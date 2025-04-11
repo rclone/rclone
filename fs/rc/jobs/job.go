@@ -190,11 +190,11 @@ func (jobs *Jobs) Stats() (running []int64, finished []int64) {
 	defer jobs.mu.RUnlock()
 	running = []int64{}
 	finished = []int64{}
-	for jobId := range jobs.jobs {
-		if jobs.jobs[jobId].Finished {
-			finished = append(finished, jobId)
+	for jobID := range jobs.jobs {
+		if jobs.jobs[jobID].Finished {
+			finished = append(finished, jobID)
 		} else {
-			running = append(running, jobId)
+			running = append(running, jobID)
 		}
 	}
 	return running, finished
@@ -430,9 +430,9 @@ Results:
 func rcJobList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
 	out["jobids"] = running.IDs()
-	runningIds, finishedIds := running.Stats()
-	out["running_ids"] = runningIds
-	out["finished_ids"] = finishedIds
+	runningIDs, finishedIDs := running.Stats()
+	out["running_ids"] = runningIDs
+	out["finished_ids"] = finishedIDs
 	out["executeId"] = executeID
 	return out, nil
 }
