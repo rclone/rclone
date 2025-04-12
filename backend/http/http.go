@@ -619,7 +619,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
 
-// Size returns the size in size of the remote http file
+// Size returns the size in bytes of the remote http file
 func (o *Object) Size() int64 {
 	return o.size
 }
