@@ -1469,7 +1469,6 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "/b2_copy_file",
-		ExtraHeaders: map[string]string{},
 	}
 	var request = api.CopyFileRequest{
 		SourceID:     srcObj.id,
