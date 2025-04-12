@@ -608,6 +608,9 @@ func (o *Object) String() string {
 
 // Remote the name of the remote HTTP file, relative to the fs root
 func (o *Object) Remote() string {
+	if o.contentDispositionFilename != nil {
+		return *o.contentDispositionFilename
+	}
 	return o.remote
 }
 
