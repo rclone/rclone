@@ -64,7 +64,11 @@ func prepareServer(t *testing.T) configmap.Simple {
 		// Set the content disposition header for the file under four
 		// later we will check if it is set using the metadata method
 		if r.URL.Path == "/four/under four.txt" {
-			w.Header().Set("Content-Disposition", "inline")
+			w.Header().Set("Content-Disposition", "attachment; filename=\"under four.txt\"")
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("Content-Language", "en-US")
+			w.Header().Set("Content-Encoding", "gzip")
 		}
 
 		fileServer.ServeHTTP(w, r)
@@ -234,7 +238,12 @@ func TestNewObjectWithMetadata(t *testing.T) {
 	assert.True(t, ok)
 	metadata, err := ho.Metadata(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "inline", metadata["content-disposition"])
+	assert.Equal(t, "text/plain; charset=utf-8", metadata["content-type"])
+	assert.Equal(t, "attachment; filename=\"under four.txt\"", metadata["content-disposition"])
+	assert.Equal(t, "under four.txt", metadata["content-disposition-filename"])
+	assert.Equal(t, "no-cache", metadata["cache-control"])
+	assert.Equal(t, "en-US", metadata["content-language"])
+	assert.Equal(t, "gzip", metadata["content-encoding"])
 }
 
 func TestOpen(t *testing.T) {

@@ -11,6 +11,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"path"
 	"strings"
@@ -121,14 +122,18 @@ type Fs struct {
 
 // Object is a remote object that has been stat'd (so it exists, but is not necessarily open for reading)
 type Object struct {
-	fs          *Fs
-	remote      string
-	size        int64
-	modTime     time.Time
-	contentType string
+	fs           *Fs
+	remote       string
+	bytes        int64     // Size of the object
+	lastModified time.Time // Last modified
+	mimeType     string    // MimeType of object - may be ""
 
 	// Metadata as pointers to strings as they often won't be present
-	contentDisposition *string // Content-Disposition: header
+	contentDisposition         *string // Content-Disposition: header
+	contentDispositionFilename *string // Filename retrieved from Content-Disposition: header
+	cacheControl               *string // Cache-Control: header
+	contentEncoding            *string // Content-Encoding: header
+	contentLanguage            *string // Content-Language: header
 }
 
 // statusError returns an error if the res contained an error
@@ -441,6 +446,29 @@ func addHeaders(req *http.Request, opt *Options) {
 	}
 }
 
+// parseFilename extracts the filename from a Content-Disposition header
+func parseFilename(contentDisposition string) (string, error) {
+	// Normalize the contentDisposition to canonical MIME format
+	mediaType, params, err := mime.ParseMediaType(contentDisposition)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse contentDisposition: %v", err)
+	}
+
+	// Check if the contentDisposition is an attachment
+	if strings.ToLower(mediaType) != "attachment" {
+		return "", fmt.Errorf("not an attachment: %s", mediaType)
+	}
+
+	// Extract the filename from the parameters
+	filename, ok := params["filename"]
+	if !ok {
+		return "", fmt.Errorf("filename not found in contentDisposition")
+	}
+
+	// Decode filename if it contains special encoding
+	return textproto.TrimString(filename), nil
+}
+
 // Adds the configured headers to the request if any
 func (f *Fs) addHeaders(req *http.Request) {
 	addHeaders(req, &f.opt)
@@ -590,12 +618,12 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 
 // Size returns the size in bytes of the remote http file
 func (o *Object) Size() int64 {
-	return o.size
+	return o.bytes
 }
 
 // ModTime returns the modification time of the remote http file
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	return o.modTime
+	return o.lastModified
 }
 
 // url returns the native url of the object
@@ -606,9 +634,9 @@ func (o *Object) url() string {
 // head sends a HEAD request to update info fields in the Object
 func (o *Object) head(ctx context.Context) error {
 	if o.fs.opt.NoHead {
-		o.size = -1
-		o.modTime = timeUnset
-		o.contentType = fs.MimeType(ctx, o)
+		o.bytes = -1
+		o.lastModified = timeUnset
+		o.mimeType = fs.MimeType(ctx, o)
 		return nil
 	}
 	url := o.url()
@@ -630,13 +658,19 @@ func (o *Object) head(ctx context.Context) error {
 
 // decodeMetadata updates info fields in the Object according to HTTP response headers
 func (o *Object) decodeMetadata(ctx context.Context, res *http.Response) error {
+
+	// Parse from Content-Length and Content-Range headers
+	o.bytes = rest.ParseSizeFromHeaders(res.Header)
+
+	// Parse Last-Modified header
 	t, err := http.ParseTime(res.Header.Get("Last-Modified"))
 	if err != nil {
 		t = timeUnset
 	}
-	o.modTime = t
-	o.contentType = res.Header.Get("Content-Type")
-	o.size = rest.ParseSizeFromHeaders(res.Header)
+	o.lastModified = t
+
+	// Parse Content-Type header
+	o.mimeType = res.Header.Get("Content-Type")
 
 	// Parse Content-Disposition header
 	contentDisposition := res.Header.Get("Content-Disposition")
@@ -644,11 +678,39 @@ func (o *Object) decodeMetadata(ctx context.Context, res *http.Response) error {
 		o.contentDisposition = &contentDisposition
 	}
 
+	// Get contentDispositionFilename
+	if o.contentDisposition != nil {
+		var filename string
+		filename, err = parseFilename(*o.contentDisposition)
+		if err == nil && filename != "" {
+			o.contentDispositionFilename = &filename
+		}
+	}
+
+	// Parse Cache-Control header
+	cacheControl := res.Header.Get("Cache-Control")
+	if cacheControl != "" {
+		o.cacheControl = &cacheControl
+	}
+
+	// Parse Content-Encoding header
+	contentEncoding := res.Header.Get("Content-Encoding")
+	if contentEncoding != "" {
+		o.contentEncoding = &contentEncoding
+	}
+
+	// Parse Content-Language header
+	contentLanguage := res.Header.Get("Content-Language")
+	if contentLanguage != "" {
+		o.contentLanguage = &contentLanguage
+	}
+
 	// If NoSlash is set then check ContentType to see if it is a directory
 	if o.fs.opt.NoSlash {
-		mediaType, _, err := mime.ParseMediaType(o.contentType)
+		var mediaType string
+		mediaType, _, err = mime.ParseMediaType(o.mimeType)
 		if err != nil {
-			return fmt.Errorf("failed to parse Content-Type: %q: %w", o.contentType, err)
+			return fmt.Errorf("failed to parse Content-Type: %q: %w", o.mimeType, err)
 		}
 		if mediaType == "text/html" {
 			return fs.ErrorNotAFile
@@ -722,7 +784,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // MimeType of an Object if known, "" otherwise
 func (o *Object) MimeType(ctx context.Context) string {
-	return o.contentType
+	return o.mimeType
 }
 
 var commandHelp = []fs.CommandHelp{{
@@ -760,7 +822,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 	switch name {
 	case "set":
 		newOpt := f.opt
-		err := configstruct.Set(configmap.Simple(opt), &newOpt)
+		err = configstruct.Set(configmap.Simple(opt), &newOpt)
 		if err != nil {
 			return nil, fmt.Errorf("reading config: %w", err)
 		}
@@ -784,7 +846,12 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 //
 // It should return nil if there is no Metadata
 func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
-	metadata = make(fs.Metadata, 1)
+	metadata = make(fs.Metadata, 6)
+	if o.mimeType != "" {
+		metadata["content-type"] = o.mimeType
+	}
+
+	// Set system metadata
 	setMetadata := func(k string, v *string) {
 		if v == nil || *v == "" {
 			return
@@ -792,6 +859,10 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 		metadata[k] = *v
 	}
 	setMetadata("content-disposition", o.contentDisposition)
+	setMetadata("content-disposition-filename", o.contentDispositionFilename)
+	setMetadata("cache-control", o.cacheControl)
+	setMetadata("content-language", o.contentLanguage)
+	setMetadata("content-encoding", o.contentEncoding)
 	return metadata, nil
 }
 
