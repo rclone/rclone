@@ -122,11 +122,11 @@ type Fs struct {
 
 // Object is a remote object that has been stat'd (so it exists, but is not necessarily open for reading)
 type Object struct {
-	fs           *Fs
-	remote       string
-	bytes        int64     // Size of the object
-	lastModified time.Time // Last modified
-	mimeType     string    // MimeType of object - may be ""
+	fs       *Fs
+	remote   string
+	size     int64     // Size of the object
+	modTime  time.Time // Last modified
+	mimeType string    // MimeType of object - may be ""
 
 	// Metadata as pointers to strings as they often won't be present
 	contentDisposition         *string // Content-Disposition: header
@@ -619,14 +619,14 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
 
-// Size returns the size in bytes of the remote http file
+// Size returns the size in size of the remote http file
 func (o *Object) Size() int64 {
-	return o.bytes
+	return o.size
 }
 
 // ModTime returns the modification time of the remote http file
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	return o.lastModified
+	return o.modTime
 }
 
 // url returns the native url of the object
@@ -637,8 +637,8 @@ func (o *Object) url() string {
 // head sends a HEAD request to update info fields in the Object
 func (o *Object) head(ctx context.Context) error {
 	if o.fs.opt.NoHead {
-		o.bytes = -1
-		o.lastModified = timeUnset
+		o.size = -1
+		o.modTime = timeUnset
 		o.mimeType = fs.MimeType(ctx, o)
 		return nil
 	}
@@ -663,14 +663,14 @@ func (o *Object) head(ctx context.Context) error {
 func (o *Object) decodeMetadata(ctx context.Context, res *http.Response) error {
 
 	// Parse from Content-Length and Content-Range headers
-	o.bytes = rest.ParseSizeFromHeaders(res.Header)
+	o.size = rest.ParseSizeFromHeaders(res.Header)
 
 	// Parse Last-Modified header
 	t, err := http.ParseTime(res.Header.Get("Last-Modified"))
 	if err != nil {
 		t = timeUnset
 	}
-	o.lastModified = t
+	o.modTime = t
 
 	// Parse Content-Type header
 	o.mimeType = res.Header.Get("Content-Type")
