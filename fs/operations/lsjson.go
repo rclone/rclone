@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"mime"
-	"net/textproto"
 	"path"
 	"strings"
 	"time"
@@ -155,29 +153,6 @@ func newListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOp
 	return lj, nil
 }
 
-// parseFilenameFromContentDisposition extracts the filename from a Content-Disposition header
-func parseFilenameFromContentDisposition(header string) (string, error) {
-	// Normalize the header to canonical MIME format
-	mediaType, params, err := mime.ParseMediaType(header)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse Content-Disposition header: %v", err)
-	}
-
-	// Check if the header is an attachment
-	if strings.ToLower(mediaType) != "attachment" {
-		return "", fmt.Errorf("not an attachment: %s", mediaType)
-	}
-
-	// Extract the filename from the parameters
-	filename, ok := params["filename"]
-	if !ok {
-		return "", fmt.Errorf("filename not found in Content-Disposition header")
-	}
-
-	// Decode filename if it contains special encoding
-	return textproto.TrimString(filename), nil
-}
-
 // Convert a single entry to JSON
 //
 // It may return nil if there is no entry to return
@@ -195,32 +170,9 @@ func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem
 		fs.Errorf(nil, "Unknown type %T in listing", entry)
 	}
 
-	// Get default name
-	name := path.Base(entry.Remote())
-
-	// Extract the name from the metadata if requested
-	if lj.opt.Metadata {
-		// Get metadata
-		metadata, err := fs.GetMetadata(ctx, entry)
-		if err != nil {
-			fs.Errorf(entry, "Failed to read metadata: %v", err)
-		}
-		// Parse the filename from the metadata
-		var parsedName string
-		if metadata != nil && metadata["content-disposition"] != "" {
-			parsedName, err = parseFilenameFromContentDisposition(metadata["content-disposition"])
-			if err != nil {
-				fs.Errorf(entry, "Failed to parse filename from content-disposition: %v", err)
-			}
-		}
-		if parsedName != "" {
-			name = parsedName
-		}
-	}
-
 	item := &ListJSONItem{
 		Path: entry.Remote(),
-		Name: name,
+		Name: path.Base(entry.Remote()),
 		Size: entry.Size(),
 	}
 	if entry.Remote() == "" {
