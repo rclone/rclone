@@ -336,6 +336,7 @@ func (o *MemoryObject) Metadata(ctx context.Context) (fs.Metadata, error) {
 	return o.meta, nil
 }
 
+// MimeType on the object
 func (o *MemoryObject) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
