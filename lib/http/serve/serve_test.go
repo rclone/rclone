@@ -89,7 +89,6 @@ func TestObjectHEADMetadata(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("HEAD", "http://example.com/aFile", nil)
 	m := fs.Metadata{
-		"content-type":        "text/plain; charset=utf-8",
 		"content-disposition": "inline",
 		"cache-control":       "no-cache",
 		"content-language":    "en",
