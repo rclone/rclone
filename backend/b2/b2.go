@@ -1883,8 +1883,13 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 	// --b2-download-url cloudflare strips the Content-Length
 	// headers (presumably so it can inject stuff) so use the old
 	// length read from the listing.
+	// Additionally, the official examples return S3 headers
+	// instead of native, i.e. no file ID, use ones from listing.
 	if info.Size < 0 {
 		info.Size = o.size
+	}
+	if info.ID == "" {
+		info.ID = o.id
 	}
 	return resp, info, nil
 }
