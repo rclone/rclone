@@ -522,3 +522,6 @@ backends:
  - backend:  "iclouddrive"
    remote:   "TestICloudDrive:"
    fastlist: false
+ - backend:  "zus"
+   remote:   "TestZus:"
+   fastlist: false   

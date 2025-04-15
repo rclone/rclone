@@ -501,7 +501,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	fileMeta := sdk.FileMeta{
-		Path:       "",
 		RemotePath: o.remote,
 		ActualSize: src.Size(),
 		RemoteName: path.Base(o.remote),
