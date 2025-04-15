@@ -90,6 +90,7 @@ docs = [
     "webdav.md",
     "yandex.md",
     "zoho.md",
+    "zus.md",
 
     "local.md",
     "changelog.md",
