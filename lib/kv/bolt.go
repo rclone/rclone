@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/lib/encoder"
 	"go.etcd.io/bbolt"
 )
@@ -66,14 +65,12 @@ func makeName(facility string, f fs.Fs) string {
 }
 
 // Start a new key-value database
-func Start(ctx context.Context, facility string, f fs.Fs) (*DB, error) {
+func Start(ctx context.Context, facility string, dir string, f fs.Fs) (*DB, error) {
 	dbMut.Lock()
 	defer dbMut.Unlock()
 	if db := lockedGet(facility, f); db != nil {
 		return db, nil
 	}
-
-	dir := filepath.Join(config.GetCacheDir(), "kv")
 	if err := os.MkdirAll(dir, dbDirMode); err != nil {
 		return nil, err
 	}
