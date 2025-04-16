@@ -41,6 +41,7 @@ type FolderListResponse struct {
 			FldID    json.Number `json:"fld_id"`
 			Path     string      `json:"path"`
 			FileCode string      `json:"file_code"`
+			Size     int64       `json:"size"`
 		} `json:"files"`
 		Folders []struct {
 			Name  string      `json:"name"`
@@ -60,6 +61,7 @@ type FileDirectLinkResponse struct {
 	} `json:"result"`
 }
 
+// FileInfoResponse represents the response for file information.
 type FileInfoResponse struct {
 	Status int    `json:"status"`
 	Msg    string `json:"msg"`
@@ -80,7 +82,7 @@ type DeleteFileResponse struct {
 
 // createFolder creates a folder at the specified path.
 func (f *Fs) createFolder(ctx context.Context, dirPath string) (*CreateFolderResponse, error) {
-	encodedDir := f.FromStandardPath(dirPath)
+	encodedDir := f.fromStandardPath(dirPath)
 	apiURL := fmt.Sprintf("%s/folder/create?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(encodedDir),
@@ -123,8 +125,8 @@ func (f *Fs) createFolder(ctx context.Context, dirPath string) (*CreateFolderRes
 // renameFolder handles folder renaming using folder paths
 func (f *Fs) renameFolder(ctx context.Context, folderPath, newName string) error {
 	folderPath = "/" + strings.Trim(folderPath, "/")
-	folderPath = f.FromStandardPath(folderPath)
-	newName = f.FromStandardPath(newName)
+	folderPath = f.fromStandardPath(folderPath)
+	newName = f.fromStandardPath(newName)
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/folder/rename",
@@ -159,7 +161,7 @@ func (f *Fs) renameFolder(ctx context.Context, folderPath, newName string) error
 
 // getFolderList List both files and folders in a directory.
 func (f *Fs) getFolderList(ctx context.Context, path string) (*FolderListResponse, error) {
-	encodedDir := f.FromStandardPath(path)
+	encodedDir := f.fromStandardPath(path)
 	apiURL := fmt.Sprintf("%s/folder/list?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(encodedDir),
@@ -177,7 +179,11 @@ func (f *Fs) getFolderList(ctx context.Context, path string) (*FolderListRespons
 		if err != nil {
 			return shouldRetry(err), fmt.Errorf("failed to list directory: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
 
 		body, err = io.ReadAll(resp.Body)
 		if err != nil {
@@ -207,7 +213,7 @@ func (f *Fs) getFolderList(ctx context.Context, path string) (*FolderListRespons
 
 // deleteFolder deletes a folder at the specified path.
 func (f *Fs) deleteFolder(ctx context.Context, fullPath string) error {
-	fullPath = f.FromStandardPath(fullPath)
+	fullPath = f.fromStandardPath(fullPath)
 	deleteURL := fmt.Sprintf("%s/folder/delete?folder_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(fullPath),
@@ -224,7 +230,11 @@ func (f *Fs) deleteFolder(ctx context.Context, fullPath string) error {
 		if err != nil {
 			return fserrors.ShouldRetry(err), err
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
@@ -249,7 +259,7 @@ func (f *Fs) deleteFolder(ctx context.Context, fullPath string) error {
 
 // getDirectLink of file from FileLu to download.
 func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64, error) {
-	filePath = f.FromStandardPath(filePath)
+	filePath = f.fromStandardPath(filePath)
 	apiURL := fmt.Sprintf("%s/file/direct_link?file_path=%s&key=%s",
 		f.endpoint,
 		url.QueryEscape(filePath),
@@ -267,7 +277,11 @@ func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64,
 		if err != nil {
 			return shouldRetry(err), fmt.Errorf("failed to fetch direct link: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
 
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 			return false, fmt.Errorf("error decoding response: %w", err)
@@ -288,7 +302,7 @@ func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64,
 
 // deleteFile deletes a file based on filePath
 func (f *Fs) deleteFile(ctx context.Context, filePath string) error {
-	filePath = f.FromStandardPath(filePath)
+	filePath = f.fromStandardPath(filePath)
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/file/remove",
@@ -317,8 +331,8 @@ func (f *Fs) deleteFile(ctx context.Context, filePath string) error {
 
 // renameFile renames a file
 func (f *Fs) renameFile(ctx context.Context, filePath, newName string) error {
-	filePath = f.FromStandardPath(filePath)
-	newName = f.FromStandardPath(newName)
+	filePath = f.fromStandardPath(filePath)
+	newName = f.fromStandardPath(newName)
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/file/rename",
@@ -355,8 +369,8 @@ func (f *Fs) renameFile(ctx context.Context, filePath, newName string) error {
 func (f *Fs) moveFolderToDestination(ctx context.Context, folderPath string, destFolderPath string) error {
 	folderPath = "/" + strings.Trim(folderPath, "/")
 	destFolderPath = "/" + strings.Trim(destFolderPath, "/")
-	folderPath = f.FromStandardPath(folderPath)
-	destFolderPath = f.FromStandardPath(destFolderPath)
+	folderPath = f.fromStandardPath(folderPath)
+	destFolderPath = f.fromStandardPath(destFolderPath)
 
 	apiURL := fmt.Sprintf("%s/folder/move?folder_path=%s&dest_folder_path=%s&key=%s",
 		f.endpoint,
@@ -412,8 +426,8 @@ func (f *Fs) moveFolderToDestination(ctx context.Context, folderPath string, des
 func (f *Fs) moveFileToDestination(ctx context.Context, filePath string, destinationFolderPath string) error {
 	filePath = "/" + strings.Trim(filePath, "/")
 	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
-	filePath = f.FromStandardPath(filePath)
-	destinationFolderPath = f.FromStandardPath(destinationFolderPath)
+	filePath = f.fromStandardPath(filePath)
+	destinationFolderPath = f.fromStandardPath(destinationFolderPath)
 
 	apiURL := fmt.Sprintf("%s/file/set_folder?file_path=%s&destination_folder_path=%s&key=%s",
 		f.endpoint,
@@ -510,7 +524,11 @@ func (f *Fs) getFileInfo(ctx context.Context, fileCode string) (*FileInfoRespons
 		if err != nil {
 			return shouldRetry(err), fmt.Errorf("failed to fetch file info: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
 
 		body, err = io.ReadAll(resp.Body)
 		if err != nil {

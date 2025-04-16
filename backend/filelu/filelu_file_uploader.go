@@ -89,7 +89,11 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 		if err != nil {
 			return shouldRetry(err), fmt.Errorf("failed to get upload server: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
 
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 			return false, fmt.Errorf("error decoding response: %w", err)
@@ -111,12 +115,16 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 
 // uploadFileWithDestination uploads a file directly to a specified folder using file content reader.
 func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, fileName string, fileContent io.Reader, dirPath string) (string, error) {
-	destinationPath := f.FromStandardPath(dirPath)
+	destinationPath := f.fromStandardPath(dirPath)
 	pr, pw := io.Pipe()
 	writer := multipart.NewWriter(pw)
 	isDeletionRequired := false
 	go func() {
-		defer pw.Close()
+		defer func() {
+			if err := pw.Close(); err != nil {
+				fs.Logf(nil, "Failed to close: %v", err)
+			}
+		}()
 		_ = writer.WriteField("sess_id", sessID)
 		_ = writer.WriteField("utype", "prem")
 		_ = writer.WriteField("fld_path", destinationPath)
@@ -170,7 +178,7 @@ func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, f
 
 	if err != nil && isDeletionRequired {
 		// Attempt to delete the file if upload fails
-		f.deleteFile(ctx, destinationPath+"/"+fileName)
+		_ = f.deleteFile(ctx, destinationPath+"/"+fileName)
 	}
 
 	return fileCode, err

@@ -133,7 +133,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (f
 
 	if isFile {
 		code, err := f.getFileCode(ctx, root)
-		if errors.Is(err, FileNotFound) || errors.Is(err, fs.ErrorDirNotFound) {
+		if errors.Is(err, ErrFileNotFound) || errors.Is(err, fs.ErrorDirNotFound) {
 			return f, nil
 		}
 
@@ -331,6 +331,7 @@ func (f *Fs) Remove(ctx context.Context, dir string) error {
 	return nil
 }
 
+// Purge deletes the directory and all its contents
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 	fullPath := path.Join(f.root, dir)
@@ -351,7 +352,6 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // List returns a list of files and folders
 // List returns a list of files and folders for the given directory
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
-
 	if f.isFile {
 		obj, err := f.NewObject(ctx, f.targetFile)
 		if errors.Is(err, fs.ErrorObjectNotFound) {
@@ -362,7 +362,6 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		}
 		return []fs.DirEntry{obj}, nil
 	}
-
 	// Compose full path for API call
 	fullPath := path.Join(f.root, dir)
 	fullPath = "/" + strings.Trim(fullPath, "/")
@@ -377,14 +376,13 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 
 	fldMap := map[string]bool{}
-
 	for _, folder := range result.Result.Folders {
 		fldMap[folder.FldID.String()] = true
 		if f.root == "" && dir == "" && strings.Contains(folder.Path, "/") {
 			continue
 		}
 
-		decodedPath := f.ToStandardPath(folder.Path)
+		decodedPath := f.toStandardPath(folder.Path)
 		paths := strings.Split(decodedPath, fullPath+"/")
 		remote := paths[0]
 		if len(paths) > 1 {
@@ -403,7 +401,6 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		remotePathWithoutRoot = strings.TrimPrefix(remotePathWithoutRoot, "/")
 		entries = append(entries, fs.NewDir(remotePathWithoutRoot, time.Now()))
 	}
-
 	for _, file := range result.Result.Files {
 		if _, ok := fldMap[file.FldID.String()]; ok {
 			continue
@@ -411,23 +408,14 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		remote := path.Join(dir, file.Name)
 		// trim leading slashes
 		remote = strings.TrimPrefix(remote, "/")
-		size := int64(0)
-
-		if fileInfo, err := f.getFileInfo(ctx, file.FileCode); err == nil {
-			if len(fileInfo.Result) > 0 {
-				size, _ = strconv.ParseInt(fileInfo.Result[0].Size, 10, 64)
-			}
-		}
-
 		obj := &Object{
 			fs:      f,
 			remote:  remote,
-			size:    size,
+			size:    file.Size,
 			modTime: time.Now(),
 		}
 		entries = append(entries, obj)
 	}
-
 	return entries, nil
 }
 
@@ -494,7 +482,11 @@ func (f *Fs) getFolderID(ctx context.Context, dir string) (int, error) {
 			if err != nil {
 				return shouldRetry(err), fmt.Errorf("failed to list directory: %w", err)
 			}
-			defer resp.Body.Close()
+			defer func() {
+				if err := resp.Body.Close(); err != nil {
+					fs.Fatalf(nil, "Failed to close response body: %v", err)
+				}
+			}()
 
 			body, err = io.ReadAll(resp.Body)
 			if err != nil {
@@ -628,13 +620,21 @@ func (f *Fs) MoveTo(ctx context.Context, src fs.Object, destinationPath string) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to open source file: %w", err)
 		}
-		defer reader.Close()
+		defer func() {
+			if err := reader.Close(); err != nil {
+				fs.Logf(nil, "Failed to close file body: %v", err)
+			}
+		}()
 
 		dest, err := os.Create(destinationPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create destination file: %w", err)
 		}
-		defer dest.Close()
+		defer func() {
+			if err := dest.Close(); err != nil {
+				fs.Logf(nil, "Failed to close file body: %v", err)
+			}
+		}()
 
 		if _, err := io.Copy(dest, reader); err != nil {
 			return nil, fmt.Errorf("failed to copy file content: %w", err)
@@ -651,7 +651,11 @@ func (f *Fs) MoveTo(ctx context.Context, src fs.Object, destinationPath string) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to open source object: %w", err)
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			fs.Logf(nil, "Failed to close file body: %v", err)
+		}
+	}()
 
 	err = f.UploadFile(ctx, reader, destinationPath)
 	if err != nil {
@@ -688,13 +692,22 @@ func (f *Fs) MoveToLocal(ctx context.Context, remote string, localPath string) e
 	if err != nil {
 		return fmt.Errorf("failed to open file for download: %w", err)
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			fs.Logf(nil, "Failed to close file body: %v", err)
+		}
+	}()
 
 	outFile, err := os.Create(localPath)
 	if err != nil {
 		return fmt.Errorf("failed to create local file %q: %w", localPath, err)
 	}
-	defer outFile.Close()
+
+	defer func() {
+		if err := outFile.Close(); err != nil {
+			fs.Logf(nil, "Failed to close file body: %v", err)
+		}
+	}()
 
 	if _, err := io.Copy(outFile, reader); err != nil {
 		return fmt.Errorf("failed to copy data to local file: %w", err)

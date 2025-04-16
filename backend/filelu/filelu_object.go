@@ -110,7 +110,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			defer resp.Body.Close()
+			defer func() {
+				if err := resp.Body.Close(); err != nil {
+					fs.Logf(nil, "Failed to close response body: %v", err)
+				}
+			}()
 			return false, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
 		}
 
@@ -207,7 +211,11 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		if err != nil {
 			return shouldRetry(err), err
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
 
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 			return false, err
@@ -258,48 +266,4 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 // Storable indicates whether the object is storable
 func (o *Object) Storable() bool {
 	return true
-}
-
-type readSeeker struct {
-	reader io.ReadCloser
-	pos    int64
-}
-
-func (r *readSeeker) Read(p []byte) (int, error) {
-	n, err := r.reader.Read(p)
-	r.pos += int64(n)
-	return n, err
-}
-
-func (r *readSeeker) Seek(offset int64, whence int) (int64, error) {
-	switch whence {
-	case io.SeekStart:
-		if offset < r.pos {
-			return 0, fmt.Errorf("backward seeking is not supported")
-		}
-		// Skip forward to the desired position
-		toSkip := offset - r.pos
-		if _, err := io.CopyN(io.Discard, r.reader, toSkip); err != nil {
-			return 0, fmt.Errorf("failed to seek: %w", err)
-		}
-		r.pos = offset
-	case io.SeekCurrent:
-		if offset < 0 {
-			return 0, fmt.Errorf("backward seeking is not supported")
-		}
-		// Skip forward by the offset
-		if _, err := io.CopyN(io.Discard, r.reader, offset); err != nil {
-			return 0, fmt.Errorf("failed to seek: %w", err)
-		}
-		r.pos += offset
-	case io.SeekEnd:
-		return 0, fmt.Errorf("SeekEnd is not supported")
-	default:
-		return 0, fmt.Errorf("invalid whence: %d", whence)
-	}
-	return r.pos, nil
-}
-
-func (r *readSeeker) Close() error {
-	return r.reader.Close()
 }
