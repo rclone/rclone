@@ -199,7 +199,7 @@ func TestGoogleDrivePacer(t *testing.T) {
 		const n = 1000
 		var sum time.Duration
 		// measure average time over n cycles
-		for i := 0; i < n; i++ {
+		for range n {
 			c := NewGoogleDrive(MinSleep(1 * time.Millisecond))
 			sum += c.Calculate(test.state)
 		}
@@ -220,7 +220,7 @@ func TestGoogleDrivePacer(t *testing.T) {
 	} {
 		c := NewGoogleDrive(MinSleep(minSleep), Burst(10))
 		count := 0
-		for i := 0; i < test.calls; i++ {
+		for range test.calls {
 			sleep := c.Calculate(State{})
 			if sleep != 0 {
 				count++

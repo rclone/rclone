@@ -33,6 +33,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"slices"
+
 	"github.com/go-git/go-billy/v5"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
@@ -65,7 +67,7 @@ type Node interface {
 	Open(flags int) (Handle, error)
 	Truncate(size int64) error
 	Path() string
-	SetSys(interface{})
+	SetSys(any)
 }
 
 // Check interfaces
@@ -358,7 +360,7 @@ func (vfs *VFS) Shutdown() {
 	for i, activeVFS := range activeVFSes {
 		if activeVFS == vfs {
 			activeVFSes[i] = nil
-			active[configName] = append(activeVFSes[:i], activeVFSes[i+1:]...)
+			active[configName] = slices.Delete(activeVFSes, i, i+1)
 			break
 		}
 	}
@@ -897,4 +899,16 @@ func (vfs *VFS) CreateSymlink(oldname, newname string) (Node, error) {
 func (vfs *VFS) Symlink(oldname, newname string) error {
 	_, err := vfs.CreateSymlink(oldname, newname)
 	return err
+}
+
+// Return true if name represents a metadata file
+//
+// It returns the underlying path
+func (vfs *VFS) isMetadataFile(name string) (rawName string, found bool) {
+	ext := vfs.Opt.MetadataExtension
+	if ext == "" {
+		return name, false
+	}
+	rawName, found = strings.CutSuffix(name, ext)
+	return rawName, found
 }

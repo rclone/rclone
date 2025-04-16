@@ -337,7 +337,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	// Cleanup stray files left after failed upload
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		cleanObj, cleanErr := f.NewObject(ctx, src.Remote())
 		if cleanErr == nil {
 			cleanErr = cleanObj.Remove(ctx)

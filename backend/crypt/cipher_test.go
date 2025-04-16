@@ -1307,10 +1307,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 	open := func(ctx context.Context, underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
 		end := len(ciphertext)
 		if underlyingLimit >= 0 {
-			end = int(underlyingOffset + underlyingLimit)
-			if end > len(ciphertext) {
-				end = len(ciphertext)
-			}
+			end = min(int(underlyingOffset+underlyingLimit), len(ciphertext))
 		}
 		reader = io.NopCloser(bytes.NewBuffer(ciphertext[int(underlyingOffset):end]))
 		return reader, nil
@@ -1490,7 +1487,7 @@ func TestDecrypterRead(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Test truncating the file at each possible point
-	for i := 0; i < len(file16)-1; i++ {
+	for i := range len(file16) - 1 {
 		what := fmt.Sprintf("truncating to %d/%d", i, len(file16))
 		cd := newCloseDetector(bytes.NewBuffer(file16[:i]))
 		fh, err := c.newDecrypter(cd)

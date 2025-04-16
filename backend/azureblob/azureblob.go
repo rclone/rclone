@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -43,7 +44,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
@@ -656,19 +657,33 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	// FIXME interpret special errors - more to do here
-	if storageErr, ok := err.(*azcore.ResponseError); ok {
+	var storageErr *azcore.ResponseError
+	if errors.As(err, &storageErr) {
+		// General errors from:
+		// https://learn.microsoft.com/en-us/rest/api/storageservices/common-rest-api-error-codes
+		// Blob specific errors from:
+		// https://learn.microsoft.com/en-us/rest/api/storageservices/blob-service-error-codes
 		switch storageErr.ErrorCode {
 		case "InvalidBlobOrBlock":
 			// These errors happen sometimes in multipart uploads
 			// because of block concurrency issues
 			return true, err
+		case "InternalError":
+			// The server encountered an internal error. Please retry the request.
+			return true, err
+		case "OperationTimedOut":
+			// The operation could not be completed within the permitted time. The
+			// operation may or may not have succeeded on the server side. Please query
+			// the server state before retrying the operation.
+			return true, err
+		case "ServerBusy":
+			// The server is currently unable to receive requests. Please retry your
+			// request.
+			return true, err
 		}
 		statusCode := storageErr.StatusCode
-		for _, e := range retryErrorCodes {
-			if statusCode == e {
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, statusCode) {
+			return true, err
 		}
 	}
 	return fserrors.ShouldRetry(err), err
@@ -1363,7 +1378,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	containerName, directory := f.split(dir)
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	listR := func(containerName, directory, prefix string, addContainer bool) error {
 		return f.list(ctx, containerName, directory, prefix, addContainer, true, int32(f.opt.ListChunkSize), func(remote string, object *container.BlobItem, isDirectory bool) error {
 			entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
@@ -1872,7 +1887,11 @@ func (f *Fs) copySinglepart(ctx context.Context, remote, dstContainer, dstPath s
 	pollTime := 100 * time.Millisecond
 	for copyStatus != nil && string(*copyStatus) == string(container.CopyStatusTypePending) {
 		time.Sleep(pollTime)
-		getMetadata, err := dstBlobSVC.GetProperties(ctx, &getOptions)
+		var getMetadata blob.GetPropertiesResponse
+		err = f.pacer.Call(func() (bool, error) {
+			getMetadata, err = dstBlobSVC.GetProperties(ctx, &getOptions)
+			return f.shouldRetry(ctx, err)
+		})
 		if err != nil {
 			return nil, err
 		}

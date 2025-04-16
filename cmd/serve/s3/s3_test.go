@@ -11,22 +11,23 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/rclone/rclone/fs/object"
-
 	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
+	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
-	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,23 +37,16 @@ const (
 )
 
 // Configure and serve the server
-func serveS3(f fs.Fs) (testURL string, keyid string, keysec string, w *Server) {
+func serveS3(t *testing.T, f fs.Fs) (testURL string, keyid string, keysec string, w *Server) {
 	keyid = random.String(16)
 	keysec = random.String(16)
-	serveropt := &Options{
-		HTTP:           httplib.DefaultCfg(),
-		pathBucketMode: true,
-		hashName:       "",
-		hashType:       hash.None,
-		authPair:       []string{fmt.Sprintf("%s,%s", keyid, keysec)},
-	}
-
-	serveropt.HTTP.ListenAddr = []string{endpoint}
-	w, _ = newServer(context.Background(), f, serveropt)
-	router := w.server.Router()
-
-	w.Bind(router)
-	_ = w.Serve()
+	opt := Opt // copy default options
+	opt.AuthKey = []string{fmt.Sprintf("%s,%s", keyid, keysec)}
+	opt.HTTP.ListenAddr = []string{endpoint}
+	w, _ = newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
 	testURL = w.server.URLs()[0]
 
 	return
@@ -62,7 +56,7 @@ func serveS3(f fs.Fs) (testURL string, keyid string, keysec string, w *Server) {
 // s3 remote against it.
 func TestS3(t *testing.T) {
 	start := func(f fs.Fs) (configmap.Simple, func()) {
-		testURL, keyid, keysec, _ := serveS3(f)
+		testURL, keyid, keysec, _ := serveS3(t, f)
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
 			"type":              "s3",
@@ -125,7 +119,7 @@ func TestEncodingWithMinioClient(t *testing.T) {
 			_, err = f.Put(context.Background(), in, obji)
 			assert.NoError(t, err)
 
-			endpoint, keyid, keysec, _ := serveS3(f)
+			endpoint, keyid, keysec, _ := serveS3(t, f)
 			testURL, _ := url.Parse(endpoint)
 			minioClient, err := minio.New(testURL.Host, &minio.Options{
 				Creds:  credentials.NewStaticV4(keyid, keysec, ""),
@@ -173,9 +167,9 @@ func testListBuckets(t *testing.T, cases []TestCase, useProxy bool) {
 		cmd := "go run " + prog + " " + files
 
 		// FIXME: this is untidy setting a global variable!
-		proxyflags.Opt.AuthProxy = cmd
+		proxy.Opt.AuthProxy = cmd
 		defer func() {
-			proxyflags.Opt.AuthProxy = ""
+			proxy.Opt.AuthProxy = ""
 		}()
 
 		f = nil
@@ -188,7 +182,7 @@ func testListBuckets(t *testing.T, cases []TestCase, useProxy bool) {
 
 	for _, tt := range cases {
 		t.Run(tt.description, func(t *testing.T) {
-			endpoint, keyid, keysec, s := serveS3(f)
+			endpoint, keyid, keysec, s := serveS3(t, f)
 			defer func() {
 				assert.NoError(t, s.server.Shutdown())
 			}()
@@ -226,13 +220,7 @@ func testListBuckets(t *testing.T, cases []TestCase, useProxy bool) {
 
 				for _, tt := range tt.files {
 					file := path.Join(tt.path, tt.filename)
-					found := false
-					for _, fname := range objects {
-						if file == fname {
-							found = true
-							break
-						}
-					}
+					found := slices.Contains(objects, file)
 					require.Equal(t, true, found, "Object not found: "+file)
 				}
 			}
@@ -301,4 +289,11 @@ func TestListBucketsAuthProxy(t *testing.T) {
 	}
 
 	testListBuckets(t, cases, true)
+}
+
+func TestRc(t *testing.T) {
+	servetest.TestRc(t, rc.Params{
+		"type":           "s3",
+		"vfs_cache_mode": "off",
+	})
 }

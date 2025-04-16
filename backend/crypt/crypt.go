@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 )
 
 // Globals
@@ -293,6 +294,9 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		PartialUploads:           true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 
+	// Enable ListP always
+	f.features.ListP = f.ListP
+
 	return f, err
 }
 
@@ -416,11 +420,40 @@ func (f *Fs) encryptEntries(ctx context.Context, entries fs.DirEntries) (newEntr
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	entries, err = f.Fs.List(ctx, f.cipher.EncryptDirName(dir))
-	if err != nil {
-		return nil, err
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	wrappedCallback := func(entries fs.DirEntries) error {
+		entries, err := f.encryptEntries(ctx, entries)
+		if err != nil {
+			return err
+		}
+		return callback(entries)
 	}
-	return f.encryptEntries(ctx, entries)
+	listP := f.Fs.Features().ListP
+	encryptedDir := f.cipher.EncryptDirName(dir)
+	if listP == nil {
+		entries, err := f.Fs.List(ctx, encryptedDir)
+		if err != nil {
+			return err
+		}
+		return wrappedCallback(entries)
+	}
+	return listP(ctx, encryptedDir, wrappedCallback)
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -924,7 +957,7 @@ Usage Example:
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "decode":
 		out := make([]string, 0, len(arg))

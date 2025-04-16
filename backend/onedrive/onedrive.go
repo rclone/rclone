@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -1396,7 +1397,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	// So we have to filter things outside of the root which is
 	// inefficient.
 
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 
 	// list a folder conventionally - used for shared folders
 	var listFolder func(dir string) error
@@ -2532,10 +2533,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	remaining := size
 	position := int64(0)
 	for remaining > 0 {
-		n := int64(o.fs.opt.ChunkSize)
-		if remaining < n {
-			n = remaining
-		}
+		n := min(remaining, int64(o.fs.opt.ChunkSize))
 		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
 		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n, options...)

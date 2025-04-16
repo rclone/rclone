@@ -207,7 +207,7 @@ func BenchmarkCheckParents(b *testing.B) {
 		b.Run(fmt.Sprintf("%d", N), func(b *testing.B) {
 			b.StopTimer()
 			dt := New()
-			for i := 0; i < N; i++ {
+			for i := range N {
 				remote := fmt.Sprintf("dir%09d/file%09d.txt", i, 1)
 				o := mockobject.New(remote)
 				dt.Add(o)

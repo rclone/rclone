@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -195,8 +196,8 @@ type Option struct {
 	Help       string           // help, start with a single sentence on a single line that will be extracted for command line help
 	Groups     string           `json:",omitempty"` // groups this option belongs to - comma separated string for options classification
 	Provider   string           `json:",omitempty"` // set to filter on provider
-	Default    interface{}      // default value, nil => "", if set (and not to nil or "") then Required does nothing
-	Value      interface{}      // value to be set by flags
+	Default    any              // default value, nil => "", if set (and not to nil or "") then Required does nothing
+	Value      any              // value to be set by flags
 	Examples   OptionExamples   `json:",omitempty"` // predefined values that can be selected from list (multiple-choice option)
 	ShortOpt   string           `json:",omitempty"` // the short option for this if required
 	Hide       OptionVisibility // set this to hide the config from the configurator or the command line
@@ -232,7 +233,7 @@ func (o *Option) MarshalJSON() ([]byte, error) {
 }
 
 // GetValue gets the current value which is the default if not set
-func (o *Option) GetValue() interface{} {
+func (o *Option) GetValue() any {
 	val := o.Value
 	if val == nil {
 		val = o.Default
@@ -258,15 +259,27 @@ func (o *Option) IsDefault() bool {
 // String turns Option into a string
 func (o *Option) String() string {
 	v := o.GetValue()
-	if stringArray, isStringArray := v.([]string); isStringArray {
+	switch x := v.(type) {
+	case []string:
 		// Treat empty string array as empty string
 		// This is to make the default value of the option help nice
-		if len(stringArray) == 0 {
+		if len(x) == 0 {
 			return ""
 		}
 		// Encode string arrays as CSV
 		// The default Go encoding can't be decoded uniquely
-		return CommaSepList(stringArray).String()
+		return CommaSepList(x).String()
+	case SizeSuffix:
+		str := x.String()
+		// Suffix bare numbers with "B" unless they are 0
+		//
+		// This makes sure that fs.SizeSuffix roundtrips through string
+		if len(str) > 0 && str != "0" {
+			if lastDigit := str[len(str)-1]; lastDigit >= '0' && lastDigit <= '9' {
+				str += "B"
+			}
+		}
+		return str
 	}
 	return fmt.Sprint(v)
 }
@@ -373,7 +386,7 @@ func Register(info *RegInfo) {
 		aliasInfo.Name = alias
 		aliasInfo.Prefix = alias
 		aliasInfo.Hide = true
-		aliasInfo.Options = append(Options(nil), info.Options...)
+		aliasInfo.Options = slices.Clone(info.Options)
 		for i := range aliasInfo.Options {
 			aliasInfo.Options[i].Hide = OptionHideBoth
 		}
@@ -410,7 +423,7 @@ func MustFind(name string) *RegInfo {
 // OptionsInfo holds info about an block of options
 type OptionsInfo struct {
 	Name    string                      // name of this options block for the rc
-	Opt     interface{}                 // pointer to a struct to set the options in
+	Opt     any                         // pointer to a struct to set the options in
 	Options Options                     // description of the options
 	Reload  func(context.Context) error // if not nil, call when options changed and on init
 }

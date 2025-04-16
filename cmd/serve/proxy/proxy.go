@@ -106,14 +106,23 @@ backend that rclone supports.
 
 `, "|", "`")
 
+// OptionsInfo descripts the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "auth_proxy",
+	Default: "",
+	Help:    "A program to use to create the backend from the auth",
+}}
+
 // Options is options for creating the proxy
 type Options struct {
-	AuthProxy string
+	AuthProxy string `config:"auth_proxy"`
 }
 
-// DefaultOpt is the default values uses for Opt
-var DefaultOpt = Options{
-	AuthProxy: "",
+// Opt is the default options
+var Opt Options
+
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "proxy", Opt: &Opt, Options: OptionsInfo})
 }
 
 // Proxy represents a proxy to turn auth requests into a VFS
@@ -122,6 +131,7 @@ type Proxy struct {
 	vfsCache *libcache.Cache
 	ctx      context.Context // for global config
 	Opt      Options
+	vfsOpt   vfscommon.Options
 }
 
 // cacheEntry is what is stored in the vfsCache
@@ -131,12 +141,15 @@ type cacheEntry struct {
 }
 
 // New creates a new proxy with the Options passed in
-func New(ctx context.Context, opt *Options) *Proxy {
+//
+// Any VFS are created with the vfsOpt passed in.
+func New(ctx context.Context, opt *Options, vfsOpt *vfscommon.Options) *Proxy {
 	return &Proxy{
 		ctx:      ctx,
 		Opt:      *opt,
 		cmdLine:  strings.Fields(opt.AuthProxy),
 		vfsCache: libcache.New(),
+		vfsOpt:   *vfsOpt,
 	}
 }
 
@@ -182,7 +195,7 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 }
 
 // call runs the auth proxy and returns a cacheEntry and an error
-func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, err error) {
+func (p *Proxy) call(user, auth string, isPublicKey bool) (value any, err error) {
 	var config configmap.Simple
 	// Contact the proxy
 	if isPublicKey {
@@ -222,7 +235,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 	fsString := name + ":" + root
 
 	// Look for fs in the VFS cache
-	value, err = p.vfsCache.Get(user, func(key string) (value interface{}, ok bool, err error) {
+	value, err = p.vfsCache.Get(user, func(key string) (value any, ok bool, err error) {
 		// Create the Fs from the cache
 		f, err := cache.GetFn(p.ctx, fsString, func(ctx context.Context, fsString string) (fs.Fs, error) {
 			// Update the config with the default values
@@ -242,7 +255,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 		// need to in memory. An attacker would find it easier to go
 		// after the unencrypted password in memory most likely.
 		entry := cacheEntry{
-			vfs:    vfs.New(f, &vfscommon.Opt),
+			vfs:    vfs.New(f, &p.vfsOpt),
 			pwHash: sha256.Sum256([]byte(auth)),
 		}
 		return entry, true, nil

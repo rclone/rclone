@@ -27,7 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -631,7 +631,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // ListR lists the objects and directories of the Fs starting
 // from dir recursively into out.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	err = f.listHelper(ctx, dir, true, func(o fs.DirEntry) error {
 		return list.Add(o)
 	})
@@ -990,10 +990,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	if err != nil {
 		return nil, err
 	}
-	free := q.Quota - q.UsedQuota
-	if free < 0 {
-		free = 0
-	}
+	free := max(q.Quota-q.UsedQuota, 0)
 	usage = &fs.Usage{
 		Total: fs.NewUsageValue(q.Quota),     // quota of bytes that can be used
 		Used:  fs.NewUsageValue(q.UsedQuota), // bytes in use
@@ -1324,7 +1321,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		// sometimes pcloud leaves a half complete file on
 		// error, so delete it if it exists, trying a few times
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			delObj, delErr := o.fs.NewObject(ctx, o.remote)
 			if delErr == nil && delObj != nil {
 				_ = delObj.Remove(ctx)

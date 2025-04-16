@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -47,8 +48,8 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
@@ -934,13 +935,19 @@ func init() {
 				Help:  "The default endpoint\nIran",
 			}},
 		}, {
-			// Linode endpoints: https://www.linode.com/docs/products/storage/object-storage/guides/urls/#cluster-url-s3-endpoint
+			// Linode endpoints: https://techdocs.akamai.com/cloud-computing/docs/object-storage-product-limits#supported-endpoint-types-by-region
 			Name:     "endpoint",
 			Help:     "Endpoint for Linode Object Storage API.",
 			Provider: "Linode",
 			Examples: []fs.OptionExample{{
+				Value: "nl-ams-1.linodeobjects.com",
+				Help:  "Amsterdam (Netherlands), nl-ams-1",
+			}, {
 				Value: "us-southeast-1.linodeobjects.com",
 				Help:  "Atlanta, GA (USA), us-southeast-1",
+			}, {
+				Value: "in-maa-1.linodeobjects.com",
+				Help:  "Chennai (India), in-maa-1",
 			}, {
 				Value: "us-ord-1.linodeobjects.com",
 				Help:  "Chicago, IL (USA), us-ord-1",
@@ -948,20 +955,47 @@ func init() {
 				Value: "eu-central-1.linodeobjects.com",
 				Help:  "Frankfurt (Germany), eu-central-1",
 			}, {
+				Value: "id-cgk-1.linodeobjects.com",
+				Help:  "Jakarta (Indonesia), id-cgk-1",
+			}, {
+				Value: "gb-lon-1.linodeobjects.com",
+				Help:  "London 2 (Great Britain), gb-lon-1",
+			}, {
+				Value: "us-lax-1.linodeobjects.com",
+				Help:  "Los Angeles, CA (USA), us-lax-1",
+			}, {
+				Value: "es-mad-1.linodeobjects.com",
+				Help:  "Madrid (Spain), es-mad-1",
+			}, {
+				Value: "au-mel-1.linodeobjects.com",
+				Help:  "Melbourne (Australia), au-mel-1",
+			}, {
+				Value: "us-mia-1.linodeobjects.com",
+				Help:  "Miami, FL (USA), us-mia-1",
+			}, {
 				Value: "it-mil-1.linodeobjects.com",
 				Help:  "Milan (Italy), it-mil-1",
 			}, {
 				Value: "us-east-1.linodeobjects.com",
 				Help:  "Newark, NJ (USA), us-east-1",
 			}, {
+				Value: "jp-osa-1.linodeobjects.com",
+				Help:  "Osaka (Japan), jp-osa-1",
+			}, {
 				Value: "fr-par-1.linodeobjects.com",
 				Help:  "Paris (France), fr-par-1",
+			}, {
+				Value: "br-gru-1.linodeobjects.com",
+				Help:  "São Paulo (Brazil), br-gru-1",
 			}, {
 				Value: "us-sea-1.linodeobjects.com",
 				Help:  "Seattle, WA (USA), us-sea-1",
 			}, {
 				Value: "ap-south-1.linodeobjects.com",
-				Help:  "Singapore ap-south-1",
+				Help:  "Singapore, ap-south-1",
+			}, {
+				Value: "sg-sin-1.linodeobjects.com",
+				Help:  "Singapore 2, sg-sin-1",
 			}, {
 				Value: "se-sto-1.linodeobjects.com",
 				Help:  "Stockholm (Sweden), se-sto-1",
@@ -3064,10 +3098,8 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 				return true, err
 			}
 		}
-		for _, e := range retryErrorCodes {
-			if httpStatusCode == e {
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, httpStatusCode) {
+			return true, err
 		}
 	}
 	// Ok, not an awserr, check for generic failure conditions
@@ -3197,7 +3229,7 @@ func fixupRequest(o *s3.Options, opt *Options) {
 type s3logger struct{}
 
 // Logf is expected to support the standard fmt package "verbs".
-func (s3logger) Logf(classification logging.Classification, format string, v ...interface{}) {
+func (s3logger) Logf(classification logging.Classification, format string, v ...any) {
 	switch classification {
 	default:
 	case logging.Debug:
@@ -4449,7 +4481,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *types.Ob
 }
 
 // listDir lists files and directories to out
-func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool, callback func(fs.DirEntry) error) (err error) {
 	// List the objects and directories
 	err = f.list(ctx, listOpt{
 		bucket:       bucket,
@@ -4465,16 +4497,16 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 			return err
 		}
 		if entry != nil {
-			entries = append(entries, entry)
+			return callback(entry)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// bucket must be present if listing succeeded
 	f.cache.MarkOK(bucket)
-	return entries, nil
+	return nil
 }
 
 // listBuckets lists the buckets to out
@@ -4507,14 +4539,46 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	bucket, directory := f.split(dir)
 	if bucket == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listBuckets(ctx)
+		entries, err := f.listBuckets(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", list.Add)
+		if err != nil {
+			return err
+		}
 	}
-	return f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "")
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -4535,7 +4599,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // of listing recursively than doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	bucket, directory := f.split(dir)
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
 		return f.list(ctx, listOpt{
 			bucket:       bucket,
@@ -5029,7 +5093,7 @@ or from INTELLIGENT-TIERING Archive Access / Deep Archive Access tier to the Fre
 
 Usage Examples:
 
-    rclone backend restore s3:bucket/path/to/object -o priority=PRIORITY -o lifetime=DAYS
+    rclone backend restore s3:bucket/path/to/ --include /object -o priority=PRIORITY -o lifetime=DAYS
     rclone backend restore s3:bucket/path/to/directory -o priority=PRIORITY -o lifetime=DAYS
     rclone backend restore s3:bucket -o priority=PRIORITY -o lifetime=DAYS
     rclone backend restore s3:bucket/path/to/directory -o priority=PRIORITY
@@ -5220,7 +5284,7 @@ It doesn't return anything.
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "restore":
 		req := s3.RestoreObjectInput{
@@ -6811,6 +6875,7 @@ var (
 	_ fs.Copier          = &Fs{}
 	_ fs.PutStreamer     = &Fs{}
 	_ fs.ListRer         = &Fs{}
+	_ fs.ListPer         = &Fs{}
 	_ fs.Commander       = &Fs{}
 	_ fs.CleanUpper      = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}

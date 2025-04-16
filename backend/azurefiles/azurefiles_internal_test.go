@@ -61,7 +61,7 @@ const chars = "abcdefghijklmnopqrstuvwzyxABCDEFGHIJKLMNOPQRSTUVWZYX"
 
 func randomString(charCount int) string {
 	strBldr := strings.Builder{}
-	for i := 0; i < charCount; i++ {
+	for range charCount {
 		randPos := rand.Int63n(52)
 		strBldr.WriteByte(chars[randPos])
 	}

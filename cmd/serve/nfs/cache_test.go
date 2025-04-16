@@ -5,10 +5,13 @@ package nfs
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/vfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,6 +21,8 @@ const testSymlinkCache = "go test -c && sudo setcap cap_dac_read_search+ep ./nfs
 
 // Check basic CRUD operations
 func testCacheCRUD(t *testing.T, h *Handler, c Cache, fileName string) {
+	isMetadata := strings.HasSuffix(fileName, ".metadata")
+
 	// Check reading a non existent handle returns an error
 	_, _, err := c.FromHandle([]byte{10})
 	assert.Error(t, err)
@@ -26,6 +31,11 @@ func testCacheCRUD(t *testing.T, h *Handler, c Cache, fileName string) {
 	splitPath := []string{"dir", fileName}
 	fh := c.ToHandle(h.billyFS, splitPath)
 	assert.True(t, len(fh) > 0)
+	if isMetadata {
+		assert.Equal(t, metadataSuffix, fh[len(fh)-len(metadataSuffix):])
+	} else {
+		assert.NotEqual(t, metadataSuffix, fh[len(fh)-len(metadataSuffix):])
+	}
 
 	// Read the handle back
 	newFs, newSplitPath, err := c.FromHandle(fh)
@@ -43,14 +53,19 @@ func testCacheCRUD(t *testing.T, h *Handler, c Cache, fileName string) {
 
 	// Check the handle is gone and returning stale handle error
 	_, _, err = c.FromHandle(fh)
-	require.Error(t, err)
-	assert.Equal(t, errStaleHandle, err)
+	if !isMetadata {
+		require.Error(t, err)
+		assert.Equal(t, errStaleHandle, err)
+	} else {
+		// Can't invalidate metadata handles
+		require.NoError(t, err)
+	}
 }
 
 // Thrash the cache operations in parallel on different files
 func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		i := i
 		wg.Add(1)
 		go func() {
@@ -64,7 +79,7 @@ func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 // Thrash the cache operations in parallel on the same file
 func testCacheThrashSame(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -113,8 +128,10 @@ func TestCache(t *testing.T) {
 		cacheType := cacheType
 		t.Run(cacheType.String(), func(t *testing.T) {
 			h := &Handler{
+				vfs:     vfs.New(object.MemoryFs, nil),
 				billyFS: billyFS,
 			}
+			h.vfs.Opt.MetadataExtension = ".metadata"
 			h.opt.HandleLimit = 1000
 			h.opt.HandleCache = cacheType
 			h.opt.HandleCacheDir = t.TempDir()
@@ -150,6 +167,10 @@ func TestCache(t *testing.T) {
 				})
 				t.Run("ThrashSame", func(t *testing.T) {
 					testCacheThrashSame(t, h, c)
+				})
+				// Metadata file handles only supported on non memory
+				t.Run("CRUDMetadata", func(t *testing.T) {
+					testCacheCRUD(t, h, c, "file.metadata")
 				})
 			}
 		})

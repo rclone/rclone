@@ -5,6 +5,7 @@ package oracleobjectstorage
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -23,7 +24,7 @@ var refreshGracePeriod = 30 * time.Second
 //
 // `state` is the latest state of that object. And `err` is any error that
 // may have happened while refreshing the state.
-type StateRefreshFunc func() (result interface{}, state string, err error)
+type StateRefreshFunc func() (result any, state string, err error)
 
 // StateChangeConf is the configuration struct used for `WaitForState`.
 type StateChangeConf struct {
@@ -56,7 +57,7 @@ type StateChangeConf struct {
 // reach the target state.
 //
 // Cancellation from the passed in context will cancel the refresh loop
-func (conf *StateChangeConf) WaitForStateContext(ctx context.Context, entityType string) (interface{}, error) {
+func (conf *StateChangeConf) WaitForStateContext(ctx context.Context, entityType string) (any, error) {
 	// fs.Debugf(entityType, "Waiting for state to become: %s", conf.Target)
 
 	notfoundTick := 0
@@ -72,7 +73,7 @@ func (conf *StateChangeConf) WaitForStateContext(ctx context.Context, entityType
 	}
 
 	type Result struct {
-		Result interface{}
+		Result any
 		State  string
 		Error  error
 		Done   bool
@@ -165,12 +166,9 @@ func (conf *StateChangeConf) WaitForStateContext(ctx context.Context, entityType
 					}
 				}
 
-				for _, allowed := range conf.Pending {
-					if currentState == allowed {
-						found = true
-						targetOccurrence = 0
-						break
-					}
+				if slices.Contains(conf.Pending, currentState) {
+					found = true
+					targetOccurrence = 0
 				}
 
 				if !found && len(conf.Pending) > 0 {
@@ -278,8 +276,8 @@ func (conf *StateChangeConf) WaitForStateContext(ctx context.Context, entityType
 // NotFoundError resource not found error
 type NotFoundError struct {
 	LastError    error
-	LastRequest  interface{}
-	LastResponse interface{}
+	LastRequest  any
+	LastResponse any
 	Message      string
 	Retries      int
 }

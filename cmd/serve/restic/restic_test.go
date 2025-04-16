@@ -14,7 +14,9 @@ import (
 
 	_ "github.com/rclone/rclone/backend/all"
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +28,7 @@ const (
 )
 
 func newOpt() Options {
-	opt := DefaultOpt
+	opt := Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
 	return opt
 }
@@ -56,7 +58,10 @@ func TestResticIntegration(t *testing.T) {
 	// Start the server
 	s, err := newServer(ctx, fremote, &opt)
 	require.NoError(t, err)
-	testURL := s.Server.URLs()[0]
+	go func() {
+		require.NoError(t, s.Serve())
+	}()
+	testURL := s.server.URLs()[0]
 	defer func() {
 		_ = s.Shutdown()
 	}()
@@ -136,7 +141,7 @@ func TestListErrors(t *testing.T) {
 	f := &listErrorFs{Fs: cmd.NewFsSrc([]string{tempdir})}
 	s, err := newServer(ctx, f, &opt)
 	require.NoError(t, err)
-	router := s.Server.Router()
+	router := s.server.Router()
 
 	req := newRequest(t, "GET", "/test/snapshots/", nil)
 	checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusInternalServerError)})
@@ -161,7 +166,7 @@ func TestServeErrors(t *testing.T) {
 	f := &newObjectErrorFs{Fs: cmd.NewFsSrc([]string{tempdir})}
 	s, err := newServer(ctx, f, &opt)
 	require.NoError(t, err)
-	router := s.Server.Router()
+	router := s.server.Router()
 
 	f.err = errors.New("oops")
 	req := newRequest(t, "GET", "/test/config", nil)
@@ -169,4 +174,10 @@ func TestServeErrors(t *testing.T) {
 
 	f.err = fs.ErrorObjectNotFound
 	checkRequest(t, router.ServeHTTP, req, []wantFunc{wantCode(http.StatusNotFound)})
+}
+
+func TestRc(t *testing.T) {
+	servetest.TestRc(t, rc.Params{
+		"type": "restic",
+	})
 }

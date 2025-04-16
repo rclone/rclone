@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
@@ -273,7 +274,7 @@ func (dm *dirMap) sendEntries(fn fs.ListRCallback) (err error) {
 	sort.Strings(dirs)
 	// Now convert to bulkier Dir in batches and send
 	now := time.Now()
-	list := NewListRHelper(fn)
+	list := list.NewHelper(fn)
 	for _, dir := range dirs {
 		err = list.Add(fs.NewDir(dir, now))
 		if err != nil {
@@ -296,6 +297,7 @@ func listR(ctx context.Context, f fs.Fs, path string, includeAll bool, listType 
 	}
 	var mu sync.Mutex
 	err := doListR(ctx, path, func(entries fs.DirEntries) (err error) {
+		accounting.Stats(ctx).Listed(int64(len(entries)))
 		if synthesizeDirs {
 			err = dm.addEntries(entries)
 			if err != nil {
@@ -388,7 +390,7 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 			}()
 		})
 	}
-	for i := 0; i < ci.Checkers; i++ {
+	for range ci.Checkers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -465,6 +467,7 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 	includeDirectory := fi.IncludeDirectory(ctx, f)
 	var mu sync.Mutex
 	err := listR(ctx, startPath, func(entries fs.DirEntries) error {
+		accounting.Stats(ctx).Listed(int64(len(entries)))
 		mu.Lock()
 		defer mu.Unlock()
 		for _, entry := range entries {
@@ -640,42 +643,4 @@ func GetAll(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel
 		return nil
 	})
 	return
-}
-
-// ListRHelper is used in the implementation of ListR to accumulate DirEntries
-type ListRHelper struct {
-	callback fs.ListRCallback
-	entries  fs.DirEntries
-}
-
-// NewListRHelper should be called from ListR with the callback passed in
-func NewListRHelper(callback fs.ListRCallback) *ListRHelper {
-	return &ListRHelper{
-		callback: callback,
-	}
-}
-
-// send sends the stored entries to the callback if there are >= max
-// entries.
-func (lh *ListRHelper) send(max int) (err error) {
-	if len(lh.entries) >= max {
-		err = lh.callback(lh.entries)
-		lh.entries = lh.entries[:0]
-	}
-	return err
-}
-
-// Add an entry to the stored entries and send them if there are more
-// than a certain amount
-func (lh *ListRHelper) Add(entry fs.DirEntry) error {
-	if entry == nil {
-		return nil
-	}
-	lh.entries = append(lh.entries, entry)
-	return lh.send(100)
-}
-
-// Flush the stored entries (if any) sending them to the callback
-func (lh *ListRHelper) Flush() error {
-	return lh.send(1)
 }

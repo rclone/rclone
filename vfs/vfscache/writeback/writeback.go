@@ -97,14 +97,14 @@ func (ws writeBackItems) Swap(i, j int) {
 	ws[j].index = j
 }
 
-func (ws *writeBackItems) Push(x interface{}) {
+func (ws *writeBackItems) Push(x any) {
 	n := len(*ws)
 	item := x.(*writeBackItem)
 	item.index = n
 	*ws = append(*ws, item)
 }
 
-func (ws *writeBackItems) Pop() interface{} {
+func (ws *writeBackItems) Pop() any {
 	old := *ws
 	n := len(old)
 	item := old[n-1]
@@ -227,10 +227,7 @@ func (wb *WriteBack) _resetTimer() {
 			return
 		}
 		wb.expiry = wbItem.expiry
-		dt := time.Until(wbItem.expiry)
-		if dt < 0 {
-			dt = 0
-		}
+		dt := max(time.Until(wbItem.expiry), 0)
 		// fs.Debugf(nil, "resetTimer dt=%v", dt)
 		if wb.timer != nil {
 			wb.timer.Stop()

@@ -16,10 +16,7 @@ var (
 func StartLimitTPS(ctx context.Context) {
 	ci := fs.GetConfig(ctx)
 	if ci.TPSLimit > 0 {
-		tpsBurst := ci.TPSLimitBurst
-		if tpsBurst < 1 {
-			tpsBurst = 1
-		}
+		tpsBurst := max(ci.TPSLimitBurst, 1)
 		tpsBucket = rate.NewLimiter(rate.Limit(ci.TPSLimit), tpsBurst)
 		fs.Infof(nil, "Starting transaction limiter: max %g transactions/s with burst %d", ci.TPSLimit, tpsBurst)
 	}

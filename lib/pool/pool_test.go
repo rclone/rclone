@@ -1,12 +1,15 @@
 package pool
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/rand"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 )
@@ -118,7 +121,7 @@ func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
 
 	checkFlushHasHappened := func(desired int) {
 		var n int
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			time.Sleep(100 * time.Millisecond)
 			n = bp.InPool()
 			if n <= desired {
@@ -224,4 +227,56 @@ func TestPool(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestPoolMaxBufferMemory(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	ci.MaxBufferMemory = 4 * 4096
+	defer func() {
+		ci.MaxBufferMemory = 0
+		totalMemory = nil
+	}()
+	totalMemoryInit = sync.Once{} // reset the sync.Once as it likely has been used
+	totalMemory = nil
+	bp := New(60*time.Second, 4096, 2, true)
+
+	assert.Equal(t, bp.alloced, 0)
+	assert.Nil(t, totalMemory)
+	buf := bp.Get()
+	assert.NotNil(t, totalMemory)
+	bp.Put(buf)
+	assert.Equal(t, bp.alloced, 1)
+
+	var (
+		wg       sync.WaitGroup
+		mu       sync.Mutex
+		bufs     int
+		maxBufs  int
+		countBuf = func(i int) {
+			mu.Lock()
+			defer mu.Unlock()
+			bufs += i
+			if bufs > maxBufs {
+				maxBufs = bufs
+			}
+		}
+	)
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			buf := bp.Get()
+			countBuf(1)
+			time.Sleep(100 * time.Millisecond)
+			bp.Put(buf)
+			countBuf(-1)
+		}()
+	}
+
+	wg.Wait()
+
+	assert.Equal(t, bufs, 0)
+	assert.Equal(t, maxBufs, 4)
+	assert.Equal(t, bp.alloced, 2)
 }

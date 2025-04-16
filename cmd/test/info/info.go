@@ -289,7 +289,7 @@ func (r *results) checkControls() {
 
 	// Concurrency control
 	tokens := make(chan struct{}, ci.Checkers)
-	for i := 0; i < ci.Checkers; i++ {
+	for range ci.Checkers {
 		tokens <- struct{}{}
 	}
 	var wg sync.WaitGroup

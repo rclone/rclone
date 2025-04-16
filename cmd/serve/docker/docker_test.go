@@ -49,7 +49,7 @@ func initialise(ctx context.Context, t *testing.T) (string, fs.Fs) {
 	return testDir, testFs
 }
 
-func assertErrorContains(t *testing.T, err error, errString string, msgAndArgs ...interface{}) {
+func assertErrorContains(t *testing.T, err error, errString string, msgAndArgs ...any) {
 	assert.Error(t, err)
 	if err != nil {
 		assert.Contains(t, err.Error(), errString, msgAndArgs...)
@@ -244,7 +244,7 @@ func newAPIClient(t *testing.T, host, unixPath string) *APIClient {
 	}
 }
 
-func (a *APIClient) request(path string, in, out interface{}, wantErr bool) {
+func (a *APIClient) request(path string, in, out any, wantErr bool) {
 	t := a.t
 	var (
 		dataIn  []byte

@@ -17,6 +17,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -320,12 +321,7 @@ type Opt struct {
 
 // returns true if x is found in ss
 func stringsContains(x string, ss []string) bool {
-	for _, s := range ss {
-		if x == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ss, x)
 }
 
 // toUpperASCII returns a copy of the string s with all Unicode
@@ -484,7 +480,7 @@ func Run(t *testing.T, opt *Opt) {
 		}
 		v := reflect.ValueOf(ft).Elem()
 		vType := v.Type()
-		for i := 0; i < v.NumField(); i++ {
+		for i := range v.NumField() {
 			vName := vType.Field(i).Name
 			if stringsContains(vName, opt.UnimplementableFsMethods) {
 				continue
@@ -1068,7 +1064,7 @@ func Run(t *testing.T, opt *Opt) {
 				var err error
 				var objs []fs.Object
 				var dirs []fs.Directory
-				for i := 0; i < 2; i++ {
+				for range 2 {
 					dir, _ := path.Split(fileName)
 					dir = dir[:len(dir)-1]
 					objs, dirs, err = walk.GetAll(ctx, f, dir, true, -1)
@@ -2370,18 +2366,12 @@ func Run(t *testing.T, opt *Opt) {
 
 			setUploadCutoffer, _ := f.(SetUploadCutoffer)
 
-			minChunkSize := opt.ChunkedUpload.MinChunkSize
-			if minChunkSize < 100 {
-				minChunkSize = 100
-			}
+			minChunkSize := max(opt.ChunkedUpload.MinChunkSize, 100)
 			if opt.ChunkedUpload.CeilChunkSize != nil {
 				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
 			}
 
-			maxChunkSize := 2 * fs.Mebi
-			if maxChunkSize < 2*minChunkSize {
-				maxChunkSize = 2 * minChunkSize
-			}
+			maxChunkSize := max(2*fs.Mebi, 2*minChunkSize)
 			if opt.ChunkedUpload.MaxChunkSize > 0 && maxChunkSize > opt.ChunkedUpload.MaxChunkSize {
 				maxChunkSize = opt.ChunkedUpload.MaxChunkSize
 			}
@@ -2495,10 +2485,7 @@ func Run(t *testing.T, opt *Opt) {
 				t.Skipf("%T does not implement SetCopyCutoff", f)
 			}
 
-			minChunkSize := opt.ChunkedUpload.MinChunkSize
-			if minChunkSize < 100 {
-				minChunkSize = 100
-			}
+			minChunkSize := max(opt.ChunkedUpload.MinChunkSize, 100)
 			if opt.ChunkedUpload.CeilChunkSize != nil {
 				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
 			}

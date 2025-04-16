@@ -20,7 +20,7 @@ func TestKvConcurrency(t *testing.T) {
 	ctx := context.Background()
 	results := make([]*DB, threadNum)
 	wg.Add(threadNum)
-	for i := 0; i < threadNum; i++ {
+	for i := range threadNum {
 		go func(i int) {
 			db, err := Start(ctx, "test", nil)
 			require.NoError(t, err)
@@ -35,11 +35,11 @@ func TestKvConcurrency(t *testing.T) {
 	db := results[0]
 	assert.Equal(t, 1, len(dbMap))
 	assert.Equal(t, threadNum, db.refs)
-	for i := 0; i < threadNum; i++ {
+	for i := range threadNum {
 		assert.Equal(t, db, results[i])
 	}
 
-	for i := 0; i < threadNum; i++ {
+	for i := range threadNum {
 		assert.Equal(t, 1, len(dbMap))
 		err := db.Stop(false)
 		assert.NoError(t, err, "unexpected error %v at retry %d", err, i)
@@ -54,7 +54,7 @@ func TestKvExit(t *testing.T) {
 	require.Equal(t, 0, len(dbMap), "no databases can be started initially")
 	const dbNum = 5
 	ctx := context.Background()
-	for i := 0; i < dbNum; i++ {
+	for i := range dbNum {
 		facility := fmt.Sprintf("test-%d", i)
 		for j := 0; j <= i; j++ {
 			db, err := Start(ctx, facility, nil)

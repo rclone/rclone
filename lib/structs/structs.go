@@ -17,12 +17,12 @@ import (
 // This is useful for copying between almost identical structures that
 // are frequently present in auto-generated code for cloud storage
 // interfaces.
-func SetFrom(a, b interface{}) {
+func SetFrom(a, b any) {
 	ta := reflect.TypeOf(a).Elem()
 	tb := reflect.TypeOf(b).Elem()
 	va := reflect.ValueOf(a).Elem()
 	vb := reflect.ValueOf(b).Elem()
-	for i := 0; i < tb.NumField(); i++ {
+	for i := range tb.NumField() {
 		bField := vb.Field(i)
 		tbField := tb.Field(i)
 		name := tbField.Name
@@ -41,12 +41,12 @@ func SetFrom(a, b interface{}) {
 // This copies the public members only from b to a.  This is useful if
 // you can't just use a struct copy because it contains a private
 // mutex, e.g. as http.Transport.
-func SetDefaults(a, b interface{}) {
+func SetDefaults(a, b any) {
 	pt := reflect.TypeOf(a)
 	t := pt.Elem()
 	va := reflect.ValueOf(a).Elem()
 	vb := reflect.ValueOf(b).Elem()
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		aField := va.Field(i)
 		// Set a from b if it is public
 		if aField.CanSet() {

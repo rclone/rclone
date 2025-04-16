@@ -40,7 +40,7 @@ func (signer *IbmIamSigner) SignHTTP(ctx context.Context, credentials aws.Creden
 	return nil
 }
 
-// NoOpCredentialsProvider is needed since S3 SDK requires having credentials, eventhough authentication is happening via IBM IAM.
+// NoOpCredentialsProvider is needed since S3 SDK requires having credentials, even though authentication is happening via IBM IAM.
 type NoOpCredentialsProvider struct{}
 
 // Retrieve returns mock credentials for the NoOpCredentialsProvider.

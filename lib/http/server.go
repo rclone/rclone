@@ -229,7 +229,8 @@ type Server struct {
 	cfg          Config
 	template     *TemplateConfig
 	htmlTemplate *template.Template
-	usingAuth    bool // set if we are using auth middleware
+	usingAuth    bool       // set if we are using auth middleware
+	mu           sync.Mutex // mutex protects RW variables below
 	atexitHandle atexit.FnHandle
 }
 
@@ -524,7 +525,9 @@ func (s *Server) Serve() {
 		go ii.serve(&s.wg)
 	}
 	// Install an atexit handler to shutdown gracefully
+	s.mu.Lock()
 	s.atexitHandle = atexit.Register(func() { _ = s.Shutdown() })
+	s.mu.Unlock()
 }
 
 // Wait blocks while the server is serving requests
@@ -543,10 +546,12 @@ const gracefulShutdownTime = 10 * time.Second
 // Shutdown gracefully shuts down the server
 func (s *Server) Shutdown() error {
 	// Stop the atexit handler
+	s.mu.Lock()
 	if s.atexitHandle != nil {
 		atexit.Unregister(s.atexitHandle)
 		s.atexitHandle = nil
 	}
+	s.mu.Unlock()
 	for _, ii := range s.instances {
 		expiry := time.Now().Add(gracefulShutdownTime)
 		ctx, cancel := context.WithDeadline(context.Background(), expiry)
@@ -574,6 +579,14 @@ func (s *Server) URLs() []string {
 		out = append(out, ii.url)
 	}
 	return out
+}
+
+// Addr returns the first configured address
+func (s *Server) Addr() net.Addr {
+	if len(s.instances) == 0 || s.instances[0].listener == nil {
+		return nil
+	}
+	return s.instances[0].listener.Addr()
 }
 
 // UsingAuth returns true if authentication is required

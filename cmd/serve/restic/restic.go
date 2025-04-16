@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -16,10 +17,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
+	cmdserve "github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/walk"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
@@ -29,37 +33,63 @@ import (
 	"golang.org/x/net/http2"
 )
 
+// OptionsInfo describes the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "stdio",
+	Default: false,
+	Help:    "Run an HTTP2 server on stdin/stdout",
+}, {
+	Name:    "append_only",
+	Default: false,
+	Help:    "Disallow deletion of repository data",
+}, {
+	Name:    "private_repos",
+	Default: false,
+	Help:    "Users can only access their private repo",
+}, {
+	Name:    "cache_objects",
+	Default: true,
+	Help:    "Cache listed objects",
+}}.
+	Add(libhttp.ConfigInfo).
+	Add(libhttp.AuthConfigInfo)
+
 // Options required for http server
 type Options struct {
 	Auth         libhttp.AuthConfig
 	HTTP         libhttp.Config
-	Stdio        bool
-	AppendOnly   bool
-	PrivateRepos bool
-	CacheObjects bool
-}
-
-// DefaultOpt is the default values used for Options
-var DefaultOpt = Options{
-	Auth: libhttp.DefaultAuthCfg(),
-	HTTP: libhttp.DefaultCfg(),
+	Stdio        bool `config:"stdio"`
+	AppendOnly   bool `config:"append_only"`
+	PrivateRepos bool `config:"private_repos"`
+	CacheObjects bool `config:"cache_objects"`
 }
 
 // Opt is options set by command line flags
-var Opt = DefaultOpt
+var Opt Options
 
 // flagPrefix is the prefix used to uniquely identify command line flags.
 // It is intentionally empty for this package.
 const flagPrefix = ""
 
 func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "restic", Opt: &Opt, Options: OptionsInfo})
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
-	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", false, "Run an HTTP2 server on stdin/stdout", "")
-	flags.BoolVarP(flagSet, &Opt.AppendOnly, "append-only", "", false, "Disallow deletion of repository data", "")
-	flags.BoolVarP(flagSet, &Opt.PrivateRepos, "private-repos", "", false, "Users can only access their private repo", "")
-	flags.BoolVarP(flagSet, &Opt.CacheObjects, "cache-objects", "", true, "Cache listed objects", "")
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
+	cmdserve.Command.AddCommand(Command)
+	cmdserve.AddRc("restic", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
+		// Read opts
+		var opt = Opt // set default opts
+		err := configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		if opt.Stdio {
+			return nil, errors.New("can't use --stdio via the rc")
+		}
+		// Create server
+		return newServer(ctx, f, &opt)
+	})
+
 }
 
 // Command definition for cobra
@@ -173,17 +203,15 @@ with a path of ` + "`/<username>/`" + `.
 
 				httpSrv := &http2.Server{}
 				opts := &http2.ServeConnOpts{
-					Handler: s.Server.Router(),
+					Handler: s.server.Router(),
 				}
 				httpSrv.ServeConn(conn, opts)
 				return nil
 			}
-			fs.Logf(s.f, "Serving restic REST API on %s", s.URLs())
+			fs.Logf(s.f, "Serving restic REST API on %s", s.server.URLs())
 
 			defer systemd.Notify()()
-			s.Wait()
-
-			return nil
+			return s.Serve()
 		})
 	},
 }
@@ -239,10 +267,10 @@ func checkPrivate(next http.Handler) http.Handler {
 
 // server contains everything to run the server
 type server struct {
-	*libhttp.Server
-	f     fs.Fs
-	cache *cache
-	opt   Options
+	server *libhttp.Server
+	f      fs.Fs
+	cache  *cache
+	opt    Options
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error) {
@@ -255,17 +283,33 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error
 	if opt.Stdio {
 		opt.HTTP.ListenAddr = nil
 	}
-	s.Server, err = libhttp.NewServer(ctx,
+	s.server, err = libhttp.NewServer(ctx,
 		libhttp.WithConfig(opt.HTTP),
 		libhttp.WithAuth(opt.Auth),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init server: %w", err)
 	}
-	router := s.Router()
+	router := s.server.Router()
 	s.Bind(router)
-	s.Server.Serve()
 	return s, nil
+}
+
+// Serve restic until the server is shutdown
+func (s *server) Serve() error {
+	s.server.Serve()
+	s.server.Wait()
+	return nil
+}
+
+// Return the first address of the server
+func (s *server) Addr() net.Addr {
+	return s.server.Addr()
+}
+
+// Shutdown the server
+func (s *server) Shutdown() error {
+	return s.server.Shutdown()
 }
 
 // bind helper for main Bind method

@@ -491,7 +491,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Method: "POST",
 		Path:   "/file/move_copy.json",
 	}
-	var request interface{} = moveCopyFileData
+	var request any = moveCopyFileData
 
 	// use /file/rename.json if moving within the same directory
 	_, srcDirID, err := srcObj.fs.dirCache.FindPath(ctx, srcObj.remote, false)
@@ -564,7 +564,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		Method: "POST",
 		Path:   "/folder/move_copy.json",
 	}
-	var request interface{} = moveFolderData
+	var request any = moveFolderData
 
 	// use /folder/rename.json if moving within the same parent directory
 	if srcDirectoryID == dstDirectoryID {
@@ -1042,10 +1042,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	chunkCounter := 0
 
 	for remainingBytes > 0 {
-		currentChunkSize := int64(o.fs.opt.ChunkSize)
-		if currentChunkSize > remainingBytes {
-			currentChunkSize = remainingBytes
-		}
+		currentChunkSize := min(int64(o.fs.opt.ChunkSize), remainingBytes)
 		remainingBytes -= currentChunkSize
 		fs.Debugf(o, "Uploading chunk %d, size=%d, remain=%d", chunkCounter, currentChunkSize, remainingBytes)
 

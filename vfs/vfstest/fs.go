@@ -364,7 +364,7 @@ func (r *Run) rm(t *testing.T, filepath string) {
 	require.NoError(t, err)
 
 	// Wait for file to disappear from listing
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		_, err := r.os.Stat(filepath)
 		if os.IsNotExist(err) {
 			return

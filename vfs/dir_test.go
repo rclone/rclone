@@ -2,8 +2,11 @@ package vfs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"runtime"
+	"slices"
 	"sort"
 	"testing"
 	"time"
@@ -316,7 +319,7 @@ func TestDirReadDirAll(t *testing.T) {
 		features := r.Fremote.Features()
 		if features.CanHaveEmptyDirectories {
 			// snip out virtualDir2 which will only be present if can't have empty dirs
-			want = append(want[:2], want[3:]...)
+			want = slices.Delete(want, 2, 3)
 		}
 		checkListing(t, dir, want)
 
@@ -654,4 +657,108 @@ func TestDirFileOpen(t *testing.T) {
 	fi, err = vfs.Stat("dir/sub/file2")
 	require.NoError(t, err)
 	assert.Equal(t, int64(12), fi.Size())
+}
+
+func TestDirEntryModTimeInvalidation(t *testing.T) {
+	r, vfs := newTestVFS(t)
+	features := r.Fremote.Features()
+	if !features.DirModTimeUpdatesOnWrite {
+		t.Skip("Need DirModTimeUpdatesOnWrite")
+	}
+	if features.IsLocal && runtime.GOOS == "windows" {
+		t.Skip("dirent modtime is unreliable on Windows filesystems")
+	}
+
+	// Needs to be less than 2x the wait time below, othewrwise the entry
+	// gets cleared out before it had a chance to be updated.
+	vfs.Opt.DirCacheTime = fs.Duration(50 * time.Millisecond)
+
+	r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
+
+	node, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	modTime1 := node.(*Dir).DirEntry().ModTime(context.Background())
+
+	// Wait some time, then write another file which must update ModTime of
+	// the directory.
+	time.Sleep(75 * time.Millisecond)
+	r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
+
+	node2, err := vfs.Stat("dir")
+	require.NoError(t, err)
+	modTime2 := node2.(*Dir).DirEntry().ModTime(context.Background())
+
+	// ModTime of directory must be different after second file was written.
+	if modTime1.Equal(modTime2) {
+		t.Error("ModTime not invalidated")
+	}
+}
+
+func TestDirMetadataExtension(t *testing.T) {
+	r, vfs, dir, _ := dirCreate(t)
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	features := r.Fremote.Features()
+
+	checkListing(t, dir, []string{"file1,14,false"})
+	checkListing(t, root, []string{"dir,0,true"})
+
+	node, err := vfs.Stat("dir/file1")
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+
+	node, err = vfs.Stat("dir")
+	require.NoError(t, err)
+	require.True(t, node.IsDir())
+
+	// Check metadata files do not exist
+	_, err = vfs.Stat("dir/file1.metadata")
+	require.Error(t, err, ENOENT)
+	_, err = vfs.Stat("dir.metadata")
+	require.Error(t, err, ENOENT)
+
+	// Configure metadata extension
+	vfs.Opt.MetadataExtension = ".metadata"
+
+	// Check metadata for file does exist
+	node, err = vfs.Stat("dir/file1.metadata")
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+	size := node.Size()
+	assert.Greater(t, size, int64(1))
+	modTime := node.ModTime()
+
+	// ...and is now in the listing
+	checkListing(t, dir, []string{"file1,14,false", fmt.Sprintf("file1.metadata,%d,false", size)})
+
+	// ...and is a JSON blob with correct "mtime" key
+	blob, err := vfs.ReadFile("dir/file1.metadata")
+	require.NoError(t, err)
+	var metadata map[string]string
+	err = json.Unmarshal(blob, &metadata)
+	require.NoError(t, err)
+	if features.ReadMetadata {
+		assert.Equal(t, modTime.Format(time.RFC3339Nano), metadata["mtime"])
+	}
+
+	// Check metadata for dir does exist
+	node, err = vfs.Stat("dir.metadata")
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+	size = node.Size()
+	assert.Greater(t, size, int64(1))
+	modTime = node.ModTime()
+
+	// ...and is now in the listing
+	checkListing(t, root, []string{"dir,0,true", fmt.Sprintf("dir.metadata,%d,false", size)})
+
+	// ...and is a JSON blob with correct "mtime" key
+	blob, err = vfs.ReadFile("dir.metadata")
+	require.NoError(t, err)
+	clear(metadata)
+	err = json.Unmarshal(blob, &metadata)
+	require.NoError(t, err)
+	if features.ReadDirMetadata {
+		assert.Equal(t, modTime.Format(time.RFC3339Nano), metadata["mtime"])
+	}
 }

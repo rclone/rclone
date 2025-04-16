@@ -5,6 +5,32 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.69.1 - 2025-02-14
+
+[See commits](https://github.com/rclone/rclone/compare/v1.69.0...v1.69.1)
+
+* Bug Fixes
+    * lib/oauthutil: Fix redirect URL mismatch errors (Nick Craig-Wood)
+    * bisync: Fix listings missing concurrent modifications (nielash)
+    * serve s3: Fix list objects encoding-type (Nick Craig-Wood)
+    * fs: Fix confusing "didn't find section in config file" error (Nick Craig-Wood)
+    * doc fixes (Christoph Berger, Dimitri Papadopoulos, Matt Ickstadt, Nick Craig-Wood, Tim White, Zachary Vorhies)
+    * build: Added parallel docker builds and caching for go build in the container (Anagh Kumar Baranwal)
+* VFS
+    * Fix the cache failing to upload symlinks when `--links` was specified (Nick Craig-Wood)
+    * Fix race detected by race detector (Nick Craig-Wood)
+    * Close the change notify channel on Shutdown (izouxv)
+* B2
+    * Fix "fatal error: concurrent map writes" (Nick Craig-Wood)
+* Iclouddrive
+    * Add notes on ADP and Missing PCS cookies (Nick Craig-Wood)
+* Onedrive
+    * Mark German (de) region as deprecated (Nick Craig-Wood)
+* S3
+    * Added new storage class to magalu provider (Bruno Fernandes)
+    * Add DigitalOcean regions SFO2, LON1, TOR1, BLR1 (jkpe)
+    * Add latest Linode Object Storage endpoints (jbagwell-akamai)
+
 ## v1.69.0 - 2025-01-12
 
 [See commits](https://github.com/rclone/rclone/compare/v1.68.0...v1.69.0)
