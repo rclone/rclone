@@ -18,7 +18,7 @@ type FolderListFile struct {
 	Uploaded  string `json:"uploaded"`  // Upload date as a string.
 	Thumbnail string `json:"thumbnail"` // URL to the file's thumbnail.
 	Link      string `json:"link"`      // URL to access the file.
-	FldID     int    `json:"fld_id"`    // Folder ID containing the file.
+	FldID     string `json:"fld_id"`    // Folder ID containing the file.
 	FileCode  string `json:"file_code"` // Unique code for the file.
 	Hash      string `json:"hash"`      // Hash of the file for verification.
 }
@@ -27,7 +27,7 @@ type FolderListFile struct {
 type FolderListFolder struct {
 	Name      string `json:"name"`       // Folder name.
 	Code      string `json:"code"`       // Unique code for the folder.
-	FldID     int    `json:"fld_id"`     // Folder ID.
+	FldID     string `json:"fld_id"`     // Folder ID.
 	FldPublic int    `json:"fld_public"` // Indicates if the folder is public.
 	Filedrop  int    `json:"filedrop"`   // Indicates if the folder supports file drop.
 }
