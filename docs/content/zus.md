@@ -6,7 +6,17 @@ versionIntroduced: ""
 
 # {{< icon "fa-solid fa-cloud-bolt" >}} Zus
 
-[Zus](https://zus.network/) is a decentralized cloud storage platform
+[Zus](https://zus.network/) is the first S3-compatible storage platform that’s both ACID-compliant and operates on a zero-knowledge network — meaning you no longer need additional services like AWS Athena or GuardDuty to secure or query your data.
+Our goal is to deliver 10x value to customers through:
+- 5x better performance 
+- 2x lower costs, thanks to zero egress and API fees
+- 2x lower carbon footprint, enabled by our erasure-coded architecture 
+Bulletproof security with split-key, zero-knowledge, and erasure coded data
+Vendor neutrality, with no lock-in or dependency on a single storage provider
+One of our customers recently benchmarked our platform against AWS on [s3compare.io](https://s3compare.io) and found 5x performance gains across real-world scenarios.
+We also fill security and vendor neutrality gaps that MinIO and AWS have in their solution
+Beyond backup and datalake storage, our platform is ideal for storing AI data, where integrity and verifiability matter such as for MCP workflows.
+
 
 ## Configuration
 
