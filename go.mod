@@ -81,12 +81,12 @@ require (
 	github.com/zeebo/blake3 v0.2.4
 	go.etcd.io/bbolt v1.4.0
 	goftp.io/server/v2 v2.0.1
-	golang.org/x/crypto v0.35.0
-	golang.org/x/net v0.36.0
+	golang.org/x/crypto v0.36.0
+	golang.org/x/net v0.38.0
 	golang.org/x/oauth2 v0.27.0
-	golang.org/x/sync v0.11.0
-	golang.org/x/sys v0.30.0
-	golang.org/x/text v0.22.0
+	golang.org/x/sync v0.12.0
+	golang.org/x/sys v0.31.0
+	golang.org/x/text v0.23.0
 	golang.org/x/time v0.10.0
 	google.golang.org/api v0.223.0
 	gopkg.in/validator.v2 v2.0.1
@@ -243,5 +243,5 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/pkg/xattr v0.4.10
 	golang.org/x/mobile v0.0.0-20250218173827-cd096645fcd3
-	golang.org/x/term v0.29.0
+	golang.org/x/term v0.30.0
 )
