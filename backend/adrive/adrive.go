@@ -228,6 +228,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	root = parsePath(root)
+
 	// Create HTTP client
 	client := fshttp.NewClient(ctx)
 
@@ -302,20 +304,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Set up authentication
 	if f.opt.AccessToken != "" {
 		f.client.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
-	}
 
-	// Set up OpenAPI client
-	f.openClient = aliyunpan_open.NewOpenPanClient(apiConfig, apiToken, func(userId string, newToken openapi.ApiToken) error {
-		// Update token in config
-		m.Set("access_token", newToken.AccessToken)
-		m.Set("expires_at", fmt.Sprintf("%d", newToken.ExpiredAt))
-		return nil
-	})
+		// Set up OpenAPI client
+		f.openClient = aliyunpan_open.NewOpenPanClient(apiConfig, apiToken, func(userId string, newToken openapi.ApiToken) error {
+			// Update token in config
+			m.Set("access_token", newToken.AccessToken)
+			m.Set("expires_at", fmt.Sprintf("%d", newToken.ExpiredAt))
+			return nil
+		})
+	}
 
 	// Set up token renewal if using OAuth2
 	if ts != nil {
 		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-			return nil
+			_, err := f.UserInfo(ctx)
+			return err
 		})
 	}
 
@@ -426,10 +429,10 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 }
 
 // CreateDir makes a directory with pathID as parent and name leaf
-func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID string, err error) {
-	result, err := f.openClient.Mkdir(f.driveID, pathID, leaf)
-	if err != nil {
-		return "", err
+func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (string, error) {
+	result, apiErr := f.openClient.Mkdir(f.driveID, pathID, leaf)
+	if apiErr != nil {
+		return "", fmt.Errorf("error creating directory: %v", apiErr)
 	}
 
 	return result.FileId, nil
@@ -438,7 +441,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (newID s
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(directoryID string) (items aliyunpan.FileList, err error) {
+func (f *Fs) listAll(directoryID string) (aliyunpan.FileList, error) {
 	result, apiErr := f.openClient.FileList(&aliyunpan.FileListParam{
 		DriveId:      f.driveID,
 		ParentFileId: directoryID,
@@ -461,24 +464,24 @@ func (f *Fs) listAll(directoryID string) (items aliyunpan.FileList, err error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get directory entries from the dirID
-	fileList, err := f.openClient.FileListGetAll(&aliyunpan.FileListParam{
+	fileList, apiErr := f.openClient.FileListGetAll(&aliyunpan.FileListParam{
 		DriveId:        f.driveID,
 		ParentFileId:   directoryID,
 		OrderBy:        "name",
 		OrderDirection: "ASC",
 	}, -1)
-	if err != nil {
-		return nil, err
+	if apiErr != nil {
+		return nil, fmt.Errorf("error listing directory: %v", apiErr)
 	}
 
-	entries = make(fs.DirEntries, 0, len(fileList))
+	entries := make(fs.DirEntries, 0, len(fileList))
 	for _, item := range fileList {
 		remote := path.Join(dir, item.FileName)
 		if item.FileType == ItemTypeFolder {
@@ -501,10 +504,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				entries = append(entries, o)
 			}
 		}
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	return entries, nil
@@ -544,13 +543,14 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	switch err {
 	case nil:
 		return existingObj, existingObj.Update(ctx, in, src, options...)
-	// case fs.ErrorObjectNotFound:
-	// 	// Not found so create it
-	// 	newObj := &Object{
-	// 		fs:     f,
-	// 		remote: src.Remote(),
-	// 	}
-	// 	return newObj, newObj.upload(ctx, in, src, false, options...)
+	case fs.ErrorObjectNotFound:
+		// Not found so create it
+		newObj := &Object{
+			fs:     f,
+			remote: src.Remote(),
+		}
+		// TODO: fix this
+		return newObj, newObj.upload(ctx, in, f.root, f.root, src.ModTime(ctx))
 	default:
 		return nil, err
 	}
@@ -588,12 +588,15 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(id string) error {
-	_, err := f.openClient.FileDelete(&aliyunpan.FileBatchActionParam{
+	_, apiErr := f.openClient.FileDelete(&aliyunpan.FileBatchActionParam{
 		DriveId: f.driveID,
 		FileId:  id,
 	})
+	if apiErr != nil {
+		return fmt.Errorf("error deleting object: %v", apiErr)
+	}
 
-	return err
+	return nil
 }
 
 // purgeCheck removes the root directory, if check is set then it
@@ -663,18 +666,18 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	item, err := f.openClient.FileCopy(&aliyunpan.FileCopyParam{
+	item, apiErr := f.openClient.FileCopy(&aliyunpan.FileCopyParam{
 		DriveId:        f.driveID,
 		ToParentFileId: directoryID,
 		FileId:         srcObj.id,
 	})
-	if err != nil {
-		return nil, err
+	if apiErr != nil {
+		return nil, fmt.Errorf("error copying file: %v", apiErr)
 	}
 
-	info, err := f.openClient.FileInfoById(f.driveID, item.FileId)
-	if err != nil {
-		return nil, err
+	info, apiErr := f.openClient.FileInfoById(f.driveID, item.FileId)
+	if apiErr != nil {
+		return nil, fmt.Errorf("error getting copied file: %v", apiErr)
 	}
 	err = dstObj.setMetaData(info)
 	if err != nil {
@@ -693,7 +696,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 }
 
 // move a file or folder
-func (f *Fs) move(id, leaf, directoryID string) (info *aliyunpan.FileEntity, err error) {
+func (f *Fs) move(id, directoryID string) (*aliyunpan.FileEntity, error) {
 	// Use OpenAPI client for file move operation
 	moveFileParam := &aliyunpan.FileMoveParam{
 		DriveId:        f.driveID,
@@ -716,13 +719,13 @@ func (f *Fs) move(id, leaf, directoryID string) (info *aliyunpan.FileEntity, err
 }
 
 // About gets quota information
-func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
-	about, err := f.openClient.GetUserInfo()
-	if err != nil {
-		return nil, err
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	about, apiErr := f.openClient.GetUserInfo()
+	if apiErr != nil {
+		return nil, fmt.Errorf("error getting user info: %v", apiErr)
 	}
 
-	usage = &fs.Usage{
+	usage := &fs.Usage{
 		Used:  fs.NewUsageValue(int64(about.UsedSize)),
 		Total: fs.NewUsageValue(int64(about.TotalSize)),
 		Free:  fs.NewUsageValue(int64(about.TotalSize - about.UsedSize)),
@@ -748,12 +751,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Create temporary object
-	dstObj, leaf, directoryID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
+	dstObj, _, directoryID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
 	if err != nil {
 		return nil, err
 	}
 	// Do the move
-	info, err := f.move(srcObj.id, leaf, directoryID)
+	info, err := f.move(srcObj.id, directoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -780,13 +783,13 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorCantDirMove
 	}
 
-	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	srcID, _, _, dstDirectoryID, _, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
 	if err != nil {
 		return err
 	}
 
 	// Do the move
-	_, err = f.move(srcID, dstLeaf, dstDirectoryID)
+	_, err = f.move(srcID, dstDirectoryID)
 	if err != nil {
 		return err
 	}
@@ -812,13 +815,13 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // UserInfo implements fs.UserInfoer.
-func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err error) {
-	user, err := f.openClient.GetUserInfo()
-	if err != nil {
-		return nil, err
+func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
+	user, apiErr := f.openClient.GetUserInfo()
+	if apiErr != nil {
+		return nil, fmt.Errorf("error getting user info: %v", apiErr)
 	}
 
-	userInfo = map[string]string{
+	userInfo := map[string]string{
 		"UserName": user.UserName,
 		"Email":    user.Email,
 		"Phone":    user.Phone,
@@ -873,7 +876,7 @@ func (o *Object) Size() int64 {
 }
 
 // setMetaData sets the metadata from info
-func (o *Object) setMetaData(info *aliyunpan.FileEntity) (err error) {
+func (o *Object) setMetaData(info *aliyunpan.FileEntity) error {
 	if info.FileType == ItemTypeFolder {
 		return fs.ErrorIsDir
 	}
@@ -892,7 +895,7 @@ func (o *Object) setMetaData(info *aliyunpan.FileEntity) (err error) {
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // it also sets the info
-func (o *Object) readMetaData(ctx context.Context) (err error) {
+func (o *Object) readMetaData(ctx context.Context) error {
 	if o.hasMetaData {
 		return nil
 	}
@@ -990,51 +993,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	return res.Body, nil
 }
 
-// upload does a single non-multipart upload
-//
-// This is recommended for less than 50 MiB of content
-func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, modTime time.Time, options ...fs.OpenOption) (err error) {
-	// TODO
-
-	// upload := api.UploadFile{
-	// 	Name:              o.fs.opt.Enc.FromStandardName(leaf),
-	// 	ContentModifiedAt: api.Time(modTime),
-	// 	ContentCreatedAt:  api.Time(modTime),
-	// 	Parent: api.Parent{
-	// 		ID: directoryID,
-	// 	},
-	// }
-
-	// var resp *http.Response
-	// var result api.FolderItems
-	// opts := rest.Opts{
-	// 	Method:                "POST",
-	// 	Body:                  in,
-	// 	MultipartMetadataName: "attributes",
-	// 	MultipartContentName:  "contents",
-	// 	MultipartFileName:     upload.Name,
-	// 	RootURL:               uploadURL,
-	// 	Options:               options,
-	// }
-	// // If object has an ID then it is existing so create a new version
-	// if o.id != "" {
-	// 	opts.Path = "/files/" + o.id + "/content"
-	// } else {
-	// 	opts.Path = "/files/content"
-	// }
-	// err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-	// 	resp, err = o.fs.srv.CallJSON(ctx, &opts, &upload, &result)
-	// 	return shouldRetry(ctx, resp, err)
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-	// if result.TotalCount != 1 || len(result.Entries) != 1 {
-	// 	return fmt.Errorf("failed to upload %v - not sure why", o)
-	// }
-	return o.setMetaData(&aliyunpan.FileEntity{})
-}
-
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // If existing is set then it updates the object rather than creating a new one.
@@ -1046,22 +1004,22 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		defer o.fs.tokenRenewer.Stop()
 	}
 
-	// size := src.Size()
-	// modTime := src.ModTime(ctx)
-	// remote := o.Remote()
+	size := src.Size()
+	modTime := src.ModTime(ctx)
+	remote := o.Remote()
 
-	// // Create the directory for the object if it doesn't exist
-	// leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
-	// if err != nil {
-	// 	return err
-	// }
+	// Create the directory for the object if it doesn't exist
+	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return err
+	}
 
-	// // Upload with simple or multipart
-	// if size <= int64(o.fs.opt.UploadCutoff) {
-	// 	err = o.upload(ctx, in, leaf, directoryID, modTime, options...)
-	// } else {
-	// 	err = o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime, options...)
-	// }
+	// Upload with simple or multipart
+	if size <= int64(o.fs.opt.ChunkSize) {
+		err = o.upload(ctx, in, leaf, directoryID, modTime, options...)
+	} else {
+		err = o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime, options...)
+	}
 	return err
 }
 
