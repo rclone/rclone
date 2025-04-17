@@ -25,9 +25,6 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-	"github.com/tickstep/aliyunpan-api/aliyunpan"
-	"github.com/tickstep/aliyunpan-api/aliyunpan_open"
-	"github.com/tickstep/aliyunpan-api/aliyunpan_open/openapi"
 	"golang.org/x/oauth2"
 )
 
@@ -109,14 +106,13 @@ type Fs struct {
 	root         string             // the path we are working on
 	opt          Options            // parsed options
 	features     *fs.Features       // optional features
-	client       *rest.Client       // Aliyun Drive client
+	srv          *rest.Client       // Aliyun Drive client
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 	m            configmap.Mapper
 	driveID      string
 	rootID       string // the id of the root folder
-	openClient   *aliyunpan_open.OpenPanClient
 }
 
 // Object describes a adrive object
@@ -221,10 +217,12 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+// NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config
 	opt := new(Options)
-	if err := configstruct.Set(m, opt); err != nil {
+	err := configstruct.Set(m, opt)
+	if err != nil {
 		return nil, err
 	}
 
@@ -232,60 +230,22 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Create HTTP client
 	client := fshttp.NewClient(ctx)
-
 	var ts *oauthutil.TokenSource
-	var apiToken openapi.ApiToken
-	var apiConfig openapi.ApiConfig
-
-	if opt.ClientID != "" && opt.ClientSecret != "" {
-		// Use OpenAPI with client credentials
-		if opt.AccessToken == "" {
-			return nil, fmt.Errorf("access_token is required for OpenAPI authentication")
-		}
-
-		apiToken = openapi.ApiToken{
-			AccessToken: opt.AccessToken,
-		}
-
-		if opt.ExpiresAt != "" {
-			expireSec, err := strconv.ParseInt(opt.ExpiresAt, 10, 64)
-			if err == nil {
-				apiToken.ExpiredAt = expireSec
-			}
-		}
-
-		apiConfig = openapi.ApiConfig{
-			ClientId:     opt.ClientID,
-			ClientSecret: opt.ClientSecret,
-		}
-	} else if opt.AccessToken == "" {
-		// Standard OAuth2 flow
-		var err error
+	// If not using an accessToken, create an oauth client and tokensource
+	if opt.AccessToken == "" {
 		client, ts, err = oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to configure Aliyun Drive: %w", err)
-		}
-	} else {
-		// Direct token usage (legacy)
-		apiToken = openapi.ApiToken{
-			AccessToken: opt.AccessToken,
-		}
-
-		if opt.ExpiresAt != "" {
-			expireSec, err := strconv.ParseInt(opt.ExpiresAt, 10, 64)
-			if err == nil {
-				apiToken.ExpiredAt = expireSec
-			}
 		}
 	}
 
 	// Create filesystem
 	f := &Fs{
-		name:   name,
-		root:   root,
-		opt:    *opt,
-		client: rest.NewClient(client).SetRoot(rootURL),
-		m:      m,
+		name: name,
+		root: root,
+		opt:  *opt,
+		srv:  rest.NewClient(client).SetRoot(rootURL),
+		m:    m,
 		pacer: fs.NewPacer(
 			context.Background(),
 			pacer.NewDefault(
@@ -299,25 +259,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CaseInsensitive:         true,
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
-	f.client.SetErrorHandler(errorHandler)
+	f.srv.SetErrorHandler(errorHandler)
 
 	// Set up authentication
 	if f.opt.AccessToken != "" {
-		f.client.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
-
-		// Set up OpenAPI client
-		f.openClient = aliyunpan_open.NewOpenPanClient(apiConfig, apiToken, func(userId string, newToken openapi.ApiToken) error {
-			// Update token in config
-			m.Set("access_token", newToken.AccessToken)
-			m.Set("expires_at", fmt.Sprintf("%d", newToken.ExpiredAt))
-			return nil
-		})
+		f.srv.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
 	}
-
 	// Set up token renewal if using OAuth2
 	if ts != nil {
 		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-			_, err := f.UserInfo(ctx)
+			_, err = f.UserInfo(ctx)
 			return err
 		})
 	}
@@ -331,7 +282,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.dirCache = dircache.New(root, f.rootID, f)
 
 	// Find the current root
-	err := f.dirCache.FindRoot(ctx, false)
+	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
@@ -354,19 +305,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		f.features.Fill(ctx, &tempF)
 		// XXX: update the old f here instead of returning tempF, since
-		// `features` were already filled with functions having *f as a receiver.
 		f.dirCache = tempF.dirCache
+		// `features` were already filled with functions having *f as a receiver.
 		f.root = tempF.root
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
 
 	// Get drive info using the OpenAPI client
-	userInfo, apiErr := f.openClient.GetUserInfo()
+	userInfo, apiErr := f.GetUserInfo(ctx)
 	if apiErr != nil {
 		return nil, fmt.Errorf("failed to get user info: %v", apiErr)
 	}
-
 	// Set drive ID
 	f.driveID = userInfo.FileDriveId
 
@@ -384,7 +334,7 @@ func (f *Fs) rootSlash() string {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *aliyunpan.FileEntity) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.FileEntity) (fs.Object, error) {
 	o := &Object{
 		fs:       f,
 		remote:   remote,
@@ -413,7 +363,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	items, err := f.listAll(pathID)
+	items, err := f.listAll(ctx, pathID)
 	if err != nil {
 		return "", false, err
 	}
@@ -430,19 +380,18 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (string, error) {
-	result, apiErr := f.openClient.Mkdir(f.driveID, pathID, leaf)
+	result, apiErr := f.MkDirectory(ctx, f.driveID, pathID, leaf)
 	if apiErr != nil {
 		return "", fmt.Errorf("error creating directory: %v", apiErr)
 	}
-
 	return result.FileId, nil
 }
 
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(directoryID string) (aliyunpan.FileList, error) {
-	result, apiErr := f.openClient.FileList(&aliyunpan.FileListParam{
+func (f *Fs) listAll(ctx context.Context, directoryID string) ([]*api.FileEntity, error) {
+	result, apiErr := f.FileList(ctx, &api.FileListParam{
 		DriveId:      f.driveID,
 		ParentFileId: directoryID,
 		OrderBy:      "name",
@@ -452,7 +401,7 @@ func (f *Fs) listAll(directoryID string) (aliyunpan.FileList, error) {
 		return nil, fmt.Errorf("error listing directory: %v", apiErr)
 	}
 
-	return result.FileList, nil
+	return result.Items, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -471,7 +420,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 
 	// Get directory entries from the dirID
-	fileList, apiErr := f.openClient.FileListGetAll(&aliyunpan.FileListParam{
+	fileList, apiErr := f.FileListGetAll(ctx, &api.FileListParam{
 		DriveId:        f.driveID,
 		ParentFileId:   directoryID,
 		OrderBy:        "name",
@@ -587,8 +536,8 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 }
 
 // deleteObject removes an object by ID
-func (f *Fs) deleteObject(id string) error {
-	_, apiErr := f.openClient.FileDelete(&aliyunpan.FileBatchActionParam{
+func (f *Fs) deleteObject(ctx context.Context, id string) error {
+	_, apiErr := f.FileDelete(ctx, &api.FileBatchActionParam{
 		DriveId: f.driveID,
 		FileId:  id,
 	})
@@ -611,7 +560,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string) error {
 		return err
 	}
 
-	err = f.deleteObject(fileID)
+	err = f.deleteObject(ctx, fileID)
 	if err != nil {
 		return fmt.Errorf("rmdir failed: %w", err)
 	}
@@ -666,16 +615,16 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	item, apiErr := f.openClient.FileCopy(&aliyunpan.FileCopyParam{
+	item, apiErr := f.FileCopy(ctx, &api.FileCopyParam{
 		DriveId:        f.driveID,
-		ToParentFileId: directoryID,
 		FileId:         srcObj.id,
+		ToParentFileId: directoryID,
 	})
 	if apiErr != nil {
 		return nil, fmt.Errorf("error copying file: %v", apiErr)
 	}
 
-	info, apiErr := f.openClient.FileInfoById(f.driveID, item.FileId)
+	info, apiErr := f.FileInfoById(ctx, f.driveID, item.FileId)
 	if apiErr != nil {
 		return nil, fmt.Errorf("error getting copied file: %v", apiErr)
 	}
@@ -696,21 +645,21 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 }
 
 // move a file or folder
-func (f *Fs) move(id, directoryID string) (*aliyunpan.FileEntity, error) {
+func (f *Fs) move(ctx context.Context, id, directoryID string) (*api.FileEntity, error) {
 	// Use OpenAPI client for file move operation
-	moveFileParam := &aliyunpan.FileMoveParam{
+	moveFileParam := &api.FileMoveParam{
 		DriveId:        f.driveID,
 		FileId:         id,
 		ToParentFileId: directoryID,
 	}
 
-	result, apiErr := f.openClient.FileMove(moveFileParam)
+	result, apiErr := f.FileMove(ctx, moveFileParam)
 	if apiErr != nil {
 		return nil, fmt.Errorf("error moving file: %v", apiErr)
 	}
 
 	// Convert to FileEntity
-	fileEntity, apiErr := f.openClient.FileInfoById(f.driveID, result.FileId)
+	fileEntity, apiErr := f.FileInfoById(ctx, f.driveID, result.FileId)
 	if apiErr != nil {
 		return nil, fmt.Errorf("error getting moved file: %v", apiErr)
 	}
@@ -720,7 +669,7 @@ func (f *Fs) move(id, directoryID string) (*aliyunpan.FileEntity, error) {
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	about, apiErr := f.openClient.GetUserInfo()
+	about, apiErr := f.GetUserInfo(ctx)
 	if apiErr != nil {
 		return nil, fmt.Errorf("error getting user info: %v", apiErr)
 	}
@@ -756,7 +705,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	// Do the move
-	info, err := f.move(srcObj.id, directoryID)
+	info, err := f.move(ctx, srcObj.id, directoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -773,8 +722,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
-// If it isn't possible then return fs.ErrorCantDirMove
-//
 // If destination exists then return fs.ErrorDirExists
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
@@ -789,7 +736,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	// Do the move
-	_, err = f.move(srcID, dstDirectoryID)
+	_, err = f.move(ctx, srcID, dstDirectoryID)
 	if err != nil {
 		return err
 	}
@@ -816,7 +763,7 @@ func (f *Fs) Hashes() hash.Set {
 
 // UserInfo implements fs.UserInfoer.
 func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
-	user, apiErr := f.openClient.GetUserInfo()
+	user, apiErr := f.GetUserInfo(ctx)
 	if apiErr != nil {
 		return nil, fmt.Errorf("error getting user info: %v", apiErr)
 	}
@@ -876,7 +823,7 @@ func (o *Object) Size() int64 {
 }
 
 // setMetaData sets the metadata from info
-func (o *Object) setMetaData(info *aliyunpan.FileEntity) error {
+func (o *Object) setMetaData(info *api.FileEntity) error {
 	if info.FileType == ItemTypeFolder {
 		return fs.ErrorIsDir
 	}
@@ -908,19 +855,26 @@ func (o *Object) readMetaData(ctx context.Context) error {
 		return err
 	}
 
-	list, err := o.fs.listAll(dirID)
+	list, err := o.fs.listAll(ctx, dirID)
 	if err != nil {
 		return err
 	}
-	var info aliyunpan.FileEntity
+
+	found := false
+	var info *api.FileEntity
 	for _, item := range list {
 		if item.FileType == ItemTypeFile && strings.EqualFold(item.FileName, leaf) {
-			info = *item
+			info = item
+			found = true
 			break
 		}
 	}
 
-	return o.setMetaData(&info)
+	if !found {
+		return fs.ErrorObjectNotFound
+	}
+
+	return o.setMetaData(info)
 }
 
 // ModTime returns the modification time of the object
@@ -957,7 +911,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	// Get download URL from OpenAPI
-	downloadUrl, apiErr := o.fs.openClient.GetFileDownloadUrl(&aliyunpan.GetFileDownloadUrlParam{
+	downloadUrl, apiErr := o.fs.GetFileDownloadUrl(ctx, &api.GetFileDownloadUrlParam{
 		DriveId: o.fs.driveID,
 		FileId:  o.id,
 	})
@@ -984,7 +938,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		delete(req.Header, "Range")
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		res, err = o.fs.client.Do(req)
+		res, err = o.fs.srv.Do(req)
 		return shouldRetry(ctx, res, err)
 	})
 	if err != nil {
@@ -1025,7 +979,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	return o.fs.deleteObject(o.id)
+	return o.fs.deleteObject(ctx, o.id)
 }
 
 // ParentID returns the ID of the parent directory
