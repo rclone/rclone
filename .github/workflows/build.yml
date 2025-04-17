@@ -285,7 +285,7 @@ jobs:
       - name: Publish Docker Plugin
         run: |
           VER=${GITHUB_REF_NAME}
-          PLUGIN_USER=ghcr.io/tgdrive
+          PLUGIN_USER=ghcr.io/benjithatfoxguy
           for PLUGIN_ARCH in amd64 arm64 arm/v7 ;do
               export PLUGIN_ARCH
               export PLUGIN_USER

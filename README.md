@@ -1,20 +1,8 @@
-<div align="center">
-<sup>Special thanks to our sponsor:</sup>
-<br>
-<br>
-<a href="https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103">
-  <div>
-    <img src="https://rclone.org/img/logos/warp-github.svg" width="300" alt="Warp">
-  </div>
-  <b>Warp is a modern, Rust-based terminal with AI built in so you and your team can build great software, faster.</b>
-  <div>
-    <sup>Visit warp.dev to learn more.</sup>
-  </div>
-</a>
-<br>
-<hr>
-</div>
-<br>
+> ⚠️ **Unofficial Fork Disclaimer**  
+> This is an **unofficial fork** of [rclone](https://rclone.org), with additional enhancements such as **Teldrive** and **Terabox** support.  
+> I am **not affiliated with the upstream maintainers**, and this fork **does not intend to be malicious or harmful** in any way.  
+> Please **read the source code** if you're unsure or want to verify that it behaves as described.  
+> Contributions, feedback, and scrutiny are welcome.
 
 [<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
 [<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
@@ -27,10 +15,7 @@
 [Installation](https://rclone.org/install/) |
 [Forum](https://forum.rclone.org/)
 
-[![Build Status](https://github.com/rclone/rclone/workflows/build/badge.svg)](https://github.com/rclone/rclone/actions?query=workflow%3Abuild)
-[![Go Report Card](https://goreportcard.com/badge/github.com/rclone/rclone)](https://goreportcard.com/report/github.com/rclone/rclone)
-[![GoDoc](https://godoc.org/github.com/rclone/rclone?status.svg)](https://godoc.org/github.com/rclone/rclone)
-[![Docker Pulls](https://img.shields.io/docker/pulls/rclone/rclone)](https://hub.docker.com/r/rclone/rclone)
+[![Build Status](https://github.com/benjithatfoxguy/bclone/workflows/build/badge.svg)](https://github.com/benjithatfoxguy/bclone/actions?query=workflow%3Abuild)
 
 # Rclone
 
@@ -119,6 +104,8 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * SugarSync [:page_facing_up:](https://rclone.org/sugarsync/)
   * Synology C2 Object Storage [:page_facing_up:](https://rclone.org/s3/#synology-c2)
   * Tencent Cloud Object Storage (COS) [:page_facing_up:](https://rclone.org/s3/#tencent-cos)
+  * Teldrive [📄](https://github.com/tgdrive/teldrive)
+  * Terabox [📄](https://terabox.com)
   * Uloz.to [:page_facing_up:](https://rclone.org/ulozto/)
   * Wasabi [:page_facing_up:](https://rclone.org/s3/#wasabi)
   * WebDAV [:page_facing_up:](https://rclone.org/webdav/)
@@ -172,7 +159,7 @@ Please see the [rclone website](https://rclone.org/) for:
 
 ## Downloads
 
-  * https://rclone.org/downloads/
+  * https://github.com/BenjiThatFoxGuy/bclone/releases/latest/
 
 License
 -------
