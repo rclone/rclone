@@ -297,7 +297,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	debug(f.opt, 1, "List %s;", dir)
 
-	if f.origRootItem == nil {
+	if f.root != "/" && f.origRootItem == nil {
 		return nil, fs.ErrorDirNotFound
 	}
 
