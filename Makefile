@@ -282,7 +282,7 @@ PLUGIN_TAG ?= latest
 PLUGIN_BASE_TAG ?= latest
 PLUGIN_ARCH ?= amd64
 PLUGIN_IMAGE := $(PLUGIN_USER)/docker-volume-rclone:$(PLUGIN_TAG)
-PLUGIN_BASE := $(PLUGIN_USER)/rclone:$(PLUGIN_BASE_TAG)
+PLUGIN_BASE := $(PLUGIN_USER)/bclone:$(PLUGIN_BASE_TAG)
 PLUGIN_BUILD_DIR := ./build/docker-plugin
 PLUGIN_CONTRIB_DIR := ./contrib/docker-plugin/managed
 

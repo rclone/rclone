@@ -6,7 +6,7 @@ on:
       - '**'
 
 env:
-  IMAGE: tgdrive/rclone
+  IMAGE: benjithatfoxguy/bclone
 
 
 jobs:
