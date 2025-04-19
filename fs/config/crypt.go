@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
 
 	"golang.org/x/crypto/nacl/secretbox"
@@ -179,27 +178,9 @@ func GetPasswordCommand(ctx context.Context) (pass string, err error) {
 		return "", nil
 	}
 
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	cmd := exec.Command(ci.PasswordCommand[0], ci.PasswordCommand[1:]...)
-
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	cmd.Stdin = os.Stdin
-
-	err = cmd.Run()
+	pass, err = fs.ExecCommand(ci.PasswordCommand)
 	if err != nil {
-		// One does not always get the stderr returned in the wrapped error.
-		fs.Errorf(nil, "Using --password-command returned: %v", err)
-		if ers := strings.TrimSpace(stderr.String()); ers != "" {
-			fs.Errorf(nil, "--password-command stderr: %s", ers)
-		}
-		return pass, fmt.Errorf("password command failed: %w", err)
-	}
-	pass = strings.Trim(stdout.String(), "\r\n")
-	if pass == "" {
-		return pass, errors.New("--password-command returned empty string")
+		return "", fmt.Errorf("--password-command failed: %w", err)
 	}
 	return pass, nil
 }
