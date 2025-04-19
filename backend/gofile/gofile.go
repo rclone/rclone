@@ -427,7 +427,6 @@ func (f *Fs) readRootFolderID(ctx context.Context, m configmap.Mapper) (err erro
 	return nil
 }
 
-
 // rootSlash returns root with a slash on if it is empty, otherwise empty string
 func (f *Fs) rootSlash() string {
 	if f.root == "" {
