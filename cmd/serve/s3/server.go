@@ -81,7 +81,6 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		gofakes3.WithIntegrityCheck(true), // Check Content-MD5 if supplied
 	)
 
-	w.handler = http.NewServeMux()
 	w.handler = w.faker.Server()
 
 	if proxy.Opt.AuthProxy != "" {
