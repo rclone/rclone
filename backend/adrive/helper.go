@@ -28,6 +28,23 @@ func (f *Fs) GetUserInfo(ctx context.Context) (*api.UserInfo, error) {
 	return &result, nil
 }
 
+// GetSpaceInfo gets information about the authenticated user's space
+func (f *Fs) GetSpaceInfo(ctx context.Context) (*api.SpaceInfo, error) {
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/adrive/v1.0/user/getSpaceInfo",
+	}
+	var resp api.SpaceInfo
+	err := f.pacer.Call(func() (bool, error) {
+		resp2, err := f.srv.CallJSON(ctx, &opts, nil, &resp)
+		return shouldRetry(ctx, resp2, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
 // GetDriveID gets information about the authenticated user
 func (f *Fs) GetDriveID(ctx context.Context) (*api.DriveInfo, error) {
 	var result api.DriveInfo

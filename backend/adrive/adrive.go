@@ -646,15 +646,15 @@ func (f *Fs) move(ctx context.Context, id, directoryID string) (*api.FileEntity,
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	about, apiErr := f.GetUserInfo(ctx)
+	spaceInfo, apiErr := f.GetSpaceInfo(ctx)
 	if apiErr != nil {
-		return nil, fmt.Errorf("error getting user info: %v", apiErr)
+		return nil, fmt.Errorf("error getting space info: %v", apiErr)
 	}
 
 	usage := &fs.Usage{
-		Used:  fs.NewUsageValue(int64(about.UsedSize)),
-		Total: fs.NewUsageValue(int64(about.TotalSize)),
-		Free:  fs.NewUsageValue(int64(about.TotalSize - about.UsedSize)),
+		Used:  fs.NewUsageValue(int64(spaceInfo.PersonalSpaceInfo.UsedSize)),
+		Total: fs.NewUsageValue(int64(spaceInfo.PersonalSpaceInfo.TotalSize)),
+		Free:  fs.NewUsageValue(int64(spaceInfo.PersonalSpaceInfo.TotalSize - spaceInfo.PersonalSpaceInfo.UsedSize)),
 	}
 
 	return usage, nil

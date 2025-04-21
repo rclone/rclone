@@ -15,8 +15,11 @@ import (
 // upload does a single non-multipart upload
 //
 // This is recommended for less than 50 MiB of content
-func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string,size int64) (err error) {
+func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, size int64) (err error) {
+	// Calculate number of chunks needed
 	chunkNum := int(math.Ceil(float64(size) / float64(defaultChunkSize)))
+
+	// Step 1: Create the upload
 	resp, err := o.fs.FileUploadCreate(ctx, &api.FileUploadCreateParam{
 		DriveID:         o.fs.driveID,
 		Name:            leaf,
@@ -33,12 +36,13 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	}
 	o.id = resp.FileID
 
+	// Check if input reader supports seeking
+	seeker, useSeek := in.(io.ReadSeeker)
+
+	// Track when URLs were last refreshed
 	preTime := time.Now()
 
-	// Check if the reader implements io.Seeker and if we have a valid size
-	seeker, canSeek := in.(io.Seeker)
-	useSeek := canSeek && size >= 0
-
+	// Step 2: Upload each part
 	for k, p := range resp.PartInfoList {
 		// Refresh upload URLs if 50 minutes passed
 		if time.Since(preTime) > 50*time.Minute {
@@ -79,17 +83,13 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		}
 
 		// Upload the part with retries
-		opts := rest.Opts{
-			Method:  "PUT",
-			RootURL: p.UploadURL,
-			Body:    bytes.NewReader(buf[:n]),
-		}
-		_, err = o.fs.srv.Call(ctx, &opts)
+		err = o.uploadPart(ctx, buf[:n], p)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to upload part %d: %w", k+1, err)
 		}
 	}
 
+	// Step 3: Complete the upload
 	file, err := o.fs.FileUploadComplete(ctx, &api.FileUploadCompleteParam{
 		DriveID:  o.fs.driveID,
 		FileID:   resp.FileID,
@@ -100,4 +100,18 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	}
 
 	return o.setMetaData(file)
+}
+
+// uploadPart uploads a single part
+func (o *Object) uploadPart(ctx context.Context, data []byte, part api.PartInfo) error {
+	opts := rest.Opts{
+		Method:  "PUT",
+		RootURL: part.UploadURL,
+		Body:    io.NopCloser(bytes.NewReader(data)),
+	}
+
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.Call(ctx, &opts)
+		return shouldRetry(ctx, resp, err)
+	})
 }

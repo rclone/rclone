@@ -73,6 +73,15 @@ type UserInfo struct {
 	ThirdPartyVipExpire string `json:"third_party_vip_expire"`
 }
 
+// SpaceInfo represents the space information returned by the API
+type SpaceInfo struct {
+	PersonalSpaceInfo struct {
+		UsedSize  int64 `json:"used_size"`
+		TotalSize int64 `json:"total_size"`
+	} `json:"personal_space_info"`
+}
+
+// DriveInfo represents the drive information returned by the API
 type DriveInfo struct {
 	DefaultDriveId string `json:"default_drive_id"`
 }
