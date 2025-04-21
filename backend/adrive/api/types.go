@@ -132,69 +132,69 @@ type FileActionResponse struct {
 	FileID string `json:"file_id"`
 }
 
-// GetFileDownloadUrlParam contains parameters for getting download URL
-type GetFileDownloadUrlParam struct {
+// GetFileDownloadURLParam contains parameters for getting download URL
+type GetFileDownloadURLParam struct {
 	DriveID string `json:"drive_id"`
 	FileID  string `json:"file_id"`
 }
 
-// DownloadUrlResponse is the response when getting a download URL
-type DownloadUrlResponse struct {
-	Url string `json:"url"`
+// DownloadURLResponse is the response when getting a download URL
+type DownloadURLResponse struct {
+	URL string `json:"url"`
 }
 
 // PartInfo contains information about a part of a file
 type PartInfo struct {
 	PartNumber int    `json:"part_number"`
-	UploadUrl  string `json:"upload_url"`
+	UploadURL  string `json:"upload_url"`
 	PartSize   int64  `json:"part_size"`
 }
 
 // FileUploadCreateParam contains parameters for creating a file
 type FileUploadCreateParam struct {
-	DriveID         string      `json:"drive_id"`
-	ParentFileID    string      `json:"parent_file_id"`
-	Name            string      `json:"name"`
-	Type            string      `json:"type"`
-	CheckNameMode   string      `json:"check_name_mode"`
-	Size            int64       `json:"size"`
+	DriveID         string     `json:"drive_id"`
+	ParentFileID    string     `json:"parent_file_id"`
+	Name            string     `json:"name"`
+	Type            string     `json:"type"`
+	CheckNameMode   string     `json:"check_name_mode"`
+	Size            int64      `json:"size"`
 	PartInfoList    []PartInfo `json:"part_info_list"`
-	ContentHash     string      `json:"content_hash"`
-	ContentHashName string      `json:"content_hash_name"`
-	ProofCode       string      `json:"proof_code"`
-	ProofVersion    string      `json:"proof_version"`
-	LocalCreatedAt  string      `json:"local_created_at"`
-	LocalModifiedAt string      `json:"local_modified_at"`
+	ContentHash     string     `json:"content_hash"`
+	ContentHashName string     `json:"content_hash_name"`
+	ProofCode       string     `json:"proof_code"`
+	ProofVersion    string     `json:"proof_version"`
+	LocalCreatedAt  string     `json:"local_created_at"`
+	LocalModifiedAt string     `json:"local_modified_at"`
 }
 
 // FileUploadCreateResponse contains the result of creating a file
 type FileUploadCreateResponse struct {
-	DriveID      string      `json:"drive_id"`
-	ParentFileID string      `json:"parent_file_id"`
-	FileID       string      `json:"file_id"`
-	FileName     string      `json:"file_name"`
-	Status       string      `json:"status"`
-	UploadID     string      `json:"upload_id"`
-	Available    bool        `json:"available"`
-	Exist        bool        `json:"exist"`
-	RapidUpload  bool        `json:"rapid_upload"`
+	DriveID      string     `json:"drive_id"`
+	ParentFileID string     `json:"parent_file_id"`
+	FileID       string     `json:"file_id"`
+	FileName     string     `json:"file_name"`
+	Status       string     `json:"status"`
+	UploadID     string     `json:"upload_id"`
+	Available    bool       `json:"available"`
+	Exist        bool       `json:"exist"`
+	RapidUpload  bool       `json:"rapid_upload"`
 	PartInfoList []PartInfo `json:"part_info_list"`
 }
 
-// FileUploadGetUploadUrlParam Get upload url param
-type FileUploadGetUploadUrlParam struct {
-	DriveID      string      `json:"drive_id"`
-	FileID       string      `json:"file_id"`
-	UploadID     string      `json:"upload_id"`
+// FileUploadGetUploadURLParam Get upload url param
+type FileUploadGetUploadURLParam struct {
+	DriveID      string     `json:"drive_id"`
+	FileID       string     `json:"file_id"`
+	UploadID     string     `json:"upload_id"`
 	PartInfoList []PartInfo `json:"part_info_list"`
 }
 
-// FileUploadGetUploadUrlResponse Get upload url response
-type FileUploadGetUploadUrlResponse struct {
-	DriveID      string      `json:"drive_id"`
-	FileID       string      `json:"file_id"`
-	UploadID     string      `json:"upload_id"`
-	CreatedAt    string      `json:"created_at"`
+// FileUploadGetUploadURLResponse Get upload url response
+type FileUploadGetUploadURLResponse struct {
+	DriveID      string     `json:"drive_id"`
+	FileID       string     `json:"file_id"`
+	UploadID     string     `json:"upload_id"`
+	CreatedAt    string     `json:"created_at"`
 	PartInfoList []PartInfo `json:"part_info_list"`
 }
 

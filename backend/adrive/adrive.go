@@ -31,22 +31,14 @@ import (
 )
 
 const (
-	minSleep      = 10 * time.Millisecond
-	maxSleep      = 2 * time.Second
-	decayConstant = 2 // bigger for slower decay, exponential
-
+	minSleep         = 10 * time.Millisecond
+	maxSleep         = 2 * time.Second
+	decayConstant    = 2 // bigger for slower decay, exponential
 	defaultChunkSize = int64(524288)
 	maxPartNum       = 10000
-
-	rootURL  = "https://openapi.alipan.com"
-	authURL  = "https://openapi.alipan.com/oauth/authorize"
-	tokenURL = "https://openapi.alipan.com/oauth/access_token"
-
-	GrantTypeAuthorizationCode = "authorization_code"
-	GrantTypeRefreshToken      = "refresh_token"
-
-	ItemTypeFile   = "file"
-	ItemTypeFolder = "folder"
+	rootURL          = "https://openapi.alipan.com"
+	authURL          = "https://openapi.alipan.com/oauth/authorize"
+	tokenURL         = "https://openapi.alipan.com/oauth/access_token"
 )
 
 // Globals
@@ -435,7 +427,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	entries := make(fs.DirEntries, 0, len(fileList))
 	for _, item := range fileList {
 		remote := path.Join(dir, item.FileName)
-		if item.FileType == ItemTypeFolder {
+		if item.FileType == api.ItemTypeFolder {
 			// Parse UpdatedAt time
 			modTime := time.Now()
 			if item.UpdatedAt != "" {
@@ -820,10 +812,10 @@ func (o *Object) Size() int64 {
 
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.FileEntity) error {
-	if info.FileType == ItemTypeFolder {
+	if info.FileType == api.ItemTypeFolder {
 		return fs.ErrorIsDir
 	}
-	if info.FileType != ItemTypeFile {
+	if info.FileType != api.ItemTypeFile {
 		return fmt.Errorf("%q is %q: %w", o.remote, info.FileType, fs.ErrorNotAFile)
 	}
 	o.hasMetaData = true
@@ -859,7 +851,7 @@ func (o *Object) readMetaData(ctx context.Context) error {
 	found := false
 	var info *api.FileEntity
 	for _, item := range list {
-		if item.FileType == ItemTypeFile && strings.EqualFold(item.FileName, leaf) {
+		if item.FileType == api.ItemTypeFile && strings.EqualFold(item.FileName, leaf) {
 			info = item
 			found = true
 			break
@@ -907,7 +899,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	// Get download URL from OpenAPI
-	downloadUrl, apiErr := o.fs.GetFileDownloadUrl(ctx, &api.GetFileDownloadUrlParam{
+	downloadURL, apiErr := o.fs.GetFileDownloadURL(ctx, &api.GetFileDownloadURLParam{
 		DriveID: o.fs.driveID,
 		FileID:  o.id,
 	})
@@ -915,14 +907,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, fmt.Errorf("error getting download URL: %v", apiErr)
 	}
 
-	if downloadUrl == nil || downloadUrl.Url == "" {
+	if downloadURL == nil || downloadURL.URL == "" {
 		return nil, errors.New("empty download URL")
 	}
 
-	if downloadUrl.Url == "" {
+	if downloadURL.URL == "" {
 		return nil, errors.New("forbidden to download - check sharing permission")
 	}
-	req, err := http.NewRequestWithContext(ctx, "GET", downloadUrl.Url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", downloadURL.URL, nil)
 	if err != nil {
 		return nil, err
 	}

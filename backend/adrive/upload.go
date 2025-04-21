@@ -121,7 +121,7 @@ func (o *Object) uploadMultipart(ctx context.Context, parts []api.PartInfo, in i
 			// Upload the part
 			opts := rest.Opts{
 				Method:        "PUT",
-				RootURL:       part.UploadUrl,
+				RootURL:       part.UploadURL,
 				ContentLength: &partSize,
 				Body:          buffer,
 				ExtraHeaders: map[string]string{

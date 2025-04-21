@@ -20,7 +20,7 @@ func (f *Fs) GetUserInfo(ctx context.Context) (*api.UserInfo, error) {
 	err := f.pacer.Call(func() (bool, error) {
 		resp2, err := f.srv.CallJSON(ctx, &opts, nil, &resp)
 		return shouldRetry(ctx, resp2, err)
-	})
+	})	
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (f *Fs) GetUserInfo(ctx context.Context) (*api.UserInfo, error) {
 	return &result, nil
 }
 
-// Mkdir creates a new directory
+// MkDirectory creates a new directory
 func (f *Fs) MkDirectory(ctx context.Context, driveID, parentID, name string) (*api.FileEntity, error) {
 	opts := rest.Opts{
 		Method: "POST",
@@ -170,13 +170,13 @@ func (f *Fs) FileMove(ctx context.Context, param *api.FileMoveParam) (*api.FileA
 	return &resp, nil
 }
 
-// GetFileDownloadUrl gets the download URL for a file
-func (f *Fs) GetFileDownloadUrl(ctx context.Context, param *api.GetFileDownloadUrlParam) (*api.DownloadUrlResponse, error) {
+// GetFileDownloadURL gets the download URL for a file
+func (f *Fs) GetFileDownloadURL(ctx context.Context, param *api.GetFileDownloadURLParam) (*api.DownloadURLResponse, error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/getDownloadUrl",
 	}
-	var resp api.DownloadUrlResponse
+	var resp api.DownloadURLResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp2, err := f.srv.CallJSON(ctx, &opts, param, &resp)
 		return shouldRetry(ctx, resp2, err)
@@ -187,7 +187,7 @@ func (f *Fs) GetFileDownloadUrl(ctx context.Context, param *api.GetFileDownloadU
 	return &resp, nil
 }
 
-// GetFileDownloadUrl gets the download URL for a file
+// FileUploadCreate creates a new file
 func (f *Fs) FileUploadCreate(ctx context.Context, param *api.FileUploadCreateParam, chunkNum int) (*api.FileUploadCreateResponse, error) {
 	opts := rest.Opts{
 		Method: "POST",
@@ -212,12 +212,12 @@ func (f *Fs) FileUploadCreate(ctx context.Context, param *api.FileUploadCreatePa
 }
 
 // GetFileDownloadUrl gets the download URL for a file
-func (f *Fs) FileUploadGetUploadUrl(ctx context.Context, param *api.FileUploadGetUploadUrlParam) (*api.FileUploadGetUploadUrlResponse, error) {
+func (f *Fs) FileUploadGetUploadUrl(ctx context.Context, param *api.FileUploadGetUploadURLParam) (*api.FileUploadGetUploadURLResponse, error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/getUploadUrl",
 	}
-	var resp api.FileUploadGetUploadUrlResponse
+	var resp api.FileUploadGetUploadURLResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp2, err := f.srv.CallJSON(ctx, &opts, param, &resp)
 		return shouldRetry(ctx, resp2, err)
