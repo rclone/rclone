@@ -250,7 +250,7 @@ func (f *Fs) FileUploadGetUploadURL(ctx context.Context, param *api.FileUploadGe
 }
 
 // FileUploadComplete gets the download URL for a file
-func (f *Fs) FileUploadComplete(ctx context.Context, param *api.FileUploadCompleteParam) (*api.FileUploadCompleteResponse, error) {
+func (f *Fs) FileUploadComplete(ctx context.Context, param *api.FileUploadCompleteParam) (*api.FileEntity, error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/complete",
@@ -263,5 +263,11 @@ func (f *Fs) FileUploadComplete(ctx context.Context, param *api.FileUploadComple
 	if err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	file, err := f.FileInfoByID(ctx, param.DriveID, param.FileID)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
 }
