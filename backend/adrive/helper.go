@@ -28,6 +28,27 @@ func (f *Fs) GetUserInfo(ctx context.Context) (*api.UserInfo, error) {
 	return &result, nil
 }
 
+// GetDriveID gets information about the authenticated user
+func (f *Fs) GetDriveID(ctx context.Context) (*api.DriveInfo, error) {
+	var result api.DriveInfo
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/adrive/v1.0/user/getDriveInfo",
+	}
+	var resp struct {
+		api.DriveInfo
+	}
+	err := f.pacer.Call(func() (bool, error) {
+		resp2, err := f.srv.CallJSON(ctx, &opts, nil, &resp)
+		return shouldRetry(ctx, resp2, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	result = resp.DriveInfo
+	return &result, nil
+}
+
 // MkDirectory creates a new directory
 func (f *Fs) MkDirectory(ctx context.Context, driveID, parentID, name string) (*api.FileEntity, error) {
 	opts := rest.Opts{

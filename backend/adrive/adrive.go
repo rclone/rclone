@@ -50,7 +50,7 @@ var (
 		AuthURL:     authURL,
 		TokenURL:    tokenURL,
 		AuthStyle:   oauth2.AuthStyleInParams,
-		RedirectURL: oauthutil.RedirectURL,
+		RedirectURL: "https://cloudoauth.files.casaos.app/",
 	}
 )
 
@@ -261,7 +261,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Set up token renewal if using OAuth2
 	if ts != nil {
 		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-			_, err = f.UserInfo(ctx)
+			_, err = f.GetUserInfo(ctx)
 			return err
 		})
 	}
@@ -306,12 +306,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// Get drive info using the OpenAPI client
-	userInfo, apiErr := f.GetUserInfo(ctx)
+	driveInfo, apiErr := f.GetDriveID(ctx)
 	if apiErr != nil {
-		return nil, fmt.Errorf("failed to get user info: %v", apiErr)
+		return nil, fmt.Errorf("failed to get drive info: %v", apiErr)
 	}
-	// Set drive ID
-	f.driveID = userInfo.FileDriveID
+	f.driveID = driveInfo.DefaultDriveId
 
 	return f, nil
 }

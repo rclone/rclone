@@ -73,6 +73,10 @@ type UserInfo struct {
 	ThirdPartyVipExpire string `json:"third_party_vip_expire"`
 }
 
+type DriveInfo struct {
+	DefaultDriveId string `json:"default_drive_id"`
+}
+
 // FileEntity represents a file or folder entity
 type FileEntity struct {
 	DriveID         string `json:"drive_id"`
