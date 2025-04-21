@@ -33,6 +33,7 @@ const (
 
 	apiUpload       = "api/upload"
 	apiFiles        = "api/v1/filestorage/files"
+	apiDeleteFiles  = "api/v1/filestorage/delete-files"
 	apiMoveFiles    = "api/v1/filestorage/move-files"
 	apiEditFile     = "api/v1/filestorage/{fileId}/edit"
 	apiGetFileLink  = "api/v1/filestorage/{fileId}/getlink"
@@ -362,7 +363,7 @@ func (n *Namecrane) GetFiles(ctx context.Context, ids ...string) ([]File, error)
 
 // DeleteFiles deletes the remote files specified by ids
 func (n *Namecrane) DeleteFiles(ctx context.Context, ids ...string) error {
-	res, err := n.doRequest(ctx, http.MethodPost, apiFiles, filesRequest{
+	res, err := n.doRequest(ctx, http.MethodPost, apiDeleteFiles, filesRequest{
 		FileIDs: ids,
 	})
 
