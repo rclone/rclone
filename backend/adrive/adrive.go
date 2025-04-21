@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -317,14 +316,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// rootSlash returns root with a slash on if it is empty, otherwise empty string
-func (f *Fs) rootSlash() string {
-	if f.root == "" {
-		return f.root
-	}
-	return f.root + "/"
-}
-
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
@@ -337,7 +328,6 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 	}
 	var err error
 	if info != nil {
-		// Set info
 		err = o.setMetaData(info)
 	} else {
 		err = o.readMetaData(ctx) // reads info and meta, returning an error
@@ -612,7 +602,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fmt.Errorf("error copying file: %v", apiErr)
 	}
 
-	info, apiErr := f.FileInfoById(ctx, f.driveID, item.FileID)
+	info, apiErr := f.FileInfoByID(ctx, f.driveID, item.FileID)
 	if apiErr != nil {
 		return nil, fmt.Errorf("error getting copied file: %v", apiErr)
 	}
@@ -647,7 +637,7 @@ func (f *Fs) move(ctx context.Context, id, directoryID string) (*api.FileEntity,
 	}
 
 	// Convert to FileEntity
-	fileEntity, apiErr := f.FileInfoById(ctx, f.driveID, result.FileID)
+	fileEntity, apiErr := f.FileInfoByID(ctx, f.driveID, result.FileID)
 	if apiErr != nil {
 		return nil, fmt.Errorf("error getting moved file: %v", apiErr)
 	}
@@ -764,10 +754,6 @@ func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
 		"Status":   string(user.Status),
 		"Nickname": user.Nickname,
 	}
-
-	userInfo["Expire"] = user.ThirdPartyVipExpire
-	userInfo["ThirdPartyVip"] = strconv.FormatBool(user.ThirdPartyVip)
-	userInfo["ThirdPartyVipExpire"] = user.ThirdPartyVipExpire
 
 	return userInfo, nil
 }

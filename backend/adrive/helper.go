@@ -20,7 +20,7 @@ func (f *Fs) GetUserInfo(ctx context.Context) (*api.UserInfo, error) {
 	err := f.pacer.Call(func() (bool, error) {
 		resp2, err := f.srv.CallJSON(ctx, &opts, nil, &resp)
 		return shouldRetry(ctx, resp2, err)
-	})	
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -98,8 +98,8 @@ func (f *Fs) FileListGetAll(ctx context.Context, param *api.FileListParam, maxIt
 	return result, nil
 }
 
-// FileInfoById gets file information by ID
-func (f *Fs) FileInfoById(ctx context.Context, driveID, fileID string) (*api.FileEntity, error) {
+// FileInfoByID gets file information by ID
+func (f *Fs) FileInfoByID(ctx context.Context, driveID, fileID string) (*api.FileEntity, error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/get",
@@ -211,8 +211,8 @@ func (f *Fs) FileUploadCreate(ctx context.Context, param *api.FileUploadCreatePa
 	return &resp, nil
 }
 
-// GetFileDownloadUrl gets the download URL for a file
-func (f *Fs) FileUploadGetUploadUrl(ctx context.Context, param *api.FileUploadGetUploadURLParam) (*api.FileUploadGetUploadURLResponse, error) {
+// FileUploadGetUploadURL gets the download URL for a file
+func (f *Fs) FileUploadGetUploadURL(ctx context.Context, param *api.FileUploadGetUploadURLParam) (*api.FileUploadGetUploadURLResponse, error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/getUploadUrl",
@@ -228,7 +228,7 @@ func (f *Fs) FileUploadGetUploadUrl(ctx context.Context, param *api.FileUploadGe
 	return &resp, nil
 }
 
-// GetFileDownloadUrl gets the download URL for a file
+// FileUploadComplete gets the download URL for a file
 func (f *Fs) FileUploadComplete(ctx context.Context, param *api.FileUploadCompleteParam) (*api.FileUploadCompleteResponse, error) {
 	opts := rest.Opts{
 		Method: "POST",
