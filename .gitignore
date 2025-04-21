@@ -21,3 +21,4 @@ __pycache__
 resource_windows_*.syso
 .devcontainer
 .aider*
+resource_windows_`go
