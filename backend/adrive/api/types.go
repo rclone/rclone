@@ -1,9 +1,39 @@
+// Package api has type definitions for Aliyun Drive
+//
+// Converted from the API docs with help from https://mholt.github.io/json-to-go/
 package api
 
 import (
 	"fmt"
+	"time"
 )
 
+const (
+	// 2017-05-03T07:26:10-07:00
+	timeFormat = `"` + time.RFC3339 + `"`
+)
+
+// Time represents date and time information for the
+// box API, by using RFC3339
+type Time time.Time
+
+// MarshalJSON turns a Time into JSON (in UTC)
+func (t *Time) MarshalJSON() (out []byte, err error) {
+	timeString := (*time.Time)(t).Format(timeFormat)
+	return []byte(timeString), nil
+}
+
+// UnmarshalJSON turns JSON into a Time
+func (t *Time) UnmarshalJSON(data []byte) error {
+	newT, err := time.Parse(timeFormat, string(data))
+	if err != nil {
+		return err
+	}
+	*t = Time(newT)
+	return nil
+}
+
+// Error is returned from box when things go wrong
 type Error struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -20,6 +50,12 @@ func (e *Error) Error() string {
 
 // Check Error satisfies the error interface
 var _ error = (*Error)(nil)
+
+// Types of things in Item/ItemMini
+const (
+	ItemTypeFolder = "folder"
+	ItemTypeFile   = "file"
+)
 
 // UserInfo represents the user information returned by the API
 type UserInfo struct {
@@ -107,25 +143,80 @@ type DownloadUrlResponse struct {
 	Url string `json:"url"`
 }
 
+// PartInfo contains information about a part of a file
 type PartInfo struct {
-	Etag        interface{} `json:"etag"`
-	PartNumber  int         `json:"part_number"`
-	PartSize    interface{} `json:"part_size"`
-	UploadUrl   string      `json:"upload_url"`
-	ContentType string      `json:"content_type"`
+	PartNumber int    `json:"part_number"`
+	UploadUrl  string `json:"upload_url"`
+	PartSize   int64  `json:"part_size"`
 }
 
-type CreateResp struct {
-	Type         string     `json:"type"`
-	ParentFileID string     `json:"parent_file_id"`
-	DriveID      string     `json:"drive_id"`
-	FileID       string     `json:"file_id"`
-	RevisionID   string     `json:"revision_id"`
-	EncryptMode  string     `json:"encrypt_mode"`
-	DomainID     string     `json:"domain_id"`
-	FileName     string     `json:"file_name"`
-	UploadID     string     `json:"upload_id"`
-	Location     string     `json:"location"`
-	RapidUpload  bool       `json:"rapid_upload"`
+// FileUploadCreateParam contains parameters for creating a file
+type FileUploadCreateParam struct {
+	DriveID         string      `json:"drive_id"`
+	ParentFileID    string      `json:"parent_file_id"`
+	Name            string      `json:"name"`
+	Type            string      `json:"type"`
+	CheckNameMode   string      `json:"check_name_mode"`
+	Size            int64       `json:"size"`
+	PartInfoList    []PartInfo `json:"part_info_list"`
+	ContentHash     string      `json:"content_hash"`
+	ContentHashName string      `json:"content_hash_name"`
+	ProofCode       string      `json:"proof_code"`
+	ProofVersion    string      `json:"proof_version"`
+	LocalCreatedAt  string      `json:"local_created_at"`
+	LocalModifiedAt string      `json:"local_modified_at"`
+}
+
+// FileUploadCreateResponse contains the result of creating a file
+type FileUploadCreateResponse struct {
+	DriveID      string      `json:"drive_id"`
+	ParentFileID string      `json:"parent_file_id"`
+	FileID       string      `json:"file_id"`
+	FileName     string      `json:"file_name"`
+	Status       string      `json:"status"`
+	UploadID     string      `json:"upload_id"`
+	Available    bool        `json:"available"`
+	Exist        bool        `json:"exist"`
+	RapidUpload  bool        `json:"rapid_upload"`
 	PartInfoList []PartInfo `json:"part_info_list"`
+}
+
+// FileUploadGetUploadUrlParam Get upload url param
+type FileUploadGetUploadUrlParam struct {
+	DriveID      string      `json:"drive_id"`
+	FileID       string      `json:"file_id"`
+	UploadID     string      `json:"upload_id"`
+	PartInfoList []PartInfo `json:"part_info_list"`
+}
+
+// FileUploadGetUploadUrlResponse Get upload url response
+type FileUploadGetUploadUrlResponse struct {
+	DriveID      string      `json:"drive_id"`
+	FileID       string      `json:"file_id"`
+	UploadID     string      `json:"upload_id"`
+	CreatedAt    string      `json:"created_at"`
+	PartInfoList []PartInfo `json:"part_info_list"`
+}
+
+// FileUploadCompleteParam Upload complete param
+type FileUploadCompleteParam struct {
+	DriveID  string `json:"drive_id"`
+	FileID   string `json:"file_id"`
+	UploadID string `json:"upload_id"`
+}
+
+// FileUploadCompleteResponse Upload complete response
+type FileUploadCompleteResponse struct {
+	DriveID         string `json:"drive_id"`
+	ParentFileID    string `json:"parent_file_id"`
+	FileID          string `json:"file_id"`
+	Name            string `json:"name"`
+	Type            string `json:"type"`
+	Size            int64  `json:"size"`
+	Category        string `json:"category"`
+	FileExtension   string `json:"file_extension"`
+	ContentHash     string `json:"content_hash"`
+	ContentHashName string `json:"content_hash_name"`
+	LocalCreatedAt  string `json:"local_created_at"`
+	LocalModifiedAt string `json:"local_modified_at"`
 }

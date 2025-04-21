@@ -1,3 +1,5 @@
+// Package adrive provides an interface to the Aliyun Drive
+// object storage system.
 package adrive
 
 import (
@@ -493,13 +495,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	case nil:
 		return existingObj, existingObj.Update(ctx, in, src, options...)
 	case fs.ErrorObjectNotFound:
-		// Not found so create it
-		newObj := &Object{
-			fs:     f,
-			remote: src.Remote(),
-		}
-		// TODO: fix this
-		return newObj, newObj.upload(ctx, in, f.root, f.root, src.ModTime(ctx))
+		return f.PutUnchecked(ctx, in, src, options...)
 	default:
 		return nil, err
 	}
@@ -959,7 +955,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	size := src.Size()
-	modTime := src.ModTime(ctx)
 	remote := o.Remote()
 
 	// Create the directory for the object if it doesn't exist
@@ -968,13 +963,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	// Upload with simple or multipart
-	if size <= int64(o.fs.opt.ChunkSize) {
-		err = o.upload(ctx, in, leaf, directoryID, modTime, options...)
-	} else {
-		err = o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime, options...)
-	}
-	return err
+	return o.upload(ctx, in, leaf, directoryID, size)
 }
 
 // Remove an object

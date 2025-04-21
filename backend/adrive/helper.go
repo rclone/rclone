@@ -188,12 +188,19 @@ func (f *Fs) GetFileDownloadUrl(ctx context.Context, param *api.GetFileDownloadU
 }
 
 // GetFileDownloadUrl gets the download URL for a file
-func (f *Fs) FileUploadCreate(ctx context.Context, param *api.GetFileDownloadUrlParam) (*api.DownloadUrlResponse, error) {
+func (f *Fs) FileUploadCreate(ctx context.Context, param *api.FileUploadCreateParam, chunkNum int) (*api.FileUploadCreateResponse, error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/create",
 	}
-	var resp api.DownloadUrlResponse
+
+	for i := 0; i < chunkNum; i++ {
+		param.PartInfoList = append(param.PartInfoList, api.PartInfo{
+			PartNumber: i + 1,
+		})
+	}
+
+	var resp api.FileUploadCreateResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp2, err := f.srv.CallJSON(ctx, &opts, param, &resp)
 		return shouldRetry(ctx, resp2, err)
@@ -205,12 +212,12 @@ func (f *Fs) FileUploadCreate(ctx context.Context, param *api.GetFileDownloadUrl
 }
 
 // GetFileDownloadUrl gets the download URL for a file
-func (f *Fs) FileUploadGetUploadUrl(ctx context.Context, param *api.GetFileDownloadUrlParam) (*api.DownloadUrlResponse, error) {
+func (f *Fs) FileUploadGetUploadUrl(ctx context.Context, param *api.FileUploadGetUploadUrlParam) (*api.FileUploadGetUploadUrlResponse, error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/getUploadUrl",
 	}
-	var resp api.DownloadUrlResponse
+	var resp api.FileUploadGetUploadUrlResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp2, err := f.srv.CallJSON(ctx, &opts, param, &resp)
 		return shouldRetry(ctx, resp2, err)
@@ -222,12 +229,12 @@ func (f *Fs) FileUploadGetUploadUrl(ctx context.Context, param *api.GetFileDownl
 }
 
 // GetFileDownloadUrl gets the download URL for a file
-func (f *Fs) FileUploadComplete(ctx context.Context, param *api.GetFileDownloadUrlParam) (*api.DownloadUrlResponse, error) {
+func (f *Fs) FileUploadComplete(ctx context.Context, param *api.FileUploadCompleteParam) (*api.FileUploadCompleteResponse, error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/adrive/v1.0/openFile/complete",
 	}
-	var resp api.DownloadUrlResponse
+	var resp api.FileUploadCompleteResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp2, err := f.srv.CallJSON(ctx, &opts, param, &resp)
 		return shouldRetry(ctx, resp2, err)
