@@ -318,7 +318,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, fmt.Errorf("failed to get user info: %v", apiErr)
 	}
 	// Set drive ID
-	f.driveID = userInfo.FileDriveId
+	f.driveID = userInfo.FileDriveID
 
 	return f, nil
 }
@@ -338,8 +338,8 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 	o := &Object{
 		fs:       f,
 		remote:   remote,
-		id:       info.FileId,
-		parentID: info.ParentFileId,
+		id:       info.FileID,
+		parentID: info.ParentFileID,
 	}
 	var err error
 	if info != nil {
@@ -369,7 +369,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	}
 	for _, item := range items {
 		if strings.EqualFold(item.FileName, leaf) {
-			pathIDOut = item.FileId
+			pathIDOut = item.FileID
 			found = true
 			break
 		}
@@ -384,7 +384,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (string,
 	if apiErr != nil {
 		return "", fmt.Errorf("error creating directory: %v", apiErr)
 	}
-	return result.FileId, nil
+	return result.FileID, nil
 }
 
 // Lists the directory required calling the user function on each item found
@@ -392,8 +392,8 @@ func (f *Fs) CreateDir(ctx context.Context, pathID string, leaf string) (string,
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, directoryID string) ([]*api.FileEntity, error) {
 	result, apiErr := f.FileList(ctx, &api.FileListParam{
-		DriveId:      f.driveID,
-		ParentFileId: directoryID,
+		DriveID:      f.driveID,
+		ParentFileID: directoryID,
 		OrderBy:      "name",
 		Limit:        100,
 	})
@@ -421,8 +421,8 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 
 	// Get directory entries from the dirID
 	fileList, apiErr := f.FileListGetAll(ctx, &api.FileListParam{
-		DriveId:        f.driveID,
-		ParentFileId:   directoryID,
+		DriveID:        f.driveID,
+		ParentFileID:   directoryID,
 		OrderBy:        "name",
 		OrderDirection: "ASC",
 	}, -1)
@@ -445,7 +445,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 				}
 			}
 
-			d := fs.NewDir(remote, modTime).SetID(item.FileId).SetParentID(directoryID)
+			d := fs.NewDir(remote, modTime).SetID(item.FileID).SetParentID(directoryID)
 			entries = append(entries, d)
 		} else {
 			o, createErr := f.newObjectWithInfo(ctx, remote, item)
@@ -538,8 +538,8 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(ctx context.Context, id string) error {
 	_, apiErr := f.FileDelete(ctx, &api.FileBatchActionParam{
-		DriveId: f.driveID,
-		FileId:  id,
+		DriveID: f.driveID,
+		FileID:  id,
 	})
 	if apiErr != nil {
 		return fmt.Errorf("error deleting object: %v", apiErr)
@@ -616,15 +616,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	item, apiErr := f.FileCopy(ctx, &api.FileCopyParam{
-		DriveId:        f.driveID,
-		FileId:         srcObj.id,
-		ToParentFileId: directoryID,
+		DriveID:        f.driveID,
+		FileID:         srcObj.id,
+		ToParentFileID: directoryID,
 	})
 	if apiErr != nil {
 		return nil, fmt.Errorf("error copying file: %v", apiErr)
 	}
 
-	info, apiErr := f.FileInfoById(ctx, f.driveID, item.FileId)
+	info, apiErr := f.FileInfoById(ctx, f.driveID, item.FileID)
 	if apiErr != nil {
 		return nil, fmt.Errorf("error getting copied file: %v", apiErr)
 	}
@@ -648,9 +648,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 func (f *Fs) move(ctx context.Context, id, directoryID string) (*api.FileEntity, error) {
 	// Use OpenAPI client for file move operation
 	moveFileParam := &api.FileMoveParam{
-		DriveId:        f.driveID,
-		FileId:         id,
-		ToParentFileId: directoryID,
+		DriveID:        f.driveID,
+		FileID:         id,
+		ToParentFileID: directoryID,
 	}
 
 	result, apiErr := f.FileMove(ctx, moveFileParam)
@@ -659,7 +659,7 @@ func (f *Fs) move(ctx context.Context, id, directoryID string) (*api.FileEntity,
 	}
 
 	// Convert to FileEntity
-	fileEntity, apiErr := f.FileInfoById(ctx, f.driveID, result.FileId)
+	fileEntity, apiErr := f.FileInfoById(ctx, f.driveID, result.FileID)
 	if apiErr != nil {
 		return nil, fmt.Errorf("error getting moved file: %v", apiErr)
 	}
@@ -834,8 +834,8 @@ func (o *Object) setMetaData(info *api.FileEntity) error {
 	o.size = int64(info.FileSize)
 	o.sha1 = info.ContentHash
 	o.modTime = parseTime(info.CreatedAt)
-	o.id = info.FileId
-	o.parentID = info.ParentFileId
+	o.id = info.FileID
+	o.parentID = info.ParentFileID
 	return nil
 }
 
@@ -912,8 +912,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	// Get download URL from OpenAPI
 	downloadUrl, apiErr := o.fs.GetFileDownloadUrl(ctx, &api.GetFileDownloadUrlParam{
-		DriveId: o.fs.driveID,
-		FileId:  o.id,
+		DriveID: o.fs.driveID,
+		FileID:  o.id,
 	})
 	if apiErr != nil {
 		return nil, fmt.Errorf("error getting download URL: %v", apiErr)
