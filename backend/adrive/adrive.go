@@ -310,7 +310,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if apiErr != nil {
 		return nil, fmt.Errorf("failed to get drive info: %v", apiErr)
 	}
-	f.driveID = driveInfo.DefaultDriveId
+	f.driveID = driveInfo.DefaultDriveID
 
 	return f, nil
 }
@@ -652,9 +652,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 
 	usage := &fs.Usage{
-		Used:  fs.NewUsageValue(int64(spaceInfo.PersonalSpaceInfo.UsedSize)),
-		Total: fs.NewUsageValue(int64(spaceInfo.PersonalSpaceInfo.TotalSize)),
-		Free:  fs.NewUsageValue(int64(spaceInfo.PersonalSpaceInfo.TotalSize - spaceInfo.PersonalSpaceInfo.UsedSize)),
+		Used:  fs.NewUsageValue(spaceInfo.PersonalSpaceInfo.UsedSize),
+		Total: fs.NewUsageValue(spaceInfo.PersonalSpaceInfo.TotalSize),
+		Free:  fs.NewUsageValue(spaceInfo.PersonalSpaceInfo.TotalSize - spaceInfo.PersonalSpaceInfo.UsedSize),
 	}
 
 	return usage, nil

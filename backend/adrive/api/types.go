@@ -83,7 +83,7 @@ type SpaceInfo struct {
 
 // DriveInfo represents the drive information returned by the API
 type DriveInfo struct {
-	DefaultDriveId string `json:"default_drive_id"`
+	DefaultDriveID string `json:"default_drive_id"`
 }
 
 // FileEntity represents a file or folder entity

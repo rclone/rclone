@@ -60,8 +60,8 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		}
 
 		// Calculate chunk size
-		chunkSize := int64(defaultChunkSize)
-		if size >= 0 && k == int(chunkNum-1) {
+		chunkSize := defaultChunkSize
+		if size >= 0 && k == chunkNum-1 {
 			chunkSize = size - defaultChunkSize*int64(chunkNum-1)
 		}
 
