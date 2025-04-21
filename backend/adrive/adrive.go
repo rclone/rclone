@@ -50,7 +50,7 @@ var (
 		AuthURL:     authURL,
 		TokenURL:    tokenURL,
 		AuthStyle:   oauth2.AuthStyleInParams,
-		RedirectURL: "https://cloudoauth.files.casaos.app/",
+		RedirectURL: oauthutil.RedirectURL,
 	}
 )
 
@@ -931,16 +931,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		defer o.fs.tokenRenewer.Stop()
 	}
 
-	size := src.Size()
-	remote := o.Remote()
-
 	// Create the directory for the object if it doesn't exist
-	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
+	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, o.Remote(), true)
 	if err != nil {
 		return err
 	}
 
-	return o.upload(ctx, in, leaf, directoryID, size)
+	return o.upload(ctx, in, leaf, directoryID, src.Size())
 }
 
 // Remove an object

@@ -1,6 +1,7 @@
 package adrive
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -14,7 +15,7 @@ import (
 // upload does a single non-multipart upload
 //
 // This is recommended for less than 50 MiB of content
-func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, size int64) (err error) {
+func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string,size int64) (err error) {
 	chunkNum := int(math.Ceil(float64(size) / float64(defaultChunkSize)))
 	resp, err := o.fs.FileUploadCreate(ctx, &api.FileUploadCreateParam{
 		DriveID:         o.fs.driveID,
@@ -33,22 +34,14 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	o.id = resp.FileID
 
 	preTime := time.Now()
-	var offset, length int64 = 0, defaultChunkSize
+
+	// Check if the reader implements io.Seeker and if we have a valid size
+	seeker, canSeek := in.(io.Seeker)
+	useSeek := canSeek && size >= 0
 
 	for k, p := range resp.PartInfoList {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-
 		// Refresh upload URLs if 50 minutes passed
 		if time.Since(preTime) > 50*time.Minute {
-			refreshPartInfos := make([]api.PartInfo, len(resp.PartInfoList)-k)
-			for j := 0; j < len(refreshPartInfos); j++ {
-				refreshPartInfos[j] = api.PartInfo{
-					PartNumber: resp.PartInfoList[k+j].PartNumber,
-				}
-			}
-
 			refreshResp, refreshErr := o.fs.FileUploadGetUploadURL(ctx, &api.FileUploadGetUploadURLParam{
 				DriveID:  o.fs.driveID,
 				FileID:   resp.FileID,
@@ -58,41 +51,43 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 				return fmt.Errorf("failed to refresh upload URLs: %w", refreshErr)
 			}
 
-			// Update remaining parts with new URLs
-			for j := 0; j < len(refreshResp.PartInfoList); j++ {
-				if k+j < len(resp.PartInfoList) {
-					resp.PartInfoList[k+j] = refreshResp.PartInfoList[j]
-				}
-			}
-
 			preTime = time.Now()
+			resp.PartInfoList = refreshResp.PartInfoList
 		}
 
-		// Adjust length for the last part
-		if remain := size - offset; length > remain {
-			length = remain
+		// Calculate chunk size
+		chunkSize := int64(defaultChunkSize)
+		if size >= 0 && k == int(chunkNum-1) {
+			chunkSize = size - defaultChunkSize*int64(chunkNum-1)
 		}
 
-		// Skip if no data to upload
-		if length <= 0 {
-			continue
+		// Use Seek if available and we have a valid size
+		if useSeek {
+			chunkPos := int64(k) * defaultChunkSize
+			_, err = seeker.Seek(chunkPos, io.SeekStart)
+			if err != nil {
+				return fmt.Errorf("failed to seek to position %d: %w", chunkPos, err)
+			}
 		}
 
-		// Create a limited reader for this part
-		limitedReader := io.LimitReader(in, length)
+		// Read the chunk
+		buf := make([]byte, chunkSize)
+		var n int
+		n, err = io.ReadFull(in, buf)
+		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+			return fmt.Errorf("failed to read chunk %d: %w", k, err)
+		}
 
 		// Upload the part with retries
 		opts := rest.Opts{
 			Method:  "PUT",
 			RootURL: p.UploadURL,
-			Body:    limitedReader,
+			Body:    bytes.NewReader(buf[:n]),
 		}
 		_, err = o.fs.srv.Call(ctx, &opts)
 		if err != nil {
 			return err
 		}
-
-		offset += length
 	}
 
 	file, err := o.fs.FileUploadComplete(ctx, &api.FileUploadCompleteParam{
