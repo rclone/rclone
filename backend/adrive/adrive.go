@@ -320,14 +320,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.FileEntity) (fs.Object, error) {
-	o := &Object{
-		fs:       f,
-		remote:   remote,
-		id:       info.FileID,
-		parentID: info.ParentFileID,
-	}
 	var err error
+	o := &Object{
+		fs:     f,
+		remote: remote,
+	}
 	if info != nil {
+		o.id = info.FileID
+		o.parentID = info.ParentFileID
 		err = o.setMetaData(info)
 	} else {
 		err = o.readMetaData(ctx) // reads info and meta, returning an error
@@ -750,8 +750,8 @@ func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
 		"UserName": user.UserName,
 		"Email":    user.Email,
 		"Phone":    user.Phone,
-		"Role":     string(user.Role),
-		"Status":   string(user.Status),
+		"Role":     user.Role,
+		"Status":   user.Status,
 		"Nickname": user.Nickname,
 	}
 
