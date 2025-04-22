@@ -457,223 +457,77 @@ backends:
    extratime: 2.0
    ignore:
       - TestIntegration/FsMkdir/FsEncoding/URL_encoding
-  - backend: "sugarsync"
-    remote: "TestSugarSync:Test"
-    fastlist: false
-    ignore:
-      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
-  - backend: "swift"
-    remote: "TestSwiftAIO:"
-    fastlist: true
-  - backend: "swift"
-    remote: "TestSwiftAIOsegments:"
-    fastlist: true
-  - backend: "swift"
-    remote: "TestSwift:"
-    fastlist: true
-  # - backend:  "swift"
-  #   remote:   "TestSwiftCeph:"
-  #   fastlist: true
-  #   ignore:
-  #     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
-  - backend: "yandex"
-    remote: "TestYandex:"
-    fastlist: false
-  - backend: "ftp"
-    remote: "TestFTPProftpd:"
-    fastlist: false
-  - backend: "ftp"
-    remote: "TestFTPPureftpd:"
-    fastlist: false
-  - backend: "ftp"
-    remote: "TestFTPVsftpd:"
-    fastlist: false
-  - backend: "ftp"
-    remote: "TestFTPRclone:"
-    fastlist: false
-  - backend: "box"
-    remote: "TestBox:"
-    fastlist: false
-  - backend: "fichier"
-    remote: "TestFichier:"
-    fastlist: false
-    listretries: 5
-    tests:
-      - backend
-  # Disabled due to account cancellation - no longer available to me
-  # - backend:  "qingstor"
-  #   remote:   "TestQingStor:"
-  #   fastlist: false
-  #   oneonly:  true
-  #   cleanup:  true
-  #   ignore:
-  #     # This test fails because of a broken bucket in the account!
-  #     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/ListR
-  - backend: "azureblob"
-    remote: "TestAzureBlob:"
-    fastlist: true
-  - backend: "azureblob"
-    remote: "TestAzureBlob,directory_markers:"
-    fastlist: true
-  - backend: "azurefiles"
-    remote: "TestAzureFiles:"
-  - backend: "pcloud"
-    remote: "TestPcloud:"
-    fastlist: true
-  - backend: "pikpak"
-    remote: "TestPikPak:"
-    fastlist: false
-    ignore:
-      #  fs/operations
-      - TestCheckSum
-      - TestHashSums/Md5
-      #  fs/sync
-      - TestSyncWithTrackRenames
-      # integration
-      - TestIntegration/FsMkdir/FsPutFiles/ObjectMimeType
-      # This test fails with message
-      # "share_status_prohibited" (9): Sorry, the sharing service is under maintenance in the current region.
-      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
-  - backend: "pixeldrain"
-    remote: "TestPixeldrain:"
-    ignore:
-      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
-    fastlist: false
-  - backend: "webdav"
-    remote: "TestWebdavNextcloud:"
-    ignore:
-      - TestIntegration/FsMkdir/FsEncoding/punctuation
-      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
-    fastlist: false
-  - backend: "webdav"
-    remote: "TestWebdavOwncloud:"
-    ignore:
-      - TestIntegration/FsMkdir/FsEncoding/punctuation
-      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
-    fastlist: false
-  - backend: "webdav"
-    remote: "TestWebdavRclone:"
-    ignore:
-      - TestFileReadAtZeroLength
-    fastlist: false
-  - backend: "cache"
-    remote: "TestCache:"
-    fastlist: false
-    ignoretests:
-      - TestBisyncLocalRemote
-      - TestBisyncRemoteLocal
-      - TestBisyncRemoteRemote
-  - backend: "mega"
-    remote: "TestMega:"
-    fastlist: false
-    ignore:
-      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
-      - TestDirRename
-  - backend: "opendrive"
-    remote: "TestOpenDrive:"
-    fastlist: false
-  - backend: "union"
-    remote: "TestUnion:"
-    fastlist: false
-  - backend: "koofr"
-    remote: "TestKoofr:"
-    fastlist: false
-  # - backend:  "koofr"
-  #   remote:   "TestDigiStorage:"
-  #   fastlist: false
-  - backend: "linkbox"
-    remote: "TestLinkbox:"
-    fastlist: false
-    ignore:
-      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
-      - TestRWFileHandleWriteNoWrite
-      - TestCaseInsensitiveMoveFile
-      - TestFixCase
-      - TestListDirSorted # Can't upload files starting with . - FIXME fix with encoding
-      - TestSyncOverlapWithFilter # Can't upload files starting with . - FIXME fix with encoding
-  - backend: "premiumizeme"
-    remote: "TestPremiumizeMe:"
-    fastlist: false
-  - backend: "protondrive"
-    remote: "TestProtonDrive:"
-    fastlist: false
-  - backend: "putio"
-    remote: "TestPutio:"
-    fastlist: false
-    extratime: 2.0
-    ignore:
-      - TestIntegration/FsMkdir/FsEncoding/URL_encoding
-  - backend: "sharefile"
-    remote: "TestSharefile:"
-    fastlist: false
-  - backend: "sia"
-    remote: "TestSia:"
-    fastlist: false
-  - backend: "mailru"
-    remote: "TestMailru:"
-    subdir: false
-    fastlist: false
-    oneonly: true
-    ignore:
-      - TestApplyTransforms
-  - backend: "seafile"
-    remote: "TestSeafileV6:"
-    fastlist: false
-    ignore:
-      - TestIntegration/FsMkdir/FsPutFiles/FsDirMove
-  - backend: "seafile"
-    remote: "TestSeafile:"
-    fastlist: true
-  - backend: "seafile"
-    remote: "TestSeafileEncrypted:"
-    fastlist: true
-  - backend: "sia"
-    remote: "TestSia:"
-    fastlist: false
-  - backend: "smb"
-    remote: "TestSMB:rclone"
-    fastlist: false
-  - backend: "smb"
-    remote: "TestSMBKerberos:rclone"
-    fastlist: false
-  - backend: "storj"
-    remote: "TestStorj:"
-    fastlist: true
-  - backend: "zoho"
-    remote: "TestZoho:"
-    fastlist: false
-    tests:
-      - backend
-  - backend: "hdfs"
-    remote: "TestHdfs:"
-    fastlist: false
-    ignore:
-      - TestSyncUTFNorm
-  # - backend: "uptobox"
-  #   remote: "TestUptobox:"
-  #   fastlist: false
-  #   ignore:
-  #     - TestRWFileHandleWriteNoWrite
-  - backend: "oracleobjectstorage"
-    remote: "TestOracleObjectStorage:"
-    fastlist: true
-    ignore:
-      - TestIntegration/FsMkdir/FsEncoding/control_chars
-      - TestIntegration/FsMkdir/FsEncoding/leading_CR
-      - TestIntegration/FsMkdir/FsEncoding/leading_LF
-      - TestIntegration/FsMkdir/FsEncoding/trailing_CR
-      - TestIntegration/FsMkdir/FsEncoding/trailing_LF
-      - TestIntegration/FsMkdir/FsEncoding/leading_HT
-      - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
-  - backend: "quatrix"
-    remote: "TestQuatrix:"
-    fastlist: false
-  - backend: "ulozto"
-    remote: "TestUlozto:"
-    fastlist: false
-  - backend: "iclouddrive"
-    remote: "TestICloudDrive:"
-    fastlist: false
-  - backend: "adrive"
-    remote: "TestAliyunDrive:"
-    fastlist: false
+ - backend:  "sharefile"
+   remote:   "TestSharefile:"
+   fastlist: false
+ - backend:  "sia"
+   remote:   "TestSia:"
+   fastlist: false
+ - backend:  "mailru"
+   remote:   "TestMailru:"
+   subdir:   false
+   fastlist: false
+   oneonly:  true
+   ignore:
+     - TestApplyTransforms
+ - backend:  "seafile"
+   remote:   "TestSeafileV6:"
+   fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/FsDirMove
+ - backend:  "seafile"
+   remote:   "TestSeafile:"
+   fastlist: true
+ - backend:  "seafile"
+   remote:   "TestSeafileEncrypted:"
+   fastlist: true
+ - backend:  "sia"
+   remote:   "TestSia:"
+   fastlist: false
+ - backend:  "smb"
+   remote:   "TestSMB:rclone"
+   fastlist: false
+ - backend:  "smb"
+   remote:   "TestSMBKerberos:rclone"
+   fastlist: false
+ - backend:  "storj"
+   remote:   "TestStorj:"
+   fastlist: true
+ - backend:  "zoho"
+   remote:   "TestZoho:"
+   fastlist: false
+   tests:
+     - backend
+ - backend: "hdfs"
+   remote: "TestHdfs:"
+   fastlist: false
+   ignore:
+     - TestSyncUTFNorm
+ # - backend: "uptobox"
+ #   remote: "TestUptobox:"
+ #   fastlist: false
+ #   ignore:
+ #     - TestRWFileHandleWriteNoWrite
+ - backend: "oracleobjectstorage"
+   remote: "TestOracleObjectStorage:"
+   fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/control_chars
+     - TestIntegration/FsMkdir/FsEncoding/leading_CR
+     - TestIntegration/FsMkdir/FsEncoding/leading_LF
+     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
+     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
+     - TestIntegration/FsMkdir/FsEncoding/leading_HT
+     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
+ - backend:  "quatrix"
+   remote:   "TestQuatrix:"
+   fastlist: false
+ - backend:  "ulozto"
+   remote:   "TestUlozto:"
+   fastlist: false
+ - backend:  "iclouddrive"
+   remote:   "TestICloudDrive:"
+   fastlist: false
+ - backend:  "adrive"
+   remote:   "TestAliyunDrive:"
+   fastlist: false
