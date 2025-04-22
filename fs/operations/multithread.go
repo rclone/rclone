@@ -92,7 +92,7 @@ func (mc *multiThreadCopyState) copyChunk(ctx context.Context, chunk int, writer
 		rs = rc
 	} else {
 		// Read the chunk into buffered reader
-		rw := multipart.NewRW()
+		rw := multipart.NewRW().Reserve(size)
 		defer fs.CheckClose(rw, &err)
 		_, err = io.CopyN(rw, rc, size)
 		if err != nil {
