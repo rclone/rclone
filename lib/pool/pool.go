@@ -192,27 +192,62 @@ func (bp *Pool) release(mem int64) {
 	totalMemory.Release(mem)
 }
 
+// Reserve buffers for use. Blocks until they are free.
+//
+// Doesn't allocate any memory.
+//
+// Must be released by calling GetReserved() which releases 1 buffer or
+// Release() to release any number of buffers.
+func (bp *Pool) Reserve(buffers int) {
+	waitTime := time.Millisecond
+	for {
+		err := bp.acquire(int64(buffers) * int64(bp.bufferSize))
+		if err == nil {
+			break
+		}
+		fs.Logf(nil, "Failed to get reservation for buffer, waiting for %v: %v", waitTime, err)
+		time.Sleep(waitTime)
+		waitTime *= 2
+	}
+}
+
+// Release previously Reserved buffers.
+//
+// Doesn't free any memory.
+func (bp *Pool) Release(buffers int) {
+	bp.release(int64(buffers) * int64(bp.bufferSize))
+}
+
 // Get a buffer from the pool or allocate one
-func (bp *Pool) Get() []byte {
+func (bp *Pool) getBlock(reserved bool) []byte {
 	bp.mu.Lock()
 	var buf []byte
 	waitTime := time.Millisecond
 	for {
 		if len(bp.cache) > 0 {
 			buf = bp.get()
+			if reserved {
+				// If got reserved memory from the cache we
+				// can release the reservation of one buffer.
+				bp.release(int64(bp.bufferSize))
+			}
 			break
 		} else {
 			var err error
-			bp.mu.Unlock()
-			err = bp.acquire(int64(bp.bufferSize))
-			bp.mu.Lock()
+			if !reserved {
+				bp.mu.Unlock()
+				err = bp.acquire(int64(bp.bufferSize))
+				bp.mu.Lock()
+			}
 			if err == nil {
 				buf, err = bp.alloc(bp.bufferSize)
 				if err == nil {
 					bp.alloced++
 					break
 				}
-				bp.release(int64(bp.bufferSize))
+				if !reserved {
+					bp.release(int64(bp.bufferSize))
+				}
 			}
 			fs.Logf(nil, "Failed to get memory for buffer, waiting for %v: %v", waitTime, err)
 			bp.mu.Unlock()
@@ -225,6 +260,16 @@ func (bp *Pool) Get() []byte {
 	bp.updateMinFill()
 	bp.mu.Unlock()
 	return buf
+}
+
+// Get a buffer from the pool or allocate one
+func (bp *Pool) Get() []byte {
+	return bp.getBlock(false)
+}
+
+// GetReserved gets a reserved buffer from the pool or allocates one.
+func (bp *Pool) GetReserved() []byte {
+	return bp.getBlock(true)
 }
 
 // freeBuffer returns mem to the os if required - call with lock held

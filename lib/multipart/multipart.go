@@ -73,7 +73,7 @@ func UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt U
 	for partNum := int64(0); !finished; partNum++ {
 		// Get a block of memory from the pool and token which limits concurrency.
 		tokens.Get()
-		rw := NewRW()
+		rw := NewRW().Reserve(chunkSize)
 		if acc != nil {
 			rw.SetAccounting(acc.AccountRead)
 		}
