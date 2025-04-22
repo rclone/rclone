@@ -45,6 +45,10 @@ func getFileHashByte(node any, hashType hash.Type) []byte {
 }
 
 func getFileHash(node any, hashType hash.Type) string {
+	if hashType == hash.None {
+		return ""
+	}
+
 	var o fs.Object
 
 	switch b := node.(type) {
