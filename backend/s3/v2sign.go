@@ -63,6 +63,14 @@ func (v2 *v2Signer) SignHTTP(ctx context.Context, credentials aws.Credentials, r
 		uri = "/"
 	}
 
+	// Support for host-style requests (caveat: this only works for configs which include the endpoint)
+	endpoint := strings.TrimPrefix(v2.opt.Endpoint, "https://")
+	endpoint = strings.TrimPrefix(endpoint, "http://")
+	idx := strings.Index(req.URL.Host, endpoint)
+	if idx > 1 && req.URL.Host[idx-1] == '.' {
+		uri = "/" + req.URL.Host[0:idx-1] + uri
+	}
+
 	// Look through headers of interest
 	var md5 string
 	var contentType string
