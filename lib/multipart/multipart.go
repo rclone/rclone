@@ -5,8 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"sync"
-	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -18,30 +16,12 @@ import (
 
 const (
 	// BufferSize is the default size of the pages used in the reader
-	BufferSize           = 1024 * 1024
-	bufferCacheSize      = 64              // max number of buffers to keep in cache
-	bufferCacheFlushTime = 5 * time.Second // flush the cached buffers after this long
+	BufferSize = pool.BufferSize
 )
 
-// bufferPool is a global pool of buffers
-var (
-	bufferPool     *pool.Pool
-	bufferPoolOnce sync.Once
-)
-
-// get a buffer pool
-func getPool() *pool.Pool {
-	bufferPoolOnce.Do(func() {
-		ci := fs.GetConfig(context.Background())
-		// Initialise the buffer pool when used
-		bufferPool = pool.New(bufferCacheFlushTime, BufferSize, bufferCacheSize, ci.UseMmap)
-	})
-	return bufferPool
-}
-
-// NewRW gets a pool.RW using the multipart pool
+// NewRW gets a pool.RW using the global pool
 func NewRW() *pool.RW {
-	return pool.NewRW(getPool())
+	return pool.NewRW(pool.Global())
 }
 
 // UploadMultipartOptions options for the generic multipart upload

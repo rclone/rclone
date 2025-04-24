@@ -13,6 +13,15 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
+const (
+	// BufferSize is the page size of the Global() pool
+	BufferSize = 1024 * 1024
+	// BufferCacheSize is the max number of buffers to keep in the cache for the Global() pool
+	BufferCacheSize = 64
+	// BufferCacheFlushTime is the max time to keep buffers in the Global() pool
+	BufferCacheFlushTime = 5 * time.Second
+)
+
 // Pool of internal buffers
 //
 // We hold buffers in cache. Every time we Get or Put we update
@@ -67,6 +76,17 @@ func New(flushTime time.Duration, bufferSize, poolSize int, useMmap bool) *Pool 
 			return nil
 		}
 	}
+
+	// Initialise total memory limit if required
+	totalMemoryInit.Do(func() {
+		ci := fs.GetConfig(context.Background())
+
+		// Set max buffer memory limiter
+		if ci.MaxBufferMemory > 0 {
+			totalMemory = semaphore.NewWeighted(int64(ci.MaxBufferMemory))
+		}
+	})
+
 	bp.timer = time.AfterFunc(flushTime, bp.flushAged)
 	return bp
 }
@@ -157,20 +177,10 @@ func (bp *Pool) updateMinFill() {
 
 // acquire mem bytes of memory
 func (bp *Pool) acquire(mem int64) error {
-	ctx := context.Background()
-
-	totalMemoryInit.Do(func() {
-		ci := fs.GetConfig(ctx)
-
-		// Set max buffer memory limiter
-		if ci.MaxBufferMemory > 0 {
-			totalMemory = semaphore.NewWeighted(int64(ci.MaxBufferMemory))
-		}
-	})
-
 	if totalMemory == nil {
 		return nil
 	}
+	ctx := context.Background()
 	return totalMemory.Acquire(ctx, mem)
 }
 
@@ -247,4 +257,18 @@ func (bp *Pool) Put(buf []byte) {
 	bp.inUse--
 	bp.updateMinFill()
 	bp.kickFlusher()
+}
+
+// bufferPool is a global pool of buffers
+var bufferPool *Pool
+var bufferPoolOnce sync.Once
+
+// Global gets a global pool of BufferSize, BufferCacheSize, BufferCacheFlushTime.
+func Global() *Pool {
+	bufferPoolOnce.Do(func() {
+		// Initialise the buffer pool when used
+		ci := fs.GetConfig(context.Background())
+		bufferPool = New(BufferCacheFlushTime, BufferSize, BufferCacheSize, ci.UseMmap)
+	})
+	return bufferPool
 }
