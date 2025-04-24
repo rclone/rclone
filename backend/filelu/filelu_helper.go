@@ -65,7 +65,11 @@ func (f *Fs) getFileCode(ctx context.Context, filePath string) (string, error) {
 	}
 
 	for _, file := range result.Result.Files {
-		if filePath == parentDir+"/"+file.Name {
+		filePathFromServer := parentDir + "/" + file.Name
+		if parentDir == "/" {
+			filePathFromServer = "/" + file.Name
+		}
+		if filePath == filePathFromServer {
 			return file.FileCode, nil
 		}
 	}
