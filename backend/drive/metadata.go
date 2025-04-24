@@ -508,7 +508,7 @@ type updateMetadataFn func(context.Context, *drive.File) error
 //
 // It returns a callback which should be called to finish the updates
 // after the data is uploaded.
-func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs.Metadata, update bool) (callback updateMetadataFn, err error) {
+func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs.Metadata, update, isFolder bool) (callback updateMetadataFn, err error) {
 	callbackFns := []updateMetadataFn{}
 	callback = func(ctx context.Context, info *drive.File) error {
 		for _, fn := range callbackFns {
@@ -533,7 +533,9 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 		}
 		switch k {
 		case "copy-requires-writer-permission":
-			if err := parseBool(&updateInfo.CopyRequiresWriterPermission); err != nil {
+			if isFolder {
+				fs.Debugf(f, "Ignoring %s=%s as can't set on folders", k, v)
+			} else if err := parseBool(&updateInfo.CopyRequiresWriterPermission); err != nil {
 				return nil, err
 			}
 		case "writers-can-share":
@@ -630,7 +632,7 @@ func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, opti
 	if err != nil {
 		return nil, fmt.Errorf("failed to read metadata from source object: %w", err)
 	}
-	callback, err = f.updateMetadata(ctx, updateInfo, meta, update)
+	callback, err = f.updateMetadata(ctx, updateInfo, meta, update, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update metadata from source object: %w", err)
 	}
