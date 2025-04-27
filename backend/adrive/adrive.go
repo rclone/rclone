@@ -805,7 +805,7 @@ func (o *Object) setMetaData(info *api.FileEntity) error {
 	}
 	o.hasMetaData = true
 	o.size = int64(info.FileSize)
-	o.sha1 = info.ContentHash
+	o.sha1 = strings.ToLower(info.ContentHash)
 	o.modTime = parseTime(info.CreatedAt)
 	o.id = info.FileID
 	o.parentID = info.ParentFileID
