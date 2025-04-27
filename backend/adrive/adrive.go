@@ -33,7 +33,7 @@ const (
 	minSleep         = 10 * time.Millisecond
 	maxSleep         = 2 * time.Second
 	decayConstant    = 2 // bigger for slower decay, exponential
-	defaultChunkSize = int64(524288)
+	defaultChunkSize = int64(10 * fs.Mebi)
 	maxPartNum       = 10000
 	rootURL          = "https://openapi.alipan.com"
 	authURL          = "https://openapi.alipan.com/oauth/authorize"
