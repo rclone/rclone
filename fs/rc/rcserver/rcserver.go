@@ -363,7 +363,7 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 }
 
 // Match URLS of the form [fs]/remote
-var fsMatch = regexp.MustCompile(`^\[(.*?)\](.*)$`)
+var fsMatch = regexp.MustCompile(`^\[([^}]*)\](.*)$`)
 
 func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) {
 	// Look to see if this has an fs in the path

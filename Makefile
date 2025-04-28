@@ -205,12 +205,12 @@ upload:
 upload_github:
 	./bin/upload-github $(TAG)
 
-cross:	doc
-	go run bin/cross-compile.go -release current $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
+cross:
+	go run bin/cross-compile.go $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
 
 beta:
 	go run bin/cross-compile.go $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
-	rclone -v copy build/ pub.rclone.org:/$(TAG)
+	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)
 	@echo Beta release ready at https://pub.rclone.org/$(TAG)/
 
 log_since_last_release:
@@ -223,18 +223,18 @@ ci_upload:
 	sudo chown -R $$USER build
 	find build -type l -delete
 	gzip -r9v build
-	./rclone --no-check-dest --config bin/ci.rclone.conf -v copy build/ $(BETA_UPLOAD)/testbuilds
+	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD)/testbuilds
 ifeq ($(or $(BRANCH_PATH),$(RELEASE_TAG)),)
-	./rclone --no-check-dest --config bin/ci.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/test/testbuilds-latest
+	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/test/testbuilds-latest
 endif
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
 ci_beta:
 	git log $(LAST_TAG).. > /tmp/git-log.txt
 	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
-	rclone --no-check-dest --config bin/ci.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
+	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
 ifeq ($(or $(BRANCH_PATH),$(RELEASE_TAG)),)
-	rclone --no-check-dest --config bin/ci.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)$(BETA_SUBDIR)
+	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)$(BETA_SUBDIR)
 endif
 	@echo Beta release ready at $(BETA_URL)
 
@@ -243,7 +243,7 @@ fetch_binaries:
 	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
-	cd docs && hugo server --logLevel info -w --disableFastRender
+	cd docs && hugo server -v -w --disableFastRender
 
 tag:	retag doc
 	bin/make_changelog.py $(LAST_TAG) $(VERSION) > docs/content/changelog.md.new

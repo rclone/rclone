@@ -6,7 +6,7 @@
 
 set -e
 
-REPO="rclone/rclone"
+REPO="tgdrive/rclone"
 
 if [ "$1" == "" ]; then
     echo "Syntax: $0 Version"
@@ -29,7 +29,7 @@ gh release create "${VERSION}" \
     --notes-file "/tmp/${VERSION}-release-notes" \
     --draft=true
 
-for build in build/*; do
+for build in /tmp/build/*; do
     case $build in
         *current*) continue ;;
         *testbuilds*) continue ;;
