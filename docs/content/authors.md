@@ -966,3 +966,4 @@ put them back in again.` >}}
   * Ed Craig-Wood <138211970+edc-w@users.noreply.github.com>
   * Christian Richter <crichter@owncloud.com> <1058116+dragonchaser@users.noreply.github.com>
   * Ralf Haferkamp <r.haferkamp@opencloud.eu>
+  * Jugal Kishore <me@devjugal.com>
