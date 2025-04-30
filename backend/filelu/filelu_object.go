@@ -28,13 +28,8 @@ type Object struct {
 
 // NewObject creates a new Object for the given remote path
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-
 	var filePath string
-	if f.isFile {
-		filePath = path.Join(f.root, f.targetFile)
-	} else {
-		filePath = path.Join(f.root, remote)
-	}
+	filePath = path.Join(f.root, remote)
 	filePath = "/" + strings.Trim(filePath, "/")
 
 	// Get File code
@@ -53,10 +48,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	size, _ := strconv.ParseInt(fileInfo.Size, 10, 64)
 
 	returnedRemote := remote
-	if f.isFile {
-		returnedRemote = f.targetFile
-	}
-
 	return &Object{
 		fs:      f,
 		remote:  returnedRemote,
@@ -150,7 +141,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fs.ErrorCantUploadEmptyFiles
 	}
 
-	err := o.fs.UploadFile(ctx, in, o.remote)
+	err := o.fs.uploadFile(ctx, in, o.remote)
 	if err != nil {
 		return fmt.Errorf("failed to upload file: %w", err)
 	}

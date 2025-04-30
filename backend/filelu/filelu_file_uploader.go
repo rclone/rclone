@@ -15,9 +15,8 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
-// UploadFile uploads a file to FileLu
-func (f *Fs) UploadFile(ctx context.Context, fileContent io.Reader, fileFullPath string) error {
-
+// uploadFile uploads a file to FileLu
+func (f *Fs) uploadFile(ctx context.Context, fileContent io.Reader, fileFullPath string) error {
 	directory := path.Dir(fileFullPath)
 	fileName := path.Base(fileFullPath)
 	if directory == "." {
@@ -48,7 +47,8 @@ func (f *Fs) UploadFile(ctx context.Context, fileContent io.Reader, fileFullPath
 			}
 
 			// If the file exists but is different, remove it
-			err = f.DeleteFile(ctx, destinationFolderPath+"/"+fileName)
+			filePath := "/" + strings.Trim(destinationFolderPath+"/"+fileName, "/")
+			err = f.deleteFile(ctx, filePath)
 			if err != nil {
 				return fmt.Errorf("failed to delete existing file: %w", err)
 			}
@@ -116,6 +116,7 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 // uploadFileWithDestination uploads a file directly to a specified folder using file content reader.
 func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, fileName string, fileContent io.Reader, dirPath string) (string, error) {
 	destinationPath := f.fromStandardPath(dirPath)
+	encodedFileName := f.fromStandardPath(fileName)
 	pr, pw := io.Pipe()
 	writer := multipart.NewWriter(pw)
 	isDeletionRequired := false
@@ -129,7 +130,7 @@ func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, f
 		_ = writer.WriteField("utype", "prem")
 		_ = writer.WriteField("fld_path", destinationPath)
 
-		part, err := writer.CreateFormFile("file_0", fileName)
+		part, err := writer.CreateFormFile("file_0", encodedFileName)
 		if err != nil {
 			pw.CloseWithError(fmt.Errorf("failed to create form file: %w", err))
 			return

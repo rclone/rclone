@@ -16,72 +16,8 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
-// CreateFolderResponse represents the response for creating a folder.
-type CreateFolderResponse struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
-	Result struct {
-		FldID interface{} `json:"fld_id"`
-	} `json:"result"`
-}
-
-// DeleteFolderResponse represents the response for deleting a folder.
-type DeleteFolderResponse struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
-}
-
-// FolderListResponse represents the response for listing folders.
-type FolderListResponse struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
-	Result struct {
-		Files []struct {
-			Name     string      `json:"name"`
-			FldID    json.Number `json:"fld_id"`
-			Path     string      `json:"path"`
-			FileCode string      `json:"file_code"`
-			Size     int64       `json:"size"`
-		} `json:"files"`
-		Folders []struct {
-			Name  string      `json:"name"`
-			FldID json.Number `json:"fld_id"`
-			Path  string      `json:"path"`
-		} `json:"folders"`
-	} `json:"result"`
-}
-
-// FileDirectLinkResponse represents the response for a direct link to a file.
-type FileDirectLinkResponse struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
-	Result struct {
-		URL  string `json:"url"`
-		Size int64  `json:"size"`
-	} `json:"result"`
-}
-
-// FileInfoResponse represents the response for file information.
-type FileInfoResponse struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
-	Result []struct {
-		Size     string `json:"size"`
-		Name     string `json:"name"`
-		FileCode string `json:"filecode"`
-		Hash     string `json:"hash"`
-		Status   int    `json:"status"`
-	} `json:"result"`
-}
-
-// DeleteFileResponse represents the response for deleting a file.
-type DeleteFileResponse struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
-}
-
 // createFolder creates a folder at the specified path.
-func (f *Fs) createFolder(ctx context.Context, dirPath string) (*CreateFolderResponse, error) {
+func (f *Fs) createFolder(ctx context.Context, dirPath string) (*api.CreateFolderResponse, error) {
 	encodedDir := f.fromStandardPath(dirPath)
 	apiURL := fmt.Sprintf("%s/folder/create?folder_path=%s&key=%s",
 		f.endpoint,
@@ -95,7 +31,7 @@ func (f *Fs) createFolder(ctx context.Context, dirPath string) (*CreateFolderRes
 	}
 
 	var resp *http.Response
-	result := CreateFolderResponse{}
+	result := api.CreateFolderResponse{}
 	err = f.pacer.Call(func() (bool, error) {
 		var innerErr error
 		resp, innerErr = f.client.Do(req)
@@ -122,45 +58,8 @@ func (f *Fs) createFolder(ctx context.Context, dirPath string) (*CreateFolderRes
 	return &result, nil
 }
 
-// renameFolder handles folder renaming using folder paths
-func (f *Fs) renameFolder(ctx context.Context, folderPath, newName string) error {
-	folderPath = "/" + strings.Trim(folderPath, "/")
-	folderPath = f.fromStandardPath(folderPath)
-	newName = f.fromStandardPath(newName)
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/folder/rename",
-		Parameters: url.Values{
-			"folder_path": {folderPath},
-			"name":        {newName},
-			"key":         {f.opt.Key},
-		},
-	}
-
-	var result struct {
-		Status int    `json:"status"`
-		Result string `json:"result"`
-		Msg    string `json:"msg"`
-	}
-
-	err := f.pacer.Call(func() (bool, error) {
-		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
-		return fserrors.ShouldRetry(err), err
-	})
-
-	if err != nil {
-		return fmt.Errorf("renameFolder failed: %w", err)
-	}
-	if result.Status != 200 {
-		return fmt.Errorf("renameFolder API error: %s", result.Msg)
-	}
-
-	fs.Infof(f, "Successfully renamed folder at path: %s to %s", folderPath, newName)
-	return nil
-}
-
 // getFolderList List both files and folders in a directory.
-func (f *Fs) getFolderList(ctx context.Context, path string) (*FolderListResponse, error) {
+func (f *Fs) getFolderList(ctx context.Context, path string) (*api.FolderListResponse, error) {
 	encodedDir := f.fromStandardPath(path)
 	apiURL := fmt.Sprintf("%s/folder/list?folder_path=%s&key=%s",
 		f.endpoint,
@@ -196,7 +95,7 @@ func (f *Fs) getFolderList(ctx context.Context, path string) (*FolderListRespons
 		return nil, err
 	}
 
-	var response FolderListResponse
+	var response api.FolderListResponse
 	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&response); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
@@ -205,6 +104,14 @@ func (f *Fs) getFolderList(ctx context.Context, path string) (*FolderListRespons
 			return nil, fs.ErrorDirNotFound
 		}
 		return nil, fmt.Errorf("API error: %s", response.Msg)
+	}
+
+	for index := range response.Result.Folders {
+		response.Result.Folders[index].Path = f.toStandardPath(response.Result.Folders[index].Path)
+	}
+
+	for index := range response.Result.Files {
+		response.Result.Files[index].Name = f.toStandardPath(response.Result.Files[index].Name)
 	}
 
 	return &response, nil
@@ -220,7 +127,7 @@ func (f *Fs) deleteFolder(ctx context.Context, fullPath string) error {
 		url.QueryEscape(f.opt.Key),
 	)
 
-	delResp := DeleteFolderResponse{}
+	delResp := api.DeleteFolderResponse{}
 	err := f.pacer.Call(func() (bool, error) {
 		req, err := http.NewRequestWithContext(ctx, "GET", deleteURL, nil)
 		if err != nil {
@@ -266,7 +173,7 @@ func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64,
 		url.QueryEscape(f.opt.Key),
 	)
 
-	result := FileDirectLinkResponse{}
+	result := api.FileDirectLinkResponse{}
 	err := f.pacer.Call(func() (bool, error) {
 		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 		if err != nil {
@@ -312,7 +219,7 @@ func (f *Fs) deleteFile(ctx context.Context, filePath string) error {
 		},
 	}
 
-	result := DeleteFileResponse{}
+	result := api.DeleteFileResponse{}
 	err := f.pacer.Call(func() (bool, error) {
 		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 		return fserrors.ShouldRetry(err), err
@@ -326,154 +233,6 @@ func (f *Fs) deleteFile(ctx context.Context, filePath string) error {
 	}
 
 	fs.Infof(f, "Successfully deleted file: %s", filePath)
-	return nil
-}
-
-// renameFile renames a file
-func (f *Fs) renameFile(ctx context.Context, filePath, newName string) error {
-	filePath = f.fromStandardPath(filePath)
-	newName = f.fromStandardPath(newName)
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/file/rename",
-		Parameters: url.Values{
-			"file_path": {filePath},
-			"name":      {newName},
-			"key":       {f.opt.Key},
-		},
-	}
-
-	var result struct {
-		Status int    `json:"status"`
-		Result string `json:"result"`
-		Msg    string `json:"msg"`
-	}
-
-	err := f.pacer.Call(func() (bool, error) {
-		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
-		return fserrors.ShouldRetry(err), err
-	})
-
-	if err != nil {
-		return fmt.Errorf("renameFile failed: %w", err)
-	}
-	if result.Status != 200 {
-		return fmt.Errorf("renameFile API error: %s", result.Msg)
-	}
-
-	fs.Infof(f, "Successfully renamed file at path: %s to %s", filePath, newName)
-	return nil
-}
-
-// moveFolderToDestination moves a folder to a different location within FileLu
-func (f *Fs) moveFolderToDestination(ctx context.Context, folderPath string, destFolderPath string) error {
-	folderPath = "/" + strings.Trim(folderPath, "/")
-	destFolderPath = "/" + strings.Trim(destFolderPath, "/")
-	folderPath = f.fromStandardPath(folderPath)
-	destFolderPath = f.fromStandardPath(destFolderPath)
-
-	apiURL := fmt.Sprintf("%s/folder/move?folder_path=%s&dest_folder_path=%s&key=%s",
-		f.endpoint,
-		url.QueryEscape(folderPath),
-		url.QueryEscape(destFolderPath),
-		url.QueryEscape(f.opt.Key),
-	)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create move folder request: %w", err)
-	}
-
-	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		var err error
-		resp, err = f.client.Do(req)
-		if err != nil {
-			return shouldRetry(err), fmt.Errorf("failed to send move folder request: %w", err)
-		}
-		return shouldRetryHTTP(resp.StatusCode), nil
-	})
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	var result struct {
-		Status      int    `json:"status"`
-		Msg         string `json:"msg"`
-		SourceFldID string `json:"source_fld_id"`
-		DestFldID   string `json:"dest_fld_id"`
-	}
-
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return fmt.Errorf("error decoding move folder response: %w", err)
-	}
-
-	if result.Status != 200 {
-		return fmt.Errorf("error while moving folder: %s", result.Msg)
-	}
-
-	fs.Infof(f, "Successfully moved folder from %s to %s", folderPath, destFolderPath)
-	return nil
-}
-
-// moveFileToDestination moves a file to a different folder using file paths
-func (f *Fs) moveFileToDestination(ctx context.Context, filePath string, destinationFolderPath string) error {
-	filePath = "/" + strings.Trim(filePath, "/")
-	destinationFolderPath = "/" + strings.Trim(destinationFolderPath, "/")
-	filePath = f.fromStandardPath(filePath)
-	destinationFolderPath = f.fromStandardPath(destinationFolderPath)
-
-	apiURL := fmt.Sprintf("%s/file/set_folder?file_path=%s&destination_folder_path=%s&key=%s",
-		f.endpoint,
-		url.QueryEscape(filePath),
-		url.QueryEscape(destinationFolderPath),
-		url.QueryEscape(f.opt.Key),
-	)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create move request: %w", err)
-	}
-
-	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		var err error
-		resp, err = f.client.Do(req)
-		if err != nil {
-			return shouldRetry(err), fmt.Errorf("failed to send move request: %w", err)
-		}
-		return shouldRetryHTTP(resp.StatusCode), nil
-	})
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Fatalf(nil, "Failed to close response body: %v", err)
-		}
-	}()
-
-	var result struct {
-		Status int    `json:"status"`
-		Msg    string `json:"msg"`
-	}
-
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return fmt.Errorf("error decoding move response: %w", err)
-	}
-
-	if result.Status != 200 {
-		return fmt.Errorf("error while moving file: %s", result.Msg)
-	}
-
-	fs.Infof(f, "Successfully moved file from %s to folder %s", filePath, destinationFolderPath)
 	return nil
 }
 
@@ -504,7 +263,8 @@ func (f *Fs) getAccountInfo(ctx context.Context) (*api.AccountInfoResponse, erro
 	return &result, nil
 }
 
-func (f *Fs) getFileInfo(ctx context.Context, fileCode string) (*FileInfoResponse, error) {
+// getFileInfo retrieves file information based on file code
+func (f *Fs) getFileInfo(ctx context.Context, fileCode string) (*api.FileInfoResponse, error) {
 	u, _ := url.Parse(f.endpoint + "/file/info2")
 	q := u.Query()
 	q.Set("file_code", fileCode) // raw path — Go handles escaping properly here
@@ -540,7 +300,7 @@ func (f *Fs) getFileInfo(ctx context.Context, fileCode string) (*FileInfoRespons
 	if err != nil {
 		return nil, err
 	}
-	result := FileInfoResponse{}
+	result := api.FileInfoResponse{}
 
 	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&result); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)

@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -16,42 +15,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 )
 
-// ErrFileNotFound represent file not found error
-var ErrFileNotFound error = errors.New("file not found")
-
-var commandHelp = []fs.CommandHelp{{
-	Name:  "rename",
-	Short: "Rename a file in a FileLu directory",
-	Long: `
-For example:
-
-    rclone backend rename filelu:/file-path/hello.txt "hello_new_name.txt"
-`,
-}, {
-	Name:  "movefile",
-	Short: "Move file within the remote FileLu directory",
-	Long: `
-For example:
-
-    rclone backend movefile filelu:/source-path/hello.txt /destination-path/
-`,
-}, {
-	Name:  "movefolder",
-	Short: "Move a folder on remote FileLu",
-	Long: `
-For example:
-
-    rclone backend movefolder filelu:/sorce-fld-path/hello-folder/ /destication-fld-path/hello-folder/
-`,
-}, {
-	Name:  "renamefolder",
-	Short: "Rename a folder on FileLu",
-	Long: `
-For example:
-
-    rclone backend renamefolder filelu:/folder-path/folder-name "new-folder-name"
-`,
-}}
+// errFileNotFound represent file not found error
+var errFileNotFound error = errors.New("file not found")
 
 // getFileCode retrieves the file code for a given file path
 func (f *Fs) getFileCode(ctx context.Context, filePath string) (string, error) {
@@ -74,7 +39,7 @@ func (f *Fs) getFileCode(ctx context.Context, filePath string) (string, error) {
 		}
 	}
 
-	return "", ErrFileNotFound
+	return "", errFileNotFound
 }
 
 // Features returns the optional features of this Fs
@@ -120,8 +85,8 @@ func encodePath(path string) string {
 		if segment == "" {
 			continue // Skip empty segments to preserve leading/trailing slashes
 		}
-		// Encode the segment if it contains '/' or '?' or is not ASCII
-		if strings.Contains(segment, "/") || strings.Contains(segment, "?") || !isASCII(segment) {
+		// Encode the segment if it contains '%', '~' '/' or '?' or is not ASCII
+		if containsControlChars(segment) || strings.Contains(segment, "/") || strings.Contains(segment, "%") || strings.Contains(segment, "~") || strings.Contains(segment, "?") || !isASCII(segment) {
 			// Encode segment using Base64 URL encoding
 			encoded := base64.URLEncoding.EncodeToString([]byte(segment))
 			encoded = strings.ReplaceAll(encoded, "_", "_u_")
@@ -159,6 +124,15 @@ func isASCII(s string) bool {
 	return true
 }
 
+func containsControlChars(s string) bool {
+	for _, r := range s {
+		if r < 32 || r == 127 { // ASCII control characters range
+			return true
+		}
+	}
+	return false
+}
+
 // isFileCode checks if a string looks like a file code
 func isFileCode(s string) bool {
 	if len(s) != 12 {
@@ -180,11 +154,15 @@ func shouldRetryHTTP(code int) bool {
 	return code == 429 || code >= 500
 }
 
-// DeleteLocalFile deletes a file from the local file system.
-func DeleteLocalFile(localPath string) error {
-	err := os.Remove(localPath)
-	if err != nil {
-		return fmt.Errorf("failed to delete local file %q: %w", localPath, err)
+func rootSplit(absPath string) (bucket, bucketPath string) {
+	// No bucket
+	if absPath == "" {
+		return "", ""
 	}
-	return nil
+	slash := strings.IndexRune(absPath, '/')
+	// Bucket but no path
+	if slash < 0 {
+		return absPath, ""
+	}
+	return absPath[:slash], absPath[slash+1:]
 }
