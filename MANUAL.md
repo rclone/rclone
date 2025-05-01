@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Feb 14, 2025
+% May 01, 2025
 
 # NAME
 
@@ -2858,13 +2858,18 @@ Remote authorization. Used to authorize a remote or headless
 rclone from a machine with a browser - use as instructed by
 rclone config.
 
+The command requires 1-3 arguments:
+  - fs name (e.g., "drive", "s3", etc.)
+  - Either a base64 encoded JSON blob obtained from a previous rclone config session
+  - Or a client_id and client_secret pair obtained from the remote service
+
 Use --auth-no-open-browser to prevent rclone to open auth
 link in default browser automatically.
 
 Use --template to generate HTML output via a custom Go template. If a blank string is provided as an argument to this flag, the default template is used.
 
 ```
-rclone authorize [flags]
+rclone authorize <fs name> [base64_json_blob | client_id client_secret] [flags]
 ```
 
 ## Options
@@ -4232,6 +4237,8 @@ This doesn't transfer files that are identical on src and dst, testing
 by size and modification time or MD5SUM.  It doesn't delete files from
 the destination.
 
+*If you are looking to copy just a byte range of a file, please see 'rclone cat --offset X --count Y'*
+
 **Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics
 
 
@@ -4353,7 +4360,7 @@ Setting `--auto-filename` will attempt to automatically determine the
 filename from the URL (after any redirections) and used in the
 destination path.
 
-With `--auto-filename-header` in addition, if a specific filename is
+With `--header-filename` in addition, if a specific filename is
 set in HTTP headers, it will be used instead of the name from the URL.
 With `--print-filename` in addition, the resulting file name will be
 printed.
@@ -5861,11 +5868,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -7123,11 +7130,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -8251,11 +8258,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -8806,11 +8813,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -9363,11 +9370,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -10101,11 +10108,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -10778,11 +10785,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -11427,7 +11434,7 @@ docs](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)).
 access.
 
 Please note that some clients may require HTTPS endpoints. See [the
-SSL docs](#ssl-tls) for more information.
+SSL docs](#tls-ssl) for more information.
 
 This command uses the [VFS directory cache](#vfs-virtual-file-system).
 All the functionality will work with `--vfs-cache-mode off`. Using
@@ -11734,11 +11741,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -12328,11 +12335,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -13109,11 +13116,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -21097,7 +21104,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.69.1")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.69.2")
 ```
 
 
@@ -22141,7 +22148,7 @@ on the host.
 The _FUSE_ driver is a prerequisite for rclone mounting and should be
 installed on host:
 ```
-sudo apt-get -y install fuse
+sudo apt-get -y install fuse3
 ```
 
 Create two directories required by rclone docker plugin:
@@ -25783,7 +25790,8 @@ tries to access data from the glacier storage class you will see an error like b
     2017/09/11 19:07:43 Failed to sync: failed to open source object: Object in GLACIER, restore first: path/to/file
 
 In this case you need to [restore](http://docs.aws.amazon.com/AmazonS3/latest/user-guide/restore-archived-objects.html)
-the object(s) in question before using rclone.
+the object(s) in question before accessing object contents.
+The [restore](#restore) section below shows how to do this with rclone.
 
 Note that rclone only speaks the S3 API it does not speak the Glacier
 Vault API, so rclone cannot directly access Glacier Vaults.
@@ -27186,7 +27194,7 @@ or from INTELLIGENT-TIERING Archive Access / Deep Archive Access tier to the Fre
 
 Usage Examples:
 
-    rclone backend restore s3:bucket/path/to/object -o priority=PRIORITY -o lifetime=DAYS
+    rclone backend restore s3:bucket/path/to/ --include /object -o priority=PRIORITY -o lifetime=DAYS
     rclone backend restore s3:bucket/path/to/directory -o priority=PRIORITY -o lifetime=DAYS
     rclone backend restore s3:bucket -o priority=PRIORITY -o lifetime=DAYS
     rclone backend restore s3:bucket/path/to/directory -o priority=PRIORITY
@@ -31592,7 +31600,7 @@ machine with no Internet browser available.
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from Box. This only runs from the moment it opens
 your browser to the moment you get back the verification code.  This
-is on `http://127.0.0.1:53682/` and this it may require you to unblock
+is on `http://127.0.0.1:53682/` and this may require you to unblock
 it temporarily if you are running a host firewall.
 
 Once configured you can then use `rclone` like this,
@@ -53113,7 +53121,8 @@ Properties:
 
 On some SFTP servers (e.g. Synology) the paths are different
 for SSH and SFTP so the hashes can't be calculated properly.
-For them using `disable_hashcheck` is a good idea.
+You can either use [`--sftp-path-override`](#--sftp-path-override)
+or [`disable_hashcheck`](#--sftp-disable-hashcheck).
 
 The only ssh agent supported under Windows is Putty's pageant.
 
@@ -56649,6 +56658,50 @@ Options:
 
 # Changelog
 
+## v1.69.2 - 2025-05-01
+
+[See commits](https://github.com/rclone/rclone/compare/v1.69.1...v1.69.2)
+
+* Bug fixes
+    * accounting: Fix percentDiff calculation -- (Anagh Kumar Baranwal)
+    * build
+        * Update github.com/golang-jwt/jwt/v4 from 4.5.1 to 4.5.2 to fix CVE-2025-30204 (dependabot[bot])
+        * Update github.com/golang-jwt/jwt/v5 from 5.2.1 to 5.2.2 to fix CVE-2025-30204 (dependabot[bot])
+        * Update golang.org/x/crypto to v0.35.0 to fix CVE-2025-22869 (Nick Craig-Wood)
+        * Update golang.org/x/net from 0.36.0 to 0.38.0 to fix CVE-2025-22870 (dependabot[bot])
+        * Update golang.org/x/net to 0.36.0. to fix CVE-2025-22869 (dependabot[bot])
+        * Stop building with go < go1.23 as security updates forbade it (Nick Craig-Wood)
+        * Fix docker plugin build (Anagh Kumar Baranwal)
+    * cmd: Fix crash if rclone is invoked without any arguments (Janne Hellsten)
+    * config: Read configuration passwords from stdin even when terminated with EOF (Samantha Bowen)
+    * doc fixes (Andrew Kreimer, Danny Garside, eccoisle, Ed Craig-Wood, emyarod, jack, Jugal Kishore, Markus Gerstel, Michael Kebe, Nick Craig-Wood, simonmcnair, simwai, Zachary Vorhies)
+    * fs: Fix corruption of SizeSuffix with "B" suffix in config (eg --min-size) (Nick Craig-Wood)
+    * lib/http: Fix race between Serve() and Shutdown() (Nick Craig-Wood)
+    * object: Fix memory object out of bounds Seek (Nick Craig-Wood)
+    * operations: Fix call fmt.Errorf with wrong err (alingse)
+    * rc
+        * Disable the metrics server when running `rclone rc` (hiddenmarten)
+        * Fix debug/* commands not being available over unix sockets (Nick Craig-Wood)
+    * serve nfs: Fix unlikely crash (Nick Craig-Wood)
+    * stats: Fix the speed not getting updated after a pause in the processing (Anagh Kumar Baranwal)
+    * sync
+        * Fix cpu spinning when empty directory finding with leading slashes (Nick Craig-Wood)
+        * Copy dir modtimes even when copyEmptySrcDirs is false (ll3006)
+* VFS
+    * Fix directory cache serving stale data (Lorenz Brun)
+    * Fix inefficient directory caching when directory reads are slow (huanghaojun)
+    * Fix integration test failures (Nick Craig-Wood)
+* Drive
+    * Metadata: fix error when setting copy-requires-writer-permission on a folder (Nick Craig-Wood)
+* Dropbox
+    * Retry link without expiry (Dave Vasilevsky)
+* HTTP
+    * Correct root if definitely pointing to a file (nielash)
+* Iclouddrive
+    * Fix so created files are writable (Ben Alex)
+* Onedrive
+    * Fix metadata ordering in permissions (Nick Craig-Wood)
+
 ## v1.69.1 - 2025-02-14
 
 [See commits](https://github.com/rclone/rclone/compare/v1.69.0...v1.69.1)
@@ -56704,7 +56757,7 @@ Options:
     * fs: Make `--links` flag global and add new `--local-links` and `--vfs-links` flags (Nick Craig-Wood)
     * http servers: Disable automatic authentication skipping for unix sockets in http servers (Moises Lima)
         * This was making it impossible to use unix sockets with an proxy
-        * This might now cause rclone to need authenticaton where it didn't before
+        * This might now cause rclone to need authentication where it didn't before
     * oauthutil: add support for OAuth client credential flow (Martin Hassack, Nick Craig-Wood)
     * operations: make log messages consistent for mkdir/rmdir at INFO level (Nick Craig-Wood)
     * rc: Add `relative` to [vfs/queue-set-expiry](https://rclone.org/rc/#vfs-queue-set-expiry) (Nick Craig-Wood)
@@ -57382,7 +57435,7 @@ instead of of `--size-only`, when `check` is not available.
         * Update all dependencies (Nick Craig-Wood)
         * Refactor version info and icon resource handling on windows (albertony)
     * doc updates (albertony, alfish2000, asdffdsazqqq, Dimitri Papadopoulos, Herby Gillot, Joda Stößer, Manoj Ghosh, Nick Craig-Wood)
-    * Implement `--metadata-mapper` to transform metatadata with a user supplied program (Nick Craig-Wood)
+    * Implement `--metadata-mapper` to transform metadata with a user supplied program (Nick Craig-Wood)
     * Add `ChunkWriterDoesntSeek` feature flag and set it for b2 (Nick Craig-Wood)
     * lib/http: Export basic go string functions for use in `--template` (Gabriel Espinoza)
     * makefile: Use POSIX compatible install arguments (Mina Galić)
@@ -57497,7 +57550,7 @@ instead of of `--size-only`, when `check` is not available.
     * Fix "fatal error: concurrent map writes" (Nick Craig-Wood)
 * B2
     * Fix multipart upload: corrupted on transfer: sizes differ XXX vs 0 (Nick Craig-Wood)
-    * Fix locking window when getting mutipart upload URL (Nick Craig-Wood)
+    * Fix locking window when getting multipart upload URL (Nick Craig-Wood)
     * Fix server side copies greater than 4GB (Nick Craig-Wood)
     * Fix chunked streaming uploads (Nick Craig-Wood)
     * Reduce default `--b2-upload-concurrency` to 4 to reduce memory usage (Nick Craig-Wood)
@@ -63404,7 +63457,6 @@ put them back in again.` >}}
   * ben-ba <benjamin.brauner@gmx.de>
   * Eli Orzitzer <e_orz@yahoo.com>
   * Anthony Metzidis <anthony.metzidis@gmail.com>
-  * emyarod <afw5059@gmail.com>
   * keongalvin <keongalvin@gmail.com>
   * rarspace01 <rarspace01@users.noreply.github.com>
   * Paul Stern <paulstern45@gmail.com>

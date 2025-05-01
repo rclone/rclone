@@ -5,6 +5,7 @@
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <meta name="author" content="Nick Craig-Wood" />
+  <meta name="dcterms.date" content="2025-05-01" />
   <title>rclone(1) User Manual</title>
   <style>
     code{white-space: pre-wrap;}
@@ -81,7 +82,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Feb 14, 2025</p>
+<p class="date">May 01, 2025</p>
 </header>
 <h1 id="name">NAME</h1>
 <p>rclone - manage files on cloud storage</p>
@@ -1694,9 +1695,10 @@ Other:   8849156022</code></pre>
 <p>Remote authorization.</p>
 <h2 id="synopsis-19">Synopsis</h2>
 <p>Remote authorization. Used to authorize a remote or headless rclone from a machine with a browser - use as instructed by rclone config.</p>
+<p>The command requires 1-3 arguments: - fs name (e.g., "drive", "s3", etc.) - Either a base64 encoded JSON blob obtained from a previous rclone config session - Or a client_id and client_secret pair obtained from the remote service</p>
 <p>Use --auth-no-open-browser to prevent rclone to open auth link in default browser automatically.</p>
 <p>Use --template to generate HTML output via a custom Go template. If a blank string is provided as an argument to this flag, the default template is used.</p>
-<pre><code>rclone authorize [flags]</code></pre>
+<pre><code>rclone authorize &lt;fs name&gt; [base64_json_blob | client_id client_secret] [flags]</code></pre>
 <h2 id="options-19">Options</h2>
 <pre><code>      --auth-no-open-browser   Do not automatically open auth link in default browser
   -h, --help                   help for authorize
@@ -2421,6 +2423,7 @@ if src is directory
     copy it to dst, overwriting existing files if they exist
     see copy command for full details</code></pre>
 <p>This doesn't transfer files that are identical on src and dst, testing by size and modification time or MD5SUM. It doesn't delete files from the destination.</p>
+<p><em>If you are looking to copy just a byte range of a file, please see 'rclone cat --offset X --count Y'</em></p>
 <p><strong>Note</strong>: Use the <code>-P</code>/<code>--progress</code> flag to view real-time transfer statistics</p>
 <pre><code>rclone copyto source:path dest:path [flags]</code></pre>
 <h2 id="options-48">Options</h2>
@@ -2503,7 +2506,7 @@ if src is directory
 <h2 id="synopsis-42">Synopsis</h2>
 <p>Download a URL's content and copy it to the destination without saving it in temporary storage.</p>
 <p>Setting <code>--auto-filename</code> will attempt to automatically determine the filename from the URL (after any redirections) and used in the destination path.</p>
-<p>With <code>--auto-filename-header</code> in addition, if a specific filename is set in HTTP headers, it will be used instead of the name from the URL. With <code>--print-filename</code> in addition, the resulting file name will be printed.</p>
+<p>With <code>--header-filename</code> in addition, if a specific filename is set in HTTP headers, it will be used instead of the name from the URL. With <code>--print-filename</code> in addition, the resulting file name will be printed.</p>
 <p>Setting <code>--no-clobber</code> will prevent overwriting file on the destination if there is one with the same name.</p>
 <p>Setting <code>--stdout</code> or making the output file name <code>-</code> will cause the output to be written to standard output.</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
@@ -3198,7 +3201,7 @@ WantedBy=multi-user.target</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off">--vfs-cache-mode off</h3>
@@ -3737,7 +3740,7 @@ WantedBy=multi-user.target</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-1">--vfs-cache-mode off</h3>
@@ -4321,7 +4324,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-2">--vfs-cache-mode off</h3>
@@ -4544,7 +4547,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-3">--vfs-cache-mode off</h3>
@@ -4788,7 +4791,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-4">--vfs-cache-mode off</h3>
@@ -5181,7 +5184,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-5">--vfs-cache-mode off</h3>
@@ -5455,7 +5458,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-6">--vfs-cache-mode off</h3>
@@ -5739,7 +5742,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p><code>serve s3</code> is considered <strong>Experimental</strong> so use with care.</p>
 <p>S3 server supports Signature Version 4 authentication. Just use <code>--auth-key accessKey,secretKey</code> and set the <code>Authorization</code> header correctly in the request. (See the <a href="https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html">AWS docs</a>).</p>
 <p><code>--auth-key</code> can be repeated for multiple auth pairs. If <code>--auth-key</code> is not provided then <code>serve s3</code> will allow anonymous access.</p>
-<p>Please note that some clients may require HTTPS endpoints. See <a href="#ssl-tls">the SSL docs</a> for more information.</p>
+<p>Please note that some clients may require HTTPS endpoints. See <a href="#tls-ssl">the SSL docs</a> for more information.</p>
 <p>This command uses the <a href="#vfs-virtual-file-system">VFS directory cache</a>. All the functionality will work with <code>--vfs-cache-mode off</code>. Using <code>--vfs-cache-mode full</code> (or <code>writes</code>) can be used to cache objects locally to improve performance.</p>
 <p>Use <code>--force-path-style=false</code> if you want to use the bucket name as a part of the hostname (such as mybucket.local)</p>
 <p>Use <code>--etag-hash</code> if you want to change the hash uses for the <code>ETag</code>. Note that using anything other than <code>MD5</code> (the default) is likely to cause problems for S3 clients which rely on the Etag being the MD5.</p>
@@ -5859,7 +5862,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-7">--vfs-cache-mode off</h3>
@@ -6108,7 +6111,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-8">--vfs-cache-mode off</h3>
@@ -6513,7 +6516,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>If run with <code>-vv</code> rclone will print the location of the file cache. The files are stored in the user cache file area which is OS dependent but can be controlled with <code>--cache-dir</code> or setting the appropriate environment variable.</p>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for <code>--vfs-write-back</code> seconds. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
-<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-size</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
+<p>If using <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> note that the cache may exceed these quotas for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache. When <code>--vfs-cache-max-size</code> or <code>--vfs-cache-min-free-space</code> is exceeded, rclone will attempt to evict the least accessed files from the cache first. rclone will start with files that haven't been accessed for the longest. This cache flushing strategy is efficient and more relevant files are likely to remain cached.</p>
 <p>The <code>--vfs-cache-max-age</code> will evict files from the cache after the set time since last access has passed. The default value of 1 hour will start evicting files from cache that haven't been accessed for 1 hour. When a cached file is accessed the 1 hour timer is reset to 0 and will wait for 1 more hour before evicting. Specify the time with standard notation, s, m, h, d, w .</p>
 <p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-9">--vfs-cache-mode off</h3>
@@ -12289,7 +12292,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.69.1&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.69.2&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -13238,7 +13241,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <p>In the first example we will use the <a href="https://rclone.org/sftp/">SFTP</a> rclone volume with Docker engine on a standalone Ubuntu machine.</p>
 <p>Start from <a href="https://docs.docker.com/engine/install/">installing Docker</a> on the host.</p>
 <p>The <em>FUSE</em> driver is a prerequisite for rclone mounting and should be installed on host:</p>
-<pre><code>sudo apt-get -y install fuse</code></pre>
+<pre><code>sudo apt-get -y install fuse3</code></pre>
 <p>Create two directories required by rclone docker plugin:</p>
 <pre><code>sudo mkdir -p /var/lib/docker-plugins/rclone/config
 sudo mkdir -p /var/lib/docker-plugins/rclone/cache</code></pre>
@@ -15152,7 +15155,7 @@ $ rclone -q --s3-versions ls s3:cleanup-test
 <h3 id="glacier-and-glacier-deep-archive">Glacier and Glacier Deep Archive</h3>
 <p>You can upload objects using the glacier storage class or transition them to glacier using a <a href="http://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-lifecycle.html">lifecycle policy</a>. The bucket can still be synced or copied into normally, but if rclone tries to access data from the glacier storage class you will see an error like below.</p>
 <pre><code>2017/09/11 19:07:43 Failed to sync: failed to open source object: Object in GLACIER, restore first: path/to/file</code></pre>
-<p>In this case you need to <a href="http://docs.aws.amazon.com/AmazonS3/latest/user-guide/restore-archived-objects.html">restore</a> the object(s) in question before using rclone.</p>
+<p>In this case you need to <a href="http://docs.aws.amazon.com/AmazonS3/latest/user-guide/restore-archived-objects.html">restore</a> the object(s) in question before accessing object contents. The <a href="#restore">restore</a> section below shows how to do this with rclone.</p>
 <p>Note that rclone only speaks the S3 API it does not speak the Glacier Vault API, so rclone cannot directly access Glacier Vaults.</p>
 <h3 id="object-lock-enabled-s3-bucket">Object-lock enabled S3 bucket</h3>
 <p>According to AWS's <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-overview.html#object-lock-permission">documentation on S3 Object Lock</a>:</p>
@@ -16512,7 +16515,7 @@ Windows:   &quot;%USERPROFILE%\.aws\credentials&quot;</code></pre>
 <pre><code>rclone backend restore remote: [options] [&lt;arguments&gt;+]</code></pre>
 <p>This command can be used to restore one or more objects from GLACIER to normal storage or from INTELLIGENT-TIERING Archive Access / Deep Archive Access tier to the Frequent Access tier.</p>
 <p>Usage Examples:</p>
-<pre><code>rclone backend restore s3:bucket/path/to/object -o priority=PRIORITY -o lifetime=DAYS
+<pre><code>rclone backend restore s3:bucket/path/to/ --include /object -o priority=PRIORITY -o lifetime=DAYS
 rclone backend restore s3:bucket/path/to/directory -o priority=PRIORITY -o lifetime=DAYS
 rclone backend restore s3:bucket -o priority=PRIORITY -o lifetime=DAYS
 rclone backend restore s3:bucket/path/to/directory -o priority=PRIORITY</code></pre>
@@ -19889,7 +19892,7 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup docs</a> for how to set it up on a machine with no Internet browser available.</p>
-<p>Note that rclone runs a webserver on your local machine to collect the token as returned from Box. This only runs from the moment it opens your browser to the moment you get back the verification code. This is on <code>http://127.0.0.1:53682/</code> and this it may require you to unblock it temporarily if you are running a host firewall.</p>
+<p>Note that rclone runs a webserver on your local machine to collect the token as returned from Box. This only runs from the moment it opens your browser to the moment you get back the verification code. This is on <code>http://127.0.0.1:53682/</code> and this may require you to unblock it temporarily if you are running a host firewall.</p>
 <p>Once configured you can then use <code>rclone</code> like this,</p>
 <p>List directories in top level of your Box</p>
 <pre><code>rclone lsd remote:</code></pre>
@@ -35553,7 +35556,7 @@ server_command = sudo /usr/libexec/openssh/sftp-server</code></pre>
 <li>Required: false</li>
 </ul>
 <h2 id="limitations-36">Limitations</h2>
-<p>On some SFTP servers (e.g. Synology) the paths are different for SSH and SFTP so the hashes can't be calculated properly. For them using <code>disable_hashcheck</code> is a good idea.</p>
+<p>On some SFTP servers (e.g. Synology) the paths are different for SSH and SFTP so the hashes can't be calculated properly. You can either use <a href="#--sftp-path-override"><code>--sftp-path-override</code></a> or <a href="#--sftp-disable-hashcheck"><code>disable_hashcheck</code></a>.</p>
 <p>The only ssh agent supported under Windows is Putty's pageant.</p>
 <p>The Go SSH library disables the use of the aes128-cbc cipher by default, due to security concerns. This can be re-enabled on a per-connection basis by setting the <code>use_insecure_cipher</code> setting in the configuration file to <code>true</code>. Further details on the insecurity of this cipher can be found <a href="http://www.isg.rhul.ac.uk/~kp/SandPfinal.pdf">in this paper</a>.</p>
 <p>SFTP isn't supported under plan9 until <a href="https://github.com/pkg/sftp/issues/156">this issue</a> is fixed.</p>
@@ -38311,6 +38314,69 @@ $ tree /tmp/c
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.69.2---2025-05-01">v1.69.2 - 2025-05-01</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.69.1...v1.69.2">See commits</a></p>
+<ul>
+<li>Bug fixes
+<ul>
+<li>accounting: Fix percentDiff calculation -- (Anagh Kumar Baranwal)</li>
+<li>build
+<ul>
+<li>Update github.com/golang-jwt/jwt/v4 from 4.5.1 to 4.5.2 to fix CVE-2025-30204 (dependabot[bot])</li>
+<li>Update github.com/golang-jwt/jwt/v5 from 5.2.1 to 5.2.2 to fix CVE-2025-30204 (dependabot[bot])</li>
+<li>Update golang.org/x/crypto to v0.35.0 to fix CVE-2025-22869 (Nick Craig-Wood)</li>
+<li>Update golang.org/x/net from 0.36.0 to 0.38.0 to fix CVE-2025-22870 (dependabot[bot])</li>
+<li>Update golang.org/x/net to 0.36.0. to fix CVE-2025-22869 (dependabot[bot])</li>
+<li>Stop building with go &lt; go1.23 as security updates forbade it (Nick Craig-Wood)</li>
+<li>Fix docker plugin build (Anagh Kumar Baranwal)</li>
+</ul></li>
+<li>cmd: Fix crash if rclone is invoked without any arguments (Janne Hellsten)</li>
+<li>config: Read configuration passwords from stdin even when terminated with EOF (Samantha Bowen)</li>
+<li>doc fixes (Andrew Kreimer, Danny Garside, eccoisle, Ed Craig-Wood, emyarod, jack, Jugal Kishore, Markus Gerstel, Michael Kebe, Nick Craig-Wood, simonmcnair, simwai, Zachary Vorhies)</li>
+<li>fs: Fix corruption of SizeSuffix with "B" suffix in config (eg --min-size) (Nick Craig-Wood)</li>
+<li>lib/http: Fix race between Serve() and Shutdown() (Nick Craig-Wood)</li>
+<li>object: Fix memory object out of bounds Seek (Nick Craig-Wood)</li>
+<li>operations: Fix call fmt.Errorf with wrong err (alingse)</li>
+<li>rc
+<ul>
+<li>Disable the metrics server when running <code>rclone rc</code> (hiddenmarten)</li>
+<li>Fix debug/* commands not being available over unix sockets (Nick Craig-Wood)</li>
+</ul></li>
+<li>serve nfs: Fix unlikely crash (Nick Craig-Wood)</li>
+<li>stats: Fix the speed not getting updated after a pause in the processing (Anagh Kumar Baranwal)</li>
+<li>sync
+<ul>
+<li>Fix cpu spinning when empty directory finding with leading slashes (Nick Craig-Wood)</li>
+<li>Copy dir modtimes even when copyEmptySrcDirs is false (ll3006)</li>
+</ul></li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Fix directory cache serving stale data (Lorenz Brun)</li>
+<li>Fix inefficient directory caching when directory reads are slow (huanghaojun)</li>
+<li>Fix integration test failures (Nick Craig-Wood)</li>
+</ul></li>
+<li>Drive
+<ul>
+<li>Metadata: fix error when setting copy-requires-writer-permission on a folder (Nick Craig-Wood)</li>
+</ul></li>
+<li>Dropbox
+<ul>
+<li>Retry link without expiry (Dave Vasilevsky)</li>
+</ul></li>
+<li>HTTP
+<ul>
+<li>Correct root if definitely pointing to a file (nielash)</li>
+</ul></li>
+<li>Iclouddrive
+<ul>
+<li>Fix so created files are writable (Ben Alex)</li>
+</ul></li>
+<li>Onedrive
+<ul>
+<li>Fix metadata ordering in permissions (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.69.1---2025-02-14">v1.69.1 - 2025-02-14</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.69.0...v1.69.1">See commits</a></p>
 <ul>
@@ -38390,7 +38456,7 @@ $ tree /tmp/c
 <li>http servers: Disable automatic authentication skipping for unix sockets in http servers (Moises Lima)
 <ul>
 <li>This was making it impossible to use unix sockets with an proxy</li>
-<li>This might now cause rclone to need authenticaton where it didn't before</li>
+<li>This might now cause rclone to need authentication where it didn't before</li>
 </ul></li>
 <li>oauthutil: add support for OAuth client credential flow (Martin Hassack, Nick Craig-Wood)</li>
 <li>operations: make log messages consistent for mkdir/rmdir at INFO level (Nick Craig-Wood)</li>
@@ -39430,7 +39496,7 @@ $ tree /tmp/c
 <li>Refactor version info and icon resource handling on windows (albertony)</li>
 </ul></li>
 <li>doc updates (albertony, alfish2000, asdffdsazqqq, Dimitri Papadopoulos, Herby Gillot, Joda Stößer, Manoj Ghosh, Nick Craig-Wood)</li>
-<li>Implement <code>--metadata-mapper</code> to transform metatadata with a user supplied program (Nick Craig-Wood)</li>
+<li>Implement <code>--metadata-mapper</code> to transform metadata with a user supplied program (Nick Craig-Wood)</li>
 <li>Add <code>ChunkWriterDoesntSeek</code> feature flag and set it for b2 (Nick Craig-Wood)</li>
 <li>lib/http: Export basic go string functions for use in <code>--template</code> (Gabriel Espinoza)</li>
 <li>makefile: Use POSIX compatible install arguments (Mina Galić)</li>
@@ -39605,7 +39671,7 @@ $ tree /tmp/c
 <li>B2
 <ul>
 <li>Fix multipart upload: corrupted on transfer: sizes differ XXX vs 0 (Nick Craig-Wood)</li>
-<li>Fix locking window when getting mutipart upload URL (Nick Craig-Wood)</li>
+<li>Fix locking window when getting multipart upload URL (Nick Craig-Wood)</li>
 <li>Fix server side copies greater than 4GB (Nick Craig-Wood)</li>
 <li>Fix chunked streaming uploads (Nick Craig-Wood)</li>
 <li>Reduce default <code>--b2-upload-concurrency</code> to 4 to reduce memory usage (Nick Craig-Wood)</li>
@@ -47606,7 +47672,6 @@ THE SOFTWARE.</code></pre>
 <li>ben-ba <a href="mailto:benjamin.brauner@gmx.de" class="email">benjamin.brauner@gmx.de</a></li>
 <li>Eli Orzitzer <a href="mailto:e_orz@yahoo.com" class="email">e_orz@yahoo.com</a></li>
 <li>Anthony Metzidis <a href="mailto:anthony.metzidis@gmail.com" class="email">anthony.metzidis@gmail.com</a></li>
-<li>emyarod <a href="mailto:afw5059@gmail.com" class="email">afw5059@gmail.com</a></li>
 <li>keongalvin <a href="mailto:keongalvin@gmail.com" class="email">keongalvin@gmail.com</a></li>
 <li>rarspace01 <a href="mailto:rarspace01@users.noreply.github.com" class="email">rarspace01@users.noreply.github.com</a></li>
 <li>Paul Stern <a href="mailto:paulstern45@gmail.com" class="email">paulstern45@gmail.com</a></li>

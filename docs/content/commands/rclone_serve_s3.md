@@ -27,7 +27,7 @@ docs](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)).
 access.
 
 Please note that some clients may require HTTPS endpoints. See [the
-SSL docs](#ssl-tls) for more information.
+SSL docs](#tls-ssl) for more information.
 
 This command uses the [VFS directory cache](#vfs-virtual-file-system).
 All the functionality will work with `--vfs-cache-mode off`. Using
@@ -334,11 +334,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
