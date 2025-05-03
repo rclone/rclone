@@ -978,6 +978,25 @@ func (f *Fs) getRootID(ctx context.Context) (string, error) {
 	return info.Id, nil
 }
 
+// Replaces `\` to `\\` and `'` to `\'`
+// Escaping backslashes requirement is not documented
+// See https://stackoverflow.com/a/32310092
+func escapeSingleQuotesAndBackslashes(s string) string {
+	n := strings.Count(s, "\\") + strings.Count(s, "'")
+	var b strings.Builder
+	b.Grow(len(s) + n)
+	start := 0
+	for pos, c := range s {
+		if c == '\\' || c == '\'' {
+			b.WriteString(s[start:pos])
+			b.Write([]byte{'\\', byte(c)})
+			start = pos + 1
+		}
+	}
+	b.WriteString(s[start:])
+	return b.String()
+}
+
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
@@ -1032,8 +1051,7 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	if title != "" {
 		searchTitle := f.opt.Enc.FromStandardName(title)
 		// Escaping the backslash isn't documented but seems to work
-		searchTitle = strings.ReplaceAll(searchTitle, `\`, `\\`)
-		searchTitle = strings.ReplaceAll(searchTitle, `'`, `\'`)
+		searchTitle = escapeSingleQuotesAndBackslashes(searchTitle)
 
 		var titleQuery bytes.Buffer
 		_, _ = fmt.Fprintf(&titleQuery, "(name='%s'", searchTitle)
