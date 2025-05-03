@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/lib/structs"
+	"github.com/rclone/rclone/lib/wincrypt"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -68,6 +69,17 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 	}
 
 	// Load client certs
+	if ci.WinCrypt != "" {
+		crypts, err := wincrypt.LoadWinCryptCerts(ci.WinCrypt)
+		if err != nil || crypts == nil {
+			fs.Panicf(nil, "Failed to load WinCrypt certificate: %v", err)
+		} else {
+			for _, crypt := range crypts {
+				t.TLSClientConfig.Certificates = append(t.TLSClientConfig.Certificates, crypt.TLSCertificate())
+			}
+		}
+	}
+
 	if ci.ClientCert != "" || ci.ClientKey != "" {
 		if ci.ClientCert == "" || ci.ClientKey == "" {
 			fs.Fatalf(nil, "Both --client-cert and --client-key must be set")
@@ -83,7 +95,7 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 				fs.Fatalf(nil, "Failed to parse the certificate")
 			}
 		}
-		t.TLSClientConfig.Certificates = []tls.Certificate{cert}
+		t.TLSClientConfig.Certificates = append(t.TLSClientConfig.Certificates, cert)
 	}
 
 	// Load CA certs
@@ -297,20 +309,22 @@ func (t *Transport) reloadCertificates() {
 		return
 	}
 
-	cert, err := tls.LoadX509KeyPair(t.clientCert, t.clientKey)
-	if err != nil {
-		fs.Fatalf(nil, "Failed to load --client-cert/--client-key pair: %v", err)
-	}
-	// Check if we need to parse the certificate again, we need it
-	// for checking the expiration date
-	if cert.Leaf == nil {
-		// Leaf is always the first certificate
-		cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+	if t.clientCert != "" && t.clientKey != "" {
+		cert, err := tls.LoadX509KeyPair(t.clientCert, t.clientKey)
 		if err != nil {
-			fs.Fatalf(nil, "Failed to parse the certificate")
+			fs.Fatalf(nil, "Failed to load --client-cert/--client-key pair: %v", err)
 		}
+		// Check if we need to parse the certificate again, we need it
+		// for checking the expiration date
+		if cert.Leaf == nil {
+			// Leaf is always the first certificate
+			cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+			if err != nil {
+				fs.Fatalf(nil, "Failed to parse the certificate")
+			}
+		}
+		t.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
-	t.TLSClientConfig.Certificates = []tls.Certificate{cert}
 }
 
 // RoundTrip implements the RoundTripper interface.

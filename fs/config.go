@@ -570,6 +570,10 @@ uploads or downloads to limit the number of total connections.
 `, "|", "`"),
 	Default:  0,
 	Advanced: true,
+}, {
+	Name:   "wincrypt",
+	Help:   "Load certificate/key pairs from Windows certificate store for mutual TLS authentication",
+	Groups: "Networking",
 }}
 
 // ConfigInfo is filesystem config options
@@ -681,6 +685,7 @@ type ConfigInfo struct {
 	PartialSuffix              string            `config:"partial_suffix"`
 	MetadataMapper             SpaceSepList      `config:"metadata_mapper"`
 	MaxConnections             int               `config:"max_connections"`
+	WinCrypt                   string            `config:"wincrypt"`
 }
 
 func init() {
