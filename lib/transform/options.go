@@ -3,7 +3,9 @@ package transform
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -40,6 +42,13 @@ func SetOptions(ctx context.Context, s ...string) (err error) {
 	return err
 }
 
+// cache to minimize re-parsing
+var (
+	cachedNameTransform []string
+	cachedOpt           []transform
+	cacheLock           sync.Mutex
+)
+
 // getOptions sets the options from flags passed in.
 func getOptions(ctx context.Context) (opt []transform, err error) {
 	if !Transforming(ctx) {
@@ -47,6 +56,12 @@ func getOptions(ctx context.Context) (opt []transform, err error) {
 	}
 
 	ci := fs.GetConfig(ctx)
+
+	// return cached opt if available
+	if cachedNameTransform != nil && slices.Equal(ci.NameTransform, cachedNameTransform) {
+		return cachedOpt, nil
+	}
+
 	for _, transform := range ci.NameTransform {
 		t, err := parse(transform)
 		if err != nil {
@@ -54,8 +69,15 @@ func getOptions(ctx context.Context) (opt []transform, err error) {
 		}
 		opt = append(opt, t)
 	}
-	// TODO: should we store opt in ci and skip re-parsing when present, for efficiency?
+	updateCache(ci.NameTransform, opt)
 	return opt, nil
+}
+
+func updateCache(nt []string, o []transform) {
+	cacheLock.Lock()
+	cachedNameTransform = slices.Clone(nt)
+	cachedOpt = o
+	cacheLock.Unlock()
 }
 
 // parse a single instance of --name-transform
