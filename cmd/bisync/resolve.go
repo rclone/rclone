@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"mime"
-	"path"
 	"strings"
 	"time"
 
@@ -13,6 +11,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/terminal"
+	"github.com/rclone/rclone/lib/transform"
 )
 
 // Prefer describes strategies for resolving sync conflicts
@@ -130,6 +129,7 @@ type (
 		path2 namePair
 	}
 )
+
 type namePair struct {
 	oldName string
 	newName string
@@ -240,24 +240,7 @@ func SuffixName(ctx context.Context, remote, suffix string) string {
 	}
 	ci := fs.GetConfig(ctx)
 	if ci.SuffixKeepExtension {
-		var (
-			base  = remote
-			exts  = ""
-			first = true
-			ext   = path.Ext(remote)
-		)
-		for ext != "" {
-			// Look second and subsequent extensions in mime types.
-			// If they aren't found then don't keep it as an extension.
-			if !first && mime.TypeByExtension(ext) == "" {
-				break
-			}
-			base = base[:len(base)-len(ext)]
-			exts = ext + exts
-			first = false
-			ext = path.Ext(base)
-		}
-		return base + suffix + exts
+		return transform.SuffixKeepExtension(remote, suffix)
 	}
 	return remote + suffix
 }

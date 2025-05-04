@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/text/unicode/norm"
 )
@@ -86,6 +87,7 @@ func (m *March) srcKey(entry fs.DirEntry) string {
 		return ""
 	}
 	name := path.Base(entry.Remote())
+	name = transform.Path(name, fs.DirEntryType(entry) == "directory")
 	for _, transform := range m.transforms {
 		name = transform(name)
 	}
@@ -94,7 +96,14 @@ func (m *March) srcKey(entry fs.DirEntry) string {
 
 // dstKey turns a directory entry into a sort key using the defined transforms.
 func (m *March) dstKey(entry fs.DirEntry) string {
-	return m.srcKey(entry) // FIXME actually do something different
+	if entry == nil {
+		return ""
+	}
+	name := path.Base(entry.Remote())
+	for _, transform := range m.transforms {
+		name = transform(name)
+	}
+	return name
 }
 
 // makeListDir makes constructs a listing function for the given fs
@@ -454,7 +463,6 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 				noDst:     true,
 			})
 		}
-
 	}, func(dst fs.DirEntry) {
 		recurse := m.Callback.DstOnly(dst)
 		if recurse && job.dstDepth > 0 {

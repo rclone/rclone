@@ -39,6 +39,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/text/unicode/norm"
 )
@@ -424,6 +425,8 @@ func MoveTransfer(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string,
 
 // move - see Move for help
 func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object, isTransfer bool) (newDst fs.Object, err error) {
+	origRemote := remote // avoid double-transform on fallback to copy
+	remote = transform.Path(remote, false)
 	ci := fs.GetConfig(ctx)
 	var tr *accounting.Transfer
 	if isTransfer {
@@ -447,7 +450,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && (fdst.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
 		// Delete destination if it exists and is not the same file as src (could be same file while seemingly different if the remote is case insensitive)
 		if dst != nil {
-			remote = dst.Remote()
+			remote = transform.Path(dst.Remote(), false)
 			if !SameObject(src, dst) {
 				err = DeleteFile(ctx, dst)
 				if err != nil {
@@ -488,7 +491,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		}
 	}
 	// Move not found or didn't work so copy dst <- src
-	newDst, err = Copy(ctx, fdst, dst, remote, src)
+	newDst, err = Copy(ctx, fdst, dst, origRemote, src)
 	if err != nil {
 		fs.Errorf(src, "Not deleting source as copy failed: %v", err)
 		return newDst, err
@@ -516,24 +519,7 @@ func SuffixName(ctx context.Context, remote string) string {
 		return remote
 	}
 	if ci.SuffixKeepExtension {
-		var (
-			base  = remote
-			exts  = ""
-			first = true
-			ext   = path.Ext(remote)
-		)
-		for ext != "" {
-			// Look second and subsequent extensions in mime types.
-			// If they aren't found then don't keep it as an extension.
-			if !first && mime.TypeByExtension(ext) == "" {
-				break
-			}
-			base = base[:len(base)-len(ext)]
-			exts = ext + exts
-			first = false
-			ext = path.Ext(base)
-		}
-		return base + ci.Suffix + exts
+		return transform.SuffixKeepExtension(remote, ci.Suffix)
 	}
 	return remote + ci.Suffix
 }

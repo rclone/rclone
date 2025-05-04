@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/log/logflags"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/transform/transformflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/text/cases"
@@ -137,6 +138,7 @@ func setupRootCommand(rootCmd *cobra.Command) {
 	// Add global flags
 	configflags.AddFlags(ci, pflag.CommandLine)
 	filterflags.AddFlags(pflag.CommandLine)
+	transformflags.AddFlags(pflag.CommandLine)
 	rcflags.AddFlags(pflag.CommandLine)
 	logflags.AddFlags(pflag.CommandLine)
 
@@ -191,7 +193,6 @@ func setupRootCommand(rootCmd *cobra.Command) {
 	})
 
 	cobra.OnInitialize(initConfig)
-
 }
 
 // Traverse the tree of commands running fn on each
