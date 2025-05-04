@@ -1125,7 +1125,7 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 			newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
 		}
 	}
-	if transform.Transforming() && newDst != nil && src.Remote() != newDst.Remote() {
+	if transform.Transforming(ctx) && newDst != nil && src.Remote() != newDst.Remote() {
 		s.markParentNotEmpty(src)
 	}
 	// If we need to set modtime after and we created a dir, then save it for later
@@ -1260,8 +1260,8 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 		s.logger(s.ctx, operations.MissingOnDst, src, nil, fs.ErrorIsDir)
 
 		// Create the directory and make sure the Metadata/ModTime is correct
-		s.copyDirMetadata(s.ctx, s.fdst, nil, transform.Path(x.Remote(), true), x)
-		s.markDirModified(transform.Path(x.Remote(), true))
+		s.copyDirMetadata(s.ctx, s.fdst, nil, transform.Path(s.ctx, x.Remote(), true), x)
+		s.markDirModified(transform.Path(s.ctx, x.Remote(), true))
 		return true
 	default:
 		panic("Bad object in DirEntries")
@@ -1294,9 +1294,9 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
-		srcX = fs.NewOverrideDirectory(srcX, transform.Path(src.Remote(), true))
+		srcX = fs.NewOverrideDirectory(srcX, transform.Path(ctx, src.Remote(), true))
 		src = srcX
-		if !transform.Transforming() || src.Remote() != dst.Remote() {
+		if !transform.Transforming(ctx) || src.Remote() != dst.Remote() {
 			s.markParentNotEmpty(src)
 		}
 		dstX, ok := dst.(fs.Directory)
