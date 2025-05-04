@@ -96,8 +96,8 @@ func (b *bisyncRun) setResolveDefaults(ctx context.Context) error {
 	}
 	// replace glob variables, if any
 	t := time.Now() // capture static time here so it is the same for all files throughout this run
-	b.opt.ConflictSuffix1 = bilib.AppyTimeGlobs(b.opt.ConflictSuffix1, t)
-	b.opt.ConflictSuffix2 = bilib.AppyTimeGlobs(b.opt.ConflictSuffix2, t)
+	b.opt.ConflictSuffix1 = transform.AppyTimeGlobs(b.opt.ConflictSuffix1, t)
+	b.opt.ConflictSuffix2 = transform.AppyTimeGlobs(b.opt.ConflictSuffix2, t)
 
 	// append dot (intentionally allow more than one)
 	b.opt.ConflictSuffix1 = "." + b.opt.ConflictSuffix1

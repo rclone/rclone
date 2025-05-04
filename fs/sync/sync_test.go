@@ -2981,7 +2981,7 @@ func predictDstFromLogger(ctx context.Context) context.Context {
 			if winner.Err != nil {
 				errMsg = ";" + winner.Err.Error()
 			}
-			operations.SyncFprintf(opt.JSON, "%s;%s;%v;%s%s\n", file.ModTime(ctx).Local().Format(timeFormat), checksum, file.Size(), transform.Path(file.Remote(), false), errMsg) // TODO: should the transform be handled in the sync instead of here?
+			operations.SyncFprintf(opt.JSON, "%s;%s;%v;%s%s\n", file.ModTime(ctx).Local().Format(timeFormat), checksum, file.Size(), transform.Path(ctx, file.Remote(), false), errMsg) // TODO: should the transform be handled in the sync instead of here?
 		}
 	}
 	return operations.WithSyncLogger(ctx, opt)

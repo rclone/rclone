@@ -426,7 +426,7 @@ func MoveTransfer(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string,
 // move - see Move for help
 func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object, isTransfer bool) (newDst fs.Object, err error) {
 	origRemote := remote // avoid double-transform on fallback to copy
-	remote = transform.Path(remote, false)
+	remote = transform.Path(ctx, remote, false)
 	ci := fs.GetConfig(ctx)
 	var tr *accounting.Transfer
 	if isTransfer {
@@ -450,7 +450,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && (fdst.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
 		// Delete destination if it exists and is not the same file as src (could be same file while seemingly different if the remote is case insensitive)
 		if dst != nil {
-			remote = transform.Path(dst.Remote(), false)
+			remote = transform.Path(ctx, dst.Remote(), false)
 			if !SameObject(src, dst) {
 				err = DeleteFile(ctx, dst)
 				if err != nil {
@@ -2206,50 +2206,10 @@ func (l *ListFormat) SetOutput(output []func(entry *ListJSONItem) string) {
 
 // AddModTime adds file's Mod Time to output
 func (l *ListFormat) AddModTime(timeFormat string) {
-	switch timeFormat {
-	case "":
+	if timeFormat == "" {
 		timeFormat = "2006-01-02 15:04:05"
-	case "Layout":
-		timeFormat = time.Layout
-	case "ANSIC":
-		timeFormat = time.ANSIC
-	case "UnixDate":
-		timeFormat = time.UnixDate
-	case "RubyDate":
-		timeFormat = time.RubyDate
-	case "RFC822":
-		timeFormat = time.RFC822
-	case "RFC822Z":
-		timeFormat = time.RFC822Z
-	case "RFC850":
-		timeFormat = time.RFC850
-	case "RFC1123":
-		timeFormat = time.RFC1123
-	case "RFC1123Z":
-		timeFormat = time.RFC1123Z
-	case "RFC3339":
-		timeFormat = time.RFC3339
-	case "RFC3339Nano":
-		timeFormat = time.RFC3339Nano
-	case "Kitchen":
-		timeFormat = time.Kitchen
-	case "Stamp":
-		timeFormat = time.Stamp
-	case "StampMilli":
-		timeFormat = time.StampMilli
-	case "StampMicro":
-		timeFormat = time.StampMicro
-	case "StampNano":
-		timeFormat = time.StampNano
-	case "DateTime":
-		// timeFormat = time.DateTime // missing in go1.19
-		timeFormat = "2006-01-02 15:04:05"
-	case "DateOnly":
-		// timeFormat = time.DateOnly // missing in go1.19
-		timeFormat = "2006-01-02"
-	case "TimeOnly":
-		// timeFormat = time.TimeOnly // missing in go1.19
-		timeFormat = "15:04:05"
+	} else {
+		timeFormat = transform.TimeFormat(timeFormat)
 	}
 	l.AppendOutput(func(entry *ListJSONItem) string {
 		return entry.ModTime.When.Local().Format(timeFormat)

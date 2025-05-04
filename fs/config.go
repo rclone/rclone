@@ -550,6 +550,11 @@ var ConfigOptionsInfo = Options{{
 	Default:  0,
 	Advanced: true,
 	Groups:   "Networking",
+}, {
+	Name:    "name_transform",
+	Default: []string{},
+	Help:    "`--name-transform` introduces path name transformations for `rclone copy`, `rclone sync`, and `rclone move`. These transformations enable modifications to source and destination file names by applying prefixes, suffixes, and other alterations during transfer operations. For detailed docs and examples, see [`convmv`](/commands/rclone_convmv/).",
+	Groups:  "Filter",
 }}
 
 // ConfigInfo is filesystem config options
@@ -661,6 +666,7 @@ type ConfigInfo struct {
 	PartialSuffix              string            `config:"partial_suffix"`
 	MetadataMapper             SpaceSepList      `config:"metadata_mapper"`
 	MaxConnections             int               `config:"max_connections"`
+	NameTransform              []string          `config:"name_transform"`
 }
 
 func init() {

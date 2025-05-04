@@ -8,30 +8,11 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
-func init() {
-	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "name_transform", Opt: &Opt.Flags, Options: OptionsInfo, Reload: Reload})
-}
-
 type transform struct {
 	key   transformAlgo // for example, "prefix"
 	value string        // for example, "some_prefix_"
 	tag   tag           // file, dir, or all
 }
-
-// Options stores the parsed and unparsed transform options.
-// their order must never be changed or sorted.
-type Options struct {
-	Flags      Flags       // unparsed flag value like "file,prefix=ABC"
-	transforms []transform // parsed from NameTransform
-}
-
-// Flags is a slice of unparsed values set from command line flags or env vars
-type Flags struct {
-	NameTransform []string `config:"name_transform"`
-}
-
-// Opt is the default options modified by the environment variables and command line flags
-var Opt Options
 
 // tag controls which part of the file path is affected (file, dir, all)
 type tag int
@@ -43,39 +24,38 @@ const (
 	all             // Transform the entire path for files and directories
 )
 
-// OptionsInfo describes the Options in use
-var OptionsInfo = fs.Options{{
-	Name:    "name_transform",
-	Default: []string{},
-	Help:    "`--name-transform` introduces path name transformations for `rclone copy`, `rclone sync`, and `rclone move`. These transformations enable modifications to source and destination file names by applying prefixes, suffixes, and other alterations during transfer operations. For detailed docs and examples, see [`convmv`](/commands/rclone_convmv/).",
-	Groups:  "Filter",
-}}
-
-// Reload the transform options from the flags
-func Reload(ctx context.Context) (err error) {
-	return newOpt(Opt)
+// Transforming returns true when transforms are in use
+func Transforming(ctx context.Context) bool {
+	ci := fs.GetConfig(ctx)
+	return len(ci.NameTransform) > 0
 }
 
-// SetOptions sets the options from flags passed in.
+// SetOptions sets the options in ctx from flags passed in.
 // Any existing flags will be overwritten.
 // s should be in the same format as cmd line flags, i.e. "all,prefix=XXX"
 func SetOptions(ctx context.Context, s ...string) (err error) {
-	Opt = Options{Flags: Flags{NameTransform: s}}
-	return Reload(ctx)
+	ci := fs.GetConfig(ctx)
+	ci.NameTransform = s
+	_, err = getOptions(ctx)
+	return err
 }
 
-// overwite Opt.transforms with values from Opt.Flags
-func newOpt(opt Options) (err error) {
-	Opt.transforms = []transform{}
+// getOptions sets the options from flags passed in.
+func getOptions(ctx context.Context) (opt []transform, err error) {
+	if !Transforming(ctx) {
+		return opt, nil
+	}
 
-	for _, transform := range opt.Flags.NameTransform {
+	ci := fs.GetConfig(ctx)
+	for _, transform := range ci.NameTransform {
 		t, err := parse(transform)
 		if err != nil {
-			return err
+			return opt, err
 		}
-		Opt.transforms = append(Opt.transforms, t)
+		opt = append(opt, t)
 	}
-	return nil
+	// TODO: should we store opt in ci and skip re-parsing when present, for efficiency?
+	return opt, nil
 }
 
 // parse a single instance of --name-transform
@@ -161,6 +141,10 @@ func (t *transform) requiresValue() bool {
 		return true
 	case ConvDecoder:
 		return true
+	case ConvRegex:
+		return true
+	case ConvCommand:
+		return true
 	}
 	return false
 }
@@ -197,7 +181,8 @@ const (
 	ConvTitlecase
 	ConvASCII
 	ConvURL
-	ConvMapper
+	ConvRegex
+	ConvCommand
 )
 
 type transformChoices struct{}
@@ -231,7 +216,8 @@ func (transformChoices) Choices() []string {
 		ConvTitlecase:           "titlecase",
 		ConvASCII:               "ascii",
 		ConvURL:                 "url",
-		ConvMapper:              "mapper",
+		ConvRegex:               "regex",
+		ConvCommand:             "command",
 	}
 }
 

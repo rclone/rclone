@@ -87,11 +87,8 @@ func (m *March) srcKey(entry fs.DirEntry) string {
 		return ""
 	}
 	name := path.Base(entry.Remote())
-	name = transform.Path(name, fs.DirEntryType(entry) == "directory")
-	for _, transform := range m.transforms {
-		name = transform(name)
-	}
-	return name
+	name = transform.Path(m.Ctx, name, fs.DirEntryType(entry) == "directory")
+	return transforms(name, m.transforms)
 }
 
 // dstKey turns a directory entry into a sort key using the defined transforms.
@@ -99,8 +96,11 @@ func (m *March) dstKey(entry fs.DirEntry) string {
 	if entry == nil {
 		return ""
 	}
-	name := path.Base(entry.Remote())
-	for _, transform := range m.transforms {
+	return transforms(path.Base(entry.Remote()), m.transforms)
+}
+
+func transforms(name string, transforms []matchTransformFn) string {
+	for _, transform := range transforms {
 		name = transform(name)
 	}
 	return name

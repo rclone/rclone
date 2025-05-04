@@ -6,7 +6,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"path/filepath"
+	"path"
 	"slices"
 	"strings"
 	"testing"
@@ -96,25 +96,26 @@ func TestTransform(t *testing.T) {
 			r := fstest.NewRun(t)
 			defer r.Finalise()
 
-			r.Mkdir(context.Background(), r.Flocal)
-			r.Mkdir(context.Background(), r.Fremote)
+			ctx := context.Background()
+			r.Mkdir(ctx, r.Flocal)
+			r.Mkdir(ctx, r.Fremote)
 			items := makeTestFiles(t, r, "dir1")
 			deleteDSStore(t, r)
 			r.CheckRemoteListing(t, items, nil)
 			r.CheckLocalListing(t, items, nil)
 
-			err := transform.SetOptions(context.Background(), tt.args.TransformOpt...)
+			err := transform.SetOptions(ctx, tt.args.TransformOpt...)
 			require.NoError(t, err)
 
-			err = Sync(context.Background(), r.Fremote, r.Flocal, true)
+			err = Sync(ctx, r.Fremote, r.Flocal, true)
 			assert.NoError(t, err)
-			compareNames(t, r, items)
+			compareNames(ctx, t, r, items)
 
-			err = transform.SetOptions(context.Background(), tt.args.TransformBackOpt...)
+			err = transform.SetOptions(ctx, tt.args.TransformBackOpt...)
 			require.NoError(t, err)
-			err = Sync(context.Background(), r.Fremote, r.Flocal, true)
+			err = Sync(ctx, r.Fremote, r.Flocal, true)
 			assert.NoError(t, err)
-			compareNames(t, r, items)
+			compareNames(ctx, t, r, items)
 
 			if tt.args.Lossless {
 				deleteDSStore(t, r)
@@ -138,8 +139,9 @@ func makeTestFiles(t *testing.T, r *fstest.Run, dir string) []fstest.Item {
 		for i := rune(0); i < 7; i++ {
 			out.WriteRune(c + i)
 		}
-		fileName := filepath.Join(dir, fmt.Sprintf("%04d-%s.txt", n, out.String()))
+		fileName := path.Join(dir, fmt.Sprintf("%04d-%s.txt", n, out.String()))
 		fileName = strings.ToValidUTF8(fileName, "")
+		fileName = strings.NewReplacer(":", "", "<", "", ">", "", "?", "").Replace(fileName) // remove characters illegal on windows
 
 		if debug != "" {
 			fileName = debug
@@ -174,7 +176,7 @@ func deleteDSStore(t *testing.T, r *fstest.Run) {
 	assert.NoError(t, err)
 }
 
-func compareNames(t *testing.T, r *fstest.Run, items []fstest.Item) {
+func compareNames(ctx context.Context, t *testing.T, r *fstest.Run, items []fstest.Item) {
 	var entries fs.DirEntries
 
 	deleteDSStore(t, r)
@@ -195,8 +197,8 @@ func compareNames(t *testing.T, r *fstest.Run, items []fstest.Item) {
 
 	// sort by CONVERTED name
 	slices.SortStableFunc(items, func(a, b fstest.Item) int {
-		aConv := transform.Path(a.Path, false)
-		bConv := transform.Path(b.Path, false)
+		aConv := transform.Path(ctx, a.Path, false)
+		bConv := transform.Path(ctx, b.Path, false)
 		return cmp.Compare(aConv, bConv)
 	})
 	slices.SortStableFunc(entries, func(a, b fs.DirEntry) int {
@@ -204,7 +206,7 @@ func compareNames(t *testing.T, r *fstest.Run, items []fstest.Item) {
 	})
 
 	for i, e := range entries {
-		expect := transform.Path(items[i].Path, false)
+		expect := transform.Path(ctx, items[i].Path, false)
 		msg := fmt.Sprintf("expected %v, got %v", detectEncoding(expect), detectEncoding(e.Remote()))
 		assert.Equal(t, expect, e.Remote(), msg)
 	}
@@ -477,7 +479,5 @@ func TestError(t *testing.T) {
 	assert.Error(t, err)
 
 	r.CheckLocalListing(t, []fstest.Item{file1}, []string{"toe", "toe/toe"})
-	r.CheckRemoteListing(t, []fstest.Item{}, []string{})
-	err = transform.SetOptions(ctx, "") // has illegal character
-	assert.NoError(t, err)
+	r.CheckRemoteListing(t, []fstest.Item{file1}, []string{"toe", "toe/toe"})
 }
