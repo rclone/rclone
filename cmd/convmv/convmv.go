@@ -96,7 +96,7 @@ This can lead to race conditions when performing concurrent transfers. It is up 
 		cmd.CheckArgs(1, 1, command, args)
 		fdst, srcFileName := cmd.NewFsFile(args[0])
 		cmd.Run(false, true, command, func() error {
-			if !transform.Transforming() {
+			if !transform.Transforming(context.Background()) {
 				return errors.New("--name-transform must be set")
 			}
 			if srcFileName == "" {

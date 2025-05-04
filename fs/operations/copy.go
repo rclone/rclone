@@ -391,7 +391,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		f:           f,
 		dstFeatures: f.Features(),
 		dst:         dst,
-		remote:      transform.Path(remote, false),
+		remote:      transform.Path(ctx, remote, false),
 		src:         src,
 		ci:          ci,
 		tr:          tr,
@@ -400,7 +400,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	}
 	c.hashType, c.hashOption = CommonHash(ctx, f, src.Fs())
 	if c.dst != nil {
-		c.remote = transform.Path(c.dst.Remote(), false)
+		c.remote = transform.Path(ctx, c.dst.Remote(), false)
 	}
 	// Are we using partials?
 	//

@@ -105,31 +105,32 @@ func TestTransform(t *testing.T) {
 			r := fstest.NewRun(t)
 			defer r.Finalise()
 
-			r.Mkdir(context.Background(), r.Flocal)
-			r.Mkdir(context.Background(), r.Fremote)
+			ctx := context.Background()
+			r.Mkdir(ctx, r.Flocal)
+			r.Mkdir(ctx, r.Fremote)
 			items := makeTestFiles(t, r, "dir1")
-			err := r.Fremote.Mkdir(context.Background(), "empty/empty")
+			err := r.Fremote.Mkdir(ctx, "empty/empty")
 			require.NoError(t, err)
-			err = r.Flocal.Mkdir(context.Background(), "empty/empty")
+			err = r.Flocal.Mkdir(ctx, "empty/empty")
 			require.NoError(t, err)
 			deleteDSStore(t, r)
 			r.CheckRemoteListing(t, items, []string{"dir1", "empty", "empty/empty"})
 			r.CheckLocalListing(t, items, []string{"dir1", "empty", "empty/empty"})
 
-			err = transform.SetOptions(context.Background(), tt.args.TransformOpt...)
+			err = transform.SetOptions(ctx, tt.args.TransformOpt...)
 			require.NoError(t, err)
 
-			err = sync.Transform(context.Background(), r.Fremote, true, true)
+			err = sync.Transform(ctx, r.Fremote, true, true)
 			assert.NoError(t, err)
-			compareNames(t, r, items)
+			compareNames(ctx, t, r, items)
 
-			transformedItems := transformItems(t, items)
-			r.CheckRemoteListing(t, transformedItems, []string{transform.Path("dir1", true), transform.Path("empty", true), transform.Path("empty/empty", true)})
-			err = transform.SetOptions(context.Background(), tt.args.TransformBackOpt...)
+			transformedItems := transformItems(ctx, t, items)
+			r.CheckRemoteListing(t, transformedItems, []string{transform.Path(ctx, "dir1", true), transform.Path(ctx, "empty", true), transform.Path(ctx, "empty/empty", true)})
+			err = transform.SetOptions(ctx, tt.args.TransformBackOpt...)
 			require.NoError(t, err)
-			err = sync.Transform(context.Background(), r.Fremote, true, true)
+			err = sync.Transform(ctx, r.Fremote, true, true)
 			assert.NoError(t, err)
-			compareNames(t, r, transformedItems)
+			compareNames(ctx, t, r, transformedItems)
 
 			if tt.args.Lossless {
 				deleteDSStore(t, r)
@@ -191,7 +192,7 @@ func deleteDSStore(t *testing.T, r *fstest.Run) {
 	assert.NoError(t, err)
 }
 
-func compareNames(t *testing.T, r *fstest.Run, items []fstest.Item) {
+func compareNames(ctx context.Context, t *testing.T, r *fstest.Run, items []fstest.Item) {
 	var entries fs.DirEntries
 
 	deleteDSStore(t, r)
@@ -212,8 +213,8 @@ func compareNames(t *testing.T, r *fstest.Run, items []fstest.Item) {
 
 	// sort by CONVERTED name
 	slices.SortStableFunc(items, func(a, b fstest.Item) int {
-		aConv := transform.Path(a.Path, false)
-		bConv := transform.Path(b.Path, false)
+		aConv := transform.Path(ctx, a.Path, false)
+		bConv := transform.Path(ctx, b.Path, false)
 		return cmp.Compare(aConv, bConv)
 	})
 	slices.SortStableFunc(entries, func(a, b fs.DirEntry) int {
@@ -221,16 +222,16 @@ func compareNames(t *testing.T, r *fstest.Run, items []fstest.Item) {
 	})
 
 	for i, e := range entries {
-		expect := transform.Path(items[i].Path, false)
+		expect := transform.Path(ctx, items[i].Path, false)
 		msg := fmt.Sprintf("expected %v, got %v", detectEncoding(expect), detectEncoding(e.Remote()))
 		assert.Equal(t, expect, e.Remote(), msg)
 	}
 }
 
-func transformItems(t *testing.T, items []fstest.Item) []fstest.Item {
+func transformItems(ctx context.Context, t *testing.T, items []fstest.Item) []fstest.Item {
 	transformedItems := []fstest.Item{}
 	for _, item := range items {
-		newPath := transform.Path(item.Path, false)
+		newPath := transform.Path(ctx, item.Path, false)
 		newItem := item
 		newItem.Path = newPath
 		transformedItems = append(transformedItems, newItem)
