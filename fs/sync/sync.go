@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/errcount"
+	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -1254,8 +1255,8 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 		s.logger(s.ctx, operations.MissingOnDst, src, nil, fs.ErrorIsDir)
 
 		// Create the directory and make sure the Metadata/ModTime is correct
-		s.copyDirMetadata(s.ctx, s.fdst, nil, x.Remote(), x)
-		s.markDirModified(x.Remote())
+		s.copyDirMetadata(s.ctx, s.fdst, nil, transform.Path(x.Remote(), true), x)
+		s.markDirModified(transform.Path(x.Remote(), true))
 		return true
 	default:
 		panic("Bad object in DirEntries")
@@ -1288,6 +1289,8 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
+		srcX = fs.NewOverrideDirectory(srcX, transform.Path(src.Remote(), true))
+		src = srcX
 		s.markParentNotEmpty(src)
 		dstX, ok := dst.(fs.Directory)
 		if ok {
@@ -1370,6 +1373,11 @@ func CopyDir(ctx context.Context, fdst, fsrc fs.Fs, copyEmptySrcDirs bool) error
 // moveDir moves fsrc into fdst
 func moveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
 	return runSyncCopyMove(ctx, fdst, fsrc, fs.DeleteModeOff, true, deleteEmptySrcDirs, copyEmptySrcDirs)
+}
+
+// Transform renames fdst in place
+func Transform(ctx context.Context, fdst fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
+	return runSyncCopyMove(ctx, fdst, fdst, fs.DeleteModeOff, true, deleteEmptySrcDirs, copyEmptySrcDirs)
 }
 
 // MoveDir moves fsrc into fdst
