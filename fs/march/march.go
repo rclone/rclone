@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/text/unicode/norm"
 )
@@ -80,18 +81,22 @@ func (m *March) init(ctx context.Context) {
 	}
 }
 
-// srcKey turns a directory entry into a sort key using the defined transforms.
-func (m *March) srcKey(entry fs.DirEntry) string {
+// srcOrDstKey turns a directory entry into a sort key using the defined transforms.
+func (m *March) srcOrDstKey(entry fs.DirEntry, isSrc bool) string {
 	if entry == nil {
 		return ""
 	}
 	name := path.Base(entry.Remote())
+	_, isDirectory := entry.(fs.Directory)
+	if isSrc {
+		name = transform.Path(m.Ctx, name, isDirectory)
+	}
 	for _, transform := range m.transforms {
 		name = transform(name)
 	}
 	// Suffix entries to make identically named files and
 	// directories sort consistently with directories first.
-	if _, isDirectory := entry.(fs.Directory); isDirectory {
+	if isDirectory {
 		name += "D"
 	} else {
 		name += "F"
@@ -99,9 +104,14 @@ func (m *March) srcKey(entry fs.DirEntry) string {
 	return name
 }
 
+// srcKey turns a directory entry into a sort key using the defined transforms.
+func (m *March) srcKey(entry fs.DirEntry) string {
+	return m.srcOrDstKey(entry, true)
+}
+
 // dstKey turns a directory entry into a sort key using the defined transforms.
 func (m *March) dstKey(entry fs.DirEntry) string {
-	return m.srcKey(entry) // FIXME actually do something different
+	return m.srcOrDstKey(entry, false)
 }
 
 // makeListDir makes constructs a listing function for the given fs
@@ -461,7 +471,6 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 				noDst:     true,
 			})
 		}
-
 	}, func(dst fs.DirEntry) {
 		recurse := m.Callback.DstOnly(dst)
 		if recurse && job.dstDepth > 0 {
