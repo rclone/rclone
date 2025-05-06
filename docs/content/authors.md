@@ -967,3 +967,4 @@ put them back in again.` >}}
   * Christian Richter <crichter@owncloud.com> <1058116+dragonchaser@users.noreply.github.com>
   * Ralf Haferkamp <r.haferkamp@opencloud.eu>
   * Jugal Kishore <me@devjugal.com>
+  * Tho Neyugn <nguyentruongtho@users.noreply.github.com>
