@@ -553,8 +553,8 @@ var ConfigOptionsInfo = Options{{
 }, {
 	Name:    "name_transform",
 	Default: []string{},
-	Help:    "`--name-transform` introduces path name transformations for `rclone copy`, `rclone sync`, and `rclone move`. These transformations enable modifications to source and destination file names by applying prefixes, suffixes, and other alterations during transfer operations. For detailed docs and examples, see [`convmv`](/commands/rclone_convmv/).",
-	Groups:  "Filter",
+	Help:    "Transform paths during the copy process.",
+	Groups:  "Copy",
 }}
 
 // ConfigInfo is filesystem config options
