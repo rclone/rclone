@@ -90,7 +90,9 @@ func encodePath(path string) string {
 			// Encode segment using Base64 URL encoding
 			encoded := base64.URLEncoding.EncodeToString([]byte(segment))
 			encoded = strings.ReplaceAll(encoded, "_", "_u_")
-			segments[i] = strings.ReplaceAll(encoded, "=", "_e_")
+			encoded = strings.ReplaceAll(encoded, "=", "_e_")
+			encoded = "b64_" + encoded
+			segments[i] = encoded
 		}
 	}
 	return strings.Join(segments, "/")
@@ -105,10 +107,14 @@ func decodePath(encodedPath string) string {
 		}
 		segment = strings.ReplaceAll(segment, "_e_", "=")
 		segment = strings.ReplaceAll(segment, "_u_", "_")
-		decoded, err := base64.URLEncoding.DecodeString(segment)
-		if err == nil && utf8.Valid(decoded) {
-			segments[i] = string(decoded)
+		segments[i] = segment
+		if strings.HasPrefix(segment, "b64_") {
+			decoded, err := base64.URLEncoding.DecodeString(strings.TrimLeft(segment, "b64_"))
+			if err == nil && utf8.Valid(decoded) {
+				segments[i] = string(decoded)
+			}
 		}
+
 		// If decoding fails, leave the segment as is
 	}
 	return strings.Join(segments, "/")

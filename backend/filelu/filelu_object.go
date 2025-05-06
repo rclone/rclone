@@ -250,8 +250,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	o.modTime = modTime
-	return nil
+	return fs.ErrorCantSetModTime
 }
 
 // Storable indicates whether the object is storable
