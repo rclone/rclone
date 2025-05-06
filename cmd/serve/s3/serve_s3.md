@@ -14,7 +14,7 @@ docs](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)).
 access.
 
 Please note that some clients may require HTTPS endpoints. See [the
-SSL docs](#ssl-tls) for more information.
+SSL docs](#tls-ssl) for more information.
 
 This command uses the [VFS directory cache](#vfs-virtual-file-system).
 All the functionality will work with `--vfs-cache-mode off`. Using

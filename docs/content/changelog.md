@@ -5,6 +5,50 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.69.2 - 2025-05-01
+
+[See commits](https://github.com/rclone/rclone/compare/v1.69.1...v1.69.2)
+
+* Bug fixes
+    * accounting: Fix percentDiff calculation -- (Anagh Kumar Baranwal)
+    * build
+        * Update github.com/golang-jwt/jwt/v4 from 4.5.1 to 4.5.2 to fix CVE-2025-30204 (dependabot[bot])
+        * Update github.com/golang-jwt/jwt/v5 from 5.2.1 to 5.2.2 to fix CVE-2025-30204 (dependabot[bot])
+        * Update golang.org/x/crypto to v0.35.0 to fix CVE-2025-22869 (Nick Craig-Wood)
+        * Update golang.org/x/net from 0.36.0 to 0.38.0 to fix CVE-2025-22870 (dependabot[bot])
+        * Update golang.org/x/net to 0.36.0. to fix CVE-2025-22869 (dependabot[bot])
+        * Stop building with go < go1.23 as security updates forbade it (Nick Craig-Wood)
+        * Fix docker plugin build (Anagh Kumar Baranwal)
+    * cmd: Fix crash if rclone is invoked without any arguments (Janne Hellsten)
+    * config: Read configuration passwords from stdin even when terminated with EOF (Samantha Bowen)
+    * doc fixes (Andrew Kreimer, Danny Garside, eccoisle, Ed Craig-Wood, emyarod, jack, Jugal Kishore, Markus Gerstel, Michael Kebe, Nick Craig-Wood, simonmcnair, simwai, Zachary Vorhies)
+    * fs: Fix corruption of SizeSuffix with "B" suffix in config (eg --min-size) (Nick Craig-Wood)
+    * lib/http: Fix race between Serve() and Shutdown() (Nick Craig-Wood)
+    * object: Fix memory object out of bounds Seek (Nick Craig-Wood)
+    * operations: Fix call fmt.Errorf with wrong err (alingse)
+    * rc
+        * Disable the metrics server when running `rclone rc` (hiddenmarten)
+        * Fix debug/* commands not being available over unix sockets (Nick Craig-Wood)
+    * serve nfs: Fix unlikely crash (Nick Craig-Wood)
+    * stats: Fix the speed not getting updated after a pause in the processing (Anagh Kumar Baranwal)
+    * sync
+        * Fix cpu spinning when empty directory finding with leading slashes (Nick Craig-Wood)
+        * Copy dir modtimes even when copyEmptySrcDirs is false (ll3006)
+* VFS
+    * Fix directory cache serving stale data (Lorenz Brun)
+    * Fix inefficient directory caching when directory reads are slow (huanghaojun)
+    * Fix integration test failures (Nick Craig-Wood)
+* Drive
+    * Metadata: fix error when setting copy-requires-writer-permission on a folder (Nick Craig-Wood)
+* Dropbox
+    * Retry link without expiry (Dave Vasilevsky)
+* HTTP
+    * Correct root if definitely pointing to a file (nielash)
+* Iclouddrive
+    * Fix so created files are writable (Ben Alex)
+* Onedrive
+    * Fix metadata ordering in permissions (Nick Craig-Wood)
+
 ## v1.69.1 - 2025-02-14
 
 [See commits](https://github.com/rclone/rclone/compare/v1.69.0...v1.69.1)
@@ -60,7 +104,7 @@ description: "Rclone Changelog"
     * fs: Make `--links` flag global and add new `--local-links` and `--vfs-links` flags (Nick Craig-Wood)
     * http servers: Disable automatic authentication skipping for unix sockets in http servers (Moises Lima)
         * This was making it impossible to use unix sockets with an proxy
-        * This might now cause rclone to need authenticaton where it didn't before
+        * This might now cause rclone to need authentication where it didn't before
     * oauthutil: add support for OAuth client credential flow (Martin Hassack, Nick Craig-Wood)
     * operations: make log messages consistent for mkdir/rmdir at INFO level (Nick Craig-Wood)
     * rc: Add `relative` to [vfs/queue-set-expiry](/rc/#vfs-queue-set-expiry) (Nick Craig-Wood)
@@ -738,7 +782,7 @@ instead of of `--size-only`, when `check` is not available.
         * Update all dependencies (Nick Craig-Wood)
         * Refactor version info and icon resource handling on windows (albertony)
     * doc updates (albertony, alfish2000, asdffdsazqqq, Dimitri Papadopoulos, Herby Gillot, Joda Stößer, Manoj Ghosh, Nick Craig-Wood)
-    * Implement `--metadata-mapper` to transform metatadata with a user supplied program (Nick Craig-Wood)
+    * Implement `--metadata-mapper` to transform metadata with a user supplied program (Nick Craig-Wood)
     * Add `ChunkWriterDoesntSeek` feature flag and set it for b2 (Nick Craig-Wood)
     * lib/http: Export basic go string functions for use in `--template` (Gabriel Espinoza)
     * makefile: Use POSIX compatible install arguments (Mina Galić)
@@ -853,7 +897,7 @@ instead of of `--size-only`, when `check` is not available.
     * Fix "fatal error: concurrent map writes" (Nick Craig-Wood)
 * B2
     * Fix multipart upload: corrupted on transfer: sizes differ XXX vs 0 (Nick Craig-Wood)
-    * Fix locking window when getting mutipart upload URL (Nick Craig-Wood)
+    * Fix locking window when getting multipart upload URL (Nick Craig-Wood)
     * Fix server side copies greater than 4GB (Nick Craig-Wood)
     * Fix chunked streaming uploads (Nick Craig-Wood)
     * Reduce default `--b2-upload-concurrency` to 4 to reduce memory usage (Nick Craig-Wood)
