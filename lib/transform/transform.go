@@ -18,6 +18,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/encoder"
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/unicode/norm"
@@ -48,7 +49,7 @@ func Path(ctx context.Context, s string, isDir bool) string {
 			s, err = transformPath(s, t, baseOnly)
 		}
 		if err != nil {
-			err = fs.CountError(ctx, err)
+			err = fs.CountError(ctx, fserrors.NoRetryError(err))
 			fs.Errorf(s, "Failed to transform: %v", err)
 		}
 	}
@@ -56,7 +57,7 @@ func Path(ctx context.Context, s string, isDir bool) string {
 		fs.Debugf(old, "transformed to: %v", s)
 	}
 	if strings.Count(old, "/") != strings.Count(s, "/") {
-		err = fs.CountError(ctx, fmt.Errorf("number of path segments must match: %v (%v), %v (%v)", old, strings.Count(old, "/"), s, strings.Count(s, "/")))
+		err = fs.CountError(ctx, fserrors.NoRetryError(fmt.Errorf("number of path segments must match: %v (%v), %v (%v)", old, strings.Count(old, "/"), s, strings.Count(s, "/"))))
 		fs.Errorf(old, "%v", err)
 		return old
 	}
