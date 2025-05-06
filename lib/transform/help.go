@@ -102,10 +102,13 @@ func commandTable() string {
 	return s
 }
 
+var generatingHelpText bool
+
 // SprintList returns the example help text as a string
 func SprintList() string {
 	var algos transformAlgo
 	var charmaps fs.Enum[cmapChoices]
+	generatingHelpText = true
 	s := commandTable()
 	s += fmt.Sprintln("Conversion modes:  \n```")
 	for _, v := range algos.Choices() {
@@ -127,6 +130,7 @@ func SprintList() string {
 
 	s += sprintExamples()
 
+	generatingHelpText = false
 	return s
 }
 

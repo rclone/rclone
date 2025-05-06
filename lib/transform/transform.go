@@ -52,7 +52,7 @@ func Path(ctx context.Context, s string, isDir bool) string {
 			fs.Errorf(s, "Failed to transform: %v", err)
 		}
 	}
-	if old != s {
+	if old != s && !generatingHelpText {
 		fs.Debugf(old, "transformed to: %v", s)
 	}
 	if strings.Count(old, "/") != strings.Count(s, "/") {
