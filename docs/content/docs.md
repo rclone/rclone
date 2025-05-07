@@ -1557,6 +1557,32 @@ Setting `--max-buffer-memory` allows the buffer memory to be
 controlled so that it doesn't overwhelm the machine and allows
 `--transfers` to be set large.
 
+### --max-connections=N ###
+
+This sets the maximum number of concurrent calls to the backend API.
+It may not map 1:1 to TCP or HTTP connections depending on the backend
+in use and the use of HTTP1 vs HTTP2.
+
+When downloading files, backends only limit the initial opening of the
+stream. The bulk data download is not counted as a connection. This
+means that the `--max--connections` flag won't limit the total number
+of downloads.
+
+Note that it is possible to cause deadlocks with this setting so it
+should be used with care.
+
+If you are doing a sync or copy then make sure `--max-connections` is
+one more than the sum of `--transfers` and `--checkers`.
+
+If you use `--check-first` then `--max-connections` just needs to be
+one more than the maximum of `--checkers` and `--transfers`.
+
+So for  `--max-connections 3` you'd use `--checkers 2 --transfers 2
+--check-first` or `--checkers 1 --transfers 1`.
+
+Setting this flag can be useful for backends which do multipart
+uploads to limit the number of simultaneous parts being transferred.
+
 ### --max-delete=N ###
 
 This tells rclone not to delete more than N files.  If that limit is
