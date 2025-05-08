@@ -2469,6 +2469,10 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 				return false, nil
 			}
 			return true, fmt.Errorf("retry this chunk skipping %d bytes: %w", skip, err)
+		} else if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
+			fs.Debugf(o, "Received 404 error: assuming eventual consistency problem with session - retrying chunk: %v", err)
+			time.Sleep(5 * time.Second) // a little delay to help things along
+			return true, err
 		}
 		if err != nil {
 			return shouldRetry(ctx, resp, err)
