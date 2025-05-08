@@ -1515,6 +1515,33 @@ warnings and significant events.
 
 `ERROR` is equivalent to `-q`. It only outputs error messages.
 
+### --windows-event-log LEVEL ###
+
+If this is configured (the default is `OFF`) then logs of this level
+and above will be logged to the Windows event log in **addition** to
+the normal logs. These will be logged in JSON format as described
+below regardless of what format the main logs are configured for.
+
+The Windows event log only has 3 levels of severity `Info`, `Warning`
+and `Error`. If enabled we map rclone levels like this.
+
+- `Error` ← `ERROR` (and above)
+- `Warning` ←  `WARNING` (note that this level is defined but not currently used).
+- `Info` ← `NOTICE`, `INFO` and `DEBUG`.
+
+Rclone will declare its log source as "rclone" if it is has enough
+permissions to create the registry key needed. If not then logs will
+appear as "Application". You can run `rclone version --windows-event-log DEBUG`
+once as administrator to create the registry key in advance.
+
+**Note** that the `--windows-event-log` level must be greater (more
+severe) than or equal to the `--log-level`. For example to log DEBUG
+to a log file but ERRORs to the event log you would use
+
+    --log-file rclone.log --log-level DEBUG --windows-event-log ERROR
+
+This option is only supported Windows platforms.
+
 ### --use-json-log ###
 
 This switches the log format to JSON for rclone. The fields of JSON

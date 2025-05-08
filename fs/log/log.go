@@ -3,6 +3,7 @@ package log
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -38,15 +39,27 @@ var OptionsInfo = fs.Options{{
 	Default: false,
 	Help:    "Activate systemd integration for the logger",
 	Groups:  "Logging",
+}, {
+	Name:    "windows_event_log_level",
+	Default: fs.LogLevelOff,
+	Help:    "Windows Event Log level DEBUG|INFO|NOTICE|ERROR|OFF",
+	Groups:  "Logging",
+	Hide: func() fs.OptionVisibility {
+		if runtime.GOOS == "windows" {
+			return 0
+		}
+		return fs.OptionHideBoth
+	}(),
 }}
 
 // Options contains options for controlling the logging
 type Options struct {
-	File              string    `config:"log_file"`        // Log everything to this file
-	Format            logFormat `config:"log_format"`      // Comma separated list of log format options
-	UseSyslog         bool      `config:"syslog"`          // Use Syslog for logging
-	SyslogFacility    string    `config:"syslog_facility"` // Facility for syslog, e.g. KERN,USER,...
-	LogSystemdSupport bool      `config:"log_systemd"`     // set if using systemd logging
+	File                 string      `config:"log_file"`        // Log everything to this file
+	Format               logFormat   `config:"log_format"`      // Comma separated list of log format options
+	UseSyslog            bool        `config:"syslog"`          // Use Syslog for logging
+	SyslogFacility       string      `config:"syslog_facility"` // Facility for syslog, e.g. KERN,USER,...
+	LogSystemdSupport    bool        `config:"log_systemd"`     // set if using systemd logging
+	WindowsEventLogLevel fs.LogLevel `config:"windows_event_log_level"`
 }
 
 func init() {
@@ -149,6 +162,11 @@ func Stack(o any, info string) {
 // externally visible in the rc.
 func logReload(ci *fs.ConfigInfo) error {
 	Handler.SetLevel(fs.LogLevelToSlog(ci.LogLevel))
+
+	if Opt.WindowsEventLogLevel != fs.LogLevelOff && Opt.WindowsEventLogLevel > ci.LogLevel {
+		return fmt.Errorf("--windows-event-log-level %q must be >= --log-level %q", Opt.WindowsEventLogLevel, ci.LogLevel)
+	}
+
 	return nil
 }
 
@@ -206,6 +224,14 @@ func InitLogging() {
 	// Systemd logging output
 	if Opt.LogSystemdSupport {
 		startSystemdLog(Handler)
+	}
+
+	// Windows event logging
+	if Opt.WindowsEventLogLevel != fs.LogLevelOff {
+		err := startWindowsEventLog(Handler)
+		if err != nil {
+			fs.Fatalf(nil, "Failed to start windows event log: %v", err)
+		}
 	}
 }
 
