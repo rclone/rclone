@@ -194,6 +194,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
 {{< provider name="Zoho WorkDrive" home="https://www.zoho.com/workdrive/" config="/zoho/" >}}
+{{< provider name="Zus" home="https://zus.network/" config="/zus/" >}}
 {{< provider name="The local filesystem" home="/local/" config="/local/" end="true">}}
 {{< /provider_list >}}
 

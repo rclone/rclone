@@ -89,6 +89,7 @@ See the following for detailed instructions for
   * [WebDAV](/webdav/)
   * [Yandex Disk](/yandex/)
   * [Zoho WorkDrive](/zoho/)
+  * [Zus](/zus/)
   * [The local filesystem](/local/)
 
 Basic syntax

@@ -67,6 +67,7 @@ Here is an overview of the major features of each cloud storage system.
 | WebDAV                       | MD5, SHA1 ³       | R ⁴     | Depends          | No              | -         | -        |
 | Yandex Disk                  | MD5               | R/W     | No               | No              | R         | -        |
 | Zoho WorkDrive               | -                 | -       | No               | No              | -         | -        |
+| Zus                          | MD5               | R       | No               | No              | -         | -        |
 | The local filesystem         | All               | DR/W    | Depends          | No              | -         | DRWU     |
 
 ¹ Dropbox supports [its own custom
@@ -547,6 +548,7 @@ upon backend-specific capabilities.
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ³        | No                | No           | Yes   | Yes      |
 | Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | Zoho WorkDrive               | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | Yes   | Yes      |
+| Zus                          | Yes   | No   | No   | No      | No      | No    | Yes          | No                | No           | No    | Yes      |
 | The local filesystem         | No    | No   | Yes  | Yes     | No      | No    | Yes          | Yes               | No           | Yes   | Yes      |
 
 ¹ Note Swift implements this in order to delete directory markers but
