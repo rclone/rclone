@@ -52,8 +52,8 @@ const (
 	listChunks                  = 100 // chunk size to read directory listings
 	albumChunks                 = 50  // chunk size to read album listings
 	minSleep                    = 10 * time.Millisecond
-	scopeReadOnly               = "https://www.googleapis.com/auth/photoslibrary.readonly"
-	scopeReadWrite              = "https://www.googleapis.com/auth/photoslibrary"
+	scopeReadOnly               = "https://www.googleapis.com/auth/photoslibrary.appendonly"
+	scopeReadWrite              = "https://www.googleapis.com/auth/photoslibrary.appendonly"
 	scopeAccess                 = 2 // position of access scope in list
 )
 
