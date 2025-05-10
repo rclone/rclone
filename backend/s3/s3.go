@@ -114,6 +114,9 @@ var providerOption = fs.Option{
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
 	}, {
+		Value: "Hetzner",
+		Help:  "Hetzner Object Storage",
+	}, {
 		Value: "HuaweiOBS",
 		Help:  "Huawei Object Storage Service",
 	}, {
@@ -373,6 +376,20 @@ func init() {
 			}, {
 				Value: "me-central",
 				Help:  "Middle East (ME-Central)",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region to connect to.",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "hel1",
+				Help:  "Helsinki",
+			}, {
+				Value: "fsn1",
+				Help:  "Falkenstein",
+			}, {
+				Value: "nbg1",
+				Help:  "Nuremberg",
 			}},
 		}, {
 			Name:     "region",
@@ -697,7 +714,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -913,6 +930,20 @@ func init() {
 			Examples: []fs.OptionExample{{
 				Value: "https://storage.googleapis.com",
 				Help:  "Google Cloud Storage endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Hetzner Object Storage",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "hel1.your-objectstorage.com",
+				Help:  "Helsinki",
+			}, {
+				Value: "fsn1.your-objectstorage.com",
+				Help:  "Falkenstein",
+			}, {
+				Value: "nbg1.your-objectstorage.com",
+				Help:  "Nuremberg",
 			}},
 		}, {
 			// obs endpoints: https://developer.huaweicloud.com/intl/en-us/endpoint?OBS
@@ -1616,7 +1647,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,GCS,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,StackPath,Storj,Synology,TencentCOS,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,GCS,Hetzner,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,StackPath,Storj,Synology,TencentCOS,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -3734,6 +3765,8 @@ func setQuirks(opt *Options) {
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
 		useAlreadyExists = true  // returns 200 OK
+	case "Hetzner":
+		useAlreadyExists = false
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
@@ -4109,6 +4142,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
+	}
+	if opt.Provider == "Hetzner" {
+		f.features.SetTier = false
 	}
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
