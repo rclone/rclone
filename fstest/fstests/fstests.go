@@ -455,6 +455,7 @@ func Run(t *testing.T, opt *Opt) {
 	subRemoteName, subRemoteLeaf, err = fstest.RandomRemoteName(remoteName)
 	require.NoError(t, err)
 	f, err = fs.NewFs(context.Background(), subRemoteName)
+
 	if errors.Is(err, fs.ErrorNotFoundInConfigFile) {
 		t.Logf("Didn't find %q in config file - skipping tests", remoteName)
 		return
@@ -528,6 +529,7 @@ func Run(t *testing.T, opt *Opt) {
 	// Make the directory
 	err = f.Mkdir(ctx, "")
 	require.NoError(t, err)
+
 	fstest.CheckListing(t, f, []fstest.Item{})
 
 	// TestFsString tests the String method
@@ -586,6 +588,7 @@ func Run(t *testing.T, opt *Opt) {
 
 		err := f.Mkdir(ctx, "")
 		require.NoError(t, err)
+
 		fstest.CheckListing(t, f, []fstest.Item{})
 
 		err = f.Mkdir(ctx, "")
@@ -705,7 +708,9 @@ func Run(t *testing.T, opt *Opt) {
 					fileName := encoder.Standard.Encode(test.path)
 					dirName := fileName
 					t.Logf("testing %q", fileName)
+
 					assert.NoError(t, f.Mkdir(ctx, dirName))
+
 					file := fstest.Item{
 						ModTime: time.Now(),
 						Path:    dirName + "/" + fileName, // test creating a file and dir with that name
@@ -2633,6 +2638,7 @@ func Run(t *testing.T, opt *Opt) {
 			// Make the directory and try again
 			err = f.Mkdir(ctx, name)
 			require.NoError(t, err)
+
 			err = do(ctx, name, t1)
 			require.NoError(t, err)
 

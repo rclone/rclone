@@ -105,6 +105,9 @@ var providerOption = fs.Option{
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
 	}, {
+		Value: "Hetzner",
+		Help:  "Hetzner Object Storage",
+	}, {
 		Value: "HuaweiOBS",
 		Help:  "Huawei Object Storage Service",
 	}, {
@@ -397,6 +400,20 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "Region to connect to.",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "hel1",
+				Help:  "Helsinki",
+			}, {
+				Value: "fsn1",
+				Help:  "Falkenstein",
+			}, {
+				Value: "nbg1",
+				Help:  "Nuremberg",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "Region to connect to. - the location where your bucket will be created and your data stored. Need bo be same with your endpoint.\n",
 			Provider: "HuaweiOBS",
 			Examples: []fs.OptionExample{{
@@ -567,7 +584,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,Hetzner,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1098,6 +1115,20 @@ func init() {
 				Help:  "Middle East 1 (Dubai)",
 			}},
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Hetzner Object Storage",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "hel1.your-objectstorage.com",
+				Help:  "Helsinki",
+			}, {
+				Value: "fsn1.your-objectstorage.com",
+				Help:  "Falkenstein",
+			}, {
+				Value: "nbg1.your-objectstorage.com",
+				Help:  "Nuremberg",
+			}},
+		}, {
 			// obs endpoints: https://developer.huaweicloud.com/intl/en-us/endpoint?OBS
 			Name:     "endpoint",
 			Help:     "Endpoint for OBS API.",
@@ -1377,7 +1408,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,Hetzner,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1939,19 +1970,19 @@ the default (private) will be used.
 			}, {
 				Value:    "public-read-write",
 				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
-				Provider: "!IBMCOS",
+				Provider: "!IBMCOS,Hetzner",
 			}, {
 				Value:    "authenticated-read",
 				Help:     "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.",
-				Provider: "!IBMCOS",
+				Provider: "!IBMCOS,Hetzner",
 			}, {
 				Value:    "bucket-owner-read",
 				Help:     "Object owner gets FULL_CONTROL.\nBucket owner gets READ access.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
-				Provider: "!IBMCOS,ChinaMobile",
+				Provider: "!IBMCOS,Hetzner,ChinaMobile",
 			}, {
 				Value:    "bucket-owner-full-control",
 				Help:     "Both the object owner and the bucket owner get FULL_CONTROL over the object.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
-				Provider: "!IBMCOS,ChinaMobile",
+				Provider: "!IBMCOS,Hetzner,ChinaMobile",
 			}, {
 				Value:    "private",
 				Help:     "Owner gets FULL_CONTROL.\nNo one else has access rights (default).\nThis acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise COS.",
@@ -1981,6 +2012,7 @@ isn't set then "acl" is used instead.
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
 header is added and the default (private) will be used.
 `,
+			Provider: "!Hetzner",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
@@ -2905,66 +2937,67 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 
 // Options defines the configuration for this backend
 type Options struct {
-	Provider              string               `config:"provider"`
-	EnvAuth               bool                 `config:"env_auth"`
-	AccessKeyID           string               `config:"access_key_id"`
-	SecretAccessKey       string               `config:"secret_access_key"`
-	Region                string               `config:"region"`
-	Endpoint              string               `config:"endpoint"`
-	STSEndpoint           string               `config:"sts_endpoint"`
-	UseDualStack          bool                 `config:"use_dual_stack"`
-	LocationConstraint    string               `config:"location_constraint"`
-	ACL                   string               `config:"acl"`
-	BucketACL             string               `config:"bucket_acl"`
-	RequesterPays         bool                 `config:"requester_pays"`
-	ServerSideEncryption  string               `config:"server_side_encryption"`
-	SSEKMSKeyID           string               `config:"sse_kms_key_id"`
-	SSECustomerAlgorithm  string               `config:"sse_customer_algorithm"`
-	SSECustomerKey        string               `config:"sse_customer_key"`
-	SSECustomerKeyBase64  string               `config:"sse_customer_key_base64"`
-	SSECustomerKeyMD5     string               `config:"sse_customer_key_md5"`
-	StorageClass          string               `config:"storage_class"`
-	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
-	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
-	ChunkSize             fs.SizeSuffix        `config:"chunk_size"`
-	MaxUploadParts        int                  `config:"max_upload_parts"`
-	DisableChecksum       bool                 `config:"disable_checksum"`
-	SharedCredentialsFile string               `config:"shared_credentials_file"`
-	Profile               string               `config:"profile"`
-	SessionToken          string               `config:"session_token"`
-	UploadConcurrency     int                  `config:"upload_concurrency"`
-	ForcePathStyle        bool                 `config:"force_path_style"`
-	V2Auth                bool                 `config:"v2_auth"`
-	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
-	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
-	ListChunk             int32                `config:"list_chunk"`
-	ListVersion           int                  `config:"list_version"`
-	ListURLEncode         fs.Tristate          `config:"list_url_encode"`
-	NoCheckBucket         bool                 `config:"no_check_bucket"`
-	NoHead                bool                 `config:"no_head"`
-	NoHeadObject          bool                 `config:"no_head_object"`
-	Enc                   encoder.MultiEncoder `config:"encoding"`
-	DisableHTTP2          bool                 `config:"disable_http2"`
-	DownloadURL           string               `config:"download_url"`
-	DirectoryMarkers      bool                 `config:"directory_markers"`
-	UseMultipartEtag      fs.Tristate          `config:"use_multipart_etag"`
-	UsePresignedRequest   bool                 `config:"use_presigned_request"`
-	Versions              bool                 `config:"versions"`
-	VersionAt             fs.Time              `config:"version_at"`
-	VersionDeleted        bool                 `config:"version_deleted"`
-	Decompress            bool                 `config:"decompress"`
-	MightGzip             fs.Tristate          `config:"might_gzip"`
-	UseAcceptEncodingGzip fs.Tristate          `config:"use_accept_encoding_gzip"`
-	NoSystemMetadata      bool                 `config:"no_system_metadata"`
-	UseAlreadyExists      fs.Tristate          `config:"use_already_exists"`
-	UseMultipartUploads   fs.Tristate          `config:"use_multipart_uploads"`
-	UseUnsignedPayload    fs.Tristate          `config:"use_unsigned_payload"`
-	SDKLogMode            sdkLogMode           `config:"sdk_log_mode"`
-	DirectoryBucket       bool                 `config:"directory_bucket"`
-	IBMAPIKey             string               `config:"ibm_api_key"`
-	IBMInstanceID         string               `config:"ibm_resource_instance_id"`
-	UseXID                fs.Tristate          `config:"use_x_id"`
-	SignAcceptEncoding    fs.Tristate          `config:"sign_accept_encoding"`
+	Provider                  string               `config:"provider"`
+	EnvAuth                   bool                 `config:"env_auth"`
+	AccessKeyID               string               `config:"access_key_id"`
+	SecretAccessKey           string               `config:"secret_access_key"`
+	Region                    string               `config:"region"`
+	Endpoint                  string               `config:"endpoint"`
+	STSEndpoint               string               `config:"sts_endpoint"`
+	UseDualStack              bool                 `config:"use_dual_stack"`
+	LocationConstraint        string               `config:"location_constraint"`
+	ACL                       string               `config:"acl"`
+	BucketACL                 string               `config:"bucket_acl"`
+	RequesterPays             bool                 `config:"requester_pays"`
+	ServerSideEncryption      string               `config:"server_side_encryption"`
+	SSEKMSKeyID               string               `config:"sse_kms_key_id"`
+	SSECustomerAlgorithm      string               `config:"sse_customer_algorithm"`
+	SSECustomerKey            string               `config:"sse_customer_key"`
+	SSECustomerKeyBase64      string               `config:"sse_customer_key_base64"`
+	SSECustomerKeyMD5         string               `config:"sse_customer_key_md5"`
+	StorageClass              string               `config:"storage_class"`
+	UploadCutoff              fs.SizeSuffix        `config:"upload_cutoff"`
+	CopyCutoff                fs.SizeSuffix        `config:"copy_cutoff"`
+	ChunkSize                 fs.SizeSuffix        `config:"chunk_size"`
+	MaxUploadParts            int                  `config:"max_upload_parts"`
+	DisableChecksum           bool                 `config:"disable_checksum"`
+	SharedCredentialsFile     string               `config:"shared_credentials_file"`
+	Profile                   string               `config:"profile"`
+	SessionToken              string               `config:"session_token"`
+	UploadConcurrency         int                  `config:"upload_concurrency"`
+	ForcePathStyle            bool                 `config:"force_path_style"`
+	V2Auth                    bool                 `config:"v2_auth"`
+	UseAccelerateEndpoint     bool                 `config:"use_accelerate_endpoint"`
+	LeavePartsOnError         bool                 `config:"leave_parts_on_error"`
+	ListChunk                 int32                `config:"list_chunk"`
+	ListVersion               int                  `config:"list_version"`
+	ListURLEncode             fs.Tristate          `config:"list_url_encode"`
+	NoCheckBucket             bool                 `config:"no_check_bucket"`
+	NoHead                    bool                 `config:"no_head"`
+	NoHeadObject              bool                 `config:"no_head_object"`
+	Enc                       encoder.MultiEncoder `config:"encoding"`
+	DisableHTTP2              bool                 `config:"disable_http2"`
+	DownloadURL               string               `config:"download_url"`
+	DirectoryMarkers          bool                 `config:"directory_markers"`
+	UseMultipartEtag          fs.Tristate          `config:"use_multipart_etag"`
+	UsePresignedRequest       bool                 `config:"use_presigned_request"`
+	Versions                  bool                 `config:"versions"`
+	VersionAt                 fs.Time              `config:"version_at"`
+	VersionDeleted            bool                 `config:"version_deleted"`
+	Decompress                bool                 `config:"decompress"`
+	MightGzip                 fs.Tristate          `config:"might_gzip"`
+	IgnoreBucketAlreadyExists fs.Tristate          `config:"ignore_bucket_already_exists"`
+	UseAcceptEncodingGzip     fs.Tristate          `config:"use_accept_encoding_gzip"`
+	NoSystemMetadata          bool                 `config:"no_system_metadata"`
+	UseAlreadyExists          fs.Tristate          `config:"use_already_exists"`
+	UseMultipartUploads       fs.Tristate          `config:"use_multipart_uploads"`
+	UseUnsignedPayload        fs.Tristate          `config:"use_unsigned_payload"`
+	SDKLogMode                sdkLogMode           `config:"sdk_log_mode"`
+	DirectoryBucket           bool                 `config:"directory_bucket"`
+	IBMAPIKey                 string               `config:"ibm_api_key"`
+	IBMInstanceID             string               `config:"ibm_resource_instance_id"`
+	UseXID                    fs.Tristate          `config:"use_x_id"`
+	SignAcceptEncoding        fs.Tristate          `config:"sign_accept_encoding"`
 }
 
 // Fs represents a remote s3 server
@@ -3446,17 +3479,18 @@ func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
 //	go test -v -remote NewS3Provider:
 func setQuirks(opt *Options) {
 	var (
-		listObjectsV2         = true // Always use ListObjectsV2 instead of ListObjects
-		virtualHostStyle      = true // Use bucket.provider.com instead of putting the bucket in the URL
-		urlEncodeListings     = true // URL encode the listings to help with control characters
-		useMultipartEtag      = true // Set if Etags for multipart uploads are compatible with AWS
-		useAcceptEncodingGzip = true // Set Accept-Encoding: gzip
-		mightGzip             = true // assume all providers might use content encoding gzip until proven otherwise
-		useAlreadyExists      = true // Set if provider returns AlreadyOwnedByYou or no error if you try to remake your own bucket
-		useMultipartUploads   = true // Set if provider supports multipart uploads
-		useUnsignedPayload    = true // Do we need to use unsigned payloads to avoid seeking in PutObject
-		useXID                = true // Add x-id URL parameter into requests
-		signAcceptEncoding    = true // If we should include AcceptEncoding in the signature
+		listObjectsV2             = true // Always use ListObjectsV2 instead of ListObjects
+		ignoreBucketAlreadyExists = true // Treate BucketAlreadyExists as success and swallow the error
+		virtualHostStyle          = true // Use bucket.provider.com instead of putting the bucket in the URL
+		urlEncodeListings         = true // URL encode the listings to help with control characters
+		useMultipartEtag          = true // Set if Etags for multipart uploads are compatible with AWS
+		useAcceptEncodingGzip     = true // Set Accept-Encoding: gzip
+		mightGzip                 = true // assume all providers might use content encoding gzip until proven otherwise
+		useAlreadyExists          = true // Set if provider returns AlreadyOwnedByYou or no error if you try to remake your own bucket
+		useMultipartUploads       = true // Set if provider supports multipart uploads
+		useUnsignedPayload        = true // Do we need to use unsigned payloads to avoid seeking in PutObject
+		useXID                    = true // Add x-id URL parameter into requests
+		signAcceptEncoding        = true // If we should include AcceptEncoding in the signature
 	)
 	switch opt.Provider {
 	case "AWS":
@@ -3466,6 +3500,9 @@ func setQuirks(opt *Options) {
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
 		useAlreadyExists = true  // returns 200 OK
+	case "Hetzner":
+		useAlreadyExists = false
+		ignoreBucketAlreadyExists = false
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
@@ -3664,6 +3701,12 @@ func setQuirks(opt *Options) {
 		opt.UseAlreadyExists.Value = useAlreadyExists
 	}
 
+	// Does the provider abort pending deletes if the bucket is recreated?
+	if !opt.IgnoreBucketAlreadyExists.Valid {
+		opt.IgnoreBucketAlreadyExists.Valid = true
+		opt.IgnoreBucketAlreadyExists.Value = ignoreBucketAlreadyExists
+	}
+
 	// Set the correct use multipart uploads if not manually set
 	if !opt.UseMultipartUploads.Valid {
 		opt.UseMultipartUploads.Valid = true
@@ -3802,6 +3845,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.GetTier = false
 	}
 	if opt.Provider == "IDrive" {
+		f.features.SetTier = false
+	}
+	if opt.Provider == "Hetzner" {
 		f.features.SetTier = false
 	}
 	if opt.Provider == "AWS" {
@@ -4763,29 +4809,44 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 				LocationConstraint: types.BucketLocationConstraint(f.opt.LocationConstraint),
 			}
 		}
-		err := f.pacer.Call(func() (bool, error) {
+		return f.pacer.Call(func() (bool, error) {
 			_, err := f.c.CreateBucket(ctx, &req)
-			return f.shouldRetry(ctx, err)
-		})
-		if err == nil {
-			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
-		}
-		var awsErr smithy.APIError
-		if errors.As(err, &awsErr) {
-			switch awsErr.ErrorCode() {
-			case "BucketAlreadyOwnedByYou":
-				err = nil
-			case "BucketAlreadyExists", "BucketNameUnavailable":
-				if f.opt.UseAlreadyExists.Value {
-					// We can trust BucketAlreadyExists to mean not owned by us, so make it non retriable
-					err = fserrors.NoRetryError(err)
-				} else {
-					// We can't trust BucketAlreadyExists to mean not owned by us, so ignore it
+			if err == nil {
+				fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
+			}
+			var awsErr smithy.APIError
+			if errors.As(err, &awsErr) {
+				switch awsErr.ErrorCode() {
+				case "BucketAlreadyOwnedByYou":
 					err = nil
+				case "BucketAlreadyExists", "BucketNameUnavailable":
+					if f.opt.UseAlreadyExists.Value {
+						// The provider returns BucketAlreadyExists only for
+						// buckets owned by someone else. The bucket will not
+						// become available for our use. The operation should
+						// not be retried.
+						err = fserrors.NoRetryError(err)
+					} else if f.opt.IgnoreBucketAlreadyExists.Value {
+						// The provider returns BucketAlreadyExists for buckets
+						// we own. If the bucket is pending deletion, the
+						// provider will abort that procedure. The bucket is
+						// available for our use, and retrying is unnecessary.
+						err = nil
+					} else {
+						// The provider returns BucketAlreadyExists for buckets
+						// we own. If the bucket is pending deletion, the
+						// provider will NOT abort that procedure. We should
+						// retry, in case the provider finishes deleting and we
+						// can proceed with creating the bucket.
+						//
+						// Sleep time is arbitrary but passes integration tests
+						time.Sleep(1 * time.Second)
+						return true, err
+					}
 				}
 			}
-		}
-		return err
+			return f.shouldRetry(ctx, err)
+		})
 	}, func() (bool, error) {
 		return f.bucketExists(ctx, bucket)
 	})
