@@ -49,6 +49,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Hetzner Storage Box [:page_facing_up:](https://rclone.org/sftp/#hetzner-storage-box)
   * HiDrive [:page_facing_up:](https://rclone.org/hidrive/)
   * HTTP [:page_facing_up:](https://rclone.org/http/)
+  * Hetzner Object Storage [:page_facing_up:](https://rclone.org/s3/#hetzner)
   * Huawei Cloud Object Storage Service(OBS) [:page_facing_up:](https://rclone.org/s3/#huawei-obs)
   * iCloud Drive [:page_facing_up:](https://rclone.org/iclouddrive/)
   * ImageKit [:page_facing_up:](https://rclone.org/imagekit/)
