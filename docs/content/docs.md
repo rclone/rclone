@@ -1483,12 +1483,21 @@ have a signal to rotate logs.
 
 ### --log-format LIST ###
 
-Comma separated list of log format options. Accepted options are `date`, 
-`time`, `microseconds`, `pid`, `longfile`, `shortfile`, `UTC`. Any other 
-keywords will be silently ignored. `pid` will tag log messages with process
-identifier which useful with `rclone mount --daemon`. Other accepted
-options are explained in the [go documentation](https://pkg.go.dev/log#pkg-constants).
-The default log format is "`date`,`time`".
+Comma separated list of log format options. The accepted options are:
+
+- `date` - Add a date in the format YYYY/MM/YY to the log.
+- `time` - Add a time to the log in format HH:MM:SS.
+- `microseconds` - Add microseconds to the time in format HH:MM:SS.SSSSSS.
+- `UTC` - Make the logs in UTC not localtime.
+- `longfile` - Adds the source file and line number of the log statement.
+- `shortfile` - Adds the source file and line number of the log statement.
+- `pid` - Add the process ID to the log - useful with `rclone mount --daemon`.
+- `nolevel` - Don't add the level to the log.
+- `json` - Equivalent to adding `--use-json-log`
+
+They are added to the log line in the order above.
+
+The default log format is `"date,time"`.
 
 ### --log-level LEVEL ###
 
@@ -1508,8 +1517,61 @@ warnings and significant events.
 
 ### --use-json-log ###
 
-This switches the log format to JSON for rclone. The fields of json log
-are level, msg, source, time.
+This switches the log format to JSON for rclone. The fields of JSON
+log are `level`, `msg`, `source`, `time`. The JSON logs will be
+printed on a single line, but are shown expanded here for clarity.
+
+```json
+{
+  "time": "2025-05-13T17:30:51.036237518+01:00",
+  "level": "debug",
+  "msg": "4 go routines active\n",
+  "source": "cmd/cmd.go:298"
+}
+```
+
+Completed data transfer logs will have extra `size` information. Logs
+which are about a particular object will have `object` and
+`objectType` fields also.
+
+```json
+{
+  "time": "2025-05-13T17:38:05.540846352+01:00",
+  "level": "info",
+  "msg": "Copied (new) to: file2.txt",
+  "size": 6,
+  "object": "file.txt",
+  "objectType": "*local.Object",
+  "source": "operations/copy.go:368"
+}
+```
+
+Stats logs will contain a `stats` field which is the same as
+returned from the rc call [core/stats](/rc/#core-stats).
+
+```json
+{
+  "time": "2025-05-13T17:38:05.540912847+01:00",
+  "level": "info",
+  "msg": "...text version of the stats...",
+  "stats": {
+    "bytes": 6,
+    "checks": 0,
+    "deletedDirs": 0,
+    "deletes": 0,
+    "elapsedTime": 0.000904825,
+    ...truncated for clarity...
+    "totalBytes": 6,
+    "totalChecks": 0,
+    "totalTransfers": 1,
+    "transferTime": 0.000882794,
+    "transfers": 1
+  },
+  "source": "accounting/stats.go:569"
+}
+```
+
+
 
 ### --low-level-retries NUMBER ###
 

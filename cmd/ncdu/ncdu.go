@@ -6,6 +6,8 @@ package ncdu
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"path"
 	"reflect"
 	"sort"
@@ -925,23 +927,19 @@ func (u *UI) Run() error {
 		return fmt.Errorf("screen init: %w", err)
 	}
 
-	// Hijack fs.LogOutput so that it doesn't corrupt the screen.
-	if logOutput := fs.LogOutput; !log.Redirected() {
-		type log struct {
-			text  string
-			level fs.LogLevel
-		}
-		var logs []log
-		fs.LogOutput = func(level fs.LogLevel, text string) {
+	// Hijack log output so that it doesn't corrupt the screen.
+	if !log.Redirected() {
+		var logs []string
+		log.Handler.SetOutput(func(level slog.Level, text string) {
 			if len(logs) > 100 {
 				logs = logs[len(logs)-100:]
 			}
-			logs = append(logs, log{level: level, text: text})
-		}
+			logs = append(logs, text)
+		})
 		defer func() {
-			fs.LogOutput = logOutput
-			for i := range logs {
-				logOutput(logs[i].level, logs[i].text)
+			log.Handler.ResetOutput()
+			for _, text := range logs {
+				_, _ = os.Stderr.WriteString(text)
 			}
 		}()
 	}

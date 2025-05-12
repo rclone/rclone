@@ -671,8 +671,12 @@ func init() {
 	RegisterGlobalOptions(OptionsInfo{Name: "main", Opt: globalConfig, Options: ConfigOptionsInfo, Reload: globalConfig.Reload})
 
 	// initial guess at log level from the flags
-	globalConfig.LogLevel = initialLogLevel()
+	globalConfig.LogLevel = InitialLogLevel()
 }
+
+// LogReload is written by fs/log to set variables which should really
+// be there but we can't move due to them being visible here in the rc.
+var LogReload = func(*ConfigInfo) error { return nil }
 
 // Reload assumes the config has been edited and does what is necessary to make it live
 func (ci *ConfigInfo) Reload(ctx context.Context) error {
@@ -685,11 +689,6 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	// If --dry-run or -i then use NOTICE as minimum log level
 	if (ci.DryRun || ci.Interactive) && ci.StatsLogLevel > LogLevelNotice {
 		ci.StatsLogLevel = LogLevelNotice
-	}
-
-	// If --use-json-log then start the JSON logger
-	if ci.UseJSONLog {
-		InstallJSONLogger(ci.LogLevel)
 	}
 
 	// Check --compare-dest and --copy-dest
@@ -731,13 +730,12 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	nonZero(&ci.Transfers)
 	nonZero(&ci.Checkers)
 
-	return nil
+	return LogReload(ci)
 }
 
-// Initial logging level
-//
-// Perform a simple check for debug flags to enable debug logging during the flag initialization
-func initialLogLevel() LogLevel {
+// InitialLogLevel performs a simple check for debug flags to enable
+// debug logging during the flag initialization.
+func InitialLogLevel() LogLevel {
 	logLevel := LogLevelNotice
 	for argIndex, arg := range os.Args {
 		if strings.HasPrefix(arg, "-vv") && strings.TrimRight(arg, "v") == "-" {
