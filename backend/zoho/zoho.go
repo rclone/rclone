@@ -14,10 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/random"
-
 	"github.com/rclone/rclone/backend/zoho/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -27,7 +23,10 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
+	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
@@ -774,9 +773,9 @@ func (f *Fs) uploadLargeFile(ctx context.Context, in io.Reader, src fs.ObjectInf
 
 	// Create the headers map if it doesn't exist
 	headers := map[string]string{
-		"x-filename":         remote,
-		"x-parent_id":        f.opt.RootFolderID,
-		"override-name-exist": "true",
+		"x-filename":           remote,
+		"x-parent_id":          f.opt.RootFolderID,
+		"override-name-exist":  "true",
 	}
 	
 	// Add the modification time header
@@ -784,10 +783,10 @@ func (f *Fs) uploadLargeFile(ctx context.Context, in io.Reader, src fs.ObjectInf
 
 	opts := rest.Opts{
 		Method:        "POST",
-		Path:         "/api/v2/files/upload",
-		ExtraHeaders: headers,
-		Body:         in,
-		ContentType:  "application/octet-stream",
+		Path:          "/api/v2/files/upload",
+		ExtraHeaders:  headers,
+		Body:          in,
+		ContentType:   "application/octet-stream",
 	}
 
 	var resp *http.Response
@@ -844,10 +843,10 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote
 
 	opts := rest.Opts{
 		Method:        "POST",
-		Path:         "/api/v2/files/upload",
-		ExtraHeaders: headers,
-		Body:         in,
-		ContentType:  "application/octet-stream",
+		Path:          "/api/v2/files/upload",
+		ExtraHeaders:  headers,
+		Body:          in,
+		ContentType:   "application/octet-stream",
 	}
 
 	var resp *http.Response
