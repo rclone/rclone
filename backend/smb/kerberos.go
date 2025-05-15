@@ -6,7 +6,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/jcmturner/gokrb5/v8/client"
 	"github.com/jcmturner/gokrb5/v8/config"
@@ -16,22 +15,19 @@ import (
 var (
 	kerberosClient *client.Client
 	kerberosErr    error
-	kerberosOnce   sync.Once
 )
 
 // getKerberosClient returns a Kerberos client that can be used to authenticate.
-func getKerberosClient() (*client.Client, error) {
+func getKerberosClient(ccachePath string) (*client.Client, error) {
 	if kerberosClient == nil || kerberosErr == nil {
-		kerberosOnce.Do(func() {
-			kerberosClient, kerberosErr = createKerberosClient()
-		})
+		kerberosClient, kerberosErr = createKerberosClient(ccachePath)
 	}
 
 	return kerberosClient, kerberosErr
 }
 
 // createKerberosClient creates a new Kerberos client.
-func createKerberosClient() (*client.Client, error) {
+func createKerberosClient(ccachePath string) (*client.Client, error) {
 	cfgPath := os.Getenv("KRB5_CONFIG")
 	if cfgPath == "" {
 		cfgPath = "/etc/krb5.conf"
@@ -42,9 +38,12 @@ func createKerberosClient() (*client.Client, error) {
 		return nil, err
 	}
 
-	// Determine the ccache location from the environment, falling back to the
+	// If ccachePath is empty, use the global default ccache location.
+	if ccachePath == "" {
+		ccachePath = os.Getenv("KRB5CCNAME")
+	}
+	// Determine the ccache location, falling back to the
 	// default location.
-	ccachePath := os.Getenv("KRB5CCNAME")
 	switch {
 	case strings.Contains(ccachePath, ":"):
 		parts := strings.SplitN(ccachePath, ":", 2)
