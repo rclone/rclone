@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	iofs "io/fs"
+	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -483,6 +484,14 @@ Example:
 	`,
 			Advanced: true,
 		}, {
+			Name:    "http_proxy",
+			Default: "",
+			Help: `URL for HTTP CONNECT proxy
+
+Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+`,
+			Advanced: true,
+		}, {
 			Name:    "copy_is_hardlink",
 			Default: false,
 			Help: `Set to enable server side copies using hardlinks.
@@ -545,6 +554,7 @@ type Options struct {
 	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
 	SSH                     fs.SpaceSepList `config:"ssh"`
 	SocksProxy              string          `config:"socks_proxy"`
+	HTTPProxy               string          `config:"http_proxy"`
 	CopyIsHardlink          bool            `config:"copy_is_hardlink"`
 }
 
@@ -570,6 +580,7 @@ type Fs struct {
 	savedpswd    string
 	sessions     atomic.Int32 // count in use sessions
 	tokens       *pacer.TokenDispenser
+	proxyURL     *url.URL // address of HTTP proxy read from environment
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -865,6 +876,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.Port == "" {
 		opt.Port = "22"
+	}
+
+	// get proxy URL if set
+	if opt.HTTPProxy != "" {
+		proxyURL, err := url.Parse(opt.HTTPProxy)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse HTTP Proxy URL: %w", err)
+		}
+		f.proxyURL = proxyURL
 	}
 
 	sshConfig := &ssh.ClientConfig{
