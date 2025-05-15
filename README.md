@@ -39,6 +39,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
   * Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
   * Fastmail Files [:page_facing_up:](https://rclone.org/webdav/#fastmail-files)
+  * Filen [:page_facing_up:](https://rclone.org/filen/)
   * Files.com [:page_facing_up:](https://rclone.org/filescom/)
   * FTP [:page_facing_up:](https://rclone.org/ftp/)
   * GoFile [:page_facing_up:](https://rclone.org/gofile/)
