@@ -11,6 +11,37 @@ import (
 
 func init() {
 	rc.Add(rc.Call{
+		Path:         "config/unlock",
+		Fn:           rcConfigPassword,
+		Title:        "Unlock the config file.",
+		AuthRequired: true,
+		Help: `
+Unlocks the config file if it is locked.
+
+Parameters:
+
+- 'config_password' - password to unlock the config file
+
+A good idea is to disable AskPassword before making this call
+`,
+	})
+}
+
+// Unlock the config file
+// A good idea is to disable AskPassword before making this call
+func rcConfigPassword(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	configPass, err := in.GetString("config_password")
+	if err != nil {
+		return nil, err
+	}
+	if SetConfigPassword(configPass) != nil {
+		return nil, errors.New("failed to set config password")
+	}
+	return DumpRcBlob(), nil
+}
+
+func init() {
+	rc.Add(rc.Call{
 		Path:         "config/dump",
 		Fn:           rcDump,
 		Title:        "Dumps the config file.",
