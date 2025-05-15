@@ -130,6 +130,12 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 		if node.IsDir() {
 			dirent.Type = fuse.DT_Dir
 		}
+		switch node := node.(type) {
+		case *vfs.File:
+			if node.IsSymlink() {
+				dirent.Type = fuse.DT_Link
+			}
+		}
 		dirents = append(dirents, dirent)
 	}
 	itemsRead = len(dirents)
