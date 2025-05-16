@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/text/unicode/norm"
 )
@@ -60,9 +61,9 @@ type Marcher interface {
 // Note: this will flag filter-aware backends on the source side
 func (m *March) init(ctx context.Context) {
 	ci := fs.GetConfig(ctx)
-	m.srcListDir = m.makeListDir(ctx, m.Fsrc, m.SrcIncludeAll)
+	m.srcListDir = m.makeListDir(ctx, m.Fsrc, m.SrcIncludeAll, m.srcKey)
 	if !m.NoTraverse {
-		m.dstListDir = m.makeListDir(ctx, m.Fdst, m.DstIncludeAll)
+		m.dstListDir = m.makeListDir(ctx, m.Fdst, m.DstIncludeAll, m.dstKey)
 	}
 	// Now create the matching transform
 	// ..normalise the UTF8 first
@@ -80,13 +81,26 @@ func (m *March) init(ctx context.Context) {
 	}
 }
 
-// key turns a directory entry into a sort key using the defined transforms.
-func (m *March) key(entry fs.DirEntry) string {
+// srcKey turns a directory entry into a sort key using the defined transforms.
+func (m *March) srcKey(entry fs.DirEntry) string {
 	if entry == nil {
 		return ""
 	}
 	name := path.Base(entry.Remote())
-	for _, transform := range m.transforms {
+	name = transform.Path(m.Ctx, name, fs.DirEntryType(entry) == "directory")
+	return transforms(name, m.transforms)
+}
+
+// dstKey turns a directory entry into a sort key using the defined transforms.
+func (m *March) dstKey(entry fs.DirEntry) string {
+	if entry == nil {
+		return ""
+	}
+	return transforms(path.Base(entry.Remote()), m.transforms)
+}
+
+func transforms(name string, transforms []matchTransformFn) string {
+	for _, transform := range transforms {
 		name = transform(name)
 	}
 	return name
@@ -95,14 +109,14 @@ func (m *March) key(entry fs.DirEntry) string {
 // makeListDir makes constructs a listing function for the given fs
 // and includeAll flags for marching through the file system.
 // Note: this will optionally flag filter-aware backends!
-func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool) listDirFn {
+func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn list.KeyFn) listDirFn {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
 	if !(ci.UseListR && f.Features().ListR != nil) && // !--fast-list active and
 		!(ci.NoTraverse && fi.HaveFilesFrom()) { // !(--files-from and --no-traverse)
 		return func(dir string, callback fs.ListRCallback) (err error) {
 			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
-			return list.DirSortedFn(dirCtx, f, includeAll, dir, callback, m.key)
+			return list.DirSortedFn(dirCtx, f, includeAll, dir, callback, keyFn)
 		}
 	}
 
@@ -137,7 +151,7 @@ func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool) listD
 		// in syncing as it will use the first entry for the sync
 		// comparison.
 		slices.SortStableFunc(entries, func(a, b fs.DirEntry) int {
-			return cmp.Compare(m.key(a), m.key(b))
+			return cmp.Compare(keyFn(a), keyFn(b))
 		})
 		return callback(entries)
 	}
@@ -290,11 +304,11 @@ func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, srcOnly, dstO
 		// Reload src and dst if needed - we set them to nil if used
 		if src == nil {
 			src = <-srcChan
-			srcName = m.key(src)
+			srcName = m.srcKey(src)
 		}
 		if dst == nil {
 			dst = <-dstChan
-			dstName = m.key(dst)
+			dstName = m.dstKey(dst)
 		}
 		if src == nil && dst == nil {
 			break
@@ -399,7 +413,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	if m.NoTraverse && !m.NoCheckDest {
 		originalSrcChan := srcChan
 		srcChan = make(chan fs.DirEntry, 100)
-		ls, err := list.NewSorter(m.Ctx, m.Fdst, list.SortToChan(dstChan), m.key)
+		ls, err := list.NewSorter(m.Ctx, m.Fdst, list.SortToChan(dstChan), m.dstKey)
 		if err != nil {
 			return nil, err
 		}
@@ -449,7 +463,6 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 				noDst:     true,
 			})
 		}
-
 	}, func(dst fs.DirEntry) {
 		recurse := m.Callback.DstOnly(dst)
 		if recurse && job.dstDepth > 0 {
