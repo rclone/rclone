@@ -1061,14 +1061,14 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 // Pass in the remote desired and the size if known.
 //
 // It truncates any existing object
-func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.OpenWriterAtInfo, fs.WriterAtCloser, error) {
 	u, uRemote, err := f.findUpstream(remote)
 	if err != nil {
-		return nil, err
+		return fs.OpenWriterAtInfo{}, nil, err
 	}
 	do := u.f.Features().OpenWriterAt
 	if do == nil {
-		return nil, fs.ErrorNotImplemented
+		return fs.OpenWriterAtInfo{}, nil, fs.ErrorNotImplemented
 	}
 	return do(ctx, uRemote, size)
 }
