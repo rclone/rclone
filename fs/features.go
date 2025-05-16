@@ -589,6 +589,9 @@ const (
 	EntryDirectory EntryType = iota // 0
 	// EntryObject should be used to classify remote paths in objects
 	EntryObject // 1
+	// EntryUncertain should be used when a remote path cannot reliably or
+	// efficiently be classified as EntryDirectory or EntryObject
+	EntryUncertain // 2
 )
 
 // UnWrapper is an optional interfaces for Fs
