@@ -105,6 +105,9 @@ var providerOption = fs.Option{
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
 	}, {
+		Value: "Hetzner",
+		Help:  "Hetzner Object Storage",
+	}, {
 		Value: "HuaweiOBS",
 		Help:  "Huawei Object Storage Service",
 	}, {
@@ -397,6 +400,20 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "Region to connect to.",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "fsn1",
+				Help:  "Falkenstein",
+			}, {
+				Value: "hel1",
+				Help:  "Helsinki",
+			}, {
+				Value: "nbg1",
+				Help:  "Nuremberg",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "Region to connect to. - the location where your bucket will be created and your data stored. Need bo be same with your endpoint.\n",
 			Provider: "HuaweiOBS",
 			Examples: []fs.OptionExample{{
@@ -567,7 +584,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,Hetzner,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1098,6 +1115,20 @@ func init() {
 				Help:  "Middle East 1 (Dubai)",
 			}},
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Hetzner Object Storage",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "fsn1.your-objectstorage.com",
+				Help:  "Falkenstein",
+			}, {
+				Value: "hel1.your-objectstorage.com",
+				Help:  "Helsinki",
+			}, {
+				Value: "nbg1.your-objectstorage.com",
+				Help:  "Nuremberg",
+			}},
+		}, {
 			// obs endpoints: https://developer.huaweicloud.com/intl/en-us/endpoint?OBS
 			Name:     "endpoint",
 			Help:     "Endpoint for OBS API.",
@@ -1377,7 +1408,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,Hetzner,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1939,19 +1970,19 @@ the default (private) will be used.
 			}, {
 				Value:    "public-read-write",
 				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
-				Provider: "!IBMCOS",
+				Provider: "!IBMCOS,Hetzner",
 			}, {
 				Value:    "authenticated-read",
 				Help:     "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.",
-				Provider: "!IBMCOS",
+				Provider: "!IBMCOS,Hetzner",
 			}, {
 				Value:    "bucket-owner-read",
 				Help:     "Object owner gets FULL_CONTROL.\nBucket owner gets READ access.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
-				Provider: "!IBMCOS,ChinaMobile",
+				Provider: "!IBMCOS,Hetzner,ChinaMobile",
 			}, {
 				Value:    "bucket-owner-full-control",
 				Help:     "Both the object owner and the bucket owner get FULL_CONTROL over the object.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
-				Provider: "!IBMCOS,ChinaMobile",
+				Provider: "!IBMCOS,Hetzner,ChinaMobile",
 			}, {
 				Value:    "private",
 				Help:     "Owner gets FULL_CONTROL.\nNo one else has access rights (default).\nThis acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise COS.",
@@ -1981,6 +2012,7 @@ isn't set then "acl" is used instead.
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
 header is added and the default (private) will be used.
 `,
+			Provider: "!Hetzner",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
@@ -3466,6 +3498,8 @@ func setQuirks(opt *Options) {
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
 		useAlreadyExists = true  // returns 200 OK
+	case "Hetzner":
+		useAlreadyExists = false
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
@@ -3802,6 +3836,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.GetTier = false
 	}
 	if opt.Provider == "IDrive" {
+		f.features.SetTier = false
+	}
+	if opt.Provider == "Hetzner" {
 		f.features.SetTier = false
 	}
 	if opt.Provider == "AWS" {
@@ -4763,29 +4800,38 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 				LocationConstraint: types.BucketLocationConstraint(f.opt.LocationConstraint),
 			}
 		}
-		err := f.pacer.Call(func() (bool, error) {
+		return f.pacer.Call(func() (bool, error) {
 			_, err := f.c.CreateBucket(ctx, &req)
-			return f.shouldRetry(ctx, err)
-		})
-		if err == nil {
-			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
-		}
-		var awsErr smithy.APIError
-		if errors.As(err, &awsErr) {
-			switch awsErr.ErrorCode() {
-			case "BucketAlreadyOwnedByYou":
-				err = nil
-			case "BucketAlreadyExists", "BucketNameUnavailable":
-				if f.opt.UseAlreadyExists.Value {
-					// We can trust BucketAlreadyExists to mean not owned by us, so make it non retriable
-					err = fserrors.NoRetryError(err)
-				} else {
-					// We can't trust BucketAlreadyExists to mean not owned by us, so ignore it
+			if err == nil {
+				fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
+			}
+			var awsErr smithy.APIError
+			if errors.As(err, &awsErr) {
+				switch awsErr.ErrorCode() {
+				case "BucketAlreadyOwnedByYou":
 					err = nil
+				case "BucketAlreadyExists", "BucketNameUnavailable":
+					if f.opt.UseAlreadyExists.Value {
+						// The operation is non-retriable, because the provider
+						// returns BucketAlreadyExists for buckets not owned by
+						// us
+						err = fserrors.NoRetryError(err)
+					} else {
+						// The provider returns BucketAlreadyExists for buckets
+						// owned by us. We can presume the bucket is available
+						// for use.
+						//
+						// TODO: Decide how to handle providers that cancel
+						// deletion vs those that don't.
+						//
+						// Sleep time is arbitrary but passes integration tests
+						time.Sleep(1 * time.Second)
+						return true, err
+					}
 				}
 			}
-		}
-		return err
+			return f.shouldRetry(ctx, err)
+		})
 	}, func() (bool, error) {
 		return f.bucketExists(ctx, bucket)
 	})
