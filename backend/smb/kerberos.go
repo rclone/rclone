@@ -14,24 +14,12 @@ import (
 )
 
 var (
-	kerberosClient *client.Client
-	kerberosErr    error
-	kerberosOnce   sync.Once
+	kerberosClient sync.Map // map[string]*client.Client
+	kerberosErr    sync.Map // map[string]error
 )
 
-// getKerberosClient returns a Kerberos client that can be used to authenticate.
-func getKerberosClient() (*client.Client, error) {
-	if kerberosClient == nil || kerberosErr == nil {
-		kerberosOnce.Do(func() {
-			kerberosClient, kerberosErr = createKerberosClient()
-		})
-	}
-
-	return kerberosClient, kerberosErr
-}
-
 // createKerberosClient creates a new Kerberos client.
-func createKerberosClient() (*client.Client, error) {
+func createKerberosClient(ccachePath string) (*client.Client, error) {
 	cfgPath := os.Getenv("KRB5_CONFIG")
 	if cfgPath == "" {
 		cfgPath = "/etc/krb5.conf"
@@ -42,9 +30,12 @@ func createKerberosClient() (*client.Client, error) {
 		return nil, err
 	}
 
-	// Determine the ccache location from the environment, falling back to the
+	// If ccachePath is empty, use the global default ccache location.
+	if ccachePath == "" {
+		ccachePath = os.Getenv("KRB5CCNAME")
+	}
+	// Determine the ccache location, falling back to the
 	// default location.
-	ccachePath := os.Getenv("KRB5CCNAME")
 	switch {
 	case strings.Contains(ccachePath, ":"):
 		parts := strings.SplitN(ccachePath, ":", 2)
@@ -69,10 +60,23 @@ func createKerberosClient() (*client.Client, error) {
 		ccachePath = "/tmp/krb5cc_" + u.Uid
 	}
 
-	ccache, err := credentials.LoadCCache(ccachePath)
-	if err != nil {
-		return nil, err
+	if errVal, ok := kerberosErr.Load(ccachePath); ok {
+		return nil, errVal.(error)
+	}
+	if clientVal, ok := kerberosClient.Load(ccachePath); ok {
+		return clientVal.(*client.Client), nil
 	}
 
-	return client.NewFromCCache(ccache, cfg)
+	ccache, err := credentials.LoadCCache(ccachePath)
+	if err != nil {
+		kerberosErr.Store(ccachePath, err)
+		return nil, err
+	}
+	cl, err := client.NewFromCCache(ccache, cfg)
+	if err != nil {
+		kerberosErr.Store(ccachePath, err)
+		return nil, err
+	}
+	kerberosClient.Store(ccachePath, cl)
+	return cl, nil
 }
