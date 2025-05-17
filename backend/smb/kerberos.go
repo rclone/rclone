@@ -6,6 +6,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/jcmturner/gokrb5/v8/client"
 	"github.com/jcmturner/gokrb5/v8/config"
@@ -13,18 +14,9 @@ import (
 )
 
 var (
-	kerberosClient *client.Client
-	kerberosErr    error
+	kerberosClient sync.Map // map[string]*client.Client
+	kerberosErr    sync.Map // map[string]error
 )
-
-// getKerberosClient returns a Kerberos client that can be used to authenticate.
-func getKerberosClient(ccachePath string) (*client.Client, error) {
-	if kerberosClient == nil || kerberosErr == nil {
-		kerberosClient, kerberosErr = createKerberosClient(ccachePath)
-	}
-
-	return kerberosClient, kerberosErr
-}
 
 // createKerberosClient creates a new Kerberos client.
 func createKerberosClient(ccachePath string) (*client.Client, error) {
@@ -68,10 +60,23 @@ func createKerberosClient(ccachePath string) (*client.Client, error) {
 		ccachePath = "/tmp/krb5cc_" + u.Uid
 	}
 
-	ccache, err := credentials.LoadCCache(ccachePath)
-	if err != nil {
-		return nil, err
+	if errVal, ok := kerberosErr.Load(ccachePath); ok {
+		return nil, errVal.(error)
+	}
+	if clientVal, ok := kerberosClient.Load(ccachePath); ok {
+		return clientVal.(*client.Client), nil
 	}
 
-	return client.NewFromCCache(ccache, cfg)
+	ccache, err := credentials.LoadCCache(ccachePath)
+	if err != nil {
+		kerberosErr.Store(ccachePath, err)
+		return nil, err
+	}
+	cl, err := client.NewFromCCache(ccache, cfg)
+	if err != nil {
+		kerberosErr.Store(ccachePath, err)
+		return nil, err
+	}
+	kerberosClient.Store(ccachePath, cl)
+	return cl, nil
 }
