@@ -968,8 +968,9 @@ on any OS, and the value is defined as following:
   - On Unix: `$HOME` if defined, else by looking up current user in OS-specific user database
     (e.g. passwd file), or else use the result from shell command `cd && pwd`.
 
-If you run `rclone config file` you will see where the default
-location is for you.
+If you run `rclone config file` you will see where the default location is for
+you. Running `rclone config touch` will ensure a configuration file exists,
+creating an empty one in the default location if there is none.
 
 The fact that an existing file `rclone.conf` in the same directory
 as the rclone executable is always preferred, means that it is easy
@@ -980,7 +981,13 @@ same directory.
 If the location is set to empty string `""` or path to a file
 with name `notfound`, or the os null device represented by value `NUL` on
 Windows and `/dev/null` on Unix systems, then rclone will keep the
-config file in memory only.
+configuration file in memory only.
+
+You may see a log message "Config file not found - using defaults" if there is
+no configuration file. This can be supressed, e.g. if you are using rclone
+entirely with [on the fly remotes](/docs/#backend-path-to-dir), by using
+memory-only configuration file or by creating an empty configuration file, as
+described above.
 
 The file format is basic [INI](https://en.wikipedia.org/wiki/INI_file#Format):
 Sections of text, led by a `[section]` header and followed by
@@ -1556,6 +1563,32 @@ possible and memory use.
 Setting `--max-buffer-memory` allows the buffer memory to be
 controlled so that it doesn't overwhelm the machine and allows
 `--transfers` to be set large.
+
+### --max-connections=N ###
+
+This sets the maximum number of concurrent calls to the backend API.
+It may not map 1:1 to TCP or HTTP connections depending on the backend
+in use and the use of HTTP1 vs HTTP2.
+
+When downloading files, backends only limit the initial opening of the
+stream. The bulk data download is not counted as a connection. This
+means that the `--max--connections` flag won't limit the total number
+of downloads.
+
+Note that it is possible to cause deadlocks with this setting so it
+should be used with care.
+
+If you are doing a sync or copy then make sure `--max-connections` is
+one more than the sum of `--transfers` and `--checkers`.
+
+If you use `--check-first` then `--max-connections` just needs to be
+one more than the maximum of `--checkers` and `--transfers`.
+
+So for  `--max-connections 3` you'd use `--checkers 2 --transfers 2
+--check-first` or `--checkers 1 --transfers 1`.
+
+Setting this flag can be useful for backends which do multipart
+uploads to limit the number of simultaneous parts being transferred.
 
 ### --max-delete=N ###
 
