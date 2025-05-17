@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/namecrane/hoist"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"io"
-	"net/http"
 	"path"
 	"strings"
 	"time"
@@ -31,15 +31,15 @@ type Fs struct {
 	name        string
 	root        string
 	features    *fs.Features
-	client      *Namecrane
+	client      hoist.Client
 	apiURL      string
-	authManager *AuthManager
+	authManager hoist.AuthManager
 }
 
 type Object struct {
 	fs     *Fs
-	file   *File
-	folder *Folder
+	file   *hoist.File
+	folder *hoist.Folder
 	remote string
 }
 
@@ -133,11 +133,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root = "/"
 	}
 
-	authManager := NewAuthManager(http.DefaultClient, m, opt.ApiURL)
+	authManager := hoist.NewAuthManager(opt.ApiURL, hoist.WithAuthStore(&ConfigMapperStore{
+		m: m,
+	}))
 
-	authManager.fillFromConfigMapper()
-
-	if _, err := authManager.GetToken(ctx); errors.Is(err, ErrNoToken) {
+	if _, err := authManager.GetToken(ctx); errors.Is(err, hoist.ErrNoToken) {
 		if opt.Username != "" && opt.Password != "" {
 			err = authManager.Authenticate(ctx, opt.Username, opt.Password, opt.TwoFA)
 
@@ -150,7 +150,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	client := NewClient(opt.ApiURL, authManager)
+	client := hoist.NewClient(opt.ApiURL, authManager)
 
 	f := &Fs{
 		name:        name,
@@ -164,7 +164,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	_, file, err := client.Find(ctx, root)
 
 	// Ignore ErrNoFile as rclone will create directories for us
-	if err != nil && !errors.Is(err, ErrNoFile) {
+	if err != nil && !errors.Is(err, hoist.ErrNoFile) {
 		return nil, err
 	}
 
@@ -293,7 +293,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		folder, err := f.client.GetFolder(ctx, remote)
 
 		if err != nil {
-			if errors.Is(err, ErrNoFolder) {
+			if errors.Is(err, hoist.ErrNoFolder) {
 				return nil, fs.ErrorDirNotFound
 			}
 
@@ -314,7 +314,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	return f.folderToEntries(root[0]), nil
 }
 
-func (f *Fs) folderToEntries(folder Folder) fs.DirEntries {
+func (f *Fs) folderToEntries(folder hoist.Folder) fs.DirEntries {
 	var entries fs.DirEntries
 
 	for _, file := range folder.Files {
@@ -348,7 +348,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	folder, file, err := f.client.Find(ctx, remote)
 
 	if err != nil {
-		if errors.Is(err, ErrNoFile) {
+		if errors.Is(err, hoist.ErrNoFile) {
 			return nil, fs.ErrorObjectNotFound
 		}
 
@@ -381,7 +381,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	fs.Debugf(f, "Put contents of %s to %s", src.Remote(), remote)
 
-	file, err := f.client.Upload(ctx, in, remote, src.Size())
+	file, err := f.client.ChunkedUpload(ctx, in, remote, src.Size())
 
 	if err != nil {
 		return nil, err
@@ -424,7 +424,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// Confirm that the parent folder exists in the destination path
 	parent, _, err := f.client.Find(ctx, dstRemote)
 
-	if errors.Is(err, ErrNoFile) {
+	if errors.Is(err, hoist.ErrNoFile) {
 		// If the parent does not exist, create it (equivalent to MkdirAll)
 		parent, err = f.client.CreateFolder(ctx, dstRemote)
 
@@ -443,7 +443,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	// Use server side move
-	err = f.client.MoveFolder(ctx, folder.Path, parent.Path)
+	err = f.client.MoveFolder(ctx, folder.Path, parent.Path, folder.Name)
 
 	if err != nil {
 		// not quite clear, but probably trying to move directory across file system
@@ -479,7 +479,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// Check if the destination is a folder
 	_, err := dstObj.Stat(ctx)
 
-	if errors.Is(err, ErrNoFile) {
+	if errors.Is(err, hoist.ErrNoFile) {
 		// OK
 	} else if err != nil {
 		return nil, err
@@ -489,11 +489,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, errors.New("can't move file onto non-file")
 	}
 
-	newFolder, _ := f.client.parsePath(remote)
+	newFolder, _ := f.client.ParsePath(remote)
 
 	baseFolder, _, err := f.client.Find(ctx, newFolder)
 
-	if err != nil && errors.Is(err, ErrNoFile) {
+	if err != nil && errors.Is(err, hoist.ErrNoFile) {
 		baseFolder, err = f.client.CreateFolder(ctx, newFolder)
 
 		if err != nil {
@@ -526,13 +526,13 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 	_, file, err := f.client.Find(ctx, remote)
 
-	if errors.Is(err, ErrNoFile) {
+	if errors.Is(err, hoist.ErrNoFile) {
 		return "", fs.ErrorObjectNotFound
 	}
 
 	// Unlink just sets published to false
 	if unlink {
-		err = f.client.EditFile(ctx, file.ID, EditFileParams{
+		err = f.client.EditFile(ctx, file.ID, hoist.EditFileParams{
 			Published:      false,
 			PublishedUntil: time.Time{},
 		})
@@ -549,7 +549,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 	publicLink = strings.TrimRight(f.apiURL, "/") + "/" + publicLink
 
-	params := EditFileParams{
+	params := hoist.EditFileParams{
 		ShortLink:          shortLink,
 		PublicDownloadLink: publicLink,
 		Published:          true,
@@ -668,13 +668,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	// Support ranges (maybe, not sure if the API supports this?)
-	opts := make([]RequestOpt, 0)
+	opts := make([]hoist.RequestOpt, 0)
 
 	for _, opt := range options {
 		key, value := opt.Header()
 
 		if key != "" && value != "" {
-			opts = append(opts, WithHeader(key, value))
+			opts = append(opts, hoist.WithHeader(key, value))
 		}
 	}
 
