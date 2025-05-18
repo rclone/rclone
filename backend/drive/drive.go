@@ -3689,15 +3689,15 @@ func (f *Fs) lockUnlockFile(ctx context.Context, entry fs.DirEntry, lock bool) e
 
 // lockUnlockDir locks or unlocks all files in a directory recursively
 func (f *Fs) lockUnlockDir(ctx context.Context, path string, lock bool) (r lockUnlockResult, err error) {
-	lock_str := map[bool]string{true: "lock", false: "unlock"}[lock]
+	lockStr := map[bool]string{true: "lock", false: "unlock"}[lock]
 
 	// Process directory recursively using walk.listR (this makes the command
 	// aware of file filters like --exclude
 	err = walk.ListR(ctx, f, path, false, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 		for _, entry := range entries {
-			fs.Debugf(f, "%sing file: %q", lock_str, entry.Remote())
+			fs.Debugf(f, "%sing file: %q", lockStr, entry.Remote())
 			if err := f.lockUnlockFile(ctx, entry, lock); err != nil {
-				fs.Errorf(f, "Failed to %s file %q: %v", lock_str, entry.Remote(), err)
+				fs.Errorf(f, "Failed to %s file %q: %v", lockStr, entry.Remote(), err)
 				r.Errors++
 				continue
 			}
@@ -3709,13 +3709,13 @@ func (f *Fs) lockUnlockDir(ctx context.Context, path string, lock bool) (r lockU
 		fs.Errorf(f, "Failed to process directory: %v", err)
 		return r, fmt.Errorf("failed to process directory: %w", err)
 	}
-	fs.Debugf(f, "Successfully %sed %d files with %d errors", lock_str, r.Modified, r.Errors)
+	fs.Debugf(f, "Successfully %sed %d files with %d errors", lockStr, r.Modified, r.Errors)
 	return r, nil
 }
 
 // lockUnlockPath locks or unlocks a single file or directory recursively
 func (f *Fs) lockUnlockPath(ctx context.Context, path string, recursive, lock bool) (r lockUnlockResult, err error) {
-	lock_str := map[bool]string{true: "lock", false: "unlock"}[lock]
+	lockStr := map[bool]string{true: "lock", false: "unlock"}[lock]
 	// Get the file ID
 	file, _, _, _, _, err := f.getRemoteInfoWithExport(ctx, path)
 
@@ -3730,28 +3730,29 @@ func (f *Fs) lockUnlockPath(ctx context.Context, path string, recursive, lock bo
 			return r, errors.New("not a directory")
 		}
 		return f.lockUnlockDir(ctx, path, lock)
-	} else {
-		if isDir {
-			return r, errors.New("not a file")
-		}
-		entry, err := f.itemToDirEntry(ctx, path, file)
-		if err != nil {
-			msg := fmt.Sprintf("Failed to get file info: %v", err)
-			fs.Errorf(f, msg)
-			return r, errors.New(msg)
-		}
-	
-		// Process single file
-		fs.Debugf(f, "%sing single file", lock_str)
-		if err := f.lockUnlockFile(ctx, entry, lock); err != nil {
-			msg := fmt.Sprintf("Failed to %s file: %v", lock_str, err)
-			fs.Errorf(f, msg)
-			return r, errors.New(msg)
-		}
-		r.Modified = 1
-		fs.Debugf(f, "Successfully %sed file", lock_str)
-		return r, nil
 	}
+	
+	if isDir {
+		return r, errors.New("not a file")
+	}
+	entry, err := f.itemToDirEntry(ctx, path, file)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to get file info: %v", err)
+		fs.Errorf(f, msg)
+		return r, errors.New(msg)
+	}
+
+	// Process single file
+	fs.Debugf(f, "%sing single file", lockStr)
+	if err := f.lockUnlockFile(ctx, entry, lock); err != nil {
+		msg := fmt.Sprintf("Failed to %s file: %v", lockStr, err)
+		fs.Errorf(f, msg)
+		return r, errors.New(msg)
+	}
+	r.Modified = 1
+	fs.Debugf(f, "Successfully %sed file", lockStr)
+	return r, nil
+	
 }
 
 
@@ -4203,8 +4204,8 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		path := arg[0]
 		_, recursive := opt["recursive"]
 		lock := name == "lock"
-		lock_str := map[bool]string{true: "lock", false: "unlock"}[lock]
-		fs.Infof(f, "%sing path=%q, recursive=%v", lock_str, path, recursive)
+		lockStr := map[bool]string{true: "lock", false: "unlock"}[lock]
+		fs.Infof(f, "%sing path=%q, recursive=%v", lockStr, path, recursive)
 		return f.lockUnlockPath(ctx, path, recursive, lock)
 	default:
 		return nil, fs.ErrorCommandNotFound

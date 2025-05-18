@@ -652,7 +652,8 @@ func (f *Fs) InternalTestLockUnlock(t *testing.T) {
 	testContent := "test content"
 	obj, err := f.Put(ctx, strings.NewReader(testContent), object.NewStaticObjectInfo(testFile, time.Now(), int64(len(testContent)), true, nil, f))
 	require.NoError(t, err, "Failed to create test file")
-	defer obj.Remove(ctx)
+	defer func() { require.NoError(t, obj.Remove(ctx)) }()
+
 
 	// Test locking
 	result, err := f.Command(ctx, "lock", []string{testFile}, map[string]string{})
@@ -690,7 +691,7 @@ func (f *Fs) InternalTestLockUnlockRecursive(t *testing.T) {
 	testDir := "test-lock-dir"
 	err := f.Mkdir(ctx, testDir)
 	require.NoError(t, err, "Failed to create test directory")
-	defer f.Rmdir(ctx, testDir)
+	defer func() { require.NoError(t, f.Rmdir(ctx, testDir)) }()
 
 	testFiles := []string{
 		"test-lock-dir/file1.txt",
@@ -703,7 +704,7 @@ func (f *Fs) InternalTestLockUnlockRecursive(t *testing.T) {
 		obj, err := f.Put(ctx, strings.NewReader(testContent), object.NewStaticObjectInfo(file, time.Now(), int64(len(testContent)), true, nil, f))
 		require.NoError(t, err, "Failed to create test file %s", file)
 		objs = append(objs, obj)
-		defer obj.Remove(ctx)
+		defer func() { require.NoError(t, obj.Remove(ctx)) }()
 	}
 
 	// Lock directory recursively
