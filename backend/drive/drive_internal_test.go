@@ -654,7 +654,6 @@ func (f *Fs) InternalTestLockUnlock(t *testing.T) {
 	require.NoError(t, err, "Failed to create test file")
 	defer func() { require.NoError(t, obj.Remove(ctx)) }()
 
-
 	// Test locking
 	result, err := f.Command(ctx, "lock", []string{testFile}, map[string]string{})
 	assert.NoError(t, err, "Failed to lock file")

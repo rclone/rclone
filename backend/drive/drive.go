@@ -3673,7 +3673,7 @@ func (f *Fs) lockUnlockFile(ctx context.Context, entry fs.DirEntry, lock bool) e
 	} else {
 		updateInfo = &drive.File{
 			ContentRestrictions: []*drive.ContentRestriction{{
-				ReadOnly: false,
+				ReadOnly:        false,
 				ForceSendFields: []string{"ReadOnly"},
 			}},
 		}
@@ -3701,7 +3701,7 @@ func (f *Fs) lockUnlockDir(ctx context.Context, path string, lock bool) (r lockU
 				r.Errors++
 				continue
 			}
-			r.Modified++		
+			r.Modified++
 		}
 		return nil
 	})
@@ -3731,7 +3731,7 @@ func (f *Fs) lockUnlockPath(ctx context.Context, path string, recursive, lock bo
 		}
 		return f.lockUnlockDir(ctx, path, lock)
 	}
-	
+
 	if isDir {
 		return r, errors.New("not a file")
 	}
@@ -3752,9 +3752,8 @@ func (f *Fs) lockUnlockPath(ctx context.Context, path string, recursive, lock bo
 	r.Modified = 1
 	fs.Debugf(f, "Successfully %sed file", lockStr)
 	return r, nil
-	
-}
 
+}
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "get",
