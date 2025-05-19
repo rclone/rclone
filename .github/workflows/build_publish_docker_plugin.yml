@@ -7,6 +7,9 @@ name: Release Build for Docker Plugin
 on:
   release:
     types: [published]
+  push:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       manual:
@@ -19,6 +22,9 @@ jobs:
     if: inputs.manual || github.repository == 'rclone/rclone'
     name: Build docker plugin job
     runs-on: ubuntu-latest
+    env:
+      IS_RELEASE: ${{ github.event_name == 'release' }}
+      IS_BETA: ${{ github.ref == 'refs/heads/master' }}
     steps:
       - name: Free some space
         shell: bash
@@ -36,14 +42,26 @@ jobs:
       - name: Build and publish docker plugin
         shell: bash
         run: |
-          VER=${GITHUB_REF#refs/tags/}
           PLUGIN_USER=rclone
+
+          if [[ "$IS_RELEASE" == "true" ]]; then
+            VER=${GITHUB_REF#refs/tags/v}
+          elif [[ "$IS_BETA" == "true" ]]; then
+            VER=beta
+          else
+            echo "Error: This workflow is only meant to run on releases or the master branch"
+            echo "Current ref: $GITHUB_REF"
+            echo "Event name: $GITHUB_EVENT_NAME"
+            exit 1
+          fi
+
           docker login --username ${{ secrets.DOCKER_HUB_USER }} \
                        --password-stdin <<< "${{ secrets.DOCKER_HUB_PASSWORD }}"
+
           for PLUGIN_ARCH in amd64 arm64 arm/v7 arm/v6 ;do
               export PLUGIN_USER PLUGIN_ARCH
               make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}
-              make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}-${VER#v}
+              make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}-${VER}
           done
           make docker-plugin PLUGIN_ARCH=amd64 PLUGIN_TAG=latest
-          make docker-plugin PLUGIN_ARCH=amd64 PLUGIN_TAG=${VER#v}
+          make docker-plugin PLUGIN_ARCH=amd64 PLUGIN_TAG=${VER}
