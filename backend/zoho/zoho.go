@@ -1383,7 +1383,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// use normal upload API for small sizes (<10MiB)
 	if size < int64(o.fs.opt.UploadCutoff) {
-		obj, err := o.fs.upload(ctx, in, src, o.fs.opt.Enc.FromStandardName(leaf), size, options...)
+		obj, err := o.fs.upload(ctx, in, src, o.fs.opt.Enc.FromStandardName(leaf), options...)
 		if err != nil {
 			return err
 		}
