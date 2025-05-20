@@ -30,3 +30,22 @@ func TestIntegration2(t *testing.T) {
 		NilObject:  (*smb.Object)(nil),
 	})
 }
+
+func TestIntegration3(t *testing.T) {
+	tmpDir := t.TempDir()
+	krb5Conf := filepath.Join(tmpDir, "krb5.conf")
+	ccache := filepath.Join(tmpDir, "ccache")
+
+	t.Setenv("KRB5_CONFIG", krb5Conf)
+	t.Setenv("RCLONE_TEST_CUSTOM_CCACHE_LOCATION", ccache)
+
+	name := "TestSMBKerberosCcache"
+
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":rclone",
+		NilObject:  (*smb.Object)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "kerberos_ccache", Value: ccache},
+		},
+	})
+}

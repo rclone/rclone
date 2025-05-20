@@ -108,6 +108,13 @@ Set to 0 to keep connections indefinitely.
 			Default:  true,
 			Advanced: true,
 		}, {
+			Name: "kerberos_ccache",
+			Help: `Path to the Kerberos credential cache (krb5cc).
+
+Overrides the default KRB5CCNAME environment variable and allows each backend
+to use a different Kerberos cache file.`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -137,6 +144,7 @@ type Options struct {
 	Domain          string      `config:"domain"`
 	SPN             string      `config:"spn"`
 	UseKerberos     bool        `config:"use_kerberos"`
+	KerberosCCache  string      `config:"kerberos_ccache"`
 	HideSpecial     bool        `config:"hide_special_share"`
 	CaseInsensitive bool        `config:"case_insensitive"`
 	IdleTimeout     fs.Duration `config:"idle_timeout"`
