@@ -758,11 +758,11 @@ func (f *Fs) createObject(ctx context.Context, remote string, size int64, modTim
 	return
 }
 
-func (f *Fs) uploadLargeFile(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, size int64, options ...fs.OpenOption) (o *Object, err error) {
+func (f *Fs) uploadLargeFile(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, options ...fs.OpenOption) (o *Object, err error) {
 	// Get the metadata from the options
 	metadata := fs.Metadata{}
 	metadata.MergeOptions(options)
-	
+
 	// Get the modification time from metadata or src
 	modTime := src.ModTime(ctx)
 	if mtime, ok := metadata["mtime"]; ok {
@@ -773,20 +773,20 @@ func (f *Fs) uploadLargeFile(ctx context.Context, in io.Reader, src fs.ObjectInf
 
 	// Create the headers map if it doesn't exist
 	headers := map[string]string{
-		"x-filename":           remote,
-		"x-parent_id":          f.opt.RootFolderID,
-		"override-name-exist":  "true",
+		"x-filename":          remote,
+		"x-parent_id":         f.opt.RootFolderID,
+		"override-name-exist": "true",
 	}
-	
+
 	// Add the modification time header
 	headers["x-last-modified-date"] = modTime.Format(time.RFC3339)
 
 	opts := rest.Opts{
-		Method:        "POST",
-		Path:          "/api/v2/files/upload",
-		ExtraHeaders:  headers,
-		Body:          in,
-		ContentType:   "application/octet-stream",
+		Method:       "POST",
+		Path:         "/api/v2/files/upload",
+		ExtraHeaders: headers,
+		Body:         in,
+		ContentType:  "application/octet-stream",
 	}
 
 	var resp *http.Response
@@ -818,11 +818,11 @@ func (f *Fs) uploadLargeFile(ctx context.Context, in io.Reader, src fs.ObjectInf
 	return o, nil
 }
 
-func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, size int64, options ...fs.OpenOption) (o *Object, err error) {
+func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, options ...fs.OpenOption) (o *Object, err error) {
 	// Get the metadata from the options
 	metadata := fs.Metadata{}
 	metadata.MergeOptions(options)
-	
+
 	// Get the modification time from metadata or src
 	modTime := src.ModTime(ctx)
 	if mtime, ok := metadata["mtime"]; ok {
@@ -833,20 +833,20 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote
 
 	// Create the headers map if it doesn't exist
 	headers := map[string]string{
-		"x-filename":         remote,
-		"x-parent_id":        f.opt.RootFolderID,
+		"x-filename":          remote,
+		"x-parent_id":         f.opt.RootFolderID,
 		"override-name-exist": "true",
 	}
-	
+
 	// Add the modification time header
 	headers["x-last-modified-date"] = modTime.Format(time.RFC3339)
 
 	opts := rest.Opts{
-		Method:        "POST",
-		Path:          "/api/v2/files/upload",
-		ExtraHeaders:  headers,
-		Body:          in,
-		ContentType:   "application/octet-stream",
+		Method:       "POST",
+		Path:         "/api/v2/files/upload",
+		ExtraHeaders: headers,
+		Body:         in,
+		ContentType:  "application/octet-stream",
 	}
 
 	var resp *http.Response
@@ -900,7 +900,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 		// use normal upload API for small sizes (<10MiB)
 		if size < int64(f.opt.UploadCutoff) {
-			obj, err := f.upload(ctx, in, src, f.opt.Enc.FromStandardName(leaf), size, options...)
+			obj, err := f.upload(ctx, in, src, f.opt.Enc.FromStandardName(leaf), options...)
 			if err != nil {
 				return nil, err
 			}
@@ -908,7 +908,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 
 		// large file API otherwise
-		obj, err := f.uploadLargeFile(ctx, in, src, f.opt.Enc.FromStandardName(leaf), size, options...)
+		obj, err := f.uploadLargeFile(ctx, in, src, f.opt.Enc.FromStandardName(leaf), options...)
 		if err != nil {
 			return nil, err
 		}
@@ -1394,7 +1394,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// large file API otherwise
-	obj, err := o.fs.uploadLargeFile(ctx, in, src, o.fs.opt.Enc.FromStandardName(leaf), size, options...)
+	obj, err := o.fs.uploadLargeFile(ctx, in, src, o.fs.opt.Enc.FromStandardName(leaf), options...)
 	if err != nil {
 		return err
 	}
