@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-May 01, 2025
+May 21, 2025
 
 NAME
 
@@ -20654,7 +20654,7 @@ Flags for general networking and HTTP stuff.
           --tpslimit float                     Limit HTTP transactions per second to this
           --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
           --use-cookies                        Enable session cookiejar
-          --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.69.2")
+          --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.69.3")
 
 Performance
 
@@ -56323,6 +56323,16 @@ Options:
 -   "error": return an error based on option value
 
 Changelog
+
+v1.69.3 - 2025-05-21
+
+See commits
+
+-   Bug Fixes
+    -   build: Reapply update github.com/golang-jwt/jwt/v5 from 5.2.1 to
+        5.2.2 to fix CVE-2025-30204 (dependabot[bot])
+    -   build: Update github.com/ebitengine/purego to work around bug in
+        go1.24.3 (Nick Craig-Wood)
 
 v1.69.2 - 2025-05-01
 
