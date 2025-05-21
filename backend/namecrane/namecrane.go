@@ -611,6 +611,10 @@ func (o *Object) Remote() string {
 	remotePath := path.Clean(o.String())
 	rootPath := path.Clean(o.fs.root)
 
+	if len(rootPath) > 0 && rootPath[0] != '/' {
+		rootPath = "/" + rootPath
+	}
+
 	// Strip the root path from the remote if necessary
 	remotePath = strings.TrimPrefix(remotePath, rootPath)
 
