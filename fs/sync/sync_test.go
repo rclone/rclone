@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/transform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
@@ -2980,7 +2981,7 @@ func predictDstFromLogger(ctx context.Context) context.Context {
 			if winner.Err != nil {
 				errMsg = ";" + winner.Err.Error()
 			}
-			operations.SyncFprintf(opt.JSON, "%s;%s;%v;%s%s\n", file.ModTime(ctx).Local().Format(timeFormat), checksum, file.Size(), file.Remote(), errMsg)
+			operations.SyncFprintf(opt.JSON, "%s;%s;%v;%s%s\n", file.ModTime(ctx).Local().Format(timeFormat), checksum, file.Size(), transform.Path(ctx, file.Remote(), false), errMsg) // TODO: should the transform be handled in the sync instead of here?
 		}
 	}
 	return operations.WithSyncLogger(ctx, opt)

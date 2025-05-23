@@ -550,6 +550,11 @@ var ConfigOptionsInfo = Options{{
 	Default:  0,
 	Advanced: true,
 	Groups:   "Networking",
+}, {
+	Name:    "name_transform",
+	Default: []string{},
+	Help:    "Transform paths during the copy process.",
+	Groups:  "Copy",
 }}
 
 // ConfigInfo is filesystem config options
@@ -661,6 +666,7 @@ type ConfigInfo struct {
 	PartialSuffix              string            `config:"partial_suffix"`
 	MetadataMapper             SpaceSepList      `config:"metadata_mapper"`
 	MaxConnections             int               `config:"max_connections"`
+	NameTransform              []string          `config:"name_transform"`
 }
 
 func init() {

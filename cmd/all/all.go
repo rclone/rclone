@@ -15,6 +15,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/cleanup"
 	_ "github.com/rclone/rclone/cmd/cmount"
 	_ "github.com/rclone/rclone/cmd/config"
+	_ "github.com/rclone/rclone/cmd/convmv"
 	_ "github.com/rclone/rclone/cmd/copy"
 	_ "github.com/rclone/rclone/cmd/copyto"
 	_ "github.com/rclone/rclone/cmd/copyurl"
