@@ -14,11 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/random"
-
 	"github.com/rclone/rclone/backend/zoho/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -28,7 +23,10 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
+	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
@@ -425,7 +423,7 @@ func (f *Fs) String() string {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return time.Second // Zoho supports modification times with second precision
 }
 
 // Hashes returns the supported hash sets.
@@ -760,24 +758,37 @@ func (f *Fs) createObject(ctx context.Context, remote string, size int64, modTim
 	return
 }
 
-func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
-	opts := rest.Opts{
-		Method:        "POST",
-		Path:          "/stream/upload",
-		Body:          in,
-		ContentLength: &size,
-		ContentType:   "application/octet-stream",
-		Options:       options,
-		ExtraHeaders: map[string]string{
-			"x-filename":          url.QueryEscape(name),
-			"x-parent_id":         parent,
-			"override-name-exist": "true",
-			"upload-id":           uuid.New().String(),
-			"x-streammode":        "1",
-		},
+func (f *Fs) uploadLargeFile(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, options ...fs.OpenOption) (o *Object, err error) {
+	// Get the metadata from the options
+	metadata := fs.Metadata{}
+	metadata.MergeOptions(options)
+
+	// Get the modification time from metadata or src
+	modTime := src.ModTime(ctx)
+	if mtime, ok := metadata["mtime"]; ok {
+		if t, err := time.Parse(time.RFC3339Nano, mtime); err == nil {
+			modTime = t
+		}
 	}
 
-	var err error
+	// Create the headers map if it doesn't exist
+	headers := map[string]string{
+		"x-filename":          remote,
+		"x-parent_id":         f.opt.RootFolderID,
+		"override-name-exist": "true",
+	}
+
+	// Add the modification time header
+	headers["x-last-modified-date"] = modTime.Format(time.RFC3339)
+
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         "/api/v2/files/upload",
+		ExtraHeaders: headers,
+		Body:         in,
+		ContentType:  "application/octet-stream",
+	}
+
 	var resp *http.Response
 	var uploadResponse *api.LargeUploadResponse
 	err = f.pacer.CallNoRetry(func() (bool, error) {
@@ -796,42 +807,46 @@ func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, si
 		return nil, fmt.Errorf("upload error: %w", err)
 	}
 
-	// Fill in the api.Item from the api.UploadFileInfo
-	var info api.Item
-	info.ID = upload.Attributes.RessourceID
-	info.Attributes.Name = upload.Attributes.FileName
-	// info.Attributes.Type = not used
-	info.Attributes.IsFolder = false
-	// info.Attributes.CreatedTime = not used
-	info.Attributes.ModifiedTime = uploadInfo.GetModTime()
-	// info.Attributes.UploadedTime = 0 not used
-	info.Attributes.StorageInfo.Size = uploadInfo.Size
-	info.Attributes.StorageInfo.FileCount = 0
-	info.Attributes.StorageInfo.FolderCount = 0
-
-	return &info, nil
+	// Create a new Object with the upload info
+	o = &Object{
+		fs:      f,
+		remote:  remote,
+		size:    uploadInfo.Size,
+		modTime: time.Time(uploadInfo.GetModTime()),
+		id:      upload.Attributes.RessourceID,
+	}
+	return o, nil
 }
 
-func (f *Fs) upload(ctx context.Context, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
-	params := url.Values{}
-	params.Set("filename", url.QueryEscape(name))
-	params.Set("parent_id", parent)
-	params.Set("override-name-exist", strconv.FormatBool(true))
-	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, nil, "content", name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make multipart upload: %w", err)
+func (f *Fs) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote string, options ...fs.OpenOption) (o *Object, err error) {
+	// Get the metadata from the options
+	metadata := fs.Metadata{}
+	metadata.MergeOptions(options)
+
+	// Get the modification time from metadata or src
+	modTime := src.ModTime(ctx)
+	if mtime, ok := metadata["mtime"]; ok {
+		if t, err := time.Parse(time.RFC3339Nano, mtime); err == nil {
+			modTime = t
+		}
 	}
 
-	contentLength := overhead + size
+	// Create the headers map if it doesn't exist
+	headers := map[string]string{
+		"x-filename":          remote,
+		"x-parent_id":         f.opt.RootFolderID,
+		"override-name-exist": "true",
+	}
+
+	// Add the modification time header
+	headers["x-last-modified-date"] = modTime.Format(time.RFC3339)
+
 	opts := rest.Opts{
-		Method:           "POST",
-		Path:             "/upload",
-		Body:             formReader,
-		ContentType:      contentType,
-		ContentLength:    &contentLength,
-		Options:          options,
-		Parameters:       params,
-		TransferEncoding: []string{"identity"},
+		Method:       "POST",
+		Path:         "/api/v2/files/upload",
+		ExtraHeaders: headers,
+		Body:         in,
+		ContentType:  "application/octet-stream",
 	}
 
 	var resp *http.Response
@@ -852,20 +867,15 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 		return nil, fmt.Errorf("upload error: %w", err)
 	}
 
-	// Fill in the api.Item from the api.UploadFileInfo
-	var info api.Item
-	info.ID = upload.Attributes.RessourceID
-	info.Attributes.Name = upload.Attributes.FileName
-	// info.Attributes.Type = not used
-	info.Attributes.IsFolder = false
-	// info.Attributes.CreatedTime = not used
-	info.Attributes.ModifiedTime = uploadInfo.GetModTime()
-	// info.Attributes.UploadedTime = 0 not used
-	info.Attributes.StorageInfo.Size = uploadInfo.Size
-	info.Attributes.StorageInfo.FileCount = 0
-	info.Attributes.StorageInfo.FolderCount = 0
-
-	return &info, nil
+	// Create a new Object with the upload info
+	o = &Object{
+		fs:      f,
+		remote:  remote,
+		size:    uploadInfo.Size,
+		modTime: time.Time(uploadInfo.GetModTime()),
+		id:      upload.Attributes.RessourceID,
+	}
+	return o, nil
 }
 
 // Put the object into the container
@@ -883,28 +893,26 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		remote := src.Remote()
 
 		// Create the directory for the object if it doesn't exist
-		leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
+		leaf, _, err := f.dirCache.FindPath(ctx, remote, true)
 		if err != nil {
 			return nil, err
 		}
 
 		// use normal upload API for small sizes (<10MiB)
 		if size < int64(f.opt.UploadCutoff) {
-			info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+			obj, err := f.upload(ctx, in, src, f.opt.Enc.FromStandardName(leaf), options...)
 			if err != nil {
 				return nil, err
 			}
-
-			return f.newObjectWithInfo(ctx, remote, info)
+			return obj, nil
 		}
 
 		// large file API otherwise
-		info, err := f.uploadLargeFile(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+		obj, err := f.uploadLargeFile(ctx, in, src, f.opt.Enc.FromStandardName(leaf), options...)
 		if err != nil {
 			return nil, err
 		}
-
-		return f.newObjectWithInfo(ctx, remote, info)
+		return obj, nil
 	default:
 		return nil, err
 	}
@@ -1320,7 +1328,9 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	// We can't modify the modification time after upload
+	// It can only be set during the initial upload
+	return fs.ErrorCantSetModTimeWithoutDelete
 }
 
 // rename renames an object in place
@@ -1366,28 +1376,32 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	remote := o.Remote()
 
 	// Create the directory for the object if it doesn't exist
-	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
+	leaf, _, err := o.fs.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return err
 	}
 
 	// use normal upload API for small sizes (<10MiB)
 	if size < int64(o.fs.opt.UploadCutoff) {
-		info, err := o.fs.upload(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+		obj, err := o.fs.upload(ctx, in, src, o.fs.opt.Enc.FromStandardName(leaf), options...)
 		if err != nil {
 			return err
 		}
-
-		return o.setMetaData(info)
+		o.id = obj.id
+		o.size = obj.size
+		o.modTime = obj.modTime
+		return nil
 	}
 
 	// large file API otherwise
-	info, err := o.fs.uploadLargeFile(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+	obj, err := o.fs.uploadLargeFile(ctx, in, src, o.fs.opt.Enc.FromStandardName(leaf), options...)
 	if err != nil {
 		return err
 	}
-
-	return o.setMetaData(info)
+	o.id = obj.id
+	o.size = obj.size
+	o.modTime = obj.modTime
+	return nil
 }
 
 // Remove an object
