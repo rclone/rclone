@@ -111,8 +111,15 @@ Set to 0 to keep connections indefinitely.
 			Name: "kerberos_ccache",
 			Help: `Path to the Kerberos credential cache (krb5cc).
 
-Overrides the default KRB5CCNAME environment variable and allows each backend
-to use a different Kerberos cache file.`,
+Overrides the default KRB5CCNAME environment variable and allows this
+instance of the SMB backend to use a different Kerberos cache file.
+This is useful when mounting multiple SMB with different credentials
+or running in multi-user environments.
+
+Supported formats:
+  - FILE:/path/to/ccache   – Use the specified file.
+  - DIR:/path/to/ccachedir – Use the primary file inside the specified directory.
+  - /path/to/ccache        – Interpreted as a file path.`,
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
