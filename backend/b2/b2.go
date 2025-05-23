@@ -1673,6 +1673,21 @@ func (o *Object) getMetaData(ctx context.Context) (info *api.File, err error) {
 			return o.getMetaDataListing(ctx)
 		}
 	}
+
+	// If using versionAt we need to list the find the correct version.
+	if o.fs.opt.VersionAt.IsSet() {
+		info, err := o.getMetaDataListing(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if info.Action == "hide" {
+			// Rerturn object not found error if the current version is deleted.
+			return nil, fs.ErrorObjectNotFound
+		}
+		return info, nil
+	}
+
 	_, info, err = o.getOrHead(ctx, "HEAD", nil)
 	return info, err
 }
