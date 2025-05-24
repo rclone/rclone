@@ -252,18 +252,14 @@ func (d *DriveService) DownloadFile(ctx context.Context, url string, opt []fs.Op
 	}
 
 	resp, err := d.icloud.srv.Call(ctx, opts)
-	if err != nil {
-		// icloud has some weird http codes
-		if resp.StatusCode == 330 {
-			loc, err := resp.Location()
-			if err == nil {
-				return d.DownloadFile(ctx, loc.String(), opt)
-			}
+	// icloud has some weird http codes
+	if err != nil && resp != nil && resp.StatusCode == 330 {
+		loc, err := resp.Location()
+		if err == nil {
+			return d.DownloadFile(ctx, loc.String(), opt)
 		}
-
-		return resp, err
 	}
-	return d.icloud.srv.Call(ctx, opts)
+	return resp, err
 }
 
 // MoveItemToTrashByItemID moves an item to the trash based on the item ID.
