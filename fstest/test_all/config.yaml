@@ -528,3 +528,6 @@ backends:
  - backend:  "iclouddrive"
    remote:   "TestICloudDrive:"
    fastlist: false
+ - backend:  "adrive"
+   remote:   "TestAliyunDrive:"
+   fastlist: false
