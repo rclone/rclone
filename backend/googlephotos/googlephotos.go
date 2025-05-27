@@ -1193,7 +1193,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("failed to commit batch: %w", err)
 	}
 
-	o.setMetaData(info)
+	// Store the info back into the Object
+	// info == nil will only happen if we are uploading async batches
+	// we don't have anything sensible to write into the info then.
+	if info != nil {
+		o.setMetaData(info)
+	}
 
 	// Add upload to internal storage
 	if pattern.isUpload {
