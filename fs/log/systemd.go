@@ -11,7 +11,7 @@ import (
 )
 
 // Enables systemd logs if configured or if auto-detected
-func startSystemdLog() bool {
+func startSystemdLog(handler *OutputHandler) bool {
 	fs.Fatalf(nil, "--log-systemd not supported on %s platform", runtime.GOOS)
 	return false
 }

@@ -545,31 +545,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Add partial-suffix to temporary file name when --inplace is not used",
 	Groups:  "Copy",
 }, {
-	Name: "max_connections",
-	Help: strings.ReplaceAll(`Maximum number of simultaneous connections, 0 for unlimited.
-
-This sets the maximum number of connections made to the backend on a
-per backend basis. Connections in this case are calls to the backend
-API and may not map 1:1 to TCP or HTTP connections depending on the
-backend in use.
-
-Note that it is possible to cause deadlocks with this setting so it
-should be used with care.
-
-If you are doing a sync or copy then make sure |--max-connections| is
-one more than the sum of |--transfers| and |--checkers|.
-
-If you use |--check-first| then |--max-connections| just needs to be
-one more than the maximum of |--checkers| and |--transfers|.
-
-So for  |--max-connections 3| you'd use |--checkers 2 --transfers 2
---check-first| or |--checkers 1 --transfers 1|.
-
-Setting this flag can be useful for backends which do multipart
-uploads or downloads to limit the number of total connections.
-`, "|", "`"),
+	Name:     "max_connections",
+	Help:     "Maximum number of simultaneous backend API connections, 0 for unlimited.",
 	Default:  0,
 	Advanced: true,
+	Groups:   "Networking",
 }}
 
 // ConfigInfo is filesystem config options
@@ -691,8 +671,12 @@ func init() {
 	RegisterGlobalOptions(OptionsInfo{Name: "main", Opt: globalConfig, Options: ConfigOptionsInfo, Reload: globalConfig.Reload})
 
 	// initial guess at log level from the flags
-	globalConfig.LogLevel = initialLogLevel()
+	globalConfig.LogLevel = InitialLogLevel()
 }
+
+// LogReload is written by fs/log to set variables which should really
+// be there but we can't move due to them being visible here in the rc.
+var LogReload = func(*ConfigInfo) error { return nil }
 
 // Reload assumes the config has been edited and does what is necessary to make it live
 func (ci *ConfigInfo) Reload(ctx context.Context) error {
@@ -705,11 +689,6 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	// If --dry-run or -i then use NOTICE as minimum log level
 	if (ci.DryRun || ci.Interactive) && ci.StatsLogLevel > LogLevelNotice {
 		ci.StatsLogLevel = LogLevelNotice
-	}
-
-	// If --use-json-log then start the JSON logger
-	if ci.UseJSONLog {
-		InstallJSONLogger(ci.LogLevel)
 	}
 
 	// Check --compare-dest and --copy-dest
@@ -751,13 +730,12 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	nonZero(&ci.Transfers)
 	nonZero(&ci.Checkers)
 
-	return nil
+	return LogReload(ci)
 }
 
-// Initial logging level
-//
-// Perform a simple check for debug flags to enable debug logging during the flag initialization
-func initialLogLevel() LogLevel {
+// InitialLogLevel performs a simple check for debug flags to enable
+// debug logging during the flag initialization.
+func InitialLogLevel() LogLevel {
 	logLevel := LogLevelNotice
 	for argIndex, arg := range os.Args {
 		if strings.HasPrefix(arg, "-vv") && strings.TrimRight(arg, "v") == "-" {

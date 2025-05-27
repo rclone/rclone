@@ -7,54 +7,47 @@ package log
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"strconv"
-	"strings"
 
 	"github.com/coreos/go-systemd/v22/journal"
 	"github.com/rclone/rclone/fs"
 )
 
 // Enables systemd logs if configured or if auto-detected
-func startSystemdLog() bool {
-	flagsStr := "," + Opt.Format + ","
-	var flags int
-	if strings.Contains(flagsStr, ",longfile,") {
-		flags |= log.Llongfile
-	}
-	if strings.Contains(flagsStr, ",shortfile,") {
-		flags |= log.Lshortfile
-	}
-	log.SetFlags(flags)
+func startSystemdLog(handler *OutputHandler) bool {
+	handler.clearFormatFlags(logFormatDate | logFormatTime | logFormatMicroseconds | logFormatUTC | logFormatLongFile | logFormatShortFile | logFormatPid)
+	handler.setFormatFlags(logFormatNoLevel)
 	// TODO: Use the native journal.Print approach rather than a custom implementation
-	fs.LogOutput = func(level fs.LogLevel, text string) {
+	handler.SetOutput(func(level slog.Level, text string) {
 		text = fmt.Sprintf("<%s>%-6s: %s", systemdLogPrefix(level), level, text)
 		_ = log.Output(4, text)
-	}
+	})
 	return true
 }
 
-var logLevelToSystemdPrefix = []journal.Priority{
-	fs.LogLevelEmergency: journal.PriEmerg,
-	fs.LogLevelAlert:     journal.PriAlert,
-	fs.LogLevelCritical:  journal.PriCrit,
-	fs.LogLevelError:     journal.PriErr,
-	fs.LogLevelWarning:   journal.PriWarning,
-	fs.LogLevelNotice:    journal.PriNotice,
-	fs.LogLevelInfo:      journal.PriInfo,
-	fs.LogLevelDebug:     journal.PriDebug,
+var slogLevelToSystemdPrefix = map[slog.Level]journal.Priority{
+	fs.SlogLevelEmergency: journal.PriEmerg,
+	fs.SlogLevelAlert:     journal.PriAlert,
+	fs.SlogLevelCritical:  journal.PriCrit,
+	slog.LevelError:       journal.PriErr,
+	slog.LevelWarn:        journal.PriWarning,
+	fs.SlogLevelNotice:    journal.PriNotice,
+	slog.LevelInfo:        journal.PriInfo,
+	slog.LevelDebug:       journal.PriDebug,
 }
 
-func systemdLogPrefix(l fs.LogLevel) string {
-	if l >= fs.LogLevel(len(logLevelToSystemdPrefix)) {
+func systemdLogPrefix(l slog.Level) string {
+	prio, ok := slogLevelToSystemdPrefix[l]
+	if !ok {
 		return ""
 	}
-	return strconv.Itoa(int(logLevelToSystemdPrefix[l]))
+	return strconv.Itoa(int(prio))
 }
 
 func isJournalStream() bool {
 	if usingJournald, _ := journal.StderrIsJournalStream(); usingJournald {
 		return true
 	}
-
 	return false
 }

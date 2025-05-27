@@ -66,7 +66,6 @@ require (
 	github.com/rivo/uniseg v0.4.7
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/shirou/gopsutil/v4 v4.25.1
-	github.com/sirupsen/logrus v1.9.3
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
@@ -81,12 +80,12 @@ require (
 	github.com/zeebo/blake3 v0.2.4
 	go.etcd.io/bbolt v1.4.0
 	goftp.io/server/v2 v2.0.1
-	golang.org/x/crypto v0.35.0
-	golang.org/x/net v0.36.0
+	golang.org/x/crypto v0.36.0
+	golang.org/x/net v0.38.0
 	golang.org/x/oauth2 v0.27.0
-	golang.org/x/sync v0.11.0
-	golang.org/x/sys v0.30.0
-	golang.org/x/text v0.22.0
+	golang.org/x/sync v0.12.0
+	golang.org/x/sys v0.31.0
+	golang.org/x/text v0.23.0
 	golang.org/x/time v0.10.0
 	google.golang.org/api v0.223.0
 	gopkg.in/validator.v2 v2.0.1
@@ -138,7 +137,7 @@ require (
 	github.com/cronokirby/saferith v0.33.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/ebitengine/purego v0.8.2 // indirect
+	github.com/ebitengine/purego v0.8.3 // indirect
 	github.com/emersion/go-message v0.18.0 // indirect
 	github.com/emersion/go-textwrapper v0.0.0-20200911093747-65d896831594 // indirect
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9 // indirect
@@ -208,6 +207,7 @@ require (
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
 	github.com/samber/lo v1.47.0 // indirect
 	github.com/shabbyrobe/gocovmerge v0.0.0-20230507112040-c3350d9342df // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/spacemonkeygo/monkit/v3 v3.0.22 // indirect
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
@@ -243,5 +243,5 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/pkg/xattr v0.4.10
 	golang.org/x/mobile v0.0.0-20250218173827-cd096645fcd3
-	golang.org/x/term v0.29.0
+	golang.org/x/term v0.30.0
 )
