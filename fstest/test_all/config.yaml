@@ -527,40 +527,14 @@ backends:
       fastlist: false
   ignore:
     # FsEncoding tests
-    - TestIntegration/FsMkdir/FsEncoding/control_chars
-    - TestIntegration/FsMkdir/FsEncoding/dot
-    - TestIntegration/FsMkdir/FsEncoding/dot_dot
-    - TestIntegration/FsMkdir/FsEncoding/punctuation
-    - TestIntegration/FsMkdir/FsEncoding/leading_space
-    - TestIntegration/FsMkdir/FsEncoding/leading_tilde
-    - TestIntegration/FsMkdir/FsEncoding/leading_CR
-    - TestIntegration/FsMkdir/FsEncoding/leading_LF
-    - TestIntegration/FsMkdir/FsEncoding/leading_HT
-    - TestIntegration/FsMkdir/FsEncoding/leading_VT
-    - TestIntegration/FsMkdir/FsEncoding/leading_dot
     - TestIntegration/FsMkdir/FsEncoding/trailing_space
-    - TestIntegration/FsMkdir/FsEncoding/trailing_CR
-    - TestIntegration/FsMkdir/FsEncoding/trailing_LF
-    - TestIntegration/FsMkdir/FsEncoding/trailing_HT
-    - TestIntegration/FsMkdir/FsEncoding/trailing_VT
-    - TestIntegration/FsMkdir/FsEncoding/trailing_dot
-    - TestIntegration/FsMkdir/FsEncoding/URL_encoding
-
-    # FsPutFiles failures
-    - TestIntegration/FsMkdir/FsPutFiles/FsListDirFile2
-    - TestIntegration/FsMkdir/FsPutFiles/FsListR
-    - TestIntegration/FsMkdir/FsPutFiles/FsListLevel2
-    - TestIntegration/FsMkdir/FsPutFiles/FsListFile1
-    - TestIntegration/FsMkdir/FsPutFiles/FsListFile1and2
-    - TestIntegration/FsMkdir/FsPutFiles/FsPurge
-    - TestIntegration/FsMkdir/FsPutFiles/FsPurgeRoot
-    - TestIntegration/FsMkdir/FsPutFiles/FsMove
-    - TestIntegration/FsMkdir/FsPutFiles/FromRoot
-    - TestIntegration/FsMkdir/FsPutFiles/FromRoot/List
-    - TestIntegration/FsMkdir/FsPutFiles/FromRoot/ListEntries
-    - TestIntegration/FsMkdir/FsPutFiles/FromRoot/Put
-    - TestIntegration/FsMkdir/FsPutFiles/FromRoot/Put/Remove
-    - TestIntegration/FsMkdir/FsPutFiles/ObjectRemove
+     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
+     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
+     - TestIntegration/FsMkdir/FsEncoding/trailing_HT
+     - TestIntegration/FsMkdir/FsEncoding/trailing_VT
+     - TestIntegration/FsMkdir/FsEncoding/trailing_dot
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+     - TestIntegration/FsMkdir/FsEncoding/URL_encoding
    # fs/operations
      - TestCheckSum
      - TestCheckSumDownload
