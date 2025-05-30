@@ -4,7 +4,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/jcmturner/gokrb5/v8/client"
+	"github.com/jcmturner/gokrb5/v8/config"
+	"github.com/jcmturner/gokrb5/v8/credentials"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -76,4 +80,56 @@ func TestResolveCcachePath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestKerberosFactory_GetClient_ReloadOnCcacheChange(t *testing.T) {
+	// Create temp ccache file
+	tmpFile, err := os.CreateTemp("", "krb5cc_test")
+	assert.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	initialContent := []byte("CCACHE_VERSION 4\n")
+	_, err = tmpFile.Write(initialContent)
+	assert.NoError(t, err)
+	assert.NoError(t, tmpFile.Close())
+
+	// Setup mocks
+	loadCallCount := 0
+	mockLoadCCache := func(path string) (*credentials.CCache, error) {
+		loadCallCount++
+		return &credentials.CCache{}, nil
+	}
+
+	mockNewClient := func(cc *credentials.CCache, cfg *config.Config, opts ...func(*client.Settings)) (*client.Client, error) {
+		return &client.Client{}, nil
+	}
+
+	mockLoadConfig := func() (*config.Config, error) {
+		return &config.Config{}, nil
+	}
+	factory := &KerberosFactory{
+		loadCCache: mockLoadCCache,
+		newClient:  mockNewClient,
+		loadConfig: mockLoadConfig,
+	}
+
+	// First call — triggers loading
+	_, err = factory.GetClient(tmpFile.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, 1, loadCallCount, "expected 1 load call")
+
+	// Second call — should reuse cache, no additional load
+	_, err = factory.GetClient(tmpFile.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, 1, loadCallCount, "expected cached reuse, no new load")
+
+	// Simulate file update
+	time.Sleep(1 * time.Second) // ensure mtime changes
+	err = os.WriteFile(tmpFile.Name(), []byte("CCACHE_VERSION 4\n#updated"), 0600)
+	assert.NoError(t, err)
+
+	// Third call — should detect change, reload
+	_, err = factory.GetClient(tmpFile.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, 2, loadCallCount, "expected reload on changed ccache")
 }
