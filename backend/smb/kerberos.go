@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jcmturner/gokrb5/v8/client"
 	"github.com/jcmturner/gokrb5/v8/config"
@@ -14,8 +15,23 @@ import (
 )
 
 var (
+	// kerberosClient caches Kerberos clients keyed by resolved ccache path.
+	// Clients are reused unless the associated ccache file changes.
 	kerberosClient sync.Map // map[string]*client.Client
-	kerberosErr    sync.Map // map[string]error
+
+	// kerberosErr caches errors encountered when loading Kerberos clients.
+	// Prevents repeated attempts for paths that previously failed.
+	kerberosErr sync.Map // map[string]error
+
+	// kerberosCredModTime tracks the last known modification time of ccache files.
+	// Used to detect changes and trigger credential refresh.
+	kerberosCredModTime sync.Map // map[string]time.Time
+)
+
+var (
+	loadCCacheFunc      = credentials.LoadCCache
+	newClientFromCCache = client.NewFromCCache
+	loadKrbConfig       = loadKerberosConfig
 )
 
 func resolveCcachePath(ccachePath string) (string, error) {
@@ -65,30 +81,45 @@ func createKerberosClient(ccachePath string) (*client.Client, error) {
 		return nil, err
 	}
 
-	// check if we already have a client or an error for this ccache path
-	if errVal, ok := kerberosErr.Load(ccachePath); ok {
-		return nil, errVal.(error)
+	// Check if the ccache file is modified since last check
+	stat, statErr := os.Stat(ccachePath)
+	if statErr != nil {
+		kerberosErr.Store(ccachePath, statErr)
+		return nil, statErr
 	}
-	if clientVal, ok := kerberosClient.Load(ccachePath); ok {
-		return clientVal.(*client.Client), nil
+	mtime := stat.ModTime()
+
+	if oldCredModTimeVal, ok := kerberosCredModTime.Load(ccachePath); ok {
+		if oldMtime, ok := oldCredModTimeVal.(time.Time); ok && oldMtime.Equal(mtime) {
+			// ccache hasn't changed — return cached client or error
+			if errVal, ok := kerberosErr.Load(ccachePath); ok {
+				return nil, errVal.(error)
+			}
+			if clientVal, ok := kerberosClient.Load(ccachePath); ok {
+				return clientVal.(*client.Client), nil
+			}
+		}
 	}
 
-	// create a new client if not found in the map
-	cfg, err := loadKerberosConfig()
+	// ccache changed or no valid cached client — reload credentials
+	cfg, err := loadKrbConfig()
 	if err != nil {
 		kerberosErr.Store(ccachePath, err)
 		return nil, err
 	}
-	ccache, err := credentials.LoadCCache(ccachePath)
+	ccache, err := loadCCacheFunc(ccachePath)
 	if err != nil {
 		kerberosErr.Store(ccachePath, err)
 		return nil, err
 	}
-	cl, err := client.NewFromCCache(ccache, cfg)
+	cl, err := newClientFromCCache(ccache, cfg)
 	if err != nil {
 		kerberosErr.Store(ccachePath, err)
 		return nil, err
 	}
+
 	kerberosClient.Store(ccachePath, cl)
+	kerberosErr.Delete(ccachePath)
+	kerberosCredModTime.Store(ccachePath, mtime)
 	return cl, nil
 }

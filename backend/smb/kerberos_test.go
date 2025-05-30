@@ -4,7 +4,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/jcmturner/gokrb5/v8/client"
+	"github.com/jcmturner/gokrb5/v8/config"
+	"github.com/jcmturner/gokrb5/v8/credentials"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -76,4 +80,60 @@ func TestResolveCcachePath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreateKerberosClient_ReloadOnCcacheChange(t *testing.T) {
+
+	// Create temporary fake ccache file
+	tmpFile, err := os.CreateTemp("", "krb5cc_test")
+	assert.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	fakeCcacheContent := []byte("CCACHE_VERSION 4\n")
+	_, err = tmpFile.Write(fakeCcacheContent)
+	assert.NoError(t, err)
+	assert.NoError(t, tmpFile.Close())
+
+	// Patch functions
+	origLoadCCache := loadCCacheFunc
+	origNewFromCCache := newClientFromCCache
+	origLoadKerberosConfig := loadKrbConfig
+
+	defer func() {
+		loadCCacheFunc = origLoadCCache
+		newClientFromCCache = origNewFromCCache
+		loadKrbConfig = origLoadKerberosConfig
+	}()
+
+	loadCallCount := 0
+	loadCCacheFunc = func(path string) (*credentials.CCache, error) {
+		loadCallCount++
+		return &credentials.CCache{}, nil
+	}
+	newClientFromCCache = func(cc *credentials.CCache, cfg *config.Config, _ ...func(*client.Settings)) (*client.Client, error) {
+		return &client.Client{}, nil
+	}
+	loadKrbConfig = func() (*config.Config, error) {
+		return &config.Config{}, nil
+	}
+
+	// First call — should trigger load
+	_, err = createKerberosClient(tmpFile.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, 1, loadCallCount, "expected 1 load call")
+
+	// Second call — should reuse cached client
+	_, err = createKerberosClient(tmpFile.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, 1, loadCallCount, "expected reuse on unchanged ccache")
+
+	// Simulate file update
+	time.Sleep(1 * time.Second) // ensure mtime actually changes
+	err = os.WriteFile(tmpFile.Name(), []byte("CCACHE_VERSION 4\n#updated"), 0600)
+	assert.NoError(t, err)
+
+	// Third call — should detect change and reload
+	_, err = createKerberosClient(tmpFile.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, 2, loadCallCount, "expected reload on changed ccache")
 }
