@@ -284,6 +284,9 @@ backends:
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/SetTier
+ # - backend:  "s3"
+ #   remote:   "TestS3FlashBlade:"
+ #   fastlist: true
  - backend:  "sftp"
    remote:   "TestSFTPOpenssh:"
    fastlist: false
