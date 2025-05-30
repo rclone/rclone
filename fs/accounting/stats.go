@@ -68,6 +68,7 @@ type StatsInfo struct {
 
 type averageValues struct {
 	mu      sync.Mutex
+	period  float64
 	lpBytes int64
 	lpTime  time.Time
 	speed   float64
@@ -328,8 +329,6 @@ func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 }
 
 func (s *StatsInfo) averageLoop(ctx context.Context) {
-	var period float64
-
 	ticker := time.NewTicker(averagePeriodLength)
 	defer ticker.Stop()
 
@@ -347,11 +346,11 @@ func (s *StatsInfo) averageLoop(ctx context.Context) {
 				avg = float64(a.lpBytes) / elapsed
 			}
 
-			if period < averagePeriod {
-				period++
+			if a.period < averagePeriod {
+				a.period++
 			}
 
-			a.speed = (avg + a.speed*(period-1)) / period
+			a.speed = (avg + a.speed*(a.period-1)) / a.period
 			a.lpBytes = 0
 			a.lpTime = now
 
