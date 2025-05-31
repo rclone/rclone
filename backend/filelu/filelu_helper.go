@@ -2,13 +2,11 @@ package filelu
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"path"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -48,11 +46,11 @@ func (f *Fs) Features() *fs.Features {
 }
 
 func (f *Fs) fromStandardPath(remote string) string {
-	return encodePath(remote)
+	return f.opt.Enc.FromStandardPath(remote)
 }
 
 func (f *Fs) toStandardPath(remote string) string {
-	return decodePath(remote)
+	return f.opt.Enc.ToStandardPath(remote)
 }
 
 // Hashes returns an empty hash set, indicating no hash support
@@ -77,66 +75,6 @@ func (f *Fs) Precision() time.Duration {
 
 func (f *Fs) String() string {
 	return fmt.Sprintf("FileLu root '%s'", f.root)
-}
-
-func encodePath(path string) string {
-	segments := strings.Split(path, "/")
-	for i, segment := range segments {
-		if segment == "" {
-			continue // Skip empty segments to preserve leading/trailing slashes
-		}
-		// Encode the segment if it contains '%', '~' '/' or '?' or is not ASCII
-		if containsControlChars(segment) || strings.Contains(segment, "/") || strings.Contains(segment, "%") || strings.Contains(segment, "~") || strings.Contains(segment, "?") || !isASCII(segment) {
-			// Encode segment using Base64 URL encoding
-			encoded := base64.URLEncoding.EncodeToString([]byte(segment))
-			encoded = strings.ReplaceAll(encoded, "_", "_u_")
-			encoded = strings.ReplaceAll(encoded, "=", "_e_")
-			encoded = "b64_" + encoded
-			segments[i] = encoded
-		}
-	}
-	return strings.Join(segments, "/")
-}
-
-// Function to decode the encoded path
-func decodePath(encodedPath string) string {
-	segments := strings.Split(encodedPath, "/")
-	for i, segment := range segments {
-		if segment == "" {
-			continue // Skip empty segments
-		}
-		segment = strings.ReplaceAll(segment, "_e_", "=")
-		segment = strings.ReplaceAll(segment, "_u_", "_")
-		segments[i] = segment
-		if strings.HasPrefix(segment, "b64_") {
-			decoded, err := base64.URLEncoding.DecodeString(strings.TrimLeft(segment, "b64_"))
-			if err == nil && utf8.Valid(decoded) {
-				segments[i] = string(decoded)
-			}
-		}
-
-		// If decoding fails, leave the segment as is
-	}
-	return strings.Join(segments, "/")
-}
-
-// Helper function to check if a string contains only ASCII characters
-func isASCII(s string) bool {
-	for i := 0; i < len(s); i++ {
-		if s[i] > 127 {
-			return false
-		}
-	}
-	return true
-}
-
-func containsControlChars(s string) bool {
-	for _, r := range s {
-		if r < 32 || r == 127 { // ASCII control characters range
-			return true
-		}
-	}
-	return false
 }
 
 // isFileCode checks if a string looks like a file code
