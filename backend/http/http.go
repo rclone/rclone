@@ -360,11 +360,26 @@ var (
 
 // parseName turns a name as found in the page into a remote path or returns an error
 func parseName(base *url.URL, name string) (string, error) {
+
 	// make URL absolute
 	u, err := rest.URLJoin(base, name)
 	if err != nil {
 		return "", errURLJoinFailed
 	}
+
+	//Some vendors have the format path/to/?dir=dirname instead of path/to/dirname
+	//This can be corrected here to ignore the extranous "?dir="
+	if(len(u.Query()["dir"]) == 1 && len(u.Query()) == 1 ) {
+		dirName := u.Query()["dir"][0]
+		name = name[:strings.Index(name, "?dir=")]
+		name = name + dirName
+		// make URL absolute
+		u, err = rest.URLJoin(base, name)
+		if err != nil {
+			return "", errURLJoinFailed
+		}
+	}
+
 	// check it doesn't have URL parameters
 	uStr := u.String()
 	if strings.Contains(uStr, "?") {
