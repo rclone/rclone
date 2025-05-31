@@ -102,6 +102,9 @@ var providerOption = fs.Option{
 		Value: "Dreamhost",
 		Help:  "Dreamhost DreamObjects",
 	}, {
+		Value: "FlashBlade",
+		Help:  "Pure Storage FlashBlade Object Storage",
+	}, {
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
 	}, {
@@ -567,7 +570,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1908,7 +1911,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1923,7 +1926,7 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 If the acl is an empty string then no X-Amz-Acl: header is added and
 the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare",
+			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -1981,6 +1984,7 @@ isn't set then "acl" is used instead.
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
 header is added and the default (private) will be used.
 `,
+			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
@@ -3495,6 +3499,9 @@ func setQuirks(opt *Options) {
 	case "Dreamhost":
 		urlEncodeListings = false
 		useAlreadyExists = false // untested
+	case "FlashBlade":
+		mightGzip = false        // Never auto gzips objects
+		virtualHostStyle = false // supports vhost but defaults to paths
 	case "IBMCOS":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false

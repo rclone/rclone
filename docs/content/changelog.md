@@ -5,6 +5,14 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.69.3 - 2025-05-21
+
+[See commits](https://github.com/rclone/rclone/compare/v1.69.2...v1.69.3)
+
+* Bug Fixes
+    * build: Reapply update github.com/golang-jwt/jwt/v5 from 5.2.1 to 5.2.2 to fix CVE-2025-30204 (dependabot[bot])
+    * build: Update github.com/ebitengine/purego to work around bug in go1.24.3 (Nick Craig-Wood)
+
 ## v1.69.2 - 2025-05-01
 
 [See commits](https://github.com/rclone/rclone/compare/v1.69.1...v1.69.2)

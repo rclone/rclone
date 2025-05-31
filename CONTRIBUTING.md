@@ -572,3 +572,19 @@ Then, run `go build -buildmode=plugin -o PLUGIN_NAME.so .` to build the plugin.
 [Go reference](https://godoc.org/github.com/rclone/rclone/lib/plugin)
 
 [Minimal example](https://gist.github.com/terorie/21b517ee347828e899e1913efc1d684f)
+
+## Keeping a backend or command out of tree
+
+Rclone was designed to be modular so it is very easy to keep a backend
+or a command out of the main rclone source tree.
+
+So for example if you had a backend which accessed your proprietary
+systems or a command which was specialised for your needs you could
+add them out of tree.
+
+This may be easier than using a plugin and is supported on all
+platforms not just macOS and Linux.
+
+This is explained further in https://github.com/rclone/rclone_out_of_tree_example
+which has an example of an out of tree backend `ram` (which is a
+renamed version of the `memory` backend).
