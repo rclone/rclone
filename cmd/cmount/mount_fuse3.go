@@ -1,8 +1,8 @@
 //go:build fuse3 && (linux || freebsd)
 
-// // Package cmount implements a FUSE mounting system for rclone remotes.
+// Package cmount implements a FUSE mounting system for rclone remotes.
 //
-// This uses the cgo based cgofuse library
+// FUSE3 mount options.
 package cmount
 
 import (

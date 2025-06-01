@@ -1,8 +1,8 @@
 //go:build !fuse3
 
-// // Package cmount implements a FUSE mounting system for rclone remotes.
+// Package cmount implements a FUSE mounting system for rclone remotes.
 //
-// This uses the cgo based cgofuse library
+// FUSE2 mount options.
 package cmount
 
 import (
@@ -15,6 +15,8 @@ import (
 )
 
 // mountOptions configures the options from the command line flags
+//
+// nolint:unused This function is used by mount.go.
 func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.Options) (options []string) {
 	// Options
 	options = []string{
