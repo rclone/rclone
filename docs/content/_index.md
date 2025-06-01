@@ -15,7 +15,7 @@ notoc: true
 - [What providers does rclone support?](#providers)
 - [Download](/downloads/)
 - [Install](/install/)
-  {{< rem MAINPAGELINK >}}
+{{< rem MAINPAGELINK >}}
 
 ## About rclone {#about}
 
@@ -30,8 +30,8 @@ mv, mount, ls, ncdu, tree, rm, and cat. Rclone's familiar syntax
 includes shell pipeline support, and `--dry-run` protection. It is
 used at the command line, in scripts or via its [API](/rc).
 
-Users call rclone _"The Swiss army knife of cloud storage"_, and
-_"Technology indistinguishable from magic"_.
+Users call rclone *"The Swiss army knife of cloud storage"*, and
+*"Technology indistinguishable from magic"*.
 
 Rclone really looks after your data. It preserves timestamps and
 verifies checksums at all times. Transfers over limited bandwidth;
@@ -85,11 +85,11 @@ Rclone helps you:
 ## Features {#features}
 
 - Transfers
-  - MD5, SHA1 hashes are checked at all times for file integrity
-  - Timestamps are preserved on files
-  - Operations can be restarted at any time
-  - Can be to and from network, e.g. two different cloud providers
-  - Can use multi-threaded downloads to local disk
+    - MD5, SHA1 hashes are checked at all times for file integrity
+    - Timestamps are preserved on files
+    - Operations can be restarted at any time
+    - Can be to and from network, e.g. two different cloud providers
+    - Can use multi-threaded downloads to local disk
 - [Copy](/commands/rclone_copy/) new or changed files to cloud storage
 - [Sync](/commands/rclone_sync/) (one way) to make a directory identical
 - [Bisync](/bisync/) (two way) to keep two directories in sync bidirectionally
@@ -217,9 +217,11 @@ These backends adapt or modify other storage providers:
 {{< provider name="Hasher: Hash files" home="/hasher/" config="/hasher/" >}}
 {{< provider name="Union: Join multiple remotes to work together" home="/union/" config="/union/" >}}
 
+
 ## Links
 
-- {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
-- {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
-- {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
-- {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)
+  * {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
+  * {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
+  * {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
+  * {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)
+
