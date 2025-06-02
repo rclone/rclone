@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/textproto"
+	"net/url"
 	"path"
 	"runtime"
 	"strings"
@@ -188,6 +189,14 @@ Example:
 `,
 			Advanced: true,
 		}, {
+			Name:    "http_proxy",
+			Default: "",
+			Help: `URL for HTTP CONNECT proxy
+
+Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+`,
+			Advanced: true,
+		}, {
 			Name:    "no_check_upload",
 			Default: false,
 			Help: `Don't check the upload is OK
@@ -248,6 +257,7 @@ type Options struct {
 	AskPassword       bool                 `config:"ask_password"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	SocksProxy        string               `config:"socks_proxy"`
+	HTTPProxy         string               `config:"http_proxy"`
 	NoCheckUpload     bool                 `config:"no_check_upload"`
 }
 
@@ -266,6 +276,7 @@ type Fs struct {
 	pool     []*ftp.ServerConn
 	drain    *time.Timer // used to drain the pool when we stop using the connections
 	tokens   *pacer.TokenDispenser
+	proxyURL *url.URL  // address of HTTP proxy read from environment
 	pacer    *fs.Pacer // pacer for FTP connections
 	fGetTime bool      // true if the ftp library accepts GetTime
 	fSetTime bool      // true if the ftp library accepts SetTime
@@ -413,11 +424,26 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	dial := func(network, address string) (conn net.Conn, err error) {
 		fs.Debugf(f, "dial(%q,%q)", network, address)
 		defer func() {
-			fs.Debugf(f, "> dial: conn=%T, err=%v", conn, err)
+			if err != nil {
+				fs.Debugf(f, "> dial: conn=%v, err=%v", conn, err)
+			} else {
+				fs.Debugf(f, "> dial: conn=%s->%s, err=%v", conn.LocalAddr(), conn.RemoteAddr(), err)
+			}
 		}()
 		baseDialer := fshttp.NewDialer(ctx)
 		if f.opt.SocksProxy != "" {
 			conn, err = proxy.SOCKS5Dial(network, address, f.opt.SocksProxy, baseDialer)
+		} else if f.proxyURL != nil {
+			// We need to make the onward connection to f.opt.Host. However the FTP
+			// library sets the host to the proxy IP after using EPSV or PASV so we need
+			// to correct that here.
+			var dialPort string
+			_, dialPort, err = net.SplitHostPort(address)
+			if err != nil {
+				return nil, err
+			}
+			dialAddress := net.JoinHostPort(f.opt.Host, dialPort)
+			conn, err = proxy.HTTPConnectDial(network, dialAddress, f.proxyURL, baseDialer)
 		} else {
 			conn, err = baseDialer.Dial(network, address)
 		}
@@ -631,6 +657,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		CanHaveEmptyDirectories: true,
 		PartialUploads:          true,
 	}).Fill(ctx, f)
+	// get proxy URL if set
+	if opt.HTTPProxy != "" {
+		proxyURL, err := url.Parse(opt.HTTPProxy)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse HTTP Proxy URL: %w", err)
+		}
+		f.proxyURL = proxyURL
+	}
 	// set the pool drainer timer going
 	if f.opt.IdleTimeout > 0 {
 		f.drain = time.AfterFunc(time.Duration(opt.IdleTimeout), func() { _ = f.drainPool(ctx) })
