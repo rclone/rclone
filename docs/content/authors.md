@@ -973,3 +973,4 @@ put them back in again.` >}}
   * Jeff Geerling <geerlingguy@mac.com>
   * Germán Casares <german.casares.march+github@gmail.com>
   * fhuber <florian.huber@noris.de>
+  * wbulot <wbulot@hotmail.com>
