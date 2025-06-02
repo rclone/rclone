@@ -95,6 +95,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * rsync.net [:page_facing_up:](https://rclone.org/sftp/#rsync-net)
   * Scaleway [:page_facing_up:](https://rclone.org/s3/#scaleway)
   * Seafile [:page_facing_up:](https://rclone.org/seafile/)
+  * Seagate Lyve Cloud ["page_facing_up:](https://rclone.org/s3/#lyve)
   * SeaweedFS [:page_facing_up:](https://rclone.org/s3/#seaweedfs)
   * Selectel Object Storage [:page_facing_up:](https://rclone.org/s3/#selectel)
   * SFTP [:page_facing_up:](https://rclone.org/sftp/)

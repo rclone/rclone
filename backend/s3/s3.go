@@ -1007,6 +1007,12 @@ func init() {
 				Help:  "Washington, DC, (USA), us-iad-1",
 			}},
 		}, {
+			// Lyve Cloud endpoints
+			Name:     "endpoint",
+			Help:     "Endpoint for Lyve Cloud S3 API.\nRequired when using an S3 clone. Please type in your LyveCloud endpoint.\nExamples:\n- s3.us-west-1.{account_name}.lyve.seagate.com (US West 1 - California)\n- s3.eu-west-1.{account_name}.lyve.seagate.com (EU West 1 - Ireland)",
+			Provider: "LyveCloud",
+			Required: true,
+		}, {
 			// Magalu endpoints: https://docs.magalu.cloud/docs/object-storage/how-to/copy-url
 			Name:     "endpoint",
 			Help:     "Endpoint for Magalu Object Storage API.",
@@ -1380,7 +1386,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1429,18 +1435,6 @@ func init() {
 				Value:    "localhost:8333",
 				Help:     "SeaweedFS S3 localhost",
 				Provider: "SeaweedFS",
-			}, {
-				Value:    "s3.us-east-1.lyvecloud.seagate.com",
-				Help:     "Seagate Lyve Cloud US East 1 (Virginia)",
-				Provider: "LyveCloud",
-			}, {
-				Value:    "s3.us-west-1.lyvecloud.seagate.com",
-				Help:     "Seagate Lyve Cloud US West 1 (California)",
-				Provider: "LyveCloud",
-			}, {
-				Value:    "s3.ap-southeast-1.lyvecloud.seagate.com",
-				Help:     "Seagate Lyve Cloud AP Southeast 1 (Singapore)",
-				Provider: "LyveCloud",
 			}, {
 				Value:    "oos.eu-west-2.outscale.com",
 				Help:     "Outscale EU West 2 (Paris)",
