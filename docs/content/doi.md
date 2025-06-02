@@ -105,6 +105,32 @@ Properties:
     - "invenio"
         - Invenio
 
+#### --doi-doi-resolver-api-url
+
+The URL of the DOI resolver API to use.
+
+The DOI resolver can be set for testing or for cases when the the canonical DOI resolver API cannot be used.
+
+Defaults to "https://doi.org/api".
+
+Properties:
+
+- Config:      doi_resolver_api_url
+- Env Var:     RCLONE_DOI_DOI_RESOLVER_API_URL
+- Type:        string
+- Required:    false
+
+#### --doi-description
+
+Description of the remote.
+
+Properties:
+
+- Config:      description
+- Env Var:     RCLONE_DOI_DESCRIPTION
+- Type:        string
+- Required:    false
+
 ## Backend commands
 
 Here are the commands specific to the doi backend.

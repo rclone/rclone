@@ -98,26 +98,25 @@ func checkInvenioAPIURL(ctx context.Context, srv *rest.Client, pacer *fs.Pacer, 
 	return url.Parse(result.Links.Self)
 }
 
-// Implements Fs.List() for Invenio
-func (f *Fs) listInvenio(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	if dir != "" {
-		return nil, fs.ErrorDirNotFound
-	}
-
-	fileEntries, err := f.listInvevioDoiFiles(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error listing %q: %w", dir, err)
-	}
-	for _, entry := range fileEntries {
-		entries = append(entries, entry)
-	}
-	return entries, nil
+// invenioProvider implements the doiProvider interface for InvenioRDM installations
+type invenioProvider struct {
+	f *Fs
 }
 
-// List the files contained in the DOI
-func (f *Fs) listInvevioDoiFiles(ctx context.Context) (entries []*Object, err error) {
+// CanHaveSubDirs is true when the remote can have subdirectories
+func (ip *invenioProvider) CanHaveSubDirs() bool {
+	return false
+}
+
+// IsFile returns true if remote is a file
+func (ip *invenioProvider) IsFile(ctx context.Context, remote string) (isFile bool, err error) {
+	return remote != "", nil
+}
+
+// ListEntries returns the full list of entries found at the remote, regardless of root
+func (ip *invenioProvider) ListEntries(ctx context.Context) (entries []*Object, err error) {
 	// Use the cache if populated
-	cachedEntries, found := f.cache.GetMaybe("files")
+	cachedEntries, found := ip.f.cache.GetMaybe("files")
 	if found {
 		parsedEntries, ok := cachedEntries.([]Object)
 		if ok {
@@ -129,14 +128,14 @@ func (f *Fs) listInvevioDoiFiles(ctx context.Context) (entries []*Object, err er
 		}
 	}
 
-	filesURL := f.endpoint.JoinPath("files")
+	filesURL := ip.f.endpoint.JoinPath("files")
 	var result api.InvenioFilesResponse
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   strings.TrimLeft(filesURL.EscapedPath(), "/"),
 	}
-	err = f.pacer.Call(func() (bool, error) {
-		res, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+	err = ip.f.pacer.Call(func() (bool, error) {
+		res, err := ip.f.srv.CallJSON(ctx, &opts, nil, &result)
 		return shouldRetry(ctx, res, err)
 	})
 	if err != nil {
@@ -145,11 +144,11 @@ func (f *Fs) listInvevioDoiFiles(ctx context.Context) (entries []*Object, err er
 	for _, file := range result.Entries {
 		modTime, modTimeErr := time.Parse(time.RFC3339, file.Updated)
 		if modTimeErr != nil {
-			fs.Logf(f, "error: could not parse last update time %v", modTimeErr)
+			fs.Logf(ip.f, "error: could not parse last update time %v", modTimeErr)
 			modTime = timeUnset
 		}
 		entry := &Object{
-			fs:          f,
+			fs:          ip.f,
 			remote:      file.Key,
 			contentURL:  file.Links.Content,
 			size:        file.Size,
@@ -164,6 +163,12 @@ func (f *Fs) listInvevioDoiFiles(ctx context.Context) (entries []*Object, err er
 	for _, entry := range entries {
 		cacheEntries = append(cacheEntries, *entry)
 	}
-	f.cache.Put("files", cacheEntries)
+	ip.f.cache.Put("files", cacheEntries)
 	return entries, nil
+}
+
+func newInvenioProvider(f *Fs) doiProvider {
+	return &invenioProvider{
+		f: f,
+	}
 }

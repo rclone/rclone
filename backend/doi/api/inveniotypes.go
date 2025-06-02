@@ -5,7 +5,6 @@ package api
 // InvenioRecordResponse is the representation of a record stored in InvenioRDM
 type InvenioRecordResponse struct {
 	Links InvenioRecordResponseLinks `json:"links"`
-	// Metadata InvenioRecordMetadata      `json:"metadata"`
 }
 
 // InvenioRecordResponseLinks represents a record's links

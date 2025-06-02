@@ -35,48 +35,35 @@ func resolveDataverseEndpoint(resolvedURL *url.URL) (provider Provider, endpoint
 	return Dataverse, endpointURL, nil
 }
 
-// Implements Fs.List() for Dataverse installations
-func (f *Fs) listDataverse(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	fileEntries, err := f.listDataverseDoiFiles(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error listing %q: %w", dir, err)
-	}
-
-	fullDir := path.Join(f.root, dir)
-	if fullDir != "" {
-		fullDir += "/"
-	}
-	dirPaths := map[string]bool{}
-	for _, entry := range fileEntries {
-		// First, filter out files not in `fullDir`
-		if !strings.HasPrefix(entry.remote, fullDir) {
-			continue
-		}
-		// Then, find entries in subfolers
-		remotePath := entry.remote
-		if fullDir != "" {
-			remotePath = strings.TrimLeft(strings.TrimPrefix(remotePath, fullDir), "/")
-		}
-		parts := strings.SplitN(remotePath, "/", 2)
-		if len(parts) == 1 {
-			newEntry := *entry
-			newEntry.remote = path.Join(dir, remotePath)
-			entries = append(entries, &newEntry)
-		} else {
-			dirPaths[path.Join(dir, parts[0])] = true
-		}
-	}
-	for dirPath := range dirPaths {
-		entry := fs.NewDir(dirPath, time.Time{})
-		entries = append(entries, entry)
-	}
-	return entries, nil
+// dataverseProvider implements the doiProvider interface for Dataverse installations
+type dataverseProvider struct {
+	f *Fs
 }
 
-// List the files contained in the DOI
-func (f *Fs) listDataverseDoiFiles(ctx context.Context) (entries []*Object, err error) {
+// CanHaveSubDirs is true when the remote can have subdirectories
+func (dp *dataverseProvider) CanHaveSubDirs() bool {
+	return true
+}
+
+// IsFile returns true if remote is a file
+func (dp *dataverseProvider) IsFile(ctx context.Context, remote string) (isFile bool, err error) {
+	entries, err := dp.ListEntries(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, entry := range entries {
+		if entry.remote == remote {
+			isFile = true
+			break
+		}
+	}
+	return isFile, nil
+}
+
+// ListEntries returns the full list of entries found at the remote, regardless of root
+func (dp *dataverseProvider) ListEntries(ctx context.Context) (entries []*Object, err error) {
 	// Use the cache if populated
-	cachedEntries, found := f.cache.GetMaybe("files")
+	cachedEntries, found := dp.f.cache.GetMaybe("files")
 	if found {
 		parsedEntries, ok := cachedEntries.([]Object)
 		if ok {
@@ -88,7 +75,7 @@ func (f *Fs) listDataverseDoiFiles(ctx context.Context) (entries []*Object, err 
 		}
 	}
 
-	filesURL := f.endpoint
+	filesURL := dp.f.endpoint
 	var res *http.Response
 	var result api.DataverseDatasetResponse
 	opts := rest.Opts{
@@ -96,8 +83,8 @@ func (f *Fs) listDataverseDoiFiles(ctx context.Context) (entries []*Object, err 
 		Path:       strings.TrimLeft(filesURL.EscapedPath(), "/"),
 		Parameters: filesURL.Query(),
 	}
-	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+	err = dp.f.pacer.Call(func() (bool, error) {
+		res, err = dp.f.srv.CallJSON(ctx, &opts, nil, &result)
 		return shouldRetry(ctx, res, err)
 	})
 	if err != nil {
@@ -105,16 +92,16 @@ func (f *Fs) listDataverseDoiFiles(ctx context.Context) (entries []*Object, err 
 	}
 	modTime, modTimeErr := time.Parse(time.RFC3339, result.Data.LatestVersion.LastUpdateTime)
 	if modTimeErr != nil {
-		fs.Logf(f, "error: could not parse last update time %v", modTimeErr)
+		fs.Logf(dp.f, "error: could not parse last update time %v", modTimeErr)
 		modTime = timeUnset
 	}
 	for _, file := range result.Data.LatestVersion.Files {
 		contentURLPath := fmt.Sprintf("/api/access/datafile/%d", file.DataFile.ID)
 		query := url.Values{}
 		query.Add("format", "original")
-		contentURL := f.endpoint.ResolveReference(&url.URL{Path: contentURLPath, RawQuery: query.Encode()})
+		contentURL := dp.f.endpoint.ResolveReference(&url.URL{Path: contentURLPath, RawQuery: query.Encode()})
 		entry := &Object{
-			fs:          f,
+			fs:          dp.f,
 			remote:      path.Join(file.DirectoryLabel, file.DataFile.Filename),
 			contentURL:  contentURL.String(),
 			size:        file.DataFile.FileSize,
@@ -134,6 +121,12 @@ func (f *Fs) listDataverseDoiFiles(ctx context.Context) (entries []*Object, err 
 	for _, entry := range entries {
 		cacheEntries = append(cacheEntries, *entry)
 	}
-	f.cache.Put("files", cacheEntries)
+	dp.f.cache.Put("files", cacheEntries)
 	return entries, nil
+}
+
+func newDataverseProvider(f *Fs) doiProvider {
+	return &dataverseProvider{
+		f: f,
+	}
 }
