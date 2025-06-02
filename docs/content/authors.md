@@ -974,3 +974,4 @@ put them back in again.` >}}
   * Germán Casares <german.casares.march+github@gmail.com>
   * fhuber <florian.huber@noris.de>
   * wbulot <wbulot@hotmail.com>
+  * Jeremy Daer <jeremydaer@gmail.com>
