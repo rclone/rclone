@@ -477,6 +477,17 @@ func TestMatchListings(t *testing.T) {
 				{dirA, dirA},
 			},
 		},
+		{
+			what: "Sync with duplicate files and dirs",
+			input: fs.DirEntries{
+				dirA, A,
+				A, dirA,
+			},
+			matches: []matchPair{
+				{dirA, dirA},
+				{A, A},
+			},
+		},
 	} {
 		t.Run(fmt.Sprintf("TestMatchListings-%s", test.what), func(t *testing.T) {
 			ctx := context.Background()

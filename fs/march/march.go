@@ -89,6 +89,13 @@ func (m *March) key(entry fs.DirEntry) string {
 	for _, transform := range m.transforms {
 		name = transform(name)
 	}
+	// Suffix entries to make identically named files and
+	// directories sort consistently with directories first.
+	if _, isDirectory := entry.(fs.Directory); isDirectory {
+		name += "D"
+	} else {
+		name += "F"
+	}
 	return name
 }
 
