@@ -1,4 +1,4 @@
-package internxt
+package internxt_test
 
 import (
 	"testing"
