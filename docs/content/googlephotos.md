@@ -14,6 +14,11 @@ Google Photos.
 limitations, so please read the [limitations section](#limitations)
 carefully to make sure it is suitable for your use.
 
+**NB** From March 31, 2025 rclone can only download photos it
+uploaded. This limitation is due to policy changes at Google. You may
+need to run `rclone config reconnect remote:` to make rclone work
+again after upgrading to rclone v1.70.
+
 ## Configuration
 
 The initial setup for google cloud storage involves getting a token from Google Photos
@@ -527,6 +532,11 @@ Only images and videos can be uploaded.  If you attempt to upload non
 videos or images or formats that Google Photos doesn't understand,
 rclone will upload the file, then Google Photos will give an error
 when it is put turned into a media item.
+
+**NB** From March 31, 2025 rclone can only download photos it
+uploaded. This limitation is due to policy changes at Google. You may
+need to run `rclone config reconnect remote:` to make rclone work
+again after upgrading to rclone v1.70.
 
 Note that all media items uploaded to Google Photos through the API
 are stored in full resolution at "original quality" and **will** count

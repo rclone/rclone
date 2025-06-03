@@ -28,14 +28,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -108,35 +105,6 @@ func (m *messageParser) finalParameter() string {
 	param := m.line
 	m.line = ""
 	return param
-}
-
-// configDefinition describes a configuration value required by this command. We
-// use "GETCONFIG" messages to query git-annex for these values at runtime.
-type configDefinition struct {
-	names        []string
-	description  string
-	destination  *string
-	defaultValue *string
-}
-
-func (c *configDefinition) getCanonicalName() string {
-	if len(c.names) < 1 {
-		panic(fmt.Errorf("configDefinition must have at least one name: %v", c))
-	}
-	return c.names[0]
-}
-
-// fullDescription returns a single-line, human-readable description for this
-// config. The returned string begins with a list of synonyms and ends with
-// `c.description`.
-func (c *configDefinition) fullDescription() string {
-	if len(c.names) <= 1 {
-		return c.description
-	}
-	// Exclude the canonical name from the list of synonyms.
-	synonyms := c.names[1:len(c.names)]
-	commaSeparatedSynonyms := strings.Join(synonyms, ", ")
-	return fmt.Sprintf("(synonyms: %s) %s", commaSeparatedSynonyms, c.description)
 }
 
 // server contains this command's current state.
@@ -274,81 +242,31 @@ func (s *server) handleInitRemote() error {
 		return fmt.Errorf("failed to get configs: %w", err)
 	}
 
-	// Explicitly check whether [server.configRcloneRemoteName] names a remote.
-	//
-	// - We do not permit file paths in the remote name; that's what
-	//   [s.configPrefix] is for. If we simply checked whether [cache.Get]
-	//   returns [fs.ErrorNotFoundInConfigFile], we would incorrectly identify
-	//   file names as valid remote names.
-	//
-	// - In order to support remotes defined by environment variables, we must
-	//   use [config.GetRemoteNames] instead of [config.FileSections].
-	trimmedName := strings.TrimSuffix(s.configRcloneRemoteName, ":")
-	if slices.Contains(config.GetRemoteNames(), trimmedName) {
-		s.sendMsg("INITREMOTE-SUCCESS")
-		return nil
+	if err := validateRemoteName(s.configRcloneRemoteName); err != nil {
+		s.sendMsg(fmt.Sprintf("INITREMOTE-FAILURE %s", err))
+		return fmt.Errorf("failed to init remote: %w", err)
 	}
 
-	// Otherwise, check whether [server.configRcloneRemoteName] is actually a
-	// backend string such as ":local:". These are not remote names, per se, but
-	// they are permitted for compatibility with [fstest]. We could guard this
-	// behavior behind [testing.Testing] to prevent users from specifying
-	// backend strings, but there's no obvious harm in permitting it.
-	maybeBackend := strings.HasPrefix(s.configRcloneRemoteName, ":")
-	if !maybeBackend {
-		s.sendMsg("INITREMOTE-FAILURE remote does not exist: " + s.configRcloneRemoteName)
-		return fmt.Errorf("remote does not exist: %s", s.configRcloneRemoteName)
+	if mode := parseLayoutMode(s.configRcloneLayout); mode == layoutModeUnknown {
+		err := fmt.Errorf("unknown layout mode: %s", s.configRcloneLayout)
+		s.sendMsg(fmt.Sprintf("INITREMOTE-FAILURE %s", err))
+		return fmt.Errorf("failed to init remote: %w", err)
 	}
-	parsed, err := fspath.Parse(s.configRcloneRemoteName)
-	if err != nil {
-		s.sendMsg("INITREMOTE-FAILURE remote could not be parsed as a backend: " + s.configRcloneRemoteName)
-		return fmt.Errorf("remote could not be parsed as a backend: %s", s.configRcloneRemoteName)
-	}
-	if parsed.Path != "" {
-		s.sendMsg("INITREMOTE-FAILURE backend must not have a path: " + s.configRcloneRemoteName)
-		return fmt.Errorf("backend must not have a path: %s", s.configRcloneRemoteName)
-	}
-	// Strip the leading colon and options before searching for the backend,
-	// i.e. search for "local" instead of ":local,description=hello:/tmp/foo".
-	trimmedBackendName := strings.TrimPrefix(parsed.Name, ":")
-	if _, err = fs.Find(trimmedBackendName); err != nil {
-		s.sendMsg("INITREMOTE-FAILURE backend does not exist: " + trimmedBackendName)
-		return fmt.Errorf("backend does not exist: %s", trimmedBackendName)
-	}
+
 	s.sendMsg("INITREMOTE-SUCCESS")
 	return nil
 }
 
-// Get a list of configs with pointers to fields of `s`.
-func (s *server) getRequiredConfigs() []configDefinition {
-	defaultRclonePrefix := "git-annex-rclone"
-	defaultRcloneLayout := "nodir"
-
-	return []configDefinition{
-		{
-			[]string{"rcloneremotename", "target"},
-			"Name of the rclone remote to use. " +
-				"Must match a remote known to rclone. " +
-				"(Note that rclone remotes are a distinct concept from git-annex remotes.)",
-			&s.configRcloneRemoteName,
-			nil,
-		},
-		{
-			[]string{"rcloneprefix", "prefix"},
-			"Directory where rclone will write git-annex content. " +
-				fmt.Sprintf("If not specified, defaults to %q. ", defaultRclonePrefix) +
-				"This directory will be created on init if it does not exist.",
-			&s.configPrefix,
-			&defaultRclonePrefix,
-		},
-		{
-			[]string{"rclonelayout", "rclone_layout"},
-			"Defines where, within the rcloneprefix directory, rclone will write git-annex content. " +
-				fmt.Sprintf("Must be one of %v. ", allLayoutModes()) +
-				fmt.Sprintf("If empty, defaults to %q.", defaultRcloneLayout),
-			&s.configRcloneLayout,
-			&defaultRcloneLayout,
-		},
+func (s *server) mustSetConfigValue(id configID, value string) {
+	switch id {
+	case configRemoteName:
+		s.configRcloneRemoteName = value
+	case configPrefix:
+		s.configPrefix = value
+	case configLayout:
+		s.configRcloneLayout = value
+	default:
+		panic(fmt.Errorf("unhandled configId: %v", id))
 	}
 }
 
@@ -360,8 +278,8 @@ func (s *server) queryConfigs() error {
 
 	// Send a "GETCONFIG" message for each required config and parse git-annex's
 	// "VALUE" response.
-	for _, config := range s.getRequiredConfigs() {
-		var valueReceived bool
+queryNextConfig:
+	for _, config := range requiredConfigs {
 		// Try each of the config's names in sequence, starting with the
 		// canonical name.
 		for _, configName := range config.names {
@@ -377,19 +295,15 @@ func (s *server) queryConfigs() error {
 				return fmt.Errorf("failed to parse config value: %s %s", valueKeyword, message.line)
 			}
 
-			value := message.finalParameter()
-			if value != "" {
-				*config.destination = value
-				valueReceived = true
-				break
+			if value := message.finalParameter(); value != "" {
+				s.mustSetConfigValue(config.id, value)
+				continue queryNextConfig
 			}
 		}
-		if !valueReceived {
-			if config.defaultValue == nil {
-				return fmt.Errorf("did not receive a non-empty config value for %q", config.getCanonicalName())
-			}
-			*config.destination = *config.defaultValue
+		if config.defaultValue == "" {
+			return fmt.Errorf("did not receive a non-empty config value for %q", config.getCanonicalName())
 		}
+		s.mustSetConfigValue(config.id, config.defaultValue)
 	}
 
 	s.configsDone = true
@@ -408,7 +322,7 @@ func (s *server) handlePrepare() error {
 // Git-annex is asking us to return the list of settings that we use. Keep this
 // in sync with `handlePrepare()`.
 func (s *server) handleListConfigs() {
-	for _, config := range s.getRequiredConfigs() {
+	for _, config := range requiredConfigs {
 		s.sendMsg(fmt.Sprintf("CONFIG %s %s", config.getCanonicalName(), config.fullDescription()))
 	}
 	s.sendMsg("CONFIGEND")

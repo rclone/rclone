@@ -1,20 +1,4 @@
-<div align="center">
-<sup>Special thanks to our sponsor:</sup>
-<br>
-<br>
-<a href="https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rclone_20231103">
-  <div>
-    <img src="https://rclone.org/img/logos/warp-github.svg" width="300" alt="Warp">
-  </div>
-  <b>Warp is a modern, Rust-based terminal with AI built in so you and your team can build great software, faster.</b>
-  <div>
-    <sup>Visit warp.dev to learn more.</sup>
-  </div>
-</a>
-<br>
-<hr>
-</div>
-<br>
+
 
 [<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
 [<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
@@ -56,6 +40,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
   * Fastmail Files [:page_facing_up:](https://rclone.org/webdav/#fastmail-files)
   * Files.com [:page_facing_up:](https://rclone.org/filescom/)
+  * FlashBlade [:page_facing_up:](https://rclone.org/s3/#pure-storage-flashblade)
   * FTP [:page_facing_up:](https://rclone.org/ftp/)
   * GoFile [:page_facing_up:](https://rclone.org/gofile/)
   * Google Cloud Storage [:page_facing_up:](https://rclone.org/googlecloudstorage/)

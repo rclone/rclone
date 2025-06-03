@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -55,6 +56,7 @@ const (
 	driveTypeSharepoint         = "documentLibrary"
 	defaultChunkSize            = 10 * fs.Mebi
 	chunkSizeMultiple           = 320 * fs.Kibi
+	maxSinglePartSize           = 4 * fs.Mebi
 
 	regionGlobal = "global"
 	regionUS     = "us"
@@ -137,6 +139,21 @@ func init() {
 					Help:  "Azure and Office 365 operated by Vnet Group in China",
 				},
 			},
+		}, {
+			Name: "upload_cutoff",
+			Help: `Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+
+This is disabled by default as uploading using single part uploads
+causes rclone to use twice the storage on Onedrive business as when
+rclone sets the modification time after the upload Onedrive creates a
+new version.
+
+See: https://github.com/rclone/rclone/issues/1716
+`,
+			Default:  fs.SizeSuffix(-1),
+			Advanced: true,
 		}, {
 			Name: "chunk_size",
 			Help: `Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
@@ -745,6 +762,7 @@ Examples:
 // Options defines the configuration for this backend
 type Options struct {
 	Region                  string               `config:"region"`
+	UploadCutoff            fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
@@ -1021,6 +1039,13 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 	return
 }
 
+func checkUploadCutoff(cs fs.SizeSuffix) error {
+	if cs > maxSinglePartSize {
+		return fmt.Errorf("%v is greater than %v", cs, maxSinglePartSize)
+	}
+	return nil
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -1033,6 +1058,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
 		return nil, fmt.Errorf("onedrive: chunk size: %w", err)
+	}
+	err = checkUploadCutoff(opt.UploadCutoff)
+	if err != nil {
+		return nil, fmt.Errorf("onedrive: upload cutoff: %w", err)
 	}
 
 	if opt.DriveID == "" || opt.DriveType == "" {
@@ -1396,7 +1425,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	// So we have to filter things outside of the root which is
 	// inefficient.
 
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 
 	// list a folder conventionally - used for shared folders
 	var listFolder func(dir string) error
@@ -2468,6 +2497,10 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 				return false, nil
 			}
 			return true, fmt.Errorf("retry this chunk skipping %d bytes: %w", skip, err)
+		} else if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
+			fs.Debugf(o, "Received 404 error: assuming eventual consistency problem with session - retrying chunk: %v", err)
+			time.Sleep(5 * time.Second) // a little delay to help things along
+			return true, err
 		}
 		if err != nil {
 			return shouldRetry(ctx, resp, err)
@@ -2562,8 +2595,8 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 // This function will set modtime and metadata after uploading, which will create a new version for the remote file
 func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (info *api.Item, err error) {
 	size := src.Size()
-	if size < 0 || size > int64(fs.SizeSuffix(4*1024*1024)) {
-		return nil, errors.New("size passed into uploadSinglepart must be >= 0 and <= 4 MiB")
+	if size < 0 || size > int64(maxSinglePartSize) {
+		return nil, fmt.Errorf("size passed into uploadSinglepart must be >= 0 and <= %v", maxSinglePartSize)
 	}
 
 	fs.Debugf(o, "Starting singlepart upload")
@@ -2616,9 +2649,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	size := src.Size()
 
 	var info *api.Item
-	if size > 0 {
+	if size > 0 && size >= int64(o.fs.opt.UploadCutoff) {
 		info, err = o.uploadMultipart(ctx, in, src, options...)
-	} else if size == 0 {
+	} else if size >= 0 {
 		info, err = o.uploadSinglepart(ctx, in, src, options...)
 	} else {
 		return errors.New("unknown-sized upload not supported")

@@ -284,6 +284,9 @@ backends:
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/SetTier
+ # - backend:  "s3"
+ #   remote:   "TestS3FlashBlade:"
+ #   fastlist: true
  - backend:  "sftp"
    remote:   "TestSFTPOpenssh:"
    fastlist: false
@@ -395,6 +398,12 @@ backends:
    fastlist: false
  - backend:  "webdav"
    remote:   "TestWebdavOwncloud:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+   fastlist: false
+ - backend:  "webdav"
+   remote:   "TestWebdavInfiniteScale:"
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/punctuation
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8

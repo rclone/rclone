@@ -12,6 +12,7 @@ import (
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -50,6 +51,8 @@ func init() {
 	// Add common mount/vfs flags
 	mountlib.AddFlags(cmdFlags)
 	vfsflags.AddFlags(cmdFlags)
+	// Register with parent command
+	serve.Command.AddCommand(Command)
 }
 
 // Command definition for cobra
