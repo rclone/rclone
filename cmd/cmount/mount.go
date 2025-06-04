@@ -66,9 +66,6 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 			// it does not work with cgofuse on Windows with
 			// WinFSP so cmount must work with or without it.
 			options = append(options, "-o", "atomic_o_trunc")
-			if opt.DaemonTimeout != 0 {
-				options = append(options, "-o", fmt.Sprintf("daemon_timeout=%d", int(time.Duration(opt.DaemonTimeout).Seconds())))
-			}
 		}
 		if opt.AllowOther {
 			options = append(options, "-o", "allow_other")
@@ -94,6 +91,9 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 			}
 			if opt.NoAppleXattr {
 				options = append(options, "-o", "noapplexattr")
+			}
+			if opt.DaemonTimeout != 0 {
+				options = append(options, "-o", fmt.Sprintf("daemon_timeout=%d", int(time.Duration(opt.DaemonTimeout).Seconds())))
 			}
 		}
 	}
