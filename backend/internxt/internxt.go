@@ -139,6 +139,8 @@ func (f *Fs) String() string { return f.name + ":" + f.root }
 
 // Precision returns the precision of mtime that the server responds
 func (f *Fs) Precision() time.Duration { return time.Microsecond }
+
+// Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
 	return &fs.Features{ReadMetadata: false, CanHaveEmptyDirectories: true}
 }
