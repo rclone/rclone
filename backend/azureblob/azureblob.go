@@ -1768,7 +1768,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 	var (
 		srcSize  = src.size
 		partSize = int64(chunksize.Calculator(o, src.size, blockblob.MaxBlocks, f.opt.ChunkSize))
-		numParts = (srcSize-1)/partSize + 1
+		numParts = (srcSize + partSize - 1) / partSize
 		blockIDs = make([]string, numParts) // list of blocks for finalize
 		g, gCtx  = errgroup.WithContext(ctx)
 		checker  = newCheckForInvalidBlockOrBlob("copy", o)

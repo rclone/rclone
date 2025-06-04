@@ -1090,6 +1090,10 @@ func (o *Object) Remote() string {
 
 // Hash returns the requested hash of a file as a lowercase hex string
 func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
+	if r == hash.None {
+		return "", nil
+	}
+
 	// Check that the underlying file hasn't changed
 	o.fs.objectMetaMu.RLock()
 	oldtime := o.modTime

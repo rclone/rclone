@@ -970,3 +970,8 @@ put them back in again.` >}}
   * Tho Neyugn <nguyentruongtho@users.noreply.github.com>
   * Ben Boeckel <mathstuf@users.noreply.github.com>
   * Clément Wehrung <cwehrung@nurves.com>
+  * Jeff Geerling <geerlingguy@mac.com>
+  * Germán Casares <german.casares.march+github@gmail.com>
+  * fhuber <florian.huber@noris.de>
+  * wbulot <wbulot@hotmail.com>
+  * Jeremy Daer <jeremydaer@gmail.com>
