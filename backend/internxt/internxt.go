@@ -9,12 +9,9 @@ import (
 	"time"
 
 	"github.com/StarHack/go-internxt-drive/auth"
-	_ "github.com/StarHack/go-internxt-drive/auth"
 	"github.com/StarHack/go-internxt-drive/buckets"
 	config "github.com/StarHack/go-internxt-drive/config"
-	_ "github.com/StarHack/go-internxt-drive/files"
 	"github.com/StarHack/go-internxt-drive/folders"
-	_ "github.com/StarHack/go-internxt-drive/folders"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -23,12 +20,14 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 )
 
+// Options holds configuration options for this interface
 type Options struct {
 	Endpoint string `flag:"endpoint" help:"API endpoint"`
 	Email    string `flag:"email"    help:"Internxt account email"`
 	Password string `flag:"password" help:"Internxt account password"`
 }
 
+// Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "internxt",
@@ -50,6 +49,7 @@ func init() {
 		}})
 }
 
+// Fs represents an Internxt remote
 type Fs struct {
 	name           string
 	root           string
@@ -62,6 +62,7 @@ type Fs struct {
 	rootFile       *folders.File
 }
 
+// NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
 	if err := configstruct.Set(m, opt); err != nil {
@@ -127,13 +128,22 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-func (f *Fs) Name() string             { return f.name }
-func (f *Fs) Root() string             { return f.root }
-func (f *Fs) String() string           { return f.name + ":" + f.root }
+// Name of the remote (as passed into NewFs)
+func (f *Fs) Name() string { return f.name }
+
+// Root of the remote (as passed into NewFs)
+func (f *Fs) Root() string { return f.root }
+
+// String converts this Fs to a string
+func (f *Fs) String() string { return f.name + ":" + f.root }
+
+// Precision returns the precision of mtime that the server responds
 func (f *Fs) Precision() time.Duration { return time.Microsecond }
 func (f *Fs) Features() *fs.Features {
 	return &fs.Features{ReadMetadata: false, CanHaveEmptyDirectories: true}
 }
+
+// Mkdir creates a new directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	_, err := f.dirCache.FindDir(ctx, dir, true)
 	if err != nil && strings.Contains(err.Error(), `"statusCode":400`) {
@@ -141,6 +151,8 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	}
 	return err
 }
+
+// Rmdir removes a directory
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	id, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
@@ -176,6 +188,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 	return "", false, nil
 }
 
+// CreateDir creates a new directory
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error) {
 	resp, err := folders.CreateFolder(f.cfg, folders.CreateFolderRequest{
 		PlainName:        leaf,
@@ -187,6 +200,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 	return resp.UUID, nil
 }
 
+// List lists a directory
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	if f.rootIsFile && dir == "" {
 		return fs.DirEntries{newObjectWithFile(f, f.root, f.rootFile)}, nil
@@ -220,6 +234,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	return out, nil
 }
 
+// Put uploads a file
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 
@@ -242,6 +257,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	return newObjectWithMetaFile(f, remote, meta), nil
 }
 
+// Remove removes an object
 func (f *Fs) Remove(ctx context.Context, remote string) error {
 	obj, err := f.NewObject(ctx, remote)
 	if err == nil {
@@ -263,20 +279,27 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 	return nil
 }
 
+// Move moves a directory (not implemented)
 func (f *Fs) Move(ctx context.Context, src, dst fs.Object) error {
 	// return f.client.Rename(ctx, f.root+src.Remote(), f.root+dst.Remote())
 	return nil
 }
+
+// Copy copies a directory (not implemented)
 func (f *Fs) Copy(ctx context.Context, src, dst fs.Object) error {
 	// return f.client.Copy(ctx, f.root+src.Remote(), f.root+dst.Remote())
 	return nil
 }
+
+// DirCacheFlush flushes the dir cache (not implemented)
 func (f *Fs) DirCacheFlush(ctx context.Context) {}
 
+// Hashes returns type of hashes supported by Internxt
 func (f *Fs) Hashes() hash.Set {
 	return hash.NewHashSet()
 }
 
+// NewObject creates a new object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if f.rootIsFile {
 		leaf := path.Base(f.root)
