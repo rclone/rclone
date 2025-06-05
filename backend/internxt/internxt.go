@@ -1,3 +1,4 @@
+// Package internxt provides an interface to Internxt's Drive API
 package internxt
 
 import (
