@@ -2,6 +2,7 @@ package internxt
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -11,6 +12,7 @@ import (
 	"github.com/StarHack/go-internxt-drive/auth"
 	"github.com/StarHack/go-internxt-drive/buckets"
 	config "github.com/StarHack/go-internxt-drive/config"
+	"github.com/StarHack/go-internxt-drive/files"
 	"github.com/StarHack/go-internxt-drive/folders"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -19,13 +21,6 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 )
-
-// Options holds configuration options for this interface
-type Options struct {
-	Endpoint string `flag:"endpoint" help:"API endpoint"`
-	Email    string `flag:"email"    help:"Internxt account email"`
-	Password string `flag:"password" help:"Internxt account password"`
-}
 
 // Register with Fs
 func init() {
@@ -49,6 +44,13 @@ func init() {
 		}})
 }
 
+// Options holds configuration options for this interface
+type Options struct {
+	Endpoint string `flag:"endpoint" help:"API endpoint"`
+	Email    string `flag:"email"    help:"Internxt account email"`
+	Password string `flag:"password" help:"Internxt account password"`
+}
+
 // Fs represents an Internxt remote
 type Fs struct {
 	name           string
@@ -61,6 +63,38 @@ type Fs struct {
 	rootIsFile     bool
 	rootFile       *folders.File
 }
+
+// Object holds the data for a remote file object
+type Object struct {
+	f       *Fs
+	remote  string
+	id      string
+	uuid    string
+	size    int64
+	modTime time.Time
+}
+
+// Name of the remote (as passed into NewFs)
+func (f *Fs) Name() string { return f.name }
+
+// Root of the remote (as passed into NewFs)
+func (f *Fs) Root() string { return f.root }
+
+// String converts this Fs to a string
+func (f *Fs) String() string { return f.name + ":" + f.root }
+
+// Features returns the optional features of this Fs
+func (f *Fs) Features() *fs.Features {
+	return &fs.Features{ReadMetadata: false, CanHaveEmptyDirectories: true}
+}
+
+// Hashes returns type of hashes supported by Internxt
+func (f *Fs) Hashes() hash.Set {
+	return hash.NewHashSet()
+}
+
+// Precision returns the precision of mtime that the server responds
+func (f *Fs) Precision() time.Duration { return time.Microsecond }
 
 // NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -126,23 +160,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	return f, nil
-}
-
-// Name of the remote (as passed into NewFs)
-func (f *Fs) Name() string { return f.name }
-
-// Root of the remote (as passed into NewFs)
-func (f *Fs) Root() string { return f.root }
-
-// String converts this Fs to a string
-func (f *Fs) String() string { return f.name + ":" + f.root }
-
-// Precision returns the precision of mtime that the server responds
-func (f *Fs) Precision() time.Duration { return time.Microsecond }
-
-// Features returns the optional features of this Fs
-func (f *Fs) Features() *fs.Features {
-	return &fs.Features{ReadMetadata: false, CanHaveEmptyDirectories: true}
 }
 
 // Mkdir creates a new directory
@@ -296,11 +313,6 @@ func (f *Fs) Copy(ctx context.Context, src, dst fs.Object) error {
 // DirCacheFlush flushes the dir cache (not implemented)
 func (f *Fs) DirCacheFlush(ctx context.Context) {}
 
-// Hashes returns type of hashes supported by Internxt
-func (f *Fs) Hashes() hash.Set {
-	return hash.NewHashSet()
-}
-
 // NewObject creates a new object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if f.rootIsFile {
@@ -329,4 +341,102 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		}
 	}
 	return nil, fs.ErrorObjectNotFound
+}
+
+// newObjectWithFile returns a new object by file info
+func newObjectWithFile(f *Fs, remote string, file *folders.File) fs.Object {
+	size, _ := file.Size.Int64()
+	return &Object{
+		f:       f,
+		remote:  remote,
+		id:      file.FileID,
+		uuid:    file.UUID,
+		size:    size,
+		modTime: file.ModificationTime,
+	}
+}
+
+// newObjectWithMetaFile returns a new object by meta file info
+func newObjectWithMetaFile(f *Fs, remote string, file *buckets.CreateMetaResp) fs.Object {
+	size, _ := file.Size.Int64()
+	return &Object{
+		f:       f,
+		remote:  remote,
+		uuid:    file.UUID,
+		size:    size,
+		modTime: time.Now(),
+	}
+}
+
+// Fs returns the parent Fs
+func (o *Object) Fs() fs.Info {
+	return o.f
+}
+
+// String returns the remote path
+func (o *Object) String() string {
+	return o.remote
+}
+
+// Remote returns the remote path
+func (o *Object) Remote() string {
+	return o.remote
+}
+
+// Size is the file length
+func (o *Object) Size() int64 {
+	return o.size
+}
+
+// ModTime is the last modified time (read-only)
+func (o *Object) ModTime(ctx context.Context) time.Time {
+	return o.modTime
+}
+
+// Hash returns the hash value (not implemented)
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
+	return "", errors.New("not implemented")
+}
+
+// Storable returns if this object is storable
+func (o *Object) Storable() bool {
+	return true
+}
+
+// SetModTime sets the modified time
+func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
+	return errors.New("not implemented")
+}
+
+// Open opens a file for streaming
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	return buckets.DownloadFileStream(o.f.cfg, o.id)
+}
+
+// Update updates an existing file
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	parentDir, _ := path.Split(o.remote)
+	parentDir = strings.Trim(parentDir, "/")
+	folderUUID, err := o.f.dirCache.FindDir(ctx, parentDir, false)
+	if err != nil {
+		return err
+	}
+
+	if err := files.DeleteFile(o.f.cfg, o.uuid); err != nil {
+		return err
+	}
+
+	meta, err := buckets.UploadFileStream(o.f.cfg, folderUUID, path.Base(o.remote), in, src.Size())
+	if err != nil {
+		return err
+	}
+	o.uuid = meta.UUID
+	o.size = src.Size()
+	o.modTime = time.Now()
+	return nil
+}
+
+// Remove deletes a file
+func (o *Object) Remove(ctx context.Context) error {
+	return files.DeleteFile(o.f.cfg, o.uuid)
 }
