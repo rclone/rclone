@@ -318,8 +318,15 @@ $ rclone rc job/list
 If you wish to set config (the equivalent of the global flags) for the
 duration of an rc call only then pass in the `_config` parameter.
 
-This should be in the same format as the `config` key returned by
+This should be in the same format as the `main` key returned by
 [options/get](#options-get).
+
+    rclone rc --loopback options/get blocks=main
+
+You can see more help on these options with this command (see [the
+options blocks section](#option-blocks) for more info).
+
+    rclone rc --loopback options/info blocks=main
 
 For example, if you wished to run a sync with the `--checksum`
 parameter, you would pass this parameter in your JSON blob.
@@ -350,6 +357,13 @@ pass in the `_filter` parameter.
 
 This should be in the same format as the `filter` key returned by
 [options/get](#options-get).
+
+    rclone rc --loopback options/get blocks=filter
+
+You can see more help on these options with this command (see [the
+options blocks section](#option-blocks) for more info).
+
+    rclone rc --loopback options/info blocks=filter
 
 For example, if you wished to run a sync with these flags
 
