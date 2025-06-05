@@ -40,26 +40,6 @@ type dataverseProvider struct {
 	f *Fs
 }
 
-// CanHaveSubDirs is true when the remote can have subdirectories
-func (dp *dataverseProvider) CanHaveSubDirs() bool {
-	return true
-}
-
-// IsFile returns true if remote is a file
-func (dp *dataverseProvider) IsFile(ctx context.Context, remote string) (isFile bool, err error) {
-	entries, err := dp.ListEntries(ctx)
-	if err != nil {
-		return false, err
-	}
-	for _, entry := range entries {
-		if entry.remote == remote {
-			isFile = true
-			break
-		}
-	}
-	return isFile, nil
-}
-
 // ListEntries returns the full list of entries found at the remote, regardless of root
 func (dp *dataverseProvider) ListEntries(ctx context.Context) (entries []*Object, err error) {
 	// Use the cache if populated

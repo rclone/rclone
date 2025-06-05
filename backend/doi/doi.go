@@ -135,10 +135,6 @@ type Object struct {
 
 // doiProvider is the interface used to list objects in a DOI
 type doiProvider interface {
-	// CanHaveSubDirs is true when the remote can have subdirectories
-	CanHaveSubDirs() bool
-	// IsFile returns true if remote is a file
-	IsFile(ctx context.Context, remote string) (isFile bool, err error)
 	// ListEntries returns the full list of entries found at the remote, regardless of root
 	ListEntries(ctx context.Context) (entries []*Object, err error)
 }
@@ -261,7 +257,17 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	}
 
 	// Determine if the root is a file
-	return f.doiProvider.IsFile(ctx, f.root)
+	entries, err := f.doiProvider.ListEntries(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, entry := range entries {
+		if entry.remote == f.root {
+			isFile = true
+			break
+		}
+	}
+	return isFile, nil
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
@@ -382,8 +388,13 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
+	remoteFullPath := remote
+	if f.root != "" {
+		remoteFullPath = path.Join(f.root, remote)
+	}
+
 	for _, entry := range entries {
-		if entry.Remote() == remote {
+		if entry.Remote() == remoteFullPath {
 			return entry, nil
 		}
 	}
@@ -401,48 +412,40 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	if !f.doiProvider.CanHaveSubDirs() && dir != "" {
-		return nil, fs.ErrorDirNotFound
-	}
-
 	fileEntries, err := f.doiProvider.ListEntries(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error listing %q: %w", dir, err)
 	}
 
-	if !f.doiProvider.CanHaveSubDirs() {
-		for _, entry := range fileEntries {
-			entries = append(entries, entry)
+	fullDir := path.Join(f.root, dir)
+	if fullDir != "" {
+		fullDir += "/"
+	}
+
+	dirPaths := map[string]bool{}
+	for _, entry := range fileEntries {
+		// First, filter out files not in `fullDir`
+		if !strings.HasPrefix(entry.remote, fullDir) {
+			continue
 		}
-	} else {
-		fullDir := path.Join(f.root, dir)
+		// Then, find entries in subfolers
+		remotePath := entry.remote
 		if fullDir != "" {
-			fullDir += "/"
+			remotePath = strings.TrimLeft(strings.TrimPrefix(remotePath, fullDir), "/")
 		}
-		dirPaths := map[string]bool{}
-		for _, entry := range fileEntries {
-			// First, filter out files not in `fullDir`
-			if !strings.HasPrefix(entry.remote, fullDir) {
-				continue
-			}
-			// Then, find entries in subfolers
-			remotePath := entry.remote
-			if fullDir != "" {
-				remotePath = strings.TrimLeft(strings.TrimPrefix(remotePath, fullDir), "/")
-			}
-			parts := strings.SplitN(remotePath, "/", 2)
-			if len(parts) == 1 {
-				newEntry := *entry
-				newEntry.remote = path.Join(dir, remotePath)
-				entries = append(entries, &newEntry)
-			} else {
-				dirPaths[path.Join(dir, parts[0])] = true
-			}
+		parts := strings.SplitN(remotePath, "/", 2)
+		if len(parts) == 1 {
+			newEntry := *entry
+			newEntry.remote = path.Join(dir, remotePath)
+			entries = append(entries, &newEntry)
+		} else {
+			dirPaths[path.Join(dir, parts[0])] = true
 		}
-		for dirPath := range dirPaths {
-			entry := fs.NewDir(dirPath, time.Time{})
-			entries = append(entries, entry)
-		}
+	}
+
+	for dirPath := range dirPaths {
+		entry := fs.NewDir(dirPath, time.Time{})
+		entries = append(entries, entry)
 	}
 
 	return entries, nil

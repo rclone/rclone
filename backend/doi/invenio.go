@@ -103,16 +103,6 @@ type invenioProvider struct {
 	f *Fs
 }
 
-// CanHaveSubDirs is true when the remote can have subdirectories
-func (ip *invenioProvider) CanHaveSubDirs() bool {
-	return false
-}
-
-// IsFile returns true if remote is a file
-func (ip *invenioProvider) IsFile(ctx context.Context, remote string) (isFile bool, err error) {
-	return remote != "", nil
-}
-
 // ListEntries returns the full list of entries found at the remote, regardless of root
 func (ip *invenioProvider) ListEntries(ctx context.Context) (entries []*Object, err error) {
 	// Use the cache if populated
