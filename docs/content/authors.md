@@ -967,3 +967,15 @@ put them back in again.` >}}
   * Christian Richter <crichter@owncloud.com> <1058116+dragonchaser@users.noreply.github.com>
   * Ralf Haferkamp <r.haferkamp@opencloud.eu>
   * Jugal Kishore <me@devjugal.com>
+  * Tho Neyugn <nguyentruongtho@users.noreply.github.com>
+  * Ben Boeckel <mathstuf@users.noreply.github.com>
+  * Clément Wehrung <cwehrung@nurves.com>
+  * Jeff Geerling <geerlingguy@mac.com>
+  * Germán Casares <german.casares.march+github@gmail.com>
+  * fhuber <florian.huber@noris.de>
+  * wbulot <wbulot@hotmail.com>
+  * Jeremy Daer <jeremydaer@gmail.com>
+  * Oleksiy Stashok <ostashok@tesla.com>
+  * PrathameshLakawade <prathameshlakawade@gmail.com>
+  * Nathanael Demacon <7271496+quantumsheep@users.noreply.github.com>
+  * ahxxm <ahxxm@users.noreply.github.com>

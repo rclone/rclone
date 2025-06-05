@@ -62,7 +62,7 @@ func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
-	var list = []*ListJSONItem{}
+	list := []*ListJSONItem{}
 	err = ListJSON(ctx, f, remote, &opt, func(item *ListJSONItem) error {
 		list = append(list, item)
 		return nil
@@ -193,7 +193,7 @@ func rcMoveOrCopyFile(ctx context.Context, in rc.Params, cp bool) (out rc.Params
 	if err != nil {
 		return nil, err
 	}
-	return nil, moveOrCopyFile(ctx, dstFs, srcFs, dstRemote, srcRemote, cp)
+	return nil, moveOrCopyFile(ctx, dstFs, srcFs, dstRemote, srcRemote, cp, false)
 }
 
 func init() {
@@ -289,7 +289,6 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 
 		var request *http.Request
 		request, err := in.GetHTTPRequest()
-
 		if err != nil {
 			return nil, err
 		}
@@ -629,12 +628,12 @@ func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return nil, err
 	}
-	var opt = map[string]string{}
+	opt := map[string]string{}
 	err = in.GetStructMissingOK("opt", &opt)
 	if err != nil {
 		return nil, err
 	}
-	var arg = []string{}
+	arg := []string{}
 	err = in.GetStructMissingOK("arg", &arg)
 	if err != nil {
 		return nil, err
@@ -642,7 +641,6 @@ func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	result, err := doCommand(ctx, command, arg, opt)
 	if err != nil {
 		return nil, fmt.Errorf("command %q failed: %w", command, err)
-
 	}
 	out = make(rc.Params)
 	out["result"] = result
@@ -685,7 +683,6 @@ func rcDu(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	dir, err := in.GetString("dir")
 	if rc.IsErrParamNotFound(err) {
 		dir = config.GetCacheDir()
-
 	} else if err != nil {
 		return nil, err
 	}

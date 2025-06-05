@@ -298,6 +298,7 @@ func GlobalStats() *StatsInfo {
 // NewStatsGroup creates new stats under named group.
 func NewStatsGroup(ctx context.Context, group string) *StatsInfo {
 	stats := NewStats(ctx)
+	stats.startAverageLoop()
 	stats.group = group
 	groups.set(ctx, group, stats)
 	return stats

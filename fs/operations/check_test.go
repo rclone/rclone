@@ -6,12 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
-	"os"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/hash"
@@ -65,18 +64,16 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operat
 	check := func(i int, wantErrors int64, wantChecks int64, oneway bool, wantOutput map[string]string) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			accounting.GlobalStats().ResetCounters()
-			var buf bytes.Buffer
-			log.SetOutput(&buf)
-			defer func() {
-				log.SetOutput(os.Stderr)
-			}()
 			opt := operations.CheckOpt{
 				Fdst:   r.Fremote,
 				Fsrc:   r.Flocal,
 				OneWay: oneway,
 			}
 			addBuffers(&opt)
-			err := checkFunction(ctx, &opt)
+			var err error
+			buf := bilib.CaptureOutput(func() {
+				err = checkFunction(ctx, &opt)
+			})
 			gotErrors := accounting.GlobalStats().GetErrors()
 			gotChecks := accounting.GlobalStats().GetChecks()
 			if wantErrors == 0 && err != nil {
@@ -88,7 +85,7 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operat
 			if wantErrors != gotErrors {
 				t.Errorf("%d: Expecting %d errors but got %d", i, wantErrors, gotErrors)
 			}
-			if gotChecks > 0 && !strings.Contains(buf.String(), "matching files") {
+			if gotChecks > 0 && !strings.Contains(string(buf), "matching files") {
 				t.Errorf("%d: Total files matching line missing", i)
 			}
 			if wantChecks != gotChecks {
@@ -389,9 +386,6 @@ func testCheckSum(t *testing.T, download bool) {
 
 	checkRun := func(runNo, wantChecks, wantErrors int, want wantType) {
 		accounting.GlobalStats().ResetCounters()
-		buf := new(bytes.Buffer)
-		log.SetOutput(buf)
-		defer log.SetOutput(os.Stderr)
 
 		opt := operations.CheckOpt{
 			Combined:     new(bytes.Buffer),
@@ -401,8 +395,10 @@ func testCheckSum(t *testing.T, download bool) {
 			MissingOnSrc: new(bytes.Buffer),
 			MissingOnDst: new(bytes.Buffer),
 		}
-		err := operations.CheckSum(ctx, dataFs, r.Fremote, sumFile, hashType, &opt, download)
-
+		var err error
+		buf := bilib.CaptureOutput(func() {
+			err = operations.CheckSum(ctx, dataFs, r.Fremote, sumFile, hashType, &opt, download)
+		})
 		gotErrors := int(accounting.GlobalStats().GetErrors())
 		if wantErrors == 0 {
 			assert.NoError(t, err, "unexpected error in run %d", runNo)
@@ -414,7 +410,7 @@ func testCheckSum(t *testing.T, download bool) {
 
 		gotChecks := int(accounting.GlobalStats().GetChecks())
 		if wantChecks > 0 || gotChecks > 0 {
-			assert.Contains(t, buf.String(), "matching files", "missing matching files in run %d", runNo)
+			assert.Contains(t, string(buf), "matching files", "missing matching files in run %d", runNo)
 		}
 		assert.Equal(t, wantChecks, gotChecks, "wrong number of checks in run %d", runNo)
 
