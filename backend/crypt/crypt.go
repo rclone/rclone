@@ -907,6 +907,17 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 			decrypted, err = f.cipher.DecryptDirName(path)
 		case fs.EntryObject:
 			decrypted, err = f.cipher.DecryptFileName(path)
+		case fs.EntryUncertain:
+			if f.opt.FilenameEncryption == "on" && !f.opt.DirectoryNameEncryption {
+				// Uncertain entry types cannot be handled in this case, as not only is the entry
+				// type uncertain, but also whether or not the name is encrypted
+				fs.Errorf(path, "crypt ChangeNotify: ignoring EntryType %d as file names are encrypted but directory names are not", fs.EntryUncertain)
+				return
+			}
+			decrypted, err = f.cipher.DecryptFileName(path)
+			if err == ErrorNotAnEncryptedFile {
+				decrypted, err = f.cipher.DecryptDirName(path)
+			}
 		default:
 			fs.Errorf(path, "crypt ChangeNotify: ignoring unknown EntryType %d", entryType)
 			return
