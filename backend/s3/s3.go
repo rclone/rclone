@@ -162,6 +162,9 @@ var providerOption = fs.Option{
 		Value: "Selectel",
 		Help:  "Selectel Object Storage",
 	}, {
+		Value: "Sirv",
+		Help:  "Sirv (Sirv Object Storage)",
+	}, {
 		Value: "StackPath",
 		Help:  "StackPath Object Storage",
 	}, {
@@ -1386,7 +1389,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,Sirv,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1523,7 +1526,16 @@ func init() {
 				Value:    "s3.ir-tbz-sh1.arvanstorage.ir",
 				Help:     "ArvanCloud Tabriz Iran (Shahriar) endpoint",
 				Provider: "ArvanCloud",
+			}, {
+				Value:    "s3.sirv.com",
+				Help:     "Sirv Object Storage endpoint",
+				Provider: "Sirv",
 			}},
+		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Sirv Object Storage.",
+			Provider: "Sirv",
+			Default:  "s3.sirv.com",
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nUsed when creating buckets only.",
@@ -3561,6 +3573,18 @@ func setQuirks(opt *Options) {
 		useAlreadyExists = true
 	case "Selectel":
 		urlEncodeListings = false
+	case "Sirv":
+		listObjectsV2 = false     // untested
+		urlEncodeListings = false // Sirv has issues with special characters in URLs
+		virtualHostStyle = false
+		useMultipartEtag = false
+		useAlreadyExists = false
+		useMultipartUploads = false
+		useAcceptEncodingGzip = false
+		signAcceptEncoding = false
+		useXID = false
+		mightGzip = false
+
 	case "SeaweedFS":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
@@ -4829,6 +4853,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision of the remote
 func (f *Fs) Precision() time.Duration {
+	// Sirv only supports second precision
+	if f.opt.Provider == "Sirv" {
+		return time.Second
+	}
 	return time.Nanosecond
 }
 
@@ -5089,7 +5117,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "restore",
 	Short: "Restore objects from GLACIER or INTELLIGENT-TIERING archive tier",
-	Long: `This command can be used to restore one or more objects from GLACIER to normal storage 
+	Long: `This command can be used to restore one or more objects from GLACIER to normal storage
 or from INTELLIGENT-TIERING Archive Access / Deep Archive Access tier to the Frequent Access tier.
 
 Usage Examples:
