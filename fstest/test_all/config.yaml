@@ -531,3 +531,8 @@ backends:
  - backend:  "iclouddrive"
    remote:   "TestICloudDrive:"
    fastlist: false
+ - backend: "filelu"
+   remote: "TestFileLu:"
+   fastlist: false
+   ignore:
+     - TestRWFileHandleWriteNoWrite
