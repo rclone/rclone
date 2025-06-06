@@ -1782,7 +1782,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	if err != nil {
 		return nil, err
 	}
-	err = dstObj.setMetaData(info)
+	if info != nil {
+		err = dstObj.setMetaData(info)
+	}
 	return dstObj, err
 }
 
@@ -1862,7 +1864,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	err = dstObj.setMetaData(info)
+	if info != nil {
+		err = dstObj.setMetaData(info)
+	}
 	return dstObj, err
 }
 
@@ -2629,7 +2633,10 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.Obje
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch and update metadata: %w", err)
 	}
-	return info, o.setMetaData(info)
+	if info != nil {
+		err = o.setMetaData(info)
+	}
+	return info, err
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
