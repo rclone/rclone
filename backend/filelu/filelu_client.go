@@ -210,30 +210,40 @@ func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64,
 // deleteFile deletes a file based on filePath
 func (f *Fs) deleteFile(ctx context.Context, filePath string) error {
 	filePath = f.fromStandardPath(filePath)
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/file/remove",
-		Parameters: url.Values{
-			"file_path": {filePath},
-			"key":       {f.opt.Key},
-		},
-	}
+	apiURL := fmt.Sprintf("%s/file/remove?file_path=%s&key=%s",
+		f.endpoint,
+		url.QueryEscape(filePath),
+		url.QueryEscape(f.opt.Key),
+	)
 
 	result := api.DeleteFileResponse{}
 	err := f.pacer.Call(func() (bool, error) {
-		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
-		return fserrors.ShouldRetry(err), err
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return shouldRetry(err), fmt.Errorf("failed to fetch direct link: %w", err)
+		}
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fs.Logf(nil, "Failed to close response body: %v", err)
+			}
+		}()
+
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, fmt.Errorf("error decoding response: %w", err)
+		}
+
+		if result.Status != 200 {
+			return false, fmt.Errorf("API error: %s", result.Msg)
+		}
+
+		return shouldRetryHTTP(resp.StatusCode), nil
 	})
-
-	if err != nil {
-		return fmt.Errorf("DeleteFile failed: %w", err)
-	}
-	if result.Status != 200 {
-		return fmt.Errorf("DeleteFile API error: %s", result.Msg)
-	}
-
-	fs.Infof(f, "Successfully deleted file: %s", filePath)
-	return nil
+	return err
 }
 
 // getAccountInfo retrieves account information
