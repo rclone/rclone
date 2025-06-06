@@ -749,6 +749,8 @@ func (o *Object) fetchMetadataForCreate(ctx context.Context, src fs.ObjectInfo, 
 
 // Fetch metadata and update updateInfo if --metadata is in use
 // modtime will still be set when there is no metadata to set
+//
+// May return info=nil and err=nil if there was no metadata to update.
 func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, updateInfo *Object) (info *api.Item, err error) {
 	meta, err := fs.GetMetadataOptions(ctx, f, src, options)
 	if err != nil {
@@ -768,6 +770,8 @@ func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, opti
 }
 
 // updateMetadata calls Get, Set, and Write
+//
+// May return info=nil and err=nil if there was no metadata to update.
 func (o *Object) updateMetadata(ctx context.Context, meta fs.Metadata) (info *api.Item, err error) {
 	_, err = o.meta.Get(ctx) // refresh permissions
 	if err != nil {
