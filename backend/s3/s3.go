@@ -4758,9 +4758,10 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	modTime := src.ModTime(ctx)
 
 	ui.req = &s3.PutObjectInput{
-		Bucket: &bucket,
-		ACL:    types.ObjectCannedACL(o.fs.opt.ACL),
-		Key:    &bucketPath,
+		Bucket:            &bucket,
+		ACL:               types.ObjectCannedACL(o.fs.opt.ACL),
+		Key:               &bucketPath,
+		ChecksumAlgorithm: types.ChecksumAlgorithmCrc32c,
 	}
 	if tierObj, ok := src.(fs.GetTierer); ok {
 		tier := tierObj.GetTier()
@@ -4773,6 +4774,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	if err != nil {
 		return ui, fmt.Errorf("failed to read metadata from source object: %w", err)
 	}
+	meta["written-from"] = "rclone"
 	ui.req.Metadata = make(map[string]string, len(meta)+2)
 	// merge metadata into request and user metadata
 	for k, v := range meta {

@@ -436,6 +436,7 @@ type Object struct {
 	modTime  time.Time // Modified time of the object
 	mimeType string
 	gzipped  bool // set if object has Content-Encoding: gzip
+	metadata fs.Metadata
 }
 
 // ------------------------------------------------------------
@@ -593,6 +594,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMimeType:     true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
+		ReadMetadata:      true,
 	}).Fill(ctx, f)
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
@@ -1275,6 +1277,15 @@ func (o *Object) setMetaData(info *storage.Object) {
 		o.bytes = -1
 		o.md5sum = ""
 	}
+
+	o.metadata = make(map[string]string)
+	for k, v := range info.Metadata {
+		o.metadata[k] = v
+	}
+}
+
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	return o.metadata, nil
 }
 
 // readObjectInfo reads the definition for an object
