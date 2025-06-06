@@ -40,15 +40,29 @@ func init() {
 				Default: (encoder.Base | //  Slash,LtGt,DoubleQuote,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,RightSpace,InvalidUtf8,Dot
 					encoder.EncodeSlash |
 					encoder.EncodeLtGt |
+					encoder.EncodeExclamation |
 					encoder.EncodeDoubleQuote |
+					encoder.EncodeSingleQuote |
+					encoder.EncodeBackQuote |
 					encoder.EncodeQuestion |
+					encoder.EncodeDollar |
+					encoder.EncodeColon |
 					encoder.EncodeAsterisk |
 					encoder.EncodePipe |
 					encoder.EncodeHash |
 					encoder.EncodePercent |
 					encoder.EncodeBackSlash |
+					encoder.EncodeCrLf |
 					encoder.EncodeDel |
 					encoder.EncodeCtl |
+					encoder.EncodeLeftSpace |
+					encoder.EncodeLeftPeriod |
+					encoder.EncodeLeftTilde |
+					encoder.EncodeLeftCrLfHtVt |
+					encoder.EncodeRightPeriod |
+					encoder.EncodeRightCrLfHtVt |
+					encoder.EncodeSquareBracket |
+					encoder.EncodeSemicolon |
 					encoder.EncodeRightSpace |
 					encoder.EncodeInvalidUtf8 |
 					encoder.EncodeDot),
