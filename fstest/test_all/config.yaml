@@ -533,26 +533,6 @@ backends:
    fastlist: false
  - backend: "filelu"
    remote: "TestFileLu:"
-      fastlist: false
-  ignore:
-    # FsEncoding tests
-    - TestIntegration/FsMkdir/FsEncoding/trailing_space
-     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
-     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
-     - TestIntegration/FsMkdir/FsEncoding/trailing_HT
-     - TestIntegration/FsMkdir/FsEncoding/trailing_VT
-     - TestIntegration/FsMkdir/FsEncoding/trailing_dot
-     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
-     - TestIntegration/FsMkdir/FsEncoding/URL_encoding
-   # fs/operations
-     - TestCheckSum
-     - TestCheckSumDownload
-     - TestHashSums/Md5
-     - TestReadFile
-     - TestCopyURL
-     - TestMoveFileWithIgnoreExisting
-     #vfs
-     - TestFileSetModTime/cache=off,open=false,write=false
-     - TestFileSetModTime/cache=off,open=true,write=false
+   fastlist: false
+   ignore:
      - TestRWFileHandleWriteNoWrite
-
