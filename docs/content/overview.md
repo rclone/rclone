@@ -47,7 +47,7 @@ Here is an overview of the major features of each cloud storage system.
 | Microsoft Azure Files Storage | MD5              | R/W     | Yes              | No              | R/W       | -        |
 | Microsoft OneDrive           | QuickXorHash ⁵    | DR/W    | Yes              | No              | R         | DRW      |
 | OpenDrive                    | MD5               | R/W     | Yes              | Partial ⁸       | -         | -        |
-| OpenStack Swift              | MD5               | R/W     | No               | No              | R/W       | -        |
+| OpenStack Swift              | MD5               | R/W     | No               | No              | R/W       | RU       |
 | Oracle Object Storage        | MD5               | R/W     | No               | No              | R/W       | -        |
 | pCloud                       | MD5, SHA1 ⁷       | R/W     | No               | No              | W         | -        |
 | PikPak                       | MD5               | R       | No               | No              | R         | -        |
