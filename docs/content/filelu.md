@@ -135,40 +135,6 @@ millions of files, duplicate folder names or paths are quite common.
 
 FileLu supports both modification times and MD5 hashes.
 
-### Restricted Filename Characters
-
-| Character | Value   | Replacement |
-|-----------|---------|-------------|
-| @         | 0x40    | _           |
-| !         | 0x21    | _           |
-| ~         | 0x7E    | _           |
-| `         | 0x60    | _           |
-| %         | 0x25    | _           |
-| &         | 0x26    | _           |
-| ^         | 0x5E    | _           |
-| (         | 0x28    | _           |
-| )         | 0x29    | _           |
-| {         | 0x7B    | _           |
-| }         | 0x7D    | _           |
-| ;         | 0x3B    | _           |
-| '         | 0x27    | _           |
-| ,         | 0x2C    | _           |
-| [         | 0x5B    | _           |
-| ]         | 0x5D    | _           |
-| +         | 0x2B    | _           |
-| =         | 0x3D    | _           |
-| $         | 0x24    | _           |
-| *         | 0x2A    | _           |
-| ?         | 0x3F    | _           |
-| <         | 0x3C    | _           |
-| >         | 0x3E    | _           |
-| :         | 0x3A    | _           |
-| \         | 0x5C    | _           |
-| /         | 0x2F    | _           |
-| "         | 0x22    | _           |
-| #         | 0x23    | _           |
-
-
 FileLu only supports filenames and folder names up to 255 characters in length, where a
 character is a Unicode character.
 
