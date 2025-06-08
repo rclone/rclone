@@ -1704,6 +1704,7 @@ var (
 	_ fs.OpenWriterAter  = &Fs{}
 	_ fs.DirSetModTimer  = &Fs{}
 	_ fs.MkdirMetadataer = &Fs{}
+	_ fs.ChangeNotifier  = &Fs{}
 	_ fs.Object          = &Object{}
 	_ fs.Metadataer      = &Object{}
 	_ fs.SetMetadataer   = &Object{}

@@ -3,6 +3,7 @@ package vfs
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
@@ -97,7 +98,15 @@ func TestRcPollInterval(t *testing.T) {
 	}
 	out, err := call.Fn(context.Background(), nil)
 	require.NoError(t, err)
-	assert.Equal(t, rc.Params{}, out)
+	assert.Equal(t, rc.Params{
+		"enabled": true,
+		"interval": map[string]interface{}{
+			"raw":     fs.Duration(60000000000),
+			"seconds": time.Duration(60),
+			"string":  "1m0s",
+		},
+		"supported": true,
+	}, out)
 	// FIXME needs more tests
 }
 
