@@ -44,7 +44,7 @@ func TestDoMultiThreadCopy(t *testing.T) {
 	ci.MultiThreadStreams, ci.MultiThreadCutoff = 4, 50
 	ci.MultiThreadSet = false
 
-	nullWriterAt := func(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+	nullWriterAt := func(ctx context.Context, remote string, size int64) (fs.OpenWriterAtInfo, fs.WriterAtCloser, error) {
 		panic("don't call me")
 	}
 	f.Features().OpenWriterAt = nullWriterAt

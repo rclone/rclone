@@ -1490,22 +1490,23 @@ var sparseWarning sync.Once
 // Pass in the remote desired and the size if known.
 //
 // It truncates any existing object
-func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.OpenWriterAtInfo, fs.WriterAtCloser, error) {
 	// Temporary Object under construction
 	o := f.newObject(remote)
+	info := fs.OpenWriterAtInfo{}
 
 	err := o.mkdirAll()
 	if err != nil {
-		return nil, err
+		return info, nil, err
 	}
 
 	if o.translatedLink {
-		return nil, errors.New("can't open a symlink for random writing")
+		return info, nil, errors.New("can't open a symlink for random writing")
 	}
 
 	out, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
-		return nil, err
+		return info, nil, err
 	}
 	// Pre-allocate the file for performance reasons
 	if !f.opt.NoPreAllocate {
@@ -1525,7 +1526,7 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		}
 	}
 
-	return out, nil
+	return info, out, nil
 }
 
 // setMetadata sets the file info from the os.FileInfo passed in

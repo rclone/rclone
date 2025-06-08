@@ -1352,10 +1352,11 @@ func (w *writerAt) Close() error {
 // Pass in the remote desired and the size if known.
 //
 // It truncates any existing object
-func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.OpenWriterAtInfo, fs.WriterAtCloser, error) {
+	info := fs.OpenWriterAtInfo{}
 	err := f.mkParentDir(ctx, remote)
 	if err != nil {
-		return nil, fmt.Errorf("OpenWriterAt: failed to create parent directory: %w", err)
+		return info, nil, fmt.Errorf("OpenWriterAt: failed to create parent directory: %w", err)
 	}
 	fc := f.fileClient(remote)
 	if size < 0 {
@@ -1363,7 +1364,7 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	}
 	_, err = fc.Create(ctx, size, nil)
 	if err != nil {
-		return nil, fmt.Errorf("OpenWriterAt: unable to create file: %w", err)
+		return info, nil, fmt.Errorf("OpenWriterAt: unable to create file: %w", err)
 	}
 	w := &writerAt{
 		ctx:  ctx,
@@ -1371,7 +1372,7 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		fc:   fc,
 		size: size,
 	}
-	return w, nil
+	return info, w, nil
 }
 
 // About gets quota information

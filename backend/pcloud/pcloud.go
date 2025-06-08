@@ -383,22 +383,28 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 // Pass in the remote desired and the size if known.
 //
 // It truncates any existing object
-func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.OpenWriterAtInfo, fs.WriterAtCloser, error) {
+	info := fs.OpenWriterAtInfo{
+		BufferSize:        int64(16 * 1024 * 1024),
+		ChunkSize:         int64(16 * 1024 * 1024),
+		LeavePartsOnError: true,
+	}
+
 	client, err := f.newSingleConnClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("create client: %w", err)
+		return info, nil, fmt.Errorf("create client: %w", err)
 	}
 	// init an empty file
 	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
-		return nil, fmt.Errorf("resolve src: %w", err)
+		return info, nil, fmt.Errorf("resolve src: %w", err)
 	}
 	openResult, err := fileOpenNew(ctx, client, f, directoryID, leaf)
 	if err != nil {
-		return nil, fmt.Errorf("open file: %w", err)
+		return info, nil, fmt.Errorf("open file: %w", err)
 	}
 	if _, err := fileClose(ctx, client, f.pacer, openResult.FileDescriptor); err != nil {
-		return nil, fmt.Errorf("close file: %w", err)
+		return info, nil, fmt.Errorf("close file: %w", err)
 	}
 
 	writer := &writerAt{
@@ -409,7 +415,7 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		fileID: openResult.Fileid,
 	}
 
-	return writer, nil
+	return info, writer, nil
 }
 
 // Create a new http client, accepting keep-alive headers, limited to single connection.

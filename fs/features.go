@@ -182,7 +182,7 @@ type Features struct {
 	// Pass in the remote desired and the size if known.
 	//
 	// It truncates any existing object
-	OpenWriterAt func(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+	OpenWriterAt OpenWriterAtFn
 
 	// OpenChunkWriter returns the chunk size and a ChunkWriter
 	//
@@ -728,11 +728,19 @@ type OpenWriterAter interface {
 	// Pass in the remote desired and the size if known.
 	//
 	// It truncates any existing object
-	OpenWriterAt(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+	OpenWriterAt(ctx context.Context, remote string, size int64) (OpenWriterAtInfo, WriterAtCloser, error)
+}
+
+// OpenWriterAtInfo describes how a backend would like ChunkWriter called
+type OpenWriterAtInfo struct {
+	BufferSize        int64 // preferred buffer size
+	ChunkSize         int64 // preferred chunk size
+	Concurrency       int   // how many chunks to write at once
+	LeavePartsOnError bool  // if set don't delete parts uploaded so far on error
 }
 
 // OpenWriterAtFn describes the OpenWriterAt function pointer
-type OpenWriterAtFn func(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+type OpenWriterAtFn func(ctx context.Context, remote string, size int64) (OpenWriterAtInfo, WriterAtCloser, error)
 
 // ChunkWriterInfo describes how a backend would like ChunkWriter called
 type ChunkWriterInfo struct {
