@@ -435,7 +435,7 @@ or
 
     rclone sync --interactive /full/path/to/sync:me remote:path
 
-Server Side Copy
+Server-Side Copy
 ----------------
 
 Most remotes (but not all - see [the
@@ -455,14 +455,20 @@ downloading and re-uploading.
 Remotes which don't support server-side copy **will** download and
 re-upload in this case.
 
-Server side copies are used with `sync` and `copy` and will be
+Server-side copies are used with `sync` and `copy` and will be
 identified in the log when using the `-v` flag.  The `move` command
 may also use them if remote doesn't support server-side move directly.
 This is done by issuing a server-side copy then a delete which is much
 quicker than a download and re-upload.
 
-Server side copies will only be attempted if the remote names are the
-same.
+Server-side copies will only be attempted if the remote names are the
+same. This will try a server-side copy from A to A:
+
+    rclone copy s3-a:oldbucket s3-a:newbucket
+    
+This will download and re-upload files from A to B:
+
+    rclone copy s3-a:oldbucket s3-b:newbucket
 
 This can be used when scripting to make aged backups efficiently, e.g.
 
