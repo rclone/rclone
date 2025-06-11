@@ -235,7 +235,7 @@ func TestTransformCopy(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalItems(t, file1)
@@ -252,7 +252,7 @@ func TestDoubleTransform(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalItems(t, file1)
@@ -269,7 +269,7 @@ func TestFileTag(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalItems(t, file1)
@@ -286,7 +286,7 @@ func TestNoTag(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalItems(t, file1)
@@ -305,7 +305,7 @@ func TestDirTag(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalListing(t, []fstest.Item{fstest.NewItem("toe/toe/toe.txt", "hello world", t1)}, []string{"empty_dir", "toe", "toe/toe"})
@@ -324,7 +324,7 @@ func TestAllTag(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalListing(t, []fstest.Item{fstest.NewItem("toe/toe/toe.txt", "hello world", t1)}, []string{"empty_dir", "toe", "toe/toe"})
@@ -343,7 +343,7 @@ func TestRunTwice(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalItems(t, file1)
@@ -352,7 +352,7 @@ func TestRunTwice(t *testing.T) {
 	// result should not change second time, since src is unchanged
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalItems(t, file1)
@@ -384,7 +384,7 @@ func TestConflicting(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	// should result in no change as prefix and trimprefix cancel out
@@ -404,7 +404,7 @@ func TestMove(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = MoveDir(ctx, r.Fremote, r.Flocal, true, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalListing(t, []fstest.Item{}, []string{})
@@ -423,7 +423,7 @@ func TestTransformFile(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = MoveDir(ctx, r.Fremote, r.Flocal, true, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalListing(t, []fstest.Item{}, []string{})
@@ -447,7 +447,7 @@ func TestBase64(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalItems(t, file1)
@@ -458,7 +458,7 @@ func TestBase64(t *testing.T) {
 	require.NoError(t, err)
 	ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Flocal, r.Fremote, true)
-	testLoggerVsLsf(ctx, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, r.Flocal, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	require.NoError(t, err)
 
 	r.CheckLocalItems(t, file1)
@@ -475,7 +475,7 @@ func TestError(t *testing.T) {
 	r.Mkdir(ctx, r.Fremote)
 	// ctx = predictDstFromLogger(ctx)
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
-	// testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
+	// testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	assert.Error(t, err)
 
 	r.CheckLocalListing(t, []fstest.Item{file1}, []string{"toe", "toe/toe"})
