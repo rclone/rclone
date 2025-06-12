@@ -55,7 +55,8 @@ the destination.
 *If you are looking to copy just a byte range of a file, please see 'rclone cat --offset X --count Y'*
 
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics
-`,
+
+` + operationsflags.Help(),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.35",
 		"groups":            "Copy,Filter,Listing,Important",

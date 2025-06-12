@@ -4,8 +4,10 @@ package operationsflags
 
 import (
 	"context"
+	_ "embed"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -14,6 +16,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
+
+//go:embed operationsflags.md
+var help string
+
+// Help returns the help string cleaned up to simplify appending
+func Help() string {
+	return strings.TrimSpace(help) + "\n\n"
+}
 
 // AddLoggerFlagsOptions contains options for the Logger Flags
 type AddLoggerFlagsOptions struct {
