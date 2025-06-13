@@ -573,7 +573,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1029,6 +1029,16 @@ func init() {
 			},
 			},
 		}, {
+			// Zata.ai endpoints: https://docs.zata.ai/manage/service-urls-for-zata.ai-s3
+			Name:     "endpoint",
+			Help:     "Endpoint for Zata Object Storage",
+			Provider: "Zata.ai",
+			Examples: []fs.OptionExample{{
+				Value: "idr01.zata.ai",
+				Help:  "Central India",
+			},
+			},
+		},{
 			// oss endpoints: https://help.aliyun.com/document_detail/31837.html
 			Name:     "endpoint",
 			Help:     "Endpoint for OSS API.",
