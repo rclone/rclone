@@ -1,5 +1,5 @@
 // Package terabox provides an interface to the Terabox storage system.
-
+//
 // resources for implementation:
 // https://github.com/ivansaul/terabox_downloader
 // https://gist.github.com/CypherpunkSamurai/58d8f2b669e101e893a6ecf3d3938412
@@ -9,7 +9,6 @@
 //
 // Documentation:
 // https://www.terabox.com/integrations/docs?lang=en
-
 package terabox
 
 import (
@@ -35,9 +34,9 @@ import (
 )
 
 const (
-	baseURL             = "https://www.terabox.com"
-	chunkSize     int64 = 4 << 20 // 4MB
-	fileLimitSize int64 = 4 << 30 // 4GB
+	baseURL       = "https://www.terabox.com"
+	chunkSize     = 4 * fs.Mebi // 4MB
+	fileLimitSize = 4 * fs.Gibi // 4GB
 
 	// minSleep       = 400 * time.Millisecond // api is extremely rate limited now
 	// maxSleep       = 5 * time.Second
@@ -71,13 +70,13 @@ func init() {
 			// 	Sensitive: true,
 			// },
 			{
-				Help:     "Set cookie (should contains TSID; ndus; ndut_fmt)",
+				Help:     "Set full cookie string from browser or only 'ndus' value from cookie string",
 				Name:     "cookie",
 				Advanced: false,
 				Required: true,
 			},
 			{
-				Help:     "Clear Recycle Bin after deletion",
+				Help:     "Clear Trash after deletion",
 				Name:     "delete_permanently",
 				Advanced: true,
 				Default:  false,
@@ -86,10 +85,10 @@ func init() {
 				Help:     "Set custom header User Agent",
 				Name:     "user_agent",
 				Advanced: true,
-				Default:  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+				Default:  "terabox;1.37.0.7;PC;PC-Windows;10.0.22631;WindowsTeraBox",
 			},
 			{
-				Help:     "Set extra debug level from 0 to 3 (0 - none; 1 - name of function and params; 2 - response output; 3 - request output)",
+				Help:     "Set extra debug level from 0 to 4 (0 - none; 1 - name of function and params; 2 - response output + body; 3 - request output, 4 - request body)",
 				Name:     "debug_level",
 				Advanced: true,
 				Default:  0,
@@ -115,7 +114,7 @@ type Options struct {
 	Cookie            string               `config:"cookie"`
 	DeletePermanently bool                 `config:"delete_permanently"`
 	UserAgent         string               `config:"user_agent"`
-	DebugLevel        uint8                `config:"debug"`
+	DebugLevel        uint8                `config:"debug_level"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -169,13 +168,16 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	if err := configstruct.Set(config, opt); err != nil {
 		return nil, err
 	}
+	opt.Cookie = valuedCookie(opt.Cookie)
 
 	debug(opt, 1, "NewFS %s; %s; %+v;", name, root, opt)
 
+	if len(root) > 0 && root[0:1] == "." {
+		root = root[1:]
+	}
+
 	if root == "" {
 		root = "/"
-	} else if root[0:1] == "." {
-		root = root[1:]
 	}
 
 	f := &Fs{
@@ -278,7 +280,8 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return nil, err
 	}
 
-	return &fs.Usage{Total: &info.Total, Used: &info.Used, Free: &info.Free}, nil
+	free := info.Total - info.Used // the server returns a free value equal to the total, that's why we calculate it manually
+	return &fs.Usage{Total: &info.Total, Used: &info.Used, Free: &free}, nil
 }
 
 //
@@ -729,6 +732,6 @@ func (o *Object) Remove(ctx context.Context) error {
 	debug(o.fs.opt, 1, "Remove")
 
 	return o.fs.apiOperation(ctx, "delete", []api.OperationalItem{
-		{Path: o.remote},
+		{Path: libPath.Join(o.fs.root, o.remote)},
 	})
 }

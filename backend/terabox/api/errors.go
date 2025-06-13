@@ -117,6 +117,7 @@ var (
 
 		// third party [unofficial]
 		4000023: "need verify (jsToken expired)",
+		450016:  "need verify",
 	}
 )
 
@@ -129,12 +130,15 @@ func Num2Err(number int) error {
 	return ErrorAPI{number}
 }
 
-// ErrIsNum checking is provided error is Terabox error
-func ErrIsNum(err error, number int) bool {
+// ErrIsNum checking is provided error is Terabox error. Can be a multiple error codes for one error
+func ErrIsNum(err error, numbers ...int) bool {
 	if e, ok := err.(ErrorInterface); ok {
-		return e.ErrorNumber() == number
+		for _, number := range numbers {
+			if e.ErrorNumber() == number {
+				return true
+			}
+		}
 	}
-
 	return false
 }
 

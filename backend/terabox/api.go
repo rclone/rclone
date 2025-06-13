@@ -53,11 +53,14 @@ retry:
 
 	if opts.Parameters != nil {
 		if f.accessToken == "" {
-			opts.Parameters.Add("app_id", "250528")
-			opts.Parameters.Add("channel", "dubox")
-			opts.Parameters.Add("clienttype", "0")
+			opts.Parameters.Set("app_id", "250528")
+			opts.Parameters.Set("channel", "dubox")
+			opts.Parameters.Set("clienttype", "0")
+			if f.jsToken != "" {
+				opts.Parameters.Set("jsToken", f.jsToken)
+			}
 		} else {
-			opts.Parameters.Add("access_tokens", f.accessToken)
+			opts.Parameters.Set("access_tokens", f.accessToken)
 		}
 	}
 
@@ -73,21 +76,30 @@ retry:
 		}
 	}
 
+	var reqBody *bytes.Buffer
+	if f.opt.DebugLevel >= 4 && opts.Body != nil && !strings.Contains(opts.RootURL, "/superfile2") {
+		reqBody = bytes.NewBuffer(make([]byte, 0))
+		opts.Body = io.TeeReader(opts.Body, reqBody)
+	}
+
 	resp, err := f.client.Call(ctx, opts)
 	if err != nil {
 		return err
 	}
 
+	if reqBody != nil {
+		debug(f.opt, 4, "Request body: %s", reqBody.String())
+	}
 	debug(f.opt, 3, "Request: %+v", resp.Request)
 	debug(f.opt, 2, "Response: %+v", resp)
 
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, _ := io.ReadAll(resp.Body)
-	debug(f.opt, 2, "Response body: %s", string(body))
+	debug(f.opt, 2, "Response body: %s", body)
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		err = fmt.Errorf("http error %d: %v", resp.StatusCode, resp.Status)
-		fs.Debug(nil, err.Error())
+		debug(f.opt, 1, "Error: %s", err)
 		if IsInSlice(resp.StatusCode, retryErrorCodes) {
 			retry++
 			if retry > 2 {
@@ -104,9 +116,18 @@ retry:
 		return err
 	}
 
+	var jsTokenRequested bool
 	if _, skip := res.(*api.ResponseUploadedChunk); !skip {
 		if err, ok := res.(api.ErrorInterface); ok {
-			if err.Err() != nil {
+			if api.ErrIsNum(err, 4000023, 450016) && !jsTokenRequested {
+				jsTokenRequested = true
+				if err := f.apiJsToken(ctx); err != nil {
+					return err
+				}
+
+				retry++
+				goto retry
+			} else if err.Err() != nil {
 				return err
 			}
 		} else {
@@ -123,7 +144,7 @@ func (f *Fs) apiJsToken(ctx context.Context) error {
 		return err
 	}
 
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
@@ -157,11 +178,11 @@ func (f *Fs) apiList(ctx context.Context, dir string) ([]*api.Item, error) {
 	page := 1
 	limit := 100
 	opt := NewRequest(http.MethodGet, "/api/list")
-	opt.Parameters.Add("dir", dir)
-	// opt.Parameters.Add("web", "1") // If 1 is passed, the thumbnail field thumbs will be returned.
-	// opt.Parameters.Add("order", ...) // Sorting field: time (modification time), name (file name), size (size; note that directories do not have a size)
+	opt.Parameters.Set("dir", dir)
+	// opt.Parameters.Set("web", "1") // If 1 is passed, the thumbnail field thumbs will be returned.
+	// opt.Parameters.Set("order", ...) // Sorting field: time (modification time), name (file name), size (size; note that directories do not have a size)
 	// if true {
-	// 	opt.Parameters.Add("desc", "1") // 1: descending order; 0: ascending order
+	// 	opt.Parameters.Set("desc", "1") // 1: descending order; 0: ascending order
 	// }
 
 	list := make([]*api.Item, 0)
@@ -190,11 +211,11 @@ func (f *Fs) apiList(ctx context.Context, dir string) ([]*api.Item, error) {
 // files info, can return info about a few files, but we're use it for only one file
 func (f *Fs) apiItemInfo(ctx context.Context, path string, downloadLink bool) (*api.Item, error) {
 	opt := NewRequest(http.MethodGet, "/api/filemetas")
-	opt.Parameters.Add("target", fmt.Sprintf(`["%s"]`, path))
+	opt.Parameters.Set("target", fmt.Sprintf(`["%s"]`, path))
 	if downloadLink {
-		opt.Parameters.Add("dlink", "1")
+		opt.Parameters.Set("dlink", "1")
 	} else {
-		opt.Parameters.Add("dlink", "0")
+		opt.Parameters.Set("dlink", "0")
 	}
 
 	var res api.ResponseItemInfo
@@ -218,9 +239,9 @@ func (f *Fs) apiItemInfo(ctx context.Context, path string, downloadLink bool) (*
 func (f *Fs) apiMkDir(ctx context.Context, path string) error {
 	opt := NewRequest(http.MethodPost, "/api/create")
 	opt.MultipartParams = url.Values{}
-	opt.MultipartParams.Add("path", path)
-	opt.MultipartParams.Add("isdir", "1")
-	opt.MultipartParams.Add("rtype", "0") // The file naming policy. The default value is 1. 0: Do not rename. If a file with the same name exists in the cloud, this call will fail and return a conflict; 1: Rename if there is any path conflict; 2: Rename only if there is a path conflict and the block_list is different; 3: Overwrite
+	opt.MultipartParams.Set("path", path)
+	opt.MultipartParams.Set("isdir", "1")
+	opt.MultipartParams.Set("rtype", "0") // The file naming policy. The default value is 1. 0: Do not rename. If a file with the same name exists in the cloud, this call will fail and return a conflict; 1: Rename if there is any path conflict; 2: Rename only if there is a path conflict and the block_list is different; 3: Overwrite
 
 	var res api.ResponseDefault
 	err := f.apiExec(ctx, opt, &res)
@@ -234,8 +255,9 @@ func (f *Fs) apiMkDir(ctx context.Context, path string) error {
 // opera=delete: filelist: ["/test.mp4"]
 func (f *Fs) apiOperation(ctx context.Context, operation string, items []api.OperationalItem) error {
 	opt := NewRequest(http.MethodPost, "/api/filemanager")
-	opt.Parameters.Add("opera", operation)
-	opt.Parameters.Add("async", "0") // The default value is 0; 0: synchronous; 1: adaptive; 2: asynchronous. The difference lies in whether to care about the success of the request, and the returned structure differs. Different structures are returned based on the request parameters; see the return examples for details.)
+	opt.Parameters.Set("opera", operation)
+	opt.Parameters.Set("async", "1") // The default value is 0 [not available anymore, use 1]; 0: synchronous; 1: adaptive; 2: asynchronous. The difference lies in whether to care about the success of the request, and the returned structure differs. Different structures are returned based on the request parameters; see the return examples for details.)
+	opt.Parameters.Set("onnest", "fail")
 
 	var list any
 	if operation == "delete" {
@@ -287,12 +309,12 @@ func (f *Fs) apiDownloadLink(ctx context.Context, fileID uint64) (*api.ResponseD
 	}
 
 	opt := NewRequest(http.MethodGet, "/api/download")
-	opt.Parameters.Add("type", "dlink")
-	opt.Parameters.Add("vip", "2")
-	opt.Parameters.Add("sign", sign(f.signs[0], f.signs[1]))
-	opt.Parameters.Add("timestamp", fmt.Sprintf("%d", time.Now().Unix()))
-	opt.Parameters.Add("need_speed", "1")
-	opt.Parameters.Add("fidlist", fmt.Sprintf("[%d]", fileID))
+	opt.Parameters.Set("type", "dlink")
+	opt.Parameters.Set("vip", "2")
+	opt.Parameters.Set("sign", sign(f.signs[0], f.signs[1]))
+	opt.Parameters.Set("timestamp", fmt.Sprintf("%d", time.Now().Unix()))
+	opt.Parameters.Set("need_speed", "1")
+	opt.Parameters.Set("fidlist", fmt.Sprintf("[%d]", fileID))
 
 	var res api.ResponseDownload
 	if err := f.apiExec(ctx, opt, &res); err != nil {
@@ -317,7 +339,7 @@ func (f *Fs) apiSignPrepare(ctx context.Context) error {
 // Delete files from Recycle Bin
 func (f *Fs) apiCleanRecycleBin(ctx context.Context) error {
 	opt := NewRequest(http.MethodPost, "/api/recycle/clear")
-	opt.Parameters.Add("async", "0") // The default value is 0; 0: synchronous; 1: adaptive; 2: asynchronous. The difference lies in whether to care about the success of the request, and the returned structure differs. Different structures are returned based on the request parameters; see the return examples for details.)
+	opt.Parameters.Set("async", "0") // The default value is 0; 0: synchronous; 1: adaptive; 2: asynchronous. The difference lies in whether to care about the success of the request, and the returned structure differs. Different structures are returned based on the request parameters; see the return examples for details.)
 
 	var res api.ResponseDefault
 	if err := f.apiExec(ctx, opt, &res); err != nil {
@@ -330,8 +352,8 @@ func (f *Fs) apiCleanRecycleBin(ctx context.Context) error {
 // Quota limits for storage
 func (f *Fs) apiQuotaInfo(ctx context.Context) (*api.ResponseQuota, error) {
 	opt := NewRequest(http.MethodGet, "/api/quota")
-	opt.Parameters.Add("checkexpire", "1")
-	opt.Parameters.Add("checkfree", "1")
+	opt.Parameters.Set("checkexpire", "1")
+	opt.Parameters.Set("checkfree", "1")
 
 	var res api.ResponseQuota
 	if err := f.apiExec(ctx, opt, &res); err != nil {
@@ -343,7 +365,7 @@ func (f *Fs) apiQuotaInfo(ctx context.Context) (*api.ResponseQuota, error) {
 
 // Upload file
 func (f *Fs) apiFileUpload(ctx context.Context, path string, size int64, modTime time.Time, in io.Reader, options []fs.OpenOption, overwriteMode uint8) error {
-	if size > fileLimitSize {
+	if size > int64(fileLimitSize) {
 		return api.Num2Err(58)
 	}
 
@@ -378,6 +400,7 @@ func (f *Fs) apiFileUpload(ctx context.Context, path string, size int64, modTime
 	chunksUploaded := map[int]string{}
 	chunksUploadedCounter := 0
 	chunkData := make([]byte, chunkSize)
+	attemptChunkUpload := 0
 	for {
 		// check context
 		if ctx.Err() != nil {
@@ -385,26 +408,42 @@ func (f *Fs) apiFileUpload(ctx context.Context, path string, size int64, modTime
 		}
 
 		// read chunk
-		r, err := in.Read(chunkData)
-		if r == 0 && err != nil {
-			if errors.Is(err, io.EOF) {
+		readSize, err := io.ReadAtLeast(in, chunkData, int(chunkSize))
+		if readSize == 0 && err != nil {
+			if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
 				break
 			}
 
 			return err
 		}
 
-		// calculate md5
-		chunksUploaded[chunksUploadedCounter] = fmt.Sprintf("%x", md5.Sum(chunkData))
-		resUpload, err := f.apiFileUploadChunk(ctx, path, resPreCreate.UploadID, chunksUploadedCounter, int64(r), chunkData[:r], options)
+		// md5 calculate
+		chunksUploaded[chunksUploadedCounter] = fmt.Sprintf("%x", md5.Sum(chunkData[:readSize]))
+
+	retryChunkUpload:
+		// check context
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		// upload chunk
+		resUpload, err := f.apiFileUploadChunk(ctx, path, resPreCreate.UploadID, chunksUploadedCounter, int64(readSize), chunkData[:readSize], options)
 		if err != nil {
 			return err
 		}
 
-		// upload chunk
+		debug(f.opt, 1, "chunk md5 %s chunk size %d", chunksUploaded[chunksUploadedCounter], readSize)
+
 		if chunksUploaded[chunksUploadedCounter] != resUpload.MD5 {
-			debug(f.opt, 1, "uploaded chunk have another md5 then our: %s, uploaded: %s", chunksUploaded[chunksUploadedCounter], resUpload.MD5)
-			chunksUploaded[chunksUploadedCounter] = resUpload.MD5
+			attemptChunkUpload++
+			debug(f.opt, 1, "uploaded chunk have wrong md5: our: %s | uploaded: %s | attempt: %d", chunksUploaded[chunksUploadedCounter], resUpload.MD5, attemptChunkUpload)
+			if attemptChunkUpload > 3 {
+				return fmt.Errorf("can't upload chunk with three attempts, server hash of chunk is different, than ours")
+			}
+
+			goto retryChunkUpload
+		} else {
+			attemptChunkUpload = 0
 		}
 
 		chunksUploadedCounter++
@@ -415,10 +454,45 @@ func (f *Fs) apiFileUpload(ctx context.Context, path string, size int64, modTime
 		chunksUploadedList[k] = v
 	}
 
+	attemptFileCreate := 0
+
+retryFileCreate:
+	// check context
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
 	// create file
-	err = f.apiFileCreate(ctx, path, resPreCreate.UploadID, size, modTime, chunksUploadedList, overwriteMode)
+	created, err := f.apiFileCreate(ctx, path, resPreCreate.UploadID, size, modTime, chunksUploadedList, overwriteMode)
 	if err != nil {
+		if _, ok := err.(api.ErrorInterface); !ok && attemptFileCreate < 3 {
+			attemptFileCreate++
+			goto retryFileCreate
+		}
 		return err
+	}
+	attemptFileCreate = 0
+
+	finalMD5 := decodeMD5(created.MD5)
+	controlMD5 := ""
+	if len(chunksUploadedList) == 1 {
+		controlMD5 = chunksUploadedList[0]
+	} else {
+		jsonBytes, err := json.Marshal(chunksUploadedList)
+		if err != nil {
+			return err
+		}
+		controlMD5 = fmt.Sprintf("%x", md5.Sum(jsonBytes))
+	}
+
+	if controlMD5 != finalMD5 {
+		debug(f.opt, 1, "controlMD5 %s not equal server file md5 %s, attempt %d", controlMD5, finalMD5, attemptFileCreate)
+		if attemptFileCreate < 3 {
+			attemptFileCreate++
+			goto retryFileCreate
+		}
+
+		return fmt.Errorf("can't create file control MD5 is different than ours")
 	}
 
 	return nil
@@ -440,54 +514,39 @@ func (f *Fs) apiFileLocateUpload(ctx context.Context) error {
 
 func (f *Fs) apiFilePrecreate(ctx context.Context, path string, size int64, modTime time.Time) (*api.ResponsePrecreate, error) {
 	opt := NewRequest(http.MethodPost, "/api/precreate")
-	opt.Parameters.Add("jsToken", f.jsToken)
 
 	opt.MultipartParams = url.Values{}
-	opt.MultipartParams.Add("path", path)
-	opt.MultipartParams.Add("autoinit", "1")
-	opt.MultipartParams.Add("local_mtime", fmt.Sprintf("%d", modTime.Unix()))
-	opt.MultipartParams.Add("file_limit_switch_v34", "true")
-	opt.MultipartParams.Add("size", fmt.Sprintf("%d", size))
+	opt.MultipartParams.Set("path", path)
+	opt.MultipartParams.Set("autoinit", "1")
+	opt.MultipartParams.Set("local_mtime", fmt.Sprintf("%d", modTime.Unix()))
+	opt.MultipartParams.Set("file_limit_switch_v34", "true")
+	opt.MultipartParams.Set("size", fmt.Sprintf("%d", size))
 
 	dirPath, _ := libPath.Split(path)
-	opt.MultipartParams.Add("target_path", dirPath)
+	opt.MultipartParams.Set("target_path", dirPath)
 
-	if size > chunkSize {
-		opt.MultipartParams.Add("block_list", `["5910a591dd8fc18c32a8f3df4fdc1761", "a5fc157d78e6ad1c7e114b056c92821e"]`)
+	if size > int64(chunkSize) {
+		opt.MultipartParams.Set("block_list", `["5910a591dd8fc18c32a8f3df4fdc1761", "a5fc157d78e6ad1c7e114b056c92821e"]`)
 	} else {
-		opt.MultipartParams.Add("block_list", `["5910a591dd8fc18c32a8f3df4fdc1761"]`)
+		opt.MultipartParams.Set("block_list", `["5910a591dd8fc18c32a8f3df4fdc1761"]`)
 	}
 
-	var jsTokenRequested bool
 	var res api.ResponsePrecreate
-	for {
-		err := f.apiExec(ctx, opt, &res)
-		if err != nil {
-			if api.ErrIsNum(err, 4000023) && !jsTokenRequested {
-				jsTokenRequested = true
-				if err := f.apiJsToken(ctx); err != nil {
-					return nil, err
-				}
-
-				opt.Parameters.Set("jsToken", f.jsToken)
-				continue
-			}
-
-			return nil, err
-		}
-
-		break
+	err := f.apiExec(ctx, opt, &res)
+	if err != nil {
+		return nil, err
 	}
+
 	return &res, nil
 }
 
 func (f *Fs) apiFileUploadChunk(ctx context.Context, path, uploadID string, chunkNumber int, size int64, data []byte, options []fs.OpenOption) (*api.ResponseUploadedChunk, error) {
 	opt := NewRequest(http.MethodPost, fmt.Sprintf("https://%s/rest/2.0/pcs/superfile2", f.uploadHost))
-	opt.Parameters.Add("method", "upload")
-	opt.Parameters.Add("path", path)
-	opt.Parameters.Add("uploadid", uploadID)
-	opt.Parameters.Add("partseq", fmt.Sprintf("%d", chunkNumber))
-	opt.Parameters.Add("uploadsign", "0")
+	opt.Parameters.Set("method", "upload")
+	opt.Parameters.Set("path", path)
+	opt.Parameters.Set("uploadid", uploadID)
+	opt.Parameters.Set("partseq", fmt.Sprintf("%d", chunkNumber))
+	opt.Parameters.Set("uploadsign", "0")
 	opt.Options = options
 
 	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, bytes.NewReader(data), opt.MultipartParams, "file", "blob")
@@ -507,34 +566,39 @@ func (f *Fs) apiFileUploadChunk(ctx context.Context, path, uploadID string, chun
 	return &res, nil
 }
 
-func (f *Fs) apiFileCreate(ctx context.Context, path, uploadID string, size int64, modTime time.Time, blockList []string, overwriteMode uint8) error {
+func (f *Fs) apiFileCreate(ctx context.Context, path, uploadID string, size int64, modTime time.Time, blockList []string, overwriteMode uint8) (*api.ResponseCreate, error) {
 	opt := NewRequest(http.MethodPost, "/api/create")
-	opt.Parameters.Add("isdir", "0")
+	opt.Parameters.Set("isdir", "0")
 
 	// The file naming policy. The default value is 1. 0: Do not rename. If a file with the same name exists in the cloud, this call will fail and return a conflict; 1: Rename if there is any path conflict; 2: Rename only if there is a path conflict and the block_list is different; 3: Overwrite
-	opt.Parameters.Add("rtype", fmt.Sprintf("%d", overwriteMode))
+	opt.Parameters.Set("rtype", fmt.Sprintf("%d", overwriteMode))
 	if overwriteMode > 3 {
 		opt.Parameters.Set("rtype", "1")
 	}
 
 	opt.MultipartParams = url.Values{}
-	opt.MultipartParams.Add("path", path)
-	// opt.MultipartParams.Add("isdir", "0") // for dir create this param shold be in body, for upload in URL
-	// opt.MultipartParams.Add("rtype", "0") // for dir create this param shold be in body, for upload in URL
-	opt.MultipartParams.Add("local_mtime", fmt.Sprintf("%d", modTime.Unix()))
-	opt.MultipartParams.Add("uploadid", uploadID)
-	opt.MultipartParams.Add("size", fmt.Sprintf("%d", size))
+	opt.MultipartParams.Set("path", path)
+	// opt.MultipartParams.Set("isdir", "0") // for dir create this param shold be in body, for upload in URL
+	// opt.MultipartParams.Set("rtype", "0") // for dir create this param shold be in body, for upload in URL
+	opt.MultipartParams.Set("local_mtime", fmt.Sprintf("%d", modTime.Unix()))
+	opt.MultipartParams.Set("uploadid", uploadID)
+	opt.MultipartParams.Set("size", fmt.Sprintf("%d", size))
 
 	dirPath, _ := libPath.Split(path)
-	opt.MultipartParams.Add("target_path", dirPath)
+	opt.MultipartParams.Set("target_path", dirPath)
 
 	blockListStr, err := json.Marshal(blockList)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	opt.MultipartParams.Add("block_list", string(blockListStr))
+	opt.MultipartParams.Set("block_list", string(blockListStr))
 
 	debug(f.opt, 3, "%+v", opt.MultipartParams)
-	var res api.ResponseDefault
-	return f.apiExec(ctx, opt, &res)
+
+	var res api.ResponseCreate
+	if err := f.apiExec(ctx, opt, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }

@@ -3,8 +3,10 @@ package terabox
 import (
 	"encoding/base64"
 	"fmt"
+	"net/textproto"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/rclone/rclone/fs"
@@ -76,4 +78,38 @@ func sign(s1, s2 string) string {
 	}
 
 	return base64.StdEncoding.EncodeToString(o)
+}
+
+func valuedCookie(cookie string) string {
+	cookie = textproto.TrimString(cookie)
+	if len(cookie) > 2 && cookie[0] == '"' && cookie[len(cookie)-1] == '"' {
+		cookie = cookie[1 : len(cookie)-1]
+	}
+
+	parts := strings.Split(cookie, ";")
+	if len(parts) == 1 && !strings.Contains(parts[0], "=") {
+		return fmt.Sprintf("ndus=%s; lang=en", parts[0])
+	}
+
+	return cookie
+}
+
+func decodeMD5(md5 string) string {
+	if len(md5) != 32 {
+		return md5
+	}
+
+	restoredHexChar := fmt.Sprintf("%x", md5[9]-'g')
+	o := md5[:9] + restoredHexChar + md5[10:]
+
+	// Apply XOR transformation to each character
+	n := make([]byte, 0, 32)
+	for i := 0; i < len(o); i++ {
+		orig, _ := strconv.ParseInt(string(o[i]), 16, 8)
+		xor := int(orig) ^ (i & 15)
+		n = append(n, fmt.Sprintf("%x", xor)[0])
+	}
+
+	e := string(n[8:16]) + string(n[0:8]) + string(n[24:32]) + string(n[16:24])
+	return e
 }
