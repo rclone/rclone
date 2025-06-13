@@ -3631,12 +3631,6 @@ func setQuirks(opt *Options) {
 		mightGzip = false 
 		useUnsignedPayload = false       
 		useAlreadyExists = false
-	
-		
-		
-
-
-
 	case "Exaba":
 		virtualHostStyle = false
 	case "GCS":
