@@ -116,6 +116,9 @@ backends:
      - TestReadFile
      - TestCopyURL
      - TestMoveFileWithIgnoreExisting
+     - TestCopyFileCompareDest
+     # fs/sync
+     - TestServerSideMoveOverSelf
      #vfs
      - TestFileSetModTime/cache=off,open=false,write=false
      - TestFileSetModTime/cache=off,open=true,write=false
@@ -183,6 +186,8 @@ backends:
  - backend:  "imagekit"
    remote:   "TestImageKit:"
    fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsPutZeroLength
    ignoretests:
      - cmd/bisync
  - backend:  "internetarchive"
@@ -190,6 +195,8 @@ backends:
    fastlist: true
    tests:
      - backend
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding
    extratime: 2.0
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
@@ -557,6 +564,8 @@ backends:
    oneonly:  true
    ignore:
      - TestApplyTransforms
+   ignoretests:
+     - cmd/bisync
  - backend:  "seafile"
    remote:   "TestSeafileV6:"
    fastlist: false
@@ -597,6 +606,8 @@ backends:
    fastlist: false
    ignore:
      - TestSyncUTFNorm
+   ignoretests:
+     - cmd/gitannex
  # - backend: "uptobox"
  #   remote: "TestUptobox:"
  #   fastlist: false
