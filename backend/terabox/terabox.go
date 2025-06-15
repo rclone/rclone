@@ -205,6 +205,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	if opt.UserAgent != "" {
 		clientConfig.UserAgent = opt.UserAgent
 	}
+	clientConfig.Timeout = 5 * time.Second
 
 	f.client = rest.NewClient(fshttp.NewClient(newCtx))
 
@@ -482,7 +483,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	srcPath := libPath.Join(srcObj.fs.root, srcObj.remote)
-	if f.origRootItem == nil {
+	if f.origRootItem == nil && f.root != "/" {
 		if err := f.apiMkDir(ctx, f.root); err != nil && !api.ErrIsNum(err, -8) {
 			return nil, err
 		}
@@ -516,7 +517,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	srcPath := libPath.Join(srcObj.fs.root, srcObj.remote)
-	if f.origRootItem == nil {
+	if f.origRootItem == nil && f.root != "/" {
 		if err := f.apiMkDir(ctx, f.root); err != nil && !api.ErrIsNum(err, -8) {
 			return nil, err
 		}
@@ -560,7 +561,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fmt.Errorf("couldn't move root directory")
 	}
 
-	if f.origRootItem == nil {
+	if f.origRootItem == nil && f.root != "/" {
 		if err := f.apiMkDir(ctx, f.root); err != nil && !api.ErrIsNum(err, -8) {
 			return err
 		}

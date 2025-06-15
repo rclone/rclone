@@ -60,7 +60,7 @@ type ResponseDownload struct {
 		ID  string `json:"fs_id"`
 		URL string `json:"dlink"`
 	} `json:"dlink"`
-	FileInfo []struct {
+	FileInfo struct {
 		Size int64  `json:"size"`
 		Name string `json:"filename"`
 	} `json:"file_info"`

@@ -259,6 +259,13 @@ func (f *Fs) apiOperation(ctx context.Context, operation string, items []api.Ope
 	opt.Parameters.Set("async", "1") // The default value is 0 [not available anymore, use 1]; 0: synchronous; 1: adaptive; 2: asynchronous. The difference lies in whether to care about the success of the request, and the returned structure differs. Different structures are returned based on the request parameters; see the return examples for details.)
 	opt.Parameters.Set("onnest", "fail")
 
+	// get JS token
+	if f.jsToken == "" {
+		if err := f.apiJsToken(ctx); err != nil {
+			return err
+		}
+	}
+
 	var list any
 	if operation == "delete" {
 		list = make([]string, len(items))
