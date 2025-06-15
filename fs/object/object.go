@@ -191,11 +191,12 @@ var _ fs.Fs = MemoryFs
 
 // MemoryObject is an in memory object
 type MemoryObject struct {
-	remote  string
-	modTime time.Time
-	content []byte
-	meta    fs.Metadata
-	fs      fs.Fs
+	remote   string
+	modTime  time.Time
+	content  []byte
+	meta     fs.Metadata
+	fs       fs.Fs
+	mimeType string
 }
 
 // NewMemoryObject returns an in memory Object with the modTime and content passed in
@@ -211,6 +212,12 @@ func NewMemoryObject(remote string, modTime time.Time, content []byte) *MemoryOb
 // WithMetadata adds meta to the MemoryObject
 func (o *MemoryObject) WithMetadata(meta fs.Metadata) *MemoryObject {
 	o.meta = meta
+	return o
+}
+
+// WithMimeType adds mimeType to the MemoryObject
+func (o *MemoryObject) WithMimeType(mimeType string) *MemoryObject {
+	o.mimeType = mimeType
 	return o
 }
 
@@ -329,8 +336,14 @@ func (o *MemoryObject) Metadata(ctx context.Context) (fs.Metadata, error) {
 	return o.meta, nil
 }
 
+// MimeType on the object
+func (o *MemoryObject) MimeType(ctx context.Context) string {
+	return o.mimeType
+}
+
 // Check interfaces
 var (
 	_ fs.Object     = (*MemoryObject)(nil)
+	_ fs.MimeTyper  = (*MemoryObject)(nil)
 	_ fs.Metadataer = (*MemoryObject)(nil)
 )
