@@ -311,6 +311,11 @@ only useful for reading.
 				Advanced: true,
 				Default:  encoder.OS,
 			},
+			{
+				Name: "preserve_links",
+				Default: false,
+				Help: "Preserve hard links when syncing",
+			},
 		},
 	}
 	fs.Register(fsi)
@@ -333,6 +338,7 @@ type Options struct {
 	TimeType          timeType             `config:"time_type"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	NoClone           bool                 `config:"no_clone"`
+	PreserveLinks     bool                 `config:"preserve_links"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -351,6 +357,7 @@ type Fs struct {
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
 	objectMetaMu sync.RWMutex // global lock for Object metadata
+	hardlinks     sync.Map // map[uint64]*string for tracking hard links during sync
 }
 
 // Object represents a local filesystem object
@@ -766,6 +773,24 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		f.dev = readDevice(fi, f.opt.OneFileSystem)
 	}
 	return nil
+}
+
+func (f *Fs) Link(ctx context.Context, src string, dst string) error {
+	localSrc := f.localPath(src)
+	localDst := f.localPath(dst)
+
+	err := os.Link(localSrc, localDst)
+	if errors.Is(err, os.ErrNotExist) {
+		err = os.Remove(localDst)
+
+		if err != nil {
+			return err
+		}
+
+		err = os.Link(localSrc, localDst)
+	}
+
+	return err
 }
 
 // DirSetModTime sets the directory modtime for dir
@@ -1354,7 +1379,7 @@ type nopWriterCloser struct {
 }
 
 func (nwc nopWriterCloser) Close() error {
-	// noop
+	// noop// map[uint64]*hardLinkInfo for tracking hard links during sync
 	return nil
 }
 
