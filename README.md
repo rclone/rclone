@@ -106,6 +106,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * SugarSync [:page_facing_up:](https://rclone.org/sugarsync/)
   * Synology C2 Object Storage [:page_facing_up:](https://rclone.org/s3/#synology-c2)
   * Tencent Cloud Object Storage (COS) [:page_facing_up:](https://rclone.org/s3/#tencent-cos)
+  * Terabox [:page_facing_up:](https://rclone.org/terabox)
   * Uloz.to [:page_facing_up:](https://rclone.org/ulozto/)
   * Wasabi [:page_facing_up:](https://rclone.org/s3/#wasabi)
   * WebDAV [:page_facing_up:](https://rclone.org/webdav/)
