@@ -346,7 +346,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	baseClient := fshttp.NewClient(ctx)
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to configure Box: %w", err)
+		return nil, fmt.Errorf("failed to configure google photos: %w", err)
 	}
 
 	root = strings.Trim(path.Clean(root), "/")
