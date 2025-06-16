@@ -25,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/random"
@@ -77,6 +78,8 @@ func Initialise() {
 	}
 	ci.LowLevelRetries = *LowLevelRetries
 	ci.UseListR = *UseListR
+	log.InitLogging()
+	_ = fs.LogReload(ci)
 }
 
 // Item represents an item for checking
