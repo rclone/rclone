@@ -137,10 +137,6 @@ type Fs struct {
 	baseURL     string
 	notFirstRun bool
 
-	// sign for download should be got only once
-	signs   []string
-	signsMX sync.Once
-
 	// upload host should be got only once
 	uploadHost   string
 	uploadHostMX sync.Once
@@ -172,11 +168,16 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 
 	debug(opt, 1, "NewFS %s; %s; %+v;", name, root, opt)
 
-	if len(root) > 0 && root[0:1] == "." {
-		root = root[1:]
-	}
+	if len(root) > 0 {
+		if root[0:1] == "." {
+			root = root[1:]
+		}
 
-	if root == "" {
+		if root[0:1] != "/" {
+			root = "/" + root
+		}
+
+	} else if root == "" {
 		root = "/"
 	}
 
@@ -200,6 +201,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	if opt.UserAgent != "" {
 		clientConfig.UserAgent = opt.UserAgent
 	}
+	clientConfig.Timeout = 5 * time.Second
 
 	f.client = rest.NewClient(fshttp.NewClient(newCtx))
 
@@ -418,10 +420,17 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 //
 // Return an error if it doesn't exist or isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return fs.ErrorNotImplemented
-	// f.apiOperation(ctx, "delete", []api.OperationalItem{
-	// 	{Path: libPath.Join(f.root, dir)},
-	// })
+	debug(f.opt, 1, "Rmdir %s;", dir)
+
+	if items, err := f.List(ctx, dir); err != nil {
+		return err
+	} else if len(items) != 0 {
+		return fs.ErrorDirectoryNotEmpty
+	}
+
+	return f.apiOperation(ctx, "delete", []api.OperationalItem{
+		{Path: libPath.Join(f.root, dir)},
+	})
 }
 
 //
@@ -470,7 +479,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	srcPath := libPath.Join(srcObj.fs.root, srcObj.remote)
-	if f.origRootItem == nil {
+	if f.origRootItem == nil && f.root != "/" {
 		if err := f.apiMkDir(ctx, f.root); err != nil && !api.ErrIsNum(err, -8) {
 			return nil, err
 		}
@@ -504,7 +513,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	srcPath := libPath.Join(srcObj.fs.root, srcObj.remote)
-	if f.origRootItem == nil {
+	if f.origRootItem == nil && f.root != "/" {
 		if err := f.apiMkDir(ctx, f.root); err != nil && !api.ErrIsNum(err, -8) {
 			return nil, err
 		}
@@ -548,7 +557,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fmt.Errorf("couldn't move root directory")
 	}
 
-	if f.origRootItem == nil {
+	if f.origRootItem == nil && f.root != "/" {
 		if err := f.apiMkDir(ctx, f.root); err != nil && !api.ErrIsNum(err, -8) {
 			return err
 		}
@@ -673,7 +682,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	debug(o.fs.opt, 1, "Object Open %+v;", options)
 
 	if o.downloadLink == "" {
-		if item, err := o.fs.apiItemInfo(ctx, o.remote, true); err == nil && item.DownloadLink != "" {
+		if item, err := o.fs.apiItemInfo(ctx, libPath.Join(o.fs.root, o.remote), true); err == nil && item.DownloadLink != "" {
 			o.downloadLink = item.DownloadLink
 		}
 	}

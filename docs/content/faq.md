@@ -22,6 +22,20 @@ See the [remote setup docs](/remote_setup/) for more info.
 
 This has now been documented in its own [remote setup page](/remote_setup/).
 
+### How can I get rid of the "Config file not found" notice?
+
+If you see a notice like 'NOTICE: Config file "rclone.conf" not found', this
+means you have not configured any remotes.
+
+If you need to configure a remote, see the [config help docs](/docs/#configure).
+
+If you are using rclone entirely with [on the fly remotes](/docs/#backend-path-to-dir),
+you can create an empty config file to get rid of this notice, for example:
+
+```
+rclone config touch
+```
+
 ### Can rclone sync directly from drive to s3 ###
 
 Rclone can sync between two remote cloud storage systems just fine.

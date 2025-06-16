@@ -928,6 +928,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	case opt.ClientID != "" && opt.Tenant != "" && opt.Username != "" && opt.Password != "":
 		// User with username and password
+		//nolint:staticcheck // this is deprecated due to Azure policy
 		options := azidentity.UsernamePasswordCredentialOptions{
 			ClientOptions: policyClientOptions,
 		}
@@ -1768,7 +1769,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 	var (
 		srcSize  = src.size
 		partSize = int64(chunksize.Calculator(o, src.size, blockblob.MaxBlocks, f.opt.ChunkSize))
-		numParts = (srcSize-1)/partSize + 1
+		numParts = (srcSize + partSize - 1) / partSize
 		blockIDs = make([]string, numParts) // list of blocks for finalize
 		g, gCtx  = errgroup.WithContext(ctx)
 		checker  = newCheckForInvalidBlockOrBlob("copy", o)

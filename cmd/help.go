@@ -191,7 +191,6 @@ func setupRootCommand(rootCmd *cobra.Command) {
 	})
 
 	cobra.OnInitialize(initConfig)
-
 }
 
 // Traverse the tree of commands running fn on each

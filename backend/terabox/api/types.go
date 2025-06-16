@@ -57,10 +57,10 @@ type ResponseOperational struct {
 type ResponseDownload struct {
 	ErrorAPI
 	DownloadLink []struct {
-		ID  uint64 `json:"fs_id"`
+		ID  string `json:"fs_id"`
 		URL string `json:"dlink"`
 	} `json:"dlink"`
-	FileInfo []struct {
+	FileInfo struct {
 		Size int64  `json:"size"`
 		Name string `json:"filename"`
 	} `json:"file_info"`

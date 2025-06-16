@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/transform"
 )
 
 // State of the copy
@@ -390,7 +391,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		f:           f,
 		dstFeatures: f.Features(),
 		dst:         dst,
-		remote:      remote,
+		remote:      transform.Path(ctx, remote, false),
 		src:         src,
 		ci:          ci,
 		tr:          tr,
@@ -399,7 +400,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	}
 	c.hashType, c.hashOption = CommonHash(ctx, f, src.Fs())
 	if c.dst != nil {
-		c.remote = c.dst.Remote()
+		c.remote = transform.Path(ctx, c.dst.Remote(), false)
 	}
 	// Are we using partials?
 	//
@@ -414,5 +415,5 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 
 // CopyFile moves a single file possibly to a new name
 func CopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string) (err error) {
-	return moveOrCopyFile(ctx, fdst, fsrc, dstFileName, srcFileName, true)
+	return moveOrCopyFile(ctx, fdst, fsrc, dstFileName, srcFileName, true, false)
 }
