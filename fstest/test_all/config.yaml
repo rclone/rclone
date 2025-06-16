@@ -230,8 +230,6 @@ backends:
  - backend:  "s3"
    remote:   "TestS3,directory_markers:"
    fastlist: true
-   ignoretests:
-     - cmd/bisync
  - backend:  "s3"
    remote:   "TestS3Rclone:"
    fastlist: true
