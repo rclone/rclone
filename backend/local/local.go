@@ -312,9 +312,10 @@ only useful for reading.
 				Default:  encoder.OS,
 			},
 			{
-				Name: "preserve_links",
+				Name:    "preserve_links",
 				Default: false,
-				Help: "Preserve hard links when syncing",
+				Help:    "Preserve hard links when syncing",
+				Advanced: true,
 			},
 		},
 	}
@@ -357,7 +358,7 @@ type Fs struct {
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
 	objectMetaMu sync.RWMutex // global lock for Object metadata
-	hardlinks     sync.Map // map[uint64]*string for tracking hard links during sync
+	hardlinks    sync.Map     // map[LinkInfo]*string for tracking hard links during sync
 }
 
 // Object represents a local filesystem object
@@ -366,10 +367,11 @@ type Object struct {
 	remote string // The remote path (encoded path)
 	path   string // The local path (OS path)
 	// When using these items the fs.objectMetaMu must be held
-	size    int64 // file metadata - always present
-	mode    os.FileMode
-	modTime time.Time
-	hashes  map[hash.Type]string // Hashes
+	size     int64 // file metadata - always present
+	mode     os.FileMode
+	modTime  time.Time
+	hashes   map[hash.Type]string // Hashes
+	hlinkInfo any // One of nil, WindowsHLinkInfo, UnixHLinkInfo, Plan9HLinkInfo
 	// these are read only and don't need the mutex held
 	translatedLink bool // Is this object a translated link
 }
@@ -1191,6 +1193,13 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
+// returns LinkInfo, hasLinkInfo
+func (o *Object) LinkInfo() (any, bool) {
+	o.fs.objectMetaMu.RLock()
+	defer o.fs.objectMetaMu.RUnlock()
+	return o.hlinkInfo, o.hlinkInfo != nil
+}
+
 // ModTime returns the modification time of the object
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	o.fs.objectMetaMu.RLock()
@@ -1405,6 +1414,28 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
+	if o.fs.opt.PreserveLinks {
+		fs.Debugf(nil, "possible error: %v", o.lstat())
+		linkInfo, hasInode := o.LinkInfo()
+		fs.Debugf(nil, "o is %+v", o.remote)
+		fs.Debugf(nil, "right here, %v, %v!", linkInfo, hasInode);
+		if hasInode {
+			linkRoot, haveRoot := o.fs.hardlinks.LoadOrStore(linkInfo, o.remote)
+			linkRootString, linkRootIsString := linkRoot.(string)
+
+			if haveRoot && linkRootIsString {
+				err = o.fs.Link(ctx, linkRootString, o.remote)
+
+				if err != nil {
+					fs.Debugf(o, "Failed to perform link %v->%v: %v", linkRootString, o.path, err)
+					return err
+				} else {
+					return o.lstat()
+				}
+			}
+		}
+	}
+
 	// Wipe hashes before update
 	o.clearHashCache()
 
@@ -1564,6 +1595,9 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	o.modTime = readTime(o.fs.opt.TimeType, info)
 	o.mode = info.Mode()
 	o.fs.objectMetaMu.Unlock()
+
+	o.hlinkInfo = getHLinkInfo(o.path, info)
+	fs.Debugf(nil, "getHLinkInfo: %v, %v, %v", o.path, info, o.hlinkInfo)
 	// Read the size of the link.
 	//
 	// The value in info.Size() is not always correct
