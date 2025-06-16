@@ -568,6 +568,7 @@ func (f *Fs) RegisterLinkRoot(ctx context.Context, src *Object, dst *Object, dst
 	} else {
 		// This is the root
 		// If we don't need to transfer, we can immediately use the existing file on the remote to link against
+		fs.Debugf(src, "registering link root")
 		if !needTransfer {
 			dstLinkInfo, dstHasLinkInfo := dst.HLinkInfo()
 			if !dstHasLinkInfo {
@@ -903,6 +904,7 @@ func (f *Fs) HLink(ctx context.Context, src string, dst string) error {
 	localSrc := f.localPath(src)
 	localDst := f.localPath(dst)
 
+	file.MkdirAll(path.Dir(localDst), 0777)
 	err := os.Link(localSrc, localDst)
 	if errors.Is(err, os.ErrExist) {
 		err = os.Remove(localDst)
