@@ -137,10 +137,6 @@ type Fs struct {
 	baseURL     string
 	notFirstRun bool
 
-	// sign for download should be got only once
-	signs   []string
-	signsMX sync.Once
-
 	// upload host should be got only once
 	uploadHost   string
 	uploadHostMX sync.Once
@@ -685,13 +681,8 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	debug(o.fs.opt, 1, "Object Open %+v;", options)
 
-	remote := o.remote
-	if remote[0:1] != "/" {
-		remote = "/" + remote
-	}
-
 	if o.downloadLink == "" {
-		if item, err := o.fs.apiItemInfo(ctx, remote, true); err == nil && item.DownloadLink != "" {
+		if item, err := o.fs.apiItemInfo(ctx, libPath.Join(o.fs.root, o.remote), true); err == nil && item.DownloadLink != "" {
 			o.downloadLink = item.DownloadLink
 		}
 	}

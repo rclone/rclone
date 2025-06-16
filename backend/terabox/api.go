@@ -306,19 +306,15 @@ func (f *Fs) apiOperation(ctx context.Context, operation string, items []api.Ope
 
 // Download file
 func (f *Fs) apiDownloadLink(ctx context.Context, fileID uint64) (*api.ResponseDownload, error) {
-	var err error
-	f.signsMX.Do(func() {
-		err = f.apiSignPrepare(ctx)
-	})
+	signKeys, err := f.apiSignPrepare(ctx)
 	if err != nil {
-		f.signsMX = sync.Once{}
 		return nil, err
 	}
 
 	opt := NewRequest(http.MethodGet, "/api/download")
 	opt.Parameters.Set("type", "dlink")
 	opt.Parameters.Set("vip", "2")
-	opt.Parameters.Set("sign", sign(f.signs[0], f.signs[1]))
+	opt.Parameters.Set("sign", sign(signKeys[0], signKeys[1]))
 	opt.Parameters.Set("timestamp", fmt.Sprintf("%d", time.Now().Unix()))
 	opt.Parameters.Set("need_speed", "1")
 	opt.Parameters.Set("fidlist", fmt.Sprintf("[%d]", fileID))
@@ -331,16 +327,15 @@ func (f *Fs) apiDownloadLink(ctx context.Context, fileID uint64) (*api.ResponseD
 	return &res, nil
 }
 
-func (f *Fs) apiSignPrepare(ctx context.Context) error {
+func (f *Fs) apiSignPrepare(ctx context.Context) ([]string, error) {
 	opt := NewRequest(http.MethodGet, "/api/home/info")
 
 	var res api.ResponseHomeInfo
 	if err := f.apiExec(ctx, opt, &res); err != nil {
-		return err
+		return nil, err
 	}
 
-	f.signs = []string{res.Data.Sign3, res.Data.Sign1}
-	return nil
+	return []string{res.Data.Sign3, res.Data.Sign1}, nil
 }
 
 // Delete files from Recycle Bin
