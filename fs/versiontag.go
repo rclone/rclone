@@ -1,4 +1,4 @@
 package fs
 
 // VersionTag of rclone
-var VersionTag = "v1.69.6"
+var VersionTag = "v1.69.7"
