@@ -553,7 +553,7 @@ func (f *Fs) RegisterLinkRoot(ctx context.Context, src *Object, dst *Object, dst
 		if info.remoteHLinkInfo != nil {
 			if info.remoteHLinkInfo != dstLinkInfo {
 				fs.Debugf(f, "performing hardlink %v->%v", info.remotePath, dstPath)
-				err := f.Link(ctx, info.remotePath, dstPath)
+				err := f.HLink(ctx, info.remotePath, dstPath)
 
 				if err != nil {
 					fs.Debugf(f, "failed to perform link %v->%v: %v\n", info.remotePath, dstPath, err)
@@ -613,7 +613,7 @@ func (f *Fs) FlushLinkrootLinkQueue(src *Object) {
 	// We probably can't count on the source's inode remaining after a transfer, so we just go ahead and relink all
 	for _, tgt := range info.pendingLinkDests {
 		fs.Debugf(src, "performing pending link %v->%v", info.remotePath, tgt)
-		f.Link(context.Background(), info.remotePath, tgt)
+		f.HLink(context.Background(), info.remotePath, tgt)
 	}
 
 	info.pendingLinkDests = nil
@@ -899,7 +899,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return nil
 }
 
-func (f *Fs) Link(ctx context.Context, src string, dst string) error {
+func (f *Fs) HLink(ctx context.Context, src string, dst string) error {
 	localSrc := f.localPath(src)
 	localDst := f.localPath(dst)
 
@@ -1510,7 +1510,7 @@ type nopWriterCloser struct {
 }
 
 func (nwc nopWriterCloser) Close() error {
-	// noop// map[uint64]*hardLinkInfo for tracking hard links during sync
+	// noop
 	return nil
 }
 
@@ -1535,28 +1535,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-
-	// if o.fs.opt.PreserveLinks {
-	// 	fs.Debugf(nil, "possible error: %v", o.lstat())
-	// 	linkInfo, hasInode := o.HLinkInfo()
-	// 	fs.Debugf(nil, "o is %+v", o.remote)
-	// 	fs.Debugf(nil, "right here, %v, %v!", linkInfo, hasInode)
-	// 	if hasInode {
-	// 		linkRoot, haveRoot := o.fs.hardlinks.LoadOrStore(linkInfo, o.remote)
-	// 		linkRootString, linkRootIsString := linkRoot.(string)
-	//
-	// 		if haveRoot && linkRootIsString {
-	// 			err = o.fs.Link(ctx, linkRootString, o.remote)
-	//
-	// 			if err != nil {
-	// 				fs.Debugf(o, "Failed to perform link %v->%v: %v", linkRootString, o.path, err)
-	// 				return err
-	// 			} else {
-	// 				return o.lstat()
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	// Wipe hashes before update
 	o.clearHashCache()
