@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
@@ -399,6 +400,16 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				} else {
 					fs.Infof(pair.Dst, "Fixed case by renaming to: %s", src.Remote())
 					pair.Dst = newDst
+				}
+			}
+			{
+				fsrc := pair.Src.Fs()
+				fdst := pair.Dst.Fs()
+				localFdst, isLocalFdst := fdst.(*local.Fs)
+				_, isLocalFsrc := fsrc.(*local.Fs)
+
+				if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
+					needTransfer = localFdst.RegisterLinkRoot(context.Background(), pair.Src.(*local.Object), pair.Dst.(*local.Object), pair.Dst.Remote(), needTransfer)
 				}
 			}
 			if needTransfer {
@@ -1243,6 +1254,17 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			if err != nil {
 				s.processError(err)
 				s.logger(s.ctx, operations.TransferError, x, nil, err)
+			}
+			{
+				fsrc := src.Fs()
+				fdst := s.fdst
+				localFdst, isLocalFdst := fdst.(*local.Fs)
+				_, isLocalFsrc := fsrc.(*local.Fs)
+
+				if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
+					needTransfer := localFdst.RegisterLinkRoot(context.Background(), src.(*local.Object), nil, src.Remote(), !NoNeedTransfer)
+					NoNeedTransfer = !needTransfer
+				}
 			}
 			if !NoNeedTransfer {
 				// No need to check since doesn't exist

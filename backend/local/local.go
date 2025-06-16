@@ -312,9 +312,9 @@ only useful for reading.
 				Default:  encoder.OS,
 			},
 			{
-				Name:    "preserve_links",
-				Default: false,
-				Help:    "Preserve hard links when syncing",
+				Name:     "preserve_links",
+				Default:  false,
+				Help:     "Preserve hard links when syncing",
 				Advanced: true,
 			},
 		},
@@ -358,7 +358,7 @@ type Fs struct {
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
 	objectMetaMu sync.RWMutex // global lock for Object metadata
-	hardlinks    sync.Map     // map[LinkInfo]*string for tracking hard links during sync
+	hardlinks    sync.Map     // map[LinkInfo]*HLinkRootInfo for tracking hard links during sync
 }
 
 // Object represents a local filesystem object
@@ -367,13 +367,20 @@ type Object struct {
 	remote string // The remote path (encoded path)
 	path   string // The local path (OS path)
 	// When using these items the fs.objectMetaMu must be held
-	size     int64 // file metadata - always present
-	mode     os.FileMode
-	modTime  time.Time
-	hashes   map[hash.Type]string // Hashes
-	hlinkInfo any // One of nil, WindowsHLinkInfo, UnixHLinkInfo, Plan9HLinkInfo
+	size      int64 // file metadata - always present
+	mode      os.FileMode
+	modTime   time.Time
+	hashes    map[hash.Type]string // Hashes
+	hlinkInfo any                  // One of nil, WindowsHLinkInfo, UnixHLinkInfo, Plan9HLinkInfo
 	// these are read only and don't need the mutex held
 	translatedLink bool // Is this object a translated link
+}
+
+type HLinkRootInfo struct {
+	lock             sync.Mutex
+	remotePath       string
+	remoteHLinkInfo  any      // One of nil, WindowsHLinkInfo, UnixHLinkInfo, Plan9HLinkInfo
+	pendingLinkDests []string // Link destinations on the remote encountered while transferring (indicated by remoteHLinkInfo == nil)
 }
 
 // Directory represents a local filesystem directory
@@ -495,6 +502,121 @@ func (f *Fs) String() string {
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
 	return f.features
+}
+
+func (f *Fs) ShouldPreserveLinks() bool {
+	return f.opt.PreserveLinks
+}
+
+// Registers a objects as possible hardlink roots, attempts to link immediately where relevant
+// otherwise, we queue for later linkage. Returns true if src should be copied to dst
+func (f *Fs) RegisterLinkRoot(ctx context.Context, src *Object, dst *Object, dstPath string, needTransfer bool) bool {
+	srcLinkInfo, srcHasLinkInfo := src.HLinkInfo()
+	if !srcHasLinkInfo {
+		fs.Debugf(src, "hlinkInfo is unexpectedly null")
+		return false
+	}
+
+	newInfo := HLinkRootInfo{
+		lock:             sync.Mutex{},
+		remotePath:       dstPath,
+		remoteHLinkInfo:  nil,
+		pendingLinkDests: []string{},
+	}
+	newInfo.lock.Lock()
+
+	rawInfo, isExisting := f.hardlinks.LoadOrStore(srcLinkInfo, &newInfo)
+	info, ok := rawInfo.(*HLinkRootInfo)
+	if !ok {
+		fs.Debugf(f, "hardlinks map returned non-HLinkRootInfo")
+		return false
+	}
+
+	defer info.lock.Unlock()
+	if isExisting {
+		// We are not the root file, so we should link the root to dst
+		info.lock.Lock()
+
+		var dstLinkInfo any
+		dstHasLinkInfo := false
+
+		if dst != nil {
+			dstLinkInfo, dstHasLinkInfo = dst.HLinkInfo()
+
+			if !dstHasLinkInfo {
+				fs.Debugf(dst, "destination unexpectedly has no hlink info")
+				return false
+			}
+		}
+
+		// If this case is true, we have fully transferred the root and can immediately link
+		if info.remoteHLinkInfo != nil {
+			if info.remoteHLinkInfo != dstLinkInfo {
+				fs.Debugf(f, "performing hardlink %v->%v", info.remotePath, dstPath)
+				err := f.Link(ctx, info.remotePath, dstPath)
+
+				if err != nil {
+					fs.Debugf(f, "failed to perform link %v->%v: %v\n", info.remotePath, dstPath, err)
+					return false
+				}
+			}
+		} else {
+			// Otherwise, we add the path to the queue, to be linked post-transfer
+			fs.Debugf(f, "queueing hardlink %v->%v", info.remotePath, dstPath)
+			info.pendingLinkDests = append(info.pendingLinkDests, dstPath)
+		}
+	} else {
+		// This is the root
+		// If we don't need to transfer, we can immediately use the existing file on the remote to link against
+		if !needTransfer {
+			dstLinkInfo, dstHasLinkInfo := dst.HLinkInfo()
+			if !dstHasLinkInfo {
+				fs.Debugf(dst, "destination unexpectedly has no hlink info")
+			}
+
+			info.remoteHLinkInfo = dstLinkInfo
+
+			return false
+		}
+
+		// Otherwise, we need to transfer and indicate the caller as such
+		return true
+	}
+
+	return false
+}
+
+func (f *Fs) FlushLinkrootLinkQueue(src *Object) {
+	val, ok := f.hardlinks.Load(src.hlinkInfo)
+	if !ok {
+		fs.Debugf(src, "failed to load hardlink root data")
+		return
+	}
+
+	info, ok := val.(*HLinkRootInfo)
+	if !ok {
+		fs.Debugf(src, "unexpected return type from hardlinks map")
+		return
+	}
+
+	srcHLinkInfo, srcHasHLinkInfo := src.HLinkInfo()
+	if !srcHasHLinkInfo {
+		fs.Debugf(src, "unexpectedly missing hlinkinfo")
+		return
+	}
+
+	info.lock.Lock()
+	defer info.lock.Unlock()
+
+	info.remoteHLinkInfo = srcHLinkInfo
+
+	// We probably can't count on the source's inode remaining after a transfer, so we just go ahead and relink all
+	for _, tgt := range info.pendingLinkDests {
+		fs.Debugf(src, "performing pending link %v->%v", info.remotePath, tgt)
+		f.Link(context.Background(), info.remotePath, tgt)
+	}
+
+	info.pendingLinkDests = nil
 }
 
 // caseInsensitive returns whether the remote is case insensitive or not
@@ -782,7 +904,7 @@ func (f *Fs) Link(ctx context.Context, src string, dst string) error {
 	localDst := f.localPath(dst)
 
 	err := os.Link(localSrc, localDst)
-	if errors.Is(err, os.ErrNotExist) {
+	if errors.Is(err, os.ErrExist) {
 		err = os.Remove(localDst)
 
 		if err != nil {
@@ -1193,8 +1315,8 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
-// returns LinkInfo, hasLinkInfo
-func (o *Object) LinkInfo() (any, bool) {
+// returns HLinkInfo, hasLinkInfo
+func (o *Object) HLinkInfo() (any, bool) {
 	o.fs.objectMetaMu.RLock()
 	defer o.fs.objectMetaMu.RUnlock()
 	return o.hlinkInfo, o.hlinkInfo != nil
@@ -1414,27 +1536,27 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	if o.fs.opt.PreserveLinks {
-		fs.Debugf(nil, "possible error: %v", o.lstat())
-		linkInfo, hasInode := o.LinkInfo()
-		fs.Debugf(nil, "o is %+v", o.remote)
-		fs.Debugf(nil, "right here, %v, %v!", linkInfo, hasInode);
-		if hasInode {
-			linkRoot, haveRoot := o.fs.hardlinks.LoadOrStore(linkInfo, o.remote)
-			linkRootString, linkRootIsString := linkRoot.(string)
-
-			if haveRoot && linkRootIsString {
-				err = o.fs.Link(ctx, linkRootString, o.remote)
-
-				if err != nil {
-					fs.Debugf(o, "Failed to perform link %v->%v: %v", linkRootString, o.path, err)
-					return err
-				} else {
-					return o.lstat()
-				}
-			}
-		}
-	}
+	// if o.fs.opt.PreserveLinks {
+	// 	fs.Debugf(nil, "possible error: %v", o.lstat())
+	// 	linkInfo, hasInode := o.HLinkInfo()
+	// 	fs.Debugf(nil, "o is %+v", o.remote)
+	// 	fs.Debugf(nil, "right here, %v, %v!", linkInfo, hasInode)
+	// 	if hasInode {
+	// 		linkRoot, haveRoot := o.fs.hardlinks.LoadOrStore(linkInfo, o.remote)
+	// 		linkRootString, linkRootIsString := linkRoot.(string)
+	//
+	// 		if haveRoot && linkRootIsString {
+	// 			err = o.fs.Link(ctx, linkRootString, o.remote)
+	//
+	// 			if err != nil {
+	// 				fs.Debugf(o, "Failed to perform link %v->%v: %v", linkRootString, o.path, err)
+	// 				return err
+	// 			} else {
+	// 				return o.lstat()
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	// Wipe hashes before update
 	o.clearHashCache()
@@ -1597,7 +1719,6 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	o.fs.objectMetaMu.Unlock()
 
 	o.hlinkInfo = getHLinkInfo(o.path, info)
-	fs.Debugf(nil, "getHLinkInfo: %v, %v, %v", o.path, info, o.hlinkInfo)
 	// Read the size of the link.
 	//
 	// The value in info.Size() is not always correct

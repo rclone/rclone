@@ -24,6 +24,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -481,6 +482,15 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 			}
 			in.ServerSideMoveEnd(newDst.Size()) // account the bytes for the server-side transfer
 			_ = in.Close()
+
+			{
+				localFdst, isLocalFdst := fdst.(*local.Fs)
+				_, isLocalFsrc := src.Fs().(*local.Fs)
+
+				if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
+					localFdst.FlushLinkrootLinkQueue(src.(*local.Object))
+				}
+			}
 			return newDst, nil
 		case fs.ErrorCantMove:
 			fs.Debugf(src, "Can't move, switching to copy")
@@ -497,6 +507,14 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	if err != nil {
 		fs.Errorf(src, "Not deleting source as copy failed: %v", err)
 		return newDst, err
+	}
+	{
+		localFdst, isLocalFdst := fdst.(*local.Fs)
+		_, isLocalFsrc := src.Fs().(*local.Fs)
+
+		if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
+			localFdst.FlushLinkrootLinkQueue(src.(*local.Object))
+		}
 	}
 	// Delete src if no error on copy
 	return newDst, DeleteFile(ctx, src)
@@ -2064,6 +2082,16 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			needTransfer = false
 		}
 	}
+
+	{
+		localFdst, isLocalFdst := fdst.(*local.Fs)
+		_, isLocalFsrc := fsrc.(*local.Fs)
+
+		if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
+			needTransfer = localFdst.RegisterLinkRoot(ctx, srcObj.(*local.Object), dstObj.(*local.Object), dstFileName, needTransfer)
+		}
+	}
+
 	if needTransfer {
 		// If destination already exists, then we must move it into --backup-dir if required
 		if dstObj != nil && backupDir != nil {
