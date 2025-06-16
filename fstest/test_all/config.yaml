@@ -421,12 +421,14 @@ backends:
    ignore:
      # It just isn't possible to preserve the existing file with azure blob
      # and make sure we don't leak uncomitted blocks.
-     - TestMultithreadCopyAbort   
+     - TestMultithreadCopyAbort
  - backend:  "azureblob"
    remote:   "TestAzureBlob,directory_markers:"
    fastlist: true
-   ignoretests:
-     - cmd/bisync
+   ignore:
+     # It just isn't possible to preserve the existing file with azure blob
+     # and make sure we don't leak uncomitted blocks.
+     - TestMultithreadCopyAbort
  - backend:  "azurefiles"
    remote:   "TestAzureFiles:"
    ignoretests:
