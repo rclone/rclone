@@ -24,7 +24,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -484,11 +483,14 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 			_ = in.Close()
 
 			{
-				localFdst, isLocalFdst := fdst.(*local.Fs)
-				_, isLocalFsrc := src.Fs().(*local.Fs)
+				fsrc := src.Fs()
+				fdst := dst.Fs()
 
-				if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
-					localFdst.FlushLinkrootLinkQueue(src.(*local.Object))
+				fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
+				fdstEx, haveFdstEx := fdst.(fs.FsEx)
+
+				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+					fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx)
 				}
 			}
 			return newDst, nil
@@ -509,11 +511,14 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		return newDst, err
 	}
 	{
-		localFdst, isLocalFdst := fdst.(*local.Fs)
-		_, isLocalFsrc := src.Fs().(*local.Fs)
+		fsrc := src.Fs()
+		fdst := dst.Fs()
 
-		if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
-			localFdst.FlushLinkrootLinkQueue(src.(*local.Object))
+		fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
+		fdstEx, haveFdstEx := fdst.(fs.FsEx)
+
+		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+			fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx)
 		}
 	}
 	// Delete src if no error on copy
@@ -2084,11 +2089,13 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	}
 
 	{
-		localFdst, isLocalFdst := fdst.(*local.Fs)
-		_, isLocalFsrc := fsrc.(*local.Fs)
+		fsrc := srcObj.Fs()
 
-		if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
-			needTransfer = localFdst.RegisterLinkRoot(ctx, srcObj.(*local.Object), dstObj.(*local.Object), dstFileName, needTransfer)
+		fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
+		fdstEx, haveFdstEx := fdst.(fs.FsEx)
+
+		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+			needTransfer = fdstEx.RegisterLinkRoot(ctx, srcObj, fsrcEx, dstObj, srcObj.Remote(), needTransfer)
 		}
 	}
 

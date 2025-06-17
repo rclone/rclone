@@ -15,7 +15,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -370,11 +369,14 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 	fs.Infof(c.src, "%s%s", actionTaken, fs.LogValueHide("size", fs.SizeSuffix(c.src.Size())))
 
 	if newDst != nil {
-		localFdst, isLocalFdst := newDst.Fs().(*local.Fs)
-		_, isLocalFsrc := c.src.Fs().(*local.Fs)
+		fsrc := c.src.Fs()
+		fdst := c.dst.Fs()
 
-		if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
-			localFdst.FlushLinkrootLinkQueue(c.src.(*local.Object))
+		fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
+		fdstEx, haveFdstEx := fdst.(fs.FsEx)
+
+		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+			fdstEx.NotifyLinkRootTransferComplete(ctx, c.src, fsrcEx)
 		}
 	}
 

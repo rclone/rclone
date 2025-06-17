@@ -1,4 +1,5 @@
 // Package local provides a filesystem interface
+
 package local
 
 import (
@@ -358,7 +359,8 @@ type Fs struct {
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
 	objectMetaMu sync.RWMutex // global lock for Object metadata
-	hardlinks    sync.Map     // map[LinkInfo]*HLinkRootInfo for tracking hard links during sync
+
+	hlTracker fs.HLinkTracker
 }
 
 // Object represents a local filesystem object
@@ -371,16 +373,9 @@ type Object struct {
 	mode      os.FileMode
 	modTime   time.Time
 	hashes    map[hash.Type]string // Hashes
-	hlinkInfo any                  // One of nil, WindowsHLinkInfo, UnixHLinkInfo, Plan9HLinkInfo
+	hlinkInfo any
 	// these are read only and don't need the mutex held
 	translatedLink bool // Is this object a translated link
-}
-
-type HLinkRootInfo struct {
-	lock             sync.Mutex
-	remotePath       string
-	remoteHLinkInfo  any      // One of nil, WindowsHLinkInfo, UnixHLinkInfo, Plan9HLinkInfo
-	pendingLinkDests []string // Link destinations on the remote encountered while transferring (indicated by remoteHLinkInfo == nil)
 }
 
 // Directory represents a local filesystem directory
@@ -508,116 +503,41 @@ func (f *Fs) ShouldPreserveLinks() bool {
 	return f.opt.PreserveLinks
 }
 
-// Registers a objects as possible hardlink roots, attempts to link immediately where relevant
-// otherwise, we queue for later linkage. Returns true if src should be copied to dst
-func (f *Fs) RegisterLinkRoot(ctx context.Context, src *Object, dst *Object, dstPath string, needTransfer bool) bool {
-	srcLinkInfo, srcHasLinkInfo := src.HLinkInfo()
-	if !srcHasLinkInfo {
-		fs.Debugf(src, "hlinkInfo is unexpectedly null")
-		return false
-	}
+func (f *Fs) HLink(ctx context.Context, src string, dst string) error {
+	localSrc := f.localPath(src)
+	localDst := f.localPath(dst)
 
-	newInfo := HLinkRootInfo{
-		lock:             sync.Mutex{},
-		remotePath:       dstPath,
-		remoteHLinkInfo:  nil,
-		pendingLinkDests: []string{},
-	}
-	newInfo.lock.Lock()
+	file.MkdirAll(path.Dir(localDst), 0777)
+	err := os.Link(localSrc, localDst)
+	if errors.Is(err, os.ErrExist) {
+		err = os.Remove(localDst)
 
-	rawInfo, isExisting := f.hardlinks.LoadOrStore(srcLinkInfo, &newInfo)
-	info, ok := rawInfo.(*HLinkRootInfo)
-	if !ok {
-		fs.Debugf(f, "hardlinks map returned non-HLinkRootInfo")
-		return false
-	}
-
-	defer info.lock.Unlock()
-	if isExisting {
-		// We are not the root file, so we should link the root to dst
-		info.lock.Lock()
-
-		var dstLinkInfo any
-		dstHasLinkInfo := false
-
-		if dst != nil {
-			dstLinkInfo, dstHasLinkInfo = dst.HLinkInfo()
-
-			if !dstHasLinkInfo {
-				fs.Debugf(dst, "destination unexpectedly has no hlink info")
-				return false
-			}
+		if err != nil {
+			return err
 		}
 
-		// If this case is true, we have fully transferred the root and can immediately link
-		if info.remoteHLinkInfo != nil {
-			if info.remoteHLinkInfo != dstLinkInfo {
-				fs.Debugf(f, "performing hardlink %v->%v", info.remotePath, dstPath)
-				err := f.HLink(ctx, info.remotePath, dstPath)
-
-				if err != nil {
-					fs.Debugf(f, "failed to perform link %v->%v: %v\n", info.remotePath, dstPath, err)
-					return false
-				}
-			}
-		} else {
-			// Otherwise, we add the path to the queue, to be linked post-transfer
-			fs.Debugf(f, "queueing hardlink %v->%v", info.remotePath, dstPath)
-			info.pendingLinkDests = append(info.pendingLinkDests, dstPath)
-		}
-	} else {
-		// This is the root
-		// If we don't need to transfer, we can immediately use the existing file on the remote to link against
-		fs.Debugf(src, "registering link root")
-		if !needTransfer {
-			dstLinkInfo, dstHasLinkInfo := dst.HLinkInfo()
-			if !dstHasLinkInfo {
-				fs.Debugf(dst, "destination unexpectedly has no hlink info")
-			}
-
-			info.remoteHLinkInfo = dstLinkInfo
-
-			return false
-		}
-
-		// Otherwise, we need to transfer and indicate the caller as such
-		return true
+		err = os.Link(localSrc, localDst)
 	}
 
-	return false
+	return err
 }
 
-func (f *Fs) FlushLinkrootLinkQueue(src *Object) {
-	val, ok := f.hardlinks.Load(src.hlinkInfo)
-	if !ok {
-		fs.Debugf(src, "failed to load hardlink root data")
-		return
+func (f *Fs) HLinkID(ctx context.Context, tgt fs.Object) (any, bool) {
+	obj, isObj := tgt.(*Object)
+
+	if !isObj {
+		fs.Debugf(f, "%v is not a *local.Object", obj)
 	}
 
-	info, ok := val.(*HLinkRootInfo)
-	if !ok {
-		fs.Debugf(src, "unexpected return type from hardlinks map")
-		return
-	}
+	return obj.HLinkInfo()
+}
 
-	srcHLinkInfo, srcHasHLinkInfo := src.HLinkInfo()
-	if !srcHasHLinkInfo {
-		fs.Debugf(src, "unexpectedly missing hlinkinfo")
-		return
-	}
+func (f *Fs) RegisterLinkRoot(ctx context.Context, src fs.Object, fsrc fs.FsEx, dst fs.Object, dstPath string, willTransfer bool) bool {
+	return f.hlTracker.RegisterHLinkRoot(ctx, src, fsrc, dst, f, dstPath, willTransfer)
+}
 
-	info.lock.Lock()
-	defer info.lock.Unlock()
-
-	info.remoteHLinkInfo = srcHLinkInfo
-
-	// We probably can't count on the source's inode remaining after a transfer, so we just go ahead and relink all
-	for _, tgt := range info.pendingLinkDests {
-		fs.Debugf(src, "performing pending link %v->%v", info.remotePath, tgt)
-		f.HLink(context.Background(), info.remotePath, tgt)
-	}
-
-	info.pendingLinkDests = nil
+func (f *Fs) NotifyLinkRootTransferComplete(ctx context.Context, src fs.Object, fsrc fs.FsEx) {
+	f.hlTracker.FlushLinkrootLinkQueue(ctx, src, fsrc)
 }
 
 // caseInsensitive returns whether the remote is case insensitive or not
@@ -898,25 +818,6 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		f.dev = readDevice(fi, f.opt.OneFileSystem)
 	}
 	return nil
-}
-
-func (f *Fs) HLink(ctx context.Context, src string, dst string) error {
-	localSrc := f.localPath(src)
-	localDst := f.localPath(dst)
-
-	file.MkdirAll(path.Dir(localDst), 0777)
-	err := os.Link(localSrc, localDst)
-	if errors.Is(err, os.ErrExist) {
-		err = os.Remove(localDst)
-
-		if err != nil {
-			return err
-		}
-
-		err = os.Link(localSrc, localDst)
-	}
-
-	return err
 }
 
 // DirSetModTime sets the directory modtime for dir

@@ -57,6 +57,20 @@ type Fs interface {
 	Rmdir(ctx context.Context, dir string) error
 }
 
+type FsEx interface {
+	Fs
+
+	ShouldPreserveLinks() bool
+
+	HLink(ctx context.Context, oldPath string, newPath string) error
+
+	HLinkID(ctx context.Context, tgt Object) (any, bool)
+
+	RegisterLinkRoot(ctx context.Context, src Object, fsrc FsEx, dst Object, dstPath string, willTransfer bool) bool
+
+	NotifyLinkRootTransferComplete(ctx context.Context, src Object, fsrc FsEx)
+}
+
 // Info provides a read only interface to information about a filesystem.
 type Info interface {
 	// Name of the remote (as passed into NewFs)

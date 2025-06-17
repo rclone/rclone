@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
@@ -403,13 +402,14 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				}
 			}
 			{
-				fsrc := pair.Src.Fs()
-				fdst := pair.Dst.Fs()
-				localFdst, isLocalFdst := fdst.(*local.Fs)
-				_, isLocalFsrc := fsrc.(*local.Fs)
+				fsrc := src.Fs()
+				fdst := s.fdst
 
-				if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
-					needTransfer = localFdst.RegisterLinkRoot(context.Background(), pair.Src.(*local.Object), pair.Dst.(*local.Object), pair.Dst.Remote(), needTransfer)
+				fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
+				fdstEx, haveFdstEx := fdst.(fs.FsEx)
+
+				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+					needTransfer = fdstEx.RegisterLinkRoot(s.ctx, src, fsrcEx, pair.Dst, src.Remote(), needTransfer)
 				}
 			}
 			if needTransfer {
@@ -1258,11 +1258,12 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			{
 				fsrc := src.Fs()
 				fdst := s.fdst
-				localFdst, isLocalFdst := fdst.(*local.Fs)
-				_, isLocalFsrc := fsrc.(*local.Fs)
 
-				if isLocalFsrc && isLocalFdst && localFdst.ShouldPreserveLinks() {
-					needTransfer := localFdst.RegisterLinkRoot(context.Background(), src.(*local.Object), nil, src.Remote(), !NoNeedTransfer)
+				fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
+				fdstEx, haveFdstEx := fdst.(fs.FsEx)
+
+				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+					needTransfer := fdstEx.RegisterLinkRoot(s.ctx, x, fsrcEx, nil, src.Remote(), !NoNeedTransfer)
 					NoNeedTransfer = !needTransfer
 				}
 			}
