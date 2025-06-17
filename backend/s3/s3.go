@@ -188,8 +188,7 @@ var providerOption = fs.Option{
 	}, {
 		Value: "Zata",
 		Help: "Zata (S3 compatible Gateway)",
-	}, 
-	{
+	}, {
 		Value: "Other",
 		Help:  "Any other S3 compatible provider",
 	}},
