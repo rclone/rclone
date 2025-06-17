@@ -484,7 +484,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 
 			{
 				fsrc := src.Fs()
-				fdst := dst.Fs()
+				fdst := newDst.Fs()
 
 				fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
 				fdstEx, haveFdstEx := fdst.(fs.FsEx)
@@ -512,7 +512,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	}
 	{
 		fsrc := src.Fs()
-		fdst := dst.Fs()
+		fdst := newDst.Fs()
 
 		fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
 		fdstEx, haveFdstEx := fdst.(fs.FsEx)

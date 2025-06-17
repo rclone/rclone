@@ -61,7 +61,6 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc F
 		// If this case is true, we have fully transferred the root and can immediately link
 		if info.remoteHLinkInfo != nil {
 			if info.remoteHLinkInfo != dstLinkInfo {
-				Debugf(fdst, "bruh: %+v vs %+v", info.remoteHLinkInfo, dstLinkInfo)
 				Debugf(fdst, "performing hardlink %v->%v", info.remotePath, dstPath)
 				err := fdst.HLink(ctx, info.remotePath, dstPath)
 
@@ -85,7 +84,6 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc F
 			if !dstHasLinkInfo {
 				Debugf(dst, "destination unexpectedly has no hlink info")
 			}
-			Debugf(dstPath, "dst link info: %+v", dstLinkInfo)
 
 			info.remoteHLinkInfo = dstLinkInfo
 

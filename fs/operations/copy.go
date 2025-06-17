@@ -370,7 +370,7 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 
 	if newDst != nil {
 		fsrc := c.src.Fs()
-		fdst := c.dst.Fs()
+		fdst := c.f
 
 		fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
 		fdstEx, haveFdstEx := fdst.(fs.FsEx)
