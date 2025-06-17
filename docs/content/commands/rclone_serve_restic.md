@@ -162,7 +162,11 @@ By default this will serve files without needing a login.
 You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the `--user` and `--pass` flags.
 
-If no static users are configured by either of the above methods, and client
+Alternatively, you can have the reverse proxy manage authentication and use the
+username provided in the configured header with `--user-from-header`  (e.g., `----user-from-header=x-remote-user`).
+Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration may lead to unauthorized access.
+
+If either of the above authentication methods is not configured and client
 certificates are required by the `--client-ca` flag passed to the server, the
 client certificate common name will be considered as the username.
 
@@ -191,16 +195,16 @@ rclone serve restic remote:path [flags]
 ## Options
 
 ```
-      --addr stringArray                IPaddress:Port, :Port or [unix://]/path/to/socket to bind server to (default [127.0.0.1:8080])
+      --addr stringArray                IPaddress:Port or :Port to bind server to (default 127.0.0.1:8080)
       --allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --append-only                     Disallow deletion of repository data
       --baseurl string                  Prefix for URLs - leave blank for root
       --cache-objects                   Cache listed objects (default true)
-      --cert string                     Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)
-      --client-ca string                Path to TLS PEM CA file with certificate authorities to verify clients with
+      --cert string                     TLS PEM key (concatenation of certificate and CA certificate)
+      --client-ca string                Client certificate authority to verify clients with
   -h, --help                            help for restic
       --htpasswd string                 A htpasswd file - if not provided no authentication is done
-      --key string                      Path to TLS PEM private key file
+      --key string                      TLS PEM Private key
       --max-header-bytes int            Maximum size of request header (default 4096)
       --min-tls-version string          Minimum TLS version that is acceptable (default "tls1.0")
       --pass string                     Password for authentication
@@ -211,6 +215,7 @@ rclone serve restic remote:path [flags]
       --server-write-timeout Duration   Timeout for server writing data (default 1h0m0s)
       --stdio                           Run an HTTP2 server on stdin/stdout
       --user string                     User name for authentication
+      --user-from-header string         User name from a defined HTTP header
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
