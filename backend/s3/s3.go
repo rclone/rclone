@@ -3651,9 +3651,9 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		useAlreadyExists = false // untested
 	case "Zata":
-		useMultipartEtag = false            
-		mightGzip = false 
-		useUnsignedPayload = false       
+		useMultipartEtag = false
+		mightGzip = false
+		useUnsignedPayload = false
 		useAlreadyExists = false
 	case "Exaba":
 		virtualHostStyle = false
