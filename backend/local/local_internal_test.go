@@ -681,8 +681,11 @@ func TestCopySymlink(t *testing.T) {
 func TestHardlinks(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
+	rdest := fstest.NewRun(t)
 	defer r.Finalise()
+	defer rdest.Finalise()
 	f := r.Flocal.(*Fs)
+	fdest := r.Flocal.(*Fs)
 	when := time.Now()
 
 	r.WriteFile("src/linkroot.txt", "lorem ipsum dolor sit amet", when)
@@ -709,6 +712,8 @@ func TestHardlinks(t *testing.T) {
 	require.True(t, roothasHLinkID)
 	require.NotNil(t, roothlinkID)
 
+	// hlink should overwrite a file that already exists
+	r.WriteFile("src/linkdest.txt", "some highly random text", time.Now().Add(-time.Hour))
 	destObj, err := f.NewObject(ctx, "src/linkdest.txt")
 	require.NoError(t, err)
 	require.NoError(t, destObj.(*Object).lstat())
