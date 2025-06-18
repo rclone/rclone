@@ -51,7 +51,7 @@ var commandList = []commands{
 	{command: "--name-transform nfd", description: "Converts the file name to NFD Unicode normalization form."},
 	{command: "--name-transform nfkc", description: "Converts the file name to NFKC Unicode normalization form."},
 	{command: "--name-transform nfkd", description: "Converts the file name to NFKD Unicode normalization form."},
-	{command: "--name-transform command=/path/to/my/programfile names.", description: "Executes an external program to transform"},
+	{command: "--name-transform command=/path/to/my/programfile names.", description: "Executes an external program to transform."},
 }
 
 var examples = []example{
@@ -106,7 +106,7 @@ func commandTable() string {
 	for _, c := range commandList {
 		s += fmt.Sprintf("\n| `%s` | %s |", c.command, c.description)
 	}
-	s += "\n\n\n"
+	s += "\n\n"
 	return s
 }
 
@@ -116,23 +116,23 @@ func SprintList() string {
 	var charmaps transform.CharmapChoices
 
 	s := commandTable()
-	s += fmt.Sprintln("Conversion modes:  \n```")
+	s += "Conversion modes:\n\n```\n"
 	for _, v := range algos.Choices() {
-		s += fmt.Sprintln(v + "  ")
+		s += v + "\n"
 	}
-	s += fmt.Sprintln("```")
+	s += "```\n\n"
 
-	s += fmt.Sprintln("Char maps:  \n```")
+	s += "Char maps:\n\n```\n"
 	for _, v := range charmaps.Choices() {
-		s += fmt.Sprintln(v + "  ")
+		s += v + "\n"
 	}
-	s += fmt.Sprintln("```")
+	s += "```\n\n"
 
-	s += fmt.Sprintln("Encoding masks:  \n```")
-	for _, v := range strings.Split(encoder.ValidStrings(), ",") {
-		s += fmt.Sprintln(v + "  ")
+	s += "Encoding masks:\n\n```\n"
+	for _, v := range strings.Split(encoder.ValidStrings(), ", ") {
+		s += v + "\n"
 	}
-	s += fmt.Sprintln("```")
+	s += "```\n\n"
 
 	s += sprintExamples()
 
