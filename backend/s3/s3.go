@@ -493,8 +493,7 @@ func init() {
 				Value: "ap-northeast-1",
 				Help:  "Northeast Asia Region 1.\nNeeds location constraint ap-northeast-1.",
 			}},
-		}, 
-		{
+		}, {
 			Name:     "region",
 			Help:     "Region where you can connect with.\n",
 			Provider: "Zata",
@@ -502,8 +501,7 @@ func init() {
 				Value: "us-east-1",
 				Help:  "Indore, Madhya Pradesh, India",
 			}},
-		},
-		{
+		}, {
 			Name:     "region",
 			Help:     "Region where your bucket will be created and your data stored.\n",
 			Provider: "IONOS",
@@ -1401,9 +1399,7 @@ func init() {
 				Value: "idr01.zata.ai",
 				Help:  "South Asia Endpoint",
 			}},
-		},
-		
-		{
+		}, {
 			// Selectel endpoints: https://docs.selectel.ru/en/cloud/object-storage/manage/domains/#s3-api-domains
 			Name:     "endpoint",
 			Help:     "Endpoint for Selectel Object Storage.",
