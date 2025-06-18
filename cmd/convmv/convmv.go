@@ -34,7 +34,7 @@ var commandDefinition = &cobra.Command{
 	Long: strings.ReplaceAll(`
 convmv supports advanced path name transformations for converting and renaming files and directories by applying prefixes, suffixes, and other alterations.
 
-`+transform.SprintList()+`
+`+transform.Help()+`
 
 Multiple transformations can be used in sequence, applied in the order they are specified on the command line.
 

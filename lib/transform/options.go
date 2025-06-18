@@ -11,9 +11,9 @@ import (
 )
 
 type transform struct {
-	key   transformAlgo // for example, "prefix"
-	value string        // for example, "some_prefix_"
-	tag   tag           // file, dir, or all
+	key   Algo   // for example, "prefix"
+	value string // for example, "some_prefix_"
+	tag   tag    // file, dir, or all
 }
 
 // tag controls which part of the file path is affected (file, dir, all)
@@ -171,12 +171,12 @@ func (t *transform) requiresValue() bool {
 	return false
 }
 
-// transformAlgo describes conversion setting
-type transformAlgo = fs.Enum[transformChoices]
+// Algo describes conversion setting
+type Algo = fs.Enum[transformChoices]
 
 // Supported transform options
 const (
-	ConvNone transformAlgo = iota
+	ConvNone Algo = iota
 	ConvToNFC
 	ConvToNFD
 	ConvToNFKC
