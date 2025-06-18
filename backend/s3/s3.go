@@ -187,7 +187,7 @@ var providerOption = fs.Option{
 		Help:  "Qiniu Object Storage (Kodo)",
 	}, {
 		Value: "Zata",
-		Help: "Zata (S3 compatible Gateway)",
+		Help:  "Zata (S3 compatible Gateway)",
 	}, {
 		Value: "Other",
 		Help:  "Any other S3 compatible provider",
