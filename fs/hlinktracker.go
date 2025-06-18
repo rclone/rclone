@@ -97,7 +97,7 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc F
 	return false
 }
 
-func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, fsrc FsEx) {
+func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, fsrc FsEx, dst Object, fdst FsEx) {
 	srcHLinkInfo, srcHasHLinkInfo := fsrc.HLinkID(ctx, src)
 	if !srcHasHLinkInfo {
 		Debugf(src, "failed to load hardlink info")
@@ -119,12 +119,17 @@ func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, f
 	info.lock.Lock()
 	defer info.lock.Unlock()
 
-	info.remoteHLinkInfo = srcHLinkInfo
+	dstHLinkInfo, dstHasHLinkInfo := fdst.HLinkID(ctx, dst)
+	if !dstHasHLinkInfo {
+		Debugf(dst, "failed to load hardlink info")
+		return
+	}
+	info.remoteHLinkInfo = dstHLinkInfo
 
 	// We probably can't count on the source's inode remaining after a transfer, so we just go ahead and relink all
 	for _, tgt := range info.pendingLinkDests {
 		Debugf(src, "performing pending link %v -> %v", info.remotePath, tgt)
-		err := fsrc.HLink(context.Background(), info.remotePath, tgt)
+		err := fdst.HLink(context.Background(), info.remotePath, tgt)
 		if err != nil {
 			Errorf(fsrc, "failed to perform link %v -> %v: %v", info.remotePath, tgt, err)
 			return

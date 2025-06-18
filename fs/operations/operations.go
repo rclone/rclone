@@ -490,7 +490,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 				fdstEx, haveFdstEx := fdst.(fs.FsEx)
 
 				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
-					fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx)
+					fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst, fdstEx)
 				}
 			}
 			return newDst, nil
@@ -518,7 +518,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		fdstEx, haveFdstEx := fdst.(fs.FsEx)
 
 		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
-			fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx)
+			fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst, fdstEx)
 		}
 	}
 	// Delete src if no error on copy
