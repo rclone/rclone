@@ -677,3 +677,51 @@ func TestCopySymlink(t *testing.T) {
 	want = fstest.NewItem("dst2/file.txt", "hello world", when)
 	fstest.CompareItems(t, []fs.DirEntry{dst}, []fstest.Item{want}, nil, f.precision, "")
 }
+
+func TestHardlinks(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	f := r.Flocal.(*Fs)
+	when := time.Now()
+
+	r.WriteFile("src/linkroot.txt", "lorem ipsum dolor sit amet", when)
+	// Can we hardlink?
+	require.NoError(t,
+		f.HLink(ctx,
+			"src/linkroot.txt",
+			"src/linkdest.txt",
+		),
+	)
+
+	// We should automatically create nested directories
+	require.NoError(t,
+		f.HLink(ctx,
+			"src/linkroot.txt",
+			"src/nested/nestedagain/linkdest.txt",
+		),
+	)
+
+	rootObj, err := f.NewObject(ctx, "src/linkroot.txt")
+	require.NoError(t, err)
+	require.NoError(t, rootObj.(*Object).lstat())
+	roothlinkID, roothasHLinkID := f.HLinkID(ctx, rootObj)
+	require.True(t, roothasHLinkID)
+	require.NotNil(t, roothlinkID)
+
+	destObj, err := f.NewObject(ctx, "src/linkdest.txt")
+	require.NoError(t, err)
+	require.NoError(t, destObj.(*Object).lstat())
+	linkDestHLinkID, linkDestHasHLinkID := f.HLinkID(ctx, destObj)
+	require.True(t, linkDestHasHLinkID)
+	require.NotNil(t, linkDestHLinkID)
+	require.Equal(t, roothlinkID, linkDestHLinkID)
+
+	destNestedObj, err := f.NewObject(ctx, "src/nested/nestedagain/linkdest.txt")
+	require.NoError(t, err)
+	require.NoError(t, destNestedObj.(*Object).lstat())
+	linkDestNestedHLinkID, linkDestNestedHasHLinkID := f.HLinkID(ctx, destObj)
+	require.True(t, linkDestNestedHasHLinkID)
+	require.NotNil(t, linkDestNestedHLinkID)
+	require.Equal(t, roothlinkID, linkDestNestedHLinkID)
+}
