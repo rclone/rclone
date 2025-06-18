@@ -319,7 +319,7 @@ Properties:
     - "us"
         - Microsoft Cloud for US Government
     - "de"
-        - Microsoft Cloud Germany
+        - Microsoft Cloud Germany (deprecated - try global region first).
     - "cn"
         - Azure and Office 365 operated by Vnet Group in China
 
@@ -391,6 +391,27 @@ Properties:
 - Env Var:     RCLONE_ONEDRIVE_CLIENT_CREDENTIALS
 - Type:        bool
 - Default:     false
+
+#### --onedrive-upload-cutoff
+
+Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+
+This is disabled by default as uploading using single part uploads
+causes rclone to use twice the storage on Onedrive business as when
+rclone sets the modification time after the upload Onedrive creates a
+new version.
+
+See: https://github.com/rclone/rclone/issues/1716
+
+
+Properties:
+
+- Config:      upload_cutoff
+- Env Var:     RCLONE_ONEDRIVE_UPLOAD_CUTOFF
+- Type:        SizeSuffix
+- Default:     off
 
 #### --onedrive-chunk-size
 

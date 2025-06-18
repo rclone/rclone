@@ -504,7 +504,7 @@ Properties:
 
 #### --gphotos-batch-commit-timeout
 
-Max time to wait for a batch to finish committing
+Max time to wait for a batch to finish committing. (no longer used)
 
 Properties:
 
