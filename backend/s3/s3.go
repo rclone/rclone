@@ -187,7 +187,7 @@ var providerOption = fs.Option{
 		Help:  "Qiniu Object Storage (Kodo)",
 	}, {
 		Value: "Zata",
-		Help: "Zata (S3 compatible Gateway)",
+		Help:  "Zata (S3 compatible Gateway)",
 	}, {
 		Value: "Other",
 		Help:  "Any other S3 compatible provider",
@@ -493,1467 +493,1467 @@ func init() {
 				Value: "ap-northeast-1",
 				Help:  "Northeast Asia Region 1.\nNeeds location constraint ap-northeast-1.",
 			}},
-		}, 
-		{
-			Name:     "region",
-			Help:     "Region where you can connect with.\n",
-			Provider: "Zata",
-			Examples: []fs.OptionExample{{
-				Value: "us-east-1",
-				Help:  "Indore, Madhya Pradesh, India",
-			}},
 		},
-		{
-			Name:     "region",
-			Help:     "Region where your bucket will be created and your data stored.\n",
-			Provider: "IONOS",
-			Examples: []fs.OptionExample{{
-				Value: "de",
-				Help:  "Frankfurt, Germany",
-			}, {
-				Value: "eu-central-2",
-				Help:  "Berlin, Germany",
-			}, {
-				Value: "eu-south-2",
-				Help:  "Logrono, Spain",
-			}},
-		}, {
-			Name:     "region",
-			Help:     "Region where your bucket will be created and your data stored.\n",
-			Provider: "Outscale",
-			Examples: []fs.OptionExample{{
-				Value: "eu-west-2",
-				Help:  "Paris, France",
-			}, {
-				Value: "us-east-2",
-				Help:  "New Jersey, USA",
-			}, {
-				Value: "us-west-1",
-				Help:  "California, USA",
-			}, {
-				Value: "cloudgouv-eu-west-1",
-				Help:  "SecNumCloud, Paris, France",
-			}, {
-				Value: "ap-northeast-1",
-				Help:  "Tokyo, Japan",
-			}},
-		}, {
-			Name:     "region",
-			Help:     "Region where your bucket will be created and your data stored.\n",
-			Provider: "Petabox",
-			Examples: []fs.OptionExample{{
-				Value: "us-east-1",
-				Help:  "US East (N. Virginia)",
-			}, {
-				Value: "eu-central-1",
-				Help:  "Europe (Frankfurt)",
-			}, {
-				Value: "ap-southeast-1",
-				Help:  "Asia Pacific (Singapore)",
-			}, {
-				Value: "me-south-1",
-				Help:  "Middle East (Bahrain)",
-			}, {
-				Value: "sa-east-1",
-				Help:  "South America (São Paulo)",
-			}},
-		}, {
-			Name:     "region",
-			Help:     "Region where your data stored.\n",
-			Provider: "Synology",
-			Examples: []fs.OptionExample{{
-				Value: "eu-001",
-				Help:  "Europe Region 1",
-			}, {
-				Value: "eu-002",
-				Help:  "Europe Region 2",
-			}, {
-				Value: "us-001",
-				Help:  "US Region 1",
-			}, {
-				Value: "us-002",
-				Help:  "US Region 2",
-			}, {
-				Value: "tw-001",
-				Help:  "Asia (Taiwan)",
-			}},
-		}, {
-			// See endpoints for object storage regions: https://docs.selectel.ru/en/cloud/object-storage/manage/domains/#s3-api-domains
-			Name:     "region",
-			Help:     "Region where your data stored.\n",
-			Provider: "Selectel",
-			Examples: []fs.OptionExample{{
-				Value: "ru-1",
-				Help:  "St. Petersburg",
-			}},
-		}, {
-			Name:     "region",
-			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
-			}, {
-				Value: "other-v2-signature",
-				Help:  "Use this only if v4 signatures don't work.\nE.g. pre Jewel/v10 CEPH.",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for S3 API.\n\nLeave blank if using AWS to use the default endpoint for the region.",
-			Provider: "AWS",
-		}, {
-			// ChinaMobile endpoints: https://ecloud.10086.cn/op-help-center/doc/article/24534
-			Name:     "endpoint",
-			Help:     "Endpoint for China Mobile Ecloud Elastic Object Storage (EOS) API.",
-			Provider: "ChinaMobile",
-			Examples: []fs.OptionExample{{
-				Value: "eos-wuxi-1.cmecloud.cn",
-				Help:  "The default endpoint - a good choice if you are unsure.\nEast China (Suzhou)",
-			}, {
-				Value: "eos-jinan-1.cmecloud.cn",
-				Help:  "East China (Jinan)",
-			}, {
-				Value: "eos-ningbo-1.cmecloud.cn",
-				Help:  "East China (Hangzhou)",
-			}, {
-				Value: "eos-shanghai-1.cmecloud.cn",
-				Help:  "East China (Shanghai-1)",
-			}, {
-				Value: "eos-zhengzhou-1.cmecloud.cn",
-				Help:  "Central China (Zhengzhou)",
-			}, {
-				Value: "eos-hunan-1.cmecloud.cn",
-				Help:  "Central China (Changsha-1)",
-			}, {
-				Value: "eos-zhuzhou-1.cmecloud.cn",
-				Help:  "Central China (Changsha-2)",
-			}, {
-				Value: "eos-guangzhou-1.cmecloud.cn",
-				Help:  "South China (Guangzhou-2)",
-			}, {
-				Value: "eos-dongguan-1.cmecloud.cn",
-				Help:  "South China (Guangzhou-3)",
-			}, {
-				Value: "eos-beijing-1.cmecloud.cn",
-				Help:  "North China (Beijing-1)",
-			}, {
-				Value: "eos-beijing-2.cmecloud.cn",
-				Help:  "North China (Beijing-2)",
-			}, {
-				Value: "eos-beijing-4.cmecloud.cn",
-				Help:  "North China (Beijing-3)",
-			}, {
-				Value: "eos-huhehaote-1.cmecloud.cn",
-				Help:  "North China (Huhehaote)",
-			}, {
-				Value: "eos-chengdu-1.cmecloud.cn",
-				Help:  "Southwest China (Chengdu)",
-			}, {
-				Value: "eos-chongqing-1.cmecloud.cn",
-				Help:  "Southwest China (Chongqing)",
-			}, {
-				Value: "eos-guiyang-1.cmecloud.cn",
-				Help:  "Southwest China (Guiyang)",
-			}, {
-				Value: "eos-xian-1.cmecloud.cn",
-				Help:  "Nouthwest China (Xian)",
-			}, {
-				Value: "eos-yunnan.cmecloud.cn",
-				Help:  "Yunnan China (Kunming)",
-			}, {
-				Value: "eos-yunnan-2.cmecloud.cn",
-				Help:  "Yunnan China (Kunming-2)",
-			}, {
-				Value: "eos-tianjin-1.cmecloud.cn",
-				Help:  "Tianjin China (Tianjin)",
-			}, {
-				Value: "eos-jilin-1.cmecloud.cn",
-				Help:  "Jilin China (Changchun)",
-			}, {
-				Value: "eos-hubei-1.cmecloud.cn",
-				Help:  "Hubei China (Xiangyan)",
-			}, {
-				Value: "eos-jiangxi-1.cmecloud.cn",
-				Help:  "Jiangxi China (Nanchang)",
-			}, {
-				Value: "eos-gansu-1.cmecloud.cn",
-				Help:  "Gansu China (Lanzhou)",
-			}, {
-				Value: "eos-shanxi-1.cmecloud.cn",
-				Help:  "Shanxi China (Taiyuan)",
-			}, {
-				Value: "eos-liaoning-1.cmecloud.cn",
-				Help:  "Liaoning China (Shenyang)",
-			}, {
-				Value: "eos-hebei-1.cmecloud.cn",
-				Help:  "Hebei China (Shijiazhuang)",
-			}, {
-				Value: "eos-fujian-1.cmecloud.cn",
-				Help:  "Fujian China (Xiamen)",
-			}, {
-				Value: "eos-guangxi-1.cmecloud.cn",
-				Help:  "Guangxi China (Nanning)",
-			}, {
-				Value: "eos-anhui-1.cmecloud.cn",
-				Help:  "Anhui China (Huainan)",
-			}},
-		}, {
-			// ArvanCloud endpoints: https://www.arvancloud.ir/en/products/cloud-storage
-			Name:     "endpoint",
-			Help:     "Endpoint for Arvan Cloud Object Storage (AOS) API.",
-			Provider: "ArvanCloud",
-			Examples: []fs.OptionExample{{
-				Value: "s3.ir-thr-at1.arvanstorage.ir",
-				Help:  "The default endpoint - a good choice if you are unsure.\nTehran Iran (Simin)",
-			}, {
-				Value: "s3.ir-tbz-sh1.arvanstorage.ir",
-				Help:  "Tabriz Iran (Shahriar)",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for IBM COS S3 API.\n\nSpecify if using an IBM COS On Premise.",
-			Provider: "IBMCOS",
-			Examples: []fs.OptionExample{{
-				Value: "s3.us.cloud-object-storage.appdomain.cloud",
-				Help:  "US Cross Region Endpoint",
-			}, {
-				Value: "s3.dal.us.cloud-object-storage.appdomain.cloud",
-				Help:  "US Cross Region Dallas Endpoint",
-			}, {
-				Value: "s3.wdc.us.cloud-object-storage.appdomain.cloud",
-				Help:  "US Cross Region Washington DC Endpoint",
-			}, {
-				Value: "s3.sjc.us.cloud-object-storage.appdomain.cloud",
-				Help:  "US Cross Region San Jose Endpoint",
-			}, {
-				Value: "s3.private.us.cloud-object-storage.appdomain.cloud",
-				Help:  "US Cross Region Private Endpoint",
-			}, {
-				Value: "s3.private.dal.us.cloud-object-storage.appdomain.cloud",
-				Help:  "US Cross Region Dallas Private Endpoint",
-			}, {
-				Value: "s3.private.wdc.us.cloud-object-storage.appdomain.cloud",
-				Help:  "US Cross Region Washington DC Private Endpoint",
-			}, {
-				Value: "s3.private.sjc.us.cloud-object-storage.appdomain.cloud",
-				Help:  "US Cross Region San Jose Private Endpoint",
-			}, {
-				Value: "s3.us-east.cloud-object-storage.appdomain.cloud",
-				Help:  "US Region East Endpoint",
-			}, {
-				Value: "s3.private.us-east.cloud-object-storage.appdomain.cloud",
-				Help:  "US Region East Private Endpoint",
-			}, {
-				Value: "s3.us-south.cloud-object-storage.appdomain.cloud",
-				Help:  "US Region South Endpoint",
-			}, {
-				Value: "s3.private.us-south.cloud-object-storage.appdomain.cloud",
-				Help:  "US Region South Private Endpoint",
-			}, {
-				Value: "s3.eu.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Cross Region Endpoint",
-			}, {
-				Value: "s3.fra.eu.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Cross Region Frankfurt Endpoint",
-			}, {
-				Value: "s3.mil.eu.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Cross Region Milan Endpoint",
-			}, {
-				Value: "s3.ams.eu.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Cross Region Amsterdam Endpoint",
-			}, {
-				Value: "s3.private.eu.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Cross Region Private Endpoint",
-			}, {
-				Value: "s3.private.fra.eu.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Cross Region Frankfurt Private Endpoint",
-			}, {
-				Value: "s3.private.mil.eu.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Cross Region Milan Private Endpoint",
-			}, {
-				Value: "s3.private.ams.eu.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Cross Region Amsterdam Private Endpoint",
-			}, {
-				Value: "s3.eu-gb.cloud-object-storage.appdomain.cloud",
-				Help:  "Great Britain Endpoint",
-			}, {
-				Value: "s3.private.eu-gb.cloud-object-storage.appdomain.cloud",
-				Help:  "Great Britain Private Endpoint",
-			}, {
-				Value: "s3.eu-de.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Region DE Endpoint",
-			}, {
-				Value: "s3.private.eu-de.cloud-object-storage.appdomain.cloud",
-				Help:  "EU Region DE Private Endpoint",
-			}, {
-				Value: "s3.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional Endpoint",
-			}, {
-				Value: "s3.tok.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional Tokyo Endpoint",
-			}, {
-				Value: "s3.hkg.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional HongKong Endpoint",
-			}, {
-				Value: "s3.seo.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional Seoul Endpoint",
-			}, {
-				Value: "s3.private.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional Private Endpoint",
-			}, {
-				Value: "s3.private.tok.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional Tokyo Private Endpoint",
-			}, {
-				Value: "s3.private.hkg.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional HongKong Private Endpoint",
-			}, {
-				Value: "s3.private.seo.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional Seoul Private Endpoint",
-			}, {
-				Value: "s3.jp-tok.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Region Japan Endpoint",
-			}, {
-				Value: "s3.private.jp-tok.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Region Japan Private Endpoint",
-			}, {
-				Value: "s3.au-syd.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Region Australia Endpoint",
-			}, {
-				Value: "s3.private.au-syd.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Region Australia Private Endpoint",
-			}, {
-				Value: "s3.ams03.cloud-object-storage.appdomain.cloud",
-				Help:  "Amsterdam Single Site Endpoint",
-			}, {
-				Value: "s3.private.ams03.cloud-object-storage.appdomain.cloud",
-				Help:  "Amsterdam Single Site Private Endpoint",
-			}, {
-				Value: "s3.che01.cloud-object-storage.appdomain.cloud",
-				Help:  "Chennai Single Site Endpoint",
-			}, {
-				Value: "s3.private.che01.cloud-object-storage.appdomain.cloud",
-				Help:  "Chennai Single Site Private Endpoint",
-			}, {
-				Value: "s3.mel01.cloud-object-storage.appdomain.cloud",
-				Help:  "Melbourne Single Site Endpoint",
-			}, {
-				Value: "s3.private.mel01.cloud-object-storage.appdomain.cloud",
-				Help:  "Melbourne Single Site Private Endpoint",
-			}, {
-				Value: "s3.osl01.cloud-object-storage.appdomain.cloud",
-				Help:  "Oslo Single Site Endpoint",
-			}, {
-				Value: "s3.private.osl01.cloud-object-storage.appdomain.cloud",
-				Help:  "Oslo Single Site Private Endpoint",
-			}, {
-				Value: "s3.tor01.cloud-object-storage.appdomain.cloud",
-				Help:  "Toronto Single Site Endpoint",
-			}, {
-				Value: "s3.private.tor01.cloud-object-storage.appdomain.cloud",
-				Help:  "Toronto Single Site Private Endpoint",
-			}, {
-				Value: "s3.seo01.cloud-object-storage.appdomain.cloud",
-				Help:  "Seoul Single Site Endpoint",
-			}, {
-				Value: "s3.private.seo01.cloud-object-storage.appdomain.cloud",
-				Help:  "Seoul Single Site Private Endpoint",
-			}, {
-				Value: "s3.mon01.cloud-object-storage.appdomain.cloud",
-				Help:  "Montreal Single Site Endpoint",
-			}, {
-				Value: "s3.private.mon01.cloud-object-storage.appdomain.cloud",
-				Help:  "Montreal Single Site Private Endpoint",
-			}, {
-				Value: "s3.mex01.cloud-object-storage.appdomain.cloud",
-				Help:  "Mexico Single Site Endpoint",
-			}, {
-				Value: "s3.private.mex01.cloud-object-storage.appdomain.cloud",
-				Help:  "Mexico Single Site Private Endpoint",
-			}, {
-				Value: "s3.sjc04.cloud-object-storage.appdomain.cloud",
-				Help:  "San Jose Single Site Endpoint",
-			}, {
-				Value: "s3.private.sjc04.cloud-object-storage.appdomain.cloud",
-				Help:  "San Jose Single Site Private Endpoint",
-			}, {
-				Value: "s3.mil01.cloud-object-storage.appdomain.cloud",
-				Help:  "Milan Single Site Endpoint",
-			}, {
-				Value: "s3.private.mil01.cloud-object-storage.appdomain.cloud",
-				Help:  "Milan Single Site Private Endpoint",
-			}, {
-				Value: "s3.hkg02.cloud-object-storage.appdomain.cloud",
-				Help:  "Hong Kong Single Site Endpoint",
-			}, {
-				Value: "s3.private.hkg02.cloud-object-storage.appdomain.cloud",
-				Help:  "Hong Kong Single Site Private Endpoint",
-			}, {
-				Value: "s3.par01.cloud-object-storage.appdomain.cloud",
-				Help:  "Paris Single Site Endpoint",
-			}, {
-				Value: "s3.private.par01.cloud-object-storage.appdomain.cloud",
-				Help:  "Paris Single Site Private Endpoint",
-			}, {
-				Value: "s3.sng01.cloud-object-storage.appdomain.cloud",
-				Help:  "Singapore Single Site Endpoint",
-			}, {
-				Value: "s3.private.sng01.cloud-object-storage.appdomain.cloud",
-				Help:  "Singapore Single Site Private Endpoint",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for IONOS S3 Object Storage.\n\nSpecify the endpoint from the same region.",
-			Provider: "IONOS",
-			Examples: []fs.OptionExample{{
-				Value: "s3-eu-central-1.ionoscloud.com",
-				Help:  "Frankfurt, Germany",
-			}, {
-				Value: "s3-eu-central-2.ionoscloud.com",
-				Help:  "Berlin, Germany",
-			}, {
-				Value: "s3-eu-south-2.ionoscloud.com",
-				Help:  "Logrono, Spain",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for Petabox S3 Object Storage.\n\nSpecify the endpoint from the same region.",
-			Provider: "Petabox",
-			Required: true,
-			Examples: []fs.OptionExample{{
-				Value: "s3.petabox.io",
-				Help:  "US East (N. Virginia)",
-			}, {
-				Value: "s3.us-east-1.petabox.io",
-				Help:  "US East (N. Virginia)",
-			}, {
-				Value: "s3.eu-central-1.petabox.io",
-				Help:  "Europe (Frankfurt)",
-			}, {
-				Value: "s3.ap-southeast-1.petabox.io",
-				Help:  "Asia Pacific (Singapore)",
-			}, {
-				Value: "s3.me-south-1.petabox.io",
-				Help:  "Middle East (Bahrain)",
-			}, {
-				Value: "s3.sa-east-1.petabox.io",
-				Help:  "South America (São Paulo)",
-			}},
-		}, {
-			// Leviia endpoints: https://www.leviia.com/object-storage/
-			Name:     "endpoint",
-			Help:     "Endpoint for Leviia Object Storage API.",
-			Provider: "Leviia",
-			Examples: []fs.OptionExample{{
-				Value: "s3.leviia.com",
-				Help:  "The default endpoint\nLeviia",
-			}},
-		}, {
-			// Liara endpoints: https://liara.ir/landing/object-storage
-			Name:     "endpoint",
-			Help:     "Endpoint for Liara Object Storage API.",
-			Provider: "Liara",
-			Examples: []fs.OptionExample{{
-				Value: "storage.iran.liara.space",
-				Help:  "The default endpoint\nIran",
-			}},
-		}, {
-			// Linode endpoints: https://techdocs.akamai.com/cloud-computing/docs/object-storage-product-limits#supported-endpoint-types-by-region
-			Name:     "endpoint",
-			Help:     "Endpoint for Linode Object Storage API.",
-			Provider: "Linode",
-			Examples: []fs.OptionExample{{
-				Value: "nl-ams-1.linodeobjects.com",
-				Help:  "Amsterdam (Netherlands), nl-ams-1",
-			}, {
-				Value: "us-southeast-1.linodeobjects.com",
-				Help:  "Atlanta, GA (USA), us-southeast-1",
-			}, {
-				Value: "in-maa-1.linodeobjects.com",
-				Help:  "Chennai (India), in-maa-1",
-			}, {
-				Value: "us-ord-1.linodeobjects.com",
-				Help:  "Chicago, IL (USA), us-ord-1",
-			}, {
-				Value: "eu-central-1.linodeobjects.com",
-				Help:  "Frankfurt (Germany), eu-central-1",
-			}, {
-				Value: "id-cgk-1.linodeobjects.com",
-				Help:  "Jakarta (Indonesia), id-cgk-1",
-			}, {
-				Value: "gb-lon-1.linodeobjects.com",
-				Help:  "London 2 (Great Britain), gb-lon-1",
-			}, {
-				Value: "us-lax-1.linodeobjects.com",
-				Help:  "Los Angeles, CA (USA), us-lax-1",
-			}, {
-				Value: "es-mad-1.linodeobjects.com",
-				Help:  "Madrid (Spain), es-mad-1",
-			}, {
-				Value: "au-mel-1.linodeobjects.com",
-				Help:  "Melbourne (Australia), au-mel-1",
-			}, {
-				Value: "us-mia-1.linodeobjects.com",
-				Help:  "Miami, FL (USA), us-mia-1",
-			}, {
-				Value: "it-mil-1.linodeobjects.com",
-				Help:  "Milan (Italy), it-mil-1",
-			}, {
-				Value: "us-east-1.linodeobjects.com",
-				Help:  "Newark, NJ (USA), us-east-1",
-			}, {
-				Value: "jp-osa-1.linodeobjects.com",
-				Help:  "Osaka (Japan), jp-osa-1",
-			}, {
-				Value: "fr-par-1.linodeobjects.com",
-				Help:  "Paris (France), fr-par-1",
-			}, {
-				Value: "br-gru-1.linodeobjects.com",
-				Help:  "São Paulo (Brazil), br-gru-1",
-			}, {
-				Value: "us-sea-1.linodeobjects.com",
-				Help:  "Seattle, WA (USA), us-sea-1",
-			}, {
-				Value: "ap-south-1.linodeobjects.com",
-				Help:  "Singapore, ap-south-1",
-			}, {
-				Value: "sg-sin-1.linodeobjects.com",
-				Help:  "Singapore 2, sg-sin-1",
-			}, {
-				Value: "se-sto-1.linodeobjects.com",
-				Help:  "Stockholm (Sweden), se-sto-1",
-			}, {
-				Value: "us-iad-1.linodeobjects.com",
-				Help:  "Washington, DC, (USA), us-iad-1",
-			}},
-		}, {
-			// Lyve Cloud endpoints
-			Name:     "endpoint",
-			Help:     "Endpoint for Lyve Cloud S3 API.\nRequired when using an S3 clone. Please type in your LyveCloud endpoint.\nExamples:\n- s3.us-west-1.{account_name}.lyve.seagate.com (US West 1 - California)\n- s3.eu-west-1.{account_name}.lyve.seagate.com (EU West 1 - Ireland)",
-			Provider: "LyveCloud",
-			Required: true,
-		}, {
-			// Magalu endpoints: https://docs.magalu.cloud/docs/object-storage/how-to/copy-url
-			Name:     "endpoint",
-			Help:     "Endpoint for Magalu Object Storage API.",
-			Provider: "Magalu",
-			Examples: []fs.OptionExample{{
-				Value: "br-se1.magaluobjects.com",
-				Help:  "São Paulo, SP (BR), br-se1",
-			}, {
-				Value: "br-ne1.magaluobjects.com",
-				Help:  "Fortaleza, CE (BR), br-ne1",
+			{
+				Name:     "region",
+				Help:     "Region where you can connect with.\n",
+				Provider: "Zata",
+				Examples: []fs.OptionExample{{
+					Value: "us-east-1",
+					Help:  "Indore, Madhya Pradesh, India",
+				}},
 			},
-			},
-		}, {
-			// oss endpoints: https://help.aliyun.com/document_detail/31837.html
-			Name:     "endpoint",
-			Help:     "Endpoint for OSS API.",
-			Provider: "Alibaba",
-			Examples: []fs.OptionExample{{
-				Value: "oss-accelerate.aliyuncs.com",
-				Help:  "Global Accelerate",
-			}, {
-				Value: "oss-accelerate-overseas.aliyuncs.com",
-				Help:  "Global Accelerate (outside mainland China)",
-			}, {
-				Value: "oss-cn-hangzhou.aliyuncs.com",
-				Help:  "East China 1 (Hangzhou)",
-			}, {
-				Value: "oss-cn-shanghai.aliyuncs.com",
-				Help:  "East China 2 (Shanghai)",
-			}, {
-				Value: "oss-cn-qingdao.aliyuncs.com",
-				Help:  "North China 1 (Qingdao)",
-			}, {
-				Value: "oss-cn-beijing.aliyuncs.com",
-				Help:  "North China 2 (Beijing)",
-			}, {
-				Value: "oss-cn-zhangjiakou.aliyuncs.com",
-				Help:  "North China 3 (Zhangjiakou)",
-			}, {
-				Value: "oss-cn-huhehaote.aliyuncs.com",
-				Help:  "North China 5 (Hohhot)",
-			}, {
-				Value: "oss-cn-wulanchabu.aliyuncs.com",
-				Help:  "North China 6 (Ulanqab)",
-			}, {
-				Value: "oss-cn-shenzhen.aliyuncs.com",
-				Help:  "South China 1 (Shenzhen)",
-			}, {
-				Value: "oss-cn-heyuan.aliyuncs.com",
-				Help:  "South China 2 (Heyuan)",
-			}, {
-				Value: "oss-cn-guangzhou.aliyuncs.com",
-				Help:  "South China 3 (Guangzhou)",
-			}, {
-				Value: "oss-cn-chengdu.aliyuncs.com",
-				Help:  "West China 1 (Chengdu)",
-			}, {
-				Value: "oss-cn-hongkong.aliyuncs.com",
-				Help:  "Hong Kong (Hong Kong)",
-			}, {
-				Value: "oss-us-west-1.aliyuncs.com",
-				Help:  "US West 1 (Silicon Valley)",
-			}, {
-				Value: "oss-us-east-1.aliyuncs.com",
-				Help:  "US East 1 (Virginia)",
-			}, {
-				Value: "oss-ap-southeast-1.aliyuncs.com",
-				Help:  "Southeast Asia Southeast 1 (Singapore)",
-			}, {
-				Value: "oss-ap-southeast-2.aliyuncs.com",
-				Help:  "Asia Pacific Southeast 2 (Sydney)",
-			}, {
-				Value: "oss-ap-southeast-3.aliyuncs.com",
-				Help:  "Southeast Asia Southeast 3 (Kuala Lumpur)",
-			}, {
-				Value: "oss-ap-southeast-5.aliyuncs.com",
-				Help:  "Asia Pacific Southeast 5 (Jakarta)",
-			}, {
-				Value: "oss-ap-northeast-1.aliyuncs.com",
-				Help:  "Asia Pacific Northeast 1 (Japan)",
-			}, {
-				Value: "oss-ap-south-1.aliyuncs.com",
-				Help:  "Asia Pacific South 1 (Mumbai)",
-			}, {
-				Value: "oss-eu-central-1.aliyuncs.com",
-				Help:  "Central Europe 1 (Frankfurt)",
-			}, {
-				Value: "oss-eu-west-1.aliyuncs.com",
-				Help:  "West Europe (London)",
-			}, {
-				Value: "oss-me-east-1.aliyuncs.com",
-				Help:  "Middle East 1 (Dubai)",
-			}},
-		}, {
-			// obs endpoints: https://developer.huaweicloud.com/intl/en-us/endpoint?OBS
-			Name:     "endpoint",
-			Help:     "Endpoint for OBS API.",
-			Provider: "HuaweiOBS",
-			Examples: []fs.OptionExample{{
-				Value: "obs.af-south-1.myhuaweicloud.com",
-				Help:  "AF-Johannesburg",
-			}, {
-				Value: "obs.ap-southeast-2.myhuaweicloud.com",
-				Help:  "AP-Bangkok",
-			}, {
-				Value: "obs.ap-southeast-3.myhuaweicloud.com",
-				Help:  "AP-Singapore",
-			}, {
-				Value: "obs.cn-east-3.myhuaweicloud.com",
-				Help:  "CN East-Shanghai1",
-			}, {
-				Value: "obs.cn-east-2.myhuaweicloud.com",
-				Help:  "CN East-Shanghai2",
-			}, {
-				Value: "obs.cn-north-1.myhuaweicloud.com",
-				Help:  "CN North-Beijing1",
-			}, {
-				Value: "obs.cn-north-4.myhuaweicloud.com",
-				Help:  "CN North-Beijing4",
-			}, {
-				Value: "obs.cn-south-1.myhuaweicloud.com",
-				Help:  "CN South-Guangzhou",
-			}, {
-				Value: "obs.ap-southeast-1.myhuaweicloud.com",
-				Help:  "CN-Hong Kong",
-			}, {
-				Value: "obs.sa-argentina-1.myhuaweicloud.com",
-				Help:  "LA-Buenos Aires1",
-			}, {
-				Value: "obs.sa-peru-1.myhuaweicloud.com",
-				Help:  "LA-Lima1",
-			}, {
-				Value: "obs.na-mexico-1.myhuaweicloud.com",
-				Help:  "LA-Mexico City1",
-			}, {
-				Value: "obs.sa-chile-1.myhuaweicloud.com",
-				Help:  "LA-Santiago2",
-			}, {
-				Value: "obs.sa-brazil-1.myhuaweicloud.com",
-				Help:  "LA-Sao Paulo1",
-			}, {
-				Value: "obs.ru-northwest-2.myhuaweicloud.com",
-				Help:  "RU-Moscow2",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for Scaleway Object Storage.",
-			Provider: "Scaleway",
-			Examples: []fs.OptionExample{{
-				Value: "s3.nl-ams.scw.cloud",
-				Help:  "Amsterdam Endpoint",
-			}, {
-				Value: "s3.fr-par.scw.cloud",
-				Help:  "Paris Endpoint",
-			}, {
-				Value: "s3.pl-waw.scw.cloud",
-				Help:  "Warsaw Endpoint",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for StackPath Object Storage.",
-			Provider: "StackPath",
-			Examples: []fs.OptionExample{{
-				Value: "s3.us-east-2.stackpathstorage.com",
-				Help:  "US East Endpoint",
-			}, {
-				Value: "s3.us-west-1.stackpathstorage.com",
-				Help:  "US West Endpoint",
-			}, {
-				Value: "s3.eu-central-1.stackpathstorage.com",
-				Help:  "EU Endpoint",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for Google Cloud Storage.",
-			Provider: "GCS",
-			Examples: []fs.OptionExample{{
-				Value: "https://storage.googleapis.com",
-				Help:  "Google Cloud Storage endpoint",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for Storj Gateway.",
-			Provider: "Storj",
-			Examples: []fs.OptionExample{{
-				Value: "gateway.storjshare.io",
-				Help:  "Global Hosted Gateway",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for Synology C2 Object Storage API.",
-			Provider: "Synology",
-			Examples: []fs.OptionExample{{
-				Value: "eu-001.s3.synologyc2.net",
-				Help:  "EU Endpoint 1",
-			}, {
-				Value: "eu-002.s3.synologyc2.net",
-				Help:  "EU Endpoint 2",
-			}, {
-				Value: "us-001.s3.synologyc2.net",
-				Help:  "US Endpoint 1",
-			}, {
-				Value: "us-002.s3.synologyc2.net",
-				Help:  "US Endpoint 2",
-			}, {
-				Value: "tw-001.s3.synologyc2.net",
-				Help:  "TW Endpoint 1",
-			}},
-		}, {
-			// cos endpoints: https://intl.cloud.tencent.com/document/product/436/6224
-			Name:     "endpoint",
-			Help:     "Endpoint for Tencent COS API.",
-			Provider: "TencentCOS",
-			Examples: []fs.OptionExample{{
-				Value: "cos.ap-beijing.myqcloud.com",
-				Help:  "Beijing Region",
-			}, {
-				Value: "cos.ap-nanjing.myqcloud.com",
-				Help:  "Nanjing Region",
-			}, {
-				Value: "cos.ap-shanghai.myqcloud.com",
-				Help:  "Shanghai Region",
-			}, {
-				Value: "cos.ap-guangzhou.myqcloud.com",
-				Help:  "Guangzhou Region",
-			}, {
-				Value: "cos.ap-nanjing.myqcloud.com",
-				Help:  "Nanjing Region",
-			}, {
-				Value: "cos.ap-chengdu.myqcloud.com",
-				Help:  "Chengdu Region",
-			}, {
-				Value: "cos.ap-chongqing.myqcloud.com",
-				Help:  "Chongqing Region",
-			}, {
-				Value: "cos.ap-hongkong.myqcloud.com",
-				Help:  "Hong Kong (China) Region",
-			}, {
-				Value: "cos.ap-singapore.myqcloud.com",
-				Help:  "Singapore Region",
-			}, {
-				Value: "cos.ap-mumbai.myqcloud.com",
-				Help:  "Mumbai Region",
-			}, {
-				Value: "cos.ap-seoul.myqcloud.com",
-				Help:  "Seoul Region",
-			}, {
-				Value: "cos.ap-bangkok.myqcloud.com",
-				Help:  "Bangkok Region",
-			}, {
-				Value: "cos.ap-tokyo.myqcloud.com",
-				Help:  "Tokyo Region",
-			}, {
-				Value: "cos.na-siliconvalley.myqcloud.com",
-				Help:  "Silicon Valley Region",
-			}, {
-				Value: "cos.na-ashburn.myqcloud.com",
-				Help:  "Virginia Region",
-			}, {
-				Value: "cos.na-toronto.myqcloud.com",
-				Help:  "Toronto Region",
-			}, {
-				Value: "cos.eu-frankfurt.myqcloud.com",
-				Help:  "Frankfurt Region",
-			}, {
-				Value: "cos.eu-moscow.myqcloud.com",
-				Help:  "Moscow Region",
-			}, {
-				Value: "cos.accelerate.myqcloud.com",
-				Help:  "Use Tencent COS Accelerate Endpoint",
-			}},
-		}, {
-			// RackCorp endpoints: https://www.rackcorp.com/storage/s3storage
-			Name:     "endpoint",
-			Help:     "Endpoint for RackCorp Object Storage.",
-			Provider: "RackCorp",
-			Examples: []fs.OptionExample{{
-				Value: "s3.rackcorp.com",
-				Help:  "Global (AnyCast) Endpoint",
-			}, {
-				Value: "au.s3.rackcorp.com",
-				Help:  "Australia (Anycast) Endpoint",
-			}, {
-				Value: "au-nsw.s3.rackcorp.com",
-				Help:  "Sydney (Australia) Endpoint",
-			}, {
-				Value: "au-qld.s3.rackcorp.com",
-				Help:  "Brisbane (Australia) Endpoint",
-			}, {
-				Value: "au-vic.s3.rackcorp.com",
-				Help:  "Melbourne (Australia) Endpoint",
-			}, {
-				Value: "au-wa.s3.rackcorp.com",
-				Help:  "Perth (Australia) Endpoint",
-			}, {
-				Value: "ph.s3.rackcorp.com",
-				Help:  "Manila (Philippines) Endpoint",
-			}, {
-				Value: "th.s3.rackcorp.com",
-				Help:  "Bangkok (Thailand) Endpoint",
-			}, {
-				Value: "hk.s3.rackcorp.com",
-				Help:  "HK (Hong Kong) Endpoint",
-			}, {
-				Value: "mn.s3.rackcorp.com",
-				Help:  "Ulaanbaatar (Mongolia) Endpoint",
-			}, {
-				Value: "kg.s3.rackcorp.com",
-				Help:  "Bishkek (Kyrgyzstan) Endpoint",
-			}, {
-				Value: "id.s3.rackcorp.com",
-				Help:  "Jakarta (Indonesia) Endpoint",
-			}, {
-				Value: "jp.s3.rackcorp.com",
-				Help:  "Tokyo (Japan) Endpoint",
-			}, {
-				Value: "sg.s3.rackcorp.com",
-				Help:  "SG (Singapore) Endpoint",
-			}, {
-				Value: "de.s3.rackcorp.com",
-				Help:  "Frankfurt (Germany) Endpoint",
-			}, {
-				Value: "us.s3.rackcorp.com",
-				Help:  "USA (AnyCast) Endpoint",
-			}, {
-				Value: "us-east-1.s3.rackcorp.com",
-				Help:  "New York (USA) Endpoint",
-			}, {
-				Value: "us-west-1.s3.rackcorp.com",
-				Help:  "Freemont (USA) Endpoint",
-			}, {
-				Value: "nz.s3.rackcorp.com",
-				Help:  "Auckland (New Zealand) Endpoint",
-			}},
-		}, {
-			// Qiniu endpoints: https://developer.qiniu.com/kodo/4088/s3-access-domainname
-			Name:     "endpoint",
-			Help:     "Endpoint for Qiniu Object Storage.",
-			Provider: "Qiniu",
-			Examples: []fs.OptionExample{{
-				Value: "s3-cn-east-1.qiniucs.com",
-				Help:  "East China Endpoint 1",
-			}, {
-				Value: "s3-cn-east-2.qiniucs.com",
-				Help:  "East China Endpoint 2",
-			}, {
-				Value: "s3-cn-north-1.qiniucs.com",
-				Help:  "North China Endpoint 1",
-			}, {
-				Value: "s3-cn-south-1.qiniucs.com",
-				Help:  "South China Endpoint 1",
-			}, {
-				Value: "s3-us-north-1.qiniucs.com",
-				Help:  "North America Endpoint 1",
-			}, {
-				Value: "s3-ap-southeast-1.qiniucs.com",
-				Help:  "Southeast Asia Endpoint 1",
-			}, {
-				Value: "s3-ap-northeast-1.qiniucs.com",
-				Help:  "Northeast Asia Endpoint 1",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for Zata Object Storage.",
-			Provider: "Zata",
-			Examples: []fs.OptionExample{{
-				Value: "idr01.zata.ai",
-				Help:  "South Asia Endpoint",
-			}},
-		},
-		
-		{
-			// Selectel endpoints: https://docs.selectel.ru/en/cloud/object-storage/manage/domains/#s3-api-domains
-			Name:     "endpoint",
-			Help:     "Endpoint for Selectel Object Storage.",
-			Provider: "Selectel",
-			Examples: []fs.OptionExample{{
-				Value: "s3.ru-1.storage.selcloud.ru",
-				Help:  "Saint Petersburg",
-			}},
-		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
-			Examples: []fs.OptionExample{{
-				Value:    "objects-us-east-1.dream.io",
-				Help:     "Dream Objects endpoint",
-				Provider: "Dreamhost",
-			}, {
-				Value:    "syd1.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces Sydney 1",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "sfo3.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces San Francisco 3",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "sfo2.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces San Francisco 2",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "fra1.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces Frankfurt 1",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "nyc3.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces New York 3",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "ams3.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces Amsterdam 3",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "sgp1.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces Singapore 1",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "lon1.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces London 1",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "tor1.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces Toronto 1",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "blr1.digitaloceanspaces.com",
-				Help:     "DigitalOcean Spaces Bangalore 1",
-				Provider: "DigitalOcean",
-			}, {
-				Value:    "localhost:8333",
-				Help:     "SeaweedFS S3 localhost",
-				Provider: "SeaweedFS",
-			}, {
-				Value:    "oos.eu-west-2.outscale.com",
-				Help:     "Outscale EU West 2 (Paris)",
+			{
+				Name:     "region",
+				Help:     "Region where your bucket will be created and your data stored.\n",
+				Provider: "IONOS",
+				Examples: []fs.OptionExample{{
+					Value: "de",
+					Help:  "Frankfurt, Germany",
+				}, {
+					Value: "eu-central-2",
+					Help:  "Berlin, Germany",
+				}, {
+					Value: "eu-south-2",
+					Help:  "Logrono, Spain",
+				}},
+			}, {
+				Name:     "region",
+				Help:     "Region where your bucket will be created and your data stored.\n",
 				Provider: "Outscale",
+				Examples: []fs.OptionExample{{
+					Value: "eu-west-2",
+					Help:  "Paris, France",
+				}, {
+					Value: "us-east-2",
+					Help:  "New Jersey, USA",
+				}, {
+					Value: "us-west-1",
+					Help:  "California, USA",
+				}, {
+					Value: "cloudgouv-eu-west-1",
+					Help:  "SecNumCloud, Paris, France",
+				}, {
+					Value: "ap-northeast-1",
+					Help:  "Tokyo, Japan",
+				}},
 			}, {
-				Value:    "oos.us-east-2.outscale.com",
-				Help:     "Outscale US east 2 (New Jersey)",
-				Provider: "Outscale",
+				Name:     "region",
+				Help:     "Region where your bucket will be created and your data stored.\n",
+				Provider: "Petabox",
+				Examples: []fs.OptionExample{{
+					Value: "us-east-1",
+					Help:  "US East (N. Virginia)",
+				}, {
+					Value: "eu-central-1",
+					Help:  "Europe (Frankfurt)",
+				}, {
+					Value: "ap-southeast-1",
+					Help:  "Asia Pacific (Singapore)",
+				}, {
+					Value: "me-south-1",
+					Help:  "Middle East (Bahrain)",
+				}, {
+					Value: "sa-east-1",
+					Help:  "South America (São Paulo)",
+				}},
 			}, {
-				Value:    "oos.us-west-1.outscale.com",
-				Help:     "Outscale EU West 1 (California)",
-				Provider: "Outscale",
+				Name:     "region",
+				Help:     "Region where your data stored.\n",
+				Provider: "Synology",
+				Examples: []fs.OptionExample{{
+					Value: "eu-001",
+					Help:  "Europe Region 1",
+				}, {
+					Value: "eu-002",
+					Help:  "Europe Region 2",
+				}, {
+					Value: "us-001",
+					Help:  "US Region 1",
+				}, {
+					Value: "us-002",
+					Help:  "US Region 2",
+				}, {
+					Value: "tw-001",
+					Help:  "Asia (Taiwan)",
+				}},
 			}, {
-				Value:    "oos.cloudgouv-eu-west-1.outscale.com",
-				Help:     "Outscale SecNumCloud (Paris)",
-				Provider: "Outscale",
+				// See endpoints for object storage regions: https://docs.selectel.ru/en/cloud/object-storage/manage/domains/#s3-api-domains
+				Name:     "region",
+				Help:     "Region where your data stored.\n",
+				Provider: "Selectel",
+				Examples: []fs.OptionExample{{
+					Value: "ru-1",
+					Help:  "St. Petersburg",
+				}},
 			}, {
-				Value:    "oos.ap-northeast-1.outscale.com",
-				Help:     "Outscale AP Northeast 1 (Japan)",
-				Provider: "Outscale",
+				Name:     "region",
+				Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
+				Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
+				}, {
+					Value: "other-v2-signature",
+					Help:  "Use this only if v4 signatures don't work.\nE.g. pre Jewel/v10 CEPH.",
+				}},
 			}, {
-				Value:    "s3.wasabisys.com",
-				Help:     "Wasabi US East 1 (N. Virginia)",
-				Provider: "Wasabi",
+				Name:     "endpoint",
+				Help:     "Endpoint for S3 API.\n\nLeave blank if using AWS to use the default endpoint for the region.",
+				Provider: "AWS",
 			}, {
-				Value:    "s3.us-east-2.wasabisys.com",
-				Help:     "Wasabi US East 2 (N. Virginia)",
-				Provider: "Wasabi",
+				// ChinaMobile endpoints: https://ecloud.10086.cn/op-help-center/doc/article/24534
+				Name:     "endpoint",
+				Help:     "Endpoint for China Mobile Ecloud Elastic Object Storage (EOS) API.",
+				Provider: "ChinaMobile",
+				Examples: []fs.OptionExample{{
+					Value: "eos-wuxi-1.cmecloud.cn",
+					Help:  "The default endpoint - a good choice if you are unsure.\nEast China (Suzhou)",
+				}, {
+					Value: "eos-jinan-1.cmecloud.cn",
+					Help:  "East China (Jinan)",
+				}, {
+					Value: "eos-ningbo-1.cmecloud.cn",
+					Help:  "East China (Hangzhou)",
+				}, {
+					Value: "eos-shanghai-1.cmecloud.cn",
+					Help:  "East China (Shanghai-1)",
+				}, {
+					Value: "eos-zhengzhou-1.cmecloud.cn",
+					Help:  "Central China (Zhengzhou)",
+				}, {
+					Value: "eos-hunan-1.cmecloud.cn",
+					Help:  "Central China (Changsha-1)",
+				}, {
+					Value: "eos-zhuzhou-1.cmecloud.cn",
+					Help:  "Central China (Changsha-2)",
+				}, {
+					Value: "eos-guangzhou-1.cmecloud.cn",
+					Help:  "South China (Guangzhou-2)",
+				}, {
+					Value: "eos-dongguan-1.cmecloud.cn",
+					Help:  "South China (Guangzhou-3)",
+				}, {
+					Value: "eos-beijing-1.cmecloud.cn",
+					Help:  "North China (Beijing-1)",
+				}, {
+					Value: "eos-beijing-2.cmecloud.cn",
+					Help:  "North China (Beijing-2)",
+				}, {
+					Value: "eos-beijing-4.cmecloud.cn",
+					Help:  "North China (Beijing-3)",
+				}, {
+					Value: "eos-huhehaote-1.cmecloud.cn",
+					Help:  "North China (Huhehaote)",
+				}, {
+					Value: "eos-chengdu-1.cmecloud.cn",
+					Help:  "Southwest China (Chengdu)",
+				}, {
+					Value: "eos-chongqing-1.cmecloud.cn",
+					Help:  "Southwest China (Chongqing)",
+				}, {
+					Value: "eos-guiyang-1.cmecloud.cn",
+					Help:  "Southwest China (Guiyang)",
+				}, {
+					Value: "eos-xian-1.cmecloud.cn",
+					Help:  "Nouthwest China (Xian)",
+				}, {
+					Value: "eos-yunnan.cmecloud.cn",
+					Help:  "Yunnan China (Kunming)",
+				}, {
+					Value: "eos-yunnan-2.cmecloud.cn",
+					Help:  "Yunnan China (Kunming-2)",
+				}, {
+					Value: "eos-tianjin-1.cmecloud.cn",
+					Help:  "Tianjin China (Tianjin)",
+				}, {
+					Value: "eos-jilin-1.cmecloud.cn",
+					Help:  "Jilin China (Changchun)",
+				}, {
+					Value: "eos-hubei-1.cmecloud.cn",
+					Help:  "Hubei China (Xiangyan)",
+				}, {
+					Value: "eos-jiangxi-1.cmecloud.cn",
+					Help:  "Jiangxi China (Nanchang)",
+				}, {
+					Value: "eos-gansu-1.cmecloud.cn",
+					Help:  "Gansu China (Lanzhou)",
+				}, {
+					Value: "eos-shanxi-1.cmecloud.cn",
+					Help:  "Shanxi China (Taiyuan)",
+				}, {
+					Value: "eos-liaoning-1.cmecloud.cn",
+					Help:  "Liaoning China (Shenyang)",
+				}, {
+					Value: "eos-hebei-1.cmecloud.cn",
+					Help:  "Hebei China (Shijiazhuang)",
+				}, {
+					Value: "eos-fujian-1.cmecloud.cn",
+					Help:  "Fujian China (Xiamen)",
+				}, {
+					Value: "eos-guangxi-1.cmecloud.cn",
+					Help:  "Guangxi China (Nanning)",
+				}, {
+					Value: "eos-anhui-1.cmecloud.cn",
+					Help:  "Anhui China (Huainan)",
+				}},
 			}, {
-				Value:    "s3.us-central-1.wasabisys.com",
-				Help:     "Wasabi US Central 1 (Texas)",
-				Provider: "Wasabi",
+				// ArvanCloud endpoints: https://www.arvancloud.ir/en/products/cloud-storage
+				Name:     "endpoint",
+				Help:     "Endpoint for Arvan Cloud Object Storage (AOS) API.",
+				Provider: "ArvanCloud",
+				Examples: []fs.OptionExample{{
+					Value: "s3.ir-thr-at1.arvanstorage.ir",
+					Help:  "The default endpoint - a good choice if you are unsure.\nTehran Iran (Simin)",
+				}, {
+					Value: "s3.ir-tbz-sh1.arvanstorage.ir",
+					Help:  "Tabriz Iran (Shahriar)",
+				}},
 			}, {
-				Value:    "s3.us-west-1.wasabisys.com",
-				Help:     "Wasabi US West 1 (Oregon)",
-				Provider: "Wasabi",
+				Name:     "endpoint",
+				Help:     "Endpoint for IBM COS S3 API.\n\nSpecify if using an IBM COS On Premise.",
+				Provider: "IBMCOS",
+				Examples: []fs.OptionExample{{
+					Value: "s3.us.cloud-object-storage.appdomain.cloud",
+					Help:  "US Cross Region Endpoint",
+				}, {
+					Value: "s3.dal.us.cloud-object-storage.appdomain.cloud",
+					Help:  "US Cross Region Dallas Endpoint",
+				}, {
+					Value: "s3.wdc.us.cloud-object-storage.appdomain.cloud",
+					Help:  "US Cross Region Washington DC Endpoint",
+				}, {
+					Value: "s3.sjc.us.cloud-object-storage.appdomain.cloud",
+					Help:  "US Cross Region San Jose Endpoint",
+				}, {
+					Value: "s3.private.us.cloud-object-storage.appdomain.cloud",
+					Help:  "US Cross Region Private Endpoint",
+				}, {
+					Value: "s3.private.dal.us.cloud-object-storage.appdomain.cloud",
+					Help:  "US Cross Region Dallas Private Endpoint",
+				}, {
+					Value: "s3.private.wdc.us.cloud-object-storage.appdomain.cloud",
+					Help:  "US Cross Region Washington DC Private Endpoint",
+				}, {
+					Value: "s3.private.sjc.us.cloud-object-storage.appdomain.cloud",
+					Help:  "US Cross Region San Jose Private Endpoint",
+				}, {
+					Value: "s3.us-east.cloud-object-storage.appdomain.cloud",
+					Help:  "US Region East Endpoint",
+				}, {
+					Value: "s3.private.us-east.cloud-object-storage.appdomain.cloud",
+					Help:  "US Region East Private Endpoint",
+				}, {
+					Value: "s3.us-south.cloud-object-storage.appdomain.cloud",
+					Help:  "US Region South Endpoint",
+				}, {
+					Value: "s3.private.us-south.cloud-object-storage.appdomain.cloud",
+					Help:  "US Region South Private Endpoint",
+				}, {
+					Value: "s3.eu.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Cross Region Endpoint",
+				}, {
+					Value: "s3.fra.eu.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Cross Region Frankfurt Endpoint",
+				}, {
+					Value: "s3.mil.eu.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Cross Region Milan Endpoint",
+				}, {
+					Value: "s3.ams.eu.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Cross Region Amsterdam Endpoint",
+				}, {
+					Value: "s3.private.eu.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Cross Region Private Endpoint",
+				}, {
+					Value: "s3.private.fra.eu.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Cross Region Frankfurt Private Endpoint",
+				}, {
+					Value: "s3.private.mil.eu.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Cross Region Milan Private Endpoint",
+				}, {
+					Value: "s3.private.ams.eu.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Cross Region Amsterdam Private Endpoint",
+				}, {
+					Value: "s3.eu-gb.cloud-object-storage.appdomain.cloud",
+					Help:  "Great Britain Endpoint",
+				}, {
+					Value: "s3.private.eu-gb.cloud-object-storage.appdomain.cloud",
+					Help:  "Great Britain Private Endpoint",
+				}, {
+					Value: "s3.eu-de.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Region DE Endpoint",
+				}, {
+					Value: "s3.private.eu-de.cloud-object-storage.appdomain.cloud",
+					Help:  "EU Region DE Private Endpoint",
+				}, {
+					Value: "s3.ap.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Cross Regional Endpoint",
+				}, {
+					Value: "s3.tok.ap.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Cross Regional Tokyo Endpoint",
+				}, {
+					Value: "s3.hkg.ap.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Cross Regional HongKong Endpoint",
+				}, {
+					Value: "s3.seo.ap.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Cross Regional Seoul Endpoint",
+				}, {
+					Value: "s3.private.ap.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Cross Regional Private Endpoint",
+				}, {
+					Value: "s3.private.tok.ap.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Cross Regional Tokyo Private Endpoint",
+				}, {
+					Value: "s3.private.hkg.ap.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Cross Regional HongKong Private Endpoint",
+				}, {
+					Value: "s3.private.seo.ap.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Cross Regional Seoul Private Endpoint",
+				}, {
+					Value: "s3.jp-tok.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Region Japan Endpoint",
+				}, {
+					Value: "s3.private.jp-tok.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Region Japan Private Endpoint",
+				}, {
+					Value: "s3.au-syd.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Region Australia Endpoint",
+				}, {
+					Value: "s3.private.au-syd.cloud-object-storage.appdomain.cloud",
+					Help:  "APAC Region Australia Private Endpoint",
+				}, {
+					Value: "s3.ams03.cloud-object-storage.appdomain.cloud",
+					Help:  "Amsterdam Single Site Endpoint",
+				}, {
+					Value: "s3.private.ams03.cloud-object-storage.appdomain.cloud",
+					Help:  "Amsterdam Single Site Private Endpoint",
+				}, {
+					Value: "s3.che01.cloud-object-storage.appdomain.cloud",
+					Help:  "Chennai Single Site Endpoint",
+				}, {
+					Value: "s3.private.che01.cloud-object-storage.appdomain.cloud",
+					Help:  "Chennai Single Site Private Endpoint",
+				}, {
+					Value: "s3.mel01.cloud-object-storage.appdomain.cloud",
+					Help:  "Melbourne Single Site Endpoint",
+				}, {
+					Value: "s3.private.mel01.cloud-object-storage.appdomain.cloud",
+					Help:  "Melbourne Single Site Private Endpoint",
+				}, {
+					Value: "s3.osl01.cloud-object-storage.appdomain.cloud",
+					Help:  "Oslo Single Site Endpoint",
+				}, {
+					Value: "s3.private.osl01.cloud-object-storage.appdomain.cloud",
+					Help:  "Oslo Single Site Private Endpoint",
+				}, {
+					Value: "s3.tor01.cloud-object-storage.appdomain.cloud",
+					Help:  "Toronto Single Site Endpoint",
+				}, {
+					Value: "s3.private.tor01.cloud-object-storage.appdomain.cloud",
+					Help:  "Toronto Single Site Private Endpoint",
+				}, {
+					Value: "s3.seo01.cloud-object-storage.appdomain.cloud",
+					Help:  "Seoul Single Site Endpoint",
+				}, {
+					Value: "s3.private.seo01.cloud-object-storage.appdomain.cloud",
+					Help:  "Seoul Single Site Private Endpoint",
+				}, {
+					Value: "s3.mon01.cloud-object-storage.appdomain.cloud",
+					Help:  "Montreal Single Site Endpoint",
+				}, {
+					Value: "s3.private.mon01.cloud-object-storage.appdomain.cloud",
+					Help:  "Montreal Single Site Private Endpoint",
+				}, {
+					Value: "s3.mex01.cloud-object-storage.appdomain.cloud",
+					Help:  "Mexico Single Site Endpoint",
+				}, {
+					Value: "s3.private.mex01.cloud-object-storage.appdomain.cloud",
+					Help:  "Mexico Single Site Private Endpoint",
+				}, {
+					Value: "s3.sjc04.cloud-object-storage.appdomain.cloud",
+					Help:  "San Jose Single Site Endpoint",
+				}, {
+					Value: "s3.private.sjc04.cloud-object-storage.appdomain.cloud",
+					Help:  "San Jose Single Site Private Endpoint",
+				}, {
+					Value: "s3.mil01.cloud-object-storage.appdomain.cloud",
+					Help:  "Milan Single Site Endpoint",
+				}, {
+					Value: "s3.private.mil01.cloud-object-storage.appdomain.cloud",
+					Help:  "Milan Single Site Private Endpoint",
+				}, {
+					Value: "s3.hkg02.cloud-object-storage.appdomain.cloud",
+					Help:  "Hong Kong Single Site Endpoint",
+				}, {
+					Value: "s3.private.hkg02.cloud-object-storage.appdomain.cloud",
+					Help:  "Hong Kong Single Site Private Endpoint",
+				}, {
+					Value: "s3.par01.cloud-object-storage.appdomain.cloud",
+					Help:  "Paris Single Site Endpoint",
+				}, {
+					Value: "s3.private.par01.cloud-object-storage.appdomain.cloud",
+					Help:  "Paris Single Site Private Endpoint",
+				}, {
+					Value: "s3.sng01.cloud-object-storage.appdomain.cloud",
+					Help:  "Singapore Single Site Endpoint",
+				}, {
+					Value: "s3.private.sng01.cloud-object-storage.appdomain.cloud",
+					Help:  "Singapore Single Site Private Endpoint",
+				}},
 			}, {
-				Value:    "s3.ca-central-1.wasabisys.com",
-				Help:     "Wasabi CA Central 1 (Toronto)",
-				Provider: "Wasabi",
+				Name:     "endpoint",
+				Help:     "Endpoint for IONOS S3 Object Storage.\n\nSpecify the endpoint from the same region.",
+				Provider: "IONOS",
+				Examples: []fs.OptionExample{{
+					Value: "s3-eu-central-1.ionoscloud.com",
+					Help:  "Frankfurt, Germany",
+				}, {
+					Value: "s3-eu-central-2.ionoscloud.com",
+					Help:  "Berlin, Germany",
+				}, {
+					Value: "s3-eu-south-2.ionoscloud.com",
+					Help:  "Logrono, Spain",
+				}},
 			}, {
-				Value:    "s3.eu-central-1.wasabisys.com",
-				Help:     "Wasabi EU Central 1 (Amsterdam)",
-				Provider: "Wasabi",
+				Name:     "endpoint",
+				Help:     "Endpoint for Petabox S3 Object Storage.\n\nSpecify the endpoint from the same region.",
+				Provider: "Petabox",
+				Required: true,
+				Examples: []fs.OptionExample{{
+					Value: "s3.petabox.io",
+					Help:  "US East (N. Virginia)",
+				}, {
+					Value: "s3.us-east-1.petabox.io",
+					Help:  "US East (N. Virginia)",
+				}, {
+					Value: "s3.eu-central-1.petabox.io",
+					Help:  "Europe (Frankfurt)",
+				}, {
+					Value: "s3.ap-southeast-1.petabox.io",
+					Help:  "Asia Pacific (Singapore)",
+				}, {
+					Value: "s3.me-south-1.petabox.io",
+					Help:  "Middle East (Bahrain)",
+				}, {
+					Value: "s3.sa-east-1.petabox.io",
+					Help:  "South America (São Paulo)",
+				}},
 			}, {
-				Value:    "s3.eu-central-2.wasabisys.com",
-				Help:     "Wasabi EU Central 2 (Frankfurt)",
-				Provider: "Wasabi",
+				// Leviia endpoints: https://www.leviia.com/object-storage/
+				Name:     "endpoint",
+				Help:     "Endpoint for Leviia Object Storage API.",
+				Provider: "Leviia",
+				Examples: []fs.OptionExample{{
+					Value: "s3.leviia.com",
+					Help:  "The default endpoint\nLeviia",
+				}},
 			}, {
-				Value:    "s3.eu-west-1.wasabisys.com",
-				Help:     "Wasabi EU West 1 (London)",
-				Provider: "Wasabi",
-			}, {
-				Value:    "s3.eu-west-2.wasabisys.com",
-				Help:     "Wasabi EU West 2 (Paris)",
-				Provider: "Wasabi",
-			}, {
-				Value:    "s3.eu-south-1.wasabisys.com",
-				Help:     "Wasabi EU South 1 (Milan)",
-				Provider: "Wasabi",
-			}, {
-				Value:    "s3.ap-northeast-1.wasabisys.com",
-				Help:     "Wasabi AP Northeast 1 (Tokyo) endpoint",
-				Provider: "Wasabi",
-			}, {
-				Value:    "s3.ap-northeast-2.wasabisys.com",
-				Help:     "Wasabi AP Northeast 2 (Osaka) endpoint",
-				Provider: "Wasabi",
-			}, {
-				Value:    "s3.ap-southeast-1.wasabisys.com",
-				Help:     "Wasabi AP Southeast 1 (Singapore)",
-				Provider: "Wasabi",
-			}, {
-				Value:    "s3.ap-southeast-2.wasabisys.com",
-				Help:     "Wasabi AP Southeast 2 (Sydney)",
-				Provider: "Wasabi",
-			}, {
-				Value:    "storage.iran.liara.space",
-				Help:     "Liara Iran endpoint",
+				// Liara endpoints: https://liara.ir/landing/object-storage
+				Name:     "endpoint",
+				Help:     "Endpoint for Liara Object Storage API.",
 				Provider: "Liara",
+				Examples: []fs.OptionExample{{
+					Value: "storage.iran.liara.space",
+					Help:  "The default endpoint\nIran",
+				}},
 			}, {
-				Value:    "s3.ir-thr-at1.arvanstorage.ir",
-				Help:     "ArvanCloud Tehran Iran (Simin) endpoint",
+				// Linode endpoints: https://techdocs.akamai.com/cloud-computing/docs/object-storage-product-limits#supported-endpoint-types-by-region
+				Name:     "endpoint",
+				Help:     "Endpoint for Linode Object Storage API.",
+				Provider: "Linode",
+				Examples: []fs.OptionExample{{
+					Value: "nl-ams-1.linodeobjects.com",
+					Help:  "Amsterdam (Netherlands), nl-ams-1",
+				}, {
+					Value: "us-southeast-1.linodeobjects.com",
+					Help:  "Atlanta, GA (USA), us-southeast-1",
+				}, {
+					Value: "in-maa-1.linodeobjects.com",
+					Help:  "Chennai (India), in-maa-1",
+				}, {
+					Value: "us-ord-1.linodeobjects.com",
+					Help:  "Chicago, IL (USA), us-ord-1",
+				}, {
+					Value: "eu-central-1.linodeobjects.com",
+					Help:  "Frankfurt (Germany), eu-central-1",
+				}, {
+					Value: "id-cgk-1.linodeobjects.com",
+					Help:  "Jakarta (Indonesia), id-cgk-1",
+				}, {
+					Value: "gb-lon-1.linodeobjects.com",
+					Help:  "London 2 (Great Britain), gb-lon-1",
+				}, {
+					Value: "us-lax-1.linodeobjects.com",
+					Help:  "Los Angeles, CA (USA), us-lax-1",
+				}, {
+					Value: "es-mad-1.linodeobjects.com",
+					Help:  "Madrid (Spain), es-mad-1",
+				}, {
+					Value: "au-mel-1.linodeobjects.com",
+					Help:  "Melbourne (Australia), au-mel-1",
+				}, {
+					Value: "us-mia-1.linodeobjects.com",
+					Help:  "Miami, FL (USA), us-mia-1",
+				}, {
+					Value: "it-mil-1.linodeobjects.com",
+					Help:  "Milan (Italy), it-mil-1",
+				}, {
+					Value: "us-east-1.linodeobjects.com",
+					Help:  "Newark, NJ (USA), us-east-1",
+				}, {
+					Value: "jp-osa-1.linodeobjects.com",
+					Help:  "Osaka (Japan), jp-osa-1",
+				}, {
+					Value: "fr-par-1.linodeobjects.com",
+					Help:  "Paris (France), fr-par-1",
+				}, {
+					Value: "br-gru-1.linodeobjects.com",
+					Help:  "São Paulo (Brazil), br-gru-1",
+				}, {
+					Value: "us-sea-1.linodeobjects.com",
+					Help:  "Seattle, WA (USA), us-sea-1",
+				}, {
+					Value: "ap-south-1.linodeobjects.com",
+					Help:  "Singapore, ap-south-1",
+				}, {
+					Value: "sg-sin-1.linodeobjects.com",
+					Help:  "Singapore 2, sg-sin-1",
+				}, {
+					Value: "se-sto-1.linodeobjects.com",
+					Help:  "Stockholm (Sweden), se-sto-1",
+				}, {
+					Value: "us-iad-1.linodeobjects.com",
+					Help:  "Washington, DC, (USA), us-iad-1",
+				}},
+			}, {
+				// Lyve Cloud endpoints
+				Name:     "endpoint",
+				Help:     "Endpoint for Lyve Cloud S3 API.\nRequired when using an S3 clone. Please type in your LyveCloud endpoint.\nExamples:\n- s3.us-west-1.{account_name}.lyve.seagate.com (US West 1 - California)\n- s3.eu-west-1.{account_name}.lyve.seagate.com (EU West 1 - Ireland)",
+				Provider: "LyveCloud",
+				Required: true,
+			}, {
+				// Magalu endpoints: https://docs.magalu.cloud/docs/object-storage/how-to/copy-url
+				Name:     "endpoint",
+				Help:     "Endpoint for Magalu Object Storage API.",
+				Provider: "Magalu",
+				Examples: []fs.OptionExample{{
+					Value: "br-se1.magaluobjects.com",
+					Help:  "São Paulo, SP (BR), br-se1",
+				}, {
+					Value: "br-ne1.magaluobjects.com",
+					Help:  "Fortaleza, CE (BR), br-ne1",
+				},
+				},
+			}, {
+				// oss endpoints: https://help.aliyun.com/document_detail/31837.html
+				Name:     "endpoint",
+				Help:     "Endpoint for OSS API.",
+				Provider: "Alibaba",
+				Examples: []fs.OptionExample{{
+					Value: "oss-accelerate.aliyuncs.com",
+					Help:  "Global Accelerate",
+				}, {
+					Value: "oss-accelerate-overseas.aliyuncs.com",
+					Help:  "Global Accelerate (outside mainland China)",
+				}, {
+					Value: "oss-cn-hangzhou.aliyuncs.com",
+					Help:  "East China 1 (Hangzhou)",
+				}, {
+					Value: "oss-cn-shanghai.aliyuncs.com",
+					Help:  "East China 2 (Shanghai)",
+				}, {
+					Value: "oss-cn-qingdao.aliyuncs.com",
+					Help:  "North China 1 (Qingdao)",
+				}, {
+					Value: "oss-cn-beijing.aliyuncs.com",
+					Help:  "North China 2 (Beijing)",
+				}, {
+					Value: "oss-cn-zhangjiakou.aliyuncs.com",
+					Help:  "North China 3 (Zhangjiakou)",
+				}, {
+					Value: "oss-cn-huhehaote.aliyuncs.com",
+					Help:  "North China 5 (Hohhot)",
+				}, {
+					Value: "oss-cn-wulanchabu.aliyuncs.com",
+					Help:  "North China 6 (Ulanqab)",
+				}, {
+					Value: "oss-cn-shenzhen.aliyuncs.com",
+					Help:  "South China 1 (Shenzhen)",
+				}, {
+					Value: "oss-cn-heyuan.aliyuncs.com",
+					Help:  "South China 2 (Heyuan)",
+				}, {
+					Value: "oss-cn-guangzhou.aliyuncs.com",
+					Help:  "South China 3 (Guangzhou)",
+				}, {
+					Value: "oss-cn-chengdu.aliyuncs.com",
+					Help:  "West China 1 (Chengdu)",
+				}, {
+					Value: "oss-cn-hongkong.aliyuncs.com",
+					Help:  "Hong Kong (Hong Kong)",
+				}, {
+					Value: "oss-us-west-1.aliyuncs.com",
+					Help:  "US West 1 (Silicon Valley)",
+				}, {
+					Value: "oss-us-east-1.aliyuncs.com",
+					Help:  "US East 1 (Virginia)",
+				}, {
+					Value: "oss-ap-southeast-1.aliyuncs.com",
+					Help:  "Southeast Asia Southeast 1 (Singapore)",
+				}, {
+					Value: "oss-ap-southeast-2.aliyuncs.com",
+					Help:  "Asia Pacific Southeast 2 (Sydney)",
+				}, {
+					Value: "oss-ap-southeast-3.aliyuncs.com",
+					Help:  "Southeast Asia Southeast 3 (Kuala Lumpur)",
+				}, {
+					Value: "oss-ap-southeast-5.aliyuncs.com",
+					Help:  "Asia Pacific Southeast 5 (Jakarta)",
+				}, {
+					Value: "oss-ap-northeast-1.aliyuncs.com",
+					Help:  "Asia Pacific Northeast 1 (Japan)",
+				}, {
+					Value: "oss-ap-south-1.aliyuncs.com",
+					Help:  "Asia Pacific South 1 (Mumbai)",
+				}, {
+					Value: "oss-eu-central-1.aliyuncs.com",
+					Help:  "Central Europe 1 (Frankfurt)",
+				}, {
+					Value: "oss-eu-west-1.aliyuncs.com",
+					Help:  "West Europe (London)",
+				}, {
+					Value: "oss-me-east-1.aliyuncs.com",
+					Help:  "Middle East 1 (Dubai)",
+				}},
+			}, {
+				// obs endpoints: https://developer.huaweicloud.com/intl/en-us/endpoint?OBS
+				Name:     "endpoint",
+				Help:     "Endpoint for OBS API.",
+				Provider: "HuaweiOBS",
+				Examples: []fs.OptionExample{{
+					Value: "obs.af-south-1.myhuaweicloud.com",
+					Help:  "AF-Johannesburg",
+				}, {
+					Value: "obs.ap-southeast-2.myhuaweicloud.com",
+					Help:  "AP-Bangkok",
+				}, {
+					Value: "obs.ap-southeast-3.myhuaweicloud.com",
+					Help:  "AP-Singapore",
+				}, {
+					Value: "obs.cn-east-3.myhuaweicloud.com",
+					Help:  "CN East-Shanghai1",
+				}, {
+					Value: "obs.cn-east-2.myhuaweicloud.com",
+					Help:  "CN East-Shanghai2",
+				}, {
+					Value: "obs.cn-north-1.myhuaweicloud.com",
+					Help:  "CN North-Beijing1",
+				}, {
+					Value: "obs.cn-north-4.myhuaweicloud.com",
+					Help:  "CN North-Beijing4",
+				}, {
+					Value: "obs.cn-south-1.myhuaweicloud.com",
+					Help:  "CN South-Guangzhou",
+				}, {
+					Value: "obs.ap-southeast-1.myhuaweicloud.com",
+					Help:  "CN-Hong Kong",
+				}, {
+					Value: "obs.sa-argentina-1.myhuaweicloud.com",
+					Help:  "LA-Buenos Aires1",
+				}, {
+					Value: "obs.sa-peru-1.myhuaweicloud.com",
+					Help:  "LA-Lima1",
+				}, {
+					Value: "obs.na-mexico-1.myhuaweicloud.com",
+					Help:  "LA-Mexico City1",
+				}, {
+					Value: "obs.sa-chile-1.myhuaweicloud.com",
+					Help:  "LA-Santiago2",
+				}, {
+					Value: "obs.sa-brazil-1.myhuaweicloud.com",
+					Help:  "LA-Sao Paulo1",
+				}, {
+					Value: "obs.ru-northwest-2.myhuaweicloud.com",
+					Help:  "RU-Moscow2",
+				}},
+			}, {
+				Name:     "endpoint",
+				Help:     "Endpoint for Scaleway Object Storage.",
+				Provider: "Scaleway",
+				Examples: []fs.OptionExample{{
+					Value: "s3.nl-ams.scw.cloud",
+					Help:  "Amsterdam Endpoint",
+				}, {
+					Value: "s3.fr-par.scw.cloud",
+					Help:  "Paris Endpoint",
+				}, {
+					Value: "s3.pl-waw.scw.cloud",
+					Help:  "Warsaw Endpoint",
+				}},
+			}, {
+				Name:     "endpoint",
+				Help:     "Endpoint for StackPath Object Storage.",
+				Provider: "StackPath",
+				Examples: []fs.OptionExample{{
+					Value: "s3.us-east-2.stackpathstorage.com",
+					Help:  "US East Endpoint",
+				}, {
+					Value: "s3.us-west-1.stackpathstorage.com",
+					Help:  "US West Endpoint",
+				}, {
+					Value: "s3.eu-central-1.stackpathstorage.com",
+					Help:  "EU Endpoint",
+				}},
+			}, {
+				Name:     "endpoint",
+				Help:     "Endpoint for Google Cloud Storage.",
+				Provider: "GCS",
+				Examples: []fs.OptionExample{{
+					Value: "https://storage.googleapis.com",
+					Help:  "Google Cloud Storage endpoint",
+				}},
+			}, {
+				Name:     "endpoint",
+				Help:     "Endpoint for Storj Gateway.",
+				Provider: "Storj",
+				Examples: []fs.OptionExample{{
+					Value: "gateway.storjshare.io",
+					Help:  "Global Hosted Gateway",
+				}},
+			}, {
+				Name:     "endpoint",
+				Help:     "Endpoint for Synology C2 Object Storage API.",
+				Provider: "Synology",
+				Examples: []fs.OptionExample{{
+					Value: "eu-001.s3.synologyc2.net",
+					Help:  "EU Endpoint 1",
+				}, {
+					Value: "eu-002.s3.synologyc2.net",
+					Help:  "EU Endpoint 2",
+				}, {
+					Value: "us-001.s3.synologyc2.net",
+					Help:  "US Endpoint 1",
+				}, {
+					Value: "us-002.s3.synologyc2.net",
+					Help:  "US Endpoint 2",
+				}, {
+					Value: "tw-001.s3.synologyc2.net",
+					Help:  "TW Endpoint 1",
+				}},
+			}, {
+				// cos endpoints: https://intl.cloud.tencent.com/document/product/436/6224
+				Name:     "endpoint",
+				Help:     "Endpoint for Tencent COS API.",
+				Provider: "TencentCOS",
+				Examples: []fs.OptionExample{{
+					Value: "cos.ap-beijing.myqcloud.com",
+					Help:  "Beijing Region",
+				}, {
+					Value: "cos.ap-nanjing.myqcloud.com",
+					Help:  "Nanjing Region",
+				}, {
+					Value: "cos.ap-shanghai.myqcloud.com",
+					Help:  "Shanghai Region",
+				}, {
+					Value: "cos.ap-guangzhou.myqcloud.com",
+					Help:  "Guangzhou Region",
+				}, {
+					Value: "cos.ap-nanjing.myqcloud.com",
+					Help:  "Nanjing Region",
+				}, {
+					Value: "cos.ap-chengdu.myqcloud.com",
+					Help:  "Chengdu Region",
+				}, {
+					Value: "cos.ap-chongqing.myqcloud.com",
+					Help:  "Chongqing Region",
+				}, {
+					Value: "cos.ap-hongkong.myqcloud.com",
+					Help:  "Hong Kong (China) Region",
+				}, {
+					Value: "cos.ap-singapore.myqcloud.com",
+					Help:  "Singapore Region",
+				}, {
+					Value: "cos.ap-mumbai.myqcloud.com",
+					Help:  "Mumbai Region",
+				}, {
+					Value: "cos.ap-seoul.myqcloud.com",
+					Help:  "Seoul Region",
+				}, {
+					Value: "cos.ap-bangkok.myqcloud.com",
+					Help:  "Bangkok Region",
+				}, {
+					Value: "cos.ap-tokyo.myqcloud.com",
+					Help:  "Tokyo Region",
+				}, {
+					Value: "cos.na-siliconvalley.myqcloud.com",
+					Help:  "Silicon Valley Region",
+				}, {
+					Value: "cos.na-ashburn.myqcloud.com",
+					Help:  "Virginia Region",
+				}, {
+					Value: "cos.na-toronto.myqcloud.com",
+					Help:  "Toronto Region",
+				}, {
+					Value: "cos.eu-frankfurt.myqcloud.com",
+					Help:  "Frankfurt Region",
+				}, {
+					Value: "cos.eu-moscow.myqcloud.com",
+					Help:  "Moscow Region",
+				}, {
+					Value: "cos.accelerate.myqcloud.com",
+					Help:  "Use Tencent COS Accelerate Endpoint",
+				}},
+			}, {
+				// RackCorp endpoints: https://www.rackcorp.com/storage/s3storage
+				Name:     "endpoint",
+				Help:     "Endpoint for RackCorp Object Storage.",
+				Provider: "RackCorp",
+				Examples: []fs.OptionExample{{
+					Value: "s3.rackcorp.com",
+					Help:  "Global (AnyCast) Endpoint",
+				}, {
+					Value: "au.s3.rackcorp.com",
+					Help:  "Australia (Anycast) Endpoint",
+				}, {
+					Value: "au-nsw.s3.rackcorp.com",
+					Help:  "Sydney (Australia) Endpoint",
+				}, {
+					Value: "au-qld.s3.rackcorp.com",
+					Help:  "Brisbane (Australia) Endpoint",
+				}, {
+					Value: "au-vic.s3.rackcorp.com",
+					Help:  "Melbourne (Australia) Endpoint",
+				}, {
+					Value: "au-wa.s3.rackcorp.com",
+					Help:  "Perth (Australia) Endpoint",
+				}, {
+					Value: "ph.s3.rackcorp.com",
+					Help:  "Manila (Philippines) Endpoint",
+				}, {
+					Value: "th.s3.rackcorp.com",
+					Help:  "Bangkok (Thailand) Endpoint",
+				}, {
+					Value: "hk.s3.rackcorp.com",
+					Help:  "HK (Hong Kong) Endpoint",
+				}, {
+					Value: "mn.s3.rackcorp.com",
+					Help:  "Ulaanbaatar (Mongolia) Endpoint",
+				}, {
+					Value: "kg.s3.rackcorp.com",
+					Help:  "Bishkek (Kyrgyzstan) Endpoint",
+				}, {
+					Value: "id.s3.rackcorp.com",
+					Help:  "Jakarta (Indonesia) Endpoint",
+				}, {
+					Value: "jp.s3.rackcorp.com",
+					Help:  "Tokyo (Japan) Endpoint",
+				}, {
+					Value: "sg.s3.rackcorp.com",
+					Help:  "SG (Singapore) Endpoint",
+				}, {
+					Value: "de.s3.rackcorp.com",
+					Help:  "Frankfurt (Germany) Endpoint",
+				}, {
+					Value: "us.s3.rackcorp.com",
+					Help:  "USA (AnyCast) Endpoint",
+				}, {
+					Value: "us-east-1.s3.rackcorp.com",
+					Help:  "New York (USA) Endpoint",
+				}, {
+					Value: "us-west-1.s3.rackcorp.com",
+					Help:  "Freemont (USA) Endpoint",
+				}, {
+					Value: "nz.s3.rackcorp.com",
+					Help:  "Auckland (New Zealand) Endpoint",
+				}},
+			}, {
+				// Qiniu endpoints: https://developer.qiniu.com/kodo/4088/s3-access-domainname
+				Name:     "endpoint",
+				Help:     "Endpoint for Qiniu Object Storage.",
+				Provider: "Qiniu",
+				Examples: []fs.OptionExample{{
+					Value: "s3-cn-east-1.qiniucs.com",
+					Help:  "East China Endpoint 1",
+				}, {
+					Value: "s3-cn-east-2.qiniucs.com",
+					Help:  "East China Endpoint 2",
+				}, {
+					Value: "s3-cn-north-1.qiniucs.com",
+					Help:  "North China Endpoint 1",
+				}, {
+					Value: "s3-cn-south-1.qiniucs.com",
+					Help:  "South China Endpoint 1",
+				}, {
+					Value: "s3-us-north-1.qiniucs.com",
+					Help:  "North America Endpoint 1",
+				}, {
+					Value: "s3-ap-southeast-1.qiniucs.com",
+					Help:  "Southeast Asia Endpoint 1",
+				}, {
+					Value: "s3-ap-northeast-1.qiniucs.com",
+					Help:  "Northeast Asia Endpoint 1",
+				}},
+			}, {
+				Name:     "endpoint",
+				Help:     "Endpoint for Zata Object Storage.",
+				Provider: "Zata",
+				Examples: []fs.OptionExample{{
+					Value: "idr01.zata.ai",
+					Help:  "South Asia Endpoint",
+				}},
+			},
+
+			{
+				// Selectel endpoints: https://docs.selectel.ru/en/cloud/object-storage/manage/domains/#s3-api-domains
+				Name:     "endpoint",
+				Help:     "Endpoint for Selectel Object Storage.",
+				Provider: "Selectel",
+				Examples: []fs.OptionExample{{
+					Value: "s3.ru-1.storage.selcloud.ru",
+					Help:  "Saint Petersburg",
+				}},
+			}, {
+				Name:     "endpoint",
+				Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
+				Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+				Examples: []fs.OptionExample{{
+					Value:    "objects-us-east-1.dream.io",
+					Help:     "Dream Objects endpoint",
+					Provider: "Dreamhost",
+				}, {
+					Value:    "syd1.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces Sydney 1",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "sfo3.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces San Francisco 3",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "sfo2.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces San Francisco 2",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "fra1.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces Frankfurt 1",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "nyc3.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces New York 3",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "ams3.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces Amsterdam 3",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "sgp1.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces Singapore 1",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "lon1.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces London 1",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "tor1.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces Toronto 1",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "blr1.digitaloceanspaces.com",
+					Help:     "DigitalOcean Spaces Bangalore 1",
+					Provider: "DigitalOcean",
+				}, {
+					Value:    "localhost:8333",
+					Help:     "SeaweedFS S3 localhost",
+					Provider: "SeaweedFS",
+				}, {
+					Value:    "oos.eu-west-2.outscale.com",
+					Help:     "Outscale EU West 2 (Paris)",
+					Provider: "Outscale",
+				}, {
+					Value:    "oos.us-east-2.outscale.com",
+					Help:     "Outscale US east 2 (New Jersey)",
+					Provider: "Outscale",
+				}, {
+					Value:    "oos.us-west-1.outscale.com",
+					Help:     "Outscale EU West 1 (California)",
+					Provider: "Outscale",
+				}, {
+					Value:    "oos.cloudgouv-eu-west-1.outscale.com",
+					Help:     "Outscale SecNumCloud (Paris)",
+					Provider: "Outscale",
+				}, {
+					Value:    "oos.ap-northeast-1.outscale.com",
+					Help:     "Outscale AP Northeast 1 (Japan)",
+					Provider: "Outscale",
+				}, {
+					Value:    "s3.wasabisys.com",
+					Help:     "Wasabi US East 1 (N. Virginia)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.us-east-2.wasabisys.com",
+					Help:     "Wasabi US East 2 (N. Virginia)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.us-central-1.wasabisys.com",
+					Help:     "Wasabi US Central 1 (Texas)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.us-west-1.wasabisys.com",
+					Help:     "Wasabi US West 1 (Oregon)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.ca-central-1.wasabisys.com",
+					Help:     "Wasabi CA Central 1 (Toronto)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.eu-central-1.wasabisys.com",
+					Help:     "Wasabi EU Central 1 (Amsterdam)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.eu-central-2.wasabisys.com",
+					Help:     "Wasabi EU Central 2 (Frankfurt)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.eu-west-1.wasabisys.com",
+					Help:     "Wasabi EU West 1 (London)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.eu-west-2.wasabisys.com",
+					Help:     "Wasabi EU West 2 (Paris)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.eu-south-1.wasabisys.com",
+					Help:     "Wasabi EU South 1 (Milan)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.ap-northeast-1.wasabisys.com",
+					Help:     "Wasabi AP Northeast 1 (Tokyo) endpoint",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.ap-northeast-2.wasabisys.com",
+					Help:     "Wasabi AP Northeast 2 (Osaka) endpoint",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.ap-southeast-1.wasabisys.com",
+					Help:     "Wasabi AP Southeast 1 (Singapore)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "s3.ap-southeast-2.wasabisys.com",
+					Help:     "Wasabi AP Southeast 2 (Sydney)",
+					Provider: "Wasabi",
+				}, {
+					Value:    "storage.iran.liara.space",
+					Help:     "Liara Iran endpoint",
+					Provider: "Liara",
+				}, {
+					Value:    "s3.ir-thr-at1.arvanstorage.ir",
+					Help:     "ArvanCloud Tehran Iran (Simin) endpoint",
+					Provider: "ArvanCloud",
+				}, {
+					Value:    "s3.ir-tbz-sh1.arvanstorage.ir",
+					Help:     "ArvanCloud Tabriz Iran (Shahriar) endpoint",
+					Provider: "ArvanCloud",
+				}, {
+					Value:    "s3.eu-central-1.s4.mega.io",
+					Help:     "Mega S4 eu-central-1 (Amsterdam)",
+					Provider: "Mega",
+				}, {
+					Value:    "s3.eu-central-2.s4.mega.io",
+					Help:     "Mega S4 eu-central-2 (Bettembourg)",
+					Provider: "Mega",
+				}, {
+					Value:    "s3.ca-central-1.s4.mega.io",
+					Help:     "Mega S4 ca-central-1 (Montreal)",
+					Provider: "Mega",
+				}, {
+					Value:    "s3.ca-west-1.s4.mega.io",
+					Help:     "Mega S4 ca-west-1 (Vancouver)",
+					Provider: "Mega",
+				}},
+			}, {
+				Name:     "location_constraint",
+				Help:     "Location constraint - must be set to match the Region.\n\nUsed when creating buckets only.",
+				Provider: "AWS",
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "Empty for US Region, Northern Virginia, or Pacific Northwest",
+				}, {
+					Value: "us-east-2",
+					Help:  "US East (Ohio) Region",
+				}, {
+					Value: "us-west-1",
+					Help:  "US West (Northern California) Region",
+				}, {
+					Value: "us-west-2",
+					Help:  "US West (Oregon) Region",
+				}, {
+					Value: "ca-central-1",
+					Help:  "Canada (Central) Region",
+				}, {
+					Value: "eu-west-1",
+					Help:  "EU (Ireland) Region",
+				}, {
+					Value: "eu-west-2",
+					Help:  "EU (London) Region",
+				}, {
+					Value: "eu-west-3",
+					Help:  "EU (Paris) Region",
+				}, {
+					Value: "eu-north-1",
+					Help:  "EU (Stockholm) Region",
+				}, {
+					Value: "eu-south-1",
+					Help:  "EU (Milan) Region",
+				}, {
+					Value: "EU",
+					Help:  "EU Region",
+				}, {
+					Value: "ap-southeast-1",
+					Help:  "Asia Pacific (Singapore) Region",
+				}, {
+					Value: "ap-southeast-2",
+					Help:  "Asia Pacific (Sydney) Region",
+				}, {
+					Value: "ap-northeast-1",
+					Help:  "Asia Pacific (Tokyo) Region",
+				}, {
+					Value: "ap-northeast-2",
+					Help:  "Asia Pacific (Seoul) Region",
+				}, {
+					Value: "ap-northeast-3",
+					Help:  "Asia Pacific (Osaka-Local) Region",
+				}, {
+					Value: "ap-south-1",
+					Help:  "Asia Pacific (Mumbai) Region",
+				}, {
+					Value: "ap-east-1",
+					Help:  "Asia Pacific (Hong Kong) Region",
+				}, {
+					Value: "sa-east-1",
+					Help:  "South America (Sao Paulo) Region",
+				}, {
+					Value: "il-central-1",
+					Help:  "Israel (Tel Aviv) Region",
+				}, {
+					Value: "me-south-1",
+					Help:  "Middle East (Bahrain) Region",
+				}, {
+					Value: "af-south-1",
+					Help:  "Africa (Cape Town) Region",
+				}, {
+					Value: "cn-north-1",
+					Help:  "China (Beijing) Region",
+				}, {
+					Value: "cn-northwest-1",
+					Help:  "China (Ningxia) Region",
+				}, {
+					Value: "us-gov-east-1",
+					Help:  "AWS GovCloud (US-East) Region",
+				}, {
+					Value: "us-gov-west-1",
+					Help:  "AWS GovCloud (US) Region",
+				}},
+			}, {
+				Name:     "location_constraint",
+				Help:     "Location constraint - must match endpoint.\n\nUsed when creating buckets only.",
+				Provider: "ChinaMobile",
+				Examples: []fs.OptionExample{{
+					Value: "wuxi1",
+					Help:  "East China (Suzhou)",
+				}, {
+					Value: "jinan1",
+					Help:  "East China (Jinan)",
+				}, {
+					Value: "ningbo1",
+					Help:  "East China (Hangzhou)",
+				}, {
+					Value: "shanghai1",
+					Help:  "East China (Shanghai-1)",
+				}, {
+					Value: "zhengzhou1",
+					Help:  "Central China (Zhengzhou)",
+				}, {
+					Value: "hunan1",
+					Help:  "Central China (Changsha-1)",
+				}, {
+					Value: "zhuzhou1",
+					Help:  "Central China (Changsha-2)",
+				}, {
+					Value: "guangzhou1",
+					Help:  "South China (Guangzhou-2)",
+				}, {
+					Value: "dongguan1",
+					Help:  "South China (Guangzhou-3)",
+				}, {
+					Value: "beijing1",
+					Help:  "North China (Beijing-1)",
+				}, {
+					Value: "beijing2",
+					Help:  "North China (Beijing-2)",
+				}, {
+					Value: "beijing4",
+					Help:  "North China (Beijing-3)",
+				}, {
+					Value: "huhehaote1",
+					Help:  "North China (Huhehaote)",
+				}, {
+					Value: "chengdu1",
+					Help:  "Southwest China (Chengdu)",
+				}, {
+					Value: "chongqing1",
+					Help:  "Southwest China (Chongqing)",
+				}, {
+					Value: "guiyang1",
+					Help:  "Southwest China (Guiyang)",
+				}, {
+					Value: "xian1",
+					Help:  "Nouthwest China (Xian)",
+				}, {
+					Value: "yunnan",
+					Help:  "Yunnan China (Kunming)",
+				}, {
+					Value: "yunnan2",
+					Help:  "Yunnan China (Kunming-2)",
+				}, {
+					Value: "tianjin1",
+					Help:  "Tianjin China (Tianjin)",
+				}, {
+					Value: "jilin1",
+					Help:  "Jilin China (Changchun)",
+				}, {
+					Value: "hubei1",
+					Help:  "Hubei China (Xiangyan)",
+				}, {
+					Value: "jiangxi1",
+					Help:  "Jiangxi China (Nanchang)",
+				}, {
+					Value: "gansu1",
+					Help:  "Gansu China (Lanzhou)",
+				}, {
+					Value: "shanxi1",
+					Help:  "Shanxi China (Taiyuan)",
+				}, {
+					Value: "liaoning1",
+					Help:  "Liaoning China (Shenyang)",
+				}, {
+					Value: "hebei1",
+					Help:  "Hebei China (Shijiazhuang)",
+				}, {
+					Value: "fujian1",
+					Help:  "Fujian China (Xiamen)",
+				}, {
+					Value: "guangxi1",
+					Help:  "Guangxi China (Nanning)",
+				}, {
+					Value: "anhui1",
+					Help:  "Anhui China (Huainan)",
+				}},
+			}, {
+				Name:     "location_constraint",
+				Help:     "Location constraint - must match endpoint.\n\nUsed when creating buckets only.",
 				Provider: "ArvanCloud",
-			}, {
-				Value:    "s3.ir-tbz-sh1.arvanstorage.ir",
-				Help:     "ArvanCloud Tabriz Iran (Shahriar) endpoint",
-				Provider: "ArvanCloud",
-			}, {
-				Value:    "s3.eu-central-1.s4.mega.io",
-				Help:     "Mega S4 eu-central-1 (Amsterdam)",
-				Provider: "Mega",
-			}, {
-				Value:    "s3.eu-central-2.s4.mega.io",
-				Help:     "Mega S4 eu-central-2 (Bettembourg)",
-				Provider: "Mega",
-			}, {
-				Value:    "s3.ca-central-1.s4.mega.io",
-				Help:     "Mega S4 ca-central-1 (Montreal)",
-				Provider: "Mega",
-			}, {
-				Value:    "s3.ca-west-1.s4.mega.io",
-				Help:     "Mega S4 ca-west-1 (Vancouver)",
-				Provider: "Mega",
-			}},
-		}, {
-			Name:     "location_constraint",
-			Help:     "Location constraint - must be set to match the Region.\n\nUsed when creating buckets only.",
-			Provider: "AWS",
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Empty for US Region, Northern Virginia, or Pacific Northwest",
-			}, {
-				Value: "us-east-2",
-				Help:  "US East (Ohio) Region",
-			}, {
-				Value: "us-west-1",
-				Help:  "US West (Northern California) Region",
-			}, {
-				Value: "us-west-2",
-				Help:  "US West (Oregon) Region",
-			}, {
-				Value: "ca-central-1",
-				Help:  "Canada (Central) Region",
-			}, {
-				Value: "eu-west-1",
-				Help:  "EU (Ireland) Region",
-			}, {
-				Value: "eu-west-2",
-				Help:  "EU (London) Region",
-			}, {
-				Value: "eu-west-3",
-				Help:  "EU (Paris) Region",
-			}, {
-				Value: "eu-north-1",
-				Help:  "EU (Stockholm) Region",
-			}, {
-				Value: "eu-south-1",
-				Help:  "EU (Milan) Region",
-			}, {
-				Value: "EU",
-				Help:  "EU Region",
-			}, {
-				Value: "ap-southeast-1",
-				Help:  "Asia Pacific (Singapore) Region",
-			}, {
-				Value: "ap-southeast-2",
-				Help:  "Asia Pacific (Sydney) Region",
-			}, {
-				Value: "ap-northeast-1",
-				Help:  "Asia Pacific (Tokyo) Region",
-			}, {
-				Value: "ap-northeast-2",
-				Help:  "Asia Pacific (Seoul) Region",
-			}, {
-				Value: "ap-northeast-3",
-				Help:  "Asia Pacific (Osaka-Local) Region",
-			}, {
-				Value: "ap-south-1",
-				Help:  "Asia Pacific (Mumbai) Region",
-			}, {
-				Value: "ap-east-1",
-				Help:  "Asia Pacific (Hong Kong) Region",
-			}, {
-				Value: "sa-east-1",
-				Help:  "South America (Sao Paulo) Region",
-			}, {
-				Value: "il-central-1",
-				Help:  "Israel (Tel Aviv) Region",
-			}, {
-				Value: "me-south-1",
-				Help:  "Middle East (Bahrain) Region",
-			}, {
-				Value: "af-south-1",
-				Help:  "Africa (Cape Town) Region",
-			}, {
-				Value: "cn-north-1",
-				Help:  "China (Beijing) Region",
-			}, {
-				Value: "cn-northwest-1",
-				Help:  "China (Ningxia) Region",
-			}, {
-				Value: "us-gov-east-1",
-				Help:  "AWS GovCloud (US-East) Region",
-			}, {
-				Value: "us-gov-west-1",
-				Help:  "AWS GovCloud (US) Region",
-			}},
-		}, {
-			Name:     "location_constraint",
-			Help:     "Location constraint - must match endpoint.\n\nUsed when creating buckets only.",
-			Provider: "ChinaMobile",
-			Examples: []fs.OptionExample{{
-				Value: "wuxi1",
-				Help:  "East China (Suzhou)",
-			}, {
-				Value: "jinan1",
-				Help:  "East China (Jinan)",
-			}, {
-				Value: "ningbo1",
-				Help:  "East China (Hangzhou)",
-			}, {
-				Value: "shanghai1",
-				Help:  "East China (Shanghai-1)",
-			}, {
-				Value: "zhengzhou1",
-				Help:  "Central China (Zhengzhou)",
-			}, {
-				Value: "hunan1",
-				Help:  "Central China (Changsha-1)",
-			}, {
-				Value: "zhuzhou1",
-				Help:  "Central China (Changsha-2)",
-			}, {
-				Value: "guangzhou1",
-				Help:  "South China (Guangzhou-2)",
-			}, {
-				Value: "dongguan1",
-				Help:  "South China (Guangzhou-3)",
-			}, {
-				Value: "beijing1",
-				Help:  "North China (Beijing-1)",
-			}, {
-				Value: "beijing2",
-				Help:  "North China (Beijing-2)",
-			}, {
-				Value: "beijing4",
-				Help:  "North China (Beijing-3)",
-			}, {
-				Value: "huhehaote1",
-				Help:  "North China (Huhehaote)",
-			}, {
-				Value: "chengdu1",
-				Help:  "Southwest China (Chengdu)",
-			}, {
-				Value: "chongqing1",
-				Help:  "Southwest China (Chongqing)",
-			}, {
-				Value: "guiyang1",
-				Help:  "Southwest China (Guiyang)",
-			}, {
-				Value: "xian1",
-				Help:  "Nouthwest China (Xian)",
-			}, {
-				Value: "yunnan",
-				Help:  "Yunnan China (Kunming)",
-			}, {
-				Value: "yunnan2",
-				Help:  "Yunnan China (Kunming-2)",
-			}, {
-				Value: "tianjin1",
-				Help:  "Tianjin China (Tianjin)",
-			}, {
-				Value: "jilin1",
-				Help:  "Jilin China (Changchun)",
-			}, {
-				Value: "hubei1",
-				Help:  "Hubei China (Xiangyan)",
-			}, {
-				Value: "jiangxi1",
-				Help:  "Jiangxi China (Nanchang)",
-			}, {
-				Value: "gansu1",
-				Help:  "Gansu China (Lanzhou)",
-			}, {
-				Value: "shanxi1",
-				Help:  "Shanxi China (Taiyuan)",
-			}, {
-				Value: "liaoning1",
-				Help:  "Liaoning China (Shenyang)",
-			}, {
-				Value: "hebei1",
-				Help:  "Hebei China (Shijiazhuang)",
-			}, {
-				Value: "fujian1",
-				Help:  "Fujian China (Xiamen)",
-			}, {
-				Value: "guangxi1",
-				Help:  "Guangxi China (Nanning)",
-			}, {
-				Value: "anhui1",
-				Help:  "Anhui China (Huainan)",
-			}},
-		}, {
-			Name:     "location_constraint",
-			Help:     "Location constraint - must match endpoint.\n\nUsed when creating buckets only.",
-			Provider: "ArvanCloud",
-			Examples: []fs.OptionExample{{
-				Value: "ir-thr-at1",
-				Help:  "Tehran Iran (Simin)",
-			}, {
-				Value: "ir-tbz-sh1",
-				Help:  "Tabriz Iran (Shahriar)",
-			}},
-		}, {
-			Name:     "location_constraint",
-			Help:     "Location constraint - must match endpoint when using IBM Cloud Public.\n\nFor on-prem COS, do not make a selection from this list, hit enter.",
-			Provider: "IBMCOS",
-			Examples: []fs.OptionExample{{
-				Value: "us-standard",
-				Help:  "US Cross Region Standard",
-			}, {
-				Value: "us-vault",
-				Help:  "US Cross Region Vault",
-			}, {
-				Value: "us-cold",
-				Help:  "US Cross Region Cold",
-			}, {
-				Value: "us-flex",
-				Help:  "US Cross Region Flex",
-			}, {
-				Value: "us-east-standard",
-				Help:  "US East Region Standard",
-			}, {
-				Value: "us-east-vault",
-				Help:  "US East Region Vault",
-			}, {
-				Value: "us-east-cold",
-				Help:  "US East Region Cold",
-			}, {
-				Value: "us-east-flex",
-				Help:  "US East Region Flex",
-			}, {
-				Value: "us-south-standard",
-				Help:  "US South Region Standard",
-			}, {
-				Value: "us-south-vault",
-				Help:  "US South Region Vault",
-			}, {
-				Value: "us-south-cold",
-				Help:  "US South Region Cold",
-			}, {
-				Value: "us-south-flex",
-				Help:  "US South Region Flex",
-			}, {
-				Value: "eu-standard",
-				Help:  "EU Cross Region Standard",
-			}, {
-				Value: "eu-vault",
-				Help:  "EU Cross Region Vault",
-			}, {
-				Value: "eu-cold",
-				Help:  "EU Cross Region Cold",
-			}, {
-				Value: "eu-flex",
-				Help:  "EU Cross Region Flex",
-			}, {
-				Value: "eu-gb-standard",
-				Help:  "Great Britain Standard",
-			}, {
-				Value: "eu-gb-vault",
-				Help:  "Great Britain Vault",
-			}, {
-				Value: "eu-gb-cold",
-				Help:  "Great Britain Cold",
-			}, {
-				Value: "eu-gb-flex",
-				Help:  "Great Britain Flex",
-			}, {
-				Value: "ap-standard",
-				Help:  "APAC Standard",
-			}, {
-				Value: "ap-vault",
-				Help:  "APAC Vault",
-			}, {
-				Value: "ap-cold",
-				Help:  "APAC Cold",
-			}, {
-				Value: "ap-flex",
-				Help:  "APAC Flex",
-			}, {
-				Value: "mel01-standard",
-				Help:  "Melbourne Standard",
-			}, {
-				Value: "mel01-vault",
-				Help:  "Melbourne Vault",
-			}, {
-				Value: "mel01-cold",
-				Help:  "Melbourne Cold",
-			}, {
-				Value: "mel01-flex",
-				Help:  "Melbourne Flex",
-			}, {
-				Value: "tor01-standard",
-				Help:  "Toronto Standard",
-			}, {
-				Value: "tor01-vault",
-				Help:  "Toronto Vault",
-			}, {
-				Value: "tor01-cold",
-				Help:  "Toronto Cold",
-			}, {
-				Value: "tor01-flex",
-				Help:  "Toronto Flex",
-			}},
-		}, {
-			Name:     "location_constraint",
-			Help:     "Location constraint - the location where your bucket will be located and your data stored.\n",
-			Provider: "RackCorp",
-			Examples: []fs.OptionExample{{
-				Value: "global",
-				Help:  "Global CDN Region",
-			}, {
-				Value: "au",
-				Help:  "Australia (All locations)",
-			}, {
-				Value: "au-nsw",
-				Help:  "NSW (Australia) Region",
-			}, {
-				Value: "au-qld",
-				Help:  "QLD (Australia) Region",
-			}, {
-				Value: "au-vic",
-				Help:  "VIC (Australia) Region",
-			}, {
-				Value: "au-wa",
-				Help:  "Perth (Australia) Region",
-			}, {
-				Value: "ph",
-				Help:  "Manila (Philippines) Region",
-			}, {
-				Value: "th",
-				Help:  "Bangkok (Thailand) Region",
-			}, {
-				Value: "hk",
-				Help:  "HK (Hong Kong) Region",
-			}, {
-				Value: "mn",
-				Help:  "Ulaanbaatar (Mongolia) Region",
-			}, {
-				Value: "kg",
-				Help:  "Bishkek (Kyrgyzstan) Region",
-			}, {
-				Value: "id",
-				Help:  "Jakarta (Indonesia) Region",
-			}, {
-				Value: "jp",
-				Help:  "Tokyo (Japan) Region",
-			}, {
-				Value: "sg",
-				Help:  "SG (Singapore) Region",
-			}, {
-				Value: "de",
-				Help:  "Frankfurt (Germany) Region",
-			}, {
-				Value: "us",
-				Help:  "USA (AnyCast) Region",
-			}, {
-				Value: "us-east-1",
-				Help:  "New York (USA) Region",
-			}, {
-				Value: "us-west-1",
-				Help:  "Freemont (USA) Region",
-			}, {
-				Value: "nz",
-				Help:  "Auckland (New Zealand) Region",
-			}},
-		}, {
-			Name:     "location_constraint",
-			Help:     "Location constraint - must be set to match the Region.\n\nUsed when creating buckets only.",
-			Provider: "Qiniu",
-			Examples: []fs.OptionExample{{
-				Value: "cn-east-1",
-				Help:  "East China Region 1",
-			}, {
-				Value: "cn-east-2",
-				Help:  "East China Region 2",
-			}, {
-				Value: "cn-north-1",
-				Help:  "North China Region 1",
-			}, {
-				Value: "cn-south-1",
-				Help:  "South China Region 1",
-			}, {
-				Value: "us-north-1",
-				Help:  "North America Region 1",
-			}, {
-				Value: "ap-southeast-1",
-				Help:  "Southeast Asia Region 1",
-			}, {
-				Value: "ap-northeast-1",
-				Help:  "Northeast Asia Region 1",
-			}},
-		}, {
-			Name:     "location_constraint",
-			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
-		}, {
-			Name: "acl",
-			Help: `Canned ACL used when creating buckets and storing or copying objects.
+				Examples: []fs.OptionExample{{
+					Value: "ir-thr-at1",
+					Help:  "Tehran Iran (Simin)",
+				}, {
+					Value: "ir-tbz-sh1",
+					Help:  "Tabriz Iran (Shahriar)",
+				}},
+			}, {
+				Name:     "location_constraint",
+				Help:     "Location constraint - must match endpoint when using IBM Cloud Public.\n\nFor on-prem COS, do not make a selection from this list, hit enter.",
+				Provider: "IBMCOS",
+				Examples: []fs.OptionExample{{
+					Value: "us-standard",
+					Help:  "US Cross Region Standard",
+				}, {
+					Value: "us-vault",
+					Help:  "US Cross Region Vault",
+				}, {
+					Value: "us-cold",
+					Help:  "US Cross Region Cold",
+				}, {
+					Value: "us-flex",
+					Help:  "US Cross Region Flex",
+				}, {
+					Value: "us-east-standard",
+					Help:  "US East Region Standard",
+				}, {
+					Value: "us-east-vault",
+					Help:  "US East Region Vault",
+				}, {
+					Value: "us-east-cold",
+					Help:  "US East Region Cold",
+				}, {
+					Value: "us-east-flex",
+					Help:  "US East Region Flex",
+				}, {
+					Value: "us-south-standard",
+					Help:  "US South Region Standard",
+				}, {
+					Value: "us-south-vault",
+					Help:  "US South Region Vault",
+				}, {
+					Value: "us-south-cold",
+					Help:  "US South Region Cold",
+				}, {
+					Value: "us-south-flex",
+					Help:  "US South Region Flex",
+				}, {
+					Value: "eu-standard",
+					Help:  "EU Cross Region Standard",
+				}, {
+					Value: "eu-vault",
+					Help:  "EU Cross Region Vault",
+				}, {
+					Value: "eu-cold",
+					Help:  "EU Cross Region Cold",
+				}, {
+					Value: "eu-flex",
+					Help:  "EU Cross Region Flex",
+				}, {
+					Value: "eu-gb-standard",
+					Help:  "Great Britain Standard",
+				}, {
+					Value: "eu-gb-vault",
+					Help:  "Great Britain Vault",
+				}, {
+					Value: "eu-gb-cold",
+					Help:  "Great Britain Cold",
+				}, {
+					Value: "eu-gb-flex",
+					Help:  "Great Britain Flex",
+				}, {
+					Value: "ap-standard",
+					Help:  "APAC Standard",
+				}, {
+					Value: "ap-vault",
+					Help:  "APAC Vault",
+				}, {
+					Value: "ap-cold",
+					Help:  "APAC Cold",
+				}, {
+					Value: "ap-flex",
+					Help:  "APAC Flex",
+				}, {
+					Value: "mel01-standard",
+					Help:  "Melbourne Standard",
+				}, {
+					Value: "mel01-vault",
+					Help:  "Melbourne Vault",
+				}, {
+					Value: "mel01-cold",
+					Help:  "Melbourne Cold",
+				}, {
+					Value: "mel01-flex",
+					Help:  "Melbourne Flex",
+				}, {
+					Value: "tor01-standard",
+					Help:  "Toronto Standard",
+				}, {
+					Value: "tor01-vault",
+					Help:  "Toronto Vault",
+				}, {
+					Value: "tor01-cold",
+					Help:  "Toronto Cold",
+				}, {
+					Value: "tor01-flex",
+					Help:  "Toronto Flex",
+				}},
+			}, {
+				Name:     "location_constraint",
+				Help:     "Location constraint - the location where your bucket will be located and your data stored.\n",
+				Provider: "RackCorp",
+				Examples: []fs.OptionExample{{
+					Value: "global",
+					Help:  "Global CDN Region",
+				}, {
+					Value: "au",
+					Help:  "Australia (All locations)",
+				}, {
+					Value: "au-nsw",
+					Help:  "NSW (Australia) Region",
+				}, {
+					Value: "au-qld",
+					Help:  "QLD (Australia) Region",
+				}, {
+					Value: "au-vic",
+					Help:  "VIC (Australia) Region",
+				}, {
+					Value: "au-wa",
+					Help:  "Perth (Australia) Region",
+				}, {
+					Value: "ph",
+					Help:  "Manila (Philippines) Region",
+				}, {
+					Value: "th",
+					Help:  "Bangkok (Thailand) Region",
+				}, {
+					Value: "hk",
+					Help:  "HK (Hong Kong) Region",
+				}, {
+					Value: "mn",
+					Help:  "Ulaanbaatar (Mongolia) Region",
+				}, {
+					Value: "kg",
+					Help:  "Bishkek (Kyrgyzstan) Region",
+				}, {
+					Value: "id",
+					Help:  "Jakarta (Indonesia) Region",
+				}, {
+					Value: "jp",
+					Help:  "Tokyo (Japan) Region",
+				}, {
+					Value: "sg",
+					Help:  "SG (Singapore) Region",
+				}, {
+					Value: "de",
+					Help:  "Frankfurt (Germany) Region",
+				}, {
+					Value: "us",
+					Help:  "USA (AnyCast) Region",
+				}, {
+					Value: "us-east-1",
+					Help:  "New York (USA) Region",
+				}, {
+					Value: "us-west-1",
+					Help:  "Freemont (USA) Region",
+				}, {
+					Value: "nz",
+					Help:  "Auckland (New Zealand) Region",
+				}},
+			}, {
+				Name:     "location_constraint",
+				Help:     "Location constraint - must be set to match the Region.\n\nUsed when creating buckets only.",
+				Provider: "Qiniu",
+				Examples: []fs.OptionExample{{
+					Value: "cn-east-1",
+					Help:  "East China Region 1",
+				}, {
+					Value: "cn-east-2",
+					Help:  "East China Region 2",
+				}, {
+					Value: "cn-north-1",
+					Help:  "North China Region 1",
+				}, {
+					Value: "cn-south-1",
+					Help:  "South China Region 1",
+				}, {
+					Value: "us-north-1",
+					Help:  "North America Region 1",
+				}, {
+					Value: "ap-southeast-1",
+					Help:  "Southeast Asia Region 1",
+				}, {
+					Value: "ap-northeast-1",
+					Help:  "Northeast Asia Region 1",
+				}},
+			}, {
+				Name:     "location_constraint",
+				Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
+				Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
+			}, {
+				Name: "acl",
+				Help: `Canned ACL used when creating buckets and storing or copying objects.
 
 This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.
 
@@ -1965,55 +1965,55 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 If the acl is an empty string then no X-Amz-Acl: header is added and
 the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade,Mega",
-			Examples: []fs.OptionExample{{
-				Value:    "default",
-				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
-				Provider: "TencentCOS",
+				Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade,Mega",
+				Examples: []fs.OptionExample{{
+					Value:    "default",
+					Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
+					Provider: "TencentCOS",
+				}, {
+					Value:    "private",
+					Help:     "Owner gets FULL_CONTROL.\nNo one else has access rights (default).",
+					Provider: "!IBMCOS,TencentCOS",
+				}, {
+					Value:    "public-read",
+					Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ access.",
+					Provider: "!IBMCOS",
+				}, {
+					Value:    "public-read-write",
+					Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
+					Provider: "!IBMCOS",
+				}, {
+					Value:    "authenticated-read",
+					Help:     "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.",
+					Provider: "!IBMCOS",
+				}, {
+					Value:    "bucket-owner-read",
+					Help:     "Object owner gets FULL_CONTROL.\nBucket owner gets READ access.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
+					Provider: "!IBMCOS,ChinaMobile",
+				}, {
+					Value:    "bucket-owner-full-control",
+					Help:     "Both the object owner and the bucket owner get FULL_CONTROL over the object.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
+					Provider: "!IBMCOS,ChinaMobile",
+				}, {
+					Value:    "private",
+					Help:     "Owner gets FULL_CONTROL.\nNo one else has access rights (default).\nThis acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise COS.",
+					Provider: "IBMCOS",
+				}, {
+					Value:    "public-read",
+					Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ access.\nThis acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise IBM COS.",
+					Provider: "IBMCOS",
+				}, {
+					Value:    "public-read-write",
+					Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nThis acl is available on IBM Cloud (Infra), On-Premise IBM COS.",
+					Provider: "IBMCOS",
+				}, {
+					Value:    "authenticated-read",
+					Help:     "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.\nNot supported on Buckets.\nThis acl is available on IBM Cloud (Infra) and On-Premise IBM COS.",
+					Provider: "IBMCOS",
+				}},
 			}, {
-				Value:    "private",
-				Help:     "Owner gets FULL_CONTROL.\nNo one else has access rights (default).",
-				Provider: "!IBMCOS,TencentCOS",
-			}, {
-				Value:    "public-read",
-				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ access.",
-				Provider: "!IBMCOS",
-			}, {
-				Value:    "public-read-write",
-				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
-				Provider: "!IBMCOS",
-			}, {
-				Value:    "authenticated-read",
-				Help:     "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.",
-				Provider: "!IBMCOS",
-			}, {
-				Value:    "bucket-owner-read",
-				Help:     "Object owner gets FULL_CONTROL.\nBucket owner gets READ access.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
-				Provider: "!IBMCOS,ChinaMobile",
-			}, {
-				Value:    "bucket-owner-full-control",
-				Help:     "Both the object owner and the bucket owner get FULL_CONTROL over the object.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
-				Provider: "!IBMCOS,ChinaMobile",
-			}, {
-				Value:    "private",
-				Help:     "Owner gets FULL_CONTROL.\nNo one else has access rights (default).\nThis acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise COS.",
-				Provider: "IBMCOS",
-			}, {
-				Value:    "public-read",
-				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ access.\nThis acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise IBM COS.",
-				Provider: "IBMCOS",
-			}, {
-				Value:    "public-read-write",
-				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nThis acl is available on IBM Cloud (Infra), On-Premise IBM COS.",
-				Provider: "IBMCOS",
-			}, {
-				Value:    "authenticated-read",
-				Help:     "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.\nNot supported on Buckets.\nThis acl is available on IBM Cloud (Infra) and On-Premise IBM COS.",
-				Provider: "IBMCOS",
-			}},
-		}, {
-			Name: "bucket_acl",
-			Help: `Canned ACL used when creating buckets.
+				Name: "bucket_acl",
+				Help: `Canned ACL used when creating buckets.
 
 For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
 
@@ -2023,266 +2023,266 @@ isn't set then "acl" is used instead.
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
 header is added and the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade",
-			Advanced: true,
-			Examples: []fs.OptionExample{{
-				Value: "private",
-				Help:  "Owner gets FULL_CONTROL.\nNo one else has access rights (default).",
+				Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade",
+				Advanced: true,
+				Examples: []fs.OptionExample{{
+					Value: "private",
+					Help:  "Owner gets FULL_CONTROL.\nNo one else has access rights (default).",
+				}, {
+					Value: "public-read",
+					Help:  "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ access.",
+				}, {
+					Value: "public-read-write",
+					Help:  "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
+				}, {
+					Value: "authenticated-read",
+					Help:  "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.",
+				}},
 			}, {
-				Value: "public-read",
-				Help:  "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ access.",
+				Name:     "requester_pays",
+				Help:     "Enables requester pays option when interacting with S3 bucket.",
+				Provider: "AWS",
+				Default:  false,
+				Advanced: true,
 			}, {
-				Value: "public-read-write",
-				Help:  "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
+				Name:     "server_side_encryption",
+				Help:     "The server-side encryption algorithm used when storing this object in S3.",
+				Provider: "AWS,Ceph,ChinaMobile,Minio",
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "None",
+				}, {
+					Value: "AES256",
+					Help:  "AES256",
+				}, {
+					Value:    "aws:kms",
+					Help:     "aws:kms",
+					Provider: "!ChinaMobile",
+				}},
 			}, {
-				Value: "authenticated-read",
-				Help:  "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.",
-			}},
-		}, {
-			Name:     "requester_pays",
-			Help:     "Enables requester pays option when interacting with S3 bucket.",
-			Provider: "AWS",
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:     "server_side_encryption",
-			Help:     "The server-side encryption algorithm used when storing this object in S3.",
-			Provider: "AWS,Ceph,ChinaMobile,Minio",
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "None",
+				Name:     "sse_customer_algorithm",
+				Help:     "If using SSE-C, the server-side encryption algorithm used when storing this object in S3.",
+				Provider: "AWS,Ceph,ChinaMobile,Minio",
+				Advanced: true,
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "None",
+				}, {
+					Value: "AES256",
+					Help:  "AES256",
+				}},
 			}, {
-				Value: "AES256",
-				Help:  "AES256",
+				Name:     "sse_kms_key_id",
+				Help:     "If using KMS ID you must provide the ARN of Key.",
+				Provider: "AWS,Ceph,Minio",
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "None",
+				}, {
+					Value: "arn:aws:kms:us-east-1:*",
+					Help:  "arn:aws:kms:*",
+				}},
+				Sensitive: true,
 			}, {
-				Value:    "aws:kms",
-				Help:     "aws:kms",
-				Provider: "!ChinaMobile",
-			}},
-		}, {
-			Name:     "sse_customer_algorithm",
-			Help:     "If using SSE-C, the server-side encryption algorithm used when storing this object in S3.",
-			Provider: "AWS,Ceph,ChinaMobile,Minio",
-			Advanced: true,
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "None",
-			}, {
-				Value: "AES256",
-				Help:  "AES256",
-			}},
-		}, {
-			Name:     "sse_kms_key_id",
-			Help:     "If using KMS ID you must provide the ARN of Key.",
-			Provider: "AWS,Ceph,Minio",
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "None",
-			}, {
-				Value: "arn:aws:kms:us-east-1:*",
-				Help:  "arn:aws:kms:*",
-			}},
-			Sensitive: true,
-		}, {
-			Name: "sse_customer_key",
-			Help: `To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data.
+				Name: "sse_customer_key",
+				Help: `To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data.
 
 Alternatively you can provide --sse-customer-key-base64.`,
-			Provider: "AWS,Ceph,ChinaMobile,Minio",
-			Advanced: true,
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "None",
-			}},
-			Sensitive: true,
-		}, {
-			Name: "sse_customer_key_base64",
-			Help: `If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data.
+				Provider: "AWS,Ceph,ChinaMobile,Minio",
+				Advanced: true,
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "None",
+				}},
+				Sensitive: true,
+			}, {
+				Name: "sse_customer_key_base64",
+				Help: `If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data.
 
 Alternatively you can provide --sse-customer-key.`,
-			Provider: "AWS,Ceph,ChinaMobile,Minio",
-			Advanced: true,
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "None",
-			}},
-			Sensitive: true,
-		}, {
-			Name: "sse_customer_key_md5",
-			Help: `If using SSE-C you may provide the secret encryption key MD5 checksum (optional).
+				Provider: "AWS,Ceph,ChinaMobile,Minio",
+				Advanced: true,
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "None",
+				}},
+				Sensitive: true,
+			}, {
+				Name: "sse_customer_key_md5",
+				Help: `If using SSE-C you may provide the secret encryption key MD5 checksum (optional).
 
 If you leave it blank, this is calculated automatically from the sse_customer_key provided.
 `,
-			Provider: "AWS,Ceph,ChinaMobile,Minio",
-			Advanced: true,
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "None",
-			}},
-			Sensitive: true,
-		}, {
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in S3.",
-			Provider: "AWS",
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Default",
+				Provider: "AWS,Ceph,ChinaMobile,Minio",
+				Advanced: true,
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "None",
+				}},
+				Sensitive: true,
 			}, {
-				Value: "STANDARD",
-				Help:  "Standard storage class",
+				Name:     "storage_class",
+				Help:     "The storage class to use when storing new objects in S3.",
+				Provider: "AWS",
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "Default",
+				}, {
+					Value: "STANDARD",
+					Help:  "Standard storage class",
+				}, {
+					Value: "REDUCED_REDUNDANCY",
+					Help:  "Reduced redundancy storage class",
+				}, {
+					Value: "STANDARD_IA",
+					Help:  "Standard Infrequent Access storage class",
+				}, {
+					Value: "ONEZONE_IA",
+					Help:  "One Zone Infrequent Access storage class",
+				}, {
+					Value: "GLACIER",
+					Help:  "Glacier Flexible Retrieval storage class",
+				}, {
+					Value: "DEEP_ARCHIVE",
+					Help:  "Glacier Deep Archive storage class",
+				}, {
+					Value: "INTELLIGENT_TIERING",
+					Help:  "Intelligent-Tiering storage class",
+				}, {
+					Value: "GLACIER_IR",
+					Help:  "Glacier Instant Retrieval storage class",
+				}},
 			}, {
-				Value: "REDUCED_REDUNDANCY",
-				Help:  "Reduced redundancy storage class",
+				// Mapping from here: https://www.alibabacloud.com/help/doc-detail/64919.htm
+				Name:     "storage_class",
+				Help:     "The storage class to use when storing new objects in OSS.",
+				Provider: "Alibaba",
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "Default",
+				}, {
+					Value: "STANDARD",
+					Help:  "Standard storage class",
+				}, {
+					Value: "GLACIER",
+					Help:  "Archive storage mode",
+				}, {
+					Value: "STANDARD_IA",
+					Help:  "Infrequent access storage mode",
+				}},
 			}, {
-				Value: "STANDARD_IA",
-				Help:  "Standard Infrequent Access storage class",
+				// Mapping from here: https://ecloud.10086.cn/op-help-center/doc/article/24495
+				Name:     "storage_class",
+				Help:     "The storage class to use when storing new objects in ChinaMobile.",
+				Provider: "ChinaMobile",
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "Default",
+				}, {
+					Value: "STANDARD",
+					Help:  "Standard storage class",
+				}, {
+					Value: "GLACIER",
+					Help:  "Archive storage mode",
+				}, {
+					Value: "STANDARD_IA",
+					Help:  "Infrequent access storage mode",
+				}},
 			}, {
-				Value: "ONEZONE_IA",
-				Help:  "One Zone Infrequent Access storage class",
+				// Mapping from here: https://liara.ir/landing/object-storage
+				Name:     "storage_class",
+				Help:     "The storage class to use when storing new objects in Liara",
+				Provider: "Liara",
+				Examples: []fs.OptionExample{{
+					Value: "STANDARD",
+					Help:  "Standard storage class",
+				}},
 			}, {
-				Value: "GLACIER",
-				Help:  "Glacier Flexible Retrieval storage class",
+				// Mapping from here: https://www.arvancloud.ir/en/products/cloud-storage
+				Name:     "storage_class",
+				Help:     "The storage class to use when storing new objects in ArvanCloud.",
+				Provider: "ArvanCloud",
+				Examples: []fs.OptionExample{{
+					Value: "STANDARD",
+					Help:  "Standard storage class",
+				}},
 			}, {
-				Value: "DEEP_ARCHIVE",
-				Help:  "Glacier Deep Archive storage class",
+				// Mapping from here: https://docs.magalu.cloud/docs/storage/object-storage/Classes-de-Armazenamento/standard
+				Name:     "storage_class",
+				Help:     "The storage class to use when storing new objects in Magalu.",
+				Provider: "Magalu",
+				Examples: []fs.OptionExample{{
+					Value: "STANDARD",
+					Help:  "Standard storage class",
+				}, {
+					Value: "GLACIER_IR",
+					Help:  "Glacier Instant Retrieval storage class",
+				}},
 			}, {
-				Value: "INTELLIGENT_TIERING",
-				Help:  "Intelligent-Tiering storage class",
+				// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
+				Name:     "storage_class",
+				Help:     "The storage class to use when storing new objects in Tencent COS.",
+				Provider: "TencentCOS",
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "Default",
+				}, {
+					Value: "STANDARD",
+					Help:  "Standard storage class",
+				}, {
+					Value: "ARCHIVE",
+					Help:  "Archive storage mode",
+				}, {
+					Value: "STANDARD_IA",
+					Help:  "Infrequent access storage mode",
+				}},
 			}, {
-				Value: "GLACIER_IR",
-				Help:  "Glacier Instant Retrieval storage class",
-			}},
-		}, {
-			// Mapping from here: https://www.alibabacloud.com/help/doc-detail/64919.htm
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in OSS.",
-			Provider: "Alibaba",
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Default",
+				// Mapping from here: https://www.scaleway.com/en/docs/storage/object/quickstart/
+				Name:     "storage_class",
+				Help:     "The storage class to use when storing new objects in S3.",
+				Provider: "Scaleway",
+				Examples: []fs.OptionExample{{
+					Value: "",
+					Help:  "Default.",
+				}, {
+					Value: "STANDARD",
+					Help:  "The Standard class for any upload.\nSuitable for on-demand content like streaming or CDN.\nAvailable in all regions.",
+				}, {
+					Value: "GLACIER",
+					Help:  "Archived storage.\nPrices are lower, but it needs to be restored first to be accessed.\nAvailable in FR-PAR and NL-AMS regions.",
+				}, {
+					Value: "ONEZONE_IA",
+					Help:  "One Zone - Infrequent Access.\nA good choice for storing secondary backup copies or easily re-creatable data.\nAvailable in the FR-PAR region only.",
+				}},
 			}, {
-				Value: "STANDARD",
-				Help:  "Standard storage class",
+				// Mapping from here: https://developer.qiniu.com/kodo/5906/storage-type
+				Name:     "storage_class",
+				Help:     "The storage class to use when storing new objects in Qiniu.",
+				Provider: "Qiniu",
+				Examples: []fs.OptionExample{{
+					Value: "STANDARD",
+					Help:  "Standard storage class",
+				}, {
+					Value: "LINE",
+					Help:  "Infrequent access storage mode",
+				}, {
+					Value: "GLACIER",
+					Help:  "Archive storage mode",
+				}, {
+					Value: "DEEP_ARCHIVE",
+					Help:  "Deep archive storage mode",
+				}},
 			}, {
-				Value: "GLACIER",
-				Help:  "Archive storage mode",
-			}, {
-				Value: "STANDARD_IA",
-				Help:  "Infrequent access storage mode",
-			}},
-		}, {
-			// Mapping from here: https://ecloud.10086.cn/op-help-center/doc/article/24495
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in ChinaMobile.",
-			Provider: "ChinaMobile",
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Default",
-			}, {
-				Value: "STANDARD",
-				Help:  "Standard storage class",
-			}, {
-				Value: "GLACIER",
-				Help:  "Archive storage mode",
-			}, {
-				Value: "STANDARD_IA",
-				Help:  "Infrequent access storage mode",
-			}},
-		}, {
-			// Mapping from here: https://liara.ir/landing/object-storage
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in Liara",
-			Provider: "Liara",
-			Examples: []fs.OptionExample{{
-				Value: "STANDARD",
-				Help:  "Standard storage class",
-			}},
-		}, {
-			// Mapping from here: https://www.arvancloud.ir/en/products/cloud-storage
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in ArvanCloud.",
-			Provider: "ArvanCloud",
-			Examples: []fs.OptionExample{{
-				Value: "STANDARD",
-				Help:  "Standard storage class",
-			}},
-		}, {
-			// Mapping from here: https://docs.magalu.cloud/docs/storage/object-storage/Classes-de-Armazenamento/standard
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in Magalu.",
-			Provider: "Magalu",
-			Examples: []fs.OptionExample{{
-				Value: "STANDARD",
-				Help:  "Standard storage class",
-			}, {
-				Value: "GLACIER_IR",
-				Help:  "Glacier Instant Retrieval storage class",
-			}},
-		}, {
-			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in Tencent COS.",
-			Provider: "TencentCOS",
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Default",
-			}, {
-				Value: "STANDARD",
-				Help:  "Standard storage class",
-			}, {
-				Value: "ARCHIVE",
-				Help:  "Archive storage mode",
-			}, {
-				Value: "STANDARD_IA",
-				Help:  "Infrequent access storage mode",
-			}},
-		}, {
-			// Mapping from here: https://www.scaleway.com/en/docs/storage/object/quickstart/
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in S3.",
-			Provider: "Scaleway",
-			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Default.",
-			}, {
-				Value: "STANDARD",
-				Help:  "The Standard class for any upload.\nSuitable for on-demand content like streaming or CDN.\nAvailable in all regions.",
-			}, {
-				Value: "GLACIER",
-				Help:  "Archived storage.\nPrices are lower, but it needs to be restored first to be accessed.\nAvailable in FR-PAR and NL-AMS regions.",
-			}, {
-				Value: "ONEZONE_IA",
-				Help:  "One Zone - Infrequent Access.\nA good choice for storing secondary backup copies or easily re-creatable data.\nAvailable in the FR-PAR region only.",
-			}},
-		}, {
-			// Mapping from here: https://developer.qiniu.com/kodo/5906/storage-type
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in Qiniu.",
-			Provider: "Qiniu",
-			Examples: []fs.OptionExample{{
-				Value: "STANDARD",
-				Help:  "Standard storage class",
-			}, {
-				Value: "LINE",
-				Help:  "Infrequent access storage mode",
-			}, {
-				Value: "GLACIER",
-				Help:  "Archive storage mode",
-			}, {
-				Value: "DEEP_ARCHIVE",
-				Help:  "Deep archive storage mode",
-			}},
-		}, {
-			Name: "upload_cutoff",
-			Help: `Cutoff for switching to chunked upload.
+				Name: "upload_cutoff",
+				Help: `Cutoff for switching to chunked upload.
 
 Any files larger than this will be uploaded in chunks of chunk_size.
 The minimum is 0 and the maximum is 5 GiB.`,
-			Default:  defaultUploadCutoff,
-			Advanced: true,
-		}, {
-			Name: "chunk_size",
-			Help: `Chunk size to use for uploading.
+				Default:  defaultUploadCutoff,
+				Advanced: true,
+			}, {
+				Name: "chunk_size",
+				Help: `Chunk size to use for uploading.
 
 When uploading files larger than upload_cutoff or files with unknown
 size (e.g. from "rclone rcat" or uploaded with "rclone mount" or google
@@ -2310,11 +2310,11 @@ it's buffered by the AWS SDK, when in fact it may still be uploading.
 A bigger chunk size means a bigger AWS SDK buffer and progress
 reporting more deviating from the truth.
 `,
-			Default:  minChunkSize,
-			Advanced: true,
-		}, {
-			Name: "max_upload_parts",
-			Help: `Maximum number of parts in a multipart upload.
+				Default:  minChunkSize,
+				Advanced: true,
+			}, {
+				Name: "max_upload_parts",
+				Help: `Maximum number of parts in a multipart upload.
 
 This option defines the maximum number of multipart chunks to use
 when doing a multipart upload.
@@ -2325,31 +2325,31 @@ specification of 10,000 chunks.
 Rclone will automatically increase the chunk size when uploading a
 large file of a known size to stay below this number of chunks limit.
 `,
-			Default:  maxUploadParts,
-			Advanced: true,
-		}, {
-			Name: "copy_cutoff",
-			Help: `Cutoff for switching to multipart copy.
+				Default:  maxUploadParts,
+				Advanced: true,
+			}, {
+				Name: "copy_cutoff",
+				Help: `Cutoff for switching to multipart copy.
 
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
 The minimum is 0 and the maximum is 5 GiB.`,
-			Default:  fs.SizeSuffix(maxSizeForCopy),
-			Advanced: true,
-		}, {
-			Name: "disable_checksum",
-			Help: `Don't store MD5 checksum with object metadata.
+				Default:  fs.SizeSuffix(maxSizeForCopy),
+				Advanced: true,
+			}, {
+				Name: "disable_checksum",
+				Help: `Don't store MD5 checksum with object metadata.
 
 Normally rclone will calculate the MD5 checksum of the input before
 uploading it so it can add it to metadata on the object. This is great
 for data integrity checking but can cause long delays for large files
 to start uploading.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "shared_credentials_file",
-			Help: `Path to the shared credentials file.
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name: "shared_credentials_file",
+				Help: `Path to the shared credentials file.
 
 If env_auth = true then rclone can use a shared credentials file.
 
@@ -2360,10 +2360,10 @@ it will default to the current user's home directory.
     Linux/OSX: "$HOME/.aws/credentials"
     Windows:   "%USERPROFILE%\.aws\credentials"
 `,
-			Advanced: true,
-		}, {
-			Name: "profile",
-			Help: `Profile to use in the shared credentials file.
+				Advanced: true,
+			}, {
+				Name: "profile",
+				Help: `Profile to use in the shared credentials file.
 
 If env_auth = true then rclone can use a shared credentials file. This
 variable controls which profile is used in that file.
@@ -2371,15 +2371,15 @@ variable controls which profile is used in that file.
 If empty it will default to the environment variable "AWS_PROFILE" or
 "default" if that environment variable is also not set.
 `,
-			Advanced: true,
-		}, {
-			Name:      "session_token",
-			Help:      "An AWS session token.",
-			Advanced:  true,
-			Sensitive: true,
-		}, {
-			Name: "upload_concurrency",
-			Help: `Concurrency for multipart uploads and copies.
+				Advanced: true,
+			}, {
+				Name:      "session_token",
+				Help:      "An AWS session token.",
+				Advanced:  true,
+				Sensitive: true,
+			}, {
+				Name: "upload_concurrency",
+				Help: `Concurrency for multipart uploads and copies.
 
 This is the number of chunks of the same file that are uploaded
 concurrently for multipart uploads and copies.
@@ -2387,11 +2387,11 @@ concurrently for multipart uploads and copies.
 If you are uploading small numbers of large files over high-speed links
 and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.`,
-			Default:  4,
-			Advanced: true,
-		}, {
-			Name: "force_path_style",
-			Help: `If true use path style access if false use virtual hosted style.
+				Default:  4,
+				Advanced: true,
+			}, {
+				Name: "force_path_style",
+				Help: `If true use path style access if false use virtual hosted style.
 
 If this is true (the default) then rclone will use path style access,
 if false then rclone will use virtual path style. See [the AWS S3
@@ -2405,58 +2405,58 @@ setting.
 Note that if your bucket isn't a valid DNS name, i.e. has '.' or '_' in,
 you'll need to set this to true.
 `,
-			Default:  true,
-			Advanced: true,
-		}, {
-			Name: "v2_auth",
-			Help: `If true use v2 authentication.
+				Default:  true,
+				Advanced: true,
+			}, {
+				Name: "v2_auth",
+				Help: `If true use v2 authentication.
 
 If this is false (the default) then rclone will use v4 authentication.
 If it is set then rclone will use v2 authentication.
 
 Use this only if v4 signatures don't work, e.g. pre Jewel/v10 CEPH.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "use_dual_stack",
-			Help: `If true use AWS S3 dual-stack endpoint (IPv6 support).
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name: "use_dual_stack",
+				Help: `If true use AWS S3 dual-stack endpoint (IPv6 support).
 
 See [AWS Docs on Dualstack Endpoints](https://docs.aws.amazon.com/AmazonS3/latest/userguide/dual-stack-endpoints.html)`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:     "use_accelerate_endpoint",
-			Provider: "AWS",
-			Help: `If true use the AWS S3 accelerated endpoint.
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name:     "use_accelerate_endpoint",
+				Provider: "AWS",
+				Help: `If true use the AWS S3 accelerated endpoint.
 
 See: [AWS S3 Transfer acceleration](https://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration-examples.html)`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:     "leave_parts_on_error",
-			Provider: "AWS",
-			Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name:     "leave_parts_on_error",
+				Provider: "AWS",
+				Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
 
 It should be set to true for resuming uploads across different sessions.
 
 WARNING: Storing parts of an incomplete multipart upload counts towards space usage on S3 and will add additional costs if not cleaned up.
 `,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "list_chunk",
-			Help: `Size of listing chunk (response list for each ListObject S3 request).
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name: "list_chunk",
+				Help: `Size of listing chunk (response list for each ListObject S3 request).
 
 This option is also known as "MaxKeys", "max-items", or "page-size" from the AWS S3 specification.
 Most services truncate the response list to 1000 objects even if requested more than that.
 In AWS S3 this is a global maximum and cannot be changed, see [AWS S3](https://docs.aws.amazon.com/cli/latest/reference/s3/ls.html).
 In Ceph, this can be increased with the "rgw list buckets max chunk" option.
 `,
-			Default:  1000,
-			Advanced: true,
-		}, {
-			Name: "list_version",
-			Help: `Version of ListObjects to use: 1,2 or 0 for auto.
+				Default:  1000,
+				Advanced: true,
+			}, {
+				Name: "list_version",
+				Help: `Version of ListObjects to use: 1,2 or 0 for auto.
 
 When S3 originally launched it only provided the ListObjects call to
 enumerate objects in a bucket.
@@ -2468,11 +2468,11 @@ If set to the default, 0, rclone will guess according to the provider
 set which list objects method to call. If it guesses wrong, then it
 may be set manually here.
 `,
-			Default:  0,
-			Advanced: true,
-		}, {
-			Name: "list_url_encode",
-			Help: `Whether to url encode listings: true/false/unset
+				Default:  0,
+				Advanced: true,
+			}, {
+				Name: "list_url_encode",
+				Help: `Whether to url encode listings: true/false/unset
 
 Some providers support URL encoding listings and where this is
 available this is more reliable when using control characters in file
@@ -2480,11 +2480,11 @@ names. If this is set to unset (the default) then rclone will choose
 according to the provider setting what to apply, but you can override
 rclone's choice here.
 `,
-			Default:  fs.Tristate{},
-			Advanced: true,
-		}, {
-			Name: "no_check_bucket",
-			Help: `If set, don't attempt to check the bucket exists or create it.
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "no_check_bucket",
+				Help: `If set, don't attempt to check the bucket exists or create it.
 
 This can be useful when trying to minimise the number of transactions
 rclone does if you know the bucket exists already.
@@ -2493,11 +2493,11 @@ It can also be needed if the user you are using does not have bucket
 creation permissions. Before v1.52.0 this would have passed silently
 due to a bug.
 `,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "no_head",
-			Help: `If set, don't HEAD uploaded objects to check integrity.
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name: "no_head",
+				Help: `If set, don't HEAD uploaded objects to check integrity.
 
 This can be useful when trying to minimise the number of transactions
 rclone does.
@@ -2526,47 +2526,47 @@ in particular an incorrect size, so it isn't recommended for normal
 operation. In practice the chance of an undetected upload failure is
 very small even with this flag.
 `,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:     "no_head_object",
-			Help:     `If set, do not do HEAD before GET when getting objects.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:     config.ConfigEncoding,
-			Help:     config.ConfigEncodingHelp,
-			Advanced: true,
-			// Any UTF-8 character is valid in a key, however it can't handle
-			// invalid UTF-8 and / have a special meaning.
-			//
-			// The SDK can't seem to handle uploading files called '.'
-			//
-			// FIXME would be nice to add
-			// - initial / encoding
-			// - doubled / encoding
-			// - trailing / encoding
-			// so that AWS keys are always valid file names
-			Default: encoder.EncodeInvalidUtf8 |
-				encoder.EncodeSlash |
-				encoder.EncodeDot,
-		}, {
-			Name:     "memory_pool_flush_time",
-			Default:  fs.Duration(time.Minute),
-			Advanced: true,
-			Hide:     fs.OptionHideBoth,
-			Help:     `How often internal memory buffer pools will be flushed. (no longer used)`,
-		}, {
-			Name:     "memory_pool_use_mmap",
-			Default:  false,
-			Advanced: true,
-			Hide:     fs.OptionHideBoth,
-			Help:     `Whether to use mmap buffers in internal memory pool. (no longer used)`,
-		}, {
-			Name:     "disable_http2",
-			Default:  false,
-			Advanced: true,
-			Help: `Disable usage of http2 for S3 backends.
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name:     "no_head_object",
+				Help:     `If set, do not do HEAD before GET when getting objects.`,
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name:     config.ConfigEncoding,
+				Help:     config.ConfigEncodingHelp,
+				Advanced: true,
+				// Any UTF-8 character is valid in a key, however it can't handle
+				// invalid UTF-8 and / have a special meaning.
+				//
+				// The SDK can't seem to handle uploading files called '.'
+				//
+				// FIXME would be nice to add
+				// - initial / encoding
+				// - doubled / encoding
+				// - trailing / encoding
+				// so that AWS keys are always valid file names
+				Default: encoder.EncodeInvalidUtf8 |
+					encoder.EncodeSlash |
+					encoder.EncodeDot,
+			}, {
+				Name:     "memory_pool_flush_time",
+				Default:  fs.Duration(time.Minute),
+				Advanced: true,
+				Hide:     fs.OptionHideBoth,
+				Help:     `How often internal memory buffer pools will be flushed. (no longer used)`,
+			}, {
+				Name:     "memory_pool_use_mmap",
+				Default:  false,
+				Advanced: true,
+				Hide:     fs.OptionHideBoth,
+				Help:     `Whether to use mmap buffers in internal memory pool. (no longer used)`,
+			}, {
+				Name:     "disable_http2",
+				Default:  false,
+				Advanced: true,
+				Help: `Disable usage of http2 for S3 backends.
 
 There is currently an unsolved issue with the s3 (specifically minio) backend
 and HTTP/2.  HTTP/2 is enabled by default for the s3 backend but can be
@@ -2575,32 +2575,32 @@ disabled here.  When the issue is solved this flag will be removed.
 See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rclone/issues/3631
 
 `,
-		}, {
-			Name: "download_url",
-			Help: `Custom endpoint for downloads.
+			}, {
+				Name: "download_url",
+				Help: `Custom endpoint for downloads.
 This is usually set to a CloudFront CDN URL as AWS S3 offers
 cheaper egress for data downloaded through the CloudFront network.`,
-			Advanced: true,
-		}, {
-			Name:     "directory_markers",
-			Default:  false,
-			Advanced: true,
-			Help: `Upload an empty object with a trailing slash when a new directory is created
+				Advanced: true,
+			}, {
+				Name:     "directory_markers",
+				Default:  false,
+				Advanced: true,
+				Help: `Upload an empty object with a trailing slash when a new directory is created
 
 Empty folders are unsupported for bucket based remotes, this option creates an empty
 object ending with "/", to persist the folder.
 `,
-		}, {
-			Name: "use_multipart_etag",
-			Help: `Whether to use ETag in multipart uploads for verification
+			}, {
+				Name: "use_multipart_etag",
+				Help: `Whether to use ETag in multipart uploads for verification
 
 This should be true, false or left unset to use the default for the provider.
 `,
-			Default:  fs.Tristate{},
-			Advanced: true,
-		}, {
-			Name: "use_unsigned_payload",
-			Help: `Whether to use an unsigned payload in PutObject
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "use_unsigned_payload",
+				Help: `Whether to use an unsigned payload in PutObject
 
 Rclone has to avoid the AWS SDK seeking the body when calling
 PutObject. The AWS provider can add checksums in the trailer to avoid
@@ -2608,11 +2608,11 @@ seeking but other providers can't.
 
 This should be true, false or left unset to use the default for the provider.
 `,
-			Default:  fs.Tristate{},
-			Advanced: true,
-		}, {
-			Name: "use_presigned_request",
-			Help: `Whether to use a presigned request or PutObject for single part uploads
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "use_presigned_request",
+				Help: `Whether to use a presigned request or PutObject for single part uploads
 
 If this is false rclone will use PutObject from the AWS SDK to upload
 an object.
@@ -2622,16 +2622,16 @@ part object and setting this flag to true will re-enable that
 functionality. This shouldn't be necessary except in exceptional
 circumstances or for testing.
 `,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:     "versions",
-			Help:     "Include old versions in directory listings.",
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "version_at",
-			Help: `Show file versions as they were at the specified time.
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name:     "versions",
+				Help:     "Include old versions in directory listings.",
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name: "version_at",
+				Help: `Show file versions as they were at the specified time.
 
 The parameter should be a date, "2006-01-02", datetime "2006-01-02
 15:04:05" or a duration for that long ago, eg "100d" or "1h".
@@ -2641,11 +2641,11 @@ so you can't upload files or delete them.
 
 See [the time option docs](/docs/#time-option) for valid formats.
 `,
-			Default:  fs.Time{},
-			Advanced: true,
-		}, {
-			Name: "version_deleted",
-			Help: `Show deleted file markers when using versions.
+				Default:  fs.Time{},
+				Advanced: true,
+			}, {
+				Name: "version_deleted",
+				Help: `Show deleted file markers when using versions.
 
 This shows deleted file markers in the listing when using versions. These will appear
 as 0 size files. The only operation which can be performed on them is deletion.
@@ -2654,11 +2654,11 @@ Deleting a delete marker will reveal the previous version.
 
 Deleted files will always show with a timestamp.
 `,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name: "decompress",
-			Help: `If set this will decompress gzip encoded objects.
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name: "decompress",
+				Help: `If set this will decompress gzip encoded objects.
 
 It is possible to upload objects to S3 with "Content-Encoding: gzip"
 set. Normally rclone will download these files as compressed objects.
@@ -2667,11 +2667,11 @@ If this flag is set then rclone will decompress these files with
 "Content-Encoding: gzip" as they are received. This means that rclone
 can't check the size and hash but the file contents will be decompressed.
 `,
-			Advanced: true,
-			Default:  false,
-		}, {
-			Name: "might_gzip",
-			Help: strings.ReplaceAll(`Set this if the backend might gzip objects.
+				Advanced: true,
+				Default:  false,
+			}, {
+				Name: "might_gzip",
+				Help: strings.ReplaceAll(`Set this if the backend might gzip objects.
 
 Normally providers will not alter objects when they are downloaded. If
 an object was not uploaded with |Content-Encoding: gzip| then it won't
@@ -2692,11 +2692,11 @@ If this is set to unset (the default) then rclone will choose
 according to the provider setting what to apply, but you can override
 rclone's choice here.
 `, "|", "`"),
-			Default:  fs.Tristate{},
-			Advanced: true,
-		}, {
-			Name: "use_accept_encoding_gzip",
-			Help: strings.ReplaceAll(`Whether to send |Accept-Encoding: gzip| header.
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "use_accept_encoding_gzip",
+				Help: strings.ReplaceAll(`Whether to send |Accept-Encoding: gzip| header.
 
 By default, rclone will append |Accept-Encoding: gzip| to the request to download
 compressed objects whenever possible.
@@ -2710,22 +2710,22 @@ A symptom of this would be receiving errors like
 
 In this case, you might want to try disabling this option.
 `, "|", "`"),
-			Default:  fs.Tristate{},
-			Advanced: true,
-		}, {
-			Name:     "no_system_metadata",
-			Help:     `Suppress setting and reading of system metadata`,
-			Advanced: true,
-			Default:  false,
-		}, {
-			Name:     "sts_endpoint",
-			Help:     "Endpoint for STS (deprecated).\n\nLeave blank if using AWS to use the default endpoint for the region.",
-			Provider: "AWS",
-			Advanced: true,
-			Hide:     fs.OptionHideBoth,
-		}, {
-			Name: "use_already_exists",
-			Help: strings.ReplaceAll(`Set if rclone should report BucketAlreadyExists errors on bucket creation.
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name:     "no_system_metadata",
+				Help:     `Suppress setting and reading of system metadata`,
+				Advanced: true,
+				Default:  false,
+			}, {
+				Name:     "sts_endpoint",
+				Help:     "Endpoint for STS (deprecated).\n\nLeave blank if using AWS to use the default endpoint for the region.",
+				Provider: "AWS",
+				Advanced: true,
+				Hide:     fs.OptionHideBoth,
+			}, {
+				Name: "use_already_exists",
+				Help: strings.ReplaceAll(`Set if rclone should report BucketAlreadyExists errors on bucket creation.
 
 At some point during the evolution of the s3 protocol, AWS started
 returning an |AlreadyOwnedByYou| error when attempting to create a
@@ -2748,11 +2748,11 @@ ignores the |BucketAlreadyExists| error which can lead to confusion.
 This should be automatically set correctly for all providers rclone
 knows about - please make a bug report if not.
 `, "|", "`"),
-			Default:  fs.Tristate{},
-			Advanced: true,
-		}, {
-			Name: "use_multipart_uploads",
-			Help: `Set if rclone should use multipart uploads.
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "use_multipart_uploads",
+				Help: `Set if rclone should use multipart uploads.
 
 You can change this if you want to disable the use of multipart uploads.
 This shouldn't be necessary in normal operation.
@@ -2760,11 +2760,11 @@ This shouldn't be necessary in normal operation.
 This should be automatically set correctly for all providers rclone
 knows about - please make a bug report if not.
 `,
-			Default:  fs.Tristate{},
-			Advanced: true,
-		}, {
-			Name: "use_x_id",
-			Help: `Set if rclone should add x-id URL parameters.
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "use_x_id",
+				Help: `Set if rclone should add x-id URL parameters.
 
 You can change this if you want to disable the AWS SDK from
 adding x-id URL parameters.
@@ -2774,11 +2774,11 @@ This shouldn't be necessary in normal operation.
 This should be automatically set correctly for all providers rclone
 knows about - please make a bug report if not.
 `,
-			Default:  fs.Tristate{},
-			Advanced: true,
-		}, {
-			Name: "sign_accept_encoding",
-			Help: `Set if rclone should include Accept-Encoding as part of the signature.
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "sign_accept_encoding",
+				Help: `Set if rclone should include Accept-Encoding as part of the signature.
 
 You can change this if you want to stop rclone including
 Accept-Encoding as part of the signature.
@@ -2788,11 +2788,11 @@ This shouldn't be necessary in normal operation.
 This should be automatically set correctly for all providers rclone
 knows about - please make a bug report if not.
 `,
-			Default:  fs.Tristate{},
-			Advanced: true,
-		}, {
-			Name: "directory_bucket",
-			Help: strings.ReplaceAll(`Set to use AWS Directory Buckets
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "directory_bucket",
+				Help: strings.ReplaceAll(`Set to use AWS Directory Buckets
 
 If you are using an AWS Directory Bucket then set this flag.
 
@@ -2816,12 +2816,12 @@ Rclone limitations with Directory Buckets:
   work with |directory_markers = true| but it doesn't.
 - Directories don't seem to appear in recursive (ListR) listings.
 `, "|", "`"),
-			Default:  false,
-			Advanced: true,
-			Provider: "AWS",
-		}, {
-			Name: "sdk_log_mode",
-			Help: strings.ReplaceAll(`Set to debug the SDK
+				Default:  false,
+				Advanced: true,
+				Provider: "AWS",
+			}, {
+				Name: "sdk_log_mode",
+				Help: strings.ReplaceAll(`Set to debug the SDK
 
 This can be set to a comma separated list of the following functions:
 
@@ -2838,9 +2838,9 @@ This can be set to a comma separated list of the following functions:
 Use |Off| to disable and |All| to set all log levels. You will need to
 use |-vv| to see the debug level logs.
 `, "|", "`"),
-			Default:  sdkLogMode(0),
-			Advanced: true,
-		},
+				Default:  sdkLogMode(0),
+				Advanced: true,
+			},
 			{
 				Name:     "ibm_api_key",
 				Help:     "IBM API Key to be used to obtain IAM token",
@@ -3655,9 +3655,9 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		useAlreadyExists = false // untested
 	case "Zata":
-		useMultipartEtag = false            
-		mightGzip = false 
-		useUnsignedPayload = false       
+		useMultipartEtag = false
+		mightGzip = false
+		useUnsignedPayload = false
 		useAlreadyExists = false
 	case "Exaba":
 		virtualHostStyle = false
