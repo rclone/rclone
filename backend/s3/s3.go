@@ -3503,182 +3503,182 @@ func setQuirks(opt *Options) {
 	switch opt.Provider {
 	case "AWS":
 		// No quirks
-			mightGzip = false          // Never auto gzips objects
-			useUnsignedPayload = false // AWS has trailer support which means it adds checksums in the trailer without seeking
+		mightGzip = false          // Never auto gzips objects
+		useUnsignedPayload = false // AWS has trailer support which means it adds checksums in the trailer without seeking
 	case "Alibaba":
-			useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
-			useAlreadyExists = true  // returns 200 OK
+		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
+		useAlreadyExists = true  // returns 200 OK
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
-			urlEncodeListings = false
-			listObjectsV2 = false
-			useAlreadyExists = false // untested
-			useMultipartUploads = false // Huawei OBS PFS is not support multipart uploads
+		urlEncodeListings = false
+		listObjectsV2 = false
+		useAlreadyExists = false    // untested
+		useMultipartUploads = false // Huawei OBS PFS is not support multipart uploads
 	case "Ceph":
-			listObjectsV2 = false
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useAlreadyExists = true
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useAlreadyExists = true
 	case "ChinaMobile":
-			listObjectsV2 = false
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useAlreadyExists = false // untested
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "Cloudflare":
-			virtualHostStyle = false
-			useMultipartEtag = false // currently multipart Etags are random
+		virtualHostStyle = false
+		useMultipartEtag = false // currently multipart Etags are random
 	case "ArvanCloud":
-			listObjectsV2 = false
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useAlreadyExists = false // untested
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "DigitalOcean":
-			urlEncodeListings = false
-			useAlreadyExists = false // untested
+		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "Dreamhost":
-			urlEncodeListings = false
-			useAlreadyExists = false // untested
+		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "FlashBlade":
-			mightGzip = false        // Never auto gzips objects
-			virtualHostStyle = false // supports vhost but defaults to paths
+		mightGzip = false        // Never auto gzips objects
+		virtualHostStyle = false // supports vhost but defaults to paths
 	case "IBMCOS":
-			listObjectsV2 = false // untested
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useMultipartEtag = false // untested
-			useAlreadyExists = false // returns BucketAlreadyExists
+		listObjectsV2 = false // untested
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useMultipartEtag = false // untested
+		useAlreadyExists = false // returns BucketAlreadyExists
 	case "IDrive":
-			virtualHostStyle = false
-			useAlreadyExists = false // untested
+		virtualHostStyle = false
+		useAlreadyExists = false // untested
 	case "IONOS":
-			// listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useAlreadyExists = false // untested
+		// listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "Petabox":
-			useAlreadyExists = false // untested
+		useAlreadyExists = false // untested
 	case "Liara":
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useMultipartEtag = false
-			useAlreadyExists = false // untested
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useMultipartEtag = false
+		useAlreadyExists = false // untested
 	case "Linode":
-			useAlreadyExists = true // returns 200 OK
+		useAlreadyExists = true // returns 200 OK
 	case "LyveCloud":
-			useMultipartEtag = false // LyveCloud seems to calculate multipart Etags differently from AWS
-			useAlreadyExists = false // untested
+		useMultipartEtag = false // LyveCloud seems to calculate multipart Etags differently from AWS
+		useAlreadyExists = false // untested
 	case "Magalu":
-			listObjectsV2 = false
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useMultipartEtag = false
-			useAlreadyExists = false
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useMultipartEtag = false
+		useAlreadyExists = false
 	case "Mega":
-			listObjectsV2 = true
-			virtualHostStyle = false
-			urlEncodeListings = true
-			useMultipartEtag = false
-			useAlreadyExists = false
-			// Multipart server side copies not supported
-			opt.CopyCutoff = math.MaxInt64
+		listObjectsV2 = true
+		virtualHostStyle = false
+		urlEncodeListings = true
+		useMultipartEtag = false
+		useAlreadyExists = false
+		// Multipart server side copies not supported
+		opt.CopyCutoff = math.MaxInt64
 	case "Minio":
-			virtualHostStyle = false
+		virtualHostStyle = false
 	case "Netease":
-			listObjectsV2 = false // untested
-			urlEncodeListings = false
-			useMultipartEtag = false // untested
-			useAlreadyExists = false // untested
+		listObjectsV2 = false // untested
+		urlEncodeListings = false
+		useMultipartEtag = false // untested
+		useAlreadyExists = false // untested
 	case "Outscale":
-			virtualHostStyle = false
+		virtualHostStyle = false
 	case "RackCorp":
-			// No quirks
-			useMultipartEtag = false // untested
-			useAlreadyExists = false // untested
+		// No quirks
+		useMultipartEtag = false // untested
+		useAlreadyExists = false // untested
 	case "Rclone":
-			listObjectsV2 = true
-			urlEncodeListings = true
-			virtualHostStyle = false
-			useMultipartEtag = false
-			useAlreadyExists = false
-			// useMultipartUploads = false - set this manually
-			// rclone serve doesn't support multi-part server side copy:
-			// See: https://github.com/rclone/rclone/issues/7454
-			// So make cutoff very large which it does support
-			opt.CopyCutoff = math.MaxInt64
+		listObjectsV2 = true
+		urlEncodeListings = true
+		virtualHostStyle = false
+		useMultipartEtag = false
+		useAlreadyExists = false
+		// useMultipartUploads = false - set this manually
+		// rclone serve doesn't support multi-part server side copy:
+		// See: https://github.com/rclone/rclone/issues/7454
+		// So make cutoff very large which it does support
+		opt.CopyCutoff = math.MaxInt64
 	case "Scaleway":
-			// Scaleway can only have 1000 parts in an upload
-			if opt.MaxUploadParts > 1000 {
-				opt.MaxUploadParts = 1000
-			}
-			urlEncodeListings = true
-			useAlreadyExists = true
+		// Scaleway can only have 1000 parts in an upload
+		if opt.MaxUploadParts > 1000 {
+			opt.MaxUploadParts = 1000
+		}
+		urlEncodeListings = true
+		useAlreadyExists = true
 	case "Selectel":
-			urlEncodeListings = false
+		urlEncodeListings = false
 	case "SeaweedFS":
-			listObjectsV2 = false // untested
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useMultipartEtag = false // untested
-			useAlreadyExists = false // untested
+		listObjectsV2 = false // untested
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useMultipartEtag = false // untested
+		useAlreadyExists = false // untested
 	case "StackPath":
-			listObjectsV2 = false // untested
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useAlreadyExists = false // untested
+		listObjectsV2 = false // untested
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useAlreadyExists = false // untested
 	case "Storj":
-			// Force chunk size to >= 64 MiB
-			if opt.ChunkSize < 64*fs.Mebi {
-				opt.ChunkSize = 64 * fs.Mebi
-			}
-			useAlreadyExists = false // returns BucketAlreadyExists
-			// Storj doesn't support multi-part server side copy:
-			// https://github.com/storj/roadmap/issues/40
-			// So make cutoff very large which it does support
-			opt.CopyCutoff = math.MaxInt64
+		// Force chunk size to >= 64 MiB
+		if opt.ChunkSize < 64*fs.Mebi {
+			opt.ChunkSize = 64 * fs.Mebi
+		}
+		useAlreadyExists = false // returns BucketAlreadyExists
+		// Storj doesn't support multi-part server side copy:
+		// https://github.com/storj/roadmap/issues/40
+		// So make cutoff very large which it does support
+		opt.CopyCutoff = math.MaxInt64
 	case "Synology":
-			useMultipartEtag = false
-			useAlreadyExists = false // untested
+		useMultipartEtag = false
+		useAlreadyExists = false // untested
 	case "TencentCOS":
-			listObjectsV2 = false    // untested
-			useMultipartEtag = false // untested
-			useAlreadyExists = false // untested
+		listObjectsV2 = false    // untested
+		useMultipartEtag = false // untested
+		useAlreadyExists = false // untested
 	case "Wasabi":
-			useAlreadyExists = true // returns 200 OK
+		useAlreadyExists = true // returns 200 OK
 	case "Leviia":
-			useAlreadyExists = false // untested
+		useAlreadyExists = false // untested
 	case "Qiniu":
-			useMultipartEtag = false
-			urlEncodeListings = false
-			virtualHostStyle = false
-			useAlreadyExists = false // untested
+		useMultipartEtag = false
+		urlEncodeListings = false
+		virtualHostStyle = false
+		useAlreadyExists = false // untested
 	case "Zata":
-			useMultipartEtag = false
-			mightGzip = false
-			useUnsignedPayload = false
-			useAlreadyExists = false
+		useMultipartEtag = false
+		mightGzip = false
+		useUnsignedPayload = false
+		useAlreadyExists = false
 	case "Exaba":
-			virtualHostStyle = false
+		virtualHostStyle = false
 	case "GCS":
-			// Google break request Signature by mutating accept-encoding HTTP header
-			// https://github.com/rclone/rclone/issues/6670
-			useAcceptEncodingGzip = false
-			signAcceptEncoding = false
-			useAlreadyExists = true // returns BucketNameUnavailable instead of BucketAlreadyExists but good enough!
-			// GCS S3 doesn't support multi-part server side copy:
-			// See: https://issuetracker.google.com/issues/323465186
-			// So make cutoff very large which it does seem to support
-			opt.CopyCutoff = math.MaxInt64
-			// GCS doesn't like the x-id URL parameter the SDKv2 inserts
-			useXID = false
+		// Google break request Signature by mutating accept-encoding HTTP header
+		// https://github.com/rclone/rclone/issues/6670
+		useAcceptEncodingGzip = false
+		signAcceptEncoding = false
+		useAlreadyExists = true // returns BucketNameUnavailable instead of BucketAlreadyExists but good enough!
+		// GCS S3 doesn't support multi-part server side copy:
+		// See: https://issuetracker.google.com/issues/323465186
+		// So make cutoff very large which it does seem to support
+		opt.CopyCutoff = math.MaxInt64
+		// GCS doesn't like the x-id URL parameter the SDKv2 inserts
+		useXID = false
 	default: //nolint:gocritic // Don't include gocritic when running golangci-lint to avoid defaultCaseOrder: consider to make `default` case as first or as last case
-			fs.Logf("s3", "s3 provider %q not known - please set correctly", opt.Provider)
-			fallthrough
+		fs.Logf("s3", "s3 provider %q not known - please set correctly", opt.Provider)
+		fallthrough
 	case "Other":
-			listObjectsV2 = false
-			virtualHostStyle = false
-			urlEncodeListings = false
-			useMultipartEtag = false
-			useAlreadyExists = false
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useMultipartEtag = false
+		useAlreadyExists = false
 	}
 
 	// Path Style vs Virtual Host style
