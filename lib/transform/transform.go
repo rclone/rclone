@@ -1,9 +1,12 @@
 // Package transform holds functions for path name transformations
+//
+//go:generate go run gen_help.go transform.md
 package transform
 
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -23,6 +26,16 @@ import (
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/unicode/norm"
 )
+
+//go:embed transform.md
+var help string
+
+// Help returns the help string cleaned up to simplify appending
+func Help() string {
+	// Chop off auto generated message
+	nl := strings.IndexRune(help, '\n')
+	return strings.TrimSpace(help[nl:]) + "\n\n"
+}
 
 // Path transforms a path s according to the --name-transform options in use
 //
@@ -53,7 +66,7 @@ func Path(ctx context.Context, s string, isDir bool) string {
 			fs.Errorf(s, "Failed to transform: %v", err)
 		}
 	}
-	if old != s && !generatingHelpText {
+	if old != s {
 		fs.Debugf(old, "transformed to: %v", s)
 	}
 	if strings.Count(old, "/") != strings.Count(s, "/") {
@@ -181,7 +194,7 @@ func transformPathSegment(s string, t transform) (string, error) {
 	case ConvMacintosh:
 		return encodeWithReplacement(s, charmap.Macintosh), nil
 	case ConvCharmap:
-		var cmapType fs.Enum[cmapChoices]
+		var cmapType CharmapChoices
 		err := cmapType.Set(t.value)
 		if err != nil {
 			return s, err
