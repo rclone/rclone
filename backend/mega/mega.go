@@ -221,34 +221,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// srv = mega.New().SetClient(fshttp.NewClient(ctx))
 
 		// Workaround for Mega's use of insecure cipher suites which are no longer supported by default since Go 1.22.
-		// Relevent issues:
+		// Relevant issues:
 		// https://github.com/rclone/rclone/issues/8565
 		// https://github.com/meganz/webclient/issues/103
 		clt := fshttp.NewClient(ctx)
 		clt.Transport = fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
-			t.TLSClientConfig.CipherSuites = []uint16{
-				// https://github.com/golang/go/blob/release-branch.go1.24/src/crypto/tls/cipher_suites.go#L56
-				// Go's default list for TLS 1.3
-				tls.TLS_AES_128_GCM_SHA256,
-				tls.TLS_AES_256_GCM_SHA384,
-				tls.TLS_CHACHA20_POLY1305_SHA256,
-
-				// Go's default list for TLS 1.2
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-
-				// Insecure but Mega uses TLS_RSA_WITH_AES_128_GCM_SHA256 for storage endpoints
-				// (e.g. https://gfs302n114.userstorage.mega.co.nz) as of June 18, 2025.
-				tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+			var ids []uint16
+			// Read default ciphers
+			for _, cs := range tls.CipherSuites() {
+				ids = append(ids, cs.ID)
 			}
+			// Insecure but Mega uses TLS_RSA_WITH_AES_128_GCM_SHA256 for storage endpoints
+			// (e.g. https://gfs302n114.userstorage.mega.co.nz) as of June 18, 2025.
+			t.TLSClientConfig.CipherSuites = append(ids, tls.TLS_RSA_WITH_AES_128_GCM_SHA256)
 		})
 		srv = mega.New().SetClient(clt)
 
