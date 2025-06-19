@@ -1411,7 +1411,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -3512,8 +3512,7 @@ func setQuirks(opt *Options) {
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
 		listObjectsV2 = false
-		useAlreadyExists = false    // untested
-		useMultipartUploads = false // Huawei OBS PFS is not support multipart uploads
+		useAlreadyExists = false // untested
 	case "Ceph":
 		listObjectsV2 = false
 		virtualHostStyle = false
