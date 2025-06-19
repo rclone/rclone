@@ -29,7 +29,7 @@ var (
 		-2: "Back up",
 		-4: "Unknown error",
 		-5: "Unknown error",
-		-6: "Failed to login, please try again later ",
+		-6: "Failed to login, please try again later",
 		// -7: "Unable to access or the name is wrong",
 		// -8: "The file already exists in this directory ",
 		// -9:      "The file doesn't exist or The request parameter spd is incorrect.",

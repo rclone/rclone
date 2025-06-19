@@ -87,12 +87,12 @@ retry:
 		return err
 	}
 
+	debug(f.opt, 3, "Request: %+v", resp.Request)
 	if reqBody != nil {
 		debug(f.opt, 4, "Request body: %s", reqBody.String())
 	}
-	debug(f.opt, 3, "Request: %+v", resp.Request)
-	debug(f.opt, 2, "Response: %+v", resp)
 
+	debug(f.opt, 2, "Response: %+v", resp)
 	defer func() { _ = resp.Body.Close() }()
 	body, _ := io.ReadAll(resp.Body)
 	debug(f.opt, 2, "Response body: %s", body)
@@ -127,8 +127,13 @@ retry:
 
 				retry++
 				goto retry
-			} else if err.Err() != nil {
-				return err
+			} else if prefix, ok := resp.Header["Url-Domain-Prefix"]; ok && len(prefix) > 0 && api.ErrIsNum(err, -6) { // for some accounts base url can be different, then for others, update it
+				newBaseURL := "https://" + prefix[0] + ".terabox.com"
+				f.client.SetRoot(newBaseURL)
+				debug(f.opt, 1, "Base URL changed from %s to %s", f.baseURL, newBaseURL)
+
+				retry++
+				goto retry
 			}
 		} else {
 			return fmt.Errorf("response have no api error interface")
