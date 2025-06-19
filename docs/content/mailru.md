@@ -300,6 +300,8 @@ Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
 
+Note that this option is NOT supported by all backends.
+
 Properties:
 
 - Config:      client_credentials

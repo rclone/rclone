@@ -81,7 +81,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Jun 17, 2025</p>
+<p class="date">Jun 19, 2025</p>
 </header>
 <h1 id="name">NAME</h1>
 <p>rclone - manage files on cloud storage</p>
@@ -2682,15 +2682,15 @@ X-User-Defined  </code></pre>
 <pre><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,command=echo&quot;
 // Output: stories/The Quick Brown Fox!.txt</code></pre>
 <pre><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{YYYYMMDD}&quot;
-// Output: stories/The Quick Brown Fox!-20250617</code></pre>
+// Output: stories/The Quick Brown Fox!-20250618</code></pre>
 <pre><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{macfriendlytime}&quot;
-// Output: stories/The Quick Brown Fox!-2025-06-17 0551PM</code></pre>
+// Output: stories/The Quick Brown Fox!-2025-06-18 0148PM</code></pre>
 <pre><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,regex=[\\.\\w]/ab&quot;
 // Output: ababababababab/ababab ababababab ababababab ababab!abababab</code></pre>
 <p>Multiple transformations can be used in sequence, applied in the order they are specified on the command line.</p>
 <p>The <code>--name-transform</code> flag is also available in <code>sync</code>, <code>copy</code>, and <code>move</code>.</p>
 <h1 id="files-vs-directories">Files vs Directories</h1>
-<p>By default <code>--name-transform</code> will only apply to file names. The means only the leaf file name will be transformed. However some of the transforms would be better applied to the whole path or just directories. To choose which which part of the file path is affected some tags can be added to the <code>--name-transform</code></p>
+<p>By default <code>--name-transform</code> will only apply to file names. The means only the leaf file name will be transformed. However some of the transforms would be better applied to the whole path or just directories. To choose which which part of the file path is affected some tags can be added to the <code>--name-transform</code>.</p>
 <table>
 <colgroup>
 <col style="width: 50%" />
@@ -2718,7 +2718,7 @@ X-User-Defined  </code></pre>
 </tbody>
 </table>
 <p>This is used by adding the tag into the transform name like this: <code>--name-transform file,prefix=ABC</code> or <code>--name-transform dir,prefix=DEF</code>.</p>
-<p>For some conversions using all is more likely to be useful, for example <code>--name-transform all,nfc</code></p>
+<p>For some conversions using all is more likely to be useful, for example <code>--name-transform all,nfc</code>.</p>
 <p>Note that <code>--name-transform</code> may not add path separators <code>/</code> to the name. This will cause an error.</p>
 <h1 id="ordering-and-conflicts">Ordering and Conflicts</h1>
 <ul>
@@ -2739,16 +2739,7 @@ X-User-Defined  </code></pre>
 </ul>
 <h1 id="race-conditions-and-non-deterministic-behavior">Race Conditions and Non-Deterministic Behavior</h1>
 <p>Some transformations, such as <code>replace=old:new</code>, may introduce conflicts where multiple source files map to the same destination name. This can lead to race conditions when performing concurrent transfers. It is up to the user to anticipate these. * If two files from the source are transformed into the same name at the destination, the final state may be non-deterministic. * Running rclone check after a sync using such transformations may erroneously report missing or differing files due to overwritten results.</p>
-<ul>
-<li>To minimize risks, users should:
-<ul>
-<li>Carefully review transformations that may introduce conflicts.</li>
-<li>Use <code>--dry-run</code> to inspect changes before executing a sync (but keep in mind that it won't show the effect of non-deterministic transformations).</li>
-<li>Avoid transformations that cause multiple distinct source files to map to the same destination name.</li>
-<li>Consider disabling concurrency with <code>--transfers=1</code> if necessary.</li>
-<li>Certain transformations (e.g. <code>prefix</code>) will have a multiplying effect every time they are used. Avoid these when using <code>bisync</code>.</li>
-</ul></li>
-</ul>
+<p>To minimize risks, users should: * Carefully review transformations that may introduce conflicts. * Use <code>--dry-run</code> to inspect changes before executing a sync (but keep in mind that it won't show the effect of non-deterministic transformations). * Avoid transformations that cause multiple distinct source files to map to the same destination name. * Consider disabling concurrency with <code>--transfers=1</code> if necessary. * Certain transformations (e.g. <code>prefix</code>) will have a multiplying effect every time they are used. Avoid these when using <code>bisync</code>.</p>
 <pre><code>rclone convmv dest:path --name-transform XXX [flags]</code></pre>
 <h2 id="options-48">Options</h2>
 <pre><code>      --create-empty-src-dirs   Create empty source dirs on destination after move
@@ -13239,7 +13230,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.70.0&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.70.1&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -13661,6 +13652,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --ftp-explicit-tls                                    Use Explicit FTPS (FTP over TLS)
       --ftp-force-list-hidden                               Use LIST -a to force listing of hidden files and folders. This will disable the use of MLSD
       --ftp-host string                                     FTP host to connect to
+      --ftp-http-proxy string                               URL for HTTP CONNECT proxy
       --ftp-idle-timeout Duration                           Max time before closing idle connections (default 1m0s)
       --ftp-no-check-certificate                            Do not verify the TLS certificate of the server
       --ftp-no-check-upload                                 Don&#39;t check the upload is OK
@@ -21368,6 +21360,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="box-client-credentials">--box-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -22622,6 +22615,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="sharefile-client-credentials">--sharefile-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -23395,7 +23389,7 @@ upstreams = &quot;My Drive=My Drive:&quot; &quot;Test Drive=Test Drive:&quot;</c
 <p>See the <a href="https://rclone.org/docs/#metadata">metadata</a> docs for more info.</p>
 <h1 id="doi">DOI</h1>
 <p>The DOI remote is a read only remote for reading files from digital object identifiers (DOI).</p>
-<p>Currently, the DOI backend supports supports DOIs hosted with: - <a href="https://inveniosoftware.org/products/rdm/">InvenioRDM</a> - <a href="https://zenodo.org">Zenodo</a> - <a href="https://data.caltech.edu">CaltechDATA</a> - <a href="https://inveniosoftware.org/showcase/">Other InvenioRDM repositories</a> - <a href="https://dataverse.org">Dataverse</a> - <a href="https://dataverse.harvard.edu">Harvard Dataverse</a> - <a href="https://dataverse.org/installations">Other Dataverse repositories</a></p>
+<p>Currently, the DOI backend supports DOIs hosted with: - <a href="https://inveniosoftware.org/products/rdm/">InvenioRDM</a> - <a href="https://zenodo.org">Zenodo</a> - <a href="https://data.caltech.edu">CaltechDATA</a> - <a href="https://inveniosoftware.org/showcase/">Other InvenioRDM repositories</a> - <a href="https://dataverse.org">Dataverse</a> - <a href="https://dataverse.harvard.edu">Harvard Dataverse</a> - <a href="https://dataverse.org/installations">Other Dataverse repositories</a></p>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
 <h2 id="configuration-12">Configuration</h2>
@@ -23756,6 +23750,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="dropbox-client-credentials">--dropbox-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -24724,6 +24719,16 @@ rclone lsf :ftp,host=speedtest.tele2.net,user=anonymous,pass=IXs2wc8OJOz7SYLBk47
 <li>Type: string</li>
 <li>Required: false</li>
 </ul>
+<h4 id="ftp-http-proxy">--ftp-http-proxy</h4>
+<p>URL for HTTP CONNECT proxy</p>
+<p>Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: http_proxy</li>
+<li>Env Var: RCLONE_FTP_HTTP_PROXY</li>
+<li>Type: string</li>
+<li>Required: false</li>
+</ul>
 <h4 id="ftp-no-check-upload">--ftp-no-check-upload</h4>
 <p>Don't check the upload is OK</p>
 <p>Normally rclone will try to check the upload exists after it has uploaded a file to make sure the size and modification time are as expected.</p>
@@ -25651,6 +25656,7 @@ ya29.c.c0ASRK0GbAFEewXD [truncated]</code></pre>
 <h4 id="gcs-client-credentials">--gcs-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -26354,6 +26360,7 @@ trashed=false and &#39;c&#39; in parents</code></pre>
 <h4 id="drive-client-credentials">--drive-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -27429,6 +27436,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="gphotos-client-credentials">--gphotos-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -28151,6 +28159,7 @@ rclone lsd remote:/users/test/path</code></pre>
 <h4 id="hidrive-client-credentials">--hidrive-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -29403,6 +29412,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="jottacloud-client-credentials">--jottacloud-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -30162,6 +30172,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="mailru-client-credentials">--mailru-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -32302,6 +32313,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="onedrive-client-credentials">--onedrive-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -35077,6 +35089,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="pcloud-client-credentials">--pcloud-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -35686,6 +35699,7 @@ y/e/d&gt; </code></pre>
 <h4 id="premiumizeme-client-credentials">--premiumizeme-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -36077,6 +36091,7 @@ e/n/d/r/c/s/q&gt; q</code></pre>
 <h4 id="putio-client-credentials">--putio-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -39099,6 +39114,7 @@ y/e/d&gt; y</code></pre>
 <h4 id="yandex-client-credentials">--yandex-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -39322,6 +39338,7 @@ y/e/d&gt; </code></pre>
 <h4 id="zoho-client-credentials">--zoho-client-credentials</h4>
 <p>Use client credentials OAuth flow.</p>
 <p>This will use the OAUTH2 client Credentials Flow as described in RFC 6749.</p>
+<p>Note that this option is NOT supported by all backends.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: client_credentials</li>
@@ -40062,6 +40079,15 @@ $ tree /tmp/c
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.70.1---2025-06-19">v1.70.1 - 2025-06-19</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.70.0...v1.70.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>convmv: Fix spurious "error running command echo" on Windows (Nick Craig-Wood)</li>
+<li>doc fixes (albertony, Ed Craig-Wood, jinjingroad)</li>
+</ul></li>
+</ul>
 <h2 id="v1.70.0---2025-06-17">v1.70.0 - 2025-06-17</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.69.0...v1.70.0">See commits</a></p>
 <ul>

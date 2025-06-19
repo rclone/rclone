@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jun 17, 2025
+% Jun 19, 2025
 
 # NAME
 
@@ -4452,12 +4452,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20250617
+// Output: stories/The Quick Brown Fox!-20250618
 ```
 
 ```
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2025-06-17 0551PM
+// Output: stories/The Quick Brown Fox!-2025-06-18 0148PM
 ```
 
 ```
@@ -4465,17 +4465,15 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,regex=[\\
 // Output: ababababababab/ababab ababababab ababababab ababab!abababab
 ```
 
-
-
 Multiple transformations can be used in sequence, applied in the order they are specified on the command line.
 
 The `--name-transform` flag is also available in `sync`, `copy`, and `move`.
 
-# Files vs Directories ##
+# Files vs Directories
 
 By default `--name-transform` will only apply to file names. The means only the leaf file name will be transformed.
 However some of the transforms would be better applied to the whole path or just directories.
-To choose which which part of the file path is affected some tags can be added to the `--name-transform`
+To choose which which part of the file path is affected some tags can be added to the `--name-transform`.
 
 | Tag | Effect |
 |------|------|
@@ -4485,11 +4483,11 @@ To choose which which part of the file path is affected some tags can be added t
 
 This is used by adding the tag into the transform name like this: `--name-transform file,prefix=ABC` or `--name-transform dir,prefix=DEF`.
 
-For some conversions using all is more likely to be useful, for example `--name-transform all,nfc`
+For some conversions using all is more likely to be useful, for example `--name-transform all,nfc`.
 
 Note that `--name-transform` may not add path separators `/` to the name. This will cause an error.
 
-# Ordering and Conflicts ##
+# Ordering and Conflicts
 
 * Transformations will be applied in the order specified by the user.
     * If the `file` tag is in use (the default) then only the leaf name of files will be transformed.
@@ -4504,19 +4502,19 @@ user, allowing for intentional use cases (e.g., trimming one prefix before addin
     * Users should be aware that certain combinations may lead to unexpected results and should verify
 transformations using `--dry-run` before execution.
 
-# Race Conditions and Non-Deterministic Behavior ##
+# Race Conditions and Non-Deterministic Behavior
 
 Some transformations, such as `replace=old:new`, may introduce conflicts where multiple source files map to the same destination name.
 This can lead to race conditions when performing concurrent transfers. It is up to the user to anticipate these.
 * If two files from the source are transformed into the same name at the destination, the final state may be non-deterministic.
 * Running rclone check after a sync using such transformations may erroneously report missing or differing files due to overwritten results.
 
-* To minimize risks, users should:
-    * Carefully review transformations that may introduce conflicts.
-    * Use `--dry-run` to inspect changes before executing a sync (but keep in mind that it won't show the effect of non-deterministic transformations).
-    * Avoid transformations that cause multiple distinct source files to map to the same destination name.
-    * Consider disabling concurrency with `--transfers=1` if necessary.
-    * Certain transformations (e.g. `prefix`) will have a multiplying effect every time they are used. Avoid these when using `bisync`.
+To minimize risks, users should:
+* Carefully review transformations that may introduce conflicts.
+* Use `--dry-run` to inspect changes before executing a sync (but keep in mind that it won't show the effect of non-deterministic transformations).
+* Avoid transformations that cause multiple distinct source files to map to the same destination name.
+* Consider disabling concurrency with `--transfers=1` if necessary.
+* Certain transformations (e.g. `prefix`) will have a multiplying effect every time they are used. Avoid these when using `bisync`.
 
 	
 
@@ -22400,7 +22398,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.70.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.70.1")
 ```
 
 
@@ -22882,6 +22880,7 @@ Backend-only flags (these can be set in the config file also).
       --ftp-explicit-tls                                    Use Explicit FTPS (FTP over TLS)
       --ftp-force-list-hidden                               Use LIST -a to force listing of hidden files and folders. This will disable the use of MLSD
       --ftp-host string                                     FTP host to connect to
+      --ftp-http-proxy string                               URL for HTTP CONNECT proxy
       --ftp-idle-timeout Duration                           Max time before closing idle connections (default 1m0s)
       --ftp-no-check-certificate                            Do not verify the TLS certificate of the server
       --ftp-no-check-upload                                 Don't check the upload is OK
@@ -33549,6 +33548,8 @@ Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
 
+Note that this option is NOT supported by all backends.
+
 Properties:
 
 - Config:      client_credentials
@@ -35368,6 +35369,8 @@ Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
 
+Note that this option is NOT supported by all backends.
+
 Properties:
 
 - Config:      client_credentials
@@ -36631,7 +36634,7 @@ See the [metadata](https://rclone.org/docs/#metadata) docs for more info.
 
 The DOI remote is a read only remote for reading files from digital object identifiers (DOI).
 
-Currently, the DOI backend supports supports DOIs hosted with:
+Currently, the DOI backend supports DOIs hosted with:
 - [InvenioRDM](https://inveniosoftware.org/products/rdm/)
   - [Zenodo](https://zenodo.org)
   - [CaltechDATA](https://data.caltech.edu)
@@ -37109,6 +37112,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
@@ -38548,6 +38553,20 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --ftp-http-proxy
+
+URL for HTTP CONNECT proxy
+
+Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+
+
+Properties:
+
+- Config:      http_proxy
+- Env Var:     RCLONE_FTP_HTTP_PROXY
+- Type:        string
+- Required:    false
+
 #### --ftp-no-check-upload
 
 Don't check the upload is OK
@@ -39591,6 +39610,8 @@ Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
 
+Note that this option is NOT supported by all backends.
+
 Properties:
 
 - Config:      client_credentials
@@ -40403,6 +40424,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
@@ -41939,6 +41962,8 @@ Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
 
+Note that this option is NOT supported by all backends.
+
 Properties:
 
 - Config:      client_credentials
@@ -43127,6 +43152,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
@@ -44697,6 +44724,8 @@ Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
 
+Note that this option is NOT supported by all backends.
+
 Properties:
 
 - Config:      client_credentials
@@ -45572,6 +45601,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
@@ -48558,6 +48589,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
@@ -52187,6 +52220,8 @@ Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
 
+Note that this option is NOT supported by all backends.
+
 Properties:
 
 - Config:      client_credentials
@@ -52988,6 +53023,8 @@ Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
 
+Note that this option is NOT supported by all backends.
+
 Properties:
 
 - Config:      client_credentials
@@ -53583,6 +53620,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
@@ -58004,6 +58043,8 @@ Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
 
+Note that this option is NOT supported by all backends.
+
 Properties:
 
 - Config:      client_credentials
@@ -58303,6 +58344,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
@@ -59070,6 +59113,14 @@ Options:
 
 
 # Changelog
+
+## v1.70.1 - 2025-06-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.70.0...v1.70.1)
+
+* Bug Fixes
+    * convmv: Fix spurious "error running command echo" on Windows (Nick Craig-Wood)
+    * doc fixes (albertony, Ed Craig-Wood, jinjingroad)
 
 ## v1.70.0 - 2025-06-17
 
