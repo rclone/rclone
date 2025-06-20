@@ -504,7 +504,7 @@ Properties:
 
 #### --gphotos-batch-commit-timeout
 
-Max time to wait for a batch to finish committing
+Max time to wait for a batch to finish committing. (no longer used)
 
 Properties:
 
@@ -630,3 +630,22 @@ Rclone cannot delete files anywhere except under `album`.
 ### Deleting albums
 
 The Google Photos API does not support deleting albums - see [bug #135714733](https://issuetracker.google.com/issues/135714733).
+
+## Making your own client_id
+
+When you use rclone with Google photos in its default configuration you
+are using rclone's client_id.  This is shared between all the rclone
+users.  There is a global rate limit on the number of queries per
+second that each client_id can do set by Google.
+
+If there is a problem with this client_id (eg quota too low or the
+client_id stops working) then you can make your own.
+
+Please follow the steps in [the google drive docs](https://rclone.org/drive/#making-your-own-client-id).
+You will need these scopes instead of the drive ones detailed:
+
+```
+https://www.googleapis.com/auth/photoslibrary.appendonly
+https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata
+https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata
+```

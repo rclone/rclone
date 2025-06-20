@@ -922,7 +922,7 @@ func (o *Object) setMetadata(resp *file.GetPropertiesResponse) {
 	}
 }
 
-// readMetaData gets the metadata if it hasn't already been fetched
+// getMetadata gets the metadata if it hasn't already been fetched
 func (o *Object) getMetadata(ctx context.Context) error {
 	resp, err := o.fileClient().GetProperties(ctx, nil)
 	if err != nil {
