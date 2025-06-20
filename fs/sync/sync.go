@@ -401,6 +401,17 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 					pair.Dst = newDst
 				}
 			}
+			{
+				fsrc := src.Fs()
+				fdst := s.fdst
+
+				fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
+				fdstEx, haveFdstEx := fdst.(fs.FsEx)
+
+				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+					needTransfer = fdstEx.RegisterLinkRoot(s.ctx, src, fsrcEx, pair.Dst, src.Remote(), needTransfer)
+				}
+			}
 			if needTransfer {
 				// If files are treated as immutable, fail if destination exists and does not match
 				if s.ci.Immutable && pair.Dst != nil {
@@ -1243,6 +1254,18 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			if err != nil {
 				s.processError(err)
 				s.logger(s.ctx, operations.TransferError, x, nil, err)
+			}
+			{
+				fsrc := src.Fs()
+				fdst := s.fdst
+
+				fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
+				fdstEx, haveFdstEx := fdst.(fs.FsEx)
+
+				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+					needTransfer := fdstEx.RegisterLinkRoot(s.ctx, x, fsrcEx, nil, src.Remote(), !NoNeedTransfer)
+					NoNeedTransfer = !needTransfer
+				}
 			}
 			if !NoNeedTransfer {
 				// No need to check since doesn't exist

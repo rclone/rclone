@@ -368,6 +368,18 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 	}
 	fs.Infof(c.src, "%s%s", actionTaken, fs.LogValueHide("size", fs.SizeSuffix(c.src.Size())))
 
+	if newDst != nil {
+		fsrc := c.src.Fs()
+		fdst := c.f
+
+		fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
+		fdstEx, haveFdstEx := fdst.(fs.FsEx)
+
+		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+			fdstEx.NotifyLinkRootTransferComplete(ctx, c.src, fsrcEx, newDst, fdstEx)
+		}
+	}
+
 	return newDst, nil
 }
 
