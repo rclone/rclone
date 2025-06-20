@@ -38,6 +38,8 @@ type ioStatusBlock struct {
 // implementation of Preallocate actually does anything.
 const PreallocateImplemented = true
 
+func PreAllocateAdvise(allocateSparse bool) {}
+
 // PreAllocate the file for performance reasons
 func PreAllocate(size int64, out *os.File) error {
 	if size <= 0 {

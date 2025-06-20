@@ -25,6 +25,15 @@ var (
 // implementation of Preallocate actually does anything.
 const PreallocateImplemented = true
 
+// Whether or not to preallocate files as sparse
+func PreAllocateAdvise(allocateSparse bool) {
+	if allocateSparse {
+		fallocFlagsIndex.Store(1)
+	} else {
+		fallocFlagsIndex.Store(0)
+	}
+}
+
 // PreAllocate the file for performance reasons
 func PreAllocate(size int64, out *os.File) (err error) {
 	if size <= 0 {
