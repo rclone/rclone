@@ -41,6 +41,61 @@ type copy struct {
 	remoteForCopy string               // the name used for the transfer, either remote or remote+".partial"
 }
 
+func WriteSparse(writer fs.WriterAtCloser, baseOff int64, reader io.Reader, minSparseBlockSize int64) (int64, error) {
+	buf := make([]byte, 32*1024)
+	currentFileOff := baseOff
+	var contigZeroCount int64 = 0
+	total := int64(0)
+	
+	var n int
+	var err error
+	for n, err = reader.Read(buf); (err == io.EOF && n > 0) || err == nil; n, err = reader.Read(buf) {
+		rdBuf := buf[:n]
+		bufDenseBlockStart := 0
+		bufDenseBlockCurrent := -1
+		for i, val := range rdBuf[:n] {
+			if val == 0 {
+				contigZeroCount++
+			}
+			if val != 0 && contigZeroCount >= minSparseBlockSize {
+				total += int64(i - (bufDenseBlockCurrent + 1))
+			}
+
+			if (val != 0 && contigZeroCount >= minSparseBlockSize) || len(rdBuf)-1 == i {
+
+				if val != 0 && contigZeroCount < minSparseBlockSize && len(rdBuf)-1 == i {
+					bufDenseBlockCurrent = i
+				}
+
+				if bufDenseBlockCurrent+1-bufDenseBlockStart > 0 {
+					nWritten := int(0)
+					fs.Debugf(baseOff, "%v: writing dense %v-%v", reader, currentFileOff+int64(bufDenseBlockStart), currentFileOff+int64(bufDenseBlockCurrent))
+					nWritten, writeErr := writer.WriteAt(buf[bufDenseBlockStart:bufDenseBlockCurrent+1], currentFileOff+int64(bufDenseBlockStart))
+					total += int64(nWritten)
+
+					if writeErr != nil {
+						return int64(total), err
+					}
+				}
+
+				bufDenseBlockStart = i
+			}
+
+			if val != 0 {
+				bufDenseBlockCurrent = i
+				contigZeroCount = 0
+			}
+		}
+		currentFileOff += int64(len(rdBuf))
+		rdBuf = nil
+	}
+
+	if err != io.EOF && err != nil {
+		return 0, err
+	}
+	return int64(total), nil
+}
+
 // Used to remove a failed copy
 func (c *copy) removeFailedCopy(ctx context.Context, o fs.Object) {
 	if o == nil {
