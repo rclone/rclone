@@ -47,18 +47,24 @@ func PreAllocate(size int64, out *os.File) (err error) {
 
 		index := fallocFlagsIndex.Load()
 	again:
-		if index >= int32(len(fallocFlags)) {
+		if index >= int32(len(fallocFlags)+1) {
 			return nil // Fallocate is disabled
 		}
-		flags := fallocFlags[index]
-		err = unix.Fallocate(int(out.Fd()), flags, 0, size)
-		if err == unix.ENOTSUP {
-			// Try the next flags combination
-			index++
-			fallocFlagsIndex.Store(index)
-			fs.Debugf(nil, "preAllocate: got error on fallocate, trying combination %d/%d: %v", index, len(fallocFlags), err)
-			goto again
+		if index == int32(len(fallocFlags)) {
+			// use ftruncate
+			err = unix.Ftruncate(int(out.Fd()), size)
+			return err
+		} else {
+			flags := fallocFlags[index]
+			err = unix.Fallocate(int(out.Fd()), flags, 0, size)
+			if err == unix.ENOTSUP {
+				// Try the next flags combination
+				index++
+				fallocFlagsIndex.Store(index)
+				fs.Debugf(nil, "preAllocate: got error on fallocate, trying combination %d/%d: %v", index, len(fallocFlags), err)
+				goto again
 
+			}
 		}
 		// Wrap important errors
 		if err == unix.ENOSPC {
