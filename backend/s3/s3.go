@@ -186,6 +186,9 @@ var providerOption = fs.Option{
 		Value: "Qiniu",
 		Help:  "Qiniu Object Storage (Kodo)",
 	}, {
+		Value: "Zata",
+		Help:  "Zata (S3 compatible Gateway)",
+	}, {
 		Value: "Other",
 		Help:  "Any other S3 compatible provider",
 	}},
@@ -492,6 +495,14 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "Region where you can connect with.\n",
+			Provider: "Zata",
+			Examples: []fs.OptionExample{{
+				Value: "us-east-1",
+				Help:  "Indore, Madhya Pradesh, India",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "Region where your bucket will be created and your data stored.\n",
 			Provider: "IONOS",
 			Examples: []fs.OptionExample{{
@@ -576,7 +587,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1381,6 +1392,14 @@ func init() {
 				Help:  "Northeast Asia Endpoint 1",
 			}},
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Zata Object Storage.",
+			Provider: "Zata",
+			Examples: []fs.OptionExample{{
+				Value: "idr01.zata.ai",
+				Help:  "South Asia Endpoint",
+			}},
+		}, {
 			// Selectel endpoints: https://docs.selectel.ru/en/cloud/object-storage/manage/domains/#s3-api-domains
 			Name:     "endpoint",
 			Help:     "Endpoint for Selectel Object Storage.",
@@ -1392,7 +1411,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -3631,6 +3650,11 @@ func setQuirks(opt *Options) {
 		urlEncodeListings = false
 		virtualHostStyle = false
 		useAlreadyExists = false // untested
+	case "Zata":
+		useMultipartEtag = false
+		mightGzip = false
+		useUnsignedPayload = false
+		useAlreadyExists = false
 	case "Exaba":
 		virtualHostStyle = false
 	case "GCS":
