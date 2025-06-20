@@ -107,6 +107,23 @@ func NewItem(Path, Content string, modTime time.Time) Item {
 	return i
 }
 
+// NewItem creates an item from a string content
+func NewItemBytes(Path string, Content []byte, modTime time.Time) Item {
+	i := Item{
+		Path:    Path,
+		ModTime: modTime,
+		Size:    int64(len(Content)),
+	}
+	hash := hash.NewMultiHasher()
+	buf := bytes.NewBuffer(Content)
+	_, err := io.Copy(hash, buf)
+	if err != nil {
+		fs.Fatalf(nil, "Failed to create item: %v", err)
+	}
+	i.Hashes = hash.Sums()
+	return i
+}
+
 // CheckTimeEqualWithPrecision checks the times are equal within the
 // precision, returns the delta and a flag
 func CheckTimeEqualWithPrecision(t0, t1 time.Time, precision time.Duration) (time.Duration, bool) {

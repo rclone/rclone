@@ -505,3 +505,83 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	r.CheckLocalItems(t, file1, file2, file3, file4)
 	r.CheckRemoteItems(t, file1, file4)
 }
+
+func TestCopyFileSparse(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	ci.Sparse = true
+
+	file1 := r.WriteFile("file1", "file1 contents", t1)
+	r.CheckLocalItems(t, file1)
+
+	file2 := file1
+	file2.Path = "sub/file2"
+
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+
+	err = operations.CopyFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+}
+
+func generateInconvenientByteMap(sparseBlockMin int64) []byte {
+	buf := make([]byte, sparseBlockMin*3)
+
+	for i := range sparseBlockMin * 3 {
+		// generate a hole at the beginning
+		if i < sparseBlockMin+sparseBlockMin/3 {
+			buf[i] = 0
+		} else if i < sparseBlockMin+(2*sparseBlockMin)/3 {
+			if i%2 == 0 {
+				buf[i] = 1
+			} else {
+				buf[i] = 0
+			}
+		} else {
+			buf[i] = 0
+		}
+	}
+
+	return buf
+}
+
+func TestCopyFileSparseStrategicHoles(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	ci.Sparse = true
+	ci.SparseMinBlockSize = 512
+
+	buf := generateInconvenientByteMap(int64(ci.SparseMinBlockSize))
+
+	file1 := r.WriteFileBytes("file1", buf, t1)
+	r.CheckLocalItems(t, file1)
+
+	file2 := file1
+	file2.Path = "sub/file2"
+
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+
+	err = operations.CopyFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
+}

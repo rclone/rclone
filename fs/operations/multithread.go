@@ -10,6 +10,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/sparse"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/multipart"
 	"golang.org/x/sync/errgroup"
@@ -74,6 +75,7 @@ func (mc *multiThreadCopyState) copyChunk(ctx context.Context, chunk int, writer
 		return nil
 	}
 	end := min(start+mc.partSize, mc.size)
+
 	size := end - start
 
 	fs.Debugf(mc.src, "multi-thread copy: chunk %d/%d (%d-%d) size %v starting", chunk+1, mc.numChunks, start, end, fs.SizeSuffix(size))
@@ -130,12 +132,16 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	ci := fs.GetConfig(ctx)
 	noBuffering := false
 	usingOpenWriterAt := false
-	if openChunkWriter == nil {
+	if openChunkWriter == nil || ci.Sparse {
 		openWriterAt := f.Features().OpenWriterAt
-		if openWriterAt == nil {
+		if openWriterAt == nil && !ci.Sparse {
 			return nil, errors.New("multi-thread copy: neither OpenChunkWriter nor OpenWriterAt supported")
 		}
+		if openWriterAt == nil && ci.Sparse {
+			return nil, errors.New("multi-thread copy: OpenWriterAt must be supported for sparse copies")
+		}
 		openChunkWriter = openChunkWriterFromOpenWriterAt(openWriterAt, int64(ci.MultiThreadChunkSize), int64(ci.MultiThreadWriteBufferSize), f)
+
 		// If we are using OpenWriterAt we don't seek the chunks so don't need to buffer
 		fs.Debugf(src, "multi-thread copy: disabling buffering because destination uses OpenWriterAt")
 		noBuffering = true
@@ -287,6 +293,7 @@ type writerAtChunkWriter struct {
 	writeBufferSize int64
 	f               fs.Fs
 	closed          bool
+	src             fs.Object
 }
 
 // WriteChunk writes chunkNumber from reader
@@ -298,13 +305,27 @@ func (w *writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, r
 		bytesToWrite = w.size % w.chunkSize
 	}
 
-	var writer io.Writer = io.NewOffsetWriter(w.writerAt, int64(chunkNumber)*w.chunkSize)
-	if w.writeBufferSize > 0 {
-		writer = bufio.NewWriterSize(writer, int(w.writeBufferSize))
-	}
-	n, err := io.Copy(writer, reader)
-	if err != nil {
-		return -1, err
+	start := int64(chunkNumber) * w.chunkSize
+
+	var writer io.Writer = nil
+	ci := fs.GetConfig(ctx)
+	var n int64
+	var err error
+	if !ci.Sparse {
+		writer = io.NewOffsetWriter(w.writerAt, start)
+		if w.writeBufferSize > 0 {
+			writer = bufio.NewWriterSize(writer, int(w.writeBufferSize))
+		}
+		n, err = io.Copy(writer, reader)
+
+		if err != nil {
+			return -1, err
+		}
+	} else {
+		n, err = sparse.WriteSparse(w.writerAt, start, reader, int64(ci.SparseMinBlockSize))
+		if err != nil {
+			return -1, err
+		}
 	}
 	if n != bytesToWrite {
 		return -1, fmt.Errorf("expected to write %v bytes for chunk %v, but wrote %v bytes", bytesToWrite, chunkNumber, n)
