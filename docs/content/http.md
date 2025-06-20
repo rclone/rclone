@@ -235,6 +235,22 @@ Properties:
 - Type:        string
 - Required:    false
 
+### Metadata
+
+HTTP metadata keys are case insensitive and are always returned in lower case.
+
+Here are the possible system metadata items for the http backend.
+
+| Name | Help | Type | Example | Read Only |
+|------|------|------|---------|-----------|
+| cache-control | Cache-Control header | string | no-cache | **Y** |
+| content-disposition | Content-Disposition header | string | inline | **Y** |
+| content-encoding | Content-Encoding header | string | gzip | **Y** |
+| content-language | Content-Language header | string | en-US | **Y** |
+| content-type | Content-Type header | string | text/plain | **Y** |
+
+See the [metadata](/docs/#metadata) docs for more info.
+
 ## Backend commands
 
 Here are the commands specific to the http backend.
