@@ -103,6 +103,7 @@ type UpdateFileInformation struct {
 	UploadId  string     `json:"uploadId,omitempty"`
 	ChannelID int64      `json:"channelId,omitempty"`
 	ParentID  string     `json:"parentId,omitempty"`
+	Encrypted bool       `json:"encrypted,omitempty"`
 }
 
 type RemoveFileRequest struct {

@@ -706,6 +706,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		payload.Parts = uploadInfo.fileChunks
 		payload.UploadId = uploadInfo.uploadID
 		payload.ChannelID = o.fs.opt.ChannelID
+		payload.Encrypted = uploadInfo.encryptFile
 	}
 
 	opts := rest.Opts{
