@@ -115,6 +115,11 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		Type:    "string",
 		Example: "inline",
 	},
+	"content-disposition-filename": {
+		Help:    "Filename retrieved from Content-Disposition header",
+		Type:    "string",
+		Example: "file.txt",
+	},
 	"content-encoding": {
 		Help:    "Content-Encoding header",
 		Type:    "string",
