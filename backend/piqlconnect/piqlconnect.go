@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/backend/piqlconnect/api"
@@ -50,6 +51,7 @@ type Options struct {
 type Fs struct {
 	organisationId string
 	client         *rest.Client
+	packageIdMap   map[string]string
 }
 
 func (f *Fs) Name() string {
@@ -103,6 +105,7 @@ func (f *Fs) listPackages(ctx context.Context, topDir TopDirKind) (entries fs.Di
 		return nil, err
 	}
 	for _, p := range ps {
+		f.packageIdMap[p.Name] = p.Id
 		switch topDir {
 		case TopDirWorkspace:
 			if p.Status != "ACTIVE" {
@@ -123,6 +126,24 @@ func (f *Fs) listPackages(ctx context.Context, topDir TopDirKind) (entries fs.Di
 		}
 		entries = append(entries, fs.NewDir(path.Join(topDir.name(), p.Name), mtime))
 	}
+	return entries, nil
+}
+
+func (fs *Fs) listFiles(ctx context.Context, packageName string, path []string) (entries fs.DirEntries, err error) {
+	values := url.Values{}
+	values.Set("organisationId", fs.organisationId)
+	values.Set("packageId", fs.packageIdMap[packageName])
+	files := []api.File{}
+	_, err = fs.client.CallJSON(ctx, &rest.Opts{Path: "/api/files", Parameters: values}, nil, &files)
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range files {
+		fmt.Println(f)
+		f.SetFs(fs)
+		entries = append(entries, f)
+	}
+	return entries, nil
 }
 
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
@@ -143,6 +164,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if dir == "Archive" {
 		return f.listPackages(ctx, TopDirArchive)
 	}
+	segments := strings.Split(dir, "/")
+	if len(segments) >= 2 && segments[0] == "Workspace" {
+		return f.listFiles(ctx, segments[1], segments[2:])
+	}
+
 	return entries, nil
 }
 
@@ -190,6 +216,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f := &Fs{
 		organisationId: string(organisationIdBytes),
 		client:         client,
+		packageIdMap:   make(map[string]string),
 	}
 	fmt.Println(f)
 
