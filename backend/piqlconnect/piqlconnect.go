@@ -3,14 +3,15 @@ package piqlconnect
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/backend/piqlconnect/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -18,6 +19,174 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/rest"
 )
+
+type Package struct {
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	Status    string `json:"status"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
+type File struct {
+	fs        *Fs
+	Path      string `json:"path"`
+	UpdatedAt string `json:"updatedAt"`
+	FileSize  int64  `json:"size"`
+}
+
+func (file *File) SetFs(fs *Fs) {
+	file.fs = fs
+}
+
+func (file *File) SetPath(path string) {
+	file.Path = path
+}
+
+// DirEntry
+func (file File) Fs() fs.Info {
+	return file.fs
+}
+
+func (file File) String() string {
+	return path.Base(file.Path)
+}
+
+func (file File) Remote() string {
+	return file.Path
+}
+
+func (file File) ModTime(ctx context.Context) time.Time {
+	mtime, err := time.Parse(time.RFC3339, file.UpdatedAt)
+	if err != nil {
+		panic("Failed to parse time")
+	}
+	return mtime
+}
+
+func (file File) Size() int64 {
+	return file.FileSize
+}
+
+// ObjectInfo
+func (file File) Hash(ctx context.Context, ty hash.Type) (string, error) {
+	return "", nil
+}
+
+func (file File) Storable() bool {
+	return true
+}
+
+// Object
+func (file File) SetModTime(ctx context.Context, t time.Time) error {
+	return fmt.Errorf("failed to set modtime")
+}
+
+func (file File) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	segments := strings.Split(path.Join(file.fs.RootPath, file.Path), "/")
+	if file.fs.PackageIdMap[segments[1]] == "" {
+		var topDir TopDirKind
+		if segments[0] == "Workspace" {
+			topDir = TopDirWorkspace
+		}
+		if segments[0] == "In Progress" {
+			topDir = TopDirInProgress
+		}
+		if segments[0] == "Archive" {
+			topDir = TopDirArchive
+		}
+		file.fs.listPackages(ctx, topDir)
+	}
+	json_string, err := json.Marshal(struct {
+		OrganisationId string    `json:"organisationId"`
+		PackageId      string    `json:"packageId"`
+		PackageName    string    `json:"packageName"`
+		BlobNames      [1]string `json:"blobNames"`
+	}{
+		OrganisationId: file.fs.OrganisationId,
+		PackageId:      file.fs.PackageIdMap[segments[1]],
+		PackageName:    "",
+		BlobNames:      [1]string{path.Join(segments[2:]...)},
+	})
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(string(json_string))
+	resp, err := file.fs.Client.Call(ctx, &rest.Opts{
+		Method: "POST",
+		Path:   "/api/files/download",
+		Body:   strings.NewReader(string(json_string)),
+	})
+	if err != nil {
+		return nil, err
+	}
+	sasUrlBytes, err := io.ReadAll(resp.Body)
+	sasUrl := string(sasUrlBytes)
+	fmt.Println(sasUrl)
+	if err != nil {
+		return nil, err
+	}
+	resp, err = file.fs.HttpClient.Get(sasUrl)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
+
+func (file File) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	return fmt.Errorf("failed to update file")
+}
+
+func (file File) Remove(ctx context.Context) error {
+	return fmt.Errorf("failed to remove file")
+}
+
+type Directory struct {
+	fs        fs.Info
+	Path      string `json:"path"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
+func (dir *Directory) SetFs(fs fs.Info) {
+	dir.fs = fs
+}
+
+func (dir *Directory) SetPath(path string) {
+	dir.Path = path
+}
+
+// DirEntry
+func (dir Directory) Fs() fs.Info {
+	return dir.fs
+}
+
+func (dir Directory) String() string {
+	return path.Base(dir.Path)
+}
+
+func (dir Directory) Remote() string {
+	return dir.Path
+}
+
+func (dir Directory) ModTime(ctx context.Context) time.Time {
+	mtime, err := time.Parse(time.RFC3339, dir.UpdatedAt)
+	if err != nil {
+		panic("Failed to parse time")
+	}
+	return mtime
+}
+
+func (dir Directory) Size() int64 {
+	return 0
+}
+
+// Directory
+func (dir Directory) Items() int64 {
+	return -1
+}
+
+func (dir Directory) ID() string {
+	return ""
+}
 
 const (
 	rootURL = "http://127.0.0.1:3000"
@@ -49,9 +218,11 @@ type Options struct {
 
 // Fs represents a remote piqlConnect package
 type Fs struct {
-	organisationId string
-	client         *rest.Client
-	packageIdMap   map[string]string
+	OrganisationId string
+	HttpClient     *http.Client
+	Client         *rest.Client
+	PackageIdMap   map[string]string
+	RootPath       string
 }
 
 func (f *Fs) Name() string {
@@ -59,15 +230,17 @@ func (f *Fs) Name() string {
 }
 
 func (f *Fs) Root() string {
-	return "."
+	return f.RootPath
 }
 
 func (f *Fs) String() string {
-	return "piqlConnect[" + f.organisationId + "]"
+	return "piqlConnect[" + f.OrganisationId + "]"
 }
 
 func (f *Fs) Features() *fs.Features {
-	return &fs.Features{}
+	return &fs.Features{
+		CanHaveEmptyDirectories: true,
+	}
 }
 
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
@@ -97,15 +270,15 @@ func (topDir TopDirKind) name() string {
 
 func (f *Fs) listPackages(ctx context.Context, topDir TopDirKind) (entries fs.DirEntries, err error) {
 	values := url.Values{}
-	values.Set("organisationId", f.organisationId)
+	values.Set("organisationId", f.OrganisationId)
 
-	ps := []api.Package{}
-	_, err = f.client.CallJSON(ctx, &rest.Opts{Path: "/api/packages", Parameters: values}, nil, &ps)
+	ps := []Package{}
+	_, err = f.Client.CallJSON(ctx, &rest.Opts{Path: "/api/packages", Parameters: values}, nil, &ps)
 	if err != nil {
 		return nil, err
 	}
 	for _, p := range ps {
-		f.packageIdMap[p.Name] = p.Id
+		f.PackageIdMap[p.Name] = p.Id
 		switch topDir {
 		case TopDirWorkspace:
 			if p.Status != "ACTIVE" {
@@ -124,29 +297,46 @@ func (f *Fs) listPackages(ctx context.Context, topDir TopDirKind) (entries fs.Di
 		if err != nil {
 			return nil, err
 		}
-		entries = append(entries, fs.NewDir(path.Join(topDir.name(), p.Name), mtime))
+		adjusted, _ := strings.CutPrefix(path.Join(topDir.name(), p.Name), f.RootPath+"/")
+		entries = append(entries, fs.NewDir(adjusted, mtime))
 	}
 	return entries, nil
 }
 
-func (fs *Fs) listFiles(ctx context.Context, packageName string, path []string) (entries fs.DirEntries, err error) {
+func (fs *Fs) listFiles(ctx context.Context, topDir TopDirKind, packageName string, dirPath []string) (entries fs.DirEntries, err error) {
 	values := url.Values{}
-	values.Set("organisationId", fs.organisationId)
-	values.Set("packageId", fs.packageIdMap[packageName])
-	files := []api.File{}
-	_, err = fs.client.CallJSON(ctx, &rest.Opts{Path: "/api/files", Parameters: values}, nil, &files)
+	values.Set("organisationId", fs.OrganisationId)
+	if fs.PackageIdMap[packageName] == "" {
+		fs.listPackages(ctx, topDir)
+	}
+	values.Set("packageId", fs.PackageIdMap[packageName])
+	values.Set("path", path.Join(dirPath...))
+	files := []File{}
+	_, err = fs.Client.CallJSON(ctx, &rest.Opts{Path: "/api/files", Parameters: values}, nil, &files)
 	if err != nil {
 		return nil, err
 	}
 	for _, f := range files {
-		fmt.Println(f)
 		f.SetFs(fs)
-		entries = append(entries, f)
+		adjusted, _ := strings.CutPrefix(topDir.name()+"/"+packageName+"/"+f.Path, fs.RootPath+"/")
+		f.SetPath(adjusted)
+		if f.FileSize == 0 && f.Path[len(f.Path)-1] == '/' {
+			dir := Directory{
+				Path:      f.Path[0 : len(f.Path)-1],
+				UpdatedAt: f.UpdatedAt,
+			}
+			dir.SetFs(fs)
+			entries = append(entries, dir)
+		} else {
+			entries = append(entries, f)
+		}
 	}
 	return entries, nil
 }
 
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	dir = path.Join(f.RootPath, dir)
+	fmt.Printf("List(\"%s\")\n", dir)
 	if len(dir) == 0 {
 		return append(
 			entries,
@@ -155,18 +345,22 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			fs.NewDir(path.Join(dir, "Archive"), time.Unix(0, 0)),
 		), nil
 	}
-	if dir == "Workspace" {
-		return f.listPackages(ctx, TopDirWorkspace)
-	}
-	if dir == "In Progress" {
-		return f.listPackages(ctx, TopDirInProgress)
-	}
-	if dir == "Archive" {
-		return f.listPackages(ctx, TopDirArchive)
-	}
 	segments := strings.Split(dir, "/")
-	if len(segments) >= 2 && segments[0] == "Workspace" {
-		return f.listFiles(ctx, segments[1], segments[2:])
+	var topDir TopDirKind
+	if segments[0] == "Workspace" {
+		topDir = TopDirWorkspace
+	}
+	if segments[0] == "In Progress" {
+		topDir = TopDirInProgress
+	}
+	if segments[0] == "Archive" {
+		topDir = TopDirArchive
+	}
+	if len(segments) == 1 {
+		return f.listPackages(ctx, topDir)
+	}
+	if len(segments) >= 2 {
+		return f.listFiles(ctx, topDir, segments[1], segments[2:])
 	}
 
 	return entries, nil
@@ -193,6 +387,13 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
+	if strings.Index(root, "/") == 0 {
+		root = root[1:]
+	}
+	if len(root) > 0 && root[len(root)-1] == '/' {
+		root = root[0 : len(root)-1]
+	}
+	fmt.Printf("NewFs(\"%s\")\n", root)
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -214,9 +415,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	f := &Fs{
-		organisationId: string(organisationIdBytes),
-		client:         client,
-		packageIdMap:   make(map[string]string),
+		OrganisationId: string(organisationIdBytes),
+		HttpClient:     httpclient,
+		Client:         client,
+		PackageIdMap:   make(map[string]string),
+		RootPath:       root,
 	}
 	fmt.Println(f)
 
