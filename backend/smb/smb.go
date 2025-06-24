@@ -503,13 +503,31 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 	return usage, nil
 }
 
+type smbWriterAt struct {
+	pool *filePool
+}
+
+func (w *smbWriterAt) WriteAt(p []byte, off int64) (int, error) {
+	f, err := w.pool.get()
+	if err != nil {
+		return 0, err
+	}
+
+	n, writeErr := f.WriteAt(p, off)
+	w.pool.put(f, writeErr)
+	return n, writeErr
+}
+
+func (w *smbWriterAt) Close() error {
+	return w.pool.drain()
+}
+
 // OpenWriterAt opens with a handle for random access writes
 //
 // Pass in the remote desired and the size if known.
 //
 // It truncates any existing object
 func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
-	var err error
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -519,27 +537,39 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		return nil, fs.ErrorIsDir
 	}
 
-	err = o.fs.ensureDirectory(ctx, share, filename)
+	err := o.fs.ensureDirectory(ctx, share, filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make parent directories: %w", err)
 	}
 
-	filename = o.fs.toSambaPath(filename)
+	smbPath := o.fs.toSambaPath(filename)
 
-	o.fs.addSession() // Show session in use
-	defer o.fs.removeSession()
-
+	// One-time truncate
 	cn, err := o.fs.getConnection(ctx, share)
 	if err != nil {
 		return nil, err
 	}
-
-	fl, err := cn.smbShare.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	file, err := cn.smbShare.OpenFile(smbPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open: %w", err)
+		o.fs.putConnection(&cn, err)
+		return nil, err
 	}
+	if size > 0 {
+		if truncateErr := file.Truncate(size); truncateErr != nil {
+			_ = file.Close()
+			o.fs.putConnection(&cn, truncateErr)
+			return nil, fmt.Errorf("failed to truncate file: %w", truncateErr)
+		}
+	}
+	if closeErr := file.Close(); closeErr != nil {
+		o.fs.putConnection(&cn, closeErr)
+		return nil, fmt.Errorf("failed to close file after truncate: %w", closeErr)
+	}
+	o.fs.putConnection(&cn, nil)
 
-	return fl, nil
+	return &smbWriterAt{
+		pool: newFilePool(ctx, o.fs, share, smbPath),
+	}, nil
 }
 
 // Shutdown the backend, closing any background tasks and any
