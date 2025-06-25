@@ -532,12 +532,12 @@ func (f *Fs) HLinkID(ctx context.Context, tgt fs.Object) (any, bool) {
 	return obj.HLinkInfo()
 }
 
-func (f *Fs) RegisterLinkRoot(ctx context.Context, src fs.Object, fsrc fs.FsEx, dst fs.Object, dstPath string, willTransfer bool) bool {
+func (f *Fs) RegisterLinkRoot(ctx context.Context, src fs.Object, fsrc fs.FsEx, dst fs.Object, dstPath string, willTransfer bool) (bool, error) {
 	return f.hlTracker.RegisterHLinkRoot(ctx, src, fsrc, dst, f, dstPath, willTransfer)
 }
 
-func (f *Fs) NotifyLinkRootTransferComplete(ctx context.Context, src fs.Object, fsrc fs.FsEx, dst fs.Object, fdst fs.FsEx) {
-	f.hlTracker.FlushLinkrootLinkQueue(ctx, src, fsrc, dst, fdst)
+func (f *Fs) NotifyLinkRootTransferComplete(ctx context.Context, src fs.Object, fsrc fs.FsEx, dst fs.Object) error {
+	return f.hlTracker.FlushLinkrootLinkQueue(ctx, src, fsrc, dst, f)
 }
 
 // caseInsensitive returns whether the remote is case insensitive or not

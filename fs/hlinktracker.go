@@ -2,6 +2,7 @@ package fs
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -18,11 +19,10 @@ type HLinkTracker struct {
 	hardlinks sync.Map // map[HLinkInfo]*HLinkRootInfo
 }
 
-func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc FsEx, dst Object, fdst FsEx, dstPath string, willTransfer bool) bool {
+func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc FsEx, dst Object, fdst FsEx, dstPath string, willTransfer bool) (bool, error) {
 	srcLinkInfo, srcHasLinkInfo := fsrc.HLinkID(ctx, src)
 	if !srcHasLinkInfo {
-		Debugf(src, "hlinkInfo is unexpectedly null")
-		return false
+		return false, fmt.Errorf("hlinkInfo is unexpectedly null for %v", src)
 	}
 
 	newInfo := HLinkRootInfo{
@@ -37,8 +37,7 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc F
 	rawInfo, isExisting := t.hardlinks.LoadOrStore(srcLinkInfo, &newInfo)
 	info, ok := rawInfo.(*HLinkRootInfo)
 	if !ok {
-		Debugf(t, "hardlinks map unexpectedly returned non-HLinkRootInfo")
-		return false
+		return false, fmt.Errorf("HLinkTracker hardlinks map unexpectedly returned non-HLinkRootInfo value")
 	}
 
 	defer info.lock.Unlock()
@@ -53,8 +52,7 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc F
 			dstLinkInfo, dstHasLinkInfo = fdst.HLinkID(ctx, dst)
 
 			if !dstHasLinkInfo {
-				Debugf(dst, "destination unexpectedly has no hlink info")
-				return false
+				return false, fmt.Errorf("destination %v unexpectedly has no hlink info", dst)
 			}
 		}
 
@@ -65,8 +63,7 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc F
 				err := fdst.HLink(ctx, info.remotePath, dstPath)
 
 				if err != nil {
-					Debugf(fdst, "failed to perform link %v->%v: %v\n", info.remotePath, dstPath, err)
-					return false
+					return false, fmt.Errorf("RegisterHlinkRoot failed to perform link %v->%v: %w", info.remotePath, dstPath, err)
 				}
 			}
 		} else {
@@ -80,40 +77,40 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc F
 		Debugf(dstPath, "registering as link root")
 		if !willTransfer {
 			Debugf(dstPath, "not transferring root")
+			if dst == nil {
+				return false, fmt.Errorf("RegisterHLinkRoot destination is unexpectedly null")
+			}
 			dstLinkInfo, dstHasLinkInfo := fdst.HLinkID(ctx, dst)
 			if !dstHasLinkInfo {
-				Debugf(dst, "destination unexpectedly has no hlink info")
+				return false, fmt.Errorf("destination %v unexpectedly has no hlink info", dstLinkInfo)
 			}
 
 			info.remoteHLinkInfo = dstLinkInfo
 
-			return false
+			return false, nil
 		}
 
 		// Otherwise, we need to transfer and indicate the caller as such
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
-func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, fsrc FsEx, dst Object, fdst FsEx) {
+func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, fsrc FsEx, dst Object, fdst FsEx) error {
 	srcHLinkInfo, srcHasHLinkInfo := fsrc.HLinkID(ctx, src)
 	if !srcHasHLinkInfo {
-		Debugf(src, "failed to load hardlink info")
-		return
+		return fmt.Errorf("failed to load hardlink info for src %v", src)
 	}
 
 	val, ok := t.hardlinks.Load(srcHLinkInfo)
 	if !ok {
-		Debugf(src, "failed to load hardlink root data")
-		return
+		return fmt.Errorf("failed to load hardlink root data for src %v", src)
 	}
 
 	info, ok := val.(*HLinkRootInfo)
 	if !ok {
-		Debugf(src, "unexpected return type from hardlinks map")
-		return
+		return fmt.Errorf("unexpected return type from hardlinks map for src %v", src)
 	}
 
 	info.lock.Lock()
@@ -121,8 +118,7 @@ func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, f
 
 	dstHLinkInfo, dstHasHLinkInfo := fdst.HLinkID(ctx, dst)
 	if !dstHasHLinkInfo {
-		Debugf(dst, "failed to load hardlink info")
-		return
+		return fmt.Errorf("failed to load hardlink info for dst %v", dst)
 	}
 	info.remoteHLinkInfo = dstHLinkInfo
 
@@ -131,10 +127,10 @@ func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, f
 		Debugf(src, "performing pending link %v -> %v", info.remotePath, tgt)
 		err := fdst.HLink(context.Background(), info.remotePath, tgt)
 		if err != nil {
-			Errorf(fsrc, "failed to perform link %v -> %v: %v", info.remotePath, tgt, err)
-			return
+			return fmt.Errorf("failed to perform link %v -> %v: %v", info.remotePath, tgt, err)
 		}
 	}
 
 	info.pendingLinkDests = nil
+	return nil
 }

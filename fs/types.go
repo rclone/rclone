@@ -66,9 +66,9 @@ type FsEx interface {
 
 	HLinkID(ctx context.Context, tgt Object) (any, bool)
 
-	RegisterLinkRoot(ctx context.Context, src Object, fsrc FsEx, dst Object, dstPath string, willTransfer bool) bool
+	RegisterLinkRoot(ctx context.Context, src Object, fsrc FsEx, dst Object, dstPath string, willTransfer bool) (bool, error)
 
-	NotifyLinkRootTransferComplete(ctx context.Context, src Object, fsrc FsEx, dst Object, fdst FsEx)
+	NotifyLinkRootTransferComplete(ctx context.Context, src Object, fsrc FsEx, dst Object) error
 }
 
 // Info provides a read only interface to information about a filesystem.

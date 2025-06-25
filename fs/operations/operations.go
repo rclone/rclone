@@ -490,7 +490,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 				fdstEx, haveFdstEx := fdst.(fs.FsEx)
 
 				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
-					fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst, fdstEx)
+					fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst)
 				}
 			}
 			return newDst, nil
@@ -518,7 +518,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		fdstEx, haveFdstEx := fdst.(fs.FsEx)
 
 		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
-			fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst, fdstEx)
+			fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst)
 		}
 	}
 	// Delete src if no error on copy
@@ -2095,7 +2095,11 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		fdstEx, haveFdstEx := fdst.(fs.FsEx)
 
 		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
-			needTransfer = fdstEx.RegisterLinkRoot(ctx, srcObj, fsrcEx, dstObj, srcObj.Remote(), needTransfer)
+			needTransfer, err = fdstEx.RegisterLinkRoot(ctx, srcObj, fsrcEx, dstObj, srcObj.Remote(), needTransfer)
+			if err != nil {
+				fs.Errorf(srcObj, "Failed to register link root")
+				return
+			}
 		}
 	}
 
