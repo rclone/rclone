@@ -1109,6 +1109,9 @@ func (s *syncCopyMove) markDirModifiedObject(o fs.Object) {
 // be nil.
 func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, src fs.Directory) (newDst fs.Directory) {
 	var err error
+	if dst != nil && src.Remote() == dst.Remote() && operations.OverlappingFilterCheck(ctx, s.fdst, s.fsrc) {
+		return nil // src and dst can be the same in convmv
+	}
 	equal := operations.DirsEqual(ctx, src, dst, operations.DirsEqualOpt{ModifyWindow: s.modifyWindow, SetDirModtime: s.setDirModTime, SetDirMetadata: s.setDirMetadata})
 	if !s.setDirModTimeAfter && equal {
 		return nil
