@@ -428,6 +428,10 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	origRemote := remote // avoid double-transform on fallback to copy
 	remote = transform.Path(ctx, remote, false)
 	ci := fs.GetConfig(ctx)
+	newDst = dst
+	if ci.DryRun && dst != nil && SameObject(src, dst) && src.Remote() == transform.Path(ctx, dst.Remote(), false) {
+		return // avoid SkipDestructive log for objects that won't really be moved
+	}
 	var tr *accounting.Transfer
 	if isTransfer {
 		tr = accounting.Stats(ctx).NewTransfer(src, fdst)
@@ -440,8 +444,11 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		}
 		tr.Done(ctx, err)
 	}()
-	newDst = dst
-	if SkipDestructive(ctx, src, "move") {
+	action := "move"
+	if remote != src.Remote() {
+		action += " to " + remote
+	}
+	if SkipDestructive(ctx, src, action) {
 		in := tr.Account(ctx, nil)
 		in.DryRun(src.Size())
 		return newDst, nil
@@ -505,6 +512,9 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		}
 	}
 	// Move not found or didn't work so copy dst <- src
+	if origRemote != remote {
+		dst = nil
+	}
 	newDst, err = Copy(ctx, fdst, dst, origRemote, src)
 	if err != nil {
 		fs.Errorf(src, "Not deleting source as copy failed: %v", err)
@@ -1959,6 +1969,9 @@ func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err err
 func needsMoveCaseInsensitive(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool) bool {
 	dstFilePath := path.Join(fdst.Root(), dstFileName)
 	srcFilePath := path.Join(fsrc.Root(), srcFileName)
+	if !cp && fdst.Name() == fsrc.Name() && dstFileName != srcFileName && norm.NFC.String(dstFilePath) == norm.NFC.String(srcFilePath) {
+		return true
+	}
 	return !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.EqualFold(dstFilePath, srcFilePath)
 }
 

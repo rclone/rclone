@@ -1641,6 +1641,32 @@ attempted if possible.
 Use the --interactive/-i or --dry-run flag to see what would be copied before copying.
 
 
+### moveid
+
+Move files by ID
+
+    rclone backend moveid remote: [options] [<arguments>+]
+
+This command moves files by ID
+
+Usage:
+
+    rclone backend moveid drive: ID path
+    rclone backend moveid drive: ID1 path1 ID2 path2
+
+It moves the drive file with ID given to the path (an rclone path which
+will be passed internally to rclone moveto).
+
+The path should end with a / to indicate move the file as named to
+this directory. If it doesn't end with a / then the last path
+component will be used as the file name.
+
+If the destination is a drive backend then server-side moving will be
+attempted if possible.
+
+Use the --interactive/-i or --dry-run flag to see what would be moved beforehand.
+
+
 ### exportformats
 
 Dump the export formats for debug purposes
