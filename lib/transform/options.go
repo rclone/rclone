@@ -159,6 +159,12 @@ func (t *transform) requiresValue() bool {
 		return true
 	case ConvTruncate:
 		return true
+	case ConvTruncateKeepExtension:
+		return true
+	case ConvTruncateBytes:
+		return true
+	case ConvTruncateBytesKeepExtension:
+		return true
 	case ConvEncoder:
 		return true
 	case ConvDecoder:
@@ -190,6 +196,9 @@ const (
 	ConvIndex
 	ConvDate
 	ConvTruncate
+	ConvTruncateKeepExtension
+	ConvTruncateBytes
+	ConvTruncateBytesKeepExtension
 	ConvBase64Encode
 	ConvBase64Decode
 	ConvEncoder
@@ -211,35 +220,38 @@ type transformChoices struct{}
 
 func (transformChoices) Choices() []string {
 	return []string{
-		ConvNone:                "none",
-		ConvToNFC:               "nfc",
-		ConvToNFD:               "nfd",
-		ConvToNFKC:              "nfkc",
-		ConvToNFKD:              "nfkd",
-		ConvFindReplace:         "replace",
-		ConvPrefix:              "prefix",
-		ConvSuffix:              "suffix",
-		ConvSuffixKeepExtension: "suffix_keep_extension",
-		ConvTrimPrefix:          "trimprefix",
-		ConvTrimSuffix:          "trimsuffix",
-		ConvIndex:               "index",
-		ConvDate:                "date",
-		ConvTruncate:            "truncate",
-		ConvBase64Encode:        "base64encode",
-		ConvBase64Decode:        "base64decode",
-		ConvEncoder:             "encoder",
-		ConvDecoder:             "decoder",
-		ConvISO8859_1:           "ISO-8859-1",
-		ConvWindows1252:         "Windows-1252",
-		ConvMacintosh:           "Macintosh",
-		ConvCharmap:             "charmap",
-		ConvLowercase:           "lowercase",
-		ConvUppercase:           "uppercase",
-		ConvTitlecase:           "titlecase",
-		ConvASCII:               "ascii",
-		ConvURL:                 "url",
-		ConvRegex:               "regex",
-		ConvCommand:             "command",
+		ConvNone:                       "none",
+		ConvToNFC:                      "nfc",
+		ConvToNFD:                      "nfd",
+		ConvToNFKC:                     "nfkc",
+		ConvToNFKD:                     "nfkd",
+		ConvFindReplace:                "replace",
+		ConvPrefix:                     "prefix",
+		ConvSuffix:                     "suffix",
+		ConvSuffixKeepExtension:        "suffix_keep_extension",
+		ConvTrimPrefix:                 "trimprefix",
+		ConvTrimSuffix:                 "trimsuffix",
+		ConvIndex:                      "index",
+		ConvDate:                       "date",
+		ConvTruncate:                   "truncate",
+		ConvTruncateKeepExtension:      "truncate_keep_extension",
+		ConvTruncateBytes:              "truncate_bytes",
+		ConvTruncateBytesKeepExtension: "truncate_bytes_keep_extension",
+		ConvBase64Encode:               "base64encode",
+		ConvBase64Decode:               "base64decode",
+		ConvEncoder:                    "encoder",
+		ConvDecoder:                    "decoder",
+		ConvISO8859_1:                  "ISO-8859-1",
+		ConvWindows1252:                "Windows-1252",
+		ConvMacintosh:                  "Macintosh",
+		ConvCharmap:                    "charmap",
+		ConvLowercase:                  "lowercase",
+		ConvUppercase:                  "uppercase",
+		ConvTitlecase:                  "titlecase",
+		ConvASCII:                      "ascii",
+		ConvURL:                        "url",
+		ConvRegex:                      "regex",
+		ConvCommand:                    "command",
 	}
 }
 
