@@ -23,14 +23,14 @@ jobs:
           - job_name: linux
             os: ubuntu-latest
             go: '>=1.24.0-rc.1'
-            gotags: cmount
+            gotags: cmount,noselfupdate
             cgo: '0'
             build_flags: '-include "^(linux/amd64|linux/arm64|linux/arm-v7)"'
 
           - job_name: windows
             os: windows-latest
             go: '>=1.24.0-rc.1'
-            gotags: cmount
+            gotags: cmount,noselfupdate
             cgo: '0'
             build_flags: '-include "^(windows/amd64|windows/arm64)"'
             build_args: '-buildmode exe'
@@ -38,13 +38,13 @@ jobs:
           - job_name: mac_amd64
             os: macos-latest
             go: '>=1.23.0-rc.1'
-            gotags: 'cmount'
+            gotags: 'cmount,noselfupdate'
             build_flags: '-include "^darwin/amd64" -cgo'
 
           - job_name: mac_arm64
             os: macos-latest
             go: '>=1.23.0-rc.1'
-            gotags: 'cmount'
+            gotags: 'cmount,noselfupdate'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
 
 
