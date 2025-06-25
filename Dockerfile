@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates fuse3 tzdata unzip && \
+RUN apk --no-cache add ca-certificates fuse3 tzdata unzip coreutils && \
     echo "user_allow_other" >> /etc/fuse.conf
 
 ARG TARGETARCH

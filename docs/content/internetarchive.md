@@ -192,6 +192,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --internetarchive-item-derive
+
+Whether to trigger derive on the IA item or not. If set to false, the item will not be derived by IA upon upload.
+The derive process produces a number of secondary files from an upload to make an upload more usable on the web.
+Setting this to false is useful for uploading files that are already in a format that IA can display or reduce burden on IA's infrastructure.
+
+Properties:
+
+- Config:      item_derive
+- Env Var:     RCLONE_INTERNETARCHIVE_ITEM_DERIVE
+- Type:        bool
+- Default:     true
+
 ### Advanced options
 
 Here are the Advanced options specific to internetarchive (Internet Archive).
@@ -221,6 +234,18 @@ Properties:
 - Env Var:     RCLONE_INTERNETARCHIVE_FRONT_ENDPOINT
 - Type:        string
 - Default:     "https://archive.org"
+
+#### --internetarchive-item-metadata
+
+Metadata to be set on the IA item, this is different from file-level metadata that can be set using --metadata-set.
+Format is key=value and the 'x-archive-meta-' prefix is automatically added.
+
+Properties:
+
+- Config:      item_metadata
+- Env Var:     RCLONE_INTERNETARCHIVE_ITEM_METADATA
+- Type:        stringArray
+- Default:     []
 
 #### --internetarchive-disable-checksum
 

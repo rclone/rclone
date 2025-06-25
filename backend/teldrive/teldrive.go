@@ -706,6 +706,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		payload.Parts = uploadInfo.fileChunks
 		payload.UploadId = uploadInfo.uploadID
 		payload.ChannelID = o.fs.opt.ChannelID
+		payload.Encrypted = uploadInfo.encryptFile
 	}
 
 	opts := rest.Opts{
@@ -792,22 +793,14 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 		return err
 	}
 
-	type fileEntryType struct {
-		path      string
-		entryType fs.EntryType
-	}
-	var pathsToClear []fileEntryType
+	var pathsToClear []string
 	for _, change := range changes {
 		if _, ok := processedEventIDs[change.ID]; ok {
 			continue
 		}
 		addPathToClear := func(parentID string) {
 			if path, ok := f.dirCache.GetInv(parentID); ok {
-				entryType := fs.EntryObject
-				if change.Source.Type != "file" {
-					entryType = fs.EntryDirectory
-				}
-				pathsToClear = append(pathsToClear, fileEntryType{path: path, entryType: entryType})
+				pathsToClear = append(pathsToClear, path)
 			}
 		}
 
@@ -821,12 +814,12 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 		processedEventIDs[change.ID] = time.Now()
 	}
 	notifiedPaths := make(map[string]bool)
-	for _, entry := range pathsToClear {
-		if _, ok := notifiedPaths[entry.path]; ok {
+	for _, path := range pathsToClear {
+		if _, ok := notifiedPaths[path]; ok {
 			continue
 		}
-		notifiedPaths[entry.path] = true
-		notifyFunc(entry.path, entry.entryType)
+		notifiedPaths[path] = true
+		notifyFunc(path, fs.EntryDirectory)
 	}
 	return nil
 }

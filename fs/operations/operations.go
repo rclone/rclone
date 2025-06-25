@@ -493,6 +493,9 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		}
 	}
 	// Move not found or didn't work so copy dst <- src
+	if origRemote != remote {
+		dst = nil
+	}
 	newDst, err = Copy(ctx, fdst, dst, origRemote, src)
 	if err != nil {
 		fs.Errorf(src, "Not deleting source as copy failed: %v", err)

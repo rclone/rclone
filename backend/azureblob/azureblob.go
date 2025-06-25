@@ -612,6 +612,9 @@ func parsePath(path string) (root string) {
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (containerName, containerPath string) {
 	containerName, containerPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
+	if f.opt.DirectoryMarkers && strings.HasSuffix(containerPath, "//") {
+		containerPath = containerPath[:len(containerPath)-1]
+	}
 	return f.opt.Enc.FromStandardName(containerName), f.opt.Enc.FromStandardPath(containerPath)
 }
 
@@ -1214,7 +1217,7 @@ func (f *Fs) list(ctx context.Context, containerName, directory, prefix string, 
 					continue
 				}
 				// process directory markers as directories
-				remote = strings.TrimRight(remote, "/")
+				remote, _ = strings.CutSuffix(remote, "/")
 			}
 			remote = remote[len(prefix):]
 			if addContainer {
@@ -1535,7 +1538,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // mkdirParent creates the parent bucket/directory if it doesn't exist
 func (f *Fs) mkdirParent(ctx context.Context, remote string) error {
-	remote = strings.TrimRight(remote, "/")
+	remote, _ = strings.CutSuffix(remote, "/")
 	dir := path.Dir(remote)
 	if dir == "/" || dir == "." {
 		dir = ""
@@ -2177,11 +2180,6 @@ func (o *Object) getTags() (tags map[string]string) {
 // getBlobSVC creates a blob client
 func (o *Object) getBlobSVC() *blob.Client {
 	container, directory := o.split()
-	// If we are trying to remove an all / directory marker then
-	// this will have one / too many now.
-	if bucket.IsAllSlashes(o.remote) {
-		directory = strings.TrimSuffix(directory, "/")
-	}
 	return o.fs.getBlobSVC(container, directory)
 }
 
@@ -2864,6 +2862,9 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			return ui, err
 		}
 	}
+	// if ui.isDirMarker && strings.HasSuffix(containerPath, "//") {
+	// 	containerPath = containerPath[:len(containerPath)-1]
+	// }
 
 	// Update Mod time
 	o.updateMetadataWithModTime(src.ModTime(ctx))

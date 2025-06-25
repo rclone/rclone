@@ -437,6 +437,36 @@ func TestTransformFile(t *testing.T) {
 	r.CheckRemoteListing(t, []fstest.Item{fstest.NewItem("toe/toe/toe.txt", "hello world", t1)}, []string{"tictacempty_dir", "tictactoe", "tictactoe/tictactoe", "toe", "toe/toe"})
 }
 
+func TestManualTransformFile(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+
+	r.Flocal.Features().DisableList([]string{"Copy", "Move"})
+	r.Fremote.Features().DisableList([]string{"Copy", "Move"})
+
+	err := transform.SetOptions(ctx, "all,prefix=tac", "all,prefix=tic")
+	require.NoError(t, err)
+	r.WriteFile("toe/toe/toe.txt", "hello world", t1)
+	_, err = operations.MkdirModTime(ctx, r.Flocal, "empty_dir", t1)
+	require.NoError(t, err)
+
+	r.Mkdir(ctx, r.Fremote)
+	ctx = predictDstFromLogger(ctx)
+	err = MoveDir(ctx, r.Fremote, r.Flocal, true, true)
+	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	require.NoError(t, err)
+
+	r.CheckLocalListing(t, []fstest.Item{}, []string{})
+	r.CheckRemoteListing(t, []fstest.Item{fstest.NewItem("tictactoe/tictactoe/tictactoe.txt", "hello world", t1)}, []string{"tictacempty_dir", "tictactoe", "tictactoe/tictactoe"})
+
+	err = transform.SetOptions(ctx, "all,trimprefix=tic", "all,trimprefix=tac")
+	require.NoError(t, err)
+	err = operations.TransformFile(ctx, r.Fremote, "tictactoe/tictactoe/tictactoe.txt")
+	require.NoError(t, err)
+	r.CheckLocalListing(t, []fstest.Item{}, []string{})
+	r.CheckRemoteListing(t, []fstest.Item{fstest.NewItem("toe/toe/toe.txt", "hello world", t1)}, []string{"tictacempty_dir", "tictactoe", "tictactoe/tictactoe", "toe", "toe/toe"})
+}
+
 func TestBase64(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)

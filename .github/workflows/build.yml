@@ -99,7 +99,8 @@ jobs:
         shell: powershell
         run: |
           $ProgressPreference = 'SilentlyContinue'
-          choco install -y winfsp zip
+          choco install -y winfsp
+          choco install zip --source="bin"
           echo "CPATH=C:\Program Files\WinFsp\inc\fuse;C:\Program Files (x86)\WinFsp\inc\fuse" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           if ($env:GOARCH -eq "386") {
             choco install -y mingw --forcex86 --force
@@ -196,7 +197,7 @@ jobs:
       - name: arm64-v8a Set environment variables
         shell: bash
         run: |
-          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
           echo 'GOOS=android' >> $GITHUB_ENV
           echo 'GOARCH=arm64' >> $GITHUB_ENV
