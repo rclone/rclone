@@ -985,3 +985,5 @@ put them back in again.` >}}
   * Benji Silver <git@benjifox.gay>
   * jinjingroad <jinjingroad@sina.com>
   * necaran <55765083+necaran@users.noreply.github.com>
+  * Marvin Rösch <marvinroesch99@gmail.com>
+  * curlwget <curlwget@icloud.com>
