@@ -104,7 +104,8 @@ func (c *copy) checkPartial(ctx context.Context) (remoteForCopy string, inplace 
 
 	suffix := fmt.Sprintf(".%x%s", hash, c.ci.PartialSuffix)
 	base := path.Base(remoteForCopy)
-	if len(base) > 100 {
+	// ci.PartialPathmax == 0 implies pathmax checks for partial names is disabled
+	if c.ci.PartialPathmax != 0 && len(base) > c.ci.PartialPathmax {
 		remoteForCopy = TruncateString(remoteForCopy, len(remoteForCopy)-len(suffix)) + suffix
 	} else {
 		remoteForCopy += suffix

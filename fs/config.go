@@ -545,6 +545,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Add partial-suffix to temporary file name when --inplace is not used",
 	Groups:  "Copy",
 }, {
+	Name:    "partial_pathmax",
+	Default: 100,
+	Help:    "Maximum length a path can be before the path is truncated to this length to fit the partial suffix. 0 to disable",
+	Groups:  "Copy",
+}, {
 	Name:     "max_connections",
 	Help:     "Maximum number of simultaneous backend API connections, 0 for unlimited.",
 	Default:  0,
@@ -664,6 +669,7 @@ type ConfigInfo struct {
 	DefaultTime                Time              `config:"default_time"` // time that directories with no time should display
 	Inplace                    bool              `config:"inplace"`      // Download directly to destination file instead of atomic download to temp/rename
 	PartialSuffix              string            `config:"partial_suffix"`
+	PartialPathmax             int               `config:"partial_pathmax"`
 	MetadataMapper             SpaceSepList      `config:"metadata_mapper"`
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`

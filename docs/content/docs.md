@@ -2116,6 +2116,12 @@ Suffix length limit is 16 characters.
 
 The default is `.partial`.
 
+### --partial-pathmax PATHMAX
+
+Rclone truncates the names of partial files by the length of the partial suffix (formatted as `.hash.partial`) if the base path exceeds `--partial-pathmax` characters in attempt to respect remote path maximums. If `--partial-pathmax` is set to 0, truncation to fit the suffix is disabled entirely.
+
+The default is 100 characters
+
 ### --password-command SpaceSepList {#password-command}
 
 This flag supplies a program which should supply the config password
