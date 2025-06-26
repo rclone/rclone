@@ -29,6 +29,7 @@ type Package struct {
 
 type File struct {
 	fs        *Fs
+	Id        string `json:"id"`
 	Path      string `json:"path"`
 	UpdatedAt string `json:"updatedAt"`
 	FileSize  int64  `json:"size"`
@@ -110,7 +111,6 @@ func (file File) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(json_string))
 	resp, err := file.fs.Client.Call(ctx, &rest.Opts{
 		Method: "POST",
 		Path:   "/api/files/download",
@@ -121,7 +121,6 @@ func (file File) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 	sasUrlBytes, err := io.ReadAll(resp.Body)
 	sasUrl := string(sasUrlBytes)
-	fmt.Println(sasUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -133,11 +132,49 @@ func (file File) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 }
 
 func (file File) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	return fmt.Errorf("failed to update file")
+	fmt.Printf("Update(%s)\n", file.Remote())
+	err := file.Remove(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = file.fs.Put(ctx, in, src, options...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (file File) Remove(ctx context.Context) error {
-	return fmt.Errorf("failed to remove file")
+	fmt.Printf("Remove(%s)\n", file.Remote())
+	dir := path.Join(file.fs.RootPath, file.Remote())
+	segments := strings.Split(dir, "/")
+	var topDir TopDirKind
+	if file.fs.PackageIdMap[segments[1]] == "" {
+		if segments[0] == "Workspace" {
+			topDir = TopDirWorkspace
+		}
+		if segments[0] == "In Progress" {
+			topDir = TopDirInProgress
+		}
+		if segments[0] == "Archive" {
+			topDir = TopDirArchive
+		}
+		file.fs.listPackages(ctx, topDir)
+	}
+	reqBody := struct {
+		OrganisationId string    `json:"organisationId"`
+		PackageId      string    `json:"packageId"`
+		FileIds        [1]string `json:"fileIds"`
+	}{
+		OrganisationId: file.fs.OrganisationId,
+		PackageId:      file.fs.PackageIdMap[segments[1]],
+		FileIds:        [1]string{file.Id},
+	}
+	_, err := file.fs.Client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/api/files/delete"}, &reqBody, nil)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type Directory struct {
@@ -189,7 +226,7 @@ func (dir Directory) ID() string {
 }
 
 const (
-	rootURL = "http://127.0.0.1:3000"
+	rootURL = "http://192.168.9.248:3000"
 )
 
 func init() {
@@ -367,7 +404,85 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 }
 
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return nil, nil
+	fmt.Printf("Put(%s)\n", src.Remote())
+	dir := path.Join(f.RootPath, src.Remote())
+	segments := strings.Split(dir, "/")
+	var topDir TopDirKind
+	if f.PackageIdMap[segments[1]] == "" {
+		if segments[0] == "Workspace" {
+			topDir = TopDirWorkspace
+		}
+		if segments[0] == "In Progress" {
+			topDir = TopDirInProgress
+		}
+		if segments[0] == "Archive" {
+			topDir = TopDirArchive
+		}
+		f.listPackages(ctx, topDir)
+	}
+	type FilePath struct {
+		Path string `json:"path"`
+	}
+	reqBody := struct {
+		OrganisationId string      `json:"organisationId"`
+		PackageId      string      `json:"packageId"`
+		Files          [1]FilePath `json:"files"`
+		Method         string      `json:"method"`
+	}{
+		OrganisationId: f.OrganisationId,
+		PackageId:      f.PackageIdMap[segments[1]],
+		Files:          [1]FilePath{{Path: strings.Join(segments[2:], "/")}},
+		Method:         "OVERWRITE",
+	}
+	var results [1]string
+	_, err := f.Client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/api/sas-url"}, &reqBody, &results)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, "PUT", results[0], in)
+	req.ContentLength = src.Size()
+	req.Header.Add("x-ms-blob-type", "BlockBlob")
+	if err != nil {
+		return nil, err
+	}
+	azureResp, err := f.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if azureResp.StatusCode < 200 || azureResp.StatusCode > 299 {
+		azureRespBytes, err := io.ReadAll(azureResp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("invalid http response code from azure: " + azureResp.Status + "\n" + string(azureRespBytes))
+	}
+	type FilePathSize struct {
+		Path string `json:"path"`
+		Size int64  `json:"size"`
+	}
+	filesReqBody := struct {
+		OrganisationId string          `json:"organisationId"`
+		PackageId      string          `json:"packageId"`
+		Files          [1]FilePathSize `json:"files"`
+	}{
+		OrganisationId: f.OrganisationId,
+		PackageId:      f.PackageIdMap[segments[1]],
+		Files:          [1]FilePathSize{{Path: strings.Join(segments[2:], "/"), Size: src.Size()}},
+	}
+	var fileIds [1]string
+	_, err = f.Client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/api/files"}, &filesReqBody, &fileIds)
+	if err != nil {
+		return nil, err
+	}
+	adjusted, _ := strings.CutPrefix(topDir.name()+"/"+segments[1]+"/"+strings.Join(segments[2:], "/"), f.RootPath+"/")
+	return &File{
+		fs:        f,
+		Id:        fileIds[0],
+		Path:      adjusted,
+		UpdatedAt: time.Now().Format(time.RFC3339),
+		FileSize:  src.Size(),
+	}, nil
+
 }
 
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
