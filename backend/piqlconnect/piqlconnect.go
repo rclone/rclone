@@ -113,7 +113,7 @@ func (file File) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 	resp, err := file.fs.Client.Call(ctx, &rest.Opts{
 		Method: "POST",
-		Path:   "/api/files/download",
+		Path:   "/files/download",
 		Body:   strings.NewReader(string(json_string)),
 	})
 	if err != nil {
@@ -170,7 +170,7 @@ func (file File) Remove(ctx context.Context) error {
 		PackageId:      file.fs.PackageIdMap[segments[1]],
 		FileIds:        [1]string{file.Id},
 	}
-	_, err := file.fs.Client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/api/files/delete"}, &reqBody, nil)
+	_, err := file.fs.Client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/files/delete"}, &reqBody, nil)
 	if err != nil {
 		return err
 	}
@@ -225,10 +225,6 @@ func (dir Directory) ID() string {
 	return ""
 }
 
-const (
-	rootURL = "http://192.168.9.248:3000"
-)
-
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "piqlconnect",
@@ -244,13 +240,20 @@ func init() {
 				Required:  true,
 				Sensitive: true,
 			},
+			{
+				Name:     "root_url",
+				Help:     "piqlConnect API url",
+				Required: true,
+				Default:  "https://app.piql.com/api",
+			},
 		},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ApiKey string `config:"api_key"`
+	ApiKey  string `config:"api_key"`
+	RootURL string `config:"root_url"`
 }
 
 // Fs represents a remote piqlConnect package
@@ -310,7 +313,7 @@ func (f *Fs) listPackages(ctx context.Context, topDir TopDirKind) (entries fs.Di
 	values.Set("organisationId", f.OrganisationId)
 
 	ps := []Package{}
-	_, err = f.Client.CallJSON(ctx, &rest.Opts{Path: "/api/packages", Parameters: values}, nil, &ps)
+	_, err = f.Client.CallJSON(ctx, &rest.Opts{Path: "/packages", Parameters: values}, nil, &ps)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +352,7 @@ func (fs *Fs) listFiles(ctx context.Context, topDir TopDirKind, packageName stri
 	values.Set("packageId", fs.PackageIdMap[packageName])
 	values.Set("path", path.Join(dirPath...))
 	files := []File{}
-	_, err = fs.Client.CallJSON(ctx, &rest.Opts{Path: "/api/files", Parameters: values}, nil, &files)
+	_, err = fs.Client.CallJSON(ctx, &rest.Opts{Path: "/files", Parameters: values}, nil, &files)
 	if err != nil {
 		return nil, err
 	}
@@ -435,7 +438,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		Method:         "OVERWRITE",
 	}
 	var results [1]string
-	_, err := f.Client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/api/sas-url"}, &reqBody, &results)
+	_, err := f.Client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/sas-url"}, &reqBody, &results)
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +473,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		Files:          [1]FilePathSize{{Path: strings.Join(segments[2:], "/"), Size: src.Size()}},
 	}
 	var fileIds [1]string
-	_, err = f.Client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/api/files"}, &filesReqBody, &fileIds)
+	_, err = f.Client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/files"}, &filesReqBody, &fileIds)
 	if err != nil {
 		return nil, err
 	}
@@ -518,9 +521,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	httpclient := fshttp.NewClient(ctx)
 	client := rest.NewClient(httpclient)
-	client.SetRoot(rootURL)
+	client.SetRoot(opt.RootURL)
 	client.SetHeader("Authorization", "Bearer "+opt.ApiKey)
-	resp, err := client.Call(ctx, &rest.Opts{Path: "/api/user/api-key/organisation"})
+	resp, err := client.Call(ctx, &rest.Opts{Path: "/user/api-key/organisation"})
 	if err != nil {
 		return nil, err
 	}
