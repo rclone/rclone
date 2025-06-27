@@ -507,8 +507,12 @@ func (f *Fs) HLink(ctx context.Context, src string, dst string) error {
 	localSrc := f.localPath(src)
 	localDst := f.localPath(dst)
 
-	file.MkdirAll(path.Dir(localDst), 0777)
-	err := os.Link(localSrc, localDst)
+	err := file.MkdirAll(path.Dir(localDst), 0777)
+	if err != nil {
+		return err
+	}
+
+	err = os.Link(localSrc, localDst)
 	if errors.Is(err, os.ErrExist) {
 		err = os.Remove(localDst)
 

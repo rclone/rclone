@@ -681,10 +681,16 @@ func TestCopySymlink(t *testing.T) {
 func TestHardlinks(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
+	// defer r.Finalise()
 	f := r.Flocal.(*Fs)
 	fdest := r.Fremote.(*Fs)
 	when := time.Now()
+	f.opt.PreserveLinks = true
+	fdest.opt.PreserveLinks = true
+
+	require.True(t, f.ShouldPreserveLinks())
+	require.True(t, fdest.ShouldPreserveLinks())
+	require.NotEqual(t, f, fdest)
 
 	r.WriteFile("src/linkroot.txt", "lorem ipsum dolor sit amet", when)
 	// Can we hardlink?
@@ -737,29 +743,91 @@ func TestHardlinks(t *testing.T) {
 	shouldTransfer, err = fdest.RegisterLinkRoot(ctx, linkTgtObj, f, nil, linkTgtObj.Remote(), true)
 	require.NoError(t, err)
 	require.False(t, shouldTransfer)
-	destObj, err := fdest.NewObject(ctx, linkTgtObj.Remote())
-	require.NoError(t, err)
-	require.Error(t, destObj.(*Object).lstat())
+	destLinkTgtObj, err := fdest.NewObject(ctx, linkTgtObj.Remote())
+	require.ErrorIs(t, err, fs.ErrorObjectNotFound)
 
 	// Do the copy
-	destRootObj, err := operations.Copy(ctx, r.Fremote, nil, linkTgtObj.Remote(), linkTgtObj)
+	// This should notify the tracker that the root has been copied
+	destRootObj, err := operations.Copy(ctx, r.Fremote, nil, rootObj.Remote(), rootObj)
 	require.NoError(t, err)
-	require.NotNil(t, linkTgtObj)
+	require.NotNil(t, destRootObj)
 
-	// Notify the tracker that the root has been copied
-	require.NoError(t, fdest.NotifyLinkRootTransferComplete(ctx, rootObj, f, nil))
-	require.NoError(t, destRootObj.(*Object).lstat())
-	require.NoError(t, destObj.(*Object).lstat())
+	destLinkTgtObj, err = fdest.NewObject(ctx, linkTgtObj.Remote())
+	require.NoError(t, err)
+	require.NotNil(t, destLinkTgtObj)
 
 	destRootLinkID, hasLink := f.HLinkID(ctx, destRootObj)
 	require.True(t, hasLink)
 	require.NotNil(t, destRootLinkID)
 	require.NotEqual(t, roothlinkID, destRootLinkID) // make sure we didn't link to the source
-	destLinkID, hasLink := f.HLinkID(ctx, destObj)
+	destLinkID, hasLink := f.HLinkID(ctx, destLinkTgtObj)
 	require.NotEqual(t, destLinkID, linkTgtHLinkID) // make sure we didn't link to the source
-	require.Equal(t, destRootLinkID, destLinkID) // These two should be hard linked together
+	require.Equal(t, destRootLinkID, destLinkID)    // These two should be hard linked together
 
-	// destNestedObj, err := operations.Copy(ctx, r.Fremote, nil, nestedObj.Remote(), nestedObj)
+	// Now that the copy is finished, any matching inodes should hlink immediately
+	_, err = fdest.NewObject(ctx, nestedObj.Remote())
+	require.Error(t, err, fs.ErrorObjectNotFound)
+	shouldTransfer, err = fdest.hlTracker.RegisterHLinkRoot(ctx, nestedObj, f, nil, fdest, nestedObj.Remote(), true)
+	require.NoError(t, err)
+	require.False(t, shouldTransfer)
 
-	// require.NoError(t, f.hlTracker.RegisterHLinkRoot(ctx, destNestedObj, f, nil, fdest, destNestedObj.Remote(), false))
+	destNestedObj, err := fdest.NewObject(ctx, nestedObj.Remote())
+	require.NoError(t, err)
+	require.NotNil(t, destNestedObj)
+	destNestedObjHlinkID, hasHlinkID := fdest.HLinkID(ctx, destNestedObj)
+	require.True(t, hasHlinkID)
+	require.NotNil(t, destNestedObjHlinkID)
+	require.Equal(t, destRootLinkID, destNestedObjHlinkID)
+
+	// reset tracker state
+	fdest.hlTracker = fs.HLinkTracker{}
+
+	// change inode, but maintain mod time
+	oldLinkTgtObj := linkTgtObj
+	err = linkTgtObj.Remove(ctx)
+	require.NoError(t, err)
+	newWrongTgtItem := r.WriteObjectTo(ctx, f, oldLinkTgtObj.Remote(), "new text", destLinkTgtObj.ModTime(ctx), false)
+	newWrongTgtObj, err := f.NewObject(ctx, newWrongTgtItem.Path)
+	require.NoError(t, err)
+	newWrongTgtHLinkID, hasHlinkID := fdest.HLinkID(ctx, newWrongTgtObj)
+	require.True(t, hasHlinkID)
+	require.NotEqual(t, roothlinkID, newWrongTgtHLinkID)
+
+	shouldTransfer, err = fdest.hlTracker.RegisterHLinkRoot(ctx, rootObj, f, destRootObj, fdest, rootObj.Remote(), false)
+	require.NoError(t, err)
+	require.False(t, shouldTransfer)
+
+	shouldTransfer, err = fdest.hlTracker.RegisterHLinkRoot(ctx, newWrongTgtObj, f, nil, fdest, oldLinkTgtObj.Remote(), true)
+	require.NoError(t, err)
+	require.True(t, shouldTransfer)
+
+	shouldTransfer, err = fdest.hlTracker.RegisterHLinkRoot(ctx, nestedObj, f, destNestedObj, fdest, nestedObj.Remote(), true)
+	require.NoError(t, err)
+	require.False(t, shouldTransfer)
+
+	destLinkTgtObj, err = operations.Copy(ctx, r.Fremote, nil, newWrongTgtObj.Remote(), newWrongTgtObj)
+	require.NoError(t, err)
+	require.NotNil(t, destRootObj)
+
+	{
+		// ensure that the root object hlink id didn't change
+		curRootHlinkID, hasHlinkID := fdest.HLinkID(ctx, destRootObj)
+		require.True(t, hasHlinkID)
+		require.Equal(t, destRootLinkID, curRootHlinkID)
+	}
+
+	err = destLinkTgtObj.(*Object).lstat()
+	require.NoError(t, err)
+
+	err = destNestedObj.(*Object).lstat()
+	require.NoError(t, err)
+
+	destLinkID, hasHlinkID = fdest.HLinkID(ctx, destLinkTgtObj)
+	require.True(t, hasHlinkID)
+
+	destNestedObjHlinkID, hasHlinkID = fdest.HLinkID(ctx, destNestedObj)
+	require.True(t, hasHlinkID)
+
+	require.NotEqual(t, destRootLinkID, destLinkID)
+	require.Equal(t, destRootLinkID, destNestedObjHlinkID)
 }
