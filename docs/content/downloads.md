@@ -9,6 +9,9 @@ type: page
 Rclone is single executable (`rclone`, or `rclone.exe` on Windows) that you can
 simply download as a zip archive and extract into a location of your choosing.
 See the [install](https://rclone.org/install/) documentation for more details.
+We also offer a secure [enterprise-grade, zero CVE docker
+image](https://securebuild.com/images/rclone) through our partner
+[SecureBuild](https://securebuild.com/blog/introducing-securebuild).
 
 ## Release {{% version %}} OS requirements {#osrequirements}
 
