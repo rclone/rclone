@@ -1065,6 +1065,20 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --sftp-http-proxy
+
+URL for HTTP CONNECT proxy
+
+Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+
+
+Properties:
+
+- Config:      http_proxy
+- Env Var:     RCLONE_SFTP_HTTP_PROXY
+- Type:        string
+- Required:    false
+
 #### --sftp-copy-is-hardlink
 
 Set to enable server side copies using hardlinks.

@@ -615,6 +615,42 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --azurefiles-disable-instance-discovery
+
+Skip requesting Microsoft Entra instance metadata
+This should be set true only by applications authenticating in
+disconnected clouds, or private clouds such as Azure Stack.
+It determines whether rclone requests Microsoft Entra instance
+metadata from `https://login.microsoft.com/` before
+authenticating.
+Setting this to true will skip this request, making you responsible
+for ensuring the configured authority is valid and trustworthy.
+
+
+Properties:
+
+- Config:      disable_instance_discovery
+- Env Var:     RCLONE_AZUREFILES_DISABLE_INSTANCE_DISCOVERY
+- Type:        bool
+- Default:     false
+
+#### --azurefiles-use-az
+
+Use Azure CLI tool az for authentication
+Set to use the [Azure CLI tool az](https://learn.microsoft.com/en-us/cli/azure/)
+as the sole means of authentication.
+Setting this can be useful if you wish to use the az CLI on a host with
+a System Managed Identity that you do not want to use.
+Don't set env_auth at the same time.
+
+
+Properties:
+
+- Config:      use_az
+- Env Var:     RCLONE_AZUREFILES_USE_AZ
+- Type:        bool
+- Default:     false
+
 #### --azurefiles-endpoint
 
 Endpoint for the service.

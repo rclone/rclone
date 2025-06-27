@@ -2,6 +2,8 @@
 package pacer
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -235,15 +237,22 @@ type retryAfterError struct {
 }
 
 func (r *retryAfterError) Error() string {
-	return r.error.Error()
+	return fmt.Sprintf("%v: trying again in %v", r.error, r.retryAfter)
 }
 
 func (r *retryAfterError) Cause() error {
 	return r.error
 }
 
+func (r *retryAfterError) Unwrap() error {
+	return r.error
+}
+
 // RetryAfterError returns a wrapped error that can be used by Calculator implementations
 func RetryAfterError(err error, retryAfter time.Duration) error {
+	if err == nil {
+		err = errors.New("too many requests")
+	}
 	return &retryAfterError{
 		error:      err,
 		retryAfter: retryAfter,

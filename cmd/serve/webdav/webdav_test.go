@@ -18,12 +18,14 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/webdav"
@@ -48,31 +50,32 @@ var (
 func TestWebDav(t *testing.T) {
 	// Configure and start the server
 	start := func(f fs.Fs) (configmap.Simple, func()) {
-		opt := DefaultOpt
+		opt := Opt
 		opt.HTTP.ListenAddr = []string{testBindAddress}
 		opt.HTTP.BaseURL = "/prefix"
 		opt.Auth.BasicUser = testUser
 		opt.Auth.BasicPass = testPass
 		opt.Template.Path = testTemplate
-		opt.HashType = hash.MD5
+		opt.EtagHash = "MD5"
 
 		// Start the server
-		w, err := newWebDAV(context.Background(), f, &opt)
+		w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
 		require.NoError(t, err)
-		require.NoError(t, w.serve())
+		go func() {
+			require.NoError(t, w.Serve())
+		}()
 
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
 			"type":   "webdav",
 			"vendor": "rclone",
-			"url":    w.Server.URLs()[0],
+			"url":    w.server.URLs()[0],
 			"user":   testUser,
 			"pass":   obscure.MustObscure(testPass),
 		}
 
 		return config, func() {
 			assert.NoError(t, w.Shutdown())
-			w.Wait()
 		}
 	}
 
@@ -98,19 +101,20 @@ func TestHTTPFunction(t *testing.T) {
 	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
 	assert.NoError(t, err)
 
-	opt := DefaultOpt
+	opt := Opt
 	opt.HTTP.ListenAddr = []string{testBindAddress}
 	opt.Template.Path = testTemplate
 
 	// Start the server
-	w, err := newWebDAV(context.Background(), f, &opt)
+	w, err := newWebDAV(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
 	assert.NoError(t, err)
-	require.NoError(t, w.serve())
+	go func() {
+		require.NoError(t, w.Serve())
+	}()
 	defer func() {
 		assert.NoError(t, w.Shutdown())
-		w.Wait()
 	}()
-	testURL := w.Server.URLs()[0]
+	testURL := w.server.URLs()[0]
 	pause := time.Millisecond
 	i := 0
 	for ; i < 10; i++ {
@@ -259,4 +263,11 @@ func HelpTestGET(t *testing.T, testURL string) {
 
 		checkGolden(t, test.Golden, body)
 	}
+}
+
+func TestRc(t *testing.T) {
+	servetest.TestRc(t, rc.Params{
+		"type":           "webdav",
+		"vfs_cache_mode": "off",
+	})
 }

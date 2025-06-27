@@ -318,8 +318,15 @@ $ rclone rc job/list
 If you wish to set config (the equivalent of the global flags) for the
 duration of an rc call only then pass in the `_config` parameter.
 
-This should be in the same format as the `config` key returned by
+This should be in the same format as the `main` key returned by
 [options/get](#options-get).
+
+    rclone rc --loopback options/get blocks=main
+
+You can see more help on these options with this command (see [the
+options blocks section](#option-blocks) for more info).
+
+    rclone rc --loopback options/info blocks=main
 
 For example, if you wished to run a sync with the `--checksum`
 parameter, you would pass this parameter in your JSON blob.
@@ -350,6 +357,13 @@ pass in the `_filter` parameter.
 
 This should be in the same format as the `filter` key returned by
 [options/get](#options-get).
+
+    rclone rc --loopback options/get blocks=filter
+
+You can see more help on these options with this command (see [the
+options blocks section](#option-blocks) for more info).
+
+    rclone rc --loopback options/info blocks=filter
 
 For example, if you wished to run a sync with these flags
 
@@ -432,7 +446,7 @@ format. Each block describes a single option.
 | Field | Type | Optional | Description |
 |-------|------|----------|-------------|
 | Name       | string     | N | name of the option in snake_case |
-| FieldName  | string     | N | name of the field used in the rc - if blank use Name |
+| FieldName  | string     | N | name of the field used in the rc - if blank use Name. May contain "." for nested fields. |
 | Help       | string     | N | help, started with a single sentence on a single line |
 | Groups     | string     | Y | groups this option belongs to - comma separated string for options classification |
 | Provider   | string     | Y | set to filter on provider |
@@ -638,6 +652,7 @@ This takes the following parameters:
 - opt - a dictionary of options to control the configuration
     - obscure - declare passwords are plain and need obscuring
     - noObscure - declare passwords are already obscured and don't need obscuring
+    - noOutput - don't print anything to stdout
     - nonInteractive - don't interact with a user, return questions
     - continue - continue the config process with an answer
     - all - ask all the config questions not just the post config ones
@@ -752,6 +767,7 @@ This takes the following parameters:
 - opt - a dictionary of options to control the configuration
     - obscure - declare passwords are plain and need obscuring
     - noObscure - declare passwords are already obscured and don't need obscuring
+    - noOutput - don't print anything to stdout
     - nonInteractive - don't interact with a user, return questions
     - continue - continue the config process with an answer
     - all - ask all the config questions not just the post config ones
@@ -936,7 +952,8 @@ returned.
 
 Parameters
 
-- group - name of the stats group (string)
+- group - name of the stats group (string, optional)
+- short - if true will not return the transferring and checking arrays (boolean, optional)
 
 Returns the following values:
 
@@ -951,6 +968,7 @@ Returns the following values:
 	"fatalError": boolean whether there has been at least one fatal error,
 	"lastError": last error string,
 	"renames" : number of files renamed,
+	"listed" : number of directory entries listed,
 	"retryError": boolean showing whether there has been at least one non-NoRetryError,
         "serverSideCopies": number of server side copies done,
         "serverSideCopyBytes": number bytes server side copied,
@@ -1914,6 +1932,141 @@ check that parameter passing is working properly.
 This echoes the input parameters to the output parameters for testing
 purposes.  It can be used to check that rclone is still alive and to
 check that parameter passing is working properly.
+
+**Authentication is required for this call.**
+
+### serve/list: Show running servers {#serve-list}
+
+Show running servers with IDs.
+
+This takes no parameters and returns
+
+- list: list of running serve commands
+
+Each list element will have
+
+- id: ID of the server
+- addr: address the server is running on
+- params: parameters used to start the server
+
+Eg
+
+    rclone rc serve/list
+
+Returns
+
+```json
+{
+    "list": [
+        {
+            "addr": "[::]:4321",
+            "id": "nfs-ffc2a4e5",
+            "params": {
+                "fs": "remote:",
+                "opt": {
+                    "ListenAddr": ":4321"
+                },
+                "type": "nfs",
+                "vfsOpt": {
+                    "CacheMode": "full"
+                }
+            }
+        }
+    ]
+}
+```
+
+**Authentication is required for this call.**
+
+### serve/start: Create a new server {#serve-start}
+
+Create a new server with the specified parameters.
+
+This takes the following parameters:
+
+- `type` - type of server: `http`, `webdav`, `ftp`, `sftp`, `nfs`, etc.
+- `fs` - remote storage path to serve
+- `addr` - the ip:port to run the server on, eg ":1234" or "localhost:1234"
+
+Other parameters are as described in the documentation for the
+relevant [rclone serve](/commands/rclone_serve/) command line options.
+To translate a command line option to an rc parameter, remove the
+leading `--` and replace `-` with `_`, so `--vfs-cache-mode` becomes
+`vfs_cache_mode`. Note that global parameters must be set with
+`_config` and `_filter` as described above.
+
+Examples:
+
+    rclone rc serve/start type=nfs fs=remote: addr=:4321 vfs_cache_mode=full
+    rclone rc serve/start --json '{"type":"nfs","fs":"remote:","addr":":1234","vfs_cache_mode":"full"}'
+
+This will give the reply
+
+```json
+{
+    "addr": "[::]:4321", // Address the server was started on
+    "id": "nfs-ecfc6852" // Unique identifier for the server instance
+}
+```
+
+Or an error if it failed to start.
+
+Stop the server with `serve/stop` and list the running servers with `serve/list`.
+
+**Authentication is required for this call.**
+
+### serve/stop: Unserve selected active serve {#serve-stop}
+
+Stops a running `serve` instance by ID.
+
+This takes the following parameters:
+
+- id: as returned by serve/start
+
+This will give an empty response if successful or an error if not.
+
+Example:
+
+    rclone rc serve/stop id=12345
+
+**Authentication is required for this call.**
+
+### serve/stopall: Stop all active servers {#serve-stopall}
+
+Stop all active servers.
+
+This will stop all active servers.
+
+    rclone rc serve/stopall
+
+**Authentication is required for this call.**
+
+### serve/types: Show all possible serve types {#serve-types}
+
+This shows all possible serve types and returns them as a list.
+
+This takes no parameters and returns
+
+- types: list of serve types, eg "nfs", "sftp", etc
+
+The serve types are strings like "serve", "serve2", "cserve" and can
+be passed to serve/start as the serveType parameter.
+
+Eg
+
+    rclone rc serve/types
+
+Returns
+
+```json
+{
+    "types": [
+        "http",
+        "sftp",
+        "nfs"
+    ]
+}
+```
 
 **Authentication is required for this call.**
 

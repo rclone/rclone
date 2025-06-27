@@ -123,6 +123,7 @@ rclone config create name type [key value]* [flags]
       --continue          Continue the configuration process with an answer
   -h, --help              help for create
       --no-obscure        Force any passwords not to be obscured
+      --no-output         Don't provide any output
       --non-interactive   Don't interact with user and return questions
       --obscure           Force any passwords to be obscured
       --result string     Result - use with --continue

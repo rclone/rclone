@@ -356,7 +356,8 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		DirModTimeUpdatesOnWrite: true,
 	}).Fill(ctx, f).Mask(ctx, baseFs).WrapsFs(f, baseFs)
 
-	f.features.Disable("ListR") // Recursive listing may cause chunker skip files
+	f.features.ListR = nil // Recursive listing may cause chunker skip files
+	f.features.ListP = nil // ListP not supported yet
 
 	return f, err
 }
@@ -1860,6 +1861,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // baseMove chains to the wrapped Move or simulates it by Copy+Delete
 func (f *Fs) baseMove(ctx context.Context, src fs.Object, remote string, delMode int) (fs.Object, error) {
+	ctx, ci := fs.AddConfig(ctx)
+	ci.NameTransform = nil // ensure operations.Move does not double-transform here
 	var (
 		dest fs.Object
 		err  error

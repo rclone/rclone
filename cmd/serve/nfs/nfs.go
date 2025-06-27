@@ -14,8 +14,11 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -83,6 +86,24 @@ func AddFlags(flagSet *pflag.FlagSet) {
 func init() {
 	vfsflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags())
+	serve.Command.AddCommand(Command)
+	serve.AddRc("nfs", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
+		// Create VFS
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		VFS := vfs.New(f, &vfsOpt)
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return NewServer(ctx, VFS, &opt)
+	})
 }
 
 // Run the command
@@ -168,6 +189,12 @@ the server under Linux/macOS, use the following command:
 Where |$PORT| is the same port number used in the |serve nfs| command
 and |$HOSTNAME| is the network address of the machine that |serve nfs|
 was run on.
+
+If |--vfs-metadata-extension| is in use then for the |--nfs-cache-type disk|
+and |--nfs-cache-type cache| the metadata files will have the file
+handle of their parent file suffixed with |0x00, 0x00, 0x00, 0x01|.
+This means they can be looked up directly from the parent file handle
+is desired.
 
 This command is only available on Unix platforms.
 

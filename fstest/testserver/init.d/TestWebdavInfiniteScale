@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+set -e
+
+NAME=infinitescale
+USER=admin
+PASS=admin
+PORT=9200
+
+. $(dirname "$0")/docker.bash
+
+start() {
+
+    docker run --rm --name $NAME \
+           -v $(pwd):/etc/ocis \
+           -e "OCIS_INSECURE=true" \
+           -e "IDM_ADMIN_PASSWORD=$PASS" \
+           -e "OCIS_FORCE_CONFIG_OVERWRITE=true" \
+           -e "OCIS_URL=https://127.0.0.1:$PORT" \
+           owncloud/ocis \
+           init
+
+    docker run --rm -d --name $NAME \
+           -e "OCIS_LOG_LEVEL=debug" \
+           -e "OCIS_LOG_PRETTY=true" \
+           -e "OCIS_URL=https://127.0.0.1:$PORT" \
+           -e "OCIS_ADMIN_USER_ID=some-admin-user-id-0000-100000000000" \
+           -e "IDM_ADMIN_PASSWORD=$PASS" \
+           -e "OCIS_INSECURE=true" \
+           -e "PROXY_ENABLE_BASIC_AUTH=true" \
+           -v $(pwd):/etc/ocis \
+           -p 127.0.0.1:${PORT}:9200 \
+           owncloud/ocis
+    
+    echo type=webdav
+    echo url=https://127.0.0.1:${PORT}/dav/spaces/some-admin-user-id-0000-100000000000
+    echo user=$USER
+    echo pass=$(rclone obscure $PASS)
+    echo vendor=infinitescale
+    echo _connect=127.0.0.1:${PORT}
+}
+
+stop() {
+    # Clean up the mess
+    docker stop infinitescale
+    rm -f ./ocis.yaml
+}
+
+. $(dirname "$0")/run.bash

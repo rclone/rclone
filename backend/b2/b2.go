@@ -31,8 +31,8 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/multipart"
@@ -918,7 +918,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	bucket, directory := f.split(dir)
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
 		last := ""
 		return f.list(ctx, bucket, directory, prefix, addBucket, true, 0, f.opt.Versions, false, func(remote string, object *api.File, isDirectory bool) error {
@@ -1883,8 +1883,13 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 	// --b2-download-url cloudflare strips the Content-Length
 	// headers (presumably so it can inject stuff) so use the old
 	// length read from the listing.
+	// Additionally, the official examples return S3 headers
+	// instead of native, i.e. no file ID, use ones from listing.
 	if info.Size < 0 {
 		info.Size = o.size
+	}
+	if info.ID == "" {
+		info.ID = o.id
 	}
 	return resp, info, nil
 }

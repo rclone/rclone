@@ -36,6 +36,7 @@ Run without a hash to see the list of all supported hashes, e.g.
       * whirlpool
       * crc32
       * sha256
+      * sha512
 
 Then
 
@@ -74,6 +75,7 @@ Flags for filtering directory listings
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
+      --hash-filter string                  Partition filenames by hash k/n or randomly @/n
       --ignore-case                         Ignore case in filters (case insensitive)
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read file include patterns from file (use - to read from stdin)
