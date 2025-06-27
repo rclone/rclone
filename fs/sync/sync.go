@@ -405,8 +405,8 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				fsrc := src.Fs()
 				fdst := s.fdst
 
-				fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
-				fdstEx, haveFdstEx := fdst.(fs.FsEx)
+				fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+				fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
 
 				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
 					needTransfer, err = fdstEx.RegisterLinkRoot(s.ctx, src, fsrcEx, pair.Dst, src.Remote(), needTransfer)
@@ -1266,8 +1266,8 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 				fsrc := src.Fs()
 				fdst := s.fdst
 
-				fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
-				fdstEx, haveFdstEx := fdst.(fs.FsEx)
+				fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+				fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
 
 				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
 					needTransfer, err := fdstEx.RegisterLinkRoot(s.ctx, x, fsrcEx, nil, src.Remote(), !NoNeedTransfer)

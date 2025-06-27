@@ -493,8 +493,8 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 				fsrc := src.Fs()
 				fdst := newDst.Fs()
 
-				fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
-				fdstEx, haveFdstEx := fdst.(fs.FsEx)
+				fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+				fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
 
 				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
 					fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst)
@@ -524,8 +524,8 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		fsrc := src.Fs()
 		fdst := newDst.Fs()
 
-		fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
-		fdstEx, haveFdstEx := fdst.(fs.FsEx)
+		fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+		fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
 
 		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
 			fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst)
@@ -2104,8 +2104,8 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	{
 		fsrc := srcObj.Fs()
 
-		fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
-		fdstEx, haveFdstEx := fdst.(fs.FsEx)
+		fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+		fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
 
 		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
 			needTransfer, err = fdstEx.RegisterLinkRoot(ctx, srcObj, fsrcEx, dstObj, srcObj.Remote(), needTransfer)

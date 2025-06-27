@@ -19,7 +19,7 @@ type HLinkTracker struct {
 	hardlinks sync.Map // map[HLinkInfo]*HLinkRootInfo
 }
 
-func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc FsEx, dst Object, fdst FsEx, dstPath string, willTransfer bool) (bool, error) {
+func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc Hardlinker, dst Object, fdst Hardlinker, dstPath string, willTransfer bool) (bool, error) {
 	srcLinkInfo, srcHasLinkInfo := fsrc.HLinkID(ctx, src)
 	if !srcHasLinkInfo {
 		return false, fmt.Errorf("hlinkInfo is unexpectedly null for %v", src)
@@ -97,7 +97,7 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc F
 	return false, nil
 }
 
-func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, fsrc FsEx, dst Object, fdst FsEx) error {
+func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, fsrc Hardlinker, dst Object, fdst Hardlinker) error {
 	srcHLinkInfo, srcHasHLinkInfo := fsrc.HLinkID(ctx, src)
 	if !srcHasHLinkInfo {
 		return fmt.Errorf("failed to load hardlink info for src %v", src)

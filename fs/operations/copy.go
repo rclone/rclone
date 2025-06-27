@@ -372,8 +372,8 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 		fsrc := c.src.Fs()
 		fdst := c.f
 
-		fsrcEx, haveFsrcEx := fsrc.(fs.FsEx)
-		fdstEx, haveFdstEx := fdst.(fs.FsEx)
+		fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+		fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
 
 		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
 			fdstEx.NotifyLinkRootTransferComplete(ctx, c.src, fsrcEx, newDst)

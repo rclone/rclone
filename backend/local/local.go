@@ -536,11 +536,11 @@ func (f *Fs) HLinkID(ctx context.Context, tgt fs.Object) (any, bool) {
 	return obj.HLinkInfo()
 }
 
-func (f *Fs) RegisterLinkRoot(ctx context.Context, src fs.Object, fsrc fs.FsEx, dst fs.Object, dstPath string, willTransfer bool) (bool, error) {
+func (f *Fs) RegisterLinkRoot(ctx context.Context, src fs.Object, fsrc fs.Hardlinker, dst fs.Object, dstPath string, willTransfer bool) (bool, error) {
 	return f.hlTracker.RegisterHLinkRoot(ctx, src, fsrc, dst, f, dstPath, willTransfer)
 }
 
-func (f *Fs) NotifyLinkRootTransferComplete(ctx context.Context, src fs.Object, fsrc fs.FsEx, dst fs.Object) error {
+func (f *Fs) NotifyLinkRootTransferComplete(ctx context.Context, src fs.Object, fsrc fs.Hardlinker, dst fs.Object) error {
 	return f.hlTracker.FlushLinkrootLinkQueue(ctx, src, fsrc, dst, f)
 }
 
