@@ -81,7 +81,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Jun 19, 2025</p>
+<p class="date">Jun 27, 2025</p>
 </header>
 <h1 id="name">NAME</h1>
 <p>rclone - manage files on cloud storage</p>
@@ -426,6 +426,7 @@ choco install rclone</code></pre>
 <p><a href="https://repology.org/project/rclone/versions"><img src="https://repology.org/badge/vertical-allrepos/rclone.svg?columns=3" alt="Packaging status" /></a></p>
 <h2 id="docker">Docker installation</h2>
 <p>The rclone developers maintain a <a href="https://hub.docker.com/r/rclone/rclone">docker image for rclone</a>.</p>
+<p><strong>Note:</strong> We also now offer a paid version of rclone with enterprise-grade security and zero CVEs through our partner <a href="https://securebuild.com/blog/introducing-securebuild">SecureBuild</a>. If you are interested, check out their website and the <a href="https://securebuild.com/images/rclone">Rclone SecureBuild Image</a>.</p>
 <p>These images are built as part of the release process based on a minimal Alpine Linux.</p>
 <p>The <code>:latest</code> tag will always point to the latest stable release. You can use the <code>:beta</code> tag to get the latest build from master. You can also use version tags, e.g. <code>:1.49.1</code>, <code>:1.49</code> or <code>:1</code>.</p>
 <pre><code>$ docker pull rclone/rclone:latest
@@ -13230,7 +13231,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.70.1&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.70.2&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -27604,6 +27605,13 @@ y/e/d&gt; y</code></pre>
 <p>Rclone cannot delete files anywhere except under <code>album</code>.</p>
 <h3 id="deleting-albums">Deleting albums</h3>
 <p>The Google Photos API does not support deleting albums - see <a href="https://issuetracker.google.com/issues/135714733">bug #135714733</a>.</p>
+<h2 id="making-your-own-client_id-1">Making your own client_id</h2>
+<p>When you use rclone with Google photos in its default configuration you are using rclone's client_id. This is shared between all the rclone users. There is a global rate limit on the number of queries per second that each client_id can do set by Google.</p>
+<p>If there is a problem with this client_id (eg quota too low or the client_id stops working) then you can make your own.</p>
+<p>Please follow the steps in <a href="https://rclone.org/drive/#making-your-own-client-id">the google drive docs</a>. You will need these scopes instead of the drive ones detailed:</p>
+<pre><code>https://www.googleapis.com/auth/photoslibrary.appendonly
+https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata
+https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata</code></pre>
 <h1 id="hasher">Hasher</h1>
 <p>Hasher is a special overlay backend to create remotes which handle checksums for other remotes. It's main functions include: - Emulate hash types unimplemented by backends - Cache checksums to help with slow hashing of large local or (S)FTP files - Warm up checksum cache from external SUM files</p>
 <h2 id="getting-started-1">Getting started</h2>
@@ -32075,7 +32083,10 @@ y/e/d&gt; y</code></pre>
 <h4 id="creating-client-id-for-onedrive-personal">Creating Client ID for OneDrive Personal</h4>
 <p>To create your own Client ID, please follow these steps:</p>
 <ol type="1">
-<li>Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade and then click <code>New registration</code>.</li>
+<li>Open https://portal.azure.com/?quickstart=true#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview and then under the <code>Add</code> menu click <code>App registration</code>.
+<ul>
+<li>If you have not created an Azure account, you will be prompted to. This is free, but you need to provide a phone number, address, and credit card for identity verification.</li>
+</ul></li>
 <li>Enter a name for your app, choose account type <code>Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)</code>, select <code>Web</code> in <code>Redirect URI</code>, then type (do not copy and paste) <code>http://localhost:53682/</code> and click Register. Copy and keep the <code>Application (client) ID</code> under the app name for later use.</li>
 <li>Under <code>manage</code> select <code>Certificates &amp; secrets</code>, click <code>New client secret</code>. Enter a description (can be anything) and set <code>Expires</code> to 24 months. Copy and keep that secret <em>Value</em> for later use (you <em>won't</em> be able to see this value afterwards).</li>
 <li>Under <code>manage</code> select <code>API permissions</code>, click <code>Add a permission</code> and select <code>Microsoft Graph</code> then select <code>delegated permissions</code>.</li>
@@ -32647,75 +32658,75 @@ rclone rc vfs/refresh recursive=true</code></pre>
 <p>Permissions are also supported, if <code>--onedrive-metadata-permissions</code> is set. The accepted values for <code>--onedrive-metadata-permissions</code> are "<code>read</code>", "<code>write</code>", "<code>read,write</code>", and "<code>off</code>" (the default). "<code>write</code>" supports adding new permissions, updating the "role" of existing permissions, and removing permissions. Updating and removing require the Permission ID to be known, so it is recommended to use "<code>read,write</code>" instead of "<code>write</code>" if you wish to update/remove permissions.</p>
 <p>Permissions are read/written in JSON format using the same schema as the <a href="https://learn.microsoft.com/en-us/onedrive/developer/rest-api/resources/permission?view=odsp-graph-online">OneDrive API</a>, which differs slightly between OneDrive Personal and Business.</p>
 <p>Example for OneDrive Personal:</p>
-<div class="sourceCode" id="cb1405"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1405-1"><a href="#cb1405-1" aria-hidden="true"></a><span class="ot">[</span></span>
-<span id="cb1405-2"><a href="#cb1405-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
-<span id="cb1405-3"><a href="#cb1405-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;1234567890ABC!123&quot;</span><span class="fu">,</span></span>
-<span id="cb1405-4"><a href="#cb1405-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1405-5"><a href="#cb1405-5" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1405-6"><a href="#cb1405-6" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
-<span id="cb1405-7"><a href="#cb1405-7" aria-hidden="true"></a>            <span class="fu">},</span></span>
-<span id="cb1405-8"><a href="#cb1405-8" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1405-9"><a href="#cb1405-9" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1405-10"><a href="#cb1405-10" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1405-11"><a href="#cb1405-11" aria-hidden="true"></a>        <span class="dt">&quot;invitation&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1405-12"><a href="#cb1405-12" aria-hidden="true"></a>            <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
-<span id="cb1405-13"><a href="#cb1405-13" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1405-14"><a href="#cb1405-14" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1405-15"><a href="#cb1405-15" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://1drv.ms/t/s!1234567890ABC&quot;</span></span>
-<span id="cb1405-16"><a href="#cb1405-16" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1405-17"><a href="#cb1405-17" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1405-18"><a href="#cb1405-18" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
-<span id="cb1405-19"><a href="#cb1405-19" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1405-20"><a href="#cb1405-20" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;s!1234567890ABC&quot;</span></span>
-<span id="cb1405-21"><a href="#cb1405-21" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb1405-22"><a href="#cb1405-22" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
-<p>Example for OneDrive Business:</p>
 <div class="sourceCode" id="cb1406"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1406-1"><a href="#cb1406-1" aria-hidden="true"></a><span class="ot">[</span></span>
 <span id="cb1406-2"><a href="#cb1406-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
-<span id="cb1406-3"><a href="#cb1406-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;48d31887-5fad-4d73-a9f5-3c356e68a038&quot;</span><span class="fu">,</span></span>
-<span id="cb1406-4"><a href="#cb1406-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedToIdentities&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1406-5"><a href="#cb1406-5" aria-hidden="true"></a>            <span class="fu">{</span></span>
-<span id="cb1406-6"><a href="#cb1406-6" aria-hidden="true"></a>                <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1406-7"><a href="#cb1406-7" aria-hidden="true"></a>                    <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
-<span id="cb1406-8"><a href="#cb1406-8" aria-hidden="true"></a>                <span class="fu">},</span></span>
-<span id="cb1406-9"><a href="#cb1406-9" aria-hidden="true"></a>                <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1406-10"><a href="#cb1406-10" aria-hidden="true"></a>                <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1406-11"><a href="#cb1406-11" aria-hidden="true"></a>            <span class="fu">}</span></span>
-<span id="cb1406-12"><a href="#cb1406-12" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1406-13"><a href="#cb1406-13" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1406-14"><a href="#cb1406-14" aria-hidden="true"></a>            <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;view&quot;</span><span class="fu">,</span></span>
-<span id="cb1406-15"><a href="#cb1406-15" aria-hidden="true"></a>            <span class="dt">&quot;scope&quot;</span><span class="fu">:</span> <span class="st">&quot;users&quot;</span><span class="fu">,</span></span>
-<span id="cb1406-16"><a href="#cb1406-16" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://contoso.sharepoint.com/:w:/t/design/a577ghg9hgh737613bmbjf839026561fmzhsr85ng9f3hjck2t5s&quot;</span></span>
-<span id="cb1406-17"><a href="#cb1406-17" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1406-18"><a href="#cb1406-18" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1406-19"><a href="#cb1406-19" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
-<span id="cb1406-20"><a href="#cb1406-20" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1406-21"><a href="#cb1406-21" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;u!LKj1lkdlals90j1nlkascl&quot;</span></span>
-<span id="cb1406-22"><a href="#cb1406-22" aria-hidden="true"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1406-23"><a href="#cb1406-23" aria-hidden="true"></a>    <span class="fu">{</span></span>
-<span id="cb1406-24"><a href="#cb1406-24" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;5D33DD65C6932946&quot;</span><span class="fu">,</span></span>
-<span id="cb1406-25"><a href="#cb1406-25" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1406-26"><a href="#cb1406-26" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1406-27"><a href="#cb1406-27" aria-hidden="true"></a>                <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;John Doe&quot;</span><span class="fu">,</span></span>
-<span id="cb1406-28"><a href="#cb1406-28" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;efee1b77-fb3b-4f65-99d6-274c11914d12&quot;</span></span>
-<span id="cb1406-29"><a href="#cb1406-29" aria-hidden="true"></a>            <span class="fu">},</span></span>
-<span id="cb1406-30"><a href="#cb1406-30" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1406-31"><a href="#cb1406-31" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
-<span id="cb1406-32"><a href="#cb1406-32" aria-hidden="true"></a>        <span class="fu">},</span></span>
-<span id="cb1406-33"><a href="#cb1406-33" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1406-34"><a href="#cb1406-34" aria-hidden="true"></a>            <span class="st">&quot;owner&quot;</span></span>
-<span id="cb1406-35"><a href="#cb1406-35" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1406-36"><a href="#cb1406-36" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;FWxc1lasfdbEAGM5fI7B67aB5ZMPDMmQ11U&quot;</span></span>
-<span id="cb1406-37"><a href="#cb1406-37" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb1406-38"><a href="#cb1406-38" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
+<span id="cb1406-3"><a href="#cb1406-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;1234567890ABC!123&quot;</span><span class="fu">,</span></span>
+<span id="cb1406-4"><a href="#cb1406-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1406-5"><a href="#cb1406-5" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1406-6"><a href="#cb1406-6" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
+<span id="cb1406-7"><a href="#cb1406-7" aria-hidden="true"></a>            <span class="fu">},</span></span>
+<span id="cb1406-8"><a href="#cb1406-8" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb1406-9"><a href="#cb1406-9" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb1406-10"><a href="#cb1406-10" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1406-11"><a href="#cb1406-11" aria-hidden="true"></a>        <span class="dt">&quot;invitation&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1406-12"><a href="#cb1406-12" aria-hidden="true"></a>            <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
+<span id="cb1406-13"><a href="#cb1406-13" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1406-14"><a href="#cb1406-14" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1406-15"><a href="#cb1406-15" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://1drv.ms/t/s!1234567890ABC&quot;</span></span>
+<span id="cb1406-16"><a href="#cb1406-16" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1406-17"><a href="#cb1406-17" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1406-18"><a href="#cb1406-18" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
+<span id="cb1406-19"><a href="#cb1406-19" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1406-20"><a href="#cb1406-20" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;s!1234567890ABC&quot;</span></span>
+<span id="cb1406-21"><a href="#cb1406-21" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb1406-22"><a href="#cb1406-22" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
+<p>Example for OneDrive Business:</p>
+<div class="sourceCode" id="cb1407"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1407-1"><a href="#cb1407-1" aria-hidden="true"></a><span class="ot">[</span></span>
+<span id="cb1407-2"><a href="#cb1407-2" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb1407-3"><a href="#cb1407-3" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;48d31887-5fad-4d73-a9f5-3c356e68a038&quot;</span><span class="fu">,</span></span>
+<span id="cb1407-4"><a href="#cb1407-4" aria-hidden="true"></a>        <span class="dt">&quot;grantedToIdentities&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1407-5"><a href="#cb1407-5" aria-hidden="true"></a>            <span class="fu">{</span></span>
+<span id="cb1407-6"><a href="#cb1407-6" aria-hidden="true"></a>                <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1407-7"><a href="#cb1407-7" aria-hidden="true"></a>                    <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;ryan@contoso.com&quot;</span></span>
+<span id="cb1407-8"><a href="#cb1407-8" aria-hidden="true"></a>                <span class="fu">},</span></span>
+<span id="cb1407-9"><a href="#cb1407-9" aria-hidden="true"></a>                <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb1407-10"><a href="#cb1407-10" aria-hidden="true"></a>                <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb1407-11"><a href="#cb1407-11" aria-hidden="true"></a>            <span class="fu">}</span></span>
+<span id="cb1407-12"><a href="#cb1407-12" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1407-13"><a href="#cb1407-13" aria-hidden="true"></a>        <span class="dt">&quot;link&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1407-14"><a href="#cb1407-14" aria-hidden="true"></a>            <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;view&quot;</span><span class="fu">,</span></span>
+<span id="cb1407-15"><a href="#cb1407-15" aria-hidden="true"></a>            <span class="dt">&quot;scope&quot;</span><span class="fu">:</span> <span class="st">&quot;users&quot;</span><span class="fu">,</span></span>
+<span id="cb1407-16"><a href="#cb1407-16" aria-hidden="true"></a>            <span class="dt">&quot;webUrl&quot;</span><span class="fu">:</span> <span class="st">&quot;https://contoso.sharepoint.com/:w:/t/design/a577ghg9hgh737613bmbjf839026561fmzhsr85ng9f3hjck2t5s&quot;</span></span>
+<span id="cb1407-17"><a href="#cb1407-17" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1407-18"><a href="#cb1407-18" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1407-19"><a href="#cb1407-19" aria-hidden="true"></a>            <span class="st">&quot;read&quot;</span></span>
+<span id="cb1407-20"><a href="#cb1407-20" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1407-21"><a href="#cb1407-21" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;u!LKj1lkdlals90j1nlkascl&quot;</span></span>
+<span id="cb1407-22"><a href="#cb1407-22" aria-hidden="true"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb1407-23"><a href="#cb1407-23" aria-hidden="true"></a>    <span class="fu">{</span></span>
+<span id="cb1407-24"><a href="#cb1407-24" aria-hidden="true"></a>        <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;5D33DD65C6932946&quot;</span><span class="fu">,</span></span>
+<span id="cb1407-25"><a href="#cb1407-25" aria-hidden="true"></a>        <span class="dt">&quot;grantedTo&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1407-26"><a href="#cb1407-26" aria-hidden="true"></a>            <span class="dt">&quot;user&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1407-27"><a href="#cb1407-27" aria-hidden="true"></a>                <span class="dt">&quot;displayName&quot;</span><span class="fu">:</span> <span class="st">&quot;John Doe&quot;</span><span class="fu">,</span></span>
+<span id="cb1407-28"><a href="#cb1407-28" aria-hidden="true"></a>                <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="st">&quot;efee1b77-fb3b-4f65-99d6-274c11914d12&quot;</span></span>
+<span id="cb1407-29"><a href="#cb1407-29" aria-hidden="true"></a>            <span class="fu">},</span></span>
+<span id="cb1407-30"><a href="#cb1407-30" aria-hidden="true"></a>            <span class="dt">&quot;application&quot;</span><span class="fu">:</span> <span class="fu">{},</span></span>
+<span id="cb1407-31"><a href="#cb1407-31" aria-hidden="true"></a>            <span class="dt">&quot;device&quot;</span><span class="fu">:</span> <span class="fu">{}</span></span>
+<span id="cb1407-32"><a href="#cb1407-32" aria-hidden="true"></a>        <span class="fu">},</span></span>
+<span id="cb1407-33"><a href="#cb1407-33" aria-hidden="true"></a>        <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1407-34"><a href="#cb1407-34" aria-hidden="true"></a>            <span class="st">&quot;owner&quot;</span></span>
+<span id="cb1407-35"><a href="#cb1407-35" aria-hidden="true"></a>        <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1407-36"><a href="#cb1407-36" aria-hidden="true"></a>        <span class="dt">&quot;shareId&quot;</span><span class="fu">:</span> <span class="st">&quot;FWxc1lasfdbEAGM5fI7B67aB5ZMPDMmQ11U&quot;</span></span>
+<span id="cb1407-37"><a href="#cb1407-37" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb1407-38"><a href="#cb1407-38" aria-hidden="true"></a><span class="ot">]</span></span></code></pre></div>
 <p>To write permissions, pass in a "permissions" metadata key using this same format. The <a href="https://rclone.org/docs/#metadata-mapper"><code>--metadata-mapper</code></a> tool can be very helpful for this.</p>
 <p>When adding permissions, an email address can be provided in the <code>User.ID</code> or <code>DisplayName</code> properties of <code>grantedTo</code> or <code>grantedToIdentities</code>. Alternatively, an ObjectID can be provided in <code>User.ID</code>. At least one valid recipient must be provided in order to add a permission for a user. Creating a Public Link is also supported, if <code>Link.Scope</code> is set to <code>"anonymous"</code>.</p>
 <p>Example request to add a "read" permission with <code>--metadata-mapper</code>:</p>
-<div class="sourceCode" id="cb1407"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1407-1"><a href="#cb1407-1" aria-hidden="true"></a><span class="fu">{</span></span>
-<span id="cb1407-2"><a href="#cb1407-2" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1407-3"><a href="#cb1407-3" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;[{</span><span class="ch">\&quot;</span><span class="st">grantedToIdentities</span><span class="ch">\&quot;</span><span class="st">:[{</span><span class="ch">\&quot;</span><span class="st">user</span><span class="ch">\&quot;</span><span class="st">:{</span><span class="ch">\&quot;</span><span class="st">id</span><span class="ch">\&quot;</span><span class="st">:</span><span class="ch">\&quot;</span><span class="st">ryan@contoso.com</span><span class="ch">\&quot;</span><span class="st">}}],</span><span class="ch">\&quot;</span><span class="st">roles</span><span class="ch">\&quot;</span><span class="st">:[</span><span class="ch">\&quot;</span><span class="st">read</span><span class="ch">\&quot;</span><span class="st">]}]&quot;</span></span>
-<span id="cb1407-4"><a href="#cb1407-4" aria-hidden="true"></a>    <span class="fu">}</span></span>
-<span id="cb1407-5"><a href="#cb1407-5" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb1408"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb1408-1"><a href="#cb1408-1" aria-hidden="true"></a><span class="fu">{</span></span>
+<span id="cb1408-2"><a href="#cb1408-2" aria-hidden="true"></a>    <span class="dt">&quot;Metadata&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1408-3"><a href="#cb1408-3" aria-hidden="true"></a>        <span class="dt">&quot;permissions&quot;</span><span class="fu">:</span> <span class="st">&quot;[{</span><span class="ch">\&quot;</span><span class="st">grantedToIdentities</span><span class="ch">\&quot;</span><span class="st">:[{</span><span class="ch">\&quot;</span><span class="st">user</span><span class="ch">\&quot;</span><span class="st">:{</span><span class="ch">\&quot;</span><span class="st">id</span><span class="ch">\&quot;</span><span class="st">:</span><span class="ch">\&quot;</span><span class="st">ryan@contoso.com</span><span class="ch">\&quot;</span><span class="st">}}],</span><span class="ch">\&quot;</span><span class="st">roles</span><span class="ch">\&quot;</span><span class="st">:[</span><span class="ch">\&quot;</span><span class="st">read</span><span class="ch">\&quot;</span><span class="st">]}]&quot;</span></span>
+<span id="cb1408-4"><a href="#cb1408-4" aria-hidden="true"></a>    <span class="fu">}</span></span>
+<span id="cb1408-5"><a href="#cb1408-5" aria-hidden="true"></a><span class="fu">}</span></span></code></pre></div>
 <p>Note that adding a permission can fail if a conflicting permission already exists for the file/folder.</p>
 <p>To update an existing permission, include both the Permission ID and the new <code>roles</code> to be assigned. <code>roles</code> is the only property that can be changed.</p>
 <p>To remove permissions, pass in a blob containing only the permissions you wish to keep (which can be empty, to remove all.) Note that the <code>owner</code> role will be ignored, as it cannot be removed.</p>
@@ -40079,6 +40090,36 @@ $ tree /tmp/c
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.70.2---2025-06-27">v1.70.2 - 2025-06-27</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.70.1...v1.70.2">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>convmv: Make --dry-run logs less noisy (nielash)</li>
+<li>sync: Avoid copying dir metadata to itself (nielash)</li>
+<li>build: Bump github.com/go-chi/chi/v5 from 5.2.1 to 5.2.2 to fix GHSA-vrw8-fxc6-2r93 (dependabot[bot])</li>
+<li>convmv: Fix moving to unicode-equivalent name (nielash)</li>
+<li>log: Fix deadlock when using systemd logging (Nick Craig-Wood)</li>
+<li>pacer: Fix nil pointer deref in RetryError (Nick Craig-Wood)</li>
+<li>doc fixes (Ali Zein Yousuf, Nick Craig-Wood)</li>
+</ul></li>
+<li>Local
+<ul>
+<li>Fix --skip-links on Windows when skipping Junction points (Nick Craig-Wood)</li>
+</ul></li>
+<li>Combine
+<ul>
+<li>Fix directory not found errors with ListP interface (Nick Craig-Wood)</li>
+</ul></li>
+<li>Mega
+<ul>
+<li>Fix tls handshake failure (necaran)</li>
+</ul></li>
+<li>Pikpak
+<ul>
+<li>Fix uploads fail with "aws-chunked encoding is not supported" error (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.70.1---2025-06-19">v1.70.1 - 2025-06-19</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.70.0...v1.70.1">See commits</a></p>
 <ul>

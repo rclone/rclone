@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jun 19, 2025
+% Jun 27, 2025
 
 # NAME
 
@@ -511,6 +511,12 @@ package is here.
 ## Docker installation {#docker}
 
 The rclone developers maintain a [docker image for rclone](https://hub.docker.com/r/rclone/rclone).
+
+**Note:** We also now offer a paid version of rclone with
+enterprise-grade security and zero CVEs through our partner
+[SecureBuild](https://securebuild.com/blog/introducing-securebuild).
+If you are interested, check out their website and the [Rclone
+SecureBuild Image](https://securebuild.com/images/rclone).
 
 These images are built as part of the release process based on a
 minimal Alpine Linux.
@@ -22398,7 +22404,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.70.1")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.70.2")
 ```
 
 
@@ -42271,6 +42277,25 @@ Rclone cannot delete files anywhere except under `album`.
 
 The Google Photos API does not support deleting albums - see [bug #135714733](https://issuetracker.google.com/issues/135714733).
 
+## Making your own client_id
+
+When you use rclone with Google photos in its default configuration you
+are using rclone's client_id.  This is shared between all the rclone
+users.  There is a global rate limit on the number of queries per
+second that each client_id can do set by Google.
+
+If there is a problem with this client_id (eg quota too low or the
+client_id stops working) then you can make your own.
+
+Please follow the steps in [the google drive docs](https://rclone.org/drive/#making-your-own-client-id).
+You will need these scopes instead of the drive ones detailed:
+
+```
+https://www.googleapis.com/auth/photoslibrary.appendonly
+https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata
+https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata
+```
+
 #  Hasher
 
 Hasher is a special overlay backend to create remotes which handle
@@ -48337,7 +48362,8 @@ For example, you might see throttling.
 
 To create your own Client ID, please follow these steps:
 
-1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade and then click `New registration`.
+1. Open https://portal.azure.com/?quickstart=true#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview and then under the `Add` menu click `App registration`.
+    * If you have not created an Azure account, you will be prompted to. This is free, but you need to provide a phone number, address, and credit card for identity verification.
 2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`, select `Web` in `Redirect URI`, then type (do not copy and paste) `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
 3. Under `manage` select `Certificates & secrets`, click `New client secret`. Enter a description (can be anything) and set `Expires` to 24 months. Copy and keep that secret _Value_ for later use (you _won't_ be able to see this value afterwards).
 4. Under `manage` select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
@@ -59113,6 +59139,27 @@ Options:
 
 
 # Changelog
+
+## v1.70.2 - 2025-06-27
+
+[See commits](https://github.com/rclone/rclone/compare/v1.70.1...v1.70.2)
+
+* Bug Fixes
+    * convmv: Make --dry-run logs less noisy (nielash)
+    * sync: Avoid copying dir metadata to itself (nielash)
+    * build: Bump github.com/go-chi/chi/v5 from 5.2.1 to 5.2.2 to fix GHSA-vrw8-fxc6-2r93 (dependabot[bot])
+    * convmv: Fix moving to unicode-equivalent name (nielash)
+    * log: Fix deadlock when using systemd logging (Nick Craig-Wood)
+    * pacer: Fix nil pointer deref in RetryError (Nick Craig-Wood)
+    * doc fixes (Ali Zein Yousuf, Nick Craig-Wood)
+* Local
+    * Fix --skip-links on Windows when skipping Junction points (Nick Craig-Wood)
+* Combine
+    * Fix directory not found errors with ListP interface (Nick Craig-Wood)
+* Mega
+    * Fix tls handshake failure (necaran)
+* Pikpak
+    * Fix uploads fail with "aws-chunked encoding is not supported" error (Nick Craig-Wood)
 
 ## v1.70.1 - 2025-06-19
 
