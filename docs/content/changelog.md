@@ -5,6 +5,27 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.70.2 - 2025-06-27
+
+[See commits](https://github.com/rclone/rclone/compare/v1.70.1...v1.70.2)
+
+* Bug Fixes
+    * convmv: Make --dry-run logs less noisy (nielash)
+    * sync: Avoid copying dir metadata to itself (nielash)
+    * build: Bump github.com/go-chi/chi/v5 from 5.2.1 to 5.2.2 to fix GHSA-vrw8-fxc6-2r93 (dependabot[bot])
+    * convmv: Fix moving to unicode-equivalent name (nielash)
+    * log: Fix deadlock when using systemd logging (Nick Craig-Wood)
+    * pacer: Fix nil pointer deref in RetryError (Nick Craig-Wood)
+    * doc fixes (Ali Zein Yousuf, Nick Craig-Wood)
+* Local
+    * Fix --skip-links on Windows when skipping Junction points (Nick Craig-Wood)
+* Combine
+    * Fix directory not found errors with ListP interface (Nick Craig-Wood)
+* Mega
+    * Fix tls handshake failure (necaran)
+* Pikpak
+    * Fix uploads fail with "aws-chunked encoding is not supported" error (Nick Craig-Wood)
+
 ## v1.70.1 - 2025-06-19
 
 [See commits](https://github.com/rclone/rclone/compare/v1.70.0...v1.70.1)
