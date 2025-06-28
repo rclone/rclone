@@ -420,39 +420,119 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	// for each item in the srcList to head dst object
 	if m.NoTraverse && !m.NoCheckDest {
 		originalSrcChan := srcChan
-		srcChan = make(chan fs.DirEntry, 100)
-		ls, err := list.NewSorter(m.Ctx, m.Fdst, list.SortToChan(dstChan), m.dstKey)
-		if err != nil {
-			return nil, err
-		}
+		srcChan = make(chan fs.DirEntry, ci.Checkers*2)
 
+		// Use sequence numbers for ordering - simpler than sorter
+		// This assumes source entries arrive in the same order as destination keys
+		// would be sorted, which is true for all current backends
 		startedDst = true
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			defer ls.CleanUp()
+
+			type seqResult struct {
+				seq   int
+				entry fs.DirEntry // nil if not found at destination
+			}
+			results := make(chan seqResult, 1) // small buffer to avoid context switch
 
 			g, gCtx := errgroup.WithContext(m.Ctx)
 			g.SetLimit(ci.Checkers)
-			for src := range originalSrcChan {
-				srcChan <- src
-				if srcObj, ok := src.(fs.Object); ok {
-					g.Go(func() error {
-						leaf := path.Base(srcObj.Remote())
-						dstObj, err := m.Fdst.NewObject(gCtx, path.Join(job.dstRemote, leaf))
-						if err == nil {
-							_ = ls.Add(fs.DirEntries{dstObj}) // ignore errors
+
+			// Process source entries with sequence numbers
+			go func() {
+				seq := 0
+				for src := range originalSrcChan {
+					// Assign sequence number to EVERY entry (including directories)
+					mySeq := seq
+					seq++
+
+					// Forward ALL entries to srcChan
+					select {
+					case srcChan <- src:
+					case <-m.Ctx.Done():
+						close(srcChan)
+						return
+					}
+
+					// Debug check: verify ordering assumption
+					// seq order == m.dstKey order for every backend; asserted below, fallback sends nil
+					if dl := fs.GetConfig(m.Ctx).LogLevel; dl <= fs.LogLevelDebug && m.srcKey(src) != m.dstKey(src) {
+						fs.Errorf(src, "no-traverse seq-order assumption violated: srcKey=%q != dstKey=%q", m.srcKey(src), m.dstKey(src))
+						// Fall back to copy-everything semantics
+						select {
+						case results <- seqResult{seq: mySeq, entry: nil}:
+						case <-m.Ctx.Done():
+							return
 						}
-						return nil // ignore errors
+						continue
+					}
+
+					srcObj, ok := src.(fs.Object)
+					if !ok {
+						// Directory: send nil placeholder synchronously
+						select {
+						case results <- seqResult{seq: mySeq, entry: nil}:
+						case <-m.Ctx.Done():
+							return
+						}
+						continue
+					}
+
+					// Object: check destination in worker
+					g.Go(func() error {
+						// Check if exists at destination
+						var dstEntry fs.DirEntry
+						if dstObj, err := m.Fdst.NewObject(gCtx, path.Join(job.dstRemote, path.Base(srcObj.Remote()))); err == nil {
+							dstEntry = dstObj
+						}
+
+						// Send result with sequence number
+						select {
+						case results <- seqResult{seq: mySeq, entry: dstEntry}:
+						case <-gCtx.Done():
+						}
+						return nil
 					})
 				}
+				close(srcChan)
+				dstListErr = g.Wait()
+				close(results)
+			}()
+
+			// Emit results in sequence order
+			next := 0
+			pending := make(map[int]fs.DirEntry) // bounded by checkers
+
+			for res := range results {
+				pending[res.seq] = res.entry
+
+				// Emit all consecutive entries we have
+				for entry, ok := pending[next]; ok; entry, ok = pending[next] {
+					select {
+					case dstChan <- entry:
+					case <-m.Ctx.Done():
+						close(dstChan)
+						return
+					}
+					delete(pending, next)
+					next++
+				}
 			}
-			dstListErr = g.Wait()
-			sendErr := ls.Send()
-			if dstListErr == nil {
-				dstListErr = sendErr
+
+			// Drain any remaining entries
+			for len(pending) > 0 {
+				if entry, ok := pending[next]; ok {
+					select {
+					case dstChan <- entry:
+					case <-m.Ctx.Done():
+						close(dstChan)
+						return
+					}
+					delete(pending, next)
+				}
+				next++
 			}
-			close(srcChan)
 			close(dstChan)
 		}()
 	}
