@@ -591,6 +591,11 @@ backends:
  - backend:  "smb"
    remote:   "TestSMBKerberos:rclone"
    fastlist: false
+   env:
+      - KRB5_CONFIG=/tmp/rclone_krb5/krb5.conf
+      - KRB5CCNAME=/tmp/rclone_krb5/ccache
+   ignoretests:
+     - cmd/gitannex
  - backend:  "storj"
    remote:   "TestStorj:"
    fastlist: true
