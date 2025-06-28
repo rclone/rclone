@@ -4,9 +4,11 @@ package march
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"slices"
+	"sort"
 	"strings"
 	"sync"
 
@@ -420,40 +422,78 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	// for each item in the srcList to head dst object
 	if m.NoTraverse && !m.NoCheckDest {
 		originalSrcChan := srcChan
-		srcChan = make(chan fs.DirEntry, 100)
-		ls, err := list.NewSorter(m.Ctx, m.Fdst, list.SortToChan(dstChan), m.dstKey)
-		if err != nil {
-			return nil, err
+		// Use a larger buffer to prevent blocking
+		bufferSize := (ci.Transfers + ci.Checkers) * 2
+		if bufferSize < 1000 {
+			bufferSize = 1000
 		}
+		srcChan = make(chan fs.DirEntry, bufferSize)
 
+		// Use a different approach to avoid deadlock:
+		// Instead of using the sorter which accumulates all entries,
+		// send destination entries directly as they are found
 		startedDst = true
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			defer ls.CleanUp()
+
+			// Collect and sort all destination entries first
+			var dstList []fs.DirEntry
+			var dstMu sync.Mutex
 
 			g, gCtx := errgroup.WithContext(m.Ctx)
 			g.SetLimit(ci.Checkers)
+
+			// Process all source entries
 			for src := range originalSrcChan {
-				srcChan <- src
+				// Forward to srcChan
+				select {
+				case srcChan <- src:
+				case <-m.Ctx.Done():
+					close(srcChan)
+					close(dstChan)
+					return
+				}
+
 				if srcObj, ok := src.(fs.Object); ok {
+					srcObj := srcObj // capture loop variable
 					g.Go(func() error {
 						leaf := path.Base(srcObj.Remote())
 						dstObj, err := m.Fdst.NewObject(gCtx, path.Join(job.dstRemote, leaf))
 						if err == nil {
-							_ = ls.Add(fs.DirEntries{dstObj}) // ignore errors
+							dstMu.Lock()
+							dstList = append(dstList, dstObj)
+							dstMu.Unlock()
 						}
 						return nil // ignore errors
 					})
 				}
 			}
-			dstListErr = g.Wait()
-			sendErr := ls.Send()
-			if dstListErr == nil {
-				dstListErr = sendErr
-			}
 			close(srcChan)
+
+			// Wait for all destination checks to complete
+			dstListErr = g.Wait()
+
+			// Sort the destination list
+			sort.Slice(dstList, func(i, j int) bool {
+				return m.dstKey(dstList[i]) < m.dstKey(dstList[j])
+			})
+
+			// Send sorted destination entries
+			for _, dst := range dstList {
+				select {
+				case dstChan <- dst:
+				case <-m.Ctx.Done():
+					close(dstChan)
+					return
+				}
+			}
 			close(dstChan)
+
+			// Log any errors from destination checking
+			if dstListErr != nil && !errors.Is(dstListErr, fs.ErrorObjectNotFound) {
+				fs.Debugf(m.Fdst, "no-traverse: destination check finished with: %v", dstListErr)
+			}
 		}()
 	}
 	if !startedDst {
