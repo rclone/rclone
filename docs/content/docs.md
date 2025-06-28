@@ -2248,6 +2248,24 @@ This can be useful transferring files from Dropbox which have been
 modified by the desktop sync client which doesn't set checksums of
 modification times in the same way as rclone.
 
+### --sparse ###
+
+Turn sequences of zeros into sparse blocks
+
+Normally, when zeros are written to a file, they are stored as data.
+However, some filesystems have the ability to keep track of locations
+in a file that contain no data, saving disk space. To take advantage
+of this, `--sparse` avoids writing to locations in the destination
+file where the source file contains a sequence of zeros greater than
+or equal to the size specified by `--sparse-min-block-size`
+
+### --sparse-min-block-size=SIZE ###
+
+The minimum size a sequence of zeros must be in order to not be
+written to the remote when `--sparse is specified`. Larger
+values could lead to better performance due to a smaller amount
+of write calls made to the remote.
+
 ### --stats=TIME ###
 
 Commands which transfer data (`sync`, `copy`, `copyto`, `move`,
