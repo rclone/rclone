@@ -95,61 +95,44 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		if err != nil {
 			return fmt.Errorf("send output failed: %w", err)
 		}
-	case "md5sum", "sha1sum":
-		ht := hash.MD5
-		if binary == "sha1sum" {
-			ht = hash.SHA1
+	case "md5sum":
+		return c.handleHashsumCommand(ctx, out, hash.MD5, args)
+	case "sha1sum":
+		return c.handleHashsumCommand(ctx, out, hash.SHA1, args)
+	case "crc32":
+		return c.handleHashsumCommand(ctx, out, hash.CRC32, args)
+	case "sha256sum":
+		return c.handleHashsumCommand(ctx, out, hash.SHA256, args)
+	case "b3sum":
+		return c.handleHashsumCommand(ctx, out, hash.BLAKE3, args)
+	case "xxh128sum":
+		return c.handleHashsumCommand(ctx, out, hash.XXH128, args)
+	case "xxhsum":
+		argv := strings.SplitN(args, " ", 2)
+		if len(argv) == 0 || argv[0] != "-H2" {
+			return fmt.Errorf("%q not implemented", command)
 		}
-		if !c.vfs.Fs().Hashes().Contains(ht) {
-			return fmt.Errorf("%v hash not supported", ht)
-		}
-		var hashSum string
-		if args == "" {
-			// empty hash for no input
-			if ht == hash.MD5 {
-				hashSum = "d41d8cd98f00b204e9800998ecf8427e"
-			} else {
-				hashSum = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
-			}
-			args = "-"
+		if len(argv) > 1 {
+			args = argv[1]
 		} else {
-			node, err := c.vfs.Stat(args)
-			if err != nil {
-				return fmt.Errorf("hash failed finding file %q: %w", args, err)
+			args = ""
+		}
+		return c.handleHashsumCommand(ctx, out, hash.XXH128, args)
+	case "rclone":
+		argv := strings.SplitN(args, " ", 3)
+		if len(argv) > 1 && argv[0] == "hashsum" {
+			var ht hash.Type
+			if err := ht.Set(argv[1]); err != nil {
+				return err
 			}
-			if node.IsDir() {
-				return errors.New("can't hash directory")
-			}
-			o, ok := node.DirEntry().(fs.ObjectInfo)
-			if !ok {
-				fs.Debugf(args, "File uploading - reading hash from VFS cache")
-				in, err := node.Open(os.O_RDONLY)
-				if err != nil {
-					return fmt.Errorf("hash vfs open failed: %w", err)
-				}
-				defer func() {
-					_ = in.Close()
-				}()
-				h, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
-				if err != nil {
-					return fmt.Errorf("hash vfs create multi-hasher failed: %w", err)
-				}
-				_, err = io.Copy(h, in)
-				if err != nil {
-					return fmt.Errorf("hash vfs copy failed: %w", err)
-				}
-				hashSum = h.Sums()[ht]
+			if len(argv) > 2 {
+				args = argv[2]
 			} else {
-				hashSum, err = o.Hash(ctx, ht)
-				if err != nil {
-					return fmt.Errorf("hash failed: %w", err)
-				}
+				args = ""
 			}
+			return c.handleHashsumCommand(ctx, out, ht, args)
 		}
-		_, err = fmt.Fprintf(out, "%s  %s\n", hashSum, args)
-		if err != nil {
-			return fmt.Errorf("send output failed: %w", err)
-		}
+		return fmt.Errorf("%q not implemented", command)
 	case "echo":
 		// Special cases for legacy rclone command detection.
 		// Before rclone v1.49.0 the sftp backend used "echo 'abc' | md5sum" when
@@ -185,6 +168,74 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		}
 	default:
 		return fmt.Errorf("%q not implemented", command)
+	}
+	return nil
+}
+
+// handleHashsumCommand is a helper to execCommand for common functionality of hashsum related commands
+func (c *conn) handleHashsumCommand(ctx context.Context, out io.Writer, ht hash.Type, args string) (err error) {
+	if !c.vfs.Fs().Hashes().Contains(ht) {
+		return fmt.Errorf("%v hash not supported", ht)
+	}
+	var hashSum string
+	if args == "" {
+		// empty hash for no input
+		switch ht {
+		case hash.MD5:
+			hashSum = "d41d8cd98f00b204e9800998ecf8427e"
+		case hash.SHA1:
+			hashSum = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+		case hash.CRC32:
+			hashSum = "00000000"
+		case hash.SHA256:
+			hashSum = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+		case hash.BLAKE3:
+			hashSum = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+		case hash.XXH3:
+			hashSum = "2d06800538d394c2"
+		case hash.XXH128:
+			hashSum = "99aa06d3014798d86001c324468d497f"
+		default:
+			return fmt.Errorf("%v hash not implemented", ht)
+		}
+		args = "-"
+	} else {
+		node, err := c.vfs.Stat(args)
+		if err != nil {
+			return fmt.Errorf("hash failed finding file %q: %w", args, err)
+		}
+		if node.IsDir() {
+			return errors.New("can't hash directory")
+		}
+		o, ok := node.DirEntry().(fs.ObjectInfo)
+		if !ok {
+			fs.Debugf(args, "File uploading - reading hash from VFS cache")
+			in, err := node.Open(os.O_RDONLY)
+			if err != nil {
+				return fmt.Errorf("hash vfs open failed: %w", err)
+			}
+			defer func() {
+				_ = in.Close()
+			}()
+			h, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+			if err != nil {
+				return fmt.Errorf("hash vfs create multi-hasher failed: %w", err)
+			}
+			_, err = io.Copy(h, in)
+			if err != nil {
+				return fmt.Errorf("hash vfs copy failed: %w", err)
+			}
+			hashSum = h.Sums()[ht]
+		} else {
+			hashSum, err = o.Hash(ctx, ht)
+			if err != nil {
+				return fmt.Errorf("hash failed: %w", err)
+			}
+		}
+	}
+	_, err = fmt.Fprintf(out, "%s  %s\n", hashSum, args)
+	if err != nil {
+		return fmt.Errorf("send output failed: %w", err)
 	}
 	return nil
 }
