@@ -566,6 +566,12 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:     "assume_listings_sorted",
+	Default:  false,
+	Advanced: true,
+	Help:     "If set will not sort listings. If listings aren't sorted the sync may go wrong.",
+	Groups:   "Copy",
 }}
 
 // ConfigInfo is filesystem config options
@@ -680,6 +686,7 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	AssumeListingsSorted       bool              `config:"assume_listings_sorted"`
 }
 
 func init() {

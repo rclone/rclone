@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/transform"
@@ -330,7 +331,8 @@ func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, srcOnly, dstO
 				continue
 			} else if srcName < srcPrevName {
 				// this should never happen since we sort the listings
-				panic("Out of order listing in source")
+				// however the user may be using the --assume-listings-sorted flag
+				return fserrors.FatalError(fmt.Errorf("out of order listing in source (%v)", src.Fs()))
 			}
 		}
 		if dst != nil && dstPrev != nil {
@@ -340,7 +342,8 @@ func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, srcOnly, dstO
 				continue
 			} else if dstName < dstPrevName {
 				// this should never happen since we sort the listings
-				panic("Out of order listing in destination")
+				// however the user may be using the --assume-listings-sorted flag
+				return fserrors.FatalError(fmt.Errorf("out of order listing in destination (%v)", dst.Fs()))
 			}
 		}
 		switch {

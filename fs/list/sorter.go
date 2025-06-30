@@ -45,6 +45,7 @@ type Sorter struct {
 	keyFn      KeyFn                 // transform an entry into a sort key
 	cutoff     int                   // number of entries above which we start extsort
 	extSort    bool                  // true if we are ext sorting
+	noSort     bool                  // true if we aren't sorting
 	inputChan  chan string           // for sending data to the ext sort
 	outputChan <-chan string         // for receiving data from the ext sort
 	errChan    <-chan error          // for getting errors from the ext sort
@@ -78,6 +79,7 @@ func NewSorter(ctx context.Context, f NewObjecter, callback fs.ListRCallback, ke
 		keyFn:    keyFn,
 		cutoff:   ci.ListCutoff,
 		errs:     errcount.New(),
+		noSort:   ci.AssumeListingsSorted,
 	}, nil
 }
 
@@ -172,6 +174,9 @@ func (ls *Sorter) startExtSort() (err error) {
 //
 // Safe to call from concurrent go routines
 func (ls *Sorter) Add(entries fs.DirEntries) error {
+	if ls.noSort {
+		return ls.callback(entries)
+	}
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
 	if ls.extSort {
@@ -267,6 +272,9 @@ func (lh *listHelper) Flush() error {
 
 // Send the sorted entries to the callback.
 func (ls *Sorter) Send() (err error) {
+	if ls.noSort {
+		return nil
+	}
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
 

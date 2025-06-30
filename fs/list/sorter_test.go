@@ -46,6 +46,46 @@ func TestSorter(t *testing.T) {
 	assert.Equal(t, fs.DirEntries(nil), ls.entries)
 }
 
+func TestSorterAssumeSorted(t *testing.T) {
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.AssumeListingsSorted = true
+
+	gotEntry := 0
+	wantEntries := fs.DirEntries{
+		mockdir.New("c"),
+		mockobject.Object("C"),
+		mockdir.New("b"),
+		mockobject.Object("B"),
+		mockdir.New("a"),
+		mockobject.Object("A"),
+	}
+	callback := func(entries fs.DirEntries) error {
+		for _, entry := range entries {
+			require.Equal(t, wantEntries[gotEntry], entry)
+			gotEntry++
+		}
+		return nil
+	}
+	ls, err := NewSorter(ctx, nil, callback, nil)
+	require.NoError(t, err)
+
+	// Test Add
+	require.NoError(t, ls.Add(wantEntries[0:2]))
+	require.NoError(t, ls.Add(wantEntries[2:6]))
+	assert.Equal(t, 6, gotEntry)
+	assert.Equal(t, fs.DirEntries(nil), ls.entries)
+
+	// Test Send
+	err = ls.Send()
+	require.NoError(t, err)
+	assert.Equal(t, 6, gotEntry)
+
+	// Test Cleanup
+	ls.CleanUp()
+	assert.Equal(t, 6, gotEntry)
+	assert.Equal(t, fs.DirEntries(nil), ls.entries)
+}
+
 func TestSorterIdentity(t *testing.T) {
 	ctx := context.Background()
 	cmpFn := func(a, b fs.DirEntry) int {
