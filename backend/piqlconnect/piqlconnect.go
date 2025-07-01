@@ -136,7 +136,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Return an Object from a path
 //
-// If it can't be found it returns the error fs.ErrorObjectNotFound
+// If it can't be found it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Item) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
@@ -147,7 +147,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Ite
 		// Set info
 		err = o.setMetaData(info)
 	} else {
-		err = o.readMetaData(ctx)
+		err = o.readMetaData(ctx) // reads info and meta, returning an error
 	}
 	if err != nil {
 		return nil, err
@@ -161,9 +161,87 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
-// List the objects and directories in dir into entries. The entries can be returned in any order but should be for a complete directory.
+func (f *Fs) getFiles(ctx context.Context, segments []string) (files []api.Item, err error) {
+	packageName := segments[1]
+	values := url.Values{}
+	values.Set("organisationId", f.organisationId)
+	if f.packageIdCache[packageName] == "" {
+		f.listPackages(ctx, segments[0])
+	}
+	packageId := f.packageIdCache[packageName]
+	values.Set("packageId", packageId)
+	packageRelativePath := strings.Join(segments[2:], "/")
+	values.Set("path", packageRelativePath)
+	_, err = f.client.CallJSON(ctx, &rest.Opts{Path: "/files", Parameters: values}, nil, &files)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
+func (f *Fs) listFiles(ctx context.Context, absolutePath string) (entries fs.DirEntries, err error) {
+	segments := getPathSegments(absolutePath)
+	files, err := f.getFiles(ctx, segments)
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range files {
+		file.Path = segments[0] + "/" + segments[1] + "/" + file.Path
+		if file.Size == 0 && file.Path[len(file.Path)-1] == '/' {
+			modTime, err := time.Parse(time.RFC3339, file.UpdatedAt)
+			if err != nil {
+				return nil, err
+			}
+			dir := fs.NewDir(f.absolutePathToRclone(file.Path[0:len(file.Path)-1]), modTime)
+			entries = append(entries, dir)
+		} else {
+			o, err := f.newObjectWithInfo(ctx, f.absolutePathToRclone(file.Path), &file)
+			if err != nil {
+				return nil, err
+			}
+			entries = append(entries, o)
+		}
+	}
+	return entries, nil
+}
+
+func (f *Fs) listPackages(ctx context.Context, absolutePath string) (entries fs.DirEntries, err error) {
+	segments := getPathSegments(absolutePath)
+	values := url.Values{}
+	values.Set("organisationId", f.organisationId)
+
+	ps := []api.Package{}
+	_, err = f.client.CallJSON(ctx, &rest.Opts{Path: "/packages", Parameters: values}, nil, &ps)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range ps {
+		f.packageIdCache[p.Name] = p.Id
+		mtime, err := time.Parse(time.RFC3339, p.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		entry := fs.NewDir(f.absolutePathToRclone(segments[0]+"/"+p.Name), mtime)
+		if segments[0] == "Workspace" && p.Status == "ACTIVE" {
+			entries = append(entries, entry)
+		} else if segments[0] == "In Progress" && (p.Status == "PENDING_PAYMENT" || p.Status == "PREPARING" || p.Status == "PROCESSING") {
+			entries = append(entries, entry)
+		} else if segments[0] == "Archive" && p.Status == "ARCHIVED" {
+			entries = append(entries, entry)
+		}
+	}
+	return
+}
+
+// List the objects and directories in dir into entries.  The
+// entries can be returned in any order but should be for a
+// complete directory.
 //
-// dir should be "" to list the root
+// dir should be "" to list the root, and should not have
+// trailing slashes.
+//
+// TODO: This should return ErrDirNotFound if the directory isn't
+// found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	absolutePath := f.rclonePathToAbsolute(dir)
 	if len(absolutePath) == 0 {
@@ -317,6 +395,31 @@ func (o *Object) Remote() string {
 // Hash returns the SHA-1 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
+	// fmt.Printf("Hash(%s)\n", o.remote)
+	// if ty != hash.MD5 {
+	// 	return "", hash.ErrUnsupported
+	// }
+	// segments := o.fs.getAbsolutePathSegments(o.remote)
+	// if o.fs.packageIdCache[segments[1]] == "" {
+	// 	o.fs.listPackages(ctx, segments[0])
+	// }
+	// reqBody := api.CreateFileUrl{
+	// 	OrganisationId: o.fs.organisationId,
+	// 	PackageId:      o.fs.packageIdCache[segments[1]],
+	// 	Files:          [1]api.FilePath{{Path: path.Join(segments[2:]...)}},
+	// 	Method:         "READ",
+	// }
+	// var results [1]string
+	// _, err := o.fs.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/sas-url"}, &reqBody, &results)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// resp, err := o.fs.httpClient.Head(results[0])
+	// if err != nil {
+	// 	return "", err
+	// }
+	// fmt.Printf("Hash(%s): %s\n", o.remote, resp.Header.Get("Content-MD5"))
+	// return "", fmt.Errorf("oops")
 }
 
 // Size returns the size of an object in bytes
@@ -393,78 +496,6 @@ func (f *Fs) absolutePathToRclone(absolutePath string) string {
 	return r
 }
 
-func (f *Fs) listPackages(ctx context.Context, absolutePath string) (entries fs.DirEntries, err error) {
-	segments := getPathSegments(absolutePath)
-	values := url.Values{}
-	values.Set("organisationId", f.organisationId)
-
-	ps := []api.Package{}
-	_, err = f.client.CallJSON(ctx, &rest.Opts{Path: "/packages", Parameters: values}, nil, &ps)
-	if err != nil {
-		return nil, err
-	}
-	for _, p := range ps {
-		f.packageIdCache[p.Name] = p.Id
-		mtime, err := time.Parse(time.RFC3339, p.UpdatedAt)
-		if err != nil {
-			return nil, err
-		}
-		entry := fs.NewDir(f.absolutePathToRclone(segments[0]+"/"+p.Name), mtime)
-		if segments[0] == "Workspace" && p.Status == "ACTIVE" {
-			entries = append(entries, entry)
-		} else if segments[0] == "In Progress" && (p.Status == "PENDING_PAYMENT" || p.Status == "PREPARING" || p.Status == "PROCESSING") {
-			entries = append(entries, entry)
-		} else if segments[0] == "Archive" && p.Status == "ARCHIVED" {
-			entries = append(entries, entry)
-		}
-	}
-	return
-}
-
-func (f *Fs) getFiles(ctx context.Context, segments []string) (files []api.Item, err error) {
-	packageName := segments[1]
-	values := url.Values{}
-	values.Set("organisationId", f.organisationId)
-	if f.packageIdCache[packageName] == "" {
-		f.listPackages(ctx, segments[0])
-	}
-	packageId := f.packageIdCache[packageName]
-	values.Set("packageId", packageId)
-	packageRelativePath := strings.Join(segments[2:], "/")
-	values.Set("path", packageRelativePath)
-	_, err = f.client.CallJSON(ctx, &rest.Opts{Path: "/files", Parameters: values}, nil, &files)
-	if err != nil {
-		return nil, err
-	}
-	return files, nil
-}
-
-func (f *Fs) listFiles(ctx context.Context, absolutePath string) (entries fs.DirEntries, err error) {
-	segments := getPathSegments(absolutePath)
-	files, err := f.getFiles(ctx, segments)
-	if err != nil {
-		return nil, err
-	}
-	for _, file := range files {
-		file.Path = segments[0] + "/" + segments[1] + "/" + file.Path
-		if file.Size == 0 && file.Path[len(file.Path)-1] == '/' {
-			modTime, err := time.Parse(time.RFC3339, file.UpdatedAt)
-			if err != nil {
-				return nil, err
-			}
-			dir := fs.NewDir(f.absolutePathToRclone(file.Path[0:len(file.Path)-1]), modTime)
-			entries = append(entries, dir)
-		} else {
-			o, err := f.newObjectWithInfo(ctx, f.absolutePathToRclone(file.Path), &file)
-			if err != nil {
-				return nil, err
-			}
-			entries = append(entries, o)
-		}
-	}
-	return entries, nil
-}
-
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	segments := o.fs.getAbsolutePathSegments(o.remote)
@@ -523,6 +554,7 @@ func (f *Fs) Precision() time.Duration {
 }
 
 func (f *Fs) Hashes() hash.Set {
+	// TODO
 	return hash.Set(hash.None)
 }
 
