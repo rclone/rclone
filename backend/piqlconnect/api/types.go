@@ -25,8 +25,47 @@ type DownloadFile struct {
 	BlobNames      [1]string `json:"blobNames"`
 }
 
+// Remove file is the request body for deleting files (/api/files/delete)
 type RemoveFile struct {
 	OrganisationId string    `json:"organisationId"`
 	PackageId      string    `json:"packageId"`
 	FileIds        [1]string `json:"fileIds"`
+}
+
+type FilePath struct {
+	Path string `json:"path"`
+}
+
+// CreateFileUrl is the request body for creating upload URLs in order to upload files (/api/sas-url)
+type CreateFileUrl struct {
+	OrganisationId string      `json:"organisationId"`
+	PackageId      string      `json:"packageId"`
+	Files          [1]FilePath `json:"files"`
+	Method         string      `json:"method"`
+}
+
+type FilePathSize struct {
+	Path string `json:"path"`
+	Size int64  `json:"size"`
+}
+
+// Create file is the request body for creating the file entry after upload (/api/files)
+type CreateFile struct {
+	OrganisationId string          `json:"organisationId"`
+	PackageId      string          `json:"packageId"`
+	Files          [1]FilePathSize `json:"files"`
+}
+
+// Create folder is the request body for creating folders (/api/folders)
+type CreateFolder struct {
+	OrganisationId string `json:"organisationId"`
+	PackageId      string `json:"packageId"`
+	FolderPath     string `json:"folderPath"`
+}
+
+// Remove folder is the request body for deleting folders (/api/folders/delete)
+type RemoveFolder struct {
+	OrganisationId string    `json:"organisationId"`
+	PackageId      string    `json:"packageId"`
+	FolderPaths    [1]string `json:"folderPaths"`
 }
