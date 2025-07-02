@@ -6,10 +6,12 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httputil"
+	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -55,7 +57,18 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 	// This also means we get new stuff when it gets added to go
 	t := new(http.Transport)
 	structs.SetDefaults(t, http.DefaultTransport.(*http.Transport))
-	t.Proxy = http.ProxyFromEnvironment
+	if ci.HTTPProxy != "" {
+		proxyURL, err := url.Parse(ci.HTTPProxy)
+		if err != nil {
+			t.Proxy = func(*http.Request) (*url.URL, error) {
+				return nil, fmt.Errorf("failed to set --http-proxy from %q: %w", ci.HTTPProxy, err)
+			}
+		} else {
+			t.Proxy = http.ProxyURL(proxyURL)
+		}
+	} else {
+		t.Proxy = http.ProxyFromEnvironment
+	}
 	t.MaxIdleConnsPerHost = 2 * (ci.Checkers + ci.Transfers + 1)
 	t.MaxIdleConns = 2 * t.MaxIdleConnsPerHost
 	t.TLSHandshakeTimeout = ci.ConnectTimeout
