@@ -141,6 +141,16 @@ e.g.
 
 Note that the FTP backend does not support `ftp_proxy` yet.
 
+You can use the command line argument `--http-proxy` to set the proxy,
+and in turn use an override in the config file if you want it set for
+a single backend, eg `override.http_proxy = http://...` in the config
+file.
+
+The FTP and SFTP backends have their own `http_proxy` settings to
+support an HTTP CONNECT proxy (
+[--ftp-http-proxy](https://rclone.org/ftp/#ftp-http-proxy) and
+[--sftp-http-proxy](https://rclone.org/ftp/#sftp-http-proxy) )
+
 ### Rclone gives x509: failed to load system roots and no roots provided error ###
 
 This means that `rclone` can't find the SSL root certificates.  Likely

@@ -1249,6 +1249,15 @@ rclone sync --interactive ~/src s3:test/dst --header-upload "Content-Disposition
 See the GitHub issue [here](https://github.com/rclone/rclone/issues/59) for
 currently supported backends.
 
+### --http-proxy string
+
+Use this option to set an HTTP proxy for all HTTP based services to
+use.
+
+Rclone also supports the standard HTTP proxy environment variables
+which it will pick up automatically. The is the way the HTTP proxy
+will normally be set but this flag can be used to override it.
+
 ### --human-readable ###
 
 Rclone commands output values for sizes (e.g. number of bytes) and
