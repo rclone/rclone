@@ -463,7 +463,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Renew the token in the background
 	if ts != nil {
-		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
+		f.tokenRenewer = oauthutil.NewRenewOnExpiry(f.String(), ts, func() error {
 			_, err := f.List(ctx, "")
 			return err
 		})

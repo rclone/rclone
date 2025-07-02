@@ -17,12 +17,12 @@ type Renew struct {
 	shutdown sync.Once
 }
 
-// NewRenew creates a new Renew struct and starts a background process
+// NewRenewOnExpiry creates a new Renew struct and starts a background process
 // which renews the token whenever it expires.  It uses the run() call
 // to run a transaction to do this.
 //
 // It will only renew the token if the number of uploads > 0
-func NewRenew(name string, ts *TokenSource, run func() error) *Renew {
+func NewRenewOnExpiry(name string, ts *TokenSource, run func() error) *Renew {
 	r := &Renew{
 		name: name,
 		ts:   ts,
@@ -30,6 +30,22 @@ func NewRenew(name string, ts *TokenSource, run func() error) *Renew {
 		done: make(chan any),
 	}
 	go r.renewOnExpiry()
+	return r
+}
+
+// NewRenewBeforeExpiry creates a new Renew struct and starts a background process
+// which renews the token shortly before it expires.  It uses the run() call
+// to run a transaction to do this.
+//
+// It will only renew the token if the number of uploads > 0
+func NewRenewBeforeExpiry(name string, ts *TokenSource, run func() error) *Renew {
+	r := &Renew{
+		name: name,
+		ts:   ts,
+		run:  run,
+		done: make(chan any),
+	}
+	go r.renewOnBeforeExpiry()
 	return r
 }
 
@@ -45,19 +61,39 @@ func (r *Renew) renewOnExpiry() {
 		case <-r.done:
 			return
 		}
-		uploads := r.uploads.Load()
-		if uploads != 0 {
-			fs.Debugf(r.name, "Token expired - %d uploads in progress - refreshing", uploads)
-			// Do a transaction
-			err := r.run()
-			if err == nil {
-				fs.Debugf(r.name, "Token refresh successful")
-			} else {
-				fs.Errorf(r.name, "Token refresh failed: %v", err)
-			}
-		} else {
-			fs.Debugf(r.name, "Token expired but no uploads in progress - doing nothing")
+		r.renewToken()
+	}
+}
+
+// renewOnBeforeExpiry renews the token shortly before it expires. This
+// permits refresh of the token before it expires for packages that
+// independently manage token refresh
+func (r *Renew) renewOnBeforeExpiry() {
+	expiry := r.ts.OnBeforeExpiry()
+	for {
+		select {
+		case <-expiry:
+		case <-r.done:
+			return
 		}
+		r.renewToken()
+	}
+}
+
+// Renew the token by running the provided transaction if any uploads are in progress
+func (r *Renew) renewToken() {
+	uploads := r.uploads.Load()
+	if uploads != 0 {
+		fs.Debugf(r.name, "Token expired - %d uploads in progress - refreshing", uploads)
+		// Do a transaction
+		err := r.run()
+		if err == nil {
+			fs.Debugf(r.name, "Token refresh successful")
+		} else {
+			fs.Errorf(r.name, "Token refresh failed: %v", err)
+		}
+	} else {
+		fs.Debugf(r.name, "Token expired but no uploads in progress - doing nothing")
 	}
 }
 
@@ -88,7 +124,12 @@ func (r *Renew) Shutdown() {
 	}
 	// closing a channel can only be done once
 	r.shutdown.Do(func() {
-		r.ts.expiryTimer.Stop()
+		if r.ts.expiryTimer != nil {
+			r.ts.expiryTimer.Stop()
+		}
+		if r.ts.beforeExpiryTimer != nil {
+			r.ts.beforeExpiryTimer.Stop()
+		}
 		close(r.done)
 	})
 }

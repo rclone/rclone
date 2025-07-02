@@ -336,7 +336,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
-	f.tokenRenewer = oauthutil.NewRenew(f.String(), f.ts, func() error {
+	f.tokenRenewer = oauthutil.NewRenewOnExpiry(f.String(), f.ts, func() error {
 		_, err := f.readMetaDataForPath(ctx, "")
 		return err
 	})
