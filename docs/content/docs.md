@@ -437,6 +437,103 @@ Do not use single character names on Windows as it creates ambiguity with Window
 drives' names, e.g.: remote called `C` is indistinguishable from `C` drive. Rclone
 will always assume that single letter name refers to a drive.
 
+## Adding global configuration to a remote
+
+It is possible to add global configuration to the remote configuration which
+will be applied just before the remote is created.
+
+This can be done in two ways. The first is to use `override.var = value` in the
+config file or the connection string for a temporary change, and the second is
+to use `global.var = value` in the config file or connection string for a
+permanent change.
+
+This is explained fully below.
+
+### override.var
+
+This is used to override a global variable **just** for the duration of the
+remote creation. It won't affect other remotes even if they are created at the
+same time.
+
+This is very useful for overriding networking config needed for just for that
+remote. For example, say you have a remote which needs `--no-check-certificate`
+as it is running on test infrastructure without a proper certificate. You could
+supply the `--no-check-certificate` flag to rclone, but this will affect **all**
+the remotes. To make it just affect this remote you use an override. You could
+put this in the config file:
+
+```ini
+[remote]
+type = XXX
+...
+override.no_check_certificate = true
+```
+
+or use it in the connection string `remote,override.no_check_certificate=true:`
+(or just `remote,override.no_check_certificate:`).
+
+Note how the global flag name loses its initial `--` and gets `-` replaced with
+`_` and gets an `override.` prefix.
+
+Not all global variables make sense to be overridden like this as the config is
+only applied during the remote creation. Here is a non exhaustive list of ones
+which might be useful:
+
+- `bind_addr`
+- `ca_cert`
+- `client_cert`
+- `client_key`
+- `connect_timeout`
+- `disable_http2`
+- `disable_http_keep_alives`
+- `dump`
+- `expect_continue_timeout`
+- `headers`
+- `http_proxy`
+- `low_level_retries`
+- `max_connections`
+- `no_check_certificate`
+- `no_gzip`
+- `timeout`
+- `traffic_class`
+- `use_cookies`
+- `use_server_modtime`
+- `user_agent`
+
+An `override.var` will override all other config methods, but **just** for the
+duration of the creation of the remote.
+
+### global.var
+
+This is used to set a global variable **for everything**. The global variable is
+set just before the remote is created.
+
+This is useful for parameters (eg sync parameters) which can't be set as an
+`override`. For example, say you have a remote where you would always like to
+use the `--checksum` flag. You could supply the `--checksum` flag to rclone on
+every command line, but instead you could put this in the config file:
+
+```ini
+[remote]
+type = XXX
+...
+global.checksum = true
+```
+
+or use it in the connection string `remote,global.checksum=true:` (or just
+`remote,global.checksum:`). This is equivalent to using the `--checksum` flag.
+
+Note how the global flag name loses its initial `--` and gets `-` replaced with
+`_` and gets a `global.` prefix.
+
+Any global variable can be set like this and it is exactly equivalent to using
+the equivalent flag on the command line. This means it will affect all uses of
+rclone.
+
+If two remotes set the same global variable then the first one instantiated will
+be overridden by the second one. A `global.var` will override all other config
+methods when the remote is created.
+
 ## Quoting and the shell
 
 When you are typing commands to your computer you are using something
