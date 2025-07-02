@@ -583,11 +583,11 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 			token, err := msiCred.GetToken(context.Background(), policy.TokenRequestOptions{
 				Scopes: []string{"api://AzureADTokenExchange"},
 			})
-	
+
 			if err != nil {
 				return "", fmt.Errorf("failed to acquire MSI token: %w", err)
 			}
-	
+
 			return token.Token, nil
 		}
 
@@ -600,7 +600,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to acquire client assertion token: %w", err)
-		}		
+		}
 	default:
 		return nil, errors.New("no authentication method configured")
 	}

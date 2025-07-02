@@ -998,11 +998,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			token, err := msiCred.GetToken(context.Background(), policy.TokenRequestOptions{
 				Scopes: []string{"api://AzureADTokenExchange"},
 			})
-	
+
 			if err != nil {
 				return "", fmt.Errorf("failed to acquire MSI token: %w", err)
 			}
-	
+
 			return token.Token, nil
 		}
 
@@ -1015,7 +1015,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to acquire client assertion token: %w", err)
-		}		
+		}
 	case opt.UseAZ:
 		var options = azidentity.AzureCLICredentialOptions{}
 		f.cred, err = azidentity.NewAzureCLICredential(&options)
