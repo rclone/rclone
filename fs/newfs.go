@@ -7,12 +7,15 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 )
 
@@ -65,11 +68,42 @@ func NewFs(ctx context.Context, path string) (Fs, error) {
 		overriddenConfig[suffix] = extraConfig
 		overriddenConfigMu.Unlock()
 	}
+	ctx, err = addGlobalConfigToContext(ctx, configName, config)
+	if err != nil {
+		return nil, err
+	}
 	f, err := fsInfo.NewFs(ctx, configName, fsPath, config)
 	if f != nil && (err == nil || err == ErrorIsFile) {
 		addReverse(f, fsInfo)
 	}
 	return f, err
+}
+
+// Add any global config variables from the config into the context.
+//
+// Global config variables should be prefixed with `_` to separate
+// them from backend config.
+func addGlobalConfigToContext(ctx context.Context, configName string, config *configmap.Map) (newCtx context.Context, err error) {
+	globalConfig := make(configmap.Simple)
+	for i := range ConfigOptionsInfo {
+		opt := &ConfigOptionsInfo[i]
+		modifiedName := "_" + opt.Name
+		value, isSet := config.Get(modifiedName)
+		if isSet {
+			globalConfig[opt.Name] = value
+		}
+	}
+	if len(globalConfig) == 0 {
+		return ctx, nil
+	}
+	keys := slices.Collect(maps.Keys(globalConfig))
+	newCtx, ci := AddConfig(ctx)
+	err = configstruct.Set(globalConfig, ci)
+	if err != nil {
+		return ctx, fmt.Errorf("failed to set global config variables %q: %w", keys, err)
+	}
+	Debugf(configName, "Set variables %q for backend startup", keys)
+	return newCtx, nil
 }
 
 // ConfigFs makes the config for calling NewFs with.
