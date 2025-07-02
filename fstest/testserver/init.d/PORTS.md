@@ -28,6 +28,8 @@ They should be bound to localhost so they are not accessible externally.
 | 28632 | TestSwiftAIOsegments |
 | 28633 | TestSMBKerberos |
 | 28634 | TestSMBKerberos |
+| 28635 | TestS3Exaba |
+| 28636 | TestS3Exaba |
 | 38081 | TestWebdavOwncloud |
 
 ## Non localhost tests

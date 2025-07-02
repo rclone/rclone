@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -103,19 +105,39 @@ func init() {
 				Advanced: true,
 				Help:     "Wait N seconds for eventual consistency of the databases that support the backend operation",
 			},
+			{
+				Name:     "adjust_media_files_extensions",
+				Default:  true,
+				Advanced: true,
+				Help:     "Cloudinary handles media formats as a file attribute and strips it from the name, which is unlike most other file systems",
+			},
+			{
+				Name: "media_extensions",
+				Default: []string{
+					"3ds", "3g2", "3gp", "ai", "arw", "avi", "avif", "bmp", "bw",
+					"cr2", "cr3", "djvu", "dng", "eps3", "fbx", "flif", "flv", "gif",
+					"glb", "gltf", "hdp", "heic", "heif", "ico", "indd", "jp2", "jpe",
+					"jpeg", "jpg", "jxl", "jxr", "m2ts", "mov", "mp4", "mpeg", "mts",
+					"mxf", "obj", "ogv", "pdf", "ply", "png", "psd", "svg", "tga",
+					"tif", "tiff", "ts", "u3ma", "usdz", "wdp", "webm", "webp", "wmv"},
+				Advanced: true,
+				Help:     "Cloudinary supported media extensions",
+			},
 		},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	CloudName                 string               `config:"cloud_name"`
-	APIKey                    string               `config:"api_key"`
-	APISecret                 string               `config:"api_secret"`
-	UploadPrefix              string               `config:"upload_prefix"`
-	UploadPreset              string               `config:"upload_preset"`
-	Enc                       encoder.MultiEncoder `config:"encoding"`
-	EventuallyConsistentDelay fs.Duration          `config:"eventually_consistent_delay"`
+	CloudName                  string               `config:"cloud_name"`
+	APIKey                     string               `config:"api_key"`
+	APISecret                  string               `config:"api_secret"`
+	UploadPrefix               string               `config:"upload_prefix"`
+	UploadPreset               string               `config:"upload_preset"`
+	Enc                        encoder.MultiEncoder `config:"encoding"`
+	EventuallyConsistentDelay  fs.Duration          `config:"eventually_consistent_delay"`
+	MediaExtensions            []string             `config:"media_extensions"`
+	AdjustMediaFilesExtensions bool                 `config:"adjust_media_files_extensions"`
 }
 
 // Fs represents a remote cloudinary server
@@ -203,6 +225,18 @@ func (f *Fs) FromStandardPath(s string) string {
 
 // FromStandardName implementation of the api.CloudinaryEncoder
 func (f *Fs) FromStandardName(s string) string {
+	if f.opt.AdjustMediaFilesExtensions {
+		parsedURL, err := url.Parse(s)
+		ext := ""
+		if err != nil {
+			fs.Logf(nil, "Error parsing URL: %v", err)
+		} else {
+			ext = path.Ext(parsedURL.Path)
+			if slices.Contains(f.opt.MediaExtensions, strings.ToLower(strings.TrimPrefix(ext, "."))) {
+				s = strings.TrimSuffix(parsedURL.Path, ext)
+			}
+		}
+	}
 	return strings.ReplaceAll(f.opt.Enc.FromStandardName(s), "&", "\uFF06")
 }
 
@@ -212,8 +246,20 @@ func (f *Fs) ToStandardPath(s string) string {
 }
 
 // ToStandardName implementation of the api.CloudinaryEncoder
-func (f *Fs) ToStandardName(s string) string {
-	return strings.ReplaceAll(f.opt.Enc.ToStandardName(s), "\uFF06", "&")
+func (f *Fs) ToStandardName(s string, assetURL string) string {
+	ext := ""
+	if f.opt.AdjustMediaFilesExtensions {
+		parsedURL, err := url.Parse(assetURL)
+		if err != nil {
+			fs.Logf(nil, "Error parsing URL: %v", err)
+		} else {
+			ext = path.Ext(parsedURL.Path)
+			if !slices.Contains(f.opt.MediaExtensions, strings.ToLower(strings.TrimPrefix(ext, "."))) {
+				ext = ""
+			}
+		}
+	}
+	return strings.ReplaceAll(f.opt.Enc.ToStandardName(s), "\uFF06", "&") + ext
 }
 
 // FromStandardFullPath encodes a full path to Cloudinary standard
@@ -331,10 +377,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		}
 
 		for _, asset := range results.Assets {
-			remote := api.CloudinaryEncoder.ToStandardName(f, asset.DisplayName)
-			if dir != "" {
-				remote = path.Join(dir, api.CloudinaryEncoder.ToStandardName(f, asset.DisplayName))
-			}
+			remote := path.Join(dir, api.CloudinaryEncoder.ToStandardName(f, asset.DisplayName, asset.SecureURL))
 			o := &Object{
 				fs:           f,
 				remote:       remote,

@@ -225,6 +225,12 @@ package is here.
 
 The rclone developers maintain a [docker image for rclone](https://hub.docker.com/r/rclone/rclone).
 
+**Note:** We also now offer a paid version of rclone with
+enterprise-grade security and zero CVEs through our partner
+[SecureBuild](https://securebuild.com/blog/introducing-securebuild).
+If you are interested, check out their website and the [Rclone
+SecureBuild Image](https://securebuild.com/images/rclone).
+
 These images are built as part of the release process based on a
 minimal Alpine Linux.
 

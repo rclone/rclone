@@ -311,6 +311,7 @@ func DirectoryOptionalInterfaces(d Directory) (supported, unsupported []string) 
 type ListRCallback func(entries DirEntries) error
 
 // ListRFn is defines the call used to recursively list a directory
+// with ListR or page through a directory with ListP
 type ListRFn func(ctx context.Context, dir string, callback ListRCallback) error
 
 // Flagger describes the interface rclone config types flags must satisfy

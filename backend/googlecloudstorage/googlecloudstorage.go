@@ -35,7 +35,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
@@ -483,6 +483,9 @@ func parsePath(path string) (root string) {
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 	bucketName, bucketPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
+	if f.opt.DirectoryMarkers && strings.HasSuffix(bucketPath, "//") {
+		bucketPath = bucketPath[:len(bucketPath)-1]
+	}
 	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
@@ -712,7 +715,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 					continue
 				}
 				// process directory markers as directories
-				remote = strings.TrimRight(remote, "/")
+				remote, _ = strings.CutSuffix(remote, "/")
 			}
 			remote = remote[len(prefix):]
 			if addBucket {
@@ -845,7 +848,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	bucket, directory := f.split(dir)
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
 		return f.list(ctx, bucket, directory, prefix, addBucket, true, func(remote string, object *storage.Object, isDirectory bool) error {
 			entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
@@ -959,7 +962,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 
 // mkdirParent creates the parent bucket/directory if it doesn't exist
 func (f *Fs) mkdirParent(ctx context.Context, remote string) error {
-	remote = strings.TrimRight(remote, "/")
+	remote, _ = strings.CutSuffix(remote, "/")
 	dir := path.Dir(remote)
 	if dir == "/" || dir == "." {
 		dir = ""

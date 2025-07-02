@@ -74,13 +74,14 @@ var matchLine = regexp.MustCompile(`^([a-zA-Z_]+)=(.*)$`)
 // Start the server and set its env vars
 // Call with the mutex held
 func start(name string) error {
+	fs.Logf(name, "Starting server")
 	out, err := run(name, "start")
 	if err != nil {
 		return err
 	}
-	fs.Logf(name, "Starting server")
 	// parse the output and set environment vars from it
 	var connect string
+	var connectDelay time.Duration
 	for _, line := range bytes.Split(out, []byte("\n")) {
 		line = bytes.TrimSpace(line)
 		part := matchLine.FindSubmatch(line)
@@ -88,6 +89,12 @@ func start(name string) error {
 			key, value := part[1], part[2]
 			if string(key) == "_connect" {
 				connect = string(value)
+				continue
+			} else if string(key) == "_connect_delay" {
+				connectDelay, err = time.ParseDuration(string(value))
+				if err != nil {
+					return fmt.Errorf("bad _connect_delay: %w", err)
+				}
 				continue
 			}
 
@@ -99,6 +106,7 @@ func start(name string) error {
 		}
 	}
 	if connect == "" {
+		fs.Logf(name, "Started server")
 		return nil
 	}
 	// If we got a _connect value then try to connect to it
@@ -108,7 +116,7 @@ func start(name string) error {
 		if i != 0 {
 			time.Sleep(time.Second)
 		}
-		fs.Debugf(name, "Attempting to connect to %q try %d/%d", connect, i, maxTries)
+		fs.Logf(name, "Attempting to connect to %q try %d/%d", connect, i, maxTries)
 		conn, err := net.DialTimeout("tcp", connect, time.Second)
 		if err != nil {
 			fs.Debugf(name, "Connection to %q failed try %d/%d: %v", connect, i, maxTries, err)
@@ -126,7 +134,11 @@ func start(name string) error {
 			// Try again
 			continue
 		}
-		//time.Sleep(30 * time.Second)
+		if connectDelay > 0 {
+			fs.Logf(name, "Connect delay %v", connectDelay)
+			time.Sleep(connectDelay)
+		}
+		fs.Logf(name, "Started server and connected to %q", connect)
 		return nil
 	}
 	return fmt.Errorf("failed to connect to %q on %q", name, connect)

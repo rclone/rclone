@@ -159,6 +159,21 @@ type Features struct {
 	// of listing recursively that doing a directory traversal.
 	ListR ListRFn
 
+	// ListP lists the objects and directories of the Fs starting
+	// from dir non recursively to out.
+	//
+	// dir should be "" to start from the root, and should not
+	// have trailing slashes.
+	//
+	// This should return ErrDirNotFound if the directory isn't
+	// found.
+	//
+	// It should call callback for each tranche of entries read.
+	// These need not be returned in any particular order.  If
+	// callback returns an error then the listing will stop
+	// immediately.
+	ListP func(ctx context.Context, dir string, callback ListRCallback) error
+
 	// About gets quota information from the Fs
 	About func(ctx context.Context) (*Usage, error)
 
@@ -327,6 +342,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(ListRer); ok {
 		ft.ListR = do.ListR
 	}
+	if do, ok := f.(ListPer); ok {
+		ft.ListP = do.ListP
+	}
 	if do, ok := f.(Abouter); ok {
 		ft.About = do.About
 	}
@@ -434,6 +452,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	}
 	if mask.ListR == nil {
 		ft.ListR = nil
+	}
+	if mask.ListP == nil {
+		ft.ListP = nil
 	}
 	if mask.About == nil {
 		ft.About = nil
@@ -661,6 +682,24 @@ type ListRer interface {
 	// Don't implement this unless you have a more efficient way
 	// of listing recursively that doing a directory traversal.
 	ListR(ctx context.Context, dir string, callback ListRCallback) error
+}
+
+// ListPer is an optional interfaces for Fs
+type ListPer interface {
+	// ListP lists the objects and directories of the Fs starting
+	// from dir non recursively into out.
+	//
+	// dir should be "" to start from the root, and should not
+	// have trailing slashes.
+	//
+	// This should return ErrDirNotFound if the directory isn't
+	// found.
+	//
+	// It should call callback for each tranche of entries read.
+	// These need not be returned in any particular order.  If
+	// callback returns an error then the listing will stop
+	// immediately.
+	ListP(ctx context.Context, dir string, callback ListRCallback) error
 }
 
 // RangeSeeker is the interface that wraps the RangeSeek method.

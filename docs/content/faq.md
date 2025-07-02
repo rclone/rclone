@@ -22,6 +22,20 @@ See the [remote setup docs](/remote_setup/) for more info.
 
 This has now been documented in its own [remote setup page](/remote_setup/).
 
+### How can I get rid of the "Config file not found" notice?
+
+If you see a notice like 'NOTICE: Config file "rclone.conf" not found', this
+means you have not configured any remotes.
+
+If you need to configure a remote, see the [config help docs](/docs/#configure).
+
+If you are using rclone entirely with [on the fly remotes](/docs/#backend-path-to-dir),
+you can create an empty config file to get rid of this notice, for example:
+
+```
+rclone config touch
+```
+
 ### Can rclone sync directly from drive to s3 ###
 
 Rclone can sync between two remote cloud storage systems just fine.
@@ -233,11 +247,21 @@ value, say `export GOGC=20`.  This will make the garbage collector
 work harder, reducing memory size at the expense of CPU usage.
 
 The most common cause of rclone using lots of memory is a single
-directory with millions of files in. Rclone has to load this entirely
-into memory as rclone objects. Each rclone object takes 0.5k-1k of
-memory. There is
+directory with millions of files in. 
+
+Before rclone v1.70 has to load this entirely into memory as rclone
+objects. Each rclone object takes 0.5k-1k of memory. There is
 [a workaround for this](https://github.com/rclone/rclone/wiki/Big-syncs-with-millions-of-files)
 which involves a bit of scripting.
+
+However with rclone v1.70 and later rclone will automatically save
+directory entries to disk when a directory with more than
+[`--list-cutoff`](/docs/#list-cutoff) (1,000,000 by default) entries
+is detected.
+
+From v1.70 rclone also has the [--max-buffer-memory](/docs/#max-buffer-memory)
+flag which helps particularly when multi-thread transfers are using
+too much memory.
 
 ### Rclone changes fullwidth Unicode punctuation marks in file names
 

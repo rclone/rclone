@@ -516,6 +516,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		}
 	case opt.ClientID != "" && opt.Tenant != "" && opt.Username != "" && opt.Password != "":
 		// User with username and password
+		//nolint:staticcheck // this is deprecated due to Azure policy
 		options := azidentity.UsernamePasswordCredentialOptions{
 			ClientOptions: policyClientOptions,
 		}
@@ -953,7 +954,7 @@ func (o *Object) setMetadata(resp *file.GetPropertiesResponse) {
 	}
 }
 
-// readMetaData gets the metadata if it hasn't already been fetched
+// getMetadata gets the metadata if it hasn't already been fetched
 func (o *Object) getMetadata(ctx context.Context) error {
 	resp, err := o.fileClient().GetProperties(ctx, nil)
 	if err != nil {

@@ -43,6 +43,7 @@ See the following for detailed instructions for
   * [Digi Storage](/koofr/#digi-storage)
   * [Dropbox](/dropbox/)
   * [Enterprise File Fabric](/filefabric/)
+  * [FileLu Cloud Storage](/filelu/)
   * [Files.com](/filescom/)
   * [FTP](/ftp/)
   * [Gofile](/gofile/)
@@ -968,8 +969,9 @@ on any OS, and the value is defined as following:
   - On Unix: `$HOME` if defined, else by looking up current user in OS-specific user database
     (e.g. passwd file), or else use the result from shell command `cd && pwd`.
 
-If you run `rclone config file` you will see where the default
-location is for you.
+If you run `rclone config file` you will see where the default location is for
+you. Running `rclone config touch` will ensure a configuration file exists,
+creating an empty one in the default location if there is none.
 
 The fact that an existing file `rclone.conf` in the same directory
 as the rclone executable is always preferred, means that it is easy
@@ -980,7 +982,13 @@ same directory.
 If the location is set to empty string `""` or path to a file
 with name `notfound`, or the os null device represented by value `NUL` on
 Windows and `/dev/null` on Unix systems, then rclone will keep the
-config file in memory only.
+configuration file in memory only.
+
+You may see a log message "Config file not found - using defaults" if there is
+no configuration file. This can be supressed, e.g. if you are using rclone
+entirely with [on the fly remotes](/docs/#backend-path-to-dir), by using
+memory-only configuration file or by creating an empty configuration file, as
+described above.
 
 The file format is basic [INI](https://en.wikipedia.org/wiki/INI_file#Format):
 Sections of text, led by a `[section]` header and followed by
@@ -1448,6 +1456,19 @@ backends and the VFS. There are individual flags for just enabling it
 for the VFS `--vfs-links` and the local backend `--local-links` if
 required.
 
+### --list-cutoff N {#list-cutoff}
+
+When syncing rclone needs to sort directory entries before comparing
+them. Below this threshold (1,000,000) by default, rclone will store
+the directory entries in memory. 1,000,000 entries will take approx
+1GB of RAM to store. Above this threshold rclone will store directory
+entries on disk and sort them without using a lot of memory.
+
+Doing this is slightly less efficient then sorting them in memory and
+will only work well for the bucket based backends (eg s3, b2,
+azureblob, swift) but these are the only backends likely to have
+millions of entries in a directory.
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.
@@ -1463,12 +1484,21 @@ have a signal to rotate logs.
 
 ### --log-format LIST ###
 
-Comma separated list of log format options. Accepted options are `date`, 
-`time`, `microseconds`, `pid`, `longfile`, `shortfile`, `UTC`. Any other 
-keywords will be silently ignored. `pid` will tag log messages with process
-identifier which useful with `rclone mount --daemon`. Other accepted
-options are explained in the [go documentation](https://pkg.go.dev/log#pkg-constants).
-The default log format is "`date`,`time`".
+Comma separated list of log format options. The accepted options are:
+
+- `date` - Add a date in the format YYYY/MM/YY to the log.
+- `time` - Add a time to the log in format HH:MM:SS.
+- `microseconds` - Add microseconds to the time in format HH:MM:SS.SSSSSS.
+- `UTC` - Make the logs in UTC not localtime.
+- `longfile` - Adds the source file and line number of the log statement.
+- `shortfile` - Adds the source file and line number of the log statement.
+- `pid` - Add the process ID to the log - useful with `rclone mount --daemon`.
+- `nolevel` - Don't add the level to the log.
+- `json` - Equivalent to adding `--use-json-log`
+
+They are added to the log line in the order above.
+
+The default log format is `"date,time"`.
 
 ### --log-level LEVEL ###
 
@@ -1486,10 +1516,90 @@ warnings and significant events.
 
 `ERROR` is equivalent to `-q`. It only outputs error messages.
 
+### --windows-event-log LEVEL ###
+
+If this is configured (the default is `OFF`) then logs of this level
+and above will be logged to the Windows event log in **addition** to
+the normal logs. These will be logged in JSON format as described
+below regardless of what format the main logs are configured for.
+
+The Windows event log only has 3 levels of severity `Info`, `Warning`
+and `Error`. If enabled we map rclone levels like this.
+
+- `Error` ← `ERROR` (and above)
+- `Warning` ←  `WARNING` (note that this level is defined but not currently used).
+- `Info` ← `NOTICE`, `INFO` and `DEBUG`.
+
+Rclone will declare its log source as "rclone" if it is has enough
+permissions to create the registry key needed. If not then logs will
+appear as "Application". You can run `rclone version --windows-event-log DEBUG`
+once as administrator to create the registry key in advance.
+
+**Note** that the `--windows-event-log` level must be greater (more
+severe) than or equal to the `--log-level`. For example to log DEBUG
+to a log file but ERRORs to the event log you would use
+
+    --log-file rclone.log --log-level DEBUG --windows-event-log ERROR
+
+This option is only supported Windows platforms.
+
 ### --use-json-log ###
 
-This switches the log format to JSON for rclone. The fields of json log
-are level, msg, source, time.
+This switches the log format to JSON for rclone. The fields of JSON
+log are `level`, `msg`, `source`, `time`. The JSON logs will be
+printed on a single line, but are shown expanded here for clarity.
+
+```json
+{
+  "time": "2025-05-13T17:30:51.036237518+01:00",
+  "level": "debug",
+  "msg": "4 go routines active\n",
+  "source": "cmd/cmd.go:298"
+}
+```
+
+Completed data transfer logs will have extra `size` information. Logs
+which are about a particular object will have `object` and
+`objectType` fields also.
+
+```json
+{
+  "time": "2025-05-13T17:38:05.540846352+01:00",
+  "level": "info",
+  "msg": "Copied (new) to: file2.txt",
+  "size": 6,
+  "object": "file.txt",
+  "objectType": "*local.Object",
+  "source": "operations/copy.go:368"
+}
+```
+
+Stats logs will contain a `stats` field which is the same as
+returned from the rc call [core/stats](/rc/#core-stats).
+
+```json
+{
+  "time": "2025-05-13T17:38:05.540912847+01:00",
+  "level": "info",
+  "msg": "...text version of the stats...",
+  "stats": {
+    "bytes": 6,
+    "checks": 0,
+    "deletedDirs": 0,
+    "deletes": 0,
+    "elapsedTime": 0.000904825,
+    ...truncated for clarity...
+    "totalBytes": 6,
+    "totalChecks": 0,
+    "totalTransfers": 1,
+    "transferTime": 0.000882794,
+    "transfers": 1
+  },
+  "source": "accounting/stats.go:569"
+}
+```
+
+
 
 ### --low-level-retries NUMBER ###
 
@@ -1525,6 +1635,50 @@ of the remote which may be desirable.
 
 Setting this to a negative number will make the backlog as large as
 possible.
+
+### --max-buffer-memory=SIZE {#max-buffer-memory}
+
+If set, don't allocate more than SIZE amount of memory as buffers. If
+not set or set to `0` or `off` this will not limit the amount of memory
+in use.
+
+This includes memory used by buffers created by the `--buffer` flag
+and buffers used by multi-thread transfers.
+
+Most multi-thread transfers do not take additional memory, but some do
+depending on the backend (eg the s3 backend for uploads). This means
+there is a tension between total setting `--transfers` as high as
+possible and memory use.
+
+Setting `--max-buffer-memory` allows the buffer memory to be
+controlled so that it doesn't overwhelm the machine and allows
+`--transfers` to be set large.
+
+### --max-connections=N ###
+
+This sets the maximum number of concurrent calls to the backend API.
+It may not map 1:1 to TCP or HTTP connections depending on the backend
+in use and the use of HTTP1 vs HTTP2.
+
+When downloading files, backends only limit the initial opening of the
+stream. The bulk data download is not counted as a connection. This
+means that the `--max--connections` flag won't limit the total number
+of downloads.
+
+Note that it is possible to cause deadlocks with this setting so it
+should be used with care.
+
+If you are doing a sync or copy then make sure `--max-connections` is
+one more than the sum of `--transfers` and `--checkers`.
+
+If you use `--check-first` then `--max-connections` just needs to be
+one more than the maximum of `--checkers` and `--transfers`.
+
+So for  `--max-connections 3` you'd use `--checkers 2 --transfers 2
+--check-first` or `--checkers 1 --transfers 1`.
+
+Setting this flag can be useful for backends which do multipart
+uploads to limit the number of simultaneous parts being transferred.
 
 ### --max-delete=N ###
 
@@ -1785,6 +1939,14 @@ This will work with the `sync`/`copy`/`move` commands and friends
 mount` and `rclone serve` if `--vfs-cache-mode` is set to `writes` or
 above.
 
+Most multi-thread transfers do not take additional memory, but some do
+(for example uploading to s3). In the worst case memory usage can be
+at maximum `--transfers` * `--multi-thread-chunk-size` *
+`--multi-thread-streams` or specifically for the s3 backend
+`--transfers` * `--s3-chunk-size` * `--s3-concurrency`. However you
+can use the the [--max-buffer-memory](/docs/#max-buffer-memory) flag
+to control the maximum memory used here.
+
 **NB** that this **only** works with supported backends as the
 destination but will work with any backend as the source.
 
@@ -1808,6 +1970,13 @@ If the backend has a `--backend-upload-concurrency` setting (eg
 `--s3-upload-concurrency`) then this setting will be used as the
 number of transfers instead if it is larger than the value of
 `--multi-thread-streams` or `--multi-thread-streams` isn't set.
+
+### --name-transform COMMAND[=XXXX] ###
+`--name-transform` introduces path name transformations for
+`rclone copy`, `rclone sync`, and `rclone move`. These transformations
+enable modifications to source and destination file names by applying
+prefixes, suffixes, and other alterations during transfer operations.
+For detailed docs and examples, see [`convmv`](/commands/rclone_convmv/).
 
 ### --no-check-dest ###
 
@@ -2808,6 +2977,7 @@ For the filtering options
   * `--max-size`
   * `--min-age`
   * `--max-age`
+  * `--hash-filter`
   * `--dump filters`
   * `--metadata-include`
   * `--metadata-include-from`

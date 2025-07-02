@@ -38,8 +38,8 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
@@ -1745,7 +1745,7 @@ func (f *Fs) createDir(ctx context.Context, pathID, leaf string, metadata fs.Met
 	}
 	var updateMetadata updateMetadataFn
 	if len(metadata) > 0 {
-		updateMetadata, err = f.updateMetadata(ctx, createInfo, metadata, true)
+		updateMetadata, err = f.updateMetadata(ctx, createInfo, metadata, true, true)
 		if err != nil {
 			return nil, fmt.Errorf("create dir: failed to update metadata: %w", err)
 		}
@@ -1776,7 +1776,7 @@ func (f *Fs) updateDir(ctx context.Context, dirID string, metadata fs.Metadata) 
 	}
 	dirID = actualID(dirID)
 	updateInfo := &drive.File{}
-	updateMetadata, err := f.updateMetadata(ctx, updateInfo, metadata, true)
+	updateMetadata, err := f.updateMetadata(ctx, updateInfo, metadata, true, true)
 	if err != nil {
 		return nil, fmt.Errorf("update dir: failed to update metadata from source object: %w", err)
 	}
@@ -2189,7 +2189,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	wg := sync.WaitGroup{}
 	in := make(chan listREntry, listRInputBuffer)
 	out := make(chan error, f.ci.Checkers)
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	overflow := []listREntry{}
 	listed := 0
 

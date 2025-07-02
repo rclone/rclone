@@ -18,8 +18,8 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/pacer"
 )
@@ -649,7 +649,7 @@ of listing recursively that doing a directory traversal.
 */
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	bucketName, directory := f.split(dir)
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
 		return f.list(ctx, bucket, directory, prefix, addBucket, true, 0, func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error {
 			entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)

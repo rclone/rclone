@@ -1090,6 +1090,10 @@ func (o *Object) Remote() string {
 
 // Hash returns the requested hash of a file as a lowercase hex string
 func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
+	if r == hash.None {
+		return "", nil
+	}
+
 	// Check that the underlying file hasn't changed
 	o.fs.objectMetaMu.RLock()
 	oldtime := o.modTime
@@ -1197,7 +1201,15 @@ func (o *Object) Storable() bool {
 	o.fs.objectMetaMu.RLock()
 	mode := o.mode
 	o.fs.objectMetaMu.RUnlock()
-	if mode&os.ModeSymlink != 0 && !o.fs.opt.TranslateSymlinks {
+
+	// On Windows items with os.ModeIrregular are likely Junction
+	// points so we treat them as symlinks for the purpose of ignoring them.
+	// https://github.com/golang/go/issues/73827
+	symlinkFlag := os.ModeSymlink
+	if runtime.GOOS == "windows" {
+		symlinkFlag |= os.ModeIrregular
+	}
+	if mode&symlinkFlag != 0 && !o.fs.opt.TranslateSymlinks {
 		if !o.fs.opt.SkipSymlinks {
 			fs.Logf(o, "Can't follow symlink without -L/--copy-links")
 		}

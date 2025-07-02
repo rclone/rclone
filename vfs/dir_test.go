@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"runtime"
@@ -690,5 +691,74 @@ func TestDirEntryModTimeInvalidation(t *testing.T) {
 	// ModTime of directory must be different after second file was written.
 	if modTime1.Equal(modTime2) {
 		t.Error("ModTime not invalidated")
+	}
+}
+
+func TestDirMetadataExtension(t *testing.T) {
+	r, vfs, dir, _ := dirCreate(t)
+	root, err := vfs.Root()
+	require.NoError(t, err)
+	features := r.Fremote.Features()
+
+	checkListing(t, dir, []string{"file1,14,false"})
+	checkListing(t, root, []string{"dir,0,true"})
+
+	node, err := vfs.Stat("dir/file1")
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+
+	node, err = vfs.Stat("dir")
+	require.NoError(t, err)
+	require.True(t, node.IsDir())
+
+	// Check metadata files do not exist
+	_, err = vfs.Stat("dir/file1.metadata")
+	require.Error(t, err, ENOENT)
+	_, err = vfs.Stat("dir.metadata")
+	require.Error(t, err, ENOENT)
+
+	// Configure metadata extension
+	vfs.Opt.MetadataExtension = ".metadata"
+
+	// Check metadata for file does exist
+	node, err = vfs.Stat("dir/file1.metadata")
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+	size := node.Size()
+	assert.Greater(t, size, int64(1))
+	modTime := node.ModTime()
+
+	// ...and is now in the listing
+	checkListing(t, dir, []string{"file1,14,false", fmt.Sprintf("file1.metadata,%d,false", size)})
+
+	// ...and is a JSON blob with correct "mtime" key
+	blob, err := vfs.ReadFile("dir/file1.metadata")
+	require.NoError(t, err)
+	var metadata map[string]string
+	err = json.Unmarshal(blob, &metadata)
+	require.NoError(t, err)
+	if features.ReadMetadata {
+		assert.Equal(t, modTime.Format(time.RFC3339Nano), metadata["mtime"])
+	}
+
+	// Check metadata for dir does exist
+	node, err = vfs.Stat("dir.metadata")
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+	size = node.Size()
+	assert.Greater(t, size, int64(1))
+	modTime = node.ModTime()
+
+	// ...and is now in the listing
+	checkListing(t, root, []string{"dir,0,true", fmt.Sprintf("dir.metadata,%d,false", size)})
+
+	// ...and is a JSON blob with correct "mtime" key
+	blob, err = vfs.ReadFile("dir.metadata")
+	require.NoError(t, err)
+	clear(metadata)
+	err = json.Unmarshal(blob, &metadata)
+	require.NoError(t, err)
+	if features.ReadDirMetadata {
+		assert.Equal(t, modTime.Format(time.RFC3339Nano), metadata["mtime"])
 	}
 }
