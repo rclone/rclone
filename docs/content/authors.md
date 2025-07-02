@@ -988,3 +988,4 @@ put them back in again.` >}}
   * curlwget <curlwget@icloud.com>
   * $@M@RTH_ <165886349+Samarth1015@users.noreply.github.com>
   * Ali Zein Yousuf <azy5030@gmail.com>
+  * Davide Bizzarri <davide.bizzarri@willhaben.at>
