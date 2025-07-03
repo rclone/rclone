@@ -990,3 +990,4 @@ put them back in again.` >}}
   * Ali Zein Yousuf <azy5030@gmail.com>
   * Davide Bizzarri <davide.bizzarri@willhaben.at>
   * Ross Smith II <ross@smithii.com>
+  * Vikas Bhansali <64532198+vibhansa-msft@users.noreply.github.com>
