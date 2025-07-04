@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mitchellh/go-homedir"
-
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -144,7 +142,7 @@ func findFile(dir string, name string) string {
 
 // Find current user's home directory
 func findHomeDir() (string, error) {
-	path, err := homedir.Dir()
+	path, err := os.UserHomeDir()
 	if err != nil {
 		fs.Debugf(nil, "Home directory lookup failed and cannot be used as configuration location: %v", err)
 	} else if path == "" {
