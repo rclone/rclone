@@ -479,6 +479,11 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 			// when a zero-byte file was uploaded with an invalid captcha token
 			f.rst.captcha.Invalidate()
 			return true, err
+		} else if strings.Contains(apiErr.Reason, "idx.shub.mypikpak.com") && apiErr.Code == 500 {
+			// internal server error: Post "http://idx.shub.mypikpak.com": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+			// This typically happens when trying to retrieve a gcid for which no record exists.
+			// No retry is needed in this case.
+			return false, err
 		}
 	}
 
