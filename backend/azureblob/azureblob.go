@@ -65,6 +65,7 @@ const (
 	timeFormatIn          = time.RFC3339
 	timeFormatOut         = "2006-01-02T15:04:05.000000000Z07:00"
 	storageDefaultBaseURL = "blob.core.windows.net"
+	blobScope             = "https://storage.azure.com/.default"
 	defaultChunkSize      = 4 * fs.Mebi
 	defaultAccessTier     = blob.AccessTier("") // FIXME AccessTierNone
 	// Default storage account, key and blob endpoint for emulator support,
@@ -1743,7 +1744,9 @@ func (o *Object) getAuth(ctx context.Context, tokenOK bool, noAuth bool) (srcURL
 		if !tokenOK {
 			return srcURL, token, errors.New("not supported: Microsoft Entra ID")
 		}
-		options := policy.TokenRequestOptions{}
+		options := policy.TokenRequestOptions{
+			Scopes: []string{blobScope},
+		}
 		accessToken, err := f.cred.GetToken(ctx, options)
 		if err != nil {
 			return srcURL, token, fmt.Errorf("failed to create access token: %w", err)
