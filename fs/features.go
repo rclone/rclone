@@ -810,6 +810,22 @@ type Shutdowner interface {
 	Shutdown(ctx context.Context) error
 }
 
+
+// Common interface for filesystems that support hardlinking
+type Hardlinker interface {
+	Fs
+
+	ShouldPreserveLinks() bool
+
+	HLink(ctx context.Context, oldPath string, newPath string) error
+
+	HLinkID(ctx context.Context, tgt Object) (any, bool)
+
+	RegisterLinkRoot(ctx context.Context, src Object, fsrc Hardlinker, dst Object, dstPath string, willTransfer bool) (bool, error)
+
+	NotifyLinkRootTransferComplete(ctx context.Context, src Object, fsrc Hardlinker, dst Object) error
+}
+
 // ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
 
