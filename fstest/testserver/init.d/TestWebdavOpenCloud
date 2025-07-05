@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -e
+
+NAME=opencloud
+USER=admin
+PASS=admin
+PORT=9200
+
+CONF_DIR=/tmp/opencloud-config
+install -d -m 0777 ${CONF_DIR}
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    echo "*************************** init"
+    docker run --rm --name $NAME \
+           -v ${CONF_DIR}:/etc/opencloud \
+           -e "OC_INSECURE=true" \
+           -e "IDM_ADMIN_PASSWORD=$PASS" \
+           -e "OC_FORCE_CONFIG_OVERWRITE=true" \
+           -e "OC_URL=https://127.0.0.1:$PORT" \
+           opencloudeu/opencloud-rolling \
+           init
+
+    docker run --rm -d --name $NAME \
+           -e "OC_LOG_LEVEL=debug" \
+           -e "OC_LOG_PRETTY=true" \
+           -e "OC_URL=https://127.0.0.1:$PORT" \
+           -e "IDM_ADMIN_PASSWORD=$PASS" \
+           -e "OC_INSECURE=true" \
+           -e "PROXY_ENABLE_BASIC_AUTH=true" \
+           -v ${CONF_DIR}:/etc/opencloud \
+           -p 127.0.0.1:${PORT}:9200 \
+           opencloudeu/opencloud-rolling 
+    
+    echo type=webdav
+    echo url=https://127.0.0.1:${PORT}/dav/spaces/some-admin-user-id-0000-100000000000
+    echo user=$USER
+    echo pass=$(rclone obscure $PASS)
+    echo vendor=opencloud
+    echo _connect=127.0.0.1:${PORT}
+    echo _connect_delay=5s
+}
+
+stop() {
+    # Clean up the mess
+    docker stop opencloud 
+    rm -r ${CONF_DIR}
+}
+
+. $(dirname "$0")/run.bash

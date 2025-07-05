@@ -89,6 +89,9 @@ func init() {
 				Value: "infinitescale",
 				Help:  "ownCloud Infinite Scale",
 			}, {
+				Value: "opencloud",
+				Help:  "OpenCloud",
+			}, {
 				Value: "sharepoint",
 				Help:  "Sharepoint Online, authenticated by Microsoft account",
 			}, {
@@ -636,7 +639,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCMD5 = true
 		f.hasOCSHA1 = true
-	case "infinitescale":
+	case "opencloud", "infinitescale":
 		f.precision = time.Second
 		f.useOCMtime = true
 		f.propsetMtime = true
