@@ -12,9 +12,14 @@ required.
 
 When start is run it should output config parameters for that remote.
 If a `_connect` parameter is output then that will be used for a
-connection test.  For example if `_connect=127.0.0.1:80` then a TCP
+connection test. For example if `_connect=127.0.0.1:80` then a TCP
 connection will be made to `127.0.0.1:80` and only when that succeeds
 will the test continue.
+
+If in addition to `_connect`, `_connect_delay=5s` is also present then
+after the connection succeeds rclone will wait `5s` before continuing.
+This is for servers that aren't quite ready even though they have
+opened their TCP ports.
 
 `run.bash` contains boilerplate to be included in a bash script for
 interpreting the command line parameters.

@@ -41,12 +41,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -66,17 +64,22 @@ import (
 
 // Constants
 const (
-	clientID                 = "YUMx5nI8ZU8Ap8pm"
-	clientVersion            = "2.0.0"
-	packageName              = "mypikpak.com"
-	defaultUserAgent         = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"
-	minSleep                 = 100 * time.Millisecond
-	maxSleep                 = 2 * time.Second
-	taskWaitTime             = 500 * time.Millisecond
-	decayConstant            = 2 // bigger for slower decay, exponential
-	rootURL                  = "https://api-drive.mypikpak.com"
-	minChunkSize             = fs.SizeSuffix(manager.MinUploadPartSize)
-	defaultUploadConcurrency = manager.DefaultUploadConcurrency
+	clientID         = "YUMx5nI8ZU8Ap8pm"
+	clientVersion    = "2.0.0"
+	packageName      = "mypikpak.com"
+	defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"
+	minSleep         = 100 * time.Millisecond
+	maxSleep         = 2 * time.Second
+	taskWaitTime     = 500 * time.Millisecond
+	decayConstant    = 2 // bigger for slower decay, exponential
+	rootURL          = "https://api-drive.mypikpak.com"
+
+	maxUploadParts      = 10000                          // Part number must be an integer between 1 and 10000, inclusive.
+	defaultChunkSize    = fs.SizeSuffix(1024 * 1024 * 5) // Part size should be in [100KB, 5GB]
+	minChunkSize        = 100 * fs.Kibi
+	maxChunkSize        = 5 * fs.Gibi
+	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
+	maxUploadCutoff     = 5 * fs.Gibi // maximum allowed size for singlepart uploads
 )
 
 // Globals
@@ -224,6 +227,14 @@ Fill in for rclone to use a non root folder as its starting point.
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}, {
+			Name: "upload_cutoff",
+			Help: `Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+The minimum is 0 and the maximum is 5 GiB.`,
+			Default:  defaultUploadCutoff,
+			Advanced: true,
+		}, {
 			Name: "chunk_size",
 			Help: `Chunk size for multipart uploads.
 	
@@ -241,7 +252,7 @@ large file of known size to stay below the 10,000 chunks limit.
 
 Increasing the chunk size decreases the accuracy of the progress
 statistics displayed with "-P" flag.`,
-			Default:  minChunkSize,
+			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
 			Name: "upload_concurrency",
@@ -257,7 +268,7 @@ in memory.
 If you are uploading small numbers of large files over high-speed links
 and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.`,
-			Default:  defaultUploadConcurrency,
+			Default:  4,
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -294,6 +305,7 @@ type Options struct {
 	NoMediaLink         bool                 `config:"no_media_link"`
 	HashMemoryThreshold fs.SizeSuffix        `config:"hash_memory_limit"`
 	ChunkSize           fs.SizeSuffix        `config:"chunk_size"`
+	UploadCutoff        fs.SizeSuffix        `config:"upload_cutoff"`
 	UploadConcurrency   int                  `config:"upload_concurrency"`
 	Enc                 encoder.MultiEncoder `config:"encoding"`
 }
@@ -467,6 +479,11 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 			// when a zero-byte file was uploaded with an invalid captcha token
 			f.rst.captcha.Invalidate()
 			return true, err
+		} else if strings.Contains(apiErr.Reason, "idx.shub.mypikpak.com") && apiErr.Code == 500 {
+			// internal server error: Post "http://idx.shub.mypikpak.com": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+			// This typically happens when trying to retrieve a gcid for which no record exists.
+			// No retry is needed in this case.
+			return false, err
 		}
 	}
 
@@ -524,6 +541,39 @@ func (f *Fs) newClientWithPacer(ctx context.Context) (err error) {
 	return nil
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	if cs < minChunkSize {
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	if cs > maxChunkSize {
+		return fmt.Errorf("%s is greater than %s", cs, maxChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
+func checkUploadCutoff(cs fs.SizeSuffix) error {
+	if cs > maxUploadCutoff {
+		return fmt.Errorf("%s is greater than %s", cs, maxUploadCutoff)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadCutoff(cs)
+	if err == nil {
+		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
+	}
+	return
+}
+
 // newFs partially constructs Fs from the path
 //
 // It constructs a valid Fs but doesn't attempt to figure out whether
@@ -531,11 +581,17 @@ func (f *Fs) newClientWithPacer(ctx context.Context) (err error) {
 func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
-	if err := configstruct.Set(m, opt); err != nil {
+	err := configstruct.Set(m, opt)
+	if err != nil {
 		return nil, err
 	}
-	if opt.ChunkSize < minChunkSize {
-		return nil, fmt.Errorf("chunk size must be at least %s", minChunkSize)
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, fmt.Errorf("pikpak: chunk size: %w", err)
+	}
+	err = checkUploadCutoff(opt.UploadCutoff)
+	if err != nil {
+		return nil, fmt.Errorf("pikpak: upload cutoff: %w", err)
 	}
 
 	root := parsePath(path)
@@ -1260,9 +1316,7 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	return
 }
 
-func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, size int64, resumable *api.Resumable) (err error) {
-	p := resumable.Params
-
+func (f *Fs) newS3Client(ctx context.Context, p *api.ResumableParams) (s3Client *s3.Client, err error) {
 	// Create a credentials provider
 	creds := credentials.NewStaticCredentialsProvider(p.AccessKeyID, p.AccessKeySecret, p.SecurityToken)
 
@@ -1272,22 +1326,64 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, s
 	if err != nil {
 		return
 	}
+	ci := fs.GetConfig(ctx)
+	cfg.RetryMaxAttempts = ci.LowLevelRetries
+	cfg.HTTPClient = getClient(ctx, &f.opt)
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String("https://mypikpak.com/")
+		o.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
+		o.ResponseChecksumValidation = aws.ResponseChecksumValidationWhenRequired
 	})
-	partSize := chunksize.Calculator(name, size, int(manager.MaxUploadParts), f.opt.ChunkSize)
+	return client, nil
+}
 
-	// Create an uploader with custom options
-	uploader := manager.NewUploader(client, func(u *manager.Uploader) {
-		u.PartSize = int64(partSize)
-		u.Concurrency = f.opt.UploadConcurrency
-	})
-	// Perform an upload
-	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, size int64, resumable *api.Resumable, options ...fs.OpenOption) (err error) {
+	p := resumable.Params
+
+	if size < 0 || size >= int64(f.opt.UploadCutoff) {
+		mu, err := f.newChunkWriter(ctx, name, size, p, in, options...)
+		if err != nil {
+			return fmt.Errorf("multipart upload failed to initialise: %w", err)
+		}
+		return mu.Upload(ctx)
+	}
+
+	// upload singlepart
+	client, err := f.newS3Client(ctx, p)
+	if err != nil {
+		return fmt.Errorf("failed to create upload client: %w", err)
+	}
+	req := &s3.PutObjectInput{
 		Bucket: &p.Bucket,
 		Key:    &p.Key,
-		Body:   in,
+		Body:   io.NopCloser(in),
+	}
+	// Apply upload options
+	for _, option := range options {
+		key, value := option.Header()
+		lowerKey := strings.ToLower(key)
+		switch lowerKey {
+		case "":
+			// ignore
+		case "cache-control":
+			req.CacheControl = aws.String(value)
+		case "content-disposition":
+			req.ContentDisposition = aws.String(value)
+		case "content-encoding":
+			req.ContentEncoding = aws.String(value)
+		case "content-type":
+			req.ContentType = aws.String(value)
+		}
+	}
+	var s3opts = []func(*s3.Options){}
+	// Can't retry single part uploads as only have an io.Reader
+	s3opts = append(s3opts, func(o *s3.Options) {
+		o.RetryMaxAttempts = 1
+	})
+	err = f.pacer.CallNoRetry(func() (bool, error) {
+		_, err = client.PutObject(ctx, req, s3opts...)
+		return f.shouldRetry(ctx, nil, err)
 	})
 	return
 }
@@ -1345,7 +1441,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 	if uploadType == api.UploadTypeForm && new.Form != nil {
 		err = f.uploadByForm(ctx, in, req.Name, size, new.Form, options...)
 	} else if uploadType == api.UploadTypeResumable && new.Resumable != nil {
-		err = f.uploadByResumable(ctx, in, leaf, size, new.Resumable)
+		err = f.uploadByResumable(ctx, in, leaf, size, new.Resumable, options...)
 	} else {
 		err = fmt.Errorf("no method available for uploading: %+v", new)
 	}

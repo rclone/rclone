@@ -39,6 +39,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
   * Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
   * Fastmail Files [:page_facing_up:](https://rclone.org/webdav/#fastmail-files)
+  * FileLu [:page_facing_up:](https://rclone.org/filelu/)
   * Files.com [:page_facing_up:](https://rclone.org/filescom/)
   * FlashBlade [:page_facing_up:](https://rclone.org/s3/#pure-storage-flashblade)
   * FTP [:page_facing_up:](https://rclone.org/ftp/)
@@ -111,6 +112,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * WebDAV [:page_facing_up:](https://rclone.org/webdav/)
   * Yandex Disk [:page_facing_up:](https://rclone.org/yandex/)
   * Zoho WorkDrive [:page_facing_up:](https://rclone.org/zoho/)
+  * Zata.ai [:page_facing_up:](https://rclone.org/s3/#Zata)
   * The local filesystem [:page_facing_up:](https://rclone.org/local/)
 
 Please see [the full list of all storage providers and their features](https://rclone.org/overview/)
