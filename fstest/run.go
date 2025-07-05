@@ -230,6 +230,27 @@ func (r *Run) WriteFile(filePath, content string, t time.Time) Item {
 	return item
 }
 
+// WriteFile writes a file to local
+func (r *Run) WriteFileBytes(filePath string, content []byte, t time.Time) Item {
+	item := NewItemBytes(filePath, content, t)
+	// FIXME make directories?
+	filePath = path.Join(r.LocalName, filePath)
+	dirPath := path.Dir(filePath)
+	err := file.MkdirAll(dirPath, 0770)
+	if err != nil {
+		r.Fatalf("Failed to make directories %q: %v", dirPath, err)
+	}
+	err = os.WriteFile(filePath, content, 0600)
+	if err != nil {
+		r.Fatalf("Failed to write file %q: %v", filePath, err)
+	}
+	err = os.Chtimes(filePath, t, t)
+	if err != nil {
+		r.Fatalf("Failed to chtimes file %q: %v", filePath, err)
+	}
+	return item
+}
+
 // ForceMkdir creates the remote
 func (r *Run) ForceMkdir(ctx context.Context, f fs.Fs) {
 	err := f.Mkdir(ctx, "")
@@ -287,9 +308,54 @@ func (r *Run) WriteObjectTo(ctx context.Context, f fs.Fs, remote, content string
 	return NewItem(remote, content, modTime)
 }
 
+// WriteObjectTo writes an object to the fs, remote passed in
+func (r *Run) WriteObjectToBytes(ctx context.Context, f fs.Fs, remote string, content []byte, modTime time.Time, useUnchecked bool) Item {
+	put := f.Put
+	if useUnchecked {
+		put = f.Features().PutUnchecked
+		if put == nil {
+			r.Fatalf("Fs doesn't support PutUnchecked")
+		}
+	}
+	r.Mkdir(ctx, f)
+
+	// calculate all hashes f supports for content
+	hash, err := hash.NewMultiHasherTypes(f.Hashes())
+	if err != nil {
+		r.Fatalf("Failed to make new multi hasher: %v", err)
+	}
+	_, err = hash.Write([]byte(content))
+	if err != nil {
+		r.Fatalf("Failed to make write to hash: %v", err)
+	}
+	hashSums := hash.Sums()
+
+	const maxTries = 10
+	for tries := 1; ; tries++ {
+		in := bytes.NewBuffer(content)
+		objinfo := object.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, hashSums, nil)
+		_, err := put(ctx, in, objinfo)
+		if err == nil {
+			break
+		}
+		// Retry if err returned a retry error
+		if fserrors.IsRetryError(err) && tries < maxTries {
+			r.Logf("Retry Put of %q to %v: %d/%d (%v)", remote, f, tries, maxTries, err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		r.Fatalf("Failed to put %q to %q: %v", remote, f, err)
+	}
+	return NewItemBytes(remote, content, modTime)
+}
+
 // WriteObject writes an object to the remote
 func (r *Run) WriteObject(ctx context.Context, remote, content string, modTime time.Time) Item {
 	return r.WriteObjectTo(ctx, r.Fremote, remote, content, modTime, false)
+}
+
+func (r *Run) WriteObjectBytes(ctx context.Context, remote string, content []byte, modTime time.Time) Item {
+	return r.WriteObjectToBytes(ctx, r.Fremote, remote, content, modTime, false)
 }
 
 // WriteUncheckedObject writes an object to the remote not checking for duplicates

@@ -4,6 +4,8 @@ package file
 
 import "os"
 
+func PreAllocateAdvise(allocateSparse bool) {}
+
 // PreallocateImplemented is a constant indicating whether the
 // implementation of Preallocate actually does anything.
 const PreallocateImplemented = false
