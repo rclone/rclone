@@ -249,7 +249,7 @@ func (c *checkMarch) reportResults(ctx context.Context, err error) error {
 		fs.Logf(c.opt.Fsrc, "%d %s missing", c.srcFilesMissing.Load(), entity)
 	}
 
-	fs.Logf(c.opt.Fdst, "%d differences found", accounting.Stats(ctx).GetErrors())
+	fs.Logf(c.opt.Fdst, "%d differences found", c.differences.Load())
 	if errs := accounting.Stats(ctx).GetErrors(); errs > 0 {
 		fs.Logf(c.opt.Fdst, "%d errors while checking", errs)
 	}
