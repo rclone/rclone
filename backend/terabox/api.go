@@ -22,6 +22,28 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
+// Chunk of data representation
+type Chunk struct {
+	Data   []byte
+	Readed int
+	Number int
+	MD5    string
+}
+
+// Reset state between use
+func (t *Chunk) Reset() {
+	t.Data = t.Data[:cap(t.Data)]
+	t.Readed = 0
+	t.Number = 0
+	t.MD5 = ""
+}
+
+// Sync - syncing size of buffer with readed size; calculate MD5 hash
+func (t *Chunk) Sync() {
+	t.Data = t.Data[:t.Readed]
+	t.MD5 = fmt.Sprintf("%x", md5.Sum(t.Data))
+}
+
 var retryErrorCodes = []int{
 	429, // Too Many Requests.
 	500, // Internal Server Error
@@ -466,10 +488,16 @@ func (f *Fs) apiFileUpload(ctx context.Context, path string, size int64, modTime
 				// upload chunk
 				resUpload, err := f.apiFileUploadChunk(ctx, path, resPreCreate.UploadID, chunk.Number, int64(chunk.Readed), chunk.Data, options)
 				if err != nil {
-					mx.Lock()
-					threadsErrs = append(threadsErrs, err.Error())
-					mx.Unlock()
-					return
+					attemptChunkUpload++
+					debug(f.opt, 1, "upload chunk (%d) error: %s | attempt: %d", chunk.Number, err, attemptChunkUpload)
+					if attemptChunkUpload > 3 {
+						mx.Lock()
+						threadsErrs = append(threadsErrs, err.Error())
+						mx.Unlock()
+						return
+					}
+
+					continue
 				}
 
 				debug(f.opt, 1, "chunk %d md5 %s chunk size %d", chunk.Number, chunk.MD5, chunk.Readed)

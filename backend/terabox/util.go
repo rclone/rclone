@@ -1,7 +1,6 @@
 package terabox
 
 import (
-	"crypto/md5"
 	"encoding/base64"
 	"fmt"
 	"net/textproto"
@@ -113,23 +112,4 @@ func decodeMD5(md5 string) string {
 
 	e := string(n[8:16]) + string(n[0:8]) + string(n[24:32]) + string(n[16:24])
 	return e
-}
-
-type Chunk struct {
-	Data   []byte
-	Readed int
-	Number int
-	MD5    string
-}
-
-func (t *Chunk) Reset() {
-	t.Data = t.Data[:cap(t.Data)]
-	t.Readed = 0
-	t.Number = 0
-	t.MD5 = ""
-}
-
-func (t *Chunk) Sync() {
-	t.Data = t.Data[:t.Readed]
-	t.MD5 = fmt.Sprintf("%x", md5.Sum(t.Data))
 }
