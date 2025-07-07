@@ -555,6 +555,17 @@ var ConfigOptionsInfo = Options{{
 	Default: []string{},
 	Help:    "Transform paths during the copy process.",
 	Groups:  "Copy",
+}, {
+	Name:    "sparse",
+	Default: false,
+	Help:    "Copy blocks of zeros as sparse",
+	Groups:  "Copy",
+}, {
+
+	Name:    "sparse_min_block_size",
+	Default: SizeSuffix(1024),
+	Help:    "Minimum size a sequence of zeros must be in order to not be written to the remote with --sparse",
+	Groups:  "Copy",
 }}
 
 // ConfigInfo is filesystem config options
@@ -667,6 +678,8 @@ type ConfigInfo struct {
 	MetadataMapper             SpaceSepList      `config:"metadata_mapper"`
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
+	Sparse                     bool              `config:"sparse"`
+	SparseMinBlockSize         SizeSuffix        `config:"sparse_min_block_size"`
 }
 
 func init() {

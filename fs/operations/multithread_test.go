@@ -144,6 +144,39 @@ func skipIfNotMultithread(ctx context.Context, t *testing.T, r *fstest.Run) int 
 	return chunkSize
 }
 
+func generateInconvenientByteMap(sparseBlockMin int64) []byte {
+	buf := make([]byte, sparseBlockMin*8*1024*64)
+
+	for j := range int64(1024 * 64) {
+		for i := range sparseBlockMin * 8 {
+			// generate a hole at the beginning
+			if i < sparseBlockMin+sparseBlockMin/3 {
+				buf[j+i] = 0
+			} else if i < sparseBlockMin+(2*sparseBlockMin)/3-1 {
+				if i%2 == 0 {
+					buf[j+i] = 1
+				} else {
+					buf[j+i] = 0
+				}
+			} else if i < sparseBlockMin*3-sparseBlockMin/2 {
+				if i%2 == 0 {
+					buf[j+i] = 1
+				} else {
+					buf[j+i] = 0
+				}
+			} else if i < sparseBlockMin*4+1 {
+				buf[j+i] = 0
+			} else if i < sparseBlockMin*5 {
+				buf[j+i] = 1
+			} else {
+				buf[j+i] = 0
+			}
+		}
+	}
+
+	return buf
+}
+
 func TestMultithreadCopy(t *testing.T) {
 	r := fstest.NewRun(t)
 	ctx := context.Background()
@@ -152,86 +185,103 @@ func TestMultithreadCopy(t *testing.T) {
 	checkMetadata := false
 	ctx, ci := fs.AddConfig(ctx)
 
-	for _, upload := range []bool{false, true} {
-		for _, test := range []struct {
-			size    int
-			streams int
-		}{
-			{size: chunkSize*2 - 1, streams: 2},
-			{size: chunkSize * 2, streams: 2},
-			{size: chunkSize*2 + 1, streams: 2},
-		} {
-			checkMetadata = !checkMetadata
-			ci.Metadata = checkMetadata
-			fileName := fmt.Sprintf("test-multithread-copy-%v-%d-%d", upload, test.size, test.streams)
-			t.Run(fmt.Sprintf("upload=%v,size=%v,streams=%v", upload, test.size, test.streams), func(t *testing.T) {
-				if *fstest.SizeLimit > 0 && int64(test.size) > *fstest.SizeLimit {
-					t.Skipf("exceeded file size limit %d > %d", test.size, *fstest.SizeLimit)
-				}
-				var (
-					contents     = random.String(test.size)
-					t1           = fstest.Time("2001-02-03T04:05:06.499999999Z")
-					file1        fstest.Item
-					src, dst     fs.Object
-					err          error
-					testMetadata = fs.Metadata{
-						// System metadata supported by all backends
-						"mtime": t1.Format(time.RFC3339Nano),
-						// User metadata
-						"potato": "jersey",
-					}
-				)
+	const minSparseBlockSize = 512
+	sparseBuf := generateInconvenientByteMap(minSparseBlockSize)
 
-				var fSrc, fDst fs.Fs
-				if upload {
-					file1 = r.WriteFile(fileName, contents, t1)
-					r.CheckRemoteItems(t)
-					r.CheckLocalItems(t, file1)
-					fDst, fSrc = r.Fremote, r.Flocal
-				} else {
-					file1 = r.WriteObject(ctx, fileName, contents, t1)
-					r.CheckRemoteItems(t, file1)
-					r.CheckLocalItems(t)
-					fDst, fSrc = r.Flocal, r.Fremote
-				}
-				src, err = fSrc.NewObject(ctx, fileName)
-				require.NoError(t, err)
+	for _, sparse := range []bool{true, false} {
+		for _, useSparseBuf := range []bool{false, true} {
+			for _, upload := range []bool{false, true} {
+				for _, test := range []struct {
+					size    int
+					streams int
+				}{
+					{size: chunkSize*2 - 1, streams: 2},
+					{size: chunkSize * 2, streams: 2},
+					{size: chunkSize*2 + 1, streams: 2},
+				} {
+					checkMetadata = !checkMetadata
+					ci.Metadata = checkMetadata
+					ci.Sparse = sparse
+					ci.SparseMinBlockSize = minSparseBlockSize
+					fileName := fmt.Sprintf("test-multithread-copy-%v-%v-%v-%d-%d", upload, sparse, useSparseBuf, test.size, test.streams)
+					t.Run(fmt.Sprintf("upload=%v,sparse=%v,useSparseBuf=%v,size=%v,streams=%v", upload, sparse, useSparseBuf, test.size, test.streams), func(t *testing.T) {
+						if *fstest.SizeLimit > 0 && int64(test.size) > *fstest.SizeLimit {
+							t.Skipf("exceeded file size limit %d > %d", test.size, *fstest.SizeLimit)
+						}
+						var (
+							contents     = random.String(test.size)
+							t1           = fstest.Time("2001-02-03T04:05:06.499999999Z")
+							file1        fstest.Item
+							src, dst     fs.Object
+							err          error
+							testMetadata = fs.Metadata{
+								// System metadata supported by all backends
+								"mtime": t1.Format(time.RFC3339Nano),
+								// User metadata
+								"potato": "jersey",
+							}
+						)
 
-				do, canSetMetadata := src.(fs.SetMetadataer)
-				if checkMetadata && canSetMetadata {
-					// Set metadata on the source if required
-					err := do.SetMetadata(ctx, testMetadata)
-					if err == fs.ErrorNotImplemented {
-						canSetMetadata = false
-					} else {
+						var fSrc, fDst fs.Fs
+						if upload {
+							if useSparseBuf {
+								file1 = r.WriteFile(fileName, contents, t1)
+							} else {
+								file1 = r.WriteFileBytes(fileName, sparseBuf, t1)
+							}
+							r.CheckRemoteItems(t)
+							r.CheckLocalItems(t, file1)
+							fDst, fSrc = r.Fremote, r.Flocal
+						} else {
+							if useSparseBuf {
+								file1 = r.WriteObject(ctx, fileName, contents, t1)
+							} else {
+								file1 = r.WriteObjectBytes(ctx, fileName, sparseBuf, t1)
+							}
+							r.CheckRemoteItems(t, file1)
+							r.CheckLocalItems(t)
+							fDst, fSrc = r.Flocal, r.Fremote
+						}
+						src, err = fSrc.NewObject(ctx, fileName)
 						require.NoError(t, err)
-						fstest.CheckEntryMetadata(ctx, t, r.Flocal, src, testMetadata)
-					}
+
+						do, canSetMetadata := src.(fs.SetMetadataer)
+						if checkMetadata && canSetMetadata {
+							// Set metadata on the source if required
+							err := do.SetMetadata(ctx, testMetadata)
+							if err == fs.ErrorNotImplemented {
+								canSetMetadata = false
+							} else {
+								require.NoError(t, err)
+								fstest.CheckEntryMetadata(ctx, t, r.Flocal, src, testMetadata)
+							}
+						}
+
+						accounting.GlobalStats().ResetCounters()
+						tr := accounting.GlobalStats().NewTransfer(src, nil)
+
+						defer func() {
+							tr.Done(ctx, err)
+						}()
+
+						dst, err = multiThreadCopy(ctx, fDst, fileName, src, test.streams, tr)
+						require.NoError(t, err)
+
+						assert.Equal(t, src.Size(), dst.Size())
+						assert.Equal(t, fileName, dst.Remote())
+						fstest.CheckListingWithPrecision(t, fSrc, []fstest.Item{file1}, nil, fs.GetModifyWindow(ctx, fDst, fSrc))
+						fstest.CheckListingWithPrecision(t, fDst, []fstest.Item{file1}, nil, fs.GetModifyWindow(ctx, fDst, fSrc))
+
+						if checkMetadata && canSetMetadata && fDst.Features().ReadMetadata {
+							fstest.CheckEntryMetadata(ctx, t, fDst, dst, testMetadata)
+						}
+
+						require.NoError(t, dst.Remove(ctx))
+						require.NoError(t, src.Remove(ctx))
+
+					})
 				}
-
-				accounting.GlobalStats().ResetCounters()
-				tr := accounting.GlobalStats().NewTransfer(src, nil)
-
-				defer func() {
-					tr.Done(ctx, err)
-				}()
-
-				dst, err = multiThreadCopy(ctx, fDst, fileName, src, test.streams, tr)
-				require.NoError(t, err)
-
-				assert.Equal(t, src.Size(), dst.Size())
-				assert.Equal(t, fileName, dst.Remote())
-				fstest.CheckListingWithPrecision(t, fSrc, []fstest.Item{file1}, nil, fs.GetModifyWindow(ctx, fDst, fSrc))
-				fstest.CheckListingWithPrecision(t, fDst, []fstest.Item{file1}, nil, fs.GetModifyWindow(ctx, fDst, fSrc))
-
-				if checkMetadata && canSetMetadata && fDst.Features().ReadMetadata {
-					fstest.CheckEntryMetadata(ctx, t, fDst, dst, testMetadata)
-				}
-
-				require.NoError(t, dst.Remove(ctx))
-				require.NoError(t, src.Remove(ctx))
-
-			})
+			}
 		}
 	}
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/sparse"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/readers"
@@ -1377,11 +1378,11 @@ func (o *Object) mkdirAll() error {
 	return file.MkdirAll(dir, 0777)
 }
 
-type nopWriterCloser struct {
+type nopWriterSeekerCloser struct {
 	*bytes.Buffer
 }
 
-func (nwc nopWriterCloser) Close() error {
+func (nwc nopWriterSeekerCloser) Close() error {
 	// noop
 	return nil
 }
@@ -1389,6 +1390,7 @@ func (nwc nopWriterCloser) Close() error {
 // Update the object from in with modTime and size
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	var out io.WriteCloser
+	var outAt fs.WriterAtCloser
 	var hasher *hash.MultiHasher
 
 	for _, option := range options {
@@ -1430,6 +1432,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				return err
 			}
 		}
+		ci := fs.GetConfig(ctx)
+		if ci.Sparse {
+			file.PreAllocateAdvise(true)
+		} else {
+			file.PreAllocateAdvise(false)
+		}
+
 		if !o.fs.opt.NoPreAllocate {
 			// Pre-allocate the file for performance reasons
 			err = file.PreAllocate(src.Size(), f)
@@ -1442,8 +1451,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			}
 		}
 		out = f
+		outAt = f
 	} else {
-		out = nopWriterCloser{&symlinkData}
+		out = nopWriterSeekerCloser{&symlinkData}
 	}
 
 	// Calculate the hash of the object we are reading as we go along
@@ -1451,10 +1461,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		in = io.TeeReader(in, hasher)
 	}
 
-	_, err = io.Copy(out, in)
-	closeErr := out.Close()
-	if err == nil {
-		err = closeErr
+	ci := fs.GetConfig(ctx)
+	if !ci.Sparse {
+		_, err = io.Copy(out, in)
+		closeErr := out.Close()
+		if err == nil {
+			err = closeErr
+		}
+	} else if !o.translatedLink && outAt != nil {
+		_, err = sparse.WriteSparse(outAt, 0, in, int64(ci.SparseMinBlockSize))
 	}
 
 	if o.translatedLink {
@@ -1535,6 +1550,14 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	if err != nil {
 		return nil, err
 	}
+
+	ci := fs.GetConfig(ctx)
+	if ci.Sparse {
+		file.PreAllocateAdvise(true)
+	} else {
+		file.PreAllocateAdvise(false)
+	}
+
 	// Pre-allocate the file for performance reasons
 	if !f.opt.NoPreAllocate {
 		err = file.PreAllocate(size, out)

@@ -14,8 +14,7 @@ import (
 
 var (
 	fallocFlags = [...]uint32{
-		unix.FALLOC_FL_KEEP_SIZE,                             // Default
-		unix.FALLOC_FL_KEEP_SIZE | unix.FALLOC_FL_PUNCH_HOLE, // for ZFS #3066
+		0,                             // Default
 	}
 	fallocFlagsIndex atomic.Int32
 	preAllocateMu    sync.Mutex
@@ -24,6 +23,15 @@ var (
 // PreallocateImplemented is a constant indicating whether the
 // implementation of Preallocate actually does anything.
 const PreallocateImplemented = true
+
+// Whether or not to preallocate files as sparse
+func PreAllocateAdvise(allocateSparse bool) {
+	if allocateSparse {
+		fallocFlagsIndex.Store(1)
+	} else {
+		fallocFlagsIndex.Store(0)
+	}
+}
 
 // PreAllocate the file for performance reasons
 func PreAllocate(size int64, out *os.File) (err error) {
@@ -38,18 +46,24 @@ func PreAllocate(size int64, out *os.File) (err error) {
 
 		index := fallocFlagsIndex.Load()
 	again:
-		if index >= int32(len(fallocFlags)) {
+		if index >= int32(len(fallocFlags)+1) {
 			return nil // Fallocate is disabled
 		}
-		flags := fallocFlags[index]
-		err = unix.Fallocate(int(out.Fd()), flags, 0, size)
-		if err == unix.ENOTSUP {
-			// Try the next flags combination
-			index++
-			fallocFlagsIndex.Store(index)
-			fs.Debugf(nil, "preAllocate: got error on fallocate, trying combination %d/%d: %v", index, len(fallocFlags), err)
-			goto again
+		if index == int32(len(fallocFlags)) {
+			// use ftruncate
+			err = unix.Ftruncate(int(out.Fd()), size)
+			return err
+		} else {
+			flags := fallocFlags[index]
+			err = unix.Fallocate(int(out.Fd()), flags, 0, size)
+			if err == unix.ENOTSUP {
+				// Try the next flags combination
+				index++
+				fallocFlagsIndex.Store(index)
+				fs.Debugf(nil, "preAllocate: got error on fallocate, trying combination %d/%d: %v", index, len(fallocFlags), err)
+				goto again
 
+			}
 		}
 		// Wrap important errors
 		if err == unix.ENOSPC {
