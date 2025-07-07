@@ -204,6 +204,23 @@ func TestSymlinkError(t *testing.T) {
 	assert.Equal(t, errLinksAndCopyLinks, err)
 }
 
+func TestHashWithTypeNone(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	const filePath = "file.txt"
+	r.WriteFile(filePath, "content", time.Now())
+	f := r.Flocal.(*Fs)
+
+	// Get the object
+	o, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+
+	// Test the hash is as we expect
+	h, err := o.Hash(ctx, hash.None)
+	require.Empty(t, h)
+	require.NoError(t, err)
+}
+
 // Test hashes on updating an object
 func TestHashOnUpdate(t *testing.T) {
 	ctx := context.Background()

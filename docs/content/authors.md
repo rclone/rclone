@@ -961,3 +961,33 @@ put them back in again.` >}}
   * Markus Gerstel <markus.gerstel@osirium.com>
   * simwai <16225108+simwai@users.noreply.github.com>
   * Ben Alex <ben.alex@acegi.com.au>
+  * Klaas Freitag <opensource@freisturz.de> <klaas.freitag@kiteworks.com>
+  * Andrew Kreimer <algonell@gmail.com>
+  * Ed Craig-Wood <138211970+edc-w@users.noreply.github.com>
+  * Christian Richter <crichter@owncloud.com> <1058116+dragonchaser@users.noreply.github.com>
+  * Ralf Haferkamp <r.haferkamp@opencloud.eu>
+  * Jugal Kishore <me@devjugal.com>
+  * Tho Neyugn <nguyentruongtho@users.noreply.github.com>
+  * Ben Boeckel <mathstuf@users.noreply.github.com>
+  * Clément Wehrung <cwehrung@nurves.com>
+  * Jeff Geerling <geerlingguy@mac.com>
+  * Germán Casares <german.casares.march+github@gmail.com>
+  * fhuber <florian.huber@noris.de>
+  * wbulot <wbulot@hotmail.com>
+  * Jeremy Daer <jeremydaer@gmail.com>
+  * Oleksiy Stashok <ostashok@tesla.com>
+  * PrathameshLakawade <prathameshlakawade@gmail.com>
+  * Nathanael Demacon <7271496+quantumsheep@users.noreply.github.com>
+  * ahxxm <ahxxm@users.noreply.github.com>
+  * Flora Thiebaut <johann.thiebaut@gmail.com>
+  * kingston125 <support@filelu.com>
+  * Ser-Bul <30335009+Ser-Bul@users.noreply.github.com>
+  * jinjingroad <jinjingroad@sina.com>
+  * necaran <55765083+necaran@users.noreply.github.com>
+  * Marvin Rösch <marvinroesch99@gmail.com>
+  * curlwget <curlwget@icloud.com>
+  * $@M@RTH_ <165886349+Samarth1015@users.noreply.github.com>
+  * Ali Zein Yousuf <azy5030@gmail.com>
+  * Davide Bizzarri <davide.bizzarri@willhaben.at>
+  * Ross Smith II <ross@smithii.com>
+  * Vikas Bhansali <64532198+vibhansa-msft@users.noreply.github.com>

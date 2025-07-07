@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+set -e
+
+NAME=exaba
+USER="Use the webui to find the access_key_id"
+PASS="Use the webui to find the secret_access_key"
+PORT=28635
+WEBUIPORT=28636
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name $NAME \
+           -e "CLUSTER_NAME=rclone" \
+           -e "CLUSTER_SIZE_GB=20" \
+           -p 127.0.0.1:${PORT}:9000 \
+           -p 127.0.0.1:${WEBUIPORT}:9006 \
+           exaba/exaba
+
+    echo type=s3
+    echo provider=Exaba
+    echo access_key_id=$USER
+    echo secret_access_key=$PASS
+    echo endpoint=http://127.0.0.1:${PORT}/
+    echo webui=http://127.0.0.1:${WEBUIPORT}/
+    echo _connect=127.0.0.1:${PORT}
+}
+
+. $(dirname "$0")/run.bash

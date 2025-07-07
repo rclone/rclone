@@ -1861,6 +1861,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // baseMove chains to the wrapped Move or simulates it by Copy+Delete
 func (f *Fs) baseMove(ctx context.Context, src fs.Object, remote string, delMode int) (fs.Object, error) {
+	ctx, ci := fs.AddConfig(ctx)
+	ci.NameTransform = nil // ensure operations.Move does not double-transform here
 	var (
 		dest fs.Object
 		err  error

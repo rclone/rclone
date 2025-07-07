@@ -306,6 +306,12 @@ only useful for reading.
 				}},
 			},
 			{
+				Name:     "hashes",
+				Help:     `Comma separated list of supported checksum types.`,
+				Default:  fs.CommaSepList{},
+				Advanced: true,
+			},
+			{
 				Name:     config.ConfigEncoding,
 				Help:     config.ConfigEncodingHelp,
 				Advanced: true,
@@ -331,6 +337,7 @@ type Options struct {
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
 	TimeType          timeType             `config:"time_type"`
+	Hashes            fs.CommaSepList      `config:"hashes"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	NoClone           bool                 `config:"no_clone"`
 }
@@ -1021,6 +1028,19 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
+	if len(f.opt.Hashes) > 0 {
+		// Return only configured hashes.
+		// Note: Could have used hash.SupportOnly to limit supported hashes for all hash related features.
+		var supported hash.Set
+		for _, hashName := range f.opt.Hashes {
+			var ht hash.Type
+			if err := ht.Set(hashName); err != nil {
+				fs.Infof(nil, "Invalid token %q in hash string %q", hashName, f.opt.Hashes.String())
+			}
+			supported.Add(ht)
+		}
+		return supported
+	}
 	return hash.Supported()
 }
 
@@ -1090,6 +1110,10 @@ func (o *Object) Remote() string {
 
 // Hash returns the requested hash of a file as a lowercase hex string
 func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
+	if r == hash.None {
+		return "", nil
+	}
+
 	// Check that the underlying file hasn't changed
 	o.fs.objectMetaMu.RLock()
 	oldtime := o.modTime
@@ -1197,7 +1221,15 @@ func (o *Object) Storable() bool {
 	o.fs.objectMetaMu.RLock()
 	mode := o.mode
 	o.fs.objectMetaMu.RUnlock()
-	if mode&os.ModeSymlink != 0 && !o.fs.opt.TranslateSymlinks {
+
+	// On Windows items with os.ModeIrregular are likely Junction
+	// points so we treat them as symlinks for the purpose of ignoring them.
+	// https://github.com/golang/go/issues/73827
+	symlinkFlag := os.ModeSymlink
+	if runtime.GOOS == "windows" {
+		symlinkFlag |= os.ModeIrregular
+	}
+	if mode&symlinkFlag != 0 && !o.fs.opt.TranslateSymlinks {
 		if !o.fs.opt.SkipSymlinks {
 			fs.Logf(o, "Can't follow symlink without -L/--copy-links")
 		}

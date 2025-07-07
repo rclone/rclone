@@ -295,6 +295,16 @@ be explicitly specified using exactly one of the `msi_object_id`,
 
 If none of `msi_object_id`, `msi_client_id`, or `msi_mi_res_id` is
 set, this is is equivalent to using `env_auth`.
+
+#### Fedrated Identity Credentials 
+
+If these variables are set, rclone will authenticate with fedrated identity.
+
+- `tenant_id`: tenant_id to authenticate in storage
+- `client_id`: client ID of the application the user will authenticate to storage
+- `msi_client_id`: managed identity client ID of the application the user will authenticate to
+
+By default "api://AzureADTokenExchange" is used as scope for token retrieval over MSI. This token is then exchanged for actual storage token using 'tenant_id' and 'client_id'.
 	
 #### Azure CLI tool `az` {#use_az}
 Set to use the [Azure CLI tool `az`](https://learn.microsoft.com/en-us/cli/azure/)
@@ -614,6 +624,42 @@ Properties:
 - Env Var:     RCLONE_AZUREFILES_MSI_MI_RES_ID
 - Type:        string
 - Required:    false
+
+#### --azurefiles-disable-instance-discovery
+
+Skip requesting Microsoft Entra instance metadata
+This should be set true only by applications authenticating in
+disconnected clouds, or private clouds such as Azure Stack.
+It determines whether rclone requests Microsoft Entra instance
+metadata from `https://login.microsoft.com/` before
+authenticating.
+Setting this to true will skip this request, making you responsible
+for ensuring the configured authority is valid and trustworthy.
+
+
+Properties:
+
+- Config:      disable_instance_discovery
+- Env Var:     RCLONE_AZUREFILES_DISABLE_INSTANCE_DISCOVERY
+- Type:        bool
+- Default:     false
+
+#### --azurefiles-use-az
+
+Use Azure CLI tool az for authentication
+Set to use the [Azure CLI tool az](https://learn.microsoft.com/en-us/cli/azure/)
+as the sole means of authentication.
+Setting this can be useful if you wish to use the az CLI on a host with
+a System Managed Identity that you do not want to use.
+Don't set env_auth at the same time.
+
+
+Properties:
+
+- Config:      use_az
+- Env Var:     RCLONE_AZUREFILES_USE_AZ
+- Type:        bool
+- Default:     false
 
 #### --azurefiles-endpoint
 

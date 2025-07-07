@@ -378,12 +378,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// OpenWriterAt opens with a handle for random access writes
+// XOpenWriterAt opens with a handle for random access writes
 //
 // Pass in the remote desired and the size if known.
 //
-// It truncates any existing object
-func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+// It truncates any existing object.
+//
+// OpenWriterAt disabled because it seems to have been disabled at pcloud
+// PUT /file_open?flags=XXX&folderid=XXX&name=XXX HTTP/1.1
+//
+//	{
+//	        "result": 2003,
+//	        "error": "Access denied. You do not have permissions to perform this operation."
+//	}
+func (f *Fs) XOpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
 	client, err := f.newSingleConnClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("create client: %w", err)

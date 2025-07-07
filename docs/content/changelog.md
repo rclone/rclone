@@ -5,6 +5,203 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.70.2 - 2025-06-27
+
+[See commits](https://github.com/rclone/rclone/compare/v1.70.1...v1.70.2)
+
+* Bug Fixes
+    * convmv: Make --dry-run logs less noisy (nielash)
+    * sync: Avoid copying dir metadata to itself (nielash)
+    * build: Bump github.com/go-chi/chi/v5 from 5.2.1 to 5.2.2 to fix GHSA-vrw8-fxc6-2r93 (dependabot[bot])
+    * convmv: Fix moving to unicode-equivalent name (nielash)
+    * log: Fix deadlock when using systemd logging (Nick Craig-Wood)
+    * pacer: Fix nil pointer deref in RetryError (Nick Craig-Wood)
+    * doc fixes (Ali Zein Yousuf, Nick Craig-Wood)
+* Local
+    * Fix --skip-links on Windows when skipping Junction points (Nick Craig-Wood)
+* Combine
+    * Fix directory not found errors with ListP interface (Nick Craig-Wood)
+* Mega
+    * Fix tls handshake failure (necaran)
+* Pikpak
+    * Fix uploads fail with "aws-chunked encoding is not supported" error (Nick Craig-Wood)
+
+## v1.70.1 - 2025-06-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.70.0...v1.70.1)
+
+* Bug Fixes
+    * convmv: Fix spurious "error running command echo" on Windows (Nick Craig-Wood)
+    * doc fixes (albertony, Ed Craig-Wood, jinjingroad)
+
+## v1.70.0 - 2025-06-17
+
+[See commits](https://github.com/rclone/rclone/compare/v1.69.0...v1.70.0)
+
+* New backends
+    * [DOI](/doi/) (Flora Thiebaut)
+    * [FileLu](/filelu/) (kingston125)
+    * New S3 providers:
+        * [MEGA S4](/s3/#mega) (Nick Craig-Wood)
+        * [Pure Storage FlashBlade](/s3/#pure-storage-flashblade) (Jeremy Daer)
+* New commands
+    * [convmv](/commands/rclone_convmv/): for moving and transforming files (nielash)
+* New Features
+    * Add [`--max-connections`](/docs/#max-connections-n) to control maximum backend concurrency (Nick Craig-Wood)
+    * Add [`--max-buffer-memory`](/docs/#max-buffer-memory) to limit total buffer memory usage (Nick Craig-Wood)
+    * Add transform library and [`--name-transform`](/docs/#name-transform-command-xxxx) flag (nielash)
+    * sync: Implement [`--list-cutoff`](/docs/#list-cutoff) to allow on disk sorting for reduced memory use (Nick Craig-Wood)
+    * accounting: Add listed stat for number of directory entries listed (Nick Craig-Wood)
+    * backend: Skip hash calculation when the hashType is None (Oleksiy Stashok)
+    * build
+        * Update to go1.24 and make go1.22 the minimum required version (Nick Craig-Wood)
+        * Disable docker builds on PRs & add missing dockerfile changes (Anagh Kumar Baranwal)
+        * Modernize Go usage (Nick Craig-Wood)
+        * Update all dependencies (Nick Craig-Wood)
+    * cmd/authorize: Show required arguments in help text (simwai)
+    * cmd/config: add `--no-output` option (Jess)
+    * cmd/gitannex
+        * Tweak parsing of "rcloneremotename" config (Dan McArdle)
+        * Permit remotes with options (Dan McArdle)
+        * Reject unknown layout modes in INITREMOTE (Dan McArdle)
+    * docker image: Add label org.opencontainers.image.source for release notes in Renovate dependency updates (Robin Schneider)
+    * doc fixes (albertony, Andrew Kreimer, Ben Boeckel, Christoph Berger, Danny Garside, Dimitri Papadopoulos, eccoisle, Ed Craig-Wood, Fernando Fernández, jack, Jeff Geerling, Jugal Kishore, kingston125, luzpaz, Markus Gerstel, Matt Ickstadt, Michael Kebe, Nick Craig-Wood, PrathameshLakawade, Ser-Bul, simonmcnair, Tim White, Zachary Vorhies)
+    * filter:
+        * Add `--hash-filter` to deterministically select a subset of files (Nick Craig-Wood)
+        * Show `--min-size` and `--max-size` in `--dump` filters (Nick Craig-Wood)
+    * hash: Add SHA512 support for file hashes (Enduriel)
+    * http servers: Add `--user-from-header` to use for authentication (Moises Lima)
+    * lib/batcher: Deprecate unused option: batch_commit_timeout (Dan McArdle)
+    * log:
+        * Remove github.com/sirupsen/logrus and replace with log/slog (Nick Craig-Wood)
+        * Add `--windows-event-log-level` to support Windows Event Log (Nick Craig-Wood)
+    * rc
+        * Add add `short` parameter to `core/stats` to not return transferring and checking (Nick Craig-Wood)
+        * In `options/info` make FieldName contain a "." if it should be nested (Nick Craig-Wood)
+        * Add rc control for serve commands (Nick Craig-Wood)
+        * rcserver: Improve content-type check (Jonathan Giannuzzi)
+    * serve nfs
+        * Update docs to note Windows is not supported (Zachary Vorhies)
+        * Change the format of `--nfs-cache-type symlink` file handles (Nick Craig-Wood)
+        * Make metadata files have special file handles (Nick Craig-Wood)
+    * touch: Make touch obey `--transfers` (Nick Craig-Wood)
+    * version: Add `--deps` flag to show dependencies and other build info (Nick Craig-Wood)
+* Bug Fixes
+    * serve s3:
+        * Fix ListObjectsV2 response (fhuber)
+        * Remove redundant handler initialization (Tho Neyugn)
+    * stats: Fix goroutine leak and improve stats accounting process (Nathanael Demacon)
+* VFS
+    * Add `--vfs-metadata-extension` to expose metadata sidecar files (Nick Craig-Wood)
+* Azure Blob
+    * Add support for `x-ms-tags` header (Trevor Starick)
+    * Cleanup uncommitted blocks on upload errors (Nick Craig-Wood)
+    * Speed up server side copies for small files (Nick Craig-Wood)
+    * Implement multipart server side copy (Nick Craig-Wood)
+    * Remove uncommitted blocks on InvalidBlobOrBlock error (Nick Craig-Wood)
+    * Fix handling of objects with // in (Nick Craig-Wood)
+    * Handle retry error codes more carefully (Nick Craig-Wood)
+    * Fix errors not being retried when doing single part copy (Nick Craig-Wood)
+    * Fix multipart server side copies of 0 sized files (Nick Craig-Wood)
+* Azurefiles
+    * Add `--azurefiles-use-az` and `--azurefiles-disable-instance-discovery` (b-wimmer)
+* B2
+    * Add SkipDestructive handling to backend commands (Pat Patterson)
+    * Use file id from listing when not presented in headers (ahxxm)
+* Cloudinary
+    * Automatically add/remove known media files extensions (yuval-cloudinary)
+    * Var naming convention (yuval-cloudinary)
+* Drive
+    * Added `backend moveid` command (Spencer McCullough)
+* Dropbox
+    * Support Dropbox Paper (Dave Vasilevsky)
+* FTP
+    * Add `--ftp-http-proxy` to connect via HTTP CONNECT proxy
+* Gofile
+    * Update to use new direct upload endpoint (wbulot)
+* Googlephotos
+    * Update read only and read write scopes to meet Google's requirements. (Germán Casares)
+* Iclouddrive
+    * Fix panic and files potentially downloaded twice (Clément Wehrung)
+* Internetarchive
+    * Add `--internetarchive-metadata="key=value"` for setting item metadata (Corentin Barreau)
+* Onedrive
+    * Fix "The upload session was not found" errors (Nick Craig-Wood)
+    * Re-add `--onedrive-upload-cutoff` flag (Nick Craig-Wood)
+    * Fix crash if no metadata was updated (Nick Craig-Wood)
+* Opendrive
+    * Added `--opendrive-access` flag to handle permissions (Joel K Biju)
+* Pcloud
+    * Fix "Access denied. You do not have permissions to perform this operation" on large uploads (Nick Craig-Wood)
+* S3
+    * Fix handling of objects with // in (Nick Craig-Wood)
+    * Add IBM IAM signer (Alexander Minbaev)
+    * Split the GCS quirks into `--s3-use-x-id` and `--s3-sign-accept-encoding` (Nick Craig-Wood)
+    * Implement paged listing interface ListP (Nick Craig-Wood)
+    * Add Pure Storage FlashBlade provider support (Jeremy Daer)
+    * Require custom endpoint for Lyve Cloud v2 support (PrathameshLakawade)
+    * MEGA S4 support (Nick Craig-Wood)
+* SFTP
+    * Add `--sftp-http-proxy` to connect via HTTP CONNECT proxy (Nick Craig-Wood)
+* Smb
+    * Add support for kerberos authentication (Jonathan Giannuzzi)
+    * Improve connection pooling efficiency (Jonathan Giannuzzi)
+* WebDAV
+    * Retry propfind on 425 status (Jörn Friedrich Dreyer)
+    * Add an ownCloud Infinite Scale vendor that enables tus chunked upload support (Klaas Freitag)
+
+## v1.69.3 - 2025-05-21
+
+[See commits](https://github.com/rclone/rclone/compare/v1.69.2...v1.69.3)
+
+* Bug Fixes
+    * build: Reapply update github.com/golang-jwt/jwt/v5 from 5.2.1 to 5.2.2 to fix CVE-2025-30204 (dependabot[bot])
+    * build: Update github.com/ebitengine/purego to work around bug in go1.24.3 (Nick Craig-Wood)
+
+## v1.69.2 - 2025-05-01
+
+[See commits](https://github.com/rclone/rclone/compare/v1.69.1...v1.69.2)
+
+* Bug fixes
+    * accounting: Fix percentDiff calculation -- (Anagh Kumar Baranwal)
+    * build
+        * Update github.com/golang-jwt/jwt/v4 from 4.5.1 to 4.5.2 to fix CVE-2025-30204 (dependabot[bot])
+        * Update github.com/golang-jwt/jwt/v5 from 5.2.1 to 5.2.2 to fix CVE-2025-30204 (dependabot[bot])
+        * Update golang.org/x/crypto to v0.35.0 to fix CVE-2025-22869 (Nick Craig-Wood)
+        * Update golang.org/x/net from 0.36.0 to 0.38.0 to fix CVE-2025-22870 (dependabot[bot])
+        * Update golang.org/x/net to 0.36.0. to fix CVE-2025-22869 (dependabot[bot])
+        * Stop building with go < go1.23 as security updates forbade it (Nick Craig-Wood)
+        * Fix docker plugin build (Anagh Kumar Baranwal)
+    * cmd: Fix crash if rclone is invoked without any arguments (Janne Hellsten)
+    * config: Read configuration passwords from stdin even when terminated with EOF (Samantha Bowen)
+    * doc fixes (Andrew Kreimer, Danny Garside, eccoisle, Ed Craig-Wood, emyarod, jack, Jugal Kishore, Markus Gerstel, Michael Kebe, Nick Craig-Wood, simonmcnair, simwai, Zachary Vorhies)
+    * fs: Fix corruption of SizeSuffix with "B" suffix in config (eg --min-size) (Nick Craig-Wood)
+    * lib/http: Fix race between Serve() and Shutdown() (Nick Craig-Wood)
+    * object: Fix memory object out of bounds Seek (Nick Craig-Wood)
+    * operations: Fix call fmt.Errorf with wrong err (alingse)
+    * rc
+        * Disable the metrics server when running `rclone rc` (hiddenmarten)
+        * Fix debug/* commands not being available over unix sockets (Nick Craig-Wood)
+    * serve nfs: Fix unlikely crash (Nick Craig-Wood)
+    * stats: Fix the speed not getting updated after a pause in the processing (Anagh Kumar Baranwal)
+    * sync
+        * Fix cpu spinning when empty directory finding with leading slashes (Nick Craig-Wood)
+        * Copy dir modtimes even when copyEmptySrcDirs is false (ll3006)
+* VFS
+    * Fix directory cache serving stale data (Lorenz Brun)
+    * Fix inefficient directory caching when directory reads are slow (huanghaojun)
+    * Fix integration test failures (Nick Craig-Wood)
+* Drive
+    * Metadata: fix error when setting copy-requires-writer-permission on a folder (Nick Craig-Wood)
+* Dropbox
+    * Retry link without expiry (Dave Vasilevsky)
+* HTTP
+    * Correct root if definitely pointing to a file (nielash)
+* Iclouddrive
+    * Fix so created files are writable (Ben Alex)
+* Onedrive
+    * Fix metadata ordering in permissions (Nick Craig-Wood)
+
 ## v1.69.1 - 2025-02-14
 
 [See commits](https://github.com/rclone/rclone/compare/v1.69.0...v1.69.1)

@@ -1550,7 +1550,7 @@ func (o *Object) extraHeaders(ctx context.Context, src fs.ObjectInfo) map[string
 	extraHeaders := map[string]string{}
 	if o.fs.useOCMtime || o.fs.hasOCMD5 || o.fs.hasOCSHA1 {
 		if o.fs.useOCMtime {
-			extraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", o.modTime.Unix())
+			extraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", src.ModTime(ctx).Unix())
 		}
 		// Set one upload checksum
 		// Owncloud uses one checksum only to check the upload and stores its own SHA1 and MD5

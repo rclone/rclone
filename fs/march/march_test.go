@@ -477,6 +477,17 @@ func TestMatchListings(t *testing.T) {
 				{dirA, dirA},
 			},
 		},
+		{
+			what: "Sync with duplicate files and dirs",
+			input: fs.DirEntries{
+				dirA, A,
+				A, dirA,
+			},
+			matches: []matchPair{
+				{dirA, dirA},
+				{A, A},
+			},
+		},
 	} {
 		t.Run(fmt.Sprintf("TestMatchListings-%s", test.what), func(t *testing.T) {
 			ctx := context.Background()
@@ -491,7 +502,11 @@ func TestMatchListings(t *testing.T) {
 			// Make a channel to send the source (0) or dest (1) using a list.Sorter
 			makeChan := func(offset int) <-chan fs.DirEntry {
 				out := make(chan fs.DirEntry)
-				ls, err := list.NewSorter(ctx, nil, list.SortToChan(out), m.key)
+				key := m.dstKey
+				if offset == 0 {
+					key = m.srcKey
+				}
+				ls, err := list.NewSorter(ctx, nil, list.SortToChan(out), key)
 				require.NoError(t, err)
 				wg.Add(1)
 				go func() {

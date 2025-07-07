@@ -36,6 +36,8 @@ This doesn't transfer files that are identical on src and dst, testing
 by size and modification time or MD5SUM.  It doesn't delete files from
 the destination.
 
+*If you are looking to copy just a byte range of a file, please see 'rclone cat --offset X --count Y'*
+
 **Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics
 
 
@@ -79,6 +81,7 @@ Flags for anything which can copy a file
       --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 256Mi)
       --multi-thread-streams int                    Number of streams to use for multi-thread downloads (default 4)
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
+      --name-transform stringArray                  Transform paths during the copy process
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy
       --no-update-dir-modtime                       Don't update directory modification times
@@ -115,6 +118,7 @@ Flags for filtering directory listings
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
+      --hash-filter string                  Partition filenames by hash k/n or randomly @/n
       --ignore-case                         Ignore case in filters (case insensitive)
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read file include patterns from file (use - to read from stdin)
