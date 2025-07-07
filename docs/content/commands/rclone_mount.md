@@ -459,6 +459,12 @@ by `-` and prepend `--` to get the command-line flags. Options containing commas
 or spaces can be wrapped in single or double quotes. Any inner quotes inside outer
 quotes of the same type should be doubled.
 
+On FreeBSD you can symlink the binary with `ln -s /usr/local/bin/rclone /usr/local/bin/rclonefs` 
+then use the following syntax for /etc/fstab:
+```
+sftp1:subdir /mnt/data none rw,noauto,args2env,mountprog=/usr/local/bin/rclonefs,vfs_cache_mode=writes,config=/usr/local/etc/rclone.conf,cache_dir=/var/cache/rclone 0 0
+```
+
 Mount option syntax includes a few extra options treated specially:
 
 - `env.NAME=VALUE` will set an environment variable for the mount process.
