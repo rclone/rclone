@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rclone/rclone/fs"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4signer "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 )
@@ -59,6 +61,14 @@ func (v2 *v2Signer) SignHTTP(ctx context.Context, credentials aws.Credentials, r
 	uri := req.URL.EscapedPath()
 	if uri == "" {
 		uri = "/"
+	}
+
+	// Support for host-style requests (caveat: this only works for configs which include the endpoint)
+	endpoint := strings.TrimPrefix(v2.opt.Endpoint, "https://")
+	endpoint = strings.TrimPrefix(endpoint, "http://")
+	idx := strings.Index(req.URL.Host, endpoint)
+	if idx > 1 && req.URL.Host[idx-1] == '.' {
+		uri = "/" + req.URL.Host[0:idx-1] + uri
 	}
 
 	// Look through headers of interest
@@ -122,6 +132,11 @@ func (v2 *v2Signer) SignHTTP(ctx context.Context, credentials aws.Credentials, r
 	_, _ = hash.Write([]byte(payload))
 	signature := make([]byte, base64.StdEncoding.EncodedLen(hash.Size()))
 	base64.StdEncoding.Encode(signature, hash.Sum(nil))
+
+	ci := fs.GetConfig(ctx)
+	if fs.DumpAuth&ci.Dump != 0 {
+		fs.Debugf(nil, "StringToSign = %s", payload)
+	}
 
 	// Set signature in request
 	req.Header.Set("Authorization", "AWS "+v2.opt.AccessKeyID+":"+string(signature))
