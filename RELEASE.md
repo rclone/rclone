@@ -32,6 +32,8 @@ This file describes how to make the various kinds of releases
   * make upload
   * make upload_website
   * make upload_github
+  * make apt_repo
+  * make yum_repo
   * make startdev # make startstable for stable branch
   * # announce with forum post, twitter post, patreon post
 
