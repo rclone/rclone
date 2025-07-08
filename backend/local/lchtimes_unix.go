@@ -1,4 +1,4 @@
-//go:build !windows && !plan9 && !js
+//go:build !windows && !plan9 && !js && !wasm
 
 package local
 

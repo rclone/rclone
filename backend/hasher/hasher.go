@@ -1,3 +1,5 @@
+//go:build !js && !wasm
+
 // Package hasher implements a checksum handling overlay backend
 package hasher
 

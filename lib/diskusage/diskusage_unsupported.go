@@ -1,4 +1,4 @@
-//go:build illumos || js || plan9 || solaris
+//go:build illumos || js || plan9 || solaris || wasm
 
 package diskusage
 

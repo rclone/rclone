@@ -1,6 +1,6 @@
 // Test Cache filesystem interface
 
-//go:build !plan9 && !js && !race
+//go:build !plan9 && !js && !race && !wasm
 
 package cache_test
 

@@ -1,6 +1,6 @@
 // Test Sftp filesystem interface
 
-//go:build !plan9
+//go:build !plan9 && !wasm
 
 package sftp_test
 
