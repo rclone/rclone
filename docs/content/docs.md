@@ -12,8 +12,7 @@ what the [basic syntax](#basic-syntax) looks like, describes the
 various [subcommands](#subcommands), the various [options](#options),
 and more.
 
-Configure
----------
+## Configure
 
 First, you'll need to configure rclone.  As the object storage systems
 have quite complicated authentication these are kept in a config file.
@@ -92,8 +91,7 @@ See the following for detailed instructions for
 - [Zoho WorkDrive](/zoho/)
 - [The local filesystem](/local/)
 
-Basic syntax
------
+## Basic syntax
 
 Rclone syncs a directory tree from one storage system to another.
 
@@ -127,8 +125,7 @@ You can define as many storage paths as you like in the config file.
 Please use the [`--interactive`/`-i`](#interactive) flag while
 learning rclone to avoid accidental data loss.
 
-Subcommands
------------
+## Subcommands
 
 rclone uses a system of subcommands.  For example
 
@@ -172,8 +169,7 @@ The main rclone commands with most used first
 
 See the [commands index](/commands/) for the full list.
 
-Copying single files
---------------------
+## Copying single files
 
 rclone normally syncs or copies directories.  However, if the source
 remote points to a file, rclone will just copy that file.  The
@@ -200,8 +196,7 @@ It is recommended to use `copy` when copying individual files, not `sync`.
 They have pretty much the same effect but `copy` will use a lot less
 memory.
 
-Syntax of remote paths
-----------------------
+## Syntax of remote paths
 
 The syntax of the paths passed to the rclone command are as follows.
 
@@ -384,8 +379,7 @@ Do not use single character names on Windows as it creates ambiguity with Window
 drives' names, e.g.: remote called `C` is indistinguishable from `C` drive. Rclone
 will always assume that single letter name refers to a drive.
 
-Quoting and the shell
----------------------
+## Quoting and the shell
 
 When you are typing commands to your computer you are using something
 called the command line shell.  This interprets various characters in
@@ -419,8 +413,7 @@ If you are using the root directory on its own then don't quote it
 
     rclone copy E:\ remote:backup
 
-Copying files or directories with `:` in the names
---------------------------------------------------
+## Copying files or directories with `:` in the names
 
 rclone uses `:` to mark a remote name.  This is, however, a valid
 filename component in non-Windows OSes.  The remote name parser will
@@ -436,8 +429,7 @@ or
 
     rclone sync --interactive /full/path/to/sync:me remote:path
 
-Server-side copy
-----------------
+## Server-side copy
 
 Most remotes (but not all - see [the
 overview](/overview/#optional-features)) support server-side copy.
@@ -606,8 +598,7 @@ modification time of the source object.
 Hashes are not included in system metadata as there is a well defined
 way of reading those already.
 
-Options
--------
+## Options
 
 Rclone has a number of options to control its behaviour. These are
 documented below, and in the [flags](/flags) page.
@@ -687,8 +678,7 @@ the binary units, e.g. 1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
 
 See also [--human-readable](#human-readable).
 
-Main options
-------------
+## Main options
 
 ### --backup-dir string
 
@@ -2699,8 +2689,7 @@ When setting verbosity as an environment variable, use
 
 Prints the version number
 
-SSL/TLS options
----------------
+## SSL/TLS options
 
 The outgoing SSL/TLS connections rclone makes can be controlled with
 these options.  For example this can be very useful with the HTTP or
@@ -2740,8 +2729,8 @@ This option defaults to `false`.
 
 **This should be used only for testing.**
 
-Configuration encryption
-------------------------
+## Configuration encryption
+
 Your configuration file contains information for logging in to
 your cloud services. This means that you should keep your
 `rclone.conf` file in a secure location.
@@ -2930,8 +2919,7 @@ at rest or transfer. Detailed instructions for popular OSes:
 
 - Add/update the password from previous steps
 
-Developer options
------------------
+## Developer options
 
 These options are useful when developing or debugging rclone.  There
 are also some more remote specific options which aren't documented
@@ -2983,8 +2971,7 @@ The available flags are:
   `--metadata-mapper` and received from it. It can be useful for debugging
   the metadata mapper interface.
 
-Filtering
----------
+## Filtering
 
 For the filtering options
 
@@ -3013,8 +3000,7 @@ For the filtering options
 
 See the [filtering section](/filtering/).
 
-Remote control
---------------
+## Remote control
 
 For the remote control options and for instructions on how to remote control rclone:
 
@@ -3023,8 +3009,7 @@ For the remote control options and for instructions on how to remote control rcl
 
 See [the remote control section](/rc/).
 
-Logging
--------
+## Logging
 
 rclone has 4 levels of logging, `ERROR`, `NOTICE`, `INFO` and `DEBUG`.
 
@@ -3054,8 +3039,7 @@ Rclone prefixes all log messages with their level in capitals, e.g. INFO
 which makes it easy to grep the log file for different kinds of
 information.
 
-Metrics
--------
+## Metrics
 
 Rclone can publish metrics in the OpenMetrics/Prometheus format.
 
@@ -3073,8 +3057,7 @@ the same port as the rc API. In this case, the `--metrics-*` flags will be
 ignored, and the HTTP endpoint configuration will be managed by the `--rc-*`
 parameters.
 
-Exit code
----------
+## Exit code
 
 If any errors occur during the command execution, rclone will exit with a
 non-zero exit code.  This allows scripts to detect when rclone
@@ -3106,8 +3089,7 @@ it will log a high priority message if the retry was successful.
 - `9` - Operation successful, but no files transferred (Requires [`--error-on-no-transfer`](#error-on-no-transfer))
 - `10` - Duration exceeded - limit set by --max-duration reached
 
-Environment variables
----------------------
+## Environment variables
 
 Rclone can be configured entirely using environment variables.  These
 can be used to set defaults for options or config file entries.
