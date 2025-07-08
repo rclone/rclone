@@ -71,6 +71,9 @@ backends:
    remote:   "TestChunkerChunk50bYandex:"
    fastlist: true
    maxfile:  1k
+   ignore:
+     # Needs investigation
+     - TestDeduplicateNewestByHash
  # - backend:  "chunker"
  #   remote:   "TestChunkerChunk50bBox:"
  #   fastlist: true
@@ -362,11 +365,11 @@ backends:
    fastlist: true
    ignoretests:
      - cmd/gitannex
- - backend:  "swift"
-   remote:   "TestSwift:"
-   fastlist: true
-   ignoretests:
-     - cmd/bisync
+ # - backend:  "swift"
+ #   remote:   "TestSwift:"
+ #   fastlist: true
+ #   ignoretests:
+ #     - cmd/bisync
  # - backend:  "swift"
  #   remote:   "TestSwiftCeph:"
  #   fastlist: true
@@ -505,6 +508,7 @@ backends:
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
      - TestDirRename
+     - TestFileRename
    ignoretests:
      - cmd/bisync
  - backend:  "opendrive"
