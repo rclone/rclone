@@ -84,6 +84,7 @@ See the following for detailed instructions for
   * [SMB](/smb/)
   * [Storj](/storj/)
   * [SugarSync](/sugarsync/)
+  * [Terabox](/terabox/)
   * [Union](/union/)
   * [Uloz.to](/ulozto/)
   * [Uptobox](/uptobox/)
