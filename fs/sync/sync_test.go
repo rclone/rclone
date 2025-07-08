@@ -1467,7 +1467,7 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 	r.CheckRemoteItems(t, oneO, twoO, threeO, fourO)
 
 	ci.UpdateOlder = true
-	ci.ModifyWindow = fs.ModTimeNotSupported
+	ci.ModifyWindow = fs.Duration(fs.ModTimeNotSupported)
 
 	ctx = predictDstFromLogger(ctx)
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
@@ -1497,7 +1497,7 @@ func testSyncWithMaxDuration(t *testing.T, cutoffMode fs.CutoffMode) {
 	}
 	r := fstest.NewRun(t)
 
-	maxDuration := 250 * time.Millisecond
+	maxDuration := fs.Duration(250 * time.Millisecond)
 	ci.MaxDuration = maxDuration
 	ci.CutoffMode = cutoffMode
 	ci.CheckFirst = true
@@ -1539,7 +1539,7 @@ func testSyncWithMaxDuration(t *testing.T, cutoffMode fs.CutoffMode) {
 	const maxTransferTime = 20 * time.Second
 
 	what := fmt.Sprintf("expecting elapsed time %v between %v and %v", elapsed, maxDuration, maxTransferTime)
-	assert.True(t, elapsed >= maxDuration, what)
+	assert.True(t, elapsed >= time.Duration(maxDuration), what)
 	assert.True(t, elapsed < maxTransferTime, what)
 }
 

@@ -932,7 +932,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		User:            opt.User,
 		Auth:            []ssh.AuthMethod{},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         f.ci.ConnectTimeout,
+		Timeout:         time.Duration(f.ci.ConnectTimeout),
 		ClientVersion:   "SSH-2.0-" + f.ci.UserAgent,
 	}
 

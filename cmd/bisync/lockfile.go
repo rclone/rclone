@@ -14,7 +14,7 @@ import (
 	"github.com/rclone/rclone/lib/terminal"
 )
 
-const basicallyforever = 200 * 365 * 24 * time.Hour
+const basicallyforever = fs.Duration(200 * 365 * 24 * time.Hour)
 
 var stopRenewal func()
 
@@ -66,9 +66,9 @@ func (b *bisyncRun) removeLockFile() {
 }
 
 func (b *bisyncRun) setLockFileExpiration() {
-	if b.opt.MaxLock > 0 && b.opt.MaxLock < 2*time.Minute {
+	if b.opt.MaxLock > 0 && b.opt.MaxLock < fs.Duration(2*time.Minute) {
 		fs.Logf(nil, Color(terminal.YellowFg, "--max-lock cannot be shorter than 2 minutes (unless 0.) Changing --max-lock from %v to %v"), b.opt.MaxLock, 2*time.Minute)
-		b.opt.MaxLock = 2 * time.Minute
+		b.opt.MaxLock = fs.Duration(2 * time.Minute)
 	} else if b.opt.MaxLock <= 0 {
 		b.opt.MaxLock = basicallyforever
 	}
@@ -80,7 +80,7 @@ func (b *bisyncRun) renewLockFile() {
 		data.Session = b.basePath
 		data.PID = strconv.Itoa(os.Getpid())
 		data.TimeRenewed = time.Now()
-		data.TimeExpires = time.Now().Add(b.opt.MaxLock)
+		data.TimeExpires = time.Now().Add(time.Duration(b.opt.MaxLock))
 
 		// save data file
 		df, err := os.Create(b.lockFile)
@@ -131,7 +131,7 @@ func (b *bisyncRun) startLockRenewal() func() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		ticker := time.NewTicker(b.opt.MaxLock - time.Minute)
+		ticker := time.NewTicker(time.Duration(b.opt.MaxLock) - time.Minute)
 		for {
 			select {
 			case <-ticker.C:

@@ -79,7 +79,7 @@ func Start(ctx context.Context, facility string, f fs.Fs) (*DB, error) {
 	}
 
 	name := makeName(facility, f)
-	lockTime := fs.GetConfig(ctx).KvLockTime
+	lockTime := time.Duration(fs.GetConfig(ctx).KvLockTime)
 
 	db := &DB{
 		name:      name,

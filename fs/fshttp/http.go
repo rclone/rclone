@@ -58,8 +58,8 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 	t.Proxy = http.ProxyFromEnvironment
 	t.MaxIdleConnsPerHost = 2 * (ci.Checkers + ci.Transfers + 1)
 	t.MaxIdleConns = 2 * t.MaxIdleConnsPerHost
-	t.TLSHandshakeTimeout = ci.ConnectTimeout
-	t.ResponseHeaderTimeout = ci.Timeout
+	t.TLSHandshakeTimeout = time.Duration(ci.ConnectTimeout)
+	t.ResponseHeaderTimeout = time.Duration(ci.Timeout)
 	t.DisableKeepAlives = ci.DisableHTTPKeepAlives
 
 	// TLS Config
@@ -109,7 +109,7 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 		return NewDialer(ctx).DialContext(reqCtx, network, addr)
 	}
 	t.IdleConnTimeout = 60 * time.Second
-	t.ExpectContinueTimeout = ci.ExpectContinueTimeout
+	t.ExpectContinueTimeout = time.Duration(ci.ExpectContinueTimeout)
 
 	if ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
 		fs.Debugf(nil, "You have specified to dump information. Please be noted that the "+

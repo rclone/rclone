@@ -120,11 +120,11 @@ var ConfigInfo = fs.Options{{
 	Help:    "IPaddress:Port or :Port to bind server to",
 }, {
 	Name:    "server_read_timeout",
-	Default: 1 * time.Hour,
+	Default: fs.Duration(1 * time.Hour),
 	Help:    "Timeout for server reading data",
 }, {
 	Name:    "server_write_timeout",
-	Default: 1 * time.Hour,
+	Default: fs.Duration(1 * time.Hour),
 	Help:    "Timeout for server writing data",
 }, {
 	Name:    "max_header_bytes",
@@ -158,25 +158,25 @@ var ConfigInfo = fs.Options{{
 
 // Config contains options for the http Server
 type Config struct {
-	ListenAddr         []string      `config:"addr"`                 // Port to listen on
-	BaseURL            string        `config:"baseurl"`              // prefix to strip from URLs
-	ServerReadTimeout  time.Duration `config:"server_read_timeout"`  // Timeout for server reading data
-	ServerWriteTimeout time.Duration `config:"server_write_timeout"` // Timeout for server writing data
-	MaxHeaderBytes     int           `config:"max_header_bytes"`     // Maximum size of request header
-	TLSCert            string        `config:"cert"`                 // Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)
-	TLSKey             string        `config:"key"`                  // Path to TLS PEM private key file
-	TLSCertBody        []byte        `config:"-"`                    // TLS PEM public key certificate body (can also include intermediate/CA certificates), ignores TLSCert
-	TLSKeyBody         []byte        `config:"-"`                    // TLS PEM private key body, ignores TLSKey
-	ClientCA           string        `config:"client_ca"`            // Path to TLS PEM CA file with certificate authorities to verify clients with
-	MinTLSVersion      string        `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable.
-	AllowOrigin        string        `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
+	ListenAddr         []string    `config:"addr"`                 // Port to listen on
+	BaseURL            string      `config:"baseurl"`              // prefix to strip from URLs
+	ServerReadTimeout  fs.Duration `config:"server_read_timeout"`  // Timeout for server reading data
+	ServerWriteTimeout fs.Duration `config:"server_write_timeout"` // Timeout for server writing data
+	MaxHeaderBytes     int         `config:"max_header_bytes"`     // Maximum size of request header
+	TLSCert            string      `config:"cert"`                 // Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)
+	TLSKey             string      `config:"key"`                  // Path to TLS PEM private key file
+	TLSCertBody        []byte      `config:"-"`                    // TLS PEM public key certificate body (can also include intermediate/CA certificates), ignores TLSCert
+	TLSKeyBody         []byte      `config:"-"`                    // TLS PEM private key body, ignores TLSKey
+	ClientCA           string      `config:"client_ca"`            // Path to TLS PEM CA file with certificate authorities to verify clients with
+	MinTLSVersion      string      `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable.
+	AllowOrigin        string      `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
 }
 
 // AddFlagsPrefix adds flags for the httplib
 func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.StringArrayVarP(flagSet, &cfg.ListenAddr, prefix+"addr", "", cfg.ListenAddr, "IPaddress:Port, :Port or [unix://]/path/to/socket to bind server to", prefix)
-	flags.DurationVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", cfg.ServerReadTimeout, "Timeout for server reading data", prefix)
-	flags.DurationVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", cfg.ServerWriteTimeout, "Timeout for server writing data", prefix)
+	flags.FVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", "Timeout for server reading data", prefix)
+	flags.FVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", "Timeout for server writing data", prefix)
 	flags.IntVarP(flagSet, &cfg.MaxHeaderBytes, prefix+"max-header-bytes", "", cfg.MaxHeaderBytes, "Maximum size of request header", prefix)
 	flags.StringVarP(flagSet, &cfg.TLSCert, prefix+"cert", "", cfg.TLSCert, "Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)", prefix)
 	flags.StringVarP(flagSet, &cfg.TLSKey, prefix+"key", "", cfg.TLSKey, "Path to TLS PEM private key file", prefix)
@@ -198,8 +198,8 @@ func AddHTTPFlagsPrefix(flagSet *pflag.FlagSet, prefix string, cfg *Config) {
 func DefaultCfg() Config {
 	return Config{
 		ListenAddr:         []string{"127.0.0.1:8080"},
-		ServerReadTimeout:  1 * time.Hour,
-		ServerWriteTimeout: 1 * time.Hour,
+		ServerReadTimeout:  fs.Duration(1 * time.Hour),
+		ServerWriteTimeout: fs.Duration(1 * time.Hour),
 		MaxHeaderBytes:     4096,
 		MinTLSVersion:      "tls1.0",
 	}
@@ -273,8 +273,8 @@ func newInstance(ctx context.Context, s *Server, listener net.Listener, tlsCfg *
 		listener: listener,
 		httpServer: &http.Server{
 			Handler:           s.mux,
-			ReadTimeout:       s.cfg.ServerReadTimeout,
-			WriteTimeout:      s.cfg.ServerWriteTimeout,
+			ReadTimeout:       time.Duration(s.cfg.ServerReadTimeout),
+			WriteTimeout:      time.Duration(s.cfg.ServerWriteTimeout),
 			MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
 			ReadHeaderTimeout: 10 * time.Second, // time to send the headers
 			IdleTimeout:       60 * time.Second, // time to keep idle connections open
