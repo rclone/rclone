@@ -683,7 +683,7 @@ Default units are `KiB` but abbreviations `B`, `K`, `M`, `G`, `T` or `P` are val
 E.g. `rclone ls remote: --min-size 50k` lists files on `remote:` of 50 KiB
 size or larger.
 
-See [the size option docs](/docs/#size-option) for more info.
+See [the size option docs](/docs/#size-options) for more info.
 
 ### `--max-size` - Don't transfer any file larger than this
 
@@ -693,7 +693,7 @@ Default units are `KiB` but abbreviations `B`, `K`, `M`, `G`, `T` or `P` are val
 E.g. `rclone ls remote: --max-size 1G` lists files on `remote:` of 1 GiB
 size or smaller.
 
-See [the size option docs](/docs/#size-option) for more info.
+See [the size option docs](/docs/#size-options) for more info.
 
 ### `--max-age` - Don't transfer any file older than this
 
@@ -704,7 +704,7 @@ Controls the maximum age of files within the scope of an rclone command.
 E.g. `rclone ls remote: --max-age 2d` lists files on `remote:` of 2 days
 old or less.
 
-See [the time option docs](/docs/#time-option) for valid formats.
+See [the time option docs](/docs/#time-options) for valid formats.
 
 ### `--min-age` - Don't transfer any file younger than this
 
@@ -716,7 +716,7 @@ Controls the minimum age of files within the scope of an rclone command.
 E.g. `rclone ls remote: --min-age 2d` lists files on `remote:` of 2 days
 old or more.
 
-See [the time option docs](/docs/#time-option) for valid formats.
+See [the time option docs](/docs/#time-options) for valid formats.
 
 ### `--hash-filter` - Deterministically select a subset of files {#hash-filter}
 

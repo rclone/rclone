@@ -240,7 +240,7 @@ to run as the SYSTEM account. A third alternative is to use the
 Read more in the [install documentation](https://rclone.org/install/).
 Note that when running rclone as another user, it will not use
 the configuration file from your profile unless you tell it to
-with the [`--config`](https://rclone.org/docs/#config-config-file) option.
+with the [`--config`](https://rclone.org/docs/#config-string) option.
 Note also that it is now the SYSTEM account that will have the owner
 permissions, and other accounts will have permissions according to the
 group or others scopes. As mentioned above, these will then not get the

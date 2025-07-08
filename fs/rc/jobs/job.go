@@ -148,7 +148,7 @@ func (jobs *Jobs) kickExpire() {
 	jobs.mu.Lock()
 	defer jobs.mu.Unlock()
 	if !jobs.expireRunning {
-		time.AfterFunc(jobs.opt.JobExpireInterval, jobs.Expire)
+		time.AfterFunc(time.Duration(jobs.opt.JobExpireInterval), jobs.Expire)
 		jobs.expireRunning = true
 	}
 }
@@ -160,13 +160,13 @@ func (jobs *Jobs) Expire() {
 	now := time.Now()
 	for ID, job := range jobs.jobs {
 		job.mu.Lock()
-		if job.Finished && now.Sub(job.EndTime) > jobs.opt.JobExpireDuration {
+		if job.Finished && now.Sub(job.EndTime) > time.Duration(jobs.opt.JobExpireDuration) {
 			delete(jobs.jobs, ID)
 		}
 		job.mu.Unlock()
 	}
 	if len(jobs.jobs) != 0 {
-		time.AfterFunc(jobs.opt.JobExpireInterval, jobs.Expire)
+		time.AfterFunc(time.Duration(jobs.opt.JobExpireInterval), jobs.Expire)
 		jobs.expireRunning = true
 	} else {
 		jobs.expireRunning = false

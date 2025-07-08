@@ -24,7 +24,7 @@ func TestNewJobs(t *testing.T) {
 func TestJobsKickExpire(t *testing.T) {
 	testy.SkipUnreliable(t)
 	jobs := newJobs()
-	jobs.opt.JobExpireInterval = time.Millisecond
+	jobs.opt.JobExpireInterval = fs.Duration(time.Millisecond)
 	assert.Equal(t, false, jobs.expireRunning)
 	jobs.kickExpire()
 	jobs.mu.Lock()
@@ -41,7 +41,7 @@ func TestJobsExpire(t *testing.T) {
 	ctx := context.Background()
 	wait := make(chan struct{})
 	jobs := newJobs()
-	jobs.opt.JobExpireInterval = time.Millisecond
+	jobs.opt.JobExpireInterval = fs.Duration(time.Millisecond)
 	assert.Equal(t, false, jobs.expireRunning)
 	var gotJobID int64
 	var gotJob *Job
@@ -64,7 +64,7 @@ func TestJobsExpire(t *testing.T) {
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.mu.Lock()
 	job.mu.Lock()
-	job.EndTime = time.Now().Add(-rc.Opt.JobExpireDuration - 60*time.Second)
+	job.EndTime = time.Now().Add(-time.Duration(rc.Opt.JobExpireDuration) - 60*time.Second)
 	assert.Equal(t, true, jobs.expireRunning)
 	job.mu.Unlock()
 	jobs.mu.Unlock()

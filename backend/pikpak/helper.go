@@ -155,6 +155,7 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 		if err == nil && !info.Links.ApplicationOctetStream.Valid() {
+			time.Sleep(5 * time.Second)
 			return true, errors.New("no link")
 		}
 		return f.shouldRetry(ctx, resp, err)

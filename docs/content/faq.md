@@ -233,7 +233,7 @@ Restart-Service hns
 It is likely you have more than 10,000 files that need to be
 synced. By default, rclone only gets 10,000 files ahead in a sync so as
 not to use up too much memory. You can change this default with the
-[--max-backlog](/docs/#max-backlog-n) flag.
+[--max-backlog](/docs/#max-backlog-int) flag.
 
 ### Rclone is using too much memory or appears to have a memory leak
 

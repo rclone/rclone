@@ -27,10 +27,10 @@ func NewDialer(ctx context.Context) *Dialer {
 	ci := fs.GetConfig(ctx)
 	dialer := &Dialer{
 		Dialer: net.Dialer{
-			Timeout:   ci.ConnectTimeout,
+			Timeout:   time.Duration(ci.ConnectTimeout),
 			KeepAlive: 30 * time.Second,
 		},
-		timeout: ci.Timeout,
+		timeout: time.Duration(ci.Timeout),
 		tclass:  int(ci.TrafficClass),
 	}
 	if ci.BindAddr != nil {

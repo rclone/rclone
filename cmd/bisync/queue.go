@@ -376,8 +376,8 @@ func (b *bisyncRun) saveQueue(files bilib.Names, jobName string) error {
 	return files.Save(queueFile)
 }
 
-func naptime(totalWait time.Duration) {
-	expireTime := time.Now().Add(totalWait)
+func naptime(totalWait fs.Duration) {
+	expireTime := time.Now().Add(time.Duration(totalWait))
 	fs.Logf(nil, "will retry in %v at %v", totalWait, expireTime.Format("2006-01-02 15:04:05 MST"))
 	for i := 0; time.Until(expireTime) > 0; i++ {
 		if i > 0 && i%10 == 0 {

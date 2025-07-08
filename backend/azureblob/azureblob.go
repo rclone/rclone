@@ -72,6 +72,7 @@ const (
 	emulatorAccount      = "devstoreaccount1"
 	emulatorAccountKey   = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 	emulatorBlobEndpoint = "http://127.0.0.1:10000/devstoreaccount1"
+	sasCopyValidity      = time.Hour // how long SAS should last when doing server side copy
 )
 
 var (
@@ -559,6 +560,11 @@ type Fs struct {
 	pacer         *fs.Pacer                    // To pace and retry the API calls
 	uploadToken   *pacer.TokenDispenser        // control concurrency
 	publicAccess  container.PublicAccessType   // Container Public Access Level
+
+	// user delegation cache
+	userDelegationMu     sync.Mutex
+	userDelegation       *service.UserDelegationCredential
+	userDelegationExpiry time.Time
 }
 
 // Object describes an azure object
@@ -983,6 +989,38 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.cred, err = azidentity.NewManagedIdentityCredential(&options)
 		if err != nil {
 			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+	case opt.ClientID != "" && opt.Tenant != "" && opt.MSIClientID != "":
+		// Workload Identity based authentication
+		var options azidentity.ManagedIdentityCredentialOptions
+		options.ID = azidentity.ClientID(opt.MSIClientID)
+
+		msiCred, err := azidentity.NewManagedIdentityCredential(&options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+
+		getClientAssertions := func(context.Context) (string, error) {
+			token, err := msiCred.GetToken(context.Background(), policy.TokenRequestOptions{
+				Scopes: []string{"api://AzureADTokenExchange"},
+			})
+
+			if err != nil {
+				return "", fmt.Errorf("failed to acquire MSI token: %w", err)
+			}
+
+			return token.Token, nil
+		}
+
+		assertOpts := &azidentity.ClientAssertionCredentialOptions{}
+		f.cred, err = azidentity.NewClientAssertionCredential(
+			opt.Tenant,
+			opt.ClientID,
+			getClientAssertions,
+			assertOpts)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire client assertion token: %w", err)
 		}
 	case opt.UseAZ:
 		var options = azidentity.AzureCLICredentialOptions{}
@@ -1688,6 +1726,38 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.deleteContainer(ctx, container)
 }
 
+// Get a user delegation which is valid for at least sasCopyValidity
+//
+// This value is cached in f
+func (f *Fs) getUserDelegation(ctx context.Context) (*service.UserDelegationCredential, error) {
+	f.userDelegationMu.Lock()
+	defer f.userDelegationMu.Unlock()
+
+	if f.userDelegation != nil && time.Until(f.userDelegationExpiry) > sasCopyValidity {
+		return f.userDelegation, nil
+	}
+
+	// Validity window
+	start := time.Now().UTC()
+	expiry := start.Add(2 * sasCopyValidity)
+	startStr := start.Format(time.RFC3339)
+	expiryStr := expiry.Format(time.RFC3339)
+
+	// Acquire user delegation key from the service client
+	info := service.KeyInfo{
+		Start:  &startStr,
+		Expiry: &expiryStr,
+	}
+	userDelegationKey, err := f.svc.GetUserDelegationCredential(ctx, info, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user delegation key: %w", err)
+	}
+
+	f.userDelegation = userDelegationKey
+	f.userDelegationExpiry = expiry
+	return f.userDelegation, nil
+}
+
 // getAuth gets auth to copy o.
 //
 // tokenOK is used to signal that token based auth (Microsoft Entra
@@ -1699,7 +1769,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // URL (not a SAS) and token will be empty.
 //
 // If tokenOK is true it may also return a token for the auth.
-func (o *Object) getAuth(ctx context.Context, tokenOK bool, noAuth bool) (srcURL string, token *string, err error) {
+func (o *Object) getAuth(ctx context.Context, noAuth bool) (srcURL string, err error) {
 	f := o.fs
 	srcBlobSVC := o.getBlobSVC()
 	srcURL = srcBlobSVC.URL()
@@ -1708,29 +1778,47 @@ func (o *Object) getAuth(ctx context.Context, tokenOK bool, noAuth bool) (srcURL
 	case noAuth:
 		// If same storage account then no auth needed
 	case f.cred != nil:
-		if !tokenOK {
-			return srcURL, token, errors.New("not supported: Microsoft Entra ID")
-		}
-		options := policy.TokenRequestOptions{}
-		accessToken, err := f.cred.GetToken(ctx, options)
+		// Generate a User Delegation SAS URL using Azure AD credentials
+		userDelegationKey, err := f.getUserDelegation(ctx)
 		if err != nil {
-			return srcURL, token, fmt.Errorf("failed to create access token: %w", err)
+			return "", fmt.Errorf("sas creation: %w", err)
 		}
-		token = &accessToken.Token
+
+		// Build the SAS values
+		perms := sas.BlobPermissions{Read: true}
+		container, containerPath := o.split()
+		start := time.Now().UTC()
+		expiry := start.Add(sasCopyValidity)
+		vals := sas.BlobSignatureValues{
+			StartTime:     start,
+			ExpiryTime:    expiry,
+			Permissions:   perms.String(),
+			ContainerName: container,
+			BlobName:      containerPath,
+		}
+
+		// Sign with the delegation key
+		queryParameters, err := vals.SignWithUserDelegation(userDelegationKey)
+		if err != nil {
+			return "", fmt.Errorf("signing SAS with user delegation failed: %w", err)
+		}
+
+		// Append the SAS to the URL
+		srcURL = srcBlobSVC.URL() + "?" + queryParameters.Encode()
 	case f.sharedKeyCred != nil:
 		// Generate a short lived SAS URL if using shared key credentials
-		expiry := time.Now().Add(time.Hour)
+		expiry := time.Now().Add(sasCopyValidity)
 		sasOptions := blob.GetSASURLOptions{}
 		srcURL, err = srcBlobSVC.GetSASURL(sas.BlobPermissions{Read: true}, expiry, &sasOptions)
 		if err != nil {
-			return srcURL, token, fmt.Errorf("failed to create SAS URL: %w", err)
+			return srcURL, fmt.Errorf("failed to create SAS URL: %w", err)
 		}
 	case f.anonymous || f.opt.SASURL != "":
 		// If using a SASURL or anonymous, no need for any extra auth
 	default:
-		return srcURL, token, errors.New("unknown authentication type")
+		return srcURL, errors.New("unknown authentication type")
 	}
-	return srcURL, token, nil
+	return srcURL, nil
 }
 
 // Do multipart parallel copy.
@@ -1751,7 +1839,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 	o.fs = f
 	o.remote = remote
 
-	srcURL, token, err := src.getAuth(ctx, true, false)
+	srcURL, err := src.getAuth(ctx, false)
 	if err != nil {
 		return nil, fmt.Errorf("multipart copy: %w", err)
 	}
@@ -1795,7 +1883,8 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 					Count:  partSize,
 				},
 				// Specifies the authorization scheme and signature for the copy source.
-				CopySourceAuthorization: token,
+				// We use SAS URLs as this doesn't seem to work always
+				// CopySourceAuthorization: token,
 				// CPKInfo *blob.CPKInfo
 				// CPKScopeInfo *blob.CPKScopeInfo
 			}
@@ -1865,7 +1954,7 @@ func (f *Fs) copySinglepart(ctx context.Context, remote, dstContainer, dstPath s
 	dstBlobSVC := f.getBlobSVC(dstContainer, dstPath)
 
 	// Get the source auth - none needed for same storage account
-	srcURL, _, err := src.getAuth(ctx, false, f == src.fs)
+	srcURL, err := src.getAuth(ctx, f == src.fs)
 	if err != nil {
 		return nil, fmt.Errorf("single part copy: source auth: %w", err)
 	}
