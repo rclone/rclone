@@ -13,13 +13,17 @@ func TestResolveCcachePath(t *testing.T) {
 
 	// Setup: files for FILE and DIR modes
 	fileCcache := filepath.Join(tmpDir, "file_ccache")
-	_ = os.WriteFile(fileCcache, []byte{}, 0600)
+	err := os.WriteFile(fileCcache, []byte{}, 0600)
+	assert.NoError(t, err)
 
 	dirCcache := filepath.Join(tmpDir, "dir_ccache")
-	_ = os.Mkdir(dirCcache, 0755)
-	_ = os.WriteFile(filepath.Join(dirCcache, "primary"), []byte("ticket"), 0600)
+	err = os.Mkdir(dirCcache, 0755)
+	assert.NoError(t, err)
+	err = os.WriteFile(filepath.Join(dirCcache, "primary"), []byte("ticket"), 0600)
+	assert.NoError(t, err)
 	dirCcacheTicket := filepath.Join(dirCcache, "ticket")
-	_ = os.WriteFile(dirCcacheTicket, []byte{}, 0600)
+	err = os.WriteFile(dirCcacheTicket, []byte{}, 0600)
+	assert.NoError(t, err)
 
 	tests := []struct {
 		name          string

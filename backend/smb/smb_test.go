@@ -32,12 +32,12 @@ func TestIntegration2(t *testing.T) {
 }
 
 func TestIntegration3(t *testing.T) {
-	tmpDir := t.TempDir()
-	krb5Conf := filepath.Join(tmpDir, "krb5.conf")
-	ccache := filepath.Join(tmpDir, "ccache")
+	if *fstest.RemoteName != "" {
+		t.Skip("skipping as -remote is set")
+	}
 
-	t.Setenv("KRB5_CONFIG", krb5Conf)
-	t.Setenv("RCLONE_TEST_CUSTOM_CCACHE_LOCATION", ccache)
+	// Where the Kerberos ccache file is stored. Ref: fstest/testserver/init.d/TestSMBKerberosCcache
+	ccache := "/tmp/rclone_krb5/ccache"
 
 	name := "TestSMBKerberosCcache"
 

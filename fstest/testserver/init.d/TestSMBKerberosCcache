@@ -2,7 +2,12 @@
 
 set -e
 
-# RCLONE_TEST_CUSTOM_CCACHE_LOCATION and KRB5_CONFIG are set by the caller
+# Set default location for Kerberos config and ccache. Can be overridden by the caller
+# using environment variables RCLONE_TEST_CUSTOM_CCACHE_LOCATION and KRB5_CONFIG.
+export TEMP_DIR=/tmp/rclone_krb5
+mkdir -p "${TEMP_DIR}"
+export KRB5_CONFIG=${KRB5_CONFIG:-${TEMP_DIR}/krb5.conf}
+export RCLONE_TEST_CUSTOM_CCACHE_LOCATION=${RCLONE_TEST_CUSTOM_CCACHE_LOCATION:-${TEMP_DIR}/ccache}
 
 IMAGE=rclone/test-smb-kerberos
 NAME=smb-kerberos
@@ -29,8 +34,11 @@ RUN rm -rf /etc/samba/smb.conf /var/lib/samba \
     --dns-backend=SAMBA_INTERNAL \
     --host-name=localhost \
  && samba-tool user add --random-password $USER \
+  && samba-tool user setexpiry $USER --noexpiry \
  && mkdir -m 777 /share /rclone \
  && cat <<EOS >> /etc/samba/smb.conf
+[global]
+server signing = auto
 [public]
 path = /share
 browseable = yes
