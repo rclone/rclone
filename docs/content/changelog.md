@@ -49,7 +49,7 @@ description: "Rclone Changelog"
 * New Features
     * Add [`--max-connections`](/docs/#max-connections-n) to control maximum backend concurrency (Nick Craig-Wood)
     * Add [`--max-buffer-memory`](/docs/#max-buffer-memory) to limit total buffer memory usage (Nick Craig-Wood)
-    * Add transform library and [`--name-transform`](/docs/#name-transform-command-xxxx) flag (nielash)
+    * Add transform library and [`--name-transform`](/docs/#name-transform-stringarray) flag (nielash)
     * sync: Implement [`--list-cutoff`](/docs/#list-cutoff) to allow on disk sorting for reduced memory use (Nick Craig-Wood)
     * accounting: Add listed stat for number of directory entries listed (Nick Craig-Wood)
     * backend: Skip hash calculation when the hashType is None (Oleksiy Stashok)
