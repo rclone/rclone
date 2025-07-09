@@ -81,7 +81,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Jun 27, 2025</p>
+<p class="date">Jul 09, 2025</p>
 </header>
 <h1 id="name">NAME</h1>
 <p>rclone - manage files on cloud storage</p>
@@ -222,8 +222,8 @@ Use &quot;rclone help backends&quot; for a list of supported services.
 <li>Dropbox</li>
 <li>Enterprise File Fabric</li>
 <li>Fastmail Files</li>
-<li>Files.com</li>
 <li>FileLu Cloud Storage</li>
+<li>Files.com</li>
 <li>FlashBlade</li>
 <li>FTP</li>
 <li>Gofile</li>
@@ -8258,7 +8258,8 @@ y/n/s/!/q&gt; n</code></pre>
 <pre><code>--log-file rclone.log --log-level DEBUG --windows-event-log ERROR</code></pre>
 <p>This option is only supported Windows platforms.</p>
 <h3 id="use-json-log">--use-json-log</h3>
-<p>This switches the log format to JSON for rclone. The fields of JSON log are <code>level</code>, <code>msg</code>, <code>source</code>, <code>time</code>. The JSON logs will be printed on a single line, but are shown expanded here for clarity.</p>
+<p>This switches the log format to JSON. The log messages are then streamed as individual JSON objects, with fields: <code>level</code>, <code>msg</code>, <code>source</code>, and <code>time</code>. The resulting format is what is sometimes referred to as <a href="https://en.wikipedia.org/wiki/JSON_streaming#Newline-delimited_JSON">newline-delimited JSON</a> (NDJSON), or JSON Lines (JSONL). This is well suited for processing by traditional line-oriented tools and shell pipelines, but a complete log file is not strictly valid JSON and needs a parser that can handle it.</p>
+<p>The JSON logs will be printed on a single line, but are shown expanded here for clarity.</p>
 <div class="sourceCode" id="cb654"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb654-1"><a href="#cb654-1" aria-hidden="true"></a><span class="fu">{</span></span>
 <span id="cb654-2"><a href="#cb654-2" aria-hidden="true"></a>  <span class="dt">&quot;time&quot;</span><span class="fu">:</span> <span class="st">&quot;2025-05-13T17:30:51.036237518+01:00&quot;</span><span class="fu">,</span></span>
 <span id="cb654-3"><a href="#cb654-3" aria-hidden="true"></a>  <span class="dt">&quot;level&quot;</span><span class="fu">:</span> <span class="st">&quot;debug&quot;</span><span class="fu">,</span></span>
@@ -13231,7 +13232,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.70.2&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.70.3&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -40090,6 +40091,36 @@ $ tree /tmp/c
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.70.3---2025-07-09">v1.70.3 - 2025-07-09</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.70.2...v1.70.3">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>check: Fix difference report (was reporting error counts) (albertony)</li>
+<li>march: Fix deadlock when using <code>--no-traverse</code> (Nick Craig-Wood)</li>
+<li>doc fixes (albertony, Nick Craig-Wood)</li>
+</ul></li>
+<li>Azure Blob
+<ul>
+<li>Fix server side copy error "requires exactly one scope" (Nick Craig-Wood)</li>
+</ul></li>
+<li>B2
+<ul>
+<li>Fix finding objects when using <code>--b2-version-at</code> (Davide Bizzarri)</li>
+</ul></li>
+<li>Linkbox
+<ul>
+<li>Fix upload error "user upload file not exist" (Nick Craig-Wood)</li>
+</ul></li>
+<li>Pikpak
+<ul>
+<li>Improve error handling for missing links and unrecoverable 500s (wiserain)</li>
+</ul></li>
+<li>WebDAV
+<ul>
+<li>Fix setting modtime to that of local object instead of remote (WeidiDeng)</li>
+</ul></li>
+</ul>
 <h2 id="v1.70.2---2025-06-27">v1.70.2 - 2025-06-27</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.70.1...v1.70.2">See commits</a></p>
 <ul>

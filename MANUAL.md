@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jun 27, 2025
+% Jul 09, 2025
 
 # NAME
 
@@ -192,8 +192,8 @@ WebDAV or S3, that work out of the box.)
 - Dropbox
 - Enterprise File Fabric
 - Fastmail Files
-- Files.com
 - FileLu Cloud Storage
+- Files.com
 - FlashBlade
 - FTP
 - Gofile
@@ -16332,9 +16332,16 @@ This option is only supported Windows platforms.
 
 ### --use-json-log ###
 
-This switches the log format to JSON for rclone. The fields of JSON
-log are `level`, `msg`, `source`, `time`. The JSON logs will be
-printed on a single line, but are shown expanded here for clarity.
+This switches the log format to JSON. The log messages are then
+streamed as individual JSON objects, with fields: `level`, `msg`, `source`,
+and `time`. The resulting format is what is sometimes referred to as
+[newline-delimited JSON](https://en.wikipedia.org/wiki/JSON_streaming#Newline-delimited_JSON)
+(NDJSON), or JSON Lines (JSONL). This is well suited for processing by
+traditional line-oriented tools and shell pipelines, but a complete log
+file is not strictly valid JSON and needs a parser that can handle it.
+
+The JSON logs will be printed on a single line, but are shown expanded
+here for clarity.
 
 ```json
 {
@@ -22404,7 +22411,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.70.2")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.70.3")
 ```
 
 
@@ -59139,6 +59146,25 @@ Options:
 
 
 # Changelog
+
+## v1.70.3 - 2025-07-09
+
+[See commits](https://github.com/rclone/rclone/compare/v1.70.2...v1.70.3)
+
+* Bug Fixes
+    * check: Fix difference report (was reporting error counts) (albertony)
+    * march: Fix deadlock when using `--no-traverse` (Nick Craig-Wood)
+    * doc fixes (albertony, Nick Craig-Wood)
+* Azure Blob
+    * Fix server side copy error "requires exactly one scope" (Nick Craig-Wood)
+* B2
+    * Fix finding objects when using `--b2-version-at` (Davide Bizzarri)
+* Linkbox
+    * Fix upload error "user upload file not exist" (Nick Craig-Wood)
+* Pikpak
+    * Improve error handling for missing links and unrecoverable 500s (wiserain)
+* WebDAV
+    * Fix setting modtime to that of local object instead of remote (WeidiDeng)
 
 ## v1.70.2 - 2025-06-27
 

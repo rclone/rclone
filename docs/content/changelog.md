@@ -5,6 +5,25 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.70.3 - 2025-07-09
+
+[See commits](https://github.com/rclone/rclone/compare/v1.70.2...v1.70.3)
+
+* Bug Fixes
+    * check: Fix difference report (was reporting error counts) (albertony)
+    * march: Fix deadlock when using `--no-traverse` (Nick Craig-Wood)
+    * doc fixes (albertony, Nick Craig-Wood)
+* Azure Blob
+    * Fix server side copy error "requires exactly one scope" (Nick Craig-Wood)
+* B2
+    * Fix finding objects when using `--b2-version-at` (Davide Bizzarri)
+* Linkbox
+    * Fix upload error "user upload file not exist" (Nick Craig-Wood)
+* Pikpak
+    * Improve error handling for missing links and unrecoverable 500s (wiserain)
+* WebDAV
+    * Fix setting modtime to that of local object instead of remote (WeidiDeng)
+
 ## v1.70.2 - 2025-06-27
 
 [See commits](https://github.com/rclone/rclone/compare/v1.70.1...v1.70.2)
