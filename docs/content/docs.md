@@ -2006,7 +2006,8 @@ If the backend has a `--backend-upload-concurrency` setting (eg
 number of transfers instead if it is larger than the value of
 `--multi-thread-streams` or `--multi-thread-streams` isn't set.
 
-### --name-transform COMMAND[=XXXX]
+### --name-transform stringArray
+
 `--name-transform` introduces path name transformations for
 `rclone copy`, `rclone sync`, and `rclone move`. These transformations
 enable modifications to source and destination file names by applying
