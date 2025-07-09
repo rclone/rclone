@@ -2935,7 +2935,7 @@ Write CPU profile to a file. This can be analysed with `go tool pprof`.
 
 Write memory profile to a file. This can be analysed with `go tool pprof`.
 
-#### --dump DumpFlags
+### --dump DumpFlags
 
 The `--dump` flag takes a comma separated list of flags to dump info
 about.
