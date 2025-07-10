@@ -278,4 +278,4 @@ Unicode characters when transferring to one storage system, and replacing
 back again when transferring to a different storage system where the
 original characters are supported. When the same Unicode characters
 are intentionally used in file names, this replacement strategy leads
-to unwanted renames. Read more [here](/overview/#restricted-filenames-caveats).
+to unwanted renames. Read more under section [caveats](/overview/#restricted-filenames-caveats).

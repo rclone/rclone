@@ -115,7 +115,7 @@ script) from a URL which doesn't change then you can use these links.
 
 ## Older Downloads
 
-Older downloads can be found [here](https://downloads.rclone.org/).
+Older downloads can be found at <https://downloads.rclone.org/>
 
 The latest `rclone` version working for:
 
