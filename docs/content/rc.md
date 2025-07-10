@@ -188,8 +188,8 @@ You can use it like this:
 ```sh
 $ rclone rc rc/noop param1=one param2=two
 {
-	"param1": "one",
-	"param2": "two"
+    "param1": "one",
+    "param2": "two"
 }
 ```
 
@@ -219,16 +219,16 @@ more complicated input parameters.
 ```sh
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 } }' rc/noop
 {
-	"p1": [
-		1,
-		"2",
-		null,
-		4
-	],
-	"p2": {
-		"a": 1,
-		"b": 2
-	}
+    "p1": [
+        1,
+        "2",
+        null,
+        4
+    ],
+    "p2": {
+        "a": 1,
+        "b": 2
+    }
 }
 ```
 
@@ -272,7 +272,7 @@ Starting a job with the `_async` flag:
 ```sh
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 }, "_async": true }' rc/noop
 {
-	"jobid": 2
+    "jobid": 2
 }
 ```
 
@@ -282,26 +282,26 @@ on the meaning of these return parameters see the `job/status` call.
 ```sh
 $ rclone rc --json '{ "jobid":2 }' job/status
 {
-	"duration": 0.000124163,
-	"endTime": "2018-10-27T11:38:07.911245881+01:00",
-	"error": "",
-	"finished": true,
-	"id": 2,
-	"output": {
-		"_async": true,
-		"p1": [
-			1,
-			"2",
-			null,
-			4
-		],
-		"p2": {
-			"a": 1,
-			"b": 2
-		}
-	},
-	"startTime": "2018-10-27T11:38:07.911121728+01:00",
-	"success": true
+    "duration": 0.000124163,
+    "endTime": "2018-10-27T11:38:07.911245881+01:00",
+    "error": "",
+    "finished": true,
+    "id": 2,
+    "output": {
+        "_async": true,
+        "p1": [
+            1,
+            "2",
+            null,
+            4
+        ],
+        "p2": {
+            "a": 1,
+            "b": 2
+        }
+    },
+    "startTime": "2018-10-27T11:38:07.911121728+01:00",
+    "success": true
 }
 ```
 
@@ -310,9 +310,9 @@ $ rclone rc --json '{ "jobid":2 }' job/status
 ```sh
 $ rclone rc job/list
 {
-	"jobids": [
-		2
-	]
+    "jobids": [
+        2
+    ]
 }
 ```
 
@@ -429,8 +429,8 @@ Stats for specific group can be accessed by passing `group` to `core/stats`:
 ```sh
 $ rclone rc --json '{ "group": "job/1" }' core/stats
 {
-	"speed": 12345
-	...
+    "speed": 12345
+    ...
 }
 ```
 
@@ -2412,8 +2412,8 @@ Response
 
 ```json
 {
-	"potato": "1",
-	"sausage": "2"
+    "potato": "1",
+    "sausage": "2"
 }
 ```
 
@@ -2425,11 +2425,11 @@ curl -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 
 ```json
 {
-	"error": "arbitrary error on input map[potato:1 sausage:2]",
-	"input": {
-		"potato": "1",
-		"sausage": "2"
-	}
+    "error": "arbitrary error on input map[potato:1 sausage:2]",
+    "input": {
+        "potato": "1",
+        "sausage": "2"
+    }
 }
 ```
 
@@ -2452,8 +2452,8 @@ Response
 
 ```json
 {
-	"potato": "1",
-	"sausage": "2"
+    "potato": "1",
+    "sausage": "2"
 }
 ```
 
@@ -2468,9 +2468,9 @@ Response
 
 ```json
 {
-	"potato": "1",
-	"rutabaga": "3",
-	"sausage": "4"
+    "potato": "1",
+    "rutabaga": "3",
+    "sausage": "4"
 }
 
 ```
@@ -2485,8 +2485,8 @@ response
 
 ```json
 {
-	"password": "xyz",
-	"username": "xyz"
+    "password": "xyz",
+    "username": "xyz"
 }
 ```
 
@@ -2499,9 +2499,9 @@ curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' '
 
 ```json
 {
-	"potato": 2,
-	"rutabaga": "3",
-	"sausage": 1
+    "potato": 2,
+    "rutabaga": "3",
+    "sausage": 1
 }
 ```
 
