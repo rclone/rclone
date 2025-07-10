@@ -79,9 +79,11 @@ This is an SHA256 sum of all the 4 MiB block SHA256s.
 
 ³ WebDAV supports hashes when used with Fastmail Files, Owncloud and Nextcloud only.
 
-⁴ WebDAV supports modtimes when used with Fastmail Files, Owncloud and Nextcloud only.
+⁴ WebDAV supports modtimes when used with Fastmail Files, Owncloud and Nextcloud
+only.
 
-⁵ [QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash) is Microsoft's own hash.
+⁵ [QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash)
+is Microsoft's own hash.
 
 ⁶ Mail.ru uses its own modified SHA1 hash
 
@@ -180,7 +182,8 @@ depending on OS.
 
 - Windows - usually case insensitive, though case is preserved
 - OSX - usually case insensitive, though it is possible to format case sensitive
-- Linux - usually case sensitive, but there are case insensitive file systems (e.g. FAT formatted USB keys)
+- Linux - usually case sensitive, but there are case insensitive file systems
+  (e.g. FAT formatted USB keys)
 
 Most of the time this doesn't cause any problems as people tend to
 avoid files whose name differs only by case even on case sensitive
@@ -421,7 +424,8 @@ to the existing ones, giving:
 Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot,Del,RightSpace
 ```
 
-This can be specified using the `--ftp-encoding` flag or using an `encoding` parameter in the config file.
+This can be specified using the `--ftp-encoding` flag or using an `encoding`
+parameter in the config file.
 
 ##### Encoding example: Windows
 
@@ -447,7 +451,8 @@ the default value but without `Colon,Question,Asterisk`:
 --local-encoding "Slash,LtGt,DoubleQuote,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
 ```
 
-Alternatively, you can disable the conversion of any characters with `--local-encoding Raw`.
+Alternatively, you can disable the conversion of any characters with
+`--local-encoding Raw`.
 
 Instead of using command-line argument `--local-encoding`, you may also set it
 as [environment variable](/docs/#environment-variables) `RCLONE_LOCAL_ENCODING`,
