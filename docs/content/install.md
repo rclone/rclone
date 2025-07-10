@@ -507,15 +507,15 @@ role](https://github.com/stefangweichinger/ansible-rclone).
 
 Instructions
 
-  1. `git clone https://github.com/stefangweichinger/ansible-rclone.git` into
-     your local roles-directory
-  2. add the role to the hosts you want rclone installed to:
+1. `git clone https://github.com/stefangweichinger/ansible-rclone.git` into
+   your local roles-directory
+2. add the role to the hosts you want rclone installed to:
 
-```yml
+    ```yml
     - hosts: rclone-hosts
       roles:
-          - rclone
-```
+        - rclone
+    ```
 
 ## Portable installation {#portable}
 
