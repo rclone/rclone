@@ -23,7 +23,10 @@ image](https://securebuild.com/images/rclone) through our partner
 | FreeBSD | 12.2 |
 | OpenBSD | 6.9 |
 
-These requirements come from the Go version that rclone is compiled with and are simplified from [minimum requirements](https://go.dev/wiki/MinimumRequirements) and other [platform specific information](https://go.dev/wiki/#platform-specific-information) in the Go Wiki.
+These requirements come from the Go version that rclone is compiled with and are
+simplified from [minimum requirements](https://go.dev/wiki/MinimumRequirements)
+and other [platform specific information](https://go.dev/wiki/#platform-specific-information)
+in the Go Wiki.
 
 ## Release {{% version %}} {#release}
 
