@@ -168,8 +168,7 @@ Please see the [rclone website](https://rclone.org/) for:
 
 - <https://rclone.org/downloads/>
 
-License
--------
+## License
 
 This is free software under the terms of the MIT license (check the
 [COPYING file](/COPYING) included in this package).

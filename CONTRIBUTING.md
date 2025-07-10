@@ -166,7 +166,7 @@ git rebase master
 If you rebase commits that have been pushed to GitHub, then you will have to
 [replace your previously pushed commits](#replacing-your-previously-pushed-commits).
 
-### Squashing your commits ###
+### Squashing your commits
 
 To combine your commits into one commit:
 
