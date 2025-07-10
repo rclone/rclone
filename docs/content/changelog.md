@@ -261,10 +261,10 @@ description: "Rclone Changelog"
 - Security fixes
   - serve sftp: Resolve CVE-2024-45337 - Misuse of ServerConfig.PublicKeyCallback may cause authorization bypass (dependabot)
     - Rclone was **not** vulnerable to this.
-    - See https://github.com/advisories/GHSA-v778-237x-gjrc
+    - See <https://github.com/advisories/GHSA-v778-237x-gjrc>
   - build: Update golang.org/x/net to v0.33.0 to fix CVE-2024-45338 - Non-linear parsing of case-insensitive content (Nick Craig-Wood)
     - Rclone was **not** vulnerable to this.
-    - See https://github.com/advisories/GHSA-w32m-9786-jp63
+    - See <https://github.com/advisories/GHSA-w32m-9786-jp63>
 - New Features
   - accounting: Write the current bwlimit to the log on SIGUSR2 (Nick Craig-Wood)
   - bisync: Change exit code from 2 to 7 for critically aborted run (albertony)
@@ -388,10 +388,10 @@ description: "Rclone Changelog"
 - Security fixes
   - local backend: CVE-2024-52522: fix permission and ownership on symlinks with `--links` and `--metadata` (Nick Craig-Wood)
     - Only affects users using `--metadata` and `--links` and copying files to the local backend
-    - See https://github.com/rclone/rclone/security/advisories/GHSA-hrxh-9w67-g4cv
+    - See <https://github.com/rclone/rclone/security/advisories/GHSA-hrxh-9w67-g4cv>
   - build: bump github.com/golang-jwt/jwt/v4 from 4.5.0 to 4.5.1 (dependabot)
     - This is an issue in a dependency which is used for JWT certificates
-    - See https://github.com/golang-jwt/jwt/security/advisories/GHSA-29wx-vh33-7x7r
+    - See <https://github.com/golang-jwt/jwt/security/advisories/GHSA-29wx-vh33-7x7r>
 - Bug Fixes
   - accounting: Fix wrong message on SIGUSR2 to enable/disable bwlimit (Nick Craig-Wood)
   - bisync: Fix output capture restoring the wrong output for logrus (Dimitrios Slamaris)
@@ -1568,7 +1568,7 @@ instead of of `--size-only`, when `check` is not available.
   - dedupe
     - Count Checks in the stats while scanning for duplicates (Nick Craig-Wood)
     - Make dedupe obey the filters (Nick Craig-Wood)
-  - dlna: Properly attribute code used from https://github.com/anacrolix/dms (Nick Craig-Wood)
+  - dlna: Properly attribute code used from <https://github.com/anacrolix/dms> (Nick Craig-Wood)
   - docs
     - Add minimum versions and status badges to backend and command docs (Nick Craig-Wood, albertony)
     - Remote names may not start or end with space (albertony)
@@ -5118,7 +5118,7 @@ Point release to fix hubic and azureblob backends.
   - Fix the uploading of files with spaces
   - Fix initialization order for token renewer
   - Display speeds accurately when uploading - Yoni Jah
-  - Swap to using http://localhost:53682/ as redirect URL - Michael Ledin
+  - Swap to using `http://localhost:53682/` as redirect URL - Michael Ledin
   - Retry on token expired error, reset upload body on retry - Yoni Jah
 - Google Cloud Storage
   - Add ability to specify location and storage class via config and command line - thanks gdm85

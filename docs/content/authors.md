@@ -2,6 +2,7 @@
 title: "Authors"
 description: "Rclone Authors and Contributors"
 ---
+<!-- markdownlint-disable no-bare-urls -->
 
 # Authors and contributors
 
