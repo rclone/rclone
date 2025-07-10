@@ -178,9 +178,9 @@ matter how many times you run the sync it never completes fully.
 The local filesystem and SFTP may or may not be case sensitive
 depending on OS.
 
-  * Windows - usually case insensitive, though case is preserved
-  * OSX - usually case insensitive, though it is possible to format case sensitive
-  * Linux - usually case sensitive, but there are case insensitive file systems (e.g. FAT formatted USB keys)
+- Windows - usually case insensitive, though case is preserved
+- OSX - usually case insensitive, though it is possible to format case sensitive
+- Linux - usually case sensitive, but there are case insensitive file systems (e.g. FAT formatted USB keys)
 
 Most of the time this doesn't cause any problems as people tend to
 avoid files whose name differs only by case even on case sensitive

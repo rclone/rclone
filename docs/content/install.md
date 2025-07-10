@@ -9,10 +9,10 @@ Rclone is a Go program and comes as a single binary file.
 
 ## Quickstart
 
-  * [Download](/downloads/) the relevant binary.
-  * Extract the `rclone` executable, `rclone.exe` on Windows, from the archive.
-  * Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
-  * Optionally configure [automatic execution](#autostart).
+- [Download](/downloads/) the relevant binary.
+- Extract the `rclone` executable, `rclone.exe` on Windows, from the archive.
+- Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
+- Optionally configure [automatic execution](#autostart).
 
 See below for some expanded Linux / macOS / Windows instructions.
 
@@ -270,9 +270,9 @@ from the rclone image.
 - If you want to access the RC interface (either via the API or the Web UI), it is
   required to set the `--rc-addr` to `:5572` in order to connect to it from outside
   the container. An explanation about why this is necessary is present [here](https://web.archive.org/web/20200808071950/https://pythonspeed.com/articles/docker-connection-refused/).
-    * NOTE: Users running this container with the docker network set to `host` should
-     probably set it to listen to localhost only, with `127.0.0.1:5572` as the value for
-      `--rc-addr`
+  - NOTE: Users running this container with the docker network set to `host` should
+    probably set it to listen to localhost only, with `127.0.0.1:5572` as the value for
+    `--rc-addr`
 
 - It is possible to use `rclone mount` inside a userspace Docker container, and expose
   the resulting fuse mount to the host. The exact `docker run` options to do that might
@@ -329,7 +329,7 @@ sudo snap install rclone
 Due to the strict confinement of Snap, rclone snap cannot access real /home/$USER/.config/rclone directory, default config path is as below.
 
 - Default config directory:
-    - /home/$USER/snap/rclone/current/.config/rclone
+  - /home/$USER/snap/rclone/current/.config/rclone
 
 Note: Due to the strict confinement of Snap, `rclone mount` feature is `not` supported.
 
@@ -495,9 +495,9 @@ the locations that rclone will use.
 To override them set the corresponding options (as command-line arguments, or as
 [environment variables](https://rclone.org/docs/#environment-variables)):
 
-  - [--config](https://rclone.org/docs/#config-string)
-  - [--cache-dir](https://rclone.org/docs/#cache-dir-string)
-  - [--temp-dir](https://rclone.org/docs/#temp-dir-string)
+- [--config](https://rclone.org/docs/#config-string)
+- [--cache-dir](https://rclone.org/docs/#cache-dir-string)
+- [--temp-dir](https://rclone.org/docs/#temp-dir-string)
 
 ## Autostart
 

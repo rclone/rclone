@@ -2537,11 +2537,11 @@ Here is how to use some of them:
 - 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
 - 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
 - Goroutine blocking profile
-    - Enable first with: `rclone rc debug/set-block-profile-rate rate=1` ([docs](#debug-set-block-profile-rate))
-    - `go tool pprof http://localhost:5572/debug/pprof/block`
+  - Enable first with: `rclone rc debug/set-block-profile-rate rate=1` ([docs](#debug-set-block-profile-rate))
+  - `go tool pprof http://localhost:5572/debug/pprof/block`
 - Contended mutexes:
-    - Enable first with: `rclone rc debug/set-mutex-profile-fraction rate=1` ([docs](#debug-set-mutex-profile-fraction))
-    - `go tool pprof http://localhost:5572/debug/pprof/mutex`
+  - Enable first with: `rclone rc debug/set-mutex-profile-fraction rate=1` ([docs](#debug-set-mutex-profile-fraction))
+  - `go tool pprof http://localhost:5572/debug/pprof/mutex`
 
 See the [net/http/pprof docs](https://golang.org/pkg/net/http/pprof/)
 for more info on how to use the profiling and for a general overview
