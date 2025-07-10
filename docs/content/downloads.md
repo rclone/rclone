@@ -118,6 +118,7 @@ script) from a URL which doesn't change then you can use these links.
 Older downloads can be found [here](https://downloads.rclone.org/).
 
 The latest `rclone` version working for:
+
 | OS | Maximum rclone version |
 |:-------:|:-------:|
 | Windows 7 | v1.63.1 |
