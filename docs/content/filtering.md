@@ -198,12 +198,12 @@ them into regular expressions.
 
 Rclone path/file name filters are made up of one or more of the following flags:
 
-  * `--include`
-  * `--include-from`
-  * `--exclude`
-  * `--exclude-from`
-  * `--filter`
-  * `--filter-from`
+- `--include`
+- `--include-from`
+- `--exclude`
+- `--exclude-from`
+- `--filter`
+- `--filter-from`
 
 There can be more than one instance of individual flags.
 
@@ -274,15 +274,15 @@ every path against the supplied regular expression(s).
 
 Directory recursion optimisation occurs if either:
 
-* A source remote does not support the rclone `ListR` primitive. local,
+- A source remote does not support the rclone `ListR` primitive. local,
 sftp, Microsoft OneDrive and WebDAV do not support `ListR`. Google
 Drive and most bucket type storage do. [Full list](https://rclone.org/overview/#optional-features)
 
-* On other remotes (those that support `ListR`), if the rclone command is not naturally recursive, and
+- On other remotes (those that support `ListR`), if the rclone command is not naturally recursive, and
 provided it is not run with the `--fast-list` flag. `ls`, `lsf -R` and
 `size` are naturally recursive but `sync`, `copy` and `move` are not.
 
-* Whenever the `--disable ListR` flag is applied to an rclone command.
+- Whenever the `--disable ListR` flag is applied to an rclone command.
 
 Rclone commands imply directory filter rules from path/file filter
 rules. To view the directory filter rules rclone has implied for a
@@ -660,9 +660,9 @@ not as work as expected in your shell and may require quoting.
 
 E.g. linux, OSX (`*` metacharacter)
 
-  * `--include \*.jpg`
-  * `--include '*.jpg'`
-  * `--include='*.jpg'`
+- `--include \*.jpg`
+- `--include '*.jpg'`
+- `--include='*.jpg'`
 
 Microsoft Windows expansion is done by the command, not shell, so
 `--include *.jpg` does not require quoting.
@@ -895,6 +895,6 @@ file name patterns have metadata patterns.
 The most frequent filter support issues on
 the [rclone forum](https://forum.rclone.org/) are:
 
-* Not using paths relative to the root of the remote
-* Not using `/` to match from the root of a remote
-* Not using `**` to match the contents of a directory
+- Not using paths relative to the root of the remote
+- Not using `/` to match from the root of a remote
+- Not using `**` to match the contents of a directory
