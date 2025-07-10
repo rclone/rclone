@@ -2315,6 +2315,7 @@ Note that on macOS you can send a SIGINFO (which is normally ctrl-T in
 the terminal) to make the stats print immediately.
 
 ### --stats-file-name-length int
+
 By default, the `--stats` output will truncate file names and paths longer
 than 40 characters.  This is equivalent to providing
 `--stats-file-name-length 40`. Use `--stats-file-name-length 0` to disable
