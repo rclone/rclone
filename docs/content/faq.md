@@ -47,7 +47,9 @@ The syncs would be incremental (on a file by file basis).
 
 e.g.
 
-    rclone sync --interactive drive:Folder s3:bucket
+```
+rclone sync --interactive drive:Folder s3:bucket
+```
 
 ### Using rclone from multiple locations at the same time ###
 
@@ -116,17 +118,21 @@ may use `http_proxy` but another one `HTTP_PROXY`.  The `Go` libraries
 used by `rclone` will try both variations, but you may wish to set all
 possibilities.  So, on Linux, you may end up with code similar to
 
-    export http_proxy=http://proxyserver:12345
-    export https_proxy=$http_proxy
-    export HTTP_PROXY=$http_proxy
-    export HTTPS_PROXY=$http_proxy
+```
+export http_proxy=http://proxyserver:12345
+export https_proxy=$http_proxy
+export HTTP_PROXY=$http_proxy
+export HTTPS_PROXY=$http_proxy
+```
 
 Note: If the proxy server requires a username and password, then use
 
-    export http_proxy=http://username:password@proxyserver:12345
-    export https_proxy=$http_proxy
-    export HTTP_PROXY=$http_proxy
-    export HTTPS_PROXY=$http_proxy
+```
+export http_proxy=http://username:password@proxyserver:12345
+export https_proxy=$http_proxy
+export HTTP_PROXY=$http_proxy
+export HTTPS_PROXY=$http_proxy
+```
 
 The `NO_PROXY` allows you to disable the proxy for specific hosts.
 Hosts must be comma separated, and can contain domains or parts.
@@ -134,8 +140,10 @@ For instance "foo.com" also matches "bar.foo.com".
 
 e.g.
 
-    export no_proxy=localhost,127.0.0.0/8,my.host.name
-    export NO_PROXY=$no_proxy
+```
+export no_proxy=localhost,127.0.0.0/8,my.host.name
+export NO_PROXY=$no_proxy
+```
 
 Note that the FTP backend does not support `ftp_proxy` yet.
 
@@ -148,10 +156,12 @@ possibly on Solaris.
 Rclone (via the Go runtime) tries to load the root certificates from
 these places on Linux.
 
-    "/etc/ssl/certs/ca-certificates.crt", // Debian/Ubuntu/Gentoo etc.
-    "/etc/pki/tls/certs/ca-bundle.crt",   // Fedora/RHEL
-    "/etc/ssl/ca-bundle.pem",             // OpenSUSE
-    "/etc/pki/tls/cacert.pem",            // OpenELEC
+```
+"/etc/ssl/certs/ca-certificates.crt", // Debian/Ubuntu/Gentoo etc.
+"/etc/pki/tls/certs/ca-bundle.crt",   // Fedora/RHEL
+"/etc/ssl/ca-bundle.pem",             // OpenSUSE
+"/etc/pki/tls/cacert.pem",            // OpenELEC
+```
 
 So doing something like this should fix the problem.  It also sets the
 time which is important for SSL to work properly.

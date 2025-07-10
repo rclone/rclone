@@ -29,11 +29,15 @@ signatures on the release.
 
 To install rclone on Linux/macOS/BSD systems, run:
 
-    sudo -v ; curl https://rclone.org/install.sh | sudo bash
+```
+sudo -v ; curl https://rclone.org/install.sh | sudo bash
+```
 
 For beta installation, run:
 
-    sudo -v ; curl https://rclone.org/install.sh | sudo bash -s beta
+```
+sudo -v ; curl https://rclone.org/install.sh | sudo bash -s beta
+```
 
 Note that this script checks the version of rclone installed first and
 won't re-download if not needed.
@@ -44,31 +48,41 @@ won't re-download if not needed.
 
 Fetch and unpack
 
-    curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
-    unzip rclone-current-linux-amd64.zip
-    cd rclone-*-linux-amd64
+```
+curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+unzip rclone-current-linux-amd64.zip
+cd rclone-*-linux-amd64
+```
 
 Copy binary file
 
-    sudo cp rclone /usr/bin/
-    sudo chown root:root /usr/bin/rclone
-    sudo chmod 755 /usr/bin/rclone
+```
+sudo cp rclone /usr/bin/
+sudo chown root:root /usr/bin/rclone
+sudo chmod 755 /usr/bin/rclone
+```
 
 Install manpage
 
-    sudo mkdir -p /usr/local/share/man/man1
-    sudo cp rclone.1 /usr/local/share/man/man1/
-    sudo mandb
+```
+sudo mkdir -p /usr/local/share/man/man1
+sudo cp rclone.1 /usr/local/share/man/man1/
+sudo mandb
+```
 
 Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
-    rclone config
+```
+rclone config
+```
 
 ## macOS installation {#macos}
 
 ### Installation with brew {#macos-brew}
 
-    brew install rclone
+```
+brew install rclone
+```
 
 NOTE: This version of rclone will not support `mount` any more (see
 [#5373](https://github.com/rclone/rclone/issues/5373)). If mounting is wanted
@@ -84,7 +98,9 @@ developers so it may be out of date. Its current version is as below.
 
 On macOS, rclone can also be installed via [MacPorts](https://www.macports.org):
 
-    sudo port install rclone
+```
+sudo port install rclone
+```
 
 Note that this is a third party installer not controlled by the rclone
 developers so it may be out of date. Its current version is as below.
@@ -100,26 +116,36 @@ notarized it is enough to download with `curl`.
 
 Download the latest version of rclone.
 
-    cd && curl -O https://downloads.rclone.org/rclone-current-osx-amd64.zip
+```
+cd && curl -O https://downloads.rclone.org/rclone-current-osx-amd64.zip
+```
 
 Unzip the download and cd to the extracted folder.
 
-    unzip -a rclone-current-osx-amd64.zip && cd rclone-*-osx-amd64
+```
+unzip -a rclone-current-osx-amd64.zip && cd rclone-*-osx-amd64
+```
 
 Move rclone to your $PATH. You will be prompted for your password.
 
-    sudo mkdir -p /usr/local/bin
-    sudo mv rclone /usr/local/bin/
+```
+sudo mkdir -p /usr/local/bin
+sudo mv rclone /usr/local/bin/
+```
 
 (the `mkdir` command is safe to run, even if the directory already exists).
 
 Remove the leftover files.
 
-    cd .. && rm -rf rclone-*-osx-amd64 rclone-current-osx-amd64.zip
+```
+cd .. && rm -rf rclone-*-osx-amd64 rclone-current-osx-amd64.zip
+```
 
 Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
-    rclone config
+```
+rclone config
+```
 
 ### Precompiled binary, using a web browser  {#macos-precompiled-web}
 
@@ -127,12 +153,16 @@ When downloading a binary with a web browser, the browser will set the macOS
 gatekeeper quarantine attribute. Starting from Catalina, when attempting to run
 `rclone`, a pop-up will appear saying:
 
-    "rclone" cannot be opened because the developer cannot be verified.
-    macOS cannot verify that this app is free from malware.
+```
+"rclone" cannot be opened because the developer cannot be verified.
+macOS cannot verify that this app is free from malware.
+```
 
 The simplest fix is to run
 
-    xattr -d com.apple.quarantine rclone
+```
+xattr -d com.apple.quarantine rclone
+```
 
 ## Windows installation {#windows}
 
