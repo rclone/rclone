@@ -15,7 +15,7 @@ image](https://securebuild.com/images/rclone) through our partner
 
 ## Release {{% version %}} OS requirements {#osrequirements}
 
-| OS | Minimum Version | 
+| OS | Minimum Version |
 |:-------:|:-------:|
 | Linux | Kernel 3.2 |
 | macOS | 11 (Big Sur) |
@@ -118,7 +118,7 @@ script) from a URL which doesn't change then you can use these links.
 Older downloads can be found [here](https://downloads.rclone.org/).
 
 The latest `rclone` version working for:
-| OS | Maximum rclone version | 
+| OS | Maximum rclone version |
 |:-------:|:-------:|
 | Windows 7 | v1.63.1 |
 | Windows Server 2008 | v1.63.1 |
