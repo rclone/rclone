@@ -491,6 +491,7 @@ the locations that rclone will use.
 
 To override them set the corresponding options (as command-line arguments, or as
 [environment variables](https://rclone.org/docs/#environment-variables)):
+
   - [--config](https://rclone.org/docs/#config-string)
   - [--cache-dir](https://rclone.org/docs/#cache-dir-string)
   - [--temp-dir](https://rclone.org/docs/#temp-dir-string)
@@ -514,6 +515,7 @@ manually from a Command Prompt first.
 ### Autostart on Windows
 
 The most relevant alternatives for autostart on Windows are:
+
 - Run at user log on using the Startup folder
 - Run at user log on, at system startup or at schedule using Task Scheduler
 - Run at system startup using Windows service

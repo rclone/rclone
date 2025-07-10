@@ -2364,7 +2364,8 @@ e.g.
 }
 ```
 
-The keys in the error response are
+The keys in the error response are:
+
 - error - error string
 - input - the input parameters to the call
 - status - the HTTP status code
