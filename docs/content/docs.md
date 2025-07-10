@@ -1979,9 +1979,9 @@ if `--vfs-cache-mode` is set to `writes` or above.
 
 Most multi-thread transfers do not take additional memory, but some do
 (for example uploading to s3). In the worst case memory usage can be
-at maximum `--transfers` * `--multi-thread-chunk-size` *
+at maximum `--transfers` \* `--multi-thread-chunk-size` \*
 `--multi-thread-streams` or specifically for the s3 backend
-`--transfers` * `--s3-chunk-size` * `--s3-concurrency`. However you
+`--transfers` \* `--s3-chunk-size` \* `--s3-concurrency`. However you
 can use the the [--max-buffer-memory](/docs/#max-buffer-memory) flag
 to control the maximum memory used here.
 
