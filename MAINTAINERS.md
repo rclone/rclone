@@ -34,21 +34,21 @@ When a ticket comes in it should be triaged.  This means it should be classified
 
 Rclone uses the labels like this:
 
-* `bug` - a definitely verified bug
-* `can't reproduce` - a problem which we can't reproduce
-* `doc fix` - a bug in the documentation - if users need help understanding the docs add this label
-* `duplicate` - normally close these and ask the user to subscribe to the original
-* `enhancement: new remote` - a new rclone backend
-* `enhancement` - a new feature
-* `FUSE` - to do with `rclone mount` command
-* `good first issue` - mark these if you find a small self-contained issue - these get shown to new visitors to the project
-* `help` wanted - mark these if you find a self-contained issue - these get shown to new visitors to the project
-* `IMPORTANT` - note to maintainers not to forget to fix this for the release
-* `maintenance` - internal enhancement, code re-organisation, etc.
-* `Needs Go 1.XX` - waiting for that version of Go to be released
-* `question` - not a `bug` or `enhancement` - direct to the forum for next time
-* `Remote: XXX` - which rclone backend this affects
-* `thinking` - not decided on the course of action yet
+- `bug` - a definitely verified bug
+- `can't reproduce` - a problem which we can't reproduce
+- `doc fix` - a bug in the documentation - if users need help understanding the docs add this label
+- `duplicate` - normally close these and ask the user to subscribe to the original
+- `enhancement: new remote` - a new rclone backend
+- `enhancement` - a new feature
+- `FUSE` - to do with `rclone mount` command
+- `good first issue` - mark these if you find a small self-contained issue - these get shown to new visitors to the project
+- `help` wanted - mark these if you find a self-contained issue - these get shown to new visitors to the project
+- `IMPORTANT` - note to maintainers not to forget to fix this for the release
+- `maintenance` - internal enhancement, code re-organisation, etc.
+- `Needs Go 1.XX` - waiting for that version of Go to be released
+- `question` - not a `bug` or `enhancement` - direct to the forum for next time
+- `Remote: XXX` - which rclone backend this affects
+- `thinking` - not decided on the course of action yet
 
 If it turns out to be a bug or an enhancement it should be tagged as such, with the appropriate other tags.  Don't forget the "good first issue" tag to give new contributors something easy to do to get going.
 
@@ -56,11 +56,11 @@ When a ticket is tagged it should be added to a milestone, either the next relea
 
 The milestones have these meanings:
 
-* v1.XX - stuff we would like to fit into this release
-* v1.XX+1 - stuff we are leaving until the next release
-* Soon - stuff we think is a good idea - waiting to be scheduled for a release
-* Help wanted - blue sky stuff that might get moved up, or someone could help with
-* Known bugs - bugs waiting on external factors or we aren't going to fix for the moment
+- v1.XX - stuff we would like to fit into this release
+- v1.XX+1 - stuff we are leaving until the next release
+- Soon - stuff we think is a good idea - waiting to be scheduled for a release
+- Help wanted - blue sky stuff that might get moved up, or someone could help with
+- Known bugs - bugs waiting on external factors or we aren't going to fix for the moment
 
 Tickets [with no milestone](https://github.com/rclone/rclone/issues?utf8=✓&q=is%3Aissue%20is%3Aopen%20no%3Amile) are good candidates for ones that have slipped between the gaps and need following up.
 

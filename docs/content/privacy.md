@@ -57,17 +57,17 @@ This website may use social sharing buttons which help share web content directl
 
 Rclone is a command-line program to manage files on cloud storage. Its sole purpose is to access and manipulate user content in the [supported](/overview/) cloud storage systems from a local machine of the end user. For accessing the user content via the cloud provider API, Rclone uses authentication mechanisms, such as OAuth or HTTP Cookies, depending on the particular cloud provider offerings. Use of these authentication mechanisms and user data is governed by the privacy policies mentioned in the [Resources & Further Information](/privacy/#resources-further-information) section and followed by the privacy policy of Rclone.
 
-* Rclone provides the end user with access to their files available in a storage system associated by the authentication credentials via the publicly exposed API of the storage system.
-* Rclone allows storing the authentication credentials on the user machine in the local configuration file.
-* Rclone does not share any user data with third parties.
+- Rclone provides the end user with access to their files available in a storage system associated by the authentication credentials via the publicly exposed API of the storage system.
+- Rclone allows storing the authentication credentials on the user machine in the local configuration file.
+- Rclone does not share any user data with third parties.
 
 ## Resources & Further Information ##
 
-  * [Data Protection Act 1998](http://www.legislation.gov.uk/ukpga/1998/29/contents)
-  * [Privacy and Electronic Communications Regulations 2003](http://www.legislation.gov.uk/uksi/2003/2426/contents/made)
-  * [Privacy and Electronic Communications Regulations 2003 - The Guide](https://ico.org.uk/for-organisations/guide-to-pecr/)
-  * [Twitter Privacy Policy](https://twitter.com/privacy)
-  * [Facebook Privacy Policy](https://www.facebook.com/about/privacy/)
-  * [Google Privacy Policy](https://www.google.com/privacy.html)
-  * [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy)
-  * [Sample Website Privacy Policy](http://www.jamieking.co.uk/resources/free_sample_privacy_policy.html)
+- [Data Protection Act 1998](http://www.legislation.gov.uk/ukpga/1998/29/contents)
+- [Privacy and Electronic Communications Regulations 2003](http://www.legislation.gov.uk/uksi/2003/2426/contents/made)
+- [Privacy and Electronic Communications Regulations 2003 - The Guide](https://ico.org.uk/for-organisations/guide-to-pecr/)
+- [Twitter Privacy Policy](https://twitter.com/privacy)
+- [Facebook Privacy Policy](https://www.facebook.com/about/privacy/)
+- [Google Privacy Policy](https://www.google.com/privacy.html)
+- [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy)
+- [Sample Website Privacy Policy](http://www.jamieking.co.uk/resources/free_sample_privacy_policy.html)
