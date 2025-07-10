@@ -320,7 +320,7 @@ kill %1
 Make sure you have [Snapd installed](https://snapcraft.io/docs/installing-snapd)
 
 ```bash
-$ sudo snap install rclone
+sudo snap install rclone
 ```
 Due to the strict confinement of Snap, rclone snap cannot access real /home/$USER/.config/rclone directory, default config path is as below.
 
