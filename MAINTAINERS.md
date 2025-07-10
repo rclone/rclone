@@ -24,7 +24,7 @@ Current active maintainers of rclone are:
 | Dan McArdle      | @dmcardle         | gitannex                     |
 | Sam Harrison     | @childish-sambino | filescom                     |
 
-**This is a work in progress Draft**
+## This is a work in progress draft
 
 This is a guide for how to be an rclone maintainer.  This is mostly a write-up
 of what I (@ncw) attempt to do.
