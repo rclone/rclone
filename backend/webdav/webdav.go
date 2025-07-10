@@ -648,7 +648,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 	case "opencloud", "infinitescale":
 		f.precision = time.Second
 		f.useOCMtime = true
-		f.propsetMtime = true
+		f.propsetMtime = false
 		f.hasOCMD5 = false
 		f.hasOCSHA1 = true
 		f.canChunk = false
