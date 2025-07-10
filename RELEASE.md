@@ -152,7 +152,7 @@ Now
 If updating the website note that the sponsor logos have been moved out of the
 main repository.
 
-You will need to checkout `/docs/static/img/logos` from https://github.com/rclone/third-party-logos
+You will need to checkout `/docs/static/img/logos` from <https://github.com/rclone/third-party-logos>
 which is a private repo containing artwork from sponsors.
 
 ## Update the website between releases
@@ -177,7 +177,7 @@ Create the changes, check them in, test with `make serve` then
 make upload_test_website
 ```
 
-Check out https://test.rclone.org and when happy
+Check out <https://test.rclone.org> and when happy
 
 ```sh
 make upload_website

@@ -72,11 +72,11 @@ Timeout for server writing data (default 1h0m0s).
 
 ### --rc-serve
 
-Enable the serving of remote objects via the HTTP interface.  This
-means objects will be accessible at http://127.0.0.1:5572/ by default,
-so you can browse to http://127.0.0.1:5572/ or http://127.0.0.1:5572/*
+Enable the serving of remote objects via the HTTP interface. This
+means objects will be accessible at `http://127.0.0.1:5572/` by default,
+so you can browse to `http://127.0.0.1:5572/` or `http://127.0.0.1:5572/*`
 to see a listing of the remotes.  Objects may be requested from
-remotes using this syntax http://127.0.0.1:5572/[remote:path]/path/to/object
+remotes using this syntax `http://127.0.0.1:5572/[remote:path]/path/to/object`
 
 Default Off.
 
@@ -127,7 +127,7 @@ Default is IP address on which rc is running.
 
 Set the URL to fetch the rclone-web-gui files from.
 
-Default https://api.github.com/repos/rclone/rclone-webui-react/releases/latest.
+Default <https://api.github.com/repos/rclone/rclone-webui-react/releases/latest>.
 
 ### --rc-web-gui-update
 
@@ -2554,11 +2554,11 @@ See all active go routines using
 curl http://localhost:5572/debug/pprof/goroutine?debug=1
 ```
 
-Or go to http://localhost:5572/debug/pprof/goroutine?debug=1 in your browser.
+Or go to <http://localhost:5572/debug/pprof/goroutine?debug=1> in your browser.
 
 ### Other profiles to look at
 
-You can see a summary of profiles available at http://localhost:5572/debug/pprof/
+You can see a summary of profiles available at <http://localhost:5572/debug/pprof/>
 
 Here is how to use some of them:
 

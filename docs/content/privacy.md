@@ -7,7 +7,7 @@ description: "Rclone Privacy Policy"
 
 ## What is this Privacy Policy for? ##
 
-This privacy policy is for this website https://rclone.org and governs the
+This privacy policy is for this website <https://rclone.org> and governs the
 privacy of its users who choose to use it.
 
 The policy sets out the different areas where user privacy is concerned and

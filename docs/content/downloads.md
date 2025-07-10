@@ -41,8 +41,10 @@ in the Go Wiki.
 | MIPS - Big Endian | - | - | {{< download linux mips >}} | {{< download linux mips deb >}} | {{< download linux mips rpm >}} | - | - | - | - | - |
 | MIPS - Little Endian | - | - | {{< download linux mipsle >}} | {{< download linux mipsle deb >}} | {{< download linux mipsle rpm >}} | - | - | - | - | - |
 
+<!-- markdownlint-disable-next-line no-bare-urls line-length -->
 You can also find a [mirror of the downloads on GitHub](https://github.com/rclone/rclone/releases/tag/{{< version >}}).
 
+<!-- markdownlint-disable-next-line no-bare-urls -->
 See also [Android builds](https://beta.rclone.org/{{% version %}}/testbuilds/).
 These are built as part of the official release, but haven't been
 adopted as first class builds yet.
