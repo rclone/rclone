@@ -4,8 +4,6 @@ package env
 import (
 	"os"
 	"os/user"
-
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 // ShellExpandHelp describes what ShellExpand does for inclusion into help
@@ -16,7 +14,7 @@ const ShellExpandHelp = "\n\nLeading `~` will be expanded in the file name as wi
 func ShellExpand(s string) string {
 	if s != "" {
 		if s[0] == '~' {
-			newS, err := homedir.Expand(s)
+			newS, err := expandHomeDir(s)
 			if err == nil {
 				s = newS
 			}
