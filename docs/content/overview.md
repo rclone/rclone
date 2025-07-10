@@ -4,13 +4,13 @@ description: "Overview of cloud storage systems"
 type: page
 ---
 
-# Overview of cloud storage systems #
+# Overview of cloud storage systems
 
 Each cloud storage system is slightly different.  Rclone attempts to
 provide a unified interface to them, but some underlying differences
 show through.
 
-## Features ##
+## Features
 
 Here is an overview of the major features of each cloud storage system.
 
@@ -112,7 +112,7 @@ top-level sum.
 ¹³ Uloz.to provides server-calculated MD5 hash upon file upload. MD5 and SHA256
 hashes are client-calculated and stored as metadata fields.
 
-### Hash ###
+### Hash
 
 The cloud storage system supports various hash types of the objects.
 The hashes are used when transferring data as an integrity check and
@@ -122,7 +122,7 @@ the `check` command.
 To use the verify checksums when transferring between cloud storage
 systems they must support a common hash type.
 
-### ModTime ###
+### ModTime
 
 Almost all cloud storage systems store some sort of timestamp
 on objects, but several of them not something that is appropriate
@@ -166,7 +166,7 @@ means they do also support modtime-only operations.
 Storage systems with `D` in the ModTime column means that the
 following symbols apply to directories as well as files.
 
-### Case Insensitive ###
+### Case Insensitive
 
 If a cloud storage systems is case sensitive then it is possible to
 have two files which differ only in case, e.g. `file.txt` and
@@ -189,7 +189,7 @@ Most of the time this doesn't cause any problems as people tend to
 avoid files whose name differs only by case even on case sensitive
 systems.
 
-### Duplicate files ###
+### Duplicate files
 
 If a cloud storage system allows duplicate files then it can have two
 objects with the same name.
@@ -197,7 +197,7 @@ objects with the same name.
 This confuses rclone greatly when syncing - use the `rclone dedupe`
 command to rename or remove duplicates.
 
-### Restricted filenames ###
+### Restricted filenames
 
 Some cloud storage systems might have restrictions on the characters
 that are usable in file or directory names.
@@ -465,7 +465,7 @@ it to your Windows filesystem, this will fail. These characters are not
 valid in filenames on Windows, and you have told rclone not to work around
 this by converting them to valid fullwidth variants.
 
-### MIME Type ###
+### MIME Type
 
 MIME types (also known as media types) classify types of documents
 using a simple text classification, e.g. `text/html` or
@@ -501,7 +501,7 @@ The levels of metadata support are
 
 See [the metadata docs](/docs/#metadata) for more info.
 
-## Optional Features ##
+## Optional Features
 
 All rclone remotes support a base command set. Other features depend
 upon backend-specific capabilities.
@@ -574,12 +574,12 @@ purging a directory inside a bucket, files are deleted individually.
 
 ⁵ Use the `--onedrive-delta` flag to enable.
 
-### Purge ###
+### Purge
 
 This deletes a directory quicker than just deleting all the files in
 the directory.
 
-### Copy ###
+### Copy
 
 Used when copying an object to and from the same remote.  This known
 as a server-side copy so you can copy a file without downloading it
@@ -589,7 +589,7 @@ and uploading it again.  It is used if you use `rclone copy` or
 If the server doesn't support `Copy` directly then for copy operations
 the file is downloaded then re-uploaded.
 
-### Move ###
+### Move
 
 Used when moving/renaming an object on the same remote.  This is known
 as a server-side move of a file.  This is used in `rclone move` if the
@@ -599,13 +599,13 @@ If the server isn't capable of `Move` then rclone simulates it with
 `Copy` then delete.  If the server doesn't support `Copy` then rclone
 will download the file and re-upload it.
 
-### DirMove ###
+### DirMove
 
 This is used to implement `rclone move` to move a directory if
 possible.  If it isn't then it will use `Move` on each file (which
 falls back to `Copy` then download and upload - see `Move` section).
 
-### CleanUp ###
+### CleanUp
 
 This is used for emptying the trash for a remote by `rclone cleanup`.
 
@@ -615,31 +615,31 @@ error.
 ‡‡ Note that while Box implements this it has to delete every file
 individually so it will be slower than emptying the trash via the WebUI
 
-### ListR ###
+### ListR
 
 The remote supports a recursive list to list all the contents beneath
 a directory quickly.  This enables the `--fast-list` flag to work.
 See the [rclone docs](/docs/#fast-list) for more details.
 
-### StreamUpload ###
+### StreamUpload
 
 Some remotes allow files to be uploaded without knowing the file size
 in advance. This allows certain operations to work without spooling the
 file to local disk first, e.g. `rclone rcat`.
 
-### MultithreadUpload ###
+### MultithreadUpload
 
 Some remotes allow transfers to the remote to be sent as chunks in
 parallel. If this is supported then rclone will use multi-thread
 copying to transfer files much faster.
 
-### LinkSharing ###
+### LinkSharing
 
 Sets the necessary permissions on a file or folder and prints a link
 that allows others to access them, even if they don't have an account
 on the particular cloud provider.
 
-### About ###
+### About
 
 Rclone `about` prints quota information for a remote. Typical output
 includes bytes used, free, quota and in trash.
@@ -653,7 +653,7 @@ rclone union remote.
 
 See [rclone about command](https://rclone.org/commands/rclone_about/)
 
-### EmptyDir ###
+### EmptyDir
 
 The remote supports empty directories. See [Limitations](/bugs/#limitations)
  for details. Most Object/Bucket-based remotes do not support this.

@@ -2505,7 +2505,7 @@ curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' '
 }
 ```
 
-## Debugging rclone with pprof ##
+## Debugging rclone with pprof
 
 If you use the `--rc` flag this will also enable the use of the go
 profiling tools on the same port.
