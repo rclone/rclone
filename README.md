@@ -166,7 +166,7 @@ Please see the [rclone website](https://rclone.org/) for:
 
 ## Downloads
 
-- https://rclone.org/downloads/
+- <https://rclone.org/downloads/>
 
 License
 -------

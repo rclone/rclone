@@ -620,8 +620,7 @@ configure rclone to be started automatically in a highly configurable way, e.g.
 periodically on a schedule, on user log on, or at system startup. It can run
 be configured to run as the current user, or for a mount command that needs to
 be available to all users it can run as the `SYSTEM` user.
-For technical information, see
-https://docs.microsoft.com/windows/win32/taskschd/task-scheduler-start-page.
+For technical information, see [Task Scheduler for developers](https://docs.microsoft.com/windows/win32/taskschd/task-scheduler-start-page).
 
 #### Run as service
 
