@@ -16,7 +16,8 @@
 
 # Rclone
 
-Rclone *("rsync for cloud storage")* is a command-line program to sync files and directories to and from different cloud storage providers.
+Rclone *("rsync for cloud storage")* is a command-line program to sync files and
+directories to and from different cloud storage providers.
 
 ## Storage providers
 
@@ -134,17 +135,22 @@ These backends adapt or modify other storage providers
 - MD5/SHA-1 hashes checked at all times for file integrity
 - Timestamps preserved on files
 - Partial syncs supported on a whole file basis
-- [Copy](https://rclone.org/commands/rclone_copy/) mode to just copy new/changed files
-- [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory identical
-- [Bisync](https://rclone.org/bisync/) (two way) to keep two directories in sync bidirectionally
-- [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash equality
+- [Copy](https://rclone.org/commands/rclone_copy/) mode to just copy new/changed
+  files
+- [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory
+  identical
+- [Bisync](https://rclone.org/bisync/) (two way) to keep two directories in sync
+  bidirectionally
+- [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash
+  equality
 - Can sync to and from network, e.g. two different cloud accounts
 - Optional large file chunking ([Chunker](https://rclone.org/chunker/))
 - Optional transparent compression ([Compress](https://rclone.org/compress/))
 - Optional encryption ([Crypt](https://rclone.org/crypt/))
 - Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
 - Multi-threaded downloads to local disk
-- Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files over HTTP/WebDAV/FTP/SFTP/DLNA
+- Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files
+  over HTTP/WebDAV/FTP/SFTP/DLNA
 
 ## Installation & documentation
 

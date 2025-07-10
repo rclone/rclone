@@ -190,7 +190,10 @@ feature then you will need to install the third party utility
 
 ### Windows package manager (Winget) {#windows-chocolatey}
 
-[Winget](https://learn.microsoft.com/en-us/windows/package-manager/) comes pre-installed with the latest versions of Windows. If not, update the [App Installer](https://www.microsoft.com/p/app-installer/9nblggh4nns1) package from the Microsoft store.
+[Winget](https://learn.microsoft.com/en-us/windows/package-manager/) comes
+pre-installed with the latest versions of Windows. If not, update the
+[App Installer](https://www.microsoft.com/p/app-installer/9nblggh4nns1) package
+from the Microsoft store.
 
 To install rclone
 
@@ -286,32 +289,33 @@ There are a few command line options to consider when starting an rclone Docker 
 from the rclone image.
 
 - You need to mount the host rclone config dir at `/config/rclone` into the Docker
-  container. Due to the fact that rclone updates tokens inside its config file, and that
-  the update process involves a file rename, you need to mount the whole host rclone
-  config dir, not just the single host rclone config file.
+  container. Due to the fact that rclone updates tokens inside its config file,
+  and that the update process involves a file rename, you need to mount the whole
+  host rclone config dir, not just the single host rclone config file.
 
 - You need to mount a host data dir at `/data` into the Docker container.
 
 - By default, the rclone binary inside a Docker container runs with UID=0 (root).
-  As a result, all files created in a run will have UID=0. If your config and data files
-  reside on the host with a non-root UID:GID, you need to pass these on the container
-  start command line.
+  As a result, all files created in a run will have UID=0. If your config and
+  data files reside on the host with a non-root UID:GID, you need to pass these
+  on the container start command line.
 
 - If you want to access the RC interface (either via the API or the Web UI), it is
   required to set the `--rc-addr` to `:5572` in order to connect to it from outside
-  the container. An explanation about why this is necessary can be found in an old [pythonspeed.com](https://web.archive.org/web/20200808071950/https://pythonspeed.com/articles/docker-connection-refused/)
+  the container. An explanation about why this is necessary can be found in an old
+  [pythonspeed.com](https://web.archive.org/web/20200808071950/https://pythonspeed.com/articles/docker-connection-refused/)
   article.
   - NOTE: Users running this container with the docker network set to `host` should
-    probably set it to listen to localhost only, with `127.0.0.1:5572` as the value for
-    `--rc-addr`
+    probably set it to listen to localhost only, with `127.0.0.1:5572` as the
+    value for `--rc-addr`
 
 - It is possible to use `rclone mount` inside a userspace Docker container, and expose
-  the resulting fuse mount to the host. The exact `docker run` options to do that might
-  vary slightly between hosts. See, e.g. the discussion in this
+  the resulting fuse mount to the host. The exact `docker run` options to do that
+  might vary slightly between hosts. See, e.g. the discussion in this
   [thread](https://github.com/moby/moby/issues/9448).
 
-  You also need to mount the host `/etc/passwd` and `/etc/group` for fuse to work inside
-  the container.
+  You also need to mount the host `/etc/passwd` and `/etc/group` for fuse to work
+  inside the container.
 
 Here are some commands tested on an Ubuntu 18.04.3 host:
 
@@ -357,16 +361,19 @@ Make sure you have [Snapd installed](https://snapcraft.io/docs/installing-snapd)
 sudo snap install rclone
 ```
 
-Due to the strict confinement of Snap, rclone snap cannot access real /home/$USER/.config/rclone directory, default config path is as below.
+Due to the strict confinement of Snap, rclone snap cannot access real
+`/home/$USER/.config/rclone` directory, default config path is as below.
 
 - Default config directory:
   - /home/$USER/snap/rclone/current/.config/rclone
 
 Note: Due to the strict confinement of Snap, `rclone mount` feature is `not` supported.
 
-If mounting is wanted, either install a precompiled binary or enable the relevant option when [installing from source](#source).
+If mounting is wanted, either install a precompiled binary or enable the relevant
+option when [installing from source](#source).
 
-Note that this is controlled by [community maintainer](https://github.com/boukendesho/rclone-snap) not the rclone developers so it may be out of date. Its current version is as below.
+Note that this is controlled by [community maintainer](https://github.com/boukendesho/rclone-snap)
+not the rclone developers so it may be out of date. Its current version is as below.
 
 [![rclone](https://snapcraft.io/rclone/badge.svg)](https://snapcraft.io/rclone)
 
@@ -500,7 +507,8 @@ role](https://github.com/stefangweichinger/ansible-rclone).
 
 Instructions
 
-  1. `git clone https://github.com/stefangweichinger/ansible-rclone.git` into your local roles-directory
+  1. `git clone https://github.com/stefangweichinger/ansible-rclone.git` into
+     your local roles-directory
   2. add the role to the hosts you want rclone installed to:
 
 ```yml
@@ -532,19 +540,19 @@ To override them set the corresponding options (as command-line arguments, or as
 
 ## Autostart
 
-After installing and configuring rclone, as described above, you are ready to use rclone
-as an interactive command line utility. If your goal is to perform *periodic* operations,
-such as a regular [sync](https://rclone.org/commands/rclone_sync/), you will probably want
-to configure your rclone command in your operating system's scheduler. If you need to
-expose *service*-like features, such as [remote control](https://rclone.org/rc/),
-[GUI](https://rclone.org/gui/), [serve](https://rclone.org/commands/rclone_serve/)
-or [mount](https://rclone.org/commands/rclone_mount/), you will often want an rclone
-command always running in the background, and configuring it to run in a service infrastructure
-may be a better option. Below are some alternatives on how to achieve this on
-different operating systems.
+After installing and configuring rclone, as described above, you are ready to use
+rclone as an interactive command line utility. If your goal is to perform *periodic*
+operations, such as a regular [sync](https://rclone.org/commands/rclone_sync/), you
+will probably want to configure your rclone command in your operating system's
+scheduler. If you need to expose *service*-like features, such as
+[remote control](https://rclone.org/rc/), [GUI](https://rclone.org/gui/),
+[serve](https://rclone.org/commands/rclone_serve/) or [mount](https://rclone.org/commands/rclone_mount/),
+you will often want an rclone command always running in the background, and
+configuring it to run in a service infrastructure may be a better option. Below
+are some alternatives on how to achieve this on different operating systems.
 
-NOTE: Before setting up autorun it is highly recommended that you have tested your command
-manually from a Command Prompt first.
+NOTE: Before setting up autorun it is highly recommended that you have tested
+your command manually from a Command Prompt first.
 
 ### Autostart on Windows
 
@@ -559,11 +567,11 @@ The most relevant alternatives for autostart on Windows are:
 Rclone is a console application, so if not starting from an existing Command Prompt,
 e.g. when starting rclone.exe from a shortcut, it will open a Command Prompt window.
 When configuring rclone to run from task scheduler and windows service you are able
-to set it to run hidden in background. From rclone version 1.54 you can also make it
-run hidden from anywhere by adding option `--no-console` (it may still flash briefly
-when the program starts). Since rclone normally writes information and any error
-messages to the console, you must redirect this to a file to be able to see it.
-Rclone has a built-in option `--log-file` for that.
+to set it to run hidden in background. From rclone version 1.54 you can also make
+it run hidden from anywhere by adding option `--no-console` (it may still flash
+briefly when the program starts). Since rclone normally writes information and any
+error messages to the console, you must redirect this to a file to be able to see
+it. Rclone has a built-in option `--log-file` for that.
 
 Example command to run a sync in background:
 
@@ -574,8 +582,8 @@ c:\rclone\rclone.exe sync c:\files remote:/files --no-console --log-file c:\rclo
 #### User account
 
 As mentioned in the [mount](https://rclone.org/commands/rclone_mount/) documentation,
-mounted drives created as Administrator are not visible to other accounts, not even the
-account that was elevated as Administrator. By running the mount command as the
+mounted drives created as Administrator are not visible to other accounts, not even
+the account that was elevated as Administrator. By running the mount command as the
 built-in `SYSTEM` user account, it will create drives accessible for everyone on
 the system. Both scheduled task and Windows service can be used to achieve this.
 
@@ -622,13 +630,14 @@ your rclone command, as an alternative to scheduled task configured to run at st
 
 ##### Mount command built-in service integration
 
-For mount commands, rclone has a built-in Windows service integration via the third-party
-WinFsp library it uses. Registering as a regular Windows service easy, as you just have to
-execute the built-in PowerShell command `New-Service` (requires administrative privileges).
+For mount commands, rclone has a built-in Windows service integration via the
+third-party WinFsp library it uses. Registering as a regular Windows service
+easy, as you just have to execute the built-in PowerShell command `New-Service`
+(requires administrative privileges).
 
 Example of a PowerShell command that creates a Windows service for mounting
-some `remote:/files` as drive letter `X:`, for *all* users (service will be running as the
-local system account):
+some `remote:/files` as drive letter `X:`, for *all* users (service will be
+running as the local system account):
 
 ```pwsh
 New-Service -Name Rclone -BinaryPathName 'c:\rclone\rclone.exe mount remote:/files X: --config c:\rclone\config\rclone.conf --log-file c:\rclone\logs\mount.txt'
@@ -652,15 +661,15 @@ customized response to different exit codes, with a GUI to configure everything 
 (although it can also be used from command line ).
 
 There are also several other alternatives. To mention one more,
-[WinSW](https://github.com/winsw/winsw), "Windows Service Wrapper", is worth checking out.
-It requires .NET Framework, but it is preinstalled on newer versions of Windows, and it
-also provides alternative standalone distributions which includes necessary runtime (.NET 5).
-WinSW is a command-line only utility, where you have to manually create an XML file with
-service configuration. This may be a drawback for some, but it can also be an advantage
-as it is easy to back up and reuse the configuration
+[WinSW](https://github.com/winsw/winsw), "Windows Service Wrapper", is worth checking
+out. It requires .NET Framework, but it is preinstalled on newer versions of Windows,
+and it also provides alternative standalone distributions which includes necessary
+runtime (.NET 5). WinSW is a command-line only utility, where you have to manually
+create an XML file with service configuration. This may be a drawback for some, but
+it can also be an advantage as it is easy to back up and reuse the configuration
 settings, without having go through manual steps in a GUI. One thing to note is that
-by default it does not restart the service on error, one have to explicit enable this
-in the configuration file (via the "onfailure" parameter).
+by default it does not restart the service on error, one have to explicit enable
+this in the configuration file (via the "onfailure" parameter).
 
 ### Autostart on Linux
 

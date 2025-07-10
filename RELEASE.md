@@ -15,7 +15,8 @@ This file describes how to make the various kinds of releases
 - Check GitHub actions build for master is Green
 - make test # see integration test server or run locally
 - make tag
-- edit docs/content/changelog.md # make sure to remove duplicate logs from point releases
+- edit docs/content/changelog.md # make sure to remove duplicate logs from point
+  releases
 - make tidy
 - make doc
 - git status - to check for new man pages - git add them
@@ -140,14 +141,16 @@ Now
 - make startstable
 - Do the steps as above
 - git co master
-- `#` cherry pick the changes to the changelog - check the diff to make sure it is correct
+- `#` cherry pick the changes to the changelog - check the diff to make sure it
+  is correct
 - git checkout ${BASE_TAG}-stable docs/content/changelog.md
 - git commit -a -v -m "Changelog updates from Version ${NEW_TAG}"
 - git push
 
 ## Sponsor logos
 
-If updating the website note that the sponsor logos have been moved out of the main repository.
+If updating the website note that the sponsor logos have been moved out of the
+main repository.
 
 You will need to checkout `/docs/static/img/logos` from https://github.com/rclone/third-party-logos
 which is a private repo containing artwork from sponsors.

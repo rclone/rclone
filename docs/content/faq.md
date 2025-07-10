@@ -172,10 +172,12 @@ curl -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bag
 ntpclient -s -h pool.ntp.org
 ```
 
-The two environment variables `SSL_CERT_FILE` and `SSL_CERT_DIR`, mentioned in the [x509 package](https://godoc.org/crypto/x509),
-provide an additional way to provide the SSL root certificates.
+The two environment variables `SSL_CERT_FILE` and `SSL_CERT_DIR`, mentioned in
+the [x509 package](https://godoc.org/crypto/x509), provide an additional way to
+provide the SSL root certificates.
 
-Note that you may need to add the `--insecure` option to the `curl` command line if it doesn't work without.
+Note that you may need to add the `--insecure` option to the `curl` command line
+if it doesn't work without.
 
 ```sh
 curl --insecure -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
@@ -229,7 +231,8 @@ Error: config failed to refresh token: failed to start auth webserver: listen tc
 yyyy/mm/dd hh:mm:ss Fatal error: config failed to refresh token: failed to start auth webserver: listen tcp 127.0.0.1:53682: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
 ```
 
-This is sometimes caused by the Host Network Service causing issues with opening the port on the host.
+This is sometimes caused by the Host Network Service causing issues with opening
+the port on the host.
 
 A simple solution may be restarting the Host Network Service with eg. Powershell
 
