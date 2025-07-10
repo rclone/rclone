@@ -676,7 +676,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	var resp *client.UploadResult
 
-	err = o.fs.pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		var res *http.Response
 		res, resp, err = o.fs.ik.Upload(ctx, in, client.UploadParam{
 			FileName:      fileName,
@@ -731,7 +731,7 @@ func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, opti
 	UseUniqueFileName := new(bool)
 	*UseUniqueFileName = false
 
-	err := f.pacer.Call(func() (bool, error) {
+	err := f.pacer.CallNoRetry(func() (bool, error) {
 		var res *http.Response
 		var err error
 		res, _, err = f.ik.Upload(ctx, in, client.UploadParam{
