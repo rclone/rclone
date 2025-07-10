@@ -12,7 +12,8 @@ which can be used to remote control rclone using its API.
 You can either use the [rc](#api-rc) command to access the API
 or [use HTTP directly](#api-http).
 
-If you just want to run a remote control then see the [rcd](/commands/rclone_rcd/) command.
+If you just want to run a remote control then see the [rcd](/commands/rclone_rcd/)
+command.
 
 ## Supported parameters
 
@@ -102,7 +103,9 @@ Default Off.
 ### --rc-enable-metrics
 
 Enable OpenMetrics/Prometheus compatible endpoint at `/metrics`.
-If more control over the metrics is desired (for example running it on a different port or with different auth) then endpoint can be enabled with the `--metrics-*` flags instead.
+If more control over the metrics is desired (for example running it on a
+different port or with different auth) then endpoint can be enabled with
+the `--metrics-*` flags instead.
 
 Default Off.
 
@@ -2396,7 +2399,8 @@ The keys in the error response are:
 ### CORS
 
 The sever implements basic CORS support and allows all origins for that.
-The response to a preflight OPTIONS request will echo the requested "Access-Control-Request-Headers" back.
+The response to a preflight OPTIONS request will echo the requested
+"Access-Control-Request-Headers" back.
 
 ### Using POST with URL parameters only
 

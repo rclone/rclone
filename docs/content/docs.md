@@ -118,8 +118,8 @@ starts with a `-` then put a `--` on its own first, eg
 rclone lsf -- -directory-starting-with-dash
 ```
 
-A `parameter` is usually a file path or [rclone remote](#syntax-of-remote-paths), eg
-`/path/to/file` or `remote:path/to/file` but it can be other things -
+A `parameter` is usually a file path or [rclone remote](#syntax-of-remote-paths),
+eg `/path/to/file` or `remote:path/to/file` but it can be other things -
 the `subcommand` help will tell you what.
 
 Source and destination paths are specified by the name you gave the
@@ -133,7 +133,7 @@ learning rclone to avoid accidental data loss.
 
 ## Subcommands
 
-rclone uses a system of subcommands.  For example
+rclone uses a system of subcommands. For example
 
 ```sh
 rclone ls remote:path # lists a remote
@@ -143,7 +143,9 @@ rclone sync --interactive /local/path remote:path # syncs /local/path to the rem
 
 The main rclone commands with most used first
 
-- [rclone config](/commands/rclone_config/) - Enter an interactive configuration session.
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable line-length -->
+- [rclone config](/commands/rclone_config/) - Enter an interactive configurationsession.
 - [rclone copy](/commands/rclone_copy/) - Copy files from source to dest, skipping already copied.
 - [rclone sync](/commands/rclone_sync/) - Make source and dest identical, modifying destination only.
 - [rclone bisync](/commands/rclone_bisync/) - [Bidirectional synchronization](/bisync/) between two paths.
@@ -174,6 +176,7 @@ The main rclone commands with most used first
 - [rclone obscure](/commands/rclone_obscure/) - Obscure password for use in the rclone.conf
 - [rclone cryptcheck](/commands/rclone_cryptcheck/) - Check the integrity of an encrypted remote.
 - [rclone about](/commands/rclone_about/) - Get quota information from the remote.
+<!-- markdownlint-restore -->
 
 See the [commands index](/commands/) for the full list.
 
@@ -839,7 +842,8 @@ for upload:download, e.g.`10M:1M`.
 
 Entries can be separated by spaces or semicolons.
 
-**Note:** Semicolons can be used as separators instead of spaces to avoid parsing issues in environments like Docker.
+**Note:** Semicolons can be used as separators instead of spaces to avoid
+parsing issues in environments like Docker.
 
 An example of a typical timetable to avoid link saturation during daytime
 working hours could be:
@@ -948,14 +952,17 @@ Default value is depending on operating system:
 
 - Windows `%LocalAppData%\rclone`, if `LocalAppData` is defined.
 - macOS `$HOME/Library/Caches/rclone` if `HOME` is defined.
-- Unix `$XDG_CACHE_HOME/rclone` if `XDG_CACHE_HOME` is defined, else `$HOME/.cache/rclone` if `HOME` is defined.
-- Fallback (on all OS) to `$TMPDIR/rclone`, where `TMPDIR` is the value from [--temp-dir](#temp-dir-string).
+- Unix `$XDG_CACHE_HOME/rclone` if `XDG_CACHE_HOME` is defined, else
+  `$HOME/.cache/rclone` if `HOME` is defined.
+- Fallback (on all OS) to `$TMPDIR/rclone`, where `TMPDIR` is the value
+  from [--temp-dir](#temp-dir-string).
 
 You can use the [config paths](/commands/rclone_config_paths/)
 command to see the current value.
 
 Cache directory is heavily used by the [VFS File Caching](/commands/rclone_mount/#vfs-file-caching)
-mount feature, but also by [serve](/commands/rclone_serve/), [GUI](/gui) and other parts of rclone.
+mount feature, but also by [serve](/commands/rclone_serve/), [GUI](/gui) and
+other parts of rclone.
 
 ### --check-first
 
@@ -1079,8 +1086,8 @@ The `~` symbol in paths above represent the home directory of the current user
 on any OS, and the value is defined as following:
 
 - On Windows: `%HOME%` if defined, else `%USERPROFILE%`, or else `%HOMEDRIVE%\%HOMEPATH%`.
-- On Unix: `$HOME` if defined, else by looking up current user in OS-specific user database
-  (e.g. passwd file), or else use the result from shell command `cd && pwd`.
+- On Unix: `$HOME` if defined, else by looking up current user in OS-specific user
+  database (e.g. passwd file), or else use the result from shell command `cd && pwd`.
 
 If you run `rclone config file` you will see where the default location is for
 you. Running `rclone config touch` will ensure a configuration file exists,
@@ -1250,9 +1257,10 @@ sometimes speed up transfers due to a
 Specify a DSCP value or name to use in connections. This could help QoS
 system to identify traffic class. BE, EF, DF, LE, CSx and AFxx are allowed.
 
-See the description of [differentiated services](https://en.wikipedia.org/wiki/Differentiated_services) to get an idea of
-this field. Setting this to 1 (LE) to identify the flow to SCAVENGER class
-can avoid occupying too much bandwidth in a network with DiffServ support ([RFC 8622](https://tools.ietf.org/html/rfc8622)).
+See the description of [differentiated services](https://en.wikipedia.org/wiki/Differentiated_services)
+to get an idea of this field. Setting this to 1 (LE) to identify the flow to
+SCAVENGER class can avoid occupying too much bandwidth in a network with DiffServ
+support ([RFC 8622](https://tools.ietf.org/html/rfc8622)).
 
 For example, if you configured QoS on router to handle LE properly. Running:
 
@@ -2207,7 +2215,8 @@ This can have a modifier appended with a comma:
 
 - `ascending` or `asc` - order so that the smallest (or oldest) is processed first
 - `descending` or `desc` - order so that the largest (or newest) is processed first
-- `mixed` - order so that the smallest is processed first for some threads and the largest for others
+- `mixed` - order so that the smallest is processed first for some threads and
+  the largest for others
 
 If the modifier is `mixed` then it can have an optional percentage
 (which defaults to `50`), e.g. `size,mixed,25` which means that 25% of
@@ -2446,8 +2455,8 @@ the display with a date string. The default is `2006/01/02 15:04:05 - `
 
 When this is specified, rclone enables the single-line stats and prepends
 the display with a user-supplied date string. The date string MUST be
-enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format) for
-date formatting syntax.
+enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format)
+for date formatting syntax.
 
 ### --stats-unit string
 
@@ -2528,7 +2537,8 @@ the default. Make sure the directory exists and have accessible permissions.
 By default the operating system's temp directory will be used:
 
 - On Unix systems, `$TMPDIR` if non-empty, else `/tmp`.
-- On Windows, the first non-empty value from `%TMP%`, `%TEMP%`, `%USERPROFILE%`, or the Windows directory.
+- On Windows, the first non-empty value from `%TMP%`, `%TEMP%`, `%USERPROFILE%`,
+  or the Windows directory.
 
 When overriding the default with this option, the specified path will be
 set as value of environment variable `TMPDIR` on Unix systems
@@ -2898,9 +2908,12 @@ There is no way to recover the configuration if you lose your password.
 
 You can also use
 
-- [rclone config encryption set](/commands/rclone_config_encryption_set/) to set the config encryption directly
-- [rclone config encryption remove](/commands/rclone_config_encryption_remove/) to remove it
-- [rclone config encryption check](/commands/rclone_config_encryption_check/) to check that it is encrypted properly.
+- [rclone config encryption set](/commands/rclone_config_encryption_set/)
+  to set the config encryption directly
+- [rclone config encryption remove](/commands/rclone_config_encryption_remove/)
+  to remove it
+- [rclone config encryption check](/commands/rclone_config_encryption_check/)
+  to check that it is encrypted properly.
 
 rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox)
 which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate
@@ -3201,9 +3214,11 @@ it will log a high priority message if the retry was successful.
 - `4` - File not found
 - `5` - Temporary error (one that more retries might fix) (Retry errors)
 - `6` - Less serious errors (like 461 errors from dropbox) (NoRetry errors)
-- `7` - Fatal error (one that more retries won't fix, like account suspended) (Fatal errors)
+- `7` - Fatal error (one that more retries won't fix, like account suspended)
+  (Fatal errors)
 - `8` - Transfer exceeded - limit set by --max-transfer reached
-- `9` - Operation successful, but no files transferred (Requires [`--error-on-no-transfer`](#error-on-no-transfer))
+- `9` - Operation successful, but no files transferred (Requires
+  [`--error-on-no-transfer`](#error-on-no-transfer))
 - `10` - Duration exceeded - limit set by --max-duration reached
 
 ## Environment variables
@@ -3234,7 +3249,8 @@ or for `-vv`, `RCLONE_VERBOSE=2`.
 The same parser is used for the options and the environment variables
 so they take exactly the same form.
 
-The options set by environment variables can be seen with the `-vv` flag, e.g. `rclone version -vv`.
+The options set by environment variables can be seen with the `-vv` flag,
+e.g. `rclone version -vv`.
 
 Options that can appear multiple times (type `stringArray`) are
 treated slightly differently as environment variables can only be
@@ -3314,7 +3330,8 @@ this order and the first one with a value is used.
 
 - Parameters in connection strings, e.g. `myRemote,skip_links:`
 - Flag values as supplied on the command line, e.g. `--skip-links`
-- Remote specific environment vars, e.g. `RCLONE_CONFIG_MYREMOTE_SKIP_LINKS` (see above).
+- Remote specific environment vars, e.g. `RCLONE_CONFIG_MYREMOTE_SKIP_LINKS`
+  (see above).
 - Backend-specific environment vars, e.g. `RCLONE_LOCAL_SKIP_LINKS`.
 - Backend generic environment vars, e.g. `RCLONE_SKIP_LINKS`.
 - Config file, e.g. `skip_links = true`.

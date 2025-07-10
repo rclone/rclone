@@ -68,7 +68,8 @@ pattern { , pattern }
           comma-separated (without spaces) patterns
 ```
 
-character classes (see [Go regular expression reference](https://golang.org/pkg/regexp/syntax/)) include:
+character classes (see [Go regular expression reference](https://golang.org/pkg/regexp/syntax/))
+include:
 
 ```text
 Named character classes (e.g. [\d], [^\d], [\D], [^\D])
@@ -76,7 +77,8 @@ Perl character classes (e.g. \s, \S, \w, \W)
 ASCII character classes (e.g. [[:alnum:]], [[:alpha:]], [[:punct:]], [[:xdigit:]])
 ```
 
-regexp for advanced users to insert a regular expression - see [below](#regexp) for more info:
+regexp for advanced users to insert a regular expression - see [below](#regexp)
+for more info:
 
 ```text
 Any re2 regular expression not containing `}}`
@@ -115,8 +117,9 @@ F:
 │   │   └── document.pdf
 ```
 
-To copy the contents of folder `data` into folder `bkp` excluding the contents of subfolder
-`excl`the following command treats `F:\data` and `F:\bkp` as top level for filtering.
+To copy the contents of folder `data` into folder `bkp` excluding the contents
+of subfolder `excl`the following command treats `F:\data` and `F:\bkp` as top
+level for filtering.
 
 `rclone copy F:\data\ F:\bkp\ --exclude=/excl/**`
 
@@ -306,9 +309,10 @@ Directory recursion optimisation occurs if either:
 sftp, Microsoft OneDrive and WebDAV do not support `ListR`. Google
 Drive and most bucket type storage do. [Full list](https://rclone.org/overview/#optional-features)
 
-- On other remotes (those that support `ListR`), if the rclone command is not naturally recursive, and
-provided it is not run with the `--fast-list` flag. `ls`, `lsf -R` and
-`size` are naturally recursive but `sync`, `copy` and `move` are not.
+- On other remotes (those that support `ListR`), if the rclone command is not
+naturally recursive, and provided it is not run with the `--fast-list` flag.
+`ls`, `lsf -R` and `size` are naturally recursive but `sync`, `copy` and `move`
+are not.
 
 - Whenever the `--disable ListR` flag is applied to an rclone command.
 
@@ -550,7 +554,9 @@ processed in.
 Arrange the order of filter rules with the most restrictive first and
 work down.
 
-Lines starting with # or ; are ignored, and can be used to write comments. Inline comments are not supported. _Use `-vv --dump filters` to see how they appear in the final regexp._
+Lines starting with # or ; are ignored, and can be used to write comments.
+Inline comments are not supported. _Use `-vv --dump filters` to see how they
+appear in the final regexp._
 
 E.g. for `filter-file.txt`:
 
@@ -632,8 +638,8 @@ to right along the command line.
 
 Paths within the `--files-from` file are interpreted as starting
 with the root specified in the rclone command.  Leading `/` separators are
-ignored. See [--files-from-raw](#files-from-raw-read-list-of-source-file-names-without-any-processing) if
-you need the input to be processed in a raw manner.
+ignored. See [--files-from-raw](#files-from-raw-read-list-of-source-file-names-without-any-processing)
+if you need the input to be processed in a raw manner.
 
 E.g. for a file `files-from.txt`:
 
@@ -709,8 +715,8 @@ Then there will be an extra `home` directory on the remote:
 
 This flag is the same as `--files-from` except that input is read in a
 raw manner. Lines with leading / trailing whitespace, and lines starting
-with `;` or `#` are read without any processing. [rclone lsf](/commands/rclone_lsf/) has
-a compatible format that can be used to export file lists from remotes for
+with `;` or `#` are read without any processing. [rclone lsf](/commands/rclone_lsf/)
+has a compatible format that can be used to export file lists from remotes for
 input to `--files-from-raw`.
 
 ### `--ignore-case` - make searches case insensitive
@@ -788,7 +794,8 @@ See [the time option docs](/docs/#time-options) for valid formats.
 
 ### `--hash-filter` - Deterministically select a subset of files {#hash-filter}
 
-The `--hash-filter` flag enables selecting a deterministic subset of files, useful for:
+The `--hash-filter` flag enables selecting a deterministic subset of files,
+useful for:
 
 1. Running large sync operations across multiple machines.
 2. Checking a subset of files for bitrot.
@@ -808,7 +815,8 @@ The flag takes two parameters expressed as a fraction:
 For example:
 
 - `--hash-filter 1/3`: Selects the first third of the files.
-- `--hash-filter 2/3` and `--hash-filter 3/3`: Select the second and third partitions, respectively.
+- `--hash-filter 2/3` and `--hash-filter 3/3`: Select the second and third
+  partitions, respectively.
 
 Each partition is non-overlapping, ensuring all files are covered without duplication.
 
@@ -820,11 +828,13 @@ Use `@` as `K` to randomly select a partition:
 --hash-filter @/M
 ```
 
-For example, `--hash-filter @/3` will randomly select a number between 0 and 2. This will stay constant across retries.
+For example, `--hash-filter @/3` will randomly select a number between 0 and 2.
+This will stay constant across retries.
 
 #### How It Works
 
-- Rclone takes each file's full path, normalizes it to lowercase, and applies Unicode normalization.
+- Rclone takes each file's full path, normalizes it to lowercase, and applies
+  Unicode normalization.
 - It then hashes the normalized path into a 64 bit number.
 - The hash result is reduced modulo `N` to assign the file to a partition.
 - If the calculated partition does not match `K` the file is excluded.
@@ -956,11 +966,14 @@ directories.
 The filters can be applied using these flags.
 
 - `--metadata-include`      - Include metadatas matching pattern
-- `--metadata-include-from` - Read metadata include patterns from file (use - to read from stdin)
+- `--metadata-include-from` - Read metadata include patterns from file
+  (use - to read from stdin)
 - `--metadata-exclude`      - Exclude metadatas matching pattern
-- `--metadata-exclude-from` - Read metadata exclude patterns from file (use - to read from stdin)
+- `--metadata-exclude-from` - Read metadata exclude patterns from file
+  (use - to read from stdin)
 - `--metadata-filter`       - Add a metadata filtering rule
-- `--metadata-filter-from`  - Read metadata filtering patterns from a file (use - to read from stdin)
+- `--metadata-filter-from`  - Read metadata filtering patterns from a file
+  (use - to read from stdin)
 
 Each flag can be repeated. See the section on [how filter rules are
 applied](#how-filter-rules-work) for more details - these flags work
