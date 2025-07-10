@@ -20,24 +20,32 @@ start() {
            -e "IDM_ADMIN_PASSWORD=$PASS" \
            -e "OC_FORCE_CONFIG_OVERWRITE=true" \
            -e "OC_URL=https://127.0.0.1:$PORT" \
+	   -e "OC_ADMIN_USER_ID=some-admin-user-id-0000-100000000000" \
+	   -e "GATEWAY_STORAGE_USERS_MOUNT_ID=storage-users-1" \
+           -e "STORAGE_USERS_MOUNT_ID=storage-users-1" \
            opencloudeu/opencloud-rolling \
            init
 
-    docker run --rm -d --name $NAME \
+    docker run -d --name $NAME \
            -e "OC_LOG_LEVEL=debug" \
            -e "OC_LOG_PRETTY=true" \
            -e "OC_URL=https://127.0.0.1:$PORT" \
            -e "IDM_ADMIN_PASSWORD=$PASS" \
+           -e "OC_ADMIN_USER_ID=some-admin-user-id-0000-100000000000" \
+           -e "GATEWAY_STORAGE_USERS_MOUNT_ID=storage-users-1" \
+           -e "STORAGE_USERS_MOUNT_ID=storage-users-1" \
            -e "OC_INSECURE=true" \
            -e "PROXY_ENABLE_BASIC_AUTH=true" \
            -v ${CONF_DIR}:/etc/opencloud \
            -p 127.0.0.1:${PORT}:9200 \
            opencloudeu/opencloud-rolling 
-    
+
+    sleep 10
     echo type=webdav
-    echo url=https://127.0.0.1:${PORT}/dav/spaces/some-admin-user-id-0000-100000000000
+    url=$(curl -f -s -k -u admin:${PASS} "https://127.0.0.1:${PORT}/graph/v1.0/me/drive"   -H 'accept: application/json' | jq -r '.root.webDavUrl' - )
+    echo url=${url}
     echo user=$USER
-    echo pass=$(rclone obscure $PASS)
+    echo pass=$(/home/kf/git/rclone/rclone obscure $PASS)
     echo vendor=opencloud
     echo _connect=127.0.0.1:${PORT}
     echo _connect_delay=5s
