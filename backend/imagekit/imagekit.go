@@ -800,35 +800,10 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	return metadata, nil
 }
 
-// Copy src to this remote using server-side move operations.
-//
-// This is stored with the remote path given.
-//
-// It returns the destination Object and a possible error.
-//
-// Will only be called if src.Fs().Name() == f.Name()
-//
-// If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*Object)
-	if !ok {
-		return nil, fs.ErrorCantMove
-	}
-
-	file, err := srcObj.Open(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return uploadFile(ctx, f, file, remote)
-}
-
 // Check the interfaces are satisfied.
 var (
 	_ fs.Fs           = &Fs{}
 	_ fs.Purger       = &Fs{}
 	_ fs.PublicLinker = &Fs{}
 	_ fs.Object       = &Object{}
-	_ fs.Copier       = &Fs{}
 )
