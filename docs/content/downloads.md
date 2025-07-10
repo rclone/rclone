@@ -52,7 +52,7 @@ adopted as first class builds yet.
 See [the release signing docs](/release_signing/) for how to verify
 signatures on the release.
 
-## Script download and install ##
+## Script download and install
 
 To install rclone on Linux/macOS/BSD systems, run:
 

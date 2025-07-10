@@ -1,4 +1,4 @@
-# Maintainers guide for rclone #
+# Maintainers guide for rclone
 
 Current active maintainers of rclone are:
 
@@ -29,7 +29,7 @@ Current active maintainers of rclone are:
 This is a guide for how to be an rclone maintainer.  This is mostly a write-up
 of what I (@ncw) attempt to do.
 
-## Triaging Tickets ##
+## Triaging Tickets
 
 When a ticket comes in it should be triaged.  This means it should be classified
 by adding labels and placed into a milestone. Quite a lot of tickets need a bit
@@ -79,12 +79,12 @@ Tickets [with no milestone](https://github.com/rclone/rclone/issues?utf8=✓&q=i
 are good candidates for ones that have slipped between the gaps and need
 following up.
 
-## Closing Tickets ##
+## Closing Tickets
 
 Close tickets as soon as you can - make sure they are tagged with a release.
 Post a link to a beta in the ticket with the fix in, asking for feedback.
 
-## Pull requests ##
+## Pull requests
 
 Try to process pull requests promptly!
 
@@ -98,12 +98,12 @@ After merging the commit, in your local master branch, do `git pull` then run
 Sometimes pull requests need to be left open for a while - this especially true
 of contributions of new backends which take a long time to get right.
 
-## Merges ##
+## Merges
 
 If you are merging a branch locally then do `git merge --ff-only branch-name` to
 avoid a merge commit.  You'll need to rebase the branch if it doesn't merge cleanly.
 
-## Release cycle ##
+## Release cycle
 
 Rclone aims for a 6-8 week release cycle.  Sometimes release cycles take longer
 if there is something big to merge that didn't stabilize properly or for personal
@@ -121,11 +121,11 @@ Follow the instructions in RELEASE.md for making the release. Note that the
 testing part is the most time-consuming often needing several rounds of test
 and fix depending on exactly how many new features rclone has gained.
 
-## Mailing list ##
+## Mailing list
 
 There is now an invite-only mailing list for rclone developers `rclone-dev` on
 google groups.
 
-## TODO ##
+## TODO
 
 I should probably make a <dev@rclone.org> to register with cloud providers.

@@ -3,9 +3,9 @@ title: "Privacy Policy"
 description: "Rclone Privacy Policy"
 ---
 
-# Rclone Privacy Policy #
+# Rclone Privacy Policy
 
-## What is this Privacy Policy for? ##
+## What is this Privacy Policy for?
 
 This privacy policy is for this website <https://rclone.org> and governs the
 privacy of its users who choose to use it.
@@ -15,14 +15,14 @@ outlines the obligations & requirements of the users, the website and website
 owners. Furthermore the way this website processes, stores and protects user
 data and information will also be detailed within this policy.
 
-## The Website ##
+## The Website
 
 This website and its owners take a proactive approach to user privacy and
 ensure the necessary steps are taken to protect the privacy of its users
 throughout their visiting experience. This website complies to all UK national
 laws and requirements for user privacy.
 
-## Use of Cookies ##
+## Use of Cookies
 
 This website uses cookies to better the users experience while visiting the
 website. Where applicable this website uses a cookie control system allowing
@@ -55,7 +55,7 @@ cookies are used for conversion and referral tracking and typically expire
 after 30 days, though some may take longer. No personal information is stored,
 saved or collected.
 
-## Contact & Communication ##
+## Contact & Communication
 
 Users contacting this website and/or its owners do so at their own discretion
 and provide any such personal details requested at their own risk. Your
@@ -66,7 +66,7 @@ This website and its owners use any information submitted to provide you with
 further information about the products / services they offer or to assist you
 in answering any questions or queries you may have submitted.
 
-## External Links ##
+## External Links
 
 Although this website only looks to include quality, safe and relevant external
 links, users are advised adopt a policy of caution before clicking any external
@@ -78,7 +78,7 @@ note they click on external links at their own risk and this website and its
 owners cannot be held liable for any damages or implications caused by visiting
 any external links mentioned.
 
-## Adverts and Sponsored Links ##
+## Adverts and Sponsored Links
 
 This website may contain sponsored links and adverts. These will typically be
 served through our advertising partners, to whom may have detailed privacy
@@ -92,7 +92,7 @@ on sponsored external links at their own risk and this website and its owners
 cannot be held liable for any damages or implications caused by visiting any
 external links mentioned.
 
-### Social Media Platforms ##
+### Social Media Platforms
 
 Communication, engagement and actions taken through external social media
 platforms that this website and its owners participate on are subject to the
@@ -113,7 +113,7 @@ discretion and note that the social media platform may track and save your
 request to share a web page respectively through your social media platform
 account.
 
-## Use of Cloud API User Data ##
+## Use of Cloud API User Data
 
 Rclone is a command-line program to manage files on cloud storage. Its sole
 purpose is to access and manipulate user content in the [supported](/overview/)
@@ -131,7 +131,7 @@ section and followed by the privacy policy of Rclone.
   local configuration file.
 - Rclone does not share any user data with third parties.
 
-## Resources & Further Information ##
+## Resources & Further Information
 
 - [Data Protection Act 1998](http://www.legislation.gov.uk/ukpga/1998/29/contents)
 - [Privacy and Electronic Communications Regulations 2003](http://www.legislation.gov.uk/uksi/2003/2426/contents/made)

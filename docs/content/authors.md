@@ -6,13 +6,11 @@ description: "Rclone Authors and Contributors"
 
 # Authors and contributors
 
-Authors
--------
+## Authors
 
 - Nick Craig-Wood <nick@craig-wood.com>
 
-Contributors
-------------
+## Contributors
 
 {{< rem `email addresses removed from here need to be added to
 bin/.ignore-emails to make sure update-authors.py doesn't immediately
