@@ -247,7 +247,7 @@ value, say `export GOGC=20`.  This will make the garbage collector
 work harder, reducing memory size at the expense of CPU usage.
 
 The most common cause of rclone using lots of memory is a single
-directory with millions of files in. 
+directory with millions of files in.
 
 Before rclone v1.70 has to load this entirely into memory as rclone
 objects. Each rclone object takes 0.5k-1k of memory. There is

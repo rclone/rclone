@@ -440,7 +440,7 @@ description: "Rclone Changelog"
 * Changed backends
     * [S3](/s3/) backend updated to use [AWS SDKv2](https://github.com/aws/aws-sdk-go-v2) as v1 is now unsupported.
         * The matrix of providers and auth methods is huge and there could be problems with obscure combinations.
-        * Please report problems in a [new issue](https://github.com/rclone/rclone/issues/new/choose) on Github. 
+        * Please report problems in a [new issue](https://github.com/rclone/rclone/issues/new/choose) on Github.
 * New commands
     * [config encryption](/commands/rclone_config_encryption/): set, remove and check to manage config file encryption (Nick Craig-Wood)
 * New Features
