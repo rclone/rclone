@@ -36,8 +36,10 @@ func TestIntegration3(t *testing.T) {
 		t.Skip("skipping as -remote is set")
 	}
 
-	// Where the Kerberos ccache file is stored. Ref: fstest/testserver/init.d/TestSMBKerberosCcache
-	ccache := "/tmp/rclone_krb5/ccache"
+	krb5Dir := t.TempDir()
+	t.Setenv("KRB5_CONFIG", filepath.Join(krb5Dir, "krb5.conf"))
+	ccache := filepath.Join(krb5Dir, "ccache")
+	t.Setenv("RCLONE_TEST_CUSTOM_CCACHE_LOCATION", ccache)
 
 	name := "TestSMBKerberosCcache"
 

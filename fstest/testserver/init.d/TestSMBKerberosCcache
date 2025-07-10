@@ -4,23 +4,23 @@ set -e
 
 # Set default location for Kerberos config and ccache. Can be overridden by the caller
 # using environment variables RCLONE_TEST_CUSTOM_CCACHE_LOCATION and KRB5_CONFIG.
-export TEMP_DIR=/tmp/rclone_krb5
+export TEMP_DIR=/tmp/rclone_krb5_ccache
 mkdir -p "${TEMP_DIR}"
 export KRB5_CONFIG=${KRB5_CONFIG:-${TEMP_DIR}/krb5.conf}
 export RCLONE_TEST_CUSTOM_CCACHE_LOCATION=${RCLONE_TEST_CUSTOM_CCACHE_LOCATION:-${TEMP_DIR}/ccache}
 
-IMAGE=rclone/test-smb-kerberos
-NAME=smb-kerberos
+IMAGE=rclone/test-smb-kerberos-ccache
+NAME=smb-kerberos-ccache
 USER=rclone
 DOMAIN=RCLONE
 REALM=RCLONE.LOCAL
-SMB_PORT=28633
-KRB5_PORT=28634
+SMB_PORT=28637
+KRB5_PORT=28638
 
 . $(dirname "$0")/docker.bash
 
 start() {
-    docker build -t ${IMAGE} - <<EOF
+    docker build -t ${IMAGE} --load - <<EOF
 FROM alpine:3.21
 RUN apk add --no-cache samba-dc
 RUN rm -rf /etc/samba/smb.conf /var/lib/samba \
@@ -34,7 +34,7 @@ RUN rm -rf /etc/samba/smb.conf /var/lib/samba \
     --dns-backend=SAMBA_INTERNAL \
     --host-name=localhost \
  && samba-tool user add --random-password $USER \
-  && samba-tool user setexpiry $USER --noexpiry \
+ && samba-tool user setexpiry $USER --noexpiry \
  && mkdir -m 777 /share /rclone \
  && cat <<EOS >> /etc/samba/smb.conf
 [global]
@@ -78,7 +78,7 @@ EOF
     echo host=localhost
     echo port=$SMB_PORT
     echo use_kerberos=true
-    echo kerberos_ccache="${RCLONE_TEST_CUSTOM_CCACHE_LOCATION}"
+    echo kerberos_ccache=${RCLONE_TEST_CUSTOM_CCACHE_LOCATION}
     echo _connect=127.0.0.1:${SMB_PORT}
 }
 
