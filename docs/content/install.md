@@ -163,10 +163,13 @@ feature then you will need to install the third party utility
 [Winget](https://learn.microsoft.com/en-us/windows/package-manager/) comes pre-installed with the latest versions of Windows. If not, update the [App Installer](https://www.microsoft.com/p/app-installer/9nblggh4nns1) package from the Microsoft store.
 
 To install rclone
+
 ```
 winget install Rclone.Rclone
 ```
+
 To uninstall rclone
+
 ```
 winget uninstall Rclone.Rclone --force
 ```
@@ -322,6 +325,7 @@ Make sure you have [Snapd installed](https://snapcraft.io/docs/installing-snapd)
 ```bash
 sudo snap install rclone
 ```
+
 Due to the strict confinement of Snap, rclone snap cannot access real /home/$USER/.config/rclone directory, default config path is as below.
 
 - Default config directory:
@@ -532,6 +536,7 @@ messages to the console, you must redirect this to a file to be able to see it.
 Rclone has a built-in option `--log-file` for that.
 
 Example command to run a sync in background:
+
 ```
 c:\rclone\rclone.exe sync c:\files remote:/files --no-console --log-file c:\rclone\logs\sync_files.txt
 ```

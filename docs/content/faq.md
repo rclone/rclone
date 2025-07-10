@@ -215,6 +215,7 @@ from source with CGO enabled if necessary). See the
 [name resolution section in the go docs](https://golang.org/pkg/net/#hdr-Name_Resolution).
 
 ### Failed to start auth webserver on Windows ###
+
 ```
 Error: config failed to refresh token: failed to start auth webserver: listen tcp 127.0.0.1:53682: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
 ...
@@ -224,6 +225,7 @@ yyyy/mm/dd hh:mm:ss Fatal error: config failed to refresh token: failed to start
 This is sometimes caused by the Host Network Service causing issues with opening the port on the host.
 
 A simple solution may be restarting the Host Network Service with eg. Powershell
+
 ```
 Restart-Service hns
 ```
