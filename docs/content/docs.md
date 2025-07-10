@@ -1159,9 +1159,11 @@ this field. Setting this to 1 (LE) to identify the flow to SCAVENGER class
 can avoid occupying too much bandwidth in a network with DiffServ support ([RFC 8622](https://tools.ietf.org/html/rfc8622)).
 
 For example, if you configured QoS on router to handle LE properly. Running:
+
 ```
 rclone copy --dscp LE from:/from to:/to
 ```
+
 would make the priority lower than usual internet flows.
 
 This option has no effect on Windows (see [golang/go#42728](https://github.com/golang/go/issues/42728)).
@@ -2759,6 +2761,7 @@ e/n/d/s/q>
 ```
 
 Go into `s`, Set configuration password:
+
 ```
 e/n/d/s/q> s
 Your configuration is not encrypted.
@@ -3176,6 +3179,7 @@ file as documented [above](#valid-remote-names).
 You must write the name in uppercase in the environment variable, but
 as seen from example above it will be listed and can be accessed in
 lowercase, while you can also refer to the same remote in uppercase:
+
 ```
 $ rclone lsd mys3:
           -1 2016-09-21 12:54:21        -1 my-bucket
