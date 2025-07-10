@@ -91,7 +91,7 @@ developers so it may be out of date. Its current version is as below.
 
 [![MacPorts port](https://repology.org/badge/version-for-repo/macports/rclone.svg)](https://repology.org/project/rclone/versions)
 
-More information [here](https://ports.macports.org/port/rclone/).
+More information on [macports.org](https://ports.macports.org/port/rclone/).
 
 ### Precompiled binary, using curl {#macos-precompiled}
 
@@ -269,7 +269,8 @@ from the rclone image.
 
 - If you want to access the RC interface (either via the API or the Web UI), it is
   required to set the `--rc-addr` to `:5572` in order to connect to it from outside
-  the container. An explanation about why this is necessary is present [here](https://web.archive.org/web/20200808071950/https://pythonspeed.com/articles/docker-connection-refused/).
+  the container. An explanation about why this is necessary can be found in an old [pythonspeed.com](https://web.archive.org/web/20200808071950/https://pythonspeed.com/articles/docker-connection-refused/)
+  article.
   - NOTE: Users running this container with the docker network set to `host` should
     probably set it to listen to localhost only, with `127.0.0.1:5572` as the value for
     `--rc-addr`
@@ -609,7 +610,7 @@ into its own launcher service, as kind of "child services". This has the additio
 advantage that it also implements a network provider that integrates into
 Windows standard methods for managing network drives. This is currently not
 officially supported by Rclone, but with WinFsp version 2019.3 B2 / v1.5B2 or later
-it should be possible through path rewriting as described [here](https://github.com/rclone/rclone/issues/3340).
+it should be possible through path rewriting as described in [#3340](https://github.com/rclone/rclone/issues/3340).
 
 ##### Third-party service integration
 
