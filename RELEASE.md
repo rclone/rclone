@@ -24,7 +24,7 @@ This file describes how to make the various kinds of releases
 - make retag
 - git push origin # without --follow-tags so it doesn't push the tag if it fails
 - git push --follow-tags origin
-- # Wait for the GitHub builds to complete then...
+- \# Wait for the GitHub builds to complete then...
 - make fetch_binaries
 - make tarball
 - make vendorball
@@ -34,7 +34,7 @@ This file describes how to make the various kinds of releases
 - make upload_website
 - make upload_github
 - make startdev # make startstable for stable branch
-- # announce with forum post, twitter post, patreon post
+- \# announce with forum post, twitter post, patreon post
 
 ## Update dependencies
 
