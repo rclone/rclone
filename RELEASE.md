@@ -48,8 +48,10 @@ Early in the next release cycle update the dependencies.
 
 If the `make updatedirect` upgrades the version of go in the `go.mod`
 
-    go 1.22.0
-    
+```
+go 1.22.0
+```
+
 then go to manual mode. `go1.22` here is the lowest supported version
 in the `go.mod`.
 
@@ -99,7 +101,9 @@ The above procedure will not upgrade major versions, so v2 to v3.
 However this tool can show which major versions might need to be
 upgraded:
 
-    go run github.com/icholy/gomajor@latest list -major
+```
+go run github.com/icholy/gomajor@latest list -major
+```
 
 Expect API breakage when updating major versions.
 
@@ -107,7 +111,9 @@ Expect API breakage when updating major versions.
 
 At some point after the release run
 
-    bin/tidy-beta v1.55
+```
+bin/tidy-beta v1.55
+```
 
 where the version number is that of a couple ago to remove old beta binaries.
 
@@ -150,21 +156,29 @@ which is a private repo containing artwork from sponsors.
 
 Create an update website branch based off the last release
 
-    git co -b update-website
+```
+git co -b update-website
+```
 
 If the branch already exists, double check there are no commits that need saving.
 
 Now reset the branch to the last release
 
-    git reset --hard v1.64.0
+```
+git reset --hard v1.64.0
+```
 
 Create the changes, check them in, test with `make serve` then
 
-    make upload_test_website
+```
+make upload_test_website
+```
 
 Check out https://test.rclone.org and when happy
 
-    make upload_website
+```
+make upload_website
+```
 
 Cherry pick any changes back to master and the stable branch if it is active.
 
