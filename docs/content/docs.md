@@ -2439,6 +2439,7 @@ showing the most important stats only.
 ### --stats-one-line-date
 
 When this is specified, rclone enables the single-line stats and prepends
+<!-- markdownlint-disable-next-line no-space-in-code -->
 the display with a date string. The default is `2006/01/02 15:04:05 - `
 
 ### --stats-one-line-date-format string

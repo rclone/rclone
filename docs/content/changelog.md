@@ -1376,7 +1376,7 @@ instead of of `--size-only`, when `check` is not available.
   - Fix Arvancloud Domain and region changes and alphabetise the provider (Ehsan Tadayon)
   - Fix Qiniu KODO quirks virtualHostStyle is false (zzq)
 - SFTP
-  - Add `--sftp-host-key-algorithms ` to allow specifying SSH host key algorithms (Joel)
+  - Add `--sftp-host-key-algorithms` to allow specifying SSH host key algorithms (Joel)
   - Fix using `--sftp-key-use-agent` and `--sftp-key-file` together needing private key file (Arnav Singh)
   - Fix move to allow overwriting existing files (Nick Craig-Wood)
   - Don't stat directories before listing them (Nick Craig-Wood)
