@@ -182,7 +182,7 @@ rc` command.
 
 You can use it like this:
 
-```
+```sh
 $ rclone rc rc/noop param1=one param2=two
 {
 	"param1": "one",
@@ -193,14 +193,14 @@ $ rclone rc rc/noop param1=one param2=two
 If the remote is running on a different URL than the default
 `http://localhost:5572/`, use the `--url` option to specify it:
 
-```
+```sh
 rclone rc --url http://some.remote:1234/ rc/noop
 ```
 
 Or, if the remote is listening on a Unix socket, use the `--unix-socket` option
 instead:
 
-```
+```sh
 rclone rc --unix-socket /tmp/rclone.sock rc/noop
 ```
 
@@ -213,7 +213,7 @@ remote server.
 `rclone rc` also supports a `--json` flag which can be used to send
 more complicated input parameters.
 
-```
+```sh
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 } }' rc/noop
 {
 	"p1": [
@@ -233,13 +233,13 @@ If the parameter being passed is an object then it can be passed as a
 JSON string rather than using the `--json` flag which simplifies the
 command line.
 
-```
+```sh
 rclone rc operations/list fs=/tmp remote=test opt='{"showHash": true}'
 ```
 
 Rather than
 
-```
+```sh
 rclone rc operations/list --json '{"fs": "/tmp", "remote": "test", "opt": {"showHash": true}}'
 ```
 
@@ -266,7 +266,7 @@ response timing out.
 
 Starting a job with the `_async` flag:
 
-```
+```sh
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 }, "_async": true }' rc/noop
 {
 	"jobid": 2
@@ -276,7 +276,7 @@ $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 }, "_async": tr
 Query the status to see if the job has finished.  For more information
 on the meaning of these return parameters see the `job/status` call.
 
-```
+```sh
 $ rclone rc --json '{ "jobid":2 }' job/status
 {
 	"duration": 0.000124163,
@@ -304,7 +304,7 @@ $ rclone rc --json '{ "jobid":2 }' job/status
 
 `job/list` can be used to show the running or recently completed jobs
 
-```
+```sh
 $ rclone rc job/list
 {
 	"jobids": [
@@ -321,27 +321,27 @@ duration of an rc call only then pass in the `_config` parameter.
 This should be in the same format as the `main` key returned by
 [options/get](#options-get).
 
-```
+```sh
 rclone rc --loopback options/get blocks=main
 ```
 
 You can see more help on these options with this command (see [the
 options blocks section](#option-blocks) for more info).
 
-```
+```sh
 rclone rc --loopback options/info blocks=main
 ```
 
 For example, if you wished to run a sync with the `--checksum`
 parameter, you would pass this parameter in your JSON blob.
 
-```
+```json
 "_config":{"CheckSum": true}
 ```
 
 If using `rclone rc` this could be passed as
 
-```
+```sh
 rclone rc sync/sync ... _config='{"CheckSum": true}'
 ```
 
@@ -352,7 +352,7 @@ Note that it is possible to set some values as strings or integers -
 see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
-```
+```json
 "_config":{"BufferSize": "42M"}
 "_config":{"BufferSize": 44040192}
 ```
@@ -368,32 +368,32 @@ pass in the `_filter` parameter.
 This should be in the same format as the `filter` key returned by
 [options/get](#options-get).
 
-```
+```sh
 rclone rc --loopback options/get blocks=filter
 ```
 
 You can see more help on these options with this command (see [the
 options blocks section](#option-blocks) for more info).
 
-```
+```sh
 rclone rc --loopback options/info blocks=filter
 ```
 
 For example, if you wished to run a sync with these flags
 
-```
+```sh
 --max-size 1M --max-age 42s --include "a" --include "b"
 ```
 
 you would pass this parameter in your JSON blob.
 
-```
+```json
 "_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
 ```
 
 If using `rclone rc` this could be passed as
 
-```
+```sh
 rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
 ```
 
@@ -404,7 +404,7 @@ Note that it is possible to set some values as strings or integers -
 see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
-```
+```json
 "_filter":{"MinSize": "42M"}
 "_filter":{"MinSize": 44040192}
 ```
@@ -423,7 +423,7 @@ value. This allows caller to group stats under their own name.
 
 Stats for specific group can be accessed by passing `group` to `core/stats`:
 
-```
+```sh
 $ rclone rc --json '{ "group": "job/1" }' core/stats
 {
 	"speed": 12345
@@ -488,7 +488,7 @@ An example of this might be the `--log-level` flag. Note that the
 `Name` of the option becomes the command line flag with `_` replaced
 with `-`.
 
-```
+```json
 {
     "Advanced": false,
     "Default": 5,
@@ -547,7 +547,7 @@ isn't specified then it defaults to the root of the remote.
 
 For example this JSON is equivalent to `remote:/tmp`
 
-```
+```json
 {
     "_name": "remote",
     "_root": "/tmp"
@@ -556,7 +556,7 @@ For example this JSON is equivalent to `remote:/tmp`
 
 And this is equivalent to `:sftp,host='example.com':/tmp`
 
-```
+```json
 {
     "type": "sftp",
     "host": "example.com",
@@ -566,7 +566,7 @@ And this is equivalent to `:sftp,host='example.com':/tmp`
 
 And this is equivalent to `/tmp/dir`
 
-```
+```json
 {
     "type": "local",
     "_root": "/tmp/dir"
@@ -2374,7 +2374,7 @@ If an error occurs then there will be an HTTP error status (e.g. 500)
 and the body of the response will contain a JSON encoded error object,
 e.g.
 
-```
+```json
 {
     "error": "Expecting string value for key \"remote\" (was float64)",
     "input": {
@@ -2400,13 +2400,13 @@ The response to a preflight OPTIONS request will echo the requested "Access-Cont
 
 ### Using POST with URL parameters only
 
-```
+```sh
 curl -X POST 'http://localhost:5572/rc/noop?potato=1&sausage=2'
 ```
 
 Response
 
-```
+```json
 {
 	"potato": "1",
 	"sausage": "2"
@@ -2415,11 +2415,11 @@ Response
 
 Here is what an error response looks like:
 
-```
+```sh
 curl -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 ```
 
-```
+```json
 {
 	"error": "arbitrary error on input map[potato:1 sausage:2]",
 	"input": {
@@ -2431,7 +2431,7 @@ curl -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 
 Note that curl doesn't return errors to the shell unless you use the `-f` option
 
-```
+```sh
 $ curl -f -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 curl: (22) The requested URL returned error: 400 Bad Request
 $ echo $?
@@ -2440,13 +2440,13 @@ $ echo $?
 
 ### Using POST with a form
 
-```
+```sh
 curl --data "potato=1" --data "sausage=2" http://localhost:5572/rc/noop
 ```
 
 Response
 
-```
+```json
 {
 	"potato": "1",
 	"sausage": "2"
@@ -2456,13 +2456,13 @@ Response
 Note that you can combine these with URL parameters too with the POST
 parameters taking precedence.
 
-```
+```sh
 curl --data "potato=1" --data "sausage=2" "http://localhost:5572/rc/noop?rutabaga=3&sausage=4"
 ```
 
 Response
 
-```
+```json
 {
 	"potato": "1",
 	"rutabaga": "3",
@@ -2473,13 +2473,13 @@ Response
 
 ### Using POST with a JSON blob
 
-```
+```sh
 curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' http://localhost:5572/rc/noop
 ```
 
 response
 
-```
+```json
 {
 	"password": "xyz",
 	"username": "xyz"
@@ -2489,11 +2489,11 @@ response
 This can be combined with URL parameters too if required.  The JSON
 blob takes precedence.
 
-```
+```sh
 curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' 'http://localhost:5572/rc/noop?rutabaga=3&potato=4'
 ```
 
-```
+```json
 {
 	"potato": 2,
 	"rutabaga": "3",
@@ -2512,7 +2512,7 @@ To use these, first [install go](https://golang.org/doc/install).
 
 To profile rclone's memory use you can run:
 
-```
+```sh
 go tool pprof -web http://localhost:5572/debug/pprof/heap
 ```
 
@@ -2521,7 +2521,7 @@ memory.
 
 You can also use the `-text` flag to produce a textual summary
 
-```
+```sh
 $ go tool pprof -text http://localhost:5572/debug/pprof/heap
 Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       flat  flat%   sum%        cum   cum%
@@ -2546,7 +2546,7 @@ alive which should have been garbage collected.
 
 See all active go routines using
 
-```
+```sh
 curl http://localhost:5572/debug/pprof/goroutine?debug=1
 ```
 

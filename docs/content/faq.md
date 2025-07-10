@@ -32,7 +32,7 @@ If you need to configure a remote, see the [config help docs](/docs/#configure).
 If you are using rclone entirely with [on the fly remotes](/docs/#backend-path-to-dir),
 you can create an empty config file to get rid of this notice, for example:
 
-```
+```sh
 rclone config touch
 ```
 
@@ -47,7 +47,7 @@ The syncs would be incremental (on a file by file basis).
 
 e.g.
 
-```
+```sh
 rclone sync --interactive drive:Folder s3:bucket
 ```
 
@@ -56,7 +56,7 @@ rclone sync --interactive drive:Folder s3:bucket
 You can use rclone from multiple places at the same time if you choose
 different subdirectory for the output, e.g.
 
-```
+```sh
 Server A> rclone sync --interactive /tmp/whatever remote:ServerA
 Server B> rclone sync --interactive /tmp/whatever remote:ServerB
 ```
@@ -64,7 +64,7 @@ Server B> rclone sync --interactive /tmp/whatever remote:ServerB
 If you sync to the same directory then you should use rclone copy
 otherwise the two instances of rclone may delete each other's files, e.g.
 
-```
+```sh
 Server A> rclone copy /tmp/whatever remote:Backup
 Server B> rclone copy /tmp/whatever remote:Backup
 ```
@@ -118,7 +118,7 @@ may use `http_proxy` but another one `HTTP_PROXY`.  The `Go` libraries
 used by `rclone` will try both variations, but you may wish to set all
 possibilities.  So, on Linux, you may end up with code similar to
 
-```
+```sh
 export http_proxy=http://proxyserver:12345
 export https_proxy=$http_proxy
 export HTTP_PROXY=$http_proxy
@@ -127,7 +127,7 @@ export HTTPS_PROXY=$http_proxy
 
 Note: If the proxy server requires a username and password, then use
 
-```
+```sh
 export http_proxy=http://username:password@proxyserver:12345
 export https_proxy=$http_proxy
 export HTTP_PROXY=$http_proxy
@@ -140,7 +140,7 @@ For instance "foo.com" also matches "bar.foo.com".
 
 e.g.
 
-```
+```sh
 export no_proxy=localhost,127.0.0.0/8,my.host.name
 export NO_PROXY=$no_proxy
 ```
@@ -156,7 +156,7 @@ possibly on Solaris.
 Rclone (via the Go runtime) tries to load the root certificates from
 these places on Linux.
 
-```
+```sh
 "/etc/ssl/certs/ca-certificates.crt", // Debian/Ubuntu/Gentoo etc.
 "/etc/pki/tls/certs/ca-bundle.crt",   // Fedora/RHEL
 "/etc/ssl/ca-bundle.pem",             // OpenSUSE
@@ -166,7 +166,7 @@ these places on Linux.
 So doing something like this should fix the problem.  It also sets the
 time which is important for SSL to work properly.
 
-```
+```sh
 mkdir -p /etc/ssl/certs/
 curl -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
 ntpclient -s -h pool.ntp.org
@@ -177,7 +177,7 @@ provide an additional way to provide the SSL root certificates.
 
 Note that you may need to add the `--insecure` option to the `curl` command line if it doesn't work without.
 
-```
+```sh
 curl --insecure -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
 ```
 
@@ -202,7 +202,7 @@ versions' file formats
 This happens when rclone cannot resolve a domain. Please check that
 your DNS setup is generally working, e.g.
 
-```
+```sh
 # both should print a long list of possible IP addresses
 dig www.googleapis.com          # resolve using your default DNS
 dig www.googleapis.com @8.8.8.8 # resolve with Google's DNS server
@@ -223,7 +223,7 @@ from source with CGO enabled if necessary). See the
 
 ### Failed to start auth webserver on Windows ###
 
-```
+```text
 Error: config failed to refresh token: failed to start auth webserver: listen tcp 127.0.0.1:53682: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
 ...
 yyyy/mm/dd hh:mm:ss Fatal error: config failed to refresh token: failed to start auth webserver: listen tcp 127.0.0.1:53682: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
@@ -233,7 +233,7 @@ This is sometimes caused by the Host Network Service causing issues with opening
 
 A simple solution may be restarting the Host Network Service with eg. Powershell
 
-```
+```pwsh
 Restart-Service hns
 ```
 

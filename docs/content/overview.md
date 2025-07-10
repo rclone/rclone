@@ -402,7 +402,7 @@ and to maintain backward compatibility, its behavior has not been changed.
 
 To take a specific example, the FTP backend's default encoding is
 
-```
+```sh
 --ftp-encoding "Slash,Del,Ctl,RightSpace,Dot"
 ```
 
@@ -411,13 +411,13 @@ any of the invalid Windows characters in file names. You are backing
 up Linux servers to this FTP server which do have those characters in
 file names. So you would add the Windows set which are
 
-```
+```text
 Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
 ```
 
 to the existing ones, giving:
 
-```
+```text
 Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot,Del,RightSpace
 ```
 
@@ -435,7 +435,7 @@ To avoid this you can change the set of characters rclone should convert
 for the local filesystem, using command-line argument `--local-encoding`.
 Rclone's default behavior on Windows corresponds to
 
-```
+```sh
 --local-encoding "Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
 ```
 
@@ -443,7 +443,7 @@ If you want to use fullwidth characters `：`, `＊` and `？` in your filenames
 without rclone changing them when uploading to a remote, then set the same as
 the default value but without `Colon,Question,Asterisk`:
 
-```
+```sh
 --local-encoding "Slash,LtGt,DoubleQuote,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
 ```
 

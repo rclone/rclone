@@ -51,13 +51,13 @@ signatures on the release.
 
 To install rclone on Linux/macOS/BSD systems, run:
 
-```
+```sh
 sudo -v ; curl https://rclone.org/install.sh | sudo bash
 ```
 
 For beta installation, run:
 
-```
+```sh
 sudo -v ; curl https://rclone.org/install.sh | sudo bash -s beta
 ```
 
@@ -69,13 +69,13 @@ won't re-download if not needed.
 [Beta releases](https://beta.rclone.org) are generated from each commit
 to master.  Note these are named like
 
-```
+```text
 {Version Tag}.beta.{Commit Number}.{Git Commit Hash}
 ```
 
 e.g.
 
-```
+```text
 v1.53.0-beta.4677.b657a2204
 ```
 
@@ -87,13 +87,13 @@ and will normally be at the end of the list.
 
 Some beta releases may have a branch name also:
 
-```
+```text
 {Version Tag}-beta.{Commit Number}.{Git Commit Hash}.{Branch Name}
 ```
 
 e.g.
 
-```
+```text
 v1.53.0-beta.4677.b657a2204.semver
 ```
 

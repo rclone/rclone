@@ -13,13 +13,13 @@ change.
 Run this command in a terminal and rclone will download and then
 display the GUI in a web browser.
 
-```
+```sh
 rclone rcd --rc-web-gui
 ```
 
 This will produce logs like this and rclone needs to continue to run to serve the GUI:
 
-```
+```text
 2019/08/25 11:40:14 NOTICE: A new release for gui is present at https://github.com/rclone/rclone-webui-react/releases/download/v0.0.6/currentbuild.zip
 2019/08/25 11:40:14 NOTICE: Downloading webgui binary. Please wait. [Size: 3813937, Path :  /home/USER/.cache/rclone/webgui/v0.0.6.zip]
 2019/08/25 11:40:16 NOTICE: Unzipping
