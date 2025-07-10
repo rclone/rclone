@@ -128,4 +128,4 @@ google groups.
 
 ## TODO ##
 
-I should probably make a dev@rclone.org to register with cloud providers.
+I should probably make a <dev@rclone.org> to register with cloud providers.
