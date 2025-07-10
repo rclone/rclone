@@ -540,6 +540,7 @@ from a list of `remote:`.
 
 Adds path/file names to an rclone command based on rules in a
 named file. The file contains a list of remarks and pattern rules. Include
+<!-- markdownlint-disable-next-line no-space-in-code -->
 rules start with `+ ` and exclude rules with `- `. `!` clears existing
 rules. Rules are processed in the order they are defined.
 
