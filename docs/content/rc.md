@@ -2548,4 +2548,3 @@ for more info on how to use the profiling and for a general overview
 see [the Go team's blog post on profiling go programs](https://blog.golang.org/profiling-go-programs).
 
 The profiling hook is [zero overhead unless it is used](https://stackoverflow.com/q/26545159/164234).
-

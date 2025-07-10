@@ -107,5 +107,3 @@ The GUI is being developed in the: [rclone/rclone-webui-react repository](https:
 Bug reports and contributions are very welcome :-)
 
 If you have questions then please ask them on the [rclone forum](https://forum.rclone.org/).
-
-

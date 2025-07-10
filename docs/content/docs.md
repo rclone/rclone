@@ -1640,8 +1640,6 @@ returned from the rc call [core/stats](/rc/#core-stats).
 }
 ```
 
-
-
 ### --low-level-retries int
 
 This controls the number of low level retries rclone does.
@@ -3187,7 +3185,6 @@ $ rclone lsd mys3:
 $ rclone lsd MYS3:
           -1 2016-09-21 12:54:21        -1 my-bucket
 ```
-
 
 Note that you can only set the options of the immediate backend,
 so RCLONE_CONFIG_MYS3CRYPT_ACCESS_KEY_ID has no effect, if myS3Crypt is
