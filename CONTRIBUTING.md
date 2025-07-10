@@ -32,7 +32,7 @@ Then [install Git](https://git-scm.com/downloads) and set your public contributi
 
 Next open your terminal, change directory to your preferred folder and initialise your local rclone project:
 
-```
+```sh
 git clone https://github.com/rclone/rclone.git
 cd rclone
 git remote rename origin upstream
@@ -46,13 +46,13 @@ Note that most of the terminal commands in the rest of this guide must be execut
 
 Now [install Go](https://golang.org/doc/install) and verify your installation:
 
-```
+```sh
 go version
 ```
 
 Great, you can now compile and execute your own version of rclone:
 
-```
+```sh
 go build
 ./rclone version
 ```
@@ -61,7 +61,7 @@ go build
 more accurate version number in the executable as well as enable you to specify
 more build options.) Finally make a branch to add your new feature
 
-```
+```sh
 git checkout -b my-new-feature
 ```
 
@@ -71,7 +71,7 @@ You may like one of the [popular editors/IDE's for Go](https://github.com/golang
 
 When ready - test the affected functionality and run the unit tests for the code you changed
 
-```
+```sh
 cd folder/with/changed/files
 go test -v
 ```
@@ -89,7 +89,7 @@ Make sure you
 
 When you are done with that push your changes to GitHub:
 
-```
+```sh
 git push -u origin my-new-feature
 ```
 
@@ -106,7 +106,7 @@ You may sometimes be asked to [base your changes on the latest master](#basing-y
 
 Follow the guideline for [commit messages](#commit-messages) and then:
 
-```
+```sh
 git checkout my-new-feature      # To switch to your branch
 git status                       # To see the new and changed files
 git add FILENAME                 # To select FILENAME for the commit
@@ -117,7 +117,7 @@ git log                          # To verify the commit. Use q to quit the log
 
 You can modify the message or changes in the latest commit using:
 
-```
+```sh
 git commit --amend
 ```
 
@@ -129,7 +129,7 @@ Note that you are about to rewrite the GitHub history of your branch. It is good
 
 Your previously pushed commits are replaced by:
 
-```
+```sh
 git push --force origin my-new-feature 
 ```
 
@@ -137,7 +137,7 @@ git push --force origin my-new-feature
 
 To base your changes on the latest version of the [rclone master](https://github.com/rclone/rclone/tree/master) (upstream):
 
-```
+```sh
 git checkout master
 git fetch upstream
 git merge --ff-only
@@ -152,7 +152,7 @@ If you rebase commits that have been pushed to GitHub, then you will have to [re
 
 To combine your commits into one commit:
 
-```
+```sh
 git log                          # To count the commits to squash, e.g. the last 2
 git reset --soft HEAD~2          # To undo the 2 latest commits
 git status                       # To check everything is as expected
@@ -160,13 +160,13 @@ git status                       # To check everything is as expected
 
 If everything is fine, then make the new combined commit:
 
-```
+```sh
 git commit                       # To commit the undone commits as one
 ```
 
 otherwise, you may roll back using:
 
-```
+```sh
 git reflog                       # To check that HEAD{1} is your previous state
 git reset --soft 'HEAD@{1}'      # To roll back to your previous state
 ```
@@ -194,13 +194,13 @@ Using these tests ensures that the rclone codebase all uses the same coding stan
 rclone's tests are run from the go testing framework, so at the top
 level you can run this to run all the tests.
 
-```
+```sh
 go test -v ./...
 ```
 
 You can also use `make`, if supported by your platform
 
-```
+```sh
 make quicktest
 ```
 
@@ -220,7 +220,7 @@ need to make a remote called `TestDrive`.
 You can then run the unit tests in the drive directory.  These tests
 are skipped if `TestDrive:` isn't defined.
 
-```
+```sh
 cd backend/drive
 go test -v
 ```
@@ -229,7 +229,7 @@ You can then run the integration tests which test all of rclone's
 operations.  Normally these get run against the local file system,
 but they can be run against any of the remotes.
 
-```
+```sh
 cd fs/sync
 go test -v -remote TestDrive:
 go test -v -remote TestDrive: -fast-list
@@ -242,7 +242,7 @@ If you want to use the integration test framework to run these tests
 altogether with an HTML report and test retries then from the
 project root:
 
-```
+```sh
 go install github.com/rclone/rclone/fstest/test_all
 test_all -backends drive
 ```
@@ -252,14 +252,14 @@ test_all -backends drive
 If you want to run all the integration tests against all the remotes,
 then change into the project root and run
 
-```
+```sh
 make check
 make test
 ```
 
 The commands may require some extra go packages which you can install with
 
-```
+```sh
 make build_dep
 ```
 
@@ -390,13 +390,13 @@ change will get linked into the issue.
 
 Here is an example of a short commit message:
 
-```
+```text
 drive: add team drive support - fixes #885
 ```
 
 And here is an example of a longer one:
 
-```
+```text
 mount: fix hang on errored upload
 
 In certain circumstances, if an upload failed then the mount could hang
@@ -419,7 +419,7 @@ To add a dependency `github.com/ncw/new_dependency` see the
 instructions below.  These will fetch the dependency and add it to
 `go.mod` and `go.sum`.
 
-```
+```sh
 go get github.com/ncw/new_dependency
 ```
 
@@ -433,7 +433,7 @@ and `go.sum` in the same commit as your other changes.
 
 If you need to update a dependency then run
 
-```
+```sh
 go get golang.org/x/crypto
 ```
 
