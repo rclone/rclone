@@ -738,6 +738,7 @@ The flag takes two parameters expressed as a fraction:
 - `K`: The specific partition to select (an integer from `0` to `N`).
 
 For example:
+
 - `--hash-filter 1/3`: Selects the first third of the files.
 - `--hash-filter 2/3` and `--hash-filter 3/3`: Select the second and third partitions, respectively.
 
