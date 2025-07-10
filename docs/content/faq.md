@@ -114,7 +114,7 @@ The content of the variable is `protocol://server:port`.  The protocol
 value is the one used to talk to the proxy server, itself, and is commonly
 either `http` or `socks5`.
 
-Slightly annoyingly, there is no _standard_ for the name; some applications
+Slightly annoyingly, there is no *standard* for the name; some applications
 may use `http_proxy` but another one `HTTP_PROXY`.  The `Go` libraries
 used by `rclone` will try both variations, but you may wish to set all
 possibilities.  So, on Linux, you may end up with code similar to
