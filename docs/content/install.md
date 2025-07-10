@@ -339,7 +339,6 @@ Note that this is controlled by [community maintainer](https://github.com/bouken
 
 [![rclone](https://snapcraft.io/rclone/badge.svg)](https://snapcraft.io/rclone)
 
-
 ## Source installation {#source}
 
 Make sure you have git and [Go](https://golang.org/) installed.

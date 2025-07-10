@@ -49,7 +49,6 @@ e.g.
 
     rclone sync --interactive drive:Folder s3:bucket
 
-
 ### Using rclone from multiple locations at the same time ###
 
 You can use rclone from multiple places at the same time if you choose
@@ -121,7 +120,6 @@ possibilities.  So, on Linux, you may end up with code similar to
     export https_proxy=$http_proxy
     export HTTP_PROXY=$http_proxy
     export HTTPS_PROXY=$http_proxy
-
 
 Note: If the proxy server requires a username and password, then use
 
@@ -203,7 +201,6 @@ dig www.googleapis.com @8.8.8.8 # resolve with Google's DNS server
 If you are using `systemd-resolved` (default on Arch Linux), ensure it
 is at version 233 or higher. Previous releases contain a bug which
 causes not all domains to be resolved properly.
-
 
 The Go resolver decision can be influenced with the `GODEBUG=netdns=...`
 environment variable. This also allows to resolve certain issues with
