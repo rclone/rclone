@@ -363,6 +363,7 @@ Will get their own names
 ### Valid remote names
 
 Remote names are case sensitive, and must adhere to the following rules:
+
 - May contain number, letter, `_`, `-`, `.`, `+`, `@` and space.
 - May not start with `-` or space.
 - May not end with space.
@@ -856,6 +857,7 @@ Specify the directory rclone will use for caching, to override
 the default.
 
 Default value is depending on operating system:
+
 - Windows `%LocalAppData%\rclone`, if `LocalAppData` is defined.
 - macOS `$HOME/Library/Caches/rclone` if `HOME` is defined.
 - Unix `$XDG_CACHE_HOME/rclone` if `XDG_CACHE_HOME` is defined, else `$HOME/.cache/rclone` if `HOME` is defined.
@@ -1204,6 +1206,7 @@ If `--fix-case` is set, then `HELLO.txt` will be renamed to `hello.txt`
 to match the source.
 
 NB:
+
 - directory names with incorrect casing will also be fixed
 - `--fix-case` will be ignored if `--immutable` is set
 - using `--local-case-sensitive` instead is not advisable;
@@ -2413,6 +2416,7 @@ Specify the directory rclone will use for temporary files, to override
 the default. Make sure the directory exists and have accessible permissions.
 
 By default the operating system's temp directory will be used:
+
 - On Unix systems, `$TMPDIR` if non-empty, else `/tmp`.
 - On Windows, the first non-empty value from `%TMP%`, `%TEMP%`, `%USERPROFILE%`, or the Windows directory.
 
@@ -3078,6 +3082,7 @@ messages may not be valid after the retry. If rclone has done a retry
 it will log a high priority message if the retry was successful.
 
 ### List of exit codes
+
 - `0` - Success
 - `1` - Error not otherwise categorised
 - `2` - Syntax or usage error
