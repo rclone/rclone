@@ -194,14 +194,14 @@ If the remote is running on a different URL than the default
 `http://localhost:5572/`, use the `--url` option to specify it:
 
 ```
-$ rclone rc --url http://some.remote:1234/ rc/noop
+rclone rc --url http://some.remote:1234/ rc/noop
 ```
 
 Or, if the remote is listening on a Unix socket, use the `--unix-socket` option
 instead:
 
 ```
-$ rclone rc --unix-socket /tmp/rclone.sock rc/noop
+rclone rc --unix-socket /tmp/rclone.sock rc/noop
 ```
 
 Run `rclone rc` on its own, without any commands, to see the help for the
