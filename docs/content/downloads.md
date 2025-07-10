@@ -51,11 +51,15 @@ signatures on the release.
 
 To install rclone on Linux/macOS/BSD systems, run:
 
-    sudo -v ; curl https://rclone.org/install.sh | sudo bash
+```
+sudo -v ; curl https://rclone.org/install.sh | sudo bash
+```
 
 For beta installation, run:
 
-    sudo -v ; curl https://rclone.org/install.sh | sudo bash -s beta
+```
+sudo -v ; curl https://rclone.org/install.sh | sudo bash -s beta
+```
 
 Note that this script checks the version of rclone installed first and
 won't re-download if not needed.
@@ -65,11 +69,15 @@ won't re-download if not needed.
 [Beta releases](https://beta.rclone.org) are generated from each commit
 to master.  Note these are named like
 
-    {Version Tag}.beta.{Commit Number}.{Git Commit Hash}
+```
+{Version Tag}.beta.{Commit Number}.{Git Commit Hash}
+```
 
 e.g.
 
-    v1.53.0-beta.4677.b657a2204
+```
+v1.53.0-beta.4677.b657a2204
+```
 
 The `Version Tag` is the version that the beta release will become
 when it is released. You can match the `Git Commit Hash` up with the
@@ -79,11 +87,15 @@ and will normally be at the end of the list.
 
 Some beta releases may have a branch name also:
 
-    {Version Tag}-beta.{Commit Number}.{Git Commit Hash}.{Branch Name}
+```
+{Version Tag}-beta.{Commit Number}.{Git Commit Hash}.{Branch Name}
+```
 
 e.g.
 
-    v1.53.0-beta.4677.b657a2204.semver
+```
+v1.53.0-beta.4677.b657a2204.semver
+```
 
 The presence of `Branch Name` indicates that this is a feature under
 development which will at some point be merged into the normal betas

@@ -321,21 +321,29 @@ duration of an rc call only then pass in the `_config` parameter.
 This should be in the same format as the `main` key returned by
 [options/get](#options-get).
 
-    rclone rc --loopback options/get blocks=main
+```
+rclone rc --loopback options/get blocks=main
+```
 
 You can see more help on these options with this command (see [the
 options blocks section](#option-blocks) for more info).
 
-    rclone rc --loopback options/info blocks=main
+```
+rclone rc --loopback options/info blocks=main
+```
 
 For example, if you wished to run a sync with the `--checksum`
 parameter, you would pass this parameter in your JSON blob.
 
-    "_config":{"CheckSum": true}
+```
+"_config":{"CheckSum": true}
+```
 
 If using `rclone rc` this could be passed as
 
-    rclone rc sync/sync ... _config='{"CheckSum": true}'
+```
+rclone rc sync/sync ... _config='{"CheckSum": true}'
+```
 
 Any config parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -344,8 +352,10 @@ Note that it is possible to set some values as strings or integers -
 see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
-    "_config":{"BufferSize": "42M"}
-    "_config":{"BufferSize": 44040192}
+```
+"_config":{"BufferSize": "42M"}
+"_config":{"BufferSize": 44040192}
+```
 
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
@@ -358,24 +368,34 @@ pass in the `_filter` parameter.
 This should be in the same format as the `filter` key returned by
 [options/get](#options-get).
 
-    rclone rc --loopback options/get blocks=filter
+```
+rclone rc --loopback options/get blocks=filter
+```
 
 You can see more help on these options with this command (see [the
 options blocks section](#option-blocks) for more info).
 
-    rclone rc --loopback options/info blocks=filter
+```
+rclone rc --loopback options/info blocks=filter
+```
 
 For example, if you wished to run a sync with these flags
 
-    --max-size 1M --max-age 42s --include "a" --include "b"
+```
+--max-size 1M --max-age 42s --include "a" --include "b"
+```
 
 you would pass this parameter in your JSON blob.
 
-    "_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
+```
+"_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
+```
 
 If using `rclone rc` this could be passed as
 
-    rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
+```
+rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
+```
 
 Any filter parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -384,8 +404,10 @@ Note that it is possible to set some values as strings or integers -
 see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
-    "_filter":{"MinSize": "42M"}
-    "_filter":{"MinSize": 44040192}
+```
+"_filter":{"MinSize": "42M"}
+"_filter":{"MinSize": 44040192}
+```
 
 If you wish to check the `_filter` assignment has worked properly then
 calling `options/local` will show what the value got set to.
@@ -2490,7 +2512,9 @@ To use these, first [install go](https://golang.org/doc/install).
 
 To profile rclone's memory use you can run:
 
-    go tool pprof -web http://localhost:5572/debug/pprof/heap
+```
+go tool pprof -web http://localhost:5572/debug/pprof/heap
+```
 
 This should open a page in your browser showing what is using what
 memory.
@@ -2522,7 +2546,9 @@ alive which should have been garbage collected.
 
 See all active go routines using
 
-    curl http://localhost:5572/debug/pprof/goroutine?debug=1
+```
+curl http://localhost:5572/debug/pprof/goroutine?debug=1
+```
 
 Or go to http://localhost:5572/debug/pprof/goroutine?debug=1 in your browser.
 
