@@ -546,8 +546,8 @@ And this is equivalent to `/tmp/dir`
 
 ```
 {
-    type = "local",
-    _root = "/tmp/dir"
+    "type": "local",
+    "_root": "/tmp/dir"
 }
 ```
 
@@ -2359,8 +2359,8 @@ e.g.
         "fs": "/tmp",
         "remote": 3
     },
-    "status": 400
-    "path": "operations/rmdir",
+    "status": 400,
+    "path": "operations/rmdir"
 }
 ```
 
