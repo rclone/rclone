@@ -402,18 +402,24 @@ and to maintain backward compatibility, its behavior has not been changed.
 
 To take a specific example, the FTP backend's default encoding is
 
-    --ftp-encoding "Slash,Del,Ctl,RightSpace,Dot"
+```
+--ftp-encoding "Slash,Del,Ctl,RightSpace,Dot"
+```
 
 However, let's say the FTP server is running on Windows and can't have
 any of the invalid Windows characters in file names. You are backing
 up Linux servers to this FTP server which do have those characters in
 file names. So you would add the Windows set which are
 
-    Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+```
+Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+```
 
 to the existing ones, giving:
 
-    Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot,Del,RightSpace
+```
+Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot,Del,RightSpace
+```
 
 This can be specified using the `--ftp-encoding` flag or using an `encoding` parameter in the config file.
 
