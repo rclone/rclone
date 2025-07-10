@@ -1265,7 +1265,7 @@ add multiple headers.
 rclone sync --interactive s3:test/src ~/dst --header-download "X-Amz-Meta-Test: Foo" --header-download "X-Amz-Meta-Test2: Bar"
 ```
 
-See the GitHub issue [here](https://github.com/rclone/rclone/issues/59) for
+See GitHub issue [#59](https://github.com/rclone/rclone/issues/59) for
 currently supported backends.
 
 ### --header-upload stringArray
@@ -1277,7 +1277,7 @@ multiple headers.
 rclone sync --interactive ~/src s3:test/dst --header-upload "Content-Disposition: attachment; filename='cool.html'" --header-upload "X-Amz-Meta-Test: FooBar"
 ```
 
-See the GitHub issue [here](https://github.com/rclone/rclone/issues/59) for
+See GitHub issue [#59](https://github.com/rclone/rclone/issues/59) for
 currently supported backends.
 
 ### --human-readable
