@@ -526,7 +526,6 @@ matching `secret*.jpg` and including `file2.avi`.  It also includes
 everything in the directory `dir` at the root of `remote`, except
 `remote:dir/Trash` which it excludes.  Everything else is excluded.
 
-
 E.g. for an alternative `filter-file.txt`:
 
     - secret*.jpg
@@ -891,7 +890,6 @@ applied](#how-filter-rules-work) for more details - these flags work
 in an identical way to the file name filtering flags, but instead of
 file name patterns have metadata patterns.
 
-
 ## Common pitfalls
 
 The most frequent filter support issues on
@@ -900,4 +898,3 @@ the [rclone forum](https://forum.rclone.org/) are:
 * Not using paths relative to the root of the remote
 * Not using `/` to match from the root of a remote
 * Not using `**` to match the contents of a directory
-

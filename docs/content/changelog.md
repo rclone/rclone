@@ -5847,4 +5847,3 @@ Point release to fix hubic and azureblob backends.
 ## v0.00 - 2012-11-18
 
 * Project started
-
