@@ -5,12 +5,12 @@ description: "Rclone Frequently Asked Questions"
 
 # Frequently Asked Questions
 
-### Do all cloud storage systems support all rclone commands ###
+### Do all cloud storage systems support all rclone commands
 
 Yes they do.  All the rclone commands (e.g. `sync`, `copy`, etc.) will
 work on all the remote storage systems.
 
-### Can I copy the config from one machine to another ###
+### Can I copy the config from one machine to another
 
 Sure!  Rclone stores all of its config in a single file.  If you want
 to find this file, run `rclone config file` which will tell you where
@@ -18,7 +18,7 @@ it is.
 
 See the [remote setup docs](/remote_setup/) for more info.
 
-### How do I configure rclone on a remote / headless box with no browser? ###
+### How do I configure rclone on a remote / headless box with no browser?
 
 This has now been documented in its own [remote setup page](/remote_setup/).
 
@@ -36,7 +36,7 @@ you can create an empty config file to get rid of this notice, for example:
 rclone config touch
 ```
 
-### Can rclone sync directly from drive to s3 ###
+### Can rclone sync directly from drive to s3
 
 Rclone can sync between two remote cloud storage systems just fine.
 
@@ -51,7 +51,7 @@ e.g.
 rclone sync --interactive drive:Folder s3:bucket
 ```
 
-### Using rclone from multiple locations at the same time ###
+### Using rclone from multiple locations at the same time
 
 You can use rclone from multiple places at the same time if you choose
 different subdirectory for the output, e.g.
@@ -73,7 +73,7 @@ The file names you upload from Server A and Server B should be
 different in this case, otherwise some file systems (e.g. Drive) may
 make duplicates.
 
-### Why doesn't rclone support partial transfers / binary diffs like rsync? ###
+### Why doesn't rclone support partial transfers / binary diffs like rsync?
 
 Rclone stores each file you transfer as a native object on the remote
 cloud storage system.  This means that you can see the files you
@@ -95,12 +95,12 @@ it would be possible to make partial downloads work.  However to make
 this work efficiently this would require storing a significant amount
 of metadata, which breaks the desired 1:1 mapping of files to objects.
 
-### Can rclone do bi-directional sync? ###
+### Can rclone do bi-directional sync?
 
 Yes, since rclone v1.58.0, [bidirectional cloud sync](/bisync/) is
 available.
 
-### Can I use rclone with an HTTP proxy? ###
+### Can I use rclone with an HTTP proxy?
 
 Yes. rclone will follow the standard environment variables for
 proxies, similar to cURL and other programs.
@@ -147,7 +147,7 @@ export NO_PROXY=$no_proxy
 
 Note that the FTP backend does not support `ftp_proxy` yet.
 
-### Rclone gives x509: failed to load system roots and no roots provided error ###
+### Rclone gives x509: failed to load system roots and no roots provided error
 
 This means that `rclone` can't find the SSL root certificates.  Likely
 you are running `rclone` on a NAS with a cut-down Linux OS, or
@@ -183,7 +183,7 @@ if it doesn't work without.
 curl --insecure -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
 ```
 
-### Rclone gives Failed to load config file: function not implemented error ###
+### Rclone gives Failed to load config file: function not implemented error
 
 Likely this means that you are running rclone on Linux version not
 supported by the go runtime, ie earlier than version 2.6.23.
@@ -191,7 +191,7 @@ supported by the go runtime, ie earlier than version 2.6.23.
 See the [system requirements section in the go install
 docs](https://golang.org/doc/install) for full details.
 
-### All my uploaded docx/xlsx/pptx files appear as archive/zip ###
+### All my uploaded docx/xlsx/pptx files appear as archive/zip
 
 This is caused by uploading these files from a Windows computer which
 hasn't got the Microsoft Office suite installed.  The easiest way to
@@ -199,7 +199,7 @@ fix is to install the Word viewer and the Microsoft Office
 Compatibility Pack for Word, Excel, and PowerPoint 2007 and later
 versions' file formats
 
-### tcp lookup some.domain.com no such host ###
+### tcp lookup some.domain.com no such host
 
 This happens when rclone cannot resolve a domain. Please check that
 your DNS setup is generally working, e.g.
@@ -223,7 +223,7 @@ name resolver by setting `GODEBUG=netdns=cgo` (and recompile rclone
 from source with CGO enabled if necessary). See the
 [name resolution section in the go docs](https://golang.org/pkg/net/#hdr-Name_Resolution).
 
-### Failed to start auth webserver on Windows ###
+### Failed to start auth webserver on Windows
 
 ```text
 Error: config failed to refresh token: failed to start auth webserver: listen tcp 127.0.0.1:53682: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
