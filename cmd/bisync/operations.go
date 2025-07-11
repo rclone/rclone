@@ -97,7 +97,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 
 	b.setResyncDefaults()
 
-	err = b.setResolveDefaults(ctx)
+	err = b.setResolveDefaults()
 	if err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	// Generate Path1 and Path2 listings and copy any unique Path2 files to Path1
 	if opt.Resync {
-		return b.resync(octx, fctx)
+		return b.resync(fctx)
 	}
 
 	// Check for existence of prior Path1 and Path2 listings
