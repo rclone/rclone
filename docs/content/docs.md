@@ -22,7 +22,9 @@ file and choose its location.)
 The easiest way to make the config is to run rclone with the config
 option:
 
-    rclone config
+```sh
+rclone config
+```
 
 See the following for detailed instructions for
 
@@ -97,7 +99,9 @@ Rclone syncs a directory tree from one storage system to another.
 
 Its syntax is like this
 
-    rclone subcommand [options] <parameters> <parameters...>
+```sh
+rclone subcommand [options] <parameters> <parameters...>
+```
 
 A `subcommand` is a the rclone operation required, (e.g. `sync`,
 `copy`, `ls`).
@@ -110,10 +114,12 @@ used before the `subcommand`. Anything after a `--` option will not be
 interpreted as an option so if you need to add a parameter which
 starts with a `-` then put a `--` on its own first, eg
 
-    rclone lsf -- -directory-starting-with-dash
+```sh
+rclone lsf -- -directory-starting-with-dash
+```
 
-A `parameter` is usually a file path or [rclone remote](#syntax-of-remote-paths), eg
-`/path/to/file` or `remote:path/to/file` but it can be other things -
+A `parameter` is usually a file path or [rclone remote](#syntax-of-remote-paths),
+eg `/path/to/file` or `remote:path/to/file` but it can be other things -
 the `subcommand` help will tell you what.
 
 Source and destination paths are specified by the name you gave the
@@ -127,15 +133,19 @@ learning rclone to avoid accidental data loss.
 
 ## Subcommands
 
-rclone uses a system of subcommands.  For example
+rclone uses a system of subcommands. For example
 
-    rclone ls remote:path # lists a remote
-    rclone copy /local/path remote:path # copies /local/path to the remote
-    rclone sync --interactive /local/path remote:path # syncs /local/path to the remote
+```sh
+rclone ls remote:path # lists a remote
+rclone copy /local/path remote:path # copies /local/path to the remote
+rclone sync --interactive /local/path remote:path # syncs /local/path to the remote
+```
 
 The main rclone commands with most used first
 
-- [rclone config](/commands/rclone_config/) - Enter an interactive configuration session.
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable line-length -->
+- [rclone config](/commands/rclone_config/) - Enter an interactive configurationsession.
 - [rclone copy](/commands/rclone_copy/) - Copy files from source to dest, skipping already copied.
 - [rclone sync](/commands/rclone_sync/) - Make source and dest identical, modifying destination only.
 - [rclone bisync](/commands/rclone_bisync/) - [Bidirectional synchronization](/bisync/) between two paths.
@@ -166,6 +176,7 @@ The main rclone commands with most used first
 - [rclone obscure](/commands/rclone_obscure/) - Obscure password for use in the rclone.conf
 - [rclone cryptcheck](/commands/rclone_cryptcheck/) - Check the integrity of an encrypted remote.
 - [rclone about](/commands/rclone_about/) - Get quota information from the remote.
+<!-- markdownlint-restore -->
 
 See the [commands index](/commands/) for the full list.
 
@@ -180,17 +191,23 @@ directory` if it isn't.
 For example, suppose you have a remote with a file in called
 `test.jpg`, then you could copy just that file like this
 
-    rclone copy remote:test.jpg /tmp/download
+```sh
+rclone copy remote:test.jpg /tmp/download
+```
 
 The file `test.jpg` will be placed inside `/tmp/download`.
 
 This is equivalent to specifying
 
-    rclone copy --files-from /tmp/files remote: /tmp/download
+```sh
+rclone copy --files-from /tmp/files remote: /tmp/download
+```
 
 Where `/tmp/files` contains the single line
 
-    test.jpg
+```sh
+test.jpg
+```
 
 It is recommended to use `copy` when copying individual files, not `sync`.
 They have pretty much the same effect but `copy` will use a lot less
@@ -234,19 +251,27 @@ the command line (or in environment variables).
 
 Here are some examples:
 
-    rclone lsd --http-url https://pub.rclone.org :http:
+```sh
+rclone lsd --http-url https://pub.rclone.org :http:
+```
 
 To list all the directories in the root of `https://pub.rclone.org/`.
 
-    rclone lsf --http-url https://example.com :http:path/to/dir
+```sh
+rclone lsf --http-url https://example.com :http:path/to/dir
+```
 
 To list files and directories in `https://example.com/path/to/dir/`
 
-    rclone copy --http-url https://example.com :http:path/to/dir /tmp/dir
+```sh
+rclone copy --http-url https://example.com :http:path/to/dir /tmp/dir
+```
 
 To copy files and directories in `https://example.com/path/to/dir` to `/tmp/dir`.
 
-    rclone copy --sftp-host example.com :sftp:path/to/dir /tmp/dir
+```sh
+rclone copy --sftp-host example.com :sftp:path/to/dir /tmp/dir
+```
 
 To copy files and directories from `example.com` in the relative
 directory `path/to/dir` to `/tmp/dir` using sftp.
@@ -258,16 +283,20 @@ syntax, so instead of providing the arguments as command line
 parameters `--http-url https://pub.rclone.org` they are provided as
 part of the remote specification as a kind of connection string.
 
-    rclone lsd ":http,url='https://pub.rclone.org':"
-    rclone lsf ":http,url='https://example.com':path/to/dir"
-    rclone copy ":http,url='https://example.com':path/to/dir" /tmp/dir
-    rclone copy :sftp,host=example.com:path/to/dir /tmp/dir
+```sh
+rclone lsd ":http,url='https://pub.rclone.org':"
+rclone lsf ":http,url='https://example.com':path/to/dir"
+rclone copy ":http,url='https://example.com':path/to/dir" /tmp/dir
+rclone copy :sftp,host=example.com:path/to/dir /tmp/dir
+```
 
 These can apply to modify existing remotes as well as create new
 remotes with the on the fly syntax. This example is equivalent to
 adding the `--drive-shared-with-me` parameter to the remote `gdrive:`.
 
-    rclone lsf "gdrive,shared_with_me:path/to/dir"
+```sh
+rclone lsf "gdrive,shared_with_me:path/to/dir"
+```
 
 The major advantage to using the connection string style syntax is
 that it only applies to the remote, not to all the remotes of that
@@ -276,34 +305,46 @@ file shared on google drive to the normal drive which **does not
 work** because the `--drive-shared-with-me` flag applies to both the
 source and the destination.
 
-    rclone copy --drive-shared-with-me gdrive:shared-file.txt gdrive:
+```sh
+rclone copy --drive-shared-with-me gdrive:shared-file.txt gdrive:
+```
 
 However using the connection string syntax, this does work.
 
-    rclone copy "gdrive,shared_with_me:shared-file.txt" gdrive:
+```sh
+rclone copy "gdrive,shared_with_me:shared-file.txt" gdrive:
+```
 
-Note that the connection string only affects the options of the immediate 
-backend. If for example gdriveCrypt is a crypt based on gdrive, then the 
-following command **will not work** as intended, because 
+Note that the connection string only affects the options of the immediate
+backend. If for example gdriveCrypt is a crypt based on gdrive, then the
+following command **will not work** as intended, because
 `shared_with_me` is ignored by the crypt backend:
 
-    rclone copy "gdriveCrypt,shared_with_me:shared-file.txt" gdriveCrypt:
+```sh
+rclone copy "gdriveCrypt,shared_with_me:shared-file.txt" gdriveCrypt:
+```
 
 The connection strings have the following syntax
 
-    remote,parameter=value,parameter2=value2:path/to/dir
-    :backend,parameter=value,parameter2=value2:path/to/dir
+```sh
+remote,parameter=value,parameter2=value2:path/to/dir
+:backend,parameter=value,parameter2=value2:path/to/dir
+```
 
 If the `parameter` has a `:` or `,` then it must be placed in quotes `"` or
 `'`, so
 
-    remote,parameter="colon:value",parameter2="comma,value":path/to/dir
-    :backend,parameter='colon:value',parameter2='comma,value':path/to/dir
+```sh
+remote,parameter="colon:value",parameter2="comma,value":path/to/dir
+:backend,parameter='colon:value',parameter2='comma,value':path/to/dir
+```
 
 If a quoted value needs to include that quote, then it should be
 doubled, so
 
-    remote,parameter="with""quote",parameter2='with''quote':path/to/dir
+```sh
+remote,parameter="with""quote",parameter2='with''quote':path/to/dir
+```
 
 This will make `parameter` be `with"quote` and `parameter2` be
 `with'quote`.
@@ -312,11 +353,15 @@ If you leave off the `=parameter` then rclone will substitute `=true`
 which works very well with flags. For example, to use s3 configured in
 the environment you could use:
 
-    rclone lsd :s3,env_auth:
+```sh
+rclone lsd :s3,env_auth:
+```
 
 Which is equivalent to
 
-    rclone lsd :s3,env_auth=true:
+```sh
+rclone lsd :s3,env_auth=true:
+```
 
 Note that on the command line you might need to surround these
 connection strings with `"` or `'` to stop the shell interpreting any
@@ -326,14 +371,18 @@ If you are a shell master then you'll know which strings are OK and
 which aren't, but if you aren't sure then enclose them in `"` and use
 `'` as the inside quote. This syntax works on all OSes.
 
-    rclone copy ":http,url='https://example.com':path/to/dir" /tmp/dir
+```sh
+rclone copy ":http,url='https://example.com':path/to/dir" /tmp/dir
+```
 
 On Linux/macOS some characters are still interpreted inside `"`
 strings in the shell (notably `\` and `$` and `"`) so if your strings
 contain those you can swap the roles of `"` and `'` thus. (This syntax
 does not work on Windows.)
 
-    rclone copy ':http,url="https://example.com":path/to/dir' /tmp/dir
+```sh
+rclone copy ':http,url="https://example.com":path/to/dir' /tmp/dir
+```
 
 #### Connection strings, config and logging
 
@@ -341,11 +390,15 @@ If you supply extra configuration to a backend by command line flag,
 environment variable or connection string then rclone will add a
 suffix based on the hash of the config to the name of the remote, eg
 
-    rclone -vv lsf --s3-chunk-size 20M s3:
+```sh
+rclone -vv lsf --s3-chunk-size 20M s3:
+```
 
 Has the log message
 
-    DEBUG : s3: detected overridden config - adding "{Srj1p}" suffix to name
+```sh
+DEBUG : s3: detected overridden config - adding "{Srj1p}" suffix to name
+```
 
 This is so rclone can tell the modified remote apart from the
 unmodified remote when caching the backends.
@@ -354,15 +407,20 @@ This should only be noticeable in the logs.
 
 This means that on the fly backends such as
 
-    rclone -vv lsf :s3,env_auth:
+```sh
+rclone -vv lsf :s3,env_auth:
+```
 
 Will get their own names
 
-    DEBUG : :s3: detected overridden config - adding "{YTu53}" suffix to name
+```sh
+DEBUG : :s3: detected overridden config - adding "{YTu53}" suffix to name
+```
 
 ### Valid remote names
 
 Remote names are case sensitive, and must adhere to the following rules:
+
 - May contain number, letter, `_`, `-`, `.`, `+`, `@` and space.
 - May not start with `-` or space.
 - May not end with space.
@@ -392,11 +450,15 @@ Here are some gotchas which may help users unfamiliar with the shell rules
 If your names have spaces or shell metacharacters (e.g. `*`, `?`, `$`,
 `'`, `"`, etc.) then you must quote them.  Use single quotes `'` by default.
 
-    rclone copy 'Important files?' remote:backup
+```sh
+rclone copy 'Important files?' remote:backup
+```
 
 If you want to send a `'` you will need to use `"`, e.g.
 
-    rclone copy "O'Reilly Reviews" remote:backup
+```sh
+rclone copy "O'Reilly Reviews" remote:backup
+```
 
 The rules for quoting metacharacters are complicated and if you want
 the full details you'll have to consult the manual page for your
@@ -406,12 +468,16 @@ shell.
 
 If your names have spaces in you need to put them in `"`, e.g.
 
-    rclone copy "E:\folder name\folder name\folder name" remote:backup
+```bat
+rclone copy "E:\folder name\folder name\folder name" remote:backup
+```
 
 If you are using the root directory on its own then don't quote it
 (see [#464](https://github.com/rclone/rclone/issues/464) for why), e.g.
 
-    rclone copy E:\ remote:backup
+```bat
+rclone copy E:\ remote:backup
+```
 
 ## Copying files or directories with `:` in the names
 
@@ -423,11 +489,15 @@ file or directory like this then use the full path starting with a
 
 So to sync a directory called `sync:me` to a remote called `remote:` use
 
-    rclone sync --interactive ./sync:me remote:path
+```sh
+rclone sync --interactive ./sync:me remote:path
+```
 
 or
 
-    rclone sync --interactive /full/path/to/sync:me remote:path
+```sh
+rclone sync --interactive /full/path/to/sync:me remote:path
+```
 
 ## Server-side copy
 
@@ -440,7 +510,9 @@ to copy them in place.
 
 Eg
 
-    rclone copy s3:oldbucket s3:newbucket
+```sh
+rclone copy s3:oldbucket s3:newbucket
+```
 
 Will copy the contents of `oldbucket` to `newbucket` without
 downloading and re-uploading.
@@ -459,8 +531,10 @@ same.
 
 This can be used when scripting to make aged backups efficiently, e.g.
 
-    rclone sync --interactive remote:current-backup remote:previous-backup
-    rclone sync --interactive /path/to/files remote:current-backup
+```sh
+rclone sync --interactive remote:current-backup remote:previous-backup
+rclone sync --interactive /path/to/files remote:current-backup
+```
 
 ## Metadata support {#metadata}
 
@@ -617,8 +691,8 @@ name of the log level to set with option `--log-level`, are case
 insensitive, e.g. `--log-level ERROR` and `--log-level error` are
 identical.
 
-Options documented to take a `stringArray` parameter accept multiple 
-values. To pass more than one value, repeat the option; for example: 
+Options documented to take a `stringArray` parameter accept multiple
+values. To pass more than one value, repeat the option; for example:
 `--include value1 --include value2`. Other options may only accept a
 single value, and should only be specified once, but where the
 specified parameter may indicate a list of values separated by space
@@ -697,7 +771,9 @@ excluded by a filter rule.
 
 For example
 
-    rclone sync --interactive /path/to/local remote:current --backup-dir remote:old
+```sh
+rclone sync --interactive /path/to/local remote:current --backup-dir remote:old
+```
 
 will sync `/path/to/local` to `remote:current`, but for any files
 which would have been updated or deleted will be stored in
@@ -723,7 +799,9 @@ You can use `--bind 0.0.0.0` to force rclone to use IPv4 addresses and
 
 This option controls the bandwidth limit. For example
 
-    --bwlimit 10M
+```sh
+--bwlimit 10M
+```
 
 would mean limit the upload and download bandwidth to 10 MiB/s.
 **NB** this is **bytes** per second not **bits** per second. To use a
@@ -733,13 +811,17 @@ suffix B|K|M|G|T|P. The default is `0` which means to not limit bandwidth.
 The upload and download bandwidth can be specified separately, as
 `--bwlimit UP:DOWN`, so
 
-    --bwlimit 10M:100k
+```sh
+--bwlimit 10M:100k
+```
 
 would mean limit the upload bandwidth to 10 MiB/s and the download
 bandwidth to 100 KiB/s. Either limit can be "off" meaning no limit, so
 to just limit the upload bandwidth you would use
 
-    --bwlimit 10M:off
+```sh
+--bwlimit 10M:off
+```
 
 this would limit the upload bandwidth to 10 MiB/s but the download
 bandwidth would be unlimited.
@@ -760,7 +842,8 @@ for upload:download, e.g.`10M:1M`.
 
 Entries can be separated by spaces or semicolons.
 
-**Note:** Semicolons can be used as separators instead of spaces to avoid parsing issues in environments like Docker.
+**Note:** Semicolons can be used as separators instead of spaces to avoid
+parsing issues in environments like Docker.
 
 An example of a typical timetable to avoid link saturation during daytime
 working hours could be:
@@ -793,11 +876,15 @@ be unlimited.
 Timeslots without `WEEKDAY` are extended to the whole week. So this
 example:
 
-`--bwlimit "Mon-00:00,512 12:00,1M Sun-20:00,off"`
+```sh
+--bwlimit "Mon-00:00,512 12:00,1M Sun-20:00,off"
+```
 
 Is equivalent to this:
 
-`--bwlimit "Mon-00:00,512Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-12:00,1M Sun-20:00,off"`
+```sh
+--bwlimit "Mon-00:00,512Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-12:00,1M Sun-20:00,off"
+```
 
 Bandwidth limit apply to the data transfer for all backends. For most
 backends the directory listing bandwidth is also included (exceptions
@@ -815,12 +902,16 @@ of a long running rclone transfer and to restore it back to the value specified
 with `--bwlimit` quickly when needed. Assuming there is only one rclone instance
 running, you can toggle the limiter like this:
 
-    kill -SIGUSR2 $(pidof rclone)
+```sh
+kill -SIGUSR2 $(pidof rclone)
+```
 
 If you configure rclone with a [remote control](/rc) then you can use
 change the bwlimit dynamically:
 
-    rclone rc core/bwlimit rate=1M
+```sh
+rclone rc core/bwlimit rate=1M
+```
 
 ### --bwlimit-file BwTimetable
 
@@ -829,7 +920,9 @@ This option controls per file bandwidth limit. For the options see the
 
 For example use this to allow no transfers to be faster than 1 MiB/s
 
-    --bwlimit-file 1M
+```sh
+--bwlimit-file 1M
+```
 
 This can be used in conjunction with `--bwlimit`.
 
@@ -856,16 +949,20 @@ Specify the directory rclone will use for caching, to override
 the default.
 
 Default value is depending on operating system:
+
 - Windows `%LocalAppData%\rclone`, if `LocalAppData` is defined.
 - macOS `$HOME/Library/Caches/rclone` if `HOME` is defined.
-- Unix `$XDG_CACHE_HOME/rclone` if `XDG_CACHE_HOME` is defined, else `$HOME/.cache/rclone` if `HOME` is defined.
-- Fallback (on all OS) to `$TMPDIR/rclone`, where `TMPDIR` is the value from [--temp-dir](#temp-dir-string).
+- Unix `$XDG_CACHE_HOME/rclone` if `XDG_CACHE_HOME` is defined, else
+  `$HOME/.cache/rclone` if `HOME` is defined.
+- Fallback (on all OS) to `$TMPDIR/rclone`, where `TMPDIR` is the value
+  from [--temp-dir](#temp-dir-string).
 
 You can use the [config paths](/commands/rclone_config_paths/)
 command to see the current value.
 
 Cache directory is heavily used by the [VFS File Caching](/commands/rclone_mount/#vfs-file-caching)
-mount feature, but also by [serve](/commands/rclone_serve/), [GUI](/gui) and other parts of rclone.
+mount feature, but also by [serve](/commands/rclone_serve/), [GUI](/gui) and
+other parts of rclone.
 
 ### --check-first
 
@@ -893,21 +990,21 @@ objects to transfer is held in memory before the transfers start.
 
 ### --checkers int
 
-Originally controlling just the number of file checkers to run in parallel, 
-e.g. by `rclone copy`. Now a fairly universal parallelism control 
-used by `rclone` in several places. 
+Originally controlling just the number of file checkers to run in parallel,
+e.g. by `rclone copy`. Now a fairly universal parallelism control
+used by `rclone` in several places.
 
-Note: checkers do the equality checking of files during a sync. 
-For some storage systems (e.g. S3, Swift, Dropbox) this can take 
+Note: checkers do the equality checking of files during a sync.
+For some storage systems (e.g. S3, Swift, Dropbox) this can take
 a significant amount of time so they are run in parallel.
 
-The default is to run 8 checkers in parallel. However, in case 
+The default is to run 8 checkers in parallel. However, in case
 of slow-reacting backends you may need to lower (rather than increase)
-this default by setting `--checkers` to 4 or less threads. This is 
-especially advised if you are experiencing backend server crashes 
-during file checking phase (e.g. on subsequent or top-up backups 
-where little or no file copying is done and checking takes up 
-most of the time). Increase this setting only with utmost care, 
+this default by setting `--checkers` to 4 or less threads. This is
+especially advised if you are experiencing backend server crashes
+during file checking phase (e.g. on subsequent or top-up backups
+where little or no file copying is done and checking takes up
+most of the time). Increase this setting only with utmost care,
 while monitoring your server health and file checking throughput.
 
 ### -c, --checksum
@@ -989,8 +1086,8 @@ The `~` symbol in paths above represent the home directory of the current user
 on any OS, and the value is defined as following:
 
 - On Windows: `%HOME%` if defined, else `%USERPROFILE%`, or else `%HOMEDRIVE%\%HOMEPATH%`.
-- On Unix: `$HOME` if defined, else by looking up current user in OS-specific user database
-  (e.g. passwd file), or else use the result from shell command `cd && pwd`.
+- On Unix: `$HOME` if defined, else by looking up current user in OS-specific user
+  database (e.g. passwd file), or else use the result from shell command `cd && pwd`.
 
 If you run `rclone config file` you will see where the default location is for
 you. Running `rclone config touch` will ensure a configuration file exists,
@@ -1028,10 +1125,12 @@ beginning of a line.
 
 Example:
 
-    [megaremote]
-    type = mega
-    user = you@example.com
-    pass = PDPcQVVjVtzFY-GTdDFozqBhTdsPg3qH
+```ini
+[megaremote]
+type = mega
+user = you@example.com
+pass = PDPcQVVjVtzFY-GTdDFozqBhTdsPg3qH
+```
 
 Note that passwords are in [obscured](/commands/rclone_obscure/)
 form. Also, many storage systems uses token-based authentication instead
@@ -1089,7 +1188,7 @@ See `--compare-dest` and `--backup-dir`.
 
 ### --dedupe-mode interactive|skip|first|newest|oldest|largest|smallest|rename|list
 
-Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, 
+Mode to run dedupe command in.  One of `interactive`, `skip`, `first`,
 `newest`, `oldest`, `largest`, `smallest`, `rename` `list`.  The default
 is `interactive`.   See the [dedupe](/commands/rclone_dedupe/) command
 for more information as to what these options mean.
@@ -1111,17 +1210,23 @@ time rclone started up.
 This disables a comma separated list of optional features. For example
 to disable server-side move and server-side copy use:
 
-    --disable move,copy
+```sh
+--disable move,copy
+```
 
 The features can be put in any case.
 
 To see a list of which features can be disabled use:
 
-    --disable help
+```sh
+--disable help
+```
 
 The features a remote has can be seen in JSON format with:
 
-    rclone backend features remote:
+```sh
+rclone backend features remote:
+```
 
 See the overview [features](/overview/#features) and
 [optional features](/overview/#optional-features) to get an idea of
@@ -1152,14 +1257,17 @@ sometimes speed up transfers due to a
 Specify a DSCP value or name to use in connections. This could help QoS
 system to identify traffic class. BE, EF, DF, LE, CSx and AFxx are allowed.
 
-See the description of [differentiated services](https://en.wikipedia.org/wiki/Differentiated_services) to get an idea of
-this field. Setting this to 1 (LE) to identify the flow to SCAVENGER class
-can avoid occupying too much bandwidth in a network with DiffServ support ([RFC 8622](https://tools.ietf.org/html/rfc8622)).
+See the description of [differentiated services](https://en.wikipedia.org/wiki/Differentiated_services)
+to get an idea of this field. Setting this to 1 (LE) to identify the flow to
+SCAVENGER class can avoid occupying too much bandwidth in a network with DiffServ
+support ([RFC 8622](https://tools.ietf.org/html/rfc8622)).
 
 For example, if you configured QoS on router to handle LE properly. Running:
-```
+
+```sh
 rclone copy --dscp LE from:/from to:/to
 ```
+
 would make the priority lower than usual internet flows.
 
 This option has no effect on Windows (see [golang/go#42728](https://github.com/golang/go/issues/42728)).
@@ -1204,6 +1312,7 @@ If `--fix-case` is set, then `HELLO.txt` will be renamed to `hello.txt`
 to match the source.
 
 NB:
+
 - directory names with incorrect casing will also be fixed
 - `--fix-case` will be ignored if `--immutable` is set
 - using `--local-case-sensitive` instead is not advisable;
@@ -1247,7 +1356,7 @@ This flag is supported for all HTTP based backends even those not
 supported by `--header-upload` and `--header-download` so may be used
 as a workaround for those with care.
 
-```
+```sh
 rclone ls remote:test --header "X-Rclone: Foo" --header "X-LetMeIn: Yes"
 ```
 
@@ -1256,11 +1365,11 @@ rclone ls remote:test --header "X-Rclone: Foo" --header "X-LetMeIn: Yes"
 Add an HTTP header for all download transactions. The flag can be repeated to
 add multiple headers.
 
-```
+```sh
 rclone sync --interactive s3:test/src ~/dst --header-download "X-Amz-Meta-Test: Foo" --header-download "X-Amz-Meta-Test2: Bar"
 ```
 
-See the GitHub issue [here](https://github.com/rclone/rclone/issues/59) for
+See GitHub issue [#59](https://github.com/rclone/rclone/issues/59) for
 currently supported backends.
 
 ### --header-upload stringArray
@@ -1268,11 +1377,11 @@ currently supported backends.
 Add an HTTP header for all upload transactions. The flag can be repeated to add
 multiple headers.
 
-```
+```sh
 rclone sync --interactive ~/src s3:test/dst --header-upload "Content-Disposition: attachment; filename='cool.html'" --header-upload "X-Amz-Meta-Test: FooBar"
 ```
 
-See the GitHub issue [here](https://github.com/rclone/rclone/issues/59) for
+See GitHub issue [#59](https://github.com/rclone/rclone/issues/59) for
 currently supported backends.
 
 ### --human-readable
@@ -1393,10 +1502,12 @@ flag set) such as:
 
 Without `--inplace` (the default) rclone will first upload to a
 temporary file with an extension like this, where `XXXXXX` represents a
-hash of the source file's fingerprint and `.partial` is 
+hash of the source file's fingerprint and `.partial` is
 [--partial-suffix](#partial-suffix) value (`.partial` by default).
 
-    original-file-name.XXXXXX.partial
+```text
+original-file-name.XXXXXX.partial
+```
 
 (rclone will make sure the final name is no longer than 100 characters
 by truncating the `original-file-name` part if necessary).
@@ -1435,7 +1546,7 @@ especially with `rclone sync`.
 
 For example
 
-```
+```sh
 $ rclone delete --interactive /tmp/dir
 rclone: delete "important-file.txt"?
 y) Yes, this is OK (default)
@@ -1568,7 +1679,9 @@ once as administrator to create the registry key in advance.
 severe) than or equal to the `--log-level`. For example to log DEBUG
 to a log file but ERRORs to the event log you would use
 
-    --log-file rclone.log --log-level DEBUG --windows-event-log ERROR
+```sh
+--log-file rclone.log --log-level DEBUG --windows-event-log ERROR
+```
 
 This option is only supported Windows platforms.
 
@@ -1634,8 +1747,6 @@ returned from the rc call [core/stats](/rc/#core-stats).
   "source": "accounting/stats.go:569"
 }
 ```
-
-
 
 ### --low-level-retries int
 
@@ -1799,9 +1910,11 @@ it in `"`, if you want a literal `"` in an argument then enclose the
 argument in `"` and double the `"`. See [CSV encoding](https://godoc.org/encoding/csv)
 for more info.
 
-    --metadata-mapper "python bin/test_metadata_mapper.py"
-    --metadata-mapper 'python bin/test_metadata_mapper.py "argument with a space"'
-    --metadata-mapper 'python bin/test_metadata_mapper.py "argument with ""two"" quotes"'
+```sh
+--metadata-mapper "python bin/test_metadata_mapper.py"
+--metadata-mapper 'python bin/test_metadata_mapper.py "argument with a space"'
+--metadata-mapper 'python bin/test_metadata_mapper.py "argument with ""two"" quotes"'
+```
 
 This uses a simple JSON based protocol with input on STDIN and output
 on STDOUT. This will be called for every file and directory copied and
@@ -1976,9 +2089,9 @@ if `--vfs-cache-mode` is set to `writes` or above.
 
 Most multi-thread transfers do not take additional memory, but some do
 (for example uploading to s3). In the worst case memory usage can be
-at maximum `--transfers` * `--multi-thread-chunk-size` *
+at maximum `--transfers` \* `--multi-thread-chunk-size` \*
 `--multi-thread-streams` or specifically for the s3 backend
-`--transfers` * `--s3-chunk-size` * `--s3-concurrency`. However you
+`--transfers` \* `--s3-chunk-size` \* `--s3-concurrency`. However you
 can use the the [--max-buffer-memory](/docs/#max-buffer-memory) flag
 to control the maximum memory used here.
 
@@ -2102,7 +2215,8 @@ This can have a modifier appended with a comma:
 
 - `ascending` or `asc` - order so that the smallest (or oldest) is processed first
 - `descending` or `desc` - order so that the largest (or newest) is processed first
-- `mixed` - order so that the smallest is processed first for some threads and the largest for others
+- `mixed` - order so that the smallest is processed first for some threads and
+  the largest for others
 
 If the modifier is `mixed` then it can have an optional percentage
 (which defaults to `50`), e.g. `size,mixed,25` which means that 25% of
@@ -2167,9 +2281,11 @@ for more info.
 
 Eg
 
-    --password-command "echo hello"
-    --password-command 'echo "hello with space"'
-    --password-command 'echo "hello with ""quotes"" and space"'
+```sh
+--password-command "echo hello"
+--password-command 'echo "hello with space"'
+--password-command 'echo "hello with ""quotes"" and space"'
+```
 
 Note that when changing the configuration password the environment
 variable `RCLONE_PASSWORD_CHANGE=1` will be set. This can be used to
@@ -2310,6 +2426,7 @@ Note that on macOS you can send a SIGINFO (which is normally ctrl-T in
 the terminal) to make the stats print immediately.
 
 ### --stats-file-name-length int
+
 By default, the `--stats` output will truncate file names and paths longer
 than 40 characters.  This is equivalent to providing
 `--stats-file-name-length 40`. Use `--stats-file-name-length 0` to disable
@@ -2331,14 +2448,15 @@ showing the most important stats only.
 ### --stats-one-line-date
 
 When this is specified, rclone enables the single-line stats and prepends
+<!-- markdownlint-disable-next-line no-space-in-code -->
 the display with a date string. The default is `2006/01/02 15:04:05 - `
 
 ### --stats-one-line-date-format string
 
 When this is specified, rclone enables the single-line stats and prepends
 the display with a user-supplied date string. The date string MUST be
-enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format) for
-date formatting syntax.
+enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format)
+for date formatting syntax.
 
 ### --stats-unit string
 
@@ -2368,7 +2486,9 @@ or with `--backup-dir`. See `--backup-dir` for more info.
 
 For example
 
-    rclone copy --interactive /path/to/local/file remote:current --suffix .bak
+```sh
+rclone copy --interactive /path/to/local/file remote:current --suffix .bak
+```
 
 will copy `/path/to/local` to `remote:current`, but for any files
 which would have been updated or deleted have .bak added.
@@ -2377,7 +2497,9 @@ If using `rclone sync` with `--suffix` and without `--backup-dir` then
 it is recommended to put a filter rule in excluding the suffix
 otherwise the `sync` will delete the backup files.
 
-    rclone sync --interactive /path/to/local/file remote:current --suffix .bak --exclude "*.bak"
+```sh
+rclone sync --interactive /path/to/local/file remote:current --suffix .bak --exclude "*.bak"
+```
 
 ### --suffix-keep-extension
 
@@ -2413,8 +2535,10 @@ Specify the directory rclone will use for temporary files, to override
 the default. Make sure the directory exists and have accessible permissions.
 
 By default the operating system's temp directory will be used:
+
 - On Unix systems, `$TMPDIR` if non-empty, else `/tmp`.
-- On Windows, the first non-empty value from `%TMP%`, `%TEMP%`, `%USERPROFILE%`, or the Windows directory.
+- On Windows, the first non-empty value from `%TMP%`, `%TEMP%`, `%USERPROFILE%`,
+  or the Windows directory.
 
 When overriding the default with this option, the specified path will be
 set as value of environment variable `TMPDIR` on Unix systems
@@ -2742,8 +2866,8 @@ have to supply the password every time you start rclone.
 
 To add a password to your rclone configuration, execute `rclone config`.
 
-```
->rclone config
+```sh
+$ rclone config
 Current remotes:
 
 e) Edit existing remote
@@ -2755,7 +2879,8 @@ e/n/d/s/q>
 ```
 
 Go into `s`, Set configuration password:
-```
+
+```sh
 e/n/d/s/q> s
 Your configuration is not encrypted.
 If you add a password, you will protect your login information to cloud services.
@@ -2783,9 +2908,12 @@ There is no way to recover the configuration if you lose your password.
 
 You can also use
 
-- [rclone config encryption set](/commands/rclone_config_encryption_set/) to set the config encryption directly
-- [rclone config encryption remove](/commands/rclone_config_encryption_remove/) to remove it
-- [rclone config encryption check](/commands/rclone_config_encryption_check/) to check that it is encrypted properly.
+- [rclone config encryption set](/commands/rclone_config_encryption_set/)
+  to set the config encryption directly
+- [rclone config encryption remove](/commands/rclone_config_encryption_remove/)
+  to remove it
+- [rclone config encryption check](/commands/rclone_config_encryption_check/)
+  to check that it is encrypted properly.
 
 rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox)
 which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate
@@ -3078,6 +3206,7 @@ messages may not be valid after the retry. If rclone has done a retry
 it will log a high priority message if the retry was successful.
 
 ### List of exit codes
+
 - `0` - Success
 - `1` - Error not otherwise categorised
 - `2` - Syntax or usage error
@@ -3085,9 +3214,11 @@ it will log a high priority message if the retry was successful.
 - `4` - File not found
 - `5` - Temporary error (one that more retries might fix) (Retry errors)
 - `6` - Less serious errors (like 461 errors from dropbox) (NoRetry errors)
-- `7` - Fatal error (one that more retries won't fix, like account suspended) (Fatal errors)
+- `7` - Fatal error (one that more retries won't fix, like account suspended)
+  (Fatal errors)
 - `8` - Transfer exceeded - limit set by --max-transfer reached
-- `9` - Operation successful, but no files transferred (Requires [`--error-on-no-transfer`](#error-on-no-transfer))
+- `9` - Operation successful, but no files transferred (Requires
+  [`--error-on-no-transfer`](#error-on-no-transfer))
 - `10` - Duration exceeded - limit set by --max-duration reached
 
 ## Environment variables
@@ -3111,14 +3242,15 @@ override the environment variable setting.
 Or to always use the trash in drive `--drive-use-trash`, set
 `RCLONE_DRIVE_USE_TRASH=true`.
 
-Verbosity is slightly different, the environment variable 
-equivalent of `--verbose` or `-v` is `RCLONE_VERBOSE=1`, 
+Verbosity is slightly different, the environment variable
+equivalent of `--verbose` or `-v` is `RCLONE_VERBOSE=1`,
 or for `-vv`, `RCLONE_VERBOSE=2`.
 
 The same parser is used for the options and the environment variables
 so they take exactly the same form.
 
-The options set by environment variables can be seen with the `-vv` flag, e.g. `rclone version -vv`.
+The options set by environment variables can be seen with the `-vv` flag,
+e.g. `rclone version -vv`.
 
 Options that can appear multiple times (type `stringArray`) are
 treated slightly differently as environment variables can only be
@@ -3152,7 +3284,7 @@ so it can only contain letters, digits, or the `_` (underscore) character.
 For example, to configure an S3 remote named `mys3:` without a config
 file (using unix ways of setting environment variables):
 
-```
+```sh
 $ export RCLONE_CONFIG_MYS3_TYPE=s3
 $ export RCLONE_CONFIG_MYS3_ACCESS_KEY_ID=XXX
 $ export RCLONE_CONFIG_MYS3_SECRET_ACCESS_KEY=XXX
@@ -3171,23 +3303,25 @@ file as documented [above](#valid-remote-names).
 You must write the name in uppercase in the environment variable, but
 as seen from example above it will be listed and can be accessed in
 lowercase, while you can also refer to the same remote in uppercase:
-```
+
+```sh
 $ rclone lsd mys3:
           -1 2016-09-21 12:54:21        -1 my-bucket
 $ rclone lsd MYS3:
           -1 2016-09-21 12:54:21        -1 my-bucket
 ```
 
-
-Note that you can only set the options of the immediate backend, 
-so RCLONE_CONFIG_MYS3CRYPT_ACCESS_KEY_ID has no effect, if myS3Crypt is 
-a crypt remote based on an S3 remote. However RCLONE_S3_ACCESS_KEY_ID will 
+Note that you can only set the options of the immediate backend,
+so RCLONE_CONFIG_MYS3CRYPT_ACCESS_KEY_ID has no effect, if myS3Crypt is
+a crypt remote based on an S3 remote. However RCLONE_S3_ACCESS_KEY_ID will
 set the access key of all remotes using S3, including myS3Crypt.
 
 Note also that now rclone has [connection strings](#connection-strings),
 it is probably easier to use those instead which makes the above example
 
-    rclone lsd :s3,access_key_id=XXX,secret_access_key=XXX:
+```sh
+rclone lsd :s3,access_key_id=XXX,secret_access_key=XXX:
+```
 
 ### Precedence
 
@@ -3196,7 +3330,8 @@ this order and the first one with a value is used.
 
 - Parameters in connection strings, e.g. `myRemote,skip_links:`
 - Flag values as supplied on the command line, e.g. `--skip-links`
-- Remote specific environment vars, e.g. `RCLONE_CONFIG_MYREMOTE_SKIP_LINKS` (see above).
+- Remote specific environment vars, e.g. `RCLONE_CONFIG_MYREMOTE_SKIP_LINKS`
+  (see above).
 - Backend-specific environment vars, e.g. `RCLONE_LOCAL_SKIP_LINKS`.
 - Backend generic environment vars, e.g. `RCLONE_SKIP_LINKS`.
 - Config file, e.g. `skip_links = true`.
@@ -3220,9 +3355,9 @@ For non backend configuration the order is as follows:
 - `RCLONE_CONFIG_PASS` set to contain your config file password (see
   [Configuration Encryption](#configuration-encryption) section)
 - `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` (or the lowercase versions thereof).
-    - `HTTPS_PROXY` takes precedence over `HTTP_PROXY` for https requests.
-    - The environment values may be either a complete URL or a "host[:port]"
-      for, in which case the "http" scheme is assumed.
+  - `HTTPS_PROXY` takes precedence over `HTTP_PROXY` for https requests.
+  - The environment values may be either a complete URL or a "host[:port]"
+    for, in which case the "http" scheme is assumed.
 - `USER` and `LOGNAME` values are used as fallbacks for current username.
   The primary method for looking up username is OS-specific: Windows API on
   Windows, real user ID in /etc/passwd on Unix systems. In the documentation
