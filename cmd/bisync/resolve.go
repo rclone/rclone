@@ -135,7 +135,7 @@ type namePair struct {
 	newName string
 }
 
-func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias string, renameSkipped, copy1to2, copy2to1 *bilib.Names, ds1, ds2 *deltaSet) error {
+func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias string, renameSkipped, copy1to2, copy2to1 *bilib.Names, ds1, ds2 *deltaSet) (err error) {
 	winningPath := 0
 	if b.opt.ConflictResolve != PreferNone {
 		winningPath = b.conflictWinner(ds1, ds2, file, alias)
@@ -261,15 +261,15 @@ func (ri *renamesInfo) getNames(is1to2 bool) (srcOldName, srcNewName, dstOldName
 func (b *bisyncRun) numerate(ctx context.Context, startnum int, file, alias string) int {
 	for i := startnum; i < math.MaxInt; i++ {
 		iStr := fmt.Sprint(i)
-		if !ls1.has(SuffixName(ctx, file, b.opt.ConflictSuffix1+iStr)) &&
-			!ls1.has(SuffixName(ctx, alias, b.opt.ConflictSuffix1+iStr)) &&
-			!ls2.has(SuffixName(ctx, file, b.opt.ConflictSuffix2+iStr)) &&
-			!ls2.has(SuffixName(ctx, alias, b.opt.ConflictSuffix2+iStr)) {
+		if !b.march.ls1.has(SuffixName(ctx, file, b.opt.ConflictSuffix1+iStr)) &&
+			!b.march.ls1.has(SuffixName(ctx, alias, b.opt.ConflictSuffix1+iStr)) &&
+			!b.march.ls2.has(SuffixName(ctx, file, b.opt.ConflictSuffix2+iStr)) &&
+			!b.march.ls2.has(SuffixName(ctx, alias, b.opt.ConflictSuffix2+iStr)) {
 			// make sure it still holds true with suffixes switched (it should)
-			if !ls1.has(SuffixName(ctx, file, b.opt.ConflictSuffix2+iStr)) &&
-				!ls1.has(SuffixName(ctx, alias, b.opt.ConflictSuffix2+iStr)) &&
-				!ls2.has(SuffixName(ctx, file, b.opt.ConflictSuffix1+iStr)) &&
-				!ls2.has(SuffixName(ctx, alias, b.opt.ConflictSuffix1+iStr)) {
+			if !b.march.ls1.has(SuffixName(ctx, file, b.opt.ConflictSuffix2+iStr)) &&
+				!b.march.ls1.has(SuffixName(ctx, alias, b.opt.ConflictSuffix2+iStr)) &&
+				!b.march.ls2.has(SuffixName(ctx, file, b.opt.ConflictSuffix1+iStr)) &&
+				!b.march.ls2.has(SuffixName(ctx, alias, b.opt.ConflictSuffix1+iStr)) {
 				fs.Debugf(file, "The first available suffix is: %s", iStr)
 				return i
 			}
@@ -280,10 +280,10 @@ func (b *bisyncRun) numerate(ctx context.Context, startnum int, file, alias stri
 
 // like numerate, but consider only one side's suffix (for when suffixes are different)
 func (b *bisyncRun) numerateSingle(ctx context.Context, startnum int, file, alias string, path int) int {
-	lsA, lsB := ls1, ls2
+	lsA, lsB := b.march.ls1, b.march.ls2
 	suffix := b.opt.ConflictSuffix1
 	if path == 2 {
-		lsA, lsB = ls2, ls1
+		lsA, lsB = b.march.ls2, b.march.ls1
 		suffix = b.opt.ConflictSuffix2
 	}
 	for i := startnum; i < math.MaxInt; i++ {
@@ -299,7 +299,7 @@ func (b *bisyncRun) numerateSingle(ctx context.Context, startnum int, file, alia
 	return 0 // not really possible, as no one has 9223372036854775807 conflicts, and if they do, they have bigger problems
 }
 
-func (b *bisyncRun) rename(ctx context.Context, thisNamePair namePair, thisPath, thatPath string, thisFs fs.Fs, thisPathNum, thatPathNum, winningPath int, q, renameSkipped *bilib.Names) error {
+func (b *bisyncRun) rename(ctx context.Context, thisNamePair namePair, thisPath, thatPath string, thisFs fs.Fs, thisPathNum, thatPathNum, winningPath int, q, renameSkipped *bilib.Names) (err error) {
 	if winningPath == thisPathNum {
 		b.indent(fmt.Sprintf("!Path%d", thisPathNum), thisPath+thisNamePair.newName, fmt.Sprintf("Not renaming Path%d copy, as it was determined the winner", thisPathNum))
 	} else {
@@ -321,7 +321,7 @@ func (b *bisyncRun) rename(ctx context.Context, thisNamePair namePair, thisPath,
 	return nil
 }
 
-func (b *bisyncRun) delete(ctx context.Context, thisNamePair namePair, thisPath, thatPath string, thisFs fs.Fs, thisPathNum, thatPathNum int, renameSkipped *bilib.Names) error {
+func (b *bisyncRun) delete(ctx context.Context, thisNamePair namePair, thisPath, thatPath string, thisFs fs.Fs, thisPathNum, thatPathNum int, renameSkipped *bilib.Names) (err error) {
 	skip := operations.SkipDestructive(ctx, thisNamePair.oldName, "delete")
 	if !skip {
 		b.indent(fmt.Sprintf("!Path%d", thisPathNum), thisPath+thisNamePair.oldName, fmt.Sprintf("Deleting Path%d copy", thisPathNum))
