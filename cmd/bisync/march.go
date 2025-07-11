@@ -60,9 +60,9 @@ func (b *bisyncRun) makeMarchListing(ctx context.Context) (*fileList, *fileList,
 	if b.opt.Compare.DownloadHash && b.march.ls2.hash == hash.None {
 		b.march.ls2.hash = hash.MD5
 	}
-	b.march.err = b.march.ls1.save(ctx, b.newListing1)
+	b.march.err = b.march.ls1.save(b.newListing1)
 	b.handleErr(b.march.ls1, "error saving b.march.ls1 from march", b.march.err, true, true)
-	b.march.err = b.march.ls2.save(ctx, b.newListing2)
+	b.march.err = b.march.ls2.save(b.newListing2)
 	b.handleErr(b.march.ls2, "error saving b.march.ls2 from march", b.march.err, true, true)
 
 	return b.march.ls1, b.march.ls2, b.march.err
