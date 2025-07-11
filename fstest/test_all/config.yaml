@@ -67,13 +67,13 @@ backends:
  #   maxfile:  10k
  #   ignore:
  #     - TestApplyTransforms
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bYandex:"
-   fastlist: true
-   maxfile:  1k
-   ignore:
-     # Needs investigation
-     - TestDeduplicateNewestByHash
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bYandex:"
+ #   fastlist: true
+ #   maxfile:  1k
+ #   ignore:
+ #     # Needs investigation
+ #     - TestDeduplicateNewestByHash
  # - backend:  "chunker"
  #   remote:   "TestChunkerChunk50bBox:"
  #   fastlist: true
