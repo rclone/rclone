@@ -247,7 +247,7 @@ func (ls *fileList) sort() {
 }
 
 // save will save listing to a file.
-func (ls *fileList) save(ctx context.Context, listing string) error {
+func (ls *fileList) save(listing string) error {
 	file, err := os.Create(listing)
 	if err != nil {
 		return err
@@ -712,9 +712,9 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		b.debug(b.DebugName, fmt.Sprintf("%s pre-save dstList has it?: %v", direction, dstList.has(b.DebugName)))
 	}
 	// update files
-	err = srcList.save(ctx, srcListing)
+	err = srcList.save(srcListing)
 	b.handleErr(srcList, "error saving srcList from modifyListing", err, true, true)
-	err = dstList.save(ctx, dstListing)
+	err = dstList.save(dstListing)
 	b.handleErr(dstList, "error saving dstList from modifyListing", err, true, true)
 
 	return err
