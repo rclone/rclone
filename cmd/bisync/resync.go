@@ -41,12 +41,12 @@ func (b *bisyncRun) setResyncDefaults() {
 // It will generate path1 and path2 listings,
 // copy any unique files to the opposite path,
 // and resolve any differing files according to the --resync-mode.
-func (b *bisyncRun) resync(octx, fctx context.Context) error {
+func (b *bisyncRun) resync(octx, fctx context.Context) (err error) {
 	fs.Infof(nil, "Copying Path2 files to Path1")
 
 	// Save blank filelists (will be filled from sync results)
-	var ls1 = newFileList()
-	var ls2 = newFileList()
+	ls1 := newFileList()
+	ls2 := newFileList()
 	err = ls1.save(fctx, b.newListing1)
 	if err != nil {
 		b.handleErr(ls1, "error saving ls1 from resync", err, true, true)
