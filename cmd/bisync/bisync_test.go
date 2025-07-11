@@ -176,6 +176,7 @@ var (
 	// Flag -refresh-times helps with Dropbox tests failing with message
 	// "src and dst identical but can't set mod time without deleting and re-uploading"
 	argRefreshTimes = flag.Bool("refresh-times", false, "Force refreshing the target modtime, useful for Dropbox (default: false)")
+	ignoreLogs      = flag.Bool("ignore-logs", false, "skip comparing log lines but still compare listings")
 )
 
 // bisyncTest keeps all test data in a single place
@@ -262,6 +263,25 @@ func TestBisyncRemoteRemote(t *testing.T) {
 	require.NoError(t, err)
 	defer cleanup()
 	testBisync(t, remote, remote)
+}
+
+// make sure rc can cope with running concurrent jobs
+func TestBisyncConcurrent(t *testing.T) {
+	oldArgTestCase := argTestCase
+	*argTestCase = "basic"
+	*ignoreLogs = true // not useful to compare logs here because both runs will be logging at once
+	t.Cleanup(func() {
+		argTestCase = oldArgTestCase
+		*ignoreLogs = false
+	})
+
+	t.Run("test1", testParallel)
+	t.Run("test2", testParallel)
+}
+
+func testParallel(t *testing.T) {
+	t.Parallel()
+	TestBisyncRemoteRemote(t)
 }
 
 // TestBisync is a test engine for bisync test cases.
@@ -1441,6 +1461,9 @@ func (b *bisyncTest) compareResults() int {
 		resultText := b.mangleResult(b.workDir, file, false)
 
 		if fileType(file) == "log" {
+			if *ignoreLogs {
+				continue
+			}
 			// save mangled logs so difference is easier on eyes
 			goldenFile := filepath.Join(b.logDir, "mangled.golden.log")
 			resultFile := filepath.Join(b.logDir, "mangled.result.log")
