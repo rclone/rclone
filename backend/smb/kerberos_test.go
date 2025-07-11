@@ -86,7 +86,14 @@ func TestKerberosFactory_GetClient_ReloadOnCcacheChange(t *testing.T) {
 	// Create temp ccache file
 	tmpFile, err := os.CreateTemp("", "krb5cc_test")
 	assert.NoError(t, err)
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		if err := os.Remove(tmpFile.Name()); err != nil {
+			t.Logf("Failed to remove temp file %s: %v", tmpFile.Name(), err)
+		}
+	}()
+
+	unixPath := filepath.ToSlash(tmpFile.Name())
+	ccachePath := "FILE:" + unixPath
 
 	initialContent := []byte("CCACHE_VERSION 4\n")
 	_, err = tmpFile.Write(initialContent)
@@ -114,12 +121,12 @@ func TestKerberosFactory_GetClient_ReloadOnCcacheChange(t *testing.T) {
 	}
 
 	// First call — triggers loading
-	_, err = factory.GetClient(tmpFile.Name())
+	_, err = factory.GetClient(ccachePath)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, loadCallCount, "expected 1 load call")
 
 	// Second call — should reuse cache, no additional load
-	_, err = factory.GetClient(tmpFile.Name())
+	_, err = factory.GetClient(ccachePath)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, loadCallCount, "expected cached reuse, no new load")
 
@@ -129,7 +136,7 @@ func TestKerberosFactory_GetClient_ReloadOnCcacheChange(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Third call — should detect change, reload
-	_, err = factory.GetClient(tmpFile.Name())
+	_, err = factory.GetClient(ccachePath)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, loadCallCount, "expected reload on changed ccache")
 }
