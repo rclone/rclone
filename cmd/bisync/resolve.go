@@ -77,7 +77,7 @@ func (conflictLoserChoices) Type() string {
 // ConflictLoserList is a list of --conflict-loser flag choices used in the help
 var ConflictLoserList = Opt.ConflictLoser.Help()
 
-func (b *bisyncRun) setResolveDefaults(ctx context.Context) error {
+func (b *bisyncRun) setResolveDefaults() error {
 	if b.opt.ConflictLoser == ConflictLoserSkip {
 		b.opt.ConflictLoser = ConflictLoserNumber
 	}
@@ -197,7 +197,7 @@ func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias s
 	// note also that deletes and renames are mutually exclusive -- we never delete one path and rename the other.
 	if b.opt.ConflictLoser == ConflictLoserDelete && winningPath == 1 {
 		// delete 2, copy 1 to 2
-		err = b.delete(ctxMove, r.path2, path2, path1, b.fs2, 2, 1, renameSkipped)
+		err = b.delete(ctxMove, r.path2, path2, b.fs2, 2, renameSkipped)
 		if err != nil {
 			return err
 		}
@@ -207,7 +207,7 @@ func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias s
 		copy1to2.Add(r.path1.oldName)
 	} else if b.opt.ConflictLoser == ConflictLoserDelete && winningPath == 2 {
 		// delete 1, copy 2 to 1
-		err = b.delete(ctxMove, r.path1, path1, path2, b.fs1, 1, 2, renameSkipped)
+		err = b.delete(ctxMove, r.path1, path1, b.fs1, 1, renameSkipped)
 		if err != nil {
 			return err
 		}
@@ -321,7 +321,7 @@ func (b *bisyncRun) rename(ctx context.Context, thisNamePair namePair, thisPath,
 	return nil
 }
 
-func (b *bisyncRun) delete(ctx context.Context, thisNamePair namePair, thisPath, thatPath string, thisFs fs.Fs, thisPathNum, thatPathNum int, renameSkipped *bilib.Names) (err error) {
+func (b *bisyncRun) delete(ctx context.Context, thisNamePair namePair, thisPath string, thisFs fs.Fs, thisPathNum int, renameSkipped *bilib.Names) (err error) {
 	skip := operations.SkipDestructive(ctx, thisNamePair.oldName, "delete")
 	if !skip {
 		b.indent(fmt.Sprintf("!Path%d", thisPathNum), thisPath+thisNamePair.oldName, fmt.Sprintf("Deleting Path%d copy", thisPathNum))
@@ -359,17 +359,17 @@ func (b *bisyncRun) conflictWinner(ds1, ds2 *deltaSet, remote1, remote2 string) 
 		return 2
 	case PreferNewer, PreferOlder:
 		t1, t2 := ds1.time[remote1], ds2.time[remote2]
-		return b.resolveNewerOlder(t1, t2, remote1, remote2, b.opt.ConflictResolve)
+		return b.resolveNewerOlder(t1, t2, remote1, b.opt.ConflictResolve)
 	case PreferLarger, PreferSmaller:
 		s1, s2 := ds1.size[remote1], ds2.size[remote2]
-		return b.resolveLargerSmaller(s1, s2, remote1, remote2, b.opt.ConflictResolve)
+		return b.resolveLargerSmaller(s1, s2, remote1, b.opt.ConflictResolve)
 	default:
 		return 0
 	}
 }
 
 // returns the winning path number, or 0 if winner can't be determined
-func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1, remote2 string, prefer Prefer) int {
+func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1 string, prefer Prefer) int {
 	if fs.GetModifyWindow(b.octx, b.fs1, b.fs2) == fs.ModTimeNotSupported {
 		fs.Infof(remote1, "Winner cannot be determined as at least one path lacks modtime support.")
 		return 0
@@ -404,7 +404,7 @@ func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1, remote2 string,
 }
 
 // returns the winning path number, or 0 if winner can't be determined
-func (b *bisyncRun) resolveLargerSmaller(s1, s2 int64, remote1, remote2 string, prefer Prefer) int {
+func (b *bisyncRun) resolveLargerSmaller(s1, s2 int64, remote1 string, prefer Prefer) int {
 	if s1 < 0 || s2 < 0 {
 		fs.Infof(remote1, "Winner cannot be determined as at least one size is unknown. Path1: %v, Path2: %v", s1, s2)
 		return 0
