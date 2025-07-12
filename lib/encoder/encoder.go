@@ -18,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -61,6 +63,8 @@ const (
 	EncodeRightPeriod                // Trailing .
 	EncodeRightCrLfHtVt              // Trailing CR LF HT VT
 	EncodeInvalidUtf8                // Invalid UTF-8 bytes
+	EncodeInvalidNFC                 // Force NFC encoding
+	EncodeInvalidNFD                 // Force NFD encoding
 	EncodeDot                        // . and .. names
 	EncodeSquareBracket              // []
 	EncodeSemicolon                  // ;
@@ -148,6 +152,8 @@ func init() {
 	alias("RightPeriod", EncodeRightPeriod)
 	alias("RightCrLfHtVt", EncodeRightCrLfHtVt)
 	alias("InvalidUtf8", EncodeInvalidUtf8)
+	alias("ForceNFC", EncodeInvalidNFC)
+	alias("ForceNFD", EncodeInvalidNFD)
 	alias("Dot", EncodeDot)
 }
 
@@ -224,6 +230,13 @@ func (mask MultiEncoder) Encode(in string) string {
 
 	if in == "" {
 		return ""
+	}
+
+	if mask.Has(EncodeInvalidNFD) {
+		in = norm.NFD.String(in)
+	}
+	if mask.Has(EncodeInvalidNFC) {
+		in = norm.NFC.String(in)
 	}
 
 	if mask.Has(EncodeDot) {
@@ -687,6 +700,15 @@ func (mask MultiEncoder) Decode(in string) string {
 	if mask == EncodeRaw {
 		return in
 	}
+
+	/* // Can't losslessly decode NFC/NFD
+	if mask.Has(EncodeInvalidNFD) {
+		in = norm.NFC.String(in)
+	}
+	if mask.Has(EncodeInvalidNFC) {
+		in = norm.NFD.String(in)
+	}
+	*/
 
 	if mask.Has(EncodeDot) {
 		switch in {

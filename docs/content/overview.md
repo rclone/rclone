@@ -377,6 +377,8 @@ will show you the defaults for the backends.
 | Exclamation | `!` | `！` |
 | Hash | `#` | `＃` |
 | InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) | `�` |
+| ForceNFC | All invalid NFC characters | Their valid NFC equivalents |
+| ForceNFD | All invalid NFD characters | Their valid NFD equivalents |
 | LeftCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the left of a string | `␍`, `␊`, `␉`, `␋` |
 | LeftPeriod | `.` on the left of a string | `.` |
 | LeftSpace | SPACE on the left of a string | `␠` |

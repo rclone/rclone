@@ -34,7 +34,6 @@ func TestEncodeString(t *testing.T) {
 		got := test.mask.String()
 		assert.Equal(t, test.want, got)
 	}
-
 }
 
 func TestEncodeSet(t *testing.T) {
@@ -60,7 +59,6 @@ func TestEncodeSet(t *testing.T) {
 		assert.Equal(t, test.wantErr, err != nil, err)
 		assert.Equal(t, test.want, got, test.in)
 	}
-
 }
 
 type testCase struct {
@@ -171,6 +169,34 @@ func TestEncodeInvalidUnicode(t *testing.T) {
 			if got2 != tc.in {
 				t.Errorf("Decode(%q) want %q got %q", got, tc.in, got2)
 			}
+		})
+	}
+}
+
+func TestEncodeNFCNFD(t *testing.T) {
+	for i, tc := range []testCase{
+		{
+			mask: EncodeInvalidNFC,
+			in:   "Über",
+			out:  "Über",
+		},
+		{
+			mask: EncodeInvalidNFD,
+			in:   "Über",
+			out:  "Über",
+		},
+	} {
+		e := tc.mask
+		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
+			got := e.Encode(tc.in)
+			if got != tc.out {
+				t.Errorf("Encode(%q) want %q got %q", tc.in, tc.out, got)
+			}
+			// we can't losslessly decode NFC/NFD
+			/* got2 := e.Decode(got)
+			if got2 != tc.in {
+				t.Errorf("Decode(%q) want %q got %q", got, tc.in, got2)
+			} */
 		})
 	}
 }

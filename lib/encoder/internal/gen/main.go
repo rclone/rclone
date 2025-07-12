@@ -67,6 +67,8 @@ var maskBits = []struct {
 	{encoder.EncodeRightPeriod, "EncodeRightPeriod"},
 	{encoder.EncodeRightCrLfHtVt, "EncodeRightCrLfHtVt"},
 	{encoder.EncodeInvalidUtf8, "EncodeInvalidUtf8"},
+	{encoder.EncodeInvalidNFC, "ForceNFC"},
+	{encoder.EncodeInvalidNFD, "ForceNFD"},
 	{encoder.EncodeDot, "EncodeDot"},
 }
 
@@ -82,13 +84,15 @@ var allEdges = []edge{
 	{encoder.EncodeLeftSpace, "EncodeLeftSpace", edgeLeft, []rune{' '}, []rune{'␠'}},
 	{encoder.EncodeLeftPeriod, "EncodeLeftPeriod", edgeLeft, []rune{'.'}, []rune{'．'}},
 	{encoder.EncodeLeftTilde, "EncodeLeftTilde", edgeLeft, []rune{'~'}, []rune{'～'}},
-	{encoder.EncodeLeftCrLfHtVt, "EncodeLeftCrLfHtVt", edgeLeft,
+	{
+		encoder.EncodeLeftCrLfHtVt, "EncodeLeftCrLfHtVt", edgeLeft,
 		[]rune{'\t', '\n', '\v', '\r'},
 		[]rune{'␀' + '\t', '␀' + '\n', '␀' + '\v', '␀' + '\r'},
 	},
 	{encoder.EncodeRightSpace, "EncodeRightSpace", edgeRight, []rune{' '}, []rune{'␠'}},
 	{encoder.EncodeRightPeriod, "EncodeRightPeriod", edgeRight, []rune{'.'}, []rune{'．'}},
-	{encoder.EncodeRightCrLfHtVt, "EncodeRightCrLfHtVt", edgeRight,
+	{
+		encoder.EncodeRightCrLfHtVt, "EncodeRightCrLfHtVt", edgeRight,
 		[]rune{'\t', '\n', '\v', '\r'},
 		[]rune{'␀' + '\t', '␀' + '\n', '␀' + '\v', '␀' + '\r'},
 	},
@@ -99,102 +103,122 @@ var allMappings = []mapping{{
 		0,
 	}, []rune{
 		'␀',
-	}}, {
+	},
+}, {
 	encoder.EncodeSlash, []rune{
 		'/',
 	}, []rune{
 		'／',
-	}}, {
+	},
+}, {
 	encoder.EncodeLtGt, []rune{
 		'<', '>',
 	}, []rune{
 		'＜', '＞',
-	}}, {
+	},
+}, {
 	encoder.EncodeSquareBracket, []rune{
 		'[', ']',
 	}, []rune{
 		'［', '］',
-	}}, {
+	},
+}, {
 	encoder.EncodeSemicolon, []rune{
 		';',
 	}, []rune{
 		'；',
-	}}, {
+	},
+}, {
 	encoder.EncodeExclamation, []rune{
 		'!',
 	}, []rune{
 		'！',
-	}}, {
+	},
+}, {
 	encoder.EncodeDoubleQuote, []rune{
 		'"',
 	}, []rune{
 		'＂',
-	}}, {
+	},
+}, {
 	encoder.EncodeSingleQuote, []rune{
 		'\'',
 	}, []rune{
 		'＇',
-	}}, {
+	},
+}, {
 	encoder.EncodeBackQuote, []rune{
 		'`',
 	}, []rune{
 		'｀',
-	}}, {
+	},
+}, {
 	encoder.EncodeDollar, []rune{
 		'$',
 	}, []rune{
 		'＄',
-	}}, {
+	},
+}, {
 	encoder.EncodeColon, []rune{
 		':',
 	}, []rune{
 		'：',
-	}}, {
+	},
+}, {
 	encoder.EncodeQuestion, []rune{
 		'?',
 	}, []rune{
 		'？',
-	}}, {
+	},
+}, {
 	encoder.EncodeAsterisk, []rune{
 		'*',
 	}, []rune{
 		'＊',
-	}}, {
+	},
+}, {
 	encoder.EncodePipe, []rune{
 		'|',
 	}, []rune{
 		'｜',
-	}}, {
+	},
+}, {
 	encoder.EncodeHash, []rune{
 		'#',
 	}, []rune{
 		'＃',
-	}}, {
+	},
+}, {
 	encoder.EncodePercent, []rune{
 		'%',
 	}, []rune{
 		'％',
-	}}, {
+	},
+}, {
 	encoder.EncodeSlash, []rune{
 		'/',
 	}, []rune{
 		'／',
-	}}, {
+	},
+}, {
 	encoder.EncodeBackSlash, []rune{
 		'\\',
 	}, []rune{
 		'＼',
-	}}, {
+	},
+}, {
 	encoder.EncodeCrLf, []rune{
 		rune(0x0D), rune(0x0A),
 	}, []rune{
 		'␍', '␊',
-	}}, {
+	},
+}, {
 	encoder.EncodeDel, []rune{
 		0x7F,
 	}, []rune{
 		'␡',
-	}}, {
+	},
+}, {
 	encoder.EncodeCtl,
 	runeRange(0x01, 0x1F),
 	runeRange('␁', '␟'),
@@ -438,6 +462,7 @@ func fatal(err error, s ...any) {
 		fs.Fatal(nil, fmt.Sprint(append(s, err)))
 	}
 }
+
 func fatalW(_ int, err error) func(...any) {
 	if err != nil {
 		return func(s ...any) {
@@ -471,12 +496,14 @@ func getMapping(mask encoder.MultiEncoder) mapping {
 	}
 	return mapping{}
 }
+
 func collectEncodables(m []mapping) (out []rune) {
 	for _, s := range m {
 		out = append(out, s.src...)
 	}
 	return
 }
+
 func collectEncoded(m []mapping) (out []rune) {
 	for _, s := range m {
 		out = append(out, s.dst...)
