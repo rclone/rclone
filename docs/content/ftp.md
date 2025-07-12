@@ -433,6 +433,25 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --ftp-http-proxy
+
+URL for HTTP CONNECT proxy
+
+Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+
+Supports the format http://user:pass@host:port, http://host:port, http://host.
+
+Example:
+
+  http://myUser:myPass@proxyhostname.example.com:8000
+
+Properties:
+
+- Config:      http_proxy
+- Env Var:     RCLONE_FTP_HTTP_PROXY
+- Type:        string
+- Required:    false
+
 #### --ftp-no-check-upload
 
 Don't check the upload is OK
