@@ -1278,13 +1278,13 @@ func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err e
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	err := srcObj.readMetaData(ctx)
+	err = srcObj.readMetaData(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1299,31 +1299,55 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't copy - same parent")
 		return nil, fs.ErrorCantCopy
 	}
+
+	// Check for possible conflicts: Pikpak creates numbered copies on name collision.
+	var conflict *api.File
+	_, srcLeaf := dircache.SplitPath(srcObj.remote)
+	if srcLeaf == dstLeaf {
+		if conflict, err = f.readMetaDataForPath(ctx, remote); err == nil {
+			// delete conflicting file
+			if err = f.deleteObjects(ctx, []string{conflict.ID}, true); err != nil {
+				return nil, fmt.Errorf("copy: couldn't delete conflicting file: %w", err)
+			}
+			defer func() {
+				if err != nil {
+					if restoreErr := f.untrashObjects(ctx, []string{conflict.ID}); restoreErr != nil {
+						fs.Logf(f, "copy: couldn't restore conflicting file: %v", restoreErr)
+					}
+				}
+			}()
+		} else if err != fs.ErrorObjectNotFound {
+			return nil, err
+		}
+	} else {
+		dstDir, _ := dircache.SplitPath(remote)
+		dstObj.remote = path.Join(dstDir, srcLeaf)
+		if conflict, err = f.readMetaDataForPath(ctx, dstObj.remote); err == nil {
+			tmpName := conflict.Name + "-rclone-copy-" + random.String(8)
+			if _, err = f.renameObject(ctx, conflict.ID, tmpName); err != nil {
+				return nil, fmt.Errorf("copy: couldn't rename conflicting file: %w", err)
+			}
+			defer func() {
+				if _, renameErr := f.renameObject(ctx, conflict.ID, conflict.Name); renameErr != nil {
+					fs.Logf(f, "copy: couldn't rename conflicting file back to original: %v", renameErr)
+				}
+			}()
+		} else if err != fs.ErrorObjectNotFound {
+			return nil, err
+		}
+	}
+
 	// Copy the object
 	if err := f.copyObjects(ctx, []string{srcObj.id}, dstParentID); err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
-	// Update info of the copied object with new parent but source name
-	if info, err := dstObj.fs.readMetaDataForPath(ctx, srcObj.remote); err != nil {
-		return nil, fmt.Errorf("copy: couldn't locate copied file: %w", err)
-	} else if err = dstObj.setMetaData(info); err != nil {
-		return nil, err
-	}
-
-	// Can't copy and change name in one step so we have to check if we have
-	// the correct name after copy
-	srcLeaf, _, err := srcObj.fs.dirCache.FindPath(ctx, srcObj.remote, false)
+	err = dstObj.readMetaData(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("copy: couldn't locate copied file: %w", err)
 	}
 
 	if srcLeaf != dstLeaf {
-		// Rename
-		info, err := f.renameObject(ctx, dstObj.id, dstLeaf)
-		if err != nil {
-			return nil, fmt.Errorf("copy: couldn't rename copied file: %w", err)
-		}
-		return dstObj, dstObj.setMetaData(info)
+		return f.Move(ctx, dstObj, remote)
 	}
 	return dstObj, nil
 }
