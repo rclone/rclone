@@ -571,8 +571,6 @@ Then, run `go build -buildmode=plugin -o PLUGIN_NAME.so .` to build the plugin.
 
 [Go reference](https://godoc.org/github.com/rclone/rclone/lib/plugin)
 
-[Minimal example](https://gist.github.com/terorie/21b517ee347828e899e1913efc1d684f)
-
 ## Keeping a backend or command out of tree
 
 Rclone was designed to be modular so it is very easy to keep a backend
