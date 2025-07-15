@@ -980,6 +980,10 @@ func (f *Fs) deleteObjects(ctx context.Context, IDs []string, useTrash bool) (er
 }
 
 // untrash a file or directory by ID
+//
+// If a name collision occurs in the destination folder, PikPak might automatically
+// rename the restored item(s) by appending a numbered suffix. For example,
+// foo.txt -> foo(1).txt or foo(2).txt if foo(1).txt already exists
 func (f *Fs) untrashObjects(ctx context.Context, IDs []string) (err error) {
 	if len(IDs) == 0 {
 		return nil
@@ -1077,7 +1081,14 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	return f.waitTask(ctx, info.TaskID)
 }
 
-// Move the object
+// Move the object to a new parent folder
+//
+// Objects cannot be moved to their current folder.
+// "file_move_or_copy_to_cur" (9): Please don't move or copy to current folder or sub folder
+//
+// If a name collision occurs in the destination folder, PikPak might automatically
+// rename the moved item(s) by appending a numbered suffix. For example,
+// foo.txt -> foo(1).txt or foo(2).txt if foo(1).txt already exists
 func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err error) {
 	if len(IDs) == 0 {
 		return nil
@@ -1093,6 +1104,12 @@ func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err e
 }
 
 // renames the object
+//
+// The new name must be different from the current name.
+// "file_rename_to_same_name" (3): Name of file or folder is not changed
+//
+// Within the same folder, object names must be unique.
+// "file_duplicated_name" (3): File name cannot be repeated
 func (f *Fs) renameObject(ctx context.Context, ID, newName string) (info *api.File, err error) {
 	req := api.File{
 		Name: f.opt.Enc.FromStandardName(newName),
@@ -1255,6 +1272,13 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 }
 
 // copy objects
+//
+// Objects cannot be copied to their current folder.
+// "file_move_or_copy_to_cur" (9): Please don't move or copy to current folder or sub folder
+//
+// If a name collision occurs in the destination folder, PikPak might automatically
+// rename the copied item(s) by appending a numbered suffix. For example,
+// foo.txt -> foo(1).txt or foo(2).txt if foo(1).txt already exists
 func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err error) {
 	if len(IDs) == 0 {
 		return nil
