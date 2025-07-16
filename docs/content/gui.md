@@ -13,13 +13,14 @@ change.
 Run this command in a terminal and rclone will download and then
 display the GUI in a web browser.
 
-```
+```sh
 rclone rcd --rc-web-gui
 ```
 
-This will produce logs like this and rclone needs to continue to run to serve the GUI:
+This will produce logs like this and rclone needs to continue to run to serve
+the GUI:
 
-```
+```text
 2019/08/25 11:40:14 NOTICE: A new release for gui is present at https://github.com/rclone/rclone-webui-react/releases/download/v0.0.6/currentbuild.zip
 2019/08/25 11:40:14 NOTICE: Downloading webgui binary. Please wait. [Size: 3813937, Path :  /home/USER/.cache/rclone/webgui/v0.0.6.zip]
 2019/08/25 11:40:16 NOTICE: Unzipping
@@ -58,7 +59,8 @@ When you run the `rclone rcd --rc-web-gui` this is what happens
 - Rclone starts but only runs the remote control API ("rc").
 - The API is bound to localhost with an auto-generated username and password.
 - If the API bundle is missing then rclone will download it.
-- rclone will start serving the files from the API bundle over the same port as the API
+- rclone will start serving the files from the API bundle over the same port as
+  the API
 - rclone will open the browser with a `login_token` so it can log straight in.
 
 ## Advanced use
@@ -79,7 +81,8 @@ See also the [rclone rcd documentation](https://rclone.org/commands/rclone_rcd/)
 
 ### Example: Running a public GUI
 
-For example the GUI could be served on a public port over SSL using an htpasswd file using the following flags:
+For example the GUI could be served on a public port over SSL using an htpasswd
+file using the following flags:
 
 - `--rc-web-gui`
 - `--rc-addr :443`
@@ -107,5 +110,3 @@ The GUI is being developed in the: [rclone/rclone-webui-react repository](https:
 Bug reports and contributions are very welcome :-)
 
 If you have questions then please ask them on the [rclone forum](https://forum.rclone.org/).
-
-
