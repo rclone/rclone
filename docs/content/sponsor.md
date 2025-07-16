@@ -56,6 +56,7 @@ off donation.
 
 Thank you very much to our sponsors:
 
+{{< sponsor src="/img/logos/backblaze.svg" width="300" height="200" title="Visit our sponsor Backblaze" link="https://www.backblaze.com/cloud-storage-rclonead?utm_source=rclone&utm_medium=paid&utm_campaign=rclone-website-20250715">}}
 {{< sponsor src="/img/logos/idrive_e2.svg" width="300" height="200" title="Visit our sponsor IDrive e2" link="https://www.idrive.com/e2/?refer=rclone">}}
 {{< sponsor src="/img/logos/filescom-enterprise-grade-workflows.png" width="300" height="200" title="Start Your Free Trial Today" link="https://files.com/?utm_source=rclone&utm_medium=referral&utm_campaign=banner&utm_term=rclone">}}
 {{< sponsor src="/img/logos/sia.svg" width="200" height="200" title="Visit our sponsor sia" link="https://sia.tech">}}
