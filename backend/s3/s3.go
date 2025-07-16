@@ -2550,6 +2550,11 @@ See: [AWS S3 Transfer acceleration](https://docs.aws.amazon.com/AmazonS3/latest/
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "use_arn_region",
+			Help:     `If true, enables arn region support for the service.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "leave_parts_on_error",
 			Provider: "AWS",
 			Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
@@ -3096,6 +3101,7 @@ type Options struct {
 	ForcePathStyle        bool                 `config:"force_path_style"`
 	V2Auth                bool                 `config:"v2_auth"`
 	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
+	UseARNRegion          bool                 `config:"use_arn_region"`
 	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
 	ListChunk             int32                `config:"list_chunk"`
 	ListVersion           int                  `config:"list_version"`
@@ -3460,6 +3466,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 	options = append(options, func(s3Opt *s3.Options) {
 		s3Opt.UsePathStyle = opt.ForcePathStyle
 		s3Opt.UseAccelerate = opt.UseAccelerateEndpoint
+		s3Opt.UseARNRegion = opt.UseARNRegion
 		// FIXME maybe this should be a tristate so can default to DualStackEndpointStateUnset?
 		if opt.UseDualStack {
 			s3Opt.EndpointOptions.UseDualStackEndpoint = aws.DualStackEndpointStateEnabled
