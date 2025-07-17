@@ -391,6 +391,7 @@ func (s *StatsInfo) _stopAverageLoop() {
 	if s.average.started {
 		s.average.cancel()
 		s.average.stopped.Wait()
+		s.average.started = false
 	}
 }
 
