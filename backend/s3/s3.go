@@ -5061,8 +5061,11 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 			MultipartUpload: &types.CompletedMultipartUpload{
 				Parts: parts,
 			},
-			RequestPayer: req.RequestPayer,
-			UploadId:     uid,
+			RequestPayer:         req.RequestPayer,
+			SSECustomerAlgorithm: req.SSECustomerAlgorithm,
+			SSECustomerKey:       req.SSECustomerKey,
+			SSECustomerKeyMD5:    req.SSECustomerKeyMD5,
+			UploadId:             uid,
 		})
 		return f.shouldRetry(ctx, err)
 	})
@@ -6446,8 +6449,11 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 			MultipartUpload: &types.CompletedMultipartUpload{
 				Parts: w.completedParts,
 			},
-			RequestPayer: w.multiPartUploadInput.RequestPayer,
-			UploadId:     w.uploadID,
+			RequestPayer:         w.multiPartUploadInput.RequestPayer,
+			SSECustomerAlgorithm: w.multiPartUploadInput.SSECustomerAlgorithm,
+			SSECustomerKey:       w.multiPartUploadInput.SSECustomerKey,
+			SSECustomerKeyMD5:    w.multiPartUploadInput.SSECustomerKeyMD5,
+			UploadId:             w.uploadID,
 		})
 		return w.f.shouldRetry(ctx, err)
 	})
