@@ -991,3 +991,4 @@ put them back in again.` >}}
   * Ross Smith II <ross@smithii.com>
   * Vikas Bhansali <64532198+vibhansa-msft@users.noreply.github.com>
   * Sudipto Baral <sudiptobaral.me@gmail.com>
+  * Sam Pegg <samrpegg@gmail.com>
