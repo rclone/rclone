@@ -491,6 +491,17 @@ backends:
      - cmd/bisync
      - cmd/gitannex
  - backend:  "webdav"
+   remote:   "TestWebdavOpenCloud:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+   env:
+      - RCLONE_NO_CHECK_CERTIFICATE=true
+   fastlist: false
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
+ - backend:  "webdav"
    remote:   "TestWebdavRclone:"
    ignore:
      - TestFileReadAtZeroLength
