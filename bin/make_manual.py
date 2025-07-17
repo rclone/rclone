@@ -44,6 +44,7 @@ docs = [
     "doi.md",
     "dropbox.md",
     "filefabric.md",
+    "filejump.md",
     "filelu.md",
     "filescom.md",
     "ftp.md",
