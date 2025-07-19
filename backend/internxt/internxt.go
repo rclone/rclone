@@ -382,18 +382,6 @@ func newObjectWithFile(f *Fs, remote string, file *folders.File) fs.Object {
 	}
 }
 
-// newObjectWithMetaFile returns a new object by meta file info
-func newObjectWithMetaFile(f *Fs, remote string, file *buckets.CreateMetaResp) fs.Object {
-	size, _ := file.Size.Int64()
-	return &Object{
-		f:       f,
-		remote:  remote,
-		uuid:    file.UUID,
-		size:    size,
-		modTime: time.Now(),
-	}
-}
-
 // Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {
 	return o.f
