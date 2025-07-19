@@ -197,14 +197,13 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	err = folders.DeleteFolder(f.cfg, id)
 	if err != nil {
 		if strings.Contains(err.Error(), "statusCode\":404") {
-			return fs.ErrorDirNotFound
+			err = fs.ErrorDirNotFound
 		}
-		return nil
 	}
 
 	f.dirCache.FlushDir(dir)
 	f.dirCache.FlushDir(path.Dir(dir))
-	return nil
+	return err
 }
 
 // FindLeaf looks for a sub‑folder named `leaf` under the Internxt folder `pathID`.
