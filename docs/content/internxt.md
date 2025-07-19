@@ -37,9 +37,34 @@ Storage> internxt
 
 Remote config
 
+Option email.
+The email of the user to operate as.
+Enter a value. Press Enter to leave empty.
+email> abc@gmail.com
+
+Option password.
+The password for the user.
+Choose an alternative below. Press Enter for the default (n).
+y) Yes, type in my own password
+g) Generate random password
+n) No, leave this optional password blank (default)
+y/g/n> y
+
+Enter the password:
+password:
+Confirm the password:
+password:
+
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n> n
+
 Configuration complete.
 Options:
 - type: internxt
+- email: abc@gmail.com
+- password: *** ENCRYPTED ***
 Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
