@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 )
 
 // Register with Fs
@@ -64,6 +65,7 @@ type Fs struct {
 	rootIsFile     bool
 	rootFile       *folders.File
 	features       *fs.Features
+	encoding       encoder.MultiEncoder
 }
 
 // Object holds the data for a remote file object
@@ -132,6 +134,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: false,
 	})
 
+	f.encoding = encoder.EncodeBackSlash
+
 	f.dirCache = dircache.New("", cfg.RootFolderID, f)
 
 	if root != "" {
@@ -171,9 +175,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Mkdir creates a new directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	if hasPunctuationChars(dir) {
-		return fs.ErrorNotImplemented
-	}
 	_, err := f.dirCache.FindDir(ctx, dir, true)
 	if err != nil && strings.Contains(err.Error(), `"statusCode":400`) {
 		return nil
@@ -270,10 +271,6 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 
-	if hasPunctuationChars(remote) {
-		return nil, fs.ErrorNotImplemented
-	}
-
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
 
@@ -339,10 +336,6 @@ func (f *Fs) DirCacheFlush(ctx context.Context) {}
 
 // NewObject creates a new object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	if hasPunctuationChars(remote) {
-		return nil, fs.ErrorNotImplemented
-	}
-
 	if f.rootIsFile {
 		leaf := path.Base(f.root)
 		if remote == "" || remote == leaf {
@@ -468,15 +461,4 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove deletes a file
 func (o *Object) Remove(ctx context.Context) error {
 	return files.DeleteFile(o.f.cfg, o.uuid)
-}
-
-func hasPunctuationChars(s string) bool {
-	/*
-		const disallowed = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-		for _, r := range s {
-			if strings.ContainsRune(disallowed, r) {
-				return true
-			}
-		}*/
-	return false
 }
