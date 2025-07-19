@@ -134,14 +134,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: false,
 	})
 
-	f.encoding = encoder.EncodeBackSlash
+	f.encoding = encoder.EncodeBackSlash | encoder.EncodeHash | encoder.EncodePercent
 
 	f.dirCache = dircache.New("", cfg.RootFolderID, f)
 
 	if root != "" {
 		parent, leaf := path.Split(root)
 		parent = strings.Trim(parent, "/")
-		dirID, err := f.dirCache.FindDir(ctx, parent, false)
+		dirID, err := f.dirCache.FindDir(ctx, strings.ReplaceAll(parent, "\\", "%5C"), false)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +162,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 
 		if !f.rootIsFile {
-			folderID, err := f.dirCache.FindDir(ctx, root, true)
+			folderID, err := f.dirCache.FindDir(ctx, strings.ReplaceAll(root, "\\", "%5C"), true)
 			if err != nil {
 				return nil, err
 			}
@@ -175,6 +175,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Mkdir creates a new directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	dir = strings.ReplaceAll(dir, "\\", "%5C")
 	_, err := f.dirCache.FindDir(ctx, dir, true)
 	if err != nil && strings.Contains(err.Error(), `"statusCode":400`) {
 		return nil
@@ -224,7 +225,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 // CreateDir creates a new directory
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error) {
 	resp, err := folders.CreateFolder(f.cfg, folders.CreateFolderRequest{
-		PlainName:        leaf,
+		PlainName:        strings.ReplaceAll(leaf, "\\", "%5C"),
 		ParentFolderUUID: pathID,
 	})
 	if err != nil {
@@ -249,6 +250,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 	for _, e := range foldersList {
 		remote := path.Join(dir, e.PlainName)
+		remote = strings.ReplaceAll(remote, "%5C", "\\")
 		f.dirCache.Put(remote, e.UUID)
 		out = append(out, fs.NewDir(remote, e.ModificationTime))
 	}
@@ -258,6 +260,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 	for _, e := range filesList {
 		remote := path.Join(dir, e.PlainName)
+		remote = strings.ReplaceAll(remote, "%5C", "\\")
 		if len(e.Type) > 0 {
 			remote += "." + e.Type
 		}
@@ -274,6 +277,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
 
+	parentDir = strings.ReplaceAll(parentDir, "\\", "%5C")
 	folderUUID, err := f.dirCache.FindDir(ctx, parentDir, true)
 	if err != nil {
 		return nil, err
@@ -308,6 +312,7 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 		f.dirCache.FlushDir(parent)
 		return nil
 	}
+	remote = strings.ReplaceAll(remote, "\\", "%5C")
 	dirID, err := f.dirCache.FindDir(ctx, remote, false)
 	if err != nil {
 		return err
@@ -344,6 +349,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
+	parentDir = strings.ReplaceAll(parentDir, "\\", "%5C")
 	dirID, err := f.dirCache.FindDir(ctx, parentDir, false)
 	if err != nil {
 		return nil, err
@@ -438,6 +444,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	parentDir, _ := path.Split(o.remote)
 	parentDir = strings.Trim(parentDir, "/")
+	parentDir = strings.ReplaceAll(parentDir, "\\", "%5C")
 	folderUUID, err := o.f.dirCache.FindDir(ctx, parentDir, false)
 	if err != nil {
 		return err
