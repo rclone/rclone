@@ -4,7 +4,6 @@ package internxt
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"path"
 	"strings"
@@ -42,7 +41,8 @@ func init() {
 				Help:       "The password for the user.",
 				IsPassword: true,
 			},
-		}})
+		}},
+	)
 }
 
 // Options holds configuration options for this interface
@@ -63,6 +63,7 @@ type Fs struct {
 	accessResponse *auth.AccessResponse
 	rootIsFile     bool
 	rootFile       *folders.File
+	features       *fs.Features
 }
 
 // Object holds the data for a remote file object
@@ -86,7 +87,7 @@ func (f *Fs) String() string { return f.name + ":" + f.root }
 
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
-	return &fs.Features{ReadMetadata: false, CanHaveEmptyDirectories: true}
+	return f.features
 }
 
 // Hashes returns type of hashes supported by Internxt
@@ -95,7 +96,7 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // Precision returns the precision of mtime that the server responds
-func (f *Fs) Precision() time.Duration { return time.Microsecond }
+func (f *Fs) Precision() time.Duration { return time.Second }
 
 // NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -125,6 +126,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		loginResponse:  loginResponse,
 		accessResponse: accessResponse,
 	}
+
+	f.features = (&fs.Features{
+		ReadMetadata:            false,
+		CanHaveEmptyDirectories: false,
+	})
 
 	f.dirCache = dircache.New("", cfg.RootFolderID, f)
 
@@ -165,6 +171,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Mkdir creates a new directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	if hasControlChars(dir) {
+		return fs.ErrorNotImplemented
+	}
 	_, err := f.dirCache.FindDir(ctx, dir, true)
 	if err != nil && strings.Contains(err.Error(), `"statusCode":400`) {
 		return nil
@@ -176,20 +185,26 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	id, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
-		return err
+		if errors.Is(err, fs.ErrorDirNotFound) {
+			return nil
+		}
+		return nil
 	}
-
-	fmt.Println(id)
 
 	if id == f.cfg.RootFolderID {
-		return fs.ErrorDirNotFound
+		return nil
 	}
 
-	if err := folders.DeleteFolder(f.cfg, id); err != nil {
+	err = folders.DeleteFolder(f.cfg, id)
+	if err != nil {
+		if strings.Contains(err.Error(), "statusCode\":404") {
+			return fs.ErrorDirNotFound
+		}
 		return err
 	}
 
 	f.dirCache.FlushDir(dir)
+	f.dirCache.FlushDir(path.Dir(dir))
 	return nil
 }
 
@@ -258,11 +273,14 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 
+	if hasControlChars(remote) {
+		return nil, fs.ErrorNotImplemented
+	}
+
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
 
 	folderUUID, err := f.dirCache.FindDir(ctx, parentDir, true)
-
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +292,15 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	f.dirCache.Put(remote, meta.UUID)
 
-	return newObjectWithMetaFile(f, remote, meta), nil
+	modTime := src.ModTime(ctx)
+
+	return &Object{
+		f:       f,
+		remote:  remote,
+		uuid:    meta.UUID,
+		size:    src.Size(),
+		modTime: modTime,
+	}, nil
 }
 
 // Remove removes an object
@@ -316,6 +342,10 @@ func (f *Fs) DirCacheFlush(ctx context.Context) {}
 
 // NewObject creates a new object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	if hasControlChars(remote) {
+		return nil, fs.ErrorNotImplemented
+	}
+
 	if f.rootIsFile {
 		leaf := path.Base(f.root)
 		if remote == "" || remote == leaf {
@@ -431,13 +461,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
+
 	o.uuid = meta.UUID
 	o.size = src.Size()
-	o.modTime = time.Now()
+	o.modTime = src.ModTime(ctx)
 	return nil
 }
 
 // Remove deletes a file
 func (o *Object) Remove(ctx context.Context) error {
 	return files.DeleteFile(o.f.cfg, o.uuid)
+}
+
+func hasControlChars(s string) bool {
+	for _, r := range s {
+		if r < 0x20 || r == 0x7F {
+			return true
+		}
+	}
+	return false
 }
