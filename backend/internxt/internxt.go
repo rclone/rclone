@@ -140,7 +140,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if root != "" {
 		parent, leaf := path.Split(root)
 		parent = strings.Trim(parent, "/")
-		dirID, err := f.dirCache.FindDir(ctx, strings.ReplaceAll(parent, "\\", "%5C"), false)
+		dirID, err := f.dirCache.FindDir(ctx, encodePath(parent), false)
 		if err != nil {
 			return nil, err
 		}
@@ -161,7 +161,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 
 		if !f.rootIsFile {
-			folderID, err := f.dirCache.FindDir(ctx, strings.ReplaceAll(root, "\\", "%5C"), true)
+			folderID, err := f.dirCache.FindDir(ctx, encodePath(root), true)
 			if err != nil {
 				return nil, err
 			}
@@ -174,7 +174,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Mkdir creates a new directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	dir = strings.ReplaceAll(dir, "\\", "%5C")
+	dir = encodePath(dir)
 
 	id, err := f.dirCache.FindDir(ctx, dir, true)
 	if err != nil {
@@ -236,7 +236,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 // CreateDir creates a new directory
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error) {
 	resp, err := folders.CreateFolder(f.cfg, folders.CreateFolderRequest{
-		PlainName:        strings.ReplaceAll(leaf, "\\", "%5C"),
+		PlainName:        encodePath(leaf),
 		ParentFolderUUID: pathID,
 		ModificationTime: time.Now().UTC().Format(time.RFC3339),
 	})
@@ -262,7 +262,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 	for _, e := range foldersList {
 		remote := path.Join(dir, e.PlainName)
-		remote = strings.ReplaceAll(remote, "%5C", "\\")
+		remote = decodePath(remote)
 		f.dirCache.Put(remote, e.UUID)
 		out = append(out, fs.NewDir(remote, e.ModificationTime))
 	}
@@ -272,7 +272,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 	for _, e := range filesList {
 		remote := path.Join(dir, e.PlainName)
-		remote = strings.ReplaceAll(remote, "%5C", "\\")
+		remote = decodePath(remote)
 		if len(e.Type) > 0 {
 			remote += "." + e.Type
 		}
@@ -297,7 +297,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
 
-	parentDir = strings.ReplaceAll(parentDir, "\\", "%5C")
+	parentDir = encodePath(parentDir)
 	folderUUID, err := f.dirCache.FindDir(ctx, parentDir, true)
 	if err != nil {
 		return nil, err
@@ -332,7 +332,7 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 		f.dirCache.FlushDir(parent)
 		return nil
 	}
-	remote = strings.ReplaceAll(remote, "\\", "%5C")
+	remote = encodePath(remote)
 	dirID, err := f.dirCache.FindDir(ctx, remote, false)
 	if err != nil {
 		return err
@@ -369,7 +369,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
-	parentDir = strings.ReplaceAll(parentDir, "\\", "%5C")
+	parentDir = encodePath(parentDir)
 	dirID, err := f.dirCache.FindDir(ctx, parentDir, true)
 	if err != nil {
 		return nil, fs.ErrorObjectNotFound
@@ -452,7 +452,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	parentDir, _ := path.Split(o.remote)
 	parentDir = strings.Trim(parentDir, "/")
-	parentDir = strings.ReplaceAll(parentDir, "\\", "%5C")
+	parentDir = encodePath(parentDir)
 
 	if src.Size() < 0 {
 		return fs.ErrorCantUploadEmptyFiles
@@ -481,4 +481,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove deletes a file
 func (o *Object) Remove(ctx context.Context) error {
 	return files.DeleteFile(o.f.cfg, o.uuid)
+}
+
+func encodePath(path string) string {
+	return strings.ReplaceAll(path, "\\", "%5C")
+}
+
+func decodePath(path string) string {
+	return strings.ReplaceAll(path, "%5C", "\\")
 }
