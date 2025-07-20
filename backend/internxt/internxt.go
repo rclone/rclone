@@ -175,9 +175,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 // Mkdir creates a new directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	dir = strings.ReplaceAll(dir, "\\", "%5C")
-	_, err := f.dirCache.FindDir(ctx, dir, true)
+	id, err := f.dirCache.FindDir(ctx, dir, true)
 	if err != nil && strings.Contains(err.Error(), `"statusCode":400`) {
 		return nil
+	}
+	if err == nil {
+		f.dirCache.Put(dir, id)
 	}
 	return err
 }
@@ -185,8 +188,13 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // Rmdir removes a directory
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	id, err := f.dirCache.FindDir(ctx, dir, false)
+	if err == fs.ErrorDirNotFound {
+		if id, err = f.dirCache.FindDir(ctx, dir, true); err != nil {
+			return fs.ErrorDirNotFound
+		}
+	}
 	if err != nil {
-		return fs.ErrorDirNotFound
+		return err
 	}
 
 	if id == f.cfg.RootFolderID {
