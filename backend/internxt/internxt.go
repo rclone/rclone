@@ -133,7 +133,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: false,
 	})
 
-	f.encoding = encoder.EncodeBackSlash | encoder.EncodeHash | encoder.EncodePercent
+	f.encoding = encoder.EncodeHash | encoder.EncodePercent
 
 	f.dirCache = dircache.New("", cfg.RootFolderID, f)
 
