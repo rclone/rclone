@@ -3,7 +3,6 @@ package internxt
 
 import (
 	"context"
-	"errors"
 	"io"
 	"path"
 	"strings"
@@ -226,6 +225,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 	resp, err := folders.CreateFolder(f.cfg, folders.CreateFolderRequest{
 		PlainName:        strings.ReplaceAll(leaf, "\\", "%5C"),
 		ParentFolderUUID: pathID,
+		ModificationTime: time.Now().UTC().Format(time.RFC3339),
 	})
 	if err != nil {
 		return "", err
@@ -282,7 +282,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 
-	meta, err := buckets.UploadFileStream(f.cfg, folderUUID, fileName, in, src.Size())
+	meta, err := buckets.UploadFileStream(f.cfg, folderUUID, fileName, in, src.Size(), src.ModTime(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -409,7 +409,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // Hash returns the hash value (not implemented)
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	return "", errors.New("not implemented")
+	return "", hash.ErrUnsupported
 }
 
 // Storable returns if this object is storable
@@ -419,7 +419,7 @@ func (o *Object) Storable() bool {
 
 // SetModTime sets the modified time
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	return errors.New("not implemented")
+	return fs.ErrorCantSetModTime
 }
 
 // Open opens a file for streaming
@@ -441,7 +441,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	meta, err := buckets.UploadFileStream(o.f.cfg, folderUUID, path.Base(o.remote), in, src.Size())
+	meta, err := buckets.UploadFileStream(o.f.cfg, folderUUID, path.Base(o.remote), in, src.Size(), src.ModTime(ctx))
 	if err != nil {
 		return err
 	}
