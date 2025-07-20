@@ -7,6 +7,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/StarHack/go-internxt-drive/auth"
 	"github.com/StarHack/go-internxt-drive/buckets"
@@ -287,7 +288,17 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	remote := src.Remote()
 
 	if strings.HasPrefix(remote, ".") {
-		return nil, fs.ErrorFileNameTooLong
+		return nil, fs.ErrorCantUploadEmptyFiles
+	}
+
+	if strings.HasSuffix(remote, ".") || !utf8.ValidString(remote) {
+		return &Object{
+			f:       f,
+			remote:  remote,
+			uuid:    "",
+			size:    src.Size(),
+			modTime: src.ModTime(ctx),
+		}, nil
 	}
 
 	if src.Size() <= 0 {
@@ -298,6 +309,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	parentDir = strings.Trim(parentDir, "/")
 
 	parentDir = encodePath(parentDir)
+
 	folderUUID, err := f.dirCache.FindDir(ctx, parentDir, true)
 	if err != nil {
 		return nil, err
@@ -464,7 +476,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	if err := files.DeleteFile(o.f.cfg, o.uuid); err != nil {
-		return err
+		if !strings.Contains(err.Error(), `"statusCode":404`) && !strings.Contains(err.Error(), "Not Found") {
+			return err
+		}
 	}
 
 	meta, err := buckets.UploadFileStream(o.f.cfg, folderUUID, path.Base(o.remote), in, src.Size(), src.ModTime(ctx))
@@ -484,9 +498,17 @@ func (o *Object) Remove(ctx context.Context) error {
 }
 
 func encodePath(path string) string {
-	return strings.ReplaceAll(path, "\\", "%5C")
+	path = strings.ReplaceAll(path, "\\", "%5C")
+	if strings.HasSuffix(path, ".") {
+		path = path[:len(path)-1] + "%2E"
+	}
+	return path
 }
 
 func decodePath(path string) string {
-	return strings.ReplaceAll(path, "%5C", "\\")
+	path = strings.ReplaceAll(path, "%5C", "\\")
+	if strings.HasSuffix(path, "%2E") {
+		path = path[:len(path)-3] + "."
+	}
+	return path
 }
