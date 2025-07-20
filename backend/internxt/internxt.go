@@ -286,6 +286,10 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 
+	if strings.HasPrefix(remote, ".") {
+		return nil, fs.ErrorFileNameTooLong
+	}
+
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
 
