@@ -186,7 +186,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	id, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
-		return nil
+		return fs.ErrorDirNotFound
 	}
 
 	if id == f.cfg.RootFolderID {
@@ -195,14 +195,16 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 	err = folders.DeleteFolder(f.cfg, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "statusCode\":404") {
-			err = fs.ErrorDirNotFound
+		if strings.Contains(err.Error(), "statusCode\":404") ||
+			strings.Contains(err.Error(), "directory not found") {
+			return fs.ErrorDirNotFound
 		}
+		return err
 	}
 
 	f.dirCache.FlushDir(dir)
 	f.dirCache.FlushDir(path.Dir(dir))
-	return err
+	return nil
 }
 
 // FindLeaf looks for a sub‑folder named `leaf` under the Internxt folder `pathID`.
