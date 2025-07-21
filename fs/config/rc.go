@@ -37,7 +37,7 @@ func rcConfigPassword(ctx context.Context, in rc.Params) (out rc.Params, err err
 	if SetConfigPassword(configPass) != nil {
 		return nil, errors.New("failed to set config password")
 	}
-	return true, nil
+	return nil, nil
 }
 
 func init() {
