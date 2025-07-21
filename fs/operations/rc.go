@@ -820,7 +820,7 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, rc.NewErrParamInvalid(errors.New("need srcFs parameter when not using checkFileHash"))
 	}
 
-	oneway, _ := in.GetBool("oneway")
+	oneway, _ := in.GetBool("oneWay")
 	download, _ := in.GetBool("download")
 
 	opt := &CheckOpt{
