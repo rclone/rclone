@@ -12,5 +12,6 @@ func TestIntegration(t *testing.T) {
 		RemoteName:      "TestInternxt:",
 		SkipLeadingDot:  true,
 		SkipTrailingDot: true,
+		SkipInvalidUTF8: true,
 	})
 }
