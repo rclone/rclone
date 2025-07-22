@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"runtime"
 	"testing"
@@ -601,4 +602,243 @@ func TestOnFinishDataRace(t *testing.T) {
 			t.Fatal("Timeout waiting for all OnFinish calls to fire")
 		}
 	}
+}
+
+// Register some test rc calls
+func init() {
+	rc.Add(rc.Call{
+		Path:         "test/needs_request",
+		NeedsRequest: true,
+	})
+	rc.Add(rc.Call{
+		Path:          "test/needs_response",
+		NeedsResponse: true,
+	})
+
+}
+
+func TestNewJobFromParams(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		in   rc.Params
+		want rc.Params
+	}{{
+		in: rc.Params{
+			"_path": "rc/noop",
+			"a":     "potato",
+		},
+		want: rc.Params{
+			"a": "potato",
+		},
+	}, {
+		in: rc.Params{
+			"_path": "rc/noop",
+			"b":     "sausage",
+		},
+		want: rc.Params{
+			"b": "sausage",
+		},
+	}, {
+		in: rc.Params{
+			"_path": "rc/error",
+			"e":     "sausage",
+		},
+		want: rc.Params{
+			"error": "arbitrary error on input map[e:sausage]",
+			"input": rc.Params{
+				"e": "sausage",
+			},
+			"path":   "rc/error",
+			"status": 500,
+		},
+	}, {
+		in: rc.Params{
+			"_path": "bad/path",
+			"param": "sausage",
+		},
+		want: rc.Params{
+			"error": "couldn't find path \"bad/path\"",
+			"input": rc.Params{
+				"param": "sausage",
+			},
+			"path":   "bad/path",
+			"status": 404,
+		},
+	}, {
+		in: rc.Params{
+			"_path": "test/needs_request",
+		},
+		want: rc.Params{
+			"error":  "can't run path \"test/needs_request\" as it needs the request",
+			"input":  rc.Params{},
+			"path":   "test/needs_request",
+			"status": 400,
+		},
+	}, {
+		in: rc.Params{
+			"_path": "test/needs_response",
+		},
+		want: rc.Params{
+			"error":  "can't run path \"test/needs_response\" as it needs the response",
+			"input":  rc.Params{},
+			"path":   "test/needs_response",
+			"status": 400,
+		},
+	}, {
+		in: rc.Params{
+			"nopath": "BOOM",
+		},
+		want: rc.Params{
+			"error": "Didn't find key \"_path\" in input",
+			"input": rc.Params{
+				"nopath": "BOOM",
+			},
+			"path":   "",
+			"status": 400,
+		},
+	}} {
+		got := NewJobFromParams(ctx, test.in)
+		assert.Equal(t, test.want, got)
+	}
+}
+
+func TestJobsBatch(t *testing.T) {
+	ctx := context.Background()
+
+	call := rc.Calls.Get("job/batch")
+	assert.NotNil(t, call)
+
+	inJSON := `{
+  "inputs": [
+    {
+      "_path": "rc/noop",
+      "a": "potato"
+    },
+    "bad string",
+    {
+      "_path": "rc/noop",
+      "b": "sausage"
+    },
+    {
+      "_path": "rc/error",
+      "e": "sausage"
+    },
+    {
+      "_path": "bad/path",
+      "param": "sausage"
+    },
+    {
+      "_path": "test/needs_request"
+    },
+    {
+      "_path": "test/needs_response"
+    },
+    {
+      "nopath": "BOOM"
+    }
+  ]
+}
+`
+	var in rc.Params
+	require.NoError(t, json.Unmarshal([]byte(inJSON), &in))
+
+	wantJSON := `{
+  "results": [
+    {
+      "a": "potato"
+    },
+    {
+      "error": "\"inputs\" items must be objects not string",
+      "input": null,
+      "path": "unknown",
+      "status": 400
+    },
+    {
+      "b": "sausage"
+    },
+    {
+      "error": "arbitrary error on input map[e:sausage]",
+      "input": {
+        "e": "sausage"
+      },
+      "path": "rc/error",
+      "status": 500
+    },
+    {
+      "error": "couldn't find path \"bad/path\"",
+      "input": {
+        "param": "sausage"
+      },
+      "path": "bad/path",
+      "status": 404
+    },
+    {
+      "error": "can't run path \"test/needs_request\" as it needs the request",
+      "input": {},
+      "path": "test/needs_request",
+      "status": 400
+    },
+    {
+      "error": "can't run path \"test/needs_response\" as it needs the response",
+      "input": {},
+      "path": "test/needs_response",
+      "status": 400
+    },
+    {
+      "error": "Didn't find key \"_path\" in input",
+      "input": {
+        "nopath": "BOOM"
+      },
+      "path": "",
+      "status": 400
+    }
+  ]
+}
+`
+
+	var want rc.Params
+	require.NoError(t, json.Unmarshal([]byte(wantJSON), &want))
+
+	out, err := call.Fn(ctx, in)
+	require.NoError(t, err)
+
+	var got rc.Params
+	require.NoError(t, rc.Reshape(&got, out))
+
+	assert.Equal(t, want, got)
+}
+
+func TestJobsBatchConcurrent(t *testing.T) {
+	ctx := context.Background()
+	for concurrency := range 10 {
+		in := rc.Params{}
+		var inputs []any
+		var results []rc.Params
+		for i := range 100 {
+			in := map[string]any{
+				"_path": "rc/noop",
+				"i":     i,
+			}
+			inputs = append(inputs, in)
+			results = append(results, rc.Params{
+				"i": i,
+			})
+		}
+		in["inputs"] = inputs
+		want := rc.Params{
+			"results": results,
+		}
+
+		if concurrency > 0 {
+			in["concurrency"] = concurrency
+		}
+		call := rc.Calls.Get("job/batch")
+		assert.NotNil(t, call)
+
+		got, err := call.Fn(ctx, in)
+		require.NoError(t, err)
+
+		assert.Equal(t, want, got)
+	}
+
 }
