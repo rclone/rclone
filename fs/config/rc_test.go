@@ -188,3 +188,17 @@ func TestRcPaths(t *testing.T) {
 	assert.Equal(t, config.GetCacheDir(), out["cache"])
 	assert.Equal(t, os.TempDir(), out["temp"])
 }
+
+func TestRcConfigUnlock(t *testing.T) {
+	call := rc.Calls.Get("config/unlock")
+	assert.NotNil(t, call)
+	in := rc.Params{
+		"config_password": "test",
+	}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+
+	assert.Nil(t, err)
+	assert.Nil(t, out)
+
+}
