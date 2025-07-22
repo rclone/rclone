@@ -141,7 +141,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if root != "" {
 		parent, leaf := path.Split(root)
 		parent = strings.Trim(parent, "/")
-		dirID, err := f.dirCache.FindDir(ctx, encodePath(parent), false)
+		dirID, err := f.dirCache.FindDir(ctx, f.EncodePath(parent), false)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +162,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 
 		if !f.rootIsFile {
-			folderID, err := f.dirCache.FindDir(ctx, encodePath(root), true)
+			folderID, err := f.dirCache.FindDir(ctx, f.EncodePath(root), true)
 			if err != nil {
 				return nil, err
 			}
@@ -175,7 +175,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Mkdir creates a new directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	dir = encodePath(dir)
+	dir = f.EncodePath(dir)
 
 	id, err := f.dirCache.FindDir(ctx, dir, true)
 	if err != nil {
@@ -237,7 +237,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 // CreateDir creates a new directory
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error) {
 	resp, err := folders.CreateFolder(f.cfg, folders.CreateFolderRequest{
-		PlainName:        encodePath(leaf),
+		PlainName:        f.EncodePath(leaf),
 		ParentFolderUUID: pathID,
 		ModificationTime: time.Now().UTC().Format(time.RFC3339),
 	})
@@ -263,7 +263,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 	for _, e := range foldersList {
 		remote := path.Join(dir, e.PlainName)
-		remote = decodePath(remote)
+		remote = f.DecodePath(remote)
 		f.dirCache.Put(remote, e.UUID)
 		out = append(out, fs.NewDir(remote, e.ModificationTime))
 	}
@@ -273,7 +273,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 	for _, e := range filesList {
 		remote := path.Join(dir, e.PlainName)
-		remote = decodePath(remote)
+		remote = f.DecodePath(remote)
 		if len(e.Type) > 0 {
 			remote += "." + e.Type
 		}
@@ -308,7 +308,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
 
-	parentDir = encodePath(parentDir)
+	parentDir = f.EncodePath(parentDir)
 
 	folderUUID, err := f.dirCache.FindDir(ctx, parentDir, true)
 	if err != nil {
@@ -344,7 +344,7 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 		f.dirCache.FlushDir(parent)
 		return nil
 	}
-	remote = encodePath(remote)
+	remote = f.EncodePath(remote)
 	dirID, err := f.dirCache.FindDir(ctx, remote, false)
 	if err != nil {
 		return err
@@ -381,7 +381,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
-	parentDir = encodePath(parentDir)
+	parentDir = f.EncodePath(parentDir)
 	dirID, err := f.dirCache.FindDir(ctx, parentDir, true)
 	if err != nil {
 		return nil, fs.ErrorObjectNotFound
@@ -464,7 +464,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	parentDir, _ := path.Split(o.remote)
 	parentDir = strings.Trim(parentDir, "/")
-	parentDir = encodePath(parentDir)
+	parentDir = o.f.EncodePath(parentDir)
 
 	if src.Size() < 0 {
 		return fs.ErrorCantUploadEmptyFiles
@@ -497,7 +497,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	return files.DeleteFile(o.f.cfg, o.uuid)
 }
 
-func encodePath(path string) string {
+func (f *Fs) EncodePath(path string) string {
 	path = strings.ReplaceAll(path, "\\", "%5C")
 	if strings.HasSuffix(path, ".") {
 		path = path[:len(path)-1] + "%2E"
@@ -505,7 +505,7 @@ func encodePath(path string) string {
 	return path
 }
 
-func decodePath(path string) string {
+func (f *Fs) DecodePath(path string) string {
 	path = strings.ReplaceAll(path, "%5C", "\\")
 	if strings.HasSuffix(path, "%2E") {
 		path = path[:len(path)-3] + "."
