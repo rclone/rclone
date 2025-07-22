@@ -191,32 +191,27 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // Rmdir removes a directory
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	dir = f.EncodePath(dir)
 	id, err := f.dirCache.FindDir(ctx, dir, false)
 	if err == fs.ErrorDirNotFound {
 		if id, err = f.dirCache.FindDir(ctx, dir, true); err != nil {
-			return nil
-		}
-	}
-	if err != nil {
-		return err
-	}
-
-	if id == f.cfg.RootFolderID {
-		return nil
-	}
-
-	err = folders.DeleteFolder(f.cfg, id)
-	if err != nil {
-		if strings.Contains(err.Error(), "statusCode\":404") ||
-			strings.Contains(err.Error(), "directory not found") {
 			err = fs.ErrorDirNotFound
 		}
-		return err
+	}
+
+	if err == nil {
+		err = folders.DeleteFolder(f.cfg, id)
+		if err != nil {
+			if strings.Contains(err.Error(), "statusCode\":404") ||
+				strings.Contains(err.Error(), "directory not found") {
+				err = fs.ErrorDirNotFound
+			}
+		}
 	}
 
 	f.dirCache.FlushDir(dir)
-	f.dirCache.FlushDir(path.Dir(dir))
-	return nil
+
+	return err
 }
 
 // FindLeaf looks for a sub‑folder named `leaf` under the Internxt folder `pathID`.
