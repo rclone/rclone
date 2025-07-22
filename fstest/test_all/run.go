@@ -45,8 +45,9 @@ type Run struct {
 	NoBinary    bool   // set to not build a binary
 	SizeLimit   int64  // maximum test file size
 	Ignore      map[string]struct{}
-	ListRetries int     // -list-retries if > 0
-	ExtraTime   float64 // multiply the timeout by this
+	ListRetries int      // -list-retries if > 0
+	ExtraTime   float64  // multiply the timeout by this
+	Env         []string // environment variables in form KEY=VALUE
 	// Internals
 	CmdLine     []string
 	CmdString   string
@@ -252,6 +253,7 @@ func (r *Run) trial() {
 	cmd.Stderr = multiOut
 	cmd.Stdout = multiOut
 	cmd.Dir = r.Path
+	cmd.Env = append(os.Environ(), r.Env...)
 	start := time.Now()
 	r.err = cmd.Run()
 	r.output = b.Bytes()
