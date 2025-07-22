@@ -23,6 +23,9 @@ jobs:
   build:
     if: inputs.manual || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name))
     timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -103,7 +106,6 @@ jobs:
           check-latest: true
 
       - name: Set environment variables
-        shell: bash
         run: |
           echo 'GOTAGS=${{ matrix.gotags }}' >> $GITHUB_ENV
           echo 'BUILD_FLAGS=${{ matrix.build_flags }}' >> $GITHUB_ENV
@@ -112,7 +114,6 @@ jobs:
           if [[ "${{ matrix.cgo }}" != "" ]]; then echo 'CGO_ENABLED=${{ matrix.cgo }}' >> $GITHUB_ENV ; fi
 
       - name: Install Libraries on Linux
-        shell: bash
         run: |
           sudo modprobe fuse
           sudo chmod 666 /dev/fuse
@@ -122,7 +123,6 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install Libraries on macOS
-        shell: bash
         run: |
           # https://github.com/Homebrew/brew/issues/15621#issuecomment-1619266788
           # https://github.com/orgs/Homebrew/discussions/4612#discussioncomment-6319008
@@ -151,7 +151,6 @@ jobs:
         if: matrix.os == 'windows-latest'
 
       - name: Print Go version and environment
-        shell: bash
         run: |
           printf "Using go at: $(which go)\n"
           printf "Go version: $(go version)\n"
@@ -163,29 +162,24 @@ jobs:
           env
 
       - name: Build rclone
-        shell: bash
         run: |
           make
 
       - name: Rclone version
-        shell: bash
         run: |
           rclone version
 
       - name: Run tests
-        shell: bash
         run: |
           make quicktest
         if: matrix.quicktest
 
       - name: Race test
-        shell: bash
         run: |
           make racequicktest
         if: matrix.racequicktest
 
       - name: Run librclone tests
-        shell: bash
         run: |
           make -C librclone/ctest test
           make -C librclone/ctest clean
@@ -193,14 +187,12 @@ jobs:
         if: matrix.librclonetest
 
       - name: Compile all architectures test
-        shell: bash
         run: |
           make
           make compile_all
         if: matrix.compile_all
 
       - name: Deploy built binaries
-        shell: bash
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then make release_dep_linux ; fi
           make ci_beta
@@ -219,7 +211,6 @@ jobs:
     steps:
       - name: Get runner parameters
         id: get-runner-parameters
-        shell: bash
         run: |
           echo "year-week=$(/bin/date -u "+%Y%V")" >> $GITHUB_OUTPUT
           echo "runner-os-version=$ImageOS" >> $GITHUB_OUTPUT
@@ -314,7 +305,6 @@ jobs:
           go-version: '>=1.24.0-rc.1'
 
       - name: Set global environment variables
-        shell: bash
         run: |
           echo "VERSION=$(make version)" >> $GITHUB_ENV
 
@@ -333,7 +323,6 @@ jobs:
         run: env PATH=$PATH:~/go/bin gomobile bind -androidapi ${RCLONE_NDK_VERSION} -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile
 
       - name: arm-v7a Set environment variables
-        shell: bash
         run: |
           echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
@@ -347,7 +336,6 @@ jobs:
         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-armv7a .
 
       - name: arm64-v8a Set environment variables
-        shell: bash
         run: |
           echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
@@ -360,7 +348,6 @@ jobs:
         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-armv8a .
 
       - name: x86 Set environment variables
-        shell: bash
         run: |
           echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
@@ -373,7 +360,6 @@ jobs:
         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-x86 .
 
       - name: x64 Set environment variables
-        shell: bash
         run: |
           echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV

@@ -3,6 +3,7 @@ package fs
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -59,8 +60,11 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc H
 		// If this case is true, we have fully transferred the root and can immediately link
 		if info.remoteHLinkInfo != nil {
 			if info.remoteHLinkInfo != dstLinkInfo {
-				Debugf(fdst, "performing hardlink %v->%v", info.remotePath, dstPath)
-				err := fdst.HLink(ctx, info.remotePath, dstPath)
+				dstPathNoSuffix := strings.TrimSuffix(dstPath, ".rclonelink")
+				srcPathNoSuffix := strings.TrimSuffix(info.remotePath, ".rclonelink")
+				Debugf(fdst, "performing hardlink %v->%v", srcPathNoSuffix, dstPathNoSuffix)
+
+				err := fdst.HLink(ctx, srcPathNoSuffix, dstPathNoSuffix)
 
 				if err != nil {
 					return false, fmt.Errorf("RegisterHlinkRoot failed to perform link %v->%v: %w", info.remotePath, dstPath, err)
@@ -124,10 +128,12 @@ func (t *HLinkTracker) FlushLinkrootLinkQueue(ctx context.Context, src Object, f
 
 	// We probably can't count on the source's inode remaining after a transfer, so we just go ahead and relink all
 	for _, tgt := range info.pendingLinkDests {
-		Debugf(src, "performing pending link %v -> %v", info.remotePath, tgt)
-		err := fdst.HLink(context.Background(), info.remotePath, tgt)
+		dstPathNoSuffix := strings.TrimSuffix(tgt, ".rclonelink")
+		srcPathNoSuffix := strings.TrimSuffix(info.remotePath, ".rclonelink")
+		Debugf(src, "performing pending link %v -> %v", srcPathNoSuffix, dstPathNoSuffix)
+		err := fdst.HLink(context.Background(), srcPathNoSuffix, dstPathNoSuffix)
 		if err != nil {
-			return fmt.Errorf("failed to perform link %v -> %v: %v", info.remotePath, tgt, err)
+			return fmt.Errorf("failed to perform link %v -> %v: %v", srcPathNoSuffix, dstPathNoSuffix, err)
 		}
 	}
 
