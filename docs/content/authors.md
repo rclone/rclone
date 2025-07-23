@@ -992,3 +992,4 @@ put them back in again.` >}}
 - Sudipto Baral <sudiptobaral.me@gmail.com>
 - Sam Pegg <samrpegg@gmail.com>
 - liubingrun <liubr1@chinatelecom.cn>
+- Albin Parou <fumesover@gmail.com>
