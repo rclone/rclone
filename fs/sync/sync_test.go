@@ -658,7 +658,7 @@ func TestServerSideCopyOverSelf(t *testing.T) {
 	ctx = predictDstFromLogger(ctx)
 	err = CopyDir(ctx, FremoteCopy, r.Fremote, false)
 	require.NoError(t, err)
-	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, FremoteCopy, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	fstest.CheckItems(t, FremoteCopy, file1)
 
 	file2 := r.WriteObject(ctx, "sub dir/hello world", "hello world again", t2)
@@ -667,7 +667,7 @@ func TestServerSideCopyOverSelf(t *testing.T) {
 	ctx = predictDstFromLogger(ctx)
 	err = CopyDir(ctx, FremoteCopy, r.Fremote, false)
 	require.NoError(t, err)
-	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, FremoteCopy, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	fstest.CheckItems(t, FremoteCopy, file2)
 }
 
@@ -703,7 +703,7 @@ func TestServerSideMoveOverSelf(t *testing.T) {
 	ctx = predictDstFromLogger(ctx)
 	err = CopyDir(ctx, FremoteCopy, r.Fremote, false)
 	require.NoError(t, err)
-	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	testLoggerVsLsf(ctx, FremoteCopy, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 	fstest.CheckItems(t, FremoteCopy, file1)
 
 	file2 := r.WriteObject(ctx, "sub dir/hello world", "hello world again", t2)
