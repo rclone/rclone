@@ -3031,6 +3031,9 @@ func DstLsf(ctx context.Context, Fremote fs.Fs) *bytes.Buffer {
 
 	list.SetSeparator(";")
 	timeFormat := operations.FormatForLSFPrecision(Fremote.Precision())
+	if Fremote.Precision() == fs.ModTimeNotSupported {
+		timeFormat = "none"
+	}
 	list.AddModTime(timeFormat)
 	list.AddHash(hash.MD5)
 	list.AddSize()
@@ -3082,7 +3085,7 @@ func testLoggerVsLsf(ctx context.Context, fdst, fsrc fs.Fs, logger *bytes.Buffer
 			elements := bytes.Split(line, []byte(";"))
 			if len(elements) >= 2 {
 				if !canTestModtime {
-					elements[0] = []byte("")
+					elements[0] = []byte("none")
 				}
 				if !canTestHash {
 					elements[1] = []byte("")
