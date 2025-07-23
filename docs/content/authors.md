@@ -994,3 +994,4 @@ put them back in again.` >}}
 - liubingrun <liubr1@chinatelecom.cn>
 - Albin Parou <fumesover@gmail.com>
 - n4n5 <56606507+Its-Just-Nans@users.noreply.github.com>
+- Florent Vennetier <florent.vennetier@ovhcloud.com>
