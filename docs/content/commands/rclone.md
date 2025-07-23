@@ -509,6 +509,7 @@ rclone [flags]
       --local-time-type mtime|atime|btime|ctime             Set what kind of time is returned (default mtime)
       --local-unicode-normalization                         Apply unicode NFC normalization to paths and filenames
       --local-zero-size-links                               Assume the Stat size of links is zero (and read them instead) (deprecated)
+      --local-preserve-hlinks                               Preserve hardlinks
       --log-file string                                     Log everything to this file
       --log-format Bits                                     Comma separated list of log format options (default date,time)
       --log-level LogLevel                                  Log level DEBUG|INFO|NOTICE|ERROR (default NOTICE)
