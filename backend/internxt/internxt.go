@@ -119,6 +119,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	// cfg.RootFolderID = accessResponse.User.RootFolderID
+
 	f := &Fs{
 		name:           name,
 		root:           root,
@@ -301,25 +303,27 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	return out, nil
 }
 
+// Forced a reload of
+func (f *Fs) refreshDirCache(dir, folderUUID string) ([]folders.File, error) {
+
+	filesList, err := folders.ListFiles(f.cfg, folderUUID, folders.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range filesList {
+		remote := path.Join(dir, e.PlainName)
+		remote = f.DecodePath(remote)
+		if len(e.Type) > 0 {
+			remote += "." + e.Type
+		}
+		f.dirCache.Put(remote, e.UUID)
+	}
+	return filesList, nil
+}
+
 // Put uploads a file
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
-
-	/*
-		if strings.HasPrefix(remote, ".") {
-			return nil, fs.ErrorCantUploadEmptyFiles
-		}
-
-		if strings.HasSuffix(remote, ".") || !utf8.ValidString(remote) {
-			return &Object{
-				f:       f,
-				remote:  remote,
-				uuid:    "",
-				size:    src.Size(),
-				modTime: src.ModTime(ctx),
-			}, nil
-		}
-	*/
 
 	if src.Size() <= 0 {
 		return nil, fs.ErrorCantUploadEmptyFiles
@@ -328,51 +332,30 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
 
-	folderUUID, err := f.dirCache.FindDir(ctx, parentDir, true)
-	if err != nil {
-		return nil, err
+	folderUUID := ""
+	var err error
+	if parentDir == "" {
+		folderUUID = f.accessResponse.User.RootFolderID
+
+	} else {
+		folderUUID, err = f.dirCache.FindDir(ctx, parentDir, true)
+		if err != nil {
+			return nil, err
+		}
 	}
 
+	f.refreshDirCache(parentDir, folderUUID)
+
 	fileUUID, err := f.dirCache.FindDir(ctx, remote, false)
-	if err == nil {
+	if len(fileUUID) > 0 || err == nil {
 		files.DeleteFile(f.cfg, fileUUID)
 		f.dirCache.FlushDir(remote)
 	}
-	size := src.Size()
-	if size < 0 {
-		size = 0
-	}
-	meta, err := buckets.UploadFileStream(f.cfg, folderUUID, fileName, in, size, src.ModTime(ctx))
+
+	meta, err := buckets.UploadFileStream(f.cfg, folderUUID, fileName, in, src.Size(), src.ModTime(ctx))
 	if err != nil {
 		return nil, err
 	}
-	/*
-		if err != nil {
-			if strings.Contains(err.Error(), `"statusCode":409`) {
-				fmt.Println("ERROR: 409")
-				fileUUID, err := f.dirCache.FindDir(ctx, remote, true)
-				fmt.Println(fileUUID)
-				fmt.Println(err)
-				if err == nil {
-					fmt.Println("ERROR: 409 DELTE FILE")
-					err = files.DeleteFile(f.cfg, fileUUID)
-					if err == nil {
-						fmt.Println("ERROR: 409 REUPLOAD FILE")
-						meta, err = buckets.UploadFileStream(f.cfg, folderUUID, fileName, in, src.Size(), src.ModTime(ctx))
-						if err == nil {
-							fmt.Println("REPLACE OK")
-						}
-					} else {
-						return nil, err
-					}
-				} else {
-					return nil, err
-				}
-			} else {
-				return nil, err
-			}
-		}
-	*/
 
 	f.dirCache.Put(remote, meta.UUID)
 
@@ -437,12 +420,19 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
 
-	dirID, err := f.dirCache.FindDir(ctx, parentDir, false)
-	if err != nil {
-		return nil, fs.ErrorObjectNotFound
+	dirID := ""
+	var err error
+	if parentDir == "" {
+		dirID = f.accessResponse.User.RootFolderID
+	} else {
+		dirID, err = f.dirCache.FindDir(ctx, parentDir, false)
+		if err != nil {
+			return nil, fs.ErrorObjectNotFound
+		}
 	}
 
-	files, err := folders.ListFiles(f.cfg, dirID, folders.ListOptions{})
+	files, err := f.refreshDirCache(parentDir, dirID)
+
 	if err != nil {
 		return nil, err
 	}
