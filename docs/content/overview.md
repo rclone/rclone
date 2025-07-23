@@ -34,7 +34,7 @@ Here is an overview of the major features of each cloud storage system.
 | Google Photos                | -                 | -       | No               | Yes             | R         | -        |
 | HDFS                         | -                 | R/W     | No               | No              | -         | -        |
 | HiDrive                      | HiDrive ¹²        | R/W     | No               | No              | -         | -        |
-| HTTP                         | -                 | R       | No               | No              | R         | -        |
+| HTTP                         | -                 | R       | No               | No              | R         | R        |
 | iCloud Drive                 | -                 | R       | No               | No              | -         | -        |
 | Internet Archive             | MD5, SHA1, CRC32  | R/W ¹¹  | No               | No              | -         | RWU      |
 | Jottacloud                   | MD5               | R/W     | Yes              | No              | R         | RW       |
