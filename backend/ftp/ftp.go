@@ -164,6 +164,11 @@ Enabled by default. Use 0 to disable.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "allow_insecure_tls_ciphers",
+			Help:     "Allow insecure TLS ciphers",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "shut_timeout",
 			Help:     "Maximum time to wait for data connection closing status.",
 			Default:  fs.Duration(60 * time.Second),
@@ -180,11 +185,11 @@ If this is set and no password is supplied then rclone will ask for a password
 			Name:    "socks_proxy",
 			Default: "",
 			Help: `Socks 5 proxy host.
-		
+
 Supports the format user:pass@host:port, user@host:port, host:port.
-		
+
 Example:
-		
+
     myUser:myPass@localhost:9005
 `,
 			Advanced: true,
@@ -218,8 +223,7 @@ a write only folder.
 			Advanced: true,
 			// The FTP protocol can't handle trailing spaces
 			// (for instance, pureftpd turns them into '_')
-			Default: (encoder.Display |
-				encoder.EncodeRightSpace),
+			Default: (encoder.Display | encoder.EncodeRightSpace),
 			Examples: []fs.OptionExample{{
 				Value: "Asterisk,Ctl,Dot,Slash",
 				Help:  "ProFTPd can't handle '*' in file names",
@@ -236,29 +240,30 @@ a write only folder.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host              string               `config:"host"`
-	User              string               `config:"user"`
-	Pass              string               `config:"pass"`
-	Port              string               `config:"port"`
-	TLS               bool                 `config:"tls"`
-	ExplicitTLS       bool                 `config:"explicit_tls"`
-	TLSCacheSize      int                  `config:"tls_cache_size"`
-	DisableTLS13      bool                 `config:"disable_tls13"`
-	Concurrency       int                  `config:"concurrency"`
-	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
-	DisableEPSV       bool                 `config:"disable_epsv"`
-	DisableMLSD       bool                 `config:"disable_mlsd"`
-	DisableUTF8       bool                 `config:"disable_utf8"`
-	WritingMDTM       bool                 `config:"writing_mdtm"`
-	ForceListHidden   bool                 `config:"force_list_hidden"`
-	IdleTimeout       fs.Duration          `config:"idle_timeout"`
-	CloseTimeout      fs.Duration          `config:"close_timeout"`
-	ShutTimeout       fs.Duration          `config:"shut_timeout"`
-	AskPassword       bool                 `config:"ask_password"`
-	Enc               encoder.MultiEncoder `config:"encoding"`
-	SocksProxy        string               `config:"socks_proxy"`
-	HTTPProxy         string               `config:"http_proxy"`
-	NoCheckUpload     bool                 `config:"no_check_upload"`
+	Host                    string               `config:"host"`
+	User                    string               `config:"user"`
+	Pass                    string               `config:"pass"`
+	Port                    string               `config:"port"`
+	TLS                     bool                 `config:"tls"`
+	ExplicitTLS             bool                 `config:"explicit_tls"`
+	TLSCacheSize            int                  `config:"tls_cache_size"`
+	DisableTLS13            bool                 `config:"disable_tls13"`
+	AllowInsecureTLSCiphers bool                 `config:"allow_insecure_tls_ciphers"`
+	Concurrency             int                  `config:"concurrency"`
+	SkipVerifyTLSCert       bool                 `config:"no_check_certificate"`
+	DisableEPSV             bool                 `config:"disable_epsv"`
+	DisableMLSD             bool                 `config:"disable_mlsd"`
+	DisableUTF8             bool                 `config:"disable_utf8"`
+	WritingMDTM             bool                 `config:"writing_mdtm"`
+	ForceListHidden         bool                 `config:"force_list_hidden"`
+	IdleTimeout             fs.Duration          `config:"idle_timeout"`
+	CloseTimeout            fs.Duration          `config:"close_timeout"`
+	ShutTimeout             fs.Duration          `config:"shut_timeout"`
+	AskPassword             bool                 `config:"ask_password"`
+	Enc                     encoder.MultiEncoder `config:"encoding"`
+	SocksProxy              string               `config:"socks_proxy"`
+	HTTPProxy               string               `config:"http_proxy"`
+	NoCheckUpload           bool                 `config:"no_check_upload"`
 }
 
 // Fs represents a remote FTP server
@@ -406,6 +411,14 @@ func (f *Fs) tlsConfig() *tls.Config {
 		}
 		if f.opt.DisableTLS13 {
 			tlsConfig.MaxVersion = tls.VersionTLS12
+		}
+		if f.opt.AllowInsecureTLSCiphers {
+			var ids []uint16
+			// Read default ciphers
+			for _, cs := range tls.CipherSuites() {
+				ids = append(ids, cs.ID)
+			}
+			tlsConfig.CipherSuites = append(ids, tls.TLS_RSA_WITH_AES_128_GCM_SHA256)
 		}
 	}
 	return tlsConfig
