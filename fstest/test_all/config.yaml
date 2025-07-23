@@ -120,8 +120,6 @@ backends:
      - TestCopyURL
      - TestMoveFileWithIgnoreExisting
      - TestCopyFileCompareDest
-     # fs/sync
-     - TestServerSideMoveOverSelf
      #vfs
      - TestFileSetModTime/cache=off,open=false,write=false
      - TestFileSetModTime/cache=off,open=true,write=false
