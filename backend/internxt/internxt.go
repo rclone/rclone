@@ -7,7 +7,6 @@ import (
 	"path"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/StarHack/go-internxt-drive/auth"
 	"github.com/StarHack/go-internxt-drive/buckets"
@@ -65,7 +64,7 @@ type Fs struct {
 	rootIsFile     bool
 	rootFile       *folders.File
 	features       *fs.Features
-	encoding       encoder.MultiEncoder
+	Encoding       encoder.MultiEncoder
 }
 
 // Object holds the data for a remote file object
@@ -134,17 +133,39 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: false,
 	})
 
-	f.encoding = encoder.EncodeHash | encoder.EncodePercent
+	f.Encoding = encoder.EncodeBackSlash // | encoder.EncodeInvalidUtf8
+	// f.Encoding = encoder.Display | encoder.EncodeBackSlash | encoder.EncodeInvalidUtf8
+	/*
+		f.Encoding = encoder.EncodeInvalidUtf8 |
+			encoder.EncodeSlash |
+			encoder.EncodeCtl |
+			encoder.EncodeDel |
+			encoder.EncodeBackSlash |
+			encoder.EncodeRightPeriod
+	*/
 
 	f.dirCache = dircache.New("", cfg.RootFolderID, f)
 
 	if root != "" {
 		parent, leaf := path.Split(root)
 		parent = strings.Trim(parent, "/")
-		dirID, err := f.dirCache.FindDir(ctx, f.EncodePath(parent), false)
-		if err != nil {
-			return nil, err
+		dirID, err := f.dirCache.FindDir(ctx, parent, false)
+
+		for err != nil && strings.Contains(root, "/") {
+			root = parent
+			parent, leaf = path.Split(root)
+			parent = strings.Trim(parent, "/")
+			dirID, err = f.dirCache.FindDir(ctx, parent, false)
 		}
+
+		/*
+			if err != nil {
+				f.dirCache = dircache.New("", f.cfg.RootFolderID, f)
+			} else {
+				f.dirCache = dircache.New("", dirID, f)
+			}
+		*/
+
 		files, err := folders.ListFiles(f.cfg, dirID, folders.ListOptions{})
 		if err != nil {
 			return nil, err
@@ -162,7 +183,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 
 		if !f.rootIsFile {
-			folderID, err := f.dirCache.FindDir(ctx, f.EncodePath(root), true)
+			folderID, err := f.dirCache.FindDir(ctx, root, true)
 			if err != nil {
 				return nil, err
 			}
@@ -175,8 +196,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Mkdir creates a new directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	dir = f.EncodePath(dir)
-
 	id, err := f.dirCache.FindDir(ctx, dir, true)
 	if err != nil {
 		if strings.Contains(err.Error(), `"statusCode":400`) {
@@ -191,22 +210,18 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // Rmdir removes a directory
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	dir = f.EncodePath(dir)
 	id, err := f.dirCache.FindDir(ctx, dir, false)
-	if err == fs.ErrorDirNotFound {
-		if id, err = f.dirCache.FindDir(ctx, dir, true); err != nil {
-			err = fs.ErrorDirNotFound
-		}
-	}
-
 	if err == nil {
 		err = folders.DeleteFolder(f.cfg, id)
 		if err != nil {
-			if strings.Contains(err.Error(), "statusCode\":404") ||
-				strings.Contains(err.Error(), "directory not found") {
+			if dir == "" {
 				err = fs.ErrorDirNotFound
+			} else {
+				err = nil
 			}
 		}
+	} else {
+		return fs.ErrorDirNotFound
 	}
 
 	f.dirCache.FlushDir(dir)
@@ -237,7 +252,15 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 		ModificationTime: time.Now().UTC().Format(time.RFC3339),
 	})
 	if err != nil {
-		return "", err
+		resp, err = folders.CreateFolder(f.cfg, folders.CreateFolderRequest{
+			PlainName:        f.EncodePath(leaf),
+			ParentFolderUUID: pathID,
+			ModificationTime: time.Now().UTC().Format(time.RFC3339),
+		})
+
+		if err != nil {
+			return "", err
+		}
 	}
 	return resp.UUID, nil
 }
@@ -282,19 +305,21 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 
-	if strings.HasPrefix(remote, ".") {
-		return nil, fs.ErrorCantUploadEmptyFiles
-	}
+	/*
+		if strings.HasPrefix(remote, ".") {
+			return nil, fs.ErrorCantUploadEmptyFiles
+		}
 
-	if strings.HasSuffix(remote, ".") || !utf8.ValidString(remote) {
-		return &Object{
-			f:       f,
-			remote:  remote,
-			uuid:    "",
-			size:    src.Size(),
-			modTime: src.ModTime(ctx),
-		}, nil
-	}
+		if strings.HasSuffix(remote, ".") || !utf8.ValidString(remote) {
+			return &Object{
+				f:       f,
+				remote:  remote,
+				uuid:    "",
+				size:    src.Size(),
+				modTime: src.ModTime(ctx),
+			}, nil
+		}
+	*/
 
 	if src.Size() <= 0 {
 		return nil, fs.ErrorCantUploadEmptyFiles
@@ -303,17 +328,51 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
 
-	parentDir = f.EncodePath(parentDir)
-
 	folderUUID, err := f.dirCache.FindDir(ctx, parentDir, true)
 	if err != nil {
 		return nil, err
 	}
 
-	meta, err := buckets.UploadFileStream(f.cfg, folderUUID, fileName, in, src.Size(), src.ModTime(ctx))
+	fileUUID, err := f.dirCache.FindDir(ctx, remote, false)
+	if err == nil {
+		files.DeleteFile(f.cfg, fileUUID)
+		f.dirCache.FlushDir(remote)
+	}
+	size := src.Size()
+	if size < 0 {
+		size = 0
+	}
+	meta, err := buckets.UploadFileStream(f.cfg, folderUUID, fileName, in, size, src.ModTime(ctx))
 	if err != nil {
 		return nil, err
 	}
+	/*
+		if err != nil {
+			if strings.Contains(err.Error(), `"statusCode":409`) {
+				fmt.Println("ERROR: 409")
+				fileUUID, err := f.dirCache.FindDir(ctx, remote, true)
+				fmt.Println(fileUUID)
+				fmt.Println(err)
+				if err == nil {
+					fmt.Println("ERROR: 409 DELTE FILE")
+					err = files.DeleteFile(f.cfg, fileUUID)
+					if err == nil {
+						fmt.Println("ERROR: 409 REUPLOAD FILE")
+						meta, err = buckets.UploadFileStream(f.cfg, folderUUID, fileName, in, src.Size(), src.ModTime(ctx))
+						if err == nil {
+							fmt.Println("REPLACE OK")
+						}
+					} else {
+						return nil, err
+					}
+				} else {
+					return nil, err
+				}
+			} else {
+				return nil, err
+			}
+		}
+	*/
 
 	f.dirCache.Put(remote, meta.UUID)
 
@@ -339,7 +398,7 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 		f.dirCache.FlushDir(parent)
 		return nil
 	}
-	remote = f.EncodePath(remote)
+
 	dirID, err := f.dirCache.FindDir(ctx, remote, false)
 	if err != nil {
 		return err
@@ -374,13 +433,15 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 			return newObjectWithFile(f, f.root, f.rootFile), nil
 		}
 	}
+
 	parentDir, fileName := path.Split(remote)
 	parentDir = strings.Trim(parentDir, "/")
-	parentDir = f.EncodePath(parentDir)
-	dirID, err := f.dirCache.FindDir(ctx, parentDir, true)
+
+	dirID, err := f.dirCache.FindDir(ctx, parentDir, false)
 	if err != nil {
 		return nil, fs.ErrorObjectNotFound
 	}
+
 	files, err := folders.ListFiles(f.cfg, dirID, folders.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -459,7 +520,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	parentDir, _ := path.Split(o.remote)
 	parentDir = strings.Trim(parentDir, "/")
-	parentDir = o.f.EncodePath(parentDir)
 
 	if src.Size() < 0 {
 		return fs.ErrorCantUploadEmptyFiles
@@ -493,17 +553,25 @@ func (o *Object) Remove(ctx context.Context) error {
 }
 
 func (f *Fs) EncodePath(path string) string {
+	/*
+		path = strings.ReplaceAll(path, "\\", "%5C")
+		if strings.HasSuffix(path, ".") {
+			path = path[:len(path)-1] + "%2E"
+		}
+	*/
+	//path = f.Encoding.Encode(path)
 	path = strings.ReplaceAll(path, "\\", "%5C")
-	if strings.HasSuffix(path, ".") {
-		path = path[:len(path)-1] + "%2E"
-	}
 	return path
 }
 
 func (f *Fs) DecodePath(path string) string {
+	/*
+		path = strings.ReplaceAll(path, "%5C", "\\")
+		if strings.HasSuffix(path, "%2E") {
+			path = path[:len(path)-3] + "."
+		}
+	*/
+	//path = f.Encoding.Decode(path)
 	path = strings.ReplaceAll(path, "%5C", "\\")
-	if strings.HasSuffix(path, "%2E") {
-		path = path[:len(path)-3] + "."
-	}
 	return path
 }
