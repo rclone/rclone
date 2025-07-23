@@ -997,3 +997,4 @@ put them back in again.` >}}
 - Florent Vennetier <florent.vennetier@ovhcloud.com>
 - houance <45840516+houance@users.noreply.github.com>
 - Yu Xin <3188+is@users.noreply.github.com>
+- Antonin Goude <antonin.goude@ovhcloud.com>
