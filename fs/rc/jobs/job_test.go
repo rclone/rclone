@@ -702,6 +702,58 @@ func TestNewJobFromParams(t *testing.T) {
 	}
 }
 
+func TestNewJobFromBytes(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		in   string
+		want string
+	}{{
+		in: `{
+			"_path": "rc/noop",
+			"a":     "potato"
+}`,
+		want: `{
+	"a": "potato"
+}
+`,
+	}, {
+		in: `{
+				"_path": "rc/error",
+				"e":     "sausage"
+			}`,
+		want: `{
+	"error": "arbitrary error on input map[e:sausage]",
+	"input": {
+		"e": "sausage"
+	},
+	"path": "rc/error",
+	"status": 500
+}
+`,
+	}, {
+		in: `parse error`,
+		want: `{
+	"error": "invalid character 'p' looking for beginning of value",
+	"input": null,
+	"path": "unknown",
+	"status": 400
+}
+`,
+	}, {
+		in: `"just a string"`,
+		want: `{
+	"error": "json: cannot unmarshal string into Go value of type rc.Params",
+	"input": null,
+	"path": "unknown",
+	"status": 400
+}
+`,
+	}} {
+		got := NewJobFromBytes(ctx, []byte(test.in))
+		assert.Equal(t, test.want, string(got))
+	}
+}
+
 func TestJobsBatch(t *testing.T) {
 	ctx := context.Background()
 
