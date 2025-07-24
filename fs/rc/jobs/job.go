@@ -2,7 +2,9 @@
 package jobs
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -530,6 +532,32 @@ func NewJobFromParams(ctx context.Context, in rc.Params) (out rc.Params) {
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
 	return out
+}
+
+// NewJobFromBytes creates an rc job from a JSON blob as bytes.
+//
+// The JSON blob should contain a _path entry.
+//
+// It returns a JSON blob as output which may be an error.
+func NewJobFromBytes(ctx context.Context, inBuf []byte) (outBuf []byte) {
+	var in rc.Params
+	var out rc.Params
+
+	// Parse a JSON blob from the input
+	err := json.Unmarshal(inBuf, &in)
+	if err != nil {
+		out, _ = rc.Error("unknown", in, err, http.StatusBadRequest)
+	} else {
+		out = NewJobFromParams(ctx, in)
+	}
+
+	var w bytes.Buffer
+	err = rc.WriteJSON(&w, out)
+	if err != nil {
+		fs.Errorf(nil, "rc: NewJobFromBytes: failed to write JSON output: %v", err)
+		return []byte(`{"error":"failed to write JSON output"}`)
+	}
+	return w.Bytes()
 }
 
 func init() {
