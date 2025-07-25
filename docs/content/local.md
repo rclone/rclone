@@ -390,6 +390,21 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --skip-specials
+
+Don't warn about skipped pipes, sockets and device objects.
+
+This flag disables warning messages on skipped pipes, sockets and
+device objects, as you explicitly acknowledge that they should be
+skipped.`,
+
+Properties:
+
+- Config:      skip_specials
+- Env Var:     RCLONE_LOCAL_SKIP_SPECIALS
+- Type:        bool
+- Default:     false
+
 #### --local-zero-size-links
 
 Assume the Stat size of links is zero (and read them instead) (deprecated).
