@@ -560,6 +560,31 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:    "cluster",
+	Default: "",
+	Help:    "Enable cluster mode with remote to use as shared storage.",
+	Groups:  "Networking",
+}, {
+	Name:    "cluster_id",
+	Default: "",
+	Help:    "Set to an ID for the cluster. An ID of 0 or empty becomes the controller.",
+	Groups:  "Networking",
+}, {
+	Name:    "cluster_batch_files",
+	Default: 1000,
+	Help:    "Max number of files for a cluster batch.",
+	Groups:  "Networking",
+}, {
+	Name:    "cluster_batch_size",
+	Default: Tebi,
+	Help:    "Max size of files for a cluster batch.",
+	Groups:  "Networking",
+}, {
+	Name:    "cluster_no_tidy",
+	Default: false,
+	Help:    "Set to disable tidying of cluster work files on exit.",
+	Groups:  "Networking",
 }}
 
 // ConfigInfo is filesystem config options
@@ -673,6 +698,11 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	Cluster                    string            `config:"cluster"`
+	ClusterID                  string            `config:"cluster_id"`
+	ClusterBatchFiles          int               `config:"cluster_batch_files"`
+	ClusterBatchSize           SizeSuffix        `config:"cluster_batch_size"`
+	ClusterNoTidy              bool              `config:"cluster_no_tidy"`
 }
 
 func init() {
