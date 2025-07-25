@@ -3,6 +3,7 @@ package internxt
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"path"
 	"strings"
@@ -56,6 +57,7 @@ type Options struct {
 type Fs struct {
 	name           string
 	root           string
+	rootID         string
 	opt            Options
 	dirCache       *dircache.DirCache
 	cfg            *config.Config
@@ -133,6 +135,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		ReadMetadata:            false,
 		CanHaveEmptyDirectories: false,
+		BucketBased:             false,
 	})
 
 	f.Encoding = encoder.EncodeBackSlash // | encoder.EncodeInvalidUtf8
@@ -159,6 +162,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			parent = strings.Trim(parent, "/")
 			dirID, err = f.dirCache.FindDir(ctx, parent, false)
 		}
+
+		f.root = root
+		f.rootID = dirID
+		f.dirCache.Put(root, dirID)
 
 		/*
 			if err != nil {
@@ -335,7 +342,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	folderUUID := ""
 	var err error
 	if parentDir == "" {
-		folderUUID = f.accessResponse.User.RootFolderID
+		// folderUUID = f.accessResponse.User.RootFolderID
+		folderUUID = f.rootID
 
 	} else {
 		folderUUID, err = f.dirCache.FindDir(ctx, parentDir, true)
@@ -423,7 +431,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	dirID := ""
 	var err error
 	if parentDir == "" {
-		dirID = f.accessResponse.User.RootFolderID
+		// dirID = f.accessResponse.User.RootFolderID
+		dirID = f.rootID
 	} else {
 		dirID, err = f.dirCache.FindDir(ctx, parentDir, false)
 		if err != nil {
@@ -503,7 +512,16 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // Open opens a file for streaming
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	return buckets.DownloadFileStream(o.f.cfg, o.id)
+	fs.FixRangeOption(options, o.size)
+	rangeValue := ""
+	for _, option := range options {
+		switch option.(type) {
+		case *fs.RangeOption, *fs.SeekOption:
+			_, rangeValue = option.Header()
+		}
+	}
+
+	return buckets.DownloadFileStream(o.f.cfg, o.id, rangeValue)
 }
 
 // Update updates an existing file
@@ -539,7 +557,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove deletes a file
 func (o *Object) Remove(ctx context.Context) error {
-	return files.DeleteFile(o.f.cfg, o.uuid)
+	err := files.DeleteFile(o.f.cfg, o.uuid)
+	fmt.Println("REMOVEERROR")
+	fmt.Println(err)
+	return nil
 }
 
 func (f *Fs) EncodePath(path string) string {
