@@ -50,6 +50,34 @@ var (
 	ConfigEdit = "config_fs_edit"
 )
 
+// ClusterCleanup describes the cluster cleanup choices.
+type ClusterCleanup = Enum[clusterCleanupChoices]
+
+// Cluster cleanup choices.
+//
+//	ClusterCleanupNone      don't remove any cluster files
+//	ClusterCleanupCompleted remove successfully completed jobs
+//	ClusterCleanupFull      remove everything on exit
+const (
+	ClusterCleanupNone ClusterCleanup = iota
+	ClusterCleanupCompleted
+	ClusterCleanupFull
+)
+
+type clusterCleanupChoices struct{}
+
+func (clusterCleanupChoices) Choices() []string {
+	return []string{
+		ClusterCleanupNone:      "none",
+		ClusterCleanupCompleted: "completed",
+		ClusterCleanupFull:      "full",
+	}
+}
+
+func (clusterCleanupChoices) Type() string {
+	return "ClusterCleanup"
+}
+
 // ConfigOptionsInfo describes the Options in use
 var ConfigOptionsInfo = Options{{
 	Name:    "modify_window",
@@ -566,6 +594,36 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:    "cluster",
+	Default: "",
+	Help:    "Enable cluster mode with remote to use as shared storage.",
+	Groups:  "Networking",
+}, {
+	Name:    "cluster_id",
+	Default: "",
+	Help:    "Set to an ID for the cluster. An ID of 0 or empty becomes the controller.",
+	Groups:  "Networking",
+}, {
+	Name:    "cluster_quit_workers",
+	Default: false,
+	Help:    "Set to cause the controller to quit the workers when it finished.",
+	Groups:  "Networking",
+}, {
+	Name:    "cluster_batch_files",
+	Default: 1000,
+	Help:    "Max number of files for a cluster batch.",
+	Groups:  "Networking",
+}, {
+	Name:    "cluster_batch_size",
+	Default: Tebi,
+	Help:    "Max size of files for a cluster batch.",
+	Groups:  "Networking",
+}, {
+	Name:    "cluster_cleanup",
+	Default: ClusterCleanupFull,
+	Help:    "Control which cluster files get cleaned up.",
+	Groups:  "Networking",
 }}
 
 // ConfigInfo is filesystem config options
@@ -680,6 +738,12 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	Cluster                    string            `config:"cluster"`
+	ClusterID                  string            `config:"cluster_id"`
+	ClusterQuitWorkers         bool              `config:"cluster_quit_workers"`
+	ClusterBatchFiles          int               `config:"cluster_batch_files"`
+	ClusterBatchSize           SizeSuffix        `config:"cluster_batch_size"`
+	ClusterCleanup             ClusterCleanup    `config:"cluster_cleanup"`
 }
 
 func init() {

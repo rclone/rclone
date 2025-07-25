@@ -23,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/cluster"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/config/configflags"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -480,6 +481,22 @@ func initConfig() {
 				fs.Fatal(nil, fmt.Sprint(err))
 			}
 		})
+	}
+
+	// Run as a cluster worker if configured, otherwise ignoring
+	// the command given on the command line
+	if ci.Cluster != "" {
+		if ci.ClusterID == "" || ci.ClusterID == "0" {
+			fs.Infof(nil, "Running in cluster mode %q as controller", ci.ClusterID)
+		} else {
+			fs.Infof(nil, "Running in cluster mode %q as worker with id %q", ci.ClusterID, ci.ClusterID)
+			worker, err := cluster.NewWorker(ctx)
+			if err != nil || worker == nil {
+				fs.Fatalf(nil, "Failed to start cluster worker: %v", err)
+			}
+			// Do not continue with the main thread
+			select {}
+		}
 	}
 }
 
