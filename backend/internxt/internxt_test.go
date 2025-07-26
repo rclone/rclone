@@ -9,9 +9,6 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:      "TestInternxt:",
-		SkipLeadingDot:  true,
-		SkipTrailingDot: true,
-		SkipInvalidUTF8: true,
+		RemoteName: "TestInternxt:",
 	})
 }
