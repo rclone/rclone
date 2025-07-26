@@ -1815,6 +1815,9 @@ about _Unison_ and synchronization in general.
 
 ## Changelog
 
+### `v1.71`
+* Fixed an issue causing errors when running concurrent bisync runs through the `rc`.
+
 ### `v1.69.1`
 * Fixed an issue causing listings to not capture concurrent modifications under certain conditions
 
