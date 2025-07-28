@@ -279,3 +279,30 @@ func TestOptionGetters(t *testing.T) {
 	}
 
 }
+
+func TestOptionsNonDefaultRC(t *testing.T) {
+	type cfg struct {
+		X string `config:"x"`
+		Y int    `config:"y"`
+	}
+	c := &cfg{X: "a", Y: 6}
+	opts := Options{
+		{Name: "x", Default: "a"}, // at default, should be omitted
+		{Name: "y", Default: 5},   // non-default, should be included
+	}
+
+	got, err := opts.NonDefaultRC(c)
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{"Y": 6}, got)
+}
+
+func TestOptionsNonDefaultRCMissingKey(t *testing.T) {
+	type cfg struct {
+		X string `config:"x"`
+	}
+	c := &cfg{X: "a"}
+	// Options refers to a key not present in the struct -> expect error
+	opts := Options{{Name: "missing", Default: ""}}
+	_, err := opts.NonDefaultRC(c)
+	assert.ErrorContains(t, err, "not found")
+}
