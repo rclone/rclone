@@ -365,9 +365,78 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 }
 
 // Move moves a directory (not implemented)
-func (f *Fs) Move(ctx context.Context, src, dst fs.Object) error {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	/*
+		srcObj, ok := src.(*Object)
+		if !ok {
+			fs.Debugf(src, "Can't move - not same remote type")
+			return nil, fs.ErrorCantMove
+		}
+
+		srcLeaf, srcDirectoryID, err := f.dirCache.FindPath(ctx, srcObj.remote, false)
+		if err != nil {
+			return nil, err
+		}
+		//fmt.Printf("Move: srcLeaf %s, srcDirID %s\n", srcLeaf, srcDirectoryID)
+
+		dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(ctx, remote, false)
+		if err != nil {
+			return nil, err
+		}
+		//fmt.Printf("Move: srcLeaf %s, srcDirID %s \n dstLeaf %s, dstDirID, %s", srcLeaf, srcDirectoryID, dstLeaf, dstDirectoryID)
+
+		doMove := srcDirectoryID != dstDirectoryID
+		doRename := srcLeaf != dstLeaf
+
+		println("Move ", doMove, doRename)
+	*/
 	// return f.client.Rename(ctx, f.root+src.Remote(), f.root+dst.Remote())
-	return fs.ErrorNotImplemented
+	return nil, fs.ErrorNotImplemented
+}
+
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+
+	srcID, _, srcLeaf, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+
+	doMove := srcID != dstDirectoryID
+	doRename := srcLeaf != dstLeaf
+
+	// If we're moving AND renaming we need to set a temp name first, else we risk collisions
+	if doMove && doRename {
+		err = folders.RenameFolder(f.cfg, srcID, f.opt.Encoding.FromStandardName(dstLeaf+".__RCLONE_MOVE__"))
+		if err != nil {
+			return err
+		}
+		time.Sleep(500 * time.Millisecond) //Find a way around this
+	}
+
+	if doMove {
+		err = folders.MoveFolder(f.cfg, srcID, dstDirectoryID)
+		if err != nil {
+			return err
+		}
+		time.Sleep(500 * time.Millisecond) //Find a way around this
+
+	}
+
+	if doRename {
+		err = folders.RenameFolder(f.cfg, srcID, f.opt.Encoding.FromStandardName(dstLeaf))
+		if err != nil {
+			return err
+		}
+		time.Sleep(500 * time.Millisecond) //Find a way around this
+	}
+
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
 }
 
 // Copy copies a directory (not implemented)
