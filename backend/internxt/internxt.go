@@ -216,11 +216,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 
 	// Replace these calls with GetFolderContent? (fmt.Sprintf("/storage/v2/folder/%d%s", folderID, query))
-	childFolders, err := folders.ListFolders(f.cfg, id, folders.ListOptions{})
+	childFolders, err := folders.ListAllFolders(f.cfg, id)
 	if err != nil {
 		return err
 	}
-	childFiles, err := folders.ListFiles(f.cfg, id, folders.ListOptions{})
+	childFiles, err := folders.ListAllFiles(f.cfg, id)
 	if err != nil {
 		return err
 	}
@@ -246,7 +246,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // If found, it returns its UUID and true. If not found, returns "", false.
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, error) {
 	//fmt.Printf("FindLeaf pathID: %s, leaf: %s\n", pathID, leaf)
-	entries, err := folders.ListFolders(f.cfg, pathID, folders.ListOptions{})
+	entries, err := folders.ListAllFolders(f.cfg, pathID)
 	if err != nil {
 		return "", false, err
 	}
@@ -281,7 +281,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 	var out fs.DirEntries
 
-	foldersList, err := folders.ListFolders(f.cfg, dirID, folders.ListOptions{})
+	foldersList, err := folders.ListAllFolders(f.cfg, dirID)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +289,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		remote := filepath.Join(dir, f.opt.Encoding.ToStandardName(e.PlainName))
 		out = append(out, fs.NewDir(remote, e.ModificationTime))
 	}
-	filesList, err := folders.ListFiles(f.cfg, dirID, folders.ListOptions{})
+	filesList, err := folders.ListAllFiles(f.cfg, dirID)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +373,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fs.ErrorObjectNotFound
 	}
 
-	files, err := folders.ListFiles(f.cfg, dirID, folders.ListOptions{})
+	files, err := folders.ListAllFiles(f.cfg, dirID)
 	if err != nil {
 		return nil, err
 	}
