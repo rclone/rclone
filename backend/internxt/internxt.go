@@ -364,36 +364,71 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 	return nil
 }
 
-// Move moves a directory (not implemented)
+// Move src to this remote using server-side move operations.
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	/*
-		srcObj, ok := src.(*Object)
-		if !ok {
-			fs.Debugf(src, "Can't move - not same remote type")
-			return nil, fs.ErrorCantMove
-		}
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
 
-		srcLeaf, srcDirectoryID, err := f.dirCache.FindPath(ctx, srcObj.remote, false)
+	srcLeaf, srcDirectoryID, err := f.dirCache.FindPath(ctx, srcObj.remote, false)
+	if err != nil {
+		return nil, err
+	}
+
+	dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+
+	doMove := srcDirectoryID != dstDirectoryID
+	doRename := srcLeaf != dstLeaf
+
+	var dstObj fs.Object
+
+	// If we're doing both, we should rename to a temp name in case there's a file
+	// with the same name at the destination folder (we can't rename AND move with one call)
+	if doMove && doRename {
+		newFile, err := files.UpdateFileMeta(f.cfg, srcObj.uuid, &folders.File{Type: "__RCLONE_MOVE__"})
 		if err != nil {
 			return nil, err
 		}
-		//fmt.Printf("Move: srcLeaf %s, srcDirID %s\n", srcLeaf, srcDirectoryID)
+		time.Sleep(500 * time.Millisecond) //Find a way around this
+		dstObj = newObjectWithFile(f, remote, newFile)
+	}
 
-		dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(ctx, remote, false)
+	if doMove {
+		newFile, err := files.MoveFile(f.cfg, srcObj.uuid, dstDirectoryID)
 		if err != nil {
 			return nil, err
 		}
-		//fmt.Printf("Move: srcLeaf %s, srcDirID %s \n dstLeaf %s, dstDirID, %s", srcLeaf, srcDirectoryID, dstLeaf, dstDirectoryID)
+		time.Sleep(500 * time.Millisecond) //Find a way around this
+		dstObj = newObjectWithFile(f, remote, newFile)
+	}
 
-		doMove := srcDirectoryID != dstDirectoryID
-		doRename := srcLeaf != dstLeaf
+	if doRename {
+		base := filepath.Base(remote)
+		name := strings.TrimSuffix(base, filepath.Ext(base))
+		ext := strings.TrimPrefix(filepath.Ext(base), ".")
 
-		println("Move ", doMove, doRename)
-	*/
-	// return f.client.Rename(ctx, f.root+src.Remote(), f.root+dst.Remote())
-	return nil, fs.ErrorNotImplemented
+		updated := &folders.File{
+			PlainName: f.opt.Encoding.FromStandardName(name),
+			Type:      f.opt.Encoding.FromStandardName(ext),
+		}
+
+		newFile, err := files.UpdateFileMeta(f.cfg, srcObj.uuid, updated)
+		if err != nil {
+			return nil, err
+		}
+		time.Sleep(500 * time.Millisecond) //Find a way around this
+		dstObj = newObjectWithFile(f, remote, newFile)
+	}
+
+	return dstObj, nil
 }
 
+// Move dir to destination using server-side move operations.
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
