@@ -44,18 +44,14 @@ func (p *filePool) get() (*file, error) {
 	}
 	p.mu.Unlock()
 
-	p.fs.addSession()
-
 	c, err := p.fs.getConnection(p.ctx, p.share)
 	if err != nil {
-		p.fs.removeSession()
 		return nil, err
 	}
 
 	fl, err := c.smbShare.OpenFile(p.path, os.O_WRONLY, 0o644)
 	if err != nil {
 		p.fs.putConnection(&c, err)
-		p.fs.removeSession()
 		return nil, fmt.Errorf("failed to open: %w", err)
 	}
 
@@ -70,7 +66,6 @@ func (p *filePool) put(f *file, err error) {
 	if err != nil {
 		_ = f.Close()
 		p.fs.putConnection(&f.c, err)
-		p.fs.removeSession()
 		return
 	}
 
@@ -90,7 +85,6 @@ func (p *filePool) drain() error {
 		g.Go(func() error {
 			err := f.Close()
 			p.fs.putConnection(&f.c, err)
-			p.fs.removeSession()
 			return err
 		})
 	}
