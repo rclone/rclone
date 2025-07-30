@@ -1446,9 +1446,9 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		}
 	}
 	usage = &fs.Usage{
-		Total: fs.NewUsageValue(int64(total)),        // quota of bytes that can be used
-		Used:  fs.NewUsageValue(int64(used)),         // bytes in use
-		Free:  fs.NewUsageValue(int64(total - used)), // bytes which can be uploaded before reaching the quota
+		Total: fs.NewUsageValue(total),        // quota of bytes that can be used
+		Used:  fs.NewUsageValue(used),         // bytes in use
+		Free:  fs.NewUsageValue(total - used), // bytes which can be uploaded before reaching the quota
 	}
 	return usage, nil
 }

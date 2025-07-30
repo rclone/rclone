@@ -494,11 +494,11 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 		return nil, err
 	}
 
-	bs := int64(stat.BlockSize())
+	bs := stat.BlockSize()
 	usage := &fs.Usage{
-		Total: fs.NewUsageValue(bs * int64(stat.TotalBlockCount())),
-		Used:  fs.NewUsageValue(bs * int64(stat.TotalBlockCount()-stat.FreeBlockCount())),
-		Free:  fs.NewUsageValue(bs * int64(stat.AvailableBlockCount())),
+		Total: fs.NewUsageValue(bs * stat.TotalBlockCount()),
+		Used:  fs.NewUsageValue(bs * (stat.TotalBlockCount() - stat.FreeBlockCount())),
+		Free:  fs.NewUsageValue(bs * stat.AvailableBlockCount()),
 	}
 	return usage, nil
 }
