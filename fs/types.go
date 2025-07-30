@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"math"
 	"time"
 
 	"github.com/rclone/rclone/fs/hash"
@@ -335,9 +336,15 @@ type FlaggerNP interface {
 }
 
 // NewUsageValue makes a valid value
-func NewUsageValue(value int64) *int64 {
+func NewUsageValue[T interface {
+	int64 | uint64 | float64
+}](value T) *int64 {
 	p := new(int64)
-	*p = value
+	if value > T(int64(math.MaxInt64)) {
+		*p = math.MaxInt64
+	} else {
+		*p = int64(value)
+	}
 	return p
 }
 
