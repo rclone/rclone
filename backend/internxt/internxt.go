@@ -47,9 +47,9 @@ func init() {
 				IsPassword: true,
 			},
 			{
-				Name:    "simulateEmptyFiles",
+				Name:    "use_2fa",
+				Help:    "Do you use 2FA to login?",
 				Default: false,
-				Help:    "Simulates empty files by uploading a small placeholder file instead. Alters the filename when uploading to keep track of empty files, but this is not visible through rclone.",
 			},
 			{
 				Name:     rclone_config.ConfigEncoding,
@@ -76,11 +76,11 @@ var (
 
 // Options holds configuration options for this interface
 type Options struct {
-	Endpoint           string               `flag:"endpoint" help:"API endpoint"`
-	Email              string               `flag:"email"    help:"Internxt account email"`
-	Password           string               `flag:"password" help:"Internxt account password"`
-	Encoding           encoder.MultiEncoder `config:"encoding"`
-	SimulateEmptyFiles bool                 `config:"simulateEmptyFiles"`
+	Endpoint string               `flag:"endpoint" help:"API endpoint"`
+	Email    string               `flag:"email"    help:"Internxt account email"`
+	Password string               `flag:"password" help:"Internxt account password"`
+	Use2FA   bool                 `config:"use_2fa" help:"Do you use 2FA to login?"`
+	Encoding encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents an Internxt remote
@@ -145,6 +145,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+
+	if opt.Use2FA {
+		fmt.Print("Enter your 2FA code: ")
+		var code string
+		_, err := fmt.Scanln(&code)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read 2FA code: %w", err)
+		}
+		cfg.TFA = code
+		fmt.Println("TWO FACTOR CODE: " + cfg.TFA)
+	}
+
 	accessResponse, err := auth.AccessLogin(cfg, loginResponse)
 	if err != nil {
 		return nil, err
