@@ -154,7 +154,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("failed to read 2FA code: %w", err)
 		}
 		cfg.TFA = code
-		fmt.Println("TWO FACTOR CODE: " + cfg.TFA)
 	}
 
 	accessResponse, err := auth.AccessLogin(cfg, loginResponse)
