@@ -7,6 +7,7 @@ import (
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cluster"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
@@ -38,6 +39,8 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		"groups":            "RC",
 	},
 	Run: func(command *cobra.Command, args []string) {
+		ctx := context.Background()
+
 		cmd.CheckArgs(0, 1, command, args)
 		if rc.Opt.Enabled {
 			fs.Fatalf(nil, "Don't supply --rc flag when using rcd")
@@ -47,6 +50,12 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		rc.Opt.Enabled = true
 		if len(args) > 0 {
 			rc.Opt.Files = args[0]
+		}
+
+		// Start the cluster worker if configured
+		_, err := cluster.NewWorker(ctx)
+		if err != nil {
+			fs.Fatalf(nil, "Failed to start cluster worker: %v", err)
 		}
 
 		s, err := rcserver.Start(context.Background(), &rc.Opt)
