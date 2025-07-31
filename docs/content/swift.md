@@ -139,6 +139,12 @@ excess files in the container.
 
     rclone sync --interactive /home/local/directory remote:container
 
+Sync a remote container to a bucket and maintain object metadata:
+
+    rclone sync --metadata remote:container s3:bucket
+
+Note that swift backend only supports reading metadata, not writing to it.
+
 ### Configuration from an OpenStack credentials file
 
 An OpenStack credentials file typically looks something something

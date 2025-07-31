@@ -148,6 +148,16 @@ func init() {
 		Name:        "swift",
 		Description: "OpenStack Swift (Rackspace Cloud Files, Blomp Cloud Storage, Memset Memstore, OVH)",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `User metadata is stored as X-Object-Meta- keys. Swift metadata keys are case insensitive and are always returned in lower case.`,
+			System: map[string]fs.MetadataHelp{
+				"mtime": {
+					Help:    "Time of last modification, read from rclone metadata",
+					Type:    "RFC 3339",
+					Example: "2006-01-02T15:04:05.999999999Z07:00",
+				},
+			},
+		},
 		Options: append([]fs.Option{{
 			Name:    "env_auth",
 			Help:    "Get swift credentials from environment variables in standard OpenStack form.",
@@ -584,6 +594,8 @@ func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c
 		BucketBased:       true,
 		BucketBasedRootOK: true,
 		SlowModTime:       true,
+		ReadMetadata:      true,
+		UserMetadata:      true,
 	}).Fill(ctx, f)
 	if !f.opt.UseSegmentsContainer.Valid {
 		f.opt.UseSegmentsContainer.Value = !needFileSegmentsDirectory.MatchString(opt.Auth)
@@ -1643,6 +1655,32 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return o.contentType
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	err := o.readMetaData(ctx) // reads info and headers, returning an error
+	if err != nil {
+		return nil, err
+	}
+	objectMetadata := o.headers.ObjectMetadata()
+	if len(objectMetadata) == 0 {
+		return nil, nil
+	}
+	metadata := make(fs.Metadata, len(objectMetadata))
+	for k, v := range objectMetadata {
+		switch k {
+		case "mtime":
+			if modTime, err := swift.FloatStringToTime(v); err == nil {
+				metadata["mtime"] = modTime.Format(time.RFC3339Nano)
+			}
+		default:
+			metadata[k] = v
+		}
+	}
+	return metadata, nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs          = &Fs{}
@@ -1652,4 +1690,5 @@ var (
 	_ fs.ListRer     = &Fs{}
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
+	_ fs.Metadataer  = &Object{}
 )
