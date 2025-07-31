@@ -5,13 +5,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestShellExpand(t *testing.T) {
-	home, err := homedir.Dir()
+	home, err := os.UserHomeDir()
 	require.NoError(t, err)
 	require.NoError(t, os.Setenv("EXPAND_TEST", "potato"))
 	defer func() {
