@@ -10,6 +10,13 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// FsInterface defines the methods that filePool needs from Fs
+type FsInterface interface {
+	getConnection(ctx context.Context, share string) (*conn, error)
+	putConnection(pc **conn, err error)
+	removeSession()
+}
+
 type file struct {
 	*smb2.File
 	c *conn
@@ -17,7 +24,7 @@ type file struct {
 
 type filePool struct {
 	ctx   context.Context
-	fs    *Fs
+	fs    FsInterface
 	share string
 	path  string
 
@@ -25,7 +32,7 @@ type filePool struct {
 	pool []*file
 }
 
-func newFilePool(ctx context.Context, fs *Fs, share, path string) *filePool {
+func newFilePool(ctx context.Context, fs FsInterface, share, path string) *filePool {
 	return &filePool{
 		ctx:   ctx,
 		fs:    fs,
