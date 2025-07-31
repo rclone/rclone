@@ -82,7 +82,7 @@ type accountValues struct {
 	max     int64      // if >=0 the max number of bytes to transfer
 	start   time.Time  // Start time of first read
 	lpTime  time.Time  // Time of last average measurement
-	lpBytes int        // Number of bytes read since last measurement
+	lpBytes int64      // Number of bytes read since last measurement
 	avg     float64    // Moving average of last few measurements in Byte/s
 }
 
@@ -344,15 +344,20 @@ func (acc *Account) limitPerFileBandwidth(n int) {
 	}
 }
 
-// Account the read and limit bandwidth
-func (acc *Account) accountRead(n int) {
+// Account the read
+func (acc *Account) accountReadN(n int64) {
 	// Update Stats
 	acc.values.mu.Lock()
 	acc.values.lpBytes += n
-	acc.values.bytes += int64(n)
+	acc.values.bytes += n
 	acc.values.mu.Unlock()
 
-	acc.stats.Bytes(int64(n))
+	acc.stats.Bytes(n)
+}
+
+// Account the read and limit bandwidth
+func (acc *Account) accountRead(n int) {
+	acc.accountReadN(int64(n))
 
 	TokenBucket.LimitBandwidth(TokenBucketSlotAccounting, n)
 	acc.limitPerFileBandwidth(n)
@@ -458,6 +463,15 @@ func (acc *Account) AccountRead(n int) (err error) {
 		acc.accountRead(n)
 	}
 	return err
+}
+
+// AccountReadN account having read n bytes
+//
+// Does not obey any transfer limits, bandwidth limits, etc.
+func (acc *Account) AccountReadN(n int64) {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	acc.accountReadN(n)
 }
 
 // Close the object
