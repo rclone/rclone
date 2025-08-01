@@ -243,7 +243,7 @@ fetch_binaries:
 	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
-	cd docs && hugo server --logLevel info -w --disableFastRender
+	cd docs && hugo server --logLevel info -w --disableFastRender --ignoreCache
 
 tag:	retag doc
 	bin/make_changelog.py $(LAST_TAG) $(VERSION) > docs/content/changelog.md.new
