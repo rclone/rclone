@@ -692,6 +692,10 @@ version recommended):
 		newFormat := true
 		err := outM.Decode(code)
 		if err != nil {
+			if len(code) > 0 && code[0] != '{' {
+				fs.Errorf(nil, "Couldn't decode rclone authorize output as base64, trying JSON: %v", err)
+				fs.Errorf(nil, "Check the code is complete and didn't get truncated >>>%s<<<", code)
+			}
 			newFormat = false
 			err = json.Unmarshal([]byte(code), &token)
 		}
