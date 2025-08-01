@@ -17,6 +17,7 @@ type TransferSnapshot struct {
 	Size        int64     `json:"size"`
 	Bytes       int64     `json:"bytes"`
 	Checked     bool      `json:"checked"`
+	What        string    `json:"what"`
 	StartedAt   time.Time `json:"started_at"`
 	CompletedAt time.Time `json:"completed_at,omitempty"`
 	Error       error     `json:"-"`
@@ -186,9 +187,10 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 	}
 	snapshot := TransferSnapshot{
 		Name:        tr.remote,
-		Checked:     tr.checking,
 		Size:        s,
 		Bytes:       b,
+		Checked:     tr.checking,
+		What:        tr.what,
 		StartedAt:   tr.startedAt,
 		CompletedAt: tr.completedAt,
 		Error:       tr.err,
