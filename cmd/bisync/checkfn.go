@@ -16,15 +16,17 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 )
 
-var hashType hash.Type
-var fsrc, fdst fs.Fs
-var fcrypt *crypt.Fs
+type bisyncCheck = struct {
+	hashType   hash.Type
+	fsrc, fdst fs.Fs
+	fcrypt     *crypt.Fs
+}
 
 // WhichCheck determines which CheckFn we should use based on the Fs types
 // It is more robust and accurate than Check because
 // it will fallback to CryptCheck or DownloadCheck instead of --size-only!
 // it returns the *operations.CheckOpt with the CheckFn set.
-func WhichCheck(ctx context.Context, opt *operations.CheckOpt) *operations.CheckOpt {
+func (b *bisyncRun) WhichCheck(ctx context.Context, opt *operations.CheckOpt) *operations.CheckOpt {
 	ci := fs.GetConfig(ctx)
 	common := opt.Fsrc.Hashes().Overlap(opt.Fdst.Hashes())
 
@@ -40,32 +42,32 @@ func WhichCheck(ctx context.Context, opt *operations.CheckOpt) *operations.Check
 
 	if (srcIsCrypt && dstIsCrypt) || (!srcIsCrypt && dstIsCrypt) {
 		// if both are crypt or only dst is crypt
-		hashType = FdstCrypt.UnWrap().Hashes().GetOne()
-		if hashType != hash.None {
+		b.check.hashType = FdstCrypt.UnWrap().Hashes().GetOne()
+		if b.check.hashType != hash.None {
 			// use cryptcheck
-			fsrc = opt.Fsrc
-			fdst = opt.Fdst
-			fcrypt = FdstCrypt
-			fs.Infof(fdst, "Crypt detected! Using cryptcheck instead of check. (Use --size-only or --ignore-checksum to disable)")
-			opt.Check = CryptCheckFn
+			b.check.fsrc = opt.Fsrc
+			b.check.fdst = opt.Fdst
+			b.check.fcrypt = FdstCrypt
+			fs.Infof(b.check.fdst, "Crypt detected! Using cryptcheck instead of check. (Use --size-only or --ignore-checksum to disable)")
+			opt.Check = b.CryptCheckFn
 			return opt
 		}
 	} else if srcIsCrypt && !dstIsCrypt {
 		// if only src is crypt
-		hashType = FsrcCrypt.UnWrap().Hashes().GetOne()
-		if hashType != hash.None {
+		b.check.hashType = FsrcCrypt.UnWrap().Hashes().GetOne()
+		if b.check.hashType != hash.None {
 			// use reverse cryptcheck
-			fsrc = opt.Fdst
-			fdst = opt.Fsrc
-			fcrypt = FsrcCrypt
-			fs.Infof(fdst, "Crypt detected! Using cryptcheck instead of check. (Use --size-only or --ignore-checksum to disable)")
-			opt.Check = ReverseCryptCheckFn
+			b.check.fsrc = opt.Fdst
+			b.check.fdst = opt.Fsrc
+			b.check.fcrypt = FsrcCrypt
+			fs.Infof(b.check.fdst, "Crypt detected! Using cryptcheck instead of check. (Use --size-only or --ignore-checksum to disable)")
+			opt.Check = b.ReverseCryptCheckFn
 			return opt
 		}
 	}
 
 	// if we've gotten this far, neither check or cryptcheck will work, so use --download
-	fs.Infof(fdst, "Can't compare hashes, so using check --download for safety. (Use --size-only or --ignore-checksum to disable)")
+	fs.Infof(b.check.fdst, "Can't compare hashes, so using check --download for safety. (Use --size-only or --ignore-checksum to disable)")
 	opt.Check = DownloadCheckFn
 	return opt
 }
@@ -88,17 +90,17 @@ func CheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool,
 }
 
 // CryptCheckFn is a slightly modified version of CryptCheck
-func CryptCheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
+func (b *bisyncRun) CryptCheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
 	cryptDst := dst.(*crypt.Object)
 	underlyingDst := cryptDst.UnWrap()
-	underlyingHash, err := underlyingDst.Hash(ctx, hashType)
+	underlyingHash, err := underlyingDst.Hash(ctx, b.check.hashType)
 	if err != nil {
 		return true, false, fmt.Errorf("error reading hash from underlying %v: %w", underlyingDst, err)
 	}
 	if underlyingHash == "" {
 		return false, true, nil
 	}
-	cryptHash, err := fcrypt.ComputeHash(ctx, cryptDst, src, hashType)
+	cryptHash, err := b.check.fcrypt.ComputeHash(ctx, cryptDst, src, b.check.hashType)
 	if err != nil {
 		return true, false, fmt.Errorf("error computing hash: %w", err)
 	}
@@ -106,10 +108,10 @@ func CryptCheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash 
 		return false, true, nil
 	}
 	if cryptHash != underlyingHash {
-		err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
+		err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", b.check.fdst.Name(), b.check.fdst.Root(), cryptHash, b.check.fsrc.Name(), b.check.fsrc.Root(), underlyingHash)
 		fs.Debugf(src, "%s", err.Error())
 		// using same error msg as CheckFn so integration tests match
-		err = fmt.Errorf("%v differ", hashType)
+		err = fmt.Errorf("%v differ", b.check.hashType)
 		fs.Errorf(src, "%s", err.Error())
 		return true, false, nil
 	}
@@ -118,8 +120,8 @@ func CryptCheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash 
 
 // ReverseCryptCheckFn is like CryptCheckFn except src and dst are switched
 // result: src is crypt, dst is non-crypt
-func ReverseCryptCheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
-	return CryptCheckFn(ctx, src, dst)
+func (b *bisyncRun) ReverseCryptCheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
+	return b.CryptCheckFn(ctx, src, dst)
 }
 
 // DownloadCheckFn is a slightly modified version of Check with --download
@@ -137,7 +139,7 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 	if filterCheck.HaveFilesFrom() {
 		fs.Debugf(nil, "There are potential conflicts to check.")
 
-		opt, close, checkopterr := check.GetCheckOpt(b.fs1, b.fs2)
+		opt, close, checkopterr := check.GetCheckOpt(fs1, fs2)
 		if checkopterr != nil {
 			b.critical = true
 			b.retryable = true
@@ -148,16 +150,16 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 
 		opt.Match = new(bytes.Buffer)
 
-		opt = WhichCheck(ctxCheck, opt)
+		opt = b.WhichCheck(ctxCheck, opt)
 
 		fs.Infof(nil, "Checking potential conflicts...")
 		check := operations.CheckFn(ctxCheck, opt)
 		fs.Infof(nil, "Finished checking the potential conflicts. %s", check)
 
-		//reset error count, because we don't want to count check errors as bisync errors
+		// reset error count, because we don't want to count check errors as bisync errors
 		accounting.Stats(ctxCheck).ResetErrors()
 
-		//return the list of identical files to check against later
+		// return the list of identical files to check against later
 		if len(fmt.Sprint(opt.Match)) > 0 {
 			matches = bilib.ToNames(strings.Split(fmt.Sprint(opt.Match), "\n"))
 		}
@@ -173,14 +175,14 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 
 // WhichEqual is similar to WhichCheck, but checks a single object.
 // Returns true if the objects are equal, false if they differ or if we don't know
-func WhichEqual(ctx context.Context, src, dst fs.Object, Fsrc, Fdst fs.Fs) bool {
+func (b *bisyncRun) WhichEqual(ctx context.Context, src, dst fs.Object, Fsrc, Fdst fs.Fs) bool {
 	opt, close, checkopterr := check.GetCheckOpt(Fsrc, Fdst)
 	if checkopterr != nil {
 		fs.Debugf(nil, "GetCheckOpt error: %v", checkopterr)
 	}
 	defer close()
 
-	opt = WhichCheck(ctx, opt)
+	opt = b.WhichCheck(ctx, opt)
 	differ, noHash, err := opt.Check(ctx, dst, src)
 	if err != nil {
 		fs.Errorf(src, "failed to check: %v", err)
@@ -217,7 +219,7 @@ func (b *bisyncRun) EqualFn(ctx context.Context) context.Context {
 		equal, skipHash = timeSizeEqualFn()
 		if equal && !skipHash {
 			whichHashType := func(f fs.Info) hash.Type {
-				ht := getHashType(f.Name())
+				ht := b.getHashType(f.Name())
 				if ht == hash.None && b.opt.Compare.SlowHashSyncOnly && !b.opt.Resync {
 					ht = f.Hashes().GetOne()
 				}
@@ -225,9 +227,9 @@ func (b *bisyncRun) EqualFn(ctx context.Context) context.Context {
 			}
 			srcHash, _ := src.Hash(ctx, whichHashType(src.Fs()))
 			dstHash, _ := dst.Hash(ctx, whichHashType(dst.Fs()))
-			srcHash, _ = tryDownloadHash(ctx, src, srcHash)
-			dstHash, _ = tryDownloadHash(ctx, dst, dstHash)
-			equal = !hashDiffers(srcHash, dstHash, whichHashType(src.Fs()), whichHashType(dst.Fs()), src.Size(), dst.Size())
+			srcHash, _ = b.tryDownloadHash(ctx, src, srcHash)
+			dstHash, _ = b.tryDownloadHash(ctx, dst, dstHash)
+			equal = !b.hashDiffers(srcHash, dstHash, whichHashType(src.Fs()), whichHashType(dst.Fs()), src.Size(), dst.Size())
 		}
 		if equal {
 			logger(ctx, operations.Match, src, dst, nil)
@@ -247,7 +249,7 @@ func (b *bisyncRun) resyncTimeSizeEqual(ctxNoLogger context.Context, src fs.Obje
 		// note that arg order is path1, path2, regardless of src/dst
 		path1, path2 := b.resyncWhichIsWhich(src, dst)
 		if sizeDiffers(path1.Size(), path2.Size()) {
-			winningPath := b.resolveLargerSmaller(path1.Size(), path2.Size(), path1.Remote(), path2.Remote(), b.opt.ResyncMode)
+			winningPath := b.resolveLargerSmaller(path1.Size(), path2.Size(), path1.Remote(), b.opt.ResyncMode)
 			// don't need to check/update modtime here, as sizes definitely differ and something will be transferred
 			return b.resyncWinningPathToEqual(winningPath), b.resyncWinningPathToEqual(winningPath) // skip hash check if true
 		}
@@ -257,7 +259,7 @@ func (b *bisyncRun) resyncTimeSizeEqual(ctxNoLogger context.Context, src fs.Obje
 		// note that arg order is path1, path2, regardless of src/dst
 		path1, path2 := b.resyncWhichIsWhich(src, dst)
 		if timeDiffers(ctxNoLogger, path1.ModTime(ctxNoLogger), path2.ModTime(ctxNoLogger), path1.Fs(), path2.Fs()) {
-			winningPath := b.resolveNewerOlder(path1.ModTime(ctxNoLogger), path2.ModTime(ctxNoLogger), path1.Remote(), path2.Remote(), b.opt.ResyncMode)
+			winningPath := b.resolveNewerOlder(path1.ModTime(ctxNoLogger), path2.ModTime(ctxNoLogger), path1.Remote(), b.opt.ResyncMode)
 			// if src is winner, proceed with equal to check size/hash and possibly just update dest modtime instead of transferring
 			if !b.resyncWinningPathToEqual(winningPath) {
 				return operations.Equal(ctxNoLogger, src, dst), false // note we're back to src/dst, not path1/path2
