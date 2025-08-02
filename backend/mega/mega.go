@@ -28,6 +28,7 @@ import (
 	"sync"
 	"time"
 
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -39,7 +40,9 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
-	mega "github.com/t3rm1n4l/go-mega"
+	mega "github.com/inspirationull/go-mega"
+	"github.com/zalando/go-keyring"
+	"encoding/base64"
 )
 
 const (
@@ -49,10 +52,18 @@ const (
 	decayConstant = 2 // bigger for slower decay, exponential
 )
 
+const keyringService = "rclone-mega-session"
+
 var (
 	megaCacheMu sync.Mutex                // mutex for the below
 	megaCache   = map[string]*mega.Mega{} // cache logged in Mega's by user
 )
+
+func init() {
+	// Remove persistent_login and 2fa_enabled from Options
+	// Remove related config and flag logic
+	// Always try session restore, then fallback to login/2FA, then save session after full success
+}
 
 // Register with Fs
 func init() {
@@ -209,35 +220,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	ci := fs.GetConfig(ctx)
 
-	// cache *mega.Mega on username so we can reuse and share
-	// them between remotes.  They are expensive to make as they
-	// contain all the objects and sharing the objects makes the
-	// move code easier as we don't have to worry about mixing
-	// them up between different remotes.
 	megaCacheMu.Lock()
 	defer megaCacheMu.Unlock()
 	srv := megaCache[opt.User]
 	if srv == nil {
-		// srv = mega.New().SetClient(fshttp.NewClient(ctx))
-
-		// Workaround for Mega's use of insecure cipher suites which are no longer supported by default since Go 1.22.
-		// Relevant issues:
-		// https://github.com/rclone/rclone/issues/8565
-		// https://github.com/meganz/webclient/issues/103
 		clt := fshttp.NewClient(ctx)
 		clt.Transport = fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
 			var ids []uint16
-			// Read default ciphers
 			for _, cs := range tls.CipherSuites() {
 				ids = append(ids, cs.ID)
 			}
-			// Insecure but Mega uses TLS_RSA_WITH_AES_128_GCM_SHA256 for storage endpoints
-			// (e.g. https://gfs302n114.userstorage.mega.co.nz) as of June 18, 2025.
 			t.TLSClientConfig.CipherSuites = append(ids, tls.TLS_RSA_WITH_AES_128_GCM_SHA256)
 		})
 		srv = mega.New().SetClient(clt)
-
-		srv.SetRetries(ci.LowLevelRetries) // let mega do the low level retries
+		srv.SetRetries(ci.LowLevelRetries)
 		srv.SetHTTPS(opt.UseHTTPS)
 		srv.SetLogger(func(format string, v ...any) {
 			fs.Infof("*go-mega*", format, v...)
@@ -248,9 +244,67 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			})
 		}
 
-		err := srv.Login(opt.User, opt.Pass)
+		// Try session restore from keyring
+		session, err := keyring.Get(keyringService, opt.User)
+		fs.Debugf("mega", "Session from keyring for user %s: %q, err=%v", opt.User, session, err)
+		if err == nil && session != "" {
+			// Handle go-keyring-base64 prefix if present
+			if strings.HasPrefix(session, "go-keyring-base64:") {
+				b64 := strings.TrimPrefix(session, "go-keyring-base64:")
+				decoded, decErr := base64.StdEncoding.DecodeString(b64)
+				if decErr == nil {
+					session = string(decoded)
+					fs.Debugf("mega", "Decoded session from keyring for user %s: %q", opt.User, session)
+				} else {
+					fs.Debugf("mega", "Failed to decode base64 session for user %s: %v", opt.User, decErr)
+				}
+			}
+			err := srv.LoginWithSession(session)
+			fs.Debugf("mega", "LoginWithSession returned err=%v, FS=%v", err, srv.FS)
+			if err == nil && srv.FS != nil && srv.FS.GetRoot() != nil {
+				fs.Debugf("mega", "Session restore succeeded for user %s", opt.User)
+				megaCache[opt.User] = srv
+				root = parsePath(root)
+				f := &Fs{
+					name:  name,
+					root:  root,
+					opt:   *opt,
+					srv:   srv,
+					pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+				}
+				f.features = (&fs.Features{
+					DuplicateFiles:          true,
+					CanHaveEmptyDirectories: true,
+				}).Fill(ctx, f)
+				_, err = f.findRoot(ctx, false)
+				return f, err
+			}
+			fs.Debugf("mega", "Session restore failed for user %s: %v", opt.User, err)
+			_ = keyring.Delete(keyringService, opt.User)
+		}
+
+		err = srv.Login(opt.User, opt.Pass)
 		if err != nil {
-			return nil, fmt.Errorf("couldn't login: %w", err)
+			fs.Debugf("mega", "Login failed: %v", err)
+			if strings.Contains(strings.ToLower(err.Error()), "2fa") || strings.Contains(strings.ToLower(err.Error()), "multi-factor") {
+				code := config.GetPassword("Enter 2FA code for MEGA account:")
+				err = srv.MultiFactorLogin(opt.User, opt.Pass, code)
+			}
+			if err != nil {
+				return nil, fmt.Errorf("couldn't login: %w", err)
+			}
+		}
+		// After successful login and file tree load, save session to keyring
+		if srv.FS != nil && srv.FS.GetRoot() != nil {
+			fs.Debugf("mega", "About to save session to keyring for user %s", opt.User)
+			session := srv.GetSession()
+			fs.Debugf("mega", "Session to be saved for user %s: %q", opt.User, session)
+			err := keyring.Set(keyringService, opt.User, session)
+			if err != nil {
+				fs.Debugf("mega", "Failed to save session to keyring: %v", err)
+			} else {
+				fs.Debugf("mega", "Session saved to keyring for user %s", opt.User)
+			}
 		}
 		megaCache[opt.User] = srv
 	}
@@ -268,7 +322,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
 
-	// Find the root node and check if it is a file or not
 	_, err = f.findRoot(ctx, false)
 	switch err {
 	case nil:
@@ -946,9 +999,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return nil, fmt.Errorf("failed to get Mega Quota: %w", err)
 	}
 	usage := &fs.Usage{
-		Total: fs.NewUsageValue(q.Mstrg),           // quota of bytes that can be used
-		Used:  fs.NewUsageValue(q.Cstrg),           // bytes in use
-		Free:  fs.NewUsageValue(q.Mstrg - q.Cstrg), // bytes which can be uploaded before reaching the quota
+		Total: fs.NewUsageValue(int64(q.Mstrg)),           // quota of bytes that can be used
+		Used:  fs.NewUsageValue(int64(q.Cstrg)),           // bytes in use
+		Free:  fs.NewUsageValue(int64(q.Mstrg - q.Cstrg)), // bytes which can be uploaded before reaching the quota
 	}
 	return usage, nil
 }
