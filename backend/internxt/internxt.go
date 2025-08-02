@@ -4,6 +4,7 @@ package internxt
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -47,6 +48,11 @@ func init() {
 				IsPassword: true,
 			},
 			{
+				Name:    "simulateEmptyFiles",
+				Default: false,
+				Help:    "Simulates empty files by uploading a small placeholder file instead. Alters the filename when uploading to keep track of empty files, but this is not visible through rclone.",
+			},
+			{
 				Name:    "use_2fa",
 				Help:    "Do you use 2FA to login?",
 				Default: false,
@@ -76,11 +82,12 @@ var (
 
 // Options holds configuration options for this interface
 type Options struct {
-	Endpoint string               `flag:"endpoint" help:"API endpoint"`
-	Email    string               `flag:"email"    help:"Internxt account email"`
-	Password string               `flag:"password" help:"Internxt account password"`
-	Use2FA   bool                 `config:"use_2fa" help:"Do you use 2FA to login?"`
-	Encoding encoder.MultiEncoder `config:"encoding"`
+	Endpoint           string               `flag:"endpoint" help:"API endpoint"`
+	Email              string               `flag:"email"    help:"Internxt account email"`
+	Password           string               `flag:"password" help:"Internxt account password"`
+	Encoding           encoder.MultiEncoder `config:"encoding"`
+	SimulateEmptyFiles bool                 `config:"simulateEmptyFiles"`
+	Use2FA             bool                 `config:"use_2fa" help:"Do you use 2FA to login?"`
 }
 
 // Fs represents an Internxt remote
@@ -235,24 +242,48 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 }
 
 // Rmdir removes a directory
+// Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, true)
+}
+
+// Purge deletes the directory and all its contents
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, false)
+}
+
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error) {
+	root := path.Join(f.root, dir)
+	if root == "" {
+		return errors.New("can't purge root directory")
+	}
+
+	// check that the directory exists
 	id, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return fs.ErrorDirNotFound
 	}
 
-	// Replace these calls with GetFolderContent? (fmt.Sprintf("/storage/v2/folder/%d%s", folderID, query))
-	childFolders, err := folders.ListAllFolders(f.cfg, id)
-	if err != nil {
-		return err
-	}
-	childFiles, err := folders.ListAllFiles(f.cfg, id)
-	if err != nil {
-		return err
-	}
+	if check {
+		// Replace these calls with GetFolderContent? (fmt.Sprintf("/storage/v2/folder/%d%s", folderID, query))
+		// Check folders and files separately in case we only need to call the API once.
+		childFolders, err := folders.ListAllFolders(f.cfg, id)
+		if err != nil {
+			return err
+		}
 
-	if len(childFiles) > 0 || len(childFolders) > 0 {
-		return fs.ErrorDirectoryNotEmpty
+		if len(childFolders) > 0 {
+			return fs.ErrorDirectoryNotEmpty
+		}
+
+		childFiles, err := folders.ListAllFiles(f.cfg, id)
+		if err != nil {
+			return err
+		}
+
+		if len(childFiles) > 0 {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
 
 	err = folders.DeleteFolder(f.cfg, id)
@@ -266,6 +297,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	f.dirCache.FlushDir(dir)
 	time.Sleep(500 * time.Millisecond) // REMOVE THIS, use pacer to check for consistency?
 	return nil
+
 }
 
 // FindLeaf looks for a sub‑folder named `leaf` under the Internxt folder `pathID`.
