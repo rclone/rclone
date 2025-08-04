@@ -185,12 +185,18 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 	if tr.acc != nil {
 		b, s = tr.acc.progress()
 	}
+
+	what := tr.what
+	if what == "" {
+		what = "transferring"
+	}
+
 	snapshot := TransferSnapshot{
 		Name:        tr.remote,
 		Size:        s,
 		Bytes:       b,
 		Checked:     tr.checking,
-		What:        tr.what,
+		What:        what,
 		StartedAt:   tr.startedAt,
 		CompletedAt: tr.completedAt,
 		Error:       tr.err,
