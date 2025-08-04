@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -398,6 +399,11 @@ So for |connections 3| you'd use |--checkers 2 --transfers 2
 			Default:  0,
 			Advanced: true,
 		}, {
+			Name:     "encoding",
+			Help:     "Encoding for file names (see 'rclone help encoding')",
+			Default:  "",
+			Advanced: true,
+		}, {
 			Name:    "set_env",
 			Default: fs.SpaceSepList{},
 			Help: `Environment variables to pass to sftp and commands
@@ -584,6 +590,7 @@ type Options struct {
 	Concurrency             int             `config:"concurrency"`
 	Connections             int             `config:"connections"`
 	SetEnv                  fs.SpaceSepList `config:"set_env"`
+	Encoding                string          `config:"encoding"`
 	Ciphers                 fs.SpaceSepList `config:"ciphers"`
 	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
 	MACs                    fs.SpaceSepList `config:"macs"`
@@ -616,7 +623,8 @@ type Fs struct {
 	savedpswd    string
 	sessions     atomic.Int32 // count in use sessions
 	tokens       *pacer.TokenDispenser
-	proxyURL     *url.URL // address of HTTP proxy read from environment
+	proxyURL     *url.URL             // address of HTTP proxy read from environment
+	Enc          encoder.MultiEncoder // encoder for file names
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -1169,6 +1177,14 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	f.absRoot = root
 	f.shellRoot = root
 	f.opt = *opt
+	// Initialize encoding
+	if opt.Encoding != "" {
+		var err error
+		err = f.Enc.Set(opt.Encoding)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse encoding: %w", err)
+		}
+	}
 	f.m = m
 	f.config = sshConfig
 	f.url = "sftp://" + opt.User + "@" + opt.Host + ":" + opt.Port + "/" + root
@@ -1317,9 +1333,10 @@ func (f *Fs) Precision() time.Duration {
 
 // NewObject creates a new remote sftp file object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	remoteEnc := f.Enc.FromStandardName(remote)
 	o := &Object{
 		fs:     f,
-		remote: remote,
+		remote: remoteEnc,
 	}
 	err := o.stat(ctx)
 	if err != nil {
@@ -1439,6 +1456,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // directories above that
 func (f *Fs) mkParentDir(ctx context.Context, remote string) error {
 	parent := path.Dir(remote)
+	parent = f.Enc.FromStandardName(parent)
 	return f.mkdir(ctx, path.Join(f.absRoot, parent))
 }
 
@@ -1521,7 +1539,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
-	err := f.mkParentDir(ctx, remote)
+	remoteEnc := f.Enc.FromStandardName(remote)
+	err := f.mkParentDir(ctx, remoteEnc)
 	if err != nil {
 		return nil, fmt.Errorf("Move mkParentDir failed: %w", err)
 	}
@@ -1529,7 +1548,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, fmt.Errorf("Move: %w", err)
 	}
-	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remote)
+	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remoteEnc)
 	if _, ok := c.sftpClient.HasExtension("posix-rename@openssh.com"); ok {
 		err = c.sftpClient.PosixRename(srcPath, dstPath)
 	} else {
@@ -1561,7 +1580,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	err := f.mkParentDir(ctx, remote)
+	remoteEnc := f.Enc.FromStandardName(remote)
+	err := f.mkParentDir(ctx, remoteEnc)
 	if err != nil {
 		return nil, fmt.Errorf("Copy mkParentDir failed: %w", err)
 	}
@@ -1569,7 +1589,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, fmt.Errorf("Copy: %w", err)
 	}
-	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remote)
+	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remoteEnc)
 	err = c.sftpClient.Link(srcPath, dstPath)
 	f.putSftpConnection(&c, err)
 	if err != nil {
@@ -1602,8 +1622,10 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	srcPath := path.Join(srcFs.absRoot, srcRemote)
-	dstPath := path.Join(f.absRoot, dstRemote)
+	srcRemoteEnc := f.Enc.FromStandardName(srcRemote)
+	dstRemoteEnc := f.Enc.FromStandardName(dstRemote)
+	srcPath := path.Join(srcFs.absRoot, srcRemoteEnc)
+	dstPath := path.Join(f.absRoot, dstRemoteEnc)
 
 	// Check if destination exists
 	ok, err := f.dirExists(ctx, dstPath)
@@ -2069,13 +2091,15 @@ func (f *Fs) quoteOrEscapeShellPath(shellPath string) (string, error) {
 
 // remotePath returns the native SFTP path of the file or directory at the remote given
 func (f *Fs) remotePath(remote string) string {
-	return path.Join(f.absRoot, remote)
+	remoteEnc := f.Enc.FromStandardName(remote)
+	return path.Join(f.absRoot, remoteEnc)
 }
 
 // remoteShellPath returns the SSH shell path of the file or directory at the remote given
 func (f *Fs) remoteShellPath(remote string) string {
+	remoteEnc := f.Enc.FromStandardName(remote)
 	if f.opt.PathOverride != "" {
-		shellPath := path.Join(f.opt.PathOverride, remote)
+		shellPath := path.Join(f.opt.PathOverride, remoteEnc)
 		if f.opt.PathOverride[0] == '@' {
 			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, remote)
 		}
@@ -2169,9 +2193,10 @@ func (o *Object) setMetadata(info os.FileInfo) {
 
 // statRemote stats the file or directory at the remote given
 func (f *Fs) stat(ctx context.Context, remote string) (info os.FileInfo, err error) {
-	absPath := remote
-	if !strings.HasPrefix(remote, "/") {
-		absPath = path.Join(f.absRoot, remote)
+	remoteEnc := f.Enc.FromStandardName(remote)
+	absPath := remoteEnc
+	if !strings.HasPrefix(remoteEnc, "/") {
+		absPath = path.Join(f.absRoot, remoteEnc)
 	}
 	c, err := f.getSftpConnection(ctx)
 	if err != nil {
