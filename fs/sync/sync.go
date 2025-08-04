@@ -411,7 +411,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
 					needTransfer, err = fdstEx.RegisterLinkRoot(s.ctx, src, fsrcEx, pair.Dst, src.Remote(), needTransfer)
 					if err != nil {
-						fs.Errorf(pair.Dst, "Failed to register link root")
+						fs.Errorf(pair.Dst, "Failed to register link root: %s", err)
 						return
 					}
 				}
@@ -1273,7 +1273,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 					needTransfer, err := fdstEx.RegisterLinkRoot(s.ctx, x, fsrcEx, nil, src.Remote(), !NoNeedTransfer)
 					NoNeedTransfer = !needTransfer
 					if err != nil {
-						fs.Errorf(src, "failed to register link root")
+						fs.Errorf(src, "failed to register link root: %s", err)
 						return
 					}
 				}

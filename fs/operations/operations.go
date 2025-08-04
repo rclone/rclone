@@ -2110,7 +2110,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
 			needTransfer, err = fdstEx.RegisterLinkRoot(ctx, srcObj, fsrcEx, dstObj, srcObj.Remote(), needTransfer)
 			if err != nil {
-				fs.Errorf(srcObj, "Failed to register link root")
+				fs.Errorf(srcObj, "Failed to register link root: %s", err)
 				return
 			}
 		}
