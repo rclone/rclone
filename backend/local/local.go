@@ -313,7 +313,7 @@ only useful for reading.
 				Default:  encoder.OS,
 			},
 			{
-				Name:     "preserve_links",
+				Name:     "preserve_hlinks",
 				Default:  false,
 				Help:     "Preserve hard links when syncing",
 				Advanced: true,
@@ -340,7 +340,7 @@ type Options struct {
 	TimeType          timeType             `config:"time_type"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	NoClone           bool                 `config:"no_clone"`
-	PreserveLinks     bool                 `config:"preserve_links"`
+	PreserveHLinks    bool                 `config:"preserve_hlinks"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -500,7 +500,7 @@ func (f *Fs) Features() *fs.Features {
 }
 
 func (f *Fs) ShouldPreserveLinks() bool {
-	return f.opt.PreserveLinks
+	return f.opt.PreserveHLinks
 }
 
 func (f *Fs) HLink(ctx context.Context, src string, dst string) error {

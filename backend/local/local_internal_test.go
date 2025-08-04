@@ -685,8 +685,8 @@ func TestHardlinks(t *testing.T) {
 	f := r.Flocal.(*Fs)
 	fdest := r.Fremote.(*Fs)
 	when := time.Now()
-	f.opt.PreserveLinks = true
-	fdest.opt.PreserveLinks = true
+	f.opt.PreserveHLinks = true
+	fdest.opt.PreserveHLinks = true
 
 	require.True(t, f.ShouldPreserveLinks())
 	require.True(t, fdest.ShouldPreserveLinks())
