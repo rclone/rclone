@@ -1179,8 +1179,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	f.opt = *opt
 	// Initialize encoding
 	if opt.Encoding != "" {
-		var err error
-		err = f.Enc.Set(opt.Encoding)
+		err := f.Enc.Set(opt.Encoding)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse encoding: %w", err)
 		}
