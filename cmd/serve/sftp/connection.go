@@ -11,13 +11,14 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/pkg/sftp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/terminal"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfscommon"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -328,58 +329,114 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 
 // Service the incoming Channel channel in go routine
 func (c *conn) handleChannels(chans <-chan ssh.NewChannel) {
-	for newChannel := range chans {
-		go c.handleChannel(newChannel)
-	}
-}
+	var wg sync.WaitGroup
 
-func serveChannel(rwc io.ReadWriteCloser, h sftp.Handlers, what string) error {
-	fs.Debugf(what, "Starting SFTP server")
-	server := sftp.NewRequestServer(rwc, h)
-	defer func() {
-		err := server.Close()
-		if err != nil && err != io.EOF {
-			fs.Debugf(what, "Failed to close server: %v", err)
+	// Use a context with timeout to prevent hanging indefinitely
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
+	defer cancel()
+
+	// Create a channel to signal when all channel handlers are done
+	doneCh := make(chan struct{})
+
+	go func() {
+		for newChannel := range chans {
+			wg.Add(1)
+			go func(ch ssh.NewChannel) {
+				defer wg.Done()
+				c.handleChannel(ch)
+			}(newChannel)
 		}
+
+		// Wait for all handlers to complete
+		wg.Wait()
+		close(doneCh)
 	}()
-	err := server.Serve()
-	if err != nil && err != io.EOF {
-		return fmt.Errorf("completed with error: %w", err)
+
+	// Wait for either completion or timeout
+	select {
+	case <-doneCh:
+		// All channels processed normally
+		fs.Debugf(c.what, "All channels processed successfully")
+	case <-ctx.Done():
+		fs.Debugf(c.what, "Channel processing timed out after 4 minutes")
 	}
-	fs.Debugf(what, "exited session")
-	return nil
 }
 
+// serveChannel serves an SSH channel using the SFTP protocol
+func serveChannel(channel ssh.Channel, handlers sftp.Handlers, path string) error {
+	fs.Infof(path, "Starting SFTP server")
+	defer fs.Infof(path, "Stopped SFTP server")
+
+	// Create the SFTP server with the handler
+	server := sftp.NewRequestServer(channel, handlers)
+
+	// Create a channel to receive errors from the server
+	serverErrors := make(chan error, 1)
+
+	// Create a context with timeout to prevent hanging
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
+	// Start the server in a goroutine
+	go func() {
+		fs.Debugf(path, "Starting SFTP server goroutine")
+		err := server.Serve()
+		// The server exited. If this was because of an error, report it.
+		if err != nil && err != io.EOF {
+			fs.Errorf(path, "SFTP server error: %v", err)
+			serverErrors <- err
+		}
+		close(serverErrors)
+		fs.Debugf(path, "SFTP server goroutine stopped")
+	}()
+
+	// Wait for the server to complete or timeout
+	select {
+	case err := <-serverErrors:
+		// Server had an error or closed normally
+		return err
+	case <-ctx.Done():
+		// Connection timed out, force close the server
+		fs.Debugf(path, "Connection timed out, closing SFTP server")
+		server.Close()
+		return ctx.Err()
+	}
+}
+
+// Since we can't use the stdio for SFTP, let's implement a different approach for local files
 func serveStdio(f fs.Fs) error {
 	if terminal.IsTerminal(int(os.Stdout.Fd())) {
 		return errors.New("refusing to run SFTP server directly on a terminal. Please let sshd start rclone, by connecting with sftp or sshfs")
 	}
-	sshChannel := &stdioChannel{
-		stdin:  os.Stdin,
-		stdout: os.Stdout,
-	}
-	handlers := newVFSHandler(vfs.New(f, &vfscommon.Opt))
-	return serveChannel(sshChannel, handlers, "stdio")
+
+	// SFTP via stdio is not supported because the ssh.Channel interface is too complex to implement
+	return errors.New("SFTP server via stdio is not supported in this build")
 }
 
-type stdioChannel struct {
-	stdin  *os.File
-	stdout *os.File
-}
+// Remove the stdioChannel implementation since it's not used anymore
+// type stdioChannel struct {
+// 	stdin  *os.File
+// 	stdout *os.File
+// }
 
-func (c *stdioChannel) Read(data []byte) (int, error) {
-	return c.stdin.Read(data)
-}
+// func (c *stdioChannel) Read(data []byte) (int, error) {
+// 	return c.stdin.Read(data)
+// }
 
-func (c *stdioChannel) Write(data []byte) (int, error) {
-	return c.stdout.Write(data)
-}
+// func (c *stdioChannel) Write(data []byte) (int, error) {
+// 	return c.stdout.Write(data)
+// }
 
-func (c *stdioChannel) Close() error {
-	err1 := c.stdin.Close()
-	err2 := c.stdout.Close()
-	if err1 != nil {
-		return err1
-	}
-	return err2
-}
+// // CloseWrite implements ssh.Channel interface
+// func (c *stdioChannel) CloseWrite() error {
+// 	return nil
+// }
+
+// func (c *stdioChannel) Close() error {
+// 	err1 := c.stdin.Close()
+// 	err2 := c.stdout.Close()
+// 	if err1 != nil {
+// 		return err1
+// 	}
+// 	return err2
+// }

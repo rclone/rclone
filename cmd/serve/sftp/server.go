@@ -21,6 +21,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/fs"
@@ -43,6 +45,7 @@ type server struct {
 	listener net.Listener
 	stopped  chan struct{} // for waiting on the listener to stop
 	proxy    *proxy.Proxy
+	mu       sync.Mutex // protects stopped channel from concurrent closes
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (*server, error) {
@@ -98,6 +101,25 @@ func (s *server) acceptConnection(nConn net.Conn) {
 		return
 	}
 
+	// Set up a context with timeout for this connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	// Start a goroutine to monitor for context cancellation
+	connClosed := make(chan struct{})
+	defer close(connClosed)
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			// Context timed out or was cancelled
+			fs.Debugf(what, "Connection timeout, forcing close")
+			_ = nConn.Close()
+		case <-connClosed:
+			// Connection normally closed
+		}
+	}()
+
 	fs.Infof(what, "SSH login from %s using %s", sshConn.User(), sshConn.ClientVersion())
 
 	// Discard all global out-of-band Requests
@@ -115,21 +137,48 @@ func (s *server) acceptConnection(nConn net.Conn) {
 	c.handlers = newVFSHandler(c.vfs)
 
 	// Accept all channels
-	go c.handleChannels(chans)
+	c.handleChannels(chans) // Don't run in goroutine - wait for all channels to complete
 }
 
 // Accept connections and call them in a go routine
 func (s *server) acceptConnections() {
+	// Close the stopped channel when we finish, using mutex to prevent concurrent closes
+	defer func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		select {
+		case <-s.stopped:
+			// Already closed
+		default:
+			close(s.stopped)
+		}
+	}()
+
 	for {
 		nConn, err := s.listener.Accept()
 		if err != nil {
 			if strings.Contains(err.Error(), "use of closed network connection") {
+				fs.Infof(nil, "SFTP listener closed, stopping accept loop")
 				return
 			}
 			fs.Errorf(nil, "Failed to accept incoming connection: %v", err)
 			continue
 		}
-		go s.acceptConnection(nConn)
+
+		// Handle each connection in a separate goroutine with proper cleanup
+		go func(conn net.Conn) {
+			what := describeConn(conn)
+			defer func() {
+				fs.Debugf(what, "Closing connection")
+				// Ensure connection is always closed to prevent leaks
+				if err := conn.Close(); err != nil && !errors.Is(err, io.EOF) {
+					fs.Debugf(what, "Error closing connection: %v", err)
+				}
+			}()
+
+			// Process the connection
+			s.acceptConnection(conn)
+		}(nConn)
 	}
 }
 
@@ -306,7 +355,6 @@ func (s *server) configure() (err error) {
 func (s *server) Serve() (err error) {
 	fs.Logf(nil, "SFTP server listening on %v\n", s.listener.Addr())
 	s.acceptConnections()
-	close(s.stopped)
 	return nil
 }
 
@@ -322,11 +370,43 @@ func (s *server) Wait() {
 
 // Shutdown shuts the running server down
 func (s *server) Shutdown() error {
+	fs.Infof(nil, "SFTP server shutting down...")
+
+	// First, close the listener to prevent new connections
 	err := s.listener.Close()
 	if errors.Is(err, io.ErrUnexpectedEOF) {
 		err = nil
 	}
-	s.Wait()
+
+	// Create a timeout channel to avoid hanging if Wait blocks
+	done := make(chan struct{})
+	shutdownTimeout := 15 * time.Second
+
+	go func() {
+		s.Wait()
+		close(done)
+	}()
+
+	// Wait with a reasonable timeout
+	select {
+	case <-done:
+		// Server stopped normally
+		fs.Debugf(nil, "SFTP server stopped normally")
+	case <-time.After(shutdownTimeout):
+		// Force close the stopped channel if we're still waiting
+		s.mu.Lock()
+		select {
+		case <-s.stopped:
+			// Already closed, do nothing
+			fs.Debugf(nil, "SFTP server already stopped")
+		default:
+			fs.Debugf(nil, "SFTP server force stopped after %v timeout", shutdownTimeout)
+			close(s.stopped)
+		}
+		s.mu.Unlock()
+	}
+
+	fs.Infof(nil, "SFTP server shutdown complete")
 	return err
 }
 
