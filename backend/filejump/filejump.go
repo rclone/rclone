@@ -46,7 +46,7 @@ func init() {
 			Sensitive: true,
 		}, {
 			Name:     "workspace_id",
-			Help:     "The ID of the workspace to use. Defaults to personal workspace if not set or 0.",
+			Help:     "The ID of the workspace to use. Defaults to personal workspace (0). Set to -1 to list available workspaces on first use.",
 			Default:  "0",
 			Advanced: true,
 		}, {
@@ -100,6 +100,12 @@ type Object struct {
 	modTime     time.Time
 	id          string
 	mimeType    string
+}
+
+// Workspace describes a filejump workspace
+type Workspace struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 // callJSON is a generic function for API calls
@@ -166,6 +172,13 @@ func CallJSON[T any, B any](f *Fs, ctx context.Context, method string, path stri
 
 	if params != nil {
 		opts.Parameters = *params
+	}
+
+	if f.opt.WorkspaceID != "" && f.opt.WorkspaceID != "0" {
+		if opts.Parameters == nil {
+			opts.Parameters = url.Values{}
+		}
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 
 	err := f.pacer.Call(func() (bool, error) {
@@ -287,9 +300,41 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 	f.srv.SetHeader("Authorization", "Bearer "+opt.AccessToken)
 
+	// Check workspace ID
+	workspaceID, err := strconv.Atoi(f.opt.WorkspaceID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid workspace_id: %w", err)
+	}
+
+	if workspaceID == -1 {
+		return nil, f.listWorkspaces(ctx)
+	}
+
+	// For workspace IDs other than 0 (personal), check if the workspace exists
+	if workspaceID > 0 {
+		workspaces, err := f.getWorkspaces(ctx)
+		if err != nil {
+			// If we can't list workspaces, we can't verify the ID.
+			// We can either fail hard or continue with a warning.
+			// Let's fail hard to avoid unexpected behavior.
+			return nil, fmt.Errorf("could not verify workspace id: %w", err)
+		}
+		found := false
+		for _, ws := range workspaces {
+			if ws.ID == workspaceID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			fs.Errorf(f, "Workspace with ID %d not found.", workspaceID)
+			return nil, f.listWorkspaces(ctx)
+		}
+	}
+
 	// Initialize dirCache without an ID
 	// var rootID string
-	rootID := opt.WorkspaceID
+	rootID := "0"
 	f.dirCache = dircache.New(root, rootID, f)
 
 	// Find the current root
@@ -323,29 +368,34 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// listWorkspaces retrieves the list of workspaces for the current user and returns a formatted error
-func (f *Fs) listWorkspaces(ctx context.Context) error {
-	type Workspace struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	}
+// getWorkspaces retrieves the list of workspaces for the current user
+func (f *Fs) getWorkspaces(ctx context.Context) ([]Workspace, error) {
 	type WorkspacesResponse struct {
 		Workspaces []Workspace `json:"workspaces"`
 	}
 
 	response, err := CallJSONGet[WorkspacesResponse](f, ctx, "/me/workspaces", nil)
 	if err != nil {
-		return fmt.Errorf("could not retrieve workspaces. Please check your access token. Original error: %w", err)
+		return nil, fmt.Errorf("could not retrieve workspaces. Please check your access token. Original error: %w", err)
+	}
+	// Add personal workspace manually as it's not in the API response
+	workspaces := append([]Workspace{{ID: 0, Name: "Personal Space"}}, response.Workspaces...)
+	return workspaces, nil
+}
+
+// listWorkspaces retrieves the list of workspaces for the current user and returns a formatted error
+func (f *Fs) listWorkspaces(ctx context.Context) error {
+	workspaces, err := f.getWorkspaces(ctx)
+	if err != nil {
+		return err
 	}
 
 	var workspaceInfo strings.Builder
 	workspaceInfo.WriteString("\nAvailable workspaces:\n")
 	workspaceInfo.WriteString("-------------------\n")
-	// Add personal workspace manually as it's not in the API response
-	workspaceInfo.WriteString(fmt.Sprintf("Personal Space | ID: 0\n"))
 
-	for _, ws := range response.Workspaces {
-		workspaceInfo.WriteString(fmt.Sprintf("%-14s | ID: %d\n", ws.Name, ws.ID))
+	for _, ws := range workspaces {
+		workspaceInfo.WriteString(fmt.Sprintf("% -14s | ID: %d\n", ws.Name, ws.ID))
 	}
 	workspaceInfo.WriteString("-------------------\n")
 	workspaceInfo.WriteString("Please add the correct 'workspace_id' to your rclone config.")
@@ -1078,7 +1128,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			Name:        f.padNameForFileJump(leaf),
 			InitialName: f.padNameForFileJump(oldLeaf),
 		}
-		result, err := CallJSON[ResultRename, RequestRename](f, ctx, "POST", "/file-entries/"+srcObj.id+"?_method=PUT", nil, &request)
+		params := url.Values{}
+		params.Set("_method", "PUT")
+		result, err := CallJSON[ResultRename, RequestRename](f, ctx, "POST", "/file-entries/"+srcObj.id, &params, &request)
 		if err != nil {
 			return nil, err
 		}
@@ -1225,11 +1277,13 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			Name:        f.padNameForFileJump(leafDst),
 			InitialName: f.padNameForFileJump(leafSrc),
 		}
+		params := url.Values{}
+		params.Set("_method", "PUT")
 		_, err := CallJSON[ResultRename, RequestRename](
 			f, ctx,
 			"POST",
-			"/file-entries/"+srcID+"?_method=PUT",
-			nil,
+			"/file-entries/"+srcID,
+			&params,
 			&renameReq,
 		)
 		if err != nil {
