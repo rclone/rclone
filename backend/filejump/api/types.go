@@ -1,3 +1,4 @@
+// Package api provides types for the filejump backend
 package api
 
 import (
@@ -7,16 +8,23 @@ import (
 
 // Types of things in Item/ItemMini
 const (
+	// ItemTypeFolder is a folder
 	ItemTypeFolder = "folder"
-	ItemTypeImage  = "image"
-	ItemTypeText   = "text"
-	ItemTypeAudio  = "audio"
-	ItemTypeVideo  = "video"
-	ItemTypePdf    = "pdf"
+	// ItemTypeImage is an image
+	ItemTypeImage = "image"
+	// ItemTypeText is a text file
+	ItemTypeText = "text"
+	// ItemTypeAudio is an audio file
+	ItemTypeAudio = "audio"
+	// ItemTypeVideo is a video file
+	ItemTypeVideo = "video"
+	// ItemTypePdf is a pdf file
+	ItemTypePdf = "pdf"
 	// ItemStatusActive  = "active"
 	// ItemStatusDeleted = "deleted"
 )
 
+// FileEntries is a list of files
 type FileEntries struct {
 	CurrentPage uint   `json:"current_page,omitempty"`
 	Data        []Item `json:"data,omitempty"`
@@ -28,6 +36,7 @@ type FileEntries struct {
 	Folder      Folder `json:"folder,omitempty"`
 }
 
+// Item is a file or folder
 type Item struct {
 	ID          int    `json:"id,omitempty"`
 	Name        string `json:"name,omitempty"`
@@ -59,6 +68,7 @@ type FileUploadResponse struct {
 	FileEntry Item   `json:"fileEntry"`
 }
 
+// GetID returns the ID of the item
 func (i *Item) GetID() (id string) {
 	if i.ID == 0 {
 		// Return empty string for invalid ID instead of "0"
@@ -89,6 +99,7 @@ func (i *Item) ModTime() (t time.Time) {
 	return time.Time{}
 }
 
+// Folder is a folder
 type Folder struct {
 	Type        string `json:"type,omitempty"`
 	ID          int    `json:"id,omitempty"`

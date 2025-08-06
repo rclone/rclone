@@ -1,3 +1,4 @@
+// Package filejump provides an interface to the FileJump storage system.
 package filejump
 
 import (
@@ -99,7 +100,6 @@ type Object struct {
 	size        int64
 	modTime     time.Time
 	id          string
-	mimeType    string
 }
 
 // Workspace describes a filejump workspace
@@ -108,7 +108,7 @@ type Workspace struct {
 	Name string `json:"name"`
 }
 
-// callJSON is a generic function for API calls
+// CallJSON is a generic function for API calls
 /*
 POST-Request Template:
 --------------------
@@ -126,7 +126,7 @@ type Response struct {
     Data   string `json:"data,omitempty"`
 }
 
-result, err := CallJSON[Response, Request](f, ctx, "POST", "/api/endpoint", nil, &request)
+result, err := CallJSON[Response, Request](ctx, f, "POST", "/api/endpoint", nil, &request)
 if err != nil {
     return err
 }
@@ -143,12 +143,12 @@ values.Set("param2", "wert2")
 values.Set("EntryIds", fmt.Sprintf("[%s]", dir))
 values.Set("DeleteForever", strconv.FormatBool(true)))
 
-result, err := CallJSON[Response, struct{}](f, ctx, "GET", "/file-entries/delete", &values, nil)
+result, err := CallJSON[Response, struct{}](ctx, f, "GET", "/file-entries/delete", &values, nil)
 if err != nil {
     return err
 }
 */
-func CallJSON[T any, B any](f *Fs, ctx context.Context, method string, path string, params *url.Values, body *B) (*T, error) {
+func CallJSON[T any, B any](ctx context.Context, f *Fs, method string, path string, params *url.Values, body *B) (*T, error) {
 	// Input parameters in one line
 	logMsg := fmt.Sprintf("CallJSON: %s %s", method, path)
 	if params != nil && len(*params) > 0 {
@@ -206,13 +206,13 @@ values := url.Values{}
 values.Set("param1", "wert1")
 values.Set("param2", "wert2")
 
-result, err := CallJSONGet[Response](f, ctx, "/api/endpoint", &values)
+result, err := CallJSONGet[Response](ctx, f, "/api/endpoint", &values)
 if err != nil {
     return err
 }
 */
-func CallJSONGet[T any](f *Fs, ctx context.Context, path string, params *url.Values) (*T, error) {
-	return CallJSON[T, struct{}](f, ctx, "GET", path, params, nil)
+func CallJSONGet[T any](ctx context.Context, f *Fs, path string, params *url.Values) (*T, error) {
+	return CallJSON[T, struct{}](ctx, f, "GET", path, params, nil)
 }
 
 // CallJSONPost executes a POST request
@@ -234,13 +234,13 @@ request := RequestDelete{
 	DeleteForever: false,
 }
 
-result, err := CallJSONPost[ResultDelete, RequestDelete](f, ctx, "/file-entries/delete", &request)
+result, err := CallJSONPost[ResultDelete, RequestDelete](ctx, f, "/file-entries/delete", &request)
 if err != nil {
     return err
 }
 */
-func CallJSONPost[T any, B any](f *Fs, ctx context.Context, path string, body *B) (*T, error) {
-	return CallJSON[T, B](f, ctx, "POST", path, &url.Values{}, body)
+func CallJSONPost[T any, B any](ctx context.Context, f *Fs, path string, body *B) (*T, error) {
+	return CallJSON[T, B](ctx, f, "POST", path, &url.Values{}, body)
 }
 
 // padNameForFileJump pads names shorter than 3 characters with encoded spaces
@@ -374,7 +374,7 @@ func (f *Fs) getWorkspaces(ctx context.Context) ([]Workspace, error) {
 		Workspaces []Workspace `json:"workspaces"`
 	}
 
-	response, err := CallJSONGet[WorkspacesResponse](f, ctx, "/me/workspaces", nil)
+	response, err := CallJSONGet[WorkspacesResponse](ctx, f, "/me/workspaces", nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve workspaces. Please check your access token. Original error: %w", err)
 	}
@@ -425,7 +425,7 @@ OUTER:
 			values.Set("page", strconv.FormatUint(uint64(*page), 10))
 		}
 
-		result, err := CallJSONGet[api.FileEntries](f, ctx, "/drive/file-entries", &values)
+		result, err := CallJSONGet[api.FileEntries](ctx, f, "/drive/file-entries", &values)
 		if err != nil {
 			return found, fmt.Errorf("couldn't list files: %w", err)
 		}
@@ -630,7 +630,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // //
 // // Shouldn't return an error if it already exists
 // func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-// 	presignResult, err := CallJSON[PresignResult](f, ctx, "POST", "/folders", url.Values{
+// 	presignResult, err := CallJSON[PresignResult](ctx, f, "POST", "/folders", url.Values{
 // 		"name": []string{dir}
 // :
 // "test123"
@@ -686,7 +686,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	}
 
 	type RequestDelete struct {
-		EntryIds      []int `json:"entryIds"`
+		EntryIDs      []int `json:"entryIds"`
 		DeleteForever bool  `json:"deleteForever"`
 	}
 
@@ -696,11 +696,11 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 
 	iDir, _ := strconv.Atoi(rootID)
 	request := RequestDelete{
-		EntryIds:      []int{iDir},
+		EntryIDs:      []int{iDir},
 		DeleteForever: f.opt.HardDelete,
 	}
 
-	result, err := CallJSONPost[ResultDelete, RequestDelete](f, ctx, "/file-entries/delete", &request)
+	result, err := CallJSONPost[ResultDelete, RequestDelete](ctx, f, "/file-entries/delete", &request)
 
 	if err != nil {
 		return fmt.Errorf("rmdir failed: %w", err)
@@ -734,7 +734,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) error {
 	type RequestEmptyTrash struct {
-		EntryIds   []int `json:"entryIds"`
+		EntryIDs   []int `json:"entryIds"`
 		EmptyTrash bool  `json:"emptyTrash"`
 	}
 
@@ -743,11 +743,11 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	}
 
 	request := RequestEmptyTrash{
-		EntryIds:   []int{}, // Empty array as specified in the API
+		EntryIDs:   []int{}, // Empty array as specified in the API
 		EmptyTrash: true,
 	}
 
-	result, err := CallJSONPost[ResultEmptyTrash, RequestEmptyTrash](f, ctx, "/file-entries/delete", &request)
+	result, err := CallJSONPost[ResultEmptyTrash, RequestEmptyTrash](ctx, f, "/file-entries/delete", &request)
 	if err != nil {
 		return fmt.Errorf("cleanup failed: %w", err)
 	}
@@ -759,7 +759,6 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	return nil
 }
 
-// type Info interface:
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {
 	return f.name
@@ -782,7 +781,7 @@ func (f *Fs) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
 
-// Returns the supported hash types of the filesystem
+// Hashes returns the supported hash types of the filesystem
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.None)
 }
@@ -819,11 +818,11 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	// The API expects `null` for the root directory, not 0.
 	// dircache uses "0" as the ID for the root.
 	if pathID != "" && pathID != "0" {
-		iPathId, err := strconv.ParseInt(pathID, 10, 64)
+		iPathID, err := strconv.ParseInt(pathID, 10, 64)
 		if err != nil {
 			return "", fmt.Errorf("invalid parent ID %q: %w", pathID, err)
 		}
-		parentID = &iPathId
+		parentID = &iPathID
 	}
 
 	requestCreateDir := RequestCreateDir{
@@ -838,7 +837,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Status string `json:"status,omitempty"`
 	}
 
-	result, err := CallJSONPost[ResultCreateDir, RequestCreateDir](f, ctx, "/folders", &requestCreateDir)
+	result, err := CallJSONPost[ResultCreateDir, RequestCreateDir](ctx, f, "/folders", &requestCreateDir)
 
 	if err != nil {
 		// Check if this is the specific FileJump 3-character limitation error
@@ -942,17 +941,17 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if len(idsToDelete) > 0 {
 		// Delete existing files with the same name
 		type RequestDelete struct {
-			EntryIds      []int `json:"entryIds"`
+			EntryIDs      []int `json:"entryIds"`
 			DeleteForever bool  `json:"deleteForever"`
 		}
 		request := RequestDelete{
-			EntryIds:      idsToDelete,
+			EntryIDs:      idsToDelete,
 			DeleteForever: f.opt.HardDelete,
 		}
 		type ResultDelete struct {
 			Status string `json:"status,omitempty"`
 		}
-		result, deleteErr := CallJSONPost[ResultDelete, RequestDelete](f, ctx, "/file-entries/delete", &request)
+		result, deleteErr := CallJSONPost[ResultDelete, RequestDelete](ctx, f, "/file-entries/delete", &request)
 		if deleteErr != nil {
 			return nil, fmt.Errorf("copy: failed to delete existing files: %w", deleteErr)
 		}
@@ -978,8 +977,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// API request structure for copy/duplicate
 	type RequestCopy struct {
-		EntryIds      []int `json:"entryIds"`
-		DestinationId *int  `json:"destinationId"`
+		EntryIDs      []int `json:"entryIds"`
+		DestinationID *int  `json:"destinationId"`
 	}
 
 	type ResultCopy struct {
@@ -988,11 +987,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	request := RequestCopy{
-		EntryIds:      []int{srcID},
-		DestinationId: destID,
+		EntryIDs:      []int{srcID},
+		DestinationID: destID,
 	}
 
-	result, err := CallJSONPost[ResultCopy, RequestCopy](f, ctx, "/file-entries/duplicate", &request)
+	result, err := CallJSONPost[ResultCopy, RequestCopy](ctx, f, "/file-entries/duplicate", &request)
 	if err != nil {
 		return nil, fmt.Errorf("copy failed: %w", err)
 	}
@@ -1024,7 +1023,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			FileEntry api.Item `json:"fileEntry"`
 		}
 
-		updateResult, err := CallJSON[ResultUpdate, RequestUpdate](f, ctx, "PUT", "/file-entries/"+copiedEntry.GetID(), nil, &updateRequest)
+		updateResult, err := CallJSON[ResultUpdate, RequestUpdate](ctx, f, "PUT", "/file-entries/"+copiedEntry.GetID(), nil, &updateRequest)
 		if err != nil {
 			// If rename fails, we still have a successful copy, just with wrong name
 			fs.Debugf(f, "Failed to rename copied file to %q: %v", leaf, err)
@@ -1094,17 +1093,17 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			return nil, errors.New("invalid destination directory ID")
 		}
 		type RequestMove struct {
-			DestinationId int   `json:"destinationId"`
-			EntryIds      []int `json:"entryIds"`
+			DestinationID int   `json:"destinationId"`
+			EntryIDs      []int `json:"entryIds"`
 		}
 		type ResultMove struct {
 			Status string `json:"status"`
 		}
 		request := RequestMove{
-			DestinationId: destIDInt,
-			EntryIds:      []int{entryIDInt},
+			DestinationID: destIDInt,
+			EntryIDs:      []int{entryIDInt},
 		}
-		result, err := CallJSONPost[ResultMove, RequestMove](f, ctx, "/file-entries/move", &request)
+		result, err := CallJSONPost[ResultMove, RequestMove](ctx, f, "/file-entries/move", &request)
 		if err != nil {
 			return nil, err
 		}
@@ -1130,7 +1129,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 		params := url.Values{}
 		params.Set("_method", "PUT")
-		result, err := CallJSON[ResultRename, RequestRename](f, ctx, "POST", "/file-entries/"+srcObj.id, &params, &request)
+		result, err := CallJSON[ResultRename, RequestRename](ctx, f, "POST", "/file-entries/"+srcObj.id, &params, &request)
 		if err != nil {
 			return nil, err
 		}
@@ -1197,17 +1196,17 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 				return errors.New("invalid destination directory ID")
 			}
 			type RequestMove struct {
-				DestinationId int   `json:"destinationId"`
-				EntryIds      []int `json:"entryIds"`
+				DestinationID int   `json:"destinationId"`
+				EntryIDs      []int `json:"entryIds"`
 			}
 			type ResultMove struct {
 				Status string `json:"status"`
 			}
 			moveReq := RequestMove{
-				DestinationId: destIDInt,
-				EntryIds:      entriesToMove,
+				DestinationID: destIDInt,
+				EntryIDs:      entriesToMove,
 			}
-			_, err = CallJSONPost[ResultMove, RequestMove](f, ctx, "/file-entries/move", &moveReq)
+			_, err = CallJSONPost[ResultMove, RequestMove](ctx, f, "/file-entries/move", &moveReq)
 			if err != nil {
 				return err
 			}
@@ -1249,17 +1248,17 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return errors.New("invalid destination directory ID")
 	}
 	type RequestMove struct {
-		DestinationId int   `json:"destinationId"`
-		EntryIds      []int `json:"entryIds"`
+		DestinationID int   `json:"destinationId"`
+		EntryIDs      []int `json:"entryIds"`
 	}
 	type ResultMove struct {
 		Status string `json:"status"`
 	}
 	moveReq := RequestMove{
-		DestinationId: destIDInt,
-		EntryIds:      []int{srcIDInt},
+		DestinationID: destIDInt,
+		EntryIDs:      []int{srcIDInt},
 	}
-	_, err = CallJSONPost[ResultMove, RequestMove](f, ctx, "/file-entries/move", &moveReq)
+	_, err = CallJSONPost[ResultMove, RequestMove](ctx, f, "/file-entries/move", &moveReq)
 	if err != nil {
 		return err
 	}
@@ -1280,7 +1279,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		params := url.Values{}
 		params.Set("_method", "PUT")
 		_, err := CallJSON[ResultRename, RequestRename](
-			f, ctx,
+			ctx, f,
 			"POST",
 			"/file-entries/"+srcID,
 			&params,
@@ -1304,7 +1303,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		Status    string `json:"status"`
 	}
 
-	response, err := CallJSONGet[SpaceUsageResponse](f, ctx, "/user/space-usage", nil)
+	response, err := CallJSONGet[SpaceUsageResponse](ctx, f, "/user/space-usage", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get space usage: %w", err)
 	}
@@ -1373,7 +1372,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
-		return nil, errors.New("Download not possible - no ID available")
+		return nil, errors.New("download not possible - no ID available")
 	}
 
 	// Ensure we have metadata to check file size
@@ -1419,7 +1418,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			}
 
 			if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-				resp.Body.Close()
+				_ = resp.Body.Close()
 				return nil, fmt.Errorf("download failed with status: %s", resp.Status)
 			}
 
@@ -1449,7 +1448,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		if resp.StatusCode == http.StatusFound || resp.StatusCode == http.StatusMovedPermanently {
 			redirectURL := resp.Header.Get("Location")
 			if redirectURL == "" {
-				return false, errors.New("Redirect URL not found")
+				return false, errors.New("redirect URL not found")
 			}
 
 			// Follow the redirect
@@ -1471,7 +1470,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			}
 
 			// Replace the original response with the redirect response
-			resp.Body.Close() // Close the original response body
+			_ = resp.Body.Close() // Close the original response body
 			resp = redirectResp
 		}
 
@@ -1515,17 +1514,17 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 		if len(idsToDelete) > 0 {
 			type RequestDelete struct {
-				EntryIds      []int `json:"entryIds"`
+				EntryIDs      []int `json:"entryIds"`
 				DeleteForever bool  `json:"deleteForever"`
 			}
 			request := RequestDelete{
-				EntryIds:      idsToDelete,
+				EntryIDs:      idsToDelete,
 				DeleteForever: o.fs.opt.HardDelete,
 			}
 			type ResultDelete struct {
 				Status string `json:"status,omitempty"`
 			}
-			result, deleteErr := CallJSONPost[ResultDelete, RequestDelete](o.fs, ctx, "/file-entries/delete", &request)
+			result, deleteErr := CallJSONPost[ResultDelete, RequestDelete](ctx, o.fs, "/file-entries/delete", &request)
 			if deleteErr != nil {
 				return fmt.Errorf("Update: failed to delete duplicates: %w", deleteErr)
 			}
@@ -1720,7 +1719,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		RelativePath: "",
 	}
 
-	resultPresign, err := CallJSONPost[ResultPresign, RequestPresign](o.fs, ctx, "/s3/simple/presign", &requestPresign)
+	resultPresign, err := CallJSONPost[ResultPresign, RequestPresign](ctx, o.fs, "/s3/simple/presign", &requestPresign)
 
 	if err != nil {
 		return fmt.Errorf("error requesting presigned URL: %w", err)
@@ -1744,7 +1743,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	if err != nil {
 		return fmt.Errorf("error uploading file: %w", err)
 	}
-	defer putResp.Body.Close()
+	defer func() { _ = putResp.Body.Close() }()
 
 	if putResp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(putResp.Body)
@@ -1779,7 +1778,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		ClientExtension: "bin",
 	}
 
-	resultEntries, err := CallJSONPost[api.Item, RequestEntries](o.fs, ctx, "/s3/entries", &requestEntries)
+	resultEntries, err := CallJSONPost[api.Item, RequestEntries](ctx, o.fs, "/s3/entries", &requestEntries)
 
 	if err != nil {
 		return fmt.Errorf("error requesting file data URL: %w", err)
@@ -1811,10 +1810,10 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	return nil
 }
 
-// Removes this object
+// Remove this object
 func (o *Object) Remove(ctx context.Context) error {
 	type RequestDelete struct {
-		EntryIds      []int `json:"entryIds"`
+		EntryIDs      []int `json:"entryIds"`
 		DeleteForever bool  `json:"deleteForever"`
 	}
 
@@ -1822,13 +1821,13 @@ func (o *Object) Remove(ctx context.Context) error {
 		Status string `json:"status,omitempty"`
 	}
 
-	entryId, _ := strconv.Atoi(o.id)
+	entryID, _ := strconv.Atoi(o.id)
 	request := RequestDelete{
-		EntryIds:      []int{entryId},
+		EntryIDs:      []int{entryID},
 		DeleteForever: o.fs.opt.HardDelete,
 	}
 
-	result, err := CallJSONPost[ResultDelete, RequestDelete](o.fs, ctx, "/file-entries/delete", &request)
+	result, err := CallJSONPost[ResultDelete, RequestDelete](ctx, o.fs, "/file-entries/delete", &request)
 
 	if err != nil {
 		return err

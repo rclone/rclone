@@ -18,7 +18,7 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:               "filejump:",
-		NilObject:                (*filejump.Object)(nil),
+		RemoteName: "filejump:",
+		NilObject:  (*filejump.Object)(nil),
 	})
 }
