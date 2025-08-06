@@ -20,7 +20,5 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:               "filejump:",
 		NilObject:                (*filejump.Object)(nil),
-		UnimplementableFsMethods: []string{"OpenWriterAt", "OpenChunkWriter"},
-		// SkipInvalidUTF8: true,
 	})
 }

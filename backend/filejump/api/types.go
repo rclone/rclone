@@ -53,6 +53,12 @@ type Item struct {
 	Tags        []any  `json:"tags,omitempty"`
 }
 
+// FileUploadResponse is the response from the single file upload endpoint
+type FileUploadResponse struct {
+	Status    string `json:"status"`
+	FileEntry Item   `json:"fileEntry"`
+}
+
 func (i *Item) GetID() (id string) {
 	if i.ID == 0 {
 		// Return empty string for invalid ID instead of "0"
@@ -65,47 +71,21 @@ func (i *Item) GetID() (id string) {
 func (i *Item) ModTime() (t time.Time) {
 	// Parse UpdatedAt first
 	if i.UpdatedAt != "" {
-		// Try multiple time formats that FileJump might use
-		formats := []string{
-			"2006-01-02T15:04:05.000000Z",  // FileJump's actual format
-			time.RFC3339,
-			time.RFC3339Nano,
-			"2006-01-02T15:04:05Z",
-			"2006-01-02 15:04:05",
-			"2006-01-02T15:04:05.000Z",
-			"2006-01-02T15:04:05",
-		}
-		
-		for _, format := range formats {
-			if parsed, err := time.Parse(format, i.UpdatedAt); err == nil {
-				// Convert to local time to match test expectations
-				return parsed.Local()
-			}
+		format := "2006-01-02T15:04:05.000000Z"
+		if parsed, err := time.Parse(format, i.UpdatedAt); err == nil {
+			return parsed.Local()
 		}
 	}
-	
+
 	// Fall back to CreatedAt if UpdatedAt parsing failed
 	if i.CreatedAt != "" {
-		formats := []string{
-			"2006-01-02T15:04:05.000000Z",  // FileJump's actual format
-			time.RFC3339,
-			time.RFC3339Nano,
-			"2006-01-02T15:04:05Z",
-			"2006-01-02 15:04:05",
-			"2006-01-02T15:04:05.000Z",
-			"2006-01-02T15:04:05",
-		}
-		
-		for _, format := range formats {
-			if parsed, err := time.Parse(format, i.CreatedAt); err == nil {
-				// Convert to local time to match test expectations
-				return parsed.Local()
-			}
+		format := "2006-01-02T15:04:05.000000Z"
+		if parsed, err := time.Parse(format, i.CreatedAt); err == nil {
+			return parsed.Local()
 		}
 	}
-	
+
 	// If all parsing fails, return zero time
-	// The calling code should handle this appropriately
 	return time.Time{}
 }
 
