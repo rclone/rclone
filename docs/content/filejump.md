@@ -39,8 +39,8 @@ Storage> filejump
 You should create an API access token here: https://drive.filejump.com/account-settings
 Enter a string value. Press Enter for the default ("").
 access_token> your_api_token_here
-The ID of the workspace to use. Defaults to personal workspace if not set or 0.
-Enter a string value. Press Enter for the default ("0").
+The ID of the workspace to use. Defaults to personal workspace (0). Set to -1 to list available workspaces on first use.
+Enter a string value. Press Enter for thedefault ("0").
 workspace_id> 0
 Edit advanced config? (y/n)
 y) Yes
@@ -87,10 +87,9 @@ To configure rclone with FileJump you will need to get an API access token.
 
 ### Workspaces
 
-FileJump supports workspaces for organizing your files. By default, rclone will use your personal workspace (workspace_id = 0). If you want to use a different workspace:
+FileJump supports workspaces for organizing your files. By default, rclone will use your personal workspace (`workspace_id = 0`). If you want to use a different workspace, you need to provide its ID.
 
-1. You can find available workspace IDs in your FileJump account
-2. Set the `workspace_id` in your rclone config to the desired workspace ID
+To get a list of your available workspaces and their IDs, you can temporarily set `workspace_id = -1` in your rclone configuration. When you next run an rclone command (e.g., `rclone lsd remote:`), rclone will print a list of all available workspaces and their corresponding IDs, then abort. You can then update your configuration with the correct ID.
 
 ### Root folder ID
 
@@ -147,6 +146,7 @@ Properties:
 - Env Var:     RCLONE_FILEJUMP_ACCESS_TOKEN
 - Type:        string
 - Required:    true
+- Sensitive:   true
 
 ### Advanced options
 
@@ -154,7 +154,7 @@ Here are the Advanced options specific to filejump (FileJump).
 
 #### --filejump-workspace-id
 
-The ID of the workspace to use. Defaults to personal workspace if not set or 0.
+The ID of the workspace to use. Defaults to personal workspace (0). Set to -1 to list available workspaces on first use.
 
 Properties:
 
