@@ -615,8 +615,8 @@ github.com/tklauser/go-sysconf v0.3.15 h1:VE89k0criAymJ/Os65CSn1IXaol+1wrsFHEB8O
 github.com/tklauser/go-sysconf v0.3.15/go.mod h1:Dmjwr6tYFIseJw7a3dRLJfsHAMXZ3nEnL/aZY+0IuI4=
 github.com/tklauser/numcpus v0.10.0 h1:18njr6LDBk1zuna922MgdjQuJFjrdppsZG60sHGfjso=
 github.com/tklauser/numcpus v0.10.0/go.mod h1:BiTKazU708GQTYF4mB+cmlpT2Is1gLk7XVuEeem8LsQ=
-github.com/tonymet/dualstack v0.0.5 h1:sASihbeN1i/G+Boc7khHiabqeUJnx3FGGQYNQn1Jdzw=
-github.com/tonymet/dualstack v0.0.5/go.mod h1:7Q0UPu1lHYF0uKwMfIRhN3yASxewBKPnjiU7Az5LzNM=
+github.com/tonymet/dualstack v0.0.7 h1:pphPOXst46on2cstsbQFix2aRlUMqU6HLgHBP/38z1U=
+github.com/tonymet/dualstack v0.0.7/go.mod h1:7Q0UPu1lHYF0uKwMfIRhN3yASxewBKPnjiU7Az5LzNM=
 github.com/tv42/httpunix v0.0.0-20191220191345-2ba4b9c3382c h1:u6SKchux2yDvFQnDHS3lPnIRmfVJ5Sxy3ao2SIdysLQ=
 github.com/tv42/httpunix v0.0.0-20191220191345-2ba4b9c3382c/go.mod h1:hzIxponao9Kjc7aWznkXaL4U4TWaDSs8zcsY4Ka08nM=
 github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS4MhqMhdFk5YI=
