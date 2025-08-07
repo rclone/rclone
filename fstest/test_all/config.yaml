@@ -160,6 +160,11 @@ backends:
  - backend:  "gofile"
    remote:   "TestGoFile:"
    fastlist: true
+ - backend: "filen"
+   remote:   "TestFilen:"
+   ignore:
+     - TestBisyncRemoteRemote/extended_filenames
+   fastlist: false
  - backend:  "filescom"
    remote:   "TestFilesCom:"
    fastlist: false
