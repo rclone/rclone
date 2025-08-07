@@ -33,7 +33,7 @@ func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.StringVarP(cmdFlags, &format, "format", "F", "p", "Output format - see  help for details", "")
-	flags.StringVarP(cmdFlags, &timeFormat, "time-format", "t", "", "Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)", "")
+	flags.StringVarP(cmdFlags, &timeFormat, "time-format", "t", "", "Specify a custom time format, 'unix' / 'unixnano' for timestamp, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)", "")
 	flags.StringVarP(cmdFlags, &separator, "separator", "s", ";", "Separator for the items in the format", "")
 	flags.BoolVarP(cmdFlags, &dirSlash, "dir-slash", "d", true, "Append a slash to directory names", "")
 	flags.FVarP(cmdFlags, &hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash", "")

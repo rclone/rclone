@@ -3,6 +3,7 @@ package lsf
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
@@ -247,6 +248,84 @@ func TestTimeFormat(t *testing.T) {
 	}
 	for _, item := range itemsInSubdir {
 		expectedOutput = append(expectedOutput, item.ModTime(context.Background()).Format(timeFormat))
+	}
+
+	assert.Equal(t, `file1_+_0_+_`+expectedOutput[0]+`
+file2_+_321_+_`+expectedOutput[1]+`
+file3_+_1234_+_`+expectedOutput[2]+`
+subdir/_+_-1_+_`+expectedOutput[3]+`
+subdir/file1_+_0_+_`+expectedOutput[4]+`
+subdir/file2_+_1_+_`+expectedOutput[5]+`
+subdir/file3_+_111_+_`+expectedOutput[6]+`
+`, buf.String())
+
+	format = ""
+	separator = ""
+	recurse = false
+	dirSlash = false
+}
+
+func TestTimeFormatUnix(t *testing.T) {
+	fstest.Initialise()
+	f, err := fs.NewFs(context.Background(), "testfiles")
+	require.NoError(t, err)
+	format = "pst"
+	separator = "_+_"
+	recurse = true
+	dirSlash = true
+	timeFormat = "unix"
+
+	buf := new(bytes.Buffer)
+	err = Lsf(context.Background(), f, buf)
+	require.NoError(t, err)
+
+	items, _ := list.DirSorted(context.Background(), f, true, "")
+	itemsInSubdir, _ := list.DirSorted(context.Background(), f, true, "subdir")
+	var expectedOutput []string
+	for _, item := range items {
+		expectedOutput = append(expectedOutput, fmt.Sprint(item.ModTime(context.Background()).Unix()))
+	}
+	for _, item := range itemsInSubdir {
+		expectedOutput = append(expectedOutput, fmt.Sprint(item.ModTime(context.Background()).Unix()))
+	}
+
+	assert.Equal(t, `file1_+_0_+_`+expectedOutput[0]+`
+file2_+_321_+_`+expectedOutput[1]+`
+file3_+_1234_+_`+expectedOutput[2]+`
+subdir/_+_-1_+_`+expectedOutput[3]+`
+subdir/file1_+_0_+_`+expectedOutput[4]+`
+subdir/file2_+_1_+_`+expectedOutput[5]+`
+subdir/file3_+_111_+_`+expectedOutput[6]+`
+`, buf.String())
+
+	format = ""
+	separator = ""
+	recurse = false
+	dirSlash = false
+}
+
+func TestTimeFormatUnixNano(t *testing.T) {
+	fstest.Initialise()
+	f, err := fs.NewFs(context.Background(), "testfiles")
+	require.NoError(t, err)
+	format = "pst"
+	separator = "_+_"
+	recurse = true
+	dirSlash = true
+	timeFormat = "unixnano"
+
+	buf := new(bytes.Buffer)
+	err = Lsf(context.Background(), f, buf)
+	require.NoError(t, err)
+
+	items, _ := list.DirSorted(context.Background(), f, true, "")
+	itemsInSubdir, _ := list.DirSorted(context.Background(), f, true, "subdir")
+	var expectedOutput []string
+	for _, item := range items {
+		expectedOutput = append(expectedOutput, fmt.Sprint(item.ModTime(context.Background()).UnixNano()))
+	}
+	for _, item := range itemsInSubdir {
+		expectedOutput = append(expectedOutput, fmt.Sprint(item.ModTime(context.Background()).UnixNano()))
 	}
 
 	assert.Equal(t, `file1_+_0_+_`+expectedOutput[0]+`
