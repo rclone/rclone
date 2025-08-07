@@ -138,6 +138,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="iCloud Drive" home="https://icloud.com/" config="/iclouddrive/" >}}
 {{< provider name="ImageKit" home="https://imagekit.io" config="/imagekit/" >}}
 {{< provider name="Internet Archive" home="https://archive.org/" config="/internetarchive/" >}}
+{{< provider name="Internxt" home="https://internxt.com/" config="/internxt/" >}}
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
@@ -222,3 +223,4 @@ These backends adapt or modify other storage providers:
   * {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
   * {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
   * {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)
+
