@@ -649,6 +649,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			}
 			o.remote = o.remote + EMPTY_FILE_EXT
 		}
+	} else {
+		if o.f.opt.SimulateEmptyFiles {
+			// Remove the suffix if we're updating an empty file with actual data
+			o.remote = strings.TrimSuffix(o.remote, EMPTY_FILE_EXT)
+		}
 	}
 
 	// Check if object exists on the server
