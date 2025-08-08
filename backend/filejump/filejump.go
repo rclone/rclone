@@ -2,6 +2,7 @@
 package filejump
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -117,7 +118,7 @@ type Request struct {
     Field2 int    `json:"field2"`
 }
 request := Request{
-    Field1: "wert1",
+    Field1: "value1",
     Field2: 42,
 }
 
@@ -138,8 +139,8 @@ type Response struct {
     Data   string `json:"data,omitempty"`
 }
 values := url.Values{}
-values.Set("param1", "wert1")
-values.Set("param2", "wert2")
+values.Set("param1", "value1")
+values.Set("param2", "value2")
 values.Set("EntryIds", fmt.Sprintf("[%s]", dir))
 values.Set("DeleteForever", strconv.FormatBool(true)))
 
@@ -203,8 +204,8 @@ type Response struct {
 }
 
 values := url.Values{}
-values.Set("param1", "wert1")
-values.Set("param2", "wert2")
+values.Set("param1", "value1")
+values.Set("param2", "value2")
 
 result, err := CallJSONGet[Response](ctx, f, "/api/endpoint", &values)
 if err != nil {
@@ -269,6 +270,8 @@ func (f *Fs) unpadNameForFileJump(name string) string {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
+	fs.Logf(nil, "WARNING: The FileJump backend is new and experimental. While it can be tested and used, it should not be used for important data or production environments. Please use with caution and ensure you have proper backups.")
+
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
 	if err != nil {
@@ -297,6 +300,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		DirMove:                 f.DirMove,
 		PublicLink:              f.PublicLink,
 		About:                   f.About,
+		DirCacheFlush:           f.DirCacheFlush,
 	}).Fill(ctx, f)
 	f.srv.SetHeader("Authorization", "Bearer "+opt.AccessToken)
 
@@ -415,12 +419,14 @@ type listAllFn func(*api.Item) bool
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, activeOnly bool, fn listAllFn) (found bool, err error) {
-	values := url.Values{}
-	values.Set("folderId", dirID)
-	values.Set("perPage", "1000")
 	var page *uint
 OUTER:
 	for {
+		values := url.Values{}
+		if dirID != "" && dirID != "0" {
+			values.Set("folderId", dirID)
+		}
+		values.Set("perPage", "1000")
 		if page != nil {
 			values.Set("page", strconv.FormatUint(uint64(*page), 10))
 		}
@@ -429,19 +435,22 @@ OUTER:
 		if err != nil {
 			return found, fmt.Errorf("couldn't list files: %w", err)
 		}
+
+		// If we get an empty list of items then we are at the end
+		if len(result.Data) == 0 {
+			break
+		}
+
 		for i := range result.Data {
 			item := &result.Data[i]
 			if item.Type == api.ItemTypeFolder {
 				if filesOnly {
 					continue
 				}
-			} else if item.Type != api.ItemTypeFolder {
+			} else {
 				if directoriesOnly {
 					continue
 				}
-			} else {
-				fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
-				continue
 			}
 			// Handle padding removal for names that were padded to meet 3-character minimum
 			itemName := f.unpadNameForFileJump(item.Name)
@@ -570,14 +579,12 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 	// For unknown size uploads, we need to read the data first to determine the size
 	if size < 0 {
-		// Read all data into memory to determine size
 		data, err := io.ReadAll(in)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read data for unknown size upload: %w", err)
 		}
 		size = int64(len(data))
-		// Create a new reader from the data
-		in = strings.NewReader(string(data))
+		in = bytes.NewReader(data)
 	}
 
 	o, _, _, err := f.createObject(ctx, remote, modTime, size)
@@ -609,14 +616,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	// For unknown size uploads, we need to read the data first to determine the size
 	if size < 0 {
-		// Read all data into memory to determine size
 		data, err := io.ReadAll(in)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read data for unknown size upload: %w", err)
 		}
 		size = int64(len(data))
-		// Create a new reader from the data
-		in = strings.NewReader(string(data))
+		in = bytes.NewReader(data)
 	}
 
 	o, _, _, err := f.createObject(ctx, remote, modTime, size)
@@ -647,7 +652,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // 	})
 
 // 	if err != nil {
-// 		// Fehlerbehandlung
+// 		// Error handling
 // 	}
 // }
 
@@ -709,9 +714,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return errors.New("delete, no api success")
 	}
 	f.dirCache.FlushDir(dir)
-	if err != nil {
-		return errors.New("rmdir failed, no success response")
-	}
+
 	return nil
 }
 
@@ -732,30 +735,118 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 }
 
 // CleanUp empties the trash
+// Streamed approach: repeatedly list the first page of trash (up to 1000 items)
+// and hard-delete those IDs in a batch, until the trash is empty.
+// The previous shortcut using EmptyTrash is intentionally commented out in favor of
+// the robust streaming deletion to avoid failures with very large trash.
 func (f *Fs) CleanUp(ctx context.Context) error {
-	type RequestEmptyTrash struct {
-		EntryIDs   []int `json:"entryIds"`
-		EmptyTrash bool  `json:"emptyTrash"`
-	}
+	// Previous approach (kept for reference):
+	// type RequestEmptyTrash struct { EntryIDs []int `json:"entryIds"`; EmptyTrash bool `json:"emptyTrash"` }
+	// type ResultEmptyTrash struct { Status string `json:"status,omitempty"` }
+	// _, _ = CallJSONPost[ResultEmptyTrash, RequestEmptyTrash](ctx, f, "/file-entries/delete", &RequestEmptyTrash{EntryIDs: []int{}, EmptyTrash: true})
 
-	type ResultEmptyTrash struct {
+	type RequestDelete struct {
+		EntryIDs      []int `json:"entryIds"`
+		DeleteForever bool  `json:"deleteForever"`
+	}
+	type ResultDelete struct {
 		Status string `json:"status,omitempty"`
 	}
 
-	request := RequestEmptyTrash{
-		EntryIDs:   []int{}, // Empty array as specified in the API
-		EmptyTrash: true,
+	const batchSize = 100
+	var (
+		batchNum     int
+		totalFound   int
+		totalDeleted int
+	)
+	fs.Infof(f, "CleanUp: streaming hard delete of trash in batches of %d", batchSize)
+
+	for {
+		values := url.Values{}
+		values.Set("section", "trash")
+		values.Set("deletedOnly", "true")
+		values.Set("orderDir", "desc")
+		values.Set("orderBy", "name")
+		values.Set("perPage", strconv.Itoa(batchSize))
+		values.Set("page", "1") // always fetch first page after deletions
+
+		// retryable list call
+		const maxRetries = 3
+		retrySleepBase := 2 * time.Second
+		var (
+			res *api.FileEntries
+			err error
+		)
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			res, err = CallJSONGet[api.FileEntries](ctx, f, "/drive/file-entries", &values)
+			if err == nil {
+				break
+			}
+			if attempt < maxRetries {
+				fs.Infof(f, "CleanUp: list attempt %d/%d failed: %v -- retrying", attempt, maxRetries, err)
+				time.Sleep(time.Duration(attempt) * retrySleepBase)
+				continue
+			}
+			return fmt.Errorf("cleanup list failed after %d attempts: %w", maxRetries, err)
+		}
+
+		if len(res.Data) == 0 {
+			break // nothing left in trash
+		}
+
+		batchNum++
+		ids := make([]int, 0, len(res.Data))
+		for i := range res.Data {
+			if res.Data[i].ID != 0 {
+				ids = append(ids, res.Data[i].ID)
+			}
+		}
+		found := len(ids)
+		totalFound += found
+		fs.Infof(f, "CleanUp: batch %d - found the first %d items in trash", batchNum, found)
+
+		if found == 0 {
+			// Unlikely, but continue to next iteration just in case
+			continue
+		}
+
+		req := RequestDelete{EntryIDs: ids, DeleteForever: true}
+		// retryable delete call
+		const maxRetriesDel = 3
+		retrySleepBaseDel := 2 * time.Second
+		var (
+			resDel *ResultDelete
+			delErr error
+		)
+		for attempt := 1; attempt <= maxRetriesDel; attempt++ {
+			resDel, delErr = CallJSONPost[ResultDelete, RequestDelete](ctx, f, "/file-entries/delete", &req)
+			if delErr == nil && resDel != nil && resDel.Status == "success" {
+				break
+			}
+			if attempt < maxRetriesDel {
+				status := "<nil>"
+				if resDel != nil {
+					status = resDel.Status
+				}
+				fs.Infof(f, "CleanUp: delete attempt %d/%d failed (status=%s, err=%v) -- retrying", attempt, maxRetriesDel, status, delErr)
+				time.Sleep(time.Duration(attempt) * retrySleepBaseDel)
+				continue
+			}
+			if delErr != nil {
+				return fmt.Errorf("cleanup batch %d delete failed after %d attempts: %w", batchNum, maxRetriesDel, delErr)
+			}
+			status := "<nil>"
+			if resDel != nil {
+				status = resDel.Status
+			}
+			return fmt.Errorf("cleanup batch %d delete returned non-success status after %d attempts: %s", batchNum, maxRetriesDel, status)
+		}
+
+		totalDeleted += found
+		fs.Infof(f, "CleanUp: batch %d - deleted %d items (total deleted: %d)", batchNum, found, totalDeleted)
 	}
 
-	result, err := CallJSONPost[ResultEmptyTrash, RequestEmptyTrash](ctx, f, "/file-entries/delete", &request)
-	if err != nil {
-		return fmt.Errorf("cleanup failed: %w", err)
-	}
-
-	if result.Status != "success" {
-		return fmt.Errorf("cleanup failed with status: %s", result.Status)
-	}
-
+	fs.Infof(f, "CleanUp: completed - total found %d, total deleted %d in %d batches", totalFound, totalDeleted, batchNum)
 	return nil
 }
 
@@ -877,14 +968,10 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Ite
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.Item) (err error) {
 	if info.Type == api.ItemTypeFolder {
-		return fs.ErrorIsDir
-	}
-	if info.Type == api.ItemTypeFolder {
 		return fmt.Errorf("%q is %q: %w", o.remote, info.Type, fs.ErrorNotAFile)
 	}
 	o.hasMetaData = true
 	o.size = int64(info.FileSize)
-	// o.sha1 = info.SHA1
 	o.modTime = info.ModTime()
 	o.id = info.GetID()
 	return nil
@@ -1079,28 +1166,28 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstAbsDir := path.Dir(dstAbsPath)
 
 	if srcAbsDir != dstAbsDir {
-		// Determine destination directory
-		destID := directoryID
-		if destID == "" {
-			destID = "0"
+		// Destination als *int (nil = Root)
+		var destPtr *int
+		if directoryID != "" && directoryID != "0" {
+			destIDInt, err := strconv.Atoi(directoryID)
+			if err != nil {
+				return nil, errors.New("invalid destination directory ID")
+			}
+			destPtr = &destIDInt
 		}
 		entryIDInt, err := strconv.Atoi(srcObj.id)
 		if err != nil {
 			return nil, errors.New("invalid source file ID")
 		}
-		destIDInt, err := strconv.Atoi(destID)
-		if err != nil {
-			return nil, errors.New("invalid destination directory ID")
-		}
 		type RequestMove struct {
-			DestinationID int   `json:"destinationId"`
+			DestinationID *int  `json:"destinationId"`
 			EntryIDs      []int `json:"entryIds"`
 		}
 		type ResultMove struct {
 			Status string `json:"status"`
 		}
 		request := RequestMove{
-			DestinationID: destIDInt,
+			DestinationID: destPtr,
 			EntryIDs:      []int{entryIDInt},
 		}
 		result, err := CallJSONPost[ResultMove, RequestMove](ctx, f, "/file-entries/move", &request)
@@ -1163,8 +1250,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return err
 	}
 
-	// This backend can't move a directory into another directory which has a file with the same name.
-	// So we must check for the destination directory existing
+	// The destination must not already exist.
 	if _, err := f.dirCache.FindDir(ctx, dstRemote, false); err == nil {
 		return fs.ErrorDirExists
 	} else if !errors.Is(err, fs.ErrorDirNotFound) {
@@ -1191,19 +1277,23 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		}
 
 		if len(entriesToMove) > 0 {
-			destIDInt, err := strconv.Atoi(dstID)
-			if err != nil {
-				return errors.New("invalid destination directory ID")
+			var destPtr *int
+			if dstID != "" && dstID != "0" {
+				destIDInt, err := strconv.Atoi(dstID)
+				if err != nil {
+					return errors.New("invalid destination directory ID")
+				}
+				destPtr = &destIDInt
 			}
 			type RequestMove struct {
-				DestinationID int   `json:"destinationId"`
+				DestinationID *int  `json:"destinationId"`
 				EntryIDs      []int `json:"entryIds"`
 			}
 			type ResultMove struct {
 				Status string `json:"status"`
 			}
 			moveReq := RequestMove{
-				DestinationID: destIDInt,
+				DestinationID: destPtr,
 				EntryIDs:      entriesToMove,
 			}
 			_, err = CallJSONPost[ResultMove, RequestMove](ctx, f, "/file-entries/move", &moveReq)
@@ -1235,27 +1325,29 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return err
 	}
 
-	destID := dstParentID
-	if destID == "" {
-		destID = "0"
-	}
 	srcIDInt, err := strconv.Atoi(srcID)
 	if err != nil {
 		return errors.New("invalid source directory ID")
 	}
-	destIDInt, err := strconv.Atoi(destID)
-	if err != nil {
-		return errors.New("invalid destination directory ID")
+
+	var destPtr *int
+	if dstParentID != "" && dstParentID != "0" {
+		destIDInt, err := strconv.Atoi(dstParentID)
+		if err != nil {
+			return errors.New("invalid destination directory ID")
+		}
+		destPtr = &destIDInt
 	}
+
 	type RequestMove struct {
-		DestinationID int   `json:"destinationId"`
+		DestinationID *int  `json:"destinationId"`
 		EntryIDs      []int `json:"entryIds"`
 	}
 	type ResultMove struct {
 		Status string `json:"status"`
 	}
 	moveReq := RequestMove{
-		DestinationID: destIDInt,
+		DestinationID: destPtr,
 		EntryIDs:      []int{srcIDInt},
 	}
 	_, err = CallJSONPost[ResultMove, RequestMove](ctx, f, "/file-entries/move", &moveReq)
@@ -1314,8 +1406,8 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 
 	usage := &fs.Usage{
 		Used:  fs.NewUsageValue(response.Used),
-		Free:  fs.NewUsageValue(response.Available),
-		Total: fs.NewUsageValue(response.Used + response.Available),
+		Free:  fs.NewUsageValue(response.Available - response.Used),
+		Total: fs.NewUsageValue(response.Available),
 	}
 	return usage, nil
 }
@@ -1357,6 +1449,13 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 
 	return "https://drive.filejump.com/drive/s/" + result.Link.Hash, nil
+}
+
+// DirCacheFlush resets the directory cache - used in testing
+// as an optional interface
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.Flush()
+	f.dirCache.ResetRoot()
 }
 
 // type Object interface:
@@ -1506,7 +1605,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 					idsToDelete = append(idsToDelete, id)
 				}
 			}
-			return false // find all duplicates
+			return false
 		})
 		if listErr != nil {
 			return fmt.Errorf("Update: failed to list duplicates: %w", listErr)
@@ -1534,7 +1633,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
-	// Now, proceed with creating the directory if it doesn't exist and uploading
+	// Create directory if necessary and redetermine path
 	leaf, directoryID, err = o.fs.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return err
@@ -1545,14 +1644,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// For unknown size uploads, we need to read the data first to determine the size
 	if size < 0 {
-		// Read all data into memory to determine size
 		data, err := io.ReadAll(in)
 		if err != nil {
 			return fmt.Errorf("failed to read data for unknown size upload: %w", err)
 		}
 		size = int64(len(data))
-		// Create a new reader from the data
-		in = strings.NewReader(string(data))
+		in = bytes.NewReader(data)
 	}
 
 	err = o.upload(ctx, in, leaf, directoryID, size, modTime, options...)
@@ -1579,104 +1676,8 @@ func getExtensionAndMime(filename string) (extension, mimeType string) {
 }
 
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, options ...fs.OpenOption) (err error) {
-	// There are two ways to upload a file in the Filejump backend:
-	// 1. Using the REST API – this is a single request.
-	// 2. Using a presigned URL – first fetch the URL, upload the file directly to Wasabi,
-	//    then make a follow-up request to report metadata (e.g. MIME type) to Filejump.
-
-	// Large files are currently uploaded via presigned URLs, since direct upload to Wasabi
-	// is likely faster. The REST API is just a wrapper that also uploads to Wasabi,
-	// but it doesn't currently support setting a MIME type explicitly.
-
-	// As a result, files uploaded via the REST API default to a binary MIME type.
-	// This causes issues when previewing e.g. text files in the web interface,
-	// since they can only be downloaded, not displayed.
-
-	// To avoid this, all files are currently uploaded via presigned URL,
-	// even though it requires 3 separate requests per file.
-
-	// In the future, we might consider uploading small *binary* files via the REST API
-	// to reduce request overhead — since MIME type is irrelevant for those anyway.
-
-	// However, after testing the upload speed, it turned out that using the presigned URL
-	// was actually faster.
-	// Therefore, the working code that uploads via the REST API wrapper is currently commented out.
-
-	// // Use REST API for small files
-	// if size <= smallFileCutoff {
-	// 	fs.Debugf(o, "Uploading small file via REST API")
-	// 	body := &bytes.Buffer{}
-	// 	writer := multipart.NewWriter(body)
-
-	// 	// Encode and pad the filename for FileJump API requirements
-	// 	encodedLeaf := o.fs.padNameForFileJump(leaf)
-	// 	part, err := writer.CreateFormFile("file", encodedLeaf)
-	// 	if err != nil {
-	// 		return fmt.Errorf("failed to create form file: %w", err)
-	// 	}
-	// 	_, err = io.Copy(part, in)
-	// 	if err != nil {
-	// 		return fmt.Errorf("failed to copy file to multipart buffer: %w", err)
-	// 	}
-
-	// 	if directoryID != "" && directoryID != "0" {
-	// 		_ = writer.WriteField("parentId", directoryID)
-	// 	}
-
-	// 	// The API uses parentId to place the file, so relativePath can be empty.
-	// 	// This now matches the large file upload logic.
-	// 	_ = writer.WriteField("relativePath", "")
-
-	// 	err = writer.Close()
-	// 	if err != nil {
-	// 		return fmt.Errorf("failed to close multipart writer: %w", err)
-	// 	}
-
-	// 	var result api.FileUploadResponse
-	// 	var resp *http.Response
-	// 	err = o.fs.pacer.Call(func() (bool, error) {
-	// 		opts := rest.Opts{
-	// 			Method: "POST",
-	// 			Path:   "/uploads",
-	// 			Body:   body,
-	// 			ExtraHeaders: map[string]string{
-	// 				"Content-Type": writer.FormDataContentType(),
-	// 				"Accept":       "application/json",
-	// 			},
-	// 		}
-	// 		resp, err = o.fs.srv.Call(ctx, &opts)
-	// 		if err != nil {
-	// 			return shouldRetry(ctx, resp, err)
-	// 		}
-
-	// 		// Decode the response
-	// 		defer fs.CheckClose(resp.Body, &err)
-	// 		err = json.NewDecoder(resp.Body).Decode(&result)
-	// 		if err != nil {
-	// 			return false, fmt.Errorf("failed to decode upload response: %w", err)
-	// 		}
-
-	// 		return shouldRetry(ctx, resp, err)
-	// 	})
-
-	// 	if err != nil {
-	// 		return fmt.Errorf("small file upload failed: %w", err)
-	// 	}
-	// 	if result.Status != "success" {
-	// 		return fmt.Errorf("small file upload failed with status: %s", result.Status)
-	// 	}
-
-	// 	err = o.setMetaData(&result.FileEntry)
-	// 	if err != nil {
-	// 		return fmt.Errorf("error setting metadata after small file upload: %w", err)
-	// 	}
-	// 	o.size = size
-	// 	o.modTime = modTime
-	// 	return nil
-	// }
-
-	// Use S3 presigned URL for large files
-	fs.Debugf(o, "Uploading large file via S3 presigned URL")
+	// Upload via S3 presigned URL
+	fs.Debugf(o, "Uploading file via S3 presigned URL")
 	directoryIDInt, _ := strconv.Atoi(directoryID)
 	workspaceIDInt, err := strconv.Atoi(o.fs.opt.WorkspaceID)
 	if err != nil {
@@ -1684,7 +1685,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		workspaceIDInt = 0
 	}
 
-	// Requesting the pre-subscribed URL
+	// Presign
 	type ResultPresign struct {
 		URL    string `json:"url"`
 		Key    string `json:"key"`
@@ -1699,7 +1700,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		Size         int64  `json:"size"`
 		Extension    string `json:"extension"`
 		WorkspaceID  int    `json:"workspaceId"`
-		ParentID     int    `json:"parentId"`
+		ParentID     *int   `json:"parentId,omitempty"` // nil für Root
 		RelativePath string `json:"relativePath"`
 	}
 
@@ -1708,6 +1709,11 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	// Encode and pad the filename for FileJump API requirements
 	encodedLeaf := o.fs.padNameForFileJump(leaf)
 
+	var parentIDPtr *int
+	if directoryIDInt != 0 {
+		parentIDPtr = &directoryIDInt
+	}
+
 	requestPresign := RequestPresign{
 		Filename:     encodedLeaf,
 		Mime:         mime,
@@ -1715,27 +1721,23 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		Size:         size,
 		Extension:    ext,
 		WorkspaceID:  workspaceIDInt,
-		ParentID:     directoryIDInt,
+		ParentID:     parentIDPtr,
 		RelativePath: "",
 	}
 
 	resultPresign, err := CallJSONPost[ResultPresign, RequestPresign](ctx, o.fs, "/s3/simple/presign", &requestPresign)
-
 	if err != nil {
 		return fmt.Errorf("error requesting presigned URL: %w", err)
 	}
-
 	if resultPresign.Status != "success" {
 		return fmt.Errorf("error requesting presigned URL: status is not 'success'")
 	}
 
-	// PUT-Request
+	// PUT to presigned URL
 	putReq, err := http.NewRequestWithContext(ctx, http.MethodPut, resultPresign.URL, in)
 	if err != nil {
 		return fmt.Errorf("error creating PUT request: %w", err)
 	}
-
-	// Set the necessary headers
 	putReq.Header.Set("Content-Type", "application/octet-stream")
 	putReq.Header.Set("x-amz-acl", resultPresign.ACL)
 
@@ -1750,6 +1752,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		return fmt.Errorf("error uploading file: HTTP %d: %s", putResp.StatusCode, string(body))
 	}
 
+	// Register file in FileJump
 	type RequestEntries struct {
 		WorkspaceID     int         `json:"workspaceId"`
 		ParentID        interface{} `json:"parentId"`
@@ -1779,28 +1782,21 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	}
 
 	resultEntries, err := CallJSONPost[api.Item, RequestEntries](ctx, o.fs, "/s3/entries", &requestEntries)
-
 	if err != nil {
 		return fmt.Errorf("error requesting file data URL: %w", err)
 	}
 
-	// If the upload response doesn't contain valid metadata, try to read it from the API
+	//  Set/refresh metadata
 	if resultEntries.ID == 0 || resultEntries.Name == "" {
-		// Set basic metadata first
 		o.size = size
 		o.modTime = modTime
-		o.hasMetaData = false // Force readMetaData to fetch from API
-		// Try to read metadata from the API
-		err = o.readMetaData(ctx)
-		if err != nil {
-			// Set minimal metadata to allow the object to function
+		o.hasMetaData = false
+		if err := o.readMetaData(ctx); err != nil {
 			o.hasMetaData = true
-			o.id = "" // Will be empty, but object still works for most operations
+			o.id = ""
 		}
 	} else {
-		// Set object metadata
-		err = o.setMetaData(resultEntries)
-		if err != nil {
+		if err := o.setMetaData(resultEntries); err != nil {
 			return fmt.Errorf("error setting metadata: %w", err)
 		}
 		o.size = size
