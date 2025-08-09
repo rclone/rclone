@@ -322,7 +322,6 @@ backends:
    remote:   "TestSFTPOpenssh:"
    fastlist: false
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "sftp"
    remote:   "TestSFTPRclone:"
