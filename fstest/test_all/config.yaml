@@ -429,8 +429,6 @@ backends:
      - TestMultithreadCopyAbort
  - backend:  "azurefiles"
    remote:   "TestAzureFiles:"
-   ignoretests:
-     - cmd/bisync
  - backend:  "pcloud"
    remote:   "TestPcloud:"
    fastlist: true
