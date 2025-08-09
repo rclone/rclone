@@ -12,18 +12,20 @@ import (
 	"github.com/rclone/rclone/fs/march"
 )
 
-var ls1 = newFileList()
-var ls2 = newFileList()
-var err error
-var firstErr error
-var marchAliasLock sync.Mutex
-var marchLsLock sync.Mutex
-var marchErrLock sync.Mutex
-var marchCtx context.Context
+type bisyncMarch struct {
+	ls1            *fileList
+	ls2            *fileList
+	err            error
+	firstErr       error
+	marchAliasLock sync.Mutex
+	marchLsLock    sync.Mutex
+	marchErrLock   sync.Mutex
+	marchCtx       context.Context
+}
 
 func (b *bisyncRun) makeMarchListing(ctx context.Context) (*fileList, *fileList, error) {
 	ci := fs.GetConfig(ctx)
-	marchCtx = ctx
+	b.march.marchCtx = ctx
 	b.setupListing()
 	fs.Debugf(b, "starting to march!")
 
@@ -39,31 +41,31 @@ func (b *bisyncRun) makeMarchListing(ctx context.Context) (*fileList, *fileList,
 		NoCheckDest:            false,
 		NoUnicodeNormalization: ci.NoUnicodeNormalization,
 	}
-	err = m.Run(ctx)
+	b.march.err = m.Run(ctx)
 
-	fs.Debugf(b, "march completed. err: %v", err)
-	if err == nil {
-		err = firstErr
+	fs.Debugf(b, "march completed. err: %v", b.march.err)
+	if b.march.err == nil {
+		b.march.err = b.march.firstErr
 	}
-	if err != nil {
-		b.handleErr("march", "error during march", err, true, true)
+	if b.march.err != nil {
+		b.handleErr("march", "error during march", b.march.err, true, true)
 		b.abort = true
-		return ls1, ls2, err
+		return b.march.ls1, b.march.ls2, b.march.err
 	}
 
 	// save files
-	if b.opt.Compare.DownloadHash && ls1.hash == hash.None {
-		ls1.hash = hash.MD5
+	if b.opt.Compare.DownloadHash && b.march.ls1.hash == hash.None {
+		b.march.ls1.hash = hash.MD5
 	}
-	if b.opt.Compare.DownloadHash && ls2.hash == hash.None {
-		ls2.hash = hash.MD5
+	if b.opt.Compare.DownloadHash && b.march.ls2.hash == hash.None {
+		b.march.ls2.hash = hash.MD5
 	}
-	err = ls1.save(ctx, b.newListing1)
-	b.handleErr(ls1, "error saving ls1 from march", err, true, true)
-	err = ls2.save(ctx, b.newListing2)
-	b.handleErr(ls2, "error saving ls2 from march", err, true, true)
+	b.march.err = b.march.ls1.save(b.newListing1)
+	b.handleErr(b.march.ls1, "error saving b.march.ls1 from march", b.march.err, true, true)
+	b.march.err = b.march.ls2.save(b.newListing2)
+	b.handleErr(b.march.ls2, "error saving b.march.ls2 from march", b.march.err, true, true)
 
-	return ls1, ls2, err
+	return b.march.ls1, b.march.ls2, b.march.err
 }
 
 // SrcOnly have an object which is on path1 only
@@ -83,9 +85,9 @@ func (b *bisyncRun) DstOnly(o fs.DirEntry) (recurse bool) {
 // Match is called when object exists on both path1 and path2 (whether equal or not)
 func (b *bisyncRun) Match(ctx context.Context, o2, o1 fs.DirEntry) (recurse bool) {
 	fs.Debugf(o1, "both path1 and path2")
-	marchAliasLock.Lock()
+	b.march.marchAliasLock.Lock()
 	b.aliases.Add(o1.Remote(), o2.Remote())
-	marchAliasLock.Unlock()
+	b.march.marchAliasLock.Unlock()
 	b.parse(o1, true)
 	b.parse(o2, false)
 	return isDir(o1)
@@ -119,76 +121,76 @@ func (b *bisyncRun) parse(e fs.DirEntry, isPath1 bool) {
 }
 
 func (b *bisyncRun) setupListing() {
-	ls1 = newFileList()
-	ls2 = newFileList()
+	b.march.ls1 = newFileList()
+	b.march.ls2 = newFileList()
 
 	// note that --ignore-listing-checksum is different from --ignore-checksum
 	// and we already checked it when we set b.opt.Compare.HashType1 and 2
-	ls1.hash = b.opt.Compare.HashType1
-	ls2.hash = b.opt.Compare.HashType2
+	b.march.ls1.hash = b.opt.Compare.HashType1
+	b.march.ls2.hash = b.opt.Compare.HashType2
 }
 
 func (b *bisyncRun) ForObject(o fs.Object, isPath1 bool) {
-	tr := accounting.Stats(marchCtx).NewCheckingTransfer(o, "listing file - "+whichPath(isPath1))
+	tr := accounting.Stats(b.march.marchCtx).NewCheckingTransfer(o, "listing file - "+whichPath(isPath1))
 	defer func() {
-		tr.Done(marchCtx, nil)
+		tr.Done(b.march.marchCtx, nil)
 	}()
 	var (
 		hashVal string
 		hashErr error
 	)
-	ls := whichLs(isPath1)
+	ls := b.whichLs(isPath1)
 	hashType := ls.hash
 	if hashType != hash.None {
-		hashVal, hashErr = o.Hash(marchCtx, hashType)
-		marchErrLock.Lock()
-		if firstErr == nil {
-			firstErr = hashErr
+		hashVal, hashErr = o.Hash(b.march.marchCtx, hashType)
+		b.march.marchErrLock.Lock()
+		if b.march.firstErr == nil {
+			b.march.firstErr = hashErr
 		}
-		marchErrLock.Unlock()
+		b.march.marchErrLock.Unlock()
 	}
-	hashVal, hashErr = tryDownloadHash(marchCtx, o, hashVal)
-	marchErrLock.Lock()
-	if firstErr == nil {
-		firstErr = hashErr
+	hashVal, hashErr = b.tryDownloadHash(b.march.marchCtx, o, hashVal)
+	b.march.marchErrLock.Lock()
+	if b.march.firstErr == nil {
+		b.march.firstErr = hashErr
 	}
-	if firstErr != nil {
-		b.handleErr(hashType, "error hashing during march", firstErr, false, true)
+	if b.march.firstErr != nil {
+		b.handleErr(hashType, "error hashing during march", b.march.firstErr, false, true)
 	}
-	marchErrLock.Unlock()
+	b.march.marchErrLock.Unlock()
 
 	var modtime time.Time
 	if b.opt.Compare.Modtime {
-		modtime = o.ModTime(marchCtx).In(TZ)
+		modtime = o.ModTime(b.march.marchCtx).In(TZ)
 	}
 	id := ""     // TODO: ID(o)
 	flags := "-" // "-" for a file and "d" for a directory
-	marchLsLock.Lock()
+	b.march.marchLsLock.Lock()
 	ls.put(o.Remote(), o.Size(), modtime, hashVal, id, flags)
-	marchLsLock.Unlock()
+	b.march.marchLsLock.Unlock()
 }
 
 func (b *bisyncRun) ForDir(o fs.Directory, isPath1 bool) {
-	tr := accounting.Stats(marchCtx).NewCheckingTransfer(o, "listing dir - "+whichPath(isPath1))
+	tr := accounting.Stats(b.march.marchCtx).NewCheckingTransfer(o, "listing dir - "+whichPath(isPath1))
 	defer func() {
-		tr.Done(marchCtx, nil)
+		tr.Done(b.march.marchCtx, nil)
 	}()
-	ls := whichLs(isPath1)
+	ls := b.whichLs(isPath1)
 	var modtime time.Time
 	if b.opt.Compare.Modtime {
-		modtime = o.ModTime(marchCtx).In(TZ)
+		modtime = o.ModTime(b.march.marchCtx).In(TZ)
 	}
 	id := ""     // TODO
 	flags := "d" // "-" for a file and "d" for a directory
-	marchLsLock.Lock()
+	b.march.marchLsLock.Lock()
 	ls.put(o.Remote(), -1, modtime, "", id, flags)
-	marchLsLock.Unlock()
+	b.march.marchLsLock.Unlock()
 }
 
-func whichLs(isPath1 bool) *fileList {
-	ls := ls1
+func (b *bisyncRun) whichLs(isPath1 bool) *fileList {
+	ls := b.march.ls1
 	if !isPath1 {
-		ls = ls2
+		ls = b.march.ls2
 	}
 	return ls
 }
@@ -206,7 +208,7 @@ func (b *bisyncRun) findCheckFiles(ctx context.Context) (*fileList, *fileList, e
 	b.handleErr(b.opt.CheckFilename, "error adding CheckFilename to filter", filterCheckFile.Add(true, b.opt.CheckFilename), true, true)
 	b.handleErr(b.opt.CheckFilename, "error adding ** exclusion to filter", filterCheckFile.Add(false, "**"), true, true)
 	ci := fs.GetConfig(ctxCheckFile)
-	marchCtx = ctxCheckFile
+	b.march.marchCtx = ctxCheckFile
 
 	b.setupListing()
 	fs.Debugf(b, "starting to march!")
@@ -223,18 +225,18 @@ func (b *bisyncRun) findCheckFiles(ctx context.Context) (*fileList, *fileList, e
 		NoCheckDest:            false,
 		NoUnicodeNormalization: ci.NoUnicodeNormalization,
 	}
-	err = m.Run(ctxCheckFile)
+	b.march.err = m.Run(ctxCheckFile)
 
-	fs.Debugf(b, "march completed. err: %v", err)
-	if err == nil {
-		err = firstErr
+	fs.Debugf(b, "march completed. err: %v", b.march.err)
+	if b.march.err == nil {
+		b.march.err = b.march.firstErr
 	}
-	if err != nil {
-		b.handleErr("march", "error during findCheckFiles", err, true, true)
+	if b.march.err != nil {
+		b.handleErr("march", "error during findCheckFiles", b.march.err, true, true)
 		b.abort = true
 	}
 
-	return ls1, ls2, err
+	return b.march.ls1, b.march.ls2, b.march.err
 }
 
 // ID returns the ID of the Object if known, or "" if not
