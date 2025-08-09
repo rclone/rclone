@@ -11,6 +11,7 @@ Make TesTrun have a []string of flags to try - that then makes it generic
 */
 
 import (
+	"encoding/csv"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -79,7 +80,14 @@ func main() {
 
 	// Filter selection
 	if *testRemotes != "" {
-		conf.filterBackendsByRemotes(strings.Split(*testRemotes, ","))
+		// CSV parse to support connection string remotes with commas like -remotes local,\"TestGoogleCloudStorage,directory_markers:\"
+		r := csv.NewReader(strings.NewReader(*testRemotes))
+		remotes, err := r.Read()
+		if err != nil {
+			fs.Fatalf(*testRemotes, "error CSV-parsing -remotes string: %v", err)
+		}
+		fs.Debugf(*testRemotes, "using remotes: %v", remotes)
+		conf.filterBackendsByRemotes(remotes)
 	}
 	if *testBackends != "" {
 		conf.filterBackendsByBackends(strings.Split(*testBackends, ","))
