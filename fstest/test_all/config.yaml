@@ -169,13 +169,11 @@ backends:
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage,directory_markers:"
    fastlist: true
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "googlephotos"
    remote:   "TestGooglePhotos:"
