@@ -159,7 +159,7 @@ rclone lsf remote:path [flags]
   -h, --help                 help for lsf
   -R, --recursive            Recurse into the listing
   -s, --separator string     Separator for the items in the format (default ";")
-  -t, --time-format string   Specify a custom time format, 'unix' / 'unixnano' for timestamp, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
+  -t, --time-format string   Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
 ```
 
 Options shared with other commands are described next.

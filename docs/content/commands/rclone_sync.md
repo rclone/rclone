@@ -114,7 +114,7 @@ rclone sync source:path dest:path [flags]
       --missing-on-dst string   Report all files missing from the destination to this file
       --missing-on-src string   Report all files missing from the source to this file
   -s, --separator string        Separator for the items in the format (default ";")
-  -t, --timeformat string       Specify a custom time format, 'unix' / 'unixnano' for timestamp, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
+  -t, --timeformat string       Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
 ```
 
 Options shared with other commands are described next.
