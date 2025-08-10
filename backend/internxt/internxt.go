@@ -192,6 +192,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		DirModTimeUpdatesOnWrite: false,
 	}).Fill(ctx, f)
 
+	// Handle leading and trailing slashes
+	root = strings.Trim(root, "/")
 	f.dirCache = dircache.New(root, cfg.RootFolderID, f)
 
 	err = f.dirCache.FindRoot(ctx, false)
