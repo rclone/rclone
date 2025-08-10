@@ -981,17 +981,23 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		objinfo := object.NewStaticObjectInfo("modtime_write_test", initDate, int64(len("modtime_write_test")), true, nil, nil)
 		obj, err := f.Put(ctx, in, objinfo)
 		require.NoError(b.t, err)
+		if !f.Features().IsLocal {
+			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
+		}
 		err = obj.SetModTime(ctx, initDate)
 		if err == fs.ErrorCantSetModTime {
-			if b.testCase != "nomodtime" {
-				b.t.Skip("skipping test as at least one remote does not support setting modtime")
-			}
+			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+		}
+		if !f.Features().IsLocal {
+			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
 		}
 		err = obj.Remove(ctx)
 		require.NoError(b.t, err)
 	}
-	testSetModtime(b.fs1)
-	testSetModtime(b.fs2)
+	if b.testCase != "nomodtime" {
+		testSetModtime(b.fs1)
+		testSetModtime(b.fs2)
+	}
 
 	if b.testCase == "normalization" || b.testCase == "extended_char_paths" || b.testCase == "extended_filenames" {
 		// test whether remote is capable of running test
