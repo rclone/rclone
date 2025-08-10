@@ -15,11 +15,11 @@ import (
 	"github.com/StarHack/go-internxt-drive/auth"
 	"github.com/StarHack/go-internxt-drive/buckets"
 	config "github.com/StarHack/go-internxt-drive/config"
-	rclone_config "github.com/rclone/rclone/fs/config"
-
 	"github.com/StarHack/go-internxt-drive/files"
 	"github.com/StarHack/go-internxt-drive/folders"
+	"github.com/StarHack/go-internxt-drive/users"
 	"github.com/rclone/rclone/fs"
+	rclone_config "github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -611,6 +611,28 @@ func (o *Object) Storable() bool {
 // SetModTime sets the modified time
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
+}
+
+// About gets quota information
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	internxtLimit, err := users.GetLimit(f.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	internxtUsage, err := users.GetUsage(f.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	usage := &fs.Usage{
+		Used: fs.NewUsageValue(internxtUsage.Drive),
+	}
+
+	usage.Total = fs.NewUsageValue(internxtLimit.MaxSpaceBytes)
+	usage.Free = fs.NewUsageValue(*usage.Total - *usage.Used)
+
+	return usage, nil
 }
 
 // Open opens a file for streaming
