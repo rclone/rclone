@@ -41,12 +41,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/rclone/rclone/backend/pikpak/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
-	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -66,17 +64,22 @@ import (
 
 // Constants
 const (
-	clientID                 = "YUMx5nI8ZU8Ap8pm"
-	clientVersion            = "2.0.0"
-	packageName              = "mypikpak.com"
-	defaultUserAgent         = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"
-	minSleep                 = 100 * time.Millisecond
-	maxSleep                 = 2 * time.Second
-	taskWaitTime             = 500 * time.Millisecond
-	decayConstant            = 2 // bigger for slower decay, exponential
-	rootURL                  = "https://api-drive.mypikpak.com"
-	minChunkSize             = fs.SizeSuffix(manager.MinUploadPartSize)
-	defaultUploadConcurrency = manager.DefaultUploadConcurrency
+	clientID         = "YUMx5nI8ZU8Ap8pm"
+	clientVersion    = "2.0.0"
+	packageName      = "mypikpak.com"
+	defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"
+	minSleep         = 100 * time.Millisecond
+	maxSleep         = 2 * time.Second
+	taskWaitTime     = 500 * time.Millisecond
+	decayConstant    = 2 // bigger for slower decay, exponential
+	rootURL          = "https://api-drive.mypikpak.com"
+
+	maxUploadParts      = 10000                          // Part number must be an integer between 1 and 10000, inclusive.
+	defaultChunkSize    = fs.SizeSuffix(1024 * 1024 * 5) // Part size should be in [100KB, 5GB]
+	minChunkSize        = 100 * fs.Kibi
+	maxChunkSize        = 5 * fs.Gibi
+	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
+	maxUploadCutoff     = 5 * fs.Gibi // maximum allowed size for singlepart uploads
 )
 
 // Globals
@@ -224,6 +227,14 @@ Fill in for rclone to use a non root folder as its starting point.
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}, {
+			Name: "upload_cutoff",
+			Help: `Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+The minimum is 0 and the maximum is 5 GiB.`,
+			Default:  defaultUploadCutoff,
+			Advanced: true,
+		}, {
 			Name: "chunk_size",
 			Help: `Chunk size for multipart uploads.
 	
@@ -241,7 +252,7 @@ large file of known size to stay below the 10,000 chunks limit.
 
 Increasing the chunk size decreases the accuracy of the progress
 statistics displayed with "-P" flag.`,
-			Default:  minChunkSize,
+			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
 			Name: "upload_concurrency",
@@ -257,7 +268,7 @@ in memory.
 If you are uploading small numbers of large files over high-speed links
 and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.`,
-			Default:  defaultUploadConcurrency,
+			Default:  4,
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -294,6 +305,7 @@ type Options struct {
 	NoMediaLink         bool                 `config:"no_media_link"`
 	HashMemoryThreshold fs.SizeSuffix        `config:"hash_memory_limit"`
 	ChunkSize           fs.SizeSuffix        `config:"chunk_size"`
+	UploadCutoff        fs.SizeSuffix        `config:"upload_cutoff"`
 	UploadConcurrency   int                  `config:"upload_concurrency"`
 	Enc                 encoder.MultiEncoder `config:"encoding"`
 }
@@ -467,6 +479,11 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 			// when a zero-byte file was uploaded with an invalid captcha token
 			f.rst.captcha.Invalidate()
 			return true, err
+		} else if strings.Contains(apiErr.Reason, "idx.shub.mypikpak.com") && apiErr.Code == 500 {
+			// internal server error: Post "http://idx.shub.mypikpak.com": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+			// This typically happens when trying to retrieve a gcid for which no record exists.
+			// No retry is needed in this case.
+			return false, err
 		}
 	}
 
@@ -524,6 +541,39 @@ func (f *Fs) newClientWithPacer(ctx context.Context) (err error) {
 	return nil
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	if cs < minChunkSize {
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	if cs > maxChunkSize {
+		return fmt.Errorf("%s is greater than %s", cs, maxChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
+func checkUploadCutoff(cs fs.SizeSuffix) error {
+	if cs > maxUploadCutoff {
+		return fmt.Errorf("%s is greater than %s", cs, maxUploadCutoff)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadCutoff(cs)
+	if err == nil {
+		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
+	}
+	return
+}
+
 // newFs partially constructs Fs from the path
 //
 // It constructs a valid Fs but doesn't attempt to figure out whether
@@ -531,11 +581,17 @@ func (f *Fs) newClientWithPacer(ctx context.Context) (err error) {
 func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
-	if err := configstruct.Set(m, opt); err != nil {
+	err := configstruct.Set(m, opt)
+	if err != nil {
 		return nil, err
 	}
-	if opt.ChunkSize < minChunkSize {
-		return nil, fmt.Errorf("chunk size must be at least %s", minChunkSize)
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, fmt.Errorf("pikpak: chunk size: %w", err)
+	}
+	err = checkUploadCutoff(opt.UploadCutoff)
+	if err != nil {
+		return nil, fmt.Errorf("pikpak: upload cutoff: %w", err)
 	}
 
 	root := parsePath(path)
@@ -923,6 +979,24 @@ func (f *Fs) deleteObjects(ctx context.Context, IDs []string, useTrash bool) (er
 	return nil
 }
 
+// untrash a file or directory by ID
+//
+// If a name collision occurs in the destination folder, PikPak might automatically
+// rename the restored item(s) by appending a numbered suffix. For example,
+// foo.txt -> foo(1).txt or foo(2).txt if foo(1).txt already exists
+func (f *Fs) untrashObjects(ctx context.Context, IDs []string) (err error) {
+	if len(IDs) == 0 {
+		return nil
+	}
+	req := api.RequestBatch{
+		IDs: IDs,
+	}
+	if err := f.requestBatchAction(ctx, "batchUntrash", &req); err != nil {
+		return fmt.Errorf("untrash object failed: %w", err)
+	}
+	return nil
+}
+
 // purgeCheck removes the root directory, if check is set then it
 // refuses to do so if it has anything in
 func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
@@ -1007,7 +1081,14 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	return f.waitTask(ctx, info.TaskID)
 }
 
-// Move the object
+// Move the object to a new parent folder
+//
+// Objects cannot be moved to their current folder.
+// "file_move_or_copy_to_cur" (9): Please don't move or copy to current folder or sub folder
+//
+// If a name collision occurs in the destination folder, PikPak might automatically
+// rename the moved item(s) by appending a numbered suffix. For example,
+// foo.txt -> foo(1).txt or foo(2).txt if foo(1).txt already exists
 func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err error) {
 	if len(IDs) == 0 {
 		return nil
@@ -1023,6 +1104,12 @@ func (f *Fs) moveObjects(ctx context.Context, IDs []string, dirID string) (err e
 }
 
 // renames the object
+//
+// The new name must be different from the current name.
+// "file_rename_to_same_name" (3): Name of file or folder is not changed
+//
+// Within the same folder, object names must be unique.
+// "file_duplicated_name" (3): File name cannot be repeated
 func (f *Fs) renameObject(ctx context.Context, ID, newName string) (info *api.File, err error) {
 	req := api.File{
 		Name: f.opt.Enc.FromStandardName(newName),
@@ -1107,18 +1194,13 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
-	err := srcObj.readMetaData(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	srcLeaf, srcParentID, err := srcObj.fs.dirCache.FindPath(ctx, srcObj.remote, false)
+	err = srcObj.readMetaData(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1129,31 +1211,74 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	if srcParentID != dstParentID {
-		// Do the move
+	if srcObj.parent != dstParentID {
+		// Perform the move. A numbered copy might be generated upon name collision.
 		if err = f.moveObjects(ctx, []string{srcObj.id}, dstParentID); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("move: failed to move object %s to new parent %s: %w", srcObj.id, dstParentID, err)
 		}
+		defer func() {
+			if err != nil {
+				// FIXME: Restored file might have a numbered name if a conflict occurs
+				if mvErr := f.moveObjects(ctx, []string{srcObj.id}, srcObj.parent); mvErr != nil {
+					fs.Logf(f, "move: couldn't restore original object %q to %q after move failure: %v", dstObj.id, src.Remote(), mvErr)
+				}
+			}
+		}()
 	}
-	// Manually update info of moved object to save API calls
-	dstObj.id = srcObj.id
-	dstObj.mimeType = srcObj.mimeType
-	dstObj.gcid = srcObj.gcid
-	dstObj.md5sum = srcObj.md5sum
-	dstObj.hasMetaData = true
 
-	if srcLeaf != dstLeaf {
-		// Rename
-		info, err := f.renameObject(ctx, srcObj.id, dstLeaf)
-		if err != nil {
-			return nil, fmt.Errorf("move: couldn't rename moved file: %w", err)
+	// Find the moved object and any conflict object with the same name.
+	var moved, conflict *api.File
+	_, err = f.listAll(ctx, dstParentID, api.KindOfFile, "false", func(item *api.File) bool {
+		if item.ID == srcObj.id {
+			moved = item
+			if item.Name == dstLeaf {
+				return true
+			}
+		} else if item.Name == dstLeaf {
+			conflict = item
 		}
-		return dstObj, dstObj.setMetaData(info)
+		// Stop early if both found
+		return moved != nil && conflict != nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("move: couldn't locate moved file %q in destination directory %q: %w", srcObj.id, dstParentID, err)
 	}
-	return dstObj, nil
+	if moved == nil {
+		return nil, fmt.Errorf("move: moved file %q not found in destination", srcObj.id)
+	}
+
+	// If moved object already has the correct name, return
+	if moved.Name == dstLeaf {
+		return dstObj, dstObj.setMetaData(moved)
+	}
+	// If name collision, delete conflicting file first
+	if conflict != nil {
+		if err = f.deleteObjects(ctx, []string{conflict.ID}, true); err != nil {
+			return nil, fmt.Errorf("move: couldn't delete conflicting file: %w", err)
+		}
+		defer func() {
+			if err != nil {
+				if restoreErr := f.untrashObjects(ctx, []string{conflict.ID}); restoreErr != nil {
+					fs.Logf(f, "move: couldn't restore conflicting file: %v", restoreErr)
+				}
+			}
+		}()
+	}
+	info, err := f.renameObject(ctx, srcObj.id, dstLeaf)
+	if err != nil {
+		return nil, fmt.Errorf("move: couldn't rename moved file %q to %q: %w", dstObj.id, dstLeaf, err)
+	}
+	return dstObj, dstObj.setMetaData(info)
 }
 
 // copy objects
+//
+// Objects cannot be copied to their current folder.
+// "file_move_or_copy_to_cur" (9): Please don't move or copy to current folder or sub folder
+//
+// If a name collision occurs in the destination folder, PikPak might automatically
+// rename the copied item(s) by appending a numbered suffix. For example,
+// foo.txt -> foo(1).txt or foo(2).txt if foo(1).txt already exists
 func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err error) {
 	if len(IDs) == 0 {
 		return nil
@@ -1177,13 +1302,13 @@ func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err e
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	err := srcObj.readMetaData(ctx)
+	err = srcObj.readMetaData(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1198,31 +1323,55 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't copy - same parent")
 		return nil, fs.ErrorCantCopy
 	}
+
+	// Check for possible conflicts: Pikpak creates numbered copies on name collision.
+	var conflict *api.File
+	_, srcLeaf := dircache.SplitPath(srcObj.remote)
+	if srcLeaf == dstLeaf {
+		if conflict, err = f.readMetaDataForPath(ctx, remote); err == nil {
+			// delete conflicting file
+			if err = f.deleteObjects(ctx, []string{conflict.ID}, true); err != nil {
+				return nil, fmt.Errorf("copy: couldn't delete conflicting file: %w", err)
+			}
+			defer func() {
+				if err != nil {
+					if restoreErr := f.untrashObjects(ctx, []string{conflict.ID}); restoreErr != nil {
+						fs.Logf(f, "copy: couldn't restore conflicting file: %v", restoreErr)
+					}
+				}
+			}()
+		} else if err != fs.ErrorObjectNotFound {
+			return nil, err
+		}
+	} else {
+		dstDir, _ := dircache.SplitPath(remote)
+		dstObj.remote = path.Join(dstDir, srcLeaf)
+		if conflict, err = f.readMetaDataForPath(ctx, dstObj.remote); err == nil {
+			tmpName := conflict.Name + "-rclone-copy-" + random.String(8)
+			if _, err = f.renameObject(ctx, conflict.ID, tmpName); err != nil {
+				return nil, fmt.Errorf("copy: couldn't rename conflicting file: %w", err)
+			}
+			defer func() {
+				if _, renameErr := f.renameObject(ctx, conflict.ID, conflict.Name); renameErr != nil {
+					fs.Logf(f, "copy: couldn't rename conflicting file back to original: %v", renameErr)
+				}
+			}()
+		} else if err != fs.ErrorObjectNotFound {
+			return nil, err
+		}
+	}
+
 	// Copy the object
 	if err := f.copyObjects(ctx, []string{srcObj.id}, dstParentID); err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
-	// Update info of the copied object with new parent but source name
-	if info, err := dstObj.fs.readMetaDataForPath(ctx, srcObj.remote); err != nil {
-		return nil, fmt.Errorf("copy: couldn't locate copied file: %w", err)
-	} else if err = dstObj.setMetaData(info); err != nil {
-		return nil, err
-	}
-
-	// Can't copy and change name in one step so we have to check if we have
-	// the correct name after copy
-	srcLeaf, _, err := srcObj.fs.dirCache.FindPath(ctx, srcObj.remote, false)
+	err = dstObj.readMetaData(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("copy: couldn't locate copied file: %w", err)
 	}
 
 	if srcLeaf != dstLeaf {
-		// Rename
-		info, err := f.renameObject(ctx, dstObj.id, dstLeaf)
-		if err != nil {
-			return nil, fmt.Errorf("copy: couldn't rename copied file: %w", err)
-		}
-		return dstObj, dstObj.setMetaData(info)
+		return f.Move(ctx, dstObj, remote)
 	}
 	return dstObj, nil
 }
@@ -1260,9 +1409,7 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	return
 }
 
-func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, size int64, resumable *api.Resumable) (err error) {
-	p := resumable.Params
-
+func (f *Fs) newS3Client(ctx context.Context, p *api.ResumableParams) (s3Client *s3.Client, err error) {
 	// Create a credentials provider
 	creds := credentials.NewStaticCredentialsProvider(p.AccessKeyID, p.AccessKeySecret, p.SecurityToken)
 
@@ -1272,22 +1419,64 @@ func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, s
 	if err != nil {
 		return
 	}
+	ci := fs.GetConfig(ctx)
+	cfg.RetryMaxAttempts = ci.LowLevelRetries
+	cfg.HTTPClient = getClient(ctx, &f.opt)
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String("https://mypikpak.com/")
+		o.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
+		o.ResponseChecksumValidation = aws.ResponseChecksumValidationWhenRequired
 	})
-	partSize := chunksize.Calculator(name, size, int(manager.MaxUploadParts), f.opt.ChunkSize)
+	return client, nil
+}
 
-	// Create an uploader with custom options
-	uploader := manager.NewUploader(client, func(u *manager.Uploader) {
-		u.PartSize = int64(partSize)
-		u.Concurrency = f.opt.UploadConcurrency
-	})
-	// Perform an upload
-	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+func (f *Fs) uploadByResumable(ctx context.Context, in io.Reader, name string, size int64, resumable *api.Resumable, options ...fs.OpenOption) (err error) {
+	p := resumable.Params
+
+	if size < 0 || size >= int64(f.opt.UploadCutoff) {
+		mu, err := f.newChunkWriter(ctx, name, size, p, in, options...)
+		if err != nil {
+			return fmt.Errorf("multipart upload failed to initialise: %w", err)
+		}
+		return mu.Upload(ctx)
+	}
+
+	// upload singlepart
+	client, err := f.newS3Client(ctx, p)
+	if err != nil {
+		return fmt.Errorf("failed to create upload client: %w", err)
+	}
+	req := &s3.PutObjectInput{
 		Bucket: &p.Bucket,
 		Key:    &p.Key,
-		Body:   in,
+		Body:   io.NopCloser(in),
+	}
+	// Apply upload options
+	for _, option := range options {
+		key, value := option.Header()
+		lowerKey := strings.ToLower(key)
+		switch lowerKey {
+		case "":
+			// ignore
+		case "cache-control":
+			req.CacheControl = aws.String(value)
+		case "content-disposition":
+			req.ContentDisposition = aws.String(value)
+		case "content-encoding":
+			req.ContentEncoding = aws.String(value)
+		case "content-type":
+			req.ContentType = aws.String(value)
+		}
+	}
+	var s3opts = []func(*s3.Options){}
+	// Can't retry single part uploads as only have an io.Reader
+	s3opts = append(s3opts, func(o *s3.Options) {
+		o.RetryMaxAttempts = 1
+	})
+	err = f.pacer.CallNoRetry(func() (bool, error) {
+		_, err = client.PutObject(ctx, req, s3opts...)
+		return f.shouldRetry(ctx, nil, err)
 	})
 	return
 }
@@ -1345,7 +1534,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 	if uploadType == api.UploadTypeForm && new.Form != nil {
 		err = f.uploadByForm(ctx, in, req.Name, size, new.Form, options...)
 	} else if uploadType == api.UploadTypeResumable && new.Resumable != nil {
-		err = f.uploadByResumable(ctx, in, leaf, size, new.Resumable)
+		err = f.uploadByResumable(ctx, in, leaf, size, new.Resumable, options...)
 	} else {
 		err = fmt.Errorf("no method available for uploading: %+v", new)
 	}

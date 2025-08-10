@@ -39,6 +39,7 @@ type Backend struct {
 	IgnoreTests []string // paths of tests not to run, blank for none
 	ListRetries int      // -list-retries if > 0
 	ExtraTime   float64  // factor to multiply the timeout by
+	Env         []string // environment variables to set in form KEY=VALUE
 }
 
 // includeTest returns true if this backend should be included in this
@@ -94,6 +95,7 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 			Ignore:      ignore,
 			ListRetries: b.ListRetries,
 			ExtraTime:   b.ExtraTime,
+			Env:         b.Env,
 		}
 		if t.AddBackend {
 			run.Path = path.Join(run.Path, b.Backend)

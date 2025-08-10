@@ -5,6 +5,7 @@
 > Contributions, feedback, and scrutiny are welcome.
 
 [<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
+<!-- markdownlint-disable-next-line no-inline-html -->
 [<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
 
 [Website](https://rclone.org) |
@@ -19,7 +20,8 @@
 
 # Rclone
 
-Rclone *("rsync for cloud storage")* is a command-line program to sync files and directories to and from different cloud storage providers.
+Rclone *("rsync for cloud storage")* is a command-line program to sync files and
+directories to and from different cloud storage providers.
 
 ## Storage providers
 
@@ -123,50 +125,54 @@ Please see [the full list of all storage providers and their features](https://r
 
 These backends adapt or modify other storage providers
 
-  * Alias: rename existing remotes [:page_facing_up:](https://rclone.org/alias/)
-  * Cache: cache remotes (DEPRECATED) [:page_facing_up:](https://rclone.org/cache/)
-  * Chunker: split large files [:page_facing_up:](https://rclone.org/chunker/)
-  * Combine: combine multiple remotes into a directory tree [:page_facing_up:](https://rclone.org/combine/)
-  * Compress: compress files [:page_facing_up:](https://rclone.org/compress/)
-  * Crypt: encrypt files [:page_facing_up:](https://rclone.org/crypt/)
-  * Hasher: hash files [:page_facing_up:](https://rclone.org/hasher/)
-  * Union: join multiple remotes to work together [:page_facing_up:](https://rclone.org/union/)
+- Alias: rename existing remotes [:page_facing_up:](https://rclone.org/alias/)
+- Cache: cache remotes (DEPRECATED) [:page_facing_up:](https://rclone.org/cache/)
+- Chunker: split large files [:page_facing_up:](https://rclone.org/chunker/)
+- Combine: combine multiple remotes into a directory tree [:page_facing_up:](https://rclone.org/combine/)
+- Compress: compress files [:page_facing_up:](https://rclone.org/compress/)
+- Crypt: encrypt files [:page_facing_up:](https://rclone.org/crypt/)
+- Hasher: hash files [:page_facing_up:](https://rclone.org/hasher/)
+- Union: join multiple remotes to work together [:page_facing_up:](https://rclone.org/union/)
 
 ## Features
 
-  * MD5/SHA-1 hashes checked at all times for file integrity
-  * Timestamps preserved on files
-  * Partial syncs supported on a whole file basis
-  * [Copy](https://rclone.org/commands/rclone_copy/) mode to just copy new/changed files
-  * [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory identical
-  * [Bisync](https://rclone.org/bisync/) (two way) to keep two directories in sync bidirectionally
-  * [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash equality
-  * Can sync to and from network, e.g. two different cloud accounts
-  * Optional large file chunking ([Chunker](https://rclone.org/chunker/))
-  * Optional transparent compression ([Compress](https://rclone.org/compress/))
-  * Optional encryption ([Crypt](https://rclone.org/crypt/))
-  * Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
-  * Multi-threaded downloads to local disk
-  * Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files over HTTP/WebDAV/FTP/SFTP/DLNA
+- MD5/SHA-1 hashes checked at all times for file integrity
+- Timestamps preserved on files
+- Partial syncs supported on a whole file basis
+- [Copy](https://rclone.org/commands/rclone_copy/) mode to just copy new/changed
+  files
+- [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory
+  identical
+- [Bisync](https://rclone.org/bisync/) (two way) to keep two directories in sync
+  bidirectionally
+- [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash
+  equality
+- Can sync to and from network, e.g. two different cloud accounts
+- Optional large file chunking ([Chunker](https://rclone.org/chunker/))
+- Optional transparent compression ([Compress](https://rclone.org/compress/))
+- Optional encryption ([Crypt](https://rclone.org/crypt/))
+- Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
+- Multi-threaded downloads to local disk
+- Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files
+  over HTTP/WebDAV/FTP/SFTP/DLNA
 
 ## Installation & documentation
 
 Please see the [rclone website](https://rclone.org/) for:
 
-  * [Installation](https://rclone.org/install/)
-  * [Documentation & configuration](https://rclone.org/docs/)
-  * [Changelog](https://rclone.org/changelog/)
-  * [FAQ](https://rclone.org/faq/)
-  * [Storage providers](https://rclone.org/overview/)
-  * [Forum](https://forum.rclone.org/)
-  * ...and more
+- [Installation](https://rclone.org/install/)
+- [Documentation & configuration](https://rclone.org/docs/)
+- [Changelog](https://rclone.org/changelog/)
+- [FAQ](https://rclone.org/faq/)
+- [Storage providers](https://rclone.org/overview/)
+- [Forum](https://forum.rclone.org/)
+- ...and more
 
 ## Downloads
 
   * https://github.com/BenjiThatFoxGuy/bclone/releases/latest/
 
-License
--------
+## License
 
 This is free software under the terms of the MIT license (check the
 [COPYING file](/COPYING) included in this package).

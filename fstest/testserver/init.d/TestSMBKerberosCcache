@@ -2,20 +2,20 @@
 
 set -e
 
-IMAGE=rclone/test-smb-kerberos
-NAME=smb-kerberos
+# Set default location for Kerberos config and ccache. Can be overridden by the caller
+# using environment variables RCLONE_TEST_CUSTOM_CCACHE_LOCATION and KRB5_CONFIG.
+export TEMP_DIR=/tmp/rclone_krb5_ccache
+mkdir -p "${TEMP_DIR}"
+export KRB5_CONFIG=${KRB5_CONFIG:-${TEMP_DIR}/krb5.conf}
+export RCLONE_TEST_CUSTOM_CCACHE_LOCATION=${RCLONE_TEST_CUSTOM_CCACHE_LOCATION:-${TEMP_DIR}/ccache}
+
+IMAGE=rclone/test-smb-kerberos-ccache
+NAME=smb-kerberos-ccache
 USER=rclone
 DOMAIN=RCLONE
 REALM=RCLONE.LOCAL
-SMB_PORT=28633
-KRB5_PORT=28634
-
-# KRB5_CONFIG and KRB5CCNAME should be set by the caller but default
-# them here for the integration tests
-export TEMP_DIR=/tmp/rclone_krb5
-mkdir -p "${TEMP_DIR}"
-export KRB5_CONFIG=${KRB5_CONFIG:-${TEMP_DIR}/krb5.conf}
-export KRB5CCNAME=${KRB5CCNAME:-${TEMP_DIR}/ccache}
+SMB_PORT=28637
+KRB5_PORT=28638
 
 . $(dirname "$0")/docker.bash
 
@@ -53,15 +53,14 @@ valid users = rclone
 EOS
 CMD ["samba", "-i"]
 EOF
- 
+
     docker run --rm -d --name ${NAME} \
         -p 127.0.0.1:${SMB_PORT}:445 \
         -p 127.0.0.1:${SMB_PORT}:445/udp \
         -p 127.0.0.1:${KRB5_PORT}:88 \
         ${IMAGE}
 
-    # KRB5_CONFIG and KRB5CCNAME are set by the caller
-    cat > ${KRB5_CONFIG} <<EOF
+    cat > "${KRB5_CONFIG}" <<EOF
 [libdefaults]
     default_realm = ${REALM}
 [realms]
@@ -69,15 +68,17 @@ ${REALM} = {
     kdc = localhost
 }
 EOF
-    docker cp ${KRB5_CONFIG} ${NAME}:/etc/krb5.conf
+
+    docker cp "${KRB5_CONFIG}" ${NAME}:/etc/krb5.conf
     docker exec ${NAME} samba-tool user get-kerberos-ticket rclone --output-krb5-ccache=/tmp/ccache
-    docker cp ${NAME}:/tmp/ccache ${KRB5CCNAME}
-    sed -i -e "s/localhost/localhost:${KRB5_PORT}/" ${KRB5_CONFIG}
-    
+    docker cp ${NAME}:/tmp/ccache "${RCLONE_TEST_CUSTOM_CCACHE_LOCATION}"
+    sed -i -e "s/localhost/localhost:${KRB5_PORT}/" "${KRB5_CONFIG}"
+
     echo type=smb
     echo host=localhost
     echo port=$SMB_PORT
     echo use_kerberos=true
+    echo kerberos_ccache=${RCLONE_TEST_CUSTOM_CCACHE_LOCATION}
     echo _connect=127.0.0.1:${SMB_PORT}
 }
 

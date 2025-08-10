@@ -288,7 +288,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			accounting.GlobalStats().ResetErrors()
 		}
 		if ci.RetriesInterval > 0 {
-			time.Sleep(ci.RetriesInterval)
+			time.Sleep(time.Duration(ci.RetriesInterval))
 		}
 	}
 	stopStats()

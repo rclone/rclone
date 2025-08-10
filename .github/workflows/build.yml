@@ -14,6 +14,9 @@ concurrency:
 jobs:
   build:
     timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -65,7 +68,6 @@ jobs:
           check-latest: true
 
       - name: Set environment variables
-        shell: bash
         run: |
           echo 'GOTAGS=${{ matrix.gotags }}' >> $GITHUB_ENV
           echo 'BUILD_FLAGS=${{ matrix.build_flags }}' >> $GITHUB_ENV
@@ -73,7 +75,6 @@ jobs:
           if [[ "${{ matrix.cgo }}" != "" ]]; then echo 'CGO_ENABLED=${{ matrix.cgo }}' >> $GITHUB_ENV ; fi
 
       - name: Install Libraries on Linux
-        shell: bash
         run: |
           sudo modprobe fuse
           sudo chmod 666 /dev/fuse
@@ -83,7 +84,6 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install Libraries on macOS
-        shell: bash
         run: |
           # https://github.com/Homebrew/brew/issues/15621#issuecomment-1619266788
           # https://github.com/orgs/Homebrew/discussions/4612#discussioncomment-6319008
@@ -113,7 +113,6 @@ jobs:
         if: matrix.os == 'windows-latest'
 
       - name: Print Go version and environment
-        shell: bash
         run: |
           printf "Using go at: $(which go)\n"
           printf "Go version: $(go version)\n"
@@ -191,11 +190,20 @@ jobs:
           echo 'CGO_ENABLED=1' >> $GITHUB_ENV
           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
+      - name: arm-v7a Set environment variables
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=arm' >> $GITHUB_ENV
+          echo 'GOARM=7' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
       - name: arm-v7a build
         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${{ github.ref_name }} -o build/rclone-armv7a .
 
       - name: arm64-v8a Set environment variables
-        shell: bash
         run: |
           echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV

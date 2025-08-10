@@ -23,7 +23,7 @@ def add_email(name, email):
     """
     print("Adding %s <%s>" % (name, email))
     with open(AUTHORS, "a+") as fd:
-        print("  * %s <%s>" % (name, email), file=fd)
+        print("- %s <%s>" % (name, email), file=fd)
     subprocess.check_call(["git", "commit", "-m", "Add %s to contributors" % name, AUTHORS])
     
 def main():

@@ -453,7 +453,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 			return nil, fmt.Errorf("create new shared key credential failed: %w", err)
 		}
 	case opt.UseAZ:
-		var options = azidentity.AzureCLICredentialOptions{}
+		options := azidentity.AzureCLICredentialOptions{}
 		cred, err = azidentity.NewAzureCLICredential(&options)
 		fmt.Println(cred)
 		if err != nil {
@@ -550,7 +550,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 	case opt.UseMSI:
 		// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
 		// Validate and ensure exactly one is set. (To do: better validation.)
-		var b2i = map[bool]int{false: 0, true: 1}
+		b2i := map[bool]int{false: 0, true: 1}
 		set := b2i[opt.MSIClientID != ""] + b2i[opt.MSIObjectID != ""] + b2i[opt.MSIResourceID != ""]
 		if set > 1 {
 			return nil, errors.New("more than one user-assigned identity ID is set")
@@ -568,6 +568,37 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		cred, err = azidentity.NewManagedIdentityCredential(&options)
 		if err != nil {
 			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+	case opt.ClientID != "" && opt.Tenant != "" && opt.MSIClientID != "":
+		// Workload Identity based authentication
+		var options azidentity.ManagedIdentityCredentialOptions
+		options.ID = azidentity.ClientID(opt.MSIClientID)
+
+		msiCred, err := azidentity.NewManagedIdentityCredential(&options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+
+		getClientAssertions := func(context.Context) (string, error) {
+			token, err := msiCred.GetToken(context.Background(), policy.TokenRequestOptions{
+				Scopes: []string{"api://AzureADTokenExchange"},
+			})
+			if err != nil {
+				return "", fmt.Errorf("failed to acquire MSI token: %w", err)
+			}
+
+			return token.Token, nil
+		}
+
+		assertOpts := &azidentity.ClientAssertionCredentialOptions{}
+		cred, err = azidentity.NewClientAssertionCredential(
+			opt.Tenant,
+			opt.ClientID,
+			getClientAssertions,
+			assertOpts)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire client assertion token: %w", err)
 		}
 	default:
 		return nil, errors.New("no authentication method configured")
@@ -823,7 +854,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		return entries, err
 	}
 
-	var opt = &directory.ListFilesAndDirectoriesOptions{
+	opt := &directory.ListFilesAndDirectoriesOptions{
 		Include: directory.ListFilesInclude{
 			Timestamps: true,
 		},
@@ -981,6 +1012,10 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	opt := file.SetHTTPHeadersOptions{
 		SMBProperties: &file.SMBProperties{
 			LastWriteTime: &t,
+		},
+		HTTPHeaders: &file.HTTPHeaders{
+			ContentMD5:  o.md5,
+			ContentType: &o.contentType,
 		},
 	}
 	_, err := o.fileClient().SetHTTPHeaders(ctx, &opt)

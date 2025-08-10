@@ -2,6 +2,8 @@ package pacer
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -349,4 +351,83 @@ func TestCallParallel(t *testing.T) {
 
 	assert.Equal(t, 5, called)
 	wait.Broadcast()
+}
+
+func TestRetryAfterError_NonNilErr(t *testing.T) {
+	orig := errors.New("test failure")
+	dur := 2 * time.Second
+	err := RetryAfterError(orig, dur)
+
+	rErr, ok := err.(*retryAfterError)
+	if !ok {
+		t.Fatalf("expected *retryAfterError, got %T", err)
+	}
+	if !strings.Contains(err.Error(), "test failure") {
+		t.Errorf("Error() = %q, want it to contain original message", err.Error())
+	}
+	if !strings.Contains(err.Error(), dur.String()) {
+		t.Errorf("Error() = %q, want it to contain retryAfter %v", err.Error(), dur)
+	}
+	if rErr.retryAfter != dur {
+		t.Errorf("retryAfter = %v, want %v", rErr.retryAfter, dur)
+	}
+	if !errors.Is(err, orig) {
+		t.Error("errors.Is(err, orig) = false, want true")
+	}
+}
+
+func TestRetryAfterError_NilErr(t *testing.T) {
+	dur := 5 * time.Second
+	err := RetryAfterError(nil, dur)
+	if !strings.Contains(err.Error(), "too many requests") {
+		t.Errorf("Error() = %q, want it to mention default message", err.Error())
+	}
+	if !strings.Contains(err.Error(), dur.String()) {
+		t.Errorf("Error() = %q, want it to contain retryAfter %v", err.Error(), dur)
+	}
+}
+
+func TestCauseMethod(t *testing.T) {
+	orig := errors.New("underlying")
+	dur := time.Second
+	rErr := RetryAfterError(orig, dur).(*retryAfterError)
+	cause := rErr.Cause()
+	if !errors.Is(cause, orig) {
+		t.Errorf("Cause() does not wrap original: got %v", cause)
+	}
+}
+
+func TestIsRetryAfter_True(t *testing.T) {
+	orig := errors.New("oops")
+	dur := 3 * time.Second
+	err := RetryAfterError(orig, dur)
+
+	gotDur, ok := IsRetryAfter(err)
+	if !ok {
+		t.Error("IsRetryAfter returned false, want true")
+	}
+	if gotDur != dur {
+		t.Errorf("got %v, want %v", gotDur, dur)
+	}
+}
+
+func TestIsRetryAfter_Nested(t *testing.T) {
+	orig := errors.New("fail")
+	dur := 4 * time.Second
+	retryErr := RetryAfterError(orig, dur)
+	nested := fmt.Errorf("wrapped: %w", retryErr)
+
+	gotDur, ok := IsRetryAfter(nested)
+	if !ok {
+		t.Error("IsRetryAfter on nested error returned false, want true")
+	}
+	if gotDur != dur {
+		t.Errorf("got %v, want %v", gotDur, dur)
+	}
+}
+
+func TestIsRetryAfter_False(t *testing.T) {
+	if _, ok := IsRetryAfter(errors.New("other")); ok {
+		t.Error("IsRetryAfter = true for non-retry error, want false")
+	}
 }
