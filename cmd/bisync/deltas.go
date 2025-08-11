@@ -396,7 +396,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 					b.march.ls1.getPut(file, skippedDirs1)
 					b.march.ls2.getPut(file, skippedDirs2)
 					b.debugFn(file, func() {
-						b.debug(file, fmt.Sprintf("deltas dir: %s, ls1 has name?: %v, b.march.ls2 has name?: %v", file, b.march.ls1.has(b.DebugName), b.march.ls2.has(b.DebugName)))
+						b.debug(file, fmt.Sprintf("deltas dir: %s, ls1 has name?: %v, ls2 has name?: %v", file, b.march.ls1.has(b.DebugName), b.march.ls2.has(b.DebugName)))
 					})
 				} else {
 					equal := matches.Has(file)
