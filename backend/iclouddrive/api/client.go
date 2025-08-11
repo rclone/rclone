@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fshttp"
@@ -31,6 +33,13 @@ type Client struct {
 	srv                 *rest.Client
 	Session             *Session
 	sessionSaveCallback sessionSave
+
+	// ADP/PCS support
+	mutextHSA          sync.Mutex
+	lastAttemptHSA     time.Time
+	webBuildNumber     string
+	webMasteringNumber string
+	pcsReady           map[string]bool
 
 	drive *DriveService
 }
@@ -63,12 +72,40 @@ func New(appleID, password, trustToken string, clientID string, cookies []*http.
 func (c *Client) DriveService() (*DriveService, error) {
 	var err error
 	if c.drive == nil {
+		// Ensure PCS consent/cookies for iCloud Drive before use
+		if err := c.EnsurePCSForServiceOnce("iclouddrive"); err != nil {
+			fs.Infof("icloud", "Unable to complete ADP/PCS consent for iCloud Drive: %v", err)
+			return nil, err
+		}
+
 		c.drive, err = NewDriveService(c)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return c.drive, nil
+}
+
+// EnsurePCSForServiceOnce protects ensurePCSForService with a tiny "done" map
+// so we don't re-run the flow if multiple goroutines race.
+func (c *Client) EnsurePCSForServiceOnce(app string) error {
+	c.mutextHSA.Lock()
+	if c.pcsReady == nil {
+		c.pcsReady = make(map[string]bool)
+	}
+	if c.pcsReady[app] {
+		c.mutextHSA.Unlock()
+		return nil
+	}
+	c.mutextHSA.Unlock()
+
+	if err := c.EnsurePCSForService(app); err != nil {
+		return err
+	}
+	c.mutextHSA.Lock()
+	c.pcsReady[app] = true
+	c.mutextHSA.Unlock()
+	return nil
 }
 
 // Request makes a request and retries it if the session is invalid.

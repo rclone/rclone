@@ -61,6 +61,17 @@ func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, resp
 	return resp, nil
 }
 
+// CaptureCookies merges Set-Cookie from a raw HTTP response into the session jar.
+// Used by bootstrap calls that don't go through CallJSON.
+func (s *Session) CaptureCookies(resp *http.Response) {
+	if resp == nil {
+		return
+	}
+	if merged, _ := MergeCookies(s.Cookies, resp.Cookies()); merged != nil {
+		s.Cookies = merged
+	}
+}
+
 // Requires2FA returns true if the session requires 2FA
 func (s *Session) Requires2FA() bool {
 	return s.AccountInfo.DsInfo.HsaVersion == 2 && s.AccountInfo.HsaChallengeRequired
