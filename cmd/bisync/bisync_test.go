@@ -228,6 +228,17 @@ var color = bisync.Color
 // TestMain drives the tests
 func TestMain(m *testing.M) {
 	bisync.LogTZ = time.UTC
+	ci := fs.GetConfig(context.TODO())
+	ciSave := *ci
+	defer func() {
+		*ci = ciSave
+	}()
+	// need to set context.TODO() here as we cannot pass a ctx to fs.LogLevelPrintf
+	ci.LogLevel = fs.LogLevelInfo
+	if *argDebug {
+		ci.LogLevel = fs.LogLevelDebug
+	}
+	fstest.Initialise()
 	fstest.TestMain(m)
 }
 
@@ -240,7 +251,8 @@ func TestBisyncRemoteLocal(t *testing.T) {
 	fs.Logf(nil, "remote: %v", remote)
 	require.NoError(t, err)
 	defer cleanup()
-	testBisync(t, remote, *argRemote2)
+	ctx, _ := fs.AddConfig(context.TODO())
+	testBisync(ctx, t, remote, *argRemote2)
 }
 
 // Path1 is local, Path2 is remote
@@ -252,7 +264,8 @@ func TestBisyncLocalRemote(t *testing.T) {
 	fs.Logf(nil, "remote: %v", remote)
 	require.NoError(t, err)
 	defer cleanup()
-	testBisync(t, *argRemote2, remote)
+	ctx, _ := fs.AddConfig(context.TODO())
+	testBisync(ctx, t, *argRemote2, remote)
 }
 
 // Path1 and Path2 are both different directories on remote
@@ -262,7 +275,8 @@ func TestBisyncRemoteRemote(t *testing.T) {
 	fs.Logf(nil, "remote: %v", remote)
 	require.NoError(t, err)
 	defer cleanup()
-	testBisync(t, remote, remote)
+	ctx, _ := fs.AddConfig(context.TODO())
+	testBisync(ctx, t, remote, remote)
 }
 
 // make sure rc can cope with running concurrent jobs
@@ -285,10 +299,7 @@ func testParallel(t *testing.T) {
 }
 
 // TestBisync is a test engine for bisync test cases.
-func testBisync(t *testing.T, path1, path2 string) {
-	ctx := context.Background()
-	fstest.Initialise()
-
+func testBisync(ctx context.Context, t *testing.T, path1, path2 string) {
 	ci := fs.GetConfig(ctx)
 	ciSave := *ci
 	defer func() {
@@ -297,7 +308,9 @@ func testBisync(t *testing.T, path1, path2 string) {
 	if *argRefreshTimes {
 		ci.RefreshTimes = true
 	}
+	bisync.ColorsLock.Lock()
 	bisync.Colors = true
+	bisync.ColorsLock.Unlock()
 	ci.FsCacheExpireDuration = fs.Duration(5 * time.Hour)
 
 	baseDir, err := os.Getwd()
@@ -618,13 +631,8 @@ func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) 
 }
 
 func (b *bisyncTest) cleanupCase(ctx context.Context) {
-	// Silence "directory not found" errors from the ftp backend
-	_ = bilib.CaptureOutput(func() {
-		_ = operations.Purge(ctx, b.fs1, "")
-	})
-	_ = bilib.CaptureOutput(func() {
-		_ = operations.Purge(ctx, b.fs2, "")
-	})
+	_ = operations.Purge(ctx, b.fs1, "")
+	_ = operations.Purge(ctx, b.fs2, "")
 	_ = os.RemoveAll(b.workDir)
 	accounting.Stats(ctx).ResetCounters()
 }
@@ -639,11 +647,6 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	defer func() {
 		*ci = ciSave
 	}()
-	ci.LogLevel = fs.LogLevelInfo
-	if b.debug {
-		ci.LogLevel = fs.LogLevelDebug
-	}
-
 	testFunc := func() {
 		src := filepath.Join(b.dataDir, "file7.txt")
 
