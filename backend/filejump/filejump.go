@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -735,15 +736,68 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 }
 
 // CleanUp empties the trash
-// Streamed approach: repeatedly list the first page of trash (up to 1000 items)
-// and hard-delete those IDs in a batch, until the trash is empty.
-// The previous shortcut using EmptyTrash is intentionally commented out in favor of
-// the robust streaming deletion to avoid failures with very large trash.
+// Original approach: call emptyTrash shortcut. If that triggers a SQL 'too many placeholders' error,
+// extract all IDs from the message and bulk delete them in chunks.
 func (f *Fs) CleanUp(ctx context.Context) error {
-	// Previous approach (kept for reference):
-	// type RequestEmptyTrash struct { EntryIDs []int `json:"entryIds"`; EmptyTrash bool `json:"emptyTrash"` }
-	// type ResultEmptyTrash struct { Status string `json:"status,omitempty"` }
-	// _, _ = CallJSONPost[ResultEmptyTrash, RequestEmptyTrash](ctx, f, "/file-entries/delete", &RequestEmptyTrash{EntryIDs: []int{}, EmptyTrash: true})
+	// 1) Try the original empty trash call
+	type RequestEmptyTrash struct {
+		EntryIDs   []int `json:"entryIds"`
+		EmptyTrash bool  `json:"emptyTrash"`
+	}
+	type ResultEmptyTrash struct {
+		Status string `json:"status,omitempty"`
+	}
+	opts := &rest.Opts{Method: "POST", Path: "/file-entries/delete"}
+	if f.opt.WorkspaceID != "" && f.opt.WorkspaceID != "0" {
+		opts.Parameters = url.Values{"workspaceId": []string{f.opt.WorkspaceID}}
+	}
+	resp, err := f.srv.CallJSON(ctx, opts, &RequestEmptyTrash{EntryIDs: []int{}, EmptyTrash: true}, &ResultEmptyTrash{})
+	if err == nil {
+		fs.Infof(f, "CleanUp: emptied trash via EmptyTrash API")
+		return nil
+	}
+
+	// 2) If we got the specific SQL error with a huge IN (...) list, parse IDs and bulk delete
+	msg := err.Error()
+	if resp != nil && resp.StatusCode == 500 {
+		fs.Debugf(f, "CleanUp: received 500 on EmptyTrash, attempting to parse IDs from error body")
+	} else {
+		return err
+	}
+
+	// Extract IDs from SQL "in (...)" if possible
+	idsSegment := ""
+	if idx := strings.Index(strings.ToLower(msg), " in ("); idx >= 0 {
+		rest := msg[idx+5:]
+		if end := strings.Index(rest, ")"); end > 0 {
+			idsSegment = rest[:end+1]
+		}
+	}
+	if idsSegment == "" {
+		idsSegment = msg
+	}
+
+	re := regexp.MustCompile(`\d+`)
+	matches := re.FindAllString(idsSegment, -1)
+	if len(matches) == 0 {
+		return err
+	}
+
+	idsMap := make(map[int]struct{}, len(matches))
+	ids := make([]int, 0, len(matches))
+	for _, m := range matches {
+		if v, convErr := strconv.Atoi(m); convErr == nil {
+			if _, ok := idsMap[v]; !ok {
+				idsMap[v] = struct{}{}
+				ids = append(ids, v)
+			}
+		}
+	}
+	if len(ids) == 0 {
+		return err
+	}
+
+	fs.Infof(f, "CleanUp: EmptyTrash SQL error detected; parsed %d IDs — performing bulk hard delete in chunks", len(ids))
 
 	type RequestDelete struct {
 		EntryIDs      []int `json:"entryIds"`
@@ -753,100 +807,50 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 		Status string `json:"status,omitempty"`
 	}
 
-	const batchSize = 100
-	var (
-		batchNum     int
-		totalFound   int
-		totalDeleted int
-	)
-	fs.Infof(f, "CleanUp: streaming hard delete of trash in batches of %d", batchSize)
+	const chunkSize = 10
+	deleted := 0
+	var errs []string
 
-	for {
-		values := url.Values{}
-		values.Set("section", "trash")
-		values.Set("deletedOnly", "true")
-		values.Set("orderDir", "desc")
-		values.Set("orderBy", "name")
-		values.Set("perPage", strconv.Itoa(batchSize))
-		values.Set("page", "1") // always fetch first page after deletions
+	delOpts := &rest.Opts{Method: "POST", Path: "/file-entries/delete"}
+	if f.opt.WorkspaceID != "" && f.opt.WorkspaceID != "0" {
+		delOpts.Parameters = url.Values{"workspaceId": []string{f.opt.WorkspaceID}}
+	}
 
-		// retryable list call
-		const maxRetries = 3
-		retrySleepBase := 2 * time.Second
-		var (
-			res *api.FileEntries
-			err error
-		)
-		for attempt := 1; attempt <= maxRetries; attempt++ {
-			res, err = CallJSONGet[api.FileEntries](ctx, f, "/drive/file-entries", &values)
-			if err == nil {
-				break
-			}
-			if attempt < maxRetries {
-				fs.Infof(f, "CleanUp: list attempt %d/%d failed: %v -- retrying", attempt, maxRetries, err)
-				time.Sleep(time.Duration(attempt) * retrySleepBase)
-				continue
-			}
-			return fmt.Errorf("cleanup list failed after %d attempts: %w", maxRetries, err)
+	for i := 0; i < len(ids); i += chunkSize {
+		end := i + chunkSize
+		if end > len(ids) {
+			end = len(ids)
 		}
+		chunk := ids[i:end]
+		req := &RequestDelete{EntryIDs: chunk, DeleteForever: true}
+		resDel := &ResultDelete{}
 
-		if len(res.Data) == 0 {
-			break // nothing left in trash
-		}
-
-		batchNum++
-		ids := make([]int, 0, len(res.Data))
-		for i := range res.Data {
-			if res.Data[i].ID != 0 {
-				ids = append(ids, res.Data[i].ID)
-			}
-		}
-		found := len(ids)
-		totalFound += found
-		fs.Infof(f, "CleanUp: batch %d - found the first %d items in trash", batchNum, found)
-
-		if found == 0 {
-			// Unlikely, but continue to next iteration just in case
+		if _, delErr := f.srv.CallJSON(ctx, delOpts, req, resDel); delErr != nil {
+			errMsg := fmt.Sprintf("chunk %d-%d failed: %v", i, end, delErr)
+			fs.Errorf(f, "CleanUp: %s", errMsg)
+			errs = append(errs, errMsg)
 			continue
 		}
-
-		req := RequestDelete{EntryIDs: ids, DeleteForever: true}
-		// retryable delete call
-		const maxRetriesDel = 3
-		retrySleepBaseDel := 2 * time.Second
-		var (
-			resDel *ResultDelete
-			delErr error
-		)
-		for attempt := 1; attempt <= maxRetriesDel; attempt++ {
-			resDel, delErr = CallJSONPost[ResultDelete, RequestDelete](ctx, f, "/file-entries/delete", &req)
-			if delErr == nil && resDel != nil && resDel.Status == "success" {
-				break
-			}
-			if attempt < maxRetriesDel {
-				status := "<nil>"
-				if resDel != nil {
-					status = resDel.Status
-				}
-				fs.Infof(f, "CleanUp: delete attempt %d/%d failed (status=%s, err=%v) -- retrying", attempt, maxRetriesDel, status, delErr)
-				time.Sleep(time.Duration(attempt) * retrySleepBaseDel)
-				continue
-			}
-			if delErr != nil {
-				return fmt.Errorf("cleanup batch %d delete failed after %d attempts: %w", batchNum, maxRetriesDel, delErr)
-			}
+		if resDel == nil || resDel.Status != "success" {
 			status := "<nil>"
 			if resDel != nil {
 				status = resDel.Status
 			}
-			return fmt.Errorf("cleanup batch %d delete returned non-success status after %d attempts: %s", batchNum, maxRetriesDel, status)
+			errMsg := fmt.Sprintf("chunk %d-%d returned non-success status: %s", i, end, status)
+			fs.Errorf(f, "CleanUp: %s", errMsg)
+			errs = append(errs, errMsg)
+			continue
 		}
 
-		totalDeleted += found
-		fs.Infof(f, "CleanUp: batch %d - deleted %d items (total deleted: %d)", batchNum, found, totalDeleted)
+		deleted += len(chunk)
+		fs.Infof(f, "CleanUp: bulk deleted %d items (total %d/%d)", len(chunk), deleted, len(ids))
 	}
 
-	fs.Infof(f, "CleanUp: completed - total found %d, total deleted %d in %d batches", totalFound, totalDeleted, batchNum)
+	fs.Infof(f, "CleanUp: completed — deleted %d items parsed from SQL error", deleted)
+
+	if len(errs) > 0 {
+		return fmt.Errorf("CleanUp completed with errors: %s", strings.Join(errs, "; "))
+	}
 	return nil
 }
 
