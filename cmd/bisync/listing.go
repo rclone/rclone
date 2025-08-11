@@ -42,10 +42,14 @@ var lineRegex = regexp.MustCompile(`^(\S) +(-?\d+) (\S+) (\S+) (\d{4}-\d\d-\d\dT
 // timeFormat defines time format used in listings
 const timeFormat = "2006-01-02T15:04:05.000000000-0700"
 
-// TZ defines time zone used in listings
 var (
+	// TZ defines time zone used in listings
 	TZ      = time.UTC
 	tzLocal = false
+
+	// LogTZ defines time zone used in logs (which may be different than that used in listings).
+	// time.Local by default, but we force UTC on tests to make them deterministic regardless of tester's location.
+	LogTZ = time.Local
 )
 
 // fileInfo describes a file
