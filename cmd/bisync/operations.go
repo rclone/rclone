@@ -87,7 +87,9 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	opt.OrigBackupDir = ci.BackupDir
 
 	if ci.TerminalColorMode == fs.TerminalColorModeAlways || (ci.TerminalColorMode == fs.TerminalColorModeAuto && !log.Redirected()) {
+		ColorsLock.Lock()
 		Colors = true
+		ColorsLock.Unlock()
 	}
 
 	err = b.setCompareDefaults(ctx)

@@ -20,7 +20,6 @@ func (b *bisyncRun) setResyncDefaults() {
 	}
 	if b.opt.ResyncMode != PreferNone {
 		b.opt.Resync = true
-		Opt.Resync = true // shouldn't be using this one, but set to be safe
 	}
 
 	// checks and warnings
