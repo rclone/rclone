@@ -226,6 +226,7 @@ var color = bisync.Color
 
 // TestMain drives the tests
 func TestMain(m *testing.M) {
+	bisync.LogTZ = time.UTC
 	fstest.TestMain(m)
 }
 
@@ -277,7 +278,6 @@ func testBisync(t *testing.T, path1, path2 string) {
 		ci.RefreshTimes = true
 	}
 	bisync.Colors = true
-	time.Local = bisync.TZ
 	ci.FsCacheExpireDuration = fs.Duration(5 * time.Hour)
 
 	baseDir, err := os.Getwd()
