@@ -15,7 +15,7 @@ jobs:
     if: github.actor == github.repository_owner  # Only run if PR is by repo owner
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -76,7 +76,7 @@ jobs:
           path: artifacts
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Comment with artifact info
         if: github.event_name == 'pull_request'
