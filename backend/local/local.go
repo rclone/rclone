@@ -671,8 +671,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			name := fi.Name()
 			mode := fi.Mode()
 			newRemote := f.cleanRemote(dir, name)
+			symlinkFlag := os.ModeSymlink
+			if runtime.GOOS == "windows" {
+				symlinkFlag |= os.ModeIrregular
+			}
 			// Follow symlinks if required
-			if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
+			if f.opt.FollowSymlinks && (mode&symlinkFlag) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
 				fi, err = os.Stat(localPath)
 				// Quietly skip errors on excluded files and directories
@@ -694,13 +698,13 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
-				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
+				if (mode&symlinkFlag) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
 					d := f.newDirectory(newRemote, fi)
 					entries = append(entries, d)
 				}
 			} else {
 				// Check whether this link should be translated
-				if f.opt.TranslateSymlinks && fi.Mode()&os.ModeSymlink != 0 {
+				if f.opt.TranslateSymlinks && fi.Mode()&symlinkFlag != 0 {
 					newRemote += fs.LinkSuffix
 				}
 				// Don't include non directory if not included

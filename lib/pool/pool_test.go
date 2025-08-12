@@ -240,11 +240,10 @@ func TestPoolMaxBufferMemory(t *testing.T) {
 	totalMemoryInit = sync.Once{} // reset the sync.Once as it likely has been used
 	totalMemory = nil
 	bp := New(60*time.Second, 4096, 2, true)
+	assert.NotNil(t, totalMemory)
 
 	assert.Equal(t, bp.alloced, 0)
-	assert.Nil(t, totalMemory)
 	buf := bp.Get()
-	assert.NotNil(t, totalMemory)
 	bp.Put(buf)
 	assert.Equal(t, bp.alloced, 1)
 
