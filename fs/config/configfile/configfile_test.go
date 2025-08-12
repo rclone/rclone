@@ -349,6 +349,20 @@ func TestConfigFileSaveSymlinkAbsolute(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, info.IsDir())
 	}
+	testSymlinkLoopError := func(t *testing.T, link string, target string, resolvedTarget string) {
+		err = os.Symlink(target, link)
+		require.NoError(t, err)
+		defer func() {
+			_ = os.Remove(link)
+		}()
+
+		assert.NoError(t, config.SetConfigPath(link))
+		data := &Storage{}
+		require.Error(t, data.Load(), config.ErrorConfigFileNotFound)
+
+		err = data.Save()
+		require.Error(t, err, "failed to resolve config path: symlink loop")
+	}
 
 	t.Run("Absolute", func(t *testing.T) {
 		link := filepath.Join(linkDir, "configfilelink")
@@ -372,5 +386,9 @@ func TestConfigFileSaveSymlinkAbsolute(t *testing.T) {
 		}()
 
 		testSymlink(t, link, intermediate, target)
+	})
+	t.Run("Loop", func(t *testing.T) {
+		target := filepath.Join(testDir, "configfileself")
+		testSymlinkLoopError(t, target, target, target)
 	})
 }

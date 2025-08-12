@@ -108,8 +108,14 @@ func (s *Storage) Save() error {
 	}
 	configDir, configName := filepath.Split(configPath)
 
+	visited := make(map[string]bool)
 	info := (os.FileInfo)(nil)
 	for {
+		_, isVisited := visited[configPath]
+		if isVisited {
+			return fmt.Errorf("failed to resolve config path: symlink loop")
+		}
+		visited[configPath] = true
 		info, err := os.Lstat(configPath)
 		if err != nil {
 			if !os.IsNotExist(err) {
