@@ -361,4 +361,16 @@ func TestConfigFileSaveSymlinkAbsolute(t *testing.T) {
 		resolvedTarget := filepath.Join(filepath.Dir(link), target)
 		testSymlink(t, link, target, resolvedTarget)
 	})
+	t.Run("Trampoline", func(t *testing.T) {
+		link := filepath.Join(linkDir, "configfilefirstlink")
+		intermediate := filepath.Join(linkDir, "configfileintermediatelink")
+		target := filepath.Join(testDir, "c", "configfiletarget")
+		err = os.Symlink(target, intermediate)
+		require.NoError(t, err)
+		defer func() {
+			_ = os.Remove(intermediate)
+		}()
+
+		testSymlink(t, link, intermediate, target)
+	})
 }
