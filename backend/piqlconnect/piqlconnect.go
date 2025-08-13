@@ -338,6 +338,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	}
 
 	resp, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders"}, &createFolder, nil)
+	if err != nil {
+		return err
+	}
 	folderIdBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
