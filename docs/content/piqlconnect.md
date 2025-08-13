@@ -6,11 +6,19 @@ versionIntroduced: "?"
 
 # {{< icon "fa fa-film" >}} piqlConnect
 
+Paths are specified as `remote:path`
+
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
+
+The initial setup for piqlConnect involves getting an API key from piqlConnect
+which you can do in your browser by navigating to: **Settings** -> **Security**
+-> **API keys** and creating a key.
+
 ## Configuration
 
 Here is an example of how to make a remote called `remote`. First run:
 
-     rclone config
+    rclone config
 
 This will guide you through an interactive setup process:
 
@@ -57,3 +65,7 @@ y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
 ```
+
+### Modification times and hashes
+
+piqlConnect supports MD5 type hashes, so you can use the `--checksum` flag.

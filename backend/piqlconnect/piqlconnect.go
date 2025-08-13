@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -284,31 +285,84 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 	if err != nil {
 		return nil, err
 	}
-	if src.Size() == 0 {
-		in = nil
-	}
-	req, err := http.NewRequestWithContext(ctx, "PUT", results[0], in)
-	req.ContentLength = src.Size()
-	req.Header.Add("x-ms-blob-type", "BlockBlob")
-	if err != nil {
-		return nil, err
-	}
-	azureResp, err := f.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if azureResp.StatusCode < 200 || azureResp.StatusCode > 299 {
-		azureRespBytes, err := io.ReadAll(azureResp.Body)
+	size := src.Size()
+	if size > 4000*1024*1024 {
+		i := 0
+		bytes_left := size
+		for bytes_left > 0 {
+			i++
+			chunkSize := min(4000*1024*1024, bytes_left)
+			bytes_left -= chunkSize
+			url := results[0] + "&comp=block&blockid=" + url.QueryEscape(base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(i))))
+			fmt.Println(chunkSize, url)
+			req, err := http.NewRequestWithContext(ctx, "PUT", url, io.LimitReader(in, chunkSize))
+			if err != nil {
+				return nil, err
+			}
+			req.ContentLength = chunkSize
+			azureResp, err := f.httpClient.Do(req)
+			if err != nil {
+				return nil, err
+			}
+			if azureResp.StatusCode < 200 || azureResp.StatusCode > 299 {
+				azureRespBytes, err := io.ReadAll(azureResp.Body)
+				if err != nil {
+					return nil, err
+				}
+				return nil, fmt.Errorf("invalid http response code from azure: " + azureResp.Status + "\n" + string(azureRespBytes))
+			}
+		}
+
+		blocklist := "<?xml version=\"1.0\" encoding=\"utf-8\"?><BlockList>"
+		for j := 1; j <= i; j++ {
+			blocklist += "<Uncommitted>" + base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(j))) + "</Uncommitted>"
+		}
+		blocklist += "</BlockList>"
+		fmt.Println(blocklist)
+		req, err := http.NewRequestWithContext(ctx, "PUT", results[0]+"&comp=blocklist", strings.NewReader(blocklist))
 		if err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("invalid http response code from azure: " + azureResp.Status + "\n" + string(azureRespBytes))
+		req.ContentLength = int64(len(blocklist))
+		resp, err := f.httpClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			respBytes, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			return nil, fmt.Errorf("invalid http response code from azure: " + resp.Status + "\n" + string(respBytes))
+		}
+	} else {
+		if size == 0 {
+			in = nil
+		}
+		req, err := http.NewRequestWithContext(ctx, "PUT", results[0], in)
+		if err != nil {
+			return nil, err
+		}
+		req.ContentLength = size
+		req.Header.Add("x-ms-blob-type", "BlockBlob")
+		azureResp, err := f.httpClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if azureResp.StatusCode < 200 || azureResp.StatusCode > 299 {
+			azureRespBytes, err := io.ReadAll(azureResp.Body)
+			if err != nil {
+				return nil, err
+			}
+			return nil, fmt.Errorf("invalid http response code from azure: " + azureResp.Status + "\n" + string(azureRespBytes))
+		}
+
 	}
 
 	filesReqBody := api.CreateFile{
 		OrganisationId: f.organisationId,
 		PackageId:      f.packageIdCache[segments[1]],
-		Files:          [1]api.FilePathSize{{Path: strings.Join(segments[2:], "/"), Size: src.Size()}},
+		Files:          [1]api.FilePathSize{{Path: strings.Join(segments[2:], "/"), Size: size}},
 	}
 	var fileIds [1]string
 	_, err = f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/files"}, &filesReqBody, &fileIds)
@@ -318,7 +372,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 	return &Object{
 		fs:      f,
 		remote:  src.Remote(),
-		size:    src.Size(),
+		size:    size,
 		modTime: time.Now(),
 		id:      fileIds[0],
 	}, nil
@@ -530,6 +584,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	sasUrlBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, "GET", string(sasUrlBytes), nil)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(string(sasUrlBytes))
+	for _, option := range options {
+		fmt.Println(option.Header())
+		req.Header.Set(option.Header())
 	}
 	resp, err = o.fs.httpClient.Get(string(sasUrlBytes))
 	if err != nil {
