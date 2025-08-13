@@ -3,6 +3,8 @@ package piqlconnect
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -282,6 +284,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 	if err != nil {
 		return nil, err
 	}
+	if src.Size() == 0 {
+		in = nil
+	}
 	req, err := http.NewRequestWithContext(ctx, "PUT", results[0], in)
 	req.ContentLength = src.Size()
 	req.Header.Add("x-ms-blob-type", "BlockBlob")
@@ -392,34 +397,39 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Hash returns the SHA-1 of an object returning a lowercase hex string
+// Hash returns the MD5 of an object as a lowercase hex string
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
-	return "", hash.ErrUnsupported
-	// fmt.Printf("Hash(%s)\n", o.remote)
-	// if ty != hash.MD5 {
-	// 	return "", hash.ErrUnsupported
-	// }
-	// segments := o.fs.getAbsolutePathSegments(o.remote)
-	// if o.fs.packageIdCache[segments[1]] == "" {
-	// 	o.fs.listPackages(ctx, segments[0])
-	// }
-	// reqBody := api.CreateFileUrl{
-	// 	OrganisationId: o.fs.organisationId,
-	// 	PackageId:      o.fs.packageIdCache[segments[1]],
-	// 	Files:          [1]api.FilePath{{Path: path.Join(segments[2:]...)}},
-	// 	Method:         "READ",
-	// }
-	// var results [1]string
-	// _, err := o.fs.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/sas-url"}, &reqBody, &results)
-	// if err != nil {
-	// 	return "", err
-	// }
-	// resp, err := o.fs.httpClient.Head(results[0])
-	// if err != nil {
-	// 	return "", err
-	// }
-	// fmt.Printf("Hash(%s): %s\n", o.remote, resp.Header.Get("Content-MD5"))
-	// return "", fmt.Errorf("oops")
+	if ty != hash.MD5 {
+		return "", hash.ErrUnsupported
+	}
+	segments := o.fs.getAbsolutePathSegments(o.remote)
+	if o.fs.packageIdCache[segments[1]] == "" {
+		o.fs.listPackages(ctx, segments[0])
+	}
+	reqBody := api.CreateFileUrl{
+		OrganisationId: o.fs.organisationId,
+		PackageId:      o.fs.packageIdCache[segments[1]],
+		Files:          [1]api.FilePath{{Path: path.Join(segments[2:]...)}},
+		Method:         "READ",
+	}
+	var results [1]string
+	_, err := o.fs.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/sas-url"}, &reqBody, &results)
+	if err != nil {
+		return "", err
+	}
+	resp, err := o.fs.httpClient.Head(results[0])
+	if err != nil {
+		return "", err
+	}
+	md5header := resp.Header.Get("Content-MD5")
+	if md5header == "" {
+		return "", nil
+	}
+	md5bytes, err := base64.StdEncoding.DecodeString(md5header)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(md5bytes), nil
 }
 
 // Size returns the size of an object in bytes
@@ -554,8 +564,7 @@ func (f *Fs) Precision() time.Duration {
 }
 
 func (f *Fs) Hashes() hash.Set {
-	// TODO
-	return hash.Set(hash.None)
+	return hash.Set(hash.MD5)
 }
 
 // Check the interfaces are satisfied
