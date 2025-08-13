@@ -240,7 +240,7 @@ to run as the SYSTEM account. A third alternative is to use the
 Read more in the [install documentation](https://rclone.org/install/).
 Note that when running rclone as another user, it will not use
 the configuration file from your profile unless you tell it to
-with the [`--config`](https://rclone.org/docs/#config-config-file) option.
+with the [`--config`](https://rclone.org/docs/#config-string) option.
 Note also that it is now the SYSTEM account that will have the owner
 permissions, and other accounts will have permissions according to the
 group or others scopes. As mentioned above, these will then not get the
@@ -316,10 +316,10 @@ See the [VFS File Caching](#vfs-file-caching) section for more info.
 When using NFS mount on macOS, if you don't specify |--vfs-cache-mode|
 the mount point will be read-only.
 
-The bucket-based remotes (e.g. Swift, S3, Google Compute Storage, B2)
-do not support the concept of empty directories, so empty
-directories will have a tendency to disappear once they fall out of
-the directory cache.
+Bucket-based remotes - Azure Blob, Swift, S3, Google Cloud Storage and B2 -
+can't store empty directories. Of these, only Azure Blob, Google Cloud Storage
+and S3 can preserve them when you add `--xxx-directory_markers`; otherwise,
+empty directories will vanish once they drop out of the directory cache.
 
 When `rclone mount` is invoked on Unix with `--daemon` flag, the main rclone
 program will wait for the background mount to become ready or until the timeout

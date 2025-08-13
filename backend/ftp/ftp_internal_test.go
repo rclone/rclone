@@ -52,7 +52,7 @@ func (f *Fs) testUploadTimeout(t *testing.T) {
 		ci.Timeout = saveTimeout
 	}()
 	ci.LowLevelRetries = 1
-	ci.Timeout = idleTimeout
+	ci.Timeout = fs.Duration(idleTimeout)
 
 	upload := func(concurrency int, shutTimeout time.Duration) (obj fs.Object, err error) {
 		fixFs := deriveFs(ctx, t, f, settings{

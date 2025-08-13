@@ -555,6 +555,11 @@ var ConfigOptionsInfo = Options{{
 	Default: []string{},
 	Help:    "Transform paths during the copy process.",
 	Groups:  "Copy",
+}, {
+	Name:    "http_proxy",
+	Default: "",
+	Help:    "HTTP proxy URL.",
+	Groups:  "Networking",
 }}
 
 // ConfigInfo is filesystem config options
@@ -570,12 +575,12 @@ type ConfigInfo struct {
 	IgnoreTimes                bool              `config:"ignore_times"`
 	IgnoreExisting             bool              `config:"ignore_existing"`
 	IgnoreErrors               bool              `config:"ignore_errors"`
-	ModifyWindow               time.Duration     `config:"modify_window"`
+	ModifyWindow               Duration          `config:"modify_window"`
 	Checkers                   int               `config:"checkers"`
 	Transfers                  int               `config:"transfers"`
-	ConnectTimeout             time.Duration     `config:"contimeout"` // Connect timeout
-	Timeout                    time.Duration     `config:"timeout"`    // Data channel timeout
-	ExpectContinueTimeout      time.Duration     `config:"expect_continue_timeout"`
+	ConnectTimeout             Duration          `config:"contimeout"` // Connect timeout
+	Timeout                    Duration          `config:"timeout"`    // Data channel timeout
+	ExpectContinueTimeout      Duration          `config:"expect_continue_timeout"`
 	Dump                       DumpFlags         `config:"dump"`
 	InsecureSkipVerify         bool              `config:"no_check_certificate"` // Skip server certificate verification
 	DeleteMode                 DeleteMode        `config:"delete_mode"`
@@ -584,7 +589,7 @@ type ConfigInfo struct {
 	TrackRenames               bool              `config:"track_renames"`          // Track file renames.
 	TrackRenamesStrategy       string            `config:"track_renames_strategy"` // Comma separated list of strategies used to track renames
 	Retries                    int               `config:"retries"`                // High-level retries
-	RetriesInterval            time.Duration     `config:"retries_sleep"`
+	RetriesInterval            Duration          `config:"retries_sleep"`
 	LowLevelRetries            int               `config:"low_level_retries"`
 	UpdateOlder                bool              `config:"update"`           // Skip files that are newer on the destination
 	NoGzip                     bool              `config:"no_gzip_encoding"` // Disable compression
@@ -623,7 +628,7 @@ type ConfigInfo struct {
 	PasswordCommand            SpaceSepList      `config:"password_command"`
 	UseServerModTime           bool              `config:"use_server_modtime"`
 	MaxTransfer                SizeSuffix        `config:"max_transfer"`
-	MaxDuration                time.Duration     `config:"max_duration"`
+	MaxDuration                Duration          `config:"max_duration"`
 	CutoffMode                 CutoffMode        `config:"cutoff_mode"`
 	MaxBacklog                 int               `config:"max_backlog"`
 	MaxStatsGroups             int               `config:"max_stats_groups"`
@@ -652,11 +657,11 @@ type ConfigInfo struct {
 	RefreshTimes               bool              `config:"refresh_times"`
 	NoConsole                  bool              `config:"no_console"`
 	TrafficClass               uint8             `config:"traffic_class"`
-	FsCacheExpireDuration      time.Duration     `config:"fs_cache_expire_duration"`
-	FsCacheExpireInterval      time.Duration     `config:"fs_cache_expire_interval"`
+	FsCacheExpireDuration      Duration          `config:"fs_cache_expire_duration"`
+	FsCacheExpireInterval      Duration          `config:"fs_cache_expire_interval"`
 	DisableHTTP2               bool              `config:"disable_http2"`
 	HumanReadable              bool              `config:"human_readable"`
-	KvLockTime                 time.Duration     `config:"kv_lock_time"` // maximum time to keep key-value database locked by process
+	KvLockTime                 Duration          `config:"kv_lock_time"` // maximum time to keep key-value database locked by process
 	DisableHTTPKeepAlives      bool              `config:"disable_http_keep_alives"`
 	Metadata                   bool              `config:"metadata"`
 	ServerSideAcrossConfigs    bool              `config:"server_side_across_configs"`
@@ -667,6 +672,7 @@ type ConfigInfo struct {
 	MetadataMapper             SpaceSepList      `config:"metadata_mapper"`
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
+	HTTPProxy                  string            `config:"http_proxy"`
 }
 
 func init() {
@@ -766,7 +772,7 @@ func InitialLogLevel() LogLevel {
 // TimeoutOrInfinite returns ci.Timeout if > 0 or infinite otherwise
 func (ci *ConfigInfo) TimeoutOrInfinite() time.Duration {
 	if ci.Timeout > 0 {
-		return ci.Timeout
+		return time.Duration(ci.Timeout)
 	}
 	return ModTimeNotSupported
 }

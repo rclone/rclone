@@ -55,7 +55,7 @@ type Options struct {
 	Compare               CompareOpt
 	CompareFlag           string
 	DebugName             string
-	MaxLock               time.Duration
+	MaxLock               fs.Duration
 	ConflictResolve       Prefer
 	ConflictLoser         ConflictLoserAction
 	ConflictSuffixFlag    string
@@ -146,7 +146,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &Opt.Compare.NoSlowHash, "no-slow-hash", "", Opt.Compare.NoSlowHash, "Ignore listing checksums only on backends where they are slow", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.SlowHashSyncOnly, "slow-hash-sync-only", "", Opt.Compare.SlowHashSyncOnly, "Ignore slow checksums for listings and deltas, but still consider them during sync calls.", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.DownloadHash, "download-hash", "", Opt.Compare.DownloadHash, "Compute hash by downloading when otherwise unavailable. (warning: may be slow and use lots of data!)", "")
-	flags.DurationVarP(cmdFlags, &Opt.MaxLock, "max-lock", "", Opt.MaxLock, "Consider lock files older than this to be expired (default: 0 (never expire)) (minimum: 2m)", "")
+	flags.FVarP(cmdFlags, &Opt.MaxLock, "max-lock", "", "Consider lock files older than this to be expired (default: 0 (never expire)) (minimum: 2m)", "")
 	flags.FVarP(cmdFlags, &Opt.ConflictResolve, "conflict-resolve", "", "Automatically resolve conflicts by preferring the version that is: "+ConflictResolveList+" (default: none)", "")
 	flags.FVarP(cmdFlags, &Opt.ConflictLoser, "conflict-loser", "", "Action to take on the loser of a sync conflict (when there is a winner) or on both files (when there is no winner): "+ConflictLoserList+" (default: num)", "")
 	flags.StringVarP(cmdFlags, &Opt.ConflictSuffixFlag, "conflict-suffix", "", Opt.ConflictSuffixFlag, "Suffix to use when renaming a --conflict-loser. Can be either one string or two comma-separated strings to assign different suffixes to Path1/Path2. (default: 'conflict')", "")

@@ -278,7 +278,7 @@ func testBisync(t *testing.T, path1, path2 string) {
 	}
 	bisync.Colors = true
 	time.Local = bisync.TZ
-	ci.FsCacheExpireDuration = 5 * time.Hour
+	ci.FsCacheExpireDuration = fs.Duration(5 * time.Hour)
 
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
@@ -952,6 +952,12 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 	if strings.HasPrefix(b.fs2.String(), "OneDrive") {
 		b.fs2.Features().Disable("Copy") // API has longstanding bug for conflictBehavior=replace https://github.com/rclone/rclone/issues/4590
 		b.fs2.Features().Disable("Move")
+	}
+	if strings.HasPrefix(b.fs1.String(), "sftp") {
+		b.fs1.Features().Disable("Copy") // disable --sftp-copy-is-hardlink as hardlinks are not truly copies
+	}
+	if strings.HasPrefix(b.fs2.String(), "sftp") {
+		b.fs2.Features().Disable("Copy") // disable --sftp-copy-is-hardlink as hardlinks are not truly copies
 	}
 	if strings.Contains(strings.ToLower(fs.ConfigString(b.fs1)), "mailru") || strings.Contains(strings.ToLower(fs.ConfigString(b.fs2)), "mailru") {
 		fs.GetConfig(ctx).TPSLimit = 10 // https://github.com/rclone/rclone/issues/7768#issuecomment-2060888980

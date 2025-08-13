@@ -78,6 +78,9 @@ var hashTestSet = []hashTest{
 			hash.CRC32:     "a6041d7e",
 			hash.SHA256:    "c839e57675862af5c21bd0a15413c3ec579e0d5522dab600bc6c3489b05b8f54",
 			hash.SHA512:    "008e7e9b5d94d37bf5e07c955890f730f137a41b8b0db16cb535a9b4cb5632c2bccff31685ec470130fe10e2258a0ab50ab587472258f3132ccf7d7d59fb91db",
+			hash.BLAKE3:    "0a7276a407a3be1b4d31488318ee05a335aad5a3b82c4420e592a8178c9e86bb",
+			hash.XXH3:      "4b83b0c51c543525",
+			hash.XXH128:    "438de241a57d684214f67657f7aad93b",
 		},
 	},
 	// Empty data set
@@ -90,6 +93,9 @@ var hashTestSet = []hashTest{
 			hash.CRC32:     "00000000",
 			hash.SHA256:    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 			hash.SHA512:    "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
+			hash.BLAKE3:    "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+			hash.XXH3:      "2d06800538d394c2",
+			hash.XXH128:    "99aa06d3014798d86001c324468d497f",
 		},
 	},
 }

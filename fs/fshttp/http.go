@@ -6,10 +6,12 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httputil"
+	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -55,11 +57,22 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 	// This also means we get new stuff when it gets added to go
 	t := new(http.Transport)
 	structs.SetDefaults(t, http.DefaultTransport.(*http.Transport))
-	t.Proxy = http.ProxyFromEnvironment
+	if ci.HTTPProxy != "" {
+		proxyURL, err := url.Parse(ci.HTTPProxy)
+		if err != nil {
+			t.Proxy = func(*http.Request) (*url.URL, error) {
+				return nil, fmt.Errorf("failed to set --http-proxy from %q: %w", ci.HTTPProxy, err)
+			}
+		} else {
+			t.Proxy = http.ProxyURL(proxyURL)
+		}
+	} else {
+		t.Proxy = http.ProxyFromEnvironment
+	}
 	t.MaxIdleConnsPerHost = 2 * (ci.Checkers + ci.Transfers + 1)
 	t.MaxIdleConns = 2 * t.MaxIdleConnsPerHost
-	t.TLSHandshakeTimeout = ci.ConnectTimeout
-	t.ResponseHeaderTimeout = ci.Timeout
+	t.TLSHandshakeTimeout = time.Duration(ci.ConnectTimeout)
+	t.ResponseHeaderTimeout = time.Duration(ci.Timeout)
 	t.DisableKeepAlives = ci.DisableHTTPKeepAlives
 
 	// TLS Config
@@ -109,7 +122,7 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 		return NewDialer(ctx).DialContext(reqCtx, network, addr)
 	}
 	t.IdleConnTimeout = 60 * time.Second
-	t.ExpectContinueTimeout = ci.ExpectContinueTimeout
+	t.ExpectContinueTimeout = time.Duration(ci.ExpectContinueTimeout)
 
 	if ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
 		fs.Debugf(nil, "You have specified to dump information. Please be noted that the "+

@@ -295,6 +295,16 @@ be explicitly specified using exactly one of the `msi_object_id`,
 
 If none of `msi_object_id`, `msi_client_id`, or `msi_mi_res_id` is
 set, this is is equivalent to using `env_auth`.
+
+#### Fedrated Identity Credentials 
+
+If these variables are set, rclone will authenticate with fedrated identity.
+
+- `tenant_id`: tenant_id to authenticate in storage
+- `client_id`: client ID of the application the user will authenticate to storage
+- `msi_client_id`: managed identity client ID of the application the user will authenticate to
+
+By default "api://AzureADTokenExchange" is used as scope for token retrieval over MSI. This token is then exchanged for actual storage token using 'tenant_id' and 'client_id'.
 	
 #### Azure CLI tool `az` {#use_az}
 Set to use the [Azure CLI tool `az`](https://learn.microsoft.com/en-us/cli/azure/)

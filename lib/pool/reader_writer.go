@@ -35,6 +35,8 @@ type RW struct {
 	// Read side Variables
 	out   int // offset we are reading from
 	reads int // count how many times the data has been read
+
+	reserved int // number of buffers reserved
 }
 
 var (
@@ -56,6 +58,20 @@ func NewRW(pool *Pool) *RW {
 		pages:   make([][]byte, 0, 16),
 		written: make(chan struct{}, 1),
 	}
+	return rw
+}
+
+// Reserve bytes of memory.
+//
+// Reserve, but don't allocate n bytes of memory.
+//
+// This is rounded up to the nearest buffer page size.
+func (rw *RW) Reserve(n int64) *RW {
+	rw.mu.Lock()
+	defer rw.mu.Unlock()
+	buffers := int((n + int64(rw.pool.bufferSize) - 1) / int64(rw.pool.bufferSize))
+	rw.pool.Reserve(buffers)
+	rw.reserved += buffers
 	return rw
 }
 
@@ -200,7 +216,12 @@ func (rw *RW) writePage() (page []byte) {
 	if len(rw.pages) > 0 && rw.lastOffset < rw.pool.bufferSize {
 		return rw.pages[len(rw.pages)-1][rw.lastOffset:]
 	}
-	page = rw.pool.Get()
+	if rw.reserved > 0 {
+		page = rw.pool.GetReserved()
+		rw.reserved--
+	} else {
+		page = rw.pool.Get()
+	}
 	rw.pages = append(rw.pages, page)
 	rw.lastOffset = 0
 	return page
@@ -321,6 +342,10 @@ func (rw *RW) Close() error {
 		rw.pool.Put(page)
 	}
 	rw.pages = nil
+	if rw.reserved > 0 {
+		rw.pool.Release(rw.reserved)
+		rw.reserved = 0
+	}
 	return nil
 }
 
