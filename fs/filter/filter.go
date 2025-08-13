@@ -464,10 +464,14 @@ func (f *Filter) ListContainsExcludeFile(entries fs.DirEntries) bool {
 		return false
 	}
 	for _, entry := range entries {
-		obj, ok := entry.(fs.Object)
-		if ok {
-			basename := path.Base(obj.Remote())
+		basename := path.Base(entry.Remote())
+		switch entry.(type) {
+		case fs.Object:
 			if slices.Contains(f.Opt.ExcludeFile, basename) {
+				return true
+			}
+		case fs.Directory:
+			if slices.Contains(f.Opt.ExcludeFile, basename+"/") {
 				return true
 			}
 		}
@@ -507,17 +511,16 @@ func (f *Filter) DirContainsExcludeFile(ctx context.Context, fremote fs.Fs, remo
 	if len(f.Opt.ExcludeFile) > 0 {
 		for _, excludeFile := range f.Opt.ExcludeFile {
 			exists, err := fs.FileExists(ctx, fremote, path.Join(remote, excludeFile))
-			if err == fs.ErrorIsDir {
-				exists = true
-			}
-
 			if exists {
 				return true, nil
 			}
-
+			if errors.Is(err, fs.ErrorIsDir) {
+				return strings.HasSuffix(excludeFile, "/"), nil
+			}
 			if err != nil {
 				return false, err
 			}
+
 		}
 	}
 	return false, nil
