@@ -294,7 +294,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 			chunkSize := min(4000*1024*1024, bytes_left)
 			bytes_left -= chunkSize
 			url := results[0] + "&comp=block&blockid=" + url.QueryEscape(base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(i))))
-			fmt.Println(chunkSize, url)
 			req, err := http.NewRequestWithContext(ctx, "PUT", url, io.LimitReader(in, chunkSize))
 			if err != nil {
 				return nil, err
@@ -318,7 +317,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 			blocklist += "<Uncommitted>" + base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(j))) + "</Uncommitted>"
 		}
 		blocklist += "</BlockList>"
-		fmt.Println(blocklist)
 		req, err := http.NewRequestWithContext(ctx, "PUT", results[0]+"&comp=blocklist", strings.NewReader(blocklist))
 		if err != nil {
 			return nil, err
