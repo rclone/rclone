@@ -3,7 +3,6 @@
 package config
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -15,6 +14,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/peterh/liner"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -25,12 +25,22 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-// ReadLine reads some input
-var ReadLine = func() string {
-	buf := bufio.NewReader(os.Stdin)
-	line, err := buf.ReadString('\n')
-	if err != nil && (line == "" || err != io.EOF) {
-		fs.Fatalf(nil, "Failed to read line: %v", err)
+// ReadLine reads an unlimited length line from stdin with a prompt.
+var ReadLine = func(prompt string) string {
+	l := liner.NewLiner()
+	defer func() {
+		_ = l.Close()
+	}()
+	l.SetMultiLineMode(true)
+	l.SetCtrlCAborts(true)
+
+	line, err := l.Prompt(prompt)
+	if err == io.EOF {
+		return ""
+	}
+	if err != nil {
+		_ = l.Close()
+		fs.Fatalf(nil, "Failed to read: %v", err)
 	}
 	return strings.TrimSpace(line)
 }
@@ -39,8 +49,7 @@ var ReadLine = func() string {
 func ReadNonEmptyLine(prompt string) string {
 	result := ""
 	for result == "" {
-		fmt.Print(prompt)
-		result = strings.TrimSpace(ReadLine())
+		result = strings.TrimSpace(ReadLine(prompt))
 	}
 	return result
 }
@@ -63,8 +72,7 @@ func CommandDefault(commands []string, defaultIndex int) byte {
 	optString := strings.Join(opts, "")
 	optHelp := strings.Join(opts, "/")
 	for {
-		fmt.Printf("%s> ", optHelp)
-		result := strings.ToLower(ReadLine())
+		result := strings.ToLower(ReadLine(fmt.Sprintf("%s> ", optHelp)))
 		if len(result) == 0 {
 			if defaultIndex >= 0 {
 				return optString[defaultIndex]
@@ -146,8 +154,7 @@ func Choose(what string, kind string, choices, help []string, defaultValue strin
 		terminal.WriteString(terminal.Reset)
 	}
 	for {
-		fmt.Printf("%s> ", what)
-		result := ReadLine()
+		result := ReadLine(fmt.Sprintf("%s> ", what))
 		i, err := strconv.Atoi(result)
 		if err != nil {
 			if slices.Contains(choices, result) {
@@ -194,8 +201,7 @@ func Enter(what string, kind string, defaultValue string, required bool) string 
 		fmt.Println()
 	}
 	for {
-		fmt.Printf("%s> ", what)
-		result := ReadLine()
+		result := ReadLine(fmt.Sprintf("%s> ", what))
 		if !required || result != "" {
 			return result
 		}
@@ -254,8 +260,7 @@ func ChoosePassword(defaultValue string, required bool) string {
 // inclusive prompting them with what.
 func ChooseNumber(what string, min, max int) int {
 	for {
-		fmt.Printf("%s> ", what)
-		result := ReadLine()
+		result := ReadLine(fmt.Sprintf("%s> ", what))
 		i, err := strconv.Atoi(result)
 		if err != nil {
 			fmt.Printf("Bad number: %v\n", err)
@@ -526,8 +531,7 @@ func ChooseOption(o *fs.Option, name string) string {
 func NewRemoteName() (name string) {
 	for {
 		fmt.Println("Enter name for new remote.")
-		fmt.Printf("name> ")
-		name = ReadLine()
+		name = ReadLine("name> ")
 		if LoadedData().HasSection(name) {
 			fmt.Printf("Remote %q already exists.\n", name)
 			continue
