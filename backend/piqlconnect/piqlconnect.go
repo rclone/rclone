@@ -589,9 +589,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(sasUrlBytes))
 	for _, option := range options {
-		fmt.Println(option.Header())
 		req.Header.Set(option.Header())
 	}
 	resp, err = o.fs.httpClient.Get(string(sasUrlBytes))
