@@ -190,6 +190,23 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --smb-use-kerberos
+
+Use Kerberos authentication.
+
+If set, rclone will use Kerberos authentication instead of NTLM. This
+requires a valid Kerberos configuration and credentials cache to be
+available, either in the default locations or as specified by the
+KRB5_CONFIG and KRB5CCNAME environment variables.
+
+
+Properties:
+
+- Config:      use_kerberos
+- Env Var:     RCLONE_SMB_USE_KERBEROS
+- Type:        bool
+- Default:     false
+
 ### Advanced options
 
 Here are the Advanced options specific to smb (SMB / CIFS).

@@ -16,6 +16,8 @@ import (
 	"strings"
 
 	"github.com/jzelinskie/whirlpool"
+	"github.com/zeebo/blake3"
+	"github.com/zeebo/xxh3"
 )
 
 // Type indicates a standard hashing algorithm
@@ -91,7 +93,26 @@ var (
 
 	// SHA512 indicates SHA-512 support
 	SHA512 Type
+
+	// BLAKE3 indicates BLAKE3 support
+	BLAKE3 Type
+
+	// XXH3 indicates XXH3 support, also known as XXH3-64, a variant of xxHash
+	XXH3 Type
+
+	// XXH128 indicates XXH128 support, also known as XXH3-128, a variant of xxHash
+	XXH128 Type
 )
+
+type xxh128Hasher struct {
+	xxh3.Hasher
+}
+
+// Sum overrides xxh3.Sum to return value based on Sum128 instead of the default Sum64.
+func (h *xxh128Hasher) Sum(b []byte) []byte {
+	buf := h.Sum128().Bytes()
+	return buf[:]
+}
 
 func init() {
 	MD5 = RegisterHash("md5", "MD5", 32, md5.New)
@@ -100,6 +121,9 @@ func init() {
 	CRC32 = RegisterHash("crc32", "CRC-32", 8, func() hash.Hash { return crc32.NewIEEE() })
 	SHA256 = RegisterHash("sha256", "SHA-256", 64, sha256.New)
 	SHA512 = RegisterHash("sha512", "SHA-512", 128, sha512.New)
+	BLAKE3 = RegisterHash("blake3", "BLAKE3", 64, func() hash.Hash { return blake3.New() })
+	XXH3 = RegisterHash("xxh3", "XXH3", 16, func() hash.Hash { return xxh3.New() })
+	XXH128 = RegisterHash("xxh128", "XXH128", 32, func() hash.Hash { return &xxh128Hasher{} })
 }
 
 // Supported returns a set of all the supported hashes by

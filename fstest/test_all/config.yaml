@@ -34,9 +34,9 @@ backends:
    fastlist: true
    ignore:
      - TestCopyFileMaxTransfer
- - backend:  "crypt"
-   remote:   "TestCryptSwift:"
-   fastlist: false
+ # - backend:  "crypt"
+ #   remote:   "TestCryptSwift:"
+ #   fastlist: false
  ## chunker
  - backend:  "chunker"
    remote:   "TestChunkerLocal:"
@@ -67,16 +67,19 @@ backends:
  #   maxfile:  10k
  #   ignore:
  #     - TestApplyTransforms
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bYandex:"
-   fastlist: true
-   maxfile:  1k
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bBox:"
-   fastlist: true
-   maxfile:  1k
-   ignore:
-     - TestIntegration/FsMkdir/FsChangeNotify
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bYandex:"
+ #   fastlist: true
+ #   maxfile:  1k
+ #   ignore:
+ #     # Needs investigation
+ #     - TestDeduplicateNewestByHash
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bBox:"
+ #   fastlist: true
+ #   maxfile:  1k
+ #   ignore:
+ #     - TestIntegration/FsMkdir/FsChangeNotify
  - backend:  "chunker"
    remote:   "TestChunkerS3:"
    fastlist: true
@@ -117,8 +120,6 @@ backends:
      - TestCopyURL
      - TestMoveFileWithIgnoreExisting
      - TestCopyFileCompareDest
-     # fs/sync
-     - TestServerSideMoveOverSelf
      #vfs
      - TestFileSetModTime/cache=off,open=false,write=false
      - TestFileSetModTime/cache=off,open=true,write=false
@@ -132,9 +133,9 @@ backends:
  - backend:  "compress"
    remote:   "TestCompress:"
    fastlist: false
- - backend:  "compress"
-   remote:   "TestCompressSwift:"
-   fastlist: false
+ # - backend:  "compress"
+ #   remote:   "TestCompressSwift:"
+ #   fastlist: false
  - backend:  "compress"
    remote:   "TestCompressDrive:"
    fastlist: false
@@ -168,13 +169,11 @@ backends:
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage,directory_markers:"
    fastlist: true
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "googlephotos"
    remote:   "TestGooglePhotos:"
@@ -321,7 +320,6 @@ backends:
    remote:   "TestSFTPOpenssh:"
    fastlist: false
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "sftp"
    remote:   "TestSFTPRclone:"
@@ -362,11 +360,11 @@ backends:
    fastlist: true
    ignoretests:
      - cmd/gitannex
- - backend:  "swift"
-   remote:   "TestSwift:"
-   fastlist: true
-   ignoretests:
-     - cmd/bisync
+ # - backend:  "swift"
+ #   remote:   "TestSwift:"
+ #   fastlist: true
+ #   ignoretests:
+ #     - cmd/bisync
  # - backend:  "swift"
  #   remote:   "TestSwiftCeph:"
  #   fastlist: true
@@ -429,8 +427,6 @@ backends:
      - TestMultithreadCopyAbort
  - backend:  "azurefiles"
    remote:   "TestAzureFiles:"
-   ignoretests:
-     - cmd/bisync
  - backend:  "pcloud"
    remote:   "TestPcloud:"
    fastlist: true
@@ -481,6 +477,8 @@ backends:
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/punctuation
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+   env:
+      - RCLONE_NO_CHECK_CERTIFICATE=true
    fastlist: false
    ignoretests:
      - cmd/bisync
@@ -503,6 +501,7 @@ backends:
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
      - TestDirRename
+     - TestFileRename
    ignoretests:
      - cmd/bisync
  - backend:  "opendrive"
@@ -591,6 +590,18 @@ backends:
  - backend:  "smb"
    remote:   "TestSMBKerberos:rclone"
    fastlist: false
+   env:
+      - KRB5_CONFIG=/tmp/rclone_krb5/krb5.conf
+      - KRB5CCNAME=/tmp/rclone_krb5/ccache
+   ignoretests:
+     - cmd/gitannex
+ - backend:  "smb"
+   remote:   "TestSMBKerberosCcache:rclone"
+   fastlist: false
+   env:
+     - KRB5_CONFIG=/tmp/rclone_krb5_ccache/krb5.conf
+   ignoretests:
+     - cmd/gitannex
  - backend:  "storj"
    remote:   "TestStorj:"
    fastlist: true

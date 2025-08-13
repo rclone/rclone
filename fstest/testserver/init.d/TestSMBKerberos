@@ -10,10 +10,17 @@ REALM=RCLONE.LOCAL
 SMB_PORT=28633
 KRB5_PORT=28634
 
+# KRB5_CONFIG and KRB5CCNAME should be set by the caller but default
+# them here for the integration tests
+export TEMP_DIR=/tmp/rclone_krb5
+mkdir -p "${TEMP_DIR}"
+export KRB5_CONFIG=${KRB5_CONFIG:-${TEMP_DIR}/krb5.conf}
+export KRB5CCNAME=${KRB5CCNAME:-${TEMP_DIR}/ccache}
+
 . $(dirname "$0")/docker.bash
 
 start() {
-    docker build -t ${IMAGE} - <<EOF
+    docker build -t ${IMAGE} --load - <<EOF
 FROM alpine:3.21
 RUN apk add --no-cache samba-dc
 RUN rm -rf /etc/samba/smb.conf /var/lib/samba \
@@ -27,8 +34,11 @@ RUN rm -rf /etc/samba/smb.conf /var/lib/samba \
     --dns-backend=SAMBA_INTERNAL \
     --host-name=localhost \
  && samba-tool user add --random-password $USER \
+ && samba-tool user setexpiry $USER --noexpiry \
  && mkdir -m 777 /share /rclone \
  && cat <<EOS >> /etc/samba/smb.conf
+[global]
+server signing = auto
 [public]
 path = /share
 browseable = yes

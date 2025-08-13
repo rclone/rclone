@@ -108,6 +108,20 @@ Set to 0 to keep connections indefinitely.
 			Default:  true,
 			Advanced: true,
 		}, {
+			Name: "kerberos_ccache",
+			Help: `Path to the Kerberos credential cache (krb5cc).
+
+Overrides the default KRB5CCNAME environment variable and allows this
+instance of the SMB backend to use a different Kerberos cache file.
+This is useful when mounting multiple SMB with different credentials
+or running in multi-user environments.
+
+Supported formats:
+  - FILE:/path/to/ccache   – Use the specified file.
+  - DIR:/path/to/ccachedir – Use the primary file inside the specified directory.
+  - /path/to/ccache        – Interpreted as a file path.`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -137,6 +151,7 @@ type Options struct {
 	Domain          string      `config:"domain"`
 	SPN             string      `config:"spn"`
 	UseKerberos     bool        `config:"use_kerberos"`
+	KerberosCCache  string      `config:"kerberos_ccache"`
 	HideSpecial     bool        `config:"hide_special_share"`
 	CaseInsensitive bool        `config:"case_insensitive"`
 	IdleTimeout     fs.Duration `config:"idle_timeout"`
@@ -479,11 +494,11 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 		return nil, err
 	}
 
-	bs := int64(stat.BlockSize())
+	bs := stat.BlockSize()
 	usage := &fs.Usage{
-		Total: fs.NewUsageValue(bs * int64(stat.TotalBlockCount())),
-		Used:  fs.NewUsageValue(bs * int64(stat.TotalBlockCount()-stat.FreeBlockCount())),
-		Free:  fs.NewUsageValue(bs * int64(stat.AvailableBlockCount())),
+		Total: fs.NewUsageValue(bs * stat.TotalBlockCount()),
+		Used:  fs.NewUsageValue(bs * (stat.TotalBlockCount() - stat.FreeBlockCount())),
+		Free:  fs.NewUsageValue(bs * stat.AvailableBlockCount()),
 	}
 	return usage, nil
 }

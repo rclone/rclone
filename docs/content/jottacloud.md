@@ -257,7 +257,7 @@ flag.
 Note that Jottacloud requires the MD5 hash before upload so if the
 source does not have an MD5 checksum then the file will be cached
 temporarily on disk (in location given by
-[--temp-dir](/docs/#temp-dir-dir)) before it is uploaded.
+[--temp-dir](/docs/#temp-dir-string)) before it is uploaded.
 Small files will be cached in memory - see the
 [--jottacloud-md5-memory-limit](#jottacloud-md5-memory-limit) flag.
 When uploading from local disk the source checksum is always available,

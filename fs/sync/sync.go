@@ -194,7 +194,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		return nil, err
 	}
 	if ci.MaxDuration > 0 {
-		s.maxDurationEndTime = time.Now().Add(ci.MaxDuration)
+		s.maxDurationEndTime = time.Now().Add(time.Duration(ci.MaxDuration))
 		fs.Infof(s.fdst, "Transfer session %v deadline: %s", ci.CutoffMode, s.maxDurationEndTime.Format("2006/01/02 15:04:05"))
 	}
 	// If a max session duration has been defined add a deadline
@@ -1109,6 +1109,9 @@ func (s *syncCopyMove) markDirModifiedObject(o fs.Object) {
 // be nil.
 func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, src fs.Directory) (newDst fs.Directory) {
 	var err error
+	if dst != nil && src.Remote() == dst.Remote() && operations.OverlappingFilterCheck(ctx, s.fdst, s.fsrc) {
+		return nil // src and dst can be the same in convmv
+	}
 	equal := operations.DirsEqual(ctx, src, dst, operations.DirsEqualOpt{ModifyWindow: s.modifyWindow, SetDirModtime: s.setDirModTime, SetDirMetadata: s.setDirMetadata})
 	if !s.setDirModTimeAfter && equal {
 		return nil

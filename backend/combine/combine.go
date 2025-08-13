@@ -858,7 +858,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 		}
 		return wrappedCallback(entries)
 	}
-	return listP(ctx, dir, wrappedCallback)
+	return listP(ctx, uRemote, wrappedCallback)
 }
 
 // ListR lists the objects and directories of the Fs starting

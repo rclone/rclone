@@ -634,7 +634,7 @@ func (f *Fs) readItemMetaData(ctx context.Context, path string) (entry fs.DirEnt
 	return
 }
 
-// itemToEntry converts API item to rclone directory entry
+// itemToDirEntry converts API item to rclone directory entry
 // The dirSize return value is:
 //
 //	<0 - for a file or in case of error

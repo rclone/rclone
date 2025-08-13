@@ -318,29 +318,30 @@ is able to use checksumming if the same login has shell access,
 and can execute remote commands. If there is a command that can
 calculate compatible checksums on the remote system, Rclone can
 then be configured to execute this whenever a checksum is needed,
-and read back the results. Currently MD5 and SHA-1 are supported.
+and read back the results. By default MD5 and SHA-1 are considered,
+but also CRC32, SHA-256, BLAKE3, XXH3 and XXH128 are supported,
+option `hashes` can be set to specify which to consider.
 
 Normally this requires an external utility being available on
-the server. By default rclone will try commands `md5sum`, `md5`
-and `rclone md5sum` for MD5 checksums, and the first one found usable
-will be picked. Same with `sha1sum`, `sha1` and `rclone sha1sum`
-commands for SHA-1 checksums. These utilities normally need to
-be in the remote's PATH to be found.
+the server. E.g. for MD5 checksums, by default rclone will try commands
+`md5sum`, `md5` and `rclone md5sum`, and the first one found
+usable will be picked. These utilities normally need to be in the
+remote's PATH to be found.
 
 In some cases the shell itself is capable of calculating checksums.
 PowerShell is an example of such a shell. If rclone detects that the
 remote shell is PowerShell, which means it most probably is a
 Windows OpenSSH server, rclone will use a predefined script block
-to produce the checksums when no external checksum commands are found
-(see [shell access](#shell-access)). This assumes PowerShell version
-4.0 or newer.
+to produce the checksums for MD5, SHA-1 and SHA-256 when no external
+checksum commands are found (see [shell access](#shell-access)). This
+assumes PowerShell version 4.0 or newer.
 
-The options `md5sum_command` and `sha1_command` can be used to customize
-the command to be executed for calculation of checksums. You can for
-example set a specific path to where md5sum and sha1sum executables
-are located, or use them to specify some other tools that print checksums
-in compatible format. The value can include command-line arguments,
-or even shell script blocks as with PowerShell. Rclone has subcommands
+The options `md5sum_command`, `sha1_command`, etc. can be used to customize
+the commands to be executed for calculation of checksums. You can for
+example set a specific path to where the md5sum executable are located,
+or specify some other tool that print checksums in compatible format.
+The value can include command-line arguments, or even shell script blocks
+as with PowerShell. Rclone has subcommands [hashsum](/commands/rclone_hashsum/),
 [md5sum](/commands/rclone_md5sum/) and [sha1sum](/commands/rclone_sha1sum/)
 that use compatible format, which means if you have an rclone executable
 on the server it can be used. As mentioned above, they will be automatically
@@ -356,11 +357,14 @@ configuration, so next time it will use the same. Value `none`
 will be set if none of the default commands could be used for a specific
 algorithm, and this algorithm will not be supported by the remote.
 
-Disabling the checksumming may be required if you are connecting to SFTP servers
-which are not under your control, and to which the execution of remote shell
-commands is prohibited.  Set the configuration option `disable_hashcheck`
-to `true` to disable checksumming entirely, or set `shell_type` to `none`
-to disable all functionality based on remote shell command execution.
+Disabling the checksumming completely may be required if you are connecting to
+SFTP servers which are not under your control, and to which the execution of
+remote shell commands is prohibited. Set the configuration option `disable_hashcheck`
+to `true` to disable checksumming entirely (you get the same effect by setting
+option `hashes` to `none` or options `md5sum_command`, `sha1_command` etc.
+to `none`). Set option `shell_type` to `none` to not only disable checksumming,
+but also disable all other functionality that are based on remote shell command
+execution.
 
 ### Modification times and hashes
 
@@ -1062,6 +1066,20 @@ Properties:
 
 - Config:      socks_proxy
 - Env Var:     RCLONE_SFTP_SOCKS_PROXY
+- Type:        string
+- Required:    false
+
+#### --sftp-http-proxy
+
+URL for HTTP CONNECT proxy
+
+Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+
+
+Properties:
+
+- Config:      http_proxy
+- Env Var:     RCLONE_SFTP_HTTP_PROXY
 - Type:        string
 - Required:    false
 

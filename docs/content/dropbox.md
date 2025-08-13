@@ -431,6 +431,56 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --dropbox-export-formats
+
+Comma separated list of preferred formats for exporting files
+
+Certain Dropbox files can only be accessed by exporting them to another format.
+These include Dropbox Paper documents.
+
+For each such file, rclone will choose the first format on this list that Dropbox
+considers valid. If none is valid, it will choose Dropbox's default format.
+
+Known formats include: "html", "md" (markdown)
+
+Properties:
+
+- Config:      export_formats
+- Env Var:     RCLONE_DROPBOX_EXPORT_FORMATS
+- Type:        CommaSepList
+- Default:     html,md
+
+#### --dropbox-skip-exports
+
+Skip exportable files in all listings.
+
+If given, exportable files practically become invisible to rclone.
+
+Properties:
+
+- Config:      skip_exports
+- Env Var:     RCLONE_DROPBOX_SKIP_EXPORTS
+- Type:        bool
+- Default:     false
+
+#### --dropbox-show-all-exports
+
+Show all exportable files in listings.
+
+Adding this flag will allow all exportable files to be server side copied.
+Note that rclone doesn't add extensions to the exportable file names in this mode.
+
+Do **not** use this flag when trying to download exportable files - rclone
+will fail to download them.
+
+
+Properties:
+
+- Config:      show_all_exports
+- Env Var:     RCLONE_DROPBOX_SHOW_ALL_EXPORTS
+- Type:        bool
+- Default:     false
+
 #### --dropbox-batch-mode
 
 Upload file batching sync|async|off.
@@ -508,7 +558,7 @@ Properties:
 
 #### --dropbox-batch-commit-timeout
 
-Max time to wait for a batch to finish committing
+Max time to wait for a batch to finish committing. (no longer used)
 
 Properties:
 

@@ -304,7 +304,7 @@ func (acc *Account) ServerSideTransferEnd(n int64) {
 	acc.stats.Bytes(n)
 }
 
-// serverSideEnd accounts for non specific server side data
+// serverSideEnd accounts for non specific server-side data
 func (acc *Account) serverSideEnd(n int64) {
 	// Account for bytes unless we are checking
 	if !acc.checking {
@@ -312,13 +312,13 @@ func (acc *Account) serverSideEnd(n int64) {
 	}
 }
 
-// ServerSideCopyEnd accounts for a read of n bytes in a sever side copy
+// ServerSideCopyEnd accounts for a read of n bytes in a server-side copy
 func (acc *Account) ServerSideCopyEnd(n int64) {
 	acc.stats.AddServerSideCopy(n)
 	acc.serverSideEnd(n)
 }
 
-// ServerSideMoveEnd accounts for a read of n bytes in a sever side move
+// ServerSideMoveEnd accounts for a read of n bytes in a server-side move
 func (acc *Account) ServerSideMoveEnd(n int64) {
 	acc.stats.AddServerSideMove(n)
 	acc.serverSideEnd(n)

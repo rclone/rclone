@@ -446,14 +446,14 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 				t.Run("List", func(t *testing.T) {
 					fstest.CheckListing(t, f, test.want)
 				})
-				// b2 NewObject doesn't work with VersionAt
-				//t.Run("NewObject", func(t *testing.T) {
-				//	gotObj, gotErr := f.NewObject(ctx, fileName)
-				//	assert.Equal(t, test.wantErr, gotErr)
-				//	if gotErr == nil {
-				//		assert.Equal(t, test.wantSize, gotObj.Size())
-				//	}
-				//})
+
+				t.Run("NewObject", func(t *testing.T) {
+					gotObj, gotErr := f.NewObject(ctx, fileName)
+					assert.Equal(t, test.wantErr, gotErr)
+					if gotErr == nil {
+						assert.Equal(t, test.wantSize, gotObj.Size())
+					}
+				})
 			})
 		}
 	})

@@ -9,8 +9,6 @@ description: "Rclone Global Flags"
 This describes the global flags available to every rclone command
 split into groups.
 
-See the [Options section](/docs/#options) for syntax and usage advice.
-
 
 ## Copy
 
@@ -39,6 +37,7 @@ Flags for anything which can copy a file.
       --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 256Mi)
       --multi-thread-streams int                    Number of streams to use for multi-thread downloads (default 4)
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
+      --name-transform stringArray                  Transform paths during the copy process
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy
       --no-update-dir-modtime                       Don't update directory modification times
@@ -64,6 +63,7 @@ Flags used for sync commands.
       --delete-during                   When synchronizing, delete files during transfer
       --fix-case                        Force rename of case insensitive dest to match source
       --ignore-errors                   Delete even if there are I/O errors
+      --list-cutoff int                 To save memory, sort directory listings on disk above this threshold (default 1000000)
       --max-delete int                  When synchronizing, limit the number of deletes (default -1)
       --max-delete-size SizeSuffix      When synchronizing, limit the total size of deletes (default off)
       --suffix string                   Suffix to add to changed files
@@ -112,13 +112,14 @@ Flags for general networking and HTTP stuff.
       --header stringArray                 Set HTTP header for all transactions
       --header-download stringArray        Set HTTP header for download transactions
       --header-upload stringArray          Set HTTP header for upload transactions
+      --max-connections int                Maximum number of simultaneous backend API connections, 0 for unlimited
       --no-check-certificate               Do not verify the server SSL certificate (insecure)
       --no-gzip-encoding                   Don't set Accept-Encoding: gzip
       --timeout Duration                   IO idle timeout (default 5m0s)
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.69.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.70.0")
 ```
 
 
@@ -153,6 +154,7 @@ Flags for general configuration of rclone.
   -i, --interactive                         Enable interactive mode
       --kv-lock-time Duration               Maximum time to keep key-value database locked by process (default 1s)
       --low-level-retries int               Number of low level retries to do (default 10)
+      --max-buffer-memory SizeSuffix        If set, don't allocate more than this amount of memory as buffers (default off)
       --no-console                          Hide console window (supported on Windows only)
       --no-unicode-normalization            Don't normalize unicode characters in filenames
       --password-command SpaceSepList       Command for supplying password for encrypted configuration
@@ -190,6 +192,7 @@ Flags for filtering directory listings.
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
+      --hash-filter string                  Partition filenames by hash k/n or randomly @/n
       --ignore-case                         Ignore case in filters (case insensitive)
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read file include patterns from file (use - to read from stdin)
@@ -223,7 +226,7 @@ Flags for logging and statistics.
 
 ```
       --log-file string                     Log everything to this file
-      --log-format string                   Comma separated list of log format options (default "date,time")
+      --log-format Bits                     Comma separated list of log format options (default date,time)
       --log-level LogLevel                  Log level DEBUG|INFO|NOTICE|ERROR (default NOTICE)
       --log-systemd                         Activate systemd integration for the logger
       --max-stats-groups int                Maximum number of stats groups to keep in memory, on max oldest is discarded (default 1000)
@@ -290,6 +293,7 @@ Flags to control the Remote Control API.
       --rc-server-write-timeout Duration   Timeout for server writing data (default 1h0m0s)
       --rc-template string                 User-specified template
       --rc-user string                     User name for authentication
+      --rc-user-from-header string         User name from a defined HTTP header
       --rc-web-fetch-url string            URL to fetch the releases for webgui (default "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest")
       --rc-web-gui                         Launch WebGUI on localhost
       --rc-web-gui-force-update            Force update to latest version of web gui
@@ -319,6 +323,7 @@ Flags to control the Metrics HTTP endpoint..
       --metrics-server-write-timeout Duration   Timeout for server writing data (default 1h0m0s)
       --metrics-template string                 User-specified template
       --metrics-user string                     User name for authentication
+      --metrics-user-from-header string         User name from a defined HTTP header
       --rc-enable-metrics                       Enable the Prometheus metrics path at the remote control server
 ```
 
@@ -339,6 +344,8 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-client-id string                          The ID of the client in use
       --azureblob-client-secret string                      One of the service principal's client secrets
       --azureblob-client-send-certificate-chain             Send the certificate chain when using certificate auth
+      --azureblob-copy-concurrency int                      Concurrency for multipart copy (default 512)
+      --azureblob-copy-cutoff SizeSuffix                    Cutoff for switching to multipart copy (default 8Mi)
       --azureblob-delete-snapshots string                   Set to specify how to deal with snapshots on blob deletion
       --azureblob-description string                        Description of the remote
       --azureblob-directory-markers                         Upload an empty object with a trailing slash when a new directory is created
@@ -362,6 +369,7 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-upload-concurrency int                    Concurrency for multipart uploads (default 16)
       --azureblob-upload-cutoff string                      Cutoff for switching to chunked upload (<= 256 MiB) (deprecated)
       --azureblob-use-az                                    Use Azure CLI tool az for authentication
+      --azureblob-use-copy-blob                             Whether to use the Copy Blob API when copying to the same storage account (default true)
       --azureblob-use-emulator                              Uses local storage emulator if provided as 'true'
       --azureblob-use-msi                                   Use a managed service identity to authenticate (only works in Azure)
       --azureblob-username string                           User name (usually an email address)
@@ -374,6 +382,7 @@ Backend-only flags (these can be set in the config file also).
       --azurefiles-client-send-certificate-chain            Send the certificate chain when using certificate auth
       --azurefiles-connection-string string                 Azure Files Connection String
       --azurefiles-description string                       Description of the remote
+      --azurefiles-disable-instance-discovery               Skip requesting Microsoft Entra instance metadata
       --azurefiles-encoding Encoding                        The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8,Dot)
       --azurefiles-endpoint string                          Endpoint for the service
       --azurefiles-env-auth                                 Read credentials from runtime (environment variables, CLI or MSI)
@@ -388,6 +397,7 @@ Backend-only flags (these can be set in the config file also).
       --azurefiles-share-name string                        Azure Files Share Name
       --azurefiles-tenant string                            ID of the service principal's tenant. Also called its directory ID
       --azurefiles-upload-concurrency int                   Concurrency for multipart uploads (default 16)
+      --azurefiles-use-az                                   Use Azure CLI tool az for authentication
       --azurefiles-use-msi                                  Use a managed service identity to authenticate (only works in Azure)
       --azurefiles-username string                          User name (usually an email address)
       --b2-account string                                   Account ID or Application Key ID
@@ -450,12 +460,14 @@ Backend-only flags (these can be set in the config file also).
       --chunker-fail-hard                                   Choose how chunker should handle files with missing or invalid chunks
       --chunker-hash-type string                            Choose how chunker handles hash sums (default "md5")
       --chunker-remote string                               Remote to chunk/unchunk
+      --cloudinary-adjust-media-files-extensions            Cloudinary handles media formats as a file attribute and strips it from the name, which is unlike most other file systems (default true)
       --cloudinary-api-key string                           Cloudinary API Key
       --cloudinary-api-secret string                        Cloudinary API Secret
       --cloudinary-cloud-name string                        Cloudinary Environment Name
       --cloudinary-description string                       Description of the remote
       --cloudinary-encoding Encoding                        The encoding for the backend (default Slash,LtGt,DoubleQuote,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,RightSpace,InvalidUtf8,Dot)
       --cloudinary-eventually-consistent-delay Duration     Wait N seconds for eventual consistency of the databases that support the backend operation (default 0s)
+      --cloudinary-media-extensions stringArray             Cloudinary supported media extensions (default 3ds,3g2,3gp,ai,arw,avi,avif,bmp,bw,cr2,cr3,djvu,dng,eps3,fbx,flif,flv,gif,glb,gltf,hdp,heic,heif,ico,indd,jp2,jpe,jpeg,jpg,jxl,jxr,m2ts,mov,mp4,mpeg,mts,mxf,obj,ogv,pdf,ply,png,psd,svg,tga,tif,tiff,ts,u3ma,usdz,wdp,webm,webp,wmv)
       --cloudinary-upload-prefix string                     Specify the API endpoint for environments out of the US
       --cloudinary-upload-preset string                     Upload Preset to select asset manipulation on upload
       --combine-description string                          Description of the remote
@@ -479,6 +491,10 @@ Backend-only flags (these can be set in the config file also).
       --crypt-show-mapping                                  For all files listed show how the names encrypt
       --crypt-strict-names                                  If set, this will raise an error when crypt comes across a filename that can't be decrypted
       --crypt-suffix string                                 If this is set it will override the default suffix of ".bin" (default ".bin")
+      --doi-description string                              Description of the remote
+      --doi-doi string                                      The DOI or the doi.org URL
+      --doi-doi-resolver-api-url string                     The URL of the DOI resolver API to use
+      --doi-provider string                                 DOI provider
       --drive-acknowledge-abuse                             Set to allow files which return cannotDownloadAbusiveFile to be downloaded
       --drive-allow-import-name-change                      Allow the filetype to change when uploading Google docs
       --drive-auth-owner-only                               Only consider files owned by the authenticated user
@@ -530,7 +546,6 @@ Backend-only flags (these can be set in the config file also).
       --drive-use-trash                                     Send files to the trash instead of deleting permanently (default true)
       --drive-v2-download-min-size SizeSuffix               If Object's are greater, use drive v2 API to download (default off)
       --dropbox-auth-url string                             Auth server URL
-      --dropbox-batch-commit-timeout Duration               Max time to wait for a batch to finish committing (default 10m0s)
       --dropbox-batch-mode string                           Upload file batching sync|async|off (default "sync")
       --dropbox-batch-size int                              Max number of files in upload batch
       --dropbox-batch-timeout Duration                      Max time to allow an idle upload batch before uploading (default 0s)
@@ -540,11 +555,14 @@ Backend-only flags (these can be set in the config file also).
       --dropbox-client-secret string                        OAuth Client Secret
       --dropbox-description string                          Description of the remote
       --dropbox-encoding Encoding                           The encoding for the backend (default Slash,BackSlash,Del,RightSpace,InvalidUtf8,Dot)
+      --dropbox-export-formats CommaSepList                 Comma separated list of preferred formats for exporting files (default html,md)
       --dropbox-impersonate string                          Impersonate this user when using a business account
       --dropbox-pacer-min-sleep Duration                    Minimum time to sleep between API calls (default 10ms)
       --dropbox-root-namespace string                       Specify a different Dropbox namespace ID to use as the root for all paths
       --dropbox-shared-files                                Instructs rclone to work on individual shared files
       --dropbox-shared-folders                              Instructs rclone to work on shared folders
+      --dropbox-show-all-exports                            Show all exportable files in listings
+      --dropbox-skip-exports                                Skip exportable files in all listings
       --dropbox-token string                                OAuth Access Token as a JSON blob
       --dropbox-token-url string                            Token server url
       --fichier-api-key string                              Your API Key, get it from https://1fichier.com/console/params.pl
@@ -562,6 +580,9 @@ Backend-only flags (these can be set in the config file also).
       --filefabric-token-expiry string                      Token expiry time
       --filefabric-url string                               URL of the Enterprise File Fabric to connect to
       --filefabric-version string                           Version read from the file fabric
+      --filelu-description string                           Description of the remote
+      --filelu-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,CrLf,Del,Ctl,LeftSpace,LeftPeriod,LeftTilde,LeftCrLfHtVt,RightSpace,RightPeriod,RightCrLfHtVt,InvalidUtf8,Dot,SquareBracket,Semicolon,Exclamation)
+      --filelu-key string                                   Your FileLu Rclone key from My Account
       --filescom-api-key string                             The API key used to authenticate with Files.com
       --filescom-description string                         Description of the remote
       --filescom-encoding Encoding                          The encoding for the backend (default Slash,BackSlash,Del,Ctl,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
@@ -621,7 +642,6 @@ Backend-only flags (these can be set in the config file also).
       --gofile-list-chunk int                               Number of items to list in each call (default 1000)
       --gofile-root-folder-id string                        ID of the root folder
       --gphotos-auth-url string                             Auth server URL
-      --gphotos-batch-commit-timeout Duration               Max time to wait for a batch to finish committing (default 10m0s)
       --gphotos-batch-mode string                           Upload file batching sync|async|off (default "sync")
       --gphotos-batch-size int                              Max number of files in upload batch
       --gphotos-batch-timeout Duration                      Max time to allow an idle upload batch before uploading (default 0s)
@@ -689,6 +709,8 @@ Backend-only flags (these can be set in the config file also).
       --internetarchive-encoding Encoding                   The encoding for the backend (default Slash,LtGt,CrLf,Del,Ctl,InvalidUtf8,Dot)
       --internetarchive-endpoint string                     IAS3 Endpoint (default "https://s3.us.archive.org")
       --internetarchive-front-endpoint string               Host of InternetArchive Frontend (default "https://archive.org")
+      --internetarchive-item-derive                         Whether to trigger derive on the IA item or not. If set to false, the item will not be derived by IA upon upload (default true)
+      --internetarchive-item-metadata stringArray           Metadata to be set on the IA item, this is different from file-level metadata that can be set using --metadata-set
       --internetarchive-secret-access-key string            IAS3 Secret Key (password)
       --internetarchive-wait-archive Duration               Timeout for waiting the server's processing tasks (specifically archive and book_op) to finish (default 0s)
       --jottacloud-auth-url string                          Auth server URL
@@ -784,6 +806,7 @@ Backend-only flags (these can be set in the config file also).
       --onedrive-tenant string                              ID of the service principal's tenant. Also called its directory ID
       --onedrive-token string                               OAuth Access Token as a JSON blob
       --onedrive-token-url string                           Token server url
+      --onedrive-upload-cutoff SizeSuffix                   Cutoff for switching to chunked upload (default off)
       --oos-attempt-resume-upload                           If true attempt to resume previously started multipart upload for the object
       --oos-chunk-size SizeSuffix                           Chunk size to use for uploading (default 5Mi)
       --oos-compartment string                              Specify compartment OCID, if you need to list buckets
@@ -809,6 +832,7 @@ Backend-only flags (these can be set in the config file also).
       --oos-storage-tier string                             The storage class to use when storing new objects in storage. https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/understandingstoragetiers.htm (default "Standard")
       --oos-upload-concurrency int                          Concurrency for multipart uploads (default 10)
       --oos-upload-cutoff SizeSuffix                        Cutoff for switching to chunked upload (default 200Mi)
+      --opendrive-access string                             Files and folders will be uploaded with this access permission (default private) (default "private")
       --opendrive-chunk-size SizeSuffix                     Files will be uploaded in chunks this size (default 10Mi)
       --opendrive-description string                        Description of the remote
       --opendrive-encoding Encoding                         The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
@@ -905,6 +929,8 @@ Backend-only flags (these can be set in the config file also).
       --s3-endpoint string                                  Endpoint for S3 API
       --s3-env-auth                                         Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars)
       --s3-force-path-style                                 If true use path style access if false use virtual hosted style (default true)
+      --s3-ibm-api-key string                               IBM API Key to be used to obtain IAM token
+      --s3-ibm-resource-instance-id string                  IBM service instance id
       --s3-leave-parts-on-error                             If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery
       --s3-list-chunk int                                   Size of listing chunk (response list for each ListObject S3 request) (default 1000)
       --s3-list-url-encode Tristate                         Whether to url encode listings: true/false/unset (default unset)
@@ -925,6 +951,7 @@ Backend-only flags (these can be set in the config file also).
       --s3-server-side-encryption string                    The server-side encryption algorithm used when storing this object in S3
       --s3-session-token string                             An AWS session token
       --s3-shared-credentials-file string                   Path to the shared credentials file
+      --s3-sign-accept-encoding Tristate                    Set if rclone should include Accept-Encoding as part of the signature (default unset)
       --s3-sse-customer-algorithm string                    If using SSE-C, the server-side encryption algorithm used when storing this object in S3
       --s3-sse-customer-key string                          To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data
       --s3-sse-customer-key-base64 string                   If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data
@@ -941,6 +968,7 @@ Backend-only flags (these can be set in the config file also).
       --s3-use-multipart-uploads Tristate                   Set if rclone should use multipart uploads (default unset)
       --s3-use-presigned-request                            Whether to use a presigned request or PutObject for single part uploads
       --s3-use-unsigned-payload Tristate                    Whether to use an unsigned payload in PutObject (default unset)
+      --s3-use-x-id Tristate                                Set if rclone should add x-id URL parameters (default unset)
       --s3-v2-auth                                          If true use v2 authentication
       --s3-version-at Time                                  Show file versions as they were at the specified time (default off)
       --s3-version-deleted                                  Show deleted file markers when using versions
@@ -966,6 +994,7 @@ Backend-only flags (these can be set in the config file also).
       --sftp-disable-hashcheck                              Disable the execution of SSH commands to determine if remote file hashing is available
       --sftp-host string                                    SSH host to connect to
       --sftp-host-key-algorithms SpaceSepList               Space separated list of host key algorithms, ordered by preference
+      --sftp-http-proxy string                              URL for HTTP CONNECT proxy
       --sftp-idle-timeout Duration                          Max time before closing idle connections (default 1m0s)
       --sftp-key-exchange SpaceSepList                      Space separated list of key exchange algorithms, ordered by preference
       --sftp-key-file string                                Path to PEM-encoded private key file
@@ -1020,6 +1049,7 @@ Backend-only flags (these can be set in the config file also).
       --smb-pass string                                     SMB password (obscured)
       --smb-port int                                        SMB port number (default 445)
       --smb-spn string                                      Service principal name
+      --smb-use-kerberos                                    Use Kerberos authentication
       --smb-user string                                     SMB username (default "$USER")
       --storj-access-grant string                           Access grant
       --storj-api-key string                                API key

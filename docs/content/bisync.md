@@ -635,7 +635,7 @@ directory separators.) To address this particular issue, an additional
 `2006-01-02 0304PM`.
 
 Note that `--conflict-suffix` is entirely separate from rclone's main
-[`--sufix`](/docs/#suffix-suffix) flag. This is intentional, as users may wish
+[`--sufix`](/docs/#suffix-string) flag. This is intentional, as users may wish
 to use both flags simultaneously, if also using
 [`--backup-dir`](#backup-dir1-and-backup-dir2).
 
@@ -810,7 +810,7 @@ without requiring the user to get involved and run a `--resync`. (See also:
 
 ### --backup-dir1 and --backup-dir2
 
-As of `v1.66`, [`--backup-dir`](/docs/#backup-dir-dir) is supported in bisync.
+As of `v1.66`, [`--backup-dir`](/docs/#backup-dir-string) is supported in bisync.
 Because `--backup-dir` must be a non-overlapping path on the same remote,
 Bisync has introduced new `--backup-dir1` and `--backup-dir2` flags to support
 separate backup-dirs for `Path1` and `Path2` (bisyncing between different
@@ -841,7 +841,7 @@ In the event of a [rename due to a sync conflict](#conflict-loser), the
 rename is not considered a delete, unless a previous conflict with the same
 name already exists and would get overwritten.
 
-See also: [`--suffix`](/docs/#suffix-suffix),
+See also: [`--suffix`](/docs/#suffix-string),
 [`--suffix-keep-extension`](/docs/#suffix-keep-extension)
 
 ## Operation
@@ -1831,7 +1831,7 @@ about _Unison_ and synchronization in general.
 * Final listings are now generated from sync results, to avoid needing to re-list
 * Bisync is now much more resilient to changes that happen during a bisync run, and far less prone to critical errors / undetected changes
 * Bisync is now capable of rolling a file listing back in cases of uncertainty, essentially marking the file as needing to be rechecked next time.
-* A few basic terminal colors are now supported, controllable with [`--color`](/docs/#color-when) (`AUTO`|`NEVER`|`ALWAYS`)
+* A few basic terminal colors are now supported, controllable with [`--color`](/docs/#color) (`AUTO`|`NEVER`|`ALWAYS`)
 * Initial listing snapshots of Path1 and Path2 are now generated concurrently, using the same "march" infrastructure as `check` and `sync`,
 for performance improvements and less [risk of error](https://forum.rclone.org/t/bisync-bugs-and-feature-requests/37636#:~:text=4.%20Listings%20should%20alternate%20between%20paths%20to%20minimize%20errors).
 * Fixed handling of unicode normalization and case insensitivity, support for [`--fix-case`](/docs/#fix-case), [`--ignore-case-sync`](/docs/#ignore-case-sync), [`--no-unicode-normalization`](/docs/#no-unicode-normalization)

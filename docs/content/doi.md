@@ -8,7 +8,7 @@ versionIntroduced: "?"
 
 The DOI remote is a read only remote for reading files from digital object identifiers (DOI).
 
-Currently, the DOI backend supports supports DOIs hosted with:
+Currently, the DOI backend supports DOIs hosted with:
 - [InvenioRDM](https://inveniosoftware.org/products/rdm/)
   - [Zenodo](https://zenodo.org)
   - [CaltechDATA](https://data.caltech.edu)

@@ -226,6 +226,7 @@ var color = bisync.Color
 
 // TestMain drives the tests
 func TestMain(m *testing.M) {
+	bisync.LogTZ = time.UTC
 	fstest.TestMain(m)
 }
 
@@ -277,8 +278,7 @@ func testBisync(t *testing.T, path1, path2 string) {
 		ci.RefreshTimes = true
 	}
 	bisync.Colors = true
-	time.Local = bisync.TZ
-	ci.FsCacheExpireDuration = 5 * time.Hour
+	ci.FsCacheExpireDuration = fs.Duration(5 * time.Hour)
 
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
@@ -953,6 +953,12 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		b.fs2.Features().Disable("Copy") // API has longstanding bug for conflictBehavior=replace https://github.com/rclone/rclone/issues/4590
 		b.fs2.Features().Disable("Move")
 	}
+	if strings.HasPrefix(b.fs1.String(), "sftp") {
+		b.fs1.Features().Disable("Copy") // disable --sftp-copy-is-hardlink as hardlinks are not truly copies
+	}
+	if strings.HasPrefix(b.fs2.String(), "sftp") {
+		b.fs2.Features().Disable("Copy") // disable --sftp-copy-is-hardlink as hardlinks are not truly copies
+	}
 	if strings.Contains(strings.ToLower(fs.ConfigString(b.fs1)), "mailru") || strings.Contains(strings.ToLower(fs.ConfigString(b.fs2)), "mailru") {
 		fs.GetConfig(ctx).TPSLimit = 10 // https://github.com/rclone/rclone/issues/7768#issuecomment-2060888980
 	}
@@ -975,17 +981,23 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		objinfo := object.NewStaticObjectInfo("modtime_write_test", initDate, int64(len("modtime_write_test")), true, nil, nil)
 		obj, err := f.Put(ctx, in, objinfo)
 		require.NoError(b.t, err)
+		if !f.Features().IsLocal {
+			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
+		}
 		err = obj.SetModTime(ctx, initDate)
 		if err == fs.ErrorCantSetModTime {
-			if b.testCase != "nomodtime" {
-				b.t.Skip("skipping test as at least one remote does not support setting modtime")
-			}
+			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+		}
+		if !f.Features().IsLocal {
+			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
 		}
 		err = obj.Remove(ctx)
 		require.NoError(b.t, err)
 	}
-	testSetModtime(b.fs1)
-	testSetModtime(b.fs2)
+	if b.testCase != "nomodtime" {
+		testSetModtime(b.fs1)
+		testSetModtime(b.fs2)
+	}
 
 	if b.testCase == "normalization" || b.testCase == "extended_char_paths" || b.testCase == "extended_filenames" {
 		// test whether remote is capable of running test

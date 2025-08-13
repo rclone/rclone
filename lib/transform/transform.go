@@ -1,9 +1,12 @@
 // Package transform holds functions for path name transformations
+//
+//go:generate go run gen_help.go transform.md
 package transform
 
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -23,6 +26,16 @@ import (
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/unicode/norm"
 )
+
+//go:embed transform.md
+var help string
+
+// Help returns the help string cleaned up to simplify appending
+func Help() string {
+	// Chop off auto generated message
+	nl := strings.IndexRune(help, '\n')
+	return strings.TrimSpace(help[nl:]) + "\n\n"
+}
 
 // Path transforms a path s according to the --name-transform options in use
 //
@@ -53,7 +66,7 @@ func Path(ctx context.Context, s string, isDir bool) string {
 			fs.Errorf(s, "Failed to transform: %v", err)
 		}
 	}
-	if old != s && !generatingHelpText {
+	if old != s {
 		fs.Debugf(old, "transformed to: %v", s)
 	}
 	if strings.Count(old, "/") != strings.Count(s, "/") {
@@ -152,14 +165,25 @@ func transformPathSegment(s string, t transform) (string, error) {
 		if err != nil {
 			return s, err
 		}
-		if max <= 0 {
-			return s, nil
+		return truncateChars(s, max, false), nil
+	case ConvTruncateKeepExtension:
+		max, err := strconv.Atoi(t.value)
+		if err != nil {
+			return s, err
 		}
-		if utf8.RuneCountInString(s) <= max {
-			return s, nil
+		return truncateChars(s, max, true), nil
+	case ConvTruncateBytes:
+		max, err := strconv.Atoi(t.value)
+		if err != nil {
+			return s, err
 		}
-		runes := []rune(s)
-		return string(runes[:max]), nil
+		return truncateBytes(s, max, false)
+	case ConvTruncateBytesKeepExtension:
+		max, err := strconv.Atoi(t.value)
+		if err != nil {
+			return s, err
+		}
+		return truncateBytes(s, max, true)
 	case ConvEncoder:
 		var enc encoder.MultiEncoder
 		err := enc.Set(t.value)
@@ -181,7 +205,7 @@ func transformPathSegment(s string, t transform) (string, error) {
 	case ConvMacintosh:
 		return encodeWithReplacement(s, charmap.Macintosh), nil
 	case ConvCharmap:
-		var cmapType fs.Enum[cmapChoices]
+		var cmapType CharmapChoices
 		err := cmapType.Set(t.value)
 		if err != nil {
 			return s, err
@@ -218,9 +242,13 @@ func transformPathSegment(s string, t transform) (string, error) {
 //
 // i.e. file.txt becomes file_somesuffix.txt not file.txt_somesuffix
 func SuffixKeepExtension(remote string, suffix string) string {
+	base, exts := splitExtension(remote)
+	return base + suffix + exts
+}
+
+func splitExtension(remote string) (base, exts string) {
+	base = remote
 	var (
-		base  = remote
-		exts  = ""
 		first = true
 		ext   = path.Ext(remote)
 	)
@@ -235,7 +263,45 @@ func SuffixKeepExtension(remote string, suffix string) string {
 		first = false
 		ext = path.Ext(base)
 	}
-	return base + suffix + exts
+	return base, exts
+}
+
+func truncateChars(s string, max int, keepExtension bool) string {
+	if max <= 0 {
+		return s
+	}
+	if utf8.RuneCountInString(s) <= max {
+		return s
+	}
+	exts := ""
+	if keepExtension {
+		s, exts = splitExtension(s)
+	}
+	runes := []rune(s)
+	return string(runes[:max-utf8.RuneCountInString(exts)]) + exts
+}
+
+// truncateBytes is like truncateChars but counts the number of bytes, not UTF-8 characters
+func truncateBytes(s string, max int, keepExtension bool) (string, error) {
+	if max <= 0 {
+		return s, nil
+	}
+	if len(s) <= max {
+		return s, nil
+	}
+	exts := ""
+	if keepExtension {
+		s, exts = splitExtension(s)
+	}
+
+	// ensure we don't split a multi-byte UTF-8 character
+	for i := max - len(exts); i > 0; i-- {
+		b := append([]byte(s)[:i], exts...)
+		if len(b) <= max && utf8.Valid(b) {
+			return string(b), nil
+		}
+	}
+	return "", errors.New("could not truncate to valid UTF-8")
 }
 
 // forbid transformations that add/remove path separators

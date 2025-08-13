@@ -14,10 +14,13 @@ var (
 	lock  sync.Mutex
 )
 
+// CharmapChoices is an enum of the character map choices.
+type CharmapChoices = fs.Enum[cmapChoices]
+
 type cmapChoices struct{}
 
 func (cmapChoices) Choices() []string {
-	choices := make([]string, 1)
+	choices := []string{}
 	i := 0
 	for _, enc := range charmap.All {
 		c, ok := enc.(*charmap.Charmap)

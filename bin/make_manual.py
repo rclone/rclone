@@ -41,6 +41,7 @@ docs = [
     "crypt.md",
     "compress.md",
     "combine.md",
+    "doi.md",
     "dropbox.md",
     "filefabric.md",
     "filelu.md",

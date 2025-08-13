@@ -380,26 +380,26 @@ func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1, remote2 string,
 	}
 	if t1.After(t2) {
 		if prefer == PreferNewer {
-			fs.Infof(remote1, "Path1 is newer. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t1.Sub(t2))
+			fs.Infof(remote1, "Path1 is newer. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t1.Sub(t2))
 			return 1
 		} else if prefer == PreferOlder {
-			fs.Infof(remote1, "Path2 is older. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t1.Sub(t2))
+			fs.Infof(remote1, "Path2 is older. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t1.Sub(t2))
 			return 2
 		}
 	} else if t1.Before(t2) {
 		if prefer == PreferNewer {
-			fs.Infof(remote1, "Path2 is newer. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t2.Sub(t1))
+			fs.Infof(remote1, "Path2 is newer. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
 			return 2
 		} else if prefer == PreferOlder {
-			fs.Infof(remote1, "Path1 is older. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t2.Sub(t1))
+			fs.Infof(remote1, "Path1 is older. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
 			return 1
 		}
 	}
 	if t1.Equal(t2) {
-		fs.Infof(remote1, "Winner cannot be determined as times are equal. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t2.Sub(t1))
+		fs.Infof(remote1, "Winner cannot be determined as times are equal. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
 		return 0
 	}
-	fs.Errorf(remote1, "Winner cannot be determined. Path1: %v, Path2: %v", t1.Local(), t2.Local()) // shouldn't happen unless prefer is of wrong type
+	fs.Errorf(remote1, "Winner cannot be determined. Path1: %v, Path2: %v", t1.In(LogTZ), t2.In(LogTZ)) // shouldn't happen unless prefer is of wrong type
 	return 0
 }
 

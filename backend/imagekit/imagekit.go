@@ -421,6 +421,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // will return the object and the error, otherwise will return
 // nil and the error
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	if src.Size() == 0 {
+		return nil, fs.ErrorCantUploadEmptyFiles
+	}
 	return uploadFile(ctx, f, in, src.Remote(), options...)
 }
 
@@ -659,6 +662,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	if src.Size() == 0 {
+		return fs.ErrorCantUploadEmptyFiles
+	}
 
 	srcRemote := o.Remote()
 
@@ -670,7 +676,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	var resp *client.UploadResult
 
-	err = o.fs.pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		var res *http.Response
 		res, resp, err = o.fs.ik.Upload(ctx, in, client.UploadParam{
 			FileName:      fileName,
@@ -725,7 +731,7 @@ func uploadFile(ctx context.Context, f *Fs, in io.Reader, srcRemote string, opti
 	UseUniqueFileName := new(bool)
 	*UseUniqueFileName = false
 
-	err := f.pacer.Call(func() (bool, error) {
+	err := f.pacer.CallNoRetry(func() (bool, error) {
 		var res *http.Response
 		var err error
 		res, _, err = f.ik.Upload(ctx, in, client.UploadParam{
@@ -794,35 +800,10 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	return metadata, nil
 }
 
-// Copy src to this remote using server-side move operations.
-//
-// This is stored with the remote path given.
-//
-// It returns the destination Object and a possible error.
-//
-// Will only be called if src.Fs().Name() == f.Name()
-//
-// If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*Object)
-	if !ok {
-		return nil, fs.ErrorCantMove
-	}
-
-	file, err := srcObj.Open(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return uploadFile(ctx, f, file, remote)
-}
-
 // Check the interfaces are satisfied.
 var (
 	_ fs.Fs           = &Fs{}
 	_ fs.Purger       = &Fs{}
 	_ fs.PublicLinker = &Fs{}
 	_ fs.Object       = &Object{}
-	_ fs.Copier       = &Fs{}
 )

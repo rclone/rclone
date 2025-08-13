@@ -297,6 +297,16 @@ be explicitly specified using exactly one of the `msi_object_id`,
 If none of `msi_object_id`, `msi_client_id`, or `msi_mi_res_id` is
 set, this is is equivalent to using `env_auth`.
 
+#### Fedrated Identity Credentials 
+
+If these variables are set, rclone will authenticate with fedrated identity.
+
+- `tenant_id`: tenant_id to authenticate in storage
+- `client_id`: client ID of the application the user will authenticate to storage
+- `msi_client_id`: managed identity client ID of the application the user will authenticate to
+
+By default "api://AzureADTokenExchange" is used as scope for token retrieval over MSI. This token is then exchanged for actual storage token using 'tenant_id' and 'client_id'.
+
 #### Azure CLI tool `az` {#use_az}
 
 Set to use the [Azure CLI tool `az`](https://learn.microsoft.com/en-us/cli/azure/)
@@ -718,6 +728,65 @@ Properties:
 - Env Var:     RCLONE_AZUREBLOB_UPLOAD_CONCURRENCY
 - Type:        int
 - Default:     16
+
+#### --azureblob-copy-cutoff
+
+Cutoff for switching to multipart copy.
+
+Any files larger than this that need to be server-side copied will be
+copied in chunks of chunk_size using the put block list API.
+
+Files smaller than this limit will be copied with the Copy Blob API.
+
+Properties:
+
+- Config:      copy_cutoff
+- Env Var:     RCLONE_AZUREBLOB_COPY_CUTOFF
+- Type:        SizeSuffix
+- Default:     8Mi
+
+#### --azureblob-copy-concurrency
+
+Concurrency for multipart copy.
+
+This is the number of chunks of the same file that are copied
+concurrently.
+
+These chunks are not buffered in memory and Microsoft recommends
+setting this value to greater than 1000 in the azcopy documentation.
+
+https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-optimize#increase-concurrency
+
+In tests, copy speed increases almost linearly with copy
+concurrency.
+
+Properties:
+
+- Config:      copy_concurrency
+- Env Var:     RCLONE_AZUREBLOB_COPY_CONCURRENCY
+- Type:        int
+- Default:     512
+
+#### --azureblob-use-copy-blob
+
+Whether to use the Copy Blob API when copying to the same storage account.
+
+If true (the default) then rclone will use the Copy Blob API for
+copies to the same storage account even when the size is above the
+copy_cutoff.
+
+Rclone assumes that the same storage account means the same config
+and does not check for the same storage account in different configs.
+
+There should be no need to change this value.
+
+
+Properties:
+
+- Config:      use_copy_blob
+- Env Var:     RCLONE_AZUREBLOB_USE_COPY_BLOB
+- Type:        bool
+- Default:     true
 
 #### --azureblob-list-chunk
 

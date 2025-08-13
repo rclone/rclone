@@ -146,7 +146,9 @@ Properties:
     - "nextcloud"
         - Nextcloud
     - "owncloud"
-        - Owncloud
+        - Owncloud 10 PHP based WebDAV server
+    - "infinitescale"
+        - ownCloud Infinite Scale
     - "sharepoint"
         - Sharepoint Online, authenticated by Microsoft account
     - "sharepoint-ntlm"

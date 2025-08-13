@@ -6,6 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="{{ .Description }}">
     <meta name="author" content="Nick Craig-Wood">
+    <meta property="og:site_name" content="Rclone" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="{{ "/img/rclone-1200x630.png" | absURL }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="{{ .Permalink }}" />
+    <meta property="og:title" content="{{ .Title }}" />
+    <meta property="og:description" content="{{ .Description }}" />
     <link rel="shortcut icon" type="image/png" href="/img/rclone-32x32.png"/>
     <script defer data-domain="rclone.org" src="https://weblog.rclone.org/js/script.js"></script>
     <title>{{ block "title" . }}{{ .Title }}{{ end }}</title>
