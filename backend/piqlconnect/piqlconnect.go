@@ -432,6 +432,24 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return nil
 }
 
+// Purge deletes all the files and the container
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	segments := f.getAbsolutePathSegments(dir)
+	if f.packageIdCache[segments[1]] == "" {
+		f.listPackages(ctx, segments[0])
+	}
+	removeFolder := api.RemoveFolder{
+		OrganisationId: f.organisationId,
+		PackageId:      f.packageIdCache[segments[1]],
+		FolderPaths:    [1]string{strings.Join(segments[2:], "/")},
+	}
+	_, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders/delete"}, &removeFolder, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -536,7 +554,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	// TODO
+	// TODO: POST /api/files/touch
 	return errors.New("failed to set modtime")
 }
 
@@ -631,12 +649,13 @@ func (f *Fs) Hashes() hash.Set {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs = (*Fs)(nil)
-	// TODO: Purger is implementable for piqlConnect
-	// _ fs.Purger = (*Fs)(nil)
+	_ fs.Fs     = (*Fs)(nil)
+	_ fs.Purger = (*Fs)(nil)
 	// TODO: PutStreamer is implementable for piqlConnect
 	// _ fs.PutStreamer = (*Fs)(nil)
 	_ fs.Object = (*Object)(nil)
 	// TODO: IDer is implementable for piqlConnect
-	// _ fs.IDer = (*Fs)(nil)
+	// _ fs.IDer = (*Object)(nil)
+	// TODO: ParentIDer is implementable for piqlConnect
+	// _ fs.ParentIDer = (*Object)(nil)
 )
