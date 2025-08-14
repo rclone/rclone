@@ -56,6 +56,13 @@ type CreateFile struct {
 	Files          [1]FilePathSize `json:"files"`
 }
 
+// Touch file is the request body for updating file ModTime (/api/files/touch)
+type TouchFile struct {
+	OrganisationId string    `json:"organisationId"`
+	PackageId      string    `json:"packageId"`
+	Files          [1]string `json:"files"`
+}
+
 // Create folder is the request body for creating folders (/api/folders)
 type CreateFolder struct {
 	OrganisationId string `json:"organisationId"`

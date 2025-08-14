@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -175,8 +174,11 @@ func (f *Fs) getFiles(ctx context.Context, segments []string) (files []api.Item,
 	values.Set("packageId", packageId)
 	packageRelativePath := strings.Join(segments[2:], "/")
 	values.Set("path", packageRelativePath)
-	_, err = f.client.CallJSON(ctx, &rest.Opts{Path: "/files", Parameters: values}, nil, &files)
+	resp, err := f.client.CallJSON(ctx, &rest.Opts{Path: "/files", Parameters: values}, nil, &files)
 	if err != nil {
+		if resp.StatusCode == 404 {
+			return nil, fs.ErrorDirNotFound
+		}
 		return nil, err
 	}
 	return files, nil
@@ -243,7 +245,7 @@ func (f *Fs) listPackages(ctx context.Context, absolutePath string) (entries fs.
 // dir should be "" to list the root, and should not have
 // trailing slashes.
 //
-// TODO: This should return ErrDirNotFound if the directory isn't
+// This returns ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	absolutePath := f.rclonePathToAbsolute(dir)
@@ -554,8 +556,24 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	// TODO: POST /api/files/touch
-	return errors.New("failed to set modtime")
+	segments := o.fs.getAbsolutePathSegments(o.remote)
+	if o.fs.packageIdCache[segments[1]] == "" {
+		o.fs.listPackages(ctx, segments[0])
+	}
+
+	touchFile := api.TouchFile{
+		OrganisationId: o.fs.organisationId,
+		PackageId:      o.fs.packageIdCache[segments[1]],
+		Files:          [1]string{path.Join(segments[2:]...)},
+	}
+	_, err := o.fs.client.CallJSON(ctx, &rest.Opts{
+		Method: "POST",
+		Path:   "/files/touch",
+	}, &touchFile, nil)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Storable returns a boolean showing whether this object is storable
