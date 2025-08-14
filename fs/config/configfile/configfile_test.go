@@ -387,12 +387,12 @@ func TestConfigFileSaveSymlinkAbsolute(t *testing.T) {
 	}
 
 	t.Run("Absolute", func(t *testing.T) {
-		link := filepath.Join(linkDir, "configfilelink")
+		link := filepath.Join(linkDir, "configfileabslink")
 		target := filepath.Join(testDir, "b", "configfiletarget")
 		testSymlink(t, link, target, target)
 	})
 	t.Run("Relative", func(t *testing.T) {
-		link := filepath.Join(linkDir, "configfilelink")
+		link := filepath.Join(linkDir, "configfilerellink")
 		target := filepath.Join("b", "c", "configfiletarget")
 		resolvedTarget := filepath.Join(filepath.Dir(link), target)
 		testSymlink(t, link, target, resolvedTarget)
