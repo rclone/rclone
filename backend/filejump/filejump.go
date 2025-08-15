@@ -768,9 +768,9 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	// Extract IDs from SQL "in (...)" if possible
 	idsSegment := ""
 	if idx := strings.Index(strings.ToLower(msg), " in ("); idx >= 0 {
-		rest := msg[idx+5:]
-		if end := strings.Index(rest, ")"); end > 0 {
-			idsSegment = rest[:end+1]
+		restMsg := msg[idx+5:]
+		if end := strings.Index(restMsg, ")"); end > 0 {
+			idsSegment = restMsg[:end+1]
 		}
 	}
 	if idsSegment == "" {
@@ -807,13 +807,13 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 		Status string `json:"status,omitempty"`
 	}
 
-	const chunkSize = 10
+	const chunkSize = 1000
 	deleted := 0
 	var errs []string
 
-	delOpts := &rest.Opts{Method: "POST", Path: "/file-entries/delete"}
+	baseDelOpts := &rest.Opts{Method: "POST", Path: "/file-entries/delete"}
 	if f.opt.WorkspaceID != "" && f.opt.WorkspaceID != "0" {
-		delOpts.Parameters = url.Values{"workspaceId": []string{f.opt.WorkspaceID}}
+		baseDelOpts.Parameters = url.Values{"workspaceId": []string{f.opt.WorkspaceID}}
 	}
 
 	for i := 0; i < len(ids); i += chunkSize {
@@ -825,20 +825,44 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 		req := &RequestDelete{EntryIDs: chunk, DeleteForever: true}
 		resDel := &ResultDelete{}
 
-		if _, delErr := f.srv.CallJSON(ctx, delOpts, req, resDel); delErr != nil {
-			errMsg := fmt.Sprintf("chunk %d-%d failed: %v", i, end, delErr)
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(req); err != nil {
+			errMsg := fmt.Sprintf("chunk %d-%d failed to encode: %v", i, end, err)
 			fs.Errorf(f, "CleanUp: %s", errMsg)
 			errs = append(errs, errMsg)
 			continue
 		}
-		if resDel == nil || resDel.Status != "success" {
-			status := "<nil>"
-			if resDel != nil {
-				status = resDel.Status
-			}
-			errMsg := fmt.Sprintf("chunk %d-%d returned non-success status: %s", i, end, status)
+
+		delOpts := *baseDelOpts
+		delOpts.Body = &buf
+		delOpts.ContentType = "application/json"
+
+		httpResp, callErr := f.srv.Call(ctx, &delOpts)
+		if callErr != nil {
+			errMsg := fmt.Sprintf("chunk %d-%d call failed: %v", i, end, callErr)
 			fs.Errorf(f, "CleanUp: %s", errMsg)
 			errs = append(errs, errMsg)
+			continue
+		}
+
+		bodyBytes, _ := io.ReadAll(httpResp.Body)
+		_ = httpResp.Body.Close()
+
+		if err := json.Unmarshal(bodyBytes, resDel); err != nil {
+			fs.Errorf(f, "CleanUp: chunk %d-%d non-JSON response (status %d):\n%s",
+				i, end, httpResp.StatusCode, string(bodyBytes))
+			errs = append(errs, fmt.Sprintf("chunk %d-%d non-JSON response (status %d)", i, end, httpResp.StatusCode))
+			continue
+		}
+
+		if resDel.Status != "success" {
+			status := "<nil>"
+			if resDel.Status != "" {
+				status = resDel.Status
+			}
+			fs.Errorf(f, "CleanUp: chunk %d-%d returned non-success status: %s (HTTP %d) body: %s",
+				i, end, status, httpResp.StatusCode, string(bodyBytes))
+			errs = append(errs, fmt.Sprintf("chunk %d-%d returned non-success: %s", i, end, status))
 			continue
 		}
 
