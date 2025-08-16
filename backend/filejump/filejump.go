@@ -1517,6 +1517,7 @@ type RangeReader struct {
 	pos    int64
 }
 
+// NewRangeReader creates a new RangeReader that reads from the given reader between start and end positions
 func NewRangeReader(reader io.ReadCloser, start, end int64) *RangeReader {
 	return &RangeReader{
 		reader: reader,
@@ -1526,6 +1527,7 @@ func NewRangeReader(reader io.ReadCloser, start, end int64) *RangeReader {
 	}
 }
 
+// Read reads data from the underlying reader within the specified range
 func (r *RangeReader) Read(p []byte) (n int, err error) {
 	// Skip bytes bis zum Start-Offset
 	if r.pos < r.start {
@@ -1565,6 +1567,7 @@ func (r *RangeReader) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
+// Close closes the underlying reader
 func (r *RangeReader) Close() error {
 	return r.reader.Close()
 }
