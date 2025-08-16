@@ -4,6 +4,8 @@ package filejump
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,7 +34,6 @@ import (
 )
 
 const (
-	apiBaseURL          = "https://drive.filejump.com/api/v1"
 	defaultUploadCutoff = 50 * 1024 * 1024
 	smallFileCutoff     = 15 * 1024 * 1024 // 15 MiB
 )
@@ -44,9 +45,13 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:      "access_token",
-			Help:      "You should create an API access token here: https://drive.filejump.com/account-settings",
+			Help:      "You should create an API access token in your Account Settings (top right) -> Developers -> API access tokens",
 			Required:  true,
 			Sensitive: true,
+		}, {
+			Name:     "api_domain",
+			Help:     "Enter the domain name of your FileJump server, as shown in your browser’s address bar when you’re logged in (e.g., drive.filejump.com, app.filejump.com, eu.filejump.com).",
+			Required: true,
 		}, {
 			Name:     "workspace_id",
 			Help:     "The ID of the workspace to use. Defaults to personal workspace (0). Set to -1 to list available workspaces on first use.",
@@ -79,6 +84,7 @@ type Options struct {
 	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
 	Enc          encoder.MultiEncoder `config:"encoding"`
 	AccessToken  string               `config:"access_token"`
+	APIDomain    string               `config:"api_domain"`
 	WorkspaceID  string               `config:"workspace_id"`
 	HardDelete   bool                 `config:"hard_delete"`
 }
@@ -151,17 +157,6 @@ if err != nil {
 }
 */
 func CallJSON[T any, B any](ctx context.Context, f *Fs, method string, path string, params *url.Values, body *B) (*T, error) {
-	// Input parameters in one line
-	logMsg := fmt.Sprintf("CallJSON: %s %s", method, path)
-	if params != nil && len(*params) > 0 {
-		logMsg += fmt.Sprintf(" params=%s", params.Encode())
-	}
-	if body != nil {
-		bodyJSON, _ := json.Marshal(body)
-		logMsg += fmt.Sprintf(" body=%s", string(bodyJSON))
-	}
-	fs.Debugf(f, "%v", logMsg)
-
 	var result T
 	opts := rest.Opts{
 		Method: method,
@@ -287,7 +282,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name: name,
 		root: root,
 		opt:  *opt,
-		srv:  rest.NewClient(client).SetRoot(apiBaseURL),
+		srv:  rest.NewClient(client).SetRoot("https://" + opt.APIDomain + "/api/v1"),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(
 			pacer.MinSleep(10*time.Millisecond),
 			pacer.MaxSleep(2*time.Second),
@@ -530,12 +525,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	authRetry := false
-
-	if resp != nil && resp.StatusCode == 401 && strings.Contains(resp.Header.Get("Www-Authenticate"), "expired_token") {
-		authRetry = true
-		fs.Debugf(nil, "Should retry: %v", err)
-	}
+	authRetry := resp != nil && resp.StatusCode == 401 && strings.Contains(resp.Header.Get("Www-Authenticate"), "expired_token")
 
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -1476,7 +1466,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", errors.New("failed to create shareable link: empty hash in response")
 	}
 
-	return "https://drive.filejump.com/drive/s/" + result.Link.Hash, nil
+	return "https://" + f.opt.APIDomain + "/drive/s/" + result.Link.Hash, nil
 }
 
 // DirCacheFlush resets the directory cache - used in testing
@@ -1516,13 +1506,48 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	fs.FixRangeOption(options, o.size)
 
-	// Try to get file metadata to see if it contains a download URL
+	// Check if we're using the EU domain which has a different download endpoint
+	if o.fs.opt.APIDomain == "eu.filejump.com" {
+		// For EU domain, use the direct download endpoint with base64 encoded hash
+		encodedHash := base64.StdEncoding.EncodeToString([]byte(o.id + "|pad"))
+		encodedHash = strings.TrimRight(encodedHash, "=") // Remove padding
+		downloadURL := fmt.Sprintf("https://%s/api/v1/file-entries/download/%s?workspaceId=0", o.fs.opt.APIDomain, encodedHash)
+
+		req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create download request: %w", err)
+		}
+
+		// Add authorization header
+		req.Header.Set("Authorization", "Bearer "+o.fs.opt.AccessToken)
+
+		// Apply range options if any
+		for _, option := range options {
+			if rangeOption, ok := option.(*fs.RangeOption); ok {
+				req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", rangeOption.Start, rangeOption.End))
+			}
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to download file: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+			_ = resp.Body.Close()
+			return nil, fmt.Errorf("download failed with status: %s", resp.Status)
+		}
+
+		return resp.Body, nil
+	}
+
+	// For non-EU domains, try to get file metadata to see if it contains a download URL
 	info, err := o.fs.readMetaDataForPath(ctx, o.remote)
 	if err == nil && info != nil {
 		// Check if the URL field contains a download URL
 		if urlStr, ok := info.URL.(string); ok && urlStr != "" {
 			// Construct full URL - the URL field contains a relative path
-			fullURL := "https://drive.filejump.com/" + strings.TrimPrefix(urlStr, "/")
+			fullURL := "https://" + o.fs.opt.APIDomain + "/" + strings.TrimPrefix(urlStr, "/")
 
 			req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
 			if err != nil {
@@ -1553,7 +1578,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 	}
 
-	// Fallback to direct download endpoint
+	// Fallback to direct download endpoint for non-EU domains
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
@@ -1704,8 +1729,75 @@ func getExtensionAndMime(filename string) (extension, mimeType string) {
 }
 
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, options ...fs.OpenOption) (err error) {
-	// Upload via S3 presigned URL
-	fs.Debugf(o, "Uploading file via S3 presigned URL")
+	// Check which server we're using
+	if o.fs.opt.APIDomain == "eu.filejump.com" {
+		return o.uploadViaTUS(ctx, in, leaf, directoryID, size, modTime, options...)
+	}
+
+	// Default to S3 presigned URL method (drive.filejump.com and others)
+	return o.uploadViaS3(ctx, in, leaf, directoryID, size, modTime, options...)
+}
+
+// Upload via TUS protocol (for eu.filejump.com)
+func (o *Object) uploadViaTUS(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, options ...fs.OpenOption) (err error) {
+	// Read all data into buffer since TUS might need to seek/retry
+	data, err := io.ReadAll(in)
+	if err != nil {
+		return fmt.Errorf("error reading upload data: %w", err)
+	}
+	reader := bytes.NewReader(data)
+
+	// Generate fingerprint similar to TypeScript version
+	fingerprint := fmt.Sprintf("tus-%s-drive", generateFingerprint(leaf, size))
+
+	// Encode filename for FileJump API requirements
+	encodedLeaf := o.fs.padNameForFileJump(leaf)
+	ext, mime := getExtensionAndMime(leaf)
+
+	// Create TUS upload
+	tusEndpoint := fmt.Sprintf("https://%s/api/v1/tus/upload", o.fs.opt.APIDomain)
+	uploadKey, err := o.performTUSUpload(ctx, reader, tusEndpoint, fingerprint, encodedLeaf, leaf, ext, mime, size, directoryID)
+	if err != nil {
+		return fmt.Errorf("error performing TUS upload: %w", err)
+	}
+
+	// Create file entry using upload key
+	type RequestTUSEntries struct {
+		UploadKey string `json:"uploadKey"`
+	}
+
+	requestTUSEntries := RequestTUSEntries{
+		UploadKey: uploadKey,
+	}
+
+	resultEntries, err := CallJSONPost[api.Item, RequestTUSEntries](ctx, o.fs, "/tus/entries", &requestTUSEntries)
+	if err != nil {
+		return fmt.Errorf("error creating file entry: %w", err)
+	}
+
+	// Set/refresh metadata
+	if resultEntries.ID == 0 || resultEntries.Name == "" {
+		o.size = size
+		o.modTime = modTime
+		o.hasMetaData = false
+		if err := o.readMetaData(ctx); err != nil {
+			o.hasMetaData = true
+			o.id = ""
+		}
+	} else {
+		if err := o.setMetaData(resultEntries); err != nil {
+			return fmt.Errorf("error setting metadata: %w", err)
+		}
+		o.size = size
+		o.modTime = modTime
+	}
+
+	return nil
+}
+
+// Upload via S3 presigned URL (original method for drive.filejump.com)
+func (o *Object) uploadViaS3(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, options ...fs.OpenOption) (err error) {
+	// Your existing S3 upload code remains unchanged
 	directoryIDInt, _ := strconv.Atoi(directoryID)
 	workspaceIDInt, err := strconv.Atoi(o.fs.opt.WorkspaceID)
 	if err != nil {
@@ -1720,7 +1812,6 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		ACL    string `json:"acl"`
 		Status string `json:"status"`
 	}
-
 	type RequestPresign struct {
 		Filename     string `json:"filename"`
 		Mime         string `json:"mime"`
@@ -1731,17 +1822,13 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		ParentID     *int   `json:"parentId,omitempty"` // nil für Root
 		RelativePath string `json:"relativePath"`
 	}
-
 	ext, mime := getExtensionAndMime(leaf)
-
 	// Encode and pad the filename for FileJump API requirements
 	encodedLeaf := o.fs.padNameForFileJump(leaf)
-
 	var parentIDPtr *int
 	if directoryIDInt != 0 {
 		parentIDPtr = &directoryIDInt
 	}
-
 	requestPresign := RequestPresign{
 		Filename:     encodedLeaf,
 		Mime:         mime,
@@ -1752,7 +1839,6 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		ParentID:     parentIDPtr,
 		RelativePath: "",
 	}
-
 	resultPresign, err := CallJSONPost[ResultPresign, RequestPresign](ctx, o.fs, "/s3/simple/presign", &requestPresign)
 	if err != nil {
 		return fmt.Errorf("error requesting presigned URL: %w", err)
@@ -1760,7 +1846,6 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	if resultPresign.Status != "success" {
 		return fmt.Errorf("error requesting presigned URL: status is not 'success'")
 	}
-
 	// PUT to presigned URL
 	putReq, err := http.NewRequestWithContext(ctx, http.MethodPut, resultPresign.URL, in)
 	if err != nil {
@@ -1768,18 +1853,15 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	}
 	putReq.Header.Set("Content-Type", "application/octet-stream")
 	putReq.Header.Set("x-amz-acl", resultPresign.ACL)
-
 	putResp, err := http.DefaultClient.Do(putReq)
 	if err != nil {
 		return fmt.Errorf("error uploading file: %w", err)
 	}
 	defer func() { _ = putResp.Body.Close() }()
-
 	if putResp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(putResp.Body)
 		return fmt.Errorf("error uploading file: HTTP %d: %s", putResp.StatusCode, string(body))
 	}
-
 	// Register file in FileJump
 	type RequestEntries struct {
 		WorkspaceID     int         `json:"workspaceId"`
@@ -1808,12 +1890,10 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		Size:            size,
 		ClientExtension: "bin",
 	}
-
 	resultEntries, err := CallJSONPost[api.Item, RequestEntries](ctx, o.fs, "/s3/entries", &requestEntries)
 	if err != nil {
 		return fmt.Errorf("error requesting file data URL: %w", err)
 	}
-
 	//  Set/refresh metadata
 	if resultEntries.ID == 0 || resultEntries.Name == "" {
 		o.size = size
@@ -1830,8 +1910,146 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		o.size = size
 		o.modTime = modTime
 	}
+	return nil
+}
+
+// Perform the actual TUS upload
+func (o *Object) performTUSUpload(ctx context.Context, reader *bytes.Reader, endpoint, fingerprint, encodedName, originalName, ext, mime string, size int64, directoryID string) (string, error) {
+	// Create TUS upload with metadata
+	// Important: values must be raw and will be base64-encoded exactly once
+	// when constructing the Upload-Metadata header. Do NOT pre-encode here.
+	parentID := directoryID
+	if parentID == "0" { // the API expects empty for root in metadata
+		parentID = ""
+	}
+	metadata := map[string]string{
+		"name":            encodedName, // backend-encoded + padded
+		"clientName":      encodedName, // keep consistent with S3 path to avoid invalid UTF-8 issues
+		"clientExtension": ext,
+		"clientMime":      mime,
+		"clientSize":      fmt.Sprintf("%d", size),
+		"workspaceId":     o.fs.opt.WorkspaceID,
+		"parentId":        parentID,
+	}
+
+	// Create the upload
+	uploadURL, err := o.createTUSUpload(ctx, endpoint, size, metadata)
+	if err != nil {
+		return "", fmt.Errorf("error creating TUS upload: %w", err)
+	}
+
+	// Upload the data in chunks
+	err = o.uploadTUSChunks(ctx, reader, uploadURL, size)
+	if err != nil {
+		return "", fmt.Errorf("error uploading TUS chunks: %w", err)
+	}
+
+	// Extract upload key from URL
+	parts := strings.Split(uploadURL, "/")
+	if len(parts) == 0 {
+		return "", fmt.Errorf("could not extract upload key from URL: %s", uploadURL)
+	}
+	uploadKey := parts[len(parts)-1]
+
+	return uploadKey, nil
+}
+
+// Create TUS upload session
+func (o *Object) createTUSUpload(ctx context.Context, endpoint string, size int64, metadata map[string]string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// Set TUS headers
+	req.Header.Set("Tus-Resumable", "1.0.0")
+	req.Header.Set("Upload-Length", fmt.Sprintf("%d", size))
+
+	// Set metadata
+	var metaPairs []string
+	for key, value := range metadata {
+		encodedValue := base64.StdEncoding.EncodeToString([]byte(value))
+		metaPairs = append(metaPairs, fmt.Sprintf("%s %s", key, encodedValue))
+	}
+	req.Header.Set("Upload-Metadata", strings.Join(metaPairs, ","))
+
+	// Add authentication headers
+	req.Header.Set("Authorization", "Bearer "+o.fs.opt.AccessToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("TUS upload creation failed: HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	uploadURL := resp.Header.Get("Location")
+	if uploadURL == "" {
+		return "", fmt.Errorf("no upload URL returned from TUS server")
+	}
+
+	return uploadURL, nil
+}
+
+// Upload data in chunks using TUS PATCH requests
+func (o *Object) uploadTUSChunks(ctx context.Context, reader *bytes.Reader, uploadURL string, totalSize int64) error {
+	const chunkSize = 4 * 1024 * 1024 // 4MB chunks, similar to TypeScript default
+
+	offset := int64(0)
+	for offset < totalSize {
+		// Calculate chunk size
+		currentChunkSize := chunkSize
+		if offset+int64(currentChunkSize) > totalSize {
+			currentChunkSize = int(totalSize - offset)
+		}
+
+		// Read chunk
+		chunk := make([]byte, currentChunkSize)
+		n, err := reader.Read(chunk)
+		if err != nil && err != io.EOF {
+			return fmt.Errorf("error reading chunk: %w", err)
+		}
+		chunk = chunk[:n]
+
+		// Upload chunk
+		req, err := http.NewRequestWithContext(ctx, "PATCH", uploadURL, bytes.NewReader(chunk))
+		if err != nil {
+			return fmt.Errorf("error creating PATCH request: %w", err)
+		}
+
+		req.Header.Set("Tus-Resumable", "1.0.0")
+		req.Header.Set("Upload-Offset", fmt.Sprintf("%d", offset))
+		req.Header.Set("Content-Type", "application/offset+octet-stream")
+		req.Header.Set("Content-Length", fmt.Sprintf("%d", len(chunk)))
+		req.Header.Set("Authorization", "Bearer "+o.fs.opt.AccessToken)
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return fmt.Errorf("error uploading chunk: %w", err)
+		}
+		defer func() { _ = resp.Body.Close() }()
+
+		if resp.StatusCode != http.StatusNoContent {
+			body, _ := io.ReadAll(resp.Body)
+			return fmt.Errorf("TUS chunk upload failed: HTTP %d: %s", resp.StatusCode, string(body))
+		}
+
+		offset += int64(len(chunk))
+	}
 
 	return nil
+}
+
+// Generate a simple fingerprint for the file
+func generateFingerprint(filename string, size int64) string {
+	h := sha256.New()
+	h.Write([]byte(filename))
+	_, _ = fmt.Fprintf(h, "%d", size)
+	return fmt.Sprintf("%x", h.Sum(nil))[:16] // Use first 16 chars
 }
 
 // Remove this object

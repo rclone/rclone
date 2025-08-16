@@ -1,7 +1,8 @@
 ---
 title: "FileJump"
 description: "Rclone docs for FileJump"
-versionIntroduced: "v1.69"
+versionIntroduced: "v1.71"
+status: Beta
 ---
 
 # {{< icon "fa fa-cloud" >}} FileJump
