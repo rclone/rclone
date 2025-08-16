@@ -292,7 +292,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// Get the API domain and handle server selection errors
-	apiDomain, err := opt.GetAPIDomain()
+	apiDomain, err = opt.GetAPIDomain()
 	if err != nil {
 		return nil, err
 	}
