@@ -1279,6 +1279,14 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
 
 	list.SetOutput(nil)
+	list.AddModTime("unix")
+	assert.Equal(t, fmt.Sprint(t1.Local().Unix()), list.Format(item0))
+
+	list.SetOutput(nil)
+	list.AddModTime("unixnano")
+	assert.Equal(t, fmt.Sprint(t1.Local().UnixNano()), list.Format(item0))
+
+	list.SetOutput(nil)
 	list.SetSeparator("|")
 	list.AddID()
 	list.AddOrigID()
