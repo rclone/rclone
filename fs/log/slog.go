@@ -29,7 +29,7 @@ var Handler = defaultHandler()
 // InitLogging has been called yet or not.
 func defaultHandler() *OutputHandler {
 	// Default options for default handler
-	var opts = &slog.HandlerOptions{
+	opts := &slog.HandlerOptions{
 		Level: fs.LogLevelToSlog(fs.InitialLogLevel()),
 	}
 
@@ -87,7 +87,7 @@ func getCaller(skip int) string {
 		return ""
 	}
 	frames := runtime.CallersFrames(pc[:n])
-	var more = true
+	more := true
 	var frame runtime.Frame
 	for more {
 		frame, more = frames.Next()
@@ -175,11 +175,15 @@ func NewOutputHandler(out io.Writer, opts *slog.HandlerOptions, format logFormat
 //
 // This is for temporarily overriding the output.
 func (h *OutputHandler) SetOutput(fn outputFn) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	h.output = append(h.output, fn)
 }
 
 // ResetOutput resets the log output to what is was.
 func (h *OutputHandler) ResetOutput() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	if len(h.output) > 0 {
 		h.output = h.output[:len(h.output)-1]
 	}
@@ -187,6 +191,8 @@ func (h *OutputHandler) ResetOutput() {
 
 // AddOutput adds an additional logging destination of the type specified.
 func (h *OutputHandler) AddOutput(json bool, fn outputFn) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	h.outputExtra = append(h.outputExtra, outputExtra{
 		json:   json,
 		output: fn,
@@ -195,6 +201,8 @@ func (h *OutputHandler) AddOutput(json bool, fn outputFn) {
 
 // SetLevel sets a new log level, returning the old one.
 func (h *OutputHandler) SetLevel(level slog.Level) slog.Level {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	oldLevel := h.levelVar.Level()
 	h.levelVar.Set(level)
 	return oldLevel
