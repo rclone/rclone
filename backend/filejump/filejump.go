@@ -1486,6 +1486,66 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
+// RangeReader implementiert io.ReadCloser und simuliert Range-Requests
+type RangeReader struct {
+	reader io.ReadCloser
+	start  int64
+	end    int64
+	pos    int64
+}
+
+func NewRangeReader(reader io.ReadCloser, start, end int64) *RangeReader {
+	return &RangeReader{
+		reader: reader,
+		start:  start,
+		end:    end,
+		pos:    0,
+	}
+}
+
+func (r *RangeReader) Read(p []byte) (n int, err error) {
+	// Skip bytes bis zum Start-Offset
+	if r.pos < r.start {
+		skipBytes := r.start - r.pos
+		if skipBytes > int64(len(p)) {
+			skipBytes = int64(len(p))
+		}
+
+		tempBuf := make([]byte, skipBytes)
+		n, err = r.reader.Read(tempBuf)
+		r.pos += int64(n)
+
+		if err != nil {
+			return 0, err
+		}
+
+		// Wenn wir noch nicht am Start sind, rekursiv weiterlesen
+		if r.pos < r.start {
+			return r.Read(p)
+		}
+	}
+
+	// Berechne wie viele Bytes wir noch lesen dürfen
+	remainingBytes := r.end - r.pos + 1
+	if remainingBytes <= 0 {
+		return 0, io.EOF
+	}
+
+	// Begrenze die Anzahl der zu lesenden Bytes
+	if int64(len(p)) > remainingBytes {
+		p = p[:remainingBytes]
+	}
+
+	n, err = r.reader.Read(p)
+	r.pos += int64(n)
+
+	return n, err
+}
+
+func (r *RangeReader) Close() error {
+	return r.reader.Close()
+}
+
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
@@ -1508,6 +1568,37 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	// Check if we're using the EU domain which has a different download endpoint
 	if o.fs.opt.APIDomain == "eu.filejump.com" {
+		// // For EU domain, use the direct download endpoint with base64 encoded hash
+		// encodedHash := base64.StdEncoding.EncodeToString([]byte(o.id + "|pad"))
+		// encodedHash = strings.TrimRight(encodedHash, "=") // Remove padding
+		// downloadURL := fmt.Sprintf("https://%s/api/v1/file-entries/download/%s?workspaceId=0", o.fs.opt.APIDomain, encodedHash)
+
+		// req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("failed to create download request: %w", err)
+		// }
+
+		// // Add authorization header
+		// req.Header.Set("Authorization", "Bearer "+o.fs.opt.AccessToken)
+
+		// // Apply range options if any
+		// for _, option := range options {
+		// 	if rangeOption, ok := option.(*fs.RangeOption); ok {
+		// 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", rangeOption.Start, rangeOption.End))
+		// 	}
+		// }
+
+		// resp, err := http.DefaultClient.Do(req)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("failed to download file: %w", err)
+		// }
+
+		// if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		// 	_ = resp.Body.Close()
+		// 	return nil, fmt.Errorf("download failed with status: %s", resp.Status)
+		// }
+
+		// return resp.Body, nil
 		// For EU domain, use the direct download endpoint with base64 encoded hash
 		encodedHash := base64.StdEncoding.EncodeToString([]byte(o.id + "|pad"))
 		encodedHash = strings.TrimRight(encodedHash, "=") // Remove padding
@@ -1521,10 +1612,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		// Add authorization header
 		req.Header.Set("Authorization", "Bearer "+o.fs.opt.AccessToken)
 
-		// Apply range options if any
+		// Überprüfe ob Range-Optionen vorhanden sind
+		var rangeOption *fs.RangeOption
 		for _, option := range options {
-			if rangeOption, ok := option.(*fs.RangeOption); ok {
-				req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", rangeOption.Start, rangeOption.End))
+			if ro, ok := option.(*fs.RangeOption); ok {
+				rangeOption = ro
+				break
 			}
 		}
 
@@ -1533,12 +1626,19 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			return nil, fmt.Errorf("failed to download file: %w", err)
 		}
 
-		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		if resp.StatusCode != http.StatusOK {
 			_ = resp.Body.Close()
 			return nil, fmt.Errorf("download failed with status: %s", resp.Status)
 		}
 
-		return resp.Body, nil
+		// Wenn keine Range-Option vorhanden ist, gib den kompletten Body zurück
+		if rangeOption == nil {
+			return resp.Body, nil
+		}
+
+		// Erstelle einen RangeReader für den gewünschten Bereich
+		rangeReader := NewRangeReader(resp.Body, rangeOption.Start, rangeOption.End)
+		return rangeReader, nil
 	}
 
 	// For non-EU domains, try to get file metadata to see if it contains a download URL
