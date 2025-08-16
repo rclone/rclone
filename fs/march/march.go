@@ -2,9 +2,11 @@
 package march
 
 import (
+	"bufio"
 	"cmp"
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"slices"
 	"strings"
@@ -119,7 +121,7 @@ func (m *March) dstKey(entry fs.DirEntry) string {
 func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn list.KeyFn) listDirFn {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
-	if !(ci.UseListR && f.Features().ListR != nil) && // !--fast-list active and
+	if !ci.FilesFromStdin && !(ci.UseListR && f.Features().ListR != nil) && // !--files-from-stdin && !--fast-list active and
 		!(ci.NoTraverse && fi.HaveFilesFrom()) { // !(--files-from and --no-traverse)
 		return func(dir string, callback fs.ListRCallback) (err error) {
 			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
@@ -131,10 +133,44 @@ func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn
 	// --files-from and --no-traverse is set
 	var (
 		mu      sync.Mutex
+		scanner *bufio.Scanner
 		started bool
 		dirs    dirtree.DirTree
 		dirsErr error
 	)
+
+	if ci.FilesFromStdin {
+		return func(dir string, callback fs.ListRCallback) (err error) {
+			mu.Lock()
+			if !started {
+				scanner = bufio.NewScanner(os.Stdin)
+
+				started = true
+			}
+			ok := scanner.Scan()
+
+			path := ""
+			path = scanner.Text()
+
+			mu.Unlock()
+
+			if !ok {
+				return callback(nil)
+			}
+
+			entries := fs.DirEntries{}
+			obj, err := f.NewObject(ctx, path)
+			if err != nil {
+				fs.Errorf(path, "%v", err)
+				callback(fs.DirEntries{nil})
+				return nil
+			} else {
+				entries = append(entries, obj)
+			}
+			return callback(entries)
+		}
+	}
+
 	return func(dir string, callback fs.ListRCallback) (err error) {
 		mu.Lock()
 		defer mu.Unlock()
@@ -382,6 +418,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		srcListErr, dstListErr error
 		wg                     sync.WaitGroup
 		ci                     = fs.GetConfig(m.Ctx)
+		haveEntries            = false
 	)
 
 	// List the src and dst directories
@@ -391,8 +428,14 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		go func() {
 			defer wg.Done()
 			srcListErr = m.srcListDir(job.srcRemote, func(entries fs.DirEntries) error {
+				if len(entries) > 0 {
+					haveEntries = true
+				}
+
 				for _, entry := range entries {
-					srcChan <- entry
+					if entry != nil {
+						srcChan <- entry
+					}
 				}
 				return nil
 			})
@@ -544,6 +587,10 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		}
 		dstListErr = fs.CountError(m.Ctx, dstListErr)
 		return nil, dstListErr
+	}
+
+	if ci.FilesFromStdin && haveEntries {
+		jobs = append(jobs, job)
 	}
 
 	return jobs, nil

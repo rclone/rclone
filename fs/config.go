@@ -253,6 +253,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Include additional server-side paths during comparison",
 	Groups:  "Copy",
 }, {
+	Name:    "files_from_stdin",
+	Default: false,
+	Help:    "Only consider files passed in from stdin",
+	Groups:  "Copy",
+}, {
 	Name:    "copy_dest",
 	Default: []string{},
 	Help:    "Implies --compare-dest but also copies files from paths into destination",
@@ -673,6 +678,7 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	FilesFromStdin             bool              `config:"files_from_stdin"`
 }
 
 func init() {
@@ -706,6 +712,11 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	// Check --compare-dest and --copy-dest
 	if len(ci.CompareDest) > 0 && len(ci.CopyDest) > 0 {
 		return fmt.Errorf("can't use --compare-dest with --copy-dest")
+	}
+
+	// --files-from-stdin must be used with --no-check-dest
+	if (!ci.NoCheckDest && !ci.NoTraverse) && ci.FilesFromStdin {
+		return fmt.Errorf("--files-from-stdin must be used with --no-check-dest or --no-traverse")
 	}
 
 	// Check --stats-one-line and dependent flags
