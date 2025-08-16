@@ -1687,7 +1687,8 @@ During rmdirs it will not remove root directory, even if it's empty.
 ### -l, --links
 
 Normally rclone will ignore symlinks or junction points (which behave
-like symlinks under Windows).
+like symlinks under Windows). Ignored files won't be copied, moved or
+deleted in a sync.
 
 If you supply this flag then rclone will copy symbolic links from any
 supported backend backend, and store them as text files, with a

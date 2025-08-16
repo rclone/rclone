@@ -44,9 +44,11 @@ want to delete files from destination, use the
 
     rclone sync --interactive SOURCE remote:DESTINATION
 
-Note that files in the destination won't be deleted if there were any
-errors at any point.  Duplicate objects (files with the same name, on
-those providers that support it) are also not yet handled.
+Files in the destination won't be deleted if there were any errors at any
+point. Duplicate objects (files with the same name, on those providers that
+support it) are not yet handled. Files that are excluded won't be deleted
+unless |--delete-excluded| is used. Symlinks won't be transferred or
+deleted from local file systems unless |--links| is used.
 
 It is always the contents of the directory that is synced, not the
 directory itself. So when source:path is a directory, it's the contents of
