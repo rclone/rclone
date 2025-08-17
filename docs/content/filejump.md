@@ -39,9 +39,17 @@ XX / FileJump
 Storage> filejump
 ** See help for filejump backend at: https://rclone.org/filejump/ **
 
-You should create an API access token here: https://drive.filejump.com/account-settings
+You should create an API access token on your FileJump server in Account Settings (top right) → Developers → API access tokens. For example:
+- https://drive.filejump.com/account-settings
+- https://app.filejump.com/account-settings
+- https://eu.filejump.com/account-settings
 Enter a string value. Press Enter for the default ("").
 access_token> your_api_token_here
+Select your FileJump server (check your browser's address bar when logged in):
+1) drive.filejump.com
+2) app.filejump.com
+3) eu.filejump.com
+api_domain> 1
 The ID of the workspace to use. Defaults to personal workspace (0). Set to -1 to list available workspaces on first use.
 Enter a string value. Press Enter for thedefault ("0").
 workspace_id> 0
@@ -62,6 +70,17 @@ d) Delete this remote
 y/e/d> y
 ```
 
+### Server selection (api_domain)
+
+During configuration you will be asked to select your FileJump server (api_domain). Choose the number that matches the domain you see in your browser when logged in:
+- 1 = drive.filejump.com
+- 2 = app.filejump.com
+- 3 = eu.filejump.com
+
+This choice affects how rclone uploads and downloads files:
+- eu.filejump.com: uploads use the TUS protocol; downloads go through a direct API endpoint. This difference is necessary because the server-side protocol changed between older and newer deployments.
+- drive.filejump.com and app.filejump.com: uploads use S3 presigned URLs; downloads may redirect to a signed URL.
+
 You can then use it like this:
 
 Test with
@@ -78,11 +97,17 @@ List all the files in your FileJump
 
 Copy `/home/local/directory` to the remote directory called `directory`.
 
+### Testing status per FileJump server
+
+- drive.filejump.com: tested during development; account available.
+- eu.filejump.com: tested during development; account available.
+- app.filejump.com: not tested due to lack of an account. FileJump first launched drive.filejump.com, then app.filejump.com, and the newest deployment is eu.filejump.com. If you have an app.filejump.com account you don't need, testing rclone on this server would be helpful so we can verify and, if necessary, fix the backend. Please open an issue or PR.
+
 ### Getting your API access token
 
 To configure rclone with FileJump you will need to get an API access token.
 
-1. Login to your FileJump account at [https://drive.filejump.com](https://drive.filejump.com)
+1. Login to your FileJump account at your FileJump domain (e.g. https://drive.filejump.com, https://app.filejump.com, or https://eu.filejump.com)
 2. Go to Account Settings by clicking on your profile in the top right corner
 3. Navigate to the API section
 4. Create a new API access token
@@ -141,7 +166,7 @@ Here are the Standard options specific to filejump (FileJump).
 
 #### --filejump-access-token
 
-You should create an API access token here: https://drive.filejump.com/account-settings
+You should create an API access token in your Account Settings (top right) -> Developers -> API access tokens
 
 Properties:
 
@@ -149,7 +174,24 @@ Properties:
 - Env Var:     RCLONE_FILEJUMP_ACCESS_TOKEN
 - Type:        string
 - Required:    true
-- Sensitive:   true
+
+#### --filejump-api-domain
+
+Enter the number for your FileJump server (check your browser's address bar when logged in): 1 = drive.filejump.com, 2 = app.filejump.com, 3 = eu.filejump.com
+
+Properties:
+
+- Config:      api_domain
+- Env Var:     RCLONE_FILEJUMP_API_DOMAIN
+- Type:        string
+- Required:    true
+- Examples:
+    - "drive.filejump.com"
+        - 
+    - "app.filejump.com"
+        - 
+    - "eu.filejump.com"
+        - 
 
 ### Advanced options
 
@@ -251,6 +293,11 @@ FileJump has some limitations that affect rclone usage:
 
 Note that FileJump does not currently support standard file hashes (e.g. MD5, SHA1). The hash value returned by the API appears to be a placeholder (a base64 encoding of the file/folder ID with a `|pa` suffix) and should not be relied upon for integrity checking. This may be subject to change in the future.
 Integrity checking relies on file size only.
+
+### Range requests
+
+- For `eu.filejump.com`, native server-side HTTP range reads are unfortunately not supported. Therefore, rclone simulates range reads by downloading the full file once and serving the requested range from that stream. This can increase bandwidth usage for random-access workloads.
+- For other domains, range requests are handled by the server via signed URLs where available.
 
 ### Workspace limitations
 
