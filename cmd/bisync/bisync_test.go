@@ -281,6 +281,9 @@ func TestBisyncRemoteRemote(t *testing.T) {
 
 // make sure rc can cope with running concurrent jobs
 func TestBisyncConcurrent(t *testing.T) {
+	if !isLocal(*fstest.RemoteName) {
+		t.Skip("TestBisyncConcurrent is skipped on non-local")
+	}
 	oldArgTestCase := argTestCase
 	*argTestCase = "basic"
 	*ignoreLogs = true // not useful to compare logs here because both runs will be logging at once
@@ -596,11 +599,15 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	}
 }
 
+func isLocal(remote string) bool {
+	return bilib.IsLocalPath(remote) && !strings.HasPrefix(remote, ":") && !strings.Contains(remote, ",")
+}
+
 // makeTempRemote creates temporary folder and makes a filesystem
 // if a local path is provided, it's ignored (the test will run under system temp)
 func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) (f, parent fs.Fs, path, canon string) {
 	var err error
-	if bilib.IsLocalPath(remote) && !strings.HasPrefix(remote, ":") && !strings.Contains(remote, ",") {
+	if isLocal(remote) {
 		if remote != "" && !strings.HasPrefix(remote, "local") && *fstest.RemoteName != "" {
 			b.t.Fatalf(`Missing ":" in remote %q. Use "local" to test with local filesystem.`, remote)
 		}
