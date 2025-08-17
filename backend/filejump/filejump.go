@@ -50,7 +50,7 @@ func init() {
 			Sensitive: true,
 		}, {
 			Name:     "api_domain",
-			Help:     "Enter the number for your FileJump server (check your browser's address bar when logged in): 1 = drive.filejump.com, 2 = app.filejump.com, 3 = eu.filejump.com",
+			Help:     "Enter the domain of your FileJump server (check your browser's address bar when logged in)",
 			Required: true,
 			Examples: []fs.OptionExample{{
 				Value: "drive.filejump.com",
