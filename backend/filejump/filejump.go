@@ -33,8 +33,6 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
-var apiDomain string
-
 const (
 	defaultUploadCutoff = 50 * 1024 * 1024
 	smallFileCutoff     = 15 * 1024 * 1024 // 15 MiB
@@ -51,9 +49,16 @@ func init() {
 			Required:  true,
 			Sensitive: true,
 		}, {
-			Name:     "server",
+			Name:     "api_domain",
 			Help:     "Enter the number for your FileJump server (check your browser's address bar when logged in): 1 = drive.filejump.com, 2 = app.filejump.com, 3 = eu.filejump.com",
 			Required: true,
+			Examples: []fs.OptionExample{{
+				Value: "drive.filejump.com",
+			}, {
+				Value: "app.filejump.com",
+			}, {
+				Value: "eu.filejump.com",
+			}},
 		}, {
 			Name:     "workspace_id",
 			Help:     "The ID of the workspace to use. Defaults to personal workspace (0). Set to -1 to list available workspaces on first use.",
@@ -86,24 +91,9 @@ type Options struct {
 	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
 	Enc          encoder.MultiEncoder `config:"encoding"`
 	AccessToken  string               `config:"access_token"`
-	Server       string               `config:"server"`
+	APIDomain    string               `config:"api_domain"`
 	WorkspaceID  string               `config:"workspace_id"`
 	HardDelete   bool                 `config:"hard_delete"`
-}
-
-// Domain mapping for numeric values
-var domainMap = map[string]string{
-	"1": "drive.filejump.com",
-	"2": "app.filejump.com",
-	"3": "eu.filejump.com",
-}
-
-// GetAPIDomain converts the numeric input to the corresponding domain
-func (o *Options) GetAPIDomain() (string, error) {
-	if domain, exists := domainMap[o.Server]; exists {
-		return domain, nil
-	}
-	return "", fmt.Errorf("invalid server selection '%s' in rclone configuration. Please set server to one of: 1 (drive.filejump.com), 2 (app.filejump.com), 3 (eu.filejump.com)", o.Server)
 }
 
 // Fs represents a remote filejump server
@@ -291,12 +281,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	// Get the API domain and handle server selection errors
-	apiDomain, err = opt.GetAPIDomain()
-	if err != nil {
-		return nil, err
-	}
-
 	root = strings.Trim(root, "/")
 
 	client := fshttp.NewClient(ctx)
@@ -305,7 +289,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name: name,
 		root: root,
 		opt:  *opt,
-		srv:  rest.NewClient(client).SetRoot("https://" + apiDomain + "/api/v1"),
+		srv:  rest.NewClient(client).SetRoot("https://" + opt.APIDomain + "/api/v1"),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(
 			pacer.MinSleep(10*time.Millisecond),
 			pacer.MaxSleep(2*time.Second),
@@ -1489,7 +1473,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", errors.New("failed to create shareable link: empty hash in response")
 	}
 
-	return "https://" + apiDomain + "/drive/s/" + result.Link.Hash, nil
+	return "https://" + f.opt.APIDomain + "/drive/s/" + result.Link.Hash, nil
 }
 
 // DirCacheFlush resets the directory cache - used in testing
@@ -1593,11 +1577,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	fs.FixRangeOption(options, o.size)
 
 	// Check if we're using the EU domain which has a different download endpoint
-	if apiDomain == "eu.filejump.com" {
+	if o.fs.opt.APIDomain == "eu.filejump.com" {
 		// // For EU domain, use the direct download endpoint with base64 encoded hash
 		// encodedHash := base64.StdEncoding.EncodeToString([]byte(o.id + "|pad"))
 		// encodedHash = strings.TrimRight(encodedHash, "=") // Remove padding
-		// downloadURL := fmt.Sprintf("https://%s/api/v1/file-entries/download/%s?workspaceId=0", apiDomain, encodedHash)
+		// downloadURL := fmt.Sprintf("https://%s/api/v1/file-entries/download/%s?workspaceId=0", o.fs.opt.APIDomain, encodedHash)
 
 		// req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
 		// if err != nil {
@@ -1628,7 +1612,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		// For EU domain, use the direct download endpoint with base64 encoded hash
 		encodedHash := base64.StdEncoding.EncodeToString([]byte(o.id + "|pad"))
 		encodedHash = strings.TrimRight(encodedHash, "=") // Remove padding
-		downloadURL := fmt.Sprintf("https://%s/api/v1/file-entries/download/%s?workspaceId=0", apiDomain, encodedHash)
+		downloadURL := fmt.Sprintf("https://%s/api/v1/file-entries/download/%s?workspaceId=0", o.fs.opt.APIDomain, encodedHash)
 
 		req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
 		if err != nil {
@@ -1673,7 +1657,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		// Check if the URL field contains a download URL
 		if urlStr, ok := info.URL.(string); ok && urlStr != "" {
 			// Construct full URL - the URL field contains a relative path
-			fullURL := "https://" + apiDomain + "/" + strings.TrimPrefix(urlStr, "/")
+			fullURL := "https://" + o.fs.opt.APIDomain + "/" + strings.TrimPrefix(urlStr, "/")
 
 			req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
 			if err != nil {
@@ -1856,7 +1840,7 @@ func getExtensionAndMime(filename string) (extension, mimeType string) {
 
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, options ...fs.OpenOption) (err error) {
 	// Check which server we're using
-	if apiDomain == "eu.filejump.com" {
+	if o.fs.opt.APIDomain == "eu.filejump.com" {
 		return o.uploadViaTUS(ctx, in, leaf, directoryID, size, modTime, options...)
 	}
 
@@ -1881,7 +1865,7 @@ func (o *Object) uploadViaTUS(ctx context.Context, in io.Reader, leaf, directory
 	ext, mime := getExtensionAndMime(leaf)
 
 	// Create TUS upload
-	tusEndpoint := fmt.Sprintf("https://%s/api/v1/tus/upload", apiDomain)
+	tusEndpoint := fmt.Sprintf("https://%s/api/v1/tus/upload", o.fs.opt.APIDomain)
 	uploadKey, err := o.performTUSUpload(ctx, reader, tusEndpoint, fingerprint, encodedLeaf, leaf, ext, mime, size, directoryID)
 	if err != nil {
 		return fmt.Errorf("error performing TUS upload: %w", err)
