@@ -1339,7 +1339,7 @@ func quotePath(s string) string {
 	seg := strings.Split(s, "/")
 	newValues := []string{}
 	for _, v := range seg {
-		newValues = append(newValues, url.PathEscape(v))
+		newValues = append(newValues, url.QueryEscape(v))
 	}
 	return strings.Join(newValues, "/")
 }
