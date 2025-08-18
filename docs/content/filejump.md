@@ -45,14 +45,12 @@ You should create an API access token on your FileJump server in Account Setting
 - https://eu.filejump.com/account-settings
 Enter a string value. Press Enter for the default ("").
 access_token> your_api_token_here
-Select your FileJump server (check your browser's address bar when logged in):
-1) drive.filejump.com
-2) app.filejump.com
-3) eu.filejump.com
-api_domain> 1
-The ID of the workspace to use. Defaults to personal workspace (0). Set to -1 to list available workspaces on first use.
-Enter a string value. Press Enter for thedefault ("0").
-workspace_id> 0
+Enter the domain of your FileJump server (check your browser's address bar when logged in)
+Choose a number from below, or type in your own value.
+ 1 > drive.filejump.com
+ 2 > app.filejump.com
+ 3 > eu.filejump.com
+api_domain> 3
 Edit advanced config? (y/n)
 y) Yes
 n) No (default)
@@ -60,26 +58,15 @@ y/n> n
 Remote config
 --------------------
 [remote]
-type = filejump
-access_token = your_api_token_here
-workspace_id = 0
+- type: filejump
+- access_token: your_api_token_here
+- api_domain: eu.filejump.com
 --------------------
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
 y/e/d> y
 ```
-
-### Server selection (api_domain)
-
-During configuration you will be asked to select your FileJump server (api_domain). Choose the number that matches the domain you see in your browser when logged in:
-- 1 = drive.filejump.com
-- 2 = app.filejump.com
-- 3 = eu.filejump.com
-
-This choice affects how rclone uploads and downloads files:
-- eu.filejump.com: uploads use the TUS protocol; downloads go through a direct API endpoint. This difference is necessary because the server-side protocol changed between older and newer deployments.
-- drive.filejump.com and app.filejump.com: uploads use S3 presigned URLs; downloads may redirect to a signed URL.
 
 You can then use it like this:
 
@@ -177,7 +164,7 @@ Properties:
 
 #### --filejump-api-domain
 
-Enter the number for your FileJump server (check your browser's address bar when logged in): 1 = drive.filejump.com, 2 = app.filejump.com, 3 = eu.filejump.com
+Enter the domain of your FileJump server (check your browser's address bar when logged in)
 
 Properties:
 
@@ -304,3 +291,9 @@ Integrity checking relies on file size only.
 - Each workspace is isolated
 - Files cannot be moved between workspaces via rclone
 - Workspace access depends on your FileJump account permissions
+
+### Upload mechanism
+
+The choice of `api_domain` affects how rclone uploads and downloads files:
+- `eu.filejump.com`: uploads use the TUS protocol; downloads go through a direct API endpoint. This difference is necessary because the server-side protocol changed between older and newer deployments.
+- `drive.filejump.com` and `app.filejump.com`: uploads use S3 presigned URLs; downloads may redirect to a signed URL.
