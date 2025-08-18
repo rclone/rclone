@@ -8,7 +8,7 @@ versionIntroduced: "v1.70"
 
 This is a Backend for Terabox Cloud storage (beta). 
 
-**Notice** This integrations is not official, because official integration required special `client id` and `client secret` which only can be provided by Terabox. I made a request for this, but did not got a responce, yet. If Terabox will provide the keys for official integration, will update the integration.
+**Notice** This integrations is not official, because official integration required special `client id` and `client secret` which only can be provided by Terabox. I made a few requests for this, but did not got a responce, yet. If Terabox will provide the keys for official integration, will update the integration.
 
 Paths are specified as `remote:path` or `remote:/path`
 
@@ -129,6 +129,17 @@ Properties:
 ### Advanced options
 
 Here are the Advanced options specific to Terabox.
+
+#### --terabox-upload-threads
+
+How many parallels chunks will be upload. (Be careful with this setting, you can got a ban)
+
+Properties:
+
+- Config:      upload_threads
+- Env Var:     RCLONE_TERABOX_UPLOAD_THREADS
+- Type:        uint8
+- Default:     3
 
 #### --terabox-delete-permanently
 

@@ -34,9 +34,7 @@ import (
 )
 
 const (
-	baseURL       = "https://www.terabox.com"
-	chunkSize     = 4 * fs.Mebi // 4MB
-	fileLimitSize = 4 * fs.Gibi // 4GB
+	baseURL = "https://www.terabox.com"
 
 	// minSleep       = 400 * time.Millisecond // api is extremely rate limited now
 	// maxSleep       = 5 * time.Second
@@ -82,6 +80,12 @@ func init() {
 				Default:  false,
 			},
 			{
+				Help:     "Parallel upload threads",
+				Name:     "upload_threads",
+				Advanced: true,
+				Default:  5,
+			},
+			{
 				Help:     "Set custom header User Agent",
 				Name:     "user_agent",
 				Advanced: true,
@@ -113,6 +117,7 @@ type Options struct {
 	// AccessToken  string               `config:"access_token"`
 	Cookie            string               `config:"cookie"`
 	DeletePermanently bool                 `config:"delete_permanently"`
+	UploadThreads     uint8                `config:"upload_threads"`
 	UserAgent         string               `config:"user_agent"`
 	DebugLevel        uint8                `config:"debug_level"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
@@ -146,6 +151,9 @@ type Fs struct {
 
 	// unofficial access [web token required for upload]
 	jsToken string
+
+	isPremium   bool
+	isPremiumMX sync.Once
 }
 
 // NewFs makes a new Fs object from the path
@@ -201,7 +209,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	if opt.UserAgent != "" {
 		clientConfig.UserAgent = opt.UserAgent
 	}
-	clientConfig.Timeout = fs.Duration(5 * time.Second)
+	clientConfig.Timeout = 5 * fs.Duration(time.Second)
 
 	f.client = rest.NewClient(fshttp.NewClient(newCtx))
 

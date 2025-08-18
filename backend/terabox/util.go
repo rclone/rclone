@@ -113,3 +113,22 @@ func decodeMD5(md5 string) string {
 	e := string(n[8:16]) + string(n[0:8]) + string(n[24:32]) + string(n[16:24])
 	return e
 }
+
+func getChunkSize(fileSize int64, isVIP bool) int64 {
+	const MiB = 1024 * 1024
+	const GiB = 1024 * MiB
+
+	limitSizes := []int64{4, 8, 16, 32, 64, 128}
+
+	if !isVIP {
+		return limitSizes[0] * MiB
+	}
+
+	for _, limit := range limitSizes {
+		if fileSize <= limit*GiB {
+			return limit * MiB
+		}
+	}
+
+	return limitSizes[len(limitSizes)-1] * MiB
+}

@@ -22,6 +22,28 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
+// Chunk of data representation
+type Chunk struct {
+	Data   []byte
+	Readed int
+	Number int
+	MD5    string
+}
+
+// Reset state between use
+func (t *Chunk) Reset() {
+	t.Data = t.Data[:cap(t.Data)]
+	t.Readed = 0
+	t.Number = 0
+	t.MD5 = ""
+}
+
+// Sync - syncing size of buffer with readed size; calculate MD5 hash
+func (t *Chunk) Sync() {
+	t.Data = t.Data[:t.Readed]
+	t.MD5 = fmt.Sprintf("%x", md5.Sum(t.Data))
+}
+
 var retryErrorCodes = []int{
 	429, // Too Many Requests.
 	500, // Internal Server Error
@@ -172,6 +194,22 @@ func (f *Fs) apiCheckLogin(ctx context.Context) error {
 		return err
 	}
 
+	return nil
+}
+
+func (f *Fs) apiCheckPremium(ctx context.Context) error {
+	var res api.ResponseUser
+	opt := NewRequest(http.MethodGet, "/rest/2.0/membership/proxy/user")
+	opt.Parameters.Set("method", "query")
+	opt.Parameters.Set("membership_version", "1.0")
+
+	err := f.apiExec(ctx, opt, &res)
+	if err != nil {
+		return err
+	}
+
+	// Premium type: 0: regular user; 1: regular Premium; 2: super Premium
+	f.isPremium = res.Data.MemberInfo.IsVIP > 0
 	return nil
 }
 
@@ -372,7 +410,12 @@ func (f *Fs) apiQuotaInfo(ctx context.Context) (*api.ResponseQuota, error) {
 
 // Upload file
 func (f *Fs) apiFileUpload(ctx context.Context, path string, size int64, modTime time.Time, in io.Reader, options []fs.OpenOption, overwriteMode uint8) error {
-	if size > int64(fileLimitSize) {
+	f.isPremiumMX.Do(func() {
+		_ = f.apiCheckPremium(ctx)
+	})
+
+	// freeFileLimitSize - 4GB; premiumFileLimitSize - 128GB
+	if (!f.isPremium && size > int64(4*fs.Gibi)) || (f.isPremium && size > int64(128*fs.Gibi)) {
 		return api.Num2Err(58)
 	}
 
@@ -404,10 +447,17 @@ func (f *Fs) apiFileUpload(ctx context.Context, path string, size int64, modTime
 	}
 
 	// upload chunks
+	chunkSize := getChunkSize(size, f.isPremium)
 	chunksUploaded := map[int]string{}
-	chunksUploadedCounter := 0
-	chunkData := make([]byte, chunkSize)
-	attemptChunkUpload := 0
+	chunkDataPool := sync.Pool{
+		New: func() any {
+			return &Chunk{Data: make([]byte, chunkSize)}
+		},
+	}
+	mx := sync.Mutex{}
+	threads := sync.WaitGroup{}
+	threadsLimitter := make(chan struct{}, f.opt.UploadThreads)
+	threadsErrs := []string{}
 	for {
 		// check context
 		if ctx.Err() != nil {
@@ -415,45 +465,86 @@ func (f *Fs) apiFileUpload(ctx context.Context, path string, size int64, modTime
 		}
 
 		// read chunk
-		readSize, err := io.ReadAtLeast(in, chunkData, int(chunkSize))
-		if readSize == 0 && err != nil {
+		chunk := chunkDataPool.Get().(*Chunk)
+		chunk.Reset()
+		chunk.Readed, err = io.ReadAtLeast(in, chunk.Data, int(chunkSize))
+		chunk.Sync()
+		if chunk.Readed == 0 && err != nil {
 			if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
 				break
 			}
 
 			return err
 		}
+		chunk.Number = len(chunksUploaded)
 
-		// md5 calculate
-		chunksUploaded[chunksUploadedCounter] = fmt.Sprintf("%x", md5.Sum(chunkData[:readSize]))
+		chunksUploaded[chunk.Number] = chunk.MD5
 
-	retryChunkUpload:
-		// check context
-		if ctx.Err() != nil {
-			return ctx.Err()
+		// wait available slot for upload
+		threadsLimitter <- struct{}{}
+
+		// if upload broken, finish it
+		if len(threadsErrs) > 0 {
+			return fmt.Errorf("chunks upload error(s): %s", strings.Join(threadsErrs, "; "))
 		}
 
-		// upload chunk
-		resUpload, err := f.apiFileUploadChunk(ctx, path, resPreCreate.UploadID, chunksUploadedCounter, int64(readSize), chunkData[:readSize], options)
-		if err != nil {
-			return err
-		}
+		// upload start
+		threads.Add(1)
+		go func(chunk *Chunk) {
+			defer func() { // release upload slot
+				chunkDataPool.Put(chunk)
+				<-threadsLimitter
+				threads.Done()
+			}()
 
-		debug(f.opt, 1, "chunk md5 %s chunk size %d", chunksUploaded[chunksUploadedCounter], readSize)
+			attemptChunkUpload := 0
+			for attemptChunkUpload < 4 {
+				// check context
+				if ctx.Err() != nil {
+					mx.Lock()
+					threadsErrs = append(threadsErrs, ctx.Err().Error())
+					mx.Unlock()
+					return
+				}
 
-		if chunksUploaded[chunksUploadedCounter] != resUpload.MD5 {
-			attemptChunkUpload++
-			debug(f.opt, 1, "uploaded chunk have wrong md5: our: %s | uploaded: %s | attempt: %d", chunksUploaded[chunksUploadedCounter], resUpload.MD5, attemptChunkUpload)
-			if attemptChunkUpload > 3 {
-				return fmt.Errorf("can't upload chunk with three attempts, server hash of chunk is different, than ours")
+				// upload chunk
+				resUpload, err := f.apiFileUploadChunk(ctx, path, resPreCreate.UploadID, chunk.Number, int64(chunk.Readed), chunk.Data, options)
+				if err != nil {
+					attemptChunkUpload++
+					debug(f.opt, 1, "upload chunk (%d) error: %s | attempt: %d", chunk.Number, err, attemptChunkUpload)
+					if attemptChunkUpload > 3 {
+						mx.Lock()
+						threadsErrs = append(threadsErrs, err.Error())
+						mx.Unlock()
+						return
+					}
+
+					continue
+				}
+
+				debug(f.opt, 1, "chunk %d md5 %s chunk size %d", chunk.Number, chunk.MD5, chunk.Readed)
+
+				if chunk.MD5 != resUpload.MD5 {
+					attemptChunkUpload++
+					debug(f.opt, 1, "uploaded chunk (%d) have wrong md5: our: %s | uploaded: %s | attempt: %d", chunk.Number, chunk.MD5, resUpload.MD5, attemptChunkUpload)
+					if attemptChunkUpload > 3 {
+						mx.Lock()
+						threadsErrs = append(threadsErrs, fmt.Sprintf("can't upload chunk %d with three attempts, server hash of chunk %s is different, than ours %s", chunk.Number, resUpload.MD5, chunk.MD5))
+						mx.Unlock()
+						return
+					}
+
+					continue
+				} else {
+					break
+				}
 			}
-
-			goto retryChunkUpload
-		} else {
-			attemptChunkUpload = 0
-		}
-
-		chunksUploadedCounter++
+		}(chunk)
+	}
+	threads.Wait()
+	close(threadsLimitter)
+	if len(threadsErrs) > 0 {
+		return fmt.Errorf("chunks upload error(s): %s", strings.Join(threadsErrs, "; "))
 	}
 
 	chunksUploadedList := make([]string, len(chunksUploaded))
@@ -506,7 +597,7 @@ retryFileCreate:
 }
 
 func (f *Fs) apiFileLocateUpload(ctx context.Context) error {
-	opt := NewRequest(http.MethodGet, "https://d.terabox.com/rest/2.0/pcs/file?method=locateupload")
+	opt := NewRequest(http.MethodGet, "/rest/2.0/pcs/file?method=locateupload")
 	opt.Parameters = nil
 
 	var res api.ResponseFileLocateUpload
@@ -532,7 +623,8 @@ func (f *Fs) apiFilePrecreate(ctx context.Context, path string, size int64, modT
 	dirPath, _ := libPath.Split(path)
 	opt.MultipartParams.Set("target_path", dirPath)
 
-	if size > int64(chunkSize) {
+	chunkSize := getChunkSize(size, f.isPremium)
+	if size > chunkSize {
 		opt.MultipartParams.Set("block_list", `["5910a591dd8fc18c32a8f3df4fdc1761", "a5fc157d78e6ad1c7e114b056c92821e"]`)
 	} else {
 		opt.MultipartParams.Set("block_list", `["5910a591dd8fc18c32a8f3df4fdc1761"]`)

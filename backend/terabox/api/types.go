@@ -117,19 +117,12 @@ type ResponseCreate struct {
 	Name string `json:"filename"`
 }
 
-// 2025/06/12 16:00:44 DEBUG : Response body: {
-// 	"category":6,
-// 	"ctime":1749744044,
-// 	"errmsg":"","errno":0,
-// 	"from_type":1,
-// 	"fs_id":459215280158899,
-// 	"isdir":0,
-// 	"md5":"11b72ad87u875baae83dbead46336c40",
-// 	"mtime":1749744044,
-// 	"name":"/test119",
-// 	"newno":"",
-// 	"path":"/test119",
-// 	"request_id":321677587051751085,
-// 	"server_filename":"test119",
-// 	"server_time":1749744044,
-// 	"size":3204770}
+// ResponseUser check user VIP status
+type ResponseUser struct {
+	ErrorAPI
+	Data struct {
+		MemberInfo struct {
+			IsVIP int64 `json:"is_vip"`
+		} `json:"member_info"`
+	} `json:"data"`
+}
