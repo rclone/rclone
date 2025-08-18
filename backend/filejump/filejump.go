@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -1493,81 +1494,16 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
-// RangeReader implements io.ReadCloser and simulates range requests
-type RangeReader struct {
-	reader io.ReadCloser
-	start  int64
-	end    int64
-	pos    int64
-}
-
-// NewRangeReader creates a new RangeReader that reads from the given reader between start and end positions
-func NewRangeReader(reader io.ReadCloser, start, end int64) *RangeReader {
-	return &RangeReader{
-		reader: reader,
-		start:  start,
-		end:    end,
-		pos:    0,
-	}
-}
-
-// Read reads data from the underlying reader within the specified range
-func (r *RangeReader) Read(p []byte) (n int, err error) {
-	// Skip bytes until the start offset
-	if r.pos < r.start {
-		skipBytes := r.start - r.pos
-		if skipBytes > int64(len(p)) {
-			skipBytes = int64(len(p))
-		}
-
-		tempBuf := make([]byte, skipBytes)
-		n, err = r.reader.Read(tempBuf)
-		r.pos += int64(n)
-
-		if err != nil {
-			return 0, err
-		}
-
-		// If we are not yet at the start, continue reading recursively
-		if r.pos < r.start {
-			return r.Read(p)
-		}
-	}
-
-	// Calculate how many bytes we are still allowed to read
-	remainingBytes := r.end - r.pos + 1
-	if remainingBytes <= 0 {
-		return 0, io.EOF
-	}
-
-	// Limit the number of bytes to read
-	if int64(len(p)) > remainingBytes {
-		p = p[:remainingBytes]
-	}
-
-	n, err = r.reader.Read(p)
-	r.pos += int64(n)
-
-	return n, err
-}
-
-// Close closes the underlying reader
-func (r *RangeReader) Close() error {
-	return r.reader.Close()
-}
-
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
 		return nil, errors.New("download not possible - no ID available")
 	}
-
 	// Ensure we have metadata to check file size
 	err = o.readMetaData(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read metadata: %w", err)
 	}
-
 	// Special handling for zero-length files
 	if o.size == 0 {
 		// Return an empty reader for zero-length files
@@ -1578,47 +1514,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	// Check if we're using the EU domain which has a different download endpoint
 	if o.fs.opt.APIDomain == "eu.filejump.com" {
-		// // For EU domain, use the direct download endpoint with base64 encoded hash
-		// encodedHash := base64.StdEncoding.EncodeToString([]byte(o.id + "|pad"))
-		// encodedHash = strings.TrimRight(encodedHash, "=") // Remove padding
-		// downloadURL := fmt.Sprintf("https://%s/api/v1/file-entries/download/%s?workspaceId=0", o.fs.opt.APIDomain, encodedHash)
-
-		// req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("failed to create download request: %w", err)
-		// }
-
-		// // Add authorization header
-		// req.Header.Set("Authorization", "Bearer "+o.fs.opt.AccessToken)
-
-		// // Apply range options if any
-		// for _, option := range options {
-		// 	if rangeOption, ok := option.(*fs.RangeOption); ok {
-		// 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", rangeOption.Start, rangeOption.End))
-		// 	}
-		// }
-
-		// resp, err := http.DefaultClient.Do(req)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("failed to download file: %w", err)
-		// }
-
-		// if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-		// 	_ = resp.Body.Close()
-		// 	return nil, fmt.Errorf("download failed with status: %s", resp.Status)
-		// }
-
-		// return resp.Body, nil
 		// For EU domain, use the direct download endpoint with base64 encoded hash
 		encodedHash := base64.StdEncoding.EncodeToString([]byte(o.id + "|pad"))
 		encodedHash = strings.TrimRight(encodedHash, "=") // Remove padding
 		downloadURL := fmt.Sprintf("https://%s/api/v1/file-entries/download/%s?workspaceId=0", o.fs.opt.APIDomain, encodedHash)
-
 		req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create download request: %w", err)
 		}
-
 		// Add authorization header
 		req.Header.Set("Authorization", "Bearer "+o.fs.opt.AccessToken)
 
@@ -1627,6 +1530,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		for _, option := range options {
 			if ro, ok := option.(*fs.RangeOption); ok {
 				rangeOption = ro
+				// Try to set Range header first
+				req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", ro.Start, ro.End))
 				break
 			}
 		}
@@ -1635,8 +1540,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		if err != nil {
 			return nil, fmt.Errorf("failed to download file: %w", err)
 		}
-
-		if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 			_ = resp.Body.Close()
 			return nil, fmt.Errorf("download failed with status: %s", resp.Status)
 		}
@@ -1646,9 +1550,25 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			return resp.Body, nil
 		}
 
-		// Create a RangeReader for the desired range
-		rangeReader := NewRangeReader(resp.Body, rangeOption.Start, rangeOption.End)
-		return rangeReader, nil
+		// Check if server supported the Range header
+		if resp.StatusCode == http.StatusPartialContent {
+			// Server supported range request, return body directly
+			return resp.Body, nil
+		}
+
+		// Server ignored Range header, simulate it manually
+		skip := rangeOption.Start
+		end := rangeOption.End
+
+		// Skip bytes to reach the start position
+		_, err = io.CopyN(io.Discard, resp.Body, skip)
+		if err != nil {
+			_ = resp.Body.Close()
+			return nil, err
+		}
+
+		// Return limited reader for the desired range
+		return readers.NewLimitedReadCloser(resp.Body, end-skip+1), nil
 	}
 
 	// For non-EU domains, try to get file metadata to see if it contains a download URL
@@ -1658,19 +1578,20 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		if urlStr, ok := info.URL.(string); ok && urlStr != "" {
 			// Construct full URL - the URL field contains a relative path
 			fullURL := "https://" + o.fs.opt.APIDomain + "/" + strings.TrimPrefix(urlStr, "/")
-
 			req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create download request: %w", err)
 			}
-
 			// Add authorization header
 			req.Header.Set("Authorization", "Bearer "+o.fs.opt.AccessToken)
 
 			// Apply range options if any
+			var rangeOption *fs.RangeOption
 			for _, option := range options {
-				if rangeOption, ok := option.(*fs.RangeOption); ok {
-					req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", rangeOption.Start, rangeOption.End))
+				if ro, ok := option.(*fs.RangeOption); ok {
+					rangeOption = ro
+					req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", ro.Start, ro.End))
+					break
 				}
 			}
 
@@ -1678,10 +1599,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			if err != nil {
 				return nil, fmt.Errorf("failed to download file: %w", err)
 			}
-
 			if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 				_ = resp.Body.Close()
 				return nil, fmt.Errorf("download failed with status: %s", resp.Status)
+			}
+
+			// Handle range request simulation if server doesn't support it
+			if rangeOption != nil && resp.StatusCode == http.StatusOK {
+				skip := rangeOption.Start
+				end := rangeOption.End
+
+				_, err = io.CopyN(io.Discard, resp.Body, skip)
+				if err != nil {
+					_ = resp.Body.Close()
+					return nil, err
+				}
+
+				return readers.NewLimitedReadCloser(resp.Body, end-skip+1), nil
 			}
 
 			return resp.Body, nil
@@ -1698,31 +1632,30 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			"Authorization": "Bearer " + o.fs.opt.AccessToken,
 		},
 	}
-
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-
 		if err != nil {
 			return shouldRetry(ctx, resp, err)
 		}
-
 		// Check for redirects
 		if resp.StatusCode == http.StatusFound || resp.StatusCode == http.StatusMovedPermanently {
 			redirectURL := resp.Header.Get("Location")
 			if redirectURL == "" {
 				return false, errors.New("redirect URL not found")
 			}
-
 			// Follow the redirect
 			redirectReq, redirectErr := http.NewRequestWithContext(ctx, "GET", redirectURL, nil)
 			if redirectErr != nil {
 				return false, redirectErr
 			}
 
-			// Apply range options to redirect request
+			// Apply range options to redirect request and handle simulation
+			var rangeOption *fs.RangeOption
 			for _, option := range options {
-				if rangeOption, ok := option.(*fs.RangeOption); ok {
-					redirectReq.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", rangeOption.Start, rangeOption.End))
+				if ro, ok := option.(*fs.RangeOption); ok {
+					rangeOption = ro
+					redirectReq.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", ro.Start, ro.End))
+					break
 				}
 			}
 
@@ -1731,18 +1664,34 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 				return shouldRetry(ctx, redirectResp, redirectErr)
 			}
 
-			// Replace the original response with the redirect response
-			_ = resp.Body.Close() // Close the original response body
-			resp = redirectResp
-		}
+			// Close the original response body
+			_ = resp.Body.Close()
 
+			// Handle range request simulation if needed
+			if rangeOption != nil && redirectResp.StatusCode == http.StatusOK {
+				skip := rangeOption.Start
+				end := rangeOption.End
+
+				_, err = io.CopyN(io.Discard, redirectResp.Body, skip)
+				if err != nil {
+					_ = redirectResp.Body.Close()
+					return false, err
+				}
+
+				resp = &http.Response{
+					Body:       readers.NewLimitedReadCloser(redirectResp.Body, end-skip+1),
+					StatusCode: redirectResp.StatusCode,
+					Header:     redirectResp.Header,
+				}
+			} else {
+				resp = redirectResp
+			}
+		}
 		return false, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
-
 	return resp.Body, nil
 }
 
