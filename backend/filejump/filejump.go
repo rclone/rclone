@@ -1493,7 +1493,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
-// RangeReader implementiert io.ReadCloser und simuliert Range-Requests
+// RangeReader implements io.ReadCloser and simulates range requests
 type RangeReader struct {
 	reader io.ReadCloser
 	start  int64
@@ -1513,7 +1513,7 @@ func NewRangeReader(reader io.ReadCloser, start, end int64) *RangeReader {
 
 // Read reads data from the underlying reader within the specified range
 func (r *RangeReader) Read(p []byte) (n int, err error) {
-	// Skip bytes bis zum Start-Offset
+	// Skip bytes until the start offset
 	if r.pos < r.start {
 		skipBytes := r.start - r.pos
 		if skipBytes > int64(len(p)) {
@@ -1528,19 +1528,19 @@ func (r *RangeReader) Read(p []byte) (n int, err error) {
 			return 0, err
 		}
 
-		// Wenn wir noch nicht am Start sind, rekursiv weiterlesen
+		// If we are not yet at the start, continue reading recursively
 		if r.pos < r.start {
 			return r.Read(p)
 		}
 	}
 
-	// Berechne wie viele Bytes wir noch lesen dürfen
+	// Calculate how many bytes we are still allowed to read
 	remainingBytes := r.end - r.pos + 1
 	if remainingBytes <= 0 {
 		return 0, io.EOF
 	}
 
-	// Begrenze die Anzahl der zu lesenden Bytes
+	// Limit the number of bytes to read
 	if int64(len(p)) > remainingBytes {
 		p = p[:remainingBytes]
 	}
@@ -1622,7 +1622,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		// Add authorization header
 		req.Header.Set("Authorization", "Bearer "+o.fs.opt.AccessToken)
 
-		// Überprüfe ob Range-Optionen vorhanden sind
+		// Check whether range options are present
 		var rangeOption *fs.RangeOption
 		for _, option := range options {
 			if ro, ok := option.(*fs.RangeOption); ok {
@@ -1641,12 +1641,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			return nil, fmt.Errorf("download failed with status: %s", resp.Status)
 		}
 
-		// Wenn keine Range-Option vorhanden ist, gib den kompletten Body zurück
+		// If no range option is present, return the complete body
 		if rangeOption == nil {
 			return resp.Body, nil
 		}
 
-		// Erstelle einen RangeReader für den gewünschten Bereich
+		// Create a RangeReader for the desired range
 		rangeReader := NewRangeReader(resp.Body, rangeOption.Start, rangeOption.End)
 		return rangeReader, nil
 	}
@@ -1929,7 +1929,7 @@ func (o *Object) uploadViaS3(ctx context.Context, in io.Reader, leaf, directoryI
 		Size         int64  `json:"size"`
 		Extension    string `json:"extension"`
 		WorkspaceID  int    `json:"workspaceId"`
-		ParentID     *int   `json:"parentId,omitempty"` // nil für Root
+		ParentID     *int   `json:"parentId,omitempty"` // nil for root
 		RelativePath string `json:"relativePath"`
 	}
 	ext, mime := getExtensionAndMime(leaf)
