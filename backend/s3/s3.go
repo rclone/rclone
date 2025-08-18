@@ -3628,7 +3628,7 @@ func setQuirks(opt *Options) {
 		useUnsignedPayload = false // AWS has trailer support which means it adds checksums in the trailer without seeking
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
-		useAlreadyExists = false // returns BucketAlreadyExists
+		useAlreadyExists = true  // returns 200 OK
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
