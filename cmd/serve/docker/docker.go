@@ -4,6 +4,7 @@ package docker
 import (
 	"context"
 	_ "embed"
+	"net"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -14,6 +15,7 @@ import (
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 )
@@ -73,15 +75,25 @@ var Command = &cobra.Command{
 				return err
 			}
 			srv := NewServer(drv)
+
+			var listener net.Listener
 			if socketAddr == "" {
 				// Listen on unix socket at /run/docker/plugins/<pluginName>.sock
-				return srv.ServeUnix(pluginName, socketGid)
-			}
-			if filepath.IsAbs(socketAddr) {
+				listener, err = srv.ListenUnix(pluginName, socketGid)
+			} else if filepath.IsAbs(socketAddr) {
 				// Listen on unix socket at given path
-				return srv.ServeUnix(socketAddr, socketGid)
+				listener, err = srv.ListenUnix(socketAddr, socketGid)
+			} else {
+				listener, err = srv.ListenTCP(socketAddr, "", nil, noSpec)
 			}
-			return srv.ServeTCP(socketAddr, "", nil, noSpec)
+			if err != nil {
+				return err
+			}
+
+			// notify systemd
+			defer systemd.Notify()()
+
+			return srv.Serve(listener)
 		})
 	},
 }
