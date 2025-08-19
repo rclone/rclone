@@ -1508,15 +1508,6 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 	}
 	if new.File == nil {
 		return nil, fmt.Errorf("invalid response: %+v", new)
-	} else if new.File.Phase == api.PhaseTypeComplete {
-		// early return; in case of zero-byte objects
-		if acc, ok := in.(*accounting.Account); ok && acc != nil {
-			// if `in io.Reader` is still in type of `*accounting.Account` (meaning that it is unused)
-			// it is considered as a server side copy as no incoming/outgoing traffic occur at all
-			acc.ServerSideTransferStart()
-			acc.ServerSideCopyEnd(size)
-		}
-		return new.File, nil
 	}
 
 	defer atexit.OnError(&err, func() {
@@ -1532,6 +1523,23 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 			time.Sleep(taskWaitTime)
 		}
 	})()
+
+	// Note: The API might automatically append a numbered suffix to the filename,
+	// even if a file with the same name does not exist in the target directory.
+	if upName := f.opt.Enc.ToStandardName(new.File.Name); leaf != upName {
+		return nil, fserrors.NoRetryError(fmt.Errorf("uploaded file name mismatch: expected %q, got %q", leaf, upName))
+	}
+
+	// early return; in case of zero-byte objects or uploaded by matched gcid
+	if new.File.Phase == api.PhaseTypeComplete {
+		if acc, ok := in.(*accounting.Account); ok && acc != nil {
+			// if `in io.Reader` is still in type of `*accounting.Account` (meaning that it is unused)
+			// it is considered as a server side copy as no incoming/outgoing traffic occur at all
+			acc.ServerSideTransferStart()
+			acc.ServerSideCopyEnd(size)
+		}
+		return new.File, nil
+	}
 
 	if uploadType == api.UploadTypeForm && new.Form != nil {
 		err = f.uploadByForm(ctx, in, req.Name, size, new.Form, options...)
