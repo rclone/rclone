@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	transport    http.RoundTripper
+	transport    *Transport
 	noTransport  = new(sync.Once)
 	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	logMutex     sync.Mutex
@@ -51,7 +51,7 @@ func ResetTransport() {
 // NewTransportCustom returns an http.RoundTripper with the correct timeouts.
 // The customize function is called if set to give the caller an opportunity to
 // customize any defaults in the Transport.
-func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) http.RoundTripper {
+func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) *Transport {
 	ci := fs.GetConfig(ctx)
 	// Start with a sensible set of defaults then override.
 	// This also means we get new stuff when it gets added to go
@@ -145,7 +145,7 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 }
 
 // NewTransport returns an http.RoundTripper with the correct timeouts
-func NewTransport(ctx context.Context) http.RoundTripper {
+func NewTransport(ctx context.Context) *Transport {
 	(*noTransport).Do(func() {
 		transport = NewTransportCustom(ctx, nil)
 	})
