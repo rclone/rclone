@@ -134,6 +134,35 @@ be enabled in the FTP backend config for the remote, or with
 [`--ftp-tls`](#ftp-tls). The default FTPS port is `990`, not `21` and
 can be set with [`--ftp-port`](#ftp-port).
 
+## TLS Options
+
+TLS options for Implicit and Explicit TLS can be set using the
+following flags which are specific to the FTP backend:
+
+```
+--ftp-no-check-certificate     Do not verify the TLS certificate of the server
+--ftp-disable-tls13            Disable TLS 1.3 (workaround for FTP servers with buggy TLS)
+--ftp-tls-cache-size int       Size of TLS session cache for all control and data connections (default 32)
+```
+
+However any of the global TLS flags can also be used such as:
+
+```
+--ca-cert stringArray          CA certificate used to verify servers
+--client-cert string           Client SSL certificate (PEM) for mutual TLS auth
+--client-key string            Client SSL private key (PEM) for mutual TLS auth
+--no-check-certificate         Do not verify the server SSL certificate (insecure)
+```
+
+If these need to be put in the config file so they apply to just the
+FTP backend then use the `override` syntax, eg
+
+```
+override.ca_cert = XXX
+override.client_cert = XXX
+override.client_key = XXX
+```
+
 ### Restricted filename characters
 
 In addition to the [default restricted characters set](/overview/#restricted-characters)
