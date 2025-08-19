@@ -224,7 +224,7 @@ jobs:
         id: setup-go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '>=1.24.0-rc.1'
           check-latest: true
           cache: false
 
