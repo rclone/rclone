@@ -6641,7 +6641,7 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 		return wantETag, gotETag, versionID, ui, err
 	}
 
-	var s3cw *s3ChunkWriter = chunkWriter.(*s3ChunkWriter)
+	s3cw := chunkWriter.(*s3ChunkWriter)
 	gotETag = *stringClone(s3cw.eTag)
 	versionID = stringClone(s3cw.versionID)
 
