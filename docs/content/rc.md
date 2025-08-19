@@ -684,6 +684,9 @@ This takes the following parameters:
     - state - state to restart with - used with continue
     - result - result to restart with - used with continue
 
+Note that when specifying paths on windows at `parameters` with `remote` using `\`
+as path separator must be escaped, i.e. `\\`. Alternatively you can also use `/`
+as path separator.
 
 See the [config create](/commands/rclone_config_create/) command for more information on the above.
 
@@ -799,6 +802,9 @@ This takes the following parameters:
     - state - state to restart with - used with continue
     - result - result to restart with - used with continue
 
+Note that when specifying paths on windows at `parameters` with `remote` using `\`
+as path separator must be escaped, i.e. `\\`. Alternatively you can also use `/`
+as path separator.
 
 See the [config update](/commands/rclone_config_update/) command for more information on the above.
 
