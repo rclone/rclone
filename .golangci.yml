@@ -1,24 +1,29 @@
 version: "2"
 
 linters:
+  # Configure the linter set. To avoid unexpected results the implicit default
+  # set is ignored and all the ones to use are explicitly enabled.
   default: none
   enable:
+    # Default
     - errcheck
-    - gocritic
     - govet
     - ineffassign
-    - misspell
-    - revive
     - staticcheck
-    - unconvert
     - unused
-    #- prealloc
+    # Additional
+    - gocritic
+    - misspell
+    #- prealloc # TODO
+    - revive
+    - unconvert
+  # Configure checks. Mostly using defaults but with some commented exceptions.
   settings:
     staticcheck:
-      # Enable all default checks performed by the staticcheck stand-alone tool
-      # (see https://staticcheck.io/docs/configuration/options/#checks), with
-      # some exceptions/additions (commented).
+      # With staticcheck there is only one setting, so to extend the implicit
+      # default value it must be explicitly included.
       checks:
+        # Default
         - all
         - -ST1000
         - -ST1003
@@ -26,22 +31,24 @@ linters:
         - -ST1020
         - -ST1021
         - -ST1022
-        - -ST1023 # Not enabled by default
+        # Disable quickfix checks
+        - -QF*
     gocritic:
-      # Enable all default checks with some exceptions/additions (commented).
-      # Cannot use both enabled-checks and disabled-checks, so must specify all
-      # to be used.
+      # With gocritic there are different settings, but since enabled-checks
+      # and disabled-checks cannot both be set, for full customization the
+      # alternative is to disable all defaults and explicitly enable the ones
+      # to use.
       disable-all: true
       enabled-checks:
-        #- appendAssign # Enabled by default
+        #- appendAssign # Skip default
         - argOrder
         - assignOp
         - badCall
         - badCond
-        #- captLocal # Enabled by default
+        #- captLocal # Skip default
         - caseOrder
         - codegenComment
-        #- commentFormatting # Enabled by default
+        #- commentFormatting # Skip default
         - defaultCaseOrder
         - deprecatedComment
         - dupArg
@@ -49,16 +56,16 @@ linters:
         - dupCase
         - dupSubExpr
         - elseif
-        #- exitAfterDefer # Enabled by default
+        #- exitAfterDefer # Skip default
         - flagDeref
         - flagName
-        #- ifElseChain # Enabled by default
+        #- ifElseChain # Skip default
         - mapKey
         - newDeref
         - offBy1
         - regexpMust
-        - ruleguard # Not enabled by default
-        #- singleCaseSwitch # Enabled by default
+        - ruleguard # Enable additional check that are not enabled by default
+        #- singleCaseSwitch # Skip default
         - sloppyLen
         - sloppyTypeAssert
         - switchTrue
@@ -72,8 +79,10 @@ linters:
         ruleguard:
           rules: ${base-path}/bin/rules.go
     revive:
-      # Disable some of the default rules which produces a lot of issues currently.
-      # Since setting any rule disable all others, we must re-enable them.
+      # With revive there is in reality only one setting, and when at least one
+      # rule are specified then only these rules will be considered, defaults
+      # and all others are then implicitly disabled, so must explicitly enable
+      # all rules to be used.
       rules:
         - name: blank-imports
           disabled: false
@@ -83,8 +92,8 @@ linters:
           disabled: false
         - name: dot-imports
           disabled: false
-        - name: empty-block
-          disabled: true
+        #- name: empty-block # Skip default
+        #  disabled: true
         - name: error-naming
           disabled: false
         - name: error-return
@@ -95,10 +104,8 @@ linters:
           disabled: false
         - name: exported
           disabled: false
-        - name: if-return
-          disabled: true
-        - name: increment-decrement
-          disabled: true
+        #- name: increment-decrement # Skip default
+        #  disabled: true
         - name: indent-error-flow
           disabled: false
         - name: package-comments
@@ -107,38 +114,26 @@ linters:
           disabled: false
         - name: receiver-naming
           disabled: false
-        - name: redefines-builtin-id
-          disabled: true
-        - name: superfluous-else
-          disabled: true
+        #- name: redefines-builtin-id # Skip default
+        #  disabled: true
+        #- name: superfluous-else # Skip default
+        #  disabled: true
         - name: time-naming
           disabled: false
         - name: unexported-return
           disabled: false
-        - name: unreachable-code
-          disabled: true
-        - name: unused-parameter
-          disabled: true
+        #- name: unreachable-code # Skip default
+        #  disabled: true
+        #- name: unused-parameter # Skip default
+        #  disabled: true
         - name: var-declaration
           disabled: false
         - name: var-naming
           disabled: false
-  exclusions:
-    # Exclude sources that contain lines like `autogenerated file`,
-    # `code generated`, `do not edit`, etc. This is what golangci-lint v1 did,
-    # while in v2 the default is to strictly following the Go generated file
-    # convention.
-    generated: lax
-    rules:
-      - linters:
-          - staticcheck
-        text: 'SA1019: "github.com/rclone/rclone/cmd/serve/httplib" is deprecated'
 
 formatters:
   enable:
     - goimports
-  exclusions:
-    generated: lax
 
 issues:
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
