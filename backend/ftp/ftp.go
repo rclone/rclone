@@ -283,6 +283,7 @@ type Fs struct {
 	user     string
 	pass     string
 	dialAddr string
+	tlsConf  *tls.Config // default TLS client config
 	poolMu   sync.Mutex
 	pool     []*ftp.ServerConn
 	drain    *time.Timer // used to drain the pool when we stop using the connections
@@ -408,9 +409,14 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 func (f *Fs) tlsConfig() *tls.Config {
 	var tlsConfig *tls.Config
 	if f.opt.TLS || f.opt.ExplicitTLS {
-		tlsConfig = &tls.Config{
-			ServerName:         f.opt.Host,
-			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
+		if f.tlsConf != nil {
+			tlsConfig = f.tlsConf.Clone()
+		} else {
+			tlsConfig = new(tls.Config)
+		}
+		tlsConfig.ServerName = f.opt.Host
+		if f.opt.SkipVerifyTLSCert {
+			tlsConfig.InsecureSkipVerify = true
 		}
 		if f.opt.TLSCacheSize > 0 {
 			tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(f.opt.TLSCacheSize)
@@ -671,6 +677,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		dialAddr: dialAddr,
 		tokens:   pacer.NewTokenDispenser(opt.Concurrency),
 		pacer:    fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		tlsConf:  fshttp.NewTransport(ctx).TLSClientConfig,
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
