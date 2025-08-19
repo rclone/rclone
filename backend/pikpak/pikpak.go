@@ -1524,11 +1524,13 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 		if cancelErr := f.deleteObjects(ctx, []string{new.File.ID}, false); cancelErr != nil {
 			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
 		}
-		if cancelErr := f.deleteTask(ctx, new.Task.ID, false); cancelErr != nil {
-			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
+		if new.Task != nil {
+			if cancelErr := f.deleteTask(ctx, new.Task.ID, false); cancelErr != nil {
+				fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
+			}
+			fs.Debugf(leaf, "waiting %v for the cancellation to be effective", taskWaitTime)
+			time.Sleep(taskWaitTime)
 		}
-		fs.Debugf(leaf, "waiting %v for the cancellation to be effective", taskWaitTime)
-		time.Sleep(taskWaitTime)
 	})()
 
 	if uploadType == api.UploadTypeForm && new.Form != nil {
@@ -1541,6 +1543,9 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload: %w", err)
+	}
+	if new.Task == nil {
+		return new.File, nil
 	}
 	return new.File, f.waitTask(ctx, new.Task.ID)
 }
