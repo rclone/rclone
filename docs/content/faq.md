@@ -158,11 +158,14 @@ support an HTTP CONNECT proxy (
 [--ftp-http-proxy](https://rclone.org/ftp/#ftp-http-proxy) and
 [--sftp-http-proxy](https://rclone.org/ftp/#sftp-http-proxy) )
 
-### Rclone gives x509: failed to load system roots and no roots provided error
+### Rclone gives x509 SSL root certificates error
 
-This means that `rclone` can't find the SSL root certificates.  Likely
-you are running `rclone` on a NAS with a cut-down Linux OS, or
-possibly on Solaris.
+`x509: failed to load system roots and no roots provided` means that `rclone` can't
+find the SSL root certificates.  Likely you are running `rclone` on a NAS with
+a cut-down Linux OS, or possibly on Solaris.
+
+`x509: certificate signed by unknown authority` error may occur on outdated systems,
+where `rclone` can't verify the server with the SSL root certificates.
 
 Rclone (via the Go runtime) tries to load the root certificates from
 these places on Linux.
@@ -192,6 +195,16 @@ if it doesn't work without.
 
 ```sh
 curl --insecure -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
+```
+
+On macOS, you can install
+[ca-certificates](https://formulae.brew.sh/formula/ca-certificates) with
+Homebrew, and specify the SSL root certificates with the
+[--ca-cert](/docs/#ca-cert-stringarray) flag.
+
+```sh
+brew install ca-certificates
+find $(brew --prefix)/etc/ca-certificates -type f
 ```
 
 ### Rclone gives Failed to load config file: function not implemented error
