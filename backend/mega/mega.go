@@ -59,12 +59,9 @@ var (
 	megaCache   = map[string]*mega.Mega{} // cache logged in Mega's by user
 )
 
-func init() {
-	// Remove persistent_login and 2fa_enabled from Options
-	// Remove related config and flag logic
-	// Always try session restore, then fallback to login/2FA, then save session after full success
-}
-
+// Remove persistent_login and 2fa_enabled from Options
+// Remove related config and flag logic
+// Always try session restore, then fallback to login/2FA, then save session after full success
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
