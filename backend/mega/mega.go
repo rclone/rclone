@@ -220,16 +220,30 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	ci := fs.GetConfig(ctx)
 
+	// cache *mega Mega on username so we can reuse and share
+	// them between remotes. They are expensive to make as they
+	// contain all the objects and sharing the objects makes the
+    // move code easier as we don't have to worry about mixing 
+	// them up between different remotes.
 	megaCacheMu.Lock()
 	defer megaCacheMu.Unlock()
 	srv := megaCache[opt.User]
 	if srv == nil {
+		// srv = mega.New(). SetClient(fshttp.NewClient(ctx))|
+
+		// Workaround for Mega's use of insecure cipher suites which are no longer supported by default since Go 1.22.
+		// Relevant issues:
+		// https://github.com/rclone/rclone/issues/8565
+		// https://github.com/meganz/webclient/issues/103
 		clt := fshttp.NewClient(ctx)
 		clt.Transport = fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
 			var ids []uint16
+			// Read default ciphers
 			for _, cs := range tls.CipherSuites() {
 				ids = append(ids, cs.ID)
 			}
+			// Insecure but Mega uses TLS_RSA_WITH_AES_128_GCM_SHA256 for storage endpoints
+			// (e.g. https://gfs302n114.userstorage.mega.co.nz) as of June 18, 2025.
 			t.TLSClientConfig.CipherSuites = append(ids, tls.TLS_RSA_WITH_AES_128_GCM_SHA256)
 		})
 		srv = mega.New().SetClient(clt)
@@ -322,6 +336,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
 
+	// Find the root node and check if it is a file or not
 	_, err = f.findRoot(ctx, false)
 	switch err {
 	case nil:
