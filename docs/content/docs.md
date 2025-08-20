@@ -3000,6 +3000,20 @@ The `--client-key` flag is required too when using this.
 This loads the PEM encoded client side private key used for mutual TLS
 authentication.  Used in conjunction with `--client-cert`.
 
+Supported types are:
+
+- Unencrypted PKCS#1 ("BEGIN RSA PRIVATE KEY")
+- Unencrypted PKCS#8 ("BEGIN PRIVATE KEY")
+- Encrypted PKCS#8 ("BEGIN ENCRYPTED PRIVATE KEY")
+- Legacy PEM encryption (e.g., DEK-Info headers), which are automatically detected.
+
+### --client-pass string
+
+This can be used to supply an optional password to decrypt the client key file.
+
+**NB** the password should be obscured so it should be the output of
+`rclone obscure YOURPASSWORD`.
+
 ### --no-check-certificate
 
 `--no-check-certificate` controls whether a client verifies the
