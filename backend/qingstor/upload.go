@@ -1,6 +1,6 @@
 // Upload object to QingStor
 
-//go:build !plan9 && !js
+//go:build !plan9 && !js && !wasm
 
 package qingstor
 

@@ -1,4 +1,4 @@
-//go:build !plan9 && !wasm
+//go:build wasm
 
 package fserrors
 
@@ -11,11 +11,11 @@ func init() {
 		syscall.EPIPE,
 		syscall.ETIMEDOUT,
 		syscall.ECONNREFUSED,
-		syscall.EHOSTDOWN,
+		//syscall.EHOSTDOWN,
 		syscall.EHOSTUNREACH,
 		syscall.ECONNABORTED,
 		syscall.EAGAIN,
-		syscall.EWOULDBLOCK,
+		//syscall.EWOULDBLOCK,
 		syscall.ECONNRESET,
 	)
 }

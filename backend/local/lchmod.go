@@ -1,4 +1,4 @@
-//go:build windows || plan9 || js || linux
+//go:build windows || plan9 || js || wasm || linux
 
 package local
 

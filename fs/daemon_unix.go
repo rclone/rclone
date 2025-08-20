@@ -1,6 +1,6 @@
 // Daemonization interface for Unix platforms (common definitions)
 
-//go:build !windows && !plan9 && !js
+//go:build !windows && !plan9 && !js && !wasm
 
 package fs
 

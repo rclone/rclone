@@ -1,4 +1,4 @@
-//go:build dragonfly || plan9 || js
+//go:build dragonfly || plan9 || js || wasm
 
 package local
 

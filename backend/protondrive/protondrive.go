@@ -1,3 +1,5 @@
+//go:build !wasm
+
 // Package protondrive implements the Proton Drive backend
 package protondrive
 

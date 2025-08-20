@@ -1,4 +1,4 @@
-//go:build !plan9
+//go:build !plan9 && !wasm
 
 // Package sftp provides a filesystem interface using github.com/pkg/sftp
 package sftp

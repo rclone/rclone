@@ -1,7 +1,7 @@
 // Build for oracleobjectstorage for unsupported platforms to stop go complaining
 // about "no buildable Go source files "
 
-//go:build plan9 || solaris || js
+//go:build plan9 || solaris || js || wasm
 
 // Package oracleobjectstorage provides an interface to the OCI object storage system.
 package oracleobjectstorage

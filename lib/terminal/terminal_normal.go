@@ -1,4 +1,4 @@
-//go:build !js
+//go:build !js && !wasm
 
 package terminal
 

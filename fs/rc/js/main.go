@@ -2,7 +2,7 @@
 //
 // This library exports the core rc functionality
 
-//go:build js
+//go:build js || wasm
 
 package main
 
