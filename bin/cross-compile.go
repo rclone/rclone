@@ -73,7 +73,7 @@ var osarches = []string{
 	"plan9/386",
 	"plan9/amd64",
 	"solaris/amd64",
-	// "js/wasm", // Rclone is too big for js/wasm until https://github.com/golang/go/issues/64856 is fixed
+	"js/wasm",
 }
 
 // Special environment flags for a given arch
