@@ -57,6 +57,7 @@ require (
 	github.com/ncw/swift/v2 v2.0.4
 	github.com/oracle/oci-go-sdk/v65 v65.98.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/peterh/liner v1.2.2
 	github.com/pkg/sftp v1.13.9
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/prometheus/client_golang v1.23.0
@@ -90,6 +91,7 @@ require (
 	golang.org/x/text v0.28.0
 	golang.org/x/time v0.12.0
 	google.golang.org/api v0.247.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/validator.v2 v2.0.1
 	gopkg.in/yaml.v3 v3.0.1
 	storj.io/uplink v1.13.1

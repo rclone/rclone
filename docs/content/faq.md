@@ -185,7 +185,7 @@ ntpclient -s -h pool.ntp.org
 
 The two environment variables `SSL_CERT_FILE` and `SSL_CERT_DIR`, mentioned in
 the [x509 package](https://godoc.org/crypto/x509), provide an additional way to
-provide the SSL root certificates.
+provide the SSL root certificates on Unix systems other than macOS.
 
 Note that you may need to add the `--insecure` option to the `curl` command line
 if it doesn't work without.

@@ -3,6 +3,7 @@ package config_test
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
@@ -19,6 +20,12 @@ const testName = "configTestNameForRc"
 
 func TestRc(t *testing.T) {
 	ctx := context.Background()
+	oldConfigFile := config.GetConfigPath()
+	defer func() {
+		require.NoError(t, config.SetConfigPath(oldConfigFile))
+	}()
+	// Set a temporary config file
+	require.NoError(t, config.SetConfigPath(filepath.Join(t.TempDir(), "rclone.conf")))
 	configfile.Install()
 	// Create the test remote
 	call := rc.Calls.Get("config/create")

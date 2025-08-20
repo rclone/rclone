@@ -5,6 +5,7 @@ package pool
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -46,7 +47,8 @@ type Pool struct {
 
 // totalMemory is a semaphore used to control total buffer usage of
 // all Pools. It it may be nil in which case the total buffer usage
-// will not be controlled.
+// will not be controlled. It counts memory in active use, it does not
+// count memory cached in the pool.
 var totalMemory *semaphore.Weighted
 
 // Make sure we initialise the totalMemory semaphore once
@@ -102,11 +104,37 @@ func (bp *Pool) get() []byte {
 	return buf
 }
 
+// getN gets the last n buffers in bp.cache
+//
+// will panic if you ask for too many buffers
+//
+// Call with mu held
+func (bp *Pool) getN(n int) [][]byte {
+	i := len(bp.cache) - n
+	bufs := slices.Clone(bp.cache[i:])
+	bp.cache = slices.Delete(bp.cache, i, len(bp.cache))
+	return bufs
+}
+
 // put puts the buffer on the end of bp.cache
 //
 // Call with mu held
 func (bp *Pool) put(buf []byte) {
 	bp.cache = append(bp.cache, buf)
+}
+
+// put puts the bufs on the end of bp.cache
+//
+// Call with mu held
+func (bp *Pool) putN(bufs [][]byte) {
+	bp.cache = append(bp.cache, bufs...)
+}
+
+// buffers returns the number of buffers in bp.ache
+//
+// Call with mu held
+func (bp *Pool) buffers() int {
+	return len(bp.cache)
 }
 
 // flush n entries from the entire buffer pool
@@ -175,7 +203,7 @@ func (bp *Pool) updateMinFill() {
 	}
 }
 
-// acquire mem bytes of memory
+// acquire mem bytes of memory for the user
 func (bp *Pool) acquire(mem int64) error {
 	if totalMemory == nil {
 		return nil
@@ -184,7 +212,7 @@ func (bp *Pool) acquire(mem int64) error {
 	return totalMemory.Acquire(ctx, mem)
 }
 
-// release mem bytes of memory
+// release mem bytes of memory from the user
 func (bp *Pool) release(mem int64) {
 	if totalMemory == nil {
 		return
@@ -192,84 +220,62 @@ func (bp *Pool) release(mem int64) {
 	totalMemory.Release(mem)
 }
 
-// Reserve buffers for use. Blocks until they are free.
-//
-// Doesn't allocate any memory.
-//
-// Must be released by calling GetReserved() which releases 1 buffer or
-// Release() to release any number of buffers.
-func (bp *Pool) Reserve(buffers int) {
-	waitTime := time.Millisecond
-	for {
-		err := bp.acquire(int64(buffers) * int64(bp.bufferSize))
-		if err == nil {
-			break
-		}
-		fs.Logf(nil, "Failed to get reservation for buffer, waiting for %v: %v", waitTime, err)
-		time.Sleep(waitTime)
-		waitTime *= 2
-	}
-}
-
-// Release previously Reserved buffers.
-//
-// Doesn't free any memory.
-func (bp *Pool) Release(buffers int) {
-	bp.release(int64(buffers) * int64(bp.bufferSize))
-}
-
-// Get a buffer from the pool or allocate one
-func (bp *Pool) getBlock(reserved bool) []byte {
-	bp.mu.Lock()
-	var buf []byte
-	waitTime := time.Millisecond
-	for {
-		if len(bp.cache) > 0 {
-			buf = bp.get()
-			if reserved {
-				// If got reserved memory from the cache we
-				// can release the reservation of one buffer.
-				bp.release(int64(bp.bufferSize))
-			}
-			break
-		} else {
-			var err error
-			if !reserved {
-				bp.mu.Unlock()
-				err = bp.acquire(int64(bp.bufferSize))
-				bp.mu.Lock()
-			}
-			if err == nil {
-				buf, err = bp.alloc(bp.bufferSize)
-				if err == nil {
-					bp.alloced++
-					break
-				}
-				if !reserved {
-					bp.release(int64(bp.bufferSize))
-				}
-			}
-			fs.Logf(nil, "Failed to get memory for buffer, waiting for %v: %v", waitTime, err)
-			bp.mu.Unlock()
-			time.Sleep(waitTime)
-			bp.mu.Lock()
-			waitTime *= 2
-		}
-	}
-	bp.inUse++
-	bp.updateMinFill()
-	bp.mu.Unlock()
-	return buf
-}
-
 // Get a buffer from the pool or allocate one
 func (bp *Pool) Get() []byte {
-	return bp.getBlock(false)
+	return bp.GetN(1)[0]
 }
 
-// GetReserved gets a reserved buffer from the pool or allocates one.
-func (bp *Pool) GetReserved() []byte {
-	return bp.getBlock(true)
+// GetN get n buffers atomically from the pool or allocate them
+func (bp *Pool) GetN(n int) [][]byte {
+	bp.mu.Lock()
+	var (
+		waitTime = time.Millisecond // retry time if allocation failed
+		err      error              // allocation error
+		buf      []byte             // allocated buffer
+		bufs     [][]byte           // bufs so far
+		have     int                // have this many buffers in bp.cache
+		want     int                // want this many extra buffers
+		acquired bool               // whether we have acquired the memory or not
+	)
+	for {
+		acquired = false
+		bp.mu.Unlock()
+		err = bp.acquire(int64(bp.bufferSize) * int64(n))
+		bp.mu.Lock()
+		if err != nil {
+			goto FAIL
+		}
+		acquired = true
+		have = min(bp.buffers(), n)
+		want = n - have
+		bufs = bp.getN(have) // get as many buffers as we have from the cache
+		for range want {
+			buf, err = bp.alloc(bp.bufferSize)
+			if err != nil {
+				goto FAIL
+			}
+			bp.alloced++
+			bufs = append(bufs, buf)
+		}
+		break
+	FAIL:
+		// Release the buffers and the allocation if it succeeded
+		bp.putN(bufs)
+		if acquired {
+			bp.release(int64(bp.bufferSize) * int64(n))
+		}
+		fs.Logf(nil, "Failed to get memory for buffer, waiting for %v: %v", waitTime, err)
+		bp.mu.Unlock()
+		time.Sleep(waitTime)
+		bp.mu.Lock()
+		waitTime *= 2
+		clear(bufs)
+		bufs = nil
+	}
+	bp.inUse += n
+	bp.updateMinFill()
+	bp.mu.Unlock()
+	return bufs
 }
 
 // freeBuffer returns mem to the os if required - call with lock held
@@ -277,19 +283,17 @@ func (bp *Pool) freeBuffer(mem []byte) {
 	err := bp.free(mem)
 	if err != nil {
 		fs.Logf(nil, "Failed to free memory: %v", err)
-	} else {
-		bp.release(int64(bp.bufferSize))
 	}
 	bp.alloced--
 }
 
-// Put returns the buffer to the buffer cache or frees it
+// _put returns the buffer to the buffer cache or frees it
 //
-// Note that if you try to return a buffer of the wrong size to Put it
-// will panic.
-func (bp *Pool) Put(buf []byte) {
-	bp.mu.Lock()
-	defer bp.mu.Unlock()
+// call with lock held
+//
+// Note that if you try to return a buffer of the wrong size it will
+// panic.
+func (bp *Pool) _put(buf []byte) {
 	buf = buf[0:cap(buf)]
 	if len(buf) != bp.bufferSize {
 		panic(fmt.Sprintf("Returning buffer sized %d but expecting %d", len(buf), bp.bufferSize))
@@ -299,7 +303,33 @@ func (bp *Pool) Put(buf []byte) {
 	} else {
 		bp.freeBuffer(buf)
 	}
+	bp.release(int64(bp.bufferSize))
+}
+
+// Put returns the buffer to the buffer cache or frees it
+//
+// Note that if you try to return a buffer of the wrong size to Put it
+// will panic.
+func (bp *Pool) Put(buf []byte) {
+	bp.mu.Lock()
+	defer bp.mu.Unlock()
+	bp._put(buf)
 	bp.inUse--
+	bp.updateMinFill()
+	bp.kickFlusher()
+}
+
+// PutN returns the buffers to the buffer cache or frees it,
+//
+// Note that if you try to return a buffer of the wrong size to PutN it
+// will panic.
+func (bp *Pool) PutN(bufs [][]byte) {
+	bp.mu.Lock()
+	defer bp.mu.Unlock()
+	for _, buf := range bufs {
+		bp._put(buf)
+	}
+	bp.inUse -= len(bufs)
 	bp.updateMinFill()
 	bp.kickFlusher()
 }

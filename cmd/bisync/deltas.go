@@ -219,7 +219,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 				}
 			}
 			if b.opt.Compare.Checksum {
-				if hashDiffers(old.getHash(file), now.getHash(file), old.hash, now.hash, old.getSize(file), now.getSize(file)) {
+				if b.hashDiffers(old.getHash(file), now.getHash(file), old.hash, now.hash, old.getSize(file), now.getSize(file)) {
 					fs.Debugf(file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
 					whatchanged = append(whatchanged, Color(terminal.MagentaFg, "hash"))
 					d |= deltaHash
@@ -346,7 +346,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 			if d2.is(deltaOther) {
 				// if size or hash differ, skip this, as we already know they're not equal
 				if (b.opt.Compare.Size && sizeDiffers(ds1.size[file], ds2.size[file2])) ||
-					(b.opt.Compare.Checksum && hashDiffers(ds1.hash[file], ds2.hash[file2], b.opt.Compare.HashType1, b.opt.Compare.HashType2, ds1.size[file], ds2.size[file2])) {
+					(b.opt.Compare.Checksum && b.hashDiffers(ds1.hash[file], ds2.hash[file2], b.opt.Compare.HashType1, b.opt.Compare.HashType2, ds1.size[file], ds2.size[file2])) {
 					fs.Debugf(file, "skipping equality check as size/hash definitely differ")
 				} else {
 					checkit := func(filename string) {
@@ -393,10 +393,10 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 				// if files are identical, leave them alone instead of renaming
 				if (dirs1.has(file) || dirs1.has(alias)) && (dirs2.has(file) || dirs2.has(alias)) {
 					fs.Infof(nil, "This is a directory, not a file. Skipping equality check and will not rename: %s", file)
-					ls1.getPut(file, skippedDirs1)
-					ls2.getPut(file, skippedDirs2)
+					b.march.ls1.getPut(file, skippedDirs1)
+					b.march.ls2.getPut(file, skippedDirs2)
 					b.debugFn(file, func() {
-						b.debug(file, fmt.Sprintf("deltas dir: %s, ls1 has name?: %v, ls2 has name?: %v", file, ls1.has(b.DebugName), ls2.has(b.DebugName)))
+						b.debug(file, fmt.Sprintf("deltas dir: %s, ls1 has name?: %v, ls2 has name?: %v", file, b.march.ls1.has(b.DebugName), b.march.ls2.has(b.DebugName)))
 					})
 				} else {
 					equal := matches.Has(file)
@@ -409,16 +409,16 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 							// the Path1 version is deemed "correct" in this scenario
 							fs.Infof(alias, "Files are equal but will copy anyway to fix case to %s", file)
 							copy1to2.Add(file)
-						} else if b.opt.Compare.Modtime && timeDiffers(ctx, ls1.getTime(ls1.getTryAlias(file, alias)), ls2.getTime(ls2.getTryAlias(file, alias)), b.fs1, b.fs2) {
+						} else if b.opt.Compare.Modtime && timeDiffers(ctx, b.march.ls1.getTime(b.march.ls1.getTryAlias(file, alias)), b.march.ls2.getTime(b.march.ls2.getTryAlias(file, alias)), b.fs1, b.fs2) {
 							fs.Infof(file, "Files are equal but will copy anyway to update modtime (will not rename)")
-							if ls1.getTime(ls1.getTryAlias(file, alias)).Before(ls2.getTime(ls2.getTryAlias(file, alias))) {
+							if b.march.ls1.getTime(b.march.ls1.getTryAlias(file, alias)).Before(b.march.ls2.getTime(b.march.ls2.getTryAlias(file, alias))) {
 								// Path2 is newer
 								b.indent("Path2", p1, "Queue copy to Path1")
-								copy2to1.Add(ls2.getTryAlias(file, alias))
+								copy2to1.Add(b.march.ls2.getTryAlias(file, alias))
 							} else {
 								// Path1 is newer
 								b.indent("Path1", p2, "Queue copy to Path2")
-								copy1to2.Add(ls1.getTryAlias(file, alias))
+								copy1to2.Add(b.march.ls1.getTryAlias(file, alias))
 							}
 						} else {
 							fs.Infof(nil, "Files are equal! Skipping: %s", file)
@@ -590,10 +590,10 @@ func (b *bisyncRun) updateAliases(ctx context.Context, ds1, ds2 *deltaSet) {
 	fullMap1 := map[string]string{} // [transformedname]originalname
 	fullMap2 := map[string]string{} // [transformedname]originalname
 
-	for _, name := range ls1.list {
+	for _, name := range b.march.ls1.list {
 		fullMap1[transform(name)] = name
 	}
-	for _, name := range ls2.list {
+	for _, name := range b.march.ls2.list {
 		fullMap2[transform(name)] = name
 	}
 

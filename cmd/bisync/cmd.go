@@ -115,6 +115,7 @@ func (x *CheckSyncMode) Type() string {
 }
 
 // Opt keeps command line options
+// internal functions should use b.opt instead
 var Opt Options
 
 func init() {
