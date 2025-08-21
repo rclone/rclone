@@ -1816,6 +1816,7 @@ about _Unison_ and synchronization in general.
 ## Changelog
 
 ### `v1.71`
+* Fixed an issue causing hash type to be set incorrectly if `path2` had slow hashes and `--no-slow-hash` or `--slow-hash-sync-only` was in use.
 * Fixed an issue causing errors when running concurrent bisync runs through the `rc`.
 
 ### `v1.69.1`
