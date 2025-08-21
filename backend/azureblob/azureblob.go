@@ -130,6 +130,7 @@ Set this if using
 - Service principal with client secret
 - Service principal with certificate
 - User with username and password
+- Device code / Authorization code flow
 `,
 			Sensitive: true,
 		}, {
@@ -140,6 +141,7 @@ Set this if using
 - Service principal with client secret
 - Service principal with certificate
 - User with username and password
+- Device code / Authorization code flow
 `,
 			Sensitive: true,
 		}, {
@@ -232,7 +234,29 @@ for ensuring the configured authority is valid and trustworthy.
 `,
 			Default:  false,
 			Advanced: true,
+		}, 
+		{
+			Name:     "use_authorization_flow",
+			Default:  false,
+			Advanced: true,
+			Help: `Use the authorization flow for obtaining the access token.
+When true, use the authorization flow to obtain the access token instead of using the client secret or certificate. 
+see [Interactive Browser Authentication](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow)`,
 		}, {
+			Name:     "use_device_code_flow",
+			Default:  false,
+			Advanced: true,
+			Help: `Use the Device code flow for obtaining the access token.
+When true, use the device code flow to obtain the access token instead of using the client secret or certificate. 
+see [Device code Authentication](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-device-code)`,
+		},
+		{
+			Name:     "oauth_port",
+			Default:  "8085",
+			Advanced: true,
+			Help: `Use the specified port for the device code and authorization code flow redirect endpoint.`,
+		},
+		{
 			Name: "use_msi",
 			Help: `Use a managed service identity to authenticate (only works in Azure).
 
@@ -513,6 +537,9 @@ type Options struct {
 	ClientCertificatePath      string               `config:"client_certificate_path"`
 	ClientCertificatePassword  string               `config:"client_certificate_password"`
 	ClientSendCertificateChain bool                 `config:"client_send_certificate_chain"`
+	OAuthPort                  string               `config:"oauth_port"`
+ 	UseAuthorizationFlow       bool                 `config:"use_authorization_flow"`
+ 	UseDeviceCodeFlow          bool                 `config:"use_device_code_flow"`
 	Username                   string               `config:"username"`
 	Password                   string               `config:"password"`
 	ServicePrincipalFile       string               `config:"service_principal_file"`
@@ -900,6 +927,54 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("error creating a client secret credential: %w", err)
 		}
+
+
+	
+	case opt.ClientID != "" && opt.Tenant != "" && opt.ClientSecret == "" && opt.UseAuthorizationFlow:
+		// Authorization code flow
+		startingPort := opt.OAuthPort
+		if startingPort == "" {
+			startingPort = "8085"
+		}
+		redirectURL := "http://localhost:" + startingPort
+
+		f.cred, err = azidentity.NewInteractiveBrowserCredential(&azidentity.InteractiveBrowserCredentialOptions{
+			ClientID:    opt.ClientID,
+			TenantID:    opt.Tenant,
+			RedirectURL: redirectURL,
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("error creating an interactive browser credential: %w", err)
+		}
+
+		serviceURL := fmt.Sprintf("https://%s.%s", opt.Account, storageDefaultBaseURL)
+		fmt.Println("redirectURL: ", redirectURL)
+		fmt.Println("serviceURL: ", serviceURL)
+
+		f.svc, err = service.NewClient(serviceURL, f.cred, &clientOpt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create service client: %w", err)
+		}
+	case opt.ClientID != "" && opt.Tenant != "" && opt.ClientSecret == "" && opt.UseDeviceCodeFlow:
+		// Device code flow
+		f.cred, err = azidentity.NewDeviceCodeCredential(&azidentity.DeviceCodeCredentialOptions{
+			ClientID: opt.ClientID,
+			TenantID: opt.Tenant,
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("error creating an interactive browser credential: %w", err)
+		}
+
+		serviceURL := fmt.Sprintf("https://%s.%s", opt.Account, storageDefaultBaseURL)
+		fmt.Println("serviceURL: ", serviceURL)
+
+		f.svc, err = service.NewClient(serviceURL, f.cred, &clientOpt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create service client: %w", err)
+		}
+
 	case opt.ClientID != "" && opt.Tenant != "" && opt.ClientCertificatePath != "":
 		// Service principal with certificate
 		//
