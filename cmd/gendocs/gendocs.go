@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"text/template"
 	"time"
@@ -91,7 +92,7 @@ rclone.org website.`,
 			Aliases     []string
 			Annotations map[string]string
 		}
-		var commands = map[string]commandDetails{}
+		commands := map[string]commandDetails{}
 		var addCommandDetails func(root *cobra.Command, parentAliases []string)
 		addCommandDetails = func(root *cobra.Command, parentAliases []string) {
 			name := strings.ReplaceAll(root.CommandPath(), " ", "_") + ".md"
@@ -158,7 +159,7 @@ rclone.org website.`,
 			return err
 		}
 
-		var outdentTitle = regexp.MustCompile(`(?m)^#(#+)`)
+		outdentTitle := regexp.MustCompile(`(?m)^#(#+)`)
 
 		// Munge the files to add a link to the global flags page
 		err = filepath.Walk(out, func(path string, info os.FileInfo, err error) error {
@@ -169,6 +170,9 @@ rclone.org website.`,
 				name := filepath.Base(path)
 				cmd, ok := commands[name]
 				if !ok {
+					if name == "rclone_mount.md" && runtime.GOOS == "darwin" {
+						return nil // won't exist without -tags cmount
+					}
 					return fmt.Errorf("didn't find command for %q", name)
 				}
 				b, err := os.ReadFile(path)
