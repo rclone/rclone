@@ -177,7 +177,7 @@ func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
 	}
 	if (b.opt.Compare.NoSlowHash || b.opt.Compare.SlowHashSyncOnly) && b.fs2.Features().SlowHash {
 		fs.Infoc(nil, Color(terminal.YellowFg, "Slow hash detected on Path2. Will ignore checksum due to slow-hash settings"))
-		b.opt.Compare.HashType1 = hash.None
+		b.opt.Compare.HashType2 = hash.None
 	} else {
 		b.opt.Compare.HashType2 = b.fs2.Hashes().GetOne()
 		if b.opt.Compare.HashType2 != hash.None {
