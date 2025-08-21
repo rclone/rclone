@@ -2,12 +2,11 @@
 title: "Bisync"
 description: "Bidirectional cloud sync solution in rclone"
 versionIntroduced: "v1.58"
-status: Beta
 ---
 
 ## Bisync
 
-`bisync` is **in beta** and is considered an **advanced command**, so use with care.
+`bisync` is considered an **advanced command**, so use with care.
 Make sure you have read and understood the entire
 [manual](https://rclone.org/bisync) (especially the [Limitations](#limitations)
 section) before using, or data loss can result. Questions can be asked in the
@@ -117,7 +116,7 @@ Optional Flags:
       --no-slow-hash                         Ignore listing checksums only on backends where they are slow
       --recover                              Automatically recover from interruptions without requiring --resync.
       --remove-empty-dirs                    Remove ALL empty directories at the final cleanup step.
-      --resilient                            Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!
+      --resilient                            Allow future runs to retry after certain less-serious errors, instead of requiring --resync.
   -1, --resync                               Performs the resync run. Equivalent to --resync-mode path1. Consider using --verbose or --dry-run first.
       --resync-mode string                   During resync, prefer the version that is: path1, path2, newer, older, larger, smaller (default: path1 if --resync, otherwise none for no resync.) (default "none")
       --retries int                          Retry operations this many times if they fail (requires --resilient). (default 3)
@@ -740,8 +739,6 @@ See also: [Concurrent modifications](#concurrent-modifications), [`--resilient`]
 
 ### --resilient
 
-***Caution: this is an experimental feature. Use at your own risk!***
-
 By default, most errors or interruptions will cause bisync to abort and
 require [`--resync`](#resync) to recover. This is a safety feature,  to prevent
 bisync from running again until a user checks things out.  However, in some
@@ -1040,22 +1037,62 @@ expire on its own, if using `--max-lock`.)
 
 ### Supported backends
 
-Bisync is considered *BETA* and has been tested with the following backends:
+Bisync is integration-tested against all rclone backends to verify compatibility.
+Most backends (including all backends not listed below) are deemed fully
+supported with no known issues. Occasionally, however, these tests reveal issues
+with particular backends, usually related to a provider-specific limitation
+beyond rclone's control (for example, disallowed special characters and filename
+encodings.)
 
-- Local filesystem
-- Google Drive
-- Dropbox
-- OneDrive
-- S3
-- SFTP
-- Yandex Disk
-- Crypt
+The following backends have known issues that need more investigation:
 
-It has not been fully tested with other services yet.
-If it works, or sorta works, please let us know and we'll update the list.
-Run the test suite to check for proper operation as described below.
+<!--- start list_failures - DO NOT EDIT THIS SECTION - use rclone gendocs --->
+- `TestGoFile` (`gofile`)
+  - [`TestBisyncRemoteLocal/all_changed`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [`TestBisyncRemoteLocal/backupdir`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [`TestBisyncRemoteLocal/basic`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [`TestBisyncRemoteLocal/changes`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [`TestBisyncRemoteLocal/check_access`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [78 more](https://pub.rclone.org/integration-tests/current/)
+- Updated: 2025-08-21-010015
+<!--- end list_failures - DO NOT EDIT THIS SECTION - use rclone gendocs --->
 
-The first release of `rclone bisync` required both underlying backends to support
+The following backends either have not been tested recently or have known issues
+that are deemed unfixable for the time being:
+
+<!--- start list_ignores - DO NOT EDIT THIS SECTION - use rclone gendocs --->
+- `TestCache` (`cache`)
+- `TestFileLu` (`filelu`)
+- `TestFilesCom` (`filescom`)
+- `TestImageKit` (`imagekit`)
+- `TestJottacloud` (`jottacloud`)
+- `TestLinkbox` (`linkbox`)
+- `TestMailru` (`mailru`)
+- `TestMega` (`mega`)
+- `TestOpenDrive` (`opendrive`)
+- `TestOracleObjectStorage` (`oracleobjectstorage`)
+- `TestPikPak` (`pikpak`)
+- `TestPixeldrain` (`pixeldrain`)
+- `TestProtonDrive` (`protondrive`)
+- `TestPutio` (`putio`)
+- `TestQuatrix` (`quatrix`)
+- `TestS3GCS` (`s3`)
+  - `TestBisyncRemoteRemote/extended_filenames`
+- `TestS3Rclone` (`s3`)
+- `TestSFTPRsyncNet` (`sftp`)
+- `TestStorj` (`storj`)
+- `TestWebdavInfiniteScale` (`webdav`)
+- `TestWebdavNextcloud` (`webdav`)
+- `TestWebdavOwncloud` (`webdav`)
+- `TestnStorage` (`netstorage`)
+<!--- end list_ignores - DO NOT EDIT THIS SECTION - use rclone gendocs --->
+([more info](https://github.com/rclone/rclone/blob/master/fstest/test_all/config.yaml))
+
+The above lists are updated for each stable release of rclone. For test results
+updated nightly based on the latest beta, visit rclone's [integration test
+status page](https://pub.rclone.org/integration-tests/current/).
+
+Early beta versions of `rclone bisync` required both underlying backends to support
 modification times, and refused to run otherwise.
 This limitation has been lifted as of `v1.66`, as bisync now supports comparing
 checksum and/or size instead of (or in addition to) modtime.
@@ -1860,6 +1897,8 @@ about *Unison* and synchronization in general.
 ## Changelog
 
 ### `v1.71`
+
+- `bisync` is now officially released from beta.
 
 - Fixed an issue causing hash type to be set incorrectly if `path2` had slow
 hashes and `--no-slow-hash` or `--slow-hash-sync-only` was in use.

@@ -141,7 +141,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &tzLocal, "localtime", "", tzLocal, "Use local time in listings (default: UTC)", "")
 	flags.BoolVarP(cmdFlags, &Opt.NoCleanup, "no-cleanup", "", Opt.NoCleanup, "Retain working files (useful for troubleshooting and testing).", "")
 	flags.BoolVarP(cmdFlags, &Opt.IgnoreListingChecksum, "ignore-listing-checksum", "", Opt.IgnoreListingChecksum, "Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)", "")
-	flags.BoolVarP(cmdFlags, &Opt.Resilient, "resilient", "", Opt.Resilient, "Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!", "")
+	flags.BoolVarP(cmdFlags, &Opt.Resilient, "resilient", "", Opt.Resilient, "Allow future runs to retry after certain less-serious errors, instead of requiring --resync.", "")
 	flags.BoolVarP(cmdFlags, &Opt.Recover, "recover", "", Opt.Recover, "Automatically recover from interruptions without requiring --resync.", "")
 	flags.StringVarP(cmdFlags, &Opt.CompareFlag, "compare", "", Opt.CompareFlag, "Comma-separated list of bisync-specific compare options ex. 'size,modtime,checksum' (default: 'size,modtime')", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.NoSlowHash, "no-slow-hash", "", Opt.Compare.NoSlowHash, "Ignore listing checksums only on backends where they are slow", "")
@@ -163,7 +163,6 @@ var commandDefinition = &cobra.Command{
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.58",
 		"groups":            "Filter,Copy,Important",
-		"status":            "Beta",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		// NOTE: avoid putting too much handling here, as it won't apply to the rc.
@@ -191,7 +190,6 @@ var commandDefinition = &cobra.Command{
 			}
 		}
 
-		fs.Logf(nil, "bisync is IN BETA. Don't use in production!")
 		cmd.Run(false, true, command, func() error {
 			err := Bisync(ctx, fs1, fs2, &opt)
 			if err == ErrBisyncAborted {
