@@ -104,6 +104,7 @@ Flags for general networking and HTTP stuff.
       --ca-cert stringArray                CA certificate used to verify servers
       --client-cert string                 Client SSL certificate (PEM) for mutual TLS auth
       --client-key string                  Client SSL private key (PEM) for mutual TLS auth
+      --client-pass string                 Password for client SSL private key (PEM) for mutual TLS auth (obscured) (obscured)
       --contimeout Duration                Connect timeout (default 1m0s)
       --disable-http-keep-alives           Disable HTTP keep-alives and use each connection once
       --disable-http2                      Disable HTTP/2 in the global transport
@@ -112,6 +113,7 @@ Flags for general networking and HTTP stuff.
       --header stringArray                 Set HTTP header for all transactions
       --header-download stringArray        Set HTTP header for download transactions
       --header-upload stringArray          Set HTTP header for upload transactions
+      --http-proxy string                  HTTP proxy URL
       --max-connections int                Maximum number of simultaneous backend API connections, 0 for unlimited
       --no-check-certificate               Do not verify the server SSL certificate (insecure)
       --no-gzip-encoding                   Don't set Accept-Encoding: gzip
@@ -119,7 +121,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.70.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.71.0")
 ```
 
 
@@ -226,6 +228,10 @@ Flags for logging and statistics.
 
 ```
       --log-file string                     Log everything to this file
+      --log-file-compress                   If set, compress rotated log files using gzip
+      --log-file-max-age Duration           Maximum duration to retain old log files (eg "7d") (default 0s)
+      --log-file-max-backups int            Maximum number of old log files to retain
+      --log-file-max-size SizeSuffix        Maximum size of the log file before it's rotated (eg "10M") (default off)
       --log-format Bits                     Comma separated list of log format options (default date,time)
       --log-level LogLevel                  Log level DEBUG|INFO|NOTICE|ERROR (default NOTICE)
       --log-systemd                         Activate systemd integration for the logger
@@ -589,6 +595,7 @@ Backend-only flags (these can be set in the config file also).
       --filescom-password string                            The password used to authenticate with Files.com (obscured)
       --filescom-site string                                Your site subdomain (e.g. mysite) or custom domain (e.g. myfiles.customdomain.com)
       --filescom-username string                            The username used to authenticate with Files.com
+      --ftp-allow-insecure-tls-ciphers                      Allow insecure TLS ciphers
       --ftp-ask-password                                    Allow asking for FTP password when needed
       --ftp-close-timeout Duration                          Maximum time to wait for a response to close (default 1m0s)
       --ftp-concurrency int                                 Maximum number of FTP simultaneous connections, 0 for unlimited
@@ -601,6 +608,7 @@ Backend-only flags (these can be set in the config file also).
       --ftp-explicit-tls                                    Use Explicit FTPS (FTP over TLS)
       --ftp-force-list-hidden                               Use LIST -a to force listing of hidden files and folders. This will disable the use of MLSD
       --ftp-host string                                     FTP host to connect to
+      --ftp-http-proxy string                               URL for HTTP CONNECT proxy
       --ftp-idle-timeout Duration                           Max time before closing idle connections (default 1m0s)
       --ftp-no-check-certificate                            Do not verify the TLS certificate of the server
       --ftp-no-check-upload                                 Don't check the upload is OK
@@ -740,6 +748,7 @@ Backend-only flags (these can be set in the config file also).
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
       --local-description string                            Description of the remote
       --local-encoding Encoding                             The encoding for the backend (default Slash,Dot)
+      --local-hashes CommaSepList                           Comma separated list of supported checksum types
       --local-links                                         Translate symlinks to/from regular files with a '.rclonelink' extension for the local backend
       --local-no-check-updated                              Don't check to see if the files change during upload
       --local-no-clone                                      Disable reflink cloning for server-side copies
@@ -859,7 +868,8 @@ Backend-only flags (these can be set in the config file also).
       --pikpak-pass string                                  Pikpak password (obscured)
       --pikpak-root-folder-id string                        ID of the root folder
       --pikpak-trashed-only                                 Only show files that are in the trash
-      --pikpak-upload-concurrency int                       Concurrency for multipart uploads (default 5)
+      --pikpak-upload-concurrency int                       Concurrency for multipart uploads (default 4)
+      --pikpak-upload-cutoff SizeSuffix                     Cutoff for switching to chunked upload (default 200Mi)
       --pikpak-use-trash                                    Send files to the trash instead of deleting permanently (default true)
       --pikpak-user string                                  Pikpak username
       --pikpak-user-agent string                            HTTP user agent for pikpak (default "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0")
@@ -963,6 +973,7 @@ Backend-only flags (these can be set in the config file also).
       --s3-use-accelerate-endpoint                          If true use the AWS S3 accelerated endpoint
       --s3-use-accept-encoding-gzip Accept-Encoding: gzip   Whether to send Accept-Encoding: gzip header (default unset)
       --s3-use-already-exists Tristate                      Set if rclone should report BucketAlreadyExists errors on bucket creation (default unset)
+      --s3-use-arn-region                                   If true, enables arn region support for the service
       --s3-use-dual-stack                                   If true use AWS S3 dual-stack endpoint (IPv6 support)
       --s3-use-multipart-etag Tristate                      Whether to use ETag in multipart uploads for verification (default unset)
       --s3-use-multipart-uploads Tristate                   Set if rclone should use multipart uploads (default unset)
@@ -976,22 +987,25 @@ Backend-only flags (these can be set in the config file also).
       --seafile-2fa                                         Two-factor authentication ('true' if the account has 2FA enabled)
       --seafile-create-library                              Should rclone create a library if it doesn't exist
       --seafile-description string                          Description of the remote
-      --seafile-encoding Encoding                           The encoding for the backend (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
+      --seafile-encoding Encoding                           The encoding for the backend (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8,Dot)
       --seafile-library string                              Name of the library
       --seafile-library-key string                          Library password (for encrypted libraries only) (obscured)
       --seafile-pass string                                 Password (obscured)
       --seafile-url string                                  URL of seafile host to connect to
       --seafile-user string                                 User name (usually email address)
       --sftp-ask-password                                   Allow asking for SFTP password when needed
+      --sftp-blake3sum-command string                       The command used to read BLAKE3 hashes
       --sftp-chunk-size SizeSuffix                          Upload and download chunk size (default 32Ki)
       --sftp-ciphers SpaceSepList                           Space separated list of ciphers to be used for session encryption, ordered by preference
       --sftp-concurrency int                                The maximum number of outstanding requests for one file (default 64)
       --sftp-connections int                                Maximum number of SFTP simultaneous connections, 0 for unlimited
       --sftp-copy-is-hardlink                               Set to enable server side copies using hardlinks
+      --sftp-crc32sum-command string                        The command used to read CRC-32 hashes
       --sftp-description string                             Description of the remote
       --sftp-disable-concurrent-reads                       If set don't use concurrent reads
       --sftp-disable-concurrent-writes                      If set don't use concurrent writes
       --sftp-disable-hashcheck                              Disable the execution of SSH commands to determine if remote file hashing is available
+      --sftp-hashes CommaSepList                            Comma separated list of supported checksum types
       --sftp-host string                                    SSH host to connect to
       --sftp-host-key-algorithms SpaceSepList               Space separated list of host key algorithms, ordered by preference
       --sftp-http-proxy string                              URL for HTTP CONNECT proxy
@@ -1003,7 +1017,7 @@ Backend-only flags (these can be set in the config file also).
       --sftp-key-use-agent                                  When set forces the usage of the ssh-agent
       --sftp-known-hosts-file string                        Optional path to known_hosts file
       --sftp-macs SpaceSepList                              Space separated list of MACs (message authentication code) algorithms, ordered by preference
-      --sftp-md5sum-command string                          The command used to read md5 hashes
+      --sftp-md5sum-command string                          The command used to read MD5 hashes
       --sftp-pass string                                    SSH password, leave blank to use ssh-agent (obscured)
       --sftp-path-override string                           Override path used by SSH shell commands
       --sftp-port int                                       SSH port number (default 22)
@@ -1012,7 +1026,8 @@ Backend-only flags (these can be set in the config file also).
       --sftp-server-command string                          Specifies the path or command to run a sftp server on the remote host
       --sftp-set-env SpaceSepList                           Environment variables to pass to sftp and commands
       --sftp-set-modtime                                    Set the modified time on the remote if set (default true)
-      --sftp-sha1sum-command string                         The command used to read sha1 hashes
+      --sftp-sha1sum-command string                         The command used to read SHA-1 hashes
+      --sftp-sha256sum-command string                       The command used to read SHA-256 hashes
       --sftp-shell-type string                              The type of SSH shell on remote server, if any
       --sftp-skip-links                                     Set to skip any symlinks and any other non regular files
       --sftp-socks-proxy string                             Socks 5 proxy host
@@ -1021,6 +1036,8 @@ Backend-only flags (these can be set in the config file also).
       --sftp-use-fstat                                      If set use fstat instead of stat
       --sftp-use-insecure-cipher                            Enable the use of insecure ciphers and key exchange methods
       --sftp-user string                                    SSH username (default "$USER")
+      --sftp-xxh128sum-command string                       The command used to read XXH128 hashes
+      --sftp-xxh3sum-command string                         The command used to read XXH3 hashes
       --sharefile-auth-url string                           Auth server URL
       --sharefile-chunk-size SizeSuffix                     Upload chunk size (default 64Mi)
       --sharefile-client-credentials                        Use client credentials OAuth flow
@@ -1046,6 +1063,7 @@ Backend-only flags (these can be set in the config file also).
       --smb-hide-special-share                              Hide special shares (e.g. print$) which users aren't supposed to access (default true)
       --smb-host string                                     SMB server hostname to connect to
       --smb-idle-timeout Duration                           Max time before closing idle connections (default 1m0s)
+      --smb-kerberos-ccache string                          Path to the Kerberos credential cache (krb5cc)
       --smb-pass string                                     SMB password (obscured)
       --smb-port int                                        SMB port number (default 445)
       --smb-spn string                                      Service principal name

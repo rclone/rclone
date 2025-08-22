@@ -419,6 +419,22 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --ftp-allow-insecure-tls-ciphers
+
+Allow insecure TLS ciphers
+
+Setting this flag will allow the usage of the following TLS ciphers in addition to the secure defaults:
+
+- TLS_RSA_WITH_AES_128_GCM_SHA256
+
+
+Properties:
+
+- Config:      allow_insecure_tls_ciphers
+- Env Var:     RCLONE_FTP_ALLOW_INSECURE_TLS_CIPHERS
+- Type:        bool
+- Default:     false
+
 #### --ftp-shut-timeout
 
 Maximum time to wait for data connection closing status.
@@ -459,6 +475,20 @@ Properties:
 
 - Config:      socks_proxy
 - Env Var:     RCLONE_FTP_SOCKS_PROXY
+- Type:        string
+- Required:    false
+
+#### --ftp-http-proxy
+
+URL for HTTP CONNECT proxy
+
+Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+
+
+Properties:
+
+- Config:      http_proxy
+- Env Var:     RCLONE_FTP_HTTP_PROXY
 - Type:        string
 - Required:    false
 
