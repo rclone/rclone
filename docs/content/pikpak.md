@@ -201,6 +201,20 @@ Properties:
 - Type:        SizeSuffix
 - Default:     10Mi
 
+#### --pikpak-upload-cutoff
+
+Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+The minimum is 0 and the maximum is 5 GiB.
+
+Properties:
+
+- Config:      upload_cutoff
+- Env Var:     RCLONE_PIKPAK_UPLOAD_CUTOFF
+- Type:        SizeSuffix
+- Default:     200Mi
+
 #### --pikpak-chunk-size
 
 Chunk size for multipart uploads.
@@ -247,7 +261,7 @@ Properties:
 - Config:      upload_concurrency
 - Env Var:     RCLONE_PIKPAK_UPLOAD_CONCURRENCY
 - Type:        int
-- Default:     5
+- Default:     4
 
 #### --pikpak-encoding
 

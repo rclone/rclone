@@ -630,6 +630,17 @@ Properties:
     - "ctime"
         - The last status change time.
 
+#### --local-hashes
+
+Comma separated list of supported checksum types.
+
+Properties:
+
+- Config:      hashes
+- Env Var:     RCLONE_LOCAL_HASHES
+- Type:        CommaSepList
+- Default:     
+
 #### --local-encoding
 
 The encoding for the backend.

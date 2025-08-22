@@ -725,9 +725,20 @@ Properties:
     - "cmd"
         - Windows Command Prompt
 
+#### --sftp-hashes
+
+Comma separated list of supported checksum types.
+
+Properties:
+
+- Config:      hashes
+- Env Var:     RCLONE_SFTP_HASHES
+- Type:        CommaSepList
+- Default:     
+
 #### --sftp-md5sum-command
 
-The command used to read md5 hashes.
+The command used to read MD5 hashes.
 
 Leave blank for autodetect.
 
@@ -740,7 +751,7 @@ Properties:
 
 #### --sftp-sha1sum-command
 
-The command used to read sha1 hashes.
+The command used to read SHA-1 hashes.
 
 Leave blank for autodetect.
 
@@ -748,6 +759,71 @@ Properties:
 
 - Config:      sha1sum_command
 - Env Var:     RCLONE_SFTP_SHA1SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-crc32sum-command
+
+The command used to read CRC-32 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      crc32sum_command
+- Env Var:     RCLONE_SFTP_CRC32SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-sha256sum-command
+
+The command used to read SHA-256 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      sha256sum_command
+- Env Var:     RCLONE_SFTP_SHA256SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-blake3sum-command
+
+The command used to read BLAKE3 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      blake3sum_command
+- Env Var:     RCLONE_SFTP_BLAKE3SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-xxh3sum-command
+
+The command used to read XXH3 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      xxh3sum_command
+- Env Var:     RCLONE_SFTP_XXH3SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-xxh128sum-command
+
+The command used to read XXH128 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      xxh128sum_command
+- Env Var:     RCLONE_SFTP_XXH128SUM_COMMAND
 - Type:        string
 - Required:    false
 

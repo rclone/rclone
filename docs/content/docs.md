@@ -437,7 +437,7 @@ Do not use single character names on Windows as it creates ambiguity with Window
 drives' names, e.g.: remote called `C` is indistinguishable from `C` drive. Rclone
 will always assume that single letter name refers to a drive.
 
-## Adding global configuration to a remote
+## Adding global configuration to a remote {#globalconfig}
 
 It is possible to add global configuration to the remote configuration which
 will be applied just before the remote is created.
