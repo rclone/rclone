@@ -21,6 +21,7 @@ import (
 
 	"github.com/buengese/sgzip"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/klauspost/compress/zstd"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -46,6 +47,7 @@ const (
 	minCompressionRatio = 1.1
 
 	gzFileExt           = ".gz"
+	zstdFileExt         = ".zst"
 	metaFileExt         = ".json"
 	uncompressedFileExt = ".bin"
 )
@@ -54,6 +56,7 @@ const (
 const (
 	Uncompressed = 0
 	Gzip         = 2
+	Zstd         = 4
 )
 
 var nameRegexp = regexp.MustCompile(`^(.+?)\.([A-Za-z0-9-_]{11})$`)
@@ -65,6 +68,10 @@ func init() {
 		{ // Default compression mode options {
 			Value: "gzip",
 			Help:  "Standard gzip compression with fastest parameters.",
+		},
+		{
+			Value: "zstd",
+			Help:  "Zstandard compression — fast modern algorithm offering adjustable speed-to-compression tradeoffs.",
 		},
 	}
 
@@ -87,17 +94,23 @@ func init() {
 			Examples: compressionModeOptions,
 		}, {
 			Name: "level",
-			Help: `GZIP compression level (-2 to 9).
-
-Generally -1 (default, equivalent to 5) is recommended.
-Levels 1 to 9 increase compression at the cost of speed. Going past 6 
-generally offers very little return.
-
-Level -2 uses Huffman encoding only. Only use if you know what you
-are doing.
-Level 0 turns off compression.`,
-			Default:  sgzip.DefaultCompression,
-			Advanced: true,
+			Help: `GZIP (levels -2 to 9):
+- -2 — Huffman encoding only. Only use if you know what you're doing.
+- -1 (default) — recommended; equivalent to level 5.
+- 0 — turns off compression.
+- 1–9 — increase compression at the cost of speed. Going past 6 generally offers very little return.
+ 
+ZSTD (levels 0 to 4):
+- 0 — turns off compression entirely.
+- 1 — fastest compression with the lowest ratio.
+- 2 (default) — good balance of speed and compression.
+- 3 — better compression, but uses about 2–3x more CPU than the default.
+- 4 — best possible compression ratio (highest CPU cost).
+ 
+Notes:
+- Choose GZIP for wide compatibility; ZSTD for better speed/ratio tradeoffs.
+- Negative gzip levels: -2 = Huffman-only, -1 = default (≈ level 5).`,
+			Required: true,
 		}, {
 			Name: "ram_cache_limit",
 			Help: `Some remotes don't allow the upload of files with unknown size.
@@ -219,6 +232,8 @@ func compressionModeFromName(name string) int {
 	switch name {
 	case "gzip":
 		return Gzip
+	case "zstd":
+		return Zstd
 	default:
 		return Uncompressed
 	}
@@ -261,7 +276,16 @@ func processFileName(compressedFileName string) (origFileName string, extension 
 	if err != nil {
 		return "", "", 0, errors.New("could not decode size")
 	}
-	return match[1], gzFileExt, size, nil
+	var ext string
+	switch compressionModeFromName(compressedFileName[extensionPos+1:]) {
+	case Gzip:
+		ext = gzFileExt
+	case Zstd:
+		ext = zstdFileExt
+	default:
+		ext = ""
+	}
+	return match[1], ext, size, nil
 }
 
 // Generates the file name for a metadata file
@@ -286,11 +310,15 @@ func unwrapMetadataFile(filename string) (string, bool) {
 
 // makeDataName generates the file name for a data file with specified compression mode
 func makeDataName(remote string, size int64, mode int) (newRemote string) {
-	if mode != Uncompressed {
+	switch mode {
+	case Gzip:
 		newRemote = remote + "." + int64ToBase64(size) + gzFileExt
-	} else {
+	case Zstd:
+		newRemote = remote + "." + int64ToBase64(size) + zstdFileExt
+	default:
 		newRemote = remote + uncompressedFileExt
 	}
+
 	return newRemote
 }
 
@@ -427,8 +455,23 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error decoding metadata: %w", err)
 	}
+	var size int64
+	switch meta.Mode {
+	case Gzip:
+		if meta.CompressionMetadataGzip == nil {
+			return nil, errors.New("missing gzip metadata")
+		}
+		size = meta.CompressionMetadataGzip.Size
+	case Zstd:
+		if meta.CompressionMetadataZstd == nil {
+			return nil, errors.New("missing zstd metadata")
+		}
+		size = meta.CompressionMetadataZstd.Size
+	default:
+		size = 0
+	}
 	// Create our Object
-	o, err := f.Fs.NewObject(ctx, makeDataName(remote, meta.CompressionMetadata.Size, meta.Mode))
+	o, err := f.Fs.NewObject(ctx, makeDataName(remote, size, meta.Mode))
 	if err != nil {
 		return nil, err
 	}
@@ -437,7 +480,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // checkCompressAndType checks if an object is compressible and determines it's mime type
 // returns a multireader with the bytes that were read to determine mime type
-func checkCompressAndType(in io.Reader) (newReader io.Reader, compressible bool, mimeType string, err error) {
+func checkCompressAndType(in io.Reader, compressionMode int) (newReader io.Reader, compressible bool, mimeType string, err error) {
 	in, wrap := accounting.UnWrap(in)
 	buf := make([]byte, heuristicBytes)
 	n, err := in.Read(buf)
@@ -446,7 +489,7 @@ func checkCompressAndType(in io.Reader) (newReader io.Reader, compressible bool,
 		return nil, false, "", err
 	}
 	mime := mimetype.Detect(buf)
-	compressible, err = isCompressible(bytes.NewReader(buf))
+	compressible, err = isCompressible(bytes.NewReader(buf), compressionMode)
 	if err != nil {
 		return nil, false, "", err
 	}
@@ -456,19 +499,38 @@ func checkCompressAndType(in io.Reader) (newReader io.Reader, compressible bool,
 
 // isCompressible checks the compression ratio of the provided data and returns true if the ratio exceeds
 // the configured threshold
-func isCompressible(r io.Reader) (bool, error) {
+func isCompressible(r io.Reader, compressionMode int) (bool, error) {
 	var b bytes.Buffer
-	w, err := sgzip.NewWriterLevel(&b, sgzip.DefaultCompression)
-	if err != nil {
-		return false, err
-	}
-	n, err := io.Copy(w, r)
-	if err != nil {
-		return false, err
-	}
-	err = w.Close()
-	if err != nil {
-		return false, err
+	var n int64
+	switch compressionMode {
+	case Gzip:
+		w, err := sgzip.NewWriterLevel(&b, sgzip.DefaultCompression)
+		if err != nil {
+			return false, err
+		}
+		n, err = io.Copy(w, r)
+		if err != nil {
+			return false, err
+		}
+		err = w.Close()
+		if err != nil {
+			return false, err
+		}
+	case Zstd:
+		w, err := NewWriterSzstd(&b, zstd.WithEncoderLevel(zstd.SpeedDefault))
+		if err != nil {
+			return false, err
+		}
+		n, err = io.Copy(w, r)
+		if err != nil {
+			return false, err
+		}
+		err = w.Close()
+		if err != nil {
+			return false, err
+		}
+	default:
+		return false, fmt.Errorf("unsupported compression mode %d", compressionMode)
 	}
 	ratio := float64(n) / float64(b.Len())
 	return ratio > minCompressionRatio, nil
@@ -494,9 +556,9 @@ func (f *Fs) verifyObjectHash(ctx context.Context, o fs.Object, hasher *hash.Mul
 
 type putFn func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error)
 
-type compressionResult struct {
+type compressionResult[T sgzip.GzipMetadata | SzstdMetadata] struct {
 	err  error
-	meta sgzip.GzipMetadata
+	meta T
 }
 
 // replicating some of operations.Rcat functionality because we want to support remotes without streaming
@@ -537,11 +599,11 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 		return nil, fmt.Errorf("failed to write temporary local file: %w", err)
 	}
 	if _, err = tempFile.Seek(0, 0); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to seek temporary local file: %w", err)
 	}
 	finfo, err := tempFile.Stat()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to stat temporary local file: %w", err)
 	}
 	return f.Fs.Put(ctx, tempFile, object.NewStaticObjectInfo(dstFileName, modTime, finfo.Size(), false, nil, f.Fs))
 }
@@ -557,86 +619,144 @@ func (f *Fs) putCompress(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 
 	// Compress the file
 	pipeReader, pipeWriter := io.Pipe()
-	results := make(chan compressionResult)
-	go func() {
-		gz, err := sgzip.NewWriterLevel(pipeWriter, f.opt.CompressionLevel)
-		if err != nil {
-			results <- compressionResult{err: err, meta: sgzip.GzipMetadata{}}
-			return
-		}
-		_, err = io.Copy(gz, in)
-		gzErr := gz.Close()
-		if gzErr != nil {
-			fs.Errorf(nil, "Failed to close compress: %v", gzErr)
-			if err == nil {
+
+	switch f.mode {
+	case Gzip:
+		resultsGzip := make(chan compressionResult[sgzip.GzipMetadata])
+		go func() {
+			gz, err := sgzip.NewWriterLevel(pipeWriter, f.opt.CompressionLevel)
+			if err != nil {
+				resultsGzip <- compressionResult[sgzip.GzipMetadata]{err: err, meta: sgzip.GzipMetadata{}}
+				close(resultsGzip)
+				return
+			}
+			_, err = io.Copy(gz, in)
+			gzErr := gz.Close()
+			if gzErr != nil && err == nil {
 				err = gzErr
 			}
-		}
-		closeErr := pipeWriter.Close()
-		if closeErr != nil {
-			fs.Errorf(nil, "Failed to close pipe: %v", closeErr)
-			if err == nil {
+			closeErr := pipeWriter.Close()
+			if closeErr != nil && err == nil {
 				err = closeErr
 			}
-		}
-		results <- compressionResult{err: err, meta: gz.MetaData()}
-	}()
-	wrappedIn := wrap(bufio.NewReaderSize(pipeReader, bufferSize)) // Probably no longer needed as sgzip has it's own buffering
+			resultsGzip <- compressionResult[sgzip.GzipMetadata]{err: err, meta: gz.MetaData()}
+			close(resultsGzip)
+		}()
 
-	// Find a hash the destination supports to compute a hash of
-	// the compressed data.
-	ht := f.Fs.Hashes().GetOne()
-	var hasher *hash.MultiHasher
-	var err error
-	if ht != hash.None {
-		// unwrap the accounting again
-		wrappedIn, wrap = accounting.UnWrap(wrappedIn)
-		hasher, err = hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+		wrappedIn := wrap(bufio.NewReaderSize(pipeReader, bufferSize)) // Probably no longer needed as sgzip has it's own buffering
+
+		// Find a hash the destination supports to compute a hash of
+		// the compressed data.
+		ht := f.Fs.Hashes().GetOne()
+		var hasher *hash.MultiHasher
+		var err error
+		if ht != hash.None {
+			// unwrap the accounting again
+			wrappedIn, wrap = accounting.UnWrap(wrappedIn)
+			hasher, err = hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+			if err != nil {
+				return nil, nil, err
+			}
+			// add the hasher and re-wrap the accounting
+			wrappedIn = io.TeeReader(wrappedIn, hasher)
+			wrappedIn = wrap(wrappedIn)
+		}
+
+		// Transfer the data
+		o, err := f.rcat(ctx, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx), options)
+		if err != nil {
+			if o != nil {
+				if removeErr := o.Remove(ctx); removeErr != nil {
+					fs.Errorf(o, "Failed to remove partially transferred object: %v", removeErr)
+				}
+			}
+			return nil, nil, err
+		}
+		// Check whether we got an error during compression
+		result := <-resultsGzip
+		if result.err != nil {
+			if o != nil {
+				if removeErr := o.Remove(ctx); removeErr != nil {
+					fs.Errorf(o, "Failed to remove partially compressed object: %v", removeErr)
+				}
+			}
+			return nil, nil, result.err
+		}
+
+		// Generate metadata
+		meta := newMetadataGzip(result.meta.Size, f.mode, result.meta, hex.EncodeToString(metaHasher.Sum(nil)), mimeType)
+
+		// Check the hashes of the compressed data if we were comparing them
+		if ht != hash.None && hasher != nil {
+			err = f.verifyObjectHash(ctx, o, hasher, ht)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+		return o, meta, nil
+
+	case Zstd:
+		resultsZstd := make(chan compressionResult[SzstdMetadata])
+		go func() {
+			writer, err := NewWriterSzstd(pipeWriter, zstd.WithEncoderLevel(zstd.EncoderLevel(f.opt.CompressionLevel)))
+			if err != nil {
+				resultsZstd <- compressionResult[SzstdMetadata]{err: err}
+				close(resultsZstd)
+				return
+			}
+			_, err = io.Copy(writer, in)
+			if wErr := writer.Close(); wErr != nil && err == nil {
+				err = wErr
+			}
+			if cErr := pipeWriter.Close(); cErr != nil && err == nil {
+				err = cErr
+			}
+
+			resultsZstd <- compressionResult[SzstdMetadata]{err: err, meta: writer.GetMetadata()}
+			close(resultsZstd)
+		}()
+
+		wrappedIn := wrap(bufio.NewReaderSize(pipeReader, bufferSize))
+
+		ht := f.Fs.Hashes().GetOne()
+		var hasher *hash.MultiHasher
+		var err error
+		if ht != hash.None {
+			wrappedIn, wrap = accounting.UnWrap(wrappedIn)
+			hasher, err = hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+			if err != nil {
+				return nil, nil, err
+			}
+			wrappedIn = io.TeeReader(wrappedIn, hasher)
+			wrappedIn = wrap(wrappedIn)
+		}
+
+		o, err := f.rcat(ctx, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx), options)
 		if err != nil {
 			return nil, nil, err
 		}
-		// add the hasher and re-wrap the accounting
-		wrappedIn = io.TeeReader(wrappedIn, hasher)
-		wrappedIn = wrap(wrappedIn)
-	}
 
-	// Transfer the data
-	o, err := f.rcat(ctx, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx), options)
-	//o, err := operations.Rcat(ctx, f.Fs, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx))
-	if err != nil {
-		if o != nil {
-			removeErr := o.Remove(ctx)
-			if removeErr != nil {
-				fs.Errorf(o, "Failed to remove partially transferred object: %v", err)
+		result := <-resultsZstd
+		if result.err != nil {
+			if o != nil {
+				_ = o.Remove(ctx)
+			}
+			return nil, nil, result.err
+		}
+
+		// Build metadata using uncompressed size for filename
+		meta := newMetadataZstd(src.Size(), f.mode, result.meta, hex.EncodeToString(metaHasher.Sum(nil)), mimeType)
+		if ht != hash.None && hasher != nil {
+			err = f.verifyObjectHash(ctx, o, hasher, ht)
+			if err != nil {
+				return nil, nil, err
 			}
 		}
-		return nil, nil, err
-	}
-	// Check whether we got an error during compression
-	result := <-results
-	err = result.err
-	if err != nil {
-		if o != nil {
-			removeErr := o.Remove(ctx)
-			if removeErr != nil {
-				fs.Errorf(o, "Failed to remove partially compressed object: %v", err)
-			}
-		}
-		return nil, nil, err
-	}
+		return o, meta, nil
 
-	// Generate metadata
-	meta := newMetadata(result.meta.Size, f.mode, result.meta, hex.EncodeToString(metaHasher.Sum(nil)), mimeType)
-
-	// Check the hashes of the compressed data if we were comparing them
-	if ht != hash.None && hasher != nil {
-		err = f.verifyObjectHash(ctx, o, hasher, ht)
-		if err != nil {
-			return nil, nil, err
-		}
+	default:
+		return nil, nil, fmt.Errorf("unsupported compression mode %d", f.mode)
 	}
-
-	return o, meta, nil
 }
 
 // Put an uncompressed version of a file. Returns a wrappable object and metadata.
@@ -680,7 +800,15 @@ func (f *Fs) putUncompress(ctx context.Context, in io.Reader, src fs.ObjectInfo,
 	if err != nil {
 		return nil, nil, err
 	}
-	return o, newMetadata(o.Size(), Uncompressed, sgzip.GzipMetadata{}, hex.EncodeToString(sum), mimeType), nil
+
+	switch f.mode {
+	case Gzip:
+		return o, newMetadataGzip(o.Size(), Uncompressed, sgzip.GzipMetadata{}, hex.EncodeToString(sum), mimeType), nil
+	case Zstd:
+		return o, newMetadataZstd(o.Size(), Uncompressed, SzstdMetadata{}, hex.EncodeToString(sum), mimeType), nil
+	default:
+		return nil, nil, fmt.Errorf("unsupported compression mode %d", f.mode)
+	}
 }
 
 // This function will write a metadata struct to a metadata Object for an src. Returns a wrappable metadata object.
@@ -751,7 +879,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	o, err := f.NewObject(ctx, src.Remote())
 	if err == fs.ErrorObjectNotFound {
 		// Get our file compressibility
-		in, compressible, mimeType, err := checkCompressAndType(in)
+		in, compressible, mimeType, err := checkCompressAndType(in, f.mode)
 		if err != nil {
 			return nil, err
 		}
@@ -771,7 +899,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	}
 	found := err == nil
 
-	in, compressible, mimeType, err := checkCompressAndType(in)
+	in, compressible, mimeType, err := checkCompressAndType(in, f.mode)
 	if err != nil {
 		return nil, err
 	}
@@ -1090,11 +1218,12 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, duration fs.Duration
 
 // ObjectMetadata describes the metadata for an Object.
 type ObjectMetadata struct {
-	Mode                int    // Compression mode of the file.
-	Size                int64  // Size of the object.
-	MD5                 string // MD5 hash of the file.
-	MimeType            string // Mime type of the file
-	CompressionMetadata sgzip.GzipMetadata
+	Mode                    int                 // Compression mode of the file.
+	Size                    int64               // Size of the object.
+	MD5                     string              // MD5 hash of the file.
+	MimeType                string              // Mime type of the file
+	CompressionMetadataGzip *sgzip.GzipMetadata // Metadata for Gzip compression
+	CompressionMetadataZstd *SzstdMetadata      // Metadata for Zstd compression
 }
 
 // Object with external metadata
@@ -1107,12 +1236,25 @@ type Object struct {
 	meta      *ObjectMetadata // Metadata struct for this object (nil if not loaded)
 }
 
-// This function generates a metadata object
-func newMetadata(size int64, mode int, cmeta sgzip.GzipMetadata, md5 string, mimeType string) *ObjectMetadata {
+// This function generates a metadata object for Gzip
+func newMetadataGzip(size int64, mode int, cmeta sgzip.GzipMetadata, md5 string, mimeType string) *ObjectMetadata {
 	meta := new(ObjectMetadata)
 	meta.Size = size
 	meta.Mode = mode
-	meta.CompressionMetadata = cmeta
+	meta.CompressionMetadataGzip = &cmeta
+	meta.CompressionMetadataZstd = nil
+	meta.MD5 = md5
+	meta.MimeType = mimeType
+	return meta
+}
+
+// This function generates a metadata object for Zstd
+func newMetadataZstd(size int64, mode int, cmeta SzstdMetadata, md5 string, mimeType string) *ObjectMetadata {
+	meta := new(ObjectMetadata)
+	meta.Size = size
+	meta.Mode = mode
+	meta.CompressionMetadataGzip = nil
+	meta.CompressionMetadataZstd = &cmeta
 	meta.MD5 = md5
 	meta.MimeType = mimeType
 	return meta
@@ -1165,7 +1307,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return o.mo, o.mo.Update(ctx, in, src, options...)
 	}
 
-	in, compressible, mimeType, err := checkCompressAndType(in)
+	in, compressible, mimeType, err := checkCompressAndType(in, o.meta.Mode)
 	if err != nil {
 		return err
 	}
@@ -1381,7 +1523,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		return o.Object.Open(ctx, options...)
 	}
 	// Get offset and limit from OpenOptions, pass the rest to the underlying remote
-	var openOptions = []fs.OpenOption{&fs.SeekOption{Offset: 0}}
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
@@ -1389,21 +1530,35 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			offset = x.Offset
 		case *fs.RangeOption:
 			offset, limit = x.Decode(o.Size())
-		default:
-			openOptions = append(openOptions, option)
 		}
 	}
 	// Get a chunkedreader for the wrapped object
 	chunkedReader := chunkedreader.New(ctx, o.Object, initialChunkSize, maxChunkSize, chunkStreams)
 	// Get file handle
 	var file io.Reader
-	if offset != 0 {
-		file, err = sgzip.NewReaderAt(chunkedReader, &o.meta.CompressionMetadata, offset)
-	} else {
-		file, err = sgzip.NewReader(chunkedReader)
-	}
-	if err != nil {
-		return nil, err
+	var retCloser io.Closer = chunkedReader
+
+	switch o.meta.Mode {
+	case Uncompressed:
+		return o.Object.Open(ctx, options...)
+	case Gzip:
+		if offset != 0 {
+			file, err = sgzip.NewReaderAt(chunkedReader, o.meta.CompressionMetadataGzip, offset)
+		} else {
+			file, err = sgzip.NewReader(chunkedReader)
+		}
+		if err != nil {
+			return nil, err
+		}
+	case Zstd:
+		if offset != 0 {
+			file, err = NewReaderAtSzstd(chunkedReader, o.meta.CompressionMetadataZstd, offset)
+		} else {
+			file, err = zstd.NewReader(chunkedReader)
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var fileReader io.Reader
@@ -1413,7 +1568,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		fileReader = file
 	}
 	// Return a ReadCloser
-	return ReadCloserWrapper{Reader: fileReader, Closer: chunkedReader}, nil
+	return ReadCloserWrapper{Reader: fileReader, Closer: retCloser}, nil
 }
 
 // ObjectInfo describes a wrapped fs.ObjectInfo for being the source
