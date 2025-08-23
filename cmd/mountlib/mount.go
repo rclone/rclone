@@ -396,7 +396,7 @@ func (m *MountPoint) Wait() error {
 			if err := m.Unmount(); err != nil {
 				fs.Errorf(m.MountPoint, "Failed to unmount: %v", err)
 			} else {
-				fs.Errorf(m.MountPoint, "Unmounted rclone mount")
+				fs.Logf(m.MountPoint, "Unmounted rclone mount")
 			}
 		})
 	}
