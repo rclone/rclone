@@ -19,11 +19,13 @@ giving the password a nice name like `rclone` and clicking on generate.
 
 Here is an example of how to make a remote called `koofr`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -89,15 +91,21 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level of your Koofr
 
-    rclone lsd koofr:
+```sh
+rclone lsd koofr:
+```
 
 List all the files in your Koofr
 
-    rclone ls koofr:
+```sh
+rclone ls koofr:
+```
 
 To copy a local directory to an Koofr directory called backup
 
-    rclone copy /home/source koofr:backup
+```sh
+rclone copy /home/source koofr:backup
+```
 
 ### Restricted filename characters
 
@@ -245,11 +253,13 @@ provides a Koofr API.
 
 Here is an example of how to make a remote called `ds`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -312,11 +322,13 @@ You may also want to use another, public or private storage provider that runs a
 
 Here is an example of how to make a remote called `other`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
