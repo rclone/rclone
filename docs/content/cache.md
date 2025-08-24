@@ -31,11 +31,13 @@ with `cache`.
 
 Here is an example of how to make a remote called `test-cache`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 r) Rename remote
@@ -115,19 +117,25 @@ You can then use it like this,
 
 List directories in top level of your drive
 
-    rclone lsd test-cache:
+```sh
+rclone lsd test-cache:
+```
 
 List all the files in your drive
 
-    rclone ls test-cache:
+```sh
+rclone ls test-cache:
+```
 
 To start a cached mount
 
-    rclone mount --allow-other test-cache: /var/tmp/test-cache
+```sh
+rclone mount --allow-other test-cache: /var/tmp/test-cache
+```
 
-### Write Features ###
+### Write Features
 
-### Offline uploading ###
+### Offline uploading
 
 In an effort to make writing through cache more reliable, the backend 
 now supports this feature which can be activated by specifying a
@@ -152,7 +160,7 @@ Uploads will be stored in a queue and be processed based on the order they were 
 The queue and the temporary storage is persistent across restarts but
 can be cleared on startup with the `--cache-db-purge` flag.
 
-### Write Support ###
+### Write Support
 
 Writes are supported through `cache`.
 One caveat is that a mounted cache remote does not add any retry or fallback
@@ -163,9 +171,9 @@ One special case is covered with `cache-writes` which will cache the file
 data at the same time as the upload when it is enabled making it available
 from the cache store immediately once the upload is finished.
 
-### Read Features ###
+### Read Features
 
-#### Multiple connections ####
+#### Multiple connections
 
 To counter the high latency between a local PC where rclone is running
 and cloud providers, the cache remote can split multiple requests to the
@@ -177,7 +185,7 @@ This is similar to buffering when media files are played online. Rclone
 will stay around the current marker but always try its best to stay ahead
 and prepare the data before.
 
-#### Plex Integration ####
+#### Plex Integration
 
 There is a direct integration with Plex which allows cache to detect during reading
 if the file is in playback or not. This helps cache to adapt how it queries
@@ -196,9 +204,11 @@ How to enable? Run `rclone config` and add all the Plex options (endpoint, usern
 and password) in your remote and it will be automatically enabled.
 
 Affected settings:
-- `cache-workers`: _Configured value_ during confirmed playback or _1_ all the other times
 
-##### Certificate Validation #####
+- `cache-workers`: *Configured value* during confirmed playback or *1* all the
+  other times
+
+##### Certificate Validation
 
 When the Plex server is configured to only accept secure connections, it is
 possible to use `.plex.direct` URLs to ensure certificate validation succeeds.
@@ -213,60 +223,63 @@ have been replaced with dashes, e.g. `127.0.0.1` becomes `127-0-0-1`.
 
 To get the `server-hash` part, the easiest way is to visit
 
-https://plex.tv/api/resources?includeHttps=1&X-Plex-Token=your-plex-token
+<https://plex.tv/api/resources?includeHttps=1&X-Plex-Token=your-plex-token>
 
 This page will list all the available Plex servers for your account
 with at least one `.plex.direct` link for each. Copy one URL and replace
 the IP address with the desired address. This can be used as the
 `plex_url` value.
 
-### Known issues ###
+### Known issues
 
-#### Mount and --dir-cache-time ####
+#### Mount and --dir-cache-time
 
---dir-cache-time controls the first layer of directory caching which works at the mount layer.
-Being an independent caching mechanism from the `cache` backend, it will manage its own entries
-based on the configured time.
+--dir-cache-time controls the first layer of directory caching which works at
+the mount layer. Being an independent caching mechanism from the `cache` backend,
+it will manage its own entries based on the configured time.
 
-To avoid getting in a scenario where dir cache has obsolete data and cache would have the correct
-one, try to set `--dir-cache-time` to a lower time than `--cache-info-age`. Default values are
-already configured in this way. 
+To avoid getting in a scenario where dir cache has obsolete data and cache would
+have the correct one, try to set `--dir-cache-time` to a lower time than
+`--cache-info-age`. Default values are already configured in this way.
 
-#### Windows support - Experimental ####
+#### Windows support - Experimental
 
-There are a couple of issues with Windows `mount` functionality that still require some investigations.
-It should be considered as experimental thus far as fixes come in for this OS.
+There are a couple of issues with Windows `mount` functionality that still
+require some investigations. It should be considered as experimental thus far
+as fixes come in for this OS.
 
 Most of the issues seem to be related to the difference between filesystems
 on Linux flavors and Windows as cache is heavily dependent on them.
 
 Any reports or feedback on how cache behaves on this OS is greatly appreciated.
- 
-- https://github.com/rclone/rclone/issues/1935
-- https://github.com/rclone/rclone/issues/1907
-- https://github.com/rclone/rclone/issues/1834 
 
-#### Risk of throttling ####
+- [Issue #1935](https://github.com/rclone/rclone/issues/1935)
+- [Issue #1907](https://github.com/rclone/rclone/issues/1907)
+- [Issue #1834](https://github.com/rclone/rclone/issues/1834)
+
+#### Risk of throttling
 
 Future iterations of the cache backend will make use of the pooling functionality
 of the cloud provider to synchronize and at the same time make writing through it
-more tolerant to failures. 
+more tolerant to failures.
 
 There are a couple of enhancements in track to add these but in the meantime
 there is a valid concern that the expiring cache listings can lead to cloud provider
 throttles or bans due to repeated queries on it for very large mounts.
 
 Some recommendations:
+
 - don't use a very small interval for entry information (`--cache-info-age`)
-- while writes aren't yet optimised, you can still write through `cache` which gives you the advantage
-of adding the file in the cache at the same time if configured to do so.
+- while writes aren't yet optimised, you can still write through `cache` which
+  gives you the advantage of adding the file in the cache at the same time if
+  configured to do so.
 
 Future enhancements:
 
-- https://github.com/rclone/rclone/issues/1937
-- https://github.com/rclone/rclone/issues/1936 
+- [Issue #1937](https://github.com/rclone/rclone/issues/1937)
+- [Issue #1936](https://github.com/rclone/rclone/issues/1936)
 
-#### cache and crypt ####
+#### cache and crypt
 
 One common scenario is to keep your data encrypted in the cloud provider
 using the `crypt` remote. `crypt` uses a similar technique to wrap around
@@ -281,30 +294,36 @@ which makes it think we're downloading the full file instead of small chunks.
 Organizing the remotes in this order yields better results:
 {{<color green>}}**cloud remote** -> **cache** -> **crypt**{{</color>}}
 
-#### absolute remote paths ####
+#### absolute remote paths
 
-`cache` can not differentiate between relative and absolute paths for the wrapped remote.
-Any path given in the `remote` config setting and on the command line will be passed to
-the wrapped remote as is, but for storing the chunks on disk the path will be made
-relative by removing any leading `/` character.
+`cache` can not differentiate between relative and absolute paths for the wrapped
+remote. Any path given in the `remote` config setting and on the command line will
+be passed to the wrapped remote as is, but for storing the chunks on disk the path
+will be made relative by removing any leading `/` character.
 
-This behavior is irrelevant for most backend types, but there are backends where a leading `/`
-changes the effective directory, e.g. in the `sftp` backend paths starting with a `/` are
-relative to the root of the SSH server and paths without are relative to the user home directory.
-As a result `sftp:bin` and `sftp:/bin` will share the same cache folder, even if they represent
-a different directory on the SSH server.
+This behavior is irrelevant for most backend types, but there are backends where
+a leading `/` changes the effective directory, e.g. in the `sftp` backend paths
+starting with a `/` are relative to the root of the SSH server and paths without
+are relative to the user home directory. As a result `sftp:bin` and `sftp:/bin`
+will share the same cache folder, even if they represent a different directory
+on the SSH server.
 
-### Cache and Remote Control (--rc) ###
-Cache supports the new `--rc` mode in rclone and can be remote controlled through the following end points:
-By default, the listener is disabled if you do not add the flag.
+### Cache and Remote Control (--rc)
+
+Cache supports the new `--rc` mode in rclone and can be remote controlled
+through the following end points: By default, the listener is disabled if
+you do not add the flag.
 
 ### rc cache/expire
+
 Purge a remote from the cache backend. Supports either a directory or a file.
 It supports both encrypted and unencrypted file names if cache is wrapped by crypt.
 
 Params:
-  - **remote** = path to remote **(required)**
-  - **withData** = true/false to delete cached data (chunks) as well _(optional, false by default)_
+
+- **remote** = path to remote **(required)**
+- **withData** = true/false to delete cached data (chunks) as
+  well *(optional, false by default)*
 
 {{< rem autogenerated options start" - DO NOT EDIT - instead edit fs.RegInfo in backend/cache/cache.go then run make backenddocs" >}}
 ### Standard options

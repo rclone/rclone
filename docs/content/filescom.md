@@ -19,85 +19,97 @@ password. Alternatively, you can authenticate using an API Key from
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-    No remotes found, make a new one?
-    n) New remote
-    s) Set configuration password
-    q) Quit config
-    n/s/q> n
+```text
+No remotes found, make a new one?
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
 
-    Enter name for new remote.
-    name> remote
+Enter name for new remote.
+name> remote
 
-    Option Storage.
-    Type of storage to configure.
-    Choose a number from below, or type in your own value.
-    [snip]
-    XX / Files.com
-      \ "filescom"
-    [snip]
-    Storage> filescom
+Option Storage.
+Type of storage to configure.
+Choose a number from below, or type in your own value.
+[snip]
+XX / Files.com
+  \ "filescom"
+[snip]
+Storage> filescom
 
-    Option site.
-    Your site subdomain (e.g. mysite) or custom domain (e.g. myfiles.customdomain.com)
-    Enter a value. Press Enter to leave empty.
-    site> mysite
+Option site.
+Your site subdomain (e.g. mysite) or custom domain (e.g. myfiles.customdomain.com)
+Enter a value. Press Enter to leave empty.
+site> mysite
 
-    Option username.
-    The username used to authenticate with Files.com.
-    Enter a value. Press Enter to leave empty.
-    username> user
+Option username.
+The username used to authenticate with Files.com.
+Enter a value. Press Enter to leave empty.
+username> user
 
-    Option password.
-    The password used to authenticate with Files.com.
-    Choose an alternative below. Press Enter for the default (n).
-    y) Yes, type in my own password
-    g) Generate random password
-    n) No, leave this optional password blank (default)
-    y/g/n> y
-    Enter the password:
-    password:
-    Confirm the password:
-    password:
+Option password.
+The password used to authenticate with Files.com.
+Choose an alternative below. Press Enter for the default (n).
+y) Yes, type in my own password
+g) Generate random password
+n) No, leave this optional password blank (default)
+y/g/n> y
+Enter the password:
+password:
+Confirm the password:
+password:
 
-    Edit advanced config?
-    y) Yes
-    n) No (default)
-    y/n> n
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n> n
 
-    Configuration complete.
-    Options:
-    - type: filescom
-    - site: mysite
-    - username: user
-    - password: *** ENCRYPTED ***
-    Keep this "remote" remote?
-    y) Yes this is OK (default)
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
+Configuration complete.
+Options:
+- type: filescom
+- site: mysite
+- username: user
+- password: *** ENCRYPTED ***
+Keep this "remote" remote?
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+```
 
 Once configured you can use rclone.
 
 See all files in the top level:
 
-    rclone lsf remote:
+```sh
+rclone lsf remote:
+```
 
 Make a new directory in the root:
 
-    rclone mkdir remote:dir
+```sh
+rclone mkdir remote:dir
+```
 
 Recursively List the contents:
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-    rclone sync --interactive /home/local/directory remote:dir
+```sh
+rclone sync --interactive /home/local/directory remote:dir
+```
 
 ### Hashes
 

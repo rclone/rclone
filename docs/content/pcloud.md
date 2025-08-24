@@ -17,11 +17,13 @@ need to do in your browser.  `rclone config` walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -85,15 +87,21 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level of your pCloud
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your pCloud
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to a pCloud directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Modification times and hashes
 
@@ -125,10 +133,11 @@ be used to empty the trash.
 
 ### Emptying the trash
 
-Due to an API limitation, the `rclone cleanup` command will only work if you 
-set your username and password in the advanced options for this backend. 
+Due to an API limitation, the `rclone cleanup` command will only work if you
+set your username and password in the advanced options for this backend.
 Since we generally want to avoid storing user passwords in the rclone config
-file, we advise you to only set this up if you need the `rclone cleanup` command to work.
+file, we advise you to only set this up if you need the `rclone cleanup` command
+to work.
 
 ### Root folder ID
 

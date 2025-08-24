@@ -14,11 +14,13 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 n) New remote
 d) Delete remote
 q) Quit config
@@ -55,15 +57,21 @@ y/e/d> y
 
 List directories in top level of your OpenDrive
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your OpenDrive
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an OpenDrive directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Modification times and hashes
 
@@ -98,7 +106,6 @@ These only get replaced if they are the first or last character in the name:
 | LF        | 0x0A  | ␊           |
 | VT        | 0x0B  | ␋           |
 | CR        | 0x0D  | ␍           |
-
 
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be used in JSON strings.
