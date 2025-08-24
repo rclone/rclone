@@ -21,7 +21,8 @@ set a single username and password with the ` + "`--{{ .Prefix }}user` and `--{{
 
 Alternatively, you can have the reverse proxy manage authentication and use the
 username provided in the configured header with ` + "`--user-from-header`" + `  (e.g., ` + "`--{{ .Prefix }}--user-from-header=x-remote-user`" + `).
-Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration may lead to unauthorized access.
+Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration
+may lead to unauthorized access.
 
 If either of the above authentication methods is not configured and client
 certificates are required by the ` + "`--client-ca`" + ` flag passed to the server, the
@@ -33,9 +34,11 @@ authentication.  Bcrypt is recommended.
 
 To create an htpasswd file:
 
-    touch htpasswd
-    htpasswd -B htpasswd user
-    htpasswd -B htpasswd anotherUser
+` + "```sh" + `
+touch htpasswd
+htpasswd -B htpasswd user
+htpasswd -B htpasswd anotherUser
+` + "```" + `
 
 The password file can be updated while rclone is running.
 
