@@ -38,8 +38,7 @@ when there is data to read (if not, the hyphen will be treated literally,
 as a relative path).
 
 This command can also hash data received on STDIN, if not passing
-a remote:path.
-`,
+a remote:path.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.27",
 		"groups":            "Filter,Listing",

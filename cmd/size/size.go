@@ -41,8 +41,7 @@ Some backends do not always provide file sizes, see for example
 [Google Docs](/drive/#limitations-of-google-docs).
 Rclone will then show a notice in the log indicating how many such
 files were encountered, and count them in as empty files in the output
-of the size command.
-`,
+of the size command.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.23",
 		"groups":            "Filter,Listing",
