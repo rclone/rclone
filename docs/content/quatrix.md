@@ -12,20 +12,23 @@ Paths are specified as `remote:path`
 
 Paths may be as deep as required, e.g., `remote:directory/subdirectory`.
 
-The initial setup for Quatrix involves getting an API Key from Quatrix. You can get the API key in the user's profile at `https://<account>/profile/api-keys`
-or with the help of the API - https://docs.maytech.net/quatrix/quatrix-api/api-explorer#/API-Key/post_api_key_create.
+The initial setup for Quatrix involves getting an API Key from Quatrix. You can
+get the API key in the user's profile at `https://<account>/profile/api-keys`
+or with the help of the API - <https://docs.maytech.net/quatrix/quatrix-api/api-explorer#/API-Key/post_api_key_create>.
 
-See complete Swagger documentation for Quatrix - https://docs.maytech.net/quatrix/quatrix-api/api-explorer
+See complete [Swagger documentation for Quatrix](https://docs.maytech.net/quatrix/quatrix-api/api-explorer).
 
 ## Configuration
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -60,23 +63,30 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level of your Quatrix
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your Quatrix
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an Quatrix directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### API key validity
 
-API Key is created with no expiration date. It will be valid until you delete or deactivate it in your account.
-After disabling, the API Key can be enabled back. If the API Key was deleted and a new key was created, you can
-update it in rclone config. The same happens if the hostname was changed.
+API Key is created with no expiration date. It will be valid until you delete or
+deactivate it in your account. After disabling, the API Key can be enabled back.
+If the API Key was deleted and a new key was created, you can update it in rclone
+config. The same happens if the hostname was changed.
 
-```
+```sh
 $ rclone config
 Current remotes:
 
@@ -131,23 +141,31 @@ Quatrix does not support hashes, so you cannot use the `--checksum` flag.
 
 ### Restricted filename characters
 
-File names in Quatrix are case sensitive and have limitations like the maximum length of a filename is 255, and the minimum length is 1. A file name cannot be equal to `.` or `..` nor contain `/` , `\` or non-printable ascii.
+File names in Quatrix are case sensitive and have limitations like the maximum
+length of a filename is 255, and the minimum length is 1. A file name cannot be
+equal to `.` or `..` nor contain `/` , `\` or non-printable ascii.
 
 ### Transfers
 
-For files above 50 MiB rclone will use a chunked transfer. Rclone will upload up to `--transfers` chunks at the same time (shared among all multipart uploads).
-Chunks are buffered in memory, and the minimal chunk size is 10_000_000 bytes by default, and it can be changed in the advanced configuration, so increasing `--transfers` will increase the memory use.
-The chunk size has a maximum size limit, which is set to 100_000_000 bytes by default and can be changed in the advanced configuration.
+For files above 50 MiB rclone will use a chunked transfer. Rclone will upload
+up to `--transfers` chunks at the same time (shared among all multipart uploads).
+Chunks are buffered in memory, and the minimal chunk size is 10_000_000 bytes by
+default, and it can be changed in the advanced configuration, so increasing `--transfers`
+will increase the memory use. The chunk size has a maximum size limit, which is
+set to 100_000_000 bytes by default and can be changed in the advanced configuration.
 The size of the uploaded chunk will dynamically change depending on the upload speed.
-The total memory use equals the number of transfers multiplied by the minimal chunk size.
-In case there's free memory allocated for the upload (which equals the difference of `maximal_summary_chunk_size` and `minimal_chunk_size` * `transfers`),
-the chunk size may increase in case of high upload speed. As well as it can decrease in case of upload speed problems.
-If no free memory is available, all chunks will equal `minimal_chunk_size`.
+The total memory use equals the number of transfers multiplied by the minimal
+chunk size. In case there's free memory allocated for the upload (which equals
+the difference of `maximal_summary_chunk_size` and `minimal_chunk_size` * `transfers`),
+the chunk size may increase in case of high upload speed. As well as it can decrease
+in case of upload speed problems. If no free memory is available, all chunks will
+equal `minimal_chunk_size`.
 
 ### Deleting files
 
 Files you delete with rclone will end up in Trash and be stored there for 30 days.
-Quatrix also provides an API to permanently delete files and an API to empty the Trash so that you can remove files permanently from your account.
+Quatrix also provides an API to permanently delete files and an API to empty the
+Trash so that you can remove files permanently from your account.
 
 {{< rem autogenerated options start" - DO NOT EDIT - instead edit fs.RegInfo in backend/quatrix/quatrix.go then run make backenddocs" >}}
 ### Standard options

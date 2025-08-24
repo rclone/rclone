@@ -21,11 +21,13 @@ premium account.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -68,11 +70,15 @@ Once configured you can then use `rclone` like this,
 
 List directories and files in the top level of your Gofile
 
-    rclone lsf remote:
+```sh
+rclone lsf remote:
+```
 
 To copy a local directory to an Gofile directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Modification times and hashes
 
@@ -96,7 +102,6 @@ the following characters are also replaced:
 | ?         | 0x3F  | ？           |
 | \         | 0x5C  | ＼           |
 | \|        | 0x7C  | ｜           |
-
 
 File names can also not start or end with the following characters.
 These only get replaced if they are the first or last character in the
@@ -134,7 +139,7 @@ directory you wish rclone to display.
 
 You can do this with rclone
 
-```
+```sh
 $ rclone lsf -Fip --dirs-only remote:
 d6341f53-ee65-4f29-9f59-d11e8070b2a0;Files/
 f4f5c9b8-6ece-478b-b03e-4538edfe5a1c;Photos/
@@ -143,7 +148,7 @@ d50e356c-29ca-4b27-a3a7-494d91026e04;Videos/
 
 The ID to use is the part before the `;` so you could set
 
-```
+```text
 root_folder_id = d6341f53-ee65-4f29-9f59-d11e8070b2a0
 ```
 

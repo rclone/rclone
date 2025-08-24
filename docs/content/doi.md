@@ -6,9 +6,11 @@ versionIntroduced: "?"
 
 # {{< icon "fa fa-building-columns" >}} DOI
 
-The DOI remote is a read only remote for reading files from digital object identifiers (DOI).
+The DOI remote is a read only remote for reading files from digital object
+identifiers (DOI).
 
 Currently, the DOI backend supports DOIs hosted with:
+
 - [InvenioRDM](https://inveniosoftware.org/products/rdm/)
   - [Zenodo](https://zenodo.org)
   - [CaltechDATA](https://data.caltech.edu)
@@ -25,11 +27,13 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password

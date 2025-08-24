@@ -11,7 +11,7 @@ tree.
 
 For example you might have a remote for images on one provider:
 
-```
+```sh
 $ rclone tree s3:imagesbucket
 /
 ├── image1.jpg
@@ -20,7 +20,7 @@ $ rclone tree s3:imagesbucket
 
 And a remote for files on another:
 
-```
+```sh
 $ rclone tree drive:important/files
 /
 ├── file1.txt
@@ -30,7 +30,7 @@ $ rclone tree drive:important/files
 The `combine` backend can join these together into a synthetic
 directory structure like this:
 
-```
+```sh
 $ rclone tree combined:
 /
 ├── files
@@ -44,7 +44,9 @@ $ rclone tree combined:
 You'd do this by specifying an `upstreams` parameter in the config
 like this
 
-    upstreams = images=s3:imagesbucket files=drive:important/files
+```text
+upstreams = images=s3:imagesbucket files=drive:important/files
+```
 
 During the initial setup with `rclone config` you will specify the
 upstreams remotes as a space separated list. The upstream remotes can
@@ -55,11 +57,13 @@ either be a local paths or other remotes.
 Here is an example of how to make a combine called `remote` for the
 example above. First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -103,21 +107,25 @@ the shared drives you have access to.
 Assuming your main (non shared drive) Google drive remote is called
 `drive:` you would run
 
-    rclone backend -o config drives drive:
+```sh
+rclone backend -o config drives drive:
+```
 
 This would produce something like this:
 
-    [My Drive]
-    type = alias
-    remote = drive,team_drive=0ABCDEF-01234567890,root_folder_id=:
+```ini
+[My Drive]
+type = alias
+remote = drive,team_drive=0ABCDEF-01234567890,root_folder_id=:
 
-    [Test Drive]
-    type = alias
-    remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
+[Test Drive]
+type = alias
+remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
 
-    [AllDrives]
-    type = combine
-    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
+[AllDrives]
+type = combine
+upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
+```
 
 If you then add that config to your config file (find it with `rclone
 config file`) then you can access all the shared drives in one place

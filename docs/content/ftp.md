@@ -20,14 +20,16 @@ a `/` it is relative to the home directory of the user.  An empty path
 
 To create an FTP configuration named `remote`, run
 
-    rclone config
+```sh
+rclone config
+```
 
 Rclone config guides you through an interactive setup process. A minimal
 rclone FTP remote definition only requires host, username and password.
 For an anonymous FTP server, see [below](#anonymous-ftp).
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 r) Rename remote
 c) Copy remote
@@ -86,20 +88,28 @@ y/e/d> y
 
 To see all directories in the home directory of `remote`
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 Make a new directory
 
-    rclone mkdir remote:path/to/directory
+```sh
+rclone mkdir remote:path/to/directory
+```
 
 List the contents of a directory
 
-    rclone ls remote:path/to/directory
+```sh
+rclone ls remote:path/to/directory
+```
 
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-    rclone sync --interactive /home/local/directory remote:directory
+```sh
+rclone sync --interactive /home/local/directory remote:directory
+```
 
 ### Anonymous FTP
 
@@ -114,8 +124,10 @@ Using [on-the-fly](#backend-path-to-dir) or
 such servers, without requiring any configuration in advance. The following
 are examples of that:
 
-    rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=$(rclone obscure dummy)
-    rclone lsf :ftp,host=speedtest.tele2.net,user=anonymous,pass=$(rclone obscure dummy):
+```sh
+rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=$(rclone obscure dummy)
+rclone lsf :ftp,host=speedtest.tele2.net,user=anonymous,pass=$(rclone obscure dummy):
+```
 
 The above examples work in Linux shells and in PowerShell, but not Windows
 Command Prompt. They execute the [rclone obscure](/commands/rclone_obscure/)
@@ -124,8 +136,10 @@ command to create a password string in the format required by the
 an already obscured string representation of the same password "dummy", and
 therefore works even in Windows Command Prompt:
 
-    rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=IXs2wc8OJOz7SYLBk47Ji1rHTmxM
-    rclone lsf :ftp,host=speedtest.tele2.net,user=anonymous,pass=IXs2wc8OJOz7SYLBk47Ji1rHTmxM:
+```sh
+rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=IXs2wc8OJOz7SYLBk47Ji1rHTmxM
+rclone lsf :ftp,host=speedtest.tele2.net,user=anonymous,pass=IXs2wc8OJOz7SYLBk47Ji1rHTmxM:
+```
 
 ### Implicit TLS
 
@@ -139,7 +153,7 @@ can be set with [`--ftp-port`](#ftp-port).
 TLS options for Implicit and Explicit TLS can be set using the
 following flags which are specific to the FTP backend:
 
-```
+```text
 --ftp-no-check-certificate     Do not verify the TLS certificate of the server
 --ftp-disable-tls13            Disable TLS 1.3 (workaround for FTP servers with buggy TLS)
 --ftp-tls-cache-size int       Size of TLS session cache for all control and data connections (default 32)
@@ -147,7 +161,7 @@ following flags which are specific to the FTP backend:
 
 However any of the global TLS flags can also be used such as:
 
-```
+```text
 --ca-cert stringArray          CA certificate used to verify servers
 --client-cert string           Client SSL certificate (PEM) for mutual TLS auth
 --client-key string            Client SSL private key (PEM) for mutual TLS auth
@@ -157,7 +171,7 @@ However any of the global TLS flags can also be used such as:
 If these need to be put in the config file so they apply to just the
 FTP backend then use the `override` syntax, eg
 
-```
+```text
 override.ca_cert = XXX
 override.client_cert = XXX
 override.client_key = XXX

@@ -14,12 +14,12 @@ subscriptions](https://pixeldrain.com/#pro).
 An overview of the filesystem's features and limitations is available in the
 [filesystem guide](https://pixeldrain.com/filesystem) on pixeldrain.
 
-### Usage with account
+## Usage with account
 
 To use the personal filesystem you will need a [pixeldrain
 account](https://pixeldrain.com/register) and either the Prepaid plan or one of
 the Patreon-based subscriptions. After registering and subscribing, your
-personal filesystem will be available at this link: https://pixeldrain.com/d/me.
+personal filesystem will be available at this link: <https://pixeldrain.com/d/me>.
 
 Go to the [API keys page](https://pixeldrain.com/user/api_keys) on your account
 and generate a new API key for rclone. Then run `rclone config` and use the API
@@ -27,8 +27,8 @@ key to create a new backend.
 
 Example:
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 d) Delete remote
 c) Copy remote
@@ -91,7 +91,7 @@ q) Quit config
 e/n/d/r/c/s/q> q
 ```
 
-### Usage without account
+## Usage without account
 
 It is possible to gain read-only access to publicly shared directories through
 rclone. For this you only need a directory ID. The directory ID can be found in
