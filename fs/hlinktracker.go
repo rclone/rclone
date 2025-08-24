@@ -17,7 +17,8 @@ type HLinkRootInfo struct {
 
 // A generic hardlink tracker for use in filesystems that support hardlinks
 type HLinkTracker struct {
-	hardlinks sync.Map // map[HLinkInfo]*HLinkRootInfo
+	hardlinks   sync.Map // map[HLinkInfo]*HLinkRootInfo
+	dstToSrcMap sync.Map // map[HLinkInfo]HLinkInfo
 }
 
 func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc Hardlinker, dst Object, fdst Hardlinker, dstPath string, willTransfer bool) (bool, error) {
@@ -39,6 +40,28 @@ func (t *HLinkTracker) RegisterHLinkRoot(ctx context.Context, src Object, fsrc H
 	info, ok := rawInfo.(*HLinkRootInfo)
 	if !ok {
 		return false, fmt.Errorf("HLinkTracker hardlinks map unexpectedly returned non-HLinkRootInfo value")
+	}
+
+	var dstLinkInfo any
+	dstHasLinkInfo := false
+	if !isExisting && dst != nil && !willTransfer {
+		dstLinkInfo, dstHasLinkInfo = fdst.HLinkID(ctx, dst)
+
+		if !dstHasLinkInfo {
+			return false, fmt.Errorf("destination %v unexpectedly has no hlink info", dst)
+		}
+	} else if isExisting && info.remoteHLinkInfo != nil {
+		dstHasLinkInfo = true
+		dstLinkInfo = info.remoteHLinkInfo
+	}
+
+	if dstHasLinkInfo {
+		srcInodeInfoFromDst, haveSrcInodeInfoFromDst := t.dstToSrcMap.LoadOrStore(dstLinkInfo, srcLinkInfo)
+
+		if (haveSrcInodeInfoFromDst && !isExisting) || (haveSrcInodeInfoFromDst && isExisting && info.remoteHLinkInfo != nil && (srcInodeInfoFromDst != srcLinkInfo)) {
+			willTransfer = true
+			isExisting = false
+		}
 	}
 
 	defer info.lock.Unlock()
