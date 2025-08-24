@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/rest"
@@ -35,11 +37,11 @@ type Client struct {
 	sessionSaveCallback sessionSave
 
 	// ADP/PCS support
-	mutextHSA          sync.Mutex
-	lastAttemptHSA     time.Time
-	webBuildNumber     string
-	webMasteringNumber string
-	pcsReady           map[string]bool
+	pcsMu          sync.Mutex
+	pcsReady       map[string]bool
+	pcsGroup       singleflight.Group
+	pcsLastAttempt time.Time
+	webBuildNumber string
 
 	drive *DriveService
 }
@@ -72,10 +74,9 @@ func New(appleID, password, trustToken string, clientID string, cookies []*http.
 func (c *Client) DriveService() (*DriveService, error) {
 	var err error
 	if c.drive == nil {
-		// Ensure PCS consent/cookies for iCloud Drive before use
+		// Ensure ADP/PCS consent/cookies for iCloud Drive before use it
 		if err := c.EnsurePCSForServiceOnce("iclouddrive"); err != nil {
-			fs.Infof("icloud", "Unable to complete ADP/PCS consent for iCloud Drive: %v", err)
-			return nil, err
+			return nil, fmt.Errorf("icloud: ADP/PCS consent for iCloud Drive failed: %w", err)
 		}
 
 		c.drive, err = NewDriveService(c)
@@ -86,26 +87,34 @@ func (c *Client) DriveService() (*DriveService, error) {
 	return c.drive, nil
 }
 
-// EnsurePCSForServiceOnce protects ensurePCSForService with a tiny "done" map
-// so we don't re-run the flow if multiple goroutines race.
+// EnsurePCSForServiceOnce ensures the PCS flow runs at most once concurrently per app.
+// If the run fails, the next caller will retry.
 func (c *Client) EnsurePCSForServiceOnce(app string) error {
-	c.mutextHSA.Lock()
-	if c.pcsReady == nil {
-		c.pcsReady = make(map[string]bool)
-	}
-	if c.pcsReady[app] {
-		c.mutextHSA.Unlock()
+	// Fast path: already ready?
+	c.pcsMu.Lock()
+	ready := c.pcsReady != nil && c.pcsReady[app]
+	c.pcsMu.Unlock()
+	if ready {
 		return nil
 	}
-	c.mutextHSA.Unlock()
 
-	if err := c.EnsurePCSForService(app); err != nil {
-		return err
+	// It will execute the function for a given key only once.
+	// Callers will wait for the result.
+	_, err, _ := c.pcsGroup.Do(app, func() (any, error) {
+		return nil, c.EnsurePCSForService(app)
+	})
+
+	if err == nil {
+		// Mark as ready only on success.
+		c.pcsMu.Lock()
+		if c.pcsReady == nil {
+			c.pcsReady = make(map[string]bool)
+		}
+		c.pcsReady[app] = true
+		c.pcsMu.Unlock()
 	}
-	c.mutextHSA.Lock()
-	c.pcsReady[app] = true
-	c.mutextHSA.Unlock()
-	return nil
+
+	return err
 }
 
 // Request makes a request and retries it if the session is invalid.

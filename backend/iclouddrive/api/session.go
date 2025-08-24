@@ -62,7 +62,6 @@ func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, resp
 }
 
 // CaptureCookies merges Set-Cookie from a raw HTTP response into the session jar.
-// Used by bootstrap calls that don't go through CallJSON.
 func (s *Session) CaptureCookies(resp *http.Response) {
 	if resp == nil {
 		return

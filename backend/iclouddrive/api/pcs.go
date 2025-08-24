@@ -175,9 +175,9 @@ func (c *Client) DefaultSetupParams(ctx context.Context) url.Values {
 // SetupHeaders builds headers for setup.icloud.com with proper cookies.
 func (c *Client) SetupHeaders() (map[string]string, error) {
 	// Throttle this noisy line to at most once per 10s
-	if time.Since(c.lastAttemptHSA) > 10*time.Second {
+	if time.Since(c.pcsLastAttempt) > 10*time.Second {
 		fs.Debugf("icloud", "[PCS] setupHeaders: tokenPresent=%v", c.WebAuthToken() != "")
-		c.lastAttemptHSA = time.Now()
+		c.pcsLastAttempt = time.Now()
 	}
 	// Best-effort ensure WEBAUTH token
 	if c.WebAuthToken() == "" {
