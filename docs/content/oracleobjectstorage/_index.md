@@ -720,6 +720,23 @@ Properties:
 - Type:        string
 - Required:    false
 
+### Metadata
+
+User metadata is stored as opc-meta- keys.
+
+Here are the possible system metadata items for the oracleobjectstorage backend.
+
+| Name | Help | Type | Example | Read Only |
+|------|------|------|---------|-----------|
+| opc-meta-atime | Time of last access | ISO 8601 | 2025-06-30T22:27:43-04:00 | N |
+| opc-meta-btime | Time of file birth (creation) | ISO 8601 | 2025-06-30T22:27:43-04:00 | N |
+| opc-meta-gid | Group ID of owner | decimal number | 500 | N |
+| opc-meta-mode | File type and mode | octal, unix style | 0100664 | N |
+| opc-meta-mtime | Time of last modification | ISO 8601 | 2025-06-30T22:27:43-04:00 | N |
+| opc-meta-uid | User ID of owner | decimal number | 500 | N |
+
+See the [metadata](/docs/#metadata) docs for more info.
+
 ## Backend commands
 
 Here are the commands specific to the oracleobjectstorage backend.

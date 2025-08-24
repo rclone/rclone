@@ -39,6 +39,7 @@ directories to and from different cloud storage providers.
 - Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)
 - Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
 - Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
+- Exaba [:page_facing_up:](https://rclone.org/s3/#exaba)
 - Fastmail Files [:page_facing_up:](https://rclone.org/webdav/#fastmail-files)
 - FileLu [:page_facing_up:](https://rclone.org/filelu/)
 - Files.com [:page_facing_up:](https://rclone.org/filescom/)

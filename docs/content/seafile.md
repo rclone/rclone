@@ -387,7 +387,7 @@ Properties:
 - Config:      encoding
 - Env Var:     RCLONE_SEAFILE_ENCODING
 - Type:        Encoding
-- Default:     Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8
+- Default:     Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8,Dot
 
 #### --seafile-description
 

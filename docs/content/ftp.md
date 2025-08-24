@@ -134,6 +134,35 @@ be enabled in the FTP backend config for the remote, or with
 [`--ftp-tls`](#ftp-tls). The default FTPS port is `990`, not `21` and
 can be set with [`--ftp-port`](#ftp-port).
 
+## TLS Options
+
+TLS options for Implicit and Explicit TLS can be set using the
+following flags which are specific to the FTP backend:
+
+```
+--ftp-no-check-certificate     Do not verify the TLS certificate of the server
+--ftp-disable-tls13            Disable TLS 1.3 (workaround for FTP servers with buggy TLS)
+--ftp-tls-cache-size int       Size of TLS session cache for all control and data connections (default 32)
+```
+
+However any of the global TLS flags can also be used such as:
+
+```
+--ca-cert stringArray          CA certificate used to verify servers
+--client-cert string           Client SSL certificate (PEM) for mutual TLS auth
+--client-key string            Client SSL private key (PEM) for mutual TLS auth
+--no-check-certificate         Do not verify the server SSL certificate (insecure)
+```
+
+If these need to be put in the config file so they apply to just the
+FTP backend then use the `override` syntax, eg
+
+```
+override.ca_cert = XXX
+override.client_cert = XXX
+override.client_key = XXX
+```
+
 ### Restricted filename characters
 
 In addition to the [default restricted characters set](/overview/#restricted-characters)
@@ -390,6 +419,22 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --ftp-allow-insecure-tls-ciphers
+
+Allow insecure TLS ciphers
+
+Setting this flag will allow the usage of the following TLS ciphers in addition to the secure defaults:
+
+- TLS_RSA_WITH_AES_128_GCM_SHA256
+
+
+Properties:
+
+- Config:      allow_insecure_tls_ciphers
+- Env Var:     RCLONE_FTP_ALLOW_INSECURE_TLS_CIPHERS
+- Type:        bool
+- Default:     false
+
 #### --ftp-shut-timeout
 
 Maximum time to wait for data connection closing status.
@@ -430,6 +475,20 @@ Properties:
 
 - Config:      socks_proxy
 - Env Var:     RCLONE_FTP_SOCKS_PROXY
+- Type:        string
+- Required:    false
+
+#### --ftp-http-proxy
+
+URL for HTTP CONNECT proxy
+
+Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+
+
+Properties:
+
+- Config:      http_proxy
+- Env Var:     RCLONE_FTP_HTTP_PROXY
 - Type:        string
 - Required:    false
 

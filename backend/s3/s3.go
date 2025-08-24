@@ -2550,6 +2550,11 @@ See: [AWS S3 Transfer acceleration](https://docs.aws.amazon.com/AmazonS3/latest/
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "use_arn_region",
+			Help:     `If true, enables arn region support for the service.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "leave_parts_on_error",
 			Provider: "AWS",
 			Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
@@ -3096,6 +3101,7 @@ type Options struct {
 	ForcePathStyle        bool                 `config:"force_path_style"`
 	V2Auth                bool                 `config:"v2_auth"`
 	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
+	UseARNRegion          bool                 `config:"use_arn_region"`
 	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
 	ListChunk             int32                `config:"list_chunk"`
 	ListVersion           int                  `config:"list_version"`
@@ -3460,6 +3466,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 	options = append(options, func(s3Opt *s3.Options) {
 		s3Opt.UsePathStyle = opt.ForcePathStyle
 		s3Opt.UseAccelerate = opt.UseAccelerateEndpoint
+		s3Opt.UseARNRegion = opt.UseARNRegion
 		// FIXME maybe this should be a tristate so can default to DualStackEndpointStateUnset?
 		if opt.UseDualStack {
 			s3Opt.EndpointOptions.UseDualStackEndpoint = aws.DualStackEndpointStateEnabled
@@ -3628,7 +3635,7 @@ func setQuirks(opt *Options) {
 		useUnsignedPayload = false // AWS has trailer support which means it adds checksums in the trailer without seeking
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
-		useAlreadyExists = false // returns BucketAlreadyExists
+		useAlreadyExists = true  // returns 200 OK
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
@@ -6086,7 +6093,7 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 	o.storageClass = stringClone(string(resp.StorageClass))
 	o.cacheControl = stringClonePointer(resp.CacheControl)
 	o.contentDisposition = stringClonePointer(resp.ContentDisposition)
-	o.contentEncoding = stringClonePointer(resp.ContentEncoding)
+	o.contentEncoding = stringClonePointer(removeAWSChunked(resp.ContentEncoding))
 	o.contentLanguage = stringClonePointer(resp.ContentLanguage)
 
 	// If decompressing then size and md5sum are unknown
@@ -6152,6 +6159,36 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 // Storable raturns a boolean indicating if this object is storable
 func (o *Object) Storable() bool {
 	return true
+}
+
+// removeAWSChunked removes the "aws-chunked" content-coding from a
+// Content-Encoding field value (RFC 9110). Comparison is case-insensitive.
+// Returns nil if encoding is empty after removal.
+func removeAWSChunked(pv *string) *string {
+	if pv == nil {
+		return nil
+	}
+	v := *pv
+	if v == "" {
+		return nil
+	}
+	if !strings.Contains(strings.ToLower(v), "aws-chunked") {
+		return pv
+	}
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		tok := strings.TrimSpace(p)
+		if tok == "" || strings.EqualFold(tok, "aws-chunked") {
+			continue
+		}
+		out = append(out, tok)
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	v = strings.Join(out, ",")
+	return &v
 }
 
 func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
@@ -6322,7 +6359,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	o.setMetaData(&head)
 
 	// Decompress body if necessary
-	if deref(resp.ContentEncoding) == "gzip" {
+	if deref(removeAWSChunked(resp.ContentEncoding)) == "gzip" {
 		if o.fs.opt.Decompress || (resp.ContentLength == nil && o.fs.opt.MightGzip.Value) {
 			return readers.NewGzipReader(resp.Body)
 		}
@@ -6604,7 +6641,7 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 		return wantETag, gotETag, versionID, ui, err
 	}
 
-	var s3cw *s3ChunkWriter = chunkWriter.(*s3ChunkWriter)
+	s3cw := chunkWriter.(*s3ChunkWriter)
 	gotETag = *stringClone(s3cw.eTag)
 	versionID = stringClone(s3cw.versionID)
 
@@ -6746,7 +6783,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		case "content-disposition":
 			ui.req.ContentDisposition = pv
 		case "content-encoding":
-			ui.req.ContentEncoding = pv
+			ui.req.ContentEncoding = removeAWSChunked(pv)
 		case "content-language":
 			ui.req.ContentLanguage = pv
 		case "content-type":
@@ -6843,7 +6880,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		case "content-disposition":
 			ui.req.ContentDisposition = aws.String(value)
 		case "content-encoding":
-			ui.req.ContentEncoding = aws.String(value)
+			ui.req.ContentEncoding = removeAWSChunked(aws.String(value))
 		case "content-language":
 			ui.req.ContentLanguage = aws.String(value)
 		case "content-type":
