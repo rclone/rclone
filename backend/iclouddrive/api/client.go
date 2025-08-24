@@ -9,6 +9,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
+
+	"golang.org/x/sync/singleflight"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fshttp"
@@ -31,6 +34,12 @@ type Client struct {
 	srv                 *rest.Client
 	Session             *Session
 	sessionSaveCallback sessionSave
+
+	// ADP/PCS support
+	pcsMu          sync.Mutex
+	pcsReady       map[string]bool
+	pcsGroup       singleflight.Group
+	webBuildNumber string
 
 	drive *DriveService
 }
@@ -60,9 +69,14 @@ func New(appleID, password, trustToken string, clientID string, cookies []*http.
 }
 
 // DriveService returns the DriveService instance associated with the Client.
-func (c *Client) DriveService() (*DriveService, error) {
+func (c *Client) DriveService(ctx context.Context) (*DriveService, error) {
 	var err error
 	if c.drive == nil {
+		// Ensure ADP/PCS consent/cookies for iCloud Drive before use it
+		if err := c.EnsurePCSForServiceOnce(ctx, "iclouddrive"); err != nil {
+			return nil, fmt.Errorf("icloud: ADP/PCS consent for iCloud Drive failed: %w", err)
+		}
+
 		c.drive, err = NewDriveService(c)
 		if err != nil {
 			return nil, err
@@ -71,8 +85,37 @@ func (c *Client) DriveService() (*DriveService, error) {
 	return c.drive, nil
 }
 
+// EnsurePCSForServiceOnce ensures the PCS flow runs at most once concurrently per app.
+// If the run fails, the next caller will retry.
+func (c *Client) EnsurePCSForServiceOnce(ctx context.Context, app string) error {
+	// Fast path: already ready?
+	c.pcsMu.Lock()
+	ready := c.pcsReady != nil && c.pcsReady[app]
+	c.pcsMu.Unlock()
+	if ready {
+		return nil
+	}
+
+	// singleflight.Do executes the given function for a given key only once.
+	// Callers will wait for the result. The context is passed to the function being executed.
+	_, err, _ := c.pcsGroup.Do(app, func() (any, error) {
+		return nil, c.EnsurePCSForService(ctx, app)
+	})
+
+	if err == nil {
+		// Mark as ready only on success.
+		c.pcsMu.Lock()
+		if c.pcsReady == nil {
+			c.pcsReady = make(map[string]bool)
+		}
+		c.pcsReady[app] = true
+		c.pcsMu.Unlock()
+	}
+
+	return err
+}
+
 // Request makes a request and retries it if the session is invalid.
-//
 // This function is the main entry point for making requests to the iCloud
 // API. If the initial request returns a 401 (Unauthorized), it will try to
 // reauthenticate and retry the request.
@@ -96,7 +139,6 @@ func (c *Client) Request(ctx context.Context, opts rest.Opts, request any, respo
 }
 
 // RequestNoReAuth makes a request without re-authenticating.
-//
 // This function is useful when you have a session that is already
 // authenticated, but you need to make a request without triggering
 // a re-authentication.
@@ -160,7 +202,7 @@ func newRequestError(Status string, Text string) *RequestError {
 	}
 }
 
-// newErr orf makes a new error from sprintf parameters.
+// newRequestErrorf makes a new error from sprintf parameters.
 func newRequestErrorf(Status string, Text string, Parameters ...any) *RequestError {
 	return newRequestError(strings.ToLower(Status), fmt.Sprintf(Text, Parameters...))
 }

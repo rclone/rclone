@@ -855,7 +855,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 
 	rootID := f.rootID
-	f.service, err = icloud.DriveService()
+	f.service, err = icloud.DriveService(ctx)
 	if err != nil {
 		return nil, err
 	}
