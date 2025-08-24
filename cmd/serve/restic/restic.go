@@ -108,7 +108,7 @@ The server will log errors.  Use -v to see access logs.
 ` + "`--bwlimit`" + ` will be respected for file transfers.
 Use ` + "`--stats`" + ` to control the stats printing.
 
-### Setting up rclone for use by restic ###
+### Setting up rclone for use by restic
 
 First [set up a remote for your chosen cloud provider](/docs/#configure).
 
@@ -119,7 +119,9 @@ following instructions.
 
 Now start the rclone restic server
 
-    rclone serve restic -v remote:backup
+` + "```sh" + `
+rclone serve restic -v remote:backup
+` + "```" + `
 
 Where you can replace "backup" in the above by whatever path in the
 remote you wish to use.
@@ -133,7 +135,7 @@ Adding ` + "`--cache-objects=false`" + ` will cause rclone to stop caching objec
 returned from the List call. Caching is normally desirable as it speeds
 up downloading objects, saves transactions and uses very little memory.
 
-### Setting up restic to use rclone ###
+### Setting up restic to use rclone
 
 Now you can [follow the restic
 instructions](http://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#rest-server)
@@ -147,38 +149,43 @@ the URL for the REST server.
 
 For example:
 
-    $ export RESTIC_REPOSITORY=rest:http://localhost:8080/
-    $ export RESTIC_PASSWORD=yourpassword
-    $ restic init
-    created restic backend 8b1a4b56ae at rest:http://localhost:8080/
+` + "```sh" + `
+$ export RESTIC_REPOSITORY=rest:http://localhost:8080/
+$ export RESTIC_PASSWORD=yourpassword
+$ restic init
+created restic backend 8b1a4b56ae at rest:http://localhost:8080/
 
-    Please note that knowledge of your password is required to access
-    the repository. Losing your password means that your data is
-    irrecoverably lost.
-    $ restic backup /path/to/files/to/backup
-    scan [/path/to/files/to/backup]
-    scanned 189 directories, 312 files in 0:00
-    [0:00] 100.00%  38.128 MiB / 38.128 MiB  501 / 501 items  0 errors  ETA 0:00
-    duration: 0:00
-    snapshot 45c8fdd8 saved
+Please note that knowledge of your password is required to access
+the repository. Losing your password means that your data is
+irrecoverably lost.
+$ restic backup /path/to/files/to/backup
+scan [/path/to/files/to/backup]
+scanned 189 directories, 312 files in 0:00
+[0:00] 100.00%  38.128 MiB / 38.128 MiB  501 / 501 items  0 errors  ETA 0:00
+duration: 0:00
+snapshot 45c8fdd8 saved
 
-#### Multiple repositories ####
+` + "```" + `
+
+#### Multiple repositories
 
 Note that you can use the endpoint to host multiple repositories.  Do
 this by adding a directory name or path after the URL.  Note that
 these **must** end with /.  Eg
 
-    $ export RESTIC_REPOSITORY=rest:http://localhost:8080/user1repo/
-    # backup user1 stuff
-    $ export RESTIC_REPOSITORY=rest:http://localhost:8080/user2repo/
-    # backup user2 stuff
+` + "```sh" + `
+$ export RESTIC_REPOSITORY=rest:http://localhost:8080/user1repo/
+# backup user1 stuff
+$ export RESTIC_REPOSITORY=rest:http://localhost:8080/user2repo/
+# backup user2 stuff
+` + "```" + `
 
-#### Private repositories ####
+#### Private repositories
 
 The` + "`--private-repos`" + ` flag can be used to limit users to repositories starting
 with a path of ` + "`/<username>/`" + `.
 
-` + libhttp.Help(flagPrefix) + libhttp.AuthHelp(flagPrefix),
+` + strings.TrimSpace(libhttp.Help(flagPrefix)+libhttp.AuthHelp(flagPrefix)),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.40",
 	},

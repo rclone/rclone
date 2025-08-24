@@ -51,14 +51,15 @@ var longHelp = shortHelp + makeHelp(`
 bidirectional cloud sync solution in rclone.
 It retains the Path1 and Path2 filesystem listings from the prior run.
 On each successive run it will:
+
 - list files on Path1 and Path2, and check for changes on each side.
   Changes include |New|, |Newer|, |Older|, and |Deleted| files.
 - Propagate changes on Path1 to Path2, and vice-versa.
 
 Bisync is considered an **advanced command**, so use with care.
 Make sure you have read and understood the entire [manual](https://rclone.org/bisync)
-(especially the [Limitations](https://rclone.org/bisync/#limitations) section) before using,
-or data loss can result. Questions can be asked in the [Rclone Forum](https://forum.rclone.org/).
+(especially the [Limitations](https://rclone.org/bisync/#limitations) section)
+before using, or data loss can result. Questions can be asked in the
+[Rclone Forum](https://forum.rclone.org/).
 
-See [full bisync description](https://rclone.org/bisync/) for details.
-`)
+See [full bisync description](https://rclone.org/bisync/) for details.`)

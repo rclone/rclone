@@ -44,8 +44,7 @@ var configCommand = &cobra.Command{
 	Short: `Enter an interactive configuration session.`,
 	Long: `Enter an interactive configuration session where you can setup new
 remotes and manage existing ones. You may also set or remove a
-password to protect your configuration.
-`,
+password to protect your configuration.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 	},
@@ -134,9 +133,7 @@ sensitive info with XXX.
 
 This makes the config file suitable for posting online for support.
 
-It should be double checked before posting as the redaction may not be perfect.
-
-`,
+It should be double checked before posting as the redaction may not be perfect.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.64",
 	},
@@ -178,8 +175,8 @@ var configProvidersCommand = &cobra.Command{
 
 var updateRemoteOpt config.UpdateRemoteOpt
 
-var configPasswordHelp = strings.ReplaceAll(`
-Note that if the config process would normally ask a question the
+var configPasswordHelp = strings.ReplaceAll(
+	`Note that if the config process would normally ask a question the
 default is taken (unless |--non-interactive| is used).  Each time
 that happens rclone will print or DEBUG a message saying how to
 affect the value taken.
@@ -205,29 +202,29 @@ it.
 
 This will look something like (some irrelevant detail removed):
 
-|||
+|||json
 {
-    "State": "*oauth-islocal,teamdrive,,",
-    "Option": {
-        "Name": "config_is_local",
-        "Help": "Use web browser to automatically authenticate rclone with remote?\n * Say Y if the machine running rclone has a web browser you can use\n * Say N if running rclone on a (remote) machine without web browser access\nIf not sure try Y. If Y failed, try N.\n",
-        "Default": true,
-        "Examples": [
-            {
-                "Value": "true",
-                "Help": "Yes"
-            },
-            {
-                "Value": "false",
-                "Help": "No"
-            }
-        ],
-        "Required": false,
-        "IsPassword": false,
-        "Type": "bool",
-        "Exclusive": true,
-    },
-    "Error": "",
+  "State": "*oauth-islocal,teamdrive,,",
+  "Option": {
+    "Name": "config_is_local",
+    "Help": "Use web browser to automatically authenticate rclone with remote?\n * Say Y if the machine running rclone has a web browser you can use\n * Say N if running rclone on a (remote) machine without web browser access\nIf not sure try Y. If Y failed, try N.\n",
+    "Default": true,
+    "Examples": [
+      {
+        "Value": "true",
+        "Help": "Yes"
+      },
+      {
+        "Value": "false",
+        "Help": "No"
+      }
+    ],
+    "Required": false,
+    "IsPassword": false,
+    "Type": "bool",
+    "Exclusive": true,
+  },
+  "Error": "",
 }
 |||
 
@@ -250,7 +247,9 @@ The keys of |Option| are used as follows:
 If |Error| is set then it should be shown to the user at the same
 time as the question.
 
-    rclone config update name --continue --state "*oauth-islocal,teamdrive,," --result "true"
+|||sh
+rclone config update name --continue --state "*oauth-islocal,teamdrive,," --result "true"
+|||
 
 Note that when using |--continue| all passwords should be passed in
 the clear (not obscured). Any default config values should be passed
@@ -264,8 +263,7 @@ not just the post config questions. Any parameters are used as
 defaults for questions as usual.
 
 Note that |bin/config.py| in the rclone source implements this protocol
-as a readable demonstration.
-`, "|", "`")
+as a readable demonstration.`, "|", "`")
 var configCreateCommand = &cobra.Command{
 	Use:   "create name type [key value]*",
 	Short: `Create a new remote with name, type and options.`,
@@ -275,13 +273,18 @@ should be passed in pairs of |key| |value| or as |key=value|.
 For example, to make a swift remote of name myremote using auto config
 you would do:
 
-    rclone config create myremote swift env_auth true
-    rclone config create myremote swift env_auth=true
+|||sh
+rclone config create myremote swift env_auth true
+rclone config create myremote swift env_auth=true
+|||
 
 So for example if you wanted to configure a Google Drive remote but
 using remote authorization you would do this:
 
-    rclone config create mydrive drive config_is_local=false
+|||sh
+rclone config create mydrive drive config_is_local=false
+|||
+
 `, "|", "`") + configPasswordHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
@@ -344,13 +347,18 @@ pairs of |key| |value| or as |key=value|.
 For example, to update the env_auth field of a remote of name myremote
 you would do:
 
-    rclone config update myremote env_auth true
-    rclone config update myremote env_auth=true
+|||sh
+rclone config update myremote env_auth true
+rclone config update myremote env_auth=true
+|||
 
 If the remote uses OAuth the token will be updated, if you don't
 require this add an extra parameter thus:
 
-    rclone config update myremote env_auth=true config_refresh_token=false
+|||sh
+rclone config update myremote env_auth=true config_refresh_token=false
+|||
+
 `, "|", "`") + configPasswordHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
@@ -388,12 +396,13 @@ The |password| should be passed in in clear (unobscured).
 
 For example, to set password of a remote of name myremote you would do:
 
-    rclone config password myremote fieldname mypassword
-    rclone config password myremote fieldname=mypassword
+|||sh
+rclone config password myremote fieldname mypassword
+rclone config password myremote fieldname=mypassword
+|||
 
 This command is obsolete now that "config update" and "config create"
-both support obscuring passwords directly.
-`, "|", "`"),
+both support obscuring passwords directly.`, "|", "`"),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 	},
@@ -441,8 +450,7 @@ var configReconnectCommand = &cobra.Command{
 
 To disconnect the remote use "rclone config disconnect".
 
-This normally means going through the interactive oauth flow again.
-`,
+This normally means going through the interactive oauth flow again.`,
 	RunE: func(command *cobra.Command, args []string) error {
 		ctx := context.Background()
 		cmd.CheckArgs(1, 1, command, args)
@@ -461,8 +469,7 @@ var configDisconnectCommand = &cobra.Command{
 
 This normally means revoking the oauth token.
 
-To reconnect use "rclone config reconnect".
-`,
+To reconnect use "rclone config reconnect".`,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
@@ -490,8 +497,7 @@ var configUserInfoCommand = &cobra.Command{
 	Use:   "userinfo remote:",
 	Short: `Prints info about logged in user of remote.`,
 	Long: `This prints the details of the person logged in to the cloud storage
-system.
-`,
+system.`,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
@@ -534,8 +540,7 @@ var configEncryptionCommand = &cobra.Command{
 	Use:   "encryption",
 	Short: `set, remove and check the encryption for the config file`,
 	Long: `This command sets, clears and checks the encryption for the config file using
-the subcommands below.
-`,
+the subcommands below.`,
 }
 
 var configEncryptionSetCommand = &cobra.Command{
@@ -559,8 +564,7 @@ variable to distinguish which password you must supply.
 Alternatively you can remove the password first (with |rclone config
 encryption remove|), then set it again with this command which may be
 easier if you don't mind the unencrypted config file being on the disk
-briefly.
-`, "|", "`"),
+briefly.`, "|", "`"),
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
 		config.LoadedData()
@@ -580,8 +584,7 @@ If |--password-command| is in use, this will be called to supply the old config
 password.
 
 If the config was not encrypted then no error will be returned and
-this command will do nothing.
-`, "|", "`"),
+this command will do nothing.`, "|", "`"),
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
 		config.LoadedData()
@@ -600,8 +603,7 @@ It will attempt to decrypt the config using the password you supply.
 If decryption fails it will return a non-zero exit code if using
 |--password-command|, otherwise it will prompt again for the password.
 
-If the config file is not encrypted it will return a non zero exit code.
-`, "|", "`"),
+If the config file is not encrypted it will return a non zero exit code.`, "|", "`"),
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
 		config.LoadedData()
