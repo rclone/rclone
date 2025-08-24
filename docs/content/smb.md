@@ -8,21 +8,27 @@ versionIntroduced: "v1.60"
 
 SMB is [a communication protocol to share files over network](https://en.wikipedia.org/wiki/Server_Message_Block).
 
-This relies on [go-smb2 library](https://github.com/CloudSoda/go-smb2/) for communication with SMB protocol.
+This relies on [go-smb2 library](https://github.com/CloudSoda/go-smb2/) for
+communication with SMB protocol.
 
 Paths are specified as `remote:sharename` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g. `remote:item/path/to/dir`.
 
 ## Notes
 
-The first path segment must be the name of the share, which you entered when you started to share on Windows. On smbd, it's the section title in `smb.conf` (usually in `/etc/samba/`) file.
+The first path segment must be the name of the share, which you entered when
+you started to share on Windows. On smbd, it's the section title in `smb.conf`
+(usually in `/etc/samba/`) file.
 You can find shares by querying the root if you're unsure (e.g. `rclone lsd remote:`).
 
 You can't access to the shared printers from rclone, obviously.
 
-You can't use Anonymous access for logging in. You have to use the `guest` user with an empty password instead.
-The rclone client tries to avoid 8.3 names when uploading files by encoding trailing spaces and periods.
-Alternatively, [the local backend](/local/#paths-on-windows) on Windows can access SMB servers using UNC paths, by `\\server\share`. This doesn't apply to non-Windows OSes, such as Linux and macOS.
+You can't use Anonymous access for logging in. You have to use the `guest` user
+with an empty password instead. The rclone client tries to avoid 8.3 names when
+uploading files by encoding trailing spaces and periods. Alternatively,
+[the local backend](/local/#paths-on-windows) on Windows can access SMB servers
+using UNC paths, by `\\server\share`. This doesn't apply to non-Windows OSes,
+such as Linux and macOS.
 
 ## Configuration
 
@@ -30,12 +36,14 @@ Here is an example of making a SMB configuration.
 
 First run
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process.
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 s) Set configuration password
 q) Quit config

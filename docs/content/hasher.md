@@ -9,6 +9,7 @@ status: Experimental
 
 Hasher is a special overlay backend to create remotes which handle
 checksums for other remotes. It's main functions include:
+
 - Emulate hash types unimplemented by backends
 - Cache checksums to help with slow hashing of large local or (S)FTP files
 - Warm up checksum cache from external SUM files
@@ -29,8 +30,9 @@ Now proceed to interactive or manual configuration.
 ### Interactive configuration
 
 Run `rclone config`:
-```
-No remotes found, make a new one?
+
+```text
+No remotes found, make a new one\?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -76,7 +78,7 @@ usually `YOURHOME/.config/rclone/rclone.conf`.
 Open it in your favorite text editor, find section for the base remote
 and create new section for hasher like in the following examples:
 
-```
+```ini
 [Hasher1]
 type = hasher
 remote = myRemote:path
@@ -91,12 +93,13 @@ max_age = 24h
 ```
 
 Hasher takes basically the following parameters:
-- `remote` is required,
+
+- `remote` is required
 - `hashes` is a comma separated list of supported checksums
-   (by default `md5,sha1`),
-- `max_age` - maximum time to keep a checksum value in the cache,
-   `0` will disable caching completely,
-   `off` will cache "forever" (that is until the files get changed).
+   (by default `md5,sha1`)
+- `max_age` - maximum time to keep a checksum value in the cache
+   `0` will disable caching completely
+   `off` will cache "forever" (that is until the files get changed)
 
 Make sure the `remote` has `:` (colon) in. If you specify the remote without
 a colon then rclone will use a local directory of that name. So if you use
@@ -111,7 +114,8 @@ If you use `remote = name` literally then rclone will put files
 Now you can use it as `Hasher2:subdir/file` instead of base remote.
 Hasher will transparently update cache with new checksums when a file
 is fully read or overwritten, like:
-```
+
+```sh
 rclone copy External:path/file Hasher:dest/path
 
 rclone cat Hasher:path/to/file > /dev/null
@@ -121,14 +125,16 @@ The way to refresh **all** cached checksums (even unsupported by the base backen
 for a subtree is to **re-download** all files in the subtree. For example,
 use `hashsum --download` using **any** supported hashsum on the command line
 (we just care to re-read):
-```
+
+```sh
 rclone hashsum MD5 --download Hasher:path/to/subtree > /dev/null
 
 rclone backend dump Hasher:path/to/subtree
 ```
 
 You can print or drop hashsum cache using custom backend commands:
-```
+
+```sh
 rclone backend dump Hasher:dir/subdir
 
 rclone backend drop Hasher:
@@ -139,7 +145,7 @@ rclone backend drop Hasher:
 Hasher supports two backend commands: generic SUM file `import` and faster
 but less consistent `stickyimport`.
 
-```
+```sh
 rclone backend import Hasher:dir/subdir SHA1 /path/to/SHA1SUM [--checkers 4]
 ```
 
@@ -148,6 +154,7 @@ can point to either a local or an `other-remote:path` text file in SUM format.
 The command will parse the SUM file, then walk down the path given by the
 first argument, snapshot current fingerprints and fill in the cache entries
 correspondingly.
+
 - Paths in the SUM file are treated as relative to `hasher:dir/subdir`.
 - The command will **not** check that supplied values are correct.
   You **must know** what you are doing.
@@ -158,7 +165,7 @@ correspondingly.
   `--checkers` to make it faster. Or use `stickyimport` if you don't care
   about fingerprints and consistency.
 
-```
+```sh
 rclone backend stickyimport hasher:path/to/data sha1 remote:/path/to/sum.sha1
 ```
 
