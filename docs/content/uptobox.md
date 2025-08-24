@@ -6,8 +6,9 @@ versionIntroduced: "v1.56"
 
 # {{< icon "fa fa-archive" >}} Uptobox
 
-This is a Backend for Uptobox file storage service. Uptobox is closer to a one-click hoster than a traditional 
-cloud storage provider and therefore not suitable for long term storage. 
+This is a Backend for Uptobox file storage service. Uptobox is closer to a
+one-click hoster than a traditional  cloud storage provider and therefore not
+suitable for long term storage.
 
 Paths are specified as `remote:path`
 
@@ -15,16 +16,19 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 ## Configuration
 
-To configure an Uptobox backend you'll need your personal api token. You'll find it in your
-[account settings](https://uptobox.com/my_account)
+To configure an Uptobox backend you'll need your personal api token. You'll find
+it in your [account settings](https://uptobox.com/my_account).
 
-Here is an example of how to make a remote called `remote` with the default setup.  First run:
+Here is an example of how to make a remote called `remote` with the default setup.
+First run:
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 Current remotes:
 
 Name                 Type
@@ -66,21 +70,28 @@ api_key = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
-y/e/d> 
+y/e/d>
 ```
+
 Once configured you can then use `rclone` like this,
 
 List directories in top level of your Uptobox
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your Uptobox
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an Uptobox directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Modification times and hashes
 
