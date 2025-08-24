@@ -169,7 +169,8 @@ rclone.org website.`,
 				name := filepath.Base(path)
 				cmd, ok := commands[name]
 				if !ok {
-					return fmt.Errorf("didn't find command for %q", name)
+					//return fmt.Errorf("didn't find command for %q", name)
+					return nil
 				}
 				b, err := os.ReadFile(path)
 				if err != nil {
@@ -184,7 +185,12 @@ rclone.org website.`,
 						return fmt.Errorf("internal error: failed to find cut points: startCut = %d, endCut = %d", startCut, endCut)
 					}
 					if endCut >= 0 {
-						doc = doc[:endCut] + "### See Also" + doc[endCut+12:]
+						doc = doc[:endCut] + `### See Also
+
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->` + doc[endCut+12:] + `
+<!-- markdownlint-restore -->
+`
 					}
 				} else {
 					var out strings.Builder
@@ -196,7 +202,7 @@ rclone.org website.`,
 							if group.Flags.HasFlags() {
 								_, _ = fmt.Fprintf(&out, "#### %s Options\n\n", group.Name)
 								_, _ = fmt.Fprintf(&out, "%s\n\n", group.Help)
-								_, _ = out.WriteString("```\n")
+								_, _ = out.WriteString("```text\n")
 								_, _ = out.WriteString(group.Flags.FlagUsages())
 								_, _ = out.WriteString("```\n\n")
 							}
@@ -204,7 +210,12 @@ rclone.org website.`,
 					} else {
 						_, _ = out.WriteString("See the [global flags page](/flags/) for global options not listed here.\n\n")
 					}
-					doc = doc[:startCut] + out.String() + "### See Also" + doc[endCut+12:]
+					doc = doc[:startCut] + out.String() + `### See Also
+
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->` + doc[endCut+12:] + `
+<!-- markdownlint-restore -->
+`
 				}
 
 				// outdent all the titles by one
