@@ -65,7 +65,7 @@ var cmdSelfUpdate = &cobra.Command{
 	Use:     "selfupdate",
 	Aliases: []string{"self-update"},
 	Short:   `Update the rclone binary.`,
-	Long:    selfUpdateHelp,
+	Long:    strings.TrimSpace(selfUpdateHelp),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.55",
 	},

@@ -35,26 +35,32 @@ name.  If the source is a directory then it acts exactly like the
 
 So
 
-    rclone copyto src dst
+` + "```sh" + `
+rclone copyto src dst
+` + "```" + `
 
-where src and dst are rclone paths, either remote:path or
-/path/to/local or C:\windows\path\if\on\windows.
+where src and dst are rclone paths, either ` + "`remote:path`" + ` or
+` + "`/path/to/local`" + ` or ` + "`C:\\windows\\path\\if\\on\\windows`" + `.
 
 This will:
 
-    if src is file
-        copy it to dst, overwriting an existing file if it exists
-    if src is directory
-        copy it to dst, overwriting existing files if they exist
-        see copy command for full details
+` + "```text" + `
+if src is file
+    copy it to dst, overwriting an existing file if it exists
+if src is directory
+    copy it to dst, overwriting existing files if they exist
+    see copy command for full details
+` + "```" + `
 
 This doesn't transfer files that are identical on src and dst, testing
 by size and modification time or MD5SUM.  It doesn't delete files from
 the destination.
 
-*If you are looking to copy just a byte range of a file, please see 'rclone cat --offset X --count Y'*
+*If you are looking to copy just a byte range of a file, please see
+` + "`rclone cat --offset X --count Y`" + `.*
 
-**Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics
+**Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view
+real-time transfer statistics.
 
 ` + operationsflags.Help(),
 	Annotations: map[string]string{

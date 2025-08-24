@@ -21,18 +21,21 @@ var zshCommandDefinition = &cobra.Command{
 This writes to /usr/share/zsh/vendor-completions/_rclone by default so will
 probably need to be run with sudo or as root, e.g.
 
-    sudo rclone completion zsh
+` + "```sh" + `
+sudo rclone completion zsh
+` + "```" + `
 
 Logout and login again to use the autocompletion scripts, or source
 them directly
 
-    autoload -U compinit && compinit
+` + "```sh" + `
+autoload -U compinit && compinit
+` + "```" + `
 
 If you supply a command line argument the script will be written
 there.
 
-If output_file is "-", then the output will be written to stdout.
-`,
+If output_file is "-", then the output will be written to stdout.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
 		out := "/usr/share/zsh/vendor-completions/_rclone"

@@ -1,9 +1,10 @@
-## Logger Flags
+### Logger Flags
 
-The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error` flags write paths,
-one per line, to the file name (or stdout if it is `-`) supplied. What they write is described
-in the help below. For example `--differ` will write all paths which are present
-on both the source and destination but different.
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error`
+flags write paths, one per line, to the file name (or stdout if it is `-`)
+supplied. What they write is described in the help below. For example
+`--differ` will write all paths which are present on both the source and
+destination but different.
 
 The `--combined` flag will write a file (or stdout) which contains all
 file paths with a symbol and then a space and then the path to tell
@@ -36,4 +37,4 @@ are not currently supported:
 
 Note also that each file is logged during execution, as opposed to after, so it
 is most useful as a predictor of what SHOULD happen to each file
-(which may or may not match what actually DID.)
+(which may or may not match what actually DID).

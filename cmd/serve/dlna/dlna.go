@@ -123,7 +123,7 @@ default "rclone (hostname)".
 Use ` + "`--log-trace` in conjunction with `-vv`" + ` to enable additional debug
 logging of all UPNP traffic.
 
-` + vfs.Help(),
+` + strings.TrimSpace(vfs.Help()),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.46",
 		"groups":            "Filter",

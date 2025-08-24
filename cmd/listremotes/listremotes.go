@@ -114,8 +114,7 @@ func newLess(orderBy string) (less lessFn, err error) {
 var commandDefinition = &cobra.Command{
 	Use:   "listremotes [<filter>]",
 	Short: `List all the remotes in the config file and defined in environment variables.`,
-	Long: `
-Lists all the available remotes from the config file, or the remotes matching
+	Long: `Lists all the available remotes from the config file, or the remotes matching
 an optional filter.
 
 Prints the result in human-readable format by default, and as a simple list of
@@ -126,8 +125,7 @@ the source (file or environment).
 
 Result can be filtered by a filter argument which applies to all attributes,
 and/or filter flags specific for each attribute. The values must be specified
-according to regular rclone filtering pattern syntax.
-`,
+according to regular rclone filtering pattern syntax.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.34",
 	},

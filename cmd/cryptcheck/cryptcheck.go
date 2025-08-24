@@ -37,14 +37,18 @@ checksum of the file it has just encrypted.
 
 Use it like this
 
-    rclone cryptcheck /path/to/files encryptedremote:path
+` + "```sh" + `
+rclone cryptcheck /path/to/files encryptedremote:path
+` + "```" + `
 
 You can use it like this also, but that will involve downloading all
-the files in remote:path.
+the files in ` + "`remote:path`" + `.
 
-    rclone cryptcheck remote:path encryptedremote:path
+` + "```sh" + `
+rclone cryptcheck remote:path encryptedremote:path
+` + "```" + `
 
-After it has run it will log the status of the encryptedremote:.
+After it has run it will log the status of the ` + "`encryptedremote:`" + `.
 ` + check.FlagsHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.36",
