@@ -100,8 +100,8 @@ any root slug set.`,
 			},
 			{
 				Name:    "total_size",
-				Default: "-1",
-				Help:    "Uloz.to doesn't report the total size available. This value enables reporting the proper size of the disk instead of 1P. Default is -1 (unknown). Enter a value with the suffix, e.g. 25G.",
+				Default: "0",
+				Help:    "Uloz.to doesn't report the total size available. This value enables reporting the proper size of the disk instead of 1P. Default is 0 (unknown). Enter a value with the suffix, e.g. 25G.",
 			},
 		},
 	})
@@ -187,17 +187,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // About implements the Abouter interface for Uloz.to.
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	total := int64(f.opt.TotalSize)
+	total := (*int64)(&f.opt.TotalSize)
+	if *total == 0 {
+		total = nil
+	}
 	used, err := f.getUsedSize(ctx)
 	if err != nil {
 		return nil, err
 	}
-	free := total - used
+
+	var free *int64
+	if total != nil {
+		f := *total - used
+		free = &f
+	}
 
 	usage := fs.Usage{
-		Total: &total,
+		Total: total,
 		Used:  &used,
-		Free:  &free,
+		Free:  free,
 	}
 
 	return &usage, nil
