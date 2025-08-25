@@ -79,6 +79,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		gofakes3.WithoutVersioning(),
 		gofakes3.WithV4Auth(authlistResolver(opt.AuthKey)),
 		gofakes3.WithIntegrityCheck(true), // Check Content-MD5 if supplied
+		gofakes3.WithBaseURL(opt.HTTP.BaseURL),
 	)
 
 	w.handler = w.faker.Server()
