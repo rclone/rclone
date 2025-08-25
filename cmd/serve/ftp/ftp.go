@@ -14,6 +14,7 @@ import (
 	"os/user"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -140,7 +141,7 @@ By default this will serve files without needing a login.
 
 You can set a single username and password with the --user and --pass flags.
 
-` + vfs.Help() + proxy.Help,
+` + strings.TrimSpace(vfs.Help()+proxy.Help),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.44",
 		"groups":            "Filter",

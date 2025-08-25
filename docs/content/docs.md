@@ -2097,25 +2097,25 @@ some context for the `Metadata` which may be important.
 
 ```json
 {
-    "SrcFs": "gdrive:",
-    "SrcFsType": "drive",
-    "DstFs": "newdrive:user",
-    "DstFsType": "onedrive",
-    "Remote": "test.txt",
-    "Size": 6,
-    "MimeType": "text/plain; charset=utf-8",
-    "ModTime": "2022-10-11T17:53:10.286745272+01:00",
-    "IsDir": false,
-    "ID": "xyz",
-    "Metadata": {
-        "btime": "2022-10-11T16:53:11Z",
-        "content-type": "text/plain; charset=utf-8",
-        "mtime": "2022-10-11T17:53:10.286745272+01:00",
-        "owner": "user1@domain1.com",
-        "permissions": "...",
-        "description": "my nice file",
-        "starred": "false"
-    }
+  "SrcFs": "gdrive:",
+  "SrcFsType": "drive",
+  "DstFs": "newdrive:user",
+  "DstFsType": "onedrive",
+  "Remote": "test.txt",
+  "Size": 6,
+  "MimeType": "text/plain; charset=utf-8",
+  "ModTime": "2022-10-11T17:53:10.286745272+01:00",
+  "IsDir": false,
+  "ID": "xyz",
+  "Metadata": {
+    "btime": "2022-10-11T16:53:11Z",
+    "content-type": "text/plain; charset=utf-8",
+    "mtime": "2022-10-11T17:53:10.286745272+01:00",
+    "owner": "user1@domain1.com",
+    "permissions": "...",
+    "description": "my nice file",
+    "starred": "false"
+  }
 }
 ```
 
@@ -2127,15 +2127,15 @@ the description:
 
 ```json
 {
-    "Metadata": {
-        "btime": "2022-10-11T16:53:11Z",
-        "content-type": "text/plain; charset=utf-8",
-        "mtime": "2022-10-11T17:53:10.286745272+01:00",
-        "owner": "user1@domain2.com",
-        "permissions": "...",
-        "description": "my nice file [migrated from domain1]",
-        "starred": "false"
-    }
+  "Metadata": {
+    "btime": "2022-10-11T16:53:11Z",
+    "content-type": "text/plain; charset=utf-8",
+    "mtime": "2022-10-11T17:53:10.286745272+01:00",
+    "owner": "user1@domain2.com",
+    "permissions": "...",
+    "description": "my nice file [migrated from domain1]",
+    "starred": "false"
+  }
 }
 ```
 

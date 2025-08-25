@@ -68,8 +68,7 @@ paths passed in and how long they can be.  It can take some time.  It will
 write test files into the remote:path passed in.  It outputs a bit of go
 code for each one.
 
-**NB** this can create undeletable files and other hazards - use with care
-`,
+**NB** this can create undeletable files and other hazards - use with care!`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.55",
 	},

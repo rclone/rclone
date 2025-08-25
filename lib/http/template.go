@@ -42,9 +42,9 @@ to be used within the template to server pages:
 |-- .Size     | Size in Bytes of the entry. |
 |-- .ModTime  | The UTC timestamp of an entry. |
 
-The server also makes the following functions available so that they can be used within the
-template. These functions help extend the options for dynamic rendering of HTML. They can
-be used to render HTML based on specific conditions.
+The server also makes the following functions available so that they can be used
+within the template. These functions help extend the options for dynamic
+rendering of HTML. They can be used to render HTML based on specific conditions.
 
 | Function   | Description |
 | :---------- | :---------- |

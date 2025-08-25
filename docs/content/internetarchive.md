@@ -8,7 +8,8 @@ versionIntroduced: "v1.59"
 
 The Internet Archive backend utilizes Items on [archive.org](https://archive.org/)
 
-Refer to [IAS3 API documentation](https://archive.org/services/docs/api/ias3.html) for the API this backend uses.
+Refer to [IAS3 API documentation](https://archive.org/services/docs/api/ias3.html)
+for the API this backend uses.
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g. `remote:item/path/to/dir`.
@@ -19,31 +20,47 @@ Once you have made a remote, you can use it like this:
 
 Make a new item
 
-    rclone mkdir remote:item
+```sh
+rclone mkdir remote:item
+```
 
 List the contents of a item
 
-    rclone ls remote:item
+```sh
+rclone ls remote:item
+```
 
 Sync `/home/local/directory` to the remote item, deleting any excess
 files in the item.
 
-    rclone sync --interactive /home/local/directory remote:item
+```sh
+rclone sync --interactive /home/local/directory remote:item
+```
 
 ## Notes
-Because of Internet Archive's architecture, it enqueues write operations (and extra post-processings) in a per-item queue. You can check item's queue at https://catalogd.archive.org/history/item-name-here . Because of that, all uploads/deletes will not show up immediately and takes some time to be available.
-The per-item queue is enqueued to an another queue, Item Deriver Queue. [You can check the status of Item Deriver Queue here.](https://catalogd.archive.org/catalog.php?whereami=1) This queue has a limit, and it may block you from uploading, or even deleting. You should avoid uploading a lot of small files for better behavior.
 
-You can optionally wait for the server's processing to finish, by setting non-zero value to `wait_archive` key.
-By making it wait, rclone can do normal file comparison.
-Make sure to set a large enough value (e.g. `30m0s` for smaller files) as it can take a long time depending on server's queue.
+Because of Internet Archive's architecture, it enqueues write operations (and
+extra post-processings) in a per-item queue. You can check item's queue at
+<https://catalogd.archive.org/history/item-name-here>. Because of that, all
+uploads/deletes will not show up immediately and takes some time to be available.
+The per-item queue is enqueued to an another queue, Item Deriver Queue.
+[You can check the status of Item Deriver Queue here.](https://catalogd.archive.org/catalog.php?whereami=1)
+This queue has a limit, and it may block you from uploading, or even deleting.
+You should avoid uploading a lot of small files for better behavior.
+
+You can optionally wait for the server's processing to finish, by setting
+non-zero value to `wait_archive` key. By making it wait, rclone can do normal
+file comparison. Make sure to set a large enough value (e.g. `30m0s` for smaller
+files) as it can take a long time depending on server's queue.
 
 ## About metadata
+
 This backend supports setting, updating and reading metadata of each file.
 The metadata will appear as file metadata on Internet Archive.
 However, some fields are reserved by both Internet Archive and rclone.
 
 The following are reserved by Internet Archive:
+
 - `name`
 - `source`
 - `size`
@@ -56,9 +73,11 @@ The following are reserved by Internet Archive:
 - `summation`
 
 Trying to set values to these keys is ignored with a warning.
-Only setting `mtime` is an exception. Doing so make it the identical behavior as setting ModTime.
+Only setting `mtime` is an exception. Doing so make it the identical
+behavior as setting ModTime.
 
-rclone reserves all the keys starting with `rclone-`. Setting value for these keys will give you warnings, but values are set according to request.
+rclone reserves all the keys starting with `rclone-`. Setting value for
+these keys will give you warnings, but values are set according to request.
 
 If there are multiple values for a key, only the first one is returned.
 This is a limitation of rclone, that supports one value per one key.
@@ -76,7 +95,9 @@ changeable, as they are created by the Internet Archive automatically.
 These auto-created files can be excluded from the sync using [metadata
 filtering](/filtering/#metadata).
 
-    rclone sync ... --metadata-exclude "source=metadata" --metadata-exclude "format=Metadata"
+```sh
+rclone sync ... --metadata-exclude "source=metadata" --metadata-exclude "format=Metadata"
+```
 
 Which excludes from the sync any files which have the
 `source=metadata` or `format=Metadata` flags which are added to
@@ -89,12 +110,14 @@ Most applies to the other providers as well, any differences are described [belo
 
 First run
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process.
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 s) Set configuration password
 q) Quit config

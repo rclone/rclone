@@ -19,11 +19,13 @@ do in your browser.  `rclone config` walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -91,15 +93,21 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level of your Enterprise File Fabric
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your Enterprise File Fabric
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an Enterprise File Fabric directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Modification times and hashes
 
@@ -124,7 +132,7 @@ upload an empty file as a single space with a mime type of
 `application/vnd.rclone.empty.file` and files with that mime type are
 treated as empty.
 
-### Root folder ID ###
+### Root folder ID
 
 You can set the `root_folder_id` for rclone.  This is the directory
 (identified by its `Folder ID`) that rclone considers to be the root
@@ -140,7 +148,7 @@ In order to do this you will have to find the `Folder ID` of the
 directory you wish rclone to display.  These aren't displayed in the
 web interface, but you can use `rclone lsf` to find them, for example
 
-```
+```sh
 $ rclone lsf --dirs-only -Fip --csv filefabric:
 120673758,Burnt PDFs/
 120673759,My Quick Uploads/

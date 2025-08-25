@@ -273,7 +273,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 		Use:    commandName + " remote:path /path/to/mountpoint",
 		Hidden: hidden,
 		Short:  `Mount the remote as file system on a mountpoint.`,
-		Long:   help(commandName) + vfs.Help(),
+		Long:   help(commandName) + strings.TrimSpace(vfs.Help()),
 		Annotations: map[string]string{
 			"versionIntroduced": "v1.33",
 			"groups":            "Filter",

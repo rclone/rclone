@@ -18,13 +18,14 @@ var Command = &cobra.Command{
 
 Select which test command you want with the subcommand, eg
 
-    rclone test memory remote:
+` + "```sh" + `
+rclone test memory remote:
+` + "```" + `
 
 Each subcommand has its own options which you can see in their help.
 
 **NB** Be careful running these commands, they may do strange things
-so reading their documentation first is recommended.
-`,
+so reading their documentation first is recommended.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.55",
 	},

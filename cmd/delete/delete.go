@@ -32,26 +32,29 @@ obeys include/exclude filters so can be used to selectively delete files.
 alone. If you want to delete a directory and all of its contents use
 the [purge](/commands/rclone_purge/) command.
 
-If you supply the |--rmdirs| flag, it will remove all empty directories along with it.
-You can also use the separate command [rmdir](/commands/rclone_rmdir/) or
-[rmdirs](/commands/rclone_rmdirs/) to delete empty directories only.
+If you supply the |--rmdirs| flag, it will remove all empty directories along
+with it. You can also use the separate command [rmdir](/commands/rclone_rmdir/)
+or [rmdirs](/commands/rclone_rmdirs/) to delete empty directories only.
 
 For example, to delete all files bigger than 100 MiB, you may first want to
 check what would be deleted (use either):
 
-    rclone --min-size 100M lsl remote:path
-    rclone --dry-run --min-size 100M delete remote:path
+|||sh
+rclone --min-size 100M lsl remote:path
+rclone --dry-run --min-size 100M delete remote:path
+|||
 
 Then proceed with the actual delete:
 
-    rclone --min-size 100M delete remote:path
+|||sh
+rclone --min-size 100M delete remote:path
+|||
 
 That reads "delete everything with a minimum size of 100 MiB", hence
 delete all files bigger than 100 MiB.
 
 **Important**: Since this can cause data loss, test first with the
-|--dry-run| or the |--interactive|/|-i| flag.
-`, "|", "`"),
+|--dry-run| or the |--interactive|/|-i| flag.`, "|", "`"),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.27",
 		"groups":            "Important,Filter,Listing",

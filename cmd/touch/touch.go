@@ -61,8 +61,7 @@ time instead of the current time. Times may be specified as one of:
 - 'YYYY-MM-DDTHH:MM:SS.SSS' - e.g. 2006-01-02T15:04:05.123456789
 
 Note that value of ` + "`--timestamp`" + ` is in UTC. If you want local time
-then add the ` + "`--localtime`" + ` flag.
-`,
+then add the ` + "`--localtime`" + ` flag.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 		"groups":            "Filter,Listing,Important",

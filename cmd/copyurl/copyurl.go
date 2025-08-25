@@ -48,7 +48,7 @@ set in HTTP headers, it will be used instead of the name from the URL.
 With |--print-filename| in addition, the resulting file name will be
 printed.
 
-Setting |--no-clobber| will prevent overwriting file on the 
+Setting |--no-clobber| will prevent overwriting file on the
 destination if there is one with the same name.
 
 Setting |--stdout| or making the output file name |-|
@@ -62,9 +62,7 @@ If you can't get |rclone copyurl| to work then here are some things you can try:
 - |--bind 0.0.0.0| rclone will use IPv6 if available - try disabling it
 - |--bind ::0| to disable IPv4
 - |--user agent curl| - some sites have whitelists for curl's user-agent - try that
-- Make sure the site works with |curl| directly
-
-`, "|", "`"),
+- Make sure the site works with |curl| directly`, "|", "`"),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.43",
 		"groups":            "Important",

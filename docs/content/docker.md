@@ -20,14 +20,14 @@ As of Docker 1.12 volumes are supported by
 [Docker Swarm](https://docs.docker.com/engine/swarm/key-concepts/)
 included with Docker Engine and created from descriptions in
 [swarm compose v3](https://docs.docker.com/compose/compose-file/compose-file-v3/#volume-configuration-reference)
-files for use with _swarm stacks_ across multiple cluster nodes.
+files for use with *swarm stacks* across multiple cluster nodes.
 
 [Docker Volume Plugins](https://docs.docker.com/engine/extend/plugins_volume/)
 augment the default `local` volume driver included in Docker with stateful
 volumes shared across containers and hosts. Unlike local volumes, your
-data will _not_ be deleted when such volume is removed. Plugins can run
+data will *not* be deleted when such volume is removed. Plugins can run
 managed by the docker daemon, as a native system service
-(under systemd, _sysv_ or _upstart_) or as a standalone executable.
+(under systemd, *sysv* or *upstart*) or as a standalone executable.
 Rclone can run as docker volume plugin in all these modes.
 It interacts with the local docker daemon
 via [plugin API](https://docs.docker.com/engine/extend/plugin_api/) and
@@ -42,39 +42,43 @@ rclone volume with Docker engine on a standalone Ubuntu machine.
 Start from [installing Docker](https://docs.docker.com/engine/install/)
 on the host.
 
-The _FUSE_ driver is a prerequisite for rclone mounting and should be
+The *FUSE* driver is a prerequisite for rclone mounting and should be
 installed on host:
-```
+
+```sh
 sudo apt-get -y install fuse3
 ```
 
 Create two directories required by rclone docker plugin:
-```
+
+```sh
 sudo mkdir -p /var/lib/docker-plugins/rclone/config
 sudo mkdir -p /var/lib/docker-plugins/rclone/cache
 ```
 
 Install the managed rclone docker plugin for your architecture (here `amd64`):
-```
+
+```sh
 docker plugin install rclone/docker-volume-rclone:amd64 args="-v" --alias rclone --grant-all-permissions
 docker plugin list
 ```
 
 Create your [SFTP volume](/sftp/#standard-options):
-```
+
+```sh
 docker volume create firstvolume -d rclone -o type=sftp -o sftp-host=_hostname_ -o sftp-user=_username_ -o sftp-pass=_password_ -o allow-other=true
 ```
 
 Note that since all options are static, you don't even have to run
 `rclone config` or create the `rclone.conf` file (but the `config` directory
 should still be present). In the simplest case you can use `localhost`
-as _hostname_ and your SSH credentials as _username_ and _password_.
+as *hostname* and your SSH credentials as *username* and *password*.
 You can also change the remote path to your home directory on the host,
 for example `-o path=/home/username`.
 
-
 Time to create a test container and mount the volume into it:
-```
+
+```sh
 docker run --rm -it -v firstvolume:/mnt --workdir /mnt ubuntu:latest bash
 ```
 
@@ -83,7 +87,8 @@ the mounted SFTP remote. You can type `ls` to list the mounted directory
 or otherwise play with it. Type `exit` when you are done.
 The container will stop but the volume will stay, ready to be reused.
 When it's not needed anymore, remove it:
-```
+
+```sh
 docker volume list
 docker volume remove firstvolume
 ```
@@ -92,7 +97,7 @@ Now let us try **something more elaborate**:
 [Google Drive](/drive/) volume on multi-node Docker Swarm.
 
 You should start from installing Docker and FUSE, creating plugin
-directories and installing rclone plugin on _every_ swarm node.
+directories and installing rclone plugin on *every* swarm node.
 Then [setup the Swarm](https://docs.docker.com/engine/swarm/swarm-mode/).
 
 Google Drive volumes need an access token which can be setup via web
@@ -101,14 +106,15 @@ plugin cannot run a browser so we will use a technique similar to the
 [rclone setup on a headless box](/remote_setup/).
 
 Run [rclone config](/commands/rclone_config_create/)
-on _another_ machine equipped with _web browser_ and graphical user interface.
+on *another* machine equipped with *web browser* and graphical user interface.
 Create the [Google Drive remote](/drive/#standard-options).
 When done, transfer the resulting `rclone.conf` to the Swarm cluster
 and save as `/var/lib/docker-plugins/rclone/config/rclone.conf`
-on _every_ node. By default this location is accessible only to the
+on *every* node. By default this location is accessible only to the
 root user so you will need appropriate privileges. The resulting config
 will look like this:
-```
+
+```ini
 [gdrive]
 type = drive
 scope = drive
@@ -119,7 +125,8 @@ token = {"access_token":...}
 
 Now create the file named `example.yml` with a swarm stack description
 like this:
-```
+
+```yml
 version: '3'
 services:
   heimdall:
@@ -137,16 +144,18 @@ volumes:
 ```
 
 and run the stack:
-```
+
+```sh
 docker stack deploy example -c ./example.yml
 ```
 
 After a few seconds docker will spread the parsed stack description
-over cluster, create the `example_heimdall` service on port _8080_,
+over cluster, create the `example_heimdall` service on port *8080*,
 run service containers on one or more cluster nodes and request
 the `example_configdata` volume from rclone plugins on the node hosts.
 You can use the following commands to confirm results:
-```
+
+```sh
 docker service ls
 docker service ps example_heimdall
 docker volume ls
@@ -163,7 +172,8 @@ the `docker volume remove example_configdata` command on every node.
 
 Volumes can be created with [docker volume create](https://docs.docker.com/engine/reference/commandline/volume_create/).
 Here are a few examples:
-```
+
+```sh
 docker volume create vol1 -d rclone -o remote=storj: -o vfs-cache-mode=full
 docker volume create vol2 -d rclone -o remote=:storj,access_grant=xxx:heimdall
 docker volume create vol3 -d rclone -o type=storj -o path=heimdall -o storj-access-grant=xxx -o poll-interval=0
@@ -175,7 +185,8 @@ name `rclone/docker-volume-rclone` because you provided the `--alias rclone`
 option.
 
 Volumes can be inspected as follows:
-```
+
+```sh
 docker volume list
 docker volume inspect vol1
 ```
@@ -184,7 +195,7 @@ docker volume inspect vol1
 
 Rclone flags and volume options are set via the `-o` flag to the
 `docker volume create` command. They include backend-specific parameters
-as well as mount and _VFS_ options. Also there are a few
+as well as mount and *VFS* options. Also there are a few
 special `-o` options:
 `remote`, `fs`, `type`, `path`, `mount-type` and `persist`.
 
@@ -192,19 +203,23 @@ special `-o` options:
 trailing colon and optionally with a remote path. See the full syntax in
 the [rclone documentation](/docs/#syntax-of-remote-paths).
 This option can be aliased as `fs` to prevent confusion with the
-_remote_ parameter of such backends as _crypt_ or _alias_.
+*remote* parameter of such backends as *crypt* or *alias*.
 
 The `remote=:backend:dir/subdir` syntax can be used to create
 [on-the-fly (config-less) remotes](/docs/#backend-path-to-dir),
 while the `type` and `path` options provide a simpler alternative for this.
 Using two split options
-```
+
+```sh
 -o type=backend -o path=dir/subdir
 ```
+
 is equivalent to the combined syntax
-```
+
+```sh
 -o remote=:backend:dir/subdir
 ```
+
 but is arguably easier to parameterize in scripts.
 The `path` part is optional.
 
@@ -219,7 +234,7 @@ Boolean CLI flags without value will gain the `true` value, e.g.
 
 Please note that you can provide parameters only for the backend immediately
 referenced by the backend type of mounted `remote`.
-If this is a wrapping backend like _alias, chunker or crypt_, you cannot
+If this is a wrapping backend like *alias, chunker or crypt*, you cannot
 provide options for the referred to remote or backend. This limitation is
 imposed by the rclone connection string parser. The only workaround is to
 feed plugin with `rclone.conf` or configure plugin arguments (see below).
@@ -242,17 +257,21 @@ In future it will allow to persist on-the-fly remotes in the plugin
 The `remote` value can be extended
 with [connection strings](/docs/#connection-strings)
 as an alternative way to supply backend parameters. This is equivalent
-to the `-o` backend options with one _syntactic difference_.
+to the `-o` backend options with one *syntactic difference*.
 Inside connection string the backend prefix must be dropped from parameter
 names but in the `-o param=value` array it must be present.
 For instance, compare the following option array
-```
+
+```sh
 -o remote=:sftp:/home -o sftp-host=localhost
 ```
+
 with equivalent connection string:
-```
+
+```sh
 -o remote=:sftp,host=localhost:/home
 ```
+
 This difference exists because flag options `-o key=val` include not only
 backend parameters but also mount/VFS flags and possibly other settings.
 Also it allows to discriminate the `remote` option from the `crypt-remote`
@@ -261,11 +280,13 @@ due to clearer value substitution.
 
 ## Using with Swarm or Compose
 
-Both _Docker Swarm_ and _Docker Compose_ use
+Both *Docker Swarm* and *Docker Compose* use
 [YAML](http://yaml.org/spec/1.2/spec.html)-formatted text files to describe
 groups (stacks) of containers, their properties, networks and volumes.
-_Compose_ uses the [compose v2](https://docs.docker.com/compose/compose-file/compose-file-v2/#volume-configuration-reference) format,
-_Swarm_ uses the [compose v3](https://docs.docker.com/compose/compose-file/compose-file-v3/#volume-configuration-reference) format.
+*Compose* uses the [compose v2](https://docs.docker.com/compose/compose-file/compose-file-v2/#volume-configuration-reference)
+format,
+*Swarm* uses the [compose v3](https://docs.docker.com/compose/compose-file/compose-file-v3/#volume-configuration-reference)
+format.
 They are mostly similar, differences are explained in the
 [docker documentation](https://docs.docker.com/compose/compose-file/compose-versioning/#upgrading).
 
@@ -274,7 +295,7 @@ Each of them should be named after its volume and have at least two
 elements, the self-explanatory `driver: rclone` value and the
 `driver_opts:` structure playing the same role as `-o key=val` CLI flags:
 
-```
+```yml
 volumes:
   volume_name_1:
     driver: rclone
@@ -287,6 +308,7 @@ volumes:
 ```
 
 Notice a few important details:
+
 - YAML prefers `_` in option names instead of `-`.
 - YAML treats single and double quotes interchangeably.
   Simple strings and integers can be left unquoted.
@@ -313,6 +335,7 @@ The plugin requires presence of two directories on the host before it can
 be installed. Note that plugin will **not** create them automatically.
 By default they must exist on host at the following locations
 (though you can tweak the paths):
+
 - `/var/lib/docker-plugins/rclone/config`
   is reserved for the `rclone.conf` config file and **must** exist
   even if it's empty and the config file is not present.
@@ -321,14 +344,16 @@ By default they must exist on host at the following locations
 
 You can [install managed plugin](https://docs.docker.com/engine/reference/commandline/plugin_install/)
 with default settings as follows:
-```
+
+```sh
 docker plugin install rclone/docker-volume-rclone:amd64 --grant-all-permissions --alias rclone
 ```
 
-The `:amd64` part of the image specification after colon is called a _tag_.
+The `:amd64` part of the image specification after colon is called a *tag*.
 Usually you will want to install the latest plugin for your architecture. In
 this case the tag will just name it, like `amd64` above. The following plugin
 architectures are currently available:
+
 - `amd64`
 - `arm64`
 - `arm-v7`
@@ -362,7 +387,8 @@ mount namespaces and bind-mounts into requesting user containers.
 
 You can tweak a few plugin settings after installation when it's disabled
 (not in use), for instance:
-```
+
+```sh
 docker plugin disable rclone
 docker plugin set rclone RCLONE_VERBOSE=2 config=/etc/rclone args="--vfs-cache-mode=writes --allow-other"
 docker plugin enable rclone
@@ -377,10 +403,10 @@ plan in advance.
 You can tweak the following settings:
 `args`, `config`, `cache`, `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY`
 and `RCLONE_VERBOSE`.
-It's _your_ task to keep plugin settings in sync across swarm cluster nodes.
+It's *your* task to keep plugin settings in sync across swarm cluster nodes.
 
 `args` sets command-line arguments for the `rclone serve docker` command
-(_none_ by default). Arguments should be separated by space so you will
+(*none* by default). Arguments should be separated by space so you will
 normally want to put them in quotes on the
 [docker plugin set](https://docs.docker.com/engine/reference/commandline/plugin_set/)
 command line. Both [serve docker flags](/commands/rclone_serve_docker/#options)
@@ -402,7 +428,7 @@ at the predefined path `/data/config`. For example, if your key file is
 named `sftp-box1.key` on the host, the corresponding volume config option
 should read `-o sftp-key-file=/data/config/sftp-box1.key`.
 
-`cache=/host/dir` sets alternative host location for the _cache_ directory.
+`cache=/host/dir` sets alternative host location for the *cache* directory.
 The plugin will keep VFS caches here. Also it will create and maintain
 the `docker-plugin.state` file in this directory. When the plugin is
 restarted or reinstalled, it will look in this file to recreate any volumes
@@ -415,13 +441,14 @@ failures, daemon restarts or host reboots.
 to `2` (debugging). Verbosity can be also tweaked via `args="-v [-v] ..."`.
 Since arguments are more generic, you will rarely need this setting.
 The plugin output by default feeds the docker daemon log on local host.
-Log entries are reflected as _errors_ in the docker log but retain their
+Log entries are reflected as *errors* in the docker log but retain their
 actual level assigned by rclone in the encapsulated message string.
 
 `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` customize the plugin proxy settings.
 
-You can set custom plugin options right when you install it, _in one go_:
-```
+You can set custom plugin options right when you install it, *in one go*:
+
+```sh
 docker plugin remove rclone
 docker plugin install rclone/docker-volume-rclone:amd64 \
        --alias rclone --grant-all-permissions \
@@ -435,7 +462,8 @@ The docker plugin volume protocol doesn't provide a way for plugins
 to inform the docker daemon that a volume is (un-)available.
 As a workaround you can setup a healthcheck to verify that the mount
 is responding, for example:
-```
+
+```yml
 services:
   my_service:
     image: my_image
@@ -456,8 +484,9 @@ systems. Proceed further only if you are on Linux.
 First, [install rclone](/install/).
 You can just run it (type `rclone serve docker` and hit enter) for the test.
 
-Install _FUSE_:
-```
+Install *FUSE*:
+
+```sh
 sudo apt-get -y install fuse
 ```
 
@@ -466,22 +495,25 @@ Download two systemd configuration files:
 and [docker-volume-rclone.socket](https://raw.githubusercontent.com/rclone/rclone/master/contrib/docker-plugin/systemd/docker-volume-rclone.socket).
 
 Put them to the `/etc/systemd/system/` directory:
-```
+
+```sh
 cp docker-volume-plugin.service /etc/systemd/system/
 cp docker-volume-plugin.socket  /etc/systemd/system/
 ```
 
-Please note that all commands in this section must be run as _root_ but
+Please note that all commands in this section must be run as *root* but
 we omit `sudo` prefix for brevity.
 Now create directories required by the service:
-```
+
+```sh
 mkdir -p /var/lib/docker-volumes/rclone
 mkdir -p /var/lib/docker-plugins/rclone/config
 mkdir -p /var/lib/docker-plugins/rclone/cache
 ```
 
 Run the docker plugin service in the socket activated mode:
-```
+
+```sh
 systemctl daemon-reload
 systemctl start docker-volume-rclone.service
 systemctl enable docker-volume-rclone.socket
@@ -490,6 +522,7 @@ systemctl restart docker
 ```
 
 Or run the service directly:
+
 - run `systemctl daemon-reload` to let systemd pick up new config
 - run `systemctl enable docker-volume-rclone.service` to make the new
   service start automatically when you power on your machine.
@@ -506,39 +539,50 @@ prefer socket activation.
 
 You can [see managed plugin settings](https://docs.docker.com/engine/extend/#debugging-plugins)
 with
-```
+
+```sh
 docker plugin list
 docker plugin inspect rclone
 ```
+
 Note that docker (including latest 20.10.7) will not show actual values
 of `args`, just the defaults.
 
 Use `journalctl --unit docker` to see managed plugin output as part of
-the docker daemon log. Note that docker reflects plugin lines as _errors_
+the docker daemon log. Note that docker reflects plugin lines as *errors*
 but their actual level can be seen from encapsulated message string.
 
 You will usually install the latest version of managed plugin for your platform.
 Use the following commands to print the actual installed version:
-```
+
+```sh
 PLUGID=$(docker plugin list --no-trunc | awk '/rclone/{print$1}')
 sudo runc --root /run/docker/runtime-runc/plugins.moby exec $PLUGID rclone version
 ```
 
 You can even use `runc` to run shell inside the plugin container:
-```
+
+```sh
 sudo runc --root /run/docker/runtime-runc/plugins.moby exec --tty $PLUGID bash
 ```
 
 Also you can use curl to check the plugin socket connectivity:
-```
+
+```sh
 docker plugin list --no-trunc
 PLUGID=123abc...
 sudo curl -H Content-Type:application/json -XPOST -d {} --unix-socket /run/docker/plugins/$PLUGID/rclone.sock http://localhost/Plugin.Activate
 ```
+
 though this is rarely needed.
 
-If the plugin fails to work properly, and only as a last resort after you tried diagnosing with the above methods, you can try clearing the state of the plugin. **Note that all existing rclone docker volumes will probably have to be recreated.** This might be needed because a reinstall don't cleanup existing state files to allow for easy restoration, as stated above.
-```
+If the plugin fails to work properly, and only as a last resort after you tried
+diagnosing with the above methods, you can try clearing the state of the plugin.
+**Note that all existing rclone docker volumes will probably have to be recreated.**
+This might be needed because a reinstall don't cleanup existing state files to
+allow for easy restoration, as stated above.
+
+```sh
 docker plugin disable rclone # disable the plugin to ensure no interference
 sudo rm /var/lib/docker-plugins/rclone/cache/docker-plugin.state # removing the plugin state
 docker plugin enable rclone # re-enable the plugin afterward
@@ -546,20 +590,22 @@ docker plugin enable rclone # re-enable the plugin afterward
 
 ## Caveats
 
-Finally I'd like to mention a _caveat with updating volume settings_.
+Finally I'd like to mention a *caveat with updating volume settings*.
 Docker CLI does not have a dedicated command like `docker volume update`.
 It may be tempting to invoke `docker volume create` with updated options
 on existing volume, but there is a gotcha. The command will do nothing,
 it won't even return an error. I hope that docker maintainers will fix
 this some day. In the meantime be aware that you must remove your volume
 before recreating it with new settings:
-```
+
+```sh
 docker volume remove my_vol
 docker volume create my_vol -d rclone -o opt1=new_val1 ...
 ```
 
 and verify that settings did update:
-```
+
+```sh
 docker volume list
 docker volume inspect my_vol
 ```
