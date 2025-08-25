@@ -7,9 +7,11 @@ versionIntroduced: "v1.60"
 
 # {{< icon "fa fa-cloud" >}} Oracle Object Storage
 
-- [Oracle Object Storage Overview](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)
+Object Storage provided by the Oracle Cloud Infrastructure (OCI).
+Read more at <oracle.com>:
+
+- [Oracle Object Storage Overview](https://docs.oracle.com/iaas/Content/Object/Concepts/objectstorageoverview.htm)
 - [Oracle Object Storage FAQ](https://www.oracle.com/cloud/storage/object-storage/faq/)
-- [Oracle Object Storage Limits](https://docs.oracle.com/en-us/iaas/Content/Resources/Assets/whitepapers/oci-object-storage-best-practices.pdf)
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd` command).
 You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
