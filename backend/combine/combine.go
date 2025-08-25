@@ -241,17 +241,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		DirModTimeUpdatesOnWrite: true,
 		PartialUploads:           true,
 	}).Fill(ctx, f)
-	canMove := true
+	canMove, slowHash := true, false
 	for _, u := range f.upstreams {
 		features = features.Mask(ctx, u.f) // Mask all upstream fs
 		if !operations.CanServerSideMove(u.f) {
 			canMove = false
 		}
+		slowHash = slowHash || u.f.Features().SlowHash
 	}
 	// We can move if all remotes support Move or Copy
 	if canMove {
 		features.Move = f.Move
 	}
+
+	// If any of upstreams are SlowHash, propagate it
+	features.SlowHash = slowHash
 
 	// Enable ListR when upstreams either support ListR or is local
 	// But not when all upstreams are local
