@@ -49,6 +49,7 @@ type Options struct {
 	RootFolderSlug string               `config:"root_folder_slug"`
 	Enc            encoder.MultiEncoder `config:"encoding"`
 	ListPageSize   int                  `config:"list_page_size"`
+	TotalSize      fs.SizeSuffix        `config:"total_size"`
 }
 
 func init() {
@@ -97,7 +98,13 @@ any root slug set.`,
 				Advanced: true,
 				Default:  encoder.Display | encoder.EncodeInvalidUtf8 | encoder.EncodeBackSlash,
 			},
-		}})
+			{
+				Name:    "total_size",
+				Default: "-1",
+				Help:    "Uloz.to doesn't report the total size available. This value enables reporting the proper size of the disk instead of 1P. Default is -1 (unknown). Enter a value with the suffix, e.g. 25G.",
+			},
+		},
+	})
 }
 
 // Fs represents a remote uloz.to storage
@@ -176,6 +183,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	return f, err
+}
+
+// About implements the Abouter interface for Uloz.to.
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	total := int64(f.opt.TotalSize)
+	used, err := f.getUsedSize(ctx)
+	if err != nil {
+		return nil, err
+	}
+	free := total - used
+
+	usage := fs.Usage{
+		Total: &total,
+		Used:  &used,
+		Free:  &free,
+	}
+
+	return &usage, nil
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -261,6 +286,32 @@ func (f *Fs) authenticate(ctx context.Context) (response *api.AuthenticateRespon
 	f.rest.SetHeader("X-User-Token", response.TokenID)
 
 	return response, nil
+}
+
+func (f *Fs) getUsedSize(ctx context.Context) (int64, error) {
+	rootID, err := f.dirCache.RootID(ctx, false)
+	if err != nil {
+		return 0, err
+	}
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   fmt.Sprintf("/v6/user/%s/folder/%s/folder-sizes", f.opt.Username, rootID),
+		Parameters: url.Values{
+			"recursive": []string{"true"},
+		},
+	}
+
+	folderSizes := api.FolderSizesResponse{}
+
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, nil, &folderSizes)
+		return f.shouldRetry(ctx, resp, err, true)
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return folderSizes[rootID].Recursive.FilesSize, nil
 }
 
 // UploadSession represents a single Uloz.to upload session.
