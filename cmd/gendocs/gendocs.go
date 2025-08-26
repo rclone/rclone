@@ -169,8 +169,7 @@ rclone.org website.`,
 				name := filepath.Base(path)
 				cmd, ok := commands[name]
 				if !ok {
-					//return fmt.Errorf("didn't find command for %q", name)
-					return nil
+					return fmt.Errorf("didn't find command for %q", name)
 				}
 				b, err := os.ReadFile(path)
 				if err != nil {
