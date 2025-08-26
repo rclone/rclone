@@ -511,7 +511,7 @@ Instructions
    your local roles-directory
 2. add the role to the hosts you want rclone installed to:
 
-    ```yml
+    ```yaml
     - hosts: rclone-hosts
       roles:
         - rclone
@@ -638,7 +638,7 @@ Example of a PowerShell command that creates a Windows service for mounting
 some `remote:/files` as drive letter `X:`, for *all* users (service will be
 running as the local system account):
 
-```pwsh
+```powershell
 New-Service -Name Rclone -BinaryPathName 'c:\rclone\rclone.exe mount remote:/files X: --config c:\rclone\config\rclone.conf --log-file c:\rclone\logs\mount.txt'
 ```
 

@@ -260,7 +260,7 @@ the port on the host.
 
 A simple solution may be restarting the Host Network Service with eg. Powershell
 
-```pwsh
+```powershell
 Restart-Service hns
 ```
 

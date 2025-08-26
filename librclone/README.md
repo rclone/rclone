@@ -130,7 +130,7 @@ either.
 The interface of librclone is so simple, that all you need is to define the
 small struct `RcloneRPCResult`, from [librclone.go](librclone.go):
 
-```C++
+```c++
 struct RcloneRPCResult {
     char* Output;
     int	Status;
@@ -161,7 +161,7 @@ own escaping. This is not a Windows-specific issue, but there is the
 additional challenge that native filesystem path separator is the same as
 the escape character, and you may end up with strings like this:
 
-```C++
+```c++
 const char* input = "{"
 "\"fs\": \"C:\\\\Temp\","
 "\"remote\": \"sub/folder\","
