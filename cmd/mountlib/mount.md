@@ -99,7 +99,7 @@ backward. Examples:
 ```sh
 rclone @ remote:path/to/files *
 rclone @ remote:path/to/files X:
-rclone @ remote:path/to/files C:\\path\\parent\\mount
+rclone @ remote:path/to/files C:\path\parent\mount
 rclone @ remote:path/to/files X:
 ```
 
