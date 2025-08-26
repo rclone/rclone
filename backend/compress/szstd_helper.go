@@ -13,6 +13,7 @@ import (
 
 const szstdChunkSize int = 1 << 20 // 1 MiB chunk size
 
+// SzstdMetadata holds metadata for szstd compressed files.
 type SzstdMetadata struct {
 	BlockSize int      // BlockSize is the size of the blocks in the zstd file
 	Size      int64    // Size is the uncompressed size of the file
@@ -109,7 +110,7 @@ func (w *SzstdWriter) Close() error {
 
 // GetMetadata returns the metadata of the szstd writer.
 func (w *SzstdWriter) GetMetadata() SzstdMetadata {
-	return SzstdMetadata(w.metadata)
+	return w.metadata
 }
 
 // SzstdReaderAt is a reader that allows random access in szstd compressed data.
