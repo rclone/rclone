@@ -103,7 +103,7 @@ rclone lsd filelu:
 Copy a specific file to the FileLu root:
 
 ```sh
-rclone copy D:\\hello.txt filelu:
+rclone copy D:\hello.txt filelu:
 ```
 
 Copy files from a local directory to a FileLu directory:
@@ -121,7 +121,7 @@ rclone copy filelu:/file-path/hello.txt D:/local-folder
 Move files from a local directory to a FileLu directory:
 
 ```sh
-rclone move D:\\local-folder filelu:/remote-path/
+rclone move D:\local-folder filelu:/remote-path/
 ```
 
 Sync files from a local directory to a FileLu directory:
