@@ -3210,13 +3210,13 @@ at rest or transfer. Detailed instructions for popular OSes:
 
 - Generate and store a password
 
-  ```pwsh
+  ```powershell
   New-Object -TypeName PSCredential -ArgumentList "rclone", (ConvertTo-SecureString -String ([System.Web.Security.Membership]::GeneratePassword(40, 10)) -AsPlainText -Force) | Export-Clixml -Path "rclone-credential.xml"
   ```
 
 - Add the password retrieval instruction
 
-  ```pwsh
+  ```powershell
   [Environment]::SetEnvironmentVariable("RCLONE_PASSWORD_COMMAND", "[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((Import-Clixml -Path "rclone-credential.xml").Password))")
   ```
 
