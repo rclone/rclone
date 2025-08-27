@@ -878,7 +878,9 @@ which would have been updated or deleted will be stored in
 
 If running rclone from a script you might want to use today's date as
 the directory name passed to `--backup-dir` to store the old files, or
-you might want to pass `--suffix` with today's date.
+you might want to pass `--suffix` with today's date. This can be done
+with `--suffix $(date +%F)` in bash, and
+`--suffix $(Get-Date -Format 'yyyy-MM-dd')` in PowerShell.
 
 See `--compare-dest` and `--copy-dest`.
 
