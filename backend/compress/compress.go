@@ -529,6 +529,8 @@ func isCompressible(r io.Reader, compressionMode int) (bool, error) {
 		if err != nil {
 			return false, err
 		}
+	case Uncompressed:
+		return false, nil
 	default:
 		return false, fmt.Errorf("unsupported compression mode %d", compressionMode)
 	}
