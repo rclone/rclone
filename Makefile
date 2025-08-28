@@ -100,6 +100,7 @@ compiletest:
 check:	rclone
 	@echo "-- START CODE QUALITY REPORT -------------------------------"
 	@golangci-lint run $(LINTTAGS) ./...
+	@bin/markdown-lint
 	@echo "-- END CODE QUALITY REPORT ---------------------------------"
 
 # Get the build dependencies
