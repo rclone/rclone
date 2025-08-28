@@ -159,21 +159,32 @@ func TestRcCopyurl(t *testing.T) {
 
 // operations/delete: Remove files in the path
 func TestRcDelete(t *testing.T) {
+	ctx := context.Background()
 	r, call := rcNewRun(t, "operations/delete")
+	file1 := r.WriteObject(ctx, "subdir/file1", "subdir/file1 contents", t1)
+	file2 := r.WriteObject(ctx, "file2", "file2 contents", t1)
 
-	file1 := r.WriteObject(context.Background(), "small", "1234567890", t2)                                                                                           // 10 bytes
-	file2 := r.WriteObject(context.Background(), "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
-	file3 := r.WriteObject(context.Background(), "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
-	r.CheckRemoteItems(t, file1, file2, file3)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2}, []string{"subdir"}, fs.GetModifyWindow(ctx, r.Fremote))
 
 	in := rc.Params{
 		"fs": r.FremoteName,
 	}
-	out, err := call.Fn(context.Background(), in)
+	out, err := call.Fn(ctx, in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
-	r.CheckRemoteItems(t)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{"subdir"}, fs.GetModifyWindow(ctx, r.Fremote))
+
+	// Now try with rmdirs=true and leaveRoot=true
+	in["rmdirs"] = true
+	in["leaveRoot"] = true
+	out, err = call.Fn(ctx, in)
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{}, fs.GetModifyWindow(ctx, r.Fremote))
+
+	// FIXME don't have an easy way of checking the root still exists or not
 }
 
 // operations/deletefile: Remove the single file pointed to

@@ -208,7 +208,7 @@ func init() {
 		{name: "rmdir", title: "Remove an empty directory or container"},
 		{name: "purge", title: "Remove a directory or container and all of its contents"},
 		{name: "rmdirs", title: "Remove all the empty directories in the path", help: "- leaveRoot - boolean, set to true not to delete the root\n"},
-		{name: "delete", title: "Remove files in the path", noRemote: true},
+		{name: "delete", title: "Remove files in the path", help: "- rmdirs - boolean, set to true to remove empty directories\n- leaveRoot - boolean if rmdirs is set, set to true not to delete the root\n", noRemote: true},
 		{name: "deletefile", title: "Remove the single file pointed to"},
 		{name: "copyurl", title: "Copy the URL to the object", help: "- url - string, URL to read from\n - autoFilename - boolean, set to true to retrieve destination file name from url\n"},
 		{name: "uploadfile", title: "Upload file using multiform/form-data", help: "- each part in body represents a file to be uploaded\n", needsRequest: true, noCommand: true},
@@ -267,7 +267,22 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 		}
 		return nil, Rmdirs(ctx, f, remote, leaveRoot)
 	case "delete":
-		return nil, Delete(ctx, f)
+		rmdirs, err := in.GetBool("rmdirs")
+		if rc.NotErrParamNotFound(err) {
+			return nil, err
+		}
+		leaveRoot, err := in.GetBool("leaveRoot")
+		if rc.NotErrParamNotFound(err) {
+			return nil, err
+		}
+		err = Delete(ctx, f)
+		if err != nil {
+			return nil, err
+		}
+		if !rmdirs {
+			return nil, nil
+		}
+		return nil, Rmdirs(ctx, f, remote, leaveRoot)
 	case "deletefile":
 		o, err := f.NewObject(ctx, remote)
 		if err != nil {
