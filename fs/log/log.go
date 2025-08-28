@@ -9,8 +9,10 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/fs"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // OptionsInfo descripts the Options in use
@@ -18,6 +20,26 @@ var OptionsInfo = fs.Options{{
 	Name:    "log_file",
 	Default: "",
 	Help:    "Log everything to this file",
+	Groups:  "Logging",
+}, {
+	Name:    "log_file_max_size",
+	Default: fs.SizeSuffix(-1),
+	Help:    `Maximum size of the log file before it's rotated (eg "10M")`,
+	Groups:  "Logging",
+}, {
+	Name:    "log_file_max_backups",
+	Default: 0,
+	Help:    "Maximum number of old log files to retain.",
+	Groups:  "Logging",
+}, {
+	Name:    "log_file_max_age",
+	Default: fs.Duration(0),
+	Help:    `Maximum duration to retain old log files (eg "7d")`,
+	Groups:  "Logging",
+}, {
+	Name:    "log_file_compress",
+	Default: false,
+	Help:    "If set, compress rotated log files using gzip.",
 	Groups:  "Logging",
 }, {
 	Name:    "log_format",
@@ -54,12 +76,16 @@ var OptionsInfo = fs.Options{{
 
 // Options contains options for controlling the logging
 type Options struct {
-	File                 string      `config:"log_file"`        // Log everything to this file
-	Format               logFormat   `config:"log_format"`      // Comma separated list of log format options
-	UseSyslog            bool        `config:"syslog"`          // Use Syslog for logging
-	SyslogFacility       string      `config:"syslog_facility"` // Facility for syslog, e.g. KERN,USER,...
-	LogSystemdSupport    bool        `config:"log_systemd"`     // set if using systemd logging
-	WindowsEventLogLevel fs.LogLevel `config:"windows_event_log_level"`
+	File                 string        `config:"log_file"`             // Log everything to this file
+	MaxSize              fs.SizeSuffix `config:"log_file_max_size"`    // Max size of log file
+	MaxBackups           int           `config:"log_file_max_backups"` // Max backups of log file
+	MaxAge               fs.Duration   `config:"log_file_max_age"`     // Max age of of log file
+	Compress             bool          `config:"log_file_compress"`    // Set to compress log file
+	Format               logFormat     `config:"log_format"`           // Comma separated list of log format options
+	UseSyslog            bool          `config:"syslog"`               // Use Syslog for logging
+	SyslogFacility       string        `config:"syslog_facility"`      // Facility for syslog, e.g. KERN,USER,...
+	LogSystemdSupport    bool          `config:"log_systemd"`          // set if using systemd logging
+	WindowsEventLogLevel fs.LogLevel   `config:"windows_event_log_level"`
 }
 
 func init() {
@@ -182,16 +208,42 @@ func InitLogging() {
 
 	// Log file output
 	if Opt.File != "" {
-		f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
-		if err != nil {
-			fs.Fatalf(nil, "Failed to open log file: %v", err)
+		var w io.Writer
+		if Opt.MaxSize == 0 {
+			// No log rotation - just open the file as normal
+			// We'll capture tracebacks like this too.
+			f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
+			if err != nil {
+				fs.Fatalf(nil, "Failed to open log file: %v", err)
+			}
+			_, err = f.Seek(0, io.SeekEnd)
+			if err != nil {
+				fs.Errorf(nil, "Failed to seek log file to end: %v", err)
+			}
+			redirectStderr(f)
+			w = f
+		} else {
+			// Round with a minimum of 1 if set
+			round := func(x float64) int {
+				if x <= 0 {
+					return 0
+				} else if x <= 1 {
+					return 1
+				}
+				return int(x + 0.5)
+			}
+			// Log rotation active
+			f := &lumberjack.Logger{
+				Filename:   Opt.File,
+				MaxSize:    round(float64(Opt.MaxSize) / float64(fs.Mebi)), // MiB
+				MaxBackups: Opt.MaxBackups,
+				MaxAge:     round(time.Duration(Opt.MaxAge).Hours() / 24), // Days
+				Compress:   Opt.Compress,
+				LocalTime:  true, // format log file names in localtime
+			}
+			w = f
 		}
-		_, err = f.Seek(0, io.SeekEnd)
-		if err != nil {
-			fs.Errorf(nil, "Failed to seek log file to end: %v", err)
-		}
-		redirectStderr(f)
-		Handler.setWriter(f)
+		Handler.setWriter(w)
 	}
 
 	// --use-json-log implies JSON formatting

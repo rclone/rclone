@@ -18,7 +18,7 @@ image](https://securebuild.com/images/rclone) through our partner
 | OS | Minimum Version |
 |:-------:|:-------:|
 | Linux | Kernel 3.2 |
-| macOS | 11 (Big Sur) |
+| macOS | 12 (Monterey) |
 | Windows | 10, Server 2016 |
 | FreeBSD | 12.2 |
 | OpenBSD | 6.9 |

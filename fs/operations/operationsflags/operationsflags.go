@@ -22,7 +22,7 @@ var help string
 
 // Help returns the help string cleaned up to simplify appending
 func Help() string {
-	return strings.TrimSpace(help) + "\n\n"
+	return strings.TrimSpace(help)
 }
 
 // AddLoggerFlagsOptions contains options for the Logger Flags

@@ -18,11 +18,13 @@ which you need to do in your browser.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found - make a new one
 n) New remote
 s) Set configuration password
@@ -83,34 +85,42 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level of your HiDrive root folder
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your HiDrive filesystem
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to a HiDrive directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Keeping your tokens safe
 
-Any OAuth-tokens will be stored by rclone in the remote's configuration file as unencrypted text.
-Anyone can use a valid refresh-token to access your HiDrive filesystem without knowing your password.
-Therefore you should make sure no one else can access your configuration.
+Any OAuth-tokens will be stored by rclone in the remote's configuration file as
+unencrypted text. Anyone can use a valid refresh-token to access your HiDrive
+filesystem without knowing your password. Therefore you should make sure no one
+else can access your configuration.
 
 It is possible to encrypt rclone's configuration file.
-You can find information on securing your configuration file by viewing the [configuration encryption docs](/docs/#configuration-encryption).
+You can find information on securing your configuration file by viewing the
+[configuration encryption docs](/docs/#configuration-encryption).
 
 ### Invalid refresh token
 
-As can be verified [here](https://developer.hidrive.com/basics-flows/),
+As can be verified on [HiDrive's OAuth guide](https://developer.hidrive.com/basics-flows/),
 each `refresh_token` (for Native Applications) is valid for 60 days.
 If used to access HiDrivei, its validity will be automatically extended.
 
 This means that if you
 
-  * Don't use the HiDrive remote for 60 days
+- Don't use the HiDrive remote for 60 days
 
 then rclone will return an error which includes a text
 that implies the refresh token is *invalid* or *expired*.
@@ -119,7 +129,9 @@ To fix this you will need to authorize rclone to access your HiDrive account aga
 
 Using
 
-    rclone config reconnect remote:
+```sh
+rclone config reconnect remote:
+```
 
 the process is very similar to the process of initial setup exemplified before.
 
@@ -141,7 +153,7 @@ Therefore rclone will automatically replace these characters,
 if files or folders are stored or accessed with such names.
 
 You can read about how this filename encoding works in general
-[here](overview/#restricted-filenames).
+in the [main docs](/overview/#restricted-filenames).
 
 Keep in mind that HiDrive only supports file or folder names
 with a length of 255 characters or less.
@@ -157,9 +169,9 @@ so you may want to restrict this behaviour on systems with limited resources.
 
 You can customize this behaviour using the following options:
 
-* `chunk_size`: size of file parts
-* `upload_cutoff`: files larger or equal to this in size will use a chunked transfer
-* `upload_concurrency`: number of file-parts to upload at the same time
+- `chunk_size`: size of file parts
+- `upload_cutoff`: files larger or equal to this in size will use a chunked transfer
+- `upload_concurrency`: number of file-parts to upload at the same time
 
 See the below section about configuration options for more details.
 
@@ -176,9 +188,10 @@ This works by prepending the contents of the `root_prefix` option
 to any paths accessed by rclone.
 For example, the following two ways to access the home directory are equivalent:
 
-    rclone lsd --hidrive-root-prefix="/users/test/" remote:path
-
-    rclone lsd remote:/users/test/path
+```sh
+rclone lsd --hidrive-root-prefix="/users/test/" remote:path
+rclone lsd remote:/users/test/path
+```
 
 See the below section about configuration options for more details.
 
@@ -187,10 +200,10 @@ See the below section about configuration options for more details.
 By default, rclone will know the number of directory members contained in a directory.
 For example, `rclone lsd` uses this information.
 
-The acquisition of this information will result in additional time costs for HiDrive's API.
-When dealing with large directory structures, it may be desirable to circumvent this time cost,
-especially when this information is not explicitly needed.
-For this, the `disable_fetching_member_count` option can be used.
+The acquisition of this information will result in additional time costs for
+HiDrive's API. When dealing with large directory structures, it may be
+desirable to circumvent this time cost, especially when this information is not
+explicitly needed. For this, the `disable_fetching_member_count` option can be used.
 
 See the below section about configuration options for more details.
 
@@ -287,6 +300,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

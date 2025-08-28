@@ -18,11 +18,13 @@ connecting to then rclone can enable extra features.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -91,15 +93,21 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level of your WebDAV
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your WebDAV
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an WebDAV directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Modification times and hashes
 

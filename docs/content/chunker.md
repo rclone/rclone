@@ -26,8 +26,8 @@ then you should probably put the bucket in the remote `s3:bucket`.
 Now configure `chunker` using `rclone config`. We will call this one `overlay`
 to separate it from the `remote` itself.
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -92,16 +92,15 @@ So if you use a remote of `/path/to/secret/files` then rclone will
 chunk stuff in that directory. If you use a remote of `name` then rclone
 will put files in a directory called `name` in the current directory.
 
-
 ### Chunking
 
 When rclone starts a file upload, chunker checks the file size. If it
 doesn't exceed the configured chunk size, chunker will just pass the file
-to the wrapped remote (however, see caveat below). If a file is large, chunker will transparently cut
-data in pieces with temporary names and stream them one by one, on the fly.
-Each data chunk will contain the specified number of bytes, except for the
-last one which may have less data. If file size is unknown in advance
-(this is called a streaming upload), chunker will internally create
+to the wrapped remote (however, see caveat below). If a file is large, chunker
+will transparently cut data in pieces with temporary names and stream them one
+by one, on the fly. Each data chunk will contain the specified number of bytes,
+except for the last one which may have less data. If file size is unknown in
+advance (this is called a streaming upload), chunker will internally create
 a temporary copy, record its size and repeat the above process.
 
 When upload completes, temporary chunk files are finally renamed.
@@ -129,14 +128,13 @@ proceed with current command.
 You can set the `--chunker-fail-hard` flag to have commands abort with
 error message in such cases.
 
-**Caveat**: As it is now, chunker will always create a temporary file in the 
+**Caveat**: As it is now, chunker will always create a temporary file in the
 backend and then rename it, even if the file is below the chunk threshold.
 This will result in unnecessary API calls and can severely restrict throughput
-when handling transfers primarily composed of small files on some backends (e.g. Box).
-A workaround to this issue is to use chunker only for files above the chunk threshold
-via `--min-size` and then perform a separate call without chunker on the remaining
-files. 
-
+when handling transfers primarily composed of small files on some backends
+(e.g. Box). A workaround to this issue is to use chunker only for files above
+the chunk threshold via `--min-size` and then perform a separate call without
+chunker on the remaining files.
 
 #### Chunk names
 
@@ -164,7 +162,6 @@ non-chunked files.
 
 When using `norename` transactions, chunk names will additionally have a unique
 file version suffix. For example, `BIG_FILE_NAME.rclone_chunk.001_bp562k`.
-
 
 ### Metadata
 
@@ -198,7 +195,6 @@ configured chunk name format, group them by detecting chunks with the same
 base name and show group names as virtual composite files.
 This method is more prone to missing chunk errors (especially missing
 last chunk) than format with metadata enabled.
-
 
 ### Hashsums
 
@@ -243,7 +239,6 @@ hashsums at destination. Beware of consequences: the `sync` command will
 revert (sometimes silently) to time/size comparison if compatible hashsums
 between source and target are not found.
 
-
 ### Modification times
 
 Chunker stores modification times using the wrapped remote so support
@@ -253,7 +248,6 @@ For a composite file with metadata chunker will get and set
 modification time of the metadata object on the wrapped remote.
 If file is chunked but metadata format is `none` then chunker will
 use modification time of the first data chunk.
-
 
 ### Migrations
 
@@ -282,7 +276,6 @@ An easy way to get rid of hidden garbage is to copy littered directory
 somewhere using the chunker remote and purge the original directory.
 The `copy` command will copy only active chunks while the `purge` will
 remove everything including garbage.
-
 
 ### Caveats and Limitations
 

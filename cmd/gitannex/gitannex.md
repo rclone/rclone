@@ -4,8 +4,7 @@ users.
 
 [git-annex]: https://git-annex.branchable.com/
 
-Installation on Linux
----------------------
+### Installation on Linux
 
 1. Skip this step if your version of git-annex is [10.20240430] or newer.
    Otherwise, you must create a symlink somewhere on your PATH with a particular

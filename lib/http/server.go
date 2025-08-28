@@ -84,13 +84,16 @@ by ` + "`--{{ .Prefix }}addr`" + `).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 
 Socket activation can be tested ad-hoc with the ` + "`systemd-socket-activate`" + `command
 
-       systemd-socket-activate -l 8000 -- rclone serve
+` + "```sh" + `
+systemd-socket-activate -l 8000 -- rclone serve
+` + "```" + `
 
 This will socket-activate rclone on the first connection to port 8000 over TCP.
+
 `
 	tmpl, err := template.New("server help").Parse(help)
 	if err != nil {

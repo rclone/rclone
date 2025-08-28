@@ -105,7 +105,7 @@ var Command = &cobra.Command{
 	},
 	Use:   "s3 remote:path",
 	Short: `Serve remote:path over s3.`,
-	Long:  help() + httplib.AuthHelp(flagPrefix) + httplib.Help(flagPrefix) + vfs.Help(),
+	Long:  help() + strings.TrimSpace(httplib.AuthHelp(flagPrefix)+httplib.Help(flagPrefix)+vfs.Help()),
 	RunE: func(command *cobra.Command, args []string) error {
 		var f fs.Fs
 		if proxy.Opt.AuthProxy == "" {

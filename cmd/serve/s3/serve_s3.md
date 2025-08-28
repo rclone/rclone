@@ -33,20 +33,20 @@ cause problems for S3 clients which rely on the Etag being the MD5.
 For a simple set up, to serve `remote:path` over s3, run the server
 like this:
 
-```
+```sh
 rclone serve s3 --auth-key ACCESS_KEY_ID,SECRET_ACCESS_KEY remote:path
 ```
 
 For example, to use a simple folder in the filesystem, run the server
 with a command like this:
 
-```
+```sh
 rclone serve s3 --auth-key ACCESS_KEY_ID,SECRET_ACCESS_KEY local:/path/to/folder
 ```
 
 The `rclone.conf` for the server could look like this:
 
-```
+```ini
 [local]
 type = local
 ```
@@ -59,7 +59,7 @@ will be visible as a warning in the logs. But it will run nonetheless.
 This will be compatible with an rclone (client) remote configuration which
 is defined like this:
 
-```
+```ini
 [serves3]
 type = s3
 provider = Rclone
@@ -116,20 +116,20 @@ metadata which will be set as the modification time of the file.
 `serve s3` currently supports the following operations.
 
 - Bucket
-    - `ListBuckets`
-    - `CreateBucket`
-    - `DeleteBucket`
+  - `ListBuckets`
+  - `CreateBucket`
+  - `DeleteBucket`
 - Object
-    - `HeadObject`
-    - `ListObjects`
-    - `GetObject`
-    - `PutObject`
-    - `DeleteObject`
-    - `DeleteObjects`
-    - `CreateMultipartUpload`
-    - `CompleteMultipartUpload`
-    - `AbortMultipartUpload`
-    - `CopyObject`
-    - `UploadPart`
+  - `HeadObject`
+  - `ListObjects`
+  - `GetObject`
+  - `PutObject`
+  - `DeleteObject`
+  - `DeleteObjects`
+  - `CreateMultipartUpload`
+  - `CompleteMultipartUpload`
+  - `AbortMultipartUpload`
+  - `CopyObject`
+  - `UploadPart`
 
 Other operations will return error `Unimplemented`.

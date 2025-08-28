@@ -20,13 +20,14 @@ var powershellCommandDefinition = &cobra.Command{
 
 To load completions in your current shell session:
 
-    rclone completion powershell | Out-String | Invoke-Expression
+` + "```sh" + `
+rclone completion powershell | Out-String | Invoke-Expression
+` + "```" + `
 
 To load completions for every new session, add the output of the above command
 to your powershell profile.
 
-If output_file is "-" or missing, then the output will be written to stdout.
-`,
+If output_file is "-" or missing, then the output will be written to stdout.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
 		if len(args) == 0 || (len(args) > 0 && args[0] == "-") {

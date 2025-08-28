@@ -18,11 +18,13 @@ device.
 
 Here is an example of how to make a remote called `filelu`. First, run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -54,7 +56,7 @@ A path without an initial `/` will operate in the `Rclone` directory.
 A path with an initial `/` will operate at the root where you can see
 the `Rclone` directory.
 
-```
+```sh
 $ rclone lsf TestFileLu:/
 CCTV/
 Camera/
@@ -70,55 +72,81 @@ Videos/
 
 Create a new folder named `foldername` in the `Rclone` directory:
 
-    rclone mkdir filelu:foldername
+```sh
+rclone mkdir filelu:foldername
+```
 
 Delete a folder on FileLu:
 
-    rclone rmdir filelu:/folder/path/
+```sh
+rclone rmdir filelu:/folder/path/
+```
 
 Delete a file on FileLu:
 
-    rclone delete filelu:/hello.txt
+```sh
+rclone delete filelu:/hello.txt
+```
 
 List files from your FileLu account:
 
-    rclone ls filelu:
+```sh
+rclone ls filelu:
+```
 
 List all folders:
 
-    rclone lsd filelu:
+```sh
+rclone lsd filelu:
+```
 
 Copy a specific file to the FileLu root:
 
-    rclone copy D:\\hello.txt filelu:
+```sh
+rclone copy D:\hello.txt filelu:
+```
 
 Copy files from a local directory to a FileLu directory:
 
-    rclone copy D:/local-folder filelu:/remote-folder/path/
-    
+```sh
+rclone copy D:/local-folder filelu:/remote-folder/path/
+```
+
 Download a file from FileLu into a local directory:
 
-    rclone copy filelu:/file-path/hello.txt D:/local-folder
+```sh
+rclone copy filelu:/file-path/hello.txt D:/local-folder
+```
 
 Move files from a local directory to a FileLu directory:
 
-    rclone move D:\\local-folder filelu:/remote-path/
+```sh
+rclone move D:\local-folder filelu:/remote-path/
+```
 
 Sync files from a local directory to a FileLu directory:
 
-    rclone sync --interactive D:/local-folder filelu:/remote-path/
-    
+```sh
+rclone sync --interactive D:/local-folder filelu:/remote-path/
+```
+
 Mount remote to local Linux:
 
-    rclone mount filelu: /root/mnt --vfs-cache-mode full
+```sh
+rclone mount filelu: /root/mnt --vfs-cache-mode full
+```
 
 Mount remote to local Windows:
 
-    rclone mount filelu: D:/local_mnt --vfs-cache-mode full
+```sh
+rclone mount filelu: D:/local_mnt --vfs-cache-mode full
+```
 
 Get storage info about the FileLu account:
 
-    rclone about filelu:
+```sh
+rclone about filelu:
+```
 
 All the other rclone commands are supported by this backend.
 
@@ -135,8 +163,8 @@ millions of files, duplicate folder names or paths are quite common.
 
 FileLu supports both modification times and MD5 hashes.
 
-FileLu only supports filenames and folder names up to 255 characters in length, where a
-character is a Unicode character.
+FileLu only supports filenames and folder names up to 255 characters in length,
+where a character is a Unicode character.
 
 ### Duplicated Files
 
@@ -155,7 +183,7 @@ key.
 If you are connecting to your FileLu remote for the first time and
 encounter an error such as:
 
-```
+```text
 Failed to create file system for "my-filelu-remote:": couldn't login: Invalid credentials
 ```
 

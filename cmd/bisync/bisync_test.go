@@ -176,6 +176,7 @@ var (
 	// Flag -refresh-times helps with Dropbox tests failing with message
 	// "src and dst identical but can't set mod time without deleting and re-uploading"
 	argRefreshTimes = flag.Bool("refresh-times", false, "Force refreshing the target modtime, useful for Dropbox (default: false)")
+	ignoreLogs      = flag.Bool("ignore-logs", false, "skip comparing log lines but still compare listings")
 )
 
 // bisyncTest keeps all test data in a single place
@@ -226,6 +227,18 @@ var color = bisync.Color
 
 // TestMain drives the tests
 func TestMain(m *testing.M) {
+	bisync.LogTZ = time.UTC
+	ci := fs.GetConfig(context.TODO())
+	ciSave := *ci
+	defer func() {
+		*ci = ciSave
+	}()
+	// need to set context.TODO() here as we cannot pass a ctx to fs.LogLevelPrintf
+	ci.LogLevel = fs.LogLevelInfo
+	if *argDebug {
+		ci.LogLevel = fs.LogLevelDebug
+	}
+	fstest.Initialise()
 	fstest.TestMain(m)
 }
 
@@ -238,7 +251,8 @@ func TestBisyncRemoteLocal(t *testing.T) {
 	fs.Logf(nil, "remote: %v", remote)
 	require.NoError(t, err)
 	defer cleanup()
-	testBisync(t, remote, *argRemote2)
+	ctx, _ := fs.AddConfig(context.TODO())
+	testBisync(ctx, t, remote, *argRemote2)
 }
 
 // Path1 is local, Path2 is remote
@@ -250,7 +264,8 @@ func TestBisyncLocalRemote(t *testing.T) {
 	fs.Logf(nil, "remote: %v", remote)
 	require.NoError(t, err)
 	defer cleanup()
-	testBisync(t, *argRemote2, remote)
+	ctx, _ := fs.AddConfig(context.TODO())
+	testBisync(ctx, t, *argRemote2, remote)
 }
 
 // Path1 and Path2 are both different directories on remote
@@ -260,14 +275,34 @@ func TestBisyncRemoteRemote(t *testing.T) {
 	fs.Logf(nil, "remote: %v", remote)
 	require.NoError(t, err)
 	defer cleanup()
-	testBisync(t, remote, remote)
+	ctx, _ := fs.AddConfig(context.TODO())
+	testBisync(ctx, t, remote, remote)
+}
+
+// make sure rc can cope with running concurrent jobs
+func TestBisyncConcurrent(t *testing.T) {
+	if !isLocal(*fstest.RemoteName) {
+		t.Skip("TestBisyncConcurrent is skipped on non-local")
+	}
+	oldArgTestCase := argTestCase
+	*argTestCase = "basic"
+	*ignoreLogs = true // not useful to compare logs here because both runs will be logging at once
+	t.Cleanup(func() {
+		argTestCase = oldArgTestCase
+		*ignoreLogs = false
+	})
+
+	t.Run("test1", testParallel)
+	t.Run("test2", testParallel)
+}
+
+func testParallel(t *testing.T) {
+	t.Parallel()
+	TestBisyncRemoteRemote(t)
 }
 
 // TestBisync is a test engine for bisync test cases.
-func testBisync(t *testing.T, path1, path2 string) {
-	ctx := context.Background()
-	fstest.Initialise()
-
+func testBisync(ctx context.Context, t *testing.T, path1, path2 string) {
 	ci := fs.GetConfig(ctx)
 	ciSave := *ci
 	defer func() {
@@ -276,8 +311,9 @@ func testBisync(t *testing.T, path1, path2 string) {
 	if *argRefreshTimes {
 		ci.RefreshTimes = true
 	}
+	bisync.ColorsLock.Lock()
 	bisync.Colors = true
-	time.Local = bisync.TZ
+	bisync.ColorsLock.Unlock()
 	ci.FsCacheExpireDuration = fs.Duration(5 * time.Hour)
 
 	baseDir, err := os.Getwd()
@@ -563,11 +599,15 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	}
 }
 
+func isLocal(remote string) bool {
+	return bilib.IsLocalPath(remote) && !strings.HasPrefix(remote, ":") && !strings.Contains(remote, ",")
+}
+
 // makeTempRemote creates temporary folder and makes a filesystem
 // if a local path is provided, it's ignored (the test will run under system temp)
 func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) (f, parent fs.Fs, path, canon string) {
 	var err error
-	if bilib.IsLocalPath(remote) && !strings.HasPrefix(remote, ":") && !strings.Contains(remote, ",") {
+	if isLocal(remote) {
 		if remote != "" && !strings.HasPrefix(remote, "local") && *fstest.RemoteName != "" {
 			b.t.Fatalf(`Missing ":" in remote %q. Use "local" to test with local filesystem.`, remote)
 		}
@@ -598,13 +638,8 @@ func (b *bisyncTest) makeTempRemote(ctx context.Context, remote, subdir string) 
 }
 
 func (b *bisyncTest) cleanupCase(ctx context.Context) {
-	// Silence "directory not found" errors from the ftp backend
-	_ = bilib.CaptureOutput(func() {
-		_ = operations.Purge(ctx, b.fs1, "")
-	})
-	_ = bilib.CaptureOutput(func() {
-		_ = operations.Purge(ctx, b.fs2, "")
-	})
+	_ = operations.Purge(ctx, b.fs1, "")
+	_ = operations.Purge(ctx, b.fs2, "")
 	_ = os.RemoveAll(b.workDir)
 	accounting.Stats(ctx).ResetCounters()
 }
@@ -619,11 +654,6 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	defer func() {
 		*ci = ciSave
 	}()
-	ci.LogLevel = fs.LogLevelInfo
-	if b.debug {
-		ci.LogLevel = fs.LogLevelDebug
-	}
-
 	testFunc := func() {
 		src := filepath.Join(b.dataDir, "file7.txt")
 
@@ -953,6 +983,12 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		b.fs2.Features().Disable("Copy") // API has longstanding bug for conflictBehavior=replace https://github.com/rclone/rclone/issues/4590
 		b.fs2.Features().Disable("Move")
 	}
+	if strings.HasPrefix(b.fs1.String(), "sftp") {
+		b.fs1.Features().Disable("Copy") // disable --sftp-copy-is-hardlink as hardlinks are not truly copies
+	}
+	if strings.HasPrefix(b.fs2.String(), "sftp") {
+		b.fs2.Features().Disable("Copy") // disable --sftp-copy-is-hardlink as hardlinks are not truly copies
+	}
 	if strings.Contains(strings.ToLower(fs.ConfigString(b.fs1)), "mailru") || strings.Contains(strings.ToLower(fs.ConfigString(b.fs2)), "mailru") {
 		fs.GetConfig(ctx).TPSLimit = 10 // https://github.com/rclone/rclone/issues/7768#issuecomment-2060888980
 	}
@@ -975,17 +1011,23 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		objinfo := object.NewStaticObjectInfo("modtime_write_test", initDate, int64(len("modtime_write_test")), true, nil, nil)
 		obj, err := f.Put(ctx, in, objinfo)
 		require.NoError(b.t, err)
+		if !f.Features().IsLocal {
+			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
+		}
 		err = obj.SetModTime(ctx, initDate)
 		if err == fs.ErrorCantSetModTime {
-			if b.testCase != "nomodtime" {
-				b.t.Skip("skipping test as at least one remote does not support setting modtime")
-			}
+			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+		}
+		if !f.Features().IsLocal {
+			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
 		}
 		err = obj.Remove(ctx)
 		require.NoError(b.t, err)
 	}
-	testSetModtime(b.fs1)
-	testSetModtime(b.fs2)
+	if b.testCase != "nomodtime" {
+		testSetModtime(b.fs1)
+		testSetModtime(b.fs2)
+	}
 
 	if b.testCase == "normalization" || b.testCase == "extended_char_paths" || b.testCase == "extended_filenames" {
 		// test whether remote is capable of running test
@@ -1429,6 +1471,9 @@ func (b *bisyncTest) compareResults() int {
 		resultText := b.mangleResult(b.workDir, file, false)
 
 		if fileType(file) == "log" {
+			if *ignoreLogs {
+				continue
+			}
 			// save mangled logs so difference is easier on eyes
 			goldenFile := filepath.Join(b.logDir, "mangled.golden.log")
 			resultFile := filepath.Join(b.logDir, "mangled.result.log")

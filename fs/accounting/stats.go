@@ -368,7 +368,7 @@ func (s *StatsInfo) averageLoop(ctx context.Context) {
 // Call with the mutex held
 func (s *StatsInfo) _startAverageLoop() {
 	if !s.average.started {
-		ctx, cancel := context.WithCancel(s.ctx)
+		ctx, cancel := context.WithCancel(context.Background())
 		s.average.cancel = cancel
 		s.average.started = true
 		s.average.stopped.Add(1)

@@ -783,6 +783,18 @@ Parameters:
 
 **Authentication is required for this call.**
 
+### config/unlock: Unlock the config file. {#config-unlock}
+
+Unlocks the config file if it is locked.
+
+Parameters:
+
+- 'config_password' - password to unlock the config file
+
+A good idea is to disable AskPassword before making this call
+
+**Authentication is required for this call.**
+
 ### config/update: update the config for a remote. {#config-update}
 
 This takes the following parameters:
@@ -1066,6 +1078,7 @@ Returns the following values:
 				"size": size of the file in bytes,
 				"bytes": total transferred bytes for this file,
 				"checked": if the transfer is only checked (skipped, deleted),
+				"what": the purpose of the transfer (transferring, deleting, checking, importing, hashing, merging, listing, moving, renaming),
 				"timestamp": integer representing millisecond unix epoch,
 				"error": string description of the error (empty if successful),
 				"jobid": id of the job that this transfer belongs to
@@ -1783,7 +1796,7 @@ Parameters:
 
 Note that these are the global options which are unaffected by use of
 the _config and _filter parameters. If you wish to read the parameters
-set in _config then use options/config and for _filter use options/filter.
+set in _config or _filter use options/local.
 
 This shows the internal names of the option within rclone which should
 map to the external options very easily with a few exceptions.
@@ -2115,8 +2128,7 @@ This takes the following parameters
 - removeEmptyDirs - remove empty directories at the final cleanup step
 - filtersFile - read filtering patterns from a file
 - ignoreListingChecksum - Do not use checksums for listings
-- resilient - Allow future runs to retry after certain less-serious errors, instead of requiring resync. 
-            Use at your own risk!
+- resilient - Allow future runs to retry after certain less-serious errors, instead of requiring resync.
 - workdir - server directory for history files (default: `~/.cache/rclone/bisync`)
 - backupdir1 - --backup-dir for Path1. Must be a non-overlapping path on the same remote.
 - backupdir2 - --backup-dir for Path2. Must be a non-overlapping path on the same remote.
