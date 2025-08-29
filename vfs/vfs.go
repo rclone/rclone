@@ -23,6 +23,7 @@ package vfs
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -614,6 +615,50 @@ const unknownFreeBytes = 1 << 50
 // The values will be -1 if they aren't known
 //
 // This information is cached for the DirCacheTime interval
+// GetFileStatus retrieves the caching status of a single file.
+// It takes the file path as a parameter.
+// It returns a FileStatus object containing the file's caching details.
+func (vfs *VFS) GetFileStatus(path string) (*vfscommon.FileStatus, error) {
+	node, err := vfs.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if node.IsDir() {
+		return nil, fmt.Errorf("path is a directory, not a file")
+	}
+	file := node.(*File)
+	return file.GetStatus(), nil
+}
+
+// GetDirStatus retrieves the caching status of all files in a directory.
+// It takes the directory path as a parameter.
+// It returns a DirStatusList (slice of FileStatus) containing caching details for files in the directory.
+func (vfs *VFS) GetDirStatus(path string) (vfscommon.DirStatusList, error) {
+	node, err := vfs.Stat(path)
+	if err != nil {
+		return vfscommon.DirStatusList{}, errors.New("no DirStatus value available")
+	}
+	if !node.IsDir() {
+		return vfscommon.DirStatusList{}, fmt.Errorf("path is a file, not a directory")
+	}
+	dir := node.(*Dir)
+
+	items, err := dir.ReadDirAll()
+	if err != nil {
+		return vfscommon.DirStatusList{}, err
+	}
+
+	var statusList []vfscommon.FileStatus
+	for _, itemNode := range items {
+		if !itemNode.IsDir() {
+			file := itemNode.(*File)
+			statusList = append(statusList, *file.GetStatus())
+		}
+	}
+
+	return vfscommon.DirStatusList(statusList), nil
+}
+
 func (vfs *VFS) Statfs() (total, used, free int64) {
 	// defer log.Trace("/", "")("total=%d, used=%d, free=%d", &total, &used, &free)
 	vfs.usageMu.Lock()
@@ -702,7 +747,7 @@ func (vfs *VFS) Chtimes(name string, atime time.Time, mtime time.Time) error {
 
 // mkdir creates a new directory with the specified name and permission bits
 // (before umask) returning the new directory node.
-func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
+func (vfs *VFS) mkdir(name string) (*Dir, error) {
 	dir, leaf, err := vfs.StatParent(name)
 	if err != nil {
 		return nil, err
@@ -713,7 +758,7 @@ func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
 // Mkdir creates a new directory with the specified name and permission bits
 // (before umask).
 func (vfs *VFS) Mkdir(name string, perm os.FileMode) error {
-	_, err := vfs.mkdir(name, perm)
+	_, err := vfs.mkdir(name)
 	return err
 }
 

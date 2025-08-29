@@ -65,16 +65,37 @@ type File struct {
 // o may be nil
 func newFile(d *Dir, dPath string, o fs.Object, leaf string) *File {
 	f := &File{
-		d:     d,
+		// The directory this file is in
+		d: d,
+
+		// The path of the directory this file is in
+		// NB this is used to create the full path of the file
+		// which is used in the cache
 		dPath: dPath,
-		o:     o,
-		leaf:  leaf,
+
+		// The fs.Object that this file represents
+		// This may be nil if the file is being written
+		o: o,
+
+		// The leaf name of the file
+		leaf: leaf,
+
+		// The inode number of this file - read only
+		// This is used to identify the file in the VFS
 		inode: newInode(),
+
+		// The size of the file - read only
+		// This is used for caching and stat
+		size: atomic.Int64{},
 	}
+
+	// Set the size of the file if o is not nil
 	if o != nil {
 		f.size.Store(o.Size())
 	}
+	// Set whether this is a link or not based on f.o
 	f._setIsLink()
+
 	return f
 }
 
@@ -84,6 +105,55 @@ func (f *File) _setIsLink() {
 		return
 	}
 	f.isLink = f.d.vfs.Opt.Links && strings.HasSuffix(f.o.Remote(), fs.LinkSuffix)
+}
+
+// GetStatus returns the detailed caching status of the file.
+// It queries the VFS cache for the file's current state.
+// The status includes whether the file is cached, partially cached, dirty, or uncached,
+// along with its size, cached size, and percentage cached.
+func (f *File) GetStatus() *vfscommon.FileStatus {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	status := &vfscommon.FileStatus{
+		Name: f.Name(),
+		Path: f.Path(),
+		Size: f.Size(), // Actual size of the file on the remote
+	}
+
+	// Get the cache item associated with this file from the VFS cache.
+	cacheItem := f.VFS().cache.Item(f.Path())
+
+	// Retrieve cached size and handle potential errors.
+	cachedSize, err := cacheItem.GetSize()
+	if err != nil {
+		// If we can't get the size, it's likely not in cache or an error occurred.
+		cachedSize = 0
+	}
+	status.CachedSize = cachedSize
+
+	if f.Size() > 0 {
+		status.Percentage = int(100 * status.CachedSize / f.Size())
+	}
+	if status.Percentage >= 100 {
+		status.Percentage = 100
+	}
+
+	// Determine the exact status based on cache item properties and cached percentage.
+	if cacheItem.IsDirty() {
+		status.Status = vfscommon.StatusDirty
+	// } else if cacheItem.IsUploading() { // TODO: Implement IsUploading status check if possible
+	// 	status.Status = vfscommon.StatusUploading
+	} else if status.Percentage >= 100 {
+		status.Status = vfscommon.StatusCached
+	} else if status.Percentage > 0 {
+		status.Status = vfscommon.StatusPartial
+	} else {
+		// If the item exists in cache (metadata) but has 0 bytes cached.
+		status.Status = vfscommon.StatusUncached
+	}
+
+	return status
 }
 
 // String converts it to printable
@@ -625,7 +695,7 @@ func (f *File) openWrite(flags int) (fh *WriteFileHandle, err error) {
 	}
 	// fs.Debugf(f.Path(), "File.openWrite")
 
-	fh, err = newWriteFileHandle(d, f, f.Path(), flags)
+	fh, err = newWriteFileHandle(f, f.Path(), flags)
 	if err != nil {
 		fs.Debugf(f.Path(), "File.openWrite failed: %v", err)
 		return nil, err
