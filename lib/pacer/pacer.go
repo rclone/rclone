@@ -4,6 +4,8 @@ package pacer
 import (
 	"errors"
 	"fmt"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -148,6 +150,33 @@ func (p *Pacer) ModifyCalculator(f func(Calculator)) {
 	p.mu.Unlock()
 }
 
+// Detect the pacer being called reentrantly.
+//
+// This looks for Pacer.call in the call stack and returns true if it
+// is found.
+//
+// Ideally we would do this by passing a context about but there are
+// an awful lot of Pacer calls!
+//
+// This is only needed when p.maxConnections > 0 which isn't a common
+// configuration so adding a bit of extra slowdown here is not a
+// problem.
+func pacerReentered() bool {
+	var pcs [48]uintptr
+	n := runtime.Callers(4, pcs[:]) // skip runtime.Callers, pacerReentered, beginCall/endCall and call
+	frames := runtime.CallersFrames(pcs[:n])
+	for {
+		f, more := frames.Next()
+		if strings.HasSuffix(f.Function, "(*Pacer).call") {
+			return true
+		}
+		if !more {
+			break
+		}
+	}
+	return false
+}
+
 // Start a call to the API
 //
 // This must be called as a pair with endCall.
@@ -159,7 +188,7 @@ func (p *Pacer) beginCall() {
 	// Ticker more accurately, but then we'd have to work out how
 	// not to run it when it wasn't needed
 	<-p.pacer
-	if p.maxConnections > 0 {
+	if p.maxConnections > 0 && !pacerReentered() {
 		<-p.connTokens
 	}
 
@@ -177,7 +206,7 @@ func (p *Pacer) beginCall() {
 // This should calculate a new sleepTime.  It takes a boolean as to
 // whether the operation should be retried or not.
 func (p *Pacer) endCall(retry bool, err error) {
-	if p.maxConnections > 0 {
+	if p.maxConnections > 0 && !pacerReentered() {
 		p.connTokens <- struct{}{}
 	}
 	p.mu.Lock()

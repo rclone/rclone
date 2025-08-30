@@ -353,6 +353,20 @@ func TestCallParallel(t *testing.T) {
 	wait.Broadcast()
 }
 
+func TestCallMaxConnectionsRecursiveDeadlock(t *testing.T) {
+	p := New(CalculatorOption(NewDefault(MinSleep(1*time.Millisecond), MaxSleep(2*time.Millisecond))))
+	p.SetMaxConnections(1)
+	dp := &dummyPaced{retry: false}
+	err := p.Call(func() (bool, error) {
+		// check we have taken the connection token
+		// no tokens left means deadlock on the recursive call
+		assert.Equal(t, 0, len(p.connTokens))
+		return false, p.Call(dp.fn)
+	})
+	assert.Equal(t, 1, dp.called)
+	assert.Equal(t, errFoo, err)
+}
+
 func TestRetryAfterError_NonNilErr(t *testing.T) {
 	orig := errors.New("test failure")
 	dur := 2 * time.Second
