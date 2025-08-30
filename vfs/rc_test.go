@@ -257,3 +257,101 @@ func TestRcFileAndDirStatus(t *testing.T) {
 	assert.Equal(t, filePath, dirStatus[0].Name)
 	assert.Equal(t, vfscommon.StatusCached, dirStatus[0].Status)
 }
+
+// TestRcFileAndDirStatus tests the vfs/file-status and vfs/dir-status
+// commandss
+//
+// This test case will cover the following scenarios:
+// - Test file-status command for uncached file
+// - Test file-status command for cached file
+// - Test dir-status command for a directory with cached file
+func TestRcFileAndDirStatus(t *testing.T) {
+	// --- Setup Compartilhado ---
+	filePath := "test_file.txt"
+	fileContent := "hello world"
+
+	r, vfs := newTestVFS(t)
+	require.NotNil(t, r)
+	require.NotNil(t, vfs)
+	defer vfs.CleanUp()
+
+	r.WriteFile(filePath, fileContent, time.Now())
+	time.Sleep(100 * time.Millisecond)
+
+	mapToFileStatus := func(t *testing.T, data interface{}) vfscommon.FileStatus {
+		rawStatus, ok := data.(map[string]interface{})
+		require.True(t, ok, "A resposta da API não é um mapa válido")
+
+		var status vfscommon.FileStatus
+		status.Name = rawStatus["name"].(string)
+		status.Path = rawStatus["path"].(string)
+		status.Status = rawStatus["status"].(string)
+		status.Percentage = int(rawStatus["percentage"].(float64))
+		status.Size = int64(rawStatus["size"].(float64))
+		status.CachedSize = int64(rawStatus["cachedSize"].(float64))
+		return status
+	}
+
+	t.Run("FileStatusUncached", func(t *testing.T) {
+		// Check if the file exists in VFS before calling the RC command
+		node, err := vfs.Stat(filePath)
+		require.NoError(t, err, "File should exist in VFS")
+		require.True(t, node.IsFile(), "Node should be a file")
+
+		callOpt := rc.Params{"fs": fs.ConfigString(r.Fremote), "path": filePath}
+		call := rc.Calls.Get("vfs/file-status")
+		require.NotNil(t, call)
+
+		res, err := call.Fn(context.Background(), callOpt)
+		require.NoError(t, err)
+
+		fileStatus := mapToFileStatus(t, res["status"])
+
+		assert.Equal(t, "test_file.txt", fileStatus.Name)
+		assert.Equal(t, vfscommon.StatusUncached, fileStatus.Status)
+		assert.Equal(t, 0, fileStatus.Percentage)
+		assert.Equal(t, int64(len(fileContent)), fileStatus.Size)
+	})
+
+	fd, err := vfs.OpenFile(filePath, os.O_RDONLY, 0777)
+	require.NoError(t, err)
+	_, err = io.ReadAll(fd)
+	require.NoError(t, err)
+	require.NoError(t, fd.Close())
+
+	t.Run("FileStatusCached", func(t *testing.T) {
+		callOpt := rc.Params{"fs": fs.ConfigString(r.Fremote), "path": filePath}
+		call := rc.Calls.Get("vfs/file-status")
+		require.NotNil(t, call)
+
+		res, err := call.Fn(context.Background(), callOpt)
+		require.NoError(t, err)
+
+		fileStatus := mapToFileStatus(t, res["status"])
+
+		assert.Equal(t, vfscommon.StatusCached, fileStatus.Status)
+		assert.Equal(t, 100, fileStatus.Percentage)
+		assert.Equal(t, int64(len(fileContent)), fileStatus.CachedSize)
+	})
+
+	t.Run("DirStatusWithCachedFile", func(t *testing.T) {
+		dirCallOpt := rc.Params{"fs": fs.ConfigString(r.Fremote), "dir": ""}
+		dirCall := rc.Calls.Get("vfs/dir-status")
+		require.NotNil(t, dirCall)
+
+		res, err := dirCall.Fn(context.Background(), dirCallOpt)
+		require.NoError(t, err)
+
+		rawDirStatusList, ok := res["dirStatus"].([]interface{})
+		require.True(t, ok)
+
+		var dirStatus vfscommon.DirStatusList
+		for _, item := range rawDirStatusList {
+			dirStatus = append(dirStatus, mapToFileStatus(t, item))
+		}
+
+		require.Equal(t, 1, len(dirStatus))
+		assert.Equal(t, filePath, dirStatus[0].Name)
+		assert.Equal(t, vfscommon.StatusCached, dirStatus[0].Status)
+	})
+}

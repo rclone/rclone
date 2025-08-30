@@ -149,6 +149,44 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	return rc.Params{"dirStatus": dirStatus}, nil
 }
 
+func init() {
+	rc.Add(rc.Call{
+		Path:         "vfs/file-status",
+		AuthRequired: true,
+		Fn:           rcFileStatus,
+		Title:        "Get the cache status of a single file",
+		Help: `
+This command returns the detailed cache status of a single file in the VFS.
+
+It takes a single parameter:
+- "path": The path to the file within the VFS.
+
+Example:
+
+    rclone rc vfs/file-status path=my/file.txt
+` + getVFSHelp,
+	})
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "vfs/dir-status",
+		AuthRequired: true,
+		Fn:           rcDirStatus,
+		Title:        "Get the cache status of all files in a directory",
+		Help: `
+This command returns a list of cache statuses for all files directly within a given directory.
+
+It takes a single parameter:
+- "dir": The path to the directory within the VFS.
+
+Example:
+
+    rclone rc vfs/dir-status dir=my/directory
+` + getVFSHelp,
+	})
+}
+
 func rcRefresh(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	vfs, err := getVFS(in)
 	if err != nil {
@@ -625,4 +663,46 @@ func rcQueueSetExpiry(ctx context.Context, in rc.Params) (out rc.Params, err err
 	}
 	err = vfs.cache.QueueSetExpiry(writeback.Handle(id), refTime, time.Duration(float64(time.Second)*expiry))
 	return nil, err
+}
+
+// rcFileStatus gets the cache status for a single file.
+// It takes the VFS instance and the file path as parameters.
+// It returns a FileStatus object containing the file's caching details.
+func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	path, err := in.GetString("path")
+	if err != nil {
+		return nil, err
+	}
+
+	status, err := vfs.GetFileStatus(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return rc.Params{"status": status}, nil
+}
+
+// rcDirStatus gets the cache status for files in a directory.
+// It takes the VFS instance and the directory path as parameters.
+// It returns a list of FileStatus objects for all files within the directory.
+func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	dirPath, err := in.GetString("dir")
+	if err != nil {
+		return nil, err
+	}
+
+	dirStatus, err := vfs.GetDirStatus(dirPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return rc.Params{"dirStatus": dirStatus}, nil
 }
