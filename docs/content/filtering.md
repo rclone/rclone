@@ -149,9 +149,9 @@ uses) to make things easy for users. However this does not provide
 absolute control over the matching, so for advanced users rclone also
 provides a regular expression syntax.
 
-The regular expressions used are as defined in the [Go regular
-expression reference](https://golang.org/pkg/regexp/syntax/). Regular
-expressions should be enclosed in `{{` `}}`. They will match only the
+Rclone generally accepts Perl-style regular expressions, the exact syntax
+is defined in the [Go regular expression reference](https://golang.org/pkg/regexp/syntax/).
+Regular expressions should be enclosed in `{{` `}}`. They will match only the
 last path segment if the glob doesn't start with `/` or the whole path
 name if it does. Note that rclone does not attempt to parse the
 supplied regular expression, meaning that using any regular expression

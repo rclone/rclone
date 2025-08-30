@@ -34,7 +34,14 @@ var commandDefinition = &cobra.Command{
 	Long: strings.ReplaceAll(`convmv supports advanced path name transformations for converting and renaming
 files and directories by applying prefixes, suffixes, and other alterations.
 
-`+transform.Help()+`Multiple transformations can be used in sequence, applied
+`+transform.Help()+`The regex command generally accepts Perl-style regular expressions, the exact
+syntax is defined in the [Go regular expression reference](https://golang.org/pkg/regexp/syntax/).
+The replacement string may contain capturing group variables, referencing
+capturing groups using the syntax ¡$name¡ or ¡${name}¡, where the name can
+refer to a named capturing group or it can simply be the index as a number.
+To insert a literal $, use $$.
+
+Multiple transformations can be used in sequence, applied
 in the order they are specified on the command line.
 
 The ¡--name-transform¡ flag is also available in ¡sync¡, ¡copy¡, and ¡move¡.
