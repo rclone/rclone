@@ -65,16 +65,35 @@ type File struct {
 // o may be nil
 func newFile(d *Dir, dPath string, o fs.Object, leaf string) *File {
 	f := &File{
-		d:     d,
+		// The directory this file is in
+		d: d,
+
+		// The path of the directory this file is in
+		// NB this is used to create the full path of the file
+		// which is used in the cache
 		dPath: dPath,
-		o:     o,
-		leaf:  leaf,
+
+		// The fs.Object that this file represents
+		// This may be nil if the file is being written
+		o: o,
+
+		// The leaf name of the file
+		leaf: leaf,
+
+		// The inode number of this file - read only
+		// This is used to identify the file in the VFS
 		inode: newInode(),
-		size:  atomic.Int64{},
+
+		// The size of the file - read only
+		// This is used for caching and stat
+		size: atomic.Int64{},
 	}
+
+	// Set the size of the file if o is not nil
 	if o != nil {
 		f.size.Store(o.Size())
 	}
+	// Set whether this is a link or not based on f.o
 	f._setIsLink()
 
 	return f

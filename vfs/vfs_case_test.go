@@ -50,13 +50,13 @@ func TestCaseSensitivity(t *testing.T) {
 
 	// Detect case sensitivity of the underlying remote.
 	remoteIsOK := true
-	if !checkFileDataVFS(t, vfsCS, "FiLeA", "data1") {
+	if !checkFileDataVFS(vfsCS, "FiLeA", "data1") {
 		remoteIsOK = false
 	}
-	if !checkFileDataVFS(t, vfsCS, "FiLeB", "data2") {
+	if !checkFileDataVFS(vfsCS, "FiLeB", "data2") {
 		remoteIsOK = false
 	}
-	if !checkFileDataVFS(t, vfsCS, "FilEb", "data3") {
+	if !checkFileDataVFS(vfsCS, "FilEb", "data3") {
 		remoteIsOK = false
 	}
 
@@ -101,7 +101,7 @@ func TestCaseSensitivity(t *testing.T) {
 	assertFileAbsentVFS(t, vfsCS, "FILEB")
 }
 
-func checkFileDataVFS(t *testing.T, vfs *VFS, name string, expect string) bool {
+func checkFileDataVFS(vfs *VFS, name string, expect string) bool {
 	fd, err := vfs.OpenFile(name, os.O_RDONLY, 0777)
 	if fd == nil || err != nil {
 		return false

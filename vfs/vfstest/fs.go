@@ -94,7 +94,7 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 		vfsOpt.CacheMode = test.cacheMode
 		vfsOpt.WriteBack = test.writeBack
 		vfsOpt.Links = test.links
-		run = newRun(useVFS, &vfsOpt, mountFn)
+		run = newRun(useVFS, &vfsOpt)
 		what := fmt.Sprintf("CacheMode=%v", test.cacheMode)
 		if test.writeBack > 0 {
 			what += fmt.Sprintf(",WriteBack=%v", test.writeBack)
@@ -180,7 +180,7 @@ var run *Run
 // r.fremote is an empty remote Fs
 //
 // Finalise() will tidy them away when done.
-func newRun(useVFS bool, vfsOpt *vfscommon.Options, mountFn mountlib.MountFn) *Run {
+func newRun(useVFS bool, vfsOpt *vfscommon.Options) *Run {
 	r := &Run{
 		useVFS: useVFS,
 		vfsOpt: vfsOpt,

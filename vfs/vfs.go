@@ -747,7 +747,7 @@ func (vfs *VFS) Chtimes(name string, atime time.Time, mtime time.Time) error {
 
 // mkdir creates a new directory with the specified name and permission bits
 // (before umask) returning the new directory node.
-func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
+func (vfs *VFS) mkdir(name string) (*Dir, error) {
 	dir, leaf, err := vfs.StatParent(name)
 	if err != nil {
 		return nil, err
@@ -758,7 +758,7 @@ func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
 // Mkdir creates a new directory with the specified name and permission bits
 // (before umask).
 func (vfs *VFS) Mkdir(name string, perm os.FileMode) error {
-	_, err := vfs.mkdir(name, perm)
+	_, err := vfs.mkdir(name)
 	return err
 }
 

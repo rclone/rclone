@@ -58,9 +58,7 @@ func init() {
 		Path:  "vfs/refresh",
 		Fn:    rcRefresh,
 		Title: "Refresh the directory cache.",
-		Help: `
-This reads the directories for the specified paths and freshens the
-directory cache.
+		Help: `This reads the directories for the specified paths and freshens the directory cache.
 
 If no paths are passed in then it will refresh the root directory.
 
