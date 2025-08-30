@@ -491,12 +491,16 @@ func (f *Filter) DirContainsExcludeFile(ctx context.Context, fremote fs.Fs, remo
 	if len(f.Opt.ExcludeFile) > 0 {
 		for _, excludeFile := range f.Opt.ExcludeFile {
 			exists, err := fs.FileExists(ctx, fremote, path.Join(remote, excludeFile))
-			if err != nil {
-				return false, err
-			}
 			if exists {
 				return true, nil
 			}
+			if err == fs.ErrorIsDir {
+				return strings.HasSuffix(excludeFile, "/"), nil
+			}
+			if err != nil {
+				return false, err
+			}
+			
 		}
 	}
 	return false, nil
