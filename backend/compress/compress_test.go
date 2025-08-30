@@ -53,3 +53,21 @@ func TestRemoteGzip(t *testing.T) {
 	opt.QuickTestOK = true
 	fstests.Run(t, &opt)
 }
+
+// TestRemoteZstd tests ZSTD compression
+func TestRemoteZstd(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir := filepath.Join(os.TempDir(), "rclone-compress-test-zstd")
+	name := "TestCompressZstd"
+	opt := defaultOpt
+	opt.RemoteName = name + ":"
+	opt.ExtraConfig = []fstests.ExtraConfigItem{
+		{Name: name, Key: "type", Value: "compress"},
+		{Name: name, Key: "remote", Value: tempdir},
+		{Name: name, Key: "compression_mode", Value: "zstd"},
+	}
+	opt.QuickTestOK = true
+	fstests.Run(t, &opt)
+}
