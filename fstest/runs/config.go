@@ -1,6 +1,7 @@
 // Config handling
 
-package main
+// Package runs provides the types used by test_all
+package runs
 
 import (
 	"fmt"
@@ -141,10 +142,10 @@ func (c *Config) MakeRuns() (runs Runs) {
 	return runs
 }
 
-// Filter the Backends with the remotes passed in.
+// FilterBackendsByRemotes filters the Backends with the remotes passed in.
 //
 // If no backend is found with a remote is found then synthesize one
-func (c *Config) filterBackendsByRemotes(remotes []string) {
+func (c *Config) FilterBackendsByRemotes(remotes []string) {
 	var newBackends []Backend
 	for _, name := range remotes {
 		found := false
@@ -167,8 +168,8 @@ func (c *Config) filterBackendsByRemotes(remotes []string) {
 	c.Backends = newBackends
 }
 
-// Filter the Backends with the backendNames passed in
-func (c *Config) filterBackendsByBackends(backendNames []string) {
+// FilterBackendsByBackends filters the Backends with the backendNames passed in
+func (c *Config) FilterBackendsByBackends(backendNames []string) {
 	var newBackends []Backend
 	for _, name := range backendNames {
 		for i := range c.Backends {
@@ -180,8 +181,8 @@ func (c *Config) filterBackendsByBackends(backendNames []string) {
 	c.Backends = newBackends
 }
 
-// Filter the incoming tests into the backends selected
-func (c *Config) filterTests(paths []string) {
+// FilterTests filters the incoming tests into the backends selected
+func (c *Config) FilterTests(paths []string) {
 	var newTests []Test
 	for _, path := range paths {
 		for i := range c.Tests {
