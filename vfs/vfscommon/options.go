@@ -9,6 +9,28 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
+// FileStatus represents the caching status of a single file in a VFS.
+type FileStatus struct {
+	Name       string `json:"name"`
+	Path       string `json:"path"`
+	Status     string `json:"status"`     // e.g., "uncached", "cached", "partial", "dirty", "uploading"
+	Percentage int    `json:"percentage"` // Percentage cached or uploaded
+	Size       int64  `json:"size"`
+	CachedSize int64  `json:"cachedSize"`
+}
+
+// Status constants for FileStatus
+const (
+	StatusUncached  = "uncached"  // File is not present in the local VFS cache.
+	StatusCached    = "cached"    // The entire file is present in the local VFS cache.
+	StatusPartial   = "partial"   // Parts of the file are in cache, but not the whole file.
+	StatusDirty     = "dirty"     // The file has local modifications not yet uploaded.
+	StatusUploading = "uploading" // The file is currently being uploaded.
+)
+
+// DirStatusList is a slice of FileStatus structs, representing a directory listing.
+type DirStatusList []FileStatus
+
 // OptionsInfo describes the Options in use
 var OptionsInfo = fs.Options{{
 	Name:    "no_modtime",
