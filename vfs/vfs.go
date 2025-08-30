@@ -23,6 +23,7 @@ package vfs
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -911,4 +912,48 @@ func (vfs *VFS) isMetadataFile(name string) (rawName string, found bool) {
 	}
 	rawName, found = strings.CutSuffix(name, ext)
 	return rawName, found
+}
+
+// GetFileStatus retrieves the caching status of a single file.
+// It takes the file path as a parameter.
+// It returns a FileStatus object containing the file's caching details.
+func (vfs *VFS) GetFileStatus(path string) (*vfscommon.FileStatus, error) {
+	node, err := vfs.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if node.IsDir() {
+		return nil, fmt.Errorf("path is a directory, not a file")
+	}
+	file := node.(*File)
+	return file.GetStatus(), nil
+}
+
+// GetDirStatus retrieves the caching status of all files in a directory.
+// It takes the directory path as a parameter.
+// It returns a DirStatusList (slice of FileStatus) containing caching details for files in the directory.
+func (vfs *VFS) GetDirStatus(path string) (vfscommon.DirStatusList, error) {
+	node, err := vfs.Stat(path)
+	if err != nil {
+		return vfscommon.DirStatusList{}, errors.New("no DirStatus value available")
+	}
+	if !node.IsDir() {
+		return vfscommon.DirStatusList{}, fmt.Errorf("path is a file, not a directory")
+	}
+	dir := node.(*Dir)
+
+	items, err := dir.ReadDirAll()
+	if err != nil {
+		return vfscommon.DirStatusList{}, err
+	}
+
+	var statusList []vfscommon.FileStatus
+	for _, itemNode := range items {
+		if !itemNode.IsDir() {
+			file := itemNode.(*File)
+			statusList = append(statusList, *file.GetStatus())
+		}
+	}
+
+	return vfscommon.DirStatusList(statusList), nil
 }

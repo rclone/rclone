@@ -983,3 +983,61 @@ func (f *File) Truncate(size int64) (err error) {
 	}
 	return nil
 }
+
+// GetStatus returns the detailed caching status of the file.
+// It queries the VFS cache for the file's current state.
+// The status includes whether the file is cached, partially cached, dirty, or uncached,
+// along with its size, cached size, and percentage cached.
+func (f *File) GetStatus() *vfscommon.FileStatus {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	var currentSize int64
+	if f._writingInProgress() {
+		currentSize = f.size.Load()
+	} else if f.o != nil {
+		currentSize = nonNegative(f.o.Size())
+	}
+
+	status := &vfscommon.FileStatus{
+		Name: f.leaf,
+		Path: f._path(),
+		Size: currentSize,
+	}
+
+	// Get the cache item associated with this file from the VFS cache.
+	cacheItem := f.VFS().cache.Item(f._cachePath())
+
+	// Retrieve cached size and handle potential errors.
+	var cachedSize int64
+	if cacheItem != nil {
+		size, err := cacheItem.GetSize()
+		if err == nil {
+			cachedSize = size
+		}
+	}
+	status.CachedSize = cachedSize
+
+	if f.Size() > 0 {
+		status.Percentage = int(100 * status.CachedSize / f.Size())
+	}
+	if status.Percentage >= 100 {
+		status.Percentage = 100
+	}
+
+	// Determine the exact status based on cache item properties and cached percentage.
+	if cacheItem.IsDirty() {
+		status.Status = vfscommon.StatusDirty
+		// } else if cacheItem.IsUploading() { // TODO: Implement IsUploading status check if possible
+		// 	status.Status = vfscommon.StatusUploading
+	} else if status.Percentage >= 100 {
+		status.Status = vfscommon.StatusCached
+	} else if status.Percentage > 0 {
+		status.Status = vfscommon.StatusPartial
+	} else {
+		// If the item exists in cache (metadata) but has 0 bytes cached.
+		status.Status = vfscommon.StatusUncached
+	}
+
+	return status
+}
