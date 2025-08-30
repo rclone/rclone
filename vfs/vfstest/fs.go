@@ -29,6 +29,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type TestResult struct {
+	Name string
+	Pass bool
+}
+
 const (
 	waitForWritersDelay = 30 * time.Second // time to wait for existing writers
 )
@@ -40,29 +45,51 @@ const (
 //
 // If useVFS is not set then it runs the mount in a subprocess in
 // order to avoid kernel deadlocks.
-func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.CacheMode, enableCacheTests bool, mountFn mountlib.MountFn) {
+//
+// The tests are run in the following order:
+//   - CacheModeOff with no links
+//   - CacheModeOff with links
+//   - CacheModeMinimal
+//   - CacheModeWrites
+//   - CacheModeFull with no write back
+//   - CacheModeFull with write back
+//   - CacheModeFull with write back and links
+func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.CacheMode, enableCacheTests bool, mountFn mountlib.MountFn) []TestResult {
+	// Parse command line flags
 	flag.Parse()
 	if isSubProcess() {
+		// If we are in a subprocess then start the mount
 		startMount(mountFn, useVFS, *runMount)
-		return
+		return nil
 	}
+	// Run all the tests for each cache mode
 	tests := []struct {
 		cacheMode vfscommon.CacheMode
 		writeBack fs.Duration
 		links     bool
 	}{
+		// CacheModeOff with no links
 		{cacheMode: vfscommon.CacheModeOff},
+		// CacheModeOff with links
 		{cacheMode: vfscommon.CacheModeOff, links: true},
+		// CacheModeMinimal
 		{cacheMode: vfscommon.CacheModeMinimal},
+		// CacheModeWrites
 		{cacheMode: vfscommon.CacheModeWrites},
+		// CacheModeFull with no write back
 		{cacheMode: vfscommon.CacheModeFull},
+		// CacheModeFull with write back
 		{cacheMode: vfscommon.CacheModeFull, writeBack: fs.Duration(100 * time.Millisecond)},
+		// CacheModeFull with write back and links
 		{cacheMode: vfscommon.CacheModeFull, writeBack: fs.Duration(100 * time.Millisecond), links: true},
 	}
-	for _, test := range tests {
+	results := make([]TestResult, len(tests))
+	for i, test := range tests {
 		if test.cacheMode < minimumRequiredCacheMode {
+			// Skip this test if the cache mode is less than the minimum required
 			continue
 		}
+		// Set up the vfs options for this test
 		vfsOpt := vfscommon.Opt
 		vfsOpt.CacheMode = test.cacheMode
 		vfsOpt.WriteBack = test.writeBack
@@ -75,44 +102,55 @@ func RunTests(t *testing.T, useVFS bool, minimumRequiredCacheMode vfscommon.Cach
 		if test.links {
 			what += fmt.Sprintf(",Links=%v", test.links)
 		}
+		// Run all the tests for this cache mode
 		fs.Logf(nil, "Starting test run with %s", what)
-		ok := t.Run(what, func(t *testing.T) {
-			t.Run("TestTouchAndDelete", TestTouchAndDelete)
-			t.Run("TestRenameOpenHandle", TestRenameOpenHandle)
-			t.Run("TestDirLs", TestDirLs)
-			t.Run("TestDirCreateAndRemoveDir", TestDirCreateAndRemoveDir)
-			t.Run("TestDirCreateAndRemoveFile", TestDirCreateAndRemoveFile)
-			t.Run("TestDirRenameFile", TestDirRenameFile)
-			t.Run("TestDirRenameEmptyDir", TestDirRenameEmptyDir)
-			t.Run("TestDirRenameFullDir", TestDirRenameFullDir)
-			t.Run("TestDirModTime", TestDirModTime)
-			if enableCacheTests {
-				t.Run("TestDirCacheFlush", TestDirCacheFlush)
-			}
-			t.Run("TestDirCacheFlushOnDirRename", TestDirCacheFlushOnDirRename)
-			t.Run("TestFileModTime", TestFileModTime)
-			t.Run("TestFileModTimeWithOpenWriters", TestFileModTimeWithOpenWriters)
-			t.Run("TestMount", TestMount)
-			t.Run("TestRoot", TestRoot)
-			t.Run("TestReadByByte", TestReadByByte)
-			t.Run("TestReadChecksum", TestReadChecksum)
-			t.Run("TestReadFileDoubleClose", TestReadFileDoubleClose)
-			t.Run("TestReadSeek", TestReadSeek)
-			t.Run("TestWriteFileNoWrite", TestWriteFileNoWrite)
-			t.Run("TestWriteFileWrite", TestWriteFileWrite)
-			t.Run("TestWriteFileOverwrite", TestWriteFileOverwrite)
-			t.Run("TestWriteFileDoubleClose", TestWriteFileDoubleClose)
-			t.Run("TestWriteFileFsync", TestWriteFileFsync)
-			t.Run("TestWriteFileDup", TestWriteFileDup)
-			t.Run("TestWriteFileAppend", TestWriteFileAppend)
-			t.Run("TestSymlinks", TestSymlinks)
+		passed := t.Run(what, func(t *testing.T) {
+			t.Run(what, func(t *testing.T) {
+				t.Run("TestTouchAndDelete", TestTouchAndDelete)
+				t.Run("TestRenameOpenHandle", TestRenameOpenHandle)
+				t.Run("TestDirLs", TestDirLs)
+				t.Run("TestDirCreateAndRemoveDir", TestDirCreateAndRemoveDir)
+				t.Run("TestDirCreateAndRemoveFile", TestDirCreateAndRemoveFile)
+				t.Run("TestDirRenameFile", TestDirRenameFile)
+				t.Run("TestDirRenameEmptyDir", TestDirRenameEmptyDir)
+				t.Run("TestDirRenameFullDir", TestDirRenameFullDir)
+				t.Run("TestDirModTime", TestDirModTime)
+				if enableCacheTests {
+					t.Run("TestDirCacheFlush", TestDirCacheFlush)
+				}
+				t.Run("TestDirCacheFlushOnDirRename", TestDirCacheFlushOnDirRename)
+				t.Run("TestFileModTime", TestFileModTime)
+				t.Run("TestFileModTimeWithOpenWriters", TestFileModTimeWithOpenWriters)
+				t.Run("TestMount", TestMount)
+				t.Run("TestRoot", TestRoot)
+				t.Run("TestReadByByte", TestReadByByte)
+				t.Run("TestReadChecksum", TestReadChecksum)
+				t.Run("TestReadFileDoubleClose", TestReadFileDoubleClose)
+				t.Run("TestReadSeek", TestReadSeek)
+				t.Run("TestWriteFileNoWrite", TestWriteFileNoWrite)
+				t.Run("TestWriteFileWrite", TestWriteFileWrite)
+				t.Run("TestWriteFileOverwrite", TestWriteFileOverwrite)
+				t.Run("TestWriteFileDoubleClose", TestWriteFileDoubleClose)
+				t.Run("TestWriteFileFsync", TestWriteFileFsync)
+				t.Run("TestWriteFileDup", TestWriteFileDup)
+				t.Run("TestWriteFileAppend", TestWriteFileAppend)
+				t.Run("TestSymlinks", TestSymlinks)
+			})
 		})
-		fs.Logf(nil, "Finished test run with %s (ok=%v)", what, ok)
+
+		results = append(results, TestResult{
+			Name: what,
+			Pass: passed,
+		})
+
+		fs.Logf(nil, "Finished test run with %s (ok=%v)", what, results[i].Pass)
 		run.Finalise()
-		if !ok {
+		if !results[i].Pass {
+			// If any of the tests failed, then break out of the loop
 			break
 		}
 	}
+	return results
 }
 
 // Run holds the remotes for a test run

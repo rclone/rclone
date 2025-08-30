@@ -70,11 +70,13 @@ func newFile(d *Dir, dPath string, o fs.Object, leaf string) *File {
 		o:     o,
 		leaf:  leaf,
 		inode: newInode(),
+		size:  atomic.Int64{},
 	}
 	if o != nil {
 		f.size.Store(o.Size())
 	}
 	f._setIsLink()
+
 	return f
 }
 
@@ -84,6 +86,55 @@ func (f *File) _setIsLink() {
 		return
 	}
 	f.isLink = f.d.vfs.Opt.Links && strings.HasSuffix(f.o.Remote(), fs.LinkSuffix)
+}
+
+// GetStatus returns the detailed caching status of the file.
+// It queries the VFS cache for the file's current state.
+// The status includes whether the file is cached, partially cached, dirty, or uncached,
+// along with its size, cached size, and percentage cached.
+func (f *File) GetStatus() *vfscommon.FileStatus {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	status := &vfscommon.FileStatus{
+		Name: f.Name(),
+		Path: f.Path(),
+		Size: f.Size(), // Actual size of the file on the remote
+	}
+
+	// Get the cache item associated with this file from the VFS cache.
+	cacheItem := f.VFS().cache.Item(f.Path())
+
+	// Retrieve cached size and handle potential errors.
+	cachedSize, err := cacheItem.GetSize()
+	if err != nil {
+		// If we can't get the size, it's likely not in cache or an error occurred.
+		cachedSize = 0
+	}
+	status.CachedSize = cachedSize
+
+	if f.Size() > 0 {
+		status.Percentage = int(100 * status.CachedSize / f.Size())
+	}
+	if status.Percentage >= 100 {
+		status.Percentage = 100
+	}
+
+	// Determine the exact status based on cache item properties and cached percentage.
+	if cacheItem.IsDirty() {
+		status.Status = vfscommon.StatusDirty
+	// } else if cacheItem.IsUploading() { // TODO: Implement IsUploading status check if possible
+	// 	status.Status = vfscommon.StatusUploading
+	} else if status.Percentage >= 100 {
+		status.Status = vfscommon.StatusCached
+	} else if status.Percentage > 0 {
+		status.Status = vfscommon.StatusPartial
+	} else {
+		// If the item exists in cache (metadata) but has 0 bytes cached.
+		status.Status = vfscommon.StatusUncached
+	}
+
+	return status
 }
 
 // String converts it to printable
