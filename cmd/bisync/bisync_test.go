@@ -177,6 +177,7 @@ var (
 	// "src and dst identical but can't set mod time without deleting and re-uploading"
 	argRefreshTimes = flag.Bool("refresh-times", false, "Force refreshing the target modtime, useful for Dropbox (default: false)")
 	ignoreLogs      = flag.Bool("ignore-logs", false, "skip comparing log lines but still compare listings")
+	argPCount       = flag.Int("pcount", 2, "number of parallel subtests to run for TestBisyncConcurrent") // go test ./cmd/bisync -race -pcount 10
 )
 
 // bisyncTest keeps all test data in a single place
@@ -284,6 +285,12 @@ func TestBisyncConcurrent(t *testing.T) {
 	if !isLocal(*fstest.RemoteName) {
 		t.Skip("TestBisyncConcurrent is skipped on non-local")
 	}
+	if *argPCount < 2 {
+		t.Skip("TestBisyncConcurrent is pointless with -pcount < 2")
+	}
+	if *argGolden {
+		t.Skip("skip TestBisyncConcurrent when goldenizing")
+	}
 	oldArgTestCase := argTestCase
 	*argTestCase = "basic"
 	*ignoreLogs = true // not useful to compare logs here because both runs will be logging at once
@@ -292,8 +299,9 @@ func TestBisyncConcurrent(t *testing.T) {
 		*ignoreLogs = false
 	})
 
-	t.Run("test1", testParallel)
-	t.Run("test2", testParallel)
+	for i := 0; i < *argPCount; i++ {
+		t.Run(fmt.Sprintf("test%v", i), testParallel)
+	}
 }
 
 func testParallel(t *testing.T) {
