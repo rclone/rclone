@@ -465,6 +465,7 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 
 	// Prepare initial content
 	b.cleanupCase(ctx)
+	ctx = accounting.WithStatsGroup(ctx, random.String(8))
 	fstest.CheckListingWithPrecision(b.t, b.fs1, []fstest.Item{}, []string{}, b.fs1.Precision()) // verify starting from empty
 	fstest.CheckListingWithPrecision(b.t, b.fs2, []fstest.Item{}, []string{}, b.fs2.Precision())
 	initFs, err := cache.Get(ctx, b.initDir)
@@ -641,12 +642,11 @@ func (b *bisyncTest) cleanupCase(ctx context.Context) {
 	_ = operations.Purge(ctx, b.fs1, "")
 	_ = operations.Purge(ctx, b.fs2, "")
 	_ = os.RemoveAll(b.workDir)
-	accounting.Stats(ctx).ResetCounters()
 }
 
 func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	var fsrc, fdst fs.Fs
-	accounting.Stats(ctx).ResetErrors()
+	ctx = accounting.WithStatsGroup(ctx, random.String(8))
 	b.logPrintf("%s %s", color(terminal.CyanFg, b.stepStr), color(terminal.BlueFg, line))
 
 	ci := fs.GetConfig(ctx)
