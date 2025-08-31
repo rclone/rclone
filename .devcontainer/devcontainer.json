@@ -1,0 +1,17 @@
+{
+	"name": "rclone-cli",
+    "dockerComposeFile": ".compose.yml",
+    "service": "rclone",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"containerEnv" : {
+		"WORKSPACE_FOLDER": "${localWorkspaceFolderBasename}"
+	},
+	"initializeCommand": {
+		"uid": [
+			"bash", "-c", "sed -i -E \"s|^(LOCAL_UID=).*|\\1$(id -u)|g\" \"${localWorkspaceFolder}\"/.devcontainer/.env"
+		],
+		"gid": [
+			"bash", "-c", "sed -i -E \"s|^(LOCAL_GID=).*|\\1$(id -g)|g\" \"${localWorkspaceFolder}\"/.devcontainer/.env"
+		]
+	}
+}
