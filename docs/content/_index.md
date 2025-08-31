@@ -15,7 +15,7 @@ notoc: true
 - [What providers does rclone support?](#providers)
 - [Download](/downloads/)
 - [Install](/install/)
-{{< rem MAINPAGELINK >}}
+  {{< rem MAINPAGELINK >}}
 
 ## About rclone {#about}
 
@@ -30,8 +30,8 @@ mv, mount, ls, ncdu, tree, rm, and cat. Rclone's familiar syntax
 includes shell pipeline support, and `--dry-run` protection. It is
 used at the command line, in scripts or via its [API](/rc).
 
-Users call rclone *"The Swiss army knife of cloud storage"*, and
-*"Technology indistinguishable from magic"*.
+Users call rclone _"The Swiss army knife of cloud storage"_, and
+_"Technology indistinguishable from magic"_.
 
 Rclone really looks after your data. It preserves timestamps and
 verifies checksums at all times. Transfers over limited bandwidth;
@@ -139,6 +139,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="iCloud Drive" home="https://icloud.com/" config="/iclouddrive/" >}}
 {{< provider name="ImageKit" home="https://imagekit.io" config="/imagekit/" >}}
 {{< provider name="Internet Archive" home="https://archive.org/" config="/internetarchive/" >}}
+{{< provider name="Internxt" home="https://internxt.com/" config="/internxt/" >}}
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
