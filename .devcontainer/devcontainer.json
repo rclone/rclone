@@ -1,0 +1,32 @@
+{
+	"name": "rclone-cli",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+    "dockerComposeFile": ".compose.yml",
+    "service": "rclone",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"containerEnv" : {
+		"WORKSPACE_FOLDER": "${localWorkspaceFolderBasename}"
+	},
+	"initializeCommand": {
+		"uid": [
+			"bash", "-c", "sed -i -E \"s|^(LOCAL_UID=).*|\\1$(id -u)|g\" \"${localWorkspaceFolder}\"/.devcontainer/.env"
+		],
+		"gid": [
+			"bash", "-c", "sed -i -E \"s|^(LOCAL_GID=).*|\\1$(id -g)|g\" \"${localWorkspaceFolder}\"/.devcontainer/.env"
+		]
+	}
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "uname -a",
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	//"remoteUser": "jenkinsci"
+}
