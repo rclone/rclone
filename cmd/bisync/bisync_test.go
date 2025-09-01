@@ -285,6 +285,9 @@ func TestBisyncConcurrent(t *testing.T) {
 	if !isLocal(*fstest.RemoteName) {
 		t.Skip("TestBisyncConcurrent is skipped on non-local")
 	}
+	if *argTestCase != "" && *argTestCase != "basic" {
+		t.Skip("TestBisyncConcurrent only tests 'basic'")
+	}
 	if *argPCount < 2 {
 		t.Skip("TestBisyncConcurrent is pointless with -pcount < 2")
 	}
