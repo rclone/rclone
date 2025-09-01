@@ -382,6 +382,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	segments := f.getAbsolutePathSegments(dir)
+	if len(segments) < 2 {
+		return nil
+	}
 	if f.packageIdCache[segments[1]] == "" {
 		f.listPackages(ctx, segments[0])
 	}
@@ -419,6 +422,9 @@ func (f *Fs) deleteObject(ctx context.Context, packageName string, id string) er
 
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	segments := f.getAbsolutePathSegments(dir)
+	if len(segments) < 2 {
+		return fs.ErrorDirNotFound
+	}
 	if f.packageIdCache[segments[1]] == "" {
 		f.listPackages(ctx, segments[0])
 	}
@@ -427,8 +433,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		PackageId:      f.packageIdCache[segments[1]],
 		FolderPaths:    [1]string{strings.Join(segments[2:], "/")},
 	}
-	_, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders/delete"}, &removeFolder, nil)
+	resp, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders/delete"}, &removeFolder, nil)
 	if err != nil {
+		if resp.StatusCode == 404 {
+			return fs.ErrorDirNotFound
+		}
 		return err
 	}
 	return nil
