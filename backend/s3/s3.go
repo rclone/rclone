@@ -120,6 +120,9 @@ var providerOption = fs.Option{
 		Value: "IDrive",
 		Help:  "IDrive e2",
 	}, {
+		Value: "Intercolo",
+		Help:  "Intercolo Object Storage",
+	}, {
 		Value: "IONOS",
 		Help:  "IONOS Cloud",
 	}, {
@@ -507,6 +510,14 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "Intercolo",
+			Examples: []fs.OptionExample{{
+				Value: "de-fra",
+				Help:  "Frankfurt, Germany",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
 			Provider: "IONOS",
 			Examples: []fs.OptionExample{{
 				Value: "de",
@@ -643,7 +654,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,Intercolo,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -953,6 +964,14 @@ func init() {
 			}, {
 				Value: "s3.private.sng01.cloud-object-storage.appdomain.cloud",
 				Help:  "Singapore Single Site Private Endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Intercolo Object Storage.",
+			Provider: "Intercolo",
+			Examples: []fs.OptionExample{{
+				Value: "de-fra.i3storage.com",
+				Help:  "Frankfurt, Germany",
 			}},
 		}, {
 			Name:     "endpoint",
@@ -1532,7 +1551,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,Intercolo,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -2067,7 +2086,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Outscale,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -3677,6 +3696,9 @@ func setQuirks(opt *Options) {
 	case "IDrive":
 		virtualHostStyle = false
 		useAlreadyExists = false // untested
+	case "Intercolo":
+		// no quirks
+		useUnsignedPayload = false // Intercolo has trailer support
 	case "IONOS":
 		// listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
 		virtualHostStyle = false
