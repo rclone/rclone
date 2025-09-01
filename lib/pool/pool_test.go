@@ -16,16 +16,23 @@ import (
 
 // makes the allocations be unreliable
 func makeUnreliable(bp *Pool) {
+	const maxFailsInARow = 10
+	var allocFails int
 	bp.alloc = func(size int) ([]byte, error) {
-		if rand.Intn(3) != 0 {
+		if rand.Intn(3) != 0 && allocFails < maxFailsInARow {
+			allocFails++
 			return nil, errors.New("failed to allocate memory")
 		}
+		allocFails = 0
 		return make([]byte, size), nil
 	}
+	var freeFails int
 	bp.free = func(b []byte) error {
-		if rand.Intn(3) != 0 {
+		if rand.Intn(3) != 0 && freeFails < maxFailsInARow {
+			freeFails++
 			return errors.New("failed to free memory")
 		}
+		freeFails = 0
 		return nil
 	}
 }
