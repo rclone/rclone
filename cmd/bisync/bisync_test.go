@@ -1630,6 +1630,14 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 			`^.*not equal on recheck.*$`, dropMe,
 		)
 	}
+	if b.ignoreBlankHash || !b.fs1.Hashes().Contains(hash.MD5) || !b.fs2.Hashes().Contains(hash.MD5) {
+		// if either side lacks support for md5, need to ignore the "nothing to transfer" log,
+		// as sync may in fact need to transfer, where it would otherwise skip based on hash or just update modtime.
+		// transfer stats will also differ in fs.ErrorCantSetModTimeWithoutDelete scenario, and where --download-hash is needed.
+		logReplacements = append(logReplacements,
+			`^.*There was nothing to transfer.*$`, dropMe,
+		)
+	}
 	rep := logReplacements
 	if b.testCase == "dry_run" {
 		rep = append(rep, dryrunReplacements...)
