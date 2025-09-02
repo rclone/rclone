@@ -123,18 +123,22 @@ var makefileCmd = &cobra.Command{
 		if err != nil {
 			fs.Fatalf(nil, "Failed to parse size %q: %v", args[0], err)
 		}
-		start := time.Now()
-		fs.Logf(nil, "Creating %d files of size %v.", len(args[1:]), size)
-		totalBytes := int64(0)
-		for _, filePath := range args[1:] {
-			dir := filepath.Dir(filePath)
-			name := filepath.Base(filePath)
-			writeFile(dir, name, int64(size))
-			totalBytes += int64(size)
-		}
-		dt := time.Since(start)
-		fs.Logf(nil, "Written %vB in %v at %vB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
+		makefiles(size, args[1:])
 	},
+}
+
+func makefiles(size fs.SizeSuffix, files []string) {
+	start := time.Now()
+	fs.Logf(nil, "Creating %d files of size %v.", len(files), size)
+	totalBytes := int64(0)
+	for _, filePath := range files {
+		dir := filepath.Dir(filePath)
+		name := filepath.Base(filePath)
+		writeFile(dir, name, int64(size))
+		totalBytes += int64(size)
+	}
+	dt := time.Since(start)
+	fs.Logf(nil, "Written %vB in %v at %vB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
 }
 
 func bool2int(b bool) int {
