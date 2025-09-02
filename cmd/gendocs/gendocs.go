@@ -170,17 +170,18 @@ rclone.org website.`,
 				name := filepath.Base(path)
 				cmd, ok := commands[name]
 				if !ok {
-					switch runtime.GOOS {
-					case "darwin":
-						if name == "rclone_mount.md" {
-							return nil // won't exist without -tags cmount
+					switch name {
+					case "rclone_mount.md":
+						switch runtime.GOOS {
+						case "darwin", "windows":
+							fs.Logf(nil, "Skipping docs for command not available without the cmount build tag: %v", name)
+							return nil
 						}
-					case "windows":
-						switch name {
-						case "rclone_mount.md":
-							return nil // won't exist without -tags cmount
-						case "rclone_nfsmount.md", "rclone_serve_nfs.md":
-							return nil // not supported
+					case "rclone_nfsmount.md", "rclone_serve_nfs.md":
+						switch runtime.GOOS {
+						case "windows":
+							fs.Logf(nil, "Skipping docs for command not supported on %v: %v", runtime.GOOS, name)
+							return nil
 						}
 					}
 					return fmt.Errorf("didn't find command for %q", name)
