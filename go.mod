@@ -1,6 +1,6 @@
 module github.com/rclone/rclone
 
-go 1.24.4
+go 1.24.0
 
 require (
 	bazil.org/fuse v0.0.0-20230120002735-62a210ff1fd5
@@ -11,6 +11,7 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/Files-com/files-sdk-go/v3 v3.2.218
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
+	github.com/a1ex3/zstd-seekable-format-go/pkg v0.10.0
 	github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
 	github.com/abbot/go-http-auth v0.4.0
@@ -108,7 +109,6 @@ require (
 	github.com/ProtonMail/go-srp v0.0.7 // indirect
 	github.com/ProtonMail/gopenpgp/v2 v2.9.0 // indirect
 	github.com/PuerkitoBio/goquery v1.10.3 // indirect
-	github.com/SaveTheRbtz/zstd-seekable-format-go/pkg v0.8.0 // indirect
 	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/anacrolix/generics v0.0.3 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
@@ -226,9 +226,6 @@ require (
 	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
-	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/exp v0.0.0-20250811191247-51f88131bc50 // indirect
 	golang.org/x/tools v0.36.0 // indirect

@@ -157,7 +157,7 @@ func (z *zstdModeHandler) putCompress(
 	}
 
 	// Build metadata using uncompressed size for filename
-	meta := z.newMetadata(src.Size(), f.mode, result.meta, hex.EncodeToString(metaHasher.Sum(nil)), mimeType)
+	meta := z.newMetadata(result.meta.Size, f.mode, result.meta, hex.EncodeToString(metaHasher.Sum(nil)), mimeType)
 	if ht != hash.None && hasher != nil {
 		err = f.verifyObjectHash(ctx, o, hasher, ht)
 		if err != nil {

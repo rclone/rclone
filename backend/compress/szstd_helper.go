@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"sync"
 
-	szstd "github.com/SaveTheRbtz/zstd-seekable-format-go/pkg"
+	szstd "github.com/a1ex3/zstd-seekable-format-go/pkg"
 	"github.com/klauspost/compress/zstd"
 )
 
@@ -48,6 +48,10 @@ func NewWriterSzstd(w io.Writer, opts ...zstd.EOption) (*SzstdWriter, error) {
 	return &SzstdWriter{
 		enc: encoder,
 		w:   sw,
+		metadata: SzstdMetadata{
+			BlockSize: szstdChunkSize,
+			Size:      0,
+		},
 	}, nil
 }
 
@@ -58,12 +62,10 @@ func (w *SzstdWriter) Write(p []byte) (int, error) {
 		return 0, nil
 	}
 
-	if w.metadata.BlockSize == 0 {
-		w.metadata.BlockSize = szstdChunkSize
-	}
 	if w.metadata.BlockData == nil {
-		numChunks := (len(p) + w.metadata.BlockSize - 1) / w.metadata.BlockSize
-		w.metadata.BlockData = make([]uint32, 0, numChunks)
+		numBlocks := (len(p) + w.metadata.BlockSize - 1) / w.metadata.BlockSize
+		w.metadata.BlockData = make([]uint32, 1, numBlocks+1)
+		w.metadata.BlockData[0] = 0
 	}
 
 	start := 0
@@ -75,12 +77,10 @@ func (w *SzstdWriter) Write(p []byte) (int, error) {
 		}
 
 		end := min(start+w.metadata.BlockSize, total)
-
 		chunk := p[start:end]
 		size := end - start
 
 		w.mu.Lock()
-		w.metadata.BlockData = append(w.metadata.BlockData, uint32(size))
 		w.metadata.Size += int64(size)
 		w.mu.Unlock()
 
@@ -88,7 +88,15 @@ func (w *SzstdWriter) Write(p []byte) (int, error) {
 		return chunk, nil
 	}
 
-	err := w.w.WriteMany(context.Background(), writerFunc)
+	// write sizes of compressed blocks in the callback
+	err := w.w.WriteMany(context.Background(), writerFunc,
+		szstd.WithWriteCallback(func(size uint32) {
+			w.mu.Lock()
+			lastOffset := w.metadata.BlockData[len(w.metadata.BlockData)-1]
+			w.metadata.BlockData = append(w.metadata.BlockData, lastOffset+size)
+			w.mu.Unlock()
+		}),
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -185,36 +193,28 @@ func (s *SzstdReaderAt) ReadAt(p []byte, off int64) (int, error) {
 		return 0, io.EOF
 	}
 
-	// Calculate the requested range
 	endOff := min(off+int64(len(p)), s.metadata.Size)
 
 	// Find all blocks covered by the range
 	type blockInfo struct {
 		index         int   // Block index
-		startOffset   int64 // Start of block in uncompressed stream
 		offsetInBlock int64 // Offset within the block for starting reading
 		bytesToRead   int64 // How many bytes to read from this block
 	}
 
 	var blocks []blockInfo
-	var blockStartOffset int64
+	uncompressedOffset := int64(0)
 	currentOff := off
 
-	for i, size := range s.metadata.BlockData {
-		blockEndOffset := blockStartOffset + int64(size)
-		if currentOff >= blockEndOffset {
-			blockStartOffset = blockEndOffset
-			continue
-		}
+	for i := 0; i < len(s.metadata.BlockData)-1; i++ {
+		blockUncompressedEnd := min(uncompressedOffset+int64(s.metadata.BlockSize), s.metadata.Size)
 
-		// If the current block intersects with the range
-		if currentOff < blockEndOffset && endOff > blockStartOffset {
-			offsetInBlock := max(0, currentOff-blockStartOffset)
-			bytesToRead := min(blockEndOffset-blockStartOffset-offsetInBlock, endOff-currentOff)
+		if currentOff < blockUncompressedEnd && endOff > uncompressedOffset {
+			offsetInBlock := max(0, currentOff-uncompressedOffset)
+			bytesToRead := min(blockUncompressedEnd-uncompressedOffset-offsetInBlock, endOff-currentOff)
 
 			blocks = append(blocks, blockInfo{
 				index:         i,
-				startOffset:   blockStartOffset,
 				offsetInBlock: offsetInBlock,
 				bytesToRead:   bytesToRead,
 			})
@@ -224,8 +224,7 @@ func (s *SzstdReaderAt) ReadAt(p []byte, off int64) (int, error) {
 				break
 			}
 		}
-
-		blockStartOffset = blockEndOffset
+		uncompressedOffset = blockUncompressedEnd
 	}
 
 	if len(blocks) == 0 {
@@ -241,7 +240,7 @@ func (s *SzstdReaderAt) ReadAt(p []byte, off int64) (int, error) {
 
 	resultCh := make(chan decodeResult, len(blocks))
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, runtime.NumCPU()) // Limit concurrency by the number of CPU cores
+	sem := make(chan struct{}, runtime.NumCPU())
 
 	for _, block := range blocks {
 		wg.Add(1)
@@ -250,20 +249,18 @@ func (s *SzstdReaderAt) ReadAt(p []byte, off int64) (int, error) {
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			_, err := s.r.Seek(block.startOffset, io.SeekStart)
-			if err != nil {
-				resultCh <- decodeResult{index: block.index, err: err}
-				return
-			}
+			startOffset := int64(s.metadata.BlockData[block.index])
+			endOffset := int64(s.metadata.BlockData[block.index+1])
+			compressedSize := endOffset - startOffset
 
-			compressed := make([]byte, s.metadata.BlockData[block.index])
-			n, err := s.r.Read(compressed)
+			compressed := make([]byte, compressedSize)
+			_, err := s.r.ReadAt(compressed, startOffset)
 			if err != nil && err != io.EOF {
 				resultCh <- decodeResult{index: block.index, err: err}
 				return
 			}
 
-			decoded, err := s.decoder.DecodeAll(compressed[:n], nil)
+			decoded, err := s.decoder.DecodeAll(compressed, nil)
 			if err != nil {
 				resultCh <- decodeResult{index: block.index, err: err}
 				return
@@ -291,11 +288,19 @@ func (s *SzstdReaderAt) ReadAt(p []byte, off int64) (int, error) {
 				if result.err != nil {
 					return 0, result.err
 				}
-				block := blocks[result.index-blocks[0].index]
-				start := block.offsetInBlock
-				end := start + block.bytesToRead
-				copy(p[totalRead:totalRead+int(block.bytesToRead)], result.data[start:end])
-				totalRead += int(block.bytesToRead)
+				// find the corresponding blockInfo
+				var blk blockInfo
+				for _, b := range blocks {
+					if b.index == result.index {
+						blk = b
+						break
+					}
+				}
+
+				start := blk.offsetInBlock
+				end := start + blk.bytesToRead
+				copy(p[totalRead:totalRead+int(blk.bytesToRead)], result.data[start:end])
+				totalRead += int(blk.bytesToRead)
 				minIndex++
 				if minIndex-blocks[0].index >= len(blocks) {
 					break
