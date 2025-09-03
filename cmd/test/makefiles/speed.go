@@ -42,6 +42,13 @@ func init() {
 	flags.FVarP(speedFlags, &large, "large", "", "Size of large files", "")
 	flags.BoolVarP(speedFlags, &useJSON, "json", "", useJSON, "Output only results in JSON format", "")
 
+	addCommonFlags(speedFlags)
+}
+
+func logf(text string, args ...any) {
+	if !useJSON {
+		fmt.Printf(text, args...)
+	}
 }
 
 var speedCmd = &cobra.Command{
@@ -57,7 +64,9 @@ var speedCmd = &cobra.Command{
 	uses the results of an initial test to determine how many files to use in
 	each subsequent test.
 
-	It is recommended to use -q flag for a simpler output.
+	It is recommended to use -q flag for a simpler output. e.g.:
+	
+	    rlone test speed remote: -q
 
 	**NB** This command will create and delete files on the remote in a randomly
 	named directory which should be tidied up after.
@@ -73,9 +82,7 @@ var speedCmd = &cobra.Command{
 
 		// initial test
 		size := fs.SizeSuffix(1024 * 1024)
-		if !useJSON {
-			fmt.Printf("Running initial test for 4 files of size %v\n", size)
-		}
+		logf("Running initial test for 4 files of size %v\n", size)
 		stats, err := speedTest(ctx, 4, size, args[0])
 		if err != nil {
 			return fmt.Errorf("speed test failed: %w", err)
@@ -84,39 +91,27 @@ var speedCmd = &cobra.Command{
 		var results []*Stats
 
 		// main tests
+		logf("\nTest Time: %v, File cap: %d\n", testTime, fcap)
 		for _, size := range []fs.SizeSuffix{small, medium, large} {
-			combinedSpeed := stats.Upload.Speed + stats.Download.Speed
-			numberOfFiles := int((float64(combinedSpeed) * time.Duration(testTime).Seconds()) / (2 * float64(size)))
-			if !useJSON {
-				fmt.Println()
-				fmt.Println("number of files: ", numberOfFiles)
-				if numberOfFiles < 1 {
-					fmt.Printf("Skipping test for file size %v as too slow\n", size)
-					continue
-				} else if numberOfFiles > fcap {
-					numberOfFiles = fcap
-					fmt.Printf("Capping test for file size %v to %v files\n", size, fcap)
-				}
+			numberOfFilesUpload := int((float64(stats.Upload.Speed) * time.Duration(testTime).Seconds()) / float64(size))
+			numberOfFilesDownload := int((float64(stats.Download.Speed) * time.Duration(testTime).Seconds()) / float64(size))
+			numberOfFiles := min(numberOfFilesUpload, numberOfFilesDownload)
 
-				fmt.Printf("Running test for %v files of size %v\n", numberOfFiles, size)
-				s, err := speedTest(ctx, numberOfFiles, size, args[0])
-				if err != nil {
-					return fmt.Errorf("speed test failed: %w", err)
-				}
-				results = append(results, s)
-
-			} else {
-				if numberOfFiles < 1 {
-					continue
-				} else if numberOfFiles > fcap {
-					numberOfFiles = fcap
-				}
-				s, err := speedTest(ctx, numberOfFiles, size, args[0])
-				if err != nil {
-					return fmt.Errorf("speed test failed: %w", err)
-				}
-				results = append(results, s)
+			logf("\nNumber of files for upload and download: %v\n", numberOfFiles)
+			if numberOfFiles < 1 {
+				logf("Skipping test for file size %v as calculated number of files is 0\n", size)
+				continue
+			} else if numberOfFiles > fcap {
+				numberOfFiles = fcap
+				logf("Capping test for file size %v to %v files\n", size, fcap)
 			}
+
+			logf("Running test for %d files of size %v\n", numberOfFiles, size)
+			s, err := speedTest(ctx, numberOfFiles, size, args[0])
+			if err != nil {
+				return fmt.Errorf("speed test failed: %w", err)
+			}
+			results = append(results, s)
 
 		}
 
@@ -148,7 +143,7 @@ type TestResult struct {
 }
 
 // measures stats for speedTest operations
-func measure(desc string, f func() error, size fs.SizeSuffix, numberOfFiles int, tr *TestResult, useJSON bool) error {
+func measure(desc string, f func() error, size fs.SizeSuffix, numberOfFiles int, tr *TestResult) error {
 	start := time.Now()
 	err := f()
 	dt := time.Since(start)
@@ -158,9 +153,7 @@ func measure(desc string, f func() error, size fs.SizeSuffix, numberOfFiles int,
 	tr.Duration = dt
 	tr.Bytes = int64(size) * int64(numberOfFiles)
 	tr.Speed = fs.SizeSuffix(float64(tr.Bytes) / dt.Seconds())
-	if !useJSON {
-		fmt.Printf("%-20s: %vB in %v at %vB/s\n", desc, tr.Bytes, dt.Round(time.Millisecond), tr.Speed)
-	}
+	logf("%-20s: %vB in %v at %vB/s\n", desc, tr.Bytes, dt.Round(time.Millisecond), tr.Speed)
 	return err
 }
 
@@ -181,7 +174,7 @@ func speedTest(ctx context.Context, numberOfFiles int, size fs.SizeSuffix, remot
 		}
 	})()
 
-	flocalDir, err := os.MkdirTemp("", "rclone-makefiles-local-")
+	flocalDir, err := os.MkdirTemp("", "rclone-speedtest-local-")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create local temp dir: %w", err)
 	}
@@ -192,7 +185,7 @@ func speedTest(ctx context.Context, numberOfFiles int, size fs.SizeSuffix, remot
 		return nil, fmt.Errorf("failed to create local fs: %w", err)
 	}
 
-	fdownloadDir, err := os.MkdirTemp("", "rclone-makefiles-download-")
+	fdownloadDir, err := os.MkdirTemp("", "rclone-speedtest-download-")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create download temp dir: %w", err)
 	}
@@ -203,6 +196,7 @@ func speedTest(ctx context.Context, numberOfFiles int, size fs.SizeSuffix, remot
 		return nil, fmt.Errorf("failed to create download fs: %w", err)
 	}
 
+	// make the largest amount of files we will need
 	files := make([]string, numberOfFiles)
 	for i := range files {
 		files[i] = path.Join(flocalDir, fmt.Sprintf("file%03d-%v.bin", i, size))
@@ -212,7 +206,7 @@ func speedTest(ctx context.Context, numberOfFiles int, size fs.SizeSuffix, remot
 	// upload files
 	err = measure("Upload", func() error {
 		return sync.CopyDir(ctx, fremote, flocal, false)
-	}, size, numberOfFiles, &stats.Upload, useJSON)
+	}, size, numberOfFiles, &stats.Upload)
 	if err != nil {
 		return nil, fmt.Errorf("failed to Copy to remote: %w", err)
 	}
@@ -220,7 +214,7 @@ func speedTest(ctx context.Context, numberOfFiles int, size fs.SizeSuffix, remot
 	// download files
 	err = measure("Download", func() error {
 		return sync.CopyDir(ctx, fdownload, fremote, false)
-	}, size, numberOfFiles, &stats.Download, useJSON)
+	}, size, numberOfFiles, &stats.Download)
 	if err != nil {
 		return nil, fmt.Errorf("failed to Copy from remote: %w", err)
 	}
@@ -231,9 +225,7 @@ func speedTest(ctx context.Context, numberOfFiles int, size fs.SizeSuffix, remot
 		Fdst:   fdownload,
 		OneWay: false,
 	}
-	if !useJSON {
-		fmt.Println("Checking file integrity")
-	}
+	logf("Checking file integrity\n")
 	err = operations.CheckDownload(ctx, &opt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check redownloaded files were identical: %w", err)
@@ -241,5 +233,3 @@ func speedTest(ctx context.Context, numberOfFiles int, size fs.SizeSuffix, remot
 
 	return &stats, nil
 }
-
-// docs
