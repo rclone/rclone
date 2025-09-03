@@ -85,12 +85,56 @@ var (
 	metadataMu sync.Mutex
 )
 
+// system metadata keys which this backend owns
+var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"cache-control": {
+		Help:    "Cache-Control header",
+		Type:    "string",
+		Example: "no-cache",
+	},
+	"content-disposition": {
+		Help:    "Content-Disposition header",
+		Type:    "string",
+		Example: "inline",
+	},
+	"content-encoding": {
+		Help:    "Content-Encoding header",
+		Type:    "string",
+		Example: "gzip",
+	},
+	"content-language": {
+		Help:    "Content-Language header",
+		Type:    "string",
+		Example: "en-US",
+	},
+	"content-type": {
+		Help:    "Content-Type header",
+		Type:    "string",
+		Example: "text/plain",
+	},
+	"tier": {
+		Help:     "Tier of the object",
+		Type:     "string",
+		Example:  "Hot",
+		ReadOnly: true,
+	},
+	"mtime": {
+		Help:    "Time of last modification, read from rclone metadata",
+		Type:    "RFC 3339",
+		Example: "2006-01-02T15:04:05.999999999Z07:00",
+	},
+}
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "azureblob",
 		Description: "Microsoft Azure Blob Storage",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   `User metadata is stored as x-ms-meta- keys. Azure metadata keys are case insensitive and are always returned in lower case.`,
+		},
 		Options: []fs.Option{{
 			Name: "account",
 			Help: `Azure Storage Account Name.
@@ -809,6 +853,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		ReadMimeType:            true,
 		WriteMimeType:           true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 		BucketBased:             true,
 		BucketBasedRootOK:       true,
 		SetTier:                 true,
@@ -2438,6 +2485,35 @@ func (o *Object) getMetadata() (metadata map[string]*string) {
 		metadata[k] = &v
 	}
 	return metadata
+}
+
+// Metadata returns metadata for an object
+//
+// It returns a combined view of system and user metadata.
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	// Ensure metadata is loaded
+	if err := o.readMetaData(ctx); err != nil {
+		return nil, err
+	}
+
+	m := fs.Metadata{}
+
+	// System metadata we expose
+	if !o.modTime.IsZero() {
+		m["mtime"] = o.modTime.Format(time.RFC3339Nano)
+	}
+	if o.accessTier != "" {
+		m["tier"] = string(o.accessTier)
+	}
+
+	// Merge user metadata (already lower-cased keys)
+	metadataMu.Lock()
+	for k, v := range o.meta {
+		m[k] = v
+	}
+	metadataMu.Unlock()
+
+	return m, nil
 }
 
 // decodeMetaDataFromPropertiesResponse sets the metadata from the data passed in
