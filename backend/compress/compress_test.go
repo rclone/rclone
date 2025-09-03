@@ -48,7 +48,8 @@ func TestRemoteGzip(t *testing.T) {
 	opt.ExtraConfig = []fstests.ExtraConfigItem{
 		{Name: name, Key: "type", Value: "compress"},
 		{Name: name, Key: "remote", Value: tempdir},
-		{Name: name, Key: "compression_mode", Value: "gzip"},
+		{Name: name, Key: "mode", Value: "gzip"},
+		{Name: name, Key: "level", Value: "-1"},
 	}
 	opt.QuickTestOK = true
 	fstests.Run(t, &opt)
@@ -66,7 +67,8 @@ func TestRemoteZstd(t *testing.T) {
 	opt.ExtraConfig = []fstests.ExtraConfigItem{
 		{Name: name, Key: "type", Value: "compress"},
 		{Name: name, Key: "remote", Value: tempdir},
-		{Name: name, Key: "compression_mode", Value: "zstd"},
+		{Name: name, Key: "mode", Value: "zstd"},
+		{Name: name, Key: "level", Value: "2"},
 	}
 	opt.QuickTestOK = true
 	fstests.Run(t, &opt)
