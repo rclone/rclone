@@ -120,10 +120,12 @@ guess it from the extension.
 	tar.gz 	  .tar.gz, .tgz, .taz
 	tar.bz2   .tar.bz2, .tb2, .tbz, .tbz2, .tz2
 	tar.lz	  .tar.lz
+	tar.lz4	  .tar.lz4
 	tar.xz	  .tar.xz, .txz
 	tar.zst	  .tar.zst, .tzst
 	tar.br	  .tar.br
 	tar.sz	  .tar.sz
+	tar.mz	  .tar.mz
 
 The --prefix and --fullpath flags will add a prefix for the files in
 the archive. If the flag |--fullpath| is set then the files will have
@@ -137,21 +139,21 @@ If we have a directory |/sourcedir| with the following:
     file1.txt
     dir1/file2.txt
 
-If we run the command |rclone archive /sourcedir /dest.tar.gz| the
+If we run the command |rclone archive create /sourcedir /dest.tar.gz| the
 contents of the archive will be:
 
     file1.txt
     dir1/
     dir1/file2.txt
 
-If we run the command |rclone archive --fullpath /sourcedir /dest.tar.gz|
+If we run the command |rclone archive create --fullpath /sourcedir /dest.tar.gz|
 the contents of the archive will be:
 
     sourcedir/file1.txt
     sourcedir/dir1/
     sourcedir/dir1/file2.txt
 
-If we run the command |rclone archive --prefix=my_new_path /sourcedir /dest.tar.gz|
+If we run the command |rclone archive create --prefix=my_new_path /sourcedir /dest.tar.gz|
 the contents of the archive will be:
 
     my_new_path/file1.txt

@@ -25,6 +25,9 @@ import (
 // Globals
 var (
 	archiveFormats = map[string]archives.CompressedArchive{
+		"zip": archives.CompressedArchive{
+			Archival: archives.Zip{ContinueOnError: true},
+		},
 		"tar": archives.CompressedArchive{
 			Archival: archives.Tar{ContinueOnError: true},
 		},
@@ -60,8 +63,9 @@ var (
 			Compression: archives.Sz{},
 			Archival:    archives.Tar{ContinueOnError: true},
 		},
-		"zip": archives.CompressedArchive{
-			Archival: archives.Zip{ContinueOnError: true},
+		"tar.mz": archives.CompressedArchive{
+			Compression: archives.MinLZ{},
+			Archival:    archives.Tar{ContinueOnError: true},
 		},
 	}
 	archiveExtensions = map[string]string{
@@ -81,6 +85,8 @@ var (
 		"*.tz2":     "tar.bz2",
 		// tar.lz
 		"*.tar.lz": "tar.lz",
+		// tar.lz4
+		"*.tar.lz4": "tar.lz4",
 		// tar.xz
 		"*.tar.xz": "tar.xz",
 		"*.txz":    "tar.xz",
@@ -91,6 +97,8 @@ var (
 		"*.tar.br": "tar.br",
 		// tar.sz
 		"*.tar.sz": "tar.sz",
+		// tar.mz
+		"*.tar.mz": "tar.mz",
 	}
 )
 
