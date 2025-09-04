@@ -1018,6 +1018,7 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 	}
 	// test if modtimes are writeable
 	testSetModtime := func(f fs.Fs) {
+		ctx := accounting.WithStatsGroup(ctx, random.String(8)) // keep stats separate
 		in := bytes.NewBufferString("modtime_write_test")
 		objinfo := object.NewStaticObjectInfo("modtime_write_test", initDate, int64(len("modtime_write_test")), true, nil, nil)
 		obj, err := f.Put(ctx, in, objinfo)
@@ -1031,6 +1032,8 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		}
 		if err == fs.ErrorCantSetModTimeWithoutDelete { // transfers stats expected to differ on this backend
 			logReplacements = append(logReplacements, `^.*There was nothing to transfer.*$`, dropMe)
+		} else {
+			require.NoError(b.t, err)
 		}
 		if !f.Features().IsLocal {
 			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
