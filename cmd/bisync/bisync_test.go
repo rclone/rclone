@@ -1029,6 +1029,9 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		if err == fs.ErrorCantSetModTime {
 			b.t.Skip("skipping test as at least one remote does not support setting modtime")
 		}
+		if err == fs.ErrorCantSetModTimeWithoutDelete { // transfers stats expected to differ on this backend
+			logReplacements = append(logReplacements, `^.*There was nothing to transfer.*$`, dropMe)
+		}
 		if !f.Features().IsLocal {
 			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
 		}
