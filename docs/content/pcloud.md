@@ -153,7 +153,7 @@ hierarchy.
 
 In order to do this you will have to find the `Folder ID` of the
 directory you wish rclone to display. This can be accomplished by executing
-the ```rclone lfs``` command using a basic configuration setup that does not
+the ```rclone lsf``` command using a basic configuration setup that does not
 include the ```root_folder_id``` parameter.
 
 The command will enumerate available directories, allowing you to locate the
