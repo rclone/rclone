@@ -36,7 +36,7 @@ var (
 	_ io.Closer   = (*WriteFileHandle)(nil)
 )
 
-func newWriteFileHandle(d *Dir, f *File, remote string, flags int) (*WriteFileHandle, error) {
+func newWriteFileHandle(f *File, remote string, flags int) (*WriteFileHandle, error) {
 	if f.IsSymlink() {
 		remote += fs.LinkSuffix
 	}
