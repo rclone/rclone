@@ -831,6 +831,10 @@ func jsonErrorf(format string, a ...any) []byte {
 //
 // Returns true if it is a metadata name
 func (d *Dir) statMetadata(leaf, baseLeaf string) (metaNode Node, err error) {
+	// Prevent generating metadata for metadata sidecars (e.g. *.metadata.metadata)
+	if d.vfs.isMetaPath(path.Join(d.path, baseLeaf)) {
+		return nil, ENOENT
+	}
 	// Find original file - note that this is recursing into stat()
 	node, err := d.stat(baseLeaf)
 	if err != nil {
@@ -856,7 +860,8 @@ func (d *Dir) statMetadata(leaf, baseLeaf string) (metaNode Node, err error) {
 	}
 	// Make a memory based file with metadataDump in
 	remote := path.Join(d.path, leaf)
-	o := object.NewMemoryObject(remote, entry.ModTime(context.TODO()), metadataDump)
+	modTime := node.ModTime()
+	o := object.NewMemoryObject(remote, modTime, metadataDump)
 	f := newFile(d, d.path, o, leaf)
 	// Base the metadata inode number off the real file inode number
 	// to keep it constant
@@ -927,7 +932,16 @@ func (d *Dir) isEmpty() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return len(d.items) == 0, nil
+	if !d.vfs.hideSidecarMetadata() {
+		return len(d.items) == 0, nil
+	}
+	for _, item := range d.items {
+		if d.shouldHideMetadataNode(item) {
+			continue
+		}
+		return false, nil
+	}
+	return true, nil
 }
 
 // ModTime returns the modification time of the directory
@@ -1010,13 +1024,26 @@ func (d *Dir) ReadDirAll() (items Nodes, err error) {
 		d.mu.Unlock()
 		return nil, err
 	}
+	hideMeta := d.vfs.hideSidecarMetadata()
 	for _, item := range d.items {
+		if hideMeta && d.shouldHideMetadataNode(item) {
+			continue
+		}
 		items = append(items, item)
 	}
 	d.mu.Unlock()
 	sort.Sort(items)
 	// fs.Debugf(d.path, "Dir.ReadDirAll OK with %d entries", len(items))
 	return items, nil
+}
+
+func (d *Dir) shouldHideMetadataNode(node Node) bool {
+	if node == nil {
+		return false
+	}
+	leaf := node.Name()
+	full := path.Join(d.path, leaf)
+	return d.vfs.isMetaPath(full)
 }
 
 // accessModeMask masks off the read modes from the flags

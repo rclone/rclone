@@ -941,6 +941,15 @@ is an error reading the metadata the error will be returned as
 
 
 
+## POSIX metadata overlay (sidecar)
+
+Enable a best-effort POSIX attribute overlay on mounts with `--vfs-persist-metadata`. When enabled, chmod/chown/touch operations persist to a JSON sidecar file so they survive remounts on non-POSIX backends (e.g. WebDAV). The backend’s ACLs/ownership are not modified.
+
+- Enable with `--vfs-persist-metadata`.
+- Select the storage backend via `--vfs-metadata-store` (`backend`, `sidecar`, or `auto`).
+- Configure the sidecar extension with `--vfs-metadata-extension`; it defaults to `.metadata` when persistence is enabled and the store is not `backend`.
+- Metadata overlays apply after the backend’s attributes and failures are logged at debug level; FUSE operations continue even if metadata persistence fails. The overlay is independent of the `--metadata` listing feature.
+
 ```
 rclone mount remote:path /path/to/mountpoint [flags]
 ```
@@ -991,6 +1000,8 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
       --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
       --vfs-metadata-extension string          Set the extension to read metadata from
+      --vfs-metadata-store string              Backend used for metadata persistence (default auto)
+      --vfs-persist-metadata                   Persist POSIX metadata for files
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)

@@ -17,6 +17,8 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/rclone/rclone/vfs/vfsmeta"
 )
 
 // Dir represents a directory entry
@@ -39,6 +41,31 @@ func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	a.Atime = modTime
 	a.Mtime = modTime
 	a.Ctime = modTime
+	opt := d.VFS().Opt
+	if opt.PersistMetadataEnabled() {
+		if m, err2 := d.VFS().LoadMetadata(ctx, d.Path(), true); err2 == nil {
+			if opt.PersistMetadataIncludes(vfscommon.MetadataFieldMode) && m.Mode != nil {
+				perm := os.FileMode(*m.Mode) & os.ModePerm
+				a.Mode = (a.Mode & os.ModeType) | perm
+			}
+			if opt.PersistMetadataIncludes(vfscommon.MetadataFieldOwner) {
+				if m.UID != nil {
+					a.Uid = *m.UID
+				}
+				if m.GID != nil {
+					a.Gid = *m.GID
+				}
+			}
+			if opt.PersistMetadataIncludes(vfscommon.MetadataFieldTimes) {
+				if m.Mtime != nil {
+					a.Mtime = m.Mtime.UTC()
+				}
+				if m.Atime != nil {
+					a.Atime = m.Atime.UTC()
+				}
+			}
+		}
+	}
 	// FIXME include Valid so get some caching?
 	// FIXME fs.Debugf(d.path, "Dir.Attr %+v", a)
 	return nil
@@ -50,14 +77,55 @@ var _ fusefs.NodeSetattrer = (*Dir)(nil)
 // Setattr handles attribute changes from FUSE. Currently supports ModTime only.
 func (d *Dir) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
 	defer log.Trace(d, "stat=%+v", req)("err=%v", &err)
-	if d.VFS().Opt.NoModTime {
-		return nil
+	opt := d.VFS().Opt
+	if !opt.NoModTime {
+		if req.Valid.MtimeNow() {
+			err = d.SetModTime(time.Now())
+		} else if req.Valid.Mtime() {
+			err = d.SetModTime(req.Mtime)
+		}
 	}
 
-	if req.Valid.MtimeNow() {
-		err = d.SetModTime(time.Now())
-	} else if req.Valid.Mtime() {
-		err = d.SetModTime(req.Mtime)
+	if opt.PersistMetadataEnabled() {
+		var m vfsmeta.Meta
+		changed := false
+		if opt.PersistMetadataIncludes(vfscommon.MetadataFieldMode) && req.Valid.Mode() {
+			v := uint32(req.Mode)
+			m.Mode = &v
+			changed = true
+		}
+		if opt.PersistMetadataIncludes(vfscommon.MetadataFieldOwner) && req.Valid.Uid() {
+			v := req.Uid
+			m.UID = &v
+			changed = true
+		}
+		if opt.PersistMetadataIncludes(vfscommon.MetadataFieldOwner) && req.Valid.Gid() {
+			v := req.Gid
+			m.GID = &v
+			changed = true
+		}
+		if opt.PersistMetadataIncludes(vfscommon.MetadataFieldTimes) && (req.Valid.Atime() || req.Valid.AtimeNow()) {
+			t := req.Atime
+			if req.Valid.AtimeNow() {
+				t = time.Now()
+			}
+			m.Atime = &t
+			changed = true
+		}
+		if opt.PersistMetadataIncludes(vfscommon.MetadataFieldTimes) && (req.Valid.Mtime() || req.Valid.MtimeNow()) {
+			t := req.Mtime
+			if req.Valid.MtimeNow() {
+				t = time.Now()
+			}
+			m.Mtime = &t
+			changed = true
+		}
+		if changed {
+			if err2 := d.VFS().SaveMetadata(ctx, d.Path(), true, m); err2 != nil {
+				fs.Debugf(d, "persist metadata failed: %v", err2)
+			}
+			_ = d.fsys.server.InvalidateNodeAttr(d)
+		}
 	}
 
 	return translateError(err)
