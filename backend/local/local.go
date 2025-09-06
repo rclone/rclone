@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -841,7 +842,13 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	} else if !fi.IsDir() {
 		return fs.ErrorIsFile
 	}
-	return os.Remove(localPath)
+	err := os.Remove(localPath)
+	if runtime.GOOS == "windows" && errors.Is(err, iofs.ErrPermission) { // https://github.com/golang/go/issues/26295
+		if os.Chmod(localPath, 0o600) == nil {
+			err = os.Remove(localPath)
+		}
+	}
+	return err
 }
 
 // Precision of the file system
