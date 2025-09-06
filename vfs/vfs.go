@@ -180,6 +180,7 @@ type VFS struct {
 	root        *Dir
 	Opt         vfscommon.Options
 	cache       *vfscache.Cache
+	cancel      context.CancelFunc
 	cancelCache context.CancelFunc
 	usageMu     sync.Mutex
 	usageTime   time.Time
@@ -198,8 +199,10 @@ var (
 // DefaultOpt will be used
 func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	fsDir := fs.NewDir("", time.Now())
+	ctx, cancel := context.WithCancel(context.Background())
 	vfs := &VFS{
-		f: f,
+		f:      f,
+		cancel: cancel,
 	}
 	vfs.inUse.Store(1)
 
@@ -260,6 +263,9 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		go vfs.refresh()
 	}
 
+	// Handle supported signals
+	go vfs.signalHandler(ctx)
+
 	// This can take some time so do it after the Pin
 	vfs.SetCacheMode(vfs.Opt.CacheMode)
 
@@ -272,6 +278,27 @@ func (vfs *VFS) refresh() {
 	err := vfs.root.readDirTree()
 	if err != nil {
 		fs.Errorf(vfs.f, "Error refreshing VFS directory cache: %v", err)
+	}
+}
+
+// Reload VFS cache on SIGHUP
+func (vfs *VFS) signalHandler(ctx context.Context) {
+	sigHup := make(chan os.Signal, 1)
+	NotifyOnSigHup(sigHup)
+
+	waiting := true
+	for waiting {
+		select {
+		case <-ctx.Done():
+			waiting = false
+		case <-sigHup:
+			root, err := vfs.Root()
+			if err != nil {
+				fs.Errorf(vfs.Fs(), "Error reading root: %v", err)
+			} else {
+				root.ForgetAll()
+			}
+		}
 	}
 }
 
@@ -373,6 +400,9 @@ func (vfs *VFS) Shutdown() {
 		close(vfs.pollChan)
 		vfs.pollChan = nil
 	}
+
+	// Cancel any background go routines
+	vfs.cancel()
 }
 
 // CleanUp deletes the contents of the on disk cache

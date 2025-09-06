@@ -92,7 +92,7 @@ jobs:
         # There's no way around this, because "ImageOS" is only available to
         # processes, but the setup-go action uses it in its key.
         id: imageos
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           result-encoding: string
           script: |

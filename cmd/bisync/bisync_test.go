@@ -177,6 +177,7 @@ var (
 	// "src and dst identical but can't set mod time without deleting and re-uploading"
 	argRefreshTimes = flag.Bool("refresh-times", false, "Force refreshing the target modtime, useful for Dropbox (default: false)")
 	ignoreLogs      = flag.Bool("ignore-logs", false, "skip comparing log lines but still compare listings")
+	argPCount       = flag.Int("pcount", 2, "number of parallel subtests to run for TestBisyncConcurrent") // go test ./cmd/bisync -race -pcount 10
 )
 
 // bisyncTest keeps all test data in a single place
@@ -284,6 +285,15 @@ func TestBisyncConcurrent(t *testing.T) {
 	if !isLocal(*fstest.RemoteName) {
 		t.Skip("TestBisyncConcurrent is skipped on non-local")
 	}
+	if *argTestCase != "" && *argTestCase != "basic" {
+		t.Skip("TestBisyncConcurrent only tests 'basic'")
+	}
+	if *argPCount < 2 {
+		t.Skip("TestBisyncConcurrent is pointless with -pcount < 2")
+	}
+	if *argGolden {
+		t.Skip("skip TestBisyncConcurrent when goldenizing")
+	}
 	oldArgTestCase := argTestCase
 	*argTestCase = "basic"
 	*ignoreLogs = true // not useful to compare logs here because both runs will be logging at once
@@ -292,8 +302,9 @@ func TestBisyncConcurrent(t *testing.T) {
 		*ignoreLogs = false
 	})
 
-	t.Run("test1", testParallel)
-	t.Run("test2", testParallel)
+	for i := 0; i < *argPCount; i++ {
+		t.Run(fmt.Sprintf("test%v", i), testParallel)
+	}
 }
 
 func testParallel(t *testing.T) {
@@ -465,6 +476,7 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 
 	// Prepare initial content
 	b.cleanupCase(ctx)
+	ctx = accounting.WithStatsGroup(ctx, random.String(8))
 	fstest.CheckListingWithPrecision(b.t, b.fs1, []fstest.Item{}, []string{}, b.fs1.Precision()) // verify starting from empty
 	fstest.CheckListingWithPrecision(b.t, b.fs2, []fstest.Item{}, []string{}, b.fs2.Precision())
 	initFs, err := cache.Get(ctx, b.initDir)
@@ -641,12 +653,11 @@ func (b *bisyncTest) cleanupCase(ctx context.Context) {
 	_ = operations.Purge(ctx, b.fs1, "")
 	_ = operations.Purge(ctx, b.fs2, "")
 	_ = os.RemoveAll(b.workDir)
-	accounting.Stats(ctx).ResetCounters()
 }
 
 func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	var fsrc, fdst fs.Fs
-	accounting.Stats(ctx).ResetErrors()
+	ctx = accounting.WithStatsGroup(ctx, random.String(8))
 	b.logPrintf("%s %s", color(terminal.CyanFg, b.stepStr), color(terminal.BlueFg, line))
 
 	ci := fs.GetConfig(ctx)
@@ -1007,6 +1018,7 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 	}
 	// test if modtimes are writeable
 	testSetModtime := func(f fs.Fs) {
+		ctx := accounting.WithStatsGroup(ctx, random.String(8)) // keep stats separate
 		in := bytes.NewBufferString("modtime_write_test")
 		objinfo := object.NewStaticObjectInfo("modtime_write_test", initDate, int64(len("modtime_write_test")), true, nil, nil)
 		obj, err := f.Put(ctx, in, objinfo)
@@ -1017,6 +1029,11 @@ func (b *bisyncTest) checkPreReqs(ctx context.Context, opt *bisync.Options) (con
 		err = obj.SetModTime(ctx, initDate)
 		if err == fs.ErrorCantSetModTime {
 			b.t.Skip("skipping test as at least one remote does not support setting modtime")
+		}
+		if err == fs.ErrorCantSetModTimeWithoutDelete { // transfers stats expected to differ on this backend
+			logReplacements = append(logReplacements, `^.*There was nothing to transfer.*$`, dropMe)
+		} else {
+			require.NoError(b.t, err)
 		}
 		if !f.Features().IsLocal {
 			time.Sleep(time.Second) // avoid GoogleCloudStorage Error 429 rateLimitExceeded
@@ -1617,6 +1634,14 @@ func (b *bisyncTest) mangleResult(dir, file string, golden bool) string {
 		logReplacements = append(logReplacements,
 			`^.*hash is missing.*$`, dropMe,
 			`^.*not equal on recheck.*$`, dropMe,
+		)
+	}
+	if b.ignoreBlankHash || !b.fs1.Hashes().Contains(hash.MD5) || !b.fs2.Hashes().Contains(hash.MD5) {
+		// if either side lacks support for md5, need to ignore the "nothing to transfer" log,
+		// as sync may in fact need to transfer, where it would otherwise skip based on hash or just update modtime.
+		// transfer stats will also differ in fs.ErrorCantSetModTimeWithoutDelete scenario, and where --download-hash is needed.
+		logReplacements = append(logReplacements,
+			`^.*There was nothing to transfer.*$`, dropMe,
 		)
 	}
 	rep := logReplacements
