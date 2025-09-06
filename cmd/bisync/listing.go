@@ -434,7 +434,6 @@ func (b *bisyncRun) listDirsOnly(listingNum int) (*fileList, error) {
 	}
 
 	fulllisting, err = b.loadListingNum(listingNum)
-
 	if err != nil {
 		b.critical = true
 		b.retryable = true
@@ -610,6 +609,11 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 				}
 			}
 			if srcNewName != "" { // if it was renamed and not deleted
+				if new == nil { // should not happen. log error and debug info
+					b.handleErr(b.renames, "internal error", fmt.Errorf("missing info for %q. Please report a bug at https://github.com/rclone/rclone/issues", srcNewName), true, true)
+					fs.PrettyPrint(srcList, "srcList for debugging", fs.LogLevelNotice)
+					continue
+				}
 				srcList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
 				dstList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
 			}
