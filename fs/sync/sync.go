@@ -222,6 +222,11 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		}
 		s.noTraverse = false
 	}
+
+	if ci.FilesFromStdin && s.deleteMode != fs.DeleteModeOff {
+		return nil, fmt.Errorf("--files-from-stdin is only compatible with copy")
+	}
+
 	s.trackRenamesStrategy, err = parseTrackRenamesStrategy(ci.TrackRenamesStrategy)
 	if err != nil {
 		return nil, err
