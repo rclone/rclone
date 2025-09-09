@@ -18,13 +18,15 @@ want to delete files from destination, use the
 [copy](/commands/rclone_copy/) command instead.
 
 **Important**: Since this can cause data loss, test first with the
-`--dry-run` or the `--interactive`/`-i` flag.
+`--dry-run` or the `--interactive`/`i` flag.
 
     rclone sync --interactive SOURCE remote:DESTINATION
 
-Note that files in the destination won't be deleted if there were any
-errors at any point.  Duplicate objects (files with the same name, on
-those providers that support it) are also not yet handled.
+Files in the destination won't be deleted if there were any errors at any
+point. Duplicate objects (files with the same name, on those providers that
+support it) are not yet handled. Files that are excluded won't be deleted
+unless `--delete-excluded` is used. Symlinks won't be transferred or
+deleted from local file systems unless `--links` is used.
 
 It is always the contents of the directory that is synced, not the
 directory itself. So when source:path is a directory, it's the contents of
@@ -54,10 +56,10 @@ See [this forum post](https://forum.rclone.org/t/sync-not-clearing-duplicates/14
 
 # Logger Flags
 
-The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error` flags write paths, one per line, to the file name (or
-stdout if it is `-`) supplied. What they write is described in the
-help below. For example `--differ` will write all paths which are
-present on both the source and destination but different.
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error` flags write paths,
+one per line, to the file name (or stdout if it is `-`) supplied. What they write is described
+in the help below. For example `--differ` will write all paths which are present
+on both the source and destination but different.
 
 The `--combined` flag will write a file (or stdout) which contains all
 file paths with a symbol and then a space and then the path to tell
@@ -74,7 +76,10 @@ as [`lsf`](/commands/rclone_lsf/#synopsis) (including [customizable options
 for hash, modtime, etc.](/commands/rclone_lsf/#synopsis))
 Conceptually it is similar to rsync's `--itemize-changes`, but not identical
 -- it should output an accurate list of what will be on the destination
-after the sync.
+after the command is finished.
+
+When the `--no-traverse` flag is set, all logs involving files that exist only
+on the destination will be incomplete or completely missing.
 
 Note that these logger flags have a few limitations, and certain scenarios
 are not currently supported:
@@ -85,9 +90,10 @@ are not currently supported:
 - High-level retries, because there would be duplicates (use `--retries 1` to disable)
 - Possibly some unusual error scenarios
 
-Note also that each file is logged during the sync, as opposed to after, so it
+Note also that each file is logged during execution, as opposed to after, so it
 is most useful as a predictor of what SHOULD happen to each file
 (which may or may not match what actually DID.)
+
 
 
 ```

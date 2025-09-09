@@ -11,11 +11,16 @@ This is a backend for the [Cloudinary](https://cloudinary.com/) platform
 ## About Cloudinary
 
 [Cloudinary](https://cloudinary.com/) is an image and video API platform.
-Trusted by 1.5 million developers and 10,000 enterprise and hyper-growth companies as a critical part of their tech stack to deliver visually engaging experiences.
+Trusted by 1.5 million developers and 10,000 enterprise and hyper-growth
+companies as a critical part of their tech stack to deliver visually engaging
+experiences.
 
 ## Accounts & Pricing
 
-To use this backend, you need to [create a free account](https://cloudinary.com/users/register_free) on Cloudinary. Start with a free plan with generous usage limits. Then, as your requirements grow, upgrade to a plan that best fits your needs. See [the pricing details](https://cloudinary.com/pricing).
+To use this backend, you need to [create a free account](https://cloudinary.com/users/register_free)
+on Cloudinary. Start with a free plan with generous usage limits. Then, as your
+requirements grow, upgrade to a plan that best fits your needs.
+See [the pricing details](https://cloudinary.com/pricing).
 
 ## Securing Your Credentials
 
@@ -25,13 +30,17 @@ Please refer to the [docs](/docs/#configuration-encryption-cheatsheet)
 
 Here is an example of making a Cloudinary configuration.
 
-First, create a [cloudinary.com](https://cloudinary.com/users/register_free) account and choose a plan.
+First, create a [cloudinary.com](https://cloudinary.com/users/register_free)
+account and choose a plan.
 
-You will need to log in and get the `API Key` and `API Secret` for your account from the developer section.
+You will need to log in and get the `API Key` and `API Secret` for your account
+from the developer section.
 
 Now run
 
-`rclone config`
+```sh
+rclone config
+```
 
 Follow the interactive setup process:
 
@@ -104,15 +113,21 @@ y/e/d> y
 
 List directories in the top level of your Media Library
 
-`rclone lsd cloudinary-media-library:`
+```sh
+rclone lsd cloudinary-media-library:
+```
 
 Make a new directory.
 
-`rclone mkdir cloudinary-media-library:directory`
+```sh
+rclone mkdir cloudinary-media-library:directory
+```
 
 List the contents of a directory.
 
-`rclone ls cloudinary-media-library:directory`
+```sh
+rclone ls cloudinary-media-library:directory
+```
 
 ### Modified time and hashes
 

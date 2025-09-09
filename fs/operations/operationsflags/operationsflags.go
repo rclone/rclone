@@ -22,7 +22,7 @@ var help string
 
 // Help returns the help string cleaned up to simplify appending
 func Help() string {
-	return strings.TrimSpace(help) + "\n\n"
+	return strings.TrimSpace(help)
 }
 
 // AddLoggerFlagsOptions contains options for the Logger Flags
@@ -62,7 +62,7 @@ func AddLoggerFlags(cmdFlags *pflag.FlagSet, opt *operations.LoggerOpt, flagsOpt
 
 	// lsf flags for destAfter
 	flags.StringVarP(cmdFlags, &opt.Format, "format", "F", "p", "Output format - see lsf help for details", "Sync")
-	flags.StringVarP(cmdFlags, &opt.TimeFormat, "timeformat", "t", "", "Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)", "")
+	flags.StringVarP(cmdFlags, &opt.TimeFormat, "timeformat", "t", "", "Specify a custom time format - see docs for details (default: 2006-01-02 15:04:05)", "")
 	flags.StringVarP(cmdFlags, &opt.Separator, "separator", "s", ";", "Separator for the items in the format", "Sync")
 	flags.BoolVarP(cmdFlags, &opt.DirSlash, "dir-slash", "d", true, "Append a slash to directory names", "Sync")
 	opt.HashType = hash.MD5

@@ -1,7 +1,7 @@
 // Package common defines code common to the union and the policies
 //
 // These need to be defined in a separate package to avoid import loops
-package common
+package common //nolint:revive // Don't include revive when running golangci-lint because this triggers var-naming: avoid meaningless package names
 
 import "github.com/rclone/rclone/fs"
 

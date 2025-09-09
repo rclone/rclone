@@ -31,6 +31,7 @@ func TestTransfer(t *testing.T) {
 		assert.Equal(t, int64(0), snap.Size)
 		assert.Equal(t, int64(0), snap.Bytes)
 		assert.Equal(t, false, snap.Checked)
+		assert.Equal(t, "transferring", snap.What)
 		assert.Equal(t, false, snap.StartedAt.IsZero())
 		assert.Equal(t, true, snap.CompletedAt.IsZero())
 		assert.Equal(t, nil, snap.Error)
@@ -46,6 +47,7 @@ func TestTransfer(t *testing.T) {
 		assert.Equal(t, int64(0), snap.Size)
 		assert.Equal(t, int64(0), snap.Bytes)
 		assert.Equal(t, false, snap.Checked)
+		assert.Equal(t, "transferring", snap.What)
 		assert.Equal(t, false, snap.StartedAt.IsZero())
 		assert.Equal(t, false, snap.CompletedAt.IsZero())
 		assert.Equal(t, true, errors.Is(snap.Error, io.EOF))
@@ -62,5 +64,22 @@ func TestTransfer(t *testing.T) {
 			"srcFs": "srcFs:srcFs",
 			"dstFs": "dstFs:dstFs",
 		}, out)
+	})
+
+	t.Run("Snapshot checking transfer", func(t *testing.T) {
+		ctr := newCheckingTransfer(s, o, "checking")
+		snap := ctr.Snapshot()
+
+		assert.Equal(t, "obj", snap.Name)
+		assert.Equal(t, int64(0), snap.Size)
+		assert.Equal(t, int64(0), snap.Bytes)
+		assert.Equal(t, true, snap.Checked)
+		assert.Equal(t, "checking", snap.What)
+		assert.Equal(t, false, snap.StartedAt.IsZero())
+		assert.Equal(t, true, snap.CompletedAt.IsZero())
+		assert.Equal(t, nil, snap.Error)
+		assert.Equal(t, "", snap.Group)
+		assert.Equal(t, "", snap.SrcFs)
+		assert.Equal(t, "", snap.DstFs)
 	})
 }

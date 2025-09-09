@@ -14,7 +14,7 @@ import (
 )
 
 // errFileNotFound represent file not found error
-var errFileNotFound error = errors.New("file not found")
+var errFileNotFound = errors.New("file not found")
 
 // getFileCode retrieves the file code for a given file path
 func (f *Fs) getFileCode(ctx context.Context, filePath string) (string, error) {

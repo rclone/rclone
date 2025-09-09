@@ -43,25 +43,27 @@ var commandDefinition = &cobra.Command{
 
 The output is an array of Items, where each Item looks like this:
 
-    {
-      "Hashes" : {
-         "SHA-1" : "f572d396fae9206628714fb2ce00f72e94f2258f",
-         "MD5" : "b1946ac92492d2347c6235b4d2611184",
-         "DropboxHash" : "ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc"
-      },
-      "ID": "y2djkhiujf83u33",
-      "OrigID": "UYOJVTUW00Q1RzTDA",
-      "IsBucket" : false,
-      "IsDir" : false,
-      "MimeType" : "application/octet-stream",
-      "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
-      "Name" : "file.txt",
-      "Encrypted" : "v0qpsdq8anpci8n929v3uu9338",
-      "EncryptedPath" : "kja9098349023498/v0qpsdq8anpci8n929v3uu9338",
-      "Path" : "full/path/goes/here/file.txt",
-      "Size" : 6,
-      "Tier" : "hot",
-    }
+` + "```json" + `
+{
+  "Hashes" : {
+    "SHA-1" : "f572d396fae9206628714fb2ce00f72e94f2258f",
+    "MD5" : "b1946ac92492d2347c6235b4d2611184",
+    "DropboxHash" : "ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc"
+  },
+  "ID": "y2djkhiujf83u33",
+  "OrigID": "UYOJVTUW00Q1RzTDA",
+  "IsBucket" : false,
+  "IsDir" : false,
+  "MimeType" : "application/octet-stream",
+  "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
+  "Name" : "file.txt",
+  "Encrypted" : "v0qpsdq8anpci8n929v3uu9338",
+  "EncryptedPath" : "kja9098349023498/v0qpsdq8anpci8n929v3uu9338",
+  "Path" : "full/path/goes/here/file.txt",
+  "Size" : 6,
+  "Tier" : "hot",
+}
+` + "```" + `
 
 The exact set of properties included depends on the backend:
 
@@ -118,6 +120,7 @@ will be shown ("2017-05-31T16:15:57+01:00").
 The whole output can be processed as a JSON blob, or alternatively it
 can be processed line by line as each item is written on individual lines
 (except with ` + "`--stat`" + `).
+
 ` + lshelp.Help,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.37",

@@ -18,8 +18,8 @@ s3). Because it has no parameters you can just use it with the
 You can configure it as a remote like this with `rclone config` too if
 you want to:
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -50,9 +50,11 @@ y/e/d> y
 Because the memory backend isn't persistent it is most useful for
 testing or with an rclone server or rclone mount, e.g.
 
-    rclone mount :memory: /mnt/tmp
-    rclone serve webdav :memory:
-    rclone serve sftp :memory:
+```sh
+rclone mount :memory: /mnt/tmp
+rclone serve webdav :memory:
+rclone serve sftp :memory:
+```
 
 ### Modification times and hashes
 

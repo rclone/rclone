@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -425,6 +426,32 @@ func TestCopyLongFileName(t *testing.T) {
 	require.NoError(t, err)
 	r.CheckLocalItems(t, file1)
 	r.CheckRemoteItems(t, file2)
+}
+
+func TestCopyLongFileNameCollision(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	if !r.Fremote.Features().PartialUploads {
+		t.Skip("Partial uploads not supported")
+	}
+
+	ci.Inplace = false
+	ci.Transfers = 4
+
+	// Write a lot of identical files with long names
+	files := make([]fstest.Item, 10)
+	namePrefix := strings.Repeat("file1", 30)
+	for i := range files {
+		files[i] = r.WriteFile(fmt.Sprintf("%s%02d", namePrefix, i), "file1 contents", t1)
+	}
+	r.CheckLocalItems(t, files...)
+
+	err := sync.CopyDir(ctx, r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, files...)
+	r.CheckRemoteItems(t, files...)
 }
 
 func TestCopyFileMaxTransfer(t *testing.T) {

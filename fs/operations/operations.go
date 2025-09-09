@@ -2219,14 +2219,25 @@ func (l *ListFormat) SetOutput(output []func(entry *ListJSONItem) string) {
 
 // AddModTime adds file's Mod Time to output
 func (l *ListFormat) AddModTime(timeFormat string) {
-	if timeFormat == "" {
-		timeFormat = "2006-01-02 15:04:05"
-	} else {
+	switch timeFormat {
+	case "":
+		l.AppendOutput(func(entry *ListJSONItem) string {
+			return entry.ModTime.When.Local().Format("2006-01-02 15:04:05")
+		})
+	case "unix":
+		l.AppendOutput(func(entry *ListJSONItem) string {
+			return fmt.Sprint(entry.ModTime.When.Unix())
+		})
+	case "unixnano":
+		l.AppendOutput(func(entry *ListJSONItem) string {
+			return fmt.Sprint(entry.ModTime.When.UnixNano())
+		})
+	default:
 		timeFormat = transform.TimeFormat(timeFormat)
+		l.AppendOutput(func(entry *ListJSONItem) string {
+			return entry.ModTime.When.Local().Format(timeFormat)
+		})
 	}
-	l.AppendOutput(func(entry *ListJSONItem) string {
-		return entry.ModTime.When.Local().Format(timeFormat)
-	})
 }
 
 // AddSize adds file's size to output

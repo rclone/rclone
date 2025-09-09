@@ -6,25 +6,27 @@ versionIntroduced: "v1.43"
 
 # {{< icon "fa fa-cloud" >}} Jottacloud
 
-Jottacloud is a cloud storage service provider from a Norwegian company, using its own datacenters
-in Norway. In addition to the official service at [jottacloud.com](https://www.jottacloud.com/),
-it also provides white-label solutions to different companies, such as:
-* Telia
-  * Telia Cloud (cloud.telia.se)
-  * Telia Sky (sky.telia.no)
-* Tele2
-  * Tele2 Cloud (mittcloud.tele2.se)
-* Onlime
-  * Onlime Cloud Storage (onlime.dk)
-* Elkjøp (with subsidiaries):
-  * Elkjøp Cloud (cloud.elkjop.no)
-  * Elgiganten Sweden (cloud.elgiganten.se)
-  * Elgiganten Denmark (cloud.elgiganten.dk)
-  * Giganti Cloud  (cloud.gigantti.fi)
-  * ELKO Cloud (cloud.elko.is)
+Jottacloud is a cloud storage service provider from a Norwegian company, using
+its own datacenters in Norway. In addition to the official service at
+[jottacloud.com](https://www.jottacloud.com/), it also provides white-label
+solutions to different companies, such as:
 
-Most of the white-label versions are supported by this backend, although may require different
-authentication setup - described below.
+- Telia
+  - Telia Cloud (cloud.telia.se)
+  - Telia Sky (sky.telia.no)
+- Tele2
+  - Tele2 Cloud (mittcloud.tele2.se)
+- Onlime
+  - Onlime Cloud Storage (onlime.dk)
+- Elkjøp (with subsidiaries):
+  - Elkjøp Cloud (cloud.elkjop.no)
+  - Elgiganten Sweden (cloud.elgiganten.se)
+  - Elgiganten Denmark (cloud.elgiganten.dk)
+  - Giganti Cloud  (cloud.gigantti.fi)
+  - ELKO Cloud (cloud.elko.is)
+
+Most of the white-label versions are supported by this backend, although may
+require different authentication setup - described below.
 
 Paths are specified as `remote:path`
 
@@ -32,81 +34,92 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 ## Authentication types
 
-Some of the whitelabel versions uses a different authentication method than the official service,
-and you have to choose the correct one when setting up the remote.
+Some of the whitelabel versions uses a different authentication method than the
+official service, and you have to choose the correct one when setting up the remote.
 
 ### Standard authentication
 
-The standard authentication method used by the official service (jottacloud.com), as well as
-some of the whitelabel services, requires you to generate a single-use personal login token
-from the account security settings in the service's web interface. Log in to your account,
-go to "Settings" and then "Security", or use the direct link presented to you by rclone when
-configuring the remote: <https://www.jottacloud.com/web/secure>. Scroll down to the section
-"Personal login token", and click the "Generate" button. Note that if you are using a
-whitelabel service you probably can't use the direct link, you need to find the same page in
-their dedicated web interface, and also it may be in a different location than described above.
+The standard authentication method used by the official service (jottacloud.com),
+as well as some of the whitelabel services, requires you to generate a single-use
+personal login token from the account security settings in the service's web
+interface. Log in to your account, go to "Settings" and then "Security", or use
+the direct link presented to you by rclone when configuring the remote:
+<https://www.jottacloud.com/web/secure>. Scroll down to the section "Personal login
+token", and click the "Generate" button. Note that if you are using a whitelabel
+service you probably can't use the direct link, you need to find the same page in
+their dedicated web interface, and also it may be in a different location than
+described above.
 
-To access your account from multiple instances of rclone, you need to configure each of them
-with a separate personal login token. E.g. you create a Jottacloud remote with rclone in one
-location, and copy the configuration file to a second location where you also want to run
-rclone and access the same remote. Then you need to replace the token for one of them, using
-the [config reconnect](https://rclone.org/commands/rclone_config_reconnect/) command, which
-requires you to generate a new personal login token and supply as input. If you do not
-do this, the token may easily end up being invalidated, resulting in both instances failing
-with an error message something along the lines of:
+To access your account from multiple instances of rclone, you need to configure
+each of them with a separate personal login token. E.g. you create a Jottacloud
+remote with rclone in one location, and copy the configuration file to a second
+location where you also want to run rclone and access the same remote. Then you
+need to replace the token for one of them, using the [config reconnect](https://rclone.org/commands/rclone_config_reconnect/)
+command, which requires you to generate a new personal login token and supply
+as input. If you do not do this, the token may easily end up being invalidated,
+resulting in both instances failing with an error message something along the
+lines of:
 
-    oauth2: cannot fetch token: 400 Bad Request
-    Response: {"error":"invalid_grant","error_description":"Stale token"}
+```text
+  oauth2: cannot fetch token: 400 Bad Request
+  Response: {"error":"invalid_grant","error_description":"Stale token"}
+```
 
-When this happens, you need to replace the token as described above to be able to use your
-remote again.
+When this happens, you need to replace the token as described above to be able
+to use your remote again.
 
-All personal login tokens you have taken into use will be listed in the web interface under
-"My logged in devices", and from the right side of that list you can click the "X" button to
-revoke individual tokens.
+All personal login tokens you have taken into use will be listed in the web
+interface under "My logged in devices", and from the right side of that list
+you can click the "X" button to revoke individual tokens.
 
 ### Legacy authentication
 
-If you are using one of the whitelabel versions (e.g. from Elkjøp) you may not have the option
-to generate a CLI token. In this case you'll have to use the legacy authentication. To do this select
-yes when the setup asks for legacy authentication and enter your username and password.
-The rest of the setup is identical to the default setup.
+If you are using one of the whitelabel versions (e.g. from Elkjøp) you may not
+have the option to generate a CLI token. In this case you'll have to use the
+legacy authentication. To do this select yes when the setup asks for legacy
+authentication and enter your username and password. The rest of the setup is
+identical to the default setup.
 
 ### Telia Cloud authentication
 
-Similar to other whitelabel versions Telia Cloud doesn't offer the option of creating a CLI token, and
-additionally uses a separate authentication flow where the username is generated internally. To setup
-rclone to use Telia Cloud, choose Telia Cloud authentication in the setup. The rest of the setup is
+Similar to other whitelabel versions Telia Cloud doesn't offer the option of
+creating a CLI token, and additionally uses a separate authentication flow
+where the username is generated internally. To setup rclone to use Telia Cloud,
+choose Telia Cloud authentication in the setup. The rest of the setup is
 identical to the default setup.
 
 ### Tele2 Cloud authentication
 
-As Tele2-Com Hem merger was completed this authentication can be used for former Com Hem Cloud and
-Tele2 Cloud customers as no support for creating a CLI token exists, and additionally uses a separate
-authentication flow where the username is generated internally. To setup rclone to use Tele2 Cloud,
-choose Tele2 Cloud authentication in the setup. The rest of the setup is identical to the default setup.
+As Tele2-Com Hem merger was completed this authentication can be used for former
+Com Hem Cloud and Tele2 Cloud customers as no support for creating a CLI token
+exists, and additionally uses a separate authentication flow where the username
+is generated internally. To setup rclone to use Tele2 Cloud, choose Tele2 Cloud
+authentication in the setup. The rest of the setup is identical to the default setup.
 
 ### Onlime Cloud Storage authentication
 
-Onlime has sold access to Jottacloud proper, while providing localized support to Danish Customers, but
-have recently set up their own hosting, transferring their customers from Jottacloud servers to their
-own ones.
+Onlime has sold access to Jottacloud proper, while providing localized support
+to Danish Customers, but have recently set up their own hosting, transferring
+their customers from Jottacloud servers to their own ones.
 
-This, of course, necessitates using their servers for authentication, but otherwise functionality and
-architecture seems equivalent to Jottacloud.
+This, of course, necessitates using their servers for authentication, but
+otherwise functionality and architecture seems equivalent to Jottacloud.
 
-To setup rclone to use Onlime Cloud Storage, choose Onlime Cloud authentication in the setup. The rest
-of the setup is identical to the default setup.
+To setup rclone to use Onlime Cloud Storage, choose Onlime Cloud authentication
+in the setup. The rest of the setup is identical to the default setup.
 
 ## Configuration
 
-Here is an example of how to make a remote called `remote` with the default setup.  First run:
+Here is an example of how to make a remote called `remote` with the default setup.
+First run:
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -197,15 +210,21 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level of your Jottacloud
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your Jottacloud
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an Jottacloud directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Devices and Mountpoints
 
@@ -286,18 +305,21 @@ as they can't be used in XML strings.
 
 ### Deleting files
 
-By default, rclone will send all files to the trash when deleting files. They will be permanently
-deleted automatically after 30 days. You may bypass the trash and permanently delete files immediately
-by using the [--jottacloud-hard-delete](#jottacloud-hard-delete) flag, or set the equivalent environment variable.
-Emptying the trash is supported by the [cleanup](/commands/rclone_cleanup/) command.
+By default, rclone will send all files to the trash when deleting files. They
+will be permanently deleted automatically after 30 days. You may bypass the
+trash and permanently delete files immediately by using the [--jottacloud-hard-delete](#jottacloud-hard-delete)
+flag, or set the equivalent environment variable. Emptying the trash is
+supported by the [cleanup](/commands/rclone_cleanup/) command.
 
 ### Versions
 
-Jottacloud supports file versioning. When rclone uploads a new version of a file it creates a new version of it.
-Currently rclone only supports retrieving the current version but older versions can be accessed via the Jottacloud Website.
+Jottacloud supports file versioning. When rclone uploads a new version of a
+file it creates a new version of it. Currently rclone only supports retrieving
+the current version but older versions can be accessed via the Jottacloud Website.
 
-Versioning can be disabled by `--jottacloud-no-versions` option. This is achieved by deleting the remote file prior to uploading
-a new version. If the upload the fails no version of the file will be available in the remote.
+Versioning can be disabled by `--jottacloud-no-versions` option. This is
+achieved by deleting the remote file prior to uploading a new version. If the
+upload the fails no version of the file will be available in the remote.
 
 ### Quota information
 
@@ -382,6 +404,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

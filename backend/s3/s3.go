@@ -120,6 +120,9 @@ var providerOption = fs.Option{
 		Value: "IDrive",
 		Help:  "IDrive e2",
 	}, {
+		Value: "Intercolo",
+		Help:  "Intercolo Object Storage",
+	}, {
 		Value: "IONOS",
 		Help:  "IONOS Cloud",
 	}, {
@@ -150,6 +153,9 @@ var providerOption = fs.Option{
 		Value: "Outscale",
 		Help:  "OUTSCALE Object Storage (OOS)",
 	}, {
+		Value: "OVHcloud",
+		Help:  "OVHcloud Object Storage",
+	}, {
 		Value: "Petabox",
 		Help:  "Petabox Object Storage",
 	}, {
@@ -167,6 +173,9 @@ var providerOption = fs.Option{
 	}, {
 		Value: "Selectel",
 		Help:  "Selectel Object Storage",
+	}, {
+		Value: "SpectraLogic",
+		Help:  "Spectra Logic Black Pearl",
 	}, {
 		Value: "StackPath",
 		Help:  "StackPath Object Storage",
@@ -504,6 +513,14 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "Intercolo",
+			Examples: []fs.OptionExample{{
+				Value: "de-fra",
+				Help:  "Frankfurt, Germany",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
 			Provider: "IONOS",
 			Examples: []fs.OptionExample{{
 				Value: "de",
@@ -534,6 +551,59 @@ func init() {
 			}, {
 				Value: "ap-northeast-1",
 				Help:  "Tokyo, Japan",
+			}},
+		}, {
+			// References:
+			// https://help.ovhcloud.com/csm/en-public-cloud-storage-s3-location?id=kb_article_view&sysparm_article=KB0047384
+			// https://support.us.ovhcloud.com/hc/en-us/articles/10667991081107-Endpoints-and-Object-Storage-Geoavailability
+			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "OVHcloud",
+			Examples: []fs.OptionExample{{
+				Value: "gra",
+				Help:  "Gravelines, France",
+			}, {
+				Value: "rbx",
+				Help:  "Roubaix, France",
+			}, {
+				Value: "sbg",
+				Help:  "Strasbourg, France",
+			}, {
+				Value: "eu-west-par",
+				Help:  "Paris, France (3AZ)",
+			}, {
+				Value: "de",
+				Help:  "Frankfurt, Germany",
+			}, {
+				Value: "uk",
+				Help:  "London, United Kingdom",
+			}, {
+				Value: "waw",
+				Help:  "Warsaw, Poland",
+			}, {
+				Value: "bhs",
+				Help:  "Beauharnois, Canada",
+			}, {
+				Value: "ca-east-tor",
+				Help:  "Toronto, Canada",
+			}, {
+				Value: "sgp",
+				Help:  "Singapore",
+			}, {
+				Value: "ap-southeast-syd",
+				Help:  "Sydney, Australia",
+			}, {
+				Value: "ap-south-mum",
+				Help:  "Mumbai, India",
+			}, {
+				Value: "us-east-va",
+				Help:  "Vint Hill, Virginia, USA",
+			}, {
+				Value: "us-west-or",
+				Help:  "Hillsboro, Oregon, USA",
+			}, {
+				Value: "rbx-archive",
+				Help:  "Roubaix, France (Cold Archive)",
 			}},
 		}, {
 			Name:     "region",
@@ -587,7 +657,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,Intercolo,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -900,6 +970,14 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
+			Help:     "Endpoint for Intercolo Object Storage.",
+			Provider: "Intercolo",
+			Examples: []fs.OptionExample{{
+				Value: "de-fra.i3storage.com",
+				Help:  "Frankfurt, Germany",
+			}},
+		}, {
+			Name:     "endpoint",
 			Help:     "Endpoint for IONOS S3 Object Storage.\n\nSpecify the endpoint from the same region.",
 			Provider: "IONOS",
 			Examples: []fs.OptionExample{{
@@ -1176,6 +1254,71 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
+			Help:     "Endpoint for OVHcloud Object Storage.",
+			Provider: "OVHcloud",
+			Examples: []fs.OptionExample{{
+				Value:    "s3.gra.io.cloud.ovh.net",
+				Help:     "OVHcloud Gravelines, France",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.rbx.io.cloud.ovh.net",
+				Help:     "OVHcloud Roubaix, France",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.sbg.io.cloud.ovh.net",
+				Help:     "OVHcloud Strasbourg, France",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.eu-west-par.io.cloud.ovh.net",
+				Help:     "OVHcloud Paris, France (3AZ)",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.de.io.cloud.ovh.net",
+				Help:     "OVHcloud Frankfurt, Germany",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.uk.io.cloud.ovh.net",
+				Help:     "OVHcloud London, United Kingdom",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.waw.io.cloud.ovh.net",
+				Help:     "OVHcloud Warsaw, Poland",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.bhs.io.cloud.ovh.net",
+				Help:     "OVHcloud Beauharnois, Canada",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.ca-east-tor.io.cloud.ovh.net",
+				Help:     "OVHcloud Toronto, Canada",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.sgp.io.cloud.ovh.net",
+				Help:     "OVHcloud Singapore",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.ap-southeast-syd.io.cloud.ovh.net",
+				Help:     "OVHcloud Sydney, Australia",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.ap-south-mum.io.cloud.ovh.net",
+				Help:     "OVHcloud Mumbai, India",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.us-east-va.io.cloud.ovh.us",
+				Help:     "OVHcloud Vint Hill, Virginia, USA",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.us-west-or.io.cloud.ovh.us",
+				Help:     "OVHcloud Hillsboro, Oregon, USA",
+				Provider: "OVHcloud",
+			}, {
+				Value:    "s3.rbx-archive.io.cloud.ovh.net",
+				Help:     "OVHcloud Roubaix, France (Cold Archive)",
+				Provider: "OVHcloud",
+			}},
+		}, {
+			Name:     "endpoint",
 			Help:     "Endpoint for Scaleway Object Storage.",
 			Provider: "Scaleway",
 			Examples: []fs.OptionExample{{
@@ -1411,7 +1554,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,Intercolo,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1946,7 +2089,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Outscale,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS,Petabox,Mega",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1961,7 +2104,7 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 If the acl is an empty string then no X-Amz-Acl: header is added and
 the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade,Mega",
+			Provider: "!Storj,Selectel,SpectraLogic,Synology,Cloudflare,FlashBlade,Mega",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -2019,7 +2162,7 @@ isn't set then "acl" is used instead.
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
 header is added and the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade",
+			Provider: "!Storj,Selectel,SpectraLogic,Synology,Cloudflare,FlashBlade",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
@@ -2426,6 +2569,11 @@ See [AWS Docs on Dualstack Endpoints](https://docs.aws.amazon.com/AmazonS3/lates
 			Help: `If true use the AWS S3 accelerated endpoint.
 
 See: [AWS S3 Transfer acceleration](https://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration-examples.html)`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "use_arn_region",
+			Help:     `If true, enables arn region support for the service.`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -2975,6 +3123,7 @@ type Options struct {
 	ForcePathStyle        bool                 `config:"force_path_style"`
 	V2Auth                bool                 `config:"v2_auth"`
 	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
+	UseARNRegion          bool                 `config:"use_arn_region"`
 	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
 	ListChunk             int32                `config:"list_chunk"`
 	ListVersion           int                  `config:"list_version"`
@@ -3339,6 +3488,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 	options = append(options, func(s3Opt *s3.Options) {
 		s3Opt.UsePathStyle = opt.ForcePathStyle
 		s3Opt.UseAccelerate = opt.UseAccelerateEndpoint
+		s3Opt.UseARNRegion = opt.UseARNRegion
 		// FIXME maybe this should be a tristate so can default to DualStackEndpointStateUnset?
 		if opt.UseDualStack {
 			s3Opt.EndpointOptions.UseDualStackEndpoint = aws.DualStackEndpointStateEnabled
@@ -3549,6 +3699,9 @@ func setQuirks(opt *Options) {
 	case "IDrive":
 		virtualHostStyle = false
 		useAlreadyExists = false // untested
+	case "Intercolo":
+		// no quirks
+		useUnsignedPayload = false // Intercolo has trailer support
 	case "IONOS":
 		// listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
 		virtualHostStyle = false
@@ -3589,6 +3742,8 @@ func setQuirks(opt *Options) {
 		useAlreadyExists = false // untested
 	case "Outscale":
 		virtualHostStyle = false
+	case "OVHcloud":
+		// No quirks
 	case "RackCorp":
 		// No quirks
 		useMultipartEtag = false // untested
@@ -3619,6 +3774,8 @@ func setQuirks(opt *Options) {
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
 		useAlreadyExists = false // untested
+	case "SpectraLogic":
+		virtualHostStyle = false // path-style required
 	case "StackPath":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
@@ -4458,7 +4615,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 		}
 		foundItems += len(resp.Contents)
 		for i, object := range resp.Contents {
-			remote := deref(object.Key)
+			remote := *stringClone(deref(object.Key))
 			if urlEncodeListings {
 				remote, err = url.QueryUnescape(remote)
 				if err != nil {
@@ -5061,8 +5218,11 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 			MultipartUpload: &types.CompletedMultipartUpload{
 				Parts: parts,
 			},
-			RequestPayer: req.RequestPayer,
-			UploadId:     uid,
+			RequestPayer:         req.RequestPayer,
+			SSECustomerAlgorithm: req.SSECustomerAlgorithm,
+			SSECustomerKey:       req.SSECustomerKey,
+			SSECustomerKeyMD5:    req.SSECustomerKeyMD5,
+			UploadId:             uid,
 		})
 		return f.shouldRetry(ctx, err)
 	})
@@ -5911,7 +6071,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func s3MetadataToMap(s3Meta map[string]string) map[string]string {
 	meta := make(map[string]string, len(s3Meta))
 	for k, v := range s3Meta {
-		meta[strings.ToLower(k)] = v
+		meta[strings.ToLower(k)] = *stringClone(v)
 	}
 	return meta
 }
@@ -5954,14 +6114,14 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 			o.lastModified = *resp.LastModified
 		}
 	}
-	o.mimeType = deref(resp.ContentType)
+	o.mimeType = strings.Clone(deref(resp.ContentType))
 
 	// Set system metadata
-	o.storageClass = (*string)(&resp.StorageClass)
-	o.cacheControl = resp.CacheControl
-	o.contentDisposition = resp.ContentDisposition
-	o.contentEncoding = resp.ContentEncoding
-	o.contentLanguage = resp.ContentLanguage
+	o.storageClass = stringClone(string(resp.StorageClass))
+	o.cacheControl = stringClonePointer(resp.CacheControl)
+	o.contentDisposition = stringClonePointer(resp.ContentDisposition)
+	o.contentEncoding = stringClonePointer(removeAWSChunked(resp.ContentEncoding))
+	o.contentLanguage = stringClonePointer(resp.ContentLanguage)
 
 	// If decompressing then size and md5sum are unknown
 	if o.fs.opt.Decompress && deref(o.contentEncoding) == "gzip" {
@@ -6026,6 +6186,36 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 // Storable raturns a boolean indicating if this object is storable
 func (o *Object) Storable() bool {
 	return true
+}
+
+// removeAWSChunked removes the "aws-chunked" content-coding from a
+// Content-Encoding field value (RFC 9110). Comparison is case-insensitive.
+// Returns nil if encoding is empty after removal.
+func removeAWSChunked(pv *string) *string {
+	if pv == nil {
+		return nil
+	}
+	v := *pv
+	if v == "" {
+		return nil
+	}
+	if !strings.Contains(strings.ToLower(v), "aws-chunked") {
+		return pv
+	}
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		tok := strings.TrimSpace(p)
+		if tok == "" || strings.EqualFold(tok, "aws-chunked") {
+			continue
+		}
+		out = append(out, tok)
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	v = strings.Join(out, ",")
+	return &v
 }
 
 func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
@@ -6196,7 +6386,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	o.setMetaData(&head)
 
 	// Decompress body if necessary
-	if deref(resp.ContentEncoding) == "gzip" {
+	if deref(removeAWSChunked(resp.ContentEncoding)) == "gzip" {
 		if o.fs.opt.Decompress || (resp.ContentLength == nil && o.fs.opt.MightGzip.Value) {
 			return readers.NewGzipReader(resp.Body)
 		}
@@ -6446,8 +6636,11 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 			MultipartUpload: &types.CompletedMultipartUpload{
 				Parts: w.completedParts,
 			},
-			RequestPayer: w.multiPartUploadInput.RequestPayer,
-			UploadId:     w.uploadID,
+			RequestPayer:         w.multiPartUploadInput.RequestPayer,
+			SSECustomerAlgorithm: w.multiPartUploadInput.SSECustomerAlgorithm,
+			SSECustomerKey:       w.multiPartUploadInput.SSECustomerKey,
+			SSECustomerKeyMD5:    w.multiPartUploadInput.SSECustomerKeyMD5,
+			UploadId:             w.uploadID,
 		})
 		return w.f.shouldRetry(ctx, err)
 	})
@@ -6475,9 +6668,9 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 		return wantETag, gotETag, versionID, ui, err
 	}
 
-	var s3cw *s3ChunkWriter = chunkWriter.(*s3ChunkWriter)
-	gotETag = s3cw.eTag
-	versionID = aws.String(s3cw.versionID)
+	s3cw := chunkWriter.(*s3ChunkWriter)
+	gotETag = *stringClone(s3cw.eTag)
+	versionID = stringClone(s3cw.versionID)
 
 	hashOfHashes := md5.Sum(s3cw.md5s)
 	wantETag = fmt.Sprintf("%s-%d", hex.EncodeToString(hashOfHashes[:]), len(s3cw.completedParts))
@@ -6509,8 +6702,8 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 	}
 	lastModified = time.Now()
 	if resp != nil {
-		etag = deref(resp.ETag)
-		versionID = resp.VersionId
+		etag = *stringClone(deref(resp.ETag))
+		versionID = stringClonePointer(resp.VersionId)
 	}
 	return etag, lastModified, versionID, nil
 }
@@ -6562,8 +6755,8 @@ func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.P
 		if date, err := http.ParseTime(resp.Header.Get("Date")); err != nil {
 			lastModified = date
 		}
-		etag = resp.Header.Get("Etag")
-		vID := resp.Header.Get("x-amz-version-id")
+		etag = *stringClone(resp.Header.Get("Etag"))
+		vID := *stringClone(resp.Header.Get("x-amz-version-id"))
 		if vID != "" {
 			versionID = &vID
 		}
@@ -6617,7 +6810,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		case "content-disposition":
 			ui.req.ContentDisposition = pv
 		case "content-encoding":
-			ui.req.ContentEncoding = pv
+			ui.req.ContentEncoding = removeAWSChunked(pv)
 		case "content-language":
 			ui.req.ContentLanguage = pv
 		case "content-type":
@@ -6714,7 +6907,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		case "content-disposition":
 			ui.req.ContentDisposition = aws.String(value)
 		case "content-encoding":
-			ui.req.ContentEncoding = aws.String(value)
+			ui.req.ContentEncoding = removeAWSChunked(aws.String(value))
 		case "content-language":
 			ui.req.ContentLanguage = aws.String(value)
 		case "content-type":

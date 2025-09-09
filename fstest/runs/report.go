@@ -1,4 +1,4 @@
-package main
+package runs
 
 import (
 	"encoding/json"
@@ -56,7 +56,7 @@ var parseVersion = regexp.MustCompile(`^v(?:[0-9.]+)-(?:\d+)-g([0-9a-f]+)(?:-(.*
 // FIXME take -issue or -pr parameter...
 
 // NewReport initialises and returns a Report
-func NewReport() *Report {
+func NewReport(Opt RunOpt) *Report {
 	r := &Report{
 		StartTime: time.Now(),
 		Version:   fs.Version,
@@ -67,20 +67,20 @@ func NewReport() *Report {
 	r.DateTime = r.StartTime.Format(timeFormat)
 
 	// Find previous log directory if possible
-	names, err := os.ReadDir(*outputDir)
+	names, err := os.ReadDir(Opt.OutputDir)
 	if err == nil && len(names) > 0 {
 		r.Previous = names[len(names)-1].Name()
 	}
 
 	// Create output directory for logs and report
-	r.LogDir = path.Join(*outputDir, r.DateTime)
+	r.LogDir = path.Join(Opt.OutputDir, r.DateTime)
 	err = file.MkdirAll(r.LogDir, 0777)
 	if err != nil {
 		fs.Fatalf(nil, "Failed to make log directory: %v", err)
 	}
 
 	// Online version
-	r.URL = *urlBase + r.DateTime + "/index.html"
+	r.URL = Opt.URLBase + r.DateTime + "/index.html"
 
 	// Get branch/commit out of version
 	parts := parseVersion.FindStringSubmatch(r.Version)
@@ -277,12 +277,12 @@ a:focus {
 var reportTemplate = template.Must(template.New("Report").Parse(reportHTML))
 
 // EmailHTML sends the summary report to the email address supplied
-func (r *Report) EmailHTML() {
-	if *emailReport == "" || r.IndexHTML == "" {
+func (r *Report) EmailHTML(Opt RunOpt) {
+	if Opt.EmailReport == "" || r.IndexHTML == "" {
 		return
 	}
-	fs.Logf(nil, "Sending email summary to %q", *emailReport)
-	cmdLine := []string{"mail", "-a", "Content-Type: text/html", *emailReport, "-s", "rclone integration tests: " + r.Title()}
+	fs.Logf(nil, "Sending email summary to %q", Opt.EmailReport)
+	cmdLine := []string{"mail", "-a", "Content-Type: text/html", Opt.EmailReport, "-s", "rclone integration tests: " + r.Title()}
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
 	in, err := os.Open(r.IndexHTML)
 	if err != nil {
@@ -299,8 +299,8 @@ func (r *Report) EmailHTML() {
 }
 
 // uploadTo uploads a copy of the report online to the dir given
-func (r *Report) uploadTo(uploadDir string) {
-	dst := path.Join(*uploadPath, uploadDir)
+func (r *Report) uploadTo(Opt RunOpt, uploadDir string) {
+	dst := path.Join(Opt.UploadPath, uploadDir)
 	fs.Logf(nil, "Uploading results to %q", dst)
 	cmdLine := []string{"rclone", "sync", "--stats-log-level", "NOTICE", r.LogDir, dst}
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
@@ -313,12 +313,12 @@ func (r *Report) uploadTo(uploadDir string) {
 }
 
 // Upload uploads a copy of the report online
-func (r *Report) Upload() {
-	if *uploadPath == "" || r.IndexHTML == "" {
+func (r *Report) Upload(Opt RunOpt) {
+	if Opt.UploadPath == "" || r.IndexHTML == "" {
 		return
 	}
 	// Upload into dated directory
-	r.uploadTo(r.DateTime)
+	r.uploadTo(Opt, r.DateTime)
 	// And again into current
-	r.uploadTo("current")
+	r.uploadTo(Opt, "current")
 }

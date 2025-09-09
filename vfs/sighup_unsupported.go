@@ -1,6 +1,6 @@
 //go:build plan9 || js
 
-package mountlib
+package vfs
 
 import (
 	"os"

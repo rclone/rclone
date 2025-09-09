@@ -31,11 +31,11 @@ will just give you the encrypted (scrambled) format, and anything you
 upload will *not* become encrypted.
 
 The encryption is a secret-key encryption (also called symmetric key encryption)
-algorithm, where a password (or pass phrase) is used to generate real encryption key.
-The password can be supplied by user, or you may chose to let rclone
-generate one. It will be stored in the configuration file, in a lightly obscured form.
-If you are in an environment where you are not able to keep your configuration
-secured, you should add
+algorithm, where a password (or pass phrase) is used to generate real encryption
+key. The password can be supplied by user, or you may chose to let rclone
+generate one. It will be stored in the configuration file, in a lightly obscured
+form. If you are in an environment where you are not able to keep your
+configuration secured, you should add
 [configuration encryption](https://rclone.org/docs/#configuration-encryption)
 as protection. As long as you have this configuration file, you will be able to
 decrypt your data. Without the configuration file, as long as you remember
@@ -47,9 +47,9 @@ See below for guidance to [changing password](#changing-password).
 Encryption uses [cryptographic salt](https://en.wikipedia.org/wiki/Salt_(cryptography)),
 to permute the encryption key so that the same string may be encrypted in
 different ways. When configuring the crypt remote it is optional to enter a salt,
-or to let rclone generate a unique salt. If omitted, rclone uses a built-in unique string.
-Normally in cryptography, the salt is stored together with the encrypted content,
-and do not have to be memorized by the user. This is not the case in rclone,
+or to let rclone generate a unique salt. If omitted, rclone uses a built-in unique
+string. Normally in cryptography, the salt is stored together with the encrypted
+content, and do not have to be memorized by the user. This is not the case in rclone,
 because rclone does not store any additional information on the remotes. Use of
 custom salt is effectively a second password that must be memorized.
 
@@ -86,8 +86,8 @@ anything you write will be unencrypted. To avoid issues it is best to
 configure a dedicated path for encrypted content, and access it
 exclusively through a crypt remote.
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -176,7 +176,8 @@ y/e/d>
 
 **Important** The crypt password stored in `rclone.conf` is lightly
 obscured. That only protects it from cursory inspection. It is not
-secure unless [configuration encryption](https://rclone.org/docs/#configuration-encryption) of `rclone.conf` is specified.
+secure unless [configuration encryption](https://rclone.org/docs/#configuration-encryption)
+of `rclone.conf` is specified.
 
 A long passphrase is recommended, or `rclone config` can generate a
 random one.
@@ -191,8 +192,8 @@ due to the different salt.
 
 Rclone does not encrypt
 
-  * file length - this can be calculated within 16 bytes
-  * modification time - used for syncing
+- file length - this can be calculated within 16 bytes
+- modification time - used for syncing
 
 ### Specifying the remote
 
@@ -244,6 +245,7 @@ is to re-upload everything via a crypt remote configured with your new password.
 
 Depending on the size of your data, your bandwidth, storage quota etc, there are
 different approaches you can take:
+
 - If you have everything in a different location, for example on your local system,
 you could remove all of the prior encrypted files, change the password for your
 configured crypt remote (or delete and re-create the crypt configuration),
@@ -272,7 +274,7 @@ details, and a tool you can use to check if you are affected.
 Create the following file structure using "standard" file name
 encryption.
 
-```
+```sh
 plaintext/
 ├── file0.txt
 ├── file1.txt
@@ -285,7 +287,7 @@ plaintext/
 
 Copy these to the remote, and list them
 
-```
+```sh
 $ rclone -q copy plaintext secret:
 $ rclone -q ls secret:
         7 file1.txt
@@ -297,7 +299,7 @@ $ rclone -q ls secret:
 
 The crypt remote looks like
 
-```
+```sh
 $ rclone -q ls remote:path
        55 hagjclgavj2mbiqm6u6cnjjqcg
        54 v05749mltvv1tf4onltun46gls
@@ -308,7 +310,7 @@ $ rclone -q ls remote:path
 
 The directory structure is preserved
 
-```
+```sh
 $ rclone -q ls secret:subdir
         8 file2.txt
         9 file3.txt
@@ -319,7 +321,7 @@ Without file name encryption `.bin` extensions are added to underlying
 names. This prevents the cloud provider attempting to interpret file
 content.
 
-```
+```sh
 $ rclone -q ls remote:path
        54 file0.txt.bin
        57 subdir/file3.txt.bin
@@ -332,18 +334,18 @@ $ rclone -q ls remote:path
 
 Off
 
-  * doesn't hide file names or directory structure
-  * allows for longer file names (~246 characters)
-  * can use sub paths and copy single files
+- doesn't hide file names or directory structure
+- allows for longer file names (~246 characters)
+- can use sub paths and copy single files
 
 Standard
 
-  * file names encrypted
-  * file names can't be as long (~143 characters)
-  * can use sub paths and copy single files
-  * directory structure visible
-  * identical files names will have identical uploaded names
-  * can use shortcuts to shorten the directory recursion
+- file names encrypted
+- file names can't be as long (~143 characters)
+- can use sub paths and copy single files
+- directory structure visible
+- identical files names will have identical uploaded names
+- can use shortcuts to shorten the directory recursion
 
 Obfuscation
 
@@ -362,11 +364,11 @@ equivalents.
 
 Obfuscation cannot be relied upon for strong protection.
 
-  * file names very lightly obfuscated
-  * file names can be longer than standard encryption
-  * can use sub paths and copy single files
-  * directory structure visible
-  * identical files names will have identical uploaded names
+- file names very lightly obfuscated
+- file names can be longer than standard encryption
+- can use sub paths and copy single files
+- directory structure visible
+- identical files names will have identical uploaded names
 
 Cloud storage systems have limits on file name length and
 total path length which rclone is more likely to breach using
@@ -380,7 +382,7 @@ For cloud storage systems with case sensitive file names (e.g. Google Drive),
 `base64` can be used to reduce file name length. 
 For cloud storage systems using UTF-16 to store file names internally
 (e.g. OneDrive, Dropbox, Box), `base32768` can be used to drastically reduce
-file name length. 
+file name length.
 
 An alternative, future rclone file name encryption mode may tolerate
 backend provider path length limits.
@@ -403,7 +405,6 @@ Only encrypts file names, skips directory names
 Example:
 `1/12/123.txt` is encrypted to
 `1/12/qgm4avr35m5loi1th53ato71v0`
-
 
 ### Modification times and hashes
 

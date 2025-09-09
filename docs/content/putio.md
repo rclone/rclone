@@ -19,11 +19,13 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -81,7 +83,7 @@ See the [remote setup docs](/remote_setup/) for how to set it up on a
 machine with no Internet browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
-token as returned from put.io  if using web browser to automatically 
+token as returned from put.io  if using web browser to automatically
 authenticate. This only
 runs from the moment it opens your browser to the moment you get back
 the verification code.  This is on `http://127.0.0.1:53682/` and this
@@ -92,15 +94,21 @@ You can then use it like this,
 
 List directories in top level of your put.io
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your put.io
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to a put.io directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Restricted filename characters
 
@@ -191,6 +199,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

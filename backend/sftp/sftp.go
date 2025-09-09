@@ -1863,9 +1863,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		free := vfsStats.FreeSpace()
 		used := total - free
 		return &fs.Usage{
-			Total: fs.NewUsageValue(int64(total)),
-			Used:  fs.NewUsageValue(int64(used)),
-			Free:  fs.NewUsageValue(int64(free)),
+			Total: fs.NewUsageValue(total),
+			Used:  fs.NewUsageValue(used),
+			Free:  fs.NewUsageValue(free),
 		}, nil
 	} else if err != nil {
 		if errors.Is(err, os.ErrNotExist) {

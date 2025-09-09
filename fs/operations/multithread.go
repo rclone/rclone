@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/multipart"
+	"github.com/rclone/rclone/lib/pool"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -76,6 +77,13 @@ func (mc *multiThreadCopyState) copyChunk(ctx context.Context, chunk int, writer
 	end := min(start+mc.partSize, mc.size)
 	size := end - start
 
+	// Reserve the memory first so we don't open the source and wait for memory buffers for ages
+	var rw *pool.RW
+	if !mc.noBuffering {
+		rw = multipart.NewRW().Reserve(size)
+		defer fs.CheckClose(rw, &err)
+	}
+
 	fs.Debugf(mc.src, "multi-thread copy: chunk %d/%d (%d-%d) size %v starting", chunk+1, mc.numChunks, start, end, fs.SizeSuffix(size))
 
 	rc, err := Open(ctx, mc.src, &fs.RangeOption{Start: start, End: end - 1})
@@ -92,8 +100,6 @@ func (mc *multiThreadCopyState) copyChunk(ctx context.Context, chunk int, writer
 		rs = rc
 	} else {
 		// Read the chunk into buffered reader
-		rw := multipart.NewRW()
-		defer fs.CheckClose(rw, &err)
 		_, err = io.CopyN(rw, rc, size)
 		if err != nil {
 			return fmt.Errorf("multi-thread copy: failed to read chunk: %w", err)

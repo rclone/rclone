@@ -18,17 +18,21 @@ var bashCommandDefinition = &cobra.Command{
 	Short: `Output bash completion script for rclone.`,
 	Long: `Generates a bash shell autocompletion script for rclone.
 
-By default, when run without any arguments, 
+By default, when run without any arguments,
 
-    rclone completion bash
+` + "```sh" + `
+rclone completion bash
+` + "```" + `
 
 the generated script will be written to
 
-    /etc/bash_completion.d/rclone
+` + "```sh" + `
+/etc/bash_completion.d/rclone
+` + "```" + `
 
 and so rclone will probably need to be run as root, or with sudo.
 
-If you supply a path to a file as the command line argument, then 
+If you supply a path to a file as the command line argument, then
 the generated script will be written to that file, in which case
 you should not need root privileges.
 
@@ -39,11 +43,12 @@ can logout and login again to use the autocompletion script.
 
 Alternatively, you can source the script directly
 
-    . /path/to/my_bash_completion_scripts/rclone
+` + "```sh" + `
+. /path/to/my_bash_completion_scripts/rclone
+` + "```" + `
 
 and the autocompletion functionality will be added to your
-current shell.
-`,
+current shell.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
 		out := "/etc/bash_completion.d/rclone"

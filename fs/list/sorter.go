@@ -46,8 +46,8 @@ type Sorter struct {
 	cutoff     int                   // number of entries above which we start extsort
 	extSort    bool                  // true if we are ext sorting
 	inputChan  chan string           // for sending data to the ext sort
-	outputChan chan string           // for receiving data from the ext sort
-	errChan    chan error            // for getting errors from the ext sort
+	outputChan <-chan string         // for receiving data from the ext sort
+	errChan    <-chan error          // for getting errors from the ext sort
 	sorter     *extsort.StringSorter // external string sort
 	errs       *errcount.ErrCount    // accumulate errors
 }

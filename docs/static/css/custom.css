@@ -63,11 +63,19 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Fix spacing of info boxes */
 .card {
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
+}
+/* less padding on titles */
+.card-header {
+    padding: 5px 15px;
 }
 /* less padding around info box items */
 .card-body {
-    padding: 0.5rem;
+    padding: 0px;
+}
+/* more padding around info box items */
+.card-body-padded {
+    padding: 10px 10px 10px 10px;
 }
 
 /* make menus longer */

@@ -19,11 +19,13 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 n) New remote
 d) Delete remote
 q) Quit config
@@ -71,15 +73,21 @@ You can then use it like this,
 
 List directories in top level of your dropbox
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your dropbox
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to a dropbox directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Dropbox for business
 
@@ -146,7 +154,9 @@ In this mode rclone will not use upload batching. This was the default
 before rclone v1.55. It has the disadvantage that it is very likely to
 encounter `too_many_requests` errors like this
 
-    NOTICE: too_many_requests/.: Too many requests or write operations. Trying again in 15 seconds.
+```text
+NOTICE: too_many_requests/.: Too many requests or write operations. Trying again in 15 seconds.
+```
 
 When rclone receives these it has to wait for 15s or sometimes 300s
 before continuing which really slows down transfers.
@@ -215,7 +225,7 @@ Here are some examples of how extensions are mapped:
 | Paper template | mydoc.papert        | mydoc.papert.html  |
 | other          | mydoc               | mydoc.html         |
 
-_Importing_ exportable files is not yet supported by rclone.
+*Importing* exportable files is not yet supported by rclone.
 
 Here are the supported export extensions known by rclone. Note that
 rclone does not currently support other formats not on this list,
@@ -304,6 +314,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

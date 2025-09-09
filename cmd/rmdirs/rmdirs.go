@@ -38,8 +38,7 @@ This will delete ` + "`--checkers`" + ` directories concurrently so
 if you have thousands of empty directories consider increasing this number.
 
 To delete a path and any objects in it, use the [purge](/commands/rclone_purge/)
-command.
-`,
+command.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.35",
 		"groups":            "Important",

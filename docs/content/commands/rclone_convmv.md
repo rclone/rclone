@@ -221,12 +221,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20250617
+// Output: stories/The Quick Brown Fox!-20250618
 ```
 
 ```
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2025-06-17 0551PM
+// Output: stories/The Quick Brown Fox!-2025-06-18 0148PM
 ```
 
 ```
@@ -234,17 +234,15 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,regex=[\\
 // Output: ababababababab/ababab ababababab ababababab ababab!abababab
 ```
 
-
-
 Multiple transformations can be used in sequence, applied in the order they are specified on the command line.
 
 The `--name-transform` flag is also available in `sync`, `copy`, and `move`.
 
-# Files vs Directories ##
+# Files vs Directories
 
 By default `--name-transform` will only apply to file names. The means only the leaf file name will be transformed.
 However some of the transforms would be better applied to the whole path or just directories.
-To choose which which part of the file path is affected some tags can be added to the `--name-transform`
+To choose which which part of the file path is affected some tags can be added to the `--name-transform`.
 
 | Tag | Effect |
 |------|------|
@@ -254,11 +252,11 @@ To choose which which part of the file path is affected some tags can be added t
 
 This is used by adding the tag into the transform name like this: `--name-transform file,prefix=ABC` or `--name-transform dir,prefix=DEF`.
 
-For some conversions using all is more likely to be useful, for example `--name-transform all,nfc`
+For some conversions using all is more likely to be useful, for example `--name-transform all,nfc`.
 
 Note that `--name-transform` may not add path separators `/` to the name. This will cause an error.
 
-# Ordering and Conflicts ##
+# Ordering and Conflicts
 
 * Transformations will be applied in the order specified by the user.
     * If the `file` tag is in use (the default) then only the leaf name of files will be transformed.
@@ -273,19 +271,19 @@ user, allowing for intentional use cases (e.g., trimming one prefix before addin
     * Users should be aware that certain combinations may lead to unexpected results and should verify
 transformations using `--dry-run` before execution.
 
-# Race Conditions and Non-Deterministic Behavior ##
+# Race Conditions and Non-Deterministic Behavior
 
 Some transformations, such as `replace=old:new`, may introduce conflicts where multiple source files map to the same destination name.
 This can lead to race conditions when performing concurrent transfers. It is up to the user to anticipate these.
 * If two files from the source are transformed into the same name at the destination, the final state may be non-deterministic.
 * Running rclone check after a sync using such transformations may erroneously report missing or differing files due to overwritten results.
 
-* To minimize risks, users should:
-    * Carefully review transformations that may introduce conflicts.
-    * Use `--dry-run` to inspect changes before executing a sync (but keep in mind that it won't show the effect of non-deterministic transformations).
-    * Avoid transformations that cause multiple distinct source files to map to the same destination name.
-    * Consider disabling concurrency with `--transfers=1` if necessary.
-    * Certain transformations (e.g. `prefix`) will have a multiplying effect every time they are used. Avoid these when using `bisync`.
+To minimize risks, users should:
+* Carefully review transformations that may introduce conflicts.
+* Use `--dry-run` to inspect changes before executing a sync (but keep in mind that it won't show the effect of non-deterministic transformations).
+* Avoid transformations that cause multiple distinct source files to map to the same destination name.
+* Consider disabling concurrency with `--transfers=1` if necessary.
+* Certain transformations (e.g. `prefix`) will have a multiplying effect every time they are used. Avoid these when using `bisync`.
 
 	
 

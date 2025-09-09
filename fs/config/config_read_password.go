@@ -17,7 +17,7 @@ import (
 func ReadPassword() string {
 	stdin := int(os.Stdin.Fd())
 	if !terminal.IsTerminal(stdin) {
-		return ReadLine()
+		return ReadLine("")
 	}
 	line, err := terminal.ReadPassword(stdin)
 	_, _ = fmt.Fprintln(os.Stderr)

@@ -27,11 +27,13 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -98,7 +100,7 @@ See the [remote setup docs](/remote_setup/) for how to set it up on a
 machine with no Internet browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
-token as returned from Google if using web browser to automatically 
+token as returned from Google if using web browser to automatically
 authenticate. This only
 runs from the moment it opens your browser to the moment you get back
 the verification code.  This is on `http://127.0.0.1:53682/` and this
@@ -109,20 +111,28 @@ This remote is called `remote` and can now be used like this
 
 See all the albums in your photos
 
-    rclone lsd remote:album
+```sh
+rclone lsd remote:album
+```
 
 Make a new album
 
-    rclone mkdir remote:album/newAlbum
+```sh
+rclone mkdir remote:album/newAlbum
+```
 
 List the contents of an album
 
-    rclone ls remote:album/newAlbum
+```sh
+rclone ls remote:album/newAlbum
+```
 
 Sync `/home/local/images` to the Google Photos, removing any excess
 files in the album.
 
-    rclone sync --interactive /home/local/image remote:album/newAlbum
+```sh
+rclone sync --interactive /home/local/image remote:album/newAlbum
+```
 
 ### Layout
 
@@ -139,7 +149,7 @@ Note that all your photos and videos will appear somewhere under
 `media`, but they may not appear under `album` unless you've put them
 into albums.
 
-```
+```text
 /
 - upload
     - file1.jpg
@@ -203,11 +213,13 @@ may create new directories (albums) under `album`.  If you copy files
 with a directory hierarchy in there then rclone will create albums
 with the `/` character in them.  For example if you do
 
-    rclone copy /path/to/images remote:album/images
+```sh
+rclone copy /path/to/images remote:album/images
+```
 
 and the images directory contains
 
-```
+```text
 images
     - file1.jpg
     dir
@@ -220,11 +232,11 @@ images
 Then rclone will create the following albums with the following files in
 
 - images
-    - file1.jpg
+  - file1.jpg
 - images/dir
-    - file2.jpg
+  - file2.jpg
 - images/dir2/dir3
-    - file3.jpg
+  - file3.jpg
 
 This means that you can use the `album` path pretty much like a normal
 filesystem and it is a good target for repeated syncing.
@@ -323,6 +335,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

@@ -371,9 +371,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return nil, err
 	}
 	return &fs.Usage{
-		Total: fs.NewUsageValue(int64(info.Capacity)),
-		Used:  fs.NewUsageValue(int64(info.Used)),
-		Free:  fs.NewUsageValue(int64(info.Remaining)),
+		Total: fs.NewUsageValue(info.Capacity),
+		Used:  fs.NewUsageValue(info.Used),
+		Free:  fs.NewUsageValue(info.Remaining),
 	}, nil
 }
 

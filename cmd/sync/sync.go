@@ -42,11 +42,15 @@ want to delete files from destination, use the
 **Important**: Since this can cause data loss, test first with the
 |--dry-run| or the |--interactive|/|i| flag.
 
-    rclone sync --interactive SOURCE remote:DESTINATION
+|||sh
+rclone sync --interactive SOURCE remote:DESTINATION
+|||
 
-Note that files in the destination won't be deleted if there were any
-errors at any point.  Duplicate objects (files with the same name, on
-those providers that support it) are also not yet handled.
+Files in the destination won't be deleted if there were any errors at any
+point. Duplicate objects (files with the same name, on those providers that
+support it) are not yet handled. Files that are excluded won't be deleted
+unless |--delete-excluded| is used. Symlinks won't be transferred or
+deleted from local file systems unless |--links| is used.
 
 It is always the contents of the directory that is synced, not the
 directory itself. So when source:path is a directory, it's the contents of
@@ -57,7 +61,7 @@ If dest:path doesn't exist, it is created and the source:path contents
 go there.
 
 It is not possible to sync overlapping remotes. However, you may exclude
-the destination from the sync with a filter rule or by putting an 
+the destination from the sync with a filter rule or by putting an
 exclude-if-present file inside the destination directory and sync to a
 destination that is inside the source directory.
 
@@ -66,13 +70,15 @@ the backend supports it. If metadata syncing is required then use the
 |--metadata| flag.
 
 Note that the modification time and metadata for the root directory
-will **not** be synced. See https://github.com/rclone/rclone/issues/7652
+will **not** be synced. See <https://github.com/rclone/rclone/issues/7652>
 for more info.
 
 **Note**: Use the |-P|/|--progress| flag to view real-time transfer statistics
 
-**Note**: Use the |rclone dedupe| command to deal with "Duplicate object/directory found in source/destination - ignoring" errors.
-See [this forum post](https://forum.rclone.org/t/sync-not-clearing-duplicates/14372) for more info.
+**Note**: Use the |rclone dedupe| command to deal with "Duplicate
+object/directory found in source/destination - ignoring" errors.
+See [this forum post](https://forum.rclone.org/t/sync-not-clearing-duplicates/14372)
+for more info.
 
 `, "|", "`") + operationsflags.Help(),
 	Annotations: map[string]string{

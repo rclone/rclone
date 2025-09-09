@@ -13,12 +13,14 @@ command.)  You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
 
 Here is an example of making an QingStor configuration.  First run
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process.
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 r) Rename remote
 c) Copy remote
@@ -80,20 +82,28 @@ This remote is called `remote` and can now be used like this
 
 See all buckets
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 Make a new bucket
 
-    rclone mkdir remote:bucket
+```sh
+rclone mkdir remote:bucket
+```
 
 List the contents of a bucket
 
-    rclone ls remote:bucket
+```sh
+rclone ls remote:bucket
+```
 
 Sync `/home/local/directory` to the remote bucket, deleting any excess
 files in the bucket.
 
-    rclone sync --interactive /home/local/directory remote:bucket
+```sh
+rclone sync --interactive /home/local/directory remote:bucket
+```
 
 ### --fast-list
 
@@ -126,13 +136,13 @@ zone`.
 There are two ways to supply `rclone` with a set of QingStor
 credentials. In order of precedence:
 
- - Directly in the rclone configuration file (as configured by `rclone config`)
-   - set `access_key_id` and `secret_access_key`
- - Runtime configuration:
-   - set `env_auth` to `true` in the config file
-   - Exporting the following environment variables before running `rclone`
-     - Access Key ID: `QS_ACCESS_KEY_ID` or `QS_ACCESS_KEY`
-     - Secret Access Key: `QS_SECRET_ACCESS_KEY` or `QS_SECRET_KEY`
+- Directly in the rclone configuration file (as configured by `rclone config`)
+  - set `access_key_id` and `secret_access_key`
+- Runtime configuration:
+  - set `env_auth` to `true` in the config file
+  - Exporting the following environment variables before running `rclone`
+    - Access Key ID: `QS_ACCESS_KEY_ID` or `QS_ACCESS_KEY`
+    - Secret Access Key: `QS_SECRET_ACCESS_KEY` or `QS_SECRET_KEY`
 
 ### Restricted filename characters
 

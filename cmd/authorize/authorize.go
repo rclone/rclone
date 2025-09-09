@@ -30,14 +30,16 @@ rclone from a machine with a browser - use as instructed by
 rclone config.
 
 The command requires 1-3 arguments:
-  - fs name (e.g., "drive", "s3", etc.)
-  - Either a base64 encoded JSON blob obtained from a previous rclone config session
-  - Or a client_id and client_secret pair obtained from the remote service
+
+- fs name (e.g., "drive", "s3", etc.)
+- Either a base64 encoded JSON blob obtained from a previous rclone config session
+- Or a client_id and client_secret pair obtained from the remote service
 
 Use --auth-no-open-browser to prevent rclone to open auth
 link in default browser automatically.
 
-Use --template to generate HTML output via a custom Go template. If a blank string is provided as an argument to this flag, the default template is used.`,
+Use --template to generate HTML output via a custom Go template. If a blank
+string is provided as an argument to this flag, the default template is used.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.27",
 	},

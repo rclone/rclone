@@ -18,11 +18,13 @@ you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 e) Edit existing remote
 n) New remote
 d) Delete remote
@@ -110,57 +112,88 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level of your OneDrive
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your OneDrive
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an OneDrive directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Getting your own Client ID and Key
 
-rclone uses a default Client ID when talking to OneDrive, unless a custom `client_id` is specified in the config.
-The default Client ID and Key are shared by all rclone users when performing requests.
+rclone uses a default Client ID when talking to OneDrive, unless a custom
+`client_id` is specified in the config. The default Client ID and Key are
+shared by all rclone users when performing requests.
 
-You may choose to create and use your own Client ID, in case the default one does not work well for you. 
-For example, you might see throttling.
+You may choose to create and use your own Client ID, in case the default one
+does not work well for you. For example, you might see throttling.
 
 #### Creating Client ID for OneDrive Personal
 
 To create your own Client ID, please follow these steps:
 
-1. Open https://portal.azure.com/?quickstart=true#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview and then under the `Add` menu click `App registration`.
-    * If you have not created an Azure account, you will be prompted to. This is free, but you need to provide a phone number, address, and credit card for identity verification.
-2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`, select `Web` in `Redirect URI`, then type (do not copy and paste) `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
-3. Under `manage` select `Certificates & secrets`, click `New client secret`. Enter a description (can be anything) and set `Expires` to 24 months. Copy and keep that secret _Value_ for later use (you _won't_ be able to see this value afterwards).
-4. Under `manage` select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
-5. Search and select the following permissions: `Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read` and `Sites.Read.All` (if custom access scopes are configured, select the permissions accordingly). Once selected click `Add permissions` at the bottom.
+1. Open <https://portal.azure.com/?quickstart=true#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview>
+  and then under the `Add` menu click `App registration`.
+   - If you have not created an Azure account, you will be prompted to. This is free,
+   but you need to provide a phone number, address, and credit card for identity
+   verification.
+2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`,
+  select `Web` in `Redirect URI`, then type (do not copy and paste)
+  `http://localhost:53682/` and click Register. Copy and keep the
+  `Application (client) ID` under the app name for later use.
+3. Under `manage` select `Certificates & secrets`, click `New client secret`.
+  Enter a description (can be anything) and set `Expires` to 24 months.
+  Copy and keep that secret *Value* for later use (you *won't* be able to see
+  this value afterwards).
+4. Under `manage` select `API permissions`, click `Add a permission` and select
+  `Microsoft Graph` then select `delegated permissions`.
+5. Search and select the following permissions: `Files.Read`, `Files.ReadWrite`,
+  `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read` and
+  `Sites.Read.All` (if custom access scopes are configured, select the
+  permissions accordingly). Once selected click `Add permissions` at the bottom.
 
-Now the application is complete. Run `rclone config` to create or edit a OneDrive remote.
-Supply the app ID and password as Client ID and Secret, respectively. rclone will walk you through the remaining steps.
+Now the application is complete. Run `rclone config` to create or edit a OneDrive
+remote. Supply the app ID and password as Client ID and Secret, respectively.
+rclone will walk you through the remaining steps.
 
 The access_scopes option allows you to configure the permissions requested by rclone.
-See [Microsoft Docs](https://docs.microsoft.com/en-us/graph/permissions-reference#files-permissions) for more information about the different scopes.
+See [Microsoft Docs](https://docs.microsoft.com/en-us/graph/permissions-reference#files-permissions)
+for more information about the different scopes.
 
-The `Sites.Read.All` permission is required if you need to [search SharePoint sites when configuring the remote](https://github.com/rclone/rclone/pull/5883). However, if that permission is not assigned, you need to exclude `Sites.Read.All` from your access scopes or set `disable_site_permission` option to true in the advanced options.
+The `Sites.Read.All` permission is required if you need to [search SharePoint sites when configuring the remote](https://github.com/rclone/rclone/pull/5883).
+However, if that permission is not assigned, you need to exclude `Sites.Read.All`
+from your access scopes or set `disable_site_permission` option to true in the
+advanced options.
 
 #### Creating Client ID for OneDrive Business
 
-The steps for OneDrive Personal may or may not work for OneDrive Business, depending on the security settings of the organization.
+The steps for OneDrive Personal may or may not work for OneDrive Business,
+depending on the security settings of the organization.
 A common error is that the publisher of the App is not verified.
 
-You may try to [verify you account](https://docs.microsoft.com/en-us/azure/active-directory/develop/publisher-verification-overview), or try to limit the App to your organization only, as shown below.
+You may try to [verify you account](https://docs.microsoft.com/en-us/azure/active-directory/develop/publisher-verification-overview),
+or try to limit the App to your organization only, as shown below.
 
 1. Make sure to create the App with your business account.
-2. Follow the steps above to create an App. However, we need a different account type here: `Accounts in this organizational directory only (*** - Single tenant)`. Note that you can also change the account type after creating the App.
-3. Find the [tenant ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant) of your organization.
+2. Follow the steps above to create an App. However, we need a different account
+   type here: `Accounts in this organizational directory only (*** - Single tenant)`.
+   Note that you can also change the account type after creating the App.
+3. Find the [tenant ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant)
+   of your organization.
 4. In the rclone config, set `auth_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/authorize`.
 5. In the rclone config, set `token_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/token`.
 
-Note: If you have a special region, you may need a different host in step 4 and 5. Here are [some hints](https://github.com/rclone/rclone/blob/bc23bf11db1c78c6ebbf8ea538fbebf7058b4176/backend/onedrive/onedrive.go#L86).
+Note: If you have a special region, you may need a different host in step 4 and 5.
+Here are [some hints](https://github.com/rclone/rclone/blob/bc23bf11db1c78c6ebbf8ea538fbebf7058b4176/backend/onedrive/onedrive.go#L86).
 
 ### Using OAuth Client Credential flow
 
@@ -170,10 +203,14 @@ that adopting the context of an Azure AD user account.
 
 This flow can be enabled by following the steps below:
 
-1. Create the Enterprise App registration in the Azure AD portal and obtain a Client ID and Client Secret as described above.
-2. Ensure that the application has the appropriate permissions and they are assigned as *Application Permissions*
-3. Configure the remote, ensuring that *Client ID* and *Client Secret* are entered correctly.
-4. In the *Advanced Config* section, enter `true` for `client_credentials` and in the `tenant` section enter the tenant ID.
+1. Create the Enterprise App registration in the Azure AD portal and obtain a
+   Client ID and Client Secret as described above.
+2. Ensure that the application has the appropriate permissions and they are
+   assigned as *Application Permissions*
+3. Configure the remote, ensuring that *Client ID* and *Client Secret* are
+   entered correctly.
+4. In the *Advanced Config* section, enter `true` for `client_credentials` and
+   in the `tenant` section enter the tenant ID.
 
 When it comes to choosing the type of the connection work with the
 client credentials flow. In particular the "onedrive" option does not
@@ -385,6 +422,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

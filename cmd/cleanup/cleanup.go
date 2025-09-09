@@ -17,8 +17,7 @@ var commandDefinition = &cobra.Command{
 	Use:   "cleanup remote:path",
 	Short: `Clean up the remote if possible.`,
 	Long: `Clean up the remote if possible.  Empty the trash or delete old file
-versions. Not supported by all remotes.
-`,
+versions. Not supported by all remotes.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.31",
 		"groups":            "Important",

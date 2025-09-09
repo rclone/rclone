@@ -334,7 +334,7 @@ func TestMetadata(t *testing.T) {
 
 func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
 	ctx := context.Background()
-	whenRFC := when.Format(time.RFC3339Nano)
+	whenRFC := when.Local().Format(time.RFC3339Nano)
 	const dayLength = len("2001-01-01")
 
 	f := r.Flocal.(*Fs)

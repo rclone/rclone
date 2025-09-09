@@ -14,11 +14,13 @@ e.g. `remote:path/to/dir`.
 Here is an example of making a Microsoft Azure Files Storage
 configuration.  For a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -88,20 +90,28 @@ Once configured you can use rclone.
 
 See all files in the top level:
 
-    rclone lsf remote:
+```sh
+rclone lsf remote:
+```
 
 Make a new directory in the root:
 
-    rclone mkdir remote:dir
+```sh
+rclone mkdir remote:dir
+```
 
 Recursively List the contents:
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-    rclone sync --interactive /home/local/directory remote:dir
+```sh
+rclone sync --interactive /home/local/directory remote:dir
+```
 
 ### Modified time
 
@@ -173,26 +183,35 @@ user with a password, depending on which environment variable are set.
 It reads configuration from these variables, in the following order:
 
 1. Service principal with client secret
-    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its "directory" ID.
+    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its
+      "directory" ID.
     - `AZURE_CLIENT_ID`: the service principal's client ID
     - `AZURE_CLIENT_SECRET`: one of the service principal's client secrets
 2. Service principal with certificate
-    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its "directory" ID.
+    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its
+      "directory" ID.
     - `AZURE_CLIENT_ID`: the service principal's client ID
-    - `AZURE_CLIENT_CERTIFICATE_PATH`: path to a PEM or PKCS12 certificate file including the private key.
-    - `AZURE_CLIENT_CERTIFICATE_PASSWORD`: (optional) password for the certificate file.
-    - `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN`: (optional) Specifies whether an authentication request will include an x5c header to support subject name / issuer based authentication. When set to "true" or "1", authentication requests include the x5c header.
+    - `AZURE_CLIENT_CERTIFICATE_PATH`: path to a PEM or PKCS12 certificate file
+      including the private key.
+    - `AZURE_CLIENT_CERTIFICATE_PASSWORD`: (optional) password for the
+      certificate file.
+    - `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN`: (optional) Specifies whether an
+      authentication request will include an x5c header to support subject
+      name / issuer based authentication. When set to "true" or "1",
+      authentication requests include the x5c header.
 3. User with username and password
     - `AZURE_TENANT_ID`: (optional) tenant to authenticate in. Defaults to "organizations".
-    - `AZURE_CLIENT_ID`: client ID of the application the user will authenticate to
+    - `AZURE_CLIENT_ID`: client ID of the application the user will authenticate
+      to
     - `AZURE_USERNAME`: a username (usually an email address)
     - `AZURE_PASSWORD`: the user's password
 4. Workload Identity
-    - `AZURE_TENANT_ID`: Tenant to authenticate in.
-    - `AZURE_CLIENT_ID`: Client ID of the application the user will authenticate to.
-    - `AZURE_FEDERATED_TOKEN_FILE`: Path to projected service account token file.
-    - `AZURE_AUTHORITY_HOST`: Authority of an Azure Active Directory endpoint (default: login.microsoftonline.com).
-
+    - `AZURE_TENANT_ID`: Tenant to authenticate in
+    - `AZURE_CLIENT_ID`: Client ID of the application the user will authenticate
+      to
+    - `AZURE_FEDERATED_TOKEN_FILE`: Path to projected service account token file
+    - `AZURE_AUTHORITY_HOST`: Authority of an Azure Active Directory endpoint
+      (default: login.microsoftonline.com).
 
 ##### Env Auth: 2. Managed Service Identity Credentials
 
@@ -219,15 +238,21 @@ Credentials created with the `az` tool can be picked up using `env_auth`.
 
 For example if you were to login with a service principal like this:
 
-    az login --service-principal -u XXX -p XXX --tenant XXX
+```sh
+az login --service-principal -u XXX -p XXX --tenant XXX
+```
 
 Then you could access rclone resources like this:
 
-    rclone lsf :azurefiles,env_auth,account=ACCOUNT:
+```sh
+rclone lsf :azurefiles,env_auth,account=ACCOUNT:
+```
 
 Or
 
-    rclone lsf --azurefiles-env-auth --azurefiles-account=ACCOUNT :azurefiles:
+```sh
+rclone lsf --azurefiles-env-auth --azurefiles-account=ACCOUNT :azurefiles:
+```
 
 #### Account and Shared Key
 
@@ -244,7 +269,8 @@ To use it leave `account`, `key` and "sas_url" blank and fill in `connection_str
 
 #### Service principal with client secret
 
-If these variables are set, rclone will authenticate with a service principal with a client secret.
+If these variables are set, rclone will authenticate with a service principal
+with a client secret.
 
 - `tenant`: ID of the service principal's tenant. Also called its "directory" ID.
 - `client_id`: the service principal's client ID
@@ -255,13 +281,18 @@ The credentials can also be placed in a file using the
 
 #### Service principal with certificate
 
-If these variables are set, rclone will authenticate with a service principal with certificate.
+If these variables are set, rclone will authenticate with a service principal
+with certificate.
 
 - `tenant`: ID of the service principal's tenant. Also called its "directory" ID.
 - `client_id`: the service principal's client ID
-- `client_certificate_path`: path to a PEM or PKCS12 certificate file including the private key.
+- `client_certificate_path`: path to a PEM or PKCS12 certificate file including
+  the private key.
 - `client_certificate_password`: (optional) password for the certificate file.
-- `client_send_certificate_chain`: (optional) Specifies whether an authentication request will include an x5c header to support subject name / issuer based authentication. When set to "true" or "1", authentication requests include the x5c header.
+- `client_send_certificate_chain`: (optional) Specifies whether an authentication
+  request will include an x5c header to support subject name / issuer based
+  authentication. When set to "true" or "1", authentication requests include
+  the x5c header.
 
 **NB** `client_certificate_password` must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
@@ -296,17 +327,21 @@ be explicitly specified using exactly one of the `msi_object_id`,
 If none of `msi_object_id`, `msi_client_id`, or `msi_mi_res_id` is
 set, this is is equivalent to using `env_auth`.
 
-#### Fedrated Identity Credentials 
+#### Fedrated Identity Credentials
 
 If these variables are set, rclone will authenticate with fedrated identity.
 
 - `tenant_id`: tenant_id to authenticate in storage
 - `client_id`: client ID of the application the user will authenticate to storage
-- `msi_client_id`: managed identity client ID of the application the user will authenticate to
+- `msi_client_id`: managed identity client ID of the application the user will
+  authenticate to
 
-By default "api://AzureADTokenExchange" is used as scope for token retrieval over MSI. This token is then exchanged for actual storage token using 'tenant_id' and 'client_id'.
-	
+By default "api://AzureADTokenExchange" is used as scope for token retrieval
+over MSI. This token is then exchanged for actual storage token using 'tenant_id'
+and 'client_id'.
+
 #### Azure CLI tool `az` {#use_az}
+
 Set to use the [Azure CLI tool `az`](https://learn.microsoft.com/en-us/cli/azure/)
 as the sole means of authentication.
 Setting this can be useful if you wish to use the `az` CLI on a host with

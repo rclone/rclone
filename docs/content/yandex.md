@@ -12,11 +12,13 @@ versionIntroduced: "v1.26"
 
 Here is an example of making a yandex configuration.  First run
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -71,20 +73,28 @@ Once configured you can then use `rclone` like this,
 
 See top level directories
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 Make a new directory
 
-    rclone mkdir remote:directory
+```sh
+rclone mkdir remote:directory
+```
 
 List the contents of a directory
 
-    rclone ls remote:directory
+```sh
+rclone ls remote:directory
+```
 
 Sync `/home/local/directory` to the remote path, deleting any
 excess files in the path.
 
-    rclone sync --interactive /home/local/directory remote:directory
+```sh
+rclone sync --interactive /home/local/directory remote:directory
+```
 
 Yandex paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
@@ -191,6 +201,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
