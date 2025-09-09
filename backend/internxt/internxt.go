@@ -500,7 +500,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	if doMove {
 		err = folders.MoveFolder(f.cfg, srcID, dstDirectoryID)
-		if err != nil {
+		if err != nil && !strings.Contains(err.Error(), "409") {
 			return err
 		}
 		time.Sleep(500 * time.Millisecond) //Find a way around this
@@ -509,7 +509,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	if doRename {
 		err = folders.RenameFolder(f.cfg, srcID, f.opt.Encoding.FromStandardName(dstLeaf))
-		if err != nil {
+		if err != nil && !strings.Contains(err.Error(), "409") {
 			return err
 		}
 		time.Sleep(500 * time.Millisecond) //Find a way around this
@@ -522,7 +522,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 // Copy copies a directory (not implemented)
 func (f *Fs) Copy(ctx context.Context, src, dst fs.Object) error {
 	// return f.client.Copy(ctx, f.root+src.Remote(), f.root+dst.Remote())
-	return fs.ErrorNotImplemented
+	return fs.ErrorCantCopy
 }
 
 // NewObject creates a new object

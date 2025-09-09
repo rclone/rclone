@@ -88,8 +88,8 @@ github.com/ProtonMail/gopenpgp/v2 v2.9.0 h1:ruLzBmwe4dR1hdnrsEJ/S7psSBmV15gFttFU
 github.com/ProtonMail/gopenpgp/v2 v2.9.0/go.mod h1:IldDyh9Hv1ZCCYatTuuEt1XZJ0OPjxLpTarDfglih7s=
 github.com/PuerkitoBio/goquery v1.10.3 h1:pFYcNSqHxBD06Fpj/KsbStFRsgRATgnf3LeXiUkhzPo=
 github.com/PuerkitoBio/goquery v1.10.3/go.mod h1:tMUX0zDMHXYlAQk6p35XxQMqMweEKB7iK7iLNd4RH4Y=
-github.com/StarHack/go-internxt-drive v0.0.0-20250729162806-991258f28d59 h1:HUIgGvXQMw9Y71jnILPYVyZPkdAr1fJzo4krMpMT2jg=
-github.com/StarHack/go-internxt-drive v0.0.0-20250729162806-991258f28d59/go.mod h1:cJ9TMYZAURHxL5/fJbdiz6Y2uWI1DIa+/aVsphfAUq4=
+github.com/StarHack/go-internxt-drive v0.0.0-20250908210132-8c3b31964076 h1:v7J8hdBCuXcXF4LdqwXXIOXvgi/vUxSMM4v6DQ/epmE=
+github.com/StarHack/go-internxt-drive v0.0.0-20250908210132-8c3b31964076/go.mod h1:cJ9TMYZAURHxL5/fJbdiz6Y2uWI1DIa+/aVsphfAUq4=
 github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e h1:KMVieI1/Ub++GYfnhyFPoGE3g5TUiG4srE3TMGr5nM4=
 github.com/a8m/tree v0.0.0-20240104212747-2c8764a5f17e/go.mod h1:j5astEcUkZQX8lK+KKlQ3NRQ50f4EE8ZjyZpCz3mrH4=
 github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3 h1:hhdWprfSpFbN7lz3W1gM40vOgvSh1WCSMxYD6gGB4Hs=
