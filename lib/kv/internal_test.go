@@ -8,6 +8,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/rclone/rclone/fs/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +23,7 @@ func TestKvConcurrency(t *testing.T) {
 	wg.Add(threadNum)
 	for i := range threadNum {
 		go func(i int) {
-			db, err := Start(ctx, "test", nil)
+			db, err := Start(ctx, "test", config.GetCacheDir(), nil)
 			require.NoError(t, err)
 			require.NotNil(t, db)
 			results[i] = db
@@ -57,7 +58,7 @@ func TestKvExit(t *testing.T) {
 	for i := range dbNum {
 		facility := fmt.Sprintf("test-%d", i)
 		for j := 0; j <= i; j++ {
-			db, err := Start(ctx, facility, nil)
+			db, err := Start(ctx, facility, config.GetCacheDir(), nil)
 			require.NoError(t, err)
 			require.NotNil(t, db)
 		}
