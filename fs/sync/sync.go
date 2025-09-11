@@ -14,6 +14,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/cluster"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
@@ -97,6 +98,7 @@ type syncCopyMove struct {
 	setDirModTimesMaxLevel int                    // max level of the directories to set
 	modifiedDirs           map[string]struct{}    // dirs with changed contents (if s.setDirModTimeAfter)
 	allowOverlap           bool                   // whether we allow src and dst to overlap (i.e. for convmv)
+	cluster                *cluster.Cluster       // non-nil to run sync via cluster
 }
 
 // For keeping track of delayed modtime sets
@@ -164,6 +166,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		setDirModTimeAfter:     !ci.NoUpdateDirModTime && (!copyEmptySrcDirs || fsrc.Features().CanHaveEmptyDirectories && fdst.Features().DirModTimeUpdatesOnWrite),
 		modifiedDirs:           make(map[string]struct{}),
 		allowOverlap:           allowOverlap,
+		cluster:                cluster.GetCluster(ctx),
 	}
 
 	s.logger, s.usingLogger = operations.GetLogger(ctx)
@@ -496,13 +499,25 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 		dst := pair.Dst
 		if s.DoMove {
 			if src != dst {
-				_, err = operations.MoveTransfer(ctx, fdst, dst, src.Remote(), src)
+				if s.cluster != nil {
+					err = s.cluster.Move(ctx, fdst, dst, src.Remote(), src)
+				} else {
+					_, err = operations.MoveTransfer(ctx, fdst, dst, src.Remote(), src)
+				}
 			} else {
 				// src == dst signals delete the src
-				err = operations.DeleteFile(ctx, src)
+				if s.cluster != nil {
+					err = s.cluster.DeleteFile(ctx, src)
+				} else {
+					err = operations.DeleteFile(ctx, src)
+				}
 			}
 		} else {
-			_, err = operations.Copy(ctx, fdst, dst, src.Remote(), src)
+			if s.cluster != nil {
+				err = s.cluster.Copy(ctx, fdst, dst, src.Remote(), src)
+			} else {
+				_, err = operations.Copy(ctx, fdst, dst, src.Remote(), src)
+			}
 		}
 		s.processError(err)
 		if err != nil {
@@ -539,8 +554,13 @@ func (s *syncCopyMove) startTransfers() {
 // This stops the background transfers
 func (s *syncCopyMove) stopTransfers() {
 	s.toBeUploaded.Close()
-	fs.Debugf(s.fdst, "Waiting for transfers to finish")
 	s.transfersWg.Wait()
+	fs.Debugf(s.fdst, "Waiting for transfers to finish")
+	if s.cluster != nil {
+		fs.Debugf(s.fdst, "Waiting for cluster transfers to finish")
+		s.processError(s.cluster.Sync(s.ctx))
+		fs.Debugf(s.fdst, "Cluster transfers finished")
+	}
 }
 
 // This starts the background renamers.
