@@ -43,6 +43,15 @@ XX / iCloud Drive
    \ (iclouddrive)
 [snip]
 Storage> iclouddrive
+Option region.
+Region for iCloud endpoints.
+Choose a number from below, or type in an existing value of type string.
+Press Enter for the default (global).
+ 1 / Global (default)
+   \ (global)
+ 2 / China Mainland
+   \ (chinamainland)
+region> 1
 Option apple_id.
 Apple ID.
 Enter a value.
@@ -69,6 +78,7 @@ Remote config
 --------------------
 [iclouddrive]
 - type: iclouddrive
+- region: global
 - apple_id: APPLEID
 - password: *** ENCRYPTED ***
 - cookies: ****************************
@@ -109,6 +119,19 @@ functions properly.
 ### Standard options
 
 Here are the Standard options specific to iclouddrive (iCloud Drive).
+
+#### --iclouddrive-region
+
+Region for iCloud endpoints.
+
+If your Apple ID is based in mainland China, set region to "China Mainland" during configuration. This switches iCloud endpoints to `.com.cn` (GCBD) domains and avoids redirects error.
+
+Properties:
+
+- Config:      region
+- Env Var:     RCLONE_ICLOUDDRIVE_REGION
+- Type:        string
+- Required:    true
 
 #### --iclouddrive-apple-id
 
