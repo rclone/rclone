@@ -1011,3 +1011,4 @@ put them back in again.` >}}
 - dougal <dougal.craigwood@gmail.com> <147946567+roucc@users.noreply.github.com>
 - anon-pradip <pradipsubedi360@gmail.com>
 - Robin Rolf <imer@imer.cc>
+- Jean-Christophe Cura <jcaspes@gmail.com>
