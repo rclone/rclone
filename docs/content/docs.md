@@ -3315,6 +3315,15 @@ For the remote control options and for instructions on how to remote control rcl
 
 See [the remote control section](/rc/).
 
+## Cluster
+
+For the cluster options and for instructions on how to cluster rclone:
+
+- `--cluster`
+- Anything starting with `--cluster-`
+
+See the [cluster section](/cluster/).
+
 ## Logging
 
 rclone has 4 levels of logging, `ERROR`, `NOTICE`, `INFO` and `DEBUG`.
