@@ -990,7 +990,7 @@ put them back in again.` >}}
 - Ross Smith II <ross@smithii.com>
 - Vikas Bhansali <64532198+vibhansa-msft@users.noreply.github.com>
 - Sudipto Baral <sudiptobaral.me@gmail.com>
-- Sam Pegg <samrpegg@gmail.com>
+- Sam Pegg <samrpegg@gmail.com> <70067376+S-Pegg1@users.noreply.github.com>
 - liubingrun <liubr1@chinatelecom.cn>
 - Albin Parou <fumesover@gmail.com>
 - n4n5 <56606507+Its-Just-Nans@users.noreply.github.com>
