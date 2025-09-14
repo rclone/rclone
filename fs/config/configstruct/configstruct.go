@@ -261,7 +261,7 @@ func Set(config configmap.Getter, opt any) (err error) {
 }
 
 // setIfSameType set aPtr with b if they are the same type or returns false.
-func setIfSameType(aPtr interface{}, b interface{}) bool {
+func setIfSameType(aPtr any, b any) bool {
 	aVal := reflect.ValueOf(aPtr).Elem()
 	bVal := reflect.ValueOf(b)
 
