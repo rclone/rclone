@@ -243,7 +243,6 @@ func (m *Metadata) Get(ctx context.Context) (metadata fs.Metadata, err error) {
 func (m *Metadata) Set(ctx context.Context, metadata fs.Metadata) (numSet int, err error) {
 	numSet = 0
 	for k, v := range metadata {
-		k, v := k, v
 		switch k {
 		case "mtime":
 			t, err := time.Parse(timeFormatIn, v)
