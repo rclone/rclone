@@ -6247,8 +6247,8 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 	metaData := make(map[string]string)
 	for key, value := range resp.Header {
 		key = strings.ToLower(key)
-		if strings.HasPrefix(key, "x-amz-meta-") {
-			metaKey := strings.TrimPrefix(key, "x-amz-meta-")
+		if after, ok := strings.CutPrefix(key, "x-amz-meta-"); ok {
+			metaKey := after
 			metaData[metaKey] = value[0]
 		}
 	}
