@@ -3,6 +3,7 @@ FROM ${BASE_IMAGE}
 ARG USER_CI=jenkinsci
 ARG USER_UID
 ARG USER_GID
+RUN apt-get update && apt-get install -y fuse3 && apt-get clean && rm -rf /var/lib/apt/lists/*
 # Install required plugin development package
 # Create CI USer
 RUN <<EOT
