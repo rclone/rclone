@@ -539,8 +539,7 @@ func TestOnFinish(t *testing.T) {
 func TestOnFinishAlreadyFinished(t *testing.T) {
 	jobID.Store(0)
 	done := make(chan struct{})
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	job, _, err := NewJob(ctx, shortFn, rc.Params{})
 	assert.NoError(t, err)
 
