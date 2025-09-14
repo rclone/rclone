@@ -421,12 +421,7 @@ func (m *Metadata) orderPermissions(xs []*api.PermissionsType) {
 		if hasUserIdentity(p.GetGrantedTo(m.fs.driveType)) {
 			return true
 		}
-		for _, identity := range p.GetGrantedToIdentities(m.fs.driveType) {
-			if hasUserIdentity(identity) {
-				return true
-			}
-		}
-		return false
+		return slices.ContainsFunc(p.GetGrantedToIdentities(m.fs.driveType), hasUserIdentity)
 	}
 	// Put Permissions with a user first, leaving unsorted otherwise
 	slices.SortStableFunc(xs, func(a, b *api.PermissionsType) int {
