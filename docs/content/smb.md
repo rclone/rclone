@@ -21,7 +21,7 @@ you started to share on Windows. On smbd, it's the section title in `smb.conf`
 (usually in `/etc/samba/`) file.
 You can find shares by querying the root if you're unsure (e.g. `rclone lsd remote:`).
 
-You can't access to the shared printers from rclone, obviously.
+You can't access the shared printers from rclone, obviously.
 
 You can't use Anonymous access for logging in. You have to use the `guest` user
 with an empty password instead. The rclone client tries to avoid 8.3 names when
