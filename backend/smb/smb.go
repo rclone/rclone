@@ -193,7 +193,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// if root is empty or ends with / (must be a directory)
-	isRootDir := IsPathDir(root)
+	isRootDir := isPathDir(root)
 
 	root = strings.Trim(root, "/")
 
@@ -902,8 +902,8 @@ func ensureSuffix(s, suffix string) string {
 	return s + suffix
 }
 
-// IsPathDir determines if a path represents a directory based on trailing slash
-func IsPathDir(path string) bool {
+// isPathDir determines if a path represents a directory based on trailing slash
+func isPathDir(path string) bool {
 	return path == "" || strings.HasSuffix(path, "/")
 }
 
