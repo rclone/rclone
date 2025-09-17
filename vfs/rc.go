@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -51,6 +52,204 @@ func getVFS(in rc.Params) (vfs *VFS, err error) {
 	}
 	delete(in, "fs") // delete the fs parameter
 	return activeVFS[0], nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/status",
+		Fn:    rcStatus,
+		Title: "Get cache status of a file.",
+		Help: `
+This returns the cache status of a file.
+
+This takes the following parameters:
+
+- fs - select the VFS in use (optional)
+- path - the path to the file to get the status of
+
+This returns a JSON object with the following fields:
+
+- status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
+- percentage - percentage cached (0-100)
+` + getVFSHelp,
+	})
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/file-status",
+		Fn:    rcFileStatus,
+		Title: "Get detailed cache status of a file.",
+		Help: `
+This returns the detailed cache status of a file including name and percentage.
+
+This takes the following parameters:
+
+- fs - select the VFS in use (optional)
+- path - the path to the file to get the status of
+
+This returns a JSON object with the following fields:
+
+- name - leaf name of the file
+- status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
+- percentage - percentage cached (0-100)
+` + getVFSHelp,
+	})
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/dir-status",
+		Fn:    rcDirStatus,
+		Title: "Get cache status of files in a directory.",
+		Help: `
+This returns the cache status of all files in a directory.
+
+This takes the following parameters:
+
+- fs - select the VFS in use (optional)
+- dir - the path to the directory to get the status of
+
+This returns a JSON array with the following fields for each file:
+
+- name - leaf name of the file
+- status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
+- percentage - percentage cached (0-100)
+` + getVFSHelp,
+	})
+}
+
+func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+
+	// dir parameter is optional - defaults to root
+	dirPath, _ := in.GetString("dir")
+	if err != nil && dirPath != "" {
+		return nil, err
+	}
+
+	// Get root directory
+	root, err := vfs.Root()
+	if err != nil {
+		return nil, err
+	}
+
+	// Navigate to the target directory
+	targetDir := root
+	if dirPath != "" {
+		dirPath = strings.Trim(dirPath, "/")
+		segments := strings.Split(dirPath, "/")
+		var node Node = targetDir
+		for _, s := range segments {
+			if dir, ok := node.(*Dir); ok {
+				node, err = dir.stat(s)
+				if err != nil {
+					return nil, fmt.Errorf("directory not found: %w", err)
+				}
+			} else {
+				return nil, fmt.Errorf("path component is not a directory: %s", s)
+			}
+		}
+		if dir, ok := node.(*Dir); ok {
+			targetDir = dir
+		} else {
+			return nil, fmt.Errorf("target path is not a directory")
+		}
+	}
+
+	// Read directory contents
+	err = targetDir._readDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read directory: %w", err)
+	}
+
+	// Get all nodes in the directory
+	nodes, err := targetDir.ReadDirAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list directory contents: %w", err)
+	}
+
+	// Collect status for each file
+	var results []rc.Params
+	for _, node := range nodes {
+		if file, ok := node.(*File); ok {
+			if vfs.cache == nil {
+				results = append(results, rc.Params{
+					"name":       file.Name(),
+					"status":     "NONE",
+					"percentage": 0,
+				})
+			} else {
+				item := vfs.cache.Item(file.Path())
+				status, percentage := item.VFSStatusCacheWithPercentage()
+				results = append(results, rc.Params{
+					"name":       file.Name(),
+					"status":     status,
+					"percentage": percentage,
+				})
+			}
+		}
+		// Skip directories as requested in the issue
+	}
+
+	return rc.Params{
+		"files": results,
+	}, nil
+}
+
+func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	path, err := in.GetString("path")
+	if err != nil {
+		return nil, err
+	}
+	if vfs.cache == nil {
+		return rc.Params{
+				"name":       filepath.Base(path),
+				"status":     "NONE",
+				"percentage": 0,
+			},
+			nil
+	}
+	item := vfs.cache.Item(path)
+	status, percentage := item.VFSStatusCacheWithPercentage()
+	return rc.Params{
+			"name":       filepath.Base(path),
+			"status":     status,
+			"percentage": percentage,
+		},
+		nil
+}
+
+func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	path, err := in.GetString("path")
+	if err != nil {
+		return nil, err
+	}
+	if vfs.cache == nil {
+		return rc.Params{
+				"status":     "NONE",
+				"percentage": 0,
+			},
+			nil
+	}
+	item := vfs.cache.Item(path)
+	status, percentage := item.VFSStatusCacheWithPercentage()
+	return rc.Params{
+			"status":     status,
+			"percentage": percentage,
+		},
+		nil
 }
 
 func init() {

@@ -1110,6 +1110,85 @@ func (item *Item) present() bool {
 	return item._present()
 }
 
+// VFSStatusCache returns the cache status of the file, which can be "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING", or "ERROR".
+func (item *Item) VFSStatusCache() string {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	// Check if item is being uploaded
+	if item.writeBackID != 0 {
+		if item.c.writeback != nil {
+			if wbItem := item.c.writeback.Get(item.writeBackID); wbItem != nil && wbItem.IsUploading() {
+				return "UPLOADING"
+			}
+		}
+	}
+
+	// Check if item is dirty (modified but not uploaded yet)
+	if item.info.Dirty {
+		return "DIRTY"
+	}
+
+	// Check cache status
+	if item._present() {
+		return "FULL"
+	}
+	if item.info.Rs.Size() > 0 {
+		return "PARTIAL"
+	}
+	return "NONE"
+}
+
+// VFSStatusCacheWithPercentage returns the cache status of the file along with percentage cached.
+// Returns status string and percentage (0-100).
+func (item *Item) VFSStatusCacheWithPercentage() (string, int) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	// Check if item is being uploaded
+	if item.writeBackID != 0 {
+		if item.c.writeback != nil {
+			if wbItem := item.c.writeback.Get(item.writeBackID); wbItem != nil && wbItem.IsUploading() {
+				return "UPLOADING", 100
+			}
+		}
+	}
+
+	// Check if item is dirty (modified but not uploaded yet)
+	if item.info.Dirty {
+		return "DIRTY", 100
+	}
+
+	// Check cache status
+	if item._present() {
+		return "FULL", 100
+	}
+
+	cachedSize := item.info.Rs.Size()
+	totalSize := item.info.Size
+
+	if totalSize <= 0 {
+		if cachedSize > 0 {
+			return "PARTIAL", 100
+		}
+		return "NONE", 0
+	}
+
+	if cachedSize >= totalSize {
+		return "FULL", 100
+	}
+
+	if cachedSize > 0 {
+		percentage := int((cachedSize * 100) / totalSize)
+		if percentage > 99 {
+			percentage = 99
+		}
+		return "PARTIAL", percentage
+	}
+
+	return "NONE", 0
+}
+
 // HasRange returns true if the current ranges entirely include range
 func (item *Item) HasRange(r ranges.Range) bool {
 	item.mu.Lock()
