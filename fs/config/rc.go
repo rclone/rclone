@@ -145,7 +145,6 @@ func rcProviders(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	for _, name := range []string{"create", "update", "password"} {
-		name := name
 		extraHelp := ""
 		if name == "create" {
 			extraHelp = "- type - type of the new remote\n"

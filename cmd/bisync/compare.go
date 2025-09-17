@@ -219,8 +219,8 @@ func (b *bisyncRun) setFromCompareFlag(ctx context.Context) error {
 		return nil
 	}
 	var CompareFlag CompareOpt // for exclusions
-	opts := strings.Split(b.opt.CompareFlag, ",")
-	for _, opt := range opts {
+	opts := strings.SplitSeq(b.opt.CompareFlag, ",")
+	for opt := range opts {
 		switch strings.ToLower(strings.TrimSpace(opt)) {
 		case "size":
 			b.opt.Compare.Size = true

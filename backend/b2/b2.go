@@ -2224,13 +2224,17 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		return info, nil, err
 	}
 
+	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil, options...)
+	if err != nil {
+		return info, nil, err
+	}
+
 	info = fs.ChunkWriterInfo{
-		ChunkSize:   int64(f.opt.ChunkSize),
+		ChunkSize:   up.chunkSize,
 		Concurrency: o.fs.opt.UploadConcurrency,
 		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 	}
-	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil, options...)
-	return info, up, err
+	return info, up, nil
 }
 
 // Remove an object

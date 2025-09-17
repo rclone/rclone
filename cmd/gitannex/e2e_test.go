@@ -229,7 +229,6 @@ func TestEndToEnd(t *testing.T) {
 	skipE2eTestIfNecessary(t)
 
 	for _, mode := range allLayoutModes() {
-		mode := mode
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
 
@@ -258,7 +257,6 @@ func TestEndToEndMigration(t *testing.T) {
 	}
 
 	for _, mode := range allLayoutModes() {
-		mode := mode
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
 
@@ -318,7 +316,6 @@ func TestEndToEndRepoLayoutCompat(t *testing.T) {
 	}
 
 	for _, mode := range allLayoutModes() {
-		mode := mode
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
 
