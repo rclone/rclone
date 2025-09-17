@@ -41,9 +41,10 @@ var OptionsInfo = fs.Options{}.
 
 // Options required for http server
 type Options struct {
-	Auth     libhttp.AuthConfig
-	HTTP     libhttp.Config
-	Template libhttp.TemplateConfig
+	Auth       libhttp.AuthConfig
+	HTTP       libhttp.Config
+	Template   libhttp.TemplateConfig
+	DisableZip bool
 }
 
 // DefaultOpt is the default values used for Options
@@ -69,6 +70,7 @@ func init() {
 	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
+	flagSet.BoolVar(&Opt.DisableZip, "disable-zip", false, "Disable zip download of directories")
 	cmdserve.Command.AddCommand(Command)
 	cmdserve.AddRc("http", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
 		// Read VFS Opts
@@ -257,6 +259,24 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 		return
 	}
 	dir := node.(*vfs.Dir)
+
+	if r.URL.Query().Get("download") == "zip" && !s.opt.DisableZip {
+		fs.Infof(dirRemote, "%s: Zipping directory", r.RemoteAddr)
+		zipName := path.Base(dirRemote)
+		if dirRemote == "" {
+			zipName = "root"
+		}
+		w.Header().Set("Content-Disposition", "attachment; filename=\""+zipName+".zip\"")
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
+		err := vfs.CreateZip(ctx, dir, w)
+		if err != nil {
+			serve.Error(ctx, dirRemote, w, "Failed to create zip", err)
+			return
+		}
+		return
+	}
+
 	dirEntries, err := dir.ReadDirAll()
 	if err != nil {
 		serve.Error(ctx, dirRemote, w, "Failed to list directory", err)
@@ -279,6 +299,8 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 
 	// Set the Last-Modified header to the timestamp
 	w.Header().Set("Last-Modified", dir.ModTime().UTC().Format(http.TimeFormat))
+
+	directory.DisableZip = s.opt.DisableZip
 
 	directory.Serve(w, r)
 }
