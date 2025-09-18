@@ -899,21 +899,21 @@ func configExchange(ctx context.Context, name string, m configmap.Mapper, oauthC
 
 // Local web server for collecting auth
 type authServer struct {
-	opt         *Options
-	state       string
-	listener    net.Listener
-	authURL     string
-	server      *http.Server
-	result      chan *AuthResult
+	opt      *Options
+	state    string
+	listener net.Listener
+	authURL  string
+	server   *http.Server
+	result   chan *AuthResult
 }
 
 // newAuthServer makes the webserver for collecting auth
 func newAuthServer(opt *Options, state, authURL string) *authServer {
 	return &authServer{
-		opt:         opt,
-		state:       state,
-		authURL:     authURL, // http://host/auth redirects to here
-		result:      make(chan *AuthResult, 1),
+		opt:     opt,
+		state:   state,
+		authURL: authURL, // http://host/auth redirects to here
+		result:  make(chan *AuthResult, 1),
 	}
 }
 
