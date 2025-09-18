@@ -208,6 +208,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 // Serve HTTP until the server is shutdown
 func (s *HTTP) Serve() error {
 	s.server.Serve()
+	fs.Logf(s.f, "HTTP Server started on %s", s.server.URLs())
 	s.server.Wait()
 	return nil
 }
