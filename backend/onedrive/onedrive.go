@@ -155,11 +155,6 @@ See: https://github.com/rclone/rclone/issues/1716
 			Default:  fs.SizeSuffix(-1),
 			Advanced: true,
 		}, {
-			Name:     "noadmin",
-			Default:  false,
-			Help:     "OneDrive without Admin permissions.",
-			Advanced: true,
-		}, {
 			Name:     "tenant_url",
 			Help:     "The tenant URL for non-admin OneDrive access.",
 			Default:  "",
@@ -482,17 +477,12 @@ isn't always desirable to set the permissions from the metadata.
 func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	region, _ = m.Get("region")
 
-	// Check if noadmin mode is enabled
-	noAdminStr, _ := m.Get("noadmin")
-	isNoAdmin := noAdminStr == "true"
-
 	graphURL = graphAPIEndpoint[region] + "/v1.0"
 
-	if isNoAdmin {
-		tenantURL, _ := m.Get("tenant_url")
-		if tenantURL != "" {
-			graphURL = tenantURL + "/v2.0"
-		}
+	// Check if tenant_url is provided for non-admin mode
+	tenantURL, _ := m.Get("tenant_url")
+	if tenantURL != "" {
+		graphURL = tenantURL + "/v2.0"
 	}
 
 	return region, graphURL
@@ -786,7 +776,6 @@ Examples:
 type Options struct {
 	Region                  string               `config:"region"`
 	UploadCutoff            fs.SizeSuffix        `config:"upload_cutoff"`
-	IsNoAdmin               bool                 `config:"noadmin"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	TenantURL               string               `config:"tenant_url"`
 	DriveID                 string               `config:"drive_id"`
@@ -1095,7 +1084,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
 
-	if opt.IsNoAdmin {
+	if opt.TenantURL != "" {
 		rootURL = opt.TenantURL + "/v2.0" + "/drives/" + opt.DriveID
 	}
 
@@ -2747,7 +2736,7 @@ func (o *Object) ID() string {
 // Such a normalized ID can come from (*Item).GetID()
 func (f *Fs) parseNormalizedID(ID string) (string, string, string) {
 	var rootURL string
-	if f.opt.IsNoAdmin {
+	if f.opt.TenantURL != "" {
 		rootURL = f.opt.TenantURL + "/v2.0/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
@@ -2948,7 +2937,7 @@ func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta ap
 
 func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
 	var rootURL string
-	if f.opt.IsNoAdmin {
+	if f.opt.TenantURL != "" {
 		rootURL = f.opt.TenantURL + "/v2.0/drives"
 	} else {
 		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
