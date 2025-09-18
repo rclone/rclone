@@ -105,6 +105,9 @@ var providerOption = fs.Option{
 		Value: "Exaba",
 		Help:  "Exaba Object Storage",
 	}, {
+  	                  Value: "FileLu",
+                                     Help:  "FileLu S5 (S3-Compatible Object Storage)",
+                  }, {
 		Value: "FlashBlade",
 		Help:  "Pure Storage FlashBlade Object Storage",
 	}, {
@@ -341,6 +344,26 @@ func init() {
 				Help:  "AWS GovCloud (US) Region.\nNeeds location constraint us-gov-west-1.",
 			}},
 		}, {
+    Name:     "region",
+    Help:     "Region to connect to for FileLu S5.",
+    Provider: "FileLu",
+    Examples: []fs.OptionExample{{
+        Value: "global",
+        Help:  "Global",
+    }, {
+        Value: "us-east",
+        Help:  "North America (US-East)",
+    }, {
+        Value: "eu-central",
+        Help:  "Europe (EU-Central)",
+    }, {
+        Value: "ap-southeast",
+        Help:  "Asia Pacific (AP-Southeast)",
+    }, {
+        Value: "me-central",
+        Help:  "Middle East (ME-Central)",
+    }},
+}, {
 			Name:     "region",
 			Help:     "region - the location where your bucket will be created and your data stored.\n",
 			Provider: "RackCorp",
@@ -657,7 +680,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,Intercolo,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FileLu,FlashBlade,Intercolo,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -968,7 +991,15 @@ func init() {
 				Value: "s3.private.sng01.cloud-object-storage.appdomain.cloud",
 				Help:  "Singapore Single Site Private Endpoint",
 			}},
-		}, {
+			}, {
+    				Name:     "endpoint",
+   			   	Help:     "Endpoint for FileLu S5 Object Storage.\nRequired when using FileLu S5.",
+   				Provider: "FileLu",
+    				Examples: []fs.OptionExample{{
+        				Value: "s5lu.com",
+        				Help:  "Global FileLu S5 endpoint",
+    			}},
+			}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for Intercolo Object Storage.",
 			Provider: "Intercolo",
@@ -3676,7 +3707,12 @@ func setQuirks(opt *Options) {
 	case "Cloudflare":
 		virtualHostStyle = false
 		useMultipartEtag = false // currently multipart Etags are random
-	case "ArvanCloud":
+                  case "FileLu":
+   		 listObjectsV2 = true
+    		virtualHostStyle = false
+    		urlEncodeListings = false
+    		useMultipartEtag = false
+     	case "ArvanCloud":
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
