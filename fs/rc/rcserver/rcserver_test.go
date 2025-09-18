@@ -787,7 +787,7 @@ func TestRCAsync(t *testing.T) {
 		ContentType: "application/json",
 		Body:        `{ "_async":true }`,
 		Status:      http.StatusOK,
-		Contains:    regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
+		Contains:    regexp.MustCompile(`(?s)\{.*\"jobid\":.*\"uniqueId\":.*\}`),
 	}, {
 		Name:        "bad",
 		URL:         "rc/noop",

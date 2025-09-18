@@ -17471,11 +17471,14 @@ minute after it has finished.</p>
 <code>operations/purge</code> are run with the <code>_async</code> flag
 to avoid any potential problems with the HTTP request and response
 timing out.</p>
-<p>Starting a job with the <code>_async</code> flag:</p>
+<p>Starting a job with the <code>_async</code> flag returns both the numeric job id and an
+integer <code>uniqueId</code> (always less than 2^53) that stays unique across rclone
+processes on the current machine:</p>
 <div class="sourceCode" id="cb741"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb741-1"><a href="#cb741-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> rclone rc <span class="at">--json</span> <span class="st">&#39;{ &quot;p1&quot;: [1,&quot;2&quot;,null,4], &quot;p2&quot;: { &quot;a&quot;:1, &quot;b&quot;:2 }, &quot;_async&quot;: true }&#39;</span> rc/noop</span>
 <span id="cb741-2"><a href="#cb741-2" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span></span>
-<span id="cb741-3"><a href="#cb741-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;jobid&quot;</span><span class="ex">:</span> 2</span>
+<span id="cb741-3"><a href="#cb741-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;jobid&quot;</span><span class="ex">:</span> 2,</span>
+<span id="cb741-4"><a href="#cb741-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;uniqueId&quot;</span><span class="ex">:</span> 33554433</span>
 <span id="cb741-4"><a href="#cb741-4" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
 <p>Query the status to see if the job has finished. For more information
 on the meaning of these return parameters see the
@@ -17488,6 +17491,7 @@ class="sourceCode sh"><code class="sourceCode bash"><span id="cb742-1"><a href="
 <span id="cb742-5"><a href="#cb742-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;error&quot;</span><span class="ex">:</span> <span class="st">&quot;&quot;</span>,</span>
 <span id="cb742-6"><a href="#cb742-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;finished&quot;</span><span class="ex">:</span> true,</span>
 <span id="cb742-7"><a href="#cb742-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;id&quot;</span><span class="ex">:</span> 2,</span>
+<span id="cb742-8"><a href="#cb742-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;uniqueId&quot;</span><span class="ex">:</span> 33554433,</span>
 <span id="cb742-8"><a href="#cb742-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;output&quot;</span><span class="ex">:</span> {</span>
 <span id="cb742-9"><a href="#cb742-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;_async&quot;</span><span class="ex">:</span> true,</span>
 <span id="cb742-10"><a href="#cb742-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;p1&quot;</span><span class="ex">:</span> [</span>
@@ -17511,7 +17515,10 @@ class="sourceCode sh"><code class="sourceCode bash"><span id="cb743-1"><a href="
 <span id="cb743-2"><a href="#cb743-2" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span></span>
 <span id="cb743-3"><a href="#cb743-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;jobids&quot;</span><span class="ex">:</span> [</span>
 <span id="cb743-4"><a href="#cb743-4" aria-hidden="true" tabindex="-1"></a>        <span class="ex">2</span></span>
-<span id="cb743-5"><a href="#cb743-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">]</span></span>
+<span id="cb743-5"><a href="#cb743-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">],</span></span>
+<span id="cb743-6"><a href="#cb743-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;uniqueIds&quot;</span><span class="ex">:</span> [</span>
+<span id="cb743-7"><a href="#cb743-7" aria-hidden="true" tabindex="-1"></a>        <span class="ex">33554433</span></span>
+<span id="cb743-8"><a href="#cb743-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">]</span></span>
 <span id="cb743-6"><a href="#cb743-6" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
 <h3 id="setting-config-flags-with-_config">Setting config flags with
 _config</h3>
@@ -18386,6 +18393,7 @@ in the fs cache.</h3>
 restart)</li>
 <li>jobids - array of integer job ids (starting at 1 on each
 restart)</li>
+<li>uniqueIds - array of unique integer ids (< 2^53) aligned with jobids</li>
 </ul>
 <h3 id="job-status">job/status: Reads the status of the job ID</h3>
 <p>Parameters:</p>
@@ -18401,6 +18409,7 @@ restart)</li>
 <li>error - error from the job or empty string for no error</li>
 <li>finished - boolean whether the job has finished or not</li>
 <li>id - as passed in above</li>
+<li>uniqueId - integer unique identifier (< 2^53) for the job across rclone processes on this machine</li>
 <li>startTime - time the job started (e.g.
 "2018-10-26T18:50:20.528336039+01:00")</li>
 <li>success - boolean - true for success false otherwise</li>

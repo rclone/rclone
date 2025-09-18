@@ -56,8 +56,10 @@ func TestJobsExpire(t *testing.T) {
 	}, rc.Params{"_async": true})
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(out))
+	require.NotZero(t, job.UniqueID)
 	<-wait
 	assert.Equal(t, job.ID, gotJobID, "check can get JobID from ctx")
+	assert.Equal(t, job.UniqueID, gotJob.UniqueID, "check can get UniqueID from ctx")
 	assert.Equal(t, job, gotJob, "check can get Job from ctx")
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.Expire()
@@ -87,12 +89,18 @@ func TestJobsIDs(t *testing.T) {
 	job2, _, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
 	require.NoError(t, err)
 	wantIDs := []int64{job1.ID, job2.ID}
-	gotIDs := jobs.IDs()
+	wantUniqueIDs := []int64{job1.UniqueID, job2.UniqueID}
+	gotIDs, gotUniqueIDs := jobs.IDs()
 	require.Equal(t, 2, len(gotIDs))
+	require.Equal(t, 2, len(gotUniqueIDs))
 	if gotIDs[0] != wantIDs[0] {
 		gotIDs[0], gotIDs[1] = gotIDs[1], gotIDs[0]
 	}
+	if gotUniqueIDs[0] != wantUniqueIDs[0] {
+		gotUniqueIDs[0], gotUniqueIDs[1] = gotUniqueIDs[1], gotUniqueIDs[0]
+	}
 	assert.Equal(t, wantIDs, gotIDs)
+	assert.Equal(t, wantUniqueIDs, gotUniqueIDs)
 }
 
 func TestJobsGet(t *testing.T) {
@@ -234,6 +242,7 @@ func TestJobsNewJob(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), job.ID)
 	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
+	assert.NotZero(t, job.UniqueID)
 	assert.Equal(t, job, jobs.Get(1))
 	assert.NotEmpty(t, job.Stop)
 }
@@ -245,6 +254,7 @@ func TestStartJob(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
 	assert.Equal(t, int64(1), job.ID)
+	assert.NotZero(t, job.UniqueID)
 }
 
 func TestExecuteJob(t *testing.T) {
@@ -391,6 +401,8 @@ func TestRcJobList(t *testing.T) {
 
 	require.NotNil(t, out1["executeId"], "should have executeId")
 	assert.Equal(t, out1["executeId"], out2["executeId"], "executeId should be the same")
+	
+	assert.Equal(t, 2, len(out2["uniqueIds"].([]int64)), "should have all uniqueIds listed")
 }
 
 func TestRcAsyncJobStop(t *testing.T) {

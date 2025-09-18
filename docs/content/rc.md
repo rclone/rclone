@@ -267,12 +267,15 @@ It is recommended that potentially long running jobs, e.g. `sync/sync`,
 flag to avoid any potential problems with the HTTP request and
 response timing out.
 
-Starting a job with the `_async` flag:
+Starting a job with the `_async` flag returns both the numeric job id and an
+integer `uniqueId` (always less than 2^53) that stays unique across rclone
+processes on the current machine:
 
 ```sh
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 }, "_async": true }' rc/noop
 {
-    "jobid": 2
+    "jobid": 2,
+	"uniqueId": 33554433
 }
 ```
 
@@ -287,6 +290,7 @@ $ rclone rc --json '{ "jobid":2 }' job/status
     "error": "",
     "finished": true,
     "id": 2,
+	"uniqueId": 33554433,
     "output": {
         "_async": true,
         "p1": [
@@ -312,6 +316,9 @@ $ rclone rc job/list
 {
     "jobids": [
         2
+    ],
+	"uniqueIds": [
+        33554433
     ]
 }
 ```
@@ -1215,6 +1222,7 @@ Results:
 
 - executeId - string id of rclone executing (change after restart)
 - jobids - array of integer job ids (starting at 1 on each restart)
+- uniqueIds - array of integer job unique ids (< 2^53) aligned with jobids
 
 ### job/status: Reads the status of the job ID {#job-status}
 
@@ -1230,6 +1238,7 @@ Results:
 - error - error from the job or empty string for no error
 - finished - boolean whether the job has finished or not
 - id - as passed in above
+- uniqueId - integer unique identifier (< 2^53) for the job across rclone processes on this machine
 - startTime - time the job started (e.g. "2018-10-26T18:50:20.528336039+01:00")
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
