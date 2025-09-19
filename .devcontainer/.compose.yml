@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  rclone:
+    image: golang
+    container_name: golang
+    env_file:
+      - ./.env
+    build: 
+      context: .
+      dockerfile: ./.dockerfile # path to your dockerfile      
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-golang:1.25.0-bookworm}
+        USER_CI: ${USER_CI:-jenkinsci}
+        USER_UID: ${LOCAL_UID}
+        USER_GID: ${LOCAL_GID}
+    volumes:
+      - ../..:/workspaces:cached
+      # vscode customization persistance
+      # - ../.vscode-server:/home/${USER_CI}/.vscode-server:cached
+    
+    command: sleep infinity
