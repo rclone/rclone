@@ -1889,42 +1889,43 @@ credentials", which opens the wizard).
 
 5. If you already configured an "Oauth Consent Screen", then skip
 to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button 
-(near the top right corner of the right panel), then select "External"
-and click on "CREATE"; on the next screen, enter an "Application name"
+(near the top right corner of the right panel), then click "Get started".
+On the next screen, enter an "Application name"
 ("rclone" is OK); enter "User Support Email" (your own email is OK); 
-enter "Developer Contact Email" (your own email is OK); then click on
-"Save" (all other data is optional). You will also have to add [some scopes](https://developers.google.com/drive/api/guides/api-specific-auth),
-including
-  - `https://www.googleapis.com/auth/docs`
-  - `https://www.googleapis.com/auth/drive` in order to be able to edit,
-create and delete files with RClone. 
-  - `https://www.googleapis.com/auth/drive.metadata.readonly` which you may also want to add.
-  - If you want to add all at once, comma separated it would be `https://www.googleapis.com/auth/docs,https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly`.
-6. After adding scopes, click
-"Save and continue" to add test users. Be sure to add your own account to
-the test users. Once you've added yourself as a test user and saved the
-changes, click again on "Credentials" on the left panel to go back to
-the "Credentials" screen.
+Next, under Audience select "External". Next enter your own contact information,
+agree to terms and click "Create". You should now see rclone (or your project name)
+in a box in the top left of the screen.
 
-   (PS: if you are a GSuite user, you could also select "Internal" instead
+    (PS: if you are a GSuite user, you could also select "Internal" instead
 of "External" above, but this will restrict API use to Google Workspace 
 users in your organisation). 
 
-7.  Click on the "+ CREATE CREDENTIALS" button at the top of the screen,
-then select "OAuth client ID".
+    You will also have to add [some scopes](https://developers.google.com/drive/api/guides/api-specific-auth),
+including
+    - `https://www.googleapis.com/auth/docs`
+    - `https://www.googleapis.com/auth/drive` in order to be able to edit,
+        create and delete files with RClone.
+    - `https://www.googleapis.com/auth/drive.metadata.readonly` which you may also want to add.
 
-8. Choose an application type of "Desktop app" and click "Create". (the default name is fine)
+    To do this, click Data Access on the left side panel, click "add or remove scopes" and select the three above and press update or go to the "Manually add scopes" text box (scroll down) and enter "https://www.googleapis.com/auth/docs,https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly", press add to table then update.
 
-9. It will show you a client ID and client secret. Make a note of these.
+    You should now see the three scopes on your Data access page. Now press save at the bottom!
+
+6. After adding scopes, click Audience
+Scroll down and click "+ Add users". Add yourself as a test user and press save.
+
+7. Go to Overview on the left panel, click "Create OAuth client". Choose an application type of "Desktop app" and click "Create". (the default name is fine)
+
+8. It will show you a client ID and client secret. Make a note of these.
    
-   (If you selected "External" at Step 5 continue to Step 10. 
+   (If you selected "External" at Step 5 continue to Step 9. 
    If you chose "Internal" you don't need to publish and can skip straight to
-   Step 11 but your destination drive must be part of the same Google Workspace.)
+   Step 10 but your destination drive must be part of the same Google Workspace.)
 
-10. Go to "Oauth consent screen" and then click "PUBLISH APP" button and confirm.
-   You will also want to add yourself as a test user.
+9. Go to "Audience" and then click "PUBLISH APP" button and confirm.
+   Add yourself as a test user if you haven't already.
 
-11. Provide the noted client ID and client secret to rclone.
+10. Provide the noted client ID and client secret to rclone.
 
 Be aware that, due to the "enhanced security" recently introduced by
 Google, you are theoretically expected to "submit your app for verification"

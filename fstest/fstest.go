@@ -65,6 +65,9 @@ func Initialise() {
 	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
 		_ = config.SetConfigPath(envConfig)
 	}
+	if *RemoteName == "local" {
+		*RemoteName = ""
+	}
 	configfile.Install()
 	accounting.Start(ctx)
 	if *Verbose {

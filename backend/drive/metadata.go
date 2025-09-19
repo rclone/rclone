@@ -386,7 +386,6 @@ func (o *baseObject) parseMetadata(ctx context.Context, info *drive.File) (err e
 			g.SetLimit(o.fs.ci.Checkers)
 			var mu sync.Mutex // protect the info.Permissions from concurrent writes
 			for _, permissionID := range info.PermissionIds {
-				permissionID := permissionID
 				g.Go(func() error {
 					// must fetch the team drive ones individually to check the inherited flag
 					perm, inherited, err := o.fs.getPermission(gCtx, actualID(info.Id), permissionID, !o.fs.isTeamDrive)
@@ -520,7 +519,6 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 	}
 	// merge metadata into request and user metadata
 	for k, v := range meta {
-		k, v := k, v
 		// parse a boolean from v and write into out
 		parseBool := func(out *bool) error {
 			b, err := strconv.ParseBool(v)

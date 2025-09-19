@@ -292,7 +292,7 @@ func (r *results) checkControls() {
 		tokens <- struct{}{}
 	}
 	var wg sync.WaitGroup
-	for i := rune(0); i < 128; i++ {
+	for i := range rune(128) {
 		s := string(i)
 		if i == 0 || i == '/' {
 			// We're not even going to check NULL or /

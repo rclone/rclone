@@ -206,7 +206,7 @@ func TestJobRunPanic(t *testing.T) {
 	runtime.Gosched() // yield to make sure job is updated
 
 	// Wait a short time for the panic to propagate
-	for i := uint(0); i < 10; i++ {
+	for i := range uint(10) {
 		job.mu.Lock()
 		e := job.Error
 		job.mu.Unlock()
@@ -539,8 +539,7 @@ func TestOnFinish(t *testing.T) {
 func TestOnFinishAlreadyFinished(t *testing.T) {
 	jobID.Store(0)
 	done := make(chan struct{})
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	job, _, err := NewJob(ctx, shortFn, rc.Params{})
 	assert.NoError(t, err)
 

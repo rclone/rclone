@@ -120,6 +120,9 @@ var providerOption = fs.Option{
 		Value: "IDrive",
 		Help:  "IDrive e2",
 	}, {
+		Value: "Intercolo",
+		Help:  "Intercolo Object Storage",
+	}, {
 		Value: "IONOS",
 		Help:  "IONOS Cloud",
 	}, {
@@ -170,6 +173,9 @@ var providerOption = fs.Option{
 	}, {
 		Value: "Selectel",
 		Help:  "Selectel Object Storage",
+	}, {
+		Value: "SpectraLogic",
+		Help:  "Spectra Logic Black Pearl",
 	}, {
 		Value: "StackPath",
 		Help:  "StackPath Object Storage",
@@ -507,6 +513,14 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "Intercolo",
+			Examples: []fs.OptionExample{{
+				Value: "de-fra",
+				Help:  "Frankfurt, Germany",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
 			Provider: "IONOS",
 			Examples: []fs.OptionExample{{
 				Value: "de",
@@ -643,7 +657,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,Intercolo,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -953,6 +967,14 @@ func init() {
 			}, {
 				Value: "s3.private.sng01.cloud-object-storage.appdomain.cloud",
 				Help:  "Singapore Single Site Private Endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Intercolo Object Storage.",
+			Provider: "Intercolo",
+			Examples: []fs.OptionExample{{
+				Value: "de-fra.i3storage.com",
+				Help:  "Frankfurt, Germany",
 			}},
 		}, {
 			Name:     "endpoint",
@@ -1532,7 +1554,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,Intercolo,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -2067,7 +2089,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Outscale,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS,Petabox,Mega",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -2082,7 +2104,7 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 If the acl is an empty string then no X-Amz-Acl: header is added and
 the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade,Mega",
+			Provider: "!Storj,Selectel,SpectraLogic,Synology,Cloudflare,FlashBlade,Mega",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -2140,7 +2162,7 @@ isn't set then "acl" is used instead.
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
 header is added and the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade",
+			Provider: "!Storj,Selectel,SpectraLogic,Synology,Cloudflare,FlashBlade",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
@@ -3677,6 +3699,9 @@ func setQuirks(opt *Options) {
 	case "IDrive":
 		virtualHostStyle = false
 		useAlreadyExists = false // untested
+	case "Intercolo":
+		// no quirks
+		useUnsignedPayload = false // Intercolo has trailer support
 	case "IONOS":
 		// listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
 		virtualHostStyle = false
@@ -3749,6 +3774,8 @@ func setQuirks(opt *Options) {
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
 		useAlreadyExists = false // untested
+	case "SpectraLogic":
+		virtualHostStyle = false // path-style required
 	case "StackPath":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
@@ -6220,8 +6247,8 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 	metaData := make(map[string]string)
 	for key, value := range resp.Header {
 		key = strings.ToLower(key)
-		if strings.HasPrefix(key, "x-amz-meta-") {
-			metaKey := strings.TrimPrefix(key, "x-amz-meta-")
+		if after, ok := strings.CutPrefix(key, "x-amz-meta-"); ok {
+			metaKey := after
 			metaData[metaKey] = value[0]
 		}
 	}

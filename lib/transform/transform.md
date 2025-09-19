@@ -11,6 +11,9 @@
 | `--name-transform replace=old:new` | Replaces occurrences of old with new in the file name. |
 | `--name-transform date={YYYYMMDD}` | Appends or prefixes the specified date format. |
 | `--name-transform truncate=N` | Truncates the file name to a maximum of N characters. |
+| `--name-transform truncate_keep_extension=N` | Truncates the file name to a maximum of N characters while preserving the original file extension. |
+| `--name-transform truncate_bytes=N` | Truncates the file name to a maximum of N bytes (not characters). |
+| `--name-transform truncate_bytes_keep_extension=N` | Truncates the file name to a maximum of N bytes (not characters) while preserving the original file extension. |
 | `--name-transform base64encode` | Encodes the file name in Base64. |
 | `--name-transform base64decode` | Decodes a Base64-encoded file name. |
 | `--name-transform encoder=ENCODING` | Converts the file name to the specified encoding (e.g., ISO-8859-1, Windows-1252, Macintosh). |
@@ -25,200 +28,205 @@
 | `--name-transform nfd` | Converts the file name to NFD Unicode normalization form. |
 | `--name-transform nfkc` | Converts the file name to NFKC Unicode normalization form. |
 | `--name-transform nfkd` | Converts the file name to NFKD Unicode normalization form. |
-| `--name-transform command=/path/to/my/programfile names.` | Executes an external program to transform |
+| `--name-transform command=/path/to/my/programfile names.` | Executes an external program to transform. |
 
+Conversion modes:
 
-Conversion modes:  
+```text
+none
+nfc
+nfd
+nfkc
+nfkd
+replace
+prefix
+suffix
+suffix_keep_extension
+trimprefix
+trimsuffix
+index
+date
+truncate
+truncate_keep_extension
+truncate_bytes
+truncate_bytes_keep_extension
+base64encode
+base64decode
+encoder
+decoder
+ISO-8859-1
+Windows-1252
+Macintosh
+charmap
+lowercase
+uppercase
+titlecase
+ascii
+url
+regex
+command
 ```
-none  
-nfc  
-nfd  
-nfkc  
-nfkd  
-replace  
-prefix  
-suffix  
-suffix_keep_extension  
-trimprefix  
-trimsuffix  
-index  
-date  
-truncate  
-base64encode  
-base64decode  
-encoder  
-decoder  
-ISO-8859-1  
-Windows-1252  
-Macintosh  
-charmap  
-lowercase  
-uppercase  
-titlecase  
-ascii  
-url  
-regex  
-command  
-```
-Char maps:  
-```
-  
-IBM-Code-Page-037  
-IBM-Code-Page-437  
-IBM-Code-Page-850  
-IBM-Code-Page-852  
-IBM-Code-Page-855  
-Windows-Code-Page-858  
-IBM-Code-Page-860  
-IBM-Code-Page-862  
-IBM-Code-Page-863  
-IBM-Code-Page-865  
-IBM-Code-Page-866  
-IBM-Code-Page-1047  
-IBM-Code-Page-1140  
-ISO-8859-1  
-ISO-8859-2  
-ISO-8859-3  
-ISO-8859-4  
-ISO-8859-5  
-ISO-8859-6  
-ISO-8859-7  
-ISO-8859-8  
-ISO-8859-9  
-ISO-8859-10  
-ISO-8859-13  
-ISO-8859-14  
-ISO-8859-15  
-ISO-8859-16  
-KOI8-R  
-KOI8-U  
-Macintosh  
-Macintosh-Cyrillic  
-Windows-874  
-Windows-1250  
-Windows-1251  
-Windows-1252  
-Windows-1253  
-Windows-1254  
-Windows-1255  
-Windows-1256  
-Windows-1257  
-Windows-1258  
-X-User-Defined  
-```
-Encoding masks:  
-```
-Asterisk  
- BackQuote  
- BackSlash  
- Colon  
- CrLf  
- Ctl  
- Del  
- Dollar  
- Dot  
- DoubleQuote  
- Exclamation  
- Hash  
- InvalidUtf8  
- LeftCrLfHtVt  
- LeftPeriod  
- LeftSpace  
- LeftTilde  
- LtGt  
- None  
- Percent  
- Pipe  
- Question  
- Raw  
- RightCrLfHtVt  
- RightPeriod  
- RightSpace  
- Semicolon  
- SingleQuote  
- Slash  
- SquareBracket  
-```
-Examples: 
 
+Char maps:
+
+```text
+IBM-Code-Page-037
+IBM-Code-Page-437
+IBM-Code-Page-850
+IBM-Code-Page-852
+IBM-Code-Page-855
+Windows-Code-Page-858
+IBM-Code-Page-860
+IBM-Code-Page-862
+IBM-Code-Page-863
+IBM-Code-Page-865
+IBM-Code-Page-866
+IBM-Code-Page-1047
+IBM-Code-Page-1140
+ISO-8859-1
+ISO-8859-2
+ISO-8859-3
+ISO-8859-4
+ISO-8859-5
+ISO-8859-6
+ISO-8859-7
+ISO-8859-8
+ISO-8859-9
+ISO-8859-10
+ISO-8859-13
+ISO-8859-14
+ISO-8859-15
+ISO-8859-16
+KOI8-R
+KOI8-U
+Macintosh
+Macintosh-Cyrillic
+Windows-874
+Windows-1250
+Windows-1251
+Windows-1252
+Windows-1253
+Windows-1254
+Windows-1255
+Windows-1256
+Windows-1257
+Windows-1258
+X-User-Defined
 ```
+
+Encoding masks:
+
+```text
+Asterisk
+BackQuote
+BackSlash
+Colon
+CrLf
+Ctl
+Del
+Dollar
+Dot
+DoubleQuote
+Exclamation
+Hash
+InvalidUtf8
+LeftCrLfHtVt
+LeftPeriod
+LeftSpace
+LeftTilde
+LtGt
+None
+Percent
+Pipe
+Question
+Raw
+RightCrLfHtVt
+RightPeriod
+RightSpace
+Semicolon
+SingleQuote
+Slash
+SquareBracket
+```
+
+Examples:
+
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,uppercase"
 // Output: STORIES/THE QUICK BROWN FOX!.TXT
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,replace=Fox:Turtle" --name-transform "all,replace=Quick:Slow"
 // Output: stories/The Slow Brown Turtle!.txt
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,base64encode"
 // Output: c3Rvcmllcw==/VGhlIFF1aWNrIEJyb3duIEZveCEudHh0
 ```
 
-```
+```sh
 rclone convmv "c3Rvcmllcw==/VGhlIFF1aWNrIEJyb3duIEZveCEudHh0" --name-transform "all,base64decode"
 // Output: stories/The Quick Brown Fox!.txt
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox Went to the Café!.txt" --name-transform "all,nfc"
 // Output: stories/The Quick Brown 🦊 Fox Went to the Café!.txt
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox Went to the Café!.txt" --name-transform "all,nfd"
 // Output: stories/The Quick Brown 🦊 Fox Went to the Café!.txt
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox!.txt" --name-transform "all,ascii"
 // Output: stories/The Quick Brown  Fox!.txt
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,trimsuffix=.txt"
 // Output: stories/The Quick Brown Fox!
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,prefix=OLD_"
 // Output: OLD_stories/OLD_The Quick Brown Fox!.txt
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox Went to the Café!.txt" --name-transform "all,charmap=ISO-8859-7"
 // Output: stories/The Quick Brown _ Fox Went to the Caf_!.txt
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown Fox: A Memoir [draft].txt" --name-transform "all,encoder=Colon,SquareBracket"
 // Output: stories/The Quick Brown Fox： A Memoir ［draft］.txt
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox Went to the Café!.txt" --name-transform "all,truncate=21"
 // Output: stories/The Quick Brown 🦊 Fox
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=echo"
 // Output: stories/The Quick Brown Fox!.txt
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20250618
+// Output: stories/The Quick Brown Fox!-20250830
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2025-06-18 0148PM
+// Output: stories/The Quick Brown Fox!-2025-08-30 1234AM
 ```
 
-```
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,regex=[\\.\\w]/ab"
 // Output: ababababababab/ababab ababababab ababababab ababab!abababab
 ```
-
-

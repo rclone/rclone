@@ -31,7 +31,7 @@ func BenchmarkAllocFree(b *testing.B) {
 	for _, dirty := range []bool{false, true} {
 		for size := 4096; size <= 32*1024*1024; size *= 2 {
 			b.Run(fmt.Sprintf("%dk,dirty=%v", size>>10, dirty), func(b *testing.B) {
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					mem := MustAlloc(size)
 					if dirty {
 						mem[0] ^= 0xFF
@@ -62,7 +62,7 @@ func BenchmarkAllocFreeWithLotsOfAllocations(b *testing.B) {
 	for preAllocs := 1; preAllocs <= maxAllocs; preAllocs *= 2 {
 		allocs := alloc(preAllocs)
 		b.Run(fmt.Sprintf("%d", preAllocs), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				mem := MustAlloc(size)
 				mem[0] ^= 0xFF
 				MustFree(mem)
@@ -90,7 +90,7 @@ func BenchmarkAllocFreeForLotsOfAllocations(b *testing.B) {
 	}
 	for preAllocs := 1; preAllocs <= maxAllocs; preAllocs *= 2 {
 		b.Run(fmt.Sprintf("%d", preAllocs), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				allocs := alloc(preAllocs)
 				free(allocs)
 			}

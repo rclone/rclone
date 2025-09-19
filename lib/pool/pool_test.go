@@ -16,14 +16,19 @@ import (
 
 // makes the allocations be unreliable
 func makeUnreliable(bp *Pool) {
+	var allocCount int
+	tests := rand.Intn(4) + 1
 	bp.alloc = func(size int) ([]byte, error) {
-		if rand.Intn(3) != 0 {
+		allocCount++
+		if allocCount%tests != 0 {
 			return nil, errors.New("failed to allocate memory")
 		}
 		return make([]byte, size), nil
 	}
+	var freeCount int
 	bp.free = func(b []byte) error {
-		if rand.Intn(3) != 0 {
+		freeCount++
+		if freeCount%tests != 0 {
 			return errors.New("failed to free memory")
 		}
 		return nil
@@ -283,22 +288,24 @@ func TestPoolMaxBufferMemory(t *testing.T) {
 			}
 		}
 	)
-	for i := 0; i < 20; i++ {
+	const trials = 50
+	for i := range trials {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if i < 4 {
-				buf := bp.GetN(i + 1)
-				countBuf(i + 1)
-				time.Sleep(100 * time.Millisecond)
+			if i < trials/2 {
+				n := i%4 + 1
+				buf := bp.GetN(n)
+				countBuf(n)
+				time.Sleep(1 * time.Millisecond)
+				countBuf(-n)
 				bp.PutN(buf)
-				countBuf(-(i + 1))
 			} else {
 				buf := bp.Get()
 				countBuf(1)
-				time.Sleep(100 * time.Millisecond)
-				bp.Put(buf)
+				time.Sleep(1 * time.Millisecond)
 				countBuf(-1)
+				bp.Put(buf)
 			}
 		}()
 	}

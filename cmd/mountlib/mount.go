@@ -403,27 +403,7 @@ func (m *MountPoint) Wait() error {
 	fnHandle := atexit.Register(finalise)
 	defer atexit.Unregister(fnHandle)
 
-	// Reload VFS cache on SIGHUP
-	sigHup := make(chan os.Signal, 1)
-	NotifyOnSigHup(sigHup)
-	var err error
-
-	waiting := true
-	for waiting {
-		select {
-		// umount triggered outside the app
-		case err = <-m.ErrChan:
-			waiting = false
-		// user sent SIGHUP to clear the cache
-		case <-sigHup:
-			root, err := m.VFS.Root()
-			if err != nil {
-				fs.Errorf(m.VFS.Fs(), "Error reading root: %v", err)
-			} else {
-				root.ForgetAll()
-			}
-		}
-	}
+	err := <-m.ErrChan
 
 	finalise()
 

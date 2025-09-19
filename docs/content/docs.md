@@ -103,7 +103,7 @@ Its syntax is like this
 rclone subcommand [options] <parameters> <parameters...>
 ```
 
-A `subcommand` is a the rclone operation required, (e.g. `sync`,
+A `subcommand` is an rclone operation required (e.g. `sync`,
 `copy`, `ls`).
 
 An `option` is a single letter flag (e.g. `-v`) or a group of single

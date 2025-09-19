@@ -257,5 +257,6 @@ Properties:
 
 ## Limitations
 
+- Erasure coding not supported, see [issue #8808](https://github.com/rclone/rclone/issues/8808)
 - No server-side `Move` or `DirMove`.
 - Checksums not implemented.
