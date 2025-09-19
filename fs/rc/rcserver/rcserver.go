@@ -283,6 +283,9 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	job, out, err := jobs.NewJob(ctx, call.Fn, in)
 	if job != nil {
 		w.Header().Add("x-rclone-jobid", fmt.Sprintf("%d", job.ID))
+		if job.UniqueID != 0 {
+			w.Header().Add("x-rclone-uniqueid", fmt.Sprintf("%d", job.UniqueID))
+		}
 	}
 	if err != nil {
 		writeError(path, inOrig, w, err, http.StatusInternalServerError)
