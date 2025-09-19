@@ -5,6 +5,7 @@ package api
 
 import (
 	"fmt"
+	"net/url"
 	"reflect"
 	"strconv"
 	"time"
@@ -136,8 +137,25 @@ type Link struct {
 }
 
 // Valid reports whether l is non-nil, has an URL, and is not expired.
+// It primarily checks the URL's expire query parameter, falling back to the Expire field.
 func (l *Link) Valid() bool {
-	return l != nil && l.URL != "" && time.Now().Add(10*time.Second).Before(time.Time(l.Expire))
+	if l == nil || l.URL == "" {
+		return false
+	}
+
+	// Primary validation: check URL's expire query parameter
+	if u, err := url.Parse(l.URL); err == nil {
+		if expireStr := u.Query().Get("expire"); expireStr != "" {
+			// Try parsing as Unix timestamp (seconds)
+			if expireInt, err := strconv.ParseInt(expireStr, 10, 64); err == nil {
+				expireTime := time.Unix(expireInt, 0)
+				return time.Now().Add(10 * time.Second).Before(expireTime)
+			}
+		}
+	}
+
+	// Fallback validation: use the Expire field if URL parsing didn't work
+	return time.Now().Add(10 * time.Second).Before(time.Time(l.Expire))
 }
 
 // URL is a basic form of URL
