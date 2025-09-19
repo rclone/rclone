@@ -90,15 +90,14 @@ type MagnetFilesCacheEntry struct {
 
 // Object describes a file
 type Object struct {
-	fs          *Fs       // what this object is part of
-	remote      string    // The remote path
-	hasMetaData bool      // metadata is present and correct
-	size        int64     // size of the object
-	modTime     time.Time // modification time of the object
-	id          string    // ID of the object
-	mimeType    string    // Mime type of object
-	url         string    // URL to download file
-	dLink       string
+	fs       *Fs       // what this object is part of
+	remote   string    // The remote path
+	size     int64     // size of the object
+	modTime  time.Time // modification time of the object
+	id       string    // ID of the object
+	mimeType string    // Mime type of object
+	url      string    // URL to download file
+	dLink    string
 }
 
 // ------------------------------------------------------------
@@ -303,9 +302,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info any) (fs
 						// Single file magnet
 						o.size = magnet.Size
 						o.modTime = time.Unix(magnet.UploadDate, 0)
-						o.url = "" // Defer link fetching to Open
 						o.id = fmt.Sprintf("%d", magnet.ID)
-						o.hasMetaData = true
 						return o, nil
 					} else {
 						// Multi-level path
@@ -494,10 +491,8 @@ func (f *Fs) listMagnetsDirectory(ctx context.Context, dir string) (entries fs.D
 				remote:  remote,
 				size:    magnet.Size,
 				modTime: modTime,
-				url:     "", // Defer link fetching to Open
 				id:      fmt.Sprintf("%d", magnet.ID),
 			}
-			obj.hasMetaData = true
 			entries = append(entries, obj)
 		} else {
 			// Multi-file magnet - list as directory
@@ -586,7 +581,6 @@ func (f *Fs) processMagnetFileTree(dir, currentPath, listPath, magnetFilename st
 					modTime: time.Now(), // We don't have mod time for magnet files
 					url:     file.Link,
 				}
-				obj.hasMetaData = true
 				*entries = append(*entries, obj)
 			} else if len(file.Entries) > 0 {
 				// This is a directory
@@ -610,7 +604,6 @@ func (f *Fs) processMagnetFileTree(dir, currentPath, listPath, magnetFilename st
 						size:    file.Size,
 						modTime: time.Now(),
 					}
-					obj.hasMetaData = true
 					*entries = append(*entries, obj)
 				} else {
 					// Assume it's a directory
@@ -1039,15 +1032,11 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	if o.hasMetaData {
-		return o.size
-	}
-	return 0
+	return o.size
 }
 
 // setLinkMetaData sets the metadata from a link
 func (o *Object) setLinkMetaData(info *api.Link) (err error) {
-	o.hasMetaData = true
 	o.size = info.Size
 	o.modTime = time.Unix(info.Date, 0)
 	o.url = info.Link
@@ -1056,7 +1045,6 @@ func (o *Object) setLinkMetaData(info *api.Link) (err error) {
 
 // setMagnetFileMetaData sets the metadata from a magnet file
 func (o *Object) setMagnetFileMetaData(info *api.MagnetFile) (err error) {
-	o.hasMetaData = true
 	o.size = info.Size
 	o.modTime = time.Now() // We don't have mod time for magnet files
 	o.url = info.Link
@@ -1085,7 +1073,6 @@ func (o *Object) unlockLink(ctx context.Context) error {
 		return err
 	}
 
-	o.hasMetaData = true
 	o.size = unlockInfo.Data.Filesize
 	o.dLink = unlockInfo.Data.Link
 	return nil
