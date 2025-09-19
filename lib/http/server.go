@@ -59,6 +59,8 @@ inserts leading and trailing "/" on ` + "`--{{ .Prefix }}baseurl`" + `, so ` + "
 ` + "`--{{ .Prefix }}baseurl \"/rclone\"` and `--{{ .Prefix }}baseurl \"/rclone/\"`" + ` are all treated
 identically.
 
+` + "`--{{ .Prefix }}disable-zip`" + ` may be set to disable the zipping download option.
+
 #### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over
