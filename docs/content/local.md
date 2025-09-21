@@ -657,7 +657,7 @@ Properties:
 - Config:      encoding
 - Env Var:     RCLONE_LOCAL_ENCODING
 - Type:        Encoding
-- Default:     Slash,InvalidUtf8,Dot
+- Default:     Slash,Dot
 
 #### --local-description
 
