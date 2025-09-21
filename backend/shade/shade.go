@@ -31,15 +31,15 @@ import (
 )
 
 const (
-	defaultEndpoint  = "https://fs.shade.inc"  // Default local development endpoint
-	apiEndpoint      = "https://api.shade.inc" // API endpoint for getting tokens
-	minSleep         = 10 * time.Millisecond   // Minimum sleep time for the pacer
-	maxSleep         = 5 * time.Minute         // Maximum sleep time for the pacer
-	decayConstant    = 1                       // Bigger for slower decay, exponential
-	defaultChunkSize = 64 * 1024 * 1024        // Default chunk size (64MB)
-	minChunkSize     = 5 * 1024 * 1024         // Minimum chunk size (5MB) - S3 requirement
-	maxChunkSize     = 5 * 1024 * 1024 * 1024  // Maximum chunk size (5GB)
-	maxUploadParts   = 10000                   // maximum allowed number of parts in a multipart upload
+	defaultEndpoint  = "https://fs.shade.inc"        // Default local development endpoint
+	apiEndpoint      = "https://api.shade.inc"       // API endpoint for getting tokens
+	minSleep         = 10 * time.Millisecond         // Minimum sleep time for the pacer
+	maxSleep         = 5 * time.Minute               // Maximum sleep time for the pacer
+	decayConstant    = 1                             // Bigger for slower decay, exponential
+	defaultChunkSize = int64(64 * 1024 * 1024)       // Default chunk size (64MB)
+	minChunkSize     = int64(5 * 1024 * 1024)        // Minimum chunk size (5MB) - S3 requirement
+	maxChunkSize     = int64(5 * 1024 * 1024 * 1024) // Maximum chunk size (5GB)
+	maxUploadParts   = 10000                         // maximum allowed number of parts in a multipart upload
 )
 
 // Register with Fs
@@ -99,7 +99,7 @@ func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
 	//If the token expires in less than two minutes, just get a new one
 	if f.token != "" && time.Now().Before(checkTime) {
 
-		fs.Debugf(f, "Using existing token (expires in %v)", f.tokenExp.Sub(time.Now()))
+		fs.Debugf(f, "Using existing token (expires in %v)", time.Until(f.tokenExp))
 		return f.token, nil
 	}
 
@@ -111,7 +111,7 @@ func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
 		RootURL: apiEndpoint,
 		Path:    fmt.Sprintf("/workspaces/drives/%s/shade-fs-token", f.drive),
 		ExtraHeaders: map[string]string{
-			"Authorization": f.opt.ApiKey,
+			"Authorization": f.opt.APIKey,
 		},
 	}
 
@@ -210,7 +210,7 @@ func (f *Fs) callAPI(ctx context.Context, method, path string, response interfac
 // Options defines the configuration for this backend
 type Options struct {
 	Drive          string        `config:"drive_id"`
-	ApiKey         string        `config:"api_key"`
+	APIKey         string        `config:"api_key"`
 	Endpoint       string        `config:"endpoint"`
 	ChunkSize      fs.SizeSuffix `config:"chunk_size"`
 	MaxUploadParts int           `config:"max_upload_parts"`
@@ -345,7 +345,7 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	var response api.ListDirResponse
-	_, err = f.callAPI(ctx, "GET", fmt.Sprintf("/%s/fs/attr?path=%s", f.drive, url.QueryEscape(root)), &response)
+	_, _ = f.callAPI(ctx, "GET", fmt.Sprintf("/%s/fs/attr?path=%s", f.drive, url.QueryEscape(root)), &response)
 
 	if response.Type == "file" {
 		//Specified a single file path, not a directory.
@@ -439,19 +439,13 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 
 		// Make path relative to f.root
-		entryPath := r.Path
-		if strings.HasPrefix(entryPath, "/") {
-			entryPath = entryPath[1:]
-		}
+		entryPath := strings.TrimPrefix(r.Path, "/")
 		if f.root != "" {
 			if !strings.HasPrefix(entryPath, f.root) {
 				fs.Debugf(f, "Path %s doesn't have root prefix %s, skipping", entryPath, f.root)
 				continue
 			}
-			entryPath = strings.TrimPrefix(entryPath, f.root)
-			if strings.HasPrefix(entryPath, "/") {
-				entryPath = entryPath[1:]
-			}
+			entryPath = strings.TrimPrefix(strings.TrimPrefix(entryPath, f.root), "/")
 		}
 
 		fs.Debugf(f, "Processing entry: %s, type: %s, size: %d", entryPath, r.Type, r.Size)
@@ -617,6 +611,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	fs.Debugf(f, "Encoded path for rmdir: %s", fullPath)
 	var response []api.ListDirResponse
 	res, err := f.callAPI(ctx, "GET", fmt.Sprintf("/%s/fs/listdir?path=%s", f.drive, fullPath), &response)
+
+	if res != nil && res.StatusCode != http.StatusOK {
+		fs.Debugf(f, "Failed to list dirs: status code %d", res.StatusCode)
+		return err
+	}
 
 	if len(response) > 0 {
 		return fs.ErrorDirectoryNotEmpty
@@ -893,8 +892,18 @@ func (h *hashingReadCloser) Close() error {
 	return h.closer.Close()
 }
 
+// Update in to the object with the modTime given of the given size
+//
+// When called from outside an Fs by rclone, src.Size() will always be >= 0.
+// But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
+// return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	fs.Debugf(o.fs, "Uploading file: %s", o.remote)
+
+	if src.Size() < 0 {
+		//Indeterminate sizes not supported
+		return fs.ErrorCantMove
+	}
 
 	//Need to ensure parent directories exist before updating
 	err := o.fs.ensureParentDirectories(ctx, o.remote)

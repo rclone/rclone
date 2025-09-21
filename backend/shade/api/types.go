@@ -1,9 +1,8 @@
+// Package api has type definitions for shade
 package api
 
-// -------------------------------------------------
-// ListDir Response format
-// -------------------------------------------------
-
+// ListDirResponse -------------------------------------------------
+// Format from shade api
 type ListDirResponse struct {
 	Type  string `json:"type"`  // "file" or "tree"
 	Path  string `json:"path"`  // Full path including root
@@ -15,11 +14,13 @@ type ListDirResponse struct {
 	Draft bool   `json:"draft"` // Whether this is a draft file
 }
 
+// PartURL Type for multipart upload/download
 type PartURL struct {
 	URL     string            `json:"url"`
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
+// CompletedPart Type for completed parts when making a multipart upload.
 type CompletedPart struct {
 	ETag       string
 	PartNumber int32
