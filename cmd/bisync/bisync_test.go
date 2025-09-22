@@ -330,7 +330,7 @@ func testBisync(ctx context.Context, t *testing.T, path1, path2 string) {
 	baseDir, err := os.Getwd()
 	require.NoError(t, err, "get current directory")
 	randName := time.Now().Format("150405") + random.String(2) // some bucket backends don't like dots, keep this short to avoid linux errors
-	tempDir := filepath.Join(os.TempDir(), randName)
+	tempDir := filepath.Join(t.TempDir(), randName)
 	workDir := filepath.Join(tempDir, "workdir")
 
 	b := &bisyncTest{
