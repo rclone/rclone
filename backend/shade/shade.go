@@ -118,9 +118,6 @@ func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
 	var err error
 	var tokenStr string
 
-	f.tokenMu.Unlock()
-	defer f.tokenMu.Lock() // Re-lock before updating shared state
-
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.apiSrv.Call(ctx, &opts)
 		if err != nil {
