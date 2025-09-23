@@ -948,3 +948,52 @@ func rcHashsum(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	return out, err
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "operations/discard",
+		AuthRequired: true,
+		Fn:           rcDiscard,
+		Title:        "Read and discard bytes from a file",
+		Help: `This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:"
+- remote - a file within that remote e.g. "file.txt"
+- offset - offset to start reading from, start if unset, from end if -ve
+- count - bytes to read, all if unset
+
+This is similar to the [cat](/commands/rclone_cat/) with the --discard flag.
+
+It can be used for reading files into the VFS cache.
+`,
+	})
+}
+
+// Cat a file with --discard
+func rcDiscard(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	f, remote, err := rc.GetFsAndRemote(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	o, err := f.NewObject(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+	offset, err := in.GetInt64("offset")
+	if rc.IsErrParamNotFound(err) {
+		offset = 0
+	} else if err != nil {
+		return nil, err
+	}
+	count, err := in.GetInt64("count")
+	if rc.IsErrParamNotFound(err) {
+		count = -1
+	} else if err != nil {
+		return nil, err
+	}
+	err = CatFile(ctx, o, offset, count, io.Discard)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}

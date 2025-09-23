@@ -14,12 +14,14 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/diskusage"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -865,4 +867,67 @@ func TestRcHashsumFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "md5", out["hashType"])
 	assert.Equal(t, []string{"0ef726ce9b1a7692357ff70dd321d595  hashsum-file1"}, out["hashsum"])
+}
+
+// operations/discard: read and discard the contents of a file
+func TestRcDiscard(t *testing.T) {
+	ctx := context.Background()
+	r, call := rcNewRun(t, "operations/discard")
+	r.Mkdir(ctx, r.Fremote)
+
+	fileContents := "file contents to be discarded"
+	file := r.WriteBoth(ctx, "discard-file", fileContents, t1)
+	r.CheckLocalItems(t, file)
+	r.CheckRemoteItems(t, file)
+
+	for _, tt := range []struct {
+		name string
+		in   rc.Params
+		want int64
+	}{{
+		name: "full read",
+		in: rc.Params{
+			"fs":     r.FremoteName,
+			"remote": file.Path,
+		},
+		want: int64(len(fileContents)),
+	}, {
+		name: "start",
+		in: rc.Params{
+			"fs":     r.FremoteName,
+			"remote": file.Path,
+			"count":  2,
+		},
+		want: 2,
+	}, {
+		name: "offset",
+		in: rc.Params{
+			"fs":     r.FremoteName,
+			"remote": file.Path,
+			"offset": 1,
+			"count":  3,
+		},
+		want: 3,
+	}, {
+		name: "end",
+		in: rc.Params{
+			"fs":     r.FremoteName,
+			"remote": file.Path,
+			"offset": -1,
+			"count":  4,
+		},
+		want: 1,
+	}} {
+		t.Run(tt.name, func(t *testing.T) {
+			group := random.String(8)
+			ctx := accounting.WithStatsGroup(ctx, group)
+
+			out, err := call.Fn(ctx, tt.in)
+			require.NoError(t, err)
+			assert.Equal(t, rc.Params(nil), out)
+
+			stats := accounting.Stats(ctx)
+			assert.Equal(t, tt.want, stats.GetBytes())
+		})
+	}
 }

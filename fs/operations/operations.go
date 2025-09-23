@@ -1281,6 +1281,48 @@ type readCloser struct {
 	io.Closer
 }
 
+// CatFile outputs the file to the io.Writer
+//
+// if offset == 0 it will be ignored
+// if offset > 0 then the file will be seeked to that offset
+// if offset < 0 then the file will be seeked that far from the end
+//
+// if count < 0 then it will be ignored
+// if count >= 0 then only that many characters will be output
+func CatFile(ctx context.Context, o fs.Object, offset, count int64, w io.Writer) (err error) {
+	ci := fs.GetConfig(ctx)
+	tr := accounting.Stats(ctx).NewTransfer(o, nil)
+	defer func() {
+		tr.Done(ctx, err)
+	}()
+	opt := fs.RangeOption{Start: offset, End: -1}
+	size := o.Size()
+	if opt.Start < 0 {
+		opt.Start += size
+	}
+	if count >= 0 {
+		opt.End = opt.Start + count - 1
+	}
+	var options []fs.OpenOption
+	if opt.Start > 0 || opt.End >= 0 {
+		options = append(options, &opt)
+	}
+	for _, option := range ci.DownloadHeaders {
+		options = append(options, option)
+	}
+	var in io.ReadCloser
+	in, err = Open(ctx, o, options...)
+	if err != nil {
+		return err
+	}
+	if count >= 0 {
+		in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
+	}
+	in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
+	_, err = io.Copy(w, in)
+	return err
+}
+
 // Cat any files to the io.Writer
 //
 // if offset == 0 it will be ignored
@@ -1291,46 +1333,14 @@ type readCloser struct {
 // if count >= 0 then only that many characters will be output
 func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []byte) error {
 	var mu sync.Mutex
-	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
-		var err error
-		tr := accounting.Stats(ctx).NewTransfer(o, nil)
-		defer func() {
-			tr.Done(ctx, err)
-		}()
-		opt := fs.RangeOption{Start: offset, End: -1}
-		size := o.Size()
-		if opt.Start < 0 {
-			opt.Start += size
-		}
-		if count >= 0 {
-			opt.End = opt.Start + count - 1
-		}
-		var options []fs.OpenOption
-		if opt.Start > 0 || opt.End >= 0 {
-			options = append(options, &opt)
-		}
-		for _, option := range ci.DownloadHeaders {
-			options = append(options, option)
-		}
-		var in io.ReadCloser
-		in, err = Open(ctx, o, options...)
-		if err != nil {
-			err = fs.CountError(ctx, err)
-			fs.Errorf(o, "Failed to open: %v", err)
-			return
-		}
-		if count >= 0 {
-			in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
-		}
-		in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
-		// take the lock just before we output stuff, so at the last possible moment
 		mu.Lock()
 		defer mu.Unlock()
-		_, err = io.Copy(w, in)
+		err := CatFile(ctx, o, offset, count, w)
 		if err != nil {
 			err = fs.CountError(ctx, err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
+			return
 		}
 		if len(sep) > 0 {
 			_, err = w.Write(sep)
