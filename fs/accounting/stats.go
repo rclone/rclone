@@ -912,22 +912,31 @@ func (s *StatsInfo) RemoveTransfer(transfer *Transfer) {
 }
 
 // PruneTransfers makes sure there aren't too many old transfers by removing
-// single finished transfer.
-func (s *StatsInfo) PruneTransfers() {
+// a single finished transfer. Returns true if it removed a transfer.
+func (s *StatsInfo) PruneTransfers() bool {
 	if MaxCompletedTransfers < 0 {
-		return
+		return false
 	}
+	removed := false
 	s.mu.Lock()
 	// remove a transfer from the start if we are over quota
 	if len(s.startedTransfers) > MaxCompletedTransfers+s.ci.Transfers {
 		for i, tr := range s.startedTransfers {
 			if tr.IsDone() {
 				s._removeTransfer(tr, i)
+				removed = true
 				break
 			}
 		}
 	}
 	s.mu.Unlock()
+	return removed
+}
+
+// RemoveDoneTransfers removes all Done transfers.
+func (s *StatsInfo) RemoveDoneTransfers() {
+	for s.PruneTransfers() {
+	}
 }
 
 // AddServerSideMove counts a server side move
