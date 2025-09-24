@@ -1,15 +1,16 @@
 package runs
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"runtime"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -45,14 +46,6 @@ type ReportRun struct {
 	Runs Runs
 }
 
-// Parse version numbers
-// v1.49.0
-// v1.49.0-031-g2298834e-beta
-// v1.49.0-032-g20793a5f-sharefile-beta
-// match 1 is commit number
-// match 2 is branch name
-var parseVersion = regexp.MustCompile(`^v(?:[0-9.]+)-(?:\d+)-g([0-9a-f]+)(?:-(.*))?-beta$`)
-
 // FIXME take -issue or -pr parameter...
 
 // NewReport initialises and returns a Report
@@ -82,17 +75,33 @@ func NewReport(Opt RunOpt) *Report {
 	// Online version
 	r.URL = Opt.URLBase + r.DateTime + "/index.html"
 
-	// Get branch/commit out of version
-	parts := parseVersion.FindStringSubmatch(r.Version)
-	if len(parts) >= 3 {
-		r.Commit = parts[1]
-		r.Branch = parts[2]
-	}
-	if r.Branch == "" {
-		r.Branch = "master"
-	}
+	// Get branch/commit
+	r.Branch, r.Commit = gitBranchAndCommit()
 
 	return r
+}
+
+// gitBranchAndCommit returns the current branch and commit hash.
+//
+// It returns "" on error.
+func gitBranchAndCommit() (branch, commit string) {
+	// branch (empty if detached)
+	var b bytes.Buffer
+	cmdB := exec.Command("git", "symbolic-ref", "--short", "-q", "HEAD")
+	cmdB.Stdout = &b
+	if e := cmdB.Run(); e == nil {
+		branch = strings.TrimSpace(b.String())
+	}
+
+	// commit (full SHA)
+	var c bytes.Buffer
+	cmdC := exec.Command("git", "rev-parse", "HEAD")
+	cmdC.Stdout = &c
+	if e := cmdC.Run(); e == nil {
+		commit = strings.TrimSpace(c.String())
+	}
+
+	return branch, commit
 }
 
 // End should be called when the tests are complete
