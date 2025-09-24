@@ -42,10 +42,14 @@ var lineRegex = regexp.MustCompile(`^(\S) +(-?\d+) (\S+) (\S+) (\d{4}-\d\d-\d\dT
 // timeFormat defines time format used in listings
 const timeFormat = "2006-01-02T15:04:05.000000000-0700"
 
-// TZ defines time zone used in listings
 var (
+	// TZ defines time zone used in listings
 	TZ      = time.UTC
 	tzLocal = false
+
+	// LogTZ defines time zone used in logs (which may be different than that used in listings).
+	// time.Local by default, but we force UTC on tests to make them deterministic regardless of tester's location.
+	LogTZ = time.Local
 )
 
 // fileInfo describes a file
@@ -198,8 +202,8 @@ func (b *bisyncRun) fileInfoEqual(file1, file2 string, ls1, ls2 *fileList) bool 
 			equal = false
 		}
 	}
-	if b.opt.Compare.Checksum && !ignoreListingChecksum {
-		if hashDiffers(ls1.getHash(file1), ls2.getHash(file2), b.opt.Compare.HashType1, b.opt.Compare.HashType2, ls1.getSize(file1), ls2.getSize(file2)) {
+	if b.opt.Compare.Checksum && !b.queueOpt.ignoreListingChecksum {
+		if b.hashDiffers(ls1.getHash(file1), ls2.getHash(file2), b.opt.Compare.HashType1, b.opt.Compare.HashType2, ls1.getSize(file1), ls2.getSize(file2)) {
 			b.indent("ERROR", file1, fmt.Sprintf("Checksum not equal in listing. Path1: %v, Path2: %v", ls1.getHash(file1), ls2.getHash(file2)))
 			equal = false
 		}
@@ -243,7 +247,7 @@ func (ls *fileList) sort() {
 }
 
 // save will save listing to a file.
-func (ls *fileList) save(ctx context.Context, listing string) error {
+func (ls *fileList) save(listing string) error {
 	file, err := os.Create(listing)
 	if err != nil {
 		return err
@@ -430,7 +434,6 @@ func (b *bisyncRun) listDirsOnly(listingNum int) (*fileList, error) {
 	}
 
 	fulllisting, err = b.loadListingNum(listingNum)
-
 	if err != nil {
 		b.critical = true
 		b.retryable = true
@@ -606,6 +609,11 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 				}
 			}
 			if srcNewName != "" { // if it was renamed and not deleted
+				if new == nil { // should not happen. log error and debug info
+					b.handleErr(b.renames, "internal error", fmt.Errorf("missing info for %q. Please report a bug at https://github.com/rclone/rclone/issues", srcNewName), true, true)
+					fs.PrettyPrint(srcList, "srcList for debugging", fs.LogLevelNotice)
+					continue
+				}
 				srcList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
 				dstList.put(srcNewName, new.size, new.time, new.hash, new.id, new.flags)
 			}
@@ -708,9 +716,9 @@ func (b *bisyncRun) modifyListing(ctx context.Context, src fs.Fs, dst fs.Fs, res
 		b.debug(b.DebugName, fmt.Sprintf("%s pre-save dstList has it?: %v", direction, dstList.has(b.DebugName)))
 	}
 	// update files
-	err = srcList.save(ctx, srcListing)
+	err = srcList.save(srcListing)
 	b.handleErr(srcList, "error saving srcList from modifyListing", err, true, true)
-	err = dstList.save(ctx, dstListing)
+	err = dstList.save(dstListing)
 	b.handleErr(dstList, "error saving dstList from modifyListing", err, true, true)
 
 	return err
@@ -741,7 +749,7 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 			if hashType != hash.None {
 				hashVal, _ = obj.Hash(ctxRecheck, hashType)
 			}
-			hashVal, _ = tryDownloadHash(ctxRecheck, obj, hashVal)
+			hashVal, _ = b.tryDownloadHash(ctxRecheck, obj, hashVal)
 		}
 		var modtime time.Time
 		if b.opt.Compare.Modtime {
@@ -755,7 +763,7 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 		for _, dstObj := range dstObjs {
 			if srcObj.Remote() == dstObj.Remote() || srcObj.Remote() == b.aliases.Alias(dstObj.Remote()) {
 				// note: unlike Equal(), WhichEqual() does not update the modtime in dest if sums match but modtimes don't.
-				if b.opt.DryRun || WhichEqual(ctxRecheck, srcObj, dstObj, src, dst) {
+				if b.opt.DryRun || b.WhichEqual(ctxRecheck, srcObj, dstObj, src, dst) {
 					putObj(srcObj, srcList)
 					putObj(dstObj, dstList)
 					resolved = append(resolved, srcObj.Remote())
@@ -769,7 +777,7 @@ func (b *bisyncRun) recheck(ctxRecheck context.Context, src, dst fs.Fs, srcList,
 		// skip and error during --resync, as rollback is not possible
 		if !slices.Contains(resolved, srcObj.Remote()) && !b.opt.DryRun {
 			if b.opt.Resync {
-				err = errors.New("no dstObj match or files not equal")
+				err := errors.New("no dstObj match or files not equal")
 				b.handleErr(srcObj, "Unable to rollback during --resync", err, true, false)
 			} else {
 				toRollback = append(toRollback, srcObj.Remote())

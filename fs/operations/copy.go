@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/transform"
 )
 
 // State of the copy
@@ -98,10 +99,13 @@ func (c *copy) checkPartial(ctx context.Context) (remoteForCopy string, inplace 
 	// Avoid making the leaf name longer if it's already lengthy to avoid
 	// trouble with file name length limits.
 
-	// generate a stable random suffix by hashing the fingerprint
-	hash := crc32.ChecksumIEEE([]byte(fs.Fingerprint(ctx, c.src, true)))
+	// generate a stable random suffix by hashing the filename and fingerprint
+	hasher := crc32.New(crc32.IEEETable)
+	_, _ = hasher.Write([]byte(c.remote))
+	_, _ = hasher.Write([]byte(fs.Fingerprint(ctx, c.src, true)))
+	hash := hasher.Sum32()
 
-	suffix := fmt.Sprintf(".%x%s", hash, c.ci.PartialSuffix)
+	suffix := fmt.Sprintf(".%08x%s", hash, c.ci.PartialSuffix)
 	base := path.Base(remoteForCopy)
 	if len(base) > 100 {
 		remoteForCopy = TruncateString(remoteForCopy, len(remoteForCopy)-len(suffix)) + suffix
@@ -390,7 +394,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		f:           f,
 		dstFeatures: f.Features(),
 		dst:         dst,
-		remote:      remote,
+		remote:      transform.Path(ctx, remote, false),
 		src:         src,
 		ci:          ci,
 		tr:          tr,
@@ -399,7 +403,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	}
 	c.hashType, c.hashOption = CommonHash(ctx, f, src.Fs())
 	if c.dst != nil {
-		c.remote = c.dst.Remote()
+		c.remote = transform.Path(ctx, c.dst.Remote(), false)
 	}
 	// Are we using partials?
 	//
@@ -414,5 +418,5 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 
 // CopyFile moves a single file possibly to a new name
 func CopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string) (err error) {
-	return moveOrCopyFile(ctx, fdst, fsrc, dstFileName, srcFileName, true)
+	return moveOrCopyFile(ctx, fdst, fsrc, dstFileName, srcFileName, true, false)
 }

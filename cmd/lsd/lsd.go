@@ -32,18 +32,22 @@ recurse by default.  Use the ` + "`-R`" + ` flag to recurse.
 This command lists the total size of the directory (if known, -1 if
 not), the modification time (if known, the current time if not), the
 number of objects in the directory (if known, -1 if not) and the name
-of the directory, Eg
+of the directory, E.g.
 
-    $ rclone lsd swift:
-          494000 2018-04-26 08:43:20     10000 10000files
-              65 2018-04-26 08:43:20         1 1File
+` + "```sh" + `
+$ rclone lsd swift:
+      494000 2018-04-26 08:43:20     10000 10000files
+          65 2018-04-26 08:43:20         1 1File
+` + "```" + `
 
 Or
 
-    $ rclone lsd drive:test
-              -1 2016-10-17 17:41:53        -1 1000files
-              -1 2017-01-03 14:40:54        -1 2500files
-              -1 2017-07-08 14:39:28        -1 4000files
+` + "```sh" + `
+$ rclone lsd drive:test
+          -1 2016-10-17 17:41:53        -1 1000files
+          -1 2017-01-03 14:40:54        -1 2500files
+          -1 2017-07-08 14:39:28        -1 4000files
+` + "```" + `
 
 If you just want the directory names use ` + "`rclone lsf --dirs-only`" + `.
 

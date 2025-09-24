@@ -100,6 +100,7 @@ compiletest:
 check:	rclone
 	@echo "-- START CODE QUALITY REPORT -------------------------------"
 	@golangci-lint run $(LINTTAGS) ./...
+	@bin/markdown-lint
 	@echo "-- END CODE QUALITY REPORT ---------------------------------"
 
 # Get the build dependencies
@@ -144,9 +145,11 @@ MANUAL.txt:	MANUAL.md
 	pandoc -s --from markdown-smart --to plain MANUAL.md -o MANUAL.txt
 
 commanddocs: rclone
+	go generate ./lib/transform
 	-@rmdir -p '$$HOME/.config/rclone'
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs --config=/notfound docs/content/
 	@[ ! -e '$$HOME' ] || (echo 'Error: created unwanted directory named $$HOME' && exit 1)
+	go run bin/make_bisync_docs.go ./docs/content/
 
 backenddocs: rclone bin/make_backend_docs.py
 	-@rmdir -p '$$HOME/.config/rclone'
@@ -243,7 +246,7 @@ fetch_binaries:
 	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
-	cd docs && hugo server --logLevel info -w --disableFastRender
+	cd docs && hugo server --logLevel info -w --disableFastRender --ignoreCache
 
 tag:	retag doc
 	bin/make_changelog.py $(LAST_TAG) $(VERSION) > docs/content/changelog.md.new

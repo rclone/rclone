@@ -6,6 +6,8 @@ package ncdu
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"path"
 	"reflect"
 	"sort"
@@ -45,22 +47,26 @@ structure as it goes along.
 You can interact with the user interface using key presses,
 press '?' to toggle the help on and off. The supported keys are:
 
-    ` + strings.Join(helpText()[1:], "\n    ") + `
+` + "```text" + `
+` + strings.Join(helpText()[1:], "\n") + `
+` + "```" + `
 
 Listed files/directories may be prefixed by a one-character flag,
 some of them combined with a description in brackets at end of line.
 These flags have the following meaning:
 
-    e means this is an empty directory, i.e. contains no files (but
-      may contain empty subdirectories)
-    ~ means this is a directory where some of the files (possibly in
-      subdirectories) have unknown size, and therefore the directory
-      size may be underestimated (and average size inaccurate, as it
-      is average of the files with known sizes).
-    . means an error occurred while reading a subdirectory, and
-      therefore the directory size may be underestimated (and average
-      size inaccurate)
-    ! means an error occurred while reading this directory
+` + "```text" + `
+e means this is an empty directory, i.e. contains no files (but
+  may contain empty subdirectories)
+~ means this is a directory where some of the files (possibly in
+  subdirectories) have unknown size, and therefore the directory
+  size may be underestimated (and average size inaccurate, as it
+  is average of the files with known sizes).
+. means an error occurred while reading a subdirectory, and
+  therefore the directory size may be underestimated (and average
+  size inaccurate)
+! means an error occurred while reading this directory
+` + "```" + `
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
@@ -71,8 +77,7 @@ UI won't respond in the meantime since the deletion is done synchronously.
 
 For a non-interactive listing of the remote, see the
 [tree](/commands/rclone_tree/) command. To just get the total size of
-the remote you can also use the [size](/commands/rclone_size/) command.
-`,
+the remote you can also use the [size](/commands/rclone_size/) command.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.37",
 		"groups":            "Filter,Listing",
@@ -925,23 +930,19 @@ func (u *UI) Run() error {
 		return fmt.Errorf("screen init: %w", err)
 	}
 
-	// Hijack fs.LogOutput so that it doesn't corrupt the screen.
-	if logOutput := fs.LogOutput; !log.Redirected() {
-		type log struct {
-			text  string
-			level fs.LogLevel
-		}
-		var logs []log
-		fs.LogOutput = func(level fs.LogLevel, text string) {
+	// Hijack log output so that it doesn't corrupt the screen.
+	if !log.Redirected() {
+		var logs []string
+		log.Handler.SetOutput(func(level slog.Level, text string) {
 			if len(logs) > 100 {
 				logs = logs[len(logs)-100:]
 			}
-			logs = append(logs, log{level: level, text: text})
-		}
+			logs = append(logs, text)
+		})
 		defer func() {
-			fs.LogOutput = logOutput
-			for i := range logs {
-				logOutput(logs[i].level, logs[i].text)
+			log.Handler.ResetOutput()
+			for _, text := range logs {
+				_, _ = os.Stderr.WriteString(text)
 			}
 		}()
 	}

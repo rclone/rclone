@@ -40,7 +40,7 @@ var (
 	checkStreaming     bool
 	checkBase32768     bool
 	all                bool
-	uploadWait         time.Duration
+	uploadWait         fs.Duration
 	positionLeftRe     = regexp.MustCompile(`(?s)^(.*)-position-left-([[:xdigit:]]+)$`)
 	positionMiddleRe   = regexp.MustCompile(`(?s)^position-middle-([[:xdigit:]]+)-(.*)-$`)
 	positionRightRe    = regexp.MustCompile(`(?s)^position-right-([[:xdigit:]]+)-(.*)$`)
@@ -52,7 +52,7 @@ func init() {
 	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file", "")
 	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", false, "Check UTF-8 Normalization", "")
 	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", false, "Check control characters", "")
-	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file", "")
+	flags.FVarP(cmdFlags, &uploadWait, "upload-wait", "", "Wait after writing a file", "")
 	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", false, "Check max filename length", "")
 	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", false, "Check uploads with indeterminate file size", "")
 	flags.BoolVarP(cmdFlags, &checkBase32768, "check-base32768", "", false, "Check can store all possible base32768 characters", "")
@@ -68,8 +68,7 @@ paths passed in and how long they can be.  It can take some time.  It will
 write test files into the remote:path passed in.  It outputs a bit of go
 code for each one.
 
-**NB** this can create undeletable files and other hazards - use with care
-`,
+**NB** this can create undeletable files and other hazards - use with care!`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.55",
 	},
@@ -204,7 +203,7 @@ func (r *results) writeFile(path string) (fs.Object, error) {
 	src := object.NewStaticObjectInfo(path, time.Now(), int64(len(contents)), true, nil, r.f)
 	obj, err := r.f.Put(r.ctx, bytes.NewBufferString(contents), src)
 	if uploadWait > 0 {
-		time.Sleep(uploadWait)
+		time.Sleep(time.Duration(uploadWait))
 	}
 	return obj, err
 }
@@ -293,7 +292,7 @@ func (r *results) checkControls() {
 		tokens <- struct{}{}
 	}
 	var wg sync.WaitGroup
-	for i := rune(0); i < 128; i++ {
+	for i := range rune(128) {
 		s := string(i)
 		if i == 0 || i == '/' {
 			// We're not even going to check NULL or /

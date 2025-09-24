@@ -84,7 +84,10 @@ func init() {
 				Help:  "Nextcloud",
 			}, {
 				Value: "owncloud",
-				Help:  "Owncloud",
+				Help:  "Owncloud 10 PHP based WebDAV server",
+			}, {
+				Value: "infinitescale",
+				Help:  "ownCloud Infinite Scale",
 			}, {
 				Value: "sharepoint",
 				Help:  "Sharepoint Online, authenticated by Microsoft account",
@@ -212,6 +215,7 @@ type Fs struct {
 	pacer              *fs.Pacer     // pacer for API calls
 	precision          time.Duration // mod time precision
 	canStream          bool          // set if can stream
+	canTus             bool          // supports the TUS upload protocol
 	useOCMtime         bool          // set if can use X-OC-Mtime
 	propsetMtime       bool          // set if can use propset
 	retryWithZeroDepth bool          // some vendors (sharepoint) won't list files when Depth is 1 (our default)
@@ -632,6 +636,15 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCMD5 = true
 		f.hasOCSHA1 = true
+	case "infinitescale":
+		f.precision = time.Second
+		f.useOCMtime = true
+		f.propsetMtime = true
+		f.hasOCMD5 = false
+		f.hasOCSHA1 = true
+		f.canChunk = false
+		f.canTus = true
+		f.opt.ChunkSize = 10 * fs.Mebi
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
@@ -1329,7 +1342,7 @@ func (o *Object) Size() int64 {
 	ctx := context.TODO()
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Infof(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -1373,7 +1386,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Infof(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -1499,9 +1512,21 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update mkParentDir failed: %w", err)
 	}
 
-	if o.shouldUseChunkedUpload(src) {
-		fs.Debugf(src, "Update will use the chunked upload strategy")
-		err = o.updateChunked(ctx, in, src, options...)
+	if o.fs.canTus { // supports the tus upload protocol, ie. InfiniteScale
+		fs.Debugf(src, "Update will use the tus protocol to upload")
+		contentType := fs.MimeType(ctx, src)
+		err = o.updateViaTus(ctx, in, contentType, src, options...)
+		if err != nil {
+			fs.Debug(src, "tus update failed.")
+			return fmt.Errorf("tus update failed: %w", err)
+		}
+	} else if o.shouldUseChunkedUpload(src) {
+		if o.fs.opt.Vendor == "nextcloud" {
+			fs.Debugf(src, "Update will use the chunked upload strategy")
+			err = o.updateChunked(ctx, in, src, options...)
+		} else {
+			fs.Debug(src, "Chunking - unknown vendor")
+		}
 		if err != nil {
 			return err
 		}
@@ -1513,10 +1538,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// TODO: define getBody() to enable low-level HTTP/2 retries
 		err = o.updateSimple(ctx, in, nil, filePath, src.Size(), contentType, extraHeaders, o.fs.endpointURL, options...)
 		if err != nil {
-			return err
+			return fmt.Errorf("unchunked simple update failed: %w", err)
 		}
 	}
-
 	// read metadata from remote
 	o.hasMetaData = false
 	return o.readMetaData(ctx)

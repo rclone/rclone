@@ -68,10 +68,11 @@ type StatsInfo struct {
 
 type averageValues struct {
 	mu      sync.Mutex
+	period  float64
 	lpBytes int64
 	lpTime  time.Time
 	speed   float64
-	stop    chan bool
+	cancel  context.CancelFunc
 	stopped sync.WaitGroup
 	started bool
 }
@@ -88,7 +89,6 @@ func NewStats(ctx context.Context) *StatsInfo {
 		startTime:    time.Now(),
 		average:      averageValues{},
 	}
-	s.startAverageLoop()
 	return s
 }
 
@@ -328,26 +328,17 @@ func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 	return ts
 }
 
-func (s *StatsInfo) averageLoop() {
-	var period float64
-
+func (s *StatsInfo) averageLoop(ctx context.Context) {
 	ticker := time.NewTicker(averagePeriodLength)
 	defer ticker.Stop()
 
 	a := &s.average
 	defer a.stopped.Done()
 
-	shouldRun := false
-
 	for {
 		select {
 		case now := <-ticker.C:
 			a.mu.Lock()
-
-			if !shouldRun {
-				a.mu.Unlock()
-				continue
-			}
 
 			avg := 0.0
 			elapsed := now.Sub(a.lpTime).Seconds()
@@ -355,46 +346,21 @@ func (s *StatsInfo) averageLoop() {
 				avg = float64(a.lpBytes) / elapsed
 			}
 
-			if period < averagePeriod {
-				period++
+			if a.period < averagePeriod {
+				a.period++
 			}
 
-			a.speed = (avg + a.speed*(period-1)) / period
+			a.speed = (avg + a.speed*(a.period-1)) / a.period
 			a.lpBytes = 0
 			a.lpTime = now
 
 			a.mu.Unlock()
 
-		case stop, ok := <-a.stop:
-			if !ok {
-				return // Channel closed, exit the loop
-			}
-
-			a.mu.Lock()
-
-			// If we are resuming, store the current time
-			if !shouldRun && !stop {
-				a.lpTime = time.Now()
-			}
-			shouldRun = !stop
-
-			a.mu.Unlock()
+		case <-ctx.Done():
+			// Stop the loop
+			return
 		}
 	}
-}
-
-// Resume the average loop
-func (s *StatsInfo) resumeAverageLoop() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.average.stop <- false
-}
-
-// Pause the average loop
-func (s *StatsInfo) pauseAverageLoop() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.average.stop <- true
 }
 
 // Start the average loop
@@ -402,10 +368,12 @@ func (s *StatsInfo) pauseAverageLoop() {
 // Call with the mutex held
 func (s *StatsInfo) _startAverageLoop() {
 	if !s.average.started {
-		s.average.stop = make(chan bool)
+		ctx, cancel := context.WithCancel(context.Background())
+		s.average.cancel = cancel
 		s.average.started = true
 		s.average.stopped.Add(1)
-		go s.averageLoop()
+		s.average.lpTime = time.Now()
+		go s.averageLoop(ctx)
 	}
 }
 
@@ -421,8 +389,9 @@ func (s *StatsInfo) startAverageLoop() {
 // Call with the mutex held
 func (s *StatsInfo) _stopAverageLoop() {
 	if s.average.started {
-		close(s.average.stop)
+		s.average.cancel()
 		s.average.stopped.Wait()
+		s.average.started = false
 	}
 }
 
@@ -839,7 +808,7 @@ func (s *StatsInfo) NewTransfer(obj fs.DirEntry, dstFs fs.Fs) *Transfer {
 	}
 	tr := newTransfer(s, obj, srcFs, dstFs)
 	s.transferring.add(tr)
-	s.resumeAverageLoop()
+	s.startAverageLoop()
 	return tr
 }
 
@@ -847,7 +816,7 @@ func (s *StatsInfo) NewTransfer(obj fs.DirEntry, dstFs fs.Fs) *Transfer {
 func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64, srcFs, dstFs fs.Fs) *Transfer {
 	tr := newTransferRemoteSize(s, remote, size, false, "", srcFs, dstFs)
 	s.transferring.add(tr)
-	s.resumeAverageLoop()
+	s.startAverageLoop()
 	return tr
 }
 
@@ -862,7 +831,9 @@ func (s *StatsInfo) DoneTransferring(remote string, ok bool) {
 		s.mu.Unlock()
 	}
 	if s.transferring.empty() && s.checking.empty() {
-		s.pauseAverageLoop()
+		s.mu.Lock()
+		s._stopAverageLoop()
+		s.mu.Unlock()
 	}
 }
 

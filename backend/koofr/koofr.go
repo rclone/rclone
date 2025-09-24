@@ -461,7 +461,7 @@ func translateErrorsDir(err error) error {
 	return err
 }
 
-// translatesErrorsObject translates Koofr errors to rclone errors (for an object operation)
+// translateErrorsObject translates Koofr errors to rclone errors (for an object operation)
 func translateErrorsObject(err error) error {
 	switch err := err.(type) {
 	case httpclient.InvalidStatusError:

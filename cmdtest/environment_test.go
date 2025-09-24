@@ -48,7 +48,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	env = "RCLONE_LOG_LEVEL=DEBUG"
 	out, err = rcloneEnv(env, "version", "--quiet")
 	if assert.Error(t, err) {
-		assert.Contains(t, out, " DEBUG : ")
+		assert.Contains(t, out, " DEBUG ")
 		assert.Contains(t, out, "Can't set -q and --log-level")
 		assert.Contains(t, "exit status 1", err.Error())
 	}
@@ -329,7 +329,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	jsonLogOK := func() {
 		t.Helper()
 		if assert.NoError(t, err) {
-			assert.Contains(t, out, `{"level":"debug",`)
+			assert.Contains(t, out, `"level":"debug"`)
 			assert.Contains(t, out, `"msg":"Version `)
 			assert.Contains(t, out, `"}`)
 		}
@@ -351,7 +351,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	parseFileFilters := func(out string) (extensions []string) {
 		// Match: - (^|/)[^/]*\.jpg$
 		find := regexp.MustCompile(`^- \(\^\|\/\)\[\^\/\]\*\\\.(.*?)\$$`)
-		for _, line := range strings.Split(out, "\n") {
+		for line := range strings.SplitSeq(out, "\n") {
 			if m := find.FindStringSubmatch(line); m != nil {
 				extensions = append(extensions, m[1])
 			}

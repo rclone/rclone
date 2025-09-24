@@ -191,7 +191,7 @@ func driveScopes(scopesString string) (scopes []string) {
 	if scopesString == "" {
 		scopesString = defaultScope
 	}
-	for _, scope := range strings.Split(scopesString, ",") {
+	for scope := range strings.SplitSeq(scopesString, ",") {
 		scope = strings.TrimSpace(scope)
 		scopes = append(scopes, scopePrefix+scope)
 	}
@@ -1220,7 +1220,7 @@ func isLinkMimeType(mimeType string) bool {
 // into a list of unique extensions with leading "." and a list of associated MIME types
 func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, err error) {
 	for _, extensionText := range extensionsIn {
-		for _, extension := range strings.Split(extensionText, ",") {
+		for extension := range strings.SplitSeq(extensionText, ",") {
 			extension = strings.ToLower(strings.TrimSpace(extension))
 			if extension == "" {
 				continue
@@ -1745,7 +1745,7 @@ func (f *Fs) createDir(ctx context.Context, pathID, leaf string, metadata fs.Met
 	}
 	var updateMetadata updateMetadataFn
 	if len(metadata) > 0 {
-		updateMetadata, err = f.updateMetadata(ctx, createInfo, metadata, true)
+		updateMetadata, err = f.updateMetadata(ctx, createInfo, metadata, true, true)
 		if err != nil {
 			return nil, fmt.Errorf("create dir: failed to update metadata: %w", err)
 		}
@@ -1776,7 +1776,7 @@ func (f *Fs) updateDir(ctx context.Context, dirID string, metadata fs.Metadata) 
 	}
 	dirID = actualID(dirID)
 	updateInfo := &drive.File{}
-	updateMetadata, err := f.updateMetadata(ctx, updateInfo, metadata, true)
+	updateMetadata, err := f.updateMetadata(ctx, updateInfo, metadata, true, true)
 	if err != nil {
 		return nil, fmt.Errorf("update dir: failed to update metadata from source object: %w", err)
 	}

@@ -6,12 +6,21 @@ import (
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/operations/operationsflags"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
 
+var (
+	loggerOpt      = operations.LoggerOpt{}
+	loggerFlagsOpt = operationsflags.AddLoggerFlagsOptions{}
+)
+
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
+	cmdFlags := commandDefinition.Flags()
+	operationsflags.AddLoggerFlags(cmdFlags, &loggerOpt, &loggerFlagsOpt)
+	loggerOpt.LoggerFn = operations.NewDefaultLoggerFn(&loggerOpt)
 }
 
 var commandDefinition = &cobra.Command{
@@ -26,27 +35,34 @@ name.  If the source is a directory then it acts exactly like the
 
 So
 
-    rclone copyto src dst
+` + "```sh" + `
+rclone copyto src dst
+` + "```" + `
 
-where src and dst are rclone paths, either remote:path or
-/path/to/local or C:\windows\path\if\on\windows.
+where src and dst are rclone paths, either ` + "`remote:path`" + ` or
+` + "`/path/to/local`" + ` or ` + "`C:\\windows\\path\\if\\on\\windows`" + `.
 
 This will:
 
-    if src is file
-        copy it to dst, overwriting an existing file if it exists
-    if src is directory
-        copy it to dst, overwriting existing files if they exist
-        see copy command for full details
+` + "```text" + `
+if src is file
+    copy it to dst, overwriting an existing file if it exists
+if src is directory
+    copy it to dst, overwriting existing files if they exist
+    see copy command for full details
+` + "```" + `
 
 This doesn't transfer files that are identical on src and dst, testing
 by size and modification time or MD5SUM.  It doesn't delete files from
 the destination.
 
-*If you are looking to copy just a byte range of a file, please see 'rclone cat --offset X --count Y'*
+*If you are looking to copy just a byte range of a file, please see
+` + "`rclone cat --offset X --count Y`" + `.*
 
-**Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics
-`,
+**Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view
+real-time transfer statistics.
+
+` + operationsflags.Help(),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.35",
 		"groups":            "Copy,Filter,Listing,Important",
@@ -55,10 +71,21 @@ the destination.
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst, dstFileName := cmd.NewFsSrcDstFiles(args)
 		cmd.Run(true, true, command, func() error {
-			if srcFileName == "" {
-				return sync.CopyDir(context.Background(), fdst, fsrc, false)
+			ctx := context.Background()
+			close, err := operationsflags.ConfigureLoggers(ctx, fdst, command, &loggerOpt, loggerFlagsOpt)
+			if err != nil {
+				return err
 			}
-			return operations.CopyFile(context.Background(), fdst, fsrc, dstFileName, srcFileName)
+			defer close()
+
+			if loggerFlagsOpt.AnySet() {
+				ctx = operations.WithSyncLogger(ctx, loggerOpt)
+			}
+
+			if srcFileName == "" {
+				return sync.CopyDir(ctx, fdst, fsrc, false)
+			}
+			return operations.CopyFile(ctx, fdst, fsrc, dstFileName, srcFileName)
 		})
 	},
 }

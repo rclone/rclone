@@ -85,11 +85,11 @@ Rclone helps you:
 ## Features {#features}
 
 - Transfers
-    - MD5, SHA1 hashes are checked at all times for file integrity
-    - Timestamps are preserved on files
-    - Operations can be restarted at any time
-    - Can be to and from network, e.g. two different cloud providers
-    - Can use multi-threaded downloads to local disk
+  - MD5, SHA1 hashes are checked at all times for file integrity
+  - Timestamps are preserved on files
+  - Operations can be restarted at any time
+  - Can be to and from network, e.g. two different cloud providers
+  - Can use multi-threaded downloads to local disk
 - [Copy](/commands/rclone_copy/) new or changed files to cloud storage
 - [Sync](/commands/rclone_sync/) (one way) to make a directory identical
 - [Bisync](/bisync/) (two way) to keep two directories in sync bidirectionally
@@ -122,8 +122,11 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Dreamhost" home="https://www.dreamhost.com/cloud/storage/" config="/s3/#dreamhost" >}}
 {{< provider name="Dropbox" home="https://www.dropbox.com/" config="/dropbox/" >}}
 {{< provider name="Enterprise File Fabric" home="https://storagemadeeasy.com/about/" config="/filefabric/" >}}
+{{< provider name="Exaba" home="https://exaba.com/" config="/s3/#exaba" >}}
 {{< provider name="Fastmail Files" home="https://www.fastmail.com/" config="/webdav/#fastmail-files" >}}
+{{< provider name="FileLu Cloud Storage" home="https://filelu.com/" config="/filelu/" >}}
 {{< provider name="Files.com" home="https://www.files.com/" config="/filescom/" >}}
+{{< provider name="FlashBlade" home="https://www.purestorage.com/products/unstructured-data-storage.html" config="/s3/#pure-storage-flashblade" >}}
 {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}
 {{< provider name="Gofile" home="https://gofile.io/" config="/gofile/" >}}
 {{< provider name="Google Cloud Storage" home="https://cloud.google.com/storage/" config="/googlecloudstorage/" >}}
@@ -139,6 +142,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
+{{< provider name="Intercolo Object Storage" home="https://intercolo.de/object-storage" config="/s3/#intercolo" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
 {{< provider name="Leviia Object Storage" home="https://www.leviia.com/object-storage" config="/s3/#leviia" >}}
@@ -148,20 +152,22 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Magalu" home="https://magalu.cloud/object-storage/" config="/s3/#magalu" >}}
 {{< provider name="Mail.ru Cloud" home="https://cloud.mail.ru/" config="/mailru/" >}}
 {{< provider name="Memset Memstore" home="https://www.memset.com/cloud/storage/" config="/swift/" >}}
-{{< provider name="Mega" home="https://mega.nz/" config="/mega/" >}}
+{{< provider name="MEGA" home="https://mega.nz/" config="/mega/" >}}
+{{< provider name="MEGA S4" home="https://mega.io/objectstorage" config="/s3/#mega" >}}
 {{< provider name="Memory" home="/memory/" config="/memory/" >}}
 {{< provider name="Microsoft Azure Blob Storage" home="https://azure.microsoft.com/en-us/services/storage/blobs/" config="/azureblob/" >}}
 {{< provider name="Microsoft Azure Files Storage" home="https://azure.microsoft.com/en-us/services/storage/files/" config="/azurefiles/" >}}
 {{< provider name="Microsoft OneDrive" home="https://onedrive.live.com/" config="/onedrive/" >}}
 {{< provider name="Minio" home="https://www.minio.io/" config="/s3/#minio" >}}
 {{< provider name="Nextcloud" home="https://nextcloud.com/" config="/webdav/#nextcloud" >}}
-{{< provider name="OVH" home="https://www.ovh.co.uk/public-cloud/storage/object-storage/" config="/swift/" >}}
 {{< provider name="Blomp Cloud Storage" home="https://rclone.org/swift/" config="/swift/" >}}
 {{< provider name="OpenDrive" home="https://www.opendrive.com/" config="/opendrive/" >}}
 {{< provider name="OpenStack Swift" home="https://docs.openstack.org/swift/latest/" config="/swift/" >}}
 {{< provider name="Oracle Cloud Storage Swift" home="https://docs.oracle.com/en-us/iaas/integration/doc/configure-object-storage.html" config="/swift/" >}}
 {{< provider name="Oracle Object Storage" home="https://www.oracle.com/cloud/storage/object-storage" config="/oracleobjectstorage/" >}}
 {{< provider name="Outscale" home="https://en.outscale.com/storage/outscale-object-storage/" config="/s3/#outscale" >}}
+{{< provider name="OVHcloud Object Storage (Swift)" home="https://www.ovhcloud.com/en/public-cloud/object-storage/" config="/swift/" >}}
+{{< provider name="OVHcloud Object Storage (S3-compatible)" home="https://www.ovhcloud.com/en/public-cloud/object-storage/" config="/s3/#ovhcloud" >}}
 {{< provider name="ownCloud" home="https://owncloud.org/" config="/webdav/#owncloud" >}}
 {{< provider name="pCloud" home="https://www.pcloud.com/" config="/pcloud/" >}}
 {{< provider name="Petabox" home="https://petabox.io/" config="/s3/#petabox" >}}
@@ -183,6 +189,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="SFTP" home="https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol" config="/sftp/" >}}
 {{< provider name="Sia" home="https://sia.tech/" config="/sia/" >}}
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
+{{< provider name="Spectra Logic" home="https://spectralogic.com/blackpearl-nearline-object-gateway/" config="/s3/#spectralogic" >}}
 {{< provider name="StackPath" home="https://www.stackpath.com/products/object-storage/" config="/s3/#stackpath" >}}
 {{< provider name="Storj" home="https://storj.io/" config="/storj/" >}}
 {{< provider name="Synology" home="https://c2.synology.com/en-global/object-storage/overview" config="/s3/#synology-c2" >}}
@@ -194,6 +201,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
 {{< provider name="Zoho WorkDrive" home="https://www.zoho.com/workdrive/" config="/zoho/" >}}
+{{< provider name="Zata" home="https://zata.ai/" config="/s3/#Zata" end="true" >}}
 {{< provider name="The local filesystem" home="/local/" config="/local/" end="true">}}
 {{< /provider_list >}}
 
@@ -210,10 +218,9 @@ These backends adapt or modify other storage providers:
 {{< provider name="Hasher: Hash files" home="/hasher/" config="/hasher/" >}}
 {{< provider name="Union: Join multiple remotes to work together" home="/union/" config="/union/" >}}
 
-
 ## Links
 
-  * {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
-  * {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
-  * {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
-  * {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)
+- {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
+- {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
+- {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
+- {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)

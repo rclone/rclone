@@ -110,7 +110,7 @@ The server will log errors.  Use ` + "`-v`" + ` to see access logs.
 ` + "`--bwlimit`" + ` will be respected for file transfers.  Use ` + "`--stats`" + ` to
 control the stats printing.
 
-` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help() + proxy.Help,
+` + strings.TrimSpace(libhttp.Help(flagPrefix)+libhttp.TemplateHelp(flagPrefix)+libhttp.AuthHelp(flagPrefix)+vfs.Help()+proxy.Help),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 		"groups":            "Filter",
@@ -208,6 +208,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 // Serve HTTP until the server is shutdown
 func (s *HTTP) Serve() error {
 	s.server.Serve()
+	fs.Logf(s.f, "HTTP Server started on %s", s.server.URLs())
 	s.server.Wait()
 	return nil
 }

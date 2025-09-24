@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Set default location for Kerberos config and ccache. Can be overridden by the caller
+# using environment variables RCLONE_TEST_CUSTOM_CCACHE_LOCATION and KRB5_CONFIG.
+export TEMP_DIR=/tmp/rclone_krb5_ccache
+mkdir -p "${TEMP_DIR}"
+export KRB5_CONFIG=${KRB5_CONFIG:-${TEMP_DIR}/krb5.conf}
+export RCLONE_TEST_CUSTOM_CCACHE_LOCATION=${RCLONE_TEST_CUSTOM_CCACHE_LOCATION:-${TEMP_DIR}/ccache}
+
+IMAGE=rclone/test-smb-kerberos-ccache
+NAME=smb-kerberos-ccache
+USER=rclone
+DOMAIN=RCLONE
+REALM=RCLONE.LOCAL
+SMB_PORT=28637
+KRB5_PORT=28638
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker build -t ${IMAGE} --load - <<EOF
+FROM alpine:3.21
+RUN apk add --no-cache samba-dc
+RUN rm -rf /etc/samba/smb.conf /var/lib/samba \
+ && mkdir -p /var/lib/samba/private \
+ && samba-tool domain provision \
+    --use-rfc2307 \
+    --option acl_xattr:security_acl_name=user.NTACL \
+    --realm=$REALM \
+    --domain=$DOMAIN \
+    --server-role=dc \
+    --dns-backend=SAMBA_INTERNAL \
+    --host-name=localhost \
+ && samba-tool user add --random-password $USER \
+ && samba-tool user setexpiry $USER --noexpiry \
+ && mkdir -m 777 /share /rclone \
+ && cat <<EOS >> /etc/samba/smb.conf
+[global]
+server signing = auto
+[public]
+path = /share
+browseable = yes
+read only = yes
+guest ok = yes
+[rclone]
+path = /rclone
+browseable = yes
+read only = no
+guest ok = no
+valid users = rclone
+EOS
+CMD ["samba", "-i"]
+EOF
+
+    docker run --rm -d --name ${NAME} \
+        -p 127.0.0.1:${SMB_PORT}:445 \
+        -p 127.0.0.1:${SMB_PORT}:445/udp \
+        -p 127.0.0.1:${KRB5_PORT}:88 \
+        ${IMAGE}
+
+    cat > "${KRB5_CONFIG}" <<EOF
+[libdefaults]
+    default_realm = ${REALM}
+[realms]
+${REALM} = {
+    kdc = localhost
+}
+EOF
+
+    docker cp "${KRB5_CONFIG}" ${NAME}:/etc/krb5.conf
+    docker exec ${NAME} samba-tool user get-kerberos-ticket rclone --output-krb5-ccache=/tmp/ccache
+    docker cp ${NAME}:/tmp/ccache "${RCLONE_TEST_CUSTOM_CCACHE_LOCATION}"
+    sed -i -e "s/localhost/localhost:${KRB5_PORT}/" "${KRB5_CONFIG}"
+
+    echo type=smb
+    echo host=localhost
+    echo port=$SMB_PORT
+    echo use_kerberos=true
+    echo kerberos_ccache=${RCLONE_TEST_CUSTOM_CCACHE_LOCATION}
+    echo _connect=127.0.0.1:${SMB_PORT}
+}
+
+. $(dirname "$0")/run.bash

@@ -19,11 +19,13 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 n) New remote
 d) Delete remote
 q) Quit config
@@ -71,15 +73,21 @@ You can then use it like this,
 
 List directories in top level of your dropbox
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your dropbox
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to a dropbox directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Dropbox for business
 
@@ -146,7 +154,9 @@ In this mode rclone will not use upload batching. This was the default
 before rclone v1.55. It has the disadvantage that it is very likely to
 encounter `too_many_requests` errors like this
 
-    NOTICE: too_many_requests/.: Too many requests or write operations. Trying again in 15 seconds.
+```text
+NOTICE: too_many_requests/.: Too many requests or write operations. Trying again in 15 seconds.
+```
 
 When rclone receives these it has to wait for 15s or sometimes 300s
 before continuing which really slows down transfers.
@@ -215,7 +225,7 @@ Here are some examples of how extensions are mapped:
 | Paper template | mydoc.papert        | mydoc.papert.html  |
 | other          | mydoc               | mydoc.html         |
 
-_Importing_ exportable files is not yet supported by rclone.
+*Importing* exportable files is not yet supported by rclone.
 
 Here are the supported export extensions known by rclone. Note that
 rclone does not currently support other formats not on this list,
@@ -304,6 +314,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
@@ -431,6 +443,56 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --dropbox-export-formats
+
+Comma separated list of preferred formats for exporting files
+
+Certain Dropbox files can only be accessed by exporting them to another format.
+These include Dropbox Paper documents.
+
+For each such file, rclone will choose the first format on this list that Dropbox
+considers valid. If none is valid, it will choose Dropbox's default format.
+
+Known formats include: "html", "md" (markdown)
+
+Properties:
+
+- Config:      export_formats
+- Env Var:     RCLONE_DROPBOX_EXPORT_FORMATS
+- Type:        CommaSepList
+- Default:     html,md
+
+#### --dropbox-skip-exports
+
+Skip exportable files in all listings.
+
+If given, exportable files practically become invisible to rclone.
+
+Properties:
+
+- Config:      skip_exports
+- Env Var:     RCLONE_DROPBOX_SKIP_EXPORTS
+- Type:        bool
+- Default:     false
+
+#### --dropbox-show-all-exports
+
+Show all exportable files in listings.
+
+Adding this flag will allow all exportable files to be server side copied.
+Note that rclone doesn't add extensions to the exportable file names in this mode.
+
+Do **not** use this flag when trying to download exportable files - rclone
+will fail to download them.
+
+
+Properties:
+
+- Config:      show_all_exports
+- Env Var:     RCLONE_DROPBOX_SHOW_ALL_EXPORTS
+- Type:        bool
+- Default:     false
+
 #### --dropbox-batch-mode
 
 Upload file batching sync|async|off.
@@ -508,7 +570,7 @@ Properties:
 
 #### --dropbox-batch-commit-timeout
 
-Max time to wait for a batch to finish committing
+Max time to wait for a batch to finish committing. (no longer used)
 
 Properties:
 
