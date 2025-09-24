@@ -15,41 +15,47 @@ standard output in a form which is easy to parse by scripts.  By
 default this will just be the names of the objects and directories,
 one per line.  The directories will have a / suffix.
 
-Eg
+E.g.
 
-    $ rclone lsf swift:bucket
-    bevajer5jef
-    canole
-    diwogej7
-    ferejej3gux/
-    fubuwic
+```sh
+$ rclone lsf swift:bucket
+bevajer5jef
+canole
+diwogej7
+ferejej3gux/
+fubuwic
+```
 
 Use the `--format` option to control what gets listed.  By default this
 is just the path, but you can use these parameters to control the
 output:
 
-    p - path
-    s - size
-    t - modification time
-    h - hash
-    i - ID of object
-    o - Original ID of underlying object
-    m - MimeType of object if known
-    e - encrypted name
-    T - tier of storage if known, e.g. "Hot" or "Cool"
-    M - Metadata of object in JSON blob format, eg {"key":"value"}
+```text
+p - path
+s - size
+t - modification time
+h - hash
+i - ID of object
+o - Original ID of underlying object
+m - MimeType of object if known
+e - encrypted name
+T - tier of storage if known, e.g. "Hot" or "Cool"
+M - Metadata of object in JSON blob format, eg {"key":"value"}
+```
 
 So if you wanted the path, size and modification time, you would use
 `--format "pst"`, or maybe `--format "tsp"` to put the path last.
 
-Eg
+E.g.
 
-    $ rclone lsf  --format "tsp" swift:bucket
-    2016-06-25 18:55:41;60295;bevajer5jef
-    2016-06-25 18:55:43;90613;canole
-    2016-06-25 18:55:43;94467;diwogej7
-    2018-04-26 08:50:45;0;ferejej3gux/
-    2016-06-25 18:55:40;37600;fubuwic
+```sh
+$ rclone lsf  --format "tsp" swift:bucket
+2016-06-25 18:55:41;60295;bevajer5jef
+2016-06-25 18:55:43;90613;canole
+2016-06-25 18:55:43;94467;diwogej7
+2018-04-26 08:50:45;0;ferejej3gux/
+2016-06-25 18:55:40;37600;fubuwic
+```
 
 If you specify "h" in the format you will get the MD5 hash by default,
 use the `--hash` flag to change which hash you want.  Note that this
@@ -60,16 +66,20 @@ type.
 
 For example, to emulate the md5sum command you can use
 
-    rclone lsf -R --hash MD5 --format hp --separator "  " --files-only .
+```sh
+rclone lsf -R --hash MD5 --format hp --separator "  " --files-only .
+```
 
-Eg
+E.g.
 
-    $ rclone lsf -R --hash MD5 --format hp --separator "  " --files-only swift:bucket
-    7908e352297f0f530b84a756f188baa3  bevajer5jef
-    cd65ac234e6fea5925974a51cdd865cc  canole
-    03b5341b4f234b9d984d03ad076bae91  diwogej7
-    8fd37c3810dd660778137ac3a66cc06d  fubuwic
-    99713e14a4c4ff553acaf1930fad985b  gixacuh7ku
+```sh
+$ rclone lsf -R --hash MD5 --format hp --separator "  " --files-only swift:bucket
+7908e352297f0f530b84a756f188baa3  bevajer5jef
+cd65ac234e6fea5925974a51cdd865cc  canole
+03b5341b4f234b9d984d03ad076bae91  diwogej7
+8fd37c3810dd660778137ac3a66cc06d  fubuwic
+99713e14a4c4ff553acaf1930fad985b  gixacuh7ku
+```
 
 (Though "rclone md5sum ." is an easier way of typing this.)
 
@@ -77,24 +87,28 @@ By default the separator is ";" this can be changed with the
 `--separator` flag.  Note that separators aren't escaped in the path so
 putting it last is a good strategy.
 
-Eg
+E.g.
 
-    $ rclone lsf  --separator "," --format "tshp" swift:bucket
-    2016-06-25 18:55:41,60295,7908e352297f0f530b84a756f188baa3,bevajer5jef
-    2016-06-25 18:55:43,90613,cd65ac234e6fea5925974a51cdd865cc,canole
-    2016-06-25 18:55:43,94467,03b5341b4f234b9d984d03ad076bae91,diwogej7
-    2018-04-26 08:52:53,0,,ferejej3gux/
-    2016-06-25 18:55:40,37600,8fd37c3810dd660778137ac3a66cc06d,fubuwic
+```sh
+$ rclone lsf  --separator "," --format "tshp" swift:bucket
+2016-06-25 18:55:41,60295,7908e352297f0f530b84a756f188baa3,bevajer5jef
+2016-06-25 18:55:43,90613,cd65ac234e6fea5925974a51cdd865cc,canole
+2016-06-25 18:55:43,94467,03b5341b4f234b9d984d03ad076bae91,diwogej7
+2018-04-26 08:52:53,0,,ferejej3gux/
+2016-06-25 18:55:40,37600,8fd37c3810dd660778137ac3a66cc06d,fubuwic
+```
 
 You can output in CSV standard format.  This will escape things in "
-if they contain ,
+if they contain,
 
-Eg
+E.g.
 
-    $ rclone lsf --csv --files-only --format ps remote:path
-    test.log,22355
-    test.sh,449
-    "this file contains a comma, in the file name.txt",6
+```sh
+$ rclone lsf --csv --files-only --format ps remote:path
+test.log,22355
+test.sh,449
+"this file contains a comma, in the file name.txt",6
+```
 
 Note that the `--absolute` parameter is useful for making lists of files
 to pass to an rclone copy with the `--files-from-raw` flag.
@@ -102,32 +116,36 @@ to pass to an rclone copy with the `--files-from-raw` flag.
 For example, to find all the files modified within one day and copy
 those only (without traversing the whole directory structure):
 
-    rclone lsf --absolute --files-only --max-age 1d /path/to/local > new_files
-    rclone copy --files-from-raw new_files /path/to/local remote:path
+```sh
+rclone lsf --absolute --files-only --max-age 1d /path/to/local > new_files
+rclone copy --files-from-raw new_files /path/to/local remote:path
+```
 
 The default time format is `'2006-01-02 15:04:05'`.
-[Other formats](https://pkg.go.dev/time#pkg-constants) can be specified with the `--time-format` flag.
-Examples:
+[Other formats](https://pkg.go.dev/time#pkg-constants) can be specified with
+the `--time-format` flag. Examples:
 
-	rclone lsf remote:path --format pt --time-format 'Jan 2, 2006 at 3:04pm (MST)'
-	rclone lsf remote:path --format pt --time-format '2006-01-02 15:04:05.000000000'
-	rclone lsf remote:path --format pt --time-format '2006-01-02T15:04:05.999999999Z07:00'
-	rclone lsf remote:path --format pt --time-format RFC3339
-	rclone lsf remote:path --format pt --time-format DateOnly
-	rclone lsf remote:path --format pt --time-format max
-`--time-format max` will automatically truncate '`2006-01-02 15:04:05.000000000`'
+```sh
+rclone lsf remote:path --format pt --time-format 'Jan 2, 2006 at 3:04pm (MST)'
+rclone lsf remote:path --format pt --time-format '2006-01-02 15:04:05.000000000'
+rclone lsf remote:path --format pt --time-format '2006-01-02T15:04:05.999999999Z07:00'
+rclone lsf remote:path --format pt --time-format RFC3339
+rclone lsf remote:path --format pt --time-format DateOnly
+rclone lsf remote:path --format pt --time-format max
+```
+
+`--time-format max` will automatically truncate `2006-01-02 15:04:05.000000000`
 to the maximum precision supported by the remote.
-
 
 Any of the filtering options can be applied to this command.
 
 There are several related list commands
 
-  * `ls` to list size and path of objects only
-  * `lsl` to list modification time, size and path of objects only
-  * `lsd` to list directories only
-  * `lsf` to list objects and directories in easy to parse format
-  * `lsjson` to list objects and directories in JSON format
+- `ls` to list size and path of objects only
+- `lsl` to list modification time, size and path of objects only
+- `lsd` to list directories only
+- `lsf` to list objects and directories in easy to parse format
+- `lsjson` to list objects and directories in JSON format
 
 `ls`,`lsl`,`lsd` are designed to be human-readable.
 `lsf` is designed to be human and machine-readable.
@@ -135,12 +153,12 @@ There are several related list commands
 
 Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the recursion.
 
-The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default - use `-R` to make them recurse.
+The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default -
+use `-R` to make them recurse.
 
 Listing a nonexistent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
 the bucket-based remotes).
-
 
 ```
 rclone lsf remote:path [flags]
@@ -169,7 +187,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags for filtering directory listings
 
-```
+```text
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -199,12 +217,17 @@ Flags for filtering directory listings
 
 Flags for listing directories
 
-```
+```text
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

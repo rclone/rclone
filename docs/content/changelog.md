@@ -6,6 +6,31 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.71.1 - 2025-09-24
+
+[See commits](https://github.com/rclone/rclone/compare/v1.71.0...v1.71.1)
+
+- Bug Fixes
+  - bisync: Fix error handling for renamed conflicts (nielash)
+  - march: Fix deadlock when using --fast-list on syncs (Nick Craig-Wood)
+  - operations: Fix partial name collisions for non --inplace copies (Nick Craig-Wood)
+  - pacer: Fix deadlock with --max-connections (Nick Craig-Wood)
+  - doc fixes (albertony, anon-pradip, Claudius Ellsel, dougal, Jean-Christophe Cura, Nick Craig-Wood, nielash)
+- Mount
+  - Do not log successful unmount as an error (Tilman Vogel)
+- VFS
+  - Fix SIGHUP killing serve instead of flushing directory caches (dougal)
+- Local
+  - Fix rmdir "Access is denied" on windows (nielash)
+- Box
+  - Fix about after change in API return (Nick Craig-Wood)
+- Combine
+  - Propagate SlowHash feature (skbeh)
+- Drive
+  - Update making your own client ID instructions (Ed Craig-Wood)
+- Internet Archive
+  - Fix server side copy files with spaces (Nick Craig-Wood)
+
 ## v1.71.0 - 2025-08-22
 
 [See commits](https://github.com/rclone/rclone/compare/v1.70.0...v1.71.0)

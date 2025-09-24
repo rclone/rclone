@@ -12,10 +12,12 @@ Generate public link to file/folder.
 
 Create, retrieve or remove a public link to the given file or folder.
 
-    rclone link remote:path/to/file
-    rclone link remote:path/to/folder/
-    rclone link --unlink remote:path/to/folder/
-    rclone link --expire 1d remote:path/to/file
+```sh
+rclone link remote:path/to/file
+rclone link remote:path/to/folder/
+rclone link --unlink remote:path/to/folder/
+rclone link --expire 1d remote:path/to/file
+```
 
 If you supply the --expire flag, it will set the expiration time
 otherwise it will use the default (100 years). **Note** not all
@@ -28,9 +30,8 @@ don't will just ignore it.
 
 If successful, the last line of the output will contain the
 link. Exact capabilities depend on the remote, but the link will
-always by default be created with the least constraints – e.g. no
+always by default be created with the least constraints - e.g. no
 expiry, no password protection, accessible without account.
-
 
 ```
 rclone link remote:path [flags]
@@ -48,5 +49,10 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

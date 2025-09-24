@@ -1278,14 +1278,18 @@ This takes the following parameters:
 
 Example:
 
-    rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
-    rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
-    rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+```sh
+rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
+rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
+rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+```
 
 The vfsOpt are as described in options/get and can be seen in the the
 "vfs" section when running and the mountOpt can be seen in the "mount" section:
 
-    rclone rc options/get
+```sh
+rclone rc options/get
+```
 
 **Authentication is required for this call.**
 
@@ -1728,8 +1732,6 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 
-See the [settierfile](/commands/rclone_settierfile/) command for more information on the above.
-
 **Authentication is required for this call.**
 
 ### operations/size: Count the number of bytes and files in remote {#operations-size}
@@ -1774,8 +1776,6 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 - each part in body represents a file to be uploaded
-
-See the [uploadfile](/commands/rclone_uploadfile/) command for more information on the above.
 
 **Authentication is required for this call.**
 

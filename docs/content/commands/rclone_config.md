@@ -14,7 +14,6 @@ Enter an interactive configuration session where you can setup new
 remotes and manage existing ones. You may also set or remove a
 password to protect your configuration.
 
-
 ```
 rclone config [flags]
 ```
@@ -28,6 +27,9 @@ rclone config [flags]
 See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
+
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone config create](/commands/rclone_config_create/)	 - Create a new remote with name, type and options.
@@ -47,3 +49,5 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone config update](/commands/rclone_config_update/)	 - Update options in an existing remote.
 * [rclone config userinfo](/commands/rclone_config_userinfo/)	 - Prints info about logged in user of remote.
 
+
+<!-- markdownlint-restore -->

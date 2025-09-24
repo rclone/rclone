@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "rclone" "1" "Aug 22, 2025" "User Manual" ""
+.TH "rclone" "1" "Sep 24, 2025" "User Manual" ""
 .hy
 .SH NAME
 .PP
@@ -1464,7 +1464,7 @@ rclone subcommand [options] <parameters> <parameters...>
 \f[R]
 .fi
 .PP
-A \f[V]subcommand\f[R] is a the rclone operation required, (e.g.
+A \f[V]subcommand\f[R] is an rclone operation required (e.g.
 \f[V]sync\f[R], \f[V]copy\f[R], \f[V]ls\f[R]).
 .PP
 An \f[V]option\f[R] is a single letter flag (e.g.
@@ -1679,7 +1679,8 @@ If metadata syncing is required then use the \f[V]--metadata\f[R] flag.
 .PP
 Note that the modification time and metadata for the root directory will
 \f[B]not\f[R] be synced.
-See https://github.com/rclone/rclone/issues/7652 for more info.
+See issue #7652 (https://github.com/rclone/rclone/issues/7652) for more
+info.
 .PP
 \f[B]Note\f[R]: Use the \f[V]-P\f[R]/\f[V]--progress\f[R] flag to view
 real-time transfer statistics.
@@ -1687,7 +1688,7 @@ real-time transfer statistics.
 \f[B]Note\f[R]: Use the \f[V]--dry-run\f[R] or the
 \f[V]--interactive\f[R]/\f[V]-i\f[R] flag to test without copying
 anything.
-.SH Logger Flags
+.SS Logger Flags
 .PP
 The \f[V]--differ\f[R], \f[V]--missing-on-dst\f[R],
 \f[V]--missing-on-src\f[R], \f[V]--match\f[R] and \f[V]--error\f[R]
@@ -1746,7 +1747,7 @@ Possibly some unusual error scenarios
 .PP
 Note also that each file is logged during execution, as opposed to
 after, so it is most useful as a predictor of what SHOULD happen to each
-file (which may or may not match what actually DID.)
+file (which may or may not match what actually DID).
 .IP
 .nf
 \f[C]
@@ -1931,7 +1932,7 @@ If metadata syncing is required then use the \f[V]--metadata\f[R] flag.
 .PP
 Note that the modification time and metadata for the root directory will
 \f[B]not\f[R] be synced.
-See https://github.com/rclone/rclone/issues/7652 for more info.
+See <https://github.com/rclone/rclone/issues/7652> for more info.
 .PP
 \f[B]Note\f[R]: Use the \f[V]-P\f[R]/\f[V]--progress\f[R] flag to view
 real-time transfer statistics
@@ -1942,7 +1943,7 @@ ignoring\[dq] errors.
 See this forum
 post (https://forum.rclone.org/t/sync-not-clearing-duplicates/14372) for
 more info.
-.SH Logger Flags
+.SS Logger Flags
 .PP
 The \f[V]--differ\f[R], \f[V]--missing-on-dst\f[R],
 \f[V]--missing-on-src\f[R], \f[V]--match\f[R] and \f[V]--error\f[R]
@@ -2001,7 +2002,7 @@ Possibly some unusual error scenarios
 .PP
 Note also that each file is logged during execution, as opposed to
 after, so it is most useful as a predictor of what SHOULD happen to each
-file (which may or may not match what actually DID.)
+file (which may or may not match what actually DID).
 .IP
 .nf
 \f[C]
@@ -2191,14 +2192,14 @@ If metadata syncing is required then use the \f[V]--metadata\f[R] flag.
 .PP
 Note that the modification time and metadata for the root directory will
 \f[B]not\f[R] be synced.
-See https://github.com/rclone/rclone/issues/7652 for more info.
+See <https://github.com/rclone/rclone/issues/7652> for more info.
 .PP
 \f[B]Important\f[R]: Since this can cause data loss, test first with the
 \f[V]--dry-run\f[R] or the \f[V]--interactive\f[R]/\f[V]-i\f[R] flag.
 .PP
 \f[B]Note\f[R]: Use the \f[V]-P\f[R]/\f[V]--progress\f[R] flag to view
 real-time transfer statistics.
-.SH Logger Flags
+.SS Logger Flags
 .PP
 The \f[V]--differ\f[R], \f[V]--missing-on-dst\f[R],
 \f[V]--missing-on-src\f[R], \f[V]--match\f[R] and \f[V]--error\f[R]
@@ -2257,7 +2258,7 @@ Possibly some unusual error scenarios
 .PP
 Note also that each file is logged during execution, as opposed to
 after, so it is most useful as a predictor of what SHOULD happen to each
-file (which may or may not match what actually DID.)
+file (which may or may not match what actually DID).
 .IP
 .nf
 \f[C]
@@ -2796,7 +2797,7 @@ Lists the objects in the source path to standard output in a human
 readable format with size and path.
 Recurses by default.
 .PP
-Eg
+E.g.
 .IP
 .nf
 \f[C]
@@ -2910,7 +2911,7 @@ Use the \f[V]-R\f[R] flag to recurse.
 This command lists the total size of the directory (if known, -1 if
 not), the modification time (if known, the current time if not), the
 number of objects in the directory (if known, -1 if not) and the name of
-the directory, Eg
+the directory, E.g.
 .IP
 .nf
 \f[C]
@@ -3034,7 +3035,7 @@ Lists the objects in the source path to standard output in a human
 readable format with modification time, size and path.
 Recurses by default.
 .PP
-Eg
+E.g.
 .IP
 .nf
 \f[C]
@@ -3762,11 +3763,11 @@ e.g.
 .nf
 \f[C]
 {
-    \[dq]total\[dq]: 18253611008,
-    \[dq]used\[dq]: 7993453766,
-    \[dq]trashed\[dq]: 104857602,
-    \[dq]other\[dq]: 8849156022,
-    \[dq]free\[dq]: 1411001220
+  \[dq]total\[dq]: 18253611008,
+  \[dq]used\[dq]: 7993453766,
+  \[dq]trashed\[dq]: 104857602,
+  \[dq]other\[dq]: 8849156022,
+  \[dq]free\[dq]: 1411001220
 }
 \f[R]
 .fi
@@ -3809,11 +3810,14 @@ Remote authorization.
 Used to authorize a remote or headless rclone from a machine with a
 browser - use as instructed by rclone config.
 .PP
-The command requires 1-3 arguments: - fs name (e.g., \[dq]drive\[dq],
-\[dq]s3\[dq], etc.)
-- Either a base64 encoded JSON blob obtained from a previous rclone
-config session - Or a client_id and client_secret pair obtained from the
-remote service
+The command requires 1-3 arguments:
+.IP \[bu] 2
+fs name (e.g., \[dq]drive\[dq], \[dq]s3\[dq], etc.)
+.IP \[bu] 2
+Either a base64 encoded JSON blob obtained from a previous rclone config
+session
+.IP \[bu] 2
+Or a client_id and client_secret pair obtained from the remote service
 .PP
 Use --auth-no-open-browser to prevent rclone to open auth link in
 default browser automatically.
@@ -3935,11 +3939,13 @@ Perform bidirectional synchronization between two paths.
 Bisync (https://rclone.org/bisync/) provides a bidirectional cloud sync
 solution in rclone.
 It retains the Path1 and Path2 filesystem listings from the prior run.
-On each successive run it will: - list files on Path1 and Path2, and
-check for changes on each side.
+On each successive run it will:
+.IP \[bu] 2
+list files on Path1 and Path2, and check for changes on each side.
 Changes include \f[V]New\f[R], \f[V]Newer\f[R], \f[V]Older\f[R], and
 \f[V]Deleted\f[R] files.
-- Propagate changes on Path1 to Path2, and vice-versa.
+.IP \[bu] 2
+Propagate changes on Path1 to Path2, and vice-versa.
 .PP
 Bisync is considered an \f[B]advanced command\f[R], so use with care.
 Make sure you have read and understood the entire
@@ -4632,27 +4638,27 @@ This will look something like (some irrelevant detail removed):
 .nf
 \f[C]
 {
-    \[dq]State\[dq]: \[dq]*oauth-islocal,teamdrive,,\[dq],
-    \[dq]Option\[dq]: {
-        \[dq]Name\[dq]: \[dq]config_is_local\[dq],
-        \[dq]Help\[dq]: \[dq]Use web browser to automatically authenticate rclone with remote?\[rs]n * Say Y if the machine running rclone has a web browser you can use\[rs]n * Say N if running rclone on a (remote) machine without web browser access\[rs]nIf not sure try Y. If Y failed, try N.\[rs]n\[dq],
-        \[dq]Default\[dq]: true,
-        \[dq]Examples\[dq]: [
-            {
-                \[dq]Value\[dq]: \[dq]true\[dq],
-                \[dq]Help\[dq]: \[dq]Yes\[dq]
-            },
-            {
-                \[dq]Value\[dq]: \[dq]false\[dq],
-                \[dq]Help\[dq]: \[dq]No\[dq]
-            }
-        ],
-        \[dq]Required\[dq]: false,
-        \[dq]IsPassword\[dq]: false,
-        \[dq]Type\[dq]: \[dq]bool\[dq],
-        \[dq]Exclusive\[dq]: true,
-    },
-    \[dq]Error\[dq]: \[dq]\[dq],
+  \[dq]State\[dq]: \[dq]*oauth-islocal,teamdrive,,\[dq],
+  \[dq]Option\[dq]: {
+    \[dq]Name\[dq]: \[dq]config_is_local\[dq],
+    \[dq]Help\[dq]: \[dq]Use web browser to automatically authenticate rclone with remote?\[rs]n * Say Y if the machine running rclone has a web browser you can use\[rs]n * Say N if running rclone on a (remote) machine without web browser access\[rs]nIf not sure try Y. If Y failed, try N.\[rs]n\[dq],
+    \[dq]Default\[dq]: true,
+    \[dq]Examples\[dq]: [
+      {
+        \[dq]Value\[dq]: \[dq]true\[dq],
+        \[dq]Help\[dq]: \[dq]Yes\[dq]
+      },
+      {
+        \[dq]Value\[dq]: \[dq]false\[dq],
+        \[dq]Help\[dq]: \[dq]No\[dq]
+      }
+    ],
+    \[dq]Required\[dq]: false,
+    \[dq]IsPassword\[dq]: false,
+    \[dq]Type\[dq]: \[dq]bool\[dq],
+    \[dq]Exclusive\[dq]: true,
+  },
+  \[dq]Error\[dq]: \[dq]\[dq],
 }
 \f[R]
 .fi
@@ -5272,27 +5278,27 @@ This will look something like (some irrelevant detail removed):
 .nf
 \f[C]
 {
-    \[dq]State\[dq]: \[dq]*oauth-islocal,teamdrive,,\[dq],
-    \[dq]Option\[dq]: {
-        \[dq]Name\[dq]: \[dq]config_is_local\[dq],
-        \[dq]Help\[dq]: \[dq]Use web browser to automatically authenticate rclone with remote?\[rs]n * Say Y if the machine running rclone has a web browser you can use\[rs]n * Say N if running rclone on a (remote) machine without web browser access\[rs]nIf not sure try Y. If Y failed, try N.\[rs]n\[dq],
-        \[dq]Default\[dq]: true,
-        \[dq]Examples\[dq]: [
-            {
-                \[dq]Value\[dq]: \[dq]true\[dq],
-                \[dq]Help\[dq]: \[dq]Yes\[dq]
-            },
-            {
-                \[dq]Value\[dq]: \[dq]false\[dq],
-                \[dq]Help\[dq]: \[dq]No\[dq]
-            }
-        ],
-        \[dq]Required\[dq]: false,
-        \[dq]IsPassword\[dq]: false,
-        \[dq]Type\[dq]: \[dq]bool\[dq],
-        \[dq]Exclusive\[dq]: true,
-    },
-    \[dq]Error\[dq]: \[dq]\[dq],
+  \[dq]State\[dq]: \[dq]*oauth-islocal,teamdrive,,\[dq],
+  \[dq]Option\[dq]: {
+    \[dq]Name\[dq]: \[dq]config_is_local\[dq],
+    \[dq]Help\[dq]: \[dq]Use web browser to automatically authenticate rclone with remote?\[rs]n * Say Y if the machine running rclone has a web browser you can use\[rs]n * Say N if running rclone on a (remote) machine without web browser access\[rs]nIf not sure try Y. If Y failed, try N.\[rs]n\[dq],
+    \[dq]Default\[dq]: true,
+    \[dq]Examples\[dq]: [
+      {
+        \[dq]Value\[dq]: \[dq]true\[dq],
+        \[dq]Help\[dq]: \[dq]Yes\[dq]
+      },
+      {
+        \[dq]Value\[dq]: \[dq]false\[dq],
+        \[dq]Help\[dq]: \[dq]No\[dq]
+      }
+    ],
+    \[dq]Required\[dq]: false,
+    \[dq]IsPassword\[dq]: false,
+    \[dq]Type\[dq]: \[dq]bool\[dq],
+    \[dq]Exclusive\[dq]: true,
+  },
+  \[dq]Error\[dq]: \[dq]\[dq],
 }
 \f[R]
 .fi
@@ -5453,7 +5459,7 @@ T}@T{
 Removes XXXX if it appears at the end of the file name.
 T}
 T{
-\f[V]--name-transform regex=/pattern/replacement/\f[R]
+\f[V]--name-transform regex=pattern/replacement\f[R]
 T}@T{
 Applies a regex-based transformation.
 T}
@@ -5471,6 +5477,23 @@ T{
 \f[V]--name-transform truncate=N\f[R]
 T}@T{
 Truncates the file name to a maximum of N characters.
+T}
+T{
+\f[V]--name-transform truncate_keep_extension=N\f[R]
+T}@T{
+Truncates the file name to a maximum of N characters while preserving
+the original file extension.
+T}
+T{
+\f[V]--name-transform truncate_bytes=N\f[R]
+T}@T{
+Truncates the file name to a maximum of N bytes (not characters).
+T}
+T{
+\f[V]--name-transform truncate_bytes_keep_extension=N\f[R]
+T}@T{
+Truncates the file name to a maximum of N bytes (not characters) while
+preserving the original file extension.
 T}
 T{
 \f[V]--name-transform base64encode\f[R]
@@ -5546,7 +5569,7 @@ T}
 T{
 \f[V]--name-transform command=/path/to/my/programfile names.\f[R]
 T}@T{
-Executes an external program to transform
+Executes an external program to transform.
 T}
 .TE
 .PP
@@ -5554,35 +5577,38 @@ Conversion modes:
 .IP
 .nf
 \f[C]
-none  
-nfc  
-nfd  
-nfkc  
-nfkd  
-replace  
-prefix  
-suffix  
-suffix_keep_extension  
-trimprefix  
-trimsuffix  
-index  
-date  
-truncate  
-base64encode  
-base64decode  
-encoder  
-decoder  
-ISO-8859-1  
-Windows-1252  
-Macintosh  
-charmap  
-lowercase  
-uppercase  
-titlecase  
-ascii  
-url  
-regex  
-command  
+none
+nfc
+nfd
+nfkc
+nfkd
+replace
+prefix
+suffix
+suffix_keep_extension
+trimprefix
+trimsuffix
+index
+date
+truncate
+truncate_keep_extension
+truncate_bytes
+truncate_bytes_keep_extension
+base64encode
+base64decode
+encoder
+decoder
+ISO-8859-1
+Windows-1252
+Macintosh
+charmap
+lowercase
+uppercase
+titlecase
+ascii
+url
+regex
+command
 \f[R]
 .fi
 .PP
@@ -5590,49 +5616,48 @@ Char maps:
 .IP
 .nf
 \f[C]
-  
-IBM-Code-Page-037  
-IBM-Code-Page-437  
-IBM-Code-Page-850  
-IBM-Code-Page-852  
-IBM-Code-Page-855  
-Windows-Code-Page-858  
-IBM-Code-Page-860  
-IBM-Code-Page-862  
-IBM-Code-Page-863  
-IBM-Code-Page-865  
-IBM-Code-Page-866  
-IBM-Code-Page-1047  
-IBM-Code-Page-1140  
-ISO-8859-1  
-ISO-8859-2  
-ISO-8859-3  
-ISO-8859-4  
-ISO-8859-5  
-ISO-8859-6  
-ISO-8859-7  
-ISO-8859-8  
-ISO-8859-9  
-ISO-8859-10  
-ISO-8859-13  
-ISO-8859-14  
-ISO-8859-15  
-ISO-8859-16  
-KOI8-R  
-KOI8-U  
-Macintosh  
-Macintosh-Cyrillic  
-Windows-874  
-Windows-1250  
-Windows-1251  
-Windows-1252  
-Windows-1253  
-Windows-1254  
-Windows-1255  
-Windows-1256  
-Windows-1257  
-Windows-1258  
-X-User-Defined  
+IBM-Code-Page-037
+IBM-Code-Page-437
+IBM-Code-Page-850
+IBM-Code-Page-852
+IBM-Code-Page-855
+Windows-Code-Page-858
+IBM-Code-Page-860
+IBM-Code-Page-862
+IBM-Code-Page-863
+IBM-Code-Page-865
+IBM-Code-Page-866
+IBM-Code-Page-1047
+IBM-Code-Page-1140
+ISO-8859-1
+ISO-8859-2
+ISO-8859-3
+ISO-8859-4
+ISO-8859-5
+ISO-8859-6
+ISO-8859-7
+ISO-8859-8
+ISO-8859-9
+ISO-8859-10
+ISO-8859-13
+ISO-8859-14
+ISO-8859-15
+ISO-8859-16
+KOI8-R
+KOI8-U
+Macintosh
+Macintosh-Cyrillic
+Windows-874
+Windows-1250
+Windows-1251
+Windows-1252
+Windows-1253
+Windows-1254
+Windows-1255
+Windows-1256
+Windows-1257
+Windows-1258
+X-User-Defined
 \f[R]
 .fi
 .PP
@@ -5640,36 +5665,36 @@ Encoding masks:
 .IP
 .nf
 \f[C]
-Asterisk  
- BackQuote  
- BackSlash  
- Colon  
- CrLf  
- Ctl  
- Del  
- Dollar  
- Dot  
- DoubleQuote  
- Exclamation  
- Hash  
- InvalidUtf8  
- LeftCrLfHtVt  
- LeftPeriod  
- LeftSpace  
- LeftTilde  
- LtGt  
- None  
- Percent  
- Pipe  
- Question  
- Raw  
- RightCrLfHtVt  
- RightPeriod  
- RightSpace  
- Semicolon  
- SingleQuote  
- Slash  
- SquareBracket  
+Asterisk
+BackQuote
+BackSlash
+Colon
+CrLf
+Ctl
+Del
+Dollar
+Dot
+DoubleQuote
+Exclamation
+Hash
+InvalidUtf8
+LeftCrLfHtVt
+LeftPeriod
+LeftSpace
+LeftTilde
+LtGt
+None
+Percent
+Pipe
+Question
+Raw
+RightCrLfHtVt
+RightPeriod
+RightSpace
+Semicolon
+SingleQuote
+Slash
+SquareBracket
 \f[R]
 .fi
 .PP
@@ -5769,14 +5794,14 @@ rclone convmv \[dq]stories/The Quick Brown Fox!.txt\[dq] --name-transform \[dq]a
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{YYYYMMDD}\[dq]
-// Output: stories/The Quick Brown Fox!-20250618
+// Output: stories/The Quick Brown Fox!-20250924
 \f[R]
 .fi
 .IP
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{macfriendlytime}\[dq]
-// Output: stories/The Quick Brown Fox!-2025-06-18 0148PM
+// Output: stories/The Quick Brown Fox!-2025-09-24 0413PM
 \f[R]
 .fi
 .IP
@@ -5787,12 +5812,21 @@ rclone convmv \[dq]stories/The Quick Brown Fox!.txt\[dq] --name-transform \[dq]a
 \f[R]
 .fi
 .PP
+The regex command generally accepts Perl-style regular expressions, the
+exact syntax is defined in the Go regular expression
+reference (https://golang.org/pkg/regexp/syntax/).
+The replacement string may contain capturing group variables,
+referencing capturing groups using the syntax \f[V]$name\f[R] or
+\f[V]${name}\f[R], where the name can refer to a named capturing group
+or it can simply be the index as a number.
+To insert a literal $, use $$.
+.PP
 Multiple transformations can be used in sequence, applied in the order
 they are specified on the command line.
 .PP
 The \f[V]--name-transform\f[R] flag is also available in \f[V]sync\f[R],
 \f[V]copy\f[R], and \f[V]move\f[R].
-.SH Files vs Directories
+.SS Files vs Directories
 .PP
 By default \f[V]--name-transform\f[R] will only apply to file names.
 The means only the leaf file name will be transformed.
@@ -5838,7 +5872,7 @@ For some conversions using all is more likely to be useful, for example
 Note that \f[V]--name-transform\f[R] may not add path separators
 \f[V]/\f[R] to the name.
 This will cause an error.
-.SH Ordering and Conflicts
+.SS Ordering and Conflicts
 .IP \[bu] 2
 Transformations will be applied in the order specified by the user.
 .RS 2
@@ -5873,28 +5907,35 @@ Users should be aware that certain combinations may lead to unexpected
 results and should verify transformations using \f[V]--dry-run\f[R]
 before execution.
 .RE
-.SH Race Conditions and Non-Deterministic Behavior
+.SS Race Conditions and Non-Deterministic Behavior
 .PP
 Some transformations, such as \f[V]replace=old:new\f[R], may introduce
 conflicts where multiple source files map to the same destination name.
 This can lead to race conditions when performing concurrent transfers.
 It is up to the user to anticipate these.
-* If two files from the source are transformed into the same name at the
+.IP \[bu] 2
+If two files from the source are transformed into the same name at the
 destination, the final state may be non-deterministic.
-* Running rclone check after a sync using such transformations may
+.IP \[bu] 2
+Running rclone check after a sync using such transformations may
 erroneously report missing or differing files due to overwritten
 results.
 .PP
-To minimize risks, users should: * Carefully review transformations that
-may introduce conflicts.
-* Use \f[V]--dry-run\f[R] to inspect changes before executing a sync
-(but keep in mind that it won\[aq]t show the effect of non-deterministic
+To minimize risks, users should:
+.IP \[bu] 2
+Carefully review transformations that may introduce conflicts.
+.IP \[bu] 2
+Use \f[V]--dry-run\f[R] to inspect changes before executing a sync (but
+keep in mind that it won\[aq]t show the effect of non-deterministic
 transformations).
-* Avoid transformations that cause multiple distinct source files to map
+.IP \[bu] 2
+Avoid transformations that cause multiple distinct source files to map
 to the same destination name.
-* Consider disabling concurrency with \f[V]--transfers=1\f[R] if
+.IP \[bu] 2
+Consider disabling concurrency with \f[V]--transfers=1\f[R] if
 necessary.
-* Certain transformations (e.g.
+.IP \[bu] 2
+Certain transformations (e.g.
 \f[V]prefix\f[R]) will have a multiplying effect every time they are
 used.
 Avoid these when using \f[V]bisync\f[R].
@@ -6036,8 +6077,9 @@ rclone copyto src dst
 \f[R]
 .fi
 .PP
-where src and dst are rclone paths, either remote:path or /path/to/local
-or C:.
+where src and dst are rclone paths, either \f[V]remote:path\f[R] or
+\f[V]/path/to/local\f[R] or
+\f[V]C:\[rs]windows\[rs]path\[rs]if\[rs]on\[rs]windows\f[R].
 .PP
 This will:
 .IP
@@ -6056,11 +6098,11 @@ testing by size and modification time or MD5SUM.
 It doesn\[aq]t delete files from the destination.
 .PP
 \f[I]If you are looking to copy just a byte range of a file, please see
-\[aq]rclone cat --offset X --count Y\[aq]\f[R]
+\f[VI]rclone cat --offset X --count Y\f[I].\f[R]
 .PP
 \f[B]Note\f[R]: Use the \f[V]-P\f[R]/\f[V]--progress\f[R] flag to view
-real-time transfer statistics
-.SH Logger Flags
+real-time transfer statistics.
+.SS Logger Flags
 .PP
 The \f[V]--differ\f[R], \f[V]--missing-on-dst\f[R],
 \f[V]--missing-on-src\f[R], \f[V]--match\f[R] and \f[V]--error\f[R]
@@ -6119,7 +6161,7 @@ Possibly some unusual error scenarios
 .PP
 Note also that each file is logged during execution, as opposed to
 after, so it is most useful as a predictor of what SHOULD happen to each
-file (which may or may not match what actually DID.)
+file (which may or may not match what actually DID).
 .IP
 .nf
 \f[C]
@@ -6354,7 +6396,7 @@ rclone cryptcheck /path/to/files encryptedremote:path
 .fi
 .PP
 You can use it like this also, but that will involve downloading all the
-files in remote:path.
+files in \f[V]remote:path\f[R].
 .IP
 .nf
 \f[C]
@@ -6362,7 +6404,8 @@ rclone cryptcheck remote:path encryptedremote:path
 \f[R]
 .fi
 .PP
-After it has run it will log the status of the encryptedremote:.
+After it has run it will log the status of the
+\f[V]encryptedremote:\f[R].
 .PP
 If you supply the \f[V]--one-way\f[R] flag, it will only check that
 files in the source match the files in the destination, not the other
@@ -6496,7 +6539,6 @@ use it like this
 .nf
 \f[C]
 rclone cryptdecode encryptedremote: encryptedfilename1 encryptedfilename2
-
 rclone cryptdecode --reverse encryptedremote: filename1 filename2
 \f[R]
 .fi
@@ -6752,7 +6794,7 @@ Then
 .IP
 .nf
 \f[C]
-$ rclone hashsum MD5 remote:path
+rclone hashsum MD5 remote:path
 \f[R]
 .fi
 .PP
@@ -6852,7 +6894,7 @@ that don\[aq]t will just ignore it.
 .PP
 If successful, the last line of the output will contain the link.
 Exact capabilities depend on the remote, but the link will always by
-default be created with the least constraints \[en] e.g.
+default be created with the least constraints - e.g.
 no expiry, no password protection, accessible without account.
 .IP
 .nf
@@ -6934,7 +6976,7 @@ By default this will just be the names of the objects and directories,
 one per line.
 The directories will have a / suffix.
 .PP
-Eg
+E.g.
 .IP
 .nf
 \f[C]
@@ -6970,7 +7012,7 @@ So if you wanted the path, size and modification time, you would use
 \f[V]--format \[dq]pst\[dq]\f[R], or maybe
 \f[V]--format \[dq]tsp\[dq]\f[R] to put the path last.
 .PP
-Eg
+E.g.
 .IP
 .nf
 \f[C]
@@ -6998,7 +7040,7 @@ rclone lsf -R --hash MD5 --format hp --separator \[dq]  \[dq] --files-only .
 \f[R]
 .fi
 .PP
-Eg
+E.g.
 .IP
 .nf
 \f[C]
@@ -7018,7 +7060,7 @@ By default the separator is \[dq];\[dq] this can be changed with the
 Note that separators aren\[aq]t escaped in the path so putting it last
 is a good strategy.
 .PP
-Eg
+E.g.
 .IP
 .nf
 \f[C]
@@ -7032,9 +7074,9 @@ $ rclone lsf  --separator \[dq],\[dq] --format \[dq]tshp\[dq] swift:bucket
 .fi
 .PP
 You can output in CSV standard format.
-This will escape things in \[dq] if they contain ,
+This will escape things in \[dq] if they contain,
 .PP
-Eg
+E.g.
 .IP
 .nf
 \f[C]
@@ -7076,8 +7118,8 @@ rclone lsf remote:path --format pt --time-format max
 .fi
 .PP
 \f[V]--time-format max\f[R] will automatically truncate
-\[aq]\f[V]2006-01-02 15:04:05.000000000\f[R]\[aq] to the maximum
-precision supported by the remote.
+\f[V]2006-01-02 15:04:05.000000000\f[R] to the maximum precision
+supported by the remote.
 .PP
 Any of the filtering options can be applied to this command.
 .PP
@@ -7192,9 +7234,9 @@ The output is an array of Items, where each Item looks like this:
 \f[C]
 {
   \[dq]Hashes\[dq] : {
-     \[dq]SHA-1\[dq] : \[dq]f572d396fae9206628714fb2ce00f72e94f2258f\[dq],
-     \[dq]MD5\[dq] : \[dq]b1946ac92492d2347c6235b4d2611184\[dq],
-     \[dq]DropboxHash\[dq] : \[dq]ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc\[dq]
+    \[dq]SHA-1\[dq] : \[dq]f572d396fae9206628714fb2ce00f72e94f2258f\[dq],
+    \[dq]MD5\[dq] : \[dq]b1946ac92492d2347c6235b4d2611184\[dq],
+    \[dq]DropboxHash\[dq] : \[dq]ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc\[dq]
   },
   \[dq]ID\[dq]: \[dq]y2djkhiujf83u33\[dq],
   \[dq]OrigID\[dq]: \[dq]UYOJVTUW00Q1RzTDA\[dq],
@@ -7727,9 +7769,8 @@ not suffer from the same limitations.
 Mounting on macOS can be done either via built-in NFS
 server (https://rclone.org/commands/rclone_serve_nfs/),
 macFUSE (https://osxfuse.github.io/) (also known as osxfuse) or
-FUSE-T (https://www.fuse-t.org/).
-macFUSE is a traditional FUSE driver utilizing a macOS kernel extension
-(kext).
+FUSE-T (https://www.fuse-t.org/).macFUSE is a traditional FUSE driver
+utilizing a macOS kernel extension (kext).
 FUSE-T is an alternative FUSE system which \[dq]mounts\[dq] via an NFSv4
 local server.
 .SS Unicode Normalization
@@ -8013,8 +8054,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -8084,13 +8125,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -8263,9 +8304,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -8328,10 +8369,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -8342,8 +8383,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -8354,7 +8395,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -8364,8 +8405,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -8491,7 +8532,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -8504,7 +8545,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -8700,7 +8741,7 @@ src will be deleted on successful transfer.
 .PP
 \f[B]Note\f[R]: Use the \f[V]-P\f[R]/\f[V]--progress\f[R] flag to view
 real-time transfer statistics.
-.SH Logger Flags
+.SS Logger Flags
 .PP
 The \f[V]--differ\f[R], \f[V]--missing-on-dst\f[R],
 \f[V]--missing-on-src\f[R], \f[V]--match\f[R] and \f[V]--error\f[R]
@@ -8759,7 +8800,7 @@ Possibly some unusual error scenarios
 .PP
 Note also that each file is logged during execution, as opposed to
 after, so it is most useful as a predictor of what SHOULD happen to each
-file (which may or may not match what actually DID.)
+file (which may or may not match what actually DID).
 .IP
 .nf
 \f[C]
@@ -9369,9 +9410,8 @@ not suffer from the same limitations.
 Mounting on macOS can be done either via built-in NFS
 server (https://rclone.org/commands/rclone_serve_nfs/),
 macFUSE (https://osxfuse.github.io/) (also known as osxfuse) or
-FUSE-T (https://www.fuse-t.org/).
-macFUSE is a traditional FUSE driver utilizing a macOS kernel extension
-(kext).
+FUSE-T (https://www.fuse-t.org/).macFUSE is a traditional FUSE driver
+utilizing a macOS kernel extension (kext).
 FUSE-T is an alternative FUSE system which \[dq]mounts\[dq] via an NFSv4
 local server.
 .SS Unicode Normalization
@@ -9656,8 +9696,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -9727,13 +9767,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -9906,9 +9946,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -9971,10 +10011,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -9985,8 +10025,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -9997,7 +10037,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -10007,8 +10047,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -10134,7 +10174,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -10147,7 +10187,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -10365,8 +10405,8 @@ This runs a command against a running rclone.
 Use the \f[V]--url\f[R] flag to specify an non default URL to connect
 on.
 This can be either a \[dq]:port\[dq] which is taken to mean
-\[dq]http://localhost:port\[dq] or a \[dq]host:port\[dq] which is taken
-to mean \[dq]http://host:port\[dq]
+http://localhost:port or a \[dq]host:port\[dq] which is taken to mean
+http://host:port.
 .PP
 A username and password can be passed in with \f[V]--user\f[R] and
 \f[V]--pass\f[R].
@@ -10636,20 +10676,20 @@ arguments passed by \f[V]--rc-addr\f[R]).
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described
 in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 .PP
 Socket activation can be tested ad-hoc with the
 \f[V]systemd-socket-activate\f[R]command
 .IP
 .nf
 \f[C]
-   systemd-socket-activate -l 8000 -- rclone serve
+systemd-socket-activate -l 8000 -- rclone serve
 \f[R]
 .fi
 .PP
 This will socket-activate rclone on the first connection to port 8000
 over TCP.
-### Template
+.SS Template
 .PP
 \f[V]--rc-template\f[R] allows a user to specify a custom markup
 template for HTTP and WebDAV serve functions.
@@ -11008,8 +11048,8 @@ Please note that this command was not available before rclone version
 1.55.
 If it fails for you with the message
 \f[V]unknown command \[dq]selfupdate\[dq]\f[R] then you will need to
-update manually following the install instructions located at
-https://rclone.org/install/
+update manually following the install
+documentation (https://rclone.org/install/).
 .IP
 .nf
 \f[C]
@@ -11156,8 +11196,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -11227,13 +11267,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -11406,9 +11446,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -11471,10 +11511,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -11485,8 +11525,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -11497,7 +11537,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -11507,8 +11547,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -11634,7 +11674,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -11647,7 +11687,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -11860,8 +11900,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -11931,13 +11971,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -12110,9 +12150,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -12175,10 +12215,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -12189,8 +12229,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -12201,7 +12241,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -12211,8 +12251,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -12338,7 +12378,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -12351,7 +12391,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -12555,8 +12595,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -12626,13 +12666,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -12805,9 +12845,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -12870,10 +12910,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -12884,8 +12924,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -12896,7 +12936,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -12906,8 +12946,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -13033,7 +13073,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -13046,7 +13086,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -13117,11 +13157,13 @@ it won\[aq]t use configuration from environment variables or command
 line options - it is the job of the proxy program to make a complete
 config.
 .PP
-This config generated must have this extra parameter - \f[V]_root\f[R] -
-root to use for the backend
+This config generated must have this extra parameter
+.IP \[bu] 2
+\f[V]_root\f[R] - root to use for the backend
 .PP
-And it may have this parameter - \f[V]_obscure\f[R] - comma separated
-strings for parameters to obscure
+And it may have this parameter
+.IP \[bu] 2
+\f[V]_obscure\f[R] - comma separated strings for parameters to obscure
 .PP
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -13129,8 +13171,8 @@ process (on STDIN) would look similar to this:
 .nf
 \f[C]
 {
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]pass\[dq]: \[dq]mypassword\[dq]
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]pass\[dq]: \[dq]mypassword\[dq]
 }
 \f[R]
 .fi
@@ -13141,8 +13183,8 @@ process (on STDIN) would look similar to this:
 .nf
 \f[C]
 {
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]public_key\[dq]: \[dq]AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf\[dq]
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]public_key\[dq]: \[dq]AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf\[dq]
 }
 \f[R]
 .fi
@@ -13152,12 +13194,12 @@ And as an example return this on STDOUT
 .nf
 \f[C]
 {
-    \[dq]type\[dq]: \[dq]sftp\[dq],
-    \[dq]_root\[dq]: \[dq]\[dq],
-    \[dq]_obscure\[dq]: \[dq]pass\[dq],
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]pass\[dq]: \[dq]mypassword\[dq],
-    \[dq]host\[dq]: \[dq]sftp.example.com\[dq]
+  \[dq]type\[dq]: \[dq]sftp\[dq],
+  \[dq]_root\[dq]: \[dq]\[dq],
+  \[dq]_obscure\[dq]: \[dq]pass\[dq],
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]pass\[dq]: \[dq]mypassword\[dq],
+  \[dq]host\[dq]: \[dq]sftp.example.com\[dq]
 }
 \f[R]
 .fi
@@ -13358,20 +13400,20 @@ arguments passed by \f[V]--addr\f[R]).
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described
 in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 .PP
 Socket activation can be tested ad-hoc with the
 \f[V]systemd-socket-activate\f[R]command
 .IP
 .nf
 \f[C]
-   systemd-socket-activate -l 8000 -- rclone serve
+systemd-socket-activate -l 8000 -- rclone serve
 \f[R]
 .fi
 .PP
 This will socket-activate rclone on the first connection to port 8000
 over TCP.
-### Template
+.SS Template
 .PP
 \f[V]--template\f[R] allows a user to specify a custom markup template
 for HTTP and WebDAV serve functions.
@@ -13570,8 +13612,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -13641,13 +13683,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -13820,9 +13862,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -13885,10 +13927,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -13899,8 +13941,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -13911,7 +13953,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -13921,8 +13963,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -14048,7 +14090,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -14061,7 +14103,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -14132,11 +14174,13 @@ it won\[aq]t use configuration from environment variables or command
 line options - it is the job of the proxy program to make a complete
 config.
 .PP
-This config generated must have this extra parameter - \f[V]_root\f[R] -
-root to use for the backend
+This config generated must have this extra parameter
+.IP \[bu] 2
+\f[V]_root\f[R] - root to use for the backend
 .PP
-And it may have this parameter - \f[V]_obscure\f[R] - comma separated
-strings for parameters to obscure
+And it may have this parameter
+.IP \[bu] 2
+\f[V]_obscure\f[R] - comma separated strings for parameters to obscure
 .PP
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -14144,8 +14188,8 @@ process (on STDIN) would look similar to this:
 .nf
 \f[C]
 {
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]pass\[dq]: \[dq]mypassword\[dq]
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]pass\[dq]: \[dq]mypassword\[dq]
 }
 \f[R]
 .fi
@@ -14156,8 +14200,8 @@ process (on STDIN) would look similar to this:
 .nf
 \f[C]
 {
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]public_key\[dq]: \[dq]AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf\[dq]
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]public_key\[dq]: \[dq]AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf\[dq]
 }
 \f[R]
 .fi
@@ -14167,12 +14211,12 @@ And as an example return this on STDOUT
 .nf
 \f[C]
 {
-    \[dq]type\[dq]: \[dq]sftp\[dq],
-    \[dq]_root\[dq]: \[dq]\[dq],
-    \[dq]_obscure\[dq]: \[dq]pass\[dq],
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]pass\[dq]: \[dq]mypassword\[dq],
-    \[dq]host\[dq]: \[dq]sftp.example.com\[dq]
+  \[dq]type\[dq]: \[dq]sftp\[dq],
+  \[dq]_root\[dq]: \[dq]\[dq],
+  \[dq]_obscure\[dq]: \[dq]pass\[dq],
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]pass\[dq]: \[dq]mypassword\[dq],
+  \[dq]host\[dq]: \[dq]sftp.example.com\[dq]
 }
 \f[R]
 .fi
@@ -14423,8 +14467,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -14494,13 +14538,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -14673,9 +14717,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -14738,10 +14782,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -14752,8 +14796,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -14764,7 +14808,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -14774,8 +14818,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -14901,7 +14945,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -14914,7 +14958,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -15211,20 +15255,20 @@ arguments passed by \f[V]--addr\f[R]).
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described
 in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 .PP
 Socket activation can be tested ad-hoc with the
 \f[V]systemd-socket-activate\f[R]command
 .IP
 .nf
 \f[C]
-   systemd-socket-activate -l 8000 -- rclone serve
+systemd-socket-activate -l 8000 -- rclone serve
 \f[R]
 .fi
 .PP
 This will socket-activate rclone on the first connection to port 8000
 over TCP.
-### Authentication
+.SS Authentication
 .PP
 By default this will serve files without needing a login.
 .PP
@@ -15583,20 +15627,20 @@ arguments passed by \f[V]--addr\f[R]).
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described
 in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 .PP
 Socket activation can be tested ad-hoc with the
 \f[V]systemd-socket-activate\f[R]command
 .IP
 .nf
 \f[C]
-   systemd-socket-activate -l 8000 -- rclone serve
+systemd-socket-activate -l 8000 -- rclone serve
 \f[R]
 .fi
 .PP
 This will socket-activate rclone on the first connection to port 8000
 over TCP.
-## VFS - Virtual File System
+.SS VFS - Virtual File System
 .PP
 This command uses the VFS layer.
 This adapts the cloud storage objects that rclone uses into something
@@ -15620,8 +15664,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -15691,13 +15735,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -15870,9 +15914,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -15935,10 +15979,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -15949,8 +15993,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -15961,7 +16005,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -15971,8 +16015,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -16098,7 +16142,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -16111,7 +16155,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -16307,7 +16351,7 @@ This also supports being run with socket activation, in which case it
 will listen on the first passed FD.
 It can be configured with .socket and .service unit files as described
 in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 .PP
 Socket activation can be tested ad-hoc with the
 \f[V]systemd-socket-activate\f[R]command:
@@ -16370,8 +16414,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -16441,13 +16485,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -16620,9 +16664,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -16685,10 +16729,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -16699,8 +16743,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -16711,7 +16755,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -16721,8 +16765,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -16848,7 +16892,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -16861,7 +16905,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -16932,11 +16976,13 @@ it won\[aq]t use configuration from environment variables or command
 line options - it is the job of the proxy program to make a complete
 config.
 .PP
-This config generated must have this extra parameter - \f[V]_root\f[R] -
-root to use for the backend
+This config generated must have this extra parameter
+.IP \[bu] 2
+\f[V]_root\f[R] - root to use for the backend
 .PP
-And it may have this parameter - \f[V]_obscure\f[R] - comma separated
-strings for parameters to obscure
+And it may have this parameter
+.IP \[bu] 2
+\f[V]_obscure\f[R] - comma separated strings for parameters to obscure
 .PP
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -16944,8 +16990,8 @@ process (on STDIN) would look similar to this:
 .nf
 \f[C]
 {
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]pass\[dq]: \[dq]mypassword\[dq]
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]pass\[dq]: \[dq]mypassword\[dq]
 }
 \f[R]
 .fi
@@ -16956,8 +17002,8 @@ process (on STDIN) would look similar to this:
 .nf
 \f[C]
 {
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]public_key\[dq]: \[dq]AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf\[dq]
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]public_key\[dq]: \[dq]AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf\[dq]
 }
 \f[R]
 .fi
@@ -16967,12 +17013,12 @@ And as an example return this on STDOUT
 .nf
 \f[C]
 {
-    \[dq]type\[dq]: \[dq]sftp\[dq],
-    \[dq]_root\[dq]: \[dq]\[dq],
-    \[dq]_obscure\[dq]: \[dq]pass\[dq],
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]pass\[dq]: \[dq]mypassword\[dq],
-    \[dq]host\[dq]: \[dq]sftp.example.com\[dq]
+  \[dq]type\[dq]: \[dq]sftp\[dq],
+  \[dq]_root\[dq]: \[dq]\[dq],
+  \[dq]_obscure\[dq]: \[dq]pass\[dq],
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]pass\[dq]: \[dq]mypassword\[dq],
+  \[dq]host\[dq]: \[dq]sftp.example.com\[dq]
 }
 \f[R]
 .fi
@@ -17126,22 +17172,36 @@ following error: \[dq]The folder you entered does not appear to be
 valid.
 Please choose another\[dq].
 However, you still can connect if you set the following registry key on
-a client machine: HKEY_LOCAL_MACHINEto 2.
-The BasicAuthLevel can be set to the following values: 0 - Basic
-authentication disabled 1 - Basic authentication enabled for SSL
-connections only 2 - Basic authentication enabled for SSL connections
-and for non-SSL connections If required, increase the
-FileSizeLimitInBytes to a higher value.
+a client machine:
+\f[V]HKEY_LOCAL_MACHINE\[rs]SYSTEM\[rs]CurrentControlSet\[rs]Services\[rs]WebClient\[rs]Parameters\[rs]BasicAuthLevel\f[R]
+to 2.
+The BasicAuthLevel can be set to the following values:
+.IP
+.nf
+\f[C]
+0 - Basic authentication disabled
+1 - Basic authentication enabled for SSL connections only
+2 - Basic authentication enabled for SSL connections and for non-SSL connections
+\f[R]
+.fi
+.PP
+If required, increase the FileSizeLimitInBytes to a higher value.
 Navigate to the Services interface, then restart the WebClient service.
 .SS Access Office applications on WebDAV
 .PP
-Navigate to following registry HKEY_CURRENT_USER[14.0/15.0/16.0] Create
-a new DWORD BasicAuthLevel with value 2.
-0 - Basic authentication disabled 1 - Basic authentication enabled for
-SSL connections only 2 - Basic authentication enabled for SSL and for
-non-SSL connections
+Navigate to following registry
+\f[V]HKEY_CURRENT_USER\[rs]Software\[rs]Microsoft\[rs]Office\[rs][14.0/15.0/16.0]\[rs]Common\[rs]Internet\f[R]
+Create a new DWORD BasicAuthLevel with value 2.
+.IP
+.nf
+\f[C]
+0 - Basic authentication disabled
+1 - Basic authentication enabled for SSL connections only
+2 - Basic authentication enabled for SSL and for non-SSL connections
+\f[R]
+.fi
 .PP
-https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-blank-from-sharepoint
+<https://learn.microsoft.com/en-us/office/troubleshoot/powerpoint/office-opens-blank-from-sharepoint>
 .SS Serving over a unix socket
 .PP
 You can serve the webdav on a unix socket like this:
@@ -17226,20 +17286,20 @@ arguments passed by \f[V]--addr\f[R]).
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described
 in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 .PP
 Socket activation can be tested ad-hoc with the
 \f[V]systemd-socket-activate\f[R]command
 .IP
 .nf
 \f[C]
-   systemd-socket-activate -l 8000 -- rclone serve
+systemd-socket-activate -l 8000 -- rclone serve
 \f[R]
 .fi
 .PP
 This will socket-activate rclone on the first connection to port 8000
 over TCP.
-### Template
+.SS Template
 .PP
 \f[V]--template\f[R] allows a user to specify a custom markup template
 for HTTP and WebDAV serve functions.
@@ -17438,8 +17498,8 @@ cache.
 .IP
 .nf
 \f[C]
---dir-cache-time duration   Time to cache directory entries for (default 5m0s)
---poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 \f[R]
 .fi
 .PP
@@ -17509,13 +17569,13 @@ find that you need one or the other or both.
 .IP
 .nf
 \f[C]
---cache-dir string                     Directory rclone will use for caching.
---vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
---vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
---vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
---vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
---vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
---vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+    --cache-dir string                     Directory rclone will use for caching.
+    --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
+    --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
+    --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
+    --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 \f[R]
 .fi
 .PP
@@ -17688,9 +17748,9 @@ These flags control the chunking:
 .IP
 .nf
 \f[C]
---vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
---vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
---vfs-read-chunk-streams int            The number of parallel streams to read at once
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+    --vfs-read-chunk-streams int            The number of parallel streams to read at once
 \f[R]
 .fi
 .PP
@@ -17753,10 +17813,10 @@ transaction.
 .IP
 .nf
 \f[C]
---no-checksum     Don\[aq]t compare checksums on up/download.
---no-modtime      Don\[aq]t read/write the modification time (can speed things up).
---no-seek         Don\[aq]t allow seeking in files.
---read-only       Only allow read-only access.
+    --no-checksum     Don\[aq]t compare checksums on up/download.
+    --no-modtime      Don\[aq]t read/write the modification time (can speed things up).
+    --no-seek         Don\[aq]t allow seeking in files.
+    --read-only       Only allow read-only access.
 \f[R]
 .fi
 .PP
@@ -17767,8 +17827,8 @@ These flags only come into effect when not using an on disk cache file.
 .IP
 .nf
 \f[C]
---vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
---vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 \f[R]
 .fi
 .PP
@@ -17779,7 +17839,7 @@ adjust the number of parallel uploads of modified files from the cache
 .IP
 .nf
 \f[C]
---transfers int  Number of file transfers to run in parallel (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 \f[R]
 .fi
 .SS Symlinks
@@ -17789,8 +17849,8 @@ However this may be enabled with either of the following flags:
 .IP
 .nf
 \f[C]
---links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
---vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
+    --links      Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension.
+    --vfs-links  Translate symlinks to/from regular files with a \[aq].rclonelink\[aq] extension for the VFS
 \f[R]
 .fi
 .PP
@@ -17916,7 +17976,7 @@ automatically.
 .IP
 .nf
 \f[C]
---vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 \f[R]
 .fi
 .SS Alternate report of used bytes
@@ -17929,7 +17989,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to
 \f[V]rclone size\f[R] and compute the total used space itself.
 .PP
-\f[I]WARNING.\f[R] Contrary to \f[V]rclone size\f[R], this flag ignores
+\f[B]WARNING\f[R]: Contrary to \f[V]rclone size\f[R], this flag ignores
 filters so that the result is accurate.
 However, this is very inefficient and may cost lots of API calls
 resulting in extra charges.
@@ -18000,11 +18060,13 @@ it won\[aq]t use configuration from environment variables or command
 line options - it is the job of the proxy program to make a complete
 config.
 .PP
-This config generated must have this extra parameter - \f[V]_root\f[R] -
-root to use for the backend
+This config generated must have this extra parameter
+.IP \[bu] 2
+\f[V]_root\f[R] - root to use for the backend
 .PP
-And it may have this parameter - \f[V]_obscure\f[R] - comma separated
-strings for parameters to obscure
+And it may have this parameter
+.IP \[bu] 2
+\f[V]_obscure\f[R] - comma separated strings for parameters to obscure
 .PP
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
@@ -18012,8 +18074,8 @@ process (on STDIN) would look similar to this:
 .nf
 \f[C]
 {
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]pass\[dq]: \[dq]mypassword\[dq]
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]pass\[dq]: \[dq]mypassword\[dq]
 }
 \f[R]
 .fi
@@ -18024,8 +18086,8 @@ process (on STDIN) would look similar to this:
 .nf
 \f[C]
 {
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]public_key\[dq]: \[dq]AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf\[dq]
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]public_key\[dq]: \[dq]AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf\[dq]
 }
 \f[R]
 .fi
@@ -18035,12 +18097,12 @@ And as an example return this on STDOUT
 .nf
 \f[C]
 {
-    \[dq]type\[dq]: \[dq]sftp\[dq],
-    \[dq]_root\[dq]: \[dq]\[dq],
-    \[dq]_obscure\[dq]: \[dq]pass\[dq],
-    \[dq]user\[dq]: \[dq]me\[dq],
-    \[dq]pass\[dq]: \[dq]mypassword\[dq],
-    \[dq]host\[dq]: \[dq]sftp.example.com\[dq]
+  \[dq]type\[dq]: \[dq]sftp\[dq],
+  \[dq]_root\[dq]: \[dq]\[dq],
+  \[dq]_obscure\[dq]: \[dq]pass\[dq],
+  \[dq]user\[dq]: \[dq]me\[dq],
+  \[dq]pass\[dq]: \[dq]mypassword\[dq],
+  \[dq]host\[dq]: \[dq]sftp.example.com\[dq]
 }
 \f[R]
 .fi
@@ -18353,7 +18415,7 @@ It will write test files into the remote:path passed in.
 It outputs a bit of go code for each one.
 .PP
 \f[B]NB\f[R] this can create undeletable files and other hazards - use
-with care
+with care!
 .IP
 .nf
 \f[C]
@@ -19632,6 +19694,9 @@ If running rclone from a script you might want to use today\[aq]s date
 as the directory name passed to \f[V]--backup-dir\f[R] to store the old
 files, or you might want to pass \f[V]--suffix\f[R] with today\[aq]s
 date.
+This can be done with \f[V]--suffix $(date +%F)\f[R] in bash, and
+\f[V]--suffix $(Get-Date -Format \[aq]yyyy-MM-dd\[aq])\f[R] in
+PowerShell.
 .PP
 See \f[V]--compare-dest\f[R] and \f[V]--copy-dest\f[R].
 .SS --bind string
@@ -21050,25 +21115,25 @@ backend docs.
 .nf
 \f[C]
 {
-    \[dq]SrcFs\[dq]: \[dq]gdrive:\[dq],
-    \[dq]SrcFsType\[dq]: \[dq]drive\[dq],
-    \[dq]DstFs\[dq]: \[dq]newdrive:user\[dq],
-    \[dq]DstFsType\[dq]: \[dq]onedrive\[dq],
-    \[dq]Remote\[dq]: \[dq]test.txt\[dq],
-    \[dq]Size\[dq]: 6,
-    \[dq]MimeType\[dq]: \[dq]text/plain; charset=utf-8\[dq],
-    \[dq]ModTime\[dq]: \[dq]2022-10-11T17:53:10.286745272+01:00\[dq],
-    \[dq]IsDir\[dq]: false,
-    \[dq]ID\[dq]: \[dq]xyz\[dq],
-    \[dq]Metadata\[dq]: {
-        \[dq]btime\[dq]: \[dq]2022-10-11T16:53:11Z\[dq],
-        \[dq]content-type\[dq]: \[dq]text/plain; charset=utf-8\[dq],
-        \[dq]mtime\[dq]: \[dq]2022-10-11T17:53:10.286745272+01:00\[dq],
-        \[dq]owner\[dq]: \[dq]user1\[at]domain1.com\[dq],
-        \[dq]permissions\[dq]: \[dq]...\[dq],
-        \[dq]description\[dq]: \[dq]my nice file\[dq],
-        \[dq]starred\[dq]: \[dq]false\[dq]
-    }
+  \[dq]SrcFs\[dq]: \[dq]gdrive:\[dq],
+  \[dq]SrcFsType\[dq]: \[dq]drive\[dq],
+  \[dq]DstFs\[dq]: \[dq]newdrive:user\[dq],
+  \[dq]DstFsType\[dq]: \[dq]onedrive\[dq],
+  \[dq]Remote\[dq]: \[dq]test.txt\[dq],
+  \[dq]Size\[dq]: 6,
+  \[dq]MimeType\[dq]: \[dq]text/plain; charset=utf-8\[dq],
+  \[dq]ModTime\[dq]: \[dq]2022-10-11T17:53:10.286745272+01:00\[dq],
+  \[dq]IsDir\[dq]: false,
+  \[dq]ID\[dq]: \[dq]xyz\[dq],
+  \[dq]Metadata\[dq]: {
+    \[dq]btime\[dq]: \[dq]2022-10-11T16:53:11Z\[dq],
+    \[dq]content-type\[dq]: \[dq]text/plain; charset=utf-8\[dq],
+    \[dq]mtime\[dq]: \[dq]2022-10-11T17:53:10.286745272+01:00\[dq],
+    \[dq]owner\[dq]: \[dq]user1\[at]domain1.com\[dq],
+    \[dq]permissions\[dq]: \[dq]...\[dq],
+    \[dq]description\[dq]: \[dq]my nice file\[dq],
+    \[dq]starred\[dq]: \[dq]false\[dq]
+  }
 }
 \f[R]
 .fi
@@ -21084,15 +21149,15 @@ something to the description:
 .nf
 \f[C]
 {
-    \[dq]Metadata\[dq]: {
-        \[dq]btime\[dq]: \[dq]2022-10-11T16:53:11Z\[dq],
-        \[dq]content-type\[dq]: \[dq]text/plain; charset=utf-8\[dq],
-        \[dq]mtime\[dq]: \[dq]2022-10-11T17:53:10.286745272+01:00\[dq],
-        \[dq]owner\[dq]: \[dq]user1\[at]domain2.com\[dq],
-        \[dq]permissions\[dq]: \[dq]...\[dq],
-        \[dq]description\[dq]: \[dq]my nice file [migrated from domain1]\[dq],
-        \[dq]starred\[dq]: \[dq]false\[dq]
-    }
+  \[dq]Metadata\[dq]: {
+    \[dq]btime\[dq]: \[dq]2022-10-11T16:53:11Z\[dq],
+    \[dq]content-type\[dq]: \[dq]text/plain; charset=utf-8\[dq],
+    \[dq]mtime\[dq]: \[dq]2022-10-11T17:53:10.286745272+01:00\[dq],
+    \[dq]owner\[dq]: \[dq]user1\[at]domain2.com\[dq],
+    \[dq]permissions\[dq]: \[dq]...\[dq],
+    \[dq]description\[dq]: \[dq]my nice file [migrated from domain1]\[dq],
+    \[dq]starred\[dq]: \[dq]false\[dq]
+  }
 }
 \f[R]
 .fi
@@ -22777,7 +22842,7 @@ a web browser available.
 For more help and alternate methods see: https://rclone.org/remote_setup/
 Execute the following on the machine with the web browser (same rclone
 version recommended):
-    rclone authorize \[dq]onedrive\[dq]
+rclone authorize \[dq]onedrive\[dq]
 Then paste the result.
 Enter a value.
 config_token>
@@ -23043,7 +23108,8 @@ The syntax of filter patterns is glob style matching (like
 However this does not provide absolute control over the matching, so for
 advanced users rclone also provides a regular expression syntax.
 .PP
-The regular expressions used are as defined in the Go regular expression
+Rclone generally accepts Perl-style regular expressions, the exact
+syntax is defined in the Go regular expression
 reference (https://golang.org/pkg/regexp/syntax/).
 Regular expressions should be enclosed in \f[V]{{\f[R] \f[V]}}\f[R].
 They will match only the last path segment if the glob doesn\[aq]t start
@@ -26529,9 +26595,6 @@ fs - a remote name string e.g.
 remote - a path within that remote e.g.
 \[dq]dir\[dq]
 .PP
-See the settierfile (https://rclone.org/commands/rclone_settierfile/)
-command for more information on the above.
-.PP
 \f[B]Authentication is required for this call.\f[R]
 .SS operations/size: Count the number of bytes and files in remote
 .PP
@@ -26587,9 +26650,6 @@ remote - a path within that remote e.g.
 \[dq]dir\[dq]
 .IP \[bu] 2
 each part in body represents a file to be uploaded
-.PP
-See the uploadfile (https://rclone.org/commands/rclone_uploadfile/)
-command for more information on the above.
 .PP
 \f[B]Authentication is required for this call.\f[R]
 .SS options/blocks: List all the option blocks
@@ -30907,7 +30967,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.71.0\[dq])
+      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.71.1\[dq])
 \f[R]
 .fi
 .SS Performance
@@ -32321,18 +32381,23 @@ volumes:
 \f[R]
 .fi
 .PP
-Notice a few important details: - YAML prefers \f[V]_\f[R] in option
-names instead of \f[V]-\f[R].
-- YAML treats single and double quotes interchangeably.
+Notice a few important details:
+.IP \[bu] 2
+YAML prefers \f[V]_\f[R] in option names instead of \f[V]-\f[R].
+.IP \[bu] 2
+YAML treats single and double quotes interchangeably.
 Simple strings and integers can be left unquoted.
-- Boolean values must be quoted like \f[V]\[aq]true\[aq]\f[R] or
+.IP \[bu] 2
+Boolean values must be quoted like \f[V]\[aq]true\[aq]\f[R] or
 \f[V]\[dq]false\[dq]\f[R] because these two words are reserved by YAML.
-- The filesystem string is keyed with \f[V]remote\f[R] (or with
+.IP \[bu] 2
+The filesystem string is keyed with \f[V]remote\f[R] (or with
 \f[V]fs\f[R]).
 Normally you can omit quotes here, but if the string ends with colon,
 you \f[B]must\f[R] quote it like
 \f[V]remote: \[dq]storage_box:\[dq]\f[R].
-- YAML is picky about surrounding braces in values as this is in fact
+.IP \[bu] 2
+YAML is picky about surrounding braces in values as this is in fact
 another syntax for key/value
 mappings (http://yaml.org/spec/1.2/spec.html#id2790832).
 For example, JSON access tokens usually contain double quotes and
@@ -32351,11 +32416,13 @@ The plugin requires presence of two directories on the host before it
 can be installed.
 Note that plugin will \f[B]not\f[R] create them automatically.
 By default they must exist on host at the following locations (though
-you can tweak the paths): -
+you can tweak the paths):
+.IP \[bu] 2
 \f[V]/var/lib/docker-plugins/rclone/config\f[R] is reserved for the
 \f[V]rclone.conf\f[R] config file and \f[B]must\f[R] exist even if
 it\[aq]s empty and the config file is not present.
-- \f[V]/var/lib/docker-plugins/rclone/cache\f[R] holds the plugin state
+.IP \[bu] 2
+\f[V]/var/lib/docker-plugins/rclone/cache\f[R] holds the plugin state
 file as well as optional VFS caches.
 .PP
 You can install managed
@@ -32373,8 +32440,13 @@ called a \f[I]tag\f[R].
 Usually you will want to install the latest plugin for your
 architecture.
 In this case the tag will just name it, like \f[V]amd64\f[R] above.
-The following plugin architectures are currently available: -
-\f[V]amd64\f[R] - \f[V]arm64\f[R] - \f[V]arm-v7\f[R]
+The following plugin architectures are currently available:
+.IP \[bu] 2
+\f[V]amd64\f[R]
+.IP \[bu] 2
+\f[V]arm64\f[R]
+.IP \[bu] 2
+\f[V]arm-v7\f[R]
 .PP
 Sometimes you might want a concrete plugin version, not the latest one.
 Then you should use image tag in the form
@@ -32583,14 +32655,18 @@ systemctl restart docker
 \f[R]
 .fi
 .PP
-Or run the service directly: - run \f[V]systemctl daemon-reload\f[R] to
-let systemd pick up new config - run
-\f[V]systemctl enable docker-volume-rclone.service\f[R] to make the new
-service start automatically when you power on your machine.
-- run \f[V]systemctl start docker-volume-rclone.service\f[R] to start
-the service now.
-- run \f[V]systemctl restart docker\f[R] to restart docker daemon and
-let it detect the new plugin socket.
+Or run the service directly:
+.IP \[bu] 2
+run \f[V]systemctl daemon-reload\f[R] to let systemd pick up new config
+.IP \[bu] 2
+run \f[V]systemctl enable docker-volume-rclone.service\f[R] to make the
+new service start automatically when you power on your machine.
+.IP \[bu] 2
+run \f[V]systemctl start docker-volume-rclone.service\f[R] to start the
+service now.
+.IP \[bu] 2
+run \f[V]systemctl restart docker\f[R] to restart docker daemon and let
+it detect the new plugin socket.
 Note that this step is not needed in managed mode where docker knows
 about plugin state changes.
 .PP
@@ -35386,16 +35462,16 @@ From KEYS on this website - this file contains all past signing keys
 also.
 .IP \[bu] 2
 The git repository hosted on GitHub -
-https://github.com/rclone/rclone/blob/master/docs/content/KEYS
+<https://github.com/rclone/rclone/blob/master/docs/content/KEYS>
 .IP \[bu] 2
 \f[V]gpg --keyserver hkps://keys.openpgp.org --search nick\[at]craig-wood.com\f[R]
 .IP \[bu] 2
 \f[V]gpg --keyserver hkps://keyserver.ubuntu.com --search nick\[at]craig-wood.com\f[R]
 .IP \[bu] 2
-https://www.craig-wood.com/nick/pub/pgp-key.txt
+<https://www.craig-wood.com/nick/pub/pgp-key.txt>
 .PP
 After importing the key, verify that the fingerprint of one of the keys
-matches: \f[V]FBF737ECE9F8AB18604BD2AC93935E02FF3B54FA\f[R] as this key
+matches: \f[V]FBF737ECE9F8AB18604BD2AC93935E02FF3B54FA\f[R] ads this key
 is used for signing.
 .PP
 We recommend that you cross-check the fingerprint shown above through
@@ -35468,10 +35544,10 @@ You could verify the other types of hash also for extra security.
 .IP
 .nf
 \f[C]
-$ mkdir /tmp/check
-$ cd /tmp/check
-$ rclone copy --http-url https://downloads.rclone.org/v1.63.1 :http:SHA256SUMS .
-$ rclone copy --http-url https://downloads.rclone.org/v1.63.1 :http:rclone-v1.63.1-windows-amd64.zip .
+mkdir /tmp/check
+cd /tmp/check
+rclone copy --http-url https://downloads.rclone.org/v1.63.1 :http:SHA256SUMS .
+rclone copy --http-url https://downloads.rclone.org/v1.63.1 :http:rclone-v1.63.1-windows-amd64.zip .
 \f[R]
 .fi
 .SS Verify the signatures
@@ -35564,7 +35640,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -35899,7 +35975,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -36149,7 +36225,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -36936,31 +37012,31 @@ Example policy:
 .nf
 \f[C]
 {
-    \[dq]Version\[dq]: \[dq]2012-10-17\[dq],
-    \[dq]Statement\[dq]: [
-        {
-            \[dq]Effect\[dq]: \[dq]Allow\[dq],
-            \[dq]Principal\[dq]: {
-                \[dq]AWS\[dq]: \[dq]arn:aws:iam::USER_SID:user/USER_NAME\[dq]
-            },
-            \[dq]Action\[dq]: [
-                \[dq]s3:ListBucket\[dq],
-                \[dq]s3:DeleteObject\[dq],
-                \[dq]s3:GetObject\[dq],
-                \[dq]s3:PutObject\[dq],
-                \[dq]s3:PutObjectAcl\[dq]
-            ],
-            \[dq]Resource\[dq]: [
-              \[dq]arn:aws:s3:::BUCKET_NAME/*\[dq],
-              \[dq]arn:aws:s3:::BUCKET_NAME\[dq]
-            ]
-        },
-        {
-            \[dq]Effect\[dq]: \[dq]Allow\[dq],
-            \[dq]Action\[dq]: \[dq]s3:ListAllMyBuckets\[dq],
-            \[dq]Resource\[dq]: \[dq]arn:aws:s3:::*\[dq]
-        }
-    ]
+  \[dq]Version\[dq]: \[dq]2012-10-17\[dq],
+  \[dq]Statement\[dq]: [
+    {
+      \[dq]Effect\[dq]: \[dq]Allow\[dq],
+      \[dq]Principal\[dq]: {
+        \[dq]AWS\[dq]: \[dq]arn:aws:iam::USER_SID:user/USER_NAME\[dq]
+      },
+      \[dq]Action\[dq]: [
+        \[dq]s3:ListBucket\[dq],
+        \[dq]s3:DeleteObject\[dq],
+        \[dq]s3:GetObject\[dq],
+        \[dq]s3:PutObject\[dq],
+        \[dq]s3:PutObjectAcl\[dq]
+      ],
+      \[dq]Resource\[dq]: [
+        \[dq]arn:aws:s3:::BUCKET_NAME/*\[dq],
+        \[dq]arn:aws:s3:::BUCKET_NAME\[dq]
+      ]
+    },
+    {
+      \[dq]Effect\[dq]: \[dq]Allow\[dq],
+      \[dq]Action\[dq]: \[dq]s3:ListAllMyBuckets\[dq],
+      \[dq]Resource\[dq]: \[dq]arn:aws:s3:::*\[dq]
+    }
+  ]
 }
 \f[R]
 .fi
@@ -39772,7 +39848,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -39887,7 +39963,7 @@ rclone like this.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 n/s> n
@@ -40065,7 +40141,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -40330,7 +40406,7 @@ bucket publicly.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -40541,7 +40617,7 @@ may vary depending exactly on how you have set up the container.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -40658,7 +40734,7 @@ Or you can also configure via the interactive command line:
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -41032,7 +41108,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -41507,7 +41583,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 n/s> n
@@ -41616,7 +41692,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -41779,7 +41855,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -41908,7 +41984,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -42120,7 +42196,7 @@ setup process:
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -42298,7 +42374,7 @@ with \f[V]rclone config\f[R]:
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -42505,7 +42581,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 n/s> n
@@ -43352,7 +43428,7 @@ You can use \f[V]rclone config\f[R] to make a new provider like this
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -43596,7 +43672,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -43871,7 +43947,7 @@ rclone like this.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 n/s> n
@@ -44197,7 +44273,7 @@ Key.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 q) Quit config
 n/q> n
@@ -45130,7 +45206,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -45793,7 +45869,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -45982,8 +46058,10 @@ Run \f[V]rclone config\f[R] and add all the Plex options (endpoint,
 username and password) in your remote and it will be automatically
 enabled.
 .PP
-Affected settings: - \f[V]cache-workers\f[R]: \f[I]Configured value\f[R]
-during confirmed playback or \f[I]1\f[R] all the other times
+Affected settings:
+.IP \[bu] 2
+\f[V]cache-workers\f[R]: \f[I]Configured value\f[R] during confirmed
+playback or \f[I]1\f[R] all the other times
 .SS Certificate Validation
 .PP
 When the Plex server is configured to only accept secure connections, it
@@ -46002,7 +46080,7 @@ the dots have been replaced with dashes, e.g.
 .PP
 To get the \f[V]server-hash\f[R] part, the easiest way is to visit
 .PP
-https://plex.tv/api/resources?includeHttps=1&X-Plex-Token=your-plex-token
+<https://plex.tv/api/resources?includeHttps=1&X-Plex-Token=your-plex-token>
 .PP
 This page will list all the available Plex servers for your account with
 at least one \f[V].plex.direct\f[R] link for each.
@@ -46034,11 +46112,11 @@ on them.
 Any reports or feedback on how cache behaves on this OS is greatly
 appreciated.
 .IP \[bu] 2
-https://github.com/rclone/rclone/issues/1935
+Issue #1935 (https://github.com/rclone/rclone/issues/1935)
 .IP \[bu] 2
-https://github.com/rclone/rclone/issues/1907
+Issue #1907 (https://github.com/rclone/rclone/issues/1907)
 .IP \[bu] 2
-https://github.com/rclone/rclone/issues/1834
+Issue #1834 (https://github.com/rclone/rclone/issues/1834)
 .SS Risk of throttling
 .PP
 Future iterations of the cache backend will make use of the pooling
@@ -46050,17 +46128,20 @@ meantime there is a valid concern that the expiring cache listings can
 lead to cloud provider throttles or bans due to repeated queries on it
 for very large mounts.
 .PP
-Some recommendations: - don\[aq]t use a very small interval for entry
-information (\f[V]--cache-info-age\f[R]) - while writes aren\[aq]t yet
-optimised, you can still write through \f[V]cache\f[R] which gives you
-the advantage of adding the file in the cache at the same time if
-configured to do so.
+Some recommendations:
+.IP \[bu] 2
+don\[aq]t use a very small interval for entry information
+(\f[V]--cache-info-age\f[R])
+.IP \[bu] 2
+while writes aren\[aq]t yet optimised, you can still write through
+\f[V]cache\f[R] which gives you the advantage of adding the file in the
+cache at the same time if configured to do so.
 .PP
 Future enhancements:
 .IP \[bu] 2
-https://github.com/rclone/rclone/issues/1937
+Issue #1937 (https://github.com/rclone/rclone/issues/1937)
 .IP \[bu] 2
-https://github.com/rclone/rclone/issues/1936
+Issue #1936 (https://github.com/rclone/rclone/issues/1936)
 .SS cache and crypt
 .PP
 One common scenario is to keep your data encrypted in the cloud provider
@@ -46108,7 +46189,10 @@ Supports either a directory or a file.
 It supports both encrypted and unencrypted file names if cache is
 wrapped by crypt.
 .PP
-Params: - \f[B]remote\f[R] = path to remote \f[B](required)\f[R] -
+Params:
+.IP \[bu] 2
+\f[B]remote\f[R] = path to remote \f[B](required)\f[R]
+.IP \[bu] 2
 \f[B]withData\f[R] = true/false to delete cached data (chunks) as well
 \f[I](optional, false by default)\f[R]
 .SS Standard options
@@ -46632,7 +46716,7 @@ We will call this one \f[V]overlay\f[R] to separate it from the
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -47266,8 +47350,12 @@ You will need to log in and get the \f[V]API Key\f[R] and
 \f[V]API Secret\f[R] for your account from the developer section.
 .PP
 Now run
-.PP
-\f[V]rclone config\f[R]
+.IP
+.nf
+\f[C]
+rclone config
+\f[R]
+.fi
 .PP
 Follow the interactive setup process:
 .IP
@@ -47341,16 +47429,28 @@ y/e/d> y
 .fi
 .PP
 List directories in the top level of your Media Library
-.PP
-\f[V]rclone lsd cloudinary-media-library:\f[R]
+.IP
+.nf
+\f[C]
+rclone lsd cloudinary-media-library:
+\f[R]
+.fi
 .PP
 Make a new directory.
-.PP
-\f[V]rclone mkdir cloudinary-media-library:directory\f[R]
+.IP
+.nf
+\f[C]
+rclone mkdir cloudinary-media-library:directory
+\f[R]
+.fi
 .PP
 List the contents of a directory.
-.PP
-\f[V]rclone ls cloudinary-media-library:directory\f[R]
+.IP
+.nf
+\f[C]
+rclone ls cloudinary-media-library:directory
+\f[R]
+.fi
 .SS Modified time and hashes
 .PP
 Cloudinary stores md5 and timestamps for any successful Put
@@ -47515,7 +47615,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -48088,7 +48188,7 @@ content, and access it exclusively through a crypt remote.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -48258,13 +48358,15 @@ The only possibility is to re-upload everything via a crypt remote
 configured with your new password.
 .PP
 Depending on the size of your data, your bandwidth, storage quota etc,
-there are different approaches you can take: - If you have everything in
-a different location, for example on your local system, you could remove
-all of the prior encrypted files, change the password for your
-configured crypt remote (or delete and re-create the crypt
-configuration), and then re-upload everything from the alternative
-location.
-- If you have enough space on the storage system you can create a new
+there are different approaches you can take:
+.IP \[bu] 2
+If you have everything in a different location, for example on your
+local system, you could remove all of the prior encrypted files, change
+the password for your configured crypt remote (or delete and re-create
+the crypt configuration), and then re-upload everything from the
+alternative location.
+.IP \[bu] 2
+If you have enough space on the storage system you can create a new
 crypt remote pointing to a separate directory on the same backend, and
 then use rclone to copy everything from the original crypt remote to the
 new, effectively decrypting everything on the fly using the old password
@@ -49233,7 +49335,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -49377,13 +49479,25 @@ See the metadata (https://rclone.org/docs/#metadata) docs for more info.
 The DOI remote is a read only remote for reading files from digital
 object identifiers (DOI).
 .PP
-Currently, the DOI backend supports DOIs hosted with: -
-InvenioRDM (https://inveniosoftware.org/products/rdm/) -
-Zenodo (https://zenodo.org) - CaltechDATA (https://data.caltech.edu) -
-Other InvenioRDM repositories (https://inveniosoftware.org/showcase/) -
-Dataverse (https://dataverse.org) - Harvard
-Dataverse (https://dataverse.harvard.edu) - Other Dataverse
-repositories (https://dataverse.org/installations)
+Currently, the DOI backend supports DOIs hosted with:
+.IP \[bu] 2
+InvenioRDM (https://inveniosoftware.org/products/rdm/)
+.RS 2
+.IP \[bu] 2
+Zenodo (https://zenodo.org)
+.IP \[bu] 2
+CaltechDATA (https://data.caltech.edu)
+.IP \[bu] 2
+Other InvenioRDM repositories (https://inveniosoftware.org/showcase/)
+.RE
+.IP \[bu] 2
+Dataverse (https://dataverse.org)
+.RS 2
+.IP \[bu] 2
+Harvard Dataverse (https://dataverse.harvard.edu)
+.IP \[bu] 2
+Other Dataverse repositories (https://dataverse.org/installations)
+.RE
 .PP
 Paths are specified as \f[V]remote:path\f[R]
 .PP
@@ -49396,7 +49510,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -49617,7 +49731,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -50455,7 +50569,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -50782,7 +50896,7 @@ First, run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -50882,7 +50996,7 @@ Copy a specific file to the FileLu root:
 .IP
 .nf
 \f[C]
-rclone copy D:\[rs]\[rs]hello.txt filelu:
+rclone copy D:\[rs]hello.txt filelu:
 \f[R]
 .fi
 .PP
@@ -50906,7 +51020,7 @@ Move files from a local directory to a FileLu directory:
 .IP
 .nf
 \f[C]
-rclone move D:\[rs]\[rs]local-folder filelu:/remote-path/
+rclone move D:\[rs]local-folder filelu:/remote-path/
 \f[R]
 .fi
 .PP
@@ -51306,7 +51420,7 @@ For an anonymous FTP server, see below.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 r) Rename remote
 c) Copy remote
@@ -52042,7 +52156,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -52406,7 +52520,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -52626,7 +52740,7 @@ If you already have a working service account, skip to step 3.
 .IP
 .nf
 \f[C]
-gcloud iam service-accounts create gcs-read-only 
+gcloud iam service-accounts create gcs-read-only
 \f[R]
 .fi
 .PP
@@ -52636,11 +52750,11 @@ above)
 .IP
 .nf
 \f[C]
- $ PROJECT_ID=my-project
- $ gcloud --verbose iam service-accounts add-iam-policy-binding \[rs]
-    gcs-read-only\[at]${PROJECT_ID}.iam.gserviceaccount.com  \[rs]
-    --member=serviceAccount:gcs-read-only\[at]${PROJECT_ID}.iam.gserviceaccount.com \[rs]
-    --role=roles/storage.objectViewer
+$ PROJECT_ID=my-project
+$ gcloud --verbose iam service-accounts add-iam-policy-binding \[rs]
+   gcs-read-only\[at]${PROJECT_ID}.iam.gserviceaccount.com  \[rs]
+   --member=serviceAccount:gcs-read-only\[at]${PROJECT_ID}.iam.gserviceaccount.com \[rs]
+   --role=roles/storage.objectViewer
 \f[R]
 .fi
 .PP
@@ -53606,7 +53720,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -53820,8 +53934,7 @@ environment variable.
 Let\[aq]s say that you are the administrator of a Google Workspace.
 The goal is to read or write data on an individual\[aq]s Drive account,
 who IS a member of the domain.
-We\[aq]ll call the domain \f[B]example.com\f[R], and the user
-\f[B]foo\[at]example.com\f[R].
+We\[aq]ll call the domain <example.com>, and the user <foo@example.com>.
 .PP
 There\[aq]s a few steps we need to go through to accomplish this:
 .SS 1. Create a service account for example.com
@@ -53917,11 +54030,13 @@ folder named backup.
 .PP
 Note: in case you configured a specific root folder on gdrive and rclone
 is unable to access the contents of that folder when using
-\f[V]--drive-impersonate\f[R], do this instead: - in the gdrive web
-interface, share your root folder with the user/email of the new Service
-Account you created/selected at step 1 - use rclone without specifying
-the \f[V]--drive-impersonate\f[R] option, like this:
-\f[V]rclone -v lsf gdrive:backup\f[R]
+\f[V]--drive-impersonate\f[R], do this instead:
+.IP \[bu] 2
+in the gdrive web interface, share your root folder with the user/email
+of the new Service Account you created/selected at step 1
+.IP \[bu] 2
+use rclone without specifying the \f[V]--drive-impersonate\f[R] option,
+like this: \f[V]rclone -v lsf gdrive:backup\f[R]
 .SS Shared drives (team drives)
 .PP
 If you want to configure the remote to point to a Google Shared Drive
@@ -56292,28 +56407,37 @@ recommended to stay under that number as if you use more than that, it
 will cause rclone to rate limit and make things slower.
 .PP
 Here is how to create your own Google Drive client ID for rclone:
-.IP "1." 3
+.IP " 1." 4
 Log into the Google API Console (https://console.developers.google.com/)
 with your Google account.
 It doesn\[aq]t matter what Google account you use.
 (It need not be the same account as the Google Drive you want to access)
-.IP "2." 3
+.IP " 2." 4
 Select a project or create a new project.
-.IP "3." 3
+.IP " 3." 4
 Under \[dq]ENABLE APIS AND SERVICES\[dq] search for \[dq]Drive\[dq], and
 enable the \[dq]Google Drive API\[dq].
-.IP "4." 3
+.IP " 4." 4
 Click \[dq]Credentials\[dq] in the left-side panel (not \[dq]Create
 credentials\[dq], which opens the wizard).
-.IP "5." 3
+.IP " 5." 4
 If you already configured an \[dq]Oauth Consent Screen\[dq], then skip
 to the next step; if not, click on \[dq]CONFIGURE CONSENT SCREEN\[dq]
-button (near the top right corner of the right panel), then select
-\[dq]External\[dq] and click on \[dq]CREATE\[dq]; on the next screen,
-enter an \[dq]Application name\[dq] (\[dq]rclone\[dq] is OK); enter
-\[dq]User Support Email\[dq] (your own email is OK); enter
-\[dq]Developer Contact Email\[dq] (your own email is OK); then click on
-\[dq]Save\[dq] (all other data is optional).
+button (near the top right corner of the right panel), then click
+\[dq]Get started\[dq].
+On the next screen, enter an \[dq]Application name\[dq]
+(\[dq]rclone\[dq] is OK); enter \[dq]User Support Email\[dq] (your own
+email is OK); Next, under Audience select \[dq]External\[dq].
+Next enter your own contact information, agree to terms and click
+\[dq]Create\[dq].
+You should now see rclone (or your project name) in a box in the top
+left of the screen.
+.RS 4
+.PP
+(PS: if you are a GSuite user, you could also select \[dq]Internal\[dq]
+instead of \[dq]External\[dq] above, but this will restrict API use to
+Google Workspace users in your organisation).
+.PP
 You will also have to add some
 scopes (https://developers.google.com/drive/api/guides/api-specific-auth),
 including
@@ -56325,44 +56449,40 @@ edit, create and delete files with RClone.
 .IP \[bu] 2
 \f[V]https://www.googleapis.com/auth/drive.metadata.readonly\f[R] which
 you may also want to add.
-.IP \[bu] 2
-If you want to add all at once, comma separated it would be
-\f[V]https://www.googleapis.com/auth/docs,https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly\f[R].
-.IP " 6." 4
-After adding scopes, click \[dq]Save and continue\[dq] to add test
-users.
-Be sure to add your own account to the test users.
-Once you\[aq]ve added yourself as a test user and saved the changes,
-click again on \[dq]Credentials\[dq] on the left panel to go back to the
-\[dq]Credentials\[dq] screen.
-.RS 4
 .PP
-(PS: if you are a GSuite user, you could also select \[dq]Internal\[dq]
-instead of \[dq]External\[dq] above, but this will restrict API use to
-Google Workspace users in your organisation).
+To do this, click Data Access on the left side panel, click \[dq]add or
+remove scopes\[dq] and select the three above and press update or go to
+the \[dq]Manually add scopes\[dq] text box (scroll down) and enter
+\[dq]https://www.googleapis.com/auth/docs,https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly\[dq],
+press add to table then update.
+.PP
+You should now see the three scopes on your Data access page.
+Now press save at the bottom!
 .RE
+.IP " 6." 4
+After adding scopes, click Audience Scroll down and click \[dq]+ Add
+users\[dq].
+Add yourself as a test user and press save.
 .IP " 7." 4
-Click on the \[dq]+ CREATE CREDENTIALS\[dq] button at the top of the
-screen, then select \[dq]OAuth client ID\[dq].
-.IP " 8." 4
+Go to Overview on the left panel, click \[dq]Create OAuth client\[dq].
 Choose an application type of \[dq]Desktop app\[dq] and click
 \[dq]Create\[dq].
 (the default name is fine)
-.IP " 9." 4
+.IP " 8." 4
 It will show you a client ID and client secret.
 Make a note of these.
 .RS 4
 .PP
-(If you selected \[dq]External\[dq] at Step 5 continue to Step 10.
+(If you selected \[dq]External\[dq] at Step 5 continue to Step 9.
 If you chose \[dq]Internal\[dq] you don\[aq]t need to publish and can
-skip straight to Step 11 but your destination drive must be part of the
+skip straight to Step 10 but your destination drive must be part of the
 same Google Workspace.)
 .RE
+.IP " 9." 4
+Go to \[dq]Audience\[dq] and then click \[dq]PUBLISH APP\[dq] button and
+confirm.
+Add yourself as a test user if you haven\[aq]t already.
 .IP "10." 4
-Go to \[dq]Oauth consent screen\[dq] and then click \[dq]PUBLISH
-APP\[dq] button and confirm.
-You will also want to add yourself as a test user.
-.IP "11." 4
 Provide the noted client ID and client secret to rclone.
 .PP
 Be aware that, due to the \[dq]enhanced security\[dq] recently
@@ -56417,7 +56537,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -57153,9 +57273,13 @@ https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata
 .PP
 Hasher is a special overlay backend to create remotes which handle
 checksums for other remotes.
-It\[aq]s main functions include: - Emulate hash types unimplemented by
-backends - Cache checksums to help with slow hashing of large local or
-(S)FTP files - Warm up checksum cache from external SUM files
+It\[aq]s main functions include:
+.IP \[bu] 2
+Emulate hash types unimplemented by backends
+.IP \[bu] 2
+Cache checksums to help with slow hashing of large local or (S)FTP files
+.IP \[bu] 2
+Warm up checksum cache from external SUM files
 .SS Getting started
 .PP
 To use Hasher, first set up the underlying remote following the
@@ -57176,7 +57300,7 @@ Run \f[V]rclone config\f[R]:
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -57238,12 +57362,16 @@ max_age = 24h
 \f[R]
 .fi
 .PP
-Hasher takes basically the following parameters: - \f[V]remote\f[R] is
-required, - \f[V]hashes\f[R] is a comma separated list of supported
-checksums (by default \f[V]md5,sha1\f[R]), - \f[V]max_age\f[R] - maximum
-time to keep a checksum value in the cache, \f[V]0\f[R] will disable
-caching completely, \f[V]off\f[R] will cache \[dq]forever\[dq] (that is
-until the files get changed).
+Hasher takes basically the following parameters:
+.IP \[bu] 2
+\f[V]remote\f[R] is required
+.IP \[bu] 2
+\f[V]hashes\f[R] is a comma separated list of supported checksums (by
+default \f[V]md5,sha1\f[R])
+.IP \[bu] 2
+\f[V]max_age\f[R] - maximum time to keep a checksum value in the cache
+\f[V]0\f[R] will disable caching completely \f[V]off\f[R] will cache
+\[dq]forever\[dq] (that is until the files get changed)
 .PP
 Make sure the \f[V]remote\f[R] has \f[V]:\f[R] (colon) in.
 If you specify the remote without a colon then rclone will use a local
@@ -57309,15 +57437,19 @@ The last argument can point to either a local or an
 The command will parse the SUM file, then walk down the path given by
 the first argument, snapshot current fingerprints and fill in the cache
 entries correspondingly.
-- Paths in the SUM file are treated as relative to
+.IP \[bu] 2
+Paths in the SUM file are treated as relative to
 \f[V]hasher:dir/subdir\f[R].
-- The command will \f[B]not\f[R] check that supplied values are correct.
+.IP \[bu] 2
+The command will \f[B]not\f[R] check that supplied values are correct.
 You \f[B]must know\f[R] what you are doing.
-- This is a one-time action.
+.IP \[bu] 2
+This is a one-time action.
 The SUM file will not get \[dq]attached\[dq] to the remote.
 Cache entries can still be overwritten later, should the object\[aq]s
 fingerprint change.
-- The tree walk can take long depending on the tree size.
+.IP \[bu] 2
+The tree walk can take long depending on the tree size.
 You can increase \f[V]--checkers\f[R] to make it faster.
 Or use \f[V]stickyimport\f[R] if you don\[aq]t care about fingerprints
 and consistency.
@@ -57575,7 +57707,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -57875,6 +58007,9 @@ Type: string
 Required: false
 .SS Limitations
 .IP \[bu] 2
+Erasure coding not supported, see issue
+#8808 (https://github.com/rclone/rclone/issues/8808)
+.IP \[bu] 2
 No server-side \f[V]Move\f[R] or \f[V]DirMove\f[R].
 .IP \[bu] 2
 Checksums not implemented.
@@ -57895,7 +58030,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -58001,9 +58136,9 @@ the configuration encryption
 docs (https://rclone.org/docs/#configuration-encryption).
 .SS Invalid refresh token
 .PP
-As can be verified here (https://developer.hidrive.com/basics-flows/),
-each \f[V]refresh_token\f[R] (for Native Applications) is valid for 60
-days.
+As can be verified on HiDrive\[aq]s OAuth
+guide (https://developer.hidrive.com/basics-flows/), each
+\f[V]refresh_token\f[R] (for Native Applications) is valid for 60 days.
 If used to access HiDrivei, its validity will be automatically extended.
 .PP
 This means that if you
@@ -58045,7 +58180,8 @@ Additionally, files or folders cannot be named either of the following:
 Therefore rclone will automatically replace these characters, if files
 or folders are stored or accessed with such names.
 .PP
-You can read about how this filename encoding works in general here.
+You can read about how this filename encoding works in general in the
+main docs (https://rclone.org/overview/#restricted-filenames).
 .PP
 Keep in mind that HiDrive only supports file or folder names with a
 length of 255 characters or less.
@@ -58090,7 +58226,6 @@ equivalent:
 .nf
 \f[C]
 rclone lsd --hidrive-root-prefix=\[dq]/users/test/\[dq] remote:path
-
 rclone lsd remote:/users/test/path
 \f[R]
 .fi
@@ -58517,7 +58652,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -58815,13 +58950,11 @@ about (https://rclone.org/commands/rclone_about/)
 .PP
 This is a backend for the ImageKit.io (https://imagekit.io/) storage
 service.
-.SS About ImageKit
 .PP
 ImageKit.io (https://imagekit.io/) provides real-time image and video
 optimizations, transformations, and CDN delivery.
 Over 1,000 businesses and 70,000 developers trust ImageKit with their
 images and videos on the web.
-.SS Accounts & Pricing
 .PP
 To use this backend, you need to create an
 account (https://imagekit.io/registration/) on ImageKit.
@@ -59214,7 +59347,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -59449,7 +59582,7 @@ rclone sync --interactive /home/local/directory remote:item
 Because of Internet Archive\[aq]s architecture, it enqueues write
 operations (and extra post-processings) in a per-item queue.
 You can check item\[aq]s queue at
-https://catalogd.archive.org/history/item-name-here .
+<https://catalogd.archive.org/history/item-name-here>.
 Because of that, all uploads/deletes will not show up immediately and
 takes some time to be available.
 The per-item queue is enqueued to an another queue, Item Deriver Queue.
@@ -59471,10 +59604,27 @@ file.
 The metadata will appear as file metadata on Internet Archive.
 However, some fields are reserved by both Internet Archive and rclone.
 .PP
-The following are reserved by Internet Archive: - \f[V]name\f[R] -
-\f[V]source\f[R] - \f[V]size\f[R] - \f[V]md5\f[R] - \f[V]crc32\f[R] -
-\f[V]sha1\f[R] - \f[V]format\f[R] - \f[V]old_version\f[R] -
-\f[V]viruscheck\f[R] - \f[V]summation\f[R]
+The following are reserved by Internet Archive:
+.IP \[bu] 2
+\f[V]name\f[R]
+.IP \[bu] 2
+\f[V]source\f[R]
+.IP \[bu] 2
+\f[V]size\f[R]
+.IP \[bu] 2
+\f[V]md5\f[R]
+.IP \[bu] 2
+\f[V]crc32\f[R]
+.IP \[bu] 2
+\f[V]sha1\f[R]
+.IP \[bu] 2
+\f[V]format\f[R]
+.IP \[bu] 2
+\f[V]old_version\f[R]
+.IP \[bu] 2
+\f[V]viruscheck\f[R]
+.IP \[bu] 2
+\f[V]summation\f[R]
 .PP
 Trying to set values to these keys is ignored with a warning.
 Only setting \f[V]mtime\f[R] is an exception.
@@ -59528,7 +59678,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -59954,13 +60104,41 @@ Jottacloud is a cloud storage service provider from a Norwegian company,
 using its own datacenters in Norway.
 In addition to the official service at
 jottacloud.com (https://www.jottacloud.com/), it also provides
-white-label solutions to different companies, such as: * Telia * Telia
-Cloud (cloud.telia.se) * Telia Sky (sky.telia.no) * Tele2 * Tele2 Cloud
-(mittcloud.tele2.se) * Onlime * Onlime Cloud Storage (onlime.dk) *
-Elkjøp (with subsidiaries): * Elkjøp Cloud (cloud.elkjop.no) *
-Elgiganten Sweden (cloud.elgiganten.se) * Elgiganten Denmark
-(cloud.elgiganten.dk) * Giganti Cloud (cloud.gigantti.fi) * ELKO Cloud
-(cloud.elko.is)
+white-label solutions to different companies, such as:
+.IP \[bu] 2
+Telia
+.RS 2
+.IP \[bu] 2
+Telia Cloud (cloud.telia.se)
+.IP \[bu] 2
+Telia Sky (sky.telia.no)
+.RE
+.IP \[bu] 2
+Tele2
+.RS 2
+.IP \[bu] 2
+Tele2 Cloud (mittcloud.tele2.se)
+.RE
+.IP \[bu] 2
+Onlime
+.RS 2
+.IP \[bu] 2
+Onlime Cloud Storage (onlime.dk)
+.RE
+.IP \[bu] 2
+Elkjøp (with subsidiaries):
+.RS 2
+.IP \[bu] 2
+Elkjøp Cloud (cloud.elkjop.no)
+.IP \[bu] 2
+Elgiganten Sweden (cloud.elgiganten.se)
+.IP \[bu] 2
+Elgiganten Denmark (cloud.elgiganten.dk)
+.IP \[bu] 2
+Giganti Cloud (cloud.gigantti.fi)
+.IP \[bu] 2
+ELKO Cloud (cloud.elko.is)
+.RE
 .PP
 Most of the white-label versions are supported by this backend, although
 may require different authentication setup - described below.
@@ -60006,8 +60184,8 @@ along the lines of:
 .IP
 .nf
 \f[C]
-oauth2: cannot fetch token: 400 Bad Request
-Response: {\[dq]error\[dq]:\[dq]invalid_grant\[dq],\[dq]error_description\[dq]:\[dq]Stale token\[dq]}
+  oauth2: cannot fetch token: 400 Bad Request
+  Response: {\[dq]error\[dq]:\[dq]invalid_grant\[dq],\[dq]error_description\[dq]:\[dq]Stale token\[dq]}
 \f[R]
 .fi
 .PP
@@ -60654,7 +60832,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -60948,7 +61126,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -61023,7 +61201,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -61103,7 +61281,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -61858,6 +62036,9 @@ files without knowledge of the key used for encryption.
 This is an rclone backend for Mega which supports the file transfer
 features of Mega using the same client side encryption.
 .PP
+\f[B]Note\f[R] MEGA S4 Object Storage, an S3 compatible object store,
+also works with rclone and this is recommended for new projects.
+.PP
 Paths are specified as \f[V]remote:path\f[R]
 .PP
 Paths may be as deep as required, e.g.
@@ -61869,7 +62050,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -61996,7 +62177,7 @@ access and synchronization, you may receive an error such as
 .IP
 .nf
 \f[C]
-Failed to create file system for \[dq]my-mega-remote:\[dq]: 
+Failed to create file system for \[dq]my-mega-remote:\[dq]:
 couldn\[aq]t login: Object (typically, node or user) not found
 \f[R]
 .fi
@@ -62005,8 +62186,8 @@ The diagnostic steps often recommended in the rclone
 forum (https://forum.rclone.org/search?q=mega) start with the
 \f[B]MEGAcmd\f[R] utility.
 Note that this refers to the official C++ command from
-https://github.com/meganz/MEGAcmd and not the go language built command
-from t3rm1n4l/megacmd that is no longer maintained.
+<https://github.com/meganz/MEGAcmd> and not the go language built
+command from t3rm1n4l/megacmd that is no longer maintained.
 .PP
 Follow the instructions for installing MEGAcmd and try accessing your
 remote as they recommend.
@@ -62233,7 +62414,7 @@ too if you want to:
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -62305,28 +62486,40 @@ too, e.g.
 If you have a CP code you can use that as the folder after the domain
 such as <domain>/<cpcode>/<internal directories within cpcode>.
 .PP
-For example, this is commonly configured with or without a CP code: *
+For example, this is commonly configured with or without a CP code:
+.IP \[bu] 2
 \f[B]With a CP code\f[R].
-\f[V][your-domain-prefix]-nsu.akamaihd.net/123456/subdirectory/\f[R] *
+\f[V][your-domain-prefix]-nsu.akamaihd.net/123456/subdirectory/\f[R]
+.IP \[bu] 2
 \f[B]Without a CP code\f[R].
 \f[V][your-domain-prefix]-nsu.akamaihd.net\f[R]
 .PP
-See all buckets rclone lsd remote: The initial setup for Netstorage
-involves getting an account and secret.
+See all buckets
+.IP
+.nf
+\f[C]
+rclone lsd remote:
+\f[R]
+.fi
+.PP
+The initial setup for Netstorage involves getting an account and secret.
 Use \f[V]rclone config\f[R] to walk you through the setup process.
 .SS Configuration
 .PP
 Here\[aq]s an example of how to make a remote called \f[V]ns1\f[R].
 .IP "1." 3
 To begin the interactive configuration process, enter this command:
+.RS 4
 .IP
 .nf
 \f[C]
 rclone config
 \f[R]
 .fi
+.RE
 .IP "2." 3
 Type \f[V]n\f[R] to create a new remote.
+.RS 4
 .IP
 .nf
 \f[C]
@@ -62336,16 +62529,20 @@ q) Quit config
 e/n/d/q> n
 \f[R]
 .fi
+.RE
 .IP "3." 3
 For this example, enter \f[V]ns1\f[R] when you reach the name> prompt.
+.RS 4
 .IP
 .nf
 \f[C]
 name> ns1
 \f[R]
 .fi
+.RE
 .IP "4." 3
 Enter \f[V]netstorage\f[R] as the type of storage to configure.
+.RS 4
 .IP
 .nf
 \f[C]
@@ -62357,10 +62554,12 @@ XX / NetStorage
 Storage> netstorage
 \f[R]
 .fi
+.RE
 .IP "5." 3
 Select between the HTTP or HTTPS protocol.
 Most users should choose HTTPS, which is the default.
 HTTP is provided primarily for debugging purposes.
+.RS 4
 .IP
 .nf
 \f[C]
@@ -62373,9 +62572,11 @@ Choose a number from below, or type in your own value
 protocol> 1
 \f[R]
 .fi
+.RE
 .IP "6." 3
 Specify your NetStorage host, CP code, and any necessary content paths
 using this format: \f[V]<domain>/<cpcode>/<content>/\f[R]
+.RS 4
 .IP
 .nf
 \f[C]
@@ -62383,8 +62584,10 @@ Enter a string value. Press Enter for the default (\[dq]\[dq]).
 host> baseball-nsu.akamaihd.net/123456/content/
 \f[R]
 .fi
+.RE
 .IP "7." 3
 Set the netstorage account name
+.RS 4
 .IP
 .nf
 \f[C]
@@ -62392,6 +62595,7 @@ Enter a string value. Press Enter for the default (\[dq]\[dq]).
 account> username
 \f[R]
 .fi
+.RE
 .IP "8." 3
 Set the Netstorage account secret/G2O key which will be used for
 authentication purposes.
@@ -62399,6 +62603,7 @@ Select the \f[V]y\f[R] option to set your own password then enter your
 secret.
 Note: The secret is stored in the \f[V]rclone.conf\f[R] file with
 hex-encoded encryption.
+.RS 4
 .IP
 .nf
 \f[C]
@@ -62411,8 +62616,10 @@ Confirm the password:
 password:
 \f[R]
 .fi
+.RE
 .IP "9." 3
 View the summary and confirm your remote configuration.
+.RS 4
 .IP
 .nf
 \f[C]
@@ -62429,12 +62636,13 @@ d) Delete this remote
 y/e/d> y
 \f[R]
 .fi
+.RE
 .PP
 This remote is called \f[V]ns1\f[R] and can now be used.
 .SS Example operations
 .PP
 Get started with rclone and NetStorage with these examples.
-For additional rclone commands, visit https://rclone.org/commands/.
+For additional rclone commands, visit <https://rclone.org/commands/>.
 .SS See contents of a directory in your project
 .IP
 .nf
@@ -62463,7 +62671,7 @@ rclone copy notes.txt ns1:/974012/testing/
 rclone delete ns1:/974012/testing/notes.txt
 \f[R]
 .fi
-.SS Move or copy content between CP codes.
+.SS Move or copy content between CP codes
 .PP
 Your credentials must have access to two CP codes on the same remote.
 You can\[aq]t perform operations between different remotes.
@@ -62737,7 +62945,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -62980,13 +63188,13 @@ authenticate to
 Workload Identity
 .RS 4
 .IP \[bu] 2
-\f[V]AZURE_TENANT_ID\f[R]: Tenant to authenticate in.
+\f[V]AZURE_TENANT_ID\f[R]: Tenant to authenticate in
 .IP \[bu] 2
 \f[V]AZURE_CLIENT_ID\f[R]: Client ID of the application the user will
-authenticate to.
+authenticate to
 .IP \[bu] 2
 \f[V]AZURE_FEDERATED_TOKEN_FILE\f[R]: Path to projected service account
-token file.
+token file
 .IP \[bu] 2
 \f[V]AZURE_AUTHORITY_HOST\f[R]: Authority of an Azure Active Directory
 endpoint (default: login.microsoftonline.com).
@@ -64071,7 +64279,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -64374,13 +64582,13 @@ authenticate to
 Workload Identity
 .RS 4
 .IP \[bu] 2
-\f[V]AZURE_TENANT_ID\f[R]: Tenant to authenticate in.
+\f[V]AZURE_TENANT_ID\f[R]: Tenant to authenticate in
 .IP \[bu] 2
 \f[V]AZURE_CLIENT_ID\f[R]: Client ID of the application the user will
-authenticate to.
+authenticate to
 .IP \[bu] 2
 \f[V]AZURE_FEDERATED_TOKEN_FILE\f[R]: Path to projected service account
-token file.
+token file
 .IP \[bu] 2
 \f[V]AZURE_AUTHORITY_HOST\f[R]: Authority of an Azure Active Directory
 endpoint (default: login.microsoftonline.com).
@@ -65087,7 +65295,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -65220,7 +65428,7 @@ For example, you might see throttling.
 To create your own Client ID, please follow these steps:
 .IP "1." 3
 Open
-https://portal.azure.com/?quickstart=true#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/\[ti]/Overview
+<https://portal.azure.com/?quickstart=true#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview>
 and then under the \f[V]Add\f[R] menu click \f[V]App registration\f[R].
 .RS 4
 .IP \[bu] 2
@@ -66998,7 +67206,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -67355,25 +67563,29 @@ See List of backends that do not support rclone
 about (https://rclone.org/overview/#optional-features) and rclone
 about (https://rclone.org/commands/rclone_about/)
 .SH Oracle Object Storage
+.PP
+Object Storage provided by the Oracle Cloud Infrastructure (OCI).
+Read more at <oracle.com>:
 .IP \[bu] 2
 Oracle Object Storage
-Overview (https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)
+Overview (https://docs.oracle.com/iaas/Content/Object/Concepts/objectstorageoverview.htm)
 .IP \[bu] 2
 Oracle Object Storage
 FAQ (https://www.oracle.com/cloud/storage/object-storage/faq/)
-.IP \[bu] 2
-Oracle Object Storage
-Limits (https://docs.oracle.com/en-us/iaas/Content/Resources/Assets/whitepapers/oci-object-storage-best-practices.pdf)
 .PP
 Paths are specified as \f[V]remote:bucket\f[R] (or \f[V]remote:\f[R] for
-the \f[V]lsd\f[R] command.)
+the \f[V]lsd\f[R] command).
 You may put subdirectories in too, e.g.
 \f[V]remote:bucket/path/to/dir\f[R].
 .PP
 Sample command to transfer local artifacts to remote:bucket in oracle
 object storage:
-.PP
-\f[V]rclone -vvv  --progress --stats-one-line --max-stats-groups 10 --log-format date,time,UTC,longfile --fast-list --buffer-size 256Mi --oos-no-check-bucket --oos-upload-cutoff 10Mi --multi-thread-cutoff 16Mi --multi-thread-streams 3000 --transfers 3000 --checkers 64  --retries 2  --oos-chunk-size 10Mi --oos-upload-concurrency 10000  --oos-attempt-resume-upload --oos-leave-parts-on-error sync ./artifacts  remote:bucket -vv\f[R]
+.IP
+.nf
+\f[C]
+rclone -vvv  --progress --stats-one-line --max-stats-groups 10 --log-format date,time,UTC,longfile --fast-list --buffer-size 256Mi --oos-no-check-bucket --oos-upload-cutoff 10Mi --multi-thread-cutoff 16Mi --multi-thread-streams 3000 --transfers 3000 --checkers 64  --retries 2  --oos-chunk-size 10Mi --oos-upload-concurrency 10000  --oos-attempt-resume-upload --oos-leave-parts-on-error sync ./artifacts  remote:bucket -vv
+\f[R]
+.fi
 .SS Configuration
 .PP
 Here is an example of making an oracle object storage configuration.
@@ -67384,7 +67596,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -67554,12 +67766,19 @@ config_profile = Default
 \f[R]
 .fi
 .PP
-Advantages: - One can use this method from any server within OCI or
-on-premises or from other cloud provider.
+Advantages:
+.IP \[bu] 2
+One can use this method from any server within OCI or on-premises or
+from other cloud provider.
 .PP
-Considerations: - you need to configure user\[cq]s privileges / policy
-to allow access to object storage - Overhead of managing users and keys.
-- If the user is deleted, the config file will no longer work and may
+Considerations:
+.IP \[bu] 2
+you need to configure user\[cq]s privileges / policy to allow access to
+object storage
+.IP \[bu] 2
+Overhead of managing users and keys.
+.IP \[bu] 2
+If the user is deleted, the config file will no longer work and may
 cause automation regressions that use the user\[aq]s credentials.
 .SS Instance Principal
 .PP
@@ -68591,7 +68810,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 r) Rename remote
 c) Copy remote
@@ -69002,10 +69221,10 @@ The initial setup for Quatrix involves getting an API Key from Quatrix.
 You can get the API key in the user\[aq]s profile at
 \f[V]https://<account>/profile/api-keys\f[R] or with the help of the API
 -
-https://docs.maytech.net/quatrix/quatrix-api/api-explorer#/API-Key/post_api_key_create.
+<https://docs.maytech.net/quatrix/quatrix-api/api-explorer#/API-Key/post_api_key_create>.
 .PP
-See complete Swagger documentation for Quatrix -
-https://docs.maytech.net/quatrix/quatrix-api/api-explorer
+See complete Swagger documentation for
+Quatrix (https://docs.maytech.net/quatrix/quatrix-api/api-explorer).
 .SS Configuration
 .PP
 Here is an example of how to make a remote called \f[V]remote\f[R].
@@ -69013,7 +69232,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -69346,27 +69565,32 @@ it\[aq]s safe to leave the API password blank (the API URL will be
 However, if you want to access Sia daemon running on another node, for
 example due to memory constraints or because you want to share single
 daemon between several rclone and Sia-UI instances, you\[aq]ll need to
-make a few more provisions: - Ensure you have \f[I]Sia daemon\f[R]
-installed directly or in a docker
+make a few more provisions:
+.IP \[bu] 2
+Ensure you have \f[I]Sia daemon\f[R] installed directly or in a docker
 container (https://github.com/SiaFoundation/siad/pkgs/container/siad)
 because Sia-UI does not support this mode natively.
-- Run it on externally accessible port, for example provide
+.IP \[bu] 2
+Run it on externally accessible port, for example provide
 \f[V]--api-addr :9980\f[R] and \f[V]--disable-api-security\f[R]
 arguments on the daemon command line.
-- Enforce API password for the \f[V]siad\f[R] daemon via environment
+.IP \[bu] 2
+Enforce API password for the \f[V]siad\f[R] daemon via environment
 variable \f[V]SIA_API_PASSWORD\f[R] or text file named
 \f[V]apipassword\f[R] in the daemon directory.
-- Set rclone backend option \f[V]api_password\f[R] taking it from above
+.IP \[bu] 2
+Set rclone backend option \f[V]api_password\f[R] taking it from above
 locations.
 .PP
-Notes: 1.
+Notes:
+.IP "1." 3
 If your wallet is locked, rclone cannot unlock it automatically.
 You should either unlock it in advance by using Sia-UI or via command
 line \f[V]siac wallet unlock\f[R].
 Alternatively you can make \f[V]siad\f[R] unlock your wallet
 automatically upon startup by running it with environment variable
 \f[V]SIA_WALLET_PASSWORD\f[R].
-2.
+.IP "2." 3
 If \f[V]siad\f[R] cannot find the \f[V]SIA_API_PASSWORD\f[R] variable or
 the \f[V]apipassword\f[R] file in the \f[V]SIA_DIR\f[R] directory, it
 will generate a random password and store in the text file named
@@ -69375,7 +69599,7 @@ or
 \f[V]C:\[rs]Users\[rs]YOUR_HOME\[rs]AppData\[rs]Local\[rs]Sia\[rs]apipassword\f[R]
 on Windows.
 Remember this when you configure password in rclone.
-3.
+.IP "3." 3
 The only way to use \f[V]siad\f[R] without API password is to run it
 \f[B]on localhost\f[R] with command line argument
 \f[V]--authorize-api=false\f[R], but this is insecure and \f[B]strongly
@@ -69388,7 +69612,7 @@ First, run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -69445,28 +69669,34 @@ y/e/d> y
 Once configured, you can then use \f[V]rclone\f[R] like this:
 .IP \[bu] 2
 List directories in top level of your Sia storage
+.RS 2
 .IP
 .nf
 \f[C]
 rclone lsd mySia:
 \f[R]
 .fi
+.RE
 .IP \[bu] 2
 List all the files in your Sia storage
+.RS 2
 .IP
 .nf
 \f[C]
 rclone ls mySia:
 \f[R]
 .fi
+.RE
 .IP \[bu] 2
 Upload a local directory to the Sia directory called \f[I]backup\f[R]
+.RS 2
 .IP
 .nf
 \f[C]
 rclone copy /home/source mySia:backup
 \f[R]
 .fi
+.RE
 .SS Standard options
 .PP
 Here are the Standard options specific to sia (Sia Decentralized Cloud).
@@ -69609,7 +69839,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -70503,7 +70733,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -70664,13 +70894,28 @@ hierarchy.
 .PP
 In order to do this you will have to find the \f[V]Folder ID\f[R] of the
 directory you wish rclone to display.
-This will be the \f[V]folder\f[R] field of the URL when you open the
-relevant folder in the pCloud web interface.
+This can be accomplished by executing the \f[V]rclone lsf\f[R] command
+using a basic configuration setup that does not include the
+\f[V]root_folder_id\f[R] parameter.
 .PP
-So if the folder you want rclone to use has a URL which looks like
-\f[V]https://my.pcloud.com/#page=filemanager&folder=5xxxxxxxx8&tpl=foldergrid\f[R]
-in the browser, then you use \f[V]5xxxxxxxx8\f[R] as the
-\f[V]root_folder_id\f[R] in the config.
+The command will enumerate available directories, allowing you to locate
+the appropriate Folder ID for subsequent use.
+.PP
+Example:
+.IP
+.nf
+\f[C]
+$ rclone lsf --dirs-only -Fip --csv TestPcloud:
+dxxxxxxxx2,My Music/
+dxxxxxxxx3,My Pictures/
+dxxxxxxxx4,My Videos/
+\f[R]
+.fi
+.PP
+So if the folder you want rclone to use your is \[dq]My Music/\[dq],
+then use the returned id from \f[V]rclone lsf\f[R] command (ex.
+\f[V]dxxxxxxxx2\f[R]) as the \f[V]root_folder_id\f[R] variable value in
+the config file.
 .SS Standard options
 .PP
 Here are the Standard options specific to pcloud (Pcloud).
@@ -70892,7 +71137,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -71306,7 +71551,7 @@ To use the personal filesystem you will need a pixeldrain
 account (https://pixeldrain.com/register) and either the Prepaid plan or
 one of the Patreon-based subscriptions.
 After registering and subscribing, your personal filesystem will be
-available at this link: https://pixeldrain.com/d/me.
+available at this link: <https://pixeldrain.com/d/me>.
 .PP
 Go to the API keys page (https://pixeldrain.com/user/api_keys) on your
 account and generate a new API key for rclone.
@@ -71317,7 +71562,7 @@ Example:
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 d) Delete remote
 c) Copy remote
@@ -71538,7 +71783,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -71845,7 +72090,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -72246,7 +72491,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -72541,7 +72786,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -72928,21 +73173,29 @@ official documentation available.
 .SH Seafile
 .PP
 This is a backend for the Seafile (https://www.seafile.com/) storage
-service: - It works with both the free community edition or the
-professional edition.
-- Seafile versions 6.x, 7.x, 8.x and 9.x are all supported.
-- Encrypted libraries are also supported.
-- It supports 2FA enabled users - Using a Library API Token is
-\f[B]not\f[R] supported
+service:
+.IP \[bu] 2
+It works with both the free community edition or the professional
+edition.
+.IP \[bu] 2
+Seafile versions 6.x, 7.x, 8.x and 9.x are all supported.
+.IP \[bu] 2
+Encrypted libraries are also supported.
+.IP \[bu] 2
+It supports 2FA enabled users
+.IP \[bu] 2
+Using a Library API Token is \f[B]not\f[R] supported
 .SS Configuration
 .PP
-There are two distinct modes you can setup your remote: - you point your
-remote to the \f[B]root of the server\f[R], meaning you don\[aq]t
-specify a library during the configuration: Paths are specified as
-\f[V]remote:library\f[R].
+There are two distinct modes you can setup your remote:
+.IP \[bu] 2
+you point your remote to the \f[B]root of the server\f[R], meaning you
+don\[aq]t specify a library during the configuration: Paths are
+specified as \f[V]remote:library\f[R].
 You may put subdirectories in too, e.g.
 \f[V]remote:library/path/to/dir\f[R].
-- you point your remote to a specific library during the configuration:
+.IP \[bu] 2
+you point your remote to a specific library during the configuration:
 Paths are specified as \f[V]remote:path/to/dir\f[R].
 \f[B]This is the recommended mode when using encrypted libraries\f[R].
 (\f[I]This mode is possibly slightly faster than the root mode\f[R])
@@ -72964,7 +73217,7 @@ username) and your password.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -73075,7 +73328,7 @@ attempt to authenticate you:
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -73261,9 +73514,15 @@ you will get the exact same link.
 .SS Compatibility
 .PP
 It has been actively developed using the seafile docker
-image (https://github.com/haiwen/seafile-docker) of these versions: -
-6.3.4 community edition - 7.0.5 community edition - 7.1.3 community
-edition - 9.0.10 community edition
+image (https://github.com/haiwen/seafile-docker) of these versions:
+.IP \[bu] 2
+6.3.4 community edition
+.IP \[bu] 2
+7.0.5 community edition
+.IP \[bu] 2
+7.1.3 community edition
+.IP \[bu] 2
+9.0.10 community edition
 .PP
 Versions below 6.0 are not supported.
 Versions between 6.0 and 6.3 haven\[aq]t been tested and might not work
@@ -73479,7 +73738,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -73596,7 +73855,7 @@ The key file can be specified in either an external file (key_file) or
 contained within the rclone config file (key_pem).
 If using key_pem in the config file, the entry should be on a single
 line with new line (\[aq]\[aq] or \[aq]\[aq]) separating lines.
-i.e.
+I.e.
 .IP
 .nf
 \f[C]
@@ -75043,7 +75302,7 @@ This will guide you through an interactive setup process.
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -75497,9 +75756,11 @@ without download, as checksum metadata is not calculated during upload
 .RE
 .SS Configuration
 .PP
-To make a new Storj configuration you need one of the following: *
+To make a new Storj configuration you need one of the following:
+.IP \[bu] 2
 Access Grant that someone else shared with you.
-* API
+.IP \[bu] 2
+API
 Key (https://documentation.storj.io/getting-started/uploading-your-first-object/create-an-api-key)
 of a Storj project you are a member of.
 .PP
@@ -75508,7 +75769,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -75517,7 +75778,7 @@ This will guide you through an interactive setup process:
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -75560,7 +75821,7 @@ y/e/d> y
 .IP
 .nf
 \f[C]
-No remotes found, make a new one?
+No remotes found, make a new one\[rs]?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -75838,9 +76099,11 @@ this folder.
 .IP
 .nf
 \f[C]
-rclone ls remote:bucket/path/to/dir/
+rclone ls remote:bucket
 \f[R]
 .fi
+.PP
+/path/to/dir/
 .PP
 Use the \f[V]lsf\f[R] command to list non-recursively all objects in a
 bucket or a folder.
@@ -75987,7 +76250,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -76316,7 +76579,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -76634,7 +76897,7 @@ Paths may be as deep as required, e.g.
 .PP
 To configure an Uptobox backend you\[aq]ll need your personal api token.
 You\[aq]ll find it in your account
-settings (https://uptobox.com/my_account)
+settings (https://uptobox.com/my_account).
 .PP
 Here is an example of how to make a remote called \f[V]remote\f[R] with
 the default setup.
@@ -76691,7 +76954,7 @@ api_key = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
-y/e/d> 
+y/e/d>
 \f[R]
 .fi
 .PP
@@ -76871,7 +77134,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -77369,7 +77632,7 @@ First run:
 .IP
 .nf
 \f[C]
- rclone config
+rclone config
 \f[R]
 .fi
 .PP
@@ -79243,7 +79506,7 @@ Copying the entire directory with \[aq]-l\[aq]
 .IP
 .nf
 \f[C]
-$ rclone copy -l /tmp/a/ remote:/tmp/a/
+rclone copy -l /tmp/a/ remote:/tmp/a/
 \f[R]
 .fi
 .PP
@@ -79339,7 +79602,7 @@ root
 .PP
 Using \f[V]rclone --one-file-system copy root remote:\f[R] will only
 copy \f[V]file1\f[R] and \f[V]file2\f[R].
-Eg
+E.g.
 .IP
 .nf
 \f[C]
@@ -79926,6 +80189,67 @@ Options:
 .IP \[bu] 2
 \[dq]error\[dq]: return an error based on option value
 .SH Changelog
+.SS v1.71.1 - 2025-09-24
+.PP
+See commits (https://github.com/rclone/rclone/compare/v1.71.0...v1.71.1)
+.IP \[bu] 2
+Bug Fixes
+.RS 2
+.IP \[bu] 2
+bisync: Fix error handling for renamed conflicts (nielash)
+.IP \[bu] 2
+march: Fix deadlock when using --fast-list on syncs (Nick Craig-Wood)
+.IP \[bu] 2
+operations: Fix partial name collisions for non --inplace copies (Nick
+Craig-Wood)
+.IP \[bu] 2
+pacer: Fix deadlock with --max-connections (Nick Craig-Wood)
+.IP \[bu] 2
+doc fixes (albertony, anon-pradip, Claudius Ellsel, dougal,
+Jean-Christophe Cura, Nick Craig-Wood, nielash)
+.RE
+.IP \[bu] 2
+Mount
+.RS 2
+.IP \[bu] 2
+Do not log successful unmount as an error (Tilman Vogel)
+.RE
+.IP \[bu] 2
+VFS
+.RS 2
+.IP \[bu] 2
+Fix SIGHUP killing serve instead of flushing directory caches (dougal)
+.RE
+.IP \[bu] 2
+Local
+.RS 2
+.IP \[bu] 2
+Fix rmdir \[dq]Access is denied\[dq] on windows (nielash)
+.RE
+.IP \[bu] 2
+Box
+.RS 2
+.IP \[bu] 2
+Fix about after change in API return (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+Combine
+.RS 2
+.IP \[bu] 2
+Propagate SlowHash feature (skbeh)
+.RE
+.IP \[bu] 2
+Drive
+.RS 2
+.IP \[bu] 2
+Update making your own client ID instructions (Ed Craig-Wood)
+.RE
+.IP \[bu] 2
+Internet Archive
+.RS 2
+.IP \[bu] 2
+Fix server side copy files with spaces (Nick Craig-Wood)
+.RE
 .SS v1.71.0 - 2025-08-22
 .PP
 See commits (https://github.com/rclone/rclone/compare/v1.70.0...v1.71.0)
@@ -98169,19 +98493,19 @@ cui <523516579@qq.com>
 .PP
 Forum for questions and general discussion:
 .IP \[bu] 2
-https://forum.rclone.org
+<https://forum.rclone.org>
 .SS Business support
 .PP
 For business support or sponsorship enquiries please see:
 .IP \[bu] 2
-https://rclone.com/
+<https://rclone.com/>
 .IP \[bu] 2
-sponsorship\[at]rclone.com
+<sponsorship@rclone.com>
 .SS GitHub repository
 .PP
 The project\[aq]s repository is located at:
 .IP \[bu] 2
-https://github.com/rclone/rclone
+<https://github.com/rclone/rclone>
 .PP
 There you can file bug reports or contribute with pull requests.
 .SS Twitter
@@ -98194,7 +98518,7 @@ You can also follow Nick on twitter for rclone announcements:
 Or if all else fails or you want to ask something private or
 confidential
 .IP \[bu] 2
-info\[at]rclone.com
+<info@rclone.com>
 .PP
 Please don\[aq]t email requests for help to this address - those are
 better directed to the forum unless you\[aq]d like to sign up for

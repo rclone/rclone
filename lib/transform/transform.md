@@ -7,7 +7,7 @@
 | `--name-transform suffix_keep_extension=XXXX` | Appends XXXX to the file name while preserving the original file extension. |
 | `--name-transform trimprefix=XXXX` | Removes XXXX if it appears at the start of the file name. |
 | `--name-transform trimsuffix=XXXX` | Removes XXXX if it appears at the end of the file name. |
-| `--name-transform regex=/pattern/replacement/` | Applies a regex-based transformation. |
+| `--name-transform regex=pattern/replacement` | Applies a regex-based transformation. |
 | `--name-transform replace=old:new` | Replaces occurrences of old with new in the file name. |
 | `--name-transform date={YYYYMMDD}` | Appends or prefixes the specified date format. |
 | `--name-transform truncate=N` | Truncates the file name to a maximum of N characters. |
@@ -218,12 +218,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```sh
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20250830
+// Output: stories/The Quick Brown Fox!-20250924
 ```
 
 ```sh
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2025-08-30 1234AM
+// Output: stories/The Quick Brown Fox!-2025-09-24 0423PM
 ```
 
 ```sh
