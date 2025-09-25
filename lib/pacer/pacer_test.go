@@ -108,7 +108,7 @@ func waitForPace(p *Pacer, duration time.Duration) (when time.Time) {
 func TestBeginCall(t *testing.T) {
 	p := New(MaxConnectionsOption(10), CalculatorOption(NewDefault(MinSleep(1*time.Millisecond))))
 	emptyTokens(p)
-	go p.beginCall()
+	go p.beginCall(true)
 	if !waitForPace(p, 10*time.Millisecond).IsZero() {
 		t.Errorf("beginSleep fired too early #1")
 	}
@@ -131,7 +131,7 @@ func TestBeginCall(t *testing.T) {
 func TestBeginCallZeroConnections(t *testing.T) {
 	p := New(MaxConnectionsOption(0), CalculatorOption(NewDefault(MinSleep(1*time.Millisecond))))
 	emptyTokens(p)
-	go p.beginCall()
+	go p.beginCall(false)
 	if !waitForPace(p, 10*time.Millisecond).IsZero() {
 		t.Errorf("beginSleep fired too early #1")
 	}
@@ -257,7 +257,7 @@ func TestEndCall(t *testing.T) {
 	p := New(MaxConnectionsOption(5))
 	emptyTokens(p)
 	p.state.ConsecutiveRetries = 1
-	p.endCall(true, nil)
+	p.endCall(true, nil, true)
 	assert.Equal(t, 1, len(p.connTokens))
 	assert.Equal(t, 2, p.state.ConsecutiveRetries)
 }
@@ -266,7 +266,7 @@ func TestEndCallZeroConnections(t *testing.T) {
 	p := New(MaxConnectionsOption(0))
 	emptyTokens(p)
 	p.state.ConsecutiveRetries = 1
-	p.endCall(false, nil)
+	p.endCall(false, nil, false)
 	assert.Equal(t, 0, len(p.connTokens))
 	assert.Equal(t, 0, p.state.ConsecutiveRetries)
 }
@@ -351,6 +351,41 @@ func TestCallParallel(t *testing.T) {
 
 	assert.Equal(t, 5, called)
 	wait.Broadcast()
+}
+
+func BenchmarkPacerReentered(b *testing.B) {
+	for b.Loop() {
+		_ = pacerReentered()
+	}
+}
+
+func BenchmarkPacerReentered100(b *testing.B) {
+	var fn func(level int)
+	fn = func(level int) {
+		if level > 0 {
+			fn(level - 1)
+			return
+		}
+		for b.Loop() {
+			_ = pacerReentered()
+		}
+
+	}
+	fn(100)
+}
+
+func TestCallMaxConnectionsRecursiveDeadlock(t *testing.T) {
+	p := New(CalculatorOption(NewDefault(MinSleep(1*time.Millisecond), MaxSleep(2*time.Millisecond))))
+	p.SetMaxConnections(1)
+	dp := &dummyPaced{retry: false}
+	err := p.Call(func() (bool, error) {
+		// check we have taken the connection token
+		// no tokens left means deadlock on the recursive call
+		assert.Equal(t, 0, len(p.connTokens))
+		return false, p.Call(dp.fn)
+	})
+	assert.Equal(t, 1, dp.called)
+	assert.Equal(t, errFoo, err)
 }
 
 func TestRetryAfterError_NonNilErr(t *testing.T) {

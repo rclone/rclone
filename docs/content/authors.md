@@ -1013,3 +1013,5 @@ put them back in again.` >}}
 - Robin Rolf <imer@imer.cc>
 - Jean-Christophe Cura <jcaspes@gmail.com>
 - russcoss <russcoss@outlook.com>
+- Matt LaPaglia <mlapaglia@gmail.com>
+- Youfu Zhang <1315097+zhangyoufu@users.noreply.github.com>

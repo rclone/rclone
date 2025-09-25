@@ -192,6 +192,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	// if root is empty or ends with / (must be a directory)
+	isRootDir := isPathDir(root)
+
 	root = strings.Trim(root, "/")
 
 	f := &Fs{
@@ -216,6 +219,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// test if the root exists as a file
 	share, dir := f.split("")
 	if share == "" || dir == "" {
+		return f, nil
+	}
+
+	// Skip stat check if root is already a directory
+	if isRootDir {
 		return f, nil
 	}
 	cn, err := f.getConnection(ctx, share)
@@ -892,6 +900,11 @@ func ensureSuffix(s, suffix string) string {
 		return s
 	}
 	return s + suffix
+}
+
+// isPathDir determines if a path represents a directory based on trailing slash
+func isPathDir(path string) bool {
+	return path == "" || strings.HasSuffix(path, "/")
 }
 
 func trimPathPrefix(s, prefix string) string {
