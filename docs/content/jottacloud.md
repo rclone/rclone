@@ -7,26 +7,28 @@ versionIntroduced: "v1.43"
 # {{< icon "fa fa-cloud" >}} Jottacloud
 
 Jottacloud is a cloud storage service provider from a Norwegian company, using
-its own datacenters in Norway. In addition to the official service at
-[jottacloud.com](https://www.jottacloud.com/), it also provides white-label
-solutions to different companies, such as:
+its own datacenters in Norway.
 
+In addition to the official service at [jottacloud.com](https://www.jottacloud.com/),
+it also provides white-label solutions to different companies. The following
+are currently supported by this backend, using a different authentication setup
+as described [below](#whitelabel-authentication):
+
+- Elkjøp (with subsidiaries):
+  - Elkjøp Cloud (cloud.elkjop.no)
+  - Elgiganten Cloud (cloud.elgiganten.dk)
+  - Elgiganten Cloud (cloud.elgiganten.se)
+  - ELKO Cloud (cloud.elko.is)
+  - Gigantti Cloud (cloud.gigantti.fi)
 - Telia
   - Telia Cloud (cloud.telia.se)
   - Telia Sky (sky.telia.no)
 - Tele2
   - Tele2 Cloud (mittcloud.tele2.se)
 - Onlime
-  - Onlime Cloud Storage (onlime.dk)
-- Elkjøp (with subsidiaries):
-  - Elkjøp Cloud (cloud.elkjop.no)
-  - Elgiganten Sweden (cloud.elgiganten.se)
-  - Elgiganten Denmark (cloud.elgiganten.dk)
-  - Giganti Cloud  (cloud.gigantti.fi)
-  - ELKO Cloud (cloud.elko.is)
-
-Most of the white-label versions are supported by this backend, although may
-require different authentication setup - described below.
+  - Onlime (onlime.dk)
+- MediaMarkt
+  - Let's Go Cloud (letsgo.jotta.cloud)
 
 Paths are specified as `remote:path`
 
@@ -34,18 +36,19 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 ## Authentication types
 
-Some of the whitelabel versions uses a different authentication method than the
+Some of the white-label versions uses a different authentication method than the
 official service, and you have to choose the correct one when setting up the remote.
 
 ### Standard authentication
 
 The standard authentication method used by the official service (jottacloud.com),
-as well as some of the whitelabel services, requires you to generate a single-use
-personal login token from the account security settings in the service's web
-interface. Log in to your account, go to "Settings" and then "Security", or use
-the direct link presented to you by rclone when configuring the remote:
+as well as some of the white-label services, is based on OAuth 2.0 and OpenID
+Connect (OIDC), and requires you to generate a single-use personal login token
+from the account security settings in the service's web interface. Log in to your
+account, go to "Settings" and then "Security", or use the direct link presented
+to you by rclone when configuring the remote:
 <https://www.jottacloud.com/web/secure>. Scroll down to the section "Personal login
-token", and click the "Generate" button. Note that if you are using a whitelabel
+token", and click the "Generate" button. Note that if you are using a white-label
 service you probably can't use the direct link, you need to find the same page in
 their dedicated web interface, and also it may be in a different location than
 described above.
@@ -72,41 +75,29 @@ All personal login tokens you have taken into use will be listed in the web
 interface under "My logged in devices", and from the right side of that list
 you can click the "X" button to revoke individual tokens.
 
+### Whitelabel authentication
+
+Most of the white-label versions uses a slightly different authentication flow,
+where it doesn't offer the option of creating a CLI token, and the username
+is generated internally. To setup rclone to use one of these, choose white-label
+authentication in the setup process, and then select the specific service
+in the next step.
+
+Note that when setting this up, you need to be on a machine with an
+internet-connected web browser. If you need it on a machine where this is not
+the case, then you will have to create the configuration on a different machine
+and copy it from there. The jottacloud backend does not support the
+`rclone authorize` command. See the [remote setup docs](/remote_setup) for
+details.
+
 ### Legacy authentication
 
-If you are using one of the whitelabel versions (e.g. from Elkjøp) you may not
-have the option to generate a CLI token. In this case you'll have to use the
-legacy authentication. To do this select yes when the setup asks for legacy
-authentication and enter your username and password. The rest of the setup is
-identical to the default setup.
-
-### Telia Cloud authentication
-
-Similar to other whitelabel versions Telia Cloud doesn't offer the option of
-creating a CLI token, and additionally uses a separate authentication flow
-where the username is generated internally. To setup rclone to use Telia Cloud,
-choose Telia Cloud authentication in the setup. The rest of the setup is
-identical to the default setup.
-
-### Tele2 Cloud authentication
-
-As Tele2-Com Hem merger was completed this authentication can be used for former
-Com Hem Cloud and Tele2 Cloud customers as no support for creating a CLI token
-exists, and additionally uses a separate authentication flow where the username
-is generated internally. To setup rclone to use Tele2 Cloud, choose Tele2 Cloud
-authentication in the setup. The rest of the setup is identical to the default setup.
-
-### Onlime Cloud Storage authentication
-
-Onlime has sold access to Jottacloud proper, while providing localized support
-to Danish Customers, but have recently set up their own hosting, transferring
-their customers from Jottacloud servers to their own ones.
-
-This, of course, necessitates using their servers for authentication, but
-otherwise functionality and architecture seems equivalent to Jottacloud.
-
-To setup rclone to use Onlime Cloud Storage, choose Onlime Cloud authentication
-in the setup. The rest of the setup is identical to the default setup.
+Originally Jottacloud used an older authentication method, not based on OpenID
+Connect, which required the username and password to be specified. Since
+Jottacloud migrated to the newer method, handled by the standard authentication,
+some white-label versions (those from Elkjøp) still used the legacy method for
+a long time. Currently there are no known uses of this, it is still supported
+by rclone, but the support will be removed in a future version.
 
 ## Configuration
 
@@ -125,7 +116,10 @@ n) New remote
 s) Set configuration password
 q) Quit config
 n/s/q> n
+
+Enter name for new remote.
 name> remote
+
 Option Storage.
 Type of storage to configure.
 Choose a number from below, or type in your own value.
@@ -134,60 +128,53 @@ XX / Jottacloud
    \ (jottacloud)
 [snip]
 Storage> jottacloud
+
+Option client_id.
+OAuth Client Id.
+Leave blank normally.
+Enter a value. Press Enter to leave empty.
+client_id>
+
+Option client_secret.
+OAuth Client Secret.
+Leave blank normally.
+Enter a value. Press Enter to leave empty.
+client_secret>
+
 Edit advanced config?
 y) Yes
 n) No (default)
 y/n> n
+
 Option config_type.
-Select authentication type.
-Choose a number from below, or type in an existing string value.
+Type of authentication.
+Choose a number from below, or type in an existing value of type string.
 Press Enter for the default (standard).
    / Standard authentication.
  1 | Use this if you're a normal Jottacloud user.
    \ (standard)
+   / Whitelabel authentication.
+ 2 | Use this if you are using the service offered by a third party such as Telia, Tele2, Onlime, Elkjøp, etc.
+   \ (whitelabel)
    / Legacy authentication.
- 2 | This is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.
+ 3 | This is no longer supported by any known services and not recommended for normal users.
    \ (legacy)
-   / Telia Cloud authentication.
- 3 | Use this if you are using Telia Cloud.
-   \ (telia)
-   / Tele2 Cloud authentication.
- 4 | Use this if you are using Tele2 Cloud.
-   \ (tele2)
-   / Onlime Cloud authentication.
- 5 | Use this if you are using Onlime Cloud.
-   \ (onlime)
 config_type> 1
+
+Option config_login_token.
 Personal login token.
 Generate here: https://www.jottacloud.com/web/secure
-Login Token> <your token here>
+Enter a value.
+config_login_token> <your token here>
+
 Use a non-standard device/mountpoint?
 Choosing no, the default, will let you access the storage used for the archive
 section of the official Jottacloud client. If you instead want to access the
 sync or the backup section, for example, you must choose yes.
 y) Yes
 n) No (default)
-y/n> y
-Option config_device.
-The device to use. In standard setup the built-in Jotta device is used,
-which contains predefined mountpoints for archive, sync etc. All other devices
-are treated as backup devices by the official Jottacloud client. You may create
-a new by entering a unique name.
-Choose a number from below, or type in your own string value.
-Press Enter for the default (DESKTOP-3H31129).
- 1 > DESKTOP-3H31129
- 2 > Jotta
-config_device> 2
-Option config_mountpoint.
-The mountpoint to use for the built-in device Jotta.
-The standard setup is to use the Archive mountpoint. Most other mountpoints
-have very limited support in rclone and should generally be avoided.
-Choose a number from below, or type in an existing string value.
-Press Enter for the default (Archive).
- 1 > Archive
- 2 > Shared
- 3 > Sync
-config_mountpoint> 1
+y/n> n
+
 Configuration complete.
 Options:
 - type: jottacloud
