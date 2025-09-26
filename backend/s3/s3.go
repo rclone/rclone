@@ -108,6 +108,9 @@ var providerOption = fs.Option{
 		Value: "FlashBlade",
 		Help:  "Pure Storage FlashBlade Object Storage",
 	}, {
+		Value: "FileLu",
+		Help:  "FileLu S5 (S3-Compatible Object Storage)",
+	}, {
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
 	}, {
@@ -347,6 +350,26 @@ func init() {
 			Examples: []fs.OptionExample{{
 				Value: "auto",
 				Help:  "R2 buckets are automatically distributed across Cloudflare's data centers for low latency.",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region to connect to for FileLu S5.",
+			Provider: "FileLu",
+			Examples: []fs.OptionExample{{
+				Value: "global",
+				Help:  "Global",
+			}, {
+				Value: "us-east",
+				Help:  "North America (US-East)",
+			}, {
+				Value: "eu-central",
+				Help:  "Europe (EU-Central)",
+			}, {
+				Value: "ap-southeast",
+				Help:  "Asia Pacific (AP-Southeast)",
+			}, {
+				Value: "me-central",
+				Help:  "Middle East (ME-Central)",
 			}},
 		}, {
 			Name:     "region",
@@ -657,7 +680,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -857,6 +880,14 @@ func init() {
 			}, {
 				Value: "eos-anhui-1.cmecloud.cn",
 				Help:  "Anhui China (Huainan)",
+			}},
+		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for FileLu S5 Object Storage.\nRequired when using FileLu S5.",
+			Provider: "FileLu",
+			Examples: []fs.OptionExample{{
+				Value: "s5lu.com",
+				Help:  "Global FileLu S5 endpoint",
 			}},
 		}, {
 			Name:     "endpoint",
@@ -2089,7 +2120,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -3690,6 +3721,11 @@ func setQuirks(opt *Options) {
 	case "FlashBlade":
 		mightGzip = false        // Never auto gzips objects
 		virtualHostStyle = false // supports vhost but defaults to paths
+	case "FileLu":
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useMultipartEtag = false
 	case "IBMCOS":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
