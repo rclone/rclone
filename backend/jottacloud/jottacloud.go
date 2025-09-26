@@ -463,7 +463,7 @@ You may create a new by entering a unique name.`, device)
 
 		if isNew {
 			if device == defaultDevice {
-				return nil, fmt.Errorf("custom mountpoints not supported on built-in %s device: %w", defaultDevice, err)
+				return nil, fmt.Errorf("custom mountpoints not supported on built-in %s device", defaultDevice)
 			}
 			fs.Debugf(nil, "Creating new mountpoint: %s", mountpoint)
 			_, err := createMountPoint(ctx, jfsSrv, path.Join(cust.Username, device, mountpoint))
