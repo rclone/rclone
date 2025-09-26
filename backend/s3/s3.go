@@ -108,6 +108,9 @@ var providerOption = fs.Option{
 		Value: "FlashBlade",
 		Help:  "Pure Storage FlashBlade Object Storage",
 	}, {
+    	Value: "FileLu",
+    	Help:  "FileLu S5 Object Storage",
+	}, {
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
 	}, {
@@ -347,6 +350,26 @@ func init() {
 			Examples: []fs.OptionExample{{
 				Value: "auto",
 				Help:  "R2 buckets are automatically distributed across Cloudflare's data centers for low latency.",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region to connect to for FileLu S5.",
+			Provider: "FileLu",
+			Examples: []fs.OptionExample{{
+				Value: "global",
+				Help:  "Global",
+			}, {
+				Value: "us-east",
+				Help:  "North America (US-East)",
+			}, {
+				Value: "eu-central",
+				Help:  "Europe (EU-Central)",
+			}, {
+				Value: "ap-southeast",
+				Help:  "Asia Pacific (AP-Southeast)",
+			}, {
+				Value: "me-central",
+				Help:  "Middle East (ME-Central)",
 			}},
 		}, {
 			Name:     "region",
@@ -2089,7 +2112,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
