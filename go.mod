@@ -130,6 +130,7 @@ require (
 	github.com/bradenaw/juniper v0.15.3 // indirect
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8 // indirect
 	github.com/calebcase/tmpfile v1.0.3 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chilts/sid v0.0.0-20190607042430-660e94789ec9 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
@@ -147,6 +148,8 @@ require (
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/geoffgarside/ber v1.2.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
+	github.com/go-kit/log v0.2.1 // indirect
+	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -191,10 +194,12 @@ require (
 	github.com/minio/xxml v0.0.3 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/namecrane/hoist v0.0.0-20250527012958-4ac36e537a8b // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/panjf2000/ants/v2 v2.11.3 // indirect
 	github.com/pengsrc/go-shared v0.2.1-0.20190131101655-1999055a4a14 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
+	github.com/philippseith/signalr v0.6.3 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
@@ -212,9 +217,12 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sony/gobreaker v1.0.0 // indirect
 	github.com/spacemonkeygo/monkit/v3 v3.0.24 // indirect
+	github.com/teivah/onecontext v1.3.0 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/willscott/go-nfs-client v0.0.0-20240104095149-b44639837b00 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
@@ -232,6 +240,7 @@ require (
 	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
+	nhooyr.io/websocket v1.8.17 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	storj.io/common v0.0.0-20250808122759-804533d519c1 // indirect
 	storj.io/drpc v0.0.35-0.20250513201419-f7819ea69b55 // indirect
