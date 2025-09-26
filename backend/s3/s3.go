@@ -108,8 +108,8 @@ var providerOption = fs.Option{
 		Value: "FlashBlade",
 		Help:  "Pure Storage FlashBlade Object Storage",
 	}, {
-    	Value: "FileLu",
-    	Help:  "FileLu S5 (S3-Compatible Object Storage)",
+		Value: "FileLu",
+		Help:  "FileLu S5 (S3-Compatible Object Storage)",
 	}, {
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
@@ -882,14 +882,14 @@ func init() {
 				Help:  "Anhui China (Huainan)",
 			}},
 		}, {
-    				Name:     "endpoint",
-   			   	Help:     "Endpoint for FileLu S5 Object Storage.\nRequired when using FileLu S5.",
-   				Provider: "FileLu",
-    				Examples: []fs.OptionExample{{
-        				Value: "s5lu.com",
-        				Help:  "Global FileLu S5 endpoint",
-    			}},
-			}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for FileLu S5 Object Storage.\nRequired when using FileLu S5.",
+			Provider: "FileLu",
+			Examples: []fs.OptionExample{{
+				Value: "s5lu.com",
+				Help:  "Global FileLu S5 endpoint",
+			}},
+		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for Google Cloud Storage.",
 			Provider: "GCS",
