@@ -1313,10 +1313,29 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcURL := srcObj.fileClient().URL()
 	fc := f.fileClient(remote)
-	_, err = fc.StartCopyFromURL(ctx, srcURL, &opt)
+	startCopy, err := fc.StartCopyFromURL(ctx, srcURL, &opt)
 	if err != nil {
 		return nil, fmt.Errorf("Copy failed: %w", err)
 	}
+
+	// Poll for completion if necessary
+	//
+	// The for loop is never executed for same storage account copies.
+	copyStatus := startCopy.CopyStatus
+	var properties file.GetPropertiesResponse
+	pollTime := 100 * time.Millisecond
+
+	for copyStatus != nil && string(*copyStatus) == string(file.CopyStatusTypePending) {
+		time.Sleep(pollTime)
+
+		properties, err = fc.GetProperties(ctx, &file.GetPropertiesOptions{})
+		if err != nil {
+			return nil, err
+		}
+		copyStatus = properties.CopyStatus
+		pollTime = min(2*pollTime, time.Second)
+	}
+
 	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
 		return nil, fmt.Errorf("Copy: NewObject failed: %w", err)
