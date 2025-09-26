@@ -126,7 +126,7 @@ token = {"access_token":...}
 Now create the file named `example.yml` with a swarm stack description
 like this:
 
-```yml
+```yaml
 version: '3'
 services:
   heimdall:
@@ -295,7 +295,7 @@ Each of them should be named after its volume and have at least two
 elements, the self-explanatory `driver: rclone` value and the
 `driver_opts:` structure playing the same role as `-o key=val` CLI flags:
 
-```yml
+```yaml
 volumes:
   volume_name_1:
     driver: rclone
@@ -463,7 +463,7 @@ to inform the docker daemon that a volume is (un-)available.
 As a workaround you can setup a healthcheck to verify that the mount
 is responding, for example:
 
-```yml
+```yaml
 services:
   my_service:
     image: my_image
