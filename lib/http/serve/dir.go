@@ -21,6 +21,7 @@ import (
 type DirEntry struct {
 	remote  string
 	URL     string
+	ZipURL  string
 	Leaf    string
 	IsDir   bool
 	Size    int64
@@ -32,6 +33,8 @@ type Directory struct {
 	DirRemote    string
 	Title        string
 	Name         string
+	ZipURL       string
+	DisableZip   bool
 	Entries      []DirEntry
 	Query        string
 	HTMLTemplate *template.Template
@@ -70,6 +73,7 @@ func NewDirectory(dirRemote string, htmlTemplate *template.Template) *Directory 
 		DirRemote:    dirRemote,
 		Title:        fmt.Sprintf("Directory listing of /%s", dirRemote),
 		Name:         fmt.Sprintf("/%s", dirRemote),
+		ZipURL:       "?download=zip",
 		HTMLTemplate: htmlTemplate,
 		Breadcrumb:   breadcrumb,
 	}
@@ -99,11 +103,15 @@ func (d *Directory) AddHTMLEntry(remote string, isDir bool, size int64, modTime 
 	d.Entries = append(d.Entries, DirEntry{
 		remote:  remote,
 		URL:     rest.URLPathEscape(urlRemote) + d.Query,
+		ZipURL:  "",
 		Leaf:    leaf,
 		IsDir:   isDir,
 		Size:    size,
 		ModTime: modTime,
 	})
+	if isDir {
+		d.Entries[len(d.Entries)-1].ZipURL = rest.URLPathEscape(urlRemote) + "?download=zip"
+	}
 }
 
 // AddEntry adds an entry to that directory

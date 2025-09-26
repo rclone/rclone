@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"io"
+	stdfs "io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -75,6 +76,16 @@ func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string)
 	return s, testURL
 }
 
+// setAllModTimes walks root and sets atime/mtime to t for every file & directory.
+func setAllModTimes(root string, t time.Time) error {
+	return filepath.WalkDir(root, func(path string, d stdfs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		return os.Chtimes(path, t, t)
+	})
+}
+
 var (
 	datedObject  = "two.txt"
 	expectedTime = time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC)
@@ -123,6 +134,8 @@ func testGET(t *testing.T, useProxy bool) {
 
 		f = nil
 	} else {
+		// set all the mod times to expectedTime
+		require.NoError(t, setAllModTimes("testdata/files", expectedTime))
 		// Create a test Fs
 		var err error
 		f, err = fs.NewFs(context.Background(), "testdata/files")
@@ -232,6 +245,16 @@ func testGET(t *testing.T, useProxy bool) {
 			Status: http.StatusPartialContent,
 			Range:  "bytes=3-",
 			Golden: "testdata/golden/two3-.txt",
+		},
+		{
+			URL:    "/?download=zip",
+			Status: http.StatusOK,
+			Golden: "testdata/golden/root.zip",
+		},
+		{
+			URL:    "/three/?download=zip",
+			Status: http.StatusOK,
+			Golden: "testdata/golden/three.zip",
 		},
 	} {
 		method := test.Method

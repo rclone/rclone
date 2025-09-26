@@ -82,7 +82,7 @@ func start(name string) error {
 	// parse the output and set environment vars from it
 	var connect string
 	var connectDelay time.Duration
-	for _, line := range bytes.Split(out, []byte("\n")) {
+	for line := range bytes.SplitSeq(out, []byte("\n")) {
 		line = bytes.TrimSpace(line)
 		part := matchLine.FindSubmatch(line)
 		if part != nil {

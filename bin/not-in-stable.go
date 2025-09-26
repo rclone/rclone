@@ -33,7 +33,7 @@ func readCommits(from, to string) (logMap map[string]string, logs []string) {
 	}
 	logMap = map[string]string{}
 	logs = []string{}
-	for _, line := range bytes.Split(out, []byte{'\n'}) {
+	for line := range bytes.SplitSeq(out, []byte{'\n'}) {
 		if len(line) == 0 {
 			continue
 		}

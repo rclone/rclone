@@ -1,6 +1,6 @@
 // Run a test
 
-package main
+package runs
 
 import (
 	"bytes"
@@ -28,6 +28,27 @@ var (
 	oneOnlyMu sync.Mutex
 	oneOnly   = map[string]*sync.Mutex{}
 )
+
+// RunOpt holds the options for the Run
+type RunOpt struct {
+	MaxTries     int           // Number of times to try each test
+	MaxN         int           // Maximum number of tests to run at once
+	TestRemotes  string        // Comma separated list of remotes to test, e.g. 'TestSwift:,TestS3'
+	TestBackends string        // Comma separated list of backends to test, e.g. 's3,googlecloudstorage
+	TestTests    string        // Comma separated list of tests to test, e.g. 'fs/sync,fs/operations'
+	Clean        bool          // Instead of testing, clean all left over test directories
+	RunOnly      string        // Run only those tests matching the regexp supplied
+	Timeout      time.Duration // Maximum time to run each test for before giving up
+	Race         bool          // If set run the tests under the race detector
+	ConfigFile   string        // Path to config file
+	OutputDir    string        // Place to store results
+	EmailReport  string        // Set to email the report to the address supplied
+	DryRun       bool          // Print commands which would be executed only
+	URLBase      string        // Base for the online version
+	UploadPath   string        // Set this to an rclone path to upload the results here
+	Verbose      bool          // Set to enable verbose logging in the tests
+	ListRetries  int           // Number or times to retry listing - set to override the default
+}
 
 // Run holds info about a running test
 //
@@ -132,11 +153,11 @@ func match(current trie) []string {
 // This converts a slice of test names into a regexp which matches
 // them.
 func testsToRegexp(tests []string) string {
-	var split = trie{}
+	split := trie{}
 	// Make a trie showing which parts are used at each level
 	for _, test := range tests {
-		var parent = split
-		for _, name := range strings.Split(test, "/") {
+		parent := split
+		for name := range strings.SplitSeq(test, "/") {
 			current := parent[name]
 			if current == nil {
 				current = trie{}
@@ -172,7 +193,7 @@ func (r *Run) findFailures() {
 		}
 	}
 	// Exclude the parents
-	var newTests = r.FailedTests[:0]
+	newTests := r.FailedTests[:0]
 	for _, failedTest := range r.FailedTests {
 		if _, excluded := excludeParents[failedTest]; !excluded {
 			newTests = append(newTests, failedTest)
@@ -210,10 +231,10 @@ func (r *Run) nextCmdLine() []string {
 }
 
 // trial runs a single test
-func (r *Run) trial() {
+func (r *Run) trial(Opt RunOpt) {
 	CmdLine := r.nextCmdLine()
 	CmdString := toShell(CmdLine)
-	msg := fmt.Sprintf("%q - Starting (try %d/%d)", CmdString, r.Try, *maxTries)
+	msg := fmt.Sprintf("%q - Starting (try %d/%d)", CmdString, r.Try, Opt.MaxTries)
 	fs.Log(nil, msg)
 	logName := path.Join(r.LogDir, r.TrialName)
 	out, err := os.Create(logName)
@@ -229,7 +250,7 @@ func (r *Run) trial() {
 	_, _ = fmt.Fprintln(out, msg)
 
 	// Early exit if --try-run
-	if *dryRun {
+	if Opt.DryRun {
 		fs.Logf(nil, "Not executing as --dry-run: %v", CmdLine)
 		_, _ = fmt.Fprintln(out, "--dry-run is set - not running")
 		return
@@ -260,9 +281,9 @@ func (r *Run) trial() {
 	duration := time.Since(start)
 	r.findFailures()
 	if r.passed() {
-		msg = fmt.Sprintf("%q - Finished OK in %v (try %d/%d)", CmdString, duration, r.Try, *maxTries)
+		msg = fmt.Sprintf("%q - Finished OK in %v (try %d/%d)", CmdString, duration, r.Try, Opt.MaxTries)
 	} else {
-		msg = fmt.Sprintf("%q - Finished ERROR in %v (try %d/%d): %v: Failed %v", CmdString, duration, r.Try, *maxTries, r.err, r.FailedTests)
+		msg = fmt.Sprintf("%q - Finished ERROR in %v (try %d/%d): %v: Failed %v", CmdString, duration, r.Try, Opt.MaxTries, r.err, r.FailedTests)
 	}
 	fs.Log(nil, msg)
 	_, _ = fmt.Fprintln(out, msg)
@@ -302,15 +323,15 @@ func (r *Run) PackagePath() string {
 }
 
 // MakeTestBinary makes the binary we will run
-func (r *Run) MakeTestBinary() {
+func (r *Run) MakeTestBinary(Opt RunOpt) {
 	binary := r.BinaryPath()
 	binaryName := r.BinaryName()
 	fs.Logf(nil, "%s: Making test binary %q", r.Path, binaryName)
 	CmdLine := []string{"go", "test", "-c"}
-	if *race {
+	if Opt.Race {
 		CmdLine = append(CmdLine, "-race")
 	}
-	if *dryRun {
+	if Opt.DryRun {
 		fs.Logf(nil, "Not executing: %v", CmdLine)
 		return
 	}
@@ -326,8 +347,8 @@ func (r *Run) MakeTestBinary() {
 }
 
 // RemoveTestBinary removes the binary made in makeTestBinary
-func (r *Run) RemoveTestBinary() {
-	if *dryRun {
+func (r *Run) RemoveTestBinary(Opt RunOpt) {
+	if Opt.DryRun {
 		return
 	}
 	binary := r.BinaryPath()
@@ -354,7 +375,7 @@ func (r *Run) Name() string {
 }
 
 // Init the Run
-func (r *Run) Init() {
+func (r *Run) Init(Opt RunOpt) {
 	prefix := "-test."
 	if r.NoBinary {
 		prefix = "-"
@@ -362,12 +383,12 @@ func (r *Run) Init() {
 	} else {
 		r.CmdLine = []string{"./" + r.BinaryName()}
 	}
-	testTimeout := *timeout
+	testTimeout := Opt.Timeout
 	if r.ExtraTime > 0 {
 		testTimeout = time.Duration(float64(testTimeout) * r.ExtraTime)
 	}
 	r.CmdLine = append(r.CmdLine, prefix+"v", prefix+"timeout", testTimeout.String(), "-remote", r.Remote)
-	listRetries := *listRetries
+	listRetries := Opt.ListRetries
 	if r.ListRetries > 0 {
 		listRetries = r.ListRetries
 	}
@@ -376,12 +397,12 @@ func (r *Run) Init() {
 	}
 	r.Try = 1
 	ci := fs.GetConfig(context.Background())
-	if *verbose {
+	if Opt.Verbose {
 		r.CmdLine = append(r.CmdLine, "-verbose")
 		ci.LogLevel = fs.LogLevelDebug
 	}
-	if *runOnly != "" {
-		r.CmdLine = append(r.CmdLine, prefix+"run", *runOnly)
+	if Opt.RunOnly != "" {
+		r.CmdLine = append(r.CmdLine, prefix+"run", Opt.RunOnly)
 	}
 	if r.FastList {
 		r.CmdLine = append(r.CmdLine, "-fast-list")
@@ -412,7 +433,7 @@ func (r *Run) FailedTestsCSV() string {
 }
 
 // Run runs all the trials for this test
-func (r *Run) Run(LogDir string, result chan<- *Run) {
+func (r *Run) Run(Opt RunOpt, LogDir string, result chan<- *Run) {
 	if r.OneOnly {
 		oneOnlyMu.Lock()
 		mu := oneOnly[r.Backend]
@@ -424,13 +445,13 @@ func (r *Run) Run(LogDir string, result chan<- *Run) {
 		mu.Lock()
 		defer mu.Unlock()
 	}
-	r.Init()
+	r.Init(Opt)
 	r.LogDir = LogDir
-	for r.Try = 1; r.Try <= *maxTries; r.Try++ {
+	for r.Try = 1; r.Try <= Opt.MaxTries; r.Try++ {
 		r.TrialName = r.Name() + ".txt"
 		r.TrialNames = append(r.TrialNames, r.TrialName)
 		fs.Logf(nil, "Starting run with log %q", r.TrialName)
-		r.trial()
+		r.trial(Opt)
 		if r.passed() || r.NoRetries {
 			break
 		}
@@ -439,4 +460,22 @@ func (r *Run) Run(LogDir string, result chan<- *Run) {
 		r.dumpOutput()
 	}
 	result <- r
+}
+
+// if matches then is definitely OK in the shell
+var shellOK = regexp.MustCompile("^[A-Za-z0-9./_:-]+$")
+
+// converts an argv style input into a shell command
+func toShell(args []string) (result string) {
+	for _, arg := range args {
+		if result != "" {
+			result += " "
+		}
+		if shellOK.MatchString(arg) {
+			result += arg
+		} else {
+			result += "'" + arg + "'"
+		}
+	}
+	return result
 }

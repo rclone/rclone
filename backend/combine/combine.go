@@ -187,7 +187,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	g, gCtx := errgroup.WithContext(ctx)
 	var mu sync.Mutex
 	for _, upstream := range opt.Upstreams {
-		upstream := upstream
 		g.Go(func() (err error) {
 			equal := strings.IndexRune(upstream, '=')
 			if equal < 0 {
@@ -370,7 +369,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 func (f *Fs) multithread(ctx context.Context, fn func(context.Context, *upstream) error) error {
 	g, gCtx := errgroup.WithContext(ctx)
 	for _, u := range f.upstreams {
-		u := u
 		g.Go(func() (err error) {
 			return fn(gCtx, u)
 		})
@@ -637,7 +635,6 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 	var uChans []chan time.Duration
 
 	for _, u := range f.upstreams {
-		u := u
 		if do := u.f.Features().ChangeNotify; do != nil {
 			ch := make(chan time.Duration)
 			uChans = append(uChans, ch)

@@ -990,7 +990,7 @@ put them back in again.` >}}
 - Ross Smith II <ross@smithii.com>
 - Vikas Bhansali <64532198+vibhansa-msft@users.noreply.github.com>
 - Sudipto Baral <sudiptobaral.me@gmail.com>
-- Sam Pegg <samrpegg@gmail.com>
+- Sam Pegg <samrpegg@gmail.com> <70067376+S-Pegg1@users.noreply.github.com>
 - liubingrun <liubr1@chinatelecom.cn>
 - Albin Parou <fumesover@gmail.com>
 - n4n5 <56606507+Its-Just-Nans@users.noreply.github.com>
@@ -1008,3 +1008,10 @@ put them back in again.` >}}
 - skbeh <60107333+skbeh@users.noreply.github.com>
 - Claudius Ellsel <claudius.ellsel@live.de>
 - Motte <37443982+dmotte@users.noreply.github.com>
+- dougal <dougal.craigwood@gmail.com> <147946567+roucc@users.noreply.github.com>
+- anon-pradip <pradipsubedi360@gmail.com>
+- Robin Rolf <imer@imer.cc>
+- Jean-Christophe Cura <jcaspes@gmail.com>
+- russcoss <russcoss@outlook.com>
+- Matt LaPaglia <mlapaglia@gmail.com>
+- Youfu Zhang <1315097+zhangyoufu@users.noreply.github.com>
