@@ -80,10 +80,15 @@ func getWhitelabelServices() map[string]struct {
 		clientID string
 		scopes   []string
 	}{
-		"telia_se": {"Telia Cloud (Sweden)", "cloud-auth.telia.se", "telia_se", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"telia_no": {"Telia Sky (Norway)", "sky-auth.telia.no", "get", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"tele2":    {"Tele2 Cloud (Sweden)", "mittcloud-auth.tele2.se", "comhem", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"onlime":   {"Onlime (Denmark)", "cloud-auth.onlime.dk", "onlime_wl", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"telia_se":      {"Telia Cloud (Sweden)", "cloud-auth.telia.se", "telia_se", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"telia_no":      {"Telia Sky (Norway)", "sky-auth.telia.no", "get", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"tele2":         {"Tele2 Cloud (Sweden)", "mittcloud-auth.tele2.se", "comhem", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"onlime":        {"Onlime (Denmark)", "cloud-auth.onlime.dk", "onlime_wl", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"elkjop":        {"Elkjøp Cloud (Norway)", "cloud.elkjop.no", "elkjop", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"elgiganten_se": {"Elgiganten Cloud (Sweden)", "cloud.elgiganten.se", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"elgiganten_dk": {"Elgiganten Cloud (Denmark)", "cloud.elgiganten.dk", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"gigantti":      {"Gigantti Cloud (Finland)", "cloud.gigantti.fi", "gigantti", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"elko":          {"ELKO Cloud (Iceland)", "cloud.elko.is", "elko", "desktop", []string{"openid", "jotta-default", "offline_access"}},
 	}
 }
 
