@@ -171,7 +171,7 @@ func init() {
 func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 	switch config.State {
 	case "":
-		return fs.ConfigChooseExclusiveFixed("auth_type_done", "config_type", `Select authentication type.`, []fs.OptionExample{{
+		return fs.ConfigChooseExclusiveFixed("auth_type_done", "config_type", `Type of authentication.`, []fs.OptionExample{{
 			Value: "standard",
 			Help:  "Standard authentication.\nUse this if you're a normal Jottacloud user.",
 		}, {
@@ -248,7 +248,6 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	case "legacy": // configure a jottacloud backend using legacy authentication
 		m.Set("configVersion", fmt.Sprint(legacyConfigVersion))
 		return fs.ConfigConfirm("legacy_api", false, "config_machine_specific", `Do you want to create a machine specific API key?
-
 Rclone has it's own Jottacloud API KEY which works fine as long as one
 only uses rclone on a single machine. When you want to use rclone with
 this account on more than one machine it's recommended to create a
@@ -265,10 +264,10 @@ machines.`)
 			m.Set(configClientSecret, obscure.MustObscure(deviceRegistration.ClientSecret))
 			fs.Debugf(nil, "Got clientID %q and clientSecret %q", deviceRegistration.ClientID, deviceRegistration.ClientSecret)
 		}
-		return fs.ConfigInput("legacy_username", "config_username", "Username (e-mail address)")
+		return fs.ConfigInput("legacy_username", "config_username", "Username (e-mail address) of your account.")
 	case "legacy_username":
 		m.Set(configUsername, config.Result)
-		return fs.ConfigPassword("legacy_password", "config_password", "Password (only used in setup, will not be stored)")
+		return fs.ConfigPassword("legacy_password", "config_password", "Password of your account. This is only used in setup, it will not be stored.")
 	case "legacy_password":
 		m.Set("password", config.Result)
 		m.Set("auth_code", "")
@@ -302,7 +301,7 @@ machines.`)
 		}
 		token, err := doLegacyAuth(ctx, srv, oauthConfig, username, password, authCode)
 		if err == errAuthCodeRequired {
-			return fs.ConfigInput("legacy_auth_code", "config_auth_code", "Verification Code\nThis account uses 2 factor authentication you will receive a verification code via SMS.")
+			return fs.ConfigInput("legacy_auth_code", "config_auth_code", "Verification code.\nThis account uses 2 factor authentication you will receive a verification code via SMS.")
 		}
 		m.Set("password", "")
 		m.Set("auth_code", "")
