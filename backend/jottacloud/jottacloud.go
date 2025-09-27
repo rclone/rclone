@@ -89,6 +89,7 @@ func getWhitelabelServices() map[string]struct {
 		"elgiganten_dk": {"Elgiganten Cloud (Denmark)", "cloud.elgiganten.dk", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
 		"gigantti":      {"Gigantti Cloud (Finland)", "cloud.gigantti.fi", "gigantti", "desktop", []string{"openid", "jotta-default", "offline_access"}},
 		"elko":          {"ELKO Cloud (Iceland)", "cloud.elko.is", "elko", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		"letsgo":        {"Let's Go Cloud (Germany)", "letsgo.jotta.cloud", "letsgo", "desktop-win", []string{"openid", "offline_access"}},
 	}
 }
 
