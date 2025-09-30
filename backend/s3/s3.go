@@ -4879,6 +4879,17 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			ui.req.IfNoneMatch = aws.String(value)
 		case "x-amz-tagging":
 			ui.req.Tagging = aws.String(value)
+		case "x-amz-object-lock-legal-hold":
+			ui.req.ObjectLockLegalHoldStatus = types.ObjectLockLegalHoldStatus(value)
+		case "x-amz-object-lock-mode":
+			ui.req.ObjectLockMode = types.ObjectLockMode(value)
+		case "x-amz-object-lock-retain-until-date":
+			valueTime, err := time.Parse(time.RFC3339, value)
+			if err == nil {
+				ui.req.ObjectLockRetainUntilDate = aws.Time(valueTime)
+			} else {
+				fs.Errorf(o, "Cannot parse value for key %q as time on upload", key)
+			}
 		default:
 			const amzMetaPrefix = "x-amz-meta-"
 			if strings.HasPrefix(lowerKey, amzMetaPrefix) {
