@@ -384,6 +384,9 @@ does not work on Windows.)
 rclone copy ':http,url="https://example.com":path/to/dir' /tmp/dir
 ```
 
+You can use [rclone config string](/commands/rclone_config_string/) to
+convert a remote into a connection string.
+
 #### Connection strings, config and logging
 
 If you supply extra configuration to a backend by command line flag,
