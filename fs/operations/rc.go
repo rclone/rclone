@@ -160,7 +160,6 @@ func rcAbout(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	for _, copy := range []bool{false, true} {
-		copy := copy
 		name := "Move"
 		if copy {
 			name = "Copy"
@@ -217,7 +216,6 @@ func init() {
 		{name: "settier", title: "Changes storage tier or class on all files in the path", noRemote: true},
 		{name: "settierfile", title: "Changes storage tier or class on the single file pointed to", noCommand: true},
 	} {
-		op := op
 		var remote, command string
 		if !op.noRemote {
 			remote = "- remote - a path within that remote e.g. \"dir\"\n"

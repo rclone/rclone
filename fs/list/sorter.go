@@ -222,7 +222,6 @@ func (lh *listHelper) send(max int) (err error) {
 	g, gCtx := errgroup.WithContext(lh.ls.ctx)
 	g.SetLimit(lh.ls.ci.Checkers)
 	for i, key := range lh.keys {
-		i, key := i, key // can remove when go1.22 is minimum version
 		g.Go(func() error {
 			lh.entries[i], lh.errs[i] = lh.ls.keyToEntry(gCtx, key)
 			return nil

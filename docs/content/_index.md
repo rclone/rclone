@@ -142,6 +142,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
+{{< provider name="Intercolo Object Storage" home="https://intercolo.de/object-storage" config="/s3/#intercolo" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
 {{< provider name="Leviia Object Storage" home="https://www.leviia.com/object-storage" config="/s3/#leviia" >}}
@@ -188,6 +189,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="SFTP" home="https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol" config="/sftp/" >}}
 {{< provider name="Sia" home="https://sia.tech/" config="/sia/" >}}
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
+{{< provider name="Spectra Logic" home="https://spectralogic.com/blackpearl-nearline-object-gateway/" config="/s3/#spectralogic" >}}
 {{< provider name="StackPath" home="https://www.stackpath.com/products/object-storage/" config="/s3/#stackpath" >}}
 {{< provider name="Storj" home="https://storj.io/" config="/storj/" >}}
 {{< provider name="Synology" home="https://c2.synology.com/en-global/object-storage/overview" config="/s3/#synology-c2" >}}

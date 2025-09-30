@@ -254,15 +254,47 @@ func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	bucketName, directory := f.split(dir)
 	fs.Debugf(f, "listing: bucket : %v, directory: %v", bucketName, dir)
 	if bucketName == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listBuckets(ctx)
+		entries, err := f.listBuckets(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, bucketName, directory, f.rootDirectory, f.rootBucket == "", list.Add)
+		if err != nil {
+			return err
+		}
 	}
-	return f.listDir(ctx, bucketName, directory, f.rootDirectory, f.rootBucket == "")
+	return list.Flush()
 }
 
 // listFn is called from list to handle an object.
@@ -411,24 +443,24 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *objectst
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool, callback func(fs.DirEntry) error) (err error) {
 	fn := func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
 		if err != nil {
 			return err
 		}
 		if entry != nil {
-			entries = append(entries, entry)
+			return callback(entry)
 		}
 		return nil
 	}
 	err = f.list(ctx, bucket, directory, prefix, addBucket, false, 0, fn)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// bucket must be present if listing succeeded
 	f.cache.MarkOK(bucket)
-	return entries, nil
+	return nil
 }
 
 // listBuckets returns all the buckets to out
@@ -765,6 +797,7 @@ var (
 	_ fs.Copier          = &Fs{}
 	_ fs.PutStreamer     = &Fs{}
 	_ fs.ListRer         = &Fs{}
+	_ fs.ListPer         = &Fs{}
 	_ fs.Commander       = &Fs{}
 	_ fs.CleanUpper      = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}

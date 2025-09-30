@@ -191,7 +191,7 @@ func driveScopes(scopesString string) (scopes []string) {
 	if scopesString == "" {
 		scopesString = defaultScope
 	}
-	for _, scope := range strings.Split(scopesString, ",") {
+	for scope := range strings.SplitSeq(scopesString, ",") {
 		scope = strings.TrimSpace(scope)
 		scopes = append(scopes, scopePrefix+scope)
 	}
@@ -1220,7 +1220,7 @@ func isLinkMimeType(mimeType string) bool {
 // into a list of unique extensions with leading "." and a list of associated MIME types
 func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, err error) {
 	for _, extensionText := range extensionsIn {
-		for _, extension := range strings.Split(extensionText, ",") {
+		for extension := range strings.SplitSeq(extensionText, ",") {
 			extension = strings.ToLower(strings.TrimSpace(extension))
 			if extension == "" {
 				continue
