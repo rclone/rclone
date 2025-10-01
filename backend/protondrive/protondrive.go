@@ -93,7 +93,7 @@ two-factor authentication`,
 			Name: "otp_secret_key",
 			Help: `The OTP secret key
 
-The value can also be provided with --protondrive-otp_secret_key=00000
+The value can also be provided with --protondrive-otp-secret-key=ABCDEFGHIJKLMNOPQRSTUVWXYZ234567
 
 The OTP secret key of your proton drive account if the account is set up with 
 two-factor authentication`,
