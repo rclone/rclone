@@ -31,6 +31,7 @@ const (
 	clusterProcessing = clusterQueue + "/processing"
 	clusterDone       = clusterQueue + "/done"
 	clusterFinished   = clusterQueue + "/finished"
+	clusterStatus     = clusterQueue + "/status"
 
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
@@ -38,6 +39,12 @@ const (
 
 	// Read the queue this often
 	clusterCheckJobsInterval = time.Second
+
+	// Write the worker status this often
+	clusterWriteStatusInterval = time.Second
+
+	// Read the worker status this often
+	clusterCheckWorkersInterval = time.Second
 
 	// Name of job which signals to the workers to quit
 	quitJob = "QUIT"
@@ -82,7 +89,7 @@ func NewJobs(ctx context.Context) (*Jobs, error) {
 
 // Create the cluster directory structure
 func (jobs *Jobs) createDirectoryStructure(ctx context.Context) (err error) {
-	for _, dir := range []string{clusterPending, clusterProcessing, clusterDone, clusterFinished} {
+	for _, dir := range []string{clusterPending, clusterProcessing, clusterDone, clusterFinished, clusterStatus} {
 		err = jobs.f.Mkdir(ctx, dir)
 		if err != nil {
 			return fmt.Errorf("cluster mkdir %q: %w", dir, err)
@@ -163,6 +170,17 @@ func (jobs *Jobs) writeFile(ctx context.Context, remote string, modTime time.Tim
 		}
 	}
 	return nil
+}
+
+// Remove the file if it exists
+func (jobs *Jobs) removeFile(ctx context.Context, remote string) error {
+	obj, err := jobs.f.NewObject(ctx, remote)
+	if errors.Is(err, fs.ErrorObjectNotFound) || errors.Is(err, fs.ErrorDirNotFound) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	return obj.Remove(ctx)
 }
 
 // write a job to a file returning the name

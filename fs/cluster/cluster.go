@@ -4,6 +4,7 @@ package cluster
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path"
@@ -17,10 +18,16 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/errcount"
+	"golang.org/x/sync/errgroup"
 )
 
 // ErrClusterNotConfigured is returned from creation functions.
 var ErrClusterNotConfigured = errors.New("cluster is not configured")
+
+// If we don't hear from workers in this time we assume they have timed out
+// and re-assign their jobs.
+const workerTimeout = 2 * time.Second
 
 // Cluster describes the workings of the current cluster.
 type Cluster struct {
@@ -36,6 +43,9 @@ type Cluster struct {
 	quit        chan struct{}        // signal graceful stop
 	sync        chan chan<- struct{} // sync the current jobs
 	quitWorkers bool                 // if set, send workers a stop signal on Shutdown
+
+	workers     map[string]*WorkerStatus // worker ID => status
+	deadWorkers map[string]struct{}
 
 	mu           sync.Mutex
 	currentBatch Batch
@@ -88,6 +98,8 @@ func NewCluster(ctx context.Context) (*Cluster, error) {
 		quit:        make(chan struct{}),
 		sync:        make(chan chan<- struct{}),
 		inflight:    make(map[string]Batch),
+		workers:     make(map[string]*WorkerStatus),
+		deadWorkers: make(map[string]struct{}),
 	}
 
 	// Configure _config
@@ -379,6 +391,90 @@ func (c *Cluster) processCompletedJob(ctx context.Context, obj fs.Object) error 
 	return nil
 }
 
+// loadWorkerStatus updates the worker status
+func (c *Cluster) loadWorkerStatus(ctx context.Context) error {
+	objs, err := c.jobs.listDir(ctx, clusterStatus)
+	if err != nil {
+		return fmt.Errorf("cluster: get job status list failed: %w", err)
+	}
+	ec := errcount.New()
+	g, gCtx := errgroup.WithContext(ctx)
+	var mu sync.Mutex
+	for _, obj := range objs {
+		g.Go(func() error {
+			buf, err := c.jobs.readFile(gCtx, obj)
+			if err != nil {
+				ec.Add(fmt.Errorf("read object: %w", err))
+				return nil
+			}
+			workerStatus := new(WorkerStatus)
+			err = json.Unmarshal(buf, workerStatus)
+			if err != nil {
+				ec.Add(fmt.Errorf("status json: %w", err))
+				return nil
+			}
+			mu.Lock()
+			c.workers[workerStatus.ID] = workerStatus
+			mu.Unlock()
+			return nil
+		})
+	}
+	return ec.Err("cluster: load status")
+}
+
+// checkWorkers loads the worker status
+func (c *Cluster) checkWorkers(ctx context.Context) {
+	err := c.loadWorkerStatus(ctx)
+	if err != nil {
+		fs.Errorf(nil, "failed to read some worker status: %v", err)
+	}
+	for workerID, status := range c.workers {
+		timeSinceUpdated := time.Since(status.Updated)
+		if timeSinceUpdated > workerTimeout {
+			if _, isDead := c.deadWorkers[workerID]; isDead {
+				continue
+			}
+			fs.Errorf(nil, "cluster: haven't heard from worker %q for %v - assuming dead", workerID, timeSinceUpdated)
+			// Find any jobs claimed by worker and restart
+			objs, err := c.jobs.listDir(ctx, clusterProcessing)
+			if err != nil {
+				fs.Errorf(nil, "cluster: failed to find pending jobs: %v", err)
+				continue
+			}
+			for _, obj := range objs {
+				fs.Errorf(obj, "cluster: checking job")
+				// Jobs are named {jobID}-{workerID}.json
+				name := strings.TrimSuffix(path.Base(obj.Remote()), ".json")
+				dash := strings.LastIndex(name, "-")
+				if dash < 0 {
+					fs.Errorf(nil, "cluster: failed to find dash in job %q", name)
+					continue
+				}
+				jobID, jobWorkerID := name[:dash], name[dash+1:]
+				fs.Errorf(obj, "cluster: checking jobID %q, workerID %q", jobID, jobWorkerID)
+				if workerID != jobWorkerID {
+					fs.Debugf(nil, "cluster: job %q doesn't match %q", jobWorkerID, workerID)
+					continue
+				}
+				// Found a job running on worker - rename it back to Pending
+				newRemote := path.Join(clusterPending, jobID+".json")
+				_, err = c.jobs.rename(ctx, obj, newRemote)
+				if err != nil {
+					fs.Errorf(nil, "cluster: failed to restart job %q: %v", jobID, err)
+					continue
+				}
+				fs.Errorf(nil, "cluster: restarted job %q", jobID)
+			}
+			c.deadWorkers[workerID] = struct{}{}
+		} else {
+			if _, isDead := c.deadWorkers[workerID]; isDead {
+				fs.Errorf(nil, "cluster: dead worker %q came back to life!", workerID)
+				delete(c.deadWorkers, workerID)
+			}
+		}
+	}
+}
+
 // checkJobs sees if there are any completed jobs
 func (c *Cluster) checkJobs(ctx context.Context) {
 	objs, err := c.jobs.listDir(ctx, clusterDone)
@@ -404,6 +500,8 @@ func (c *Cluster) run(ctx context.Context) {
 	defer c.wg.Done()
 	checkJobs := time.NewTicker(clusterCheckJobsInterval)
 	defer checkJobs.Stop()
+	checkWorkers := time.NewTicker(clusterCheckWorkersInterval)
+	defer checkWorkers.Stop()
 	var syncedChans []chan<- struct{}
 	for {
 		select {
@@ -415,6 +513,8 @@ func (c *Cluster) run(ctx context.Context) {
 		case synced := <-c.sync:
 			syncedChans = append(syncedChans, synced)
 			fs.Debugf(nil, "cluster: sync request received")
+		case <-checkWorkers.C:
+			c.checkWorkers(ctx)
 		case <-checkJobs.C:
 		}
 		c.checkJobs(ctx)

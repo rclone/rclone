@@ -119,6 +119,10 @@ The controller only sends transfer jobs to the workers. All the other
 tasks (eg listing, comparing) are done by the controller. The
 controller does not execute any transfer tasks itself.
 
+The controller reads worker status as written to `queue/status` and
+will detect workers which have stopped. If it detects a failed worker
+then it will re-assign any outstanding work.
+
 ## Workers
 
 The workers job is entirely to act as API endpoints that receive their
@@ -136,6 +140,27 @@ work via files in `/work`. Then
   or rename it into `queue/finished` if the `--cluster-cleanup` flag
   allows it.
 - Repeat
+
+Every second the worker will write a status file in `queue/status` to
+be read by the controller.
+
+## Layout of the work directory
+
+The format of the files in this directory may change without notice
+but the layout is documented here as it can help debugging.
+
+```text
+/work                - root of the work directory
+└── queue            - files to control the queue
+    ├── done         - job files that are finished and read
+    ├── finished     - job files that are finished but not yet read
+    ├── pending      - job files that are not started yet
+    ├── processing   - job files that are running
+    └── status       - worker status files
+```
+
+If debugging use `--cluster-cleanup none` to leave the completed files
+in the directory layout.
 
 ## Flags
 
