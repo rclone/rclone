@@ -168,9 +168,12 @@ func init() {
 }
 
 // Config runs the backend configuration protocol
-func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-	switch config.State {
+func Config(ctx context.Context, name string, m configmap.Mapper, conf fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch conf.State {
 	case "":
+		if isAuthorize, _ := m.Get(config.ConfigAuthorize); isAuthorize == "true" {
+			return nil, errors.New("not supported by this backend")
+		}
 		return fs.ConfigChooseExclusiveFixed("auth_type_done", "config_type", `Type of authentication.`, []fs.OptionExample{{
 			Value: "standard",
 			Help:  "Standard authentication.\nUse this if you're a normal Jottacloud user.",
@@ -183,12 +186,12 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		}})
 	case "auth_type_done":
 		// Jump to next state according to config chosen
-		return fs.ConfigGoto(config.Result)
+		return fs.ConfigGoto(conf.Result)
 	case "standard": // configure a jottacloud backend using the modern JottaCli token based authentication
 		m.Set("configVersion", fmt.Sprint(configVersion))
 		return fs.ConfigInput("standard_token", "config_login_token", "Personal login token.\nGenerate here: https://www.jottacloud.com/web/secure")
 	case "standard_token":
-		loginToken := config.Result
+		loginToken := conf.Result
 		m.Set(configClientID, defaultClientID)
 		m.Set(configClientSecret, "")
 
@@ -219,9 +222,9 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			"White-label service. This decides the domain name to connect to and\nthe authentication configuration to use.",
 			options)
 	case "whitelabel_type":
-		whitelabel, ok := getWhitelabelServices()[config.Result]
+		whitelabel, ok := getWhitelabelServices()[conf.Result]
 		if !ok {
-			return nil, fmt.Errorf("unexpected whitelabel %q", config.Result)
+			return nil, fmt.Errorf("unexpected whitelabel %q", conf.Result)
 		}
 		opts := rest.Opts{
 			Method:  "GET",
@@ -255,7 +258,7 @@ machine specific API key. These keys can NOT be shared between
 machines.`)
 	case "legacy_api":
 		srv := rest.NewClient(fshttp.NewClient(ctx))
-		if config.Result == "true" {
+		if conf.Result == "true" {
 			deviceRegistration, err := registerDevice(ctx, srv)
 			if err != nil {
 				return nil, fmt.Errorf("failed to register device: %w", err)
@@ -266,14 +269,14 @@ machines.`)
 		}
 		return fs.ConfigInput("legacy_username", "config_username", "Username (e-mail address) of your account.")
 	case "legacy_username":
-		m.Set(configUsername, config.Result)
+		m.Set(configUsername, conf.Result)
 		return fs.ConfigPassword("legacy_password", "config_password", "Password of your account. This is only used in setup, it will not be stored.")
 	case "legacy_password":
-		m.Set("password", config.Result)
+		m.Set("password", conf.Result)
 		m.Set("auth_code", "")
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_auth_code":
-		authCode := strings.ReplaceAll(config.Result, "-", "") // remove any "-" contained in the code so we have a 6 digit number
+		authCode := strings.ReplaceAll(conf.Result, "-", "") // remove any "-" contained in the code so we have a 6 digit number
 		m.Set("auth_code", authCode)
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_do_auth":
@@ -320,7 +323,7 @@ section of the official Jottacloud client. If you instead want to access the
 sync or the backup section, for example, you must choose yes.`)
 
 	case "choose_device_query":
-		if config.Result != "true" {
+		if conf.Result != "true" {
 			m.Set(configDevice, "")
 			m.Set(configMountpoint, "")
 			return fs.ConfigGoto("end")
@@ -361,7 +364,7 @@ a new by entering a unique name.`, defaultDevice)
 			return deviceNames[i], ""
 		})
 	case "choose_device_result":
-		device := config.Result
+		device := conf.Result
 
 		oAuthClient, _, err := getOAuthClient(ctx, name, m)
 		if err != nil {
@@ -421,7 +424,7 @@ You may create a new by entering a unique name.`, device)
 			return dev.MountPoints[i].Name, ""
 		})
 	case "choose_device_mountpoint":
-		mountpoint := config.Result
+		mountpoint := conf.Result
 
 		oAuthClient, _, err := getOAuthClient(ctx, name, m)
 		if err != nil {
@@ -467,7 +470,7 @@ You may create a new by entering a unique name.`, device)
 		// All the config flows end up here in case we need to carry on with something
 		return nil, nil
 	}
-	return nil, fmt.Errorf("unknown state %q", config.State)
+	return nil, fmt.Errorf("unknown state %q", conf.State)
 }
 
 // Options defines the configuration for this backend
