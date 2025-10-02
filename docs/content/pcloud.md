@@ -71,7 +71,7 @@ y/e/d> y
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note if you are using remote config with rclone authorize while your pcloud
 server is the EU region, you will need to set the hostname in 'Edit advanced
