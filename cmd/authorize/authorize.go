@@ -26,8 +26,8 @@ var commandDefinition = &cobra.Command{
 	Use:   "authorize <backendname> [base64_json_blob | client_id client_secret]",
 	Short: `Remote authorization.`,
 	Long: `Remote authorization. Used to authorize a remote or headless
-rclone from a machine with a browser - use as instructed by
-rclone config.
+rclone from a machine with a browser. Use as instructed by rclone config.
+See also the [remote setup documentation](/remote_setup).
 
 The command requires 1-3 arguments:
 
