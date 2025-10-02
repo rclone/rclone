@@ -6,7 +6,7 @@ description: "Configuring rclone up on a remote / headless machine"
 # Configuring rclone on a remote / headless machine
 
 Some of the configurations (those involving oauth2) require an
-Internet connected web browser.
+internet-connected web browser.
 
 If you are trying to set rclone up on a remote or headless box with no
 browser available on it (e.g. a NAS or a server in a datacenter) then

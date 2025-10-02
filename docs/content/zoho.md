@@ -80,7 +80,7 @@ y/e/d>
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Rclone runs a webserver on your local computer to collect the
 authorization token from Zoho Workdrive. This is only from the moment
