@@ -115,6 +115,10 @@ func TestZipManySubDirs(t *testing.T) {
 func TestZipLargeFiles(t *testing.T) {
 	r, vfs := newTestVFS(t)
 
+	if strings.HasPrefix(r.Fremote.Name(), "TestChunker") {
+		t.Skip("skipping test as chunker too slow")
+	}
+
 	data := random.String(5 * 1024 * 1024)
 	sum := sha256.Sum256([]byte(data))
 
