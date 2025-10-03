@@ -655,7 +655,7 @@ require further quoting which is very shell dependent.
 		var out strings.Builder
 		out.WriteRune(':')
 		out.WriteString(fsInfo.Name)
-		config := overridden.String()
+		config := overridden.Human()
 		if config != "" {
 			out.WriteRune(',')
 			out.WriteString(config)
