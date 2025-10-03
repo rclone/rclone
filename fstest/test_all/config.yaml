@@ -139,6 +139,7 @@ backends:
  - backend:  "compress"
    remote:   "TestCompressDrive:"
    fastlist: false
+   extratime: 2.0
  - backend:  "compress"
    remote:   "TestCompressS3:"
    fastlist: false
