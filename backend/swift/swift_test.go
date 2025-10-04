@@ -76,6 +76,7 @@ func (f *Fs) testNoChunk(t *testing.T) {
 
 // Additional tests that aren't in the framework
 func (f *Fs) InternalTest(t *testing.T) {
+	t.Run("PolicyDiscovery", f.testPolicyDiscovery)
 	t.Run("NoChunk", f.testNoChunk)
 	t.Run("WithChunk", f.testWithChunk)
 	t.Run("WithChunkFail", f.testWithChunkFail)
@@ -193,6 +194,52 @@ func (f *Fs) testCopyLargeObject(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, objTarget)
 	require.Equal(t, obj.Size(), objTarget.Size())
+}
+
+func (f *Fs) testPolicyDiscovery(t *testing.T) {
+	ctx := context.TODO()
+	container := "testPolicyDiscovery-1"
+	// Reset the policy so we can test if it is populated.
+	f.opt.StoragePolicy = ""
+	err := f.makeContainer(ctx, container)
+	require.NoError(t, err)
+	_, err = f.fetchStoragePolicy(ctx, container)
+	require.NoError(t, err)
+
+	// Default policy for SAIO image is 1replica.
+	assert.Equal(t, "1replica", f.opt.StoragePolicy)
+
+	// Create a container using a non-default policy, and check to ensure
+	// that the created segments container uses the same non-default policy.
+	policy := "Policy-1"
+	container = "testPolicyDiscovery-2"
+
+	f.opt.StoragePolicy = policy
+	err = f.makeContainer(ctx, container)
+	require.NoError(t, err)
+
+	// Reset the policy so we can test if it is populated, and set to the
+	// non-default policy.
+	f.opt.StoragePolicy = ""
+	_, err = f.fetchStoragePolicy(ctx, container)
+	require.NoError(t, err)
+	assert.Equal(t, policy, f.opt.StoragePolicy)
+
+	// Test that when a segmented upload container is made, the newly
+	// created container inherits the non-default policy of the base
+	// container.
+	f.opt.StoragePolicy = ""
+	f.opt.UseSegmentsContainer.Value = true
+	su, err := f.newSegmentedUpload(ctx, container, "")
+	require.NoError(t, err)
+	// The container name we expected?
+	segmentsContainer := container + segmentsContainerSuffix
+	assert.Equal(t, segmentsContainer, su.container)
+	// The policy we expected?
+	f.opt.StoragePolicy = ""
+	_, err = f.fetchStoragePolicy(ctx, su.container)
+	require.NoError(t, err)
+	assert.Equal(t, policy, f.opt.StoragePolicy)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
