@@ -17,7 +17,7 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -69,28 +69,28 @@ const (
 	legacyConfigVersion         = 0
 )
 
-func getServices() map[string]struct {
-	name, domain, realm, clientID string
-	scopes                        []string
-} {
-	return map[string]struct {
-		name     string
-		domain   string
-		realm    string
-		clientID string
-		scopes   []string
-	}{
-		"jottacloud":    {"Jottacloud", "id.jottacloud.com", "jottacloud", "desktop", []string{"openid", "jotta-default", "offline_access"}}, // Chose client id "desktop" here, will be identified as "Jottacloud for Desktop" in "My logged in devices", but could have used "jottacli" here as well.
-		"elkjop":        {"Elkjøp Cloud (Norway)", "cloud.elkjop.no", "elkjop", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"elgiganten_dk": {"Elgiganten Cloud (Denmark)", "cloud.elgiganten.dk", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"elgiganten_se": {"Elgiganten Cloud (Sweden)", "cloud.elgiganten.se", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"elko":          {"ELKO Cloud (Iceland)", "cloud.elko.is", "elko", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"gigantti":      {"Gigantti Cloud (Finland)", "cloud.gigantti.fi", "gigantti", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"telia_se":      {"Telia Cloud (Sweden)", "cloud-auth.telia.se", "telia_se", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"telia_no":      {"Telia Sky (Norway)", "sky-auth.telia.no", "get", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"tele2":         {"Tele2 Cloud (Sweden)", "mittcloud-auth.tele2.se", "comhem", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"onlime":        {"Onlime (Denmark)", "cloud-auth.onlime.dk", "onlime_wl", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"letsgo":        {"Let's Go Cloud (Germany)", "letsgo.jotta.cloud", "letsgo", "desktop-win", []string{"openid", "offline_access"}},
+type service struct {
+	key      string
+	name     string
+	domain   string
+	realm    string
+	clientID string
+	scopes   []string
+}
+
+func getServices() []service {
+	return []service{
+		{"jottacloud", "Jottacloud", "id.jottacloud.com", "jottacloud", "desktop", []string{"openid", "jotta-default", "offline_access"}}, // Chose client id "desktop" here, will be identified as "Jottacloud for Desktop" in "My logged in devices", but could have used "jottacli" here as well.
+		{"elkjop", "Elkjøp Cloud (Norway)", "cloud.elkjop.no", "elkjop", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elgiganten_dk", "Elgiganten Cloud (Denmark)", "cloud.elgiganten.dk", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elgiganten_se", "Elgiganten Cloud (Sweden)", "cloud.elgiganten.se", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elko", "ELKO Cloud (Iceland)", "cloud.elko.is", "elko", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"gigantti", "Gigantti Cloud (Finland)", "cloud.gigantti.fi", "gigantti", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"telia_se", "Telia Cloud (Sweden)", "cloud-auth.telia.se", "telia_se", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"telia_no", "Telia Sky (Norway)", "sky-auth.telia.no", "get", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"tele2", "Tele2 Cloud (Sweden)", "mittcloud-auth.tele2.se", "comhem", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"onlime", "Onlime (Denmark)", "cloud-auth.onlime.dk", "onlime_wl", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"letsgo", "Let's Go Cloud (Germany)", "letsgo.jotta.cloud", "letsgo", "desktop-win", []string{"openid", "offline_access"}},
 	}
 }
 
@@ -222,23 +222,22 @@ service, for the official service on https://www.jottacloud.com/web/secure.`)
 	case "traditional":
 		services := getServices()
 		options := make([]fs.OptionExample, 0, len(services))
-		for key, val := range services {
+		for _, service := range services {
 			options = append(options, fs.OptionExample{
-				Value: key,
-				Help:  val.name,
+				Value: service.key,
+				Help:  service.name,
 			})
 		}
-		sort.Slice(options, func(i, j int) bool {
-			return options[i].Help < options[j].Help
-		})
 		return fs.ConfigChooseExclusiveFixed("traditional_type", "config_traditional",
 			"White-label service. This decides the domain name to connect to and\nthe authentication configuration to use.",
 			options)
 	case "traditional_type":
-		service, ok := getServices()[conf.Result]
-		if !ok {
+		services := getServices()
+		i := slices.IndexFunc(services, func(s service) bool { return s.key == conf.Result })
+		if i == -1 {
 			return nil, fmt.Errorf("unexpected service %q", conf.Result)
 		}
+		service := services[i]
 		opts := rest.Opts{
 			Method:  "GET",
 			RootURL: "https://" + service.domain + "/auth/realms/" + service.realm + "/.well-known/openid-configuration",
