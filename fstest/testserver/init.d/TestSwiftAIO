@@ -11,8 +11,8 @@ start() {
     # We need to replace the remakerings in the container to create Policy-1.
     docker run --rm -d --name ${NAME} \
            -p 127.0.0.1:${PORT}:8080 \
-	   -v $(dirname "$0")/TestSwiftAIO.d/remakerings:/swift/bin/remakerings:ro \
-           bouncestorage/swift-aio
+	   -v $(dirname "$0")/TestSwiftAIO.d/remakerings:/etc/swift/remakerings:ro \
+           openstackswift/saio
 
     echo type=swift
     echo env_auth=false
