@@ -175,7 +175,16 @@ func Start(remoteName string) (fn func(), err error) {
 	if running[name] <= 0 {
 		// if server isn't running check to see if this server has
 		// been started already but not by us and stop it if so
-		if os.Getenv(envKey(name, "type")) == "" && isRunning(name) {
+		const maxTries = 10
+		for i := 1; i <= maxTries; i++ {
+			if os.Getenv(envKey(name, "type")) == "" && !isRunning(name) {
+				fs.Logf(name, "Stopped server")
+				break
+			}
+			if i != 1 {
+				time.Sleep(time.Second)
+				fs.Logf(name, "Attempting to stop %s try %d/%d", name, i, maxTries)
+			}
 			stop(name)
 		}
 		if !isRunning(name) {
@@ -211,6 +220,6 @@ func stop(name string) {
 			fs.Errorf(name, "Failed to stop server: %v", err)
 		}
 		running[name] = 0
-		fs.Logf(name, "Stopped server")
+		fs.Logf(name, "Stopping server")
 	}
 }
