@@ -110,7 +110,7 @@ func start(name string) error {
 		return nil
 	}
 	// If we got a _connect value then try to connect to it
-	const maxTries = 30
+	const maxTries = 100
 	var rdBuf = make([]byte, 1)
 	for i := 1; i <= maxTries; i++ {
 		if i != 0 {
