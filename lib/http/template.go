@@ -23,24 +23,22 @@ func TemplateHelp(prefix string) string {
 and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
-| Parameter   | Description |
-| :---------- | :---------- |
-| .Name       | The full path of a file/directory. |
-| .Title      | Directory listing of .Name |
-| .Sort       | The current sort used.  This is changeable via ?sort= parameter |
-|             | Sort Options: namedirfirst,name,size,time (default namedirfirst) |
-| .Order      | The current ordering used.  This is changeable via ?order= parameter |
-|             | Order Options: asc,desc (default asc) |
-| .Query      | Currently unused. |
-| .Breadcrumb | Allows for creating a relative navigation |
-|-- .Link     | The relative to the root link of the Text. |
-|-- .Text     | The Name of the directory. |
-| .Entries    | Information about a specific file/directory. |
-|-- .URL      | The 'url' of an entry.  |
-|-- .Leaf     | Currently same as 'URL' but intended to be 'just' the name. |
-|-- .IsDir    | Boolean for if an entry is a directory or not. |
-|-- .Size     | Size in Bytes of the entry. |
-|-- .ModTime  | The UTC timestamp of an entry. |
+| Parameter   | Subparameter | Description |
+| :---------- | :----------- | :---------- |
+| .Name       |              | The full path of a file/directory. |
+| .Title      |              | Directory listing of '.Name'. |
+| .Sort       |              | The current sort used. This is changeable via '?sort=' parameter. Possible values: namedirfirst, name, size, time (default namedirfirst). |
+| .Order      |              | The current ordering used. This is changeable via '?order=' parameter. Possible values: asc, desc (default asc). |
+| .Query      |              | Currently unused. |
+| .Breadcrumb |              | Allows for creating a relative navigation. |
+|             | .Link        | The link of the Text relative to the root. |
+|             | .Text        | The Name of the directory. |
+| .Entries    |              | Information about a specific file/directory. |
+|             | .URL         | The url of an entry. |
+|             | .Leaf        | Currently same as '.URL' but intended to be just the name. |
+|             | .IsDir       | Boolean for if an entry is a directory or not. |
+|             | .Size        | Size in bytes of the entry. |
+|             | .ModTime     | The UTC timestamp of an entry. |
 
 The server also makes the following functions available so that they can be used
 within the template. These functions help extend the options for dynamic
