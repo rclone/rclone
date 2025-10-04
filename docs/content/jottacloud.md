@@ -34,54 +34,79 @@ Paths are specified as `remote:path`
 
 Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
-## Authentication types
+## Authentication
 
-Some of the white-label versions uses a different authentication method than the
-official service, and you have to choose the correct one when setting up the remote.
-
-### Standard authentication
-
-The standard authentication method used by the official service (jottacloud.com),
-as well as some of the white-label services, is based on OAuth 2.0 and OpenID
-Connect (OIDC), and requires you to generate a single-use personal login token
-from the account security settings in the service's web interface. Log in to your
-account, go to "Settings" and then "Security", or use the direct link presented
-to you by rclone when configuring the remote:
-<https://www.jottacloud.com/web/secure>. Scroll down to the section "Personal login
-token", and click the "Generate" button. Note that if you are using a white-label
-service you probably can't use the direct link, you need to find the same page in
-their dedicated web interface, and also it may be in a different location than
-described above.
+Authentication in Jottacloud is in general based on OAuth 2.0 and OpenID
+Connect (OIDC). There are different variants to choose from, described below.
+Some of the variants are only supported by the official service and not
+white-label services, so this must be taken into consideration when choosing.
 
 To access your account from multiple instances of rclone, you need to configure
-each of them with a separate personal login token. E.g. you create a Jottacloud
-remote with rclone in one location, and copy the configuration file to a second
-location where you also want to run rclone and access the same remote. Then you
-need to replace the token for one of them, using the [config reconnect](https://rclone.org/commands/rclone_config_reconnect/)
-command, which requires you to generate a new personal login token and supply
-as input. If you do not do this, the token may easily end up being invalidated,
-resulting in both instances failing with an error message something along the
-lines of:
+each of them separately. E.g. you create a Jottacloud remote with rclone in one
+location, and copy the configuration file to a second location where you also
+want to run rclone and access the same remote. Then you need to replace the
+token for one of them, using the [config reconnect](https://rclone.org/commands/rclone_config_reconnect/)
+command. For standard authentication (described below) this means you will have
+to generate a new personal login token and supply as input. If you do not do
+this, the token may easily end up being invalidated, resulting in both
+instances failing with an error message something along the lines of:
 
 ```text
   oauth2: cannot fetch token: 400 Bad Request
   Response: {"error":"invalid_grant","error_description":"Stale token"}
 ```
 
-When this happens, you need to replace the token as described above to be able
-to use your remote again.
+The background for this is that OAuth tokens from Jottacloud normally have one
+hour expiry, after which they will be automatically refreshed by rclone.
+Jottacloud will then refresh not only the access token, but also the refresh
+token. Any requests using a previous refresh token will be flagged, and lead
+to the stale token error. When this happens, you need to replace the token as
+described above to be able to use your remote again.
 
-All personal login tokens you have taken into use will be listed in the web
-interface under "My logged in devices", and from the right side of that list
-you can click the "X" button to revoke individual tokens.
+Each time you are granted access with a new token, it will listed in the web
+interface under "My logged in devices". From the right side of that list you
+can click the "X" button to revoke access. This will effectively disable the
+refresh token, which means you will still have access using an existing access
+token until that expires, but you will not be able to refresh it.
 
-### Whitelabel authentication
+### Standard
 
-Most of the white-label versions uses a slightly different authentication flow,
-where it doesn't offer the option of creating a CLI token, and the username
-is generated internally. To setup rclone to use one of these, choose white-label
-authentication in the setup process, and then select the specific service
-in the next step.
+This is an OAuth variant designed for command-line applications. It is
+primarily supported by the official service (jottacloud.com), but may also be
+supported by some of the white-label services. The specific domain name and
+endpoint to connect to are found automatically (it is encoded into the supplied
+login token, described next).
+
+When configuring a remote, you are asked to enter a single-use personal login
+token, which you must manually generate from the account security settings in
+the service's web interface. You do not need a web browser on the same machine
+like with traditional OAuth, but need to use a web browser somewhere, and be
+able to be copy the generated string into your rclone configuration session.
+
+Log in to your account, go to "Settings" and then "Security", or use the direct
+link presented to you by rclone when configuring the remote:
+<https://www.jottacloud.com/web/secure>. Scroll down to the section "Personal
+login token", and click the "Generate" button. Note that if you are using a
+white-label service you probably can't use the direct link, you need to find
+the same page in their dedicated web interface, and also it may be in a
+different location than described above.
+
+When you have successfully authenticated using a personal login token, which
+means you have received a proper OAuth token, there will be an entry in the
+"My logged in devices" list in the web interface. It will be listed with
+application name "Jottacloud CLI".
+
+### Traditional
+
+Jottacloud also supports a more traditional OAuth variant. Most of the
+white-label services supports this, and often only this as they do not support
+personal login tokens. This method relies on pre-defined domain names and
+endpoints, and rclone must therefore explicitly add any white-label services
+that should be supported.
+
+When configuring a remote, you must interactively login to an OAuth
+authorization web site, and a one-time authorization code are automatically
+sent back to rclone, which it uses to request a token.
 
 Note that when setting this up, you need to be on a machine with an
 internet-connected web browser. If you need it on a machine where this is not
@@ -90,14 +115,18 @@ and copy it from there. The jottacloud backend does not support the
 `rclone authorize` command. See the [remote setup docs](/remote_setup) for
 details.
 
-### Legacy authentication
+When you have successfully authenticated, there will be an entry in the
+"My logged in devices" list in the web interface. It will typically be listed
+with application name "Jottacloud for Desktop" or similar (it depends on the
+white-label service configuration).
 
-Originally Jottacloud used an older authentication method, not based on OpenID
-Connect, which required the username and password to be specified. Since
-Jottacloud migrated to the newer method, handled by the standard authentication,
-some white-label versions (those from Elkjøp) still used the legacy method for
-a long time. Currently there are no known uses of this, it is still supported
-by rclone, but the support will be removed in a future version.
+### Legacy
+
+Originally Jottacloud used an OAuth variant which required your account's
+username and password to be specified. When Jottacloud migrated to the newer
+methods, some white-label versions (those from Elkjøp) still used this legacy
+method for a long time. Currently there are no known uses of this, it is still
+supported by rclone, but the support will be removed in a future version.
 
 ## Configuration
 
@@ -151,19 +180,27 @@ Type of authentication.
 Choose a number from below, or type in an existing value of type string.
 Press Enter for the default (standard).
    / Standard authentication.
- 1 | Use this if you're a normal Jottacloud user.
+   | This is primarily supported by the official service, but may also be supported
+   | by some of the white-label services. It is designed for command-line
+ 1 | applications, and you will be asked to enter a single-use personal login token
+   | which you must manually generate from the account security settings in the
+   | web interface of your service.
    \ (standard)
-   / Whitelabel authentication.
- 2 | Use this if you are using the service offered by a third party such as Telia, Tele2, Onlime, Elkjøp, etc.
-   \ (whitelabel)
+   / Traditional authentication.
+   | This is supported by the official service and most of the white-label
+ 2 | services, you will be asked which service to connect to. You need to be on
+   | a machine with an internet-connected web browser.
+   \ (traditional)
    / Legacy authentication.
- 3 | This is no longer supported by any known services and not recommended for normal users.
+ 3 | This is no longer supported by any known services and not recommended used.
+   | You will be asked for your account's username and password.
    \ (legacy)
 config_type> 1
 
 Option config_login_token.
 Personal login token.
-Generate here: https://www.jottacloud.com/web/secure
+Generate it from the account security settings in the web interface of your
+service, for the official service on https://www.jottacloud.com/web/secure.
 Enter a value.
 config_login_token> <your token here>
 
