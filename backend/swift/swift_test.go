@@ -206,8 +206,8 @@ func (f *Fs) testPolicyDiscovery(t *testing.T) {
 	_, err = f.fetchStoragePolicy(ctx, container)
 	require.NoError(t, err)
 
-	// Default policy for Swift is Policy-0.
-	assert.Equal(t, "Policy-0", f.opt.StoragePolicy)
+	// Default policy for SAIO image is 1replica.
+	assert.Equal(t, "1replica", f.opt.StoragePolicy)
 
 	// Create a container using a non-default policy, and check to ensure
 	// that the created segments container uses the same non-default policy.
