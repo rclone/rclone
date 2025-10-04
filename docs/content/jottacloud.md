@@ -28,6 +28,7 @@ as described [below](#whitelabel-authentication):
 - Onlime
   - Onlime (onlime.dk)
 - MediaMarkt
+  - MediaMarkt Cloud (mediamarkt.jottacloud.com)
   - Let's Go Cloud (letsgo.jotta.cloud)
 
 Paths are specified as `remote:path`
