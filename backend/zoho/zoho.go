@@ -15,9 +15,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/pacer"
-	"github.com/rclone/rclone/lib/random"
+	"golang.org/x/oauth2"
 
 	"github.com/rclone/rclone/backend/zoho/api"
 	"github.com/rclone/rclone/fs"
@@ -28,9 +26,11 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
+	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -425,7 +425,7 @@ func (f *Fs) String() string {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return time.Second // Zoho supports modification times with second precision
 }
 
 // Hashes returns the supported hash sets.
@@ -760,7 +760,12 @@ func (f *Fs) createObject(ctx context.Context, remote string, size int64, modTim
 	return
 }
 
-func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
+func (f *Fs) uploadLargeFile(ctx context.Context, src fs.ObjectInfo, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
+
+	// Get the modification time from src
+	modTime := src.ModTime(ctx)
+	fs.Debugf(nil, "uploadLargeFile: Original modTime: %v", modTime)
+
 	opts := rest.Opts{
 		Method:        "POST",
 		Path:          "/stream/upload",
@@ -769,11 +774,12 @@ func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, si
 		ContentType:   "application/octet-stream",
 		Options:       options,
 		ExtraHeaders: map[string]string{
-			"x-filename":          url.QueryEscape(name),
-			"x-parent_id":         parent,
-			"override-name-exist": "true",
-			"upload-id":           uuid.New().String(),
-			"x-streammode":        "1",
+			"x-filename":           url.QueryEscape(name),
+			"x-parent_id":          parent,
+			"override-name-exist":  "true",
+			"upload-id":            uuid.New().String(),
+			"x-streammode":         "1",
+			"x-last-modified-date": modTime.UTC().Format("2006-01-02T15:04:05.000Z"),
 		},
 	}
 
@@ -803,7 +809,7 @@ func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, si
 	// info.Attributes.Type = not used
 	info.Attributes.IsFolder = false
 	// info.Attributes.CreatedTime = not used
-	info.Attributes.ModifiedTime = uploadInfo.GetModTime()
+	info.Attributes.ModifiedTime = api.Time(modTime)
 	// info.Attributes.UploadedTime = 0 not used
 	info.Attributes.StorageInfo.Size = uploadInfo.Size
 	info.Attributes.StorageInfo.FileCount = 0
@@ -812,7 +818,7 @@ func (f *Fs) uploadLargeFile(ctx context.Context, name string, parent string, si
 	return &info, nil
 }
 
-func (f *Fs) upload(ctx context.Context, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
+func (f *Fs) upload(ctx context.Context, src fs.ObjectInfo, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
 	params := url.Values{}
 	params.Set("filename", url.QueryEscape(name))
 	params.Set("parent_id", parent)
@@ -822,14 +828,20 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 		return nil, fmt.Errorf("failed to make multipart upload: %w", err)
 	}
 
+	modTime := src.ModTime(ctx)
+	fs.Debugf(nil, "upload: Original modTime: %v", modTime)
+
 	contentLength := overhead + size
 	opts := rest.Opts{
-		Method:           "POST",
-		Path:             "/upload",
-		Body:             formReader,
-		ContentType:      contentType,
-		ContentLength:    &contentLength,
-		Options:          options,
+		Method:        "POST",
+		Path:          "/upload",
+		Body:          formReader,
+		ContentType:   contentType,
+		ContentLength: &contentLength,
+		Options:       options,
+		ExtraHeaders: map[string]string{
+			"x-last-modified-date": modTime.UTC().Format("2006-01-02T15:04:05.000Z"),
+		},
 		Parameters:       params,
 		TransferEncoding: []string{"identity"},
 	}
@@ -859,7 +871,7 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	// info.Attributes.Type = not used
 	info.Attributes.IsFolder = false
 	// info.Attributes.CreatedTime = not used
-	info.Attributes.ModifiedTime = uploadInfo.GetModTime()
+	info.Attributes.ModifiedTime = api.Time(modTime)
 	// info.Attributes.UploadedTime = 0 not used
 	info.Attributes.StorageInfo.Size = uploadInfo.Size
 	info.Attributes.StorageInfo.FileCount = 0
@@ -890,7 +902,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 		// use normal upload API for small sizes (<10MiB)
 		if size < int64(f.opt.UploadCutoff) {
-			info, err := f.upload(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+			info, err := f.upload(ctx, src, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 			if err != nil {
 				return nil, err
 			}
@@ -899,7 +911,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 
 		// large file API otherwise
-		info, err := f.uploadLargeFile(ctx, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+		info, err := f.uploadLargeFile(ctx, src, f.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 		if err != nil {
 			return nil, err
 		}
@@ -1320,7 +1332,9 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	// We can't modify the modification time after upload
+	// It can only be set during the initial upload
+	return fs.ErrorCantSetModTimeWithoutDelete
 }
 
 // rename renames an object in place
@@ -1373,7 +1387,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// use normal upload API for small sizes (<10MiB)
 	if size < int64(o.fs.opt.UploadCutoff) {
-		info, err := o.fs.upload(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+		info, err := o.fs.upload(ctx, src, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 		if err != nil {
 			return err
 		}
@@ -1382,7 +1396,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// large file API otherwise
-	info, err := o.fs.uploadLargeFile(ctx, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
+	info, err := o.fs.uploadLargeFile(ctx, src, o.fs.opt.Enc.FromStandardName(leaf), directoryID, size, in, options...)
 	if err != nil {
 		return err
 	}

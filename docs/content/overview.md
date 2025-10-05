@@ -67,7 +67,7 @@ Here is an overview of the major features of each cloud storage system.
 | Uptobox                      | -                 | -       | No               | Yes             | -         | -        |
 | WebDAV                       | MD5, SHA1 ³       | R ⁴     | Depends          | No              | -         | -        |
 | Yandex Disk                  | MD5               | R/W     | No               | No              | R         | -        |
-| Zoho WorkDrive               | -                 | -       | No               | No              | -         | -        |
+| Zoho WorkDrive               | -                 | R       | No               | No              | -         | -        |
 | The local filesystem         | All               | DR/W    | Depends          | No              | -         | DRWU     |
 
 ¹ Dropbox supports [its own custom
