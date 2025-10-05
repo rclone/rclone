@@ -61,13 +61,23 @@ location where you also want to run rclone and access the same remote. Then you
 need to replace the token for one of them, using the [config reconnect](https://rclone.org/commands/rclone_config_reconnect/)
 command, which requires you to generate a new personal login token and supply
 as input. If you do not do this, the token may easily end up being invalidated,
-resulting in both instances failing with an error message something along the
-lines of:
+resulting in both instances failing with an error message, something along
+the lines of:
 
 ```text
-  oauth2: cannot fetch token: 400 Bad Request
-  Response: {"error":"invalid_grant","error_description":"Stale token"}
+CRITICAL: Failed to create file system for "remote:": (...): couldn't fetch token: invalid_grant: maybe token expired? - try refreshing with "rclone config reconnect remote:"
 ```
+
+If you run rclone with verbosity level 2 (`-vv`), you will see a debug message
+with an additional error description from the OAuth response:
+
+```text
+DEBUG : remote: got fatal oauth error: oauth2: "invalid_grant" "Session doesn't have required client"
+```
+
+(The error description used to be "Stale token" instead of "Session doesn't
+have required client", so you may see references to that in older descriptions
+of this case.)
 
 When this happens, you need to replace the token as described above to be able
 to use your remote again.
