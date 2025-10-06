@@ -10,6 +10,7 @@ import (
 	nfs "github.com/willscott/go-nfs"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -21,6 +22,7 @@ type Server struct {
 	ctx                 context.Context // for global config
 	listener            net.Listener
 	UnmountedExternally bool
+	metricsCleanup      func()
 }
 
 // NewServer creates a new server
@@ -45,6 +47,9 @@ func NewServer(ctx context.Context, vfs *vfs.VFS, opt *Options) (s *Server, err 
 	if err != nil {
 		return nil, fmt.Errorf("failed to open listening socket: %w", err)
 	}
+	if metrics.Enabled() {
+		s.metricsCleanup = metrics.TrackFS(ctx, vfs.Fs())
+	}
 	return s, nil
 }
 
@@ -55,11 +60,21 @@ func (s *Server) Addr() net.Addr {
 
 // Shutdown stops the server
 func (s *Server) Shutdown() error {
-	return s.listener.Close()
+	err := s.listener.Close()
+	s.closeMetrics()
+	return err
 }
 
 // Serve starts the server
 func (s *Server) Serve() (err error) {
+	defer s.closeMetrics()
 	fs.Logf(nil, "NFS Server running at %s\n", s.listener.Addr())
 	return nfs.Serve(s.listener, s.handler)
+}
+
+func (s *Server) closeMetrics() {
+	if s.metricsCleanup != nil {
+		s.metricsCleanup()
+		s.metricsCleanup = nil
+	}
 }

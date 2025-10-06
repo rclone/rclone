@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/lib/terminal"
 	"github.com/spf13/cobra"
@@ -274,10 +275,11 @@ func checkPrivate(next http.Handler) http.Handler {
 
 // server contains everything to run the server
 type server struct {
-	server *libhttp.Server
-	f      fs.Fs
-	cache  *cache
-	opt    Options
+	server         *libhttp.Server
+	f              fs.Fs
+	cache          *cache
+	opt            Options
+	metricsCleanup func()
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error) {
@@ -299,11 +301,15 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (s *server, err error
 	}
 	router := s.server.Router()
 	s.Bind(router)
+	if metrics.Enabled() {
+		s.metricsCleanup = metrics.TrackFS(ctx, f)
+	}
 	return s, nil
 }
 
 // Serve restic until the server is shutdown
 func (s *server) Serve() error {
+	defer s.closeMetrics()
 	s.server.Serve()
 	s.server.Wait()
 	return nil
@@ -316,7 +322,18 @@ func (s *server) Addr() net.Addr {
 
 // Shutdown the server
 func (s *server) Shutdown() error {
-	return s.server.Shutdown()
+	if err := s.server.Shutdown(); err != nil {
+		return err
+	}
+	s.closeMetrics()
+	return nil
+}
+
+func (s *server) closeMetrics() {
+	if s.metricsCleanup != nil {
+		s.metricsCleanup()
+		s.metricsCleanup = nil
+	}
 }
 
 // bind helper for main Bind method

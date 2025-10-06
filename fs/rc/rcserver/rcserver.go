@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/rc/webgui"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
 )
@@ -374,8 +375,8 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		// Serve /[fs]/remote files
 		s.serveRemote(w, r, fsMatchResult[2], fsMatchResult[1])
 		return
-	case path == "metrics" && s.opt.EnableMetrics:
-		promHandlerFunc(w, r)
+	case path == "metrics" && metrics.Enabled() && s.opt.EnableMetrics:
+		metrics.Handler().ServeHTTP(w, r)
 		return
 	case path == "*" && s.opt.Serve:
 		// Serve /* as the remote listing

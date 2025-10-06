@@ -29,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -166,15 +167,16 @@ You can set a single username and password with the --user and --pass flags.
 
 // driver contains everything to run the driver for the FTP server
 type driver struct {
-	f          fs.Fs
-	srv        *ftp.Server
-	ctx        context.Context // for global config
-	opt        Options
-	globalVFS  *vfs.VFS     // the VFS if not using auth proxy
-	proxy      *proxy.Proxy // may be nil if not in use
-	useTLS     bool
-	userPassMu sync.Mutex        // to protect userPass
-	userPass   map[string]string // cache of username => password when using vfs proxy
+	f              fs.Fs
+	srv            *ftp.Server
+	ctx            context.Context // for global config
+	opt            Options
+	globalVFS      *vfs.VFS     // the VFS if not using auth proxy
+	proxy          *proxy.Proxy // may be nil if not in use
+	useTLS         bool
+	userPassMu     sync.Mutex        // to protect userPass
+	userPass       map[string]string // cache of username => password when using vfs proxy
+	metricsCleanup func()
 }
 
 func init() {
@@ -204,6 +206,10 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		d.userPass = make(map[string]string, 16)
 	} else {
 		d.globalVFS = vfs.New(f, vfsOpt)
+	}
+
+	if metrics.Enabled() {
+		d.metricsCleanup = metrics.TrackFS(ctx, f)
 	}
 	d.useTLS = d.opt.TLSKey != ""
 
@@ -237,6 +243,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 // Serve runs the FTP server until it is shutdown
 func (d *driver) Serve() error {
+	defer d.closeMetrics()
 	fs.Logf(d.f, "Serving FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
 	err := d.srv.ListenAndServe()
 	if err == ftp.ErrServerClosed {
@@ -250,7 +257,16 @@ func (d *driver) Serve() error {
 //lint:ignore U1000 unused when not building linux
 func (d *driver) Shutdown() error {
 	fs.Logf(d.f, "Stopping FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
-	return d.srv.Shutdown()
+	err := d.srv.Shutdown()
+	d.closeMetrics()
+	return err
+}
+
+func (d *driver) closeMetrics() {
+	if d.metricsCleanup != nil {
+		d.metricsCleanup()
+		d.metricsCleanup = nil
+	}
 }
 
 // Return the first address of the server
