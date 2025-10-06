@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -170,8 +171,9 @@ type server struct {
 	// Time interval between SSPD announces
 	AnnounceInterval time.Duration
 
-	f   fs.Fs
-	vfs *vfs.VFS
+	f              fs.Fs
+	vfs            *vfs.VFS
+	metricsCleanup func()
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options) (*server, error) {
@@ -233,6 +235,10 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		withHeader("Cache-Control", "public, max-age=86400",
 			http.FileServer(data.Assets))))
 	s.handler = logging(withHeader("Server", serverField, r))
+
+	if metrics.Enabled() {
+		s.metricsCleanup = metrics.TrackFS(ctx, f)
+	}
 
 	// Currently, the SSDP server only listens on an IPv4 multicast address.
 	// Differentiate between two INADDR_ANY addresses,
@@ -370,6 +376,7 @@ func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 // Serve runs the server - returns the error only if the listener was
 // not started. Blocks until the server is closed.
 func (s *server) Serve() (err error) {
+	defer s.closeMetrics()
 	go func() {
 		s.startSSDP()
 	}()
@@ -396,10 +403,18 @@ func (s *server) Wait() {
 func (s *server) Shutdown() error {
 	err := s.HTTPConn.Close()
 	close(s.waitChan)
+	s.closeMetrics()
 	if err != nil {
 		return fmt.Errorf("failed to shutdown DLNA server: %w", err)
 	}
 	return nil
+}
+
+func (s *server) closeMetrics() {
+	if s.metricsCleanup != nil {
+		s.metricsCleanup()
+		s.metricsCleanup = nil
+	}
 }
 
 // Return the first address of the server
