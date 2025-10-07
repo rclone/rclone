@@ -2,6 +2,9 @@ module github.com/rclone/rclone
 
 go 1.24.0
 
+// replace github.com/t3rm1n4l/go-mega => github.com/itrooz/go-mega v0.0.0-20251007202346-4dd43b615ec0
+replace github.com/t3rm1n4l/go-mega => ../go-mega
+
 require (
 	bazil.org/fuse v0.0.0-20230120002735-62a210ff1fd5
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.19.1
