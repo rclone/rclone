@@ -49,7 +49,7 @@ const (
 	eventWaitTime = 500 * time.Millisecond
 	decayConstant = 2 // bigger for slower decay, exponential
 
-	sessionIdConfigKey = "session_id"
+	sessionIDConfigKey = "session_id"
 	masterKeyConfigKey = "master_key"
 )
 
@@ -79,7 +79,7 @@ func init() {
 			Help:     `The 2FA code of your MEGA account if the account is set up with one`,
 			Required: false,
 		}, {
-			Name:      sessionIdConfigKey,
+			Name:      sessionIDConfigKey,
 			Help:      "Session (internal use only)",
 			Required:  false,
 			Advanced:  true,
@@ -136,7 +136,7 @@ type Options struct {
 	User       string               `config:"user"`
 	Pass       string               `config:"pass"`
 	TwoFA      string               `config:"2fa"`
-	SessionId  string               `config:"session_id"`
+	SessionID  string               `config:"session_id"`
 	MasterKey  string               `config:"master_key"`
 	Debug      bool                 `config:"debug"`
 	HardDelete bool                 `config:"hard_delete"`
@@ -286,14 +286,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			})
 		}
 
-		if opt.SessionId == "" {
+		if opt.SessionID == "" {
 			fs.Debugf(f, "Using username and password to initialize the Mega API")
 			err := srv.MultiFactorLogin(opt.User, opt.Pass, opt.TwoFA)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't login: %w", err)
 			}
 			megaCache[opt.User] = srv
-			m.Set(sessionIdConfigKey, srv.GetSessionID())
+			m.Set(sessionIDConfigKey, srv.GetSessionID())
 			encodedMasterKey := base64.StdEncoding.EncodeToString(srv.GetMasterKey())
 			m.Set(masterKeyConfigKey, encodedMasterKey)
 		} else {
@@ -302,7 +302,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			if err != nil {
 				return nil, fmt.Errorf("couldn't decode master key: %w", err)
 			}
-			err = srv.LoginWithKeys(opt.SessionId, decodedMasterKey)
+			err = srv.LoginWithKeys(opt.SessionID, decodedMasterKey)
 			if err != nil {
 				fs.Debugf(f, "login with previous auth keys failed: %v", err)
 			}
