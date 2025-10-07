@@ -1,0 +1,212 @@
+---
+# Github Actions build for rclone
+# -*- compile-command: "yamllint -f parsable build_android.yml" -*-
+
+name: Build & Push Android Builds
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+# Trigger the workflow on push or pull request
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      manual:
+        description: Manual run (bypass default conditions)
+        type: boolean
+        default: true
+
+jobs:
+  android:
+    if: inputs.manual || (github.repository == 'rclone/rclone' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name))
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - job_name: android-all
+            platform: linux/amd64/android/go1.24
+            os: ubuntu-latest
+            go: '>=1.24.0-rc.1'
+
+    name: ${{ matrix.job_name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Upgrade together with NDK version
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          check-latest: true
+          cache: false
+
+      - name: Set Environment Variables
+        shell: bash
+        run: |
+          echo "GOMODCACHE=$(go env GOMODCACHE)" >> $GITHUB_ENV
+          echo "GOCACHE=$(go env GOCACHE)" >> $GITHUB_ENV
+          echo "VERSION=$(make version)" >> $GITHUB_ENV
+
+      - name: Set PLATFORM Variable
+        shell: bash
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM=${platform//\//-}" >> $GITHUB_ENV
+
+      - name: Get ImageOS
+        # There's no way around this, because "ImageOS" is only available to
+        # processes, but the setup-go action uses it in its key.
+        id: imageos
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            return process.env.ImageOS
+
+      - name: Set CACHE_PREFIX Variable
+        shell: bash
+        run: |
+          cache_prefix=${{ runner.os }}-${{ steps.imageos.outputs.result }}-${{ env.PLATFORM }}
+          echo "CACHE_PREFIX=${cache_prefix}" >> $GITHUB_ENV
+
+      - name: Load Go Module Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.GOMODCACHE }}
+          key: ${{ env.CACHE_PREFIX }}-modcache-${{ hashFiles('**/go.mod') }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ env.CACHE_PREFIX }}-modcache
+
+      # Both load & update the cache when on default branch
+      - name: Load Go Build & Test Cache
+        id: go-cache
+        uses: actions/cache@v4
+        if: github.ref_name == github.event.repository.default_branch && github.event_name != 'pull_request'
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+          key: ${{ env.CACHE_PREFIX }}-cache-${{ hashFiles('**/go.mod') }}-${{ hashFiles('**/go.sum') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ env.CACHE_PREFIX }}-cache
+
+      # Only load the cache when not on default branch
+      - name: Load Go Build & Test Cache
+        id: go-cache-restore
+        uses: actions/cache/restore@v4
+        if: github.ref_name != github.event.repository.default_branch || github.event_name == 'pull_request'
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+          key: ${{ env.CACHE_PREFIX }}-cache-${{ hashFiles('**/go.mod') }}-${{ hashFiles('**/go.sum') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ env.CACHE_PREFIX }}-cache
+
+      - name: Build Native rclone
+        shell: bash
+        run: |
+          make
+
+      - name: Install gomobile
+        shell: bash
+        run: |
+          go install golang.org/x/mobile/cmd/gobind@latest
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          env PATH=$PATH:~/go/bin gomobile init
+          echo "RCLONE_NDK_VERSION=21" >> $GITHUB_ENV
+
+      - name: arm-v7a - gomobile build
+        shell: bash
+        run: env PATH=$PATH:~/go/bin gomobile bind -androidapi ${RCLONE_NDK_VERSION} -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile
+
+      - name: arm-v7a - Set Environment Variables
+        shell: bash
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=arm' >> $GITHUB_ENV
+          echo 'GOARM=7' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: arm-v7a - Build
+        shell: bash
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-armv7a .
+
+      - name: arm64-v8a - Set Environment Variables
+        shell: bash
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=arm64' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: arm64-v8a - Build
+        shell: bash
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-armv8a .
+
+      - name: x86 - Set Environment Variables
+        shell: bash
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=386' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: x86 - Build
+        shell: bash
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-x86 .
+
+      - name: x64 - Set Environment Variables
+        shell: bash
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=amd64' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: x64 - Build
+        shell: bash
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-x64 .
+
+      - name: Delete Existing Cache
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cache_ids=($(gh cache list --key "${{ env.CACHE_PREFIX }}-cache" --json id | jq '.[].id'))
+          for cache_id in "${cache_ids[@]}"; do
+            echo "Deleting Cache: $cache_id"
+            gh cache delete "$cache_id"
+          done
+        if: github.ref_name == github.event.repository.default_branch && github.event_name != 'pull_request' && steps.go-cache.outputs.cache-hit != 'true'
+
+      - name: Deploy Built Binaries
+        shell: bash
+        run: |
+          make ci_upload
+        env:
+          RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
+        # Upload artifacts if not a PR && not a fork
+        if: env.RCLONE_CONFIG_PASS != '' && github.head_ref == '' && github.repository == 'rclone/rclone'
