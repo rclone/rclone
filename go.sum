@@ -660,6 +660,8 @@ github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/t3rm1n4l/go-mega v0.0.0-20250926104142-ccb8d3498e6c h1:BLopNCyqewbE8+BtlIp/Juzu8AJGxz0gHdGADnsblVc=
 github.com/t3rm1n4l/go-mega v0.0.0-20250926104142-ccb8d3498e6c/go.mod h1:ykucQyiE9Q2qx1wLlEtZkkNn1IURib/2O+Mvd25i1Fo=
+github.com/t3rm1n4l/go-mega v0.0.0-20251031123324-a804aaa87491 h1:rrGZv6xYk37hx0tW2sYfgbO0PqStbHqz6Bq6oc9Hurg=
+github.com/t3rm1n4l/go-mega v0.0.0-20251031123324-a804aaa87491/go.mod h1:ykucQyiE9Q2qx1wLlEtZkkNn1IURib/2O+Mvd25i1Fo=
 github.com/tailscale/depaware v0.0.0-20210622194025-720c4b409502/go.mod h1:p9lPsd+cx33L3H9nNoecRRxPssFKUwwI50I3pZ0yT+8=
 github.com/therootcompany/xz v1.0.1 h1:CmOtsn1CbtmyYiusbfmhmkpAAETj0wBIH6kCYaX+xzw=
 github.com/therootcompany/xz v1.0.1/go.mod h1:3K3UH1yCKgBneZYhuQUvJ9HPD19UEXEI0BWbMn8qNMY=
