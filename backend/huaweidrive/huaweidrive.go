@@ -191,7 +191,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		Method: "GET",
 		Path:   "/about",
 		Parameters: url.Values{
-			"fields": {"*"},
+			"fields": []string{"*"},
 		},
 	}
 
