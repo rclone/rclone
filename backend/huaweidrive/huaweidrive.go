@@ -132,8 +132,9 @@ type Options struct {
 
 // Fs represents a remote Huawei Drive
 type Fs struct {
-	name     string             // name of this remote
-	root     string             // root path in the remote
+	name string // name of this remote
+	root string // root path in the remote
+
 	opt      Options            // parsed options
 	features *fs.Features       // optional features
 	srv      *rest.Client       // the connection to the server
@@ -403,21 +404,27 @@ func (f *Fs) listAll(ctx context.Context, dirID string, fn listAllFn) (found boo
 		Method: "GET",
 		Path:   "/files",
 		Parameters: url.Values{
-			"fields": []string{"*"},
+			"fields":     []string{"*"},
+			"containers": []string{"drive"}, // Specify drive container as per API docs
 		},
 	}
 
-	// Add query parameter for parent folder if not root
+	// Add query parameter for parent folder
 	if dirID != "" && dirID != f.rootParentID() {
+		// For subdirectories, filter by parent folder ID
 		opts.Parameters.Set("queryParam", fmt.Sprintf("parentFolder='%s'", dirID))
 	}
+	// For root directory, don't set queryParam - we'll filter in memory
 
 	// Set page size if specified
 	if f.opt.ListChunk > 0 && f.opt.ListChunk <= 1000 {
 		opts.Parameters.Set("pageSize", strconv.Itoa(f.opt.ListChunk))
 	}
 
+	// For root directory, collect all files first to analyze parent folders
+	var allFiles []api.File
 	var result api.FileList
+
 	for {
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
@@ -427,13 +434,8 @@ func (f *Fs) listAll(ctx context.Context, dirID string, fn listAllFn) (found boo
 			return false, fmt.Errorf("couldn't list directory %q: %w", dirID, err)
 		}
 
-		for i := range result.Files {
-			item := &result.Files[i]
-			if fn(item) {
-				found = true
-				return
-			}
-		}
+		fs.Debugf(f, "API call returned %d files, NextPageToken: %q", len(result.Files), result.NextPageToken)
+		allFiles = append(allFiles, result.Files...)
 
 		// Check for more pages
 		if result.NextPageToken == "" {
@@ -441,6 +443,107 @@ func (f *Fs) listAll(ctx context.Context, dirID string, fn listAllFn) (found boo
 		}
 		opts.Parameters.Set("pageToken", result.NextPageToken)
 	}
+
+	// For root directory, we need to detect the root directory ID first
+	var rootDirectoryID string
+	if dirID == "" || dirID == f.rootParentID() {
+		// Look for virtual directories that indicate root structure
+		// nonexistent_dir is a virtual directory whose parent is the root directory
+		for _, item := range allFiles {
+			if item.FileName == "nonexistent_dir" && len(item.ParentFolder) > 0 {
+				rootDirectoryID = item.ParentFolder[0]
+				fs.Debugf(f, "Found root directory ID from nonexistent_dir: %s", rootDirectoryID)
+				break
+			}
+		}
+
+		// If we found the root directory ID, make a second API call with proper filtering
+		if rootDirectoryID != "" {
+			// Clear previous results and make a targeted query for root directory contents
+			allFiles = nil
+
+			// Make a new API call with parentFolder filter
+			opts.Parameters.Set("queryParam", fmt.Sprintf("parentFolder='%s'", rootDirectoryID))
+
+			for {
+				var result api.FileList
+				err = f.pacer.Call(func() (bool, error) {
+					resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+					return shouldRetry(ctx, resp, err)
+				})
+				if err != nil {
+					return false, fmt.Errorf("couldn't list root directory contents: %w", err)
+				}
+
+				fs.Debugf(f, "Root directory API call returned %d files, NextPageToken: %q", len(result.Files), result.NextPageToken)
+				allFiles = append(allFiles, result.Files...)
+
+				// Check for more pages
+				if result.NextPageToken == "" {
+					break
+				}
+				opts.Parameters.Set("pageToken", result.NextPageToken)
+			}
+		} else {
+			// Fallback: if nonexistent_dir not found, use scoring algorithm on all files
+			parentFolderCounts := make(map[string]int)
+			parentFolderDirCounts := make(map[string]int)
+
+			for _, item := range allFiles {
+				if len(item.ParentFolder) > 0 && item.ParentFolder[0] != "" {
+					parentID := item.ParentFolder[0]
+					parentFolderCounts[parentID]++
+					if item.IsDir() {
+						parentFolderDirCounts[parentID]++
+					}
+				}
+			}
+
+			// Find directory with most subdirectories as likely root
+			maxScore := 0
+			for parentID, dirCount := range parentFolderDirCounts {
+				if dirCount == 0 {
+					continue
+				}
+
+				totalCount := parentFolderCounts[parentID]
+				score := dirCount * 2
+
+				if totalCount > 0 {
+					dirRatio := float64(dirCount) / float64(totalCount)
+					if dirRatio > 0.5 {
+						score += 10
+					}
+				}
+
+				if totalCount >= 3 && totalCount <= 50 {
+					score += 5
+				}
+
+				if score > maxScore {
+					maxScore = score
+					rootDirectoryID = parentID
+				}
+			}
+
+			// Filter allFiles to only include root directory children
+			var filteredFiles []api.File
+			for _, item := range allFiles {
+				if len(item.ParentFolder) > 0 && item.ParentFolder[0] == rootDirectoryID {
+					filteredFiles = append(filteredFiles, item)
+				}
+			}
+			allFiles = filteredFiles
+		}
+	}
+
+	// Process all files
+	for _, item := range allFiles {
+		if fn(&item) {
+			found = true
+		}
+	}
+
 	return
 }
 
