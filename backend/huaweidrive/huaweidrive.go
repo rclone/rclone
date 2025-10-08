@@ -31,8 +31,8 @@ import (
 )
 
 const (
-	rcloneClientID              = "1792274395956299072"
-	rcloneEncryptedClientSecret = "E9A3B4F38B393D3FC27825B4CE52BA3D5DA23E2FCDD568026CE489B5E00CCAE8"
+	rcloneClientID              = "115505059"
+	rcloneEncryptedClientSecret = "3effe4596fb0874e3a982e1b4237143aea206fed826dab4db45c2dc6210a70be"
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
@@ -45,9 +45,9 @@ const (
 // OAuth2 configuration
 var oauthConfig = &oauthutil.Config{
 	Scopes: []string{
-		"https://www.huawei.com/auth/drive",
 		"openid",
 		"profile",
+		"https://www.huawei.com/auth/drive",
 	},
 	AuthURL:      "https://oauth-login.cloud.huawei.com/oauth2/v3/authorize",
 	TokenURL:     "https://oauth-login.cloud.huawei.com/oauth2/v3/token",
@@ -180,6 +180,46 @@ func (f *Fs) Hashes() hash.Set {
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
 	return f.features
+}
+
+// About gets quota information
+func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/about",
+		Parameters: url.Values{
+			"fields": {"*"},
+		},
+	}
+
+	var about api.About
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &about)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get about info: %w", err)
+	}
+
+	// Convert string values to int64
+	used, err := strconv.ParseInt(about.StorageQuota.UsedSpace, 10, 64)
+	if err != nil {
+		fs.Debugf(f, "Failed to parse used space %q: %v", about.StorageQuota.UsedSpace, err)
+		used = 0
+	}
+
+	total, err := strconv.ParseInt(about.StorageQuota.UserCapacity, 10, 64)
+	if err != nil {
+		fs.Debugf(f, "Failed to parse total capacity %q: %v", about.StorageQuota.UserCapacity, err)
+		total = 0
+	}
+
+	usage = &fs.Usage{
+		Used:  fs.NewUsageValue(used),  // bytes in use
+		Total: fs.NewUsageValue(total), // bytes total
+	}
+
+	return usage, nil
 }
 
 // parsePath parses a Huawei Drive 'url'
