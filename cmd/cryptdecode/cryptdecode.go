@@ -4,6 +4,7 @@ package cryptdecode
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/cmd"
@@ -67,32 +68,32 @@ command. See the documentation on the [crypt](/crypt/) overlay for more info.`,
 
 // cryptDecode returns the unencrypted file name
 func cryptDecode(cipher *crypt.Cipher, args []string) error {
-	output := ""
+	var output strings.Builder
 
 	for _, encryptedFileName := range args {
 		fileName, err := cipher.DecryptFileName(encryptedFileName)
 		if err != nil {
-			output += fmt.Sprintln(encryptedFileName, "\t", "Failed to decrypt")
+			output.WriteString(fmt.Sprintln(encryptedFileName, "\t", "Failed to decrypt"))
 		} else {
-			output += fmt.Sprintln(encryptedFileName, "\t", fileName)
+			output.WriteString(fmt.Sprintln(encryptedFileName, "\t", fileName))
 		}
 	}
 
-	fmt.Print(output)
+	fmt.Print(output.String())
 
 	return nil
 }
 
 // cryptEncode returns the encrypted file name
 func cryptEncode(cipher *crypt.Cipher, args []string) error {
-	output := ""
+	var output strings.Builder
 
 	for _, fileName := range args {
 		encryptedFileName := cipher.EncryptFileName(fileName)
-		output += fmt.Sprintln(fileName, "\t", encryptedFileName)
+		output.WriteString(fmt.Sprintln(fileName, "\t", encryptedFileName))
 	}
 
-	fmt.Print(output)
+	fmt.Print(output.String())
 
 	return nil
 }
