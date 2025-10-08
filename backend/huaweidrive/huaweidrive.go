@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -57,6 +58,10 @@ var oauthConfig = &oauthutil.Config{
 	ClientID:     rcloneClientID,
 	ClientSecret: rcloneEncryptedClientSecret,
 	RedirectURL:  oauthutil.RedirectURL,
+	AuthStyle:    oauth2.AuthStyleInParams, // Send client credentials in request body
+	EndpointParams: url.Values{
+		"access_type": {"offline"}, // Request refresh token as per Huawei docs
+	},
 }
 
 // Register with Fs
@@ -400,32 +405,36 @@ type listAllFn func(*api.File) bool
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, fn listAllFn) (found bool, err error) {
+	// For non-root directories, we can directly query with parentFolder filter
+	if dirID != "" && dirID != f.rootParentID() {
+		return f.listDirectory(ctx, dirID, fn)
+	}
+
+	// For root directory, we need to detect the root directory ID first
+	return f.listRootDirectory(ctx, fn)
+}
+
+// listDirectory lists files in a specific directory using parentFolder filter
+func (f *Fs) listDirectory(ctx context.Context, dirID string, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/files",
 		Parameters: url.Values{
 			"fields":     []string{"*"},
-			"containers": []string{"drive"}, // Specify drive container as per API docs
+			"containers": []string{"drive"},
+			"queryParam": []string{fmt.Sprintf("parentFolder='%s'", dirID)}, // Use queryParam to filter by parent folder
 		},
 	}
-
-	// Add query parameter for parent folder
-	if dirID != "" && dirID != f.rootParentID() {
-		// For subdirectories, filter by parent folder ID
-		opts.Parameters.Set("queryParam", fmt.Sprintf("parentFolder='%s'", dirID))
-	}
-	// For root directory, don't set queryParam - we'll filter in memory
 
 	// Set page size if specified
 	if f.opt.ListChunk > 0 && f.opt.ListChunk <= 1000 {
 		opts.Parameters.Set("pageSize", strconv.Itoa(f.opt.ListChunk))
 	}
 
-	// For root directory, collect all files first to analyze parent folders
-	var allFiles []api.File
-	var result api.FileList
+	fs.Debugf(f, "Listing directory %q with parentFolder filter", dirID)
 
 	for {
+		var result api.FileList
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 			return shouldRetry(ctx, resp, err)
@@ -434,7 +443,57 @@ func (f *Fs) listAll(ctx context.Context, dirID string, fn listAllFn) (found boo
 			return false, fmt.Errorf("couldn't list directory %q: %w", dirID, err)
 		}
 
-		fs.Debugf(f, "API call returned %d files, NextPageToken: %q", len(result.Files), result.NextPageToken)
+		fs.Debugf(f, "Directory API call returned %d files, NextPageToken: %q", len(result.Files), result.NextPageToken)
+
+		// Process files directly - no need for further filtering since API does it for us
+		for _, item := range result.Files {
+			if fn(&item) {
+				found = true
+			}
+		}
+
+		// Check for more pages
+		if result.NextPageToken == "" {
+			break
+		}
+		opts.Parameters.Set("pageToken", result.NextPageToken)
+	}
+
+	return found, nil
+}
+
+// listRootDirectory lists files in the root directory by first detecting the root directory ID
+func (f *Fs) listRootDirectory(ctx context.Context, fn listAllFn) (found bool, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/files",
+		Parameters: url.Values{
+			"fields":     []string{"*"},
+			"containers": []string{"drive"},
+		},
+	}
+
+	// Set page size if specified
+	if f.opt.ListChunk > 0 && f.opt.ListChunk <= 1000 {
+		opts.Parameters.Set("pageSize", strconv.Itoa(f.opt.ListChunk))
+	}
+
+	// First, collect all files to analyze and find root directory ID
+	var allFiles []api.File
+	var result api.FileList
+
+	fs.Debugf(f, "Listing root directory - collecting all files first to detect root ID")
+
+	for {
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+			return shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return false, fmt.Errorf("couldn't list root directory: %w", err)
+		}
+
+		fs.Debugf(f, "Root detection API call returned %d files, NextPageToken: %q", len(result.Files), result.NextPageToken)
 		allFiles = append(allFiles, result.Files...)
 
 		// Check for more pages
@@ -444,107 +503,81 @@ func (f *Fs) listAll(ctx context.Context, dirID string, fn listAllFn) (found boo
 		opts.Parameters.Set("pageToken", result.NextPageToken)
 	}
 
-	// For root directory, we need to detect the root directory ID first
+	// Detect the root directory ID
 	var rootDirectoryID string
-	if dirID == "" || dirID == f.rootParentID() {
-		// Look for virtual directories that indicate root structure
-		// nonexistent_dir is a virtual directory whose parent is the root directory
-		for _, item := range allFiles {
-			if item.FileName == "nonexistent_dir" && len(item.ParentFolder) > 0 {
-				rootDirectoryID = item.ParentFolder[0]
-				fs.Debugf(f, "Found root directory ID from nonexistent_dir: %s", rootDirectoryID)
-				break
-			}
-		}
 
-		// If we found the root directory ID, make a second API call with proper filtering
-		if rootDirectoryID != "" {
-			// Clear previous results and make a targeted query for root directory contents
-			allFiles = nil
-
-			// Make a new API call with parentFolder filter
-			opts.Parameters.Set("queryParam", fmt.Sprintf("parentFolder='%s'", rootDirectoryID))
-
-			for {
-				var result api.FileList
-				err = f.pacer.Call(func() (bool, error) {
-					resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
-					return shouldRetry(ctx, resp, err)
-				})
-				if err != nil {
-					return false, fmt.Errorf("couldn't list root directory contents: %w", err)
-				}
-
-				fs.Debugf(f, "Root directory API call returned %d files, NextPageToken: %q", len(result.Files), result.NextPageToken)
-				allFiles = append(allFiles, result.Files...)
-
-				// Check for more pages
-				if result.NextPageToken == "" {
-					break
-				}
-				opts.Parameters.Set("pageToken", result.NextPageToken)
-			}
-		} else {
-			// Fallback: if nonexistent_dir not found, use scoring algorithm on all files
-			parentFolderCounts := make(map[string]int)
-			parentFolderDirCounts := make(map[string]int)
-
-			for _, item := range allFiles {
-				if len(item.ParentFolder) > 0 && item.ParentFolder[0] != "" {
-					parentID := item.ParentFolder[0]
-					parentFolderCounts[parentID]++
-					if item.IsDir() {
-						parentFolderDirCounts[parentID]++
-					}
-				}
-			}
-
-			// Find directory with most subdirectories as likely root
-			maxScore := 0
-			for parentID, dirCount := range parentFolderDirCounts {
-				if dirCount == 0 {
-					continue
-				}
-
-				totalCount := parentFolderCounts[parentID]
-				score := dirCount * 2
-
-				if totalCount > 0 {
-					dirRatio := float64(dirCount) / float64(totalCount)
-					if dirRatio > 0.5 {
-						score += 10
-					}
-				}
-
-				if totalCount >= 3 && totalCount <= 50 {
-					score += 5
-				}
-
-				if score > maxScore {
-					maxScore = score
-					rootDirectoryID = parentID
-				}
-			}
-
-			// Filter allFiles to only include root directory children
-			var filteredFiles []api.File
-			for _, item := range allFiles {
-				if len(item.ParentFolder) > 0 && item.ParentFolder[0] == rootDirectoryID {
-					filteredFiles = append(filteredFiles, item)
-				}
-			}
-			allFiles = filteredFiles
-		}
-	}
-
-	// Process all files
+	// Method 1: Look for virtual directories that indicate root structure
+	// nonexistent_dir is a virtual directory whose parent is the root directory
 	for _, item := range allFiles {
-		if fn(&item) {
-			found = true
+		if item.FileName == "nonexistent_dir" && len(item.ParentFolder) > 0 {
+			rootDirectoryID = item.ParentFolder[0]
+			fs.Debugf(f, "Found root directory ID from nonexistent_dir: %s", rootDirectoryID)
+			break
 		}
 	}
 
-	return
+	// Method 2: Fallback - use scoring algorithm if nonexistent_dir not found
+	if rootDirectoryID == "" {
+		fs.Debugf(f, "nonexistent_dir not found, using scoring algorithm to detect root")
+		parentFolderCounts := make(map[string]int)
+		parentFolderDirCounts := make(map[string]int)
+
+		for _, item := range allFiles {
+			if len(item.ParentFolder) > 0 && item.ParentFolder[0] != "" {
+				parentID := item.ParentFolder[0]
+				parentFolderCounts[parentID]++
+				if item.IsDir() {
+					parentFolderDirCounts[parentID]++
+				}
+			}
+		}
+
+		// Find directory with most subdirectories as likely root
+		maxScore := 0
+		for parentID, dirCount := range parentFolderDirCounts {
+			if dirCount == 0 {
+				continue
+			}
+
+			totalCount := parentFolderCounts[parentID]
+			score := dirCount * 2
+
+			if totalCount > 0 {
+				dirRatio := float64(dirCount) / float64(totalCount)
+				if dirRatio > 0.5 {
+					score += 10
+				}
+			}
+
+			if totalCount >= 3 && totalCount <= 50 {
+				score += 5
+			}
+
+			if score > maxScore {
+				maxScore = score
+				rootDirectoryID = parentID
+			}
+		}
+		fs.Debugf(f, "Selected root directory ID from scoring: %s (score: %d)", rootDirectoryID, maxScore)
+	}
+
+	// Now make a targeted API call with the detected root directory ID
+	if rootDirectoryID != "" {
+		fs.Debugf(f, "Making targeted API call for root directory: %s", rootDirectoryID)
+		return f.listDirectory(ctx, rootDirectoryID, fn)
+	}
+
+	// Fallback: if we couldn't detect root directory ID, filter in memory
+	fs.Debugf(f, "Could not detect root directory ID, filtering in memory")
+	for _, item := range allFiles {
+		if len(item.ParentFolder) > 0 && item.ParentFolder[0] == rootDirectoryID {
+			if fn(&item) {
+				found = true
+			}
+		}
+	}
+
+	return found, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -1252,12 +1285,13 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	if resp != nil {
 		switch resp.StatusCode {
 		case 401:
-			// For 401 errors, don't retry to avoid infinite loops
-			// User needs to re-authorize manually
+			// For 401 errors, allow OAuth library to handle token refresh
+			// Error 22044011 typically means Access Token expired - let OAuth handle refresh
 			if strings.Contains(err.Error(), "22044011") {
-				fs.Debugf(nil, "Authentication failed with error 22044011 - user needs to re-authorize")
-				return false, fserrors.NoRetryError(fmt.Errorf("authentication failed, please re-authorize: %w", err))
+				fs.Debugf(nil, "Access token expired (error 22044011) - OAuth will attempt refresh")
+				return true, err // Allow retry so OAuth can refresh the token
 			}
+			// For other 401 errors, don't retry to avoid infinite loops
 			return false, fserrors.NoRetryError(fmt.Errorf("unauthorized: %w", err))
 		case 403:
 			return false, fserrors.NoRetryError(fmt.Errorf("forbidden: %w", err))
