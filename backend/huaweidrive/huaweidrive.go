@@ -92,12 +92,6 @@ func init() {
 			return nil, nil
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
-			Name: "client_id",
-			Help: "Huawei OAuth Client Id.\n\nLeave blank normally.",
-		}, {
-			Name: "client_secret",
-			Help: "Huawei OAuth Client Secret.\n\nLeave blank normally.",
-		}, {
 			Name:     "chunk_size",
 			Help:     "Upload chunk size.\n\nMust be a power of 2 >= 256k and <= 64MB.",
 			Default:  defaultChunkSize,

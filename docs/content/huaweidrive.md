@@ -40,9 +40,9 @@ XX / Huawei Drive
    \ "huaweidrive"
 [snip]
 Storage> huaweidrive
-Huawei OAuth Client Id - leave blank to use rclone's default.
+OAuth Client Id - leave blank to use rclone's default.
 client_id> 
-Huawei OAuth Client Secret - leave blank to use rclone's default.
+OAuth Client Secret - leave blank to use rclone's default.
 client_secret>
 Remote config
 Use web browser to automatically authenticate rclone with remote?
@@ -192,7 +192,7 @@ Here are the Standard options specific to huaweidrive (Huawei Drive).
 
 #### --huaweidrive-client-id
 
-Huawei OAuth Client Id.
+OAuth Client Id.
 
 Leave blank normally.
 
@@ -205,7 +205,7 @@ Properties:
 
 #### --huaweidrive-client-secret
 
-Huawei OAuth Client Secret.
+OAuth Client Secret.
 
 Leave blank normally.
 
