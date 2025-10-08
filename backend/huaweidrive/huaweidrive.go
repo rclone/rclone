@@ -4,11 +4,14 @@ package huaweidrive
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"mime"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"path"
 	"strconv"
@@ -48,6 +51,7 @@ var oauthConfig = &oauthutil.Config{
 		"openid",
 		"profile",
 		"https://www.huawei.com/auth/drive",
+		"https://www.huawei.com/auth/drive.file",
 	},
 	AuthURL:      "https://oauth-login.cloud.huawei.com/oauth2/v3/authorize",
 	TokenURL:     "https://oauth-login.cloud.huawei.com/oauth2/v3/token",
@@ -856,16 +860,83 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // uploadSimple uploads a file using simple upload for files < upload_cutoff
 func (o *Object) uploadSimple(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time) (err error) {
-	// Use upload URL for uploads
-	srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(uploadURL)
+	// For files < 20MB, we should use multipart upload with metadata
+	// According to Huawei Drive API documentation
+	return o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime)
+}
+
+// uploadMultipart uploads a file using multipart upload with metadata
+func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time) (err error) {
+	// Use the main fs client for authentication, but with upload URL
+	srv := o.fs.srv
+
+	// Detect content type
+	mimeType := mime.TypeByExtension(path.Ext(leaf))
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+
+	// Create metadata
+	metadata := map[string]interface{}{
+		"fileName": leaf,
+		"mimeType": mimeType,
+	}
+
+	// Set parent folder if not root
+	if directoryID != "" && directoryID != o.fs.rootParentID() {
+		metadata["parentFolder"] = []string{directoryID}
+	}
+
+	// Create multipart form
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// Add metadata part - use exact format from Huawei docs
+	metadataWriter, err := writer.CreatePart(textproto.MIMEHeader{
+		"Content-Type": []string{"application/json; charset=UTF-8"},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create metadata part: %w", err)
+	}
+
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
+
+	_, err = metadataWriter.Write(metadataJSON)
+	if err != nil {
+		return fmt.Errorf("failed to write metadata: %w", err)
+	}
+
+	// Add file content part - use application/octet-stream as per Huawei docs
+	fileWriter, err := writer.CreatePart(textproto.MIMEHeader{
+		"Content-Type": []string{"application/octet-stream"},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create file part: %w", err)
+	}
+
+	// Read and write file content
+	_, err = io.Copy(fileWriter, in)
+	if err != nil {
+		return fmt.Errorf("failed to copy file content: %w", err)
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close multipart writer: %w", err)
+	}
 
 	opts := rest.Opts{
 		Method: "POST",
 		Parameters: url.Values{
-			"uploadType": []string{"content"},
+			"uploadType": []string{"multipart"},
 			"fields":     []string{"*"},
 		},
-		Body: in,
+		Body:        bytes.NewReader(buf.Bytes()),
+		ContentType: fmt.Sprintf("multipart/related; boundary=%s", writer.Boundary()),
+		RootURL:     uploadURL,
 	}
 
 	if o.id != "" {
@@ -876,13 +947,6 @@ func (o *Object) uploadSimple(ctx context.Context, in io.Reader, leaf, directory
 		// Create new file
 		opts.Path = "/files"
 	}
-
-	// Detect content type
-	mimeType := mime.TypeByExtension(path.Ext(leaf))
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
-	opts.ContentType = mimeType
 
 	var info *api.File
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -902,8 +966,8 @@ func (o *Object) uploadSimple(ctx context.Context, in io.Reader, leaf, directory
 
 // uploadResume uploads a file using resumable upload for files >= upload_cutoff
 func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time) (err error) {
-	// Use upload URL for uploads
-	srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(uploadURL)
+	// Use the main fs client for authentication
+	srv := o.fs.srv
 
 	// First, initialize the resumable upload
 	opts := rest.Opts{
@@ -915,6 +979,7 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 		ExtraHeaders: map[string]string{
 			"X-Upload-Content-Length": strconv.FormatInt(size, 10),
 		},
+		RootURL: uploadURL,
 	}
 
 	// Detect content type
@@ -1049,11 +1114,18 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	if resp != nil {
 		switch resp.StatusCode {
 		case 401:
+			// For 401 errors, don't retry to avoid infinite loops
+			// User needs to re-authorize manually
+			if strings.Contains(err.Error(), "22044011") {
+				fs.Debugf(nil, "Authentication failed with error 22044011 - user needs to re-authorize")
+				return false, fserrors.NoRetryError(fmt.Errorf("authentication failed, please re-authorize: %w", err))
+			}
 			return false, fserrors.NoRetryError(fmt.Errorf("unauthorized: %w", err))
 		case 403:
 			return false, fserrors.NoRetryError(fmt.Errorf("forbidden: %w", err))
 		case 404:
-			return false, fs.ErrorObjectNotFound
+			// For 404 errors (like invalid upload endpoints), don't retry
+			return false, fserrors.NoRetryError(fmt.Errorf("not found - check API endpoint: %w", err))
 		case 409:
 			return false, fs.ErrorDirExists
 		}
