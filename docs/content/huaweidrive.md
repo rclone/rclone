@@ -110,7 +110,25 @@ It is strongly recommended to use your own client ID as the default rclone ID is
 
 Here is how to create your own Huawei Drive client ID for rclone:
 
-Follow the detailed guide at [Huawei HMS Core Web App Preparations](https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/web-preparations-0000001050050891) for complete setup instructions.
+Follow the detailed guides for complete setup instructions:
+- [Huawei HMS Core Web App Preparations](https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/web-preparations-0000001050050891)
+- [Huawei HMS Core Server Preparations](https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/server-preparations-0000001050185577#section194911701377)
+
+Rclone uses the web application access method to connect to Huawei Drive. Before starting, you need to implement quick login authorization through Huawei Account Open Service. With user authorization credentials, rclone can call Huawei Cloud Drive Service APIs.
+
+#### Create Server Application
+Before accessing Drive service, developers need to create a server application first. For details, please refer to the WEB Application Access Development Preparation section in the "Huawei Account Service Development Guide".
+
+#### Enable Drive Application Switch
+1. Log in to the AppGallery Connect website and click "My Projects".
+2. Find your project in the project list, select the application that needs to access Drive in the project, and click "API Management".
+3. In the "API Management" area of the "Project Settings" page, click the switch on the right side of Drive Kit to ensure the switch is in the open state.
+
+#### Sign Huawei Cloud Drive Privacy Notice and User Agreement
+Guide users to visit https://cloud.huawei.com/. First-time users need to sign the agreement before they can use Huawei Cloud Drive Service.
+
+#### Application Access to Obtain Authentication Credential Access Token
+Applications accessing Drive should use authentication credential Access Token. For specific acquisition methods, please refer to the WEB Application Access Development Guide section in the "Huawei Account Service Development Guide".
 
 Key steps summary:
 
