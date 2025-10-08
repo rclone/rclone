@@ -24,7 +24,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -1043,11 +1042,11 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 		chunk := buf[:n]
 		end := offset + int64(n) - 1
 
-		// Upload this chunk
-		chunkSrv := rest.NewClient(fshttp.NewClient(ctx))
+		// Upload this chunk using the original client with OAuth authentication
 		chunkOpts := rest.Opts{
 			Method:  "PUT",
 			RootURL: location,
+			Path:    "", // Empty path since RootURL contains the full URL
 			Body:    bytes.NewReader(chunk),
 			ExtraHeaders: map[string]string{
 				"Content-Range":  fmt.Sprintf("bytes %d-%d/%d", offset, end, size),
@@ -1057,17 +1056,21 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 		}
 
 		var info *api.File
+		var chunkResp *http.Response
 		err = o.fs.pacer.Call(func() (bool, error) {
-			resp, err := chunkSrv.CallJSON(ctx, &chunkOpts, nil, &info)
+			var err error
+			chunkResp, err = srv.CallJSON(ctx, &chunkOpts, nil, &info)
 			// 308 means continue uploading (incomplete)
-			if resp != nil && resp.StatusCode == 308 {
+			if chunkResp != nil && chunkResp.StatusCode == 308 {
+				// Clear info for incomplete upload
+				info = nil
 				return false, nil
 			}
-			// 200/201 means upload complete
-			if resp != nil && (resp.StatusCode == 200 || resp.StatusCode == 201) {
-				return false, nil
+			// 200/201 means upload complete - let the response be processed
+			if chunkResp != nil && (chunkResp.StatusCode == 200 || chunkResp.StatusCode == 201) {
+				return false, err // Return err (should be nil) to allow response processing
 			}
-			return shouldRetry(ctx, resp, err)
+			return shouldRetry(ctx, chunkResp, err)
 		})
 		if err != nil {
 			return fmt.Errorf("failed to upload chunk at offset %d: %w", offset, err)
@@ -1078,6 +1081,38 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 		// If we got file info back, we're done
 		if info != nil && info.ID != "" {
 			return o.setMetaData(info)
+		}
+
+		// Check if this was the last chunk and upload is complete (308 with all bytes uploaded)
+		if chunkResp != nil && chunkResp.StatusCode == 308 && offset >= size {
+			// Upload is complete, but we need to get file info
+			// Send a final request to get the created file info
+			finalOpts := rest.Opts{
+				Method:  "PUT",
+				RootURL: location,
+				Path:    "",
+				Body:    bytes.NewReader([]byte{}), // Empty body
+				ExtraHeaders: map[string]string{
+					"Content-Range":  fmt.Sprintf("bytes */%d", size),
+					"Content-Length": "0",
+				},
+			}
+
+			var finalInfo *api.File
+			err = o.fs.pacer.Call(func() (bool, error) {
+				finalResp, err := srv.CallJSON(ctx, &finalOpts, nil, &finalInfo)
+				if finalResp != nil && (finalResp.StatusCode == 200 || finalResp.StatusCode == 201) {
+					return false, err
+				}
+				return shouldRetry(ctx, finalResp, err)
+			})
+			if err != nil {
+				return fmt.Errorf("failed to finalize upload for %q: %w", leaf, err)
+			}
+
+			if finalInfo != nil && finalInfo.ID != "" {
+				return o.setMetaData(finalInfo)
+			}
 		}
 	}
 
