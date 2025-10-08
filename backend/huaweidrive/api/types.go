@@ -52,7 +52,7 @@ type File struct {
 	Owners                    []User                 `json:"owners"`
 	LastEditor                User                   `json:"lastEditor"`
 	Permissions               []Permission           `json:"permissions"`
-	PermissionIds             []string               `json:"permissionIds"`
+	PermissionIDs             []string               `json:"permissionIds"`
 	Capabilities              FileCapabilities       `json:"capabilities"`
 	OwnedByMe                 bool                   `json:"ownedByMe"`
 	EditedByMe                bool                   `json:"editedByMe"`

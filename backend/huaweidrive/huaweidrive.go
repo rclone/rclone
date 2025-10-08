@@ -110,7 +110,7 @@ func init() {
 		}, {
 			Name:     "upload_cutoff",
 			Help:     "Cutoff for switching to multipart upload.\n\nAny files larger than this will be uploaded in chunks of chunk_size.\nThe minimum is 0 and the maximum is 5 GiB.",
-			Default:  fs.SizeSuffix(20 * fs.Mebi),
+			Default:  20 * fs.Mebi,
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -330,7 +330,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Method: "POST",
 		Path:   "/files",
 		Parameters: url.Values{
-			"fields": {"*"},
+			"fields": []string{"*"},
 		},
 	}
 
@@ -366,7 +366,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, fn listAllFn) (found boo
 		Method: "GET",
 		Path:   "/files",
 		Parameters: url.Values{
-			"fields": {"*"},
+			"fields": []string{"*"},
 		},
 	}
 
@@ -609,7 +609,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Method: "POST",
 		Path:   "/files/" + srcObj.id + "/copy",
 		Parameters: url.Values{
-			"fields": {"*"},
+			"fields": []string{"*"},
 		},
 	}
 
@@ -743,7 +743,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		Method: "PATCH",
 		Path:   "/files/" + o.id,
 		Parameters: url.Values{
-			"fields": {"*"},
+			"fields": []string{"*"},
 		},
 	}
 
@@ -781,7 +781,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Method: "GET",
 		Path:   "/files/" + o.id,
 		Parameters: url.Values{
-			"form": {"content"},
+			"form": []string{"content"},
 		},
 		Options: options,
 	}
@@ -828,8 +828,8 @@ func (o *Object) uploadSimple(ctx context.Context, in io.Reader, leaf, directory
 	opts := rest.Opts{
 		Method: "POST",
 		Parameters: url.Values{
-			"uploadType": {"content"},
-			"fields":     {"*"},
+			"uploadType": []string{"content"},
+			"fields":     []string{"*"},
 		},
 		Body: in,
 	}
@@ -875,8 +875,8 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 	opts := rest.Opts{
 		Method: "POST",
 		Parameters: url.Values{
-			"uploadType": {"resume"},
-			"fields":     {"*"},
+			"uploadType": []string{"resume"},
+			"fields":     []string{"*"},
 		},
 		ExtraHeaders: map[string]string{
 			"X-Upload-Content-Length": strconv.FormatInt(size, 10),
