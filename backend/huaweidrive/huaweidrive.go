@@ -178,7 +178,10 @@ func (f *Fs) String() string {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	// Huawei Drive API does NOT preserve file modification times
+	// Despite accepting editedTime/createdTime parameters, the API
+	// always sets file times to the server's current timestamp
+	return fs.ModTimeNotSupported
 }
 
 // Hashes returns the supported hash sets.
@@ -647,8 +650,10 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 	}
 	// Temporary Object under construction
 	o = &Object{
-		fs:     f,
-		remote: remote,
+		fs:      f,
+		remote:  remote,
+		modTime: modTime, // Store the modification time in the object
+		size:    size,    // Store the size in the object
 	}
 	return o, leaf, directoryID, nil
 }
@@ -1204,27 +1209,12 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	opts := rest.Opts{
-		Method: "PATCH",
-		Path:   "/files/" + o.id,
-		Parameters: url.Values{
-			"fields": []string{"*"},
-		},
-	}
-
-	update := api.UpdateFileRequest{
-		EditedTime: &modTime,
-	}
-
-	var info *api.File
-	err := o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(ctx, &opts, &update, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return err
-	}
-	return o.setMetaData(info)
+	// Huawei Drive API does NOT support setting modification times
+	// Despite accepting editedTime/createdTime parameters in the API,
+	// the server always overwrites them with the current server timestamp
+	// This has been confirmed through testing - the API returns success
+	// but the file modification time remains as the server's current time
+	return fs.ErrorCantSetModTime
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -1308,6 +1298,9 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		"fileName": leaf,
 		"mimeType": mimeType,
 	}
+
+	// Note: We don't set editedTime/createdTime here because
+	// Huawei Drive API ignores these parameters and always uses server time
 
 	// Set parent folder if not root
 	if directoryID != "" && directoryID != o.fs.rootParentID() {
@@ -1429,6 +1422,10 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 	metadata := map[string]interface{}{
 		"fileName": leaf,
 	}
+
+	// Note: We don't set editedTime/createdTime here because
+	// Huawei Drive API ignores these parameters and always uses server time
+
 	if directoryID != "" && directoryID != o.fs.rootParentID() {
 		metadata["parentFolder"] = []string{directoryID}
 	}
