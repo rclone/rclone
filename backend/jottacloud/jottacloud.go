@@ -993,6 +993,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.ListR = nil
 	}
 
+	cust, err := getCustomerInfo(ctx, f.apiSrv)
+	if err != nil {
+		return nil, err
+	}
+	f.user = cust.Username
+	f.setEndpoints()
+
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
 		_, err := f.readMetaDataForPath(ctx, "")
@@ -1001,13 +1008,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		return err
 	})
-
-	cust, err := getCustomerInfo(ctx, f.apiSrv)
-	if err != nil {
-		return nil, err
-	}
-	f.user = cust.Username
-	f.setEndpoints()
 
 	if root != "" && !rootIsDir {
 		// Check to see if the root actually an existing file
