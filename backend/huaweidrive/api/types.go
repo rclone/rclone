@@ -138,6 +138,7 @@ type CreateFolderRequest struct {
 type UpdateFileRequest struct {
 	FileName                  string                 `json:"fileName,omitempty"`
 	Description               string                 `json:"description,omitempty"`
+	MimeType                  string                 `json:"mimeType,omitempty"`
 	Favorite                  bool                   `json:"favorite,omitempty"`
 	Recycled                  bool                   `json:"recycled,omitempty"`
 	OriginalFilename          string                 `json:"originalFilename,omitempty"`

@@ -279,6 +279,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
 		BucketBased:             false,
+		// 新增的特性支持
+		FilterAware:      true,  // 支持过滤功能
+		ReadMetadata:     true,  // 读取元数据 - 华为云盘支持 properties 字段
+		WriteMetadata:    true,  // 写入元数据 - 华为云盘支持 properties 字段
+		UserMetadata:     true,  // 用户自定义元数据
+		ReadDirMetadata:  false, // 目录元数据读取（暂时禁用，需要额外实现）
+		WriteDirMetadata: false, // 目录元数据写入（暂时禁用，需要额外实现）
+		PartialUploads:   false, // 部分上传（华为云盘不支持断点续传的部分上传）
+		NoMultiThreading: false, // 支持多线程
+		SlowModTime:      false, // modTime 获取不慢
+		SlowHash:         false, // 哈希计算不慢
 	}).Fill(ctx, f)
 
 	// Create directory cache
@@ -804,6 +815,221 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return f.newObjectWithInfo(ctx, remote, info)
 }
 
+// Move src to this remote using server-side move operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if src.Fs().Name() == f.Name().
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	// Find the destination directory and leaf name
+	dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get current parent folders
+	currentParents := srcObj.getParentIDs()
+	fs.Debugf(f, "Move: src=%q -> dst=%q (leaf=%q, dirID=%q, currentParents=%v)",
+		src.Remote(), remote, dstLeaf, dstDirectoryID, currentParents)
+
+	// Check what type of operation we need
+	needsDirMove := len(currentParents) == 0 || currentParents[0] != dstDirectoryID
+	needsRename := srcObj.remote != dstLeaf
+
+	// If no changes needed, return the existing object
+	if !needsDirMove && !needsRename {
+		return src, nil
+	}
+
+	// Prepare the API request
+	opts := rest.Opts{
+		Method: "PATCH",
+		Path:   "/files/" + srcObj.id,
+		Parameters: url.Values{
+			"fields": []string{"*"},
+		},
+	}
+
+	moveReq := api.UpdateFileRequest{}
+
+	// Set filename if we need to rename
+	if needsRename {
+		moveReq.FileName = f.opt.Enc.FromStandardName(dstLeaf)
+	}
+
+	// Set parent folders if we need to move directories
+	// Based on Huawei API docs: addParentFolder和removeParentFolder要么都为空，要么都不为空
+	if needsDirMove && len(currentParents) > 0 {
+		moveReq.AddParentFolder = []string{dstDirectoryID}
+		moveReq.RemoveParentFolder = currentParents
+	}
+
+	fs.Debugf(f, "Move request: needsDirMove=%v, needsRename=%v, req=%+v",
+		needsDirMove, needsRename, moveReq)
+
+	// Execute the API call
+	var info *api.File
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, &moveReq, &info)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("move operation failed: %w", err)
+	}
+
+	fs.Debugf(f, "Move response: fileName=%q, parentFolder=%v", info.FileName, info.ParentFolder)
+
+	// Verify cross-directory moves actually worked
+	// Huawei Drive API has a known issue where it returns success but doesn't actually move the file
+	if needsDirMove && len(info.ParentFolder) > 0 && info.ParentFolder[0] != dstDirectoryID {
+		fs.Debugf(f, "Cross-directory move failed: API returned success but file remained in old location. Expected parent=%q, got=%q. Falling back to copy+delete.",
+			dstDirectoryID, info.ParentFolder[0])
+		return nil, fs.ErrorCantMove
+	}
+
+	return f.newObjectWithInfo(ctx, remote, info)
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+
+	srcID, srcDirectoryID, srcLeaf, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
+	if err != nil {
+		return err
+	}
+	_ = srcLeaf // not used in this implementation
+
+	// Move the directory by updating parent folders
+	opts := rest.Opts{
+		Method: "PATCH",
+		Path:   "/files/" + srcID,
+		Parameters: url.Values{
+			"fields": []string{"*"},
+		},
+	}
+
+	moveReq := api.UpdateFileRequest{
+		FileName: f.opt.Enc.FromStandardName(dstLeaf),
+	}
+
+	// Add new parent and remove old parent if they're different
+	if dstDirectoryID != srcDirectoryID {
+		moveReq.AddParentFolder = []string{dstDirectoryID}
+		moveReq.RemoveParentFolder = []string{srcDirectoryID}
+	}
+
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, &moveReq, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
+}
+
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Don't implement this unless you have a more efficient way
+// of listing recursively that doing a directory traversal.
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+
+	// Use a simple recursive approach instead of goroutines to avoid complexity
+	return f.listRRecursive(ctx, dir, directoryID, callback)
+}
+
+// listRRecursive is a helper function for ListR that recursively lists directories
+func (f *Fs) listRRecursive(ctx context.Context, dir string, directoryID string, callback fs.ListRCallback) error {
+	var entries fs.DirEntries
+	var dirs []struct {
+		path string
+		id   string
+	}
+
+	// List current directory
+	_, err := f.listAll(ctx, directoryID, func(info *api.File) bool {
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(info.FileName))
+
+		if info.IsDir() {
+			// It's a directory
+			directory := fs.NewDir(remote, info.EditedTime).SetID(info.ID)
+			entries = append(entries, directory)
+
+			// Store directory for later recursive processing
+			dirs = append(dirs, struct {
+				path string
+				id   string
+			}{remote, info.ID})
+		} else {
+			// It's a file
+			if o, err := f.newObjectWithInfo(ctx, remote, info); err == nil {
+				entries = append(entries, o)
+			}
+		}
+		return true
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// Send current directory entries to callback
+	if len(entries) > 0 {
+		if err := callback(entries); err != nil {
+			return err
+		}
+	}
+
+	// Recursively process subdirectories
+	for _, subdir := range dirs {
+		if err := f.listRRecursive(ctx, subdir.path, subdir.id, callback); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -854,6 +1080,27 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 	o.id = info.ID
 	o.mimeType = info.MimeType
 	return nil
+}
+
+// getParentIDs returns the parent folder IDs for this object
+func (o *Object) getParentIDs() []string {
+	if !o.hasMetaData {
+		// Try to read metadata if we don't have it
+		if err := o.readMetaData(context.TODO()); err != nil {
+			fs.Debugf(o, "Failed to read metadata for parent IDs: %v", err)
+			return nil
+		}
+	}
+
+	// We need to get the parent IDs from the stored metadata
+	// This requires making an API call since we only store basic info
+	info, err := o.fs.readMetaDataForPath(context.TODO(), o.remote)
+	if err != nil {
+		fs.Debugf(o, "Failed to read full metadata for parent IDs: %v", err)
+		return nil
+	}
+
+	return info.ParentFolder
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1321,6 +1568,9 @@ var (
 	_ fs.Fs              = (*Fs)(nil)
 	_ fs.Purger          = (*Fs)(nil)
 	_ fs.Copier          = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ dircache.DirCacher = (*Fs)(nil)
 )
