@@ -162,6 +162,12 @@ var providerOption = fs.Option{
 		Value: "Petabox",
 		Help:  "Petabox Object Storage",
 	}, {
+		Value: "Qiniu",
+		Help:  "Qiniu Object Storage (Kodo)",
+	}, {
+		Value: "Rabata",
+		Help:  "Rabata Cloud Storage",
+	}, {
 		Value: "RackCorp",
 		Help:  "RackCorp Object Storage",
 	}, {
@@ -194,9 +200,6 @@ var providerOption = fs.Option{
 	}, {
 		Value: "Wasabi",
 		Help:  "Wasabi Object Storage",
-	}, {
-		Value: "Qiniu",
-		Help:  "Qiniu Object Storage (Kodo)",
 	}, {
 		Value: "Zata",
 		Help:  "Zata (S3 compatible Gateway)",
@@ -566,6 +569,20 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "Rabata",
+			Examples: []fs.OptionExample{{
+				Value: "us-east-1",
+				Help:  "US East (N. Virginia)",
+			}, {
+				Value: "eu-west-1",
+				Help:  "EU (Ireland)",
+			}, {
+				Value: "eu-west-2",
+				Help:  "EU (London)",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "region - the location where your bucket will be created and your data stored.\n",
 			Provider: "RackCorp",
 			Examples: []fs.OptionExample{{
@@ -680,7 +697,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1385,11 +1402,17 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for Zata Object Storage.",
-			Provider: "Zata",
+			Help:     "Endpoint for Rabata Object Storage.",
+			Provider: "Rabata",
 			Examples: []fs.OptionExample{{
-				Value: "idr01.zata.ai",
-				Help:  "South Asia Endpoint",
+				Value: "s3.us-east-1.rabata.io",
+				Help:  "US East (N. Virginia)",
+			}, {
+				Value: "s3.eu-west-1.rabata.io",
+				Help:  "EU West (Ireland)",
+			}, {
+				Value: "s3.eu-west-2.rabata.io",
+				Help:  "EU West (London)",
 			}},
 		}, {
 			// RackCorp endpoints: https://www.rackcorp.com/storage/s3storage
@@ -1584,8 +1607,16 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
+			Help:     "Endpoint for Zata Object Storage.",
+			Provider: "Zata",
+			Examples: []fs.OptionExample{{
+				Value: "idr01.zata.ai",
+				Help:  "South Asia Endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,GCS,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,Synology,TencentCOS,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,GCS,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,StackPath,Storj,Synology,TencentCOS,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -2031,29 +2062,17 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
-			Help:     "Location constraint - must be set to match the Region.\n\nUsed when creating buckets only.",
-			Provider: "Qiniu",
+			Help:     "location where your bucket will be created and your data stored.\n",
+			Provider: "Rabata",
 			Examples: []fs.OptionExample{{
-				Value: "cn-east-1",
-				Help:  "East China Region 1",
+				Value: "us-east-1",
+				Help:  "US East (N. Virginia)",
 			}, {
-				Value: "cn-east-2",
-				Help:  "East China Region 2",
+				Value: "eu-west-1",
+				Help:  "EU (Ireland)",
 			}, {
-				Value: "cn-north-1",
-				Help:  "North China Region 1",
-			}, {
-				Value: "cn-south-1",
-				Help:  "South China Region 1",
-			}, {
-				Value: "us-north-1",
-				Help:  "North America Region 1",
-			}, {
-				Value: "ap-southeast-1",
-				Help:  "Southeast Asia Region 1",
-			}, {
-				Value: "ap-northeast-1",
-				Help:  "Northeast Asia Region 1",
+				Value: "eu-west-2",
+				Help:  "EU (London)",
 			}},
 		}, {
 			Name:     "location_constraint",
@@ -2120,7 +2139,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -2135,7 +2154,7 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 If the acl is an empty string then no X-Amz-Acl: header is added and
 the default (private) will be used.
 `,
-			Provider: "!Cloudflare,FlashBlade,Mega,Selectel,SpectraLogic,Storj,Synology",
+			Provider: "!Cloudflare,FlashBlade,Mega,Rabata,Selectel,SpectraLogic,Storj,Synology",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -2193,7 +2212,7 @@ isn't set then "acl" is used instead.
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
 header is added and the default (private) will be used.
 `,
-			Provider: "!Cloudflare,FlashBlade,Selectel,SpectraLogic,Storj,Synology",
+			Provider: "!Cloudflare,FlashBlade,Rabata,Selectel,SpectraLogic,Storj,Synology",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
@@ -3780,6 +3799,8 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 	case "OVHcloud":
 		// No quirks
+	case "Rabata":
+		// server side copy not supported
 	case "RackCorp":
 		// No quirks
 		useMultipartEtag = false // untested
@@ -4059,6 +4080,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.Provider == "AWS" {
 		f.features.DoubleSlash = true
+	}
+	if opt.Provider == "Rabata" {
+		f.features.Copy = nil
 	}
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
@@ -6195,6 +6219,11 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	if o.fs.opt.Provider == "Rabata" {
+		// Rabata does not support copying objects
+		return fs.ErrorCantSetModTime
+	}
+
 	err := o.readMetaData(ctx)
 	if err != nil {
 		return err

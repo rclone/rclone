@@ -96,6 +96,7 @@ directories to and from different cloud storage providers.
 - QingStor [:page_facing_up:](https://rclone.org/qingstor/)
 - Qiniu Cloud Object Storage (Kodo) [:page_facing_up:](https://rclone.org/s3/#qiniu)
 - Quatrix [:page_facing_up:](https://rclone.org/quatrix/)
+- Rabata Cloud Storage [:page_facing_up:](https://rclone.org/s3/#rabata)
 - Rackspace Cloud Files [:page_facing_up:](https://rclone.org/swift/)
 - RackCorp Object Storage [:page_facing_up:](https://rclone.org/s3/#RackCorp)
 - rsync.net [:page_facing_up:](https://rclone.org/sftp/#rsync-net)
