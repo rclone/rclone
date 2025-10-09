@@ -824,6 +824,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // Will only be called if src.Fs().Name() == f.Name().
 //
 // If it isn't possible then return fs.ErrorCantMove
+//
+// NOTE: Huawei Drive API has limitations with cross-directory moves:
+// - Same-directory renames work perfectly
+// - Cross-directory moves often fail silently (API returns success but file doesn't move)
+// - We detect this by verifying the parentFolder after the API call
+// - When detected, we return fs.ErrorCantMove to trigger rclone's copy+delete fallback
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -891,10 +897,42 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Verify cross-directory moves actually worked
 	// Huawei Drive API has a known issue where it returns success but doesn't actually move the file
-	if needsDirMove && len(info.ParentFolder) > 0 && info.ParentFolder[0] != dstDirectoryID {
-		fs.Debugf(f, "Cross-directory move failed: API returned success but file remained in old location. Expected parent=%q, got=%q. Falling back to copy+delete.",
-			dstDirectoryID, info.ParentFolder[0])
-		return nil, fs.ErrorCantMove
+	// Only check for cross-directory move failures when we actually requested a directory move
+	if needsDirMove && len(info.ParentFolder) > 0 {
+		actualParent := info.ParentFolder[0]
+		expectedParent := dstDirectoryID
+
+		// Verify cross-directory moves actually worked
+		// For same-directory renames, the actual parent should remain the same as current parent
+		if len(currentParents) > 0 && actualParent == currentParents[0] {
+			// File is still in the same directory as before
+			// Check if this was supposed to be a cross-directory move
+			srcDir := currentParents[0]
+			expectedDstDir := expectedParent
+
+			// Handle root directory case: if expectedParent is empty, it means root directory
+			// and we should compare with the actual root directory ID from currentParents
+			if expectedDstDir == "" {
+				expectedDstDir = srcDir // For root moves, expected dir should be same as current
+			}
+
+			if srcDir != expectedDstDir {
+				// This was supposed to be a cross-directory move but file stayed in old location
+				fs.Debugf(f, "Cross-directory move failed: API returned success but file remained in old location. Expected parent=%q, got=%q. Falling back to copy+delete.",
+					expectedDstDir, actualParent)
+				return nil, fs.ErrorCantMove
+			} else {
+				// This was just a same-directory rename, which worked correctly
+				fs.Debugf(f, "Same-directory rename completed successfully")
+			}
+		} else {
+			// File moved to a different directory, verify it's the expected one
+			if actualParent != expectedParent {
+				fs.Debugf(f, "Cross-directory move failed: API returned success but file moved to wrong location. Expected parent=%q, got=%q. Falling back to copy+delete.",
+					expectedParent, actualParent)
+				return nil, fs.ErrorCantMove
+			}
+		}
 	}
 
 	return f.newObjectWithInfo(ctx, remote, info)
@@ -936,6 +974,13 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// Add new parent and remove old parent if they're different
 	if dstDirectoryID != srcDirectoryID {
+		// Special handling for root directory moves
+		if dstDirectoryID == f.rootParentID() {
+			// Moving to root directory - we need to get the actual root directory ID
+			// For now, we'll skip the move if target is root to avoid the rootParentID error
+			fs.Debugf(f, "Skipping directory move to root directory (not supported)")
+			return fs.ErrorCantDirMove
+		}
 		moveReq.AddParentFolder = []string{dstDirectoryID}
 		moveReq.RemoveParentFolder = []string{srcDirectoryID}
 	}
