@@ -816,16 +816,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	if directoryID != "" && directoryID != f.rootParentID() {
 		copyReq.ParentFolder = []string{directoryID}
-	} else {
-		// For root directory, get the actual root directory ID
-		rootID, err := f.getRootDirectoryID(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't get root directory ID for copy: %w", err)
-		}
-		if rootID != "" {
-			copyReq.ParentFolder = []string{rootID}
-		}
 	}
+	// If directoryID is empty or is the root parent ID, don't set parentFolder
+	// The API will copy the file to the drive root by default
 
 	var info *api.File
 	err = f.pacer.Call(func() (bool, error) {
@@ -1379,19 +1372,12 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	// Note: We don't set editedTime/createdTime here because
 	// Huawei Drive API ignores these parameters and always uses server time
 
-	// Set parent folder - always required for Huawei Drive
+	// Set parent folder if directoryID is provided and not the root parent ID
 	if directoryID != "" && directoryID != o.fs.rootParentID() {
 		metadata["parentFolder"] = []string{directoryID}
-	} else {
-		// For root directory, get the actual root directory ID
-		rootID, err := o.fs.getRootDirectoryID(ctx)
-		if err != nil {
-			return fmt.Errorf("couldn't get root directory ID for upload: %w", err)
-		}
-		if rootID != "" {
-			metadata["parentFolder"] = []string{rootID}
-		}
 	}
+	// If directoryID is empty or is the root parent ID, don't set parentFolder
+	// The API will upload the file to the drive root by default
 
 	// Create multipart form
 	var buf bytes.Buffer
@@ -1514,16 +1500,9 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 
 	if directoryID != "" && directoryID != o.fs.rootParentID() {
 		metadata["parentFolder"] = []string{directoryID}
-	} else {
-		// For root directory, get the actual root directory ID
-		rootID, err := o.fs.getRootDirectoryID(ctx)
-		if err != nil {
-			return fmt.Errorf("couldn't get root directory ID for resumable upload: %w", err)
-		}
-		if rootID != "" {
-			metadata["parentFolder"] = []string{rootID}
-		}
 	}
+	// If directoryID is empty or is the root parent ID, don't set parentFolder
+	// The API will upload the file to the drive root by default
 
 	var resp *http.Response
 	var initResp api.ResumeUploadInitResponse
