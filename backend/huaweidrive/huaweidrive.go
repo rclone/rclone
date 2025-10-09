@@ -428,21 +428,13 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Description: "folder",
 	}
 
-	// For Huawei Drive, we always need to specify a parent folder
-	// If pathID is empty or is the root parent ID, we need to get the actual root directory ID
-	if pathID == "" || pathID == f.rootParentID() {
-		// Get the actual root directory ID by detecting it from nonexistent_dir
-		rootID, err := f.getRootDirectoryID(ctx)
-		if err != nil {
-			return "", fmt.Errorf("couldn't get root directory ID: %w", err)
-		}
-		if rootID != "" {
-			req.ParentFolder = []string{rootID}
-		}
-	} else {
+	// For Huawei Drive, set parent folder if pathID is provided and not the root parent ID
+	if pathID != "" && pathID != f.rootParentID() {
 		// Use the provided pathID as parent
 		req.ParentFolder = []string{pathID}
 	}
+	// If pathID is empty or is the root parent ID, don't set parentFolder
+	// The API will create the folder in the drive root by default
 
 	opts := rest.Opts{
 		Method: "POST",
