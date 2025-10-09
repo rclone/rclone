@@ -158,6 +158,10 @@ type Fs struct {
 	srv      *rest.Client       // the connection to the server
 	pacer    *fs.Pacer          // pacer for API calls
 	dirCache *dircache.DirCache // Map of directory path to directory id
+
+	// Cache for root directory ID to avoid repeated API calls
+	rootDirID     string // cached root directory ID
+	rootDirIDOnce bool   // whether root directory ID has been detected
 }
 
 // Object describes a Huawei Drive object
@@ -531,6 +535,12 @@ func (f *Fs) listDirectory(ctx context.Context, dirID string, fn listAllFn) (fou
 
 // listRootDirectory lists files in the root directory by first detecting the root directory ID
 func (f *Fs) listRootDirectory(ctx context.Context, fn listAllFn) (found bool, err error) {
+	// Check if we already have cached root directory ID
+	if f.rootDirIDOnce && f.rootDirID != "" {
+		fs.Debugf(f, "Using cached root directory ID: %s", f.rootDirID)
+		return f.listDirectory(ctx, f.rootDirID, fn)
+	}
+
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/files",
@@ -584,11 +594,16 @@ func (f *Fs) listRootDirectory(ctx context.Context, fn listAllFn) (found bool, e
 		}
 	}
 
-	// Make a targeted API call with the detected root directory ID
+	// Cache the detected root directory ID and make a targeted API call
 	if rootDirectoryID != "" {
-		fs.Debugf(f, "Making targeted API call for root directory: %s", rootDirectoryID)
+		f.rootDirID = rootDirectoryID
+		f.rootDirIDOnce = true
+		fs.Debugf(f, "Cached and making targeted API call for root directory: %s", rootDirectoryID)
 		return f.listDirectory(ctx, rootDirectoryID, fn)
 	}
+
+	// Mark that we've attempted root detection (even if failed) to avoid repeated attempts
+	f.rootDirIDOnce = true
 
 	// Fallback: if we couldn't detect root directory ID, process all files without parentFolder
 	// Files in root directory typically have empty ParentFolder or specific root ID
@@ -804,6 +819,19 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstPath := f.rootSlash() + remote
 	if srcPath == dstPath {
 		return nil, fmt.Errorf("can't copy %q -> %q as they are same name", srcPath, dstPath)
+	}
+
+	// Check if destination file already exists
+	dstObj, err := f.NewObject(ctx, remote)
+	if err == nil {
+		// Destination exists, we need to delete it first to ensure proper overwrite
+		fs.Debugf(f, "Copy: destination file exists, deleting before copy")
+		err = dstObj.Remove(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to remove existing destination file: %w", err)
+		}
+	} else if err != fs.ErrorObjectNotFound {
+		return nil, err
 	}
 
 	// Create the directory for the object if it doesn't exist
