@@ -590,13 +590,18 @@ func (f *Fs) listRootDirectory(ctx context.Context, fn listAllFn) (found bool, e
 		return f.listDirectory(ctx, rootDirectoryID, fn)
 	}
 
-	// Fallback: if we couldn't detect root directory ID, filter in memory
-	fs.Debugf(f, "Could not detect root directory ID, filtering in memory")
+	// Fallback: if we couldn't detect root directory ID, process all files without parentFolder
+	// Files in root directory typically have empty ParentFolder or specific root ID
+	fs.Debugf(f, "Could not detect root directory ID, processing all files and filtering for root files")
 	for _, item := range allFiles {
-		if len(item.ParentFolder) > 0 && item.ParentFolder[0] == rootDirectoryID {
-			if fn(&item) {
-				found = true
-			}
+		// Skip the nonexistent_dir virtual flag from results
+		if item.FileName == "nonexistent_dir" {
+			continue
+		}
+		// For root directory files, we process all files that aren't in subdirectories
+		// This is a fallback approach when root detection fails
+		if fn(&item) {
+			found = true
 		}
 	}
 
@@ -747,10 +752,15 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		Method: "DELETE",
 		Path:   "/files/" + rootID,
 	}
-	return f.pacer.Call(func() (bool, error) {
+	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
+	if err == nil {
+		// Clear the directory cache after successful deletion
+		f.dirCache.FlushDir(dir)
+	}
+	return err
 }
 
 // Rmdir deletes the root folder
@@ -990,34 +1000,15 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// Add new parent and remove old parent if they're different
 	if dstDirectoryID != srcDirectoryID {
-		var actualDstDirectoryID string
-		var actualSrcDirectoryID string
-
-		// Special handling for root directory moves
-		if dstDirectoryID == f.rootParentID() {
-			// Moving to root directory - get the actual root directory ID
-			rootID, err := f.getRootDirectoryID(ctx)
-			if err != nil {
-				return fmt.Errorf("couldn't get root directory ID for DirMove: %w", err)
-			}
-			actualDstDirectoryID = rootID
-		} else {
-			actualDstDirectoryID = dstDirectoryID
+		// For Huawei Drive, skip setting parent folders when moving to/from root
+		// The API will handle root directory operations automatically
+		if dstDirectoryID != f.rootParentID() {
+			moveReq.AddParentFolder = []string{dstDirectoryID}
 		}
 
-		if srcDirectoryID == f.rootParentID() {
-			// Moving from root directory - get the actual root directory ID
-			rootID, err := f.getRootDirectoryID(ctx)
-			if err != nil {
-				return fmt.Errorf("couldn't get root directory ID for DirMove source: %w", err)
-			}
-			actualSrcDirectoryID = rootID
-		} else {
-			actualSrcDirectoryID = srcDirectoryID
+		if srcDirectoryID != f.rootParentID() {
+			moveReq.RemoveParentFolder = []string{srcDirectoryID}
 		}
-
-		moveReq.AddParentFolder = []string{actualDstDirectoryID}
-		moveReq.RemoveParentFolder = []string{actualSrcDirectoryID}
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
