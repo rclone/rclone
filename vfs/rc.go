@@ -54,13 +54,14 @@ This returns detailed cache status of files including name and percentage.
 This takes the following parameters:
 
 - fs - select the VFS in use (optional)
-- path - the path to the file to get the status of
+- file - the path to the file to get the status of (can be repeated as file1, file2, etc.)
 
 This returns a JSON object with the following fields:
 
-- name - leaf name of the file
-- status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
-- percentage - percentage cached (0-100)
+- files - array of file objects with fields:
+  - name - leaf name of the file
+  - status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
+  - percentage - percentage cached (0-100)
 ` + getVFSHelp,
 	})
 
@@ -69,18 +70,33 @@ This returns a JSON object with the following fields:
 		Fn:    rcDirStatus,
 		Title: "Get cache status of files in a directory.",
 		Help: `
-This returns the cache status of all files in a directory.
+This returns cache status for all files in a specified directory, optionally including subdirectories. This is ideal for file manager integrations that need to display cache status overlays for directory listings.
 
 This takes the following parameters:
 
 - fs - select the VFS in use (optional)
 - dir - the path to the directory to get the status of
+- recursive - if true, include all subdirectories (optional, defaults to false)
 
-This returns a JSON array with the following fields for each file:
+This returns a JSON object with the following fields:
 
-- name - leaf name of the file
-- status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
-- percentage - percentage cached (0-100)
+- dir - the directory path that was scanned
+- files - object containing arrays of files grouped by their cache status:
+  - FULL - array of completely cached files
+  - PARTIAL - array of partially cached files  
+  - NONE - array of files not cached
+  - DIRTY - array of files modified locally but not uploaded
+  - UPLOADING - array of files currently being uploaded
+- Each file entry includes:
+  - name - the file name
+  - percentage - cache percentage (0-100)
+  - uploading - whether the file is currently being uploaded
+- recursive - whether subdirectories were included in the scan
+- fs - the file system path
+
+Example:
+  rclone rc vfs/dir-status dir=/documents
+  rclone rc vfs/dir-status dir=/documents recursive=true
 ` + getVFSHelp,
 	})
 
@@ -286,6 +302,9 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
+	// Check for recursive parameter
+	recursive, _ := in.GetBool("recursive")
+
 	// Get root directory
 	root, err := vfs.Root()
 	if err != nil {
@@ -315,37 +334,86 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		}
 	}
 
-	// Get all nodes in the directory
-	nodes, err := targetDir.ReadDirAll()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list directory contents: %w", err)
+	// Collect status for each file
+	filesByStatus := map[string][]rc.Params{
+		"FULL":    {},
+		"PARTIAL": {},
+		"NONE":    {},
+		"DIRTY":   {},
+		"UPLOADING": {},
 	}
 
-	// Collect status for each file
-	var results []rc.Params
-	for _, node := range nodes {
-		if file, ok := node.(*File); ok {
-			if vfs.cache == nil {
-				results = append(results, rc.Params{
+	// Function to collect files from a directory
+	var collectFiles func(dir *Dir, dirPath string) error
+	collectFiles = func(dir *Dir, dirPath string) error {
+		nodes, err := dir.ReadDirAll()
+		if err != nil {
+			return fmt.Errorf("failed to list directory contents: %w", err)
+		}
+
+		for _, node := range nodes {
+			if file, ok := node.(*File); ok {
+				var status string
+				var percentage int64
+				var isUploading bool
+				if vfs.cache == nil {
+					status = "NONE"
+					percentage = 0
+					isUploading = false
+				} else {
+					item := vfs.cache.Item(file.Path())
+					status, percentage = item.VFSStatusCacheWithPercentage()
+					
+					// If status is UPLOADING, then the file is uploading
+					isUploading = (status == "UPLOADING")
+				}
+
+				fileInfo := rc.Params{
 					"name":       file.Name(),
-					"status":     "NONE",
-					"percentage": 0,
-				})
-			} else {
-				item := vfs.cache.Item(file.Path())
-				status, percentage := item.VFSStatusCacheWithPercentage()
-				results = append(results, rc.Params{
-					"name":       file.Name(),
-					"status":     status,
 					"percentage": percentage,
-				})
+					"uploading":  isUploading,
+				}
+
+				// Add to the appropriate status category
+				if files, exists := filesByStatus[status]; exists {
+					filesByStatus[status] = append(files, fileInfo)
+				} else {
+					// If status doesn't exist in our map, add it to an "OTHER" category
+					if filesByStatus["OTHER"] == nil {
+						filesByStatus["OTHER"] = []rc.Params{}
+					}
+					filesByStatus["OTHER"] = append(filesByStatus["OTHER"], fileInfo)
+				}
+			} else if subDir, ok := node.(*Dir); ok {
+				// If recursive is true, traverse subdirectories
+				if recursive {
+					if err := collectFiles(subDir, filepath.Join(dirPath, subDir.Name())); err != nil {
+						return err
+					}
+				}
 			}
 		}
-		// Skip directories as requested in the issue
+		return nil
+	}
+
+	// Start collecting files from the target directory
+	if err := collectFiles(targetDir, dirPath); err != nil {
+		return nil, err
+	}
+
+	// Prepare the response, only include categories that have files
+	responseFiles := rc.Params{}
+	for status, files := range filesByStatus {
+		if len(files) > 0 {
+			responseFiles[status] = files
+		}
 	}
 
 	return rc.Params{
-		"files": results,
+		"dir":       dirPath,
+		"files":     responseFiles,
+		"recursive": recursive,
+		"fs":        fs.ConfigString(vfs.Fs()),
 	}, nil
 }
 
@@ -358,28 +426,28 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	// Support both single file and multiple files
 	var paths []string
 	
-	// Check for "path" parameter (single file)
-	if path, err := in.GetString("path"); err == nil {
+	// Check for "file" parameter (single file)
+	if path, err := in.GetString("file"); err == nil {
 		paths = []string{path}
 	} else if !rc.IsErrParamNotFound(err) {
 		return nil, err
 	} else {
-		// Check for multiple path parameters (path1, path2, etc.)
+		// Check for multiple file parameters (file1, file2, etc.)
 		for i := 1; ; i++ {
-			key := "path" + strconv.Itoa(i)
+			key := "file" + strconv.Itoa(i)
 			path, pathErr := in.GetString(key)
 			if pathErr != nil {
 				if rc.IsErrParamNotFound(pathErr) {
-					break // No more path parameters
+					break // No more file parameters
 				}
 				return nil, pathErr
 			}
 			paths = append(paths, path)
 		}
 		
-		// If no paths found, return error
+		// If no files found, return error
 		if len(paths) == 0 {
-			return nil, errors.New("no path parameter(s) provided")
+			return nil, errors.New("no file parameter(s) provided")
 		}
 	}
 	
@@ -403,11 +471,7 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 		}
 	}
 	
-	// Return single result for backward compatibility if only one path
-	if len(results) == 1 {
-		return results[0], nil
-	}
-	
+	// Always return results in 'files' array format for consistency
 	return rc.Params{
 		"files": results,
 	}, nil

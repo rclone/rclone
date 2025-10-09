@@ -22174,7 +22174,7 @@ particularly useful for file manager integrations that need to display
 cache status overlays on individual files.
 
 Files are specified using the "file" parameter, which can be repeated
-multiple times to query several files at once.
+multiple times to query several files at once (file1, file2, etc.).
 
     rclone rc vfs/file-status file=document.pdf file=image.jpg
 

@@ -7,12 +7,10 @@
 package writeback
 
 import (
-	"context"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -101,7 +99,7 @@ func (wb *WriteBack) Add(name string, o fs.Object, src fs.Object) Handle {
 		name:  name,
 		o:     o,
 		src:   src,
-		delay: wb.opt.WriteBackDelay,
+		delay: time.Duration(wb.opt.WriteBack),
 	}
 	wb.lookup[id] = wbItem
 
