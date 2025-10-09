@@ -118,11 +118,24 @@ func init() {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// Huawei Drive encoding similar to other cloud storage providers
+			// Huawei Drive has strict filename restrictions
+			// API error: "The fileName can not be blank and can not contain '<>|:\"*?/\\', cannot equal .. or . and not exceed max limit."
 			Default: (encoder.Display |
 				encoder.EncodeBackSlash |
 				encoder.EncodeInvalidUtf8 |
-				encoder.EncodeRightSpace),
+				encoder.EncodeRightSpace |
+				encoder.EncodeLeftSpace |
+				encoder.EncodeLeftTilde |
+				encoder.EncodeRightPeriod |
+				encoder.EncodeLeftPeriod |
+				encoder.EncodeColon |
+				encoder.EncodePipe |
+				encoder.EncodeDoubleQuote |
+				encoder.EncodeLtGt |
+				encoder.EncodeQuestion |
+				encoder.EncodeAsterisk |
+				encoder.EncodeCtl |
+				encoder.EncodeDot),
 		}}...),
 	})
 }

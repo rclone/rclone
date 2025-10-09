@@ -10,6 +10,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/encoder"
 )
 
 // TestIntegration runs integration tests against the remote
@@ -111,5 +112,126 @@ func TestTimeFormats(t *testing.T) {
 
 	if !parsed.Equal(testTime) {
 		t.Errorf("parsed time %v does not match original %v", parsed, testTime)
+	}
+}
+
+// TestEncoding tests filename encoding for Huawei Drive restrictions
+func TestEncoding(t *testing.T) {
+	// Create encoder with Huawei Drive restrictions
+	enc := encoder.MultiEncoder(
+		encoder.Display |
+			encoder.EncodeBackSlash |
+			encoder.EncodeInvalidUtf8 |
+			encoder.EncodeRightSpace |
+			encoder.EncodeLeftSpace |
+			encoder.EncodeLeftTilde |
+			encoder.EncodeRightPeriod |
+			encoder.EncodeLeftPeriod |
+			encoder.EncodeColon |
+			encoder.EncodePipe |
+			encoder.EncodeDoubleQuote |
+			encoder.EncodeLtGt |
+			encoder.EncodeQuestion |
+			encoder.EncodeAsterisk |
+			encoder.EncodeCtl |
+			encoder.EncodeDot)
+
+	// Test cases for problematic characters that should be encoded
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{"angle_brackets", "file<>name", "file＜＞name"},
+		{"quotes", "file\"name", "file＂name"},
+		{"pipe", "file|name", "file｜name"},
+		{"colon", "file:name", "file：name"},
+		{"asterisk", "file*name", "file＊name"},
+		{"question", "file?name", "file？name"},
+		{"backslash", "file\\name", "file＼name"},
+		{"forward_slash", "file/name", "file／name"},
+		{"leading_space", " filename", "␠filename"},
+		{"trailing_space", "filename ", "filename␠"},
+		{"leading_dot", ".filename", "．filename"},
+		{"control_chars", "file\tname\ntest", "file␉name␊test"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded := enc.FromStandardName(tc.input)
+			if encoded != tc.expected {
+				t.Errorf("encoding %q: expected %q, got %q", tc.input, tc.expected, encoded)
+			}
+
+			// Test decoding back - only for reversible encodings
+			// Some characters like forward slash and control chars are one-way encoded
+			decoded := enc.ToStandardName(encoded)
+			if tc.name != "forward_slash" && tc.name != "control_chars" {
+				if decoded != tc.input {
+					t.Errorf("decoding %q: expected %q, got %q", encoded, tc.input, decoded)
+				}
+			}
+		})
+	}
+}
+
+// TestFileNameEncoding tests that problematic characters are properly encoded
+func TestFileNameEncoding(t *testing.T) {
+	// Create a mock Fs with default encoding options
+	opts := Options{}
+	// Set the default encoding from our config
+	opts.Enc = (encoder.Display |
+		encoder.EncodeBackSlash |
+		encoder.EncodeInvalidUtf8 |
+		encoder.EncodeRightSpace |
+		encoder.EncodeLeftSpace |
+		encoder.EncodeLeftTilde |
+		encoder.EncodeRightPeriod |
+		encoder.EncodeLeftPeriod |
+		encoder.EncodeColon |
+		encoder.EncodePipe |
+		encoder.EncodeDoubleQuote |
+		encoder.EncodeLtGt |
+		encoder.EncodeQuestion |
+		encoder.EncodeAsterisk |
+		encoder.EncodeCtl |
+		encoder.EncodeDot)
+
+	f := &Fs{opt: opts}
+
+	// Test problematic characters that Huawei Drive rejects
+	testCases := []struct {
+		input string
+		desc  string
+	}{
+		{`file<name>.txt`, "angle brackets"},
+		{`file|name.txt`, "pipe character"},
+		{`file:name.txt`, "colon"},
+		{`file"name.txt`, "double quote"},
+		{`file*name.txt`, "asterisk"},
+		{`file?name.txt`, "question mark"},
+		{`file\name.txt`, "backslash"},
+		{` leading_space.txt`, "leading space"},
+		{`trailing_space.txt `, "trailing space"},
+		{`.leading_dot.txt`, "leading dot"},
+		{`trailing_dot.txt.`, "trailing dot"},
+		{`~leading_tilde.txt`, "leading tilde"},
+		{"file\x00name.txt", "control character"},
+	}
+
+	for _, tc := range testCases {
+		encoded := f.opt.Enc.FromStandardName(tc.input)
+		// The encoded name should be different from input (meaning it was encoded)
+		if encoded == tc.input {
+			t.Errorf("Expected %s (%q) to be encoded, but got same string", tc.desc, tc.input)
+		}
+
+		// Test that we can decode it back (skip control characters as they are not reversible)
+		decoded := f.opt.Enc.ToStandardName(encoded)
+		if tc.desc != "control character" && decoded != tc.input {
+			t.Errorf("Round-trip failed for %s: input=%q, encoded=%q, decoded=%q", tc.desc, tc.input, encoded, decoded)
+		}
+
+		t.Logf("✓ %s: %q → %q → %q", tc.desc, tc.input, encoded, decoded)
 	}
 }
