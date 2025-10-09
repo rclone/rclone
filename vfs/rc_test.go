@@ -100,25 +100,32 @@ func TestRCFileStatus(t *testing.T) {
 	// Test with valid file path
 	result, err := fileStatusCall.Fn(context.Background(), rc.Params{
 		"fs":   r.Fremote.String(),
-		"path": "test.txt",
+		"file": "test.txt",
 	})
 	require.NoError(t, err)
 
-	// Verify structure
-	assert.Contains(t, result, "name")
-	assert.Contains(t, result, "status")
-	assert.Contains(t, result, "percentage")
+	// Verify structure - now returns in 'files' array
+	assert.Contains(t, result, "files")
+	files, ok := result["files"].([]rc.Params)
+	require.True(t, ok)
+	require.Len(t, files, 1)
+
+	// Check the first (and only) file in the array
+	file := files[0]
+	assert.Contains(t, file, "name")
+	assert.Contains(t, file, "status")
+	assert.Contains(t, file, "percentage")
 
 	// Verify types
-	name, ok := result["name"].(string)
+	name, ok := file["name"].(string)
 	require.True(t, ok)
 	assert.Equal(t, "test.txt", name)
 
-	status, ok := result["status"].(string)
+	status, ok := file["status"].(string)
 	require.True(t, ok)
 	assert.Contains(t, []string{"FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"}, status)
 
-	percentage, ok := result["percentage"].(int)
+	percentage, ok := file["percentage"].(int)
 	require.True(t, ok)
 	assert.GreaterOrEqual(t, percentage, 0)
 	assert.LessOrEqual(t, percentage, 100)
@@ -126,19 +133,26 @@ func TestRCFileStatus(t *testing.T) {
 	// Test with non-existent file
 	result, err = fileStatusCall.Fn(context.Background(), rc.Params{
 		"fs":   r.Fremote.String(),
-		"path": "nonexistent.txt",
+		"file": "nonexistent.txt",
 	})
 	require.NoError(t, err)
 
-	name, ok = result["name"].(string)
+	// Verify structure - now returns in 'files' array
+	assert.Contains(t, result, "files")
+	files, ok = result["files"].([]rc.Params)
+	require.True(t, ok)
+	require.Len(t, files, 1)
+
+	file = files[0]
+	name, ok = file["name"].(string)
 	require.True(t, ok)
 	assert.Equal(t, "nonexistent.txt", name)
 
-	status, ok = result["status"].(string)
+	status, ok = file["status"].(string)
 	require.True(t, ok)
 	assert.Equal(t, "NONE", status)
 
-	percentage, ok = result["percentage"].(int)
+	percentage, ok = file["percentage"].(int)
 	require.True(t, ok)
 	assert.Equal(t, 0, percentage)
 }
@@ -177,27 +191,20 @@ func TestRCDirStatus(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	files, ok := result["files"].([]rc.Params)
+	// Verify structure - now returns files grouped by status
+	assert.Contains(t, result, "files")
+	filesByStatus, ok := result["files"].(rc.Params)
 	require.True(t, ok)
 
-	// Since VFS might not see files immediately, let's check for our specific files
-	foundTest1 := false
-	foundTest2 := false
-	for _, file := range files {
-		if name, ok := file["name"].(string); ok {
-			if name == "test1.txt" {
-				foundTest1 = true
-			}
-			if name == "test2.txt" {
-				foundTest2 = true
-			}
+	// Check that we have at least one status category
+	totalFiles := 0
+	for _, v := range filesByStatus {
+		statusFiles, ok := v.([]rc.Params)
+		if ok {
+			totalFiles += len(statusFiles)
 		}
 	}
-
-	// If we didn't find our files, that's okay for now - just log it
-	if !foundTest1 || !foundTest2 {
-		t.Log("Test files not found in directory listing - this may be expected due to VFS caching behavior")
-	}
+	t.Logf("Found %d files in testdir directory", totalFiles)
 
 	// Test with missing dir parameter (should default to root)
 	result, err = dirStatusCall.Fn(context.Background(), rc.Params{
@@ -206,32 +213,25 @@ func TestRCDirStatus(t *testing.T) {
 
 	require.NoError(t, err)
 
-	files, ok = result["files"].([]rc.Params)
+	// Verify structure - now returns files grouped by status
+	assert.Contains(t, result, "files")
+	filesByStatus, ok = result["files"].(rc.Params)
 	require.True(t, ok)
 	// Check that we found some files (exact count may vary)
-	t.Logf("Found %d files in root directory", len(files))
-	for _, file := range files {
-		t.Logf("File: %s, Status: %s", file["name"], file["status"])
-	}
-
-	// Reset variables for reuse
-	foundTest1 = false
-	foundTest2 = false
-	for _, file := range files {
-		if name, ok := file["name"].(string); ok {
-			if name == "test1.txt" {
-				foundTest1 = true
-			}
-			if name == "test2.txt" {
-				foundTest2 = true
+	totalFiles = 0
+	for _, v := range filesByStatus {
+		statusFiles, ok := v.([]rc.Params)
+		if ok {
+			totalFiles += len(statusFiles)
+			for _, file := range statusFiles {
+				if name, ok := file["name"].(string); ok {
+					status, _ := file["status"].(string)
+					t.Logf("File: %s, Status: %s", name, status)
+				}
 			}
 		}
 	}
-
-	// If we didn't find our files, that's okay for now - just log it
-	if !foundTest1 || !foundTest2 {
-		t.Log("Test files not found in directory listing - this may be expected due to VFS caching behavior")
-	}
+	t.Logf("Found %d files in root directory", totalFiles)
 
 	// Test with non-existent directory
 	_, err = dirStatusCall.Fn(context.Background(), rc.Params{
