@@ -1319,9 +1319,45 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Determine upload method based on size
 	if size >= 0 && size < int64(o.fs.opt.UploadCutoff) {
-		return o.uploadSimple(ctx, in, leaf, directoryID, size, src.ModTime(ctx))
+		err = o.uploadSimple(ctx, in, leaf, directoryID, size, src.ModTime(ctx))
+	} else {
+		err = o.uploadResume(ctx, in, leaf, directoryID, size, src.ModTime(ctx))
 	}
-	return o.uploadResume(ctx, in, leaf, directoryID, size, src.ModTime(ctx))
+
+	// Handle metadata if upload was successful
+	if err == nil {
+		// Get metadata from the source ObjectInfo and merge with options metadata
+		metadata, metaErr := fs.GetMetadataOptions(ctx, o.fs, src, options)
+		if metaErr != nil {
+			fs.Debugf(o, "Update: Error getting metadata options: %v", metaErr)
+		} else if len(metadata) > 0 {
+			fs.Debugf(o, "Update: File size before metadata: %d", o.size)
+			fs.Debugf(o, "Update: Setting metadata after upload: %v", metadata)
+
+			// Read the file info before setting metadata to compare
+			beforeObj, beforeErr := o.fs.NewObject(ctx, o.Remote())
+			if beforeErr == nil {
+				fs.Debugf(o, "Update: File size before SetMetadata (from API): %d", beforeObj.Size())
+			}
+
+			setMetaErr := o.SetMetadata(ctx, metadata)
+			if setMetaErr != nil {
+				fs.Debugf(o, "Update: Failed to set metadata: %v", setMetaErr)
+				// Don't fail the upload just because metadata setting failed
+			} else {
+				// Check file size after setting metadata
+				afterObj, afterErr := o.fs.NewObject(ctx, o.Remote())
+				if afterErr == nil {
+					fs.Debugf(o, "Update: File size after SetMetadata (from API): %d", afterObj.Size())
+					if afterObj.Size() != beforeObj.Size() {
+						fs.Errorf(o, "Update: WARNING - File size changed from %d to %d after SetMetadata!", beforeObj.Size(), afterObj.Size())
+					}
+				}
+			}
+		}
+	}
+
+	return err
 }
 
 // uploadSimple uploads a file using simple upload for files < upload_cutoff
@@ -1621,6 +1657,162 @@ func (o *Object) Remove(ctx context.Context) error {
 		resp, err := o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	// Get the full file information from the API
+	info, err := o.fs.readMetaDataForPath(ctx, o.remote)
+	if err != nil {
+		fs.Logf(o, "Failed to read metadata: %v", err)
+		return nil, err
+	}
+
+	// Create metadata map and populate it with available fields
+	metadata = make(fs.Metadata)
+
+	// Standard file information
+	if info.Description != "" {
+		metadata["description"] = info.Description
+	}
+	if info.MimeType != "" {
+		metadata["content-type"] = info.MimeType
+	}
+	if info.SHA256 != "" {
+		metadata["sha256"] = info.SHA256
+	}
+	if !info.CreatedTime.IsZero() {
+		metadata["btime"] = info.CreatedTime.Format(time.RFC3339Nano)
+	}
+	if !info.EditedTime.IsZero() {
+		metadata["mtime"] = info.EditedTime.Format(time.RFC3339Nano)
+	}
+	if !info.EditedByMeTime.IsZero() {
+		metadata["utime"] = info.EditedByMeTime.Format(time.RFC3339Nano)
+	}
+
+	// File attributes as string representations
+	if info.Favorite {
+		metadata["favorite"] = "true"
+	}
+	if info.Recycled {
+		metadata["recycled"] = "true"
+	}
+	if info.ExistThumbnail {
+		metadata["has-thumbnail"] = "true"
+	}
+
+	// Custom properties from Properties field
+	// Return these directly without prefix for user metadata compatibility
+	for key, value := range info.Properties {
+		if valueStr, ok := value.(string); ok {
+			metadata[key] = valueStr
+		} else if value != nil {
+			metadata[key] = fmt.Sprintf("%v", value)
+		}
+	}
+
+	// App settings from AppSettings field
+	// Also return these directly without prefix for user metadata compatibility
+	for key, value := range info.AppSettings {
+		if valueStr, ok := value.(string); ok {
+			metadata[key] = valueStr
+		} else if value != nil {
+			metadata[key] = fmt.Sprintf("%v", value)
+		}
+	}
+
+	return metadata, nil
+}
+
+// SetMetadata sets metadata for an Object
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	fs.Debugf(o, "SetMetadata called with %d keys: %v", len(metadata), metadata)
+
+	// Prepare the update request payload
+	updateReq := api.UpdateFileRequest{
+		Properties:  make(map[string]interface{}),
+		AppSettings: make(map[string]interface{}),
+	}
+
+	// Process metadata and separate into properties and app settings
+	for key, value := range metadata {
+		switch key {
+		case "description":
+			// Standard description field
+			updateReq.Description = value
+		case "favorite":
+			// Convert string boolean to actual boolean
+			if favorite, err := strconv.ParseBool(value); err == nil {
+				updateReq.Favorite = favorite
+			}
+		// Note: Other metadata like btime, mtime, content-type, sha256 are read-only
+		// and cannot be directly set via the update API
+		default:
+			// All other user metadata goes into Properties by default
+			// This makes the backend compatible with rclone's user metadata expectations
+			updateReq.Properties[key] = value
+		}
+	}
+
+	// Only proceed if we have something to update
+	if len(updateReq.Properties) == 0 && len(updateReq.AppSettings) == 0 &&
+		updateReq.Description == "" {
+		// No updateable metadata provided
+		fs.Debugf(o, "SetMetadata: No updateable metadata provided")
+		return nil
+	}
+
+	fs.Debugf(o, "SetMetadata: Updating %d properties, %d app settings, description=%q",
+		len(updateReq.Properties), len(updateReq.AppSettings), updateReq.Description)
+
+	// Make the API call to update the file metadata
+	opts := rest.Opts{
+		Method: "PATCH",
+		Path:   "/files/" + o.id,
+	}
+
+	var info *api.File
+
+	fs.Debugf(o, "SetMetadata: Making PATCH request to %s with payload: %+v", opts.Path, updateReq)
+
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, &updateReq, &info)
+		if resp != nil {
+			fs.Debugf(o, "SetMetadata: HTTP response status: %d", resp.StatusCode)
+		}
+		if info != nil {
+			fs.Debugf(o, "SetMetadata: Response file info - size: %d, version: %d", info.Size, info.Version)
+		}
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to set metadata: %w", err)
+	}
+
+	fs.Debugf(o, "SetMetadata: API response file size: %d (may be incorrect)", info.Size)
+
+	// The API response sometimes returns incorrect file information (size=0, version=0)
+	// So we need to refresh the object info by querying the API again
+	if info.Size == 0 && info.Version == 0 {
+		fs.Debugf(o, "SetMetadata: API response has zero size/version, refreshing object info")
+		freshInfo, err := o.fs.readMetaDataForPath(ctx, o.Remote())
+		if err != nil {
+			fs.Debugf(o, "SetMetadata: Failed to refresh object info: %v", err)
+			// Fall back to using the original API response
+			return o.setMetaData(info)
+		}
+		fs.Debugf(o, "SetMetadata: Refreshed file size: %d", freshInfo.Size)
+		return o.setMetaData(freshInfo)
+	}
+
+	// Update the object's cached metadata
+	return o.setMetaData(info)
 }
 
 // rootSlash returns root with a trailing slash
