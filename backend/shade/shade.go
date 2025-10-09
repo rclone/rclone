@@ -4,7 +4,9 @@ package shade
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -237,11 +239,12 @@ type Fs struct {
 
 // Object describes a ShadeFS object
 type Object struct {
-	fs     *Fs    // what this object is part of
-	remote string // The remote path
-	mtime  int64  // Modified time
-	hash   string // Content hash (As of September 2025 Shadefs does not store hashes, so this is mostly redundant
-	size   int64  // Size of the object
+	fs       *Fs    // what this object is part of
+	remote   string // The remote path
+	mtime    int64  // Modified time
+	hash     string // Content hash (As of September 2025 Shadefs does not store hashes, so this is mostly redundant
+	size     int64  // Size of the object
+	original string //Presigned download link
 }
 
 // Directory describes a ShadeFS directory
@@ -272,6 +275,108 @@ func (f *Fs) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
 
+// Move src to this remote using server-side move operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	token, err := f.refreshJWTToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	//Need to make sure destination exists
+	err = f.ensureParentDirectories(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create temporary object
+	o := &Object{
+		fs:     f,
+		remote: remote,
+	}
+	fromFullPath := path.Join(src.Fs().Root(), srcObj.remote)
+	toFullPath := path.Join(f.root, remote)
+
+	// Build query parameters
+	params := url.Values{}
+	params.Set("path", remote)
+	params.Set("from", fromFullPath)
+	params.Set("to", toFullPath)
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   fmt.Sprintf("/%s/fs/move?%s", f.drive, params.Encode()),
+		ExtraHeaders: map[string]string{
+			"Authorization": "Bearer " + token,
+		},
+	}
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.Call(ctx, &opts)
+
+		if err != nil && resp.StatusCode == http.StatusBadRequest {
+			fs.Debugf(f, "Bad token from server: %v", token)
+		}
+
+		return resp != nil && resp.StatusCode == http.StatusTooManyRequests, err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+	//Need to check if destination exists
+	fullPath := f.buildFullPath(dstRemote)
+	var response api.ListDirResponse
+	res, _ := f.callAPI(ctx, "GET", fmt.Sprintf("/%s/fs/attr?path=%s", f.drive, fullPath), &response)
+
+	if res.StatusCode != http.StatusNotFound {
+		return fs.ErrorDirExists
+	}
+
+	err := f.ensureParentDirectories(ctx, dstRemote)
+	if err != nil {
+		return err
+	}
+
+	o := &Object{
+		fs:     srcFs,
+		remote: srcRemote,
+	}
+
+	_, err = f.Move(ctx, o, dstRemote)
+	return err
+}
+
 // Hashes returns the supported hash types
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
@@ -298,7 +403,7 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:        root,
 		opt:         *opt,
 		drive:       opt.Drive,
-		srv:         rest.NewClient(fshttp.NewClient(ctx)),
+		srv:         rest.NewClient(fshttp.NewClient(ctx)).SetRoot(defaultEndpoint),
 		apiSrv:      rest.NewClient(fshttp.NewClient(ctx)),
 		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		recursive:   true,
@@ -309,6 +414,8 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Initially set minimal features
 		// We'll expand this in a future iteration
 		CanHaveEmptyDirectories: true,
+		Move:                    f.Move,
+		DirMove:                 f.DirMove,
 		OpenChunkWriter:         f.OpenChunkWriter,
 	}
 
@@ -685,35 +792,34 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		return "d41d8cd98f00b204e9800998ecf8427e", nil
 	}
 
-	// If we already have the hash from reading the file, return it
-	if o.hash != "" {
-		return o.hash, nil
-	}
+	var body io.ReadCloser
+	var err error
 
-	// If no hash is available yet, trigger a read that will compute it
-	reader, err := o.Open(ctx)
-	if err != nil {
-		return "", err
-	}
-	defer func(reader io.ReadCloser) {
-		err := reader.Close()
+	if o.original != "" {
+		resp, err := http.Get(o.original)
 		if err != nil {
-			fs.Debugf(o.fs, "Failed to close reader: %v", err)
+			return "", err
 		}
-	}(reader)
+		if resp.StatusCode != http.StatusOK {
+			defer resp.Body.Close()
+			return "", fmt.Errorf("unexpected status %d fetching %s", resp.StatusCode, o.original)
+		}
+		body = resp.Body
+		defer body.Close()
+	} else {
+		body, err = o.Open(ctx)
+		if err != nil {
+			return "", err
+		}
+		defer body.Close()
+	}
 
-	// Read the entire file to compute the hash
-	_, err = io.Copy(io.Discard, reader)
-	if err != nil {
+	h := md5.New()
+	if _, err := io.Copy(h, body); err != nil {
 		return "", err
 	}
 
-	// The hash should now be set by the hashingReadCloser
-	if o.hash == "" {
-		return "", fmt.Errorf("failed to compute MD5 hash")
-	}
-
-	return o.hash, nil
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 // Size returns the size of the object
@@ -741,7 +847,7 @@ func (o *Object) Storable() bool {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	fs.Debugf(o.fs, "Opening file: %s", o.remote)
 
-	if o.Size() == 0 {
+	if o.size == 0 {
 		// Empty file: return an empty reader
 		return io.NopCloser(bytes.NewReader(nil)), nil
 	}
@@ -767,6 +873,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	// Use pacer to manage retries and rate limiting
 	var res *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
+
+		if res != nil {
+			err = res.Body.Close()
+			if err != nil {
+				return false, err
+			}
+		}
+
 		client := http.Client{
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse // Don't follow redirects
@@ -804,6 +918,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 
 		presignedURL := strings.TrimSpace(string(bodyBytes))
+		o.original = presignedURL //Save for later for hashing
 
 		client := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(presignedURL)
 		var downloadRes *http.Response
@@ -826,25 +941,20 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			return downloadRes.StatusCode == http.StatusTooManyRequests, nil
 		})
 
+		if err != nil {
+			return nil, fmt.Errorf("presigned URL request failed: %w", err)
+		}
+		if downloadRes == nil {
+			return nil, fmt.Errorf("no response received from presigned URL request")
+		}
+
 		if downloadRes.StatusCode != http.StatusOK && downloadRes.StatusCode != http.StatusPartialContent {
 			body, _ := io.ReadAll(downloadRes.Body)
 			fs.CheckClose(downloadRes.Body, &err)
 			return nil, fmt.Errorf("presigned URL request failed with status %d: %q", downloadRes.StatusCode, string(body))
 		}
 
-		// Create a MultiHasher with just MD5 support
-		multiHasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(hash.MD5))
-		if err != nil {
-			fs.Debugf(o.fs, "Failed to create MultiHasher: %v", err)
-			return downloadRes.Body, nil // Still return the body even if we can't hash
-		}
-
-		return &hashingReadCloser{
-			closer: downloadRes.Body,
-			hasher: multiHasher,
-			o:      o,
-			Reader: io.TeeReader(downloadRes.Body, multiHasher),
-		}, nil
+		return downloadRes.Body, nil
 
 	default:
 		body, _ := io.ReadAll(res.Body)
@@ -852,41 +962,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		fs.Debugf(o.fs, "Unexpected status code from ShadeFS: %d, body: %q", res.StatusCode, string(body))
 		return nil, fmt.Errorf("download failed with status %d: %q", res.StatusCode, string(body))
 	}
-}
-
-type hashingReadCloser struct {
-	Reader io.Reader
-	closer io.ReadCloser
-	hasher *hash.MultiHasher
-	o      *Object
-	read   int64
-}
-
-func (h *hashingReadCloser) Read(p []byte) (n int, err error) {
-	n, err = h.Reader.Read(p)
-	if n > 0 {
-		h.read += int64(n)
-	}
-	if err == io.EOF {
-		// At EOF, store the computed hash
-		sums := h.hasher.Sums()
-		if md5sum, ok := sums[hash.MD5]; ok {
-			h.o.hash = md5sum
-		}
-	}
-	return n, err
-}
-
-func (h *hashingReadCloser) Close() error {
-	// If we haven't computed the hash yet, calculate it now
-	if h.o.hash == "" {
-		sums := h.hasher.Sums()
-		if md5sum, ok := sums[hash.MD5]; ok {
-			h.o.hash = md5sum
-			fs.Debugf(h.o.fs, "Computed MD5 hash at Close: %s (read %d bytes)", h.o.hash, h.read)
-		}
-	}
-	return h.closer.Close()
 }
 
 // Update in to the object with the modTime given of the given size
@@ -998,7 +1073,6 @@ func (d *Directory) String() string {
 	return fmt.Sprintf("Directory: %s", d.remote)
 }
 
-// Register interface implementations
 var (
 	_ fs.Fs        = &Fs{}
 	_ fs.Object    = &Object{}
