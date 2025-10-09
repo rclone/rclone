@@ -260,6 +260,42 @@ func (f *Fs) rootParentID() string {
 	return ""
 }
 
+// getRootDirectoryID gets the actual root directory ID by looking for nonexistent_dir virtual flag
+func (f *Fs) getRootDirectoryID(ctx context.Context) (string, error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/files",
+		Parameters: url.Values{
+			"fields":     []string{"*"},
+			"containers": []string{"drive"},
+		},
+	}
+
+	// Set page size if specified
+	if f.opt.ListChunk > 0 && f.opt.ListChunk <= 1000 {
+		opts.Parameters.Set("pageSize", strconv.Itoa(f.opt.ListChunk))
+	}
+
+	var result api.FileList
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return "", fmt.Errorf("couldn't list files to detect root directory: %w", err)
+	}
+
+	// Look for nonexistent_dir virtual flag to get root directory ID
+	for _, item := range result.Files {
+		if item.FileName == "nonexistent_dir" && len(item.ParentFolder) > 0 {
+			fs.Debugf(f, "Found root directory ID from nonexistent_dir: %s", item.ParentFolder[0])
+			return item.ParentFolder[0], nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find root directory ID via nonexistent_dir virtual flag")
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -391,8 +427,19 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Description: "folder",
 	}
 
-	// Set parent folder if specified
-	if pathID != "" && pathID != f.rootParentID() {
+	// For Huawei Drive, we always need to specify a parent folder
+	// If pathID is empty or is the root parent ID, we need to get the actual root directory ID
+	if pathID == "" || pathID == f.rootParentID() {
+		// Get the actual root directory ID by detecting it from nonexistent_dir
+		rootID, err := f.getRootDirectoryID(ctx)
+		if err != nil {
+			return "", fmt.Errorf("couldn't get root directory ID: %w", err)
+		}
+		if rootID != "" {
+			req.ParentFolder = []string{rootID}
+		}
+	} else {
+		// Use the provided pathID as parent
 		req.ParentFolder = []string{pathID}
 	}
 
@@ -530,65 +577,21 @@ func (f *Fs) listRootDirectory(ctx context.Context, fn listAllFn) (found bool, e
 		opts.Parameters.Set("pageToken", result.NextPageToken)
 	}
 
-	// Detect the root directory ID
+	// Detect the root directory ID using nonexistent_dir virtual flag
+	// nonexistent_dir is a virtual directory created by Huawei Drive API as a positioning flag
+	// Its parentFolder field points to the actual root directory ID
+	// This is Huawei Drive's design to help developers identify the root directory ID
+	// since the root directory itself has no parent
 	var rootDirectoryID string
-
-	// Method 1: Look for virtual directories that indicate root structure
-	// nonexistent_dir is a virtual directory whose parent is the root directory
 	for _, item := range allFiles {
 		if item.FileName == "nonexistent_dir" && len(item.ParentFolder) > 0 {
 			rootDirectoryID = item.ParentFolder[0]
-			fs.Debugf(f, "Found root directory ID from nonexistent_dir: %s", rootDirectoryID)
+			fs.Debugf(f, "Found root directory ID from nonexistent_dir virtual flag: %s", rootDirectoryID)
 			break
 		}
 	}
 
-	// Method 2: Fallback - use scoring algorithm if nonexistent_dir not found
-	if rootDirectoryID == "" {
-		fs.Debugf(f, "nonexistent_dir not found, using scoring algorithm to detect root")
-		parentFolderCounts := make(map[string]int)
-		parentFolderDirCounts := make(map[string]int)
-
-		for _, item := range allFiles {
-			if len(item.ParentFolder) > 0 && item.ParentFolder[0] != "" {
-				parentID := item.ParentFolder[0]
-				parentFolderCounts[parentID]++
-				if item.IsDir() {
-					parentFolderDirCounts[parentID]++
-				}
-			}
-		}
-
-		// Find directory with most subdirectories as likely root
-		maxScore := 0
-		for parentID, dirCount := range parentFolderDirCounts {
-			if dirCount == 0 {
-				continue
-			}
-
-			totalCount := parentFolderCounts[parentID]
-			score := dirCount * 2
-
-			if totalCount > 0 {
-				dirRatio := float64(dirCount) / float64(totalCount)
-				if dirRatio > 0.5 {
-					score += 10
-				}
-			}
-
-			if totalCount >= 3 && totalCount <= 50 {
-				score += 5
-			}
-
-			if score > maxScore {
-				maxScore = score
-				rootDirectoryID = parentID
-			}
-		}
-		fs.Debugf(f, "Selected root directory ID from scoring: %s (score: %d)", rootDirectoryID, maxScore)
-	}
-
-	// Now make a targeted API call with the detected root directory ID
+	// Make a targeted API call with the detected root directory ID
 	if rootDirectoryID != "" {
 		fs.Debugf(f, "Making targeted API call for root directory: %s", rootDirectoryID)
 		return f.listDirectory(ctx, rootDirectoryID, fn)
@@ -820,6 +823,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	if directoryID != "" {
 		copyReq.ParentFolder = []string{directoryID}
+	} else {
+		// For root directory, get the actual root directory ID
+		rootID, err := f.getRootDirectoryID(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't get root directory ID for copy: %w", err)
+		}
+		if rootID != "" {
+			copyReq.ParentFolder = []string{rootID}
+		}
 	}
 
 	var info *api.File
@@ -1315,9 +1327,18 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	// Note: We don't set editedTime/createdTime here because
 	// Huawei Drive API ignores these parameters and always uses server time
 
-	// Set parent folder if not root
+	// Set parent folder - always required for Huawei Drive
 	if directoryID != "" && directoryID != o.fs.rootParentID() {
 		metadata["parentFolder"] = []string{directoryID}
+	} else {
+		// For root directory, get the actual root directory ID
+		rootID, err := o.fs.getRootDirectoryID(ctx)
+		if err != nil {
+			return fmt.Errorf("couldn't get root directory ID for upload: %w", err)
+		}
+		if rootID != "" {
+			metadata["parentFolder"] = []string{rootID}
+		}
 	}
 
 	// Create multipart form
@@ -1441,6 +1462,15 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 
 	if directoryID != "" && directoryID != o.fs.rootParentID() {
 		metadata["parentFolder"] = []string{directoryID}
+	} else {
+		// For root directory, get the actual root directory ID
+		rootID, err := o.fs.getRootDirectoryID(ctx)
+		if err != nil {
+			return fmt.Errorf("couldn't get root directory ID for resumable upload: %w", err)
+		}
+		if rootID != "" {
+			metadata["parentFolder"] = []string{rootID}
+		}
 	}
 
 	var resp *http.Response
