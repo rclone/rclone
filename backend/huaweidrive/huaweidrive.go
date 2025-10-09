@@ -255,9 +255,10 @@ func parsePath(path string) (root string) {
 
 // rootParentID returns the ID of the parent of the root directory
 func (f *Fs) rootParentID() string {
-	// For Huawei Drive, root directory doesn't have a parent
-	// We use empty string to represent the root
-	return ""
+	// For Huawei Drive, we use a special marker for root parent
+	// The actual root directory ID will be determined during runtime
+	// This avoids making network calls during Fs construction
+	return "HUAWEI_DRIVE_ROOT_PARENT"
 }
 
 // getRootDirectoryID gets the actual root directory ID by looking for nonexistent_dir virtual flag
@@ -821,7 +822,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	copyReq := api.CopyFileRequest{
 		FileName: f.opt.Enc.FromStandardName(leaf),
 	}
-	if directoryID != "" {
+	if directoryID != "" && directoryID != f.rootParentID() {
 		copyReq.ParentFolder = []string{directoryID}
 	} else {
 		// For root directory, get the actual root directory ID
@@ -1004,15 +1005,34 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// Add new parent and remove old parent if they're different
 	if dstDirectoryID != srcDirectoryID {
+		var actualDstDirectoryID string
+		var actualSrcDirectoryID string
+
 		// Special handling for root directory moves
 		if dstDirectoryID == f.rootParentID() {
-			// Moving to root directory - we need to get the actual root directory ID
-			// For now, we'll skip the move if target is root to avoid the rootParentID error
-			fs.Debugf(f, "Skipping directory move to root directory (not supported)")
-			return fs.ErrorCantDirMove
+			// Moving to root directory - get the actual root directory ID
+			rootID, err := f.getRootDirectoryID(ctx)
+			if err != nil {
+				return fmt.Errorf("couldn't get root directory ID for DirMove: %w", err)
+			}
+			actualDstDirectoryID = rootID
+		} else {
+			actualDstDirectoryID = dstDirectoryID
 		}
-		moveReq.AddParentFolder = []string{dstDirectoryID}
-		moveReq.RemoveParentFolder = []string{srcDirectoryID}
+
+		if srcDirectoryID == f.rootParentID() {
+			// Moving from root directory - get the actual root directory ID
+			rootID, err := f.getRootDirectoryID(ctx)
+			if err != nil {
+				return fmt.Errorf("couldn't get root directory ID for DirMove source: %w", err)
+			}
+			actualSrcDirectoryID = rootID
+		} else {
+			actualSrcDirectoryID = srcDirectoryID
+		}
+
+		moveReq.AddParentFolder = []string{actualDstDirectoryID}
+		moveReq.RemoveParentFolder = []string{actualSrcDirectoryID}
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
@@ -1023,7 +1043,9 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return err
 	}
 
+	// Clear the directory cache for both source and destination
 	srcFs.dirCache.FlushDir(srcRemote)
+	f.dirCache.FlushDir(dstRemote)
 	return nil
 }
 
