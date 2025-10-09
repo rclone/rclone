@@ -333,7 +333,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 		BucketBased:             false,
 		// 新增的特性支持
-		FilterAware:      true,  // 支持过滤功能
+		FilterAware:      true,  // 支持过滤器
 		ReadMetadata:     true,  // 读取元数据 - 华为云盘支持 properties 字段
 		WriteMetadata:    true,  // 写入元数据 - 华为云盘支持 properties 字段
 		UserMetadata:     true,  // 用户自定义元数据
@@ -1226,7 +1226,9 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 	}
 
 	found, err := f.listAll(ctx, directoryID, func(item *api.File) bool {
-		if strings.EqualFold(item.FileName, leaf) && !item.IsDir() {
+		// Convert the API filename to standard name for comparison
+		standardName := f.opt.Enc.ToStandardName(item.FileName)
+		if strings.EqualFold(standardName, leaf) && !item.IsDir() {
 			info = item
 			return true
 		}
