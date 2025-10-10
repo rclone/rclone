@@ -266,7 +266,8 @@ func (f *Fs) rootParentID() string {
 }
 
 // getRootDirectoryID gets the actual root directory ID by looking for nonexistent_dir virtual flag
-func (f *Fs) getRootDirectoryID(ctx context.Context) (string, error) {
+// This function is kept as backup for potential future use
+func (f *Fs) getRootDirectoryID(ctx context.Context) (string, error) { //nolint:unused
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/files",
@@ -975,11 +976,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 				fs.Debugf(f, "Cross-directory move failed: API returned success but file remained in old location. Expected parent=%q, got=%q. Falling back to copy+delete.",
 					expectedDstDir, actualParent)
 				return nil, fs.ErrorCantMove
-			} else {
-				// This was just a same-directory rename, which worked correctly
-				fs.Debugf(f, "Same-directory rename completed successfully")
 			}
-		} else {
+			// This was just a same-directory rename, which worked correctly
+			fs.Debugf(f, "Same-directory rename completed successfully")
+		} else if actualParent != expectedParent {
 			// File moved to a different directory, verify it's the expected one
 			if actualParent != expectedParent {
 				fs.Debugf(f, "Cross-directory move failed: API returned success but file moved to wrong location. Expected parent=%q, got=%q. Falling back to copy+delete.",

@@ -118,7 +118,7 @@ func TestTimeFormats(t *testing.T) {
 // TestEncoding tests filename encoding for Huawei Drive restrictions
 func TestEncoding(t *testing.T) {
 	// Create encoder with Huawei Drive restrictions
-	enc := encoder.MultiEncoder(
+	enc := encoder.MultiEncoder( //nolint:unconvert
 		encoder.Display |
 			encoder.EncodeBackSlash |
 			encoder.EncodeInvalidUtf8 |
