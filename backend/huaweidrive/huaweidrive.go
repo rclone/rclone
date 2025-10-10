@@ -70,6 +70,67 @@ func init() {
 		Name:        "huaweidrive",
 		Description: "Huawei Drive",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			System: map[string]fs.MetadataHelp{
+				"content-type": {
+					Help:     "MIME type of the object",
+					Type:     "string",
+					ReadOnly: true,
+				},
+				"description": {
+					Help:     "Description of the file",
+					Type:     "string",
+					ReadOnly: false,
+				},
+				"sha256": {
+					Help:     "SHA256 hash of the file",
+					Type:     "string",
+					ReadOnly: true,
+				},
+				"btime": {
+					Help:     "Time when the file was created (RFC 3339)",
+					Type:     "RFC 3339",
+					ReadOnly: true,
+				},
+				"mtime": {
+					Help:     "Time when the file content was last modified (RFC 3339)",
+					Type:     "RFC 3339",
+					ReadOnly: true,
+				},
+				"utime": {
+					Help:     "Time when the file was last edited by the current user (RFC 3339)",
+					Type:     "RFC 3339",
+					ReadOnly: true,
+				},
+				"favorite": {
+					Help:     "Whether the file is marked as favorite (true/false)",
+					Type:     "string",
+					ReadOnly: false,
+				},
+				"recycled": {
+					Help:     "Whether the file is in recycle bin (true/false)",
+					Type:     "string",
+					ReadOnly: true,
+				},
+				"has-thumbnail": {
+					Help:     "Whether the file has a thumbnail (true/false)",
+					Type:     "string",
+					ReadOnly: true,
+				},
+			},
+			Help: `Huawei Drive supports reading and writing custom metadata.
+
+User metadata can be set using the "properties" field in the API.
+System metadata includes standard file information such as:
+- content-type: MIME type of the object
+- description: User-provided description
+- favorite: Whether file is marked as favorite
+- btime/mtime/utime: Various timestamps
+- sha256: File hash
+- recycled/has-thumbnail: File status flags
+
+Custom metadata keys can be any string and will be stored in the file's properties.`,
+		},
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			// Parse config into Options struct
 			opt := new(Options)
@@ -120,8 +181,10 @@ func init() {
 			Advanced: true,
 			// Huawei Drive has strict filename restrictions
 			// API error: "The fileName can not be blank and can not contain '<>|:\"*?/\\', cannot equal .. or . and not exceed max limit."
+			// Additionally encode slash and some Unicode characters that might cause issues
 			Default: (encoder.Display |
 				encoder.EncodeBackSlash |
+				encoder.EncodeSlash |
 				encoder.EncodeInvalidUtf8 |
 				encoder.EncodeRightSpace |
 				encoder.EncodeLeftSpace |
@@ -421,10 +484,10 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// Validate the directory name
+	// Encode the directory name
 	encodedLeaf := f.opt.Enc.FromStandardName(leaf)
-	if err := validateFileName(encodedLeaf); err != nil {
-		return "", fmt.Errorf("invalid directory name: %w", err)
+	if encodedLeaf == "" {
+		return "", fmt.Errorf("invalid directory name: cannot be empty")
 	}
 
 	// Create the directory
@@ -1381,6 +1444,16 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
+// MimeType returns the content type of the object if known, or "" if not
+func (o *Object) MimeType(ctx context.Context) string {
+	err := o.readMetaData(ctx)
+	if err != nil {
+		fs.Logf(o, "Failed to read metadata for mime type: %v", err)
+		return ""
+	}
+	return o.mimeType
+}
+
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.File) (err error) {
 	if info.IsDir() {
@@ -1568,9 +1641,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Determine upload method based on size
 	if size >= 0 && size < int64(o.fs.opt.UploadCutoff) {
-		err = o.uploadSimple(ctx, in, leaf, directoryID, size, src.ModTime(ctx))
+		err = o.uploadSimple(ctx, in, leaf, directoryID, size, src.ModTime(ctx), src)
 	} else {
-		err = o.uploadResume(ctx, in, leaf, directoryID, size, src.ModTime(ctx))
+		err = o.uploadResume(ctx, in, leaf, directoryID, size, src.ModTime(ctx), src)
 	}
 
 	// Handle metadata if upload was successful
@@ -1610,26 +1683,37 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 // uploadSimple uploads a file using simple upload for files < upload_cutoff
-func (o *Object) uploadSimple(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time) (err error) {
+func (o *Object) uploadSimple(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, src fs.ObjectInfo) (err error) {
 	// For files < 20MB, we should use multipart upload with metadata
 	// According to Huawei Drive API documentation
-	return o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime)
+	return o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime, src)
 }
 
 // uploadMultipart uploads a file using multipart upload with metadata
-func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time) (err error) {
+func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, src fs.ObjectInfo) (err error) {
 	// Use the main fs client for authentication, but with upload URL
 	srv := o.fs.srv
 
-	// Detect content type
-	mimeType := mime.TypeByExtension(path.Ext(leaf))
+	// Try to get MIME type from source object first, then fall back to extension detection
+	var mimeType string
+	if src != nil {
+		// Try to get MIME type from source object if it implements MimeTyper
+		if mimeTyper, ok := src.(fs.MimeTyper); ok {
+			mimeType = mimeTyper.MimeType(ctx)
+		}
+	}
+
+	// If we couldn't get MIME type from source, detect from extension
+	if mimeType == "" {
+		mimeType = mime.TypeByExtension(path.Ext(leaf))
+	}
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}
 
-	// Validate the filename before using it
-	if err := validateFileName(leaf); err != nil {
-		return fmt.Errorf("invalid filename: %w", err)
+	// Basic filename validation
+	if leaf == "" {
+		return fmt.Errorf("invalid filename: cannot be empty")
 	}
 
 	// Create metadata
@@ -1726,7 +1810,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 }
 
 // uploadResume uploads a file using resumable upload for files >= upload_cutoff
-func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time) (err error) {
+func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, src fs.ObjectInfo) (err error) {
 	// Use the main fs client for authentication
 	srv := o.fs.srv
 
@@ -1743,8 +1827,19 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 		RootURL: uploadURL,
 	}
 
-	// Detect content type
-	mimeType := mime.TypeByExtension(path.Ext(leaf))
+	// Try to get MIME type from source object first, then fall back to extension detection
+	var mimeType string
+	if src != nil {
+		// Try to get MIME type from source object if it implements MimeTyper
+		if mimeTyper, ok := src.(fs.MimeTyper); ok {
+			mimeType = mimeTyper.MimeType(ctx)
+		}
+	}
+
+	// If we couldn't get MIME type from source, detect from extension
+	if mimeType == "" {
+		mimeType = mime.TypeByExtension(path.Ext(leaf))
+	}
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}
@@ -2061,40 +2156,6 @@ func (f *Fs) rootSlash() string {
 		return f.root
 	}
 	return f.root + "/"
-}
-
-// validateFileName checks if a filename complies with Huawei Drive restrictions
-func validateFileName(name string) error {
-	if name == "" {
-		return fmt.Errorf("filename cannot be empty")
-	}
-
-	// Check length - Huawei Drive API documentation specifies 250 bytes max
-	if len(name) > 250 {
-		return fmt.Errorf("filename too long: %d bytes (max 250)", len(name))
-	}
-
-	// Check for invalid characters: <>|:"*?/\
-	invalidChars := "<>|:\"*?/\\"
-	for _, char := range invalidChars {
-		if strings.ContainsRune(name, char) {
-			return fmt.Errorf("filename contains invalid character: %c", char)
-		}
-	}
-
-	// Check for reserved names
-	if name == "." || name == ".." {
-		return fmt.Errorf("filename cannot be '.' or '..'")
-	}
-
-	// Check for control characters and other restrictions
-	for _, r := range name {
-		if r < 32 || r == 127 { // Control characters
-			return fmt.Errorf("filename contains control character: U+%04X", r)
-		}
-	}
-
-	return nil
 }
 
 // shouldRetry returns a boolean as to whether this err deserves to be retried

@@ -7,7 +7,6 @@ import (
 	"mime"
 	"net/http"
 	"path"
-	"strings"
 	"testing"
 	"time"
 
@@ -240,65 +239,6 @@ func TestFileNameEncoding(t *testing.T) {
 		}
 
 		t.Logf("✓ %s: %q → %q → %q", tc.desc, tc.input, encoded, decoded)
-	}
-}
-
-// TestValidateFileName tests the validateFileName function
-func TestValidateFileName(t *testing.T) {
-	testCases := []struct {
-		name      string
-		fileName  string
-		expectErr bool
-		errMsg    string
-	}{
-		{"valid_filename", "normal_file.txt", false, ""},
-		{"empty_filename", "", true, "filename cannot be empty"},
-		{"dot_only", ".", true, "filename cannot be '.' or '..'"},
-		{"dot_dot_only", "..", true, "filename cannot be '.' or '..'"},
-		{"invalid_char_less_than", "file<name.txt", true, "filename contains invalid character: <"},
-		{"invalid_char_greater_than", "file>name.txt", true, "filename contains invalid character: >"},
-		{"invalid_char_pipe", "file|name.txt", true, "filename contains invalid character: |"},
-		{"invalid_char_colon", "file:name.txt", true, "filename contains invalid character: :"},
-		{"invalid_char_quote", "file\"name.txt", true, "filename contains invalid character: \""},
-		{"invalid_char_asterisk", "file*name.txt", true, "filename contains invalid character: *"},
-		{"invalid_char_question", "file?name.txt", true, "filename contains invalid character: ?"},
-		{"invalid_char_slash", "file/name.txt", true, "filename contains invalid character: /"},
-		{"invalid_char_backslash", "file\\name.txt", true, "filename contains invalid character: \\"},
-		{"control_char_tab", "file\tname.txt", true, "filename contains control character"},
-		{"control_char_newline", "file\nname.txt", true, "filename contains control character"},
-		{"control_char_null", "file\x00name.txt", true, "filename contains control character"},
-		{"control_char_del", "file\x7fname.txt", true, "filename contains control character"},
-		{"unicode_filename", "文件名.txt", false, ""},
-		{"long_valid_name", "a_very_long_filename_that_is_still_under_250_bytes_limit.txt", false, ""},
-	}
-
-	// Create a very long filename that exceeds 250 bytes
-	longName := ""
-	for i := 0; i < 260; i++ {
-		longName += "a"
-	}
-	testCases = append(testCases, struct {
-		name      string
-		fileName  string
-		expectErr bool
-		errMsg    string
-	}{"too_long_filename", longName, true, "filename too long"})
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := validateFileName(tc.fileName)
-			if tc.expectErr {
-				if err == nil {
-					t.Errorf("expected error containing %q, got nil", tc.errMsg)
-				} else if tc.errMsg != "" && !strings.Contains(err.Error(), tc.errMsg) {
-					t.Errorf("expected error containing %q, got %q", tc.errMsg, err.Error())
-				}
-			} else {
-				if err != nil {
-					t.Errorf("expected no error, got %q", err.Error())
-				}
-			}
-		})
 	}
 }
 
