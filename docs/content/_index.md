@@ -180,6 +180,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
 {{< provider name="Qiniu Cloud Object Storage (Kodo)" home="https://www.qiniu.com/en/products/kodo" config="/s3/#qiniu" >}}
 {{< provider name="Quatrix by Maytech" home="https://www.maytech.net/products/quatrix-business" config="/quatrix/" >}}
+{{< provider name="Rabata Cloud Storage" home="https://rabata.io" config="/s3/#Rabata" >}}
 {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" >}}
 {{< provider name="Scaleway" home="https://www.scaleway.com/object-storage/" config="/s3/#scaleway" >}}
