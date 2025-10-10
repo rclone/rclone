@@ -398,11 +398,9 @@ func TestErrorHandling(t *testing.T) {
 				if resultErr == nil {
 					t.Error("expected error to be returned")
 				}
-			} else {
+			} else if !shouldRetryResult {
 				// Should retry (temporary error)
-				if !shouldRetryResult {
-					t.Error("expected shouldRetry to return true for retryable error")
-				}
+				t.Error("expected shouldRetry to return true for retryable error")
 			}
 		})
 	}
@@ -516,12 +514,12 @@ func TestConstants(t *testing.T) {
 	}
 
 	// Test size limits
-	expectedChunkSize := fs.SizeSuffix(8 * fs.Mebi) // 8MB
+	expectedChunkSize := 8 * fs.Mebi // 8MB
 	if defaultChunkSize != expectedChunkSize {
 		t.Errorf("expected default chunk size %d, got %d", expectedChunkSize, defaultChunkSize)
 	}
 
-	expectedMaxSize := fs.SizeSuffix(50 * fs.Gibi) // 50GB
+	expectedMaxSize := 50 * fs.Gibi // 50GB
 	if maxFileSize != expectedMaxSize {
 		t.Errorf("expected max file size %d, got %d", expectedMaxSize, maxFileSize)
 	}

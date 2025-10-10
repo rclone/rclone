@@ -392,7 +392,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 		// Try to verify parent directory exists, but don't fail if it doesn't work
 		// due to special character encoding issues with Huawei Drive
-		tempF.dirCache.FindRoot(ctx, false)
+		_ = tempF.dirCache.FindRoot(ctx, false)
 
 		// Check if the file exists in the parent directory (try even if FindRoot failed)
 		_, fileErr := tempF.NewObject(ctx, remote)
