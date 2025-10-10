@@ -514,11 +514,12 @@ func (f *Fs) mkDirs(ctx context.Context, path string) (err error) {
 			if apiErr.ErrorName != "DiskPathPointsToExistentDirectoryError" {
 				// 2 if it fails then create all directories in the path from root.
 				dirs := strings.Split(dirString, "/") //path separator
-				var mkdirpath = "/"                   //path separator /
+				var mkdirpath strings.Builder
+				mkdirpath.WriteString("/") //path separator /
 				for _, element := range dirs {
 					if element != "" {
-						mkdirpath += element + "/"      //path separator /
-						_ = f.CreateDir(ctx, mkdirpath) // ignore errors while creating dirs
+						mkdirpath.WriteString(element + "/")     //path separator /
+						_ = f.CreateDir(ctx, mkdirpath.String()) // ignore errors while creating dirs
 					}
 				}
 			}
