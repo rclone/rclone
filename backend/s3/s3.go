@@ -105,11 +105,11 @@ var providerOption = fs.Option{
 		Value: "Exaba",
 		Help:  "Exaba Object Storage",
 	}, {
-		Value: "FlashBlade",
-		Help:  "Pure Storage FlashBlade Object Storage",
-	}, {
 		Value: "FileLu",
 		Help:  "FileLu S5 (S3-Compatible Object Storage)",
+	}, {
+		Value: "FlashBlade",
+		Help:  "Pure Storage FlashBlade Object Storage",
 	}, {
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
@@ -376,7 +376,7 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
-			Help:     "Region to connect to. - the location where your bucket will be created and your data stored. Need bo be same with your endpoint.\n",
+			Help:     "Region to connect to. - the location where your bucket will be created and your data stored. Need to be same with your endpoint.\n",
 			Provider: "HuaweiOBS",
 			Examples: []fs.OptionExample{{
 				Value: "af-south-1",
@@ -1049,7 +1049,7 @@ func init() {
 				Help:  "APAC Cross Regional Tokyo Endpoint",
 			}, {
 				Value: "s3.hkg.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional HongKong Endpoint",
+				Help:  "APAC Cross Regional Hong Kong Endpoint",
 			}, {
 				Value: "s3.seo.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Seoul Endpoint",
@@ -1061,7 +1061,7 @@ func init() {
 				Help:  "APAC Cross Regional Tokyo Private Endpoint",
 			}, {
 				Value: "s3.private.hkg.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional HongKong Private Endpoint",
+				Help:  "APAC Cross Regional Hong Kong Private Endpoint",
 			}, {
 				Value: "s3.private.seo.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Seoul Private Endpoint",
@@ -1415,14 +1415,6 @@ func init() {
 				Help:  "EU West (London)",
 			}},
 		}, {
-			Name:     "endpoint",
-			Help:     "Endpoint for Zata Object Storage.",
-			Provider: "Zata",
-			Examples: []fs.OptionExample{{
-				Value: "idr01.zata.ai",
-				Help:  "South Asia Endpoint",
-			}},
-		}, {
 			// RackCorp endpoints: https://www.rackcorp.com/storage/s3storage
 			Name:     "endpoint",
 			Help:     "Endpoint for RackCorp Object Storage.",
@@ -1612,6 +1604,14 @@ func init() {
 			}, {
 				Value: "cos.accelerate.myqcloud.com",
 				Help:  "Use Tencent COS Accelerate Endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Zata Object Storage.",
+			Provider: "Zata",
+			Examples: []fs.OptionExample{{
+				Value: "idr01.zata.ai",
+				Help:  "South Asia Endpoint",
 			}},
 		}, {
 			Name:     "endpoint",
@@ -1918,7 +1918,7 @@ func init() {
 				Help:  "Southwest China (Guiyang)",
 			}, {
 				Value: "xian1",
-				Help:  "Nouthwest China (Xian)",
+				Help:  "Northwest China (Xian)",
 			}, {
 				Value: "yunnan",
 				Help:  "Yunnan China (Kunming)",
@@ -2157,7 +2157,7 @@ func init() {
 				Help:  "New York (USA) Region",
 			}, {
 				Value: "us-west-1",
-				Help:  "Freemont (USA) Region",
+				Help:  "Fremont (USA) Region",
 			}, {
 				Value: "nz",
 				Help:  "Auckland (New Zealand) Region",
@@ -2368,6 +2368,15 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Glacier Instant Retrieval storage class",
 			}},
 		}, {
+			// Mapping from here: https://www.arvancloud.ir/en/products/cloud-storage
+			Name:     "storage_class",
+			Help:     "The storage class to use when storing new objects in ArvanCloud.",
+			Provider: "ArvanCloud",
+			Examples: []fs.OptionExample{{
+				Value: "STANDARD",
+				Help:  "Standard storage class",
+			}},
+		}, {
 			// Mapping from here: https://www.alibabacloud.com/help/doc-detail/64919.htm
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in OSS.",
@@ -2413,15 +2422,6 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Standard storage class",
 			}},
 		}, {
-			// Mapping from here: https://www.arvancloud.ir/en/products/cloud-storage
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in ArvanCloud.",
-			Provider: "ArvanCloud",
-			Examples: []fs.OptionExample{{
-				Value: "STANDARD",
-				Help:  "Standard storage class",
-			}},
-		}, {
 			// Mapping from here: https://docs.magalu.cloud/docs/storage/object-storage/Classes-de-Armazenamento/standard
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in Magalu.",
@@ -2434,22 +2434,22 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Glacier Instant Retrieval storage class",
 			}},
 		}, {
-			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
+			// Mapping from here: https://developer.qiniu.com/kodo/5906/storage-type
 			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in Tencent COS.",
-			Provider: "TencentCOS",
+			Help:     "The storage class to use when storing new objects in Qiniu.",
+			Provider: "Qiniu",
 			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Default",
-			}, {
 				Value: "STANDARD",
 				Help:  "Standard storage class",
 			}, {
-				Value: "ARCHIVE",
+				Value: "LINE",
+				Help:  "Infrequent access storage mode",
+			}, {
+				Value: "GLACIER",
 				Help:  "Archive storage mode",
 			}, {
-				Value: "STANDARD_IA",
-				Help:  "Infrequent access storage mode",
+				Value: "DEEP_ARCHIVE",
+				Help:  "Deep archive storage mode",
 			}},
 		}, {
 			// Mapping from here: https://www.scaleway.com/en/docs/storage/object/quickstart/
@@ -2470,22 +2470,22 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "One Zone - Infrequent Access.\nA good choice for storing secondary backup copies or easily re-creatable data.\nAvailable in the FR-PAR region only.",
 			}},
 		}, {
-			// Mapping from here: https://developer.qiniu.com/kodo/5906/storage-type
+			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
 			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in Qiniu.",
-			Provider: "Qiniu",
+			Help:     "The storage class to use when storing new objects in Tencent COS.",
+			Provider: "TencentCOS",
 			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
 				Value: "STANDARD",
 				Help:  "Standard storage class",
 			}, {
-				Value: "LINE",
-				Help:  "Infrequent access storage mode",
-			}, {
-				Value: "GLACIER",
+				Value: "ARCHIVE",
 				Help:  "Archive storage mode",
 			}, {
-				Value: "DEEP_ARCHIVE",
-				Help:  "Deep archive storage mode",
+				Value: "STANDARD_IA",
+				Help:  "Infrequent access storage mode",
 			}},
 		}, {
 			Name: "upload_cutoff",
