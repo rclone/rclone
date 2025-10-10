@@ -1141,7 +1141,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) CleanUp(ctx context.Context) error {
 	opts := rest.Opts{
 		Method: "DELETE",
-		Path:   "/drive/v1/files/recycle",
+		Path:   "/files/recycle",
 		Parameters: url.Values{
 			"containers": []string{"drive"},
 		},
@@ -1377,7 +1377,7 @@ func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.File, 
 
 	opts := rest.Opts{
 		Method: "PATCH",
-		Path:   "/drive/v1/files/" + o.id,
+		Path:   "/files/" + o.id,
 		Parameters: url.Values{
 			"fields": []string{"*"},
 		},
