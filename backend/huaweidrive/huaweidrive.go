@@ -319,31 +319,63 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Find the current root
 	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
-		// Assume it is a file
+		// Assume it is a file (following Google Drive pattern)
 		newRoot, remote := dircache.SplitPath(root)
+
+		// Create a temporary Fs pointing to parent directory
 		tempF := *f
 		tempF.dirCache = dircache.New(newRoot, f.rootParentID(), &tempF)
 		tempF.root = newRoot
-		// Make new Fs which is the parent
-		err = tempF.dirCache.FindRoot(ctx, false)
-		if err != nil {
-			// No root so return old f
-			return f, nil
+
+		// Try to verify parent directory exists, but don't fail if it doesn't work
+		// due to special character encoding issues with Huawei Drive
+		tempF.dirCache.FindRoot(ctx, false)
+
+		// Check if the file exists in the parent directory (try even if FindRoot failed)
+		_, fileErr := tempF.NewObject(ctx, remote)
+
+		if fileErr == nil {
+			// Found the file! Update the original f object and return it with ErrorIsFile
+			// Note: Update original f instead of returning tempF to maintain feature consistency
+			f.dirCache = tempF.dirCache
+			f.root = tempF.root
+			return f, fs.ErrorIsFile
 		}
-		_, err := tempF.newObjectWithInfo(ctx, remote, nil)
-		if err != nil {
-			if err == fs.ErrorObjectNotFound {
-				// File doesn't exist so return old f
-				return f, nil
-			}
-			return nil, err
-		}
-		f.features.Fill(ctx, &tempF)
-		// XXX: update f.features here instead of tempF.features
-		f.features = tempF.features
-		// return an error with an fs which points to the parent
-		return &tempF, fs.ErrorIsFile
+
+		// If both parent directory and file access failed, return original f
+		return f, nil
 	}
+
+	// Check if the root path is actually pointing to a file (following S3 pattern)
+	if f.root != "" && !strings.HasSuffix(root, "/") {
+		// Check to see if the root path is actually an existing file
+		oldRoot := f.root
+		newRoot, leaf := path.Split(oldRoot)
+		if leaf != "" {
+			// Remove trailing slash from newRoot if present
+			newRoot = strings.TrimSuffix(newRoot, "/")
+
+			// Temporarily change root to parent directory
+			f.root = newRoot
+			f.dirCache = dircache.New(newRoot, f.rootParentID(), f)
+
+			// Try to find the parent directory first
+			err = f.dirCache.FindRoot(ctx, false)
+			if err == nil {
+				// Parent directory exists, now check if leaf is a file
+				_, err := f.NewObject(ctx, leaf)
+				if err == nil {
+					// It's a file! Return ErrorIsFile with f pointing to parent
+					return f, fs.ErrorIsFile
+				}
+			}
+
+			// Not a file or parent not found, restore original root
+			f.root = oldRoot
+			f.dirCache = dircache.New(oldRoot, f.rootParentID(), f)
+		}
+	}
+
 	return f, nil
 }
 
@@ -926,6 +958,21 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if directoryID != "" && directoryID != f.rootParentID() {
 		copyReq.ParentFolder = []string{directoryID}
 	}
+
+	// Copy metadata from source object if available
+	var srcMetadata fs.Metadata
+	var hasMetadata bool
+	if metadata, err := srcObj.Metadata(ctx); err == nil && len(metadata) > 0 {
+		copyReq.Properties = make(map[string]interface{})
+		for key, value := range metadata {
+			copyReq.Properties[key] = value
+		}
+		srcMetadata = metadata
+		hasMetadata = true
+		fs.Debugf(f, "Copy: copying metadata %+v to %s", metadata, remote)
+	} else {
+		fs.Debugf(f, "Copy: no metadata to copy for %s (err=%v)", srcObj.remote, err)
+	}
 	// If directoryID is empty or is the root parent ID, don't set parentFolder
 	// The API will copy the file to the drive root by default
 
@@ -937,7 +984,40 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	return f.newObjectWithInfo(ctx, remote, info)
+
+	// Create the new object
+	dstObj, newErr := f.newObjectWithInfo(ctx, remote, info)
+	if newErr != nil {
+		return nil, newErr
+	}
+
+	// If metadata was requested but not properly preserved, set it manually
+	if hasMetadata {
+		if huaweiObj, ok := dstObj.(*Object); ok {
+			if dstMetadata, err := huaweiObj.Metadata(ctx); err == nil {
+				// Check if all source metadata was preserved
+				allMatched := len(srcMetadata) == len(dstMetadata)
+				if allMatched {
+					for key, expectedValue := range srcMetadata {
+						if actualValue, exists := dstMetadata[key]; !exists || actualValue != expectedValue {
+							allMatched = false
+							break
+						}
+					}
+				}
+
+				// If metadata doesn't match exactly, set it manually
+				if !allMatched {
+					fs.Debugf(f, "Copy: metadata not preserved by API (src=%v, dst=%v), setting manually", srcMetadata, dstMetadata)
+					if err := huaweiObj.SetMetadata(ctx, srcMetadata); err != nil {
+						fs.Errorf(f, "Copy: failed to set metadata on copied file: %v", err)
+					}
+				}
+			}
+		}
+	}
+
+	return dstObj, nil
 }
 
 // Move src to this remote using server-side move operations.
@@ -1111,15 +1191,41 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	// Add new parent and remove old parent if they're different
+	// According to API docs, addParentFolder and removeParentFolder must appear together and both must be non-empty
 	if dstDirectoryID != srcDirectoryID {
-		// For Huawei Drive, skip setting parent folders when moving to/from root
-		// The API will handle root directory operations automatically
-		if dstDirectoryID != f.rootParentID() {
-			moveReq.AddParentFolder = []string{dstDirectoryID}
-		}
+		// Huawei Drive API has strict requirements for parent folder operations
+		// Let's handle different scenarios based on source and destination
 
-		if srcDirectoryID != f.rootParentID() {
-			moveReq.RemoveParentFolder = []string{srcDirectoryID}
+		srcIsRoot := (srcDirectoryID == f.rootParentID() || srcDirectoryID == "")
+		dstIsRoot := (dstDirectoryID == f.rootParentID() || dstDirectoryID == "")
+
+		if !srcIsRoot && !dstIsRoot {
+			// Both are non-root directories - this should work
+			opts.Parameters.Set("addParentFolder", dstDirectoryID)
+			opts.Parameters.Set("removeParentFolder", srcDirectoryID)
+		} else if srcIsRoot && !dstIsRoot {
+			// Moving from root to a directory
+			// We need a valid removeParentFolder - use the cached root directory ID
+			if f.rootDirIDOnce && f.rootDirID != "" {
+				opts.Parameters.Set("addParentFolder", dstDirectoryID)
+				opts.Parameters.Set("removeParentFolder", f.rootDirID)
+			} else {
+				fs.Debugf(f, "DirMove: Cannot move from root - root directory ID not available")
+				return fs.ErrorCantDirMove
+			}
+		} else if !srcIsRoot && dstIsRoot {
+			// Moving from a directory to root
+			// We need a valid addParentFolder - use the cached root directory ID
+			if f.rootDirIDOnce && f.rootDirID != "" {
+				opts.Parameters.Set("addParentFolder", f.rootDirID)
+				opts.Parameters.Set("removeParentFolder", srcDirectoryID)
+			} else {
+				fs.Debugf(f, "DirMove: Cannot move to root - root directory ID not available")
+				return fs.ErrorCantDirMove
+			}
+		} else {
+			// Both are root - this should be a simple rename, no parent change needed
+			fs.Debugf(f, "DirMove: Root to root move, no parent folder changes needed")
 		}
 	}
 
