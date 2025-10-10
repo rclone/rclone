@@ -22182,18 +22182,18 @@ The response includes cache status, percentage cached (if applicable),
 and upload status for each file:
 
     {
-        "files": {
-            "document.pdf": {
+        "files": [
+            {
+                "name": "document.pdf",
                 "status": "FULL",
-                "percentage": 100,
-                "uploading": false
+                "percentage": 100
             },
-            "image.jpg": {
-                "status": "PARTIAL", 
-                "percentage": 67,
-                "uploading": false
+            {
+                "name": "image.jpg", 
+                "status": "PARTIAL",
+                "percentage": 67
             }
-        },
+        ],
         "fs": "/mnt/remote"
     }
 

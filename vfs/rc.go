@@ -377,8 +377,9 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 				// Add to the appropriate status category
 				if files, exists := filesByStatus[status]; exists {
 					filesByStatus[status] = append(files, fileInfo)
-				} else {
 				}
+				// If status doesn't exist in our predefined map, we skip it
+				// All possible statuses should be covered in our filesByStatus map
 			} else if subDir, ok := node.(*Dir); ok {
 				// If recursive is true, traverse subdirectories
 				if recursive {
@@ -714,9 +715,12 @@ func rcQueueSetExpiry(ctx context.Context, in rc.Params) (out rc.Params, err err
 	}
 
 	relative := false
-	relative, err := in.GetBool("relative")
+	relativeValue, err := in.GetBool("relative")
 	if err != nil && !rc.IsErrParamNotFound(err) {
 		return nil, err
+	}
+	if err == nil {
+		relative = relativeValue
 	}
 
 	err = vfs.cache.SetExpiry(id, expiry, relative)
