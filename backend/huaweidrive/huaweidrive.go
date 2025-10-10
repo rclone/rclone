@@ -265,43 +265,6 @@ func (f *Fs) rootParentID() string {
 	return "HUAWEI_DRIVE_ROOT_PARENT"
 }
 
-// getRootDirectoryID gets the actual root directory ID by looking for nonexistent_dir virtual flag
-// This function is kept as backup for potential future use
-func (f *Fs) getRootDirectoryID(ctx context.Context) (string, error) { //nolint:unused
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/files",
-		Parameters: url.Values{
-			"fields":     []string{"*"},
-			"containers": []string{"drive"},
-		},
-	}
-
-	// Set page size if specified
-	if f.opt.ListChunk > 0 && f.opt.ListChunk <= 1000 {
-		opts.Parameters.Set("pageSize", strconv.Itoa(f.opt.ListChunk))
-	}
-
-	var result api.FileList
-	err := f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return "", fmt.Errorf("couldn't list files to detect root directory: %w", err)
-	}
-
-	// Look for nonexistent_dir virtual flag to get root directory ID
-	for _, item := range result.Files {
-		if item.FileName == "nonexistent_dir" && len(item.ParentFolder) > 0 {
-			fs.Debugf(f, "Found root directory ID from nonexistent_dir: %s", item.ParentFolder[0])
-			return item.ParentFolder[0], nil
-		}
-	}
-
-	return "", fmt.Errorf("could not find root directory ID via nonexistent_dir virtual flag")
-}
-
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -426,9 +389,15 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	// Validate the directory name
+	encodedLeaf := f.opt.Enc.FromStandardName(leaf)
+	if err := validateFileName(encodedLeaf); err != nil {
+		return "", fmt.Errorf("invalid directory name: %w", err)
+	}
+
 	// Create the directory
 	var req = api.CreateFolderRequest{
-		FileName:    f.opt.Enc.FromStandardName(leaf),
+		FileName:    encodedLeaf,
 		MimeType:    api.FolderMimeType,
 		Description: "folder",
 	}
@@ -488,14 +457,33 @@ func (f *Fs) listAll(ctx context.Context, dirID string, fn listAllFn) (found boo
 
 // listDirectory lists files in a specific directory using parentFolder filter
 func (f *Fs) listDirectory(ctx context.Context, dirID string, fn listAllFn) (found bool, err error) {
+	return f.listDirectoryWithFilter(ctx, dirID, nil, fn)
+}
+
+// listDirectoryWithFilter lists files in a specific directory with optional additional filters
+func (f *Fs) listDirectoryWithFilter(ctx context.Context, dirID string, extraFilter *QueryFilter, fn listAllFn) (found bool, err error) {
+	// Create base query filter for parent folder
+	filter := NewQueryFilter()
+	filter.AddParentFolder(dirID)
+
+	// Add any extra filters
+	if extraFilter != nil {
+		filter.Conditions = append(filter.Conditions, extraFilter.Conditions...)
+	}
+
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/files",
 		Parameters: url.Values{
 			"fields":     []string{"*"},
 			"containers": []string{"drive"},
-			"queryParam": []string{fmt.Sprintf("parentFolder='%s'", dirID)}, // Use queryParam to filter by parent folder
 		},
+	}
+
+	// Add query filter if we have conditions
+	queryParam := filter.String()
+	if queryParam != "" {
+		opts.Parameters.Set("queryParam", queryParam)
 	}
 
 	// Set page size if specified
@@ -503,7 +491,7 @@ func (f *Fs) listDirectory(ctx context.Context, dirID string, fn listAllFn) (fou
 		opts.Parameters.Set("pageSize", strconv.Itoa(f.opt.ListChunk))
 	}
 
-	fs.Debugf(f, "Listing directory %q with parentFolder filter", dirID)
+	fs.Debugf(f, "Listing directory %q with filter: %q", dirID, queryParam)
 
 	for {
 		var result api.FileList
@@ -622,6 +610,86 @@ func (f *Fs) listRootDirectory(ctx context.Context, fn listAllFn) (found bool, e
 	}
 
 	return found, nil
+}
+
+// QueryFilter represents a Huawei Drive query filter
+type QueryFilter struct {
+	Conditions []string
+}
+
+// NewQueryFilter creates a new empty query filter
+func NewQueryFilter() *QueryFilter {
+	return &QueryFilter{}
+}
+
+// AddParentFolder adds a parent folder filter condition
+func (q *QueryFilter) AddParentFolder(parentID string) {
+	if parentID != "" {
+		q.Conditions = append(q.Conditions, fmt.Sprintf("'%s' in parentFolder", parentID))
+	}
+}
+
+// AddMimeType adds a mime type filter condition
+func (q *QueryFilter) AddMimeType(mimeType string) {
+	if mimeType != "" {
+		q.Conditions = append(q.Conditions, fmt.Sprintf("mimeType = '%s'", mimeType))
+	}
+}
+
+// AddMimeTypeNot adds a negative mime type filter condition
+func (q *QueryFilter) AddMimeTypeNot(mimeType string) {
+	if mimeType != "" {
+		q.Conditions = append(q.Conditions, fmt.Sprintf("mimeType != '%s'", mimeType))
+	}
+}
+
+// AddFileName adds a file name filter condition
+func (q *QueryFilter) AddFileName(fileName string) {
+	if fileName != "" {
+		// Escape single quotes in filename
+		escapedName := strings.ReplaceAll(fileName, "'", "\\'")
+		q.Conditions = append(q.Conditions, fmt.Sprintf("fileName = '%s'", escapedName))
+	}
+}
+
+// AddFileNameContains adds a file name contains filter condition
+func (q *QueryFilter) AddFileNameContains(fileName string) {
+	if fileName != "" {
+		// Escape single quotes in filename
+		escapedName := strings.ReplaceAll(fileName, "'", "\\'")
+		q.Conditions = append(q.Conditions, fmt.Sprintf("fileName contains '%s'", escapedName))
+	}
+}
+
+// AddRecycled adds a recycled status filter condition
+func (q *QueryFilter) AddRecycled(recycled bool) {
+	q.Conditions = append(q.Conditions, fmt.Sprintf("recycled = %t", recycled))
+}
+
+// AddDirectlyRecycled adds a directly recycled status filter condition
+func (q *QueryFilter) AddDirectlyRecycled(directlyRecycled bool) {
+	q.Conditions = append(q.Conditions, fmt.Sprintf("directlyRecycled = %t", directlyRecycled))
+}
+
+// AddFavorite adds a favorite status filter condition
+func (q *QueryFilter) AddFavorite(favorite bool) {
+	q.Conditions = append(q.Conditions, fmt.Sprintf("favorite = %t", favorite))
+}
+
+// AddEditedTimeRange adds an edited time range filter condition
+func (q *QueryFilter) AddEditedTimeRange(operator string, editedTime time.Time) {
+	if !editedTime.IsZero() {
+		timeStr := editedTime.Format(time.RFC3339)
+		q.Conditions = append(q.Conditions, fmt.Sprintf("editedTime %s '%s'", operator, timeStr))
+	}
+}
+
+// String returns the query filter as a string for the API
+func (q *QueryFilter) String() string {
+	if len(q.Conditions) == 0 {
+		return ""
+	}
+	return strings.Join(q.Conditions, " and ")
 }
 
 // List the objects and directories in dir into entries.  The
@@ -853,6 +921,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	copyReq := api.CopyFileRequest{
 		FileName: f.opt.Enc.FromStandardName(leaf),
 	}
+
+	// Set parent folder - this should be in the request body, not as query parameter
 	if directoryID != "" && directoryID != f.rootParentID() {
 		copyReq.ParentFolder = []string{directoryID}
 	}
@@ -930,9 +1000,23 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Set parent folders if we need to move directories
 	// Based on Huawei API docs: addParentFolder和removeParentFolder要么都为空，要么都不为空
+	// These are request body parameters, not query parameters
 	if needsDirMove && len(currentParents) > 0 {
-		moveReq.AddParentFolder = []string{dstDirectoryID}
-		moveReq.RemoveParentFolder = currentParents
+		// Only set these if both source and destination are not root
+		if dstDirectoryID != f.rootParentID() {
+			moveReq.AddParentFolder = []string{dstDirectoryID}
+		}
+
+		// Remove old parent folders that are not root
+		var parentsToRemove []string
+		for _, parent := range currentParents {
+			if parent != f.rootParentID() && parent != "" {
+				parentsToRemove = append(parentsToRemove, parent)
+			}
+		}
+		if len(parentsToRemove) > 0 {
+			moveReq.RemoveParentFolder = parentsToRemove
+		}
 	}
 
 	fs.Debugf(f, "Move request: needsDirMove=%v, needsRename=%v, req=%+v",
@@ -1050,6 +1134,28 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// Clear the directory cache for both source and destination
 	srcFs.dirCache.FlushDir(srcRemote)
 	f.dirCache.FlushDir(dstRemote)
+	return nil
+}
+
+// CleanUp empties the trash
+func (f *Fs) CleanUp(ctx context.Context) error {
+	opts := rest.Opts{
+		Method: "DELETE",
+		Path:   "/drive/v1/files/recycle",
+		Parameters: url.Values{
+			"containers": []string{"drive"},
+		},
+	}
+
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.Call(ctx, &opts)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to empty recycle bin: %w", err)
+	}
+
+	fs.Debugf(f, "Successfully emptied recycle bin")
 	return nil
 }
 
@@ -1260,14 +1366,47 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
+// setModTime sets the modification time of the local fs object
+func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.File, error) {
+	if o == nil {
+		return nil, errors.New("can't set modification time - object is nil")
+	}
+	if o.id == "" {
+		return nil, errors.New("can't set modification time - no id")
+	}
+
+	opts := rest.Opts{
+		Method: "PATCH",
+		Path:   "/drive/v1/files/" + o.id,
+		Parameters: url.Values{
+			"fields": []string{"*"},
+		},
+	}
+
+	update := api.UpdateFileRequest{
+		EditedTime: &modTime,
+	}
+
+	var info *api.File
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, &update, &info)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to set modification time: %w", err)
+	}
+
+	return info, nil
+}
+
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	// Huawei Drive API does NOT support setting modification times
-	// Despite accepting editedTime/createdTime parameters in the API,
-	// the server always overwrites them with the current server timestamp
-	// This has been confirmed through testing - the API returns success
-	// but the file modification time remains as the server's current time
-	return fs.ErrorCantSetModTime
+	info, err := o.setModTime(ctx, modTime)
+	if err != nil {
+		return err
+	}
+	return o.setMetaData(info)
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -1380,6 +1519,11 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	mimeType := mime.TypeByExtension(path.Ext(leaf))
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
+	}
+
+	// Validate the filename before using it
+	if err := validateFileName(leaf); err != nil {
+		return fmt.Errorf("invalid filename: %w", err)
 	}
 
 	// Create metadata
@@ -1813,6 +1957,40 @@ func (f *Fs) rootSlash() string {
 	return f.root + "/"
 }
 
+// validateFileName checks if a filename complies with Huawei Drive restrictions
+func validateFileName(name string) error {
+	if name == "" {
+		return fmt.Errorf("filename cannot be empty")
+	}
+
+	// Check length - Huawei Drive API documentation specifies 250 bytes max
+	if len(name) > 250 {
+		return fmt.Errorf("filename too long: %d bytes (max 250)", len(name))
+	}
+
+	// Check for invalid characters: <>|:"*?/\
+	invalidChars := "<>|:\"*?/\\"
+	for _, char := range invalidChars {
+		if strings.ContainsRune(name, char) {
+			return fmt.Errorf("filename contains invalid character: %c", char)
+		}
+	}
+
+	// Check for reserved names
+	if name == "." || name == ".." {
+		return fmt.Errorf("filename cannot be '.' or '..'")
+	}
+
+	// Check for control characters and other restrictions
+	for _, r := range name {
+		if r < 32 || r == 127 { // Control characters
+			return fmt.Errorf("filename contains control character: U+%04X", r)
+		}
+	}
+
+	return nil
+}
+
 // shouldRetry returns a boolean as to whether this err deserves to be retried
 func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
@@ -1822,6 +2000,19 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	// Handle specific Huawei Drive error responses
 	if resp != nil {
 		switch resp.StatusCode {
+		case 400:
+			// Handle specific 400 error codes from Huawei Drive API
+			if strings.Contains(err.Error(), "21004001") || strings.Contains(err.Error(), "LACK_OF_PARAM") {
+				return false, fserrors.NoRetryError(fmt.Errorf("missing required parameters: %w", err))
+			}
+			if strings.Contains(err.Error(), "21004002") || strings.Contains(err.Error(), "PARAM_INVALID") {
+				return false, fserrors.NoRetryError(fmt.Errorf("invalid parameters: %w", err))
+			}
+			if strings.Contains(err.Error(), "21004009") || strings.Contains(err.Error(), "PARENTFOLDER_NOT_FOUND") {
+				return false, fs.ErrorDirNotFound
+			}
+			// For other 400 errors, don't retry
+			return false, fserrors.NoRetryError(fmt.Errorf("bad request: %w", err))
 		case 401:
 			// For 401 errors, allow OAuth library to handle token refresh
 			// Error 22044011 typically means Access Token expired - let OAuth handle refresh
@@ -1832,12 +2023,48 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 			// For other 401 errors, don't retry to avoid infinite loops
 			return false, fserrors.NoRetryError(fmt.Errorf("unauthorized: %w", err))
 		case 403:
+			// Handle specific 403 error codes
+			if strings.Contains(err.Error(), "21004032") || strings.Contains(err.Error(), "SERVICE_NOT_SUPPORT") {
+				return false, fserrors.NoRetryError(fmt.Errorf("service not supported: %w", err))
+			}
+			if strings.Contains(err.Error(), "21004035") || strings.Contains(err.Error(), "INSUFFICIENT_SCOPE") {
+				return false, fserrors.NoRetryError(fmt.Errorf("insufficient OAuth scope: %w", err))
+			}
+			if strings.Contains(err.Error(), "21004036") || strings.Contains(err.Error(), "INSUFFICIENT_PERMISSION") {
+				return false, fserrors.NoRetryError(fmt.Errorf("insufficient permissions: %w", err))
+			}
+			if strings.Contains(err.Error(), "21074033") || strings.Contains(err.Error(), "AGREEMENT_NOT_SIGNED") {
+				return false, fserrors.NoRetryError(fmt.Errorf("user agreement not signed: %w", err))
+			}
+			if strings.Contains(err.Error(), "21084031") || strings.Contains(err.Error(), "DATA_MIGRATING") {
+				// Data migration in progress - this might be temporary, allow retry
+				fs.Debugf(nil, "Data migration in progress, will retry")
+				return true, err
+			}
 			return false, fserrors.NoRetryError(fmt.Errorf("forbidden: %w", err))
 		case 404:
 			// For 404 errors (like invalid upload endpoints), don't retry
 			return false, fserrors.NoRetryError(fmt.Errorf("not found - check API endpoint: %w", err))
 		case 409:
 			return false, fs.ErrorDirExists
+		case 410:
+			// Handle 410 errors - cursor expired or temp data cleared
+			if strings.Contains(err.Error(), "21084100") || strings.Contains(err.Error(), "CURSOR_EXPIRED") {
+				return false, fserrors.NoRetryError(fmt.Errorf("cursor expired, restart listing: %w", err))
+			}
+			if strings.Contains(err.Error(), "21084101") || strings.Contains(err.Error(), "TEMP_DATA_CLEARED") {
+				return false, fserrors.NoRetryError(fmt.Errorf("temporary data cleared, restart operation: %w", err))
+			}
+			return false, fserrors.NoRetryError(fmt.Errorf("gone: %w", err))
+		case 500:
+			// Handle specific 500 error codes
+			if strings.Contains(err.Error(), "21005006") || strings.Contains(err.Error(), "SERVER_TEMP_ERROR") ||
+				strings.Contains(err.Error(), "21085002") || strings.Contains(err.Error(), "OUTER_SERVICE_UNAVAILABLE") ||
+				strings.Contains(err.Error(), "21085006") {
+				// These are temporary server errors, allow retry
+				fs.Debugf(nil, "Temporary server error, will retry: %v", err)
+				return true, err
+			}
 		}
 	}
 
@@ -1862,6 +2089,9 @@ var (
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
+	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
+	_ fs.Metadataer      = (*Object)(nil)
 	_ dircache.DirCacher = (*Fs)(nil)
 )
