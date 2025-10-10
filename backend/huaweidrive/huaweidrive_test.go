@@ -418,11 +418,11 @@ func TestMimeTypeDetection(t *testing.T) {
 		{"image.png", []string{"image/png"}},
 		{"image.gif", []string{"image/gif"}},
 		{"video.mp4", []string{"video/mp4"}},
-		{"video.avi", []string{"video/x-msvideo", "video/vnd.avi"}}, // Different systems may return different values
+		{"video.avi", []string{"video/x-msvideo", "video/vnd.avi", "video/avi"}}, // Different systems may return different values
 		{"audio.mp3", []string{"audio/mpeg"}},
 		{"text.txt", []string{"text/plain; charset=utf-8"}},
 		{"data.json", []string{"application/json"}},
-		{"archive.zip", []string{"application/zip"}},
+		{"archive.zip", []string{"application/zip", "application/x-zip-compressed"}}, // Different systems may return different values
 		{"noextension", []string{"application/octet-stream"}},
 		{"", []string{"application/octet-stream"}},
 	}
