@@ -409,22 +409,22 @@ func TestErrorHandling(t *testing.T) {
 // TestMimeTypeDetection tests MIME type detection for various file types
 func TestMimeTypeDetection(t *testing.T) {
 	testCases := []struct {
-		filename     string
-		expectedMime string
+		filename      string
+		expectedMimes []string // Allow multiple valid MIME types for cross-platform compatibility
 	}{
-		{"document.pdf", "application/pdf"},
-		{"image.jpg", "image/jpeg"},
-		{"image.jpeg", "image/jpeg"},
-		{"image.png", "image/png"},
-		{"image.gif", "image/gif"},
-		{"video.mp4", "video/mp4"},
-		{"video.avi", "video/x-msvideo"},
-		{"audio.mp3", "audio/mpeg"},
-		{"text.txt", "text/plain; charset=utf-8"},
-		{"data.json", "application/json"},
-		{"archive.zip", "application/zip"},
-		{"noextension", "application/octet-stream"},
-		{"", "application/octet-stream"},
+		{"document.pdf", []string{"application/pdf"}},
+		{"image.jpg", []string{"image/jpeg"}},
+		{"image.jpeg", []string{"image/jpeg"}},
+		{"image.png", []string{"image/png"}},
+		{"image.gif", []string{"image/gif"}},
+		{"video.mp4", []string{"video/mp4"}},
+		{"video.avi", []string{"video/x-msvideo", "video/vnd.avi"}}, // Different systems may return different values
+		{"audio.mp3", []string{"audio/mpeg"}},
+		{"text.txt", []string{"text/plain; charset=utf-8"}},
+		{"data.json", []string{"application/json"}},
+		{"archive.zip", []string{"application/zip"}},
+		{"noextension", []string{"application/octet-stream"}},
+		{"", []string{"application/octet-stream"}},
 	}
 
 	for _, tc := range testCases {
@@ -433,8 +433,18 @@ func TestMimeTypeDetection(t *testing.T) {
 			if detected == "" {
 				detected = "application/octet-stream"
 			}
-			if detected != tc.expectedMime {
-				t.Errorf("expected MIME type %q for %q, got %q", tc.expectedMime, tc.filename, detected)
+
+			// Check if detected MIME type is in the list of expected types
+			found := false
+			for _, expected := range tc.expectedMimes {
+				if detected == expected {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				t.Errorf("expected one of MIME types %v for %q, got %q", tc.expectedMimes, tc.filename, detected)
 			}
 		})
 	}
