@@ -1,0 +1,46 @@
+#!/bin/sh
+
+if ! grep -q "^\[storage-policy:1\]" swift.conf; then
+    cat <<EOF >> swift.conf
+
+[storage-policy:1]
+name = Policy-1
+EOF
+fi
+
+rm -f *.builder *.ring.gz backups/*.builder backups/*.ring.gz
+
+swift-ring-builder object.builder create 10 1 1
+swift-ring-builder object.builder add r1z1-127.0.0.1:6200/swift-d0 1
+swift-ring-builder object.builder add r1z1-127.0.0.1:6200/swift-d1 1
+swift-ring-builder object.builder add r1z1-127.0.0.1:6200/swift-d2 1
+swift-ring-builder object.builder add r1z1-127.0.0.1:6200/swift-d3 1
+swift-ring-builder object.builder add r1z1-127.0.0.1:6200/swift-d4 1
+swift-ring-builder object.builder add r1z1-127.0.0.1:6200/swift-d5 1
+swift-ring-builder object.builder rebalance
+swift-ring-builder container.builder create 10 1 1
+swift-ring-builder container.builder add r1z1-127.0.0.1:6201/swift-d0 1
+swift-ring-builder container.builder add r1z1-127.0.0.1:6201/swift-d1 1
+swift-ring-builder container.builder add r1z1-127.0.0.1:6201/swift-d2 1
+swift-ring-builder container.builder add r1z1-127.0.0.1:6201/swift-d3 1
+swift-ring-builder container.builder add r1z1-127.0.0.1:6201/swift-d4 1
+swift-ring-builder container.builder add r1z1-127.0.0.1:6201/swift-d5 1
+swift-ring-builder container.builder rebalance
+swift-ring-builder account.builder create 10 1 1
+swift-ring-builder account.builder add r1z1-127.0.0.1:6202/swift-d0 1
+swift-ring-builder account.builder add r1z1-127.0.0.1:6202/swift-d1 1
+swift-ring-builder account.builder add r1z1-127.0.0.1:6202/swift-d2 1
+swift-ring-builder account.builder add r1z1-127.0.0.1:6202/swift-d3 1
+swift-ring-builder account.builder add r1z1-127.0.0.1:6202/swift-d4 1
+swift-ring-builder account.builder add r1z1-127.0.0.1:6202/swift-d5 1
+swift-ring-builder account.builder rebalance
+
+# For Policy-1:
+swift-ring-builder object-1.builder create 10 1 1
+swift-ring-builder object-1.builder add r1z1-127.0.0.1:6200/swift-d0 1
+swift-ring-builder object-1.builder add r1z1-127.0.0.1:6200/swift-d1 1
+swift-ring-builder object-1.builder add r1z1-127.0.0.1:6200/swift-d2 1
+swift-ring-builder object-1.builder add r1z1-127.0.0.1:6200/swift-d3 1
+swift-ring-builder object-1.builder add r1z1-127.0.0.1:6200/swift-d4 1
+swift-ring-builder object-1.builder add r1z1-127.0.0.1:6200/swift-d5 1
+swift-ring-builder object-1.builder rebalance

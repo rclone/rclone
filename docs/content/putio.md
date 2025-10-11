@@ -80,7 +80,7 @@ e/n/d/r/c/s/q> q
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from put.io  if using web browser to automatically

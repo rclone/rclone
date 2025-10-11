@@ -139,6 +139,7 @@ backends:
  - backend:  "compress"
    remote:   "TestCompressDrive:"
    fastlist: false
+   extratime: 2.0
  - backend:  "compress"
    remote:   "TestCompressS3:"
    fastlist: false
@@ -610,6 +611,7 @@ backends:
  - backend:  "zoho"
    remote:   "TestZoho:"
    fastlist: false
+   extratime: 2.0
    tests:
      - backend
  - backend: "hdfs"
