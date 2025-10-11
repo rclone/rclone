@@ -47,16 +47,14 @@ func (r *Renew) renewOnExpiry() {
 		}
 		uploads := r.uploads.Load()
 		if uploads != 0 {
-			fs.Debugf(r.name, "Token expired - %d uploads in progress - refreshing", uploads)
+			fs.Debugf(r.name, "Background refresher detected expired token - %d uploads in progress - refreshing", uploads)
 			// Do a transaction
 			err := r.run()
-			if err == nil {
-				fs.Debugf(r.name, "Token refresh successful")
-			} else {
-				fs.Errorf(r.name, "Token refresh failed: %v", err)
+			if err != nil {
+				fs.Errorf(r.name, "Background token refresher failed: %v", err)
 			}
 		} else {
-			fs.Debugf(r.name, "Token expired but no uploads in progress - doing nothing")
+			fs.Debugf(r.name, "Background refresher detected expired token but no uploads in progress - doing nothing")
 		}
 	}
 }

@@ -105,14 +105,17 @@ var providerOption = fs.Option{
 		Value: "Exaba",
 		Help:  "Exaba Object Storage",
 	}, {
-		Value: "FlashBlade",
-		Help:  "Pure Storage FlashBlade Object Storage",
-	}, {
 		Value: "FileLu",
 		Help:  "FileLu S5 (S3-Compatible Object Storage)",
 	}, {
+		Value: "FlashBlade",
+		Help:  "Pure Storage FlashBlade Object Storage",
+	}, {
 		Value: "GCS",
 		Help:  "Google Cloud Storage",
+	}, {
+		Value: "Hetzner",
+		Help:  "Hetzner Object Storage",
 	}, {
 		Value: "HuaweiOBS",
 		Help:  "Huawei Object Storage Service",
@@ -161,6 +164,9 @@ var providerOption = fs.Option{
 	}, {
 		Value: "Petabox",
 		Help:  "Petabox Object Storage",
+	}, {
+		Value: "Rabata",
+		Help:  "Rabata Cloud Storage",
 	}, {
 		Value: "RackCorp",
 		Help:  "RackCorp Object Storage",
@@ -373,7 +379,21 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
-			Help:     "Region to connect to. - the location where your bucket will be created and your data stored. Need bo be same with your endpoint.\n",
+			Help:     "Region to connect to.",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "hel1",
+				Help:  "Helsinki",
+			}, {
+				Value: "fsn1",
+				Help:  "Falkenstein",
+			}, {
+				Value: "nbg1",
+				Help:  "Nuremberg",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region to connect to. - the location where your bucket will be created and your data stored. Need to be same with your endpoint.\n",
 			Provider: "HuaweiOBS",
 			Examples: []fs.OptionExample{{
 				Value: "af-south-1",
@@ -566,6 +586,20 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "Rabata",
+			Examples: []fs.OptionExample{{
+				Value: "us-east-1",
+				Help:  "US East (N. Virginia)",
+			}, {
+				Value: "eu-west-1",
+				Help:  "EU (Ireland)",
+			}, {
+				Value: "eu-west-2",
+				Help:  "EU (London)",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "region - the location where your bucket will be created and your data stored.\n",
 			Provider: "RackCorp",
 			Examples: []fs.OptionExample{{
@@ -680,7 +714,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -898,6 +932,20 @@ func init() {
 				Help:  "Google Cloud Storage endpoint",
 			}},
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Hetzner Object Storage",
+			Provider: "Hetzner",
+			Examples: []fs.OptionExample{{
+				Value: "hel1.your-objectstorage.com",
+				Help:  "Helsinki",
+			}, {
+				Value: "fsn1.your-objectstorage.com",
+				Help:  "Falkenstein",
+			}, {
+				Value: "nbg1.your-objectstorage.com",
+				Help:  "Nuremberg",
+			}},
+		}, {
 			// obs endpoints: https://developer.huaweicloud.com/intl/en-us/endpoint?OBS
 			Name:     "endpoint",
 			Help:     "Endpoint for OBS API.",
@@ -1032,7 +1080,7 @@ func init() {
 				Help:  "APAC Cross Regional Tokyo Endpoint",
 			}, {
 				Value: "s3.hkg.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional HongKong Endpoint",
+				Help:  "APAC Cross Regional Hong Kong Endpoint",
 			}, {
 				Value: "s3.seo.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Seoul Endpoint",
@@ -1044,7 +1092,7 @@ func init() {
 				Help:  "APAC Cross Regional Tokyo Private Endpoint",
 			}, {
 				Value: "s3.private.hkg.ap.cloud-object-storage.appdomain.cloud",
-				Help:  "APAC Cross Regional HongKong Private Endpoint",
+				Help:  "APAC Cross Regional Hong Kong Private Endpoint",
 			}, {
 				Value: "s3.private.seo.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Seoul Private Endpoint",
@@ -1385,11 +1433,17 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for Zata Object Storage.",
-			Provider: "Zata",
+			Help:     "Endpoint for Rabata Object Storage.",
+			Provider: "Rabata",
 			Examples: []fs.OptionExample{{
-				Value: "idr01.zata.ai",
-				Help:  "South Asia Endpoint",
+				Value: "s3.us-east-1.rabata.io",
+				Help:  "US East (N. Virginia)",
+			}, {
+				Value: "s3.eu-west-1.rabata.io",
+				Help:  "EU West (Ireland)",
+			}, {
+				Value: "s3.eu-west-2.rabata.io",
+				Help:  "EU West (London)",
 			}},
 		}, {
 			// RackCorp endpoints: https://www.rackcorp.com/storage/s3storage
@@ -1584,8 +1638,16 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
+			Help:     "Endpoint for Zata Object Storage.",
+			Provider: "Zata",
+			Examples: []fs.OptionExample{{
+				Value: "idr01.zata.ai",
+				Help:  "South Asia Endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,GCS,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,Synology,TencentCOS,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,GCS,Hetzner,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,StackPath,Storj,Synology,TencentCOS,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1887,7 +1949,7 @@ func init() {
 				Help:  "Southwest China (Guiyang)",
 			}, {
 				Value: "xian1",
-				Help:  "Nouthwest China (Xian)",
+				Help:  "Northwest China (Xian)",
 			}, {
 				Value: "yunnan",
 				Help:  "Yunnan China (Kunming)",
@@ -2057,6 +2119,20 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
+			Help:     "location where your bucket will be created and your data stored.\n",
+			Provider: "Rabata",
+			Examples: []fs.OptionExample{{
+				Value: "us-east-1",
+				Help:  "US East (N. Virginia)",
+			}, {
+				Value: "eu-west-1",
+				Help:  "EU (Ireland)",
+			}, {
+				Value: "eu-west-2",
+				Help:  "EU (London)",
+			}},
+		}, {
+			Name:     "location_constraint",
 			Help:     "Location constraint - the location where your bucket will be located and your data stored.\n",
 			Provider: "RackCorp",
 			Examples: []fs.OptionExample{{
@@ -2112,7 +2188,7 @@ func init() {
 				Help:  "New York (USA) Region",
 			}, {
 				Value: "us-west-1",
-				Help:  "Freemont (USA) Region",
+				Help:  "Fremont (USA) Region",
 			}, {
 				Value: "nz",
 				Help:  "Auckland (New Zealand) Region",
@@ -2120,7 +2196,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -2135,7 +2211,7 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 If the acl is an empty string then no X-Amz-Acl: header is added and
 the default (private) will be used.
 `,
-			Provider: "!Cloudflare,FlashBlade,Mega,Selectel,SpectraLogic,Storj,Synology",
+			Provider: "!Cloudflare,FlashBlade,Mega,Rabata,Selectel,SpectraLogic,Storj,Synology",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -2193,7 +2269,7 @@ isn't set then "acl" is used instead.
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
 header is added and the default (private) will be used.
 `,
-			Provider: "!Cloudflare,FlashBlade,Selectel,SpectraLogic,Storj,Synology",
+			Provider: "!Cloudflare,FlashBlade,Rabata,Selectel,SpectraLogic,Storj,Synology",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
@@ -2323,6 +2399,15 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Glacier Instant Retrieval storage class",
 			}},
 		}, {
+			// Mapping from here: https://www.arvancloud.ir/en/products/cloud-storage
+			Name:     "storage_class",
+			Help:     "The storage class to use when storing new objects in ArvanCloud.",
+			Provider: "ArvanCloud",
+			Examples: []fs.OptionExample{{
+				Value: "STANDARD",
+				Help:  "Standard storage class",
+			}},
+		}, {
 			// Mapping from here: https://www.alibabacloud.com/help/doc-detail/64919.htm
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in OSS.",
@@ -2368,15 +2453,6 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Standard storage class",
 			}},
 		}, {
-			// Mapping from here: https://www.arvancloud.ir/en/products/cloud-storage
-			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in ArvanCloud.",
-			Provider: "ArvanCloud",
-			Examples: []fs.OptionExample{{
-				Value: "STANDARD",
-				Help:  "Standard storage class",
-			}},
-		}, {
 			// Mapping from here: https://docs.magalu.cloud/docs/storage/object-storage/Classes-de-Armazenamento/standard
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in Magalu.",
@@ -2389,22 +2465,22 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Glacier Instant Retrieval storage class",
 			}},
 		}, {
-			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
+			// Mapping from here: https://developer.qiniu.com/kodo/5906/storage-type
 			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in Tencent COS.",
-			Provider: "TencentCOS",
+			Help:     "The storage class to use when storing new objects in Qiniu.",
+			Provider: "Qiniu",
 			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Default",
-			}, {
 				Value: "STANDARD",
 				Help:  "Standard storage class",
 			}, {
-				Value: "ARCHIVE",
+				Value: "LINE",
+				Help:  "Infrequent access storage mode",
+			}, {
+				Value: "GLACIER",
 				Help:  "Archive storage mode",
 			}, {
-				Value: "STANDARD_IA",
-				Help:  "Infrequent access storage mode",
+				Value: "DEEP_ARCHIVE",
+				Help:  "Deep archive storage mode",
 			}},
 		}, {
 			// Mapping from here: https://www.scaleway.com/en/docs/storage/object/quickstart/
@@ -2425,22 +2501,22 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "One Zone - Infrequent Access.\nA good choice for storing secondary backup copies or easily re-creatable data.\nAvailable in the FR-PAR region only.",
 			}},
 		}, {
-			// Mapping from here: https://developer.qiniu.com/kodo/5906/storage-type
+			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
 			Name:     "storage_class",
-			Help:     "The storage class to use when storing new objects in Qiniu.",
-			Provider: "Qiniu",
+			Help:     "The storage class to use when storing new objects in Tencent COS.",
+			Provider: "TencentCOS",
 			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
 				Value: "STANDARD",
 				Help:  "Standard storage class",
 			}, {
-				Value: "LINE",
-				Help:  "Infrequent access storage mode",
-			}, {
-				Value: "GLACIER",
+				Value: "ARCHIVE",
 				Help:  "Archive storage mode",
 			}, {
-				Value: "DEEP_ARCHIVE",
-				Help:  "Deep archive storage mode",
+				Value: "STANDARD_IA",
+				Help:  "Infrequent access storage mode",
 			}},
 		}, {
 			Name: "upload_cutoff",
@@ -3689,6 +3765,8 @@ func setQuirks(opt *Options) {
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
 		useAlreadyExists = true  // returns 200 OK
+	case "Hetzner":
+		useAlreadyExists = false
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
@@ -3780,6 +3858,8 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 	case "OVHcloud":
 		// No quirks
+	case "Rabata":
+		// server side copy not supported
 	case "RackCorp":
 		// No quirks
 		useMultipartEtag = false // untested
@@ -4059,6 +4139,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.Provider == "AWS" {
 		f.features.DoubleSlash = true
+	}
+	if opt.Provider == "Rabata" {
+		f.features.Copy = nil
+	}
+	if opt.Provider == "Hetzner" {
+		f.features.SetTier = false
 	}
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
@@ -6195,6 +6281,10 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	if o.fs.opt.Provider == "Rabata" {
+		// Rabata does not support copying objects
+		return fs.ErrorCantSetModTime
+	}
 	err := o.readMetaData(ctx)
 	if err != nil {
 		return err
