@@ -344,6 +344,16 @@ func (acc *Account) limitPerFileBandwidth(n int) {
 	}
 }
 
+// Account for n bytes from the current context bandwidth limit (if any)
+func (acc *Account) limitPerContextBandwidth(n int) {
+	value := acc.ctx.Value(TokenBucketWrapperPerContextKey)
+	if value != nil {
+		if tbw, ok := value.(*TokenBucketWrapper); ok {
+			tbw.LimitBandwidth(TokenBucketSlotAccounting, n)
+		}
+	}
+}
+
 // Account the read and limit bandwidth
 func (acc *Account) accountRead(n int) {
 	// Update Stats
@@ -356,6 +366,7 @@ func (acc *Account) accountRead(n int) {
 
 	TokenBucket.LimitBandwidth(TokenBucketSlotAccounting, n)
 	acc.limitPerFileBandwidth(n)
+	acc.limitPerContextBandwidth(n)
 }
 
 // read bytes from the io.Reader passed in and account them
