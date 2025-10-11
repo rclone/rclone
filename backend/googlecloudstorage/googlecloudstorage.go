@@ -253,6 +253,9 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 				Value: "us-east4",
 				Help:  "Northern Virginia",
 			}, {
+				Value: "us-east5",
+				Help:  "Ohio",
+			}, {
 				Value: "us-west1",
 				Help:  "Oregon",
 			}, {
