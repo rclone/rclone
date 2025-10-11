@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"net/url"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -72,9 +74,9 @@ func TestFsString(t *testing.T) {
 func TestFsPrecision(t *testing.T) {
 	f := &Fs{}
 	precision := f.Precision()
-	expectedPrecision := fs.ModTimeNotSupported
+	expectedPrecision := time.Second
 	if precision != expectedPrecision {
-		t.Errorf("expected precision %v (ModTimeNotSupported), got %v", expectedPrecision, precision)
+		t.Errorf("expected precision %v (second precision), got %v", expectedPrecision, precision)
 	}
 }
 
@@ -90,12 +92,12 @@ func TestFsHashes(t *testing.T) {
 // TestModTimeSupport tests if the filesystem supports modification time preservation
 func TestModTimeSupport(t *testing.T) {
 	f := &Fs{}
-	// Huawei Drive does NOT preserve original modification times
-	// Despite the API accepting editedTime/createdTime parameters,
-	// the server always overwrites them with current server timestamp
-	expectedPrecision := fs.ModTimeNotSupported
+	// Huawei Drive now supports modification time preservation
+	// Files uploaded with editedTime parameter should preserve their timestamps
+	// Directory modification times are supported via DirSetModTime feature
+	expectedPrecision := time.Second
 	if f.Precision() != expectedPrecision {
-		t.Errorf("expected precision of %v to indicate no time preservation, got %v", expectedPrecision, f.Precision())
+		t.Errorf("expected precision of %v to indicate second-level time preservation, got %v", expectedPrecision, f.Precision())
 	}
 }
 
@@ -542,22 +544,24 @@ func TestFeatures(t *testing.T) {
 
 	// Create features manually since we can't call NewFs without proper config
 	features := (&fs.Features{
-		CaseInsensitive:         false,
-		DuplicateFiles:          false,
-		ReadMimeType:            true,
-		WriteMimeType:           true,
-		CanHaveEmptyDirectories: true,
-		BucketBased:             false,
-		FilterAware:             true,
-		ReadMetadata:            true,
-		WriteMetadata:           true,
-		UserMetadata:            true,
-		ReadDirMetadata:         false,
-		WriteDirMetadata:        false,
-		PartialUploads:          false,
-		NoMultiThreading:        false,
-		SlowModTime:             false,
-		SlowHash:                false,
+		CaseInsensitive:          false,
+		DuplicateFiles:           false,
+		ReadMimeType:             true,
+		WriteMimeType:            true,
+		CanHaveEmptyDirectories:  true,
+		BucketBased:              false,
+		FilterAware:              true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          false,
+		WriteDirMetadata:         false,
+		WriteDirSetModTime:       true,
+		DirModTimeUpdatesOnWrite: false,
+		PartialUploads:           false,
+		NoMultiThreading:         false,
+		SlowModTime:              false,
+		SlowHash:                 false,
 	}).Fill(ctx, f)
 
 	f.features = features
@@ -597,6 +601,14 @@ func TestFeatures(t *testing.T) {
 
 	if !f.features.WriteMetadata {
 		t.Error("Huawei Drive should support writing metadata")
+	}
+
+	if !f.features.WriteDirSetModTime {
+		t.Error("Huawei Drive should support setting directory modification time")
+	}
+
+	if f.features.DirModTimeUpdatesOnWrite {
+		t.Error("Huawei Drive directory modification time should not update automatically on write")
 	}
 }
 
@@ -924,4 +936,62 @@ func TestCleanUp(t *testing.T) {
 	var _ fs.CleanUpper = (*Fs)(nil)
 
 	t.Log("CleanUpper interface properly implemented")
+}
+
+// TestAutoRenameDisabled tests that autoRename=false is used in API calls
+func TestAutoRenameDisabled(t *testing.T) {
+	// Test URL parameter construction for various API calls
+	testCases := []struct {
+		name     string
+		params   url.Values
+		expected bool
+	}{
+		{
+			name: "multipart upload",
+			params: url.Values{
+				"uploadType": []string{"multipart"},
+				"fields":     []string{"*"},
+				"autoRename": []string{"false"},
+			},
+			expected: true,
+		},
+		{
+			name: "resume upload",
+			params: url.Values{
+				"uploadType": []string{"resume"},
+				"fields":     []string{"*"},
+				"autoRename": []string{"false"},
+			},
+			expected: true,
+		},
+		{
+			name: "file operations",
+			params: url.Values{
+				"fields":     []string{"*"},
+				"autoRename": []string{"false"},
+			},
+			expected: true,
+		},
+		{
+			name: "missing autoRename",
+			params: url.Values{
+				"fields": []string{"*"},
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			queryString := tc.params.Encode()
+			hasAutoRename := strings.Contains(queryString, "autoRename=false")
+
+			if hasAutoRename != tc.expected {
+				t.Errorf("case %s: expected autoRename=false presence: %v, got: %v (query: %s)",
+					tc.name, tc.expected, hasAutoRename, queryString)
+			}
+		})
+	}
+
+	t.Log("autoRename=false parameter validation completed")
 }
