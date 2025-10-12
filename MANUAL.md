@@ -23165,7 +23165,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.71.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.72.0")
 ```
 
 
@@ -60862,7 +60862,7 @@ Options:
 
 ## v1.70.0 - 2025-06-17
 
-[See commits](https://github.com/rclone/rclone/compare/v1.69.0...v1.70.0)
+[See commits](https://github.com/rclone/rclone/compare/v1.69.0...v1.72.0)
 
 - New backends
   - [DOI](https://rclone.org/doi/) (Flora Thiebaut)

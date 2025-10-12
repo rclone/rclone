@@ -1,13 +1,15 @@
-name: Rclone Build
+name: build
 
 on:
   push:
     tags:
       - '**'
-
 env:
-  IMAGE: tgdrive/rclone
+  IMAGE: benjithatfoxguy/bclone
 
+concurrency:
+  group: build-${{ github.head_ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -21,14 +23,14 @@ jobs:
           - job_name: linux
             os: ubuntu-latest
             go: '>=1.24.0-rc.1'
-            gotags: cmount
+            gotags: cmount,noselfupdate
             cgo: '0'
             build_flags: '-include "^(linux/amd64|linux/arm64|linux/arm-v7)"'
 
           - job_name: windows
             os: windows-latest
             go: '>=1.24.0-rc.1'
-            gotags: cmount
+            gotags: cmount,noselfupdate
             cgo: '0'
             build_flags: '-include "^(windows/amd64|windows/arm64)"'
             build_args: '-buildmode exe'
@@ -36,13 +38,13 @@ jobs:
           - job_name: mac_amd64
             os: macos-latest
             go: '>=1.23.0-rc.1'
-            gotags: 'cmount'
+            gotags: 'cmount,noselfupdate'
             build_flags: '-include "^darwin/amd64" -cgo'
 
           - job_name: mac_arm64
             os: macos-latest
             go: '>=1.23.0-rc.1'
-            gotags: 'cmount'
+            gotags: 'cmount,noselfupdate'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
 
 
@@ -52,7 +54,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -141,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Set up Go
@@ -157,7 +159,51 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-          
+      - name: install gomobile
+        run: |
+          go install golang.org/x/mobile/cmd/gobind@latest
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          env PATH=$PATH:~/go/bin gomobile init
+          echo "RCLONE_NDK_VERSION=21" >> $GITHUB_ENV
+
+      - name: arm-v7a gomobile build
+        run: env PATH=$PATH:~/go/bin gomobile bind -androidapi ${RCLONE_NDK_VERSION} -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${{ github.ref_name }} github.com/rclone/rclone/librclone/gomobile
+
+      - name: arm-v7a Set environment variables
+        shell: bash
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=arm' >> $GITHUB_ENV
+          echo 'GOARM=7' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: arm-v7a Set environment variables
+        shell: bash
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=arm' >> $GITHUB_ENV
+          echo 'GOARM=7' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: arm-v7a Set environment variables
+        run: |
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
+          echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
+          echo 'GOOS=android' >> $GITHUB_ENV
+          echo 'GOARCH=arm' >> $GITHUB_ENV
+          echo 'GOARM=7' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=1' >> $GITHUB_ENV
+          echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
+      - name: arm-v7a build
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${{ github.ref_name }} -o build/rclone-armv7a .
+
       - name: arm64-v8a Set environment variables
         shell: bash
         run: |
@@ -174,6 +220,8 @@ jobs:
       - name: Package into Zip
         run: |
           cd build
+          mv rclone-armv7a rclone
+          zip -r rclone-${{ github.ref_name }}-android-arm.zip rclone
           mv rclone-armv8a rclone
           zip -r rclone-${{ github.ref_name }}-android-arm64.zip rclone
 
@@ -190,12 +238,12 @@ jobs:
    needs: [build,android]
    steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           
       - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
            path: /tmp/build
            pattern: rclone-*
@@ -250,7 +298,7 @@ jobs:
       - name: Publish Docker Plugin
         run: |
           VER=${GITHUB_REF_NAME}
-          PLUGIN_USER=ghcr.io/tgdrive
+          PLUGIN_USER=ghcr.io/benjithatfoxguy
           for PLUGIN_ARCH in amd64 arm64 arm/v7 ;do
               export PLUGIN_ARCH
               export PLUGIN_USER

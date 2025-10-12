@@ -1,0 +1,41 @@
+name: Auto Merge PR
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Check if comment contains "merge"
+      id: check_comment
+      run: |
+        comment_body=$(jq --raw-output .comment.body "$GITHUB_EVENT_PATH")
+        pr_author=$(jq --raw-output .pull_request.user.login "$GITHUB_EVENT_PATH")
+        repo_owner=$(jq --raw-output .repository.owner.login "$GITHUB_EVENT_PATH")
+        echo "Comment: $comment_body"
+        echo "PR Author: $pr_author"
+        echo "Repo Owner: $repo_owner"
+        
+        # Check if comment contains "merge" and comes from the repository owner
+        if [[ "$comment_body" =~ "merge" && "$pr_author" == "$repo_owner" ]]; then
+          echo "Merging PR because the comment contains 'merge' and is from the repo owner."
+          echo "should_merge=true" >> $GITHUB_ENV
+        else
+          echo "Comment does not meet conditions for merge."
+          echo "should_merge=false" >> $GITHUB_ENV
+        fi
+
+    - name: Merge the PR if conditions are met
+      if: env.should_merge == 'true'
+      run: |
+        echo "Merging pull request..."
+        curl -X PUT \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -d '{"merge_method": "merge"}' \
+          "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/merge"

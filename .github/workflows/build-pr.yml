@@ -1,0 +1,87 @@
+name: build-pr
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]  # Trigger for PR events
+
+concurrency:
+  group: build-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    timeout-minutes: 60
+    runs-on: windows-latest
+    if: github.actor == github.repository_owner  # Only run if PR is by repo owner
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.24.0-rc.1'
+          check-latest: true
+
+      - name: Set environment variables
+        shell: bash
+        run: |
+          echo 'GOTAGS=cmount' >> $GITHUB_ENV
+          echo 'BUILD_FLAGS=-include "^(windows/amd64|windows/arm64)"' >> $GITHUB_ENV
+          echo 'BUILD_ARGS=-buildmode exe' >> $GITHUB_ENV
+          echo 'CGO_ENABLED=0' >> $GITHUB_ENV
+
+      - name: Install Libraries on Windows
+        shell: powershell
+        run: |
+          choco install -y winfsp zip
+          echo "CPATH=C:\Program Files\WinFsp\inc\fuse;C:\Program Files (x86)\WinFsp\inc\fuse" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          if ($env:GOARCH -eq "386") {
+            choco install -y mingw --forcex86 --force
+            echo "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw32\\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+          $path = (get-command mingw32-make.exe).Path
+          Copy-Item -Path $path -Destination (Join-Path (Split-Path -Path $path) 'make.exe')
+
+      - name: Print Go version and environment
+        shell: bash
+        run: |
+          go version
+          go env
+          make vars
+          env
+
+      - name: Build rclone
+        shell: bash
+        run: |
+          make cross
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rclone-windows
+          path: ${{ github.workspace }}/build/**/*
+          retention-days: 7
+
+  comment-artifacts:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Download artifacts list
+        uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Comment with artifact info
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "✅ Artifacts built and uploaded. You can download them from the *Actions* tab. [Click here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n_Artifacts will expire in a day._"
