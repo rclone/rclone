@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"sync"
@@ -324,9 +325,7 @@ func (o *baseObject) parseMetadata(ctx context.Context, info *drive.File) (err e
 	metadata := make(fs.Metadata, 16)
 
 	// Dump user metadata first as it overrides system metadata
-	for k, v := range info.Properties {
-		metadata[k] = v
-	}
+	maps.Copy(metadata, info.Properties)
 
 	// System metadata
 	metadata["copy-requires-writer-permission"] = fmt.Sprint(info.CopyRequiresWriterPermission)
@@ -387,7 +386,6 @@ func (o *baseObject) parseMetadata(ctx context.Context, info *drive.File) (err e
 			g.SetLimit(o.fs.ci.Checkers)
 			var mu sync.Mutex // protect the info.Permissions from concurrent writes
 			for _, permissionID := range info.PermissionIds {
-				permissionID := permissionID
 				g.Go(func() error {
 					// must fetch the team drive ones individually to check the inherited flag
 					perm, inherited, err := o.fs.getPermission(gCtx, actualID(info.Id), permissionID, !o.fs.isTeamDrive)
@@ -508,7 +506,7 @@ type updateMetadataFn func(context.Context, *drive.File) error
 //
 // It returns a callback which should be called to finish the updates
 // after the data is uploaded.
-func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs.Metadata, update bool) (callback updateMetadataFn, err error) {
+func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs.Metadata, update, isFolder bool) (callback updateMetadataFn, err error) {
 	callbackFns := []updateMetadataFn{}
 	callback = func(ctx context.Context, info *drive.File) error {
 		for _, fn := range callbackFns {
@@ -521,7 +519,6 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 	}
 	// merge metadata into request and user metadata
 	for k, v := range meta {
-		k, v := k, v
 		// parse a boolean from v and write into out
 		parseBool := func(out *bool) error {
 			b, err := strconv.ParseBool(v)
@@ -533,7 +530,9 @@ func (f *Fs) updateMetadata(ctx context.Context, updateInfo *drive.File, meta fs
 		}
 		switch k {
 		case "copy-requires-writer-permission":
-			if err := parseBool(&updateInfo.CopyRequiresWriterPermission); err != nil {
+			if isFolder {
+				fs.Debugf(f, "Ignoring %s=%s as can't set on folders", k, v)
+			} else if err := parseBool(&updateInfo.CopyRequiresWriterPermission); err != nil {
 				return nil, err
 			}
 		case "writers-can-share":
@@ -630,7 +629,7 @@ func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, opti
 	if err != nil {
 		return nil, fmt.Errorf("failed to read metadata from source object: %w", err)
 	}
-	callback, err = f.updateMetadata(ctx, updateInfo, meta, update)
+	callback, err = f.updateMetadata(ctx, updateInfo, meta, update, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update metadata from source object: %w", err)
 	}

@@ -155,6 +155,7 @@ func (f *Fs) getFile(ctx context.Context, ID string) (info *api.File, err error)
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.rst.CallJSON(ctx, &opts, nil, &info)
 		if err == nil && !info.Links.ApplicationOctetStream.Valid() {
+			time.Sleep(5 * time.Second)
 			return true, errors.New("no link")
 		}
 		return f.shouldRetry(ctx, resp, err)
@@ -638,7 +639,7 @@ func (c *pikpakClient) SetCaptchaTokener(ctx context.Context, m configmap.Mapper
 	return c
 }
 
-func (c *pikpakClient) CallJSON(ctx context.Context, opts *rest.Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+func (c *pikpakClient) CallJSON(ctx context.Context, opts *rest.Opts, request any, response any) (resp *http.Response, err error) {
 	if c.captcha != nil {
 		token, err := c.captcha.Token(opts)
 		if err != nil || token == "" {

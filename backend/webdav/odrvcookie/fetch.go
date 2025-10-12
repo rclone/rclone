@@ -185,7 +185,7 @@ func (ca *CookieAuth) getSPToken(ctx context.Context) (conf *SharepointSuccessRe
 	if err != nil {
 		return nil, err
 	}
-	reqData := map[string]interface{}{
+	reqData := map[string]any{
 		"Username":   ca.user,
 		"Password":   ca.pass,
 		"Address":    ca.endpoint,

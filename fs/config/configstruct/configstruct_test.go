@@ -100,17 +100,17 @@ func TestItemsNested(t *testing.T) {
 	got, err := configstruct.Items(&in)
 	require.NoError(t, err)
 	want := []configstruct.Item{
-		{Name: "a", Field: "A", Value: string("1")},
-		{Name: "b", Field: "B", Value: string("2")},
-		{Name: "sub_a", Field: "A", Value: string("3")},
-		{Name: "sub_b", Field: "B", Value: string("4")},
-		{Name: "spud_pie", Field: "PotatoPie", Value: string("yum")},
-		{Name: "bean_stew", Field: "BeanStew", Value: true},
-		{Name: "raisin_roll", Field: "RaisinRoll", Value: int(42)},
-		{Name: "sausage_on_stick", Field: "SausageOnStick", Value: int64(101)},
-		{Name: "forbidden_fruit", Field: "ForbiddenFruit", Value: uint(6)},
-		{Name: "cooking_time", Field: "CookingTime", Value: fs.Duration(42 * time.Second)},
-		{Name: "total_weight", Field: "TotalWeight", Value: fs.SizeSuffix(17 << 20)},
+		{Name: "a", Field: "Conf.A", Value: string("1")},
+		{Name: "b", Field: "Conf.B", Value: string("2")},
+		{Name: "sub_a", Field: "Sub1.A", Value: string("3")},
+		{Name: "sub_b", Field: "Sub1.B", Value: string("4")},
+		{Name: "spud_pie", Field: "Sub2.PotatoPie", Value: string("yum")},
+		{Name: "bean_stew", Field: "Sub2.BeanStew", Value: true},
+		{Name: "raisin_roll", Field: "Sub2.RaisinRoll", Value: int(42)},
+		{Name: "sausage_on_stick", Field: "Sub2.SausageOnStick", Value: int64(101)},
+		{Name: "forbidden_fruit", Field: "Sub2.ForbiddenFruit", Value: uint(6)},
+		{Name: "cooking_time", Field: "Sub2.CookingTime", Value: fs.Duration(42 * time.Second)},
+		{Name: "total_weight", Field: "Sub2.TotalWeight", Value: fs.SizeSuffix(17 << 20)},
 		{Name: "c", Field: "C", Value: string("normal")},
 		{Name: "d", Field: "D", Value: fs.Tristate{Value: true, Valid: true}},
 	}
@@ -176,12 +176,45 @@ func TestSetFull(t *testing.T) {
 	assert.Equal(t, want, in)
 }
 
+func TestSetAnyFull(t *testing.T) {
+	in := &Conf2{
+		PotatoPie:      "yum",
+		BeanStew:       true,
+		RaisinRoll:     42,
+		SausageOnStick: 101,
+		ForbiddenFruit: 6,
+		CookingTime:    fs.Duration(42 * time.Second),
+		TotalWeight:    fs.SizeSuffix(17 << 20),
+	}
+	m := map[string]any{
+		"spud_pie":         "YUM",
+		"bean_stew":        false,
+		"raisin_roll":      "43 ",
+		"sausage_on_stick": " 102 ",
+		"forbidden_fruit":  "0x7",
+		"cooking_time":     43 * time.Second,
+		"total_weight":     "18M",
+	}
+	want := &Conf2{
+		PotatoPie:      "YUM",
+		BeanStew:       false,
+		RaisinRoll:     43,
+		SausageOnStick: 102,
+		ForbiddenFruit: 7,
+		CookingTime:    fs.Duration(43 * time.Second),
+		TotalWeight:    fs.SizeSuffix(18 << 20),
+	}
+	err := configstruct.SetAny(m, in)
+	require.NoError(t, err)
+	assert.Equal(t, want, in)
+}
+
 func TestStringToInterface(t *testing.T) {
 	item := struct{ A int }{2}
 	for _, test := range []struct {
 		in   string
-		def  interface{}
-		want interface{}
+		def  any
+		want any
 		err  string
 	}{
 		{"", string(""), "", ""},
@@ -223,6 +256,50 @@ func TestStringToInterface(t *testing.T) {
 			assert.Equal(t, test.want, got, what)
 		} else {
 			assert.Nil(t, got, what)
+			assert.EqualError(t, err, test.err, what)
+		}
+	}
+}
+
+func TestInterfaceToString(t *testing.T) {
+	item := struct{ A int }{2}
+	for _, test := range []struct {
+		in   any
+		want string
+		err  string
+	}{
+		{nil, "", "interpreting <nil> as string failed: don't know how to convert this"},
+		{"", "", ""},
+		{"   string   ", "   string   ", ""},
+		{int(123), "123", ""},
+		{int(0x123), "291", ""},
+		{int(-123), "-123", ""},
+		{false, "false", ""},
+		{true, "true", ""},
+		{uint(123), "123", ""},
+		{int64(123), "123", ""},
+		{item, "", "interpreting struct { A int } as string failed: don't know how to convert this"},
+		{fs.Duration(time.Second), "1s", ""},
+		{fs.Duration(61 * time.Second), "1m1s", ""},
+		{[]string{}, ``, ""},
+		{[]string{""}, `""`, ""},
+		{[]string{"", ""}, `,`, ""},
+		{[]string{"hello"}, `hello`, ""},
+		{[]string{"hello", "world"}, `hello,world`, ""},
+		{[]string{"hello", "", "world"}, `hello,,world`, ""},
+		{[]string{`hello, world`, `goodbye, world!`}, `"hello, world","goodbye, world!"`, ""},
+		{time.Second, "1s", ""},
+		{61 * time.Second, "1m1s", ""},
+		{fs.Mebi, "1Mi", ""},
+		{fs.Gibi, "1Gi", ""},
+	} {
+		what := fmt.Sprintf("interpret %#v as string", test.in)
+		got, err := configstruct.InterfaceToString(test.in)
+		if test.err == "" {
+			require.NoError(t, err, what)
+			assert.Equal(t, test.want, got, what)
+		} else {
+			assert.Equal(t, "", got)
 			assert.EqualError(t, err, test.err, what)
 		}
 	}

@@ -265,7 +265,7 @@ func TestRemoteStats(t *testing.T) {
 		}
 		s.AddTransfer(tr1)
 		time.Sleep(time.Millisecond)
-		rs, err := s.RemoteStats()
+		rs, err := s.RemoteStats(false)
 
 		require.NoError(t, err)
 		assert.Equal(t, float64(10), rs["transferTime"])
@@ -453,7 +453,7 @@ func TestPruneTransfers(t *testing.T) {
 			assert.Equal(t, test.Transfers, len(s.startedTransfers))
 			s.mu.Unlock()
 
-			for i := 0; i < test.Transfers; i++ {
+			for range test.Transfers {
 				s.PruneTransfers()
 			}
 
@@ -464,4 +464,28 @@ func TestPruneTransfers(t *testing.T) {
 
 		})
 	}
+}
+
+func TestRemoveDoneTransfers(t *testing.T) {
+	ctx := context.Background()
+	s := NewStats(ctx)
+	const transfers = 10
+	for i := int64(1); i <= int64(transfers); i++ {
+		s.AddTransfer(&Transfer{
+			startedAt:   time.Unix(i, 0),
+			completedAt: time.Unix(i+1, 0),
+		})
+	}
+
+	s.mu.Lock()
+	assert.Equal(t, time.Duration(transfers)*time.Second, s._totalDuration())
+	assert.Equal(t, transfers, len(s.startedTransfers))
+	s.mu.Unlock()
+
+	s.RemoveDoneTransfers()
+
+	s.mu.Lock()
+	assert.Equal(t, time.Duration(transfers)*time.Second, s._totalDuration())
+	assert.Equal(t, transfers, len(s.startedTransfers))
+	s.mu.Unlock()
 }

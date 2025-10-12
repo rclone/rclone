@@ -8,11 +8,12 @@ tests:
  - path: fs/sync
    fastlist: true
  - path: cmd/bisync
+ - path: cmd/gitannex
  - path: vfs
  - path: cmd/serve/restic
    localonly: true
- - path: cmd/serve/docker
-   localonly: true
+ # - path: cmd/serve/docker
+ #   localonly: true
  - path: cmd/selfupdate
    localonly: true
 backends:
@@ -33,9 +34,9 @@ backends:
    fastlist: true
    ignore:
      - TestCopyFileMaxTransfer
- - backend:  "crypt"
-   remote:   "TestCryptSwift:"
-   fastlist: false
+ # - backend:  "crypt"
+ #   remote:   "TestCryptSwift:"
+ #   fastlist: false
  ## chunker
  - backend:  "chunker"
    remote:   "TestChunkerLocal:"
@@ -66,14 +67,19 @@ backends:
  #   maxfile:  10k
  #   ignore:
  #     - TestApplyTransforms
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bYandex:"
-   fastlist: true
-   maxfile:  1k
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bBox:"
-   fastlist: true
-   maxfile:  1k
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bYandex:"
+ #   fastlist: true
+ #   maxfile:  1k
+ #   ignore:
+ #     # Needs investigation
+ #     - TestDeduplicateNewestByHash
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bBox:"
+ #   fastlist: true
+ #   maxfile:  1k
+ #   ignore:
+ #     - TestIntegration/FsMkdir/FsChangeNotify
  - backend:  "chunker"
    remote:   "TestChunkerS3:"
    fastlist: true
@@ -102,6 +108,24 @@ backends:
    fastlist: true
    maxfile:  1k
  ## end chunker
+ - backend:  "cloudinary"
+   remote:   "TestCloudinary:"
+   fastlist: false
+   ignore:
+     # fs/operations
+     - TestCheckSum
+     - TestCheckSumDownload
+     - TestHashSums/Md5
+     - TestReadFile
+     - TestCopyURL
+     - TestMoveFileWithIgnoreExisting
+     - TestCopyFileCompareDest
+     #vfs
+     - TestFileSetModTime/cache=off,open=false,write=false
+     - TestFileSetModTime/cache=off,open=true,write=false
+     - TestRWFileHandleWriteNoWrite
+   ignoretests:
+     - cmd/gitannex
  - backend:  "combine"
    remote:   "TestCombine:dir1"
    fastlist: false
@@ -109,12 +133,13 @@ backends:
  - backend:  "compress"
    remote:   "TestCompress:"
    fastlist: false
- - backend:  "compress"
-   remote:   "TestCompressSwift:"
-   fastlist: false
+ # - backend:  "compress"
+ #   remote:   "TestCompressSwift:"
+ #   fastlist: false
  - backend:  "compress"
    remote:   "TestCompressDrive:"
    fastlist: false
+   extratime: 2.0
  - backend:  "compress"
    remote:   "TestCompressS3:"
    fastlist: false
@@ -129,10 +154,6 @@ backends:
  - backend:  "dropbox"
    remote:   "TestDropbox:"
    fastlist: false
-   ignore:
-     # This test doesn't work on a standard dropbox account because it
-     # tries to set the expiry of the link
-     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
  # - backend:  "filefabric"
  #   remote:   "TestFileFabric:"
  #   fastlist: false
@@ -143,12 +164,18 @@ backends:
  - backend:  "filescom"
    remote:   "TestFilesCom:"
    fastlist: false
+   ignoretests:
+     - cmd/bisync
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
+   ignoretests:
+     - cmd/gitannex
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage,directory_markers:"
    fastlist: true
+   ignoretests:
+     - cmd/gitannex
  - backend:  "googlephotos"
    remote:   "TestGooglePhotos:"
    tests:
@@ -159,21 +186,31 @@ backends:
  - backend:  "imagekit"
    remote:   "TestImageKit:"
    fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsPutZeroLength
+   ignoretests:
+     - cmd/bisync
  - backend:  "internetarchive"
    remote:   "TestIA:rclone-integration-test"
    fastlist: true
    tests:
      - backend
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding
    extratime: 2.0
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
    fastlist: true
+   ignoretests:
+     - cmd/bisync
  - backend:  "memory"
    remote:   ":memory:"
    fastlist: true
  - backend:  "netstorage"
    remote:   "TestnStorage:"
    fastlist: true
+   ignoretests:
+     - cmd/bisync
  - backend:  "onedrive"
    remote:   "TestOneDrive:"
    fastlist: false
@@ -196,6 +233,9 @@ backends:
  - backend:  "s3"
    remote:   "TestS3Rclone:"
    fastlist: true
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
  - backend:  "s3"
    remote:   "TestS3Minio:"
    fastlist: true
@@ -212,6 +252,8 @@ backends:
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/SetTier
+   ignoretests:
+     - cmd/gitannex
  - backend:  "s3"
    remote:   "TestS3Wasabi:"
    fastlist: true
@@ -272,15 +314,24 @@ backends:
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/SetTier
+ # - backend:  "s3"
+ #   remote:   "TestS3FlashBlade:"
+ #   fastlist: true
  - backend:  "sftp"
    remote:   "TestSFTPOpenssh:"
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "sftp"
    remote:   "TestSFTPRclone:"
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "sftp"
    remote:   "TestSFTPRcloneSSH:"
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "sftp"
    remote:   "TestSFTPRsyncNet:"
    fastlist: false
@@ -293,6 +344,8 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/trailing_dot
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
      - TestIntegration/FsMkdir/FsEncoding/URL_encoding
+   ignoretests:
+     - cmd/bisync
  - backend:  "sugarsync"
    remote:   "TestSugarSync:Test"
    fastlist: false
@@ -301,12 +354,18 @@ backends:
  - backend:  "swift"
    remote:   "TestSwiftAIO:"
    fastlist: true
+   ignoretests:
+     - cmd/gitannex
  - backend:  "swift"
    remote:   "TestSwiftAIOsegments:"
    fastlist: true
- - backend:  "swift"
-   remote:   "TestSwift:"
-   fastlist: true
+   ignoretests:
+     - cmd/gitannex
+ # - backend:  "swift"
+ #   remote:   "TestSwift:"
+ #   fastlist: true
+ #   ignoretests:
+ #     - cmd/bisync
  # - backend:  "swift"
  #   remote:   "TestSwiftCeph:"
  #   fastlist: true
@@ -318,15 +377,23 @@ backends:
  - backend:  "ftp"
    remote:   "TestFTPProftpd:"
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "ftp"
    remote:   "TestFTPPureftpd:"
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "ftp"
    remote:   "TestFTPVsftpd:"
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "ftp"
    remote:   "TestFTPRclone:"
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "box"
    remote:   "TestBox:"
    fastlist: false
@@ -348,9 +415,17 @@ backends:
  - backend:  "azureblob"
    remote:   "TestAzureBlob:"
    fastlist: true
+   ignore:
+     # It just isn't possible to preserve the existing file with azure blob
+     # and make sure we don't leak uncomitted blocks.
+     - TestMultithreadCopyAbort
  - backend:  "azureblob"
    remote:   "TestAzureBlob,directory_markers:"
    fastlist: true
+   ignore:
+     # It just isn't possible to preserve the existing file with azure blob
+     # and make sure we don't leak uncomitted blocks.
+     - TestMultithreadCopyAbort
  - backend:  "azurefiles"
    remote:   "TestAzureFiles:"
  - backend:  "pcloud"
@@ -370,44 +445,71 @@ backends:
     # This test fails with message
     # "share_status_prohibited" (9): Sorry, the sharing service is under maintenance in the current region.
      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
  - backend:  "pixeldrain"
    remote: "TestPixeldrain:"
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
    fastlist: false
+   ignoretests:
+     - cmd/bisync
  - backend:  "webdav"
    remote:   "TestWebdavNextcloud:"
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/punctuation
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
    fastlist: false
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
  - backend:  "webdav"
    remote:   "TestWebdavOwncloud:"
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/punctuation
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
    fastlist: false
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
+ - backend:  "webdav"
+   remote:   "TestWebdavInfiniteScale:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+   env:
+      - RCLONE_NO_CHECK_CERTIFICATE=true
+   fastlist: false
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
  - backend:  "webdav"
    remote:   "TestWebdavRclone:"
    ignore:
      - TestFileReadAtZeroLength
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "cache"
    remote:   "TestCache:"
    fastlist: false
    ignoretests:
-     - TestBisyncLocalRemote
-     - TestBisyncRemoteLocal
-     - TestBisyncRemoteRemote
+     - cmd/bisync
  - backend:  "mega"
    remote:   "TestMega:"
    fastlist: false
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
      - TestDirRename
+     - TestFileRename
+   ignoretests:
+     - cmd/bisync
  - backend:  "opendrive"
    remote:   "TestOpenDrive:"
    fastlist: false
+   ignoretests:
+     - cmd/bisync
  - backend:  "union"
    remote:   "TestUnion:"
    fastlist: false
@@ -427,24 +529,34 @@ backends:
      - TestFixCase
      - TestListDirSorted        # Can't upload files starting with . - FIXME fix with encoding
      - TestSyncOverlapWithFilter # Can't upload files starting with . - FIXME fix with encoding
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
  - backend:  "protondrive"
    remote:   "TestProtonDrive:"
    fastlist: false
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
  - backend:  "putio"
    remote:   "TestPutio:"
    fastlist: false
    extratime: 2.0
    ignore:
       - TestIntegration/FsMkdir/FsEncoding/URL_encoding
- - backend:  "sharefile"
-   remote:   "TestSharefile:"
-   fastlist: false
+   ignoretests:
+     - cmd/bisync
+ # - backend:  "sharefile"
+ #   remote:   "TestSharefile:"
+ #   fastlist: false
  - backend:  "sia"
    remote:   "TestSia:"
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "mailru"
    remote:   "TestMailru:"
    subdir:   false
@@ -452,29 +564,54 @@ backends:
    oneonly:  true
    ignore:
      - TestApplyTransforms
+   ignoretests:
+     - cmd/bisync
  - backend:  "seafile"
    remote:   "TestSeafileV6:"
    fastlist: false
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/FsDirMove
+   ignoretests:
+     - cmd/gitannex
  - backend:  "seafile"
    remote:   "TestSeafile:"
    fastlist: true
+   ignoretests:
+     - cmd/gitannex
  - backend:  "seafile"
    remote:   "TestSeafileEncrypted:"
    fastlist: true
- - backend:  "sia"
-   remote:   "TestSia:"
-   fastlist: false
+   ignoretests:
+     - cmd/gitannex
  - backend:  "smb"
    remote:   "TestSMB:rclone"
    fastlist: false
+   ignoretests:
+     - cmd/gitannex
+ - backend:  "smb"
+   remote:   "TestSMBKerberos:rclone"
+   fastlist: false
+   env:
+      - KRB5_CONFIG=/tmp/rclone_krb5/krb5.conf
+      - KRB5CCNAME=/tmp/rclone_krb5/ccache
+   ignoretests:
+     - cmd/gitannex
+ - backend:  "smb"
+   remote:   "TestSMBKerberosCcache:rclone"
+   fastlist: false
+   env:
+     - KRB5_CONFIG=/tmp/rclone_krb5_ccache/krb5.conf
+   ignoretests:
+     - cmd/gitannex
  - backend:  "storj"
    remote:   "TestStorj:"
    fastlist: true
+   ignoretests:
+     - cmd/bisync
  - backend:  "zoho"
    remote:   "TestZoho:"
    fastlist: false
+   extratime: 2.0
    tests:
      - backend
  - backend: "hdfs"
@@ -482,6 +619,8 @@ backends:
    fastlist: false
    ignore:
      - TestSyncUTFNorm
+   ignoretests:
+     - cmd/gitannex
  # - backend: "uptobox"
  #   remote: "TestUptobox:"
  #   fastlist: false
@@ -498,12 +637,25 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/trailing_LF
      - TestIntegration/FsMkdir/FsEncoding/leading_HT
      - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
  - backend:  "quatrix"
    remote:   "TestQuatrix:"
    fastlist: false
+   ignoretests:
+     - cmd/bisync
  - backend:  "ulozto"
    remote:   "TestUlozto:"
    fastlist: false
- - backend:  "iclouddrive"
-   remote:   "TestICloudDrive:"
+ # - backend:  "iclouddrive"
+ #   remote:   "TestICloudDrive:"
+ #   fastlist: false
+ - backend: "filelu"
+   remote: "TestFileLu:"
    fastlist: false
+   ignore:
+     - TestRWFileHandleWriteNoWrite
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex

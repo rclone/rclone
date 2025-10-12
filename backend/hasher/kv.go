@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -195,9 +196,7 @@ func (op *kvPut) Do(ctx context.Context, b kv.Bucket) (err error) {
 		r.Fp = op.fp
 	}
 
-	for hashType, hashVal := range op.hashes {
-		r.Hashes[hashType] = hashVal
-	}
+	maps.Copy(r.Hashes, op.hashes)
 	if data, err = r.encode(op.key); err != nil {
 		return fmt.Errorf("marshal failed: %w", err)
 	}

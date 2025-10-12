@@ -133,7 +133,7 @@ func TestCertificates(t *testing.T) {
 			assert.Fail(t, "Certificate expired", "Certificate expires at %s, current time is %s", cert[0].NotAfter.Sub(startTime), time.Since(startTime))
 		}
 
-		// Write some test data to fullfil the request
+		// Write some test data to fulfill the request
 		w.Header().Set("Content-Type", "text/plain")
 		_, _ = fmt.Fprintln(w, "test data")
 	}))

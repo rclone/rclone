@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
 	bolt "go.etcd.io/bbolt"
+	"go.etcd.io/bbolt/errors"
 )
 
 // Constants
@@ -597,7 +598,7 @@ func (b *Persistent) CleanChunksBySize(maxSize int64) {
 	})
 
 	if err != nil {
-		if err == bolt.ErrDatabaseNotOpen {
+		if err == errors.ErrDatabaseNotOpen {
 			// we're likely a late janitor and we need to end quietly as there's no guarantee of what exists anymore
 			return
 		}
@@ -606,16 +607,16 @@ func (b *Persistent) CleanChunksBySize(maxSize int64) {
 }
 
 // Stats returns a go map with the stats key values
-func (b *Persistent) Stats() (map[string]map[string]interface{}, error) {
-	r := make(map[string]map[string]interface{})
-	r["data"] = make(map[string]interface{})
+func (b *Persistent) Stats() (map[string]map[string]any, error) {
+	r := make(map[string]map[string]any)
+	r["data"] = make(map[string]any)
 	r["data"]["oldest-ts"] = time.Now()
 	r["data"]["oldest-file"] = ""
 	r["data"]["newest-ts"] = time.Now()
 	r["data"]["newest-file"] = ""
 	r["data"]["total-chunks"] = 0
 	r["data"]["total-size"] = int64(0)
-	r["files"] = make(map[string]interface{})
+	r["files"] = make(map[string]any)
 	r["files"]["oldest-ts"] = time.Now()
 	r["files"]["oldest-name"] = ""
 	r["files"]["newest-ts"] = time.Now()

@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/lib/bucket"
 )
 
 // DirSorted reads Object and *Dir into entries for the given Fs.
@@ -22,6 +24,7 @@ import (
 func DirSorted(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err error) {
 	// Get unfiltered entries from the fs
 	entries, err = f.List(ctx, dir)
+	accounting.Stats(ctx).Listed(int64(len(entries)))
 	if err != nil {
 		return nil, err
 	}
@@ -36,14 +39,73 @@ func DirSorted(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entri
 	return filterAndSortDir(ctx, entries, includeAll, dir, fi.IncludeObject, fi.IncludeDirectory(ctx, f))
 }
 
-// filter (if required) and check the entries, then sort them
-func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir string,
+// listP for every backend
+func listP(ctx context.Context, f fs.Fs, dir string, callback fs.ListRCallback) error {
+	if doListP := f.Features().ListP; doListP != nil {
+		return doListP(ctx, dir, callback)
+	}
+	// Fallback to List
+	entries, err := f.List(ctx, dir)
+	if err != nil {
+		return err
+	}
+	return callback(entries)
+}
+
+// DirSortedFn reads Object and *Dir into entries for the given Fs.
+//
+// dir is the start directory, "" for root
+//
+// If includeAll is specified all files will be added, otherwise only
+// files and directories passing the filter will be added.
+//
+// Files will be returned through callback in sorted order
+func DirSortedFn(ctx context.Context, f fs.Fs, includeAll bool, dir string, callback fs.ListRCallback, keyFn KeyFn) (err error) {
+	stats := accounting.Stats(ctx)
+	fi := filter.GetConfig(ctx)
+
+	// Sort the entries, in or out of memory
+	sorter, err := NewSorter(ctx, f, callback, keyFn)
+	if err != nil {
+		return fmt.Errorf("failed to create directory sorter: %w", err)
+	}
+	defer sorter.CleanUp()
+
+	// Get unfiltered entries from the fs
+	err = listP(ctx, f, dir, func(entries fs.DirEntries) error {
+		stats.Listed(int64(len(entries)))
+
+		// This should happen only if exclude files lives in the
+		// starting directory, otherwise ListDirSorted should not be
+		// called.
+		if !includeAll && fi.ListContainsExcludeFile(entries) {
+			fs.Debugf(dir, "Excluded")
+			return nil
+		}
+
+		entries, err := filterDir(ctx, entries, includeAll, dir, fi.IncludeObject, fi.IncludeDirectory(ctx, f))
+		if err != nil {
+			return err
+		}
+		return sorter.Add(entries)
+	})
+	if err != nil {
+		return err
+	}
+	return sorter.Send()
+}
+
+// Filter the entries passed in
+func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir string,
 	IncludeObject func(ctx context.Context, o fs.Object) bool,
 	IncludeDirectory func(remote string) (bool, error)) (newEntries fs.DirEntries, err error) {
 	newEntries = entries[:0] // in place filter
 	prefix := ""
 	if dir != "" {
-		prefix = dir + "/"
+		prefix = dir
+		if !bucket.IsAllSlashes(dir) {
+			prefix += "/"
+		}
 	}
 	for _, entry := range entries {
 		ok := true
@@ -77,10 +139,10 @@ func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll boo
 		case !strings.HasPrefix(remote, prefix):
 			ok = false
 			fs.Errorf(entry, "Entry doesn't belong in directory %q (too short) - ignoring", dir)
-		case remote == prefix:
+		case remote == dir:
 			ok = false
 			fs.Errorf(entry, "Entry doesn't belong in directory %q (same as directory) - ignoring", dir)
-		case strings.ContainsRune(remote[len(prefix):], '/'):
+		case strings.ContainsRune(remote[len(prefix):], '/') && !bucket.IsAllSlashes(remote[len(prefix):]):
 			ok = false
 			fs.Errorf(entry, "Entry doesn't belong in directory %q (contains subdir) - ignoring", dir)
 		default:
@@ -90,7 +152,18 @@ func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll boo
 			newEntries = append(newEntries, entry)
 		}
 	}
-	entries = newEntries
+	return newEntries, nil
+}
+
+// filter and sort the entries
+func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir string,
+	IncludeObject func(ctx context.Context, o fs.Object) bool,
+	IncludeDirectory func(remote string) (bool, error)) (newEntries fs.DirEntries, err error) {
+	// Filter the directory entries (in place)
+	entries, err = filterDir(ctx, entries, includeAll, dir, IncludeObject, IncludeDirectory)
+	if err != nil {
+		return nil, err
+	}
 
 	// Sort the directory entries by Remote
 	//

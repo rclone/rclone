@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -15,10 +16,14 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
+	cmdserve "github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/lib/systemd"
@@ -28,11 +33,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// OptionsInfo describes the Options in use
+var OptionsInfo = fs.Options{}.
+	Add(libhttp.ConfigInfo).
+	Add(libhttp.AuthConfigInfo).
+	Add(libhttp.TemplateConfigInfo)
+
 // Options required for http server
 type Options struct {
-	Auth     libhttp.AuthConfig
-	HTTP     libhttp.Config
-	Template libhttp.TemplateConfig
+	Auth       libhttp.AuthConfig
+	HTTP       libhttp.Config
+	Template   libhttp.TemplateConfig
+	DisableZip bool
 }
 
 // DefaultOpt is the default values used for Options
@@ -45,17 +57,43 @@ var DefaultOpt = Options{
 // Opt is options set by command line flags
 var Opt = DefaultOpt
 
+func init() {
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "http", Opt: &Opt, Options: OptionsInfo})
+}
+
 // flagPrefix is the prefix used to uniquely identify command line flags.
 // It is intentionally empty for this package.
 const flagPrefix = ""
 
 func init() {
 	flagSet := Command.Flags()
-	libhttp.AddAuthFlagsPrefix(flagSet, flagPrefix, &Opt.Auth)
-	libhttp.AddHTTPFlagsPrefix(flagSet, flagPrefix, &Opt.HTTP)
-	libhttp.AddTemplateFlagsPrefix(flagSet, flagPrefix, &Opt.Template)
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
 	vfsflags.AddFlags(flagSet)
 	proxyflags.AddFlags(flagSet)
+	flagSet.BoolVar(&Opt.DisableZip, "disable-zip", false, "Disable zip download of directories")
+	cmdserve.Command.AddCommand(Command)
+	cmdserve.AddRc("http", func(ctx context.Context, f fs.Fs, in rc.Params) (cmdserve.Handle, error) {
+		// Read VFS Opts
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read Proxy Opts
+		var proxyOpt = proxy.Opt // set default opts
+		err = configstruct.SetAny(in, &proxyOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return newServer(ctx, f, &opt, &vfsOpt, &proxyOpt)
+	})
 }
 
 // Command definition for cobra
@@ -74,14 +112,14 @@ The server will log errors.  Use ` + "`-v`" + ` to see access logs.
 ` + "`--bwlimit`" + ` will be respected for file transfers.  Use ` + "`--stats`" + ` to
 control the stats printing.
 
-` + libhttp.Help(flagPrefix) + libhttp.TemplateHelp(flagPrefix) + libhttp.AuthHelp(flagPrefix) + vfs.Help() + proxy.Help,
+` + strings.TrimSpace(libhttp.Help(flagPrefix)+libhttp.TemplateHelp(flagPrefix)+libhttp.AuthHelp(flagPrefix)+vfs.Help()+proxy.Help),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 		"groups":            "Filter",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
-		if proxyflags.Opt.AuthProxy == "" {
+		if proxy.Opt.AuthProxy == "" {
 			cmd.CheckArgs(1, 1, command, args)
 			f = cmd.NewFsSrc(args)
 		} else {
@@ -89,14 +127,12 @@ control the stats printing.
 		}
 
 		cmd.Run(false, true, command, func() error {
-			s, err := run(context.Background(), f, Opt)
+			s, err := newServer(context.Background(), f, &Opt, &vfscommon.Opt, &proxy.Opt)
 			if err != nil {
 				fs.Fatal(nil, fmt.Sprint(err))
 			}
-
 			defer systemd.Notify()()
-			s.server.Wait()
-			return nil
+			return s.Serve()
 		})
 	},
 }
@@ -128,7 +164,7 @@ func (s *HTTP) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 }
 
 // auth does proxy authorization
-func (s *HTTP) auth(user, pass string) (value interface{}, err error) {
+func (s *HTTP) auth(user, pass string) (value any, err error) {
 	VFS, _, err := s.proxy.Call(user, pass, false)
 	if err != nil {
 		return nil, err
@@ -136,19 +172,19 @@ func (s *HTTP) auth(user, pass string) (value interface{}, err error) {
 	return VFS, err
 }
 
-func run(ctx context.Context, f fs.Fs, opt Options) (s *HTTP, err error) {
+func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (s *HTTP, err error) {
 	s = &HTTP{
 		f:   f,
 		ctx: ctx,
-		opt: opt,
+		opt: *opt,
 	}
 
-	if proxyflags.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(ctx, &proxyflags.Opt)
+	if proxyOpt.AuthProxy != "" {
+		s.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
 		// override auth
 		s.opt.Auth.CustomAuthFn = s.auth
 	} else {
-		s._vfs = vfs.New(f, &vfscommon.Opt)
+		s._vfs = vfs.New(f, vfsOpt)
 	}
 
 	s.server, err = libhttp.NewServer(ctx,
@@ -168,9 +204,25 @@ func run(ctx context.Context, f fs.Fs, opt Options) (s *HTTP, err error) {
 	router.Get("/*", s.handler)
 	router.Head("/*", s.handler)
 
-	s.server.Serve()
-
 	return s, nil
+}
+
+// Serve HTTP until the server is shutdown
+func (s *HTTP) Serve() error {
+	s.server.Serve()
+	fs.Logf(s.f, "HTTP Server started on %s", s.server.URLs())
+	s.server.Wait()
+	return nil
+}
+
+// Addr returns the first address of the server
+func (s *HTTP) Addr() net.Addr {
+	return s.server.Addr()
+}
+
+// Shutdown the server
+func (s *HTTP) Shutdown() error {
+	return s.server.Shutdown()
 }
 
 // handler reads incoming requests and dispatches them
@@ -207,6 +259,24 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 		return
 	}
 	dir := node.(*vfs.Dir)
+
+	if r.URL.Query().Get("download") == "zip" && !s.opt.DisableZip {
+		fs.Infof(dirRemote, "%s: Zipping directory", r.RemoteAddr)
+		zipName := path.Base(dirRemote)
+		if dirRemote == "" {
+			zipName = "root"
+		}
+		w.Header().Set("Content-Disposition", "attachment; filename=\""+zipName+".zip\"")
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
+		err := vfs.CreateZip(ctx, dir, w)
+		if err != nil {
+			serve.Error(ctx, dirRemote, w, "Failed to create zip", err)
+			return
+		}
+		return
+	}
+
 	dirEntries, err := dir.ReadDirAll()
 	if err != nil {
 		serve.Error(ctx, dirRemote, w, "Failed to list directory", err)
@@ -229,6 +299,8 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 
 	// Set the Last-Modified header to the timestamp
 	w.Header().Set("Last-Modified", dir.ModTime().UTC().Format(http.TimeFormat))
+
+	directory.DisableZip = s.opt.DisableZip
 
 	directory.Serve(w, r)
 }

@@ -243,7 +243,6 @@ func (m *Metadata) Get(ctx context.Context) (metadata fs.Metadata, err error) {
 func (m *Metadata) Set(ctx context.Context, metadata fs.Metadata) (numSet int, err error) {
 	numSet = 0
 	for k, v := range metadata {
-		k, v := k, v
 		switch k {
 		case "mtime":
 			t, err := time.Parse(timeFormatIn, v)
@@ -396,10 +395,52 @@ func (m *Metadata) WritePermissions(ctx context.Context) (err error) {
 	return nil
 }
 
+// Order the permissions so that any with users come first.
+//
+// This is to work around a quirk with Graph:
+//
+// 1. You are adding permissions for both a group and a user.
+// 2. The user is a member of the group.
+// 3. The permissions for the group and user are the same.
+// 4. You are adding the group permission before the user permission.
+//
+// When all of the above are true, Graph indicates it has added the
+// user permission, but it immediately drops it
+//
+// See: https://github.com/rclone/rclone/issues/8465
+func (m *Metadata) orderPermissions(xs []*api.PermissionsType) {
+	// Return true if identity has any user permissions
+	hasUserIdentity := func(identity *api.IdentitySet) bool {
+		if identity == nil {
+			return false
+		}
+		return identity.User.ID != "" || identity.User.DisplayName != "" || identity.User.Email != "" || identity.User.LoginName != ""
+	}
+	// Return true if p has any user permissions
+	hasUser := func(p *api.PermissionsType) bool {
+		if hasUserIdentity(p.GetGrantedTo(m.fs.driveType)) {
+			return true
+		}
+		return slices.ContainsFunc(p.GetGrantedToIdentities(m.fs.driveType), hasUserIdentity)
+	}
+	// Put Permissions with a user first, leaving unsorted otherwise
+	slices.SortStableFunc(xs, func(a, b *api.PermissionsType) int {
+		aHasUser := hasUser(a)
+		bHasUser := hasUser(b)
+		if aHasUser && !bHasUser {
+			return -1
+		} else if !aHasUser && bHasUser {
+			return 1
+		}
+		return 0
+	})
+}
+
 // sortPermissions sorts the permissions (to be written) into add, update, and remove queues
 func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType) {
 	new, old := m.queuedPermissions, m.permissions
 	if len(old) == 0 || m.permsAddOnly {
+		m.orderPermissions(new)
 		return new, nil, nil // they must all be "add"
 	}
 
@@ -447,6 +488,9 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 			remove = append(remove, o)
 		}
 	}
+	m.orderPermissions(add)
+	m.orderPermissions(update)
+	m.orderPermissions(remove)
 	return add, update, remove
 }
 
@@ -699,6 +743,8 @@ func (o *Object) fetchMetadataForCreate(ctx context.Context, src fs.ObjectInfo, 
 
 // Fetch metadata and update updateInfo if --metadata is in use
 // modtime will still be set when there is no metadata to set
+//
+// May return info=nil and err=nil if there was no metadata to update.
 func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, updateInfo *Object) (info *api.Item, err error) {
 	meta, err := fs.GetMetadataOptions(ctx, f, src, options)
 	if err != nil {
@@ -718,6 +764,8 @@ func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, opti
 }
 
 // updateMetadata calls Get, Set, and Write
+//
+// May return info=nil and err=nil if there was no metadata to update.
 func (o *Object) updateMetadata(ctx context.Context, meta fs.Metadata) (info *api.Item, err error) {
 	_, err = o.meta.Get(ctx) // refresh permissions
 	if err != nil {

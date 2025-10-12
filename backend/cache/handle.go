@@ -182,7 +182,7 @@ func (r *Handle) queueOffset(offset int64) {
 			}
 		}
 
-		for i := 0; i < r.workers; i++ {
+		for i := range r.workers {
 			o := r.preloadOffset + int64(r.cacheFs().opt.ChunkSize)*int64(i)
 			if o < 0 || o >= r.cachedObject.Size() {
 				continue
@@ -222,7 +222,7 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 	if !found {
 		// we're gonna give the workers a chance to pickup the chunk
 		// and retry a couple of times
-		for i := 0; i < r.cacheFs().opt.ReadRetries*8; i++ {
+		for i := range r.cacheFs().opt.ReadRetries * 8 {
 			data, err = r.storage().GetChunk(r.cachedObject, chunkStart)
 			if err == nil {
 				found = true

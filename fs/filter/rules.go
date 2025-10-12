@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/rclone/rclone/fs"
@@ -106,10 +107,8 @@ func (rs *rules) include(remote string) bool {
 // on.
 func (rs *rules) includeMany(remotes []string) bool {
 	for _, rule := range rs.rules {
-		for _, remote := range remotes {
-			if rule.Match(remote) {
-				return rule.Include
-			}
+		if slices.ContainsFunc(remotes, rule.Match) {
+			return rule.Include
 		}
 	}
 	return true

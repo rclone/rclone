@@ -1,26 +1,34 @@
 package pool
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/rand"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 )
 
 // makes the allocations be unreliable
 func makeUnreliable(bp *Pool) {
+	var allocCount int
+	tests := rand.Intn(4) + 1
 	bp.alloc = func(size int) ([]byte, error) {
-		if rand.Intn(3) != 0 {
+		allocCount++
+		if allocCount%tests != 0 {
 			return nil, errors.New("failed to allocate memory")
 		}
 		return make([]byte, size), nil
 	}
+	var freeCount int
 	bp.free = func(b []byte) error {
-		if rand.Intn(3) != 0 {
+		freeCount++
+		if freeCount%tests != 0 {
 			return errors.New("failed to free memory")
 		}
 		return nil
@@ -50,17 +58,27 @@ func testGetPut(t *testing.T, useMmap bool, unreliable bool) {
 	assert.Equal(t, 0, bp.InPool())
 	assert.Equal(t, 3, bp.Alloced())
 
+	bs := bp.GetN(3)
+	assert.Equal(t, 6, bp.InUse())
+	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 6, bp.Alloced())
+
 	bp.Put(b1)
-	assert.Equal(t, 2, bp.InUse())
+	assert.Equal(t, 5, bp.InUse())
 	assert.Equal(t, 1, bp.InPool())
-	assert.Equal(t, 3, bp.Alloced())
+	assert.Equal(t, 6, bp.Alloced())
 
 	bp.Put(b2)
-	assert.Equal(t, 1, bp.InUse())
+	assert.Equal(t, 4, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
-	assert.Equal(t, 3, bp.Alloced())
+	assert.Equal(t, 6, bp.Alloced())
 
 	bp.Put(b3)
+	assert.Equal(t, 3, bp.InUse())
+	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 5, bp.Alloced())
+
+	bp.PutN(bs)
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
 	assert.Equal(t, 2, bp.Alloced())
@@ -82,6 +100,18 @@ func testGetPut(t *testing.T, useMmap bool, unreliable bool) {
 
 	bp.Put(b1a)
 	bp.Put(b2a)
+	assert.Equal(t, 0, bp.InUse())
+	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
+
+	bsa := bp.GetN(3)
+	assert.Equal(t, addr(b1), addr(bsa[1]))
+	assert.Equal(t, addr(b2), addr(bsa[0]))
+	assert.Equal(t, 3, bp.InUse())
+	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 3, bp.Alloced())
+
+	bp.PutN(bsa)
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
 	assert.Equal(t, 2, bp.Alloced())
@@ -118,7 +148,7 @@ func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
 
 	checkFlushHasHappened := func(desired int) {
 		var n int
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			time.Sleep(100 * time.Millisecond)
 			n = bp.InPool()
 			if n <= desired {
@@ -224,4 +254,65 @@ func TestPool(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestPoolMaxBufferMemory(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	ci.MaxBufferMemory = 4 * 4096
+	defer func() {
+		ci.MaxBufferMemory = 0
+		totalMemory = nil
+	}()
+	totalMemoryInit = sync.Once{} // reset the sync.Once as it likely has been used
+	totalMemory = nil
+	bp := New(60*time.Second, 4096, 2, true)
+	assert.NotNil(t, totalMemory)
+
+	assert.Equal(t, bp.alloced, 0)
+	buf := bp.Get()
+	bp.Put(buf)
+	assert.Equal(t, bp.alloced, 1)
+
+	var (
+		wg       sync.WaitGroup
+		mu       sync.Mutex
+		bufs     int
+		maxBufs  int
+		countBuf = func(i int) {
+			mu.Lock()
+			defer mu.Unlock()
+			bufs += i
+			if bufs > maxBufs {
+				maxBufs = bufs
+			}
+		}
+	)
+	const trials = 50
+	for i := range trials {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if i < trials/2 {
+				n := i%4 + 1
+				buf := bp.GetN(n)
+				countBuf(n)
+				time.Sleep(1 * time.Millisecond)
+				countBuf(-n)
+				bp.PutN(buf)
+			} else {
+				buf := bp.Get()
+				countBuf(1)
+				time.Sleep(1 * time.Millisecond)
+				countBuf(-1)
+				bp.Put(buf)
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	assert.Equal(t, bufs, 0)
+	assert.Equal(t, maxBufs, 4)
+	assert.Equal(t, bp.alloced, 2)
 }

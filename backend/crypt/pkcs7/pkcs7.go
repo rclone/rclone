@@ -25,7 +25,7 @@ func Pad(n int, buf []byte) []byte {
 	}
 	length := len(buf)
 	padding := n - (length % n)
-	for i := 0; i < padding; i++ {
+	for range padding {
 		buf = append(buf, byte(padding))
 	}
 	if (len(buf) % n) != 0 {
@@ -54,7 +54,7 @@ func Unpad(n int, buf []byte) ([]byte, error) {
 	if padding == 0 {
 		return nil, ErrorPaddingTooShort
 	}
-	for i := 0; i < padding; i++ {
+	for i := range padding {
 		if buf[length-1-i] != byte(padding) {
 			return nil, ErrorPaddingNotAllTheSame
 		}

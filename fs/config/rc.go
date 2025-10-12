@@ -11,6 +11,37 @@ import (
 
 func init() {
 	rc.Add(rc.Call{
+		Path:         "config/unlock",
+		Fn:           rcConfigPassword,
+		Title:        "Unlock the config file.",
+		AuthRequired: true,
+		Help: `
+Unlocks the config file if it is locked.
+
+Parameters:
+
+- 'config_password' - password to unlock the config file
+
+A good idea is to disable AskPassword before making this call
+`,
+	})
+}
+
+// Unlock the config file
+// A good idea is to disable AskPassword before making this call
+func rcConfigPassword(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	configPass, err := in.GetString("config_password")
+	if err != nil {
+		return nil, err
+	}
+	if SetConfigPassword(configPass) != nil {
+		return nil, errors.New("failed to set config password")
+	}
+	return nil, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
 		Path:         "config/dump",
 		Fn:           rcDump,
 		Title:        "Dumps the config file.",
@@ -75,6 +106,9 @@ See the [listremotes](/commands/rclone_listremotes/) command for more informatio
 // including any defined by environment variables.
 func rcListRemotes(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	remoteNames := GetRemoteNames()
+	if remoteNames == nil {
+		remoteNames = []string{}
+	}
 	out = rc.Params{
 		"remotes": remoteNames,
 	}
@@ -111,7 +145,6 @@ func rcProviders(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	for _, name := range []string{"create", "update", "password"} {
-		name := name
 		extraHelp := ""
 		if name == "create" {
 			extraHelp = "- type - type of the new remote\n"
@@ -120,6 +153,7 @@ func init() {
 			extraHelp += `- opt - a dictionary of options to control the configuration
     - obscure - declare passwords are plain and need obscuring
     - noObscure - declare passwords are already obscured and don't need obscuring
+    - noOutput - don't print anything to stdout
     - nonInteractive - don't interact with a user, return questions
     - continue - continue the config process with an answer
     - all - ask all the config questions not just the post config ones

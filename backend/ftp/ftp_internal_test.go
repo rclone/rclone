@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type settings map[string]interface{}
+type settings map[string]any
 
 func deriveFs(ctx context.Context, t *testing.T, f fs.Fs, opts settings) fs.Fs {
 	fsName := strings.Split(f.Name(), "{")[0] // strip off hash
@@ -52,7 +52,7 @@ func (f *Fs) testUploadTimeout(t *testing.T) {
 		ci.Timeout = saveTimeout
 	}()
 	ci.LowLevelRetries = 1
-	ci.Timeout = idleTimeout
+	ci.Timeout = fs.Duration(idleTimeout)
 
 	upload := func(concurrency int, shutTimeout time.Duration) (obj fs.Object, err error) {
 		fixFs := deriveFs(ctx, t, f, settings{

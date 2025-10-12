@@ -19,7 +19,12 @@ By default this will serve files without needing a login.
 You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the ` + "`--{{ .Prefix }}user` and `--{{ .Prefix }}pass`" + ` flags.
 
-If no static users are configured by either of the above methods, and client
+Alternatively, you can have the reverse proxy manage authentication and use the
+username provided in the configured header with ` + "`--user-from-header`" + `  (e.g., ` + "`--{{ .Prefix }}user-from-header=x-remote-user`" + `).
+Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration
+may lead to unauthorized access.
+
+If either of the above authentication methods is not configured and client
 certificates are required by the ` + "`--client-ca`" + ` flag passed to the server, the
 client certificate common name will be considered as the username.
 
@@ -29,9 +34,11 @@ authentication.  Bcrypt is recommended.
 
 To create an htpasswd file:
 
-    touch htpasswd
-    htpasswd -B htpasswd user
-    htpasswd -B htpasswd anotherUser
+` + "```sh" + `
+touch htpasswd
+htpasswd -B htpasswd user
+htpasswd -B htpasswd anotherUser
+` + "```" + `
 
 The password file can be updated while rclone is running.
 
@@ -62,7 +69,7 @@ Use ` + "`--{{ .Prefix }}salt`" + ` to change the password hashing salt from the
 // is returned then the user is not authenticated.
 //
 // If a non nil value is returned then it is added to the context under the key
-type CustomAuthFn func(user, pass string) (value interface{}, err error)
+type CustomAuthFn func(user, pass string) (value any, err error)
 
 // AuthConfigInfo descripts the Options in use
 var AuthConfigInfo = fs.Options{{
@@ -85,16 +92,21 @@ var AuthConfigInfo = fs.Options{{
 	Name:    "salt",
 	Default: "dlPL2MqE",
 	Help:    "Password hashing salt",
+}, {
+	Name:    "user_from_header",
+	Default: "",
+	Help:    "User name from a defined HTTP header",
 }}
 
 // AuthConfig contains options for the http authentication
 type AuthConfig struct {
-	HtPasswd     string       `config:"htpasswd"`   // htpasswd file - if not provided no authentication is done
-	Realm        string       `config:"realm"`      // realm for authentication
-	BasicUser    string       `config:"user"`       // single username for basic auth if not using Htpasswd
-	BasicPass    string       `config:"pass"`       // password for BasicUser
-	Salt         string       `config:"salt"`       // password hashing salt
-	CustomAuthFn CustomAuthFn `json:"-" config:"-"` // custom Auth (not set by command line flags)
+	HtPasswd       string       `config:"htpasswd"`         // htpasswd file - if not provided no authentication is done
+	Realm          string       `config:"realm"`            // realm for authentication
+	BasicUser      string       `config:"user"`             // single username for basic auth if not using Htpasswd
+	BasicPass      string       `config:"pass"`             // password for BasicUser
+	Salt           string       `config:"salt"`             // password hashing salt
+	UserFromHeader string       `config:"user_from_header"` // retrieve user name from a defined HTTP header
+	CustomAuthFn   CustomAuthFn `json:"-" config:"-"`       // custom Auth (not set by command line flags)
 }
 
 // AddFlagsPrefix adds flags to the flag set for AuthConfig
@@ -104,6 +116,7 @@ func (cfg *AuthConfig) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.StringVarP(flagSet, &cfg.BasicUser, prefix+"user", "", cfg.BasicUser, "User name for authentication", prefix)
 	flags.StringVarP(flagSet, &cfg.BasicPass, prefix+"pass", "", cfg.BasicPass, "Password for authentication", prefix)
 	flags.StringVarP(flagSet, &cfg.Salt, prefix+"salt", "", cfg.Salt, "Password hashing salt", prefix)
+	flags.StringVarP(flagSet, &cfg.UserFromHeader, prefix+"user-from-header", "", cfg.UserFromHeader, "Retrieve the username from a specified HTTP header if no other authentication methods are configured (ideal for proxied setups)", prefix)
 }
 
 // AddAuthFlagsPrefix adds flags to the flag set for AuthConfig

@@ -128,17 +128,17 @@ type logger struct {
 }
 
 // logPrint intercepts go-nfs logs and calls rclone's log system instead
-func (l *logger) logPrint(level fs.LogLevel, args ...interface{}) {
+func (l *logger) logPrint(level fs.LogLevel, args ...any) {
 	fs.LogPrintf(level, "nfs", "%s", fmt.Sprint(args...))
 }
 
 // logPrintf intercepts go-nfs logs and calls rclone's log system instead
-func (l *logger) logPrintf(level fs.LogLevel, format string, args ...interface{}) {
+func (l *logger) logPrintf(level fs.LogLevel, format string, args ...any) {
 	fs.LogPrintf(level, "nfs", format, args...)
 }
 
 // Debug reroutes go-nfs Debug messages to Intercept
-func (l *logger) Debug(args ...interface{}) {
+func (l *logger) Debug(args ...any) {
 	if l.level < nfs.DebugLevel {
 		return
 	}
@@ -146,7 +146,7 @@ func (l *logger) Debug(args ...interface{}) {
 }
 
 // Debugf reroutes go-nfs Debugf messages to logPrintf
-func (l *logger) Debugf(format string, args ...interface{}) {
+func (l *logger) Debugf(format string, args ...any) {
 	if l.level < nfs.DebugLevel {
 		return
 	}
@@ -154,7 +154,7 @@ func (l *logger) Debugf(format string, args ...interface{}) {
 }
 
 // Error reroutes go-nfs Error messages to Intercept
-func (l *logger) Error(args ...interface{}) {
+func (l *logger) Error(args ...any) {
 	if l.level < nfs.ErrorLevel {
 		return
 	}
@@ -162,7 +162,7 @@ func (l *logger) Error(args ...interface{}) {
 }
 
 // Errorf reroutes go-nfs Errorf messages to logPrintf
-func (l *logger) Errorf(format string, args ...interface{}) {
+func (l *logger) Errorf(format string, args ...any) {
 	if l.level < nfs.ErrorLevel {
 		return
 	}
@@ -170,7 +170,7 @@ func (l *logger) Errorf(format string, args ...interface{}) {
 }
 
 // Fatal reroutes go-nfs Fatal messages to Intercept
-func (l *logger) Fatal(args ...interface{}) {
+func (l *logger) Fatal(args ...any) {
 	if l.level < nfs.FatalLevel {
 		return
 	}
@@ -178,7 +178,7 @@ func (l *logger) Fatal(args ...interface{}) {
 }
 
 // Fatalf reroutes go-nfs Fatalf messages to logPrintf
-func (l *logger) Fatalf(format string, args ...interface{}) {
+func (l *logger) Fatalf(format string, args ...any) {
 	if l.level < nfs.FatalLevel {
 		return
 	}
@@ -191,7 +191,7 @@ func (l *logger) GetLevel() nfs.LogLevel {
 }
 
 // Info reroutes go-nfs Info messages to Intercept
-func (l *logger) Info(args ...interface{}) {
+func (l *logger) Info(args ...any) {
 	if l.level < nfs.InfoLevel {
 		return
 	}
@@ -199,7 +199,7 @@ func (l *logger) Info(args ...interface{}) {
 }
 
 // Infof reroutes go-nfs Infof messages to logPrintf
-func (l *logger) Infof(format string, args ...interface{}) {
+func (l *logger) Infof(format string, args ...any) {
 	if l.level < nfs.InfoLevel {
 		return
 	}
@@ -207,7 +207,7 @@ func (l *logger) Infof(format string, args ...interface{}) {
 }
 
 // Panic reroutes go-nfs Panic messages to Intercept
-func (l *logger) Panic(args ...interface{}) {
+func (l *logger) Panic(args ...any) {
 	if l.level < nfs.PanicLevel {
 		return
 	}
@@ -215,7 +215,7 @@ func (l *logger) Panic(args ...interface{}) {
 }
 
 // Panicf reroutes go-nfs Panicf messages to logPrintf
-func (l *logger) Panicf(format string, args ...interface{}) {
+func (l *logger) Panicf(format string, args ...any) {
 	if l.level < nfs.PanicLevel {
 		return
 	}
@@ -228,7 +228,7 @@ func (l *logger) ParseLevel(level string) (nfs.LogLevel, error) {
 }
 
 // Print reroutes go-nfs Print messages to Intercept
-func (l *logger) Print(args ...interface{}) {
+func (l *logger) Print(args ...any) {
 	if l.level < nfs.InfoLevel {
 		return
 	}
@@ -236,7 +236,7 @@ func (l *logger) Print(args ...interface{}) {
 }
 
 // Printf reroutes go-nfs Printf messages to Intercept
-func (l *logger) Printf(format string, args ...interface{}) {
+func (l *logger) Printf(format string, args ...any) {
 	if l.level < nfs.InfoLevel {
 		return
 	}
@@ -249,7 +249,7 @@ func (l *logger) SetLevel(level nfs.LogLevel) {
 }
 
 // Trace reroutes go-nfs Trace messages to Intercept
-func (l *logger) Trace(args ...interface{}) {
+func (l *logger) Trace(args ...any) {
 	if l.level < nfs.DebugLevel {
 		return
 	}
@@ -257,7 +257,7 @@ func (l *logger) Trace(args ...interface{}) {
 }
 
 // Tracef reroutes go-nfs Tracef messages to logPrintf
-func (l *logger) Tracef(format string, args ...interface{}) {
+func (l *logger) Tracef(format string, args ...any) {
 	// FIXME BODGE ... the real fix is probably https://github.com/willscott/go-nfs/pull/28
 	// This comes from `Log.Tracef("request: %v", w.req)` in conn.go
 	// DEBUG : nfs: request: RPC #3285799202 (mount.Umnt)
@@ -272,7 +272,7 @@ func (l *logger) Tracef(format string, args ...interface{}) {
 }
 
 // Warn reroutes go-nfs Warn messages to Intercept
-func (l *logger) Warn(args ...interface{}) {
+func (l *logger) Warn(args ...any) {
 	if l.level < nfs.WarnLevel {
 		return
 	}
@@ -280,7 +280,7 @@ func (l *logger) Warn(args ...interface{}) {
 }
 
 // Warnf reroutes go-nfs Warnf messages to logPrintf
-func (l *logger) Warnf(format string, args ...interface{}) {
+func (l *logger) Warnf(format string, args ...any) {
 	if l.level < nfs.WarnLevel {
 		return
 	}

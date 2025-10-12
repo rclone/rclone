@@ -17,10 +17,13 @@ Improvements:
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"path"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -215,14 +218,32 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	defer megaCacheMu.Unlock()
 	srv := megaCache[opt.User]
 	if srv == nil {
-		srv = mega.New().SetClient(fshttp.NewClient(ctx))
+		// srv = mega.New().SetClient(fshttp.NewClient(ctx))
+
+		// Workaround for Mega's use of insecure cipher suites which are no longer supported by default since Go 1.22.
+		// Relevant issues:
+		// https://github.com/rclone/rclone/issues/8565
+		// https://github.com/meganz/webclient/issues/103
+		clt := fshttp.NewClient(ctx)
+		clt.Transport = fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
+			var ids []uint16
+			// Read default ciphers
+			for _, cs := range tls.CipherSuites() {
+				ids = append(ids, cs.ID)
+			}
+			// Insecure but Mega uses TLS_RSA_WITH_AES_128_GCM_SHA256 for storage endpoints
+			// (e.g. https://gfs302n114.userstorage.mega.co.nz) as of June 18, 2025.
+			t.TLSClientConfig.CipherSuites = append(ids, tls.TLS_RSA_WITH_AES_128_GCM_SHA256)
+		})
+		srv = mega.New().SetClient(clt)
+
 		srv.SetRetries(ci.LowLevelRetries) // let mega do the low level retries
 		srv.SetHTTPS(opt.UseHTTPS)
-		srv.SetLogger(func(format string, v ...interface{}) {
+		srv.SetLogger(func(format string, v ...any) {
 			fs.Infof("*go-mega*", format, v...)
 		})
 		if opt.Debug {
-			srv.SetDebugger(func(format string, v ...interface{}) {
+			srv.SetDebugger(func(format string, v ...any) {
 				fs.Debugf("*go-mega*", format, v...)
 			})
 		}
@@ -498,11 +519,8 @@ func (f *Fs) list(ctx context.Context, dir *mega.Node, fn listFn) (found bool, e
 	if err != nil {
 		return false, fmt.Errorf("list failed: %w", err)
 	}
-	for _, item := range nodes {
-		if fn(item) {
-			found = true
-			break
-		}
+	if slices.ContainsFunc(nodes, fn) {
+		found = true
 	}
 	return
 }
@@ -928,9 +946,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return nil, fmt.Errorf("failed to get Mega Quota: %w", err)
 	}
 	usage := &fs.Usage{
-		Total: fs.NewUsageValue(int64(q.Mstrg)),           // quota of bytes that can be used
-		Used:  fs.NewUsageValue(int64(q.Cstrg)),           // bytes in use
-		Free:  fs.NewUsageValue(int64(q.Mstrg - q.Cstrg)), // bytes which can be uploaded before reaching the quota
+		Total: fs.NewUsageValue(q.Mstrg),           // quota of bytes that can be used
+		Used:  fs.NewUsageValue(q.Cstrg),           // bytes in use
+		Free:  fs.NewUsageValue(q.Mstrg - q.Cstrg), // bytes which can be uploaded before reaching the quota
 	}
 	return usage, nil
 }
@@ -1156,7 +1174,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Upload the chunks
 	// FIXME do this in parallel
-	for id := 0; id < u.Chunks(); id++ {
+	for id := range u.Chunks() {
 		_, chunkSize, err := u.ChunkLocation(id)
 		if err != nil {
 			return fmt.Errorf("upload failed to read chunk location: %w", err)

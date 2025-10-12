@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"io"
+	stdfs "io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,10 +13,13 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
+	"github.com/rclone/rclone/cmd/serve/proxy"
+	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,13 +43,16 @@ func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string)
 		},
 	}
 	opts.HTTP.ListenAddr = []string{testBindAddress}
-	if proxyflags.Opt.AuthProxy == "" {
+	if proxy.Opt.AuthProxy == "" {
 		opts.Auth.BasicUser = testUser
 		opts.Auth.BasicPass = testPass
 	}
 
-	s, err := run(ctx, f, opts)
+	s, err := newServer(ctx, f, &opts, &vfscommon.Opt, &proxy.Opt)
 	require.NoError(t, err, "failed to start server")
+	go func() {
+		require.NoError(t, s.Serve())
+	}()
 
 	urls := s.server.URLs()
 	require.Len(t, urls, 1, "expected one URL")
@@ -54,7 +61,7 @@ func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string)
 
 	// try to connect to the test server
 	pause := time.Millisecond
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		resp, err := http.Head(testURL)
 		if err == nil {
 			_ = resp.Body.Close()
@@ -67,6 +74,16 @@ func start(ctx context.Context, t *testing.T, f fs.Fs) (s *HTTP, testURL string)
 	t.Fatal("couldn't connect to server")
 
 	return s, testURL
+}
+
+// setAllModTimes walks root and sets atime/mtime to t for every file & directory.
+func setAllModTimes(root string, t time.Time) error {
+	return filepath.WalkDir(root, func(path string, d stdfs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		return os.Chtimes(path, t, t)
+	})
 }
 
 var (
@@ -110,13 +127,15 @@ func testGET(t *testing.T, useProxy bool) {
 		cmd := "go run " + prog + " " + files
 
 		// FIXME this is untidy setting a global variable!
-		proxyflags.Opt.AuthProxy = cmd
+		proxy.Opt.AuthProxy = cmd
 		defer func() {
-			proxyflags.Opt.AuthProxy = ""
+			proxy.Opt.AuthProxy = ""
 		}()
 
 		f = nil
 	} else {
+		// set all the mod times to expectedTime
+		require.NoError(t, setAllModTimes("testdata/files", expectedTime))
 		// Create a test Fs
 		var err error
 		f, err = fs.NewFs(context.Background(), "testdata/files")
@@ -227,6 +246,16 @@ func testGET(t *testing.T, useProxy bool) {
 			Range:  "bytes=3-",
 			Golden: "testdata/golden/two3-.txt",
 		},
+		{
+			URL:    "/?download=zip",
+			Status: http.StatusOK,
+			Golden: "testdata/golden/root.zip",
+		},
+		{
+			URL:    "/three/?download=zip",
+			Status: http.StatusOK,
+			Golden: "testdata/golden/three.zip",
+		},
 	} {
 		method := test.Method
 		if method == "" {
@@ -266,4 +295,11 @@ func TestGET(t *testing.T) {
 
 func TestAuthProxy(t *testing.T) {
 	testGET(t, true)
+}
+
+func TestRc(t *testing.T) {
+	servetest.TestRc(t, rc.Params{
+		"type":           "http",
+		"vfs_cache_mode": "off",
+	})
 }

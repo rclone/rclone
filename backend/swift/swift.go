@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,8 +25,8 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
@@ -417,10 +419,8 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	}
 	// If this is a swift.Error object extract the HTTP error code
 	if swiftError, ok := err.(*swift.Error); ok {
-		for _, e := range retryErrorCodes {
-			if swiftError.StatusCode == e {
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, swiftError.StatusCode) {
+			return true, err
 		}
 	}
 	// Check for generic failure conditions
@@ -491,8 +491,8 @@ func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Con
 		ApplicationCredentialName:   opt.ApplicationCredentialName,
 		ApplicationCredentialSecret: opt.ApplicationCredentialSecret,
 		EndpointType:                swift.EndpointType(opt.EndpointType),
-		ConnectTimeout:              10 * ci.ConnectTimeout, // Use the timeouts in the transport
-		Timeout:                     10 * ci.Timeout,        // Use the timeouts in the transport
+		ConnectTimeout:              time.Duration(10 * ci.ConnectTimeout), // Use the timeouts in the transport
+		Timeout:                     time.Duration(10 * ci.Timeout),        // Use the timeouts in the transport
 		Transport:                   fshttp.NewTransport(ctx),
 		FetchUntilEmptyPage:         opt.FetchUntilEmptyPage,
 		PartialPageFetchThreshold:   opt.PartialPageFetchThreshold,
@@ -561,6 +561,21 @@ func (f *Fs) setRoot(root string) {
 	f.rootContainer, f.rootDirectory = bucket.Split(f.root)
 }
 
+// Fetch the base container's policy to be used if/when we need to create a
+// segments container to ensure we use the same policy.
+func (f *Fs) fetchStoragePolicy(ctx context.Context, container string) (fs.Fs, error) {
+	err := f.pacer.Call(func() (bool, error) {
+		var rxHeaders swift.Headers
+		_, rxHeaders, err := f.c.Container(ctx, container)
+
+		f.opt.StoragePolicy = rxHeaders["X-Storage-Policy"]
+		fs.Debugf(f, "Auto set StoragePolicy to %s", f.opt.StoragePolicy)
+
+		return shouldRetryHeaders(ctx, rxHeaders, err)
+	})
+	return nil, err
+}
+
 // NewFsWithConnection constructs an Fs from the path, container:path
 // and authenticated connection.
 //
@@ -590,6 +605,7 @@ func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c
 		f.opt.UseSegmentsContainer.Valid = true
 		fs.Debugf(f, "Auto set use_segments_container to %v", f.opt.UseSegmentsContainer.Value)
 	}
+
 	if f.rootContainer != "" && f.rootDirectory != "" {
 		// Check to see if the object exists - ignoring directory markers
 		var info swift.Object
@@ -701,7 +717,7 @@ func (f *Fs) listContainerRoot(ctx context.Context, container, directory, prefix
 	if !recurse {
 		opts.Delimiter = '/'
 	}
-	return f.c.ObjectsWalk(ctx, container, &opts, func(ctx context.Context, opts *swift.ObjectsOpts) (interface{}, error) {
+	return f.c.ObjectsWalk(ctx, container, &opts, func(ctx context.Context, opts *swift.ObjectsOpts) (any, error) {
 		var objects []swift.Object
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
@@ -773,21 +789,20 @@ func (f *Fs) list(ctx context.Context, container, directory, prefix string, addC
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, container, directory, prefix string, addContainer bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, container, directory, prefix string, addContainer bool, callback func(fs.DirEntry) error) (err error) {
 	if container == "" {
-		return nil, fs.ErrorListBucketRequired
+		return fs.ErrorListBucketRequired
 	}
 	// List the objects
 	err = f.list(ctx, container, directory, prefix, addContainer, false, false, func(entry fs.DirEntry) error {
-		entries = append(entries, entry)
-		return nil
+		return callback(entry)
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// container must be present if listing succeeded
 	f.cache.MarkOK(container)
-	return entries, nil
+	return nil
 }
 
 // listContainers lists the containers
@@ -818,14 +833,46 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	container, directory := f.split(dir)
 	if container == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listContainers(ctx)
+		entries, err := f.listContainers(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, container, directory, f.rootDirectory, f.rootContainer == "", list.Add)
+		if err != nil {
+			return err
+		}
 	}
-	return f.listDir(ctx, container, directory, f.rootDirectory, f.rootContainer == "")
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -846,7 +893,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // of listing recursively than doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	container, directory := f.split(dir)
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	listR := func(container, directory, prefix string, addContainer bool) error {
 		return f.list(ctx, container, directory, prefix, addContainer, true, false, func(entry fs.DirEntry) error {
 			return list.Add(entry)
@@ -1101,6 +1148,13 @@ func (f *Fs) newSegmentedUpload(ctx context.Context, dstContainer string, dstPat
 		container:    dstContainer,
 	}
 	if f.opt.UseSegmentsContainer.Value {
+		if f.opt.StoragePolicy == "" {
+			_, err = f.fetchStoragePolicy(ctx, dstContainer)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		su.container += segmentsContainerSuffix
 		err = f.makeContainer(ctx, su.container)
 		if err != nil {
@@ -1378,9 +1432,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	meta := o.headers.ObjectMetadata()
 	meta.SetModTime(modTime)
 	newHeaders := meta.ObjectHeaders()
-	for k, v := range newHeaders {
-		o.headers[k] = v
-	}
+	maps.Copy(o.headers, newHeaders)
 	// Include any other metadata from request
 	for k, v := range o.headers {
 		if strings.HasPrefix(k, "X-Object-") {
@@ -1450,7 +1502,7 @@ func (o *Object) removeSegmentsLargeObject(ctx context.Context, container string
 // encoded but we need '&' encoded.
 func urlEncode(str string) string {
 	var buf bytes.Buffer
-	for i := 0; i < len(str); i++ {
+	for i := range len(str) {
 		c := str[i]
 		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '/' || c == '.' || c == '_' || c == '-' {
 			_ = buf.WriteByte(c)
@@ -1652,6 +1704,7 @@ var (
 	_ fs.PutStreamer = &Fs{}
 	_ fs.Copier      = &Fs{}
 	_ fs.ListRer     = &Fs{}
+	_ fs.ListPer     = &Fs{}
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
 )

@@ -82,22 +82,37 @@ type Prop struct {
 // Parse a status of the form "HTTP/1.1 200 OK" or "HTTP/1.1 200"
 var parseStatus = regexp.MustCompile(`^HTTP/[0-9.]+\s+(\d+)`)
 
-// StatusOK examines the Status and returns an OK flag
-func (p *Prop) StatusOK() bool {
-	// Assume OK if no statuses received
+// Code extracts the status code from the first status
+func (p *Prop) Code() int {
 	if len(p.Status) == 0 {
-		return true
+		return -1
 	}
 	match := parseStatus.FindStringSubmatch(p.Status[0])
 	if len(match) < 2 {
-		return false
+		return 0
 	}
 	code, err := strconv.Atoi(match[1])
 	if err != nil {
+		return 0
+	}
+	return code
+}
+
+// StatusOK examines the Status and returns an OK flag
+func (p *Prop) StatusOK() bool {
+	// Fetch status code as int
+	c := p.Code()
+
+	// Assume OK if no statuses received
+	if c == -1 {
+		return true
+	}
+	if c == 0 {
 		return false
 	}
-	if code >= 200 && code < 300 {
+	if c >= 200 && c < 300 {
 		return true
+
 	}
 	return false
 }
@@ -108,7 +123,7 @@ func (p *Prop) Hashes() (hashes map[hash.Type]string) {
 		hashes = make(map[hash.Type]string)
 		for _, checksums := range p.Checksums {
 			checksums = strings.ToLower(checksums)
-			for _, checksum := range strings.Split(checksums, " ") {
+			for checksum := range strings.SplitSeq(checksums, " ") {
 				switch {
 				case strings.HasPrefix(checksum, "sha1:"):
 					hashes[hash.SHA1] = checksum[5:]

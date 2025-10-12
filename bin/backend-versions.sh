@@ -7,11 +7,11 @@ for backend in $( find backend -maxdepth 1 -type d ); do
         continue
     fi
     
-    commit=$(git log --oneline -- $backend | tail -1 | cut -d' ' -f1)
+    commit=$(git log --oneline -- $backend | tail -n 1 | cut -d' ' -f1)
     if [ "$commit" == "" ]; then
-        commit=$(git log --oneline -- backend/$backend | tail -1 | cut -d' ' -f1)
+        commit=$(git log --oneline -- backend/$backend | tail -n 1 | cut -d' ' -f1)
     fi
-    version=$(git tag --contains $commit | grep ^v | sort -n | head -1)
+    version=$(git tag --contains $commit | grep ^v | sort -n | head -n 1)
     echo $backend $version
     sed -i~ "4i versionIntroduced: \"$version\"" docs/content/${backend}.md
 done

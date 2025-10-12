@@ -31,7 +31,6 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -48,11 +47,9 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app.
-	oauthConfig = &oauth2.Config{
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://my.hidrive.com/client/authorize",
-			TokenURL: "https://my.hidrive.com/oauth2/token",
-		},
+	oauthConfig = &oauthutil.Config{
+		AuthURL:      "https://my.hidrive.com/client/authorize",
+		TokenURL:     "https://my.hidrive.com/oauth2/token",
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.TitleBarRedirectURL,

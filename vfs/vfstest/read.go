@@ -15,10 +15,10 @@ func TestReadByByte(t *testing.T) {
 	run.createFile(t, "testfile", string(data))
 	run.checkDir(t, "testfile 10")
 
-	for i := 0; i < len(data); i++ {
+	for i := range data {
 		fd, err := run.os.Open(run.path("testfile"))
 		assert.NoError(t, err)
-		for j := 0; j < i; j++ {
+		for j := range i {
 			buf := make([]byte, 1)
 			n, err := io.ReadFull(fd, buf)
 			assert.NoError(t, err)

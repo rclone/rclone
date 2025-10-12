@@ -16,11 +16,13 @@ Here is an example of making a remote for PikPak.
 
 First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -111,68 +113,29 @@ Properties:
 
 Here are the Advanced options specific to pikpak (PikPak).
 
-#### --pikpak-client-id
+#### --pikpak-device-id
 
-OAuth Client Id.
-
-Leave blank normally.
+Device ID used for authorization.
 
 Properties:
 
-- Config:      client_id
-- Env Var:     RCLONE_PIKPAK_CLIENT_ID
+- Config:      device_id
+- Env Var:     RCLONE_PIKPAK_DEVICE_ID
 - Type:        string
 - Required:    false
 
-#### --pikpak-client-secret
+#### --pikpak-user-agent
 
-OAuth Client Secret.
+HTTP user agent for pikpak.
 
-Leave blank normally.
+Defaults to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0" or "--pikpak-user-agent" provided on command line.
 
 Properties:
 
-- Config:      client_secret
-- Env Var:     RCLONE_PIKPAK_CLIENT_SECRET
+- Config:      user_agent
+- Env Var:     RCLONE_PIKPAK_USER_AGENT
 - Type:        string
-- Required:    false
-
-#### --pikpak-token
-
-OAuth Access Token as a JSON blob.
-
-Properties:
-
-- Config:      token
-- Env Var:     RCLONE_PIKPAK_TOKEN
-- Type:        string
-- Required:    false
-
-#### --pikpak-auth-url
-
-Auth server URL.
-
-Leave blank to use the provider defaults.
-
-Properties:
-
-- Config:      auth_url
-- Env Var:     RCLONE_PIKPAK_AUTH_URL
-- Type:        string
-- Required:    false
-
-#### --pikpak-token-url
-
-Token server url.
-
-Leave blank to use the provider defaults.
-
-Properties:
-
-- Config:      token_url
-- Env Var:     RCLONE_PIKPAK_TOKEN_URL
-- Type:        string
-- Required:    false
+- Default:     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0"
 
 #### --pikpak-root-folder-id
 
@@ -216,6 +179,19 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --pikpak-no-media-link
+
+Use original file links instead of media links.
+
+This avoids issues caused by invalid media links, but may reduce download speeds.
+
+Properties:
+
+- Config:      no_media_link
+- Env Var:     RCLONE_PIKPAK_NO_MEDIA_LINK
+- Type:        bool
+- Default:     false
+
 #### --pikpak-hash-memory-limit
 
 Files bigger than this will be cached on disk to calculate hash if required.
@@ -226,6 +202,20 @@ Properties:
 - Env Var:     RCLONE_PIKPAK_HASH_MEMORY_LIMIT
 - Type:        SizeSuffix
 - Default:     10Mi
+
+#### --pikpak-upload-cutoff
+
+Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+The minimum is 0 and the maximum is 5 GiB.
+
+Properties:
+
+- Config:      upload_cutoff
+- Env Var:     RCLONE_PIKPAK_UPLOAD_CUTOFF
+- Type:        SizeSuffix
+- Default:     200Mi
 
 #### --pikpak-chunk-size
 
@@ -273,7 +263,7 @@ Properties:
 - Config:      upload_concurrency
 - Env Var:     RCLONE_PIKPAK_UPLOAD_CONCURRENCY
 - Type:        int
-- Default:     5
+- Default:     4
 
 #### --pikpak-encoding
 

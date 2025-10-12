@@ -54,7 +54,7 @@ you what happened to it. These are reminiscent of diff files.
 - `* path` means path was present in source and destination but different.
 - `! path` means there was an error reading or hashing the source or dest.
 
-The default number of parallel checks is 8. See the [--checkers=N](/docs/#checkers-n)
+The default number of parallel checks is 8. See the [--checkers](/docs/#checkers-int)
 option for more information.
 
 
@@ -99,6 +99,7 @@ Flags for filtering directory listings
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
+      --hash-filter string                  Partition filenames by hash k/n or randomly @/n
       --ignore-case                         Ignore case in filters (case insensitive)
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read file include patterns from file (use - to read from stdin)

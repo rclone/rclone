@@ -12,7 +12,7 @@ import (
 func TestLimitTPS(t *testing.T) {
 	timeTransactions := func(n int, minTime, maxTime time.Duration) {
 		start := time.Now()
-		for i := 0; i < n; i++ {
+		for range n {
 			LimitTPS(context.Background())
 		}
 		dt := time.Since(start)

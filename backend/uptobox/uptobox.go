@@ -246,7 +246,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	return f, nil
 }
 
-func (f *Fs) decodeError(resp *http.Response, response interface{}) (err error) {
+func (f *Fs) decodeError(resp *http.Response, response any) (err error) {
 	defer fs.CheckClose(resp.Body, &err)
 
 	body, err := io.ReadAll(resp.Body)

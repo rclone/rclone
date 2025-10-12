@@ -2,6 +2,8 @@ package pacer
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -106,7 +108,7 @@ func waitForPace(p *Pacer, duration time.Duration) (when time.Time) {
 func TestBeginCall(t *testing.T) {
 	p := New(MaxConnectionsOption(10), CalculatorOption(NewDefault(MinSleep(1*time.Millisecond))))
 	emptyTokens(p)
-	go p.beginCall()
+	go p.beginCall(true)
 	if !waitForPace(p, 10*time.Millisecond).IsZero() {
 		t.Errorf("beginSleep fired too early #1")
 	}
@@ -129,7 +131,7 @@ func TestBeginCall(t *testing.T) {
 func TestBeginCallZeroConnections(t *testing.T) {
 	p := New(MaxConnectionsOption(0), CalculatorOption(NewDefault(MinSleep(1*time.Millisecond))))
 	emptyTokens(p)
-	go p.beginCall()
+	go p.beginCall(false)
 	if !waitForPace(p, 10*time.Millisecond).IsZero() {
 		t.Errorf("beginSleep fired too early #1")
 	}
@@ -199,7 +201,7 @@ func TestGoogleDrivePacer(t *testing.T) {
 		const n = 1000
 		var sum time.Duration
 		// measure average time over n cycles
-		for i := 0; i < n; i++ {
+		for range n {
 			c := NewGoogleDrive(MinSleep(1 * time.Millisecond))
 			sum += c.Calculate(test.state)
 		}
@@ -220,7 +222,7 @@ func TestGoogleDrivePacer(t *testing.T) {
 	} {
 		c := NewGoogleDrive(MinSleep(minSleep), Burst(10))
 		count := 0
-		for i := 0; i < test.calls; i++ {
+		for range test.calls {
 			sleep := c.Calculate(State{})
 			if sleep != 0 {
 				count++
@@ -255,7 +257,7 @@ func TestEndCall(t *testing.T) {
 	p := New(MaxConnectionsOption(5))
 	emptyTokens(p)
 	p.state.ConsecutiveRetries = 1
-	p.endCall(true, nil)
+	p.endCall(true, nil, true)
 	assert.Equal(t, 1, len(p.connTokens))
 	assert.Equal(t, 2, p.state.ConsecutiveRetries)
 }
@@ -264,7 +266,7 @@ func TestEndCallZeroConnections(t *testing.T) {
 	p := New(MaxConnectionsOption(0))
 	emptyTokens(p)
 	p.state.ConsecutiveRetries = 1
-	p.endCall(false, nil)
+	p.endCall(false, nil, false)
 	assert.Equal(t, 0, len(p.connTokens))
 	assert.Equal(t, 0, p.state.ConsecutiveRetries)
 }
@@ -349,4 +351,118 @@ func TestCallParallel(t *testing.T) {
 
 	assert.Equal(t, 5, called)
 	wait.Broadcast()
+}
+
+func BenchmarkPacerReentered(b *testing.B) {
+	for b.Loop() {
+		_ = pacerReentered()
+	}
+}
+
+func BenchmarkPacerReentered100(b *testing.B) {
+	var fn func(level int)
+	fn = func(level int) {
+		if level > 0 {
+			fn(level - 1)
+			return
+		}
+		for b.Loop() {
+			_ = pacerReentered()
+		}
+
+	}
+	fn(100)
+}
+
+func TestCallMaxConnectionsRecursiveDeadlock(t *testing.T) {
+	p := New(CalculatorOption(NewDefault(MinSleep(1*time.Millisecond), MaxSleep(2*time.Millisecond))))
+	p.SetMaxConnections(1)
+	dp := &dummyPaced{retry: false}
+	err := p.Call(func() (bool, error) {
+		// check we have taken the connection token
+		// no tokens left means deadlock on the recursive call
+		assert.Equal(t, 0, len(p.connTokens))
+		return false, p.Call(dp.fn)
+	})
+	assert.Equal(t, 1, dp.called)
+	assert.Equal(t, errFoo, err)
+}
+
+func TestRetryAfterError_NonNilErr(t *testing.T) {
+	orig := errors.New("test failure")
+	dur := 2 * time.Second
+	err := RetryAfterError(orig, dur)
+
+	rErr, ok := err.(*retryAfterError)
+	if !ok {
+		t.Fatalf("expected *retryAfterError, got %T", err)
+	}
+	if !strings.Contains(err.Error(), "test failure") {
+		t.Errorf("Error() = %q, want it to contain original message", err.Error())
+	}
+	if !strings.Contains(err.Error(), dur.String()) {
+		t.Errorf("Error() = %q, want it to contain retryAfter %v", err.Error(), dur)
+	}
+	if rErr.retryAfter != dur {
+		t.Errorf("retryAfter = %v, want %v", rErr.retryAfter, dur)
+	}
+	if !errors.Is(err, orig) {
+		t.Error("errors.Is(err, orig) = false, want true")
+	}
+}
+
+func TestRetryAfterError_NilErr(t *testing.T) {
+	dur := 5 * time.Second
+	err := RetryAfterError(nil, dur)
+	if !strings.Contains(err.Error(), "too many requests") {
+		t.Errorf("Error() = %q, want it to mention default message", err.Error())
+	}
+	if !strings.Contains(err.Error(), dur.String()) {
+		t.Errorf("Error() = %q, want it to contain retryAfter %v", err.Error(), dur)
+	}
+}
+
+func TestCauseMethod(t *testing.T) {
+	orig := errors.New("underlying")
+	dur := time.Second
+	rErr := RetryAfterError(orig, dur).(*retryAfterError)
+	cause := rErr.Cause()
+	if !errors.Is(cause, orig) {
+		t.Errorf("Cause() does not wrap original: got %v", cause)
+	}
+}
+
+func TestIsRetryAfter_True(t *testing.T) {
+	orig := errors.New("oops")
+	dur := 3 * time.Second
+	err := RetryAfterError(orig, dur)
+
+	gotDur, ok := IsRetryAfter(err)
+	if !ok {
+		t.Error("IsRetryAfter returned false, want true")
+	}
+	if gotDur != dur {
+		t.Errorf("got %v, want %v", gotDur, dur)
+	}
+}
+
+func TestIsRetryAfter_Nested(t *testing.T) {
+	orig := errors.New("fail")
+	dur := 4 * time.Second
+	retryErr := RetryAfterError(orig, dur)
+	nested := fmt.Errorf("wrapped: %w", retryErr)
+
+	gotDur, ok := IsRetryAfter(nested)
+	if !ok {
+		t.Error("IsRetryAfter on nested error returned false, want true")
+	}
+	if gotDur != dur {
+		t.Errorf("got %v, want %v", gotDur, dur)
+	}
+}
+
+func TestIsRetryAfter_False(t *testing.T) {
+	if _, ok := IsRetryAfter(errors.New("other")); ok {
+		t.Error("IsRetryAfter = true for non-retry error, want false")
+	}
 }

@@ -209,7 +209,7 @@ func (p *plexConnector) authenticate() error {
 	if err != nil {
 		return err
 	}
-	var data map[string]interface{}
+	var data map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		return fmt.Errorf("failed to obtain token: %w", err)
@@ -273,11 +273,11 @@ func (p *plexConnector) isPlaying(co *Object) bool {
 }
 
 // adapted from: https://stackoverflow.com/a/28878037 (credit)
-func get(m interface{}, path ...interface{}) (interface{}, bool) {
+func get(m any, path ...any) (any, bool) {
 	for _, p := range path {
 		switch idx := p.(type) {
 		case string:
-			if mm, ok := m.(map[string]interface{}); ok {
+			if mm, ok := m.(map[string]any); ok {
 				if val, found := mm[idx]; found {
 					m = val
 					continue
@@ -285,7 +285,7 @@ func get(m interface{}, path ...interface{}) (interface{}, bool) {
 			}
 			return nil, false
 		case int:
-			if mm, ok := m.([]interface{}); ok {
+			if mm, ok := m.([]any); ok {
 				if len(mm) > idx {
 					m = mm[idx]
 					continue

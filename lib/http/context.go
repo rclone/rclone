@@ -43,7 +43,7 @@ func PublicURL(r *http.Request) string {
 }
 
 // CtxGetAuth is a wrapper over the private Auth context key
-func CtxGetAuth(ctx context.Context) interface{} {
+func CtxGetAuth(ctx context.Context) any {
 	return ctx.Value(ctxKeyAuth)
 }
 

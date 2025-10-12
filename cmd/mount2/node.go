@@ -227,7 +227,7 @@ type dirStream struct {
 // HasNext indicates if there are further entries. HasNext
 // might be called on already closed streams.
 func (ds *dirStream) HasNext() bool {
-	return ds.i < len(ds.nodes)
+	return ds.i < len(ds.nodes)+2
 }
 
 // Next retrieves the next entry. It is only called if HasNext
@@ -235,7 +235,22 @@ func (ds *dirStream) HasNext() bool {
 // indicate I/O errors
 func (ds *dirStream) Next() (de fuse.DirEntry, errno syscall.Errno) {
 	// defer log.Trace(nil, "")("de=%+v, errno=%v", &de, &errno)
-	fi := ds.nodes[ds.i]
+	if ds.i == 0 {
+		ds.i++
+		return fuse.DirEntry{
+			Mode: fuse.S_IFDIR,
+			Name: ".",
+			Ino:  0, // FIXME
+		}, 0
+	} else if ds.i == 1 {
+		ds.i++
+		return fuse.DirEntry{
+			Mode: fuse.S_IFDIR,
+			Name: "..",
+			Ino:  0, // FIXME
+		}, 0
+	}
+	fi := ds.nodes[ds.i-2]
 	de = fuse.DirEntry{
 		// Mode is the file's mode. Only the high bits (e.g. S_IFDIR)
 		// are considered.
@@ -443,3 +458,31 @@ func (n *Node) Listxattr(ctx context.Context, dest []byte) (uint32, syscall.Errn
 }
 
 var _ fusefs.NodeListxattrer = (*Node)(nil)
+
+var _ fusefs.NodeReadlinker = (*Node)(nil)
+
+// Readlink read symbolic link target.
+func (n *Node) Readlink(ctx context.Context) (ret []byte, err syscall.Errno) {
+	defer log.Trace(n, "")("ret=%v, err=%v", &ret, &err)
+	path := n.node.Path()
+	s, serr := n.node.VFS().Readlink(path)
+	return []byte(s), translateError(serr)
+}
+
+var _ fusefs.NodeSymlinker = (*Node)(nil)
+
+// Symlink create symbolic link.
+func (n *Node) Symlink(ctx context.Context, target, name string, out *fuse.EntryOut) (node *fusefs.Inode, err syscall.Errno) {
+	defer log.Trace(n, "name=%v, target=%v", name, target)("node=%v, err=%v", &node, &err)
+	fullPath := path.Join(n.node.Path(), name)
+	vfsNode, serr := n.node.VFS().CreateSymlink(target, fullPath)
+	if serr != nil {
+		return nil, translateError(serr)
+	}
+
+	n.fsys.setEntryOut(vfsNode, out)
+	newNode := newNode(n.fsys, vfsNode)
+	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
+
+	return newInode, 0
+}

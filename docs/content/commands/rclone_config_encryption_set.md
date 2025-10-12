@@ -21,12 +21,12 @@ password to re-encrypt the config.
 
 When `--password-command` is called to change the password then the
 environment variable `RCLONE_PASSWORD_CHANGE=1` will be set. So if
-changing passwords programatically you can use the environment
+changing passwords programmatically you can use the environment
 variable to distinguish which password you must supply.
 
 Alternatively you can remove the password first (with `rclone config
 encryption remove`), then set it again with this command which may be
-easier if you don't mind the unecrypted config file being on the disk
+easier if you don't mind the unencrypted config file being on the disk
 briefly.
 
 

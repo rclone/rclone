@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -643,10 +644,8 @@ func (f *Fs) deleteObject(ctx context.Context, id string) error {
 		return err
 	}
 
-	for _, removedID := range result.IDs {
-		if removedID == id {
-			return nil
-		}
+	if slices.Contains(result.IDs, id) {
+		return nil
 	}
 
 	return fmt.Errorf("file %s was not deleted successfully", id)

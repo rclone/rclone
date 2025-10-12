@@ -59,6 +59,8 @@ inserts leading and trailing "/" on ` + "`--{{ .Prefix }}baseurl`" + `, so ` + "
 ` + "`--{{ .Prefix }}baseurl \"/rclone\"` and `--{{ .Prefix }}baseurl \"/rclone/\"`" + ` are all treated
 identically.
 
+` + "`--{{ .Prefix }}disable-zip`" + ` may be set to disable the zipping download option.
+
 #### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over
@@ -66,30 +68,34 @@ https.  You will need to supply the ` + "`--{{ .Prefix }}cert` and `--{{ .Prefix
 If you wish to do client side certificate validation then you will need to
 supply ` + "`--{{ .Prefix }}client-ca`" + ` also.
 
-` + "`--{{ .Prefix }}cert`" + ` should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  ` + "`--k{{ .Prefix }}ey`" + ` should be the PEM encoded
-private key and ` + "`--{{ .Prefix }}client-ca`" + ` should be the PEM encoded client
-certificate authority certificate.
+` + "`--{{ .Prefix }}cert`" + ` must be set to the path of a file containing
+either a PEM encoded certificate, or a concatenation of that with the CA
+certificate. ` + "`--{{ .Prefix }}key`" + ` must be set to the path of a file
+with the PEM encoded private key. ` + "If setting `--{{ .Prefix }}client-ca`" + `,
+it should be set to the path of a file with PEM encoded client certificate
+authority certificates.
 
 ` + "`--{{ .Prefix }}min-tls-version`" + ` is minimum TLS version that is acceptable. Valid
-  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
-  "tls1.0").
+values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default "tls1.0").
 
 ### Socket activation
 
 Instead of the listening addresses specified above, rclone will listen to all
-FDs passed by the service manager, if any (and ignore any arguments passed by ` +
-		"--{{ .Prefix }}addr`" + `).
+FDs passed by the service manager, if any (and ignore any arguments passed
+by ` + "`--{{ .Prefix }}addr`" + `).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 
 Socket activation can be tested ad-hoc with the ` + "`systemd-socket-activate`" + `command
 
-       systemd-socket-activate -l 8000 -- rclone serve
+` + "```sh" + `
+systemd-socket-activate -l 8000 -- rclone serve
+` + "```" + `
 
 This will socket-activate rclone on the first connection to port 8000 over TCP.
+
 `
 	tmpl, err := template.New("server help").Parse(help)
 	if err != nil {
@@ -119,11 +125,11 @@ var ConfigInfo = fs.Options{{
 	Help:    "IPaddress:Port or :Port to bind server to",
 }, {
 	Name:    "server_read_timeout",
-	Default: 1 * time.Hour,
+	Default: fs.Duration(1 * time.Hour),
 	Help:    "Timeout for server reading data",
 }, {
 	Name:    "server_write_timeout",
-	Default: 1 * time.Hour,
+	Default: fs.Duration(1 * time.Hour),
 	Help:    "Timeout for server writing data",
 }, {
 	Name:    "max_header_bytes",
@@ -157,29 +163,29 @@ var ConfigInfo = fs.Options{{
 
 // Config contains options for the http Server
 type Config struct {
-	ListenAddr         []string      `config:"addr"`                 // Port to listen on
-	BaseURL            string        `config:"baseurl"`              // prefix to strip from URLs
-	ServerReadTimeout  time.Duration `config:"server_read_timeout"`  // Timeout for server reading data
-	ServerWriteTimeout time.Duration `config:"server_write_timeout"` // Timeout for server writing data
-	MaxHeaderBytes     int           `config:"max_header_bytes"`     // Maximum size of request header
-	TLSCert            string        `config:"cert"`                 // Path to TLS PEM key (concatenation of certificate and CA certificate)
-	TLSKey             string        `config:"key"`                  // Path to TLS PEM Private key
-	TLSCertBody        []byte        `config:"-"`                    // TLS PEM key (concatenation of certificate and CA certificate) body, ignores TLSCert
-	TLSKeyBody         []byte        `config:"-"`                    // TLS PEM Private key body, ignores TLSKey
-	ClientCA           string        `config:"client_ca"`            // Client certificate authority to verify clients with
-	MinTLSVersion      string        `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable.
-	AllowOrigin        string        `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
+	ListenAddr         []string    `config:"addr"`                 // Port to listen on
+	BaseURL            string      `config:"baseurl"`              // prefix to strip from URLs
+	ServerReadTimeout  fs.Duration `config:"server_read_timeout"`  // Timeout for server reading data
+	ServerWriteTimeout fs.Duration `config:"server_write_timeout"` // Timeout for server writing data
+	MaxHeaderBytes     int         `config:"max_header_bytes"`     // Maximum size of request header
+	TLSCert            string      `config:"cert"`                 // Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)
+	TLSKey             string      `config:"key"`                  // Path to TLS PEM private key file
+	TLSCertBody        []byte      `config:"-"`                    // TLS PEM public key certificate body (can also include intermediate/CA certificates), ignores TLSCert
+	TLSKeyBody         []byte      `config:"-"`                    // TLS PEM private key body, ignores TLSKey
+	ClientCA           string      `config:"client_ca"`            // Path to TLS PEM CA file with certificate authorities to verify clients with
+	MinTLSVersion      string      `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable.
+	AllowOrigin        string      `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
 }
 
 // AddFlagsPrefix adds flags for the httplib
 func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.StringArrayVarP(flagSet, &cfg.ListenAddr, prefix+"addr", "", cfg.ListenAddr, "IPaddress:Port, :Port or [unix://]/path/to/socket to bind server to", prefix)
-	flags.DurationVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", cfg.ServerReadTimeout, "Timeout for server reading data", prefix)
-	flags.DurationVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", cfg.ServerWriteTimeout, "Timeout for server writing data", prefix)
+	flags.FVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", "Timeout for server reading data", prefix)
+	flags.FVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", "Timeout for server writing data", prefix)
 	flags.IntVarP(flagSet, &cfg.MaxHeaderBytes, prefix+"max-header-bytes", "", cfg.MaxHeaderBytes, "Maximum size of request header", prefix)
-	flags.StringVarP(flagSet, &cfg.TLSCert, prefix+"cert", "", cfg.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)", prefix)
-	flags.StringVarP(flagSet, &cfg.TLSKey, prefix+"key", "", cfg.TLSKey, "TLS PEM Private key", prefix)
-	flags.StringVarP(flagSet, &cfg.ClientCA, prefix+"client-ca", "", cfg.ClientCA, "Client certificate authority to verify clients with", prefix)
+	flags.StringVarP(flagSet, &cfg.TLSCert, prefix+"cert", "", cfg.TLSCert, "Path to TLS PEM public key certificate file (can also include intermediate/CA certificates)", prefix)
+	flags.StringVarP(flagSet, &cfg.TLSKey, prefix+"key", "", cfg.TLSKey, "Path to TLS PEM private key file", prefix)
+	flags.StringVarP(flagSet, &cfg.ClientCA, prefix+"client-ca", "", cfg.ClientCA, "Path to TLS PEM CA file with certificate authorities to verify clients with", prefix)
 	flags.StringVarP(flagSet, &cfg.BaseURL, prefix+"baseurl", "", cfg.BaseURL, "Prefix for URLs - leave blank for root", prefix)
 	flags.StringVarP(flagSet, &cfg.MinTLSVersion, prefix+"min-tls-version", "", cfg.MinTLSVersion, "Minimum TLS version that is acceptable", prefix)
 	flags.StringVarP(flagSet, &cfg.AllowOrigin, prefix+"allow-origin", "", cfg.AllowOrigin, "Origin which cross-domain request (CORS) can be executed from", prefix)
@@ -197,8 +203,8 @@ func AddHTTPFlagsPrefix(flagSet *pflag.FlagSet, prefix string, cfg *Config) {
 func DefaultCfg() Config {
 	return Config{
 		ListenAddr:         []string{"127.0.0.1:8080"},
-		ServerReadTimeout:  1 * time.Hour,
-		ServerWriteTimeout: 1 * time.Hour,
+		ServerReadTimeout:  fs.Duration(1 * time.Hour),
+		ServerWriteTimeout: fs.Duration(1 * time.Hour),
 		MaxHeaderBytes:     4096,
 		MinTLSVersion:      "tls1.0",
 	}
@@ -228,7 +234,8 @@ type Server struct {
 	cfg          Config
 	template     *TemplateConfig
 	htmlTemplate *template.Template
-	usingAuth    bool // set if we are using auth middleware
+	usingAuth    bool       // set if we are using auth middleware
+	mu           sync.Mutex // mutex protects RW variables below
 	atexitHandle atexit.FnHandle
 }
 
@@ -271,8 +278,8 @@ func newInstance(ctx context.Context, s *Server, listener net.Listener, tlsCfg *
 		listener: listener,
 		httpServer: &http.Server{
 			Handler:           s.mux,
-			ReadTimeout:       s.cfg.ServerReadTimeout,
-			WriteTimeout:      s.cfg.ServerWriteTimeout,
+			ReadTimeout:       time.Duration(s.cfg.ServerReadTimeout),
+			WriteTimeout:      time.Duration(s.cfg.ServerWriteTimeout),
 			MaxHeaderBytes:    s.cfg.MaxHeaderBytes,
 			ReadHeaderTimeout: 10 * time.Second, // time to send the headers
 			IdleTimeout:       60 * time.Second, // time to keep idle connections open
@@ -391,16 +398,23 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 
 func (s *Server) initAuth() {
 	s.usingAuth = false
+	altUsernameEnabled := s.auth.HtPasswd == "" && s.auth.BasicUser == ""
 
-	authCertificateUserEnabled := s.tlsConfig != nil && s.tlsConfig.ClientAuth != tls.NoClientCert && s.auth.HtPasswd == "" && s.auth.BasicUser == ""
-	if authCertificateUserEnabled {
+	if altUsernameEnabled {
 		s.usingAuth = true
-		s.mux.Use(MiddlewareAuthCertificateUser())
+		if s.auth.UserFromHeader != "" {
+			s.mux.Use(MiddlewareAuthGetUserFromHeader(s.auth.UserFromHeader))
+		} else if s.tlsConfig != nil && s.tlsConfig.ClientAuth != tls.NoClientCert {
+			s.mux.Use(MiddlewareAuthCertificateUser())
+		} else {
+			s.usingAuth = false
+			altUsernameEnabled = false
+		}
 	}
 
 	if s.auth.CustomAuthFn != nil {
 		s.usingAuth = true
-		s.mux.Use(MiddlewareAuthCustom(s.auth.CustomAuthFn, s.auth.Realm, authCertificateUserEnabled))
+		s.mux.Use(MiddlewareAuthCustom(s.auth.CustomAuthFn, s.auth.Realm, altUsernameEnabled))
 		return
 	}
 
@@ -511,12 +525,12 @@ func (s *Server) initTLS() error {
 func (s *Server) Serve() {
 	s.wg.Add(len(s.instances))
 	for _, ii := range s.instances {
-		// TODO: decide how/when to log listening url
-		// log.Printf("listening on %s", ii.url)
 		go ii.serve(&s.wg)
 	}
 	// Install an atexit handler to shutdown gracefully
+	s.mu.Lock()
 	s.atexitHandle = atexit.Register(func() { _ = s.Shutdown() })
+	s.mu.Unlock()
 }
 
 // Wait blocks while the server is serving requests
@@ -535,10 +549,12 @@ const gracefulShutdownTime = 10 * time.Second
 // Shutdown gracefully shuts down the server
 func (s *Server) Shutdown() error {
 	// Stop the atexit handler
+	s.mu.Lock()
 	if s.atexitHandle != nil {
 		atexit.Unregister(s.atexitHandle)
 		s.atexitHandle = nil
 	}
+	s.mu.Unlock()
 	for _, ii := range s.instances {
 		expiry := time.Now().Add(gracefulShutdownTime)
 		ctx, cancel := context.WithDeadline(context.Background(), expiry)
@@ -566,6 +582,14 @@ func (s *Server) URLs() []string {
 		out = append(out, ii.url)
 	}
 	return out
+}
+
+// Addr returns the first configured address
+func (s *Server) Addr() net.Addr {
+	if len(s.instances) == 0 || s.instances[0].listener == nil {
+		return nil
+	}
+	return s.instances[0].listener.Addr()
 }
 
 // UsingAuth returns true if authentication is required

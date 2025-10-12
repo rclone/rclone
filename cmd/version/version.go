@@ -3,10 +3,13 @@ package version
 
 import (
 	"context"
+	"debug/buildinfo"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -20,12 +23,14 @@ import (
 
 var (
 	check = false
+	deps  = false
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &check, "check", "", false, "Check for new version", "")
+	flags.BoolVarP(cmdFlags, &deps, "deps", "", false, "Show the Go dependencies", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -37,15 +42,17 @@ build tags and the type of executable (static or dynamic).
 
 For example:
 
-    $ rclone version
-    rclone v1.55.0
-    - os/version: ubuntu 18.04 (64 bit)
-    - os/kernel: 4.15.0-136-generic (x86_64)
-    - os/type: linux
-    - os/arch: amd64
-    - go/version: go1.16
-    - go/linking: static
-    - go/tags: none
+` + "```sh" + `
+$ rclone version
+rclone v1.55.0
+- os/version: ubuntu 18.04 (64 bit)
+- os/kernel: 4.15.0-136-generic (x86_64)
+- os/type: linux
+- os/arch: amd64
+- go/version: go1.16
+- go/linking: static
+- go/tags: none
+` + "```" + `
 
 Note: before rclone version 1.55 the os/type and os/arch lines were merged,
       and the "go/version" line was tagged as "go version".
@@ -53,32 +60,42 @@ Note: before rclone version 1.55 the os/type and os/arch lines were merged,
 If you supply the --check flag, then it will do an online check to
 compare your version with the latest release and the latest beta.
 
-    $ rclone version --check
-    yours:  1.42.0.6
-    latest: 1.42          (released 2018-06-16)
-    beta:   1.42.0.5      (released 2018-06-17)
+` + "```sh" + `
+$ rclone version --check
+yours:  1.42.0.6
+latest: 1.42          (released 2018-06-16)
+beta:   1.42.0.5      (released 2018-06-17)
+` + "```" + `
 
 Or
 
-    $ rclone version --check
-    yours:  1.41
-    latest: 1.42          (released 2018-06-16)
-      upgrade: https://downloads.rclone.org/v1.42
-    beta:   1.42.0.5      (released 2018-06-17)
-      upgrade: https://beta.rclone.org/v1.42-005-g56e1e820
+` + "```sh" + `
+$ rclone version --check
+yours:  1.41
+latest: 1.42          (released 2018-06-16)
+  upgrade: https://downloads.rclone.org/v1.42
+beta:   1.42.0.5      (released 2018-06-17)
+  upgrade: https://beta.rclone.org/v1.42-005-g56e1e820
+` + "```" + `
 
-`,
+If you supply the --deps flag then rclone will print a list of all the
+packages it depends on and their versions along with some other
+information about the build.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.33",
 	},
-	Run: func(command *cobra.Command, args []string) {
+	RunE: func(command *cobra.Command, args []string) error {
 		ctx := context.Background()
 		cmd.CheckArgs(0, 0, command, args)
+		if deps {
+			return printDependencies()
+		}
 		if check {
 			CheckVersion(ctx)
 		} else {
 			cmd.ShowVersion()
 		}
+		return nil
 	},
 }
 
@@ -150,4 +167,37 @@ func CheckVersion(ctx context.Context) {
 	if strings.HasSuffix(fs.Version, "-DEV") {
 		fmt.Println("Your version is compiled from git so comparisons may be wrong.")
 	}
+}
+
+// Print info about a build module
+func printModule(module *debug.Module) {
+	if module.Replace != nil {
+		fmt.Printf("- %s %s (replaced by %s %s)\n",
+			module.Path, module.Version, module.Replace.Path, module.Replace.Version)
+	} else {
+		fmt.Printf("- %s %s\n", module.Path, module.Version)
+	}
+}
+
+// printDependencies shows the packages we use in a format like go.mod
+func printDependencies() error {
+	info, err := buildinfo.ReadFile(os.Args[0])
+	if err != nil {
+		return fmt.Errorf("error reading build info: %w", err)
+	}
+	fmt.Println("Go Version:")
+	fmt.Printf("- %s\n", info.GoVersion)
+	fmt.Println("Main package:")
+	printModule(&info.Main)
+	fmt.Println("Binary path:")
+	fmt.Printf("- %s\n", info.Path)
+	fmt.Println("Settings:")
+	for _, setting := range info.Settings {
+		fmt.Printf("- %s: %s\n", setting.Key, setting.Value)
+	}
+	fmt.Println("Dependencies:")
+	for _, dep := range info.Deps {
+		printModule(dep)
+	}
+	return nil
 }

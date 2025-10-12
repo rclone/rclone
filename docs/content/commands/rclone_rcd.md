@@ -31,8 +31,7 @@ If you set `--rc-addr` to listen on a public or LAN accessible IP address
 then using Authentication is advised - see the next section for info.
 
 You can use a unix socket by setting the url to `unix:///path/to/socket`
-or just by using an absolute path name. Note that unix sockets bypass the
-authentication - this is expected to be done with file system permissions.
+or just by using an absolute path name.
 
 `--rc-addr` may be repeated to listen on multiple IPs/ports/sockets.
 Socket activation, described further below, can also be used to accomplish the same.
@@ -59,19 +58,21 @@ https.  You will need to supply the `--rc-cert` and `--rc-key` flags.
 If you wish to do client side certificate validation then you will need to
 supply `--rc-client-ca` also.
 
-`--rc-cert` should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  `--krc-ey` should be the PEM encoded
-private key and `--rc-client-ca` should be the PEM encoded client
-certificate authority certificate.
+`--rc-cert` must be set to the path of a file containing
+either a PEM encoded certificate, or a concatenation of that with the CA
+certificate. `--rc-key` must be set to the path of a file
+with the PEM encoded private key. If setting `--rc-client-ca`,
+it should be set to the path of a file with PEM encoded client certificate
+authority certificates.
 
 `--rc-min-tls-version` is minimum TLS version that is acceptable. Valid
-  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
-  "tls1.0").
+values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default "tls1.0").
 
 ## Socket activation
 
 Instead of the listening addresses specified above, rclone will listen to all
-FDs passed by the service manager, if any (and ignore any arguments passed by --rc-addr`).
+FDs passed by the service manager, if any (and ignore any arguments passed
+by `--rc-addr`).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
@@ -125,7 +126,11 @@ By default this will serve files without needing a login.
 You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the `--rc-user` and `--rc-pass` flags.
 
-If no static users are configured by either of the above methods, and client
+Alternatively, you can have the reverse proxy manage authentication and use the
+username provided in the configured header with `--user-from-header`  (e.g., `--rc---user-from-header=x-remote-user`).
+Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration may lead to unauthorized access.
+
+If either of the above authentication methods is not configured and client
 certificates are required by the `--client-ca` flag passed to the server, the
 client certificate common name will be considered as the username.
 
@@ -166,7 +171,7 @@ Flags to control the Remote Control API
 
 ```
       --rc                                 Enable the remote control server
-      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default ["localhost:5572"])
+      --rc-addr stringArray                IPaddress:Port or :Port to bind server to (default localhost:5572)
       --rc-allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --rc-baseurl string                  Prefix for URLs - leave blank for root
       --rc-cert string                     TLS PEM key (concatenation of certificate and CA certificate)
@@ -189,6 +194,7 @@ Flags to control the Remote Control API
       --rc-server-write-timeout Duration   Timeout for server writing data (default 1h0m0s)
       --rc-template string                 User-specified template
       --rc-user string                     User name for authentication
+      --rc-user-from-header string         User name from a defined HTTP header
       --rc-web-fetch-url string            URL to fetch the releases for webgui (default "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest")
       --rc-web-gui                         Launch WebGUI on localhost
       --rc-web-gui-force-update            Force update to latest version of web gui

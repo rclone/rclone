@@ -191,6 +191,33 @@ func TestNewObject(t *testing.T) {
 	assert.Equal(t, fs.ErrorObjectNotFound, err)
 }
 
+func TestNewObjectWithLeadingSlash(t *testing.T) {
+	f := prepare(t)
+
+	o, err := f.NewObject(context.Background(), "/four/under four.txt")
+	require.NoError(t, err)
+
+	assert.Equal(t, "/four/under four.txt", o.Remote())
+	assert.Equal(t, int64(8+lineEndSize), o.Size())
+	_, ok := o.(*Object)
+	assert.True(t, ok)
+
+	// Test the time is correct on the object
+
+	tObj := o.ModTime(context.Background())
+
+	fi, err := os.Stat(filepath.Join(filesPath, "four", "under four.txt"))
+	require.NoError(t, err)
+	tFile := fi.ModTime()
+
+	fstest.AssertTimeEqualWithPrecision(t, o.Remote(), tFile, tObj, time.Second)
+
+	// check object not found
+	o, err = f.NewObject(context.Background(), "/not found.txt")
+	assert.Nil(t, o)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+}
+
 func TestOpen(t *testing.T) {
 	m := prepareServer(t)
 

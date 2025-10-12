@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -19,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/errcount"
+	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -94,6 +96,7 @@ type syncCopyMove struct {
 	setDirModTimes         []setDirModTime        // directories that need their modtime set
 	setDirModTimesMaxLevel int                    // max level of the directories to set
 	modifiedDirs           map[string]struct{}    // dirs with changed contents (if s.setDirModTimeAfter)
+	allowOverlap           bool                   // whether we allow src and dst to overlap (i.e. for convmv)
 }
 
 // For keeping track of delayed modtime sets
@@ -125,8 +128,8 @@ func (strategy trackRenamesStrategy) leaf() bool {
 	return (strategy & trackRenamesStrategyLeaf) != 0
 }
 
-func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) (*syncCopyMove, error) {
-	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.OverlappingFilterCheck(ctx, fdst, fsrc) {
+func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool, allowOverlap bool) (*syncCopyMove, error) {
+	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.OverlappingFilterCheck(ctx, fdst, fsrc) && !allowOverlap {
 		return nil, fserrors.FatalError(fs.ErrorOverlapping)
 	}
 	ci := fs.GetConfig(ctx)
@@ -160,6 +163,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		setDirModTime:          (!ci.NoUpdateDirModTime && fsrc.Features().CanHaveEmptyDirectories) && (fdst.Features().WriteDirSetModTime || fdst.Features().MkdirMetadata != nil || fdst.Features().DirSetModTime != nil),
 		setDirModTimeAfter:     !ci.NoUpdateDirModTime && (!copyEmptySrcDirs || fsrc.Features().CanHaveEmptyDirectories && fdst.Features().DirModTimeUpdatesOnWrite),
 		modifiedDirs:           make(map[string]struct{}),
+		allowOverlap:           allowOverlap,
 	}
 
 	s.logger, s.usingLogger = operations.GetLogger(ctx)
@@ -190,7 +194,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		return nil, err
 	}
 	if ci.MaxDuration > 0 {
-		s.maxDurationEndTime = time.Now().Add(ci.MaxDuration)
+		s.maxDurationEndTime = time.Now().Add(time.Duration(ci.MaxDuration))
 		fs.Infof(s.fdst, "Transfer session %v deadline: %s", ci.CutoffMode, s.maxDurationEndTime.Format("2006/01/02 15:04:05"))
 	}
 	// If a max session duration has been defined add a deadline
@@ -510,7 +514,7 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 // This starts the background checkers.
 func (s *syncCopyMove) startCheckers() {
 	s.checkerWg.Add(s.ci.Checkers)
-	for i := 0; i < s.ci.Checkers; i++ {
+	for i := range s.ci.Checkers {
 		fraction := (100 * i) / s.ci.Checkers
 		go s.pairChecker(s.toBeChecked, s.toBeUploaded, fraction, &s.checkerWg)
 	}
@@ -526,7 +530,7 @@ func (s *syncCopyMove) stopCheckers() {
 // This starts the background transfers
 func (s *syncCopyMove) startTransfers() {
 	s.transfersWg.Add(s.ci.Transfers)
-	for i := 0; i < s.ci.Transfers; i++ {
+	for i := range s.ci.Transfers {
 		fraction := (100 * i) / s.ci.Transfers
 		go s.pairCopyOrMove(s.ctx, s.toBeUploaded, s.fdst, fraction, &s.transfersWg)
 	}
@@ -545,7 +549,7 @@ func (s *syncCopyMove) startRenamers() {
 		return
 	}
 	s.renamerWg.Add(s.ci.Checkers)
-	for i := 0; i < s.ci.Checkers; i++ {
+	for i := range s.ci.Checkers {
 		fraction := (100 * i) / s.ci.Checkers
 		go s.pairRenamer(s.toBeRenamed, s.toBeUploaded, fraction, &s.renamerWg)
 	}
@@ -726,7 +730,7 @@ func (s *syncCopyMove) markParentNotEmpty(entry fs.DirEntry) {
 				parentDir = ""
 			}
 			delete(s.srcEmptyDirs, parentDir)
-			if parentDir == "" {
+			if parentDir == "" || parentDir == "/" {
 				break
 			}
 			parentDir = path.Dir(parentDir)
@@ -739,7 +743,7 @@ func parseTrackRenamesStrategy(strategies string) (strategy trackRenamesStrategy
 	if len(strategies) == 0 {
 		return strategy, nil
 	}
-	for _, s := range strings.Split(strategies, ",") {
+	for s := range strings.SplitSeq(strategies, ",") {
 		switch s {
 		case "hash":
 			strategy |= trackRenamesStrategyHash
@@ -827,7 +831,7 @@ func (s *syncCopyMove) popRenameMap(hash string, src fs.Object) (dst fs.Object) 
 
 		// Remove the entry and return it
 		dst = dsts[i]
-		dsts = append(dsts[:i], dsts[i+1:]...)
+		dsts = slices.Delete(dsts, i, i+1)
 		if len(dsts) > 0 {
 			s.renameMap[hash] = dsts
 		} else {
@@ -856,7 +860,7 @@ func (s *syncCopyMove) makeRenameMap() {
 	s.renameMap = make(map[string][]fs.Object)
 	var wg sync.WaitGroup
 	wg.Add(s.ci.Checkers)
-	for i := 0; i < s.ci.Checkers; i++ {
+	for range s.ci.Checkers {
 		go func() {
 			defer wg.Done()
 			for obj := range in {
@@ -921,7 +925,7 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 //
 // dir is the start directory, "" for root
 func (s *syncCopyMove) run() error {
-	if operations.Same(s.fdst, s.fsrc) {
+	if operations.Same(s.fdst, s.fsrc) && !s.allowOverlap {
 		fs.Errorf(s.fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
@@ -1105,27 +1109,27 @@ func (s *syncCopyMove) markDirModifiedObject(o fs.Object) {
 // be nil.
 func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, src fs.Directory) (newDst fs.Directory) {
 	var err error
+	if dst != nil && src.Remote() == dst.Remote() && operations.OverlappingFilterCheck(ctx, s.fdst, s.fsrc) {
+		return nil // src and dst can be the same in convmv
+	}
 	equal := operations.DirsEqual(ctx, src, dst, operations.DirsEqualOpt{ModifyWindow: s.modifyWindow, SetDirModtime: s.setDirModTime, SetDirMetadata: s.setDirMetadata})
 	if !s.setDirModTimeAfter && equal {
 		return nil
 	}
-	if s.setDirModTimeAfter && equal {
-		newDst = dst
-	} else if s.copyEmptySrcDirs {
-		if s.setDirMetadata {
+	newDst = dst
+	if !equal {
+		if s.setDirMetadata && s.copyEmptySrcDirs {
 			newDst, err = operations.CopyDirMetadata(ctx, f, dst, dir, src)
-		} else if s.setDirModTime {
-			if dst == nil {
-				newDst, err = operations.MkdirModTime(ctx, f, dir, src.ModTime(ctx))
-			} else {
-				newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
-			}
-		} else if dst == nil {
-			// Create the directory if it doesn't exist
+		} else if dst == nil && s.setDirModTime && s.copyEmptySrcDirs {
+			newDst, err = operations.MkdirModTime(ctx, f, dir, src.ModTime(ctx))
+		} else if dst == nil && s.copyEmptySrcDirs {
 			err = operations.Mkdir(ctx, f, dir)
+		} else if dst != nil && s.setDirModTime {
+			newDst, err = operations.SetDirModTime(ctx, f, dst, dir, src.ModTime(ctx))
 		}
-	} else {
-		newDst = dst
+	}
+	if transform.Transforming(ctx) && newDst != nil && src.Remote() != newDst.Remote() {
+		s.markParentNotEmpty(src)
 	}
 	// If we need to set modtime after and we created a dir, then save it for later
 	if s.setDirModTime && s.setDirModTimeAfter && err == nil {
@@ -1259,8 +1263,8 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 		s.logger(s.ctx, operations.MissingOnDst, src, nil, fs.ErrorIsDir)
 
 		// Create the directory and make sure the Metadata/ModTime is correct
-		s.copyDirMetadata(s.ctx, s.fdst, nil, x.Remote(), x)
-		s.markDirModified(x.Remote())
+		s.copyDirMetadata(s.ctx, s.fdst, nil, transform.Path(s.ctx, x.Remote(), true), x)
+		s.markDirModified(transform.Path(s.ctx, x.Remote(), true))
 		return true
 	default:
 		panic("Bad object in DirEntries")
@@ -1293,7 +1297,11 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
-		s.markParentNotEmpty(src)
+		srcX = fs.NewOverrideDirectory(srcX, transform.Path(ctx, src.Remote(), true))
+		src = srcX
+		if !transform.Transforming(ctx) || src.Remote() != dst.Remote() {
+			s.markParentNotEmpty(src)
+		}
 		dstX, ok := dst.(fs.Directory)
 		if ok {
 			s.logger(s.ctx, operations.Match, src, dst, fs.ErrorIsDir)
@@ -1332,7 +1340,7 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 // If DoMove is true then files will be moved instead of copied.
 //
 // dir is the start directory, "" for root
-func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
+func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool, allowOverlap bool) error {
 	ci := fs.GetConfig(ctx)
 	if deleteMode != fs.DeleteModeOff && DoMove {
 		return fserrors.FatalError(errors.New("can't delete and move at the same time"))
@@ -1343,7 +1351,7 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 			return fserrors.FatalError(errors.New("can't use --delete-before with --track-renames"))
 		}
 		// only delete stuff during in this pass
-		do, err := newSyncCopyMove(ctx, fdst, fsrc, fs.DeleteModeOnly, false, deleteEmptySrcDirs, copyEmptySrcDirs)
+		do, err := newSyncCopyMove(ctx, fdst, fsrc, fs.DeleteModeOnly, false, deleteEmptySrcDirs, copyEmptySrcDirs, allowOverlap)
 		if err != nil {
 			return err
 		}
@@ -1354,7 +1362,7 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		// Next pass does a copy only
 		deleteMode = fs.DeleteModeOff
 	}
-	do, err := newSyncCopyMove(ctx, fdst, fsrc, deleteMode, DoMove, deleteEmptySrcDirs, copyEmptySrcDirs)
+	do, err := newSyncCopyMove(ctx, fdst, fsrc, deleteMode, DoMove, deleteEmptySrcDirs, copyEmptySrcDirs, allowOverlap)
 	if err != nil {
 		return err
 	}
@@ -1364,17 +1372,22 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 // Sync fsrc into fdst
 func Sync(ctx context.Context, fdst, fsrc fs.Fs, copyEmptySrcDirs bool) error {
 	ci := fs.GetConfig(ctx)
-	return runSyncCopyMove(ctx, fdst, fsrc, ci.DeleteMode, false, false, copyEmptySrcDirs)
+	return runSyncCopyMove(ctx, fdst, fsrc, ci.DeleteMode, false, false, copyEmptySrcDirs, false)
 }
 
 // CopyDir copies fsrc into fdst
 func CopyDir(ctx context.Context, fdst, fsrc fs.Fs, copyEmptySrcDirs bool) error {
-	return runSyncCopyMove(ctx, fdst, fsrc, fs.DeleteModeOff, false, false, copyEmptySrcDirs)
+	return runSyncCopyMove(ctx, fdst, fsrc, fs.DeleteModeOff, false, false, copyEmptySrcDirs, false)
 }
 
 // moveDir moves fsrc into fdst
 func moveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
-	return runSyncCopyMove(ctx, fdst, fsrc, fs.DeleteModeOff, true, deleteEmptySrcDirs, copyEmptySrcDirs)
+	return runSyncCopyMove(ctx, fdst, fsrc, fs.DeleteModeOff, true, deleteEmptySrcDirs, copyEmptySrcDirs, false)
+}
+
+// Transform renames fdst in place
+func Transform(ctx context.Context, fdst fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
+	return runSyncCopyMove(ctx, fdst, fdst, fs.DeleteModeOff, true, deleteEmptySrcDirs, copyEmptySrcDirs, true)
 }
 
 // MoveDir moves fsrc into fdst

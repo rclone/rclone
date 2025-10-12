@@ -30,7 +30,7 @@ var (
 // Assume we are run somewhere within the rclone root
 func findConfig() (string, error) {
 	dir := filepath.Join("fstest", "testserver", "init.d")
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		fi, err := os.Stat(dir)
 		if err == nil && fi.IsDir() {
 			return filepath.Abs(dir)
@@ -74,20 +74,27 @@ var matchLine = regexp.MustCompile(`^([a-zA-Z_]+)=(.*)$`)
 // Start the server and set its env vars
 // Call with the mutex held
 func start(name string) error {
+	fs.Logf(name, "Starting server")
 	out, err := run(name, "start")
 	if err != nil {
 		return err
 	}
-	fs.Logf(name, "Starting server")
 	// parse the output and set environment vars from it
 	var connect string
-	for _, line := range bytes.Split(out, []byte("\n")) {
+	var connectDelay time.Duration
+	for line := range bytes.SplitSeq(out, []byte("\n")) {
 		line = bytes.TrimSpace(line)
 		part := matchLine.FindSubmatch(line)
 		if part != nil {
 			key, value := part[1], part[2]
 			if string(key) == "_connect" {
 				connect = string(value)
+				continue
+			} else if string(key) == "_connect_delay" {
+				connectDelay, err = time.ParseDuration(string(value))
+				if err != nil {
+					return fmt.Errorf("bad _connect_delay: %w", err)
+				}
 				continue
 			}
 
@@ -99,16 +106,17 @@ func start(name string) error {
 		}
 	}
 	if connect == "" {
+		fs.Logf(name, "Started server")
 		return nil
 	}
 	// If we got a _connect value then try to connect to it
-	const maxTries = 30
+	const maxTries = 100
 	var rdBuf = make([]byte, 1)
 	for i := 1; i <= maxTries; i++ {
 		if i != 0 {
 			time.Sleep(time.Second)
 		}
-		fs.Debugf(name, "Attempting to connect to %q try %d/%d", connect, i, maxTries)
+		fs.Logf(name, "Attempting to connect to %q try %d/%d", connect, i, maxTries)
 		conn, err := net.DialTimeout("tcp", connect, time.Second)
 		if err != nil {
 			fs.Debugf(name, "Connection to %q failed try %d/%d: %v", connect, i, maxTries, err)
@@ -126,7 +134,11 @@ func start(name string) error {
 			// Try again
 			continue
 		}
-		//time.Sleep(30 * time.Second)
+		if connectDelay > 0 {
+			fs.Logf(name, "Connect delay %v", connectDelay)
+			time.Sleep(connectDelay)
+		}
+		fs.Logf(name, "Started server and connected to %q", connect)
 		return nil
 	}
 	return fmt.Errorf("failed to connect to %q on %q", name, connect)
@@ -163,7 +175,16 @@ func Start(remoteName string) (fn func(), err error) {
 	if running[name] <= 0 {
 		// if server isn't running check to see if this server has
 		// been started already but not by us and stop it if so
-		if os.Getenv(envKey(name, "type")) == "" && isRunning(name) {
+		const maxTries = 10
+		for i := 1; i <= maxTries; i++ {
+			if os.Getenv(envKey(name, "type")) == "" && !isRunning(name) {
+				fs.Logf(name, "Stopped server")
+				break
+			}
+			if i != 1 {
+				time.Sleep(time.Second)
+				fs.Logf(name, "Attempting to stop %s try %d/%d", name, i, maxTries)
+			}
 			stop(name)
 		}
 		if !isRunning(name) {
@@ -199,6 +220,6 @@ func stop(name string) {
 			fs.Errorf(name, "Failed to stop server: %v", err)
 		}
 		running[name] = 0
-		fs.Logf(name, "Stopped server")
+		fs.Logf(name, "Stopping server")
 	}
 }

@@ -5,14 +5,20 @@ package sftp
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -76,6 +82,29 @@ func init() {
 	vfsflags.AddFlags(Command.Flags())
 	proxyflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags(), &Opt)
+	serve.Command.AddCommand(Command)
+	serve.AddRc("sftp", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
+		// Read VFS Opts
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read Proxy Opts
+		var proxyOpt = proxy.Opt // set default opts
+		err = configstruct.SetAny(in, &proxyOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return newServer(ctx, f, &opt, &vfsOpt, &proxyOpt)
+	})
 }
 
 // Command definition for cobra
@@ -118,11 +147,13 @@ reachable externally then supply ` + "`--addr :2022`" + ` for example.
 This also supports being run with socket activation, in which case it will
 listen on the first passed FD.
 It can be configured with .socket and .service unit files as described in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 
 Socket activation can be tested ad-hoc with the ` + "`systemd-socket-activate`" + `command:
 
-	systemd-socket-activate -l 2222 -- rclone serve sftp :local:vfs/
+` + "```sh" + `
+systemd-socket-activate -l 2222 -- rclone serve sftp :local:vfs/
+` + "```" + `
 
 This will socket-activate rclone on the first connection to port 2222 over TCP.
 
@@ -132,7 +163,9 @@ sftp backend, but it may not be with other SFTP clients.
 If ` + "`--stdio`" + ` is specified, rclone will serve SFTP over stdio, which can
 be used with sshd via ~/.ssh/authorized_keys, for example:
 
-    restrict,command="rclone serve sftp --stdio ./photos" ssh-rsa ...
+` + "```text" + `
+restrict,command="rclone serve sftp --stdio ./photos" ssh-rsa ...
+` + "```" + `
 
 On the client you need to set ` + "`--transfers 1`" + ` when using ` + "`--stdio`" + `.
 Otherwise multiple instances of the rclone server are started by OpenSSH
@@ -145,14 +178,14 @@ used. Omitting "restrict" and using  ` + "`--sftp-path-override`" + ` to enable
 checksumming is possible but less secure and you could use the SFTP server
 provided by OpenSSH in this case.
 
-` + vfs.Help() + proxy.Help,
+` + strings.TrimSpace(vfs.Help()+proxy.Help),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.48",
 		"groups":            "Filter",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
-		if proxyflags.Opt.AuthProxy == "" {
+		if proxy.Opt.AuthProxy == "" {
 			cmd.CheckArgs(1, 1, command, args)
 			f = cmd.NewFsSrc(args)
 		} else {
@@ -162,14 +195,12 @@ provided by OpenSSH in this case.
 			if Opt.Stdio {
 				return serveStdio(f)
 			}
-			s := newServer(context.Background(), f, &Opt)
-			err := s.Serve()
+			s, err := newServer(context.Background(), f, &Opt, &vfscommon.Opt, &proxy.Opt)
 			if err != nil {
-				return err
+				fs.Fatal(nil, fmt.Sprint(err))
 			}
 			defer systemd.Notify()()
-			s.Wait()
-			return nil
+			return s.Serve()
 		})
 	},
 }

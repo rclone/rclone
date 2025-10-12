@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"slices"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
@@ -85,10 +87,8 @@ func checkOnHeap(t *testing.T, wb *WriteBack, wbItem *writeBackItem) {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 	assert.True(t, wbItem.onHeap)
-	for i := range wb.items {
-		if wb.items[i] == wbItem {
-			return
-		}
+	if slices.Contains(wb.items, wbItem) {
+		return
 	}
 	assert.Failf(t, "expecting %q on heap", wbItem.name)
 }
@@ -275,7 +275,7 @@ func (pi *putItem) finish(err error) {
 }
 
 func waitUntilNoTransfers(t *testing.T, wb *WriteBack) {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		wb.mu.Lock()
 		uploads := wb.uploads
 		wb.mu.Unlock()
@@ -549,7 +549,7 @@ func TestWriteBackSetExpiry(t *testing.T) {
 	wb, cancel := newTestWriteBack(t)
 	defer cancel()
 
-	err := wb.SetExpiry(123123123, time.Now())
+	err := wb.SetExpiry(123123123, time.Now(), 0)
 	assert.Equal(t, ErrorIDNotFound, err)
 
 	pi := newPutItem(t)
@@ -569,12 +569,12 @@ func TestWriteBackSetExpiry(t *testing.T) {
 	assert.Less(t, expiry, 1.0)
 
 	newExpiry := time.Now().Add(100 * time.Second)
-	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry))
+	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry, 0))
 	assert.Equal(t, newExpiry, getExpiry())
 
 	// This starts the transfer
-	newExpiry = time.Now().Add(-100 * time.Second)
-	require.NoError(t, wb.SetExpiry(wbItem.id, newExpiry))
+	newExpiry = wbItem.expiry.Add(-200 * time.Second)
+	require.NoError(t, wb.SetExpiry(wbItem.id, time.Time{}, -200*time.Second))
 	assert.Equal(t, newExpiry, getExpiry())
 
 	<-pi.started
@@ -601,7 +601,7 @@ func TestWriteBackMaxQueue(t *testing.T) {
 
 	// put toTransfer things in the queue
 	pis := []*putItem{}
-	for i := 0; i < toTransfer; i++ {
+	for range toTransfer {
 		pi := newPutItem(t)
 		pis = append(pis, pi)
 		wb.Add(0, fmt.Sprintf("number%d", 1), 10, true, pi.put)
@@ -612,7 +612,7 @@ func TestWriteBackMaxQueue(t *testing.T) {
 	assert.Equal(t, 0, inProgress)
 
 	// now start the first maxTransfers - this should stop the timer
-	for i := 0; i < maxTransfers; i++ {
+	for i := range maxTransfers {
 		<-pis[i].started
 	}
 
@@ -624,7 +624,7 @@ func TestWriteBackMaxQueue(t *testing.T) {
 	assert.Equal(t, maxTransfers, inProgress)
 
 	// now finish the first maxTransfers
-	for i := 0; i < maxTransfers; i++ {
+	for i := range maxTransfers {
 		pis[i].finish(nil)
 	}
 

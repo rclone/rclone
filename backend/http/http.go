@@ -180,7 +180,6 @@ func getFsEndpoint(ctx context.Context, client *http.Client, url string, opt *Op
 	}
 	addHeaders(req, opt)
 	res, err := noRedir.Do(req)
-
 	if err != nil {
 		fs.Debugf(nil, "Assuming path is a file as HEAD request could not be sent: %v", err)
 		return createFileResult()
@@ -249,6 +248,14 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	f.httpClient = client
 	f.endpoint = u
 	f.endpointURL = u.String()
+
+	if isFile {
+		// Correct root if definitely pointing to a file
+		f.root = path.Dir(f.root)
+		if f.root == "." || f.root == "/" {
+			f.root = ""
+		}
+	}
 	return isFile, nil
 }
 
@@ -331,12 +338,13 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Join's the remote onto the base URL
 func (f *Fs) url(remote string) string {
+	trimmedRemote := strings.TrimLeft(remote, "/") // remove leading "/" since we always have it in f.endpointURL
 	if f.opt.NoEscape {
 		// Directly concatenate without escaping, no_escape behavior
-		return f.endpointURL + remote
+		return f.endpointURL + trimmedRemote
 	}
 	// Default behavior
-	return f.endpointURL + rest.URLPathEscape(remote)
+	return f.endpointURL + rest.URLPathEscape(trimmedRemote)
 }
 
 // Errors returned by parseName
@@ -504,7 +512,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		entries = append(entries, entry)
 		entriesMu.Unlock()
 	}
-	for i := 0; i < checkers; i++ {
+	for range checkers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -739,7 +747,7 @@ It doesn't return anything.
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "set":
 		newOpt := f.opt

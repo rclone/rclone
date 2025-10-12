@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/multipart"
+	"github.com/rclone/rclone/lib/pool"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -73,11 +74,15 @@ func (mc *multiThreadCopyState) copyChunk(ctx context.Context, chunk int, writer
 	if start >= mc.size {
 		return nil
 	}
-	end := start + mc.partSize
-	if end > mc.size {
-		end = mc.size
-	}
+	end := min(start+mc.partSize, mc.size)
 	size := end - start
+
+	// Reserve the memory first so we don't open the source and wait for memory buffers for ages
+	var rw *pool.RW
+	if !mc.noBuffering {
+		rw = multipart.NewRW().Reserve(size)
+		defer fs.CheckClose(rw, &err)
+	}
 
 	fs.Debugf(mc.src, "multi-thread copy: chunk %d/%d (%d-%d) size %v starting", chunk+1, mc.numChunks, start, end, fs.SizeSuffix(size))
 
@@ -95,8 +100,6 @@ func (mc *multiThreadCopyState) copyChunk(ctx context.Context, chunk int, writer
 		rs = rc
 	} else {
 		// Read the chunk into buffered reader
-		rw := multipart.NewRW()
-		defer fs.CheckClose(rw, &err)
 		_, err = io.CopyN(rw, rc, size)
 		if err != nil {
 			return fmt.Errorf("multi-thread copy: failed to read chunk: %w", err)
@@ -218,7 +221,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	mc.acc = tr.Account(gCtx, nil)
 
 	fs.Debugf(src, "Starting multi-thread copy with %d chunks of size %v with %v parallel streams", mc.numChunks, fs.SizeSuffix(mc.partSize), concurrency)
-	for chunk := 0; chunk < mc.numChunks; chunk++ {
+	for chunk := range mc.numChunks {
 		// Fail fast, in case an errgroup managed function returns an error
 		if gCtx.Err() != nil {
 			break
@@ -315,8 +318,8 @@ func (w *writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, r
 	// if we were buffering, flush to disk
 	switch w := writer.(type) {
 	case *bufio.Writer:
-		er2 := w.Flush()
-		if er2 != nil {
+		err = w.Flush()
+		if err != nil {
 			return -1, fmt.Errorf("multi-thread copy: flush failed: %w", err)
 		}
 	}

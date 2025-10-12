@@ -3,13 +3,13 @@ package api
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"slices"
 	"strings"
 
 	"github.com/oracle/oci-go-sdk/v65/common"
-
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -35,7 +35,7 @@ type Session struct {
 // }
 
 // Request makes a request
-func (s *Session) Request(ctx context.Context, opts rest.Opts, request interface{}, response interface{}) (*http.Response, error) {
+func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, response any) (*http.Response, error) {
 	resp, err := s.srv.CallJSON(ctx, &opts, &request, &response)
 
 	if err != nil {
@@ -129,7 +129,7 @@ func (s *Session) AuthWithToken(ctx context.Context) error {
 
 // Validate2FACode validates the 2FA code
 func (s *Session) Validate2FACode(ctx context.Context, code string) error {
-	values := map[string]interface{}{"securityCode": map[string]string{"code": code}}
+	values := map[string]any{"securityCode": map[string]string{"code": code}}
 	body, err := IntoReader(values)
 	if err != nil {
 		return err
@@ -220,9 +220,7 @@ func (s *Session) GetAuthHeaders(overwrite map[string]string) map[string]string 
 		"Referer":                          fmt.Sprintf("%s/", homeEndpoint),
 		"User-Agent":                       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:103.0) Gecko/20100101 Firefox/103.0",
 	}
-	for k, v := range overwrite {
-		headers[k] = v
-	}
+	maps.Copy(headers, overwrite)
 	return headers
 }
 
@@ -230,9 +228,7 @@ func (s *Session) GetAuthHeaders(overwrite map[string]string) map[string]string 
 func (s *Session) GetHeaders(overwrite map[string]string) map[string]string {
 	headers := GetCommonHeaders(map[string]string{})
 	headers["Cookie"] = s.GetCookieString()
-	for k, v := range overwrite {
-		headers[k] = v
-	}
+	maps.Copy(headers, overwrite)
 	return headers
 }
 
@@ -254,9 +250,7 @@ func GetCommonHeaders(overwrite map[string]string) map[string]string {
 		"Referer":      fmt.Sprintf("%s/", baseEndpoint),
 		"User-Agent":   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:103.0) Gecko/20100101 Firefox/103.0",
 	}
-	for k, v := range overwrite {
-		headers[k] = v
-	}
+	maps.Copy(headers, overwrite)
 	return headers
 }
 
@@ -338,33 +332,33 @@ type AccountInfo struct {
 
 // ValidateDataDsInfo represents an validation info
 type ValidateDataDsInfo struct {
-	HsaVersion                         int           `json:"hsaVersion"`
-	LastName                           string        `json:"lastName"`
-	ICDPEnabled                        bool          `json:"iCDPEnabled"`
-	TantorMigrated                     bool          `json:"tantorMigrated"`
-	Dsid                               string        `json:"dsid"`
-	HsaEnabled                         bool          `json:"hsaEnabled"`
-	IsHideMyEmailSubscriptionActive    bool          `json:"isHideMyEmailSubscriptionActive"`
-	IroncadeMigrated                   bool          `json:"ironcadeMigrated"`
-	Locale                             string        `json:"locale"`
-	BrZoneConsolidated                 bool          `json:"brZoneConsolidated"`
-	ICDRSCapableDeviceList             string        `json:"ICDRSCapableDeviceList"`
-	IsManagedAppleID                   bool          `json:"isManagedAppleID"`
-	IsCustomDomainsFeatureAvailable    bool          `json:"isCustomDomainsFeatureAvailable"`
-	IsHideMyEmailFeatureAvailable      bool          `json:"isHideMyEmailFeatureAvailable"`
-	ContinueOnDeviceEligibleDeviceInfo []string      `json:"ContinueOnDeviceEligibleDeviceInfo"`
-	Gilligvited                        bool          `json:"gilligvited"`
-	AppleIDAliases                     []interface{} `json:"appleIdAliases"`
-	UbiquityEOLEnabled                 bool          `json:"ubiquityEOLEnabled"`
-	IsPaidDeveloper                    bool          `json:"isPaidDeveloper"`
-	CountryCode                        string        `json:"countryCode"`
-	NotificationID                     string        `json:"notificationId"`
-	PrimaryEmailVerified               bool          `json:"primaryEmailVerified"`
-	ADsID                              string        `json:"aDsID"`
-	Locked                             bool          `json:"locked"`
-	ICDRSCapableDeviceCount            int           `json:"ICDRSCapableDeviceCount"`
-	HasICloudQualifyingDevice          bool          `json:"hasICloudQualifyingDevice"`
-	PrimaryEmail                       string        `json:"primaryEmail"`
+	HsaVersion                         int      `json:"hsaVersion"`
+	LastName                           string   `json:"lastName"`
+	ICDPEnabled                        bool     `json:"iCDPEnabled"`
+	TantorMigrated                     bool     `json:"tantorMigrated"`
+	Dsid                               string   `json:"dsid"`
+	HsaEnabled                         bool     `json:"hsaEnabled"`
+	IsHideMyEmailSubscriptionActive    bool     `json:"isHideMyEmailSubscriptionActive"`
+	IroncadeMigrated                   bool     `json:"ironcadeMigrated"`
+	Locale                             string   `json:"locale"`
+	BrZoneConsolidated                 bool     `json:"brZoneConsolidated"`
+	ICDRSCapableDeviceList             string   `json:"ICDRSCapableDeviceList"`
+	IsManagedAppleID                   bool     `json:"isManagedAppleID"`
+	IsCustomDomainsFeatureAvailable    bool     `json:"isCustomDomainsFeatureAvailable"`
+	IsHideMyEmailFeatureAvailable      bool     `json:"isHideMyEmailFeatureAvailable"`
+	ContinueOnDeviceEligibleDeviceInfo []string `json:"ContinueOnDeviceEligibleDeviceInfo"`
+	Gilligvited                        bool     `json:"gilligvited"`
+	AppleIDAliases                     []any    `json:"appleIdAliases"`
+	UbiquityEOLEnabled                 bool     `json:"ubiquityEOLEnabled"`
+	IsPaidDeveloper                    bool     `json:"isPaidDeveloper"`
+	CountryCode                        string   `json:"countryCode"`
+	NotificationID                     string   `json:"notificationId"`
+	PrimaryEmailVerified               bool     `json:"primaryEmailVerified"`
+	ADsID                              string   `json:"aDsID"`
+	Locked                             bool     `json:"locked"`
+	ICDRSCapableDeviceCount            int      `json:"ICDRSCapableDeviceCount"`
+	HasICloudQualifyingDevice          bool     `json:"hasICloudQualifyingDevice"`
+	PrimaryEmail                       string   `json:"primaryEmail"`
 	AppleIDEntries                     []struct {
 		IsPrimary bool   `json:"isPrimary"`
 		Type      string `json:"type"`

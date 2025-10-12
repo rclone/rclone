@@ -41,6 +41,47 @@ successful transfer.
 
 **Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics.
 
+# Logger Flags
+
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error` flags write paths,
+one per line, to the file name (or stdout if it is `-`) supplied. What they write is described
+in the help below. For example `--differ` will write all paths which are present
+on both the source and destination but different.
+
+The `--combined` flag will write a file (or stdout) which contains all
+file paths with a symbol and then a space and then the path to tell
+you what happened to it. These are reminiscent of diff files.
+
+- `= path` means path was found in source and destination and was identical
+- `- path` means path was missing on the source, so only in the destination
+- `+ path` means path was missing on the destination, so only in the source
+- `* path` means path was present in source and destination but different.
+- `! path` means there was an error reading or hashing the source or dest.
+
+The `--dest-after` flag writes a list file using the same format flags
+as [`lsf`](/commands/rclone_lsf/#synopsis) (including [customizable options
+for hash, modtime, etc.](/commands/rclone_lsf/#synopsis))
+Conceptually it is similar to rsync's `--itemize-changes`, but not identical
+-- it should output an accurate list of what will be on the destination
+after the command is finished.
+
+When the `--no-traverse` flag is set, all logs involving files that exist only
+on the destination will be incomplete or completely missing.
+
+Note that these logger flags have a few limitations, and certain scenarios
+are not currently supported:
+
+- `--max-duration` / `CutoffModeHard`
+- `--compare-dest` / `--copy-dest`
+- server-side moves of an entire dir at once
+- High-level retries, because there would be duplicates (use `--retries 1` to disable)
+- Possibly some unusual error scenarios
+
+Note also that each file is logged during execution, as opposed to after, so it
+is most useful as a predictor of what SHOULD happen to each file
+(which may or may not match what actually DID.)
+
+
 
 ```
 rclone moveto source:path dest:path [flags]
@@ -49,7 +90,23 @@ rclone moveto source:path dest:path [flags]
 ## Options
 
 ```
-  -h, --help   help for moveto
+      --absolute                Put a leading / in front of path names
+      --combined string         Make a combined report of changes to this file
+      --csv                     Output in CSV format
+      --dest-after string       Report all files that exist on the dest post-sync
+      --differ string           Report all non-matching files to this file
+  -d, --dir-slash               Append a slash to directory names (default true)
+      --dirs-only               Only list directories
+      --error string            Report all files with errors (hashing or reading) to this file
+      --files-only              Only list files (default true)
+  -F, --format string           Output format - see lsf help for details (default "p")
+      --hash h                  Use this hash when h is used in the format MD5|SHA-1|DropboxHash (default "md5")
+  -h, --help                    help for moveto
+      --match string            Report all matching files to this file
+      --missing-on-dst string   Report all files missing from the destination to this file
+      --missing-on-src string   Report all files missing from the source to this file
+  -s, --separator string        Separator for the items in the format (default ";")
+  -t, --timeformat string       Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
 ```
 
 Options shared with other commands are described next.
@@ -72,6 +129,7 @@ Flags for anything which can copy a file
   -I, --ignore-times                                Don't skip items that match size and time - transfer all unconditionally
       --immutable                                   Do not modify files, fail if existing files have been modified
       --inplace                                     Download directly to destination file instead of atomic download to temp/rename
+  -l, --links                                       Translate symlinks to/from regular files with a '.rclonelink' extension
       --max-backlog int                             Maximum number of objects in sync or check backlog (default 10000)
       --max-duration Duration                       Maximum duration rclone will transfer data for (default 0s)
       --max-transfer SizeSuffix                     Maximum size of data to transfer (default off)
@@ -81,6 +139,7 @@ Flags for anything which can copy a file
       --multi-thread-cutoff SizeSuffix              Use multi-thread downloads for files above this size (default 256Mi)
       --multi-thread-streams int                    Number of streams to use for multi-thread downloads (default 4)
       --multi-thread-write-buffer-size SizeSuffix   In memory buffer size for writing when in multi-thread mode (default 128Ki)
+      --name-transform stringArray                  Transform paths during the copy process
       --no-check-dest                               Don't check the destination, copy regardless
       --no-traverse                                 Don't traverse destination file system on copy
       --no-update-dir-modtime                       Don't update directory modification times
@@ -117,6 +176,7 @@ Flags for filtering directory listings
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
+      --hash-filter string                  Partition filenames by hash k/n or randomly @/n
       --ignore-case                         Ignore case in filters (case insensitive)
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read file include patterns from file (use - to read from stdin)

@@ -84,7 +84,10 @@ func init() {
 				Help:  "Nextcloud",
 			}, {
 				Value: "owncloud",
-				Help:  "Owncloud",
+				Help:  "Owncloud 10 PHP based WebDAV server",
+			}, {
+				Value: "infinitescale",
+				Help:  "ownCloud Infinite Scale",
 			}, {
 				Value: "sharepoint",
 				Help:  "Sharepoint Online, authenticated by Microsoft account",
@@ -161,7 +164,24 @@ Set to 0 to disable chunked uploading.
 			Default:  false,
 		},
 			fshttp.UnixSocketConfig,
-		},
+			{
+				Name: "auth_redirect",
+				Help: `Preserve authentication on redirect.
+
+If the server redirects rclone to a new domain when it is trying to
+read a file then normally rclone will drop the Authorization: header
+from the request.
+
+This is standard security practice to avoid sending your credentials
+to an unknown webserver.
+
+However this is desirable in some circumstances. If you are getting
+an error like "401 Unauthorized" when rclone is attempting to read
+files from the webdav server then you can try this option.
+`,
+				Advanced: true,
+				Default:  false,
+			}},
 	})
 }
 
@@ -180,6 +200,7 @@ type Options struct {
 	ExcludeShares      bool                 `config:"owncloud_exclude_shares"`
 	ExcludeMounts      bool                 `config:"owncloud_exclude_mounts"`
 	UnixSocket         string               `config:"unix_socket"`
+	AuthRedirect       bool                 `config:"auth_redirect"`
 }
 
 // Fs represents a remote webdav
@@ -194,6 +215,7 @@ type Fs struct {
 	pacer              *fs.Pacer     // pacer for API calls
 	precision          time.Duration // mod time precision
 	canStream          bool          // set if can stream
+	canTus             bool          // supports the TUS upload protocol
 	useOCMtime         bool          // set if can use X-OC-Mtime
 	propsetMtime       bool          // set if can use propset
 	retryWithZeroDepth bool          // some vendors (sharepoint) won't list files when Depth is 1 (our default)
@@ -244,6 +266,7 @@ func (f *Fs) Features() *fs.Features {
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	423, // Locked
+	425, // Too Early
 	429, // Too Many Requests.
 	500, // Internal Server Error
 	502, // Bad Gateway
@@ -355,7 +378,8 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 		return nil, fs.ErrorObjectNotFound
 	}
 	item := result.Responses[0]
-	if !item.Props.StatusOK() {
+	// status code 425 is accepted here as well
+	if !(item.Props.StatusOK() || item.Props.Code() == 425) {
 		return nil, fs.ErrorObjectNotFound
 	}
 	if itemIsDir(&item) {
@@ -612,6 +636,15 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.propsetMtime = true
 		f.hasOCMD5 = true
 		f.hasOCSHA1 = true
+	case "infinitescale":
+		f.precision = time.Second
+		f.useOCMtime = true
+		f.propsetMtime = true
+		f.hasOCMD5 = false
+		f.hasOCSHA1 = true
+		f.canChunk = false
+		f.canTus = true
+		f.opt.ChunkSize = 10 * fs.Mebi
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
@@ -1309,7 +1342,7 @@ func (o *Object) Size() int64 {
 	ctx := context.TODO()
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Infof(o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -1353,7 +1386,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.Infof(o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -1456,6 +1489,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		ExtraHeaders: map[string]string{
 			"Depth": "0",
 		},
+		AuthRedirect: o.fs.opt.AuthRedirect, // allow redirects to preserve Auth
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
@@ -1478,9 +1512,21 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update mkParentDir failed: %w", err)
 	}
 
-	if o.shouldUseChunkedUpload(src) {
-		fs.Debugf(src, "Update will use the chunked upload strategy")
-		err = o.updateChunked(ctx, in, src, options...)
+	if o.fs.canTus { // supports the tus upload protocol, ie. InfiniteScale
+		fs.Debugf(src, "Update will use the tus protocol to upload")
+		contentType := fs.MimeType(ctx, src)
+		err = o.updateViaTus(ctx, in, contentType, src, options...)
+		if err != nil {
+			fs.Debug(src, "tus update failed.")
+			return fmt.Errorf("tus update failed: %w", err)
+		}
+	} else if o.shouldUseChunkedUpload(src) {
+		if o.fs.opt.Vendor == "nextcloud" {
+			fs.Debugf(src, "Update will use the chunked upload strategy")
+			err = o.updateChunked(ctx, in, src, options...)
+		} else {
+			fs.Debug(src, "Chunking - unknown vendor")
+		}
 		if err != nil {
 			return err
 		}
@@ -1492,10 +1538,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// TODO: define getBody() to enable low-level HTTP/2 retries
 		err = o.updateSimple(ctx, in, nil, filePath, src.Size(), contentType, extraHeaders, o.fs.endpointURL, options...)
 		if err != nil {
-			return err
+			return fmt.Errorf("unchunked simple update failed: %w", err)
 		}
 	}
-
 	// read metadata from remote
 	o.hasMetaData = false
 	return o.readMetaData(ctx)

@@ -56,11 +56,13 @@ func rcRemoteStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 	if rc.NotErrParamNotFound(err) {
 		return rc.Params{}, err
 	}
+	short, _ := in.GetBool("short")
+
 	if group != "" {
-		return StatsGroup(ctx, group).RemoteStats()
+		return StatsGroup(ctx, group).RemoteStats(short)
 	}
 
-	return groups.sum(ctx).RemoteStats()
+	return groups.sum(ctx).RemoteStats(short)
 }
 
 func init() {
@@ -78,7 +80,8 @@ returned.
 
 Parameters
 
-- group - name of the stats group (string)
+- group - name of the stats group (string, optional)
+- short - if true will not return the transferring and checking arrays (boolean, optional)
 
 Returns the following values:
 
@@ -93,6 +96,7 @@ Returns the following values:
 	"fatalError": boolean whether there has been at least one fatal error,
 	"lastError": last error string,
 	"renames" : number of files renamed,
+	"listed" : number of directory entries listed,
 	"retryError": boolean showing whether there has been at least one non-NoRetryError,
         "serverSideCopies": number of server side copies done,
         "serverSideCopyBytes": number bytes server side copied,
@@ -172,6 +176,7 @@ Returns the following values:
 				"size": size of the file in bytes,
 				"bytes": total transferred bytes for this file,
 				"checked": if the transfer is only checked (skipped, deleted),
+				"what": the purpose of the transfer (transferring, deleting, checking, importing, hashing, merging, listing, moving, renaming),
 				"timestamp": integer representing millisecond unix epoch,
 				"error": string description of the error (empty if successful),
 				"jobid": id of the job that this transfer belongs to
@@ -294,6 +299,7 @@ func GlobalStats() *StatsInfo {
 // NewStatsGroup creates new stats under named group.
 func NewStatsGroup(ctx context.Context, group string) *StatsInfo {
 	stats := NewStats(ctx)
+	stats.startAverageLoop()
 	stats.group = group
 	groups.set(ctx, group, stats)
 	return stats
@@ -322,7 +328,7 @@ func (sg *statsGroups) set(ctx context.Context, group string, stats *StatsInfo) 
 	// Limit number of groups kept in memory.
 	if len(sg.order) >= ci.MaxStatsGroups {
 		group := sg.order[0]
-		fs.LogPrintf(fs.LogLevelDebug, nil, "Max number of stats groups reached removing %s", group)
+		fs.Debugf(nil, "Max number of stats groups reached removing %s", group)
 		delete(sg.m, group)
 		r := (len(sg.order) - ci.MaxStatsGroups) + 1
 		sg.order = sg.order[r:]
@@ -380,6 +386,7 @@ func (sg *statsGroups) sum(ctx context.Context) *StatsInfo {
 			sum.transfers += stats.transfers
 			sum.transferring.merge(stats.transferring)
 			sum.transferQueueSize += stats.transferQueueSize
+			sum.listed += stats.listed
 			sum.renames += stats.renames
 			sum.renameQueue += stats.renameQueue
 			sum.renameQueueSize += stats.renameQueueSize

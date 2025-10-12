@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -34,7 +35,6 @@ import (
 // Constants
 const (
 	devUnset   = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
-	linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
 	useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
 )
 
@@ -101,10 +101,8 @@ Metadata is supported on files and directories.
 			},
 			{
 				Name:     "links",
-				Help:     "Translate symlinks to/from regular files with a '" + linkSuffix + "' extension.",
+				Help:     "Translate symlinks to/from regular files with a '" + fs.LinkSuffix + "' extension for the local backend.",
 				Default:  false,
-				NoPrefix: true,
-				ShortOpt: "l",
 				Advanced: true,
 			},
 			{
@@ -309,6 +307,12 @@ only useful for reading.
 				}},
 			},
 			{
+				Name:     "hashes",
+				Help:     `Comma separated list of supported checksum types.`,
+				Default:  fs.CommaSepList{},
+				Advanced: true,
+			},
+			{
 				Name:     config.ConfigEncoding,
 				Help:     config.ConfigEncodingHelp,
 				Advanced: true,
@@ -334,6 +338,7 @@ type Options struct {
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
 	TimeType          timeType             `config:"time_type"`
+	Hashes            fs.CommaSepList      `config:"hashes"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	NoClone           bool                 `config:"no_clone"`
 }
@@ -379,16 +384,21 @@ type Directory struct {
 
 var (
 	errLinksAndCopyLinks = errors.New("can't use -l/--links with -L/--copy-links")
-	errLinksNeedsSuffix  = errors.New("need \"" + linkSuffix + "\" suffix to refer to symlink when using -l/--links")
+	errLinksNeedsSuffix  = errors.New("need \"" + fs.LinkSuffix + "\" suffix to refer to symlink when using -l/--links")
 )
 
 // NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
+	ci := fs.GetConfig(ctx)
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	// Override --local-links with --links if set
+	if ci.Links {
+		opt.TranslateSymlinks = true
 	}
 	if opt.TranslateSymlinks && opt.FollowSymlinks {
 		return nil, errLinksAndCopyLinks
@@ -435,9 +445,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.dev = readDevice(fi, f.opt.OneFileSystem)
 	}
 	// Check to see if this is a .rclonelink if not found
-	hasLinkSuffix := strings.HasSuffix(f.root, linkSuffix)
+	hasLinkSuffix := strings.HasSuffix(f.root, fs.LinkSuffix)
 	if hasLinkSuffix && opt.TranslateSymlinks && os.IsNotExist(err) {
-		fi, err = f.lstat(strings.TrimSuffix(f.root, linkSuffix))
+		fi, err = f.lstat(strings.TrimSuffix(f.root, fs.LinkSuffix))
 	}
 	if err == nil && f.isRegular(fi.Mode()) {
 		// Handle the odd case, that a symlink was specified by name without the link suffix
@@ -508,8 +518,8 @@ func (f *Fs) caseInsensitive() bool {
 //
 // for regular files, localPath is returned unchanged
 func translateLink(remote, localPath string) (newLocalPath string, isTranslatedLink bool) {
-	isTranslatedLink = strings.HasSuffix(remote, linkSuffix)
-	newLocalPath = strings.TrimSuffix(localPath, linkSuffix)
+	isTranslatedLink = strings.HasSuffix(remote, fs.LinkSuffix)
+	newLocalPath = strings.TrimSuffix(localPath, fs.LinkSuffix)
 	return newLocalPath, isTranslatedLink
 }
 
@@ -662,8 +672,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			name := fi.Name()
 			mode := fi.Mode()
 			newRemote := f.cleanRemote(dir, name)
+			symlinkFlag := os.ModeSymlink
+			if runtime.GOOS == "windows" {
+				symlinkFlag |= os.ModeIrregular
+			}
 			// Follow symlinks if required
-			if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
+			if f.opt.FollowSymlinks && (mode&symlinkFlag) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
 				fi, err = os.Stat(localPath)
 				// Quietly skip errors on excluded files and directories
@@ -685,14 +699,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
-				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
+				if (mode&symlinkFlag) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
 					d := f.newDirectory(newRemote, fi)
 					entries = append(entries, d)
 				}
 			} else {
 				// Check whether this link should be translated
-				if f.opt.TranslateSymlinks && fi.Mode()&os.ModeSymlink != 0 {
-					newRemote += linkSuffix
+				if f.opt.TranslateSymlinks && fi.Mode()&symlinkFlag != 0 {
+					newRemote += fs.LinkSuffix
 				}
 				// Don't include non directory if not included
 				// we leave directory filtering to the layer above
@@ -828,7 +842,13 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	} else if !fi.IsDir() {
 		return fs.ErrorIsFile
 	}
-	return os.Remove(localPath)
+	err := os.Remove(localPath)
+	if runtime.GOOS == "windows" && errors.Is(err, iofs.ErrPermission) { // https://github.com/golang/go/issues/26295
+		if os.Chmod(localPath, 0o600) == nil {
+			err = os.Remove(localPath)
+		}
+	}
+	return err
 }
 
 // Precision of the file system
@@ -1019,6 +1039,19 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
+	if len(f.opt.Hashes) > 0 {
+		// Return only configured hashes.
+		// Note: Could have used hash.SupportOnly to limit supported hashes for all hash related features.
+		var supported hash.Set
+		for _, hashName := range f.opt.Hashes {
+			var ht hash.Type
+			if err := ht.Set(hashName); err != nil {
+				fs.Infof(nil, "Invalid token %q in hash string %q", hashName, f.opt.Hashes.String())
+			}
+			supported.Add(ht)
+		}
+		return supported
+	}
 	return hash.Supported()
 }
 
@@ -1044,7 +1077,7 @@ you can try to change the output.`,
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (any, error) {
 	switch name {
 	case "noop":
 		if txt, ok := opt["error"]; ok {
@@ -1054,7 +1087,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			return nil, errors.New(txt)
 		}
 		if _, ok := opt["echo"]; ok {
-			out := map[string]interface{}{}
+			out := map[string]any{}
 			out["name"] = name
 			out["arg"] = arg
 			out["opt"] = opt
@@ -1088,6 +1121,10 @@ func (o *Object) Remote() string {
 
 // Hash returns the requested hash of a file as a lowercase hex string
 func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
+	if r == hash.None {
+		return "", nil
+	}
+
 	// Check that the underlying file hasn't changed
 	o.fs.objectMetaMu.RLock()
 	oldtime := o.modTime
@@ -1195,7 +1232,15 @@ func (o *Object) Storable() bool {
 	o.fs.objectMetaMu.RLock()
 	mode := o.mode
 	o.fs.objectMetaMu.RUnlock()
-	if mode&os.ModeSymlink != 0 && !o.fs.opt.TranslateSymlinks {
+
+	// On Windows items with os.ModeIrregular are likely Junction
+	// points so we treat them as symlinks for the purpose of ignoring them.
+	// https://github.com/golang/go/issues/73827
+	symlinkFlag := os.ModeSymlink
+	if runtime.GOOS == "windows" {
+		symlinkFlag |= os.ModeIrregular
+	}
+	if mode&symlinkFlag != 0 && !o.fs.opt.TranslateSymlinks {
 		if !o.fs.opt.SkipSymlinks {
 			fs.Logf(o, "Can't follow symlink without -L/--copy-links")
 		}

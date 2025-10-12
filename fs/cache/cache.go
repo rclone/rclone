@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
@@ -25,9 +26,9 @@ func createOnFirstUse() {
 	once.Do(func() {
 		ci := fs.GetConfig(context.Background())
 		c = cache.New()
-		c.SetExpireDuration(ci.FsCacheExpireDuration)
-		c.SetExpireInterval(ci.FsCacheExpireInterval)
-		c.SetFinalizer(func(value interface{}) {
+		c.SetExpireDuration(time.Duration(ci.FsCacheExpireDuration))
+		c.SetExpireInterval(time.Duration(ci.FsCacheExpireInterval))
+		c.SetFinalizer(func(value any) {
 			if s, ok := value.(fs.Shutdowner); ok {
 				_ = fs.CountError(context.Background(), s.Shutdown(context.Background()))
 			}
@@ -98,7 +99,7 @@ func GetFn(ctx context.Context, fsString string, create func(ctx context.Context
 	createOnFirstUse()
 	canonicalFsString := Canonicalize(fsString)
 	created := false
-	value, err := c.Get(canonicalFsString, func(canonicalFsString string) (f interface{}, ok bool, err error) {
+	value, err := c.Get(canonicalFsString, func(canonicalFsString string) (f any, ok bool, err error) {
 		f, err = create(ctx, fsString) // always create the backend with the original non-canonicalised string
 		ok = err == nil || err == fs.ErrorIsFile
 		created = ok
@@ -149,9 +150,9 @@ func Pin(f fs.Fs) {
 //
 // This calls runtime.SetFinalizer on x so it shouldn't have a
 // finalizer already.
-func PinUntilFinalized(f fs.Fs, x interface{}) {
+func PinUntilFinalized(f fs.Fs, x any) {
 	Pin(f)
-	runtime.SetFinalizer(x, func(_ interface{}) {
+	runtime.SetFinalizer(x, func(_ any) {
 		Unpin(f)
 	})
 }

@@ -17,7 +17,7 @@ Setting `--auto-filename` will attempt to automatically determine the
 filename from the URL (after any redirections) and used in the
 destination path.
 
-With `--auto-filename-header` in addition, if a specific filename is
+With `--header-filename` in addition, if a specific filename is
 set in HTTP headers, it will be used instead of the name from the URL.
 With `--print-filename` in addition, the resulting file name will be
 printed.
@@ -28,7 +28,7 @@ destination if there is one with the same name.
 Setting `--stdout` or making the output file name `-`
 will cause the output to be written to standard output.
 
-## Troublshooting
+## Troubleshooting
 
 If you can't get `rclone copyurl` to work then here are some things you can try:
 

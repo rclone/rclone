@@ -14,17 +14,21 @@ import (
 	"os/user"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -70,8 +74,8 @@ type Options struct {
 	ListenAddr   string `config:"addr"`         // Port to listen on
 	PublicIP     string `config:"public_ip"`    // Passive ports range
 	PassivePorts string `config:"passive_port"` // Passive ports range
-	BasicUser    string `config:"user"`         // single username for basic auth if not using Htpasswd
-	BasicPass    string `config:"pass"`         // password for BasicUser
+	User         string `config:"user"`         // single username for basic auth if not using Htpasswd
+	Pass         string `config:"pass"`         // password for User
 	TLSCert      string `config:"cert"`         // TLS PEM key (concatenation of certificate and CA certificate)
 	TLSKey       string `config:"key"`          // TLS PEM Private key
 }
@@ -88,6 +92,29 @@ func init() {
 	vfsflags.AddFlags(Command.Flags())
 	proxyflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags())
+	serve.Command.AddCommand(Command)
+	serve.AddRc("ftp", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
+		// Read VFS Opts
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read Proxy Opts
+		var proxyOpt = proxy.Opt // set default opts
+		err = configstruct.SetAny(in, &proxyOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return newServer(ctx, f, &opt, &vfsOpt, &proxyOpt)
+	})
 }
 
 // Command definition for cobra
@@ -114,25 +141,25 @@ By default this will serve files without needing a login.
 
 You can set a single username and password with the --user and --pass flags.
 
-` + vfs.Help() + proxy.Help,
+` + strings.TrimSpace(vfs.Help()+proxy.Help),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.44",
 		"groups":            "Filter",
 	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
-		if proxyflags.Opt.AuthProxy == "" {
+		if proxy.Opt.AuthProxy == "" {
 			cmd.CheckArgs(1, 1, command, args)
 			f = cmd.NewFsSrc(args)
 		} else {
 			cmd.CheckArgs(0, 0, command, args)
 		}
 		cmd.Run(false, false, command, func() error {
-			s, err := newServer(context.Background(), f, &Opt)
+			s, err := newServer(context.Background(), f, &Opt, &vfscommon.Opt, &proxy.Opt)
 			if err != nil {
 				return err
 			}
-			return s.serve()
+			return s.Serve()
 		})
 	},
 }
@@ -157,7 +184,7 @@ func init() {
 var passivePortsRe = regexp.MustCompile(`^\s*\d+\s*-\s*\d+\s*$`)
 
 // Make a new FTP to serve the remote
-func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
+func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (*driver, error) {
 	host, port, err := net.SplitHostPort(opt.ListenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse host:port from %q", opt.ListenAddr)
@@ -172,11 +199,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
 		ctx: ctx,
 		opt: *opt,
 	}
-	if proxyflags.Opt.AuthProxy != "" {
-		d.proxy = proxy.New(ctx, &proxyflags.Opt)
+	if proxy.Opt.AuthProxy != "" {
+		d.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
 		d.userPass = make(map[string]string, 16)
 	} else {
-		d.globalVFS = vfs.New(f, &vfscommon.Opt)
+		d.globalVFS = vfs.New(f, vfsOpt)
 	}
 	d.useTLS = d.opt.TLSKey != ""
 
@@ -208,30 +235,68 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*driver, error) {
 	return d, nil
 }
 
-// serve runs the ftp server
-func (d *driver) serve() error {
+// Serve runs the FTP server until it is shutdown
+func (d *driver) Serve() error {
 	fs.Logf(d.f, "Serving FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
-	return d.srv.ListenAndServe()
+	err := d.srv.ListenAndServe()
+	if err == ftp.ErrServerClosed {
+		err = nil
+	}
+	return err
 }
 
-// close stops the ftp server
+// Shutdown stops the ftp server
 //
 //lint:ignore U1000 unused when not building linux
-func (d *driver) close() error {
+func (d *driver) Shutdown() error {
 	fs.Logf(d.f, "Stopping FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
 	return d.srv.Shutdown()
+}
+
+// Return the first address of the server
+func (d *driver) Addr() net.Addr {
+	// The FTP server doesn't let us read the listener
+	// so we have to synthesize the net.Addr here.
+	// On errors we'll return a zero item or zero parts.
+	addr := &net.TCPAddr{}
+
+	// Split host and port
+	host, port, err := net.SplitHostPort(d.opt.ListenAddr)
+	if err != nil {
+		fs.Errorf(nil, "ftp: addr: invalid address format: %v", err)
+		return addr
+	}
+
+	// Parse port
+	addr.Port, err = strconv.Atoi(port)
+	if err != nil {
+		fs.Errorf(nil, "ftp: addr: invalid port number: %v", err)
+	}
+
+	// Resolve the host to an IP address.
+	ipAddrs, err := net.LookupIP(host)
+	if err != nil {
+		fs.Errorf(nil, "ftp: addr: failed to resolve host: %v", err)
+	} else if len(ipAddrs) == 0 {
+		fs.Errorf(nil, "ftp: addr: no IP addresses found for host: %s", host)
+	} else {
+		// Choose the first IP address.
+		addr.IP = ipAddrs[0]
+	}
+
+	return addr
 }
 
 // Logger ftp logger output formatted message
 type Logger struct{}
 
 // Print log simple text message
-func (l *Logger) Print(sessionID string, message interface{}) {
+func (l *Logger) Print(sessionID string, message any) {
 	fs.Infof(sessionID, "%s", message)
 }
 
 // Printf log formatted text message
-func (l *Logger) Printf(sessionID string, format string, v ...interface{}) {
+func (l *Logger) Printf(sessionID string, format string, v ...any) {
 	fs.Infof(sessionID, format, v...)
 }
 
@@ -269,7 +334,7 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 		d.userPass[user] = oPass
 		d.userPassMu.Unlock()
 	} else {
-		ok = d.opt.BasicUser == user && (d.opt.BasicPass == "" || d.opt.BasicPass == pass)
+		ok = d.opt.User == user && (d.opt.Pass == "" || d.opt.Pass == pass)
 		if !ok {
 			fs.Infof(nil, "login failed: bad credentials")
 			return false, nil

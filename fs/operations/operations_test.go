@@ -1279,6 +1279,14 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
 
 	list.SetOutput(nil)
+	list.AddModTime("unix")
+	assert.Equal(t, fmt.Sprint(t1.Local().Unix()), list.Format(item0))
+
+	list.SetOutput(nil)
+	list.AddModTime("unixnano")
+	assert.Equal(t, fmt.Sprint(t1.Local().UnixNano()), list.Format(item0))
+
+	list.SetOutput(nil)
 	list.SetSeparator("|")
 	list.AddID()
 	list.AddOrigID()
@@ -1516,7 +1524,7 @@ func TestRcat(t *testing.T) {
 		r.CheckRemoteItems(t, file1, file2)
 	}
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		withChecksum := (i & 1) != 0
 		ignoreChecksum := (i & 2) != 0
 		t.Run(fmt.Sprintf("withChecksum=%v,ignoreChecksum=%v", withChecksum, ignoreChecksum), func(t *testing.T) {

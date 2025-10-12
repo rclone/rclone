@@ -2,10 +2,11 @@
 package march
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"path"
-	"sort"
+	"slices"
 	"strings"
 	"sync"
 
@@ -14,8 +15,16 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/transform"
 	"golang.org/x/text/unicode/norm"
 )
+
+// matchTransformFn converts a name into a form which is used for
+// comparison in matchListings.
+type matchTransformFn func(name string) string
+
+// list a directory into callback returning err
+type listDirFn func(dir string, callback fs.ListRCallback) (err error)
 
 // March holds the data used to traverse two Fs simultaneously,
 // calling Callback for each match
@@ -35,7 +44,6 @@ type March struct {
 	srcListDir listDirFn // function to call to list a directory in the src
 	dstListDir listDirFn // function to call to list a directory in the dst
 	transforms []matchTransformFn
-	limiter    chan struct{} // make sure we don't do too many operations at once
 }
 
 // Marcher is called on each match
@@ -52,9 +60,9 @@ type Marcher interface {
 // Note: this will flag filter-aware backends on the source side
 func (m *March) init(ctx context.Context) {
 	ci := fs.GetConfig(ctx)
-	m.srcListDir = m.makeListDir(ctx, m.Fsrc, m.SrcIncludeAll)
+	m.srcListDir = m.makeListDir(ctx, m.Fsrc, m.SrcIncludeAll, m.srcKey)
 	if !m.NoTraverse {
-		m.dstListDir = m.makeListDir(ctx, m.Fdst, m.DstIncludeAll)
+		m.dstListDir = m.makeListDir(ctx, m.Fdst, m.DstIncludeAll, m.dstKey)
 	}
 	// Now create the matching transform
 	// ..normalise the UTF8 first
@@ -70,24 +78,52 @@ func (m *March) init(ctx context.Context) {
 	if m.Fdst.Features().CaseInsensitive || ci.IgnoreCaseSync {
 		m.transforms = append(m.transforms, strings.ToLower)
 	}
-	// Limit parallelism for operations
-	m.limiter = make(chan struct{}, ci.Checkers)
 }
 
-// list a directory into entries, err
-type listDirFn func(dir string) (entries fs.DirEntries, err error)
+// srcOrDstKey turns a directory entry into a sort key using the defined transforms.
+func (m *March) srcOrDstKey(entry fs.DirEntry, isSrc bool) string {
+	if entry == nil {
+		return ""
+	}
+	name := path.Base(entry.Remote())
+	_, isDirectory := entry.(fs.Directory)
+	if isSrc {
+		name = transform.Path(m.Ctx, name, isDirectory)
+	}
+	for _, transform := range m.transforms {
+		name = transform(name)
+	}
+	// Suffix entries to make identically named files and
+	// directories sort consistently with directories first.
+	if isDirectory {
+		name += "D"
+	} else {
+		name += "F"
+	}
+	return name
+}
+
+// srcKey turns a directory entry into a sort key using the defined transforms.
+func (m *March) srcKey(entry fs.DirEntry) string {
+	return m.srcOrDstKey(entry, true)
+}
+
+// dstKey turns a directory entry into a sort key using the defined transforms.
+func (m *March) dstKey(entry fs.DirEntry) string {
+	return m.srcOrDstKey(entry, false)
+}
 
 // makeListDir makes constructs a listing function for the given fs
 // and includeAll flags for marching through the file system.
 // Note: this will optionally flag filter-aware backends!
-func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool) listDirFn {
+func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn list.KeyFn) listDirFn {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
 	if !(ci.UseListR && f.Features().ListR != nil) && // !--fast-list active and
 		!(ci.NoTraverse && fi.HaveFilesFrom()) { // !(--files-from and --no-traverse)
-		return func(dir string) (entries fs.DirEntries, err error) {
+		return func(dir string, callback fs.ListRCallback) (err error) {
 			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
-			return list.DirSorted(dirCtx, f, includeAll, dir)
+			return list.DirSortedFn(dirCtx, f, includeAll, dir, callback, keyFn)
 		}
 	}
 
@@ -99,24 +135,34 @@ func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool) listD
 		dirs    dirtree.DirTree
 		dirsErr error
 	)
-	return func(dir string) (entries fs.DirEntries, err error) {
+	return func(dir string, callback fs.ListRCallback) (err error) {
 		mu.Lock()
-		defer mu.Unlock()
 		if !started {
 			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 			dirs, dirsErr = walk.NewDirTree(dirCtx, f, m.Dir, includeAll, ci.MaxDepth)
 			started = true
 		}
 		if dirsErr != nil {
-			return nil, dirsErr
+			mu.Unlock()
+			return dirsErr
 		}
 		entries, ok := dirs[dir]
 		if !ok {
-			err = fs.ErrorDirNotFound
-		} else {
-			delete(dirs, dir)
+			mu.Unlock()
+			return fs.ErrorDirNotFound
 		}
-		return entries, err
+		delete(dirs, dir)
+		mu.Unlock()
+
+		// We use a stable sort here just in case there are
+		// duplicates. Assuming the remote delivers the entries in a
+		// consistent order, this will give the best user experience
+		// in syncing as it will use the first entry for the sync
+		// comparison.
+		slices.SortStableFunc(entries, func(a, b fs.DirEntry) int {
+			return cmp.Compare(keyFn(a), keyFn(b))
+		})
+		return callback(entries)
 	}
 }
 
@@ -154,7 +200,7 @@ func (m *March) Run(ctx context.Context) error {
 	var traversing sync.WaitGroup // running directory traversals
 	checkers := ci.Checkers
 	in := make(chan listDirJob, checkers)
-	for i := 0; i < checkers; i++ {
+	for range checkers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -233,148 +279,96 @@ func (m *March) aborting() bool {
 	return false
 }
 
-// matchEntry is an entry plus transformed name
-type matchEntry struct {
-	entry fs.DirEntry
-	leaf  string
-	name  string
-}
-
-// matchEntries contains many matchEntry~s
-type matchEntries []matchEntry
-
-// Len is part of sort.Interface.
-func (es matchEntries) Len() int { return len(es) }
-
-// Swap is part of sort.Interface.
-func (es matchEntries) Swap(i, j int) { es[i], es[j] = es[j], es[i] }
-
-// Less is part of sort.Interface.
-//
-// Compare in order (name, leaf, remote)
-func (es matchEntries) Less(i, j int) bool {
-	ei, ej := &es[i], &es[j]
-	if ei.name == ej.name {
-		if ei.leaf == ej.leaf {
-			return fs.CompareDirEntries(ei.entry, ej.entry) < 0
-		}
-		return ei.leaf < ej.leaf
-	}
-	return ei.name < ej.name
-}
-
-// Sort the directory entries by (name, leaf, remote)
-//
-// We use a stable sort here just in case there are
-// duplicates. Assuming the remote delivers the entries in a
-// consistent order, this will give the best user experience
-// in syncing as it will use the first entry for the sync
-// comparison.
-func (es matchEntries) sort() {
-	sort.Stable(es)
-}
-
-// make a matchEntries from a newMatch entries
-func newMatchEntries(entries fs.DirEntries, transforms []matchTransformFn) matchEntries {
-	es := make(matchEntries, len(entries))
-	for i := range es {
-		es[i].entry = entries[i]
-		name := path.Base(entries[i].Remote())
-		es[i].leaf = name
-		for _, transform := range transforms {
-			name = transform(name)
-		}
-		es[i].name = name
-	}
-	es.sort()
-	return es
-}
-
-// matchPair is a matched pair of direntries returned by matchListings
-type matchPair struct {
-	src, dst fs.DirEntry
-}
-
-// matchTransformFn converts a name into a form which is used for
-// comparison in matchListings.
-type matchTransformFn func(name string) string
-
 // Process the two listings, matching up the items in the two slices
 // using the transform function on each name first.
 //
 // Into srcOnly go Entries which only exist in the srcList
 // Into dstOnly go Entries which only exist in the dstList
-// Into matches go matchPair's of src and dst which have the same name
+// Into match go matchPair's of src and dst which have the same name
 //
 // This checks for duplicates and checks the list is sorted.
-func matchListings(srcListEntries, dstListEntries fs.DirEntries, transforms []matchTransformFn) (srcOnly fs.DirEntries, dstOnly fs.DirEntries, matches []matchPair) {
-	srcList := newMatchEntries(srcListEntries, transforms)
-	dstList := newMatchEntries(dstListEntries, transforms)
-
-	for iSrc, iDst := 0, 0; ; iSrc, iDst = iSrc+1, iDst+1 {
-		var src, dst fs.DirEntry
-		var srcName, dstName string
-		if iSrc < len(srcList) {
-			src = srcList[iSrc].entry
-			srcName = srcList[iSrc].name
+func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, srcOnly, dstOnly func(fs.DirEntry), match func(dst, src fs.DirEntry)) error {
+	var (
+		srcPrev, dstPrev         fs.DirEntry
+		srcPrevName, dstPrevName string
+		src, dst                 fs.DirEntry
+		srcHasMore, dstHasMore   = true, true
+		srcName, dstName         string
+	)
+	srcDone := func() {
+		srcPrevName = srcName
+		srcPrev = src
+		src = nil
+		srcName = ""
+	}
+	dstDone := func() {
+		dstPrevName = dstName
+		dstPrev = dst
+		dst = nil
+		dstName = ""
+	}
+	for {
+		if m.aborting() {
+			return m.Ctx.Err()
 		}
-		if iDst < len(dstList) {
-			dst = dstList[iDst].entry
-			dstName = dstList[iDst].name
+		// Reload src and dst if needed - we set them to nil if used
+		if src == nil {
+			src, srcHasMore = <-srcChan
+			srcName = m.srcKey(src)
 		}
-		if src == nil && dst == nil {
+		if dst == nil {
+			dst, dstHasMore = <-dstChan
+			dstName = m.dstKey(dst)
+		}
+		if !srcHasMore && !dstHasMore {
 			break
 		}
-		if src != nil && iSrc > 0 {
-			prev := srcList[iSrc-1].entry
-			prevName := srcList[iSrc-1].name
-			if srcName == prevName && fs.DirEntryType(prev) == fs.DirEntryType(src) {
+		if src != nil && srcPrev != nil {
+			if srcName == srcPrevName && fs.DirEntryType(srcPrev) == fs.DirEntryType(src) {
 				fs.Logf(src, "Duplicate %s found in source - ignoring", fs.DirEntryType(src))
-				iDst-- // ignore the src and retry the dst
+				srcDone() // skip the src and retry the dst
 				continue
-			} else if srcName < prevName {
+			} else if srcName < srcPrevName {
 				// this should never happen since we sort the listings
 				panic("Out of order listing in source")
 			}
 		}
-		if dst != nil && iDst > 0 {
-			prev := dstList[iDst-1].entry
-			prevName := dstList[iDst-1].name
-			if dstName == prevName && fs.DirEntryType(dst) == fs.DirEntryType(prev) {
+		if dst != nil && dstPrev != nil {
+			if dstName == dstPrevName && fs.DirEntryType(dst) == fs.DirEntryType(dstPrev) {
 				fs.Logf(dst, "Duplicate %s found in destination - ignoring", fs.DirEntryType(dst))
-				iSrc-- // ignore the dst and retry the src
+				dstDone() // skip the dst and retry the src
 				continue
-			} else if dstName < prevName {
+			} else if dstName < dstPrevName {
 				// this should never happen since we sort the listings
 				panic("Out of order listing in destination")
 			}
 		}
-		if src != nil && dst != nil {
+		switch {
+		case src != nil && dst != nil:
 			// we can't use CompareDirEntries because srcName, dstName could
-			// be different then src.Remote() or dst.Remote()
+			// be different from src.Remote() or dst.Remote()
 			srcType := fs.DirEntryType(src)
 			dstType := fs.DirEntryType(dst)
 			if srcName > dstName || (srcName == dstName && srcType > dstType) {
-				src = nil
-				iSrc--
+				dstOnly(dst)
+				dstDone()
 			} else if srcName < dstName || (srcName == dstName && srcType < dstType) {
-				dst = nil
-				iDst--
+				srcOnly(src)
+				srcDone()
+			} else {
+				match(dst, src)
+				dstDone()
+				srcDone()
 			}
-		}
-		// Debugf(nil, "src = %v, dst = %v", src, dst)
-		switch {
-		case src == nil && dst == nil:
-			// do nothing
 		case src == nil:
-			dstOnly = append(dstOnly, dst)
+			dstOnly(dst)
+			dstDone()
 		case dst == nil:
-			srcOnly = append(srcOnly, src)
-		default:
-			matches = append(matches, matchPair{src: src, dst: dst})
+			srcOnly(src)
+			srcDone()
 		}
 	}
-	return
+	return nil
 }
 
 // processJob processes a listDirJob listing the source and
@@ -385,26 +379,150 @@ func matchListings(srcListEntries, dstListEntries fs.DirEntries, transforms []ma
 func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	var (
 		jobs                   []listDirJob
-		srcList, dstList       fs.DirEntries
+		srcChan                = make(chan fs.DirEntry, 100)
+		dstChan                = make(chan fs.DirEntry, 100)
 		srcListErr, dstListErr error
 		wg                     sync.WaitGroup
-		mu                     sync.Mutex
+		ci                     = fs.GetConfig(m.Ctx)
 	)
 
 	// List the src and dst directories
 	if !job.noSrc {
+		srcChan := srcChan // duplicate this as we may override it later
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			srcList, srcListErr = m.srcListDir(job.srcRemote)
+			srcListErr = m.srcListDir(job.srcRemote, func(entries fs.DirEntries) error {
+				for _, entry := range entries {
+					srcChan <- entry
+				}
+				return nil
+			})
+			close(srcChan)
+		}()
+	} else {
+		close(srcChan)
+	}
+	startedDst := false
+	if !m.NoTraverse && !job.noDst {
+		startedDst = true
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			dstListErr = m.dstListDir(job.dstRemote, func(entries fs.DirEntries) error {
+				for _, entry := range entries {
+					dstChan <- entry
+				}
+				return nil
+			})
+			close(dstChan)
 		}()
 	}
-	if !m.NoTraverse && !job.noDst {
+	// If NoTraverse is set, then try to find a matching object
+	// for each item in the srcList to head dst object
+	if m.NoTraverse && !m.NoCheckDest {
+		startedDst = true
+		workers := ci.Checkers
+		originalSrcChan := srcChan
+		srcChan = make(chan fs.DirEntry, 100)
+
+		type matchTask struct {
+			src      fs.DirEntry        // src object to find in destination
+			dstMatch chan<- fs.DirEntry // channel to receive matching dst object or nil
+		}
+		matchTasks := make(chan matchTask, workers)
+		dstMatches := make(chan (<-chan fs.DirEntry), workers)
+
+		// Create the tasks from the originalSrcChan. These are put into matchTasks for
+		// processing and dstMatches so they can be retrieved in order.
+		go func() {
+			for src := range originalSrcChan {
+				srcChan <- src
+				dstMatch := make(chan fs.DirEntry, 1)
+				matchTasks <- matchTask{
+					src:      src,
+					dstMatch: dstMatch,
+				}
+				dstMatches <- dstMatch
+			}
+			close(matchTasks)
+		}()
+
+		// Get the tasks from the queue and find a matching object.
+		var workerWg sync.WaitGroup
+		for range workers {
+			workerWg.Add(1)
+			go func() {
+				defer workerWg.Done()
+				for t := range matchTasks {
+					leaf := path.Base(t.src.Remote())
+					dst, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
+					if err != nil {
+						dst = nil
+					}
+					t.dstMatch <- dst
+				}
+			}()
+		}
+
+		// Close dstResults when all the workers have finished
+		go func() {
+			workerWg.Wait()
+			close(dstMatches)
+		}()
+
+		// Read the matches in order and send them to dstChan if found.
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			dstList, dstListErr = m.dstListDir(job.dstRemote)
+			for dstMatch := range dstMatches {
+				dst := <-dstMatch
+				// Note that dst may be nil here
+				// We send these on so we don't deadlock the reader
+				dstChan <- dst
+			}
+			close(srcChan)
+			close(dstChan)
 		}()
+	}
+	if !startedDst {
+		close(dstChan)
+	}
+
+	// Work out what to do and do it
+	err := m.matchListings(srcChan, dstChan, func(src fs.DirEntry) {
+		recurse := m.Callback.SrcOnly(src)
+		if recurse && job.srcDepth > 0 {
+			jobs = append(jobs, listDirJob{
+				srcRemote: src.Remote(),
+				dstRemote: src.Remote(),
+				srcDepth:  job.srcDepth - 1,
+				noDst:     true,
+			})
+		}
+	}, func(dst fs.DirEntry) {
+		recurse := m.Callback.DstOnly(dst)
+		if recurse && job.dstDepth > 0 {
+			jobs = append(jobs, listDirJob{
+				srcRemote: dst.Remote(),
+				dstRemote: dst.Remote(),
+				dstDepth:  job.dstDepth - 1,
+				noSrc:     true,
+			})
+		}
+	}, func(dst, src fs.DirEntry) {
+		recurse := m.Callback.Match(m.Ctx, dst, src)
+		if recurse && job.srcDepth > 0 && job.dstDepth > 0 {
+			jobs = append(jobs, listDirJob{
+				srcRemote: src.Remote(),
+				dstRemote: dst.Remote(),
+				srcDepth:  job.srcDepth - 1,
+				dstDepth:  job.dstDepth - 1,
+			})
+		}
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	// Wait for listings to complete and report errors
@@ -430,73 +548,5 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		return nil, dstListErr
 	}
 
-	// If NoTraverse is set, then try to find a matching object
-	// for each item in the srcList to head dst object
-	if m.NoTraverse && !m.NoCheckDest {
-		for _, src := range srcList {
-			wg.Add(1)
-			m.limiter <- struct{}{}
-			go func(src fs.DirEntry) {
-				defer wg.Done()
-				if srcObj, ok := src.(fs.Object); ok {
-					leaf := path.Base(srcObj.Remote())
-					dstObj, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
-					if err == nil {
-						mu.Lock()
-						dstList = append(dstList, dstObj)
-						mu.Unlock()
-					}
-				}
-				<-m.limiter
-			}(src)
-		}
-		wg.Wait()
-	}
-
-	// Work out what to do and do it
-	srcOnly, dstOnly, matches := matchListings(srcList, dstList, m.transforms)
-	for _, src := range srcOnly {
-		if m.aborting() {
-			return nil, m.Ctx.Err()
-		}
-		recurse := m.Callback.SrcOnly(src)
-		if recurse && job.srcDepth > 0 {
-			jobs = append(jobs, listDirJob{
-				srcRemote: src.Remote(),
-				dstRemote: src.Remote(),
-				srcDepth:  job.srcDepth - 1,
-				noDst:     true,
-			})
-		}
-
-	}
-	for _, dst := range dstOnly {
-		if m.aborting() {
-			return nil, m.Ctx.Err()
-		}
-		recurse := m.Callback.DstOnly(dst)
-		if recurse && job.dstDepth > 0 {
-			jobs = append(jobs, listDirJob{
-				srcRemote: dst.Remote(),
-				dstRemote: dst.Remote(),
-				dstDepth:  job.dstDepth - 1,
-				noSrc:     true,
-			})
-		}
-	}
-	for _, match := range matches {
-		if m.aborting() {
-			return nil, m.Ctx.Err()
-		}
-		recurse := m.Callback.Match(m.Ctx, match.dst, match.src)
-		if recurse && job.srcDepth > 0 && job.dstDepth > 0 {
-			jobs = append(jobs, listDirJob{
-				srcRemote: match.src.Remote(),
-				dstRemote: match.dst.Remote(),
-				srcDepth:  job.srcDepth - 1,
-				dstDepth:  job.dstDepth - 1,
-			})
-		}
-	}
 	return jobs, nil
 }

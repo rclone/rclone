@@ -112,12 +112,8 @@ func (o *Object) uploadChunks(ctx context.Context, in0 io.Reader, size int64, pa
 			return err
 		}
 
-		contentLength := chunkSize
-
 		// Last chunk may be smaller
-		if size-offset < contentLength {
-			contentLength = size - offset
-		}
+		contentLength := min(size-offset, chunkSize)
 
 		endOffset := offset + contentLength - 1
 

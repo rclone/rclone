@@ -10,7 +10,7 @@ import (
 // Error describes low level errors in a cross platform way.
 type Error byte
 
-// NB if changing errors translateError in cmd/mount/fs.go, cmd/cmount/fs.go
+// NB if changing errors, update translateError in cmd/mount/fs.go, cmd/cmount/fs.go, cmd/mount2/fs.go
 
 // Low level errors
 const (
@@ -20,6 +20,7 @@ const (
 	EBADF
 	EROFS
 	ENOSYS
+	ELOOP
 )
 
 // Errors which have exact counterparts in os
@@ -38,6 +39,7 @@ var errorNames = []string{
 	EBADF:     "Bad file descriptor",
 	EROFS:     "Read only file system",
 	ENOSYS:    "Function not implemented",
+	ELOOP:     "Too many symbolic links",
 }
 
 // Error renders the error as a string

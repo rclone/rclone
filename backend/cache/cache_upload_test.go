@@ -162,7 +162,7 @@ func TestInternalUploadQueueMoreFiles(t *testing.T) {
 	randInstance := rand.New(rand.NewSource(time.Now().Unix()))
 
 	lastFile := ""
-	for i := 0; i < totalFiles; i++ {
+	for i := range totalFiles {
 		size := int64(randInstance.Intn(maxSize-minSize) + minSize)
 		testReader := runInstance.randomReader(t, size)
 		remote := "test/" + strconv.Itoa(i) + ".bin"

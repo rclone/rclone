@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -152,6 +153,19 @@ Owner is able to add custom keys. Metadata feature grabs all the keys including 
 			Default:  "https://archive.org",
 			Advanced: true,
 		}, {
+			Name: "item_metadata",
+			Help: `Metadata to be set on the IA item, this is different from file-level metadata that can be set using --metadata-set.
+Format is key=value and the 'x-archive-meta-' prefix is automatically added.`,
+			Default:  []string{},
+			Hide:     fs.OptionHideConfigurator,
+			Advanced: true,
+		}, {
+			Name: "item_derive",
+			Help: `Whether to trigger derive on the IA item or not. If set to false, the item will not be derived by IA upon upload.
+The derive process produces a number of secondary files from an upload to make an upload more usable on the web.
+Setting this to false is useful for uploading files that are already in a format that IA can display or reduce burden on IA's infrastructure.`,
+			Default: true,
+		}, {
 			Name: "disable_checksum",
 			Help: `Don't ask the server to test against MD5 checksum calculated by rclone.
 Normally rclone will calculate the MD5 checksum of the input before
@@ -187,7 +201,7 @@ Only enable if you need to be guaranteed to be reflected after write operations.
 const iaItemMaxSize int64 = 1099511627776
 
 // metadata keys that are not writeable
-var roMetadataKey = map[string]interface{}{
+var roMetadataKey = map[string]any{
 	// do not add mtime here, it's a documented exception
 	"name": nil, "source": nil, "size": nil, "md5": nil,
 	"crc32": nil, "sha1": nil, "format": nil, "old_version": nil,
@@ -201,6 +215,8 @@ type Options struct {
 	Endpoint        string               `config:"endpoint"`
 	FrontEndpoint   string               `config:"front_endpoint"`
 	DisableChecksum bool                 `config:"disable_checksum"`
+	ItemMetadata    []string             `config:"item_metadata"`
+	ItemDerive      bool                 `config:"item_derive"`
 	WaitArchive     fs.Duration          `config:"wait_archive"`
 	Enc             encoder.MultiEncoder `config:"encoding"`
 }
@@ -574,7 +590,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", err
 	}
 	bucket, bucketPath := f.split(remote)
-	return path.Join(f.opt.FrontEndpoint, "/download/", bucket, quotePath(bucketPath)), nil
+	return path.Join(f.opt.FrontEndpoint, "/download/", bucket, rest.URLPathEscapeAll(bucketPath)), nil
 }
 
 // Copy src to this remote using server-side copy operations.
@@ -606,7 +622,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 		"x-archive-auto-make-bucket": "1",
 		"x-archive-queue-derive":     "0",
 		"x-archive-keep-old-version": "0",
-		"x-amz-copy-source":          quotePath(path.Join("/", srcBucket, srcPath)),
+		"x-amz-copy-source":          rest.URLPathEscapeAll(path.Join("/", srcBucket, srcPath)),
 		"x-amz-metadata-directive":   "COPY",
 		"x-archive-filemeta-sha1":    srcObj.sha1,
 		"x-archive-filemeta-md5":     srcObj.md5,
@@ -762,7 +778,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	// make a GET request to (frontend)/download/:item/:path
 	opts := rest.Opts{
 		Method:  "GET",
-		Path:    path.Join("/download/", o.fs.root, quotePath(o.fs.opt.Enc.FromStandardPath(o.remote))),
+		Path:    path.Join("/download/", o.fs.root, rest.URLPathEscapeAll(o.fs.opt.Enc.FromStandardPath(o.remote))),
 		Options: optionsFixed,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -790,17 +806,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		"x-amz-filemeta-rclone-update-track": updateTracker,
 
 		// we add some more headers for intuitive actions
-		"x-amz-auto-make-bucket":     "1",    // create an item if does not exist, do nothing if already
-		"x-archive-auto-make-bucket": "1",    // same as above in IAS3 original way
-		"x-archive-keep-old-version": "0",    // do not keep old versions (a.k.a. trashes in other clouds)
-		"x-archive-meta-mediatype":   "data", // mark media type of the uploading file as "data"
-		"x-archive-queue-derive":     "0",    // skip derivation process (e.g. encoding to smaller files, OCR on PDFs)
-		"x-archive-cascade-delete":   "1",    // enable "cascate delete" (delete all derived files in addition to the file itself)
+		"x-amz-auto-make-bucket":     "1", // create an item if does not exist, do nothing if already
+		"x-archive-auto-make-bucket": "1", // same as above in IAS3 original way
+		"x-archive-keep-old-version": "0", // do not keep old versions (a.k.a. trashes in other clouds)
+		"x-archive-cascade-delete":   "1", // enable "cascate delete" (delete all derived files in addition to the file itself)
 	}
+
 	if size >= 0 {
 		headers["Content-Length"] = fmt.Sprintf("%d", size)
 		headers["x-archive-size-hint"] = fmt.Sprintf("%d", size)
 	}
+
+	// This is IA's ITEM metadata, not file metadata
+	headers, err = o.appendItemMetadataHeaders(headers, o.fs.opt)
+	if err != nil {
+		return err
+	}
+
 	var mdata fs.Metadata
 	mdata, err = fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err == nil && mdata != nil {
@@ -861,6 +883,51 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.modTime = newObj.modTime
 	o.size = newObj.size
 	return err
+}
+
+func (o *Object) appendItemMetadataHeaders(headers map[string]string, options Options) (newHeaders map[string]string, err error) {
+	metadataCounter := make(map[string]int)
+	metadataValues := make(map[string][]string)
+
+	// First pass: count occurrences and collect values
+	for _, v := range options.ItemMetadata {
+		parts := strings.SplitN(v, "=", 2)
+		if len(parts) != 2 {
+			return newHeaders, errors.New("item metadata key=value should be in the form key=value")
+		}
+		key, value := parts[0], parts[1]
+		metadataCounter[key]++
+		metadataValues[key] = append(metadataValues[key], value)
+	}
+
+	// Second pass: add headers with appropriate prefixes
+	for key, count := range metadataCounter {
+		if count == 1 {
+			// Only one occurrence, use x-archive-meta-
+			headers[fmt.Sprintf("x-archive-meta-%s", key)] = metadataValues[key][0]
+		} else {
+			// Multiple occurrences, use x-archive-meta01-, x-archive-meta02-, etc.
+			for i, value := range metadataValues[key] {
+				headers[fmt.Sprintf("x-archive-meta%02d-%s", i+1, key)] = value
+			}
+		}
+	}
+
+	if o.fs.opt.ItemDerive {
+		headers["x-archive-queue-derive"] = "1"
+	} else {
+		headers["x-archive-queue-derive"] = "0"
+	}
+
+	fs.Debugf(o, "Setting IA item derive: %t", o.fs.opt.ItemDerive)
+
+	for k, v := range headers {
+		if strings.HasPrefix(k, "x-archive-meta") {
+			fs.Debugf(o, "Setting IA item metadata: %s=%s", k, v)
+		}
+	}
+
+	return headers, nil
 }
 
 // Remove an object
@@ -925,10 +992,8 @@ func (o *Object) Metadata(ctx context.Context) (m fs.Metadata, err error) {
 
 func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 	if resp != nil {
-		for _, e := range retryErrorCodes {
-			if resp.StatusCode == e {
-				return true, err
-			}
+		if slices.Contains(retryErrorCodes, resp.StatusCode) {
+			return true, err
 		}
 	}
 	// Ok, not an awserr, check for generic failure conditions
@@ -1081,13 +1146,7 @@ func (f *Fs) waitFileUpload(ctx context.Context, reqPath, tracker string, newSiz
 			}
 
 			fileTrackers, _ := listOrString(iaFile.UpdateTrack)
-			trackerMatch := false
-			for _, v := range fileTrackers {
-				if v == tracker {
-					trackerMatch = true
-					break
-				}
-			}
+			trackerMatch := slices.Contains(fileTrackers, tracker)
 			if !trackerMatch {
 				continue
 			}
@@ -1273,16 +1332,6 @@ func trimPathPrefix(s, prefix string, enc encoder.MultiEncoder) string {
 	}
 	prefix = enc.ToStandardPath(strings.TrimRight(prefix, "/"))
 	return enc.ToStandardPath(strings.TrimPrefix(s, prefix+"/"))
-}
-
-// mimics urllib.parse.quote() on Python; exclude / from url.PathEscape
-func quotePath(s string) string {
-	seg := strings.Split(s, "/")
-	newValues := []string{}
-	for _, v := range seg {
-		newValues = append(newValues, url.PathEscape(v))
-	}
-	return strings.Join(newValues, "/")
 }
 
 var (

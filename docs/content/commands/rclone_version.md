@@ -46,6 +46,9 @@ Or
     beta:   1.42.0.5      (released 2018-06-17)
       upgrade: https://beta.rclone.org/v1.42-005-g56e1e820
 
+If you supply the --deps flag then rclone will print a list of all the
+packages it depends on and their versions along with some other
+information about the build.
 
 
 ```
@@ -56,6 +59,7 @@ rclone version [flags]
 
 ```
       --check   Check for new version
+      --deps    Show the Go dependencies
   -h, --help    help for version
 ```
 

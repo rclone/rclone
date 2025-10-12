@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
@@ -89,7 +90,7 @@ func (f *Fs) newSSHSessionExternal() *sshSessionExternal {
 	// Connect to a remote host and request the sftp subsystem via
 	// the 'ssh' command. This assumes that passwordless login is
 	// correctly configured.
-	ssh := append([]string(nil), s.f.opt.SSH...)
+	ssh := slices.Clone(s.f.opt.SSH)
 	s.cmd = exec.CommandContext(ctx, ssh[0], ssh[1:]...)
 
 	// Allow the command a short time only to shut down

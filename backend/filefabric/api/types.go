@@ -216,11 +216,11 @@ var ItemFields = mustFields(Item{})
 
 // fields returns the JSON fields in use by opt as a | separated
 // string.
-func fields(opt interface{}) (pipeTags string, err error) {
+func fields(opt any) (pipeTags string, err error) {
 	var tags []string
 	def := reflect.ValueOf(opt)
 	defType := def.Type()
-	for i := 0; i < def.NumField(); i++ {
+	for i := range def.NumField() {
 		field := defType.Field(i)
 		tag, ok := field.Tag.Lookup("json")
 		if !ok {
@@ -239,7 +239,7 @@ func fields(opt interface{}) (pipeTags string, err error) {
 
 // mustFields returns the JSON fields in use by opt as a | separated
 // string. It panics on failure.
-func mustFields(opt interface{}) string {
+func mustFields(opt any) string {
 	tags, err := fields(opt)
 	if err != nil {
 		panic(err)
@@ -351,12 +351,12 @@ type SpaceInfo struct {
 // DeleteResponse is returned from doDeleteFile
 type DeleteResponse struct {
 	Status
-	Deleted        []string      `json:"deleted"`
-	Errors         []interface{} `json:"errors"`
-	ID             string        `json:"fi_id"`
-	BackgroundTask int           `json:"backgroundtask"`
-	UsSize         string        `json:"us_size"`
-	PaSize         string        `json:"pa_size"`
+	Deleted        []string `json:"deleted"`
+	Errors         []any    `json:"errors"`
+	ID             string   `json:"fi_id"`
+	BackgroundTask int      `json:"backgroundtask"`
+	UsSize         string   `json:"us_size"`
+	PaSize         string   `json:"pa_size"`
 	//SpaceInfo      SpaceInfo     `json:"spaceinfo"`
 }
 

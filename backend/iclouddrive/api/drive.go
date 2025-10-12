@@ -252,18 +252,14 @@ func (d *DriveService) DownloadFile(ctx context.Context, url string, opt []fs.Op
 	}
 
 	resp, err := d.icloud.srv.Call(ctx, opts)
-	if err != nil {
-		// icloud has some weird http codes
-		if resp.StatusCode == 330 {
-			loc, err := resp.Location()
-			if err == nil {
-				return d.DownloadFile(ctx, loc.String(), opt)
-			}
+	// icloud has some weird http codes
+	if err != nil && resp != nil && resp.StatusCode == 330 {
+		loc, err := resp.Location()
+		if err == nil {
+			return d.DownloadFile(ctx, loc.String(), opt)
 		}
-
-		return resp, err
 	}
-	return d.icloud.srv.Call(ctx, opts)
+	return resp, err
 }
 
 // MoveItemToTrashByItemID moves an item to the trash based on the item ID.
@@ -476,7 +472,7 @@ func (d *DriveService) MoveItemByDriveID(ctx context.Context, id, etag, dstID st
 
 // CopyDocByItemID copies a document by its item ID.
 func (d *DriveService) CopyDocByItemID(ctx context.Context, itemID string) (*DriveItemRaw, *http.Response, error) {
-	// putting name in info doesnt work. extension does work so assume this is a bug in the endpoint
+	// putting name in info doesn't work. extension does work so assume this is a bug in the endpoint
 	values := map[string]any{
 		"info_to_update": map[string]any{},
 	}
@@ -631,7 +627,7 @@ func NewUpdateFileInfo() UpdateFileInfo {
 		FileFlags: FileFlags{
 			IsExecutable: true,
 			IsHidden:     false,
-			IsWritable:   false,
+			IsWritable:   true,
 		},
 	}
 }
@@ -733,8 +729,8 @@ type DocumentUpdateResponse struct {
 			StatusCode   int    `json:"status_code"`
 			ErrorMessage string `json:"error_message"`
 		} `json:"status"`
-		OperationID interface{} `json:"operation_id"`
-		Document    *Document   `json:"document"`
+		OperationID any       `json:"operation_id"`
+		Document    *Document `json:"document"`
 	} `json:"results"`
 }
 
@@ -765,9 +761,9 @@ type Document struct {
 		IsWritable   bool `json:"is_writable"`
 		IsHidden     bool `json:"is_hidden"`
 	} `json:"file_flags"`
-	LastOpenedTime   int64       `json:"lastOpenedTime"`
-	RestorePath      interface{} `json:"restorePath"`
-	HasChainedParent bool        `json:"hasChainedParent"`
+	LastOpenedTime   int64 `json:"lastOpenedTime"`
+	RestorePath      any   `json:"restorePath"`
+	HasChainedParent bool  `json:"hasChainedParent"`
 }
 
 // DriveID returns the drive ID of the Document.

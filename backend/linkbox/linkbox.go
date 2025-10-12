@@ -193,7 +193,7 @@ func (o *Object) set(e *entity) {
 // Call linkbox with the query in opts and return result
 //
 // This will be checked for error and an error will be returned if Status != 1
-func getUnmarshaledResponse(ctx context.Context, f *Fs, opts *rest.Opts, result interface{}) error {
+func getUnmarshaledResponse(ctx context.Context, f *Fs, opts *rest.Opts, result any) error {
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, opts, nil, &result)
 		return f.shouldRetry(ctx, resp, err)
@@ -617,16 +617,36 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	case 1:
 		// upload file using link from first step
 		var res *http.Response
+		var location string
+
+		// Check to see if we are being redirected
+		opts := &rest.Opts{
+			Method:     "HEAD",
+			RootURL:    getFirstStepResult.Data.SignURL,
+			Options:    options,
+			NoRedirect: true,
+		}
+		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+			res, err = o.fs.srv.Call(ctx, opts)
+			return o.fs.shouldRetry(ctx, res, err)
+		})
+		if res != nil {
+			location = res.Header.Get("Location")
+			if location != "" {
+				// set the URL to the new Location
+				opts.RootURL = location
+				err = nil
+			}
+		}
+		if err != nil {
+			return fmt.Errorf("head upload URL: %w", err)
+		}
 
 		file := io.MultiReader(bytes.NewReader(first10mBytes), in)
 
-		opts := &rest.Opts{
-			Method:        "PUT",
-			RootURL:       getFirstStepResult.Data.SignURL,
-			Options:       options,
-			Body:          file,
-			ContentLength: &size,
-		}
+		opts.Method = "PUT"
+		opts.Body = file
+		opts.ContentLength = &size
 
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			res, err = o.fs.srv.Call(ctx, opts)

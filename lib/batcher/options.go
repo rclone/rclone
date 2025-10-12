@@ -66,8 +66,9 @@ default based on the batch_mode in use.
 		Advanced: true,
 	}, {
 		Name:     "batch_commit_timeout",
-		Help:     `Max time to wait for a batch to finish committing`,
+		Help:     `Max time to wait for a batch to finish committing. (no longer used)`,
 		Default:  fs.Duration(10 * time.Minute),
 		Advanced: true,
+		Hide:     fs.OptionHideBoth,
 	}}
 }

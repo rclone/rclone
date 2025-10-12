@@ -238,6 +238,30 @@ msi_client_id, or msi_mi_res_id parameters.`,
 			Advanced:  true,
 			Sensitive: true,
 		}, {
+			Name: "disable_instance_discovery",
+			Help: `Skip requesting Microsoft Entra instance metadata
+This should be set true only by applications authenticating in
+disconnected clouds, or private clouds such as Azure Stack.
+It determines whether rclone requests Microsoft Entra instance
+metadata from ` + "`https://login.microsoft.com/`" + ` before
+authenticating.
+Setting this to true will skip this request, making you responsible
+for ensuring the configured authority is valid and trustworthy.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "use_az",
+			Help: `Use Azure CLI tool az for authentication
+Set to use the [Azure CLI tool az](https://learn.microsoft.com/en-us/cli/azure/)
+as the sole means of authentication.
+Setting this can be useful if you wish to use the az CLI on a host with
+a System Managed Identity that you do not want to use.
+Don't set env_auth at the same time.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for the service.\n\nLeave blank normally.",
 			Advanced: true,
@@ -319,10 +343,12 @@ type Options struct {
 	Username                   string               `config:"username"`
 	Password                   string               `config:"password"`
 	ServicePrincipalFile       string               `config:"service_principal_file"`
+	DisableInstanceDiscovery   bool                 `config:"disable_instance_discovery"`
 	UseMSI                     bool                 `config:"use_msi"`
 	MSIObjectID                string               `config:"msi_object_id"`
 	MSIClientID                string               `config:"msi_client_id"`
 	MSIResourceID              string               `config:"msi_mi_res_id"`
+	UseAZ                      bool                 `config:"use_az"`
 	Endpoint                   string               `config:"endpoint"`
 	ChunkSize                  fs.SizeSuffix        `config:"chunk_size"`
 	MaxStreamSize              fs.SizeSuffix        `config:"max_stream_size"`
@@ -393,8 +419,10 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 	policyClientOptions := policy.ClientOptions{
 		Transport: newTransporter(ctx),
 	}
+	backup := service.ShareTokenIntentBackup
 	clientOpt := service.ClientOptions{
-		ClientOptions: policyClientOptions,
+		ClientOptions:     policyClientOptions,
+		FileRequestIntent: &backup,
 	}
 
 	// Here we auth by setting one of cred, sharedKeyCred or f.client
@@ -412,7 +440,8 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		}
 		// Read credentials from the environment
 		options := azidentity.DefaultAzureCredentialOptions{
-			ClientOptions: policyClientOptions,
+			ClientOptions:            policyClientOptions,
+			DisableInstanceDiscovery: opt.DisableInstanceDiscovery,
 		}
 		cred, err = azidentity.NewDefaultAzureCredential(&options)
 		if err != nil {
@@ -422,6 +451,13 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		sharedKeyCred, err = service.NewSharedKeyCredential(opt.Account, opt.Key)
 		if err != nil {
 			return nil, fmt.Errorf("create new shared key credential failed: %w", err)
+		}
+	case opt.UseAZ:
+		options := azidentity.AzureCLICredentialOptions{}
+		cred, err = azidentity.NewAzureCLICredential(&options)
+		fmt.Println(cred)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Azure CLI credentials: %w", err)
 		}
 	case opt.SASURL != "":
 		client, err = service.NewClientWithNoCredential(opt.SASURL, &clientOpt)
@@ -480,6 +516,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		}
 	case opt.ClientID != "" && opt.Tenant != "" && opt.Username != "" && opt.Password != "":
 		// User with username and password
+		//nolint:staticcheck // this is deprecated due to Azure policy
 		options := azidentity.UsernamePasswordCredentialOptions{
 			ClientOptions: policyClientOptions,
 		}
@@ -513,7 +550,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 	case opt.UseMSI:
 		// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
 		// Validate and ensure exactly one is set. (To do: better validation.)
-		var b2i = map[bool]int{false: 0, true: 1}
+		b2i := map[bool]int{false: 0, true: 1}
 		set := b2i[opt.MSIClientID != ""] + b2i[opt.MSIObjectID != ""] + b2i[opt.MSIResourceID != ""]
 		if set > 1 {
 			return nil, errors.New("more than one user-assigned identity ID is set")
@@ -531,6 +568,37 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		cred, err = azidentity.NewManagedIdentityCredential(&options)
 		if err != nil {
 			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+	case opt.ClientID != "" && opt.Tenant != "" && opt.MSIClientID != "":
+		// Workload Identity based authentication
+		var options azidentity.ManagedIdentityCredentialOptions
+		options.ID = azidentity.ClientID(opt.MSIClientID)
+
+		msiCred, err := azidentity.NewManagedIdentityCredential(&options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+
+		getClientAssertions := func(context.Context) (string, error) {
+			token, err := msiCred.GetToken(context.Background(), policy.TokenRequestOptions{
+				Scopes: []string{"api://AzureADTokenExchange"},
+			})
+			if err != nil {
+				return "", fmt.Errorf("failed to acquire MSI token: %w", err)
+			}
+
+			return token.Token, nil
+		}
+
+		assertOpts := &azidentity.ClientAssertionCredentialOptions{}
+		cred, err = azidentity.NewClientAssertionCredential(
+			opt.Tenant,
+			opt.ClientID,
+			getClientAssertions,
+			assertOpts)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire client assertion token: %w", err)
 		}
 	default:
 		return nil, errors.New("no authentication method configured")
@@ -786,7 +854,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		return entries, err
 	}
 
-	var opt = &directory.ListFilesAndDirectoriesOptions{
+	opt := &directory.ListFilesAndDirectoriesOptions{
 		Include: directory.ListFilesInclude{
 			Timestamps: true,
 		},
@@ -885,7 +953,7 @@ func (o *Object) setMetadata(resp *file.GetPropertiesResponse) {
 	}
 }
 
-// readMetaData gets the metadata if it hasn't already been fetched
+// getMetadata gets the metadata if it hasn't already been fetched
 func (o *Object) getMetadata(ctx context.Context) error {
 	resp, err := o.fileClient().GetProperties(ctx, nil)
 	if err != nil {
@@ -897,7 +965,7 @@ func (o *Object) getMetadata(ctx context.Context) error {
 
 // Hash returns the MD5 of an object returning a lowercase hex string
 //
-// May make a network request becaue the [fs.List] method does not
+// May make a network request because the [fs.List] method does not
 // return MD5 hashes for DirEntry
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	if ty != hash.MD5 {
@@ -944,6 +1012,10 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	opt := file.SetHTTPHeadersOptions{
 		SMBProperties: &file.SMBProperties{
 			LastWriteTime: &t,
+		},
+		HTTPHeaders: &file.HTTPHeaders{
+			ContentMD5:  o.md5,
+			ContentType: &o.contentType,
 		},
 	}
 	_, err := o.fileClient().SetHTTPHeaders(ctx, &opt)
@@ -1241,10 +1313,29 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcURL := srcObj.fileClient().URL()
 	fc := f.fileClient(remote)
-	_, err = fc.StartCopyFromURL(ctx, srcURL, &opt)
+	startCopy, err := fc.StartCopyFromURL(ctx, srcURL, &opt)
 	if err != nil {
 		return nil, fmt.Errorf("Copy failed: %w", err)
 	}
+
+	// Poll for completion if necessary
+	//
+	// The for loop is never executed for same storage account copies.
+	copyStatus := startCopy.CopyStatus
+	var properties file.GetPropertiesResponse
+	pollTime := 100 * time.Millisecond
+
+	for copyStatus != nil && string(*copyStatus) == string(file.CopyStatusTypePending) {
+		time.Sleep(pollTime)
+
+		properties, err = fc.GetProperties(ctx, &file.GetPropertiesOptions{})
+		if err != nil {
+			return nil, err
+		}
+		copyStatus = properties.CopyStatus
+		pollTime = min(2*pollTime, time.Second)
+	}
+
 	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
 		return nil, fmt.Errorf("Copy: NewObject failed: %w", err)

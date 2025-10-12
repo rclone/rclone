@@ -34,14 +34,32 @@ func TestJoin(t *testing.T) {
 		{in1: "in1", in2: "", want: "in1"},
 		{in1: "", in2: "in2", want: "in2"},
 		{in1: "in1", in2: "in2", want: "in1/in2"},
-		{in1: "in1/", in2: "in2", want: "in1/in2"},
-		{in1: "in1", in2: "/in2", want: "in1/in2"},
+		{in1: "in1/", in2: "in2", want: "in1//in2"},
+		{in1: "in1", in2: "/in2", want: "in1//in2"},
 		{in1: "in1", in2: "in2/", want: "in1/in2/"},
-		{in1: "/in1", in2: "/in2", want: "/in1/in2"},
+		{in1: "/in1", in2: "/in2", want: "/in1//in2"},
 		{in1: "/in1", in2: "../in2", want: "/in1/../in2"},
 	} {
 		got := Join(test.in1, test.in2)
 		assert.Equal(t, test.want, got, fmt.Sprintf("in1=%q, in2=%q", test.in1, test.in2))
+	}
+}
+
+func TestIsAllSlashes(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want bool
+	}{
+		{in: "", want: false},
+		{in: "/", want: true},
+		{in: "x/", want: false},
+		{in: "/x", want: false},
+		{in: "//", want: true},
+		{in: "/x/", want: false},
+		{in: "///", want: true},
+	} {
+		got := IsAllSlashes(test.in)
+		assert.Equal(t, test.want, got, test.in)
 	}
 }
 

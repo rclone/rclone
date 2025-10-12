@@ -69,7 +69,7 @@ func TestRcServer(t *testing.T) {
 	// Do the simplest possible test to check the server is alive
 	// Do it a few times to wait for the server to start
 	var resp *http.Response
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		resp, err = http.Get(testURL + "file.txt")
 		if err == nil {
 			break
@@ -358,7 +358,7 @@ func TestRemoteServing(t *testing.T) {
 			URL:    "[notfoundremote:]/",
 			Status: http.StatusInternalServerError,
 			Expected: `{
-	"error": "failed to make Fs: didn't find section in config file",
+	"error": "failed to make Fs: didn't find section in config file (\"notfoundremote\")",
 	"input": null,
 	"path": "/",
 	"status": 500
@@ -431,6 +431,18 @@ func TestRC(t *testing.T) {
 }
 `,
 	}, {
+		Name:        "json-mixed-case-content-type",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        `{ "param1":"string", "param2":true }`,
+		ContentType: "ApplicAtion/JsOn",
+		Status:      http.StatusOK,
+		Expected: `{
+	"param1": "string",
+	"param2": true
+}
+`,
+	}, {
 		Name:        "json-and-url-params",
 		URL:         "rc/noop?param1=potato&param2=sausage",
 		Method:      "POST",
@@ -456,6 +468,44 @@ func TestRC(t *testing.T) {
 		"param1": "potato",
 		"param2": "sausage"
 	},
+	"path": "rc/noop",
+	"status": 400
+}
+`,
+	}, {
+		Name:        "json-charset",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        `{ "param1":"string", "param2":true }`,
+		ContentType: "application/json; charset=utf-8",
+		Status:      http.StatusOK,
+		Expected: `{
+	"param1": "string",
+	"param2": true
+}
+`,
+	}, {
+		Name:        "json-mixed-case-charset",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        `{ "param1":"string", "param2":true }`,
+		ContentType: "aPPlication/jSoN; charset=UtF-8",
+		Status:      http.StatusOK,
+		Expected: `{
+	"param1": "string",
+	"param2": true
+}
+`,
+	}, {
+		Name:        "json-bad-charset",
+		URL:         "rc/noop",
+		Method:      "POST",
+		Body:        `{ "param1":"string", "param2":true }`,
+		ContentType: "application/json; charset=latin1",
+		Status:      http.StatusBadRequest,
+		Expected: `{
+	"error": "unsupported charset \"latin1\" for JSON input",
+	"input": {},
 	"path": "rc/noop",
 	"status": 400
 }
@@ -494,6 +544,19 @@ func TestRC(t *testing.T) {
 		Status:      http.StatusBadRequest,
 		Expected: `{
 	"error": "failed to parse form/URL parameters: invalid URL escape \"%zz\"",
+	"input": null,
+	"path": "rc/noop",
+	"status": 400
+}
+`,
+	}, {
+		Name:        "malformed-content-type",
+		URL:         "rc/noop",
+		Method:      "POST",
+		ContentType: "malformed/",
+		Status:      http.StatusBadRequest,
+		Expected: `{
+	"error": "failed to parse Content-Type: mime: expected token after slash",
 	"input": null,
 	"path": "rc/noop",
 	"status": 400
@@ -843,7 +906,7 @@ func TestContentTypeJSON(t *testing.T) {
 }
 
 func normalizeJSON(t *testing.T, jsonStr string) string {
-	var jsonObj map[string]interface{}
+	var jsonObj map[string]any
 	err := json.Unmarshal([]byte(jsonStr), &jsonObj)
 	require.NoError(t, err, "JSON unmarshalling failed")
 	normalizedJSON, err := json.Marshal(jsonObj)

@@ -12,11 +12,13 @@ versionIntroduced: "v1.26"
 
 Here is an example of making a yandex configuration.  First run
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -59,7 +61,7 @@ y/e/d> y
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from Yandex Disk. This only runs from the moment it
@@ -71,20 +73,28 @@ Once configured you can then use `rclone` like this,
 
 See top level directories
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 Make a new directory
 
-    rclone mkdir remote:directory
+```sh
+rclone mkdir remote:directory
+```
 
 List the contents of a directory
 
-    rclone ls remote:directory
+```sh
+rclone ls remote:directory
+```
 
 Sync `/home/local/directory` to the remote path, deleting any
 excess files in the path.
 
-    rclone sync --interactive /home/local/directory remote:directory
+```sh
+rclone sync --interactive /home/local/directory remote:directory
+```
 
 Yandex paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
@@ -185,6 +195,21 @@ Properties:
 - Env Var:     RCLONE_YANDEX_TOKEN_URL
 - Type:        string
 - Required:    false
+
+#### --yandex-client-credentials
+
+Use client credentials OAuth flow.
+
+This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
+
+Properties:
+
+- Config:      client_credentials
+- Env Var:     RCLONE_YANDEX_CLIENT_CREDENTIALS
+- Type:        bool
+- Default:     false
 
 #### --yandex-hard-delete
 

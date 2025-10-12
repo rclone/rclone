@@ -13,16 +13,17 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ssh"
 )
 
 func TestRun(t *testing.T) {
-	opt := DefaultOpt
+	opt := Opt
 	cmd := "go run proxy_code.go"
 	opt.AuthProxy = cmd
-	p := New(context.Background(), &opt)
+	p := New(context.Background(), &opt, &vfscommon.Opt)
 
 	t.Run("Normal", func(t *testing.T) {
 		config, err := p.run(map[string]string{

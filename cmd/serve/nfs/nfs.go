@@ -14,8 +14,11 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -83,6 +86,24 @@ func AddFlags(flagSet *pflag.FlagSet) {
 func init() {
 	vfsflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags())
+	serve.Command.AddCommand(Command)
+	serve.AddRc("nfs", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
+		// Create VFS
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		VFS := vfs.New(f, &vfsOpt)
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return NewServer(ctx, VFS, &opt)
+	})
 }
 
 // Run the command
@@ -104,7 +125,7 @@ var Command = &cobra.Command{
 	Use:   "nfs remote:path",
 	Short: `Serve the remote as an NFS mount`,
 	Long: strings.ReplaceAll(`Create an NFS server that serves the given remote over the network.
-	
+
 This implements an NFSv3 server to serve any rclone remote via NFS.
 
 The primary purpose for this command is to enable the [mount
@@ -145,7 +166,9 @@ that it uses an on disk cache, but the cache entries are held as
 symlinks. Rclone will use the handle of the underlying file as the NFS
 handle which improves performance. This sort of cache can't be backed
 up and restored as the underlying handles will change. This is Linux
-only.
+only. It requires running rclone as root or with |CAP_DAC_READ_SEARCH|.
+You can run rclone with this extra permission by doing this to the
+rclone binary |sudo setcap cap_dac_read_search+ep /path/to/rclone|.
 
 |--nfs-cache-handle-limit| controls the maximum number of cached NFS
 handles stored by the caching handler. This should not be set too low
@@ -156,20 +179,30 @@ cache.
 
 To serve NFS over the network use following command:
 
-    rclone serve nfs remote: --addr 0.0.0.0:$PORT --vfs-cache-mode=full
+|||sh
+rclone serve nfs remote: --addr 0.0.0.0:$PORT --vfs-cache-mode=full
+|||
 
 This specifies a port that can be used in the mount command. To mount
 the server under Linux/macOS, use the following command:
-    
-    mount -t nfs -o port=$PORT,mountport=$PORT,tcp $HOSTNAME:/ path/to/mountpoint
+
+|||sh
+mount -t nfs -o port=$PORT,mountport=$PORT,tcp $HOSTNAME:/ path/to/mountpoint
+|||
 
 Where |$PORT| is the same port number used in the |serve nfs| command
 and |$HOSTNAME| is the network address of the machine that |serve nfs|
 was run on.
 
+If |--vfs-metadata-extension| is in use then for the |--nfs-cache-type disk|
+and |--nfs-cache-type cache| the metadata files will have the file
+handle of their parent file suffixed with |0x00, 0x00, 0x00, 0x01|.
+This means they can be looked up directly from the parent file handle
+is desired.
+
 This command is only available on Unix platforms.
 
-`, "|", "`") + vfs.Help(),
+`, "|", "`") + strings.TrimSpace(vfs.Help()),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.65",
 		"groups":            "Filter",

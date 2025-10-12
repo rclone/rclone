@@ -105,7 +105,11 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 	}
 	if haveSetBTime {
 		if btimeOK {
-			err = setBTime(o.path, btime)
+			if o.translatedLink {
+				err = lsetBTime(o.path, btime)
+			} else {
+				err = setBTime(o.path, btime)
+			}
 			if err != nil {
 				outErr = fmt.Errorf("failed to set birth (creation) time: %w", err)
 			}
@@ -121,7 +125,11 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 		if runtime.GOOS == "windows" || runtime.GOOS == "plan9" {
 			fs.Debugf(o, "Ignoring request to set ownership %o.%o on this OS", gid, uid)
 		} else {
-			err = os.Chown(o.path, uid, gid)
+			if o.translatedLink {
+				err = os.Lchown(o.path, uid, gid)
+			} else {
+				err = os.Chown(o.path, uid, gid)
+			}
 			if err != nil {
 				outErr = fmt.Errorf("failed to change ownership: %w", err)
 			}
@@ -132,7 +140,16 @@ func (o *Object) writeMetadataToFile(m fs.Metadata) (outErr error) {
 		if mode >= 0 {
 			umode := uint(mode)
 			if umode <= math.MaxUint32 {
-				err = os.Chmod(o.path, os.FileMode(umode))
+				if o.translatedLink {
+					if haveLChmod {
+						err = lChmod(o.path, os.FileMode(umode))
+					} else {
+						fs.Debugf(o, "Unable to set mode %v on a symlink on this OS", os.FileMode(umode))
+						err = nil
+					}
+				} else {
+					err = os.Chmod(o.path, os.FileMode(umode))
+				}
 				if err != nil {
 					outErr = fmt.Errorf("failed to change permissions: %w", err)
 				}

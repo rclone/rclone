@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -40,7 +41,6 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -56,6 +56,7 @@ const (
 	driveTypeSharepoint         = "documentLibrary"
 	defaultChunkSize            = 10 * fs.Mebi
 	chunkSizeMultiple           = 320 * fs.Kibi
+	maxSinglePartSize           = 4 * fs.Mebi
 
 	regionGlobal = "global"
 	regionUS     = "us"
@@ -65,14 +66,21 @@ const (
 
 // Globals
 var (
-	authPath  = "/common/oauth2/v2.0/authorize"
-	tokenPath = "/common/oauth2/v2.0/token"
+
+	// Define the paths used for token operations
+	commonPathPrefix = "/common" // prefix for the paths if tenant isn't known
+	authPath         = "/oauth2/v2.0/authorize"
+	tokenPath        = "/oauth2/v2.0/token"
 
 	scopeAccess             = fs.SpaceSepList{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "Sites.Read.All", "offline_access"}
 	scopeAccessWithoutSites = fs.SpaceSepList{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"}
 
-	// Description of how to auth for this app for a business account
-	oauthConfig = &oauth2.Config{
+	// When using client credential OAuth flow, scope of .default is required in order
+	// to use the permissions configured for the application within the tenant
+	scopeAccessClientCred = fs.SpaceSepList{".default"}
+
+	// Base config for how to auth
+	oauthConfig = &oauthutil.Config{
 		Scopes:       scopeAccess,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
@@ -125,12 +133,27 @@ func init() {
 					Help:  "Microsoft Cloud for US Government",
 				}, {
 					Value: regionDE,
-					Help:  "Microsoft Cloud Germany",
+					Help:  "Microsoft Cloud Germany (deprecated - try " + regionGlobal + " region first).",
 				}, {
 					Value: regionCN,
 					Help:  "Azure and Office 365 operated by Vnet Group in China",
 				},
 			},
+		}, {
+			Name: "upload_cutoff",
+			Help: `Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+
+This is disabled by default as uploading using single part uploads
+causes rclone to use twice the storage on Onedrive business as when
+rclone sets the modification time after the upload Onedrive creates a
+new version.
+
+See: https://github.com/rclone/rclone/issues/1716
+`,
+			Default:  fs.SizeSuffix(-1),
+			Advanced: true,
 		}, {
 			Name: "chunk_size",
 			Help: `Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
@@ -183,6 +206,14 @@ Choose or manually enter a custom space separated list with all scopes, that rcl
 					Help:  "Read and write access to all resources, without the ability to browse SharePoint sites. \nSame as if disable_site_permission was set to true",
 				},
 			},
+		}, {
+			Name: "tenant",
+			Help: `ID of the service principal's tenant. Also called its directory ID.
+
+Set this if using
+- Client Credential flow
+`,
+			Sensitive: true,
 		}, {
 			Name: "disable_site_permission",
 			Help: `Disable the request for Sites.Read.All permission.
@@ -527,28 +558,54 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 	})
 }
 
-// Config the backend
-func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-	region, graphURL := getRegionURL(m)
+// Make the oauth config for the backend
+func makeOauthConfig(ctx context.Context, opt *Options) (*oauthutil.Config, error) {
+	// Copy the default oauthConfig
+	oauthConfig := *oauthConfig
 
-	if config.State == "" {
-		var accessScopes fs.SpaceSepList
-		accessScopesString, _ := m.Get("access_scopes")
-		err := accessScopes.Set(accessScopesString)
+	// Set the scopes
+	oauthConfig.Scopes = opt.AccessScopes
+	if opt.DisableSitePermission {
+		oauthConfig.Scopes = scopeAccessWithoutSites
+	}
+
+	// Construct the auth URLs
+	prefix := commonPathPrefix
+	if opt.Tenant != "" {
+		prefix = "/" + opt.Tenant
+	}
+	oauthConfig.TokenURL = authEndpoint[opt.Region] + prefix + tokenPath
+	oauthConfig.AuthURL = authEndpoint[opt.Region] + prefix + authPath
+
+	// Check to see if we are using client credentials flow
+	if opt.ClientCredentials {
+		// Override scope to .default
+		oauthConfig.Scopes = scopeAccessClientCred
+		if opt.Tenant == "" {
+			return nil, fmt.Errorf("tenant parameter must be set when using %s", config.ConfigClientCredentials)
+		}
+	}
+
+	return &oauthConfig, nil
+}
+
+// Config the backend
+func Config(ctx context.Context, name string, m configmap.Mapper, conf fs.ConfigIn) (*fs.ConfigOut, error) {
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+	_, graphURL := getRegionURL(m)
+
+	// Check to see if this is the start of the state machine execution
+	if conf.State == "" {
+		conf, err := makeOauthConfig(ctx, opt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse access_scopes: %w", err)
-		}
-		oauthConfig.Scopes = []string(accessScopes)
-		disableSitePermission, _ := m.Get("disable_site_permission")
-		if disableSitePermission == "true" {
-			oauthConfig.Scopes = scopeAccessWithoutSites
-		}
-		oauthConfig.Endpoint = oauth2.Endpoint{
-			AuthURL:  authEndpoint[region] + authPath,
-			TokenURL: authEndpoint[region] + tokenPath,
+			return nil, err
 		}
 		return oauthutil.ConfigOut("choose_type", &oauthutil.Options{
-			OAuth2Config: oauthConfig,
+			OAuth2Config: conf,
 		})
 	}
 
@@ -556,9 +613,11 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	if err != nil {
 		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
 	}
+
+	// Create a REST client, build on the OAuth client created above
 	srv := rest.NewClient(oAuthClient)
 
-	switch config.State {
+	switch conf.State {
 	case "choose_type":
 		return fs.ConfigChooseExclusiveFixed("choose_type_done", "config_type", "Type of connection", []fs.OptionExample{{
 			Value: "onedrive",
@@ -584,7 +643,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		}})
 	case "choose_type_done":
 		// Jump to next state according to config chosen
-		return fs.ConfigGoto(config.Result)
+		return fs.ConfigGoto(conf.Result)
 	case "onedrive":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
 			opts: rest.Opts{
@@ -602,16 +661,22 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			},
 		})
 	case "driveid":
-		return fs.ConfigInput("driveid_end", "config_driveid_fixed", "Drive ID")
+		out, err := fs.ConfigInput("driveid_end", "config_driveid_fixed", "Drive ID")
+		if err != nil {
+			return out, err
+		}
+		// Default the drive_id to the previous version in the config
+		out.Option.Default, _ = m.Get("drive_id")
+		return out, nil
 	case "driveid_end":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-			finalDriveID: config.Result,
+			finalDriveID: conf.Result,
 		})
 	case "siteid":
 		return fs.ConfigInput("siteid_end", "config_siteid", "Site ID")
 	case "siteid_end":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-			siteID: config.Result,
+			siteID: conf.Result,
 		})
 	case "url":
 		return fs.ConfigInput("url_end", "config_site_url", `Site URL
@@ -622,7 +687,7 @@ Examples:
 - "https://XXX.sharepoint.com/teams/ID"
 `)
 	case "url_end":
-		siteURL := config.Result
+		siteURL := conf.Result
 		re := regexp.MustCompile(`https://.*\.sharepoint\.com(/.*)`)
 		match := re.FindStringSubmatch(siteURL)
 		if len(match) == 2 {
@@ -637,12 +702,12 @@ Examples:
 		return fs.ConfigInput("path_end", "config_sharepoint_url", `Server-relative URL`)
 	case "path_end":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-			relativePath: config.Result,
+			relativePath: conf.Result,
 		})
 	case "search":
 		return fs.ConfigInput("search_end", "config_search_term", `Search term`)
 	case "search_end":
-		searchTerm := config.Result
+		searchTerm := conf.Result
 		opts := rest.Opts{
 			Method:  "GET",
 			RootURL: graphURL,
@@ -664,10 +729,10 @@ Examples:
 		})
 	case "search_sites":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
-			siteID: config.Result,
+			siteID: conf.Result,
 		})
 	case "driveid_final":
-		finalDriveID := config.Result
+		finalDriveID := conf.Result
 
 		// Test the driveID and get drive type
 		opts := rest.Opts{
@@ -686,23 +751,26 @@ Examples:
 
 		return fs.ConfigConfirm("driveid_final_end", true, "config_drive_ok", fmt.Sprintf("Drive OK?\n\nFound drive %q of type %q\nURL: %s\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL))
 	case "driveid_final_end":
-		if config.Result == "true" {
+		if conf.Result == "true" {
 			return nil, nil
 		}
 		return fs.ConfigGoto("choose_type")
 	}
-	return nil, fmt.Errorf("unknown state %q", config.State)
+	return nil, fmt.Errorf("unknown state %q", conf.State)
 }
 
 // Options defines the configuration for this backend
 type Options struct {
 	Region                  string               `config:"region"`
+	UploadCutoff            fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
 	DisableSitePermission   bool                 `config:"disable_site_permission"`
+	ClientCredentials       bool                 `config:"client_credentials"`
 	AccessScopes            fs.SpaceSepList      `config:"access_scopes"`
+	Tenant                  string               `config:"tenant"`
 	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
 	ListChunk               int64                `config:"list_chunk"`
@@ -971,6 +1039,13 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 	return
 }
 
+func checkUploadCutoff(cs fs.SizeSuffix) error {
+	if cs > maxSinglePartSize {
+		return fmt.Errorf("%v is greater than %v", cs, maxSinglePartSize)
+	}
+	return nil
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -984,19 +1059,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("onedrive: chunk size: %w", err)
 	}
+	err = checkUploadCutoff(opt.UploadCutoff)
+	if err != nil {
+		return nil, fmt.Errorf("onedrive: upload cutoff: %w", err)
+	}
 
 	if opt.DriveID == "" || opt.DriveType == "" {
 		return nil, errors.New("unable to get drive_id and drive_type - if you are upgrading from older versions of rclone, please run `rclone config` and re-configure this backend")
 	}
 
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
-	oauthConfig.Scopes = opt.AccessScopes
-	if opt.DisableSitePermission {
-		oauthConfig.Scopes = scopeAccessWithoutSites
-	}
-	oauthConfig.Endpoint = oauth2.Endpoint{
-		AuthURL:  authEndpoint[opt.Region] + authPath,
-		TokenURL: authEndpoint[opt.Region] + tokenPath,
+
+	oauthConfig, err := makeOauthConfig(ctx, opt)
+	if err != nil {
+		return nil, err
 	}
 
 	client := fshttp.NewClient(ctx)
@@ -1349,7 +1425,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	// So we have to filter things outside of the root which is
 	// inefficient.
 
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 
 	// list a folder conventionally - used for shared folders
 	var listFolder func(dir string) error
@@ -1706,7 +1782,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	if err != nil {
 		return nil, err
 	}
-	err = dstObj.setMetaData(info)
+	if info != nil {
+		err = dstObj.setMetaData(info)
+	}
 	return dstObj, err
 }
 
@@ -1786,7 +1864,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	err = dstObj.setMetaData(info)
+	if info != nil {
+		err = dstObj.setMetaData(info)
+	}
 	return dstObj, err
 }
 
@@ -2421,6 +2501,10 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 				return false, nil
 			}
 			return true, fmt.Errorf("retry this chunk skipping %d bytes: %w", skip, err)
+		} else if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
+			fs.Debugf(o, "Received 404 error: assuming eventual consistency problem with session - retrying chunk: %v", err)
+			time.Sleep(5 * time.Second) // a little delay to help things along
+			return true, err
 		}
 		if err != nil {
 			return shouldRetry(ctx, resp, err)
@@ -2485,10 +2569,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	remaining := size
 	position := int64(0)
 	for remaining > 0 {
-		n := int64(o.fs.opt.ChunkSize)
-		if remaining < n {
-			n = remaining
-		}
+		n := min(remaining, int64(o.fs.opt.ChunkSize))
 		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
 		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n, options...)
@@ -2518,8 +2599,8 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, src fs.Objec
 // This function will set modtime and metadata after uploading, which will create a new version for the remote file
 func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (info *api.Item, err error) {
 	size := src.Size()
-	if size < 0 || size > int64(fs.SizeSuffix(4*1024*1024)) {
-		return nil, errors.New("size passed into uploadSinglepart must be >= 0 and <= 4 MiB")
+	if size < 0 || size > int64(maxSinglePartSize) {
+		return nil, fmt.Errorf("size passed into uploadSinglepart must be >= 0 and <= %v", maxSinglePartSize)
 	}
 
 	fs.Debugf(o, "Starting singlepart upload")
@@ -2552,7 +2633,10 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.Obje
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch and update metadata: %w", err)
 	}
-	return info, o.setMetaData(info)
+	if info != nil {
+		err = o.setMetaData(info)
+	}
+	return info, err
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -2563,15 +2647,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return errors.New("can't upload content to a OneNote file")
 	}
 
-	o.fs.tokenRenewer.Start()
-	defer o.fs.tokenRenewer.Stop()
+	// Only start the renewer if we have a valid one
+	if o.fs.tokenRenewer != nil {
+		o.fs.tokenRenewer.Start()
+		defer o.fs.tokenRenewer.Stop()
+	}
 
 	size := src.Size()
 
 	var info *api.Item
-	if size > 0 {
+	if size > 0 && size >= int64(o.fs.opt.UploadCutoff) {
 		info, err = o.uploadMultipart(ctx, in, src, options...)
-	} else if size == 0 {
+	} else if size >= 0 {
 		info, err = o.uploadSinglepart(ctx, in, src, options...)
 	} else {
 		return errors.New("unknown-sized upload not supported")

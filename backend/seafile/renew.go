@@ -9,9 +9,9 @@ import (
 
 // Renew allows tokens to be renewed on expiry.
 type Renew struct {
-	ts       *time.Ticker     // timer indicating when it's time to renew the token
-	run      func() error     // the callback to do the renewal
-	done     chan interface{} // channel to end the go routine
+	ts       *time.Ticker // timer indicating when it's time to renew the token
+	run      func() error // the callback to do the renewal
+	done     chan any     // channel to end the go routine
 	shutdown *sync.Once
 }
 
@@ -22,7 +22,7 @@ func NewRenew(every time.Duration, run func() error) *Renew {
 	r := &Renew{
 		ts:       time.NewTicker(every),
 		run:      run,
-		done:     make(chan interface{}),
+		done:     make(chan any),
 		shutdown: &sync.Once{},
 	}
 	go r.renewOnExpiry()

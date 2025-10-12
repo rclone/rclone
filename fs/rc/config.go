@@ -49,7 +49,7 @@ Parameters:
 
 Note that these are the global options which are unaffected by use of
 the _config and _filter parameters. If you wish to read the parameters
-set in _config then use options/config and for _filter use options/filter.
+set in _config or _filter use options/local.
 
 This shows the internal names of the option within rclone which should
 map to the external options very easily with a few exceptions.
@@ -64,7 +64,7 @@ func filterBlocks(in Params, f func(oi fs.OptionsInfo)) (err error) {
 		return err
 	}
 	blocks := map[string]struct{}{}
-	for _, name := range strings.Split(blocksStr, ",") {
+	for name := range strings.SplitSeq(blocksStr, ",") {
 		if name != "" {
 			blocks[name] = struct{}{}
 		}

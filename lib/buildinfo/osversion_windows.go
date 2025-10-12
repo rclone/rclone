@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/v4/host"
 	"golang.org/x/sys/windows"
 )
 

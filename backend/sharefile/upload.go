@@ -57,10 +57,7 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 		return nil, fmt.Errorf("can't use method %q with newLargeUpload", info.Method)
 	}
 
-	threads := f.ci.Transfers
-	if threads > info.MaxNumberOfThreads {
-		threads = info.MaxNumberOfThreads
-	}
+	threads := min(f.ci.Transfers, info.MaxNumberOfThreads)
 
 	// unwrap the accounting from the input, we use wrap to put it
 	// back on after the buffering

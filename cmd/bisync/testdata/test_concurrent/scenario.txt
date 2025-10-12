@@ -1,0 +1,15 @@
+test concurrent
+
+test initial bisync
+bisync resync
+
+test changed on one path - file1
+touch-glob 2001-01-02 {datadir/} file5R.txt
+touch-glob 2023-08-26 {datadir/} file7.txt
+copy-as {datadir/}file5R.txt {path2/} file1.txt
+
+test bisync with file changed during
+concurrent-func
+bisync
+
+bisync

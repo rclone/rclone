@@ -29,10 +29,12 @@ var commandDefinition = &cobra.Command{
 	Short: `Generate public link to file/folder.`,
 	Long: `Create, retrieve or remove a public link to the given file or folder.
 
-    rclone link remote:path/to/file
-    rclone link remote:path/to/folder/
-    rclone link --unlink remote:path/to/folder/
-    rclone link --expire 1d remote:path/to/file
+` + "```sh" + `
+rclone link remote:path/to/file
+rclone link remote:path/to/folder/
+rclone link --unlink remote:path/to/folder/
+rclone link --expire 1d remote:path/to/file
+` + "```" + `
 
 If you supply the --expire flag, it will set the expiration time
 otherwise it will use the default (100 years). **Note** not all
@@ -45,9 +47,8 @@ don't will just ignore it.
 
 If successful, the last line of the output will contain the
 link. Exact capabilities depend on the remote, but the link will
-always by default be created with the least constraints – e.g. no
-expiry, no password protection, accessible without account.
-`,
+always by default be created with the least constraints - e.g. no
+expiry, no password protection, accessible without account.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.41",
 	},

@@ -103,8 +103,7 @@ If you set `--addr` to listen on a public or LAN accessible IP address
 then using Authentication is advised - see the next section for info.
 
 You can use a unix socket by setting the url to `unix:///path/to/socket`
-or just by using an absolute path name. Note that unix sockets bypass the
-authentication - this is expected to be done with file system permissions.
+or just by using an absolute path name.
 
 `--addr` may be repeated to listen on multiple IPs/ports/sockets.
 Socket activation, described further below, can also be used to accomplish the same.
@@ -131,19 +130,21 @@ https.  You will need to supply the `--cert` and `--key` flags.
 If you wish to do client side certificate validation then you will need to
 supply `--client-ca` also.
 
-`--cert` should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  `--key` should be the PEM encoded
-private key and `--client-ca` should be the PEM encoded client
-certificate authority certificate.
+`--cert` must be set to the path of a file containing
+either a PEM encoded certificate, or a concatenation of that with the CA
+certificate. `--key` must be set to the path of a file
+with the PEM encoded private key. If setting `--client-ca`,
+it should be set to the path of a file with PEM encoded client certificate
+authority certificates.
 
 `--min-tls-version` is minimum TLS version that is acceptable. Valid
-  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
-  "tls1.0").
+values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default "tls1.0").
 
 ## Socket activation
 
 Instead of the listening addresses specified above, rclone will listen to all
-FDs passed by the service manager, if any (and ignore any arguments passed by --addr`).
+FDs passed by the service manager, if any (and ignore any arguments passed
+by `--addr`).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
@@ -161,7 +162,11 @@ By default this will serve files without needing a login.
 You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the `--user` and `--pass` flags.
 
-If no static users are configured by either of the above methods, and client
+Alternatively, you can have the reverse proxy manage authentication and use the
+username provided in the configured header with `--user-from-header`  (e.g., `----user-from-header=x-remote-user`).
+Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration may lead to unauthorized access.
+
+If either of the above authentication methods is not configured and client
 certificates are required by the `--client-ca` flag passed to the server, the
 client certificate common name will be considered as the username.
 
@@ -190,7 +195,7 @@ rclone serve restic remote:path [flags]
 ## Options
 
 ```
-      --addr stringArray                IPaddress:Port, :Port or [unix://]/path/to/socket to bind server to (default [127.0.0.1:8080])
+      --addr stringArray                IPaddress:Port or :Port to bind server to (default 127.0.0.1:8080)
       --allow-origin string             Origin which cross-domain request (CORS) can be executed from
       --append-only                     Disallow deletion of repository data
       --baseurl string                  Prefix for URLs - leave blank for root
@@ -210,6 +215,7 @@ rclone serve restic remote:path [flags]
       --server-write-timeout Duration   Timeout for server writing data (default 1h0m0s)
       --stdio                           Run an HTTP2 server on stdin/stdout
       --user string                     User name for authentication
+      --user-from-header string         User name from a defined HTTP header
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/buildinfo"
 )
 
@@ -31,9 +32,7 @@ func checkRcloneBinaryVersion(t *testing.T) error {
 
 	cmd := exec.Command("rclone", "rc", "--loopback", "core/version")
 	stdout, err := cmd.Output()
-	if err != nil {
-		return fmt.Errorf("failed to get rclone version: %w", err)
-	}
+	require.NoError(t, err)
 
 	var parsed versionInfo
 	if err := json.Unmarshal(stdout, &parsed); err != nil {
@@ -185,6 +184,11 @@ func skipE2eTestIfNecessary(t *testing.T) {
 		t.Skip("Skipping due to short mode.")
 	}
 
+	// TODO(#7984): Port e2e tests to `fstest` framework.
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping because fstest remote was specified.")
+	}
+
 	// TODO: Support e2e tests on Windows. Need to evaluate the semantics of the
 	// HOME and PATH environment variables.
 	switch runtime.GOOS {
@@ -225,7 +229,6 @@ func TestEndToEnd(t *testing.T) {
 	skipE2eTestIfNecessary(t)
 
 	for _, mode := range allLayoutModes() {
-		mode := mode
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
 
@@ -254,7 +257,6 @@ func TestEndToEndMigration(t *testing.T) {
 	}
 
 	for _, mode := range allLayoutModes() {
-		mode := mode
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
 
@@ -314,7 +316,6 @@ func TestEndToEndRepoLayoutCompat(t *testing.T) {
 	}
 
 	for _, mode := range allLayoutModes() {
-		mode := mode
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
 

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -149,6 +150,26 @@ func MiddlewareAuthCustom(fn CustomAuthFn, realm string, userFromContext bool) M
 			}
 
 			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+var validUsernameRegexp = regexp.MustCompile(`^[\p{L}\d@._-]+$`)
+
+// MiddlewareAuthGetUserFromHeader middleware that bypasses authentication and extracts the user via a specified HTTP header(ideal for proxied setups).
+func MiddlewareAuthGetUserFromHeader(header string) Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			username := strings.TrimSpace(r.Header.Get(header))
+			if username != "" && validUsernameRegexp.MatchString(username) {
+				r = r.WithContext(context.WithValue(r.Context(), ctxKeyUser, username))
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			code := http.StatusUnauthorized
+			w.Header().Set("Content-Type", "text/plain")
+			http.Error(w, http.StatusText(code), code)
 		})
 	}
 }

@@ -30,9 +30,7 @@ var Root = &cobra.Command{
 mounting them, listing them in lots of different ways.
 
 See the home page (https://rclone.org/) for installation, usage,
-documentation, changelog and configuration walkthroughs.
-
-`,
+documentation, changelog and configuration walkthroughs.`,
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
 		atexit.Run()
@@ -51,7 +49,7 @@ var helpCommand = &cobra.Command{
 	Short: Root.Short,
 	Long:  Root.Long,
 	Run: func(command *cobra.Command, args []string) {
-		Root.SetOutput(os.Stdout)
+		Root.SetOut(os.Stdout)
 		_ = Root.Usage()
 	},
 }
@@ -85,7 +83,7 @@ var helpFlags = &cobra.Command{
 			} else if len(args) > 0 {
 				Root.SetUsageTemplate(filterFlagsMultiGroupTemplate)
 			}
-			Root.SetOutput(os.Stdout)
+			Root.SetOut(os.Stdout)
 		}
 		_ = command.Usage()
 	},
@@ -106,7 +104,7 @@ var helpBackend = &cobra.Command{
 	Short: "List full info about a backend",
 	Run: func(command *cobra.Command, args []string) {
 		if len(args) == 0 {
-			Root.SetOutput(os.Stdout)
+			Root.SetOut(os.Stdout)
 			_ = command.Usage()
 			return
 		}
@@ -191,7 +189,6 @@ func setupRootCommand(rootCmd *cobra.Command) {
 	})
 
 	cobra.OnInitialize(initConfig)
-
 }
 
 // Traverse the tree of commands running fn on each
@@ -273,7 +270,7 @@ func showBackends() {
 	fmt.Printf("  rclone help backend <name>\n")
 }
 
-func quoteString(v interface{}) string {
+func quoteString(v any) string {
 	switch v.(type) {
 	case string:
 		return fmt.Sprintf("%q", v)
@@ -347,7 +344,7 @@ func showBackend(name string) {
 				}
 				for _, ex := range opt.Examples {
 					fmt.Printf("    - %s\n", quoteString(ex.Value))
-					for _, line := range strings.Split(ex.Help, "\n") {
+					for line := range strings.SplitSeq(ex.Help, "\n") {
 						fmt.Printf("        - %s\n", line)
 					}
 				}

@@ -6,8 +6,9 @@ versionIntroduced: "v1.54"
 
 # {{< icon "fa fa-globe" >}} HDFS
 
-[HDFS](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html) is a
-distributed file-system, part of the [Apache Hadoop](https://hadoop.apache.org/) framework.
+[HDFS](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html)
+is a distributed file-system, part of the [Apache Hadoop](https://hadoop.apache.org/)
+framework.
 
 Paths are specified as `remote:` or `remote:path/to/dir`.
 
@@ -15,11 +16,13 @@ Paths are specified as `remote:` or `remote:path/to/dir`.
 
 Here is an example of how to make a remote called `remote`. First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -83,15 +86,21 @@ This remote is called `remote` and can now be used like this
 
 See all the top level directories
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List the contents of a directory
 
-    rclone ls remote:directory
+```sh
+rclone ls remote:directory
+```
 
 Sync the remote `directory` to `/home/local/directory`, deleting any excess files.
 
-    rclone sync --interactive remote:directory /home/local/directory
+```sh
+rclone sync --interactive remote:directory /home/local/directory
+```
 
 ### Setting up your own HDFS instance for testing
 
@@ -100,7 +109,7 @@ or use the docker image from the tests:
 
 If you want to build the docker image
 
-```
+```sh
 git clone https://github.com/rclone/rclone.git
 cd rclone/fstest/testserver/images/test-hdfs
 docker build --rm -t rclone/test-hdfs .
@@ -108,7 +117,7 @@ docker build --rm -t rclone/test-hdfs .
 
 Or you can just use the latest one pushed
 
-```
+```sh
 docker run --rm --name "rclone-hdfs" -p 127.0.0.1:9866:9866 -p 127.0.0.1:8020:8020 --hostname "rclone-hdfs" rclone/test-hdfs
 ```
 
@@ -116,15 +125,15 @@ docker run --rm --name "rclone-hdfs" -p 127.0.0.1:9866:9866 -p 127.0.0.1:8020:80
 
 For this docker image the remote needs to be configured like this:
 
-```
+```ini
 [remote]
 type = hdfs
 namenode = 127.0.0.1:8020
 username = root
 ```
 
-You can stop this image with `docker kill rclone-hdfs` (**NB** it does not use volumes, so all data
-uploaded will be lost.)
+You can stop this image with `docker kill rclone-hdfs` (**NB** it does not use
+volumes, so all data uploaded will be lost.)
 
 ### Modification times
 
@@ -136,7 +145,8 @@ No checksums are implemented.
 
 ### Usage information
 
-You can use the `rclone about remote:` command which will display filesystem size and current usage.
+You can use the `rclone about remote:` command which will display filesystem
+size and current usage.
 
 ### Restricted filename characters
 
@@ -247,5 +257,6 @@ Properties:
 
 ## Limitations
 
+- Erasure coding not supported, see [issue #8808](https://github.com/rclone/rclone/issues/8808)
 - No server-side `Move` or `DirMove`.
 - Checksums not implemented.

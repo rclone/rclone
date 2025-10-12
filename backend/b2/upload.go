@@ -478,17 +478,14 @@ func (up *largeUpload) Copy(ctx context.Context) (err error) {
 		remaining = up.size
 	)
 	g.SetLimit(up.f.opt.UploadConcurrency)
-	for part := 0; part < up.parts; part++ {
+	for part := range up.parts {
 		// Fail fast, in case an errgroup managed function returns an error
 		// gCtx is cancelled. There is no point in copying all the other parts.
 		if gCtx.Err() != nil {
 			break
 		}
 
-		reqSize := remaining
-		if reqSize >= up.chunkSize {
-			reqSize = up.chunkSize
-		}
+		reqSize := min(remaining, up.chunkSize)
 
 		part := part // for the closure
 		g.Go(func() (err error) {

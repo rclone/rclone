@@ -106,6 +106,12 @@ var ConfigOptionsInfo = Options{{
 	Help:     "Enable interactive mode",
 	Groups:   "Config,Important",
 }, {
+	Name:     "links",
+	Help:     "Translate symlinks to/from regular files with a '" + LinkSuffix + "' extension.",
+	Default:  false,
+	ShortOpt: "l",
+	Groups:   "Copy",
+}, {
 	Name:    "contimeout",
 	Default: 60 * time.Second,
 	Help:    "Connect timeout",
@@ -272,6 +278,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Use recursive list if available; uses more memory but fewer transactions",
 	Groups:  "Listing",
 }, {
+	Name:    "list_cutoff",
+	Default: 1_000_000,
+	Help:    "To save memory, sort directory listings on disk above this threshold",
+	Groups:  "Sync",
+}, {
 	Name:    "tpslimit",
 	Default: 0.0,
 	Help:    "Limit HTTP transactions per second to this",
@@ -408,6 +419,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Use mmap allocator (see docs)",
 	Groups:  "Config",
 }, {
+	Name:    "max_buffer_memory",
+	Default: SizeSuffix(-1),
+	Help:    "If set, don't allocate more than this amount of memory as buffers",
+	Groups:  "Config",
+}, {
 	Name:    "ca_cert",
 	Default: []string{},
 	Help:    "CA certificate used to verify servers",
@@ -422,6 +438,12 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "Client SSL private key (PEM) for mutual TLS auth",
 	Groups:  "Networking",
+}, {
+	Name:       "client_pass",
+	Default:    "",
+	Help:       "Password for client SSL private key (PEM) for mutual TLS auth (obscured)",
+	Groups:     "Networking",
+	IsPassword: true,
 }, {
 	Name:    "multi_thread_cutoff",
 	Default: SizeSuffix(256 * 1024 * 1024),
@@ -528,6 +550,22 @@ var ConfigOptionsInfo = Options{{
 	Default: ".partial",
 	Help:    "Add partial-suffix to temporary file name when --inplace is not used",
 	Groups:  "Copy",
+}, {
+	Name:     "max_connections",
+	Help:     "Maximum number of simultaneous backend API connections, 0 for unlimited.",
+	Default:  0,
+	Advanced: true,
+	Groups:   "Networking",
+}, {
+	Name:    "name_transform",
+	Default: []string{},
+	Help:    "Transform paths during the copy process.",
+	Groups:  "Copy",
+}, {
+	Name:    "http_proxy",
+	Default: "",
+	Help:    "HTTP proxy URL.",
+	Groups:  "Networking",
 }}
 
 // ConfigInfo is filesystem config options
@@ -537,17 +575,18 @@ type ConfigInfo struct {
 	UseJSONLog                 bool              `config:"use_json_log"`
 	DryRun                     bool              `config:"dry_run"`
 	Interactive                bool              `config:"interactive"`
+	Links                      bool              `config:"links"`
 	CheckSum                   bool              `config:"checksum"`
 	SizeOnly                   bool              `config:"size_only"`
 	IgnoreTimes                bool              `config:"ignore_times"`
 	IgnoreExisting             bool              `config:"ignore_existing"`
 	IgnoreErrors               bool              `config:"ignore_errors"`
-	ModifyWindow               time.Duration     `config:"modify_window"`
+	ModifyWindow               Duration          `config:"modify_window"`
 	Checkers                   int               `config:"checkers"`
 	Transfers                  int               `config:"transfers"`
-	ConnectTimeout             time.Duration     `config:"contimeout"` // Connect timeout
-	Timeout                    time.Duration     `config:"timeout"`    // Data channel timeout
-	ExpectContinueTimeout      time.Duration     `config:"expect_continue_timeout"`
+	ConnectTimeout             Duration          `config:"contimeout"` // Connect timeout
+	Timeout                    Duration          `config:"timeout"`    // Data channel timeout
+	ExpectContinueTimeout      Duration          `config:"expect_continue_timeout"`
 	Dump                       DumpFlags         `config:"dump"`
 	InsecureSkipVerify         bool              `config:"no_check_certificate"` // Skip server certificate verification
 	DeleteMode                 DeleteMode        `config:"delete_mode"`
@@ -556,7 +595,7 @@ type ConfigInfo struct {
 	TrackRenames               bool              `config:"track_renames"`          // Track file renames.
 	TrackRenamesStrategy       string            `config:"track_renames_strategy"` // Comma separated list of strategies used to track renames
 	Retries                    int               `config:"retries"`                // High-level retries
-	RetriesInterval            time.Duration     `config:"retries_sleep"`
+	RetriesInterval            Duration          `config:"retries_sleep"`
 	LowLevelRetries            int               `config:"low_level_retries"`
 	UpdateOlder                bool              `config:"update"`           // Skip files that are newer on the destination
 	NoGzip                     bool              `config:"no_gzip_encoding"` // Disable compression
@@ -578,6 +617,7 @@ type ConfigInfo struct {
 	Suffix                     string            `config:"suffix"`
 	SuffixKeepExtension        bool              `config:"suffix_keep_extension"`
 	UseListR                   bool              `config:"fast_list"`
+	ListCutoff                 int               `config:"list_cutoff"`
 	BufferSize                 SizeSuffix        `config:"buffer_size"`
 	BwLimit                    BwTimetable       `config:"bwlimit"`
 	BwLimitFile                BwTimetable       `config:"bwlimit_file"`
@@ -594,7 +634,7 @@ type ConfigInfo struct {
 	PasswordCommand            SpaceSepList      `config:"password_command"`
 	UseServerModTime           bool              `config:"use_server_modtime"`
 	MaxTransfer                SizeSuffix        `config:"max_transfer"`
-	MaxDuration                time.Duration     `config:"max_duration"`
+	MaxDuration                Duration          `config:"max_duration"`
 	CutoffMode                 CutoffMode        `config:"cutoff_mode"`
 	MaxBacklog                 int               `config:"max_backlog"`
 	MaxStatsGroups             int               `config:"max_stats_groups"`
@@ -606,9 +646,11 @@ type ConfigInfo struct {
 	ProgressTerminalTitle      bool              `config:"progress_terminal_title"`
 	Cookie                     bool              `config:"use_cookies"`
 	UseMmap                    bool              `config:"use_mmap"`
+	MaxBufferMemory            SizeSuffix        `config:"max_buffer_memory"`
 	CaCert                     []string          `config:"ca_cert"`     // Client Side CA
 	ClientCert                 string            `config:"client_cert"` // Client Side Cert
 	ClientKey                  string            `config:"client_key"`  // Client Side Key
+	ClientPass                 string            `config:"client_pass"` // Client Side Key Password (obscured)
 	MultiThreadCutoff          SizeSuffix        `config:"multi_thread_cutoff"`
 	MultiThreadStreams         int               `config:"multi_thread_streams"`
 	MultiThreadSet             bool              `config:"multi_thread_set"`        // whether MultiThreadStreams was set (set in fs/config/configflags)
@@ -622,11 +664,11 @@ type ConfigInfo struct {
 	RefreshTimes               bool              `config:"refresh_times"`
 	NoConsole                  bool              `config:"no_console"`
 	TrafficClass               uint8             `config:"traffic_class"`
-	FsCacheExpireDuration      time.Duration     `config:"fs_cache_expire_duration"`
-	FsCacheExpireInterval      time.Duration     `config:"fs_cache_expire_interval"`
+	FsCacheExpireDuration      Duration          `config:"fs_cache_expire_duration"`
+	FsCacheExpireInterval      Duration          `config:"fs_cache_expire_interval"`
 	DisableHTTP2               bool              `config:"disable_http2"`
 	HumanReadable              bool              `config:"human_readable"`
-	KvLockTime                 time.Duration     `config:"kv_lock_time"` // maximum time to keep key-value database locked by process
+	KvLockTime                 Duration          `config:"kv_lock_time"` // maximum time to keep key-value database locked by process
 	DisableHTTPKeepAlives      bool              `config:"disable_http_keep_alives"`
 	Metadata                   bool              `config:"metadata"`
 	ServerSideAcrossConfigs    bool              `config:"server_side_across_configs"`
@@ -635,6 +677,9 @@ type ConfigInfo struct {
 	Inplace                    bool              `config:"inplace"`      // Download directly to destination file instead of atomic download to temp/rename
 	PartialSuffix              string            `config:"partial_suffix"`
 	MetadataMapper             SpaceSepList      `config:"metadata_mapper"`
+	MaxConnections             int               `config:"max_connections"`
+	NameTransform              []string          `config:"name_transform"`
+	HTTPProxy                  string            `config:"http_proxy"`
 }
 
 func init() {
@@ -645,8 +690,12 @@ func init() {
 	RegisterGlobalOptions(OptionsInfo{Name: "main", Opt: globalConfig, Options: ConfigOptionsInfo, Reload: globalConfig.Reload})
 
 	// initial guess at log level from the flags
-	globalConfig.LogLevel = initialLogLevel()
+	globalConfig.LogLevel = InitialLogLevel()
 }
+
+// LogReload is written by fs/log to set variables which should really
+// be there but we can't move due to them being visible here in the rc.
+var LogReload = func(*ConfigInfo) error { return nil }
 
 // Reload assumes the config has been edited and does what is necessary to make it live
 func (ci *ConfigInfo) Reload(ctx context.Context) error {
@@ -659,11 +708,6 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	// If --dry-run or -i then use NOTICE as minimum log level
 	if (ci.DryRun || ci.Interactive) && ci.StatsLogLevel > LogLevelNotice {
 		ci.StatsLogLevel = LogLevelNotice
-	}
-
-	// If --use-json-log then start the JSON logger
-	if ci.UseJSONLog {
-		InstallJSONLogger(ci.LogLevel)
 	}
 
 	// Check --compare-dest and --copy-dest
@@ -705,13 +749,12 @@ func (ci *ConfigInfo) Reload(ctx context.Context) error {
 	nonZero(&ci.Transfers)
 	nonZero(&ci.Checkers)
 
-	return nil
+	return LogReload(ci)
 }
 
-// Initial logging level
-//
-// Perform a simple check for debug flags to enable debug logging during the flag initialization
-func initialLogLevel() LogLevel {
+// InitialLogLevel performs a simple check for debug flags to enable
+// debug logging during the flag initialization.
+func InitialLogLevel() LogLevel {
 	logLevel := LogLevelNotice
 	for argIndex, arg := range os.Args {
 		if strings.HasPrefix(arg, "-vv") && strings.TrimRight(arg, "v") == "-" {
@@ -736,7 +779,7 @@ func initialLogLevel() LogLevel {
 // TimeoutOrInfinite returns ci.Timeout if > 0 or infinite otherwise
 func (ci *ConfigInfo) TimeoutOrInfinite() time.Duration {
 	if ci.Timeout > 0 {
-		return ci.Timeout
+		return time.Duration(ci.Timeout)
 	}
 	return ModTimeNotSupported
 }

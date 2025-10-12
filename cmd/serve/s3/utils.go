@@ -36,15 +36,19 @@ func getDirEntries(prefix string, VFS *vfs.VFS) (vfs.Nodes, error) {
 	return dirEntries, nil
 }
 
-func getFileHashByte(node interface{}) []byte {
-	b, err := hex.DecodeString(getFileHash(node))
+func getFileHashByte(node any, hashType hash.Type) []byte {
+	b, err := hex.DecodeString(getFileHash(node, hashType))
 	if err != nil {
 		return nil
 	}
 	return b
 }
 
-func getFileHash(node interface{}) string {
+func getFileHash(node any, hashType hash.Type) string {
+	if hashType == hash.None {
+		return ""
+	}
+
 	var o fs.Object
 
 	switch b := node.(type) {
@@ -59,7 +63,7 @@ func getFileHash(node interface{}) string {
 			defer func() {
 				_ = in.Close()
 			}()
-			h, err := hash.NewMultiHasherTypes(hash.NewHashSet(Opt.hashType))
+			h, err := hash.NewMultiHasherTypes(hash.NewHashSet(hashType))
 			if err != nil {
 				return ""
 			}
@@ -67,14 +71,14 @@ func getFileHash(node interface{}) string {
 			if err != nil {
 				return ""
 			}
-			return h.Sums()[Opt.hashType]
+			return h.Sums()[hashType]
 		}
 		o = fsObj
 	case fs.Object:
 		o = b
 	}
 
-	hash, err := o.Hash(context.Background(), Opt.hashType)
+	hash, err := o.Hash(context.Background(), hashType)
 	if err != nil {
 		return ""
 	}

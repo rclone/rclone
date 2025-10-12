@@ -39,6 +39,7 @@ type Features struct {
 	NoMultiThreading         bool // set if can't have multiplethreads on one download open
 	Overlay                  bool // this wraps one or more backends to add functionality
 	ChunkWriterDoesntSeek    bool // set if the chunk writer doesn't need to read the data more than once
+	DoubleSlash              bool // set if backend supports double slashes in paths
 
 	// Purge all files in the directory specified
 	//
@@ -158,6 +159,21 @@ type Features struct {
 	// of listing recursively that doing a directory traversal.
 	ListR ListRFn
 
+	// ListP lists the objects and directories of the Fs starting
+	// from dir non recursively to out.
+	//
+	// dir should be "" to start from the root, and should not
+	// have trailing slashes.
+	//
+	// This should return ErrDirNotFound if the directory isn't
+	// found.
+	//
+	// It should call callback for each tranche of entries read.
+	// These need not be returned in any particular order.  If
+	// callback returns an error then the listing will stop
+	// immediately.
+	ListP func(ctx context.Context, dir string, callback ListRCallback) error
+
 	// About gets quota information from the Fs
 	About func(ctx context.Context) (*Usage, error)
 
@@ -190,7 +206,7 @@ type Features struct {
 	// The result should be capable of being JSON encoded
 	// If it is a string or a []string it will be shown to the user
 	// otherwise it will be JSON encoded and shown to the user like that
-	Command func(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
+	Command func(ctx context.Context, name string, arg []string, opt map[string]string) (any, error)
 
 	// Shutdown the backend, closing any background tasks and any
 	// cached connections.
@@ -208,7 +224,7 @@ func (ft *Features) Disable(name string) *Features {
 	}
 	v := reflect.ValueOf(ft).Elem()
 	vType := v.Type()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		vName := vType.Field(i).Name
 		field := v.Field(i)
 		if strings.EqualFold(name, vName) {
@@ -237,7 +253,7 @@ func (ft *Features) Disable(name string) *Features {
 func (ft *Features) List() (out []string) {
 	v := reflect.ValueOf(ft).Elem()
 	vType := v.Type()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		out = append(out, vType.Field(i).Name)
 	}
 	return out
@@ -249,7 +265,7 @@ func (ft *Features) Enabled() (features map[string]bool) {
 	v := reflect.ValueOf(ft).Elem()
 	vType := v.Type()
 	features = make(map[string]bool, v.NumField())
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		vName := vType.Field(i).Name
 		field := v.Field(i)
 		if field.Kind() == reflect.Func {
@@ -326,6 +342,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(ListRer); ok {
 		ft.ListR = do.ListR
 	}
+	if do, ok := f.(ListPer); ok {
+		ft.ListP = do.ListP
+	}
 	if do, ok := f.(Abouter); ok {
 		ft.About = do.About
 	}
@@ -383,6 +402,8 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.PartialUploads = ft.PartialUploads && mask.PartialUploads
 	ft.NoMultiThreading = ft.NoMultiThreading && mask.NoMultiThreading
 	// ft.Overlay = ft.Overlay && mask.Overlay don't propagate Overlay
+	ft.ChunkWriterDoesntSeek = ft.ChunkWriterDoesntSeek && mask.ChunkWriterDoesntSeek
+	ft.DoubleSlash = ft.DoubleSlash && mask.DoubleSlash
 
 	if mask.Purge == nil {
 		ft.Purge = nil
@@ -431,6 +452,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	}
 	if mask.ListR == nil {
 		ft.ListR = nil
+	}
+	if mask.ListP == nil {
+		ft.ListP = nil
 	}
 	if mask.About == nil {
 		ft.About = nil
@@ -660,6 +684,24 @@ type ListRer interface {
 	ListR(ctx context.Context, dir string, callback ListRCallback) error
 }
 
+// ListPer is an optional interfaces for Fs
+type ListPer interface {
+	// ListP lists the objects and directories of the Fs starting
+	// from dir non recursively into out.
+	//
+	// dir should be "" to start from the root, and should not
+	// have trailing slashes.
+	//
+	// This should return ErrDirNotFound if the directory isn't
+	// found.
+	//
+	// It should call callback for each tranche of entries read.
+	// These need not be returned in any particular order.  If
+	// callback returns an error then the listing will stop
+	// immediately.
+	ListP(ctx context.Context, dir string, callback ListRCallback) error
+}
+
 // RangeSeeker is the interface that wraps the RangeSeek method.
 //
 // Some of the returns from Object.Open() may optionally implement
@@ -758,7 +800,7 @@ type Commander interface {
 	// The result should be capable of being JSON encoded
 	// If it is a string or a []string it will be shown to the user
 	// otherwise it will be JSON encoded and shown to the user like that
-	Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
+	Command(ctx context.Context, name string, arg []string, opt map[string]string) (any, error)
 }
 
 // Shutdowner is an interface to wrap the Shutdown function

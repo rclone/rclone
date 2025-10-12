@@ -17,7 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/bucket"
 )
 
@@ -325,13 +325,12 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 }
 
 // listDir lists the bucket to the entries
-func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool, callback func(fs.DirEntry) error) (err error) {
 	// List the objects and directories
 	err = f.list(ctx, bucket, directory, prefix, addBucket, false, func(remote string, entry fs.DirEntry, isDirectory bool) error {
-		entries = append(entries, entry)
-		return nil
+		return callback(entry)
 	})
-	return entries, err
+	return err
 }
 
 // listBuckets lists the buckets to entries
@@ -354,15 +353,46 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// defer fslog.Trace(dir, "")("entries = %q, err = %v", &entries, &err)
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	bucket, directory := f.split(dir)
 	if bucket == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listBuckets(ctx)
+		entries, err := f.listBuckets(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", list.Add)
+		if err != nil {
+			return err
+		}
 	}
-	return f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "")
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -383,7 +413,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	bucket, directory := f.split(dir)
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	entries := fs.DirEntries{}
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
 		err = f.list(ctx, bucket, directory, prefix, addBucket, true, func(remote string, entry fs.DirEntry, isDirectory bool) error {
@@ -629,6 +659,7 @@ var (
 	_ fs.Copier      = &Fs{}
 	_ fs.PutStreamer = &Fs{}
 	_ fs.ListRer     = &Fs{}
+	_ fs.ListPer     = &Fs{}
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
 )

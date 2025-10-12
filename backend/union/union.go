@@ -902,7 +902,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	// Backward compatible to old config
 	if len(opt.Upstreams) == 0 && len(opt.Remotes) > 0 {
-		for i := 0; i < len(opt.Remotes)-1; i++ {
+		for i := range len(opt.Remotes) - 1 {
 			opt.Remotes[i] += ":ro"
 		}
 		opt.Upstreams = opt.Remotes
@@ -1020,6 +1020,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 
+	// Disable ListP always
+	features.ListP = nil
+
 	// show that we wrap other backends
 	features.Overlay = true
 
@@ -1045,7 +1048,7 @@ func parentDir(absPath string) string {
 
 func multithread(num int, fn func(int)) {
 	var wg sync.WaitGroup
-	for i := 0; i < num; i++ {
+	for i := range num {
 		wg.Add(1)
 		i := i
 		go func() {

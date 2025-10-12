@@ -8,7 +8,7 @@ import (
 )
 
 func TestStringLength(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		s := String(i)
 		assert.Equal(t, i, len(s))
 	}
@@ -16,7 +16,7 @@ func TestStringLength(t *testing.T) {
 
 func TestStringDuplicates(t *testing.T) {
 	seen := map[string]bool{}
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		s := String(8)
 		assert.False(t, seen[s])
 		assert.Equal(t, 8, len(s))
@@ -41,7 +41,7 @@ func TestPasswordLength(t *testing.T) {
 
 func TestPasswordDuplicates(t *testing.T) {
 	seen := map[string]bool{}
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		s, err := Password(64)
 		require.NoError(t, err)
 		assert.False(t, seen[s])

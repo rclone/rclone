@@ -86,7 +86,7 @@ func TestVerifyCopy(t *testing.T) {
 	require.NoError(t, err)
 	src.(*Object).fs.opt.NoCheckUpdated = true
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		go r.WriteFile(src.Remote(), fmt.Sprintf("some new content %d", i), src.ModTime(context.Background()))
 	}
 	_, err = operations.Copy(context.Background(), r.Fremote, nil, filePath+"2", src)
@@ -110,7 +110,7 @@ func TestSymlink(t *testing.T) {
 	require.NoError(t, lChtimes(symlinkPath, modTime2, modTime2))
 
 	// Object viewed as symlink
-	file2 := fstest.NewItem("symlink.txt"+linkSuffix, "file.txt", modTime2)
+	file2 := fstest.NewItem("symlink.txt"+fs.LinkSuffix, "file.txt", modTime2)
 
 	// Object viewed as destination
 	file2d := fstest.NewItem("symlink.txt", "hello", modTime1)
@@ -139,7 +139,7 @@ func TestSymlink(t *testing.T) {
 
 	// Create a symlink
 	modTime3 := fstest.Time("2002-03-03T04:05:10.123123123Z")
-	file3 := r.WriteObjectTo(ctx, r.Flocal, "symlink2.txt"+linkSuffix, "file.txt", modTime3, false)
+	file3 := r.WriteObjectTo(ctx, r.Flocal, "symlink2.txt"+fs.LinkSuffix, "file.txt", modTime3, false)
 	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1, file2, file3}, nil, fs.ModTimeNotSupported)
 	if haveLChtimes {
 		r.CheckLocalItems(t, file1, file2, file3)
@@ -155,9 +155,9 @@ func TestSymlink(t *testing.T) {
 	assert.Equal(t, "file.txt", linkText)
 
 	// Check that NewObject gets the correct object
-	o, err := r.Flocal.NewObject(ctx, "symlink2.txt"+linkSuffix)
+	o, err := r.Flocal.NewObject(ctx, "symlink2.txt"+fs.LinkSuffix)
 	require.NoError(t, err)
-	assert.Equal(t, "symlink2.txt"+linkSuffix, o.Remote())
+	assert.Equal(t, "symlink2.txt"+fs.LinkSuffix, o.Remote())
 	assert.Equal(t, int64(8), o.Size())
 
 	// Check that NewObject doesn't see the non suffixed version
@@ -165,7 +165,7 @@ func TestSymlink(t *testing.T) {
 	require.Equal(t, fs.ErrorObjectNotFound, err)
 
 	// Check that NewFs works with the suffixed version and --links
-	f2, err := NewFs(ctx, "local", filepath.Join(dir, "symlink2.txt"+linkSuffix), configmap.Simple{
+	f2, err := NewFs(ctx, "local", filepath.Join(dir, "symlink2.txt"+fs.LinkSuffix), configmap.Simple{
 		"links": "true",
 	})
 	require.Equal(t, fs.ErrorIsFile, err)
@@ -202,6 +202,23 @@ func TestSymlinkError(t *testing.T) {
 	}
 	_, err := NewFs(context.Background(), "local", "/", m)
 	assert.Equal(t, errLinksAndCopyLinks, err)
+}
+
+func TestHashWithTypeNone(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	const filePath = "file.txt"
+	r.WriteFile(filePath, "content", time.Now())
+	f := r.Flocal.(*Fs)
+
+	// Get the object
+	o, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+
+	// Test the hash is as we expect
+	h, err := o.Hash(ctx, hash.None)
+	require.Empty(t, h)
+	require.NoError(t, err)
 }
 
 // Test hashes on updating an object
@@ -268,22 +285,66 @@ func TestMetadata(t *testing.T) {
 	r := fstest.NewRun(t)
 	const filePath = "metafile.txt"
 	when := time.Now()
-	const dayLength = len("2001-01-01")
-	whenRFC := when.Format(time.RFC3339Nano)
 	r.WriteFile(filePath, "metadata file contents", when)
 	f := r.Flocal.(*Fs)
+
+	// Set fs into "-l" / "--links" mode
+	f.opt.TranslateSymlinks = true
+
+	// Write a symlink to the file
+	symlinkPath := "metafile-link.txt"
+	osSymlinkPath := filepath.Join(f.root, symlinkPath)
+	symlinkPath += fs.LinkSuffix
+	require.NoError(t, os.Symlink(filePath, osSymlinkPath))
+	symlinkModTime := fstest.Time("2002-02-03T04:05:10.123123123Z")
+	require.NoError(t, lChtimes(osSymlinkPath, symlinkModTime, symlinkModTime))
 
 	// Get the object
 	obj, err := f.NewObject(ctx, filePath)
 	require.NoError(t, err)
 	o := obj.(*Object)
 
+	// Get the symlink object
+	symlinkObj, err := f.NewObject(ctx, symlinkPath)
+	require.NoError(t, err)
+	symlinkO := symlinkObj.(*Object)
+
+	// Record metadata for o
+	oMeta, err := o.Metadata(ctx)
+	require.NoError(t, err)
+
+	// Test symlink first to check it doesn't mess up file
+	t.Run("Symlink", func(t *testing.T) {
+		testMetadata(t, r, symlinkO, symlinkModTime)
+	})
+
+	// Read it again
+	oMetaNew, err := o.Metadata(ctx)
+	require.NoError(t, err)
+
+	// Check that operating on the symlink didn't change the file it was pointing to
+	// See: https://github.com/rclone/rclone/security/advisories/GHSA-hrxh-9w67-g4cv
+	assert.Equal(t, oMeta, oMetaNew, "metadata setting on symlink messed up file")
+
+	// Now run the same tests on the file
+	t.Run("File", func(t *testing.T) {
+		testMetadata(t, r, o, when)
+	})
+}
+
+func testMetadata(t *testing.T, r *fstest.Run, o *Object, when time.Time) {
+	ctx := context.Background()
+	whenRFC := when.Local().Format(time.RFC3339Nano)
+	const dayLength = len("2001-01-01")
+
+	f := r.Flocal.(*Fs)
 	features := f.Features()
 
-	var hasXID, hasAtime, hasBtime bool
+	var hasXID, hasAtime, hasBtime, canSetXattrOnLinks bool
 	switch runtime.GOOS {
 	case "darwin", "freebsd", "netbsd", "linux":
 		hasXID, hasAtime, hasBtime = true, true, true
+		canSetXattrOnLinks = runtime.GOOS != "linux"
 	case "openbsd", "solaris":
 		hasXID, hasAtime = true, true
 	case "windows":
@@ -306,6 +367,10 @@ func TestMetadata(t *testing.T) {
 		require.NoError(t, err)
 		assert.Nil(t, m)
 
+		if !canSetXattrOnLinks && o.translatedLink {
+			t.Skip("Skip remainder of test as can't set xattr on symlinks on this OS")
+		}
+
 		inM := fs.Metadata{
 			"potato":  "chips",
 			"cabbage": "soup",
@@ -320,18 +385,21 @@ func TestMetadata(t *testing.T) {
 	})
 
 	checkTime := func(m fs.Metadata, key string, when time.Time) {
+		t.Helper()
 		mt, ok := o.parseMetadataTime(m, key)
 		assert.True(t, ok)
 		dt := mt.Sub(when)
 		precision := time.Second
-		assert.True(t, dt >= -precision && dt <= precision, fmt.Sprintf("%s: dt %v outside +/- precision %v", key, dt, precision))
+		assert.True(t, dt >= -precision && dt <= precision, fmt.Sprintf("%s: dt %v outside +/- precision %v want %v got %v", key, dt, precision, mt, when))
 	}
 
 	checkInt := func(m fs.Metadata, key string, base int) int {
+		t.Helper()
 		value, ok := o.parseMetadataInt(m, key, base)
 		assert.True(t, ok)
 		return value
 	}
+
 	t.Run("Read", func(t *testing.T) {
 		m, err := o.Metadata(ctx)
 		require.NoError(t, err)
@@ -341,13 +409,12 @@ func TestMetadata(t *testing.T) {
 		checkInt(m, "mode", 8)
 		checkTime(m, "mtime", when)
 
-		assert.Equal(t, len(whenRFC), len(m["mtime"]))
 		assert.Equal(t, whenRFC[:dayLength], m["mtime"][:dayLength])
 
-		if hasAtime {
+		if hasAtime && !o.translatedLink { // symlinks generally don't record atime
 			checkTime(m, "atime", when)
 		}
-		if hasBtime {
+		if hasBtime && !o.translatedLink { // symlinks generally don't record btime
 			checkTime(m, "btime", when)
 		}
 		if hasXID {
@@ -371,6 +438,10 @@ func TestMetadata(t *testing.T) {
 			"mode":   "0767",
 			"potato": "wedges",
 		}
+		if !canSetXattrOnLinks && o.translatedLink {
+			// Don't change xattr if not supported on symlinks
+			delete(newM, "potato")
+		}
 		err := o.writeMetadata(newM)
 		require.NoError(t, err)
 
@@ -380,7 +451,11 @@ func TestMetadata(t *testing.T) {
 
 		mode := checkInt(m, "mode", 8)
 		if runtime.GOOS != "windows" {
-			assert.Equal(t, 0767, mode&0777, fmt.Sprintf("mode wrong - expecting 0767 got 0%o", mode&0777))
+			expectedMode := 0767
+			if o.translatedLink && runtime.GOOS == "linux" {
+				expectedMode = 0777 // perms of symlinks always read as 0777 on linux
+			}
+			assert.Equal(t, expectedMode, mode&0777, fmt.Sprintf("mode wrong - expecting 0%o got 0%o", expectedMode, mode&0777))
 		}
 
 		checkTime(m, "mtime", newMtime)
@@ -390,7 +465,7 @@ func TestMetadata(t *testing.T) {
 		if haveSetBTime {
 			checkTime(m, "btime", newBtime)
 		}
-		if xattrSupported {
+		if xattrSupported && (canSetXattrOnLinks || !o.translatedLink) {
 			assert.Equal(t, "wedges", m["potato"])
 		}
 	})

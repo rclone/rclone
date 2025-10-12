@@ -130,10 +130,7 @@ func TestQuickXorHashByBlock(t *testing.T) {
 			require.NoError(t, err, what)
 			h := New()
 			for i := 0; i < len(in); i += blockSize {
-				end := i + blockSize
-				if end > len(in) {
-					end = len(in)
-				}
+				end := min(i+blockSize, len(in))
 				n, err := h.Write(in[i:end])
 				require.Equal(t, end-i, n, what)
 				require.NoError(t, err, what)
@@ -175,8 +172,8 @@ func BenchmarkQuickXorHash(b *testing.B) {
 	require.NoError(b, err)
 	require.Equal(b, len(buf), n)
 	h := New()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+
+	for b.Loop() {
 		h.Reset()
 		h.Write(buf)
 		h.Sum(nil)

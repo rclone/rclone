@@ -27,7 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -48,12 +48,10 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
-		Scopes: nil,
-		Endpoint: oauth2.Endpoint{
-			AuthURL: "https://my.pcloud.com/oauth2/authorize",
-			// TokenURL: "https://api.pcloud.com/oauth2_token", set by updateTokenURL
-		},
+	oauthConfig = &oauthutil.Config{
+		Scopes:  nil,
+		AuthURL: "https://my.pcloud.com/oauth2/authorize",
+		// TokenURL: "https://api.pcloud.com/oauth2_token", set by updateTokenURL
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
@@ -61,8 +59,8 @@ var (
 )
 
 // Update the TokenURL with the actual hostname
-func updateTokenURL(oauthConfig *oauth2.Config, hostname string) {
-	oauthConfig.Endpoint.TokenURL = "https://" + hostname + "/oauth2_token"
+func updateTokenURL(oauthConfig *oauthutil.Config, hostname string) {
+	oauthConfig.TokenURL = "https://" + hostname + "/oauth2_token"
 }
 
 // Register with Fs
@@ -79,7 +77,7 @@ func init() {
 				fs.Errorf(nil, "Failed to read config: %v", err)
 			}
 			updateTokenURL(oauthConfig, optc.Hostname)
-			checkAuth := func(oauthConfig *oauth2.Config, auth *oauthutil.AuthResult) error {
+			checkAuth := func(oauthConfig *oauthutil.Config, auth *oauthutil.AuthResult) error {
 				if auth == nil || auth.Form == nil {
 					return errors.New("form not found in response")
 				}
@@ -380,12 +378,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// OpenWriterAt opens with a handle for random access writes
+// XOpenWriterAt opens with a handle for random access writes
 //
 // Pass in the remote desired and the size if known.
 //
-// It truncates any existing object
-func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+// It truncates any existing object.
+//
+// OpenWriterAt disabled because it seems to have been disabled at pcloud
+// PUT /file_open?flags=XXX&folderid=XXX&name=XXX HTTP/1.1
+//
+//	{
+//	        "result": 2003,
+//	        "error": "Access denied. You do not have permissions to perform this operation."
+//	}
+func (f *Fs) XOpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
 	client, err := f.newSingleConnClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("create client: %w", err)
@@ -399,14 +405,15 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	if err != nil {
 		return nil, fmt.Errorf("open file: %w", err)
 	}
+	if _, err := fileClose(ctx, client, f.pacer, openResult.FileDescriptor); err != nil {
+		return nil, fmt.Errorf("close file: %w", err)
+	}
 
 	writer := &writerAt{
 		ctx:    ctx,
-		client: client,
 		fs:     f,
 		size:   size,
 		remote: remote,
-		fd:     openResult.FileDescriptor,
 		fileID: openResult.Fileid,
 	}
 
@@ -425,7 +432,7 @@ func (f *Fs) newSingleConnClient(ctx context.Context) (*rest.Client, error) {
 	})
 	// Set our own http client in the context
 	ctx = oauthutil.Context(ctx, baseClient)
-	// create a new oauth client, re-use the token source
+	// create a new oauth client, reuse the token source
 	oAuthClient := oauth2.NewClient(ctx, f.ts)
 	return rest.NewClient(oAuthClient).SetRoot("https://" + f.opt.Hostname), nil
 }
@@ -632,7 +639,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // ListR lists the objects and directories of the Fs starting
 // from dir recursively into out.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	list := walk.NewListRHelper(callback)
+	list := list.NewHelper(callback)
 	err = f.listHelper(ctx, dir, true, func(o fs.DirEntry) error {
 		return list.Add(o)
 	})
@@ -991,10 +998,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	if err != nil {
 		return nil, err
 	}
-	free := q.Quota - q.UsedQuota
-	if free < 0 {
-		free = 0
-	}
+	free := max(q.Quota-q.UsedQuota, 0)
 	usage = &fs.Usage{
 		Total: fs.NewUsageValue(q.Quota),     // quota of bytes that can be used
 		Used:  fs.NewUsageValue(q.UsedQuota), // bytes in use
@@ -1325,7 +1329,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		// sometimes pcloud leaves a half complete file on
 		// error, so delete it if it exists, trying a few times
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			delObj, delErr := o.fs.NewObject(ctx, o.remote)
 			if delErr == nil && delObj != nil {
 				_ = delObj.Remove(ctx)

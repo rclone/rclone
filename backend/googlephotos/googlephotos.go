@@ -33,7 +33,6 @@ import (
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
@@ -44,6 +43,7 @@ var (
 	errAlbumDelete = errors.New("google photos API does not implement deleting albums")
 	errRemove      = errors.New("google photos API only implements removing files from albums")
 	errOwnAlbums   = errors.New("google photos API only allows uploading to albums rclone created")
+	errReadOnly    = errors.New("can't upload files in read only mode")
 )
 
 const (
@@ -53,20 +53,33 @@ const (
 	listChunks                  = 100 // chunk size to read directory listings
 	albumChunks                 = 50  // chunk size to read album listings
 	minSleep                    = 10 * time.Millisecond
-	scopeReadOnly               = "https://www.googleapis.com/auth/photoslibrary.readonly"
-	scopeReadWrite              = "https://www.googleapis.com/auth/photoslibrary"
-	scopeAccess                 = 2 // position of access scope in list
+	scopeAppendOnly             = "https://www.googleapis.com/auth/photoslibrary.appendonly"
+	scopeReadOnly               = "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata"
+	scopeReadWrite              = "https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata"
 )
 
 var (
+	// scopes needed for read write access
+	scopesReadWrite = []string{
+		"openid",
+		"profile",
+		scopeAppendOnly,
+		scopeReadOnly,
+		scopeReadWrite,
+	}
+
+	// scopes needed for read only access
+	scopesReadOnly = []string{
+		"openid",
+		"profile",
+		scopeReadOnly,
+	}
+
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
-		Scopes: []string{
-			"openid",
-			"profile",
-			scopeReadWrite, // this must be at position scopeAccess
-		},
-		Endpoint:     google.Endpoint,
+	oauthConfig = &oauthutil.Config{
+		Scopes:       scopesReadWrite,
+		AuthURL:      google.Endpoint.AuthURL,
+		TokenURL:     google.Endpoint.TokenURL,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
@@ -100,20 +113,26 @@ func init() {
 			case "":
 				// Fill in the scopes
 				if opt.ReadOnly {
-					oauthConfig.Scopes[scopeAccess] = scopeReadOnly
+					oauthConfig.Scopes = scopesReadOnly
 				} else {
-					oauthConfig.Scopes[scopeAccess] = scopeReadWrite
+					oauthConfig.Scopes = scopesReadWrite
 				}
-				return oauthutil.ConfigOut("warning", &oauthutil.Options{
+				return oauthutil.ConfigOut("warning1", &oauthutil.Options{
 					OAuth2Config: oauthConfig,
 				})
-			case "warning":
+			case "warning1":
 				// Warn the user as required by google photos integration
-				return fs.ConfigConfirm("warning_done", true, "config_warning", `Warning
+				return fs.ConfigConfirm("warning2", true, "config_warning", `Warning
 
 IMPORTANT: All media items uploaded to Google Photos with rclone
 are stored in full resolution at original quality.  These uploads
 will count towards storage in your Google Account.`)
+
+			case "warning2":
+				// Warn the user that rclone can no longer download photos it didnt upload from google photos
+				return fs.ConfigConfirm("warning_done", true, "config_warning", `Warning
+IMPORTANT: Due to Google policy changes rclone can now only download photos it uploaded.`)
+
 			case "warning_done":
 				return nil, nil
 			}
@@ -167,7 +186,7 @@ listings and won't be transferred.`,
 The Google API will deliver images and video which aren't full
 resolution, and/or have EXIF data missing.
 
-However if you ue the gphotosdl proxy tnen you can download original,
+However if you use the gphotosdl proxy then you can download original,
 unchanged images.
 
 This runs a headless browser in the background.
@@ -333,7 +352,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	baseClient := fshttp.NewClient(ctx)
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to configure Box: %w", err)
+		return nil, fmt.Errorf("failed to configure google photos: %w", err)
 	}
 
 	root = strings.Trim(path.Clean(root), "/")
@@ -388,7 +407,7 @@ func (f *Fs) fetchEndpoint(ctx context.Context, name string) (endpoint string, e
 		Method:  "GET",
 		RootURL: "https://accounts.google.com/.well-known/openid-configuration",
 	}
-	var openIDconfig map[string]interface{}
+	var openIDconfig map[string]any
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.unAuth.CallJSON(ctx, &opts, nil, &openIDconfig)
 		return shouldRetry(ctx, resp, err)
@@ -448,7 +467,7 @@ func (f *Fs) Disconnect(ctx context.Context) (err error) {
 			"token_type_hint": []string{"access_token"},
 		},
 	}
-	var res interface{}
+	var res any
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &res)
 		return shouldRetry(ctx, resp, err)
@@ -1120,6 +1139,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 
 		if !album.IsWriteable {
+			if o.fs.opt.ReadOnly {
+				return errReadOnly
+			}
 			return errOwnAlbums
 		}
 
@@ -1168,7 +1190,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		errors := make([]error, 1)
 		results := make([]*api.MediaItem, 1)
 		err = o.fs.commitBatch(ctx, []uploadedItem{uploaded}, results, errors)
-		if err != nil {
+		if err == nil {
 			err = errors[0]
 			info = results[0]
 		}

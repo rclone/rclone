@@ -68,14 +68,12 @@ var (
 )
 
 // Description of how to authorize
-var oauthConfig = &oauth2.Config{
+var oauthConfig = &oauthutil.Config{
 	ClientID:     api.OAuthClientID,
 	ClientSecret: "",
-	Endpoint: oauth2.Endpoint{
-		AuthURL:   api.OAuthURL,
-		TokenURL:  api.OAuthURL,
-		AuthStyle: oauth2.AuthStyleInParams,
-	},
+	AuthURL:      api.OAuthURL,
+	TokenURL:     api.OAuthURL,
+	AuthStyle:    oauth2.AuthStyleInParams,
 }
 
 // Register with Fs
@@ -402,7 +400,7 @@ type quirks struct {
 }
 
 func (q *quirks) parseQuirks(option string) {
-	for _, flag := range strings.Split(option, ",") {
+	for flag := range strings.SplitSeq(option, ",") {
 		switch strings.ToLower(strings.TrimSpace(flag)) {
 		case "binlist":
 			// The official client sometimes uses a so called "bin" protocol,
@@ -438,7 +436,9 @@ func (f *Fs) authorize(ctx context.Context, force bool) (err error) {
 	if err != nil || !tokenIsValid(t) {
 		fs.Infof(f, "Valid token not found, authorizing.")
 		ctx := oauthutil.Context(ctx, f.cli)
-		t, err = oauthConfig.PasswordCredentialsToken(ctx, f.opt.Username, f.opt.Password)
+
+		oauth2Conf := oauthConfig.MakeOauth2Config()
+		t, err = oauth2Conf.PasswordCredentialsToken(ctx, f.opt.Username, f.opt.Password)
 	}
 	if err == nil && !tokenIsValid(t) {
 		err = errors.New("invalid token")
@@ -634,7 +634,7 @@ func (f *Fs) readItemMetaData(ctx context.Context, path string) (entry fs.DirEnt
 	return
 }
 
-// itemToEntry converts API item to rclone directory entry
+// itemToDirEntry converts API item to rclone directory entry
 // The dirSize return value is:
 //
 //	<0 - for a file or in case of error
@@ -901,7 +901,7 @@ func (t *treeState) NextRecord() (fs.DirEntry, error) {
 		return nil, nil
 	case api.ListParseUnknown15:
 		skip := int(r.ReadPu32())
-		for i := 0; i < skip; i++ {
+		for range skip {
 			r.ReadPu32()
 			r.ReadPu32()
 		}
@@ -1768,9 +1768,9 @@ func (f *Fs) eligibleForSpeedup(remote string, size int64, options ...fs.OpenOpt
 func (f *Fs) parseSpeedupPatterns(patternString string) (err error) {
 	f.speedupGlobs = nil
 	f.speedupAny = false
-	uniqueValidPatterns := make(map[string]interface{})
+	uniqueValidPatterns := make(map[string]any)
 
-	for _, pattern := range strings.Split(patternString, ",") {
+	for pattern := range strings.SplitSeq(patternString, ",") {
 		pattern = strings.ToLower(strings.TrimSpace(pattern))
 		if pattern == "" {
 			continue
@@ -2131,10 +2131,7 @@ func getTransferRange(size int64, options ...fs.OpenOption) (start int64, end in
 	if limit < 0 {
 		limit = size - offset
 	}
-	end = offset + limit
-	if end > size {
-		end = size
-	}
+	end = min(offset+limit, size)
 	partial = !(offset == 0 && end == size)
 	return offset, end, partial
 }

@@ -3,6 +3,7 @@ package dlna
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"net"
@@ -19,9 +20,12 @@ import (
 	"github.com/anacrolix/dms/upnp"
 	"github.com/anacrolix/log"
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve"
 	"github.com/rclone/rclone/cmd/serve/dlna/data"
-	"github.com/rclone/rclone/cmd/serve/dlna/dlnaflags"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -29,9 +33,63 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// OptionsInfo descripts the Options in use
+var OptionsInfo = fs.Options{{
+	Name:    "addr",
+	Default: ":7879",
+	Help:    "The ip:port or :port to bind the DLNA http server to",
+}, {
+	Name:    "name",
+	Default: "",
+	Help:    "Name of DLNA server",
+}, {
+	Name:    "log_trace",
+	Default: false,
+	Help:    "Enable trace logging of SOAP traffic",
+}, {
+	Name:    "interface",
+	Default: []string{},
+	Help:    "The interface to use for SSDP (repeat as necessary)",
+}, {
+	Name:    "announce_interval",
+	Default: fs.Duration(12 * time.Minute),
+	Help:    "The interval between SSDP announcements",
+}}
+
+// Options is the type for DLNA serving options.
+type Options struct {
+	ListenAddr       string      `config:"addr"`
+	FriendlyName     string      `config:"name"`
+	LogTrace         bool        `config:"log_trace"`
+	InterfaceNames   []string    `config:"interface"`
+	AnnounceInterval fs.Duration `config:"announce_interval"`
+}
+
+// Opt contains the options for DLNA serving.
+var Opt Options
+
 func init() {
-	dlnaflags.AddFlags(Command.Flags())
-	vfsflags.AddFlags(Command.Flags())
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "dlna", Opt: &Opt, Options: OptionsInfo})
+	flagSet := Command.Flags()
+	flags.AddFlagsFromOptions(flagSet, "", OptionsInfo)
+	vfsflags.AddFlags(flagSet)
+	serve.Command.AddCommand(Command)
+	serve.AddRc("dlna", func(ctx context.Context, f fs.Fs, in rc.Params) (serve.Handle, error) {
+		// Read VFS Opts
+		var vfsOpt = vfscommon.Opt // set default opts
+		err := configstruct.SetAny(in, &vfsOpt)
+		if err != nil {
+			return nil, err
+		}
+		// Read opts
+		var opt = Opt // set default opts
+		err = configstruct.SetAny(in, &opt)
+		if err != nil {
+			return nil, err
+		}
+		// Create server
+		return newServer(ctx, f, &opt, &vfsOpt)
+	})
 }
 
 // Command definition for cobra.
@@ -53,7 +111,19 @@ Rclone will add external subtitle files (.srt) to videos if they have the same
 filename as the video file itself (except the extension), either in the same
 directory as the video, or in a "Subs" subdirectory.
 
-` + dlnaflags.Help + vfs.Help(),
+### Server options
+
+Use ` + "`--addr`" + ` to specify which IP address and port the server should
+listen on, e.g. ` + "`--addr 1.2.3.4:8000` or `--addr :8080`" + ` to listen to all
+IPs.
+
+Use ` + "`--name`" + ` to choose the friendly server name, which is by
+default "rclone (hostname)".
+
+Use ` + "`--log-trace` in conjunction with `-vv`" + ` to enable additional debug
+logging of all UPNP traffic.
+
+` + strings.TrimSpace(vfs.Help()),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.46",
 		"groups":            "Filter",
@@ -63,16 +133,12 @@ directory as the video, or in a "Subs" subdirectory.
 		f := cmd.NewFsSrc(args)
 
 		cmd.Run(false, false, command, func() error {
-			s, err := newServer(f, &dlnaflags.Opt)
+			s, err := newServer(context.Background(), f, &Opt, &vfscommon.Opt)
 			if err != nil {
 				return err
 			}
-			if err := s.Serve(); err != nil {
-				return err
-			}
 			defer systemd.Notify()()
-			s.Wait()
-			return nil
+			return s.Serve()
 		})
 	},
 }
@@ -108,7 +174,7 @@ type server struct {
 	vfs *vfs.VFS
 }
 
-func newServer(f fs.Fs, opt *dlnaflags.Options) (*server, error) {
+func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options) (*server, error) {
 	friendlyName := opt.FriendlyName
 	if friendlyName == "" {
 		friendlyName = makeDefaultFriendlyName()
@@ -137,7 +203,7 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) (*server, error) {
 		waitChan:         make(chan struct{}),
 		httpListenAddr:   opt.ListenAddr,
 		f:                f,
-		vfs:              vfs.New(f, &vfscommon.Opt),
+		vfs:              vfs.New(f, vfsOpt),
 	}
 
 	s.services = map[string]UPnPService{
@@ -167,6 +233,19 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) (*server, error) {
 		withHeader("Cache-Control", "public, max-age=86400",
 			http.FileServer(data.Assets))))
 	s.handler = logging(withHeader("Server", serverField, r))
+
+	// Currently, the SSDP server only listens on an IPv4 multicast address.
+	// Differentiate between two INADDR_ANY addresses,
+	// so that 0.0.0.0 can only listen on IPv4 addresses.
+	network := "tcp4"
+	if strings.Count(s.httpListenAddr, ":") > 1 {
+		network = "tcp"
+	}
+	listener, err := net.Listen(network, s.httpListenAddr)
+	if err != nil {
+		return nil, err
+	}
+	s.HTTPConn = listener
 
 	return s, nil
 }
@@ -288,24 +367,9 @@ func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, remotePath, node.ModTime(), in)
 }
 
-// Serve runs the server - returns the error only if
-// the listener was not started; does not block, so
-// use s.Wait() to block on the listener indefinitely.
+// Serve runs the server - returns the error only if the listener was
+// not started. Blocks until the server is closed.
 func (s *server) Serve() (err error) {
-	if s.HTTPConn == nil {
-		// Currently, the SSDP server only listens on an IPv4 multicast address.
-		// Differentiate between two INADDR_ANY addresses,
-		// so that 0.0.0.0 can only listen on IPv4 addresses.
-		network := "tcp4"
-		if strings.Count(s.httpListenAddr, ":") > 1 {
-			network = "tcp"
-		}
-		s.HTTPConn, err = net.Listen(network, s.httpListenAddr)
-		if err != nil {
-			return
-		}
-	}
-
 	go func() {
 		s.startSSDP()
 	}()
@@ -319,6 +383,7 @@ func (s *server) Serve() (err error) {
 		}
 	}()
 
+	s.Wait()
 	return nil
 }
 
@@ -327,13 +392,19 @@ func (s *server) Wait() {
 	<-s.waitChan
 }
 
-func (s *server) Close() {
+// Shutdown the DLNA server
+func (s *server) Shutdown() error {
 	err := s.HTTPConn.Close()
-	if err != nil {
-		fs.Errorf(s.f, "Error closing HTTP server: %v", err)
-		return
-	}
 	close(s.waitChan)
+	if err != nil {
+		return fmt.Errorf("failed to shutdown DLNA server: %w", err)
+	}
+	return nil
+}
+
+// Return the first address of the server
+func (s *server) Addr() net.Addr {
+	return s.HTTPConn.Addr()
 }
 
 // Run SSDP (multicast for server discovery) on all interfaces.

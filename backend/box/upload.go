@@ -105,7 +105,7 @@ func (o *Object) commitUpload(ctx context.Context, SessionID string, parts []api
 	const defaultDelay = 10
 	var tries int
 outer:
-	for tries = 0; tries < maxTries; tries++ {
+	for tries = range maxTries {
 		err = o.fs.pacer.Call(func() (bool, error) {
 			resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, nil)
 			if err != nil {
@@ -203,7 +203,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	errs := make(chan error, 1)
 	var wg sync.WaitGroup
 outer:
-	for part := 0; part < session.TotalParts; part++ {
+	for part := range session.TotalParts {
 		// Check any errors
 		select {
 		case err = <-errs:
@@ -211,10 +211,7 @@ outer:
 		default:
 		}
 
-		reqSize := remaining
-		if reqSize >= chunkSize {
-			reqSize = chunkSize
-		}
+		reqSize := min(remaining, chunkSize)
 
 		// Make a block of memory
 		buf := make([]byte, reqSize)

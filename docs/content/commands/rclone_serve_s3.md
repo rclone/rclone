@@ -27,7 +27,7 @@ docs](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)).
 access.
 
 Please note that some clients may require HTTPS endpoints. See [the
-SSL docs](#ssl-tls) for more information.
+SSL docs](#tls-ssl) for more information.
 
 This command uses the [VFS directory cache](#vfs-virtual-file-system).
 All the functionality will work with `--vfs-cache-mode off`. Using
@@ -82,7 +82,7 @@ secret_access_key = SECRET_ACCESS_KEY
 use_multipart_uploads = false
 ```
 
-Note that setting `disable_multipart_uploads = true` is to work around
+Note that setting `use_multipart_uploads = false` is to work around
 [a bug](#bugs) which will be fixed in due course.
 
 ## Bugs
@@ -154,7 +154,11 @@ By default this will serve files without needing a login.
 You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the `--user` and `--pass` flags.
 
-If no static users are configured by either of the above methods, and client
+Alternatively, you can have the reverse proxy manage authentication and use the
+username provided in the configured header with `--user-from-header`  (e.g., `----user-from-header=x-remote-user`).
+Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration may lead to unauthorized access.
+
+If either of the above authentication methods is not configured and client
 certificates are required by the `--client-ca` flag passed to the server, the
 client certificate common name will be considered as the username.
 
@@ -185,8 +189,7 @@ If you set `--addr` to listen on a public or LAN accessible IP address
 then using Authentication is advised - see the next section for info.
 
 You can use a unix socket by setting the url to `unix:///path/to/socket`
-or just by using an absolute path name. Note that unix sockets bypass the
-authentication - this is expected to be done with file system permissions.
+or just by using an absolute path name.
 
 `--addr` may be repeated to listen on multiple IPs/ports/sockets.
 Socket activation, described further below, can also be used to accomplish the same.
@@ -213,19 +216,21 @@ https.  You will need to supply the `--cert` and `--key` flags.
 If you wish to do client side certificate validation then you will need to
 supply `--client-ca` also.
 
-`--cert` should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  `--key` should be the PEM encoded
-private key and `--client-ca` should be the PEM encoded client
-certificate authority certificate.
+`--cert` must be set to the path of a file containing
+either a PEM encoded certificate, or a concatenation of that with the CA
+certificate. `--key` must be set to the path of a file
+with the PEM encoded private key. If setting `--client-ca`,
+it should be set to the path of a file with PEM encoded client certificate
+authority certificates.
 
 `--min-tls-version` is minimum TLS version that is acceptable. Valid
-  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
-  "tls1.0").
+values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default "tls1.0").
 
 ## Socket activation
 
 Instead of the listening addresses specified above, rclone will listen to all
-FDs passed by the service manager, if any (and ignore any arguments passed by --addr`).
+FDs passed by the service manager, if any (and ignore any arguments passed
+by `--addr`).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
@@ -333,11 +338,11 @@ seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using `--vfs-cache-max-size` or `--vfs-cache-min-free-size` note
+If using `--vfs-cache-max-size` or `--vfs-cache-min-free-space` note
 that the cache may exceed these quotas for two reasons. Firstly
 because it is only checked every `--vfs-cache-poll-interval`. Secondly
 because open files cannot be evicted from the cache. When
-`--vfs-cache-max-size` or `--vfs-cache-min-free-size` is exceeded,
+`--vfs-cache-max-size` or `--vfs-cache-min-free-space` is exceeded,
 rclone will attempt to evict the least accessed files from the cache
 first. rclone will start with files that haven't been accessed for the
 longest. This cache flushing strategy is efficient and more relevant
@@ -541,6 +546,50 @@ modified files from the cache (the related global flag `--checkers` has no effec
 
     --transfers int  Number of file transfers to run in parallel (default 4)
 
+## Symlinks
+
+By default the VFS does not support symlinks. However this may be
+enabled with either of the following flags:
+
+    --links      Translate symlinks to/from regular files with a '.rclonelink' extension.
+    --vfs-links  Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+
+As most cloud storage systems do not support symlinks directly, rclone
+stores the symlink as a normal file with a special extension. So a
+file which appears as a symlink `link-to-file.txt` would be stored on
+cloud storage as `link-to-file.txt.rclonelink` and the contents would
+be the path to the symlink destination.
+
+Note that `--links` enables symlink translation globally in rclone -
+this includes any backend which supports the concept (for example the
+local backend). `--vfs-links` just enables it for the VFS layer.
+
+This scheme is compatible with that used by the [local backend with the --local-links flag](/local/#symlinks-junction-points).
+
+The `--vfs-links` flag has been designed for `rclone mount`, `rclone
+nfsmount` and `rclone serve nfs`.
+
+It hasn't been tested with the other `rclone serve` commands yet.
+
+A limitation of the current implementation is that it expects the
+caller to resolve sub-symlinks. For example given this directory tree
+
+```
+.
+├── dir
+│   └── file.txt
+└── linked-dir -> dir
+```
+
+The VFS will correctly resolve `linked-dir` but not
+`linked-dir/file.txt`. This is not a problem for the tested commands
+but may be for other commands.
+
+**Note** that there is an outstanding issue with symlink support
+[issue #8245](https://github.com/rclone/rclone/issues/8245) with duplicate
+files being created when symlinks are moved into directories where
+there is a file of the same name (or vice versa).
+
 ## VFS Case Sensitivity
 
 Linux file systems are case-sensitive: two files can differ only
@@ -618,6 +667,45 @@ _WARNING._ Contrary to `rclone size`, this flag ignores filters so that the
 result is accurate. However, this is very inefficient and may cost lots of API
 calls resulting in extra charges. Use it as a last resort and only with caching.
 
+## VFS Metadata
+
+If you use the `--vfs-metadata-extension` flag you can get the VFS to
+expose files which contain the [metadata](/docs/#metadata) as a JSON
+blob. These files will not appear in the directory listing, but can be
+`stat`-ed and opened and once they have been they **will** appear in
+directory listings until the directory cache expires.
+
+Note that some backends won't create metadata unless you pass in the
+`--metadata` flag.
+
+For example, using `rclone mount` with `--metadata --vfs-metadata-extension .metadata`
+we get
+
+```
+$ ls -l /mnt/
+total 1048577
+-rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
+
+$ cat /mnt/1G.metadata
+{
+        "atime": "2025-03-04T17:34:22.317069787Z",
+        "btime": "2025-03-03T16:03:37.708253808Z",
+        "gid": "1000",
+        "mode": "100664",
+        "mtime": "2025-03-03T16:03:39.640238323Z",
+        "uid": "1000"
+}
+
+$ ls -l /mnt/
+total 1048578
+-rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
+-rw-rw-r-- 1 user user        185 Mar  3 16:03 1G.metadata
+```
+
+If the file has no metadata it will be returned as `{}` and if there
+is an error reading the metadata the error will be returned as
+`{"error":"error string"}`.
+
 
 
 ```
@@ -627,7 +715,7 @@ rclone serve s3 remote:path [flags]
 ## Options
 
 ```
-      --addr stringArray                       IPaddress:Port, :Port or [unix://]/path/to/socket to bind server to (default [127.0.0.1:8080])
+      --addr stringArray                       IPaddress:Port or :Port to bind server to (default 127.0.0.1:8080)
       --allow-origin string                    Origin which cross-domain request (CORS) can be executed from
       --auth-key stringArray                   Set key pair for v4 authorization: access_key_id,secret_access_key
       --auth-proxy string                      A program to use to create the backend from the auth
@@ -638,11 +726,12 @@ rclone serve s3 remote:path [flags]
       --dir-perms FileMode                     Directory permissions (default 777)
       --etag-hash string                       Which hash to use for the ETag, or auto or blank for off (default "MD5")
       --file-perms FileMode                    File permissions (default 666)
-      --force-path-style                       If true use path style access if false use virtual hosted style (default true) (default true)
+      --force-path-style                       If true use path style access if false use virtual hosted style (default true)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for s3
       --htpasswd string                        A htpasswd file - if not provided no authentication is done
       --key string                             TLS PEM Private key
+      --link-perms FileMode                    Link permissions (default 666)
       --max-header-bytes int                   Maximum size of request header (default 4096)
       --min-tls-version string                 Minimum TLS version that is acceptable (default "tls1.0")
       --no-checksum                            Don't compare checksums on up/download
@@ -659,6 +748,7 @@ rclone serve s3 remote:path [flags]
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
       --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 002)
       --user string                            User name for authentication
+      --user-from-header string                User name from a defined HTTP header
       --vfs-block-norm-dupes                   If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
       --vfs-cache-max-age Duration             Max time since last access of objects in the cache (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache (default off)
@@ -668,6 +758,8 @@ rclone serve s3 remote:path [flags]
       --vfs-case-insensitive                   If a file name not found, find a case insensitive match
       --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
+      --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+      --vfs-metadata-extension string          Set the extension to read metadata from
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
@@ -695,6 +787,7 @@ Flags for filtering directory listings
       --files-from-raw stringArray          Read list of source-file names from file without any processing of lines (use - to read from stdin)
   -f, --filter stringArray                  Add a file filtering rule
       --filter-from stringArray             Read file filtering patterns from a file (use - to read from stdin)
+      --hash-filter string                  Partition filenames by hash k/n or randomly @/n
       --ignore-case                         Ignore case in filters (case insensitive)
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read file include patterns from file (use - to read from stdin)

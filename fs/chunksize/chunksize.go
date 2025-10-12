@@ -17,7 +17,7 @@ import (
 // Returns the default chunk size if it is sufficiently large enough
 // to support the given file size otherwise returns the smallest chunk
 // size necessary to allow the upload to proceed.
-func Calculator(o interface{}, size int64, maxParts int, defaultChunkSize fs.SizeSuffix) fs.SizeSuffix {
+func Calculator(o any, size int64, maxParts int, defaultChunkSize fs.SizeSuffix) fs.SizeSuffix {
 	// If streaming then use default chunk size
 	if size < 0 {
 		fs.Debugf(o, "Streaming upload with chunk_size %s allows uploads of up to %s and will fail only when that limit is reached.", defaultChunkSize, fs.SizeSuffix(maxParts)*defaultChunkSize)

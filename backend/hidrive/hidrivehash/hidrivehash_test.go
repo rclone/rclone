@@ -216,7 +216,7 @@ func TestLevelWrite(t *testing.T) {
 func TestLevelIsFull(t *testing.T) {
 	content := [hidrivehash.Size]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19}
 	l := hidrivehash.NewLevel()
-	for i := 0; i < 256; i++ {
+	for range 256 {
 		assert.False(t, l.(internal.LevelHash).IsFull())
 		written, err := l.Write(content[:])
 		assert.Equal(t, len(content), written)

@@ -3,6 +3,7 @@ package smb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -25,7 +26,7 @@ import (
 )
 
 const (
-	minSleep      = 100 * time.Millisecond
+	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
 	decayConstant = 2 // bigger for slower decay, exponential
 )
@@ -77,6 +78,16 @@ Leave blank if not sure.
 `,
 			Sensitive: true,
 		}, {
+			Name: "use_kerberos",
+			Help: `Use Kerberos authentication.
+
+If set, rclone will use Kerberos authentication instead of NTLM. This
+requires a valid Kerberos configuration and credentials cache to be
+available, either in the default locations or as specified by the
+KRB5_CONFIG and KRB5CCNAME environment variables.
+`,
+			Default: false,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -96,6 +107,20 @@ Set to 0 to keep connections indefinitely.
 			Name:     "case_insensitive",
 			Help:     "Whether the server is configured to be case-insensitive.\n\nAlways true on Windows shares.",
 			Default:  true,
+			Advanced: true,
+		}, {
+			Name: "kerberos_ccache",
+			Help: `Path to the Kerberos credential cache (krb5cc).
+
+Overrides the default KRB5CCNAME environment variable and allows this
+instance of the SMB backend to use a different Kerberos cache file.
+This is useful when mounting multiple SMB with different credentials
+or running in multi-user environments.
+
+Supported formats:
+  - FILE:/path/to/ccache   – Use the specified file.
+  - DIR:/path/to/ccachedir – Use the primary file inside the specified directory.
+  - /path/to/ccache        – Interpreted as a file path.`,
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -126,6 +151,8 @@ type Options struct {
 	Pass            string      `config:"pass"`
 	Domain          string      `config:"domain"`
 	SPN             string      `config:"spn"`
+	UseKerberos     bool        `config:"use_kerberos"`
+	KerberosCCache  string      `config:"kerberos_ccache"`
 	HideSpecial     bool        `config:"hide_special_share"`
 	CaseInsensitive bool        `config:"case_insensitive"`
 	IdleTimeout     fs.Duration `config:"idle_timeout"`
@@ -165,6 +192,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	// if root is empty or ends with / (must be a directory)
+	isRootDir := isPathDir(root)
+
 	root = strings.Trim(root, "/")
 
 	f := &Fs{
@@ -191,12 +221,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if share == "" || dir == "" {
 		return f, nil
 	}
+
+	// Skip stat check if root is already a directory
+	if isRootDir {
+		return f, nil
+	}
 	cn, err := f.getConnection(ctx, share)
 	if err != nil {
 		return nil, err
 	}
 	stat, err := cn.smbShare.Stat(f.toSambaPath(dir))
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	if err != nil {
 		// ignore stat error here
 		return f, nil
@@ -257,7 +292,7 @@ func (f *Fs) findObjectSeparate(ctx context.Context, share, path string) (fs.Obj
 		return nil, err
 	}
 	stat, err := cn.smbShare.Stat(f.toSambaPath(path))
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	if err != nil {
 		return nil, translateError(err, false)
 	}
@@ -279,7 +314,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 		return err
 	}
 	err = cn.smbShare.MkdirAll(f.toSambaPath(path), 0o755)
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	return err
 }
 
@@ -294,7 +329,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return err
 	}
 	err = cn.smbShare.Remove(f.toSambaPath(path))
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	return err
 }
 
@@ -364,7 +399,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 		return nil, err
 	}
 	err = cn.smbShare.Rename(f.toSambaPath(srcPath), f.toSambaPath(dstPath))
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	if err != nil {
 		return nil, translateError(err, false)
 	}
@@ -401,7 +436,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if err != nil {
 		return err
 	}
-	defer f.putConnection(&cn)
+	defer f.putConnection(&cn, err)
 
 	_, err = cn.smbShare.Stat(dstPath)
 	if os.IsNotExist(err) {
@@ -419,7 +454,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, err
 	}
-	defer f.putConnection(&cn)
+	defer f.putConnection(&cn, err)
 
 	if share == "" {
 		shares, err := cn.smbSession.ListSharenames()
@@ -463,18 +498,79 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 		return nil, err
 	}
 	stat, err := cn.smbShare.Statfs(dir)
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	if err != nil {
 		return nil, err
 	}
 
-	bs := int64(stat.BlockSize())
+	bs := stat.BlockSize()
 	usage := &fs.Usage{
-		Total: fs.NewUsageValue(bs * int64(stat.TotalBlockCount())),
-		Used:  fs.NewUsageValue(bs * int64(stat.TotalBlockCount()-stat.FreeBlockCount())),
-		Free:  fs.NewUsageValue(bs * int64(stat.AvailableBlockCount())),
+		Total: fs.NewUsageValue(bs * stat.TotalBlockCount()),
+		Used:  fs.NewUsageValue(bs * (stat.TotalBlockCount() - stat.FreeBlockCount())),
+		Free:  fs.NewUsageValue(bs * stat.AvailableBlockCount()),
 	}
 	return usage, nil
+}
+
+type smbWriterAt struct {
+	pool    *filePool
+	closed  bool
+	closeMu sync.Mutex
+	wg      sync.WaitGroup
+}
+
+func (w *smbWriterAt) WriteAt(p []byte, off int64) (int, error) {
+	w.closeMu.Lock()
+	if w.closed {
+		w.closeMu.Unlock()
+		return 0, errors.New("writer already closed")
+	}
+	w.wg.Add(1)
+	w.closeMu.Unlock()
+	defer w.wg.Done()
+
+	f, err := w.pool.get()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get file from pool: %w", err)
+	}
+
+	n, writeErr := f.WriteAt(p, off)
+	w.pool.put(f, writeErr)
+
+	if writeErr != nil {
+		return n, fmt.Errorf("failed to write at offset %d: %w", off, writeErr)
+	}
+
+	return n, writeErr
+}
+
+func (w *smbWriterAt) Close() error {
+	w.closeMu.Lock()
+	defer w.closeMu.Unlock()
+
+	if w.closed {
+		return nil
+	}
+	w.closed = true
+
+	// Wait for all pending writes to finish
+	w.wg.Wait()
+
+	var errs []error
+
+	// Drain the pool
+	if err := w.pool.drain(); err != nil {
+		errs = append(errs, fmt.Errorf("failed to drain file pool: %w", err))
+	}
+
+	// Remove session
+	w.pool.fs.removeSession()
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
+	return nil
 }
 
 // OpenWriterAt opens with a handle for random access writes
@@ -483,7 +579,6 @@ func (f *Fs) About(ctx context.Context) (_ *fs.Usage, err error) {
 //
 // It truncates any existing object
 func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
-	var err error
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -493,27 +588,42 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		return nil, fs.ErrorIsDir
 	}
 
-	err = o.fs.ensureDirectory(ctx, share, filename)
+	err := o.fs.ensureDirectory(ctx, share, filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make parent directories: %w", err)
 	}
 
-	filename = o.fs.toSambaPath(filename)
+	smbPath := o.fs.toSambaPath(filename)
 
-	o.fs.addSession() // Show session in use
-	defer o.fs.removeSession()
-
+	// One-time truncate
 	cn, err := o.fs.getConnection(ctx, share)
 	if err != nil {
 		return nil, err
 	}
-
-	fl, err := cn.smbShare.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	file, err := cn.smbShare.OpenFile(smbPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open: %w", err)
+		o.fs.putConnection(&cn, err)
+		return nil, err
 	}
+	if size > 0 {
+		if truncateErr := file.Truncate(size); truncateErr != nil {
+			_ = file.Close()
+			o.fs.putConnection(&cn, truncateErr)
+			return nil, fmt.Errorf("failed to truncate file: %w", truncateErr)
+		}
+	}
+	if closeErr := file.Close(); closeErr != nil {
+		o.fs.putConnection(&cn, closeErr)
+		return nil, fmt.Errorf("failed to close file after truncate: %w", closeErr)
+	}
+	o.fs.putConnection(&cn, nil)
 
-	return fl, nil
+	// Add a new session
+	o.fs.addSession()
+
+	return &smbWriterAt{
+		pool: newFilePool(ctx, o.fs, share, smbPath),
+	}, nil
 }
 
 // Shutdown the backend, closing any background tasks and any
@@ -545,7 +655,7 @@ func (f *Fs) ensureDirectory(ctx context.Context, share, _path string) error {
 		return err
 	}
 	err = cn.smbShare.MkdirAll(f.toSambaPath(dir), 0o755)
-	f.putConnection(&cn)
+	f.putConnection(&cn, err)
 	return err
 }
 
@@ -593,7 +703,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	if err != nil {
 		return err
 	}
-	defer o.fs.putConnection(&cn)
+	defer o.fs.putConnection(&cn, err)
 
 	err = cn.smbShare.Chtimes(reqDir, t, t)
 	if err != nil {
@@ -601,9 +711,10 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	}
 
 	fi, err := cn.smbShare.Stat(reqDir)
-	if err == nil {
-		o.statResult = fi
+	if err != nil {
+		return fmt.Errorf("SetModTime: stat: %w", err)
 	}
+	o.statResult = fi
 	return err
 }
 
@@ -638,24 +749,25 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	fl, err := cn.smbShare.OpenFile(filename, os.O_RDONLY, 0)
 	if err != nil {
-		o.fs.putConnection(&cn)
+		o.fs.putConnection(&cn, err)
 		return nil, fmt.Errorf("failed to open: %w", err)
 	}
 	pos, err := fl.Seek(offset, io.SeekStart)
 	if err != nil {
-		o.fs.putConnection(&cn)
+		o.fs.putConnection(&cn, err)
 		return nil, fmt.Errorf("failed to seek: %w", err)
 	}
 	if pos != offset {
-		o.fs.putConnection(&cn)
-		return nil, fmt.Errorf("failed to seek: wrong position (expected=%d, reported=%d)", offset, pos)
+		err = fmt.Errorf("failed to seek: wrong position (expected=%d, reported=%d)", offset, pos)
+		o.fs.putConnection(&cn, err)
+		return nil, err
 	}
 
 	in = readers.NewLimitedReadCloser(fl, limit)
 	in = &boundReadCloser{
 		rc: in,
 		close: func() error {
-			o.fs.putConnection(&cn)
+			o.fs.putConnection(&cn, nil)
 			return nil
 		},
 	}
@@ -685,8 +797,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	defer func() {
-		o.statResult, _ = cn.smbShare.Stat(filename)
-		o.fs.putConnection(&cn)
+		o.fs.putConnection(&cn, err)
 	}()
 
 	fl, err := cn.smbShare.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
@@ -723,7 +834,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update Close failed: %w", err)
 	}
 
-	// Set the modified time
+	// Set the modified time and also o.statResult
 	err = o.SetModTime(ctx, src.ModTime(ctx))
 	if err != nil {
 		return fmt.Errorf("Update SetModTime failed: %w", err)
@@ -746,7 +857,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	}
 
 	err = cn.smbShare.Remove(filename)
-	o.fs.putConnection(&cn)
+	o.fs.putConnection(&cn, err)
 
 	return err
 }
@@ -789,6 +900,11 @@ func ensureSuffix(s, suffix string) string {
 		return s
 	}
 	return s + suffix
+}
+
+// isPathDir determines if a path represents a directory based on trailing slash
+func isPathDir(path string) bool {
+	return path == "" || strings.HasSuffix(path, "/")
 }
 
 func trimPathPrefix(s, prefix string) string {

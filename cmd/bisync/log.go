@@ -6,13 +6,14 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/terminal"
 )
 
-func (b *bisyncRun) indentf(tag, file, format string, args ...interface{}) {
+func (b *bisyncRun) indentf(tag, file, format string, args ...any) {
 	b.indent(tag, file, fmt.Sprintf(format, args...))
 }
 
@@ -67,10 +68,26 @@ func quotePath(path string) string {
 }
 
 // Colors controls whether terminal colors are enabled
-var Colors bool
+var (
+	Colors     bool
+	ColorsLock sync.Mutex
+)
 
 // Color handles terminal colors for bisync
 func Color(style string, s string) string {
+	ColorsLock.Lock()
+	defer ColorsLock.Unlock()
+	if !Colors {
+		return s
+	}
+	terminal.Start()
+	return style + s + terminal.Reset
+}
+
+// ColorX handles terminal colors for bisync
+func ColorX(style string, s string) string {
+	ColorsLock.Lock()
+	defer ColorsLock.Unlock()
 	if !Colors {
 		return s
 	}

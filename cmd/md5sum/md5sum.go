@@ -35,8 +35,7 @@ to running ` + "`rclone hashsum MD5 remote:path`" + `.
 This command can also hash data received on standard input (stdin),
 by not passing a remote:path, or by passing a hyphen as remote:path
 when there is data to read (if not, the hyphen will be treated literally,
-as a relative path).
-`,
+as a relative path).`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.02",
 		"groups":            "Filter,Listing",

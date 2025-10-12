@@ -3,6 +3,8 @@ package gitannex
 import (
 	"fmt"
 	"strings"
+
+	"github.com/rclone/rclone/fs/fspath"
 )
 
 type layoutMode string
@@ -39,8 +41,11 @@ func parseLayoutMode(mode string) layoutMode {
 type queryDirhashFunc func(msg string) (string, error)
 
 func buildFsString(queryDirhash queryDirhashFunc, mode layoutMode, key, remoteName, prefix string) (string, error) {
+	remoteName = strings.TrimSuffix(remoteName, ":") + ":"
+	remoteString := fspath.JoinRootPath(remoteName, prefix)
+
 	if mode == layoutModeNodir {
-		return fmt.Sprintf("%s:%s", remoteName, prefix), nil
+		return remoteString, nil
 	}
 
 	var dirhash string
@@ -59,13 +64,13 @@ func buildFsString(queryDirhash queryDirhashFunc, mode layoutMode, key, remoteNa
 
 	switch mode {
 	case layoutModeLower:
-		return fmt.Sprintf("%s:%s/%s", remoteName, prefix, dirhash), nil
+		return fmt.Sprintf("%s/%s", remoteString, dirhash), nil
 	case layoutModeDirectory:
-		return fmt.Sprintf("%s:%s/%s%s", remoteName, prefix, dirhash, key), nil
+		return fmt.Sprintf("%s/%s%s", remoteString, dirhash, key), nil
 	case layoutModeMixed:
-		return fmt.Sprintf("%s:%s/%s", remoteName, prefix, dirhash), nil
+		return fmt.Sprintf("%s/%s", remoteString, dirhash), nil
 	case layoutModeFrankencase:
-		return fmt.Sprintf("%s:%s/%s", remoteName, prefix, strings.ToLower(dirhash)), nil
+		return fmt.Sprintf("%s/%s", remoteString, strings.ToLower(dirhash)), nil
 	default:
 		panic("unreachable")
 	}

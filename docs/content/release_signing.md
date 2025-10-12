@@ -19,13 +19,14 @@ with a public key compiled into the rclone binary.
 You may obtain the release signing key from:
 
 - From [KEYS](/KEYS) on this website - this file contains all past signing keys also.
-- The git repository hosted on GitHub - https://github.com/rclone/rclone/blob/master/docs/content/KEYS
+- The git repository hosted on GitHub - <https://github.com/rclone/rclone/blob/master/docs/content/KEYS>
 - `gpg --keyserver hkps://keys.openpgp.org --search nick@craig-wood.com`
 - `gpg --keyserver hkps://keyserver.ubuntu.com --search nick@craig-wood.com`
-- https://www.craig-wood.com/nick/pub/pgp-key.txt
+- <https://www.craig-wood.com/nick/pub/pgp-key.txt>
 
 After importing the key, verify that the fingerprint of one of the
-keys matches: `FBF737ECE9F8AB18604BD2AC93935E02FF3B54FA` as this key is used for signing.
+keys matches: `FBF737ECE9F8AB18604BD2AC93935E02FF3B54FA` ads this key is used
+for signing.
 
 We recommend that you cross-check the fingerprint shown above through
 the domains listed below. By cross-checking the integrity of the
@@ -40,9 +41,10 @@ developers at once.
 
 ## How to verify the release
 
-In the release directory you will see the release files and some files called `MD5SUMS`, `SHA1SUMS` and `SHA256SUMS`.
+In the release directory you will see the release files and some files
+called `MD5SUMS`, `SHA1SUMS` and `SHA256SUMS`.
 
-```
+```sh
 $ rclone lsf --http-url https://downloads.rclone.org/v1.63.1 :http:
 MD5SUMS
 SHA1SUMS
@@ -60,7 +62,7 @@ binary files in the release directory along with a signature.
 
 For example:
 
-```
+```sh
 $ rclone cat --http-url https://downloads.rclone.org/v1.63.1 :http:SHA256SUMS
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
@@ -88,11 +90,11 @@ as these are the most secure. You could verify the other types of hash
 also for extra security. `rclone selfupdate` verifies just the
 `SHA256SUMS`.
 
-```
-$ mkdir /tmp/check
-$ cd /tmp/check
-$ rclone copy --http-url https://downloads.rclone.org/v1.63.1 :http:SHA256SUMS .
-$ rclone copy --http-url https://downloads.rclone.org/v1.63.1 :http:rclone-v1.63.1-windows-amd64.zip .
+```sh
+mkdir /tmp/check
+cd /tmp/check
+rclone copy --http-url https://downloads.rclone.org/v1.63.1 :http:SHA256SUMS .
+rclone copy --http-url https://downloads.rclone.org/v1.63.1 :http:rclone-v1.63.1-windows-amd64.zip .
 ```
 
 ### Verify the signatures
@@ -101,7 +103,7 @@ First verify the signatures on the SHA256 file.
 
 Import the key. See above for ways to verify this key is correct.
 
-```
+```sh
 $ gpg --keyserver keyserver.ubuntu.com --receive-keys FBF737ECE9F8AB18604BD2AC93935E02FF3B54FA
 gpg: key 93935E02FF3B54FA: public key "Nick Craig-Wood <nick@craig-wood.com>" imported
 gpg: Total number processed: 1
@@ -110,7 +112,7 @@ gpg:               imported: 1
 
 Then check the signature:
 
-```
+```sh
 $ gpg --verify SHA256SUMS 
 gpg: Signature made Mon 17 Jul 2023 15:03:17 BST
 gpg:                using DSA key FBF737ECE9F8AB18604BD2AC93935E02FF3B54FA
@@ -126,14 +128,14 @@ Repeat for `MD5SUMS` and `SHA1SUMS` if desired.
 Now that we know the signatures on the hashes are OK we can verify the
 binaries match the hashes, completing the verification.
 
-```
+```sh
 $ sha256sum -c SHA256SUMS 2>&1 | grep OK
 rclone-v1.63.1-windows-amd64.zip: OK
 ```
 
 Or do the check with rclone
 
-```
+```sh
 $ rclone hashsum sha256 -C SHA256SUMS rclone-v1.63.1-windows-amd64.zip 
 2023/09/11 10:53:58 NOTICE: SHA256SUMS: improperly formatted checksum line 0
 2023/09/11 10:53:58 NOTICE: SHA256SUMS: improperly formatted checksum line 1
@@ -148,7 +150,7 @@ $ rclone hashsum sha256 -C SHA256SUMS rclone-v1.63.1-windows-amd64.zip
 
 You can verify the signatures and hashes in one command line like this:
 
-```
+```sh
 $ h=$(gpg --decrypt SHA256SUMS) && echo "$h" | sha256sum - -c --ignore-missing
 gpg: Signature made Mon 17 Jul 2023 15:03:17 BST
 gpg:                using DSA key FBF737ECE9F8AB18604BD2AC93935E02FF3B54FA

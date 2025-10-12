@@ -5,10 +5,12 @@ import (
 	"context"
 	"encoding/hex"
 	"io"
+	"maps"
 	"os"
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/gofakes3"
@@ -18,21 +20,18 @@ import (
 
 var (
 	emptyPrefix = &gofakes3.Prefix{}
-	timeFormat  = "Mon, 2 Jan 2006 15:04:05 GMT"
 )
 
 // s3Backend implements the gofacess3.Backend interface to make an S3
 // backend for gofakes3
 type s3Backend struct {
-	opt  *Options
 	s    *Server
 	meta *sync.Map
 }
 
 // newBackend creates a new SimpleBucketBackend.
-func newBackend(s *Server, opt *Options) gofakes3.Backend {
+func newBackend(s *Server) gofakes3.Backend {
 	return &s3Backend{
-		opt:  opt,
 		s:    s,
 		meta: new(sync.Map),
 	}
@@ -52,7 +51,7 @@ func (b *s3Backend) ListBuckets(ctx context.Context) ([]gofakes3.BucketInfo, err
 	for _, entry := range dirEntries {
 		if entry.IsDir() {
 			response = append(response, gofakes3.BucketInfo{
-				Name:         gofakes3.URLEncode(entry.Name()),
+				Name:         entry.Name(),
 				CreationDate: gofakes3.NewContentTime(entry.ModTime()),
 			})
 		}
@@ -98,6 +97,13 @@ func (b *s3Backend) ListBucket(ctx context.Context, bucket string, prefix *gofak
 	return b.pager(response, page)
 }
 
+// formatHeaderTime makes an timestamp which is the same as that used by AWS.
+//
+// This is like RFC1123 always in UTC, but has GMT instead of UTC
+func formatHeaderTime(t time.Time) string {
+	return t.UTC().Format("Mon, 02 Jan 2006 15:04:05") + " GMT"
+}
+
 // HeadObject returns the fileinfo for the given object name.
 //
 // Note that the metadata is not supported yet.
@@ -128,18 +134,16 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 
 	fobj := entry.(fs.Object)
 	size := node.Size()
-	hash := getFileHashByte(fobj)
+	hash := getFileHashByte(fobj, b.s.etagHashType)
 
 	meta := map[string]string{
-		"Last-Modified": node.ModTime().Format(timeFormat),
+		"Last-Modified": formatHeaderTime(node.ModTime()),
 		"Content-Type":  fs.MimeType(context.Background(), fobj),
 	}
 
 	if val, ok := b.meta.Load(fp); ok {
 		metaMap := val.(map[string]string)
-		for k, v := range metaMap {
-			meta[k] = v
-		}
+		maps.Copy(meta, metaMap)
 	}
 
 	return &gofakes3.Object{
@@ -151,7 +155,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 	}, nil
 }
 
-// GetObject fetchs the object from the filesystem.
+// GetObject fetches the object from the filesystem.
 func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string, rangeRequest *gofakes3.ObjectRangeRequest) (obj *gofakes3.Object, err error) {
 	_vfs, err := b.s.getVFS(ctx)
 	if err != nil {
@@ -181,7 +185,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	file := node.(*vfs.File)
 
 	size := node.Size()
-	hash := getFileHashByte(fobj)
+	hash := getFileHashByte(fobj, b.s.etagHashType)
 
 	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
@@ -208,19 +212,17 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 	}
 
 	meta := map[string]string{
-		"Last-Modified": node.ModTime().Format(timeFormat),
+		"Last-Modified": formatHeaderTime(node.ModTime()),
 		"Content-Type":  fs.MimeType(context.Background(), fobj),
 	}
 
 	if val, ok := b.meta.Load(fp); ok {
 		metaMap := val.(map[string]string)
-		for k, v := range metaMap {
-			meta[k] = v
-		}
+		maps.Copy(meta, metaMap)
 	}
 
 	return &gofakes3.Object{
-		Name:     gofakes3.URLEncode(objectName),
+		Name:     objectName,
 		Hash:     hash,
 		Metadata: meta,
 		Size:     size,
@@ -393,7 +395,7 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 	}
 
 	fp := path.Join(bucketName, objectName)
-	// S3 does not report an error when attemping to delete a key that does not exist, so
+	// S3 does not report an error when attempting to delete a key that does not exist, so
 	// we need to skip IsNotExist errors.
 	if err := _vfs.Remove(fp); err != nil && !os.IsNotExist(err) {
 		return err

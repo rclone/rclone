@@ -151,7 +151,7 @@ func (x *BwTimetable) Set(s string) error {
 	}
 
 	// Split the timetable string by both spaces and semicolons
-	for _, tok := range strings.FieldsFunc(s, func(r rune) bool {
+	for tok := range strings.FieldsFuncSeq(s, func(r rune) bool {
 		return r == ' ' || r == ';'
 	}) {
 		tv := strings.Split(tok, ",")
@@ -168,7 +168,7 @@ func (x *BwTimetable) Set(s string) error {
 			if err := validateHour(HHMM); err != nil {
 				return err
 			}
-			for i := 0; i < 7; i++ {
+			for i := range 7 {
 				hh, _ := strconv.Atoi(HHMM[0:2])
 				mm, _ := strconv.Atoi(HHMM[3:])
 				ts := BwTimeSlot{

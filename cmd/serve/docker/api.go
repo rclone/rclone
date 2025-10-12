@@ -92,7 +92,7 @@ type ErrorResponse struct {
 func newRouter(drv *Driver) http.Handler {
 	r := chi.NewRouter()
 	r.Post(activatePath, func(w http.ResponseWriter, r *http.Request) {
-		res := map[string]interface{}{
+		res := map[string]any{
 			"Implements": []string{"VolumeDriver"},
 		}
 		encodeResponse(w, res, nil, activatePath)
@@ -152,7 +152,7 @@ func newRouter(drv *Driver) http.Handler {
 	return r
 }
 
-func decodeRequest(w http.ResponseWriter, r *http.Request, req interface{}) bool {
+func decodeRequest(w http.ResponseWriter, r *http.Request, req any) bool {
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return false
@@ -160,7 +160,7 @@ func decodeRequest(w http.ResponseWriter, r *http.Request, req interface{}) bool
 	return true
 }
 
-func encodeResponse(w http.ResponseWriter, res interface{}, err error, path string) {
+func encodeResponse(w http.ResponseWriter, res any, err error, path string) {
 	w.Header().Set("Content-Type", contentType)
 	if err != nil {
 		fs.Debugf(path, "Request returned error: %v", err)

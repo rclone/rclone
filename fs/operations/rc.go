@@ -62,7 +62,7 @@ func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if rc.NotErrParamNotFound(err) {
 		return nil, err
 	}
-	var list = []*ListJSONItem{}
+	list := []*ListJSONItem{}
 	err = ListJSON(ctx, f, remote, &opt, func(item *ListJSONItem) error {
 		list = append(list, item)
 		return nil
@@ -160,7 +160,6 @@ func rcAbout(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	for _, copy := range []bool{false, true} {
-		copy := copy
 		name := "Move"
 		if copy {
 			name = "Copy"
@@ -193,7 +192,7 @@ func rcMoveOrCopyFile(ctx context.Context, in rc.Params, cp bool) (out rc.Params
 	if err != nil {
 		return nil, err
 	}
-	return nil, moveOrCopyFile(ctx, dstFs, srcFs, dstRemote, srcRemote, cp)
+	return nil, moveOrCopyFile(ctx, dstFs, srcFs, dstRemote, srcRemote, cp, false)
 }
 
 func init() {
@@ -203,6 +202,7 @@ func init() {
 		help         string
 		noRemote     bool
 		needsRequest bool
+		noCommand    bool
 	}{
 		{name: "mkdir", title: "Make a destination directory or container"},
 		{name: "rmdir", title: "Remove an empty directory or container"},
@@ -211,15 +211,17 @@ func init() {
 		{name: "delete", title: "Remove files in the path", noRemote: true},
 		{name: "deletefile", title: "Remove the single file pointed to"},
 		{name: "copyurl", title: "Copy the URL to the object", help: "- url - string, URL to read from\n - autoFilename - boolean, set to true to retrieve destination file name from url\n"},
-		{name: "uploadfile", title: "Upload file using multiform/form-data", help: "- each part in body represents a file to be uploaded\n", needsRequest: true},
+		{name: "uploadfile", title: "Upload file using multiform/form-data", help: "- each part in body represents a file to be uploaded\n", needsRequest: true, noCommand: true},
 		{name: "cleanup", title: "Remove trashed files in the remote or path", noRemote: true},
 		{name: "settier", title: "Changes storage tier or class on all files in the path", noRemote: true},
-		{name: "settierfile", title: "Changes storage tier or class on the single file pointed to"},
+		{name: "settierfile", title: "Changes storage tier or class on the single file pointed to", noCommand: true},
 	} {
-		op := op
-		remote := "- remote - a path within that remote e.g. \"dir\"\n"
-		if op.noRemote {
-			remote = ""
+		var remote, command string
+		if !op.noRemote {
+			remote = "- remote - a path within that remote e.g. \"dir\"\n"
+		}
+		if !op.noCommand {
+			command = "See the [" + op.name + "](/commands/rclone_" + op.name + "/) command for more information on the above.\n"
 		}
 		rc.Add(rc.Call{
 			Path:         "operations/" + op.name,
@@ -232,9 +234,7 @@ func init() {
 			Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
-` + remote + op.help + `
-See the [` + op.name + `](/commands/rclone_` + op.name + `/) command for more information on the above.
-`,
+` + remote + op.help + "\n" + command,
 		})
 	}
 }
@@ -289,7 +289,6 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 
 		var request *http.Request
 		request, err := in.GetHTTPRequest()
-
 		if err != nil {
 			return nil, err
 		}
@@ -629,12 +628,12 @@ func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return nil, err
 	}
-	var opt = map[string]string{}
+	opt := map[string]string{}
 	err = in.GetStructMissingOK("opt", &opt)
 	if err != nil {
 		return nil, err
 	}
-	var arg = []string{}
+	arg := []string{}
 	err = in.GetStructMissingOK("arg", &arg)
 	if err != nil {
 		return nil, err
@@ -642,7 +641,6 @@ func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	result, err := doCommand(ctx, command, arg, opt)
 	if err != nil {
 		return nil, fmt.Errorf("command %q failed: %w", command, err)
-
 	}
 	out = make(rc.Params)
 	out["result"] = result
@@ -685,7 +683,6 @@ func rcDu(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	dir, err := in.GetString("dir")
 	if rc.IsErrParamNotFound(err) {
 		dir = config.GetCacheDir()
-
 	} else if err != nil {
 		return nil, err
 	}
@@ -823,7 +820,7 @@ func rcCheck(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, rc.NewErrParamInvalid(errors.New("need srcFs parameter when not using checkFileHash"))
 	}
 
-	oneway, _ := in.GetBool("oneway")
+	oneway, _ := in.GetBool("oneWay")
 	download, _ := in.GetBool("download")
 
 	opt := &CheckOpt{

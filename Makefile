@@ -100,6 +100,7 @@ compiletest:
 check:	rclone
 	@echo "-- START CODE QUALITY REPORT -------------------------------"
 	@golangci-lint run $(LINTTAGS) ./...
+	@bin/markdown-lint
 	@echo "-- END CODE QUALITY REPORT ---------------------------------"
 
 # Get the build dependencies
@@ -113,21 +114,21 @@ release_dep_linux:
 # Update dependencies
 showupdates:
 	@echo "*** Direct dependencies that could be updated ***"
-	@GO111MODULE=on go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all 2> /dev/null
+	@go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all 2> /dev/null
 
 # Update direct dependencies only
 updatedirect:
-	GO111MODULE=on go get -d $$(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all)
-	GO111MODULE=on go mod tidy
+	go get $$(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all)
+	go mod tidy
 
 # Update direct and indirect dependencies and test dependencies
 update:
-	GO111MODULE=on go get -d -u -t ./...
-	GO111MODULE=on go mod tidy
+	go get -u -t ./...
+	go mod tidy
 
 # Tidy the module dependencies
 tidy:
-	GO111MODULE=on go mod tidy
+	go mod tidy
 
 doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
 
@@ -144,9 +145,11 @@ MANUAL.txt:	MANUAL.md
 	pandoc -s --from markdown-smart --to plain MANUAL.md -o MANUAL.txt
 
 commanddocs: rclone
+	go generate ./lib/transform
 	-@rmdir -p '$$HOME/.config/rclone'
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs --config=/notfound docs/content/
 	@[ ! -e '$$HOME' ] || (echo 'Error: created unwanted directory named $$HOME' && exit 1)
+	go run bin/make_bisync_docs.go ./docs/content/
 
 backenddocs: rclone bin/make_backend_docs.py
 	-@rmdir -p '$$HOME/.config/rclone'
@@ -243,7 +246,7 @@ fetch_binaries:
 	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
-	cd docs && hugo server --logLevel info -w --disableFastRender
+	cd docs && hugo server --logLevel info -w --disableFastRender --ignoreCache
 
 tag:	retag doc
 	bin/make_changelog.py $(LAST_TAG) $(VERSION) > docs/content/changelog.md.new

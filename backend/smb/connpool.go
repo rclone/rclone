@@ -2,8 +2,10 @@ package smb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	smb2 "github.com/cloudsoda/go-smb2"
@@ -11,14 +13,17 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fshttp"
+	"golang.org/x/sync/errgroup"
 )
 
 // dial starts a client connection to the given SMB server. It is a
 // convenience function that connects to the given network address,
 // initiates the SMB handshake, and then sets up a Client.
+//
+// The context is only used for establishing the connection, not after.
 func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 	dialer := fshttp.NewDialer(ctx)
-	tconn, err := dialer.Dial(network, addr)
+	tconn, err := dialer.DialContext(ctx, network, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -31,13 +36,29 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 		}
 	}
 
-	d := &smb2.Dialer{
-		Initiator: &smb2.NTLMInitiator{
+	d := &smb2.Dialer{}
+	if f.opt.UseKerberos {
+		cl, err := NewKerberosFactory().GetClient(f.opt.KerberosCCache)
+		if err != nil {
+			return nil, err
+		}
+
+		spn := f.opt.SPN
+		if spn == "" {
+			spn = "cifs/" + f.opt.Host
+		}
+
+		d.Initiator = &smb2.Krb5Initiator{
+			Client:    cl,
+			TargetSPN: spn,
+		}
+	} else {
+		d.Initiator = &smb2.NTLMInitiator{
 			User:      f.opt.User,
 			Password:  pass,
 			Domain:    f.opt.Domain,
 			TargetSPN: f.opt.SPN,
-		},
+		}
 	}
 
 	session, err := d.DialConn(ctx, tconn, addr)
@@ -73,15 +94,7 @@ func (c *conn) close() (err error) {
 
 // True if it's closed
 func (c *conn) closed() bool {
-	var nopErr error
-	if c.smbShare != nil {
-		// stat the current directory
-		_, nopErr = c.smbShare.Stat(".")
-	} else {
-		// list the shares
-		_, nopErr = c.smbSession.ListSharenames()
-	}
-	return nopErr != nil
+	return c.smbSession.Echo() != nil
 }
 
 // Show that we are using a SMB session
@@ -102,23 +115,20 @@ func (f *Fs) getSessions() int32 {
 }
 
 // Open a new connection to the SMB server.
+//
+// The context is only used for establishing the connection, not after.
 func (f *Fs) newConnection(ctx context.Context, share string) (c *conn, err error) {
-	// As we are pooling these connections we need to decouple
-	// them from the current context
-	bgCtx := context.Background()
-
-	c, err = f.dial(bgCtx, "tcp", f.opt.Host+":"+f.opt.Port)
+	c, err = f.dial(ctx, "tcp", f.opt.Host+":"+f.opt.Port)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't connect SMB: %w", err)
 	}
 	if share != "" {
 		// mount the specified share as well if user requested
-		c.smbShare, err = c.smbSession.Mount(share)
+		err = c.mountShare(share)
 		if err != nil {
 			_ = c.smbSession.Logoff()
 			return nil, fmt.Errorf("couldn't initialize SMB: %w", err)
 		}
-		c.smbShare = c.smbShare.WithContext(bgCtx)
 	}
 	return c, nil
 }
@@ -176,22 +186,29 @@ func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err erro
 // Return a SMB connection to the pool
 //
 // It nils the pointed to connection out so it can't be reused
-func (f *Fs) putConnection(pc **conn) {
-	c := *pc
-	*pc = nil
-
-	var nopErr error
-	if c.smbShare != nil {
-		// stat the current directory
-		_, nopErr = c.smbShare.Stat(".")
-	} else {
-		// list the shares
-		_, nopErr = c.smbSession.ListSharenames()
-	}
-	if nopErr != nil {
-		fs.Debugf(f, "Connection failed, closing: %v", nopErr)
-		_ = c.close()
+//
+// if err is not nil then it checks the connection is alive using an
+// ECHO request
+func (f *Fs) putConnection(pc **conn, err error) {
+	if pc == nil {
 		return
+	}
+	c := *pc
+	if c == nil {
+		return
+	}
+	*pc = nil
+	if err != nil {
+		// If not a regular SMB error then check the connection
+		if !(errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrExist) || errors.Is(err, os.ErrPermission)) {
+			echoErr := c.smbSession.Echo()
+			if echoErr != nil {
+				fs.Debugf(f, "Connection failed, closing: %v", echoErr)
+				_ = c.close()
+				return
+			}
+			fs.Debugf(f, "Connection OK after error: %v", err)
+		}
 	}
 
 	f.poolMu.Lock()
@@ -219,15 +236,18 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 	if len(f.pool) != 0 {
 		fs.Debugf(f, "Closing %d unused connections", len(f.pool))
 	}
+
+	g, _ := errgroup.WithContext(ctx)
 	for i, c := range f.pool {
-		if !c.closed() {
-			cErr := c.close()
-			if cErr != nil {
-				err = cErr
+		g.Go(func() (err error) {
+			if !c.closed() {
+				err = c.close()
 			}
-		}
-		f.pool[i] = nil
+			f.pool[i] = nil
+			return err
+		})
 	}
+	err = g.Wait()
 	f.pool = nil
 	return err
 }

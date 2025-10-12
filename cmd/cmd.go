@@ -288,7 +288,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			accounting.GlobalStats().ResetErrors()
 		}
 		if ci.RetriesInterval > 0 {
-			time.Sleep(ci.RetriesInterval)
+			time.Sleep(time.Duration(ci.RetriesInterval))
 		}
 	}
 	stopStats()
@@ -429,11 +429,12 @@ func initConfig() {
 		fs.Fatalf(nil, "Failed to start remote control: %v", err)
 	}
 
-	// Start the metrics server if configured
-	_, err = rcserver.MetricsStart(ctx, &rc.Opt)
-	if err != nil {
-		fs.Fatalf(nil, "Failed to start metrics server: %v", err)
-
+	// Start the metrics server if configured and not running the "rc" command
+	if len(os.Args) >= 2 && os.Args[1] != "rc" {
+		_, err = rcserver.MetricsStart(ctx, &rc.Opt)
+		if err != nil {
+			fs.Fatalf(nil, "Failed to start metrics server: %v", err)
+		}
 	}
 
 	// Setup CPU profiling if desired

@@ -65,7 +65,7 @@ var cmdSelfUpdate = &cobra.Command{
 	Use:     "selfupdate",
 	Aliases: []string{"self-update"},
 	Short:   `Update the rclone binary.`,
-	Long:    selfUpdateHelp,
+	Long:    strings.TrimSpace(selfUpdateHelp),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.55",
 	},
@@ -327,7 +327,7 @@ func makeRandomExeName(baseName, extension string) (string, error) {
 		extension += ".exe"
 	}
 
-	for attempt := 0; attempt < maxAttempts; attempt++ {
+	for range maxAttempts {
 		filename := fmt.Sprintf("%s.%s.%s", baseName, random.String(4), extension)
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			return filename, nil

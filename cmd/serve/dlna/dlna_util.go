@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -68,7 +69,7 @@ func didlLite(chardata string) string {
 		`</DIDL-Lite>`
 }
 
-func mustMarshalXML(value interface{}) []byte {
+func mustMarshalXML(value any) []byte {
 	ret, err := xml.MarshalIndent(value, "", "  ")
 	if err != nil {
 		fs.Panicf(nil, "mustMarshalXML failed to marshal %v: %s", value, err)
@@ -85,8 +86,8 @@ func marshalSOAPResponse(sa upnp.SoapAction, args map[string]string) []byte {
 			Value:   value,
 		})
 	}
-	return []byte(fmt.Sprintf(`<u:%[1]sResponse xmlns:u="%[2]s">%[3]s</u:%[1]sResponse>`,
-		sa.Action, sa.ServiceURN.String(), mustMarshalXML(soapArgs)))
+	return fmt.Appendf(nil, `<u:%[1]sResponse xmlns:u="%[2]s">%[3]s</u:%[1]sResponse>`,
+		sa.Action, sa.ServiceURN.String(), mustMarshalXML(soapArgs))
 }
 
 type loggingResponseWriter struct {
@@ -95,7 +96,7 @@ type loggingResponseWriter struct {
 	committed bool
 }
 
-func (lrw *loggingResponseWriter) logRequest(code int, err interface{}) {
+func (lrw *loggingResponseWriter) logRequest(code int, err any) {
 	// Choose appropriate log level based on response status code.
 	var level fs.LogLevel
 	if code < 400 && err == nil {
@@ -163,9 +164,7 @@ func traceLogging(next http.Handler) http.Handler {
 		}
 
 		// copy from recorder to the real response writer
-		for k, v := range recorder.Header() {
-			w.Header()[k] = v
-		}
+		maps.Copy(w.Header(), recorder.Header())
 		w.WriteHeader(recorder.Code)
 		_, err = recorder.Body.WriteTo(w)
 		if err != nil {
@@ -184,7 +183,7 @@ func withHeader(name string, value string, next http.Handler) http.Handler {
 }
 
 // serveError returns an http.StatusInternalServerError and logs the error
-func serveError(ctx context.Context, what interface{}, w http.ResponseWriter, text string, err error) {
+func serveError(ctx context.Context, what any, w http.ResponseWriter, text string, err error) {
 	err = fs.CountError(ctx, err)
 	fs.Errorf(what, "%s: %v", text, err)
 	http.Error(w, text+".", http.StatusInternalServerError)

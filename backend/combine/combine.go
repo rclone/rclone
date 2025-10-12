@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"golang.org/x/sync/errgroup"
@@ -186,7 +187,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	g, gCtx := errgroup.WithContext(ctx)
 	var mu sync.Mutex
 	for _, upstream := range opt.Upstreams {
-		upstream := upstream
 		g.Go(func() (err error) {
 			equal := strings.IndexRune(upstream, '=')
 			if equal < 0 {
@@ -240,17 +240,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		DirModTimeUpdatesOnWrite: true,
 		PartialUploads:           true,
 	}).Fill(ctx, f)
-	canMove := true
+	canMove, slowHash := true, false
 	for _, u := range f.upstreams {
 		features = features.Mask(ctx, u.f) // Mask all upstream fs
 		if !operations.CanServerSideMove(u.f) {
 			canMove = false
 		}
+		slowHash = slowHash || u.f.Features().SlowHash
 	}
 	// We can move if all remotes support Move or Copy
 	if canMove {
 		features.Move = f.Move
 	}
+
+	// If any of upstreams are SlowHash, propagate it
+	features.SlowHash = slowHash
 
 	// Enable ListR when upstreams either support ListR or is local
 	// But not when all upstreams are local
@@ -264,6 +268,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 			}
 		}
 	}
+
+	// Enable ListP always
+	features.ListP = f.ListP
 
 	// Enable Purge when any upstreams support it
 	if features.Purge == nil {
@@ -362,7 +369,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 func (f *Fs) multithread(ctx context.Context, fn func(context.Context, *upstream) error) error {
 	g, gCtx := errgroup.WithContext(ctx)
 	for _, u := range f.upstreams {
-		u := u
 		g.Go(func() (err error) {
 			return fn(gCtx, u)
 		})
@@ -629,7 +635,6 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 	var uChans []chan time.Duration
 
 	for _, u := range f.upstreams {
-		u := u
 		if do := u.f.Features().ChangeNotify; do != nil {
 			ch := make(chan time.Duration)
 			uChans = append(uChans, ch)
@@ -809,24 +814,52 @@ func (u *upstream) wrapEntries(ctx context.Context, entries fs.DirEntries) (fs.D
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
 	// defer log.Trace(f, "dir=%q", dir)("entries = %v, err=%v", &entries, &err)
 	if f.root == "" && dir == "" {
-		entries = make(fs.DirEntries, 0, len(f.upstreams))
+		entries := make(fs.DirEntries, 0, len(f.upstreams))
 		for combineDir := range f.upstreams {
 			d := fs.NewLimitedDirWrapper(combineDir, fs.NewDir(combineDir, f.when))
 			entries = append(entries, d)
 		}
-		return entries, nil
+		return callback(entries)
 	}
 	u, uRemote, err := f.findUpstream(dir)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	entries, err = u.f.List(ctx, uRemote)
-	if err != nil {
-		return nil, err
+	wrappedCallback := func(entries fs.DirEntries) error {
+		entries, err := u.wrapEntries(ctx, entries)
+		if err != nil {
+			return err
+		}
+		return callback(entries)
 	}
-	return u.wrapEntries(ctx, entries)
+	listP := u.f.Features().ListP
+	if listP == nil {
+		entries, err := u.f.List(ctx, uRemote)
+		if err != nil {
+			return err
+		}
+		return wrappedCallback(entries)
+	}
+	return listP(ctx, uRemote, wrappedCallback)
 }
 
 // ListR lists the objects and directories of the Fs starting

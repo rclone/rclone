@@ -487,3 +487,17 @@ func TestFillInMissingSizes(t *testing.T) {
 		})
 	}
 }
+
+func TestVFSIsMetadataFile(t *testing.T) {
+	_, vfs := newTestVFS(t)
+
+	rawName, found := vfs.isMetadataFile("leaf.metadata")
+	assert.Equal(t, "leaf.metadata", rawName)
+	assert.Equal(t, false, found)
+
+	vfs.Opt.MetadataExtension = ".metadata"
+
+	rawName, found = vfs.isMetadataFile("leaf.metadata")
+	assert.Equal(t, "leaf", rawName)
+	assert.Equal(t, true, found)
+}

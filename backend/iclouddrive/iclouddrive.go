@@ -445,7 +445,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// build request
-	// cant use normal rename as file needs to be "activated" first
+	// can't use normal rename as file needs to be "activated" first
 
 	r := api.NewUpdateFileInfo()
 	r.DocumentID = doc.DocumentID

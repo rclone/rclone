@@ -360,7 +360,7 @@ func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(len(checkSample)), o.Size())
 
-	for i := 0; i < len(checkSample); i++ {
+	for i := range checkSample {
 		require.Equal(t, testData[i], checkSample[i])
 	}
 }
@@ -387,7 +387,7 @@ func TestInternalLargeWrittenContentMatches(t *testing.T) {
 
 	readData, err := runInstance.readDataFromRemote(t, rootFs, "data.bin", 0, testSize, false)
 	require.NoError(t, err)
-	for i := 0; i < len(readData); i++ {
+	for i := range readData {
 		require.Equalf(t, testData[i], readData[i], "at byte %v", i)
 	}
 }
@@ -688,7 +688,7 @@ func TestInternalMaxChunkSizeRespected(t *testing.T) {
 	co, ok := o.(*cache.Object)
 	require.True(t, ok)
 
-	for i := 0; i < 4; i++ { // read first 4
+	for i := range 4 { // read first 4
 		_ = runInstance.readDataFromObj(t, co, chunkSize*int64(i), chunkSize*int64(i+1), false)
 	}
 	cfs.CleanUpCache(true)
@@ -971,7 +971,7 @@ func (r *run) randomReader(t *testing.T, size int64) io.ReadCloser {
 	f, err := os.CreateTemp("", "rclonecache-tempfile")
 	require.NoError(t, err)
 
-	for i := 0; i < int(cnt); i++ {
+	for range int(cnt) {
 		data := randStringBytes(int(chunk))
 		_, _ = f.Write(data)
 	}
@@ -1085,9 +1085,9 @@ func (r *run) rm(t *testing.T, f fs.Fs, remote string) error {
 	return err
 }
 
-func (r *run) list(t *testing.T, f fs.Fs, remote string) ([]interface{}, error) {
+func (r *run) list(t *testing.T, f fs.Fs, remote string) ([]any, error) {
 	var err error
-	var l []interface{}
+	var l []any
 	var list fs.DirEntries
 	list, err = f.List(context.Background(), remote)
 	for _, ll := range list {
@@ -1215,7 +1215,7 @@ func (r *run) listenForBackgroundUpload(t *testing.T, f fs.Fs, remote string) ch
 		var err error
 		var state cache.BackgroundUploadState
 
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			select {
 			case state = <-buCh:
 				// continue
@@ -1293,7 +1293,7 @@ func (r *run) completeAllBackgroundUploads(t *testing.T, f fs.Fs, lastRemote str
 
 func (r *run) retryBlock(block func() error, maxRetries int, rate time.Duration) error {
 	var err error
-	for i := 0; i < maxRetries; i++ {
+	for range maxRetries {
 		err = block()
 		if err == nil {
 			return nil

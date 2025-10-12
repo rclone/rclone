@@ -732,7 +732,7 @@ func TestRWCacheUpdate(t *testing.T) {
 	const filename = "TestRWCacheUpdate"
 
 	modTime := time.Now().Add(-time.Hour)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		modTime = modTime.Add(time.Minute)
 		// Refresh test file
 		contents := fmt.Sprintf("TestRWCacheUpdate%03d", i)
