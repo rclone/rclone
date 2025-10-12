@@ -6,9 +6,9 @@ description: "Rclone Changelog"
 
 # Changelog
 
-## v1.71.0 - 2025-08-22
+## v1.73.0 - 2025-08-22
 
-[See commits](https://github.com/rclone/rclone/compare/v1.70.0...v1.71.0)
+[See commits](https://github.com/rclone/rclone/compare/v1.70.0...v1.73.0)
 
 - New S3 providers
   - [Exaba](/s3/#exaba) (Nick Craig-Wood)
@@ -147,15 +147,15 @@ description: "Rclone Changelog"
 
 ## v1.70.1 - 2025-06-19
 
-[See commits](https://github.com/rclone/rclone/compare/v1.72.0...v1.70.1)
+[See commits](https://github.com/rclone/rclone/compare/v1.73.0...v1.70.1)
 
 - Bug Fixes
   - convmv: Fix spurious "error running command echo" on Windows (Nick Craig-Wood)
   - doc fixes (albertony, Ed Craig-Wood, jinjingroad)
 
-## v1.72.0 - 2025-06-17
+## v1.73.0 - 2025-06-17
 
-[See commits](https://github.com/rclone/rclone/compare/v1.69.0...v1.72.0)
+[See commits](https://github.com/rclone/rclone/compare/v1.69.0...v1.73.0)
 
 - New backends
   - [DOI](/doi/) (Flora Thiebaut)

@@ -73,7 +73,7 @@ var speedCmd = &cobra.Command{
 
 	You can use the --json flag to only print the results in JSON format.`,
 	Annotations: map[string]string{
-		"versionIntroduced": "v1.72",
+		"versionIntroduced": "v1.73",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		ctx := command.Context()

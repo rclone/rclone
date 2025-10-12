@@ -1896,7 +1896,7 @@ about *Unison* and synchronization in general.
 
 ## Changelog
 
-### `v1.71`
+### `v1.73`
 
 - `bisync` is now officially released from beta.
 
