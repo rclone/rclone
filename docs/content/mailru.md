@@ -6,7 +6,10 @@ versionIntroduced: "v1.50"
 
 # {{< icon "fas fa-at" >}} Mail.ru Cloud
 
-[Mail.ru Cloud](https://cloud.mail.ru/) is a cloud storage provided by a Russian internet company [Mail.Ru Group](https://mail.ru). The official desktop client is [Disk-O:](https://disk-o.cloud/en), available on Windows and Mac OS.
+[Mail.ru Cloud](https://cloud.mail.ru/) is a cloud storage provided by a
+Russian internet company [Mail.Ru Group](https://mail.ru). The official
+desktop client is [Disk-O:](https://disk-o.cloud/en), available on Windows
+and Mac OS.
 
 ## Features highlights
 
@@ -14,12 +17,13 @@ versionIntroduced: "v1.50"
 - Files have a `last modified time` property, directories don't
 - Deleted files are by default moved to the trash
 - Files and directories can be shared via public links
-- Partial uploads or streaming are not supported, file size must be known before upload
+- Partial uploads or streaming are not supported, file size must be known before
+  upload
 - Maximum file size is limited to 2G for a free account, unlimited for paid accounts
 - Storage keeps hash for all files and performs transparent deduplication,
   the hash algorithm is a modified SHA1
-- If a particular file is already present in storage, one can quickly submit file hash
-  instead of long file upload (this optimization is supported by rclone)
+- If a particular file is already present in storage, one can quickly submit file
+  hash instead of long file upload (this optimization is supported by rclone)
 
 ## Configuration
 
@@ -35,16 +39,22 @@ give an error like `oauth2: server response missing access_token`.
 - Go to Security / "Пароль и безопасность"
 - Click password for apps / "Пароли для внешних приложений"
 - Add the password - give it a name - eg "rclone"
-- Select the permissions level. For some reason just "Full access to Cloud" (WebDav) doesn't work for Rclone currently. You have to select "Full access to Mail, Cloud and Calendar" (all protocols). ([thread on forum.rclone.org](https://forum.rclone.org/t/failed-to-create-file-system-for-mailru-failed-to-authorize-oauth2-invalid-username-or-password-username-or-password-is-incorrect/49298))
-- Copy the password and use this password below - your normal login password won't work.
+- Select the permissions level. For some reason just "Full access to Cloud"
+  (WebDav) doesn't work for Rclone currently. You have to select "Full access
+  to Mail, Cloud and Calendar" (all protocols).
+  ([thread on forum.rclone.org](https://forum.rclone.org/t/failed-to-create-file-system-for-mailru-failed-to-authorize-oauth2-invalid-username-or-password-username-or-password-is-incorrect/49298))
+- Copy the password and use this password below - your normal login password
+  won't work.
 
 Now run
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -109,20 +119,28 @@ You can use the configured backend as shown below:
 
 See top level directories
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 Make a new directory
 
-    rclone mkdir remote:directory
+```sh
+rclone mkdir remote:directory
+```
 
 List the contents of a directory
 
-    rclone ls remote:directory
+```sh
+rclone ls remote:directory
+```
 
 Sync `/home/local/directory` to the remote path, deleting any
 excess files in the path.
 
-    rclone sync --interactive /home/local/directory remote:directory
+```sh
+rclone sync --interactive /home/local/directory remote:directory
+```
 
 ### Modification times and hashes
 
@@ -299,6 +317,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

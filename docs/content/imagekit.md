@@ -2,18 +2,19 @@
 title: "ImageKit"
 description: "Rclone docs for ImageKit backend."
 versionIntroduced: "v1.63"
-
 ---
+
 # {{< icon "fa fa-cloud" >}} ImageKit
+
 This is a backend for the [ImageKit.io](https://imagekit.io/) storage service.
 
-#### About ImageKit
-[ImageKit.io](https://imagekit.io/)  provides real-time image and video optimizations, transformations, and CDN delivery. Over 1,000 businesses and 70,000 developers trust ImageKit with their images and videos on the web.
+[ImageKit.io](https://imagekit.io/) provides real-time image and video
+optimizations, transformations, and CDN delivery. Over 1,000 businesses
+and 70,000 developers trust ImageKit with their images and videos on the web.
 
-
-#### Accounts & Pricing
-
-To use this backend, you need to [create an account](https://imagekit.io/registration/) on ImageKit. Start with a free plan with generous usage limits. Then, as your requirements grow, upgrade to a plan that best fits your needs. See [the pricing details](https://imagekit.io/plans).
+To use this backend, you need to [create an account](https://imagekit.io/registration/)
+on ImageKit. Start with a free plan with generous usage limits. Then, as your requirements
+grow, upgrade to a plan that best fits your needs. See [the pricing details](https://imagekit.io/plans).
 
 ## Configuration
 
@@ -21,16 +22,18 @@ Here is an example of making an imagekit configuration.
 
 Firstly create a [ImageKit.io](https://imagekit.io/) account and choose a plan.
 
-You will need to log in and get the `publicKey` and `privateKey` for your account from the developer section.
+You will need to log in and get the `publicKey` and `privateKey` for your account
+from the developer section.
 
 Now run
-```
+
+```sh
 rclone config
 ```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -82,20 +85,26 @@ e) Edit this remote
 d) Delete this remote
 y/e/d> y
 ```
+
 List directories in the top level of your Media Library
-```
+
+```sh
 rclone lsd imagekit-media-library:
 ```
+
 Make a new directory.
-```
+
+```sh
 rclone mkdir imagekit-media-library:directory
 ```
+
 List the contents of a directory.
-```
+
+```sh
 rclone ls imagekit-media-library:directory
 ```
 
-###   Modified time and hashes
+### Modified time and hashes
 
 ImageKit does not support modification times or hashes yet.
 

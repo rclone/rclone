@@ -85,11 +85,11 @@ Rclone helps you:
 ## Features {#features}
 
 - Transfers
-    - MD5, SHA1 hashes are checked at all times for file integrity
-    - Timestamps are preserved on files
-    - Operations can be restarted at any time
-    - Can be to and from network, e.g. two different cloud providers
-    - Can use multi-threaded downloads to local disk
+  - MD5, SHA1 hashes are checked at all times for file integrity
+  - Timestamps are preserved on files
+  - Operations can be restarted at any time
+  - Can be to and from network, e.g. two different cloud providers
+  - Can use multi-threaded downloads to local disk
 - [Copy](/commands/rclone_copy/) new or changed files to cloud storage
 - [Sync](/commands/rclone_sync/) (one way) to make a directory identical
 - [Bisync](/bisync/) (two way) to keep two directories in sync bidirectionally
@@ -122,6 +122,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Dreamhost" home="https://www.dreamhost.com/cloud/storage/" config="/s3/#dreamhost" >}}
 {{< provider name="Dropbox" home="https://www.dropbox.com/" config="/dropbox/" >}}
 {{< provider name="Enterprise File Fabric" home="https://storagemadeeasy.com/about/" config="/filefabric/" >}}
+{{< provider name="Exaba" home="https://exaba.com/" config="/s3/#exaba" >}}
 {{< provider name="Fastmail Files" home="https://www.fastmail.com/" config="/webdav/#fastmail-files" >}}
 {{< provider name="FileLu Cloud Storage" home="https://filelu.com/" config="/filelu/" >}}
 {{< provider name="Files.com" home="https://www.files.com/" config="/filescom/" >}}
@@ -141,6 +142,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
+{{< provider name="Intercolo Object Storage" home="https://intercolo.de/object-storage" config="/s3/#intercolo" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
 {{< provider name="Leviia Object Storage" home="https://www.leviia.com/object-storage" config="/s3/#leviia" >}}
@@ -187,6 +189,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="SFTP" home="https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol" config="/sftp/" >}}
 {{< provider name="Sia" home="https://sia.tech/" config="/sia/" >}}
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
+{{< provider name="Spectra Logic" home="https://spectralogic.com/blackpearl-nearline-object-gateway/" config="/s3/#spectralogic" >}}
 {{< provider name="StackPath" home="https://www.stackpath.com/products/object-storage/" config="/s3/#stackpath" >}}
 {{< provider name="Storj" home="https://storj.io/" config="/storj/" >}}
 {{< provider name="Synology" home="https://c2.synology.com/en-global/object-storage/overview" config="/s3/#synology-c2" >}}
@@ -216,10 +219,9 @@ These backends adapt or modify other storage providers:
 {{< provider name="Hasher: Hash files" home="/hasher/" config="/hasher/" >}}
 {{< provider name="Union: Join multiple remotes to work together" home="/union/" config="/union/" >}}
 
-
 ## Links
 
-  * {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
-  * {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
-  * {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
-  * {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)
+- {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
+- {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
+- {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
+- {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)

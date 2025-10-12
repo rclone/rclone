@@ -15,19 +15,25 @@ encryption.
 This is an rclone backend for Mega which supports the file transfer
 features of Mega using the same client side encryption.
 
+**Note** [MEGA S4 Object Storage](/s3#mega), an S3 compatible object
+store, also works with rclone and this is recommended for new projects.
+
 Paths are specified as `remote:path`
 
 Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
+
 
 ## Configuration
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -65,22 +71,29 @@ d) Delete this remote
 y/e/d> y
 ```
 
-**NOTE:** The encryption keys need to have been already generated after a regular login
-via the browser, otherwise attempting to use the credentials in `rclone` will fail.
+**NOTE:** The encryption keys need to have been already generated after a regular
+login via the browser, otherwise attempting to use the credentials in `rclone`
+will fail.
 
 Once configured you can then use `rclone` like this,
 
 List directories in top level of your Mega
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your Mega
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an Mega directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 ### Modification times and hashes
 
@@ -110,26 +123,26 @@ Use `rclone dedupe` to fix duplicated files.
 
 #### Object not found
 
-If you are connecting to your Mega remote for the first time, 
-to test access and synchronization, you may receive an error such as 
+If you are connecting to your Mega remote for the first time,
+to test access and synchronization, you may receive an error such as
 
-```
-Failed to create file system for "my-mega-remote:": 
+```text
+Failed to create file system for "my-mega-remote:":
 couldn't login: Object (typically, node or user) not found
 ```
 
 The diagnostic steps often recommended in the [rclone forum](https://forum.rclone.org/search?q=mega)
-start with the **MEGAcmd** utility. Note that this refers to 
-the official C++ command from https://github.com/meganz/MEGAcmd 
-and not the go language built command from t3rm1n4l/megacmd 
-that is no longer maintained. 
+start with the **MEGAcmd** utility. Note that this refers to
+the official C++ command from <https://github.com/meganz/MEGAcmd>
+and not the go language built command from t3rm1n4l/megacmd
+that is no longer maintained.
 
-Follow the instructions for installing MEGAcmd and try accessing 
-your remote as they recommend. You can establish whether or not 
-you can log in using MEGAcmd, and obtain diagnostic information 
-to help you, and search or work with others in the forum. 
+Follow the instructions for installing MEGAcmd and try accessing
+your remote as they recommend. You can establish whether or not
+you can log in using MEGAcmd, and obtain diagnostic information
+to help you, and search or work with others in the forum.
 
-```
+```text
 MEGA CMD> login me@example.com
 Password:
 Fetching nodes ...
@@ -138,11 +151,10 @@ Login complete as me@example.com
 me@example.com:/$ 
 ```
 
-Note that some have found issues with passwords containing special 
-characters. If you can not log on with rclone, but MEGAcmd logs on 
-just fine, then consider changing your password temporarily to 
+Note that some have found issues with passwords containing special
+characters. If you can not log on with rclone, but MEGAcmd logs on
+just fine, then consider changing your password temporarily to
 pure alphanumeric characters, in case that helps.
-
 
 #### Repeated commands blocks access
 

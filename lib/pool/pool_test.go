@@ -16,16 +16,23 @@ import (
 
 // makes the allocations be unreliable
 func makeUnreliable(bp *Pool) {
+	const maxFailsInARow = 10
+	var allocFails int
 	bp.alloc = func(size int) ([]byte, error) {
-		if rand.Intn(3) != 0 {
+		if rand.Intn(3) != 0 && allocFails < maxFailsInARow {
+			allocFails++
 			return nil, errors.New("failed to allocate memory")
 		}
+		allocFails = 0
 		return make([]byte, size), nil
 	}
+	var freeFails int
 	bp.free = func(b []byte) error {
-		if rand.Intn(3) != 0 {
+		if rand.Intn(3) != 0 && freeFails < maxFailsInARow {
+			freeFails++
 			return errors.New("failed to free memory")
 		}
+		freeFails = 0
 		return nil
 	}
 }
@@ -53,17 +60,27 @@ func testGetPut(t *testing.T, useMmap bool, unreliable bool) {
 	assert.Equal(t, 0, bp.InPool())
 	assert.Equal(t, 3, bp.Alloced())
 
+	bs := bp.GetN(3)
+	assert.Equal(t, 6, bp.InUse())
+	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 6, bp.Alloced())
+
 	bp.Put(b1)
-	assert.Equal(t, 2, bp.InUse())
+	assert.Equal(t, 5, bp.InUse())
 	assert.Equal(t, 1, bp.InPool())
-	assert.Equal(t, 3, bp.Alloced())
+	assert.Equal(t, 6, bp.Alloced())
 
 	bp.Put(b2)
-	assert.Equal(t, 1, bp.InUse())
+	assert.Equal(t, 4, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
-	assert.Equal(t, 3, bp.Alloced())
+	assert.Equal(t, 6, bp.Alloced())
 
 	bp.Put(b3)
+	assert.Equal(t, 3, bp.InUse())
+	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 5, bp.Alloced())
+
+	bp.PutN(bs)
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
 	assert.Equal(t, 2, bp.Alloced())
@@ -85,6 +102,18 @@ func testGetPut(t *testing.T, useMmap bool, unreliable bool) {
 
 	bp.Put(b1a)
 	bp.Put(b2a)
+	assert.Equal(t, 0, bp.InUse())
+	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
+
+	bsa := bp.GetN(3)
+	assert.Equal(t, addr(b1), addr(bsa[1]))
+	assert.Equal(t, addr(b2), addr(bsa[0]))
+	assert.Equal(t, 3, bp.InUse())
+	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 3, bp.Alloced())
+
+	bp.PutN(bsa)
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
 	assert.Equal(t, 2, bp.Alloced())
@@ -265,11 +294,19 @@ func TestPoolMaxBufferMemory(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			buf := bp.Get()
-			countBuf(1)
-			time.Sleep(100 * time.Millisecond)
-			bp.Put(buf)
-			countBuf(-1)
+			if i < 4 {
+				buf := bp.GetN(i + 1)
+				countBuf(i + 1)
+				time.Sleep(100 * time.Millisecond)
+				bp.PutN(buf)
+				countBuf(-(i + 1))
+			} else {
+				buf := bp.Get()
+				countBuf(1)
+				time.Sleep(100 * time.Millisecond)
+				bp.Put(buf)
+				countBuf(-1)
+			}
 		}()
 	}
 

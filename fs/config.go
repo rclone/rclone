@@ -439,6 +439,12 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Client SSL private key (PEM) for mutual TLS auth",
 	Groups:  "Networking",
 }, {
+	Name:       "client_pass",
+	Default:    "",
+	Help:       "Password for client SSL private key (PEM) for mutual TLS auth (obscured)",
+	Groups:     "Networking",
+	IsPassword: true,
+}, {
 	Name:    "multi_thread_cutoff",
 	Default: SizeSuffix(256 * 1024 * 1024),
 	Help:    "Use multi-thread downloads for files above this size",
@@ -644,6 +650,7 @@ type ConfigInfo struct {
 	CaCert                     []string          `config:"ca_cert"`     // Client Side CA
 	ClientCert                 string            `config:"client_cert"` // Client Side Cert
 	ClientKey                  string            `config:"client_key"`  // Client Side Key
+	ClientPass                 string            `config:"client_pass"` // Client Side Key Password (obscured)
 	MultiThreadCutoff          SizeSuffix        `config:"multi_thread_cutoff"`
 	MultiThreadStreams         int               `config:"multi_thread_streams"`
 	MultiThreadSet             bool              `config:"multi_thread_set"`        // whether MultiThreadStreams was set (set in fs/config/configflags)

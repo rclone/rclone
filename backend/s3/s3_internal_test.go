@@ -248,6 +248,47 @@ func TestMergeDeleteMarkers(t *testing.T) {
 	}
 }
 
+func TestRemoveAWSChunked(t *testing.T) {
+	ps := func(s string) *string {
+		return &s
+	}
+	tests := []struct {
+		name string
+		in   *string
+		want *string
+	}{
+		{"nil", nil, nil},
+		{"empty", ps(""), nil},
+		{"only aws", ps("aws-chunked"), nil},
+		{"leading aws", ps("aws-chunked, gzip"), ps("gzip")},
+		{"trailing aws", ps("gzip, aws-chunked"), ps("gzip")},
+		{"middle aws", ps("gzip, aws-chunked, br"), ps("gzip,br")},
+		{"case insensitive", ps("GZip, AwS-ChUnKeD, Br"), ps("GZip,Br")},
+		{"duplicates", ps("aws-chunked , aws-chunked"), nil},
+		{"no aws normalize spaces", ps(" gzip ,  br "), ps(" gzip ,  br ")},
+		{"surrounding spaces", ps("  aws-chunked  "), nil},
+		{"no change", ps("gzip, br"), ps("gzip, br")},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := removeAWSChunked(tc.in)
+			check := func(want, got *string) {
+				t.Helper()
+				if tc.want == nil {
+					assert.Nil(t, got)
+				} else {
+					require.NotNil(t, got)
+					assert.Equal(t, *tc.want, *got)
+				}
+			}
+			check(tc.want, got)
+			// Idempotent
+			got2 := removeAWSChunked(got)
+			check(got, got2)
+		})
+	}
+}
+
 func (f *Fs) InternalTestVersions(t *testing.T) {
 	ctx := context.Background()
 

@@ -76,7 +76,6 @@ func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOp
 	// start mount monitoring
 	drv.hupChan = make(chan os.Signal, 1)
 	drv.monChan = make(chan bool, 1)
-	mountlib.NotifyOnSigHup(drv.hupChan)
 	go drv.monitor()
 
 	// unmount all volumes on exit

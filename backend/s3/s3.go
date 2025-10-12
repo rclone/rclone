@@ -120,6 +120,9 @@ var providerOption = fs.Option{
 		Value: "IDrive",
 		Help:  "IDrive e2",
 	}, {
+		Value: "Intercolo",
+		Help:  "Intercolo Object Storage",
+	}, {
 		Value: "IONOS",
 		Help:  "IONOS Cloud",
 	}, {
@@ -170,6 +173,9 @@ var providerOption = fs.Option{
 	}, {
 		Value: "Selectel",
 		Help:  "Selectel Object Storage",
+	}, {
+		Value: "SpectraLogic",
+		Help:  "Spectra Logic Black Pearl",
 	}, {
 		Value: "StackPath",
 		Help:  "StackPath Object Storage",
@@ -507,6 +513,14 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "Intercolo",
+			Examples: []fs.OptionExample{{
+				Value: "de-fra",
+				Help:  "Frankfurt, Germany",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
 			Provider: "IONOS",
 			Examples: []fs.OptionExample{{
 				Value: "de",
@@ -643,7 +657,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,Intercolo,IONOS,Petabox,Liara,Linode,Magalu,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,Storj,Synology,TencentCOS,HuaweiOBS,IDrive,Mega,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -953,6 +967,14 @@ func init() {
 			}, {
 				Value: "s3.private.sng01.cloud-object-storage.appdomain.cloud",
 				Help:  "Singapore Single Site Private Endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Intercolo Object Storage.",
+			Provider: "Intercolo",
+			Examples: []fs.OptionExample{{
+				Value: "de-fra.i3storage.com",
+				Help:  "Frankfurt, Germany",
 			}},
 		}, {
 			Name:     "endpoint",
@@ -1532,7 +1554,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
+			Provider: "!AWS,ArvanCloud,IBMCOS,IDrive,Intercolo,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,GCS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Scaleway,Selectel,StackPath,Storj,Synology,RackCorp,Qiniu,Petabox,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -2067,7 +2089,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,IONOS,Leviia,Liara,Linode,Magalu,Outscale,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,StackPath,Storj,TencentCOS,Petabox,Mega",
+			Provider: "!AWS,Alibaba,ArvanCloud,HuaweiOBS,ChinaMobile,Cloudflare,FlashBlade,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Outscale,OVHcloud,Qiniu,RackCorp,Scaleway,Selectel,SpectraLogic,StackPath,Storj,TencentCOS,Petabox,Mega",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -2082,7 +2104,7 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 If the acl is an empty string then no X-Amz-Acl: header is added and
 the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade,Mega",
+			Provider: "!Storj,Selectel,SpectraLogic,Synology,Cloudflare,FlashBlade,Mega",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -2140,7 +2162,7 @@ isn't set then "acl" is used instead.
 If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
 header is added and the default (private) will be used.
 `,
-			Provider: "!Storj,Selectel,Synology,Cloudflare,FlashBlade",
+			Provider: "!Storj,Selectel,SpectraLogic,Synology,Cloudflare,FlashBlade",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
@@ -2547,6 +2569,11 @@ See [AWS Docs on Dualstack Endpoints](https://docs.aws.amazon.com/AmazonS3/lates
 			Help: `If true use the AWS S3 accelerated endpoint.
 
 See: [AWS S3 Transfer acceleration](https://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration-examples.html)`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "use_arn_region",
+			Help:     `If true, enables arn region support for the service.`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -3096,6 +3123,7 @@ type Options struct {
 	ForcePathStyle        bool                 `config:"force_path_style"`
 	V2Auth                bool                 `config:"v2_auth"`
 	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
+	UseARNRegion          bool                 `config:"use_arn_region"`
 	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
 	ListChunk             int32                `config:"list_chunk"`
 	ListVersion           int                  `config:"list_version"`
@@ -3460,6 +3488,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 	options = append(options, func(s3Opt *s3.Options) {
 		s3Opt.UsePathStyle = opt.ForcePathStyle
 		s3Opt.UseAccelerate = opt.UseAccelerateEndpoint
+		s3Opt.UseARNRegion = opt.UseARNRegion
 		// FIXME maybe this should be a tristate so can default to DualStackEndpointStateUnset?
 		if opt.UseDualStack {
 			s3Opt.EndpointOptions.UseDualStackEndpoint = aws.DualStackEndpointStateEnabled
@@ -3628,7 +3657,7 @@ func setQuirks(opt *Options) {
 		useUnsignedPayload = false // AWS has trailer support which means it adds checksums in the trailer without seeking
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
-		useAlreadyExists = false // returns BucketAlreadyExists
+		useAlreadyExists = true  // returns 200 OK
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
@@ -3670,6 +3699,9 @@ func setQuirks(opt *Options) {
 	case "IDrive":
 		virtualHostStyle = false
 		useAlreadyExists = false // untested
+	case "Intercolo":
+		// no quirks
+		useUnsignedPayload = false // Intercolo has trailer support
 	case "IONOS":
 		// listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
 		virtualHostStyle = false
@@ -3742,6 +3774,8 @@ func setQuirks(opt *Options) {
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
 		useAlreadyExists = false // untested
+	case "SpectraLogic":
+		virtualHostStyle = false // path-style required
 	case "StackPath":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
@@ -6086,7 +6120,7 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 	o.storageClass = stringClone(string(resp.StorageClass))
 	o.cacheControl = stringClonePointer(resp.CacheControl)
 	o.contentDisposition = stringClonePointer(resp.ContentDisposition)
-	o.contentEncoding = stringClonePointer(resp.ContentEncoding)
+	o.contentEncoding = stringClonePointer(removeAWSChunked(resp.ContentEncoding))
 	o.contentLanguage = stringClonePointer(resp.ContentLanguage)
 
 	// If decompressing then size and md5sum are unknown
@@ -6152,6 +6186,36 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 // Storable raturns a boolean indicating if this object is storable
 func (o *Object) Storable() bool {
 	return true
+}
+
+// removeAWSChunked removes the "aws-chunked" content-coding from a
+// Content-Encoding field value (RFC 9110). Comparison is case-insensitive.
+// Returns nil if encoding is empty after removal.
+func removeAWSChunked(pv *string) *string {
+	if pv == nil {
+		return nil
+	}
+	v := *pv
+	if v == "" {
+		return nil
+	}
+	if !strings.Contains(strings.ToLower(v), "aws-chunked") {
+		return pv
+	}
+	parts := strings.Split(v, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		tok := strings.TrimSpace(p)
+		if tok == "" || strings.EqualFold(tok, "aws-chunked") {
+			continue
+		}
+		out = append(out, tok)
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	v = strings.Join(out, ",")
+	return &v
 }
 
 func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
@@ -6322,7 +6386,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	o.setMetaData(&head)
 
 	// Decompress body if necessary
-	if deref(resp.ContentEncoding) == "gzip" {
+	if deref(removeAWSChunked(resp.ContentEncoding)) == "gzip" {
 		if o.fs.opt.Decompress || (resp.ContentLength == nil && o.fs.opt.MightGzip.Value) {
 			return readers.NewGzipReader(resp.Body)
 		}
@@ -6604,7 +6668,7 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 		return wantETag, gotETag, versionID, ui, err
 	}
 
-	var s3cw *s3ChunkWriter = chunkWriter.(*s3ChunkWriter)
+	s3cw := chunkWriter.(*s3ChunkWriter)
 	gotETag = *stringClone(s3cw.eTag)
 	versionID = stringClone(s3cw.versionID)
 
@@ -6746,7 +6810,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		case "content-disposition":
 			ui.req.ContentDisposition = pv
 		case "content-encoding":
-			ui.req.ContentEncoding = pv
+			ui.req.ContentEncoding = removeAWSChunked(pv)
 		case "content-language":
 			ui.req.ContentLanguage = pv
 		case "content-type":
@@ -6843,7 +6907,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		case "content-disposition":
 			ui.req.ContentDisposition = aws.String(value)
 		case "content-encoding":
-			ui.req.ContentEncoding = aws.String(value)
+			ui.req.ContentEncoding = removeAWSChunked(aws.String(value))
 		case "content-language":
 			ui.req.ContentLanguage = aws.String(value)
 		case "content-type":

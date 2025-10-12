@@ -11,17 +11,19 @@ command.)  You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
 
 ## Configuration
 
-The initial setup for google cloud storage involves getting a token from Google Cloud Storage
-which you need to do in your browser.  `rclone config` walks you
+The initial setup for google cloud storage involves getting a token from Google
+Cloud Storage which you need to do in your browser.  `rclone config` walks you
 through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 n) New remote
 d) Delete remote
 q) Quit config
@@ -148,7 +150,7 @@ See the [remote setup docs](/remote_setup/) for how to set it up on a
 machine with no Internet browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
-token as returned from Google if using web browser to automatically 
+token as returned from Google if using web browser to automatically
 authenticate. This only
 runs from the moment it opens your browser to the moment you get back
 the verification code.  This is on `http://127.0.0.1:53682/` and this
@@ -159,20 +161,28 @@ This remote is called `remote` and can now be used like this
 
 See all the buckets in your project
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 Make a new bucket
 
-    rclone mkdir remote:bucket
+```sh
+rclone mkdir remote:bucket
+```
 
 List the contents of a bucket
 
-    rclone ls remote:bucket
+```sh
+rclone ls remote:bucket
+```
 
 Sync `/home/local/directory` to the remote bucket, deleting any excess
 files in the bucket.
 
-    rclone sync --interactive /home/local/directory remote:bucket
+```sh
+rclone sync --interactive /home/local/directory remote:bucket
+```
 
 ### Service Account support
 
@@ -203,52 +213,67 @@ environment variable.
 
 ### Service Account Authentication with Access Tokens
 
-Another option for service account authentication is to use access tokens via *gcloud impersonate-service-account*. Access tokens protect security by avoiding the use of the JSON
-key file, which can be breached. They also bypass oauth login flow, which is simpler 
-on remote VMs that lack a web browser.
+Another option for service account authentication is to use access tokens via
+*gcloud impersonate-service-account*. Access tokens protect security by avoiding
+the use of the JSON key file, which can be breached. They also bypass oauth
+login flow, which is simpler on remote VMs that lack a web browser.
 
-If you already have a working service account, skip to step 3. 
+If you already have a working service account, skip to step 3.
 
-#### 1. Create a service account using 
+#### 1. Create a service account using
 
-    gcloud iam service-accounts create gcs-read-only 
+```sh
+gcloud iam service-accounts create gcs-read-only
+```
 
 You can re-use an existing service account as well (like the one created above)
 
-#### 2. Attach a Viewer (read-only) or User (read-write) role to the service account 
-     $ PROJECT_ID=my-project
-     $ gcloud --verbose iam service-accounts add-iam-policy-binding \
-        gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  \
-        --member=serviceAccount:gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com \
-        --role=roles/storage.objectViewer
+#### 2. Attach a Viewer (read-only) or User (read-write) role to the service account
 
-Use the Google Cloud console to identify a limited role. Some relevant pre-defined roles:
+```sh
+$ PROJECT_ID=my-project
+$ gcloud --verbose iam service-accounts add-iam-policy-binding \
+   gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  \
+   --member=serviceAccount:gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com \
+   --role=roles/storage.objectViewer
+```
 
-* *roles/storage.objectUser* -- read-write access but no admin privileges
-* *roles/storage.objectViewer* -- read-only access to objects
-* *roles/storage.admin*  -- create buckets & administrative roles
+Use the Google Cloud console to identify a limited role. Some relevant
+pre-defined roles:
+
+- *roles/storage.objectUser* -- read-write access but no admin privileges
+- *roles/storage.objectViewer* -- read-only access to objects
+- *roles/storage.admin*  -- create buckets & administrative roles
 
 #### 3. Get a temporary access key for the service account
 
-    $ gcloud auth application-default print-access-token  \
-       --impersonate-service-account \
-          gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  
+```sh
+$ gcloud auth application-default print-access-token  \
+   --impersonate-service-account \
+      gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  
 
-    ya29.c.c0ASRK0GbAFEewXD [truncated]
+ya29.c.c0ASRK0GbAFEewXD [truncated]
+```
 
 #### 4. Update `access_token` setting
-hit `CTRL-C` when you see *waiting for code*.  This will save the config without doing oauth flow
 
-    rclone config update ${REMOTE_NAME} access_token ya29.c.c0Axxxx
+hit `CTRL-C` when you see *waiting for code*.  This will save the config without
+doing oauth flow
+
+```sh
+rclone config update ${REMOTE_NAME} access_token ya29.c.c0Axxxx
+```
 
 #### 5. Run rclone as usual
 
-    rclone ls dev-gcs:${MY_BUCKET}/
+```sh
+rclone ls dev-gcs:${MY_BUCKET}/
+```
 
 ### More Info on Service Accounts
 
-* [Official GCS Docs](https://cloud.google.com/compute/docs/access/service-accounts)
-* [Guide on Service Accounts using Key Files (less secure, but similar concepts)](https://forum.rclone.org/t/access-using-google-service-account/24822/2)
+- [Official GCS Docs](https://cloud.google.com/compute/docs/access/service-accounts)
+- [Guide on Service Accounts using Key Files (less secure, but similar concepts)](https://forum.rclone.org/t/access-using-google-service-account/24822/2)
 
 ### Anonymous Access
 
@@ -299,13 +324,16 @@ Note that the last of these is for setting custom metadata in the form
 ### Modification times
 
 Google Cloud Storage stores md5sum natively.
-Google's [gsutil](https://cloud.google.com/storage/docs/gsutil) tool stores modification time
-with one-second precision as `goog-reserved-file-mtime` in file metadata.
+Google's [gsutil](https://cloud.google.com/storage/docs/gsutil) tool stores
+modification time with one-second precision as `goog-reserved-file-mtime` in
+file metadata.
 
-To ensure compatibility with gsutil, rclone stores modification time in 2 separate metadata entries.
-`mtime` uses RFC3339 format with one-nanosecond precision.
-`goog-reserved-file-mtime` uses Unix timestamp format with one-second precision.
-To get modification time from object metadata, rclone reads the metadata in the following order: `mtime`, `goog-reserved-file-mtime`, object updated time.
+To ensure compatibility with gsutil, rclone stores modification time in 2
+separate metadata entries. `mtime` uses RFC3339 format with one-nanosecond
+precision. `goog-reserved-file-mtime` uses Unix timestamp format with one-second
+precision. To get modification time from object metadata, rclone reads the
+metadata in the following order: `mtime`, `goog-reserved-file-mtime`, object
+updated time.
 
 Note that rclone's default modify window is 1ns.
 Files uploaded by gsutil only contain timestamps with one-second precision.
@@ -678,6 +706,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

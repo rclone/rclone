@@ -29,6 +29,7 @@ directories to and from different cloud storage providers.
   * Akamai Netstorage [:page_facing_up:](https://rclone.org/netstorage/)
   * Alibaba Cloud (Aliyun) Object Storage System (OSS) [:page_facing_up:](https://rclone.org/s3/#alibaba-oss)
   * Alist [:page_facing_up:](https://github.com/AlistGo/alist)
+  * Alldebrid [:page_facing_up:](https://alldebrid.com/)
   * Amazon S3 [:page_facing_up:](https://rclone.org/s3/)
   * ArvanCloud Object Storage (AOS) [:page_facing_up:](https://rclone.org/s3/#arvan-cloud-object-storage-aos)
   * Backblaze B2 [:page_facing_up:](https://rclone.org/b2/)

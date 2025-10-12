@@ -51,6 +51,7 @@ import (
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -1337,9 +1338,9 @@ func (f *Fs) containerOK(container string) bool {
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, containerName, directory, prefix string, addContainer bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, containerName, directory, prefix string, addContainer bool, callback func(fs.DirEntry) error) (err error) {
 	if !f.containerOK(containerName) {
-		return nil, fs.ErrorDirNotFound
+		return fs.ErrorDirNotFound
 	}
 	err = f.list(ctx, containerName, directory, prefix, addContainer, false, int32(f.opt.ListChunkSize), func(remote string, object *container.BlobItem, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
@@ -1347,16 +1348,16 @@ func (f *Fs) listDir(ctx context.Context, containerName, directory, prefix strin
 			return err
 		}
 		if entry != nil {
-			entries = append(entries, entry)
+			return callback(entry)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// container must be present if listing succeeded
 	f.cache.MarkOK(containerName)
-	return entries, nil
+	return nil
 }
 
 // listContainers returns all the containers to out
@@ -1392,14 +1393,47 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	container, directory := f.split(dir)
 	if container == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listContainers(ctx)
+		entries, err := f.listContainers(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, container, directory, f.rootDirectory, f.rootContainer == "", list.Add)
+		if err != nil {
+			return err
+		}
+
 	}
-	return f.listDir(ctx, container, directory, f.rootDirectory, f.rootContainer == "")
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -2670,6 +2704,13 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		return -1, err
 	}
 
+	// Only account after the checksum reads have been done
+	if do, ok := reader.(pool.DelayAccountinger); ok {
+		// To figure out this number, do a transfer and if the accounted size is 0 or a
+		// multiple of what it should be, increase or decrease this number.
+		do.DelayAccounting(2)
+	}
+
 	// Upload the block, with MD5 for check
 	m := md5.New()
 	currentChunkSize, err := io.Copy(m, reader)
@@ -2757,6 +2798,8 @@ func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
 		blockList    blockblob.GetBlockListResponse
 		properties   *blob.GetPropertiesResponse
 		options      *blockblob.CommitBlockListOptions
+		// Use temporary pacer as this can be called recursively which can cause a deadlock with --max-connections
+		pacer = fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 	)
 
 	properties, err = o.readMetaDataAlways(ctx)
@@ -2768,7 +2811,7 @@ func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
 
 	if objectExists {
 		// Get the committed block list
-		err = o.fs.pacer.Call(func() (bool, error) {
+		err = pacer.Call(func() (bool, error) {
 			blockList, err = blockBlobSVC.GetBlockList(ctx, blockblob.BlockListTypeAll, nil)
 			return o.fs.shouldRetry(ctx, err)
 		})
@@ -2810,7 +2853,7 @@ func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
 
 	// Commit only the committed blocks
 	fs.Debugf(o, "Committing %d blocks to remove uncommitted blocks", len(blockIDs))
-	err = o.fs.pacer.Call(func() (bool, error) {
+	err = pacer.Call(func() (bool, error) {
 		_, err := blockBlobSVC.CommitBlockList(ctx, blockIDs, options)
 		return o.fs.shouldRetry(ctx, err)
 	})
@@ -3146,6 +3189,7 @@ var (
 	_ fs.PutStreamer     = &Fs{}
 	_ fs.Purger          = &Fs{}
 	_ fs.ListRer         = &Fs{}
+	_ fs.ListPer         = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}
 	_ fs.Object          = &Object{}
 	_ fs.MimeTyper       = &Object{}
