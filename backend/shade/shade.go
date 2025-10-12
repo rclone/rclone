@@ -242,7 +242,6 @@ type Object struct {
 	fs       *Fs    // what this object is part of
 	remote   string // The remote path
 	mtime    int64  // Modified time
-	hash     string // Content hash (As of September 2025 Shadefs does not store hashes, so this is mostly redundant
 	size     int64  // Size of the object
 	original string //Presigned download link
 }
@@ -347,7 +346,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
@@ -800,18 +798,25 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		defer func() {
+			if cerr := resp.Body.Close(); cerr != nil && err == nil {
+				err = fmt.Errorf("failed to close response body: %w", cerr)
+			}
+		}()
 		if resp.StatusCode != http.StatusOK {
-			defer resp.Body.Close()
 			return "", fmt.Errorf("unexpected status %d fetching %s", resp.StatusCode, o.original)
 		}
 		body = resp.Body
-		defer body.Close()
 	} else {
 		body, err = o.Open(ctx)
 		if err != nil {
 			return "", err
 		}
-		defer body.Close()
+		defer func() {
+			if cerr := body.Close(); cerr != nil && err == nil {
+				err = fmt.Errorf("failed to close body: %w", cerr)
+			}
+		}()
 	}
 
 	h := md5.New()
