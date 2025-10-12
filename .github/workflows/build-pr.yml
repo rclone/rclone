@@ -63,7 +63,7 @@ jobs:
         with:
           name: rclone-windows
           path: ${{ github.workspace }}/build/**/*
-          retention-days: 7
+          retention-days: 1
 
   comment-artifacts:
     needs: build
