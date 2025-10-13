@@ -22186,12 +22186,20 @@ and upload status for each file:
             {
                 "name": "document.pdf",
                 "status": "FULL",
-                "percentage": 100
+                "percentage": 100,
+                "size": 1048576,
+                "cachedBytes": 1048576,
+                "dirty": false,
+                "uploading": false
             },
             {
                 "name": "image.jpg", 
                 "status": "PARTIAL",
-                "percentage": 67
+                "percentage": 67,
+                "size": 2097152,
+                "cachedBytes": 1405870,
+                "dirty": false,
+                "uploading": false
             }
         ],
         "fs": "/mnt/remote"
@@ -22237,6 +22245,9 @@ information about each file:
                 {
                     "name": "report.pdf",
                     "percentage": 100,
+                    "size": 1048576,
+                    "cachedBytes": 1048576,
+                    "dirty": false,
                     "uploading": false
                 }
             ],
@@ -22244,6 +22255,9 @@ information about each file:
                 {
                     "name": "archive.zip", 
                     "percentage": 0,
+                    "size": 5242880,
+                    "cachedBytes": 0,
+                    "dirty": false,
                     "uploading": false
                 }
             ],
@@ -22251,6 +22265,9 @@ information about each file:
                 {
                     "name": "video.mp4",
                     "percentage": 45,
+                    "size": 104857600,
+                    "cachedBytes": 47185920,
+                    "dirty": false,
                     "uploading": false
                 }
             ]
@@ -22263,6 +22280,9 @@ Each file entry includes:
 - "name": The file name relative to the directory
 - "percentage": Cache percentage (0-100)
 - "uploading": Whether the file is currently being uploaded
+- "size": The total size of the file in bytes
+- "cachedBytes": The number of bytes of the file that are cached locally
+- "dirty": Whether the file has been modified locally but not uploaded
 
 Files are grouped by their cache status for efficient processing by client
 applications. The "recursive" field indicates whether subdirectories were

@@ -136,6 +136,25 @@ func (item *Item) VFSStatusCacheWithPercentage() (string, int) {
 	return "NONE", 0
 }
 
+// VFSStatusCacheDetailed returns detailed cache status information for the file.
+// Returns status string, percentage (0-100), total size, cached size, and dirty flag.
+func (item *Item) VFSStatusCacheDetailed() (string, int, int64, int64, bool) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	// Get basic status and percentage
+	status, percentage := item.VFSStatusCacheWithPercentage()
+
+	// Get size information
+	totalSize := item.info.Size
+	cachedSize := item.info.Rs.Size()
+
+	// Get dirty flag
+	dirty := item.info.Dirty
+
+	return status, percentage, totalSize, cachedSize, dirty
+}
+
 // GetAggregateStats returns aggregate cache statistics for all items in the cache
 func (c *Cache) GetAggregateStats() AggregateStats {
 	c.mu.Lock()

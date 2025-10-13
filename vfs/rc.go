@@ -305,96 +305,19 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	// Check for recursive parameter
 	recursive, _ := in.GetBool("recursive")
 
-	// Get root directory
-	root, err := vfs.Root()
-	if err != nil {
-		return nil, err
-	}
-
-	// Navigate to the target directory
-	targetDir := root
-	if dirPath != "" {
-		dirPath = strings.Trim(dirPath, "/")
-		segments := strings.Split(dirPath, "/")
-		var node Node = targetDir
-		for _, s := range segments {
-			if dir, ok := node.(*Dir); ok {
-				node, err = dir.stat(s)
-				if err != nil {
-					return nil, fmt.Errorf("directory not found: %w", err)
-				}
-			} else {
-				return nil, fmt.Errorf("path component is not a directory: %s", s)
-			}
+	// Get files status using the new optimized method
+	var filesByStatus map[string][]rc.Params
+	if vfs.cache == nil {
+		// If cache is not enabled, return empty results
+		filesByStatus = map[string][]rc.Params{
+			"FULL":      {},
+			"PARTIAL":   {},
+			"NONE":      {},
+			"DIRTY":     {},
+			"UPLOADING": {},
 		}
-		if dir, ok := node.(*Dir); ok {
-			targetDir = dir
-		} else {
-			return nil, fmt.Errorf("target path is not a directory")
-		}
-	}
-
-	// Collect status for each file
-	filesByStatus := map[string][]rc.Params{
-		"FULL":    {},
-		"PARTIAL": {},
-		"NONE":    {},
-		"DIRTY":   {},
-		"UPLOADING": {},
-	}
-
-	// Function to collect files from a directory
-	var collectFiles func(dir *Dir, dirPath string) error
-	collectFiles = func(dir *Dir, dirPath string) error {
-		nodes, err := dir.ReadDirAll()
-		if err != nil {
-			return fmt.Errorf("failed to list directory contents: %w", err)
-		}
-
-		for _, node := range nodes {
-			if file, ok := node.(*File); ok {
-				var status string
-				var percentage int64
-				var isUploading bool
-				if vfs.cache == nil {
-					status = "NONE"
-					percentage = 0
-					isUploading = false
-				} else {
-					item := vfs.cache.Item(file.Path())
-					status, percentage = item.VFSStatusCacheWithPercentage()
-					
-					// If status is UPLOADING, then the file is uploading
-					isUploading = (status == "UPLOADING")
-				}
-
-				fileInfo := rc.Params{
-					"name":       file.Name(),
-					"percentage": percentage,
-					"uploading":  isUploading,
-				}
-
-				// Add to the appropriate status category
-				if files, exists := filesByStatus[status]; exists {
-					filesByStatus[status] = append(files, fileInfo)
-				}
-				// If status doesn't exist in our predefined map, we skip it
-				// All possible statuses should be covered in our filesByStatus map
-			} else if subDir, ok := node.(*Dir); ok {
-				// If recursive is true, traverse subdirectories
-				if recursive {
-					if err := collectFiles(subDir, filepath.Join(dirPath, subDir.Name())); err != nil {
-						return err
-					}
-				}
-			}
-		}
-		return nil
-	}
-
-	// Start collecting files from the target directory
-	if err := collectFiles(targetDir, dirPath); err != nil {
-		return nil, err
+	} else {
+		filesByStatus = vfs.cache.GetStatusForDir(dirPath, recursive)
 	}
 
 	// Prepare the response, only include categories that have files
@@ -455,14 +378,26 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 				"name":       filepath.Base(path),
 				"status":     "NONE",
 				"percentage": 0,
+				"uploading":  false,
+				"size":       0,
+				"cachedBytes": 0,
+				"dirty":      false,
 			})
 		} else {
 			item := vfs.cache.Item(path)
-			status, percentage := item.VFSStatusCacheWithPercentage()
+			status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
+			
+			// If status is UPLOADING, then the file is uploading
+			isUploading := (status == "UPLOADING")
+			
 			results = append(results, rc.Params{
 				"name":       filepath.Base(path),
 				"status":     status,
 				"percentage": percentage,
+				"uploading":  isUploading,
+				"size":       totalSize,
+				"cachedBytes": cachedSize,
+				"dirty":      isDirty,
 			})
 		}
 	}
