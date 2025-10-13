@@ -909,7 +909,7 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 			}
 
 			// Get the status and percentage for this item
-			status, percentage := item.VFSStatusCacheWithPercentage()
+			status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
 
 			// Determine if the file is uploading
 			isUploading := (status == "UPLOADING")
@@ -919,6 +919,9 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 				"name":       filepath.Base(name),
 				"percentage": percentage,
 				"uploading":  isUploading,
+				"size":       totalSize,
+				"cachedBytes": cachedSize,
+				"dirty":      isDirty,
 			}
 
 			// Add to the appropriate status category
