@@ -1,0 +1,41 @@
+name: HuaweiOBS
+description: Huawei Object Storage Service
+region:
+  af-south-1: AF-Johannesburg
+  ap-southeast-2: AP-Bangkok
+  ap-southeast-3: AP-Singapore
+  cn-east-3: CN East-Shanghai1
+  cn-east-2: CN East-Shanghai2
+  cn-north-1: CN North-Beijing1
+  cn-north-4: CN North-Beijing4
+  cn-south-1: CN South-Guangzhou
+  ap-southeast-1: CN-Hong Kong
+  sa-argentina-1: LA-Buenos Aires1
+  sa-peru-1: LA-Lima1
+  na-mexico-1: LA-Mexico City1
+  sa-chile-1: LA-Santiago2
+  sa-brazil-1: LA-Sao Paulo1
+  ru-northwest-2: RU-Moscow2
+endpoint:
+  obs.af-south-1.myhuaweicloud.com: AF-Johannesburg
+  obs.ap-southeast-2.myhuaweicloud.com: AP-Bangkok
+  obs.ap-southeast-3.myhuaweicloud.com: AP-Singapore
+  obs.cn-east-3.myhuaweicloud.com: CN East-Shanghai1
+  obs.cn-east-2.myhuaweicloud.com: CN East-Shanghai2
+  obs.cn-north-1.myhuaweicloud.com: CN North-Beijing1
+  obs.cn-north-4.myhuaweicloud.com: CN North-Beijing4
+  obs.cn-south-1.myhuaweicloud.com: CN South-Guangzhou
+  obs.ap-southeast-1.myhuaweicloud.com: CN-Hong Kong
+  obs.sa-argentina-1.myhuaweicloud.com: LA-Buenos Aires1
+  obs.sa-peru-1.myhuaweicloud.com: LA-Lima1
+  obs.na-mexico-1.myhuaweicloud.com: LA-Mexico City1
+  obs.sa-chile-1.myhuaweicloud.com: LA-Santiago2
+  obs.sa-brazil-1.myhuaweicloud.com: LA-Sao Paulo1
+  obs.ru-northwest-2.myhuaweicloud.com: RU-Moscow2
+acl: {}
+bucket_acl: true
+quirks:
+  # Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
+  list_url_encode: false
+  list_version: 1
+  use_already_exists: false

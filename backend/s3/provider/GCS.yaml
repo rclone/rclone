@@ -1,0 +1,20 @@
+name: GCS
+description: Google Cloud Storage
+region: {}
+endpoint:
+  https://storage.googleapis.com: Google Cloud Storage endpoint
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  # Google break request Signature by mutating accept-encoding HTTP header
+  # https://github.com/rclone/rclone/issues/6670
+  use_accept_encoding_gzip: false
+  sign_accept_encoding: false
+  use_already_exists: true # returns BucketNameUnavailable instead of BucketAlreadyExists but good enough!
+  # GCS doesn't like the x-id URL parameter the SDKv2 inserts
+  use_x_id: false
+  # GCS S3 doesn't support multi-part server side copy:
+  # See: https://issuetracker.google.com/issues/323465186
+  # So make cutoff very large which it does seem to support
+  copy_cutoff: 9223372036854775807

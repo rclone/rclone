@@ -1,0 +1,19 @@
+name: Petabox
+description: Petabox Object Storage
+region:
+  us-east-1: US East (N. Virginia)
+  eu-central-1: Europe (Frankfurt)
+  ap-southeast-1: Asia Pacific (Singapore)
+  me-south-1: Middle East (Bahrain)
+  sa-east-1: South America (São Paulo)
+endpoint:
+  s3.petabox.io: US East (N. Virginia)
+  s3.us-east-1.petabox.io: US East (N. Virginia)
+  s3.eu-central-1.petabox.io: Europe (Frankfurt)
+  s3.ap-southeast-1.petabox.io: Asia Pacific (Singapore)
+  s3.me-south-1.petabox.io: Middle East (Bahrain)
+  s3.sa-east-1.petabox.io: South America (São Paulo)
+acl: {}
+bucket_acl: true
+quirks:
+  use_already_exists: false
