@@ -1,0 +1,11 @@
+name: Storj
+description: Storj (S3 Compatible Gateway)
+endpoint:
+  gateway.storjshare.io: Global Hosted Gateway
+quirks:
+  use_already_exists: false # returns BucketAlreadyExists
+  # Storj doesn't support multi-part server side copy:
+  # https://github.com/storj/roadmap/issues/40
+  # So make cutoff very large which it does support
+  copy_cutoff: 9223372036854775807
+  min_chunk_size: 67108864

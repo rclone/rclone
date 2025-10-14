@@ -1,0 +1,28 @@
+name: Scaleway
+description: Scaleway Object Storage
+region:
+  nl-ams: Amsterdam, The Netherlands
+  fr-par: Paris, France
+  pl-waw: Warsaw, Poland
+endpoint:
+  s3.nl-ams.scw.cloud: Amsterdam Endpoint
+  s3.fr-par.scw.cloud: Paris Endpoint
+  s3.pl-waw.scw.cloud: Warsaw Endpoint
+acl: {}
+storage_class:
+  '': Default.
+  STANDARD: |-
+    The Standard class for any upload.
+    Suitable for on-demand content like streaming or CDN.
+    Available in all regions.
+  GLACIER: |-
+    Archived storage.
+    Prices are lower, but it needs to be restored first to be accessed.
+    Available in FR-PAR and NL-AMS regions.
+  ONEZONE_IA: |-
+    One Zone - Infrequent Access.
+    A good choice for storing secondary backup copies or easily re-creatable data.
+    Available in the FR-PAR region only.
+bucket_acl: true
+quirks:
+  max_upload_parts: 1000

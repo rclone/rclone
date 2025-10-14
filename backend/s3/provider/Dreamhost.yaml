@@ -1,0 +1,11 @@
+name: Dreamhost
+description: Dreamhost DreamObjects
+region: {}
+endpoint:
+  objects-us-east-1.dream.io: Dream Objects endpoint
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  list_url_encode: false
+  use_already_exists: false
