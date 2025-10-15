@@ -100,7 +100,9 @@ Choose a number from below, or type in your own value
    \ "us-east1"
 13 / Northern Virginia.
    \ "us-east4"
-14 / Oregon.
+14 / Ohio.
+   \ "us-east5"
+15 / Oregon.
    \ "us-west1"
 location> 12
 The storage class to use when storing objects in Google Cloud Storage.

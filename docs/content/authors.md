@@ -1019,3 +1019,5 @@ put them back in again.` >}}
 - iTrooz <hey@itrooz.fr>
 - Microscotch <github.com@microscotch.net>
 - Andrew Ruthven <andrew@etc.gen.nz>
+- spiffytech <git@spiffy.tech>
+- Dulani Woods <Dulani@gmail.com>

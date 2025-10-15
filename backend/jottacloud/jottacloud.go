@@ -17,7 +17,7 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -60,7 +60,7 @@ const (
 	configVersion      = 1
 
 	defaultTokenURL = "https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token"
-	defaultClientID = "jottacli"
+	defaultClientID = "jottacli" // Identified as "Jottacloud CLI" in "My logged in devices"
 
 	legacyTokenURL              = "https://api.jottacloud.com/auth/v1/token"
 	legacyRegisterURL           = "https://api.jottacloud.com/auth/v1/register"
@@ -69,28 +69,31 @@ const (
 	legacyConfigVersion         = 0
 )
 
-func getWhitelabelServices() map[string]struct {
-	name, domain, realm, clientID string
-	scopes                        []string
-} {
-	return map[string]struct {
-		name     string
-		domain   string
-		realm    string
-		clientID string
-		scopes   []string
-	}{
-		"telia_se":      {"Telia Cloud (Sweden)", "cloud-auth.telia.se", "telia_se", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"telia_no":      {"Telia Sky (Norway)", "sky-auth.telia.no", "get", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"tele2":         {"Tele2 Cloud (Sweden)", "mittcloud-auth.tele2.se", "comhem", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"onlime":        {"Onlime (Denmark)", "cloud-auth.onlime.dk", "onlime_wl", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"elkjop":        {"Elkjøp Cloud (Norway)", "cloud.elkjop.no", "elkjop", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"elgiganten_se": {"Elgiganten Cloud (Sweden)", "cloud.elgiganten.se", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"elgiganten_dk": {"Elgiganten Cloud (Denmark)", "cloud.elgiganten.dk", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"gigantti":      {"Gigantti Cloud (Finland)", "cloud.gigantti.fi", "gigantti", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"elko":          {"ELKO Cloud (Iceland)", "cloud.elko.is", "elko", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"mediamarkt":    {"MediaMarkt Cloud", "mediamarkt.jottacloud.com", "mediamarkt", "desktop", []string{"openid", "jotta-default", "offline_access"}},
-		"letsgo":        {"Let's Go Cloud (Germany)", "letsgo.jotta.cloud", "letsgo", "desktop-win", []string{"openid", "offline_access"}},
+type service struct {
+	key      string
+	name     string
+	domain   string
+	realm    string
+	clientID string
+	scopes   []string
+}
+
+// The list of services and their settings for supporting traditional OAuth.
+// Please keep these in alphabetical order, but with jottacloud first.
+func getServices() []service {
+	return []service{
+		{"jottacloud", "Jottacloud", "id.jottacloud.com", "jottacloud", "desktop", []string{"openid", "jotta-default", "offline_access"}}, // Chose client id "desktop" here, will be identified as "Jottacloud for Desktop" in "My logged in devices", but could have used "jottacli" here as well.
+		{"elgiganten_dk", "Elgiganten Cloud (Denmark)", "cloud.elgiganten.dk", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elgiganten_se", "Elgiganten Cloud (Sweden)", "cloud.elgiganten.se", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elkjop", "Elkjøp Cloud (Norway)", "cloud.elkjop.no", "elkjop", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elko", "ELKO Cloud (Iceland)", "cloud.elko.is", "elko", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"gigantti", "Gigantti Cloud (Finland)", "cloud.gigantti.fi", "gigantti", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"letsgo", "Let's Go Cloud (Germany)", "letsgo.jotta.cloud", "letsgo", "desktop-win", []string{"openid", "offline_access"}},
+		{"mediamarkt", "MediaMarkt Cloud (Multiregional)", "mediamarkt.jottacloud.com", "mediamarkt", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"onlime", "Onlime (Denmark)", "cloud-auth.onlime.dk", "onlime_wl", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"tele2", "Tele2 Cloud (Sweden)", "mittcloud-auth.tele2.se", "comhem", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"telia_no", "Telia Sky (Norway)", "sky-auth.telia.no", "get", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"telia_se", "Telia Cloud (Sweden)", "cloud-auth.telia.se", "telia_se", "desktop", []string{"openid", "jotta-default", "offline_access"}},
 	}
 }
 
@@ -177,20 +180,34 @@ func Config(ctx context.Context, name string, m configmap.Mapper, conf fs.Config
 		}
 		return fs.ConfigChooseExclusiveFixed("auth_type_done", "config_type", `Type of authentication.`, []fs.OptionExample{{
 			Value: "standard",
-			Help:  "Standard authentication.\nUse this if you're a normal Jottacloud user.",
+			Help: `Standard authentication.
+This is primarily supported by the official service, but may also be
+supported by some white-label services. It is designed for command-line
+applications, and you will be asked to enter a single-use personal login
+token which you must manually generate from the account security settings
+in the web interface of your service.`,
 		}, {
-			Value: "whitelabel",
-			Help:  "Whitelabel authentication.\nUse this if you are using the service offered by a third party such as Telia, Tele2, Onlime, Elkjøp, etc.",
+			Value: "traditional",
+			Help: `Traditional authentication.
+This is supported by the official service and all white-label services
+that rclone knows about. You will be asked which service to connect to.
+It has a limitation of only a single active authentication at a time. You
+need to be on, or have access to, a machine with an internet-connected
+web browser.`,
 		}, {
 			Value: "legacy",
-			Help:  "Legacy authentication.\nThis is no longer supported by any known services and not recommended for normal users.",
+			Help: `Legacy authentication.
+This is no longer supported by any known services and not recommended
+used. You will be asked for your account's username and password.`,
 		}})
 	case "auth_type_done":
 		// Jump to next state according to config chosen
 		return fs.ConfigGoto(conf.Result)
 	case "standard": // configure a jottacloud backend using the modern JottaCli token based authentication
 		m.Set("configVersion", fmt.Sprint(configVersion))
-		return fs.ConfigInput("standard_token", "config_login_token", "Personal login token.\nGenerate here: https://www.jottacloud.com/web/secure")
+		return fs.ConfigInput("standard_token", "config_login_token", `Personal login token.
+Generate it from the account security settings in the web interface of your
+service, for the official service on https://www.jottacloud.com/web/secure.`)
 	case "standard_token":
 		loginToken := conf.Result
 		m.Set(configClientID, defaultClientID)
@@ -207,29 +224,28 @@ func Config(ctx context.Context, name string, m configmap.Mapper, conf fs.Config
 			return nil, fmt.Errorf("error while saving token: %w", err)
 		}
 		return fs.ConfigGoto("choose_device")
-	case "whitelabel":
-		whitelabels := getWhitelabelServices()
-		options := make([]fs.OptionExample, 0, len(whitelabels))
-		for key, val := range whitelabels {
+	case "traditional":
+		services := getServices()
+		options := make([]fs.OptionExample, 0, len(services))
+		for _, service := range services {
 			options = append(options, fs.OptionExample{
-				Value: key,
-				Help:  val.name,
+				Value: service.key,
+				Help:  service.name,
 			})
 		}
-		sort.Slice(options, func(i, j int) bool {
-			return options[i].Help < options[j].Help
-		})
-		return fs.ConfigChooseExclusiveFixed("whitelabel_type", "config_whitelabel",
+		return fs.ConfigChooseExclusiveFixed("traditional_type", "config_traditional",
 			"White-label service. This decides the domain name to connect to and\nthe authentication configuration to use.",
 			options)
-	case "whitelabel_type":
-		whitelabel, ok := getWhitelabelServices()[conf.Result]
-		if !ok {
-			return nil, fmt.Errorf("unexpected whitelabel %q", conf.Result)
+	case "traditional_type":
+		services := getServices()
+		i := slices.IndexFunc(services, func(s service) bool { return s.key == conf.Result })
+		if i == -1 {
+			return nil, fmt.Errorf("unexpected service %q", conf.Result)
 		}
+		service := services[i]
 		opts := rest.Opts{
 			Method:  "GET",
-			RootURL: "https://" + whitelabel.domain + "/auth/realms/" + whitelabel.realm + "/.well-known/openid-configuration",
+			RootURL: "https://" + service.domain + "/auth/realms/" + service.realm + "/.well-known/openid-configuration",
 		}
 		var wellKnown api.WellKnown
 		srv := rest.NewClient(fshttp.NewClient(ctx))
@@ -238,14 +254,14 @@ func Config(ctx context.Context, name string, m configmap.Mapper, conf fs.Config
 			return nil, fmt.Errorf("failed to get authentication provider configuration: %w", err)
 		}
 		m.Set("configVersion", fmt.Sprint(configVersion))
-		m.Set(configClientID, whitelabel.clientID)
+		m.Set(configClientID, service.clientID)
 		m.Set(configTokenURL, wellKnown.TokenEndpoint)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
 			OAuth2Config: &oauthutil.Config{
 				AuthURL:     wellKnown.AuthorizationEndpoint,
 				TokenURL:    wellKnown.TokenEndpoint,
-				ClientID:    whitelabel.clientID,
-				Scopes:      whitelabel.scopes,
+				ClientID:    service.clientID,
+				Scopes:      service.scopes,
 				RedirectURL: oauthutil.RedirectLocalhostURL,
 			},
 		})
