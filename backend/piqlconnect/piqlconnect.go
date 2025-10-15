@@ -16,10 +16,12 @@ import (
 
 	"github.com/rclone/rclone/backend/piqlconnect/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -42,20 +44,29 @@ func init() {
 				Required: true,
 				Default:  "https://app.piql.com/api",
 			},
+			{
+				Name:     config.ConfigEncoding,
+				Help:     config.ConfigEncodingHelp,
+				Advanced: true,
+				Default:  encoder.EncodeCtl | encoder.EncodeHashPercent | encoder.EncodeDot | encoder.EncodeQuestion | encoder.EncodeBackSlash | encoder.EncodeDel,
+			},
 		},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ApiKey  string `config:"api_key"`
-	RootURL string `config:"root_url"`
+	ApiKey  string               `config:"api_key"`
+	RootURL string               `config:"root_url"`
+	Enc     encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote piqlConnect path
 type Fs struct {
 	name           string            // name of this remote
 	root           string            // the path we are working on
+	rootIsFile     bool              // root path is a file
+	opt            Options           // parsed options
 	organisationId string            // the organisation ID in piqlConnect
 	httpClient     *http.Client      // http Client used for external HTTP calls (file downloads / uploads)
 	client         *rest.Client      // rest Client used for API calls
@@ -128,6 +139,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f := &Fs{
 		name:           name,
 		root:           root,
+		opt:            opt,
 		organisationId: string(organisationIdBytes),
 		httpClient:     httpclient,
 		client:         client,
@@ -172,7 +184,7 @@ func (f *Fs) getFiles(ctx context.Context, segments []string) (files []api.Item,
 	}
 	packageId := f.packageIdCache[packageName]
 	values.Set("packageId", packageId)
-	packageRelativePath := strings.Join(segments[2:], "/")
+	packageRelativePath := f.opt.Enc.FromStandardPath(strings.Join(segments[2:], "/"))
 	values.Set("path", packageRelativePath)
 	resp, err := f.client.CallJSON(ctx, &rest.Opts{Path: "/files", Parameters: values}, nil, &files)
 	if err != nil {
@@ -184,27 +196,40 @@ func (f *Fs) getFiles(ctx context.Context, segments []string) (files []api.Item,
 	return files, nil
 }
 
-func (f *Fs) listFiles(ctx context.Context, absolutePath string) (entries fs.DirEntries, err error) {
+func (f *Fs) listFiles(ctx context.Context, absolutePath string, onlyNames bool) (entries fs.DirEntries, err error) {
 	segments := getPathSegments(absolutePath)
 	files, err := f.getFiles(ctx, segments)
 	if err != nil {
 		return nil, err
 	}
 	for _, file := range files {
-		file.Path = segments[0] + "/" + segments[1] + "/" + file.Path
+		file.Path = segments[0] + "/" + segments[1] + "/" + f.opt.Enc.ToStandardPath(file.Path)
 		if file.Size == 0 && file.Path[len(file.Path)-1] == '/' {
 			modTime, err := time.Parse(time.RFC3339, file.UpdatedAt)
 			if err != nil {
 				return nil, err
 			}
-			dir := fs.NewDir(f.absolutePathToRclone(file.Path[0:len(file.Path)-1]), modTime)
-			entries = append(entries, dir)
+			if !onlyNames {
+				dir := fs.NewDir(f.absolutePathToRclone(file.Path[0:len(file.Path)-1]), modTime)
+				entries = append(entries, dir)
+			}
 		} else {
-			o, err := f.newObjectWithInfo(ctx, f.absolutePathToRclone(file.Path), &file)
+			var o fs.Object
+
+			if onlyNames {
+				lastSlash := strings.LastIndexByte(file.Path, '/')
+				o, err = f.newObjectWithInfo(ctx, file.Path[lastSlash+1:], &file)
+			} else {
+				o, err = f.newObjectWithInfo(ctx, f.absolutePathToRclone(file.Path), &file)
+			}
 			if err != nil {
 				return nil, err
 			}
-			entries = append(entries, o)
+			fmt.Println("absolutePath", absolutePath)
+			fmt.Println("o.Remote()", o.Remote())
+			if !onlyNames || strings.HasSuffix(absolutePath, o.Remote()) {
+				entries = append(entries, o)
+			}
 		}
 	}
 	return entries, nil
@@ -260,7 +285,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	segments := getPathSegments(absolutePath)
 	if len(segments) >= 2 {
-		return f.listFiles(ctx, absolutePath)
+		entries, err := f.listFiles(ctx, absolutePath, false)
+		if err == fs.ErrorDirNotFound {
+			entries, err = f.listFiles(ctx, strings.Join(segments[:len(segments)-1], "/"), true)
+			fmt.Println("rootIsFile is now true")
+			f.rootIsFile = true
+		}
+		fmt.Println("entries", entries)
+		return entries, err
 	}
 	return f.listPackages(ctx, segments[0])
 }
@@ -279,7 +311,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 	reqBody := api.CreateFileUrl{
 		OrganisationId: f.organisationId,
 		PackageId:      f.packageIdCache[segments[1]],
-		Files:          [1]api.FilePath{{Path: strings.Join(segments[2:], "/")}},
+		Files:          [1]api.FilePath{{Path: f.opt.Enc.FromStandardPath(strings.Join(segments[2:], "/"))}},
 		Method:         "OVERWRITE",
 	}
 	var results [1]string
@@ -362,7 +394,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 	filesReqBody := api.CreateFile{
 		OrganisationId: f.organisationId,
 		PackageId:      f.packageIdCache[segments[1]],
-		Files:          [1]api.FilePathSize{{Path: strings.Join(segments[2:], "/"), Size: size}},
+		Files:          [1]api.FilePathSize{{Path: f.opt.Enc.FromStandardPath(strings.Join(segments[2:], "/")), Size: size}},
 	}
 	var fileIds [1]string
 	_, err = f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/files"}, &filesReqBody, &fileIds)
@@ -373,7 +405,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 		fs:      f,
 		remote:  src.Remote(),
 		size:    size,
-		modTime: time.Now(),
+		modTime: time.Now(), // TODO: getFiles from remote?
 		id:      fileIds[0],
 	}, nil
 
@@ -550,7 +582,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	}
 	packageRelativePath := strings.Join(segments[2:], "/")
 	for _, entry := range entries {
-		if packageRelativePath == entry.Path {
+		if packageRelativePath == o.fs.opt.Enc.ToStandardPath(entry.Path) {
 			o.setMetaData(&entry)
 			return nil
 		}
@@ -591,6 +623,11 @@ func (o *Object) Storable() bool {
 }
 
 func (f *Fs) rclonePathToAbsolute(dir string) string {
+	if f.rootIsFile {
+		rootSegments := getPathSegments(f.root)
+		rootSegments[len(rootSegments)-1] = dir
+		return path.Join(rootSegments...)
+	}
 	return path.Join(f.root, dir)
 }
 
@@ -615,7 +652,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	downloadFile := api.DownloadFile{
 		OrganisationId: o.fs.organisationId,
 		PackageId:      o.fs.packageIdCache[segments[1]],
-		BlobNames:      [1]string{path.Join(segments[2:]...)},
+		BlobNames:      [1]string{o.fs.opt.Enc.FromStandardPath(strings.Join(segments[2:], "/"))},
 	}
 	resp, err := o.fs.client.CallJSON(ctx, &rest.Opts{
 		Method: "POST",
