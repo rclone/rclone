@@ -280,13 +280,20 @@ func (s *shadeChunkWriter) Close(ctx context.Context) error {
 
 	err = s.f.pacer.Call(func() (bool, error) {
 		res, err := s.f.srv.CallJSON(ctx, &completeOpts, completeBody, &response)
-		if err != nil && res.StatusCode != http.StatusOK {
-			return res != nil && res.StatusCode == http.StatusTooManyRequests, err
+
+		if err != nil && res == nil {
+			return false, err
 		}
+
+		if res.StatusCode == http.StatusTooManyRequests {
+			return true, err // Retry on 429
+		}
+
 		if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 			body, _ := io.ReadAll(res.Body)
 			return false, fmt.Errorf("complete multipart failed with status %d: %s", res.StatusCode, string(body))
 		}
+
 		return false, nil
 	})
 
