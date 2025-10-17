@@ -3816,9 +3816,9 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false
 		useAlreadyExists = false // untested
 	case "Ceph":
-		listObjectsV2 = false
+		listObjectsV2 = true
 		virtualHostStyle = false
-		urlEncodeListings = false
+		urlEncodeListings = true
 		useAlreadyExists = true
 	case "ChinaMobile":
 		listObjectsV2 = false
@@ -4673,9 +4673,8 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 	// URL encode the listings so we can use control characters in object names
 	// See: https://github.com/aws/aws-sdk-go/issues/1914
 	//
-	// However this doesn't work perfectly under Ceph (and hence DigitalOcean/Dreamhost) because
-	// it doesn't encode CommonPrefixes.
-	// See: https://tracker.ceph.com/issues/41870
+	// This is working in Ceph since v14.2.7 (see: https://tracker.ceph.com/issues/43161)
+	// but not tested for DigitalOcean/Dreamhost
 	//
 	// This does not work under IBM COS also: See https://github.com/rclone/rclone/issues/3345
 	// though maybe it does on some versions.
