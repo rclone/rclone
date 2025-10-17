@@ -34,6 +34,7 @@ directories to and from different cloud storage providers.
 - China Mobile Ecloud Elastic Object Storage (EOS) [:page_facing_up:](https://rclone.org/s3/#china-mobile-ecloud-eos)
 - Cloudflare R2 [:page_facing_up:](https://rclone.org/s3/#cloudflare-r2)
 - Citrix ShareFile [:page_facing_up:](https://rclone.org/sharefile/)
+- Cubbit DS3 [:page_facing_up:](https://rclone.org/s3/#Cubbit)
 - DigitalOcean Spaces [:page_facing_up:](https://rclone.org/s3/#digitalocean-spaces)
 - Digi Storage [:page_facing_up:](https://rclone.org/koofr/#digi-storage)
 - Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)
