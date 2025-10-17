@@ -216,10 +216,6 @@ func InitLogging() {
 			if err != nil {
 				fs.Fatalf(nil, "Failed to open log file: %v", err)
 			}
-			_, err = f.Seek(0, io.SeekEnd)
-			if err != nil {
-				fs.Errorf(nil, "Failed to seek log file to end: %v", err)
-			}
 			redirectStderr(f)
 			w = f
 		} else {
