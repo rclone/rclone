@@ -57,7 +57,7 @@ func Walk(err error, f WalkFunc) {
 				}
 			}
 		}
-		if reflect.DeepEqual(err, prev) {
+		if reflect.DeepEqual(err, prev) { //nolint:govet // deepequalerrors
 			break
 		}
 	}
