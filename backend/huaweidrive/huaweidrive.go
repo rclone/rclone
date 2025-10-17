@@ -273,30 +273,6 @@ func (f *Fs) normalizeFileName(filename string) string {
 	return filename
 }
 
-// encodeFileName applies normalization then encodes the name for API calls
-func (f *Fs) encodeFileName(filename string) string {
-	if filename == "" {
-		return ""
-	}
-	return f.opt.Enc.FromStandardName(f.normalizeFileName(filename))
-}
-
-// decodeFileName decodes an API filename and normalizes it for internal use
-func (f *Fs) decodeFileName(encoded string) string {
-	if encoded == "" {
-		return ""
-	}
-	return f.normalizeFileName(f.opt.Enc.ToStandardName(encoded))
-}
-
-// namesEqual compares an encoded API filename with a target internal name
-func (f *Fs) namesEqual(encoded string, target string) bool {
-	if target == "" {
-		return encoded == ""
-	}
-	return f.decodeFileName(encoded) == f.normalizeFileName(target)
-}
-
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {
 	return f.name
@@ -540,9 +516,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	normalizedLeaf := f.normalizeFileName(leaf)
 	found, err = f.listAll(ctx, pathID, func(item *api.File) bool {
-		if item.IsDir() && f.namesEqual(item.FileName, normalizedLeaf) {
+		if strings.EqualFold(item.FileName, leaf) && item.IsDir() {
 			pathIDOut = item.ID
 			return true
 		}
@@ -554,7 +529,8 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
 	// Normalize and encode the directory name
-	encodedLeaf := f.encodeFileName(leaf)
+	normalizedLeaf := f.normalizeFileName(leaf)
+	encodedLeaf := f.opt.Enc.FromStandardName(normalizedLeaf)
 	if encodedLeaf == "" {
 		return "", fmt.Errorf("invalid directory name: cannot be empty")
 	}
@@ -884,7 +860,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	var iErr error
 	_, err = f.listAll(ctx, directoryID, func(info *api.File) bool {
-		remote := path.Join(dir, f.decodeFileName(info.FileName))
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(f.normalizeFileName(info.FileName)))
 		if info.IsDir() {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, info.ID)
@@ -1337,7 +1313,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	copyReq := api.CopyFileRequest{
-		FileName: f.encodeFileName(leaf),
+		FileName: f.opt.Enc.FromStandardName(f.normalizeFileName(leaf)),
 	}
 
 	// Set parent folder - this should be in the request body, not as query parameter
@@ -1476,7 +1452,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Set filename if we need to rename
 	if needsRename {
-		moveReq.FileName = f.encodeFileName(dstLeaf)
+		moveReq.FileName = f.opt.Enc.FromStandardName(f.normalizeFileName(dstLeaf))
 	}
 
 	// Set parent folders if we need to move directories
@@ -1589,7 +1565,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	moveReq := api.UpdateFileRequest{
-		FileName: f.encodeFileName(dstLeaf),
+		FileName: f.opt.Enc.FromStandardName(f.normalizeFileName(dstLeaf)),
 	}
 
 	// Add new parent and remove old parent if they're different
@@ -1703,7 +1679,7 @@ func (f *Fs) listRRecursive(ctx context.Context, dir string, directoryID string,
 
 	// List current directory
 	_, err := f.listAll(ctx, directoryID, func(info *api.File) bool {
-		remote := path.Join(dir, f.decodeFileName(info.FileName))
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(f.normalizeFileName(info.FileName)))
 
 		if info.IsDir() {
 			// It's a directory
@@ -1853,11 +1829,10 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 		return nil, err
 	}
 
-	normalizedLeaf := f.normalizeFileName(leaf)
 	found, err := f.listAll(ctx, directoryID, func(item *api.File) bool {
 		// Convert the API filename to standard name for comparison
-		decodedName := f.decodeFileName(item.FileName)
-		if !item.IsDir() && decodedName == normalizedLeaf {
+		standardName := f.opt.Enc.ToStandardName(f.normalizeFileName(item.FileName))
+		if strings.EqualFold(standardName, leaf) && !item.IsDir() {
 			info = item
 			return true
 		}
@@ -1978,6 +1953,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
+	leaf = o.fs.opt.Enc.FromStandardName(leaf)
+
 	// Add directory verification if we have a parent directory
 	if directoryID != "" && directoryID != o.fs.rootParentID() {
 		// Verify directory exists by doing a quick lookup
@@ -2086,15 +2063,9 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		}
 	}
 
-	// Encode filename for API metadata
-	encodedLeaf := o.fs.encodeFileName(leaf)
-	if encodedLeaf == "" {
-		return fmt.Errorf("invalid filename: cannot be empty after encoding")
-	}
-
 	// Create metadata
 	metadata := map[string]interface{}{
-		"fileName": encodedLeaf,
+		"fileName": o.fs.normalizeFileName(leaf),
 		"mimeType": mimeType,
 	}
 
@@ -2239,12 +2210,8 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 	}
 
 	// Prepare metadata for resumable upload initialization
-	encodedLeaf := o.fs.encodeFileName(leaf)
-	if encodedLeaf == "" {
-		return fmt.Errorf("invalid filename: cannot be empty after encoding")
-	}
 	metadata := map[string]interface{}{
-		"fileName": encodedLeaf,
+		"fileName": leaf,
 	}
 
 	// Set modification time if provided
