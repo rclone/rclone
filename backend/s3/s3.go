@@ -96,6 +96,9 @@ var providerOption = fs.Option{
 		Value: "Cloudflare",
 		Help:  "Cloudflare R2 Storage",
 	}, {
+		Value: "Cubbit",
+		Help:  "Cubbit DS3 Object Storage",
+	}, {
 		Value: "DigitalOcean",
 		Help:  "DigitalOcean Spaces",
 	}, {
@@ -359,6 +362,14 @@ func init() {
 			Examples: []fs.OptionExample{{
 				Value: "auto",
 				Help:  "R2 buckets are automatically distributed across Cloudflare's data centers for low latency.",
+			}},
+		}, {
+			Name:     "region",
+			Help:     "Region to connect to.",
+			Provider: "Cubbit",
+			Examples: []fs.OptionExample{{
+				Value: "eu-west-1",
+				Help:  "Europe West",
 			}},
 		}, {
 			Name:     "region",
@@ -737,7 +748,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,Servercore,SpectraLogic,Storj,Synology,TencentCOS,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,Cubbit,FlashBlade,FileLu,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Liara,Linode,Magalu,Mega,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,Servercore,SpectraLogic,Storj,Synology,TencentCOS,Zata",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -937,6 +948,14 @@ func init() {
 			}, {
 				Value: "eos-anhui-1.cmecloud.cn",
 				Help:  "Anhui China (Huainan)",
+			}},
+		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Cubbit DS3 Object Storage.",
+			Provider: "Cubbit",
+			Examples: []fs.OptionExample{{
+				Value: "s3.cubbit.eu",
+				Help:  "Cubbit DS3 Object Storage endpoint",
 			}},
 		}, {
 			Name:     "endpoint",
@@ -1690,7 +1709,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,GCS,Hetzner,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,Servercore,StackPath,Storj,Synology,TencentCOS,Zata",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cubbit,GCS,Hetzner,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Liara,Linode,LyveCloud,Magalu,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,Servercore,StackPath,Storj,Synology,TencentCOS,Zata",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -2239,7 +2258,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,FlashBlade,FileLu,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,Servercore,SpectraLogic,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,ArvanCloud,ChinaMobile,Cloudflare,Cubbit,FlashBlade,FileLu,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,Magalu,Mega,Outscale,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,Selectel,Servercore,SpectraLogic,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -3828,6 +3847,9 @@ func setQuirks(opt *Options) {
 	case "Cloudflare":
 		virtualHostStyle = false
 		useMultipartEtag = false // currently multipart Etags are random
+	case "Cubbit":
+		// no quirks
+		useMultipartEtag = false // Cubbit calculates multipart Etags differently from AWS
 	case "ArvanCloud":
 		listObjectsV2 = false
 		virtualHostStyle = false
