@@ -16,7 +16,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/huaweidrive/api"
@@ -32,7 +31,6 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
-	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -178,19 +176,6 @@ Custom metadata keys can be any string and will be stored in the file's properti
 			Default:  20 * fs.Mebi,
 			Advanced: true,
 		}, {
-			Name: "unicode_normalization",
-			Help: `Apply unicode NFC normalization to paths and filenames.
-
-This flag can be used to normalize file names into unicode NFC form
-that are read from and sent to Huawei Drive.
-
-This can be useful to ensure consistent behavior with bisync and other
-tools that expect normalized unicode file names.
-
-Note: Huawei Drive may perform its own unicode normalization on the server side.`,
-			Default:  true,
-			Advanced: true,
-		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -223,7 +208,6 @@ type Options struct {
 	ChunkSize    fs.SizeSuffix        `config:"chunk_size"`
 	ListChunk    int                  `config:"list_chunk"`
 	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
-	UTFNorm      bool                 `config:"unicode_normalization"`
 	Enc          encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -241,14 +225,6 @@ type Fs struct {
 	// Cache for root directory ID to avoid repeated API calls
 	rootDirID     string // cached root directory ID
 	rootDirIDOnce bool   // whether root directory ID has been detected
-
-	// Changes API support for cache invalidation
-	changesCursor string     // cursor for tracking changes
-	changesOnce   *sync.Once // ensure changes cursor is initialized once
-
-	// Directory modification time cache (since Huawei Drive doesn't support setting dir modtime)
-	dirModTimeMu sync.RWMutex         // protects dirModTimes
-	dirModTimes  map[string]time.Time // map of directory path to override modtime
 }
 
 // Object describes a Huawei Drive object
@@ -264,14 +240,6 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
-
-// normalizeFileName applies Unicode NFC normalization if enabled
-func (f *Fs) normalizeFileName(filename string) string {
-	if f.opt.UTFNorm {
-		return norm.NFC.String(filename)
-	}
-	return filename
-}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {
@@ -290,10 +258,10 @@ func (f *Fs) String() string {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	// Huawei Drive API supports modification times with second precision
-	// Note: For files, the API may override with server timestamp during uploads,
-	// but directory modification times can be set via DirSetModTime feature
-	return time.Second
+	// Huawei Drive API does NOT preserve file modification times
+	// Despite accepting editedTime/createdTime parameters, the API
+	// always sets file times to the server's current timestamp
+	return fs.ModTimeNotSupported
 }
 
 // Hashes returns the supported hash sets.
@@ -381,13 +349,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	srv := rest.NewClient(client).SetRoot(rootURL)
 
 	f := &Fs{
-		name:        name,
-		root:        root,
-		opt:         *opt,
-		srv:         srv,
-		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		changesOnce: &sync.Once{},
-		dirModTimes: make(map[string]time.Time),
+		name:  name,
+		root:  root,
+		opt:   *opt,
+		srv:   srv,
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 
 	f.features = (&fs.Features{
@@ -398,19 +364,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 		BucketBased:             false,
 		// 新增的特性支持
-		FilterAware:              true,            // 支持过滤器
-		ReadMetadata:             true,            // 读取元数据 - 华为云盘支持 properties 字段
-		WriteMetadata:            true,            // 写入元数据 - 华为云盘支持 properties 字段
-		UserMetadata:             true,            // 用户自定义元数据
-		ReadDirMetadata:          false,           // 目录元数据读取（暂时禁用，需要额外实现）
-		WriteDirMetadata:         false,           // 目录元数据写入（暂时禁用，需要额外实现）
-		WriteDirSetModTime:       true,            // 支持设置目录修改时间
-		DirModTimeUpdatesOnWrite: false,           // 目录修改时间不会在写入时自动更新
-		PartialUploads:           false,           // 部分上传（华为云盘不支持断点续传的部分上传）
-		NoMultiThreading:         false,           // 支持多线程
-		SlowModTime:              false,           // modTime 获取不慢
-		SlowHash:                 false,           // 哈希计算不慢
-		DirSetModTime:            f.DirSetModTime, // 支持设置目录修改时间
+		FilterAware:      true,  // 支持过滤器
+		ReadMetadata:     true,  // 读取元数据 - 华为云盘支持 properties 字段
+		WriteMetadata:    true,  // 写入元数据 - 华为云盘支持 properties 字段
+		UserMetadata:     true,  // 用户自定义元数据
+		ReadDirMetadata:  false, // 目录元数据读取（暂时禁用，需要额外实现）
+		WriteDirMetadata: false, // 目录元数据写入（暂时禁用，需要额外实现）
+		PartialUploads:   false, // 部分上传（华为云盘不支持断点续传的部分上传）
+		NoMultiThreading: false, // 支持多线程
+		SlowModTime:      false, // modTime 获取不慢
+		SlowHash:         false, // 哈希计算不慢
 	}).Fill(ctx, f)
 
 	// Create directory cache
@@ -423,16 +386,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		newRoot, remote := dircache.SplitPath(root)
 
 		// Create a temporary Fs pointing to parent directory
-		tempF := &Fs{
-			name:        f.name,
-			root:        newRoot,
-			opt:         f.opt,
-			srv:         f.srv,
-			pacer:       f.pacer,
-			changesOnce: &sync.Once{},
-		}
-		tempF.features = f.features
-		tempF.dirCache = dircache.New(newRoot, f.rootParentID(), tempF)
+		tempF := *f
+		tempF.dirCache = dircache.New(newRoot, f.rootParentID(), &tempF)
+		tempF.root = newRoot
 
 		// Try to verify parent directory exists, but don't fail if it doesn't work
 		// due to special character encoding issues with Huawei Drive
@@ -528,9 +484,8 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// Normalize and encode the directory name
-	normalizedLeaf := f.normalizeFileName(leaf)
-	encodedLeaf := f.opt.Enc.FromStandardName(normalizedLeaf)
+	// Encode the directory name
+	encodedLeaf := f.opt.Enc.FromStandardName(leaf)
 	if encodedLeaf == "" {
 		return "", fmt.Errorf("invalid directory name: cannot be empty")
 	}
@@ -554,8 +509,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Method: "POST",
 		Path:   "/files",
 		Parameters: url.Values{
-			"fields":     []string{"*"},
-			"autoRename": []string{"false"},
+			"fields": []string{"*"},
 		},
 	}
 
@@ -570,16 +524,6 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 
 	if info == nil || info.ID == "" {
 		return "", fmt.Errorf("invalid response when creating directory %q", leaf)
-	}
-
-	// Verify the directory was created successfully by attempting to list it
-	fs.Debugf(f, "Verifying created directory %s (ID: %s)", encodedLeaf, info.ID)
-	_, verifyErr := f.listAll(ctx, info.ID, func(item *api.File) bool {
-		return false // We don't need to process items, just verify access
-	})
-	if verifyErr != nil {
-		fs.Debugf(f, "Warning: Created directory %s verification failed: %v", encodedLeaf, verifyErr)
-		// Don't fail here as the directory might still be valid, just log the warning
 	}
 
 	return info.ID, nil
@@ -857,24 +801,13 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, err
 	}
-
 	var iErr error
 	_, err = f.listAll(ctx, directoryID, func(info *api.File) bool {
-		remote := path.Join(dir, f.opt.Enc.ToStandardName(f.normalizeFileName(info.FileName)))
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(info.FileName))
 		if info.IsDir() {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, info.ID)
-
-			// Check if we have a custom modification time for this directory
-			modTime := info.EditedTime
-			f.dirModTimeMu.RLock()
-			if customTime, exists := f.dirModTimes[remote]; exists {
-				modTime = customTime
-				fs.Errorf(f, "Using custom modtime for dir %s: %v (original: %v)", remote, modTime, info.EditedTime)
-			}
-			f.dirModTimeMu.RUnlock()
-
-			d := fs.NewDir(remote, modTime).SetID(info.ID)
+			d := fs.NewDir(remote, info.EditedTime).SetID(info.ID)
 			d.SetItems(0) // Huawei Drive doesn't return item count
 			entries = append(entries, d)
 		} else {
@@ -887,7 +820,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 		return false
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -966,8 +898,6 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	// Clear any existing cache entries for this directory path to avoid conflicts
-	f.dirCache.FlushDir(dir)
 	_, err := f.dirCache.FindDir(ctx, dir, true)
 	return err
 }
@@ -1005,12 +935,10 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		resp, err := f.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
-
-	// Clear cache after successful deletion
 	if err == nil {
-		dc.FlushDir(dir)
+		// Clear the directory cache after successful deletion
+		f.dirCache.FlushDir(dir)
 	}
-
 	return err
 }
 
@@ -1019,232 +947,6 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, true)
-}
-
-// FlushDirCache flushes the directory cache for a specific directory
-func (f *Fs) FlushDirCache(dir string) {
-	f.dirCache.FlushDir(dir)
-}
-
-// DirSetModTime sets the modification time of the directory
-func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
-	// Find the directory ID
-	dirID, err := f.dirCache.FindDir(ctx, dir, false)
-	if err != nil {
-		return fmt.Errorf("failed to find directory %q: %w", dir, err)
-	}
-
-	// Set modification time using the same method as files
-	opts := rest.Opts{
-		Method: "PATCH",
-		Path:   "/files/" + dirID,
-		Parameters: url.Values{
-			"fields":     []string{"*"},
-			"autoRename": []string{"false"},
-		},
-	}
-
-	update := api.UpdateFileRequest{
-		EditedTime: &modTime,
-	}
-
-	var info *api.File
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.CallJSON(ctx, &opts, &update, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-
-	if err != nil {
-		fs.Debugf(f, "DirSetModTime: failed to set API time for %s, storing in memory: %v", dir, err)
-		// Fallback to storing in memory if API call fails
-		f.dirModTimeMu.Lock()
-		defer f.dirModTimeMu.Unlock()
-		f.dirModTimes[dir] = modTime
-		fs.Debugf(f, "DirSetModTime: stored in memory %s -> %v", dir, modTime)
-		return nil
-	}
-
-	fs.Debugf(f, "DirSetModTime: successfully set API time %s -> %v", dir, modTime)
-
-	// Remove from memory cache since we successfully set it via API
-	f.dirModTimeMu.Lock()
-	defer f.dirModTimeMu.Unlock()
-	delete(f.dirModTimes, dir)
-
-	return nil
-}
-
-// getStartCursor gets the initial cursor for change tracking
-func (f *Fs) getStartCursor(ctx context.Context) (string, error) {
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/changes/getStartCursor",
-		Parameters: url.Values{
-			"fields": {"*"},
-		},
-	}
-
-	var resp api.StartCursor
-	err := f.pacer.Call(func() (bool, error) {
-		resp = api.StartCursor{}
-		httpResp, err := f.srv.CallJSON(ctx, &opts, nil, &resp)
-		return shouldRetry(ctx, httpResp, err)
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to get start cursor: %w", err)
-	}
-
-	return resp.StartCursor, nil
-}
-
-// initializeChangesCursor initializes the changes cursor if not already set
-func (f *Fs) initializeChangesCursor(ctx context.Context) error {
-	var initErr error
-	f.changesOnce.Do(func() {
-		if f.changesCursor == "" {
-			cursor, err := f.getStartCursor(ctx)
-			if err != nil {
-				fs.Debugf(f, "Changes API not available, disabling ChangeNotify: %v", err)
-				initErr = err
-				return
-			}
-			f.changesCursor = cursor
-			fs.Debugf(f, "Initialized changes cursor: %s", cursor)
-		}
-	})
-	return initErr
-}
-
-// getChanges retrieves changes since the last cursor
-func (f *Fs) getChanges(ctx context.Context) (*api.ChangesList, error) {
-	// Initialize cursor if needed
-	if err := f.initializeChangesCursor(ctx); err != nil {
-		return nil, err
-	}
-
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/changes",
-		Parameters: url.Values{
-			"cursor":   {f.changesCursor},
-			"pageSize": {"100"},
-			"fields":   {"*"},
-		},
-	}
-
-	var resp api.ChangesList
-	err := f.pacer.Call(func() (bool, error) {
-		resp = api.ChangesList{}
-		httpResp, err := f.srv.CallJSON(ctx, &opts, nil, &resp)
-		return shouldRetry(ctx, httpResp, err)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get changes: %w", err)
-	}
-
-	return &resp, nil
-}
-
-// ChangeNotify calls the passed function with a path that has had changes.
-// If the implementation uses polling, it should adhere to the given interval.
-//
-// Automatically restarts itself in case of unexpected behavior of the remote.
-//
-// Close the returned channel to stop being notified.
-func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
-	go func() {
-		// Initialize changes cursor early so all changes from now on get processed
-		if err := f.initializeChangesCursor(ctx); err != nil {
-			fs.Infof(f, "Failed to initialize changes cursor: %s", err)
-		}
-
-		var ticker *time.Ticker
-		var tickerC <-chan time.Time
-		for {
-			select {
-			case pollInterval, ok := <-pollIntervalChan:
-				if !ok {
-					if ticker != nil {
-						ticker.Stop()
-					}
-					return
-				}
-				if ticker != nil {
-					ticker.Stop()
-					ticker, tickerC = nil, nil
-				}
-				if pollInterval != 0 {
-					ticker = time.NewTicker(pollInterval)
-					tickerC = ticker.C
-				}
-			case <-tickerC:
-				fs.Debugf(f, "Checking for changes on remote")
-				err := f.changeNotifyRunner(ctx, notifyFunc)
-				if err != nil {
-					fs.Infof(f, "Change notify listener failure: %s", err)
-				}
-			}
-		}
-	}()
-}
-
-// changeNotifyRunner gets changes and notifies about them
-func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType)) error {
-	changes, err := f.getChanges(ctx)
-	if err != nil {
-		return err
-	}
-
-	if len(changes.Changes) == 0 {
-		return nil
-	}
-
-	fs.Debugf(f, "Processing %d changes", len(changes.Changes))
-
-	for _, change := range changes.Changes {
-		if change.File == nil {
-			continue
-		}
-
-		// Determine the entry type and path
-		var entryType fs.EntryType
-		var path string
-
-		if change.File.IsDir() {
-			entryType = fs.EntryDirectory
-			path = f.opt.Enc.ToStandardPath(change.File.FileName)
-		} else {
-			entryType = fs.EntryObject
-			path = f.opt.Enc.ToStandardPath(change.File.FileName)
-		}
-
-		// Notify about the change
-		if path != "" {
-			fs.Debugf(f, "Change detected: %s %s (deleted: %v)", change.ChangeType, path, change.Deleted)
-			notifyFunc(path, entryType)
-		}
-
-		// Also notify parent directory for cache invalidation
-		if !change.File.IsDir() {
-			parentDir := path
-			if lastSlash := strings.LastIndex(path, "/"); lastSlash >= 0 {
-				parentDir = path[:lastSlash]
-			} else {
-				parentDir = ""
-			}
-			if parentDir != "" {
-				notifyFunc(parentDir, fs.EntryDirectory)
-			}
-		}
-	}
-
-	// Update cursor for next call
-	if changes.NextCursor != "" {
-		f.changesCursor = changes.NextCursor
-		fs.Debugf(f, "Updated changes cursor to: %s", f.changesCursor)
-	}
-
-	return nil
 }
 
 // Purge deletes all the files in the directory
@@ -1307,25 +1009,17 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Method: "POST",
 		Path:   "/files/" + srcObj.id + "/copy",
 		Parameters: url.Values{
-			"fields":     []string{"*"},
-			"autoRename": []string{"false"},
+			"fields": []string{"*"},
 		},
 	}
 
 	copyReq := api.CopyFileRequest{
-		FileName: f.opt.Enc.FromStandardName(f.normalizeFileName(leaf)),
+		FileName: f.opt.Enc.FromStandardName(leaf),
 	}
 
 	// Set parent folder - this should be in the request body, not as query parameter
 	if directoryID != "" && directoryID != f.rootParentID() {
 		copyReq.ParentFolder = []string{directoryID}
-	}
-
-	// Set the modification time to preserve it across copy
-	srcModTime := srcObj.ModTime(ctx)
-	if !srcModTime.IsZero() {
-		copyReq.EditedTime = &srcModTime
-		fs.Debugf(f, "Copy: preserving modification time %v for %s", srcModTime, remote)
 	}
 
 	// Copy metadata from source object if available
@@ -1436,23 +1130,15 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Method: "PATCH",
 		Path:   "/files/" + srcObj.id,
 		Parameters: url.Values{
-			"fields":     []string{"*"},
-			"autoRename": []string{"false"},
+			"fields": []string{"*"},
 		},
 	}
 
 	moveReq := api.UpdateFileRequest{}
 
-	// Preserve the current modification time during move/rename
-	currentModTime := srcObj.ModTime(ctx)
-	if !currentModTime.IsZero() {
-		moveReq.EditedTime = &currentModTime
-		fs.Debugf(f, "Move: preserving modification time %v", currentModTime)
-	}
-
 	// Set filename if we need to rename
 	if needsRename {
-		moveReq.FileName = f.opt.Enc.FromStandardName(f.normalizeFileName(dstLeaf))
+		moveReq.FileName = f.opt.Enc.FromStandardName(dstLeaf)
 	}
 
 	// Set parent folders if we need to move directories
@@ -1559,13 +1245,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		Method: "PATCH",
 		Path:   "/files/" + srcID,
 		Parameters: url.Values{
-			"fields":     []string{"*"},
-			"autoRename": []string{"false"},
+			"fields": []string{"*"},
 		},
 	}
 
 	moveReq := api.UpdateFileRequest{
-		FileName: f.opt.Enc.FromStandardName(f.normalizeFileName(dstLeaf)),
+		FileName: f.opt.Enc.FromStandardName(dstLeaf),
 	}
 
 	// Add new parent and remove old parent if they're different
@@ -1679,7 +1364,7 @@ func (f *Fs) listRRecursive(ctx context.Context, dir string, directoryID string,
 
 	// List current directory
 	_, err := f.listAll(ctx, directoryID, func(info *api.File) bool {
-		remote := path.Join(dir, f.opt.Enc.ToStandardName(f.normalizeFileName(info.FileName)))
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(info.FileName))
 
 		if info.IsDir() {
 			// It's a directory
@@ -1831,7 +1516,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 
 	found, err := f.listAll(ctx, directoryID, func(item *api.File) bool {
 		// Convert the API filename to standard name for comparison
-		standardName := f.opt.Enc.ToStandardName(f.normalizeFileName(item.FileName))
+		standardName := f.opt.Enc.ToStandardName(item.FileName)
 		if strings.EqualFold(standardName, leaf) && !item.IsDir() {
 			info = item
 			return true
@@ -1873,8 +1558,7 @@ func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.File, 
 		Method: "PATCH",
 		Path:   "/files/" + o.id,
 		Parameters: url.Values{
-			"fields":     []string{"*"},
-			"autoRename": []string{"false"},
+			"fields": []string{"*"},
 		},
 	}
 
@@ -1955,21 +1639,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	leaf = o.fs.opt.Enc.FromStandardName(leaf)
 
-	// Add directory verification if we have a parent directory
-	if directoryID != "" && directoryID != o.fs.rootParentID() {
-		// Verify directory exists by doing a quick lookup
-		_, found := o.fs.dirCache.Get(directoryID)
-		if !found {
-			fs.Debugf(o, "Directory cache miss for %s, refreshing cache", directoryID)
-			// Clear cache for this directory and try to find it again
-			o.fs.dirCache.FlushDir(remote)
-			leaf, directoryID, err = o.fs.dirCache.FindPath(ctx, remote, true)
-			if err != nil {
-				return fmt.Errorf("failed to refresh directory path for %q: %w", remote, err)
-			}
-		}
-	}
-
 	// Determine upload method based on size
 	if size >= 0 && size < int64(o.fs.opt.UploadCutoff) {
 		err = o.uploadSimple(ctx, in, leaf, directoryID, size, src.ModTime(ctx), src)
@@ -2047,40 +1716,18 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		return fmt.Errorf("invalid filename: cannot be empty")
 	}
 
-	// If we have a directoryID, verify it exists before uploading
-	if directoryID != "" && directoryID != o.fs.rootParentID() {
-		// Verify the directory exists by attempting to list it
-		fs.Debugf(o, "Verifying directory %s exists before upload for file %s", directoryID, leaf)
-		_, listErr := o.fs.listAll(ctx, directoryID, func(item *api.File) bool {
-			return false // We don't actually need to process items, just verify access
-		})
-		if listErr != nil {
-			fs.Errorf(o, "Directory %s verification failed: %v, will upload to root instead", directoryID, listErr)
-			// If directory verification fails, upload without parent (to root)
-			directoryID = ""
-		} else {
-			fs.Debugf(o, "Directory %s verification successful for file %s", directoryID, leaf)
-		}
-	}
-
 	// Create metadata
 	metadata := map[string]interface{}{
-		"fileName": o.fs.normalizeFileName(leaf),
+		"fileName": leaf,
 		"mimeType": mimeType,
 	}
 
-	// Set modification time if provided
-	if !modTime.IsZero() {
-		metadata["editedTime"] = modTime.Format(time.RFC3339)
-		fs.Debugf(o, "Upload: Setting editedTime to %v", modTime)
-	}
+	// Note: We don't set editedTime/createdTime here because
+	// Huawei Drive API ignores these parameters and always uses server time
 
 	// Set parent folder if directoryID is provided and not the root parent ID
 	if directoryID != "" && directoryID != o.fs.rootParentID() {
 		metadata["parentFolder"] = []string{directoryID}
-		fs.Debugf(o, "Upload: Setting parentFolder to %s for file %s", directoryID, leaf)
-	} else {
-		fs.Debugf(o, "Upload: No parentFolder set for file %s (directoryID: %s, rootParentID: %s)", leaf, directoryID, o.fs.rootParentID())
 	}
 	// If directoryID is empty or is the root parent ID, don't set parentFolder
 	// The API will upload the file to the drive root by default
@@ -2131,7 +1778,6 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		Parameters: url.Values{
 			"uploadType": []string{"multipart"},
 			"fields":     []string{"*"},
-			"autoRename": []string{"false"},
 		},
 		Body:        bytes.NewReader(buf.Bytes()),
 		ContentType: fmt.Sprintf("multipart/related; boundary=%s", writer.Boundary()),
@@ -2174,7 +1820,6 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 		Parameters: url.Values{
 			"uploadType": []string{"resume"},
 			"fields":     []string{"*"},
-			"autoRename": []string{"false"},
 		},
 		ExtraHeaders: map[string]string{
 			"X-Upload-Content-Length": strconv.FormatInt(size, 10),
@@ -2214,11 +1859,8 @@ func (o *Object) uploadResume(ctx context.Context, in io.Reader, leaf, directory
 		"fileName": leaf,
 	}
 
-	// Set modification time if provided
-	if !modTime.IsZero() {
-		metadata["editedTime"] = modTime.Format(time.RFC3339)
-		fs.Debugf(o, "Upload: Setting editedTime to %v for resumable upload", modTime)
-	}
+	// Note: We don't set editedTime/createdTime here because
+	// Huawei Drive API ignores these parameters and always uses server time
 
 	if directoryID != "" && directoryID != o.fs.rootParentID() {
 		metadata["parentFolder"] = []string{directoryID}
@@ -2346,19 +1988,10 @@ func (o *Object) Remove(ctx context.Context) error {
 		Method: "DELETE",
 		Path:   "/files/" + o.id,
 	}
-	err := o.fs.pacer.Call(func() (bool, error) {
+	return o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
-	if err == nil {
-		// Flush the directory cache for the parent directory to reflect the deletion
-		dir := path.Dir(o.remote)
-		if dir == "." {
-			dir = ""
-		}
-		o.fs.dirCache.FlushDir(dir)
-	}
-	return err
 }
 
 // Metadata returns metadata for an object
@@ -2441,9 +2074,6 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 		AppSettings: make(map[string]interface{}),
 	}
 
-	// Track whether mtime was explicitly provided
-	var mtimeProvided bool
-
 	// Process metadata and separate into properties and app settings
 	for key, value := range metadata {
 		switch key {
@@ -2455,16 +2085,7 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 			if favorite, err := strconv.ParseBool(value); err == nil {
 				updateReq.Favorite = favorite
 			}
-		case "mtime":
-			// Handle modification time specially
-			if t, err := time.Parse(time.RFC3339Nano, value); err == nil {
-				updateReq.EditedTime = &t
-				mtimeProvided = true
-				fs.Debugf(o, "SetMetadata: Setting editedTime to %v", t)
-			} else {
-				fs.Debugf(o, "SetMetadata: Failed to parse mtime %q: %v", value, err)
-			}
-		// Note: Other metadata like btime, content-type, sha256 are read-only
+		// Note: Other metadata like btime, mtime, content-type, sha256 are read-only
 		// and cannot be directly set via the update API
 		default:
 			// All other user metadata goes into Properties by default
@@ -2473,18 +2094,9 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 		}
 	}
 
-	// If mtime was not explicitly provided, preserve the current modification time
-	if !mtimeProvided {
-		currentModTime := o.ModTime(ctx)
-		if !currentModTime.IsZero() {
-			updateReq.EditedTime = &currentModTime
-			fs.Debugf(o, "SetMetadata: Preserving current editedTime %v", currentModTime)
-		}
-	}
-
 	// Only proceed if we have something to update
 	if len(updateReq.Properties) == 0 && len(updateReq.AppSettings) == 0 &&
-		updateReq.Description == "" && updateReq.EditedTime == nil {
+		updateReq.Description == "" {
 		// No updateable metadata provided
 		fs.Debugf(o, "SetMetadata: No updateable metadata provided")
 		return nil
@@ -2497,9 +2109,6 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 	opts := rest.Opts{
 		Method: "PATCH",
 		Path:   "/files/" + o.id,
-		Parameters: url.Values{
-			"autoRename": []string{"false"},
-		},
 	}
 
 	var info *api.File
@@ -2646,8 +2255,6 @@ var (
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
-	_ fs.DirSetModTimer  = (*Fs)(nil)
-	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)

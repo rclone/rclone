@@ -20,34 +20,6 @@ type About struct {
 	FolderLevel       int    `json:"folderLevel"`
 }
 
-// StartCursor represents response to Changes.getStartCursor
-type StartCursor struct {
-	StartCursor string `json:"startCursor"`
-}
-
-// ChangeItem represents a change in the Changes API
-type ChangeItem struct {
-	ChangeType string `json:"changeType"`
-	Deleted    bool   `json:"deleted"`
-	File       *File  `json:"file,omitempty"`
-}
-
-// ChangesList represents response to Changes.list
-type ChangesList struct {
-	Category    string       `json:"category"`
-	Changes     []ChangeItem `json:"changes"`
-	NextCursor  string       `json:"nextCursor,omitempty"`
-	HasNextPage bool         `json:"hasNextPage"`
-}
-
-// Subscription represents a webhook subscription for Changes
-type Subscription struct {
-	ID         string    `json:"id,omitempty"`
-	Type       string    `json:"type"`
-	URL        string    `json:"url"`
-	Expiration time.Time `json:"expiration"`
-}
-
 // User represents a user
 type User struct {
 	PermissionID string `json:"permissionId"`
@@ -187,7 +159,6 @@ type CopyFileRequest struct {
 	ParentFolder []string               `json:"parentFolder,omitempty"`
 	Properties   map[string]interface{} `json:"properties,omitempty"`
 	AppSettings  map[string]interface{} `json:"appSettings,omitempty"`
-	EditedTime   *time.Time             `json:"editedTime,omitempty"`
 }
 
 // ResumeUploadInitResponse represents response to resume upload init
@@ -225,9 +196,4 @@ const (
 	CategoryDriveFileList = "drive#fileList"
 	CategoryDriveAbout    = "drive#about"
 	CategoryDriveUser     = "drive#user"
-	CategoryDriveChanges  = "drive#changes"
-
-	// Change types
-	ChangeTypeFile   = "file"
-	ChangeTypeFolder = "folder"
 )
