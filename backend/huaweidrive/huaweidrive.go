@@ -1226,7 +1226,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 		// Also notify parent directory for cache invalidation
 		if !change.File.IsDir() {
-			var parentDir string
+			parentDir := path
 			if lastSlash := strings.LastIndex(path, "/"); lastSlash >= 0 {
 				parentDir = path[:lastSlash]
 			} else {
