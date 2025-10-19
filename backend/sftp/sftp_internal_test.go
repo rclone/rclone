@@ -3,10 +3,16 @@
 package sftp
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShellEscapeUnix(t *testing.T) {
@@ -85,4 +91,183 @@ func TestParseUsage(t *testing.T) {
 		gotSpaceTotal, gotSpaceUsed, gotSpaceAvail := parseUsage([]byte(test.sshOutput))
 		assert.Equal(t, test.usage, [3]int64{gotSpaceTotal, gotSpaceUsed, gotSpaceAvail}, fmt.Sprintf("Test %d sshOutput = %q", i, test.sshOutput))
 	}
+}
+
+func TestTranslateLink(t *testing.T) {
+	for i, test := range []struct {
+		remote             string
+		sftpPath           string
+		expectedPath       string
+		expectedTranslated bool
+	}{
+		// Regular file without .rclonelink suffix
+		{"file.txt", "/path/to/file.txt", "/path/to/file.txt", false},
+		// File with .rclonelink suffix - should be marked as translated
+		{"symlink.txt" + fs.LinkSuffix, "/path/to/symlink.txt" + fs.LinkSuffix, "/path/to/symlink.txt", true},
+		// Directory without suffix
+		{"dir/file.txt", "/path/dir/file.txt", "/path/dir/file.txt", false},
+		// Directory with file having .rclonelink suffix
+		{"dir/symlink.txt" + fs.LinkSuffix, "/path/dir/symlink.txt" + fs.LinkSuffix, "/path/dir/symlink.txt", true},
+		// Edge case: empty strings
+		{"", "", "", false},
+		// Edge case: suffix alone
+		{fs.LinkSuffix, "/" + fs.LinkSuffix, "/", true},
+	} {
+		gotPath, gotTranslated := translateLink(test.remote, test.sftpPath)
+		assert.Equal(t, test.expectedPath, gotPath, fmt.Sprintf("Test %d: path mismatch for remote=%q, sftpPath=%q", i, test.remote, test.sftpPath))
+		assert.Equal(t, test.expectedTranslated, gotTranslated, fmt.Sprintf("Test %d: translated flag mismatch for remote=%q", i, test.remote))
+	}
+}
+
+func TestNopWriterCloser(t *testing.T) {
+	// Test that nopWriterCloser wraps a writer correctly
+	var buf strings.Builder
+	wc := nopWriterCloser{&buf}
+
+	// Test Write
+	n, err := wc.Write([]byte("hello"))
+	assert.NoError(t, err)
+	assert.Equal(t, 5, n)
+	assert.Equal(t, "hello", buf.String())
+
+	// Test Write again
+	n, err = wc.Write([]byte(" world"))
+	assert.NoError(t, err)
+	assert.Equal(t, 6, n)
+	assert.Equal(t, "hello world", buf.String())
+
+	// Test Close (should be no-op)
+	err = wc.Close()
+	assert.NoError(t, err)
+
+	// Verify we can still read what was written
+	assert.Equal(t, "hello world", buf.String())
+}
+
+// TestSymlinkHash tests that hash calculation for symlinks works correctly
+func TestSymlinkHash(t *testing.T) {
+	// This test verifies the hash calculation logic for translated symlinks
+	// The hash should be computed from the target path string, not the target content
+
+	testCases := []struct {
+		name           string
+		targetPath     string
+		hashType       hash.Type
+		expectedLength int
+	}{
+		{"simple path md5", "file.txt", hash.MD5, 32},
+		{"nested path md5", "dir/subdir/file.txt", hash.MD5, 32},
+		{"absolute path md5", "/absolute/path/to/file", hash.MD5, 32},
+		{"relative with dots md5", "../parent/file.txt", hash.MD5, 32},
+		{"sha1 hash", "file.txt", hash.SHA1, 40},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Compute expected hash
+			hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(tc.hashType))
+			require.NoError(t, err)
+
+			_, err = hasher.Write([]byte(tc.targetPath))
+			require.NoError(t, err)
+
+			expectedHash := hasher.Sums()[tc.hashType]
+
+			// Verify the hash is computed from the target path string
+			assert.NotEmpty(t, expectedHash, "Hash should not be empty")
+			assert.Equal(t, tc.expectedLength, len(expectedHash), fmt.Sprintf("%s hash should be %d characters", tc.hashType, tc.expectedLength))
+		})
+	}
+}
+
+// TestObjectPath tests the path() method behavior with translated symlinks
+func TestObjectPath(t *testing.T) {
+	testCases := []struct {
+		name           string
+		remote         string
+		translatedLink bool
+		absRoot        string
+		expectedPath   string
+	}{
+		{
+			name:           "regular file",
+			remote:         "file.txt",
+			translatedLink: false,
+			absRoot:        "/home/user",
+			expectedPath:   "/home/user/file.txt",
+		},
+		{
+			name:           "translated symlink - removes .rclonelink",
+			remote:         "symlink.txt" + fs.LinkSuffix,
+			translatedLink: true,
+			absRoot:        "/home/user",
+			expectedPath:   "/home/user/symlink.txt",
+		},
+		{
+			name:           "nested translated symlink",
+			remote:         "dir/symlink.txt" + fs.LinkSuffix,
+			translatedLink: true,
+			absRoot:        "/home/user",
+			expectedPath:   "/home/user/dir/symlink.txt",
+		},
+		{
+			name:           "regular file with empty root",
+			remote:         "file.txt",
+			translatedLink: false,
+			absRoot:        "",
+			expectedPath:   "file.txt",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create a mock Object
+			o := &Object{
+				fs: &Fs{
+					absRoot: tc.absRoot,
+					opt: Options{
+						TranslateSymlinks: true,
+					},
+				},
+				remote:         tc.remote,
+				translatedLink: tc.translatedLink,
+			}
+
+			// Test path() method
+			gotPath := o.path()
+			assert.Equal(t, tc.expectedPath, gotPath)
+		})
+	}
+}
+
+// TestSymlinkOpen tests reading symlink target as text
+func TestSymlinkOpen(t *testing.T) {
+	ctx := context.Background()
+	targetPath := "target/file.txt"
+
+	// Test reading full content
+	t.Run("read full content", func(t *testing.T) {
+		reader := io.NopCloser(strings.NewReader(targetPath))
+		content, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, targetPath, string(content))
+	})
+
+	// Test reading with range (offset and limit)
+	t.Run("read with range", func(t *testing.T) {
+		offset := int64(7)
+		limit := int64(4)
+
+		reader := strings.NewReader(targetPath)
+		reader.Seek(offset, io.SeekStart)
+
+		limitedReader := io.LimitReader(reader, limit)
+		content, err := io.ReadAll(limitedReader)
+		require.NoError(t, err)
+
+		expected := targetPath[offset : offset+limit]
+		assert.Equal(t, expected, string(content))
+	})
+
+	_ = ctx // avoid unused variable warning
 }

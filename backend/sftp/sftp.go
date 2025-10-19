@@ -184,13 +184,13 @@ E.g. if shared folders can be found in directories representing volumes:
 E.g. if home directory can be found in a shared folder called "home":
 
     rclone sync /home/local/directory remote:/home/directory --sftp-path-override /volume1/homes/USER/directory
-	
+
 To specify only the path to the SFTP remote's root, and allow rclone to add any relative subpaths automatically (including unwrapping/decrypting remotes as necessary), add the '@' character to the beginning of the path.
 
 E.g. the first example above could be rewritten as:
 
 	rclone sync /home/local/directory remote:/directory --sftp-path-override @/volume2
-	
+
 Note that when using this method with Synology "home" folders, the full "/homes/USER" path should be specified instead of "/home".
 
 E.g. the second example above should be rewritten as:
@@ -268,6 +268,23 @@ E.g. the second example above should be rewritten as:
 			Help:     "Set to skip any symlinks and any other non regular files.",
 			Advanced: true,
 		}, {
+			Name:    "links",
+			Default: false,
+			Help: `Copy symlinks as symlinks instead of following them.
+
+When enabled, symbolic links are copied as-is, preserving their target paths exactly.
+
+**Limitations:**
+- Symlink target paths are copied verbatim (absolute or relative as stored)
+- If copying between different directory structures, absolute symlinks may break
+- Broken symlinks (pointing to non-existent targets) are copied anyway
+- Symlink modification times are not preserved (SFTP servers rarely support lutimes)
+- Checksums are calculated based on the symlink target path, not the target content.
+- Symlink behavior may vary depending on the SFTP server implementation; some servers may modify or normalize paths in ways that could break links.
+`,
+			Advanced: true,
+		}, {
+
 			Name:     "subsystem",
 			Default:  "sftp",
 			Help:     "Specifies the SSH2 subsystem on the remote host.",
@@ -279,7 +296,7 @@ E.g. the second example above should be rewritten as:
 
 The subsystem option is ignored when server_command is defined.
 
-If adding server_command to the configuration file please note that 
+If adding server_command to the configuration file please note that
 it should not be enclosed in quotes, since that will make rclone fail.
 
 A working example is:
@@ -505,7 +522,7 @@ connection for every hash it calculates.
 			Name:    "socks_proxy",
 			Default: "",
 			Help: `Socks 5 proxy host.
-	
+
 Supports the format user:pass@host:port, user@host:port, host:port.
 
 Example:
@@ -574,6 +591,7 @@ type Options struct {
 	Xxh3sumCommand          string          `config:"xxh3sum_command"`
 	Xxh128sumCommand        string          `config:"xxh128sum_command"`
 	SkipLinks               bool            `config:"skip_links"`
+	TranslateSymlinks       bool            `config:"links"`
 	Subsystem               string          `config:"subsystem"`
 	ServerCommand           string          `config:"server_command"`
 	UseFstat                bool            `config:"use_fstat"`
@@ -621,18 +639,19 @@ type Fs struct {
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
 type Object struct {
-	fs        *Fs
-	remote    string
-	size      int64       // size of the object
-	modTime   uint32      // modification time of the object as unix time
-	mode      os.FileMode // mode bits from the file
-	md5sum    *string     // Cached MD5 checksum
-	sha1sum   *string     // Cached SHA-1 checksum
-	crc32sum  *string     // Cached CRC-32 checksum
-	sha256sum *string     // Cached SHA-256 checksum
-	blake3sum *string     // Cached BLAKE3 checksum
-	xxh3sum   *string     // Cached XXH3 checksum
-	xxh128sum *string     // Cached XXH128 checksum
+	fs             *Fs
+	remote         string
+	size           int64       // size of the object
+	modTime        uint32      // modification time of the object as unix time
+	mode           os.FileMode // mode bits from the file
+	translatedLink bool        // Is this object a translated symlink (.rclonelink)?
+	md5sum         *string     // Cached MD5 checksum
+	sha1sum        *string     // Cached SHA-1 checksum
+	crc32sum       *string     // Cached CRC-32 checksum
+	sha256sum      *string     // Cached SHA-256 checksum
+	blake3sum      *string     // Cached BLAKE3 checksum
+	xxh3sum        *string     // Cached XXH3 checksum
+	xxh128sum      *string     // Cached XXH128 checksum
 }
 
 // conn encapsulates an ssh client and corresponding sftp client
@@ -892,6 +911,25 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 	return nil
 }
 
+// translateLink checks whether the remote is a translated link
+// and returns a new path, removing the suffix as needed.
+// It also returns whether this is a translated link at all.
+//
+// For regular files, sftpPath is returned unchanged
+func translateLink(remote, sftpPath string) (newPath string, isTranslatedLink bool) {
+	isTranslatedLink = strings.HasSuffix(remote, fs.LinkSuffix)
+	newPath = strings.TrimSuffix(sftpPath, fs.LinkSuffix)
+	return newPath, isTranslatedLink
+}
+
+// nopWriterCloser wraps an io.Writer and adds a no-op Close method
+type nopWriterCloser struct {
+	io.Writer
+}
+
+// Close implements io.Closer
+func (nopWriterCloser) Close() error { return nil }
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -909,6 +947,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if len(opt.SSH) != 0 && ((opt.User != currentUser && opt.User != "") || opt.Host != "" || (opt.Port != "22" && opt.Port != "")) {
 		fs.Logf(name, "--sftp-ssh is in use - ignoring user/host/port from config - set in the parameters to --sftp-ssh (remove them from the config to silence this warning)")
+	}
+	// Override --sftp-links with --links if set
+	if f.ci.Links {
+		opt.TranslateSymlinks = true
 	}
 	f.tokens = pacer.NewTokenDispenser(opt.Connections)
 
@@ -1317,14 +1359,27 @@ func (f *Fs) Precision() time.Duration {
 
 // NewObject creates a new remote sftp file object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	translatedLink := false
+
+	if f.opt.TranslateSymlinks {
+		_, translatedLink = translateLink(remote, remote)
+	}
+
 	o := &Object{
-		fs:     f,
-		remote: remote,
+		fs:             f,
+		remote:         remote,
+		translatedLink: translatedLink,
 	}
 	err := o.stat(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// Handle the odd case that a symlink was specified by name without the link suffix
+	if f.opt.TranslateSymlinks && o.mode&os.ModeSymlink != 0 && !o.translatedLink {
+		return nil, fs.ErrorObjectNotFound
+	}
+
 	return o, nil
 }
 
@@ -1406,6 +1461,17 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				remote: remote,
 			}
 			o.setMetadata(info)
+			// Check whether this link should be translated
+			if f.opt.TranslateSymlinks {
+				if info.Mode()&os.ModeSymlink != 0 {
+					// Physical symlink on server - add suffix and mark as translated
+					o.remote += fs.LinkSuffix
+					o.translatedLink = true
+				} else if strings.HasSuffix(remote, fs.LinkSuffix) {
+					// Already a .rclonelink file - mark as translated
+					o.translatedLink = true
+				}
+			}
 			entries = append(entries, o)
 		}
 	}
@@ -1418,11 +1484,26 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err != nil {
 		return nil, fmt.Errorf("Put mkParentDir failed: %w", err)
 	}
+
 	// Temporary object under construction
 	o := &Object{
 		fs:     f,
 		remote: src.Remote(),
 	}
+
+	// If TranslateSymlinks is enabled and source is a translatedLink
+	if f.opt.TranslateSymlinks {
+		if srcObj, ok := src.(*Object); ok && srcObj.translatedLink {
+			o.translatedLink = true
+			o.mode = srcObj.mode
+		} else if strings.HasSuffix(src.Remote(), fs.LinkSuffix) {
+			// Source is a symlink from another backend (e.g., local)
+			// Mark it as a translated link so Update() creates a physical symlink
+			o.translatedLink = true
+			o.mode = os.ModeSymlink | 0777
+		}
+	}
+
 	err = o.Update(ctx, in, src, options...)
 	if err != nil {
 		return nil, err
@@ -1965,9 +2046,35 @@ func (o *Object) Remote() string {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
+	// No hash if hash check is disabled
 	if o.fs.opt.DisableHashCheck {
 		return "", nil
 	}
+
+	// For translated links, hash the target path (not the target content)
+	if o.translatedLink {
+		// Read the symlink target from the server
+		linkTarget, err := o.fs.Readlink(ctx, o.path())
+		if err != nil {
+			return "", fmt.Errorf("hash: failed to read symlink: %w", err)
+		}
+
+		// Create hasher for the requested type
+		hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(r))
+		if err != nil {
+			return "", err
+		}
+
+		// Hash the target path (text)
+		_, err = hasher.Write([]byte(linkTarget))
+		if err != nil {
+			return "", err
+		}
+
+		hashValue := hasher.Sums()[r]
+		return hashValue, nil
+	}
+
 	_ = o.fs.Hashes()
 
 	var hashCmd string
@@ -2152,7 +2259,12 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // path returns the native SFTP path of the object
 func (o *Object) path() string {
-	return o.fs.remotePath(o.remote)
+	remote := o.remote
+	// Remove .rclonelink suffix for the actual SFTP path
+	if o.fs.opt.TranslateSymlinks && o.translatedLink {
+		remote = strings.TrimSuffix(remote, fs.LinkSuffix)
+	}
+	return o.fs.remotePath(remote)
 }
 
 // shellPath returns the SSH shell path of the object
@@ -2167,6 +2279,11 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	o.mode = info.Mode()
 }
 
+// IsSymlink returns true if the remote sftp file is a symlink
+func (o *Object) IsSymlink() bool {
+	return o.mode&os.ModeSymlink != 0
+}
+
 // statRemote stats the file or directory at the remote given
 func (f *Fs) stat(ctx context.Context, remote string) (info os.FileInfo, err error) {
 	absPath := remote
@@ -2177,7 +2294,13 @@ func (f *Fs) stat(ctx context.Context, remote string) (info os.FileInfo, err err
 	if err != nil {
 		return nil, fmt.Errorf("stat: %w", err)
 	}
-	info, err = c.sftpClient.Stat(absPath)
+	if f.opt.TranslateSymlinks {
+		// Lstat is used to get the info of the symlink itself instead of the target
+		// We use Lstat only if the user has requested --sftp-links flag
+		info, err = c.sftpClient.Lstat(absPath)
+	} else {
+		info, err = c.sftpClient.Stat(absPath)
+	}
 	f.putSftpConnection(&c, err)
 	return info, err
 }
@@ -2205,6 +2328,10 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if !o.fs.opt.SetModTime {
 		return nil
 	}
+	// Ignore ModTime for translated links (SFTP doesn't support lutimes to modify symlink times directly)
+	if o.translatedLink {
+		return nil  // Silent ignore
+	}
 	c, err := o.fs.getSftpConnection(ctx)
 	if err != nil {
 		return fmt.Errorf("SetModTime: %w", err)
@@ -2221,8 +2348,13 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	return nil
 }
 
-// Storable returns whether the remote sftp file is a regular file (not a directory, symbolic link, block device, character device, named pipe, etc.)
+// Storable returns whether the remote sftp file is a regular file (not a directory, block device, character device, named pipe, etc.)
+// if TranslateSymlinks is set, symlinks are also allowed
 func (o *Object) Storable() bool {
+	if o.fs.opt.TranslateSymlinks {
+		// If TranslateSymlinks is set, we also allow symlinks
+		return o.mode.IsRegular() || o.IsSymlink()
+	}
 	return o.mode.IsRegular()
 }
 
@@ -2280,6 +2412,30 @@ func (file *objectReader) Close() (err error) {
 
 // Open a remote sftp file object for reading. Seek is supported
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	// If this is a translated link, return the symlink target as text
+	if o.fs.opt.TranslateSymlinks && o.translatedLink {
+		// Read the symlink target from the server
+		linkdst, err := o.fs.Readlink(ctx, o.path())
+		if err != nil {
+			return nil, err
+		}
+		// Update size to match the actual target length from server
+		o.size = int64(len(linkdst))
+
+		// Handle offset and limit from options
+		var offset, limit int64 = 0, -1
+		for _, option := range options {
+			switch x := option.(type) {
+			case *fs.SeekOption:
+				offset = x.Offset
+			case *fs.RangeOption:
+				offset, limit = x.Decode(int64(len(linkdst)))
+			}
+		}
+
+		return readers.NewLimitedReadCloser(io.NopCloser(strings.NewReader(linkdst[offset:])), limit), nil
+	}
+
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
@@ -2341,12 +2497,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return fmt.Errorf("Update: %w", err)
 	}
-	// Hang on to the connection for the whole upload so it doesn't get reused while we are uploading
-	file, err := c.sftpClient.OpenFile(o.path(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
-	if err != nil {
-		o.fs.putSftpConnection(&c, err)
-		return fmt.Errorf("Update Create failed: %w", err)
-	}
 	// remove the file if upload failed
 	remove := func() {
 		c, removeErr := o.fs.getSftpConnection(ctx)
@@ -2361,6 +2511,55 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		} else {
 			fs.Debugf(src, "Removed after failed upload: %v", err)
 		}
+	}
+	var symlinkData bytes.Buffer
+
+	// If translated link, read data into buffer and create symlink
+	if o.translatedLink {
+		// Read the symlink target from input
+		_, err = io.Copy(&symlinkData, in)
+		if err != nil {
+			o.fs.putSftpConnection(&c, err)
+			return err
+		}
+
+		targetPath := symlinkData.String()
+
+		// Check if symlink already exists with the same target
+		existingTarget, readErr := o.fs.Readlink(ctx, o.path())
+		if readErr == nil && existingTarget == targetPath {
+			// Symlink already points to the correct target, no need to recreate
+			o.fs.putSftpConnection(&c, nil)
+			o.size = int64(len(targetPath))
+			return nil
+		}
+
+		// Remove any current symlink or file, if one exists
+		removeErr := c.sftpClient.Remove(o.path())
+		if removeErr != nil && !os.IsNotExist(removeErr) {
+			// Real error (not just "file doesn't exist")
+			o.fs.putSftpConnection(&c, removeErr)
+			return fmt.Errorf("failed to remove existing file: %w", removeErr)
+		}
+
+		// Use the contents to create a symlink
+		err = c.sftpClient.Symlink(targetPath, o.path())
+		if err != nil {
+			o.fs.putSftpConnection(&c, err)
+			remove()
+			return err
+		}
+
+		o.fs.putSftpConnection(&c, nil)
+		o.size = int64(len(targetPath))
+		return nil
+	}
+
+	// Hang on to the connection for the whole upload so it doesn't get reused while we are uploading
+	file, err := c.sftpClient.OpenFile(o.path(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+	if err != nil {
+		o.fs.putSftpConnection(&c, err)
+		return fmt.Errorf("Update Create failed: %w", err)
 	}
 	_, err = file.ReadFrom(&sizeReader{Reader: in, size: src.Size()})
 	if err != nil {
@@ -2410,6 +2609,25 @@ func (o *Object) Remove(ctx context.Context) error {
 	err = c.sftpClient.Remove(o.path())
 	o.fs.putSftpConnection(&c, err)
 	return err
+}
+
+// Readlink reads the target of a symbolic link.
+// Returns the raw target path exactly as stored in the symlink.
+// Does NOT validate if the target exists (broken symlinks are OK).
+// Does NOT convert paths (absolute/relative preserved as-is).
+func (f *Fs) Readlink(ctx context.Context, path string) (string, error) {
+	c, err := f.getSftpConnection(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer f.putSftpConnection(&c, nil)
+
+	linkTarget, err := c.sftpClient.ReadLink(path)
+	if err != nil {
+		return "", fmt.Errorf("ReadLink: %w", err)
+	}
+
+	return linkTarget, nil
 }
 
 // Check the interfaces are satisfied
