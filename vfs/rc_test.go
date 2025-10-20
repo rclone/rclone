@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -204,6 +204,7 @@ func TestRCDirStatus(t *testing.T) {
 			totalFiles += len(statusFiles)
 		}
 	}
+	assert.Equal(t, 2, totalFiles, "Expected to find 2 files in testdir directory")
 	t.Logf("Found %d files in testdir directory", totalFiles)
 
 	// Test with missing dir parameter (should default to root)
