@@ -15,7 +15,6 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/vfs/vfscache"
 )
 
 // Adds the vfs/* commands
@@ -341,10 +340,10 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Support both single file and multiple files
 	var paths []string
-	
+
 	// Check for "file" parameter (single file)
 	if path, err := in.GetString("file"); err == nil {
 		paths = []string{path}
@@ -363,45 +362,45 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 			}
 			paths = append(paths, path)
 		}
-		
+
 		// If no files found, return error
 		if len(paths) == 0 {
 			return nil, errors.New("no file parameter(s) provided")
 		}
 	}
-	
+
 	// Collect status for each file
 	var results []rc.Params
 	for _, path := range paths {
 		if vfs.cache == nil {
 			results = append(results, rc.Params{
-				"name":       filepath.Base(path),
-				"status":     "NONE",
-				"percentage": 0,
-				"uploading":  false,
-				"size":       0,
+				"name":        filepath.Base(path),
+				"status":      "NONE",
+				"percentage":  0,
+				"uploading":   false,
+				"size":        0,
 				"cachedBytes": 0,
-				"dirty":      false,
+				"dirty":       false,
 			})
 		} else {
 			item := vfs.cache.Item(path)
 			status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
-			
+
 			// If status is UPLOADING, then the file is uploading
 			isUploading := (status == "UPLOADING")
-			
+
 			results = append(results, rc.Params{
-				"name":       filepath.Base(path),
-				"status":     status,
-				"percentage": percentage,
-				"uploading":  isUploading,
-				"size":       totalSize,
+				"name":        filepath.Base(path),
+				"status":      status,
+				"percentage":  percentage,
+				"uploading":   isUploading,
+				"size":        totalSize,
 				"cachedBytes": cachedSize,
-				"dirty":      isDirty,
+				"dirty":       isDirty,
 			})
 		}
 	}
-	
+
 	// Always return results in 'files' array format for consistency
 	return rc.Params{
 		"files": results,
@@ -413,31 +412,31 @@ func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if vfs.cache == nil {
 		return rc.Params{
-			"totalFiles":           0,
-			"fullCount":            0,
-			"partialCount":         0,
-			"noneCount":            0,
-			"dirtyCount":           0,
-			"uploadingCount":       0,
-			"totalCachedBytes":     0,
+			"totalFiles":             0,
+			"fullCount":              0,
+			"partialCount":           0,
+			"noneCount":              0,
+			"dirtyCount":             0,
+			"uploadingCount":         0,
+			"totalCachedBytes":       0,
 			"averageCachePercentage": 0,
 		}, nil
 	}
-	
+
 	// Get aggregate statistics from cache
 	stats := vfs.cache.GetAggregateStats()
-	
+
 	return rc.Params{
-		"totalFiles":           stats.TotalFiles,
-		"fullCount":            stats.FullCount,
-		"partialCount":         stats.PartialCount,
-		"noneCount":            stats.NoneCount,
-		"dirtyCount":           stats.DirtyCount,
-		"uploadingCount":       stats.UploadingCount,
-		"totalCachedBytes":     stats.TotalCachedBytes,
+		"totalFiles":             stats.TotalFiles,
+		"fullCount":              stats.FullCount,
+		"partialCount":           stats.PartialCount,
+		"noneCount":              stats.NoneCount,
+		"dirtyCount":             stats.DirtyCount,
+		"uploadingCount":         stats.UploadingCount,
+		"totalCachedBytes":       stats.TotalCachedBytes,
 		"averageCachePercentage": stats.AverageCachePercentage,
 	}, nil
 }
@@ -591,9 +590,9 @@ func getStatus(vfs *VFS, in rc.Params) (out rc.Params, err error) {
 	isExternal := vfs.IsExternal()
 
 	return rc.Params{
-		"enabled":   !pollInterval.IsZero(),
-		"interval":  pollInterval,
-		"external":  isExternal,
+		"enabled":  !pollInterval.IsZero(),
+		"interval": pollInterval,
+		"external": isExternal,
 	}, nil
 }
 
@@ -649,13 +648,13 @@ func rcQueueSetExpiry(ctx context.Context, in rc.Params) (out rc.Params, err err
 		return nil, err
 	}
 
-	relative := false
-	relativeValue, err := in.GetBool("relative")
+	relative, err := in.GetBool("relative")
 	if err != nil && !rc.IsErrParamNotFound(err) {
 		return nil, err
 	}
-	if err == nil {
-		relative = relativeValue
+	// Default to false if parameter not found
+	if err != nil {
+		relative = false
 	}
 
 	err = vfs.cache.SetExpiry(id, expiry, relative)
