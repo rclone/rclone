@@ -6,18 +6,10 @@
 package vfscache
 
 import (
-	"context"
-	"fmt"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/cache"
-	"github.com/rclone/rclone/fs/fserrors"
-	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs/vfscache/downloaders"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -31,21 +23,21 @@ type Item struct {
 	downloaders  *downloaders.Downloaders
 	writeBackID  writeback.Handle // if 0 not writing back
 	pendingWrite writeback.Handle // if 0 no pending write
-	name         string            // from c.name
-	o            fs.Object         // object currently in the file
-	used         time.Time         // time this was last used
-	err          error             // last error on this item
+	name         string           // from c.name
+	o            fs.Object        // object currently in the file
+	used         time.Time        // time this was last used
+	err          error            // last error on this item
 }
 
 // Info represents the information about a cached file
 type Info struct {
-	Name     string       // name of the file
-	Size     int64        // size of the file
-	ModTime  time.Time    // modification time of the file
+	Name     string                 // name of the file
+	Size     int64                  // size of the file
+	ModTime  time.Time              // modification time of the file
 	Rs       *downloaders.RangeSpec // range specification
-	Dirty    bool         // if set then the file has been modified
-	Pinned   bool         // if set then the file is pinned in the cache
-	Metadata vfscommon.Metadata // metadata for the file
+	Dirty    bool                   // if set then the file has been modified
+	Pinned   bool                   // if set then the file is pinned in the cache
+	Metadata vfscommon.Metadata     // metadata for the file
 }
 
 // NewItem creates a new Item
@@ -87,11 +79,14 @@ func (item *Item) VFSStatusCache() string {
 	return status
 }
 
-// VFSStatusCacheWithPercentage returns the cache status of the file along with percentage cached.
-// Returns status string and percentage (0-100).
-func (item *Item) VFSStatusCacheWithPercentage() (string, int) {
-	item.mu.Lock()
-	defer item.mu.Unlock()
+// _vfsStatusCacheWithPercentage is the implementation of VFSStatusCacheWithPercentage but without the lock
+//
+// Must be called with the lock held
+func (item *Item) _vfsStatusCacheWithPercentage() (string, int) {
+	// Check if item.info is nil to prevent panic
+	if item.info == nil {
+		return "NONE", 0
+	}
 
 	// Check if item is being uploaded
 	if item.writeBackID != 0 {
@@ -114,12 +109,15 @@ func (item *Item) VFSStatusCacheWithPercentage() (string, int) {
 		return "FULL", 100
 	}
 
-	cachedSize := item.info.Rs.Size()
+	var cachedSize int64
+	if item.info.Rs != nil {
+		cachedSize = item.info.Rs.Size()
+	}
 	totalSize := item.info.Size
 
 	if totalSize <= 0 {
 		if cachedSize > 0 {
-			return "PARTIAL", 0
+			return "PARTIAL", 100
 		}
 		return "NONE", 0
 	}
@@ -136,6 +134,14 @@ func (item *Item) VFSStatusCacheWithPercentage() (string, int) {
 	return "NONE", 0
 }
 
+// VFSStatusCacheWithPercentage returns the cache status of the file along with percentage cached.
+// Returns status string and percentage (0-100).
+func (item *Item) VFSStatusCacheWithPercentage() (string, int) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	return item._vfsStatusCacheWithPercentage()
+}
+
 // VFSStatusCacheDetailed returns detailed cache status information for the file.
 // Returns status string, percentage (0-100), total size, cached size, and dirty flag.
 func (item *Item) VFSStatusCacheDetailed() (string, int, int64, int64, bool) {
@@ -143,11 +149,16 @@ func (item *Item) VFSStatusCacheDetailed() (string, int, int64, int64, bool) {
 	defer item.mu.Unlock()
 
 	// Get basic status and percentage
-	status, percentage := item.VFSStatusCacheWithPercentage()
+	status, percentage := item._vfsStatusCacheWithPercentage()
 
 	// Get size information
 	totalSize := item.info.Size
-	cachedSize := item.info.Rs.Size()
+	var cachedSize int64
+	if status == "FULL" || status == "DIRTY" || status == "UPLOADING" {
+		cachedSize = totalSize
+	} else if item.info.Rs != nil {
+		cachedSize = item.info.Rs.Size()
+	}
 
 	// Get dirty flag
 	dirty := item.info.Dirty
