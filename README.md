@@ -1,5 +1,5 @@
 > ⚠️ **Unofficial Fork Disclaimer**  
-> This is an **unofficial fork** of [rclone](https://rclone.org), with additional enhancements such as **Alist**, **Teldrive** and **Terabox** support.  
+> This is an **unofficial fork** of [rclone](https://rclone.org), with additional enhancements such as **Alist**, **Alldebrid**, **iCloud Photos**, **Teldrive** and **Terabox** support.  
 > I am **not affiliated with the upstream maintainers**, and this fork **does not intend to be malicious or harmful** in any way.  
 > Please **read the source code** if you're unsure or want to verify that it behaves as described.  
 > Contributions, feedback, and scrutiny are welcome.
@@ -57,6 +57,7 @@ directories to and from different cloud storage providers.
   * HTTP [:page_facing_up:](https://rclone.org/http/)
   * Huawei Cloud Object Storage Service(OBS) [:page_facing_up:](https://rclone.org/s3/#huawei-obs)
   * iCloud Drive [:page_facing_up:](https://rclone.org/iclouddrive/)
+  * iCloud Photos [:page_facing_up:](https://github.com/rclone/rclone/issues/7982)
   * ImageKit [:page_facing_up:](https://rclone.org/imagekit/)
   * Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
   * Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
