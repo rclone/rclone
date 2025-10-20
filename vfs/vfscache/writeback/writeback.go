@@ -41,6 +41,13 @@ func (wbItem *writeBackItem) IsUploading() bool {
 	return wbItem.uploading
 }
 
+// SetUploading sets the uploading status of the item
+func (wbItem *writeBackItem) SetUploading(uploading bool) {
+	wbItem.mu.Lock()
+	defer wbItem.mu.Unlock()
+	wbItem.uploading = uploading
+}
+
 // WriteBack manages a list of items which are in the process of
 // having their attributes set or being uploaded
 type WriteBack struct {
@@ -72,9 +79,19 @@ func (wb *WriteBack) IsUploading(id Handle) bool {
 	defer wb.mu.Unlock()
 
 	if wbItem, ok := wb.lookup[id]; ok {
-		return wbItem.uploading
+		return wbItem.IsUploading()
 	}
 	return false
+}
+
+// SetUploading sets the uploading status of an item by ID
+func (wb *WriteBack) SetUploading(id Handle, uploading bool) {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+
+	if wbItem, ok := wb.lookup[id]; ok {
+		wbItem.SetUploading(uploading)
+	}
 }
 
 // Get returns a writeback item by handle if it exists
@@ -126,4 +143,28 @@ func (wb *WriteBack) _remove(id Handle) (found bool) {
 	// Wake up the background uploader
 	wbItem.wb.cond.Signal()
 	return true
+}
+
+// Queue returns a list of items in the writeback queue
+func (wb *WriteBack) Queue() []map[string]interface{} {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+
+	var queue []map[string]interface{}
+	for _, wbItem := range wb.lookup {
+		wbItem.mu.Lock()
+		item := map[string]interface{}{
+			"name":      wbItem.name,
+			"id":        wbItem.id,
+			"size":      wbItem.src.Size(),
+			"expiry":    time.Until(wbItem.expiry).Seconds(),
+			"tries":     wbItem.attempt,
+			"delay":     wbItem.delay.Seconds(),
+			"uploading": wbItem.uploading,
+		}
+		wbItem.mu.Unlock()
+		queue = append(queue, item)
+	}
+
+	return queue
 }
