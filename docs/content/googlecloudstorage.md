@@ -595,6 +595,8 @@ Properties:
         - South Carolina
     - "us-east4"
         - Northern Virginia
+    - "us-east5"
+        - Ohio
     - "us-west1"
         - Oregon
     - "us-west2"

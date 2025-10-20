@@ -233,7 +233,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Sep 24, 2025</p>
+<p class="date">Oct 20, 2025</p>
 </header>
 <h1 id="name">NAME</h1>
 <p>rclone - manage files on cloud storage</p>
@@ -444,6 +444,7 @@ S3, that work out of the box.)</p>
 <li>Hetzner Storage Box</li>
 <li>HiDrive</li>
 <li>HTTP</li>
+<li>Huawei OBS</li>
 <li>iCloud Drive</li>
 <li>ImageKit</li>
 <li>Internet Archive</li>
@@ -486,7 +487,9 @@ S3, that work out of the box.)</p>
 <li>QingStor</li>
 <li>Qiniu Cloud Object Storage (Kodo)</li>
 <li>Quatrix by Maytech</li>
+<li>RackCorp Object Storage</li>
 <li>Rackspace Cloud Files</li>
+<li>Rclone Serve S3</li>
 <li>rsync.net</li>
 <li>Scaleway</li>
 <li>Seafile</li>
@@ -2911,10 +2914,11 @@ for rclone commands, flags and backends.</li>
 <p>Remote authorization.</p>
 <h2 id="synopsis-19">Synopsis</h2>
 <p>Remote authorization. Used to authorize a remote or headless rclone
-from a machine with a browser - use as instructed by rclone config.</p>
+from a machine with a browser. Use as instructed by rclone config. See
+also the <a href="/remote_setup">remote setup documentation</a>.</p>
 <p>The command requires 1-3 arguments:</p>
 <ul>
-<li>fs name (e.g., "drive", "s3", etc.)</li>
+<li>Name of a backend (e.g. "drive", "s3")</li>
 <li>Either a base64 encoded JSON blob obtained from a previous rclone
 config session</li>
 <li>Or a client_id and client_secret pair obtained from the remote
@@ -2925,7 +2929,7 @@ default browser automatically.</p>
 <p>Use --template to generate HTML output via a custom Go template. If a
 blank string is provided as an argument to this flag, the default
 template is used.</p>
-<pre><code>rclone authorize &lt;fs name&gt; [base64_json_blob | client_id client_secret] [flags]</code></pre>
+<pre><code>rclone authorize &lt;backendname&gt; [base64_json_blob | client_id client_secret] [flags]</code></pre>
 <h2 id="options-19">Options</h2>
 <pre><code>      --auth-no-open-browser   Do not automatically open auth link in default browser
   -h, --help                   help for authorize
@@ -4301,10 +4305,10 @@ class="sourceCode sh"><code class="sourceCode bash"><span id="cb243-1"><a href="
 <span id="cb243-2"><a href="#cb243-2" aria-hidden="true" tabindex="-1"></a><span class="ex">//</span> Output: stories/The Quick Brown Fox!.txt</span></code></pre></div>
 <div class="sourceCode" id="cb244"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb244-1"><a href="#cb244-1" aria-hidden="true" tabindex="-1"></a><span class="ex">rclone</span> convmv <span class="st">&quot;stories/The Quick Brown Fox!&quot;</span> <span class="at">--name-transform</span> <span class="st">&quot;date=-{YYYYMMDD}&quot;</span></span>
-<span id="cb244-2"><a href="#cb244-2" aria-hidden="true" tabindex="-1"></a><span class="ex">//</span> Output: stories/The Quick Brown Fox!-20250924</span></code></pre></div>
+<span id="cb244-2"><a href="#cb244-2" aria-hidden="true" tabindex="-1"></a><span class="ex">//</span> Output: stories/The Quick Brown Fox!-20251020</span></code></pre></div>
 <div class="sourceCode" id="cb245"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb245-1"><a href="#cb245-1" aria-hidden="true" tabindex="-1"></a><span class="ex">rclone</span> convmv <span class="st">&quot;stories/The Quick Brown Fox!&quot;</span> <span class="at">--name-transform</span> <span class="st">&quot;date=-{macfriendlytime}&quot;</span></span>
-<span id="cb245-2"><a href="#cb245-2" aria-hidden="true" tabindex="-1"></a><span class="ex">//</span> Output: stories/The Quick Brown Fox!-2025-09-24 0413PM</span></code></pre></div>
+<span id="cb245-2"><a href="#cb245-2" aria-hidden="true" tabindex="-1"></a><span class="ex">//</span> Output: stories/The Quick Brown Fox!-2025-10-20 1251PM</span></code></pre></div>
 <div class="sourceCode" id="cb246"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb246-1"><a href="#cb246-1" aria-hidden="true" tabindex="-1"></a><span class="ex">rclone</span> convmv <span class="st">&quot;stories/The Quick Brown Fox!.txt&quot;</span> <span class="at">--name-transform</span> <span class="st">&quot;all,regex=[</span><span class="dt">\\</span><span class="st">.</span><span class="dt">\\</span><span class="st">w]/ab&quot;</span></span>
 <span id="cb246-2"><a href="#cb246-2" aria-hidden="true" tabindex="-1"></a><span class="ex">//</span> Output: ababababababab/ababab ababababab ababababab ababab!abababab</span></code></pre></div>
@@ -7999,7 +8003,7 @@ set a single username and password with the <code>--rc-user</code> and
 <p>Alternatively, you can have the reverse proxy manage authentication
 and use the username provided in the configured header with
 <code>--user-from-header</code> (e.g.,
-<code>--rc---user-from-header=x-remote-user</code>). Ensure the proxy is
+<code>--rc-user-from-header=x-remote-user</code>). Ensure the proxy is
 trusted and headers cannot be spoofed, as misconfiguration may lead to
 unauthorized access.</p>
 <p>If either of the above authentication methods is not configured and
@@ -10014,7 +10018,7 @@ set a single username and password with the <code>--user</code> and
 <p>Alternatively, you can have the reverse proxy manage authentication
 and use the username provided in the configured header with
 <code>--user-from-header</code> (e.g.,
-<code>----user-from-header=x-remote-user</code>). Ensure the proxy is
+<code>--user-from-header=x-remote-user</code>). Ensure the proxy is
 trusted and headers cannot be spoofed, as misconfiguration may lead to
 unauthorized access.</p>
 <p>If either of the above authentication methods is not configured and
@@ -11259,7 +11263,7 @@ set a single username and password with the <code>--user</code> and
 <p>Alternatively, you can have the reverse proxy manage authentication
 and use the username provided in the configured header with
 <code>--user-from-header</code> (e.g.,
-<code>----user-from-header=x-remote-user</code>). Ensure the proxy is
+<code>--user-from-header=x-remote-user</code>). Ensure the proxy is
 trusted and headers cannot be spoofed, as misconfiguration may lead to
 unauthorized access.</p>
 <p>If either of the above authentication methods is not configured and
@@ -11439,7 +11443,7 @@ set a single username and password with the <code>--user</code> and
 <p>Alternatively, you can have the reverse proxy manage authentication
 and use the username provided in the configured header with
 <code>--user-from-header</code> (e.g.,
-<code>----user-from-header=x-remote-user</code>). Ensure the proxy is
+<code>--user-from-header=x-remote-user</code>). Ensure the proxy is
 trusted and headers cannot be spoofed, as misconfiguration may lead to
 unauthorized access.</p>
 <p>If either of the above authentication methods is not configured and
@@ -12856,7 +12860,7 @@ set a single username and password with the <code>--user</code> and
 <p>Alternatively, you can have the reverse proxy manage authentication
 and use the username provided in the configured header with
 <code>--user-from-header</code> (e.g.,
-<code>----user-from-header=x-remote-user</code>). Ensure the proxy is
+<code>--user-from-header=x-remote-user</code>). Ensure the proxy is
 trusted and headers cannot be spoofed, as misconfiguration may lead to
 unauthorized access.</p>
 <p>If either of the above authentication methods is not configured and
@@ -16752,18 +16756,20 @@ directory holding the config file.</li>
 <h1 id="configuring-rclone-on-a-remote-headless-machine">Configuring
 rclone on a remote / headless machine</h1>
 <p>Some of the configurations (those involving oauth2) require an
-Internet connected web browser.</p>
-<p>If you are trying to set rclone up on a remote or headless box with
-no browser available on it (e.g. a NAS or a server in a datacenter) then
-you will need to use an alternative means of configuration. There are
-two ways of doing it, described below.</p>
+internet-connected web browser.</p>
+<p>If you are trying to set rclone up on a remote or headless machine
+with no browser available on it (e.g. a NAS or a server in a
+datacenter), then you will need to use an alternative means of
+configuration. There are three ways of doing it, described below.</p>
 <h2 id="configuring-using-rclone-authorize">Configuring using rclone
 authorize</h2>
-<p>On the headless box run <code>rclone</code> config but answer
-<code>N</code> to the <code>Use auto config?</code> question.</p>
-<pre class="text"><code>Use auto config?
- * Say Y if not sure
- * Say N if you are working on a remote or headless machine
+<p>On the headless machine run <a href="/commands/rclone_config">rclone
+config</a>, but answer <code>N</code> to the question
+<code>Use web browser to automatically authenticate rclone with remote?</code>.</p>
+<pre class="text"><code>Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+If not sure try Y. If Y failed, try N.
 
 y) Yes (default)
 n) No
@@ -16775,25 +16781,29 @@ a web browser available.
 For more help and alternate methods see: https://rclone.org/remote_setup/
 Execute the following on the machine with the web browser (same rclone
 version recommended):
-rclone authorize &quot;onedrive&quot;
+        rclone authorize &quot;onedrive&quot;
 Then paste the result.
 Enter a value.
 config_token&gt;</code></pre>
-<p>Then on your main desktop machine</p>
+<p>Then on your main desktop machine, run <a
+href="https://rclone.org/commands/rclone_authorize/">rclone
+authorize</a>.</p>
 <pre class="text"><code>rclone authorize &quot;onedrive&quot;
-If your browser doesn&#39;t open automatically go to the following link: http://127.0.0.1:53682/auth
-Log in and authorize rclone for access
-Waiting for code...
+NOTICE: Make sure your Redirect URL is set to &quot;http://localhost:53682/&quot; in your custom config.
+NOTICE: If your browser doesn&#39;t open automatically go to the following link: http://127.0.0.1:53682/auth?state=xxxxxxxxxxxxxxxxxxxxxx
+NOTICE: Log in and authorize rclone for access
+NOTICE: Waiting for code...
+
 Got code
 Paste the following into your remote machine ---&gt;
 SECRET_TOKEN
 &lt;---End paste</code></pre>
-<p>Then back to the headless box, paste in the code</p>
+<p>Then back to the headless machine, paste in the code.</p>
 <pre class="text"><code>config_token&gt; SECRET_TOKEN
 --------------------
 [acd12]
-client_id = 
-client_secret = 
+client_id =
+client_secret =
 token = SECRET_TOKEN
 --------------------
 y) Yes this is OK
@@ -16802,38 +16812,50 @@ d) Delete this remote
 y/e/d&gt;</code></pre>
 <h2 id="configuring-by-copying-the-config-file">Configuring by copying
 the config file</h2>
-<p>Rclone stores all of its config in a single configuration file. This
-can easily be copied to configure a remote rclone.</p>
-<p>So first configure rclone on your desktop machine with</p>
+<p>Rclone stores all of its configuration in a single file. This can
+easily be copied to configure a remote rclone (although some backends
+does not support reusing the same configuration, consult your backend
+documentation to be sure).</p>
+<p>Start by running <a href="/commands/rclone_config">rclone config</a>
+to create the configuration file on your desktop machine.</p>
 <div class="sourceCode" id="cb688"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb688-1"><a href="#cb688-1" aria-hidden="true" tabindex="-1"></a><span class="ex">rclone</span> config</span></code></pre></div>
-<p>to set up the config file.</p>
-<p>Find the config file by running <code>rclone config file</code>, for
-example</p>
+<p>Then locate the file by running <a
+href="/commands/rclone_config_file">rclone config file</a>.</p>
 <div class="sourceCode" id="cb689"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb689-1"><a href="#cb689-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> rclone config file</span>
 <span id="cb689-2"><a href="#cb689-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Configuration</span> file is stored at:</span>
 <span id="cb689-3"><a href="#cb689-3" aria-hidden="true" tabindex="-1"></a><span class="ex">/home/user/.rclone.conf</span></span></code></pre></div>
-<p>Now transfer it to the remote box (scp, cut paste, ftp, sftp, etc.)
-and place it in the correct place (use <code>rclone config file</code>
-on the remote box to find out where).</p>
+<p>Finally, transfer the file to the remote machine (scp, cut paste,
+ftp, sftp, etc.) and place it in the correct location (use <a
+href="/commands/rclone_config_file">rclone config file</a> on the remote
+machine to find out where).</p>
 <h2 id="configuring-using-ssh-tunnel">Configuring using SSH Tunnel</h2>
-<p>Linux and MacOS users can utilize SSH Tunnel to redirect the headless
-box port 53682 to local machine by using the following command:</p>
+<p>If you have an SSH client installed on your local machine, you can
+set up an SSH tunnel to redirect the port 53682 into the headless
+machine by using the following command:</p>
 <div class="sourceCode" id="cb690"><pre
 class="sourceCode sh"><code class="sourceCode bash"><span id="cb690-1"><a href="#cb690-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> <span class="at">-L</span> localhost:53682:localhost:53682 username@remote_server</span></code></pre></div>
-<p>Then on the headless box run <code>rclone config</code> and answer
-<code>Y</code> to the <code>Use auto config?</code> question.</p>
-<pre class="text"><code>Use auto config?
- * Say Y if not sure
- * Say N if you are working on a remote or headless machine
+<p>Then on the headless machine run <a
+href="/commands/rclone_config">rclone config</a> and answer
+<code>Y</code> to the question
+<code>Use web browser to automatically authenticate rclone with remote?</code>.</p>
+<pre class="text"><code>Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+If not sure try Y. If Y failed, try N.
 
 y) Yes (default)
 n) No
-y/n&gt; y</code></pre>
-<p>Then copy and paste the auth url
-<code>http://127.0.0.1:53682/auth?state=xxxxxxxxxxxx</code> to the
-browser on your local machine, complete the auth and it is done.</p>
+y/n&gt; y
+NOTICE: Make sure your Redirect URL is set to &quot;http://localhost:53682/&quot; in your custom config.
+NOTICE: If your browser doesn&#39;t open automatically go to the following link: http://127.0.0.1:53682/auth?state=xxxxxxxxxxxxxxxxxxxxxx
+NOTICE: Log in and authorize rclone for access
+NOTICE: Waiting for code...</code></pre>
+<p>Finally, copy and paste the presented URL
+<code>http://127.0.0.1:53682/auth?state=xxxxxxxxxxxxxxxxxxxxxx</code> to
+the browser on your local machine, complete the auth and you are
+done.</p>
 <h1 id="filtering-includes-and-excludes">Filtering, includes and
 excludes</h1>
 <p>Filter flags determine which files rclone <code>sync</code>,
@@ -22311,7 +22333,7 @@ split into groups.</p>
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.71.1&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.71.2&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -33426,8 +33448,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from Box. This only runs from the moment it opens
 your browser to the moment you get back the verification code. This is
@@ -35232,8 +35254,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from Citrix ShareFile. This only runs from the
 moment it opens your browser to the moment you get back the verification
@@ -36733,8 +36755,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from Dropbox. This only runs from the moment it
 opens your browser to the moment you get back the verification code.
@@ -38736,7 +38758,9 @@ Choose a number from below, or type in your own value
    \ &quot;us-east1&quot;
 13 / Northern Virginia.
    \ &quot;us-east4&quot;
-14 / Oregon.
+14 / Ohio.
+   \ &quot;us-east5&quot;
+15 / Oregon.
    \ &quot;us-west1&quot;
 location&gt; 12
 The storage class to use when storing objects in Google Cloud Storage.
@@ -38781,8 +38805,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from Google if using web browser to automatically
 authenticate. This only runs from the moment it opens your browser to
@@ -39272,6 +39296,10 @@ then you will need to set this.</p>
 <ul>
 <li>Northern Virginia</li>
 </ul></li>
+<li>"us-east5"
+<ul>
+<li>Ohio</li>
+</ul></li>
 <li>"us-west1"
 <ul>
 <li>Oregon</li>
@@ -39596,8 +39624,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from Google if using web browser to automatically
 authenticate. This only runs from the moment it opens your browser to
@@ -41538,8 +41566,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from Google if using web browser to automatically
 authenticate. This only runs from the moment it opens your browser to
@@ -42597,8 +42625,8 @@ your account and hence should not be shared with other persons.</strong>
 See the <a href="#keeping-your-tokens-safe">below section</a> for more
 information.</p>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from HiDrive. This only runs from the moment it
 opens your browser to the moment you get back the verification code. The
@@ -47868,8 +47896,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from Microsoft. This only runs from the moment it
 opens your browser to the moment you get back the verification code.
@@ -51817,8 +51845,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note if you are using remote config with rclone authorize while your
 pcloud server is the EU region, you will need to set the hostname in
 'Edit advanced config', otherwise you might get a token error.</p>
@@ -52568,8 +52596,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; </code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from premiumize.me. This only runs from the moment
 it opens your browser to the moment you get back the verification code.
@@ -53107,8 +53135,8 @@ s) Set configuration password
 q) Quit config
 e/n/d/r/c/s/q&gt; q</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from put.io if using web browser to automatically
 authenticate. This only runs from the moment it opens your browser to
@@ -54987,7 +55015,7 @@ entered when you started to share on Windows. On smbd, it's the section
 title in <code>smb.conf</code> (usually in <code>/etc/samba/</code>)
 file. You can find shares by querying the root if you're unsure (e.g.
 <code>rclone lsd remote:</code>).</p>
-<p>You can't access to the shared printers from rclone, obviously.</p>
+<p>You can't access the shared printers from rclone, obviously.</p>
 <p>You can't use Anonymous access for logging in. You have to use the
 <code>guest</code> user with an empty password instead. The rclone
 client tries to avoid 8.3 names when uploading files by encoding
@@ -57192,8 +57220,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Note that rclone runs a webserver on your local machine to collect
 the token as returned from Yandex Disk. This only runs from the moment
 it opens your browser to the moment you get back the verification code.
@@ -57425,8 +57453,8 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; </code></pre>
 <p>See the <a href="https://rclone.org/remote_setup/">remote setup
-docs</a> for how to set it up on a machine with no Internet browser
-available.</p>
+docs</a> for how to set it up on a machine without an internet-connected
+web browser available.</p>
 <p>Rclone runs a webserver on your local computer to collect the
 authorization token from Zoho Workdrive. This is only from the moment
 your browser is opened until the token is returned. The webserver runs
@@ -58481,6 +58509,48 @@ the output.</p>
 </ul>
 <!-- markdownlint-disable line-length -->
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.71.2---2025-10-20">v1.71.2 - 2025-10-20</h2>
+<p><a
+href="https://github.com/rclone/rclone/compare/v1.71.1...v1.71.2">See
+commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>build
+<ul>
+<li>update Go to 1.25.3</li>
+<li>Update Docker image Alpine version to fix CVE-2025-9230</li>
+</ul></li>
+<li>bisync: Fix race when CaptureOutput is used concurrently (Nick
+Craig-Wood)</li>
+<li>doc fixes (albertony, dougal, iTrooz, Matt LaPaglia, Nick
+Craig-Wood)</li>
+<li>index: Add missing providers (dougal)</li>
+<li>serve http: Fix: logging URL on start (dougal)</li>
+</ul></li>
+<li>Azurefiles
+<ul>
+<li>Fix server side copy not waiting for completion (Vikas
+Bhansali)</li>
+</ul></li>
+<li>B2
+<ul>
+<li>Fix 1TB+ uploads (dougal)</li>
+</ul></li>
+<li>Google Cloud Storage
+<ul>
+<li>Add region us-east5 (Dulani Woods)</li>
+</ul></li>
+<li>Mega
+<ul>
+<li>Fix 402 payment required errors (Nick Craig-Wood)</li>
+</ul></li>
+<li>Pikpak
+<ul>
+<li>Fix unnecessary retries by using URL expire parameter (Youfu
+Zhang)</li>
+</ul></li>
+</ul>
 <h2 id="v1.71.1---2025-09-24">v1.71.1 - 2025-09-24</h2>
 <p><a
 href="https://github.com/rclone/rclone/compare/v1.71.0...v1.71.1">See

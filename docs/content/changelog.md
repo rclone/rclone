@@ -6,6 +6,29 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.71.2 - 2025-10-20
+
+[See commits](https://github.com/rclone/rclone/compare/v1.71.1...v1.71.2)
+
+- Bug Fixes
+  - build
+    - update Go to 1.25.3
+    - Update Docker image Alpine version to fix CVE-2025-9230
+  - bisync: Fix race when CaptureOutput is used concurrently (Nick Craig-Wood)
+  - doc fixes (albertony, dougal, iTrooz, Matt LaPaglia, Nick Craig-Wood)
+  - index: Add missing providers (dougal)
+  - serve http: Fix: logging URL on start (dougal)
+- Azurefiles
+  - Fix server side copy not waiting for completion (Vikas Bhansali)
+- B2
+  - Fix 1TB+ uploads (dougal)
+- Google Cloud Storage
+  - Add region us-east5 (Dulani Woods)
+- Mega
+  - Fix 402 payment required errors (Nick Craig-Wood)
+- Pikpak
+  - Fix unnecessary retries by using URL expire parameter (Youfu Zhang)
+
 ## v1.71.1 - 2025-09-24
 
 [See commits](https://github.com/rclone/rclone/compare/v1.71.0...v1.71.1)
