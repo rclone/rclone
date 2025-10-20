@@ -301,6 +301,14 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
+	// Check if directory exists (unless it's root which always exists)
+	if dirPath != "" {
+		_, err = vfs.Stat(dirPath)
+		if err != nil {
+			return nil, fmt.Errorf("directory not found: %q", dirPath)
+		}
+	}
+
 	// Check for recursive parameter
 	recursive, _ := in.GetBool("recursive")
 
@@ -459,7 +467,7 @@ func rcRefresh(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		if strings.HasPrefix(key, "dir") || strings.HasPrefix(key, "file") {
 			valueString, ok := value.(string)
 			if !ok {
-				continue
+				return nil, fmt.Errorf("value for %q must be a string, got %T", key, value)
 			}
 			paths = append(paths, valueString)
 		}
