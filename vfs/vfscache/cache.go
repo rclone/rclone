@@ -898,9 +898,13 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 		// Check if the item is in the target directory
 		if dirPath == "" || strings.HasPrefix(name, dirPath) {
 			// If not recursive, ensure we only include direct children
-			if !recursive && dirPath != "" {
-				// Get the relative path from the directory
-				relativePath := name[len(dirPath):]
+			if !recursive {
+				var relativePath string
+				if dirPath == "" {
+					relativePath = name
+				} else {
+					relativePath = name[len(dirPath):]
+				}
 				// Check if there are any more slashes (indicating subdirectories)
 				// We only want direct children, so there should be no more slashes
 				if strings.Contains(relativePath, "/") {
@@ -916,12 +920,12 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 
 			// Create file info
 			fileInfo := rc.Params{
-				"name":       filepath.Base(name),
-				"percentage": percentage,
-				"uploading":  isUploading,
-				"size":       totalSize,
+				"name":        filepath.Base(name),
+				"percentage":  percentage,
+				"uploading":   isUploading,
+				"size":        totalSize,
 				"cachedBytes": cachedSize,
-				"dirty":      isDirty,
+				"dirty":       isDirty,
 			}
 
 			// Add to the appropriate status category
