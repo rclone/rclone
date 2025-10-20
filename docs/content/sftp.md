@@ -991,6 +991,10 @@ When enabled, symbolic links are copied as-is, preserving their target paths exa
 - Checksums are calculated based on the symlink target path, not the target content.
 - Symlink behavior may vary depending on the SFTP server implementation; some servers may modify or normalize paths in ways that could break links.
 
+Note that `--sftp-links` just enables this feature for the sftp
+backend. `--links` and `-l` enable the feature for all supported backends
+(including local) and the VFS.
+
 Properties:
 
 - Config:      links

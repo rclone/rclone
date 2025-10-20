@@ -259,7 +259,8 @@ func TestSymlinkOpen(t *testing.T) {
 		limit := int64(4)
 
 		reader := strings.NewReader(targetPath)
-		reader.Seek(offset, io.SeekStart)
+		_, err := reader.Seek(offset, io.SeekStart)
+		require.NoError(t, err)
 
 		limitedReader := io.LimitReader(reader, limit)
 		content, err := io.ReadAll(limitedReader)

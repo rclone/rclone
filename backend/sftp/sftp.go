@@ -281,6 +281,10 @@ When enabled, symbolic links are copied as-is, preserving their target paths exa
 - Symlink modification times are not preserved (SFTP servers rarely support lutimes)
 - Checksums are calculated based on the symlink target path, not the target content.
 - Symlink behavior may vary depending on the SFTP server implementation; some servers may modify or normalize paths in ways that could break links.
+
+Note that --sftp-links just enables this feature for the sftp
+backend. --links and -l enable the feature for all supported backends
+(including local) and the VFS.
 `,
 			Advanced: true,
 		}, {
@@ -948,7 +952,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if len(opt.SSH) != 0 && ((opt.User != currentUser && opt.User != "") || opt.Host != "" || (opt.Port != "22" && opt.Port != "")) {
 		fs.Logf(name, "--sftp-ssh is in use - ignoring user/host/port from config - set in the parameters to --sftp-ssh (remove them from the config to silence this warning)")
 	}
-	// Override --sftp-links with --links if set
 	if f.ci.Links {
 		opt.TranslateSymlinks = true
 	}
@@ -2330,7 +2333,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	}
 	// Ignore ModTime for translated links (SFTP doesn't support lutimes to modify symlink times directly)
 	if o.translatedLink {
-		return nil  // Silent ignore
+		return nil // Silent ignore
 	}
 	c, err := o.fs.getSftpConnection(ctx)
 	if err != nil {
