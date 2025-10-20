@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/uniq"
 )
 
 // Fill in these to avoid circular dependencies
@@ -29,6 +30,7 @@ func init() {
 type Job struct {
 	mu        sync.Mutex
 	ID        int64     `json:"id"`
+	UniqueID  int64     `json:"uniqueId"`
 	Group     string    `json:"group"`
 	StartTime time.Time `json:"startTime"`
 	EndTime   time.Time `json:"endTime"`
@@ -121,6 +123,7 @@ var (
 	running   = newJobs()
 	jobID     atomic.Int64
 	executeID = uuid.New().String()
+	uniqueIDGen = uniq.New(executeID)
 )
 
 // newJobs makes a new Jobs structure
@@ -174,14 +177,17 @@ func (jobs *Jobs) Expire() {
 }
 
 // IDs returns the IDs of the running jobs
-func (jobs *Jobs) IDs() (IDs []int64) {
+
+func (jobs *Jobs) IDs() (IDs []int64, uniqueIDs []int64) {
 	jobs.mu.RLock()
 	defer jobs.mu.RUnlock()
-	IDs = []int64{}
-	for ID := range jobs.jobs {
+	IDs = make([]int64, 0, len(jobs.jobs))
+	uniqueIDs = make([]int64, 0, len(jobs.jobs))
+	for ID, job := range jobs.jobs {
 		IDs = append(IDs, ID)
+		uniqueIDs = append(uniqueIDs, job.UniqueID)
 	}
-	return IDs
+	return IDs, uniqueIDs
 }
 
 // Get a job with a given ID or nil if it doesn't exist
@@ -292,6 +298,7 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 	}
 	job = &Job{
 		ID:        id,
+		UniqueID:  uniqueIDGen.Next(),
 		Group:     group,
 		StartTime: time.Now(),
 		Stop:      stop,
@@ -308,6 +315,7 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		go job.run(ctx, fn, in)
 		out = make(rc.Params)
 		out["jobid"] = job.ID
+		out["uniqueId"] = job.UniqueID
 		err = nil
 	} else {
 		job.run(ctx, fn, in)
@@ -404,6 +412,7 @@ Results:
 
 - executeId - string id of rclone executing (change after restart)
 - jobids - array of integer job ids (starting at 1 on each restart)
+- uniqueIds - array of integer job unique ids aligned with jobids
 `,
 	})
 }
@@ -411,7 +420,9 @@ Results:
 // Returns list of job ids.
 func rcJobList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
-	out["jobids"] = running.IDs()
+	ids, uniqueIDs := running.IDs()
+	out["jobids"] = ids
+	out["uniqueIds"] = uniqueIDs
 	out["executeId"] = executeID
 	return out, nil
 }
