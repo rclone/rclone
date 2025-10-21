@@ -1965,9 +1965,28 @@ func (f *Fs) findImportFormat(ctx context.Context, mimeType string) string {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
+	entriesAdded := 0
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	directoryID = actualID(directoryID)
 
@@ -1979,25 +1998,30 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			return true
 		}
 		if entry != nil {
-			entries = append(entries, entry)
+			err = list.Add(entry)
+			if err != nil {
+				iErr = err
+				return true
+			}
+			entriesAdded++
 		}
 		return false
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if iErr != nil {
-		return nil, iErr
+		return iErr
 	}
 	// If listing the root of a teamdrive and got no entries,
 	// double check we have access
-	if f.isTeamDrive && len(entries) == 0 && f.root == "" && dir == "" {
+	if f.isTeamDrive && entriesAdded == 0 && f.root == "" && dir == "" {
 		err = f.teamDriveOK(ctx)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return entries, nil
+	return list.Flush()
 }
 
 // listREntry is a task to be executed by a litRRunner
@@ -4617,6 +4641,7 @@ var (
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.ListPer         = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
 	_ fs.DirSetModTimer  = (*Fs)(nil)
 	_ fs.MkdirMetadataer = (*Fs)(nil)
