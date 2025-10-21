@@ -16,7 +16,7 @@ type DB struct{}
 func Supported() bool { return false }
 
 // Start a key-value database
-func Start(ctx context.Context, facility string, f fs.Fs) (*DB, error) {
+func Start(ctx context.Context, facility string, dir string, f fs.Fs) (*DB, error) {
 	return nil, ErrUnsupported
 }
 
