@@ -25,6 +25,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Azure/go-ntlmssp"
+	"golang.org/x/sync/singleflight"
+
 	"github.com/rclone/rclone/backend/webdav/api"
 	"github.com/rclone/rclone/backend/webdav/odrvcookie"
 	"github.com/rclone/rclone/fs"
@@ -38,8 +41,6 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-
-	ntlmssp "github.com/Azure/go-ntlmssp"
 )
 
 const (
@@ -226,6 +227,7 @@ type Fs struct {
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
 	chunksUploadURL    string        // upload URL for nextcloud chunked
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
+	authSingleflight   *singleflight.Group
 }
 
 // Object describes a webdav object
@@ -476,13 +478,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	f := &Fs{
-		name:        name,
-		root:        root,
-		opt:         *opt,
-		endpoint:    u,
-		endpointURL: u.String(),
-		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(opt.PacerMinSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		precision:   fs.ModTimeNotSupported,
+		name:             name,
+		root:             root,
+		opt:              *opt,
+		endpoint:         u,
+		endpointURL:      u.String(),
+		pacer:            fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(opt.PacerMinSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		precision:        fs.ModTimeNotSupported,
+		authSingleflight: new(singleflight.Group),
 	}
 
 	var client *http.Client
@@ -607,15 +610,18 @@ func (f *Fs) findHeader(headers fs.CommaSepList, find string) bool {
 
 // fetch the bearer token and set it if successful
 func (f *Fs) fetchAndSetBearerToken() error {
-	if f.opt.BearerTokenCommand == "" {
-		return nil
-	}
-	token, err := f.fetchBearerToken(f.opt.BearerTokenCommand)
-	if err != nil {
-		return err
-	}
-	f.setBearerToken(token)
-	return nil
+	_, err, _ := f.authSingleflight.Do("bearerToken", func() (interface{}, error) {
+		if f.opt.BearerTokenCommand == "" {
+			return nil, nil
+		}
+		token, err := f.fetchBearerToken(f.opt.BearerTokenCommand)
+		if err != nil {
+			return nil, err
+		}
+		f.setBearerToken(token)
+		return nil, nil
+	})
+	return err
 }
 
 // The WebDAV url can optionally be suffixed with a path. This suffix needs to be ignored for determining the temporary upload directory of chunks.
