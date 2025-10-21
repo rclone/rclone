@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
@@ -505,6 +506,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 // CleanUp deletes all files currently in trash
 func (f *Fs) CleanUp(ctx context.Context) error {
 	return f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling EmptyTrash")
 		err := f.protonDrive.EmptyTrash(ctx)
 		return shouldRetry(ctx, err)
 	})
@@ -516,7 +518,8 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 // If remote points to a directory then it should return
 // ErrorIsDir if possible without doing any extra work,
 // otherwise ErrorObjectNotFound.
-func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (obj fs.Object, err error) {
+	defer log.Trace(f, "remote=%q", remote)("obj=%#v err=%v", &obj, &err)
 	return f.newObject(ctx, remote)
 }
 
@@ -534,6 +537,7 @@ func (f *Fs) getObjectLink(ctx context.Context, remote string) (*proton.Link, er
 
 	var link *proton.Link
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling SearchByNameInActiveFolderByID")
 		link, err = f.protonDrive.SearchByNameInActiveFolderByID(ctx, folderLinkID, leaf, true, false, proton.LinkStateActive)
 		return shouldRetry(ctx, err)
 	}); err != nil {
@@ -551,6 +555,7 @@ func (f *Fs) readMetaDataForLink(ctx context.Context, link *proton.Link) (*proto
 	var fileSystemAttrs *protonDriveAPI.FileSystemAttrs
 	var err error
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling GetActiveRevisionAttrs")
 		fileSystemAttrs, err = f.protonDrive.GetActiveRevisionAttrs(ctx, link)
 		return shouldRetry(ctx, err)
 	}); err != nil {
@@ -612,7 +617,9 @@ func (f *Fs) newObject(ctx context.Context, remote string) (fs.Object, error) {
 // found.
 // Notice that this function is expensive since everything on proton is encrypted
 // So having a remote with 10k files, during operations like sync, might take a while and lots of bandwidth!
-func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	var numberOfEntries = -1
+	defer log.Trace(f, "dir=%q", dir)("entries=%d err=%v", &numberOfEntries, &err)
 	folderLinkID, err := f.dirCache.FindDir(ctx, f.sanitizePath(dir), false) // will handle ErrDirNotFound here
 	if err != nil {
 		return nil, err
@@ -620,13 +627,14 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 
 	var foldersAndFiles []*protonDriveAPI.ProtonDirectoryData
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling ListDirectory")
 		foldersAndFiles, err = f.protonDrive.ListDirectory(ctx, folderLinkID)
 		return shouldRetry(ctx, err)
 	}); err != nil {
 		return nil, err
 	}
 
-	entries := make(fs.DirEntries, 0)
+	entries = make(fs.DirEntries, 0)
 	for i := range foldersAndFiles {
 		remote := path.Join(dir, f.opt.Enc.ToStandardName(foldersAndFiles[i].Name))
 
@@ -643,6 +651,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		}
 	}
 
+	numberOfEntries = len(entries)
 	return entries, nil
 }
 
@@ -656,6 +665,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 	var link *proton.Link
 	var err error
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling SearchByNameInActiveFolderByID")
 		link, err = f.protonDrive.SearchByNameInActiveFolderByID(ctx, pathID, leaf, false, true, proton.LinkStateActive)
 		return shouldRetry(ctx, err)
 	}); err != nil {
@@ -678,6 +688,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 	var newID string
 	var err error
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling CreateNewFolderByID")
 		newID, err = f.protonDrive.CreateNewFolderByID(ctx, pathID, leaf)
 		return shouldRetry(ctx, err)
 	}); err != nil {
@@ -775,6 +786,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling MoveFolderToTrashByID")
 		err = f.protonDrive.MoveFolderToTrashByID(ctx, folderLinkID, true)
 		return shouldRetry(ctx, err)
 	}); err != nil {
@@ -795,6 +807,7 @@ func (f *Fs) Precision() time.Duration {
 // as an optional interface
 func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
+	fs.Debugf(f, "Calling ClearCache")
 	f.protonDrive.ClearCache()
 }
 
@@ -808,6 +821,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var user *proton.User
 	var err error
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling About")
 		user, err = f.protonDrive.About(ctx)
 		return shouldRetry(ctx, err)
 	}); err != nil {
@@ -1025,6 +1039,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	}
 
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling MoveFolderToTrashByID")
 		err = f.protonDrive.MoveFolderToTrashByID(ctx, folderLinkID, false)
 		return shouldRetry(ctx, err)
 	}); err != nil {
@@ -1043,6 +1058,7 @@ func (o *Object) MimeType(ctx context.Context) string {
 // Disconnect the current user
 func (f *Fs) Disconnect(ctx context.Context) error {
 	return f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling Logout")
 		err := f.protonDrive.Logout(ctx)
 		return shouldRetry(ctx, err)
 	})
@@ -1082,6 +1098,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling MoveFileByID")
 		err = f.protonDrive.MoveFileByID(ctx, srcObj.id, dstDirectoryID, dstLeaf)
 		return shouldRetry(ctx, err)
 	}); err != nil {
@@ -1114,6 +1131,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	if err = f.pacer.Call(func() (bool, error) {
+		fs.Debugf(f, "Calling MoveFolderByID")
 		err = f.protonDrive.MoveFolderByID(ctx, srcID, dstDirectoryID, dstLeaf)
 		return shouldRetry(ctx, err)
 	}); err != nil {
