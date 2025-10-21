@@ -56,6 +56,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/readers"
@@ -843,15 +844,32 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 //
 // This should return ErrDirNotFound if the directory isn't found.
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
-	var entries fs.DirEntries
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	subDirClient := f.dirClient(dir)
 
 	// Checking whether directory exists
 	_, err := subDirClient.GetProperties(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ParentNotFound, fileerror.ResourceNotFound) {
-		return entries, fs.ErrorDirNotFound
+		return fs.ErrorDirNotFound
 	} else if err != nil {
-		return entries, err
+		return err
 	}
 
 	opt := &directory.ListFilesAndDirectoriesOptions{
@@ -863,7 +881,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	for pager.More() {
 		resp, err := pager.NextPage(ctx)
 		if err != nil {
-			return entries, err
+			return err
 		}
 		for _, directory := range resp.Segment.Directories {
 			// Name          *string `xml:"Name"`
@@ -889,7 +907,10 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 			if directory.Properties.ContentLength != nil {
 				entry.SetSize(*directory.Properties.ContentLength)
 			}
-			entries = append(entries, entry)
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
 		}
 		for _, file := range resp.Segment.Files {
 			leaf := f.opt.Enc.ToStandardPath(*file.Name)
@@ -903,10 +924,13 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 			if file.Properties.LastWriteTime != nil {
 				entry.modTime = *file.Properties.LastWriteTime
 			}
-			entries = append(entries, entry)
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
 		}
 	}
-	return entries, nil
+	return list.Flush()
 }
 
 // ------------------------------------------------------------
@@ -1450,6 +1474,7 @@ var (
 	_ fs.DirMover       = &Fs{}
 	_ fs.Copier         = &Fs{}
 	_ fs.OpenWriterAter = &Fs{}
+	_ fs.ListPer        = &Fs{}
 	_ fs.Object         = &Object{}
 	_ fs.MimeTyper      = &Object{}
 )
