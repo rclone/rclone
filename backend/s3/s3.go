@@ -958,26 +958,26 @@ func init() {
 				Help:  "Cubbit DS3 Object Storage endpoint",
 			}},
 		}, {
-    Name:     "endpoint",
-    Help:     "Endpoint for FileLu S5 Object Storage.\nRequired when using FileLu S5.",
-    Provider: "FileLu",
-    Examples: []fs.OptionExample{{
-        Value: "s5lu.com",
-        Help:  "Global FileLu S5 endpoint",
-    }, {
-        Value: "us.s5lu.com",
-        Help:  "North America (US-East) region endpoint",
-    }, {
-        Value: "eu.s5lu.com",
-        Help:  "Europe (EU-Central) region endpoint",
-    }, {
-        Value: "ap.s5lu.com",
-        Help:  "Asia Pacific (AP-Southeast) region endpoint",
-    }, {
-        Value: "me.s5lu.com",
-        Help:  "Middle East (ME-Central) region endpoint",
-    }},
-}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for FileLu S5 Object Storage.\nRequired when using FileLu S5.",
+			Provider: "FileLu",
+			Examples: []fs.OptionExample{{
+				Value: "s5lu.com",
+				Help:  "Global FileLu S5 endpoint",
+			}, {
+				Value: "us.s5lu.com",
+				Help:  "North America (US-East) region endpoint",
+			}, {
+				Value: "eu.s5lu.com",
+				Help:  "Europe (EU-Central) region endpoint",
+			}, {
+				Value: "ap.s5lu.com",
+				Help:  "Asia Pacific (AP-Southeast) region endpoint",
+			}, {
+				Value: "me.s5lu.com",
+				Help:  "Middle East (ME-Central) region endpoint",
+			}},
+		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for Google Cloud Storage.",
 			Provider: "GCS",
