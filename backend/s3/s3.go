@@ -964,6 +964,18 @@ func init() {
 			Examples: []fs.OptionExample{{
 				Value: "s5lu.com",
 				Help:  "Global FileLu S5 endpoint",
+			}, {
+				Value: "us.s5lu.com",
+				Help:  "North America (US-East) region endpoint",
+			}, {
+				Value: "eu.s5lu.com",
+				Help:  "Europe (EU-Central) region endpoint",
+			}, {
+				Value: "ap.s5lu.com",
+				Help:  "Asia Pacific (AP-Southeast) region endpoint",
+			}, {
+				Value: "me.s5lu.com",
+				Help:  "Middle East (ME-Central) region endpoint",
 			}},
 		}, {
 			Name:     "endpoint",
