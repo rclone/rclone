@@ -49,6 +49,9 @@ const (
 	// ConfigClientCredentials - use OAUTH2 client credentials
 	ConfigClientCredentials = "client_credentials"
 
+	// ConfigAuthServerBindAddress is the local bind address for OAuth callback server
+	ConfigAuthServerBindAddress = "auth_bind_addr"
+
 	// ConfigEncoding is the config key to change the encoding for a backend
 	ConfigEncoding = "encoding"
 
