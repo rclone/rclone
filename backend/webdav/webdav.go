@@ -194,7 +194,7 @@ type Options struct {
 	User               string               `config:"user"`
 	Pass               string               `config:"pass"`
 	BearerToken        string               `config:"bearer_token"`
-	BearerTokenCommand string               `config:"bearer_token_command"`
+	BearerTokenCommand fs.SpaceSepList      `config:"bearer_token_command"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 	Headers            fs.CommaSepList      `config:"headers"`
 	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
@@ -285,7 +285,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		return false, err
 	}
 	// If we have a bearer token command and it has expired then refresh it
-	if f.opt.BearerTokenCommand != "" && resp != nil && resp.StatusCode == 401 {
+	if len(f.opt.BearerTokenCommand) != 0 && resp != nil && resp.StatusCode == 401 {
 		fs.Debugf(f, "Bearer token expired: %v", err)
 		authErr := f.fetchAndSetBearerToken()
 		if authErr != nil {
@@ -519,7 +519,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.srv.SetUserPass(opt.User, opt.Pass)
 	} else if opt.BearerToken != "" {
 		f.setBearerToken(opt.BearerToken)
-	} else if f.opt.BearerTokenCommand != "" {
+	} else if len(f.opt.BearerTokenCommand) != 0 {
 		err = f.fetchAndSetBearerToken()
 		if err != nil {
 			return nil, err
@@ -566,12 +566,11 @@ func (f *Fs) setBearerToken(token string) {
 }
 
 // fetch the bearer token using the command
-func (f *Fs) fetchBearerToken(cmd string) (string, error) {
+func (f *Fs) fetchBearerToken(cmd fs.SpaceSepList) (string, error) {
 	var (
-		args   = strings.Split(cmd, " ")
 		stdout bytes.Buffer
 		stderr bytes.Buffer
-		c      = exec.Command(args[0], args[1:]...)
+		c      = exec.Command(cmd[0], cmd[1:]...)
 	)
 	c.Stdout = &stdout
 	c.Stderr = &stderr
@@ -612,7 +611,7 @@ func (f *Fs) findHeader(headers fs.CommaSepList, find string) bool {
 // fetch the bearer token and set it if successful
 func (f *Fs) fetchAndSetBearerToken() error {
 	_, err, _ := f.authSingleflight.Do("bearerToken", func() (interface{}, error) {
-		if f.opt.BearerTokenCommand == "" {
+		if len(f.opt.BearerTokenCommand) == 0 {
 			return nil, nil
 		}
 		token, err := f.fetchBearerToken(f.opt.BearerTokenCommand)
