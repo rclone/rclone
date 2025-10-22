@@ -225,8 +225,6 @@ func (f *Fs) listFiles(ctx context.Context, absolutePath string, onlyNames bool)
 			if err != nil {
 				return nil, err
 			}
-			fmt.Println("absolutePath", absolutePath)
-			fmt.Println("o.Remote()", o.Remote())
 			if !onlyNames || strings.HasSuffix(absolutePath, o.Remote()) {
 				entries = append(entries, o)
 			}
@@ -288,10 +286,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		entries, err := f.listFiles(ctx, absolutePath, false)
 		if err == fs.ErrorDirNotFound {
 			entries, err = f.listFiles(ctx, strings.Join(segments[:len(segments)-1], "/"), true)
-			fmt.Println("rootIsFile is now true")
 			f.rootIsFile = true
 		}
-		fmt.Println("entries", entries)
 		return entries, err
 	}
 	return f.listPackages(ctx, segments[0])
