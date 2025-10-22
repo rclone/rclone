@@ -44,11 +44,6 @@ func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOp
 		return nil, fmt.Errorf("failed to create cache directory: %s: %w", cacheDir, err)
 	}
 
-	//err = file.MkdirAll(root, 0755)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create mount root: %s: %w", root, err)
-	}
-
 	// setup driver state
 	if mntOpt == nil {
 		mntOpt = &mountlib.Opt
