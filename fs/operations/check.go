@@ -4,15 +4,18 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
@@ -134,7 +137,174 @@ func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (di
 	if ci.SizeOnly {
 		return false, false, nil
 	}
+	if ci.CompareACL {
+		var srcACL, dstACL string
+		equal, err := CheckEqualACL(ctx, src, dst, &srcACL, &dstACL)
+		if err != nil {
+			fs.Errorf(fmt.Sprintf("SRC: %v, DST: %v", src, dst), "%v", err)
+			return true, false, nil
+		}
+		if !equal {
+			err = fmt.Errorf("ACL differs: SRC ACL: %v, DST ACL: %v", srcACL, dstACL)
+			fs.Errorf(fmt.Sprintf("SRC: %v, DST: %v", src, dst), "%v", err)
+			return true, false, nil
+		}
+	}
 	return c.opt.Check(ctx, dst, src)
+}
+
+// CheckEqualACL checks the equality of the ACLs of objects, taking into account the mapping of the objects' owners.
+func CheckEqualACL(ctx context.Context, srcObject, dstObject fs.Object, srcACLData, dstACLData *string) (bool, error) {
+	srcObjectWithACL, ok := srcObject.(fs.ObjectWithACL)
+	if !ok {
+		return false, fmt.Errorf("src object does not support ACL")
+	}
+
+	dstObjectWithACL, ok := dstObject.(fs.ObjectWithACL)
+	if !ok {
+		return false, fmt.Errorf("dst object does not support ACL")
+	}
+
+	srcACLStr, srcBucketOwnerStr, err := srcObjectWithACL.ACL(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	dstACLStr, dstBucketOwnerStr, err := dstObjectWithACL.ACL(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	var srcACL types.AccessControlPolicy
+	err = json.Unmarshal([]byte(srcACLStr), &srcACL)
+	if err != nil {
+		return false, err
+	}
+
+	var srcBucketOwner types.Owner
+	err = json.Unmarshal([]byte(srcBucketOwnerStr), &srcBucketOwner)
+	if err != nil {
+		return false, err
+	}
+
+	var dstACL types.AccessControlPolicy
+	err = json.Unmarshal([]byte(dstACLStr), &dstACL)
+	if err != nil {
+		return false, err
+	}
+
+	var dstBucketOwner types.Owner
+	err = json.Unmarshal([]byte(dstBucketOwnerStr), &dstBucketOwner)
+	if err != nil {
+		return false, err
+	}
+
+	*srcACLData, *dstACLData = srcACLStr, dstACLStr
+
+	if !sameOwners(srcACL.Owner.ID, dstACL.Owner.ID, srcBucketOwner.ID, dstBucketOwner.ID) ||
+		!sameGrants(srcACL.Grants, dstACL.Grants, srcBucketOwner.ID, dstBucketOwner.ID) {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func sameOwners(srcObjectOwner, dstObjectOwner, srcBucketOwner, dstBucketOwner *string) bool {
+	// Both owners are group
+	if srcObjectOwner == nil && dstObjectOwner == nil {
+		return true
+	} else if srcObjectOwner == nil || dstObjectOwner == nil {
+		return false
+	}
+
+	if *srcObjectOwner == *dstObjectOwner {
+		return true
+	}
+
+	// Takes into account mapping between buckets with different owners
+	if *srcObjectOwner == *srcBucketOwner && *dstObjectOwner == *dstBucketOwner {
+		return true
+	}
+
+	return false
+}
+
+type grants []types.Grant
+
+func (g grants) Len() int {
+	return len(g)
+}
+func (g grants) Less(i, j int) bool {
+	a, b := g[i], g[j]
+
+	if a.Permission == b.Permission {
+		if a.Grantee.Type == b.Grantee.Type {
+			return *a.Grantee.ID < *b.Grantee.ID
+		}
+
+		return a.Grantee.Type < b.Grantee.Type
+	}
+
+	return a.Permission < b.Permission
+}
+func (g grants) Swap(i, j int) {
+	g[i], g[j] = g[j], g[i]
+}
+
+func sameGrants(srcGrants, dstGrants []types.Grant, srcBucketOwner, dstBucketOwner *string) bool {
+	if len(srcGrants) != len(dstGrants) {
+		return false
+	}
+
+	sort.Sort(grants(srcGrants))
+	sort.Sort(grants(dstGrants))
+
+	for i := range srcGrants {
+		srcGrant := srcGrants[i]
+		dstGrant := dstGrants[i]
+
+		if !sameGrant(srcGrant, dstGrant, srcBucketOwner, dstBucketOwner) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func sameGrant(srcGrant, dstGrant types.Grant, srcBucketOwner, dstBucketOwner *string) bool {
+	if !sameOwners(srcGrant.Grantee.ID, dstGrant.Grantee.ID, srcBucketOwner, dstBucketOwner) {
+		return false
+	}
+
+	if srcGrant.Permission != dstGrant.Permission {
+		return false
+	}
+
+	if srcGrant.Grantee.Type != dstGrant.Grantee.Type {
+		return false
+	}
+
+	// One is nil but other is not
+	if (srcGrant.Grantee.EmailAddress == nil) != (dstGrant.Grantee.EmailAddress == nil) {
+		return false
+	}
+
+	// If both are not nil and not equal (if both are nil, it's ok)
+	if (srcGrant.Grantee.EmailAddress != nil && dstGrant.Grantee.EmailAddress != nil) &&
+		*srcGrant.Grantee.EmailAddress != *dstGrant.Grantee.EmailAddress {
+		return false
+	}
+
+	if (srcGrant.Grantee.URI == nil) != (dstGrant.Grantee.URI == nil) {
+		return false
+	}
+
+	if (srcGrant.Grantee.URI != nil && dstGrant.Grantee.URI != nil) &&
+		*srcGrant.Grantee.URI != *dstGrant.Grantee.URI {
+		return false
+	}
+
+	return true
 }
 
 // Match is called when src and dst are present, so sync src to dst
