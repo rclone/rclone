@@ -68,5 +68,6 @@ Thank you very much to our sponsors:
 {{< sponsor src="/img/logos/rcloneui.svg" width="300" height="200" title="Visit our sponsor RcloneUI" link="https://github.com/rclone-ui/rclone-ui">}}
 {{< sponsor src="/img/logos/filelu-rclone.svg" width="300" height="200" title="Visit our sponsor FileLu" link="https://filelu.com/">}}
 {{< sponsor src="/img/logos/torbox.png" width="200" height="200" title="Visit our sponsor TORBOX" link="https://www.torbox.app/">}}
+{{< sponsor src="/img/logos/spectra-logic.svg" width="300" height="200" title="Visit our sponsor Spectra Logic" link="https://spectralogic.com/">}}
 
 <!-- markdownlint-restore -->
