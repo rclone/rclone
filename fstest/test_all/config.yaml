@@ -659,3 +659,6 @@ backends:
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
+ - backend:  "adrive"
+   remote:   "TestAliyunDrive:"
+   fastlist: false
