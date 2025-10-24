@@ -40,6 +40,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
@@ -3662,6 +3663,122 @@ func (f *Fs) rescue(ctx context.Context, dirID string, delete bool) (err error) 
 	})
 }
 
+// lockUnlockResult represents the result of a lock/unlock operation
+type lockUnlockResult struct {
+	Modified int `json:"modified"`
+	Errors   int `json:"errors"`
+}
+
+func (r lockUnlockResult) Error() string {
+	if r.Errors == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%d errors occurred", r.Errors)
+}
+
+// lockUnlockFile locks or unlocks a single file
+func (f *Fs) lockUnlockFile(ctx context.Context, entry fs.DirEntry, lock bool) error {
+	remote := entry.Remote()
+	fs.Debugf(remote, "lockUnlockFile: %v", lock)
+
+	// Allows support for --dry-run and --interactive
+	if operations.SkipDestructive(ctx, remote, map[bool]string{true: "lock", false: "unlock"}[lock]) {
+		return nil
+	}
+
+	var updateInfo *drive.File
+	if lock {
+		updateInfo = &drive.File{
+			ContentRestrictions: []*drive.ContentRestriction{{
+				ReadOnly: true,
+				Reason:   "Locked via rclone",
+			}},
+		}
+	} else {
+		updateInfo = &drive.File{
+			ContentRestrictions: []*drive.ContentRestriction{{
+				ReadOnly:        false,
+				ForceSendFields: []string{"ReadOnly"},
+			}},
+		}
+	}
+	return f.pacer.Call(func() (bool, error) {
+		_, err := f.svc.Files.Update(entry.(*Object).id, updateInfo).
+			Fields("").
+			SupportsAllDrives(true).
+			Context(ctx).Do()
+		return f.shouldRetry(ctx, err)
+	})
+}
+
+// lockUnlockDir locks or unlocks all files in a directory recursively
+func (f *Fs) lockUnlockDir(ctx context.Context, path string, lock bool) (r lockUnlockResult, err error) {
+	lockStr := map[bool]string{true: "lock", false: "unlock"}[lock]
+
+	// Process directory recursively using walk.listR (this makes the command
+	// aware of file filters like --exclude
+	err = walk.ListR(ctx, f, path, false, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+		for _, entry := range entries {
+			fs.Debugf(f, "%sing file: %q", lockStr, entry.Remote())
+			if err := f.lockUnlockFile(ctx, entry, lock); err != nil {
+				fs.Errorf(f, "Failed to %s file %q: %v", lockStr, entry.Remote(), err)
+				r.Errors++
+				continue
+			}
+			r.Modified++
+		}
+		return nil
+	})
+	if err != nil {
+		fs.Errorf(f, "Failed to process directory: %v", err)
+		return r, fmt.Errorf("failed to process directory: %w", err)
+	}
+	fs.Debugf(f, "Successfully %sed %d files with %d errors", lockStr, r.Modified, r.Errors)
+	return r, nil
+}
+
+// lockUnlockPath locks or unlocks a single file or directory recursively
+func (f *Fs) lockUnlockPath(ctx context.Context, path string, recursive, lock bool) (r lockUnlockResult, err error) {
+	lockStr := map[bool]string{true: "lock", false: "unlock"}[lock]
+	// Get the file ID
+	file, _, _, _, _, err := f.getRemoteInfoWithExport(ctx, path)
+
+	if err != nil {
+		fs.Errorf(f, "Failed to get file info for %q: %v", path, err)
+		return r, fmt.Errorf("failed to get file info: %w", err)
+	}
+	fs.Debugf(f, "Got file info: id=%q, name=%q, mimeType=%q", file.Id, file.Name, file.MimeType)
+	isDir := file.MimeType == driveFolderType
+	if recursive {
+		if !isDir {
+			return r, errors.New("not a directory")
+		}
+		return f.lockUnlockDir(ctx, path, lock)
+	}
+
+	if isDir {
+		return r, errors.New("not a file")
+	}
+	entry, err := f.itemToDirEntry(ctx, path, file)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to get file info: %v", err)
+		fs.Errorf(f, msg)
+		return r, errors.New(msg)
+	}
+
+	// Process single file
+	fs.Debugf(f, "%sing single file", lockStr)
+	if err := f.lockUnlockFile(ctx, entry, lock); err != nil {
+		msg := fmt.Sprintf("Failed to %s file: %v", lockStr, err)
+		fs.Errorf(f, msg)
+		return r, errors.New(msg)
+	}
+	r.Modified = 1
+	fs.Debugf(f, "Successfully %sed file", lockStr)
+	return r, nil
+
+}
+
 var commandHelp = []fs.CommandHelp{{
 	Name:  "get",
 	Short: "Get command for fetching the drive config parameters",
@@ -3906,6 +4023,60 @@ Third delete all orphaned files to the trash
 
     rclone backend rescue drive: -o delete
 `,
+}, {
+	Name:  "lock",
+	Short: "Lock files in Google Drive",
+	Long: `This command locks files in Google Drive to prevent modification.
+	
+Locked files cannot be modified by other users. This command can operate
+on a single file or recursively on all files in a directory.
+
+Usage:
+
+    rclone backend lock drive:path/to/file
+    rclone backend lock drive:path/to/directory -o recursive
+    rclone backend lock drive:path/to/directory -o recursive --exclude "*.txt" 
+    rclone backend lock drive:path/to/directory -o recursive --include "*.doc"
+
+Use the --interactive/-i or --dry-run flag to see what would be locked before locking it.
+
+Result:
+
+    {
+        "modified": 1,
+        "errors": 0
+    }
+`,
+	Opts: map[string]string{
+		"recursive": "whether to lock files recursively in a directory",
+	},
+}, {
+	Name:  "unlock",
+	Short: "Unlock files in Google Drive",
+	Long: `This command unlocks files in Google Drive to allow modification.
+	
+Unlocked files can be modified by other users. This command can operate
+on a single file or recursively on all files in a directory.
+
+Usage:
+
+    rclone backend unlock drive:path/to/file
+    rclone backend unlock drive:path/to/directory -o recursive
+    rclone backend unlock drive:path/to/directory -o recursive --exclude "*.txt"
+    rclone backend unlock drive:path/to/directory -o recursive --include "*.doc"
+
+Use the --interactive/-i or --dry-run flag to see what would be unlocked before unlocking it.
+
+Result:
+
+    {
+        "modified": 1,
+        "errors": 0
+    }
+`,
+	Opts: map[string]string{
+		"recursive": "whether to unlock files recursively in a directory",
+	},
 }}
 
 // Command the backend to run a named command
@@ -4049,6 +4220,16 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			return nil, errors.New("syntax error: need 0 or 1 args or -o delete")
 		}
 		return nil, f.rescue(ctx, dirID, delete)
+	case "lock", "unlock":
+		if len(arg) == 0 {
+			return nil, errors.New("need a file path")
+		}
+		path := arg[0]
+		_, recursive := opt["recursive"]
+		lock := name == "lock"
+		lockStr := map[bool]string{true: "lock", false: "unlock"}[lock]
+		fs.Infof(f, "%sing path=%q, recursive=%v", lockStr, path, recursive)
+		return f.lockUnlockPath(ctx, path, recursive, lock)
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}

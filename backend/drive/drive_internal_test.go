@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/rclone/rclone/fstest"
@@ -643,6 +644,105 @@ func (f *Fs) InternalTestAgeQuery(t *testing.T) {
 	assert.Contains(t, subFs.lastQuery, timeQuery)
 }
 
+// TestIntegration/FsMkdir/FsPutFiles/Internal/InternalTestLockUnlock
+func (f *Fs) InternalTestLockUnlock(t *testing.T) {
+	ctx := context.Background()
+	// Create a test file
+	testFile := "test-lock.txt"
+	testContent := "test content"
+	obj, err := f.Put(ctx, strings.NewReader(testContent), object.NewStaticObjectInfo(testFile, time.Now(), int64(len(testContent)), true, nil, f))
+	require.NoError(t, err, "Failed to create test file")
+	defer func() { require.NoError(t, obj.Remove(ctx)) }()
+
+	// Test locking
+	result, err := f.Command(ctx, "lock", []string{testFile}, map[string]string{})
+	assert.NoError(t, err, "Failed to lock file")
+	assert.NotNil(t, result, "Lock command returned nil result")
+
+	// Verify file is locked
+	info, err := f.getFile(ctx, obj.(fs.IDer).ID(), "contentRestrictions")
+	assert.NoError(t, err, "Failed to get file info")
+	assert.True(t, len(info.ContentRestrictions) > 0 && info.ContentRestrictions[0].ReadOnly, "File should be locked but isn't")
+
+	// Test unlocking
+	result, err = f.Command(ctx, "unlock", []string{testFile}, map[string]string{})
+	assert.NoError(t, err, "Failed to unlock file")
+	assert.NotNil(t, result, "Unlock command returned nil result")
+
+	// Verify file is unlocked
+	info, err = f.getFile(ctx, obj.(fs.IDer).ID(), "contentRestrictions")
+	assert.NoError(t, err, "Failed to get file info")
+	if len(info.ContentRestrictions) > 0 {
+		assert.False(t, info.ContentRestrictions[0].ReadOnly, "File should be unlocked but isn't")
+	}
+
+	// Unlock file with recursive flag should error
+	_, err = f.Command(ctx, "unlock", []string{testFile}, map[string]string{"recursive": ""})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not a directory")
+}
+
+// TestIntegration/FsMkdir/FsPutFiles/Internal/InternalTestLockUnlockRecursive
+func (f *Fs) InternalTestLockUnlockRecursive(t *testing.T) {
+	ctx := context.Background()
+
+	// Create test directory and files
+	testDir := "test-lock-dir"
+	err := f.Mkdir(ctx, testDir)
+	require.NoError(t, err, "Failed to create test directory")
+	defer func() { require.NoError(t, f.Rmdir(ctx, testDir)) }()
+
+	testFiles := []string{
+		"test-lock-dir/file1.txt",
+		"test-lock-dir/file2.txt",
+	}
+	testContent := "test content"
+	var objs []fs.Object
+
+	for _, file := range testFiles {
+		obj, err := f.Put(ctx, strings.NewReader(testContent), object.NewStaticObjectInfo(file, time.Now(), int64(len(testContent)), true, nil, f))
+		require.NoError(t, err, "Failed to create test file %s", file)
+		objs = append(objs, obj)
+		defer func() { require.NoError(t, obj.Remove(ctx)) }()
+	}
+
+	// Lock directory recursively
+	result, err := f.Command(ctx, "lock", []string{testDir}, map[string]string{"recursive": ""})
+	assert.NoError(t, err, "Failed to lock files recursively")
+	assert.NotNil(t, result, "Lock command returned nil result")
+
+	// Verify files are locked
+	for _, obj := range objs {
+		info, err := f.getFile(ctx, obj.(fs.IDer).ID(), "contentRestrictions")
+		assert.NoError(t, err, "Failed to get file info")
+		assert.True(t, len(info.ContentRestrictions) > 0 && info.ContentRestrictions[0].ReadOnly, "File %s should be locked but isn't", obj.Remote())
+	}
+
+	// Unlock directory recursively
+	result, err = f.Command(ctx, "unlock", []string{testDir}, map[string]string{"recursive": ""})
+	assert.NoError(t, err, "Failed to unlock files recursively")
+	assert.NotNil(t, result, "Unlock command returned nil result")
+
+	// Verify files are unlocked
+	for _, obj := range objs {
+		info, err := f.getFile(ctx, obj.(fs.IDer).ID(), "contentRestrictions")
+		assert.NoError(t, err, "Failed to get file info")
+		if len(info.ContentRestrictions) > 0 {
+			assert.False(t, info.ContentRestrictions[0].ReadOnly, "File %s should be unlocked but isn't", obj.Remote())
+		}
+	}
+
+	// Lock directory without recursive flag should error
+	_, err = f.Command(ctx, "lock", []string{testDir}, nil)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not a file")
+
+	// Unlock directory without recursive flag should error
+	_, err = f.Command(ctx, "unlock", []string{testDir}, nil)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not a file")
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	// These tests all depend on each other so run them as nested tests
 	t.Run("DocumentImport", func(t *testing.T) {
@@ -663,6 +763,8 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Query", f.InternalTestQuery)
 	t.Run("AgeQuery", f.InternalTestAgeQuery)
 	t.Run("ShouldRetry", f.InternalTestShouldRetry)
+	t.Run("LockUnlock", f.InternalTestLockUnlock)
+	t.Run("LockUnlockRecursive", f.InternalTestLockUnlockRecursive)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
