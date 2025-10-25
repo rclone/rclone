@@ -100,6 +100,14 @@ type Object interface {
 	Remove(ctx context.Context) error
 }
 
+// ObjectWithACL provides an object that has an ACL
+type ObjectWithACL interface {
+	Object
+
+	// Return object ACL and bucket owner of this object
+	ACL(ctx context.Context) (string, string, error)
+}
+
 // ObjectInfo provides read only information about an object.
 type ObjectInfo interface {
 	DirEntry
