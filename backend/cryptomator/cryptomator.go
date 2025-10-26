@@ -55,6 +55,15 @@ func init() {
 			Help:     "Whether to automatically create a vault if none exists at the underlying remote.",
 			Advanced: true,
 			Default:  false,
+		}, {
+			Name: "auto_create_shortening_threshold",
+			Help: `If auto create is enabled, the setting to use for minimum filename length that triggers out-of-band storage of the filename.
+
+This vault setting is normally read out of the vault config file on the remote. It can only be configured when the vault is created, because changing it may make the vault unreadable. Therefore this option has no effect if auto create is disabled, or it is enabled and the the vault already exists.
+
+The out-of-band filename storage works by replacing a file whose name is too long with a directory named using the SHA1 hash of the encrypted filename, and storying the original encrypted filename in a text file. For details, read the Cryptomator documentation on [Name Shortening](https://docs.cryptomator.org/security/vault/#name-shortening).`,
+			Advanced: true,
+			Default:  newDefaultVaultConfig().ShorteningThreshold,
 		}},
 	})
 }
@@ -113,6 +122,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if errors.Is(err, fs.ErrorObjectNotFound) && opt.AutoCreate {
 		// Vault does not exist, so create it
 		vaultConfig := newDefaultVaultConfig()
+		vaultConfig.ShorteningThreshold = opt.AutoCreateShorteningThreshold
 		err = f.createVault(ctx, password, vaultConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create new vault: %w", err)
@@ -171,9 +181,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Options defines the configuration for this backend
 type Options struct {
-	Remote     string `config:"remote"`
-	Password   string `config:"password"`
-	AutoCreate bool   `config:"auto_create"`
+	Remote   string `config:"remote"`
+	Password string `config:"password"`
+
+	AutoCreate                    bool `config:"auto_create"`
+	AutoCreateShorteningThreshold int  `config:"auto_create_shortening_threshold"`
 }
 
 // Fs wraps another fs and encrypts the directory
