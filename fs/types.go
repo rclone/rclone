@@ -221,6 +221,34 @@ type SetModTimer interface {
 	SetModTime(ctx context.Context, t time.Time) error
 }
 
+// SetModTimeCapability is an optional interface for Fs.
+//
+// It allows a backend to declare whether SetModTime is supported for a specific object.
+// This is useful for backends where SetModTime support depends on the object type
+// (e.g., SFTP can't set modification times on symlinks).
+type SetModTimeCapability interface {
+	// CanSetModTime returns true if SetModTime is supported for the given object.
+	// If the object type is not known or not relevant, it should return true.
+	// If SetModTime cannot be performed, the SetModTime method should return an error.
+	CanSetModTime(ctx context.Context, obj ObjectInfo) bool
+}
+
+// SymlinkValidator is an optional interface for Fs.
+//
+// It allows a backend to validate its symlink capabilities before sync/copy/move
+// operations begin. This provides early detection of configuration errors when
+// symlink support is enabled but not actually available on the remote server/filesystem.
+type SymlinkValidator interface {
+	// ValidateSymlinks tests if the backend can actually create and read symlinks
+	// on the remote server/filesystem. Returns an error if symlinks are not supported.
+	//
+	// The implementation should:
+	// - Return nil immediately if symlink translation is not enabled for this backend
+	// - Test real capabilities (e.g., attempt to create a test symlink)
+	// - Return a descriptive error if the backend claims to support symlinks but cannot
+	ValidateSymlinks(ctx context.Context) error
+}
+
 // FullObjectInfo contains all the read-only optional interfaces
 //
 // Use for checking making wrapping ObjectInfos implement everything

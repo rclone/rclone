@@ -618,27 +618,29 @@ type Options struct {
 
 // Fs stores the interface to the remote SFTP files
 type Fs struct {
-	name         string
-	root         string
-	absRoot      string
-	shellRoot    string
-	shellType    string
-	opt          Options          // parsed options
-	ci           *fs.ConfigInfo   // global config
-	m            configmap.Mapper // config
-	features     *fs.Features     // optional features
-	config       *ssh.ClientConfig
-	url          string
-	mkdirLock    *stringLock
-	cachedHashes *hash.Set
-	poolMu       sync.Mutex
-	pool         []*conn
-	drain        *time.Timer // used to drain the pool when we stop using the connections
-	pacer        *fs.Pacer   // pacer for operations
-	savedpswd    string
-	sessions     atomic.Int32 // count in use sessions
-	tokens       *pacer.TokenDispenser
-	proxyURL     *url.URL // address of HTTP proxy read from environment
+	name               string
+	root               string
+	absRoot            string
+	shellRoot          string
+	shellType          string
+	opt                Options          // parsed options
+	ci                 *fs.ConfigInfo   // global config
+	m                  configmap.Mapper // config
+	features           *fs.Features     // optional features
+	config             *ssh.ClientConfig
+	url                string
+	mkdirLock          *stringLock
+	cachedHashes       *hash.Set
+	poolMu             sync.Mutex
+	pool               []*conn
+	drain              *time.Timer // used to drain the pool when we stop using the connections
+	pacer              *fs.Pacer   // pacer for operations
+	savedpswd          string
+	sessions           atomic.Int32 // count in use sessions
+	tokens             *pacer.TokenDispenser
+	symlinkSupported   *bool      // nil = not tested yet, true/false = server supports symlink creation
+	symlinkSupportedMu sync.Mutex // protects symlinkSupported
+	proxyURL           *url.URL   // address of HTTP proxy read from environment
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -1463,8 +1465,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				fs:     f,
 				remote: remote,
 			}
-			o.setMetadata(info)
-			// Check whether this link should be translated
+			// Check whether this link should be translated BEFORE calling setMetadata
+			// so that setMetadata can preserve modtime for translated links
 			if f.opt.TranslateSymlinks {
 				if info.Mode()&os.ModeSymlink != 0 {
 					// Physical symlink on server - add suffix and mark as translated
@@ -1475,6 +1477,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					o.translatedLink = true
 				}
 			}
+			o.setMetadata(info)
 			entries = append(entries, o)
 		}
 	}
@@ -1574,6 +1577,19 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 		remote: dir,
 	}
 	return o.SetModTime(ctx, modTime)
+}
+
+// CanSetModTime returns true if SetModTime is supported for the given object.
+// For SFTP, SetModTime is not supported for translated symlinks because the
+// server typically doesn't support lutimes for symlinks.
+func (f *Fs) CanSetModTime(ctx context.Context, obj fs.ObjectInfo) bool {
+	// Check if this is a translated link (SFTP symlink file)
+	if o, ok := obj.(*Object); ok {
+		if f.opt.TranslateSymlinks && o.translatedLink {
+			return false // Can't set mod time on translated symlinks
+		}
+	}
+	return true // SetModTime is supported for regular files
 }
 
 // Rmdir removes the root directory of the Fs object
@@ -2484,6 +2500,71 @@ func (sr *sizeReader) Size() int64 {
 	return sr.size
 }
 
+// canCreateSymlinks tests if the SFTP server supports creating symlinks
+// Returns true if symlinks are supported, false otherwise
+// The result is cached for subsequent calls
+func (f *Fs) canCreateSymlinks(ctx context.Context) bool {
+	f.symlinkSupportedMu.Lock()
+	defer f.symlinkSupportedMu.Unlock()
+
+	// Return cached result if already tested
+	if f.symlinkSupported != nil {
+		return *f.symlinkSupported
+	}
+
+	// Generate unique test path using timestamp to avoid collisions
+	testPath := path.Join(f.absRoot, fmt.Sprintf(".rclone_symlink_test_%d", time.Now().UnixNano()))
+	testTarget := "test_target"
+
+	// Get connection for testing
+	c, err := f.getSftpConnection(ctx)
+	if err != nil {
+		fs.Debugf(f, "Failed to get connection for symlink capability test: %v", err)
+		supported := false
+		f.symlinkSupported = &supported
+		return false
+	}
+
+	// Try to create a test symlink
+	err = c.sftpClient.Symlink(testTarget, testPath)
+	f.putSftpConnection(&c, err)
+
+	supported := (err == nil)
+	f.symlinkSupported = &supported
+
+	if err != nil {
+		fs.Debugf(f, "Server does not support symlink creation: %v", err)
+	} else {
+		fs.Debugf(f, "Server supports symlink creation")
+		// Clean up test symlink
+		c2, err2 := f.getSftpConnection(ctx)
+		if err2 == nil {
+			_ = c2.sftpClient.Remove(testPath)
+			f.putSftpConnection(&c2, nil)
+		}
+	}
+
+	return supported
+}
+
+// ValidateSymlinks implements fs.SymlinkValidator
+func (f *Fs) ValidateSymlinks(ctx context.Context) error {
+	// Only validate if TranslateSymlinks is enabled
+	// This covers both --links and --sftp-links flags
+	if !f.opt.TranslateSymlinks {
+		return nil
+	}
+
+	// Test if server can create symlinks using the existing canCreateSymlinks method
+	if !f.canCreateSymlinks(ctx) {
+		return fmt.Errorf("symlink support is enabled (--sftp-links or --links) but the SFTP server does not support creating symlinks you can't use this flag with this server")
+	}
+
+	// Reading symlinks is always supported via SFTP protocol's Readlink()
+	fs.Debugf(f, "SFTP server symlink support validated")
+	return nil
+}
+
 // Update a remote sftp file using the data <in> and ModTime from <src>
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	o.fs.addSession() // Show session in use
@@ -2635,13 +2716,15 @@ func (f *Fs) Readlink(ctx context.Context, path string) (string, error) {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs             = &Fs{}
-	_ fs.PutStreamer    = &Fs{}
-	_ fs.Mover          = &Fs{}
-	_ fs.Copier         = &Fs{}
-	_ fs.DirMover       = &Fs{}
-	_ fs.DirSetModTimer = &Fs{}
-	_ fs.Abouter        = &Fs{}
-	_ fs.Shutdowner     = &Fs{}
-	_ fs.Object         = &Object{}
+	_ fs.Fs                   = &Fs{}
+	_ fs.PutStreamer          = &Fs{}
+	_ fs.Mover                = &Fs{}
+	_ fs.Copier               = &Fs{}
+	_ fs.DirMover             = &Fs{}
+	_ fs.DirSetModTimer       = &Fs{}
+	_ fs.SetModTimeCapability = &Fs{}
+	_ fs.SymlinkValidator     = &Fs{}
+	_ fs.Abouter              = &Fs{}
+	_ fs.Shutdowner           = &Fs{}
+	_ fs.Object               = &Object{}
 )

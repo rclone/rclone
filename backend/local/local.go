@@ -262,9 +262,9 @@ cause disk fragmentation and can be slow to work with.`,
 				Help: `Disable setting modtime.
 
 Normally rclone updates modification time of files after they are done
-uploading. This can cause permissions issues on Linux platforms when 
+uploading. This can cause permissions issues on Linux platforms when
 the user rclone is running as does not own the file uploaded, such as
-when copying to a CIFS mount owned by another user. If this option is 
+when copying to a CIFS mount owned by another user. If this option is
 enabled, rclone will no longer update the modtime after copying a file.`,
 				Default:  false,
 				Advanced: true,
@@ -913,6 +913,32 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 		}
 	}
 	return
+}
+
+// ValidateSymlinks implements fs.SymlinkValidator
+func (f *Fs) ValidateSymlinks(ctx context.Context) error {
+	// Only validate if TranslateSymlinks is enabled
+	if !f.opt.TranslateSymlinks {
+		return nil
+	}
+
+	// On Unix systems, symlinks are always supported
+	// On Windows, we need to test if we have the privilege
+	if runtime.GOOS == "windows" {
+		testLink := filepath.Join(f.root, fmt.Sprintf(".rclone_symlink_test_%d", time.Now().UnixNano()))
+		testTarget := "test_target"
+
+		err := os.Symlink(testTarget, testLink)
+		if err != nil {
+			return fmt.Errorf("symlink support is enabled (--links or -l) but the local filesystem does not support symlinks - Windows requires Developer Mode or Administrator privileges - you can't use this flag with this backend: %w", err)
+		}
+
+		// Clean up test symlink
+		_ = os.Remove(testLink)
+	}
+
+	fs.Debugf(f, "Local filesystem symlink support validated")
+	return nil
 }
 
 // Move src to this remote using server-side move operations.
@@ -1735,18 +1761,19 @@ func (d *Directory) Hash() {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs              = &Fs{}
-	_ fs.PutStreamer     = &Fs{}
-	_ fs.Mover           = &Fs{}
-	_ fs.DirMover        = &Fs{}
-	_ fs.Commander       = &Fs{}
-	_ fs.OpenWriterAter  = &Fs{}
-	_ fs.DirSetModTimer  = &Fs{}
-	_ fs.MkdirMetadataer = &Fs{}
-	_ fs.Object          = &Object{}
-	_ fs.Metadataer      = &Object{}
-	_ fs.SetMetadataer   = &Object{}
-	_ fs.Directory       = &Directory{}
-	_ fs.SetModTimer     = &Directory{}
-	_ fs.SetMetadataer   = &Directory{}
+	_ fs.Fs               = &Fs{}
+	_ fs.PutStreamer      = &Fs{}
+	_ fs.Mover            = &Fs{}
+	_ fs.DirMover         = &Fs{}
+	_ fs.Commander        = &Fs{}
+	_ fs.OpenWriterAter   = &Fs{}
+	_ fs.DirSetModTimer   = &Fs{}
+	_ fs.SymlinkValidator = &Fs{}
+	_ fs.MkdirMetadataer  = &Fs{}
+	_ fs.Object           = &Object{}
+	_ fs.Metadataer       = &Object{}
+	_ fs.SetMetadataer    = &Object{}
+	_ fs.Directory        = &Directory{}
+	_ fs.SetModTimer      = &Directory{}
+	_ fs.SetMetadataer    = &Directory{}
 )

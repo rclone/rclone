@@ -3104,3 +3104,22 @@ func testLoggerVsLsf(ctx context.Context, fdst, fsrc fs.Fs, logger *bytes.Buffer
 		require.NoError(t, err)
 	}
 }
+
+// TestValidateSymlinkSupport tests symlink validation during sync operations
+func TestValidateSymlinkSupport(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	t.Run("NoSymlinksEnabled", func(t *testing.T) {
+		// When symlinks are disabled, validation should not interfere
+		err := validateSymlinkSupport(ctx, r.Flocal, r.Fremote)
+		assert.NoError(t, err, "validation should pass when symlinks are not enabled")
+	})
+
+	t.Run("ValidatorNotImplemented", func(t *testing.T) {
+		// When backend doesn't implement SymlinkValidator, it should not error
+		err := checkBackendSymlinkSupport(ctx, r.Fremote, "test")
+		assert.NoError(t, err, "validation should pass for backends without SymlinkValidator")
+	})
+}

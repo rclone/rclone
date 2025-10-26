@@ -272,3 +272,21 @@ func TestSymlinkOpen(t *testing.T) {
 
 	_ = ctx // avoid unused variable warning
 }
+
+// TestValidateSymlinks tests symlink validation for SFTP backend
+func TestValidateSymlinks(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("SymlinksDisabled", func(t *testing.T) {
+		// Create a test filesystem with symlinks disabled
+		f := &Fs{
+			opt: Options{TranslateSymlinks: false},
+		}
+
+		err := f.ValidateSymlinks(ctx)
+		assert.NoError(t, err, "validation should succeed when symlinks are disabled")
+	})
+
+	// Note: Testing with symlinks enabled requires a real SFTP server
+	// This would be tested in integration tests, not unit tests
+}
