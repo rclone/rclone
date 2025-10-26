@@ -1027,3 +1027,4 @@ put them back in again.` >}}
 - Oleksandr Redko <oleksandr.red+github@gmail.com>
 - reddaisyy <reddaisy@outlook.jp>
 - viocha <viocha@qq.com>
+- Aneesh Agrawal <aneesh@anthropic.com>
