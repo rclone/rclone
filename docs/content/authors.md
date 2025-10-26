@@ -1025,3 +1025,4 @@ put them back in again.` >}}
 - hunshcn <hunsh.cn@gmail.com>
 - vastonus <vastonus@outlook.com>
 - Oleksandr Redko <oleksandr.red+github@gmail.com>
+- reddaisyy <reddaisy@outlook.jp>
