@@ -347,6 +347,9 @@ func showBackend(name string) {
 					for line := range strings.SplitSeq(ex.Help, "\n") {
 						fmt.Printf("        - %s\n", line)
 					}
+					if ex.Provider != "" {
+						fmt.Printf("        - Provider: %s\n", ex.Provider)
+					}
 				}
 			}
 			fmt.Printf("\n")
