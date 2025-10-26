@@ -142,20 +142,7 @@ func TestAgainstCryptomator(t *testing.T) {
 	config.FileSetValue("TestCryptomatorCli", "type", "webdav")
 	config.FileSetValue("TestCryptomatorCli", "url", webdavURL)
 
-	makeFses := func(t *testing.T) (rcloneFs, cryptomFs fs.Fs) {
-		rcloneFs, err = fs.NewFs(t.Context(), "TestCryptomatorRclone:"+t.Name())
-		require.NoError(t, err)
-		// Must create the directory before opening it in webdav because of a bug in cryptomator cli (seen on v0.6.1):
-		// if you start the webdav server, list a nonexistent directory, then create the directory externally to the webdav server, then try to list it again, the server won't show the directory and complains that the pointer points to a nonexistent directory id; but the hashed encrypted directory id in the log is entirely different from what it should be. Reads fine if you restart the server.
-		err = rcloneFs.Mkdir(t.Context(), "")
-		require.NoError(t, err)
-		cryptomFs, err = fs.NewFs(t.Context(), "TestCryptomatorCli:"+t.Name())
-		require.NoError(t, err)
-		return
-	}
-	rcloneFs, cryptomFs := makeFses(t)
-
-	check := func(desc string, items []fstest.Item, dirs []string) {
+	check := func(t *testing.T, desc string, rcloneFs, cryptomFs fs.Fs, items []fstest.Item, dirs []string) {
 		t.Logf("after %s: comparing %v with %v", desc, cryptomFs, rcloneFs)
 		precision := fs.GetModifyWindow(t.Context(), cryptomFs, cryptomFs)
 		fstest.CheckListingWithPrecision(t, cryptomFs, items, dirs, precision)
@@ -180,6 +167,21 @@ func TestAgainstCryptomator(t *testing.T) {
 		t.Logf("matched %v %v", items, dirs)
 	}
 
+	makeFses := func(t *testing.T) (rcloneFs, cryptomFs fs.Fs, checkFn func(t *testing.T, desc string, items []fstest.Item, dirs []string)) {
+		rcloneFs, err = fs.NewFs(t.Context(), "TestCryptomatorRclone:"+t.Name())
+		require.NoError(t, err)
+		// Must create the directory before opening it in webdav because of a bug in cryptomator cli (seen on v0.6.1):
+		// if you start the webdav server, list a nonexistent directory, then create the directory externally to the webdav server, then try to list it again, the server won't show the directory and complains that the pointer points to a nonexistent directory id; but the hashed encrypted directory id in the log is entirely different from what it should be. Reads fine if you restart the server.
+		err = rcloneFs.Mkdir(t.Context(), "")
+		require.NoError(t, err)
+		cryptomFs, err = fs.NewFs(t.Context(), "TestCryptomatorCli:"+t.Name())
+		require.NoError(t, err)
+		checkFn = func(t *testing.T, desc string, items []fstest.Item, dirs []string) {
+			check(t, desc, rcloneFs, cryptomFs, items, dirs)
+		}
+		return
+	}
+
 	put := func(t *testing.T, fs fs.Fs, path string, content string) (fstest.Item, fs.Object) {
 		now := time.Now()
 		obj, err := fs.Put(t.Context(), bytes.NewBufferString(content), object.NewStaticObjectInfo(path, time.Now(), -1, true, nil, nil))
@@ -192,41 +194,135 @@ func TestAgainstCryptomator(t *testing.T) {
 		assert.NoError(t, err)
 		return obj
 	}
+	remove := func(t *testing.T, fs fs.Fs, path string) {
+		err := get(t, fs, path).Remove(t.Context())
+		assert.NoError(t, err)
+	}
+	move := func(t *testing.T, fs fs.Fs, item *fstest.Item, dest string) {
+		_, err := fs.Features().Move(t.Context(), get(t, fs, item.Path), dest)
+		assert.NoError(t, err)
+		item.Path = dest
+	}
+	copy := func(t *testing.T, fs fs.Fs, item fstest.Item, dest string) fstest.Item {
+		_, err := fs.Features().Copy(t.Context(), get(t, fs, item.Path), dest)
+		assert.NoError(t, err)
+		item.Path = dest
+		return item
+	}
 
-	ctx := t.Context()
+	testCases := func(t *testing.T, filenameSuffix string) {
+		ctx := t.Context()
+		rcloneFs, cryptomFs, check := makeFses(t)
 
-	rclone1, _ := put(t, rcloneFs, "rclone1", "testing 123")
-	check("put with rclone", []fstest.Item{rclone1}, []string{})
-	cryptom1, _ := put(t, cryptomFs, "cryptom1", "testing 456")
-	check("put with cryptomator", []fstest.Item{rclone1, cryptom1}, []string{})
+		n := map[string]string{}
+		names := []string{"rclone1", "rclone2", "cryptom1", "cryptom2"}
+		for _, name := range names {
+			n[name] = name + filenameSuffix
+		}
+		for _, name1 := range names {
+			for _, name2 := range names {
+				n[name1+"/"+name2] = n[name1] + "/" + n[name2]
+			}
+		}
 
-	err = rcloneFs.Mkdir(ctx, "rclone2")
-	assert.NoError(t, err)
-	check("mkdir with rclone", []fstest.Item{rclone1, cryptom1}, []string{"rclone2"})
-	err = cryptomFs.Mkdir(ctx, "cryptom2")
-	assert.NoError(t, err)
-	check("mkdir with cryptomator", []fstest.Item{rclone1, cryptom1}, []string{"rclone2", "cryptom2"})
+		rclone1, _ := put(t, rcloneFs, n["rclone1"], "testing 123")
+		check(t, "put with rclone", []fstest.Item{rclone1}, []string{})
+		cryptom1, _ := put(t, cryptomFs, n["cryptom1"], "testing 456")
+		check(t, "put with cryptomator", []fstest.Item{rclone1, cryptom1}, []string{})
 
-	_, err = rcloneFs.Features().Move(ctx, get(t, rcloneFs, "cryptom1"), "rclone2/cryptom1")
-	assert.NoError(t, err)
-	cryptom1.Path = "rclone2/cryptom1"
-	check("move with rclone", []fstest.Item{rclone1, cryptom1}, []string{"rclone2", "cryptom2"})
-	_, err = cryptomFs.Features().Move(ctx, get(t, cryptomFs, "rclone1"), "cryptom2/rclone1")
-	assert.NoError(t, err)
-	rclone1.Path = "cryptom2/rclone1"
-	check("move with cryptomator", []fstest.Item{rclone1, cryptom1}, []string{"rclone2", "cryptom2"})
+		err = rcloneFs.Mkdir(ctx, n["rclone2"])
+		assert.NoError(t, err)
+		check(t, "mkdir with rclone", []fstest.Item{rclone1, cryptom1}, []string{n["rclone2"]})
+		err = cryptomFs.Mkdir(ctx, n["cryptom2"])
+		assert.NoError(t, err)
+		check(t, "mkdir with cryptomator", []fstest.Item{rclone1, cryptom1}, []string{n["rclone2"], n["cryptom2"]})
 
-	err = get(t, cryptomFs, rclone1.Path).Remove(ctx)
-	assert.NoError(t, err)
-	check("remove with cryptomator", []fstest.Item{cryptom1}, []string{"rclone2", "cryptom2"})
-	err = get(t, rcloneFs, cryptom1.Path).Remove(ctx)
-	assert.NoError(t, err)
-	check("remove with rclone", []fstest.Item{}, []string{"rclone2", "cryptom2"})
+		move(t, rcloneFs, &cryptom1, n["rclone2/cryptom1"])
+		check(t, "move with rclone", []fstest.Item{rclone1, cryptom1}, []string{n["rclone2"], n["cryptom2"]})
+		move(t, rcloneFs, &rclone1, n["cryptom2/rclone1"])
+		check(t, "move with cryptomator", []fstest.Item{rclone1, cryptom1}, []string{n["rclone2"], n["cryptom2"]})
 
-	err = rcloneFs.Rmdir(ctx, "cryptom2")
-	assert.NoError(t, err)
-	check("rmdir with rclone", []fstest.Item{}, []string{"rclone2"})
-	err = cryptomFs.Rmdir(ctx, "rclone2")
-	assert.NoError(t, err)
-	check("rmdir with cryptomator", []fstest.Item{}, []string{})
+		remove(t, cryptomFs, rclone1.Path)
+		check(t, "remove with cryptomator", []fstest.Item{cryptom1}, []string{n["rclone2"], n["cryptom2"]})
+		remove(t, rcloneFs, cryptom1.Path)
+		check(t, "remove with rclone", []fstest.Item{}, []string{n["rclone2"], n["cryptom2"]})
+
+		err = rcloneFs.Rmdir(ctx, n["cryptom2"])
+		assert.NoError(t, err)
+		check(t, "rmdir with rclone", []fstest.Item{}, []string{n["rclone2"]})
+		err = cryptomFs.Rmdir(ctx, n["rclone2"])
+		assert.NoError(t, err)
+		check(t, "rmdir with cryptomator", []fstest.Item{}, []string{})
+	}
+
+	t.Run("Basic", func(t *testing.T) {
+		testCases(t, ".")
+	})
+	t.Run("LongNames", func(t *testing.T) {
+		testCases(t, strings.Repeat(".", 1000))
+	})
+
+	t.Run("CopyMove", func(t *testing.T) {
+		// ctx := t.Context()
+		rcloneFs, _, check := makeFses(t)
+		long := func(name string) string {
+			return name + strings.Repeat(".", 1000)
+		}
+
+		file, _ := put(t, rcloneFs, "file", "testing 123")
+		check(t, "put file", []fstest.Item{file}, []string{})
+
+		t.Run("Move", func(t *testing.T) {
+			move(t, rcloneFs, &file, "file2")
+			check(t, "move file", []fstest.Item{file}, []string{})
+			move(t, rcloneFs, &file, long("file"))
+			check(t, "move file to long name", []fstest.Item{file}, []string{})
+			move(t, rcloneFs, &file, long("file2"))
+			check(t, "move file to other long name", []fstest.Item{file}, []string{})
+			move(t, rcloneFs, &file, "file")
+			check(t, "move file to short name", []fstest.Item{file}, []string{})
+		})
+
+		t.Run("Copy", func(t *testing.T) {
+			file2 := copy(t, rcloneFs, file, "file2")
+			check(t, "copy file", []fstest.Item{file, file2}, []string{})
+			longfile := copy(t, rcloneFs, file2, long("file"))
+			check(t, "copy file to long name", []fstest.Item{file, file2, longfile}, []string{})
+			longfile2 := copy(t, rcloneFs, longfile, long("file2"))
+			check(t, "copy file to other long name", []fstest.Item{file, file2, longfile, longfile2}, []string{})
+			remove(t, rcloneFs, file.Path)
+			file = copy(t, rcloneFs, longfile2, "file")
+			check(t, "copy file to short name", []fstest.Item{file, file2, longfile, longfile2}, []string{})
+
+			remove(t, rcloneFs, file2.Path)
+			remove(t, rcloneFs, longfile.Path)
+			remove(t, rcloneFs, longfile2.Path)
+		})
+
+		t.Run("DirMove", func(t *testing.T) {
+			ctx := t.Context()
+			err := rcloneFs.Mkdir(ctx, "dir")
+			assert.NoError(t, err)
+			check(t, "mkdir", []fstest.Item{file}, []string{"dir"})
+
+			err = rcloneFs.Features().DirMove(ctx, rcloneFs, "dir", "dir2")
+			assert.NoError(t, err)
+			check(t, "dirmove", []fstest.Item{file}, []string{"dir2"})
+
+			err = rcloneFs.Features().DirMove(ctx, rcloneFs, "dir2", long("dir"))
+			assert.NoError(t, err)
+			check(t, "dirmove to long name", []fstest.Item{file}, []string{long("dir")})
+
+			err = rcloneFs.Features().DirMove(ctx, rcloneFs, long("dir"), long("dir2"))
+			assert.NoError(t, err)
+			check(t, "dirmove to other long name", []fstest.Item{file}, []string{long("dir2")})
+
+			err = rcloneFs.Features().DirMove(ctx, rcloneFs, long("dir2"), "dir")
+			assert.NoError(t, err)
+			check(t, "dirmove to short name", []fstest.Item{file}, []string{"dir"})
+
+			err = rcloneFs.Rmdir(ctx, "dir")
+			assert.NoError(t, err)
+		})
+	})
 }

@@ -94,6 +94,11 @@ func (c *cryptor) decryptFilename(filename string, dirID string) (string, error)
 	return string(plaintext), nil
 }
 
+func deflateFilename(filename string) string {
+	hash := sha1.Sum([]byte(filename))
+	return base64.URLEncoding.EncodeToString(hash[:])
+}
+
 func (c *cryptor) newContentCryptor(key []byte) (contentCryptor, error) {
 	aes, err := aes.NewCipher(key)
 	if err != nil {

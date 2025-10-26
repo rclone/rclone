@@ -22,14 +22,18 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 )
 
-// Errors
-var (
-	errorMetaTooBig = errors.New("metadata file is too big")
+const (
+	dirIDC9r       = "dir.c9r"
+	fileContentC9r = "contents.c9r"
+	symlinkC9r     = "symlink.c9r"
+	fullNameC9s    = "name.c9s"
+
+	dirIDBackupC9r = "dirid.c9r"
 )
 
 const (
-	dirIDC9r       = "dir.c9r"
-	dirIDBackupC9r = "dirid.c9r"
+	maxLenNameC9s  = 10 * 1024 // quoth cryptomator "no sane person gives a file a 10kb long name."
+	maxLenDirIDC9r = 1000
 )
 
 // Register with Fs
@@ -206,6 +210,9 @@ type Fs struct {
 	dirCache *dircache.DirCache
 }
 
+// ShorteningThreshold returns the shortening threshold out of the vault config, used for a test
+func (f *Fs) ShorteningThreshold() int { return f.vaultConfig.ShorteningThreshold }
+
 // -------- fs.Info
 
 // Name of the remote (as passed into NewFs)
@@ -288,32 +295,55 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 }
 
 func (f *Fs) decryptListEntries(ctx context.Context, dir string, dirID string, encryptedEntries fs.DirEntries) (entries fs.DirEntries, err error) {
-
 	for _, entry := range encryptedEntries {
-		encryptedFilename := path.Base(entry.Remote())
-		encryptedFilename, ok := strings.CutSuffix(encryptedFilename, ".c9r")
+		node := node{path: entry.Remote()}
+		node.fullName = path.Base(node.path)
+		if node.short() {
+			fullname, err := f.readSmallFile(ctx, node.c9sFullName(), maxLenNameC9s)
+			// if errors.Is(err, fs.ErrorObjectNotFound) {
+			// 	fs.Logf(entry, "deflated filename with no full filename, skipping")
+			// 	continue
+			// }
+			if err != nil {
+				return nil, fmt.Errorf("failed to read full filename of %v: %w", node, err)
+			}
+			node.fullName = string(fullname)
+		}
+
+		encFilename, ok := strings.CutSuffix(node.fullName, ".c9r")
 		if !ok {
 			continue
 		}
-		if encryptedFilename == "dirid" {
+		if encFilename == "dirid" {
 			continue
 		}
-		filename, err := f.decryptFilename(encryptedFilename, dirID)
+		filename, err := f.decryptFilename(encFilename, dirID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt filename %q: %w", encryptedFilename, err)
+			return nil, fmt.Errorf("failed to decrypt filename %q: %w", encFilename, err)
 		}
-		remote := path.Join(dir, filename)
+		decRemote := path.Join(dir, filename)
 
-		switch entry := entry.(type) {
-		case fs.Directory:
-			// Get the path of the real directory from dir.c9r.
-			dirID, err := f.readSmallFile(ctx, path.Join(entry.Remote(), dirIDC9r), 100)
-			if err != nil {
-				return nil, err
-			}
+		// What kind of entry is this?
+
+		if entry, ok := entry.(fs.Object); ok {
+			// The only easy case - file with short filename.
+			entries = append(entries, f.newDecryptingObject(entry, node, decRemote))
+			continue
+		}
+
+		// Now that we know the underlying entry is a directory, the encrypted entry could still be anything: a directory, a symlink, or a file with a shortened name.
+
+		// Is it a directory?
+		dirID, err := f.readSmallFile(ctx, node.c9rDirID(), maxLenDirIDC9r)
+		if err != nil && !errors.Is(err, fs.ErrorObjectNotFound) {
+			return nil, fmt.Errorf("failed to read directory id: %w", err)
+		}
+		if err == nil {
+			// It's a directory!
 			dirIDPath := f.dirIDPath(string(dirID))
 
-			// Turning that path into an fs.Directory is really annoying. The only thing in the standard Fs interface that returns fs.Directory objects is List, so We have to list the parent.
+			// Turning that path into an fs.Directory is really annoying. The only thing in the standard Fs interface that returns fs.Directory objects is List, so we have to list the parent.
+			// TODO: scaling problem? this List will take time proportional to the total number of directories in the entire vault...divided by 256
 			dirIDParent, dirIDLeaf := path.Split(dirIDPath)
 			subEntries, err := f.wrapped.List(ctx, dirIDParent)
 			if err != nil {
@@ -333,20 +363,40 @@ func (f *Fs) decryptListEntries(ctx context.Context, dir string, dirID string, e
 			if err != nil {
 				return nil, err
 			}
-			entries = append(entries, &Directory{DirWrapper: fs.NewDirWrapper(remote, realDir), f: f})
-		case fs.Object:
-			entries = append(entries, &DecryptingObject{encObj: entry, f: f, decRemote: remote})
-		default:
-			return nil, fmt.Errorf("unknown entry type %T", entry)
+			entries = append(entries, &Directory{DirWrapper: fs.NewDirWrapper(decRemote, realDir), f: f})
+			continue
 		}
+
+		// Is it a symlink?
+		_, err = f.wrapped.NewObject(ctx, node.c9rSymlinkTarget())
+		if err != nil && !errors.Is(err, fs.ErrorObjectNotFound) {
+			return nil, fmt.Errorf("failed to open symlink target: %w", err)
+		}
+		if err == nil {
+			// Ignore symlinks, like the default behavior of the local backend.
+			continue
+		}
+
+		// Surely then it's a file?
+		fileContents, err := f.wrapped.NewObject(ctx, node.c9rFileContents())
+		if err != nil && !errors.Is(err, fs.ErrorObjectNotFound) {
+			return nil, fmt.Errorf("failed to open file contents: %w", err)
+		}
+		if err == nil {
+			entries = append(entries, f.newDecryptingObject(fileContents, node, decRemote))
+			continue
+		}
+
+		//fs.Logf(entry, "node of unknown type, skipping")
+		return nil, fmt.Errorf("couldn't determine type of %q: %w", decRemote, err)
 	}
 	return
 }
 
 // FindLeaf finds a child of name leaf in the directory with id pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	subdirIDFile := path.Join(f.leafPath(leaf, pathID), dirIDC9r)
-	subdirID, err := f.readSmallFile(ctx, subdirIDFile, 100)
+	subdirIDFile := f.node(leaf, pathID).c9rDirID()
+	subdirID, err := f.readSmallFile(ctx, subdirIDFile, maxLenDirIDC9r)
 	if errors.Is(err, fs.ErrorObjectNotFound) {
 		// If the directory doesn't exist, return found=false and no error to let the DirCache create the directory if it wants.
 		err = nil
@@ -362,8 +412,8 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 }
 
 // CreateDir creates a directory at the request of the DirCache
-func (f *Fs) CreateDir(ctx context.Context, parentID string, leaf string) (newID string, err error) {
-	leafPath := f.leafPath(leaf, parentID)
+func (f *Fs) CreateDir(ctx context.Context, parentID string, leafName string) (newID string, err error) {
+	node := f.node(leafName, parentID)
 	newID = uuid.NewString()
 	dirPath := f.dirIDPath(newID)
 
@@ -378,7 +428,11 @@ func (f *Fs) CreateDir(ctx context.Context, parentID string, leaf string) (newID
 	// Write pointer to directory
 	// XXX if someone else attempts to create the same directory at the same time, one of them will win and the other will get an orphaned directory.
 	// Without an atomic "create if not exists" for this next writeSmallFile operation, this can't be fixed.
-	err = f.writeSmallFile(ctx, path.Join(leafPath, dirIDC9r), []byte(newID))
+	err = f.writeNodeLongName(ctx, node)
+	if err != nil {
+		return
+	}
+	err = f.writeSmallFile(ctx, node.c9rDirID(), []byte(newID))
 	return
 }
 
@@ -440,15 +494,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		dirIDBackup string
 		// Now the directory. But, if this fails (e.g. due to the directory not being empty), we need to go recreate the dir ID backup!
 		dirPath string
-		// Finally the pointer to the directory. First the file
-		dirPointerFile string
-		// Then the directory containing the pointer
-		dirPointerPath string
+		// Finally the pointer to the directory.
+		dirPointer node
 	)
 	dirPath = f.dirIDPath(dirID)
 	dirIDBackup = path.Join(dirPath, dirIDBackupC9r)
-	dirPointerPath = f.leafPath(leaf, parentID)
-	dirPointerFile = path.Join(dirPointerPath, dirIDC9r)
+	dirPointer = f.node(leaf, parentID)
 
 	// Quick check for if the directory is empty - someone else could create a file between this and the final rmdir, so we still need that code that recreates the dir ID backup!
 	entries, err := f.wrapped.List(ctx, dirPath)
@@ -488,17 +539,20 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		}
 		return err
 	}
-	// dirPointerFile
-	obj, err = f.wrapped.NewObject(ctx, dirPointerFile)
+	// dirPointer
+	obj, err = f.wrapped.NewObject(ctx, dirPointer.c9rDirID())
 	if err == nil {
 		err = obj.Remove(ctx)
 	}
-	// dirPointerPath
 	if err == nil {
-		err = f.wrapped.Rmdir(ctx, dirPointerPath)
+		err = f.deleteNodeLongName(ctx, dirPointer)
+	}
+	// If it was shortened, deleteNodeLongName already removed the directory
+	if !dirPointer.short() && err == nil {
+		err = f.wrapped.Rmdir(ctx, dirPointer.path)
 	}
 	if err != nil {
-		return fmt.Errorf("couldn't rmdir dir pointer %q: %w", dirPointerFile, err)
+		return fmt.Errorf("couldn't rmdir dir pointer %q: %w", dirPointer, err)
 	}
 
 	f.dirCache.FlushDir(dir)
@@ -532,25 +586,29 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		}
 		return nil, fmt.Errorf("failed to find ID for directory of file %q: %w", remote, err)
 	}
-	encryptedPath := f.leafPath(leaf, dirID)
-	wrappedObj, err := f.wrapped.NewObject(ctx, encryptedPath)
+
+	node := f.node(leaf, dirID)
+	encContentsPath := node.c9rFileContents()
+	wrappedObj, err := f.wrapped.NewObject(ctx, encContentsPath)
 	if err != nil {
 		return nil, err
 	}
-	return f.newDecryptingObject(wrappedObj, remote), nil
+	return f.newDecryptingObject(wrappedObj, node, remote), nil
 }
 
 // DecryptingObject wraps the underlying fs.Object and handles decrypting it
 type DecryptingObject struct {
 	encObj    fs.Object
 	f         *Fs
+	node      node
 	decRemote string
 }
 
-func (f *Fs) newDecryptingObject(o fs.Object, decRemote string) *DecryptingObject {
+func (f *Fs) newDecryptingObject(o fs.Object, node node, decRemote string) *DecryptingObject {
 	return &DecryptingObject{
 		encObj:    o,
 		f:         f,
+		node:      node,
 		decRemote: decRemote,
 	}
 }
@@ -637,7 +695,15 @@ func (o *DecryptingObject) Open(ctx context.Context, options ...fs.OpenOption) (
 
 // Remove this object
 func (o *DecryptingObject) Remove(ctx context.Context) error {
-	return o.encObj.Remove(ctx)
+	err := o.encObj.Remove(ctx)
+	if err != nil {
+		return err
+	}
+	err = o.f.deleteNodeLongName(ctx, o.node)
+	if err != nil {
+		fs.LogPrintfCtx(ctx, fs.LogLevelWarning, o, "deleting succeeded, but then failed to remove long file name: %v", err)
+	}
+	return nil
 }
 
 // Update in to the object with the modTime given of the given size
@@ -670,7 +736,12 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 	if err != nil {
 		return nil, err
 	}
-	encRemotePath := f.leafPath(leaf, dirID)
+	node := f.node(leaf, dirID)
+	err = f.writeNodeLongName(ctx, node)
+	if err != nil {
+		return nil, err
+	}
+	encRemotePath := node.c9rFileContents()
 	encSrc := &EncryptingObjectInfo{
 		ObjectInfo: src,
 		f:          f,
@@ -679,7 +750,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 
 	obj, err := put(ctx, encIn, encSrc, options...)
 	if obj != nil {
-		obj = f.newDecryptingObject(obj, src.Remote())
+		obj = f.newDecryptingObject(obj, node, src.Remote())
 	}
 	return obj, err
 }
@@ -769,7 +840,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if do == nil {
 		return nil, fs.ErrorCantCopy
 	}
-	o, ok := src.(*DecryptingObject)
+	srcObj, ok := src.(*DecryptingObject)
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
@@ -777,12 +848,17 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	encryptedPath := f.leafPath(leaf, dirID)
-	obj, err := do(ctx, o.encObj, encryptedPath)
-	if obj != nil {
-		obj = f.newDecryptingObject(obj, remote)
+	node := f.node(leaf, dirID)
+	err = f.writeNodeLongName(ctx, node)
+	if err != nil {
+		return nil, err
 	}
-	return obj, err
+	encryptedPath := node.c9rFileContents()
+	dst, err := do(ctx, srcObj.encObj, encryptedPath)
+	if dst != nil {
+		dst = f.newDecryptingObject(dst, node, remote)
+	}
+	return dst, err
 }
 
 // Move src to this remote using server-side move operations.
@@ -801,7 +877,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if do == nil {
 		return nil, fs.ErrorCantMove
 	}
-	o, ok := src.(*DecryptingObject)
+	srcObj, ok := src.(*DecryptingObject)
 	if !ok {
 		return nil, fs.ErrorCantMove
 	}
@@ -809,12 +885,22 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	encryptedPath := f.leafPath(leaf, dirID)
-	obj, err := do(ctx, o.encObj, encryptedPath)
-	if obj != nil {
-		obj = f.newDecryptingObject(obj, remote)
+	node := f.node(leaf, dirID)
+	err = f.writeNodeLongName(ctx, node)
+	if err != nil {
+		return nil, err
 	}
-	return obj, err
+	encryptedPath := node.c9rFileContents()
+	dst, err := do(ctx, srcObj.encObj, encryptedPath)
+	if err != nil {
+		return nil, err
+	}
+	dst = f.newDecryptingObject(dst, node, remote)
+	err = f.deleteNodeLongName(ctx, srcObj.node)
+	if err != nil {
+		fs.LogPrintfCtx(ctx, fs.LogLevelWarning, srcObj, "moving to %s succeeded, but then failed to remove long file name: %v", dst, err)
+	}
+	return dst, nil
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -832,7 +918,11 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.Errorf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+	if srcFs.vaultConfig.ID != f.vaultConfig.ID {
+		fs.Errorf(srcFs, "Can't move directory - not same cryptomator vault")
 		return fs.ErrorCantDirMove
 	}
 	// TODO: It would be almost as easy to implement this operation without server-side support, by deleting and recreating the dir.c9r file (though it wouldn't be atomic.)
@@ -840,11 +930,25 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if err != nil {
 		return err
 	}
-	srcEncPath := f.leafPath(srcLeaf, srcDirectoryID)
-	dstEncPath := f.leafPath(dstLeaf, dstDirectoryID)
-	err = do(ctx, srcFs.wrapped, srcEncPath, dstEncPath)
+	srcNode := f.node(srcLeaf, srcDirectoryID)
+	dstNode := f.node(dstLeaf, dstDirectoryID)
+	err = do(ctx, srcFs.wrapped, srcNode.path, dstNode.path)
 	if err != nil {
 		return err
+	}
+
+	if dstNode.short() {
+		err = f.writeNodeLongName(ctx, dstNode)
+	} else if srcNode.short() {
+		// get rid of name.c9s residue, manually...
+		var obj fs.Object
+		obj, err = f.wrapped.NewObject(ctx, path.Join(dstNode.path, fullNameC9s))
+		if err == nil {
+			err = obj.Remove(ctx)
+		}
+	}
+	if err != nil {
+		fs.LogPrintfCtx(ctx, fs.LogLevelWarning, srcNode, "moving to %s succeeded, but then failed to update long file name: %v", dstNode, err)
 	}
 	srcFs.dirCache.FlushDir(srcRemote)
 	return nil
@@ -860,11 +964,78 @@ func (f *Fs) dirIDPath(dirID string) string {
 	return dirPath
 }
 
-// leafPath returns the encrypted path to a leaf node with the given name in the directory with the given ID.
-func (f *Fs) leafPath(leaf, dirID string) string {
+// node represents a filesystem node as it is represented in the underlying storage, as either a .c9r node with encrypted name, or a .c9s node with sha1 of encrypted name.
+type node struct {
+	// Path from the root of the vault to the node.
+	path string
+	// Original filename before c9s shortening, "" if unknown
+	fullName string
+}
+
+func (n node) String() string {
+	return n.path
+}
+
+func (n node) c9sFullName() string {
+	if n.short() {
+		return path.Join(n.path, fullNameC9s)
+	}
+	return ""
+}
+
+func (n node) c9rDirID() string {
+	return path.Join(n.path, dirIDC9r)
+}
+
+func (n node) c9rSymlinkTarget() string {
+	return path.Join(n.path, symlinkC9r)
+}
+
+func (n node) c9rFileContents() string {
+	if n.short() {
+		return path.Join(n.path, fileContentC9r)
+	}
+	return n.path
+}
+
+func (n node) short() bool {
+	return strings.HasSuffix(n.path, ".c9s")
+}
+
+// node returns the representation of a node with the given name in the directory with the given ID.
+func (f *Fs) node(name, dirID string) node {
 	dirPath := f.dirIDPath(dirID)
-	encryptedFilename := f.encryptFilename(leaf, dirID)
-	return path.Join(dirPath, encryptedFilename+".c9r")
+	encryptedFilename := f.encryptFilename(name, dirID) + ".c9r"
+	basename := encryptedFilename
+	if len(encryptedFilename) > f.ShorteningThreshold() {
+		basename = deflateFilename(encryptedFilename) + ".c9s"
+	}
+	return node{path: path.Join(dirPath, basename), fullName: encryptedFilename}
+}
+
+func (f *Fs) writeNodeLongName(ctx context.Context, node node) (err error) {
+	if node.short() {
+		err = f.writeSmallFile(ctx, node.c9sFullName(), []byte(node.fullName))
+	}
+	return
+}
+
+func (f *Fs) deleteNodeLongName(ctx context.Context, node node) error {
+	if node.short() {
+		obj, err := f.wrapped.NewObject(ctx, node.c9sFullName())
+		if err != nil {
+			return err
+		}
+		err = obj.Remove(ctx)
+		if err != nil {
+			return err
+		}
+		err = f.wrapped.Rmdir(ctx, node.path)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // encryptReader returns a reader that produces an encrypted version of the data in r, suitable for storing directly in the wrapped filesystem.
@@ -896,7 +1067,7 @@ func (f *Fs) readSmallFile(ctx context.Context, path string, maxLen int64) ([]by
 		return nil, err
 	}
 	if obj.Size() > maxLen {
-		return nil, errorMetaTooBig
+		return nil, fmt.Errorf("file %s exceeds length limit %d", path, maxLen)
 	}
 	reader, err := obj.Open(ctx)
 	if err != nil {
