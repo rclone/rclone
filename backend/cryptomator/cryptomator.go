@@ -335,7 +335,7 @@ func (f *Fs) decryptListEntries(ctx context.Context, dir string, dirID string, e
 			}
 			entries = append(entries, &Directory{DirWrapper: fs.NewDirWrapper(remote, realDir), f: f})
 		case fs.Object:
-			entries = append(entries, &DecryptingObject{Object: entry, f: f, decRemote: remote})
+			entries = append(entries, &DecryptingObject{encObj: entry, f: f, decRemote: remote})
 		default:
 			return nil, fmt.Errorf("unknown entry type %T", entry)
 		}
@@ -542,20 +542,18 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // DecryptingObject wraps the underlying fs.Object and handles decrypting it
 type DecryptingObject struct {
-	fs.Object
+	encObj    fs.Object
 	f         *Fs
 	decRemote string
 }
 
 func (f *Fs) newDecryptingObject(o fs.Object, decRemote string) *DecryptingObject {
 	return &DecryptingObject{
-		Object:    o,
+		encObj:    o,
 		f:         f,
 		decRemote: decRemote,
 	}
 }
-
-// TODO: override all relevant methods
 
 // Fs returns read only access to the Fs that this object is part of
 func (o *DecryptingObject) Fs() fs.Info { return o.f }
@@ -573,7 +571,7 @@ func (o *DecryptingObject) String() string {
 
 // Size returns the size of the object after being decrypted
 func (o *DecryptingObject) Size() int64 {
-	return o.f.decryptedFileSize(o.Object.Size())
+	return o.f.decryptedFileSize(o.encObj.Size())
 }
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
@@ -604,7 +602,7 @@ func (o *DecryptingObject) Open(ctx context.Context, options ...fs.OpenOption) (
 	}
 	options = newOptions
 
-	reader, err := o.Object.Open(ctx, options...)
+	reader, err := o.encObj.Open(ctx, options...)
 	defer func() {
 		if err != nil && reader != nil {
 			_ = reader.Close()
@@ -637,6 +635,11 @@ func (o *DecryptingObject) Open(ctx context.Context, options ...fs.OpenOption) (
 	}, nil
 }
 
+// Remove this object
+func (o *DecryptingObject) Remove(ctx context.Context) error {
+	return o.encObj.Remove(ctx)
+}
+
 // Update in to the object with the modTime given of the given size
 //
 // When called from outside an Fs by rclone, src.Size() will always be >= 0.
@@ -647,9 +650,9 @@ func (o *DecryptingObject) Update(ctx context.Context, in io.Reader, src fs.Obje
 	encSrc := &EncryptingObjectInfo{
 		ObjectInfo: src,
 		f:          o.f,
-		encRemote:  o.Object.Remote(),
+		encRemote:  o.encObj.Remote(),
 	}
-	return o.Object.Update(ctx, encIn, encSrc, options...)
+	return o.encObj.Update(ctx, encIn, encSrc, options...)
 }
 
 // Hash returns no checksum as it is not possible to quickly obtain a hash of the plaintext of an encrypted file
@@ -775,7 +778,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	encryptedPath := f.leafPath(leaf, dirID)
-	obj, err := do(ctx, o.Object, encryptedPath)
+	obj, err := do(ctx, o.encObj, encryptedPath)
 	if obj != nil {
 		obj = f.newDecryptingObject(obj, remote)
 	}
@@ -807,7 +810,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	encryptedPath := f.leafPath(leaf, dirID)
-	obj, err := do(ctx, o.Object, encryptedPath)
+	obj, err := do(ctx, o.encObj, encryptedPath)
 	if obj != nil {
 		obj = f.newDecryptingObject(obj, remote)
 	}

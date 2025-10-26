@@ -90,6 +90,21 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return do(ctx)
 }
 
+// ModTime returns the modification date of the file
+func (o *DecryptingObject) ModTime(ctx context.Context) time.Time {
+	return o.encObj.ModTime(ctx)
+}
+
+// Storable says whether this object can be stored
+func (o *DecryptingObject) Storable() bool {
+	return o.encObj.Storable()
+}
+
+// SetModTime sets the metadata on the object to set the modification date
+func (o *DecryptingObject) SetModTime(ctx context.Context, t time.Time) error {
+	return o.encObj.SetModTime(ctx, t)
+}
+
 // MimeType returns the content type of the Object if
 // known, or "" if not
 //
@@ -101,7 +116,7 @@ func (o *DecryptingObject) MimeType(ctx context.Context) string {
 
 // ID returns the ID of the Object if known, or "" if not
 func (o *DecryptingObject) ID() string {
-	do, ok := o.Object.(fs.IDer)
+	do, ok := o.encObj.(fs.IDer)
 	if !ok {
 		return ""
 	}
@@ -110,7 +125,7 @@ func (o *DecryptingObject) ID() string {
 
 // ParentID returns the ID of the parent directory if known or nil if not
 func (o *DecryptingObject) ParentID() string {
-	do, ok := o.Object.(fs.ParentIDer)
+	do, ok := o.encObj.(fs.ParentIDer)
 	if !ok {
 		return ""
 	}
@@ -119,12 +134,12 @@ func (o *DecryptingObject) ParentID() string {
 
 // UnWrap returns the Object that this Object is wrapping or
 // nil if it isn't wrapping anything
-func (o *DecryptingObject) UnWrap() fs.Object { return o.Object }
+func (o *DecryptingObject) UnWrap() fs.Object { return o.encObj }
 
 // SetTier performs changing storage tier of the Object if
 // multiple storage classes supported
 func (o *DecryptingObject) SetTier(tier string) error {
-	do, ok := o.Object.(fs.SetTierer)
+	do, ok := o.encObj.(fs.SetTierer)
 	if !ok {
 		return errorNotSupportedByUnderlyingRemote
 	}
@@ -133,7 +148,7 @@ func (o *DecryptingObject) SetTier(tier string) error {
 
 // GetTier returns storage tier or class of the Object
 func (o *DecryptingObject) GetTier() string {
-	do, ok := o.Object.(fs.GetTierer)
+	do, ok := o.encObj.(fs.GetTierer)
 	if !ok {
 		return ""
 	}
@@ -144,7 +159,7 @@ func (o *DecryptingObject) GetTier() string {
 //
 // It should return nil if there is no Metadata
 func (o *DecryptingObject) Metadata(ctx context.Context) (fs.Metadata, error) {
-	do, ok := o.Object.(fs.Metadataer)
+	do, ok := o.encObj.(fs.Metadataer)
 	if !ok {
 		return nil, nil
 	}
@@ -155,7 +170,7 @@ func (o *DecryptingObject) Metadata(ctx context.Context) (fs.Metadata, error) {
 //
 // It should return fs.ErrorNotImplemented if it can't set metadata
 func (o *DecryptingObject) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
-	do, ok := o.Object.(fs.SetMetadataer)
+	do, ok := o.encObj.(fs.SetMetadataer)
 	if !ok {
 		return fs.ErrorNotImplemented
 	}
