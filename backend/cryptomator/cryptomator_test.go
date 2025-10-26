@@ -64,6 +64,7 @@ func TestStandard(t *testing.T) {
 			{Name: name, Key: "type", Value: "cryptomator"},
 			{Name: name, Key: "remote", Value: tempdir},
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
+			{Name: name, Key: "auto_create", Value: "true"},
 		},
 		QuickTestOK:              true,
 		UnimplementableFsMethods: UnimplementableFsMethods,

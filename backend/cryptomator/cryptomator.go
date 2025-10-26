@@ -50,6 +50,11 @@ func init() {
 			Help:       "Password for Cryptomator vault.",
 			IsPassword: true,
 			Required:   true,
+		}, {
+			Name:     "auto_create",
+			Help:     "Whether to automatically create a vault if none exists at the underlying remote.",
+			Advanced: true,
+			Default:  false,
 		}},
 	})
 }
@@ -104,7 +109,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt password: %w", err)
 	}
-	err = f.loadOrCreateVault(ctx, password)
+	err = f.loadVault(ctx, password)
+	if errors.Is(err, fs.ErrorObjectNotFound) && opt.AutoCreate {
+		// Vault does not exist, so create it
+		vaultConfig := newDefaultVaultConfig()
+		err = f.createVault(ctx, password, vaultConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new vault: %w", err)
+		}
+		err = f.loadVault(ctx, password)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to load vault: %w", err)
 	}
@@ -157,8 +171,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Options defines the configuration for this backend
 type Options struct {
-	Remote   string `config:"remote"`
-	Password string `config:"password"`
+	Remote     string `config:"remote"`
+	Password   string `config:"password"`
+	AutoCreate bool   `config:"auto_create"`
 }
 
 // Fs wraps another fs and encrypts the directory

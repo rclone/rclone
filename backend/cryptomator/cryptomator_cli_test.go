@@ -132,6 +132,7 @@ func TestAgainstCryptomator(t *testing.T) {
 	config.FileSetValue("TestCryptomatorRclone", "type", "cryptomator")
 	config.FileSetValue("TestCryptomatorRclone", "remote", localPath)
 	config.FileSetValue("TestCryptomatorRclone", "password", obscure.MustObscure(password))
+	config.FileSetValue("TestCryptomatorRclone", "auto_create", "true")
 
 	// Create vault before starting cryptomator - for some reason cryptomator cli cannot create vaults
 	_, err = fs.NewFs(t.Context(), "TestCryptomatorRclone:")

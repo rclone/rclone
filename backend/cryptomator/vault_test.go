@@ -15,7 +15,7 @@ func TestVaultConfigRoundTrip(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		key := drawMasterKey(t)
 
-		c1 := newVaultConfig()
+		c1 := newDefaultVaultConfig()
 
 		token, err := c1.marshal(key)
 		assert.NoError(t, err)

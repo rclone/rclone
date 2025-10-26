@@ -3,13 +3,11 @@ package cryptomator
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/rclone/rclone/fs"
 )
 
 const (
@@ -40,8 +38,8 @@ type vaultConfig struct {
 	CipherCombo         string `json:"cipherCombo"`
 }
 
-// newVaultConfig creates a new VaultConfig with the default settings and signs it.
-func newVaultConfig() vaultConfig {
+// newDefaultVaultConfig creates a new VaultConfig with the default settings
+func newDefaultVaultConfig() vaultConfig {
 	return vaultConfig{
 		RegisteredClaims:    jwt.RegisteredClaims{ID: uuid.NewString()},
 		Format:              8,
@@ -83,23 +81,11 @@ func unmarshalVaultConfig(tokenBytes []byte, keyFunc func(masterKeyPath string) 
 	return
 }
 
-func (f *Fs) loadOrCreateVault(ctx context.Context, passphrase string) error {
+func (f *Fs) loadVault(ctx context.Context, passphrase string) error {
 	configData, err := f.readSmallFile(ctx, configFileName, 1024)
 	if err != nil {
-		if !errors.Is(err, fs.ErrorObjectNotFound) {
-			return fmt.Errorf("failed to read config at %s: %w", configFileName, err)
-		}
-		// Vault does not exist, so create it
-		err = f.createVault(ctx, passphrase)
-		if err != nil {
-			return fmt.Errorf("failed to create new vault: %w", err)
-		}
-		configData, err = f.readSmallFile(ctx, "vault.cryptomator", 1024)
-		if err != nil {
-			return fmt.Errorf("failed to read vault config after creating new vault: %w", err)
-		}
+		return fmt.Errorf("failed to read config at %s: %w", configFileName, err)
 	}
-
 	f.vaultConfig, err = unmarshalVaultConfig(configData, func(masterKeyPath string) (*masterKey, error) {
 		masterKeyData, err := f.readSmallFile(ctx, masterKeyPath, 1024)
 		if err != nil {
@@ -122,7 +108,7 @@ func (f *Fs) loadOrCreateVault(ctx context.Context, passphrase string) error {
 	return nil
 }
 
-func (f *Fs) createVault(ctx context.Context, passphrase string) error {
+func (f *Fs) createVault(ctx context.Context, passphrase string, vaultConfig vaultConfig) error {
 	masterKey, err := newMasterKey()
 	if err != nil {
 		return fmt.Errorf("failed to create master key: %w", err)
@@ -137,7 +123,6 @@ func (f *Fs) createVault(ctx context.Context, passphrase string) error {
 		return fmt.Errorf("failed to save master key: %w", err)
 	}
 
-	vaultConfig := newVaultConfig()
 	configBytes, err := vaultConfig.marshal(masterKey)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt vault config: %w", err)
