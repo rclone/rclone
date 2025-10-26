@@ -1,0 +1,16 @@
+backend: Cryptomator
+name: Cryptomator
+tier: Tier 4
+maintainers: External
+features_score: 5
+integration_tests: Passing
+data_integrity: Other
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: true
+remote: 'TestCryptomator:'
+features: null
+hashes: null
+precision: null
