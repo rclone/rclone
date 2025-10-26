@@ -450,7 +450,7 @@ This is only useful if |--vfs-cache-mode| > off. If you call it when
 the |--vfs-cache-mode| is off, it will return an empty result.
 
     {
-        "queued": // an array of files queued for upload
+        "queue": // an array of files queued for upload
         [
             {
                 "name":      "file",   // string: name (full path) of the file,
