@@ -48,7 +48,7 @@ func init() {
 				Name:     config.ConfigEncoding,
 				Help:     config.ConfigEncodingHelp,
 				Advanced: true,
-				Default:  encoder.EncodeCtl | encoder.EncodeHashPercent | encoder.EncodeDot | encoder.EncodeQuestion | encoder.EncodeBackSlash | encoder.EncodeDel,
+				Default:  encoder.EncodeCtl | encoder.EncodeHashPercent | encoder.EncodeDot | encoder.EncodeRightPeriod | encoder.EncodeQuestion | encoder.EncodeBackSlash | encoder.EncodeDel,
 			},
 		},
 	})
@@ -65,7 +65,6 @@ type Options struct {
 type Fs struct {
 	name           string            // name of this remote
 	root           string            // the path we are working on
-	rootIsFile     bool              // root path is a file
 	opt            Options           // parsed options
 	organisationId string            // the organisation ID in piqlConnect
 	httpClient     *http.Client      // http Client used for external HTTP calls (file downloads / uploads)
@@ -145,6 +144,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		client:         client,
 		packageIdCache: make(map[string]string),
 	}
+
+	_, err = f.List(ctx, "")
+	if err == fs.ErrorIsFile {
+		f.root = root[0:strings.LastIndexByte(root, '/')]
+		return f, fs.ErrorIsFile
+	}
 	return f, nil
 }
 
@@ -188,6 +193,9 @@ func (f *Fs) getFiles(ctx context.Context, segments []string) (files []api.Item,
 	values.Set("path", packageRelativePath)
 	resp, err := f.client.CallJSON(ctx, &rest.Opts{Path: "/files", Parameters: values}, nil, &files)
 	if err != nil {
+		if resp.StatusCode == 403 {
+			return nil, fs.ErrorIsFile
+		}
 		if resp.StatusCode == 404 {
 			return nil, fs.ErrorDirNotFound
 		}
@@ -196,7 +204,7 @@ func (f *Fs) getFiles(ctx context.Context, segments []string) (files []api.Item,
 	return files, nil
 }
 
-func (f *Fs) listFiles(ctx context.Context, absolutePath string, onlyNames bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listFiles(ctx context.Context, absolutePath string) (entries fs.DirEntries, err error) {
 	segments := getPathSegments(absolutePath)
 	files, err := f.getFiles(ctx, segments)
 	if err != nil {
@@ -209,25 +217,15 @@ func (f *Fs) listFiles(ctx context.Context, absolutePath string, onlyNames bool)
 			if err != nil {
 				return nil, err
 			}
-			if !onlyNames {
-				dir := fs.NewDir(f.absolutePathToRclone(file.Path[0:len(file.Path)-1]), modTime)
-				entries = append(entries, dir)
-			}
+			dir := fs.NewDir(f.absolutePathToRclone(file.Path[0:len(file.Path)-1]), modTime)
+			entries = append(entries, dir)
 		} else {
 			var o fs.Object
-
-			if onlyNames {
-				lastSlash := strings.LastIndexByte(file.Path, '/')
-				o, err = f.newObjectWithInfo(ctx, file.Path[lastSlash+1:], &file)
-			} else {
-				o, err = f.newObjectWithInfo(ctx, f.absolutePathToRclone(file.Path), &file)
-			}
+			o, err = f.newObjectWithInfo(ctx, f.absolutePathToRclone(file.Path), &file)
 			if err != nil {
 				return nil, err
 			}
-			if !onlyNames || strings.HasSuffix(absolutePath, o.Remote()) {
-				entries = append(entries, o)
-			}
+			entries = append(entries, o)
 		}
 	}
 	return entries, nil
@@ -283,12 +281,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	segments := getPathSegments(absolutePath)
 	if len(segments) >= 2 {
-		entries, err := f.listFiles(ctx, absolutePath, false)
-		if err == fs.ErrorDirNotFound {
-			entries, err = f.listFiles(ctx, strings.Join(segments[:len(segments)-1], "/"), true)
-			f.rootIsFile = true
-		}
-		return entries, err
+		return f.listFiles(ctx, absolutePath)
 	}
 	return f.listPackages(ctx, segments[0])
 }
@@ -571,8 +564,8 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if o.id != "" {
 		return nil
 	}
-	segments := o.fs.getAbsolutePathSegments(path.Dir(o.remote))
-	entries, err := o.fs.getFiles(ctx, segments)
+	segments := o.fs.getAbsolutePathSegments(o.remote)
+	entries, err := o.fs.getFiles(ctx, segments[0:len(segments)-1])
 	if err != nil {
 		return err
 	}
@@ -619,11 +612,6 @@ func (o *Object) Storable() bool {
 }
 
 func (f *Fs) rclonePathToAbsolute(dir string) string {
-	if f.rootIsFile {
-		rootSegments := getPathSegments(f.root)
-		rootSegments[len(rootSegments)-1] = dir
-		return path.Join(rootSegments...)
-	}
 	return path.Join(f.root, dir)
 }
 
