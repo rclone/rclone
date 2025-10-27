@@ -75,4 +75,5 @@ type RemoveFolder struct {
 	OrganisationId string    `json:"organisationId"`
 	PackageId      string    `json:"packageId"`
 	FolderPaths    [1]string `json:"folderPaths"`
+	Recursive      bool      `json:"recursive"`
 }

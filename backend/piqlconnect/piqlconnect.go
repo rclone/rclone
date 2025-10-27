@@ -211,6 +211,9 @@ func (f *Fs) listFiles(ctx context.Context, absolutePath string) (entries fs.Dir
 		return nil, err
 	}
 	for _, file := range files {
+		// go test -v -run TestIntegration/FsMkdir/FsEncoding wants:
+		// file.Path = segments[0] + "/" + segments[1] + "/" + f.opt.Enc.ToStandardPath(file.Path)
+		// Encoding test wants:
 		file.Path = segments[0] + "/" + segments[1] + "/" + f.opt.Enc.Decode(file.Path)
 		if file.Size == 0 && file.Path[len(file.Path)-1] == '/' {
 			modTime, err := time.Parse(time.RFC3339, file.UpdatedAt)
@@ -409,22 +412,24 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if f.packageIdCache[segments[1]] == "" {
 		f.listPackages(ctx, segments[0])
 	}
-	createFolder := api.CreateFolder{
-		OrganisationId: f.organisationId,
-		PackageId:      f.packageIdCache[segments[1]],
-		FolderPath:     strings.Join(segments[2:], "/"),
-	}
+	for i := range len(segments[2:]) {
+		createFolder := api.CreateFolder{
+			OrganisationId: f.organisationId,
+			PackageId:      f.packageIdCache[segments[1]],
+			FolderPath:     f.opt.Enc.FromStandardPath(strings.Join(segments[2:3+i], "/")),
+		}
 
-	resp, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders"}, &createFolder, nil)
-	if err != nil {
-		return err
+		resp, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders"}, &createFolder, nil)
+		if err != nil {
+			return err
+		}
+		folderIdBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		folderId := string(folderIdBytes)
+		_ = folderId
 	}
-	folderIdBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	folderId := string(folderIdBytes)
-	_ = folderId
 	return nil
 }
 
@@ -453,6 +458,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		OrganisationId: f.organisationId,
 		PackageId:      f.packageIdCache[segments[1]],
 		FolderPaths:    [1]string{strings.Join(segments[2:], "/")},
+		Recursive:      false,
 	}
 	resp, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders/delete"}, &removeFolder, nil)
 	if err != nil {
@@ -474,6 +480,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 		OrganisationId: f.organisationId,
 		PackageId:      f.packageIdCache[segments[1]],
 		FolderPaths:    [1]string{strings.Join(segments[2:], "/")},
+		Recursive:      true,
 	}
 	_, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders/delete"}, &removeFolder, nil)
 	if err != nil {
@@ -567,10 +574,16 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	segments := o.fs.getAbsolutePathSegments(o.remote)
 	entries, err := o.fs.getFiles(ctx, segments[0:len(segments)-1])
 	if err != nil {
+		if err == fs.ErrorDirNotFound {
+			return fs.ErrorObjectNotFound
+		}
 		return err
 	}
 	packageRelativePath := strings.Join(segments[2:], "/")
 	for _, entry := range entries {
+		// go test -v -run TestIntegration/FsMkdir/FsEncoding wants:
+		// if packageRelativePath == o.fs.opt.Enc.ToStandardPath(entry.Path) {
+		// Encoding test wants:
 		if packageRelativePath == o.fs.opt.Enc.Decode(entry.Path) {
 			o.setMetaData(&entry)
 			return nil
@@ -688,7 +701,7 @@ func (o *Object) Remove(ctx context.Context) error {
 }
 
 func (f *Fs) Precision() time.Duration {
-	return time.Millisecond
+	return time.Second
 }
 
 func (f *Fs) Hashes() hash.Set {

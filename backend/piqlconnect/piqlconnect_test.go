@@ -11,7 +11,7 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: "TestPiqlConnect:Workspace/FirstPackage",
+		RemoteName: "TestPiqlConnect:Workspace/RCLONE_TESTING",
 		NilObject:  (*piqlconnect.Object)(nil),
 	})
 }
