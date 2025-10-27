@@ -79,15 +79,14 @@ func init() {
 			Help:     "Maximum amount of parts in a multipart upload.",
 			Default:  maxUploadParts,
 			Advanced: true,
-		},
-			{
-				Name:     config.ConfigEncoding,
-				Help:     config.ConfigEncodingHelp,
-				Advanced: true,
-				Default: encoder.Display |
-					encoder.EncodeBackSlash |
-					encoder.EncodeInvalidUtf8,
-			}},
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default: encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeInvalidUtf8,
+		}},
 	})
 }
 
@@ -214,7 +213,6 @@ type Options struct {
 	ChunkSize      fs.SizeSuffix `config:"chunk_size"`
 	MaxUploadParts int           `config:"max_upload_parts"`
 	Concurrency    int           `config:"upload_concurrency"`
-	UploadCutoff   fs.SizeSuffix `config:"upload_cutoff"`
 	Encoding       encoder.MultiEncoder
 }
 
@@ -1082,4 +1080,7 @@ var (
 	_ fs.Fs        = &Fs{}
 	_ fs.Object    = &Object{}
 	_ fs.Directory = &Directory{}
+
+	_ fs.Mover    = &Fs{}
+	_ fs.DirMover = &Fs{}
 )

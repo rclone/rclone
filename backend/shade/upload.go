@@ -12,7 +12,6 @@ import (
 	"path"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/rclone/rclone/backend/shade/api"
 	"github.com/rclone/rclone/fs"
@@ -43,10 +42,7 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 	}
 
 	var shadeWriter = chunkWriter.(*shadeChunkWriter)
-
 	o.size = shadeWriter.size
-	o.mtime = time.Now().UnixMilli()
-
 	return nil
 }
 
