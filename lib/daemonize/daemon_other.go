@@ -1,4 +1,4 @@
-//go:build !unix
+//go:build !unix || aix
 
 // Package daemonize provides daemonization stub for non-Unix platforms.
 package daemonize
