@@ -211,7 +211,7 @@ func (f *Fs) listFiles(ctx context.Context, absolutePath string) (entries fs.Dir
 		return nil, err
 	}
 	for _, file := range files {
-		file.Path = segments[0] + "/" + segments[1] + "/" + f.opt.Enc.ToStandardPath(file.Path)
+		file.Path = segments[0] + "/" + segments[1] + "/" + f.opt.Enc.Decode(file.Path)
 		if file.Size == 0 && file.Path[len(file.Path)-1] == '/' {
 			modTime, err := time.Parse(time.RFC3339, file.UpdatedAt)
 			if err != nil {
@@ -571,7 +571,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	}
 	packageRelativePath := strings.Join(segments[2:], "/")
 	for _, entry := range entries {
-		if packageRelativePath == o.fs.opt.Enc.ToStandardPath(entry.Path) {
+		if packageRelativePath == o.fs.opt.Enc.Decode(entry.Path) {
 			o.setMetaData(&entry)
 			return nil
 		}
