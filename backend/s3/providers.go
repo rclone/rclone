@@ -178,7 +178,7 @@ func constructProviders(options fs.Options, providerMap map[string]*Provider) st
 		}
 	}
 
-	var providerList string
+	var providerList strings.Builder
 
 	for _, p := range providers {
 		for i := range options {
@@ -189,7 +189,7 @@ func constructProviders(options fs.Options, providerMap map[string]*Provider) st
 					Value: p.Name,
 					Help:  p.Description,
 				})
-				providerList += p.Name + ", "
+				providerList.WriteString(p.Name + ", ")
 			case "region":
 				addExample(opt, p, p.Region, defaults.Region)
 			case "endpoint":
@@ -232,5 +232,5 @@ func constructProviders(options fs.Options, providerMap map[string]*Provider) st
 		}
 	}
 
-	return strings.TrimSuffix(providerList, ", ")
+	return strings.TrimSuffix(providerList.String(), ", ")
 }
