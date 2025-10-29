@@ -213,7 +213,7 @@ func (f *Fs) Features() *fs.Features { return f.features }
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	dirID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -224,6 +224,44 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, err
 	}
+	return f.decryptListEntries(ctx, dir, dirID, encryptedEntries)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	do := f.wrapped.Features().ListP
+	if do == nil {
+		return errorNotSupportedByUnderlyingRemote
+	}
+
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	dirPath := f.dirIDPath(dirID)
+	return do(ctx, dirPath, func(encryptedEntries fs.DirEntries) error {
+		entries, err := f.decryptListEntries(ctx, dir, dirID, encryptedEntries)
+		if err != nil {
+			return err
+		}
+		return callback(entries)
+	})
+}
+
+func (f *Fs) decryptListEntries(ctx context.Context, dir string, dirID string, encryptedEntries fs.DirEntries) (entries fs.DirEntries, err error) {
+
 	for _, entry := range encryptedEntries {
 		encryptedFilename := path.Base(entry.Remote())
 		encryptedFilename, ok := strings.CutSuffix(encryptedFilename, ".c9r")
@@ -855,5 +893,6 @@ var (
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.PutStreamer     = (*Fs)(nil)
 	_ fs.MkdirMetadataer = (*Fs)(nil)
+	_ fs.ListPer         = (*Fs)(nil)
 	// TODO: implement OpenChunkWriter. It's entirely possible to encrypt chunks of a file in parallel.
 )
