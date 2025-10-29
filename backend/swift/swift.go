@@ -943,6 +943,20 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		used = container.Bytes
 		objects = container.Count
 		total = container.QuotaBytes
+
+		if f.opt.UseSegmentsContainer.Value {
+			err = f.pacer.Call(func() (bool, error) {
+				segmentsContainer := f.rootContainer + segmentsContainerSuffix
+				container, _, err = f.c.Container(ctx, segmentsContainer)
+				return shouldRetry(ctx, err)
+			})
+			if err != nil && err != swift.ContainerNotFound {
+				return nil, fmt.Errorf("container info failed: %w", err)
+			}
+			if err == nil {
+				used += container.Bytes
+			}
+		}
 	} else {
 		var containers []swift.Container
 		err = f.pacer.Call(func() (bool, error) {

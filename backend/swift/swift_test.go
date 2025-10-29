@@ -56,6 +56,11 @@ func (f *Fs) testNoChunk(t *testing.T) {
 	uploadHash := hash.NewMultiHasher()
 	in := io.TeeReader(buf, uploadHash)
 
+	// Track how much space is used before we put our object.
+	usage, err := f.About(ctx)
+	require.NoError(t, err)
+	usedBeforePut := *usage.Used
+
 	file.Size = -1
 	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
 	obj, err := f.Features().PutStream(ctx, in, obji)
@@ -69,6 +74,13 @@ func (f *Fs) testNoChunk(t *testing.T) {
 	obj, err = f.NewObject(ctx, file.Path)
 	require.NoError(t, err)
 	file.Check(t, obj, f.Precision())
+
+	// Check how much space is used after the upload, should match the amount we
+	// uploaded..
+	usage, err = f.About(ctx)
+	require.NoError(t, err)
+	expectedUsed := usedBeforePut + obj.Size()
+	require.EqualValues(t, expectedUsed, *usage.Used)
 
 	// Delete the object
 	assert.NoError(t, obj.Remove(ctx))
@@ -105,12 +117,24 @@ func (f *Fs) testWithChunk(t *testing.T) {
 	uploadHash := hash.NewMultiHasher()
 	in := io.TeeReader(buf, uploadHash)
 
+	// Track how much space is used before we put our object.
+	ctx := context.TODO()
+	usage, err := f.About(ctx)
+	require.NoError(t, err)
+	usedBeforePut := *usage.Used
+
 	file.Size = -1
 	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-	ctx := context.TODO()
 	obj, err := f.Features().PutStream(ctx, in, obji)
 	require.NoError(t, err)
 	require.NotEmpty(t, obj)
+
+	// Check how much space is used after the upload, should match the amount we
+	// uploaded..
+	usage, err = f.About(ctx)
+	require.NoError(t, err)
+	expectedUsed := usedBeforePut + obj.Size()
+	require.EqualValues(t, expectedUsed, *usage.Used)
 }
 
 func (f *Fs) testWithChunkFail(t *testing.T) {
@@ -183,9 +207,14 @@ func (f *Fs) testCopyLargeObject(t *testing.T) {
 	uploadHash := hash.NewMultiHasher()
 	in := io.TeeReader(buf, uploadHash)
 
+	// Track how much space is used before we put our object.
+	ctx := context.TODO()
+	usage, err := f.About(ctx)
+	require.NoError(t, err)
+	usedBeforePut := *usage.Used
+
 	file.Size = -1
 	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-	ctx := context.TODO()
 	obj, err := f.Features().PutStream(ctx, in, obji)
 	require.NoError(t, err)
 	require.NotEmpty(t, obj)
@@ -194,6 +223,13 @@ func (f *Fs) testCopyLargeObject(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, objTarget)
 	require.Equal(t, obj.Size(), objTarget.Size())
+
+	// Check how much space is used after the upload, should match the amount we
+	// uploaded *and* the copy.
+	usage, err = f.About(ctx)
+	require.NoError(t, err)
+	expectedUsed := usedBeforePut + obj.Size() + objTarget.Size()
+	require.EqualValues(t, expectedUsed, *usage.Used)
 }
 
 func (f *Fs) testPolicyDiscovery(t *testing.T) {
