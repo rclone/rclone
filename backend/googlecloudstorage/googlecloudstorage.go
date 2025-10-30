@@ -1134,7 +1134,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		remote: remote,
 	}
 
-	rewriteRequest := f.svc.Objects.Rewrite(srcBucket, srcPath, dstBucket, dstPath, nil)
+	// Set the storage class for the destination object if configured
+	var dstObject *storage.Object
+	if f.opt.StorageClass != "" {
+		dstObject = &storage.Object{
+			StorageClass: f.opt.StorageClass,
+		}
+	}
+
+	rewriteRequest := f.svc.Objects.Rewrite(srcBucket, srcPath, dstBucket, dstPath, dstObject)
 	if !f.opt.BucketPolicyOnly {
 		rewriteRequest.DestinationPredefinedAcl(f.opt.ObjectACL)
 	}
@@ -1421,6 +1429,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Name:        bucketPath,
 		ContentType: fs.MimeType(ctx, src),
 		Metadata:    metadataFromModTime(modTime),
+	}
+	// Set the storage class from config if configured
+	if o.fs.opt.StorageClass != "" {
+		object.StorageClass = o.fs.opt.StorageClass
 	}
 	// Apply upload options
 	for _, option := range options {
