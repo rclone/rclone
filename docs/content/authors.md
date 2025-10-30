@@ -1035,3 +1035,4 @@ put them back in again.` >}}
 - Adam Dinwoodie <me-and@users.noreply.github.com>
 - Lukas Krejci <metlos@users.noreply.github.com>
 - Riaz Arbi <riazarbi@users.noreply.github.com>
+- Fawzib Rojas <fawzib.rojas@gmail.com>
