@@ -181,10 +181,8 @@ func (s *sshSessionExternal) Wait() error {
 	// Use sync.Once to ensure we only wait for the process once
 	// This prevents zombie processes that occur when Wait() is called multiple times
 	s.waitOnce.Do(func() {
-		if s.exited() {
-			s.waitErr = nil
-			return
-		}
+		// Always call cmd.Wait() to properly reap the process
+		// even if it has already exited
 		s.waitErr = s.cmd.Wait()
 		if s.waitErr == nil {
 			fs.Debugf(s.f, "ssh external: command exited OK")
