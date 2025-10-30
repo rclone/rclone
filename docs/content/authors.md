@@ -1032,3 +1032,4 @@ put them back in again.` >}}
 - Andrew Gunnerson <accounts+github@chiller3.com>
 - Lakshmi-Surekha <Lakshmi.Kovvuri@ibm.com>
 - dulanting <dulanting@outlook.jp>
+- Adam Dinwoodie <me-and@users.noreply.github.com>
