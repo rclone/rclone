@@ -133,6 +133,9 @@ backends:
  - backend:  "compress"
    remote:   "TestCompress:"
    fastlist: false
+ - backend:  "compress"
+   remote:   "TestCompressZstd:"
+   fastlist: false
  # - backend:  "compress"
  #   remote:   "TestCompressSwift:"
  #   fastlist: false
