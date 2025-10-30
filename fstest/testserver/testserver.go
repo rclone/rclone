@@ -177,7 +177,7 @@ func Start(remoteName string) (fn func(), err error) {
 		// been started already but not by us and stop it if so
 		const maxTries = 10
 		for i := 1; i <= maxTries; i++ {
-			if os.Getenv(envKey(name, "type")) == "" && !isRunning(name) {
+			if !isRunning(name) {
 				fs.Logf(name, "Stopped server")
 				break
 			}
