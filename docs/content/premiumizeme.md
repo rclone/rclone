@@ -73,7 +73,7 @@ your browser to the moment you get back the verification code.  This
 is on `http://127.0.0.1:53682/` and this it may require you to unblock
 it temporarily if you are running a host firewall.
 
-Once configured you can then use `rclone` like this, (replace `remote` with the name you gave your remote)
+Once configured you can then use `rclone` like this (replace `remote` with the name you gave your remote):
 
 List directories in top level of your premiumize.me
 

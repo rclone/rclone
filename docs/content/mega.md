@@ -75,7 +75,7 @@ y/e/d> y
 login via the browser, otherwise attempting to use the credentials in `rclone`
 will fail.
 
-Once configured you can then use `rclone` like this, (replace `remote` with the name you gave your remote)
+Once configured you can then use `rclone` like this (replace `remote` with the name you gave your remote):
 
 List directories in top level of your Mega
 
