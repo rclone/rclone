@@ -2298,7 +2298,6 @@ This takes the following parameters
 
 This returns an empty result on success, or an error.
 
- 
 This command takes an "fs" parameter. If this parameter is not
 supplied and if there is only one VFS in use then that VFS will be
 used. If there is more than one VFS in use then the "fs" parameter

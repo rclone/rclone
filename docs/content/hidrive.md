@@ -468,10 +468,10 @@ HiDrive is able to store symbolic links (*symlinks*) by design,
 for example, when unpacked from a zip archive.
 
 There exists no direct mechanism to manage native symlinks in remotes.
-As such this implementation has chosen to ignore any native symlinks present in the remote.
-rclone will not be able to access or show any symlinks stored in the hidrive-remote.
-This means symlinks cannot be individually removed, copied, or moved,
-except when removing, copying, or moving the parent folder.
+As such this implementation has chosen to ignore any native symlinks present in
+the remote. rclone will not be able to access or show any symlinks stored in
+the hidrive-remote. This means symlinks cannot be individually removed, copied,
+or moved, except when removing, copying, or moving the parent folder.
 
 *This does not affect the `.rclonelink`-files
 that rclone uses to encode and store symbolic links.*

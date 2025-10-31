@@ -282,10 +282,13 @@ Properties:
 
 ## Storage usage
 
-The storage usage in Quatrix is restricted to the account during the purchase. You can restrict any user with a smaller storage limit.
-The account limit is applied if the user has no custom storage limit. Once you've reached the limit, the upload of files will fail.
-This can be fixed by freeing up the space or increasing the quota.
+The storage usage in Quatrix is restricted to the account during the purchase.
+You can restrict any user with a smaller storage limit. The account limit is
+applied if the user has no custom storage limit. Once you've reached the limit,
+the upload of files will fail. This can be fixed by freeing up the space or
+increasing the quota.
 
 ## Server-side operations
 
-Quatrix supports server-side operations (copy and move). In case of conflict, files are overwritten during server-side operation.
+Quatrix supports server-side operations (copy and move). In case of conflict,
+files are overwritten during server-side operation.

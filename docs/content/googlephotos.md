@@ -571,7 +571,11 @@ When Images are downloaded this strips EXIF location (according to the
 docs and my tests).  This is a limitation of the Google Photos API and
 is covered by [bug #112096115](https://issuetracker.google.com/issues/112096115).
 
-**The current google API does not allow photos to be downloaded at original resolution.  This is very important if you are, for example, relying on "Google Photos" as a backup of your photos.  You will not be able to use rclone to redownload original images.  You could use 'google takeout' to recover the original photos as a last resort**
+**The current google API does not allow photos to be downloaded at original
+resolution. This is very important if you are, for example, relying on
+"Google Photos" as a backup of your photos. You will not be able to use
+rclone to redownload original images.  You could use 'google takeout'
+to recover the original photos as a last resort**
 
 **NB** you **can** use the [--gphotos-proxy](#gphotos-proxy) flag to use a
 headless browser to download images in full resolution.
@@ -658,7 +662,7 @@ client_id stops working) then you can make your own.
 Please follow the steps in [the google drive docs](https://rclone.org/drive/#making-your-own-client-id).
 You will need these scopes instead of the drive ones detailed:
 
-```
+```text
 https://www.googleapis.com/auth/photoslibrary.appendonly
 https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata
 https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata

@@ -310,13 +310,18 @@ Properties:
 
 ### Process `killed`
 
-On accounts with large files or something else, memory usage can significantly increase when executing list/sync instructions. When running on cloud providers (like AWS with EC2), check if the instance type has sufficient memory/CPU to execute the commands. Use the resource monitoring tools to inspect after sending the commands. Look [at this issue](https://forum.rclone.org/t/rclone-with-mega-appears-to-work-only-in-some-accounts/40233/4).
+On accounts with large files or something else, memory usage can significantly
+increase when executing list/sync instructions. When running on cloud providers
+(like AWS with EC2), check if the instance type has sufficient memory/CPU to
+execute the commands. Use the resource monitoring tools to inspect after sending
+the commands. Look [at this issue](https://forum.rclone.org/t/rclone-with-mega-appears-to-work-only-in-some-accounts/40233/4).
 
 ## Limitations
 
-This backend uses the [go-mega go library](https://github.com/t3rm1n4l/go-mega) which is an opensource
+This backend uses the [go-mega go library](https://github.com/t3rm1n4l/go-mega)
+which is an opensource
 go library implementing the Mega API. There doesn't appear to be any
-documentation for the mega protocol beyond the [mega C++ SDK](https://github.com/meganz/sdk) source code
-so there are likely quite a few errors still remaining in this library.
+documentation for the mega protocol beyond the [mega C++ SDK](https://github.com/meganz/sdk)
+source code so there are likely quite a few errors still remaining in this library.
 
 Mega allows duplicate files which may confuse rclone.
