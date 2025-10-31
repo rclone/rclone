@@ -73,7 +73,7 @@ d) Delete this remote
 y/e/d> y
 ```
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the name you gave your remote):
 
 List folders in root level folder:
 

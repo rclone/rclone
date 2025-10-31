@@ -78,7 +78,7 @@ y/e/d> y
 Note that the config asks for your email and password but doesn't
 store them, it only uses them to get the initial token.
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the name you gave your remote):
 
 List directories (sync folders) in top level of your SugarSync
 
