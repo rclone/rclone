@@ -414,19 +414,8 @@ Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_SEAFILE_ENCODING
-- Type:        Encoding
-- Default:     Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8,Dot
-
-#### --seafile-description
-
-Description of the remote.
-
-Properties:
-
-- Config:      description
-- Env Var:     RCLONE_SEAFILE_DESCRIPTION
-- Type:        string
-- Required:    false
+- Type:        MultiEncoder
+- Default:     Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8
 
 #### --seafile-upload-cutoff
 
