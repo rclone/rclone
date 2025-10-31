@@ -117,16 +117,22 @@ func init() {
 				} else {
 					oauthConfig.Scopes = scopesReadWrite
 				}
-				return oauthutil.ConfigOut("warning", &oauthutil.Options{
+				return oauthutil.ConfigOut("warning1", &oauthutil.Options{
 					OAuth2Config: oauthConfig,
 				})
-			case "warning":
+			case "warning1":
 				// Warn the user as required by google photos integration
-				return fs.ConfigConfirm("warning_done", true, "config_warning", `Warning
+				return fs.ConfigConfirm("warning2", true, "config_warning", `Warning
 
 IMPORTANT: All media items uploaded to Google Photos with rclone
 are stored in full resolution at original quality.  These uploads
 will count towards storage in your Google Account.`)
+
+			case "warning2":
+				// Warn the user that rclone can no longer download photos it didnt upload from google photos
+				return fs.ConfigConfirm("warning_done", true, "config_warning", `Warning
+IMPORTANT: Due to Google policy changes rclone can now only download photos it uploaded.`)
+
 			case "warning_done":
 				return nil, nil
 			}
@@ -346,7 +352,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	baseClient := fshttp.NewClient(ctx)
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to configure Box: %w", err)
+		return nil, fmt.Errorf("failed to configure google photos: %w", err)
 	}
 
 	root = strings.Trim(path.Clean(root), "/")

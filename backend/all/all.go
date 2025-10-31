@@ -4,6 +4,7 @@ package all
 import (
 	// Active file systems
 	_ "github.com/rclone/rclone/backend/alias"
+	_ "github.com/rclone/rclone/backend/archive"
 	_ "github.com/rclone/rclone/backend/azureblob"
 	_ "github.com/rclone/rclone/backend/azurefiles"
 	_ "github.com/rclone/rclone/backend/b2"
@@ -14,10 +15,12 @@ import (
 	_ "github.com/rclone/rclone/backend/combine"
 	_ "github.com/rclone/rclone/backend/compress"
 	_ "github.com/rclone/rclone/backend/crypt"
+	_ "github.com/rclone/rclone/backend/doi"
 	_ "github.com/rclone/rclone/backend/drive"
 	_ "github.com/rclone/rclone/backend/dropbox"
 	_ "github.com/rclone/rclone/backend/fichier"
 	_ "github.com/rclone/rclone/backend/filefabric"
+	_ "github.com/rclone/rclone/backend/filelu"
 	_ "github.com/rclone/rclone/backend/filescom"
 	_ "github.com/rclone/rclone/backend/ftp"
 	_ "github.com/rclone/rclone/backend/gofile"

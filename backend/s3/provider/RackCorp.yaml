@@ -1,0 +1,67 @@
+name: RackCorp
+description: RackCorp Object Storage
+region:
+  global: Global CDN (All locations) Region
+  au: Australia (All states)
+  au-nsw: NSW (Australia) Region
+  au-qld: QLD (Australia) Region
+  au-vic: VIC (Australia) Region
+  au-wa: Perth (Australia) Region
+  ph: Manila (Philippines) Region
+  th: Bangkok (Thailand) Region
+  hk: HK (Hong Kong) Region
+  mn: Ulaanbaatar (Mongolia) Region
+  kg: Bishkek (Kyrgyzstan) Region
+  id: Jakarta (Indonesia) Region
+  jp: Tokyo (Japan) Region
+  sg: SG (Singapore) Region
+  de: Frankfurt (Germany) Region
+  us: USA (AnyCast) Region
+  us-east-1: New York (USA) Region
+  us-west-1: Freemont (USA) Region
+  nz: Auckland (New Zealand) Region
+endpoint:
+  s3.rackcorp.com: Global (AnyCast) Endpoint
+  au.s3.rackcorp.com: Australia (Anycast) Endpoint
+  au-nsw.s3.rackcorp.com: Sydney (Australia) Endpoint
+  au-qld.s3.rackcorp.com: Brisbane (Australia) Endpoint
+  au-vic.s3.rackcorp.com: Melbourne (Australia) Endpoint
+  au-wa.s3.rackcorp.com: Perth (Australia) Endpoint
+  ph.s3.rackcorp.com: Manila (Philippines) Endpoint
+  th.s3.rackcorp.com: Bangkok (Thailand) Endpoint
+  hk.s3.rackcorp.com: HK (Hong Kong) Endpoint
+  mn.s3.rackcorp.com: Ulaanbaatar (Mongolia) Endpoint
+  kg.s3.rackcorp.com: Bishkek (Kyrgyzstan) Endpoint
+  id.s3.rackcorp.com: Jakarta (Indonesia) Endpoint
+  jp.s3.rackcorp.com: Tokyo (Japan) Endpoint
+  sg.s3.rackcorp.com: SG (Singapore) Endpoint
+  de.s3.rackcorp.com: Frankfurt (Germany) Endpoint
+  us.s3.rackcorp.com: USA (AnyCast) Endpoint
+  us-east-1.s3.rackcorp.com: New York (USA) Endpoint
+  us-west-1.s3.rackcorp.com: Freemont (USA) Endpoint
+  nz.s3.rackcorp.com: Auckland (New Zealand) Endpoint
+location_constraint:
+  global: Global CDN Region
+  au: Australia (All locations)
+  au-nsw: NSW (Australia) Region
+  au-qld: QLD (Australia) Region
+  au-vic: VIC (Australia) Region
+  au-wa: Perth (Australia) Region
+  ph: Manila (Philippines) Region
+  th: Bangkok (Thailand) Region
+  hk: HK (Hong Kong) Region
+  mn: Ulaanbaatar (Mongolia) Region
+  kg: Bishkek (Kyrgyzstan) Region
+  id: Jakarta (Indonesia) Region
+  jp: Tokyo (Japan) Region
+  sg: SG (Singapore) Region
+  de: Frankfurt (Germany) Region
+  us: USA (AnyCast) Region
+  us-east-1: New York (USA) Region
+  us-west-1: Fremont (USA) Region
+  nz: Auckland (New Zealand) Region
+acl: {}
+bucket_acl: true
+quirks:
+  use_multipart_etag: false
+  use_already_exists: false

@@ -1,0 +1,12 @@
+name: LyveCloud
+description: Seagate Lyve Cloud
+region: {}
+endpoint:
+  's3.us-west-1.{account_name}.lyve.seagate.com': US West 1 - California
+  's3.eu-west-1.{account_name}.lyve.seagate.com': EU West 1 - Ireland
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  use_multipart_etag: false # multipart ETags differ from AWS
+  use_already_exists: false

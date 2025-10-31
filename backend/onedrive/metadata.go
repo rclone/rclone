@@ -243,7 +243,6 @@ func (m *Metadata) Get(ctx context.Context) (metadata fs.Metadata, err error) {
 func (m *Metadata) Set(ctx context.Context, metadata fs.Metadata) (numSet int, err error) {
 	numSet = 0
 	for k, v := range metadata {
-		k, v := k, v
 		switch k {
 		case "mtime":
 			t, err := time.Parse(timeFormatIn, v)
@@ -422,12 +421,7 @@ func (m *Metadata) orderPermissions(xs []*api.PermissionsType) {
 		if hasUserIdentity(p.GetGrantedTo(m.fs.driveType)) {
 			return true
 		}
-		for _, identity := range p.GetGrantedToIdentities(m.fs.driveType) {
-			if hasUserIdentity(identity) {
-				return true
-			}
-		}
-		return false
+		return slices.ContainsFunc(p.GetGrantedToIdentities(m.fs.driveType), hasUserIdentity)
 	}
 	// Put Permissions with a user first, leaving unsorted otherwise
 	slices.SortStableFunc(xs, func(a, b *api.PermissionsType) int {
@@ -749,6 +743,8 @@ func (o *Object) fetchMetadataForCreate(ctx context.Context, src fs.ObjectInfo, 
 
 // Fetch metadata and update updateInfo if --metadata is in use
 // modtime will still be set when there is no metadata to set
+//
+// May return info=nil and err=nil if there was no metadata to update.
 func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, options []fs.OpenOption, updateInfo *Object) (info *api.Item, err error) {
 	meta, err := fs.GetMetadataOptions(ctx, f, src, options)
 	if err != nil {
@@ -768,6 +764,8 @@ func (f *Fs) fetchAndUpdateMetadata(ctx context.Context, src fs.ObjectInfo, opti
 }
 
 // updateMetadata calls Get, Set, and Write
+//
+// May return info=nil and err=nil if there was no metadata to update.
 func (o *Object) updateMetadata(ctx context.Context, meta fs.Metadata) (info *api.Item, err error) {
 	_, err = o.meta.Get(ctx) // refresh permissions
 	if err != nil {

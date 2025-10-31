@@ -29,16 +29,21 @@ inaccessible.true
 
 You can use it to tier single object
 
-    rclone settier Cool remote:path/file
+` + "```sh" + `
+rclone settier Cool remote:path/file
+` + "```" + `
 
 Or use rclone filters to set tier on only specific files
 
-	rclone --include "*.txt" settier Hot remote:path/dir
+` + "```sh" + `
+rclone --include "*.txt" settier Hot remote:path/dir
+` + "```" + `
 
 Or just provide remote directory and all files in directory will be tiered
 
-    rclone settier tier remote:path/dir
-`,
+` + "```sh" + `
+rclone settier tier remote:path/dir
+` + "```",
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.44",
 	},

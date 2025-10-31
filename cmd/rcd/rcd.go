@@ -3,6 +3,7 @@ package rcd
 
 import (
 	"context"
+	"strings"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
@@ -31,7 +32,7 @@ the browser when rclone is run.
 
 See the [rc documentation](/rc/) for more info on the rc flags.
 
-` + libhttp.Help(rcflags.FlagPrefix) + libhttp.TemplateHelp(rcflags.FlagPrefix) + libhttp.AuthHelp(rcflags.FlagPrefix),
+` + strings.TrimSpace(libhttp.Help(rcflags.FlagPrefix)+libhttp.TemplateHelp(rcflags.FlagPrefix)+libhttp.AuthHelp(rcflags.FlagPrefix)),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.45",
 		"groups":            "RC",

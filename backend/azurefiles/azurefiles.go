@@ -56,6 +56,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/readers"
@@ -453,7 +454,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 			return nil, fmt.Errorf("create new shared key credential failed: %w", err)
 		}
 	case opt.UseAZ:
-		var options = azidentity.AzureCLICredentialOptions{}
+		options := azidentity.AzureCLICredentialOptions{}
 		cred, err = azidentity.NewAzureCLICredential(&options)
 		fmt.Println(cred)
 		if err != nil {
@@ -516,6 +517,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		}
 	case opt.ClientID != "" && opt.Tenant != "" && opt.Username != "" && opt.Password != "":
 		// User with username and password
+		//nolint:staticcheck // this is deprecated due to Azure policy
 		options := azidentity.UsernamePasswordCredentialOptions{
 			ClientOptions: policyClientOptions,
 		}
@@ -549,7 +551,7 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 	case opt.UseMSI:
 		// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
 		// Validate and ensure exactly one is set. (To do: better validation.)
-		var b2i = map[bool]int{false: 0, true: 1}
+		b2i := map[bool]int{false: 0, true: 1}
 		set := b2i[opt.MSIClientID != ""] + b2i[opt.MSIObjectID != ""] + b2i[opt.MSIResourceID != ""]
 		if set > 1 {
 			return nil, errors.New("more than one user-assigned identity ID is set")
@@ -567,6 +569,37 @@ func newFsFromOptions(ctx context.Context, name, root string, opt *Options) (fs.
 		cred, err = azidentity.NewManagedIdentityCredential(&options)
 		if err != nil {
 			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+	case opt.ClientID != "" && opt.Tenant != "" && opt.MSIClientID != "":
+		// Workload Identity based authentication
+		var options azidentity.ManagedIdentityCredentialOptions
+		options.ID = azidentity.ClientID(opt.MSIClientID)
+
+		msiCred, err := azidentity.NewManagedIdentityCredential(&options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+
+		getClientAssertions := func(context.Context) (string, error) {
+			token, err := msiCred.GetToken(context.Background(), policy.TokenRequestOptions{
+				Scopes: []string{"api://AzureADTokenExchange"},
+			})
+			if err != nil {
+				return "", fmt.Errorf("failed to acquire MSI token: %w", err)
+			}
+
+			return token.Token, nil
+		}
+
+		assertOpts := &azidentity.ClientAssertionCredentialOptions{}
+		cred, err = azidentity.NewClientAssertionCredential(
+			opt.Tenant,
+			opt.ClientID,
+			getClientAssertions,
+			assertOpts)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire client assertion token: %w", err)
 		}
 	default:
 		return nil, errors.New("no authentication method configured")
@@ -811,18 +844,35 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 //
 // This should return ErrDirNotFound if the directory isn't found.
 func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
-	var entries fs.DirEntries
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	subDirClient := f.dirClient(dir)
 
 	// Checking whether directory exists
 	_, err := subDirClient.GetProperties(ctx, nil)
 	if fileerror.HasCode(err, fileerror.ParentNotFound, fileerror.ResourceNotFound) {
-		return entries, fs.ErrorDirNotFound
+		return fs.ErrorDirNotFound
 	} else if err != nil {
-		return entries, err
+		return err
 	}
 
-	var opt = &directory.ListFilesAndDirectoriesOptions{
+	opt := &directory.ListFilesAndDirectoriesOptions{
 		Include: directory.ListFilesInclude{
 			Timestamps: true,
 		},
@@ -831,7 +881,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	for pager.More() {
 		resp, err := pager.NextPage(ctx)
 		if err != nil {
-			return entries, err
+			return err
 		}
 		for _, directory := range resp.Segment.Directories {
 			// Name          *string `xml:"Name"`
@@ -857,7 +907,10 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 			if directory.Properties.ContentLength != nil {
 				entry.SetSize(*directory.Properties.ContentLength)
 			}
-			entries = append(entries, entry)
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
 		}
 		for _, file := range resp.Segment.Files {
 			leaf := f.opt.Enc.ToStandardPath(*file.Name)
@@ -871,10 +924,13 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 			if file.Properties.LastWriteTime != nil {
 				entry.modTime = *file.Properties.LastWriteTime
 			}
-			entries = append(entries, entry)
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
 		}
 	}
-	return entries, nil
+	return list.Flush()
 }
 
 // ------------------------------------------------------------
@@ -921,7 +977,7 @@ func (o *Object) setMetadata(resp *file.GetPropertiesResponse) {
 	}
 }
 
-// readMetaData gets the metadata if it hasn't already been fetched
+// getMetadata gets the metadata if it hasn't already been fetched
 func (o *Object) getMetadata(ctx context.Context) error {
 	resp, err := o.fileClient().GetProperties(ctx, nil)
 	if err != nil {
@@ -980,6 +1036,10 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	opt := file.SetHTTPHeadersOptions{
 		SMBProperties: &file.SMBProperties{
 			LastWriteTime: &t,
+		},
+		HTTPHeaders: &file.HTTPHeaders{
+			ContentMD5:  o.md5,
+			ContentType: &o.contentType,
 		},
 	}
 	_, err := o.fileClient().SetHTTPHeaders(ctx, &opt)
@@ -1277,10 +1337,29 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcURL := srcObj.fileClient().URL()
 	fc := f.fileClient(remote)
-	_, err = fc.StartCopyFromURL(ctx, srcURL, &opt)
+	startCopy, err := fc.StartCopyFromURL(ctx, srcURL, &opt)
 	if err != nil {
 		return nil, fmt.Errorf("Copy failed: %w", err)
 	}
+
+	// Poll for completion if necessary
+	//
+	// The for loop is never executed for same storage account copies.
+	copyStatus := startCopy.CopyStatus
+	var properties file.GetPropertiesResponse
+	pollTime := 100 * time.Millisecond
+
+	for copyStatus != nil && string(*copyStatus) == string(file.CopyStatusTypePending) {
+		time.Sleep(pollTime)
+
+		properties, err = fc.GetProperties(ctx, &file.GetPropertiesOptions{})
+		if err != nil {
+			return nil, err
+		}
+		copyStatus = properties.CopyStatus
+		pollTime = min(2*pollTime, time.Second)
+	}
+
 	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
 		return nil, fmt.Errorf("Copy: NewObject failed: %w", err)
@@ -1395,6 +1474,7 @@ var (
 	_ fs.DirMover       = &Fs{}
 	_ fs.Copier         = &Fs{}
 	_ fs.OpenWriterAter = &Fs{}
+	_ fs.ListPer        = &Fs{}
 	_ fs.Object         = &Object{}
 	_ fs.MimeTyper      = &Object{}
 )

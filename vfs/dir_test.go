@@ -669,21 +669,22 @@ func TestDirEntryModTimeInvalidation(t *testing.T) {
 		t.Skip("dirent modtime is unreliable on Windows filesystems")
 	}
 
-	// Needs to be less than 2x the wait time below, othewrwise the entry
-	// gets cleared out before it had a chance to be updated.
-	vfs.Opt.DirCacheTime = fs.Duration(50 * time.Millisecond)
-
 	r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
 
+	// Read the modtime of the directory fresh
+	vfs.FlushDirCache()
 	node, err := vfs.Stat("dir")
 	require.NoError(t, err)
 	modTime1 := node.(*Dir).DirEntry().ModTime(context.Background())
 
-	// Wait some time, then write another file which must update ModTime of
-	// the directory.
-	time.Sleep(75 * time.Millisecond)
+	// Wait some time (we wait for Precision+10%), then write another file
+	// which should update the ModTime of the directory.
+	prec := (11 * vfs.f.Precision()) / 10
+	time.Sleep(max(100*time.Millisecond, prec))
 	r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 
+	// Read the modtime of the directory fresh again - it should have changed
+	vfs.FlushDirCache()
 	node2, err := vfs.Stat("dir")
 	require.NoError(t, err)
 	modTime2 := node2.(*Dir).DirEntry().ModTime(context.Background())

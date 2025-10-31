@@ -37,6 +37,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
@@ -705,9 +706,27 @@ OUTER:
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	var iErr error
 	_, err = f.listAll(ctx, directoryID, false, false, true, func(info *api.Item) bool {
@@ -717,14 +736,22 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			f.dirCache.Put(remote, info.ID)
 			d := fs.NewDir(remote, info.ModTime()).SetID(info.ID)
 			// FIXME more info from dir?
-			entries = append(entries, d)
+			err = list.Add(d)
+			if err != nil {
+				iErr = err
+				return true
+			}
 		} else if info.Type == api.ItemTypeFile {
 			o, err := f.newObjectWithInfo(ctx, remote, info)
 			if err != nil {
 				iErr = err
 				return true
 			}
-			entries = append(entries, o)
+			err = list.Add(o)
+			if err != nil {
+				iErr = err
+				return true
+			}
 		}
 
 		// Cache some metadata for this Item to help us process events later
@@ -740,12 +767,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return false
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if iErr != nil {
-		return nil, iErr
+		return iErr
 	}
-	return entries, nil
+	return list.Flush()
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -1741,6 +1768,7 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
+	_ fs.ListPer         = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)

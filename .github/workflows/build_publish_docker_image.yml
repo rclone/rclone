@@ -52,7 +52,7 @@ jobs:
           df -h .
 
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -92,7 +92,7 @@ jobs:
         # There's no way around this, because "ImageOS" is only available to
         # processes, but the setup-go action uses it in its key.
         id: imageos
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           result-encoding: string
           script: |
@@ -183,7 +183,7 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload Image Digest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: digests-${{ env.PLATFORM }}
           path: /tmp/digests/*
@@ -198,7 +198,7 @@ jobs:
 
     steps:
       - name: Download Image Digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: /tmp/digests
           pattern: digests-*

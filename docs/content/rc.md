@@ -12,14 +12,15 @@ which can be used to remote control rclone using its API.
 You can either use the [rc](#api-rc) command to access the API
 or [use HTTP directly](#api-http).
 
-If you just want to run a remote control then see the [rcd](/commands/rclone_rcd/) command.
+If you just want to run a remote control then see the [rcd](/commands/rclone_rcd/)
+command.
 
 ## Supported parameters
 
 ### --rc
 
 Flag to start the http server listen on remote requests.
-      
+
 ### --rc-addr=IP
 
 IPaddress:Port or :Port to bind server to. (default "localhost:5572").
@@ -71,11 +72,11 @@ Timeout for server writing data (default 1h0m0s).
 
 ### --rc-serve
 
-Enable the serving of remote objects via the HTTP interface.  This
-means objects will be accessible at http://127.0.0.1:5572/ by default,
-so you can browse to http://127.0.0.1:5572/ or http://127.0.0.1:5572/*
+Enable the serving of remote objects via the HTTP interface. This
+means objects will be accessible at `http://127.0.0.1:5572/` by default,
+so you can browse to `http://127.0.0.1:5572/` or `http://127.0.0.1:5572/*`
 to see a listing of the remotes.  Objects may be requested from
-remotes using this syntax http://127.0.0.1:5572/[remote:path]/path/to/object
+remotes using this syntax `http://127.0.0.1:5572/[remote:path]/path/to/object`
 
 Default Off.
 
@@ -102,7 +103,9 @@ Default Off.
 ### --rc-enable-metrics
 
 Enable OpenMetrics/Prometheus compatible endpoint at `/metrics`.
-If more control over the metrics is desired (for example running it on a different port or with different auth) then endpoint can be enabled with the `--metrics-*` flags instead.
+If more control over the metrics is desired (for example running it on a
+different port or with different auth) then endpoint can be enabled with
+the `--metrics-*` flags instead.
 
 Default Off.
 
@@ -124,7 +127,7 @@ Default is IP address on which rc is running.
 
 Set the URL to fetch the rclone-web-gui files from.
 
-Default https://api.github.com/repos/rclone/rclone-webui-react/releases/latest.
+Default <https://api.github.com/repos/rclone/rclone-webui-react/releases/latest>.
 
 ### --rc-web-gui-update
 
@@ -182,26 +185,26 @@ rc` command.
 
 You can use it like this:
 
-```
+```sh
 $ rclone rc rc/noop param1=one param2=two
 {
-	"param1": "one",
-	"param2": "two"
+    "param1": "one",
+    "param2": "two"
 }
 ```
 
 If the remote is running on a different URL than the default
 `http://localhost:5572/`, use the `--url` option to specify it:
 
-```
-$ rclone rc --url http://some.remote:1234/ rc/noop
+```sh
+rclone rc --url http://some.remote:1234/ rc/noop
 ```
 
 Or, if the remote is listening on a Unix socket, use the `--unix-socket` option
 instead:
 
-```
-$ rclone rc --unix-socket /tmp/rclone.sock rc/noop
+```sh
+rclone rc --unix-socket /tmp/rclone.sock rc/noop
 ```
 
 Run `rclone rc` on its own, without any commands, to see the help for the
@@ -213,19 +216,19 @@ remote server.
 `rclone rc` also supports a `--json` flag which can be used to send
 more complicated input parameters.
 
-```
+```sh
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 } }' rc/noop
 {
-	"p1": [
-		1,
-		"2",
-		null,
-		4
-	],
-	"p2": {
-		"a": 1,
-		"b": 2
-	}
+    "p1": [
+        1,
+        "2",
+        null,
+        4
+    ],
+    "p2": {
+        "a": 1,
+        "b": 2
+    }
 }
 ```
 
@@ -233,13 +236,13 @@ If the parameter being passed is an object then it can be passed as a
 JSON string rather than using the `--json` flag which simplifies the
 command line.
 
-```
+```sh
 rclone rc operations/list fs=/tmp remote=test opt='{"showHash": true}'
 ```
 
 Rather than
 
-```
+```sh
 rclone rc operations/list --json '{"fs": "/tmp", "remote": "test", "opt": {"showHash": true}}'
 ```
 
@@ -266,50 +269,50 @@ response timing out.
 
 Starting a job with the `_async` flag:
 
-```
+```sh
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 }, "_async": true }' rc/noop
 {
-	"jobid": 2
+    "jobid": 2
 }
 ```
 
 Query the status to see if the job has finished.  For more information
 on the meaning of these return parameters see the `job/status` call.
 
-```
+```sh
 $ rclone rc --json '{ "jobid":2 }' job/status
 {
-	"duration": 0.000124163,
-	"endTime": "2018-10-27T11:38:07.911245881+01:00",
-	"error": "",
-	"finished": true,
-	"id": 2,
-	"output": {
-		"_async": true,
-		"p1": [
-			1,
-			"2",
-			null,
-			4
-		],
-		"p2": {
-			"a": 1,
-			"b": 2
-		}
-	},
-	"startTime": "2018-10-27T11:38:07.911121728+01:00",
-	"success": true
+    "duration": 0.000124163,
+    "endTime": "2018-10-27T11:38:07.911245881+01:00",
+    "error": "",
+    "finished": true,
+    "id": 2,
+    "output": {
+        "_async": true,
+        "p1": [
+            1,
+            "2",
+            null,
+            4
+        ],
+        "p2": {
+            "a": 1,
+            "b": 2
+        }
+    },
+    "startTime": "2018-10-27T11:38:07.911121728+01:00",
+    "success": true
 }
 ```
 
 `job/list` can be used to show the running or recently completed jobs
 
-```
+```sh
 $ rclone rc job/list
 {
-	"jobids": [
-		2
-	]
+    "jobids": [
+        2
+    ]
 }
 ```
 
@@ -318,17 +321,32 @@ $ rclone rc job/list
 If you wish to set config (the equivalent of the global flags) for the
 duration of an rc call only then pass in the `_config` parameter.
 
-This should be in the same format as the `config` key returned by
+This should be in the same format as the `main` key returned by
 [options/get](#options-get).
+
+```sh
+rclone rc --loopback options/get blocks=main
+```
+
+You can see more help on these options with this command (see [the
+options blocks section](#option-blocks) for more info).
+
+```sh
+rclone rc --loopback options/info blocks=main
+```
 
 For example, if you wished to run a sync with the `--checksum`
 parameter, you would pass this parameter in your JSON blob.
 
-    "_config":{"CheckSum": true}
+```json
+"_config":{"CheckSum": true}
+```
 
 If using `rclone rc` this could be passed as
 
-    rclone rc sync/sync ... _config='{"CheckSum": true}'
+```sh
+rclone rc sync/sync ... _config='{"CheckSum": true}'
+```
 
 Any config parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -337,8 +355,10 @@ Note that it is possible to set some values as strings or integers -
 see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
-    "_config":{"BufferSize": "42M"}
-    "_config":{"BufferSize": 44040192}
+```json
+"_config":{"BufferSize": "42M"}
+"_config":{"BufferSize": 44040192}
+```
 
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
@@ -351,17 +371,34 @@ pass in the `_filter` parameter.
 This should be in the same format as the `filter` key returned by
 [options/get](#options-get).
 
+```sh
+rclone rc --loopback options/get blocks=filter
+```
+
+You can see more help on these options with this command (see [the
+options blocks section](#option-blocks) for more info).
+
+```sh
+rclone rc --loopback options/info blocks=filter
+```
+
 For example, if you wished to run a sync with these flags
 
-    --max-size 1M --max-age 42s --include "a" --include "b"
+```sh
+--max-size 1M --max-age 42s --include "a" --include "b"
+```
 
 you would pass this parameter in your JSON blob.
 
-    "_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
+```json
+"_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
+```
 
 If using `rclone rc` this could be passed as
 
-    rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
+```sh
+rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
+```
 
 Any filter parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -370,8 +407,10 @@ Note that it is possible to set some values as strings or integers -
 see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
-    "_filter":{"MinSize": "42M"}
-    "_filter":{"MinSize": 44040192}
+```json
+"_filter":{"MinSize": "42M"}
+"_filter":{"MinSize": 44040192}
+```
 
 If you wish to check the `_filter` assignment has worked properly then
 calling `options/local` will show what the value got set to.
@@ -387,11 +426,11 @@ value. This allows caller to group stats under their own name.
 
 Stats for specific group can be accessed by passing `group` to `core/stats`:
 
-```
+```sh
 $ rclone rc --json '{ "group": "job/1" }' core/stats
 {
-	"speed": 12345
-	...
+    "speed": 12345
+    ...
 }
 ```
 
@@ -452,7 +491,7 @@ An example of this might be the `--log-level` flag. Note that the
 `Name` of the option becomes the command line flag with `_` replaced
 with `-`.
 
-```
+```json
 {
     "Advanced": false,
     "Default": 5,
@@ -511,7 +550,7 @@ isn't specified then it defaults to the root of the remote.
 
 For example this JSON is equivalent to `remote:/tmp`
 
-```
+```json
 {
     "_name": "remote",
     "_root": "/tmp"
@@ -520,7 +559,7 @@ For example this JSON is equivalent to `remote:/tmp`
 
 And this is equivalent to `:sftp,host='example.com':/tmp`
 
-```
+```json
 {
     "type": "sftp",
     "host": "example.com",
@@ -530,10 +569,10 @@ And this is equivalent to `:sftp,host='example.com':/tmp`
 
 And this is equivalent to `/tmp/dir`
 
-```
+```json
 {
-    type = "local",
-    _root = "/tmp/dir"
+    "type": "local",
+    "_root": "/tmp/dir"
 }
 ```
 
@@ -638,6 +677,7 @@ This takes the following parameters:
 - opt - a dictionary of options to control the configuration
     - obscure - declare passwords are plain and need obscuring
     - noObscure - declare passwords are already obscured and don't need obscuring
+    - noOutput - don't print anything to stdout
     - nonInteractive - don't interact with a user, return questions
     - continue - continue the config process with an answer
     - all - ask all the config questions not just the post config ones
@@ -743,6 +783,18 @@ Parameters:
 
 **Authentication is required for this call.**
 
+### config/unlock: Unlock the config file. {#config-unlock}
+
+Unlocks the config file if it is locked.
+
+Parameters:
+
+- 'config_password' - password to unlock the config file
+
+A good idea is to disable AskPassword before making this call
+
+**Authentication is required for this call.**
+
 ### config/update: update the config for a remote. {#config-update}
 
 This takes the following parameters:
@@ -752,6 +804,7 @@ This takes the following parameters:
 - opt - a dictionary of options to control the configuration
     - obscure - declare passwords are plain and need obscuring
     - noObscure - declare passwords are already obscured and don't need obscuring
+    - noOutput - don't print anything to stdout
     - nonInteractive - don't interact with a user, return questions
     - continue - continue the config process with an answer
     - all - ask all the config questions not just the post config ones
@@ -936,7 +989,8 @@ returned.
 
 Parameters
 
-- group - name of the stats group (string)
+- group - name of the stats group (string, optional)
+- short - if true will not return the transferring and checking arrays (boolean, optional)
 
 Returns the following values:
 
@@ -951,6 +1005,7 @@ Returns the following values:
 	"fatalError": boolean whether there has been at least one fatal error,
 	"lastError": last error string,
 	"renames" : number of files renamed,
+	"listed" : number of directory entries listed,
 	"retryError": boolean showing whether there has been at least one non-NoRetryError,
         "serverSideCopies": number of server side copies done,
         "serverSideCopyBytes": number bytes server side copied,
@@ -1023,6 +1078,7 @@ Returns the following values:
 				"size": size of the file in bytes,
 				"bytes": total transferred bytes for this file,
 				"checked": if the transfer is only checked (skipped, deleted),
+				"what": the purpose of the transfer (transferring, deleting, checking, importing, hashing, merging, listing, moving, renaming),
 				"timestamp": integer representing millisecond unix epoch,
 				"error": string description of the error (empty if successful),
 				"jobid": id of the job that this transfer belongs to
@@ -1740,7 +1796,7 @@ Parameters:
 
 Note that these are the global options which are unaffected by use of
 the _config and _filter parameters. If you wish to read the parameters
-set in _config then use options/config and for _filter use options/filter.
+set in _config or _filter use options/local.
 
 This shows the internal names of the option within rclone which should
 map to the external options very easily with a few exceptions.
@@ -1917,6 +1973,141 @@ check that parameter passing is working properly.
 
 **Authentication is required for this call.**
 
+### serve/list: Show running servers {#serve-list}
+
+Show running servers with IDs.
+
+This takes no parameters and returns
+
+- list: list of running serve commands
+
+Each list element will have
+
+- id: ID of the server
+- addr: address the server is running on
+- params: parameters used to start the server
+
+Eg
+
+    rclone rc serve/list
+
+Returns
+
+```json
+{
+    "list": [
+        {
+            "addr": "[::]:4321",
+            "id": "nfs-ffc2a4e5",
+            "params": {
+                "fs": "remote:",
+                "opt": {
+                    "ListenAddr": ":4321"
+                },
+                "type": "nfs",
+                "vfsOpt": {
+                    "CacheMode": "full"
+                }
+            }
+        }
+    ]
+}
+```
+
+**Authentication is required for this call.**
+
+### serve/start: Create a new server {#serve-start}
+
+Create a new server with the specified parameters.
+
+This takes the following parameters:
+
+- `type` - type of server: `http`, `webdav`, `ftp`, `sftp`, `nfs`, etc.
+- `fs` - remote storage path to serve
+- `addr` - the ip:port to run the server on, eg ":1234" or "localhost:1234"
+
+Other parameters are as described in the documentation for the
+relevant [rclone serve](/commands/rclone_serve/) command line options.
+To translate a command line option to an rc parameter, remove the
+leading `--` and replace `-` with `_`, so `--vfs-cache-mode` becomes
+`vfs_cache_mode`. Note that global parameters must be set with
+`_config` and `_filter` as described above.
+
+Examples:
+
+    rclone rc serve/start type=nfs fs=remote: addr=:4321 vfs_cache_mode=full
+    rclone rc serve/start --json '{"type":"nfs","fs":"remote:","addr":":1234","vfs_cache_mode":"full"}'
+
+This will give the reply
+
+```json
+{
+    "addr": "[::]:4321", // Address the server was started on
+    "id": "nfs-ecfc6852" // Unique identifier for the server instance
+}
+```
+
+Or an error if it failed to start.
+
+Stop the server with `serve/stop` and list the running servers with `serve/list`.
+
+**Authentication is required for this call.**
+
+### serve/stop: Unserve selected active serve {#serve-stop}
+
+Stops a running `serve` instance by ID.
+
+This takes the following parameters:
+
+- id: as returned by serve/start
+
+This will give an empty response if successful or an error if not.
+
+Example:
+
+    rclone rc serve/stop id=12345
+
+**Authentication is required for this call.**
+
+### serve/stopall: Stop all active servers {#serve-stopall}
+
+Stop all active servers.
+
+This will stop all active servers.
+
+    rclone rc serve/stopall
+
+**Authentication is required for this call.**
+
+### serve/types: Show all possible serve types {#serve-types}
+
+This shows all possible serve types and returns them as a list.
+
+This takes no parameters and returns
+
+- types: list of serve types, eg "nfs", "sftp", etc
+
+The serve types are strings like "serve", "serve2", "cserve" and can
+be passed to serve/start as the serveType parameter.
+
+Eg
+
+    rclone rc serve/types
+
+Returns
+
+```json
+{
+    "types": [
+        "http",
+        "sftp",
+        "nfs"
+    ]
+}
+```
+
+**Authentication is required for this call.**
+
 ### sync/bisync: Perform bidirectional synchronization between two paths. {#sync-bisync}
 
 This takes the following parameters
@@ -1937,8 +2128,7 @@ This takes the following parameters
 - removeEmptyDirs - remove empty directories at the final cleanup step
 - filtersFile - read filtering patterns from a file
 - ignoreListingChecksum - Do not use checksums for listings
-- resilient - Allow future runs to retry after certain less-serious errors, instead of requiring resync. 
-            Use at your own risk!
+- resilient - Allow future runs to retry after certain less-serious errors, instead of requiring resync.
 - workdir - server directory for history files (default: `~/.cache/rclone/bisync`)
 - backupdir1 - --backup-dir for Path1. Must be a non-overlapping path on the same remote.
 - backupdir2 - --backup-dir for Path2. Must be a non-overlapping path on the same remote.
@@ -2199,19 +2389,20 @@ If an error occurs then there will be an HTTP error status (e.g. 500)
 and the body of the response will contain a JSON encoded error object,
 e.g.
 
-```
+```json
 {
     "error": "Expecting string value for key \"remote\" (was float64)",
     "input": {
         "fs": "/tmp",
         "remote": 3
     },
-    "status": 400
-    "path": "operations/rmdir",
+    "status": 400,
+    "path": "operations/rmdir"
 }
 ```
 
-The keys in the error response are
+The keys in the error response are:
+
 - error - error string
 - input - the input parameters to the call
 - status - the HTTP status code
@@ -2220,42 +2411,43 @@ The keys in the error response are
 ### CORS
 
 The sever implements basic CORS support and allows all origins for that.
-The response to a preflight OPTIONS request will echo the requested "Access-Control-Request-Headers" back.
+The response to a preflight OPTIONS request will echo the requested
+"Access-Control-Request-Headers" back.
 
 ### Using POST with URL parameters only
 
-```
+```sh
 curl -X POST 'http://localhost:5572/rc/noop?potato=1&sausage=2'
 ```
 
 Response
 
-```
+```json
 {
-	"potato": "1",
-	"sausage": "2"
+    "potato": "1",
+    "sausage": "2"
 }
 ```
 
 Here is what an error response looks like:
 
-```
+```sh
 curl -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 ```
 
-```
+```json
 {
-	"error": "arbitrary error on input map[potato:1 sausage:2]",
-	"input": {
-		"potato": "1",
-		"sausage": "2"
-	}
+    "error": "arbitrary error on input map[potato:1 sausage:2]",
+    "input": {
+        "potato": "1",
+        "sausage": "2"
+    }
 }
 ```
 
 Note that curl doesn't return errors to the shell unless you use the `-f` option
 
-```
+```sh
 $ curl -f -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 curl: (22) The requested URL returned error: 400 Bad Request
 $ echo $?
@@ -2264,68 +2456,68 @@ $ echo $?
 
 ### Using POST with a form
 
-```
+```sh
 curl --data "potato=1" --data "sausage=2" http://localhost:5572/rc/noop
 ```
 
 Response
 
-```
+```json
 {
-	"potato": "1",
-	"sausage": "2"
+    "potato": "1",
+    "sausage": "2"
 }
 ```
 
 Note that you can combine these with URL parameters too with the POST
 parameters taking precedence.
 
-```
+```sh
 curl --data "potato=1" --data "sausage=2" "http://localhost:5572/rc/noop?rutabaga=3&sausage=4"
 ```
 
 Response
 
-```
+```json
 {
-	"potato": "1",
-	"rutabaga": "3",
-	"sausage": "4"
+    "potato": "1",
+    "rutabaga": "3",
+    "sausage": "4"
 }
 
 ```
 
 ### Using POST with a JSON blob
 
-```
+```sh
 curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' http://localhost:5572/rc/noop
 ```
 
 response
 
-```
+```json
 {
-	"password": "xyz",
-	"username": "xyz"
+    "password": "xyz",
+    "username": "xyz"
 }
 ```
 
 This can be combined with URL parameters too if required.  The JSON
 blob takes precedence.
 
-```
+```sh
 curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' 'http://localhost:5572/rc/noop?rutabaga=3&potato=4'
 ```
 
-```
+```json
 {
-	"potato": 2,
-	"rutabaga": "3",
-	"sausage": 1
+    "potato": 2,
+    "rutabaga": "3",
+    "sausage": 1
 }
 ```
 
-## Debugging rclone with pprof ##
+## Debugging rclone with pprof
 
 If you use the `--rc` flag this will also enable the use of the go
 profiling tools on the same port.
@@ -2336,14 +2528,16 @@ To use these, first [install go](https://golang.org/doc/install).
 
 To profile rclone's memory use you can run:
 
-    go tool pprof -web http://localhost:5572/debug/pprof/heap
+```sh
+go tool pprof -web http://localhost:5572/debug/pprof/heap
+```
 
 This should open a page in your browser showing what is using what
 memory.
 
 You can also use the `-text` flag to produce a textual summary
 
-```
+```sh
 $ go tool pprof -text http://localhost:5572/debug/pprof/heap
 Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       flat  flat%   sum%        cum   cum%
@@ -2368,13 +2562,15 @@ alive which should have been garbage collected.
 
 See all active go routines using
 
-    curl http://localhost:5572/debug/pprof/goroutine?debug=1
+```sh
+curl http://localhost:5572/debug/pprof/goroutine?debug=1
+```
 
-Or go to http://localhost:5572/debug/pprof/goroutine?debug=1 in your browser.
+Or go to <http://localhost:5572/debug/pprof/goroutine?debug=1> in your browser.
 
 ### Other profiles to look at
 
-You can see a summary of profiles available at http://localhost:5572/debug/pprof/
+You can see a summary of profiles available at <http://localhost:5572/debug/pprof/>
 
 Here is how to use some of them:
 
@@ -2383,15 +2579,14 @@ Here is how to use some of them:
 - 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
 - 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
 - Goroutine blocking profile
-    - Enable first with: `rclone rc debug/set-block-profile-rate rate=1` ([docs](#debug-set-block-profile-rate))
-    - `go tool pprof http://localhost:5572/debug/pprof/block`
+  - Enable first with: `rclone rc debug/set-block-profile-rate rate=1` ([docs](#debug-set-block-profile-rate))
+  - `go tool pprof http://localhost:5572/debug/pprof/block`
 - Contended mutexes:
-    - Enable first with: `rclone rc debug/set-mutex-profile-fraction rate=1` ([docs](#debug-set-mutex-profile-fraction))
-    - `go tool pprof http://localhost:5572/debug/pprof/mutex`
+  - Enable first with: `rclone rc debug/set-mutex-profile-fraction rate=1` ([docs](#debug-set-mutex-profile-fraction))
+  - `go tool pprof http://localhost:5572/debug/pprof/mutex`
 
 See the [net/http/pprof docs](https://golang.org/pkg/net/http/pprof/)
 for more info on how to use the profiling and for a general overview
 see [the Go team's blog post on profiling go programs](https://blog.golang.org/profiling-go-programs).
 
 The profiling hook is [zero overhead unless it is used](https://stackoverflow.com/q/26545159/164234).
-

@@ -73,9 +73,8 @@ you what happened to it. These are reminiscent of diff files.
 - |* path| means path was present in source and destination but different.
 - |! path| means there was an error reading or hashing the source or dest.
 
-The default number of parallel checks is 8. See the [--checkers=N](/docs/#checkers-n)
-option for more information.
-`, "|", "`")
+The default number of parallel checks is 8. See the [--checkers](/docs/#checkers-int)
+option for more information.`, "|", "`")
 
 // GetCheckOpt gets the options corresponding to the check flags
 func GetCheckOpt(fsrc, fdst fs.Fs) (opt *operations.CheckOpt, close func(), err error) {

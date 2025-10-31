@@ -4,13 +4,13 @@ description: "Overview of cloud storage systems"
 type: page
 ---
 
-# Overview of cloud storage systems #
+# Overview of cloud storage systems
 
 Each cloud storage system is slightly different.  Rclone attempts to
 provide a unified interface to them, but some underlying differences
 show through.
 
-## Features ##
+## Features
 
 Here is an overview of the major features of each cloud storage system.
 
@@ -25,6 +25,7 @@ Here is an overview of the major features of each cloud storage system.
 | Cloudinary                   | MD5               | R       | No               | Yes             | -         | -        |
 | Dropbox                      | DBHASH ¹          | R       | Yes              | No              | -         | -        |
 | Enterprise File Fabric       | -                 | R/W     | Yes              | No              | R/W       | -        |
+| FileLu Cloud Storage         | MD5               | R/W     | No               | Yes             | R         | -        |
 | Files.com                    | MD5, CRC32        | DR/W    | Yes              | No              | R         | -        |
 | FTP                          | -                 | R/W ¹⁰  | No               | No              | -         | -        |
 | Gofile                       | MD5               | DR/W    | No               | Yes             | R         | -        |
@@ -47,7 +48,7 @@ Here is an overview of the major features of each cloud storage system.
 | Microsoft OneDrive           | QuickXorHash ⁵    | DR/W    | Yes              | No              | R         | DRW      |
 | OpenDrive                    | MD5               | R/W     | Yes              | Partial ⁸       | -         | -        |
 | OpenStack Swift              | MD5               | R/W     | No               | No              | R/W       | -        |
-| Oracle Object Storage        | MD5               | R/W     | No               | No              | R/W       | -        |
+| Oracle Object Storage        | MD5               | R/W     | No               | No              | R/W       | RU       |
 | pCloud                       | MD5, SHA1 ⁷       | R/W     | No               | No              | W         | -        |
 | PikPak                       | MD5               | R       | No               | No              | R         | -        |
 | Pixeldrain                   | SHA256            | R/W     | No               | No              | R         | RW       |
@@ -78,9 +79,11 @@ This is an SHA256 sum of all the 4 MiB block SHA256s.
 
 ³ WebDAV supports hashes when used with Fastmail Files, Owncloud and Nextcloud only.
 
-⁴ WebDAV supports modtimes when used with Fastmail Files, Owncloud and Nextcloud only.
+⁴ WebDAV supports modtimes when used with Fastmail Files, Owncloud and Nextcloud
+only.
 
-⁵ [QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash) is Microsoft's own hash.
+⁵ [QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash)
+is Microsoft's own hash.
 
 ⁶ Mail.ru uses its own modified SHA1 hash
 
@@ -109,7 +112,7 @@ top-level sum.
 ¹³ Uloz.to provides server-calculated MD5 hash upon file upload. MD5 and SHA256
 hashes are client-calculated and stored as metadata fields.
 
-### Hash ###
+### Hash
 
 The cloud storage system supports various hash types of the objects.
 The hashes are used when transferring data as an integrity check and
@@ -119,7 +122,7 @@ the `check` command.
 To use the verify checksums when transferring between cloud storage
 systems they must support a common hash type.
 
-### ModTime ###
+### ModTime
 
 Almost all cloud storage systems store some sort of timestamp
 on objects, but several of them not something that is appropriate
@@ -163,7 +166,7 @@ means they do also support modtime-only operations.
 Storage systems with `D` in the ModTime column means that the
 following symbols apply to directories as well as files.
 
-### Case Insensitive ###
+### Case Insensitive
 
 If a cloud storage systems is case sensitive then it is possible to
 have two files which differ only in case, e.g. `file.txt` and
@@ -177,15 +180,16 @@ matter how many times you run the sync it never completes fully.
 The local filesystem and SFTP may or may not be case sensitive
 depending on OS.
 
-  * Windows - usually case insensitive, though case is preserved
-  * OSX - usually case insensitive, though it is possible to format case sensitive
-  * Linux - usually case sensitive, but there are case insensitive file systems (e.g. FAT formatted USB keys)
+- Windows - usually case insensitive, though case is preserved
+- OSX - usually case insensitive, though it is possible to format case sensitive
+- Linux - usually case sensitive, but there are case insensitive file systems
+  (e.g. FAT formatted USB keys)
 
 Most of the time this doesn't cause any problems as people tend to
 avoid files whose name differs only by case even on case sensitive
 systems.
 
-### Duplicate files ###
+### Duplicate files
 
 If a cloud storage system allows duplicate files then it can have two
 objects with the same name.
@@ -193,7 +197,7 @@ objects with the same name.
 This confuses rclone greatly when syncing - use the `rclone dedupe`
 command to rename or remove duplicates.
 
-### Restricted filenames ###
+### Restricted filenames
 
 Some cloud storage systems might have restrictions on the characters
 that are usable in file or directory names.
@@ -401,20 +405,27 @@ and to maintain backward compatibility, its behavior has not been changed.
 
 To take a specific example, the FTP backend's default encoding is
 
-    --ftp-encoding "Slash,Del,Ctl,RightSpace,Dot"
+```sh
+--ftp-encoding "Slash,Del,Ctl,RightSpace,Dot"
+```
 
 However, let's say the FTP server is running on Windows and can't have
 any of the invalid Windows characters in file names. You are backing
 up Linux servers to this FTP server which do have those characters in
 file names. So you would add the Windows set which are
 
-    Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+```text
+Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+```
 
 to the existing ones, giving:
 
-    Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot,Del,RightSpace
+```text
+Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot,Del,RightSpace
+```
 
-This can be specified using the `--ftp-encoding` flag or using an `encoding` parameter in the config file.
+This can be specified using the `--ftp-encoding` flag or using an `encoding`
+parameter in the config file.
 
 ##### Encoding example: Windows
 
@@ -428,7 +439,7 @@ To avoid this you can change the set of characters rclone should convert
 for the local filesystem, using command-line argument `--local-encoding`.
 Rclone's default behavior on Windows corresponds to
 
-```
+```sh
 --local-encoding "Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
 ```
 
@@ -436,11 +447,12 @@ If you want to use fullwidth characters `：`, `＊` and `？` in your filenames
 without rclone changing them when uploading to a remote, then set the same as
 the default value but without `Colon,Question,Asterisk`:
 
-```
+```sh
 --local-encoding "Slash,LtGt,DoubleQuote,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
 ```
 
-Alternatively, you can disable the conversion of any characters with `--local-encoding Raw`.
+Alternatively, you can disable the conversion of any characters with
+`--local-encoding Raw`.
 
 Instead of using command-line argument `--local-encoding`, you may also set it
 as [environment variable](/docs/#environment-variables) `RCLONE_LOCAL_ENCODING`,
@@ -453,7 +465,7 @@ it to your Windows filesystem, this will fail. These characters are not
 valid in filenames on Windows, and you have told rclone not to work around
 this by converting them to valid fullwidth variants.
 
-### MIME Type ###
+### MIME Type
 
 MIME types (also known as media types) classify types of documents
 using a simple text classification, e.g. `text/html` or
@@ -489,7 +501,7 @@ The levels of metadata support are
 
 See [the metadata docs](/docs/#metadata) for more info.
 
-## Optional Features ##
+## Optional Features
 
 All rclone remotes support a base command set. Other features depend
 upon backend-specific capabilities.
@@ -515,7 +527,7 @@ upon backend-specific capabilities.
 | HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | No           | No    | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No                | No           | No    | Yes      |
 | iCloud Drive                 | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | No    | Yes      |
-| ImageKit                     | Yes   | Yes  | Yes  | No      | No      | No    | No           | No                | No           | No    | Yes      |
+| ImageKit                     | Yes   | No   | Yes  | No      | No      | No    | No           | No                | No           | No    | Yes      |
 | Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | No                | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | No                | Yes          | Yes   | Yes      |
 | Koofr                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
@@ -562,12 +574,12 @@ purging a directory inside a bucket, files are deleted individually.
 
 ⁵ Use the `--onedrive-delta` flag to enable.
 
-### Purge ###
+### Purge
 
 This deletes a directory quicker than just deleting all the files in
 the directory.
 
-### Copy ###
+### Copy
 
 Used when copying an object to and from the same remote.  This known
 as a server-side copy so you can copy a file without downloading it
@@ -577,7 +589,7 @@ and uploading it again.  It is used if you use `rclone copy` or
 If the server doesn't support `Copy` directly then for copy operations
 the file is downloaded then re-uploaded.
 
-### Move ###
+### Move
 
 Used when moving/renaming an object on the same remote.  This is known
 as a server-side move of a file.  This is used in `rclone move` if the
@@ -587,13 +599,13 @@ If the server isn't capable of `Move` then rclone simulates it with
 `Copy` then delete.  If the server doesn't support `Copy` then rclone
 will download the file and re-upload it.
 
-### DirMove ###
+### DirMove
 
 This is used to implement `rclone move` to move a directory if
 possible.  If it isn't then it will use `Move` on each file (which
 falls back to `Copy` then download and upload - see `Move` section).
 
-### CleanUp ###
+### CleanUp
 
 This is used for emptying the trash for a remote by `rclone cleanup`.
 
@@ -603,31 +615,31 @@ error.
 ‡‡ Note that while Box implements this it has to delete every file
 individually so it will be slower than emptying the trash via the WebUI
 
-### ListR ###
+### ListR
 
 The remote supports a recursive list to list all the contents beneath
 a directory quickly.  This enables the `--fast-list` flag to work.
 See the [rclone docs](/docs/#fast-list) for more details.
 
-### StreamUpload ###
+### StreamUpload
 
 Some remotes allow files to be uploaded without knowing the file size
 in advance. This allows certain operations to work without spooling the
 file to local disk first, e.g. `rclone rcat`.
 
-### MultithreadUpload ###
+### MultithreadUpload
 
 Some remotes allow transfers to the remote to be sent as chunks in
 parallel. If this is supported then rclone will use multi-thread
 copying to transfer files much faster.
 
-### LinkSharing ###
+### LinkSharing
 
 Sets the necessary permissions on a file or folder and prints a link
 that allows others to access them, even if they don't have an account
 on the particular cloud provider.
 
-### About ###
+### About
 
 Rclone `about` prints quota information for a remote. Typical output
 includes bytes used, free, quota and in trash.
@@ -641,7 +653,7 @@ rclone union remote.
 
 See [rclone about command](https://rclone.org/commands/rclone_about/)
 
-### EmptyDir ###
+### EmptyDir
 
 The remote supports empty directories. See [Limitations](/bugs/#limitations)
  for details. Most Object/Bucket-based remotes do not support this.

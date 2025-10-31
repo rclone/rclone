@@ -378,12 +378,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// OpenWriterAt opens with a handle for random access writes
+// XOpenWriterAt opens with a handle for random access writes
 //
 // Pass in the remote desired and the size if known.
 //
-// It truncates any existing object
-func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+// It truncates any existing object.
+//
+// OpenWriterAt disabled because it seems to have been disabled at pcloud
+// PUT /file_open?flags=XXX&folderid=XXX&name=XXX HTTP/1.1
+//
+//	{
+//	        "result": 2003,
+//	        "error": "Access denied. You do not have permissions to perform this operation."
+//	}
+func (f *Fs) XOpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
 	client, err := f.newSingleConnClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("create client: %w", err)
@@ -621,11 +629,31 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	list := list.NewHelper(callback)
 	err = f.listHelper(ctx, dir, false, func(o fs.DirEntry) error {
-		entries = append(entries, o)
-		return nil
+		return list.Add(o)
 	})
-	return entries, err
+	if err != nil {
+		return err
+	}
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -1369,6 +1397,8 @@ var (
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.ListPer         = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)

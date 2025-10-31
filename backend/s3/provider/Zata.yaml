@@ -1,0 +1,14 @@
+name: Zata
+description: Zata (S3 compatible Gateway)
+region:
+  us-east-1: Indore, Madhya Pradesh, India
+endpoint:
+  idr01.zata.ai: South Asia Endpoint
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  use_multipart_etag: false
+  might_gzip: false
+  use_unsigned_payload: false
+  use_already_exists: false

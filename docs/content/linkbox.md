@@ -14,11 +14,13 @@ Here is an example of making a remote for Linkbox.
 
 First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password

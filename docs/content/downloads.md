@@ -9,18 +9,24 @@ type: page
 Rclone is single executable (`rclone`, or `rclone.exe` on Windows) that you can
 simply download as a zip archive and extract into a location of your choosing.
 See the [install](https://rclone.org/install/) documentation for more details.
+We also offer a secure [enterprise-grade, zero CVE docker
+image](https://securebuild.com/images/rclone) through our partner
+[SecureBuild](https://securebuild.com/blog/introducing-securebuild).
 
 ## Release {{% version %}} OS requirements {#osrequirements}
 
-| OS | Minimum Version | 
+| OS | Minimum Version |
 |:-------:|:-------:|
 | Linux | Kernel 3.2 |
-| macOS | 11 (Big Sur) |
+| macOS | 12 (Monterey) |
 | Windows | 10, Server 2016 |
 | FreeBSD | 12.2 |
 | OpenBSD | 6.9 |
 
-These requirements come from the Go version that rclone is compiled with and are simplified from [minimum requirements](https://go.dev/wiki/MinimumRequirements) and other [platform specific information](https://go.dev/wiki/#platform-specific-information) in the Go Wiki.
+These requirements come from the Go version that rclone is compiled with and are
+simplified from [minimum requirements](https://go.dev/wiki/MinimumRequirements)
+and other [platform specific information](https://go.dev/wiki/#platform-specific-information)
+in the Go Wiki.
 
 ## Release {{% version %}} {#release}
 
@@ -35,8 +41,10 @@ These requirements come from the Go version that rclone is compiled with and are
 | MIPS - Big Endian | - | - | {{< download linux mips >}} | {{< download linux mips deb >}} | {{< download linux mips rpm >}} | - | - | - | - | - |
 | MIPS - Little Endian | - | - | {{< download linux mipsle >}} | {{< download linux mipsle deb >}} | {{< download linux mipsle rpm >}} | - | - | - | - | - |
 
+<!-- markdownlint-disable-next-line no-bare-urls line-length -->
 You can also find a [mirror of the downloads on GitHub](https://github.com/rclone/rclone/releases/tag/{{< version >}}).
 
+<!-- markdownlint-disable-next-line no-bare-urls -->
 See also [Android builds](https://beta.rclone.org/{{% version %}}/testbuilds/).
 These are built as part of the official release, but haven't been
 adopted as first class builds yet.
@@ -44,15 +52,19 @@ adopted as first class builds yet.
 See [the release signing docs](/release_signing/) for how to verify
 signatures on the release.
 
-## Script download and install ##
+## Script download and install
 
 To install rclone on Linux/macOS/BSD systems, run:
 
-    sudo -v ; curl https://rclone.org/install.sh | sudo bash
+```sh
+sudo -v ; curl https://rclone.org/install.sh | sudo bash
+```
 
 For beta installation, run:
 
-    sudo -v ; curl https://rclone.org/install.sh | sudo bash -s beta
+```sh
+sudo -v ; curl https://rclone.org/install.sh | sudo bash -s beta
+```
 
 Note that this script checks the version of rclone installed first and
 won't re-download if not needed.
@@ -62,11 +74,15 @@ won't re-download if not needed.
 [Beta releases](https://beta.rclone.org) are generated from each commit
 to master.  Note these are named like
 
-    {Version Tag}.beta.{Commit Number}.{Git Commit Hash}
+```text
+{Version Tag}.beta.{Commit Number}.{Git Commit Hash}
+```
 
 e.g.
 
-    v1.53.0-beta.4677.b657a2204
+```text
+v1.53.0-beta.4677.b657a2204
+```
 
 The `Version Tag` is the version that the beta release will become
 when it is released. You can match the `Git Commit Hash` up with the
@@ -76,11 +92,15 @@ and will normally be at the end of the list.
 
 Some beta releases may have a branch name also:
 
-    {Version Tag}-beta.{Commit Number}.{Git Commit Hash}.{Branch Name}
+```text
+{Version Tag}-beta.{Commit Number}.{Git Commit Hash}.{Branch Name}
+```
 
 e.g.
 
-    v1.53.0-beta.4677.b657a2204.semver
+```text
+v1.53.0-beta.4677.b657a2204.semver
+```
 
 The presence of `Branch Name` indicates that this is a feature under
 development which will at some point be merged into the normal betas
@@ -112,10 +132,11 @@ script) from a URL which doesn't change then you can use these links.
 
 ## Older Downloads
 
-Older downloads can be found [here](https://downloads.rclone.org/).
+Older downloads can be found at <https://downloads.rclone.org/>
 
 The latest `rclone` version working for:
-| OS | Maximum rclone version | 
+
+| OS | Maximum rclone version |
 |:-------:|:-------:|
 | Windows 7 | v1.63.1 |
 | Windows Server 2008 | v1.63.1 |

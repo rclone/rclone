@@ -24,7 +24,7 @@ func TestNewJobs(t *testing.T) {
 func TestJobsKickExpire(t *testing.T) {
 	testy.SkipUnreliable(t)
 	jobs := newJobs()
-	jobs.opt.JobExpireInterval = time.Millisecond
+	jobs.opt.JobExpireInterval = fs.Duration(time.Millisecond)
 	assert.Equal(t, false, jobs.expireRunning)
 	jobs.kickExpire()
 	jobs.mu.Lock()
@@ -41,7 +41,7 @@ func TestJobsExpire(t *testing.T) {
 	ctx := context.Background()
 	wait := make(chan struct{})
 	jobs := newJobs()
-	jobs.opt.JobExpireInterval = time.Millisecond
+	jobs.opt.JobExpireInterval = fs.Duration(time.Millisecond)
 	assert.Equal(t, false, jobs.expireRunning)
 	var gotJobID int64
 	var gotJob *Job
@@ -64,7 +64,7 @@ func TestJobsExpire(t *testing.T) {
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.mu.Lock()
 	job.mu.Lock()
-	job.EndTime = time.Now().Add(-rc.Opt.JobExpireDuration - 60*time.Second)
+	job.EndTime = time.Now().Add(-time.Duration(rc.Opt.JobExpireDuration) - 60*time.Second)
 	assert.Equal(t, true, jobs.expireRunning)
 	job.mu.Unlock()
 	jobs.mu.Unlock()
@@ -206,7 +206,7 @@ func TestJobRunPanic(t *testing.T) {
 	runtime.Gosched() // yield to make sure job is updated
 
 	// Wait a short time for the panic to propagate
-	for i := uint(0); i < 10; i++ {
+	for i := range uint(10) {
 		job.mu.Lock()
 		e := job.Error
 		job.mu.Unlock()
@@ -539,8 +539,7 @@ func TestOnFinish(t *testing.T) {
 func TestOnFinishAlreadyFinished(t *testing.T) {
 	jobID.Store(0)
 	done := make(chan struct{})
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	job, _, err := NewJob(ctx, shortFn, rc.Params{})
 	assert.NoError(t, err)
 

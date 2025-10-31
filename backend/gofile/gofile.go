@@ -8,13 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/gofile/api"
@@ -37,10 +35,8 @@ const (
 	maxSleep       = 20 * time.Second
 	decayConstant  = 1 // bigger for slower decay, exponential
 	rootURL        = "https://api.gofile.io"
-	serversExpiry  = 60 * time.Second // check for new upload servers this often
-	serversActive  = 2                // choose this many closest upload servers to use
-	rateLimitSleep = 5 * time.Second  // penalise a goroutine by this long for making a rate limit error
-	maxDepth       = 4                // in ListR recursive list this deep (maximum is 16)
+	rateLimitSleep = 5 * time.Second // penalise a goroutine by this long for making a rate limit error
+	maxDepth       = 4               // in ListR recursive list this deep (maximum is 16)
 )
 
 /*
@@ -128,16 +124,13 @@ type Options struct {
 
 // Fs represents a remote gofile
 type Fs struct {
-	name           string             // name of this remote
-	root           string             // the path we are working on
-	opt            Options            // parsed options
-	features       *fs.Features       // optional features
-	srv            *rest.Client       // the connection to the server
-	dirCache       *dircache.DirCache // Map of directory path to directory id
-	pacer          *fs.Pacer          // pacer for API calls
-	serversMu      *sync.Mutex        // protect the servers info below
-	servers        []api.Server       // upload servers we can use
-	serversChecked time.Time          // time the servers were refreshed
+	name     string             // name of this remote
+	root     string             // the path we are working on
+	opt      Options            // parsed options
+	features *fs.Features       // optional features
+	srv      *rest.Client       // the connection to the server
+	dirCache *dircache.DirCache // Map of directory path to directory id
+	pacer    *fs.Pacer          // pacer for API calls
 }
 
 // Object describes a gofile object
@@ -311,12 +304,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	client := fshttp.NewClient(ctx)
 
 	f := &Fs{
-		name:      name,
-		root:      root,
-		opt:       *opt,
-		srv:       rest.NewClient(client).SetRoot(rootURL),
-		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		serversMu: new(sync.Mutex),
+		name:  name,
+		root:  root,
+		opt:   *opt,
+		srv:   rest.NewClient(client).SetRoot(rootURL),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:          false,
@@ -433,98 +425,6 @@ func (f *Fs) readRootFolderID(ctx context.Context, m configmap.Mapper) (err erro
 	f.opt.RootFolderID = result.Data.RootFolder
 	m.Set("root_folder_id", f.opt.RootFolderID)
 	return nil
-}
-
-// Find the top n servers measured by response time
-func (f *Fs) bestServers(ctx context.Context, servers []api.Server, n int) (newServers []api.Server) {
-	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(10*time.Second))
-	defer cancel()
-
-	if n > len(servers) {
-		n = len(servers)
-	}
-	results := make(chan int, len(servers))
-
-	// Test how long the servers take to respond
-	for i := range servers {
-		i := i // for closure
-		go func() {
-			opts := rest.Opts{
-				Method:  "GET",
-				RootURL: servers[i].Root(),
-			}
-			var result api.UploadServerStatus
-			start := time.Now()
-			_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
-			ping := time.Since(start)
-			err = result.Err(err)
-			if err != nil {
-				results <- -1 // send a -ve number on error
-				return
-			}
-			fs.Debugf(nil, "Upload server %v responded in %v", &servers[i], ping)
-			results <- i
-		}()
-	}
-
-	// Wait for n servers to respond
-	newServers = make([]api.Server, 0, n)
-	for range servers {
-		i := <-results
-		if i >= 0 {
-			newServers = append(newServers, servers[i])
-		}
-		if len(newServers) >= n {
-			break
-		}
-	}
-	return newServers
-}
-
-// Clear all the upload servers - call on an error
-func (f *Fs) clearServers() {
-	f.serversMu.Lock()
-	defer f.serversMu.Unlock()
-
-	fs.Debugf(f, "Clearing upload servers")
-	f.servers = nil
-}
-
-// Gets an upload server
-func (f *Fs) getServer(ctx context.Context) (server *api.Server, err error) {
-	f.serversMu.Lock()
-	defer f.serversMu.Unlock()
-
-	if len(f.servers) == 0 || time.Since(f.serversChecked) >= serversExpiry {
-		opts := rest.Opts{
-			Method: "GET",
-			Path:   "/servers",
-		}
-		var result api.ServersResponse
-		var resp *http.Response
-		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-			return shouldRetry(ctx, resp, err)
-		})
-		if err = result.Err(err); err != nil {
-			if len(f.servers) == 0 {
-				return nil, fmt.Errorf("failed to read upload servers: %w", err)
-			}
-			fs.Errorf(f, "failed to read new upload servers: %v", err)
-		} else {
-			// Find the top servers measured by response time
-			f.servers = f.bestServers(ctx, result.Data.Servers, serversActive)
-			f.serversChecked = time.Now()
-		}
-	}
-
-	if len(f.servers) == 0 {
-		return nil, errors.New("no upload servers found")
-	}
-
-	// Pick a server at random since we've already found the top ones
-	i := rand.Intn(len(f.servers))
-	return &f.servers[i], nil
 }
 
 // rootSlash returns root with a slash on if it is empty, otherwise empty string
@@ -1526,13 +1426,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	// Find an upload server
-	server, err := o.fs.getServer(ctx)
-	if err != nil {
-		return err
-	}
-	fs.Debugf(o, "Using upload server %v", server)
-
 	// If the file exists, delete it after a successful upload
 	if o.id != "" {
 		id := o.id
@@ -1561,7 +1454,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		},
 		MultipartContentName: "file",
 		MultipartFileName:    o.fs.opt.Enc.FromStandardName(leaf),
-		RootURL:              server.URL(),
+		RootURL:              api.DirectUploadURL(),
 		Options:              options,
 	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
@@ -1569,10 +1462,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return shouldRetry(ctx, resp, err)
 	})
 	if err = result.Err(err); err != nil {
-		if isAPIErr(err, "error-freespace") {
-			fs.Errorf(o, "Upload server out of space - need to retry upload")
-		}
-		o.fs.clearServers()
 		return fmt.Errorf("failed to upload file: %w", err)
 	}
 	return o.setMetaData(&result.Data)

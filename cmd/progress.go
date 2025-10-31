@@ -5,11 +5,11 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
@@ -19,8 +19,6 @@ import (
 const (
 	// interval between progress prints
 	defaultProgressInterval = 500 * time.Millisecond
-	// time format for logging
-	logTimeFormat = "2006/01/02 15:04:05"
 )
 
 // startProgress starts the progress bar printing
@@ -28,15 +26,13 @@ const (
 // It returns a func which should be called to stop the stats.
 func startProgress() func() {
 	stopStats := make(chan struct{})
-	oldLogOutput := fs.LogOutput
 	oldSyncPrint := operations.SyncPrintf
 
 	if !log.Redirected() {
 		// Intercept the log calls if not logging to file or syslog
-		fs.LogOutput = func(level fs.LogLevel, text string) {
-			printProgress(fmt.Sprintf("%s %-6s: %s", time.Now().Format(logTimeFormat), level, text))
-
-		}
+		log.Handler.SetOutput(func(level slog.Level, text string) {
+			printProgress(text)
+		})
 	}
 
 	// Intercept output from functions such as HashLister to stdout
@@ -60,7 +56,10 @@ func startProgress() func() {
 			case <-stopStats:
 				ticker.Stop()
 				printProgress("")
-				fs.LogOutput = oldLogOutput
+				if !log.Redirected() {
+					// Reset intercept of the log calls
+					log.Handler.ResetOutput()
+				}
 				operations.SyncPrintf = oldSyncPrint
 				fmt.Println("")
 				return

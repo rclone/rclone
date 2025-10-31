@@ -304,7 +304,7 @@ func (acc *Account) ServerSideTransferEnd(n int64) {
 	acc.stats.Bytes(n)
 }
 
-// serverSideEnd accounts for non specific server side data
+// serverSideEnd accounts for non specific server-side data
 func (acc *Account) serverSideEnd(n int64) {
 	// Account for bytes unless we are checking
 	if !acc.checking {
@@ -312,13 +312,13 @@ func (acc *Account) serverSideEnd(n int64) {
 	}
 }
 
-// ServerSideCopyEnd accounts for a read of n bytes in a sever side copy
+// ServerSideCopyEnd accounts for a read of n bytes in a server-side copy
 func (acc *Account) ServerSideCopyEnd(n int64) {
 	acc.stats.AddServerSideCopy(n)
 	acc.serverSideEnd(n)
 }
 
-// ServerSideMoveEnd accounts for a read of n bytes in a sever side move
+// ServerSideMoveEnd accounts for a read of n bytes in a server-side move
 func (acc *Account) ServerSideMoveEnd(n int64) {
 	acc.stats.AddServerSideMove(n)
 	acc.serverSideEnd(n)
@@ -374,6 +374,39 @@ func (acc *Account) Read(p []byte) (n int, err error) {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
 	return acc.read(acc.in, p)
+}
+
+// Seek to position in the object - see io.Seeker
+//
+// May return an error if not implemented by the underlying reader.
+func (acc *Account) Seek(offset int64, whence int) (int64, error) {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	do, ok := acc.in.(io.Seeker)
+	if !ok {
+		return 0, fmt.Errorf("internal error: Seek not implemented for %T", acc.in)
+	}
+	return do.Seek(offset, whence)
+}
+
+// ReadAt from off into p - see io.ReaderAt
+//
+// May return an error if not implemented by the underlying reader.
+func (acc *Account) ReadAt(p []byte, off int64) (n int, err error) {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	do, ok := acc.in.(io.ReaderAt)
+	if !ok {
+		return 0, fmt.Errorf("internal error: ReadAt not implemented for %T", acc.in)
+	}
+	bytesUntilLimit, err := acc.checkReadBefore()
+	if err == nil {
+		n, err = do.ReadAt(p, off)
+		acc.accountRead(n)
+		n, err = acc.checkReadAfter(bytesUntilLimit, n, err)
+	}
+	return n, err
+
 }
 
 // Thin wrapper for w

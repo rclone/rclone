@@ -8,7 +8,9 @@ versionIntroduced: "v0.91"
 
 Local paths are specified as normal filesystem paths, e.g. `/path/to/wherever`, so
 
-    rclone sync --interactive /home/source /tmp/destination
+```sh
+rclone sync --interactive /home/source /tmp/destination
+```
 
 Will sync `/home/source` to `/tmp/destination`.
 
@@ -25,7 +27,7 @@ Rclone reads and writes the modification times using an accuracy determined
 by the OS. Typically this is 1ns on Linux, 10 ns on Windows and 1 Second
 on OS X.
 
-### Filenames ###
+### Filenames
 
 Filenames should be encoded in UTF-8 on disk. This is the normal case
 for Windows and OS X.
@@ -41,7 +43,7 @@ be replaced with a quoted representation of the invalid bytes. The name
 `gro\xdf` will be transferred as `gro‛DF`. `rclone` will emit a debug
 message in this case (use `-v` to see), e.g.
 
-```
+```text
 Local file system at .: Replacing invalid UTF-8 characters in "gro\xdf"
 ```
 
@@ -117,7 +119,7 @@ These only get replaced if they are the last character in the name:
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be converted to UTF-16.
 
-### Paths on Windows ###
+### Paths on Windows
 
 On Windows there are many ways of specifying a path to a file system resource.
 Local paths can be absolute, like `C:\path\to\wherever`, or relative,
@@ -133,10 +135,11 @@ so in most cases you do not have to worry about this (read more [below](#long-pa
 Using the same prefix `\\?\` it is also possible to specify path to volumes
 identified by their GUID, e.g. `\\?\Volume{b75e2c83-0000-0000-0000-602f00000000}\some\path`.
 
-#### Long paths ####
+#### Long paths
 
 Rclone handles long paths automatically, by converting all paths to
-[extended-length path format](https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation), which allows paths up to 32,767 characters.
+[extended-length path format](https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation),
+which allows paths up to 32,767 characters.
 
 This conversion will ensure paths are absolute and prefix them with
 the `\\?\`. This is why you will see that your paths, for instance
@@ -147,18 +150,19 @@ However, in rare cases this may cause problems with buggy file
 system drivers like [EncFS](https://github.com/rclone/rclone/issues/261).
 To disable UNC conversion globally, add this to your `.rclone.conf` file:
 
-```
+```ini
 [local]
 nounc = true
 ```
 
 If you want to selectively disable UNC, you can add it to a separate entry like this:
 
-```
+```ini
 [nounc]
 type = local
 nounc = true
 ```
+
 And use rclone like this:
 
 `rclone copy c:\src nounc:z:\dst`
@@ -180,7 +184,7 @@ This flag applies to all commands.
 
 For example, supposing you have a directory structure like this
 
-```
+```sh
 $ tree /tmp/a
 /tmp/a
 ├── b -> ../b
@@ -192,7 +196,7 @@ $ tree /tmp/a
 
 Then you can see the difference with and without the flag like this
 
-```
+```sh
 $ rclone ls /tmp/a
         6 one
         6 two/three
@@ -200,7 +204,7 @@ $ rclone ls /tmp/a
 
 and
 
-```
+```sh
 $ rclone -L ls /tmp/a
      4174 expected
         6 one
@@ -209,7 +213,7 @@ $ rclone -L ls /tmp/a
         6 b/one
 ```
 
-#### --local-links, --links, -l 
+#### --local-links, --links, -l
 
 Normally rclone will ignore symlinks or junction points (which behave
 like symlinks under Windows).
@@ -223,7 +227,7 @@ This flag applies to all commands.
 
 For example, supposing you have a directory structure like this
 
-```
+```sh
 $ tree /tmp/a
 /tmp/a
 ├── file1 -> ./file4
@@ -232,13 +236,13 @@ $ tree /tmp/a
 
 Copying the entire directory with '-l'
 
-```
-$ rclone copy -l /tmp/a/ remote:/tmp/a/
+```sh
+rclone copy -l /tmp/a/ remote:/tmp/a/
 ```
 
 The remote files are created with a `.rclonelink` suffix
 
-```
+```sh
 $ rclone ls remote:/tmp/a
        5 file1.rclonelink
       14 file2.rclonelink
@@ -246,7 +250,7 @@ $ rclone ls remote:/tmp/a
 
 The remote files will contain the target of the symbolic links
 
-```
+```sh
 $ rclone cat remote:/tmp/a/file1.rclonelink
 ./file4
 
@@ -256,7 +260,7 @@ $ rclone cat remote:/tmp/a/file2.rclonelink
 
 Copying them back with '-l'
 
-```
+```sh
 $ rclone copy -l remote:/tmp/a/ /tmp/b/
 
 $ tree /tmp/b
@@ -267,7 +271,7 @@ $ tree /tmp/b
 
 However, if copied back without '-l'
 
-```
+```sh
 $ rclone copyto remote:/tmp/a/ /tmp/b/
 
 $ tree /tmp/b
@@ -278,7 +282,7 @@ $ tree /tmp/b
 
 If you want to copy a single file with `-l` then you must use the `.rclonelink` suffix.
 
-```
+```sh
 $ rclone copy -l remote:/tmp/a/file1.rclonelink /tmp/c
 
 $ tree /tmp/c
@@ -302,7 +306,7 @@ different file systems.
 
 For example if you have a directory hierarchy like this
 
-```
+```sh
 root
 ├── disk1     - disk1 mounted on the root
 │   └── file3 - stored on disk1
@@ -312,15 +316,16 @@ root
 └── file2     - stored on the root disk
 ```
 
-Using `rclone --one-file-system copy root remote:` will only copy `file1` and `file2`.  Eg
+Using `rclone --one-file-system copy root remote:` will only copy `file1`
+and `file2`. E.g.
 
-```
+```sh
 $ rclone -q --one-file-system ls root
         0 file1
         0 file2
 ```
 
-```
+```sh
 $ rclone -q ls root
         0 disk1/file3
         0 disk2/file4
@@ -629,6 +634,17 @@ Properties:
         - The creation time.
     - "ctime"
         - The last status change time.
+
+#### --local-hashes
+
+Comma separated list of supported checksum types.
+
+Properties:
+
+- Config:      hashes
+- Env Var:     RCLONE_LOCAL_HASHES
+- Type:        CommaSepList
+- Default:     
 
 #### --local-encoding
 

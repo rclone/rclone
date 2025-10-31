@@ -1377,9 +1377,27 @@ func (f *Fs) itemToDirEntry(ctx context.Context, dir string, info *api.Item) (en
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) error {
 		entry, err := f.itemToDirEntry(ctx, dir, info)
@@ -1389,13 +1407,16 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if entry == nil {
 			return nil
 		}
-		entries = append(entries, entry)
+		err = list.Add(entry)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return entries, nil
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -1782,7 +1803,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	if err != nil {
 		return nil, err
 	}
-	err = dstObj.setMetaData(info)
+	if info != nil {
+		err = dstObj.setMetaData(info)
+	}
 	return dstObj, err
 }
 
@@ -1862,7 +1885,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	err = dstObj.setMetaData(info)
+	if info != nil {
+		err = dstObj.setMetaData(info)
+	}
 	return dstObj, err
 }
 
@@ -2629,7 +2654,10 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, src fs.Obje
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch and update metadata: %w", err)
 	}
-	return info, o.setMetaData(info)
+	if info != nil {
+		err = o.setMetaData(info)
+	}
+	return info, err
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -3016,6 +3044,7 @@ var (
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.ListPer         = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}

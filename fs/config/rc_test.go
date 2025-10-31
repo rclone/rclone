@@ -3,6 +3,7 @@ package config_test
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
@@ -19,6 +20,12 @@ const testName = "configTestNameForRc"
 
 func TestRc(t *testing.T) {
 	ctx := context.Background()
+	oldConfigFile := config.GetConfigPath()
+	defer func() {
+		require.NoError(t, config.SetConfigPath(oldConfigFile))
+	}()
+	// Set a temporary config file
+	require.NoError(t, config.SetConfigPath(filepath.Join(t.TempDir(), "rclone.conf")))
 	configfile.Install()
 	// Create the test remote
 	call := rc.Calls.Get("config/create")
@@ -138,6 +145,22 @@ func TestRc(t *testing.T) {
 	assert.Nil(t, out)
 	assert.Equal(t, "", config.GetValue(testName, "type"))
 	assert.Equal(t, "", config.GetValue(testName, "test_key"))
+
+	t.Run("ListRemotes empty not nil", func(t *testing.T) {
+		call := rc.Calls.Get("config/listremotes")
+		assert.NotNil(t, call)
+		in := rc.Params{}
+		out, err := call.Fn(context.Background(), in)
+		require.NoError(t, err)
+		require.NotNil(t, out)
+
+		var remotes []string
+		err = out.GetStruct("remotes", &remotes)
+		require.NoError(t, err)
+
+		assert.NotNil(t, remotes)
+		assert.Empty(t, remotes)
+	})
 }
 
 func TestRcProviders(t *testing.T) {
@@ -187,4 +210,18 @@ func TestRcPaths(t *testing.T) {
 	assert.Equal(t, config.GetConfigPath(), out["config"])
 	assert.Equal(t, config.GetCacheDir(), out["cache"])
 	assert.Equal(t, os.TempDir(), out["temp"])
+}
+
+func TestRcConfigUnlock(t *testing.T) {
+	call := rc.Calls.Get("config/unlock")
+	assert.NotNil(t, call)
+	in := rc.Params{
+		"config_password": "test",
+	}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+
+	assert.Nil(t, err)
+	assert.Nil(t, out)
+
 }

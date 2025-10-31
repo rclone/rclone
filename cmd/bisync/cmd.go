@@ -55,7 +55,7 @@ type Options struct {
 	Compare               CompareOpt
 	CompareFlag           string
 	DebugName             string
-	MaxLock               time.Duration
+	MaxLock               fs.Duration
 	ConflictResolve       Prefer
 	ConflictLoser         ConflictLoserAction
 	ConflictSuffixFlag    string
@@ -115,6 +115,7 @@ func (x *CheckSyncMode) Type() string {
 }
 
 // Opt keeps command line options
+// internal functions should use b.opt instead
 var Opt Options
 
 func init() {
@@ -140,13 +141,13 @@ func init() {
 	flags.BoolVarP(cmdFlags, &tzLocal, "localtime", "", tzLocal, "Use local time in listings (default: UTC)", "")
 	flags.BoolVarP(cmdFlags, &Opt.NoCleanup, "no-cleanup", "", Opt.NoCleanup, "Retain working files (useful for troubleshooting and testing).", "")
 	flags.BoolVarP(cmdFlags, &Opt.IgnoreListingChecksum, "ignore-listing-checksum", "", Opt.IgnoreListingChecksum, "Do not use checksums for listings (add --ignore-checksum to additionally skip post-copy checksum checks)", "")
-	flags.BoolVarP(cmdFlags, &Opt.Resilient, "resilient", "", Opt.Resilient, "Allow future runs to retry after certain less-serious errors, instead of requiring --resync. Use at your own risk!", "")
+	flags.BoolVarP(cmdFlags, &Opt.Resilient, "resilient", "", Opt.Resilient, "Allow future runs to retry after certain less-serious errors, instead of requiring --resync.", "")
 	flags.BoolVarP(cmdFlags, &Opt.Recover, "recover", "", Opt.Recover, "Automatically recover from interruptions without requiring --resync.", "")
 	flags.StringVarP(cmdFlags, &Opt.CompareFlag, "compare", "", Opt.CompareFlag, "Comma-separated list of bisync-specific compare options ex. 'size,modtime,checksum' (default: 'size,modtime')", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.NoSlowHash, "no-slow-hash", "", Opt.Compare.NoSlowHash, "Ignore listing checksums only on backends where they are slow", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.SlowHashSyncOnly, "slow-hash-sync-only", "", Opt.Compare.SlowHashSyncOnly, "Ignore slow checksums for listings and deltas, but still consider them during sync calls.", "")
 	flags.BoolVarP(cmdFlags, &Opt.Compare.DownloadHash, "download-hash", "", Opt.Compare.DownloadHash, "Compute hash by downloading when otherwise unavailable. (warning: may be slow and use lots of data!)", "")
-	flags.DurationVarP(cmdFlags, &Opt.MaxLock, "max-lock", "", Opt.MaxLock, "Consider lock files older than this to be expired (default: 0 (never expire)) (minimum: 2m)", "")
+	flags.FVarP(cmdFlags, &Opt.MaxLock, "max-lock", "", "Consider lock files older than this to be expired (default: 0 (never expire)) (minimum: 2m)", "")
 	flags.FVarP(cmdFlags, &Opt.ConflictResolve, "conflict-resolve", "", "Automatically resolve conflicts by preferring the version that is: "+ConflictResolveList+" (default: none)", "")
 	flags.FVarP(cmdFlags, &Opt.ConflictLoser, "conflict-loser", "", "Action to take on the loser of a sync conflict (when there is a winner) or on both files (when there is no winner): "+ConflictLoserList+" (default: num)", "")
 	flags.StringVarP(cmdFlags, &Opt.ConflictSuffixFlag, "conflict-suffix", "", Opt.ConflictSuffixFlag, "Suffix to use when renaming a --conflict-loser. Can be either one string or two comma-separated strings to assign different suffixes to Path1/Path2. (default: 'conflict')", "")
@@ -162,7 +163,6 @@ var commandDefinition = &cobra.Command{
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.58",
 		"groups":            "Filter,Copy,Important",
-		"status":            "Beta",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		// NOTE: avoid putting too much handling here, as it won't apply to the rc.
@@ -190,7 +190,6 @@ var commandDefinition = &cobra.Command{
 			}
 		}
 
-		fs.Logf(nil, "bisync is IN BETA. Don't use in production!")
 		cmd.Run(false, true, command, func() error {
 			err := Bisync(ctx, fs1, fs2, &opt)
 			if err == ErrBisyncAborted {
