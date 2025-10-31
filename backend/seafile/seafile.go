@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/lib/cache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -43,6 +44,12 @@ const (
 	configLibraryKey    = "library_key"
 	configCreateLibrary = "create_library"
 	configAuthToken     = "auth_token"
+	minChunkSize        = 1 * fs.Mebi
+	defaultChunkSize    = 127 * fs.Mebi
+	maxChunkSize        = 511 * fs.Mebi
+	defaultUploadCutoff = 255 * fs.Mebi
+	maxParts            = 100000
+	minPacer            = 100
 )
 
 // This is global to all instances of fs
@@ -59,61 +66,93 @@ func init() {
 		Description: "seafile",
 		NewFs:       NewFs,
 		Config:      Config,
-		Options: []fs.Option{{
-			Name:     configURL,
-			Help:     "URL of seafile host to connect to.",
-			Required: true,
-			Examples: []fs.OptionExample{{
-				Value: "https://cloud.seafile.com/",
-				Help:  "Connect to cloud.seafile.com.",
-			}},
-			Sensitive: true,
-		}, {
-			Name:      configUser,
-			Help:      "User name (usually email address).",
-			Required:  true,
-			Sensitive: true,
-		}, {
-			// Password is not required, it will be left blank for 2FA
-			Name:       configPassword,
-			Help:       "Password.",
-			IsPassword: true,
-			Sensitive:  true,
-		}, {
-			Name:    config2FA,
-			Help:    "Two-factor authentication ('true' if the account has 2FA enabled).",
-			Default: false,
-		}, {
-			Name: configLibrary,
-			Help: "Name of the library.\n\nLeave blank to access all non-encrypted libraries.",
-		}, {
-			Name:       configLibraryKey,
-			Help:       "Library password (for encrypted libraries only).\n\nLeave blank if you pass it through the command line.",
-			IsPassword: true,
-			Sensitive:  true,
-		}, {
-			Name:     configCreateLibrary,
-			Help:     "Should rclone create a library if it doesn't exist.",
-			Advanced: true,
-			Default:  false,
-		}, {
-			// Keep the authentication token after entering the 2FA code
-			Name:      configAuthToken,
-			Help:      "Authentication token.",
-			Hide:      fs.OptionHideBoth,
-			Sensitive: true,
-		}, {
-			Name:     config.ConfigEncoding,
-			Help:     config.ConfigEncodingHelp,
-			Advanced: true,
-			Default: (encoder.EncodeZero |
-				encoder.EncodeCtl |
-				encoder.EncodeSlash |
-				encoder.EncodeBackSlash |
-				encoder.EncodeDoubleQuote |
-				encoder.EncodeInvalidUtf8 |
-				encoder.EncodeDot),
-		}},
+		Options: []fs.Option{
+			{
+				Name:     configURL,
+				Help:     "URL of seafile host to connect to.",
+				Required: true,
+				Examples: []fs.OptionExample{{
+					Value: "https://cloud.seafile.com/",
+					Help:  "Connect to cloud.seafile.com.",
+				}},
+				Sensitive: true,
+			}, {
+				Name:      configUser,
+				Help:      "User name (usually email address).",
+				Required:  true,
+				Sensitive: true,
+			}, {
+				// Password is not required, it will be left blank for 2FA
+				Name:       configPassword,
+				Help:       "Password.",
+				IsPassword: true,
+				Sensitive:  true,
+			}, {
+				Name:    config2FA,
+				Help:    "Two-factor authentication ('true' if the account has 2FA enabled).",
+				Default: false,
+			}, {
+				Name: configLibrary,
+				Help: "Name of the library.\n\nLeave blank to access all non-encrypted libraries.",
+			}, {
+				Name:       configLibraryKey,
+				Help:       "Library password (for encrypted libraries only).\n\nLeave blank if you pass it through the command line.",
+				IsPassword: true,
+				Sensitive:  true,
+			}, {
+				Name:     configCreateLibrary,
+				Help:     "Should rclone create a library if it doesn't exist.",
+				Advanced: true,
+				Default:  false,
+			}, {
+				// Keep the authentication token after entering the 2FA code
+				Name:      configAuthToken,
+				Help:      "Authentication token.",
+				Hide:      fs.OptionHideBoth,
+				Sensitive: true,
+			}, {
+				Name:     config.ConfigEncoding,
+				Help:     config.ConfigEncodingHelp,
+				Advanced: true,
+				Default: (encoder.EncodeZero |
+					encoder.EncodeCtl |
+					encoder.EncodeSlash |
+					encoder.EncodeBackSlash |
+					encoder.EncodeDoubleQuote |
+					encoder.EncodeInvalidUtf8 |
+					encoder.EncodeDot),
+			}, {
+				Name: "upload_cutoff",
+				Help: `Cutoff for switching to chunked upload.
+
+Files above this size will be uploaded in chunks of "--seafile-chunk-size".`,
+				Default:  defaultUploadCutoff,
+				Advanced: true,
+			}, {
+				Name: "chunk_size",
+				Help: `Upload chunk size.
+	
+When uploading large files, chunk the file into this size.
+
+Must fit in memory. These chunks are buffered in memory and there
+might a maximum of "--transfers" chunks in progress at once.
+
+1 MB is the minimum size.`,
+				Default:  defaultChunkSize,
+				Advanced: true,
+			}, {
+				Name: "min_pacer",
+				Help: `Minimum time between requests (in milliseconds).
+	
+Seafile API is rate limited. The default value is to wait at least 100ms between requests.
+
+You can try to tweak the default value but you might trigger the rate limit which will make the request rate slower.
+
+The minimum value is 1ms (0 will default to 100ms)`,
+				Default:  minPacer,
+				Advanced: true,
+			},
+		},
 	})
 }
 
@@ -128,28 +167,34 @@ type Options struct {
 	LibraryKey    string               `config:"library_key"`
 	CreateLibrary bool                 `config:"create_library"`
 	Enc           encoder.MultiEncoder `config:"encoding"`
+	UploadCutoff  fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize     fs.SizeSuffix        `config:"chunk_size"`
+	MinPacer      int                  `config:"min_pacer"`
 }
 
 // Fs represents a remote seafile
 type Fs struct {
-	name                string       // name of this remote
-	root                string       // the path we are working on
-	libraryName         string       // current library
-	encrypted           bool         // Is this an encrypted library
-	rootDirectory       string       // directory part of root (if any)
-	opt                 Options      // parsed options
-	libraries           *cache.Cache // Keep a cache of libraries
-	librariesMutex      sync.Mutex   // Mutex to protect getLibraryID
-	features            *fs.Features // optional features
-	endpoint            *url.URL     // URL of the host
-	endpointURL         string       // endpoint as a string
-	srv                 *rest.Client // the connection to the server
-	pacer               *fs.Pacer    // pacer for API calls
-	authMu              sync.Mutex   // Mutex to protect library decryption
-	createDirMutex      sync.Mutex   // Protect creation of directories
-	useOldDirectoryAPI  bool         // Use the old API v2 if seafile < 7
-	moveDirNotAvailable bool         // Version < 7.0 don't have an API to move a directory
-	renew               *Renew       // Renew an encrypted library token
+	name                string         // name of this remote
+	root                string         // the path we are working on
+	libraryName         string         // current library
+	encrypted           bool           // Is this an encrypted library
+	rootDirectory       string         // directory part of root (if any)
+	ci                  *fs.ConfigInfo // global options
+	opt                 Options        // parsed options
+	libraries           *cache.Cache   // Keep a cache of libraries
+	librariesMutex      sync.Mutex     // Mutex to protect getLibraryID
+	features            *fs.Features   // optional features
+	endpoint            *url.URL       // URL of the host
+	endpointURL         string         // endpoint as a string
+	srv                 *rest.Client   // the connection to the server
+	pacer               *fs.Pacer      // pacer for API calls
+	authMu              sync.Mutex     // Mutex to protect library decryption
+	createDirMutex      sync.Mutex     // Protect creation of directories
+	useOldDirectoryAPI  bool           // Use the old API v2 if seafile < 7
+	moveDirNotAvailable bool           // Version < 7.0 don't have an API to move a directory
+	noChunkUpload       bool           // Version < 7.0 don't have support for chunk upload
+	renew               *Renew         // Renew an encrypted library token
+	pool                *pool.Pool     // memory pool
 }
 
 // ------------------------------------------------------------
@@ -196,17 +241,26 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	ci := fs.GetConfig(ctx)
+
 	f := &Fs{
 		name:          name,
 		root:          root,
 		libraryName:   libraryName,
 		rootDirectory: rootDirectory,
 		libraries:     cache.New(),
+		ci:            ci,
 		opt:           *opt,
 		endpoint:      u,
 		endpointURL:   u.String(),
 		srv:           rest.NewClient(fshttp.NewClient(ctx)).SetRoot(u.String()),
-		pacer:         getPacer(ctx, opt.URL),
+		pacer:         getPacer(ctx, opt.URL, opt.MinPacer),
+		pool: pool.New(
+			time.Minute,
+			int(opt.ChunkSize),
+			ci.Transfers,
+			ci.UseMmap,
+		),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -217,7 +271,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(nil, "Seafile server version %s", serverInfo.Version)
+	edition := "Community"
+	for _, feature := range serverInfo.Features {
+		if feature == "seafile-pro" {
+			edition = "Professional"
+			break
+		}
+	}
+	fs.Debugf(nil, "Seafile server version %s %s Edition", serverInfo.Version, edition)
 
 	// We don't support lower than seafile v6.0 (version 6.0 is already more than 3 years old)
 	serverVersion := semver.New(serverInfo.Version)
@@ -228,8 +289,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Seafile 6 does not support recursive listing
 		f.useOldDirectoryAPI = true
 		f.features.ListR = nil
-		// It also does no support moving directories
+		// It also does not support moving directories
 		f.moveDirNotAvailable = true
+		// no chunk upload either
+		f.noChunkUpload = true
 	}
 
 	// Take the authentication token from the configuration first
@@ -1342,6 +1405,57 @@ func (f *Fs) newObject(ctx context.Context, remote string, size int64, modTime t
 		modTime:       modTime,
 	}
 	return object
+}
+
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	if cs < minChunkSize {
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+		// this method is only called before starting an upload
+		// so it should be safe to adjust the memory pool to the new chunk size
+		f.pool.Flush()
+		f.pool = pool.New(
+			time.Minute,
+			int(f.opt.ChunkSize),
+			f.ci.Transfers,
+			f.ci.UseMmap,
+		)
+	}
+	return
+}
+
+func checkUploadCutoff(opt *Options, cs fs.SizeSuffix) error {
+	if cs < opt.ChunkSize {
+		return fmt.Errorf("%v is less than chunk size %v", cs, opt.ChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadCutoff(&f.opt, cs)
+	if err == nil {
+		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
+	}
+	return
+}
+
+func (f *Fs) getBuf(size int) []byte {
+	buf := f.pool.Get()
+	if size > 0 && len(buf) > size {
+		buf = buf[:size]
+	}
+	return buf
+}
+
+func (f *Fs) putBuf(buf []byte) {
+	f.pool.Put(buf)
 }
 
 // Check the interfaces are satisfied

@@ -567,13 +567,6 @@ backends:
    ignoretests:
      - cmd/bisync
  - backend:  "seafile"
-   remote:   "TestSeafileV6:"
-   fastlist: false
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/FsDirMove
-   ignoretests:
-     - cmd/gitannex
- - backend:  "seafile"
    remote:   "TestSeafile:"
    fastlist: true
    ignoretests:
