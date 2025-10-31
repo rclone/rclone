@@ -51,6 +51,9 @@ func (s *sshClientExternal) Close() error {
 func (s *sshClientExternal) NewSession() (sshSession, error) {
 	session := s.f.newSSHSessionExternal()
 	if s.session == nil {
+		// Store the first session so Wait() and Close() can use it
+		s.session = session
+	} else {
 		fs.Debugf(s.f, "ssh external: creating additional session")
 	}
 	return session, nil
@@ -178,11 +181,9 @@ func (s *sshSessionExternal) exited() bool {
 
 // Wait for the command to exit
 func (s *sshSessionExternal) Wait() error {
-	// Use sync.Once to ensure we only wait for the process once
-	// This prevents zombie processes that occur when Wait() is called multiple times
+	// Use sync.Once to ensure we only wait for the process once.
+	// This is safe even if Wait() is called from multiple goroutines.
 	s.waitOnce.Do(func() {
-		// Always call cmd.Wait() to properly reap the process
-		// even if it has already exited
 		s.waitErr = s.cmd.Wait()
 		if s.waitErr == nil {
 			fs.Debugf(s.f, "ssh external: command exited OK")
