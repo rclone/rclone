@@ -23,7 +23,7 @@ mkdir -p ${SEAFILE_TEST_DATA}/${NAME}
 COMPOSE_DIR=$(dirname "$0")/seafile
 
 start() {
-    docker compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker compose.yml up -d
+    docker compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml up -d
 
     # wait for Seafile server to start
     seafile_endpoint="http://${SEAFILE_IP}:${SEAFILE_PORT}/"
@@ -62,7 +62,7 @@ start() {
 
 stop() {
     if status ; then
-        docker compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker compose.yml down
+        docker compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml down
     fi
 }
 
