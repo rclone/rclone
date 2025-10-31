@@ -97,7 +97,7 @@ q) Quit config
 e/n/d/r/c/s/q> q
 ```
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this:
 
 List directories in top level in `remote1:dir1`, `remote2:dir2` and `remote3:dir3`
 

@@ -72,7 +72,9 @@ e) Edit this remote
 d) Delete this remote
 y/e/d>
 ```
-Once configured you can then use `rclone` like this (replace `remote` with the name you gave your remote):
+
+Once configured you can then use `rclone` like this (replace `remote` with the
+name you gave your remote):
 
 List directories in top level of your Uptobox
 

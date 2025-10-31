@@ -87,7 +87,7 @@ You can choose to edit advanced config in order to enter your own service URL
 if you use an on-premise or white label Koofr instance, or choose an alternative
 mount instead of your primary storage.
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this:
 
 List directories in top level of your Koofr
 
