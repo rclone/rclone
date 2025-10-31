@@ -16,7 +16,7 @@ Paths are specified as `remote:` or `remote:path/to/dir`.
 
 Here is an example of how to make a remote called `remote`. First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -86,19 +86,19 @@ This remote is called `remote` and can now be used like this
 
 See all the top level directories
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List the contents of a directory
 
-```sh
+```console
 rclone ls remote:directory
 ```
 
 Sync the remote `directory` to `/home/local/directory`, deleting any excess files.
 
-```sh
+```console
 rclone sync --interactive remote:directory /home/local/directory
 ```
 
@@ -109,7 +109,7 @@ or use the docker image from the tests:
 
 If you want to build the docker image
 
-```sh
+```console
 git clone https://github.com/rclone/rclone.git
 cd rclone/fstest/testserver/images/test-hdfs
 docker build --rm -t rclone/test-hdfs .
@@ -117,7 +117,7 @@ docker build --rm -t rclone/test-hdfs .
 
 Or you can just use the latest one pushed
 
-```sh
+```console
 docker run --rm --name "rclone-hdfs" -p 127.0.0.1:9866:9866 -p 127.0.0.1:8020:8020 --hostname "rclone-hdfs" rclone/test-hdfs
 ```
 

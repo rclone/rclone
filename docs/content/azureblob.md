@@ -15,7 +15,7 @@ command.)  You may put subdirectories in too, e.g.
 Here is an example of making a Microsoft Azure Blob Storage
 configuration.  For a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -57,26 +57,26 @@ y/e/d> y
 
 See all containers
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Make a new container
 
-```sh
+```console
 rclone mkdir remote:container
 ```
 
 List the contents of a container
 
-```sh
+```console
 rclone ls remote:container
 ```
 
 Sync `/home/local/directory` to the remote container, deleting any excess
 files in the container.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:container
 ```
 
@@ -212,25 +212,25 @@ Credentials created with the `az` tool can be picked up using `env_auth`.
 
 For example if you were to login with a service principal like this:
 
-```sh
+```console
 az login --service-principal -u XXX -p XXX --tenant XXX
 ```
 
 Then you could access rclone resources like this:
 
-```sh
+```console
 rclone lsf :azureblob,env_auth,account=ACCOUNT:CONTAINER
 ```
 
 Or
 
-```sh
+```console
 rclone lsf --azureblob-env-auth --azureblob-account=ACCOUNT :azureblob:CONTAINER
 ```
 
 Which is analogous to using the `az` tool:
 
-```sh
+```console
 az storage blob list --container-name CONTAINER --account-name ACCOUNT --auth-mode login
 ```
 
@@ -253,14 +253,14 @@ explorer in the Azure portal.
 If you use a container level SAS URL, rclone operations are permitted
 only on a particular container, e.g.
 
-```sh
+```console
 rclone ls azureblob:container
 ```
 
 You can also list the single container from the root. This will only
 show the container specified by the SAS URL.
 
-```sh
+```console
 $ rclone lsd azureblob:
 container/
 ```
@@ -268,7 +268,7 @@ container/
 Note that you can't see or access any other containers - this will
 fail
 
-```sh
+```console
 rclone ls azureblob:othercontainer
 ```
 
@@ -364,7 +364,7 @@ Don't set `env_auth` at the same time.
 If you want to access resources with public anonymous access then set
 `account` only. You can do this without making an rclone config:
 
-```sh
+```console
 rclone lsf :azureblob,account=ACCOUNT:CONTAINER
 ```
 

@@ -17,7 +17,7 @@ can do with rclone. `rclone config` walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -82,19 +82,19 @@ Once configured you can then use `rclone` like this (replace `remote` with the n
 
 List directories (sync folders) in top level of your SugarSync
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your SugarSync folder "Test"
 
-```sh
+```console
 rclone ls remote:Test
 ```
 
 To copy a local directory to an SugarSync folder called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 

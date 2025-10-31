@@ -37,14 +37,14 @@ checksum of the file it has just encrypted.
 
 Use it like this
 
-` + "```sh" + `
+` + "```console" + `
 rclone cryptcheck /path/to/files encryptedremote:path
 ` + "```" + `
 
 You can use it like this also, but that will involve downloading all
 the files in ` + "`remote:path`" + `.
 
-` + "```sh" + `
+` + "```console" + `
 rclone cryptcheck remote:path encryptedremote:path
 ` + "```" + `
 

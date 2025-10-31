@@ -14,7 +14,7 @@ Here is an example of making a remote for Linkbox.
 
 First run:
 
-```sh
+```console
 rclone config
 ```
 

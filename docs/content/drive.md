@@ -18,7 +18,7 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -110,19 +110,19 @@ You can then use it like this,
 
 List directories in top level of your drive
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your drive
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to a drive directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -270,7 +270,7 @@ account key" button.
 
 ##### 3. Configure rclone, assuming a new install
 
-```sh
+```text
 rclone config
 
 n/s/q> n         # New
@@ -375,7 +375,7 @@ It will  use the `--checkers` value to specify the number of requests to run in 
 In tests, these batch requests were up to 20x faster than the regular method.
 Running the following command against different sized folders gives:
 
-```sh
+```console
 rclone lsjson -vv -R --checkers=6 gdrive:folder
 ```
 

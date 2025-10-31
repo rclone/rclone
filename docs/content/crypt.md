@@ -274,7 +274,7 @@ details, and a tool you can use to check if you are affected.
 Create the following file structure using "standard" file name
 encryption.
 
-```sh
+```text
 plaintext/
 ├── file0.txt
 ├── file1.txt
@@ -287,7 +287,7 @@ plaintext/
 
 Copy these to the remote, and list them
 
-```sh
+```console
 $ rclone -q copy plaintext secret:
 $ rclone -q ls secret:
         7 file1.txt
@@ -299,7 +299,7 @@ $ rclone -q ls secret:
 
 The crypt remote looks like
 
-```sh
+```console
 $ rclone -q ls remote:path
        55 hagjclgavj2mbiqm6u6cnjjqcg
        54 v05749mltvv1tf4onltun46gls
@@ -310,7 +310,7 @@ $ rclone -q ls remote:path
 
 The directory structure is preserved
 
-```sh
+```console
 $ rclone -q ls secret:subdir
         8 file2.txt
         9 file3.txt
@@ -321,7 +321,7 @@ Without file name encryption `.bin` extensions are added to underlying
 names. This prevents the cloud provider attempting to interpret file
 content.
 
-```sh
+```console
 $ rclone -q ls remote:path
        54 file0.txt.bin
        57 subdir/file3.txt.bin

@@ -20,7 +20,7 @@ a `/` it is relative to the home directory of the user.  An empty path
 
 To create an FTP configuration named `remote`, run
 
-```sh
+```console
 rclone config
 ```
 
@@ -88,26 +88,26 @@ y/e/d> y
 
 To see all directories in the home directory of `remote`
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Make a new directory
 
-```sh
+```console
 rclone mkdir remote:path/to/directory
 ```
 
 List the contents of a directory
 
-```sh
+```console
 rclone ls remote:path/to/directory
 ```
 
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:directory
 ```
 
@@ -124,7 +124,7 @@ Using [on-the-fly](#backend-path-to-dir) or
 such servers, without requiring any configuration in advance. The following
 are examples of that:
 
-```sh
+```console
 rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=$(rclone obscure dummy)
 rclone lsf :ftp,host=speedtest.tele2.net,user=anonymous,pass=$(rclone obscure dummy):
 ```
@@ -136,7 +136,7 @@ command to create a password string in the format required by the
 an already obscured string representation of the same password "dummy", and
 therefore works even in Windows Command Prompt:
 
-```sh
+```console
 rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=IXs2wc8OJOz7SYLBk47Ji1rHTmxM
 rclone lsf :ftp,host=speedtest.tele2.net,user=anonymous,pass=IXs2wc8OJOz7SYLBk47Ji1rHTmxM:
 ```

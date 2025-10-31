@@ -21,7 +21,7 @@ premium account.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -70,13 +70,13 @@ Once configured you can then use `rclone` like this (replace `remote` with the n
 
 List directories and files in the top level of your Gofile
 
-```sh
+```console
 rclone lsf remote:
 ```
 
 To copy a local directory to an Gofile directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -139,7 +139,7 @@ directory you wish rclone to display.
 
 You can do this with rclone
 
-```sh
+```console
 $ rclone lsf -Fip --dirs-only remote:
 d6341f53-ee65-4f29-9f59-d11e8070b2a0;Files/
 f4f5c9b8-6ece-478b-b03e-4538edfe5a1c;Photos/

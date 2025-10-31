@@ -119,7 +119,7 @@ To make a new Storj configuration you need one of the following:
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -333,7 +333,7 @@ Once configured you can then use `rclone` like this.
 
 Use the `mkdir` command to create new bucket, e.g. `bucket`.
 
-```sh
+```console
 rclone mkdir remote:bucket
 ```
 
@@ -341,7 +341,7 @@ rclone mkdir remote:bucket
 
 Use the `lsf` command to list all buckets.
 
-```sh
+```console
 rclone lsf remote:
 ```
 
@@ -351,24 +351,32 @@ Note the colon (`:`) character at the end of the command line.
 
 Use the `rmdir` command to delete an empty bucket.
 
-    rclone rmdir remote:bucket
+```console
+rclone rmdir remote:bucket
+```
 
 Use the `purge` command to delete a non-empty bucket with all its content.
 
-    rclone purge remote:bucket
+```console
+rclone purge remote:bucket
+```
 
 ### Upload objects
 
 Use the `copy` command to upload an object.
 
-    rclone copy --progress /home/local/directory/file.ext remote:bucket/path/to/dir/
+```console
+rclone copy --progress /home/local/directory/file.ext remote:bucket/path/to/dir/
+```
 
 The `--progress` flag is for displaying progress information.
 Remove it if you don't need this information.
 
 Use a folder in the local path to upload all its objects.
 
-    rclone copy --progress /home/local/directory/ remote:bucket/path/to/dir/
+```console
+rclone copy --progress /home/local/directory/ remote:bucket/path/to/dir/
+```
 
 Only modified files will be copied.
 
@@ -376,57 +384,70 @@ Only modified files will be copied.
 
 Use the `ls` command to list recursively all objects in a bucket.
 
-```sh
+```console
 rclone ls remote:bucket
 ```
-
 
 Add the folder to the remote path to list recursively all objects in this folder.
 
-```sh
-rclone ls remote:bucket
-```
+```console
+$ rclone ls remote:bucket
 /path/to/dir/
+```
 
 Use the `lsf` command to list non-recursively all objects in a bucket or a folder.
 
-    rclone lsf remote:bucket/path/to/dir/
+```console
+rclone lsf remote:bucket/path/to/dir/
+```
 
 ### Download objects
 
 Use the `copy` command to download an object.
 
-    rclone copy --progress remote:bucket/path/to/dir/file.ext /home/local/directory/
+```console
+rclone copy --progress remote:bucket/path/to/dir/file.ext /home/local/directory/
+```
 
 The `--progress` flag is for displaying progress information.
 Remove it if you don't need this information.
 
 Use a folder in the remote path to download all its objects.
 
-    rclone copy --progress remote:bucket/path/to/dir/ /home/local/directory/
+```console
+rclone copy --progress remote:bucket/path/to/dir/ /home/local/directory/
+```
 
 ### Delete objects
 
 Use the `deletefile` command to delete a single object.
 
-    rclone deletefile remote:bucket/path/to/dir/file.ext
+```console
+rclone deletefile remote:bucket/path/to/dir/file.ext
+```
 
 Use the `delete` command to delete all object in a folder.
 
-    rclone delete remote:bucket/path/to/dir/
+```console
+rclone delete remote:bucket/path/to/dir/
+```
 
 ### Print the total size of objects
 
 Use the `size` command to print the total size of objects in a bucket or a folder.
 
-    rclone size remote:bucket/path/to/dir/
+```console
+rclone size remote:bucket/path/to/dir/
+```
 
 ### Sync two Locations
 
 Use the `sync` command to sync the source to the destination,
 changing the destination only, deleting any excess files.
 
-    rclone sync --interactive --progress /home/local/directory/ remote:bucket/path/to/dir/
+```console
+rclone sync --interactive --progress /home/local/directory/ remote:bucket/path/to/dir/
+```
 
 The `--progress` flag is for displaying progress information.
 Remove it if you don't need this information.
@@ -436,15 +457,21 @@ to see exactly what would be copied and deleted.
 
 The sync can be done also from Storj to the local file system.
 
-    rclone sync --interactive --progress remote:bucket/path/to/dir/ /home/local/directory/
+```console
+rclone sync --interactive --progress remote:bucket/path/to/dir/ /home/local/directory/
+```
 
 Or between two Storj buckets.
 
-    rclone sync --interactive --progress remote-us:bucket/path/to/dir/ remote-europe:bucket/path/to/dir/
+```console
+rclone sync --interactive --progress remote-us:bucket/path/to/dir/ remote-europe:bucket/path/to/dir/
+```
 
 Or even between another cloud storage and Storj.
 
-    rclone sync --interactive --progress s3:bucket/path/to/dir/ storj:bucket/path/to/dir/
+```console
+rclone sync --interactive --progress s3:bucket/path/to/dir/ storj:bucket/path/to/dir/
+```
 
 ## Limitations
 

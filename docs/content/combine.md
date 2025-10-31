@@ -11,7 +11,7 @@ tree.
 
 For example you might have a remote for images on one provider:
 
-```sh
+```console
 $ rclone tree s3:imagesbucket
 /
 ├── image1.jpg
@@ -20,7 +20,7 @@ $ rclone tree s3:imagesbucket
 
 And a remote for files on another:
 
-```sh
+```console
 $ rclone tree drive:important/files
 /
 ├── file1.txt
@@ -30,7 +30,7 @@ $ rclone tree drive:important/files
 The `combine` backend can join these together into a synthetic
 directory structure like this:
 
-```sh
+```console
 $ rclone tree combined:
 /
 ├── files
@@ -57,7 +57,7 @@ either be a local paths or other remotes.
 Here is an example of how to make a combine called `remote` for the
 example above. First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -107,7 +107,7 @@ the shared drives you have access to.
 Assuming your main (non shared drive) Google drive remote is called
 `drive:` you would run
 
-```sh
+```console
 rclone backend -o config drives drive:
 ```
 

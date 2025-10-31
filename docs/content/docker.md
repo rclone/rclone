@@ -45,27 +45,27 @@ on the host.
 The *FUSE* driver is a prerequisite for rclone mounting and should be
 installed on host:
 
-```sh
+```console
 sudo apt-get -y install fuse3
 ```
 
 Create two directories required by rclone docker plugin:
 
-```sh
+```console
 sudo mkdir -p /var/lib/docker-plugins/rclone/config
 sudo mkdir -p /var/lib/docker-plugins/rclone/cache
 ```
 
 Install the managed rclone docker plugin for your architecture (here `amd64`):
 
-```sh
+```console
 docker plugin install rclone/docker-volume-rclone:amd64 args="-v" --alias rclone --grant-all-permissions
 docker plugin list
 ```
 
 Create your [SFTP volume](/sftp/#standard-options):
 
-```sh
+```console
 docker volume create firstvolume -d rclone -o type=sftp -o sftp-host=_hostname_ -o sftp-user=_username_ -o sftp-pass=_password_ -o allow-other=true
 ```
 
@@ -78,7 +78,7 @@ for example `-o path=/home/username`.
 
 Time to create a test container and mount the volume into it:
 
-```sh
+```console
 docker run --rm -it -v firstvolume:/mnt --workdir /mnt ubuntu:latest bash
 ```
 
@@ -88,7 +88,7 @@ or otherwise play with it. Type `exit` when you are done.
 The container will stop but the volume will stay, ready to be reused.
 When it's not needed anymore, remove it:
 
-```sh
+```console
 docker volume list
 docker volume remove firstvolume
 ```
@@ -145,7 +145,7 @@ volumes:
 
 and run the stack:
 
-```sh
+```console
 docker stack deploy example -c ./example.yml
 ```
 
@@ -155,7 +155,7 @@ run service containers on one or more cluster nodes and request
 the `example_configdata` volume from rclone plugins on the node hosts.
 You can use the following commands to confirm results:
 
-```sh
+```console
 docker service ls
 docker service ps example_heimdall
 docker volume ls
@@ -173,7 +173,7 @@ the `docker volume remove example_configdata` command on every node.
 Volumes can be created with [docker volume create](https://docs.docker.com/engine/reference/commandline/volume_create/).
 Here are a few examples:
 
-```sh
+```console
 docker volume create vol1 -d rclone -o remote=storj: -o vfs-cache-mode=full
 docker volume create vol2 -d rclone -o remote=:storj,access_grant=xxx:heimdall
 docker volume create vol3 -d rclone -o type=storj -o path=heimdall -o storj-access-grant=xxx -o poll-interval=0
@@ -186,7 +186,7 @@ option.
 
 Volumes can be inspected as follows:
 
-```sh
+```console
 docker volume list
 docker volume inspect vol1
 ```
@@ -210,13 +210,13 @@ The `remote=:backend:dir/subdir` syntax can be used to create
 while the `type` and `path` options provide a simpler alternative for this.
 Using two split options
 
-```sh
+```text
 -o type=backend -o path=dir/subdir
 ```
 
 is equivalent to the combined syntax
 
-```sh
+```text
 -o remote=:backend:dir/subdir
 ```
 
@@ -262,13 +262,13 @@ Inside connection string the backend prefix must be dropped from parameter
 names but in the `-o param=value` array it must be present.
 For instance, compare the following option array
 
-```sh
+```text
 -o remote=:sftp:/home -o sftp-host=localhost
 ```
 
 with equivalent connection string:
 
-```sh
+```text
 -o remote=:sftp,host=localhost:/home
 ```
 
@@ -345,7 +345,7 @@ By default they must exist on host at the following locations
 You can [install managed plugin](https://docs.docker.com/engine/reference/commandline/plugin_install/)
 with default settings as follows:
 
-```sh
+```console
 docker plugin install rclone/docker-volume-rclone:amd64 --grant-all-permissions --alias rclone
 ```
 
@@ -388,7 +388,7 @@ mount namespaces and bind-mounts into requesting user containers.
 You can tweak a few plugin settings after installation when it's disabled
 (not in use), for instance:
 
-```sh
+```console
 docker plugin disable rclone
 docker plugin set rclone RCLONE_VERBOSE=2 config=/etc/rclone args="--vfs-cache-mode=writes --allow-other"
 docker plugin enable rclone
@@ -448,7 +448,7 @@ actual level assigned by rclone in the encapsulated message string.
 
 You can set custom plugin options right when you install it, *in one go*:
 
-```sh
+```console
 docker plugin remove rclone
 docker plugin install rclone/docker-volume-rclone:amd64 \
        --alias rclone --grant-all-permissions \
@@ -486,7 +486,7 @@ You can just run it (type `rclone serve docker` and hit enter) for the test.
 
 Install *FUSE*:
 
-```sh
+```console
 sudo apt-get -y install fuse
 ```
 
@@ -496,7 +496,7 @@ and [docker-volume-rclone.socket](https://raw.githubusercontent.com/rclone/rclon
 
 Put them to the `/etc/systemd/system/` directory:
 
-```sh
+```console
 cp docker-volume-plugin.service /etc/systemd/system/
 cp docker-volume-plugin.socket  /etc/systemd/system/
 ```
@@ -505,7 +505,7 @@ Please note that all commands in this section must be run as *root* but
 we omit `sudo` prefix for brevity.
 Now create directories required by the service:
 
-```sh
+```console
 mkdir -p /var/lib/docker-volumes/rclone
 mkdir -p /var/lib/docker-plugins/rclone/config
 mkdir -p /var/lib/docker-plugins/rclone/cache
@@ -513,7 +513,7 @@ mkdir -p /var/lib/docker-plugins/rclone/cache
 
 Run the docker plugin service in the socket activated mode:
 
-```sh
+```console
 systemctl daemon-reload
 systemctl start docker-volume-rclone.service
 systemctl enable docker-volume-rclone.socket
@@ -540,7 +540,7 @@ prefer socket activation.
 You can [see managed plugin settings](https://docs.docker.com/engine/extend/#debugging-plugins)
 with
 
-```sh
+```console
 docker plugin list
 docker plugin inspect rclone
 ```
@@ -555,20 +555,20 @@ but their actual level can be seen from encapsulated message string.
 You will usually install the latest version of managed plugin for your platform.
 Use the following commands to print the actual installed version:
 
-```sh
+```console
 PLUGID=$(docker plugin list --no-trunc | awk '/rclone/{print$1}')
 sudo runc --root /run/docker/runtime-runc/plugins.moby exec $PLUGID rclone version
 ```
 
 You can even use `runc` to run shell inside the plugin container:
 
-```sh
+```console
 sudo runc --root /run/docker/runtime-runc/plugins.moby exec --tty $PLUGID bash
 ```
 
 Also you can use curl to check the plugin socket connectivity:
 
-```sh
+```console
 docker plugin list --no-trunc
 PLUGID=123abc...
 sudo curl -H Content-Type:application/json -XPOST -d {} --unix-socket /run/docker/plugins/$PLUGID/rclone.sock http://localhost/Plugin.Activate
@@ -582,7 +582,7 @@ diagnosing with the above methods, you can try clearing the state of the plugin.
 This might be needed because a reinstall don't cleanup existing state files to
 allow for easy restoration, as stated above.
 
-```sh
+```console
 docker plugin disable rclone # disable the plugin to ensure no interference
 sudo rm /var/lib/docker-plugins/rclone/cache/docker-plugin.state # removing the plugin state
 docker plugin enable rclone # re-enable the plugin afterward
@@ -598,14 +598,14 @@ it won't even return an error. I hope that docker maintainers will fix
 this some day. In the meantime be aware that you must remove your volume
 before recreating it with new settings:
 
-```sh
+```console
 docker volume remove my_vol
 docker volume create my_vol -d rclone -o opt1=new_val1 ...
 ```
 
 and verify that settings did update:
 
-```sh
+```console
 docker volume list
 docker volume inspect my_vol
 ```

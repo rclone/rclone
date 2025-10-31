@@ -35,7 +35,7 @@ mydrive:private/backup/../desktop`.
 Here is an example of how to make a union called `remote` for local folders.
 First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -101,20 +101,20 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level in `remote1:dir1`, `remote2:dir2` and `remote3:dir3`
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in `remote1:dir1`, `remote2:dir2` and `remote3:dir3`
 
-```sh
+```console
 rclone ls remote:
 ```
 
 Copy another local directory to the union directory called source, which will be
 placed into `remote3:dir3`
 
-```sh
+```console
 rclone copy C:\source remote:source
 ```
 

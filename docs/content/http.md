@@ -39,7 +39,7 @@ To just download a single file it is easier to use
 Here is an example of how to make a remote called `remote`.  First
 run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -94,19 +94,19 @@ This remote is called `remote` and can now be used like this
 
 See all the top level directories
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List the contents of a directory
 
-```sh
+```console
 rclone ls remote:directory
 ```
 
 Sync the remote `directory` to `/home/local/directory`, deleting any excess files.
 
-```sh
+```console
 rclone sync --interactive remote:directory /home/local/directory
 ```
 
@@ -127,13 +127,13 @@ No checksums are stored.
 Since the http remote only has one config parameter it is easy to use
 without a config file:
 
-```sh
+```console
 rclone lsd --http-url https://beta.rclone.org :http:
 ```
 
 or:
 
-```sh
+```console
 rclone lsd :http,url='https://beta.rclone.org':
 ```
 

@@ -8,7 +8,7 @@ versionIntroduced: "v0.91"
 
 Local paths are specified as normal filesystem paths, e.g. `/path/to/wherever`, so
 
-```sh
+```console
 rclone sync --interactive /home/source /tmp/destination
 ```
 
@@ -184,7 +184,7 @@ This flag applies to all commands.
 
 For example, supposing you have a directory structure like this
 
-```sh
+```console
 $ tree /tmp/a
 /tmp/a
 ├── b -> ../b
@@ -196,7 +196,7 @@ $ tree /tmp/a
 
 Then you can see the difference with and without the flag like this
 
-```sh
+```console
 $ rclone ls /tmp/a
         6 one
         6 two/three
@@ -204,7 +204,7 @@ $ rclone ls /tmp/a
 
 and
 
-```sh
+```console
 $ rclone -L ls /tmp/a
      4174 expected
         6 one
@@ -227,7 +227,7 @@ This flag applies to all commands.
 
 For example, supposing you have a directory structure like this
 
-```sh
+```console
 $ tree /tmp/a
 /tmp/a
 ├── file1 -> ./file4
@@ -236,13 +236,13 @@ $ tree /tmp/a
 
 Copying the entire directory with '-l'
 
-```sh
+```console
 rclone copy -l /tmp/a/ remote:/tmp/a/
 ```
 
 The remote files are created with a `.rclonelink` suffix
 
-```sh
+```console
 $ rclone ls remote:/tmp/a
        5 file1.rclonelink
       14 file2.rclonelink
@@ -250,7 +250,7 @@ $ rclone ls remote:/tmp/a
 
 The remote files will contain the target of the symbolic links
 
-```sh
+```console
 $ rclone cat remote:/tmp/a/file1.rclonelink
 ./file4
 
@@ -260,7 +260,7 @@ $ rclone cat remote:/tmp/a/file2.rclonelink
 
 Copying them back with '-l'
 
-```sh
+```console
 $ rclone copy -l remote:/tmp/a/ /tmp/b/
 
 $ tree /tmp/b
@@ -271,7 +271,7 @@ $ tree /tmp/b
 
 However, if copied back without '-l'
 
-```sh
+```console
 $ rclone copyto remote:/tmp/a/ /tmp/b/
 
 $ tree /tmp/b
@@ -282,7 +282,7 @@ $ tree /tmp/b
 
 If you want to copy a single file with `-l` then you must use the `.rclonelink` suffix.
 
-```sh
+```console
 $ rclone copy -l remote:/tmp/a/file1.rclonelink /tmp/c
 
 $ tree /tmp/c
@@ -306,7 +306,7 @@ different file systems.
 
 For example if you have a directory hierarchy like this
 
-```sh
+```console
 root
 ├── disk1     - disk1 mounted on the root
 │   └── file3 - stored on disk1
@@ -319,13 +319,13 @@ root
 Using `rclone --one-file-system copy root remote:` will only copy `file1`
 and `file2`. E.g.
 
-```sh
+```console
 $ rclone -q --one-file-system ls root
         0 file1
         0 file2
 ```
 
-```sh
+```console
 $ rclone -q ls root
         0 disk1/file3
         0 disk2/file4

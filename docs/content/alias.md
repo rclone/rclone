@@ -34,7 +34,7 @@ can be used to only show the trashed files in `myDrive`.
 Here is an example of how to make an alias called `remote` for local folder.
 First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -87,19 +87,19 @@ Once configured you can then use `rclone` like this (replace `remote` with the n
 
 List directories in top level in `/mnt/storage/backup`
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in `/mnt/storage/backup`
 
-```sh
+```console
 rclone ls remote:
 ```
 
 Copy another local directory to the alias directory called source
 
-```sh
+```console
 rclone copy /home/source remote:source
 ```
 

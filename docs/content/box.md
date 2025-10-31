@@ -18,7 +18,7 @@ to use JWT authentication.  `rclone config` walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -96,13 +96,13 @@ Once configured you can then use `rclone` like this (replace `remote` with the n
 
 List directories in top level of your Box
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your Box
 
-```sh
+```console
 rclone ls remote:
 ```
 
@@ -144,7 +144,7 @@ did the authentication on.
 
 Here is how to do it.
 
-```sh
+```console
 $ rclone config
 Current remotes:
 

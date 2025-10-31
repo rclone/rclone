@@ -33,7 +33,7 @@ If you need to configure a remote, see the [config help docs](/docs/#configure).
 If you are using rclone entirely with [on the fly remotes](/docs/#backend-path-to-dir),
 you can create an empty config file to get rid of this notice, for example:
 
-```sh
+```console
 rclone config touch
 ```
 
@@ -48,7 +48,7 @@ The syncs would be incremental (on a file by file basis).
 
 e.g.
 
-```sh
+```console
 rclone sync --interactive drive:Folder s3:bucket
 ```
 
@@ -57,7 +57,7 @@ rclone sync --interactive drive:Folder s3:bucket
 You can use rclone from multiple places at the same time if you choose
 different subdirectory for the output, e.g.
 
-```sh
+```console
 Server A> rclone sync --interactive /tmp/whatever remote:ServerA
 Server B> rclone sync --interactive /tmp/whatever remote:ServerB
 ```
@@ -65,7 +65,7 @@ Server B> rclone sync --interactive /tmp/whatever remote:ServerB
 If you sync to the same directory then you should use rclone copy
 otherwise the two instances of rclone may delete each other's files, e.g.
 
-```sh
+```console
 Server A> rclone copy /tmp/whatever remote:Backup
 Server B> rclone copy /tmp/whatever remote:Backup
 ```
@@ -119,7 +119,7 @@ may use `http_proxy` but another one `HTTP_PROXY`.  The `Go` libraries
 used by `rclone` will try both variations, but you may wish to set all
 possibilities.  So, on Linux, you may end up with code similar to
 
-```sh
+```console
 export http_proxy=http://proxyserver:12345
 export https_proxy=$http_proxy
 export HTTP_PROXY=$http_proxy
@@ -128,7 +128,7 @@ export HTTPS_PROXY=$http_proxy
 
 Note: If the proxy server requires a username and password, then use
 
-```sh
+```console
 export http_proxy=http://username:password@proxyserver:12345
 export https_proxy=$http_proxy
 export HTTP_PROXY=$http_proxy
@@ -141,7 +141,7 @@ For instance "foo.com" also matches "bar.foo.com".
 
 e.g.
 
-```sh
+```console
 export no_proxy=localhost,127.0.0.0/8,my.host.name
 export NO_PROXY=$no_proxy
 ```
@@ -170,7 +170,7 @@ where `rclone` can't verify the server with the SSL root certificates.
 Rclone (via the Go runtime) tries to load the root certificates from
 these places on Linux.
 
-```sh
+```text
 "/etc/ssl/certs/ca-certificates.crt", // Debian/Ubuntu/Gentoo etc.
 "/etc/pki/tls/certs/ca-bundle.crt",   // Fedora/RHEL
 "/etc/ssl/ca-bundle.pem",             // OpenSUSE
@@ -180,7 +180,7 @@ these places on Linux.
 So doing something like this should fix the problem.  It also sets the
 time which is important for SSL to work properly.
 
-```sh
+```console
 mkdir -p /etc/ssl/certs/
 curl -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
 ntpclient -s -h pool.ntp.org
@@ -193,7 +193,7 @@ provide the SSL root certificates on Unix systems other than macOS.
 Note that you may need to add the `--insecure` option to the `curl` command line
 if it doesn't work without.
 
-```sh
+```console
 curl --insecure -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
 ```
 
@@ -202,7 +202,7 @@ On macOS, you can install
 Homebrew, and specify the SSL root certificates with the
 [--ca-cert](/docs/#ca-cert-stringarray) flag.
 
-```sh
+```console
 brew install ca-certificates
 find $(brew --prefix)/etc/ca-certificates -type f
 ```

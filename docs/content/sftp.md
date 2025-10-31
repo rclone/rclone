@@ -42,7 +42,7 @@ the server, see [shell access considerations](#shell-access-considerations).
 
 Here is an example of making an SFTP configuration.  First run
 
-```sh
+```console
 rclone config
 ```
 
@@ -100,39 +100,39 @@ This remote is called `remote` and can now be used like this:
 
 See all directories in the home directory
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 See all directories in the root directory
 
-```sh
+```console
 rclone lsd remote:/
 ```
 
 Make a new directory
 
-```sh
+```console
 rclone mkdir remote:path/to/directory
 ```
 
 List the contents of a directory
 
-```sh
+```console
 rclone ls remote:path/to/directory
 ```
 
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:directory
 ```
 
 Mount the remote path `/srv/www-data/` to the local path
 `/mnt/www-data`
 
-```sh
+```console
 rclone mount remote:/srv/www-data/ /mnt/www-data
 ```
 
@@ -158,7 +158,7 @@ key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----
 
 This will generate it correctly for key_pem for use in the config:
 
-```sh
+```console
 awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
 ```
 
@@ -202,7 +202,7 @@ merged file in both places.
 
 Note: the cert must come first in the file.  e.g.
 
-```sh
+```console
 cat id_rsa-cert.pub id_rsa > merged_key
 ```
 
@@ -229,7 +229,7 @@ known_hosts_file = ~/.ssh/known_hosts
 
 Alternatively you can create your own known hosts file like this:
 
-```sh
+```console
 ssh-keyscan -t dsa,rsa,ecdsa,ed25519 example.com >> known_hosts
 ```
 
@@ -272,13 +272,13 @@ Note that there seem to be various problems with using an ssh-agent on
 macOS due to recent changes in the OS.  The most effective work-around
 seems to be to start an ssh-agent in each session, e.g.
 
-```sh
+```console
 eval `ssh-agent -s` && ssh-add -A
 ```
 
 And then at the end of the session
 
-```sh
+```console
 eval `ssh-agent -k`
 ```
 

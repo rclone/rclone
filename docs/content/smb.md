@@ -36,7 +36,7 @@ Here is an example of making a SMB configuration.
 
 First run
 
-```sh
+```console
 rclone config
 ```
 

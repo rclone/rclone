@@ -30,7 +30,7 @@ There are two distinct modes you can setup your remote:
 Here is an example of making a seafile configuration for a user with **no**
 two-factor authentication.  First run
 
-```sh
+```console
 rclone config
 ```
 
@@ -108,26 +108,26 @@ server and can now be used like this:
 
 See all libraries
 
-```sh
+```console
 rclone lsd seafile:
 ```
 
 Create a new library
 
-```sh
+```console
 rclone mkdir seafile:library
 ```
 
 List the contents of a library
 
-```sh
+```console
 rclone ls seafile:library
 ```
 
 Sync `/home/local/directory` to the remote library, deleting any
 excess files in the library.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory seafile:library
 ```
 
@@ -215,26 +215,26 @@ pointing at the root of the library `My Library`:
 
 See all files in the library:
 
-```sh
+```console
 rclone lsd seafile:
 ```
 
 Create a new directory inside the library
 
-```sh
+```console
 rclone mkdir seafile:directory
 ```
 
 List the contents of a directory
 
-```sh
+```console
 rclone ls seafile:directory
 ```
 
 Sync `/home/local/directory` to the remote library, deleting any
 excess files in the library.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory seafile:
 ```
 
@@ -264,16 +264,16 @@ as they can't be used in JSON strings.
 Rclone supports generating share links for non-encrypted libraries only.
 They can either be for a file or a directory:
 
-```sh
-rclone link seafile:seafile-tutorial.doc
+```console
+$ rclone link seafile:seafile-tutorial.doc
 http://my.seafile.server/f/fdcd8a2f93f84b8b90f4/
 
 ```
 
 or if run on a directory you will get:
 
-```sh
-rclone link seafile:dir
+```console
+$ rclone link seafile:dir
 http://my.seafile.server/d/9ea2455f6f55478bbb0d/
 ```
 

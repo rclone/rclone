@@ -22,7 +22,7 @@ See complete [Swagger documentation for Quatrix](https://docs.maytech.net/quatri
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -63,19 +63,19 @@ Once configured you can then use `rclone` like this (replace `remote` with the n
 
 List directories in top level of your Quatrix
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your Quatrix
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to an Quatrix directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -86,7 +86,7 @@ deactivate it in your account. After disabling, the API Key can be enabled back.
 If the API Key was deleted and a new key was created, you can update it in rclone
 config. The same happens if the hostname was changed.
 
-```sh
+```console
 $ rclone config
 Current remotes:
 
