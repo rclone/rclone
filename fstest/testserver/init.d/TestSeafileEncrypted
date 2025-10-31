@@ -6,7 +6,7 @@ set -e
 TEST_LIBRARY=Encrypted
 TEST_LIBRARY_PASSWORD=SecretKey
 
-# environment variables passed on docker-compose
+# environment variables passed on docker compose
 export NAME=seafile-encrypted
 export MYSQL_ROOT_PASSWORD=pixenij4zacoguq0kopamid6
 export SEAFILE_ADMIN_EMAIL=seafile@rclone.org
@@ -19,11 +19,11 @@ export SEAFILE_VERSION=${SEAFILE_VERSION:-latest}
 # make sure the data directory exists
 mkdir -p ${SEAFILE_TEST_DATA}/${NAME}
 
-# docker-compose project directory
+# docker compose project directory
 COMPOSE_DIR=$(dirname "$0")/seafile
 
 start() {
-    docker-compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml up -d
+    docker compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker compose.yml up -d
 
     # wait for Seafile server to start
     seafile_endpoint="http://${SEAFILE_IP}:${SEAFILE_PORT}/"
@@ -62,7 +62,7 @@ start() {
 
 stop() {
     if status ; then
-        docker-compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml down
+        docker compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker compose.yml down
     fi
 }
 
