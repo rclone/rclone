@@ -68,8 +68,7 @@ paths passed in and how long they can be.  It can take some time.  It will
 write test files into the remote:path passed in.  It outputs a bit of go
 code for each one.
 
-**NB** this can create undeletable files and other hazards - use with care
-`,
+**NB** this can create undeletable files and other hazards - use with care!`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.55",
 	},
@@ -234,7 +233,6 @@ func (r *results) checkStringPositions(k, s string) {
 	fs.Infof(r.f, "Writing position file 0x%0X", s)
 	positionError := internal.PositionNone
 	res := internal.ControlResult{
-		Text:       s,
 		WriteError: make(map[internal.Position]string, 3),
 		GetError:   make(map[internal.Position]string, 3),
 		InList:     make(map[internal.Position]internal.Presence, 3),
@@ -293,7 +291,7 @@ func (r *results) checkControls() {
 		tokens <- struct{}{}
 	}
 	var wg sync.WaitGroup
-	for i := rune(0); i < 128; i++ {
+	for i := range rune(128) {
 		s := string(i)
 		if i == 0 || i == '/' {
 			// We're not even going to check NULL or /

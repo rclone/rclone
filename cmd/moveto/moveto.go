@@ -35,18 +35,22 @@ like the [move](/commands/rclone_move/) command.
 
 So
 
-    rclone moveto src dst
+` + "```sh" + `
+rclone moveto src dst
+` + "```" + `
 
 where src and dst are rclone paths, either remote:path or
 /path/to/local or C:\windows\path\if\on\windows.
 
 This will:
 
-    if src is file
-        move it to dst, overwriting an existing file if it exists
-    if src is directory
-        move it to dst, overwriting existing files if they exist
-        see move command for full details
+` + "```text" + `
+if src is file
+    move it to dst, overwriting an existing file if it exists
+if src is directory
+    move it to dst, overwriting existing files if they exist
+    see move command for full details
+` + "```" + `
 
 This doesn't transfer files that are identical on src and dst, testing
 by size and modification time or MD5SUM.  src will be deleted on

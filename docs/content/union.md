@@ -6,7 +6,8 @@ versionIntroduced: "v1.44"
 
 # {{< icon "fa fa-link" >}} Union
 
-The `union` backend joins several remotes together to make a single unified view of them.
+The `union` backend joins several remotes together to make a single unified view
+of them.
 
 During the initial setup with `rclone config` you will specify the upstream
 remotes as a space separated list. The upstream remotes can either be a local
@@ -18,7 +19,8 @@ to tag the remote as **read only**, **no create** or **writeback**, e.g.
 
 - `:ro` means files will only be read from here and never written
 - `:nc` means new files or directories won't be created here
-- `:writeback` means files found in different remotes will be written back here. See the [writeback section](#writeback) for more info.
+- `:writeback` means files found in different remotes will be written back here.
+  See the [writeback section](#writeback) for more info.
 
 Subfolders can be used in upstream remotes. Assume a union remote named `backup`
 with the remotes `mydrive:private/backup`. Invoking `rclone mkdir backup:desktop`
@@ -33,11 +35,13 @@ mydrive:private/backup/../desktop`.
 Here is an example of how to make a union called `remote` for local folders.
 First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -97,19 +101,33 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level in `remote1:dir1`, `remote2:dir2` and `remote3:dir3`
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in `remote1:dir1`, `remote2:dir2` and `remote3:dir3`
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
-Copy another local directory to the union directory called source, which will be placed into `remote3:dir3`
+Copy another local directory to the union directory called source, which will be
+placed into `remote3:dir3`
 
-    rclone copy C:\source remote:source
+```sh
+rclone copy C:\source remote:source
+```
 
 ### Behavior / Policies
 
-The behavior of union backend is inspired by [trapexit/mergerfs](https://github.com/trapexit/mergerfs). All functions are grouped into 3 categories: **action**, **create** and **search**. These functions and categories can be assigned a policy which dictates what file or directory is chosen when performing that behavior. Any policy can be assigned to a function or category though some may not be very useful in practice. For instance: **rand** (random) may be useful for file creation (create) but could lead to very odd behavior if used for `delete` if there were more than one copy of the file.
+The behavior of union backend is inspired by [trapexit/mergerfs](https://github.com/trapexit/mergerfs).
+All functions are grouped into 3 categories: **action**, **create** and **search**.
+These functions and categories can be assigned a policy which dictates what file
+or directory is chosen when performing that behavior. Any policy can be assigned
+to a function or category though some may not be very useful in practice. For
+instance: **rand** (random) may be useful for file creation (create) but could
+lead to very odd behavior if used for `delete` if there were more than one copy
+of the file.
 
 ### Function / Category classifications
 
@@ -122,17 +140,22 @@ The behavior of union backend is inspired by [trapexit/mergerfs](https://github.
 
 ### Path Preservation
 
-Policies, as described below, are of two basic types. `path preserving` and `non-path preserving`.
+Policies, as described below, are of two basic types. `path preserving` and
+`non-path preserving`.
 
-All policies which start with `ep` (**epff**, **eplfs**, **eplus**, **epmfs**, **eprand**) are `path preserving`. `ep` stands for `existing path`.
+All policies which start with `ep` (**epff**, **eplfs**, **eplus**, **epmfs**, **eprand**)
+are `path preserving`. `ep` stands for `existing path`.
 
-A path preserving policy will only consider upstreams where the relative path being accessed already exists.
+A path preserving policy will only consider upstreams where the relative path
+being accessed already exists.
 
-When using non-path preserving policies paths will be created in target upstreams as necessary.
+When using non-path preserving policies paths will be created in target upstreams
+as necessary.
 
 ### Quota Relevant Policies
 
-Some policies rely on quota information. These policies should be used only if your upstreams support the respective quota fields.
+Some policies rely on quota information. These policies should be used only if
+your upstreams support the respective quota fields.
 
 | Policy     | Required Field |
 |------------|----------------|
@@ -141,21 +164,27 @@ Some policies rely on quota information. These policies should be used only if y
 | lus, eplus | Used           |
 | lno, eplno | Objects        |
 
-To check if your upstream supports the field, run `rclone about remote: [flags]` and see if the required field exists.
+To check if your upstream supports the field, run `rclone about remote: [flags]`
+and see if the required field exists.
 
 ### Filters
 
-Policies basically search upstream remotes and create a list of files / paths for functions to work on. The policy is responsible for filtering and sorting. The policy type defines the sorting but filtering is mostly uniform as described below.
+Policies basically search upstream remotes and create a list of files / paths for
+functions to work on. The policy is responsible for filtering and sorting. The
+policy type defines the sorting but filtering is mostly uniform as described below.
 
-* No **search** policies filter.
-* All **action** policies will filter out remotes which are tagged as **read-only**.
-* All **create** policies will filter out remotes which are tagged **read-only** or **no-create**.
+- No **search** policies filter.
+- All **action** policies will filter out remotes which are tagged as **read-only**.
+- All **create** policies will filter out remotes which are tagged **read-only**
+  or **no-create**.
 
 If all remotes are filtered an error will be returned.
 
 ### Policy descriptions
 
-The policies definition are inspired by [trapexit/mergerfs](https://github.com/trapexit/mergerfs) but not exactly the same. Some policy definition could be different due to the much larger latency of remote file systems.
+The policies definition are inspired by [trapexit/mergerfs](https://github.com/trapexit/mergerfs)
+but not exactly the same. Some policy definition could be different due to the
+much larger latency of remote file systems.
 
 | Policy           | Description                                                |
 |------------------|------------------------------------------------------------|
@@ -175,13 +204,12 @@ The policies definition are inspired by [trapexit/mergerfs](https://github.com/t
 | newest | Pick the file / directory with the largest mtime. |
 | rand (random) | Calls **all** and then randomizes. Returns only one upstream. |
 
-
 ### Writeback {#writeback}
 
 The tag `:writeback` on an upstream remote can be used to make a simple cache
 system like this:
 
-```
+```ini
 [union]
 type = union
 action_policy = all

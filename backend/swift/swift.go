@@ -561,6 +561,21 @@ func (f *Fs) setRoot(root string) {
 	f.rootContainer, f.rootDirectory = bucket.Split(f.root)
 }
 
+// Fetch the base container's policy to be used if/when we need to create a
+// segments container to ensure we use the same policy.
+func (f *Fs) fetchStoragePolicy(ctx context.Context, container string) (fs.Fs, error) {
+	err := f.pacer.Call(func() (bool, error) {
+		var rxHeaders swift.Headers
+		_, rxHeaders, err := f.c.Container(ctx, container)
+
+		f.opt.StoragePolicy = rxHeaders["X-Storage-Policy"]
+		fs.Debugf(f, "Auto set StoragePolicy to %s", f.opt.StoragePolicy)
+
+		return shouldRetryHeaders(ctx, rxHeaders, err)
+	})
+	return nil, err
+}
+
 // NewFsWithConnection constructs an Fs from the path, container:path
 // and authenticated connection.
 //
@@ -590,6 +605,7 @@ func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c
 		f.opt.UseSegmentsContainer.Valid = true
 		fs.Debugf(f, "Auto set use_segments_container to %v", f.opt.UseSegmentsContainer.Value)
 	}
+
 	if f.rootContainer != "" && f.rootDirectory != "" {
 		// Check to see if the object exists - ignoring directory markers
 		var info swift.Object
@@ -773,21 +789,20 @@ func (f *Fs) list(ctx context.Context, container, directory, prefix string, addC
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, container, directory, prefix string, addContainer bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, container, directory, prefix string, addContainer bool, callback func(fs.DirEntry) error) (err error) {
 	if container == "" {
-		return nil, fs.ErrorListBucketRequired
+		return fs.ErrorListBucketRequired
 	}
 	// List the objects
 	err = f.list(ctx, container, directory, prefix, addContainer, false, false, func(entry fs.DirEntry) error {
-		entries = append(entries, entry)
-		return nil
+		return callback(entry)
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// container must be present if listing succeeded
 	f.cache.MarkOK(container)
-	return entries, nil
+	return nil
 }
 
 // listContainers lists the containers
@@ -818,14 +833,46 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	container, directory := f.split(dir)
 	if container == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listContainers(ctx)
+		entries, err := f.listContainers(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, container, directory, f.rootDirectory, f.rootContainer == "", list.Add)
+		if err != nil {
+			return err
+		}
 	}
-	return f.listDir(ctx, container, directory, f.rootDirectory, f.rootContainer == "")
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -896,6 +943,20 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		used = container.Bytes
 		objects = container.Count
 		total = container.QuotaBytes
+
+		if f.opt.UseSegmentsContainer.Value {
+			err = f.pacer.Call(func() (bool, error) {
+				segmentsContainer := f.rootContainer + segmentsContainerSuffix
+				container, _, err = f.c.Container(ctx, segmentsContainer)
+				return shouldRetry(ctx, err)
+			})
+			if err != nil && err != swift.ContainerNotFound {
+				return nil, fmt.Errorf("container info failed: %w", err)
+			}
+			if err == nil {
+				used += container.Bytes
+			}
+		}
 	} else {
 		var containers []swift.Container
 		err = f.pacer.Call(func() (bool, error) {
@@ -1101,6 +1162,13 @@ func (f *Fs) newSegmentedUpload(ctx context.Context, dstContainer string, dstPat
 		container:    dstContainer,
 	}
 	if f.opt.UseSegmentsContainer.Value {
+		if f.opt.StoragePolicy == "" {
+			_, err = f.fetchStoragePolicy(ctx, dstContainer)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		su.container += segmentsContainerSuffix
 		err = f.makeContainer(ctx, su.container)
 		if err != nil {
@@ -1650,6 +1718,7 @@ var (
 	_ fs.PutStreamer = &Fs{}
 	_ fs.Copier      = &Fs{}
 	_ fs.ListRer     = &Fs{}
+	_ fs.ListPer     = &Fs{}
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
 )

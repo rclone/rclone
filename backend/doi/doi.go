@@ -598,7 +598,7 @@ It doesn't return anything.
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "metadata":
 		return f.ShowMetadata(ctx)
@@ -625,7 +625,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 }
 
 // ShowMetadata returns some metadata about the corresponding DOI
-func (f *Fs) ShowMetadata(ctx context.Context) (metadata interface{}, err error) {
+func (f *Fs) ShowMetadata(ctx context.Context) (metadata any, err error) {
 	doiURL, err := url.Parse("https://doi.org/" + f.opt.Doi)
 	if err != nil {
 		return nil, err

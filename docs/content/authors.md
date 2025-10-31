@@ -990,7 +990,7 @@ put them back in again.` >}}
 - Ross Smith II <ross@smithii.com>
 - Vikas Bhansali <64532198+vibhansa-msft@users.noreply.github.com>
 - Sudipto Baral <sudiptobaral.me@gmail.com>
-- Sam Pegg <samrpegg@gmail.com>
+- Sam Pegg <samrpegg@gmail.com> <70067376+S-Pegg1@users.noreply.github.com>
 - liubingrun <liubr1@chinatelecom.cn>
 - Albin Parou <fumesover@gmail.com>
 - n4n5 <56606507+Its-Just-Nans@users.noreply.github.com>
@@ -998,3 +998,36 @@ put them back in again.` >}}
 - houance <45840516+houance@users.noreply.github.com>
 - Yu Xin <3188+is@users.noreply.github.com>
 - Antonin Goude <antonin.goude@ovhcloud.com>
+- Timothy Jacobs <timothy@ironbounddesigns.com>
+- praveen-solanki-oracle <praveen.solanki@oracle.com>
+- huangnauh <huanglibo2010@gmail.com>
+- Lucas Bremgartner <breml@users.noreply.github.com>
+- Binbin Qian <qianbinbin@hotmail.com>
+- cui <523516579@qq.com>
+- Tilman Vogel <tilman.vogel@web.de>
+- skbeh <60107333+skbeh@users.noreply.github.com>
+- Claudius Ellsel <claudius.ellsel@live.de>
+- Motte <37443982+dmotte@users.noreply.github.com>
+- dougal <dougal.craigwood@gmail.com> <147946567+roucc@users.noreply.github.com>
+- anon-pradip <pradipsubedi360@gmail.com>
+- Robin Rolf <imer@imer.cc>
+- Jean-Christophe Cura <jcaspes@gmail.com>
+- russcoss <russcoss@outlook.com>
+- Matt LaPaglia <mlapaglia@gmail.com>
+- Youfu Zhang <1315097+zhangyoufu@users.noreply.github.com>
+- juejinyuxitu <juejinyuxitu@outlook.com>
+- iTrooz <hey@itrooz.fr>
+- Microscotch <github.com@microscotch.net>
+- Andrew Ruthven <andrew@etc.gen.nz>
+- spiffytech <git@spiffy.tech>
+- Dulani Woods <Dulani@gmail.com>
+- Marco Ferretti <mferretti93@gmail.com>
+- hunshcn <hunsh.cn@gmail.com>
+- vastonus <vastonus@outlook.com>
+- Oleksandr Redko <oleksandr.red+github@gmail.com>
+- reddaisyy <reddaisy@outlook.jp>
+- viocha <viocha@qq.com>
+- Aneesh Agrawal <aneesh@anthropic.com>
+- divinity76 <hans@loltek.net>
+- Andrew Gunnerson <accounts+github@chiller3.com>
+- Lakshmi-Surekha <Lakshmi.Kovvuri@ibm.com>

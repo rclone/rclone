@@ -17,58 +17,42 @@ import (
 	"math/rand"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 
 	_ "github.com/rclone/rclone/backend/all" // import all fs
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
+	"github.com/rclone/rclone/fstest/runs"
 	"github.com/rclone/rclone/lib/pacer"
 )
 
-var (
+func init() {
 	// Flags
-	maxTries     = flag.Int("maxtries", 5, "Number of times to try each test")
-	maxN         = flag.Int("n", 20, "Maximum number of tests to run at once")
-	testRemotes  = flag.String("remotes", "", "Comma separated list of remotes to test, e.g. 'TestSwift:,TestS3'")
-	testBackends = flag.String("backends", "", "Comma separated list of backends to test, e.g. 's3,googlecloudstorage")
-	testTests    = flag.String("tests", "", "Comma separated list of tests to test, e.g. 'fs/sync,fs/operations'")
-	clean        = flag.Bool("clean", false, "Instead of testing, clean all left over test directories")
-	runOnly      = flag.String("run", "", "Run only those tests matching the regexp supplied")
-	timeout      = flag.Duration("timeout", 60*time.Minute, "Maximum time to run each test for before giving up")
-	race         = flag.Bool("race", false, "If set run the tests under the race detector")
-	configFile   = flag.String("config", "fstest/test_all/config.yaml", "Path to config file")
-	outputDir    = flag.String("output", path.Join(os.TempDir(), "rclone-integration-tests"), "Place to store results")
-	emailReport  = flag.String("email", "", "Set to email the report to the address supplied")
-	dryRun       = flag.Bool("dry-run", false, "Print commands which would be executed only")
-	urlBase      = flag.String("url-base", "https://pub.rclone.org/integration-tests/", "Base for the online version")
-	uploadPath   = flag.String("upload", "", "Set this to an rclone path to upload the results here")
-	verbose      = flag.Bool("verbose", false, "Set to enable verbose logging in the tests")
-	listRetries  = flag.Int("list-retries", -1, "Number or times to retry listing - set to override the default")
-)
-
-// if matches then is definitely OK in the shell
-var shellOK = regexp.MustCompile("^[A-Za-z0-9./_:-]+$")
-
-// converts an argv style input into a shell command
-func toShell(args []string) (result string) {
-	for _, arg := range args {
-		if result != "" {
-			result += " "
-		}
-		if shellOK.MatchString(arg) {
-			result += arg
-		} else {
-			result += "'" + arg + "'"
-		}
-	}
-	return result
+	flag.IntVar(&Opt.MaxTries, "maxtries", 5, "Number of times to try each test")
+	flag.IntVar(&Opt.MaxN, "n", 20, "Maximum number of tests to run at once")
+	flag.StringVar(&Opt.TestRemotes, "remotes", "", "Comma separated list of remotes to test, e.g. 'TestSwift:,TestS3'")
+	flag.StringVar(&Opt.TestBackends, "backends", "", "Comma separated list of backends to test, e.g. 's3,googlecloudstorage")
+	flag.StringVar(&Opt.TestTests, "tests", "", "Comma separated list of tests to test, e.g. 'fs/sync,fs/operations'")
+	flag.BoolVar(&Opt.Clean, "clean", false, "Instead of testing, clean all left over test directories")
+	flag.StringVar(&Opt.RunOnly, "run", "", "Run only those tests matching the regexp supplied")
+	flag.DurationVar(&Opt.Timeout, "timeout", 60*time.Minute, "Maximum time to run each test for before giving up")
+	flag.BoolVar(&Opt.Race, "race", false, "If set run the tests under the race detector")
+	flag.StringVar(&Opt.ConfigFile, "config", "fstest/test_all/config.yaml", "Path to config file")
+	flag.StringVar(&Opt.OutputDir, "output", path.Join(os.TempDir(), "rclone-integration-tests"), "Place to store results")
+	flag.StringVar(&Opt.EmailReport, "email", "", "Set to email the report to the address supplied")
+	flag.BoolVar(&Opt.DryRun, "dry-run", false, "Print commands which would be executed only")
+	flag.StringVar(&Opt.URLBase, "url-base", "https://pub.rclone.org/integration-tests/", "Base for the online version")
+	flag.StringVar(&Opt.UploadPath, "upload", "", "Set this to an rclone path to upload the results here")
+	flag.BoolVar(&Opt.Verbose, "verbose", false, "Set to enable verbose logging in the tests")
+	flag.IntVar(&Opt.ListRetries, "list-retries", -1, "Number or times to retry listing - set to override the default")
 }
+
+var Opt = &runs.RunOpt{}
 
 func main() {
 	flag.Parse()
-	conf, err := NewConfig(*configFile)
+	conf, err := runs.NewConfig(Opt.ConfigFile)
 	if err != nil {
 		fs.Log(nil, "test_all should be run from the root of the rclone source code")
 		fs.Fatal(nil, fmt.Sprint(err))
@@ -79,26 +63,26 @@ func main() {
 	randInstance := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 
 	// Filter selection
-	if *testRemotes != "" {
+	if Opt.TestRemotes != "" {
 		// CSV parse to support connection string remotes with commas like -remotes local,\"TestGoogleCloudStorage,directory_markers:\"
-		r := csv.NewReader(strings.NewReader(*testRemotes))
+		r := csv.NewReader(strings.NewReader(Opt.TestRemotes))
 		remotes, err := r.Read()
 		if err != nil {
-			fs.Fatalf(*testRemotes, "error CSV-parsing -remotes string: %v", err)
+			fs.Fatalf(Opt.TestRemotes, "error CSV-parsing -remotes string: %v", err)
 		}
-		fs.Debugf(*testRemotes, "using remotes: %v", remotes)
-		conf.filterBackendsByRemotes(remotes)
+		fs.Debugf(Opt.TestRemotes, "using remotes: %v", remotes)
+		conf.FilterBackendsByRemotes(remotes)
 	}
-	if *testBackends != "" {
-		conf.filterBackendsByBackends(strings.Split(*testBackends, ","))
+	if Opt.TestBackends != "" {
+		conf.FilterBackendsByBackends(strings.Split(Opt.TestBackends, ","))
 	}
-	if *testTests != "" {
-		conf.filterTests(strings.Split(*testTests, ","))
+	if Opt.TestTests != "" {
+		conf.FilterTests(strings.Split(Opt.TestTests, ","))
 	}
 
 	// Just clean the directories if required
-	if *clean {
-		err := cleanRemotes(conf)
+	if Opt.Clean {
+		err := cleanRemotes(conf, *Opt)
 		if err != nil {
 			fs.Fatalf(nil, "Failed to clean: %v", err)
 		}
@@ -112,20 +96,20 @@ func main() {
 	fs.Logf(nil, "Testing remotes: %s", strings.Join(names, ", "))
 
 	// Runs we will do for this test in random order
-	runs := conf.MakeRuns()
-	randInstance.Shuffle(len(runs), runs.Swap)
+	testRuns := conf.MakeRuns()
+	randInstance.Shuffle(len(testRuns), testRuns.Swap)
 
 	// Create Report
-	report := NewReport()
+	report := runs.NewReport(*Opt)
 
 	// Make the test binaries, one per Path found in the tests
 	done := map[string]struct{}{}
-	for _, run := range runs {
+	for _, run := range testRuns {
 		if _, found := done[run.Path]; !found {
 			done[run.Path] = struct{}{}
 			if !run.NoBinary {
-				run.MakeTestBinary()
-				defer run.RemoveTestBinary()
+				run.MakeTestBinary(*Opt)
+				defer run.RemoveTestBinary(*Opt)
 			}
 		}
 	}
@@ -134,14 +118,14 @@ func main() {
 	_ = os.Setenv("RCLONE_CACHE_DB_WAIT_TIME", "30m")
 
 	// start the tests
-	results := make(chan *Run, len(runs))
+	results := make(chan *runs.Run, len(testRuns))
 	awaiting := 0
-	tokens := pacer.NewTokenDispenser(*maxN)
-	for _, run := range runs {
+	tokens := pacer.NewTokenDispenser(Opt.MaxN)
+	for _, run := range testRuns {
 		tokens.Get()
-		go func(run *Run) {
+		go func(run *runs.Run) {
 			defer tokens.Put()
-			run.Run(report.LogDir, results)
+			run.Run(*Opt, report.LogDir, results)
 		}(run)
 		awaiting++
 	}
@@ -157,8 +141,8 @@ func main() {
 	report.LogSummary()
 	report.LogJSON()
 	report.LogHTML()
-	report.EmailHTML()
-	report.Upload()
+	report.EmailHTML(*Opt)
+	report.Upload(*Opt)
 	if !report.AllPassed() {
 		os.Exit(1)
 	}

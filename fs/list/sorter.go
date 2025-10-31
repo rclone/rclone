@@ -46,8 +46,8 @@ type Sorter struct {
 	cutoff     int                   // number of entries above which we start extsort
 	extSort    bool                  // true if we are ext sorting
 	inputChan  chan string           // for sending data to the ext sort
-	outputChan chan string           // for receiving data from the ext sort
-	errChan    chan error            // for getting errors from the ext sort
+	outputChan <-chan string         // for receiving data from the ext sort
+	errChan    <-chan error          // for getting errors from the ext sort
 	sorter     *extsort.StringSorter // external string sort
 	errs       *errcount.ErrCount    // accumulate errors
 }
@@ -222,7 +222,6 @@ func (lh *listHelper) send(max int) (err error) {
 	g, gCtx := errgroup.WithContext(lh.ls.ctx)
 	g.SetLimit(lh.ls.ci.Checkers)
 	for i, key := range lh.keys {
-		i, key := i, key // can remove when go1.22 is minimum version
 		g.Go(func() error {
 			lh.entries[i], lh.errs[i] = lh.ls.keyToEntry(gCtx, key)
 			return nil

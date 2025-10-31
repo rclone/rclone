@@ -6,7 +6,8 @@ versionIntroduced: "v1.50"
 
 # {{< icon "fas fa-share-square" >}} Citrix ShareFile
 
-[Citrix ShareFile](https://sharefile.com) is a secure file sharing and transfer service aimed as business.
+[Citrix ShareFile](https://sharefile.com) is a secure file sharing and transfer
+service aimed as business.
 
 ## Configuration
 
@@ -16,11 +17,13 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -81,7 +84,7 @@ y/e/d> y
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from Citrix ShareFile. This only runs from the moment it opens
@@ -89,19 +92,25 @@ your browser to the moment you get back the verification code.  This
 is on `http://127.0.0.1:53682/` and this it may require you to unblock
 it temporarily if you are running a host firewall.
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the name you gave your remote):
 
 List directories in top level of your ShareFile
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your ShareFile
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an ShareFile directory called backup
 
-    rclone copy /home/source remote:backup
+```sh
+rclone copy /home/source remote:backup
+```
 
 Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
@@ -251,6 +260,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

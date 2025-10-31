@@ -131,6 +131,109 @@ section and followed by the privacy policy of Rclone.
   local configuration file.
 - Rclone does not share any user data with third parties.
 
+## User Data Collection and Storage
+
+This section outlines how rclone accesses, uses, stores, and shares
+user data obtained from service provider APIs. Our use of information
+received from provider APIs will adhere to the provider API Services
+User Data Policy, including the Limited Use requirements.
+
+Rclone is a client-side command-line program that users run on their
+own computers to manage their files on cloud storage services. The
+rclone project does not operate any servers that store or process your
+personal data. All data access and processing occurs directly on the
+user's machine and between the user's machine and the provider API
+servers.
+
+### Data Accessed
+
+When you authorize rclone to access your files on your provider, it
+may access the following types of data, depending on the permissions
+you grant:
+
+- Files: Rclone accesses the metadata (filenames, sizes, modification
+  times, etc.) and content of your files and folders on your provider.
+  This is necessary for rclone to perform file management tasks like
+  copying, syncing, moving, and listing files.
+
+- Authentication Tokens: Rclone requests OAuth 2.0 access tokens from
+  the provider. These tokens are used to authenticate your requests to
+  the provider's APIs and prove that you have granted rclone
+  permission to access your data.
+
+- Basic Profile Information: As part of the authentication process,
+  rclone may receive your email address to identify the connected
+  account within the rclone configuration.
+
+### Data Usage
+
+Rclone uses the user data it accesses solely to provide its core
+functionality, which is initiated and controlled entirely by you, the
+user. Specifically:
+
+- The data is used to perform file transfer and management operations
+  (such as `copy`, `sync`, `move`, `list`, `delete`) between your
+  local machine and your provider account as per your direct commands.
+
+- Authentication tokens are used exclusively to make authorized API
+  calls to the provider's services on your behalf.
+
+- Your email address is used locally to help you identify which
+  provider account is configured.
+
+Rclone does not use your data for any other purpose, such as
+advertising, marketing, or analysis by the rclone project developers.
+
+### Data Sharing
+
+Rclone does not share your user data with any third parties.
+
+All data transfers initiated by the user occur directly between the
+machine where rclone is running and the provider's servers. The rclone
+project and its developers **never** have access to your
+authentication tokens or your file data.
+
+### Data Storage & Protection
+
+- Configuration Data: Rclone stores its configuration, including the
+  OAuth 2.0 tokens required to access your provider account, in a
+  configuration file (`rclone.conf`) located on your local machine.
+
+- Security: You are responsible for securing this configuration
+  file on your own computer. Rclone provides a built-in option to
+  encrypt the configuration file with a password for an added layer of
+  security. We strongly recommend using this feature.
+
+- File Data: Your file data is only held in your computer's memory
+  (RAM) temporarily during transfer operations. Rclone does not
+  permanently store your file content on your local disk unless you
+  explicitly command it to do so (e.g., by running a `copy` command
+  from the provider to a local directory).
+
+### Data Retention & Deletion
+
+Rclone gives you full control over your data.
+
+- Data Retention: Rclone retains the configuration data, including
+  authentication tokens, on your local machine for as long as you keep
+  the configuration file. This allows you to use rclone without having
+  to re-authenticate for every session.
+
+- Data Deletion: You can delete your data and revoke rclone's
+  access at any time through one of the following methods:
+
+    1. Local Deletion: You can delete the specific provider
+       configuration from your `rclone.conf` file or delete the entire
+       file itself. This will permanently remove the authentication
+       tokens from your machine.
+
+    2. Revoking Access via the provider: You can revoke rclone's
+       access to your provider directly from your the providers's
+       security settings page. This will invalidate the authentication
+       tokens, and rclone will no longer be able to access your data.
+       For example, if you are using Google you can manage your permissions
+       [on the Google permissions page](https://myaccount.google.com/permissions).
+
 ## Resources & Further Information
 
 - [Data Protection Act 1998](http://www.legislation.gov.uk/ukpga/1998/29/contents)

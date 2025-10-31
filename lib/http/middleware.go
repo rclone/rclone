@@ -191,6 +191,7 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 				w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
 				w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
 				w.Header().Add("Access-Control-Allow-Methods", "COPY, DELETE, GET, HEAD, LOCK, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, TRACE, UNLOCK")
+				w.Header().Add("Access-Control-Max-Age", "86400")
 			}
 
 			next.ServeHTTP(w, r)

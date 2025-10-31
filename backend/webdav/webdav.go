@@ -25,6 +25,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Azure/go-ntlmssp"
+	"golang.org/x/sync/singleflight"
+
 	"github.com/rclone/rclone/backend/webdav/api"
 	"github.com/rclone/rclone/backend/webdav/odrvcookie"
 	"github.com/rclone/rclone/fs"
@@ -35,11 +38,10 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-
-	ntlmssp "github.com/Azure/go-ntlmssp"
 )
 
 const (
@@ -192,7 +194,7 @@ type Options struct {
 	User               string               `config:"user"`
 	Pass               string               `config:"pass"`
 	BearerToken        string               `config:"bearer_token"`
-	BearerTokenCommand string               `config:"bearer_token_command"`
+	BearerTokenCommand fs.SpaceSepList      `config:"bearer_token_command"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 	Headers            fs.CommaSepList      `config:"headers"`
 	PacerMinSleep      fs.Duration          `config:"pacer_min_sleep"`
@@ -226,6 +228,7 @@ type Fs struct {
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
 	chunksUploadURL    string        // upload URL for nextcloud chunked
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
+	authSingleflight   *singleflight.Group
 }
 
 // Object describes a webdav object
@@ -282,7 +285,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		return false, err
 	}
 	// If we have a bearer token command and it has expired then refresh it
-	if f.opt.BearerTokenCommand != "" && resp != nil && resp.StatusCode == 401 {
+	if len(f.opt.BearerTokenCommand) != 0 && resp != nil && resp.StatusCode == 401 {
 		fs.Debugf(f, "Bearer token expired: %v", err)
 		authErr := f.fetchAndSetBearerToken()
 		if authErr != nil {
@@ -476,13 +479,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	f := &Fs{
-		name:        name,
-		root:        root,
-		opt:         *opt,
-		endpoint:    u,
-		endpointURL: u.String(),
-		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(opt.PacerMinSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		precision:   fs.ModTimeNotSupported,
+		name:             name,
+		root:             root,
+		opt:              *opt,
+		endpoint:         u,
+		endpointURL:      u.String(),
+		pacer:            fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(opt.PacerMinSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		precision:        fs.ModTimeNotSupported,
+		authSingleflight: new(singleflight.Group),
 	}
 
 	var client *http.Client
@@ -515,7 +519,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.srv.SetUserPass(opt.User, opt.Pass)
 	} else if opt.BearerToken != "" {
 		f.setBearerToken(opt.BearerToken)
-	} else if f.opt.BearerTokenCommand != "" {
+	} else if len(f.opt.BearerTokenCommand) != 0 {
 		err = f.fetchAndSetBearerToken()
 		if err != nil {
 			return nil, err
@@ -562,12 +566,11 @@ func (f *Fs) setBearerToken(token string) {
 }
 
 // fetch the bearer token using the command
-func (f *Fs) fetchBearerToken(cmd string) (string, error) {
+func (f *Fs) fetchBearerToken(cmd fs.SpaceSepList) (string, error) {
 	var (
-		args   = strings.Split(cmd, " ")
 		stdout bytes.Buffer
 		stderr bytes.Buffer
-		c      = exec.Command(args[0], args[1:]...)
+		c      = exec.Command(cmd[0], cmd[1:]...)
 	)
 	c.Stdout = &stdout
 	c.Stderr = &stderr
@@ -607,15 +610,18 @@ func (f *Fs) findHeader(headers fs.CommaSepList, find string) bool {
 
 // fetch the bearer token and set it if successful
 func (f *Fs) fetchAndSetBearerToken() error {
-	if f.opt.BearerTokenCommand == "" {
-		return nil
-	}
-	token, err := f.fetchBearerToken(f.opt.BearerTokenCommand)
-	if err != nil {
-		return err
-	}
-	f.setBearerToken(token)
-	return nil
+	_, err, _ := f.authSingleflight.Do("bearerToken", func() (interface{}, error) {
+		if len(f.opt.BearerTokenCommand) == 0 {
+			return nil, nil
+		}
+		token, err := f.fetchBearerToken(f.opt.BearerTokenCommand)
+		if err != nil {
+			return nil, err
+		}
+		f.setBearerToken(token)
+		return nil, nil
+	})
+	return err
 }
 
 // The WebDAV url can optionally be suffixed with a path. This suffix needs to be ignored for determining the temporary upload directory of chunks.
@@ -882,30 +888,56 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	var iErr error
-	_, err = f.listAll(ctx, dir, false, false, defaultDepth, func(remote string, isDir bool, info *api.Prop) bool {
+	_, err := f.listAll(ctx, dir, false, false, defaultDepth, func(remote string, isDir bool, info *api.Prop) bool {
 		if isDir {
 			d := fs.NewDir(remote, time.Time(info.Modified))
 			// .SetID(info.ID)
 			// FIXME more info from dir? can set size, items?
-			entries = append(entries, d)
+			err := list.Add(d)
+			if err != nil {
+				iErr = err
+				return true
+			}
 		} else {
 			o, err := f.newObjectWithInfo(ctx, remote, info)
 			if err != nil {
 				iErr = err
 				return true
 			}
-			entries = append(entries, o)
+			err = list.Add(o)
+			if err != nil {
+				iErr = err
+				return true
+			}
 		}
 		return false
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if iErr != nil {
-		return nil, iErr
+		return iErr
 	}
-	return entries, nil
+	return list.Flush()
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -1628,6 +1660,7 @@ var (
 	_ fs.Copier      = (*Fs)(nil)
 	_ fs.Mover       = (*Fs)(nil)
 	_ fs.DirMover    = (*Fs)(nil)
+	_ fs.ListPer     = (*Fs)(nil)
 	_ fs.Abouter     = (*Fs)(nil)
 	_ fs.Object      = (*Object)(nil)
 )

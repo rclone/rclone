@@ -18,11 +18,13 @@ to use JWT authentication.  `rclone config` walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -82,7 +84,7 @@ y/e/d> y
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from Box. This only runs from the moment it opens
@@ -90,15 +92,19 @@ your browser to the moment you get back the verification code.  This
 is on `http://127.0.0.1:53682/` and this may require you to unblock
 it temporarily if you are running a host firewall.
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the name you gave your remote):
 
 List directories in top level of your Box
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 List all the files in your Box
 
-    rclone ls remote:
+```sh
+rclone ls remote:
+```
 
 To copy a local directory to an Box directory called backup
 
@@ -123,9 +129,9 @@ According to the [box docs](https://developer.box.com/v2.0/docs/oauth-20#section
 
 This means that if you
 
-  * Don't use the box remote for 60 days
-  * Copy the config file with a box refresh token in and use it in two places
-  * Get an error on a token refresh
+- Don't use the box remote for 60 days
+- Copy the config file with a box refresh token in and use it in two places
+- Get an error on a token refresh
 
 then rclone will return an error which includes the text `Invalid
 refresh token`.
@@ -138,7 +144,7 @@ did the authentication on.
 
 Here is how to do it.
 
-```
+```sh
 $ rclone config
 Current remotes:
 
@@ -389,6 +395,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 

@@ -74,6 +74,47 @@ for more info.
 
 **Note**: Use the `--dry-run` or the `--interactive`/`-i` flag to test without copying anything.
 
+# Logger Flags
+
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error` flags write paths,
+one per line, to the file name (or stdout if it is `-`) supplied. What they write is described
+in the help below. For example `--differ` will write all paths which are present
+on both the source and destination but different.
+
+The `--combined` flag will write a file (or stdout) which contains all
+file paths with a symbol and then a space and then the path to tell
+you what happened to it. These are reminiscent of diff files.
+
+- `= path` means path was found in source and destination and was identical
+- `- path` means path was missing on the source, so only in the destination
+- `+ path` means path was missing on the destination, so only in the source
+- `* path` means path was present in source and destination but different.
+- `! path` means there was an error reading or hashing the source or dest.
+
+The `--dest-after` flag writes a list file using the same format flags
+as [`lsf`](/commands/rclone_lsf/#synopsis) (including [customizable options
+for hash, modtime, etc.](/commands/rclone_lsf/#synopsis))
+Conceptually it is similar to rsync's `--itemize-changes`, but not identical
+-- it should output an accurate list of what will be on the destination
+after the command is finished.
+
+When the `--no-traverse` flag is set, all logs involving files that exist only
+on the destination will be incomplete or completely missing.
+
+Note that these logger flags have a few limitations, and certain scenarios
+are not currently supported:
+
+- `--max-duration` / `CutoffModeHard`
+- `--compare-dest` / `--copy-dest`
+- server-side moves of an entire dir at once
+- High-level retries, because there would be duplicates (use `--retries 1` to disable)
+- Possibly some unusual error scenarios
+
+Note also that each file is logged during execution, as opposed to after, so it
+is most useful as a predictor of what SHOULD happen to each file
+(which may or may not match what actually DID.)
+
+
 
 ```
 rclone copy source:path dest:path [flags]
@@ -82,8 +123,24 @@ rclone copy source:path dest:path [flags]
 ## Options
 
 ```
+      --absolute                Put a leading / in front of path names
+      --combined string         Make a combined report of changes to this file
       --create-empty-src-dirs   Create empty source dirs on destination after copy
+      --csv                     Output in CSV format
+      --dest-after string       Report all files that exist on the dest post-sync
+      --differ string           Report all non-matching files to this file
+  -d, --dir-slash               Append a slash to directory names (default true)
+      --dirs-only               Only list directories
+      --error string            Report all files with errors (hashing or reading) to this file
+      --files-only              Only list files (default true)
+  -F, --format string           Output format - see lsf help for details (default "p")
+      --hash h                  Use this hash when h is used in the format MD5|SHA-1|DropboxHash (default "md5")
   -h, --help                    help for copy
+      --match string            Report all matching files to this file
+      --missing-on-dst string   Report all files missing from the destination to this file
+      --missing-on-src string   Report all files missing from the source to this file
+  -s, --separator string        Separator for the items in the format (default ";")
+  -t, --timeformat string       Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
 ```
 
 Options shared with other commands are described next.

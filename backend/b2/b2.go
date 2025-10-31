@@ -8,7 +8,9 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/md5"
 	"crypto/sha1"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -53,6 +55,9 @@ const (
 	nameHeader          = "X-Bz-File-Name"
 	timestampHeader     = "X-Bz-Upload-Timestamp"
 	retryAfterHeader    = "Retry-After"
+	sseAlgorithmHeader  = "X-Bz-Server-Side-Encryption-Customer-Algorithm"
+	sseKeyHeader        = "X-Bz-Server-Side-Encryption-Customer-Key"
+	sseMd5Header        = "X-Bz-Server-Side-Encryption-Customer-Key-Md5"
 	minSleep            = 10 * time.Millisecond
 	maxSleep            = 5 * time.Minute
 	decayConstant       = 1 // bigger for slower decay, exponential
@@ -252,6 +257,51 @@ See: [rclone backend lifecycle](#lifecycle) for setting lifecycles after bucket 
 			Default: (encoder.Display |
 				encoder.EncodeBackSlash |
 				encoder.EncodeInvalidUtf8),
+		}, {
+			Name:     "sse_customer_algorithm",
+			Help:     "If using SSE-C, the server-side encryption algorithm used when storing this object in B2.",
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}, {
+				Value: "AES256",
+				Help:  "Advanced Encryption Standard (256 bits key length)",
+			}},
+		}, {
+			Name: "sse_customer_key",
+			Help: `To use SSE-C, you may provide the secret encryption key encoded in a UTF-8 compatible string to encrypt/decrypt your data
+
+Alternatively you can provide --sse-customer-key-base64.`,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}},
+			Sensitive: true,
+		}, {
+			Name: "sse_customer_key_base64",
+			Help: `To use SSE-C, you may provide the secret encryption key encoded in Base64 format to encrypt/decrypt your data
+
+Alternatively you can provide --sse-customer-key.`,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}},
+			Sensitive: true,
+		}, {
+			Name: "sse_customer_key_md5",
+			Help: `If using SSE-C you may provide the secret encryption key MD5 checksum (optional).
+
+If you leave it blank, this is calculated automatically from the sse_customer_key provided.
+`,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}},
+			Sensitive: true,
 		}},
 	})
 }
@@ -274,6 +324,10 @@ type Options struct {
 	DownloadAuthorizationDuration fs.Duration          `config:"download_auth_duration"`
 	Lifecycle                     int                  `config:"lifecycle"`
 	Enc                           encoder.MultiEncoder `config:"encoding"`
+	SSECustomerAlgorithm          string               `config:"sse_customer_algorithm"`
+	SSECustomerKey                string               `config:"sse_customer_key"`
+	SSECustomerKeyBase64          string               `config:"sse_customer_key_base64"`
+	SSECustomerKeyMD5             string               `config:"sse_customer_key_md5"`
 }
 
 // Fs represents a remote b2 server
@@ -503,6 +557,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.Endpoint == "" {
 		opt.Endpoint = defaultEndpoint
+	}
+	if opt.SSECustomerKey != "" && opt.SSECustomerKeyBase64 != "" {
+		return nil, errors.New("b2: can't use both sse_customer_key and sse_customer_key_base64 at the same time")
+	} else if opt.SSECustomerKeyBase64 != "" {
+		// Decode the Base64-encoded key and store it in the SSECustomerKey field
+		decoded, err := base64.StdEncoding.DecodeString(opt.SSECustomerKeyBase64)
+		if err != nil {
+			return nil, fmt.Errorf("b2: Could not decode sse_customer_key_base64: %w", err)
+		}
+		opt.SSECustomerKey = string(decoded)
+	} else {
+		// Encode the raw key as Base64
+		opt.SSECustomerKeyBase64 = base64.StdEncoding.EncodeToString([]byte(opt.SSECustomerKey))
+	}
+	if opt.SSECustomerKey != "" && opt.SSECustomerKeyMD5 == "" {
+		// Calculate CustomerKeyMd5 if not supplied
+		md5sumBinary := md5.Sum([]byte(opt.SSECustomerKey))
+		opt.SSECustomerKeyMD5 = base64.StdEncoding.EncodeToString(md5sumBinary[:])
 	}
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
@@ -847,7 +919,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *api.File
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool, callback func(fs.DirEntry) error) (err error) {
 	last := ""
 	err = f.list(ctx, bucket, directory, prefix, f.rootBucket == "", false, 0, f.opt.Versions, false, func(remote string, object *api.File, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory, &last)
@@ -855,16 +927,16 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 			return err
 		}
 		if entry != nil {
-			entries = append(entries, entry)
+			return callback(entry)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// bucket must be present if listing succeeded
 	f.cache.MarkOK(bucket)
-	return entries, nil
+	return nil
 }
 
 // listBuckets returns all the buckets to out
@@ -890,14 +962,46 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	bucket, directory := f.split(dir)
 	if bucket == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listBuckets(ctx)
+		entries, err := f.listBuckets(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", list.Add)
+		if err != nil {
+			return err
+		}
 	}
-	return f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "")
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -1403,6 +1507,16 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *
 		Name:         f.opt.Enc.FromStandardPath(dstPath),
 		DestBucketID: destBucketID,
 	}
+	if f.opt.SSECustomerKey != "" && f.opt.SSECustomerKeyMD5 != "" {
+		serverSideEncryptionConfig := api.ServerSideEncryption{
+			Mode:           "SSE-C",
+			Algorithm:      f.opt.SSECustomerAlgorithm,
+			CustomerKey:    f.opt.SSECustomerKeyBase64,
+			CustomerKeyMd5: f.opt.SSECustomerKeyMD5,
+		}
+		request.SourceServerSideEncryption = serverSideEncryptionConfig
+		request.DestinationServerSideEncryption = serverSideEncryptionConfig
+	}
 	if newInfo == nil {
 		request.MetadataDirective = "COPY"
 	} else {
@@ -1834,9 +1948,10 @@ var _ io.ReadCloser = &openFile{}
 
 func (o *Object) getOrHead(ctx context.Context, method string, options []fs.OpenOption) (resp *http.Response, info *api.File, err error) {
 	opts := rest.Opts{
-		Method:     method,
-		Options:    options,
-		NoResponse: method == "HEAD",
+		Method:       method,
+		Options:      options,
+		NoResponse:   method == "HEAD",
+		ExtraHeaders: map[string]string{},
 	}
 
 	// Use downloadUrl from backblaze if downloadUrl is not set
@@ -1853,6 +1968,11 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 	} else {
 		bucket, bucketPath := o.split()
 		opts.Path += "/file/" + urlEncode(o.fs.opt.Enc.FromStandardName(bucket)) + "/" + urlEncode(o.fs.opt.Enc.FromStandardPath(bucketPath))
+	}
+	if o.fs.opt.SSECustomerKey != "" && o.fs.opt.SSECustomerKeyMD5 != "" {
+		opts.ExtraHeaders[sseAlgorithmHeader] = o.fs.opt.SSECustomerAlgorithm
+		opts.ExtraHeaders[sseKeyHeader] = o.fs.opt.SSECustomerKeyBase64
+		opts.ExtraHeaders[sseMd5Header] = o.fs.opt.SSECustomerKeyMD5
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
@@ -2118,6 +2238,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		},
 		ContentLength: &size,
 	}
+	if o.fs.opt.SSECustomerKey != "" && o.fs.opt.SSECustomerKeyMD5 != "" {
+		opts.ExtraHeaders[sseAlgorithmHeader] = o.fs.opt.SSECustomerAlgorithm
+		opts.ExtraHeaders[sseKeyHeader] = o.fs.opt.SSECustomerKeyBase64
+		opts.ExtraHeaders[sseMd5Header] = o.fs.opt.SSECustomerKeyMD5
+	}
 	var response api.FileInfo
 	// Don't retry, return a retry error instead
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
@@ -2192,13 +2317,17 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		return info, nil, err
 	}
 
+	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil, options...)
+	if err != nil {
+		return info, nil, err
+	}
+
 	info = fs.ChunkWriterInfo{
-		ChunkSize:   int64(f.opt.ChunkSize),
+		ChunkSize:   up.chunkSize,
 		Concurrency: o.fs.opt.UploadConcurrency,
 		//LeavePartsOnError: o.fs.opt.LeavePartsOnError,
 	}
-	up, err := f.newLargeUpload(ctx, o, nil, src, f.opt.ChunkSize, false, nil, options...)
-	return info, up, err
+	return info, up, nil
 }
 
 // Remove an object
@@ -2428,6 +2557,7 @@ var (
 	_ fs.PutStreamer     = &Fs{}
 	_ fs.CleanUpper      = &Fs{}
 	_ fs.ListRer         = &Fs{}
+	_ fs.ListPer         = &Fs{}
 	_ fs.PublicLinker    = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}
 	_ fs.Commander       = &Fs{}

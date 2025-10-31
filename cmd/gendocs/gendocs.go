@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"text/template"
 	"time"
@@ -91,7 +92,7 @@ rclone.org website.`,
 			Aliases     []string
 			Annotations map[string]string
 		}
-		var commands = map[string]commandDetails{}
+		commands := map[string]commandDetails{}
 		var addCommandDetails func(root *cobra.Command, parentAliases []string)
 		addCommandDetails = func(root *cobra.Command, parentAliases []string) {
 			name := strings.ReplaceAll(root.CommandPath(), " ", "_") + ".md"
@@ -158,7 +159,7 @@ rclone.org website.`,
 			return err
 		}
 
-		var outdentTitle = regexp.MustCompile(`(?m)^#(#+)`)
+		outdentTitle := regexp.MustCompile(`(?m)^#(#+)`)
 
 		// Munge the files to add a link to the global flags page
 		err = filepath.Walk(out, func(path string, info os.FileInfo, err error) error {
@@ -169,6 +170,20 @@ rclone.org website.`,
 				name := filepath.Base(path)
 				cmd, ok := commands[name]
 				if !ok {
+					switch name {
+					case "rclone_mount.md":
+						switch runtime.GOOS {
+						case "darwin", "windows":
+							fs.Logf(nil, "Skipping docs for command not available without the cmount build tag: %v", name)
+							return nil
+						}
+					case "rclone_nfsmount.md", "rclone_serve_nfs.md":
+						switch runtime.GOOS {
+						case "windows":
+							fs.Logf(nil, "Skipping docs for command not supported on %v: %v", runtime.GOOS, name)
+							return nil
+						}
+					}
 					return fmt.Errorf("didn't find command for %q", name)
 				}
 				b, err := os.ReadFile(path)
@@ -184,7 +199,12 @@ rclone.org website.`,
 						return fmt.Errorf("internal error: failed to find cut points: startCut = %d, endCut = %d", startCut, endCut)
 					}
 					if endCut >= 0 {
-						doc = doc[:endCut] + "### See Also" + doc[endCut+12:]
+						doc = doc[:endCut] + `### See Also
+
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->` + doc[endCut+12:] + `
+<!-- markdownlint-restore -->
+`
 					}
 				} else {
 					var out strings.Builder
@@ -196,7 +216,7 @@ rclone.org website.`,
 							if group.Flags.HasFlags() {
 								_, _ = fmt.Fprintf(&out, "#### %s Options\n\n", group.Name)
 								_, _ = fmt.Fprintf(&out, "%s\n\n", group.Help)
-								_, _ = out.WriteString("```\n")
+								_, _ = out.WriteString("```text\n")
 								_, _ = out.WriteString(group.Flags.FlagUsages())
 								_, _ = out.WriteString("```\n\n")
 							}
@@ -204,7 +224,12 @@ rclone.org website.`,
 					} else {
 						_, _ = out.WriteString("See the [global flags page](/flags/) for global options not listed here.\n\n")
 					}
-					doc = doc[:startCut] + out.String() + "### See Also" + doc[endCut+12:]
+					doc = doc[:startCut] + out.String() + `### See Also
+
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->` + doc[endCut+12:] + `
+<!-- markdownlint-restore -->
+`
 				}
 
 				// outdent all the titles by one

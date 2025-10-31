@@ -31,6 +31,7 @@ See the following for detailed instructions for
 - [1Fichier](/fichier/)
 - [Akamai Netstorage](/netstorage/)
 - [Alias](/alias/)
+- [Archive](/archive/)
 - [Amazon S3](/s3/)
 - [Backblaze B2](/b2/)
 - [Box](/box/)
@@ -103,7 +104,7 @@ Its syntax is like this
 rclone subcommand [options] <parameters> <parameters...>
 ```
 
-A `subcommand` is a the rclone operation required, (e.g. `sync`,
+A `subcommand` is an rclone operation required (e.g. `sync`,
 `copy`, `ls`).
 
 An `option` is a single letter flag (e.g. `-v`) or a group of single
@@ -384,6 +385,9 @@ does not work on Windows.)
 rclone copy ':http,url="https://example.com":path/to/dir' /tmp/dir
 ```
 
+You can use [rclone config string](/commands/rclone_config_string/) to
+convert a remote into a connection string.
+
 #### Connection strings, config and logging
 
 If you supply extra configuration to a backend by command line flag,
@@ -437,7 +441,7 @@ Do not use single character names on Windows as it creates ambiguity with Window
 drives' names, e.g.: remote called `C` is indistinguishable from `C` drive. Rclone
 will always assume that single letter name refers to a drive.
 
-## Adding global configuration to a remote
+## Adding global configuration to a remote {#globalconfig}
 
 It is possible to add global configuration to the remote configuration which
 will be applied just before the remote is created.
@@ -878,7 +882,9 @@ which would have been updated or deleted will be stored in
 
 If running rclone from a script you might want to use today's date as
 the directory name passed to `--backup-dir` to store the old files, or
-you might want to pass `--suffix` with today's date.
+you might want to pass `--suffix` with today's date. This can be done
+with `--suffix $(date +%F)` in bash, and
+`--suffix $(Get-Date -Format 'yyyy-MM-dd')` in PowerShell.
 
 See `--compare-dest` and `--copy-dest`.
 
@@ -1687,7 +1693,8 @@ During rmdirs it will not remove root directory, even if it's empty.
 ### -l, --links
 
 Normally rclone will ignore symlinks or junction points (which behave
-like symlinks under Windows).
+like symlinks under Windows). Ignored files won't be copied, moved or
+deleted in a sync.
 
 If you supply this flag then rclone will copy symbolic links from any
 supported backend backend, and store them as text files, with a
@@ -1725,6 +1732,57 @@ If the file exists, then rclone will append to it.
 Note that if you are using the `logrotate` program to manage rclone's
 logs, then you should use the `copytruncate` option as rclone doesn't
 have a signal to rotate logs.
+
+Alternatively you can use the options below to manage rclone's built
+in log rotation.
+
+### --log-file-max-size SizeSuffix
+
+Maximum size of the log file before it's rotated (eg `10M`). This SizeSuffix
+is rounded to the nearest MiB or 1 MiB if lower.
+
+If `--log-file` is not set then this option will be ignored.
+
+If this option is not set, then the other log rotation options will be
+ignored.
+
+For example if the following flags are in use
+
+```sh
+rclone --log-file rclone.log --log-file-max-size 1M --log-file-max-backups 3
+```
+
+Then this will create log files which look like this
+
+```console
+$ ls -l
+-rw-------  1 user user  1048491 Apr 11 17:15 rclone-2025-04-11T17-15-29.998.log
+-rw-------  1 user user  1048511 Apr 11 17:15 rclone-2025-04-11T17-15-30.467.log
+-rw-------  1 user user  1048559 Apr 11 17:15 rclone-2025-04-11T17-15-30.543.log
+-rw-------  1 user user   521602 Apr 11 17:15 rclone.log
+```
+
+The file `rclone.log` being the current one.
+
+### --log-file-compress
+
+If set, compress rotated log files using gzip. This changes the
+extension of the old log files to `.log.gz`.
+
+Defaults to false - don't compress log files.
+
+### --log-file-max-age Duration
+
+Maximum duration to retain old log files (eg `7d`). This is rounded to
+the dearest day, or 1 day if lower.
+
+The default is to retain all old log files.
+
+### --log-file-max-backups int
+
+Maximum number of old log files to retain
+
+The default is to retain all old log files.
 
 ### --log-format string
 
@@ -2045,25 +2103,25 @@ some context for the `Metadata` which may be important.
 
 ```json
 {
-    "SrcFs": "gdrive:",
-    "SrcFsType": "drive",
-    "DstFs": "newdrive:user",
-    "DstFsType": "onedrive",
-    "Remote": "test.txt",
-    "Size": 6,
-    "MimeType": "text/plain; charset=utf-8",
-    "ModTime": "2022-10-11T17:53:10.286745272+01:00",
-    "IsDir": false,
-    "ID": "xyz",
-    "Metadata": {
-        "btime": "2022-10-11T16:53:11Z",
-        "content-type": "text/plain; charset=utf-8",
-        "mtime": "2022-10-11T17:53:10.286745272+01:00",
-        "owner": "user1@domain1.com",
-        "permissions": "...",
-        "description": "my nice file",
-        "starred": "false"
-    }
+  "SrcFs": "gdrive:",
+  "SrcFsType": "drive",
+  "DstFs": "newdrive:user",
+  "DstFsType": "onedrive",
+  "Remote": "test.txt",
+  "Size": 6,
+  "MimeType": "text/plain; charset=utf-8",
+  "ModTime": "2022-10-11T17:53:10.286745272+01:00",
+  "IsDir": false,
+  "ID": "xyz",
+  "Metadata": {
+    "btime": "2022-10-11T16:53:11Z",
+    "content-type": "text/plain; charset=utf-8",
+    "mtime": "2022-10-11T17:53:10.286745272+01:00",
+    "owner": "user1@domain1.com",
+    "permissions": "...",
+    "description": "my nice file",
+    "starred": "false"
+  }
 }
 ```
 
@@ -2075,15 +2133,15 @@ the description:
 
 ```json
 {
-    "Metadata": {
-        "btime": "2022-10-11T16:53:11Z",
-        "content-type": "text/plain; charset=utf-8",
-        "mtime": "2022-10-11T17:53:10.286745272+01:00",
-        "owner": "user1@domain2.com",
-        "permissions": "...",
-        "description": "my nice file [migrated from domain1]",
-        "starred": "false"
-    }
+  "Metadata": {
+    "btime": "2022-10-11T16:53:11Z",
+    "content-type": "text/plain; charset=utf-8",
+    "mtime": "2022-10-11T17:53:10.286745272+01:00",
+    "owner": "user1@domain2.com",
+    "permissions": "...",
+    "description": "my nice file [migrated from domain1]",
+    "starred": "false"
+  }
 }
 ```
 
@@ -2947,6 +3005,20 @@ The `--client-key` flag is required too when using this.
 
 This loads the PEM encoded client side private key used for mutual TLS
 authentication.  Used in conjunction with `--client-cert`.
+
+Supported types are:
+
+- Unencrypted PKCS#1 ("BEGIN RSA PRIVATE KEY")
+- Unencrypted PKCS#8 ("BEGIN PRIVATE KEY")
+- Encrypted PKCS#8 ("BEGIN ENCRYPTED PRIVATE KEY")
+- Legacy PEM encryption (e.g., DEK-Info headers), which are automatically detected.
+
+### --client-pass string
+
+This can be used to supply an optional password to decrypt the client key file.
+
+**NB** the password should be obscured so it should be the output of
+`rclone obscure YOURPASSWORD`.
 
 ### --no-check-certificate
 

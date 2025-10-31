@@ -9,12 +9,12 @@ versionIntroduced: "v0.91"
 Swift refers to [OpenStack Object Storage](https://docs.openstack.org/swift/latest/).
 Commercial implementations of that being:
 
-  * [Rackspace Cloud Files](https://www.rackspace.com/cloud/files/)
-  * [Memset Memstore](https://www.memset.com/cloud/storage/)
-  * [OVH Object Storage](https://www.ovhcloud.com/en/public-cloud/object-storage/)
-  * [Oracle Cloud Storage](https://docs.oracle.com/en-us/iaas/integration/doc/configure-object-storage.html)
-  * [Blomp Cloud Storage](https://www.blomp.com/cloud-storage/)
-  * [IBM Bluemix Cloud ObjectStorage Swift](https://console.bluemix.net/docs/infrastructure/objectstorage-swift/index.html)
+- [Rackspace Cloud Files](https://www.rackspace.com/cloud/files/)
+- [Memset Memstore](https://www.memset.com/cloud/storage/)
+- [OVH Object Storage](https://www.ovhcloud.com/en/public-cloud/object-storage/)
+- [Oracle Cloud Storage](https://docs.oracle.com/en-us/iaas/integration/doc/configure-object-storage.html)
+- [Blomp Cloud Storage](https://www.blomp.com/cloud-storage/)
+- [IBM Bluemix Cloud ObjectStorage Swift](https://console.bluemix.net/docs/infrastructure/objectstorage-swift/index.html)
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g. `remote:container/path/to/dir`.
@@ -23,12 +23,14 @@ command.)  You may put subdirectories in too, e.g. `remote:container/path/to/dir
 
 Here is an example of making a swift configuration.  First run
 
-    rclone config
+```sh
+rclone config
+```
 
 This will guide you through an interactive setup process.
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -124,27 +126,35 @@ This remote is called `remote` and can now be used like this
 
 See all containers
 
-    rclone lsd remote:
+```sh
+rclone lsd remote:
+```
 
 Make a new container
 
-    rclone mkdir remote:container
+```sh
+rclone mkdir remote:container
+```
 
 List the contents of a container
 
-    rclone ls remote:container
+```sh
+rclone ls remote:container
+```
 
 Sync `/home/local/directory` to the remote container, deleting any
 excess files in the container.
 
-    rclone sync --interactive /home/local/directory remote:container
+```sh
+rclone sync --interactive /home/local/directory remote:container
+```
 
 ### Configuration from an OpenStack credentials file
 
 An OpenStack credentials file typically looks something something
 like this (without the comments)
 
-```
+```sh
 export OS_AUTH_URL=https://a.provider.net/v2.0
 export OS_TENANT_ID=ffffffffffffffffffffffffffffffff
 export OS_TENANT_NAME="1234567890123456"
@@ -160,7 +170,7 @@ The config file needs to look something like this where `$OS_USERNAME`
 represents the value of the `OS_USERNAME` variable - `123abc567xy` in
 the example above.
 
-```
+```ini
 [remote]
 type = swift
 user = $OS_USERNAME
@@ -188,12 +198,12 @@ in the docs for the swift library.
 ### Using an alternate authentication method
 
 If your OpenStack installation uses a non-standard authentication method
-that might not be yet supported by rclone or the underlying swift library, 
-you can authenticate externally (e.g. calling manually the `openstack` 
-commands to get a token). Then, you just need to pass the two 
-configuration variables ``auth_token`` and ``storage_url``. 
-If they are both provided, the other variables are ignored. rclone will 
-not try to authenticate but instead assume it is already authenticated 
+that might not be yet supported by rclone or the underlying swift library,
+you can authenticate externally (e.g. calling manually the `openstack`
+commands to get a token). Then, you just need to pass the two
+configuration variables ``auth_token`` and ``storage_url``.
+If they are both provided, the other variables are ignored. rclone will
+not try to authenticate but instead assume it is already authenticated
 and use these two variables to access the OpenStack installation.
 
 #### Using rclone without a config file
@@ -201,7 +211,7 @@ and use these two variables to access the OpenStack installation.
 You can use rclone with swift without a config file, if desired, like
 this:
 
-```
+```sh
 source openstack-credentials-file
 export RCLONE_CONFIG_MYREMOTE_TYPE=swift
 export RCLONE_CONFIG_MYREMOTE_ENV_AUTH=true
