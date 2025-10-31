@@ -290,12 +290,15 @@ Properties:
 
 ## Setting up your own client_id
 
-For Zoho we advise you to set up your own client_id. To do so you have to complete the following steps.
+For Zoho we advise you to set up your own client_id. To do so you have to
+complete the following steps.
 
 1. Log in to the [Zoho API Console](https://api-console.zoho.com)
 
-2. Create a new client of type "Server-based Application". The name and website don't matter, but you must add the redirect URL `http://localhost:53682/`.
+2. Create a new client of type "Server-based Application". The name and website
+don't matter, but you must add the redirect URL `http://localhost:53682/`.
 
-3. Once the client is created, you can go to the settings tab and enable it in other regions.
+3. Once the client is created, you can go to the settings tab and enable it in
+other regions.
 
 The client id and client secret can now be used with rclone.

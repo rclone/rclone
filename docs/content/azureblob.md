@@ -1044,7 +1044,7 @@ Properties:
 
 ### Custom upload headers
 
-You can set custom upload headers with the `--header-upload` flag. 
+You can set custom upload headers with the `--header-upload` flag.
 
 - Cache-Control
 - Content-Disposition
@@ -1053,19 +1053,21 @@ You can set custom upload headers with the `--header-upload` flag.
 - Content-Type
 - X-MS-Tags
 
-Eg `--header-upload "Content-Type: text/potato"` or `--header-upload "X-MS-Tags: foo=bar"`
+Eg `--header-upload "Content-Type: text/potato"` or
+`--header-upload "X-MS-Tags: foo=bar"`.
 
 ## Limitations
 
 MD5 sums are only uploaded with chunked files if the source has an MD5
 sum.  This will always be the case for a local to azure copy.
 
-`rclone about` is not supported by the Microsoft Azure Blob storage backend. Backends without
-this capability cannot determine free space for an rclone mount or
-use policy `mfs` (most free space) as a member of an rclone union
+`rclone about` is not supported by the Microsoft Azure Blob storage backend.
+Backends without this capability cannot determine free space for an rclone
+mount or use policy `mfs` (most free space) as a member of an rclone union
 remote.
 
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+and [rclone about](https://rclone.org/commands/rclone_about/).
 
 ## Azure Storage Emulator Support
 

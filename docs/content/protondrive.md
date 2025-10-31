@@ -355,25 +355,25 @@ Properties:
 
 ## Limitations
 
-This backend uses the 
-[Proton-API-Bridge](https://github.com/henrybear327/Proton-API-Bridge), which 
-is based on [go-proton-api](https://github.com/henrybear327/go-proton-api), a 
+This backend uses the
+[Proton-API-Bridge](https://github.com/henrybear327/Proton-API-Bridge), which
+is based on [go-proton-api](https://github.com/henrybear327/go-proton-api), a
 fork of the [official repo](https://github.com/ProtonMail/go-proton-api).
 
-There is no official API documentation available from Proton Drive. But, thanks 
-to Proton open sourcing [proton-go-api](https://github.com/ProtonMail/go-proton-api) 
-and the web, iOS, and Android client codebases, we don't need to completely 
-reverse engineer the APIs by observing the web client traffic! 
+There is no official API documentation available from Proton Drive. But, thanks
+to Proton open sourcing [proton-go-api](https://github.com/ProtonMail/go-proton-api)
+and the web, iOS, and Android client codebases, we don't need to completely
+reverse engineer the APIs by observing the web client traffic!
 
-[proton-go-api](https://github.com/ProtonMail/go-proton-api) provides the basic 
-building blocks of API calls and error handling, such as 429 exponential 
-back-off, but it is pretty much just a barebone interface to the Proton API. 
-For example, the encryption and decryption of the Proton Drive file are not 
-provided in this library. 
+[proton-go-api](https://github.com/ProtonMail/go-proton-api) provides the basic
+building blocks of API calls and error handling, such as 429 exponential
+back-off, but it is pretty much just a barebone interface to the Proton API.
+For example, the encryption and decryption of the Proton Drive file are not
+provided in this library.
 
-The Proton-API-Bridge, attempts to bridge the gap, so rclone can be built on 
-top of this quickly. This codebase handles the intricate tasks before and after 
-calling Proton APIs, particularly the complex encryption scheme, allowing 
-developers to implement features for other software on top of this codebase. 
-There are likely quite a few errors in this library, as there isn't official 
-documentation available. 
+The Proton-API-Bridge, attempts to bridge the gap, so rclone can be built on
+top of this quickly. This codebase handles the intricate tasks before and after
+calling Proton APIs, particularly the complex encryption scheme, allowing
+developers to implement features for other software on top of this codebase.
+There are likely quite a few errors in this library, as there isn't official
+documentation available.

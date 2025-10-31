@@ -274,7 +274,9 @@ to upload a 30 GiB file set a timeout of `2 * 30 = 60m`, that is
 `--timeout 60m`.
 
 Having a Yandex Mail account is mandatory to use the Yandex.Disk subscription.
-Token generation will work without a mail account, but Rclone won't be able to complete any actions.
-```
+Token generation will work without a mail account, but Rclone won't be able to
+complete any actions.
+
+```text
 [403 - DiskUnsupportedUserAccountTypeError] User account type is not supported.
 ```

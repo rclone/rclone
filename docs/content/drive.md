@@ -1870,7 +1870,12 @@ second that each client_id can do set by Google.  rclone already has a
 high quota and I will continue to make sure it is high enough by
 contacting Google.
 
-It is strongly recommended to use your own client ID as the default rclone ID is heavily used. If you have multiple services running, it is recommended to use an API key for each service. The default Google quota is 10 transactions per second so it is recommended to stay under that number as if you use more than that, it will cause rclone to rate limit and make things slower.
+It is strongly recommended to use your own client ID as the default
+rclone ID is heavily used. If you have multiple services running, it
+is recommended to use an API key for each service. The default Google
+quota is 10 transactions per second so it is recommended to stay under
+that number as if you use more than that, it will cause rclone to rate
+limit and make things slower.
 
 Here is how to create your own Google Drive client ID for rclone:
 
@@ -1888,37 +1893,42 @@ be the same account as the Google Drive you want to access)
 credentials", which opens the wizard).
 
 5. If you already configured an "Oauth Consent Screen", then skip
-to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button 
+to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button
 (near the top right corner of the right panel), then click "Get started".
 On the next screen, enter an "Application name"
-("rclone" is OK); enter "User Support Email" (your own email is OK); 
+("rclone" is OK); enter "User Support Email" (your own email is OK);
 Next, under Audience select "External". Next enter your own contact information,
 agree to terms and click "Create". You should now see rclone (or your project name)
 in a box in the top left of the screen.
 
     (PS: if you are a GSuite user, you could also select "Internal" instead
-of "External" above, but this will restrict API use to Google Workspace 
-users in your organisation). 
+of "External" above, but this will restrict API use to Google Workspace
+users in your organisation).
 
     You will also have to add [some scopes](https://developers.google.com/drive/api/guides/api-specific-auth),
 including
     - `https://www.googleapis.com/auth/docs`
     - `https://www.googleapis.com/auth/drive` in order to be able to edit,
         create and delete files with RClone.
-    - `https://www.googleapis.com/auth/drive.metadata.readonly` which you may also want to add.
+    - `https://www.googleapis.com/auth/drive.metadata.readonly` which you may
+      also want to add.
 
-    To do this, click Data Access on the left side panel, click "add or remove scopes" and select the three above and press update or go to the "Manually add scopes" text box (scroll down) and enter "https://www.googleapis.com/auth/docs,https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly", press add to table then update.
+    To do this, click Data Access on the left side panel, click "add or
+    remove scopes" and select the three above and press update or go to the
+    "Manually add scopes" text box (scroll down) and enter
+    "https://www.googleapis.com/auth/docs,https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly", press add to table then update.
 
-    You should now see the three scopes on your Data access page. Now press save at the bottom!
+    You should now see the three scopes on your Data access page. Now press save
+    at the bottom!
 
 6. After adding scopes, click Audience
 Scroll down and click "+ Add users". Add yourself as a test user and press save.
 
-7. Go to Overview on the left panel, click "Create OAuth client". Choose an application type of "Desktop app" and click "Create". (the default name is fine)
+7. Go to Overview on the left panel, click "Create OAuth client". Choose
+   an application type of "Desktop app" and click "Create". (the default name is fine)
 
 8. It will show you a client ID and client secret. Make a note of these.
-   
-   (If you selected "External" at Step 5 continue to Step 9. 
+   (If you selected "External" at Step 5 continue to Step 9.
    If you chose "Internal" you don't need to publish and can skip straight to
    Step 10 but your destination drive must be part of the same Google Workspace.)
 
@@ -1941,9 +1951,10 @@ testing mode would also be sufficient.
 
 (Thanks to @balazer on github for these instructions.)
 
-Sometimes, creation of an OAuth consent in Google API Console fails due to an error message
-“The request failed because changes to one of the field of the resource is not supported”.
-As a convenient workaround, the necessary Google Drive API key can be created on the
-[Python Quickstart](https://developers.google.com/drive/api/v3/quickstart/python) page.
-Just push the Enable the Drive API button to receive the Client ID and Secret.
+Sometimes, creation of an OAuth consent in Google API Console fails due to an
+error message "The request failed because changes to one of the field of the
+resource is not supported". As a convenient workaround, the necessary Google
+Drive API key can be created on the
+[Python Quickstart](https://developers.google.com/drive/api/v3/quickstart/python)
+page. Just push the Enable the Drive API button to receive the Client ID and Secret.
 Note that it will automatically create a new project in the API Console.

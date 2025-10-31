@@ -1000,25 +1000,36 @@ See the [metadata](/docs/#metadata) docs for more info.
 
 ### Impersonate other users as Admin
 
-Unlike Google Drive and impersonating any domain user via service accounts, OneDrive requires you to authenticate as an admin account, and manually setup a remote per user you wish to impersonate.
+Unlike Google Drive and impersonating any domain user via service accounts,
+OneDrive requires you to authenticate as an admin account, and manually setup
+a remote per user you wish to impersonate.
 
-1. In [Microsoft 365 Admin Center](https://admin.microsoft.com), open each user you need to "impersonate" and go to the OneDrive section. There is a heading called "Get access to files", you need to click to create the link, this creates the link of the format `https://{tenant}-my.sharepoint.com/personal/{user_name_domain_tld}/` but also changes the permissions so you your admin user has access.
+1. In [Microsoft 365 Admin Center](https://admin.microsoft.com), open each user
+   you need to "impersonate" and go to the OneDrive section. There is a heading
+   called "Get access to files", you need to click to create the link, this
+   creates the link of the format
+   `https://{tenant}-my.sharepoint.com/personal/{user_name_domain_tld}/` but also
+   changes the permissions so you your admin user has access.
 2. Then in powershell run the following commands:
-```console
-Install-Module Microsoft.Graph -Scope CurrentUser -Repository PSGallery -Force
-Import-Module Microsoft.Graph.Files
-Connect-MgGraph -Scopes "Files.ReadWrite.All"
-# Follow the steps to allow access to your admin user
-# Then run this for each user you want to impersonate to get the Drive ID
-Get-MgUserDefaultDrive -UserId '{emailaddress}'
-# This will give you output of the format:
-# Name     Id                                                                 DriveType CreatedDateTime
-# ----     --                                                                 --------- ---------------
-# OneDrive b!XYZ123                                                           business  14/10/2023 1:00:58 pm
 
-```
-3. Then in rclone add a onedrive remote type, and use the `Type in driveID` with the DriveID you got in the previous step. One remote per user. It will then confirm the drive ID, and hopefully give you a message of `Found drive "root" of type "business"` and then include the URL of the format `https://{tenant}-my.sharepoint.com/personal/{user_name_domain_tld}/Documents`
+   ```console
+   Install-Module Microsoft.Graph -Scope CurrentUser -Repository PSGallery -Force
+   Import-Module Microsoft.Graph.Files
+   Connect-MgGraph -Scopes "Files.ReadWrite.All"
+   # Follow the steps to allow access to your admin user
+   # Then run this for each user you want to impersonate to get the Drive ID
+   Get-MgUserDefaultDrive -UserId '{emailaddress}'
+   # This will give you output of the format:
+   # Name     Id                                                                 DriveType CreatedDateTime
+   # ----     --                                                                 --------- ---------------
+   # OneDrive b!XYZ123                                                           business  14/10/2023    1:00:58 pm
+   ```
 
+3. Then in rclone add a onedrive remote type, and use the `Type in driveID`
+   with the DriveID you got in the previous step. One remote per user. It will
+   then confirm the drive ID, and hopefully give you a message of
+   `Found drive "root" of type "business"` and then include the URL of the format
+   `https://{tenant}-my.sharepoint.com/personal/{user_name_domain_tld}/Documents`
 
 ## Limitations
 
@@ -1040,11 +1051,16 @@ in it will be mapped to `？` instead.
 
 ### File sizes
 
-The largest allowed file size is 250 GiB for both OneDrive Personal and OneDrive for Business [(Updated 13 Jan 2021)](https://support.microsoft.com/en-us/office/invalid-file-names-and-file-types-in-onedrive-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa?ui=en-us&rs=en-us&ad=us#individualfilesize).
+The largest allowed file size is 250 GiB for both OneDrive Personal and OneDrive
+for Business [(Updated 13 Jan 2021)](https://support.microsoft.com/en-us/office/invalid-file-names-and-file-types-in-onedrive-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa?ui=en-us&rs=en-us&ad=us#individualfilesize).
 
 ### Path length
 
-The entire path, including the file name, must contain fewer than 400 characters for OneDrive, OneDrive for Business and SharePoint Online. If you are encrypting file and folder names with rclone, you may want to pay attention to this limitation because the encrypted names are typically longer than the original ones.
+The entire path, including the file name, must contain fewer than 400
+characters for OneDrive, OneDrive for Business and SharePoint Online. If you
+are encrypting file and folder names with rclone, you may want to pay attention
+to this limitation because the encrypted names are typically longer than the
+original ones.
 
 ### Number of files
 
@@ -1053,7 +1069,8 @@ OneDrive seems to be OK with at least 50,000 files in a folder, but at
 list files: UnknownError:`.  See
 [#2707](https://github.com/rclone/rclone/issues/2707) for more info.
 
-An official document about the limitations for different types of OneDrive can be found [here](https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa).
+An official document about the limitations for different types of OneDrive can
+be found [here](https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa).
 
 ## Versions
 
@@ -1089,24 +1106,30 @@ command is required to be run by a SharePoint admin. If you are an
 admin, you can run these commands in PowerShell to change that
 setting:
 
-1. `Install-Module -Name Microsoft.Online.SharePoint.PowerShell` (in case you haven't installed this already)
+1. `Install-Module -Name Microsoft.Online.SharePoint.PowerShell` (in case you
+   haven't installed this already)
 2. `Import-Module Microsoft.Online.SharePoint.PowerShell -DisableNameChecking`
-3. `Connect-SPOService -Url https://YOURSITE-admin.sharepoint.com -Credential YOU@YOURSITE.COM` (replacing `YOURSITE`, `YOU`, `YOURSITE.COM` with the actual values; this will prompt for your credentials)
+3. `Connect-SPOService -Url https://YOURSITE-admin.sharepoint.com -Credential YOU@YOURSITE.COM` (replacing `YOURSITE`, `YOU`, `YOURSITE.COM` with the actual values; this will
+   prompt for your credentials)
 4. `Set-SPOTenant -EnableMinimumVersionRequirement $False`
 5. `Disconnect-SPOService` (to disconnect from the server)
 
-*Below are the steps for normal users to disable versioning. If you don't see the "No Versioning" option, make sure the above requirements are met.*
+*Below are the steps for normal users to disable versioning. If you don't see
+the "No Versioning" option, make sure the above requirements are met.*
 
 User [Weropol](https://github.com/Weropol) has found a method to disable
 versioning on OneDrive
 
-1. Open the settings menu by clicking on the gear symbol at the top of the OneDrive Business page.
+1. Open the settings menu by clicking on the gear symbol at the top of the
+   OneDrive Business page.
 2. Click Site settings.
-3. Once on the Site settings page, navigate to Site Administration > Site libraries and lists.
+3. Once on the Site settings page, navigate to Site Administration > Site libraries
+   and lists.
 4. Click Customize "Documents".
 5. Click General Settings > Versioning Settings.
 6. Under Document Version History select the option No versioning.
-Note: This will disable the creation of new file versions, but will not remove any previous versions. Your documents are safe.
+   Note: This will disable the creation of new file versions, but will not remove
+   any previous versions. Your documents are safe.
 7. Apply the changes by clicking OK.
 8. Use rclone to upload or modify files. (I also use the --no-update-modtime flag)
 9. Restore the versioning settings after using rclone. (Optional)
@@ -1120,20 +1143,25 @@ querying each file for versions it can be quite slow. Rclone does
 `--checkers` tests in parallel. The command also supports `--interactive`/`i`
 or `--dry-run` which is a great way to see what it would do.
 
-    rclone cleanup --interactive remote:path/subdir # interactively remove all old version for path/subdir
-    rclone cleanup remote:path/subdir               # unconditionally remove all old version for path/subdir
+```text
+rclone cleanup --interactive remote:path/subdir # interactively remove all old version for path/subdir
+rclone cleanup remote:path/subdir               # unconditionally remove all old version for path/subdir
+```
 
 **NB** Onedrive personal can't currently delete versions
 
-## Troubleshooting ##
+## Troubleshooting
 
 ### Excessive throttling or blocked on SharePoint
 
-If you experience excessive throttling or is being blocked on SharePoint then it may help to set the user agent explicitly with a flag like this: `--user-agent "ISV|rclone.org|rclone/v1.55.1"`
+If you experience excessive throttling or is being blocked on SharePoint then
+it may help to set the user agent explicitly with a flag like this:
+`--user-agent "ISV|rclone.org|rclone/v1.55.1"`
 
-The specific details can be found in the Microsoft document: [Avoid getting throttled or blocked in SharePoint Online](https://docs.microsoft.com/en-us/sharepoint/dev/general-development/how-to-avoid-getting-throttled-or-blocked-in-sharepoint-online#how-to-decorate-your-http-traffic-to-avoid-throttling)
+The specific details can be found in the Microsoft document:
+[Avoid getting throttled or blocked in SharePoint Online](https://docs.microsoft.com/en-us/sharepoint/dev/general-development/how-to-avoid-getting-throttled-or-blocked-in-sharepoint-online#how-to-decorate-your-http-traffic-to-avoid-throttling)
 
-### Unexpected file size/hash differences on Sharepoint ####
+### Unexpected file size/hash differences on Sharepoint
 
 It is a
 [known](https://github.com/OneDrive/onedrive-api-docs/issues/935#issuecomment-441741631)
@@ -1144,57 +1172,66 @@ report inconsistent file sizes. To use rclone with such
 affected files on Sharepoint, you
 may disable these checks with the following command line arguments:
 
-```
+```text
 --ignore-checksum --ignore-size
 ```
 
 Alternatively, if you have write access to the OneDrive files, it may be possible
 to fix this problem for certain files, by attempting the steps below.
 Open the web interface for [OneDrive](https://onedrive.live.com) and find the
-affected files (which will be in the error messages/log for rclone). Simply click on
-each of these files, causing OneDrive to open them on the web. This will cause each
-file to be converted in place to a format that is functionally equivalent
+affected files (which will be in the error messages/log for rclone). Simply click
+on each of these files, causing OneDrive to open them on the web. This will cause
+each file to be converted in place to a format that is functionally equivalent
 but which will no longer trigger the size discrepancy. Once all problematic files
 are converted you will no longer need the ignore options above.
 
-### Replacing/deleting existing files on Sharepoint gets "item not found" ####
+### Replacing/deleting existing files on Sharepoint gets "item not found"
 
 It is a [known](https://github.com/OneDrive/onedrive-api-docs/issues/1068) issue
 that Sharepoint (not OneDrive or OneDrive for Business) may return "item not
 found" errors when users try to replace or delete uploaded files; this seems to
-mainly affect Office files (.docx, .xlsx, etc.) and web files (.html, .aspx, etc.). As a workaround, you may use
+mainly affect Office files (.docx, .xlsx, etc.) and web files (.html, .aspx, etc.).
+As a workaround, you may use
 the `--backup-dir <BACKUP_DIR>` command line argument so rclone moves the
 files to be replaced/deleted into a given backup directory (instead of directly
 replacing/deleting them). For example, to instruct rclone to move the files into
 the directory `rclone-backup-dir` on backend `mysharepoint`, you may use:
 
-```
+```text
 --backup-dir mysharepoint:rclone-backup-dir
 ```
 
-### access\_denied (AADSTS65005) ####
+### access\_denied (AADSTS65005)
 
-```
+```text
 Error: access_denied
 Code: AADSTS65005
 Description: Using application 'rclone' is currently not supported for your organization [YOUR_ORGANIZATION] because it is in an unmanaged state. An administrator needs to claim ownership of the company by DNS validation of [YOUR_ORGANIZATION] before the application rclone can be provisioned.
 ```
 
-This means that rclone can't use the OneDrive for Business API with your account. You can't do much about it, maybe write an email to your admins.
+This means that rclone can't use the OneDrive for Business API with your account.
+You can't do much about it, maybe write an email to your admins.
 
-However, there are other ways to interact with your OneDrive account. Have a look at the WebDAV backend: https://rclone.org/webdav/#sharepoint
+However, there are other ways to interact with your OneDrive account. Have a look
+at the WebDAV backend: <https://rclone.org/webdav/#sharepoint>
 
-### invalid\_grant (AADSTS50076) ####
+### invalid\_grant (AADSTS50076)
 
-```
+```text
 Error: invalid_grant
 Code: AADSTS50076
 Description: Due to a configuration change made by your administrator, or because you moved to a new location, you must use multi-factor authentication to access '...'.
 ```
 
-If you see the error above after enabling multi-factor authentication for your account, you can fix it by refreshing your OAuth refresh token. To do that, run `rclone config`, and choose to edit your OneDrive backend. Then, you don't need to actually make any changes until you reach this question: `Already have a token - refresh?`. For this question, answer `y` and go through the process to refresh your token, just like the first time the backend is configured. After this, rclone should work again for this backend.
+If you see the error above after enabling multi-factor authentication for your
+account, you can fix it by refreshing your OAuth refresh token. To do that, run
+`rclone config`, and choose to edit your OneDrive backend. Then, you don't need
+to actually make any changes until you reach this question:
+`Already have a token - refresh?`. For this question, answer `y` and go through
+the process to refresh your token, just like the first time the backend is
+configured. After this, rclone should work again for this backend.
 
-### Invalid request when making public links ####
+### Invalid request when making public links
 
 On Sharepoint and OneDrive for Business, `rclone link` may return an "Invalid
 request" error. A possible cause is that the organisation admin didn't allow
@@ -1205,46 +1242,64 @@ permissions as an admin, take a look at the docs:
 
 ### Can not access `Shared` with me files
 
-Shared with me files is not supported by rclone [currently](https://github.com/rclone/rclone/issues/4062), but there is a workaround:
+Shared with me files is not supported by rclone
+[currently](https://github.com/rclone/rclone/issues/4062), but there is a workaround:
 
 1. Visit [https://onedrive.live.com](https://onedrive.live.com/)
 2. Right click a item in `Shared`, then click `Add shortcut to My files` in the context
     ![make_shortcut](https://user-images.githubusercontent.com/60313789/206118040-7e762b3b-aa61-41a1-8649-cc18889f3572.png "Screenshot (Shared with me)")
-3. The shortcut will appear in `My files`, you can access it with rclone, it behaves like a normal folder/file.
+3. The shortcut will appear in `My files`, you can access it with rclone, it
+   behaves like a normal folder/file.
     ![in_my_files](https://i.imgur.com/0S8H3li.png "Screenshot (My Files)")
     ![rclone_mount](https://i.imgur.com/2Iq66sW.png "Screenshot (rclone mount)")
 
 ### Live Photos uploaded from iOS (small video clips in .heic files)
 
-The iOS OneDrive app introduced [upload and storage](https://techcommunity.microsoft.com/t5/microsoft-onedrive-blog/live-photos-come-to-onedrive/ba-p/1953452) 
-of [Live Photos](https://support.apple.com/en-gb/HT207310) in 2020. 
-The usage and download of these uploaded Live Photos is unfortunately still work-in-progress 
-and this introduces several issues when copying, synchronising and mounting – both in rclone and in the native OneDrive client on Windows.
+The iOS OneDrive app introduced [upload and storage](https://techcommunity.microsoft.com/t5/microsoft-onedrive-blog/live-photos-come-to-onedrive/ba-p/1953452)
+of [Live Photos](https://support.apple.com/en-gb/HT207310) in 2020.
+The usage and download of these uploaded Live Photos is unfortunately still
+work-in-progress and this introduces several issues when copying, synchronising
+and mounting – both in rclone and in the native OneDrive client on Windows.
 
-The root cause can easily be seen if you locate one of your Live Photos in the OneDrive web interface. 
-Then download the photo from the web interface. You will then see that the size of downloaded .heic file is smaller than the size displayed in the web interface. 
-The downloaded file is smaller because it only contains a single frame (still photo) extracted from the Live Photo (movie) stored in OneDrive.
+The root cause can easily be seen if you locate one of your Live Photos in the
+OneDrive web interface. Then download the photo from the web interface. You
+will then see that the size of downloaded .heic file is smaller than the size
+displayed in the web interface. The downloaded file is smaller because it only
+contains a single frame (still photo) extracted from the Live Photo (movie)
+stored in OneDrive.
 
-The different sizes will cause `rclone copy/sync` to repeatedly recopy unmodified photos something like this:
+The different sizes will cause `rclone copy/sync` to repeatedly recopy
+unmodified photos something like this:
 
-    DEBUG : 20230203_123826234_iOS.heic: Sizes differ (src 4470314 vs dst 1298667)
-    DEBUG : 20230203_123826234_iOS.heic: sha1 = fc2edde7863b7a7c93ca6771498ac797f8460750 OK
-    INFO  : 20230203_123826234_iOS.heic: Copied (replaced existing)
+```text
+DEBUG : 20230203_123826234_iOS.heic: Sizes differ (src 4470314 vs dst 1298667)
+DEBUG : 20230203_123826234_iOS.heic: sha1 = fc2edde7863b7a7c93ca6771498ac797f8460750 OK
+INFO  : 20230203_123826234_iOS.heic: Copied (replaced existing)
+```
 
-These recopies can be worked around by adding `--ignore-size`. Please note that this workaround only syncs the still-picture not the movie clip, 
+These recopies can be worked around by adding `--ignore-size`. Please note that
+this workaround only syncs the still-picture not the movie clip,
 and relies on modification dates being correctly updated on all files in all situations.
 
-The different sizes will also cause `rclone check` to report size errors something like this:
+The different sizes will also cause `rclone check` to report size errors something
+like this:
 
-    ERROR : 20230203_123826234_iOS.heic: sizes differ
+```text
+ERROR : 20230203_123826234_iOS.heic: sizes differ
+```
 
 These check errors can be suppressed by adding `--ignore-size`.
 
-The different sizes will also cause `rclone mount` to fail downloading with an error something like this:
+The different sizes will also cause `rclone mount` to fail downloading with an
+error something like this:
 
-    ERROR : 20230203_123826234_iOS.heic: ReadFileHandle.Read error: low level retry 1/10: unexpected EOF
+```text
+ERROR : 20230203_123826234_iOS.heic: ReadFileHandle.Read error: low level retry 1/10: unexpected EOF
+```
 
 or like this when using `--cache-mode=full`:
 
-    INFO  : 20230203_123826234_iOS.heic: vfs cache: downloader: error count now 1: vfs reader: failed to write to cache file: 416 Requested Range Not Satisfiable:
-    ERROR : 20230203_123826234_iOS.heic: vfs cache: failed to download: vfs reader: failed to write to cache file: 416 Requested Range Not Satisfiable:
+```text
+INFO  : 20230203_123826234_iOS.heic: vfs cache: downloader: error count now 1: vfs reader: failed to write to cache file: 416 Requested Range Not Satisfiable:
+ERROR : 20230203_123826234_iOS.heic: vfs cache: failed to download: vfs reader: failed to write to cache file: 416 Requested Range Not Satisfiable:
+```
