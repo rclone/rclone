@@ -42,7 +42,7 @@ func (f *Fs) getAuthorizationToken(ctx context.Context) (string, error) {
 		// This is only going to be http errors here
 		return "", fmt.Errorf("failed to authenticate: %w", err)
 	}
-	if result.Errors != nil && len(result.Errors) > 0 {
+	if len(result.Errors) > 0 {
 		return "", errors.New(strings.Join(result.Errors, ", "))
 	}
 	if result.Token == "" {
