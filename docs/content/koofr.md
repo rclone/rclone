@@ -19,7 +19,7 @@ giving the password a nice name like `rclone` and clicking on generate.
 
 Here is an example of how to make a remote called `koofr`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -91,19 +91,19 @@ Once configured you can then use `rclone` like this,
 
 List directories in top level of your Koofr
 
-```sh
+```console
 rclone lsd koofr:
 ```
 
 List all the files in your Koofr
 
-```sh
+```console
 rclone ls koofr:
 ```
 
 To copy a local directory to an Koofr directory called backup
 
-```sh
+```console
 rclone copy /home/source koofr:backup
 ```
 
@@ -253,7 +253,7 @@ provides a Koofr API.
 
 Here is an example of how to make a remote called `ds`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -322,7 +322,7 @@ You may also want to use another, public or private storage provider that runs a
 
 Here is an example of how to make a remote called `other`.  First run:
 
-```sh
+```console
 rclone config
 ```
 

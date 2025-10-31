@@ -16,7 +16,7 @@ Here is an example of making a remote for PikPak.
 
 First run:
 
-```sh
+```console
 rclone config
 ```
 

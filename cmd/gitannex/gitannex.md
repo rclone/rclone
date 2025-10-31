@@ -11,11 +11,14 @@ users.
    name. This symlink helps git-annex tell rclone it wants to run the "gitannex"
    subcommand.
 
-   ```sh
-   # Create the helper symlink in "$HOME/bin".
+   Create the helper symlink in "$HOME/bin":
+
+   ```console
    ln -s "$(realpath rclone)" "$HOME/bin/git-annex-remote-rclone-builtin"
 
-   # Verify the new symlink is on your PATH.
+   Verify the new symlink is on your PATH:
+
+   ```console
    which git-annex-remote-rclone-builtin
    ```
 
@@ -27,11 +30,15 @@ users.
    Start by asking git-annex to describe the remote's available configuration
    parameters.
 
-   ```sh
-   # If you skipped step 1:
-   git annex initremote MyRemote type=rclone --whatelse
+   If you skipped step 1:
 
-   # If you created a symlink in step 1:
+   ```console
+   git annex initremote MyRemote type=rclone --whatelse
+   ```
+
+   If you created a symlink in step 1:
+
+   ```console
    git annex initremote MyRemote type=external externaltype=rclone-builtin --whatelse
     ```
 
@@ -47,7 +54,7 @@ users.
    be one configured in your rclone.conf file, which can be located with `rclone
    config file`.
 
-   ```sh
+   ```console
    git annex initremote MyRemote         \
        type=external                     \
        externaltype=rclone-builtin       \
@@ -61,7 +68,7 @@ users.
    remote**. This command is very new and has not been tested on many rclone
    backends. Caveat emptor!
 
-   ```sh
+   ```console
    git annex testremote MyRemote
    ```
 

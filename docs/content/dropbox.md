@@ -19,7 +19,7 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -73,19 +73,19 @@ You can then use it like this,
 
 List directories in top level of your dropbox
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your dropbox
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to a dropbox directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 

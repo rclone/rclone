@@ -31,7 +31,7 @@ with `cache`.
 
 Here is an example of how to make a remote called `test-cache`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -117,19 +117,19 @@ You can then use it like this,
 
 List directories in top level of your drive
 
-```sh
+```console
 rclone lsd test-cache:
 ```
 
 List all the files in your drive
 
-```sh
+```console
 rclone ls test-cache:
 ```
 
 To start a cached mount
 
-```sh
+```console
 rclone mount --allow-other test-cache: /var/tmp/test-cache
 ```
 

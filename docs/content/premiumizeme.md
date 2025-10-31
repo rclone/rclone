@@ -18,7 +18,7 @@ walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -77,19 +77,19 @@ Once configured you can then use `rclone` like this (replace `remote` with the n
 
 List directories in top level of your premiumize.me
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your premiumize.me
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to an premiumize.me directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 

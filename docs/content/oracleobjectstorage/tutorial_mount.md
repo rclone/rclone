@@ -21,7 +21,7 @@ In oracle linux 8, Rclone can be installed from
 [OL8_Developer](https://yum.oracle.com/repo/OracleLinux/OL8/developer/x86_64/index.html)
 Yum Repo, Please enable the repo if not enabled already.
 
-```sh
+```console
 [opc@base-inst-boot ~]$ sudo yum-config-manager --enable ol8_developer
 [opc@base-inst-boot ~]$ sudo yum install -y rclone
 [opc@base-inst-boot ~]$ sudo yum install -y fuse
@@ -48,7 +48,7 @@ To run it as a mount helper you should symlink rclone binary to /sbin/mount.rclo
 and optionally /usr/bin/rclonefs, e.g. `ln -s /usr/bin/rclone /sbin/mount.rclone`.
 rclone will detect it and translate command-line arguments appropriately.
 
-```sh
+```console
 ln -s /usr/bin/rclone /sbin/mount.rclone
 ```
 
@@ -65,7 +65,7 @@ Rclone configuration file needs to have 3 remote sections, one section of each
 of above 3 buckets. Create a configuration file in a accessible location that
 rclone program can read.
 
-```sh
+```console
 [opc@base-inst-boot ~]$ mkdir -p /etc/rclone
 [opc@base-inst-boot ~]$ sudo touch /etc/rclone/rclone.conf
 
@@ -135,7 +135,7 @@ Create a dynamic group say rclone-dynamic-group that the oci compute instance
 becomes a member of the below group says all instances belonging to compartment
 a...c is member of this dynamic-group.
 
-```sh
+```console
 any {instance.compartment.id = '<compartment_ocid_a>',
      instance.compartment.id = '<compartment_ocid_b>',
      instance.compartment.id = '<compartment_ocid_c>'
@@ -146,7 +146,7 @@ Now that you have a dynamic group, you need to add a policy allowing what
 permissions this dynamic-group has. In our case, we want this dynamic-group to
 access object-storage. So create a policy now.
 
-```sh
+```text
 allow dynamic-group rclone-dynamic-group to manage object-family in compartment compartment-a
 allow dynamic-group rclone-dynamic-group to manage object-family in compartment compartment-b
 allow dynamic-group rclone-dynamic-group to manage object-family in compartment compartment-c
@@ -157,19 +157,20 @@ if not please troubleshoot any mistakes you did so far. Please note, identity
 can take upto a minute to ensure policy gets reflected.
 
 ## Step 4: Setup Mount Folders
+
 Let's assume you have to mount 3 buckets, bucket-a, bucket-b, bucket-c at path
 /opt/mnt/bucket-a, /opt/mnt/bucket-b, /opt/mnt/bucket-c respectively.
 
 Create the mount folder and set its ownership to desired user, group.
 
-```sh
+```console
 [opc@base-inst-boot ~]$ sudo mkdir /opt/mnt
 [opc@base-inst-boot ~]$ sudo chown -R opc:adm /opt/mnt
 ```
 
 Set chmod permissions to user, group, others as desired for each mount path
 
-```sh
+```console
 [opc@base-inst-boot ~]$ sudo chmod 764 /opt/mnt
 [opc@base-inst-boot ~]$ ls -al /opt/mnt/
 total 0
@@ -205,7 +206,7 @@ for solutions to make mount more reliable.
 
 First lets understand the rclone mount flags and some global flags for troubleshooting.
 
-```sh
+```console
 rclone mount \
     ossa:bucket-a \                     # Remote:bucket-name
     /opt/mnt/bucket-a \                 # Local mount folder
@@ -289,7 +290,7 @@ changed relative to a remote file. Fingerprints are made from:
 
 Add this entry in /etc/fstab:
 
-```sh
+```text
 ossa:bucket-a /opt/mnt/bucket-a rclone rw,umask=0117,nofail,_netdev,args2env,config=/etc/rclone/rclone.conf,uid=1000,gid=4,
 file_perms=0760,dir_perms=0760,allow_other,vfs_cache_mode=writes,cache_dir=/tmp/rclone/cache 0 0
 ```
@@ -303,7 +304,7 @@ quotes of the same type should be doubled.
 
 Then run sudo mount -av
 
-```sh
+```console
 [opc@base-inst-boot ~]$ sudo mount -av
 /                    : ignored
 /boot                : already mounted
@@ -320,7 +321,7 @@ If you are familiar with configuring systemd unit files, you can also configure
 the each rclone mount into a systemd units file.
 various examples in git search: <https://github.com/search?l=Shell&q=rclone+unit&type=Code>
 
-```sh
+```console
 tee "/etc/systemd/system/rclonebucketa.service" > /dev/null <<EOF
 [Unit]
 Description=RCloneMounting
@@ -345,7 +346,7 @@ Sometimes, rclone process crashes and the mount points are left in dangling
 state where its mounted but the rclone mount process is gone. To clean up the
 mount point you can force unmount by running this command.
 
-```sh
+```console
 sudo fusermount -uz /opt/mnt/bucket-a
 ```
 
@@ -381,7 +382,7 @@ echo "Finished creating rclone nanny cron job."
 
 Ensure the crontab is added, so that above nanny script runs every 5 minutes.
 
-```sh
+```console
 [opc@base-inst-boot ~]$ sudo crontab -l
 */5 * * * * /etc/rclone/scripts/rclone_nanny_script.sh
 [opc@base-inst-boot ~]$
@@ -396,7 +397,7 @@ as a NFS server export so that other clients can access it by using a NFS client
 
 Install NFS Utils
 
-```sh
+```console
 sudo yum install -y nfs-utils
 ```
 

@@ -18,7 +18,7 @@ You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
 
 Sample command to transfer local artifacts to remote:bucket in oracle object storage:
 
-```sh
+```console
 rclone -vvv  --progress --stats-one-line --max-stats-groups 10 --log-format date,time,UTC,longfile --fast-list --buffer-size 256Mi --oos-no-check-bucket --oos-upload-cutoff 10Mi --multi-thread-cutoff 16Mi --multi-thread-streams 3000 --transfers 3000 --checkers 64  --retries 2  --oos-chunk-size 10Mi --oos-upload-concurrency 10000  --oos-attempt-resume-upload --oos-leave-parts-on-error sync ./artifacts  remote:bucket -vv
 ```
 
@@ -29,7 +29,7 @@ walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -139,19 +139,19 @@ y/e/d> y
 
 See all buckets
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Create a new bucket
 
-```sh
+```console
 rclone mkdir remote:bucket
 ```
 
 List the contents of a bucket
 
-```sh
+```console
 rclone ls remote:bucket
 rclone ls remote:bucket --max-depth 1
 ```
@@ -208,7 +208,7 @@ have to be stored and managed.
 
 Sample rclone configuration file for Authentication Provider Instance Principal:
 
-```sh
+```console
 [opc@rclone ~]$ cat ~/.config/rclone/rclone.conf
 [oos]
 type = oracleobjectstorage
@@ -242,7 +242,7 @@ resources that are not  compute instances such as
 To use resource principal ensure Rclone process is started with these environment
 variables set in its process.
 
-```sh
+```console
 export OCI_RESOURCE_PRINCIPAL_VERSION=2.2
 export OCI_RESOURCE_PRINCIPAL_REGION=us-ashburn-1
 export OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM=/usr/share/model-server/key.pem
@@ -268,7 +268,7 @@ Workload Identity, see [Granting Workloads Access to OCI Resources](https://docs
 To use workload identity, ensure Rclone is started with these environment
 variables set in its process.
 
-```sh
+```console
 export OCI_RESOURCE_PRINCIPAL_VERSION=2.2
 export OCI_RESOURCE_PRINCIPAL_REGION=us-ashburn-1
 ```

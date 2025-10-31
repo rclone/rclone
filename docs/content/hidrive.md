@@ -18,7 +18,7 @@ which you need to do in your browser.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -85,19 +85,19 @@ Once configured you can then use `rclone` like this (replace `remote` with the n
 
 List directories in top level of your HiDrive root folder
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your HiDrive filesystem
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to a HiDrive directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -129,7 +129,7 @@ To fix this you will need to authorize rclone to access your HiDrive account aga
 
 Using
 
-```sh
+```console
 rclone config reconnect remote:
 ```
 
@@ -188,7 +188,7 @@ This works by prepending the contents of the `root_prefix` option
 to any paths accessed by rclone.
 For example, the following two ways to access the home directory are equivalent:
 
-```sh
+```console
 rclone lsd --hidrive-root-prefix="/users/test/" remote:path
 rclone lsd remote:/users/test/path
 ```

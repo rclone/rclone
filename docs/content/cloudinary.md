@@ -38,7 +38,7 @@ from the developer section.
 
 Now run
 
-```sh
+```console
 rclone config
 ```
 
@@ -113,19 +113,19 @@ y/e/d> y
 
 List directories in the top level of your Media Library
 
-```sh
+```console
 rclone lsd cloudinary-media-library:
 ```
 
 Make a new directory.
 
-```sh
+```console
 rclone mkdir cloudinary-media-library:directory
 ```
 
 List the contents of a directory.
 
-```sh
+```console
 rclone ls cloudinary-media-library:directory
 ```
 

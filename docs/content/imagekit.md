@@ -27,7 +27,7 @@ from the developer section.
 
 Now run
 
-```sh
+```console
 rclone config
 ```
 
@@ -88,19 +88,19 @@ y/e/d> y
 
 List directories in the top level of your Media Library
 
-```sh
+```console
 rclone lsd imagekit-media-library:
 ```
 
 Make a new directory.
 
-```sh
+```console
 rclone mkdir imagekit-media-library:directory
 ```
 
 List the contents of a directory.
 
-```sh
+```console
 rclone ls imagekit-media-library:directory
 ```
 

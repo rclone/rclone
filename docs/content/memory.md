@@ -50,7 +50,7 @@ y/e/d> y
 Because the memory backend isn't persistent it is most useful for
 testing or with an rclone server or rclone mount, e.g.
 
-```sh
+```console
 rclone mount :memory: /mnt/tmp
 rclone serve webdav :memory:
 rclone serve sftp :memory:

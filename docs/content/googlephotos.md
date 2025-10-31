@@ -27,7 +27,7 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -111,26 +111,26 @@ This remote is called `remote` and can now be used like this
 
 See all the albums in your photos
 
-```sh
+```console
 rclone lsd remote:album
 ```
 
 Make a new album
 
-```sh
+```console
 rclone mkdir remote:album/newAlbum
 ```
 
 List the contents of an album
 
-```sh
+```console
 rclone ls remote:album/newAlbum
 ```
 
 Sync `/home/local/images` to the Google Photos, removing any excess
 files in the album.
 
-```sh
+```console
 rclone sync --interactive /home/local/image remote:album/newAlbum
 ```
 
@@ -213,7 +213,7 @@ may create new directories (albums) under `album`.  If you copy files
 with a directory hierarchy in there then rclone will create albums
 with the `/` character in them.  For example if you do
 
-```sh
+```console
 rclone copy /path/to/images remote:album/images
 ```
 

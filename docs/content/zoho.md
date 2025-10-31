@@ -13,7 +13,7 @@ created by [Zoho](https://zoho.com).
 
 Here is an example of making a zoho configuration.  First run
 
-```sh
+```console
 rclone config
 ```
 
@@ -93,26 +93,26 @@ Once configured you can then use `rclone` like this (replace `remote` with the n
 
 See top level directories
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Make a new directory
 
-```sh
+```console
 rclone mkdir remote:directory
 ```
 
 List the contents of a directory
 
-```sh
+```console
 rclone ls remote:directory
 ```
 
 Sync `/home/local/directory` to the remote path, deleting any
 excess files in the path.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:directory
 ```
 

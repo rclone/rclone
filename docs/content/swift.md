@@ -23,7 +23,7 @@ command.)  You may put subdirectories in too, e.g. `remote:container/path/to/dir
 
 Here is an example of making a swift configuration.  First run
 
-```sh
+```console
 rclone config
 ```
 
@@ -126,26 +126,26 @@ This remote is called `remote` and can now be used like this
 
 See all containers
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Make a new container
 
-```sh
+```console
 rclone mkdir remote:container
 ```
 
 List the contents of a container
 
-```sh
+```console
 rclone ls remote:container
 ```
 
 Sync `/home/local/directory` to the remote container, deleting any
 excess files in the container.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:container
 ```
 

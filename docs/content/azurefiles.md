@@ -14,7 +14,7 @@ e.g. `remote:path/to/dir`.
 Here is an example of making a Microsoft Azure Files Storage
 configuration.  For a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -90,26 +90,26 @@ Once configured you can use rclone.
 
 See all files in the top level:
 
-```sh
+```console
 rclone lsf remote:
 ```
 
 Make a new directory in the root:
 
-```sh
+```console
 rclone mkdir remote:dir
 ```
 
 Recursively List the contents:
 
-```sh
+```console
 rclone ls remote:
 ```
 
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:dir
 ```
 
@@ -238,19 +238,19 @@ Credentials created with the `az` tool can be picked up using `env_auth`.
 
 For example if you were to login with a service principal like this:
 
-```sh
+```console
 az login --service-principal -u XXX -p XXX --tenant XXX
 ```
 
 Then you could access rclone resources like this:
 
-```sh
+```console
 rclone lsf :azurefiles,env_auth,account=ACCOUNT:
 ```
 
 Or
 
-```sh
+```console
 rclone lsf --azurefiles-env-auth --azurefiles-account=ACCOUNT :azurefiles:
 ```
 

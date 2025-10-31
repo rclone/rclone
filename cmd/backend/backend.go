@@ -37,7 +37,7 @@ see the backend docs for definitions.
 
 You can discover what commands a backend implements by using
 
-` + "```sh" + `
+` + "```console" + `
 rclone backend help remote:
 rclone backend help <backendname>
 ` + "```" + `
@@ -46,19 +46,19 @@ You can also discover information about the backend using (see
 [operations/fsinfo](/rc/#operations-fsinfo) in the remote control docs
 for more info).
 
-` + "```sh" + `
+` + "```console" + `
 rclone backend features remote:
 ` + "```" + `
 
 Pass options to the backend command with -o. This should be key=value or key, e.g.:
 
-` + "```sh" + `
+` + "```console" + `
 rclone backend stats remote:path stats -o format=json -o long
 ` + "```" + `
 
 Pass arguments to the backend by placing them on the end of the line
 
-` + "```sh" + `
+` + "```console" + `
 rclone backend cleanup remote:path file1 file2 file3
 ` + "```" + `
 

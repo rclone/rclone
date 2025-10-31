@@ -31,7 +31,7 @@ section) before using, or data loss can result. Questions can be asked in the
 
 For example, your first command might look like this:
 
-```sh
+```console
 rclone bisync remote1:path1 remote2:path2 --create-empty-src-dirs --compare size,modtime,checksum --slow-hash-sync-only --resilient -MvP --drive-skip-gdocs --fix-case --resync --dry-run
 ```
 
@@ -40,7 +40,7 @@ After that, remove `--resync` as well.
 
 Here is a typical run log (with timestamps removed for clarity):
 
-```sh
+```console
 rclone bisync /testdir/path1/ /testdir/path2/ --verbose
 INFO  : Synching Path1 "/testdir/path1/" with Path2 "/testdir/path2/"
 INFO  : Path1 checking for diffs
@@ -86,7 +86,7 @@ INFO  : Bisync successful
 
 ## Command line syntax
 
-```sh
+```console
 $ rclone bisync --help
 Usage:
   rclone bisync remote1:path1 remote2:path2 [flags]
@@ -169,7 +169,7 @@ be copied to Path1, and the process will then copy the Path1 tree to Path2.
 The `--resync` sequence is roughly equivalent to the following
 (but see [`--resync-mode`](#resync-mode) for other options):
 
-```sh
+```console
 rclone copy Path2 Path1 --ignore-existing [--create-empty-src-dirs]
 rclone copy Path1 Path2 [--create-empty-src-dirs]
 ```
@@ -225,7 +225,7 @@ Shutdown](#graceful-shutdown) mode, when needed) for a very robust
 almost any interruption it might encounter. Consider adding something like the
 following:
 
-```sh
+```text
 --resilient --recover --max-lock 2m --conflict-resolve newer
 ```
 
@@ -353,13 +353,13 @@ simultaneously (or just `modtime` AND `checksum`).
 being `size`, `modtime`, and `checksum`. For example, if you want to compare
 size and checksum, but not modtime, you would do:
 
-```sh
+```text
 --compare size,checksum
 ```
 
 Or if you want to compare all three:
 
-```sh
+```text
 --compare size,modtime,checksum
 ```
 
@@ -627,7 +627,7 @@ specified (or when two identical suffixes are specified.) i.e. with
 `--conflict-loser pathname`, all of the following would produce exactly the
 same result:
 
-```sh
+```text
 --conflict-suffix path
 --conflict-suffix path,path
 --conflict-suffix path1,path2
@@ -642,7 +642,7 @@ changed with the [`--suffix-keep-extension`](/docs/#suffix-keep-extension) flag
 curly braces as globs. This can be helpful to track the date and/or time that
 each conflict was handled by bisync. For example:
 
-```sh
+```text
 --conflict-suffix {DateOnly}-conflict
 // result: myfile.txt.2006-01-02-conflict1
 ```
@@ -667,7 +667,7 @@ conflicts with `..path1` and `..path2` (with two periods, and `path` instead of
 additional dots can be added by including them in the specified suffix string.
 For example, for behavior equivalent to the previous default, use:
 
-```sh
+```text
 [--conflict-resolve none] --conflict-loser pathname --conflict-suffix .path
 ```
 
@@ -707,13 +707,13 @@ For example, a possible sequence could look like this:
 
 1. Normally scheduled bisync run:
 
-    ```sh
+    ```console
     rclone bisync Path1 Path2 -MPc --check-access --max-delete 10 --filters-file /path/to/filters.txt -v --no-cleanup --ignore-listing-checksum --disable ListR --checkers=16 --drive-pacer-min-sleep=10ms --create-empty-src-dirs --resilient
     ```
 
 2. Periodic independent integrity check (perhaps scheduled nightly or weekly):
 
-    ```sh
+    ```console
     rclone check -MvPc Path1 Path2 --filter-from /path/to/filters.txt
     ```
 
@@ -721,7 +721,7 @@ For example, a possible sequence could look like this:
 If one side is more up-to-date and you want to make the other side match it,
 you could run:
 
-    ```sh
+    ```console
     rclone sync Path1 Path2 --filter-from /path/to/filters.txt --create-empty-src-dirs -MPc -v
     ```
 
@@ -851,7 +851,7 @@ override `--backup-dir`.
 
 Example:
 
-```sh
+```console
 rclone bisync /Users/someuser/some/local/path/Bisync gdrive:Bisync --backup-dir1 /Users/someuser/some/local/path/BackupDir --backup-dir2 gdrive:BackupDir --suffix -2023-08-26 --suffix-keep-extension --check-access --max-delete 10 --filters-file /Users/someuser/some/local/path/bisync_filters.txt --no-cleanup --ignore-listing-checksum --checkers=16 --drive-pacer-min-sleep=10ms --create-empty-src-dirs --resilient -MvP --drive-skip-gdocs --fix-case
 ```
 
@@ -1383,7 +1383,7 @@ listings and thus not checked during the check access phase.
 Here are two normal runs. The first one has a newer file on the remote.
 The second has no deltas between local and remote.
 
-```sh
+```text
 2021/05/16 00:24:38 INFO  : Synching Path1 "/path/to/local/tree/" with Path2 "dropbox:/"
 2021/05/16 00:24:38 INFO  : Path1 checking for diffs
 2021/05/16 00:24:38 INFO  : - Path1    File is new                         - file.txt
@@ -1433,7 +1433,7 @@ numerous such messages in the log.
 Since there are no final error/warning messages on line *7*, rclone has
 recovered from failure after a retry, and the overall sync was successful.
 
-```sh
+```text
 1: 2021/05/14 00:44:12 INFO  : Synching Path1 "/path/to/local/tree" with Path2 "dropbox:"
 2: 2021/05/14 00:44:12 INFO  : Path1 checking for diffs
 3: 2021/05/14 00:44:12 INFO  : Path2 checking for diffs
@@ -1446,7 +1446,7 @@ recovered from failure after a retry, and the overall sync was successful.
 This log shows a *Critical failure* which requires a `--resync` to recover from.
 See the [Runtime Error Handling](#error-handling) section.
 
-```sh
+```text
 2021/05/12 00:49:40 INFO  : Google drive root '': Waiting for checks to finish
 2021/05/12 00:49:40 INFO  : Google drive root '': Waiting for transfers to finish
 2021/05/12 00:49:40 INFO  : Google drive root '': not deleting files as there were IO errors
@@ -1531,7 +1531,7 @@ on Linux you can use *Cron* which is described below.
 The 1st example runs a sync every 5 minutes between a local directory
 and an OwnCloud server, with output logged to a runlog file:
 
-```sh
+```text
 # Minute (0-59)
 #      Hour (0-23)
 #           Day of Month (1-31)
@@ -1548,7 +1548,7 @@ If you run `rclone bisync` as a cron job, redirect stdout/stderr to a file.
 The 2nd example runs a sync to Dropbox every hour and logs all stdout (via the `>>`)
 and stderr (via `2>&1`) to a log file.
 
-```sh
+```text
 0 * * * * /path/to/rclone bisync /path/to/local/dropbox Dropbox: --check-access --filters-file /home/user/filters.txt >> /path/to/logs/dropbox-run.log 2>&1
 ```
 
@@ -1630,7 +1630,7 @@ Rerunning the test will let it pass. Consider such failures as noise.
 
 ### Test command syntax
 
-```sh
+```text
 usage: go test ./cmd/bisync [options...]
 
 Options:

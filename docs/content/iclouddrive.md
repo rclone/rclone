@@ -22,7 +22,7 @@ or `rclone config`.
 
 Here is an example of how to make a remote called `iclouddrive`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
