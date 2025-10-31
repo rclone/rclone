@@ -677,3 +677,42 @@ func TestCopySymlink(t *testing.T) {
 	want = fstest.NewItem("dst2/file.txt", "hello world", when)
 	fstest.CompareItems(t, []fs.DirEntry{dst}, []fstest.Item{want}, nil, f.precision, "")
 }
+
+// TestValidateSymlinks tests symlink validation for local backend
+func TestValidateSymlinks(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("SymlinksDisabled", func(t *testing.T) {
+		r := fstest.NewRun(t)
+		defer r.Finalise()
+
+		f := r.Flocal.(*Fs)
+		f.opt.TranslateSymlinks = false
+
+		err := f.ValidateSymlinks(ctx)
+		assert.NoError(t, err, "validation should succeed when symlinks are disabled")
+	})
+
+	t.Run("SymlinksEnabled", func(t *testing.T) {
+		r := fstest.NewRun(t)
+		defer r.Finalise()
+
+		f := r.Flocal.(*Fs)
+		f.opt.TranslateSymlinks = true
+
+		err := f.ValidateSymlinks(ctx)
+
+		if runtime.GOOS == "windows" {
+			// On Windows, may fail without privileges
+			if err != nil {
+				assert.Contains(t, err.Error(), "does not support symlinks", "error should mention symlink support")
+				t.Logf("Windows lacks symlink privileges (expected on some systems): %v", err)
+			} else {
+				t.Logf("Windows has symlink privileges")
+			}
+		} else {
+			// On Unix, should always succeed
+			assert.NoError(t, err, "validation should succeed on Unix systems")
+		}
+	})
+}

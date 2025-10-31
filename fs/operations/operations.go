@@ -61,6 +61,17 @@ func CheckHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object) (equal b
 	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
 	// fs.Debugf(nil, "Shared hashes: %v", common)
 	if common.Count() == 0 {
+		// Special case: translated symlinks (.rclonelink files) can have their hashes
+		// computed even if the filesystems don't declare hash support
+		if strings.HasSuffix(src.Remote(), fs.LinkSuffix) && strings.HasSuffix(dst.Remote(), fs.LinkSuffix) {
+			// fs.Debugf(src, "No common hashes but trying translated symlink hash comparison")
+			for _, ht := range []hash.Type{hash.MD5, hash.SHA1, hash.SHA256} {
+				equal, htOut, _, _, err := checkHashes(ctx, src, dst, ht)
+				if err == nil && htOut != hash.None {
+					return equal, htOut, err
+				}
+			}
+		}
 		return true, hash.None, nil
 	}
 	equal, ht, _, _, err = checkHashes(ctx, src, dst, common.GetOne())
@@ -237,6 +248,18 @@ func WithEqualFn(ctx context.Context, equalFn EqualFn) context.Context {
 	return context.WithValue(ctx, equalFnKey, equalFn)
 }
 
+// canSetModTime checks if SetModTime is supported for a given object.
+// It checks if the filesystem implements SetModTimeCapability interface.
+// If not implemented, it assumes SetModTime is supported (default behavior).
+func canSetModTime(ctx context.Context, obj fs.ObjectInfo) bool {
+	fsObj := obj.Fs()
+	if cap, ok := fsObj.(fs.SetModTimeCapability); ok {
+		return cap.CanSetModTime(ctx, obj)
+	}
+	// Default: assume SetModTime is supported if not implemented
+	return true
+}
+
 func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) bool {
 	ci := fs.GetConfig(ctx)
 	logger, _ := GetLogger(ctx)
@@ -277,8 +300,13 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		return true
 	}
 
+	// Check if SetModTime is supported for both source and destination
+	canSetSrcModTime := canSetModTime(ctx, src)
+	canSetDstModTime := canSetModTime(ctx, dst)
+	skipModTimeVerification := !canSetSrcModTime || !canSetDstModTime
+
 	srcModTime := src.ModTime(ctx)
-	if !opt.forceModTimeMatch {
+	if !opt.forceModTimeMatch && !skipModTimeVerification {
 		// Sizes the same so check the mtime
 		modifyWindow := fs.GetModifyWindow(ctx, src.Fs(), dst.Fs())
 		if modifyWindow == fs.ModTimeNotSupported {
@@ -295,6 +323,14 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		}
 
 		fs.Debugf(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+	} else if skipModTimeVerification {
+		reason := ""
+		if !canSetSrcModTime {
+			reason = fmt.Sprintf("source backend %s does not support SetModTime for this object", src.Fs().Name())
+		} else {
+			reason = fmt.Sprintf("destination backend %s does not support SetModTime for this object", dst.Fs().Name())
+		}
+		fs.Debugf(src, "Skipping modification time check: %s", reason)
 	}
 
 	// Check if the hashes are the same

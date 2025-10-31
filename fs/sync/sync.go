@@ -1342,6 +1342,13 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 // dir is the start directory, "" for root
 func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool, allowOverlap bool) error {
 	ci := fs.GetConfig(ctx)
+
+	// Validate symlink support early if backends have symlinks enabled
+	// This catches configuration errors before any file operations begin
+	if err := validateSymlinkSupport(ctx, fsrc, fdst); err != nil {
+		return fserrors.FatalError(err)
+	}
+
 	if deleteMode != fs.DeleteModeOff && DoMove {
 		return fserrors.FatalError(errors.New("can't delete and move at the same time"))
 	}
@@ -1388,6 +1395,39 @@ func moveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 // Transform renames fdst in place
 func Transform(ctx context.Context, fdst fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
 	return runSyncCopyMove(ctx, fdst, fdst, fs.DeleteModeOff, true, deleteEmptySrcDirs, copyEmptySrcDirs, true)
+}
+
+// validateSymlinkSupport checks if both backends support symlinks when enabled
+func validateSymlinkSupport(ctx context.Context, fsrc, fdst fs.Fs) error {
+	// Check source
+	if err := checkBackendSymlinkSupport(ctx, fsrc, "source"); err != nil {
+		return err
+	}
+
+	// Check destination
+	if err := checkBackendSymlinkSupport(ctx, fdst, "destination"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// checkBackendSymlinkSupport validates symlink support for a single backend
+func checkBackendSymlinkSupport(ctx context.Context, f fs.Fs, fsType string) error {
+	// Check if backend implements SymlinkValidator interface
+	validator, ok := f.(fs.SymlinkValidator)
+	if !ok {
+		// Backend doesn't implement validation - assume OK (opt-in system)
+		return nil
+	}
+
+	// Let the backend validate its capabilities
+	// Backend will return nil immediately if symlinks are not enabled
+	if err := validator.ValidateSymlinks(ctx); err != nil {
+		return fmt.Errorf("%s backend %q: %w", fsType, f.Name(), err)
+	}
+
+	return nil
 }
 
 // MoveDir moves fsrc into fdst
