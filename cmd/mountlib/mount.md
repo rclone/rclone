@@ -65,7 +65,7 @@ at all, then 1 PiB is set as both the total and the free size.
 
 ### Installing on Windows
 
-To run rclone @ on Windows, you will need to
+To run `rclone @ on Windows`, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
 
 [WinFsp](https://github.com/winfsp/winfsp) is an open-source
@@ -323,6 +323,17 @@ full new copy of the file.
 
 When mounting with `--read-only`, attempts to write to files will fail *silently*
 as opposed to with a clear warning as in macFUSE.
+
+## Mounting on Linux
+
+On newer versions of Ubuntu, you may encounter the following error when running
+`rclone mount`:
+
+> NOTICE: mount helper error: fusermount3: mount failed: Permission denied
+> CRITICAL: Fatal error: failed to mount FUSE fs: fusermount: exit status 1
+This may be due to newer [Apparmor](https://wiki.ubuntu.com/AppArmor) restrictions,
+which can be disabled with `sudo aa-disable /usr/bin/fusermount3` (you may need to
+`sudo apt install apparmor-utils` beforehand).
 
 ### Limitations
 
