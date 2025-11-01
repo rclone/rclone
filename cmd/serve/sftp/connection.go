@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/sftp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/lib/terminal"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -351,6 +352,11 @@ func serveChannel(rwc io.ReadWriteCloser, h sftp.Handlers, what string) error {
 }
 
 func serveStdio(f fs.Fs) error {
+	cleanup := func() {}
+	if metrics.Enabled() {
+		cleanup = metrics.TrackFS(context.Background(), f)
+	}
+	defer cleanup()
 	if terminal.IsTerminal(int(os.Stdout.Fd())) {
 		return errors.New("refusing to run SFTP server directly on a terminal. Please let sshd start rclone, by connecting with sftp or sshfs")
 	}

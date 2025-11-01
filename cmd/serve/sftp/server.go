@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/file"
+	"github.com/rclone/rclone/lib/metrics"
 	sdActivation "github.com/rclone/rclone/lib/sdactivation"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -35,14 +36,15 @@ import (
 
 // server contains everything to run the server
 type server struct {
-	f        fs.Fs
-	opt      Options
-	vfs      *vfs.VFS
-	ctx      context.Context // for global config
-	config   *ssh.ServerConfig
-	listener net.Listener
-	stopped  chan struct{} // for waiting on the listener to stop
-	proxy    *proxy.Proxy
+	f              fs.Fs
+	opt            Options
+	vfs            *vfs.VFS
+	ctx            context.Context // for global config
+	config         *ssh.ServerConfig
+	listener       net.Listener
+	stopped        chan struct{} // for waiting on the listener to stop
+	proxy          *proxy.Proxy
+	metricsCleanup func()
 }
 
 func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Options, proxyOpt *proxy.Options) (*server, error) {
@@ -60,6 +62,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	err := s.configure()
 	if err != nil {
 		return nil, fmt.Errorf("sftp configuration failed: %w", err)
+	}
+	if metrics.Enabled() {
+		s.metricsCleanup = metrics.TrackFS(ctx, f)
 	}
 	return s, nil
 }
@@ -304,6 +309,7 @@ func (s *server) configure() (err error) {
 
 // Serve SFTP until the server is Shutdown
 func (s *server) Serve() (err error) {
+	defer s.closeMetrics()
 	fs.Logf(nil, "SFTP server listening on %v\n", s.listener.Addr())
 	s.acceptConnections()
 	close(s.stopped)
@@ -327,7 +333,15 @@ func (s *server) Shutdown() error {
 		err = nil
 	}
 	s.Wait()
+	s.closeMetrics()
 	return err
+}
+
+func (s *server) closeMetrics() {
+	if s.metricsCleanup != nil {
+		s.metricsCleanup()
+		s.metricsCleanup = nil
+	}
 }
 
 func loadPrivateKey(keyPath string) (ssh.Signer, error) {
