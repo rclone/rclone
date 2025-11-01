@@ -26,7 +26,8 @@ type AccountInfo struct {
 
 // ServerInfo contains server information
 type ServerInfo struct {
-	Version string `json:"version"`
+	Version  string   `json:"version"`
+	Features []string `json:"features"`
 }
 
 // DefaultLibrary when none specified
@@ -151,4 +152,14 @@ type BatchSourceDestRequest struct {
 	SrcItems     []string `json:"src_dirents"`
 	DstLibraryID string   `json:"dst_repo_id"`
 	DstParentDir string   `json:"dst_parent_dir"`
+}
+
+// FileUploadedBytes contains the JSON response to the "file-uploaded-bytes" API call
+type FileUploadedBytes struct {
+	FileUploadedBytes int64 `json:"uploadedBytes"`
+}
+
+// ChunkUpload contains the result of uploading one part of a file
+type ChunkUpload struct {
+	Success bool `json:"success"`
 }

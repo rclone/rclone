@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	minSleep      = 100 * time.Millisecond
-	maxSleep      = 10 * time.Second
-	decayConstant = 2 // bigger for slower decay, exponential
+	defaultMinSleep = 100 * time.Millisecond
+	maxSleep        = 10 * time.Second
+	decayConstant   = 2 // bigger for slower decay, exponential
 )
 
 // Use only one pacer per server URL
@@ -28,7 +28,7 @@ func init() {
 }
 
 // getPacer returns the unique pacer for that remote URL
-func getPacer(ctx context.Context, remote string) *fs.Pacer {
+func getPacer(ctx context.Context, remote string, minPacer int) *fs.Pacer {
 	pacerMutex.Lock()
 	defer pacerMutex.Unlock()
 
@@ -37,6 +37,10 @@ func getPacer(ctx context.Context, remote string) *fs.Pacer {
 		return existing
 	}
 
+	minSleep := time.Duration(minPacer) * time.Millisecond
+	if minSleep == 0 {
+		minSleep = defaultMinSleep
+	}
 	pacers[remote] = fs.NewPacer(
 		ctx,
 		pacer.NewDefault(
