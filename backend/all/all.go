@@ -38,6 +38,7 @@ import (
 	_ "github.com/rclone/rclone/backend/internxt"
 	_ "github.com/rclone/rclone/backend/jottacloud"
 	_ "github.com/rclone/rclone/backend/koofr"
+	_ "github.com/rclone/rclone/backend/level3"
 	_ "github.com/rclone/rclone/backend/linkbox"
 	_ "github.com/rclone/rclone/backend/local"
 	_ "github.com/rclone/rclone/backend/mailru"
