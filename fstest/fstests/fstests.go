@@ -368,7 +368,7 @@ func Run(t *testing.T, opt *Opt) {
 		}
 		file1Contents string
 		file1MimeType = "text/csv"
-		file1Metadata = fs.Metadata{"rclone-test": "potato"}
+		file1Metadata = fs.Metadata{"rclonetest": "potato"}
 		file2         = fstest.Item{
 			ModTime: fstest.Time("2001-02-03T04:05:10.123123123Z"),
 			Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`,
