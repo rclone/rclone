@@ -78,6 +78,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Skip based on size only, not modtime or checksum",
 	Groups:  "Copy",
 }, {
+	Name:    "compare_acl",
+	Default: false,
+	Help:    "Compares objects ACLs",
+	Groups:  "Copy",
+}, {
 	Name:     "ignore_times",
 	ShortOpt: "I",
 	Default:  false,
@@ -578,6 +583,7 @@ type ConfigInfo struct {
 	Links                      bool              `config:"links"`
 	CheckSum                   bool              `config:"checksum"`
 	SizeOnly                   bool              `config:"size_only"`
+	CompareACL                 bool              `config:"compare_acl"`
 	IgnoreTimes                bool              `config:"ignore_times"`
 	IgnoreExisting             bool              `config:"ignore_existing"`
 	IgnoreErrors               bool              `config:"ignore_errors"`
