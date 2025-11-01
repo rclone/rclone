@@ -604,10 +604,9 @@ issue an error message `File name disallowed - not uploading` if it
 attempts to upload one of those file names, but the sync won't fail.
 
 Some errors may occur if you try to sync copyright-protected files
-because Dropbox has its own [copyright detector](https://techcrunch.com/2014/03/30/how-dropbox-knows-when-youre-sharing-copyrighted-stuff-without-actually-looking-at-your-stuff/) that
-prevents this sort of file being downloaded. This will return the error `ERROR :
-/path/to/your/file: Failed to copy: failed to open source object:
-path/restricted_content/.`
+because Dropbox has its own [copyright detector](https://techcrunch.com/2014/03/30/how-dropbox-knows-when-youre-sharing-copyrighted-stuff-without-actually-looking-at-your-stuff/)
+that prevents this sort of file being downloaded. This will return the error
+`ERROR : /path/to/your/file: Failed to copy: failed to open source object: path/restricted_content/.`
 
 If you have more than 10,000 files in a directory then `rclone purge
 dropbox:dir` will return the error `Failed to purge: There are too
@@ -617,7 +616,8 @@ many files involved in this operation`.  As a work-around do an
 When using `rclone link` you'll need to set `--expire` if using a
 non-personal account otherwise the visibility may not be correct.
 (Note that `--expire` isn't supported on personal accounts). See the
-[forum discussion](https://forum.rclone.org/t/rclone-link-dropbox-permissions/23211) and the 
+[forum discussion](https://forum.rclone.org/t/rclone-link-dropbox-permissions/23211)
+and the
 [dropbox SDK issue](https://github.com/dropbox/dropbox-sdk-go-unofficial/issues/75).
 
 Modification times for Dropbox Paper documents are not exact, and
@@ -627,23 +627,34 @@ or so, or use `--ignore-times` to force a full sync.
 
 ## Get your own Dropbox App ID
 
-When you use rclone with Dropbox in its default configuration you are using rclone's App ID. This is shared between all the rclone users.
+When you use rclone with Dropbox in its default configuration you are using
+rclone's App ID. This is shared between all the rclone users.
 
 Here is how to create your own Dropbox App ID for rclone:
 
-1. Log into the [Dropbox App console](https://www.dropbox.com/developers/apps/create) with your Dropbox Account (It need not
-to be the same account as the Dropbox you want to access)
+1. Log into the [Dropbox App console](https://www.dropbox.com/developers/apps/create)
+with your Dropbox Account (It need not to be the same account as the Dropbox you
+want to access)
 
 2. Choose an API => Usually this should be `Dropbox API`
 
-3. Choose the type of access you want to use => `Full Dropbox` or `App Folder`. If you want to use Team Folders, `Full Dropbox` is required ([see here](https://www.dropboxforum.com/t5/Dropbox-API-Support-Feedback/How-to-create-team-folder-inside-my-app-s-folder/m-p/601005/highlight/true#M27911)).
+3. Choose the type of access you want to use => `Full Dropbox` or `App Folder`.
+If you want to use Team Folders, `Full Dropbox` is required
+([see here](https://www.dropboxforum.com/t5/Dropbox-API-Support-Feedback/How-to-create-team-folder-inside-my-app-s-folder/m-p/601005/highlight/true#M27911)).
 
 4. Name your App. The app name is global, so you can't use `rclone` for example
 
 5. Click the button `Create App`
 
-6. Switch to the `Permissions` tab. Enable at least the following permissions: `account_info.read`, `files.metadata.write`, `files.content.write`, `files.content.read`, `sharing.write`. The `files.metadata.read` and `sharing.read` checkboxes will be marked too. Click `Submit`
+6. Switch to the `Permissions` tab. Enable at least the following permissions:
+`account_info.read`, `files.metadata.write`, `files.content.write`, `files.content.read`,
+`sharing.write`. The `files.metadata.read` and `sharing.read` checkboxes will be
+marked too. Click `Submit`
 
-7. Switch to the `Settings` tab. Fill `OAuth2 - Redirect URIs` as `http://localhost:53682/` and click on `Add`
+7. Switch to the `Settings` tab. Fill `OAuth2 - Redirect URIs` as `http://localhost:53682/`
+and click on `Add`
 
-8. Find the `App key` and `App secret` values on the `Settings` tab. Use these values in rclone config to add a new remote or edit an existing remote. The `App key` setting corresponds to `client_id` in rclone config, the `App secret` corresponds to `client_secret`
+8. Find the `App key` and `App secret` values on the `Settings` tab. Use these
+values in rclone config to add a new remote or edit an existing remote.
+The `App key` setting corresponds to `client_id` in rclone config, the
+`App secret` corresponds to `client_secret`

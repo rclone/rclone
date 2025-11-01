@@ -41,7 +41,7 @@ From repo           : ol8_developer
 Summary             : rsync for cloud storage
 URL                 : http://rclone.org/
 License             : MIT
-Description         : Rclone is a command line program to sync files and directories to and from various cloud services.  	
+Description         : Rclone is a command line program to sync files and directories to and from various cloud services.
 ```
 
 To run it as a mount helper you should symlink rclone binary to /sbin/mount.rclone

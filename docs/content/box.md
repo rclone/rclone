@@ -109,7 +109,9 @@ rclone ls remote:
 
 To copy a local directory to an Box directory called backup
 
-    rclone copy /home/source remote:backup
+```console
+rclone copy /home/source remote:backup
+```
 
 ### Using rclone with an Enterprise account with SSO
 
@@ -249,8 +251,8 @@ either be actually deleted from Box or moved to the trash.
 
 Emptying the trash is supported via the rclone however cleanup command
 however this deletes every trashed file and folder individually so it
-may take a very long time. 
-Emptying the trash via the  WebUI does not have this limitation 
+may take a very long time.
+Emptying the trash via the  WebUI does not have this limitation
 so it is advised to empty the trash via the WebUI.
 
 ### Root folder ID

@@ -16,7 +16,8 @@ three ways of doing it, described below.
 ## Configuring using rclone authorize
 
 On the headless machine run [rclone config](/commands/rclone_config), but
-answer `N` to the question `Use web browser to automatically authenticate rclone with remote?`.
+answer `N` to the question `Use web browser to automatically authenticate
+rclone with remote?`.
 
 ```text
 Use web browser to automatically authenticate rclone with remote?
@@ -108,7 +109,8 @@ ssh -L localhost:53682:localhost:53682 username@remote_server
 ```
 
 Then on the headless machine run [rclone config](/commands/rclone_config) and
-answer `Y` to the question `Use web browser to automatically authenticate rclone with remote?`.
+answer `Y` to the question `Use web browser to automatically authenticate rclone
+with remote?`.
 
 ```text
 Use web browser to automatically authenticate rclone with remote?
