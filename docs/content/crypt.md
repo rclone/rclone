@@ -707,9 +707,9 @@ the same in the new encrypted remote.
 
 This will have the following advantages
 
-  * `rclone sync` will check the checksums while copying
-  * you can use `rclone check` between the encrypted remotes
-  * you don't decrypt and encrypt unnecessarily
+- `rclone sync` will check the checksums while copying
+- you can use `rclone check` between the encrypted remotes
+- you don't decrypt and encrypt unnecessarily
 
 For example, let's say you have your original remote at `remote:` with
 the encrypted version at `eremote:` with path `remote:crypt`.  You
@@ -719,11 +719,15 @@ as `eremote:`.
 
 To sync the two remotes you would do
 
-    rclone sync --interactive remote:crypt remote2:crypt
+```console
+rclone sync --interactive remote:crypt remote2:crypt
+```
 
 And to check the integrity you would do
 
-    rclone check remote:crypt remote2:crypt
+```console
+rclone check remote:crypt remote2:crypt
+```
 
 ## File formats
 
@@ -734,8 +738,8 @@ has a header and is divided into chunks.
 
 #### Header
 
-  * 8 bytes magic string `RCLONE\x00\x00`
-  * 24 bytes Nonce (IV)
+- 8 bytes magic string `RCLONE\x00\x00`
+- 24 bytes Nonce (IV)
 
 The initial nonce is generated from the operating systems crypto
 strong random number generator.  The nonce is incremented for each
@@ -753,8 +757,8 @@ authenticate messages.
 
 Each chunk contains:
 
-  * 16 Bytes of Poly1305 authenticator
-  * 1 - 65536 bytes XSalsa20 encrypted data
+- 16 Bytes of Poly1305 authenticator
+- 1 - 65536 bytes XSalsa20 encrypted data
 
 64k chunk size was chosen as the best performing chunk size (the
 authenticator takes too much time below this and the performance drops
@@ -767,15 +771,15 @@ This uses a 32 byte (256 bit key) key derived from the user password.
 
 1 byte file will encrypt to
 
-  * 32 bytes header
-  * 17 bytes data chunk
+- 32 bytes header
+- 17 bytes data chunk
 
 49 bytes total
 
 1 MiB (1048576 bytes) file will encrypt to
 
-  * 32 bytes header
-  * 16 chunks of 65568 bytes
+- 32 bytes header
+- 16 chunks of 65568 bytes
 
 1049120 bytes total (a 0.05% overhead). This is the overhead for big
 files.
@@ -798,8 +802,8 @@ it on the cloud storage system.
 
 This means that
 
-  * filenames with the same name will encrypt the same
-  * filenames which start the same won't have a common prefix
+- filenames with the same name will encrypt the same
+- filenames which start the same won't have a common prefix
 
 This uses a 32 byte key (256 bits) and a 16 byte (128 bits) IV both of
 which are derived from the user password.
@@ -808,8 +812,8 @@ After encryption they are written out using a modified version of
 standard `base32` encoding as described in RFC4648.  The standard
 encoding is modified in two ways:
 
-  * it becomes lower case (no-one likes upper case filenames!)
-  * we strip the padding character `=`
+- it becomes lower case (no-one likes upper case filenames!)
+- we strip the padding character `=`
 
 `base32` is used rather than the more efficient `base64` so rclone can be
 used on case insensitive remotes (e.g. Windows, Box, Dropbox, Onedrive etc).
@@ -825,6 +829,7 @@ then rclone uses an internal one.
 encrypted data.  For full protection against this you should always use
 a salt.
 
-## SEE ALSO
+## See Also
 
-* [rclone cryptdecode](/commands/rclone_cryptdecode/)    - Show forward/reverse mapping of encrypted filenames
+- [rclone cryptdecode](/commands/rclone_cryptdecode/) - Show forward/reverse
+mapping of encrypted filenames.

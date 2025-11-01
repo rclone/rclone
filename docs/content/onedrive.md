@@ -147,7 +147,9 @@ To create your own Client ID, please follow these steps:
    - If you have not created an Azure account, you will be prompted to. This is free,
    but you need to provide a phone number, address, and credit card for identity
    verification.
-2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`,
+2. Enter a name for your app, choose account type `Accounts in any organizational
+   directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts
+   (e.g. Skype, Xbox)`,
   select `Web` in `Redirect URI`, then type (do not copy and paste)
   `http://localhost:53682/` and click Register. Copy and keep the
   `Application (client) ID` under the app name for later use.
@@ -170,7 +172,8 @@ The access_scopes option allows you to configure the permissions requested by rc
 See [Microsoft Docs](https://docs.microsoft.com/en-us/graph/permissions-reference#files-permissions)
 for more information about the different scopes.
 
-The `Sites.Read.All` permission is required if you need to [search SharePoint sites when configuring the remote](https://github.com/rclone/rclone/pull/5883).
+The `Sites.Read.All` permission is required if you need to
+[search SharePoint sites when configuring the remote](https://github.com/rclone/rclone/pull/5883).
 However, if that permission is not assigned, you need to exclude `Sites.Read.All`
 from your access scopes or set `disable_site_permission` option to true in the
 advanced options.
@@ -1109,7 +1112,8 @@ setting:
 1. `Install-Module -Name Microsoft.Online.SharePoint.PowerShell` (in case you
    haven't installed this already)
 2. `Import-Module Microsoft.Online.SharePoint.PowerShell -DisableNameChecking`
-3. `Connect-SPOService -Url https://YOURSITE-admin.sharepoint.com -Credential YOU@YOURSITE.COM` (replacing `YOURSITE`, `YOU`, `YOURSITE.COM` with the actual values; this will
+3. `Connect-SPOService -Url https://YOURSITE-admin.sharepoint.com -Credential YOU@YOURSITE.COM`
+   (replacing `YOURSITE`, `YOU`, `YOURSITE.COM` with the actual values; this will
    prompt for your credentials)
 4. `Set-SPOTenant -EnableMinimumVersionRequirement $False`
 5. `Disconnect-SPOService` (to disconnect from the server)

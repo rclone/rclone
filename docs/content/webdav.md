@@ -531,7 +531,7 @@ installed and configured, an access token is obtained by running the
 `oidc-token` command.  The following example shows a (shortened)
 access token obtained from the *XDC* OIDC Provider.
 
-```
+```text
 paul@celebrimbor:~$ oidc-token XDC
 eyJraWQ[...]QFXDt0
 paul@celebrimbor:~$
@@ -555,7 +555,7 @@ edit the advanced config and enter the command to get a bearer token
 The following example config shows a WebDAV endpoint that uses
 oidc-agent to supply an access token from the *XDC* OIDC Provider.
 
-```
+```ini
 [dcache]
 type = webdav
 url = https://dcache.example.org/
