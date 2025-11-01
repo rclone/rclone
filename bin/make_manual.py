@@ -87,6 +87,7 @@ docs = [
     "smb.md",
     "storj.md",
     "sugarsync.md",
+    "terabox.md",
     "ulozto.md",
     "uptobox.md",
     "union.md",
