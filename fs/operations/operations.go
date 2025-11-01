@@ -115,10 +115,10 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	if srcHash != dstHash {
 		fs.Debugf(src, "%v = %s (%v)", ht, srcHash, src.Fs())
 		fs.Debugf(dst, "%v = %s (%v)", ht, dstHash, dst.Fs())
-	} else {
-		fs.Debugf(src, "%v = %s OK", ht, srcHash)
+		return false, ht, srcHash, dstHash, nil
 	}
-	return srcHash == dstHash, ht, srcHash, dstHash, nil
+	fs.Debugf(src, "%v = %s OK", ht, srcHash)
+	return true, ht, srcHash, dstHash, nil
 }
 
 // Equal checks to see if the src and dst objects are equal by looking at
@@ -184,7 +184,13 @@ func sizeDiffers(ctx context.Context, src, dst fs.ObjectInfo) bool {
 	if ci.IgnoreSize || src.Size() < 0 || dst.Size() < 0 {
 		return false
 	}
-	return src.Size() != dst.Size()
+	if src.Size() == dst.Size() {
+		fs.Debugf(dst, "size = %d OK", dst.Size())
+		return false
+	}
+	fs.Debugf(src, "size = %d (%v)", src.Size(), src.Fs())
+	fs.Debugf(dst, "size = %d (%v)", dst.Size(), dst.Fs())
+	return true
 }
 
 var checksumWarning sync.Once
@@ -241,7 +247,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 	ci := fs.GetConfig(ctx)
 	logger, _ := GetLogger(ctx)
 	if sizeDiffers(ctx, src, dst) {
-		fs.Debugf(src, "Sizes differ (src %d vs dst %d)", src.Size(), dst.Size())
+		fs.Debug(src, "Sizes differ")
 		logger(ctx, Differ, src, dst, nil)
 		return false
 	}
