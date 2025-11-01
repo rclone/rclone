@@ -45,6 +45,7 @@ See the following for detailed instructions for
 - [Digi Storage](/koofr/#digi-storage)
 - [Dropbox](/dropbox/)
 - [Enterprise File Fabric](/filefabric/)
+- [FileJump](/filejump/)
 - [FileLu Cloud Storage](/filelu/)
 - [Files.com](/filescom/)
 - [FTP](/ftp/)
