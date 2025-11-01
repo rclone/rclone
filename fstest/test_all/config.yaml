@@ -37,6 +37,9 @@ backends:
  # - backend:  "crypt"
  #   remote:   "TestCryptSwift:"
  #   fastlist: false
+ - backend:  "cryptomator"
+   remote:   "TestCryptomatorLocal:"
+   fastlist: false
  ## chunker
  - backend:  "chunker"
    remote:   "TestChunkerLocal:"

@@ -1,0 +1,14 @@
+{
+    "siv_ctrmac": {
+        "CipherCombo": "SIV_CTRMAC",
+        "Header": "mDCOS8MT0etiyDKaXv8X0cD1ayTewk/Uir95AZO5t4bwy8sQm5yl23Y0XxyQtg43/IQJLyHLJSuVfKLEQuPmncqbbndSiMzU2iS00Mo9lM3/1XCmLJWmig==",
+        "EncKey": "ABygFz/iZU0HXYlE5NtYFPgEmKqyWEh4wGjHo0fJgNY=",
+        "MacKey": "lwdzbaZqIfibYj8LSjcUAqpOJfdku/qN13f2OZWpxDk="
+    },
+    "siv_gcm": {
+        "CipherCombo": "SIV_GCM",
+        "Header": "WSGqVbG3C7X981CdJIiOFFht5ldI6GzWWFhzPSNaKbw8DZcvjoMVB3tiNNRmFTS2K1Y8rBYx0c18Bbj7Tr/gYuseGMY=",
+        "EncKey": "gk3ygEvJMA/z4e4QzItHXtQmM2GEHaXN9fm9esQxTcQ=",
+        "MacKey": "zUq4ZFL65Fz6w9htPAggqfllEv3OUQDAbZZJc2eIyJ8="
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "siv_ctrmac": {
+        "Nonce": "mDCOS8MT0etiyDKaXv8X0Q==",
+        "Reserved": "//////////8=",
+        "ContentKey": "RgbuFMgbZP051gzgXp8WbQNJ5y50eNyyBL/6qdQNn6c="
+    },
+    "siv_gcm": {
+        "Nonce": "WSGqVbG3C7X981Cd",
+        "Reserved": "//////////8=",
+        "ContentKey": "dBS1BH/nsGxL5AF6Z0I+P6V5PSelEFarrIylAIqWmlc="
+    }
+}

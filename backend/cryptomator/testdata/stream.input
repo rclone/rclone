@@ -1,0 +1,16 @@
+{
+    "example": {
+        "CipherCombo": "SIV_CTRMAC",
+        "ContentKey": "NSIfk1Uz4Xi0w8P+ulukdoifG5mtFL3TE7zhh/EWZU0=",
+        "Nonce": "a/vkY30qi89n93yMT4SQxQ==",
+        "MacKey": "lwdzbaZqIfibYj8LSjcUAqpOJfdku/qN13f2OZWpxDk=",
+        "Ciphertext": "eAGXNbHreJt00KFj3eVuj/E7snF86cgZ3bCMJOYOdIPRozg3GoQ20t1Fls3KAAEwqNzKpefVO790yZEKKTaTLEy0ZzcO0c7G2i9I2jL3WRM/nE1kZO4YiwEimKoiYnzDVCOqb6DHuGcvp+Zphx/LhrnON/U8fQjijPkU2cr8mU5+3ZMhnsNutHtUygUpK50Y4RS50JJjVlCBzLpD9X2QsnRBODBZybDQ5ZMHYhx/4ogqz0Ww1VZb7n/E9rxZtbbxnMFbcH7TT8cA76mYVxUP+wf57rGH08hLf9J7Ue904w9g/OhNPSeIZbzajafysxpbxTtnsMoOJmRDtbaAiSC4ppHT5fPXzZRPTQLHqhDPtAsJQ2HAhhEhSnp7Bg5bZPA/Vsi2KvCJfGYi1RY9oqMzBYot2fyAc/nlbueGIrM3FokolcJ1QUJsts/Qq2/hMW7gv3zuncsPCssAnXMd0vIhOP8RYmeRx4pStPqvkg51kPAOkDL4xoVA2aQXjZGVXTZ38kkpGFU+okDGRCH4e96w5M2trROq7AvhlxxN/V23/dht7BL9iYcb01XWO7jNt0eh2cXNFunKnq17HsVTRXJOXrawDnFL1fzHT3aSo2T2DQt4SOQS1BMjcZvsD/Fh2JckqbLuPRBwgKiRZYNl0fidwQ9BMMOTxKLhsPv0sTe7JTiqQ5Xjax+eNX+9nwuXO0hXNcg4fqYMLZl4oYRGblufNbpv2kTQMhgzzGBSIyoALHOT0ft68dppRxAx2+tLXaaBJ1o5WCtrLu++KoOSlb106+cZohLBwMFBE1j/93A0wlY4WP4GqrnIG/nvGOs5fPKVulp++Ozl0o/CyLdr9XZboQ=="
+    },
+    "helloWorld": {
+        "CipherCombo": "SIV_CTRMAC",
+        "Nonce": "mDCOS8MT0etiyDKaXv8X0Q==",
+        "ContentKey": "RgbuFMgbZP051gzgXp8WbQNJ5y50eNyyBL/6qdQNn6c=",
+        "MacKey": "lwdzbaZqIfibYj8LSjcUAqpOJfdku/qN13f2OZWpxDk=",
+        "Ciphertext": "ug/ko337a8QOjGML9gPpIb6JWlUV5172MFzWWdAANNCh7xiiboSSuv1uU+MGG+bNxXET1fYvEfItU11v"
+    }
+}
