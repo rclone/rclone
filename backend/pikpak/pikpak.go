@@ -1681,30 +1681,29 @@ var commandHelp = []fs.CommandHelp{{
 	Short: "Add offline download task for url.",
 	Long: `This command adds offline download task for url.
 
-Usage:
+Usage example:
 
 ` + "```console" + `
 rclone backend addurl pikpak:dirpath url
 ` + "```" + `
 
-Downloads will be stored in 'dirpath'. If 'dirpath' is invalid, 
-download will fallback to default 'My Pack' folder.
-`,
+Downloads will be stored in 'dirpath'. If 'dirpath' is invalid,
+download will fallback to default 'My Pack' folder.`,
 }, {
 	Name:  "decompress",
 	Short: "Request decompress of a file/files in a folder.",
 	Long: `This command requests decompress of file/files in a folder.
 
-Usage:
+Usage examples:
 
 ` + "```console" + `
 rclone backend decompress pikpak:dirpath {filename} -o password=password
 rclone backend decompress pikpak:dirpath {filename} -o delete-src-file
 ` + "```" + `
 
-An optional argument 'filename' can be specified for a file located in 
-'pikpak:dirpath'. You may want to pass '-o password=password' for a 
-password-protected files. Also, pass '-o delete-src-file' to delete 
+An optional argument 'filename' can be specified for a file located in
+'pikpak:dirpath'. You may want to pass '-o password=password' for a
+password-protected files. Also, pass '-o delete-src-file' to delete
 source files after decompression finished.
 
 Result:
@@ -1715,8 +1714,7 @@ Result:
     "SourceDeleted": 0,
     "Errors": 0
 }
-` + "```" + `
-`,
+` + "```",
 }}
 
 // Command the backend to run a named command

@@ -927,13 +927,12 @@ var commandHelp = []fs.CommandHelp{
 		Long: `This encodes the filenames given as arguments returning a list of
 strings of the encoded results.
 
-Usage Example:
+Usage examples:
 
 ` + "```console" + `
 rclone backend encode crypt: file1 [file2...]
 rclone rc backend/command command=encode fs=crypt: file1 [file2...]
-` + "```" + `
-`,
+` + "```",
 	},
 	{
 		Name:  "decode",
@@ -942,13 +941,12 @@ rclone rc backend/command command=encode fs=crypt: file1 [file2...]
 strings of the decoded results. It will return an error if any of the
 inputs are invalid.
 
-Usage Example:
+Usage examples:
 
 ` + "```console" + `
 rclone backend decode crypt: encryptedfile1 [encryptedfile2...]
 rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile2...]
-` + "```" + `
-`,
+` + "```",
 	},
 }
 
