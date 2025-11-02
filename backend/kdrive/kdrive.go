@@ -727,6 +727,13 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return err
 	}
 
+	nonEmpty, err := f.listAll(ctx, rootID, false, false, false, func(i *api.Item) bool {
+		return true
+	})
+	if (nonEmpty || err != nil) && check {
+		return fmt.Errorf("rmdir failed: directory %s not empty", dir)
+	}
+
 	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       fmt.Sprintf("/2/drive/%s/files/%s", f.opt.DriveID, rootID),
@@ -1146,13 +1153,15 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	filename, directoryID, err := o.fs.dirCache.FindPath(ctx, o.Remote(), true)
+	if err != nil || len(filename) == 0 || len(directoryID) == 0 {
+		return err
+	}
+
+	o.modTime = modTime
+
 	/*
 		// TOFE: there isn't currently any way of setting mtime on the remote !
-		filename, directoryID, err := o.fs.dirCache.FindPath(ctx, o.Remote(), true)
-		if err != nil {
-			return err
-		}
-
 		fileID := o.id
 		filename = o.fs.opt.Enc.FromStandardName(filename)
 		opts := rest.Opts{
@@ -1193,39 +1202,17 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// downloadURL fetches the download link
-func (o *Object) downloadURL(ctx context.Context) (URL string, err error) {
-	if o.id == "" {
-		return "", errors.New("can't download - no id")
-	}
-	var resp *http.Response
-	var result api.PubLinkResult
-	opts := rest.Opts{
-		Method:     "GET",
-		Path:       fmt.Sprintf("/2/drive/%s/files/%s/link", o.fs.opt.DriveID, o.id),
-		Parameters: url.Values{},
-	}
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
-		err = result.ResultStatus.Update(err)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return "", err
-	}
-	return result.Data.URL, nil
-}
-
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	url, err := o.downloadURL(ctx)
-	if err != nil {
-		return nil, err
-	}
+	/*	url, err := o.downloadURL(ctx)
+		if err != nil {
+			return nil, err
+		}
+	*/
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: url,
+		RootURL: fmt.Sprintf("%s/2/drive/%s/files/%s/download", "https://api.infomaniak.com", o.fs.opt.DriveID, o.id),
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1278,26 +1265,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	opts.Parameters.Set("file_name", leaf)
 	opts.Parameters.Set("directory_id", directoryID)
 	opts.Parameters.Set("total_size", fmt.Sprintf("%d", size))
-	opts.Parameters.Set("created_at", fmt.Sprintf("%d", uint64(modTime.Unix())))
-
-	// Special treatment for a 0 length upload.  This doesn't work
-	// with PUT even with Content-Length set (by setting
-	// opts.Body=0), so upload it as a multipart form POST with
-	// Content-Length set.
-	if size == 0 {
-		formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, opts.Parameters, "content", leaf)
-		if err != nil {
-			return fmt.Errorf("failed to make multipart upload for 0 length file: %w", err)
-		}
-
-		contentLength := overhead + size
-
-		opts.ContentType = contentType
-		opts.Body = formReader
-		opts.Method = "POST"
-		opts.Parameters = nil
-		opts.ContentLength = &contentLength
-	}
+	opts.Parameters.Set("last_modified_at", fmt.Sprintf("%d", uint64(modTime.Unix())))
 
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
