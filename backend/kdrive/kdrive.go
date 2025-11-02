@@ -378,65 +378,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// XOpenWriterAt opens with a handle for random access writes
-//
-// Pass in the remote desired and the size if known.
-//
-// It truncates any existing object.
-//
-// OpenWriterAt disabled because it seems to have been disabled at kdrive
-// PUT /file_open?flags=XXX&folderid=XXX&name=XXX HTTP/1.1
-//
-//	{
-//	        "result": 2003,
-//	        "error": "Access denied. You do not have permissions to perform this operation."
-//	}
-func (f *Fs) XOpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
-	client, err := f.newSingleConnClient(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("create client: %w", err)
-	}
-	// init an empty file
-	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
-	if err != nil {
-		return nil, fmt.Errorf("resolve src: %w", err)
-	}
-	openResult, err := fileOpenNew(ctx, client, f, directoryID, leaf)
-	if err != nil {
-		return nil, fmt.Errorf("open file: %w", err)
-	}
-	if _, err := fileClose(ctx, client, f.pacer, openResult.FileDescriptor); err != nil {
-		return nil, fmt.Errorf("close file: %w", err)
-	}
-
-	writer := &writerAt{
-		ctx:    ctx,
-		fs:     f,
-		size:   size,
-		remote: remote,
-		fileID: openResult.Fileid,
-	}
-
-	return writer, nil
-}
-
-// Create a new http client, accepting keep-alive headers, limited to single connection.
-// Necessary for kdrive fileops API, as it binds the session to the underlying TCP connection.
-// File descriptors are only valid within the same connection and auto-closed when the connection is closed,
-// hence we need a separate client (with single connection) for each fd to avoid all sorts of errors and race conditions.
-func (f *Fs) newSingleConnClient(ctx context.Context) (*rest.Client, error) {
-	baseClient := fshttp.NewClient(ctx)
-	baseClient.Transport = fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
-		t.MaxConnsPerHost = 1
-		t.DisableKeepAlives = false
-	})
-	// Set our own http client in the context
-	ctx = oauthutil.Context(ctx, baseClient)
-	// create a new oauth client, reuse the token source
-	oAuthClient := oauth2.NewClient(ctx, f.ts)
-	return rest.NewClient(oAuthClient).SetRoot("https://api.infomaniak.com"), nil
-}
-
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
