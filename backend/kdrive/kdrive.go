@@ -922,6 +922,7 @@ func (f *Fs) linkFile(ctx context.Context, path string, expire fs.Duration) (str
 	return result.Data.URL, nil
 }
 
+/*
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	dirID, err := f.dirCache.FindDir(ctx, remote, false)
@@ -933,7 +934,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	return f.linkDir(ctx, dirID, expire)
 }
-
+*/
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	opts := rest.Opts{
@@ -1094,48 +1095,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	filename, directoryID, err := o.fs.dirCache.FindPath(ctx, o.Remote(), true)
-	if err != nil || len(filename) == 0 || len(directoryID) == 0 {
-		return err
-	}
-
-	o.modTime = modTime
-
-	/*
-		// TOFE: there isn't currently any way of setting mtime on the remote !
-		fileID := o.id
-		filename = o.fs.opt.Enc.FromStandardName(filename)
-		opts := rest.Opts{
-			Method:           "PUT",
-			Path:             "/copyfile",
-			Parameters:       url.Values{},
-			TransferEncoding: []string{"identity"}, // kdrive doesn't like chunked encoding
-			ExtraHeaders: map[string]string{
-				"Connection": "keep-alive",
-			},
-		}
-		opts.Parameters.Set("fileid", fileID)
-		opts.Parameters.Set("folderid", dirIDtoNumber(directoryID))
-		opts.Parameters.Set("toname", filename)
-		opts.Parameters.Set("tofolderid", dirIDtoNumber(directoryID))
-		opts.Parameters.Set("ctime", strconv.FormatInt(modTime.Unix(), 10))
-		opts.Parameters.Set("mtime", strconv.FormatInt(modTime.Unix(), 10))
-
-		result := &api.ItemResult{}
-		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, result)
-			err = result.Error.Update(err)
-			return shouldRetry(ctx, resp, err)
-		})
-		if err != nil {
-			return fmt.Errorf("update mtime: copyfile: %w", err)
-		}
-		if err := o.setMetaData(&result.Metadata); err != nil {
-			return err
-		}
-	*/
-
-	return nil
+	return fs.ErrorCantSetModTime
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -1150,6 +1110,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			return nil, err
 		}
 	*/
+	fs.FixRangeOption(options, o.Size())
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
@@ -1262,7 +1223,6 @@ var (
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
-	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.ListPer         = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
