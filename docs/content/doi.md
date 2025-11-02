@@ -27,7 +27,7 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 

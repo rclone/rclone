@@ -144,7 +144,7 @@ func testSorterExt(t *testing.T, cutoff, N int, wantExtSort bool, keyFn KeyFn) {
 
 	// Make the directory entries
 	entriesMap := make(map[string]fs.DirEntry, N)
-	for i := 0; i < N; i++ {
+	for i := range N {
 		remote := fmt.Sprintf("%010d", i)
 		prefix := "a"
 		if i%3 == 0 {

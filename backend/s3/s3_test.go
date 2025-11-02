@@ -62,14 +62,14 @@ func TestAWSDualStackOption(t *testing.T) {
 		// test enabled
 		ctx, opt, client := SetupS3Test(t)
 		opt.UseDualStack = true
-		s3Conn, err := s3Connection(ctx, opt, client)
+		s3Conn, _, err := s3Connection(ctx, opt, client)
 		require.NoError(t, err)
 		assert.Equal(t, aws.DualStackEndpointStateEnabled, s3Conn.Options().EndpointOptions.UseDualStackEndpoint)
 	}
 	{
 		// test default case
 		ctx, opt, client := SetupS3Test(t)
-		s3Conn, err := s3Connection(ctx, opt, client)
+		s3Conn, _, err := s3Connection(ctx, opt, client)
 		require.NoError(t, err)
 		assert.Equal(t, aws.DualStackEndpointStateDisabled, s3Conn.Options().EndpointOptions.UseDualStackEndpoint)
 	}

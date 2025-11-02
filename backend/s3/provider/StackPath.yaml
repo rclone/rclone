@@ -1,0 +1,14 @@
+name: StackPath
+description: StackPath Object Storage
+region: {}
+endpoint:
+  s3.us-east-2.stackpathstorage.com: US East Endpoint
+  s3.us-west-1.stackpathstorage.com: US West Endpoint
+  s3.eu-central-1.stackpathstorage.com: EU Endpoint
+acl: {}
+bucket_acl: true
+quirks:
+  list_version: 1
+  force_path_style: true
+  list_url_encode: false
+  use_already_exists: false

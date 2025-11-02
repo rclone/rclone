@@ -21,7 +21,7 @@ which you need to do in your browser.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -64,23 +64,25 @@ d) Delete this remote
 y/e/d> y
 ```
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the
+name you gave your remote):
+
 
 List directories in top level of your 1Fichier account
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your 1Fichier account
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to a 1Fichier directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -223,5 +225,5 @@ this capability cannot determine free space for an rclone mount or
 use policy `mfs` (most free space) as a member of an rclone union
 remote.
 
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
-
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+and [rclone about](https://rclone.org/commands/rclone_about/).

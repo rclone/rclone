@@ -62,7 +62,7 @@ func TestListRHelperSend(t *testing.T) {
 	helper := NewHelper(callback)
 
 	// Add 100 entries to force the callback to be invoked
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		require.NoError(t, helper.Add(entry))
 	}
 
@@ -120,7 +120,7 @@ var _ fs.ListPer = (*mockListPfs)(nil)
 func TestListWithListP(t *testing.T) {
 	ctx := context.Background()
 	var entries fs.DirEntries
-	for i := 0; i < 26; i++ {
+	for i := range 26 {
 		entries = append(entries, mockobject.New(fmt.Sprintf("%c", 'A'+i)))
 	}
 	t.Run("NoError", func(t *testing.T) {

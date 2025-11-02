@@ -2152,7 +2152,6 @@ func (o *Object) getMetadata() (metadata map[string]*string) {
 	}
 	metadata = make(map[string]*string, len(o.meta))
 	for k, v := range o.meta {
-		v := v
 		metadata[k] = &v
 	}
 	return metadata
@@ -2798,8 +2797,6 @@ func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
 		blockList    blockblob.GetBlockListResponse
 		properties   *blob.GetPropertiesResponse
 		options      *blockblob.CommitBlockListOptions
-		// Use temporary pacer as this can be called recursively which can cause a deadlock with --max-connections
-		pacer = fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 	)
 
 	properties, err = o.readMetaDataAlways(ctx)
@@ -2811,7 +2808,7 @@ func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
 
 	if objectExists {
 		// Get the committed block list
-		err = pacer.Call(func() (bool, error) {
+		err = o.fs.pacer.Call(func() (bool, error) {
 			blockList, err = blockBlobSVC.GetBlockList(ctx, blockblob.BlockListTypeAll, nil)
 			return o.fs.shouldRetry(ctx, err)
 		})
@@ -2853,7 +2850,7 @@ func (o *Object) clearUncommittedBlocks(ctx context.Context) (err error) {
 
 	// Commit only the committed blocks
 	fs.Debugf(o, "Committing %d blocks to remove uncommitted blocks", len(blockIDs))
-	err = pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.Call(func() (bool, error) {
 		_, err := blockBlobSVC.CommitBlockList(ctx, blockIDs, options)
 		return o.fs.shouldRetry(ctx, err)
 	})

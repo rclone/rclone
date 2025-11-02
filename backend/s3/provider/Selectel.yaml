@@ -1,0 +1,8 @@
+name: Selectel
+description: Selectel Object Storage
+region:
+  ru-1: St. Petersburg
+endpoint:
+  s3.ru-1.storage.selcloud.ru: Saint Petersburg
+quirks:
+  list_url_encode: false

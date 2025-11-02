@@ -61,7 +61,7 @@ Notes:
 Here is an example of how to make a `sia` remote called `mySia`.
 First, run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -117,19 +117,19 @@ Once configured, you can then use `rclone` like this:
 
 - List directories in top level of your Sia storage
 
-  ```sh
+  ```console
   rclone lsd mySia:
   ```
 
 - List all the files in your Sia storage
 
-  ```sh
+  ```console
   rclone ls mySia:
   ```
 
 - Upload a local directory to the Sia directory called *backup*
 
-  ```sh
+  ```console
   rclone copy /home/source mySia:backup
   ```
 

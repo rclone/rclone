@@ -115,9 +115,8 @@ Now you can use it as `Hasher2:subdir/file` instead of base remote.
 Hasher will transparently update cache with new checksums when a file
 is fully read or overwritten, like:
 
-```sh
+```console
 rclone copy External:path/file Hasher:dest/path
-
 rclone cat Hasher:path/to/file > /dev/null
 ```
 
@@ -126,17 +125,15 @@ for a subtree is to **re-download** all files in the subtree. For example,
 use `hashsum --download` using **any** supported hashsum on the command line
 (we just care to re-read):
 
-```sh
+```console
 rclone hashsum MD5 --download Hasher:path/to/subtree > /dev/null
-
 rclone backend dump Hasher:path/to/subtree
 ```
 
 You can print or drop hashsum cache using custom backend commands:
 
-```sh
+```console
 rclone backend dump Hasher:dir/subdir
-
 rclone backend drop Hasher:
 ```
 
@@ -145,7 +142,7 @@ rclone backend drop Hasher:
 Hasher supports two backend commands: generic SUM file `import` and faster
 but less consistent `stickyimport`.
 
-```sh
+```console
 rclone backend import Hasher:dir/subdir SHA1 /path/to/SHA1SUM [--checkers 4]
 ```
 
@@ -165,7 +162,7 @@ correspondingly.
   `--checkers` to make it faster. Or use `stickyimport` if you don't care
   about fingerprints and consistency.
 
-```sh
+```console
 rclone backend stickyimport hasher:path/to/data sha1 remote:/path/to/sum.sha1
 ```
 

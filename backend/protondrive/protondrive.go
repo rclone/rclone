@@ -13,6 +13,8 @@ import (
 	protonDriveAPI "github.com/henrybear327/Proton-API-Bridge"
 	"github.com/henrybear327/go-proton-api"
 
+	"github.com/pquerna/otp/totp"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -87,6 +89,17 @@ The value can also be provided with --protondrive-2fa=000000
 The 2FA code of your proton drive account if the account is set up with 
 two-factor authentication`,
 			Required: false,
+		}, {
+			Name: "otp_secret_key",
+			Help: `The OTP secret key
+
+The value can also be provided with --protondrive-otp-secret-key=ABCDEFGHIJKLMNOPQRSTUVWXYZ234567
+
+The OTP secret key of your proton drive account if the account is set up with 
+two-factor authentication`,
+			Required:   false,
+			Sensitive:  true,
+			IsPassword: true,
 		}, {
 			Name:      clientUIDKey,
 			Help:      "Client uid key (internal use only)",
@@ -191,6 +204,7 @@ type Options struct {
 	Password        string `config:"password"`
 	MailboxPassword string `config:"mailbox_password"`
 	TwoFA           string `config:"2fa"`
+	OtpSecretKey    string `config:"otp_secret_key"`
 
 	// advanced
 	Enc                  encoder.MultiEncoder `config:"encoding"`
@@ -356,7 +370,15 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 	config.FirstLoginCredential.Username = opt.Username
 	config.FirstLoginCredential.Password = opt.Password
 	config.FirstLoginCredential.MailboxPassword = opt.MailboxPassword
+	// if 2FA code is provided, use it; otherwise, generate one using the OTP secret key if provided
 	config.FirstLoginCredential.TwoFA = opt.TwoFA
+	if opt.TwoFA == "" && opt.OtpSecretKey != "" {
+		code, err := totp.GenerateCode(opt.OtpSecretKey, time.Now())
+		if err != nil {
+			return nil, fmt.Errorf("couldn't generate 2FA code: %w", err)
+		}
+		config.FirstLoginCredential.TwoFA = code
+	}
 	protonDrive, auth, err := protonDriveAPI.NewProtonDrive(ctx, config, authHandler, deAuthHandler)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't initialize a new proton drive instance: %w", err)
@@ -392,6 +414,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.MailboxPassword, err = obscure.Reveal(opt.MailboxPassword)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't decrypt mailbox password: %w", err)
+		}
+	}
+
+	if opt.OtpSecretKey != "" {
+		var err error
+		opt.OtpSecretKey, err = obscure.Reveal(opt.OtpSecretKey)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't decrypt OtpSecretKey: %w", err)
 		}
 	}
 

@@ -42,7 +42,7 @@ build tags and the type of executable (static or dynamic).
 
 For example:
 
-` + "```sh" + `
+` + "```console" + `
 $ rclone version
 rclone v1.55.0
 - os/version: ubuntu 18.04 (64 bit)
@@ -60,7 +60,7 @@ Note: before rclone version 1.55 the os/type and os/arch lines were merged,
 If you supply the --check flag, then it will do an online check to
 compare your version with the latest release and the latest beta.
 
-` + "```sh" + `
+` + "```console" + `
 $ rclone version --check
 yours:  1.42.0.6
 latest: 1.42          (released 2018-06-16)
@@ -69,7 +69,7 @@ beta:   1.42.0.5      (released 2018-06-17)
 
 Or
 
-` + "```sh" + `
+` + "```console" + `
 $ rclone version --check
 yours:  1.41
 latest: 1.42          (released 2018-06-16)

@@ -125,12 +125,12 @@ func (b *bisyncRun) ReverseCryptCheckFn(ctx context.Context, dst, src fs.Object)
 }
 
 // DownloadCheckFn is a slightly modified version of Check with --download
-func DownloadCheckFn(ctx context.Context, a, b fs.Object) (differ bool, noHash bool, err error) {
-	differ, err = operations.CheckIdenticalDownload(ctx, a, b)
+func DownloadCheckFn(ctx context.Context, dst, src fs.Object) (equal bool, noHash bool, err error) {
+	equal, err = operations.CheckIdenticalDownload(ctx, src, dst)
 	if err != nil {
 		return true, true, fmt.Errorf("failed to download: %w", err)
 	}
-	return differ, false, nil
+	return equal, false, nil
 }
 
 // check potential conflicts (to avoid renaming if already identical)

@@ -1,0 +1,15 @@
+name: Rabata
+description: Rabata Cloud Storage
+region:
+  us-east-1: US East (N. Virginia)
+  eu-west-1: EU (Ireland)
+  eu-west-2: EU (London)
+endpoint:
+  s3.us-east-1.rabata.io: US East (N. Virginia)
+  s3.eu-west-1.rabata.io: EU West (Ireland)
+  s3.eu-west-2.rabata.io: EU West (London)
+location_constraint:
+  us-east-1: US East (N. Virginia)
+  eu-west-1: EU (Ireland)
+  eu-west-2: EU (London)
+# server side copy not supported

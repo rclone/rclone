@@ -19,7 +19,7 @@ do in your browser.  `rclone config` walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -89,23 +89,24 @@ d) Delete this remote
 y/e/d> y
 ```
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the
+name you gave your remote):
 
 List directories in top level of your Enterprise File Fabric
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your Enterprise File Fabric
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to an Enterprise File Fabric directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -148,7 +149,7 @@ In order to do this you will have to find the `Folder ID` of the
 directory you wish rclone to display.  These aren't displayed in the
 web interface, but you can use `rclone lsf` to find them, for example
 
-```sh
+```console
 $ rclone lsf --dirs-only -Fip --csv filefabric:
 120673758,Burnt PDFs/
 120673759,My Quick Uploads/

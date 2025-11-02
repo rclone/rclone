@@ -1,0 +1,19 @@
+name: ArvanCloud
+description: Arvan Cloud Object Storage (AOS)
+endpoint:
+  s3.ir-thr-at1.arvanstorage.ir: |-
+    The default endpoint - a good choice if you are unsure.
+    Tehran Iran (Simin)
+  s3.ir-tbz-sh1.arvanstorage.ir: Tabriz Iran (Shahriar)
+location_constraint:
+  ir-thr-at1: Tehran Iran (Simin)
+  ir-tbz-sh1: Tabriz Iran (Shahriar)
+acl: {}
+storage_class:
+  STANDARD: Standard storage class
+bucket_acl: true
+quirks:
+  list_version: 1
+  force_path_style: true
+  list_url_encode: false
+  use_already_exists: false

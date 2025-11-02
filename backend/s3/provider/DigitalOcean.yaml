@@ -1,0 +1,20 @@
+name: DigitalOcean
+description: DigitalOcean Spaces
+region: {}
+endpoint:
+  syd1.digitaloceanspaces.com: DigitalOcean Spaces Sydney 1
+  sfo3.digitaloceanspaces.com: DigitalOcean Spaces San Francisco 3
+  sfo2.digitaloceanspaces.com: DigitalOcean Spaces San Francisco 2
+  fra1.digitaloceanspaces.com: DigitalOcean Spaces Frankfurt 1
+  nyc3.digitaloceanspaces.com: DigitalOcean Spaces New York 3
+  ams3.digitaloceanspaces.com: DigitalOcean Spaces Amsterdam 3
+  sgp1.digitaloceanspaces.com: DigitalOcean Spaces Singapore 1
+  lon1.digitaloceanspaces.com: DigitalOcean Spaces London 1
+  tor1.digitaloceanspaces.com: DigitalOcean Spaces Toronto 1
+  blr1.digitaloceanspaces.com: DigitalOcean Spaces Bangalore 1
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  list_url_encode: false
+  use_already_exists: false

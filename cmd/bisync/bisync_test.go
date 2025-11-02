@@ -522,7 +522,7 @@ func (b *bisyncTest) runTestCase(ctx context.Context, t *testing.T, testCase str
 	require.NoError(b.t, err)
 	b.step = 0
 	b.stopped = false
-	for _, line := range strings.Split(string(scenBuf), "\n") {
+	for line := range strings.SplitSeq(string(scenBuf), "\n") {
 		comment := strings.Index(line, "#")
 		if comment != -1 {
 			line = line[:comment]
@@ -936,7 +936,7 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 // splitLine splits scenario line into tokens and performs
 // substitutions that involve whitespace or control chars.
 func splitLine(line string) (args []string) {
-	for _, s := range strings.Fields(line) {
+	for s := range strings.FieldsSeq(line) {
 		b := []byte(whitespaceReplacer.Replace(s))
 		b = regexChar.ReplaceAllFunc(b, func(b []byte) []byte {
 			c, _ := strconv.ParseUint(string(b[5:7]), 16, 8)
@@ -1513,7 +1513,7 @@ func (b *bisyncTest) compareResults() int {
 
 		fs.Log(nil, divider)
 		fs.Logf(nil, color(terminal.RedFg, "| MISCOMPARE  -Golden vs +Results for  %s"), file)
-		for _, line := range strings.Split(strings.TrimSpace(text), "\n") {
+		for line := range strings.SplitSeq(strings.TrimSpace(text), "\n") {
 			fs.Logf(nil, "| %s", strings.TrimSpace(line))
 		}
 	}

@@ -137,20 +137,22 @@ func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn
 	)
 	return func(dir string, callback fs.ListRCallback) (err error) {
 		mu.Lock()
-		defer mu.Unlock()
 		if !started {
 			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 			dirs, dirsErr = walk.NewDirTree(dirCtx, f, m.Dir, includeAll, ci.MaxDepth)
 			started = true
 		}
 		if dirsErr != nil {
+			mu.Unlock()
 			return dirsErr
 		}
 		entries, ok := dirs[dir]
 		if !ok {
+			mu.Unlock()
 			return fs.ErrorDirNotFound
 		}
 		delete(dirs, dir)
+		mu.Unlock()
 
 		// We use a stable sort here just in case there are
 		// duplicates. Assuming the remote delivers the entries in a
@@ -453,6 +455,11 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 			go func() {
 				defer workerWg.Done()
 				for t := range matchTasks {
+					// Can't match directories with NewObject
+					if _, ok := t.src.(fs.Object); !ok {
+						t.dstMatch <- nil
+						continue
+					}
 					leaf := path.Base(t.src.Remote())
 					dst, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
 					if err != nil {

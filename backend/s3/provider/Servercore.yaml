@@ -1,0 +1,17 @@
+name: Servercore
+description: Servercore Object Storage
+region:
+  ru-1: St. Petersburg
+  gis-1: Moscow
+  ru-7: Moscow
+  uz-2: Tashkent, Uzbekistan
+  kz-1: Almaty, Kazakhstan
+endpoint:
+  s3.ru-1.storage.selcloud.ru: Saint Petersburg
+  s3.gis-1.storage.selcloud.ru: Moscow
+  s3.ru-7.storage.selcloud.ru: Moscow
+  s3.uz-2.srvstorage.uz: Tashkent, Uzbekistan
+  s3.kz-1.srvstorage.kz: Almaty, Kazakhstan
+bucket_acl: true
+quirks:
+  list_url_encode: false

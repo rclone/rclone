@@ -4,6 +4,8 @@ package pacer
 import (
 	"errors"
 	"fmt"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -153,13 +155,13 @@ func (p *Pacer) ModifyCalculator(f func(Calculator)) {
 // This must be called as a pair with endCall.
 //
 // This waits for the pacer token
-func (p *Pacer) beginCall() {
+func (p *Pacer) beginCall(limitConnections bool) {
 	// pacer starts with a token in and whenever we take one out
 	// XXX ms later we put another in.  We could do this with a
 	// Ticker more accurately, but then we'd have to work out how
 	// not to run it when it wasn't needed
 	<-p.pacer
-	if p.maxConnections > 0 {
+	if limitConnections {
 		<-p.connTokens
 	}
 
@@ -176,8 +178,8 @@ func (p *Pacer) beginCall() {
 //
 // This should calculate a new sleepTime.  It takes a boolean as to
 // whether the operation should be retried or not.
-func (p *Pacer) endCall(retry bool, err error) {
-	if p.maxConnections > 0 {
+func (p *Pacer) endCall(retry bool, err error, limitConnections bool) {
+	if limitConnections {
 		p.connTokens <- struct{}{}
 	}
 	p.mu.Lock()
@@ -191,13 +193,44 @@ func (p *Pacer) endCall(retry bool, err error) {
 	p.mu.Unlock()
 }
 
+// Detect the pacer being called reentrantly.
+//
+// This looks for Pacer.call in the call stack and returns true if it
+// is found.
+//
+// Ideally we would do this by passing a context about but there are
+// an awful lot of Pacer calls!
+//
+// This is only needed when p.maxConnections > 0 which isn't a common
+// configuration so adding a bit of extra slowdown here is not a
+// problem.
+func pacerReentered() bool {
+	var pcs [48]uintptr
+	n := runtime.Callers(3, pcs[:]) // skip runtime.Callers, pacerReentered and call
+	frames := runtime.CallersFrames(pcs[:n])
+	for {
+		f, more := frames.Next()
+		if strings.HasSuffix(f.Function, "(*Pacer).call") {
+			return true
+		}
+		if !more {
+			break
+		}
+	}
+	return false
+}
+
 // call implements Call but with settable retries
 func (p *Pacer) call(fn Paced, retries int) (err error) {
 	var retry bool
+	limitConnections := false
+	if p.maxConnections > 0 && !pacerReentered() {
+		limitConnections = true
+	}
 	for i := 1; i <= retries; i++ {
-		p.beginCall()
+		p.beginCall(limitConnections)
 		retry, err = p.invoker(i, retries, fn)
-		p.endCall(retry, err)
+		p.endCall(retry, err, limitConnections)
 		if !retry {
 			break
 		}

@@ -18,7 +18,7 @@ connecting to then rclone can enable extra features.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -89,23 +89,24 @@ d) Delete this remote
 y/e/d> y
 ```
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the
+name you gave your remote):
 
 List directories in top level of your WebDAV
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your WebDAV
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to an WebDAV directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -377,7 +378,9 @@ ownCloud supports modified times using the `X-OC-Mtime` header.
 
 This is configured in an identical way to ownCloud.  Note that
 Nextcloud initially did not support streaming of files (`rcat`) whereas
-ownCloud did, but [this](https://github.com/nextcloud/nextcloud-snap/issues/365) seems to be fixed as of 2020-11-27 (tested with rclone v1.53.1 and Nextcloud Server v19).
+ownCloud did, but [this](https://github.com/nextcloud/nextcloud-snap/issues/365)
+seems to be fixed as of 2020-11-27 (tested with rclone v1.53.1 and Nextcloud
+Server v19).
 
 ### ownCloud Infinite Scale
 
@@ -430,7 +433,7 @@ Set the `vendor` to `sharepoint`.
 
 Your config file should look like this:
 
-```
+```ini
 [sharepoint]
 type = webdav
 url = https://[YOUR-DOMAIN]-my.sharepoint.com/personal/[YOUR-EMAIL]/Documents
@@ -441,17 +444,19 @@ pass = encryptedpassword
 
 ### Sharepoint with NTLM Authentication
 
-Use this option in case your (hosted) Sharepoint is not tied to OneDrive accounts and uses NTLM authentication.
+Use this option in case your (hosted) Sharepoint is not tied to OneDrive
+accounts and uses NTLM authentication.
 
-To get the `url` configuration, similarly to the above, first navigate to the desired directory in your browser to get the URL,
-then strip everything after the name of the opened directory.
+To get the `url` configuration, similarly to the above, first navigate to the
+desired directory in your browser to get the URL, then strip everything after
+the name of the opened directory.
 
 Example:
 If the URL is:
-https://example.sharepoint.com/sites/12345/Documents/Forms/AllItems.aspx
+<https://example.sharepoint.com/sites/12345/Documents/Forms/AllItems.aspx>
 
 The configuration to use would be:
-https://example.sharepoint.com/sites/12345/Documents
+<https://example.sharepoint.com/sites/12345/Documents>
 
 Set the `vendor` to `sharepoint-ntlm`.
 
@@ -460,7 +465,7 @@ set `user` to `DOMAIN\username`.
 
 Your config file should look like this:
 
-```
+```ini
 [sharepoint]
 type = webdav
 url = https://[YOUR-DOMAIN]/some-path-to/Documents
@@ -471,11 +476,15 @@ pass = encryptedpassword
 
 #### Required Flags for SharePoint
 
-As SharePoint does some special things with uploaded documents, you won't be able to use the documents size or the documents hash to compare if a file has been changed since the upload / which file is newer.
+As SharePoint does some special things with uploaded documents, you won't be
+able to use the documents size or the documents hash to compare if a file has
+been changed since the upload / which file is newer.
 
-For Rclone calls copying files (especially Office files such as .docx, .xlsx, etc.) from/to SharePoint (like copy, sync, etc.), you should append these flags to ensure Rclone uses the "Last Modified" datetime property to compare your documents:
+For Rclone calls copying files (especially Office files such as .docx, .xlsx, etc.)
+from/to SharePoint (like copy, sync, etc.), you should append these flags to ensure
+Rclone uses the "Last Modified" datetime property to compare your documents:
 
-```
+```text
 --ignore-size --ignore-checksum --update
 ```
 
@@ -485,7 +494,6 @@ Use this option if you are hosting remotes over WebDAV provided by rclone.
 Read [rclone serve webdav](commands/rclone_serve_webdav/) for more details.
 
 rclone serve supports modified times using the `X-OC-Mtime` header.
-
 
 ### dCache
 
@@ -502,7 +510,7 @@ password, instead enter your Macaroon as the `bearer_token`.
 
 The config will end up looking something like this.
 
-```
+```ini
 [dcache]
 type = webdav
 url = https://dcache...
@@ -512,8 +520,9 @@ pass =
 bearer_token = your-macaroon
 ```
 
-There is a [script](https://github.com/sara-nl/GridScripts/blob/master/get-macaroon) that
-obtains a Macaroon from a dCache WebDAV endpoint, and creates an rclone config file.
+There is a [script](https://github.com/sara-nl/GridScripts/blob/master/get-macaroon)
+that obtains a Macaroon from a dCache WebDAV endpoint, and creates an rclone config
+file.
 
 Macaroons may also be obtained from the dCacheView
 web-browser/JavaScript client that comes with dCache.
@@ -532,7 +541,7 @@ installed and configured, an access token is obtained by running the
 `oidc-token` command.  The following example shows a (shortened)
 access token obtained from the *XDC* OIDC Provider.
 
-```
+```text
 paul@celebrimbor:~$ oidc-token XDC
 eyJraWQ[...]QFXDt0
 paul@celebrimbor:~$
@@ -556,7 +565,7 @@ edit the advanced config and enter the command to get a bearer token
 The following example config shows a WebDAV endpoint that uses
 oidc-agent to supply an access token from the *XDC* OIDC Provider.
 
-```
+```ini
 [dcache]
 type = webdav
 url = https://dcache.example.org/

@@ -23,7 +23,7 @@ command.)  You may put subdirectories in too, e.g. `remote:container/path/to/dir
 
 Here is an example of making a swift configuration.  First run
 
-```sh
+```console
 rclone config
 ```
 
@@ -126,26 +126,26 @@ This remote is called `remote` and can now be used like this
 
 See all containers
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Make a new container
 
-```sh
+```console
 rclone mkdir remote:container
 ```
 
 List the contents of a container
 
-```sh
+```console
 rclone ls remote:container
 ```
 
 Sync `/home/local/directory` to the remote container, deleting any
 excess files in the container.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:container
 ```
 
@@ -721,16 +721,23 @@ setting up a swift remote.
 
 ## OVH Cloud Archive
 
-To use rclone with OVH cloud archive, first use `rclone config` to set up a `swift` backend with OVH, choosing `pca` as the `storage_policy`.
+To use rclone with OVH cloud archive, first use `rclone config` to set up a
+`swift` backend with OVH, choosing `pca` as the `storage_policy`.
 
 ### Uploading Objects
 
-Uploading objects to OVH cloud archive is no different to object storage, you just simply run the command you like (move, copy or sync) to upload the objects. Once uploaded the objects will show in a "Frozen" state within the OVH control panel.
+Uploading objects to OVH cloud archive is no different to object storage, you
+just simply run the command you like (move, copy or sync) to upload the objects.
+Once uploaded the objects will show in a "Frozen" state within the OVH control panel.
 
 ### Retrieving Objects
 
-To retrieve objects use `rclone copy` as normal. If the objects are in a frozen state then rclone will ask for them all to be unfrozen and it will wait at the end of the output with a message like the following:
+To retrieve objects use `rclone copy` as normal. If the objects are in a frozen
+state then rclone will ask for them all to be unfrozen and it will wait at the
+end of the output with a message like the following:
 
-`2019/03/23 13:06:33 NOTICE: Received retry after error - sleeping until 2019-03-23T13:16:33.481657164+01:00 (9m59.99985121s)`
+```text
+2019/03/23 13:06:33 NOTICE: Received retry after error - sleeping until 2019-03-23T13:16:33.481657164+01:00 (9m59.99985121s)
+```
 
 Rclone will wait for the time specified then retry the copy.

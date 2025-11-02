@@ -19,6 +19,11 @@ linters:
     - unconvert
   # Configure checks. Mostly using defaults but with some commented exceptions.
   settings:
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+        - shadow
     staticcheck:
       # With staticcheck there is only one setting, so to extend the implicit
       # default value it must be explicitly included.

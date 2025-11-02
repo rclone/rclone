@@ -17,7 +17,7 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -100,7 +100,9 @@ Choose a number from below, or type in your own value
    \ "us-east1"
 13 / Northern Virginia.
    \ "us-east4"
-14 / Oregon.
+14 / Ohio.
+   \ "us-east5"
+15 / Oregon.
    \ "us-west1"
 location> 12
 The storage class to use when storing objects in Google Cloud Storage.
@@ -147,7 +149,7 @@ y/e/d> y
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from Google if using web browser to automatically
@@ -161,26 +163,26 @@ This remote is called `remote` and can now be used like this
 
 See all the buckets in your project
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Make a new bucket
 
-```sh
+```console
 rclone mkdir remote:bucket
 ```
 
 List the contents of a bucket
 
-```sh
+```console
 rclone ls remote:bucket
 ```
 
 Sync `/home/local/directory` to the remote bucket, deleting any excess
 files in the bucket.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:bucket
 ```
 
@@ -222,7 +224,7 @@ If you already have a working service account, skip to step 3.
 
 #### 1. Create a service account using
 
-```sh
+```console
 gcloud iam service-accounts create gcs-read-only
 ```
 
@@ -230,7 +232,7 @@ You can re-use an existing service account as well (like the one created above)
 
 #### 2. Attach a Viewer (read-only) or User (read-write) role to the service account
 
-```sh
+```console
 $ PROJECT_ID=my-project
 $ gcloud --verbose iam service-accounts add-iam-policy-binding \
    gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  \
@@ -247,7 +249,7 @@ pre-defined roles:
 
 #### 3. Get a temporary access key for the service account
 
-```sh
+```console
 $ gcloud auth application-default print-access-token  \
    --impersonate-service-account \
       gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  
@@ -260,13 +262,13 @@ ya29.c.c0ASRK0GbAFEewXD [truncated]
 hit `CTRL-C` when you see *waiting for code*.  This will save the config without
 doing oauth flow
 
-```sh
+```console
 rclone config update ${REMOTE_NAME} access_token ya29.c.c0Axxxx
 ```
 
 #### 5. Run rclone as usual
 
-```sh
+```console
 rclone ls dev-gcs:${MY_BUCKET}/
 ```
 
@@ -825,5 +827,5 @@ this capability cannot determine free space for an rclone mount or
 use policy `mfs` (most free space) as a member of an rclone union
 remote.
 
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
-
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+and [rclone about](https://rclone.org/commands/rclone_about/).

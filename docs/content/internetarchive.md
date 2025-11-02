@@ -20,20 +20,20 @@ Once you have made a remote, you can use it like this:
 
 Make a new item
 
-```sh
+```console
 rclone mkdir remote:item
 ```
 
 List the contents of a item
 
-```sh
+```console
 rclone ls remote:item
 ```
 
 Sync `/home/local/directory` to the remote item, deleting any excess
 files in the item.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:item
 ```
 
@@ -95,7 +95,7 @@ changeable, as they are created by the Internet Archive automatically.
 These auto-created files can be excluded from the sync using [metadata
 filtering](/filtering/#metadata).
 
-```sh
+```console
 rclone sync ... --metadata-exclude "source=metadata" --metadata-exclude "format=Metadata"
 ```
 
@@ -110,7 +110,7 @@ Most applies to the other providers as well, any differences are described [belo
 
 First run
 
-```sh
+```console
 rclone config
 ```
 

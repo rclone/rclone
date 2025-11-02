@@ -1,0 +1,10 @@
+name: Intercolo
+description: Intercolo Object Storage
+region:
+  de-fra: Frankfurt, Germany
+endpoint:
+  de-fra.i3storage.com: Frankfurt, Germany
+acl: {}
+bucket_acl: true
+quirks:
+  use_unsigned_payload: false # has trailer support

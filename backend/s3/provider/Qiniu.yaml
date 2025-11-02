@@ -1,0 +1,53 @@
+name: Qiniu
+description: Qiniu Object Storage (Kodo)
+region:
+  cn-east-1: |-
+    The default endpoint - a good choice if you are unsure.
+    East China Region 1.
+    Needs location constraint cn-east-1.
+  cn-east-2: |-
+    East China Region 2.
+    Needs location constraint cn-east-2.
+  cn-north-1: |-
+    North China Region 1.
+    Needs location constraint cn-north-1.
+  cn-south-1: |-
+    South China Region 1.
+    Needs location constraint cn-south-1.
+  us-north-1: |-
+    North America Region.
+    Needs location constraint us-north-1.
+  ap-southeast-1: |-
+    Southeast Asia Region 1.
+    Needs location constraint ap-southeast-1.
+  ap-northeast-1: |-
+    Northeast Asia Region 1.
+    Needs location constraint ap-northeast-1.
+endpoint:
+  s3-cn-east-1.qiniucs.com: East China Endpoint 1
+  s3-cn-east-2.qiniucs.com: East China Endpoint 2
+  s3-cn-north-1.qiniucs.com: North China Endpoint 1
+  s3-cn-south-1.qiniucs.com: South China Endpoint 1
+  s3-us-north-1.qiniucs.com: North America Endpoint 1
+  s3-ap-southeast-1.qiniucs.com: Southeast Asia Endpoint 1
+  s3-ap-northeast-1.qiniucs.com: Northeast Asia Endpoint 1
+location_constraint:
+  cn-east-1: East China Region 1
+  cn-east-2: East China Region 2
+  cn-north-1: North China Region 1
+  cn-south-1: South China Region 1
+  us-north-1: North America Region 1
+  ap-southeast-1: Southeast Asia Region 1
+  ap-northeast-1: Northeast Asia Region 1
+acl: {}
+storage_class:
+  STANDARD: Standard storage class
+  LINE: Infrequent access storage mode
+  GLACIER: Archive storage mode
+  DEEP_ARCHIVE: Deep archive storage mode
+bucket_acl: true
+quirks:
+  use_multipart_etag: false
+  list_url_encode: false
+  force_path_style: true
+  use_already_exists: false

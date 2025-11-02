@@ -376,6 +376,39 @@ func (acc *Account) Read(p []byte) (n int, err error) {
 	return acc.read(acc.in, p)
 }
 
+// Seek to position in the object - see io.Seeker
+//
+// May return an error if not implemented by the underlying reader.
+func (acc *Account) Seek(offset int64, whence int) (int64, error) {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	do, ok := acc.in.(io.Seeker)
+	if !ok {
+		return 0, fmt.Errorf("internal error: Seek not implemented for %T", acc.in)
+	}
+	return do.Seek(offset, whence)
+}
+
+// ReadAt from off into p - see io.ReaderAt
+//
+// May return an error if not implemented by the underlying reader.
+func (acc *Account) ReadAt(p []byte, off int64) (n int, err error) {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	do, ok := acc.in.(io.ReaderAt)
+	if !ok {
+		return 0, fmt.Errorf("internal error: ReadAt not implemented for %T", acc.in)
+	}
+	bytesUntilLimit, err := acc.checkReadBefore()
+	if err == nil {
+		n, err = do.ReadAt(p, off)
+		acc.accountRead(n)
+		n, err = acc.checkReadAfter(bytesUntilLimit, n, err)
+	}
+	return n, err
+
+}
+
 // Thin wrapper for w
 type accountWriteTo struct {
 	w   io.Writer

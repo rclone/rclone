@@ -1,0 +1,36 @@
+name: OVHcloud
+description: OVHcloud Object Storage
+region:
+  gra: Gravelines, France
+  rbx: Roubaix, France
+  sbg: Strasbourg, France
+  eu-west-par: Paris, France (3AZ)
+  de: Frankfurt, Germany
+  uk: London, United Kingdom
+  waw: Warsaw, Poland
+  bhs: Beauharnois, Canada
+  ca-east-tor: Toronto, Canada
+  sgp: Singapore
+  ap-southeast-syd: Sydney, Australia
+  ap-south-mum: Mumbai, India
+  us-east-va: Vint Hill, Virginia, USA
+  us-west-or: Hillsboro, Oregon, USA
+  rbx-archive: Roubaix, France (Cold Archive)
+endpoint:
+  s3.gra.io.cloud.ovh.net: OVHcloud Gravelines, France
+  s3.rbx.io.cloud.ovh.net: OVHcloud Roubaix, France
+  s3.sbg.io.cloud.ovh.net: OVHcloud Strasbourg, France
+  s3.eu-west-par.io.cloud.ovh.net: OVHcloud Paris, France (3AZ)
+  s3.de.io.cloud.ovh.net: OVHcloud Frankfurt, Germany
+  s3.uk.io.cloud.ovh.net: OVHcloud London, United Kingdom
+  s3.waw.io.cloud.ovh.net: OVHcloud Warsaw, Poland
+  s3.bhs.io.cloud.ovh.net: OVHcloud Beauharnois, Canada
+  s3.ca-east-tor.io.cloud.ovh.net: OVHcloud Toronto, Canada
+  s3.sgp.io.cloud.ovh.net: OVHcloud Singapore
+  s3.ap-southeast-syd.io.cloud.ovh.net: OVHcloud Sydney, Australia
+  s3.ap-south-mum.io.cloud.ovh.net: OVHcloud Mumbai, India
+  s3.us-east-va.io.cloud.ovh.us: OVHcloud Vint Hill, Virginia, USA
+  s3.us-west-or.io.cloud.ovh.us: OVHcloud Hillsboro, Oregon, USA
+  s3.rbx-archive.io.cloud.ovh.net: OVHcloud Roubaix, France (Cold Archive)
+acl: {}
+bucket_acl: true

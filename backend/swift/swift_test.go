@@ -56,6 +56,11 @@ func (f *Fs) testNoChunk(t *testing.T) {
 	uploadHash := hash.NewMultiHasher()
 	in := io.TeeReader(buf, uploadHash)
 
+	// Track how much space is used before we put our object.
+	usage, err := f.About(ctx)
+	require.NoError(t, err)
+	usedBeforePut := *usage.Used
+
 	file.Size = -1
 	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
 	obj, err := f.Features().PutStream(ctx, in, obji)
@@ -70,12 +75,20 @@ func (f *Fs) testNoChunk(t *testing.T) {
 	require.NoError(t, err)
 	file.Check(t, obj, f.Precision())
 
+	// Check how much space is used after the upload, should match the amount we
+	// uploaded..
+	usage, err = f.About(ctx)
+	require.NoError(t, err)
+	expectedUsed := usedBeforePut + obj.Size()
+	require.EqualValues(t, expectedUsed, *usage.Used)
+
 	// Delete the object
 	assert.NoError(t, obj.Remove(ctx))
 }
 
 // Additional tests that aren't in the framework
 func (f *Fs) InternalTest(t *testing.T) {
+	t.Run("PolicyDiscovery", f.testPolicyDiscovery)
 	t.Run("NoChunk", f.testNoChunk)
 	t.Run("WithChunk", f.testWithChunk)
 	t.Run("WithChunkFail", f.testWithChunkFail)
@@ -104,12 +117,24 @@ func (f *Fs) testWithChunk(t *testing.T) {
 	uploadHash := hash.NewMultiHasher()
 	in := io.TeeReader(buf, uploadHash)
 
+	// Track how much space is used before we put our object.
+	ctx := context.TODO()
+	usage, err := f.About(ctx)
+	require.NoError(t, err)
+	usedBeforePut := *usage.Used
+
 	file.Size = -1
 	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-	ctx := context.TODO()
 	obj, err := f.Features().PutStream(ctx, in, obji)
 	require.NoError(t, err)
 	require.NotEmpty(t, obj)
+
+	// Check how much space is used after the upload, should match the amount we
+	// uploaded..
+	usage, err = f.About(ctx)
+	require.NoError(t, err)
+	expectedUsed := usedBeforePut + obj.Size()
+	require.EqualValues(t, expectedUsed, *usage.Used)
 }
 
 func (f *Fs) testWithChunkFail(t *testing.T) {
@@ -182,9 +207,14 @@ func (f *Fs) testCopyLargeObject(t *testing.T) {
 	uploadHash := hash.NewMultiHasher()
 	in := io.TeeReader(buf, uploadHash)
 
+	// Track how much space is used before we put our object.
+	ctx := context.TODO()
+	usage, err := f.About(ctx)
+	require.NoError(t, err)
+	usedBeforePut := *usage.Used
+
 	file.Size = -1
 	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-	ctx := context.TODO()
 	obj, err := f.Features().PutStream(ctx, in, obji)
 	require.NoError(t, err)
 	require.NotEmpty(t, obj)
@@ -193,6 +223,59 @@ func (f *Fs) testCopyLargeObject(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, objTarget)
 	require.Equal(t, obj.Size(), objTarget.Size())
+
+	// Check how much space is used after the upload, should match the amount we
+	// uploaded *and* the copy.
+	usage, err = f.About(ctx)
+	require.NoError(t, err)
+	expectedUsed := usedBeforePut + obj.Size() + objTarget.Size()
+	require.EqualValues(t, expectedUsed, *usage.Used)
+}
+
+func (f *Fs) testPolicyDiscovery(t *testing.T) {
+	ctx := context.TODO()
+	container := "testPolicyDiscovery-1"
+	// Reset the policy so we can test if it is populated.
+	f.opt.StoragePolicy = ""
+	err := f.makeContainer(ctx, container)
+	require.NoError(t, err)
+	_, err = f.fetchStoragePolicy(ctx, container)
+	require.NoError(t, err)
+
+	// Default policy for SAIO image is 1replica.
+	assert.Equal(t, "1replica", f.opt.StoragePolicy)
+
+	// Create a container using a non-default policy, and check to ensure
+	// that the created segments container uses the same non-default policy.
+	policy := "Policy-1"
+	container = "testPolicyDiscovery-2"
+
+	f.opt.StoragePolicy = policy
+	err = f.makeContainer(ctx, container)
+	require.NoError(t, err)
+
+	// Reset the policy so we can test if it is populated, and set to the
+	// non-default policy.
+	f.opt.StoragePolicy = ""
+	_, err = f.fetchStoragePolicy(ctx, container)
+	require.NoError(t, err)
+	assert.Equal(t, policy, f.opt.StoragePolicy)
+
+	// Test that when a segmented upload container is made, the newly
+	// created container inherits the non-default policy of the base
+	// container.
+	f.opt.StoragePolicy = ""
+	f.opt.UseSegmentsContainer.Value = true
+	su, err := f.newSegmentedUpload(ctx, container, "")
+	require.NoError(t, err)
+	// The container name we expected?
+	segmentsContainer := container + segmentsContainerSuffix
+	assert.Equal(t, segmentsContainer, su.container)
+	// The policy we expected?
+	f.opt.StoragePolicy = ""
+	_, err = f.fetchStoragePolicy(ctx, su.container)
+	require.NoError(t, err)
+	assert.Equal(t, policy, f.opt.StoragePolicy)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)

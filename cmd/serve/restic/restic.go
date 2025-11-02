@@ -119,7 +119,7 @@ following instructions.
 
 Now start the rclone restic server
 
-` + "```sh" + `
+` + "```console" + `
 rclone serve restic -v remote:backup
 ` + "```" + `
 
@@ -149,7 +149,7 @@ the URL for the REST server.
 
 For example:
 
-` + "```sh" + `
+` + "```console" + `
 $ export RESTIC_REPOSITORY=rest:http://localhost:8080/
 $ export RESTIC_PASSWORD=yourpassword
 $ restic init
@@ -173,7 +173,7 @@ Note that you can use the endpoint to host multiple repositories.  Do
 this by adding a directory name or path after the URL.  Note that
 these **must** end with /.  Eg
 
-` + "```sh" + `
+` + "```console" + `
 $ export RESTIC_REPOSITORY=rest:http://localhost:8080/user1repo/
 # backup user1 stuff
 $ export RESTIC_REPOSITORY=rest:http://localhost:8080/user2repo/

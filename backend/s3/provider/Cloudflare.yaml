@@ -1,0 +1,8 @@
+name: Cloudflare
+description: Cloudflare R2 Storage
+region:
+  auto: R2 buckets are automatically distributed across Cloudflare's data centers for low latency.
+endpoint: {}
+quirks:
+  force_path_style: true
+  use_multipart_etag: false # multipart ETags are random

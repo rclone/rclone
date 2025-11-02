@@ -64,7 +64,7 @@ func filterBlocks(in Params, f func(oi fs.OptionsInfo)) (err error) {
 		return err
 	}
 	blocks := map[string]struct{}{}
-	for _, name := range strings.Split(blocksStr, ",") {
+	for name := range strings.SplitSeq(blocksStr, ",") {
 		if name != "" {
 			blocks[name] = struct{}{}
 		}

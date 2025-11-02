@@ -17,7 +17,7 @@ The initial setup for Uloz.to involves filling in the user credentials.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -73,23 +73,24 @@ d) Delete this remote
 y/e/d> y
 ```
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the
+name you gave your remote):
 
 List folders in root level folder:
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your root folder:
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local folder to a Uloz.to folder called backup:
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -277,4 +278,5 @@ exposed in the API.  Backends without this capability cannot determine
 free space for an rclone mount or use policy `mfs` (most free space) 
 as a member of an rclone union remote.
 
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+and [rclone about](https://rclone.org/commands/rclone_about/).

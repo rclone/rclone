@@ -1,0 +1,17 @@
+name: IONOS
+description: IONOS Cloud
+region:
+  de: Frankfurt, Germany
+  eu-central-2: Berlin, Germany
+  eu-south-2: Logrono, Spain
+endpoint:
+  s3-eu-central-1.ionoscloud.com: Frankfurt, Germany
+  s3-eu-central-2.ionoscloud.com: Berlin, Germany
+  s3-eu-south-2.ionoscloud.com: Logrono, Spain
+acl: {}
+bucket_acl: true
+quirks:
+  # listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
+  force_path_style: true
+  list_url_encode: false
+  use_already_exists: false

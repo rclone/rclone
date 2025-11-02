@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -59,30 +60,42 @@ const (
 	configVersion      = 1
 
 	defaultTokenURL = "https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token"
-	defaultClientID = "jottacli"
+	defaultClientID = "jottacli" // Identified as "Jottacloud CLI" in "My logged in devices"
 
 	legacyTokenURL              = "https://api.jottacloud.com/auth/v1/token"
 	legacyRegisterURL           = "https://api.jottacloud.com/auth/v1/register"
 	legacyClientID              = "nibfk8biu12ju7hpqomr8b1e40"
 	legacyEncryptedClientSecret = "Vp8eAv7eVElMnQwN-kgU9cbhgApNDaMqWdlDi5qFydlQoji4JBxrGMF2"
 	legacyConfigVersion         = 0
-
-	teliaseCloudTokenURL = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/token"
-	teliaseCloudAuthURL  = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/auth"
-	teliaseCloudClientID = "desktop"
-
-	telianoCloudTokenURL = "https://sky-auth.telia.no/auth/realms/get/protocol/openid-connect/token"
-	telianoCloudAuthURL  = "https://sky-auth.telia.no/auth/realms/get/protocol/openid-connect/auth"
-	telianoCloudClientID = "desktop"
-
-	tele2CloudTokenURL = "https://mittcloud-auth.tele2.se/auth/realms/comhem/protocol/openid-connect/token"
-	tele2CloudAuthURL  = "https://mittcloud-auth.tele2.se/auth/realms/comhem/protocol/openid-connect/auth"
-	tele2CloudClientID = "desktop"
-
-	onlimeCloudTokenURL = "https://cloud-auth.onlime.dk/auth/realms/onlime_wl/protocol/openid-connect/token"
-	onlimeCloudAuthURL  = "https://cloud-auth.onlime.dk/auth/realms/onlime_wl/protocol/openid-connect/auth"
-	onlimeCloudClientID = "desktop"
 )
+
+type service struct {
+	key      string
+	name     string
+	domain   string
+	realm    string
+	clientID string
+	scopes   []string
+}
+
+// The list of services and their settings for supporting traditional OAuth.
+// Please keep these in alphabetical order, but with jottacloud first.
+func getServices() []service {
+	return []service{
+		{"jottacloud", "Jottacloud", "id.jottacloud.com", "jottacloud", "desktop", []string{"openid", "jotta-default", "offline_access"}}, // Chose client id "desktop" here, will be identified as "Jottacloud for Desktop" in "My logged in devices", but could have used "jottacli" here as well.
+		{"elgiganten_dk", "Elgiganten Cloud (Denmark)", "cloud.elgiganten.dk", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elgiganten_se", "Elgiganten Cloud (Sweden)", "cloud.elgiganten.se", "elgiganten", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elkjop", "Elkjøp Cloud (Norway)", "cloud.elkjop.no", "elkjop", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"elko", "ELKO Cloud (Iceland)", "cloud.elko.is", "elko", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"gigantti", "Gigantti Cloud (Finland)", "cloud.gigantti.fi", "gigantti", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"letsgo", "Let's Go Cloud (Germany)", "letsgo.jotta.cloud", "letsgo", "desktop-win", []string{"openid", "offline_access"}},
+		{"mediamarkt", "MediaMarkt Cloud (Multiregional)", "mediamarkt.jottacloud.com", "mediamarkt", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"onlime", "Onlime (Denmark)", "cloud-auth.onlime.dk", "onlime_wl", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"tele2", "Tele2 Cloud (Sweden)", "mittcloud-auth.tele2.se", "comhem", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"telia_no", "Telia Sky (Norway)", "sky-auth.telia.no", "get", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+		{"telia_se", "Telia Cloud (Sweden)", "cloud-auth.telia.se", "telia_se", "desktop", []string{"openid", "jotta-default", "offline_access"}},
+	}
+}
 
 // Register with Fs
 func init() {
@@ -159,36 +172,44 @@ func init() {
 }
 
 // Config runs the backend configuration protocol
-func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-	switch config.State {
+func Config(ctx context.Context, name string, m configmap.Mapper, conf fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch conf.State {
 	case "":
-		return fs.ConfigChooseExclusiveFixed("auth_type_done", "config_type", `Select authentication type.`, []fs.OptionExample{{
+		if isAuthorize, _ := m.Get(config.ConfigAuthorize); isAuthorize == "true" {
+			return nil, errors.New("not supported by this backend")
+		}
+		return fs.ConfigChooseExclusiveFixed("auth_type_done", "config_type", `Type of authentication.`, []fs.OptionExample{{
 			Value: "standard",
-			Help:  "Standard authentication.\nUse this if you're a normal Jottacloud user.",
+			Help: `Standard authentication.
+This is primarily supported by the official service, but may also be
+supported by some white-label services. It is designed for command-line
+applications, and you will be asked to enter a single-use personal login
+token which you must manually generate from the account security settings
+in the web interface of your service.`,
+		}, {
+			Value: "traditional",
+			Help: `Traditional authentication.
+This is supported by the official service and all white-label services
+that rclone knows about. You will be asked which service to connect to.
+It has a limitation of only a single active authentication at a time. You
+need to be on, or have access to, a machine with an internet-connected
+web browser.`,
 		}, {
 			Value: "legacy",
-			Help:  "Legacy authentication.\nThis is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.",
-		}, {
-			Value: "telia_se",
-			Help:  "Telia Cloud authentication.\nUse this if you are using Telia Cloud (Sweden).",
-		}, {
-			Value: "telia_no",
-			Help:  "Telia Sky authentication.\nUse this if you are using Telia Sky (Norway).",
-		}, {
-			Value: "tele2",
-			Help:  "Tele2 Cloud authentication.\nUse this if you are using Tele2 Cloud.",
-		}, {
-			Value: "onlime",
-			Help:  "Onlime Cloud authentication.\nUse this if you are using Onlime Cloud.",
+			Help: `Legacy authentication.
+This is no longer supported by any known services and not recommended
+used. You will be asked for your account's username and password.`,
 		}})
 	case "auth_type_done":
 		// Jump to next state according to config chosen
-		return fs.ConfigGoto(config.Result)
+		return fs.ConfigGoto(conf.Result)
 	case "standard": // configure a jottacloud backend using the modern JottaCli token based authentication
 		m.Set("configVersion", fmt.Sprint(configVersion))
-		return fs.ConfigInput("standard_token", "config_login_token", "Personal login token.\nGenerate here: https://www.jottacloud.com/web/secure")
+		return fs.ConfigInput("standard_token", "config_login_token", `Personal login token.
+Generate it from the account security settings in the web interface of your
+service, for the official service on https://www.jottacloud.com/web/secure.`)
 	case "standard_token":
-		loginToken := config.Result
+		loginToken := conf.Result
 		m.Set(configClientID, defaultClientID)
 		m.Set(configClientSecret, "")
 
@@ -203,10 +224,50 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			return nil, fmt.Errorf("error while saving token: %w", err)
 		}
 		return fs.ConfigGoto("choose_device")
+	case "traditional":
+		services := getServices()
+		options := make([]fs.OptionExample, 0, len(services))
+		for _, service := range services {
+			options = append(options, fs.OptionExample{
+				Value: service.key,
+				Help:  service.name,
+			})
+		}
+		return fs.ConfigChooseExclusiveFixed("traditional_type", "config_traditional",
+			"White-label service. This decides the domain name to connect to and\nthe authentication configuration to use.",
+			options)
+	case "traditional_type":
+		services := getServices()
+		i := slices.IndexFunc(services, func(s service) bool { return s.key == conf.Result })
+		if i == -1 {
+			return nil, fmt.Errorf("unexpected service %q", conf.Result)
+		}
+		service := services[i]
+		opts := rest.Opts{
+			Method:  "GET",
+			RootURL: "https://" + service.domain + "/auth/realms/" + service.realm + "/.well-known/openid-configuration",
+		}
+		var wellKnown api.WellKnown
+		srv := rest.NewClient(fshttp.NewClient(ctx))
+		_, err := srv.CallJSON(ctx, &opts, nil, &wellKnown)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get authentication provider configuration: %w", err)
+		}
+		m.Set("configVersion", fmt.Sprint(configVersion))
+		m.Set(configClientID, service.clientID)
+		m.Set(configTokenURL, wellKnown.TokenEndpoint)
+		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
+			OAuth2Config: &oauthutil.Config{
+				AuthURL:     wellKnown.AuthorizationEndpoint,
+				TokenURL:    wellKnown.TokenEndpoint,
+				ClientID:    service.clientID,
+				Scopes:      service.scopes,
+				RedirectURL: oauthutil.RedirectLocalhostURL,
+			},
+		})
 	case "legacy": // configure a jottacloud backend using legacy authentication
 		m.Set("configVersion", fmt.Sprint(legacyConfigVersion))
 		return fs.ConfigConfirm("legacy_api", false, "config_machine_specific", `Do you want to create a machine specific API key?
-
 Rclone has it's own Jottacloud API KEY which works fine as long as one
 only uses rclone on a single machine. When you want to use rclone with
 this account on more than one machine it's recommended to create a
@@ -214,7 +275,7 @@ machine specific API key. These keys can NOT be shared between
 machines.`)
 	case "legacy_api":
 		srv := rest.NewClient(fshttp.NewClient(ctx))
-		if config.Result == "true" {
+		if conf.Result == "true" {
 			deviceRegistration, err := registerDevice(ctx, srv)
 			if err != nil {
 				return nil, fmt.Errorf("failed to register device: %w", err)
@@ -223,16 +284,16 @@ machines.`)
 			m.Set(configClientSecret, obscure.MustObscure(deviceRegistration.ClientSecret))
 			fs.Debugf(nil, "Got clientID %q and clientSecret %q", deviceRegistration.ClientID, deviceRegistration.ClientSecret)
 		}
-		return fs.ConfigInput("legacy_username", "config_username", "Username (e-mail address)")
+		return fs.ConfigInput("legacy_username", "config_username", "Username (e-mail address) of your account.")
 	case "legacy_username":
-		m.Set(configUsername, config.Result)
-		return fs.ConfigPassword("legacy_password", "config_password", "Password (only used in setup, will not be stored)")
+		m.Set(configUsername, conf.Result)
+		return fs.ConfigPassword("legacy_password", "config_password", "Password of your account. This is only used in setup, it will not be stored.")
 	case "legacy_password":
-		m.Set("password", config.Result)
+		m.Set("password", conf.Result)
 		m.Set("auth_code", "")
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_auth_code":
-		authCode := strings.ReplaceAll(config.Result, "-", "") // remove any "-" contained in the code so we have a 6 digit number
+		authCode := strings.ReplaceAll(conf.Result, "-", "") // remove any "-" contained in the code so we have a 6 digit number
 		m.Set("auth_code", authCode)
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_do_auth":
@@ -242,12 +303,12 @@ machines.`)
 		authCode, _ := m.Get("auth_code")
 
 		srv := rest.NewClient(fshttp.NewClient(ctx))
-		clientID, ok := m.Get(configClientID)
-		if !ok {
+		clientID, _ := m.Get(configClientID)
+		if clientID == "" {
 			clientID = legacyClientID
 		}
-		clientSecret, ok := m.Get(configClientSecret)
-		if !ok {
+		clientSecret, _ := m.Get(configClientSecret)
+		if clientSecret == "" {
 			clientSecret = legacyEncryptedClientSecret
 		}
 
@@ -260,7 +321,7 @@ machines.`)
 		}
 		token, err := doLegacyAuth(ctx, srv, oauthConfig, username, password, authCode)
 		if err == errAuthCodeRequired {
-			return fs.ConfigInput("legacy_auth_code", "config_auth_code", "Verification Code\nThis account uses 2 factor authentication you will receive a verification code via SMS.")
+			return fs.ConfigInput("legacy_auth_code", "config_auth_code", "Verification code.\nThis account uses 2 factor authentication you will receive a verification code via SMS.")
 		}
 		m.Set("password", "")
 		m.Set("auth_code", "")
@@ -272,58 +333,6 @@ machines.`)
 			return nil, fmt.Errorf("error while saving token: %w", err)
 		}
 		return fs.ConfigGoto("choose_device")
-	case "telia_se": // telia_se cloud config
-		m.Set("configVersion", fmt.Sprint(configVersion))
-		m.Set(configClientID, teliaseCloudClientID)
-		m.Set(configTokenURL, teliaseCloudTokenURL)
-		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauthutil.Config{
-				AuthURL:     teliaseCloudAuthURL,
-				TokenURL:    teliaseCloudTokenURL,
-				ClientID:    teliaseCloudClientID,
-				Scopes:      []string{"openid", "jotta-default", "offline_access"},
-				RedirectURL: oauthutil.RedirectLocalhostURL,
-			},
-		})
-	case "telia_no": // telia_no cloud config
-		m.Set("configVersion", fmt.Sprint(configVersion))
-		m.Set(configClientID, telianoCloudClientID)
-		m.Set(configTokenURL, telianoCloudTokenURL)
-		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauthutil.Config{
-				AuthURL:     telianoCloudAuthURL,
-				TokenURL:    telianoCloudTokenURL,
-				ClientID:    telianoCloudClientID,
-				Scopes:      []string{"openid", "jotta-default", "offline_access"},
-				RedirectURL: oauthutil.RedirectLocalhostURL,
-			},
-		})
-	case "tele2": // tele2 cloud config
-		m.Set("configVersion", fmt.Sprint(configVersion))
-		m.Set(configClientID, tele2CloudClientID)
-		m.Set(configTokenURL, tele2CloudTokenURL)
-		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauthutil.Config{
-				AuthURL:     tele2CloudAuthURL,
-				TokenURL:    tele2CloudTokenURL,
-				ClientID:    tele2CloudClientID,
-				Scopes:      []string{"openid", "jotta-default", "offline_access"},
-				RedirectURL: oauthutil.RedirectLocalhostURL,
-			},
-		})
-	case "onlime": // onlime cloud config
-		m.Set("configVersion", fmt.Sprint(configVersion))
-		m.Set(configClientID, onlimeCloudClientID)
-		m.Set(configTokenURL, onlimeCloudTokenURL)
-		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauthutil.Config{
-				AuthURL:     onlimeCloudAuthURL,
-				TokenURL:    onlimeCloudTokenURL,
-				ClientID:    onlimeCloudClientID,
-				Scopes:      []string{"openid", "jotta-default", "offline_access"},
-				RedirectURL: oauthutil.RedirectLocalhostURL,
-			},
-		})
 	case "choose_device":
 		return fs.ConfigConfirm("choose_device_query", false, "config_non_standard", `Use a non-standard device/mountpoint?
 Choosing no, the default, will let you access the storage used for the archive
@@ -331,7 +340,7 @@ section of the official Jottacloud client. If you instead want to access the
 sync or the backup section, for example, you must choose yes.`)
 
 	case "choose_device_query":
-		if config.Result != "true" {
+		if conf.Result != "true" {
 			m.Set(configDevice, "")
 			m.Set(configMountpoint, "")
 			return fs.ConfigGoto("end")
@@ -372,7 +381,7 @@ a new by entering a unique name.`, defaultDevice)
 			return deviceNames[i], ""
 		})
 	case "choose_device_result":
-		device := config.Result
+		device := conf.Result
 
 		oAuthClient, _, err := getOAuthClient(ctx, name, m)
 		if err != nil {
@@ -432,7 +441,7 @@ You may create a new by entering a unique name.`, device)
 			return dev.MountPoints[i].Name, ""
 		})
 	case "choose_device_mountpoint":
-		mountpoint := config.Result
+		mountpoint := conf.Result
 
 		oAuthClient, _, err := getOAuthClient(ctx, name, m)
 		if err != nil {
@@ -463,7 +472,7 @@ You may create a new by entering a unique name.`, device)
 
 		if isNew {
 			if device == defaultDevice {
-				return nil, fmt.Errorf("custom mountpoints not supported on built-in %s device: %w", defaultDevice, err)
+				return nil, fmt.Errorf("custom mountpoints not supported on built-in %s device", defaultDevice)
 			}
 			fs.Debugf(nil, "Creating new mountpoint: %s", mountpoint)
 			_, err := createMountPoint(ctx, jfsSrv, path.Join(cust.Username, device, mountpoint))
@@ -478,7 +487,7 @@ You may create a new by entering a unique name.`, device)
 		// All the config flows end up here in case we need to carry on with something
 		return nil, nil
 	}
-	return nil, fmt.Errorf("unknown state %q", config.State)
+	return nil, fmt.Errorf("unknown state %q", conf.State)
 }
 
 // Options defines the configuration for this backend
@@ -929,12 +938,12 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 			oauthConfig.AuthURL = tokenURL
 		}
 	} else if ver == legacyConfigVersion {
-		clientID, ok := m.Get(configClientID)
-		if !ok {
+		clientID, _ := m.Get(configClientID)
+		if clientID == "" {
 			clientID = legacyClientID
 		}
-		clientSecret, ok := m.Get(configClientSecret)
-		if !ok {
+		clientSecret, _ := m.Get(configClientSecret)
+		if clientSecret == "" {
 			clientSecret = legacyEncryptedClientSecret
 		}
 		oauthConfig.ClientID = clientID
@@ -1000,6 +1009,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.ListR = nil
 	}
 
+	cust, err := getCustomerInfo(ctx, f.apiSrv)
+	if err != nil {
+		return nil, err
+	}
+	f.user = cust.Username
+	f.setEndpoints()
+
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
 		_, err := f.readMetaDataForPath(ctx, "")
@@ -1008,13 +1024,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		return err
 	})
-
-	cust, err := getCustomerInfo(ctx, f.apiSrv)
-	if err != nil {
-		return nil, err
-	}
-	f.user = cust.Username
-	f.setEndpoints()
 
 	if root != "" && !rootIsDir {
 		// Check to see if the root actually an existing file

@@ -19,7 +19,7 @@ giving the password a nice name like `rclone` and clicking on generate.
 
 Here is an example of how to make a remote called `koofr`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -87,23 +87,23 @@ You can choose to edit advanced config in order to enter your own service URL
 if you use an on-premise or white label Koofr instance, or choose an alternative
 mount instead of your primary storage.
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this:
 
 List directories in top level of your Koofr
 
-```sh
+```console
 rclone lsd koofr:
 ```
 
 List all the files in your Koofr
 
-```sh
+```console
 rclone ls koofr:
 ```
 
 To copy a local directory to an Koofr directory called backup
 
-```sh
+```console
 rclone copy /home/source koofr:backup
 ```
 
@@ -244,16 +244,17 @@ Note that Koofr is case insensitive so you can't have a file called
 
 ### Koofr
 
-This is the original [Koofr](https://koofr.eu) storage provider used as main example and described in the [configuration](#configuration) section above.
+This is the original [Koofr](https://koofr.eu) storage provider used as main
+example and described in the [configuration](#configuration) section above.
 
 ### Digi Storage 
 
-[Digi Storage](https://www.digi.ro/servicii/online/digi-storage) is a cloud storage service run by [Digi.ro](https://www.digi.ro/) that
-provides a Koofr API.
+[Digi Storage](https://www.digi.ro/servicii/online/digi-storage) is a cloud
+storage service run by [Digi.ro](https://www.digi.ro/) that provides a Koofr API.
 
 Here is an example of how to make a remote called `ds`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -318,11 +319,13 @@ y/e/d> y
 
 ### Other
 
-You may also want to use another, public or private storage provider that runs a Koofr API compatible service, by simply providing the base URL to connect to.
+You may also want to use another, public or private storage provider that
+runs a Koofr API compatible service, by simply providing the base URL to
+connect to.
 
-Here is an example of how to make a remote called `other`.  First run:
+Here is an example of how to make a remote called `other`. First run:
 
-```sh
+```console
 rclone config
 ```
 

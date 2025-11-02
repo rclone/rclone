@@ -123,7 +123,7 @@ func (p *Prop) Hashes() (hashes map[hash.Type]string) {
 		hashes = make(map[hash.Type]string)
 		for _, checksums := range p.Checksums {
 			checksums = strings.ToLower(checksums)
-			for _, checksum := range strings.Split(checksums, " ") {
+			for checksum := range strings.SplitSeq(checksums, " ") {
 				switch {
 				case strings.HasPrefix(checksum, "sha1:"):
 					hashes[hash.SHA1] = checksum[5:]

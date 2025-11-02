@@ -497,9 +497,6 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	}
 
 	f.dirCache.FlushDir(dir)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

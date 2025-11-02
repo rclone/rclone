@@ -13,7 +13,7 @@ created by [Zoho](https://zoho.com).
 
 Here is an example of making a zoho configuration.  First run
 
-```sh
+```console
 rclone config
 ```
 
@@ -80,7 +80,7 @@ y/e/d>
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Rclone runs a webserver on your local computer to collect the
 authorization token from Zoho Workdrive. This is only from the moment
@@ -89,30 +89,31 @@ The webserver runs on `http://127.0.0.1:53682/`.
 If local port `53682` is protected by a firewall you may need to temporarily
 unblock the firewall to complete authorization.
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the
+name you gave your remote):
 
 See top level directories
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Make a new directory
 
-```sh
+```console
 rclone mkdir remote:directory
 ```
 
 List the contents of a directory
 
-```sh
+```console
 rclone ls remote:directory
 ```
 
 Sync `/home/local/directory` to the remote path, deleting any
 excess files in the path.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:directory
 ```
 
@@ -289,12 +290,15 @@ Properties:
 
 ## Setting up your own client_id
 
-For Zoho we advise you to set up your own client_id. To do so you have to complete the following steps.
+For Zoho we advise you to set up your own client_id. To do so you have to
+complete the following steps.
 
 1. Log in to the [Zoho API Console](https://api-console.zoho.com)
 
-2. Create a new client of type "Server-based Application". The name and website don't matter, but you must add the redirect URL `http://localhost:53682/`.
+2. Create a new client of type "Server-based Application". The name and website
+don't matter, but you must add the redirect URL `http://localhost:53682/`.
 
-3. Once the client is created, you can go to the settings tab and enable it in other regions.
+3. Once the client is created, you can go to the settings tab and enable it in
+other regions.
 
 The client id and client secret can now be used with rclone.

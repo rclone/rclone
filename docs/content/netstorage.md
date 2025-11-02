@@ -18,7 +18,7 @@ For example, this is commonly configured with or without a CP code:
 
 See all buckets
 
-```sh
+```console
 rclone lsd remote:
 ```
 
@@ -31,7 +31,7 @@ Here's an example of how to make a remote called `ns1`.
 
 1. To begin the interactive configuration process, enter this command:
 
-    ```sh
+    ```console
     rclone config
     ```
 
@@ -128,25 +128,25 @@ commands, visit <https://rclone.org/commands/>.
 
 ### See contents of a directory in your project
 
-```sh
+```console
 rclone lsd ns1:/974012/testing/
 ```
 
 ### Sync the contents local with remote
 
-```sh
+```console
 rclone sync . ns1:/974012/testing/
 ```
 
 ### Upload local content to remote
 
-```sh
+```console
 rclone copy notes.txt ns1:/974012/testing/
 ```
 
 ### Delete content on remote
 
-```sh
+```console
 rclone delete ns1:/974012/testing/notes.txt
 ```
 
@@ -155,7 +155,7 @@ rclone delete ns1:/974012/testing/notes.txt
 Your credentials must have access to two CP codes on the same remote.
 You can't perform operations between different remotes.
 
-```sh
+```console
 rclone move ns1:/974012/testing/notes.txt ns1:/974450/testing2/
 ```
 

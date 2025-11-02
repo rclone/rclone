@@ -1,0 +1,6 @@
+name: FlashBlade
+description: Pure Storage FlashBlade Object Storage
+endpoint: {}
+quirks:
+  might_gzip: false # never auto-gzip
+  force_path_style: true # supports vhost but defaults to path-style

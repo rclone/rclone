@@ -1,0 +1,15 @@
+name: Hetzner
+description: Hetzner Object Storage
+region:
+  hel1: Helsinki
+  fsn1: Falkenstein
+  nbg1: Nuremberg
+endpoint:
+  hel1.your-objectstorage.com: Helsinki
+  fsn1.your-objectstorage.com: Falkenstein
+  nbg1.your-objectstorage.com: Nuremberg
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  use_already_exists: false

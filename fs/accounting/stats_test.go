@@ -465,3 +465,27 @@ func TestPruneTransfers(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveDoneTransfers(t *testing.T) {
+	ctx := context.Background()
+	s := NewStats(ctx)
+	const transfers = 10
+	for i := int64(1); i <= int64(transfers); i++ {
+		s.AddTransfer(&Transfer{
+			startedAt:   time.Unix(i, 0),
+			completedAt: time.Unix(i+1, 0),
+		})
+	}
+
+	s.mu.Lock()
+	assert.Equal(t, time.Duration(transfers)*time.Second, s._totalDuration())
+	assert.Equal(t, transfers, len(s.startedTransfers))
+	s.mu.Unlock()
+
+	s.RemoveDoneTransfers()
+
+	s.mu.Lock()
+	assert.Equal(t, time.Duration(transfers)*time.Second, s._totalDuration())
+	assert.Equal(t, transfers, len(s.startedTransfers))
+	s.mu.Unlock()
+}

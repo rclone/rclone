@@ -117,6 +117,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Citrix ShareFile" home="http://sharefile.com/" config="/sharefile/" >}}
 {{< provider name="Cloudflare R2" home="https://blog.cloudflare.com/r2-open-beta/" config="/s3/#cloudflare-r2" >}}
 {{< provider name="Cloudinary" home="https://cloudinary.com/" config="/cloudinary/" >}}
+{{< provider name="Cubbit DS3" home="https://cubbit.io/ds3-cloud" config="/s3/#Cubbit" >}}
 {{< provider name="DigitalOcean Spaces" home="https://www.digitalocean.com/products/object-storage/" config="/s3/#digitalocean-spaces" >}}
 {{< provider name="Digi Storage" home="https://storage.rcs-rds.ro/" config="/koofr/#digi-storage" >}}
 {{< provider name="Dreamhost" home="https://www.dreamhost.com/cloud/storage/" config="/s3/#dreamhost" >}}
@@ -125,6 +126,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Exaba" home="https://exaba.com/" config="/s3/#exaba" >}}
 {{< provider name="Fastmail Files" home="https://www.fastmail.com/" config="/webdav/#fastmail-files" >}}
 {{< provider name="FileLu Cloud Storage" home="https://filelu.com/" config="/filelu/" >}}
+{{< provider name="FileLu S5 (S3-Compatible Object Storage)" home="https://s5lu.com/" config="/s3/#filelu-s5" >}}
 {{< provider name="Files.com" home="https://www.files.com/" config="/filescom/" >}}
 {{< provider name="FlashBlade" home="https://www.purestorage.com/products/unstructured-data-storage.html" config="/s3/#pure-storage-flashblade" >}}
 {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}
@@ -133,9 +135,11 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Google Drive" home="https://www.google.com/drive/" config="/drive/" >}}
 {{< provider name="Google Photos" home="https://www.google.com/photos/about/" config="/googlephotos/" >}}
 {{< provider name="HDFS" home="https://hadoop.apache.org/" config="/hdfs/" >}}
+{{< provider name="Hetzner Object Storage" home="https://www.hetzner.com/storage/object-storage/" config="/s3/#hetzner" >}}
 {{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box" >}}
 {{< provider name="HiDrive" home="https://www.strato.de/cloud-speicher/" config="/hidrive/" >}}
 {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
+{{< provider name="Huawei OBS" home="https://www.huaweicloud.com/intl/en-us/product/obs.html" config="/s3/#huawei-obs" >}}
 {{< provider name="iCloud Drive" home="https://icloud.com/" config="/iclouddrive/" >}}
 {{< provider name="ImageKit" home="https://imagekit.io" config="/imagekit/" >}}
 {{< provider name="Internet Archive" home="https://archive.org/" config="/internetarchive/" >}}
@@ -179,13 +183,17 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
 {{< provider name="Qiniu Cloud Object Storage (Kodo)" home="https://www.qiniu.com/en/products/kodo" config="/s3/#qiniu" >}}
 {{< provider name="Quatrix by Maytech" home="https://www.maytech.net/products/quatrix-business" config="/quatrix/" >}}
+{{< provider name="Rabata Cloud Storage" home="https://rabata.io" config="/s3/#Rabata" >}}
+{{< provider name="RackCorp Object Storage" home="https://www.rackcorp.com/" config="/s3/#RackCorp" >}}
 {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
+{{< provider name="Rclone Serve S3" home="/commands/rclone_serve_s3/" config="/s3/#rclone" >}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" >}}
 {{< provider name="Scaleway" home="https://www.scaleway.com/object-storage/" config="/s3/#scaleway" >}}
 {{< provider name="Seafile" home="https://www.seafile.com/" config="/seafile/" >}}
 {{< provider name="Seagate Lyve Cloud" home="https://www.seagate.com/gb/en/services/cloud/storage/" config="/s3/#lyve" >}}
 {{< provider name="SeaweedFS" home="https://github.com/chrislusf/seaweedfs/" config="/s3/#seaweedfs" >}}
 {{< provider name="Selectel" home="https://selectel.ru/services/cloud/storage/" config="/s3/#selectel" >}}
+{{< provider name="Servercore Object Storage" home="https://servercore.com/services/object-storage/" config="/s3/#servercore" >}}
 {{< provider name="SFTP" home="https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol" config="/sftp/" >}}
 {{< provider name="Sia" home="https://sia.tech/" config="/sia/" >}}
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
@@ -210,6 +218,7 @@ WebDAV or S3, that work out of the box.)
 These backends adapt or modify other storage providers:
 
 {{< provider name="Alias: Rename existing remotes" home="/alias/" config="/alias/" >}}
+{{< provider name="Archive: Read archive files" home="/archive/" config="/archive/" >}}
 {{< provider name="Cache: Cache remotes (DEPRECATED)" home="/cache/" config="/cache/" >}}
 {{< provider name="Chunker: Split large files" home="/chunker/" config="/chunker/" >}}
 {{< provider name="Combine: Combine multiple remotes into a directory tree" home="/combine/" config="/combine/" >}}

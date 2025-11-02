@@ -27,7 +27,7 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -75,23 +75,24 @@ y/e/d> y
 login via the browser, otherwise attempting to use the credentials in `rclone`
 will fail.
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the
+name you gave your remote):
 
 List directories in top level of your Mega
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your Mega
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to an Mega directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -309,13 +310,18 @@ Properties:
 
 ### Process `killed`
 
-On accounts with large files or something else, memory usage can significantly increase when executing list/sync instructions. When running on cloud providers (like AWS with EC2), check if the instance type has sufficient memory/CPU to execute the commands. Use the resource monitoring tools to inspect after sending the commands. Look [at this issue](https://forum.rclone.org/t/rclone-with-mega-appears-to-work-only-in-some-accounts/40233/4).
+On accounts with large files or something else, memory usage can significantly
+increase when executing list/sync instructions. When running on cloud providers
+(like AWS with EC2), check if the instance type has sufficient memory/CPU to
+execute the commands. Use the resource monitoring tools to inspect after sending
+the commands. Look [at this issue](https://forum.rclone.org/t/rclone-with-mega-appears-to-work-only-in-some-accounts/40233/4).
 
 ## Limitations
 
-This backend uses the [go-mega go library](https://github.com/t3rm1n4l/go-mega) which is an opensource
+This backend uses the [go-mega go library](https://github.com/t3rm1n4l/go-mega)
+which is an opensource
 go library implementing the Mega API. There doesn't appear to be any
-documentation for the mega protocol beyond the [mega C++ SDK](https://github.com/meganz/sdk) source code
-so there are likely quite a few errors still remaining in this library.
+documentation for the mega protocol beyond the [mega C++ SDK](https://github.com/meganz/sdk)
+source code so there are likely quite a few errors still remaining in this library.
 
 Mega allows duplicate files which may confuse rclone.

@@ -10,7 +10,7 @@ import (
 
 func TestAuthorizeCommand(t *testing.T) {
 	// Test that the Use string is correctly formatted
-	if commandDefinition.Use != "authorize <fs name> [base64_json_blob | client_id client_secret]" {
+	if commandDefinition.Use != "authorize <backendname> [base64_json_blob | client_id client_secret]" {
 		t.Errorf("Command Use string doesn't match expected format: %s", commandDefinition.Use)
 	}
 
@@ -26,7 +26,7 @@ func TestAuthorizeCommand(t *testing.T) {
 	}
 
 	helpOutput := buf.String()
-	if !strings.Contains(helpOutput, "authorize <fs name>") {
+	if !strings.Contains(helpOutput, "authorize <backendname>") {
 		t.Errorf("Help output doesn't contain correct usage information")
 	}
 }

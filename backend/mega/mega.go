@@ -18,6 +18,7 @@ Improvements:
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -47,6 +48,9 @@ const (
 	maxSleep      = 2 * time.Second
 	eventWaitTime = 500 * time.Millisecond
 	decayConstant = 2 // bigger for slower decay, exponential
+
+	sessionIDConfigKey = "session_id"
+	masterKeyConfigKey = "master_key"
 )
 
 var (
@@ -70,6 +74,24 @@ func init() {
 			Help:       "Password.",
 			Required:   true,
 			IsPassword: true,
+		}, {
+			Name:     "2fa",
+			Help:     `The 2FA code of your MEGA account if the account is set up with one`,
+			Required: false,
+		}, {
+			Name:      sessionIDConfigKey,
+			Help:      "Session (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
+		}, {
+			Name:      masterKeyConfigKey,
+			Help:      "Master key (internal use only)",
+			Required:  false,
+			Advanced:  true,
+			Sensitive: true,
+			Hide:      fs.OptionHideBoth,
 		}, {
 			Name: "debug",
 			Help: `Output more debug from Mega.
@@ -113,6 +135,9 @@ Enabling it will increase CPU usage and add network overhead.`,
 type Options struct {
 	User       string               `config:"user"`
 	Pass       string               `config:"pass"`
+	TwoFA      string               `config:"2fa"`
+	SessionID  string               `config:"session_id"`
+	MasterKey  string               `config:"master_key"`
 	Debug      bool                 `config:"debug"`
 	HardDelete bool                 `config:"hard_delete"`
 	UseHTTPS   bool                 `config:"use_https"`
@@ -209,6 +234,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	ci := fs.GetConfig(ctx)
 
+	// Create Fs
+	root = parsePath(root)
+	f := &Fs{
+		name:  name,
+		root:  root,
+		opt:   *opt,
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+	}
+	f.features = (&fs.Features{
+		DuplicateFiles:          true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(ctx, f)
+
 	// cache *mega.Mega on username so we can reuse and share
 	// them between remotes.  They are expensive to make as they
 	// contain all the objects and sharing the objects makes the
@@ -248,25 +286,29 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			})
 		}
 
-		err := srv.Login(opt.User, opt.Pass)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't login: %w", err)
+		if opt.SessionID == "" {
+			fs.Debugf(f, "Using username and password to initialize the Mega API")
+			err := srv.MultiFactorLogin(opt.User, opt.Pass, opt.TwoFA)
+			if err != nil {
+				return nil, fmt.Errorf("couldn't login: %w", err)
+			}
+			megaCache[opt.User] = srv
+			m.Set(sessionIDConfigKey, srv.GetSessionID())
+			encodedMasterKey := base64.StdEncoding.EncodeToString(srv.GetMasterKey())
+			m.Set(masterKeyConfigKey, encodedMasterKey)
+		} else {
+			fs.Debugf(f, "Using previously stored session ID and master key to initialize the Mega API")
+			decodedMasterKey, err := base64.StdEncoding.DecodeString(opt.MasterKey)
+			if err != nil {
+				return nil, fmt.Errorf("couldn't decode master key: %w", err)
+			}
+			err = srv.LoginWithKeys(opt.SessionID, decodedMasterKey)
+			if err != nil {
+				fs.Debugf(f, "login with previous auth keys failed: %v", err)
+			}
 		}
-		megaCache[opt.User] = srv
 	}
-
-	root = parsePath(root)
-	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		srv:   srv,
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-	}
-	f.features = (&fs.Features{
-		DuplicateFiles:          true,
-		CanHaveEmptyDirectories: true,
-	}).Fill(ctx, f)
+	f.srv = srv
 
 	// Find the root node and check if it is a file or not
 	_, err = f.findRoot(ctx, false)

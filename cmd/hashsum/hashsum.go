@@ -103,13 +103,13 @@ as a relative path).
 
 Run without a hash to see the list of all supported hashes, e.g.
 
-` + "```sh" + `
+` + "```console" + `
 $ rclone hashsum
 ` + hash.HelpString(0) + "```" + `
 
 Then
 
-` + "```sh" + `
+` + "```console" + `
 rclone hashsum MD5 remote:path
 ` + "```" + `
 

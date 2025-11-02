@@ -19,7 +19,7 @@ through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -80,7 +80,7 @@ e/n/d/r/c/s/q> q
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from put.io  if using web browser to automatically
@@ -94,19 +94,19 @@ You can then use it like this,
 
 List directories in top level of your put.io
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your put.io
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to a put.io directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 

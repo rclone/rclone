@@ -18,7 +18,7 @@ which you need to do in your browser.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -72,7 +72,7 @@ and hence should not be shared with other persons.**
 See the [below section](#keeping-your-tokens-safe) for more information.
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from HiDrive. This only runs from the moment it opens
@@ -81,23 +81,24 @@ The webserver runs on `http://127.0.0.1:53682/`.
 If local port `53682` is protected by a firewall you may need to temporarily
 unblock the firewall to complete authorization.
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the
+name you gave your remote):
 
 List directories in top level of your HiDrive root folder
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your HiDrive filesystem
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to a HiDrive directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -129,7 +130,7 @@ To fix this you will need to authorize rclone to access your HiDrive account aga
 
 Using
 
-```sh
+```console
 rclone config reconnect remote:
 ```
 
@@ -188,7 +189,7 @@ This works by prepending the contents of the `root_prefix` option
 to any paths accessed by rclone.
 For example, the following two ways to access the home directory are equivalent:
 
-```sh
+```console
 rclone lsd --hidrive-root-prefix="/users/test/" remote:path
 rclone lsd remote:/users/test/path
 ```
@@ -467,10 +468,10 @@ HiDrive is able to store symbolic links (*symlinks*) by design,
 for example, when unpacked from a zip archive.
 
 There exists no direct mechanism to manage native symlinks in remotes.
-As such this implementation has chosen to ignore any native symlinks present in the remote.
-rclone will not be able to access or show any symlinks stored in the hidrive-remote.
-This means symlinks cannot be individually removed, copied, or moved,
-except when removing, copying, or moving the parent folder.
+As such this implementation has chosen to ignore any native symlinks present in
+the remote. rclone will not be able to access or show any symlinks stored in
+the hidrive-remote. This means symlinks cannot be individually removed, copied,
+or moved, except when removing, copying, or moving the parent folder.
 
 *This does not affect the `.rclonelink`-files
 that rclone uses to encode and store symbolic links.*

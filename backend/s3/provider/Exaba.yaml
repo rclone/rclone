@@ -1,0 +1,9 @@
+name: Exaba
+description: Exaba Object Storage
+region: {}
+endpoint: {}
+location_constraint: {}
+acl: {}
+bucket_acl: true
+quirks:
+  force_path_style: true

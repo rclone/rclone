@@ -48,7 +48,7 @@ give an error like `oauth2: server response missing access_token`.
 
 Now run
 
-```sh
+```console
 rclone config
 ```
 
@@ -119,26 +119,26 @@ You can use the configured backend as shown below:
 
 See top level directories
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Make a new directory
 
-```sh
+```console
 rclone mkdir remote:directory
 ```
 
 List the contents of a directory
 
-```sh
+```console
 rclone ls remote:directory
 ```
 
 Sync `/home/local/directory` to the remote path, deleting any
 excess files in the path.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:directory
 ```
 

@@ -1,0 +1,7 @@
+name: IDrive
+description: IDrive e2
+acl: {}
+bucket_acl: true
+quirks:
+  force_path_style: true
+  use_already_exists: false

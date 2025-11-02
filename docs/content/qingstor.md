@@ -13,7 +13,7 @@ command.)  You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
 
 Here is an example of making an QingStor configuration.  First run
 
-```sh
+```console
 rclone config
 ```
 
@@ -82,26 +82,26 @@ This remote is called `remote` and can now be used like this
 
 See all buckets
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 Make a new bucket
 
-```sh
+```console
 rclone mkdir remote:bucket
 ```
 
 List the contents of a bucket
 
-```sh
+```console
 rclone ls remote:bucket
 ```
 
 Sync `/home/local/directory` to the remote bucket, deleting any excess
 files in the bucket.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:bucket
 ```
 
@@ -341,5 +341,5 @@ this capability cannot determine free space for an rclone mount or
 use policy `mfs` (most free space) as a member of an rclone union
 remote.
 
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
-
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+and [rclone about](https://rclone.org/commands/rclone_about/).

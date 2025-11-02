@@ -19,7 +19,7 @@ var Command = &cobra.Command{
 	Long: `Serve a remote over a given protocol. Requires the use of a
 subcommand to specify the protocol, e.g.
 
-` + "```sh" + `
+` + "```console" + `
 rclone serve http remote:
 ` + "```" + `
 

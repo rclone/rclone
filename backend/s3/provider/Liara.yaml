@@ -1,0 +1,15 @@
+name: Liara
+description: Liara Object Storage
+endpoint:
+  storage.iran.liara.space: |-
+    The default endpoint
+    Iran
+acl: {}
+storage_class:
+  STANDARD: Standard storage class
+bucket_acl: true
+quirks:
+  force_path_style: true
+  list_url_encode: false
+  use_multipart_etag: false # mulitpart ETags differ from AWS
+  use_already_exists: false

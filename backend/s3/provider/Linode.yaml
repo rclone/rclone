@@ -1,0 +1,26 @@
+name: Linode
+description: Linode Object Storage
+endpoint:
+  nl-ams-1.linodeobjects.com: Amsterdam (Netherlands), nl-ams-1
+  us-southeast-1.linodeobjects.com: Atlanta, GA (USA), us-southeast-1
+  in-maa-1.linodeobjects.com: Chennai (India), in-maa-1
+  us-ord-1.linodeobjects.com: Chicago, IL (USA), us-ord-1
+  eu-central-1.linodeobjects.com: Frankfurt (Germany), eu-central-1
+  id-cgk-1.linodeobjects.com: Jakarta (Indonesia), id-cgk-1
+  gb-lon-1.linodeobjects.com: London 2 (Great Britain), gb-lon-1
+  us-lax-1.linodeobjects.com: Los Angeles, CA (USA), us-lax-1
+  es-mad-1.linodeobjects.com: Madrid (Spain), es-mad-1
+  au-mel-1.linodeobjects.com: Melbourne (Australia), au-mel-1
+  us-mia-1.linodeobjects.com: Miami, FL (USA), us-mia-1
+  it-mil-1.linodeobjects.com: Milan (Italy), it-mil-1
+  us-east-1.linodeobjects.com: Newark, NJ (USA), us-east-1
+  jp-osa-1.linodeobjects.com: Osaka (Japan), jp-osa-1
+  fr-par-1.linodeobjects.com: Paris (France), fr-par-1
+  br-gru-1.linodeobjects.com: São Paulo (Brazil), br-gru-1
+  us-sea-1.linodeobjects.com: Seattle, WA (USA), us-sea-1
+  ap-south-1.linodeobjects.com: Singapore, ap-south-1
+  sg-sin-1.linodeobjects.com: Singapore 2, sg-sin-1
+  se-sto-1.linodeobjects.com: Stockholm (Sweden), se-sto-1
+  us-iad-1.linodeobjects.com: Washington, DC, (USA), us-iad-1
+acl: {}
+bucket_acl: true

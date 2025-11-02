@@ -1,4 +1,4 @@
-<!-- 
+<!--
 // Copyright 2015 Matthew Holt and The Caddy Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License. 
+// limitations under the License.
 Modifications:  Adapted to rclone markup -->
 
 <!DOCTYPE html>
@@ -21,7 +21,7 @@ Modifications:  Adapted to rclone markup -->
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta name="google" content="notranslate">
-<style>
+<style>/
 * { padding: 0; margin: 0; }
 body {
 	font-family: sans-serif;
@@ -187,6 +187,19 @@ footer {
 		max-width: 100px;
 	}
 }
+td .zip {
+	opacity: 0;
+	margin-left: 6px;
+	transition: opacity 0.15s ease-in-out;
+}
+tr.file:hover td .zip {
+	opacity: 1;
+}
+.zip-root {
+	margin-left: 8px;
+	vertical-align: middle;
+	opacity: 1;
+}
 </style>
 	</head>
 	<body onload='filter();toggle("order");changeSize()'>
@@ -205,6 +218,9 @@ footer {
 						</g>
 						<path d="M126.154134,250.559184 C126.850974,251.883673 127.300549,253.006122 127.772602,254.106122 C128.469442,255.206122 128.919016,256.104082 129.638335,257.002041 C130.559962,258.326531 131.728855,259 133.100057,259 C134.493737,259 135.415364,258.55102 136.112204,257.67551 C136.809044,257.002041 137.258619,255.902041 137.258619,254.577551 C137.258619,253.904082 137.258619,252.804082 137.033832,251.457143 C136.786566,249.908163 136.561779,249.032653 136.561779,248.583673 C136.089726,242.814286 135.864939,237.920408 135.864939,233.273469 C135.864939,225.057143 136.786566,217.514286 138.180246,210.846939 C139.798713,204.202041 141.889234,198.634694 144.429328,193.763265 C147.216689,188.869388 150.678411,184.873469 154.836973,181.326531 C158.995535,177.779592 163.626149,174.883673 168.481552,172.661224 C173.336954,170.438776 179.113983,168.665306 185.587852,167.340816 C192.061722,166.218367 198.760378,165.342857 205.481514,164.669388 C212.18017,164.220408 219.598146,163.995918 228.162535,163.995918 L246.055591,163.995918 L246.055591,195.514286 C246.055591,197.736735 246.752431,199.510204 248.370899,201.059184 C250.214153,202.608163 252.079886,203.506122 254.372715,203.506122 C256.463236,203.506122 258.531277,202.608163 260.172223,201.059184 L326.102289,137.797959 C327.720757,136.24898 328.642384,134.47551 328.642384,132.253061 C328.642384,130.030612 327.720757,128.257143 326.102289,126.708163 L260.172223,63.4469388 C258.553756,61.8979592 256.463236,61 254.395194,61 C252.079886,61 250.236632,61.8979592 248.393377,63.4469388 C246.77491,64.9959184 246.07807,66.7693878 246.07807,68.9918367 L246.07807,100.510204 L228.162535,100.510204 C166.863084,100.510204 129.166282,117.167347 115.274437,150.459184 C110.666301,161.54898 108.350993,175.310204 108.350993,191.742857 C108.350993,205.279592 113.903236,223.912245 124.760454,247.438776 C125.00772,248.112245 125.457294,249.010204 126.154134,250.559184 Z" id="Shape" fill="#FFFFFF" transform="translate(218.496689, 160.000000) scale(-1, 1) translate(-218.496689, -160.000000) "></path>
 					</g>
+				</g>
+				<g id="zip-folder">
+					<path d="M640-480v-80h80v80h-80Zm0 80h-80v-80h80v80Zm0 80v-80h80v80h-80ZM447-640l-80-80H160v480h400v-80h80v80h160v-400H640v80h-80v-80H447ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80v-480 480Z"/>
 				</g>
 				<!-- File -->
 				<g id="file" stroke="#000" stroke-width="25" fill="#FFF" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
@@ -233,6 +249,13 @@ footer {
 		<header>
 			<h1>
 				{{range $i, $crumb := .Breadcrumb}}<a href="{{html $crumb.Link}}">{{html $crumb.Text}}</a>{{if ne $i 0}}/{{end}}{{end}}
+				{{- if not .DisableZip}}
+				<a class="zip-root" href="{{html .ZipURL}}" title="Download root as .zip">
+				<svg width="1.5em" height="1.5em" viewBox="0 -960 960 960">
+					<use xlink:href="#zip-folder"></use>
+				</svg>
+				</a>
+				{{- end}}
 			</h1>
 		</header>
 		<main>
@@ -248,7 +271,6 @@ footer {
 						<th></th>
 						<th>
 							<a href="?sort=namedirfirst&order=asc" class="icon sort order"><svg class="top" width="1em" height=".5em" version="1.1" viewBox="0 0 12.922194 6.0358899"><use xlink:href="#up-arrow"></use></svg><svg class="bottom" width="1em" height=".5em" version="1.1" viewBox="0 0 12.922194 6.0358899"><use xlink:href="#down-arrow"></use></svg></a>
-							
 							<a href="?sort=name&order=asc" class="order">Name</a>
 						</th>
 						<th>
@@ -283,6 +305,13 @@ footer {
 							<svg width="1.5em" height="1em" version="1.1" viewBox="0 0 265 323"><use xlink:href="#file"></use></svg>
 							{{- end}}
 							<span class="name"><a href="{{html .URL}}">{{html .Leaf}}</a></span>
+							{{- if and .IsDir (not $.DisableZip)}}
+							<a class="zip" href="{{html .ZipURL}}" title="Download folder as .zip">
+							<svg width="1.5em" height="1.5em" viewBox="0 -960 960 960">
+								<use xlink:href="#zip-folder"></use>
+							</svg>
+							</a>
+							{{- end}}
 						</td>
 						{{- if .IsDir}}
 						<td data-order="-1">&mdash;</td>
@@ -336,31 +365,25 @@ footer {
 			}
 			var timeList = Array.prototype.slice.call(document.getElementsByTagName("time"));
 			timeList.forEach(localizeDatetime);
-
 			var getUrlParameter = function getUrlParameter(sParam) {
-				var sPageURL = window.location.search.substring(1),
-				sURLVariables = sPageURL.split('&'),
-				sParameterName,
-				i;
-
-				for (i = 0; i < sURLVariables.length; i++) {
-					sParameterName = sURLVariables[i].split('=');
-
+				var sPageURL = window.location.search.substring(1), sURLVariables = sPageURL.split('&')
+				for (var i = 0; i < sURLVariables.length; i++) {
+					var sParameterName = sURLVariables[i].split('=');
 					if (sParameterName[0] === sParam) {
 						return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
 					}
 				}
 			};
-			function toggle(className){
+			function toggle(className) {
 				var order = getUrlParameter('order');
 				var elements = document.getElementsByClassName(className);
 				for(var i = 0, length = elements.length; i < length; i++) {
 					var currHref = elements[i].href;
-					if(order=='desc'){ 
+					if(order=='desc') {
 						var chg = currHref.replace('desc', 'asc');
 						elements[i].href = chg;
 					}
-					if(order=='asc'){ 
+					if(order=='asc') {
 						var chg = currHref.replace('asc', 'desc');
 						elements[i].href = chg;
 					}
@@ -375,10 +398,8 @@ footer {
 				}
 				return parseFloat(size).toFixed(2) + ' ' + units[i];
 			}
-
 			function changeSize() {
 				var sizes = document.getElementsByTagName("size");
-
 				for (var i = 0; i < sizes.length; i++) {
 					humanSize = readableFileSize(sizes[i].innerHTML);
 					sizes[i].innerHTML = humanSize

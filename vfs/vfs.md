@@ -34,20 +34,20 @@ You can send a `SIGHUP` signal to rclone for it to flush all
 directory caches, regardless of how old they are.  Assuming only one
 rclone instance is running, you can reset the cache like this:
 
-```sh
+```console
 kill -SIGHUP $(pidof rclone)
 ```
 
 If you configure rclone with a [remote control](/rc) then you can use
 rclone rc to flush the whole directory cache:
 
-```sh
+```console
 rclone rc vfs/forget
 ```
 
 Or individual files or directories:
 
-```sh
+```console
 rclone rc vfs/forget file=path/to/file dir=path/to/dir
 ```
 
@@ -462,7 +462,7 @@ Note that some backends won't create metadata unless you pass in the
 For example, using `rclone mount` with `--metadata --vfs-metadata-extension .metadata`
 we get
 
-```sh
+```console
 $ ls -l /mnt/
 total 1048577
 -rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G

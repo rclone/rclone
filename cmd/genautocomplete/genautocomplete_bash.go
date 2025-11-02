@@ -20,13 +20,13 @@ var bashCommandDefinition = &cobra.Command{
 
 By default, when run without any arguments,
 
-` + "```sh" + `
+` + "```console" + `
 rclone completion bash
 ` + "```" + `
 
 the generated script will be written to
 
-` + "```sh" + `
+` + "```console" + `
 /etc/bash_completion.d/rclone
 ` + "```" + `
 
@@ -43,7 +43,7 @@ can logout and login again to use the autocompletion script.
 
 Alternatively, you can source the script directly
 
-` + "```sh" + `
+` + "```console" + `
 . /path/to/my_bash_completion_scripts/rclone
 ` + "```" + `
 

@@ -19,7 +19,7 @@ password. Alternatively, you can authenticate using an API Key from
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -88,26 +88,26 @@ Once configured you can use rclone.
 
 See all files in the top level:
 
-```sh
+```console
 rclone lsf remote:
 ```
 
 Make a new directory in the root:
 
-```sh
+```console
 rclone mkdir remote:dir
 ```
 
 Recursively List the contents:
 
-```sh
+```console
 rclone ls remote:
 ```
 
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-```sh
+```console
 rclone sync --interactive /home/local/directory remote:dir
 ```
 

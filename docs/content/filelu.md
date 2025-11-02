@@ -18,7 +18,7 @@ device.
 
 Here is an example of how to make a remote called `filelu`. First, run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -56,7 +56,7 @@ A path without an initial `/` will operate in the `Rclone` directory.
 A path with an initial `/` will operate at the root where you can see
 the `Rclone` directory.
 
-```sh
+```console
 $ rclone lsf TestFileLu:/
 CCTV/
 Camera/
@@ -72,79 +72,79 @@ Videos/
 
 Create a new folder named `foldername` in the `Rclone` directory:
 
-```sh
+```console
 rclone mkdir filelu:foldername
 ```
 
 Delete a folder on FileLu:
 
-```sh
+```console
 rclone rmdir filelu:/folder/path/
 ```
 
 Delete a file on FileLu:
 
-```sh
+```console
 rclone delete filelu:/hello.txt
 ```
 
 List files from your FileLu account:
 
-```sh
+```console
 rclone ls filelu:
 ```
 
 List all folders:
 
-```sh
+```console
 rclone lsd filelu:
 ```
 
 Copy a specific file to the FileLu root:
 
-```sh
+```console
 rclone copy D:\hello.txt filelu:
 ```
 
 Copy files from a local directory to a FileLu directory:
 
-```sh
+```console
 rclone copy D:/local-folder filelu:/remote-folder/path/
 ```
 
 Download a file from FileLu into a local directory:
 
-```sh
+```console
 rclone copy filelu:/file-path/hello.txt D:/local-folder
 ```
 
 Move files from a local directory to a FileLu directory:
 
-```sh
+```console
 rclone move D:\local-folder filelu:/remote-path/
 ```
 
 Sync files from a local directory to a FileLu directory:
 
-```sh
+```console
 rclone sync --interactive D:/local-folder filelu:/remote-path/
 ```
 
 Mount remote to local Linux:
 
-```sh
+```console
 rclone mount filelu: /root/mnt --vfs-cache-mode full
 ```
 
 Mount remote to local Windows:
 
-```sh
+```console
 rclone mount filelu: D:/local_mnt --vfs-cache-mode full
 ```
 
 Get storage info about the FileLu account:
 
-```sh
+```console
 rclone about filelu:
 ```
 

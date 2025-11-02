@@ -1,0 +1,20 @@
+name: Ceph
+description: Ceph Object Storage
+region: {}
+endpoint: {}
+location_constraint: {}
+acl: {}
+server_side_encryption:
+  '': None
+  AES256: AES256
+  aws:kms: aws:kms
+bucket_acl: true
+sse_customer_algorithm: true
+sse_customer_key: true
+sse_customer_key_base64: true
+sse_customer_key_md5: true
+sse_kms_key_id: true
+quirks:
+  list_version: 1
+  force_path_style: true
+  list_url_encode: false

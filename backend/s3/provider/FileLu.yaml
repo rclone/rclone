@@ -1,0 +1,21 @@
+name: FileLu
+description: FileLu S5 (S3-Compatible Object Storage)
+region:
+  global: Global
+  us-east: North America (US-East)
+  eu-central: Europe (EU-Central)
+  ap-southeast: Asia Pacific (AP-Southeast)
+  me-central: Middle East (ME-Central)
+endpoint:
+  s5lu.com: Global FileLu S5 endpoint
+  us.s5lu.com: North America (US-East) region endpoint
+  eu.s5lu.com: Europe (EU-Central) region endpoint
+  ap.s5lu.com: Asia Pacific (AP-Southeast) region endpoint
+  me.s5lu.com: Middle East (ME-Central) region endpoint
+acl: {}
+bucket_acl: true
+quirks:
+  list_version: 1
+  force_path_style: true
+  list_url_encode: false
+  use_multipart_etag: false

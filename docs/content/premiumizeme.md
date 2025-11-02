@@ -18,7 +18,7 @@ walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -65,7 +65,7 @@ y/e/d>
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from premiumize.me. This only runs from the moment it opens
@@ -73,23 +73,24 @@ your browser to the moment you get back the verification code.  This
 is on `http://127.0.0.1:53682/` and this it may require you to unblock
 it temporarily if you are running a host firewall.
 
-Once configured you can then use `rclone` like this,
+Once configured you can then use `rclone` like this (replace `remote` with the
+name you gave your remote):
 
 List directories in top level of your premiumize.me
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your premiumize.me
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to an premiumize.me directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 

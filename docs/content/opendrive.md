@@ -14,7 +14,7 @@ Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-```sh
+```console
 rclone config
 ```
 
@@ -57,19 +57,19 @@ y/e/d> y
 
 List directories in top level of your OpenDrive
 
-```sh
+```console
 rclone lsd remote:
 ```
 
 List all the files in your OpenDrive
 
-```sh
+```console
 rclone ls remote:
 ```
 
 To copy a local directory to an OpenDrive directory called backup
 
-```sh
+```console
 rclone copy /home/source remote:backup
 ```
 
@@ -217,6 +217,5 @@ this capability cannot determine free space for an rclone mount or
 use policy `mfs` (most free space) as a member of an rclone union
 remote.
 
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
-
-
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+and [rclone about](https://rclone.org/commands/rclone_about/).

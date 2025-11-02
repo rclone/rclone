@@ -32,7 +32,7 @@ func init() {
 		{"video/x-matroska", ".mpv,.mkv"},
 		{"application/x-subrip", ".srt"},
 	} {
-		for _, ext := range strings.Split(t.extensions, ",") {
+		for ext := range strings.SplitSeq(t.extensions, ",") {
 			if mime.TypeByExtension(ext) == "" {
 				err := mime.AddExtensionType(ext, t.mimeType)
 				if err != nil {

@@ -38,7 +38,7 @@ and [email](https://docs.github.com/en/github/setting-up-and-managing-your-githu
 Next open your terminal, change directory to your preferred folder and initialise
 your local rclone project:
 
-```sh
+```console
 git clone https://github.com/rclone/rclone.git
 cd rclone
 git remote rename origin upstream
@@ -53,13 +53,13 @@ executed from the rclone folder created above.
 
 Now [install Go](https://golang.org/doc/install) and verify your installation:
 
-```sh
+```console
 go version
 ```
 
 Great, you can now compile and execute your own version of rclone:
 
-```sh
+```console
 go build
 ./rclone version
 ```
@@ -68,7 +68,7 @@ go build
 more accurate version number in the executable as well as enable you to specify
 more build options.) Finally make a branch to add your new feature
 
-```sh
+```console
 git checkout -b my-new-feature
 ```
 
@@ -80,7 +80,7 @@ and a quick view on the rclone [code organisation](#code-organisation).
 When ready - test the affected functionality and run the unit tests for the
 code you changed
 
-```sh
+```console
 cd folder/with/changed/files
 go test -v
 ```
@@ -99,7 +99,7 @@ Make sure you
 
 When you are done with that push your changes to GitHub:
 
-```sh
+```console
 git push -u origin my-new-feature
 ```
 
@@ -119,7 +119,7 @@ or [squash your commits](#squashing-your-commits).
 
 Follow the guideline for [commit messages](#commit-messages) and then:
 
-```sh
+```console
 git checkout my-new-feature      # To switch to your branch
 git status                       # To see the new and changed files
 git add FILENAME                 # To select FILENAME for the commit
@@ -130,7 +130,7 @@ git log                          # To verify the commit. Use q to quit the log
 
 You can modify the message or changes in the latest commit using:
 
-```sh
+```console
 git commit --amend
 ```
 
@@ -145,7 +145,7 @@ pushed to GitHub.
 
 Your previously pushed commits are replaced by:
 
-```sh
+```console
 git push --force origin my-new-feature 
 ```
 
@@ -154,7 +154,7 @@ git push --force origin my-new-feature
 To base your changes on the latest version of the
 [rclone master](https://github.com/rclone/rclone/tree/master) (upstream):
 
-```sh
+```console
 git checkout master
 git fetch upstream
 git merge --ff-only
@@ -170,7 +170,7 @@ If you rebase commits that have been pushed to GitHub, then you will have to
 
 To combine your commits into one commit:
 
-```sh
+```console
 git log                          # To count the commits to squash, e.g. the last 2
 git reset --soft HEAD~2          # To undo the 2 latest commits
 git status                       # To check everything is as expected
@@ -178,13 +178,13 @@ git status                       # To check everything is as expected
 
 If everything is fine, then make the new combined commit:
 
-```sh
+```console
 git commit                       # To commit the undone commits as one
 ```
 
 otherwise, you may roll back using:
 
-```sh
+```console
 git reflog                       # To check that HEAD{1} is your previous state
 git reset --soft 'HEAD@{1}'      # To roll back to your previous state
 ```
@@ -219,13 +219,13 @@ to check an error return).
 rclone's tests are run from the go testing framework, so at the top
 level you can run this to run all the tests.
 
-```sh
+```console
 go test -v ./...
 ```
 
 You can also use `make`, if supported by your platform
 
-```sh
+```console
 make quicktest
 ```
 
@@ -246,7 +246,7 @@ need to make a remote called `TestDrive`.
 You can then run the unit tests in the drive directory.  These tests
 are skipped if `TestDrive:` isn't defined.
 
-```sh
+```console
 cd backend/drive
 go test -v
 ```
@@ -255,7 +255,7 @@ You can then run the integration tests which test all of rclone's
 operations.  Normally these get run against the local file system,
 but they can be run against any of the remotes.
 
-```sh
+```console
 cd fs/sync
 go test -v -remote TestDrive:
 go test -v -remote TestDrive: -fast-list
@@ -268,7 +268,7 @@ If you want to use the integration test framework to run these tests
 altogether with an HTML report and test retries then from the
 project root:
 
-```sh
+```console
 go install github.com/rclone/rclone/fstest/test_all
 test_all -backends drive
 ```
@@ -278,14 +278,14 @@ test_all -backends drive
 If you want to run all the integration tests against all the remotes,
 then change into the project root and run
 
-```sh
+```console
 make check
 make test
 ```
 
 The commands may require some extra go packages which you can install with
 
-```sh
+```console
 make build_dep
 ```
 
@@ -478,7 +478,7 @@ To add a dependency `github.com/ncw/new_dependency` see the
 instructions below.  These will fetch the dependency and add it to
 `go.mod` and `go.sum`.
 
-```sh
+```console
 go get github.com/ncw/new_dependency
 ```
 
@@ -492,7 +492,7 @@ and `go.sum` in the same commit as your other changes.
 
 If you need to update a dependency then run
 
-```sh
+```console
 go get golang.org/x/crypto
 ```
 
@@ -621,44 +621,7 @@ in the web browser and the links (internal and external) all work.
 
 ## Adding a new s3 provider
 
-It is quite easy to add a new S3 provider to rclone.
-
-You'll need to modify the following files
-
-- `backend/s3/s3.go`
-  - Add the provider to `providerOption` at the top of the file
-  - Add endpoints and other config for your provider gated on the provider in `fs.RegInfo`.
-  - Exclude your provider from generic config questions (eg `region` and `endpoint).
-  - Add the provider to the `setQuirks` function - see the documentation there.
-- `docs/content/s3.md`
-  - Add the provider at the top of the page.
-  - Add a section about the provider linked from there.
-    - Make sure this is in alphabetical order in the `Providers` section.
-  - Add a transcript of a trial `rclone config` session
-    - Edit the transcript to remove things which might change in subsequent versions
-  - **Do not** alter or add to the autogenerated parts of `s3.md`
-  - **Do not** run `make backenddocs` or `bin/make_backend_docs.py s3`
-- `README.md` - this is the home page in github
-  - Add the provider and a link to the section you wrote in `docs/contents/s3.md`
-- `docs/content/_index.md` - this is the home page of rclone.org
-  - Add the provider and a link to the section you wrote in `docs/contents/s3.md`
-
-When adding the provider, endpoints, quirks, docs etc keep them in
-alphabetical order by `Provider` name, but with `AWS` first and
-`Other` last.
-
-Once you've written the docs, run `make serve` and check they look OK
-in the web browser and the links (internal and external) all work.
-
-Once you've written the code, test `rclone config` works to your
-satisfaction, and check the integration tests work `go test -v -remote
-NewS3Provider:`. You may need to adjust the quirks to get them to
-pass. Some providers just can't pass the tests with control characters
-in the names so if these fail and the provider doesn't support
-`urlEncodeListings` in the quirks then ignore them. Note that the
-`SetTier` test may also fail on non AWS providers.
-
-For an example of adding an s3 provider see [eb3082a1](https://github.com/rclone/rclone/commit/eb3082a1ebdb76d5625f14cedec3f5154a5e7b10).
+[Please see the guide in the S3 backend directory](backend/s3/README.md).
 
 ## Writing a plugin
 
