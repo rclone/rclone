@@ -1070,7 +1070,7 @@ func (f *Fs) Hashes() hash.Set {
 var commandHelp = []fs.CommandHelp{
 	{
 		Name:  "noop",
-		Short: "A null operation for testing backend commands",
+		Short: "A null operation for testing backend commands.",
 		Long: `This is a test command which has some options
 you can try to change the output.`,
 		Opts: map[string]string{

@@ -1678,7 +1678,7 @@ func (f *Fs) decompressDir(ctx context.Context, filename, id, password string, s
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "addurl",
-	Short: "Add offline download task for url",
+	Short: "Add offline download task for url.",
 	Long: `This command adds offline download task for url.
 
 Usage:
@@ -1690,7 +1690,7 @@ download will fallback to default 'My Pack' folder.
 `,
 }, {
 	Name:  "decompress",
-	Short: "Request decompress of a file/files in a folder",
+	Short: "Request decompress of a file/files in a folder.",
 	Long: `This command requests decompress of file/files in a folder.
 
 Usage:
