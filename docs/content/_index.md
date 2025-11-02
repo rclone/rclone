@@ -7,6 +7,7 @@ notoc: true
 
 # Rclone syncs your files to cloud storage
 
+<!-- markdownlint-disable-next-line line-length -->
 {{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" >}}
 
 - [About rclone](#about)
@@ -79,8 +80,10 @@ Rclone helps you:
 - Mirror cloud data to other cloud services or locally
 - Migrate data to the cloud, or between cloud storage vendors
 - Mount multiple, encrypted, cached or diverse cloud storage as a disk
-- Analyse and account for data held on cloud storage using [lsf](/commands/rclone_lsf/), [ljson](/commands/rclone_lsjson/), [size](/commands/rclone_size/), [ncdu](/commands/rclone_ncdu/)
-- [Union](/union/) file systems together to present multiple local and/or cloud file systems as one
+- Analyse and account for data held on cloud storage using [lsf](/commands/rclone_lsf/),
+  [ljson](/commands/rclone_lsjson/), [size](/commands/rclone_size/), [ncdu](/commands/rclone_ncdu/)
+- [Union](/union/) file systems together to present multiple local and/or cloud
+  file systems as one
 
 ## Features {#features}
 
@@ -93,7 +96,8 @@ Rclone helps you:
 - [Copy](/commands/rclone_copy/) new or changed files to cloud storage
 - [Sync](/commands/rclone_sync/) (one way) to make a directory identical
 - [Bisync](/bisync/) (two way) to keep two directories in sync bidirectionally
-- [Move](/commands/rclone_move/) files to cloud storage deleting the local after verification
+- [Move](/commands/rclone_move/) files to cloud storage deleting the local after
+  verification
 - [Check](/commands/rclone_check/) hashes and for missing/extra files
 - [Mount](/commands/rclone_mount/) your cloud storage as a network disk
 - [Serve](/commands/rclone_serve/) local or remote files over [HTTP](/commands/rclone_serve_http/)/[WebDav](/commands/rclone_serve_webdav/)/[FTP](/commands/rclone_serve_ftp/)/[SFTP](/commands/rclone_serve_sftp/)/[DLNA](/commands/rclone_serve_dlna/)
@@ -103,6 +107,9 @@ Rclone helps you:
 
 (There are many others, built on standard protocols such as
 WebDAV or S3, that work out of the box.)
+
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable line-length no-bare-urls -->
 
 {{< provider_list >}}
 {{< provider name="1Fichier" home="https://1fichier.com/" config="/fichier/" start="true">}}
@@ -213,9 +220,14 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="The local filesystem" home="/local/" config="/local/" end="true">}}
 {{< /provider_list >}}
 
+<!-- markdownlint-restore -->
+
 ## Virtual providers
 
 These backends adapt or modify other storage providers:
+
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable line-length no-bare-urls -->
 
 {{< provider name="Alias: Rename existing remotes" home="/alias/" config="/alias/" >}}
 {{< provider name="Archive: Read archive files" home="/archive/" config="/archive/" >}}
@@ -226,6 +238,8 @@ These backends adapt or modify other storage providers:
 {{< provider name="Crypt: Encrypt files" home="/crypt/" config="/crypt/" >}}
 {{< provider name="Hasher: Hash files" home="/hasher/" config="/hasher/" >}}
 {{< provider name="Union: Join multiple remotes to work together" home="/union/" config="/union/" >}}
+
+<!-- markdownlint-restore -->
 
 ## Links
 
