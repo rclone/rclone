@@ -156,9 +156,11 @@ func showHelp(fsInfo *fs.RegInfo) error {
 	fmt.Printf("## Backend commands\n\n")
 	fmt.Printf(`Here are the commands specific to the %s backend.
 
-Run them with
+Run them with:
 
-    rclone backend COMMAND remote:
+`+"```console"+`
+rclone backend COMMAND remote:
+`+"```"+`
 
 The help below will explain what arguments each command takes.
 
@@ -172,7 +174,7 @@ These can be run on a running backend using the rc command
 	for _, cmd := range cmds {
 		fmt.Printf("### %s\n\n", cmd.Name)
 		fmt.Printf("%s\n\n", cmd.Short)
-		fmt.Printf("    rclone backend %s remote: [options] [<arguments>+]\n\n", cmd.Name)
+		fmt.Printf("```console\nrclone backend %s remote: [options] [<arguments>+]\n```\n\n", cmd.Name)
 		if cmd.Long != "" {
 			fmt.Printf("%s\n\n", cmd.Long)
 		}
