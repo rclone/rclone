@@ -1683,7 +1683,9 @@ var commandHelp = []fs.CommandHelp{{
 
 Usage:
 
-    rclone backend addurl pikpak:dirpath url
+` + "```console" + `
+rclone backend addurl pikpak:dirpath url
+` + "```" + `
 
 Downloads will be stored in 'dirpath'. If 'dirpath' is invalid, 
 download will fallback to default 'My Pack' folder.
@@ -1695,8 +1697,10 @@ download will fallback to default 'My Pack' folder.
 
 Usage:
 
-    rclone backend decompress pikpak:dirpath {filename} -o password=password
-    rclone backend decompress pikpak:dirpath {filename} -o delete-src-file
+` + "```console" + `
+rclone backend decompress pikpak:dirpath {filename} -o password=password
+rclone backend decompress pikpak:dirpath {filename} -o delete-src-file
+` + "```" + `
 
 An optional argument 'filename' can be specified for a file located in 
 'pikpak:dirpath'. You may want to pass '-o password=password' for a 
@@ -1705,11 +1709,13 @@ source files after decompression finished.
 
 Result:
 
-    {
-        "Decompressed": 17,
-        "SourceDeleted": 0,
-        "Errors": 0
-    }
+` + "```json" + `
+{
+    "Decompressed": 17,
+    "SourceDeleted": 0,
+    "Errors": 0
+}
+` + "```" + `
 `,
 }}
 

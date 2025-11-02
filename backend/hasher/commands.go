@@ -46,7 +46,10 @@ var commandHelp = []fs.CommandHelp{{
 	Short: "Drop cache.",
 	Long: `Completely drop checksum cache.
 Usage Example:
-    rclone backend drop hasher:
+
+` + "```console" + `
+rclone backend drop hasher:
+` + "```" + `
 `,
 }, {
 	Name:  "dump",
@@ -60,15 +63,23 @@ Usage Example:
 	Name:  "import",
 	Short: "Import a SUM file.",
 	Long: `Amend hash cache from a SUM file and bind checksums to files by size/time.
-Usage Example:
-    rclone backend import hasher:subdir md5 /path/to/sum.md5
+
+Usage example:
+
+` + "```console" + `
+rclone backend import hasher:subdir md5 /path/to/sum.md5
+` + "```" + `
 `,
 }, {
 	Name:  "stickyimport",
 	Short: "Perform fast import of a SUM file.",
 	Long: `Fill hash cache from a SUM file without verifying file fingerprints.
-Usage Example:
-    rclone backend stickyimport hasher:subdir md5 remote:path/to/sum.md5
+
+Usage example:
+
+` + "```console" + `
+rclone backend stickyimport hasher:subdir md5 remote:path/to/sum.md5
+` + "```" + `
 `,
 }}
 

@@ -2364,25 +2364,31 @@ Usage Examples:
 
 To show the current lifecycle rules:
 
-    rclone backend lifecycle b2:bucket
+` + "```console" + `
+rclone backend lifecycle b2:bucket
+` + "```" + `
 
 This will dump something like this showing the lifecycle rules.
 
-    [
-        {
-            "daysFromHidingToDeleting": 1,
-            "daysFromUploadingToHiding": null,
-            "daysFromStartingToCancelingUnfinishedLargeFiles": null,
-            "fileNamePrefix": ""
-        }
-    ]
+` + "```json" + `
+[
+    {
+        "daysFromHidingToDeleting": 1,
+        "daysFromUploadingToHiding": null,
+        "daysFromStartingToCancelingUnfinishedLargeFiles": null,
+        "fileNamePrefix": ""
+    }
+]
+` + "```" + `
 
 If there are no lifecycle rules (the default) then it will just return [].
 
 To reset the current lifecycle rules:
 
-    rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=30
-    rclone backend lifecycle b2:bucket -o daysFromUploadingToHiding=5 -o daysFromHidingToDeleting=1
+` + "```console" + `
+rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=30
+rclone backend lifecycle b2:bucket -o daysFromUploadingToHiding=5 -o daysFromHidingToDeleting=1
+` + "```" + `
 
 This will run and then print the new lifecycle rules as above.
 
@@ -2394,7 +2400,9 @@ the daysFromHidingToDeleting to 1 day. You can enable hard_delete in
 the config also which will mean deletions won't cause versions but
 overwrites will still cause versions to be made.
 
-    rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=1
+` + "```console" + `
+rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=1
+` + "```" + `
 
 See: https://www.backblaze.com/docs/cloud-storage-lifecycle-rules
 `,
@@ -2484,8 +2492,10 @@ max-age, which defaults to 24 hours.
 Note that you can use --interactive/-i or --dry-run with this command to see what
 it would do.
 
-    rclone backend cleanup b2:bucket/path/to/object
-    rclone backend cleanup -o max-age=7w b2:bucket/path/to/object
+` + "```console" + `
+rclone backend cleanup b2:bucket/path/to/object
+rclone backend cleanup -o max-age=7w b2:bucket/path/to/object
+` + "```" + `
 
 Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
 `,
@@ -2513,7 +2523,9 @@ var cleanupHiddenHelp = fs.CommandHelp{
 Note that you can use --interactive/-i or --dry-run with this command to see what
 it would do.
 
-    rclone backend cleanup-hidden b2:bucket/path/to/dir
+` + "```console" + `
+rclone backend cleanup-hidden b2:bucket/path/to/dir
+` + "```" + `
 `,
 }
 

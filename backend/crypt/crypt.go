@@ -929,8 +929,10 @@ strings of the encoded results.
 
 Usage Example:
 
-    rclone backend encode crypt: file1 [file2...]
-    rclone rc backend/command command=encode fs=crypt: file1 [file2...]
+` + "```console" + `
+rclone backend encode crypt: file1 [file2...]
+rclone rc backend/command command=encode fs=crypt: file1 [file2...]
+` + "```" + `
 `,
 	},
 	{
@@ -942,8 +944,10 @@ inputs are invalid.
 
 Usage Example:
 
-    rclone backend decode crypt: encryptedfile1 [encryptedfile2...]
-    rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile2...]
+` + "```console" + `
+rclone backend decode crypt: encryptedfile1 [encryptedfile2...]
+rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile2...]
+` + "```" + `
 `,
 	},
 }
