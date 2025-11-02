@@ -1168,6 +1168,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	opts.Parameters.Set("directory_id", directoryID)
 	opts.Parameters.Set("total_size", fmt.Sprintf("%d", size))
 	opts.Parameters.Set("last_modified_at", fmt.Sprintf("%d", uint64(modTime.Unix())))
+	opts.Parameters.Set("conflict", "version")
 
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
@@ -1191,6 +1192,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("failed to upload %v - not sure why", o)
 	}
 
+	o.size = size
 	return o.readMetaData(ctx)
 }
 
