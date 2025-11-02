@@ -3665,41 +3665,41 @@ func (f *Fs) rescue(ctx context.Context, dirID string, delete bool) (err error) 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "get",
 	Short: "Get command for fetching the drive config parameters.",
-	Long: `This is a get command which will be used to fetch the various drive config parameters
+	Long: `This is a get command which will be used to fetch the various drive config
+parameters.
 
-Usage Examples:
+Usage examples:
 
 ` + "```console" + `
 rclone backend get drive: [-o service_account_file] [-o chunk_size]
 rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
-` + "```" + `
-`,
+` + "```",
 	Opts: map[string]string{
-		"chunk_size":           "show the current upload chunk size",
-		"service_account_file": "show the current service account file",
+		"chunk_size":           "Show the current upload chunk size.",
+		"service_account_file": "Show the current service account file.",
 	},
 }, {
 	Name:  "set",
 	Short: "Set command for updating the drive config parameters.",
-	Long: `This is a set command which will be used to update the various drive config parameters
+	Long: `This is a set command which will be used to update the various drive config
+parameters.
 
-Usage Examples:
+Usage examples:
 
 ` + "```console" + `
 rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
 rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
-` + "```" + `
-`,
+` + "```",
 	Opts: map[string]string{
-		"chunk_size":           "update the current upload chunk size",
-		"service_account_file": "update the current service account file",
+		"chunk_size":           "Update the current upload chunk size.",
+		"service_account_file": "Update the current service account file.",
 	},
 }, {
 	Name:  "shortcut",
 	Short: "Create shortcuts from files or directories.",
 	Long: `This command creates shortcuts from files or directories.
 
-Usage:
+Usage examples:
 
 ` + "```console" + `
 rclone backend shortcut drive: source_item destination_shortcut
@@ -3714,10 +3714,9 @@ from "drive:"
 In the second example this creates a shortcut from the "source_item"
 relative to "drive:" to the "destination_shortcut" relative to
 "drive2:". This may fail with a permission error if the user
-authenticated with "drive2:" can't read files from "drive:".
-`,
+authenticated with "drive2:" can't read files from "drive:".`,
 	Opts: map[string]string{
-		"target": "optional target remote for the shortcut destination",
+		"target": "Optional target remote for the shortcut destination.",
 	},
 }, {
 	Name:  "drives",
@@ -3725,7 +3724,7 @@ authenticated with "drive2:" can't read files from "drive:".
 	Long: `This command lists the Shared Drives (Team Drives) available to this
 account.
 
-Usage:
+Usage example:
 
 ` + "```console" + `
 rclone backend [-o config] drives drive:
@@ -3770,15 +3769,14 @@ Adding this to the rclone config file will cause those team drives to
 be accessible with the aliases shown. Any illegal characters will be
 substituted with "_" and duplicate names will have numbers suffixed.
 It will also add a remote called AllDrives which shows all the shared
-drives combined into one directory tree.
-`,
+drives combined into one directory tree.`,
 }, {
 	Name:  "untrash",
 	Short: "Untrash files and directories.",
 	Long: `This command untrashes all the files and directories in the directory
 passed in recursively.
 
-Usage:
+Usage example:
 
 ` + "```console" + `
 rclone backend untrash drive:directory
@@ -3788,7 +3786,8 @@ rclone backend --interactive untrash drive:directory subdir
 This takes an optional directory to trash which make this easier to
 use via the API.
 
-Use the --interactive/-i or --dry-run flag to see what would be restored before restoring it.
+Use the --interactive/-i or --dry-run flag to see what would be restored before
+restoring it.
 
 Result:
 
@@ -3797,14 +3796,13 @@ Result:
     "Untrashed": 17,
     "Errors": 0
 }
-` + "```" + `
-`,
+` + "```",
 }, {
 	Name:  "copyid",
 	Short: "Copy files by ID.",
-	Long: `This command copies files by ID
+	Long: `This command copies files by ID.
 
-Usage:
+Usage examples:
 
 ` + "```console" + `
 rclone backend copyid drive: ID path
@@ -3822,14 +3820,14 @@ component will be used as the file name.
 If the destination is a drive backend then server-side copying will be
 attempted if possible.
 
-Use the --interactive/-i or --dry-run flag to see what would be copied before copying.
-`,
+Use the --interactive/-i or --dry-run flag to see what would be copied before
+copying.`,
 }, {
 	Name:  "moveid",
 	Short: "Move files by ID.",
-	Long: `This command moves files by ID
+	Long: `This command moves files by ID.
 
-Usage:
+Usage examples:
 
 ` + "```console" + `
 rclone backend moveid drive: ID path
@@ -3846,8 +3844,7 @@ component will be used as the file name.
 If the destination is a drive backend then server-side moving will be
 attempted if possible.
 
-Use the --interactive/-i or --dry-run flag to see what would be moved beforehand.
-`,
+Use the --interactive/-i or --dry-run flag to see what would be moved beforehand.`,
 }, {
 	Name:  "exportformats",
 	Short: "Dump the export formats for debug purposes.",
@@ -3857,9 +3854,9 @@ Use the --interactive/-i or --dry-run flag to see what would be moved beforehand
 }, {
 	Name:  "query",
 	Short: "List files using Google Drive query language.",
-	Long: `This command lists files based on a query
+	Long: `This command lists files based on a query.
 
-Usage:
+Usage example:
 
 ` + "```console" + `
 rclone backend query drive: query
@@ -3902,8 +3899,7 @@ The result is a JSON array of matches, for example:
         "webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
     }
 ]
-` + "```console" + `
-`,
+` + "```console",
 }, {
 	Name:  "rescue",
 	Short: "Rescue or delete any orphaned files.",
@@ -3915,34 +3911,31 @@ are no longer in any folder in Google Drive.
 This command finds those files and either rescues them to a directory
 you specify or deletes them.
 
-Usage:
-
 This can be used in 3 ways.
 
-First, list all orphaned files
+First, list all orphaned files:
 
 ` + "```console" + `
 rclone backend rescue drive:
 ` + "```" + `
 
-Second rescue all orphaned files to the directory indicated
+Second rescue all orphaned files to the directory indicated:
 
 ` + "```console" + `
 rclone backend rescue drive: "relative/path/to/rescue/directory"
 ` + "```" + `
 
-e.g. To rescue all orphans to a directory called "Orphans" in the top level
+E.g. to rescue all orphans to a directory called "Orphans" in the top level:
 
 ` + "```console" + `
 rclone backend rescue drive: Orphans
 ` + "```" + `
 
-Third delete all orphaned files to the trash
+Third delete all orphaned files to the trash:
 
 ` + "```console" + `
 rclone backend rescue drive: -o delete
-` + "```" + `
-`,
+` + "```",
 }}
 
 // Command the backend to run a named command

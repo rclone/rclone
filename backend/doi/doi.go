@@ -569,8 +569,7 @@ Usage example:
 rclone backend metadata doi:
 ` + "```" + `
 
-It returns a JSON object representing metadata about the DOI.
-`,
+It returns a JSON object representing metadata about the DOI.`,
 }, {
 	Name:  "set",
 	Short: "Set command for updating the config parameters.",
@@ -591,8 +590,7 @@ This rebuilds the connection to the doi backend when it is called with
 the new parameters. Only new parameters need be passed as the values
 will default to those currently in use.
 
-It doesn't return anything.
-`,
+It doesn't return anything.`,
 }}
 
 // Command the backend to run a named command

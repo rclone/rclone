@@ -45,20 +45,20 @@ var commandHelp = []fs.CommandHelp{{
 	Name:  "drop",
 	Short: "Drop cache.",
 	Long: `Completely drop checksum cache.
-Usage Example:
+
+Usage example:
 
 ` + "```console" + `
 rclone backend drop hasher:
-` + "```" + `
-`,
+` + "```",
 }, {
 	Name:  "dump",
 	Short: "Dump the database.",
-	Long:  "Dump cache records covered by the current remote",
+	Long:  "Dump cache records covered by the current remote.",
 }, {
 	Name:  "fulldump",
 	Short: "Full dump of the database.",
-	Long:  "Dump all cache records in the database",
+	Long:  "Dump all cache records in the database.",
 }, {
 	Name:  "import",
 	Short: "Import a SUM file.",
@@ -68,8 +68,7 @@ Usage example:
 
 ` + "```console" + `
 rclone backend import hasher:subdir md5 /path/to/sum.md5
-` + "```" + `
-`,
+` + "```",
 }, {
 	Name:  "stickyimport",
 	Short: "Perform fast import of a SUM file.",
@@ -79,8 +78,7 @@ Usage example:
 
 ` + "```console" + `
 rclone backend stickyimport hasher:subdir md5 remote:path/to/sum.md5
-` + "```" + `
-`,
+` + "```",
 }}
 
 func (f *Fs) dbDump(ctx context.Context, full bool, root string) error {

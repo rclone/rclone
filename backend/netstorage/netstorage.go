@@ -96,7 +96,12 @@ files stored in any sub-directories that may exist.`,
 	Long: `The desired path location (including applicable sub-directories) ending in
 the object that will be the target of the symlink (for example, /links/mylink).
 Include the file extension for the object, if applicable.
-` + "`rclone backend symlink <src> <path>`",
+
+Usage example:
+
+` + "```console" + `
+rclone backend symlink <src> <path>
+` + "```",
 },
 }
 

@@ -2360,8 +2360,6 @@ var lifecycleHelp = fs.CommandHelp{
 	Short: "Read or set the lifecycle for a bucket.",
 	Long: `This command can be used to read or set the lifecycle for a bucket.
 
-Usage Examples:
-
 To show the current lifecycle rules:
 
 ` + "```console" + `
@@ -2381,7 +2379,7 @@ This will dump something like this showing the lifecycle rules.
 ]
 ` + "```" + `
 
-If there are no lifecycle rules (the default) then it will just return [].
+If there are no lifecycle rules (the default) then it will just return ` + "`[]`" + `.
 
 To reset the current lifecycle rules:
 
@@ -2404,12 +2402,13 @@ overwrites will still cause versions to be made.
 rclone backend lifecycle b2:bucket -o daysFromHidingToDeleting=1
 ` + "```" + `
 
-See: https://www.backblaze.com/docs/cloud-storage-lifecycle-rules
-`,
+See: <https://www.backblaze.com/docs/cloud-storage-lifecycle-rules>`,
 	Opts: map[string]string{
-		"daysFromHidingToDeleting":                        "After a file has been hidden for this many days it is deleted. 0 is off.",
-		"daysFromUploadingToHiding":                       "This many days after uploading a file is hidden",
-		"daysFromStartingToCancelingUnfinishedLargeFiles": "Cancels any unfinished large file versions after this many days",
+		"daysFromHidingToDeleting": `After a file has been hidden for this many days
+it is deleted. 0 is off.`,
+		"daysFromUploadingToHiding": `This many days after uploading a file is hidden.`,
+		"daysFromStartingToCancelingUnfinishedLargeFiles": `Cancels any unfinished
+large file versions after this many days.`,
 	},
 }
 
@@ -2497,10 +2496,9 @@ rclone backend cleanup b2:bucket/path/to/object
 rclone backend cleanup -o max-age=7w b2:bucket/path/to/object
 ` + "```" + `
 
-Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
-`,
+Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.`,
 	Opts: map[string]string{
-		"max-age": "Max age of upload to delete",
+		"max-age": "Max age of upload to delete.",
 	},
 }
 
@@ -2525,8 +2523,7 @@ it would do.
 
 ` + "```console" + `
 rclone backend cleanup-hidden b2:bucket/path/to/dir
-` + "```" + `
-`,
+` + "```",
 }
 
 func (f *Fs) cleanupHiddenCommand(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {

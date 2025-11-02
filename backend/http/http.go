@@ -722,7 +722,7 @@ var commandHelp = []fs.CommandHelp{{
 	Long: `This set command can be used to update the config parameters
 for a running http backend.
 
-Usage Examples:
+Usage examples:
 
 ` + "```console" + `
 rclone backend set remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
@@ -736,8 +736,7 @@ This rebuilds the connection to the http backend when it is called with
 the new parameters. Only new parameters need be passed as the values
 will default to those currently in use.
 
-It doesn't return anything.
-`,
+It doesn't return anything.`,
 }}
 
 // Command the backend to run a named command
