@@ -2357,7 +2357,7 @@ func (o *Object) ID() string {
 
 var lifecycleHelp = fs.CommandHelp{
 	Name:  "lifecycle",
-	Short: "Read or set the lifecycle for a bucket",
+	Short: "Read or set the lifecycle for a bucket.",
 	Long: `This command can be used to read or set the lifecycle for a bucket.
 
 Usage Examples:

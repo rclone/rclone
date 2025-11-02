@@ -2902,7 +2902,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "restore",
-	Short: "Restore objects from GLACIER or INTELLIGENT-TIERING archive tier",
+	Short: "Restore objects from GLACIER or INTELLIGENT-TIERING archive tier.",
 	Long: `This command can be used to restore one or more objects from GLACIER to normal storage 
 or from INTELLIGENT-TIERING Archive Access / Deep Archive Access tier to the Frequent Access tier.
 
@@ -2944,7 +2944,7 @@ if not.
 	},
 }, {
 	Name:  "restore-status",
-	Short: "Show the restore status for objects being restored from GLACIER or INTELLIGENT-TIERING storage",
+	Short: "Show the restore status for objects being restored from GLACIER or INTELLIGENT-TIERING storage.",
 	Long: `This command can be used to show the status for objects being restored from GLACIER to normal storage
 or from INTELLIGENT-TIERING Archive Access / Deep Archive Access tier to the Frequent Access tier.
 
@@ -2993,7 +2993,7 @@ It returns a list of status dictionaries.
 	},
 }, {
 	Name:  "list-multipart-uploads",
-	Short: "List the unfinished multipart uploads",
+	Short: "List the unfinished multipart uploads.",
 	Long: `This command lists the unfinished multipart uploads in JSON format.
 
     rclone backend list-multipart s3:bucket/path/to/object

@@ -87,7 +87,7 @@ Please choose the 'y' option to set your own password then enter your secret.`,
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "du",
-	Short: "Return disk usage information for a specified directory",
+	Short: "Return disk usage information for a specified directory.",
 	Long: `The usage information returned, includes the targeted directory as well as all
 files stored in any sub-directories that may exist.`,
 }, {

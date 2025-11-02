@@ -30,7 +30,7 @@ const (
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  operationRename,
-	Short: "change the name of an object",
+	Short: "change the name of an object.",
 	Long: `This command can be used to rename a object.
 
 Usage Examples:
@@ -40,7 +40,7 @@ Usage Examples:
 	Opts: nil,
 }, {
 	Name:  operationListMultiPart,
-	Short: "List the unfinished multipart uploads",
+	Short: "List the unfinished multipart uploads.",
 	Long: `This command lists the unfinished multipart uploads in JSON format.
 
     rclone backend list-multipart-uploads oos:bucket/path/to/object
@@ -82,7 +82,7 @@ Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
 	},
 }, {
 	Name:  operationRestore,
-	Short: "Restore objects from Archive to Standard storage",
+	Short: "Restore objects from Archive to Standard storage.",
 	Long: `This command can be used to restore one or more objects from Archive to Standard storage.
 
 	Usage Examples:

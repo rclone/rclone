@@ -3664,7 +3664,7 @@ func (f *Fs) rescue(ctx context.Context, dirID string, delete bool) (err error) 
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "get",
-	Short: "Get command for fetching the drive config parameters",
+	Short: "Get command for fetching the drive config parameters.",
 	Long: `This is a get command which will be used to fetch the various drive config parameters
 
 Usage Examples:
@@ -3678,7 +3678,7 @@ Usage Examples:
 	},
 }, {
 	Name:  "set",
-	Short: "Set command for updating the drive config parameters",
+	Short: "Set command for updating the drive config parameters.",
 	Long: `This is a set command which will be used to update the various drive config parameters
 
 Usage Examples:
@@ -3692,7 +3692,7 @@ Usage Examples:
 	},
 }, {
 	Name:  "shortcut",
-	Short: "Create shortcuts from files or directories",
+	Short: "Create shortcuts from files or directories.",
 	Long: `This command creates shortcuts from files or directories.
 
 Usage:
@@ -3715,7 +3715,7 @@ authenticated with "drive2:" can't read files from "drive:".
 	},
 }, {
 	Name:  "drives",
-	Short: "List the Shared Drives available to this account",
+	Short: "List the Shared Drives available to this account.",
 	Long: `This command lists the Shared Drives (Team Drives) available to this
 account.
 
@@ -3762,7 +3762,7 @@ drives combined into one directory tree.
 `,
 }, {
 	Name:  "untrash",
-	Short: "Untrash files and directories",
+	Short: "Untrash files and directories.",
 	Long: `This command untrashes all the files and directories in the directory
 passed in recursively.
 
@@ -3785,7 +3785,7 @@ Result:
 `,
 }, {
 	Name:  "copyid",
-	Short: "Copy files by ID",
+	Short: "Copy files by ID.",
 	Long: `This command copies files by ID
 
 Usage:
@@ -3808,7 +3808,7 @@ Use the --interactive/-i or --dry-run flag to see what would be copied before co
 `,
 }, {
 	Name:  "moveid",
-	Short: "Move files by ID",
+	Short: "Move files by ID.",
 	Long: `This command moves files by ID
 
 Usage:
@@ -3830,13 +3830,13 @@ Use the --interactive/-i or --dry-run flag to see what would be moved beforehand
 `,
 }, {
 	Name:  "exportformats",
-	Short: "Dump the export formats for debug purposes",
+	Short: "Dump the export formats for debug purposes.",
 }, {
 	Name:  "importformats",
-	Short: "Dump the import formats for debug purposes",
+	Short: "Dump the import formats for debug purposes.",
 }, {
 	Name:  "query",
-	Short: "List files using Google Drive query language",
+	Short: "List files using Google Drive query language.",
 	Long: `This command lists files based on a query
 
 Usage:
@@ -3877,7 +3877,7 @@ The result is a JSON array of matches, for example:
     ]`,
 }, {
 	Name:  "rescue",
-	Short: "Rescue or delete any orphaned files",
+	Short: "Rescue or delete any orphaned files.",
 	Long: `This command rescues or deletes any orphaned files or directories.
 
 Sometimes files can get orphaned in Google Drive. This means that they

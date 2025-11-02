@@ -43,29 +43,29 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "drop",
-	Short: "Drop cache",
+	Short: "Drop cache.",
 	Long: `Completely drop checksum cache.
 Usage Example:
     rclone backend drop hasher:
 `,
 }, {
 	Name:  "dump",
-	Short: "Dump the database",
+	Short: "Dump the database.",
 	Long:  "Dump cache records covered by the current remote",
 }, {
 	Name:  "fulldump",
-	Short: "Full dump of the database",
+	Short: "Full dump of the database.",
 	Long:  "Dump all cache records in the database",
 }, {
 	Name:  "import",
-	Short: "Import a SUM file",
+	Short: "Import a SUM file.",
 	Long: `Amend hash cache from a SUM file and bind checksums to files by size/time.
 Usage Example:
     rclone backend import hasher:subdir md5 /path/to/sum.md5
 `,
 }, {
 	Name:  "stickyimport",
-	Short: "Perform fast import of a SUM file",
+	Short: "Perform fast import of a SUM file.",
 	Long: `Fill hash cache from a SUM file without verifying file fingerprints.
 Usage Example:
     rclone backend stickyimport hasher:subdir md5 remote:path/to/sum.md5
