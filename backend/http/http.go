@@ -724,9 +724,11 @@ for a running http backend.
 
 Usage Examples:
 
-    rclone backend set remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
-    rclone rc backend/command command=set fs=remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
-    rclone rc backend/command command=set fs=remote: -o url=https://example.com
+` + "```console" + `
+rclone backend set remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
+rclone rc backend/command command=set fs=remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
+rclone rc backend/command command=set fs=remote: -o url=https://example.com
+` + "```" + `
 
 The option keys are named as they are in the config file.
 

@@ -3669,8 +3669,10 @@ var commandHelp = []fs.CommandHelp{{
 
 Usage Examples:
 
-    rclone backend get drive: [-o service_account_file] [-o chunk_size]
-    rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
+` + "```console" + `
+rclone backend get drive: [-o service_account_file] [-o chunk_size]
+rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
+` + "```" + `
 `,
 	Opts: map[string]string{
 		"chunk_size":           "show the current upload chunk size",
@@ -3683,8 +3685,10 @@ Usage Examples:
 
 Usage Examples:
 
-    rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
-    rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+` + "```console" + `
+rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+` + "```" + `
 `,
 	Opts: map[string]string{
 		"chunk_size":           "update the current upload chunk size",
@@ -3697,8 +3701,10 @@ Usage Examples:
 
 Usage:
 
-    rclone backend shortcut drive: source_item destination_shortcut
-    rclone backend shortcut drive: source_item -o target=drive2: destination_shortcut
+` + "```console" + `
+rclone backend shortcut drive: source_item destination_shortcut
+rclone backend shortcut drive: source_item -o target=drive2: destination_shortcut
+` + "```" + `
 
 In the first example this creates a shortcut from the "source_item"
 which can be a file or a directory to the "destination_shortcut". The
@@ -3721,38 +3727,44 @@ account.
 
 Usage:
 
-    rclone backend [-o config] drives drive:
+` + "```console" + `
+rclone backend [-o config] drives drive:
+` + "```" + `
 
-This will return a JSON list of objects like this
+This will return a JSON list of objects like this:
 
-    [
-        {
-            "id": "0ABCDEF-01234567890",
-            "kind": "drive#teamDrive",
-            "name": "My Drive"
-        },
-        {
-            "id": "0ABCDEFabcdefghijkl",
-            "kind": "drive#teamDrive",
-            "name": "Test Drive"
-        }
-    ]
+` + "```json" + `
+[
+    {
+        "id": "0ABCDEF-01234567890",
+        "kind": "drive#teamDrive",
+        "name": "My Drive"
+    },
+    {
+        "id": "0ABCDEFabcdefghijkl",
+        "kind": "drive#teamDrive",
+        "name": "Test Drive"
+    }
+]
+` + "```" + `
 
 With the -o config parameter it will output the list in a format
 suitable for adding to a config file to make aliases for all the
 drives found and a combined drive.
 
-    [My Drive]
-    type = alias
-    remote = drive,team_drive=0ABCDEF-01234567890,root_folder_id=:
+` + "```ini" + `
+[My Drive]
+type = alias
+remote = drive,team_drive=0ABCDEF-01234567890,root_folder_id=:
 
-    [Test Drive]
-    type = alias
-    remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
+[Test Drive]
+type = alias
+remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
 
-    [AllDrives]
-    type = combine
-    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
+[AllDrives]
+type = combine
+upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
+` + "```" + `
 
 Adding this to the rclone config file will cause those team drives to
 be accessible with the aliases shown. Any illegal characters will be
@@ -3768,20 +3780,24 @@ passed in recursively.
 
 Usage:
 
+` + "```console" + `
+rclone backend untrash drive:directory
+rclone backend --interactive untrash drive:directory subdir
+` + "```" + `
+
 This takes an optional directory to trash which make this easier to
 use via the API.
-
-    rclone backend untrash drive:directory
-    rclone backend --interactive untrash drive:directory subdir
 
 Use the --interactive/-i or --dry-run flag to see what would be restored before restoring it.
 
 Result:
 
-    {
-        "Untrashed": 17,
-        "Errors": 0
-    }
+` + "```json" + `
+{
+    "Untrashed": 17,
+    "Errors": 0
+}
+` + "```" + `
 `,
 }, {
 	Name:  "copyid",
@@ -3790,8 +3806,10 @@ Result:
 
 Usage:
 
-    rclone backend copyid drive: ID path
-    rclone backend copyid drive: ID1 path1 ID2 path2
+` + "```console" + `
+rclone backend copyid drive: ID path
+rclone backend copyid drive: ID1 path1 ID2 path2
+` + "```" + `
 
 It copies the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone copyto). The ID and path pairs can be
@@ -3813,8 +3831,10 @@ Use the --interactive/-i or --dry-run flag to see what would be copied before co
 
 Usage:
 
-    rclone backend moveid drive: ID path
-    rclone backend moveid drive: ID1 path1 ID2 path2
+` + "```console" + `
+rclone backend moveid drive: ID path
+rclone backend moveid drive: ID1 path1 ID2 path2
+` + "```" + `
 
 It moves the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone moveto).
@@ -3841,40 +3861,49 @@ Use the --interactive/-i or --dry-run flag to see what would be moved beforehand
 
 Usage:
 
-    rclone backend query drive: query
-    
+` + "```console" + `
+rclone backend query drive: query
+` + "```" + `
+
 The query syntax is documented at [Google Drive Search query terms and 
 operators](https://developers.google.com/drive/api/guides/ref-search-terms).
 
 For example:
 
-	rclone backend query drive: "'0ABc9DEFGHIJKLMNop0QRatUVW3X' in parents and name contains 'foo'"
+` + "```console" + `
+rclone backend query drive: "'0ABc9DEFGHIJKLMNop0QRatUVW3X' in parents and name contains 'foo'"
+` + "```" + `
 
 If the query contains literal ' or \ characters, these need to be escaped with
 \ characters. "'" becomes "\'" and "\" becomes "\\\", for example to match a 
 file named "foo ' \.txt":
 
-	rclone backend query drive: "name = 'foo \' \\\.txt'"
+` + "```console" + `
+rclone backend query drive: "name = 'foo \' \\\.txt'"
+` + "```" + `
 
 The result is a JSON array of matches, for example:
 
-    [
-	{
-		"createdTime": "2017-06-29T19:58:28.537Z",
-		"id": "0AxBe_CDEF4zkGHI4d0FjYko2QkD",
-		"md5Checksum": "68518d16be0c6fbfab918be61d658032",
-		"mimeType": "text/plain",
-		"modifiedTime": "2024-02-02T10:40:02.874Z",
-		"name": "foo ' \\.txt",
-		"parents": [
-			"0BxAe_BCDE4zkFGZpcWJGek0xbzC"
-		],
-		"resourceKey": "0-ABCDEFGHIXJQpIGqBJq3MC",
-		"sha1Checksum": "8f284fa768bfb4e45d076a579ab3905ab6bfa893",
-		"size": "311",
-		"webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
-	}
-    ]`,
+` + "```json" + `
+[
+    {
+        "createdTime": "2017-06-29T19:58:28.537Z",
+        "id": "0AxBe_CDEF4zkGHI4d0FjYko2QkD",
+        "md5Checksum": "68518d16be0c6fbfab918be61d658032",
+        "mimeType": "text/plain",
+        "modifiedTime": "2024-02-02T10:40:02.874Z",
+        "name": "foo ' \\.txt",
+        "parents": [
+            "0BxAe_BCDE4zkFGZpcWJGek0xbzC"
+        ],
+        "resourceKey": "0-ABCDEFGHIXJQpIGqBJq3MC",
+        "sha1Checksum": "8f284fa768bfb4e45d076a579ab3905ab6bfa893",
+        "size": "311",
+        "webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
+    }
+]
+` + "```console" + `
+`,
 }, {
 	Name:  "rescue",
 	Short: "Rescue or delete any orphaned files.",
@@ -3892,19 +3921,27 @@ This can be used in 3 ways.
 
 First, list all orphaned files
 
-    rclone backend rescue drive:
+` + "```console" + `
+rclone backend rescue drive:
+` + "```" + `
 
 Second rescue all orphaned files to the directory indicated
 
-    rclone backend rescue drive: "relative/path/to/rescue/directory"
+` + "```console" + `
+rclone backend rescue drive: "relative/path/to/rescue/directory"
+` + "```" + `
 
 e.g. To rescue all orphans to a directory called "Orphans" in the top level
 
-    rclone backend rescue drive: Orphans
+` + "```console" + `
+rclone backend rescue drive: Orphans
+` + "```" + `
 
 Third delete all orphaned files to the trash
 
-    rclone backend rescue drive: -o delete
+` + "```console" + `
+rclone backend rescue drive: -o delete
+` + "```" + `
 `,
 }}
 
