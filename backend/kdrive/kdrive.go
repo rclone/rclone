@@ -88,7 +88,7 @@ func init() {
 			//
 			// TODO: Investigate Unicode simplification (＼ gets converted to \ server-side)
 			Default: (encoder.Display |
-				encoder.EncodeBackSlash |
+				encoder.EncodeLeftSpace | encoder.EncodeRightSpace |
 				encoder.EncodeInvalidUtf8),
 		}, {
 			Name:    "account_id",
@@ -558,6 +558,8 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 					continue
 				}
 			}
+			item.Name = f.opt.Enc.ToStandardName(item.Name)
+			item.FullPath = f.opt.Enc.ToStandardPath(item.FullPath)
 			if fn(item) {
 				found = true
 				break
@@ -991,7 +993,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		Path:       fmt.Sprintf("/2/drive/%s", f.opt.DriveID),
 		Parameters: url.Values{},
 	}
-	opts.Parameters.Set("only", f.opt.Enc.FromStandardName("used_size,size"))
+	opts.Parameters.Set("only", "used_size,size")
 	var resp *http.Response
 	var q api.QuotaInfo
 	err = f.pacer.Call(func() (bool, error) {
