@@ -1,4 +1,4 @@
-// Package api has type definitions for kdrive
+// Package api has type definitions for kDrive
 //
 // Converted from the API docs with help from https://mholt.github.io/json-to-go/
 package api
@@ -219,44 +219,11 @@ type FileCopyResponse struct {
 	Data Item `json:"data"`
 }
 
-// FileTruncateResponse is the response from /file_truncate
-type FileTruncateResponse struct {
-	ResultStatus
-}
-
-// FileCloseResponse is the response from /file_close
-type FileCloseResponse struct {
-	ResultStatus
-}
-
-// FileOpenResponse is the response from /file_open
-type FileOpenResponse struct {
-	ResultStatus
-	Fileid         int64 `json:"fileid"`
-	FileDescriptor int64 `json:"fd"`
-}
-
-// FileChecksumResponse is the response from /file_checksum
-type FileChecksumResponse struct {
-	ResultStatus
-	MD5    string `json:"md5"`
-	SHA1   string `json:"sha1"`
-	SHA256 string `json:"sha256"`
-}
-
-// FilePWriteResponse is the response from /file_pwrite
-type FilePWriteResponse struct {
-	ResultStatus
-	Bytes int64 `json:"bytes"`
-}
-
-// UploadFileResponse is the response from /uploadfile
 type UploadFileResponse struct {
 	ResultStatus
 	Data Item `json:"data"`
 }
 
-// ChecksumFileResult is returned from /checksumfile
 type ChecksumFileResult struct {
 	ResultStatus
 	Data struct {
@@ -264,7 +231,7 @@ type ChecksumFileResult struct {
 	} `json:"data"`
 }
 
-// PubLinkResult is returned from /getfilepublink and /getfolderpublink
+// currently used, as PublicLink is disabled
 type PubLinkResult struct {
 	ResultStatus
 	Data struct {
@@ -293,35 +260,4 @@ type QuotaInfo struct {
 		Size     int64 `json:"size"`
 		UsedSize int64 `json:"used_size"`
 	} `json:"data"`
-}
-
-// UserInfo is returned from /userinfo
-type UserInfo struct {
-	ResultStatus
-	Cryptosetup           bool   `json:"cryptosetup"`
-	Plan                  int    `json:"plan"`
-	CryptoSubscription    bool   `json:"cryptosubscription"`
-	PublicLinkQuota       int64  `json:"publiclinkquota"`
-	Email                 string `json:"email"`
-	UserID                int    `json:"userid"`
-	Quota                 int64  `json:"quota"`
-	TrashRevretentionDays int    `json:"trashrevretentiondays"`
-	Premium               bool   `json:"premium"`
-	PremiumLifetime       bool   `json:"premiumlifetime"`
-	EmailVerified         bool   `json:"emailverified"`
-	UsedQuota             int64  `json:"usedquota"`
-	Language              string `json:"language"`
-	Business              bool   `json:"business"`
-	CryptoLifetime        bool   `json:"cryptolifetime"`
-	Registered            string `json:"registered"`
-	Journey               struct {
-		Claimed bool `json:"claimed"`
-		Steps   struct {
-			VerifyMail    bool `json:"verifymail"`
-			UploadFile    bool `json:"uploadfile"`
-			AutoUpload    bool `json:"autoupload"`
-			DownloadApp   bool `json:"downloadapp"`
-			DownloadDrive bool `json:"downloaddrive"`
-		} `json:"steps"`
-	} `json:"journey"`
 }

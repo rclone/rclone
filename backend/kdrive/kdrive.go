@@ -1,10 +1,6 @@
-// Package kdrive provides an interface to the kdrive
+// Package kdrive provides an interface to the kDrive
 // object storage system.
 package kdrive
-
-// FIXME cleanup returns login required?
-
-// FIXME mime type? Fix overview if implement.
 
 import (
 	"context"
@@ -77,7 +73,6 @@ func init() {
 			return oauthutil.ConfigOut("", &oauthutil.Options{
 				OAuth2Config: oauthConfig,
 				CheckAuth:    checkAuth,
-				StateBlankOK: true, // kdrive seems to drop the state parameter now - see #4210
 			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
@@ -85,8 +80,6 @@ func init() {
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
 			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
-			//
-			// TODO: Investigate Unicode simplification (＼ gets converted to \ server-side)
 			Default: (encoder.Display |
 				encoder.EncodeLeftSpace | encoder.EncodeRightSpace |
 				encoder.EncodeInvalidUtf8),
@@ -253,51 +246,6 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
-/*
-// unused for now
-func (f *Fs) retrieveDriveIdFromName(ctx context.Context, name string) (string, error) {
-	// step 1: retrieve user id
-	// fs.Debugf(f, "retrieveDriveIdFromName(%q)\n", name)
-	var resp *http.Response
-	var resultProfile api.Profile
-	var resultDrives api.ListDrives
-	var err error
-	opts := rest.Opts{
-		Method:     "GET",
-		Path:       "/profile",
-		Parameters: url.Values{},
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &resultProfile)
-		err = resultProfile.Error.Update(err)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		//fmt.Printf("...Error %v\n", err)
-		return "", err
-	}
-	// fmt.Printf("...Id %q\n", *info.Id)
-	userID := resultProfile.Data.UserID
-	// step 2: retrieve the drives of that user
-	opts = rest.Opts{
-		Method:     "GET",
-		Path:       fmt.Sprintf("/2/drive/users/%s/drives", userID),
-		Parameters: url.Values{},
-	}
-	opts.Parameters.Set("account_id", f.opt.AccountID)
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &resultDrives)
-		err = resultDrives.Error.Update(err)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		//fmt.Printf("...Error %v\n", err)
-		return "", err
-	}
-
-	return strconv.Itoa(resultDrives.Data[0].DriveID), nil
-}
-*/
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -312,10 +260,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	staticToken := oauth2.Token{AccessToken: opt.AccessToken}
 	ts := oauth2.StaticTokenSource(&staticToken)
 	oAuthClient := oauth2.NewClient(ctx, ts)
-	//oAuthClient, ts, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed to configure kdrive: %w", err)
-	//}
 
 	f := &Fs{
 		name:  name,
@@ -332,14 +276,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		PartialUploads:          true,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
-
-	// Renew the token in the background
-	/*
-		f.tokenRenewer = oauthutil.NewRenew(f.String(), f.ts, func() error {
-			_, err := f.readMetaDataForPath(ctx, "")
-			return err
-		})
-	*/
 
 	// Get rootFolderID
 	rootID := "1" // see https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
@@ -407,7 +343,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	fs.Debugf(ctx, "FindLeaf: leaf=%s", leaf)
 	// Find the leaf in pathID
 	found, err = f.listAll(ctx, pathID, true, false, false, func(item *api.Item) bool {
 		if item.Name == leaf {
@@ -439,7 +374,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		//fmt.Printf("...Error %v\n", err)
 		return "", err
 	}
-	// fmt.Printf("...Id %q\n", *info.Id)
+	// fmt.Printf("...Id %d\n", result.Data.ID)
 	return strconv.Itoa(result.Data.ID), nil
 }
 
@@ -455,7 +390,6 @@ type listAllFn func(*api.Item) bool
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, recursive bool, fn listAllFn) (found bool, err error) {
-	fs.Debugf(ctx, "Entering listAll")
 	listSomeFiles := func(currentDirID string, fromCursor string) (api.SearchResult, error) {
 		opts := rest.Opts{
 			Method:     "GET",
@@ -523,17 +457,15 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 // and calls the callback for each element.
 func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callback func(entries fs.DirEntry) error) (err error) {
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
-	fs.Debugf(ctx, "listHelper: root=%s dir=%s directoryID=%s", f.root, dir, directoryID)
+	//fs.Debugf(ctx, "listHelper: root=%s dir=%s directoryID=%s", f.root, dir, directoryID)
 	if err != nil {
 		return err
 	}
 	var iErr error
 	_, err = f.listAll(ctx, directoryID, false, false, recursive, func(info *api.Item) bool {
-		fs.Debugf(ctx, "listHelper: trimming /%s out of %s", f.root, info.FullPath)
 		remote := parsePath(strings.TrimPrefix(info.FullPath, "/"+f.root))
 		if info.Type == "dir" {
 			// cache the directory ID for later lookups
-			fs.Debugf(ctx, "listAll: caching %s as %s", remote, strconv.Itoa(info.ID))
 			f.dirCache.Put(remote, strconv.Itoa(info.ID))
 
 			d := fs.NewDir(remote, info.ModTime()).SetID(strconv.Itoa(info.ID))
@@ -881,6 +813,8 @@ func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
 
+// The PublicLink method is currently disabled, not sure which API should be used here
+/*
 func (f *Fs) linkDir(ctx context.Context, dirID string, expire fs.Duration) (string, error) {
 	opts := rest.Opts{
 		Method:     "GET",
@@ -922,7 +856,6 @@ func (f *Fs) linkFile(ctx context.Context, path string, expire fs.Duration) (str
 	return result.Data.URL, nil
 }
 
-/*
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	dirID, err := f.dirCache.FindDir(ctx, remote, false)
@@ -964,12 +897,12 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 // Shutdown shutdown the fs
 func (f *Fs) Shutdown(ctx context.Context) error {
-	//f.tokenRenewer.Shutdown()
 	return nil
 }
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
+	// kDrive only supports xxh3
 	return hash.Set(hash.XXH3)
 }
 
@@ -1105,11 +1038,6 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	/*	url, err := o.downloadURL(ctx)
-		if err != nil {
-			return nil, err
-		}
-	*/
 	fs.FixRangeOption(options, o.Size())
 	var resp *http.Response
 	opts := rest.Opts{
@@ -1133,9 +1061,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	//o.fs.tokenRenewer.Start()
-	//defer o.fs.tokenRenewer.Stop()
-
 	size := src.Size() // NB can upload without size
 	modTime := src.ModTime(ctx)
 	remote := o.Remote()
@@ -1151,6 +1076,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// This API doesn't support chunk uploads, so it's just for now
+	// NOTE: It will fail for any file larger than 1GB
+	// TODO: implement the session multi-chunk API approach
 	var resp *http.Response
 	var result api.UploadFileResponse
 	opts := rest.Opts{
@@ -1175,8 +1102,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		err = result.ResultStatus.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
+	// TODO: check if the following erroneous behavior also happens on kDrive
+	//       (this workaround comes from the pcloud backend implementation)
 	if err != nil {
-		// sometimes kdrive leaves a half complete file on
+		// sometimes we get a half complete file on
 		// error, so delete it if it exists, trying a few times
 		for range 5 {
 			delObj, delErr := o.fs.NewObject(ctx, o.remote)
