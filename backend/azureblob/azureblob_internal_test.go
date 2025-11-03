@@ -17,7 +17,6 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/rclone/rclone/fstest/testserver"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -155,26 +154,6 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Features", f.testFeatures)
 	t.Run("WriteUncommittedBlocks", f.testWriteUncommittedBlocks)
 	t.Run("Metadata", f.testMetadataPaths)
-}
-
-// Standalone runner for metadata path tests to allow easy filtering with -run
-func TestAzureMetadataPaths(t *testing.T) {
-	remoteName := "TestAzureBlob:"
-	fstest.Initialise()
-	finish, err := testserver.Start(remoteName)
-	require.NoError(t, err)
-	defer finish()
-
-	subRemoteName, _, err := fstest.RandomRemoteName(remoteName)
-	require.NoError(t, err)
-	fsi, err := fs.NewFs(context.Background(), subRemoteName)
-	if err == fs.ErrorNotFoundInConfigFile {
-		t.Skipf("Didn't find %q in config file - skipping tests", remoteName)
-		return
-	}
-	require.NoError(t, err)
-	f := fsi.(*Fs)
-	f.testMetadataPaths(t)
 }
 
 // helper to read blob properties for an object
