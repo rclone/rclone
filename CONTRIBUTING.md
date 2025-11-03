@@ -289,7 +289,7 @@ make build_dep
 ```
 
 The full integration tests are run daily on the integration test server. You can
-find the results at <https://pub.rclone.org/integration-tests/>
+find the results at <https://integration.rclone.org>
 
 ## Code Organisation
 
