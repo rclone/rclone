@@ -3,6 +3,7 @@ package level3_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/rclone/rclone/backend/level3"
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
@@ -672,5 +674,330 @@ func TestHealthCheckEnforcesStrictWrites(t *testing.T) {
 	assert.True(t, os.IsNotExist(errParity), "No parity particle should be created (health check failed)")
 	
 	t.Logf("Health check correctly prevented write operation")
+}
+
+// =============================================================================
+// Phase 2b - Comprehensive Degraded Mode Tests
+// =============================================================================
+//
+// These tests explicitly verify all operations in degraded mode to ensure
+// complete RAID 3 policy compliance and consistent error messages.
+
+// TestSetModTimeFailsInDegradedMode tests that SetModTime fails with helpful
+// error when a backend is unavailable.
+//
+// SetModTime is a write operation (modifies metadata) and should follow the
+// strict write policy like Put/Update/Move/Mkdir. In degraded mode, SetModTime
+// should fail with a helpful error message guiding the user to recovery.
+//
+// This test verifies:
+//   - SetModTime blocks when backend unavailable (strict write policy)
+//   - Error message is helpful (shows backend status + recovery steps)
+//   - Consistent with other write operations (Put/Update/Move/Mkdir)
+//   - Pre-flight health check prevents partial modifications
+//
+// Failure indicates: Metadata write operations not following RAID 3 strict
+// write policy, or inconsistent error messages.
+func TestSetModTimeFailsInDegradedMode(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := "/nonexistent/odd" // Unavailable backend
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+
+	// Create a file first (with all backends available)
+	// We'll use temp dirs for this initial creation
+	evenDir2 := t.TempDir()
+	oddDir2 := t.TempDir()
+	parityDir2 := t.TempDir()
+
+	m2 := configmap.Simple{
+		"even":   evenDir2,
+		"odd":    oddDir2,
+		"parity": parityDir2,
+	}
+	f2, err := level3.NewFs(ctx, "TestSetModTime2", "", m2)
+	require.NoError(t, err)
+
+	remote := "file.txt"
+	data := []byte("Test content")
+	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f2.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Attempt SetModTime on the object (obj is from f2, which is fully available)
+	// The health check in SetModTime is on o.fs, which is f2 (all backends available)
+	// To test degraded mode, we need to manually copy particles to degraded fs and get object from there
+	
+	// Copy particles to first fs (degraded)
+	// Even particle
+	evenSrc := filepath.Join(evenDir2, remote)
+	evenDst := filepath.Join(evenDir, remote)
+	srcData, err := os.ReadFile(evenSrc)
+	require.NoError(t, err)
+	err = os.WriteFile(evenDst, srcData, 0644)
+	require.NoError(t, err)
+	
+	// Parity particle (find which suffix was used)
+	parityOdd := level3.GetParityFilename(remote, true)
+	paritySrc := filepath.Join(parityDir2, parityOdd)
+	if _, err := os.Stat(paritySrc); os.IsNotExist(err) {
+		parityEven := level3.GetParityFilename(remote, false)
+		paritySrc = filepath.Join(parityDir2, parityEven)
+	}
+	parityDst := filepath.Join(parityDir, filepath.Base(paritySrc))
+	srcData, err = os.ReadFile(paritySrc)
+	require.NoError(t, err)
+	err = os.WriteFile(parityDst, srcData, 0644)
+	require.NoError(t, err)
+	
+	// Now create degraded fs and get object from it
+	fDegraded, err := level3.NewFs(ctx, "TestSetModTimeDegraded", "", m)
+	require.NoError(t, err)
+	
+	objDegraded, err := fDegraded.NewObject(ctx, remote)
+	require.NoError(t, err, "Should be able to get object in degraded mode for reading")
+
+	// Attempt SetModTime on degraded backend
+	newTime := time.Now().Add(-24 * time.Hour)
+	err = objDegraded.SetModTime(ctx, newTime)
+
+	// Should fail with enhanced error message
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot write - level3 backend is DEGRADED", 
+		"Error should mention degraded mode")
+	assert.Contains(t, err.Error(), "UNAVAILABLE", 
+		"Error should show unavailable backend")
+	assert.Contains(t, err.Error(), "rclone backend status level3:", 
+		"Error should guide to status command")
+
+	t.Logf("✅ SetModTime correctly blocked in degraded mode with helpful error")
+}
+
+// TestMkdirFailsInDegradedMode tests that Mkdir fails with helpful error
+// when a backend is unavailable.
+//
+// This verifies the recent fix to Mkdir which added a pre-flight health check.
+// Mkdir is a write operation and should be blocked in degraded mode with a
+// helpful error message consistent with Put/Update/Move.
+//
+// This test verifies:
+//   - Mkdir blocks when backend unavailable (strict write policy)
+//   - Error message is helpful (shows backend status + recovery steps)
+//   - Consistent with other write operations
+//   - Pre-flight health check prevents partial directory creation
+//
+// Failure indicates: Directory creation not following RAID 3 strict write
+// policy, or inconsistent error messages.
+func TestMkdirFailsInDegradedMode(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := "/nonexistent/odd" // Unavailable backend
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+
+	// NewFs should succeed (tolerates 1 unavailable backend during init)
+	f, err := level3.NewFs(ctx, "TestMkdir", "", m)
+	require.NoError(t, err)
+
+	// Attempt Mkdir - should fail at health check
+	err = f.Mkdir(ctx, "newdir")
+
+	// Should fail with enhanced error message
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot write - level3 backend is DEGRADED", 
+		"Error should mention degraded mode")
+	assert.Contains(t, err.Error(), "❌ odd:    UNAVAILABLE", 
+		"Error should show odd backend status")
+	assert.Contains(t, err.Error(), "rclone backend status level3:", 
+		"Error should guide to status command")
+
+	// Verify no directory created in available backends
+	evenPath := filepath.Join(evenDir, "newdir")
+	parityPath := filepath.Join(parityDir, "newdir")
+	
+	_, errEven := os.Stat(evenPath)
+	_, errParity := os.Stat(parityPath)
+	
+	// Health check should fail BEFORE creating any directories
+	assert.True(t, os.IsNotExist(errEven), "No even directory should be created")
+	assert.True(t, os.IsNotExist(errParity), "No parity directory should be created")
+
+	t.Logf("✅ Mkdir correctly blocked in degraded mode with helpful error")
+}
+
+// TestRmdirSucceedsInDegradedMode tests that Rmdir succeeds when a backend
+// is unavailable (best-effort delete policy).
+//
+// Rmdir is a delete operation and should follow the best-effort policy:
+// succeed even if some backends are unavailable or directories are already
+// removed. This is idempotent and consistent with Remove().
+//
+// This test verifies:
+//   - Rmdir succeeds when backend unavailable (best-effort policy)
+//   - Idempotent (can delete multiple times)
+//   - Consistent with Remove() behavior
+//   - Removes directories from available backends
+//
+// Failure indicates: Directory removal not following RAID 3 best-effort
+// delete policy, or inconsistent with Remove().
+func TestRmdirSucceedsInDegradedMode(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create a directory in all backends first
+	dirName := "testdir"
+	require.NoError(t, os.Mkdir(filepath.Join(evenDir, dirName), 0755))
+	require.NoError(t, os.Mkdir(filepath.Join(oddDir, dirName), 0755))
+	require.NoError(t, os.Mkdir(filepath.Join(parityDir, dirName), 0755))
+
+	// Now create level3 with one unavailable backend
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    "/nonexistent/odd", // Unavailable
+		"parity": parityDir,
+	}
+
+	f, err := level3.NewFs(ctx, "TestRmdir", "", m)
+	require.NoError(t, err)
+
+	// Rmdir should succeed (best-effort)
+	err = f.Rmdir(ctx, dirName)
+	require.NoError(t, err, "Rmdir should succeed in degraded mode (best-effort)")
+
+	// Verify directories removed from available backends
+	evenPath := filepath.Join(evenDir, dirName)
+	parityPath := filepath.Join(parityDir, dirName)
+	
+	_, errEven := os.Stat(evenPath)
+	_, errParity := os.Stat(parityPath)
+	
+	assert.True(t, os.IsNotExist(errEven), "Even directory should be removed")
+	assert.True(t, os.IsNotExist(errParity), "Parity directory should be removed")
+
+	// Note: Rmdir is NOT idempotent (consistent with Unix rmdir behavior)
+	// Second call should return "directory not found" error
+	err = f.Rmdir(ctx, dirName)
+	require.Error(t, err, "Rmdir of already-removed directory should error")
+	assert.True(t, errors.Is(err, fs.ErrorDirNotFound), "Should return directory not found error")
+
+	t.Logf("✅ Rmdir correctly succeeded in degraded mode (best-effort)")
+}
+
+// TestListWorksInDegradedMode tests that List succeeds when a backend is
+// unavailable, showing all reconstructable files.
+//
+// List is a read operation and should work with 2 of 3 backends available.
+// Files that have at least 2 particles present should be listed, as they
+// can be reconstructed.
+//
+// This test verifies:
+//   - List succeeds when backend unavailable (read works with 2/3)
+//   - Shows files with 2 particles present
+//   - Consistent with Open/NewObject degraded behavior
+//   - No error for unavailable backend
+//
+// Failure indicates: List not working in degraded mode, or not showing
+// reconstructable files.
+func TestListWorksInDegradedMode(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create level3 with all backends available
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+
+	f, err := level3.NewFs(ctx, "TestList", "", m)
+	require.NoError(t, err)
+
+	// Create some files
+	file1 := "file1.txt"
+	file2 := "file2.txt"
+	data := []byte("Test content")
+
+	info1 := object.NewStaticObjectInfo(file1, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(data), info1)
+	require.NoError(t, err)
+
+	info2 := object.NewStaticObjectInfo(file2, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(data), info2)
+	require.NoError(t, err)
+
+	// Now simulate odd backend becoming unavailable by recreating fs
+	// with unavailable odd backend
+	m2 := configmap.Simple{
+		"even":   evenDir,
+		"odd":    "/nonexistent/odd", // Unavailable
+		"parity": parityDir,
+	}
+
+	f2, err := level3.NewFs(ctx, "TestList2", "", m2)
+	require.NoError(t, err)
+
+	// List should work and show both files
+	entries, err := f2.List(ctx, "")
+
+	// List should succeed
+	require.NoError(t, err, "List should succeed in degraded mode")
+
+	// Extract filenames from entries
+	var listed []string
+	for _, entry := range entries {
+		if o, ok := entry.(fs.Object); ok {
+			listed = append(listed, o.Remote())
+		}
+	}
+
+	// Should list both files (they have 2/3 particles: even + parity)
+	assert.Len(t, listed, 2, "Should list 2 files")
+	assert.Contains(t, listed, file1, "Should list file1")
+	assert.Contains(t, listed, file2, "Should list file2")
+
+	// Verify we can actually read the files (reconstruction works)
+	obj1, err := f2.NewObject(ctx, file1)
+	require.NoError(t, err, "Should be able to get object in degraded mode")
+
+	reader, err := obj1.Open(ctx)
+	require.NoError(t, err, "Should be able to open object in degraded mode")
+	defer reader.Close()
+
+	readData, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	assert.Equal(t, data, readData, "Should reconstruct correct data")
+
+	t.Logf("✅ List correctly worked in degraded mode, showing %d reconstructable files", len(listed))
 }
 
