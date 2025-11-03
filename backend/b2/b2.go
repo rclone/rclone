@@ -1514,8 +1514,8 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *
 			CustomerKey:    f.opt.SSECustomerKeyBase64,
 			CustomerKeyMd5: f.opt.SSECustomerKeyMD5,
 		}
-		request.SourceServerSideEncryption = serverSideEncryptionConfig
-		request.DestinationServerSideEncryption = serverSideEncryptionConfig
+		request.SourceServerSideEncryption = &serverSideEncryptionConfig
+		request.DestinationServerSideEncryption = &serverSideEncryptionConfig
 	}
 	if newInfo == nil {
 		request.MetadataDirective = "COPY"
