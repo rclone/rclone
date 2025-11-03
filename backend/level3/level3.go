@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/fs/operations"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -67,9 +68,87 @@ This should be in the form 'remote:path'.`,
 				},
 			},
 		}},
+		CommandHelp: commandHelp,
 	}
 	fs.Register(fsi)
 }
+
+// commandHelp defines the backend-specific commands
+var commandHelp = []fs.CommandHelp{{
+	Name:  "status",
+	Short: "Show backend health and recovery guide",
+	Long: `Shows the health status of all three backends and provides step-by-step
+recovery guidance if any backend is unavailable.
+
+This is the primary diagnostic tool for level3 - run this first when you
+encounter errors or want to check backend health.
+
+Usage:
+
+    rclone backend status level3:
+
+Output includes:
+  • Health status of all three backends (even, odd, parity)
+  • Impact assessment (what operations work)
+  • Complete recovery guide for degraded mode
+  • Step-by-step instructions for backend replacement
+
+This command is mentioned in error messages when writes fail in degraded mode.
+`,
+}, {
+	Name:  "rebuild",
+	Short: "Rebuild missing particles on a replacement backend",
+	Long: `Rebuilds all missing particles on a backend after replacement.
+
+Use this after replacing a failed backend with a new, empty backend. The rebuild
+process reconstructs all missing particles using the other two backends and parity
+information, restoring the level3 backend to a fully healthy state.
+
+Usage:
+
+    rclone backend rebuild level3: [even|odd|parity]
+    
+Auto-detects which backend needs rebuild if not specified:
+
+    rclone backend rebuild level3:
+
+Options:
+
+  -o check-only=true    Analyze what needs rebuild without actually rebuilding
+  -o dry-run=true       Show what would be done without making changes
+  -o priority=MODE      Rebuild order (auto, dirs-small, dirs, small)
+
+Priority modes:
+  auto        Smart default based on dataset (recommended)
+  dirs-small  All directories first, then files by size (smallest first)
+  dirs        Directories first, then files alphabetically per directory
+  small       Create directories as-needed, files by size (smallest first)
+
+Examples:
+
+    # Check what needs rebuild
+    rclone backend rebuild level3: -o check-only=true
+    
+    # Rebuild with auto-detected backend
+    rclone backend rebuild level3:
+    
+    # Rebuild specific backend
+    rclone backend rebuild level3: odd
+    
+    # Rebuild with small files first
+    rclone backend rebuild level3: odd -o priority=small
+
+The rebuild process will:
+  1. Scan for missing particles
+  2. Reconstruct data from other two backends
+  3. Upload restored particles
+  4. Show progress and ETA
+  5. Verify integrity
+
+Note: This is different from self-healing which happens automatically during
+reads. Rebuild is a manual, complete restoration after backend replacement.
+`,
+}}
 
 // Options defines the configuration for this backend
 type Options struct {
@@ -566,6 +645,26 @@ func (f *Fs) Root() string {
 	return f.root
 }
 
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
+	switch name {
+	case "status":
+		return f.statusCommand(ctx, opt)
+	case "rebuild":
+		return f.rebuildCommand(ctx, arg, opt)
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	return fmt.Sprintf("level3 root '%s'", f.root)
@@ -615,7 +714,7 @@ func (f *Fs) disableRetriesForWrites(ctx context.Context) context.Context {
 // checkAllBackendsAvailable performs a quick health check to see if all three
 // backends are reachable. This is used to enforce strict write policy.
 //
-// Returns: error if any backend is unavailable
+// Returns: enhanced error with recovery guidance if any backend is unavailable
 func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 	// Quick timeout for health check
 	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -627,29 +726,154 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 	}
 	results := make(chan healthResult, 3)
 
-	// Check each backend by attempting to list root
+	// Check each backend by attempting to access it
+	// We check write capability since that's what we need for Put/Update/Move
+	checkBackend := func(backend fs.Fs, name string) healthResult {
+		// First, try to list (checks connectivity)
+		_, listErr := backend.List(checkCtx, "")
+
+		// Acceptable list errors (backend is available):
+		//   - ErrorDirNotFound: Directory doesn't exist yet (empty backend)
+		//   - ErrorIsFile: Path points to a file
+		if listErr == nil || errors.Is(listErr, fs.ErrorDirNotFound) || errors.Is(listErr, fs.ErrorIsFile) {
+			// Backend seems available, verify we can write
+			// Try mkdir on a test path (won't actually create if Fs is at file level)
+			testDir := ".level3-health-check-" + name
+			mkdirErr := backend.Mkdir(checkCtx, testDir)
+
+			// Clean up test directory
+			if mkdirErr == nil {
+				_ = backend.Rmdir(checkCtx, testDir)
+			}
+
+			// Acceptable mkdir errors (backend is writable):
+			//   - nil: Successfully created (backend is writable)
+			//   - ErrorDirExists: Dir already exists (backend is writable)
+			if mkdirErr == nil || errors.Is(mkdirErr, fs.ErrorDirExists) {
+				return healthResult{name, nil} // Backend is available
+			}
+
+			// Mkdir failed with real error (permission, read-only filesystem, etc.)
+			return healthResult{name, mkdirErr}
+		}
+
+		// List failed with real error (connection refused, etc.)
+		return healthResult{name, listErr}
+	}
+
 	go func() {
-		_, err := f.even.List(checkCtx, "")
-		results <- healthResult{"even", err}
+		results <- checkBackend(f.even, "even")
 	}()
 	go func() {
-		_, err := f.odd.List(checkCtx, "")
-		results <- healthResult{"odd", err}
+		results <- checkBackend(f.odd, "odd")
 	}()
 	go func() {
-		_, err := f.parity.List(checkCtx, "")
-		results <- healthResult{"parity", err}
+		results <- checkBackend(f.parity, "parity")
 	}()
 
 	// Collect results
+	var failedBackend string
+	var backendErr error
+	evenOK := true
+	oddOK := true
+	parityOK := true
+
 	for i := 0; i < 3; i++ {
 		result := <-results
 		if result.err != nil {
-			return fmt.Errorf("%s backend unavailable: %w", result.name, result.err)
+			failedBackend = result.name
+			backendErr = result.err
+			switch result.name {
+			case "even":
+				evenOK = false
+			case "odd":
+				oddOK = false
+			case "parity":
+				parityOK = false
+			}
 		}
 	}
 
+	// If any backend failed, return enhanced error with guidance
+	if backendErr != nil {
+		return f.formatDegradedModeError(failedBackend, evenOK, oddOK, parityOK, backendErr)
+	}
+
 	return nil
+}
+
+// formatDegradedModeError creates a user-friendly error message with recovery guidance
+// when the backend is in degraded mode (one or more backends unavailable).
+//
+// This implements Phase 1 of user-centric recovery: guide users at point of failure.
+func (f *Fs) formatDegradedModeError(failedBackend string, evenOK, oddOK, parityOK bool, backendErr error) error {
+	// Status icons
+	evenIcon := "✅"
+	oddIcon := "✅"
+	parityIcon := "✅"
+	evenStatus := "Available"
+	oddStatus := "Available"
+	parityStatus := "Available"
+
+	if !evenOK {
+		evenIcon = "❌"
+		evenStatus = "UNAVAILABLE"
+	}
+	if !oddOK {
+		oddIcon = "❌"
+		oddStatus = "UNAVAILABLE"
+	}
+	if !parityOK {
+		parityIcon = "❌"
+		parityStatus = "UNAVAILABLE"
+	}
+
+	// Build helpful error message with wrapped backend error
+	return fmt.Errorf(`cannot write - level3 backend is DEGRADED
+
+Backend Status:
+  %s even:   %s
+  %s odd:    %s
+  %s parity: %s
+
+Impact:
+  • Reads: ✅ Working (automatic parity reconstruction)
+  • Writes: ❌ Blocked (RAID 3 safety - prevents corruption)
+
+What to do:
+  1. Check if %s backend is temporarily down:
+     Run: rclone ls %s
+     If it works, retry your operation
+  
+  2. If backend is permanently failed:
+     Run: rclone backend status level3:
+     This will guide you through replacement and recovery
+  
+  3. For more help:
+     Documentation: rclone help level3
+     Error handling: See README.md
+
+Technical details: %w`,
+		evenIcon, evenStatus,
+		oddIcon, oddStatus,
+		parityIcon, parityStatus,
+		failedBackend,
+		f.getBackendPath(failedBackend),
+		backendErr)
+}
+
+// getBackendPath returns the configured path for a backend name
+func (f *Fs) getBackendPath(backendName string) string {
+	switch backendName {
+	case "even":
+		return f.opt.Even
+	case "odd":
+		return f.opt.Odd
+	case "parity":
+		return f.opt.Parity
+	default:
+		return "unknown"
+	}
 }
 
 // Shutdown waits for pending self-healing uploads to complete
@@ -686,6 +910,492 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 		f.uploadCancel()
 		return ctx.Err()
 	}
+}
+
+// statusCommand shows backend health and provides recovery guidance
+// This implements Phase 2 of user-centric recovery
+func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any, err error) {
+	// Check health of all backends
+	type backendHealth struct {
+		name      string
+		available bool
+		fileCount int64
+		size      int64
+		err       error
+	}
+
+	// Health check with reasonable timeout
+	checkCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	healthChan := make(chan backendHealth, 3)
+
+	// Check each backend
+	checkOne := func(backend fs.Fs, name, path string) {
+		var fileCount int64
+		var totalSize int64
+
+		// Try to list and count files
+		listErr := operations.ListFn(checkCtx, backend, func(obj fs.Object) {
+			fileCount++
+			totalSize += obj.Size()
+		})
+
+		// Check if backend is available
+		if listErr != nil && !errors.Is(listErr, fs.ErrorDirNotFound) {
+			healthChan <- backendHealth{name, false, 0, 0, listErr}
+			return
+		}
+
+		healthChan <- backendHealth{name, true, fileCount, totalSize, nil}
+	}
+
+	go func() { checkOne(f.even, "even", f.opt.Even) }()
+	go func() { checkOne(f.odd, "odd", f.opt.Odd) }()
+	go func() { checkOne(f.parity, "parity", f.opt.Parity) }()
+
+	// Collect results
+	var evenHealth, oddHealth, parityHealth backendHealth
+	for i := 0; i < 3; i++ {
+		health := <-healthChan
+		switch health.name {
+		case "even":
+			evenHealth = health
+		case "odd":
+			oddHealth = health
+		case "parity":
+			parityHealth = health
+		}
+	}
+
+	// Determine overall status
+	allHealthy := evenHealth.available && oddHealth.available && parityHealth.available
+	isDegraded := !allHealthy
+
+	// Build status report
+	var report strings.Builder
+
+	report.WriteString("Level3 Backend Health Status\n")
+	report.WriteString("════════════════════════════════════════════════════════════════\n\n")
+
+	// Backend Health Section
+	report.WriteString("Backend Health:\n")
+	writeBackendStatus := func(h backendHealth, path string) {
+		icon := "✅"
+		var status string
+		var healthText string
+
+		if !h.available {
+			icon = "❌"
+			status = "UNAVAILABLE"
+			healthText = fmt.Sprintf("ERROR: %v", h.err)
+		} else if h.fileCount == 0 {
+			status = "0 files (EMPTY)"
+			healthText = "Available but empty"
+		} else {
+			status = fmt.Sprintf("%d files, %s", h.fileCount, fs.SizeSuffix(h.size))
+			healthText = "HEALTHY"
+		}
+
+		report.WriteString(fmt.Sprintf("  %s %s (%s):\n", icon, strings.Title(h.name), path))
+		report.WriteString(fmt.Sprintf("      %s - %s\n", status, healthText))
+	}
+
+	writeBackendStatus(evenHealth, f.opt.Even)
+	writeBackendStatus(oddHealth, f.opt.Odd)
+	writeBackendStatus(parityHealth, f.opt.Parity)
+
+	// Overall Status
+	report.WriteString("\nOverall Status: ")
+	if allHealthy {
+		if evenHealth.fileCount == 0 {
+			report.WriteString("✅ HEALTHY (empty/new)\n")
+		} else {
+			report.WriteString("✅ HEALTHY\n")
+		}
+	} else {
+		report.WriteString("⚠️  DEGRADED MODE\n")
+	}
+
+	// Impact Section
+	report.WriteString("\nWhat This Means:\n")
+	if isDegraded {
+		report.WriteString("  • Reads:  ✅ Working (automatic parity reconstruction)\n")
+		report.WriteString("  • Writes: ❌ Blocked (RAID 3 data safety policy)\n")
+		report.WriteString("  • Self-healing: ⚠️  Cannot restore (backend unavailable)\n")
+	} else {
+		report.WriteString("  • Reads:  ✅ All operations working\n")
+		report.WriteString("  • Writes: ✅ All operations working\n")
+		report.WriteString("  • Self-healing: ✅ Available if needed\n")
+	}
+
+	// If degraded, show recovery guide
+	if isDegraded {
+		// Identify which backend failed
+		failedBackend := ""
+		if !evenHealth.available {
+			failedBackend = "even"
+		} else if !oddHealth.available {
+			failedBackend = "odd"
+		} else if !parityHealth.available {
+			failedBackend = "parity"
+		}
+
+		report.WriteString("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+		report.WriteString("Recovery Guide\n")
+		report.WriteString("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
+
+		report.WriteString(fmt.Sprintf("STEP 1: Check if %s backend failure is temporary\n\n", failedBackend))
+		report.WriteString("  Try accessing the backend:\n")
+		report.WriteString(fmt.Sprintf("  $ rclone ls %s\n\n", f.getBackendPath(failedBackend)))
+		report.WriteString("  If successful → Backend is online, retry your operation\n")
+		report.WriteString("  If failed → Backend is lost, continue to STEP 2\n\n")
+
+		report.WriteString("STEP 2: Create replacement backend\n\n")
+		report.WriteString(fmt.Sprintf("  $ rclone mkdir new-%s-backend:\n", failedBackend))
+		report.WriteString(fmt.Sprintf("  $ rclone ls new-%s-backend:    # Verify accessible\n\n", failedBackend))
+
+		report.WriteString("STEP 3: Update rclone.conf\n\n")
+		report.WriteString("  Edit: ~/.config/rclone/rclone.conf\n")
+		report.WriteString(fmt.Sprintf("  Change: %s = new-%s-backend:\n\n", failedBackend, failedBackend))
+
+		report.WriteString("STEP 4: Rebuild missing particles\n\n")
+		report.WriteString("  $ rclone backend rebuild level3:\n")
+		report.WriteString("  (Rebuilds all missing data - may take time)\n\n")
+
+		report.WriteString("STEP 5: Verify recovery\n\n")
+		report.WriteString("  $ rclone backend status level3:\n")
+		report.WriteString("  Should show: ✅ HEALTHY\n\n")
+
+		report.WriteString("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+	}
+
+	return report.String(), nil
+}
+
+// rebuildCommand rebuilds missing particles on a replacement backend
+// This implements Phase 3 of user-centric recovery
+func (f *Fs) rebuildCommand(ctx context.Context, arg []string, opt map[string]string) (out any, err error) {
+	// Parse options
+	checkOnly := opt["check-only"] == "true"
+	dryRun := opt["dry-run"] == "true"
+	priority := opt["priority"]
+	if priority == "" {
+		priority = "auto"
+	}
+
+	// Determine which backend to rebuild
+	targetBackend := ""
+	if len(arg) > 0 {
+		targetBackend = arg[0]
+	}
+
+	// Validate target backend
+	if targetBackend != "" && targetBackend != "even" && targetBackend != "odd" && targetBackend != "parity" {
+		return nil, fmt.Errorf("invalid backend: %s (must be: even, odd, or parity)", targetBackend)
+	}
+
+	// If not specified, auto-detect which backend needs rebuild
+	if targetBackend == "" {
+		fs.Infof(f, "Auto-detecting which backend needs rebuild...")
+
+		// Count particles on each backend
+		evenCount, _ := f.countParticles(ctx, f.even)
+		oddCount, _ := f.countParticles(ctx, f.odd)
+		parityCount, _ := f.countParticles(ctx, f.parity)
+
+		fs.Debugf(f, "Particle counts: even=%d, odd=%d, parity=%d", evenCount, oddCount, parityCount)
+
+		// Find which has fewest (needs rebuild)
+		if oddCount < evenCount && oddCount < parityCount {
+			targetBackend = "odd"
+		} else if evenCount < oddCount && evenCount < parityCount {
+			targetBackend = "even"
+		} else if parityCount < evenCount && parityCount < oddCount {
+			targetBackend = "parity"
+		} else {
+			return nil, errors.New("cannot auto-detect: all backends have similar particle counts")
+		}
+
+		fs.Infof(f, "Auto-detected: %s backend needs rebuild (%d files, should have %d)",
+			targetBackend, minInt64(evenCount, oddCount, parityCount), maxInt64(evenCount, oddCount, parityCount))
+	}
+
+	// Get source and target filesystems
+	var target fs.Fs
+	var source1, source2 fs.Fs
+	var source1Name, source2Name string
+
+	switch targetBackend {
+	case "even":
+		target = f.even
+		source1, source2 = f.odd, f.parity
+		source1Name, source2Name = "odd", "parity"
+	case "odd":
+		target = f.odd
+		source1, source2 = f.even, f.parity
+		source1Name, source2Name = "even", "parity"
+	case "parity":
+		target = f.parity
+		source1, source2 = f.even, f.odd
+		source1Name, source2Name = "even", "odd"
+	}
+
+	// Scan source backend for all files
+	var filesToRebuild []fs.Object
+	var totalSize int64
+
+	fs.Infof(f, "Scanning %s backend for files...", source1Name)
+	err = operations.ListFn(ctx, source1, func(obj fs.Object) {
+		filesToRebuild = append(filesToRebuild, obj)
+		totalSize += obj.Size()
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list %s backend: %w", source1Name, err)
+	}
+
+	fs.Infof(f, "Found %d files (%s) to rebuild", len(filesToRebuild), fs.SizeSuffix(totalSize))
+
+	// Check-only mode
+	if checkOnly {
+		var report strings.Builder
+		report.WriteString(fmt.Sprintf("Rebuild Analysis for %s backend\n", targetBackend))
+		report.WriteString("════════════════════════════════════════════════════════════════\n\n")
+		report.WriteString(fmt.Sprintf("Files to rebuild: %d\n", len(filesToRebuild)))
+		report.WriteString(fmt.Sprintf("Total size: %s\n", fs.SizeSuffix(totalSize)))
+		report.WriteString(fmt.Sprintf("Source: %s + %s (reconstruction)\n", source1Name, source2Name))
+		report.WriteString(fmt.Sprintf("Target: %s backend\n\n", targetBackend))
+		report.WriteString("Ready to rebuild. Run without -o check-only=true to proceed.\n")
+		return report.String(), nil
+	}
+
+	// Dry-run mode
+	if dryRun {
+		fs.Infof(f, "DRY-RUN: Would rebuild %d files to %s backend", len(filesToRebuild), targetBackend)
+		return fmt.Sprintf("Would rebuild %d files (%s)", len(filesToRebuild), fs.SizeSuffix(totalSize)), nil
+	}
+
+	// Actually rebuild
+	fs.Infof(f, "Rebuilding %s backend...", targetBackend)
+	fs.Infof(f, "Priority mode: %s", priority)
+
+	rebuilt := 0
+	var rebuiltSize int64
+	startTime := time.Now()
+
+	// Simple rebuild loop (MVP - no priority sorting for now)
+	for i, sourceObj := range filesToRebuild {
+		remote := sourceObj.Remote()
+
+		// Progress update every 10 files
+		if i > 0 && i%10 == 0 {
+			elapsed := time.Since(startTime)
+			speed := float64(rebuiltSize) / elapsed.Seconds()
+			remaining := totalSize - rebuiltSize
+			eta := time.Duration(float64(remaining)/speed) * time.Second
+
+			fs.Infof(f, "Progress: %d/%d files (%.0f%%), %s/%s, ETA %v",
+				rebuilt, len(filesToRebuild),
+				float64(rebuilt)/float64(len(filesToRebuild))*100,
+				fs.SizeSuffix(rebuiltSize), fs.SizeSuffix(totalSize),
+				eta.Round(time.Second))
+		}
+
+		// Check if particle already exists on target
+		_, err := target.NewObject(ctx, remote)
+		if err == nil {
+			fs.Debugf(f, "Skipping %s (already exists)", remote)
+			continue
+		}
+
+		// Reconstruct the particle
+		var particleData []byte
+		if targetBackend == "parity" {
+			// Reconstruct parity from even + odd
+			particleData, err = f.reconstructParityParticle(ctx, source1, source2, remote)
+		} else {
+			// Reconstruct data particle from other data + parity
+			particleData, err = f.reconstructDataParticle(ctx, source1, source2, remote, targetBackend)
+		}
+
+		if err != nil {
+			fs.Errorf(f, "Failed to reconstruct %s: %v", remote, err)
+			continue
+		}
+
+		// Upload to target backend
+		reader := bytes.NewReader(particleData)
+		modTime := sourceObj.ModTime(ctx)
+		info := object.NewStaticObjectInfo(remote, modTime, int64(len(particleData)), true, nil, nil)
+
+		_, err = target.Put(ctx, reader, info)
+		if err != nil {
+			fs.Errorf(f, "Failed to upload %s: %v", remote, err)
+			continue
+		}
+
+		rebuilt++
+		rebuiltSize += int64(len(particleData))
+	}
+
+	// Final summary
+	duration := time.Since(startTime)
+	avgSpeed := float64(rebuiltSize) / duration.Seconds()
+
+	var summary strings.Builder
+	summary.WriteString(fmt.Sprintf("\n✅ Rebuild Complete!\n\n"))
+	summary.WriteString(fmt.Sprintf("Files rebuilt: %d/%d\n", rebuilt, len(filesToRebuild)))
+	summary.WriteString(fmt.Sprintf("Data transferred: %s\n", fs.SizeSuffix(rebuiltSize)))
+	summary.WriteString(fmt.Sprintf("Duration: %v\n", duration.Round(time.Second)))
+	summary.WriteString(fmt.Sprintf("Average speed: %s/s\n", fs.SizeSuffix(int64(avgSpeed))))
+	summary.WriteString(fmt.Sprintf("\nBackend %s is now restored!\n", targetBackend))
+	summary.WriteString("Run 'rclone backend status level3:' to verify.\n")
+
+	return summary.String(), nil
+}
+
+// Helper functions for rebuild
+
+// countParticles counts the number of particles on a backend
+func (f *Fs) countParticles(ctx context.Context, backend fs.Fs) (int64, error) {
+	var count int64
+	err := operations.ListFn(ctx, backend, func(obj fs.Object) {
+		count++
+	})
+	if err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+		return 0, err
+	}
+	return count, nil
+}
+
+// reconstructParityParticle reconstructs a parity particle from even + odd
+func (f *Fs) reconstructParityParticle(ctx context.Context, evenFs, oddFs fs.Fs, remote string) ([]byte, error) {
+	// Read even particle
+	evenObj, err := evenFs.NewObject(ctx, remote)
+	if err != nil {
+		return nil, fmt.Errorf("even particle not found: %w", err)
+	}
+	evenReader, err := evenObj.Open(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open even particle: %w", err)
+	}
+	evenData, err := io.ReadAll(evenReader)
+	evenReader.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read even particle: %w", err)
+	}
+
+	// Read odd particle
+	oddObj, err := oddFs.NewObject(ctx, remote)
+	if err != nil {
+		return nil, fmt.Errorf("odd particle not found: %w", err)
+	}
+	oddReader, err := oddObj.Open(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open odd particle: %w", err)
+	}
+	oddData, err := io.ReadAll(oddReader)
+	oddReader.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read odd particle: %w", err)
+	}
+
+	// Calculate parity
+	parityData := CalculateParity(evenData, oddData)
+	return parityData, nil
+}
+
+// reconstructDataParticle reconstructs a data particle (even or odd) from the other data + parity
+func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs, remote string, targetType string) ([]byte, error) {
+	// For data particles, we need to read from parity backend with suffix
+	// First, try to find the parity file
+	parityOdd := GetParityFilename(remote, true)
+	parityEven := GetParityFilename(remote, false)
+
+	var parityObj fs.Object
+	var isOddLength bool
+	var err error
+
+	parityObj, err = parityFs.NewObject(ctx, parityOdd)
+	if err == nil {
+		isOddLength = true
+	} else {
+		parityObj, err = parityFs.NewObject(ctx, parityEven)
+		if err == nil {
+			isOddLength = false
+		} else {
+			return nil, fmt.Errorf("parity particle not found (tried both suffixes): %w", err)
+		}
+	}
+
+	// Read parity data
+	parityReader, err := parityObj.Open(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open parity particle: %w", err)
+	}
+	parityData, err := io.ReadAll(parityReader)
+	parityReader.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read parity particle: %w", err)
+	}
+
+	// Read the available data particle
+	dataObj, err := dataFs.NewObject(ctx, remote)
+	if err != nil {
+		return nil, fmt.Errorf("data particle not found: %w", err)
+	}
+	dataReader, err := dataObj.Open(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open data particle: %w", err)
+	}
+	dataData, err := io.ReadAll(dataReader)
+	dataReader.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read data particle: %w", err)
+	}
+
+	// Reconstruct missing particle
+	if targetType == "even" {
+		// Reconstruct even from odd + parity
+		reconstructed, err := ReconstructFromOddAndParity(dataData, parityData, isOddLength)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reconstruct even particle: %w", err)
+		}
+		evenData, _ := SplitBytes(reconstructed)
+		return evenData, nil
+	} else {
+		// Reconstruct odd from even + parity
+		reconstructed, err := ReconstructFromEvenAndParity(dataData, parityData, isOddLength)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reconstruct odd particle: %w", err)
+		}
+		_, oddData := SplitBytes(reconstructed)
+		return oddData, nil
+	}
+}
+
+// Helper to get min of three int64 values
+func minInt64(a, b, c int64) int64 {
+	min := a
+	if b < min {
+		min = b
+	}
+	if c < min {
+		min = c
+	}
+	return min
+}
+
+// Helper to get max of three int64 values
+func maxInt64(a, b, c int64) int64 {
+	max := a
+	if b > max {
+		max = b
+	}
+	if c > max {
+		max = c
+	}
+	return max
 }
 
 // backgroundUploader runs as a goroutine to process self-healing uploads

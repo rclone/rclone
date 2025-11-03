@@ -127,9 +127,142 @@ RAID 3 Backend
 
 ---
 
+### Q4: Rebuild Command for Backend Replacement
+**Date**: 2025-11-02  
+**Question**: How should we implement RAID 3 rebuild when a backend is permanently replaced?
+
+**Context**:
+- Hardware RAID 3 has a rebuild process: failed drive → replace → rebuild → healthy
+- Level3 needs similar process: failed backend → replace → ??? → healthy
+- Currently: Self-healing is automatic/opportunistic, not complete/deliberate
+
+**Scenario**:
+```
+Day 0: Odd backend fails (disk crash, account closed, etc.)
+  → Self-healing handles reads ✅
+  → Writes blocked (strict policy) ❌
+  
+Day 1: User creates new odd backend (empty)
+  → Updates rclone.conf
+  → Needs to restore ALL particles to new backend
+  → How to do this?
+```
+
+**Options**:
+
+**A) Manual Rebuild Command** (Recommended):
+```bash
+# Check what needs rebuild
+rclone backend rebuild level3: -o check-only=true
+
+# Rebuild specific backend
+rclone backend rebuild level3: odd
+
+# With options
+rclone backend rebuild level3: odd -o priority=small
+```
+
+**B) Automatic Detection**:
+```bash
+# Auto-detect which backend needs rebuild
+rclone backend rebuild level3:
+# Prompts: "Odd backend missing 1,247 files. Rebuild? (y/n)"
+```
+
+**C) Use rclone sync** (doesn't work):
+```bash
+rclone sync level3: new-odd:
+# ❌ Would sync merged files, not particles
+# ❌ Doesn't understand particle structure
+```
+
+**Proposed Features**:
+
+**MVP (Phase 1)**:
+- Basic rebuild command
+- Progress display
+- Verification
+
+**Advanced (Phase 2)**:
+- Check/analysis mode (`-o check-only=true`)
+- Priority options (`-o priority=dirs|small|large`)
+- Size filtering (`-o max-size=100M`)
+- Dry-run (`-o dry-run=true`)
+
+**Verification (Phase 3)**:
+- Separate verify command
+- Health status report
+
+**Terminology Decision**:
+- ✅ **"Rebuild"** (standard RAID term, not "recover")
+- Used by: mdadm, hardware RAID, ZFS (resilver), industry standard
+
+**Implementation Complexity**:
+- MVP: ~200 lines, 4-6 hours
+- Full: ~1,250 lines, 14-23 hours
+- Reuses existing: SplitBytes(), MergeBytes(), CalculateParity()
+
+**vs. Self-Healing**:
+- Self-healing: Automatic, opportunistic, gradual (during reads)
+- Rebuild: Manual, complete, fast (dedicated process)
+- **Both needed!** Different use cases
+
+**Investigation**:
+- [x] Research RAID terminology → "Rebuild" is standard
+- [x] Check rclone backend command pattern → `fs.Commander` interface
+- [x] Design command structure → Single command with options
+- [ ] Decide if/when to implement
+
+**User-Centric Approach** (NEW):
+
+The concern: Users may not know about `backend` commands or how to discover them!
+
+**Better UX - Multi-Layer Discovery**:
+
+1. **Enhanced Error Messages** (when write fails):
+   ```
+   ERROR: Cannot write - level3 DEGRADED (odd unavailable)
+   Diagnose: rclone backend status level3:
+   ```
+
+2. **`status` Command** (central diagnostic tool):
+   ```bash
+   $ rclone backend status level3:
+   # Shows: Full health report + step-by-step recovery guide
+   ```
+
+3. **`rebuild` Command** (for actual rebuild):
+   ```bash
+   $ rclone backend rebuild level3: odd
+   # Or: rclone backend status level3: --rebuild
+   ```
+
+**Benefits**:
+- ✅ Error messages guide users
+- ✅ `status` command provides complete recovery guide
+- ✅ No RAID knowledge required
+- ✅ Natural discovery path
+
+**Recommendation**: 
+- **Phase 1**: Enhanced error messages (1 hour) ⭐ **Do first**
+- **Phase 2**: `status` command (3-4 hours) ⭐ **Critical for UX**
+- **Phase 3**: `rebuild` command (4-6 hours) ⭐ **Completes workflow**
+
+**Total effort**: 8-11 hours for excellent UX
+
+**Priority**: 🟡 **Medium-High** (critical for production usability)
+
+**Who decides**: You (maintainer)
+
+**References**: 
+- `docs/REBUILD_RECOVERY_RESEARCH.md` (technical analysis)
+- `docs/USER_CENTRIC_RECOVERY.md` (UX analysis) ⭐ **NEW**
+
+---
+
 ## 🟢 Low Priority
 
-### Q4: Configurable Write Policy
+### Q5: Configurable Write Policy
 **Question**: Should users be able to choose degraded write mode?
 
 **Context**: Some users might prefer high availability over consistency
@@ -142,23 +275,16 @@ RAID 3 Backend
 
 ---
 
-### Q5: Explicit Rebuild Command
-**Question**: Should we add `rclone backend rebuild level3:` command?
+### Q6: Explicit Rebuild Command
+**Status**: ⚠️ **SUPERSEDED by Q4**
 
-**Context**: Self-healing handles automatic restoration, but explicit rebuild might be useful
+**Note**: This question is now fully addressed in Q4 with comprehensive research.
 
-**Use cases**:
-- Manual intervention when self-healing fails
-- Rebuild entire backend after restoring from backup
-- Verification mode (rebuild and compare)
-
-**Status**: Future enhancement (not needed now)
-
-**References**: `docs/ERROR_HANDLING_POLICY.md`
+See: Q4 (Rebuild Command for Backend Replacement) and `docs/REBUILD_RECOVERY_RESEARCH.md`
 
 ---
 
-### Q6: Move with Degraded Source
+### Q7: Move with Degraded Source
 **Question**: Current behavior allows moving files with missing particles. Is this desired?
 
 **Current**: Move succeeds, degraded state propagated to new location
@@ -174,7 +300,7 @@ RAID 3 Backend
 
 ---
 
-### Q7: Cross-Backend Move/Copy
+### Q8: Cross-Backend Move/Copy
 **Question**: How should level3 handle copying FROM level3 TO level3?
 
 **Context**: Same backend overlap issue as `union` and `combine`

@@ -654,10 +654,11 @@ func TestHealthCheckEnforcesStrictWrites(t *testing.T) {
 	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
 	_, err = f.Put(ctx, bytes.NewReader(data), info)
 
-	// Should fail with clear message
+	// Should fail with enhanced error message (Phase 1: user-centric errors)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "write blocked in degraded mode", "Error should mention degraded mode")
-	assert.Contains(t, err.Error(), "odd backend unavailable", "Error should identify unavailable backend")
+	assert.Contains(t, err.Error(), "cannot write - level3 backend is DEGRADED", "Error should mention degraded mode")
+	assert.Contains(t, err.Error(), "❌ odd:    UNAVAILABLE", "Error should show odd backend status")
+	assert.Contains(t, err.Error(), "rclone backend status level3:", "Error should guide to status command")
 
 	// Verify no particles created in available backends
 	evenPath := filepath.Join(evenDir, remote)
