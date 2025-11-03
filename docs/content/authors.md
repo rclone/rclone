@@ -1036,3 +1036,4 @@ put them back in again.` >}}
 - Lukas Krejci <metlos@users.noreply.github.com>
 - Riaz Arbi <riazarbi@users.noreply.github.com>
 - Fawzib Rojas <fawzib.rojas@gmail.com>
+- fries1234 <fries1234@protonmail.com>
