@@ -1780,44 +1780,44 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	var (
 		evenErr, oddErr, parityErr error
 	)
-	
+
 	// Try even
 	evenErr = f.even.Rmdir(ctx, dir)
-	
+
 	// Try odd
 	oddErr = f.odd.Rmdir(ctx, dir)
-	
+
 	// Try parity
 	parityErr = f.parity.Rmdir(ctx, dir)
-	
+
 	// If at least one backend succeeded, consider it success (best-effort)
 	if evenErr == nil || oddErr == nil || parityErr == nil {
 		return nil
 	}
-	
+
 	// All backends failed. Check what kind of failures
 	// Handle both fs.ErrorDirNotFound and OS-level "not exist" errors
 	evenNotFound := errors.Is(evenErr, fs.ErrorDirNotFound) || os.IsNotExist(evenErr)
 	oddNotFound := errors.Is(oddErr, fs.ErrorDirNotFound) || os.IsNotExist(oddErr)
 	parityNotFound := errors.Is(parityErr, fs.ErrorDirNotFound) || os.IsNotExist(parityErr)
-	
+
 	// Best-effort logic for degraded mode:
 	// - If removing a truly non-existent directory (all backends agree it never existed),
 	//   return error for compatibility with rclone test suite
 	// - If in degraded mode (some backends unavailable/inaccessible), treat as success
 	//   because we successfully removed from available backends
-	
+
 	// Check if this looks like a truly non-existent directory vs degraded mode
 	// In degraded mode, at least one backend would have a different error than "not found"
 	// (e.g., connection refused, backend unavailable, etc.)
 	allNotFound := evenNotFound && oddNotFound && parityNotFound
-	
+
 	if allNotFound {
 		// All backends consistently report "directory not found"
 		// This is the expected behavior for removing a non-existent directory
 		return fs.ErrorDirNotFound
 	}
-	
+
 	// Mixed results: some "not found", some other errors
 	// This indicates degraded mode or partial success
 	// Treat as success (best-effort) if any backend reported "not found"
@@ -1825,7 +1825,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if evenNotFound || oddNotFound || parityNotFound {
 		return nil
 	}
-	
+
 	// All backends failed with non-"not found" errors (e.g., "directory not empty")
 	// Return one of them to maintain rclone test compatibility
 	return evenErr

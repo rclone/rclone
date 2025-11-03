@@ -3,14 +3,17 @@ package level3_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/backend/level3"
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
@@ -56,7 +59,7 @@ func TestIntegration(t *testing.T) {
 }
 
 // TestStandard runs the full rclone integration test suite with local
-// temporary directories.
+// temporary directories (default timeout_mode=standard).
 //
 // This is the primary test for CI/CD pipelines, as it doesn't require any
 // external backends or configuration. It creates three temp directories and
@@ -89,6 +92,81 @@ func TestStandard(t *testing.T) {
 			{Name: name, Key: "even", Value: evenDir},
 			{Name: name, Key: "odd", Value: oddDir},
 			{Name: name, Key: "parity", Value: parityDir},
+		},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
+		QuickTestOK:                  true,
+	})
+}
+
+// TestStandardBalanced runs the full integration suite with timeout_mode=balanced.
+//
+// This tests the "balanced" timeout configuration which uses moderate retries
+// (3 attempts) and timeouts (30s) for S3/MinIO backends. This is a middle ground
+// between standard (long timeouts) and aggressive (fast failover).
+//
+// This test verifies:
+//   - All operations work correctly with balanced timeout settings
+//   - Appropriate for reliable S3 backends
+//   - No regressions from timeout configuration changes
+//
+// Failure indicates: Timeout mode configuration affects core functionality.
+func TestStandardBalanced(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	name := "TestLevel3Balanced"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "level3"},
+			{Name: name, Key: "even", Value: evenDir},
+			{Name: name, Key: "odd", Value: oddDir},
+			{Name: name, Key: "parity", Value: parityDir},
+			{Name: name, Key: "timeout_mode", Value: "balanced"},
+		},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
+		QuickTestOK:                  true,
+	})
+}
+
+// TestStandardAggressive runs the full integration suite with timeout_mode=aggressive.
+//
+// This tests the "aggressive" timeout configuration which uses minimal retries
+// (1 attempt) and short timeouts (10s) for fast failover in S3/MinIO degraded mode.
+// This is the recommended setting for production S3 deployments.
+//
+// This test verifies:
+//   - All operations work correctly with aggressive timeout settings
+//   - Fast failover in degraded mode scenarios
+//   - No regressions from aggressive timeout configuration
+//
+// Failure indicates: Aggressive timeout mode breaks operations or causes
+// premature failures with local backends.
+func TestStandardAggressive(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	name := "TestLevel3Aggressive"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "level3"},
+			{Name: name, Key: "even", Value: evenDir},
+			{Name: name, Key: "odd", Value: oddDir},
+			{Name: name, Key: "parity", Value: parityDir},
+			{Name: name, Key: "timeout_mode", Value: "aggressive"},
 		},
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
@@ -1242,4 +1320,336 @@ func TestRenameFilePreservesParitySuffix(t *testing.T) {
 	newParityEvenPath := filepath.Join(parityDir, newRemoteEven+".parity-el")
 	_, err = os.Stat(newParityEvenPath)
 	require.NoError(t, err, "renamed file should have .parity-el suffix (even length preserved)")
+}
+
+// =============================================================================
+// Advanced Tests - Deep Subdirectories & Concurrency
+// =============================================================================
+
+// TestDeepNestedDirectories tests operations with deeply nested directory
+// structures (5 levels deep).
+//
+// Real-world filesystems often have deeply nested directories, and level3
+// must handle them correctly. This tests that particle files are stored at
+// the correct depth in all three backends, and that operations like list,
+// move, and delete work correctly at any depth.
+//
+// This test verifies:
+//   - Creating files in deep paths (a/b/c/d/e/file.txt)
+//   - Listing works at various depths
+//   - Moving files between deep directories
+//   - All three particles stored at correct depth
+//   - No path manipulation errors
+//   - Directory creation at all levels
+//
+// Failure indicates: Path handling is broken for deeply nested structures,
+// which would cause file corruption or loss in production.
+func TestDeepNestedDirectories(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+	f, err := level3.NewFs(ctx, "TestDeepNested", "", m)
+	require.NoError(t, err)
+
+	// Test 1: Create file in deeply nested directory (5 levels)
+	deepPath := "level1/level2/level3/level4/level5/deep-file.txt"
+	deepData := []byte("Content in deeply nested directory")
+	
+	// Create parent directories
+	err = f.Mkdir(ctx, "level1")
+	require.NoError(t, err)
+	err = f.Mkdir(ctx, "level1/level2")
+	require.NoError(t, err)
+	err = f.Mkdir(ctx, "level1/level2/level3")
+	require.NoError(t, err)
+	err = f.Mkdir(ctx, "level1/level2/level3/level4")
+	require.NoError(t, err)
+	err = f.Mkdir(ctx, "level1/level2/level3/level4/level5")
+	require.NoError(t, err)
+
+	// Upload file to deep path
+	info := object.NewStaticObjectInfo(deepPath, time.Now(), int64(len(deepData)), true, nil, nil)
+	obj, err := f.Put(ctx, bytes.NewReader(deepData), info)
+	require.NoError(t, err)
+	require.NotNil(t, obj)
+
+	// Verify all three particles exist at correct depth
+	evenPath := filepath.Join(evenDir, "level1/level2/level3/level4/level5/deep-file.txt")
+	oddPath := filepath.Join(oddDir, "level1/level2/level3/level4/level5/deep-file.txt")
+	parityPath := filepath.Join(parityDir, "level1/level2/level3/level4/level5/deep-file.txt.parity-el")
+	
+	_, err = os.Stat(evenPath)
+	require.NoError(t, err, "even particle should exist at deep path")
+	_, err = os.Stat(oddPath)
+	require.NoError(t, err, "odd particle should exist at deep path")
+	_, err = os.Stat(parityPath)
+	require.NoError(t, err, "parity particle should exist at deep path")
+
+	// Test 2: List at various depths
+	entries1, err := f.List(ctx, "level1")
+	require.NoError(t, err)
+	assert.True(t, len(entries1) > 0, "should list entries at level1")
+
+	entries3, err := f.List(ctx, "level1/level2/level3")
+	require.NoError(t, err)
+	assert.True(t, len(entries3) > 0, "should list entries at level3")
+
+	entries5, err := f.List(ctx, "level1/level2/level3/level4/level5")
+	require.NoError(t, err)
+	assert.Len(t, entries5, 1, "should list 1 file at level5")
+
+	// Test 3: Read file from deep path
+	obj2, err := f.NewObject(ctx, deepPath)
+	require.NoError(t, err)
+	rc, err := obj2.Open(ctx)
+	require.NoError(t, err)
+	readData, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, deepData, readData, "should read correct data from deep path")
+
+	// Test 4: Move file between deep directories
+	deepPath2 := "level1/level2/other/level4/level5/moved-file.txt"
+	err = f.Mkdir(ctx, "level1/level2/other")
+	require.NoError(t, err)
+	err = f.Mkdir(ctx, "level1/level2/other/level4")
+	require.NoError(t, err)
+	err = f.Mkdir(ctx, "level1/level2/other/level4/level5")
+	require.NoError(t, err)
+
+	doMove := f.Features().Move
+	require.NotNil(t, doMove)
+	movedObj, err := doMove(ctx, obj2, deepPath2)
+	require.NoError(t, err)
+	require.NotNil(t, movedObj)
+
+	// Verify particles moved to new deep path
+	newEvenPath := filepath.Join(evenDir, "level1/level2/other/level4/level5/moved-file.txt")
+	newOddPath := filepath.Join(oddDir, "level1/level2/other/level4/level5/moved-file.txt")
+	newParityPath := filepath.Join(parityDir, "level1/level2/other/level4/level5/moved-file.txt.parity-el")
+	
+	_, err = os.Stat(newEvenPath)
+	require.NoError(t, err, "even particle should exist at new deep path")
+	_, err = os.Stat(newOddPath)
+	require.NoError(t, err, "odd particle should exist at new deep path")
+	_, err = os.Stat(newParityPath)
+	require.NoError(t, err, "parity particle should exist at new deep path")
+
+	// Verify old paths are deleted
+	_, err = os.Stat(evenPath)
+	require.True(t, os.IsNotExist(err), "old even particle should be deleted")
+
+	t.Logf("✅ Deep nested directories (5 levels) work correctly")
+}
+
+// TestConcurrentOperations tests multiple simultaneous operations to detect
+// race conditions and concurrency issues.
+//
+// In production, level3 may face concurrent operations: multiple uploads,
+// simultaneous reads during self-healing, or operations during degraded mode.
+// This test stresses the backend with concurrent operations to ensure thread
+// safety and detect race conditions.
+//
+// This test verifies:
+//   - Concurrent Put operations don't corrupt data
+//   - Concurrent reads work correctly
+//   - Self-healing queue handles concurrent uploads
+//   - No race conditions in particle management
+//   - Errgroup coordination works correctly
+//
+// Failure indicates: Race conditions or concurrency bugs that would cause
+// data corruption or crashes in production under load.
+//
+// Note: Run with -race flag to detect race conditions:
+//   go test -race -run TestConcurrentOperations
+func TestConcurrentOperations(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	if testing.Short() {
+		t.Skip("Skipping stress test in short mode")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+	f, err := level3.NewFs(ctx, "TestConcurrent", "", m)
+	require.NoError(t, err)
+
+	// Test 1: Concurrent Put operations (10 files simultaneously)
+	t.Log("Testing concurrent Put operations...")
+	var wg sync.WaitGroup
+	numFiles := 10
+	errors := make(chan error, numFiles)
+
+	for i := 0; i < numFiles; i++ {
+		wg.Add(1)
+		go func(fileNum int) {
+			defer wg.Done()
+			
+			remote := fmt.Sprintf("concurrent-file-%d.txt", fileNum)
+			data := []byte(fmt.Sprintf("Concurrent content %d", fileNum))
+			info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
+			
+			_, err := f.Put(ctx, bytes.NewReader(data), info)
+			if err != nil {
+				errors <- fmt.Errorf("file %d: %w", fileNum, err)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	close(errors)
+
+	// Check for errors
+	var errList []error
+	for err := range errors {
+		errList = append(errList, err)
+	}
+	require.Empty(t, errList, "concurrent Put operations should succeed")
+
+	// Verify all files were created correctly
+	for i := 0; i < numFiles; i++ {
+		remote := fmt.Sprintf("concurrent-file-%d.txt", i)
+		obj, err := f.NewObject(ctx, remote)
+		require.NoError(t, err, "file %d should exist", i)
+		
+		// Verify content
+		rc, err := obj.Open(ctx)
+		require.NoError(t, err)
+		data, err := io.ReadAll(rc)
+		rc.Close()
+		require.NoError(t, err)
+		
+		expected := fmt.Sprintf("Concurrent content %d", i)
+		assert.Equal(t, expected, string(data), "file %d should have correct content", i)
+	}
+
+	// Test 2: Concurrent reads (read all files simultaneously)
+	t.Log("Testing concurrent Read operations...")
+	var wg2 sync.WaitGroup
+	readErrors := make(chan error, numFiles)
+
+	for i := 0; i < numFiles; i++ {
+		wg2.Add(1)
+		go func(fileNum int) {
+			defer wg2.Done()
+			
+			remote := fmt.Sprintf("concurrent-file-%d.txt", fileNum)
+			obj, err := f.NewObject(ctx, remote)
+			if err != nil {
+				readErrors <- fmt.Errorf("file %d: %w", fileNum, err)
+				return
+			}
+			
+			rc, err := obj.Open(ctx)
+			if err != nil {
+				readErrors <- fmt.Errorf("file %d: %w", fileNum, err)
+				return
+			}
+			defer rc.Close()
+			
+			_, err = io.ReadAll(rc)
+			if err != nil {
+				readErrors <- fmt.Errorf("file %d: %w", fileNum, err)
+			}
+		}(i)
+	}
+
+	wg2.Wait()
+	close(readErrors)
+
+	// Check for read errors
+	var readErrList []error
+	for err := range readErrors {
+		readErrList = append(readErrList, err)
+	}
+	require.Empty(t, readErrList, "concurrent Read operations should succeed")
+
+	// Test 3: Concurrent operations with self-healing
+	// Delete odd particles to trigger self-healing on next read
+	t.Log("Testing concurrent reads with self-healing...")
+	healRemotes := []string{
+		"concurrent-file-0.txt",
+		"concurrent-file-1.txt",
+		"concurrent-file-2.txt",
+	}
+	
+	for _, remote := range healRemotes {
+		oddPath := filepath.Join(oddDir, remote)
+		err := os.Remove(oddPath)
+		require.NoError(t, err)
+	}
+
+	// Read all heal files concurrently (should trigger self-healing)
+	var wg3 sync.WaitGroup
+	healErrors := make(chan error, len(healRemotes))
+
+	for _, remote := range healRemotes {
+		wg3.Add(1)
+		go func(r string) {
+			defer wg3.Done()
+			
+			obj, err := f.NewObject(ctx, r)
+			if err != nil {
+				healErrors <- err
+				return
+			}
+			
+			rc, err := obj.Open(ctx)
+			if err != nil {
+				healErrors <- err
+				return
+			}
+			defer rc.Close()
+			
+			_, err = io.ReadAll(rc)
+			if err != nil {
+				healErrors <- err
+			}
+		}(remote)
+	}
+
+	wg3.Wait()
+	close(healErrors)
+
+	// Check for heal errors
+	var healErrList []error
+	for err := range healErrors {
+		healErrList = append(healErrList, err)
+	}
+	require.Empty(t, healErrList, "concurrent self-healing should succeed")
+
+	// Wait for self-healing to complete
+	shutdowner, ok := f.(fs.Shutdowner)
+	require.True(t, ok, "fs should implement Shutdowner")
+	err = shutdowner.Shutdown(ctx)
+	require.NoError(t, err)
+
+	// Verify healed particles were restored
+	for _, remote := range healRemotes {
+		oddPath := filepath.Join(oddDir, remote)
+		_, err := os.Stat(oddPath)
+		require.NoError(t, err, "odd particle for %s should be restored", remote)
+	}
+
+	t.Logf("✅ Concurrent operations (10 files, 3 heals) completed successfully")
 }
