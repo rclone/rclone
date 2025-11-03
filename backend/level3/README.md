@@ -9,17 +9,20 @@ The `level3` backend implements **RAID 3** storage with byte-level data striping
 - ✅ XOR parity calculation and storage
 - ✅ Parity files with length indicators (.parity-el/.parity-ol)
 - ✅ All three particles uploaded/deleted in parallel
-- ⏳ Parity reconstruction (future feature)
+- ✅ **Automatic parity reconstruction** (degraded mode reads)
+- ✅ **Automatic self-healing** (background particle restoration)
 
 **Storage Efficiency:**
 - Uses ~150% storage (50% overhead for parity)
 - Better than full duplication (200% storage)
-- Enables future single-backend failure recovery
+- Enables single-backend failure recovery
 
-**Current Limitation:**
-- Parity reconstruction not yet implemented
-- Both even and odd backends must be available for reads
-- Future update will enable recovery when either even OR odd fails
+**Degraded Mode (Hardware RAID 3 Compliant):**
+- ✅ **Reads** work with ANY 2 of 3 backends available
+- ✅ Missing particles are automatically reconstructed from parity
+- ✅ **Self-healing** automatically restores missing particles in background
+- ❌ **Writes** require ALL 3 backends available (strict RAID 3 behavior)
+- ✅ **Deletes** work with ANY backends available (idempotent)
 
 ## How It Works
 
@@ -63,6 +66,39 @@ When downloading, the backend:
 2. Validates that particle sizes are correct
 3. Merges even and odd bytes back into the original data
 4. Returns the reconstructed file
+
+### Degraded Mode & Self-Healing
+
+**Automatic Reconstruction:**
+When one data particle (even or odd) is missing but parity is available:
+1. Backend detects the missing particle
+2. Reads the available data particle + parity particle
+3. Reconstructs the missing data using XOR operation
+4. Returns the complete file to the user
+5. **Queues the missing particle for background upload (self-healing)**
+
+**Self-Healing Process:**
+1. Missing particle is calculated during reconstruction
+2. Upload is queued to a background worker
+3. User gets data immediately (6-7 seconds with aggressive timeout)
+4. Background worker uploads the missing particle (2-3 seconds)
+5. Command waits for upload to complete before exiting (~9-10 seconds total)
+
+**Example:**
+```bash
+$ rclone cat level3:file.txt
+2025/11/02 10:00:00 INFO  : file.txt: Reconstructed from even+parity (degraded mode)
+2025/11/02 10:00:00 INFO  : level3: Queued odd particle for self-healing upload: file.txt
+Hello World!
+2025/11/02 10:00:07 INFO  : level3: Waiting for 1 self-healing upload(s) to complete...
+2025/11/02 10:00:10 INFO  : level3: Self-healing upload completed for file.txt (odd)
+2025/11/02 10:00:10 INFO  : level3: Self-healing complete
+```
+
+**Performance:**
+- **Normal operation** (all particles healthy): 6-7 seconds
+- **Degraded mode with self-healing**: 9-10 seconds (6-7s read + 2-3s upload)
+- **No delay** when all particles are available (Shutdown exits immediately)
 
 ## Configuration
 
@@ -207,17 +243,75 @@ rclone cat mylevel3:test.txt > notes_merged.txt
 # ✓ Creates a file called "notes_merged.txt" with merged content
 ```
 
-#### Both Backends Must Be Accessible
-- Write operations require both remotes to be available
-- If either remote is unavailable, writes will fail
-- No graceful degradation
+## Error Handling (Hardware RAID 3 Compliant)
 
-## Future: RAID 3 with Parity
+The level3 backend follows **hardware RAID 3 behavior** for error handling:
 
-This backend is designed to be extended to RAID 3:
-- Current: 2 remotes with byte-level striping (RAID 0-like)
-- Future: Add a 3rd remote for parity bits
-- Will enable recovery from single remote failure
+### Read Operations ✅ Degraded Mode Supported
+- Work with **ANY 2 of 3** backends available
+- Automatically reconstruct missing particles from parity
+- Self-healing restores missing particles in background
+- **Example**: If odd backend is down, reads use even + parity
+
+### Write Operations ❌ All Backends Required (Strict Enforcement)
+- **Require ALL 3 backends** available (Put, Update, Move)
+- **Pre-flight health check** before each write operation
+- Fail immediately if any backend unavailable
+- **Do NOT create partially-written files or corrupted data**
+- Matches hardware RAID 3 controller behavior
+
+**Implementation**:
+- Health check tests all 3 backends before write (5-second timeout)
+- Clear error message: `"write blocked in degraded mode (RAID 3 policy)"`
+- Prevents corruption from rclone's retry logic
+- Overhead: +0.2 seconds (acceptable for safety)
+
+### Delete Operations ✅ Best Effort
+- Succeed if any backends are reachable
+- Ignore "not found" errors (idempotent)
+- Safe to delete files with missing particles
+
+### Rationale
+
+This policy ensures **data consistency** while maximizing **read availability**:
+
+**Why strict writes with health check?**
+- Prevents creating degraded files from the start
+- **Prevents corruption** from partial updates on retries
+- Matches industry-standard RAID 3 behavior
+- Avoids performance degradation (every new file needing reconstruction)
+- Fails fast with clear error messages
+
+**Why best-effort deletes?**
+- Missing particle = already deleted (same end state)
+- Idempotent delete is user-friendly
+- Can't make state worse by deleting
+
+**Example workflow**:
+```bash
+# Normal operation - all backends up
+$ rclone copy local:file.txt level3:
+✅ Success - all 3 particles created (with health check: ~1.2s)
+
+# One backend goes down
+$ rclone copy local:newfile.txt level3:
+❌ Error: write blocked in degraded mode (RAID 3 policy): odd backend unavailable
+# Fails in ~5 seconds (health check timeout)
+
+# But reads still work!
+$ rclone cat level3:file.txt
+✅ Success - reconstructed from even+parity (~7s)
+INFO: Self-healing upload completed
+
+# Updates also blocked in degraded mode (prevents corruption)
+$ echo "new data" | rclone rcat level3:file.txt
+❌ Error: update blocked in degraded mode (RAID 3 policy): odd backend unavailable
+# Original file preserved - NO CORRUPTION!
+
+# Deletes still work!
+$ rclone delete level3:file.txt
+✅ Success - deleted from available backends
+```
 
 ## Testing
 

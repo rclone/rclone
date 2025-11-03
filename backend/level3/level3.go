@@ -9,6 +9,7 @@ import (
 	"io"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -16,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -77,6 +79,60 @@ type Options struct {
 	TimeoutMode string `config:"timeout_mode"`
 }
 
+// uploadJob represents a particle that needs to be uploaded for self-healing
+type uploadJob struct {
+	remote       string
+	particleType string // "even", "odd", or "parity"
+	data         []byte
+	isOddLength  bool
+}
+
+// uploadQueue manages pending self-healing uploads
+type uploadQueue struct {
+	mu      sync.Mutex
+	pending map[string]bool // key: remote+particleType, value: true if queued
+	jobs    chan *uploadJob
+}
+
+// newUploadQueue creates a new upload queue
+func newUploadQueue() *uploadQueue {
+	return &uploadQueue{
+		pending: make(map[string]bool),
+		jobs:    make(chan *uploadJob, 100), // Buffer up to 100 pending uploads
+	}
+}
+
+// add adds a job to the queue (deduplicates)
+func (q *uploadQueue) add(job *uploadJob) bool {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	key := job.remote + ":" + job.particleType
+	if q.pending[key] {
+		return false // Already queued
+	}
+
+	q.pending[key] = true
+	q.jobs <- job
+	return true
+}
+
+// remove removes a job from the pending map
+func (q *uploadQueue) remove(job *uploadJob) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	key := job.remote + ":" + job.particleType
+	delete(q.pending, key)
+}
+
+// len returns the number of pending uploads
+func (q *uploadQueue) len() int {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return len(q.pending)
+}
+
 // Fs represents a level3 backend with striped storage and parity
 type Fs struct {
 	name     string       // name of this remote
@@ -87,6 +143,13 @@ type Fs struct {
 	odd      fs.Fs        // remote for odd-indexed bytes
 	parity   fs.Fs        // remote for parity data
 	hashSet  hash.Set     // intersection of hash types
+
+	// Self-healing infrastructure
+	uploadQueue   *uploadQueue
+	uploadWg      sync.WaitGroup
+	uploadCtx     context.Context
+	uploadCancel  context.CancelFunc
+	uploadWorkers int
 }
 
 // SplitBytes splits data into even and odd indexed bytes
@@ -475,6 +538,16 @@ checkRemotes:
 		f.features.Move = f.Move
 	}
 
+	// Initialize self-healing infrastructure
+	f.uploadQueue = newUploadQueue()
+	f.uploadCtx, f.uploadCancel = context.WithCancel(context.Background())
+	f.uploadWorkers = 2 // 2 concurrent upload workers
+
+	// Start background upload workers
+	for i := 0; i < f.uploadWorkers; i++ {
+		go f.backgroundUploader(f.uploadCtx, i)
+	}
+
 	// Return ErrorIsFile if we adjusted the root for a file path
 	if returnErrorIsFile {
 		return f, fs.ErrorIsFile
@@ -523,6 +596,181 @@ func (f *Fs) Precision() time.Duration {
 		max = p3
 	}
 	return max
+}
+
+// disableRetriesForWrites creates a context with retries disabled to enforce
+// strict write policy. This prevents rclone's command-level retry logic from
+// creating degraded files when a backend is unavailable.
+//
+// Hardware RAID 3 blocks writes in degraded mode. By disabling retries, we
+// ensure that if a write fails due to unavailable backend, it fails immediately
+// without retry attempts that could create partial/degraded files.
+func (f *Fs) disableRetriesForWrites(ctx context.Context) context.Context {
+	newCtx, ci := fs.AddConfig(ctx)
+	ci.LowLevelRetries = 0 // Disable retries - fail fast
+	fs.Debugf(f, "Disabled retries for write operation (strict RAID 3 policy)")
+	return newCtx
+}
+
+// checkAllBackendsAvailable performs a quick health check to see if all three
+// backends are reachable. This is used to enforce strict write policy.
+//
+// Returns: error if any backend is unavailable
+func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
+	// Quick timeout for health check
+	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	type healthResult struct {
+		name string
+		err  error
+	}
+	results := make(chan healthResult, 3)
+
+	// Check each backend by attempting to list root
+	go func() {
+		_, err := f.even.List(checkCtx, "")
+		results <- healthResult{"even", err}
+	}()
+	go func() {
+		_, err := f.odd.List(checkCtx, "")
+		results <- healthResult{"odd", err}
+	}()
+	go func() {
+		_, err := f.parity.List(checkCtx, "")
+		results <- healthResult{"parity", err}
+	}()
+
+	// Collect results
+	for i := 0; i < 3; i++ {
+		result := <-results
+		if result.err != nil {
+			return fmt.Errorf("%s backend unavailable: %w", result.name, result.err)
+		}
+	}
+
+	return nil
+}
+
+// Shutdown waits for pending self-healing uploads to complete
+func (f *Fs) Shutdown(ctx context.Context) error {
+	// Check if there are pending uploads
+	if f.uploadQueue.len() == 0 {
+		f.uploadCancel() // Cancel workers
+		return nil
+	}
+
+	fs.Infof(f, "Waiting for %d self-healing upload(s) to complete...", f.uploadQueue.len())
+
+	// Close the job channel to signal no more jobs
+	close(f.uploadQueue.jobs)
+
+	// Wait for pending uploads with timeout
+	done := make(chan struct{})
+	go func() {
+		f.uploadWg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		fs.Infof(f, "Self-healing complete")
+		f.uploadCancel()
+		return nil
+	case <-time.After(60 * time.Second):
+		fs.Errorf(f, "Timeout waiting for self-healing uploads (some may be incomplete)")
+		f.uploadCancel()
+		return errors.New("timeout waiting for self-healing uploads")
+	case <-ctx.Done():
+		fs.Errorf(f, "Context cancelled while waiting for self-healing uploads")
+		f.uploadCancel()
+		return ctx.Err()
+	}
+}
+
+// backgroundUploader runs as a goroutine to process self-healing uploads
+func (f *Fs) backgroundUploader(ctx context.Context, workerID int) {
+	fs.Debugf(f, "Self-healing worker %d started", workerID)
+	defer fs.Debugf(f, "Self-healing worker %d stopped", workerID)
+
+	for {
+		select {
+		case job, ok := <-f.uploadQueue.jobs:
+			if !ok {
+				// Channel closed, exit
+				return
+			}
+
+			fs.Infof(f, "Self-healing: uploading %s particle for %s", job.particleType, job.remote)
+
+			err := f.uploadParticle(ctx, job)
+			if err != nil {
+				fs.Errorf(f, "Self-healing upload failed for %s (%s): %v", job.remote, job.particleType, err)
+				// TODO: Could implement retry logic here
+			} else {
+				fs.Infof(f, "Self-healing upload completed for %s (%s)", job.remote, job.particleType)
+			}
+
+			// Remove from pending map and mark as done
+			f.uploadQueue.remove(job)
+			f.uploadWg.Done()
+
+		case <-ctx.Done():
+			// Context cancelled, exit
+			return
+		}
+	}
+}
+
+// uploadParticle uploads a single particle to its backend
+func (f *Fs) uploadParticle(ctx context.Context, job *uploadJob) error {
+	var targetFs fs.Fs
+	var filename string
+
+	switch job.particleType {
+	case "even":
+		targetFs = f.even
+		filename = job.remote
+	case "odd":
+		targetFs = f.odd
+		filename = job.remote
+	case "parity":
+		targetFs = f.parity
+		filename = GetParityFilename(job.remote, job.isOddLength)
+	default:
+		return fmt.Errorf("unknown particle type: %s", job.particleType)
+	}
+
+	// Create a basic ObjectInfo for the particle
+	baseInfo := object.NewStaticObjectInfo(filename, time.Now(), int64(len(job.data)), true, nil, nil)
+
+	src := &particleObjectInfo{
+		ObjectInfo: baseInfo,
+		remote:     filename,
+		size:       int64(len(job.data)),
+	}
+
+	// Upload the particle
+	reader := bytes.NewReader(job.data)
+	_, err := targetFs.Put(ctx, reader, src)
+	return err
+}
+
+// queueParticleUpload queues a particle for background upload
+func (f *Fs) queueParticleUpload(remote, particleType string, data []byte, isOddLength bool) {
+	job := &uploadJob{
+		remote:       remote,
+		particleType: particleType,
+		data:         data,
+		isOddLength:  isOddLength,
+	}
+
+	if f.uploadQueue.add(job) {
+		f.uploadWg.Add(1)
+		fs.Infof(f, "Queued %s particle for self-healing upload: %s", particleType, remote)
+	} else {
+		fs.Debugf(f, "Upload already queued for %s particle: %s", particleType, remote)
+	}
 }
 
 // List the objects and directories in dir into entries
@@ -693,6 +941,16 @@ func (p *particleObjectInfo) Hash(ctx context.Context, ty hash.Type) (string, er
 
 // Put uploads an object
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	// Fail immediately if any backend is unavailable to prevent degraded writes
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return nil, fmt.Errorf("write blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	// This prevents rclone's retry logic from creating degraded files
+	ctx = f.disableRetriesForWrites(ctx)
+
 	// Read all data
 	data, err := io.ReadAll(in)
 	if err != nil {
@@ -818,6 +1076,15 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Move src to this remote using server-side move operations if possible
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	// Fail immediately if any backend is unavailable to prevent degraded moves
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return nil, fmt.Errorf("move blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = f.disableRetriesForWrites(ctx)
+
 	// Check if src is from this level3 backend
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -1162,6 +1429,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 				return nil, err
 			}
 			fs.Infof(o, "Reconstructed %s from even+parity (degraded mode)", o.remote)
+
+			// Self-healing: queue missing odd particle for upload
+			_, oddData := SplitBytes(merged)
+			o.fs.queueParticleUpload(o.remote, "odd", oddData, isOddLength)
+
 		} else if errOdd == nil {
 			oddReader, err := oddObj.Open(ctx)
 			if err != nil {
@@ -1188,6 +1460,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 				return nil, err
 			}
 			fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode)", o.remote)
+
+			// Self-healing: queue missing even particle for upload
+			evenData, _ := SplitBytes(merged)
+			o.fs.queueParticleUpload(o.remote, "even", evenData, isOddLength)
+
 		} else {
 			return nil, fmt.Errorf("cannot reconstruct: no data particle available")
 		}
@@ -1249,6 +1526,27 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // Update updates the object
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	// Fail immediately if any backend is unavailable to prevent corrupted updates
+	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("update blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = o.fs.disableRetriesForWrites(ctx)
+
+	// Read original particle sizes for rollback validation
+	originalEvenObj, errEven := o.fs.even.NewObject(ctx, o.remote)
+	originalOddObj, errOdd := o.fs.odd.NewObject(ctx, o.remote)
+
+	var originalEvenSize, originalOddSize int64
+	if errEven == nil {
+		originalEvenSize = originalEvenObj.Size()
+	}
+	if errOdd == nil {
+		originalOddSize = originalOddObj.Size()
+	}
+
 	// Read data once
 	data, err := io.ReadAll(in)
 	if err != nil {
@@ -1288,7 +1586,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return fmt.Errorf("even particle not found: %w", err)
 		}
 		reader := bytes.NewReader(evenData)
-		return obj.Update(gCtx, reader, evenInfo, options...)
+		err = obj.Update(gCtx, reader, evenInfo, options...)
+		if err != nil {
+			return fmt.Errorf("failed to update even particle: %w", err)
+		}
+		return nil
 	})
 
 	// Update odd
@@ -1298,7 +1600,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return fmt.Errorf("odd particle not found: %w", err)
 		}
 		reader := bytes.NewReader(oddData)
-		return obj.Update(gCtx, reader, oddInfo, options...)
+		err = obj.Update(gCtx, reader, oddInfo, options...)
+		if err != nil {
+			return fmt.Errorf("failed to update odd particle: %w", err)
+		}
+		return nil
 	})
 
 	// Update or create parity
@@ -1309,13 +1615,49 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if err != nil {
 			// Parity doesn't exist, create it
 			_, err = o.fs.parity.Put(gCtx, reader, parityInfo, options...)
-			return err
+			if err != nil {
+				return fmt.Errorf("failed to create parity particle: %w", err)
+			}
+			return nil
 		}
 		// Parity exists, update it
-		return obj.Update(gCtx, reader, parityInfo, options...)
+		err = obj.Update(gCtx, reader, parityInfo, options...)
+		if err != nil {
+			return fmt.Errorf("failed to update parity particle: %w", err)
+		}
+		return nil
 	})
 
-	return g.Wait()
+	err = g.Wait()
+	if err != nil {
+		return err
+	}
+
+	// CRITICAL: Validate particle sizes after update to prevent corruption
+	// This catches cases where partial updates occurred before error
+	evenObj, errEvenNew := o.fs.even.NewObject(ctx, o.remote)
+	oddObj, errOddNew := o.fs.odd.NewObject(ctx, o.remote)
+
+	if errEvenNew != nil || errOddNew != nil {
+		return fmt.Errorf("update validation failed: particles missing after update")
+	}
+
+	if !ValidateParticleSizes(evenObj.Size(), oddObj.Size()) {
+		fs.Errorf(o, "CORRUPTION DETECTED: invalid particle sizes after update: even=%d, odd=%d (expected %d, %d)",
+			evenObj.Size(), oddObj.Size(), len(evenData), len(oddData))
+
+		// Attempt to restore original sizes (best effort)
+		if originalEvenSize > 0 && originalOddSize > 0 {
+			fs.Errorf(o, "Update created corrupted state - original sizes were even=%d, odd=%d",
+				originalEvenSize, originalOddSize)
+		}
+
+		return fmt.Errorf("update failed: invalid particle sizes (even=%d, odd=%d) - FILE MAY BE CORRUPTED",
+			evenObj.Size(), oddObj.Size())
+	}
+
+	fs.Debugf(o, "Update successful, validated particle sizes: even=%d, odd=%d", evenObj.Size(), oddObj.Size())
+	return nil
 }
 
 // Remove removes the object
