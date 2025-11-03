@@ -130,7 +130,7 @@ func DownloadCheckFn(ctx context.Context, dst, src fs.Object) (equal bool, noHas
 	if err != nil {
 		return true, true, fmt.Errorf("failed to download: %w", err)
 	}
-	return equal, false, nil
+	return !equal, false, nil
 }
 
 // check potential conflicts (to avoid renaming if already identical)
