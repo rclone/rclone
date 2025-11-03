@@ -1736,6 +1736,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // Mkdir makes a directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	// Pre-flight health check: Enforce strict RAID 3 write policy
+	// Consistent with Put/Update/Move operations
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return err // Returns enhanced error with recovery guidance
+	}
+
 	g, gCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
@@ -1767,18 +1773,32 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // Rmdir removes a directory
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	// Best-effort delete policy (like Remove)
+	// Ignore "directory not found" errors - idempotent behavior
 	g, gCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		return f.even.Rmdir(gCtx, dir)
+		err := f.even.Rmdir(gCtx, dir)
+		if err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+			return err
+		}
+		return nil
 	})
 
 	g.Go(func() error {
-		return f.odd.Rmdir(gCtx, dir)
+		err := f.odd.Rmdir(gCtx, dir)
+		if err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+			return err
+		}
+		return nil
 	})
 
 	g.Go(func() error {
-		return f.parity.Rmdir(gCtx, dir)
+		err := f.parity.Rmdir(gCtx, dir)
+		if err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+			return err
+		}
+		return nil
 	})
 
 	return g.Wait()
