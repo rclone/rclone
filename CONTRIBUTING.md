@@ -269,8 +269,7 @@ altogether with an HTML report and test retries then from the
 project root:
 
 ```console
-go install github.com/rclone/rclone/fstest/test_all
-test_all -backends drive
+go run ./fstest/test_all -backends drive
 ```
 
 ### Full integration testing
@@ -581,8 +580,7 @@ remote or an fs.
 - Add your backend to `fstest/test_all/config.yaml`
   - Once you've done that then you can use the integration test framework from
     the project root:
-  - go install ./...
-  - test_all -backends remote
+  - `go run ./fstest/test_all -backends remote`
 
 Or if you want to run the integration tests manually:
 
