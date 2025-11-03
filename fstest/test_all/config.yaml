@@ -697,3 +697,6 @@ backends:
    fastlist: false
    extratime: 2.0
    listretries: 5
+ - backend: "kdrive"
+   remote: "TestKdrive:Private"
+
