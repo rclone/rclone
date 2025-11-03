@@ -683,3 +683,6 @@ backends:
      # The TestBisyncRemoteLocal/check_access_filters tests fail due to duplicated objects
      - cmd/bisync
    fastlist: false
+ - backend: "kdrive"
+   remote: "TestKdrive:Private"
+
