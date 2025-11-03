@@ -61,44 +61,122 @@ RAID 3 Backend
 
 ---
 
-## 🟡 Medium Priority
+## 🔴 High Priority
 
-### Q2: Streaming Support for Large Files
-**Question**: Should level3 support streaming to handle files larger than RAM?
+### Q2: Streaming Support for Large Files 🚨 **CRITICAL**
+**Question**: How should level3 handle large files (10+ GB) without loading entire file into memory?
+
+**Updated**: 2025-11-03  
+**Status**: 🚨 **CRITICAL ISSUE** - Blocking production use with large files
 
 **Context**:
-- Current: Loads entire file into memory
-- Works well for typical files (<1 GB)
-- May fail for very large files (>available RAM)
+- **Current**: Uses `io.ReadAll()` - loads ENTIRE file into memory
+- **Memory Usage**: ~3× file size (original + even + odd + parity + working)
+- **Problem**: 10 GB file requires ~30 GB RAM (not feasible)
+- **Major Backends**: S3, Google Drive, Mega all use streaming with chunks
+
+**Memory Comparison**:
+
+| File Size | Level3 (Current) | S3 Backend | Google Drive | Result |
+|-----------|------------------|------------|--------------|--------|
+| 100 MiB | ~300 MiB | ~5 MiB | ~8 MiB | ⚠️ Acceptable |
+| 1 GB | ~3 GB | ~20 MiB | ~8 MiB | ⚠️ Marginal |
+| 10 GB | ~30 GB | ~20 MiB | ~8 MiB | ❌ **FAILS** |
+| 100 GB | ~300 GB | ~20 MiB | ~8 MiB | ❌ **IMPOSSIBLE** |
 
 **Options**:
 
-**A) Keep current (memory buffering)**:
-- ✅ Simple implementation
-- ✅ Works for 99% of use cases
-- ❌ Limited by RAM size
+**A) Document limitation and keep current** (Short-term):
+- ✅ No code changes needed
+- ✅ Simple implementation stays
+- ❌ Limited to ~500 MiB - 1 GB files
+- ❌ Not suitable for video, backups, databases
+- **Status**: ✅ DONE (README updated with warning)
 
-**B) Add streaming support**:
-- ✅ Handle arbitrarily large files
-- ✅ Better memory efficiency
-- ❌ Complex implementation
-- ❌ Hash calculation still needs full read
+**B) Implement chunk-level striping** (Long-term) ⭐ **RECOMMENDED**:
+```go
+chunkSize := 8 * 1024 * 1024  // 8 MiB
+for {
+    chunk := make([]byte, chunkSize)
+    n, _ := io.ReadFull(in, chunk)
+    
+    evenChunk, oddChunk := SplitBytes(chunk[:n])
+    parityChunk := CalculateParity(evenChunk, oddChunk)
+    
+    // Stream to particle writers
+    evenWriter.Write(evenChunk)
+    oddWriter.Write(oddChunk)
+    parityWriter.Write(parityChunk)
+}
+```
+- ✅ Constant memory (~32 MiB)
+- ✅ Works with unlimited file sizes
+- ✅ Maintains byte-level striping semantics
+- ⚠️ Requires parallel writers (io.Pipe or OpenChunkWriter)
 
-**C) Hybrid (stream + optional buffering)**:
-- Use streaming for large files (>threshold)
-- Use buffering for small files (fast)
-- Most complex but most flexible
+**C) Implement OpenChunkWriter** (Best) ⭐⭐ **BEST LONG-TERM**:
+```go
+func (f *Fs) OpenChunkWriter(...) (fs.ChunkWriterInfo, fs.ChunkWriter, error) {
+    // Open chunk writers on all three backends
+    evenWriter, _ := f.even.OpenChunkWriter(...)
+    oddWriter, _ := f.odd.OpenChunkWriter(...)
+    parityWriter, _ := f.parity.OpenChunkWriter(...)
+    
+    return &level3ChunkWriter{...}
+}
 
-**Considerations**:
-- Hash calculation requires full file read anyway
-- Parity calculation needs all data
-- Most cloud files are <1 GB
+func (w *level3ChunkWriter) WriteChunk(ctx, chunkNum int, reader io.ReadSeeker) (int64, error) {
+    data, _ := io.ReadAll(reader)  // One chunk only (8 MiB)
+    evenChunk, oddChunk := SplitBytes(data)
+    parityChunk := CalculateParity(evenChunk, oddChunk)
+    // Write chunks to all three backends
+}
+```
+- ✅ Uses rclone's standard interface
+- ✅ Supports resumable uploads
+- ✅ Concurrent chunk uploads
+- ✅ Compatible with S3/Drive patterns
+- ⚠️ Requires backends to support OpenChunkWriter
+- ⚠️ More complex implementation
 
-**Recommendation**: Keep current implementation until users report issues
+**Investigation**:
+- [x] Analyzed S3 backend → Uses multipart with 5 MiB chunks
+- [x] Analyzed Google Drive → Uses resumable with 8 MiB chunks
+- [x] Analyzed level3 current code → Uses io.ReadAll() ❌
+- [x] Measured memory impact → 3× file size ❌
+- [ ] Determine which backends support OpenChunkWriter
+- [ ] Design level3ChunkWriter implementation
+- [ ] Test with 10 GB files
 
-**Who decides**: Based on user feedback
+**Recommendation**: 
 
-**Deadline**: None (wait for real-world usage)
+**Immediate** (Do now):
+- ✅ Document limitation in README (DONE)
+- ✅ Add warning to users (DONE)
+- Add test that verifies behavior with 100 MiB file
+- Consider adding OPEN_QUESTIONS note
+
+**Short-term** (Next sprint):
+- Implement Option B (chunk-level striping with io.Pipe)
+- Add `streaming_threshold` config option (default 100 MiB)
+- Test with 1 GB files
+
+**Long-term** (Future enhancement):
+- Implement Option C (OpenChunkWriter)
+- Add resumable upload support
+- Test with 10+ GB files
+- Remove file size limitation from README
+
+**Priority**: 🚨 **HIGH** (critical for production use with large files)
+
+**Who decides**: Maintainer / based on user requirements
+
+**Deadline**: Before promoting to production use with large files
+
+**References**: 
+- `docs/LARGE_FILE_ANALYSIS.md` (comprehensive analysis) ⭐ **NEW**
+
+---
 
 ---
 
@@ -373,14 +451,20 @@ See: Q4 (Rebuild Command for Backend Replacement) and `docs/REBUILD_RECOVERY_RES
 
 ---
 
+## 🟡 Medium Priority
+
+---
+
 ## 📊 Statistics
 
 **Total Open Questions**: 7  
-**High Priority**: 1  
-**Medium Priority**: 2  
+**High Priority**: 2 (Q1: Backend Help, Q2: Streaming 🚨)  
+**Medium Priority**: 1 (Q4: Rebuild Command)  
 **Low Priority**: 4  
 
 **Decisions Made**: 8 (see `DESIGN_DECISIONS.md`)
+
+**Critical Issues**: 1 (Q2: Large file streaming - blocking production use with >1 GB files)
 
 ---
 

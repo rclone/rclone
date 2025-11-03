@@ -24,6 +24,37 @@ The `level3` backend implements **RAID 3** storage with byte-level data striping
 - ❌ **Writes** require ALL 3 backends available (strict RAID 3 behavior)
 - ✅ **Deletes** work with ANY backends available (idempotent)
 
+## ⚠️ Current Limitations
+
+### File Size Limitation
+
+**IMPORTANT**: Level3 currently loads entire files into memory during upload/download operations.
+
+**File Size Guidelines:**
+- **Recommended**: Files up to **500 MiB**
+- **Maximum**: ~1-2 GB (depends on available system RAM)
+- **Memory Usage**: Approximately **3× file size** during operations
+  - Example: 1 GB file requires ~3 GB RAM
+  - Example: 100 MiB file requires ~300 MiB RAM
+
+**Why This Limitation Exists:**
+- Byte-level striping requires processing entire file
+- XOR parity calculation needs all data
+- Current implementation uses `io.ReadAll()` for simplicity
+
+**Future Plans**:
+- Streaming implementation with chunked processing (planned)
+- Will support unlimited file sizes with constant memory (~32 MiB)
+- Similar to S3's multipart upload approach
+
+**Workarounds for Very Large Files (>1 GB):**
+1. Use S3 backend directly (supports multipart uploads)
+2. Use Union backend with multiple remotes
+3. Split large files before uploading
+4. Wait for level3 streaming implementation
+
+**Related**: See `docs/LARGE_FILE_ANALYSIS.md` for technical details.
+
 ## How It Works
 
 ### Data Splitting with Parity
