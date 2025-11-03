@@ -145,7 +145,7 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 		request.Info = newInfo.Info
 	}
 	if o.fs.opt.SSECustomerKey != "" && o.fs.opt.SSECustomerKeyMD5 != "" {
-		request.ServerSideEncryption = api.ServerSideEncryption{
+		request.ServerSideEncryption = &api.ServerSideEncryption{
 			Mode:           "SSE-C",
 			Algorithm:      o.fs.opt.SSECustomerAlgorithm,
 			CustomerKey:    o.fs.opt.SSECustomerKeyBase64,
@@ -356,8 +356,8 @@ func (up *largeUpload) copyChunk(ctx context.Context, part int, partSize int64) 
 				CustomerKey:    up.o.fs.opt.SSECustomerKeyBase64,
 				CustomerKeyMd5: up.o.fs.opt.SSECustomerKeyMD5,
 			}
-			request.SourceServerSideEncryption = serverSideEncryptionConfig
-			request.DestinationServerSideEncryption = serverSideEncryptionConfig
+			request.SourceServerSideEncryption = &serverSideEncryptionConfig
+			request.DestinationServerSideEncryption = &serverSideEncryptionConfig
 		}
 		var response api.UploadPartResponse
 		resp, err := up.f.srv.CallJSON(ctx, &opts, &request, &response)
