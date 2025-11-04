@@ -15,7 +15,7 @@ notoc: true
 - [What providers does rclone support?](#providers)
 - [Download](/downloads/)
 - [Install](/install/)
-{{< rem MAINPAGELINK >}}
+<!-- MAINPAGELINK -->
 
 ## About rclone {#about}
 
