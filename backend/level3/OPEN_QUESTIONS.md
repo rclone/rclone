@@ -391,12 +391,18 @@ See: Q4 (Rebuild Command for Backend Replacement) and `docs/REBUILD_RECOVERY_RES
 
 ---
 
-### Q9: Compression Support with Streaming 🔮 **FUTURE**
-**Question**: Should level3 support optional compression (Snappy/Gzip) to reduce storage overhead?
+### Q9: Compression Support with Streaming 🔮 **DECISION NEEDED**
+**Question**: Should level3 support optional compression (Snappy/Gzip) to reduce storage overhead, and how should it be implemented?
 
 **Updated**: 2025-11-04  
-**Status**: Discussion complete, not scheduled for implementation yet  
+**Status**: Research complete, awaiting decision on whether to implement  
 **Related**: Q2 (Streaming - prerequisite)
+
+**Decision Points**:
+1. **Should we implement compression at all?** (Yes/No/Later)
+2. **If yes, which algorithm?** (Snappy vs Gzip vs Both)
+3. **How to implement?** (Architecture: Compress BEFORE or AFTER splitting)
+4. **When to implement?** (After streaming support - Q2)
 
 **Context**:
 - Current: 150% storage overhead (even + odd + parity)
@@ -455,29 +461,60 @@ D) **None** (Current):
 - No compression overhead
 - Higher storage costs
 
-**Recommendation**: 
-- **Phase 1**: Implement streaming (Q2) - **CRITICAL**
-- **Phase 2**: Add Snappy compression (optional feature)
-- **Phase 3**: Consider Gzip as alternative
-- **Always**: Compress BEFORE splitting (entropy insight!)
+**Recommendation** (if implementing): 
+- **Algorithm**: Snappy ⭐⭐⭐ (speed matches RAID 3 philosophy)
+  - Alternative: Gzip (better ratio but slower)
+  - Future: Make configurable (both options)
+- **Architecture**: ✅ **MUST compress BEFORE splitting** (critical!)
+  - Compress(original) → Split(compressed) → Parity → Store
+  - **NOT**: Split → Compress particles (destroys patterns, 40% worse!)
+- **Implementation Order**:
+  1. Phase 1: Streaming support (Q2) - **PREREQUISITE**
+  2. Phase 2: Add Snappy compression - optional feature
+  3. Phase 3: Add Gzip alternative - optional
+  4. Phase 4: Make algorithm configurable
 
 **Investigation**: ✅ **COMPLETE**
 - [x] Research Snappy vs Gzip algorithms
 - [x] Compare with rclone compress backend
-- [x] Analyze entropy impact of byte-striping
-- [x] Document correct compression order
-- [x] Calculate storage savings
-- **Documentation**: `docs/COMPRESSION_ANALYSIS.md`, `docs/ENTROPY_INSIGHT.md`
+- [x] Analyze entropy impact of byte-striping ⭐ **CRITICAL INSIGHT**
+- [x] Document correct compression order (compress BEFORE split!)
+- [x] Calculate storage savings (50% for text vs 23% if wrong order)
+- [x] Design streaming architecture
+- **Documentation**: 
+  - `docs/COMPRESSION_ANALYSIS.md` (30KB - full comparison)
+  - `docs/ENTROPY_INSIGHT.md` (user's critical insight)
 
-**Priority**: Low (requires Q2 streaming first)
+**Key Implementation Decisions to Make**:
+1. **Implement compression?** 
+   - ✅ Pros: 50% storage savings, lower bandwidth
+   - ❌ Cons: Added complexity, CPU overhead
+   - **Decision**: TBD
 
-**Deadline**: None (future enhancement)
+2. **Which algorithm first?**
+   - Option A: Snappy only (simpler, fast)
+   - Option B: Gzip only (better ratio, slower)
+   - Option C: Both, configurable (most flexible)
+   - **Decision**: TBD (recommend Snappy first)
+
+3. **Configuration approach?**
+   - Option A: Backend parameter: `compress=true`
+   - Option B: Transparent (always compress)
+   - Option C: Per-file metadata flag
+   - **Decision**: TBD (recommend Option A)
+
+**Priority**: Low (requires Q2 streaming first, but high value if implemented)
+
+**Who decides**: Project maintainer + user feedback on storage costs
+
+**Deadline**: None (future enhancement after streaming)
 
 **Estimated Effort**: 
-- Streaming (Q2): 20-30 hours
-- + Snappy: 10-15 hours
-- + Configuration: 5 hours
-- Total: ~35-50 hours
+- Streaming (Q2): 20-30 hours (prerequisite)
+- + Snappy implementation: 10-15 hours
+- + Configuration options: 5 hours
+- + Gzip alternative (optional): 8 hours
+- **Total**: ~35-58 hours (depending on scope)
 
 ---
 
@@ -679,9 +716,16 @@ C) **Support All Commands**:
 
 **Critical Issues**: 1 (Q2: Large file streaming - blocking production use with >1 GB files)
 
-**Research Complete**: 
-- Q9 (Compression) - Documentation ready, awaiting Q2 implementation
-- Q10 (Backend Commands) - Documentation ready, awaiting rclone community discussion
+**Research Complete - Awaiting Decisions**: 
+- Q9 (Compression with Snappy) - Research complete, decision needed on:
+  * Whether to implement at all
+  * Which algorithm (Snappy vs Gzip vs both)
+  * Configuration approach
+  * Prerequisite: Q2 streaming support
+- Q10 (Backend Commands & Tags) - Research complete, awaiting rclone community discussion:
+  * Whether to support backend commands
+  * Which commands to implement (tags are critical!)
+  * API design approach
 
 ---
 
