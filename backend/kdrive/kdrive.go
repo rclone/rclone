@@ -25,57 +25,24 @@ import (
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
 
 const (
-	rcloneClientID              = "" // unused currently
-	rcloneEncryptedClientSecret = "" // unused currently
-	minSleep                    = 10 * time.Millisecond
-	maxSleep                    = 2 * time.Second
-	decayConstant               = 2 // bigger for slower decay, exponential
-)
-
-// Globals
-var (
-	// Description of how to auth for this app
-	oauthConfig = &oauthutil.Config{
-		Scopes:       []string{"user_info", "accounts", "drive"},
-		AuthURL:      "https://login.infomaniak.com/authorize",
-		TokenURL:     "https://login.infomaniak.com/token",
-		ClientID:     rcloneClientID,
-		ClientSecret: "", //obscure.MustReveal(rcloneEncryptedClientSecret),
-		RedirectURL:  oauthutil.RedirectLocalhostURL,
-	}
+	minSleep      = 10 * time.Millisecond
+	maxSleep      = 2 * time.Second
+	decayConstant = 2 // bigger for slower decay, exponential
 )
 
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "Kdrive",
-		Description: "Infomaniak's kDrive",
+		Name:        "kdrive",
+		Description: "Infomaniak kDrive",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			optc := new(Options)
-			err := configstruct.Set(m, optc)
-			if err != nil {
-				fs.Errorf(nil, "Failed to read config: %v", err)
-			}
-			checkAuth := func(oauthConfig *oauthutil.Config, auth *oauthutil.AuthResult) error {
-				if auth == nil || auth.Form == nil {
-					return errors.New("form not found in response")
-				}
-				return nil
-			}
-			return oauthutil.ConfigOut("", &oauthutil.Options{
-				OAuth2Config: oauthConfig,
-				CheckAuth:    checkAuth,
-			})
-		},
-		Options: append(oauthutil.SharedOptions, []fs.Option{{
+		Options: []fs.Option{{
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -84,8 +51,17 @@ func init() {
 				encoder.EncodeLeftSpace | encoder.EncodeRightSpace |
 				encoder.EncodeInvalidUtf8),
 		}, {
-			Name:    "account_id",
-			Help:    "Fill the account ID that is to be considered for this kdrive.",
+			Name: "root_folder_id",
+			Help: "Fill in for rclone to use a non root folder as its starting point.",
+			// for default root, see https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
+			Default:   "1",
+			Advanced:  true,
+			Sensitive: true,
+		}, {
+			Name: "account_id",
+			Help: `Fill the account ID that is to be considered for this kdrive.
+When showing a folder on kdrive, you can find the account_id here:
+https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/...`,
 			Default: "",
 		}, {
 			Name: "drive_id",
@@ -98,16 +74,17 @@ https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...
 			Help:    `Access token generated in Infomaniak profile manager.`,
 			Default: "",
 		},
-		}...),
+		},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Enc         encoder.MultiEncoder `config:"encoding"`
-	AccountID   string               `config:"account_id"`
-	DriveID     string               `config:"drive_id"`
-	AccessToken string               `config:"access_token"`
+	Enc          encoder.MultiEncoder `config:"encoding"`
+	RootFolderID string               `config:"root_folder_id"`
+	AccountID    string               `config:"account_id"`
+	DriveID      string               `config:"drive_id"`
+	AccessToken  string               `config:"access_token"`
 }
 
 // Fs represents a remote kdrive
@@ -278,7 +255,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Get rootFolderID
-	rootID := "1" // see https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
+	rootID := f.opt.RootFolderID
 	f.dirCache = dircache.New(root, rootID, f)
 
 	// Find the current root
