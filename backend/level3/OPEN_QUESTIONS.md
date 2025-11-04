@@ -391,6 +391,96 @@ See: Q4 (Rebuild Command for Backend Replacement) and `docs/REBUILD_RECOVERY_RES
 
 ---
 
+### Q9: Compression Support with Streaming 🔮 **FUTURE**
+**Question**: Should level3 support optional compression (Snappy/Gzip) to reduce storage overhead?
+
+**Updated**: 2025-11-04  
+**Status**: Discussion complete, not scheduled for implementation yet  
+**Related**: Q2 (Streaming - prerequisite)
+
+**Context**:
+- Current: 150% storage overhead (even + odd + parity)
+- With Snappy: 75% overhead for text (50% savings!)
+- With Gzip: 50% overhead for text (67% savings!)
+- **Critical**: Requires streaming support first (Q2)
+
+**⚠️ CRITICAL INSIGHT** (from user):
+**Compression order affects entropy and compression ratio!**
+- ✅ **Correct**: Compress BEFORE splitting (preserves patterns, 2× ratio)
+- ❌ **Wrong**: Compress AFTER splitting (increases entropy, 1.5× ratio)
+- **Impact**: Correct order gives **2× better savings** (50% vs 23%)!
+
+**Why Entropy Matters**:
+```
+Original: "The quick brown fox..."
+  → Patterns: "The quick", "brown", repeating words
+  → Compression: 2× ratio ✅
+
+After byte-striping:
+  Even: "T u c  r w  o ..." (fragmented)
+  Odd: "hqikbon..." (high entropy)
+  → Patterns broken!
+  → Compression: 1.5× ratio ⚠️ (40% worse)
+```
+
+**Correct Architecture**:
+```
+Compress(original) → Split(compressed bytes) → Parity(compressed) → Store
+Reconstruction: Merge(compressed bytes) → Decompress → Original
+```
+
+**Options**:
+
+A) **Snappy** (Recommended) ⭐⭐⭐:
+- ✅ Speed: 250-500 MB/s (matches RAID 3 philosophy)
+- ✅ CPU: Very low (5-10%)
+- ✅ Framing: Native RFC 8478 (perfect for streaming)
+- ✅ Savings: 50% for text, 10% for binary
+- ⚠️ Ratio: Moderate (1.5-2×)
+
+B) **Gzip** (Better ratio, slower):
+- ✅ Ratio: 2.5-3.5× (better than Snappy)
+- ✅ Savings: 67% for text
+- ⚠️ Speed: 50-100 MB/s (slower)
+- ⚠️ CPU: Moderate-high (30-80%)
+- ⚠️ Framing: Needs sgzip for random access
+
+C) **Both** (Configurable):
+- User chooses: `compress=true, type=snappy|gzip`
+- Best flexibility
+- More complex implementation
+
+D) **None** (Current):
+- Simple implementation
+- No compression overhead
+- Higher storage costs
+
+**Recommendation**: 
+- **Phase 1**: Implement streaming (Q2) - **CRITICAL**
+- **Phase 2**: Add Snappy compression (optional feature)
+- **Phase 3**: Consider Gzip as alternative
+- **Always**: Compress BEFORE splitting (entropy insight!)
+
+**Investigation**: ✅ **COMPLETE**
+- [x] Research Snappy vs Gzip algorithms
+- [x] Compare with rclone compress backend
+- [x] Analyze entropy impact of byte-striping
+- [x] Document correct compression order
+- [x] Calculate storage savings
+- **Documentation**: `docs/COMPRESSION_ANALYSIS.md`, `docs/ENTROPY_INSIGHT.md`
+
+**Priority**: Low (requires Q2 streaming first)
+
+**Deadline**: None (future enhancement)
+
+**Estimated Effort**: 
+- Streaming (Q2): 20-30 hours
+- + Snappy: 10-15 hours
+- + Configuration: 5 hours
+- Total: ~35-50 hours
+
+---
+
 ## 📋 Process for Resolving Questions
 
 ### When a Question is Answered:
@@ -457,14 +547,16 @@ See: Q4 (Rebuild Command for Backend Replacement) and `docs/REBUILD_RECOVERY_RES
 
 ## 📊 Statistics
 
-**Total Open Questions**: 7  
-**High Priority**: 2 (Q1: Backend Help, Q2: Streaming 🚨)  
+**Total Open Questions**: 9  
+**High Priority**: 2 (Q1: Backend Help, Q2: Streaming 🚨 **CRITICAL**)  
 **Medium Priority**: 1 (Q4: Rebuild Command)  
-**Low Priority**: 4  
+**Low Priority**: 6 (Q3, Q5, Q6, Q7, Q8, Q9)  
 
 **Decisions Made**: 8 (see `DESIGN_DECISIONS.md`)
 
 **Critical Issues**: 1 (Q2: Large file streaming - blocking production use with >1 GB files)
+
+**Research Complete**: Q9 (Compression) - Documentation ready, awaiting Q2 implementation
 
 ---
 
