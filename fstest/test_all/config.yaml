@@ -164,6 +164,9 @@ backends:
  - backend:  "gofile"
    remote:   "TestGoFile:"
    fastlist: true
+ - backend:   "filejump"
+   remote:    "TestFileJump:"
+   extratime: 2.0 
  - backend:  "filescom"
    remote:   "TestFilesCom:"
    fastlist: false
