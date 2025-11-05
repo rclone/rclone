@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
+	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -192,6 +193,9 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 
 	found, err := f.listAll(ctx, directoryID, false, true, false, func(item *api.Item) bool {
 		if item.Name == leaf {
+			info = item
+			return true
+		} else if norm.NFC.String(item.Name) == norm.NFC.String(leaf) {
 			info = item
 			return true
 		}
@@ -373,7 +377,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 			Path:       fmt.Sprintf("/3/drive/%s/files/%s/files", f.opt.DriveID, currentDirID),
 			Parameters: url.Values{},
 		}
-		opts.Parameters.Set("with", "path")
+		opts.Parameters.Set("with", "path,hash")
 		if len(fromCursor) > 0 {
 			opts.Parameters.Set("cursor", fromCursor)
 		}
@@ -712,7 +716,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Create temporary object
-	_, leaf, directoryID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
+	moveDst, leaf, directoryID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
 	if err != nil {
 		return nil, err
 	}
@@ -729,6 +733,20 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.ResultStatus.Update(err)
+		if err != nil && err.(*api.ResultStatus) != nil {
+			if err.(*api.ResultStatus).ErrorDetail.Result == "conflict_error" {
+				// Destination already exists => remove if and retry
+				err = moveDst.readMetaData(ctx)
+				if err != nil {
+					return false, err
+				}
+				err = moveDst.Remove(ctx)
+				if err != nil {
+					return false, err
+				}
+				return true, nil
+			}
+		}
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -962,6 +980,9 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	o.size = info.Size
 	o.modTime = info.ModTime()
 	o.id = strconv.Itoa(info.ID)
+	if len(o.xxh3) == 0 && len(info.Hash) > 0 {
+		o.xxh3 = strings.TrimPrefix(info.Hash, "xxh3:")
+	}
 	return nil
 }
 
@@ -1073,6 +1094,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	opts.Parameters.Set("total_size", fmt.Sprintf("%d", size))
 	opts.Parameters.Set("last_modified_at", fmt.Sprintf("%d", uint64(modTime.Unix())))
 	opts.Parameters.Set("conflict", "version")
+	opts.Parameters.Set("with", "hash")
 
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
