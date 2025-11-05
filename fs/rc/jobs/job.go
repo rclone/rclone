@@ -189,6 +189,22 @@ func (jobs *Jobs) IDs() (IDs []int64) {
 	return IDs
 }
 
+// Stats returns the IDs of the running and finished jobs
+func (jobs *Jobs) Stats() (running []int64, finished []int64) {
+	jobs.mu.RLock()
+	defer jobs.mu.RUnlock()
+	running = []int64{}
+	finished = []int64{}
+	for jobID := range jobs.jobs {
+		if jobs.jobs[jobID].Finished {
+			finished = append(finished, jobID)
+		} else {
+			running = append(running, jobID)
+		}
+	}
+	return running, finished
+}
+
 // Get a job with a given ID or nil if it doesn't exist
 func (jobs *Jobs) Get(ID int64) *Job {
 	jobs.mu.RLock()
@@ -409,6 +425,8 @@ Results:
 
 - executeId - string id of rclone executing (change after restart)
 - jobids - array of integer job ids (starting at 1 on each restart)
+- running_ids - array of integer job ids that are running
+- finished_ids - array of integer job ids that are finished
 `,
 	})
 }
@@ -417,6 +435,9 @@ Results:
 func rcJobList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
 	out["jobids"] = running.IDs()
+	runningIDs, finishedIDs := running.Stats()
+	out["running_ids"] = runningIDs
+	out["finished_ids"] = finishedIDs
 	out["executeId"] = executeID
 	return out, nil
 }
