@@ -167,6 +167,7 @@ type Item struct {
 	Type           string `json:"type"`
 	FullPath       string `json:"path"`
 	Status         string `json:"status"`
+	Hash           string `json:"hash"`
 	Size           int64  `json:"size"`
 	Visibility     string `json:"visibility"`
 	DriveID        int    `json:"drive_id"`
@@ -178,6 +179,7 @@ type Item struct {
 	LastModifiedBy int    `json:"last_modified_by"`
 	RevisedAt      int    `json:"revised_at"`
 	UpdatedAt      int    `json:"updated_at"`
+	MimeType       string `json:"mime_type"`
 	ParentID       int    `json:"parent_id"`
 	Color          string `json:"color"`
 }
