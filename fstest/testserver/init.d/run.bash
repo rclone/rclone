@@ -2,7 +2,7 @@
 set -euo pipefail
 
 BASE="${STATE_DIR:-${XDG_RUNTIME_DIR:-/tmp}/rclone-test-server}"
-NAME="$(basename "$0")"
+: "${NAME:=$(basename "$0")}"
 ROOT="${BASE}/${NAME}"
 STATE="${ROOT}/state"
 LOCKF="${ROOT}/lock"
