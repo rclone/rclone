@@ -25,7 +25,7 @@ opened their TCP ports.
 ## Writing new scripts
 
 A docker based server or an `rclone serve` based server should be easy
-to write. Look at once of the examples.
+to write. Look at one of the examples.
 
 `run.bash` contains boilerplate to be included in a bash script for
 interpreting the command line parameters. This does reference counting
@@ -41,3 +41,8 @@ implementations. It contains implementations of `stop()` and
 based implementations. It contains implementations of `stop()` and
 `status()` so all you have to do is write a `start()` function which
 should call the `run()` function provided.
+
+Any external TCP or UDP ports used should be unique as any of the
+servers might be running together. So please create a new line in the
+[PORTS](PORTS.md) file to allocate your server a port. Bind any ports
+to localhost so they aren't accessible externally.
