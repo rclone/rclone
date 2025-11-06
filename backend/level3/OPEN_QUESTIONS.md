@@ -702,17 +702,174 @@ C) **Support All Commands**:
 
 ## 🟡 Medium Priority
 
+### Q12: Bucket/Directory Renaming (DirMove) Limitation with S3
+**Question**: How should level3 handle directory/bucket renaming when underlying backends don't support DirMove?
+
+**Date Added**: November 6, 2025  
+**Status**: Limitation identified during testing  
+**Related**: S3/Minio backend limitations
+
+**Context**:
+- User attempted `rclone moveto miniolevel3:mybucket miniolevel3:mybucket2` to rename a bucket
+- S3/Minio backends don't support bucket renaming (fundamental S3 API limitation)
+- S3 backend doesn't implement `DirMove` at all - it's not just level3!
+- level3 now implements `DirMove` but it only works if **all three** underlying backends support it
+
+**Current Behavior**:
+```bash
+$ rclone moveto miniolevel3:mybucket miniolevel3:mybucket2
+# Falls back to file-by-file copy + delete
+# For empty buckets: creates destination bucket but source remains
+```
+
+**Why This Happens**:
+1. S3/Minio backends don't implement `DirMove` (S3 API limitation)
+2. level3's `DirMove` requires all 3 backends to support it
+3. rclone falls back to copy + delete (slow for large directories)
+4. Buckets can't be renamed in S3 (need to create new + copy + delete old)
+
+**What WOULD Work**:
+- Directory renaming **within** buckets (if backend supported DirMove)
+- Bucket renaming with backends like:
+  - Local filesystem
+  - SFTP
+  - FTP
+  - Any backend that implements DirMove
+
+**Options**:
+
+**A) Document as Known Limitation** (Current) ⭐ **RECOMMENDED**:
+- ✅ No code changes needed
+- ✅ Matches S3 behavior (can't rename buckets)
+- ✅ Clear in documentation
+- ⚠️ Users need to know: copy + delete instead of rename
+- **Status**: Already implemented
+
+**B) Improve Error Message**:
+```bash
+$ rclone moveto miniolevel3:mybucket miniolevel3:mybucket2
+ERROR: Cannot rename buckets with S3 backends (S3 API limitation)
+TIP: Use 'rclone copy' + 'rclone purge' instead for large datasets
+```
+- ✅ Clear guidance to users
+- ✅ Explains it's an S3 limitation, not level3
+- ⚠️ Need to detect bucket-level vs directory-level operations
+
+**C) Implement Special Handling for Empty Buckets**:
+- Create destination bucket on all 3 backends
+- Delete source bucket on all 3 backends  
+- Only works for empty buckets
+- ⚠️ Complex, limited benefit
+
+**D) No Action** (Accept Limitation):
+- S3 fundamentally doesn't support bucket renaming
+- Users of S3 are already familiar with this limitation
+- level3 behaves same as underlying S3 backend
+
+**Investigation**:
+- [x] Confirmed S3 backend has no DirMove implementation
+- [x] Tested bucket renaming behavior
+- [x] Verified level3 DirMove implementation works (when backends support it)
+- [ ] Test directory renaming within buckets (with supporting backends)
+- [ ] Add documentation to README about this limitation
+- [ ] Consider improved error messages
+
+**Real-World Impact**:
+- **Bucket renaming**: Not supported (fundamental S3 limitation)
+- **Directory renaming**: Would work with DirMove-capable backends
+- **Workaround**: `rclone copy source dest` + `rclone purge source`
+
+**Recommendation**: 
+- **Short-term**: Document as known limitation (Option A)
+- **Medium-term**: Add to README/FAQ with workaround instructions
+- **Long-term**: Consider improved error message (Option B) if users frequently encounter this
+
+**Priority**: 🟡 **Low-Medium** (S3 limitation users are familiar with)
+
+**Who decides**: Maintainer (document vs improve error)
+
+**Deadline**: None (known limitation, not critical)
+
+**Related Issues**:
+- S3 doesn't support bucket renaming at all
+- This affects all S3-based multi-backend systems
+- Workaround exists (copy + delete)
+
+---
+
+## ✅ Recently Resolved
+
+### Q11: Broken Object Consistency and Cleanup ✅ **RESOLVED**
+**Question**: How should level3 handle broken objects (only 1 particle) in listings and purge operations?
+
+**Date Resolved**: November 5, 2025  
+**Status**: ✅ **IMPLEMENTED**
+
+**Context**:
+- Manual testing revealed inconsistent behavior when buckets existed in only 1 remote
+- `rclone purge` showed error messages for broken objects but still succeeded
+- Needed consistent behavior across list/purge/delete operations
+
+**Problem**:
+```bash
+# Before: Confusing errors
+$ rclone purge miniolevel3:mybucket  # bucket in 1 remote only
+ERROR: Cannot find object file1.txt
+ERROR: Cannot find object file2.txt
+# ⚠️ Lots of errors, but still works
+```
+
+**Solution Implemented**: "Strict RAID 3 with Auto-Cleanup"
+- Added `auto_cleanup` option (default: `true`)
+- Objects with <2 particles are automatically hidden from listings
+- Delete operations silently clean up broken particles
+- Added `rclone cleanup` command for explicit cleanup
+
+**Implementation**:
+- ✅ `auto_cleanup` config option (default: true)
+- ✅ Particle counting helpers (`countParticlesSync`, `scanParticles`)
+- ✅ List() filters broken objects when `auto_cleanup=true`
+- ✅ `CleanUp()` interface implementation
+- ✅ Comprehensive tests (5 test cases)
+- ✅ Documentation in README
+
+**User Experience**:
+```bash
+# After: Clean, no errors
+$ rclone purge miniolevel3:mybucket  # bucket in 1 remote only
+# ✅ Works silently - no errors
+
+# Debug mode available if needed
+$ rclone config set myremote auto_cleanup false
+$ rclone ls myremote:  # Now shows broken objects
+```
+
+**Benefits**:
+- ✅ Clean UX (no confusing errors)
+- ✅ RAID 3 compliant ("object exists = object is readable")
+- ✅ Flexible (can disable for debugging)
+- ✅ Explicit cleanup command available
+- ✅ Self-cleaning (prevents fragment accumulation)
+
+**Related**:
+- `docs/CONSISTENCY_PROPOSAL.md` - Analysis and proposal
+- `docs/AUTO_CLEANUP_IMPLEMENTATION.md` - Implementation details
+
+**Who Decided**: User (hfischer) + maintainer discussion
+
 ---
 
 ## 📊 Statistics
 
-**Total Open Questions**: 10  
+**Total Open Questions**: 11  
 **High Priority**: 2 (Q1: Backend Help, Q2: Streaming 🚨 **CRITICAL**)  
 **Medium-High Priority**: 1 (Q10: Backend Commands & Tags 🤝 - awaiting community discussion)  
-**Medium Priority**: 1 (Q4: Rebuild Command)  
+**Medium Priority**: 2 (Q4: Rebuild Command, Q12: DirMove Limitation)  
 **Low Priority**: 6 (Q3, Q5, Q6, Q7, Q8, Q9)  
 
-**Decisions Made**: 8 (see `DESIGN_DECISIONS.md`)
+**Recently Resolved**: 1 (Q11: Broken Object Consistency - Auto-cleanup implemented)
+
+**Decisions Made**: 9 (see `DESIGN_DECISIONS.md`)
 
 **Critical Issues**: 1 (Q2: Large file streaming - blocking production use with >1 GB files)
 

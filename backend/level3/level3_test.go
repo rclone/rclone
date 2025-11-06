@@ -3,6 +3,7 @@ package level3_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
@@ -1238,9 +1240,121 @@ func TestMoveFileBetweenDirectories(t *testing.T) {
 	srcEvenPath := filepath.Join(evenDir, "src", "document.pdf")
 	dstEvenPath := filepath.Join(evenDir, "dst", "document.pdf")
 	_, err = os.Stat(srcEvenPath)
-	require.True(t, os.IsNotExist(err), "source even particle should be deleted")
+	require.True(t, os.IsNotExist(err), "source particle should be deleted")
 	_, err = os.Stat(dstEvenPath)
-	require.NoError(t, err, "destination even particle should exist")
+	require.NoError(t, err, "destination particle should exist")
+}
+
+// TestDirMove tests directory renaming using DirMove.
+//
+// This test verifies:
+//   - Directory can be renamed using DirMove operation
+//   - Source directory is removed after successful move
+//   - Destination directory exists with all particles
+//   - Works with local filesystem backends
+//
+// Failure indicates: DirMove doesn't properly handle directory renaming
+// or doesn't clean up source directory.
+func TestDirMove(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+	f, err := level3.NewFs(ctx, "TestDirMove", "", m)
+	require.NoError(t, err)
+
+	// Verify DirMove is supported
+	doDirMove := f.Features().DirMove
+	require.NotNil(t, doDirMove, "DirMove should be supported with local backends")
+
+	// Create source directory
+	srcDir := "mydir"
+	err = f.Mkdir(ctx, srcDir)
+	require.NoError(t, err)
+
+	// Create a file in the source directory to verify contents move
+	srcFile := "mydir/file.txt"
+	data := []byte("Test file content")
+	info := object.NewStaticObjectInfo(srcFile, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Verify source directory exists
+	entries, err := f.List(ctx, srcDir)
+	require.NoError(t, err)
+	require.Len(t, entries, 1, "source directory should contain one file")
+
+	// Move directory
+	dstDir := "mydir2"
+	
+	// Verify destination doesn't exist yet
+	_, err = f.List(ctx, dstDir)
+	require.Error(t, err, "destination should not exist before move")
+	require.True(t, errors.Is(err, fs.ErrorDirNotFound), "should get ErrorDirNotFound")
+	
+	// Create separate Fs instances for source and destination (as operations.DirMove does)
+	// Source Fs has root=srcDir, destination Fs has root=dstDir
+	srcFs, err := level3.NewFs(ctx, "TestDirMove", srcDir, m)
+	require.NoError(t, err)
+	dstFs, err := level3.NewFs(ctx, "TestDirMove", dstDir, m)
+	require.NoError(t, err)
+	
+	// Get DirMove from destination Fs
+	dstDoDirMove := dstFs.Features().DirMove
+	require.NotNil(t, dstDoDirMove, "destination Fs should support DirMove")
+	
+	// Perform the move - use destination Fs's DirMove, source Fs, and empty paths (they're at the roots)
+	err = dstDoDirMove(ctx, srcFs, "", "")
+	require.NoError(t, err, "DirMove should succeed")
+
+	// Verify source directory no longer exists
+	_, err = f.List(ctx, srcDir)
+	require.Error(t, err, "source directory should not exist after move")
+	require.True(t, errors.Is(err, fs.ErrorDirNotFound), "should get ErrorDirNotFound")
+
+	// Verify destination directory exists with file
+	entries, err = f.List(ctx, dstDir)
+	require.NoError(t, err)
+	require.Len(t, entries, 1, "destination directory should contain one file")
+
+	// Verify file content is correct
+	dstFile := "mydir2/file.txt"
+	obj, err := f.NewObject(ctx, dstFile)
+	require.NoError(t, err)
+	rc, err := obj.Open(ctx)
+	require.NoError(t, err)
+	got, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, data, got, "moved file should have same data")
+
+	// Verify particles moved in filesystem
+	srcEvenPath := filepath.Join(evenDir, srcDir)
+	dstEvenPath := filepath.Join(evenDir, dstDir)
+	_, err = os.Stat(srcEvenPath)
+	require.True(t, os.IsNotExist(err), "source directory should be deleted from even backend")
+	_, err = os.Stat(dstEvenPath)
+	require.NoError(t, err, "destination directory should exist on even backend")
+
+	// Verify on all three backends
+	for _, backendDir := range []string{evenDir, oddDir, parityDir} {
+		srcPath := filepath.Join(backendDir, srcDir)
+		dstPath := filepath.Join(backendDir, dstDir)
+		_, err := os.Stat(srcPath)
+		assert.True(t, os.IsNotExist(err), "source should be deleted on backend %s", backendDir)
+		_, err = os.Stat(dstPath)
+		assert.NoError(t, err, "destination should exist on backend %s", backendDir)
+	}
 }
 
 // TestRenameFilePreservesParitySuffix tests that renaming preserves the correct
@@ -1365,7 +1479,7 @@ func TestDeepNestedDirectories(t *testing.T) {
 	// Test 1: Create file in deeply nested directory (5 levels)
 	deepPath := "level1/level2/level3/level4/level5/deep-file.txt"
 	deepData := []byte("Content in deeply nested directory")
-	
+
 	// Create parent directories
 	err = f.Mkdir(ctx, "level1")
 	require.NoError(t, err)
@@ -1388,7 +1502,7 @@ func TestDeepNestedDirectories(t *testing.T) {
 	evenPath := filepath.Join(evenDir, "level1/level2/level3/level4/level5/deep-file.txt")
 	oddPath := filepath.Join(oddDir, "level1/level2/level3/level4/level5/deep-file.txt")
 	parityPath := filepath.Join(parityDir, "level1/level2/level3/level4/level5/deep-file.txt.parity-el")
-	
+
 	_, err = os.Stat(evenPath)
 	require.NoError(t, err, "even particle should exist at deep path")
 	_, err = os.Stat(oddPath)
@@ -1438,7 +1552,7 @@ func TestDeepNestedDirectories(t *testing.T) {
 	newEvenPath := filepath.Join(evenDir, "level1/level2/other/level4/level5/moved-file.txt")
 	newOddPath := filepath.Join(oddDir, "level1/level2/other/level4/level5/moved-file.txt")
 	newParityPath := filepath.Join(parityDir, "level1/level2/other/level4/level5/moved-file.txt.parity-el")
-	
+
 	_, err = os.Stat(newEvenPath)
 	require.NoError(t, err, "even particle should exist at new deep path")
 	_, err = os.Stat(newOddPath)
@@ -1472,7 +1586,8 @@ func TestDeepNestedDirectories(t *testing.T) {
 // data corruption or crashes in production under load.
 //
 // Note: Run with -race flag to detect race conditions:
-//   go test -race -run TestConcurrentOperations
+//
+//	go test -race -run TestConcurrentOperations
 func TestConcurrentOperations(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
@@ -1504,11 +1619,11 @@ func TestConcurrentOperations(t *testing.T) {
 		wg.Add(1)
 		go func(fileNum int) {
 			defer wg.Done()
-			
+
 			remote := fmt.Sprintf("concurrent-file-%d.txt", fileNum)
 			data := []byte(fmt.Sprintf("Concurrent content %d", fileNum))
 			info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
-			
+
 			_, err := f.Put(ctx, bytes.NewReader(data), info)
 			if err != nil {
 				errors <- fmt.Errorf("file %d: %w", fileNum, err)
@@ -1531,14 +1646,14 @@ func TestConcurrentOperations(t *testing.T) {
 		remote := fmt.Sprintf("concurrent-file-%d.txt", i)
 		obj, err := f.NewObject(ctx, remote)
 		require.NoError(t, err, "file %d should exist", i)
-		
+
 		// Verify content
 		rc, err := obj.Open(ctx)
 		require.NoError(t, err)
 		data, err := io.ReadAll(rc)
 		rc.Close()
 		require.NoError(t, err)
-		
+
 		expected := fmt.Sprintf("Concurrent content %d", i)
 		assert.Equal(t, expected, string(data), "file %d should have correct content", i)
 	}
@@ -1552,21 +1667,21 @@ func TestConcurrentOperations(t *testing.T) {
 		wg2.Add(1)
 		go func(fileNum int) {
 			defer wg2.Done()
-			
+
 			remote := fmt.Sprintf("concurrent-file-%d.txt", fileNum)
 			obj, err := f.NewObject(ctx, remote)
 			if err != nil {
 				readErrors <- fmt.Errorf("file %d: %w", fileNum, err)
 				return
 			}
-			
+
 			rc, err := obj.Open(ctx)
 			if err != nil {
 				readErrors <- fmt.Errorf("file %d: %w", fileNum, err)
 				return
 			}
 			defer rc.Close()
-			
+
 			_, err = io.ReadAll(rc)
 			if err != nil {
 				readErrors <- fmt.Errorf("file %d: %w", fileNum, err)
@@ -1592,7 +1707,7 @@ func TestConcurrentOperations(t *testing.T) {
 		"concurrent-file-1.txt",
 		"concurrent-file-2.txt",
 	}
-	
+
 	for _, remote := range healRemotes {
 		oddPath := filepath.Join(oddDir, remote)
 		err := os.Remove(oddPath)
@@ -1607,20 +1722,20 @@ func TestConcurrentOperations(t *testing.T) {
 		wg3.Add(1)
 		go func(r string) {
 			defer wg3.Done()
-			
+
 			obj, err := f.NewObject(ctx, r)
 			if err != nil {
 				healErrors <- err
 				return
 			}
-			
+
 			rc, err := obj.Open(ctx)
 			if err != nil {
 				healErrors <- err
 				return
 			}
 			defer rc.Close()
-			
+
 			_, err = io.ReadAll(rc)
 			if err != nil {
 				healErrors <- err
@@ -1652,4 +1767,643 @@ func TestConcurrentOperations(t *testing.T) {
 	}
 
 	t.Logf("✅ Concurrent operations (10 files, 3 heals) completed successfully")
+}
+
+// =============================================================================
+// Auto-Cleanup Tests
+// =============================================================================
+
+// TestAutoCleanupDefault tests that auto_cleanup defaults to true when not specified
+func TestAutoCleanupDefault(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temporary directories for three backends
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create level3 filesystem WITHOUT specifying auto_cleanup (should default to true)
+	l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+		// auto_cleanup NOT specified - should default to true
+	})
+	require.NoError(t, err, "Failed to create level3 filesystem")
+	defer func() {
+		_ = l3fs.Features().Shutdown(ctx)
+	}()
+
+	// Create a valid object (3 particles)
+	validData := []byte("This is a valid test file")
+	validObj, err := l3fs.Put(ctx, bytes.NewReader(validData), object.NewStaticObjectInfo("valid.txt", time.Now(), int64(len(validData)), true, nil, l3fs))
+	require.NoError(t, err, "Failed to create valid object")
+	require.NotNil(t, validObj, "Valid object should not be nil")
+
+	// Create a broken object manually (only 1 particle in even)
+	brokenData := []byte("broken file")
+	brokenPath := filepath.Join(evenDir, "broken.txt")
+	err = os.WriteFile(brokenPath, brokenData, 0644)
+	require.NoError(t, err, "Failed to create broken object particle")
+
+	// List should show only the valid object (broken should be hidden by default)
+	entries, err := l3fs.List(ctx, "")
+	require.NoError(t, err, "List should succeed")
+
+	// Count objects
+	objectCount := 0
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			objectCount++
+			assert.Equal(t, "valid.txt", entry.Remote(), "Should only see valid.txt")
+		}
+	}
+
+	assert.Equal(t, 1, objectCount, "Should see exactly 1 object (broken.txt should be hidden by default)")
+
+	t.Logf("✅ Auto-cleanup defaults to true: broken objects are hidden without explicit config")
+}
+
+// TestAutoCleanupEnabled tests that broken objects (1 particle) are hidden when auto_cleanup=true
+func TestAutoCleanupEnabled(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temporary directories for three backends
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create level3 filesystem with auto_cleanup=true (explicit)
+	l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "true",
+	})
+	require.NoError(t, err, "Failed to create level3 filesystem")
+	defer func() {
+		_ = l3fs.Features().Shutdown(ctx)
+	}()
+
+	// Create a valid object (3 particles)
+	validData := []byte("This is a valid test file")
+	validObj, err := l3fs.Put(ctx, bytes.NewReader(validData), object.NewStaticObjectInfo("valid.txt", time.Now(), int64(len(validData)), true, nil, l3fs))
+	require.NoError(t, err, "Failed to create valid object")
+	require.NotNil(t, validObj, "Valid object should not be nil")
+
+	// Create a broken object manually (only 1 particle in even)
+	brokenData := []byte("broken file")
+	brokenPath := filepath.Join(evenDir, "broken.txt")
+	err = os.WriteFile(brokenPath, brokenData, 0644)
+	require.NoError(t, err, "Failed to create broken object particle")
+
+	// List should show only the valid object, not the broken one
+	entries, err := l3fs.List(ctx, "")
+	require.NoError(t, err, "List should succeed")
+
+	// Count objects
+	objectCount := 0
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			objectCount++
+			assert.Equal(t, "valid.txt", entry.Remote(), "Should only see valid.txt")
+		}
+	}
+
+	assert.Equal(t, 1, objectCount, "Should see exactly 1 object (broken.txt should be hidden)")
+
+	t.Logf("✅ Auto-cleanup enabled: broken objects are hidden")
+}
+
+// TestAutoCleanupDisabled tests that broken objects are visible when auto_cleanup=false
+func TestAutoCleanupDisabled(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temporary directories for three backends
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create level3 filesystem with auto_cleanup=false
+	l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "false",
+	})
+	require.NoError(t, err, "Failed to create level3 filesystem")
+	defer func() {
+		_ = l3fs.Features().Shutdown(ctx)
+	}()
+
+	// Create a valid object (3 particles)
+	validData := []byte("This is a valid test file")
+	validObj, err := l3fs.Put(ctx, bytes.NewReader(validData), object.NewStaticObjectInfo("valid.txt", time.Now(), int64(len(validData)), true, nil, l3fs))
+	require.NoError(t, err, "Failed to create valid object")
+	require.NotNil(t, validObj, "Valid object should not be nil")
+
+	// Create a broken object manually (only 1 particle in even)
+	brokenData := []byte("broken file")
+	brokenPath := filepath.Join(evenDir, "broken.txt")
+	err = os.WriteFile(brokenPath, brokenData, 0644)
+	require.NoError(t, err, "Failed to create broken object particle")
+
+	// List should show BOTH objects when auto_cleanup is disabled
+	entries, err := l3fs.List(ctx, "")
+	require.NoError(t, err, "List should succeed")
+
+	// Count objects
+	objectCount := 0
+	var objectNames []string
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			objectCount++
+			objectNames = append(objectNames, entry.Remote())
+		}
+	}
+
+	assert.Equal(t, 2, objectCount, "Should see both valid.txt and broken.txt")
+	assert.Contains(t, objectNames, "valid.txt", "Should see valid.txt")
+	assert.Contains(t, objectNames, "broken.txt", "Should see broken.txt")
+
+	// Reading broken.txt should fail (can't reconstruct from 1 particle)
+	brokenObj, err := l3fs.NewObject(ctx, "broken.txt")
+	assert.Error(t, err, "NewObject should fail for broken object with 1 particle")
+	assert.Nil(t, brokenObj, "Broken object should be nil")
+
+	t.Logf("✅ Auto-cleanup disabled: broken objects are visible")
+}
+
+// TestCleanUpCommand tests the CleanUp() method that removes broken objects
+func TestCleanUpCommand(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temporary directories for three backends
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create level3 filesystem with auto_cleanup=false (to see broken objects)
+	l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "false",
+	})
+	require.NoError(t, err, "Failed to create level3 filesystem")
+	defer func() {
+		_ = l3fs.Features().Shutdown(ctx)
+	}()
+
+	// Create 3 valid objects
+	for i := 1; i <= 3; i++ {
+		data := []byte(fmt.Sprintf("Valid file %d", i))
+		_, err := l3fs.Put(ctx, bytes.NewReader(data), object.NewStaticObjectInfo(fmt.Sprintf("valid%d.txt", i), time.Now(), int64(len(data)), true, nil, l3fs))
+		require.NoError(t, err, "Failed to create valid object %d", i)
+	}
+
+	// Create 5 broken objects manually (1 particle each, alternating even/odd)
+	for i := 1; i <= 5; i++ {
+		data := []byte(fmt.Sprintf("Broken file %d", i))
+		// Alternate between even and odd (skip parity for simplicity)
+		var path string
+		if i%2 == 0 {
+			path = filepath.Join(evenDir, fmt.Sprintf("broken%d.txt", i))
+		} else {
+			path = filepath.Join(oddDir, fmt.Sprintf("broken%d.txt", i))
+		}
+		err = os.WriteFile(path, data, 0644)
+		require.NoError(t, err, "Failed to create broken object %d", i)
+	}
+
+	// Verify we can see all 8 objects before cleanup
+	entries, err := l3fs.List(ctx, "")
+	require.NoError(t, err, "List should succeed")
+	initialCount := 0
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			initialCount++
+		}
+	}
+	assert.Equal(t, 8, initialCount, "Should see 8 objects total (3 valid + 5 broken)")
+
+	// Run CleanUp command
+	cleanUpFunc := l3fs.Features().CleanUp
+	require.NotNil(t, cleanUpFunc, "CleanUp feature should be available")
+	err = cleanUpFunc(ctx)
+	require.NoError(t, err, "CleanUp should succeed")
+
+	// Verify only valid objects remain
+	entries, err = l3fs.List(ctx, "")
+	require.NoError(t, err, "List should succeed after cleanup")
+	finalCount := 0
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			finalCount++
+			// All remaining objects should be valid*.txt
+			assert.Contains(t, entry.Remote(), "valid", "Only valid objects should remain")
+		}
+	}
+	assert.Equal(t, 3, finalCount, "Should see only 3 valid objects after cleanup")
+
+	t.Logf("✅ CleanUp command removed 5 broken objects")
+}
+
+// TestCleanUpRecursive tests CleanUp with nested directories
+func TestCleanUpRecursive(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temporary directories for three backends
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create level3 filesystem with auto_cleanup=false
+	l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "false",
+	})
+	require.NoError(t, err, "Failed to create level3 filesystem")
+	defer func() {
+		_ = l3fs.Features().Shutdown(ctx)
+	}()
+
+	// Create directory structure:
+	// /dir1/file1.txt (valid)
+	// /dir1/file2.txt (broken)
+	// /dir2/file3.txt (broken)
+	// /dir2/subdir/file4.txt (valid)
+	// /dir2/subdir/file5.txt (broken)
+
+	// Create directories
+	require.NoError(t, l3fs.Mkdir(ctx, "dir1"))
+	require.NoError(t, l3fs.Mkdir(ctx, "dir2"))
+	require.NoError(t, l3fs.Mkdir(ctx, "dir2/subdir"))
+
+	// Create valid files
+	data1 := []byte("Valid file 1")
+	_, err = l3fs.Put(ctx, bytes.NewReader(data1), object.NewStaticObjectInfo("dir1/file1.txt", time.Now(), int64(len(data1)), true, nil, l3fs))
+	require.NoError(t, err)
+
+	data4 := []byte("Valid file 4")
+	_, err = l3fs.Put(ctx, bytes.NewReader(data4), object.NewStaticObjectInfo("dir2/subdir/file4.txt", time.Now(), int64(len(data4)), true, nil, l3fs))
+	require.NoError(t, err)
+
+	// Create broken files manually (even and odd only, skip parity)
+	broken2Path := filepath.Join(evenDir, "dir1", "file2.txt")
+	require.NoError(t, os.WriteFile(broken2Path, []byte("broken2"), 0644))
+
+	broken3Path := filepath.Join(oddDir, "dir2", "file3.txt")
+	require.NoError(t, os.MkdirAll(filepath.Dir(broken3Path), 0755))
+	require.NoError(t, os.WriteFile(broken3Path, []byte("broken3"), 0644))
+
+	broken5Path := filepath.Join(evenDir, "dir2", "subdir", "file5.txt")
+	require.NoError(t, os.MkdirAll(filepath.Dir(broken5Path), 0755))
+	require.NoError(t, os.WriteFile(broken5Path, []byte("broken5"), 0644))
+
+	// Count objects before cleanup (should see 5 total)
+	initialCount := countAllObjects(t, ctx, l3fs, "")
+	assert.Equal(t, 5, initialCount, "Should see 5 objects before cleanup")
+
+	// Run CleanUp
+	cleanUpFunc := l3fs.Features().CleanUp
+	require.NotNil(t, cleanUpFunc)
+	err = cleanUpFunc(ctx)
+	require.NoError(t, err, "CleanUp should succeed")
+
+	// Count objects after cleanup (should see only 2 valid)
+	finalCount := countAllObjects(t, ctx, l3fs, "")
+	assert.Equal(t, 2, finalCount, "Should see only 2 valid objects after cleanup")
+
+	t.Logf("✅ CleanUp removed broken objects from nested directories")
+}
+
+// TestPurgeWithAutoCleanup tests that purge works correctly with auto-cleanup enabled
+func TestPurgeWithAutoCleanup(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temporary directories for three backends
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create level3 filesystem with auto_cleanup=true
+	l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "true",
+	})
+	require.NoError(t, err, "Failed to create level3 filesystem")
+	defer func() {
+		_ = l3fs.Features().Shutdown(ctx)
+	}()
+
+	// Create a subdirectory
+	require.NoError(t, l3fs.Mkdir(ctx, "mybucket"))
+
+	// Create some valid files
+	for i := 1; i <= 3; i++ {
+		data := []byte(fmt.Sprintf("File %d", i))
+		_, err := l3fs.Put(ctx, bytes.NewReader(data), object.NewStaticObjectInfo(fmt.Sprintf("mybucket/file%d.txt", i), time.Now(), int64(len(data)), true, nil, l3fs))
+		require.NoError(t, err, "Failed to create file %d", i)
+	}
+
+	// Create a broken object manually (1 particle)
+	brokenPath := filepath.Join(evenDir, "mybucket", "broken.txt")
+	require.NoError(t, os.MkdirAll(filepath.Dir(brokenPath), 0755))
+	require.NoError(t, os.WriteFile(brokenPath, []byte("broken"), 0644))
+
+	// List should show only 3 files (broken is hidden)
+	entries, err := l3fs.List(ctx, "mybucket")
+	require.NoError(t, err)
+	count := 0
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			count++
+		}
+	}
+	assert.Equal(t, 3, count, "Should see only 3 valid files")
+
+	// Purge the bucket - should work without errors
+	// Use operations.Purge which falls back to List+Delete+Rmdir
+	err = operations.Purge(ctx, l3fs, "mybucket")
+	require.NoError(t, err, "Purge should succeed without errors")
+
+	// Verify bucket is gone
+	err = l3fs.Rmdir(ctx, "mybucket")
+	// Should succeed or return "directory not found" (both are OK)
+	if err != nil {
+		assert.True(t, err == fs.ErrorDirNotFound || os.IsNotExist(err), "Directory should be gone")
+	}
+
+	t.Logf("✅ Purge with auto-cleanup works without error messages")
+}
+
+// TestCleanUpOrphanedFiles tests cleanup of manually created files without proper suffixes
+func TestCleanUpOrphanedFiles(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temporary directories for three backends
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create level3 filesystem with auto_cleanup=false (to see orphaned files)
+	l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "false",
+	})
+	require.NoError(t, err, "Failed to create level3 filesystem")
+	defer func() {
+		_ = l3fs.Features().Shutdown(ctx)
+	}()
+
+	// Create a valid object (3 particles)
+	validData := []byte("Valid file")
+	_, err = l3fs.Put(ctx, bytes.NewReader(validData), object.NewStaticObjectInfo("valid.txt", time.Now(), int64(len(validData)), true, nil, l3fs))
+	require.NoError(t, err, "Failed to create valid object")
+
+	// Manually create orphaned files in each backend WITHOUT proper level3 structure
+	// (simulating user's scenario where files were manually created or partially deleted)
+	orphan1Path := filepath.Join(evenDir, "orphan1.txt")
+	require.NoError(t, os.WriteFile(orphan1Path, []byte("orphan in even"), 0644))
+
+	orphan2Path := filepath.Join(oddDir, "orphan2.txt")
+	require.NoError(t, os.WriteFile(orphan2Path, []byte("orphan in odd"), 0644))
+
+	// Critically: orphan in parity WITHOUT suffix (this was the bug!)
+	orphan3Path := filepath.Join(parityDir, "orphan3.txt")
+	require.NoError(t, os.WriteFile(orphan3Path, []byte("orphan in parity"), 0644))
+
+	// Verify we can see all 4 objects before cleanup (1 valid + 3 orphaned)
+	entries, err := l3fs.List(ctx, "")
+	require.NoError(t, err, "List should succeed")
+	initialCount := 0
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			initialCount++
+		}
+	}
+	assert.Equal(t, 4, initialCount, "Should see 4 objects (1 valid + 3 orphaned)")
+
+	// Run CleanUp command
+	cleanUpFunc := l3fs.Features().CleanUp
+	require.NotNil(t, cleanUpFunc, "CleanUp feature should be available")
+	err = cleanUpFunc(ctx)
+	require.NoError(t, err, "CleanUp should succeed")
+
+	// Verify only valid object remains
+	entries, err = l3fs.List(ctx, "")
+	require.NoError(t, err, "List should succeed after cleanup")
+	finalCount := 0
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			finalCount++
+			assert.Equal(t, "valid.txt", entry.Remote(), "Only valid.txt should remain")
+		}
+	}
+	assert.Equal(t, 1, finalCount, "Should see only 1 valid object after cleanup")
+
+	// Verify orphaned files are actually gone from disk
+	_, err = os.Stat(orphan1Path)
+	assert.True(t, os.IsNotExist(err), "orphan1.txt should be deleted from even")
+
+	_, err = os.Stat(orphan2Path)
+	assert.True(t, os.IsNotExist(err), "orphan2.txt should be deleted from odd")
+
+	_, err = os.Stat(orphan3Path)
+	assert.True(t, os.IsNotExist(err), "orphan3.txt should be deleted from parity (THIS WAS THE BUG!)")
+
+	t.Logf("✅ CleanUp successfully removed orphaned files including those in parity without suffix")
+}
+
+// TestAutoHealDirectoryReconstruction tests that auto_heal reconstructs missing directories
+func TestAutoHealDirectoryReconstruction(t *testing.T) {
+	ctx := context.Background()
+
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Test with auto_heal=true
+	t.Run("auto_heal=true reconstructs missing directory", func(t *testing.T) {
+		l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "true",
+		})
+		require.NoError(t, err)
+		defer l3fs.Features().Shutdown(ctx)
+
+		// Manually create directory on 2/3 backends (degraded state - 1dm)
+		testDir := "testdir_heal"
+		err = os.MkdirAll(filepath.Join(evenDir, testDir), 0755)
+		require.NoError(t, err)
+		err = os.MkdirAll(filepath.Join(oddDir, testDir), 0755)
+		require.NoError(t, err)
+		// Parity missing
+
+		// List the directory - should trigger reconstruction
+		_, err = l3fs.List(ctx, testDir)
+		require.NoError(t, err)
+
+		// Verify missing directory was reconstructed on parity
+		_, err = os.Stat(filepath.Join(parityDir, testDir))
+		assert.NoError(t, err, "Directory should be reconstructed on parity backend when auto_heal=true")
+	})
+
+	// Test with auto_heal=false
+	t.Run("auto_heal=false does NOT reconstruct missing directory", func(t *testing.T) {
+		l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "false",
+		})
+		require.NoError(t, err)
+		defer l3fs.Features().Shutdown(ctx)
+
+		// Manually create directory on 2/3 backends (degraded state)
+		testDir := "testdir_noheal"
+		err = os.MkdirAll(filepath.Join(evenDir, testDir), 0755)
+		require.NoError(t, err)
+		err = os.MkdirAll(filepath.Join(oddDir, testDir), 0755)
+		require.NoError(t, err)
+		// Parity missing
+
+		// List the directory - should NOT trigger reconstruction
+		_, err = l3fs.List(ctx, testDir)
+		require.NoError(t, err)
+
+		// Verify missing directory was NOT reconstructed on parity
+		_, err = os.Stat(filepath.Join(parityDir, testDir))
+		assert.True(t, os.IsNotExist(err), "Directory should NOT be reconstructed on parity when auto_heal=false")
+	})
+}
+
+// TestAutoHealDirMove tests that auto_heal controls reconstruction during DirMove
+func TestAutoHealDirMove(t *testing.T) {
+	ctx := context.Background()
+
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Test with auto_heal=true - should reconstruct missing directory during move
+	t.Run("auto_heal=true reconstructs during DirMove", func(t *testing.T) {
+		// Create Fs instances
+		l3fs, err := level3.NewFs(ctx, "level3", "", configmap.Simple{
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "true",
+		})
+		require.NoError(t, err)
+		defer l3fs.Features().Shutdown(ctx)
+
+		// Create source directory on 2/3 backends only (degraded - 1dm)
+		srcDir := "move_heal_src"
+		err = os.MkdirAll(filepath.Join(evenDir, srcDir), 0755)
+		require.NoError(t, err)
+		err = os.MkdirAll(filepath.Join(oddDir, srcDir), 0755)
+		require.NoError(t, err)
+		// Parity missing
+
+		// Create Fs instances for source and destination
+		srcFs, err := level3.NewFs(ctx, "level3", srcDir, configmap.Simple{
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "true",
+		})
+		require.NoError(t, err)
+		defer srcFs.Features().Shutdown(ctx)
+
+		dstFs, err := level3.NewFs(ctx, "level3", "move_heal_dst", configmap.Simple{
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "true",
+		})
+		require.NoError(t, err)
+		defer dstFs.Features().Shutdown(ctx)
+
+		// Perform DirMove
+		doDirMove := dstFs.Features().DirMove
+		require.NotNil(t, doDirMove)
+		err = doDirMove(ctx, srcFs, "", "")
+		require.NoError(t, err, "DirMove should succeed with reconstruction")
+
+		// Verify destination exists on all 3 backends (reconstructed)
+		_, err = os.Stat(filepath.Join(parityDir, "move_heal_dst"))
+		assert.NoError(t, err, "Destination should be created on parity (reconstruction)")
+	})
+
+	// Test with auto_heal=false - should fail if directory missing on backend
+	t.Run("auto_heal=false fails DirMove with degraded directory", func(t *testing.T) {
+		// Clean up
+		os.RemoveAll(filepath.Join(evenDir, "move_noheal_src"))
+		os.RemoveAll(filepath.Join(oddDir, "move_noheal_src"))
+		os.RemoveAll(filepath.Join(parityDir, "move_noheal_src"))
+		os.RemoveAll(filepath.Join(evenDir, "move_noheal_dst"))
+		os.RemoveAll(filepath.Join(oddDir, "move_noheal_dst"))
+		os.RemoveAll(filepath.Join(parityDir, "move_noheal_dst"))
+
+		// Create source directory on 2/3 backends only
+		srcDir := "move_noheal_src"
+		err := os.MkdirAll(filepath.Join(evenDir, srcDir), 0755)
+		require.NoError(t, err)
+		err = os.MkdirAll(filepath.Join(oddDir, srcDir), 0755)
+		require.NoError(t, err)
+		// Parity missing
+
+		// Create Fs instances
+		srcFs, err := level3.NewFs(ctx, "level3", srcDir, configmap.Simple{
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "false",
+		})
+		require.NoError(t, err)
+		defer srcFs.Features().Shutdown(ctx)
+
+		dstFs, err := level3.NewFs(ctx, "level3", "move_noheal_dst", configmap.Simple{
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "false",
+		})
+		require.NoError(t, err)
+		defer dstFs.Features().Shutdown(ctx)
+
+		// Perform DirMove - should fail because source missing on parity
+		doDirMove := dstFs.Features().DirMove
+		require.NotNil(t, doDirMove)
+		err = doDirMove(ctx, srcFs, "", "")
+		assert.Error(t, err, "DirMove should fail when auto_heal=false and directory degraded")
+		assert.Contains(t, err.Error(), "parity dirmove failed", "Error should indicate parity backend failure")
+	})
+}
+
+// Helper function to count objects recursively
+func countAllObjects(t *testing.T, ctx context.Context, f fs.Fs, dir string) int {
+	entries, err := f.List(ctx, dir)
+	require.NoError(t, err, "List should succeed")
+
+	count := 0
+	for _, entry := range entries {
+		switch e := entry.(type) {
+		case fs.Object:
+			count++
+		case fs.Directory:
+			count += countAllObjects(t, ctx, f, e.Remote())
+		}
+	}
+	return count
 }

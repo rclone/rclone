@@ -24,6 +24,138 @@ The `level3` backend implements **RAID 3** storage with byte-level data striping
 - ❌ **Writes** require ALL 3 backends available (strict RAID 3 behavior)
 - ✅ **Deletes** work with ANY backends available (idempotent)
 
+## 🧹 Auto-Cleanup and Auto-Heal
+
+**By default**, level3 provides two automatic features for handling degraded states:
+
+- **`auto_cleanup`**: Hides/deletes orphaned items (1/3 particles - cannot reconstruct)
+- **`auto_heal`**: Reconstructs missing items (2/3 particles - can reconstruct)
+
+### Configuration Options
+
+**Default behavior** (recommended - full automation):
+```bash
+rclone config create myremote level3 \
+    even remote1: \
+    odd remote2: \
+    parity remote3:
+# auto_cleanup defaults to true
+# auto_heal defaults to true
+```
+
+**Conservative mode** (cleanup only, no auto-reconstruction):
+```bash
+rclone config create myremote level3 \
+    even remote1: \
+    odd remote2: \
+    parity remote3: \
+    auto_cleanup true \
+    auto_heal false
+# Hides broken items but doesn't auto-reconstruct missing particles
+```
+
+**Debugging mode** (see everything, no automatic changes):
+```bash
+rclone config create myremote level3 \
+    even remote1: \
+    odd remote2: \
+    parity remote3: \
+    auto_cleanup false \
+    auto_heal false
+# Shows all objects/directories including broken ones
+# No automatic reconstruction or cleanup
+```
+
+### Behavior Matrix
+
+| auto_cleanup | auto_heal | Behavior |
+|--------------|-----------|----------|
+| `true` (default) | `true` (default) | Hide orphans (1/3) + Reconstruct degraded (2/3) - **Recommended** |
+| `true` | `false` | Hide orphans, but don't auto-reconstruct - **Conservative** |
+| `false` | `true` | Show everything + Reconstruct degraded - **Debugging with healing** |
+| `false` | `false` | Show everything, no changes - **Raw debugging mode** |
+
+### CleanUp Command
+
+**Important**: `auto_cleanup=true` only **hides** broken objects from listings. To **actually delete** them, you must run the cleanup command:
+
+```bash
+$ rclone cleanup myremote:mybucket
+Scanning for broken objects...
+Found 5 broken objects (total size: 3.0 KiB)
+Cleaned up 5 broken objects (freed 3.0 KiB)
+```
+
+**Note**: Broken objects are physically deleted from the remotes only when:
+- You explicitly run `rclone cleanup`
+- You delete/remove objects (best-effort cleanup during delete operations)
+
+**When to use**:
+- Cleaning up after backend failures
+- Recovering from partial write operations
+- Periodic maintenance
+- Before switching from `auto_cleanup=false` to `auto_cleanup=true`
+
+**What it removes**:
+- Objects with only 1 particle (even, odd, or parity)
+- Orphaned particles from failed operations
+- Does NOT remove valid objects (2+ particles)
+
+### Object and Directory States
+
+| Particles/Backends | State | auto_cleanup | auto_heal | Behavior |
+|-------------------|-------|--------------|-----------|----------|
+| **3/3** | Healthy | N/A | N/A | Normal operations |
+| **2/3** | Degraded | N/A | ✅ Enabled | Reconstruct missing particle/directory |
+| **2/3** | Degraded | N/A | ❌ Disabled | No reconstruction (manual rebuild needed) |
+| **1/3** | Orphaned | ✅ Enabled | N/A | Hide from listings, delete if accessed |
+| **1/3** | Orphaned | ❌ Disabled | N/A | Show in listings, operations may fail |
+
+**Terminology**:
+- **Degraded** (2/3): Missing 1 particle/directory - **can reconstruct** ✅
+- **Orphaned** (1/3): Missing 2 particles/directories - **cannot reconstruct** ❌
+
+**Examples**:
+
+**File with 2/3 particles** (degraded, reconstructable):
+```bash
+# auto_heal=true (default)
+$ rclone cat level3:file.txt
+# ✅ Reads successfully (reconstructs from even+odd or parity)
+# ✅ Queues missing particle for upload (self-healing)
+
+# auto_heal=false
+$ rclone cat level3:file.txt  
+# ✅ Reads successfully (reconstructs from available particles)
+# ❌ Does NOT queue self-healing upload
+```
+
+**Directory on 2/3 backends** (degraded, reconstructable):
+```bash
+# auto_heal=true (default)
+$ rclone ls level3:mydir
+# ✅ Lists contents
+# ✅ Creates missing directory on 3rd backend (reconstruction)
+
+# auto_heal=false
+$ rclone ls level3:mydir
+# ✅ Lists contents  
+# ❌ Does NOT create missing directory
+```
+
+**File with 1/3 particles** (orphaned, cannot reconstruct):
+```bash
+# auto_cleanup=true (default)
+$ rclone ls level3:
+# ✅ File hidden from listing (not shown)
+
+# auto_cleanup=false (debugging)
+$ rclone ls level3:
+# ✅ File shown in listing
+$ rclone cat level3:file.txt
+# ❌ Fails: cannot reconstruct from 1 particle
+```
+
 ## ⚠️ Current Limitations
 
 ### File Size Limitation

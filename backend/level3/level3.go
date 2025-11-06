@@ -68,6 +68,16 @@ This should be in the form 'remote:path'.`,
 					Help:  "Fast failover (1 retry, 10s) - best for S3 degraded mode",
 				},
 			},
+		}, {
+			Name:     "auto_cleanup",
+			Help:     "Automatically hide broken objects (only 1 particle) from listings",
+			Default:  true,
+			Advanced: false,
+		}, {
+			Name:     "auto_heal",
+			Help:     "Automatically reconstruct missing particles/directories (2/3 present)",
+			Default:  true,
+			Advanced: false,
 		}},
 		CommandHelp: commandHelp,
 	}
@@ -157,6 +167,8 @@ type Options struct {
 	Odd         string `config:"odd"`
 	Parity      string `config:"parity"`
 	TimeoutMode string `config:"timeout_mode"`
+	AutoCleanup bool   `config:"auto_cleanup"`
+	AutoHeal    bool   `config:"auto_heal"`
 }
 
 // uploadJob represents a particle that needs to be uploaded for self-healing
@@ -392,6 +404,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		return nil, err
 	}
 
+	// Apply defaults if not explicitly set
+	// (Go's zero value is false, but our defaults should be true)
+	if _, ok := m.Get("auto_cleanup"); !ok {
+		opt.AutoCleanup = true
+	}
+	if _, ok := m.Get("auto_heal"); !ok {
+		opt.AutoHeal = true
+	}
+
 	if opt.Even == "" {
 		return nil, errors.New("even must be set")
 	}
@@ -616,6 +637,11 @@ checkRemotes:
 	// Enable Move if all backends support it
 	if f.even.Features().Move != nil && f.odd.Features().Move != nil && f.parity.Features().Move != nil {
 		f.features.Move = f.Move
+	}
+
+	// Enable DirMove if all backends support it
+	if f.even.Features().DirMove != nil && f.odd.Features().DirMove != nil && f.parity.Features().DirMove != nil {
+		f.features.DirMove = f.DirMove
 	}
 
 	// Initialize self-healing infrastructure
@@ -1530,6 +1556,23 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	// If even fails, try odd
 	if errEven != nil {
 		if errOdd != nil {
+			// Both data backends failed - check if this is an orphaned directory
+			// that should be cleaned up before returning error
+			if f.opt.AutoCleanup {
+				// Check parity to see if directory is orphaned (exists only on parity)
+				_, errParity := f.parity.List(ctx, dir)
+				
+				// If parity exists but both data backends don't, this is orphaned
+				if errParity == nil {
+					dirPath := dir
+					if dirPath == "" {
+						dirPath = f.root
+					}
+					fs.Infof(f, "Auto-cleanup: removing orphaned directory %q (exists on 1/3 backends - parity only)", dirPath)
+					_ = f.parity.Rmdir(ctx, dir)
+					return nil, nil // Return empty list, no error
+				}
+			}
 			return nil, errEven // Return even error
 		}
 		// Continue with odd entries
@@ -1571,6 +1614,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for _, entry := range entryMap {
 		switch e := entry.(type) {
 		case fs.Object:
+			// If auto_cleanup is enabled, filter out broken objects (< 2 particles)
+			if f.opt.AutoCleanup {
+				particleCount := f.countParticlesSync(ctx, e.Remote())
+				if particleCount < 2 {
+					fs.Debugf(f, "List: Skipping broken object %s (only %d particle)", e.Remote(), particleCount)
+					continue
+				}
+			}
 			entries = append(entries, &Object{
 				fs:     f,
 				remote: e.Remote(),
@@ -1581,6 +1632,18 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				remote: e.Remote(),
 			})
 		}
+	}
+
+	// If auto_cleanup is enabled and the directory is empty, check for orphaned buckets/directories
+	// Orphaned buckets exist on < 2 backends and should be removed
+	if f.opt.AutoCleanup && len(entries) == 0 {
+		f.cleanupOrphanedDirectory(ctx, dir, errEven, errOdd)
+	}
+
+	// Reconstruct missing directories (1dm case: directory exists on 2/3 backends)
+	// This implements self-healing for degraded directory state
+	if f.opt.AutoHeal {
+		f.reconstructMissingDirectory(ctx, dir, errEven, errOdd)
 	}
 
 	return entries, nil
@@ -1831,6 +1894,116 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return evenErr
 }
 
+// CleanUp removes broken objects (only 1 particle present)
+// This implements the optional fs.CleanUpper interface
+func (f *Fs) CleanUp(ctx context.Context) error {
+	fs.Infof(f, "Scanning for broken objects...")
+
+	// Scan root directory recursively
+	brokenObjects, totalSize, err := f.findBrokenObjects(ctx, "")
+	if err != nil {
+		return fmt.Errorf("failed to scan for broken objects: %w", err)
+	}
+
+	if len(brokenObjects) == 0 {
+		fs.Infof(f, "No broken objects found")
+		return nil
+	}
+
+	fs.Infof(f, "Found %d broken objects (total size: %s)",
+		len(brokenObjects), fs.SizeSuffix(totalSize))
+
+	// Remove broken objects
+	var cleanedCount int
+	var cleanedSize int64
+	for _, obj := range brokenObjects {
+		fs.Infof(f, "Cleaning up broken object: %s (%d particle)",
+			obj.remote, obj.count)
+
+		err := f.removeBrokenObject(ctx, obj)
+		if err != nil {
+			fs.Errorf(f, "Failed to clean up %s: %v", obj.remote, err)
+			continue
+		}
+
+		cleanedCount++
+		cleanedSize += obj.size
+	}
+
+	fs.Infof(f, "Cleaned up %d broken objects (freed %s)",
+		cleanedCount, fs.SizeSuffix(cleanedSize))
+
+	return nil
+}
+
+// findBrokenObjects recursively finds all objects with only 1 particle
+func (f *Fs) findBrokenObjects(ctx context.Context, dir string) ([]particleInfo, int64, error) {
+	var brokenObjects []particleInfo
+	var totalSize int64
+
+	// Scan current directory
+	particles, err := f.scanParticles(ctx, dir)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Find broken objects (count == 1)
+	for _, p := range particles {
+		if p.count == 1 {
+			// Get size of the single particle
+			size := f.getBrokenObjectSize(ctx, p)
+			p.size = size
+			totalSize += size
+			brokenObjects = append(brokenObjects, p)
+		}
+	}
+
+	// Recursively scan subdirectories
+	entries, err := f.listDirectories(ctx, dir)
+	if err != nil {
+		fs.Debugf(f, "Failed to list directories in %s: %v", dir, err)
+	} else {
+		for _, entry := range entries {
+			if _, ok := entry.(fs.Directory); ok {
+				subBroken, subSize, err := f.findBrokenObjects(ctx, entry.Remote())
+				if err != nil {
+					fs.Errorf(f, "Failed to scan directory %s: %v", entry.Remote(), err)
+					continue
+				}
+				brokenObjects = append(brokenObjects, subBroken...)
+				totalSize += subSize
+			}
+		}
+	}
+
+	return brokenObjects, totalSize, nil
+}
+
+// listDirectories lists only directories (not objects) from a path
+// This is a helper for recursive directory scanning
+func (f *Fs) listDirectories(ctx context.Context, dir string) (fs.DirEntries, error) {
+	// Temporarily disable auto_cleanup to see all entries
+	origAutoCleanup := f.opt.AutoCleanup
+	f.opt.AutoCleanup = false
+	defer func() {
+		f.opt.AutoCleanup = origAutoCleanup
+	}()
+
+	entries, err := f.List(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var dirs fs.DirEntries
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Directory); ok {
+			dirs = append(dirs, entry)
+		}
+	}
+
+	return dirs, nil
+}
+
 // Move src to this remote using server-side move operations if possible
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	// Pre-flight check: Enforce strict RAID 3 write policy
@@ -1921,6 +2094,450 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs:     f,
 		remote: remote,
 	}, nil
+}
+
+// DirMove moves src:srcRemote to this remote at dstRemote
+// using server-side move operations
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	// Fail immediately if any backend is unavailable to prevent incomplete moves
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("dirmove blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Check if src is a level3 backend
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		return fs.ErrorCantDirMove
+	}
+
+	// Check if source and destination are the same backend
+	if f.name != srcFs.name {
+		return fs.ErrorCantDirMove
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = f.disableRetriesForWrites(ctx)
+
+	// When rclone creates Fs instances:
+	// - srcFs has root=srcRemote (e.g., "testdir")
+	// - f has root=dstRemote (e.g., "testdir2")
+	// - Underlying backends have roots like "/path/to/even/testdir" and "/path/to/even/testdir2"
+	//
+	// The local backend's DirMove uses:
+	// - srcFs.localPath(srcRemote) for source path
+	// - f.localPath(dstRemote) for destination path
+	//
+	// Since srcFs.even has root="/path/to/even/testdir", srcRemote="" (empty) means the root directory
+	// Since f.even has root="/path/to/even/testdir2", dstRemote="" (empty) means the root directory
+	// So we pass empty strings for both paths - the backend will use the Fs roots.
+	//
+	// However, rclone may have already created the destination directory during Fs initialization.
+	// If it's empty and was just created, we should remove it first to allow the move.
+	// Check if destination exists and is empty on all backends, remove if so.
+	entries, err := f.List(ctx, "")
+	if err == nil && len(entries) == 0 {
+		// Destination is empty - try to remove it so DirMove can proceed
+		_ = f.Rmdir(ctx, "")
+	}
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Move on even - use best-effort approach for degraded directories
+	g.Go(func() error {
+		if do := f.even.Features().DirMove; do != nil {
+			err := do(gCtx, srcFs.even, "", "")
+			if err != nil {
+				// If source doesn't exist on this backend, create destination instead (reconstruction)
+				// Only if auto_heal is enabled
+				if (os.IsNotExist(err) || errors.Is(err, fs.ErrorDirNotFound)) && f.opt.AutoHeal {
+					fs.Infof(f, "DirMove: source missing on even, creating destination (reconstruction)")
+					return f.even.Mkdir(gCtx, "")
+				}
+				return fmt.Errorf("even dirmove failed: %w", err)
+			}
+			return nil
+		}
+		return fs.ErrorCantDirMove
+	})
+
+	// Move on odd
+	g.Go(func() error {
+		if do := f.odd.Features().DirMove; do != nil {
+			err := do(gCtx, srcFs.odd, "", "")
+			if err != nil {
+				// If source doesn't exist on this backend, create destination instead (reconstruction)
+				// Only if auto_heal is enabled
+				if (os.IsNotExist(err) || errors.Is(err, fs.ErrorDirNotFound)) && f.opt.AutoHeal {
+					fs.Infof(f, "DirMove: source missing on odd, creating destination (reconstruction)")
+					return f.odd.Mkdir(gCtx, "")
+				}
+				return fmt.Errorf("odd dirmove failed: %w", err)
+			}
+			return nil
+		}
+		return fs.ErrorCantDirMove
+	})
+
+	// Move on parity
+	g.Go(func() error {
+		if do := f.parity.Features().DirMove; do != nil {
+			err := do(gCtx, srcFs.parity, "", "")
+			if err != nil {
+				// If source doesn't exist on this backend, create destination instead (reconstruction)
+				// Only if auto_heal is enabled
+				if (os.IsNotExist(err) || errors.Is(err, fs.ErrorDirNotFound)) && f.opt.AutoHeal {
+					fs.Infof(f, "DirMove: source missing on parity, creating destination (reconstruction)")
+					return f.parity.Mkdir(gCtx, "")
+				}
+				return fmt.Errorf("parity dirmove failed: %w", err)
+			}
+			return nil
+		}
+		return fs.ErrorCantDirMove
+	})
+
+	err = g.Wait()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// particleInfo holds information about which particles exist for an object
+type particleInfo struct {
+	remote       string
+	evenExists   bool
+	oddExists    bool
+	parityExists bool
+	count        int
+	size         int64 // Size of single particle (for broken objects)
+}
+
+// reconstructMissingDirectory creates missing directories when directory exists on 2/3 backends
+// This implements self-healing for 1dm case (directory degraded but reconstructable)
+// Called by List() when auto_cleanup is enabled
+func (f *Fs) reconstructMissingDirectory(ctx context.Context, dir string, errEven, errOdd error) {
+	// Check which backends have the directory
+	evenExists := errEven == nil
+	oddExists := errOdd == nil
+	
+	// Check parity separately
+	_, errParity := f.parity.List(ctx, dir)
+	parityExists := errParity == nil
+	
+	// Count how many backends have this directory
+	count := 0
+	if evenExists {
+		count++
+	}
+	if oddExists {
+		count++
+	}
+	if parityExists {
+		count++
+	}
+	
+	// If directory exists on exactly 2/3 backends, reconstruct the missing one
+	if count == 2 {
+		dirPath := dir
+		if dirPath == "" {
+			dirPath = f.root
+		}
+		
+		// Create missing directory on the backend that doesn't have it
+		if !evenExists {
+			fs.Infof(f, "Reconstructing missing directory %q on even backend (2/3 → 3/3)", dirPath)
+			err := f.even.Mkdir(ctx, dir)
+			if err != nil && !errors.Is(err, fs.ErrorDirExists) {
+				fs.Debugf(f, "Failed to reconstruct directory on even: %v", err)
+			}
+		}
+		if !oddExists {
+			fs.Infof(f, "Reconstructing missing directory %q on odd backend (2/3 → 3/3)", dirPath)
+			err := f.odd.Mkdir(ctx, dir)
+			if err != nil && !errors.Is(err, fs.ErrorDirExists) {
+				fs.Debugf(f, "Failed to reconstruct directory on odd: %v", err)
+			}
+		}
+		if !parityExists {
+			fs.Infof(f, "Reconstructing missing directory %q on parity backend (2/3 → 3/3)", dirPath)
+			err := f.parity.Mkdir(ctx, dir)
+			if err != nil && !errors.Is(err, fs.ErrorDirExists) {
+				fs.Debugf(f, "Failed to reconstruct directory on parity: %v", err)
+			}
+		}
+	}
+}
+
+// cleanupOrphanedDirectory removes directories that exist on < 2 backends
+// This is called by List() when auto_cleanup is enabled and the directory is empty
+// errEven and errOdd are the errors from the List operations (already performed)
+func (f *Fs) cleanupOrphanedDirectory(ctx context.Context, dir string, errEven, errOdd error) {
+	// Determine if directory exists on each backend based on List errors
+	// Directory exists if List succeeded (err == nil) or returned empty
+	// Directory doesn't exist if List returned ErrorDirNotFound
+	evenExists := errEven == nil
+	oddExists := errOdd == nil
+	
+	// For parity, we need to check separately since we don't have its error
+	type dirResult struct {
+		exists bool
+	}
+	resultCh := make(chan dirResult, 1)
+	go func() {
+		_, err := f.parity.List(ctx, dir)
+		exists := err == nil
+		resultCh <- dirResult{exists}
+	}()
+	res := <-resultCh
+	parityExists := res.exists
+
+	// Count how many backends have this directory
+	count := 0
+	if evenExists {
+		count++
+	}
+	if oddExists {
+		count++
+	}
+	if parityExists {
+		count++
+	}
+
+	// If directory exists on < 2 backends, it's orphaned - remove it
+	if count < 2 && count > 0 {
+		dirPath := dir
+		if dirPath == "" {
+			dirPath = f.root
+		}
+		fs.Infof(f, "Auto-cleanup: removing orphaned directory %q (exists on %d/3 backends)", dirPath, count)
+		
+		// Remove from all backends where it exists (best effort)
+		if evenExists {
+			err := f.even.Rmdir(ctx, dir)
+			if err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+				fs.Debugf(f, "Auto-cleanup: failed to remove %q from even: %v", dir, err)
+			} else {
+				fs.Debugf(f, "Auto-cleanup: removed %q from even", dir)
+			}
+		}
+		if oddExists {
+			err := f.odd.Rmdir(ctx, dir)
+			if err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+				fs.Debugf(f, "Auto-cleanup: failed to remove %q from odd: %v", dir, err)
+			} else {
+				fs.Debugf(f, "Auto-cleanup: removed %q from odd", dir)
+			}
+		}
+		if parityExists {
+			err := f.parity.Rmdir(ctx, dir)
+			if err != nil && !errors.Is(err, fs.ErrorDirNotFound) {
+				fs.Debugf(f, "Auto-cleanup: failed to remove %q from parity: %v", dir, err)
+			} else {
+				fs.Debugf(f, "Auto-cleanup: removed %q from parity", dir)
+			}
+		}
+	}
+}
+
+// countParticlesSync counts how many particles exist for an object (0-3)
+// This is used by List() when auto_cleanup is enabled
+func (f *Fs) countParticlesSync(ctx context.Context, remote string) int {
+	type result struct {
+		name   string
+		exists bool
+	}
+	resultCh := make(chan result, 3)
+
+	// Check even particle
+	go func() {
+		_, err := f.even.NewObject(ctx, remote)
+		resultCh <- result{"even", err == nil}
+	}()
+
+	// Check odd particle
+	go func() {
+		_, err := f.odd.NewObject(ctx, remote)
+		resultCh <- result{"odd", err == nil}
+	}()
+
+	// Check parity particle (both suffixes)
+	go func() {
+		_, errOL := f.parity.NewObject(ctx, GetParityFilename(remote, true))
+		_, errEL := f.parity.NewObject(ctx, GetParityFilename(remote, false))
+		resultCh <- result{"parity", errOL == nil || errEL == nil}
+	}()
+
+	// Collect results
+	count := 0
+	for i := 0; i < 3; i++ {
+		res := <-resultCh
+		if res.exists {
+			count++
+		}
+	}
+
+	return count
+}
+
+// scanParticles scans a directory and returns particle information for all objects
+// This is used by the Cleanup() command to identify broken objects
+func (f *Fs) scanParticles(ctx context.Context, dir string) ([]particleInfo, error) {
+	// Collect all entries from all backends (without filtering)
+	entriesEven, _ := f.even.List(ctx, dir)
+	entriesOdd, _ := f.odd.List(ctx, dir)
+	entriesParity, _ := f.parity.List(ctx, dir)
+
+	// Build map of all unique object paths
+	objectMap := make(map[string]*particleInfo)
+
+	// Process even particles
+	for _, entry := range entriesEven {
+		if _, ok := entry.(fs.Object); ok {
+			remote := entry.Remote()
+			if objectMap[remote] == nil {
+				objectMap[remote] = &particleInfo{remote: remote}
+			}
+			objectMap[remote].evenExists = true
+		}
+	}
+
+	// Process odd particles
+	for _, entry := range entriesOdd {
+		if _, ok := entry.(fs.Object); ok {
+			remote := entry.Remote()
+			if objectMap[remote] == nil {
+				objectMap[remote] = &particleInfo{remote: remote}
+			}
+			objectMap[remote].oddExists = true
+		}
+	}
+
+	// Process parity particles
+	for _, entry := range entriesParity {
+		if _, ok := entry.(fs.Object); ok {
+			remote := entry.Remote()
+			// Strip parity suffix to get base object name
+			baseRemote, isParity, _ := StripParitySuffix(remote)
+			if isParity {
+				// Proper parity file with suffix
+				if objectMap[baseRemote] == nil {
+					objectMap[baseRemote] = &particleInfo{remote: baseRemote}
+				}
+				objectMap[baseRemote].parityExists = true
+			} else {
+				// File in parity remote without suffix (orphaned/manually created)
+				// Still track it as it might be a broken object
+				if objectMap[remote] == nil {
+					objectMap[remote] = &particleInfo{remote: remote}
+				}
+				objectMap[remote].parityExists = true
+			}
+		}
+	}
+
+	// Calculate counts
+	result := make([]particleInfo, 0, len(objectMap))
+	for _, info := range objectMap {
+		if info.evenExists {
+			info.count++
+		}
+		if info.oddExists {
+			info.count++
+		}
+		if info.parityExists {
+			info.count++
+		}
+		result = append(result, *info)
+	}
+
+	return result, nil
+}
+
+// getBrokenObjectSize gets the size of a broken object's single particle
+func (f *Fs) getBrokenObjectSize(ctx context.Context, p particleInfo) int64 {
+	if p.evenExists {
+		obj, err := f.even.NewObject(ctx, p.remote)
+		if err == nil {
+			return obj.Size()
+		}
+	}
+	if p.oddExists {
+		obj, err := f.odd.NewObject(ctx, p.remote)
+		if err == nil {
+			return obj.Size()
+		}
+	}
+	if p.parityExists {
+		// Try both parity suffixes
+		parityOL := GetParityFilename(p.remote, true)
+		obj, err := f.parity.NewObject(ctx, parityOL)
+		if err == nil {
+			return obj.Size()
+		}
+		parityEL := GetParityFilename(p.remote, false)
+		obj, err = f.parity.NewObject(ctx, parityEL)
+		if err == nil {
+			return obj.Size()
+		}
+		// Also try without suffix (for orphaned files)
+		obj, err = f.parity.NewObject(ctx, p.remote)
+		if err == nil {
+			return obj.Size()
+		}
+	}
+	return 0
+}
+
+// removeBrokenObject removes all particles of a broken object
+func (f *Fs) removeBrokenObject(ctx context.Context, p particleInfo) error {
+	g, gCtx := errgroup.WithContext(ctx)
+
+	if p.evenExists {
+		g.Go(func() error {
+			obj, err := f.even.NewObject(gCtx, p.remote)
+			if err != nil {
+				return nil // Already gone
+			}
+			return obj.Remove(gCtx)
+		})
+	}
+
+	if p.oddExists {
+		g.Go(func() error {
+			obj, err := f.odd.NewObject(gCtx, p.remote)
+			if err != nil {
+				return nil // Already gone
+			}
+			return obj.Remove(gCtx)
+		})
+	}
+
+	if p.parityExists {
+		g.Go(func() error {
+			// Try both suffixes
+			parityOL := GetParityFilename(p.remote, true)
+			obj, err := f.parity.NewObject(gCtx, parityOL)
+			if err == nil {
+				return obj.Remove(gCtx)
+			}
+			parityEL := GetParityFilename(p.remote, false)
+			obj, err = f.parity.NewObject(gCtx, parityEL)
+			if err == nil {
+				return obj.Remove(gCtx)
+			}
+			// Also try without suffix (for orphaned files manually created)
+			obj, err = f.parity.NewObject(gCtx, p.remote)
+			if err == nil {
+				return obj.Remove(gCtx)
+			}
+			return nil // No parity found
+		})
+	}
+
+	return g.Wait()
 }
 
 // Object represents a striped object
@@ -2194,9 +2811,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			}
 			fs.Infof(o, "Reconstructed %s from even+parity (degraded mode)", o.remote)
 
-			// Self-healing: queue missing odd particle for upload
-			_, oddData := SplitBytes(merged)
-			o.fs.queueParticleUpload(o.remote, "odd", oddData, isOddLength)
+			// Self-healing: queue missing odd particle for upload (if auto_heal enabled)
+			if o.fs.opt.AutoHeal {
+				_, oddData := SplitBytes(merged)
+				o.fs.queueParticleUpload(o.remote, "odd", oddData, isOddLength)
+			}
 
 		} else if errOdd == nil {
 			oddReader, err := oddObj.Open(ctx)
@@ -2225,9 +2844,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			}
 			fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode)", o.remote)
 
-			// Self-healing: queue missing even particle for upload
-			evenData, _ := SplitBytes(merged)
-			o.fs.queueParticleUpload(o.remote, "even", evenData, isOddLength)
+			// Self-healing: queue missing even particle for upload (if auto_heal enabled)
+			if o.fs.opt.AutoHeal {
+				evenData, _ := SplitBytes(merged)
+				o.fs.queueParticleUpload(o.remote, "even", evenData, isOddLength)
+			}
 
 		} else {
 			return nil, fmt.Errorf("cannot reconstruct: no data particle available")
@@ -2509,6 +3130,8 @@ func (d *Directory) ID() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = (*Fs)(nil)
-	_ fs.Object = (*Object)(nil)
+	_ fs.Fs         = (*Fs)(nil)
+	_ fs.CleanUpper = (*Fs)(nil)
+	_ fs.DirMover   = (*Fs)(nil)
+	_ fs.Object     = (*Object)(nil)
 )
