@@ -129,7 +129,7 @@ func (u *Uploader) UploadChunk(ctx context.Context, cnt int, options ...fs.OpenO
 	size, err := u.upload.stream.Read(data)
 
 	if err != nil && err != io.EOF {
-		fs.Errorf(u.fs, "Chunk %d: Error: Can not read from data strem: %v", cnt, err)
+		fs.Errorf(u.fs, "Chunk %d: Error: Can not read from data stream: %v", cnt, err)
 		return err
 	}
 
@@ -145,20 +145,26 @@ func (u *Uploader) UploadChunk(ctx context.Context, cnt int, options ...fs.OpenO
 	// but just in case we handle it here.
 	maxRetries := 5
 	retries := 0
+	lastKnownOffset := newOffset
 	for err == nil && newOffset != u.offset+int64(size) {
 		// Some extra robustness checks to prevent issues
 		if newOffset < u.offset {
 			return fmt.Errorf("uploaded chunk no %d failed new offset %d is less than current offset %d", cnt, newOffset, u.offset)
 		}
 		if retries >= maxRetries {
-			return fmt.Errorf("uploaded chunk no %d failed new offset %d is not equal to current offset %d + size %d after %d retries", cnt, newOffset, u.offset, size, maxRetries)
+			if newOffset == lastKnownOffset {
+				return fmt.Errorf("uploaded chunk no %d failed new offset %d is not equal to current offset %d + size %d after %d retries", cnt, newOffset, u.offset, size, maxRetries)
+			}
+
+			lastKnownOffset = newOffset // The progress is increasing, just a bit slow
+			retries = 0
 		}
 		retries++
 
 		uploadedSize := newOffset - u.offset
 		fs.Debugf(u.fs, "Uploading chunk no %d was partial, range %d -> %d retrying from %d to %d", cnt, u.offset, newOffset, newOffset, u.offset+int64(size))
 		remainingBytes := chunk[uploadedSize:]
-		newOffset, err = u.uploadChunk(ctx, bytes.NewBuffer(remainingBytes), int64(size)-uploadedSize, u.offset+uploadedSize, options...)
+		newOffset, err = u.uploadChunk(ctx, bytes.NewBuffer(remainingBytes), int64(size)-uploadedSize, newOffset, options...)
 	}
 
 	if err == nil {
