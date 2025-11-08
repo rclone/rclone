@@ -1,7 +1,7 @@
 ---
 title: "DOI"
 description: "Rclone docs for DOI"
-versionIntroduced: "?"
+versionIntroduced: "v1.70"
 ---
 
 # {{< icon "fa fa-building-columns" >}} DOI
