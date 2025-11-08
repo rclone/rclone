@@ -39,7 +39,7 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Error is returned from kdrive when things go wrong
+// ResultStatus return error details from kdrive when things go wrong
 //
 // If result is 0 then everything is OK
 type ResultStatus struct {
@@ -184,6 +184,7 @@ type Item struct {
 	Color          string `json:"color"`
 }
 
+// SearchResult is returned when a list of items is requested
 type SearchResult struct {
 	ResultStatus
 	Data       []Item `json:"data"`
@@ -201,31 +202,37 @@ func (i *Item) ModTime() (t time.Time) {
 	return t
 }
 
+// CancelResource is a kdrive resource that can be cancelled after some action
 type CancelResource struct {
 	CancelID   string `json:"cancel_id"`
 	ValidUntil int    `json:"valid_until"`
 }
 
+// CancellableResponse is returned from kdrive when an action can be cancelled afterwards
 type CancellableResponse struct {
 	ResultStatus
 	Data CancelResource `json:"data"`
 }
 
+// CreateDirResult is returned from kdrive after a call to MkDir
 type CreateDirResult struct {
 	ResultStatus
 	Data Item `json:"data"`
 }
 
+// FileCopyResponse is returned from kdrive after a call to Copy
 type FileCopyResponse struct {
 	ResultStatus
 	Data Item `json:"data"`
 }
 
+// UploadFileResponse is returned from kdrive after a call to Upload
 type UploadFileResponse struct {
 	ResultStatus
 	Data Item `json:"data"`
 }
 
+// ChecksumFileResult is returned from kdrive after a call to Hash
 type ChecksumFileResult struct {
 	ResultStatus
 	Data struct {
@@ -233,7 +240,7 @@ type ChecksumFileResult struct {
 	} `json:"data"`
 }
 
-// currently used, as PublicLink is disabled
+// PubLinkResult is currently unused, as PublicLink is disabled
 type PubLinkResult struct {
 	ResultStatus
 	Data struct {
@@ -256,6 +263,7 @@ type PubLinkResult struct {
 	} `json:"data"`
 }
 
+// QuotaInfo is return from kdrive after a call get drive info
 type QuotaInfo struct {
 	ResultStatus
 	Data struct {
