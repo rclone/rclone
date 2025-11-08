@@ -808,8 +808,8 @@ func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
 
-// The PublicLink method is currently disabled, not sure which API should be used here
 /*
+// The PublicLink method is currently disabled, not sure which API should be used here
 func (f *Fs) linkDir(ctx context.Context, dirID string, expire fs.Duration) (string, error) {
 	opts := rest.Opts{
 		Method:     "GET",
@@ -863,6 +863,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	return f.linkDir(ctx, dirID, expire)
 }
 */
+
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	opts := rest.Opts{
