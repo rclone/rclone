@@ -375,7 +375,7 @@ func LoadedData() Storage {
 	return data
 }
 
-// LoadedData ensures the config file storage is loaded and returns it but can return an error
+// LoadedDataWithErr ensures the config file storage is loaded and returns it but can return an error
 func LoadedDataWithErr() (out Storage, err error) {
 	if !dataLoaded {
 		// Set RCLONE_CONFIG_DIR for backend config and subprocesses
@@ -720,12 +720,12 @@ func DumpRcRemote(name string) (dump rc.Params) {
 // for the rc
 func DumpRcBlob() (dump rc.Params, err error) {
 	dump = rc.Params{}
-	var config_data Storage
-	config_data, err = LoadedDataWithErr()
+	var configData Storage
+	configData, err = LoadedDataWithErr()
 	if err != nil {
 		return nil, err
 	}
-	for _, name := range config_data.GetSectionList() {
+	for _, name := range configData.GetSectionList() {
 		dump[name] = DumpRcRemote(name)
 	}
 	return dump, nil
@@ -733,9 +733,9 @@ func DumpRcBlob() (dump rc.Params, err error) {
 
 // Dump dumps all the config as a JSON file
 func Dump() error {
-	dump, err_dump := DumpRcBlob()
-	if err_dump != nil {
-		return err_dump
+	dump, errDump := DumpRcBlob()
+	if errDump != nil {
+		return errDump
 	}
 	b, err := json.MarshalIndent(dump, "", "    ")
 	if err != nil {
