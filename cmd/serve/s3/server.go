@@ -81,7 +81,12 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		gofakes3.WithIntegrityCheck(true), // Check Content-MD5 if supplied
 	)
 
-	w.handler = w.faker.Server()
+	if opt.CORS {
+		fs.Debugf(w.f, "Enabling permissive CORS headers on all responses")
+		w.handler = withCORS(w.faker.Server())
+	} else {
+		w.handler = w.faker.Server()
+	}
 
 	if proxy.Opt.AuthProxy != "" {
 		w.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
@@ -167,6 +172,23 @@ func authPairMiddleware(next http.Handler, ws *Server) http.Handler {
 			accessKey: ws.s3Secret,
 		}
 		ws.faker.AddAuthKeys(authPair)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func withCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		// Handle preflight requests
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }

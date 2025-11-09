@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -43,6 +44,7 @@ func serveS3(t *testing.T, f fs.Fs) (testURL string, keyid string, keysec string
 	opt := Opt // copy default options
 	opt.AuthKey = []string{fmt.Sprintf("%s,%s", keyid, keysec)}
 	opt.HTTP.ListenAddr = []string{endpoint}
+	opt.CORS = true // enable CORS for all tests
 	w, _ = newServer(context.Background(), f, &opt, &vfscommon.Opt, &proxy.Opt)
 	go func() {
 		require.NoError(t, w.Serve())
@@ -296,4 +298,30 @@ func TestRc(t *testing.T) {
 		"type":           "s3",
 		"vfs_cache_mode": "off",
 	})
+}
+
+// TestCORS tests that CORS headers are set correctly
+func TestCORS(t *testing.T) {
+	fstest.Initialise()
+	f, _, clean, err := fstest.RandomRemote()
+	assert.NoError(t, err)
+	defer clean()
+
+	testURL, _, _, s := serveS3(t, f)
+	defer func() {
+		assert.NoError(t, s.server.Shutdown())
+	}()
+
+	// Check CORS headers on GET request
+	req, err := http.NewRequest("GET", testURL+"/", nil)
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, "*", resp.Header.Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, "GET, PUT, POST, DELETE, OPTIONS", resp.Header.Get("Access-Control-Allow-Methods"))
+	assert.Equal(t, "*", resp.Header.Get("Access-Control-Allow-Headers"))
+	assert.Equal(t, "true", resp.Header.Get("Access-Control-Allow-Credentials"))
 }

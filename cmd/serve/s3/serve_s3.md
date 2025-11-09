@@ -28,6 +28,11 @@ Use `--etag-hash` if you want to change the hash uses for the `ETag`.
 Note that using anything other than `MD5` (the default) is likely to
 cause problems for S3 clients which rely on the Etag being the MD5.
 
+Use `--cors` to enable permissive Cross-Origin Resource Sharing (CORS)
+headers on all responses. This allows browser-based applications
+running on different origins to access the S3 server without being
+blocked by the same-origin policy.
+
 ### Quickstart
 
 For a simple set up, to serve `remote:path` over s3, run the server
