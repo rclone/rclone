@@ -362,7 +362,6 @@ func LoadedData() Storage {
 	switch err {
 	case nil:
 		fs.Debugf(nil, "Using config file from %q", configPath)
-		return data
 	case ErrorConfigFileNotFound:
 		if configPath == "" {
 			fs.Debugf(nil, "Config is memory-only - using defaults")
@@ -383,7 +382,8 @@ func LoadedDataWithErr() (out Storage, err error) {
 		// If empty configPath (in-memory only) the value will be "."
 		_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(configPath))
 		// Load configuration from file (or initialize sensible default if no file, or error)
-		if err := data.Load(); err != nil {
+		err = data.Load()
+		if err != nil {
 			return nil, err
 		}
 		dataLoaded = true
@@ -720,7 +720,8 @@ func DumpRcRemote(name string) (dump rc.Params) {
 // for the rc
 func DumpRcBlob() (dump rc.Params, err error) {
 	dump = rc.Params{}
-	config_data, err := LoadedDataWithErr()
+	var config_data Storage
+	config_data, err = LoadedDataWithErr()
 	if err != nil {
 		return nil, err
 	}
