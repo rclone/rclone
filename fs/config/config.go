@@ -376,6 +376,7 @@ func LoadedData() Storage {
 	return data
 }
 
+// LoadedData ensures the config file storage is loaded and returns it but can return an error
 func LoadedDataWithErr() (out Storage, err error) {
 	if !dataLoaded {
 		// Set RCLONE_CONFIG_DIR for backend config and subprocesses
