@@ -743,15 +743,14 @@ In this case, you might want to try disabling this option.
 			Default:  false,
 		}, {
 			Name: "metadata_acl",
-			Help: `Control whether object ACLs should be transferred or checked.
+			Help: `Control whether object ACLs should be read or written to the metadata.
 
-Object access can be controlled through various methods, including ACLs.
+In conjunction with the --metadata flag this can be used to read or
+write ACLs or preserve ACLs during a copy operation with "read,write"
 
-This flag transfers object ACLs during copy operations and check ACLs during check operations.
-Note that when bucket owners differ, the ACL owner is updated to the new bucket owner.
-Other grantees in the ACL that are not the source bucket owner remain unchanged.
-
-Also note that this flag is relevant if the metadata flag is enabled.
+Note that when writing ACLs if bucket owners differ, the ACL owner
+is updated to the new bucket owner. Other grantees in the ACL that
+are not the source bucket owner remain unchanged.
 `,
 			Advanced: true,
 			Default:  rwOff,
@@ -976,6 +975,18 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		Type:     "RFC 3339",
 		Example:  "2006-01-02T15:04:05.999999999Z07:00",
 		ReadOnly: true,
+	},
+	"x-amz-acl": {
+		Help: "Object ACl",
+		Type: "string",
+		Example: `{"Owner":{"DisplayName":"my-username","ID":"7009a8971cd538e11f6b6606438875e7c86c5b672f46db45460ddcd087d36c32"},
+		"Grants":[{"Grantee":{"DisplayName":"my-username","ID":"7009a8971cd538e11f6b6606438875e7c86c5b672f46db45460ddcd087d36c32"},
+		"Permission":"FULL_CONTROL"}]}`,
+	},
+	"bucket-owner": {
+		Help:    "Bucket owner ID",
+		Type:    "string",
+		Example: "7009a8971cd538e11f6b6606438875e7c86c5b672f46db45460ddcd087d36c32",
 	},
 }
 
@@ -4168,15 +4179,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.fs.opt.MetadataACL.IsSet(rwRead) {
 		aclString, err := o.getACLString(ctx)
 		if err != nil {
-			fs.Logf(o, "Failed to get acl: %v", err)
-			return resp.Body, nil
+			return nil, fmt.Errorf("failed to read ACL: %w", err)
 		}
 		o.acl = &aclString
 
 		bucketOwner, err := o.getBucketOwner(ctx)
 		if err != nil {
-			fs.Logf(o, "Failed to get bucket owner: %v", err)
-			return resp.Body, nil
+			return nil, fmt.Errorf("failed to get bucket owner: %w", err)
 		}
 		o.bucketOwner = &bucketOwner
 	}
@@ -4192,7 +4201,7 @@ func (o *Object) getACLString(ctx context.Context) (string, error) {
 		Key:    &bucketPath,
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("get ACL failed: %w", err)
 	}
 
 	objectACLBytes, err := json.Marshal(types.AccessControlPolicy{
@@ -4200,7 +4209,7 @@ func (o *Object) getACLString(ctx context.Context) (string, error) {
 		Owner:  resp.Owner,
 	})
 	if err != nil {
-		return "", nil
+		return "", fmt.Errorf("marshal ACL failed: %w", err)
 	}
 
 	return string(objectACLBytes), nil
@@ -4213,12 +4222,12 @@ func (o *Object) getBucketOwner(ctx context.Context) (string, error) {
 		Bucket: &bucket,
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("get bucket ACL failed: %w", err)
 	}
 
 	ownerBytes, err := json.Marshal(resp.Owner)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("marshal bucket ACL failed: %w", err)
 	}
 
 	return string(ownerBytes), nil
@@ -4666,7 +4675,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			}
 			var acl types.AccessControlPolicy
 			if err := json.Unmarshal([]byte(v), &acl); err != nil {
-				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+				return ui, fmt.Errorf("failed to parse metadata %s: %q: %v", k, v, err)
 			}
 			ui.aclReq.AccessControlPolicy = &acl
 		case "bucket-owner":
@@ -4675,7 +4684,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			}
 			var owner types.Owner
 			if err := json.Unmarshal([]byte(v), &owner); err != nil {
-				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+				return ui, fmt.Errorf("failed to parse metadata %s: %q: %v", k, v, err)
 			}
 			ui.bucketOwner = &owner
 		case "tier":
@@ -4701,11 +4710,11 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			Bucket: &bucket,
 		})
 		if err != nil {
-			fs.Logf(o, "failed to get bucket acl: %v", err)
+			return ui, fmt.Errorf("failed to get bucket ACL: %v", err)
 		}
 		ui.aclReq.AccessControlPolicy, err = o.mapACL(ui.aclReq.AccessControlPolicy, ui.bucketOwner, resp.Owner)
 		if err != nil {
-			fs.Logf(o, "failed to map acl: %v", err)
+			return ui, fmt.Errorf("failed to map ACL: %v", err)
 		}
 	}
 
@@ -4821,7 +4830,7 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 // if the objects were owned by the owner of the src bucket
 func (o *Object) mapACL(srcACL *types.AccessControlPolicy, srcBucketOwner, dstBucketOwner *types.Owner) (*types.AccessControlPolicy, error) {
 	if srcACL == nil {
-		return nil, fmt.Errorf("src acl is nil")
+		return nil, fmt.Errorf("src ACL is nil")
 	}
 	srcObjectOwner := srcACL.Owner
 
