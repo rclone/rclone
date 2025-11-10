@@ -4,11 +4,10 @@ package pacer
 import (
 	"errors"
 	"fmt"
-	"runtime"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/rclone/rclone/lib/caller"
 	liberrors "github.com/rclone/rclone/lib/errors"
 )
 
@@ -193,7 +192,9 @@ func (p *Pacer) endCall(retry bool, err error, limitConnections bool) {
 	p.mu.Unlock()
 }
 
-// Detect the pacer being called reentrantly.
+// call implements Call but with settable retries
+//
+// This detects the pacer being called reentrantly.
 //
 // This looks for Pacer.call in the call stack and returns true if it
 // is found.
@@ -204,27 +205,10 @@ func (p *Pacer) endCall(retry bool, err error, limitConnections bool) {
 // This is only needed when p.maxConnections > 0 which isn't a common
 // configuration so adding a bit of extra slowdown here is not a
 // problem.
-func pacerReentered() bool {
-	var pcs [48]uintptr
-	n := runtime.Callers(3, pcs[:]) // skip runtime.Callers, pacerReentered and call
-	frames := runtime.CallersFrames(pcs[:n])
-	for {
-		f, more := frames.Next()
-		if strings.HasSuffix(f.Function, "(*Pacer).call") {
-			return true
-		}
-		if !more {
-			break
-		}
-	}
-	return false
-}
-
-// call implements Call but with settable retries
 func (p *Pacer) call(fn Paced, retries int) (err error) {
 	var retry bool
 	limitConnections := false
-	if p.maxConnections > 0 && !pacerReentered() {
+	if p.maxConnections > 0 && !caller.Present("(*Pacer).call") {
 		limitConnections = true
 	}
 	for i := 1; i <= retries; i++ {

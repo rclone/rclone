@@ -353,27 +353,6 @@ func TestCallParallel(t *testing.T) {
 	wait.Broadcast()
 }
 
-func BenchmarkPacerReentered(b *testing.B) {
-	for b.Loop() {
-		_ = pacerReentered()
-	}
-}
-
-func BenchmarkPacerReentered100(b *testing.B) {
-	var fn func(level int)
-	fn = func(level int) {
-		if level > 0 {
-			fn(level - 1)
-			return
-		}
-		for b.Loop() {
-			_ = pacerReentered()
-		}
-
-	}
-	fn(100)
-}
-
 func TestCallMaxConnectionsRecursiveDeadlock(t *testing.T) {
 	p := New(CalculatorOption(NewDefault(MinSleep(1*time.Millisecond), MaxSleep(2*time.Millisecond))))
 	p.SetMaxConnections(1)
