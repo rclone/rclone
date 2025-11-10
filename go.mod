@@ -8,7 +8,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.12.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.2
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azfile v1.5.2
-	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
+	github.com/Azure/go-ntlmssp v0.0.2-0.20251110135918-10b7b7e7cd26
 	github.com/Files-com/files-sdk-go/v3 v3.2.242
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
 	github.com/a1ex3/zstd-seekable-format-go/pkg v0.10.0

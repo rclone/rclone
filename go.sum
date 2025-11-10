@@ -53,8 +53,8 @@ github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.2 h1:FwladfywkNirM+FZY
 github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.2/go.mod h1:vv5Ad0RrIoT1lJFdWBZwt4mB1+j+V8DUroixmKDTCdk=
 github.com/Azure/azure-sdk-for-go/sdk/storage/azfile v1.5.2 h1:l3SabZmNuXCMCbQUIeR4W6/N4j8SeH/lwX+a6leZhHo=
 github.com/Azure/azure-sdk-for-go/sdk/storage/azfile v1.5.2/go.mod h1:k+mEZ4f1pVqZTRqtSDW2AhZ/3wT5qLpsUA75C/k7dtE=
-github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 h1:mFRzDkZVAjdal+s7s0MwaRv9igoPqLRdzOLzw/8Xvq8=
-github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358/go.mod h1:chxPXzSsl7ZWRAuOIE23GDNzjWuZquvFlgA8xmpunjU=
+github.com/Azure/go-ntlmssp v0.0.2-0.20251110135918-10b7b7e7cd26 h1:gy/jrlpp8EfSyA73a51fofoSfhp5rPNQAUvDr4Dm91c=
+github.com/Azure/go-ntlmssp v0.0.2-0.20251110135918-10b7b7e7cd26/go.mod h1:NYqdhxd/8aAct/s4qSYZEerdPuH1liG2/X9DiVTbhpk=
 github.com/AzureAD/microsoft-authentication-extensions-for-go/cache v0.1.1 h1:WJTmL004Abzc5wDB5VtZG2PJk5ndYDgVacGqfirKxjM=
 github.com/AzureAD/microsoft-authentication-extensions-for-go/cache v0.1.1/go.mod h1:tCcJZ0uHAmvjsVYzEFivsRTN00oz5BEsRgQHu5JZ9WE=
 github.com/AzureAD/microsoft-authentication-library-for-go v1.5.0 h1:XkkQbfMyuH2jTSjQjSoihryI8GINRcs4xp8lNawg0FI=
