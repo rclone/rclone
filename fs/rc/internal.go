@@ -66,6 +66,39 @@ func rcError(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
+		Path:  "rc/panic",
+		Fn:    rcPanic,
+		Title: "This returns an error by panicing",
+		Help: `
+This returns an error with the input as part of its error string.
+Useful for testing error handling.`,
+	})
+}
+
+// Return an error regardless
+func rcPanic(ctx context.Context, in Params) (out Params, err error) {
+	panic(fmt.Sprintf("arbitrary error on input %+v", in))
+}
+
+func init() {
+	Add(Call{
+		Path:  "rc/fatal",
+		Fn:    rcFatal,
+		Title: "This returns an fatal error",
+		Help: `
+This returns an error with the input as part of its error string.
+Useful for testing error handling.`,
+	})
+}
+
+// Return an error regardless
+func rcFatal(ctx context.Context, in Params) (out Params, err error) {
+	fs.Fatalf(nil, "arbitrary error on input %+v", in)
+	return nil, nil
+}
+
+func init() {
+	Add(Call{
 		Path:  "rc/list",
 		Fn:    rcList,
 		Title: "List all the registered remote control commands",
