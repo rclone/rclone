@@ -289,6 +289,95 @@ func TestRemoveAWSChunked(t *testing.T) {
 	}
 }
 
+func TestMapACL(t *testing.T) {
+	o := &Object{}
+
+	srcBucketDisplayName := "src-bucket"
+	srcBucketID := "src-bucket-id"
+	srcBucketOwner := &types.Owner{
+		DisplayName: &srcBucketDisplayName,
+		ID:          &srcBucketID,
+	}
+
+	dstBucketDisplayName := "dst-bucket"
+	dstBucketID := "dst-bucket-id"
+	dstBucketOwner := &types.Owner{
+		DisplayName: &dstBucketDisplayName,
+		ID:          &dstBucketID,
+	}
+
+	extraOwnerDisplayName := "extra-owner"
+	extraOwnerID := "extra-owner-id"
+
+	publicURI := "http://acs.amazonaws.com/groups/global/AllUsers"
+
+	srcACL := &types.AccessControlPolicy{
+		Grants: []types.Grant{
+			{
+				Grantee: &types.Grantee{
+					Type:        types.TypeCanonicalUser,
+					DisplayName: &srcBucketDisplayName,
+					ID:          &srcBucketID,
+				},
+				Permission: types.PermissionFullControl,
+			},
+			{
+				Grantee: &types.Grantee{
+					Type:        types.TypeCanonicalUser,
+					DisplayName: &extraOwnerDisplayName,
+					ID:          &extraOwnerID,
+				},
+				Permission: types.PermissionRead,
+			},
+			{
+				Grantee: &types.Grantee{
+					Type: types.TypeGroup,
+					URI:  &publicURI,
+				},
+				Permission: types.PermissionRead,
+			},
+		},
+		Owner: &types.Owner{
+			DisplayName: &srcBucketDisplayName,
+			ID:          &srcBucketID,
+		},
+	}
+	mappedACL, err := o.mapACL(srcACL, srcBucketOwner, dstBucketOwner)
+	require.NoError(t, err)
+
+	require.Equal(t, dstBucketID, *mappedACL.Owner.ID)
+	require.Equal(t, dstBucketDisplayName, *mappedACL.Owner.DisplayName)
+
+	require.Len(t, mappedACL.Grants, 3)
+
+	for _, grant := range mappedACL.Grants {
+		require.NotNil(t, grant.Grantee)
+
+		switch grant.Grantee.Type {
+		case types.TypeCanonicalUser:
+			require.NotNil(t, grant.Grantee.ID)
+
+			switch *grant.Grantee.ID {
+			case dstBucketID:
+				require.NotNil(t, grant.Grantee.DisplayName)
+				require.Equal(t, dstBucketDisplayName, *grant.Grantee.DisplayName)
+				require.Equal(t, types.PermissionFullControl, grant.Permission)
+			case extraOwnerID:
+				require.NotNil(t, grant.Grantee.DisplayName)
+				require.Equal(t, extraOwnerDisplayName, *grant.Grantee.DisplayName)
+				require.Equal(t, types.PermissionRead, grant.Permission)
+			default:
+				t.Error("unknown grantee id")
+			}
+		case types.TypeGroup:
+			require.NotNil(t, grant.Grantee.URI)
+			require.Equal(t, publicURI, *grant.Grantee.URI)
+		default:
+			t.Error("unknown grantee type")
+		}
+	}
+}
+
 func (f *Fs) InternalTestVersions(t *testing.T) {
 	ctx := context.Background()
 
