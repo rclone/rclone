@@ -801,8 +801,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 	req := &api.GetDownloadLinkRequest{
 		Slug:      o.slug,
 		UserLogin: o.fs.opt.Username,
-		// Has to be set but doesn't seem to be used server side.
-		DeviceID: "foobar",
+		DeviceID:  fmt.Sprintf("%d", time.Now().UnixNano()),
 	}
 
 	var resp *api.GetDownloadLinkResponse
@@ -815,16 +814,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		return nil, err
 	}
 
+	downloadURL := resp.Link
+	if resp.Hash != "" {
+		if strings.Contains(downloadURL, "?") {
+			downloadURL += "&"
+		} else {
+			downloadURL += "?"
+		}
+		downloadURL += "hash=" + url.QueryEscape(resp.Hash)
+	}
+
 	opts = rest.Opts{
 		Method:  "GET",
-		RootURL: resp.Link,
+		RootURL: downloadURL,
 		Options: options,
 	}
 
 	var httpResp *http.Response
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		httpResp, err = o.fs.cdn.Call(ctx, &opts)
+		httpResp, err = o.fs.rest.Call(ctx, &opts)
 		return o.fs.shouldRetry(ctx, httpResp, err, true)
 	})
 	if err != nil {
