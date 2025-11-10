@@ -66,6 +66,46 @@ import (
 	"github.com/rclone/rclone/lib/version"
 )
 
+// rwChoices type for fs.Bits
+type rwChoices struct{}
+
+func (rwChoices) Choices() []fs.BitsChoicesInfo {
+	return []fs.BitsChoicesInfo{
+		{Bit: uint64(rwOff), Name: "off"},
+		{Bit: uint64(rwRead), Name: "read"},
+		{Bit: uint64(rwWrite), Name: "write"},
+		{Bit: uint64(rwFailOK), Name: "failok"},
+	}
+}
+
+// rwChoice type alias
+type rwChoice = fs.Bits[rwChoices]
+
+const (
+	rwRead rwChoice = 1 << iota
+	rwWrite
+	rwFailOK
+	rwOff rwChoice = 0
+)
+
+// Examples for the options
+var rwExamples = fs.OptionExamples{{
+	Value: rwOff.String(),
+	Help:  "Do not read or write the value",
+}, {
+	Value: rwRead.String(),
+	Help:  "Read the value only",
+}, {
+	Value: rwWrite.String(),
+	Help:  "Write the value only",
+}, {
+	Value: rwFailOK.String(),
+	Help:  "If writing fails log errors only, don't fail the transfer",
+}, {
+	Value: (rwRead | rwWrite).String(),
+	Help:  "Read and Write the value.",
+}}
+
 // Register with Fs
 func init() {
 	fs.Register(addProvidersToInfo(&fs.RegInfo{
@@ -702,6 +742,21 @@ In this case, you might want to try disabling this option.
 			Advanced: true,
 			Default:  false,
 		}, {
+			Name: "metadata_acl",
+			Help: `Control whether object ACLs should be transferred or checked.
+
+Object access can be controlled through various methods, including ACLs.
+
+This flag transfers object ACLs during copy operations and check ACLs during check operations.
+Note that when bucket owners differ, the ACL owner is updated to the new bucket owner.
+Other grantees in the ACL that are not the source bucket owner remain unchanged.
+
+Also note that this flag is relevant if the metadata flag is enabled.
+`,
+			Advanced: true,
+			Default:  rwOff,
+			Examples: rwExamples,
+		}, {
 			Name:     "sts_endpoint",
 			Help:     "Endpoint for STS (deprecated).\n\nLeave blank if using AWS to use the default endpoint for the region.",
 			Advanced: true,
@@ -1052,6 +1107,7 @@ type Options struct {
 	UseDualStack                bool                 `config:"use_dual_stack"`
 	LocationConstraint          string               `config:"location_constraint"`
 	ACL                         string               `config:"acl"`
+	MetadataACL                 rwChoice             `config:"metadata_acl"`
 	BucketACL                   string               `config:"bucket_acl"`
 	RequesterPays               bool                 `config:"requester_pays"`
 	ServerSideEncryption        string               `config:"server_side_encryption"`
@@ -1151,6 +1207,8 @@ type Object struct {
 	meta         map[string]string // The object metadata if known - may be nil - with lower case keys
 	mimeType     string            // MimeType of object - may be ""
 	versionID    *string           // If present this points to an object version
+	acl          *string           // Object ACL
+	bucketOwner  *string           // Bucket owner
 
 	// Metadata as pointers to strings as they often won't be present
 	storageClass       *string // e.g. GLACIER
@@ -4310,7 +4368,63 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		})
 	}
 
+	if o.fs.opt.MetadataACL.IsSet(rwRead) {
+		aclString, err := o.getACLString(ctx)
+		if err != nil {
+			fs.Logf(o, "Failed to get acl: %v", err)
+			return resp.Body, nil
+		}
+		o.acl = &aclString
+
+		bucketOwner, err := o.getBucketOwner(ctx)
+		if err != nil {
+			fs.Logf(o, "Failed to get bucket owner: %v", err)
+			return resp.Body, nil
+		}
+		o.bucketOwner = &bucketOwner
+	}
+
 	return resp.Body, nil
+}
+
+func (o *Object) getACLString(ctx context.Context) (string, error) {
+	bucket, bucketPath := o.split()
+
+	resp, err := o.fs.c.GetObjectAcl(ctx, &s3.GetObjectAclInput{
+		Bucket: &bucket,
+		Key:    &bucketPath,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	objectACLBytes, err := json.Marshal(types.AccessControlPolicy{
+		Grants: resp.Grants,
+		Owner:  resp.Owner,
+	})
+	if err != nil {
+		return "", nil
+	}
+
+	return string(objectACLBytes), nil
+}
+
+func (o *Object) getBucketOwner(ctx context.Context) (string, error) {
+	bucket, _ := o.split()
+
+	resp, err := o.fs.c.GetBucketAcl(ctx, &s3.GetBucketAclInput{
+		Bucket: &bucket,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	ownerBytes, err := json.Marshal(resp.Owner)
+	if err != nil {
+		return "", err
+	}
+
+	return string(ownerBytes), nil
 }
 
 var warnStreamUpload sync.Once
@@ -4683,8 +4797,10 @@ func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.P
 
 // Info needed for an upload
 type uploadInfo struct {
-	req       *s3.PutObjectInput
-	md5sumHex string
+	req         *s3.PutObjectInput
+	aclReq      *s3.PutObjectAclInput
+	bucketOwner *types.Owner
+	md5sumHex   string
 }
 
 // Prepare object for being uploaded
@@ -4712,6 +4828,14 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			ui.req.StorageClass = types.StorageClass(strings.ToUpper(tier))
 		}
 	}
+
+	if o.fs.opt.MetadataACL.IsSet(rwWrite) {
+		ui.aclReq = &s3.PutObjectAclInput{
+			Bucket: &bucket,
+			Key:    &bucketPath,
+		}
+	}
+
 	// Fetch metadata if --metadata is in use
 	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err != nil {
@@ -4739,6 +4863,24 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			ui.req.ContentType = pv
 		case "x-amz-tagging":
 			ui.req.Tagging = pv
+		case "x-amz-acl":
+			if !o.fs.opt.MetadataACL.IsSet(rwWrite) {
+				continue
+			}
+			var acl types.AccessControlPolicy
+			if err := json.Unmarshal([]byte(v), &acl); err != nil {
+				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+			}
+			ui.aclReq.AccessControlPolicy = &acl
+		case "bucket-owner":
+			if !o.fs.opt.MetadataACL.IsSet(rwWrite) {
+				continue
+			}
+			var owner types.Owner
+			if err := json.Unmarshal([]byte(v), &owner); err != nil {
+				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+			}
+			ui.bucketOwner = &owner
 		case "tier":
 			// ignore
 		case "mtime":
@@ -4774,6 +4916,19 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			}
 		default:
 			ui.req.Metadata[k] = v
+		}
+	}
+
+	if o.fs.opt.MetadataACL.IsSet(rwWrite) {
+		resp, err := o.fs.c.GetBucketAcl(ctx, &s3.GetBucketAclInput{
+			Bucket: &bucket,
+		})
+		if err != nil {
+			fs.Logf(o, "failed to get bucket acl: %v", err)
+		}
+		ui.aclReq.AccessControlPolicy, err = o.mapACL(ui.aclReq.AccessControlPolicy, ui.bucketOwner, resp.Owner)
+		if err != nil {
+			fs.Logf(o, "failed to map acl: %v", err)
 		}
 	}
 
@@ -4904,6 +5059,57 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	return ui, nil
 }
 
+// We need to transfer ownership of objects to the owner of the dst bucket
+// if the objects were owned by the owner of the src bucket
+func (o *Object) mapACL(srcACL *types.AccessControlPolicy, srcBucketOwner, dstBucketOwner *types.Owner) (*types.AccessControlPolicy, error) {
+	if srcACL == nil {
+		return nil, fmt.Errorf("src acl is nil")
+	}
+	srcObjectOwner := srcACL.Owner
+
+	dstGrants := make([]types.Grant, len(srcACL.Grants))
+	for i, grant := range srcACL.Grants {
+		if grant.Grantee == nil {
+			return nil, fmt.Errorf("grantee is nil")
+		}
+
+		newOwner := o.mapOwner(&types.Owner{
+			DisplayName: grant.Grantee.DisplayName,
+			ID:          grant.Grantee.ID,
+		}, srcBucketOwner, dstBucketOwner)
+
+		dstGrants[i] = types.Grant{
+			Grantee: &types.Grantee{
+				Type:         grant.Grantee.Type,
+				DisplayName:  newOwner.DisplayName,
+				EmailAddress: grant.Grantee.EmailAddress,
+				ID:           newOwner.ID,
+				URI:          grant.Grantee.URI,
+			},
+			Permission: grant.Permission,
+		}
+	}
+
+	newOwner := o.mapOwner(srcObjectOwner, srcBucketOwner, dstBucketOwner)
+
+	return &types.AccessControlPolicy{
+		Grants: dstGrants,
+		Owner: &types.Owner{
+			ID:          newOwner.ID,
+			DisplayName: newOwner.DisplayName,
+		},
+	}, nil
+}
+
+func (o *Object) mapOwner(srcObjectOwner, srcBucketOwner, dstBucketOwner *types.Owner) *types.Owner {
+	if (srcObjectOwner != nil && srcObjectOwner.ID != nil) &&
+		(srcBucketOwner != nil && srcBucketOwner.ID != nil) &&
+		*srcObjectOwner.ID == *srcBucketOwner.ID {
+		return dstBucketOwner
+	}
+	return srcObjectOwner
+}
+
 // Update the Object from in with modTime and size
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	if o.fs.opt.VersionAt.IsSet() {
@@ -4935,6 +5141,17 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
+
+	if o.fs.opt.MetadataACL.IsSet(rwWrite) && ui.aclReq != nil {
+		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+			_, err = o.fs.c.PutObjectAcl(ctx, ui.aclReq)
+			return o.fs.shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	// Only record versionID if we are using --s3-versions or --s3-version-at
 	if o.fs.opt.Versions || o.fs.opt.VersionAt.IsSet() {
 		o.versionID = versionID
@@ -5190,6 +5407,14 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	// metadata["x-amz-tagging"] = ""
 	if !o.lastModified.IsZero() {
 		metadata["btime"] = o.lastModified.Format(time.RFC3339Nano)
+	}
+
+	if o.acl != nil {
+		metadata["x-amz-acl"] = *o.acl
+	}
+
+	if o.bucketOwner != nil {
+		metadata["bucket-owner"] = *o.bucketOwner
 	}
 
 	// Set system metadata
