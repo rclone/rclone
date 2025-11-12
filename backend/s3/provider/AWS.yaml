@@ -137,3 +137,4 @@ use_accelerate_endpoint: true
 quirks:
   might_gzip: false # Never auto gzips objects
   use_unsigned_payload: false # AWS has trailer support which means it adds checksums in the trailer without seeking
+  use_data_integrity_protections: true

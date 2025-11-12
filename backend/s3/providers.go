@@ -20,20 +20,21 @@ var NewYamlMap = orderedmap.New[string, string]
 
 // Quirks defines all the S3 provider quirks
 type Quirks struct {
-	ListVersion           *int   `yaml:"list_version,omitempty"`     // 1 or 2
-	ForcePathStyle        *bool  `yaml:"force_path_style,omitempty"` // true = path-style
-	ListURLEncode         *bool  `yaml:"list_url_encode,omitempty"`
-	UseMultipartEtag      *bool  `yaml:"use_multipart_etag,omitempty"`
-	UseAlreadyExists      *bool  `yaml:"use_already_exists,omitempty"`
-	UseAcceptEncodingGzip *bool  `yaml:"use_accept_encoding_gzip,omitempty"`
-	MightGzip             *bool  `yaml:"might_gzip,omitempty"`
-	UseMultipartUploads   *bool  `yaml:"use_multipart_uploads,omitempty"`
-	UseUnsignedPayload    *bool  `yaml:"use_unsigned_payload,omitempty"`
-	UseXID                *bool  `yaml:"use_x_id,omitempty"`
-	SignAcceptEncoding    *bool  `yaml:"sign_accept_encoding,omitempty"`
-	CopyCutoff            *int64 `yaml:"copy_cutoff,omitempty"`
-	MaxUploadParts        *int   `yaml:"max_upload_parts,omitempty"`
-	MinChunkSize          *int64 `yaml:"min_chunk_size,omitempty"`
+	ListVersion                 *int   `yaml:"list_version,omitempty"`     // 1 or 2
+	ForcePathStyle              *bool  `yaml:"force_path_style,omitempty"` // true = path-style
+	ListURLEncode               *bool  `yaml:"list_url_encode,omitempty"`
+	UseMultipartEtag            *bool  `yaml:"use_multipart_etag,omitempty"`
+	UseAlreadyExists            *bool  `yaml:"use_already_exists,omitempty"`
+	UseAcceptEncodingGzip       *bool  `yaml:"use_accept_encoding_gzip,omitempty"`
+	UseDataIntegrityProtections *bool  `yaml:"use_data_integrity_protections,omitempty"`
+	MightGzip                   *bool  `yaml:"might_gzip,omitempty"`
+	UseMultipartUploads         *bool  `yaml:"use_multipart_uploads,omitempty"`
+	UseUnsignedPayload          *bool  `yaml:"use_unsigned_payload,omitempty"`
+	UseXID                      *bool  `yaml:"use_x_id,omitempty"`
+	SignAcceptEncoding          *bool  `yaml:"sign_accept_encoding,omitempty"`
+	CopyCutoff                  *int64 `yaml:"copy_cutoff,omitempty"`
+	MaxUploadParts              *int   `yaml:"max_upload_parts,omitempty"`
+	MinChunkSize                *int64 `yaml:"min_chunk_size,omitempty"`
 }
 
 // Provider defines the configurable data in each provider.yaml
