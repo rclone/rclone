@@ -374,7 +374,7 @@ func applyTimeoutMode(ctx context.Context, mode string) context.Context {
 		ci.LowLevelRetries = 3
 		ci.ConnectTimeout = fs.Duration(15 * time.Second)
 		ci.Timeout = fs.Duration(30 * time.Second)
-		fs.Logf(nil, "level3: Using balanced timeout mode (retries=%d, contimeout=%v, timeout=%v)",
+		fs.Debugf(nil, "level3: Using balanced timeout mode (retries=%d, contimeout=%v, timeout=%v)",
 			ci.LowLevelRetries, ci.ConnectTimeout, ci.Timeout)
 		return newCtx
 
@@ -383,7 +383,7 @@ func applyTimeoutMode(ctx context.Context, mode string) context.Context {
 		ci.LowLevelRetries = 1
 		ci.ConnectTimeout = fs.Duration(5 * time.Second)
 		ci.Timeout = fs.Duration(10 * time.Second)
-		fs.Logf(nil, "level3: Using aggressive timeout mode (retries=%d, contimeout=%v, timeout=%v)",
+		fs.Debugf(nil, "level3: Using aggressive timeout mode (retries=%d, contimeout=%v, timeout=%v)",
 			ci.LowLevelRetries, ci.ConnectTimeout, ci.Timeout)
 		return newCtx
 
@@ -1270,7 +1270,7 @@ func (f *Fs) rebuildCommand(ctx context.Context, arg []string, opt map[string]st
 	avgSpeed := float64(rebuiltSize) / duration.Seconds()
 
 	var summary strings.Builder
-	summary.WriteString(fmt.Sprintf("\n✅ Rebuild Complete!\n\n"))
+	summary.WriteString("\n✅ Rebuild Complete!\n\n")
 	summary.WriteString(fmt.Sprintf("Files rebuilt: %d/%d\n", rebuilt, len(filesToRebuild)))
 	summary.WriteString(fmt.Sprintf("Data transferred: %s\n", fs.SizeSuffix(rebuiltSize)))
 	summary.WriteString(fmt.Sprintf("Duration: %v\n", duration.Round(time.Second)))
@@ -1561,7 +1561,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if f.opt.AutoCleanup {
 				// Check parity to see if directory is orphaned (exists only on parity)
 				_, errParity := f.parity.List(ctx, dir)
-				
+
 				// If parity exists but both data backends don't, this is orphaned
 				if errParity == nil {
 					dirPath := dir
@@ -2116,43 +2116,63 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorCantDirMove
 	}
 
+	// Prepare destination: if the target directory already exists but is empty (common
+	// when the test harness pre-creates it), remove it so the backend DirMove can succeed.
+	// If it exists with contents we must fail with fs.ErrorDirExists.
+	checkAndCleanupDestination := func(remote string) error {
+		entries, err := f.List(ctx, remote)
+		switch {
+		case err == nil:
+			if len(entries) > 0 {
+				return fs.ErrorDirExists
+			}
+			if rmErr := f.Rmdir(ctx, remote); rmErr != nil && !errors.Is(rmErr, fs.ErrorDirNotFound) {
+				return fmt.Errorf("failed to remove empty destination %q: %w", remote, rmErr)
+			}
+		case errors.Is(err, fs.ErrorDirNotFound):
+			// Nothing to do - destination does not exist
+		default:
+			return err
+		}
+		return nil
+	}
+
+	if dstRemote == "" {
+		if err := checkAndCleanupDestination(""); err != nil {
+			return err
+		}
+	} else {
+		// Ensure intermediate parent directories exist so per-backend DirMove
+		// gets consistent expectations.
+		parent := path.Dir(dstRemote)
+		if parent != "." && parent != "/" {
+			if mkErr := f.Mkdir(ctx, parent); mkErr != nil && !errors.Is(mkErr, fs.ErrorDirExists) {
+				return fmt.Errorf("failed to prepare destination parent %q: %w", parent, mkErr)
+			}
+		}
+		if err := checkAndCleanupDestination(dstRemote); err != nil {
+			return err
+		}
+	}
+
 	// Disable retries for strict RAID 3 write policy
 	ctx = f.disableRetriesForWrites(ctx)
-
-	// When rclone creates Fs instances:
-	// - srcFs has root=srcRemote (e.g., "testdir")
-	// - f has root=dstRemote (e.g., "testdir2")
-	// - Underlying backends have roots like "/path/to/even/testdir" and "/path/to/even/testdir2"
-	//
-	// The local backend's DirMove uses:
-	// - srcFs.localPath(srcRemote) for source path
-	// - f.localPath(dstRemote) for destination path
-	//
-	// Since srcFs.even has root="/path/to/even/testdir", srcRemote="" (empty) means the root directory
-	// Since f.even has root="/path/to/even/testdir2", dstRemote="" (empty) means the root directory
-	// So we pass empty strings for both paths - the backend will use the Fs roots.
-	//
-	// However, rclone may have already created the destination directory during Fs initialization.
-	// If it's empty and was just created, we should remove it first to allow the move.
-	// Check if destination exists and is empty on all backends, remove if so.
-	entries, err := f.List(ctx, "")
-	if err == nil && len(entries) == 0 {
-		// Destination is empty - try to remove it so DirMove can proceed
-		_ = f.Rmdir(ctx, "")
-	}
 
 	g, gCtx := errgroup.WithContext(ctx)
 
 	// Move on even - use best-effort approach for degraded directories
 	g.Go(func() error {
 		if do := f.even.Features().DirMove; do != nil {
-			err := do(gCtx, srcFs.even, "", "")
+			err := do(gCtx, srcFs.even, srcRemote, dstRemote)
 			if err != nil {
 				// If source doesn't exist on this backend, create destination instead (reconstruction)
 				// Only if auto_heal is enabled
 				if (os.IsNotExist(err) || errors.Is(err, fs.ErrorDirNotFound)) && f.opt.AutoHeal {
 					fs.Infof(f, "DirMove: source missing on even, creating destination (reconstruction)")
-					return f.even.Mkdir(gCtx, "")
+					return f.even.Mkdir(gCtx, dstRemote)
+				}
+				if errors.Is(err, fs.ErrorDirExists) {
+					return fs.ErrorDirExists
 				}
 				return fmt.Errorf("even dirmove failed: %w", err)
 			}
@@ -2164,13 +2184,16 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// Move on odd
 	g.Go(func() error {
 		if do := f.odd.Features().DirMove; do != nil {
-			err := do(gCtx, srcFs.odd, "", "")
+			err := do(gCtx, srcFs.odd, srcRemote, dstRemote)
 			if err != nil {
 				// If source doesn't exist on this backend, create destination instead (reconstruction)
 				// Only if auto_heal is enabled
 				if (os.IsNotExist(err) || errors.Is(err, fs.ErrorDirNotFound)) && f.opt.AutoHeal {
 					fs.Infof(f, "DirMove: source missing on odd, creating destination (reconstruction)")
-					return f.odd.Mkdir(gCtx, "")
+					return f.odd.Mkdir(gCtx, dstRemote)
+				}
+				if errors.Is(err, fs.ErrorDirExists) {
+					return fs.ErrorDirExists
 				}
 				return fmt.Errorf("odd dirmove failed: %w", err)
 			}
@@ -2182,13 +2205,16 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// Move on parity
 	g.Go(func() error {
 		if do := f.parity.Features().DirMove; do != nil {
-			err := do(gCtx, srcFs.parity, "", "")
+			err := do(gCtx, srcFs.parity, srcRemote, dstRemote)
 			if err != nil {
 				// If source doesn't exist on this backend, create destination instead (reconstruction)
 				// Only if auto_heal is enabled
 				if (os.IsNotExist(err) || errors.Is(err, fs.ErrorDirNotFound)) && f.opt.AutoHeal {
 					fs.Infof(f, "DirMove: source missing on parity, creating destination (reconstruction)")
-					return f.parity.Mkdir(gCtx, "")
+					return f.parity.Mkdir(gCtx, dstRemote)
+				}
+				if errors.Is(err, fs.ErrorDirExists) {
+					return fs.ErrorDirExists
 				}
 				return fmt.Errorf("parity dirmove failed: %w", err)
 			}
@@ -2197,8 +2223,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorCantDirMove
 	})
 
-	err = g.Wait()
-	if err != nil {
+	if err := g.Wait(); err != nil {
 		return err
 	}
 
@@ -2222,11 +2247,11 @@ func (f *Fs) reconstructMissingDirectory(ctx context.Context, dir string, errEve
 	// Check which backends have the directory
 	evenExists := errEven == nil
 	oddExists := errOdd == nil
-	
+
 	// Check parity separately
 	_, errParity := f.parity.List(ctx, dir)
 	parityExists := errParity == nil
-	
+
 	// Count how many backends have this directory
 	count := 0
 	if evenExists {
@@ -2238,14 +2263,14 @@ func (f *Fs) reconstructMissingDirectory(ctx context.Context, dir string, errEve
 	if parityExists {
 		count++
 	}
-	
+
 	// If directory exists on exactly 2/3 backends, reconstruct the missing one
 	if count == 2 {
 		dirPath := dir
 		if dirPath == "" {
 			dirPath = f.root
 		}
-		
+
 		// Create missing directory on the backend that doesn't have it
 		if !evenExists {
 			fs.Infof(f, "Reconstructing missing directory %q on even backend (2/3 → 3/3)", dirPath)
@@ -2280,7 +2305,7 @@ func (f *Fs) cleanupOrphanedDirectory(ctx context.Context, dir string, errEven, 
 	// Directory doesn't exist if List returned ErrorDirNotFound
 	evenExists := errEven == nil
 	oddExists := errOdd == nil
-	
+
 	// For parity, we need to check separately since we don't have its error
 	type dirResult struct {
 		exists bool
@@ -2313,7 +2338,7 @@ func (f *Fs) cleanupOrphanedDirectory(ctx context.Context, dir string, errEven, 
 			dirPath = f.root
 		}
 		fs.Infof(f, "Auto-cleanup: removing orphaned directory %q (exists on %d/3 backends)", dirPath, count)
-		
+
 		// Remove from all backends where it exists (best effort)
 		if evenExists {
 			err := f.even.Rmdir(ctx, dir)
