@@ -50,4 +50,3 @@ quirks:
   list_version: 1
   use_multipart_etag: false
   use_already_exists: false
-  use_data_integrity_protections: false

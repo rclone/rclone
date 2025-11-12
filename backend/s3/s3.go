@@ -39,6 +39,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/ncw/swift/v2"
 
+	"golang.org/x/net/http/httpguts"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/chunksize"
@@ -59,8 +62,6 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/rclone/rclone/lib/version"
-	"golang.org/x/net/http/httpguts"
-	"golang.org/x/sync/errgroup"
 )
 
 // Register with Fs
@@ -579,7 +580,7 @@ circumstances or for testing.
 			Help: `If true use AWS S3 data integrity protections.
 
 See [AWS Docs on Data Integrity Protections](https://docs.aws.amazon.com/sdkref/latest/guide/feature-dataintegrity.html)`,
-			Default:  true,
+			Default:  fs.Tristate{},
 			Advanced: true,
 		}, {
 			Name:     "versions",
@@ -944,7 +945,7 @@ type Options struct {
 	DirectoryMarkers            bool                 `config:"directory_markers"`
 	UseMultipartEtag            fs.Tristate          `config:"use_multipart_etag"`
 	UsePresignedRequest         bool                 `config:"use_presigned_request"`
-	UseDataIntegrityProtections bool                 `config:"use_data_integrity_protections"`
+	UseDataIntegrityProtections fs.Tristate          `config:"use_data_integrity_protections"`
 	Versions                    bool                 `config:"versions"`
 	VersionAt                   fs.Time              `config:"version_at"`
 	VersionDeleted              bool                 `config:"version_deleted"`
@@ -1310,7 +1311,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		} else {
 			s3Opt.EndpointOptions.UseDualStackEndpoint = aws.DualStackEndpointStateDisabled
 		}
-		if !opt.UseDataIntegrityProtections {
+		if !opt.UseDataIntegrityProtections.Value {
 			s3Opt.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
 			s3Opt.ResponseChecksumValidation = aws.ResponseChecksumValidationWhenRequired
 		}
@@ -1509,6 +1510,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.ListURLEncode, true, provider.Quirks.ListURLEncode)
 	set(&opt.UseMultipartEtag, true, provider.Quirks.UseMultipartEtag)
 	set(&opt.UseAcceptEncodingGzip, true, provider.Quirks.UseAcceptEncodingGzip)
+	set(&opt.UseDataIntegrityProtections, false, provider.Quirks.UseDataIntegrityProtections)
 	set(&opt.MightGzip, true, provider.Quirks.MightGzip)
 	set(&opt.UseAlreadyExists, true, provider.Quirks.UseAlreadyExists)
 	set(&opt.UseMultipartUploads, true, provider.Quirks.UseMultipartUploads)

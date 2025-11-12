@@ -35,4 +35,3 @@ storage_class:
 bucket_acl: true
 quirks:
   use_multipart_etag: false # multipar ETags differ from AWS
-  use_data_integrity_protections: false
