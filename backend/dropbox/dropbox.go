@@ -1330,6 +1330,16 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
 		result, err = f.srv.MoveV2(&arg)
+		switch e := err.(type) {
+		case files.MoveV2APIError:
+			// There seems to be a bit of eventual consistency here which causes this to
+			// fail on just created objects
+			// See: https://github.com/rclone/rclone/issues/8881
+			if e.EndpointError != nil && e.EndpointError.FromLookup != nil && e.EndpointError.FromLookup.Tag == files.LookupErrorNotFound {
+				fs.Debugf(srcObj, "Retrying move on %v error", err)
+				return true, err
+			}
+		}
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
