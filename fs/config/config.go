@@ -372,17 +372,16 @@ func LoadedDataWithErr() (out Storage, err error) {
 		// If empty configPath (in-memory only) the value will be "."
 		_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(configPath))
 		// Load configuration from file (or initialize sensible default if no file, or error)
-		err = data.Load()
-		switch err {
-		case nil:
+		if err := data.Load(); err == nil {
+
 			fs.Debugf(nil, "Using config file from %q", configPath)
-		case ErrorConfigFileNotFound:
+		} else if err == ErrorConfigFileNotFound {
 			if configPath == "" {
 				fs.Debugf(nil, "Config is memory-only - using defaults")
 			} else {
 				fs.Logf(nil, "Config file %q not found - using defaults", configPath)
 			}
-		default:
+		} else {
 			return nil, err
 		}
 		dataLoaded = true
