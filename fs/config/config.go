@@ -358,11 +358,11 @@ var ErrorConfigFileNotFound = errors.New("config file not found")
 
 // LoadedData ensures the config file storage is loaded and returns it
 func LoadedData() Storage {
-	data, err := LoadedDataWithErr()
+	dataLoaded, err := LoadedDataWithErr()
 	if err != nil {
 		fs.Fatalf(nil, "Failed to load config file %q: %v", configPath, err)
 	}
-	return data
+	return dataLoaded
 }
 
 // LoadedDataWithErr ensures the config file storage is loaded and returns it but can return an error
