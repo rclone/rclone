@@ -68,7 +68,7 @@ func init() {
 	Add(Call{
 		Path:  "rc/panic",
 		Fn:    rcPanic,
-		Title: "This returns an error by panicing",
+		Title: "This returns an error by panicking",
 		Help: `
 This returns an error with the input as part of its error string.
 Useful for testing error handling.`,

@@ -1,6 +1,6 @@
 //go:build !plan9
 
-// Package list inplements 'rclone archive list'
+// Package list implements 'rclone archive list'
 package list
 
 import (

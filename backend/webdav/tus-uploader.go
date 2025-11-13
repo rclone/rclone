@@ -136,7 +136,7 @@ func (u *Uploader) UploadChunk(ctx context.Context, cnt int, options ...fs.OpenO
 	size, err := u.upload.stream.Read(data)
 
 	if err != nil {
-		fs.Errorf(u.fs, "Chunk %d: Error: Can not read from data strem: %v", cnt, err)
+		fs.Errorf(u.fs, "Chunk %d: Error: Can not read from data stream: %v", cnt, err)
 		return err
 	}
 
