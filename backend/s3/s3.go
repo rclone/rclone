@@ -4552,6 +4552,10 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 			ui.req.ContentLanguage = aws.String(value)
 		case "content-type":
 			ui.req.ContentType = aws.String(value)
+		case "if-match":
+			ui.req.IfMatch = aws.String(value)
+		case "if-none-match":
+			ui.req.IfNoneMatch = aws.String(value)
 		case "x-amz-tagging":
 			ui.req.Tagging = aws.String(value)
 		default:
