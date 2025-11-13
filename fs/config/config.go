@@ -358,19 +358,8 @@ var ErrorConfigFileNotFound = errors.New("config file not found")
 
 // LoadedData ensures the config file storage is loaded and returns it
 func LoadedData() Storage {
-	newData, err := LoadedDataWithErr()
-	switch err {
-	case nil:
-		fs.Debugf(nil, "Using config file from %q", configPath)
-		return newData
-	case ErrorConfigFileNotFound:
-		if configPath == "" {
-			fs.Debugf(nil, "Config is memory-only - using defaults")
-		} else {
-			fs.Logf(nil, "Config file %q not found - using defaults", configPath)
-		}
-		dataLoaded = true
-	default:
+	data, err := LoadedDataWithErr()
+	if err != nil {
 		fs.Fatalf(nil, "Failed to load config file %q: %v", configPath, err)
 	}
 	return data
@@ -384,7 +373,16 @@ func LoadedDataWithErr() (out Storage, err error) {
 		_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(configPath))
 		// Load configuration from file (or initialize sensible default if no file, or error)
 		err = data.Load()
-		if err != nil {
+		switch err {
+		case nil:
+			fs.Debugf(nil, "Using config file from %q", configPath)
+		case ErrorConfigFileNotFound:
+			if configPath == "" {
+				fs.Debugf(nil, "Config is memory-only - using defaults")
+			} else {
+				fs.Logf(nil, "Config file %q not found - using defaults", configPath)
+			}
+		default:
 			return nil, err
 		}
 		dataLoaded = true
