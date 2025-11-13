@@ -420,14 +420,14 @@ backends:
    fastlist: true
    ignore:
      # It just isn't possible to preserve the existing file with azure blob
-     # and make sure we don't leak uncomitted blocks.
+     # and make sure we don't leak uncommitted blocks.
      - TestMultithreadCopyAbort
  - backend:  "azureblob"
    remote:   "TestAzureBlob,directory_markers:"
    fastlist: true
    ignore:
      # It just isn't possible to preserve the existing file with azure blob
-     # and make sure we don't leak uncomitted blocks.
+     # and make sure we don't leak uncommitted blocks.
      - TestMultithreadCopyAbort
  - backend:  "azurefiles"
    remote:   "TestAzureFiles:"

@@ -961,7 +961,7 @@ func (o *Object) setMetaData(info *api.ResourceInfoResponse) (err error) {
 	return nil
 }
 
-// readMetaData reads ands sets the new metadata for a storage.Object
+// readMetaData reads and sets the new metadata for a storage.Object
 func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if o.hasMetaData {
 		return nil

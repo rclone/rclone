@@ -51,7 +51,7 @@ type LifecycleRule struct {
 // ServerSideEncryption is a configuration object for B2 Server-Side Encryption
 type ServerSideEncryption struct {
 	Mode           string `json:"mode"`
-	Algorithm      string `json:"algorithm"`      // Encryption algorith to use
+	Algorithm      string `json:"algorithm"`      // Encryption algorithm to use
 	CustomerKey    string `json:"customerKey"`    // User provided Base64 encoded key that is used by the server to encrypt files
 	CustomerKeyMd5 string `json:"customerKeyMd5"` // An MD5 hash of the decoded key
 }
