@@ -1292,7 +1292,7 @@ func (f *ftpReadCloser) Close() error {
 	// See: https://github.com/rclone/rclone/issues/3445#issuecomment-521654257
 	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
-		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend:
+		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend, ftp.StatusRequestedFileActionOK:
 			err = nil
 		}
 	}
