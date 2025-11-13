@@ -702,7 +702,11 @@ func ShowRedactedConfig() {
 // EditConfig edits the config file interactively
 func EditConfig(ctx context.Context) (err error) {
 	for {
-		haveRemotes := len(LoadedData().GetSectionList()) != 0
+		loadedData, errLoad := LoadedDataWithErr()
+		if errLoad != nil {
+			return errLoad
+		}
+		haveRemotes := len(loadedData.GetSectionList()) != 0
 		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "rRename remote", "cCopy remote", "sSet configuration password", "qQuit config"}
 		if haveRemotes {
 			fmt.Printf("Current remotes:\n\n")
