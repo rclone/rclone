@@ -373,7 +373,6 @@ func LoadedDataWithErr() (out Storage, err error) {
 		_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(configPath))
 		// Load configuration from file (or initialize sensible default if no file, or error)
 		if err := data.Load(); err == nil {
-
 			fs.Debugf(nil, "Using config file from %q", configPath)
 		} else if err == ErrorConfigFileNotFound {
 			if configPath == "" {
