@@ -72,7 +72,7 @@ const (
 
 // Globals
 var (
-	errNotWithVersions  = errors.New("can't modify or delete files in --b2-versions mode")
+	errNotWithVersions  = errors.New("can't modify files in --b2-versions mode")
 	errNotWithVersionAt = errors.New("can't modify or delete files in --b2-version-at mode")
 )
 
@@ -2334,7 +2334,10 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 func (o *Object) Remove(ctx context.Context) error {
 	bucket, bucketPath := o.split()
 	if o.fs.opt.Versions {
-		return errNotWithVersions
+		t, path := api.RemoveVersion(bucketPath)
+		if !t.IsZero() {
+			return o.fs.deleteByID(ctx, o.id, path)
+		}
 	}
 	if o.fs.opt.VersionAt.IsSet() {
 		return errNotWithVersionAt
