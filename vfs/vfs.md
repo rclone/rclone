@@ -87,6 +87,10 @@ find that you need one or the other or both.
     --vfs-cache-max-size SizeSuffix        Max total size of objects in the cache (default off)
     --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
     --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-hide-metadata                    Hide metadata sidecar files from directory listings
+    --vfs-metadata-extension string        Extension to use for metadata sidecar files
+    --vfs-metadata-store string            Backend used for metadata persistence (default "auto")
+    --vfs-persist-metadata string          Persist POSIX metadata (off|owner|mode|times|all or comma list) (default "off")
     --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
 ```
 
@@ -486,3 +490,28 @@ total 1048578
 If the file has no metadata it will be returned as `{}` and if there
 is an error reading the metadata the error will be returned as
 `{"error":"error string"}`.
+
+
+#### Persisting POSIX-like Metadata
+
+The VFS can persist POSIX-like attributes (mode/uid/gid/atime/mtime) separately from the
+backend's native attributes and re-apply them on top of what the backend returns.
+
+- Select which attributes to persist with `--vfs-persist-metadata`. Accepted values are
+  `off`, `owner`, `mode`, `times`, `all`, or a comma-separated combination (for example
+  `owner,mode`). `all` enables every supported attribute; `off` disables persistence.
+- Control where metadata is stored with `--vfs-metadata-store`:
+  - `backend`: store metadata on the backend via the remote's metadata API (if supported).
+  - `sidecar`/`auto` (default): store metadata in adjacent sidecar files.
+- Sidecar file names are controlled by `--vfs-metadata-extension` (default `.metadata`
+  whenever persistence is enabled and the store is not `backend`).
+- Use `--vfs-hide-metadata` to keep sidecar files out of directory listings entirely while
+  still allowing direct access (for example `cat path/file.metadata`).
+- Sidecar JSON continues to encode numeric fields as decimal strings and times as
+  RFC3339 timestamps, matching the example above.
+- Metadata overlay is applied after the backend reports its own attributes. This does not
+  alter remote ACLs or ownership; it only affects the view exposed by the VFS/NFS layers.
+- Updates are best-effort. Failures are logged at debug level and do not cause FUSE/NFS
+  operations to fail; rclone falls back to storing the requested values in the sidecar
+  even when the backend cannot change them (e.g. `Chown` returning `ENOSYS`).
+- The metadata overlay is independent of the `--metadata` copy/listing feature.

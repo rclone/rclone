@@ -43,6 +43,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/vfs/vfscache"
 	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/rclone/rclone/vfs/vfsmeta"
 )
 
 //go:embed vfs.md
@@ -179,6 +180,7 @@ type VFS struct {
 	root        *Dir
 	Opt         vfscommon.Options
 	cache       *vfscache.Cache
+	metaStore   vfsmeta.Store
 	cancel      context.CancelFunc
 	cancelCache context.CancelFunc
 	usageMu     sync.Mutex
@@ -214,6 +216,21 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 
 	// Fill out anything else
 	vfs.Opt.Init()
+	if vfs.Opt.PersistMetadataEnabled() {
+		switch vfs.Opt.MetadataStore {
+		case "backend":
+			vfs.metaStore = newBackendStore(vfs)
+		case "auto":
+			ft := vfs.f.Features()
+			if ft.ReadMetadata && ft.WriteMetadata {
+				vfs.metaStore = newBackendStore(vfs)
+			} else {
+				vfs.metaStore = newSidecarStore(vfs, vfs.Opt.MetadataExtension)
+			}
+		default:
+			vfs.metaStore = newSidecarStore(vfs, vfs.Opt.MetadataExtension)
+		}
+	}
 
 	// Find a VFS with the same name and options and return it if possible
 	activeMu.Lock()
@@ -605,6 +622,9 @@ func (vfs *VFS) Rename(oldName, newName string) error {
 	if err != nil {
 		return err
 	}
+	if vfs.metaStore != nil && !vfs.isMetaPath(oldName) {
+		_ = vfs.metaStore.Rename(context.Background(), oldName, newName, false)
+	}
 	return nil
 }
 
@@ -709,6 +729,9 @@ func (vfs *VFS) Remove(name string) error {
 	err = node.Remove()
 	if err != nil {
 		return err
+	}
+	if vfs.metaStore != nil && !vfs.isMetaPath(name) {
+		_ = vfs.metaStore.Delete(context.Background(), name, node.IsDir())
 	}
 	return nil
 }
@@ -825,6 +848,109 @@ func (vfs *VFS) WriteFile(name string, data []byte, perm os.FileMode) (err error
 	defer fs.CheckClose(fh, &err)
 	_, err = fh.Write(data)
 	return err
+}
+
+// LoadMetadata loads merged VFS metadata for the given path.
+func (vfs *VFS) LoadMetadata(ctx context.Context, path string, isDir bool) (vfsmeta.Meta, error) {
+	if vfs.metaStore == nil {
+		return vfsmeta.Meta{}, nil
+	}
+	if vfs.isMetaPath(path) {
+		return vfsmeta.Meta{}, fs.ErrorObjectNotFound
+	}
+	meta, err := vfs.metaStore.Load(ctx, path, isDir)
+	if err != nil {
+		return vfsmeta.Meta{}, err
+	}
+	mask := vfs.Opt.PersistMetadataFields()
+	meta, _ = maskMetadata(meta, mask)
+	return meta, nil
+}
+
+// SaveMetadata merges and persists VFS metadata for the given path.
+func (vfs *VFS) SaveMetadata(ctx context.Context, path string, isDir bool, m vfsmeta.Meta) error {
+	if vfs.metaStore == nil {
+		return nil
+	}
+	if vfs.isMetaPath(path) {
+		return nil
+	}
+	mask := vfs.Opt.PersistMetadataFields()
+	filtered, has := maskMetadata(m, mask)
+	if !has {
+		return nil
+	}
+	cur, _ := vfs.metaStore.Load(ctx, path, isDir)
+	cur, _ = maskMetadata(cur, mask)
+	cur.Merge(filtered)
+	cur, has = maskMetadata(cur, mask)
+	if !has {
+		return vfs.metaStore.Delete(ctx, path, isDir)
+	}
+	return vfs.metaStore.Save(ctx, path, isDir, cur)
+}
+
+// RenameMetadata renames metadata associated with the given path.
+func (vfs *VFS) RenameMetadata(ctx context.Context, oldPath, newPath string, isDir bool) error {
+	if vfs.metaStore == nil {
+		return nil
+	}
+	if vfs.isMetaPath(oldPath) || vfs.isMetaPath(newPath) {
+		return nil
+	}
+	return vfs.metaStore.Rename(ctx, oldPath, newPath, isDir)
+}
+
+// DeleteMetadata deletes metadata associated with the given path.
+func (vfs *VFS) DeleteMetadata(ctx context.Context, path string, isDir bool) error {
+	if vfs.metaStore == nil {
+		return nil
+	}
+	if vfs.isMetaPath(path) {
+		return nil
+	}
+	return vfs.metaStore.Delete(ctx, path, isDir)
+}
+
+func (vfs *VFS) isMetaPath(path string) bool {
+	ext := vfs.Opt.MetadataExtension
+	return ext != "" && strings.HasSuffix(path, ext)
+}
+
+func (vfs *VFS) hideSidecarMetadata() bool {
+	if vfs.metaStore == nil {
+		return false
+	}
+	if !vfs.Opt.HideMetadata {
+		return false
+	}
+	_, ok := vfs.metaStore.(*sidecarStore)
+	return ok
+}
+
+func maskMetadata(meta vfsmeta.Meta, mask vfscommon.MetadataFields) (vfsmeta.Meta, bool) {
+	if !mask.Has(vfscommon.MetadataFieldMode) {
+		meta.Mode = nil
+	}
+	if !mask.Has(vfscommon.MetadataFieldOwner) {
+		meta.UID = nil
+		meta.GID = nil
+	}
+	if !mask.Has(vfscommon.MetadataFieldTimes) {
+		meta.Mtime = nil
+		meta.Atime = nil
+		meta.Btime = nil
+	}
+	return meta, !metadataEmpty(meta)
+}
+
+func metadataEmpty(meta vfsmeta.Meta) bool {
+	return meta.Mode == nil &&
+		meta.UID == nil &&
+		meta.GID == nil &&
+		meta.Mtime == nil &&
+		meta.Atime == nil &&
+		meta.Btime == nil
 }
 
 // AddVirtual adds the object (file or dir) to the directory cache
