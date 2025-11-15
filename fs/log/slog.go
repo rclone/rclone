@@ -36,11 +36,8 @@ func defaultHandler() *OutputHandler {
 	// Create our handler
 	h := NewOutputHandler(os.Stderr, opts, logFormatDate|logFormatTime)
 
-	// Set the slog default handler
-	slog.SetDefault(slog.New(h))
-
-	// Make log.Printf logs at level Notice
-	slog.SetLogLoggerLevel(fs.SlogLevelNotice)
+	// Setup the logger
+	fs.SetLogger(h)
 
 	return h
 }
