@@ -391,6 +391,16 @@ settings of the user through a checkbox there.
 Infinite Scale works with the chunking [tus](https://tus.io) upload protocol.
 The chunk size is currently fixed 10 MB.
 
+### OpenCloud
+
+The WebDAV URL for OpenCloud can be found in the details panel of
+any space in OpenCloud if the display was enabled in the personal
+settings of the user through a checkbox there.
+
+OpenCloud works with the chunking [tus](https://tus.io) upload protocol.
+The chunk size is currently fixed 10 MB. With that, files of any size
+can be uploaded to the cloud.
+
 ### Sharepoint Online
 
 Rclone can be used with Sharepoint provided by OneDrive for Business
