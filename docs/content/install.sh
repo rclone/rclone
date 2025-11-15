@@ -37,7 +37,7 @@ for tool in ${unzip_tools_list[*]}; do
         unzip_tool="$tool"
         break
     fi
-done  
+done
 set -e
 
 # exit if no unzip tools available
@@ -69,6 +69,9 @@ OS="$(uname)"
 case $OS in
   Linux)
     OS='linux'
+    # Define values specifically for this platform/OS.
+    binTgtDir=/usr/bin
+    man1TgtDir=/usr/share/man/man1
     ;;
   FreeBSD)
     OS='freebsd'
@@ -78,7 +81,7 @@ case $OS in
     ;;
   OpenBSD)
     OS='openbsd'
-    ;;  
+    ;;
   Darwin)
     OS='osx'
     binTgtDir=/usr/local/bin
@@ -153,18 +156,32 @@ cd $unzip_dir/*
 
 case "$OS" in
   'linux')
+    # - - - - - - - - - - - - - - - - - - - -
     #binary
-    cp rclone /usr/bin/rclone.new
-    chmod 755 /usr/bin/rclone.new
-    chown root:root /usr/bin/rclone.new
-    mv /usr/bin/rclone.new /usr/bin/rclone
+    # First verify our sudo ability. If we pass that then execute the steps
+    # requested but make sure we're doing it as root and not as any other user.
+    # (If sudo was run before this, the user may be set to something *other*
+    # than 'root', this makes sure.
+    sudo -v
+    sudo -u root -- bash -c "\
+        mkdir -m 0755 ${binTgtDir} && \
+        cp rclone ${binTgtDir}/rclone.new && \
+        chmod 0755 ${binTgtDir}/rclone.new && \
+        chown root:root ${binTgtDir}/rclone.new && \
+        mv ${binTgtDir}/rclone.new ${binTgtDir}/rclone"
+    # - - - - - - - - - - - - - - - - - - - -
     #manual
     if ! [ -x "$(command -v mandb)" ]; then
         echo 'mandb not found. The rclone man docs will not be installed.'
-    else 
-        mkdir -p /usr/local/share/man/man1
-        cp rclone.1 /usr/local/share/man/man1/
-        mandb
+    else
+        # See sudo note above.
+        sudo -v
+        sudo -u root -- bash -c "\
+            mkdir -m 0755 -p ${man1TgtDir} && \
+            cp rclone.1 ${man1TgtDir} && \
+            chmod 0644 ${man1TgtDir}/rclone.1" && \
+            mandb --quiet --filename=${man1TgtDir}/rclone.1"
+    # - - - - - - - - - - - - - - - - - - - -
     fi
     ;;
   'freebsd'|'openbsd'|'netbsd')
@@ -185,7 +202,7 @@ case "$OS" in
     chmod a=x ${binTgtDir}/rclone
     #manual
     mkdir -m 0555 -p ${man1TgtDir}
-    cp rclone.1 ${man1TgtDir}    
+    cp rclone.1 ${man1TgtDir}
     chmod a=r ${man1TgtDir}/rclone.1
     ;;
   *)
