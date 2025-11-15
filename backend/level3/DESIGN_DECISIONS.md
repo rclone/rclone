@@ -210,7 +210,6 @@
 **Consequences**:
 - ✅ Simple implementation
 - ✅ Works with any file size
-- ⚠️ Entire file must be in memory (acceptable for most use cases)
 - ✅ Perfect 50/50 distribution
 
 **References**: `RAID3.md`
@@ -410,4 +409,13 @@ Parity: [A^B, C^D, E^F, G]  (4 bytes)
 This document provides a quick reference for understanding WHY the level3 backend works the way it does.
 
 For detailed implementation notes, see files in `docs/` directory.
+
+### Testing
+
+- `go test ./backend/level3/...` runs the full integration suite with temporary local remotes.
+- For MinIO-based testing, run the three containers defined in `rclone.conf`, then execute `go test ./backend/level3`.
+
+### Properties / tags
+
+- Stability: WIP
 

@@ -323,3 +323,25 @@ All use:
 
 The level3 backend is production-ready with enterprise-grade testing!
 
+## Bash Comparison Harness
+
+The script `backend/level3/tools/compare_level3_with_single.sh` supplements the Go-based tests with a black-box comparison between level3 and the corresponding single backend remotes.
+
+- Covers common rclone commands (`mkdir`, `ls`, `lsd`, `cat`, `delete`, `copy`, `move`, `check`, `sync`, `purge`, etc.).
+- Works with both MinIO (S3) and local filesystem remotes using the names defined in `rclone.conf` (`miniolevel3`, `miniosingle`, `locallevel3`, `localsingle`).
+- Assumes all three level3 remotes are healthy; degraded scenarios will be handled by a dedicated fault-testing script.
+- Compares exit codes and command outputs to confirm level3 mirrors the single backend’s behaviour.
+- Designed for incremental growth—run `./compare_level3_with_single.sh list` to see available tests, or `./compare_level3_with_single.sh test <name>` (optionally with `--storage-type=local|minio`) to execute individual cases.
+
+## Recovery Harness
+
+`backend/level3/tools/compare_level3_with_single_recover.sh` focuses on simulated disk swaps and rebuild workflows:
+
+- Shares the same safety guards and helper functions via `compare_level3_common.sh`.
+- Exercises both MinIO (Docker-backed) and local level3 remotes.
+- Provides `start|stop|teardown|list|test` commands consistent with the comparison harness.
+- For each backend (`even`, `odd`, `parity`) runs two scenarios:
+  - **Failure:** wipes the target backend plus an additional source, confirming `rclone backend rebuild` fails gracefully.
+  - **Success:** wipes the target backend only, runs `rclone backend rebuild`, then validates with `rclone check` and a byte-for-byte comparison against a preserved reference dataset.
+- Leaves reconstructed datasets in place for manual inspection; `teardown` removes all state.
+

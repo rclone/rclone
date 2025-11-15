@@ -35,43 +35,14 @@
 set -euo pipefail
 
 SCRIPT_NAME=$(basename "$0")
-WORKDIR="${HOME}/go/level3storage"
-RCLONE_CONFIG="${RCLONE_CONFIG:-${HOME}/.config/rclone/rclone.conf}"
+SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=backend/level3/tools/compare_level3_common.sh
+. "${SCRIPT_DIR}/compare_level3_common.sh"
+
 VERBOSE=0
 STORAGE_TYPE=""
 COMMAND=""
 COMMAND_ARG=""
-
-# Directory layout used by the configured backends.
-LOCAL_LEVEL3_DIRS=(
-  "${WORKDIR}/even_local"
-  "${WORKDIR}/odd_local"
-  "${WORKDIR}/parity_local"
-)
-LOCAL_SINGLE_DIR="${WORKDIR}/single_local"
-
-MINIO_LEVEL3_DIRS=(
-  "${WORKDIR}/even_minio"
-  "${WORKDIR}/odd_minio"
-  "${WORKDIR}/parity_minio"
-)
-MINIO_SINGLE_DIR="${WORKDIR}/single_minio"
-
-# Directories explicitly allowed for cleanup
-ALLOWED_DATA_DIRS=(
-  "${LOCAL_LEVEL3_DIRS[@]}"
-  "${LOCAL_SINGLE_DIR}"
-  "${MINIO_LEVEL3_DIRS[@]}"
-  "${MINIO_SINGLE_DIR}"
-)
-
-# Definition of MinIO containers: name|user|password|s3_port|console_port|data_dir
-MINIO_CONTAINERS=(
-  "minioeven|even|evenpass88|9001|9004|${WORKDIR}/even_minio"
-  "minioodd|odd|oddpass88|9002|9005|${WORKDIR}/odd_minio"
-  "minioparity|parity|paritypass88|9003|9006|${WORKDIR}/parity_minio"
-  "miniosingle|single|singlepass88|9004|9007|${WORKDIR}/single_minio"
-)
 
 # ---------------------------- helper functions ------------------------------
 
@@ -96,25 +67,6 @@ Environment:
 
 The script must be executed from ${WORKDIR}.
 EOF
-}
-
-log() {
-  printf '[%s] %s\n' "${SCRIPT_NAME}" "$*"
-}
-
-die() {
-  printf '[%s] ERROR: %s\n' "${SCRIPT_NAME}" "$*" >&2
-  exit 1
-}
-
-ensure_workdir() {
-  if [[ "${PWD}" != "${WORKDIR}" ]]; then
-    die "This script must be run from ${WORKDIR} (current: ${PWD})"
-  fi
-}
-
-ensure_rclone_config() {
-  [[ -f "${RCLONE_CONFIG}" ]] || die "rclone config not found at ${RCLONE_CONFIG}"
 }
 
 parse_args() {
@@ -170,245 +122,37 @@ parse_args() {
   fi
 }
 
-rclone_cmd() {
-  rclone --config "${RCLONE_CONFIG}" "$@"
+TEST_RESULTS=()
+
+reset_test_results() {
+  TEST_RESULTS=()
 }
 
-capture_command() {
-  local label="$1"
-  shift
-
-  local out_file err_file status
-  out_file=$(mktemp "/tmp/${label}.stdout.XXXXXX")
-  err_file=$(mktemp "/tmp/${label}.stderr.XXXXXX")
-
-  set +e
-  rclone_cmd "$@" >"${out_file}" 2>"${err_file}"
-  status=$?
-  set -e
-
-  printf '%s|%s|%s\n' "${status}" "${out_file}" "${err_file}"
+pass_test() {
+  local test="$1"
+  local detail="$2"
+  log_pass "test:${test}" "${detail}"
+  TEST_RESULTS+=("PASS ${test}")
 }
 
-print_if_verbose() {
-  local tag="$1"
-  local stdout_file="$2"
-  local stderr_file="$3"
-
-  if (( VERBOSE )); then
-    printf '\n[%s stdout]\n' "${tag}"
-    cat "${stdout_file}"
-    printf '[%s stderr]\n' "${tag}"
-    cat "${stderr_file}"
-  fi
+fail_test() {
+  local test="$1"
+  local detail="$2"
+  log_fail "test:${test}" "${detail}"
+  TEST_RESULTS+=("FAIL ${test} – ${detail}")
 }
 
-ensure_directory() {
-  local dir="$1"
-  if [[ ! -d "${dir}" ]]; then
-    mkdir -p "${dir}"
-  fi
-}
-
-container_exists() {
-  local name="$1"
-  docker ps -a --format '{{.Names}}' | grep -Fxq "${name}"
-}
-
-container_running() {
-  local name="$1"
-  docker ps --format '{{.Names}}' | grep -Fxq "${name}"
-}
-
-start_minio_containers() {
-  for entry in "${MINIO_CONTAINERS[@]}"; do
-    IFS='|' read -r name user pass s3_port console_port data_dir <<<"${entry}"
-    ensure_directory "${data_dir}"
-
-    if container_running "${name}"; then
-      log "Container '${name}' already running – skipping."
-      continue
-    fi
-
-    if container_exists "${name}"; then
-      log "Starting existing container '${name}'."
-      docker start "${name}" >/dev/null
-      continue
-    fi
-
-    log "Launching container '${name}' (ports ${s3_port}/${console_port})."
-    docker run -d \
-      --name "${name}" \
-      -p "${s3_port}:9000" \
-      -p "${console_port}:9001" \
-      -e "MINIO_ROOT_USER=${user}" \
-      -e "MINIO_ROOT_PASSWORD=${pass}" \
-      -v "${data_dir}:/data" \
-      quay.io/minio/minio server /data --console-address ":9001" >/dev/null
-  done
-}
-
-stop_minio_containers() {
-  local any_running=0
-  for entry in "${MINIO_CONTAINERS[@]}"; do
-    IFS='|' read -r name _ <<<"${entry}"
-    if container_running "${name}"; then
-      log "Stopping container '${name}'."
-      docker stop "${name}" >/dev/null
-      any_running=1
-    else
-      log "Container '${name}' not running."
-    fi
-  done
-
-  if (( ! any_running )); then
-    log "No MinIO containers were running."
-  fi
-}
-
-purge_remote_root() {
-  local remote="$1"
-  log "Purging remote '${remote}:'"
-
-  local entries=()
-  local lsd_output=""
-  if lsd_output=$(rclone_cmd lsd "${remote}:" 2>/dev/null | awk '{print $5}' || true); then
-    while IFS= read -r entry; do
-      [[ -n "${entry}" ]] && entries+=("${entry}")
-    done <<<"${lsd_output}"
-  fi
-
-  if [[ "${#entries[@]}" -eq 0 ]]; then
-    log "  (no top-level directories found on ${remote})"
-    rclone_cmd purge "${remote}:" >/dev/null 2>&1 || true
-  else
-    for entry in "${entries[@]}"; do
-      if [[ -n "${entry}" ]]; then
-        log "  - purging ${remote}:${entry}"
-        rclone_cmd purge "${remote}:${entry}" >/dev/null 2>&1 || true
-      fi
-    done
-  fi
-}
-
-verify_directory_empty() {
-  local dir="$1"
-  if [[ ! -d "${dir}" ]]; then
+print_test_summary() {
+  log_info "summary:----------"
+  if [[ "${#TEST_RESULTS[@]}" -eq 0 ]]; then
+    log_info "summary:No entries recorded."
     return
   fi
-  local leftover
-  leftover=$(find "${dir}" -mindepth 1 \
-    -not -path "${dir}/.DS_Store" \
-    -not -path "${dir}/.DS_Store/*" \
-    -not -path "${dir}/.minio.sys" \
-    -not -path "${dir}/.minio.sys/*" \
-    -print -quit 2>/dev/null || true)
-  if [[ -n "${leftover}" ]]; then
-    log "WARNING: directory '${dir}' is not empty after purge."
-  fi
-}
-
-remove_leftover_files() {
-  local dir="$1"
-
-  local allowed=0
-  for candidate in "${ALLOWED_DATA_DIRS[@]}"; do
-    if [[ "${dir}" == "${candidate}" ]]; then
-      allowed=1
-      break
-    fi
+  for entry in "${TEST_RESULTS[@]}"; do
+    log_info "summary:${entry}"
   done
-
-  if (( ! allowed )); then
-    log "Refusing to clean unexpected directory '${dir}' (not in whitelist)."
-    return
-  fi
-
-  case "${dir}" in
-    "${WORKDIR}"/*) ;;
-    *)
-      log "Refusing to clean directory '${dir}' (outside ${WORKDIR})."
-      return
-      ;;
-  esac
-
-  if [[ ! -d "${dir}" ]]; then
-    return
-  fi
-
-  find "${dir}" -mindepth 1 \
-    -not -path "${dir}/.DS_Store" \
-    -not -path "${dir}/.DS_Store/*" \
-    -not -path "${dir}/.minio.sys" \
-    -not -path "${dir}/.minio.sys/*" \
-    -exec rm -rf {} + >/dev/null 2>&1 || true
 }
 
-create_test_dataset() {
-  local label="$1"
-
-  # Dataset layout created by this helper (for both remotes):
-  #   ${dataset_id}/file_root.txt              → Root-level file
-  #   ${dataset_id}/dirA/file_nested.txt       → Nested file in dirA/
-  #   ${dataset_id}/dirB/file_placeholder.txt  → Nested file in dirB/
-  #
-  # Each test using this dataset can rely on these files. The directories are
-  # materialized by uploading files, keeping S3/MinIO semantics happy (no empty dirs).
-  local timestamp random_suffix test_id
-  timestamp=$(date +%Y%m%d%H%M%S)
-  printf -v random_suffix '%04d' $((RANDOM % 10000))
-  test_id="compare-${label}-${timestamp}-${random_suffix}"
-
-  local tmpfile1 tmpfile2
-  tmpfile1=$(mktemp) || return 1
-  tmpfile2=$(mktemp) || { rm -f "${tmpfile1}"; return 1; }
-
-  printf 'Sample data for %s (root file)\n' "${label}" >"${tmpfile1}"
-  printf 'Sample data for %s (nested file)\n' "${label}" >"${tmpfile2}"
-
-  local remote
-  for remote in "${LEVEL3_REMOTE}" "${SINGLE_REMOTE}"; do
-    if ! rclone_cmd mkdir "${remote}:${test_id}" >/dev/null; then
-      log "Failed to mkdir ${remote}:${test_id}"
-      rm -f "${tmpfile1}" "${tmpfile2}"
-      return 1
-    fi
-    if ! rclone_cmd copyto "${tmpfile1}" "${remote}:${test_id}/file_root.txt" >/dev/null; then
-      log "Failed to copy root sample file to ${remote}:${test_id}"
-      rm -f "${tmpfile1}" "${tmpfile2}"
-      return 1
-    fi
-    if ! rclone_cmd copyto "${tmpfile2}" "${remote}:${test_id}/dirA/file_nested.txt" >/dev/null; then
-      log "Failed to copy nested sample file to ${remote}:${test_id}"
-      rm -f "${tmpfile1}" "${tmpfile2}"
-      return 1
-    fi
-    if ! rclone_cmd copyto "${tmpfile1}" "${remote}:${test_id}/dirB/file_placeholder.txt" >/dev/null; then
-      log "Failed to copy placeholder file to ${remote}:${test_id}/dirB"
-      rm -f "${tmpfile1}" "${tmpfile2}"
-      return 1
-    fi
-  done
-
-  rm -f "${tmpfile1}" "${tmpfile2}"
-  printf '%s\n' "${test_id}"
-}
-
-set_remotes_for_storage_type() {
-  case "${STORAGE_TYPE}" in
-    local)
-      LEVEL3_REMOTE="locallevel3"
-      SINGLE_REMOTE="localsingle"
-      ;;
-    minio)
-      LEVEL3_REMOTE="miniolevel3"
-      SINGLE_REMOTE="miniosingle"
-      ;;
-    *)
-      die "Unsupported storage type '${STORAGE_TYPE}'"
-      ;;
-  esac
-}
 
 list_tests() {
   cat <<EOF
@@ -432,9 +176,10 @@ run_all_tests() {
   local tests=("mkdir" "lsd" "ls" "cat" "delete" "cp-download" "cp-upload" "move" "check" "sync-upload" "sync-download" "purge")
   local name
   for name in "${tests[@]}"; do
-    log "=== Running test '${name}' ==="
+    log_info "suite" "Running '${name}'"
     COMMAND_ARG="${name}"
     if ! run_single_test; then
+      print_test_summary
       die "Test '${name}' failed."
     fi
   done
@@ -443,16 +188,17 @@ run_all_tests() {
 
 # ------------------------------ test helpers --------------------------------
 run_lsd_test() {
+  local test_case="lsd"
   purge_remote_root "${LEVEL3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running lsd test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local dataset_id
   if ! dataset_id=$(create_test_dataset "lsd"); then
-    log "Failed to set up dataset for lsd test."
+    log_warn "test:${test_case}" "Failed to set up dataset."
     return 1
   fi
-  log "Dataset created: ${LEVEL3_REMOTE}:${dataset_id} and ${SINGLE_REMOTE}:${dataset_id} (retained for inspection)"
+  log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained)."
 
   local lvl_result single_result
   lvl_result=$(capture_command "lvl_lsd" lsd "${LEVEL3_REMOTE}:${dataset_id}")
@@ -468,13 +214,13 @@ run_lsd_test() {
   print_if_verbose "${SINGLE_REMOTE} lsd" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "lsd status mismatch: ${LEVEL3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
+    log_warn "test:${test_case}" "lsd status mismatch (${LEVEL3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
     rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
     return 1
   fi
 
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
-  log "lsd test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
@@ -1233,47 +979,32 @@ run_mkdir_test() {
 run_single_test() {
   set_remotes_for_storage_type
 
-  case "${COMMAND_ARG}" in
-    mkdir)
-      run_mkdir_test
-      ;;
-    lsd)
-      run_lsd_test
-      ;;
-    ls)
-      run_ls_test
-      ;;
-    cat)
-      run_cat_test
-      ;;
-    delete)
-      run_delete_test
-      ;;
-    cp-download)
-      run_copy_download_test
-      ;;
-    cp-upload)
-      run_copy_upload_test
-      ;;
-    move)
-      run_move_test
-      ;;
-    check)
-      run_check_test
-      ;;
-    sync-upload)
-      run_sync_upload_test
-      ;;
-    sync-download)
-      run_sync_download_test
-      ;;
-    purge)
-      run_purge_test
-      ;;
-    *)
-      die "Unknown test '${COMMAND_ARG}'. Use '${SCRIPT_NAME} list' to see available tests."
-      ;;
+  local test_name="${COMMAND_ARG}"
+  local test_func=""
+
+  case "${test_name}" in
+    mkdir)        test_func="run_mkdir_test" ;;
+    lsd)          test_func="run_lsd_test" ;;
+    ls)           test_func="run_ls_test" ;;
+    cat)          test_func="run_cat_test" ;;
+    delete)       test_func="run_delete_test" ;;
+    cp-download)  test_func="run_copy_download_test" ;;
+    cp-upload)    test_func="run_copy_upload_test" ;;
+    move)         test_func="run_move_test" ;;
+    check)        test_func="run_check_test" ;;
+    sync-upload)  test_func="run_sync_upload_test" ;;
+    sync-download) test_func="run_sync_download_test" ;;
+    purge)        test_func="run_purge_test" ;;
+    *) die "Unknown test '${test_name}'. Use '${SCRIPT_NAME} list' to see available tests." ;;
   esac
+
+  if "${test_func}"; then
+    pass_test "${test_name}" "Completed (${STORAGE_TYPE})."
+    return 0
+  else
+    fail_test "${test_name}" "See details above."
+    return 1
+  fi
 }
 
 # ------------------------------- main logic ---------------------------------
@@ -1301,11 +1032,12 @@ main() {
       ;;
 
     teardown)
+      [[ "${STORAGE_TYPE}" != "minio" ]] || ensure_minio_containers_ready
       set_remotes_for_storage_type
       purge_remote_root "${LEVEL3_REMOTE}"
       purge_remote_root "${SINGLE_REMOTE}"
 
-      if [[ "${STORAGE_TYPE}" == "local" ]]; then
+  if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_LEVEL3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"
           verify_directory_empty "${dir}"
@@ -1323,15 +1055,20 @@ main() {
       ;;
 
     test)
+      [[ "${STORAGE_TYPE}" != "minio" ]] || ensure_minio_containers_ready
+      reset_test_results
       if [[ -z "${COMMAND_ARG}" ]]; then
-        run_all_tests
+        if ! run_all_tests; then
+          print_test_summary
+          die "One or more tests failed."
+        fi
       else
-        if run_single_test; then
-          log "Test '${COMMAND_ARG}' passed."
-        else
+        if ! run_single_test; then
+          print_test_summary
           die "Test '${COMMAND_ARG}' failed."
         fi
       fi
+      print_test_summary
       ;;
   esac
 }

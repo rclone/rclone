@@ -1,0 +1,438 @@
+# Shared helpers for level3 comparison and recovery scripts.
+# This file is sourced by compare_level3_with_single*.sh variants.
+
+WORKDIR="${HOME}/go/level3storage"
+RCLONE_CONFIG="${RCLONE_CONFIG:-${HOME}/.config/rclone/rclone.conf}"
+
+# Directory layout used by the configured backends.
+LOCAL_LEVEL3_DIRS=(
+  "${WORKDIR}/even_local"
+  "${WORKDIR}/odd_local"
+  "${WORKDIR}/parity_local"
+)
+LOCAL_SINGLE_DIR="${WORKDIR}/single_local"
+LOCAL_LEVEL3_REMOTES=("localeven" "localodd" "localparity")
+
+MINIO_LEVEL3_DIRS=(
+  "${WORKDIR}/even_minio"
+  "${WORKDIR}/odd_minio"
+  "${WORKDIR}/parity_minio"
+)
+MINIO_SINGLE_DIR="${WORKDIR}/single_minio"
+MINIO_LEVEL3_REMOTES=("minioeven" "minioodd" "minioparity")
+
+# Directories explicitly allowed for cleanup
+ALLOWED_DATA_DIRS=(
+  "${LOCAL_LEVEL3_DIRS[@]}"
+  "${LOCAL_SINGLE_DIR}"
+  "${MINIO_LEVEL3_DIRS[@]}"
+  "${MINIO_SINGLE_DIR}"
+)
+
+# Definition of MinIO containers: name|user|password|s3_port|console_port|data_dir
+MINIO_CONTAINERS=(
+  "minioeven|even|evenpass88|9001|9004|${WORKDIR}/even_minio"
+  "minioodd|odd|oddpass88|9002|9005|${WORKDIR}/odd_minio"
+  "minioparity|parity|paritypass88|9003|9006|${WORKDIR}/parity_minio"
+  "miniosingle|single|singlepass88|9004|9007|${WORKDIR}/single_minio"
+)
+
+log_tag() {
+  local tag="$1"
+  shift
+  printf '[%s] %s %s\n' "${SCRIPT_NAME}" "${tag}" "$*"
+}
+
+log_info() {
+  log_tag "INFO" "$*"
+}
+
+log_warn() {
+  log_tag "WARN" "$*"
+}
+
+log_pass() {
+  log_tag "PASS" "$*"
+}
+
+log_fail() {
+  log_tag "FAIL" "$*"
+}
+
+log_note() {
+  log_tag "NOTE" "$*"
+}
+
+log() {
+  log_info "$*"
+}
+
+die() {
+  printf '[%s] ERROR: %s\n' "${SCRIPT_NAME}" "$*" >&2
+  exit 1
+}
+
+ensure_workdir() {
+  if [[ "${PWD}" != "${WORKDIR}" ]]; then
+    die "This script must be run from ${WORKDIR} (current: ${PWD})"
+  fi
+}
+
+ensure_rclone_config() {
+  [[ -f "${RCLONE_CONFIG}" ]] || die "rclone config not found at ${RCLONE_CONFIG}"
+}
+
+rclone_cmd() {
+  rclone --config "${RCLONE_CONFIG}" "$@"
+}
+
+capture_command() {
+  local label="$1"
+  shift
+
+  local out_file err_file status
+  out_file=$(mktemp "/tmp/${label}.stdout.XXXXXX")
+  err_file=$(mktemp "/tmp/${label}.stderr.XXXXXX")
+
+  set +e
+  rclone_cmd "$@" >"${out_file}" 2>"${err_file}"
+  status=$?
+  set -e
+
+  printf '%s|%s|%s\n' "${status}" "${out_file}" "${err_file}"
+}
+
+print_if_verbose() {
+  local tag="$1"
+  local stdout_file="$2"
+  local stderr_file="$3"
+
+  if (( VERBOSE )); then
+    printf '\n[%s stdout]\n' "${tag}"
+    cat "${stdout_file}"
+    printf '[%s stderr]\n' "${tag}"
+    cat "${stderr_file}"
+  fi
+}
+
+ensure_directory() {
+  local dir="$1"
+  if [[ ! -d "${dir}" ]]; then
+    mkdir -p "${dir}"
+  fi
+}
+
+container_exists() {
+  local name="$1"
+  docker ps -a --format '{{.Names}}' | grep -Fxq "${name}"
+}
+
+container_running() {
+  local name="$1"
+  docker ps --format '{{.Names}}' | grep -Fxq "${name}"
+}
+
+wait_for_minio_port() {
+  local port="$1"
+  local retries=30
+  local delay=1
+  while (( retries > 0 )); do
+    if nc -z localhost "${port}" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep "${delay}"
+    (( retries-- ))
+  done
+  return 1
+}
+
+minio_container_for_backend() {
+  local backend="$1"
+  case "${backend}" in
+    even) echo "minioeven" ;;
+    odd) echo "minioodd" ;;
+    parity) echo "minioparity" ;;
+    *) echo "" ;;
+  esac
+}
+
+stop_single_minio_container() {
+  local backend="$1"
+  local name
+  name=$(minio_container_for_backend "${backend}")
+  [[ -n "${name}" ]] || return
+  if container_running "${name}"; then
+    log_info "docker" "Stopping container '${name}' for backend '${backend}'."
+    docker stop "${name}" >/dev/null
+  fi
+}
+
+start_single_minio_container() {
+  local backend="$1"
+  local name
+  name=$(minio_container_for_backend "${backend}")
+  [[ -n "${name}" ]] || return
+  if container_exists "${name}"; then
+    log_info "docker" "Starting container '${name}' for backend '${backend}'."
+    docker start "${name}" >/dev/null
+  else
+    # Fallback to launching via start_minio_containers (ensures config).
+    log_info "docker" "Container '${name}' missing; launching all MinIO containers."
+    start_minio_containers
+  fi
+}
+
+start_minio_containers() {
+  for entry in "${MINIO_CONTAINERS[@]}"; do
+    IFS='|' read -r name user pass s3_port console_port data_dir <<<"${entry}"
+    ensure_directory "${data_dir}"
+
+    if container_running "${name}"; then
+      log "Container '${name}' already running – skipping."
+      continue
+    fi
+
+    if container_exists "${name}"; then
+      log "Starting existing container '${name}'."
+      docker start "${name}" >/dev/null
+      continue
+    fi
+
+    log "Launching container '${name}' (ports ${s3_port}/${console_port})."
+    docker run -d \
+      --name "${name}" \
+      -p "${s3_port}:9000" \
+      -p "${console_port}:9001" \
+      -e "MINIO_ROOT_USER=${user}" \
+      -e "MINIO_ROOT_PASSWORD=${pass}" \
+      -v "${data_dir}:/data" \
+      quay.io/minio/minio server /data --console-address ":9001" >/dev/null
+  done
+}
+
+ensure_minio_containers_ready() {
+  if [[ "${STORAGE_TYPE}" != "minio" ]]; then
+    return 0
+  fi
+
+  local entry started=0
+  for entry in "${MINIO_CONTAINERS[@]}"; do
+    IFS='|' read -r name _ _ s3_port _ data_dir <<<"${entry}"
+    ensure_directory "${data_dir}"
+    if container_running "${name}"; then
+      log_info "autostart" "Container '${name}' already running."
+      continue
+    fi
+    started=1
+    if container_exists "${name}"; then
+      log_info "autostart" "Starting container '${name}'."
+      docker start "${name}" >/dev/null || return 1
+    else
+      log_info "autostart" "Container '${name}' missing; launching full MinIO set."
+      start_minio_containers
+      started=0
+      break
+    fi
+  done
+
+  # Wait for S3 ports to come online
+  for entry in "${MINIO_CONTAINERS[@]}"; do
+    IFS='|' read -r name _ _ s3_port _ _ <<<"${entry}"
+    log_info "autostart" "Waiting for ${name} (port ${s3_port})..."
+    if ! wait_for_minio_port "${s3_port}"; then
+      log_fail "autostart" "Port ${s3_port} for ${name} did not open in time."
+      return 1
+    fi
+  done
+
+  if (( started )); then
+    log_info "autostart" "MinIO containers are ready."
+  else
+    log_info "autostart" "All MinIO containers already running."
+  fi
+  return 0
+}
+
+stop_minio_containers() {
+  local any_running=0
+  for entry in "${MINIO_CONTAINERS[@]}"; do
+    IFS='|' read -r name _ <<<"${entry}"
+    if container_running "${name}"; then
+      log "Stopping container '${name}'."
+      docker stop "${name}" >/dev/null
+      any_running=1
+    else
+      log "Container '${name}' not running."
+    fi
+  done
+
+  if (( ! any_running )); then
+    log "No MinIO containers were running."
+  fi
+}
+
+purge_remote_root() {
+  local remote="$1"
+  log "Purging remote '${remote}:'"
+
+  local entries=()
+  local lsd_output=""
+  if lsd_output=$(rclone_cmd lsd "${remote}:" 2>/dev/null | awk '{print $5}' || true); then
+    while IFS= read -r entry; do
+      [[ -n "${entry}" ]] && entries+=("${entry}")
+    done <<<"${lsd_output}"
+  fi
+
+  if [[ "${#entries[@]}" -eq 0 ]]; then
+    log "  (no top-level directories found on ${remote})"
+    rclone_cmd purge "${remote}:" >/dev/null 2>&1 || true
+  else
+    for entry in "${entries[@]}"; do
+      if [[ -n "${entry}" ]]; then
+        log "  - purging ${remote}:${entry}"
+        rclone_cmd purge "${remote}:${entry}" >/dev/null 2>&1 || true
+      fi
+    done
+  fi
+}
+
+verify_directory_empty() {
+  local dir="$1"
+  if [[ ! -d "${dir}" ]]; then
+    return
+  fi
+  local leftover
+  leftover=$(find "${dir}" -mindepth 1 \
+    -not -path "${dir}/.DS_Store" \
+    -not -path "${dir}/.DS_Store/*" \
+    -not -path "${dir}/.minio.sys" \
+    -not -path "${dir}/.minio.sys/*" \
+    -print -quit 2>/dev/null || true)
+  if [[ -n "${leftover}" ]]; then
+    log "WARNING: directory '${dir}' is not empty after purge."
+  fi
+}
+
+remove_leftover_files() {
+  local dir="$1"
+
+  local allowed=0
+  for candidate in "${ALLOWED_DATA_DIRS[@]}"; do
+    if [[ "${dir}" == "${candidate}" ]]; then
+      allowed=1
+      break
+    fi
+  done
+
+  if (( ! allowed )); then
+    log "Refusing to clean unexpected directory '${dir}' (not in whitelist)."
+    return
+  fi
+
+  case "${dir}" in
+    "${WORKDIR}"/*) ;;
+    *)
+      log "Refusing to clean directory '${dir}' (outside ${WORKDIR})."
+      return
+      ;;
+  esac
+
+  if [[ ! -d "${dir}" ]]; then
+    return
+  fi
+
+  find "${dir}" -mindepth 1 \
+    -not -path "${dir}/.DS_Store" \
+    -not -path "${dir}/.DS_Store/*" \
+    -not -path "${dir}/.minio.sys" \
+    -not -path "${dir}/.minio.sys/*" \
+    -exec rm -rf {} + >/dev/null 2>&1 || true
+}
+
+cleanup_level3_dataset_raw() {
+  local dataset_id="$1"
+  case "${STORAGE_TYPE}" in
+    local)
+      local idx dir
+      for dir in "${LOCAL_LEVEL3_DIRS[@]}"; do
+        if [[ -d "${dir}/${dataset_id}" ]]; then
+          rm -rf "${dir:?}/${dataset_id}"
+        fi
+      done
+      ;;
+    minio)
+      local remote
+      for remote in "${MINIO_LEVEL3_REMOTES[@]}"; do
+        rclone_cmd purge "${remote}:${dataset_id}" >/dev/null 2>&1 || true
+      done
+      ;;
+    *)
+      ;;
+  esac
+}
+
+create_test_dataset() {
+  local label="$1"
+
+  # Dataset layout created by this helper (for both remotes):
+  #   ${dataset_id}/file_root.txt              → Root-level file
+  #   ${dataset_id}/dirA/file_nested.txt       → Nested file in dirA/
+  #   ${dataset_id}/dirB/file_placeholder.txt  → Nested file in dirB/
+  #
+  # Each test using this dataset can rely on these files. The directories are
+  # materialized by uploading files, keeping S3/MinIO semantics happy (no empty dirs).
+  local timestamp random_suffix test_id
+  timestamp=$(date +%Y%m%d%H%M%S)
+  printf -v random_suffix '%04d' $((RANDOM % 10000))
+  test_id="compare-${label}-${timestamp}-${random_suffix}"
+
+  local tmpfile1 tmpfile2
+  tmpfile1=$(mktemp) || return 1
+  tmpfile2=$(mktemp) || { rm -f "${tmpfile1}"; return 1; }
+
+  printf 'Sample data for %s (root file)\n' "${label}" >"${tmpfile1}"
+  printf 'Sample data for %s (nested file)\n' "${label}" >"${tmpfile2}"
+
+  local remote
+  for remote in "${LEVEL3_REMOTE}" "${SINGLE_REMOTE}"; do
+    if ! rclone_cmd mkdir "${remote}:${test_id}" >/dev/null; then
+      log "Failed to mkdir ${remote}:${test_id}"
+      rm -f "${tmpfile1}" "${tmpfile2}"
+      return 1
+    fi
+    if ! rclone_cmd copyto "${tmpfile1}" "${remote}:${test_id}/file_root.txt" >/dev/null; then
+      log "Failed to copy root sample file to ${remote}:${test_id}"
+      rm -f "${tmpfile1}" "${tmpfile2}"
+      return 1
+    fi
+    if ! rclone_cmd copyto "${tmpfile2}" "${remote}:${test_id}/dirA/file_nested.txt" >/dev/null; then
+      log "Failed to copy nested sample file to ${remote}:${test_id}"
+      rm -f "${tmpfile1}" "${tmpfile2}"
+      return 1
+    fi
+    if ! rclone_cmd copyto "${tmpfile1}" "${remote}:${test_id}/dirB/file_placeholder.txt" >/dev/null; then
+      log "Failed to copy placeholder file to ${remote}:${test_id}/dirB"
+      rm -f "${tmpfile1}" "${tmpfile2}"
+      return 1
+    fi
+  done
+
+  rm -f "${tmpfile1}" "${tmpfile2}"
+  printf '%s\n' "${test_id}"
+}
+
+set_remotes_for_storage_type() {
+  case "${STORAGE_TYPE}" in
+    local)
+      LEVEL3_REMOTE="locallevel3"
+      SINGLE_REMOTE="localsingle"
+      ;;
+    minio)
+      LEVEL3_REMOTE="miniolevel3"
+      SINGLE_REMOTE="miniosingle"
+      ;;
+    *)
+      die "Unsupported storage type '${STORAGE_TYPE}'"
+      ;;
+  esac
+}
