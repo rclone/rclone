@@ -59,7 +59,7 @@ See the [config dump](/commands/rclone_config_dump/) command for more informatio
 
 // Return the config file dump
 func rcDump(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	return DumpRcBlob(), nil
+	return DumpRcBlob()
 }
 
 func init() {

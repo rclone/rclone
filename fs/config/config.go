@@ -358,26 +358,34 @@ var ErrorConfigFileNotFound = errors.New("config file not found")
 
 // LoadedData ensures the config file storage is loaded and returns it
 func LoadedData() Storage {
+	dataLoaded, err := LoadedDataWithErr()
+	if err != nil {
+		fs.Fatalf(nil, "Failed to load config file %q: %v", configPath, err)
+	}
+	return dataLoaded
+}
+
+// LoadedDataWithErr ensures the config file storage is loaded and returns it but can return an error
+func LoadedDataWithErr() (out Storage, err error) {
 	if !dataLoaded {
 		// Set RCLONE_CONFIG_DIR for backend config and subprocesses
 		// If empty configPath (in-memory only) the value will be "."
 		_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(configPath))
-		// Load configuration from file (or initialize sensible default if no file or error)
+		// Load configuration from file (or initialize sensible default if no file, or error)
 		if err := data.Load(); err == nil {
 			fs.Debugf(nil, "Using config file from %q", configPath)
-			dataLoaded = true
 		} else if err == ErrorConfigFileNotFound {
 			if configPath == "" {
 				fs.Debugf(nil, "Config is memory-only - using defaults")
 			} else {
 				fs.Logf(nil, "Config file %q not found - using defaults", configPath)
 			}
-			dataLoaded = true
 		} else {
-			fs.Fatalf(nil, "Failed to load config file %q: %v", configPath, err)
+			return nil, err
 		}
+		dataLoaded = true
 	}
-	return data
+	return data, nil
 }
 
 // SaveConfig calling function which saves configuration file.
@@ -707,17 +715,25 @@ func DumpRcRemote(name string) (dump rc.Params) {
 
 // DumpRcBlob dumps all the config as an unstructured blob suitable
 // for the rc
-func DumpRcBlob() (dump rc.Params) {
+func DumpRcBlob() (dump rc.Params, err error) {
 	dump = rc.Params{}
-	for _, name := range LoadedData().GetSectionList() {
+	var configData Storage
+	configData, err = LoadedDataWithErr()
+	if err != nil {
+		return nil, err
+	}
+	for _, name := range configData.GetSectionList() {
 		dump[name] = DumpRcRemote(name)
 	}
-	return dump
+	return dump, nil
 }
 
 // Dump dumps all the config as a JSON file
 func Dump() error {
-	dump := DumpRcBlob()
+	dump, errDump := DumpRcBlob()
+	if errDump != nil {
+		return errDump
+	}
 	b, err := json.MarshalIndent(dump, "", "    ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal config dump: %w", err)
