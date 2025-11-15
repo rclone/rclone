@@ -455,7 +455,18 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		}
 		return true, err
 	}
-	return f.shouldRetryNoReauth(ctx, resp, err)
+	shouldRetry, err := f.shouldRetryNoReauth(ctx, resp, err)
+	if !shouldRetry && resp != nil {
+		// Log details when not retrying to help with debugging
+		var peek []byte
+		if resp.Body != nil {
+			peek, _ = io.ReadAll(io.LimitReader(resp.Body, 50))
+			_ = resp.Body.Close()
+		}
+		fs.Debugf(f, "Not retrying HTTP response: status=%d headers=%v body=%q",
+			resp.StatusCode, resp.Header, string(peek))
+	}
+	return shouldRetry, err
 }
 
 // errorHandler parses a non 2xx error response into an error
