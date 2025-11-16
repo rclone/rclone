@@ -68,6 +68,7 @@ func init() {
 	fs.Register(addProvidersToInfo(&fs.RegInfo{
 		Name:        "s3",
 		Description: "Amazon S3 Compliant Storage Providers including ",
+		TestRemote:  "TestS3:",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {

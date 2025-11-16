@@ -81,6 +81,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "b2",
 		Description: "Backblaze B2",
+		TestRemote:  "TestB2:",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{

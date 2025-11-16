@@ -1,9 +1,9 @@
-Change lsd command so it doesn't show -1
-  * Make sure all Fses show -1 for objects Zero for dates, etc.
-  * Make test?
+Change lsd command so it doesn't show -1  [DONE]
+  * Make sure all Fses show -1 for objects Zero for dates, etc.  [DONE]
+  * Make test?  [DONE - added unit tests]
 
-Put the TestRemote names into the Fs description
-Make fs/test_all.go use the TestRemote name automatically
+Put the TestRemote names into the Fs description  [DONE - added TestRemote field to RegInfo]
+Make fs/test_all.go use the TestRemote name automatically  [DONE - see AddBackendsFromRegistry()]
 
 Get rid of Storable?
 

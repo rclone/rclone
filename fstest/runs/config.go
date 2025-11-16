@@ -162,7 +162,12 @@ func (c *Config) FilterBackendsByRemotes(remotes []string) {
 			if err != nil {
 				fs.Fatalf(nil, "couldn't find remote %q: %v", name, err)
 			}
-			newBackends = append(newBackends, Backend{Backend: fsInfo.FileName(), Remote: name})
+			// Use the remote name from TestRemote in RegInfo if available
+			remote := name
+			if fsInfo.TestRemote != "" {
+				remote = fsInfo.TestRemote
+			}
+			newBackends = append(newBackends, Backend{Backend: fsInfo.FileName(), Remote: remote})
 		}
 	}
 	c.Backends = newBackends
@@ -192,4 +197,30 @@ func (c *Config) FilterTests(paths []string) {
 		}
 	}
 	c.Tests = newTests
+}
+
+// AddBackendsFromRegistry adds backends from the fs.Registry that have TestRemote set
+// This allows backends to self-register their test configuration
+func (c *Config) AddBackendsFromRegistry() {
+	for _, regInfo := range fs.Registry {
+		// Skip backends without a TestRemote configured
+		if regInfo.TestRemote == "" {
+			continue
+		}
+		// Check if backend is already configured
+		found := false
+		for i := range c.Backends {
+			if c.Backends[i].Backend == regInfo.FileName() && c.Backends[i].Remote == regInfo.TestRemote {
+				found = true
+				break
+			}
+		}
+		if !found {
+			fs.Logf(nil, "Adding backend %q with test remote %q from registry", regInfo.Name, regInfo.TestRemote)
+			c.Backends = append(c.Backends, Backend{
+				Backend: regInfo.FileName(),
+				Remote:  regInfo.TestRemote,
+			})
+		}
+	}
 }

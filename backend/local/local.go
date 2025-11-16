@@ -64,6 +64,7 @@ func init() {
 	fsi := &fs.RegInfo{
 		Name:        "local",
 		Description: "Local Disk",
+		TestRemote:  "", // local doesn't need a test remote
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		MetadataInfo: &fs.MetadataInfo{

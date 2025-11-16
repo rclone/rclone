@@ -37,6 +37,9 @@ type RegInfo struct {
 	Description string
 	// Prefix for command line flags for this fs - defaults to Name if not set
 	Prefix string
+	// TestRemote is the name of the test remote for this backend, e.g. "TestS3:"
+	// This is used by fstest/test_all to automatically configure tests
+	TestRemote string
 	// Create a new file system.  If root refers to an existing
 	// object, then it should return an Fs which points to
 	// the parent of that object and ErrorIsFile.
