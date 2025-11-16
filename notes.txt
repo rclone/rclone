@@ -5,7 +5,14 @@ Change lsd command so it doesn't show -1  [DONE]
 Put the TestRemote names into the Fs description  [DONE - added TestRemote field to RegInfo]
 Make fs/test_all.go use the TestRemote name automatically  [DONE - see AddBackendsFromRegistry()]
 
-Get rid of Storable?
+Get rid of Storable?  [NO - Still needed]
+  Storable() is a critical method in the ObjectInfo interface that determines
+  whether an object can be transferred/synced. It's primarily used by:
+  - fs/sync/sync.go: Skips non-storable objects during sync operations
+  - backend/local: Returns false for symlinks, device files, named pipes,
+    sockets, and directories (unless --copy-links/-L is used)
+  - 63 backends implement it (55 just return true, but local needs the logic)
+  Cannot be removed without breaking local filesystem special file handling.
 
 Todo
   * FIXME: More -dry-run checks for object transfer
