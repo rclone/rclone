@@ -2278,7 +2278,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 // Convert a list item into a DirEntry
 func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *types.Object, versionID *string, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
-		size := int64(0)
+		size := int64(-1)
 		if object.Size != nil {
 			size = *object.Size
 		}
