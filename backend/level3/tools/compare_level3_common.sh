@@ -1,26 +1,57 @@
 # Shared helpers for level3 comparison and recovery scripts.
 # This file is sourced by compare_level3_with_single*.sh variants.
 
-WORKDIR="${HOME}/go/level3storage"
+WORKDIR="${WORKDIR:-${HOME}/go/level3storage}"
 RCLONE_CONFIG="${RCLONE_CONFIG:-${HOME}/.config/rclone/rclone.conf}"
 
-# Directory layout used by the configured backends.
+# Determine script directory so we can locate optional env overrides.
+SCRIPT_DIR=${SCRIPT_DIR:-$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
+
+# Load default environment (required – tracked in git).
+if [[ ! -f "${SCRIPT_DIR}/compare_level3_env.sh" ]]; then
+  printf '[%s] ERROR: Missing required env file: %s\n' "${SCRIPT_NAME:-compare_level3_common.sh}" "${SCRIPT_DIR}/compare_level3_env.sh" >&2
+  exit 1
+fi
+# shellcheck source=/dev/null
+. "${SCRIPT_DIR}/compare_level3_env.sh"
+
+# Allow user-specific overrides without touching the tracked file (optional).
+if [[ -f "${SCRIPT_DIR}/compare_level3_env.local.sh" ]]; then
+  # shellcheck source=/dev/null
+  . "${SCRIPT_DIR}/compare_level3_env.local.sh"
+fi
+
+# Directory layout used by the configured backends. All variables below are
+# expected to come from compare_level3_env.sh (or its local override).
 LOCAL_LEVEL3_DIRS=(
-  "${WORKDIR}/even_local"
-  "${WORKDIR}/odd_local"
-  "${WORKDIR}/parity_local"
+  "${LOCAL_EVEN_DIR}"
+  "${LOCAL_ODD_DIR}"
+  "${LOCAL_PARITY_DIR}"
 )
-LOCAL_SINGLE_DIR="${WORKDIR}/single_local"
-LOCAL_LEVEL3_REMOTES=("localeven" "localodd" "localparity")
+LOCAL_SINGLE_DIR="${LOCAL_SINGLE_DIR}"
+LOCAL_LEVEL3_REMOTES=(
+  "${LOCAL_EVEN_REMOTE}"
+  "${LOCAL_ODD_REMOTE}"
+  "${LOCAL_PARITY_REMOTE}"
+)
 
 MINIO_LEVEL3_DIRS=(
-  "${WORKDIR}/even_minio"
-  "${WORKDIR}/odd_minio"
-  "${WORKDIR}/parity_minio"
+  "${MINIO_EVEN_DIR}"
+  "${MINIO_ODD_DIR}"
+  "${MINIO_PARITY_DIR}"
 )
-MINIO_SINGLE_DIR="${WORKDIR}/single_minio"
-MINIO_LEVEL3_REMOTES=("minioeven" "minioodd" "minioparity")
-MINIO_S3_PORTS=(9001 9002 9003 9004)
+MINIO_SINGLE_DIR="${MINIO_SINGLE_DIR}"
+MINIO_LEVEL3_REMOTES=(
+  "${MINIO_EVEN_REMOTE}"
+  "${MINIO_ODD_REMOTE}"
+  "${MINIO_PARITY_REMOTE}"
+)
+MINIO_S3_PORTS=(
+  "${MINIO_EVEN_PORT}"
+  "${MINIO_ODD_PORT}"
+  "${MINIO_PARITY_PORT}"
+  "${MINIO_SINGLE_PORT}"
+)
 
 # Directories explicitly allowed for cleanup
 ALLOWED_DATA_DIRS=(
@@ -32,10 +63,10 @@ ALLOWED_DATA_DIRS=(
 
 # Definition of MinIO containers: name|user|password|s3_port|console_port|data_dir
 MINIO_CONTAINERS=(
-  "minioeven|even|evenpass88|9001|9004|${WORKDIR}/even_minio"
-  "minioodd|odd|oddpass88|9002|9005|${WORKDIR}/odd_minio"
-  "minioparity|parity|paritypass88|9003|9006|${WORKDIR}/parity_minio"
-  "miniosingle|single|singlepass88|9004|9007|${WORKDIR}/single_minio"
+  "${MINIO_EVEN_NAME}|${MINIO_EVEN_USER:-even}|${MINIO_EVEN_PASS:-evenpass88}|${MINIO_EVEN_PORT}|9004|${MINIO_EVEN_DIR}"
+  "${MINIO_ODD_NAME}|${MINIO_ODD_USER:-odd}|${MINIO_ODD_PASS:-oddpass88}|${MINIO_ODD_PORT}|9005|${MINIO_ODD_DIR}"
+  "${MINIO_PARITY_NAME}|${MINIO_PARITY_USER:-parity}|${MINIO_PARITY_PASS:-paritypass88}|${MINIO_PARITY_PORT}|9006|${MINIO_PARITY_DIR}"
+  "${MINIO_SINGLE_NAME}|${MINIO_SINGLE_USER:-single}|${MINIO_SINGLE_PASS:-singlepass88}|${MINIO_SINGLE_PORT}|9007|${MINIO_SINGLE_DIR}"
 )
 
 log_tag() {
