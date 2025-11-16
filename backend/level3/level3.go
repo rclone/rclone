@@ -405,12 +405,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}
 
 	// Apply defaults if not explicitly set
-	// (Go's zero value is false, but our defaults should be true)
+	// auto_cleanup defaults to true; auto_heal is opt-in and defaults to false.
 	if _, ok := m.Get("auto_cleanup"); !ok {
 		opt.AutoCleanup = true
-	}
-	if _, ok := m.Get("auto_heal"); !ok {
-		opt.AutoHeal = true
 	}
 
 	if opt.Even == "" {
@@ -687,6 +684,8 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		return f.statusCommand(ctx, opt)
 	case "rebuild":
 		return f.rebuildCommand(ctx, arg, opt)
+	case "heal":
+		return f.healCommand(ctx, arg, opt)
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
@@ -776,7 +775,8 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 			// Acceptable mkdir errors (backend is writable):
 			//   - nil: Successfully created (backend is writable)
 			//   - ErrorDirExists: Dir already exists (backend is writable)
-			if mkdirErr == nil || errors.Is(mkdirErr, fs.ErrorDirExists) {
+			//   - os.IsExist: underlying filesystem reports existing dir/file
+			if mkdirErr == nil || errors.Is(mkdirErr, fs.ErrorDirExists) || os.IsExist(mkdirErr) {
 				return healthResult{name, nil} // Backend is available
 			}
 
@@ -2407,6 +2407,41 @@ func (f *Fs) countParticlesSync(ctx context.Context, remote string) int {
 	return count
 }
 
+// particleInfoForObject inspects a single object and returns which particles exist.
+func (f *Fs) particleInfoForObject(ctx context.Context, remote string) (particleInfo, error) {
+	pi := particleInfo{remote: remote}
+
+	// Check even
+	if _, err := f.even.NewObject(ctx, remote); err == nil {
+		pi.evenExists = true
+	}
+
+	// Check odd
+	if _, err := f.odd.NewObject(ctx, remote); err == nil {
+		pi.oddExists = true
+	}
+
+	// Check parity (both suffixes)
+	if _, errOL := f.parity.NewObject(ctx, GetParityFilename(remote, true)); errOL == nil {
+		pi.parityExists = true
+	} else if _, errEL := f.parity.NewObject(ctx, GetParityFilename(remote, false)); errEL == nil {
+		pi.parityExists = true
+	}
+
+	pi.count = 0
+	if pi.evenExists {
+		pi.count++
+	}
+	if pi.oddExists {
+		pi.count++
+	}
+	if pi.parityExists {
+		pi.count++
+	}
+
+	return pi, nil
+}
+
 // scanParticles scans a directory and returns particle information for all objects
 // This is used by the Cleanup() command to identify broken objects
 func (f *Fs) scanParticles(ctx context.Context, dir string) ([]particleInfo, error) {
@@ -2563,6 +2598,224 @@ func (f *Fs) removeBrokenObject(ctx context.Context, p particleInfo) error {
 	}
 
 	return g.Wait()
+}
+
+// healCommand scans the entire remote and heals any objects that have exactly 2 of 3 particles.
+// This is an explicit, admin-driven alternative to automatic self-healing on read.
+func (f *Fs) healCommand(ctx context.Context, arg []string, opt map[string]string) (out any, err error) {
+	// For now we ignore args/opts and heal from the root of the remote.
+	fs.Infof(f, "Starting full heal of level3 backend...")
+
+	// Enumerate all objects in the level3 namespace
+	var remotes []string
+	err = operations.ListFn(ctx, f, func(obj fs.Object) {
+		remotes = append(remotes, obj.Remote())
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list objects: %w", err)
+	}
+
+	var total, healthy, healed, unrecoverable int
+	var unrecoverableRemotes []string
+
+	for _, remote := range remotes {
+		pi, err := f.particleInfoForObject(ctx, remote)
+		if err != nil {
+			fs.Errorf(f, "Heal: failed to inspect %q: %v", remote, err)
+			unrecoverable++
+			unrecoverableRemotes = append(unrecoverableRemotes, remote)
+			continue
+		}
+		total++
+		switch pi.count {
+		case 3:
+			healthy++
+			continue
+		case 2:
+			if err := f.healObject(ctx, pi); err != nil {
+				fs.Errorf(f, "Heal: failed to heal %q: %v", pi.remote, err)
+				unrecoverable++
+				unrecoverableRemotes = append(unrecoverableRemotes, pi.remote)
+			} else {
+				healed++
+			}
+		default:
+			// 0 or 1 particle present – unrecoverable with RAID3
+			unrecoverable++
+			unrecoverableRemotes = append(unrecoverableRemotes, pi.remote)
+		}
+	}
+
+	var report strings.Builder
+	report.WriteString("Heal Summary\n")
+	report.WriteString("══════════════════════════════════════════\n\n")
+	report.WriteString(fmt.Sprintf("Files scanned:      %d\n", total))
+	report.WriteString(fmt.Sprintf("Healthy (3/3):      %d\n", healthy))
+	report.WriteString(fmt.Sprintf("Healed (2/3→3/3):   %d\n", healed))
+	report.WriteString(fmt.Sprintf("Unrecoverable (≤1): %d\n", unrecoverable))
+
+	if unrecoverable > 0 {
+		report.WriteString("\nUnrecoverable objects (manual recovery or restore needed):\n")
+		for _, r := range unrecoverableRemotes {
+			report.WriteString("  - " + r + "\n")
+		}
+	}
+
+	fs.Infof(f, "Heal completed: %d scanned, %d healed, %d unrecoverable.", total, healed, unrecoverable)
+	return report.String(), nil
+}
+
+// healObject heals a single object described by particleInfo when exactly 2 of 3 particles exist.
+func (f *Fs) healObject(ctx context.Context, pi particleInfo) error {
+	if pi.count != 2 {
+		return fmt.Errorf("cannot heal %q: expected 2 particles, found %d", pi.remote, pi.count)
+	}
+
+	// Missing parity – reconstruct parity from even+odd
+	if pi.evenExists && pi.oddExists && !pi.parityExists {
+		return f.healParityFromData(ctx, pi.remote)
+	}
+
+	// Missing even or odd – reconstruct from data + parity
+	if !pi.evenExists && pi.oddExists && pi.parityExists {
+		return f.healDataFromParity(ctx, pi.remote, "even")
+	}
+	if pi.evenExists && !pi.oddExists && pi.parityExists {
+		return f.healDataFromParity(ctx, pi.remote, "odd")
+	}
+
+	return fmt.Errorf("cannot heal %q: unsupported particle combination (even=%v, odd=%v, parity=%v)", pi.remote, pi.evenExists, pi.oddExists, pi.parityExists)
+}
+
+// healParityFromData reconstructs and uploads a missing parity particle using even+odd.
+func (f *Fs) healParityFromData(ctx context.Context, remote string) error {
+	evenObj, errEven := f.even.NewObject(ctx, remote)
+	oddObj, errOdd := f.odd.NewObject(ctx, remote)
+	if errEven != nil || errOdd != nil {
+		return fmt.Errorf("cannot heal parity for %q: evenErr=%v, oddErr=%v", remote, errEven, errOdd)
+	}
+
+	evenReader, err := evenObj.Open(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to open even particle: %w", err)
+	}
+	defer func() { _ = evenReader.Close() }()
+
+	oddReader, err := oddObj.Open(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to open odd particle: %w", err)
+	}
+	defer func() { _ = oddReader.Close() }()
+
+	evenData, err := io.ReadAll(evenReader)
+	if err != nil {
+		return fmt.Errorf("failed to read even particle: %w", err)
+	}
+	oddData, err := io.ReadAll(oddReader)
+	if err != nil {
+		return fmt.Errorf("failed to read odd particle: %w", err)
+	}
+
+	parityData := CalculateParity(evenData, oddData)
+	isOddLength := (len(evenData)+len(oddData))%2 == 1
+
+	job := &uploadJob{
+		remote:       remote,
+		particleType: "parity",
+		data:         parityData,
+		isOddLength:  isOddLength,
+	}
+	fs.Infof(f, "Heal: uploading parity particle for %q", remote)
+	return f.uploadParticle(ctx, job)
+}
+
+// healDataFromParity reconstructs and uploads a missing data particle (even or odd) using the other data particle + parity.
+func (f *Fs) healDataFromParity(ctx context.Context, remote, missing string) error {
+	// Find which parity variant exists and derive original length type
+	parityNameOL := GetParityFilename(remote, true)
+	parityObj, errParity := f.parity.NewObject(ctx, parityNameOL)
+	isOddLength := false
+	if errParity != nil {
+		parityNameEL := GetParityFilename(remote, false)
+		parityObj, errParity = f.parity.NewObject(ctx, parityNameEL)
+		if errParity != nil {
+			return fmt.Errorf("cannot heal %q: parity missing (%w)", remote, errParity)
+		}
+		isOddLength = false // .parity-el
+	} else {
+		isOddLength = true // .parity-ol
+	}
+
+	// Read existing data particle and parity
+	var dataObj fs.Object
+	var dataLabel string
+	if missing == "even" {
+		obj, err := f.odd.NewObject(ctx, remote)
+		if err != nil {
+			return fmt.Errorf("cannot heal even for %q: odd particle missing (%w)", remote, err)
+		}
+		dataObj = obj
+		dataLabel = "odd"
+	} else {
+		obj, err := f.even.NewObject(ctx, remote)
+		if err != nil {
+			return fmt.Errorf("cannot heal odd for %q: even particle missing (%w)", remote, err)
+		}
+		dataObj = obj
+		dataLabel = "even"
+	}
+
+	dataReader, err := dataObj.Open(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to open %s particle: %w", dataLabel, err)
+	}
+	defer func() { _ = dataReader.Close() }()
+
+	parityReader, err := parityObj.Open(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to open parity particle: %w", err)
+	}
+	defer func() { _ = parityReader.Close() }()
+
+	dataBytes, err := io.ReadAll(dataReader)
+	if err != nil {
+		return fmt.Errorf("failed to read %s particle: %w", dataLabel, err)
+	}
+	parityBytes, err := io.ReadAll(parityReader)
+	if err != nil {
+		return fmt.Errorf("failed to read parity particle: %w", err)
+	}
+
+	var merged []byte
+	if missing == "even" {
+		merged, err = ReconstructFromOddAndParity(dataBytes, parityBytes, isOddLength)
+	} else {
+		merged, err = ReconstructFromEvenAndParity(dataBytes, parityBytes, isOddLength)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to reconstruct %q from %s+parity: %w", remote, dataLabel, err)
+	}
+
+	// Split merged data to get the missing particle
+	evenData, oddData := SplitBytes(merged)
+	var particleData []byte
+	switch missing {
+	case "even":
+		particleData = evenData
+	case "odd":
+		particleData = oddData
+	default:
+		return fmt.Errorf("invalid missing particle type: %s", missing)
+	}
+
+	job := &uploadJob{
+		remote:       remote,
+		particleType: missing,
+		data:         particleData,
+		isOddLength:  isOddLength,
+	}
+	fs.Infof(f, "Heal: uploading %s particle for %q", missing, remote)
+	return f.uploadParticle(ctx, job)
 }
 
 // Object represents a striped object

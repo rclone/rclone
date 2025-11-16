@@ -347,15 +347,15 @@ The script `backend/level3/tools/compare_level3_with_single.sh` supplements the 
 
 ## Healing Harness
 
-`backend/level3/tools/compare_level3_with_single_heal.sh` validates the auto-heal mechanism when any particle backend is missing:
+`backend/level3/tools/compare_level3_with_single_heal.sh` validates degraded-read behaviour and the explicit `backend heal` command when any particle backend is missing:
 
 - Uses the shared helpers/autostart logic from `compare_level3_common.sh`.
 - Covers both local and MinIO storage types (auto-starting MinIO containers on demand).
 - Scenarios:
--  - `even`, `odd`, `parity`: delete all particles on the selected backend, read a file to trigger auto-heal, and wait for the particle to reappear.
+  - `even`, `odd`, `parity`: delete all particles on the selected backend, verify degraded reads still work via `rclone cat`, then run `rclone backend heal level3:` and wait for the missing particle to reappear on the affected backend.
   - `even-list`, `odd-list`, `parity-list`:
     - For `--storage-type=local`: delete particles, run `rclone ls`, and confirm listings do **not** heal (read-only semantics).
-    - For `--storage-type=minio`: delete particles, run `rclone ls`, and assert that listing succeeds; MinIO-backed level3 may opportunistically heal during listing, which is accepted for now and documented as backend-dependent behavior.
-- Reports status with `PASS/FAIL` tags and a summary block so degraded behavior is easy to spot in logs.
+    - For `--storage-type=minio`: delete particles, run `rclone ls`, and assert that listing succeeds; MinIO-backed level3 may opportunistically heal during listing, which is accepted for now and documented as backend-dependent behaviour.
+- Reports status with `PASS/FAIL` tags and a summary block so degraded behaviour is easy to spot in logs.
 - `teardown` purges level3/single remotes and cleans the corresponding local directories.
 
