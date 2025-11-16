@@ -147,6 +147,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "swift",
 		Description: "OpenStack Swift (Rackspace Cloud Files, Blomp Cloud Storage, Memset Memstore, OVH)",
+		TestRemote:  "TestSwiftAIO:",
 		NewFs:       NewFs,
 		Options: append([]fs.Option{{
 			Name:    "env_auth",

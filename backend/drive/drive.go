@@ -219,6 +219,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "drive",
 		Description: "Google Drive",
+		TestRemote:  "TestDrive:",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {

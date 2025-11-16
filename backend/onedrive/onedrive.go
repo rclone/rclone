@@ -114,6 +114,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "onedrive",
 		Description: "Microsoft OneDrive",
+		TestRemote:  "TestOneDrive:",
 		NewFs:       NewFs,
 		Config:      Config,
 		MetadataInfo: &fs.MetadataInfo{

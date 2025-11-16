@@ -51,6 +51,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "cloudinary",
 		Description: "Cloudinary",
+		TestRemote:  "TestCloudinary:",
 		NewFs:       NewFs,
 		Options: []fs.Option{
 			{
