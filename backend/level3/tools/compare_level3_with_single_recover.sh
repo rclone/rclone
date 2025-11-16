@@ -157,31 +157,6 @@ Available recovery scenarios:
 EOF
 }
 
-remote_data_dir() {
-  local backend="$1"
-  case "${STORAGE_TYPE}" in
-    local)
-      case "${backend}" in
-        even) echo "${LOCAL_LEVEL3_DIRS[0]}" ;;
-        odd) echo "${LOCAL_LEVEL3_DIRS[1]}" ;;
-        parity) echo "${LOCAL_LEVEL3_DIRS[2]}" ;;
-        *) die "Unknown backend '${backend}'" ;;
-      esac
-      ;;
-    minio)
-      case "${backend}" in
-        even) echo "${MINIO_LEVEL3_DIRS[0]}" ;;
-        odd) echo "${MINIO_LEVEL3_DIRS[1]}" ;;
-        parity) echo "${MINIO_LEVEL3_DIRS[2]}" ;;
-        *) die "Unknown backend '${backend}'" ;;
-      esac
-      ;;
-    *)
-      die "Unsupported storage type '${STORAGE_TYPE}'"
-      ;;
-  esac
-}
-
 secondary_failure_backend() {
   local backend="$1"
   case "${backend}" in

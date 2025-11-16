@@ -20,6 +20,7 @@ MINIO_LEVEL3_DIRS=(
 )
 MINIO_SINGLE_DIR="${WORKDIR}/single_minio"
 MINIO_LEVEL3_REMOTES=("minioeven" "minioodd" "minioparity")
+MINIO_S3_PORTS=(9001 9002 9003 9004)
 
 # Directories explicitly allowed for cleanup
 ALLOWED_DATA_DIRS=(
@@ -217,7 +218,7 @@ ensure_minio_containers_ready() {
 
   local entry started=0
   for entry in "${MINIO_CONTAINERS[@]}"; do
-    IFS='|' read -r name _ _ s3_port _ data_dir <<<"${entry}"
+    IFS='|' read -r name _ _ _ _ data_dir <<<"${entry}"
     ensure_directory "${data_dir}"
     if container_running "${name}"; then
       log_info "autostart" "Container '${name}' already running."
@@ -236,13 +237,16 @@ ensure_minio_containers_ready() {
   done
 
   # Wait for S3 ports to come online
+  local idx=0
   for entry in "${MINIO_CONTAINERS[@]}"; do
-    IFS='|' read -r name _ _ s3_port _ _ <<<"${entry}"
-    log_info "autostart" "Waiting for ${name} (port ${s3_port})..."
-    if ! wait_for_minio_port "${s3_port}"; then
-      log_fail "autostart" "Port ${s3_port} for ${name} did not open in time."
+    IFS='|' read -r name _ _ _ _ _ <<<"${entry}"
+    local port="${MINIO_S3_PORTS[idx]}"
+    log_info "autostart" "Waiting for ${name} (port ${port})..."
+    if ! wait_for_minio_port "${port}"; then
+      log_fail "autostart" "Port ${port} for ${name} did not open in time."
       return 1
     fi
+    ((idx++))
   done
 
   if (( started )); then
@@ -369,6 +373,112 @@ cleanup_level3_dataset_raw() {
     *)
       ;;
   esac
+}
+
+backend_remote_name() {
+  local backend="$1"
+  case "${STORAGE_TYPE}" in
+    local)
+      case "${backend}" in
+        even) echo "${LOCAL_LEVEL3_REMOTES[0]}" ;;
+        odd) echo "${LOCAL_LEVEL3_REMOTES[1]}" ;;
+        parity) echo "${LOCAL_LEVEL3_REMOTES[2]}" ;;
+        *) die "Unknown backend '${backend}'" ;;
+      esac
+      ;;
+    minio)
+      case "${backend}" in
+        even) echo "${MINIO_LEVEL3_REMOTES[0]}" ;;
+        odd) echo "${MINIO_LEVEL3_REMOTES[1]}" ;;
+        parity) echo "${MINIO_LEVEL3_REMOTES[2]}" ;;
+        *) die "Unknown backend '${backend}'" ;;
+      esac
+      ;;
+    *)
+      die "Unsupported storage type '${STORAGE_TYPE}'"
+      ;;
+  esac
+}
+
+remote_data_dir() {
+  local backend="$1"
+  case "${STORAGE_TYPE}" in
+    local)
+      case "${backend}" in
+        even) echo "${LOCAL_LEVEL3_DIRS[0]}" ;;
+        odd) echo "${LOCAL_LEVEL3_DIRS[1]}" ;;
+        parity) echo "${LOCAL_LEVEL3_DIRS[2]}" ;;
+        *) die "Unknown backend '${backend}'" ;;
+      esac
+      ;;
+    minio)
+      case "${backend}" in
+        even) echo "${MINIO_LEVEL3_DIRS[0]}" ;;
+        odd) echo "${MINIO_LEVEL3_DIRS[1]}" ;;
+        parity) echo "${MINIO_LEVEL3_DIRS[2]}" ;;
+        *) die "Unknown backend '${backend}'" ;;
+      esac
+      ;;
+    *)
+      die "Unsupported storage type '${STORAGE_TYPE}'"
+      ;;
+  esac
+}
+
+remove_dataset_from_backend() {
+  local backend="$1"
+  local dataset_id="$2"
+  case "${STORAGE_TYPE}" in
+    local)
+      local dir
+      dir=$(remote_data_dir "${backend}")
+      rm -rf "${dir:?}/${dataset_id}"
+      ;;
+    minio)
+      local remote
+      remote=$(backend_remote_name "${backend}")
+      rclone_cmd purge "${remote}:${dataset_id}" >/dev/null 2>&1 || true
+      ;;
+    *)
+      ;;
+  esac
+}
+
+object_exists_in_backend() {
+  local backend="$1"
+  local dataset_id="$2"
+  local relative_path="$3"
+  case "${STORAGE_TYPE}" in
+    local)
+      local dir
+      dir=$(remote_data_dir "${backend}")
+      [[ -f "${dir}/${dataset_id}/${relative_path}" ]]
+      ;;
+    minio)
+      local remote
+      remote=$(backend_remote_name "${backend}")
+      rclone_cmd lsl "${remote}:${dataset_id}/${relative_path}" >/dev/null 2>&1
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+wait_for_object_in_backend() {
+  local backend="$1"
+  local dataset_id="$2"
+  local relative_path="$3"
+  local attempts=20
+  local delay=1
+  while (( attempts > 0 )); do
+    if object_exists_in_backend "${backend}" "${dataset_id}" "${relative_path}"; then
+      return 0
+    fi
+    sleep "${delay}"
+    ((attempts--))
+  done
+  return 1
 }
 
 create_test_dataset() {
