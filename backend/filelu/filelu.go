@@ -26,6 +26,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "filelu",
 		Description: "FileLu Cloud Storage",
+		TestRemote:  "TestFileLu:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:      "key",

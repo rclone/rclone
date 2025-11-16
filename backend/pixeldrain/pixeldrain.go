@@ -33,6 +33,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "pixeldrain",
 		Description: "Pixeldrain Filesystem",
+		TestRemote:  "TestPixeldrain:",
 		NewFs:       NewFs,
 		Config:      nil,
 		Options: []fs.Option{{

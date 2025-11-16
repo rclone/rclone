@@ -31,6 +31,7 @@ func init() {
 	fsi := &fs.RegInfo{
 		Name:        "combine",
 		Description: "Combine several remotes into one",
+		TestRemote:  "TestCombine:dir1",
 		NewFs:       NewFs,
 		MetadataInfo: &fs.MetadataInfo{
 			Help: `Any metadata supported by the underlying remote is read and written.`,

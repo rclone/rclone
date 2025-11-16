@@ -91,6 +91,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "azureblob",
 		Description: "Microsoft Azure Blob Storage",
+		TestRemote:  "TestAzureBlob:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",

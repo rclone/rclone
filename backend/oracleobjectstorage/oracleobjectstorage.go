@@ -30,6 +30,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "oracleobjectstorage",
 		Description: "Oracle Cloud Infrastructure Object Storage",
+		TestRemote:  "TestOracleObjectStorage:",
 		Prefix:      "oos",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,

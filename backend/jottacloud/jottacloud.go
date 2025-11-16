@@ -103,6 +103,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "jottacloud",
 		Description: "Jottacloud",
+		TestRemote:  "TestJottacloud:",
 		NewFs:       NewFs,
 		Config:      Config,
 		MetadataInfo: &fs.MetadataInfo{

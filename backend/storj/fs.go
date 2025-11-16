@@ -41,6 +41,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "storj",
 		Description: "Storj Decentralized Cloud Storage",
+		TestRemote:  "TestStorj:",
 		Aliases:     []string{"tardigrade"},
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {

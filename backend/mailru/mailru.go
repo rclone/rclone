@@ -82,6 +82,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "mailru",
 		Description: "Mail.ru Cloud",
+		TestRemote:  "TestMailru:",
 		NewFs:       NewFs,
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:      "user",

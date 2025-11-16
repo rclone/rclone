@@ -32,6 +32,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "memory",
 		Description: "In memory object storage system.",
+		TestRemote:  ":memory:",
 		NewFs:       NewFs,
 		Options:     []fs.Option{},
 	})

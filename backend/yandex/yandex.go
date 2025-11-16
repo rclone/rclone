@@ -60,6 +60,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "yandex",
 		Description: "Yandex Disk",
+		TestRemote:  "TestYandex:",
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			return oauthutil.ConfigOut("", &oauthutil.Options{

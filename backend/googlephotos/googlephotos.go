@@ -100,6 +100,7 @@ func init() {
 		Name:        "google photos",
 		Prefix:      "gphotos",
 		Description: "Google Photos",
+		TestRemote:  "TestGooglePhotos:",
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			// Parse config into Options struct

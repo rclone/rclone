@@ -64,6 +64,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "hidrive",
 		Description: "HiDrive",
+		TestRemote:  "TestHiDrive:",
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			// Parse config into Options struct

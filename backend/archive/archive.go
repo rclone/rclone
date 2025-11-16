@@ -43,6 +43,7 @@ func init() {
 	fsi := &fs.RegInfo{
 		Name:        "archive",
 		Description: "Read archives",
+		TestRemote:  "TestArchive:",
 		NewFs:       NewFs,
 		MetadataInfo: &fs.MetadataInfo{
 			Help: `Any metadata supported by the underlying remote is read and written.`,

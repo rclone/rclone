@@ -60,6 +60,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "gofile",
 		Description: "Gofile",
+		TestRemote:  "TestGoFile:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "access_token",

@@ -55,6 +55,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "ulozto",
 		Description: "Uloz.to",
+		TestRemote:  "TestUlozto:",
 		NewFs:       NewFs,
 		Options: []fs.Option{
 			{

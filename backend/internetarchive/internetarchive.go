@@ -38,6 +38,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "internetarchive",
 		Description: "Internet Archive",
+		TestRemote:  "TestIA:rclone-integration-test",
 		NewFs:       NewFs,
 
 		MetadataInfo: &fs.MetadataInfo{

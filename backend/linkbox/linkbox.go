@@ -48,6 +48,7 @@ func init() {
 	fsi := &fs.RegInfo{
 		Name:        "linkbox",
 		Description: "Linkbox",
+		TestRemote:  "TestLinkbox:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:      "token",

@@ -48,6 +48,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "ftp",
 		Description: "FTP",
+		TestRemote:  "TestFTPProftpd:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:      "host",

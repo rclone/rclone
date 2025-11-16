@@ -72,6 +72,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "compress",
 		Description: "Compress a remote",
+		TestRemote:  "TestCompress:",
 		NewFs:       NewFs,
 		MetadataInfo: &fs.MetadataInfo{
 			Help: `Any metadata supported by the underlying remote is read and written.`,

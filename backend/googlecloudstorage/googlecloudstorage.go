@@ -78,6 +78,7 @@ func init() {
 		Name:        "google cloud storage",
 		Prefix:      "gcs",
 		Description: "Google Cloud Storage (this is not Google Drive)",
+		TestRemote:  "TestGoogleCloudStorage:",
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			saFile, _ := m.Get("service_account_file")

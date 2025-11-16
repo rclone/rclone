@@ -36,6 +36,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "fichier",
 		Description: "1Fichier",
+		TestRemote:  "TestFichier:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Help:      "Your API Key, get it from https://1fichier.com/console/params.pl.",

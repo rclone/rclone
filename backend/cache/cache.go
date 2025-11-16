@@ -66,6 +66,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "cache",
 		Description: "Cache a remote",
+		TestRemote:  "TestCache:",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
