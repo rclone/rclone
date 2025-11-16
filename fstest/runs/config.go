@@ -199,8 +199,20 @@ func (c *Config) FilterTests(paths []string) {
 	c.Tests = newTests
 }
 
-// AddBackendsFromRegistry adds backends from the fs.Registry that have TestRemote set
-// This allows backends to self-register their test configuration
+// AddBackendsFromRegistry adds backends from the fs.Registry that have TestRemote set.
+//
+// This enables automatic test discovery: backends can declare their test remote
+// directly in their RegInfo, eliminating the need to manually maintain config.yaml
+// entries for simple configurations.
+//
+// Backends with TestRemote configured will be automatically added to the test suite
+// unless they're already present in config.yaml (which takes precedence for advanced
+// configurations like ignore lists, special flags, etc.).
+//
+// This function should be called after loading config.yaml to discover any backends
+// that self-registered with TestRemote but aren't explicitly configured.
+//
+// See fs/registry.go (RegInfo.TestRemote) and fstest/test_all/README.md for details.
 func (c *Config) AddBackendsFromRegistry() {
 	for _, regInfo := range fs.Registry {
 		// Skip backends without a TestRemote configured

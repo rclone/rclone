@@ -38,7 +38,18 @@ type RegInfo struct {
 	// Prefix for command line flags for this fs - defaults to Name if not set
 	Prefix string
 	// TestRemote is the name of the test remote for this backend, e.g. "TestS3:"
-	// This is used by fstest/test_all to automatically configure tests
+	//
+	// This enables automatic test discovery in fstest/test_all. When set, the
+	// backend will be automatically included in integration tests without needing
+	// a manual config.yaml entry.
+	//
+	// Set this to the standard test remote name for your backend. For example:
+	//   - "TestS3:" for S3
+	//   - "TestDrive:" for Google Drive
+	//   - "" for local (or leave unset for wrapper/utility backends)
+	//
+	// The test remote must exist in the tester's rclone config. See
+	// fstest/test_all/README.md for more details on the test infrastructure.
 	TestRemote string
 	// Create a new file system.  If root refers to an existing
 	// object, then it should return an Fs which points to

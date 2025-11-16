@@ -1,6 +1,9 @@
 // Run tests for all the remotes.  Run this with package names which
 // need integration testing.
 //
+// Backends can self-register for testing by setting the TestRemote field
+// in their RegInfo struct. See README.md in this directory for details.
+//
 // See the `test` target in the Makefile.
 package main
 
