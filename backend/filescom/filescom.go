@@ -60,6 +60,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "filescom",
 		Description: "Files.com",
+		TestRemote:  "TestFilesCom:",
 		NewFs:       NewFs,
 		Options: []fs.Option{
 			{

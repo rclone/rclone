@@ -145,6 +145,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "chunker",
 		Description: "Transparently chunk/split large files",
+		TestRemote:  "TestChunkerLocal:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "remote",

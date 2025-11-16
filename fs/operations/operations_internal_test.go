@@ -41,3 +41,89 @@ func TestSizeDiffers(t *testing.T) {
 		assert.Equal(t, test.want, got, fmt.Sprintf("ignoreSize=%v, srcSize=%v, dstSize=%v", test.ignoreSize, test.srcSize, test.dstSize))
 	}
 }
+
+func TestSizeString(t *testing.T) {
+	for _, test := range []struct {
+		size          int64
+		humanReadable bool
+		want          string
+	}{
+		{-1, true, "-"},
+		{-1, false, "-"},
+		{0, true, "0"},
+		{0, false, "0"},
+		{1024, true, "1Ki"},
+		{1024, false, "1024"},
+		{1048576, true, "1Mi"},
+		{1048576, false, "1048576"},
+		{-2, true, "-2"},
+		{-2, false, "-2"},
+		{-1024, true, "-1Ki"},
+		{-1024, false, "-1024"},
+	} {
+		got := SizeString(test.size, test.humanReadable)
+		assert.Equal(t, test.want, got, fmt.Sprintf("size=%v, humanReadable=%v", test.size, test.humanReadable))
+	}
+}
+
+func TestCountString(t *testing.T) {
+	for _, test := range []struct {
+		count         int64
+		humanReadable bool
+		want          string
+	}{
+		{-1, true, "-"},
+		{-1, false, "-"},
+		{0, true, "0"},
+		{0, false, "0"},
+		{1000, true, "1k"},
+		{1000, false, "1000"},
+		{1000000, true, "1M"},
+		{1000000, false, "1000000"},
+		{-2, true, "-2"},
+		{-2, false, "-2"},
+		{-1000, true, "-1k"},
+		{-1000, false, "-1000"},
+	} {
+		got := CountString(test.count, test.humanReadable)
+		assert.Equal(t, test.want, got, fmt.Sprintf("count=%v, humanReadable=%v", test.count, test.humanReadable))
+	}
+}
+
+func TestSizeStringField(t *testing.T) {
+	for _, test := range []struct {
+		size          int64
+		humanReadable bool
+		rawWidth      int
+		want          string
+	}{
+		{-1, true, 12, "        -"},
+		{-1, false, 12, "           -"},
+		{0, true, 12, "        0"},
+		{0, false, 12, "           0"},
+		{1024, true, 12, "      1Ki"},
+		{1024, false, 12, "        1024"},
+	} {
+		got := SizeStringField(test.size, test.humanReadable, test.rawWidth)
+		assert.Equal(t, test.want, got, fmt.Sprintf("size=%v, humanReadable=%v, rawWidth=%v", test.size, test.humanReadable, test.rawWidth))
+	}
+}
+
+func TestCountStringField(t *testing.T) {
+	for _, test := range []struct {
+		count         int64
+		humanReadable bool
+		rawWidth      int
+		want          string
+	}{
+		{-1, true, 9, "       -"},
+		{-1, false, 9, "        -"},
+		{0, true, 9, "       0"},
+		{0, false, 9, "        0"},
+		{1000, true, 9, "      1k"},
+		{1000, false, 9, "     1000"},
+	} {
+		got := CountStringField(test.count, test.humanReadable, test.rawWidth)
+		assert.Equal(t, test.want, got, fmt.Sprintf("count=%v, humanReadable=%v, rawWidth=%v", test.count, test.humanReadable, test.rawWidth))
+	}
+}

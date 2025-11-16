@@ -75,6 +75,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "sugarsync",
 		Description: "Sugarsync",
+		TestRemote:  "TestSugarSync:Test",
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			opt := new(Options)

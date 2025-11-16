@@ -49,6 +49,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "quatrix",
 		Description: "Quatrix by Maytech",
+		TestRemote:  "TestQuatrix:",
 		NewFs:       NewFs,
 		Options: fs.Options{
 			{

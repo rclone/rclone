@@ -38,6 +38,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "sia",
 		Description: "Sia Decentralized Cloud",
+		TestRemote:  "TestSia:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "api_url",

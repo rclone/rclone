@@ -29,6 +29,7 @@ func init() {
 	fsi := &fs.RegInfo{
 		Name:        "union",
 		Description: "Union merges the contents of several upstream fs",
+		TestRemote:  "TestUnion:",
 		NewFs:       NewFs,
 		MetadataInfo: &fs.MetadataInfo{
 			Help: `Any metadata supported by the underlying remote is read and written.`,

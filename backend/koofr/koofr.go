@@ -30,6 +30,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "koofr",
 		Description: "Koofr, Digi Storage and other Koofr-compatible storage providers",
+		TestRemote:  "TestKoofr:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: fs.ConfigProvider,

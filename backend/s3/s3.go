@@ -69,6 +69,7 @@ func init() {
 	fs.Register(addProvidersToInfo(&fs.RegInfo{
 		Name:        "s3",
 		Description: "Amazon S3 Compliant Storage Providers including ",
+		TestRemote:  "TestS3:",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -2292,7 +2293,7 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 // Convert a list item into a DirEntry
 func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *types.Object, versionID *string, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
-		size := int64(0)
+		size := int64(-1)
 		if object.Size != nil {
 			size = *object.Size
 		}

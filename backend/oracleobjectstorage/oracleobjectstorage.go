@@ -30,6 +30,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "oracleobjectstorage",
 		Description: "Oracle Cloud Infrastructure Object Storage",
+		TestRemote:  "TestOracleObjectStorage:",
 		Prefix:      "oos",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
@@ -428,7 +429,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 // Convert a list item into a DirEntry
 func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *objectstorage.ObjectSummary, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
-		size := int64(0)
+		size := int64(-1)
 		if object.Size != nil {
 			size = *object.Size
 		}

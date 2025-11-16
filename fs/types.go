@@ -109,6 +109,21 @@ type ObjectInfo interface {
 	Hash(ctx context.Context, ty hash.Type) (string, error)
 
 	// Storable says whether this object can be stored
+	//
+	// This returns true for regular files and false for special
+	// file types that should not be transferred. For example, the
+	// local backend returns false for:
+	//   - Symbolic links (unless --copy-links is set)
+	//   - Device files (block/character devices)
+	//   - Named pipes (FIFOs)
+	//   - Unix domain sockets
+	//   - Directories
+	//
+	// Most cloud storage backends simply return true as they only
+	// support regular files. This method is critical for filtering
+	// out non-transferable objects during sync operations.
+	//
+	// Used in fs/sync to skip non-storable objects during transfers.
 	Storable() bool
 }
 

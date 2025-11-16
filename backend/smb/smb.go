@@ -40,6 +40,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "smb",
 		Description: "SMB / CIFS",
+		TestRemote:  "TestSMB:rclone",
 		NewFs:       NewFs,
 
 		Options: []fs.Option{{

@@ -74,6 +74,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "zoho",
 		Description: "Zoho",
+		TestRemote:  "TestZoho:",
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			// Need to setup region before configuring oauth

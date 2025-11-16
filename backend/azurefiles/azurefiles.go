@@ -72,6 +72,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "azurefiles",
 		Description: "Microsoft Azure Files",
+		TestRemote:  "TestAzureFiles:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",

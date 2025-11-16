@@ -63,6 +63,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "mega",
 		Description: "Mega",
+		TestRemote:  "TestMega:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:      "user",

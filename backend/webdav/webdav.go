@@ -70,6 +70,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "webdav",
 		Description: "WebDAV",
+		TestRemote:  "TestWebdavNextcloud:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "url",

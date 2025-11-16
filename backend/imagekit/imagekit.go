@@ -100,6 +100,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "imagekit",
 		Description: "ImageKit.io",
+		TestRemote:  "TestImageKit:",
 		NewFs:       NewFs,
 		MetadataInfo: &fs.MetadataInfo{
 			System: systemMetadataInfo,

@@ -145,6 +145,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "pikpak",
 		Description: "PikPak",
+		TestRemote:  "TestPikPak:",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {

@@ -807,10 +807,16 @@ func SyncFprintf(w io.Writer, format string, a ...any) {
 // Optional human-readable format including a binary suffix
 func SizeString(size int64, humanReadable bool) string {
 	if humanReadable {
+		if size == -1 {
+			return "-"
+		}
 		if size < 0 {
 			return "-" + fs.SizeSuffix(-size).String()
 		}
 		return fs.SizeSuffix(size).String()
+	}
+	if size == -1 {
+		return "-"
 	}
 	return strconv.FormatInt(size, 10)
 }
@@ -836,10 +842,16 @@ func SizeStringField(size int64, humanReadable bool, rawWidth int) string {
 // Optional human-readable format including a decimal suffix
 func CountString(count int64, humanReadable bool) string {
 	if humanReadable {
+		if count == -1 {
+			return "-"
+		}
 		if count < 0 {
 			return "-" + fs.CountSuffix(-count).String()
 		}
 		return fs.CountSuffix(count).String()
+	}
+	if count == -1 {
+		return "-"
 	}
 	return strconv.FormatInt(count, 10)
 }

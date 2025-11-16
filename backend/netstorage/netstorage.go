@@ -44,6 +44,7 @@ func init() {
 	fsi := &fs.RegInfo{
 		Name:        "netstorage",
 		Description: "Akamai NetStorage",
+		TestRemote:  "TestnStorage:",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{

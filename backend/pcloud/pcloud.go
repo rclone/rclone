@@ -69,6 +69,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "pcloud",
 		Description: "Pcloud",
+		TestRemote:  "TestPcloud:",
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			optc := new(Options)

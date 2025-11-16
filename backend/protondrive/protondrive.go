@@ -60,6 +60,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "protondrive",
 		Description: "Proton Drive",
+		TestRemote:  "TestProtonDrive:",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "username",

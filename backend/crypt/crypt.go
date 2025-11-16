@@ -27,6 +27,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "crypt",
 		Description: "Encrypt/Decrypt a remote",
+		TestRemote:  "TestCryptDrive:",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		MetadataInfo: &fs.MetadataInfo{
