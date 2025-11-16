@@ -7,10 +7,10 @@
 # match your local setup; the scripts will source that file if present.
 #
 
-// Root directory where test data lives
+# Root directory where test data lives
 WORKDIR="${WORKDIR:-${HOME}/go/level3storage}"
 
-// rclone configuration file
+# rclone configuration file
 RCLONE_CONFIG="${RCLONE_CONFIG:-${HOME}/.config/rclone/rclone.conf}"
 
 # Local level3 backend directories
