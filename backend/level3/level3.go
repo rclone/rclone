@@ -629,6 +629,7 @@ checkRemotes:
 		WriteMimeType:           f.even.Features().WriteMimeType && f.odd.Features().WriteMimeType,
 		CanHaveEmptyDirectories: f.even.Features().CanHaveEmptyDirectories && f.odd.Features().CanHaveEmptyDirectories && f.parity.Features().CanHaveEmptyDirectories,
 		BucketBased:             f.even.Features().BucketBased && f.odd.Features().BucketBased && f.parity.Features().BucketBased,
+		About:                   f.About,
 	}).Fill(ctx, f)
 
 	// Enable Move if all backends support it
@@ -721,6 +722,66 @@ func (f *Fs) Precision() time.Duration {
 		max = p3
 	}
 	return max
+}
+
+// About gets quota information for the level3 backend by aggregating
+// the underlying even/odd/parity backends.
+//
+// If none of the backends implement About, it returns fs.ErrorNotImplemented.
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	// Helper to add src into dst, treating nil as "unknown"
+	add := func(dst **int64, src *int64) {
+		if src == nil {
+			// If any backend doesn't report this field, propagate nil
+			*dst = nil
+			return
+		}
+		if *dst == nil {
+			// First value we see for this field
+			v := *src
+			*dst = &v
+			return
+		}
+		**dst += *src
+	}
+
+	usage := &fs.Usage{}
+	var haveUsage bool
+	var lastErr error
+
+	backends := []fs.Fs{f.even, f.odd, f.parity}
+	for _, b := range backends {
+		if b == nil {
+			continue
+		}
+		aboutFn := b.Features().About
+		if aboutFn == nil {
+			continue
+		}
+		u, err := aboutFn(ctx)
+		if err != nil {
+			// If a backend can't report usage, remember the error but
+			// keep trying others. If none succeed we'll return the last error.
+			lastErr = err
+			continue
+		}
+		haveUsage = true
+		add(&usage.Total, u.Total)
+		add(&usage.Used, u.Used)
+		add(&usage.Trashed, u.Trashed)
+		add(&usage.Other, u.Other)
+		add(&usage.Free, u.Free)
+		add(&usage.Objects, u.Objects)
+	}
+
+	if !haveUsage {
+		if lastErr != nil {
+			return nil, lastErr
+		}
+		return nil, fs.ErrorNotImplemented
+	}
+
+	return usage, nil
 }
 
 // disableRetriesForWrites creates a context with retries disabled to enforce

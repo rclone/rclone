@@ -177,6 +177,59 @@ func TestStandardAggressive(t *testing.T) {
 }
 
 // =============================================================================
+// Unit Tests - About (quota aggregation)
+// =============================================================================
+
+// TestAboutAggregatesChildUsage verifies that About() is wired and returns
+// non-nil usage when the underlying backends support About.
+//
+// This mirrors the behaviour of other aggregating backends (e.g. combine)
+// and ensures that calling rclone about on a level3 remote works when the
+// child remotes implement About.
+func TestAboutAggregatesChildUsage(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create a small file on each backend so that Used is non-zero
+	require.NoError(t, os.WriteFile(filepath.Join(evenDir, "file1.bin"), []byte("even"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(oddDir, "file2.bin"), []byte("odd"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(parityDir, "file3.bin"), []byte("parity"), 0o644))
+
+	fsInterface, err := level3.NewFs(ctx, "TestAbout", "", configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	})
+	require.NoError(t, err)
+
+	f, ok := fsInterface.(*level3.Fs)
+	require.True(t, ok)
+	defer func() {
+		_ = f.Shutdown(context.Background())
+	}()
+
+	usage, err := f.About(ctx)
+	if err != nil {
+		// If none of the underlying backends support About, this will be
+		// fs.ErrorNotImplemented. In that case we just verify the error type.
+		require.ErrorIs(t, err, fs.ErrorNotImplemented)
+		return
+	}
+
+	require.NotNil(t, usage, "usage must not be nil when About succeeds")
+	// We can't assert exact values since local About reports filesystem-wide
+	// usage, but we can at least check that it returned something sensible.
+	if usage.Total != nil {
+		assert.Greater(t, *usage.Total, int64(0))
+	}
+}
+
+// =============================================================================
 // Unit Tests - Byte Operations
 // =============================================================================
 
@@ -741,9 +794,9 @@ func TestIntegrationStyle_DegradedOpenAndSize(t *testing.T) {
 
 	// Build Fs directly via NewFs using a config map
 	m := configmap.Simple{
-		"even":     evenDir,
-		"odd":      oddDir,
-		"parity":   parityDir,
+		"even":      evenDir,
+		"odd":       oddDir,
+		"parity":    parityDir,
 		"auto_heal": "true",
 	}
 	f, err := level3.NewFs(ctx, "Lvl3Int", "", m)
@@ -1297,23 +1350,23 @@ func TestDirMove(t *testing.T) {
 
 	// Move directory
 	dstDir := "mydir2"
-	
+
 	// Verify destination doesn't exist yet
 	_, err = f.List(ctx, dstDir)
 	require.Error(t, err, "destination should not exist before move")
 	require.True(t, errors.Is(err, fs.ErrorDirNotFound), "should get ErrorDirNotFound")
-	
+
 	// Create separate Fs instances for source and destination (as operations.DirMove does)
 	// Source Fs has root=srcDir, destination Fs has root=dstDir
 	srcFs, err := level3.NewFs(ctx, "TestDirMove", srcDir, m)
 	require.NoError(t, err)
 	dstFs, err := level3.NewFs(ctx, "TestDirMove", dstDir, m)
 	require.NoError(t, err)
-	
+
 	// Get DirMove from destination Fs
 	dstDoDirMove := dstFs.Features().DirMove
 	require.NotNil(t, dstDoDirMove, "destination Fs should support DirMove")
-	
+
 	// Perform the move - use destination Fs's DirMove, source Fs, and empty paths (they're at the roots)
 	err = dstDoDirMove(ctx, srcFs, "", "")
 	require.NoError(t, err, "DirMove should succeed")
