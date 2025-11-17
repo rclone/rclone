@@ -23,7 +23,15 @@ subcommand to specify the protocol, e.g.
 rclone serve http remote:
 ` + "```" + `
 
-Each subcommand has its own options which you can see in their help.`,
+When the "--metadata" flag is enabled, the following metadata fields will be provided as headers:
+- "content-disposition"
+- "cache-control" 
+- "content-language"
+- "content-encoding"
+Note: The availability of these fields depends on whether the remote supports metadata.
+
+Each subcommand has its own options which you can see in their help.
+`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.39",
 	},

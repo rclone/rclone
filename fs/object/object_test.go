@@ -87,6 +87,7 @@ func TestMemoryObject(t *testing.T) {
 	content = content[:6] // make some extra cap
 
 	o := object.NewMemoryObject(remote, now, content)
+	o.WithMimeType("text/plain; charset=utf-8")
 
 	assert.Equal(t, content, o.Content())
 	assert.Equal(t, object.MemoryFs, o.Fs())
@@ -95,6 +96,7 @@ func TestMemoryObject(t *testing.T) {
 	assert.Equal(t, now, o.ModTime(context.Background()))
 	assert.Equal(t, int64(len(content)), o.Size())
 	assert.Equal(t, true, o.Storable())
+	assert.Equal(t, "text/plain; charset=utf-8", o.MimeType(context.Background()))
 
 	Hash, err := o.Hash(context.Background(), hash.MD5)
 	assert.NoError(t, err)
