@@ -113,7 +113,7 @@ func init() {
 			Name: "box_config_file",
 			Help: "Box App config.json location\n\nLeave blank normally." + env.ShellExpandHelp,
 		}, {
-			Name:      "box_config_credentials",
+			Name:      "config_credentials",
 			Help:      "Box App config.json contents.\n\nLeave blank normally.",
 			Hide:      fs.OptionHideBoth,
 			Sensitive: true,
@@ -189,7 +189,7 @@ See: https://developer.box.com/guides/authentication/jwt/as-user/
 
 func usesJWTAuth(m configmap.Mapper) bool {
 	jsonFile, okFile := m.Get("box_config_file")
-	jsonFileCredentials, okCredentials := m.Get("box_config_credentials")
+	jsonFileCredentials, okCredentials := m.Get("config_credentials")
 	boxSubType, boxSubTypeOk := m.Get("box_sub_type")
 	return (okFile || okCredentials) && boxSubTypeOk && (jsonFile != "" || jsonFileCredentials != "") && boxSubType != ""
 }
@@ -217,7 +217,7 @@ func refreshJWTToken(ctx context.Context, name string, m configmap.Mapper) error
 }
 
 func getBoxConfig(m configmap.Mapper) (boxConfig *api.ConfigJSON, err error) {
-	configFileCredentials, _ := m.Get("box_config_credentials")
+	configFileCredentials, _ := m.Get("config_credentials")
 	configFileBytes := []byte(configFileCredentials)
 
 	if configFileCredentials == "" {
