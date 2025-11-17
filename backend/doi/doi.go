@@ -563,21 +563,26 @@ var commandHelp = []fs.CommandHelp{{
 	Short: "Show metadata about the DOI.",
 	Long: `This command returns a JSON object with some information about the DOI.
 
-    rclone backend medatadata doi: 
+Usage example:
 
-It returns a JSON object representing metadata about the DOI.
-`,
+` + "```console" + `
+rclone backend metadata doi:
+` + "```" + `
+
+It returns a JSON object representing metadata about the DOI.`,
 }, {
 	Name:  "set",
 	Short: "Set command for updating the config parameters.",
 	Long: `This set command can be used to update the config parameters
 for a running doi backend.
 
-Usage Examples:
+Usage examples:
 
-    rclone backend set doi: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
-    rclone rc backend/command command=set fs=doi: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
-    rclone rc backend/command command=set fs=doi: -o doi=NEW_DOI
+` + "```console" + `
+rclone backend set doi: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
+rclone rc backend/command command=set fs=doi: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
+rclone rc backend/command command=set fs=doi: -o doi=NEW_DOI
+` + "```" + `
 
 The option keys are named as they are in the config file.
 
@@ -585,8 +590,7 @@ This rebuilds the connection to the doi backend when it is called with
 the new parameters. Only new parameters need be passed as the values
 will default to those currently in use.
 
-It doesn't return anything.
-`,
+It doesn't return anything.`,
 }}
 
 // Command the backend to run a named command
@@ -598,7 +602,7 @@ It doesn't return anything.
 // The result should be capable of being JSON encoded
 // If it is a string or a []string it will be shown to the user
 // otherwise it will be JSON encoded and shown to the user like that
-func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
 	case "metadata":
 		return f.ShowMetadata(ctx)
@@ -625,7 +629,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 }
 
 // ShowMetadata returns some metadata about the corresponding DOI
-func (f *Fs) ShowMetadata(ctx context.Context) (metadata interface{}, err error) {
+func (f *Fs) ShowMetadata(ctx context.Context) (metadata any, err error) {
 	doiURL, err := url.Parse("https://doi.org/" + f.opt.Doi)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ package cryptdecode
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/cmd"
@@ -33,13 +34,13 @@ If you supply the ` + "`--reverse`" + ` flag, it will return encrypted file name
 
 use it like this
 
-	rclone cryptdecode encryptedremote: encryptedfilename1 encryptedfilename2
+` + "```console" + `
+rclone cryptdecode encryptedremote: encryptedfilename1 encryptedfilename2
+rclone cryptdecode --reverse encryptedremote: filename1 filename2
+` + "```" + `
 
-	rclone cryptdecode --reverse encryptedremote: filename1 filename2
-
-Another way to accomplish this is by using the ` + "`rclone backend encode` (or `decode`)" + ` command.
-See the documentation on the [crypt](/crypt/) overlay for more info.
-`,
+Another way to accomplish this is by using the ` + "`rclone backend encode` (or `decode`)" + `
+command. See the documentation on the [crypt](/crypt/) overlay for more info.`,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.38",
 	},
@@ -67,32 +68,32 @@ See the documentation on the [crypt](/crypt/) overlay for more info.
 
 // cryptDecode returns the unencrypted file name
 func cryptDecode(cipher *crypt.Cipher, args []string) error {
-	output := ""
+	var output strings.Builder
 
 	for _, encryptedFileName := range args {
 		fileName, err := cipher.DecryptFileName(encryptedFileName)
 		if err != nil {
-			output += fmt.Sprintln(encryptedFileName, "\t", "Failed to decrypt")
+			output.WriteString(fmt.Sprintln(encryptedFileName, "\t", "Failed to decrypt"))
 		} else {
-			output += fmt.Sprintln(encryptedFileName, "\t", fileName)
+			output.WriteString(fmt.Sprintln(encryptedFileName, "\t", fileName))
 		}
 	}
 
-	fmt.Print(output)
+	fmt.Print(output.String())
 
 	return nil
 }
 
 // cryptEncode returns the encrypted file name
 func cryptEncode(cipher *crypt.Cipher, args []string) error {
-	output := ""
+	var output strings.Builder
 
 	for _, fileName := range args {
 		encryptedFileName := cipher.EncryptFileName(fileName)
-		output += fmt.Sprintln(fileName, "\t", encryptedFileName)
+		output.WriteString(fmt.Sprintln(fileName, "\t", encryptedFileName))
 	}
 
-	fmt.Print(output)
+	fmt.Print(output.String())
 
 	return nil
 }

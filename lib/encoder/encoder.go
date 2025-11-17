@@ -184,8 +184,8 @@ func (mask MultiEncoder) String() string {
 // Set converts a string into a MultiEncoder
 func (mask *MultiEncoder) Set(in string) error {
 	var out MultiEncoder
-	parts := strings.Split(in, ",")
-	for _, part := range parts {
+	parts := strings.SplitSeq(in, ",")
+	for part := range parts {
 		part = strings.TrimSpace(part)
 		if bits, ok := nameToEncoding[part]; ok {
 			out |= bits

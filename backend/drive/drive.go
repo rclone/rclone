@@ -191,7 +191,7 @@ func driveScopes(scopesString string) (scopes []string) {
 	if scopesString == "" {
 		scopesString = defaultScope
 	}
-	for _, scope := range strings.Split(scopesString, ",") {
+	for scope := range strings.SplitSeq(scopesString, ",") {
 		scope = strings.TrimSpace(scope)
 		scopes = append(scopes, scopePrefix+scope)
 	}
@@ -1220,7 +1220,7 @@ func isLinkMimeType(mimeType string) bool {
 // into a list of unique extensions with leading "." and a list of associated MIME types
 func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, err error) {
 	for _, extensionText := range extensionsIn {
-		for _, extension := range strings.Split(extensionText, ",") {
+		for extension := range strings.SplitSeq(extensionText, ",") {
 			extension = strings.ToLower(strings.TrimSpace(extension))
 			if extension == "" {
 				continue
@@ -1965,9 +1965,28 @@ func (f *Fs) findImportFormat(ctx context.Context, mimeType string) string {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
+	entriesAdded := 0
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	directoryID = actualID(directoryID)
 
@@ -1979,25 +1998,30 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			return true
 		}
 		if entry != nil {
-			entries = append(entries, entry)
+			err = list.Add(entry)
+			if err != nil {
+				iErr = err
+				return true
+			}
+			entriesAdded++
 		}
 		return false
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if iErr != nil {
-		return nil, iErr
+		return iErr
 	}
 	// If listing the root of a teamdrive and got no entries,
 	// double check we have access
-	if f.isTeamDrive && len(entries) == 0 && f.root == "" && dir == "" {
+	if f.isTeamDrive && entriesAdded == 0 && f.root == "" && dir == "" {
 		err = f.teamDriveOK(ctx)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return entries, nil
+	return list.Flush()
 }
 
 // listREntry is a task to be executed by a litRRunner
@@ -3640,41 +3664,47 @@ func (f *Fs) rescue(ctx context.Context, dirID string, delete bool) (err error) 
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "get",
-	Short: "Get command for fetching the drive config parameters",
-	Long: `This is a get command which will be used to fetch the various drive config parameters
+	Short: "Get command for fetching the drive config parameters.",
+	Long: `This is a get command which will be used to fetch the various drive config
+parameters.
 
-Usage Examples:
+Usage examples:
 
-    rclone backend get drive: [-o service_account_file] [-o chunk_size]
-    rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
-`,
+` + "```console" + `
+rclone backend get drive: [-o service_account_file] [-o chunk_size]
+rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
+` + "```",
 	Opts: map[string]string{
-		"chunk_size":           "show the current upload chunk size",
-		"service_account_file": "show the current service account file",
+		"chunk_size":           "Show the current upload chunk size.",
+		"service_account_file": "Show the current service account file.",
 	},
 }, {
 	Name:  "set",
-	Short: "Set command for updating the drive config parameters",
-	Long: `This is a set command which will be used to update the various drive config parameters
+	Short: "Set command for updating the drive config parameters.",
+	Long: `This is a set command which will be used to update the various drive config
+parameters.
 
-Usage Examples:
+Usage examples:
 
-    rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
-    rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
-`,
+` + "```console" + `
+rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+` + "```",
 	Opts: map[string]string{
-		"chunk_size":           "update the current upload chunk size",
-		"service_account_file": "update the current service account file",
+		"chunk_size":           "Update the current upload chunk size.",
+		"service_account_file": "Update the current service account file.",
 	},
 }, {
 	Name:  "shortcut",
-	Short: "Create shortcuts from files or directories",
+	Short: "Create shortcuts from files or directories.",
 	Long: `This command creates shortcuts from files or directories.
 
-Usage:
+Usage examples:
 
-    rclone backend shortcut drive: source_item destination_shortcut
-    rclone backend shortcut drive: source_item -o target=drive2: destination_shortcut
+` + "```console" + `
+rclone backend shortcut drive: source_item destination_shortcut
+rclone backend shortcut drive: source_item -o target=drive2: destination_shortcut
+` + "```" + `
 
 In the first example this creates a shortcut from the "source_item"
 which can be a file or a directory to the "destination_shortcut". The
@@ -3684,90 +3714,100 @@ from "drive:"
 In the second example this creates a shortcut from the "source_item"
 relative to "drive:" to the "destination_shortcut" relative to
 "drive2:". This may fail with a permission error if the user
-authenticated with "drive2:" can't read files from "drive:".
-`,
+authenticated with "drive2:" can't read files from "drive:".`,
 	Opts: map[string]string{
-		"target": "optional target remote for the shortcut destination",
+		"target": "Optional target remote for the shortcut destination.",
 	},
 }, {
 	Name:  "drives",
-	Short: "List the Shared Drives available to this account",
+	Short: "List the Shared Drives available to this account.",
 	Long: `This command lists the Shared Drives (Team Drives) available to this
 account.
 
-Usage:
+Usage example:
 
-    rclone backend [-o config] drives drive:
+` + "```console" + `
+rclone backend [-o config] drives drive:
+` + "```" + `
 
-This will return a JSON list of objects like this
+This will return a JSON list of objects like this:
 
-    [
-        {
-            "id": "0ABCDEF-01234567890",
-            "kind": "drive#teamDrive",
-            "name": "My Drive"
-        },
-        {
-            "id": "0ABCDEFabcdefghijkl",
-            "kind": "drive#teamDrive",
-            "name": "Test Drive"
-        }
-    ]
+` + "```json" + `
+[
+    {
+        "id": "0ABCDEF-01234567890",
+        "kind": "drive#teamDrive",
+        "name": "My Drive"
+    },
+    {
+        "id": "0ABCDEFabcdefghijkl",
+        "kind": "drive#teamDrive",
+        "name": "Test Drive"
+    }
+]
+` + "```" + `
 
 With the -o config parameter it will output the list in a format
 suitable for adding to a config file to make aliases for all the
 drives found and a combined drive.
 
-    [My Drive]
-    type = alias
-    remote = drive,team_drive=0ABCDEF-01234567890,root_folder_id=:
+` + "```ini" + `
+[My Drive]
+type = alias
+remote = drive,team_drive=0ABCDEF-01234567890,root_folder_id=:
 
-    [Test Drive]
-    type = alias
-    remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
+[Test Drive]
+type = alias
+remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
 
-    [AllDrives]
-    type = combine
-    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
+[AllDrives]
+type = combine
+upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
+` + "```" + `
 
 Adding this to the rclone config file will cause those team drives to
 be accessible with the aliases shown. Any illegal characters will be
 substituted with "_" and duplicate names will have numbers suffixed.
 It will also add a remote called AllDrives which shows all the shared
-drives combined into one directory tree.
-`,
+drives combined into one directory tree.`,
 }, {
 	Name:  "untrash",
-	Short: "Untrash files and directories",
+	Short: "Untrash files and directories.",
 	Long: `This command untrashes all the files and directories in the directory
 passed in recursively.
 
-Usage:
+Usage example:
+
+` + "```console" + `
+rclone backend untrash drive:directory
+rclone backend --interactive untrash drive:directory subdir
+` + "```" + `
 
 This takes an optional directory to trash which make this easier to
 use via the API.
 
-    rclone backend untrash drive:directory
-    rclone backend --interactive untrash drive:directory subdir
-
-Use the --interactive/-i or --dry-run flag to see what would be restored before restoring it.
+Use the --interactive/-i or --dry-run flag to see what would be restored before
+restoring it.
 
 Result:
 
-    {
-        "Untrashed": 17,
-        "Errors": 0
-    }
-`,
+` + "```json" + `
+{
+    "Untrashed": 17,
+    "Errors": 0
+}
+` + "```",
 }, {
 	Name:  "copyid",
-	Short: "Copy files by ID",
-	Long: `This command copies files by ID
+	Short: "Copy files by ID.",
+	Long: `This command copies files by ID.
 
-Usage:
+Usage examples:
 
-    rclone backend copyid drive: ID path
-    rclone backend copyid drive: ID1 path1 ID2 path2
+` + "```console" + `
+rclone backend copyid drive: ID path
+rclone backend copyid drive: ID1 path1 ID2 path2
+` + "```" + `
 
 It copies the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone copyto). The ID and path pairs can be
@@ -3780,17 +3820,19 @@ component will be used as the file name.
 If the destination is a drive backend then server-side copying will be
 attempted if possible.
 
-Use the --interactive/-i or --dry-run flag to see what would be copied before copying.
-`,
+Use the --interactive/-i or --dry-run flag to see what would be copied before
+copying.`,
 }, {
 	Name:  "moveid",
-	Short: "Move files by ID",
-	Long: `This command moves files by ID
+	Short: "Move files by ID.",
+	Long: `This command moves files by ID.
 
-Usage:
+Usage examples:
 
-    rclone backend moveid drive: ID path
-    rclone backend moveid drive: ID1 path1 ID2 path2
+` + "```console" + `
+rclone backend moveid drive: ID path
+rclone backend moveid drive: ID1 path1 ID2 path2
+` + "```" + `
 
 It moves the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone moveto).
@@ -3802,58 +3844,65 @@ component will be used as the file name.
 If the destination is a drive backend then server-side moving will be
 attempted if possible.
 
-Use the --interactive/-i or --dry-run flag to see what would be moved beforehand.
-`,
+Use the --interactive/-i or --dry-run flag to see what would be moved beforehand.`,
 }, {
 	Name:  "exportformats",
-	Short: "Dump the export formats for debug purposes",
+	Short: "Dump the export formats for debug purposes.",
 }, {
 	Name:  "importformats",
-	Short: "Dump the import formats for debug purposes",
+	Short: "Dump the import formats for debug purposes.",
 }, {
 	Name:  "query",
-	Short: "List files using Google Drive query language",
-	Long: `This command lists files based on a query
+	Short: "List files using Google Drive query language.",
+	Long: `This command lists files based on a query.
 
-Usage:
+Usage example:
 
-    rclone backend query drive: query
-    
+` + "```console" + `
+rclone backend query drive: query
+` + "```" + `
+
 The query syntax is documented at [Google Drive Search query terms and 
 operators](https://developers.google.com/drive/api/guides/ref-search-terms).
 
 For example:
 
-	rclone backend query drive: "'0ABc9DEFGHIJKLMNop0QRatUVW3X' in parents and name contains 'foo'"
+` + "```console" + `
+rclone backend query drive: "'0ABc9DEFGHIJKLMNop0QRatUVW3X' in parents and name contains 'foo'"
+` + "```" + `
 
 If the query contains literal ' or \ characters, these need to be escaped with
 \ characters. "'" becomes "\'" and "\" becomes "\\\", for example to match a 
 file named "foo ' \.txt":
 
-	rclone backend query drive: "name = 'foo \' \\\.txt'"
+` + "```console" + `
+rclone backend query drive: "name = 'foo \' \\\.txt'"
+` + "```" + `
 
 The result is a JSON array of matches, for example:
 
-    [
-	{
-		"createdTime": "2017-06-29T19:58:28.537Z",
-		"id": "0AxBe_CDEF4zkGHI4d0FjYko2QkD",
-		"md5Checksum": "68518d16be0c6fbfab918be61d658032",
-		"mimeType": "text/plain",
-		"modifiedTime": "2024-02-02T10:40:02.874Z",
-		"name": "foo ' \\.txt",
-		"parents": [
-			"0BxAe_BCDE4zkFGZpcWJGek0xbzC"
-		],
-		"resourceKey": "0-ABCDEFGHIXJQpIGqBJq3MC",
-		"sha1Checksum": "8f284fa768bfb4e45d076a579ab3905ab6bfa893",
-		"size": "311",
-		"webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
-	}
-    ]`,
+` + "```json" + `
+[
+    {
+        "createdTime": "2017-06-29T19:58:28.537Z",
+        "id": "0AxBe_CDEF4zkGHI4d0FjYko2QkD",
+        "md5Checksum": "68518d16be0c6fbfab918be61d658032",
+        "mimeType": "text/plain",
+        "modifiedTime": "2024-02-02T10:40:02.874Z",
+        "name": "foo ' \\.txt",
+        "parents": [
+            "0BxAe_BCDE4zkFGZpcWJGek0xbzC"
+        ],
+        "resourceKey": "0-ABCDEFGHIXJQpIGqBJq3MC",
+        "sha1Checksum": "8f284fa768bfb4e45d076a579ab3905ab6bfa893",
+        "size": "311",
+        "webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
+    }
+]
+` + "```console",
 }, {
 	Name:  "rescue",
-	Short: "Rescue or delete any orphaned files",
+	Short: "Rescue or delete any orphaned files.",
 	Long: `This command rescues or deletes any orphaned files or directories.
 
 Sometimes files can get orphaned in Google Drive. This means that they
@@ -3862,26 +3911,31 @@ are no longer in any folder in Google Drive.
 This command finds those files and either rescues them to a directory
 you specify or deletes them.
 
-Usage:
-
 This can be used in 3 ways.
 
-First, list all orphaned files
+First, list all orphaned files:
 
-    rclone backend rescue drive:
+` + "```console" + `
+rclone backend rescue drive:
+` + "```" + `
 
-Second rescue all orphaned files to the directory indicated
+Second rescue all orphaned files to the directory indicated:
 
-    rclone backend rescue drive: "relative/path/to/rescue/directory"
+` + "```console" + `
+rclone backend rescue drive: "relative/path/to/rescue/directory"
+` + "```" + `
 
-e.g. To rescue all orphans to a directory called "Orphans" in the top level
+E.g. to rescue all orphans to a directory called "Orphans" in the top level:
 
-    rclone backend rescue drive: Orphans
+` + "```console" + `
+rclone backend rescue drive: Orphans
+` + "```" + `
 
-Third delete all orphaned files to the trash
+Third delete all orphaned files to the trash:
 
-    rclone backend rescue drive: -o delete
-`,
+` + "```console" + `
+rclone backend rescue drive: -o delete
+` + "```",
 }}
 
 // Command the backend to run a named command
@@ -4617,6 +4671,7 @@ var (
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.ListPer         = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
 	_ fs.DirSetModTimer  = (*Fs)(nil)
 	_ fs.MkdirMetadataer = (*Fs)(nil)

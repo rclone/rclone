@@ -66,6 +66,39 @@ func rcError(ctx context.Context, in Params) (out Params, err error) {
 
 func init() {
 	Add(Call{
+		Path:  "rc/panic",
+		Fn:    rcPanic,
+		Title: "This returns an error by panicking",
+		Help: `
+This returns an error with the input as part of its error string.
+Useful for testing error handling.`,
+	})
+}
+
+// Return an error regardless
+func rcPanic(ctx context.Context, in Params) (out Params, err error) {
+	panic(fmt.Sprintf("arbitrary error on input %+v", in))
+}
+
+func init() {
+	Add(Call{
+		Path:  "rc/fatal",
+		Fn:    rcFatal,
+		Title: "This returns an fatal error",
+		Help: `
+This returns an error with the input as part of its error string.
+Useful for testing error handling.`,
+	})
+}
+
+// Return an error regardless
+func rcFatal(ctx context.Context, in Params) (out Params, err error) {
+	fs.Fatalf(nil, "arbitrary error on input %+v", in)
+	return nil, nil
+}
+
+func init() {
+	Add(Call{
 		Path:  "rc/list",
 		Fn:    rcList,
 		Title: "List all the registered remote control commands",
@@ -170,17 +203,20 @@ func init() {
 	Add(Call{
 		Path:  "core/version",
 		Fn:    rcVersion,
-		Title: "Shows the current version of rclone and the go runtime.",
+		Title: "Shows the current version of rclone, Go and the OS.",
 		Help: `
-This shows the current version of go and the go runtime:
+This shows the current versions of rclone, Go and the OS:
 
-- version - rclone version, e.g. "v1.53.0"
+- version - rclone version, e.g. "v1.71.2"
 - decomposed - version number as [major, minor, patch]
 - isGit - boolean - true if this was compiled from the git version
 - isBeta - boolean - true if this is a beta version
-- os - OS in use as according to Go
-- arch - cpu architecture in use according to Go
-- goVersion - version of Go runtime in use
+- os - OS in use as according to Go GOOS (e.g. "linux")
+- osKernel - OS Kernel version (e.g. "6.8.0-86-generic (x86_64)")
+- osVersion -  OS Version (e.g. "ubuntu 24.04 (64 bit)")
+- osArch - cpu architecture in use (e.g. "arm64 (ARMv8 compatible)")
+- arch - cpu architecture in use according to Go GOARCH (e.g. "arm64")
+- goVersion - version of Go runtime in use (e.g. "go1.25.0")
 - linking - type of rclone executable (static or dynamic)
 - goTags - space separated build tags or "none"
 
@@ -195,12 +231,22 @@ func rcVersion(ctx context.Context, in Params) (out Params, err error) {
 		return nil, err
 	}
 	linking, tagString := buildinfo.GetLinkingAndTags()
+	osVersion, osKernel := buildinfo.GetOSVersion()
+	if osVersion == "" {
+		osVersion = "unknown"
+	}
+	if osKernel == "" {
+		osKernel = "unknown"
+	}
 	out = Params{
 		"version":    fs.Version,
 		"decomposed": version.Slice(),
 		"isGit":      strings.HasSuffix(fs.Version, "-DEV"),
 		"isBeta":     version.PreRelease != "",
 		"os":         runtime.GOOS,
+		"osVersion":  osVersion,
+		"osKernel":   osKernel,
+		"osArch":     buildinfo.GetArch(),
 		"arch":       runtime.GOARCH,
 		"goVersion":  runtime.Version(),
 		"linking":    linking,

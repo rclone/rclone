@@ -59,6 +59,8 @@ inserts leading and trailing "/" on ` + "`--{{ .Prefix }}baseurl`" + `, so ` + "
 ` + "`--{{ .Prefix }}baseurl \"/rclone\"` and `--{{ .Prefix }}baseurl \"/rclone/\"`" + ` are all treated
 identically.
 
+` + "`--{{ .Prefix }}disable-zip`" + ` may be set to disable the zipping download option.
+
 #### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over
@@ -84,13 +86,16 @@ by ` + "`--{{ .Prefix }}addr`" + `).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 
 Socket activation can be tested ad-hoc with the ` + "`systemd-socket-activate`" + `command
 
-       systemd-socket-activate -l 8000 -- rclone serve
+` + "```console" + `
+systemd-socket-activate -l 8000 -- rclone serve
+` + "```" + `
 
 This will socket-activate rclone on the first connection to port 8000 over TCP.
+
 `
 	tmpl, err := template.New("server help").Parse(help)
 	if err != nil {
@@ -520,8 +525,6 @@ func (s *Server) initTLS() error {
 func (s *Server) Serve() {
 	s.wg.Add(len(s.instances))
 	for _, ii := range s.instances {
-		// TODO: decide how/when to log listening url
-		// log.Printf("listening on %s", ii.url)
 		go ii.serve(&s.wg)
 	}
 	// Install an atexit handler to shutdown gracefully

@@ -28,7 +28,7 @@ type CompareOpt = struct {
 	DownloadHash     bool
 }
 
-func (b *bisyncRun) setCompareDefaults(ctx context.Context) error {
+func (b *bisyncRun) setCompareDefaults(ctx context.Context) (err error) {
 	ci := fs.GetConfig(ctx)
 
 	// defaults
@@ -120,25 +120,25 @@ func sizeDiffers(a, b int64) bool {
 
 // returns true if the hashes are definitely different.
 // returns false if equal, or if either is unknown.
-func hashDiffers(a, b string, ht1, ht2 hash.Type, size1, size2 int64) bool {
-	if a == "" || b == "" {
+func (b *bisyncRun) hashDiffers(stringA, stringB string, ht1, ht2 hash.Type, size1, size2 int64) bool {
+	if stringA == "" || stringB == "" {
 		if ht1 != hash.None && ht2 != hash.None && !(size1 <= 0 || size2 <= 0) {
-			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: hash unexpectedly blank despite Fs support (%s, %s) (you may need to --resync!)"), a, b)
+			fs.Logf(nil, Color(terminal.YellowFg, "WARNING: hash unexpectedly blank despite Fs support (%s, %s) (you may need to --resync!)"), stringA, stringB)
 		}
 		return false
 	}
 	if ht1 != ht2 {
-		if !(downloadHash && ((ht1 == hash.MD5 && ht2 == hash.None) || (ht1 == hash.None && ht2 == hash.MD5))) {
+		if !(b.downloadHashOpt.downloadHash && ((ht1 == hash.MD5 && ht2 == hash.None) || (ht1 == hash.None && ht2 == hash.MD5))) {
 			fs.Infof(nil, Color(terminal.YellowFg, "WARNING: Can't compare hashes of different types (%s, %s)"), ht1.String(), ht2.String())
 			return false
 		}
 	}
-	return a != b
+	return stringA != stringB
 }
 
 // chooses hash type, giving priority to types both sides have in common
 func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
-	downloadHash = b.opt.Compare.DownloadHash
+	b.downloadHashOpt.downloadHash = b.opt.Compare.DownloadHash
 	if b.opt.Compare.NoSlowHash && b.opt.Compare.SlowHashDetected {
 		fs.Infof(nil, "Not checking for common hash as at least one slow hash detected.")
 	} else {
@@ -177,7 +177,7 @@ func (b *bisyncRun) setHashType(ci *fs.ConfigInfo) {
 	}
 	if (b.opt.Compare.NoSlowHash || b.opt.Compare.SlowHashSyncOnly) && b.fs2.Features().SlowHash {
 		fs.Infoc(nil, Color(terminal.YellowFg, "Slow hash detected on Path2. Will ignore checksum due to slow-hash settings"))
-		b.opt.Compare.HashType1 = hash.None
+		b.opt.Compare.HashType2 = hash.None
 	} else {
 		b.opt.Compare.HashType2 = b.fs2.Hashes().GetOne()
 		if b.opt.Compare.HashType2 != hash.None {
@@ -219,8 +219,8 @@ func (b *bisyncRun) setFromCompareFlag(ctx context.Context) error {
 		return nil
 	}
 	var CompareFlag CompareOpt // for exclusions
-	opts := strings.Split(b.opt.CompareFlag, ",")
-	for _, opt := range opts {
+	opts := strings.SplitSeq(b.opt.CompareFlag, ",")
+	for opt := range opts {
 		switch strings.ToLower(strings.TrimSpace(opt)) {
 		case "size":
 			b.opt.Compare.Size = true
@@ -268,13 +268,15 @@ func (b *bisyncRun) setFromCompareFlag(ctx context.Context) error {
 	return nil
 }
 
-// downloadHash is true if we should attempt to compute hash by downloading when otherwise unavailable
-var downloadHash bool
-var downloadHashWarn mutex.Once
-var firstDownloadHash mutex.Once
+// b.downloadHashOpt.downloadHash is true if we should attempt to compute hash by downloading when otherwise unavailable
+type downloadHashOpt struct {
+	downloadHash      bool
+	downloadHashWarn  mutex.Once
+	firstDownloadHash mutex.Once
+}
 
-func tryDownloadHash(ctx context.Context, o fs.DirEntry, hashVal string) (string, error) {
-	if hashVal != "" || !downloadHash {
+func (b *bisyncRun) tryDownloadHash(ctx context.Context, o fs.DirEntry, hashVal string) (string, error) {
+	if hashVal != "" || !b.downloadHashOpt.downloadHash {
 		return hashVal, nil
 	}
 	obj, ok := o.(fs.Object)
@@ -283,14 +285,14 @@ func tryDownloadHash(ctx context.Context, o fs.DirEntry, hashVal string) (string
 		return hashVal, fs.ErrorObjectNotFound
 	}
 	if o.Size() < 0 {
-		downloadHashWarn.Do(func() {
+		b.downloadHashOpt.downloadHashWarn.Do(func() {
 			fs.Log(o, Color(terminal.YellowFg, "Skipping hash download as checksum not reliable with files of unknown length."))
 		})
 		fs.Debugf(o, "Skipping hash download as checksum not reliable with files of unknown length.")
 		return hashVal, hash.ErrUnsupported
 	}
 
-	firstDownloadHash.Do(func() {
+	b.downloadHashOpt.firstDownloadHash.Do(func() {
 		fs.Infoc(obj.Fs().Name(), Color(terminal.Dim, "Downloading hashes..."))
 	})
 	tr := accounting.Stats(ctx).NewCheckingTransfer(o, "computing hash with --download-hash")

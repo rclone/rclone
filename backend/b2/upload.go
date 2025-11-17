@@ -144,6 +144,14 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 		request.ContentType = newInfo.ContentType
 		request.Info = newInfo.Info
 	}
+	if o.fs.opt.SSECustomerKey != "" && o.fs.opt.SSECustomerKeyMD5 != "" {
+		request.ServerSideEncryption = &api.ServerSideEncryption{
+			Mode:           "SSE-C",
+			Algorithm:      o.fs.opt.SSECustomerAlgorithm,
+			CustomerKey:    o.fs.opt.SSECustomerKeyBase64,
+			CustomerKeyMd5: o.fs.opt.SSECustomerKeyMD5,
+		}
+	}
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/b2_start_large_file",
@@ -295,6 +303,12 @@ func (up *largeUpload) WriteChunk(ctx context.Context, chunkNumber int, reader i
 			ContentLength: &sizeWithHash,
 		}
 
+		if up.o.fs.opt.SSECustomerKey != "" && up.o.fs.opt.SSECustomerKeyMD5 != "" {
+			opts.ExtraHeaders[sseAlgorithmHeader] = up.o.fs.opt.SSECustomerAlgorithm
+			opts.ExtraHeaders[sseKeyHeader] = up.o.fs.opt.SSECustomerKeyBase64
+			opts.ExtraHeaders[sseMd5Header] = up.o.fs.opt.SSECustomerKeyMD5
+		}
+
 		var response api.UploadPartResponse
 
 		resp, err := up.f.srv.CallJSON(ctx, &opts, nil, &response)
@@ -333,6 +347,17 @@ func (up *largeUpload) copyChunk(ctx context.Context, part int, partSize int64) 
 			LargeFileID: up.id,
 			PartNumber:  int64(part + 1),
 			Range:       fmt.Sprintf("bytes=%d-%d", offset, offset+partSize-1),
+		}
+
+		if up.o.fs.opt.SSECustomerKey != "" && up.o.fs.opt.SSECustomerKeyMD5 != "" {
+			serverSideEncryptionConfig := api.ServerSideEncryption{
+				Mode:           "SSE-C",
+				Algorithm:      up.o.fs.opt.SSECustomerAlgorithm,
+				CustomerKey:    up.o.fs.opt.SSECustomerKeyBase64,
+				CustomerKeyMd5: up.o.fs.opt.SSECustomerKeyMD5,
+			}
+			request.SourceServerSideEncryption = &serverSideEncryptionConfig
+			request.DestinationServerSideEncryption = &serverSideEncryptionConfig
 		}
 		var response api.UploadPartResponse
 		resp, err := up.f.srv.CallJSON(ctx, &opts, &request, &response)

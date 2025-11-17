@@ -41,3 +41,32 @@ single-title: # MD025
 # Markdown files we must use whatever works in the final HTML generated docs.
 # Suppress Markdownlint warning: Link fragments should be valid.
 link-fragments: false # MD051
+
+# Restrict the languages and language identifiers to use for code blocks.
+# We only want those supported by both Hugo and GitHub. These are documented
+# here:
+#   https://gohugo.io/content-management/syntax-highlighting/#languages
+#   https://docs.github.com//get-started/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks#syntax-highlighting
+# In addition, we only want to allow identifiers (aliases) that correspond to
+# the same language in Hugo and GitHub, and preferrably also VSCode and other
+# commonly used tools, to avoid confusion. An example of this is that "shell"
+# by some are considered an identifier for shell scripts, i.e. an alias for
+# "sh", while others consider it an identifier for shell sessions, i.e. an
+# alias for "console". Although Hugo and GitHub in this case are consistent and
+# have choosen the former, using "sh" instead, and not allowing use of "shell",
+# avoids the confusion entirely.
+fenced-code-language: # MD040
+  allowed_languages:
+    - text
+    - console
+    - sh
+    - bat
+    - ini
+    - json
+    - yaml
+    - go
+    - python
+    - c++
+    - c#
+    - java
+    - powershell

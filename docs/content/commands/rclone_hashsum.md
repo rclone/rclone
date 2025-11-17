@@ -37,6 +37,9 @@ Run without a hash to see the list of all supported hashes, e.g.
       * crc32
       * sha256
       * sha512
+      * blake3
+      * xxh3
+      * xxh128
 
 Then
 

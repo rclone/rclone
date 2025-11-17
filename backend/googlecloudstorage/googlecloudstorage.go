@@ -253,6 +253,9 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 				Value: "us-east4",
 				Help:  "Northern Virginia",
 			}, {
+				Value: "us-east5",
+				Help:  "Ohio",
+			}, {
 				Value: "us-west1",
 				Help:  "Oregon",
 			}, {
@@ -760,7 +763,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *storage.
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool, callback func(fs.DirEntry) error) (err error) {
 	// List the objects
 	err = f.list(ctx, bucket, directory, prefix, addBucket, false, func(remote string, object *storage.Object, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
@@ -768,16 +771,16 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 			return err
 		}
 		if entry != nil {
-			entries = append(entries, entry)
+			return callback(entry)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// bucket must be present if listing succeeded
 	f.cache.MarkOK(bucket)
-	return entries, err
+	return err
 }
 
 // listBuckets lists the buckets
@@ -820,14 +823,46 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	bucket, directory := f.split(dir)
 	if bucket == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listBuckets(ctx)
+		entries, err := f.listBuckets(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", list.Add)
+		if err != nil {
+			return err
+		}
 	}
-	return f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "")
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -1099,7 +1134,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		remote: remote,
 	}
 
-	rewriteRequest := f.svc.Objects.Rewrite(srcBucket, srcPath, dstBucket, dstPath, nil)
+	// Set the storage class for the destination object if configured
+	var dstObject *storage.Object
+	if f.opt.StorageClass != "" {
+		dstObject = &storage.Object{
+			StorageClass: f.opt.StorageClass,
+		}
+	}
+
+	rewriteRequest := f.svc.Objects.Rewrite(srcBucket, srcPath, dstBucket, dstPath, dstObject)
 	if !f.opt.BucketPolicyOnly {
 		rewriteRequest.DestinationPredefinedAcl(f.opt.ObjectACL)
 	}
@@ -1387,6 +1430,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		ContentType: fs.MimeType(ctx, src),
 		Metadata:    metadataFromModTime(modTime),
 	}
+	// Set the storage class from config if configured
+	if o.fs.opt.StorageClass != "" {
+		object.StorageClass = o.fs.opt.StorageClass
+	}
 	// Apply upload options
 	for _, option := range options {
 		key, value := option.Header()
@@ -1462,6 +1509,7 @@ var (
 	_ fs.Copier      = &Fs{}
 	_ fs.PutStreamer = &Fs{}
 	_ fs.ListRer     = &Fs{}
+	_ fs.ListPer     = &Fs{}
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
 )

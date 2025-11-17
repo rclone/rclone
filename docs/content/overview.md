@@ -48,7 +48,7 @@ Here is an overview of the major features of each cloud storage system.
 | Microsoft OneDrive           | QuickXorHash ⁵    | DR/W    | Yes              | No              | R         | DRW      |
 | OpenDrive                    | MD5               | R/W     | Yes              | Partial ⁸       | -         | -        |
 | OpenStack Swift              | MD5               | R/W     | No               | No              | R/W       | -        |
-| Oracle Object Storage        | MD5               | R/W     | No               | No              | R/W       | -        |
+| Oracle Object Storage        | MD5               | R/W     | No               | No              | R/W       | RU       |
 | pCloud                       | MD5, SHA1 ⁷       | R/W     | No               | No              | W         | -        |
 | PikPak                       | MD5               | R       | No               | No              | R         | -        |
 | Pixeldrain                   | SHA256            | R/W     | No               | No              | R         | RW       |
@@ -405,7 +405,7 @@ and to maintain backward compatibility, its behavior has not been changed.
 
 To take a specific example, the FTP backend's default encoding is
 
-```sh
+```text
 --ftp-encoding "Slash,Del,Ctl,RightSpace,Dot"
 ```
 
@@ -439,7 +439,7 @@ To avoid this you can change the set of characters rclone should convert
 for the local filesystem, using command-line argument `--local-encoding`.
 Rclone's default behavior on Windows corresponds to
 
-```sh
+```text
 --local-encoding "Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
 ```
 
@@ -447,7 +447,7 @@ If you want to use fullwidth characters `：`, `＊` and `？` in your filenames
 without rclone changing them when uploading to a remote, then set the same as
 the default value but without `Colon,Question,Asterisk`:
 
-```sh
+```text
 --local-encoding "Slash,LtGt,DoubleQuote,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
 ```
 

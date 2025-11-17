@@ -8,7 +8,7 @@ type CreateFolderResponse struct {
 	Status int    `json:"status"`
 	Msg    string `json:"msg"`
 	Result struct {
-		FldID interface{} `json:"fld_id"`
+		FldID any `json:"fld_id"`
 	} `json:"result"`
 }
 

@@ -65,6 +65,9 @@ func Initialise() {
 	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
 		_ = config.SetConfigPath(envConfig)
 	}
+	if *RemoteName == "local" {
+		*RemoteName = ""
+	}
 	configfile.Install()
 	accounting.Start(ctx)
 	if *Verbose {
@@ -482,7 +485,9 @@ func RandomRemote() (fs.Fs, string, func(), error) {
 //
 // It logs errors rather than returning them
 func Purge(f fs.Fs) {
-	ctx := context.Background()
+	// Create a stats group here so errors in the cleanup don't
+	// interfere with the global stats.
+	ctx := accounting.WithStatsGroup(context.Background(), "test-cleanup")
 	var err error
 	doFallbackPurge := true
 	if doPurge := f.Features().Purge; doPurge != nil {

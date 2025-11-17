@@ -1,0 +1,98 @@
+name: ChinaMobile
+description: China Mobile Ecloud Elastic Object Storage (EOS)
+endpoint:
+  eos-wuxi-1.cmecloud.cn: |-
+    The default endpoint - a good choice if you are unsure.
+    East China (Suzhou)
+  eos-jinan-1.cmecloud.cn: East China (Jinan)
+  eos-ningbo-1.cmecloud.cn: East China (Hangzhou)
+  eos-shanghai-1.cmecloud.cn: East China (Shanghai-1)
+  eos-zhengzhou-1.cmecloud.cn: Central China (Zhengzhou)
+  eos-hunan-1.cmecloud.cn: Central China (Changsha-1)
+  eos-zhuzhou-1.cmecloud.cn: Central China (Changsha-2)
+  eos-guangzhou-1.cmecloud.cn: South China (Guangzhou-2)
+  eos-dongguan-1.cmecloud.cn: South China (Guangzhou-3)
+  eos-beijing-1.cmecloud.cn: North China (Beijing-1)
+  eos-beijing-2.cmecloud.cn: North China (Beijing-2)
+  eos-beijing-4.cmecloud.cn: North China (Beijing-3)
+  eos-huhehaote-1.cmecloud.cn: North China (Huhehaote)
+  eos-chengdu-1.cmecloud.cn: Southwest China (Chengdu)
+  eos-chongqing-1.cmecloud.cn: Southwest China (Chongqing)
+  eos-guiyang-1.cmecloud.cn: Southwest China (Guiyang)
+  eos-xian-1.cmecloud.cn: Nouthwest China (Xian)
+  eos-yunnan.cmecloud.cn: Yunnan China (Kunming)
+  eos-yunnan-2.cmecloud.cn: Yunnan China (Kunming-2)
+  eos-tianjin-1.cmecloud.cn: Tianjin China (Tianjin)
+  eos-jilin-1.cmecloud.cn: Jilin China (Changchun)
+  eos-hubei-1.cmecloud.cn: Hubei China (Xiangyan)
+  eos-jiangxi-1.cmecloud.cn: Jiangxi China (Nanchang)
+  eos-gansu-1.cmecloud.cn: Gansu China (Lanzhou)
+  eos-shanxi-1.cmecloud.cn: Shanxi China (Taiyuan)
+  eos-liaoning-1.cmecloud.cn: Liaoning China (Shenyang)
+  eos-hebei-1.cmecloud.cn: Hebei China (Shijiazhuang)
+  eos-fujian-1.cmecloud.cn: Fujian China (Xiamen)
+  eos-guangxi-1.cmecloud.cn: Guangxi China (Nanning)
+  eos-anhui-1.cmecloud.cn: Anhui China (Huainan)
+location_constraint:
+  wuxi1: East China (Suzhou)
+  jinan1: East China (Jinan)
+  ningbo1: East China (Hangzhou)
+  shanghai1: East China (Shanghai-1)
+  zhengzhou1: Central China (Zhengzhou)
+  hunan1: Central China (Changsha-1)
+  zhuzhou1: Central China (Changsha-2)
+  guangzhou1: South China (Guangzhou-2)
+  dongguan1: South China (Guangzhou-3)
+  beijing1: North China (Beijing-1)
+  beijing2: North China (Beijing-2)
+  beijing4: North China (Beijing-3)
+  huhehaote1: North China (Huhehaote)
+  chengdu1: Southwest China (Chengdu)
+  chongqing1: Southwest China (Chongqing)
+  guiyang1: Southwest China (Guiyang)
+  xian1: Northwest China (Xian)
+  yunnan: Yunnan China (Kunming)
+  yunnan2: Yunnan China (Kunming-2)
+  tianjin1: Tianjin China (Tianjin)
+  jilin1: Jilin China (Changchun)
+  hubei1: Hubei China (Xiangyan)
+  jiangxi1: Jiangxi China (Nanchang)
+  gansu1: Gansu China (Lanzhou)
+  shanxi1: Shanxi China (Taiyuan)
+  liaoning1: Liaoning China (Shenyang)
+  hebei1: Hebei China (Shijiazhuang)
+  fujian1: Fujian China (Xiamen)
+  guangxi1: Guangxi China (Nanning)
+  anhui1: Anhui China (Huainan)
+acl:
+  private: |-
+    Owner gets FULL_CONTROL.
+    No one else has access rights (default).
+  public-read: |-
+    Owner gets FULL_CONTROL.
+    The AllUsers group gets READ access.
+  public-read-write: |-
+    Owner gets FULL_CONTROL.
+    The AllUsers group gets READ and WRITE access.
+    Granting this on a bucket is generally not recommended.
+  authenticated-read: |-
+    Owner gets FULL_CONTROL.
+    The AuthenticatedUsers group gets READ access.
+storage_class:
+  '': Default
+  STANDARD: Standard storage class
+  GLACIER: Archive storage mode
+  STANDARD_IA: Infrequent access storage mode
+server_side_encryption:
+  '': None
+  AES256: AES256
+bucket_acl: true
+sse_customer_algorithm: true
+sse_customer_key: true
+sse_customer_key_base64: true
+sse_customer_key_md5: true
+quirks:
+  list_version: 1
+  force_path_style: true
+  list_url_encode: false
+  use_already_exists: false

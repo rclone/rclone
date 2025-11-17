@@ -48,6 +48,14 @@ type LifecycleRule struct {
 	FileNamePrefix                                  string `json:"fileNamePrefix"`
 }
 
+// ServerSideEncryption is a configuration object for B2 Server-Side Encryption
+type ServerSideEncryption struct {
+	Mode           string `json:"mode"`
+	Algorithm      string `json:"algorithm"`      // Encryption algorithm to use
+	CustomerKey    string `json:"customerKey"`    // User provided Base64 encoded key that is used by the server to encrypt files
+	CustomerKeyMd5 string `json:"customerKeyMd5"` // An MD5 hash of the decoded key
+}
+
 // Timestamp is a UTC time when this file was uploaded. It is a base
 // 10 number of milliseconds since midnight, January 1, 1970 UTC. This
 // fits in a 64 bit integer such as the type "long" in the programming
@@ -261,21 +269,22 @@ type GetFileInfoRequest struct {
 //
 // Example: { "src_last_modified_millis" : "1452802803026", "large_file_sha1" : "a3195dc1e7b46a2ff5da4b3c179175b75671e80d", "color": "blue" }
 type StartLargeFileRequest struct {
-	BucketID    string            `json:"bucketId"`    //The ID of the bucket that the file will go in.
-	Name        string            `json:"fileName"`    // The name of the file. See Files for requirements on file names.
-	ContentType string            `json:"contentType"` // The MIME type of the content of the file, which will be returned in the Content-Type header when downloading the file. Use the Content-Type b2/x-auto to automatically set the stored Content-Type post upload. In the case where a file extension is absent or the lookup fails, the Content-Type is set to application/octet-stream.
-	Info        map[string]string `json:"fileInfo"`    // A JSON object holding the name/value pairs for the custom file info.
+	BucketID             string                `json:"bucketId"`                       // The ID of the bucket that the file will go in.
+	Name                 string                `json:"fileName"`                       // The name of the file. See Files for requirements on file names.
+	ContentType          string                `json:"contentType"`                    // The MIME type of the content of the file, which will be returned in the Content-Type header when downloading the file. Use the Content-Type b2/x-auto to automatically set the stored Content-Type post upload. In the case where a file extension is absent or the lookup fails, the Content-Type is set to application/octet-stream.
+	Info                 map[string]string     `json:"fileInfo"`                       // A JSON object holding the name/value pairs for the custom file info.
+	ServerSideEncryption *ServerSideEncryption `json:"serverSideEncryption,omitempty"` // A JSON object holding values related to Server-Side Encryption
 }
 
 // StartLargeFileResponse is the response to StartLargeFileRequest
 type StartLargeFileResponse struct {
-	ID              string            `json:"fileId"`          // The unique identifier for this version of this file. Used with b2_get_file_info, b2_download_file_by_id, and b2_delete_file_version.
-	Name            string            `json:"fileName"`        // The name of this file, which can be used with b2_download_file_by_name.
-	AccountID       string            `json:"accountId"`       // The identifier for the account.
-	BucketID        string            `json:"bucketId"`        // The unique ID of the bucket.
-	ContentType     string            `json:"contentType"`     // The MIME type of the file.
-	Info            map[string]string `json:"fileInfo"`        // The custom information that was uploaded with the file. This is a JSON object, holding the name/value pairs that were uploaded with the file.
-	UploadTimestamp Timestamp         `json:"uploadTimestamp"` // This is a UTC time when this file was uploaded.
+	ID              string            `json:"fileId"`                    // The unique identifier for this version of this file. Used with b2_get_file_info, b2_download_file_by_id, and b2_delete_file_version.
+	Name            string            `json:"fileName"`                  // The name of this file, which can be used with b2_download_file_by_name.
+	AccountID       string            `json:"accountId"`                 // The identifier for the account.
+	BucketID        string            `json:"bucketId"`                  // The unique ID of the bucket.
+	ContentType     string            `json:"contentType"`               // The MIME type of the file.
+	Info            map[string]string `json:"fileInfo"`                  // The custom information that was uploaded with the file. This is a JSON object, holding the name/value pairs that were uploaded with the file.
+	UploadTimestamp Timestamp         `json:"uploadTimestamp,omitempty"` // This is a UTC time when this file was uploaded.
 }
 
 // GetUploadPartURLRequest is passed to b2_get_upload_part_url
@@ -325,21 +334,25 @@ type CancelLargeFileResponse struct {
 
 // CopyFileRequest is as passed to b2_copy_file
 type CopyFileRequest struct {
-	SourceID          string            `json:"sourceFileId"`                  // The ID of the source file being copied.
-	Name              string            `json:"fileName"`                      // The name of the new file being created.
-	Range             string            `json:"range,omitempty"`               // The range of bytes to copy. If not provided, the whole source file will be copied.
-	MetadataDirective string            `json:"metadataDirective,omitempty"`   // The strategy for how to populate metadata for the new file: COPY or REPLACE
-	ContentType       string            `json:"contentType,omitempty"`         // The MIME type of the content of the file (REPLACE only)
-	Info              map[string]string `json:"fileInfo,omitempty"`            // This field stores the metadata that will be stored with the file. (REPLACE only)
-	DestBucketID      string            `json:"destinationBucketId,omitempty"` // The destination ID of the bucket if set, if not the source bucket will be used
+	SourceID                        string                `json:"sourceFileId"`                              // The ID of the source file being copied.
+	Name                            string                `json:"fileName"`                                  // The name of the new file being created.
+	Range                           string                `json:"range,omitempty"`                           // The range of bytes to copy. If not provided, the whole source file will be copied.
+	MetadataDirective               string                `json:"metadataDirective,omitempty"`               // The strategy for how to populate metadata for the new file: COPY or REPLACE
+	ContentType                     string                `json:"contentType,omitempty"`                     // The MIME type of the content of the file (REPLACE only)
+	Info                            map[string]string     `json:"fileInfo,omitempty"`                        // This field stores the metadata that will be stored with the file. (REPLACE only)
+	DestBucketID                    string                `json:"destinationBucketId,omitempty"`             // The destination ID of the bucket if set, if not the source bucket will be used
+	SourceServerSideEncryption      *ServerSideEncryption `json:"sourceServerSideEncryption,omitempty"`      // A JSON object holding values related to Server-Side Encryption for the source file
+	DestinationServerSideEncryption *ServerSideEncryption `json:"destinationServerSideEncryption,omitempty"` // A JSON object holding values related to Server-Side Encryption for the destination file
 }
 
 // CopyPartRequest is the request for b2_copy_part - the response is UploadPartResponse
 type CopyPartRequest struct {
-	SourceID    string `json:"sourceFileId"`    // The ID of the source file being copied.
-	LargeFileID string `json:"largeFileId"`     // The ID of the large file the part will belong to, as returned by b2_start_large_file.
-	PartNumber  int64  `json:"partNumber"`      // Which part this is (starting from 1)
-	Range       string `json:"range,omitempty"` // The range of bytes to copy. If not provided, the whole source file will be copied.
+	SourceID                        string                `json:"sourceFileId"`                              // The ID of the source file being copied.
+	LargeFileID                     string                `json:"largeFileId"`                               // The ID of the large file the part will belong to, as returned by b2_start_large_file.
+	PartNumber                      int64                 `json:"partNumber"`                                // Which part this is (starting from 1)
+	Range                           string                `json:"range,omitempty"`                           // The range of bytes to copy. If not provided, the whole source file will be copied.
+	SourceServerSideEncryption      *ServerSideEncryption `json:"sourceServerSideEncryption,omitempty"`      // A JSON object holding values related to Server-Side Encryption for the source file
+	DestinationServerSideEncryption *ServerSideEncryption `json:"destinationServerSideEncryption,omitempty"` // A JSON object holding values related to Server-Side Encryption for the destination file
 }
 
 // UpdateBucketRequest describes a request to modify a B2 bucket

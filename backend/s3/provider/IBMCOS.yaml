@@ -1,0 +1,126 @@
+name: IBMCOS
+description: IBM COS S3
+region: {}
+endpoint:
+  s3.us.cloud-object-storage.appdomain.cloud: US Cross Region Endpoint
+  s3.dal.us.cloud-object-storage.appdomain.cloud: US Cross Region Dallas Endpoint
+  s3.wdc.us.cloud-object-storage.appdomain.cloud: US Cross Region Washington DC Endpoint
+  s3.sjc.us.cloud-object-storage.appdomain.cloud: US Cross Region San Jose Endpoint
+  s3.private.us.cloud-object-storage.appdomain.cloud: US Cross Region Private Endpoint
+  s3.private.dal.us.cloud-object-storage.appdomain.cloud: US Cross Region Dallas Private Endpoint
+  s3.private.wdc.us.cloud-object-storage.appdomain.cloud: US Cross Region Washington DC Private Endpoint
+  s3.private.sjc.us.cloud-object-storage.appdomain.cloud: US Cross Region San Jose Private Endpoint
+  s3.us-east.cloud-object-storage.appdomain.cloud: US Region East Endpoint
+  s3.private.us-east.cloud-object-storage.appdomain.cloud: US Region East Private Endpoint
+  s3.us-south.cloud-object-storage.appdomain.cloud: US Region South Endpoint
+  s3.private.us-south.cloud-object-storage.appdomain.cloud: US Region South Private Endpoint
+  s3.eu.cloud-object-storage.appdomain.cloud: EU Cross Region Endpoint
+  s3.fra.eu.cloud-object-storage.appdomain.cloud: EU Cross Region Frankfurt Endpoint
+  s3.mil.eu.cloud-object-storage.appdomain.cloud: EU Cross Region Milan Endpoint
+  s3.ams.eu.cloud-object-storage.appdomain.cloud: EU Cross Region Amsterdam Endpoint
+  s3.private.eu.cloud-object-storage.appdomain.cloud: EU Cross Region Private Endpoint
+  s3.private.fra.eu.cloud-object-storage.appdomain.cloud: EU Cross Region Frankfurt Private Endpoint
+  s3.private.mil.eu.cloud-object-storage.appdomain.cloud: EU Cross Region Milan Private Endpoint
+  s3.private.ams.eu.cloud-object-storage.appdomain.cloud: EU Cross Region Amsterdam Private Endpoint
+  s3.eu-gb.cloud-object-storage.appdomain.cloud: Great Britain Endpoint
+  s3.private.eu-gb.cloud-object-storage.appdomain.cloud: Great Britain Private Endpoint
+  s3.eu-de.cloud-object-storage.appdomain.cloud: EU Region DE Endpoint
+  s3.private.eu-de.cloud-object-storage.appdomain.cloud: EU Region DE Private Endpoint
+  s3.ap.cloud-object-storage.appdomain.cloud: APAC Cross Regional Endpoint
+  s3.tok.ap.cloud-object-storage.appdomain.cloud: APAC Cross Regional Tokyo Endpoint
+  s3.hkg.ap.cloud-object-storage.appdomain.cloud: APAC Cross Regional Hong Kong Endpoint
+  s3.seo.ap.cloud-object-storage.appdomain.cloud: APAC Cross Regional Seoul Endpoint
+  s3.private.ap.cloud-object-storage.appdomain.cloud: APAC Cross Regional Private Endpoint
+  s3.private.tok.ap.cloud-object-storage.appdomain.cloud: APAC Cross Regional Tokyo Private Endpoint
+  s3.private.hkg.ap.cloud-object-storage.appdomain.cloud: APAC Cross Regional Hong Kong Private Endpoint
+  s3.private.seo.ap.cloud-object-storage.appdomain.cloud: APAC Cross Regional Seoul Private Endpoint
+  s3.jp-tok.cloud-object-storage.appdomain.cloud: APAC Region Japan Endpoint
+  s3.private.jp-tok.cloud-object-storage.appdomain.cloud: APAC Region Japan Private Endpoint
+  s3.au-syd.cloud-object-storage.appdomain.cloud: APAC Region Australia Endpoint
+  s3.private.au-syd.cloud-object-storage.appdomain.cloud: APAC Region Australia Private Endpoint
+  s3.ams03.cloud-object-storage.appdomain.cloud: Amsterdam Single Site Endpoint
+  s3.private.ams03.cloud-object-storage.appdomain.cloud: Amsterdam Single Site Private Endpoint
+  s3.che01.cloud-object-storage.appdomain.cloud: Chennai Single Site Endpoint
+  s3.private.che01.cloud-object-storage.appdomain.cloud: Chennai Single Site Private Endpoint
+  s3.mel01.cloud-object-storage.appdomain.cloud: Melbourne Single Site Endpoint
+  s3.private.mel01.cloud-object-storage.appdomain.cloud: Melbourne Single Site Private Endpoint
+  s3.osl01.cloud-object-storage.appdomain.cloud: Oslo Single Site Endpoint
+  s3.private.osl01.cloud-object-storage.appdomain.cloud: Oslo Single Site Private Endpoint
+  s3.tor01.cloud-object-storage.appdomain.cloud: Toronto Single Site Endpoint
+  s3.private.tor01.cloud-object-storage.appdomain.cloud: Toronto Single Site Private Endpoint
+  s3.seo01.cloud-object-storage.appdomain.cloud: Seoul Single Site Endpoint
+  s3.private.seo01.cloud-object-storage.appdomain.cloud: Seoul Single Site Private Endpoint
+  s3.mon01.cloud-object-storage.appdomain.cloud: Montreal Single Site Endpoint
+  s3.private.mon01.cloud-object-storage.appdomain.cloud: Montreal Single Site Private Endpoint
+  s3.mex01.cloud-object-storage.appdomain.cloud: Mexico Single Site Endpoint
+  s3.private.mex01.cloud-object-storage.appdomain.cloud: Mexico Single Site Private Endpoint
+  s3.sjc04.cloud-object-storage.appdomain.cloud: San Jose Single Site Endpoint
+  s3.private.sjc04.cloud-object-storage.appdomain.cloud: San Jose Single Site Private Endpoint
+  s3.mil01.cloud-object-storage.appdomain.cloud: Milan Single Site Endpoint
+  s3.private.mil01.cloud-object-storage.appdomain.cloud: Milan Single Site Private Endpoint
+  s3.hkg02.cloud-object-storage.appdomain.cloud: Hong Kong Single Site Endpoint
+  s3.private.hkg02.cloud-object-storage.appdomain.cloud: Hong Kong Single Site Private Endpoint
+  s3.par01.cloud-object-storage.appdomain.cloud: Paris Single Site Endpoint
+  s3.private.par01.cloud-object-storage.appdomain.cloud: Paris Single Site Private Endpoint
+  s3.sng01.cloud-object-storage.appdomain.cloud: Singapore Single Site Endpoint
+  s3.private.sng01.cloud-object-storage.appdomain.cloud: Singapore Single Site Private Endpoint
+location_constraint:
+  us-standard: US Cross Region Standard
+  us-vault: US Cross Region Vault
+  us-cold: US Cross Region Cold
+  us-flex: US Cross Region Flex
+  us-east-standard: US East Region Standard
+  us-east-vault: US East Region Vault
+  us-east-cold: US East Region Cold
+  us-east-flex: US East Region Flex
+  us-south-standard: US South Region Standard
+  us-south-vault: US South Region Vault
+  us-south-cold: US South Region Cold
+  us-south-flex: US South Region Flex
+  eu-standard: EU Cross Region Standard
+  eu-vault: EU Cross Region Vault
+  eu-cold: EU Cross Region Cold
+  eu-flex: EU Cross Region Flex
+  eu-gb-standard: Great Britain Standard
+  eu-gb-vault: Great Britain Vault
+  eu-gb-cold: Great Britain Cold
+  eu-gb-flex: Great Britain Flex
+  ap-standard: APAC Standard
+  ap-vault: APAC Vault
+  ap-cold: APAC Cold
+  ap-flex: APAC Flex
+  mel01-standard: Melbourne Standard
+  mel01-vault: Melbourne Vault
+  mel01-cold: Melbourne Cold
+  mel01-flex: Melbourne Flex
+  tor01-standard: Toronto Standard
+  tor01-vault: Toronto Vault
+  tor01-cold: Toronto Cold
+  tor01-flex: Toronto Flex
+acl:
+  private: |-
+    Owner gets FULL_CONTROL.
+    No one else has access rights (default).
+    This acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise COS.
+  public-read: |-
+    Owner gets FULL_CONTROL.
+    The AllUsers group gets READ access.
+    This acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise IBM COS.
+  public-read-write: |-
+    Owner gets FULL_CONTROL.
+    The AllUsers group gets READ and WRITE access.
+    This acl is available on IBM Cloud (Infra), On-Premise IBM COS.
+  authenticated-read: |-
+    Owner gets FULL_CONTROL.
+    The AuthenticatedUsers group gets READ access.
+    Not supported on Buckets.
+    This acl is available on IBM Cloud (Infra) and On-Premise IBM COS.
+ibm_api_key: true
+ibm_resource_instance_id: true
+bucket_acl: true
+quirks:
+  list_version: 1
+  force_path_style: true
+  list_url_encode: false
+  use_multipart_etag: false
+  use_already_exists: false # returns BucketAlreadyExists

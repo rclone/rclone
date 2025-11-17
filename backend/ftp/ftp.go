@@ -164,6 +164,16 @@ Enabled by default. Use 0 to disable.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "allow_insecure_tls_ciphers",
+			Help: `Allow insecure TLS ciphers
+
+Setting this flag will allow the usage of the following TLS ciphers in addition to the secure defaults:
+
+- TLS_RSA_WITH_AES_128_GCM_SHA256
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "shut_timeout",
 			Help:     "Maximum time to wait for data connection closing status.",
 			Default:  fs.Duration(60 * time.Second),
@@ -236,29 +246,30 @@ a write only folder.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host              string               `config:"host"`
-	User              string               `config:"user"`
-	Pass              string               `config:"pass"`
-	Port              string               `config:"port"`
-	TLS               bool                 `config:"tls"`
-	ExplicitTLS       bool                 `config:"explicit_tls"`
-	TLSCacheSize      int                  `config:"tls_cache_size"`
-	DisableTLS13      bool                 `config:"disable_tls13"`
-	Concurrency       int                  `config:"concurrency"`
-	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
-	DisableEPSV       bool                 `config:"disable_epsv"`
-	DisableMLSD       bool                 `config:"disable_mlsd"`
-	DisableUTF8       bool                 `config:"disable_utf8"`
-	WritingMDTM       bool                 `config:"writing_mdtm"`
-	ForceListHidden   bool                 `config:"force_list_hidden"`
-	IdleTimeout       fs.Duration          `config:"idle_timeout"`
-	CloseTimeout      fs.Duration          `config:"close_timeout"`
-	ShutTimeout       fs.Duration          `config:"shut_timeout"`
-	AskPassword       bool                 `config:"ask_password"`
-	Enc               encoder.MultiEncoder `config:"encoding"`
-	SocksProxy        string               `config:"socks_proxy"`
-	HTTPProxy         string               `config:"http_proxy"`
-	NoCheckUpload     bool                 `config:"no_check_upload"`
+	Host                    string               `config:"host"`
+	User                    string               `config:"user"`
+	Pass                    string               `config:"pass"`
+	Port                    string               `config:"port"`
+	TLS                     bool                 `config:"tls"`
+	ExplicitTLS             bool                 `config:"explicit_tls"`
+	TLSCacheSize            int                  `config:"tls_cache_size"`
+	DisableTLS13            bool                 `config:"disable_tls13"`
+	AllowInsecureTLSCiphers bool                 `config:"allow_insecure_tls_ciphers"`
+	Concurrency             int                  `config:"concurrency"`
+	SkipVerifyTLSCert       bool                 `config:"no_check_certificate"`
+	DisableEPSV             bool                 `config:"disable_epsv"`
+	DisableMLSD             bool                 `config:"disable_mlsd"`
+	DisableUTF8             bool                 `config:"disable_utf8"`
+	WritingMDTM             bool                 `config:"writing_mdtm"`
+	ForceListHidden         bool                 `config:"force_list_hidden"`
+	IdleTimeout             fs.Duration          `config:"idle_timeout"`
+	CloseTimeout            fs.Duration          `config:"close_timeout"`
+	ShutTimeout             fs.Duration          `config:"shut_timeout"`
+	AskPassword             bool                 `config:"ask_password"`
+	Enc                     encoder.MultiEncoder `config:"encoding"`
+	SocksProxy              string               `config:"socks_proxy"`
+	HTTPProxy               string               `config:"http_proxy"`
+	NoCheckUpload           bool                 `config:"no_check_upload"`
 }
 
 // Fs represents a remote FTP server
@@ -272,6 +283,7 @@ type Fs struct {
 	user     string
 	pass     string
 	dialAddr string
+	tlsConf  *tls.Config // default TLS client config
 	poolMu   sync.Mutex
 	pool     []*ftp.ServerConn
 	drain    *time.Timer // used to drain the pool when we stop using the connections
@@ -397,15 +409,28 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 func (f *Fs) tlsConfig() *tls.Config {
 	var tlsConfig *tls.Config
 	if f.opt.TLS || f.opt.ExplicitTLS {
-		tlsConfig = &tls.Config{
-			ServerName:         f.opt.Host,
-			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
+		if f.tlsConf != nil {
+			tlsConfig = f.tlsConf.Clone()
+		} else {
+			tlsConfig = new(tls.Config)
+		}
+		tlsConfig.ServerName = f.opt.Host
+		if f.opt.SkipVerifyTLSCert {
+			tlsConfig.InsecureSkipVerify = true
 		}
 		if f.opt.TLSCacheSize > 0 {
 			tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(f.opt.TLSCacheSize)
 		}
 		if f.opt.DisableTLS13 {
 			tlsConfig.MaxVersion = tls.VersionTLS12
+		}
+		if f.opt.AllowInsecureTLSCiphers {
+			var ids []uint16
+			// Read default ciphers
+			for _, cs := range tls.CipherSuites() {
+				ids = append(ids, cs.ID)
+			}
+			tlsConfig.CipherSuites = append(ids, tls.TLS_RSA_WITH_AES_128_GCM_SHA256)
 		}
 	}
 	return tlsConfig
@@ -431,9 +456,7 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 			}
 		}()
 		baseDialer := fshttp.NewDialer(ctx)
-		if f.opt.SocksProxy != "" {
-			conn, err = proxy.SOCKS5Dial(network, address, f.opt.SocksProxy, baseDialer)
-		} else if f.proxyURL != nil {
+		if f.opt.SocksProxy != "" || f.proxyURL != nil {
 			// We need to make the onward connection to f.opt.Host. However the FTP
 			// library sets the host to the proxy IP after using EPSV or PASV so we need
 			// to correct that here.
@@ -443,7 +466,11 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 				return nil, err
 			}
 			dialAddress := net.JoinHostPort(f.opt.Host, dialPort)
-			conn, err = proxy.HTTPConnectDial(network, dialAddress, f.proxyURL, baseDialer)
+			if f.opt.SocksProxy != "" {
+				conn, err = proxy.SOCKS5Dial(network, dialAddress, f.opt.SocksProxy, baseDialer)
+			} else {
+				conn, err = proxy.HTTPConnectDial(network, dialAddress, f.proxyURL, baseDialer)
+			}
 		} else {
 			conn, err = baseDialer.Dial(network, address)
 		}
@@ -652,6 +679,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		dialAddr: dialAddr,
 		tokens:   pacer.NewTokenDispenser(opt.Concurrency),
 		pacer:    fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		tlsConf:  fshttp.NewTransport(ctx).TLSClientConfig,
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -1264,7 +1292,7 @@ func (f *ftpReadCloser) Close() error {
 	// See: https://github.com/rclone/rclone/issues/3445#issuecomment-521654257
 	if errX := textprotoError(err); errX != nil {
 		switch errX.Code {
-		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend:
+		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend, ftp.StatusRequestedFileActionOK:
 			err = nil
 		}
 	}

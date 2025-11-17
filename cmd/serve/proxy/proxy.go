@@ -46,41 +46,43 @@ options - it is the job of the proxy program to make a complete
 config.
 
 This config generated must have this extra parameter
+
 - |_root| - root to use for the backend
 
 And it may have this parameter
+
 - |_obscure| - comma separated strings for parameters to obscure
 
 If password authentication was used by the client, input to the proxy
 process (on STDIN) would look similar to this:
 
-|||
+|||json
 {
-	"user": "me",
-	"pass": "mypassword"
+  "user": "me",
+  "pass": "mypassword"
 }
 |||
 
 If public-key authentication was used by the client, input to the
 proxy process (on STDIN) would look similar to this:
 
-|||
+|||json
 {
-	"user": "me",
-	"public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+  "user": "me",
+  "public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
 }
 |||
 
 And as an example return this on STDOUT
 
-|||
+|||json
 {
-	"type": "sftp",
-	"_root": "",
-	"_obscure": "pass",
-	"user": "me",
-	"pass": "mypassword",
-	"host": "sftp.example.com"
+  "type": "sftp",
+  "_root": "",
+  "_obscure": "pass",
+  "user": "me",
+  "pass": "mypassword",
+  "host": "sftp.example.com"
 }
 |||
 
@@ -102,7 +104,7 @@ password or public-key is changed the cache will need to expire (which takes 5 m
 before it takes effect.
 
 This can be used to build general purpose proxies to any kind of
-backend that rclone supports.  
+backend that rclone supports.
 
 `, "|", "`")
 
@@ -180,7 +182,7 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 	// Obscure any values in the config map that need it
 	obscureFields, ok := config.Get("_obscure")
 	if ok {
-		for _, key := range strings.Split(obscureFields, ",") {
+		for key := range strings.SplitSeq(obscureFields, ",") {
 			value, ok := config.Get(key)
 			if ok {
 				obscuredValue, err := obscure.Obscure(value)

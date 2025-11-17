@@ -51,6 +51,11 @@ type bisyncRun struct {
 	lockFile           string
 	renames            renames
 	resyncIs1to2       bool
+	march              bisyncMarch
+	check              bisyncCheck
+	queueOpt           bisyncQueueOpt
+	downloadHashOpt    downloadHashOpt
+	lockFileOpt        lockFileOpt
 }
 
 type queues struct {
@@ -64,7 +69,6 @@ type queues struct {
 
 // Bisync handles lock file, performs bisync run and checks exit status
 func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
-	defer resetGlobals()
 	opt := *optArg // ensure that input is never changed
 	b := &bisyncRun{
 		fs1:       fs1,
@@ -83,7 +87,9 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	opt.OrigBackupDir = ci.BackupDir
 
 	if ci.TerminalColorMode == fs.TerminalColorModeAlways || (ci.TerminalColorMode == fs.TerminalColorModeAuto && !log.Redirected()) {
+		ColorsLock.Lock()
 		Colors = true
+		ColorsLock.Unlock()
 	}
 
 	err = b.setCompareDefaults(ctx)
@@ -93,7 +99,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 
 	b.setResyncDefaults()
 
-	err = b.setResolveDefaults(ctx)
+	err = b.setResolveDefaults()
 	if err != nil {
 		return err
 	}
@@ -123,6 +129,8 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	if err != nil {
 		return err
 	}
+
+	b.queueOpt.logger = operations.NewLoggerOpt()
 
 	// Handle SIGINT
 	var finaliseOnce gosync.Once
@@ -161,7 +169,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 					markFailed(b.listing1)
 					markFailed(b.listing2)
 				}
-				b.removeLockFile()
+				err = b.removeLockFile()
 			}
 		})
 	}
@@ -171,7 +179,10 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	// run bisync
 	err = b.runLocked(ctx)
 
-	b.removeLockFile()
+	removeLockErr := b.removeLockFile()
+	if err == nil {
+		err = removeLockErr
+	}
 
 	b.CleanupCompleted = true
 	if b.InGracefulShutdown {
@@ -262,7 +273,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	// Generate Path1 and Path2 listings and copy any unique Path2 files to Path1
 	if opt.Resync {
-		return b.resync(octx, fctx)
+		return b.resync(fctx)
 	}
 
 	// Check for existence of prior Path1 and Path2 listings
@@ -297,7 +308,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	}
 
 	fs.Infof(nil, "Building Path1 and Path2 listings")
-	ls1, ls2, err = b.makeMarchListing(fctx)
+	b.march.ls1, b.march.ls2, err = b.makeMarchListing(fctx)
 	if err != nil || accounting.Stats(fctx).Errored() {
 		fs.Error(nil, Color(terminal.RedFg, "There were errors while building listings. Aborting as it is too dangerous to continue."))
 		b.critical = true
@@ -307,7 +318,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	// Check for Path1 deltas relative to the prior sync
 	fs.Infof(nil, "Path1 checking for diffs")
-	ds1, err := b.findDeltas(fctx, b.fs1, b.listing1, ls1, "Path1")
+	ds1, err := b.findDeltas(fctx, b.fs1, b.listing1, b.march.ls1, "Path1")
 	if err != nil {
 		return err
 	}
@@ -315,7 +326,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	// Check for Path2 deltas relative to the prior sync
 	fs.Infof(nil, "Path2 checking for diffs")
-	ds2, err := b.findDeltas(fctx, b.fs2, b.listing2, ls2, "Path2")
+	ds2, err := b.findDeltas(fctx, b.fs2, b.listing2, b.march.ls2, "Path2")
 	if err != nil {
 		return err
 	}
@@ -389,7 +400,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		newl1, _ := b.loadListing(b.newListing1)
 		newl2, _ := b.loadListing(b.newListing2)
 		b.debug(b.DebugName, fmt.Sprintf("pre-saveOldListings, ls1 has name?: %v, ls2 has name?: %v", l1.has(b.DebugName), l2.has(b.DebugName)))
-		b.debug(b.DebugName, fmt.Sprintf("pre-saveOldListings, newls1 has name?: %v, newls2 has name?: %v", newl1.has(b.DebugName), newl2.has(b.DebugName)))
+		b.debug(b.DebugName, fmt.Sprintf("pre-saveOldListings, newls1 has name?: %v, ls2 has name?: %v", newl1.has(b.DebugName), newl2.has(b.DebugName)))
 	}
 	b.saveOldListings()
 	// save new listings
@@ -553,7 +564,7 @@ func (b *bisyncRun) setBackupDir(ctx context.Context, destPath int) context.Cont
 	return ctx
 }
 
-func (b *bisyncRun) overlappingPathsCheck(fctx context.Context, fs1, fs2 fs.Fs) error {
+func (b *bisyncRun) overlappingPathsCheck(fctx context.Context, fs1, fs2 fs.Fs) (err error) {
 	if operations.OverlappingFilterCheck(fctx, fs2, fs1) {
 		err = errors.New(Color(terminal.RedFg, "Overlapping paths detected. Cannot bisync between paths that overlap, unless excluded by filters."))
 		return err
@@ -586,7 +597,7 @@ func (b *bisyncRun) overlappingPathsCheck(fctx context.Context, fs1, fs2 fs.Fs) 
 	return nil
 }
 
-func (b *bisyncRun) checkSyntax() error {
+func (b *bisyncRun) checkSyntax() (err error) {
 	// check for odd number of quotes in path, usually indicating an escaping issue
 	path1 := bilib.FsPath(b.fs1)
 	path2 := bilib.FsPath(b.fs2)
@@ -633,26 +644,4 @@ func waitFor(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
 		time.Sleep(individualWait)
 	}
 	return false
-}
-
-// mainly to make sure tests don't interfere with each other when running more than one
-func resetGlobals() {
-	downloadHash = false
-	logger = operations.NewLoggerOpt()
-	ignoreListingChecksum = false
-	ignoreListingModtime = false
-	hashTypes = nil
-	queueCI = nil
-	hashType = 0
-	fsrc, fdst = nil, nil
-	fcrypt = nil
-	Opt = Options{}
-	once = gosync.Once{}
-	downloadHashWarn = gosync.Once{}
-	firstDownloadHash = gosync.Once{}
-	ls1 = newFileList()
-	ls2 = newFileList()
-	err = nil
-	firstErr = nil
-	marchCtx = nil
 }
