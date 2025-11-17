@@ -2,8 +2,10 @@ package vfscommon
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -170,7 +172,40 @@ var OptionsInfo = fs.Options{{
 	Default: "",
 	Help:    "Set the extension to read metadata from.",
 	Groups:  "VFS",
+}, {
+	Name:    "vfs_metadata_store",
+	Default: "auto",
+	Help:    "Backend used for metadata persistence",
+	Groups:  "VFS",
+}, {
+	Name:    "vfs_hide_metadata",
+	Default: false,
+	Help:    "Hide metadata sidecar files from directory listings",
+	Groups:  "VFS",
+}, {
+	Name:    "vfs_persist_metadata",
+	Default: "off",
+	Help:    "Persist POSIX metadata: off|owner|mode|times|all or comma-separated combination",
+	Groups:  "VFS",
 }}
+
+// MetadataFields describes which metadata attributes should be persisted.
+type MetadataFields uint8
+
+// Metadata fields bitmask.
+const (
+	MetadataFieldMode MetadataFields = 1 << iota
+	MetadataFieldOwner
+	MetadataFieldTimes
+)
+
+// MetadataFieldAll combines all known metadata fields.
+const MetadataFieldAll = MetadataFieldMode | MetadataFieldOwner | MetadataFieldTimes
+
+// Has reports whether the mask contains the provided field mask.
+func (f MetadataFields) Has(field MetadataFields) bool {
+	return f&field != 0
+}
 
 func init() {
 	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "vfs", Opt: &Opt, Options: OptionsInfo})
@@ -210,6 +245,11 @@ type Options struct {
 	FastFingerprint    bool          `config:"vfs_fast_fingerprint"` // if set use fast fingerprints
 	DiskSpaceTotalSize fs.SizeSuffix `config:"vfs_disk_space_total_size"`
 	MetadataExtension  string        `config:"vfs_metadata_extension"` // if set respond to files with this extension with metadata
+	MetadataStore      string        `config:"vfs_metadata_store"`
+	HideMetadata       bool          `config:"vfs_hide_metadata"`
+	PersistMetadata    string        `config:"vfs_persist_metadata"`
+
+	persistMetadataMask MetadataFields `config:"-"`
 }
 
 // Opt is the default options modified by the environment variables and command line flags
@@ -218,6 +258,21 @@ var Opt Options
 // Init the options, making sure everything is within range
 func (opt *Options) Init() {
 	ci := fs.GetConfig(context.Background())
+
+	mask, normalized, err := parsePersistMetadata(opt.PersistMetadata)
+	if err != nil {
+		fs.Errorf(nil, "invalid --vfs-persist-metadata value %q: %v", opt.PersistMetadata, err)
+		mask = 0
+	}
+	opt.persistMetadataMask = mask
+	opt.PersistMetadata = normalized
+
+	if opt.persistMetadataMask != 0 {
+		// Default sidecar metadata extension for vfsmeta store (non-backend)
+		if opt.MetadataExtension == "" && opt.MetadataStore != "backend" {
+			opt.MetadataExtension = ".metadata"
+		}
+	}
 
 	// Override --vfs-links with --links if set
 	if ci.Links {
@@ -234,4 +289,74 @@ func (opt *Options) Init() {
 
 	// Make sure links are returned as links
 	opt.LinkPerms |= FileMode(os.ModeSymlink)
+}
+
+// PersistMetadataEnabled reports whether any metadata fields are persisted.
+func (opt *Options) PersistMetadataEnabled() bool {
+	return opt.persistMetadataMask != 0
+}
+
+// PersistMetadataIncludes reports whether the given metadata field is persisted.
+func (opt *Options) PersistMetadataIncludes(field MetadataFields) bool {
+	return opt.persistMetadataMask.Has(field)
+}
+
+// PersistMetadataFields returns the configured metadata field mask.
+func (opt *Options) PersistMetadataFields() MetadataFields {
+	return opt.persistMetadataMask
+}
+
+func parsePersistMetadata(spec string) (MetadataFields, string, error) {
+	spec = strings.TrimSpace(spec)
+	if spec == "" {
+		return 0, "off", nil
+	}
+	lower := strings.ToLower(spec)
+	switch lower {
+	case "0", "off", "false", "none":
+		return 0, "off", nil
+	case "1", "on", "true", "all", "any":
+		return MetadataFieldAll, "all", nil
+	}
+
+	var mask MetadataFields
+	var tokens []string
+	for _, raw := range strings.Split(spec, ",") {
+		token := strings.ToLower(strings.TrimSpace(raw))
+		if token == "" {
+			continue
+		}
+		switch token {
+		case "owner":
+			mask |= MetadataFieldOwner
+		case "mode":
+			mask |= MetadataFieldMode
+		case "times":
+			mask |= MetadataFieldTimes
+		default:
+			return 0, "off", fmt.Errorf("unknown metadata field %q", token)
+		}
+	}
+
+	if mask == 0 {
+		return 0, "off", nil
+	}
+
+	// Canonicalize output string to predictable order.
+	switch mask {
+	case MetadataFieldAll:
+		return mask, "all", nil
+	}
+
+	if mask.Has(MetadataFieldOwner) {
+		tokens = append(tokens, "owner")
+	}
+	if mask.Has(MetadataFieldMode) {
+		tokens = append(tokens, "mode")
+	}
+	if mask.Has(MetadataFieldTimes) {
+		tokens = append(tokens, "times")
+	}
+
+	return mask, strings.Join(tokens, ","), nil
 }

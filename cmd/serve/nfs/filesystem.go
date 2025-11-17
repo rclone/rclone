@@ -3,6 +3,7 @@
 package nfs
 
 import (
+	"context"
 	"os"
 	"path"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/rclone/rclone/vfs/vfsmeta"
 	"github.com/willscott/go-nfs/file"
 )
 
@@ -31,13 +33,24 @@ func setSys(fi os.FileInfo) {
 		fs.Errorf(fi, "internal error: %T is not a vfs.Node", fi)
 		return
 	}
-	vfs := node.VFS()
+	vv := node.VFS()
+	opt := vv.Opt
 	// Set the UID and GID for the node passed in from the VFS defaults.
 	stat := file.FileInfo{
 		Nlink:  1,
-		UID:    vfs.Opt.UID,
-		GID:    vfs.Opt.GID,
+		UID:    opt.UID,
+		GID:    opt.GID,
 		Fileid: node.Inode(), // without this mounting doesn't work on Linux
+	}
+	if opt.PersistMetadataEnabled() && opt.PersistMetadataIncludes(vfscommon.MetadataFieldOwner) {
+		if m, err := vv.LoadMetadata(context.TODO(), node.Path(), fi.IsDir()); err == nil {
+			if m.UID != nil {
+				stat.UID = *m.UID
+			}
+			if m.GID != nil {
+				stat.GID = *m.GID
+			}
+		}
 	}
 	node.SetSys(&stat)
 }
@@ -54,8 +67,16 @@ func (f *FS) ReadDir(path string) (dir []os.FileInfo, err error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, fi := range dir {
+	opt := f.vfs.Opt
+	for i, fi := range dir {
 		setSys(fi)
+		if opt.PersistMetadataEnabled() {
+			if n, ok := fi.(vfs.Node); ok {
+				if m, err2 := f.vfs.LoadMetadata(context.TODO(), n.Path(), fi.IsDir()); err2 == nil {
+					dir[i] = withOverlayFileInfo(fi, m)
+				}
+			}
+		}
 	}
 	return dir, nil
 }
@@ -86,7 +107,54 @@ func (f *FS) Stat(filename string) (fi os.FileInfo, err error) {
 		return nil, err
 	}
 	setSys(fi)
+	// Overlay POSIX metadata on mode and times if available
+	if f.vfs.Opt.PersistMetadataEnabled() {
+		if m, err2 := f.vfs.LoadMetadata(context.TODO(), filename, fi.IsDir()); err2 == nil {
+			fi = withOverlayFileInfo(fi, m)
+		}
+	}
 	return fi, nil
+}
+
+// overlayFileInfo wraps os.FileInfo to override Mode and ModTime based on posix meta
+type overlayFileInfo struct {
+	os.FileInfo
+	modeOverride  *os.FileMode
+	mtimeOverride *time.Time
+}
+
+func (o overlayFileInfo) Mode() os.FileMode {
+	if o.modeOverride != nil {
+		return *o.modeOverride
+	}
+	return o.FileInfo.Mode()
+}
+
+func (o overlayFileInfo) ModTime() time.Time {
+	if o.mtimeOverride != nil {
+		return *o.mtimeOverride
+	}
+	return o.FileInfo.ModTime()
+}
+
+func withOverlayFileInfo(fi os.FileInfo, m vfsmeta.Meta) os.FileInfo {
+	var om *os.FileMode
+	var mt *time.Time
+	if m.Mode != nil {
+		perm := os.FileMode(*m.Mode) & os.ModePerm
+		mode := (fi.Mode() & os.ModeType) | perm
+		om = &mode
+	}
+	if m.Mtime != nil {
+		t := m.Mtime.UTC()
+		if !t.IsZero() {
+			mt = &t
+		}
+	}
+	if om == nil && mt == nil {
+		return fi
+	}
+	return overlayFileInfo{FileInfo: fi, modeOverride: om, mtimeOverride: mt}
 }
 
 // Rename renames a file
@@ -139,6 +207,11 @@ func (f *FS) Lstat(filename string) (fi os.FileInfo, err error) {
 		return nil, err
 	}
 	setSys(fi)
+	if f.vfs.Opt.PersistMetadataEnabled() {
+		if m, err2 := f.vfs.LoadMetadata(context.TODO(), filename, fi.IsDir()); err2 == nil {
+			fi = withOverlayFileInfo(fi, m)
+		}
+	}
 	return fi, nil
 }
 
@@ -157,6 +230,19 @@ func (f *FS) Readlink(link string) (result string, err error) {
 // Chmod changes the file modes
 func (f *FS) Chmod(name string, mode os.FileMode) (err error) {
 	defer log.Trace(name, "mode=%v", mode)("err=%v", &err)
+	node, err := f.vfs.Stat(name)
+	if err != nil {
+		return err
+	}
+	opt := f.vfs.Opt
+	if node.IsDir() {
+		if opt.PersistMetadataIncludes(vfscommon.MetadataFieldMode) {
+			v := uint32(mode)
+			m := vfsmeta.Meta{Mode: &v}
+			_ = f.vfs.SaveMetadata(context.TODO(), name, true, m)
+		}
+		return nil
+	}
 	file, err := f.vfs.Open(name)
 	if err != nil {
 		return err
@@ -171,6 +257,11 @@ func (f *FS) Chmod(name string, mode os.FileMode) (err error) {
 	if err == vfs.ENOSYS {
 		err = nil
 	}
+	if err == nil && opt.PersistMetadataIncludes(vfscommon.MetadataFieldMode) {
+		v := uint32(mode)
+		m := vfsmeta.Meta{Mode: &v}
+		_ = f.vfs.SaveMetadata(context.TODO(), name, false, m)
+	}
 	return err
 }
 
@@ -183,6 +274,7 @@ func (f *FS) Lchown(name string, uid, gid int) (err error) {
 // Chown changes owner of the file
 func (f *FS) Chown(name string, uid, gid int) (err error) {
 	defer log.Trace(name, "uid=%d, gid=%d", uid, gid)("err=%v", &err)
+	opt := f.vfs.Opt
 	file, err := f.vfs.Open(name)
 	if err != nil {
 		return err
@@ -192,13 +284,30 @@ func (f *FS) Chown(name string, uid, gid int) (err error) {
 			fs.Logf(f, "Error while closing file: %e", err)
 		}
 	}()
-	return file.Chown(uid, gid)
+	err = file.Chown(uid, gid)
+	if err == vfs.ENOSYS {
+		err = nil
+	}
+	if err == nil && opt.PersistMetadataIncludes(vfscommon.MetadataFieldOwner) {
+		u := uint32(uid)
+		g := uint32(gid)
+		m := vfsmeta.Meta{UID: &u, GID: &g}
+		_ = f.vfs.SaveMetadata(context.TODO(), name, false, m)
+	}
+	return err
 }
 
 // Chtimes changes the access time and modified time
 func (f *FS) Chtimes(name string, atime time.Time, mtime time.Time) (err error) {
 	defer log.Trace(name, "atime=%v, mtime=%v", atime, mtime)("err=%v", &err)
-	return f.vfs.Chtimes(name, atime, mtime)
+	err = f.vfs.Chtimes(name, atime, mtime)
+	if err == nil && f.vfs.Opt.PersistMetadataIncludes(vfscommon.MetadataFieldTimes) {
+		a := atime.UTC()
+		m := mtime.UTC()
+		meta := vfsmeta.Meta{Atime: &a, Mtime: &m}
+		_ = f.vfs.SaveMetadata(context.TODO(), name, false, meta)
+	}
+	return err
 }
 
 // Chroot is not supported in VFS
