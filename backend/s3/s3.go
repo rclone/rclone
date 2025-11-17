@@ -2832,6 +2832,8 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 			SSECustomerKey:       req.SSECustomerKey,
 			SSECustomerKeyMD5:    req.SSECustomerKeyMD5,
 			UploadId:             uid,
+			IfMatch:              copyReq.IfMatch,
+			IfNoneMatch:          copyReq.IfNoneMatch,
 		})
 		return f.shouldRetry(ctx, err)
 	})
@@ -4281,6 +4283,8 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 			SSECustomerKey:       w.multiPartUploadInput.SSECustomerKey,
 			SSECustomerKeyMD5:    w.multiPartUploadInput.SSECustomerKeyMD5,
 			UploadId:             w.uploadID,
+			IfMatch:              w.ui.req.IfMatch,
+			IfNoneMatch:          w.ui.req.IfNoneMatch,
 		})
 		return w.f.shouldRetry(ctx, err)
 	})
