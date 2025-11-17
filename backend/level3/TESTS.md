@@ -286,14 +286,12 @@ func TestNewFeature(t *testing.T) {
 ## 🔗 Related Documentation
 
 - `README.md` - User guide and usage examples
-- `TESTING.md` - Manual testing with MinIO
+- `TESTING.md` - Manual testing with MinIO and Bash harnesses
 - `RAID3.md` - Technical specification
-- `SELF_HEALING_IMPLEMENTATION.md` - Self-healing details
+- `docs/SELF_HEALING_IMPLEMENTATION.md` - Self-healing details
 
 ---
 
-**Last Updated**: November 2, 2025  
-**Total Tests**: 16 (all passing)  
-**Total Duration**: ~0.37s  
-**Status**: ✅ Comprehensive coverage
+**Last Updated**: November 16, 2025  
+**Status**: ✅ Comprehensive coverage - see `TESTING.md` for latest test information
 

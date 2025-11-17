@@ -2,7 +2,7 @@
 
 **Purpose**: Track design questions that need decisions  
 **Process**: Add questions as they arise, document decisions in `DESIGN_DECISIONS.md` when resolved  
-**Last Updated**: November 2, 2025
+**Last Updated**: November 16, 2025
 
 ---
 
@@ -174,7 +174,7 @@ func (w *level3ChunkWriter) WriteChunk(ctx, chunkNum int, reader io.ReadSeeker) 
 **Deadline**: Before promoting to production use with large files
 
 **References**: 
-- `docs/LARGE_FILE_ANALYSIS.md` (comprehensive analysis) ⭐ **NEW**
+- See README.md for current file size limitations
 
 ---
 
@@ -333,8 +333,7 @@ The concern: Users may not know about `backend` commands or how to discover them
 **Who decides**: You (maintainer)
 
 **References**: 
-- `docs/REBUILD_RECOVERY_RESEARCH.md` (technical analysis)
-- `docs/USER_CENTRIC_RECOVERY.md` (UX analysis) ⭐ **NEW**
+- See `backend rebuild` command implementation in level3.go
 
 ---
 
@@ -353,14 +352,6 @@ The concern: Users may not know about `backend` commands or how to discover them
 
 ---
 
-### Q6: Explicit Rebuild Command
-**Status**: ⚠️ **SUPERSEDED by Q4**
-
-**Note**: This question is now fully addressed in Q4 with comprehensive research.
-
-See: Q4 (Rebuild Command for Backend Replacement) and `docs/REBUILD_RECOVERY_RESEARCH.md`
-
----
 
 ### Q7: Move with Degraded Source
 **Question**: Current behavior allows moving files with missing particles. Is this desired?
@@ -482,8 +473,7 @@ D) **None** (Current):
 - [x] Calculate storage savings (50% for text vs 23% if wrong order)
 - [x] Design streaming architecture
 - **Documentation**: 
-  - `docs/COMPRESSION_ANALYSIS.md` (30KB - full comparison)
-  - `docs/ENTROPY_INSIGHT.md` (user's critical insight)
+  - `docs/COMPRESSION_ANALYSIS.md` (full comparison)
 
 **Key Implementation Decisions to Make**:
 1. **Implement compression?** 
@@ -797,79 +787,16 @@ TIP: Use 'rclone copy' + 'rclone purge' instead for large datasets
 
 ---
 
-## ✅ Recently Resolved
-
-### Q11: Broken Object Consistency and Cleanup ✅ **RESOLVED**
-**Question**: How should level3 handle broken objects (only 1 particle) in listings and purge operations?
-
-**Date Resolved**: November 5, 2025  
-**Status**: ✅ **IMPLEMENTED**
-
-**Context**:
-- Manual testing revealed inconsistent behavior when buckets existed in only 1 remote
-- `rclone purge` showed error messages for broken objects but still succeeded
-- Needed consistent behavior across list/purge/delete operations
-
-**Problem**:
-```bash
-# Before: Confusing errors
-$ rclone purge miniolevel3:mybucket  # bucket in 1 remote only
-ERROR: Cannot find object file1.txt
-ERROR: Cannot find object file2.txt
-# ⚠️ Lots of errors, but still works
-```
-
-**Solution Implemented**: "Strict RAID 3 with Auto-Cleanup"
-- Added `auto_cleanup` option (default: `true`)
-- Objects with <2 particles are automatically hidden from listings
-- Delete operations silently clean up broken particles
-- Added `rclone cleanup` command for explicit cleanup
-
-**Implementation**:
-- ✅ `auto_cleanup` config option (default: true)
-- ✅ Particle counting helpers (`countParticlesSync`, `scanParticles`)
-- ✅ List() filters broken objects when `auto_cleanup=true`
-- ✅ `CleanUp()` interface implementation
-- ✅ Comprehensive tests (5 test cases)
-- ✅ Documentation in README
-
-**User Experience**:
-```bash
-# After: Clean, no errors
-$ rclone purge miniolevel3:mybucket  # bucket in 1 remote only
-# ✅ Works silently - no errors
-
-# Debug mode available if needed
-$ rclone config set myremote auto_cleanup false
-$ rclone ls myremote:  # Now shows broken objects
-```
-
-**Benefits**:
-- ✅ Clean UX (no confusing errors)
-- ✅ RAID 3 compliant ("object exists = object is readable")
-- ✅ Flexible (can disable for debugging)
-- ✅ Explicit cleanup command available
-- ✅ Self-cleaning (prevents fragment accumulation)
-
-**Related**:
-- `docs/CONSISTENCY_PROPOSAL.md` - Analysis and proposal
-- `docs/AUTO_CLEANUP_IMPLEMENTATION.md` - Implementation details
-
-**Who Decided**: User (hfischer) + maintainer discussion
-
----
 
 ## 📊 Statistics
 
-**Total Open Questions**: 11  
+**Total Open Questions**: 10  
 **High Priority**: 2 (Q1: Backend Help, Q2: Streaming 🚨 **CRITICAL**)  
 **Medium-High Priority**: 1 (Q10: Backend Commands & Tags 🤝 - awaiting community discussion)  
 **Medium Priority**: 2 (Q4: Rebuild Command, Q12: DirMove Limitation)  
-**Low Priority**: 6 (Q3, Q5, Q6, Q7, Q8, Q9)  
+**Low Priority**: 5 (Q3, Q5, Q7, Q8, Q9)  
 
-**Recently Resolved**: 1 (Q11: Broken Object Consistency - Auto-cleanup implemented)
-
-**Decisions Made**: 9 (see `DESIGN_DECISIONS.md`)
+**Decisions Made**: See `DESIGN_DECISIONS.md` for resolved questions
 
 **Critical Issues**: 1 (Q2: Large file streaming - blocking production use with >1 GB files)
 
