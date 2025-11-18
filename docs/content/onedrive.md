@@ -221,6 +221,18 @@ client credentials flow. In particular the "onedrive" option does not
 work. You can use the "sharepoint" option or if that does not find the
 correct drive ID type it in manually with the "driveid" option.
 
+To back up any user's data using this flow, grant your Azure AD
+application the necessary Microsoft Graph *Application permissions*
+(such as `Files.Read.All`, `Sites.Read.All` and/or `Sites.Selected`).
+With these permissions, rclone can access drives across the tenant,
+but it needs to know *which user or drive* you want. Supply a specific
+`drive_id` corresponding to that user's OneDrive, or a SharePoint site
+ID for SharePoint libraries. You can obtain a user's drive ID using
+Microsoft Graph (e.g. `/users/{userUPN}/drive`) and then configure it
+in rclone. Once the correct drive ID is provided, rclone will back up
+that user's data using the app-only token without requiring their
+credentials.
+
 **NOTE** Assigning permissions directly to the application means that
 anyone with the *Client ID* and *Client Secret* can access your
 OneDrive files. Take care to safeguard these credentials.
