@@ -1046,3 +1046,4 @@ put them back in again. -->
 - aliaj1 <ali19961@gmail.com>
 - Sean Turner <30396892+seanturner026@users.noreply.github.com>
 - jijamik <30904953+jijamik@users.noreply.github.com>
+- Dominik Sander <git@dsander.de>
