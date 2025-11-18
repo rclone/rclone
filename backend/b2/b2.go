@@ -607,17 +607,28 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to authorize account: %w", err)
 	}
-	// If this is a key limited to a single bucket, it must exist already
-	if f.rootBucket != "" && f.info.Allowed.BucketID != "" {
-		allowedBucket := f.opt.Enc.ToStandardName(f.info.Allowed.BucketName)
-		if allowedBucket == "" {
-			return nil, errors.New("bucket that application key is restricted to no longer exists")
+	// If this is a key limited to number of bucket, all must exist already,
+	// and one of them must be ours.
+	if f.rootBucket != "" && len(f.info.APIs.Storage.Allowed.Buckets) != 0 {
+		buckets := f.info.APIs.Storage.Allowed.Buckets
+		var rootFound = false
+		var rootID string
+		for _, b := range buckets {
+			allowedBucket := f.opt.Enc.ToStandardName(b.Name)
+			if allowedBucket == "" {
+				return nil, errors.New("bucket that application key is restricted to no longer exists")
+			}
+
+			if allowedBucket == f.rootBucket {
+				rootFound = true
+				rootID = b.ID
+			}
 		}
-		if allowedBucket != f.rootBucket {
-			return nil, fmt.Errorf("you must use bucket %q with this application key", allowedBucket)
+		if !rootFound {
+			return nil, fmt.Errorf("you must use bucket(s) %q with this application key", buckets)
 		}
 		f.cache.MarkOK(f.rootBucket)
-		f.setBucketID(f.rootBucket, f.info.Allowed.BucketID)
+		f.setBucketID(f.rootBucket, rootID)
 	}
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		// Check to see if the (bucket,directory) is actually an existing file
@@ -643,7 +654,7 @@ func (f *Fs) authorizeAccount(ctx context.Context) error {
 	defer f.authMu.Unlock()
 	opts := rest.Opts{
 		Method:       "GET",
-		Path:         "/b2api/v1/b2_authorize_account",
+		Path:         "/b2api/v4/b2_authorize_account",
 		RootURL:      f.opt.Endpoint,
 		UserName:     f.opt.Account,
 		Password:     f.opt.Key,
@@ -656,13 +667,13 @@ func (f *Fs) authorizeAccount(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to authenticate: %w", err)
 	}
-	f.srv.SetRoot(f.info.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
+	f.srv.SetRoot(f.info.APIs.Storage.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
 	return nil
 }
 
 // hasPermission returns if the current AuthorizationToken has the selected permission
 func (f *Fs) hasPermission(permission string) bool {
-	return slices.Contains(f.info.Allowed.Capabilities, permission)
+	return slices.Contains(f.info.APIs.Storage.Allowed.Capabilities, permission)
 }
 
 // getUploadURL returns the upload info with the UploadURL and the AuthorizationToken
@@ -1067,9 +1078,16 @@ type listBucketFn func(*api.Bucket) error
 
 // listBucketsToFn lists the buckets to the function supplied
 func (f *Fs) listBucketsToFn(ctx context.Context, bucketName string, fn listBucketFn) error {
+	var bucketID string
+	for _, b := range f.info.APIs.Storage.Allowed.Buckets {
+		if b.Name == bucketName {
+			bucketID = b.ID
+			break
+		}
+	}
 	var account = api.ListBucketsRequest{
 		AccountID: f.info.AccountID,
-		BucketID:  f.info.Allowed.BucketID,
+		BucketID:  bucketID,
 	}
 	if bucketName != "" && account.BucketID == "" {
 		account.BucketName = f.opt.Enc.FromStandardName(bucketName)
@@ -1606,7 +1624,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	bucket, bucketPath := f.split(remote)
 	var RootURL string
 	if f.opt.DownloadURL == "" {
-		RootURL = f.info.DownloadURL
+		RootURL = f.info.APIs.Storage.DownloadURL
 	} else {
 		RootURL = f.opt.DownloadURL
 	}
@@ -1957,7 +1975,7 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 	// Use downloadUrl from backblaze if downloadUrl is not set
 	// otherwise use the custom downloadUrl
 	if o.fs.opt.DownloadURL == "" {
-		opts.RootURL = o.fs.info.DownloadURL
+		opts.RootURL = o.fs.info.APIs.Storage.DownloadURL
 	} else {
 		opts.RootURL = o.fs.opt.DownloadURL
 	}
