@@ -607,8 +607,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to authorize account: %w", err)
 	}
-	// If this is a key limited to number of bucket, all must exist already,
-	// and one of them must be ours.
+	// If this is a key limited to one or more buckets, one of them must exist
+	// and be ours.
 	if f.rootBucket != "" && len(f.info.APIs.Storage.Allowed.Buckets) != 0 {
 		buckets := f.info.APIs.Storage.Allowed.Buckets
 		var rootFound = false
@@ -616,7 +616,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		for _, b := range buckets {
 			allowedBucket := f.opt.Enc.ToStandardName(b.Name)
 			if allowedBucket == "" {
-				return nil, errors.New("bucket that application key is restricted to no longer exists")
+				fs.Debugf(f, "bucket %q that application key is restricted to no longer exists", b.ID)
+				continue
 			}
 
 			if allowedBucket == f.rootBucket {
