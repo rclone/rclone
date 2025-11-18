@@ -734,6 +734,17 @@ two accounts.
 			Default:  rwOff,
 			Examples: rwExamples,
 		}, {
+			Name: "metadata_enforce_expansive_access",
+			Help: `Whether the request should enforce expansive access rules.
+
+From Feb 2026 this flag will be set by default so this flag can be used for
+testing before then.
+
+See: https://developers.google.com/workspace/drive/api/guides/limited-expansive-access
+`,
+			Advanced: true,
+			Default:  false,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -812,6 +823,7 @@ type Options struct {
 	MetadataOwner             rwChoice             `config:"metadata_owner"`
 	MetadataPermissions       rwChoice             `config:"metadata_permissions"`
 	MetadataLabels            rwChoice             `config:"metadata_labels"`
+	EnforceExpansiveAccess    bool                 `config:"metadata_enforce_expansive_access"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 	EnvAuth                   bool                 `config:"env_auth"`
 }
@@ -3092,6 +3104,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		_, err = f.svc.Permissions.Create(id, permission).
 			Fields("").
 			SupportsAllDrives(true).
+			EnforceExpansiveAccess(f.opt.EnforceExpansiveAccess).
 			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})

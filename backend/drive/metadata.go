@@ -149,6 +149,7 @@ func (f *Fs) setPermissions(ctx context.Context, info *drive.File, permissions [
 			_, err := f.svc.Permissions.Create(info.Id, perm).
 				SupportsAllDrives(true).
 				SendNotificationEmail(false).
+				EnforceExpansiveAccess(f.opt.EnforceExpansiveAccess).
 				Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
@@ -483,6 +484,7 @@ func (f *Fs) setOwner(ctx context.Context, info *drive.File, owner string) (err 
 			SupportsAllDrives(true).
 			TransferOwnership(true).
 			// SendNotificationEmail(false). - required apparently!
+			EnforceExpansiveAccess(f.opt.EnforceExpansiveAccess).
 			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
