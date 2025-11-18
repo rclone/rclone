@@ -1648,10 +1648,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		newRoot, leaf := path.Split(oldRoot)
 		f.setRoot(newRoot)
 		_, err := f.NewObject(ctx, leaf)
-		if err != nil {
+		if errors.Is(err, fs.ErrorObjectNotFound) {
 			// File doesn't exist or is a directory so return old f
 			f.setRoot(oldRoot)
 			return f, nil
+		}
+		if err != nil {
+			return nil, err
 		}
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
