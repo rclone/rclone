@@ -1079,51 +1079,68 @@ type listBucketFn func(*api.Bucket) error
 
 // listBucketsToFn lists the buckets to the function supplied
 func (f *Fs) listBucketsToFn(ctx context.Context, bucketName string, fn listBucketFn) error {
-	var bucketID string
-	for _, b := range f.info.APIs.Storage.Allowed.Buckets {
-		if b.Name == bucketName {
-			bucketID = b.ID
-			break
+	responses := make([]api.ListBucketsResponse, len(f.info.APIs.Storage.Allowed.Buckets))[:0]
+
+	for i := range f.info.APIs.Storage.Allowed.Buckets {
+		b := &f.info.APIs.Storage.Allowed.Buckets[i]
+		// Empty names indicate a bucket that no longer exists, this is non-fatal
+		// for multi-bucket API keys.
+		if b.Name == "" {
+			continue
 		}
-	}
-	var account = api.ListBucketsRequest{
-		AccountID: f.info.AccountID,
-		BucketID:  bucketID,
-	}
-	if bucketName != "" && account.BucketID == "" {
-		account.BucketName = f.opt.Enc.FromStandardName(bucketName)
+		// When requesting a specific bucket skip over non-matching names
+		if bucketName != "" && b.Name != bucketName {
+			continue
+		}
+
+		var account = api.ListBucketsRequest{
+			AccountID: f.info.AccountID,
+			BucketID:  b.ID,
+		}
+		if bucketName != "" && account.BucketID == "" {
+			account.BucketName = f.opt.Enc.FromStandardName(bucketName)
+		}
+
+		var response api.ListBucketsResponse
+		opts := rest.Opts{
+			Method: "POST",
+			Path:   "/b2_list_buckets",
+		}
+		err := f.pacer.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, &opts, &account, &response)
+			return f.shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return err
+		}
+		responses = append(responses, response)
 	}
 
-	var response api.ListBucketsResponse
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/b2_list_buckets",
-	}
-	err := f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.CallJSON(ctx, &opts, &account, &response)
-		return f.shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return err
-	}
 	f.bucketIDMutex.Lock()
 	f.bucketTypeMutex.Lock()
 	f._bucketID = make(map[string]string, 1)
 	f._bucketType = make(map[string]string, 1)
-	for i := range response.Buckets {
-		bucket := &response.Buckets[i]
-		bucket.Name = f.opt.Enc.ToStandardName(bucket.Name)
-		f.cache.MarkOK(bucket.Name)
-		f._bucketID[bucket.Name] = bucket.ID
-		f._bucketType[bucket.Name] = bucket.Type
+
+	for ri := range responses {
+		response := &responses[ri]
+		for i := range response.Buckets {
+			bucket := &response.Buckets[i]
+			bucket.Name = f.opt.Enc.ToStandardName(bucket.Name)
+			f.cache.MarkOK(bucket.Name)
+			f._bucketID[bucket.Name] = bucket.ID
+			f._bucketType[bucket.Name] = bucket.Type
+		}
 	}
 	f.bucketTypeMutex.Unlock()
 	f.bucketIDMutex.Unlock()
-	for i := range response.Buckets {
-		bucket := &response.Buckets[i]
-		err = fn(bucket)
-		if err != nil {
-			return err
+	for ri := range responses {
+		response := &responses[ri]
+		for i := range response.Buckets {
+			bucket := &response.Buckets[i]
+			err := fn(bucket)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
