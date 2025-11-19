@@ -30,9 +30,11 @@ import (
 	v4signer "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/logging"
 	"github.com/aws/smithy-go/middleware"
@@ -325,6 +327,30 @@ If empty it will default to the environment variable "AWS_PROFILE" or
 			Help:      "An AWS session token.",
 			Advanced:  true,
 			Sensitive: true,
+		}, {
+			Name: "role_arn",
+			Help: `ARN of the IAM role to assume.
+			
+Leave blank if not using assume role.`,
+			Advanced: true,
+		}, {
+			Name: "role_session_name",
+			Help: `Session name for assumed role.
+			
+If empty, a session name will be generated automatically.`,
+			Advanced: true,
+		}, {
+			Name: "role_session_duration",
+			Help: `Session duration for assumed role.
+			
+If empty, the default session duration will be used.`,
+			Advanced: true,
+		}, {
+			Name: "external_id",
+			Help: `External ID for assumed role.
+			
+Leave blank if not using an external ID.`,
+			Advanced: true,
 		}, {
 			Name: "upload_concurrency",
 			Help: `Concurrency for multipart uploads and copies.
@@ -927,6 +953,10 @@ type Options struct {
 	SharedCredentialsFile       string               `config:"shared_credentials_file"`
 	Profile                     string               `config:"profile"`
 	SessionToken                string               `config:"session_token"`
+	RoleARN                     string               `config:"role_arn"`
+	RoleSessionName             string               `config:"role_session_name"`
+	RoleSessionDuration         fs.Duration          `config:"role_session_duration"`
+	ExternalID                  string               `config:"external_id"`
 	UploadConcurrency           int                  `config:"upload_concurrency"`
 	ForcePathStyle              bool                 `config:"force_path_style"`
 	V2Auth                      bool                 `config:"v2_auth"`
@@ -1288,6 +1318,34 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 
 	if opt.Region == "" {
 		opt.Region = "us-east-1"
+	}
+
+	// Handle assume role if RoleARN is specified
+	if opt.RoleARN != "" {
+		fs.Debugf(nil, "Using assume role with ARN: %s", opt.RoleARN)
+
+		// Set region for the config before creating STS client
+		awsConfig.Region = opt.Region
+
+		// Create STS client using the base credentials
+		stsClient := sts.NewFromConfig(awsConfig)
+
+		// Configure AssumeRole options
+		assumeRoleOptions := func(aro *stscreds.AssumeRoleOptions) {
+			// Set session name if provided, otherwise use a default
+			if opt.RoleSessionName != "" {
+				aro.RoleSessionName = opt.RoleSessionName
+			}
+			if opt.RoleSessionDuration != 0 {
+				aro.Duration = time.Duration(opt.RoleSessionDuration)
+			}
+			if opt.ExternalID != "" {
+				aro.ExternalID = &opt.ExternalID
+			}
+		}
+
+		// Create AssumeRole credentials provider
+		awsConfig.Credentials = stscreds.NewAssumeRoleProvider(stsClient, opt.RoleARN, assumeRoleOptions)
 	}
 
 	provider = loadProvider(opt.Provider)
