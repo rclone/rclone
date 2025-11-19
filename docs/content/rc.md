@@ -257,9 +257,9 @@ Each rc call is classified as a job and it is assigned its own id. By default
 jobs are executed immediately as they are created or synchronously.
 
 If `_async` has a true value when supplied to an rc call then it will
-return immediately with a job id and the task will be run in the
-background.  The `job/status` call can be used to get information of
-the background job.  The job can be queried for up to 1 minute after
+return immediately with a job id and execute id, and the task will be run in the
+background. The `job/status` call can be used to get information of
+the background job. The job can be queried for up to 1 minute after
 it has finished.
 
 It is recommended that potentially long running jobs, e.g. `sync/sync`,
@@ -272,9 +272,15 @@ Starting a job with the `_async` flag:
 ```console
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 }, "_async": true }' rc/noop
 {
-    "jobid": 2
+    "jobid": 2,
+    "executeId": "d794c33c-463e-4acf-b911-f4b23e4f40b7"
 }
 ```
+
+The `jobid` is a unique identifier for the job within this rclone instance.
+The `executeId` identifies the rclone process instance and changes after
+rclone restart. Together, the pair (`executeId`, `jobid`) uniquely identifies
+a job across rclone restarts.
 
 Query the status to see if the job has finished.  For more information
 on the meaning of these return parameters see the `job/status` call.
@@ -285,6 +291,7 @@ $ rclone rc --json '{ "jobid":2 }' job/status
     "duration": 0.000124163,
     "endTime": "2018-10-27T11:38:07.911245881+01:00",
     "error": "",
+    "executeId": "d794c33c-463e-4acf-b911-f4b23e4f40b7",
     "finished": true,
     "id": 2,
     "output": {
@@ -305,16 +312,30 @@ $ rclone rc --json '{ "jobid":2 }' job/status
 }
 ```
 
-`job/list` can be used to show the running or recently completed jobs
+`job/list` can be used to show running or recently completed jobs along with their status
 
 ```console
 $ rclone rc job/list
 {
+    "executeId": "d794c33c-463e-4acf-b911-f4b23e4f40b7",
+    "finished_ids": [
+        1
+    ],
     "jobids": [
+        1,
+        2
+    ],
+    "running_ids": [
         2
     ]
 }
 ```
+
+This shows:
+- `executeId` - the current rclone instance ID (same for all jobs, changes after restart)
+- `jobids` - array of all job IDs (both running and finished)
+- `running_ids` - array of currently running job IDs
+- `finished_ids` - array of finished job IDs
 
 ### Setting config flags with _config
 

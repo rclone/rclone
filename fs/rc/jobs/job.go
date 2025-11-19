@@ -34,6 +34,7 @@ func init() {
 type Job struct {
 	mu        sync.Mutex
 	ID        int64     `json:"id"`
+	ExecuteID string    `json:"executeId"`
 	Group     string    `json:"group"`
 	StartTime time.Time `json:"startTime"`
 	EndTime   time.Time `json:"endTime"`
@@ -123,8 +124,9 @@ type Jobs struct {
 }
 
 var (
-	running   = newJobs()
-	jobID     atomic.Int64
+	running = newJobs()
+	jobID   atomic.Int64
+	// executeID is a unique ID for this rclone execution
 	executeID = uuid.New().String()
 )
 
@@ -313,6 +315,7 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 	}
 	job = &Job{
 		ID:        id,
+		ExecuteID: executeID,
 		Group:     group,
 		StartTime: time.Now(),
 		Stop:      stop,
@@ -329,6 +332,7 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 		go job.run(ctx, fn, in)
 		out = make(rc.Params)
 		out["jobid"] = job.ID
+		out["executeId"] = job.ExecuteID
 		err = nil
 	} else {
 		job.run(ctx, fn, in)
@@ -386,6 +390,7 @@ Results:
 - error - error from the job or empty string for no error
 - finished - boolean whether the job has finished or not
 - id - as passed in above
+- executeId - rclone instance ID (changes after restart); combined with id uniquely identifies a job
 - startTime - time the job started (e.g. "2018-10-26T18:50:20.528336039+01:00")
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
