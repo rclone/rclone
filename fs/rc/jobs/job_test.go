@@ -56,7 +56,7 @@ func TestJobsExpire(t *testing.T) {
 		return in, nil
 	}, rc.Params{"_async": true})
 	require.NoError(t, err)
-	assert.Equal(t, 1, len(out))
+	assert.Equal(t, 2, len(out), "check output has jobid and executeId")
 	<-wait
 	assert.Equal(t, job.ID, gotJobID, "check can get JobID from ctx")
 	assert.Equal(t, job, gotJob, "check can get Job from ctx")
@@ -94,6 +94,18 @@ func TestJobsIDs(t *testing.T) {
 		gotIDs[0], gotIDs[1] = gotIDs[1], gotIDs[0]
 	}
 	assert.Equal(t, wantIDs, gotIDs)
+}
+
+func TestJobsExecuteIDs(t *testing.T) {
+	ctx := context.Background()
+	jobs := newJobs()
+	job1, _, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
+	require.NoError(t, err)
+	job2, _, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
+	require.NoError(t, err)
+	assert.Equal(t, executeID, job1.ExecuteID, "execute ID should match global executeID")
+	assert.Equal(t, executeID, job2.ExecuteID, "execute ID should match global executeID")
+	assert.True(t, job1.ExecuteID == job2.ExecuteID, "just to be sure, all the jobs share the same executeID")
 }
 
 func TestJobsGet(t *testing.T) {
@@ -234,7 +246,8 @@ func TestJobsNewJob(t *testing.T) {
 	job, out, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), job.ID)
-	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
+	assert.Equal(t, executeID, job.ExecuteID)
+	assert.Equal(t, rc.Params{"jobid": int64(1), "executeId": executeID}, out)
 	assert.Equal(t, job, jobs.Get(1))
 	assert.NotEmpty(t, job.Stop)
 }
@@ -244,8 +257,9 @@ func TestStartJob(t *testing.T) {
 	jobID.Store(0)
 	job, out, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
-	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
+	assert.Equal(t, rc.Params{"jobid": int64(1), "executeId": executeID}, out)
 	assert.Equal(t, int64(1), job.ID)
+	assert.Equal(t, executeID, job.ExecuteID)
 }
 
 func TestExecuteJob(t *testing.T) {
@@ -350,6 +364,7 @@ func TestRcJobStatus(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, float64(1), out["id"])
+	assert.Equal(t, executeID, out["executeId"])
 	assert.Equal(t, "", out["error"])
 	assert.Equal(t, false, out["finished"])
 	assert.Equal(t, false, out["success"])
@@ -377,6 +392,7 @@ func TestRcJobList(t *testing.T) {
 	out1, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out1)
+	assert.Equal(t, executeID, out1["executeId"], "should have executeId")
 	assert.Equal(t, []int64{1}, out1["jobids"], "should have job listed")
 	assert.Equal(t, []int64{1}, out1["running_ids"], "should have running job")
 	assert.Equal(t, []int64{}, out1["finished_ids"], "should not have finished job")
@@ -392,7 +408,6 @@ func TestRcJobList(t *testing.T) {
 	require.NotNil(t, out2)
 	assert.Equal(t, 2, len(out2["jobids"].([]int64)), "should have all jobs listed")
 
-	require.NotNil(t, out1["executeId"], "should have executeId")
 	assert.Equal(t, out1["executeId"], out2["executeId"], "executeId should be the same")
 }
 
