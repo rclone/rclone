@@ -430,8 +430,8 @@ Results:
 
 - executeId - string id of rclone executing (change after restart)
 - jobids - array of integer job ids (starting at 1 on each restart)
-- running_ids - array of integer job ids that are running
-- finished_ids - array of integer job ids that are finished
+- runningIds - array of integer job ids that are running
+- finishedIds - array of integer job ids that are finished
 `,
 	})
 }
@@ -441,8 +441,8 @@ func rcJobList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
 	out["jobids"] = running.IDs()
 	runningIDs, finishedIDs := running.Stats()
-	out["running_ids"] = runningIDs
-	out["finished_ids"] = finishedIDs
+	out["runningIds"] = runningIDs
+	out["finishedIds"] = finishedIDs
 	out["executeId"] = executeID
 	return out, nil
 }

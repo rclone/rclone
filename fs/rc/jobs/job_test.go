@@ -394,8 +394,8 @@ func TestRcJobList(t *testing.T) {
 	require.NotNil(t, out1)
 	assert.Equal(t, executeID, out1["executeId"], "should have executeId")
 	assert.Equal(t, []int64{1}, out1["jobids"], "should have job listed")
-	assert.Equal(t, []int64{1}, out1["running_ids"], "should have running job")
-	assert.Equal(t, []int64{}, out1["finished_ids"], "should not have finished job")
+	assert.Equal(t, []int64{1}, out1["runningIds"], "should have running job")
+	assert.Equal(t, []int64{}, out1["finishedIds"], "should not have finished job")
 
 	_, _, err = NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
