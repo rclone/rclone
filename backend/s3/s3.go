@@ -2870,24 +2870,17 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Build upload options including headers and metadata
 	ci := fs.GetConfig(ctx)
-	var uploadOptions []fs.OpenOption
+	uploadOptions := fs.MetadataAsOpenOptions(ctx)
 	for _, option := range ci.UploadHeaders {
 		uploadOptions = append(uploadOptions, option)
 	}
-	if ci.MetadataSet != nil {
-		uploadOptions = append(uploadOptions, fs.MetadataOption(ci.MetadataSet))
-	}
 
-	// Prepare upload to get headers (including If-Match, If-None-Match) and metadata
 	ui, err := srcObj.prepareUpload(ctx, src, uploadOptions, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare upload: %w", err)
 	}
 
-	// Always transfer headers from PutObjectInput to CopyObjectInput
 	setFrom_s3CopyObjectInput_s3PutObjectInput(&req, ui.req)
-
-	// Update the metadata directive if metadata is in use
 	if ci.Metadata {
 		req.MetadataDirective = types.MetadataDirectiveReplace
 	}
