@@ -2,9 +2,7 @@ module github.com/rclone/rclone
 
 go 1.24.4
 
-godebug (
-    x509negativeserial=1
-)
+godebug x509negativeserial=1
 
 require (
 	bazil.org/fuse v0.0.0-20230120002735-62a210ff1fd5
@@ -90,12 +88,12 @@ require (
 	github.com/zeebo/xxh3 v1.0.2
 	go.etcd.io/bbolt v1.4.3
 	goftp.io/server/v2 v2.0.2
-	golang.org/x/crypto v0.43.0
-	golang.org/x/net v0.46.0
+	golang.org/x/crypto v0.45.0
+	golang.org/x/net v0.47.0
 	golang.org/x/oauth2 v0.33.0
 	golang.org/x/sync v0.18.0
 	golang.org/x/sys v0.38.0
-	golang.org/x/text v0.30.0
+	golang.org/x/text v0.31.0
 	golang.org/x/time v0.14.0
 	google.golang.org/api v0.255.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -278,5 +276,5 @@ require (
 	github.com/pkg/xattr v0.4.12
 	github.com/pquerna/otp v1.5.0
 	golang.org/x/mobile v0.0.0-20251021151156-188f512ec823
-	golang.org/x/term v0.36.0
+	golang.org/x/term v0.37.0
 )
