@@ -21,6 +21,7 @@ This file describes how to make the various kinds of releases
 - make doc
 - git status - to check for new man pages - git add them
 - git commit -a -v -m "Version v1.XX.0"
+- make check
 - make retag
 - git push origin # without --follow-tags so it doesn't push the tag if it fails
 - git push --follow-tags origin
