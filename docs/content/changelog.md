@@ -26,7 +26,7 @@ description: "Rclone Changelog"
   - [rclone test speed](/commands/rclone_test_speed/): Add command to test a specified remotes speed (dougal)
 - New Features
   - backends: many backends have has a paged listing (`ListP`) interface added
-      - this enables progress when listing large directories and reduced memory usage
+    - this enables progress when listing large directories and reduced memory usage
   - build
     - Bump golang.org/x/crypto from 0.43.0 to 0.45.0 to fix CVE-2025-58181 (dependabot[bot])
     - Modernize code and tests (Nick Craig-Wood, russcoss, juejinyuxitu, reddaisyy, dulanting, Oleksandr Redko)
