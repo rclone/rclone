@@ -204,16 +204,16 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - Access the Personal Folders (default).
-    - "favorites"
-        - Access the Favorites folder.
-    - "allshared"
-        - Access all the shared folders.
-    - "connectors"
-        - Access all the individual connectors.
-    - "top"
-        - Access the home, favorites, and shared folders as well as the connectors.
+  - ""
+    - Access the Personal Folders (default).
+  - "favorites"
+    - Access the Favorites folder.
+  - "allshared"
+    - Access all the shared folders.
+  - "connectors"
+    - Access all the individual connectors.
+  - "top"
+    - Access the home, favorites, and shared folders as well as the connectors.
 
 ### Advanced options
 

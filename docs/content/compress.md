@@ -151,10 +151,10 @@ Properties:
 - Type:        string
 - Default:     "gzip"
 - Examples:
-    - "gzip"
-        - Standard gzip compression with fastest parameters.
-    - "zstd"
-        - Zstandard compression — fast modern algorithm offering adjustable speed-to-compression tradeoffs.
+  - "gzip"
+    - Standard gzip compression with fastest parameters.
+  - "zstd"
+    - Zstandard compression — fast modern algorithm offering adjustable speed-to-compression tradeoffs.
 
 #### --compress-level
 

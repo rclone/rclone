@@ -641,20 +641,20 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "drive"
-        - Full access all files, excluding Application Data Folder.
-    - "drive.readonly"
-        - Read-only access to file metadata and file contents.
-    - "drive.file"
-        - Access to files created by rclone only.
-        - These are visible in the drive website.
-        - File authorization is revoked when the user deauthorizes the app.
-    - "drive.appfolder"
-        - Allows read and write access to the Application Data folder.
-        - This is not visible in the drive website.
-    - "drive.metadata.readonly"
-        - Allows read-only access to file metadata but
-        - does not allow any access to read or download file content.
+  - "drive"
+    - Full access all files, excluding Application Data Folder.
+  - "drive.readonly"
+    - Read-only access to file metadata and file contents.
+  - "drive.file"
+    - Access to files created by rclone only.
+    - These are visible in the drive website.
+    - File authorization is revoked when the user deauthorizes the app.
+  - "drive.appfolder"
+    - Allows read and write access to the Application Data folder.
+    - This is not visible in the drive website.
+  - "drive.metadata.readonly"
+    - Allows read-only access to file metadata but
+    - does not allow any access to read or download file content.
 
 #### --drive-service-account-file
 
@@ -1342,16 +1342,16 @@ Properties:
 - Type:        Bits
 - Default:     read
 - Examples:
-    - "off"
-        - Do not read or write the value
-    - "read"
-        - Read the value only
-    - "write"
-        - Write the value only
-    - "failok"
-        - If writing fails log errors only, don't fail the transfer
-    - "read,write"
-        - Read and Write the value.
+  - "off"
+    - Do not read or write the value
+  - "read"
+    - Read the value only
+  - "write"
+    - Write the value only
+  - "failok"
+    - If writing fails log errors only, don't fail the transfer
+  - "read,write"
+    - Read and Write the value.
 
 #### --drive-metadata-permissions
 
@@ -1372,16 +1372,16 @@ Properties:
 - Type:        Bits
 - Default:     off
 - Examples:
-    - "off"
-        - Do not read or write the value
-    - "read"
-        - Read the value only
-    - "write"
-        - Write the value only
-    - "failok"
-        - If writing fails log errors only, don't fail the transfer
-    - "read,write"
-        - Read and Write the value.
+  - "off"
+    - Do not read or write the value
+  - "read"
+    - Read the value only
+  - "write"
+    - Write the value only
+  - "failok"
+    - If writing fails log errors only, don't fail the transfer
+  - "read,write"
+    - Read and Write the value.
 
 #### --drive-metadata-labels
 
@@ -1409,16 +1409,16 @@ Properties:
 - Type:        Bits
 - Default:     off
 - Examples:
-    - "off"
-        - Do not read or write the value
-    - "read"
-        - Read the value only
-    - "write"
-        - Write the value only
-    - "failok"
-        - If writing fails log errors only, don't fail the transfer
-    - "read,write"
-        - Read and Write the value.
+  - "off"
+    - Do not read or write the value
+  - "read"
+    - Read the value only
+  - "write"
+    - Write the value only
+  - "failok"
+    - If writing fails log errors only, don't fail the transfer
+  - "read,write"
+    - Read and Write the value.
 
 #### --drive-encoding
 
@@ -1446,10 +1446,10 @@ Properties:
 - Type:        bool
 - Default:     false
 - Examples:
-    - "false"
-        - Enter credentials in the next step.
-    - "true"
-        - Get GCP IAM credentials from the environment (env vars or IAM).
+  - "false"
+    - Enter credentials in the next step.
+  - "true"
+    - Get GCP IAM credentials from the environment (env vars or IAM).
 
 #### --drive-description
 
@@ -1491,9 +1491,11 @@ See the [metadata](/docs/#metadata) docs for more info.
 
 Here are the commands specific to the drive backend.
 
-Run them with
+Run them with:
 
-    rclone backend COMMAND remote:
+```console
+rclone backend COMMAND remote:
+```
 
 The help below will explain what arguments each command takes.
 
@@ -1505,54 +1507,66 @@ These can be run on a running backend using the rc command
 
 ### get
 
-Get command for fetching the drive config parameters
+Get command for fetching the drive config parameters.
 
-    rclone backend get remote: [options] [<arguments>+]
+```console
+rclone backend get remote: [options] [<arguments>+]
+```
 
-This is a get command which will be used to fetch the various drive config parameters
+This is a get command which will be used to fetch the various drive config
+parameters.
 
-Usage Examples:
+Usage examples:
 
-    rclone backend get drive: [-o service_account_file] [-o chunk_size]
-    rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
-
+```console
+rclone backend get drive: [-o service_account_file] [-o chunk_size]
+rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
+```
 
 Options:
 
-- "chunk_size": show the current upload chunk size
-- "service_account_file": show the current service account file
+- "chunk_size": Show the current upload chunk size.
+- "service_account_file": Show the current service account file.
 
 ### set
 
-Set command for updating the drive config parameters
+Set command for updating the drive config parameters.
 
-    rclone backend set remote: [options] [<arguments>+]
+```console
+rclone backend set remote: [options] [<arguments>+]
+```
 
-This is a set command which will be used to update the various drive config parameters
+This is a set command which will be used to update the various drive config
+parameters.
 
-Usage Examples:
+Usage examples:
 
-    rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
-    rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
-
+```console
+rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+```
 
 Options:
 
-- "chunk_size": update the current upload chunk size
-- "service_account_file": update the current service account file
+- "chunk_size": Update the current upload chunk size.
+- "service_account_file": Update the current service account file.
 
 ### shortcut
 
-Create shortcuts from files or directories
+Create shortcuts from files or directories.
 
-    rclone backend shortcut remote: [options] [<arguments>+]
+```console
+rclone backend shortcut remote: [options] [<arguments>+]
+```
 
 This command creates shortcuts from files or directories.
 
-Usage:
+Usage examples:
 
-    rclone backend shortcut drive: source_item destination_shortcut
-    rclone backend shortcut drive: source_item -o target=drive2: destination_shortcut
+```console
+rclone backend shortcut drive: source_item destination_shortcut
+rclone backend shortcut drive: source_item -o target=drive2: destination_shortcut
+```
 
 In the first example this creates a shortcut from the "source_item"
 which can be a file or a directory to the "destination_shortcut". The
@@ -1564,54 +1578,61 @@ relative to "drive:" to the "destination_shortcut" relative to
 "drive2:". This may fail with a permission error if the user
 authenticated with "drive2:" can't read files from "drive:".
 
-
 Options:
 
-- "target": optional target remote for the shortcut destination
+- "target": Optional target remote for the shortcut destination.
 
 ### drives
 
-List the Shared Drives available to this account
+List the Shared Drives available to this account.
 
-    rclone backend drives remote: [options] [<arguments>+]
+```console
+rclone backend drives remote: [options] [<arguments>+]
+```
 
 This command lists the Shared Drives (Team Drives) available to this
 account.
 
-Usage:
+Usage example:
 
-    rclone backend [-o config] drives drive:
+```console
+rclone backend [-o config] drives drive:
+```
 
-This will return a JSON list of objects like this
+This will return a JSON list of objects like this:
 
-    [
-        {
-            "id": "0ABCDEF-01234567890",
-            "kind": "drive#teamDrive",
-            "name": "My Drive"
-        },
-        {
-            "id": "0ABCDEFabcdefghijkl",
-            "kind": "drive#teamDrive",
-            "name": "Test Drive"
-        }
-    ]
+```json
+[
+    {
+        "id": "0ABCDEF-01234567890",
+        "kind": "drive#teamDrive",
+        "name": "My Drive"
+    },
+    {
+        "id": "0ABCDEFabcdefghijkl",
+        "kind": "drive#teamDrive",
+        "name": "Test Drive"
+    }
+]
+```
 
 With the -o config parameter it will output the list in a format
 suitable for adding to a config file to make aliases for all the
 drives found and a combined drive.
 
-    [My Drive]
-    type = alias
-    remote = drive,team_drive=0ABCDEF-01234567890,root_folder_id=:
+```ini
+[My Drive]
+type = alias
+remote = drive,team_drive=0ABCDEF-01234567890,root_folder_id=:
 
-    [Test Drive]
-    type = alias
-    remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
+[Test Drive]
+type = alias
+remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
 
-    [AllDrives]
-    type = combine
-    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
+[AllDrives]
+type = combine
+upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
+```
 
 Adding this to the rclone config file will cause those team drives to
 be accessible with the aliases shown. Any illegal characters will be
@@ -1619,46 +1640,55 @@ substituted with "_" and duplicate names will have numbers suffixed.
 It will also add a remote called AllDrives which shows all the shared
 drives combined into one directory tree.
 
-
 ### untrash
 
-Untrash files and directories
+Untrash files and directories.
 
-    rclone backend untrash remote: [options] [<arguments>+]
+```console
+rclone backend untrash remote: [options] [<arguments>+]
+```
 
 This command untrashes all the files and directories in the directory
 passed in recursively.
 
-Usage:
+Usage example:
+
+```console
+rclone backend untrash drive:directory
+rclone backend --interactive untrash drive:directory subdir
+```
 
 This takes an optional directory to trash which make this easier to
 use via the API.
 
-    rclone backend untrash drive:directory
-    rclone backend --interactive untrash drive:directory subdir
-
-Use the --interactive/-i or --dry-run flag to see what would be restored before restoring it.
+Use the --interactive/-i or --dry-run flag to see what would be restored before
+restoring it.
 
 Result:
 
-    {
-        "Untrashed": 17,
-        "Errors": 0
-    }
-
+```json
+{
+    "Untrashed": 17,
+    "Errors": 0
+}
+```
 
 ### copyid
 
-Copy files by ID
+Copy files by ID.
 
-    rclone backend copyid remote: [options] [<arguments>+]
+```console
+rclone backend copyid remote: [options] [<arguments>+]
+```
 
-This command copies files by ID
+This command copies files by ID.
 
-Usage:
+Usage examples:
 
-    rclone backend copyid drive: ID path
-    rclone backend copyid drive: ID1 path1 ID2 path2
+```console
+rclone backend copyid drive: ID path
+rclone backend copyid drive: ID1 path1 ID2 path2
+```
 
 It copies the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone copyto). The ID and path pairs can be
@@ -1671,21 +1701,25 @@ component will be used as the file name.
 If the destination is a drive backend then server-side copying will be
 attempted if possible.
 
-Use the --interactive/-i or --dry-run flag to see what would be copied before copying.
-
+Use the --interactive/-i or --dry-run flag to see what would be copied before
+copying.
 
 ### moveid
 
-Move files by ID
+Move files by ID.
 
-    rclone backend moveid remote: [options] [<arguments>+]
+```console
+rclone backend moveid remote: [options] [<arguments>+]
+```
 
-This command moves files by ID
+This command moves files by ID.
 
-Usage:
+Usage examples:
 
-    rclone backend moveid drive: ID path
-    rclone backend moveid drive: ID1 path1 ID2 path2
+```console
+rclone backend moveid drive: ID path
+rclone backend moveid drive: ID1 path1 ID2 path2
+```
 
 It moves the drive file with ID given to the path (an rclone path which
 will be passed internally to rclone moveto).
@@ -1699,69 +1733,84 @@ attempted if possible.
 
 Use the --interactive/-i or --dry-run flag to see what would be moved beforehand.
 
-
 ### exportformats
 
-Dump the export formats for debug purposes
+Dump the export formats for debug purposes.
 
-    rclone backend exportformats remote: [options] [<arguments>+]
+```console
+rclone backend exportformats remote: [options] [<arguments>+]
+```
 
 ### importformats
 
-Dump the import formats for debug purposes
+Dump the import formats for debug purposes.
 
-    rclone backend importformats remote: [options] [<arguments>+]
+```console
+rclone backend importformats remote: [options] [<arguments>+]
+```
 
 ### query
 
-List files using Google Drive query language
+List files using Google Drive query language.
 
-    rclone backend query remote: [options] [<arguments>+]
+```console
+rclone backend query remote: [options] [<arguments>+]
+```
 
-This command lists files based on a query
+This command lists files based on a query.
 
-Usage:
+Usage example:
 
-    rclone backend query drive: query
-    
+```console
+rclone backend query drive: query
+```
+
 The query syntax is documented at [Google Drive Search query terms and 
 operators](https://developers.google.com/drive/api/guides/ref-search-terms).
 
 For example:
 
-	rclone backend query drive: "'0ABc9DEFGHIJKLMNop0QRatUVW3X' in parents and name contains 'foo'"
+```console
+rclone backend query drive: "'0ABc9DEFGHIJKLMNop0QRatUVW3X' in parents and name contains 'foo'"
+```
 
 If the query contains literal ' or \ characters, these need to be escaped with
 \ characters. "'" becomes "\'" and "\" becomes "\\\", for example to match a 
 file named "foo ' \.txt":
 
-	rclone backend query drive: "name = 'foo \' \\\.txt'"
+```console
+rclone backend query drive: "name = 'foo \' \\\.txt'"
+```
 
 The result is a JSON array of matches, for example:
 
-    [
-	{
-		"createdTime": "2017-06-29T19:58:28.537Z",
-		"id": "0AxBe_CDEF4zkGHI4d0FjYko2QkD",
-		"md5Checksum": "68518d16be0c6fbfab918be61d658032",
-		"mimeType": "text/plain",
-		"modifiedTime": "2024-02-02T10:40:02.874Z",
-		"name": "foo ' \\.txt",
-		"parents": [
-			"0BxAe_BCDE4zkFGZpcWJGek0xbzC"
-		],
-		"resourceKey": "0-ABCDEFGHIXJQpIGqBJq3MC",
-		"sha1Checksum": "8f284fa768bfb4e45d076a579ab3905ab6bfa893",
-		"size": "311",
-		"webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
-	}
-    ]
+```json
+[
+    {
+        "createdTime": "2017-06-29T19:58:28.537Z",
+        "id": "0AxBe_CDEF4zkGHI4d0FjYko2QkD",
+        "md5Checksum": "68518d16be0c6fbfab918be61d658032",
+        "mimeType": "text/plain",
+        "modifiedTime": "2024-02-02T10:40:02.874Z",
+        "name": "foo ' \\.txt",
+        "parents": [
+            "0BxAe_BCDE4zkFGZpcWJGek0xbzC"
+        ],
+        "resourceKey": "0-ABCDEFGHIXJQpIGqBJq3MC",
+        "sha1Checksum": "8f284fa768bfb4e45d076a579ab3905ab6bfa893",
+        "size": "311",
+        "webViewLink": "https://drive.google.com/file/d/0AxBe_CDEF4zkGHI4d0FjYko2QkD/view?usp=drivesdk\u0026resourcekey=0-ABCDEFGHIXJQpIGqBJq3MC"
+    }
+]
+```console
 
 ### rescue
 
-Rescue or delete any orphaned files
+Rescue or delete any orphaned files.
 
-    rclone backend rescue remote: [options] [<arguments>+]
+```console
+rclone backend rescue remote: [options] [<arguments>+]
+```
 
 This command rescues or deletes any orphaned files or directories.
 
@@ -1771,26 +1820,31 @@ are no longer in any folder in Google Drive.
 This command finds those files and either rescues them to a directory
 you specify or deletes them.
 
-Usage:
-
 This can be used in 3 ways.
 
-First, list all orphaned files
+First, list all orphaned files:
 
-    rclone backend rescue drive:
+```console
+rclone backend rescue drive:
+```
 
-Second rescue all orphaned files to the directory indicated
+Second rescue all orphaned files to the directory indicated:
 
-    rclone backend rescue drive: "relative/path/to/rescue/directory"
+```console
+rclone backend rescue drive: "relative/path/to/rescue/directory"
+```
 
-e.g. To rescue all orphans to a directory called "Orphans" in the top level
+E.g. to rescue all orphans to a directory called "Orphans" in the top level:
 
-    rclone backend rescue drive: Orphans
+```console
+rclone backend rescue drive: Orphans
+```
 
-Third delete all orphaned files to the trash
+Third delete all orphaned files to the trash:
 
-    rclone backend rescue drive: -o delete
-
+```console
+rclone backend rescue drive: -o delete
+```
 
 <!-- autogenerated options stop -->
 

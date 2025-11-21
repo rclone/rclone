@@ -250,10 +250,10 @@ Properties:
 - Type:        string
 - Default:     "rw"
 - Examples:
-    - "rw"
-        - Read and write access to resources.
-    - "ro"
-        - Read-only access to resources.
+  - "rw"
+    - Read and write access to resources.
+  - "ro"
+    - Read-only access to resources.
 
 ### Advanced options
 
@@ -322,13 +322,13 @@ Properties:
 - Type:        string
 - Default:     "user"
 - Examples:
-    - "user"
-        - User-level access to management permissions.
-        - This will be sufficient in most cases.
-    - "admin"
-        - Extensive access to management permissions.
-    - "owner"
-        - Full access to management permissions.
+  - "user"
+    - User-level access to management permissions.
+    - This will be sufficient in most cases.
+  - "admin"
+    - Extensive access to management permissions.
+  - "owner"
+    - Full access to management permissions.
 
 #### --hidrive-root-prefix
 
@@ -344,14 +344,14 @@ Properties:
 - Type:        string
 - Default:     "/"
 - Examples:
-    - "/"
-        - The topmost directory accessible by rclone.
-        - This will be equivalent with "root" if rclone uses a regular HiDrive user account.
-    - "root"
-        - The topmost directory of the HiDrive user account
-    - ""
-        - This specifies that there is no root-prefix for your paths.
-        - When using this you will always need to specify paths to this remote with a valid parent e.g. "remote:/path/to/dir" or "remote:root/path/to/dir".
+  - "/"
+    - The topmost directory accessible by rclone.
+    - This will be equivalent with "root" if rclone uses a regular HiDrive user account.
+  - "root"
+    - The topmost directory of the HiDrive user account
+  - ""
+    - This specifies that there is no root-prefix for your paths.
+    - When using this you will always need to specify paths to this remote with a valid parent e.g. "remote:/path/to/dir" or "remote:root/path/to/dir".
 
 #### --hidrive-endpoint
 

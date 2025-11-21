@@ -150,22 +150,22 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "fastmail"
-        - Fastmail Files
-    - "nextcloud"
-        - Nextcloud
-    - "owncloud"
-        - Owncloud 10 PHP based WebDAV server
-    - "infinitescale"
-        - ownCloud Infinite Scale
-    - "sharepoint"
-        - Sharepoint Online, authenticated by Microsoft account
-    - "sharepoint-ntlm"
-        - Sharepoint with NTLM authentication, usually self-hosted or on-premises
-    - "rclone"
-        - rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol
-    - "other"
-        - Other site/service or software
+  - "fastmail"
+    - Fastmail Files
+  - "nextcloud"
+    - Nextcloud
+  - "owncloud"
+    - Owncloud 10 PHP based WebDAV server
+  - "infinitescale"
+    - ownCloud Infinite Scale
+  - "sharepoint"
+    - Sharepoint Online, authenticated by Microsoft account
+  - "sharepoint-ntlm"
+    - Sharepoint with NTLM authentication, usually self-hosted or on-premises
+  - "rclone"
+    - rclone WebDAV server to serve a remote over HTTP via the WebDAV protocol
+  - "other"
+    - Other site/service or software
 
 #### --webdav-user
 

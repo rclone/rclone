@@ -300,10 +300,10 @@ Properties:
 - Type:        string
 - Default:     "api.pcloud.com"
 - Examples:
-    - "api.pcloud.com"
-        - Original/US region
-    - "eapi.pcloud.com"
-        - EU region
+  - "api.pcloud.com"
+    - Original/US region
+  - "eapi.pcloud.com"
+    - EU region
 
 #### --pcloud-username
 

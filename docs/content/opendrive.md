@@ -181,12 +181,12 @@ Properties:
 - Type:        string
 - Default:     "private"
 - Examples:
-    - "private"
-        - The file or folder access can be granted in a way that will allow select users to view, read or write what is absolutely essential for them.
-    - "public"
-        - The file or folder can be downloaded by anyone from a web browser. The link can be shared in any way,
-    - "hidden"
-        - The file or folder can be accessed has the same restrictions as  Public if the user knows the URL of the file or folder link in order to access the contents
+  - "private"
+    - The file or folder access can be granted in a way that will allow select users to view, read or write what is absolutely essential for them.
+  - "public"
+    - The file or folder can be downloaded by anyone from a web browser. The link can be shared in any way,
+  - "hidden"
+    - The file or folder can be accessed has the same restrictions as  Public if the user knows the URL of the file or folder link in order to access the contents
 
 #### --opendrive-description
 

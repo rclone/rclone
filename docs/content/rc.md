@@ -810,7 +810,7 @@ Unlocks the config file if it is locked.
 
 Parameters:
 
-- 'config_password' - password to unlock the config file
+- 'configPassword' - password to unlock the config file
 
 A good idea is to disable AskPassword before making this call
 
@@ -1108,17 +1108,20 @@ Returns the following values:
 }
 ```
 
-### core/version: Shows the current version of rclone and the go runtime. {#core-version}
+### core/version: Shows the current version of rclone, Go and the OS. {#core-version}
 
-This shows the current version of go and the go runtime:
+This shows the current versions of rclone, Go and the OS:
 
-- version - rclone version, e.g. "v1.53.0"
+- version - rclone version, e.g. "v1.71.2"
 - decomposed - version number as [major, minor, patch]
 - isGit - boolean - true if this was compiled from the git version
 - isBeta - boolean - true if this is a beta version
-- os - OS in use as according to Go
-- arch - cpu architecture in use according to Go
-- goVersion - version of Go runtime in use
+- os - OS in use as according to Go GOOS (e.g. "linux")
+- osKernel - OS Kernel version (e.g. "6.8.0-86-generic (x86_64)")
+- osVersion -  OS Version (e.g. "ubuntu 24.04 (64 bit)")
+- osArch - cpu architecture in use (e.g. "arm64 (ARMv8 compatible)")
+- arch - cpu architecture in use according to Go GOARCH (e.g. "arm64")
+- goVersion - version of Go runtime in use (e.g. "go1.25.0")
 - linking - type of rclone executable (static or dynamic)
 - goTags - space separated build tags or "none"
 
@@ -1228,6 +1231,67 @@ Returns
 
 **Authentication is required for this call.**
 
+### job/batch: Run a batch of rclone rc commands concurrently. {#job-batch}
+
+This takes the following parameters:
+
+- concurrency - int - do this many commands concurrently. Defaults to `--transfers` if not set.
+- inputs - an list of inputs to the commands with an extra `_path` parameter
+
+```json
+{
+    "_path": "rc/path",
+    "param1": "parameter for the path as documented",
+    "param2": "parameter for the path as documented, etc",
+}
+```
+
+The inputs may use `_async`, `_group`, `_config` and `_filter` as normal when using the rc.
+
+Returns:
+
+- results - a list of results from the commands with one entry for each in inputs.
+
+For example:
+
+```sh
+rclone rc job/batch --json '{
+  "inputs": [
+    {
+      "_path": "rc/noop",
+      "parameter": "OK"
+    },
+    {
+      "_path": "rc/error",
+      "parameter": "BAD"
+    }
+  ]
+}
+'
+```
+
+Gives the result:
+
+```json
+{
+  "results": [
+    {
+      "parameter": "OK"
+    },
+    {
+      "error": "arbitrary error on input map[parameter:BAD]",
+      "input": {
+        "parameter": "BAD"
+      },
+      "path": "rc/error",
+      "status": 500
+    }
+  ]
+}
+```
+
+**Authentication is required for this call.**
+
 ### job/list: Lists the IDs of the running jobs {#job-list}
 
 Parameters: None.
@@ -1236,6 +1300,8 @@ Results:
 
 - executeId - string id of rclone executing (change after restart)
 - jobids - array of integer job ids (starting at 1 on each restart)
+- runningIds - array of integer job ids that are running
+- finishedIds - array of integer job ids that are finished
 
 ### job/status: Reads the status of the job ID {#job-status}
 
@@ -1251,6 +1317,7 @@ Results:
 - error - error from the job or empty string for no error
 - finished - boolean whether the job has finished or not
 - id - as passed in above
+- executeId - rclone instance ID (changes after restart); combined with id uniquely identifies a job
 - startTime - time the job started (e.g. "2018-10-26T18:50:20.528336039+01:00")
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
@@ -1299,14 +1366,18 @@ This takes the following parameters:
 
 Example:
 
-    rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
-    rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
-    rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+```console
+rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
+rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
+rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+```
 
 The vfsOpt are as described in options/get and can be seen in the the
 "vfs" section when running and the mountOpt can be seen in the "mount" section:
 
-    rclone rc options/get
+```console
+rclone rc options/get
+```
 
 **Authentication is required for this call.**
 
@@ -1749,8 +1820,6 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 
-See the [settierfile](/commands/rclone_settierfile/) command for more information on the above.
-
 **Authentication is required for this call.**
 
 ### operations/size: Count the number of bytes and files in remote {#operations-size}
@@ -1795,8 +1864,6 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 - each part in body represents a file to be uploaded
-
-See the [uploadfile](/commands/rclone_uploadfile/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1975,6 +2042,11 @@ Example:
 This returns an error with the input as part of its error string.
 Useful for testing error handling.
 
+### rc/fatal: This returns an fatal error {#rc-fatal}
+
+This returns an error with the input as part of its error string.
+Useful for testing error handling.
+
 ### rc/list: List all the registered remote control commands {#rc-list}
 
 This lists all the registered remote control commands as a JSON map in
@@ -1993,6 +2065,11 @@ purposes.  It can be used to check that rclone is still alive and to
 check that parameter passing is working properly.
 
 **Authentication is required for this call.**
+
+### rc/panic: This returns an error by panicking {#rc-panic}
+
+This returns an error with the input as part of its error string.
+Useful for testing error handling.
 
 ### serve/list: Show running servers {#serve-list}
 
@@ -2265,7 +2342,7 @@ This is only useful if `--vfs-cache-mode` > off. If you call it when
 the `--vfs-cache-mode` is off, it will return an empty result.
 
     {
-        "queued": // an array of files queued for upload
+        "queue": // an array of files queued for upload
         [
             {
                 "name":      "file",   // string: name (full path) of the file,
@@ -2319,6 +2396,7 @@ This takes the following parameters
 
 This returns an empty result on success, or an error.
 
+ 
 This command takes an "fs" parameter. If this parameter is not
 supplied and if there is only one VFS in use then that VFS will be
 used. If there is more than one VFS in use then the "fs" parameter

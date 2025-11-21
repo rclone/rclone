@@ -171,10 +171,10 @@ Properties:
 - Type:        bool
 - Default:     false
 - Examples:
-    - "false"
-        - Enter QingStor credentials in the next step.
-    - "true"
-        - Get QingStor credentials from the environment (env vars or IAM).
+  - "false"
+    - Enter QingStor credentials in the next step.
+  - "true"
+    - Get QingStor credentials from the environment (env vars or IAM).
 
 #### --qingstor-access-key-id
 
@@ -228,15 +228,15 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "pek3a"
-        - The Beijing (China) Three Zone.
-        - Needs location constraint pek3a.
-    - "sh1a"
-        - The Shanghai (China) First Zone.
-        - Needs location constraint sh1a.
-    - "gd2a"
-        - The Guangdong (China) Second Zone.
-        - Needs location constraint gd2a.
+  - "pek3a"
+    - The Beijing (China) Three Zone.
+    - Needs location constraint pek3a.
+  - "sh1a"
+    - The Shanghai (China) First Zone.
+    - Needs location constraint sh1a.
+  - "gd2a"
+    - The Guangdong (China) Second Zone.
+    - Needs location constraint gd2a.
 
 ### Advanced options
 

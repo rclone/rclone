@@ -466,24 +466,24 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "authenticatedRead"
-        - Object owner gets OWNER access.
-        - All Authenticated Users get READER access.
-    - "bucketOwnerFullControl"
-        - Object owner gets OWNER access.
-        - Project team owners get OWNER access.
-    - "bucketOwnerRead"
-        - Object owner gets OWNER access.
-        - Project team owners get READER access.
-    - "private"
-        - Object owner gets OWNER access.
-        - Default if left blank.
-    - "projectPrivate"
-        - Object owner gets OWNER access.
-        - Project team members get access according to their roles.
-    - "publicRead"
-        - Object owner gets OWNER access.
-        - All Users get READER access.
+  - "authenticatedRead"
+    - Object owner gets OWNER access.
+    - All Authenticated Users get READER access.
+  - "bucketOwnerFullControl"
+    - Object owner gets OWNER access.
+    - Project team owners get OWNER access.
+  - "bucketOwnerRead"
+    - Object owner gets OWNER access.
+    - Project team owners get READER access.
+  - "private"
+    - Object owner gets OWNER access.
+    - Default if left blank.
+  - "projectPrivate"
+    - Object owner gets OWNER access.
+    - Project team members get access according to their roles.
+  - "publicRead"
+    - Object owner gets OWNER access.
+    - All Users get READER access.
 
 #### --gcs-bucket-acl
 
@@ -496,20 +496,20 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "authenticatedRead"
-        - Project team owners get OWNER access.
-        - All Authenticated Users get READER access.
-    - "private"
-        - Project team owners get OWNER access.
-        - Default if left blank.
-    - "projectPrivate"
-        - Project team members get access according to their roles.
-    - "publicRead"
-        - Project team owners get OWNER access.
-        - All Users get READER access.
-    - "publicReadWrite"
-        - Project team owners get OWNER access.
-        - All Users get WRITER access.
+  - "authenticatedRead"
+    - Project team owners get OWNER access.
+    - All Authenticated Users get READER access.
+  - "private"
+    - Project team owners get OWNER access.
+    - Default if left blank.
+  - "projectPrivate"
+    - Project team members get access according to their roles.
+  - "publicRead"
+    - Project team owners get OWNER access.
+    - All Users get READER access.
+  - "publicReadWrite"
+    - Project team owners get OWNER access.
+    - All Users get WRITER access.
 
 #### --gcs-bucket-policy-only
 
@@ -545,78 +545,80 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - Empty for default location (US)
-    - "asia"
-        - Multi-regional location for Asia
-    - "eu"
-        - Multi-regional location for Europe
-    - "us"
-        - Multi-regional location for United States
-    - "asia-east1"
-        - Taiwan
-    - "asia-east2"
-        - Hong Kong
-    - "asia-northeast1"
-        - Tokyo
-    - "asia-northeast2"
-        - Osaka
-    - "asia-northeast3"
-        - Seoul
-    - "asia-south1"
-        - Mumbai
-    - "asia-south2"
-        - Delhi
-    - "asia-southeast1"
-        - Singapore
-    - "asia-southeast2"
-        - Jakarta
-    - "australia-southeast1"
-        - Sydney
-    - "australia-southeast2"
-        - Melbourne
-    - "europe-north1"
-        - Finland
-    - "europe-west1"
-        - Belgium
-    - "europe-west2"
-        - London
-    - "europe-west3"
-        - Frankfurt
-    - "europe-west4"
-        - Netherlands
-    - "europe-west6"
-        - Zürich
-    - "europe-central2"
-        - Warsaw
-    - "us-central1"
-        - Iowa
-    - "us-east1"
-        - South Carolina
-    - "us-east4"
-        - Northern Virginia
-    - "us-west1"
-        - Oregon
-    - "us-west2"
-        - California
-    - "us-west3"
-        - Salt Lake City
-    - "us-west4"
-        - Las Vegas
-    - "northamerica-northeast1"
-        - Montréal
-    - "northamerica-northeast2"
-        - Toronto
-    - "southamerica-east1"
-        - São Paulo
-    - "southamerica-west1"
-        - Santiago
-    - "asia1"
-        - Dual region: asia-northeast1 and asia-northeast2.
-    - "eur4"
-        - Dual region: europe-north1 and europe-west4.
-    - "nam4"
-        - Dual region: us-central1 and us-east1.
+  - ""
+    - Empty for default location (US)
+  - "asia"
+    - Multi-regional location for Asia
+  - "eu"
+    - Multi-regional location for Europe
+  - "us"
+    - Multi-regional location for United States
+  - "asia-east1"
+    - Taiwan
+  - "asia-east2"
+    - Hong Kong
+  - "asia-northeast1"
+    - Tokyo
+  - "asia-northeast2"
+    - Osaka
+  - "asia-northeast3"
+    - Seoul
+  - "asia-south1"
+    - Mumbai
+  - "asia-south2"
+    - Delhi
+  - "asia-southeast1"
+    - Singapore
+  - "asia-southeast2"
+    - Jakarta
+  - "australia-southeast1"
+    - Sydney
+  - "australia-southeast2"
+    - Melbourne
+  - "europe-north1"
+    - Finland
+  - "europe-west1"
+    - Belgium
+  - "europe-west2"
+    - London
+  - "europe-west3"
+    - Frankfurt
+  - "europe-west4"
+    - Netherlands
+  - "europe-west6"
+    - Zürich
+  - "europe-central2"
+    - Warsaw
+  - "us-central1"
+    - Iowa
+  - "us-east1"
+    - South Carolina
+  - "us-east4"
+    - Northern Virginia
+  - "us-east5"
+    - Ohio
+  - "us-west1"
+    - Oregon
+  - "us-west2"
+    - California
+  - "us-west3"
+    - Salt Lake City
+  - "us-west4"
+    - Las Vegas
+  - "northamerica-northeast1"
+    - Montréal
+  - "northamerica-northeast2"
+    - Toronto
+  - "southamerica-east1"
+    - São Paulo
+  - "southamerica-west1"
+    - Santiago
+  - "asia1"
+    - Dual region: asia-northeast1 and asia-northeast2.
+  - "eur4"
+    - Dual region: europe-north1 and europe-west4.
+  - "nam4"
+    - Dual region: us-central1 and us-east1.
 
 #### --gcs-storage-class
 
@@ -629,20 +631,20 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - Default
-    - "MULTI_REGIONAL"
-        - Multi-regional storage class
-    - "REGIONAL"
-        - Regional storage class
-    - "NEARLINE"
-        - Nearline storage class
-    - "COLDLINE"
-        - Coldline storage class
-    - "ARCHIVE"
-        - Archive storage class
-    - "DURABLE_REDUCED_AVAILABILITY"
-        - Durable reduced availability storage class
+  - ""
+    - Default
+  - "MULTI_REGIONAL"
+    - Multi-regional storage class
+  - "REGIONAL"
+    - Regional storage class
+  - "NEARLINE"
+    - Nearline storage class
+  - "COLDLINE"
+    - Coldline storage class
+  - "ARCHIVE"
+    - Archive storage class
+  - "DURABLE_REDUCED_AVAILABILITY"
+    - Durable reduced availability storage class
 
 #### --gcs-env-auth
 
@@ -657,10 +659,10 @@ Properties:
 - Type:        bool
 - Default:     false
 - Examples:
-    - "false"
-        - Enter credentials in the next step.
-    - "true"
-        - Get GCP IAM credentials from the environment (env vars or IAM).
+  - "false"
+    - Enter credentials in the next step.
+  - "true"
+    - Get GCP IAM credentials from the environment (env vars or IAM).
 
 ### Advanced options
 

@@ -368,14 +368,14 @@ Properties:
 - Type:        string
 - Default:     "global"
 - Examples:
-    - "global"
-        - Microsoft Cloud Global
-    - "us"
-        - Microsoft Cloud for US Government
-    - "de"
-        - Microsoft Cloud Germany (deprecated - try global region first).
-    - "cn"
-        - Azure and Office 365 operated by Vnet Group in China
+  - "global"
+    - Microsoft Cloud Global
+  - "us"
+    - Microsoft Cloud for US Government
+  - "de"
+    - Microsoft Cloud Germany (deprecated - try global region first).
+  - "cn"
+    - Azure and Office 365 operated by Vnet Group in China
 
 #### --onedrive-tenant
 
@@ -536,13 +536,13 @@ Properties:
 - Type:        SpaceSepList
 - Default:     Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All Sites.Read.All offline_access
 - Examples:
-    - "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All Sites.Read.All offline_access"
-        - Read and write access to all resources
-    - "Files.Read Files.Read.All Sites.Read.All offline_access"
-        - Read only access to all resources
-    - "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All offline_access"
-        - Read and write access to all resources, without the ability to browse SharePoint sites. 
-        - Same as if disable_site_permission was set to true
+  - "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All Sites.Read.All offline_access"
+    - Read and write access to all resources
+  - "Files.Read Files.Read.All Sites.Read.All offline_access"
+    - Read only access to all resources
+  - "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All offline_access"
+    - Read and write access to all resources, without the ability to browse SharePoint sites. 
+    - Same as if disable_site_permission was set to true
 
 #### --onedrive-disable-site-permission
 
@@ -660,13 +660,13 @@ Properties:
 - Type:        string
 - Default:     "anonymous"
 - Examples:
-    - "anonymous"
-        - Anyone with the link has access, without needing to sign in.
-        - This may include people outside of your organization.
-        - Anonymous link support may be disabled by an administrator.
-    - "organization"
-        - Anyone signed into your organization (tenant) can use the link to get access.
-        - Only available in OneDrive for Business and SharePoint.
+  - "anonymous"
+    - Anyone with the link has access, without needing to sign in.
+    - This may include people outside of your organization.
+    - Anonymous link support may be disabled by an administrator.
+  - "organization"
+    - Anyone signed into your organization (tenant) can use the link to get access.
+    - Only available in OneDrive for Business and SharePoint.
 
 #### --onedrive-link-type
 
@@ -679,12 +679,12 @@ Properties:
 - Type:        string
 - Default:     "view"
 - Examples:
-    - "view"
-        - Creates a read-only link to the item.
-    - "edit"
-        - Creates a read-write link to the item.
-    - "embed"
-        - Creates an embeddable link to the item.
+  - "view"
+    - Creates a read-only link to the item.
+  - "edit"
+    - Creates a read-write link to the item.
+  - "embed"
+    - Creates an embeddable link to the item.
 
 #### --onedrive-link-password
 
@@ -729,18 +729,18 @@ Properties:
 - Type:        string
 - Default:     "auto"
 - Examples:
-    - "auto"
-        - Rclone chooses the best hash
-    - "quickxor"
-        - QuickXor
-    - "sha1"
-        - SHA1
-    - "sha256"
-        - SHA256
-    - "crc32"
-        - CRC32
-    - "none"
-        - None - don't use any hashes
+  - "auto"
+    - Rclone chooses the best hash
+  - "quickxor"
+    - QuickXor
+  - "sha1"
+    - SHA1
+  - "sha256"
+    - SHA256
+  - "crc32"
+    - CRC32
+  - "none"
+    - None - don't use any hashes
 
 #### --onedrive-av-override
 
@@ -818,16 +818,16 @@ Properties:
 - Type:        Bits
 - Default:     off
 - Examples:
-    - "off"
-        - Do not read or write the value
-    - "read"
-        - Read the value only
-    - "write"
-        - Write the value only
-    - "read,write"
-        - Read and Write the value.
-    - "failok"
-        - If writing fails log errors only, don't fail the transfer
+  - "off"
+    - Do not read or write the value
+  - "read"
+    - Read the value only
+  - "write"
+    - Write the value only
+  - "read,write"
+    - Read and Write the value.
+  - "failok"
+    - If writing fails log errors only, don't fail the transfer
 
 #### --onedrive-encoding
 

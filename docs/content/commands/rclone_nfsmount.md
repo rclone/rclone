@@ -14,7 +14,7 @@ Mount the remote as file system on a mountpoint.
 Rclone nfsmount allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with FUSE.
 
-First set up your remote using `rclone config`.  Check it works with `rclone ls` etc.
+First set up your remote using `rclone config`. Check it works with `rclone ls` etc.
 
 On Linux and macOS, you can run mount in either foreground or background (aka
 daemon) mode. Mount runs in foreground mode by default. Use the `--daemon` flag
@@ -29,7 +29,9 @@ mount, waits until success or timeout and exits with appropriate code
 On Linux/macOS/FreeBSD start the mount like this, where `/path/to/local/mount`
 is an **empty** **existing** directory:
 
-    rclone nfsmount remote:path/to/files /path/to/local/mount
+```console
+rclone nfsmount remote:path/to/files /path/to/local/mount
+```
 
 On Windows you can start a mount in different ways. See [below](#mounting-modes-on-windows)
 for details. If foreground mount is used interactively from a console window,
@@ -39,26 +41,30 @@ used to work with the mount until rclone is interrupted e.g. by pressing Ctrl-C.
 The following examples will mount to an automatically assigned drive,
 to specific drive letter `X:`, to path `C:\path\parent\mount`
 (where parent directory or drive must exist, and mount must **not** exist,
-and is not supported when [mounting as a network drive](#mounting-modes-on-windows)), and
-the last example will mount as network share `\\cloud\remote` and map it to an
+and is not supported when [mounting as a network drive](#mounting-modes-on-windows)),
+and the last example will mount as network share `\\cloud\remote` and map it to an
 automatically assigned drive:
 
-    rclone nfsmount remote:path/to/files *
-    rclone nfsmount remote:path/to/files X:
-    rclone nfsmount remote:path/to/files C:\path\parent\mount
-    rclone nfsmount remote:path/to/files \\cloud\remote
+```console
+rclone nfsmount remote:path/to/files *
+rclone nfsmount remote:path/to/files X:
+rclone nfsmount remote:path/to/files C:\path\parent\mount
+rclone nfsmount remote:path/to/files \\cloud\remote
+```
 
 When the program ends while in foreground mode, either via Ctrl+C or receiving
 a SIGINT or SIGTERM signal, the mount should be automatically stopped.
 
 When running in background mode the user will have to stop the mount manually:
 
-    # Linux
-    fusermount -u /path/to/local/mount
-    #... or on some systems
-    fusermount3 -u /path/to/local/mount
-    # OS X or Linux when using nfsmount
-    umount /path/to/local/mount
+```console
+# Linux
+fusermount -u /path/to/local/mount
+#... or on some systems
+fusermount3 -u /path/to/local/mount
+# OS X or Linux when using nfsmount
+umount /path/to/local/mount
+```
 
 The umount operation can fail, for example when the mountpoint is busy.
 When that happens, it is the user's responsibility to stop the mount manually.
@@ -72,7 +78,7 @@ at all, then 1 PiB is set as both the total and the free size.
 
 ## Installing on Windows
 
-To run rclone nfsmount on Windows, you will need to
+To run `rclone nfsmount on Windows`, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
 
 [WinFsp](https://github.com/winfsp/winfsp) is an open-source
@@ -93,20 +99,22 @@ thumbnails for image and video files on network drives.
 
 In most cases, rclone will mount the remote as a normal, fixed disk drive by default.
 However, you can also choose to mount it as a remote network drive, often described
-as a network share. If you mount an rclone remote using the default, fixed drive mode
-and experience unexpected program errors, freezes or other issues, consider mounting
-as a network drive instead.
+as a network share. If you mount an rclone remote using the default, fixed drive
+mode and experience unexpected program errors, freezes or other issues, consider
+mounting as a network drive instead.
 
 When mounting as a fixed disk drive you can either mount to an unused drive letter,
 or to a path representing a **nonexistent** subdirectory of an **existing** parent
 directory or drive. Using the special value `*` will tell rclone to
-automatically assign the next available drive letter, starting with Z: and moving backward.
-Examples:
+automatically assign the next available drive letter, starting with Z: and moving
+backward. Examples:
 
-    rclone nfsmount remote:path/to/files *
-    rclone nfsmount remote:path/to/files X:
-    rclone nfsmount remote:path/to/files C:\path\parent\mount
-    rclone nfsmount remote:path/to/files X:
+```console
+rclone nfsmount remote:path/to/files *
+rclone nfsmount remote:path/to/files X:
+rclone nfsmount remote:path/to/files C:\path\parent\mount
+rclone nfsmount remote:path/to/files X:
+```
 
 Option `--volname` can be used to set a custom volume name for the mounted
 file system. The default is to use the remote name and path.
@@ -116,24 +124,28 @@ to your nfsmount command. Mounting to a directory path is not supported in
 this mode, it is a limitation Windows imposes on junctions, so the remote must always
 be mounted to a drive letter.
 
-    rclone nfsmount remote:path/to/files X: --network-mode
+```console
+rclone nfsmount remote:path/to/files X: --network-mode
+```
 
-A volume name specified with `--volname` will be used to create the network share path.
-A complete UNC path, such as `\\cloud\remote`, optionally with path
+A volume name specified with `--volname` will be used to create the network share
+path. A complete UNC path, such as `\\cloud\remote`, optionally with path
 `\\cloud\remote\madeup\path`, will be used as is. Any other
 string will be used as the share part, after a default prefix `\\server\`.
 If no volume name is specified then `\\server\share` will be used.
-You must make sure the volume name is unique when you are mounting more than one drive,
-or else the mount command will fail. The share name will treated as the volume label for
-the mapped drive, shown in Windows Explorer etc, while the complete
+You must make sure the volume name is unique when you are mounting more than one
+drive, or else the mount command will fail. The share name will treated as the
+volume label for the mapped drive, shown in Windows Explorer etc, while the complete
 `\\server\share` will be reported as the remote UNC path by
 `net use` etc, just like a normal network drive mapping.
 
 If you specify a full network share UNC path with `--volname`, this will implicitly
 set the `--network-mode` option, so the following two examples have same result:
 
-    rclone nfsmount remote:path/to/files X: --network-mode
-    rclone nfsmount remote:path/to/files X: --volname \\server\share
+```console
+rclone nfsmount remote:path/to/files X: --network-mode
+rclone nfsmount remote:path/to/files X: --volname \\server\share
+```
 
 You may also specify the network share UNC path as the mountpoint itself. Then rclone
 will automatically assign a drive letter, same as with `*` and use that as
@@ -141,14 +153,15 @@ mountpoint, and instead use the UNC path specified as the volume name, as if it 
 specified with the `--volname` option. This will also implicitly set
 the `--network-mode` option. This means the following two examples have same result:
 
-    rclone nfsmount remote:path/to/files \\cloud\remote
-    rclone nfsmount remote:path/to/files * --volname \\cloud\remote
+```console
+rclone nfsmount remote:path/to/files \\cloud\remote
+rclone nfsmount remote:path/to/files * --volname \\cloud\remote
+```
 
 There is yet another way to enable network mode, and to set the share path,
 and that is to pass the "native" libfuse/WinFsp option directly:
 `--fuse-flag --VolumePrefix=\server\share`. Note that the path
 must be with just a single backslash prefix in this case.
-
 
 *Note:* In previous versions of rclone this was the only supported method.
 
@@ -162,11 +175,11 @@ The FUSE emulation layer on Windows must convert between the POSIX-based
 permission model used in FUSE, and the permission model used in Windows,
 based on access-control lists (ACL).
 
-The mounted filesystem will normally get three entries in its access-control list (ACL),
-representing permissions for the POSIX permission scopes: Owner, group and others.
-By default, the owner and group will be taken from the current user, and the built-in
-group "Everyone" will be used to represent others. The user/group can be customized
-with FUSE options "UserName" and "GroupName",
+The mounted filesystem will normally get three entries in its access-control list
+(ACL), representing permissions for the POSIX permission scopes: Owner, group and
+others. By default, the owner and group will be taken from the current user, and
+the built-in group "Everyone" will be used to represent others. The user/group can
+be customized with FUSE options "UserName" and "GroupName",
 e.g. `-o UserName=user123 -o GroupName="Authenticated Users"`.
 The permissions on each entry will be set according to [options](#options)
 `--dir-perms` and `--file-perms`, which takes a value in traditional Unix
@@ -266,58 +279,74 @@ does not suffer from the same limitations.
 
 ## Mounting on macOS
 
-Mounting on macOS can be done either via [built-in NFS server](/commands/rclone_serve_nfs/), [macFUSE](https://osxfuse.github.io/) 
-(also known as osxfuse) or [FUSE-T](https://www.fuse-t.org/). macFUSE is a traditional
-FUSE driver utilizing a macOS kernel extension (kext). FUSE-T is an alternative FUSE system
-which "mounts" via an NFSv4 local server.
+Mounting on macOS can be done either via [built-in NFS server](/commands/rclone_serve_nfs/),
+[macFUSE](https://osxfuse.github.io/) (also known as osxfuse) or
+[FUSE-T](https://www.fuse-t.org/).macFUSE is a traditional FUSE driver utilizing
+a macOS kernel extension (kext). FUSE-T is an alternative FUSE system which
+"mounts" via an NFSv4 local server.
 
-#### Unicode Normalization
+### Unicode Normalization
 
 It is highly recommended to keep the default of `--no-unicode-normalization=false`
 for all `mount` and `serve` commands on macOS. For details, see [vfs-case-sensitivity](https://rclone.org/commands/rclone_mount/#vfs-case-sensitivity).
 
 ### NFS mount
 
-This method spins up an NFS server using [serve nfs](/commands/rclone_serve_nfs/) command and mounts
-it to the specified mountpoint. If you run this in background mode using |--daemon|, you will need to
-send SIGTERM signal to the rclone process using |kill| command to stop the mount.
+This method spins up an NFS server using [serve nfs](/commands/rclone_serve_nfs/)
+command and mounts it to the specified mountpoint. If you run this in background
+mode using |--daemon|, you will need to send SIGTERM signal to the rclone process
+using |kill| command to stop the mount.
 
-Note that `--nfs-cache-handle-limit` controls the maximum number of cached file handles stored by the `nfsmount` caching handler.
-This should not be set too low or you may experience errors when trying to access files. The default is 1000000,
+Note that `--nfs-cache-handle-limit` controls the maximum number of cached file
+handles stored by the `nfsmount` caching handler. This should not be set too low
+or you may experience errors when trying to access files. The default is 1000000,
 but consider lowering this limit if the server's system resource usage causes problems.
 
 ### macFUSE Notes
 
-If installing macFUSE using [dmg packages](https://github.com/osxfuse/osxfuse/releases) from
-the website, rclone will locate the macFUSE libraries without any further intervention.
-If however, macFUSE is installed using the [macports](https://www.macports.org/) package manager,
-the following addition steps are required.
+If installing macFUSE using [dmg packages](https://github.com/osxfuse/osxfuse/releases)
+from the website, rclone will locate the macFUSE libraries without any further intervention.
+If however, macFUSE is installed using the [macports](https://www.macports.org/)
+package manager, the following addition steps are required.
 
-    sudo mkdir /usr/local/lib
-    cd /usr/local/lib
-    sudo ln -s /opt/local/lib/libfuse.2.dylib
+```console
+sudo mkdir /usr/local/lib
+cd /usr/local/lib
+sudo ln -s /opt/local/lib/libfuse.2.dylib
+```
 
 ### FUSE-T Limitations, Caveats, and Notes
 
-There are some limitations, caveats, and notes about how it works. These are current as 
-of FUSE-T version 1.0.14.
+There are some limitations, caveats, and notes about how it works. These are
+current as  of FUSE-T version 1.0.14.
 
 #### ModTime update on read
 
 As per the [FUSE-T wiki](https://github.com/macos-fuse-t/fuse-t/wiki#caveats):
 
-> File access and modification times cannot be set separately as it seems to be an 
-> issue with the NFS client which always modifies both. Can be reproduced with 
+> File access and modification times cannot be set separately as it seems to be an
+> issue with the NFS client which always modifies both. Can be reproduced with
 > 'touch -m' and 'touch -a' commands
 
-This means that viewing files with various tools, notably macOS Finder, will cause rlcone
-to update the modification time of the file. This may make rclone upload a full new copy
-of the file.
-    
+This means that viewing files with various tools, notably macOS Finder, will cause
+rlcone to update the modification time of the file. This may make rclone upload a
+full new copy of the file.
+
 #### Read Only mounts
 
-When mounting with `--read-only`, attempts to write to files will fail *silently* as
-opposed to with a clear warning as in macFUSE.
+When mounting with `--read-only`, attempts to write to files will fail *silently*
+as opposed to with a clear warning as in macFUSE.
+
+# Mounting on Linux
+
+On newer versions of Ubuntu, you may encounter the following error when running
+`rclone mount`:
+
+> NOTICE: mount helper error: fusermount3: mount failed: Permission denied
+> CRITICAL: Fatal error: failed to mount FUSE fs: fusermount: exit status 1
+This may be due to newer [Apparmor](https://wiki.ubuntu.com/AppArmor) restrictions,
+which can be disabled with `sudo aa-disable /usr/bin/fusermount3` (you may need to
+`sudo apt install apparmor-utils` beforehand).
 
 ## Limitations
 
@@ -418,12 +447,14 @@ helper you should symlink rclone binary to `/sbin/mount.rclone` and optionally
 rclone will detect it and translate command-line arguments appropriately.
 
 Now you can run classic mounts like this:
-```
+
+```console
 mount sftp1:subdir /mnt/data -t rclone -o vfs_cache_mode=writes,sftp_key_file=/path/to/pem
 ```
 
 or create systemd mount units:
-```
+
+```ini
 # /etc/systemd/system/mnt-data.mount
 [Unit]
 Description=Mount for /mnt/data
@@ -435,7 +466,8 @@ Options=rw,_netdev,allow_other,args2env,vfs-cache-mode=writes,config=/etc/rclone
 ```
 
 optionally accompanied by systemd automount unit
-```
+
+```ini
 # /etc/systemd/system/mnt-data.automount
 [Unit]
 Description=AutoMount for /mnt/data
@@ -447,7 +479,8 @@ WantedBy=multi-user.target
 ```
 
 or add in `/etc/fstab` a line like
-```
+
+```console
 sftp1:subdir /mnt/data rclone rw,noauto,nofail,_netdev,x-systemd.automount,args2env,vfs_cache_mode=writes,config=/etc/rclone.conf,cache_dir=/var/cache/rclone 0 0
 ```
 
@@ -496,8 +529,10 @@ directory should be considered up to date and not refreshed from the
 backend. Changes made through the VFS will appear immediately or
 invalidate the cache.
 
+```text
     --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
     --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
+```
 
 However, changes made directly on the cloud storage by the web
 interface or a different copy of rclone will only be picked up once
@@ -509,16 +544,22 @@ You can send a `SIGHUP` signal to rclone for it to flush all
 directory caches, regardless of how old they are.  Assuming only one
 rclone instance is running, you can reset the cache like this:
 
-    kill -SIGHUP $(pidof rclone)
+```console
+kill -SIGHUP $(pidof rclone)
+```
 
 If you configure rclone with a [remote control](/rc) then you can use
 rclone rc to flush the whole directory cache:
 
-    rclone rc vfs/forget
+```console
+rclone rc vfs/forget
+```
 
 Or individual files or directories:
 
-    rclone rc vfs/forget file=path/to/file dir=path/to/dir
+```console
+rclone rc vfs/forget file=path/to/file dir=path/to/dir
+```
 
 ## VFS File Buffering
 
@@ -549,6 +590,7 @@ write simultaneously to a file.  See below for more details.
 Note that the VFS cache is separate from the cache backend and you may
 find that you need one or the other or both.
 
+```text
     --cache-dir string                     Directory rclone will use for caching.
     --vfs-cache-mode CacheMode             Cache mode off|minimal|writes|full (default off)
     --vfs-cache-max-age duration           Max time since last access of objects in the cache (default 1h0m0s)
@@ -556,6 +598,7 @@ find that you need one or the other or both.
     --vfs-cache-min-free-space SizeSuffix  Target minimum free space on the disk containing the cache (default off)
     --vfs-cache-poll-interval duration     Interval to poll the cache for stale objects (default 1m0s)
     --vfs-write-back duration              Time to writeback files after last use when using cache (default 5s)
+```
 
 If run with `-vv` rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
@@ -603,13 +646,13 @@ directly to the remote without caching anything on disk.
 
 This will mean some operations are not possible
 
-  * Files can't be opened for both read AND write
-  * Files opened for write can't be seeked
-  * Existing files opened for write must have O_TRUNC set
-  * Files open for read with O_TRUNC will be opened write only
-  * Files open for write only will behave as if O_TRUNC was supplied
-  * Open modes O_APPEND, O_TRUNC are ignored
-  * If an upload fails it can't be retried
+- Files can't be opened for both read AND write
+- Files opened for write can't be seeked
+- Existing files opened for write must have O_TRUNC set
+- Files open for read with O_TRUNC will be opened write only
+- Files open for write only will behave as if O_TRUNC was supplied
+- Open modes O_APPEND, O_TRUNC are ignored
+- If an upload fails it can't be retried
 
 ### --vfs-cache-mode minimal
 
@@ -619,10 +662,10 @@ write will be a lot more compatible, but uses the minimal disk space.
 
 These operations are not possible
 
-  * Files opened for write only can't be seeked
-  * Existing files opened for write must have O_TRUNC set
-  * Files opened for write only will ignore O_APPEND, O_TRUNC
-  * If an upload fails it can't be retried
+- Files opened for write only can't be seeked
+- Existing files opened for write must have O_TRUNC set
+- Files opened for write only will ignore O_APPEND, O_TRUNC
+- If an upload fails it can't be retried
 
 ### --vfs-cache-mode writes
 
@@ -705,9 +748,11 @@ read, at the cost of an increased number of requests.
 
 These flags control the chunking:
 
+```text
     --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
     --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
     --vfs-read-chunk-streams int            The number of parallel streams to read at once
+```
 
 The chunking behaves differently depending on the `--vfs-read-chunk-streams` parameter.
 
@@ -721,9 +766,9 @@ value is "off", which is the default, the limit is disabled and the chunk size
 will grow indefinitely.
 
 With `--vfs-read-chunk-size 100M` and `--vfs-read-chunk-size-limit 0`
-the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
-When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
-0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
+the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M
+and so on. When `--vfs-read-chunk-size-limit 500M` is specified, the result would
+be 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 
 Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
 
@@ -761,32 +806,41 @@ In particular S3 and Swift benefit hugely from the `--no-modtime` flag
 (or use `--use-server-modtime` for a slightly different effect) as each
 read of the modification time takes a transaction.
 
+```text
     --no-checksum     Don't compare checksums on up/download.
     --no-modtime      Don't read/write the modification time (can speed things up).
     --no-seek         Don't allow seeking in files.
     --read-only       Only allow read-only access.
+```
 
 Sometimes rclone is delivered reads or writes out of order. Rather
 than seeking rclone will wait a short time for the in sequence read or
 write to come in. These flags only come into effect when not using an
 on disk cache file.
 
+```text
     --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
     --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
+```
 
 When using VFS write caching (`--vfs-cache-mode` with value writes or full),
-the global flag `--transfers` can be set to adjust the number of parallel uploads of
-modified files from the cache (the related global flag `--checkers` has no effect on the VFS).
+the global flag `--transfers` can be set to adjust the number of parallel uploads
+of modified files from the cache (the related global flag `--checkers` has no
+effect on the VFS).
 
+```text
     --transfers int  Number of file transfers to run in parallel (default 4)
+```
 
 ## Symlinks
 
 By default the VFS does not support symlinks. However this may be
 enabled with either of the following flags:
 
+```text
     --links      Translate symlinks to/from regular files with a '.rclonelink' extension.
     --vfs-links  Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS
+```
 
 As most cloud storage systems do not support symlinks directly, rclone
 stores the symlink as a normal file with a special extension. So a
@@ -798,7 +852,8 @@ Note that `--links` enables symlink translation globally in rclone -
 this includes any backend which supports the concept (for example the
 local backend). `--vfs-links` just enables it for the VFS layer.
 
-This scheme is compatible with that used by the [local backend with the --local-links flag](/local/#symlinks-junction-points).
+This scheme is compatible with that used by the
+[local backend with the --local-links flag](/local/#symlinks-junction-points).
 
 The `--vfs-links` flag has been designed for `rclone mount`, `rclone
 nfsmount` and `rclone serve nfs`.
@@ -808,7 +863,7 @@ It hasn't been tested with the other `rclone serve` commands yet.
 A limitation of the current implementation is that it expects the
 caller to resolve sub-symlinks. For example given this directory tree
 
-```
+```text
 .
 ├── dir
 │   └── file.txt
@@ -886,7 +941,9 @@ sync`.
 This flag allows you to manually set the statistics about the filing system.
 It can be useful when those statistics cannot be read correctly automatically.
 
+```text
     --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
+```
 
 ## Alternate report of used bytes
 
@@ -897,7 +954,7 @@ With this flag set, instead of relying on the backend to report this
 information, rclone will scan the whole remote similar to `rclone size`
 and compute the total used space itself.
 
-_WARNING._ Contrary to `rclone size`, this flag ignores filters so that the
+**WARNING**: Contrary to `rclone size`, this flag ignores filters so that the
 result is accurate. However, this is very inefficient and may cost lots of API
 calls resulting in extra charges. Use it as a last resort and only with caching.
 
@@ -915,7 +972,7 @@ Note that some backends won't create metadata unless you pass in the
 For example, using `rclone mount` with `--metadata --vfs-metadata-extension .metadata`
 we get
 
-```
+```console
 $ ls -l /mnt/
 total 1048577
 -rw-rw-r-- 1 user user 1073741824 Mar  3 16:03 1G
@@ -939,8 +996,6 @@ total 1048578
 If the file has no metadata it will be returned as `{}` and if there
 is an error reading the metadata the error will be returned as
 `{"error":"error string"}`.
-
-
 
 ```
 rclone nfsmount remote:path /path/to/mountpoint [flags]
@@ -1017,7 +1072,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags for filtering directory listings
 
-```
+```text
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -1045,5 +1100,10 @@ Flags for filtering directory listings
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

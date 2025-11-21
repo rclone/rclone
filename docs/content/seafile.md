@@ -312,8 +312,8 @@ Properties:
 - Type:        string
 - Required:    true
 - Examples:
-    - "https://cloud.seafile.com/"
-        - Connect to cloud.seafile.com.
+  - "https://cloud.seafile.com/"
+    - Connect to cloud.seafile.com.
 
 #### --seafile-user
 

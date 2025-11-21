@@ -182,18 +182,18 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "com"
-        - United states / Global
-    - "eu"
-        - Europe
-    - "in"
-        - India
-    - "jp"
-        - Japan
-    - "com.cn"
-        - China
-    - "com.au"
-        - Australia
+  - "com"
+    - United states / Global
+  - "eu"
+    - Europe
+  - "in"
+    - India
+  - "jp"
+    - Japan
+  - "com.cn"
+    - China
+  - "com.au"
+    - Australia
 
 ### Advanced options
 

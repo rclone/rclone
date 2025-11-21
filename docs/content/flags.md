@@ -121,7 +121,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.71.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.72.0")
 ```
 
 
@@ -341,6 +341,8 @@ Backend-only flags (these can be set in the config file also).
 ```
       --alias-description string                            Description of the remote
       --alias-remote string                                 Remote or path to alias
+      --archive-description string                          Description of the remote
+      --archive-remote string                               Remote to wrap to read archives from
       --azureblob-access-tier string                        Access tier of blob: hot, cool, cold or archive
       --azureblob-account string                            Azure Storage Account Name
       --azureblob-archive-tier-delete                       Delete archive tier blobs before overwriting
@@ -418,6 +420,10 @@ Backend-only flags (these can be set in the config file also).
       --b2-hard-delete                                      Permanently delete files on remote removal, otherwise hide files
       --b2-key string                                       Application Key
       --b2-lifecycle int                                    Set the number of days deleted files should be kept when creating a bucket
+      --b2-sse-customer-algorithm string                    If using SSE-C, the server-side encryption algorithm used when storing this object in B2
+      --b2-sse-customer-key string                          To use SSE-C, you may provide the secret encryption key encoded in a UTF-8 compatible string to encrypt/decrypt your data
+      --b2-sse-customer-key-base64 string                   To use SSE-C, you may provide the secret encryption key encoded in Base64 format to encrypt/decrypt your data
+      --b2-sse-customer-key-md5 string                      If using SSE-C you may provide the secret encryption key MD5 checksum (optional)
       --b2-test-mode string                                 A flag string for X-Bz-Test-Mode header for debugging
       --b2-upload-concurrency int                           Concurrency for multipart uploads (default 4)
       --b2-upload-cutoff SizeSuffix                         Cutoff for switching to chunked upload (default 200Mi)
@@ -479,7 +485,7 @@ Backend-only flags (these can be set in the config file also).
       --combine-description string                          Description of the remote
       --combine-upstreams SpaceSepList                      Upstreams for combining
       --compress-description string                         Description of the remote
-      --compress-level int                                  GZIP compression level (-2 to 9) (default -1)
+      --compress-level string                               GZIP (levels -2 to 9):
       --compress-mode string                                Compression mode (default "gzip")
       --compress-ram-cache-limit SizeSuffix                 Some remotes don't allow the upload of files with unknown size (default 20Mi)
       --compress-remote string                              Remote to compress
@@ -774,6 +780,7 @@ Backend-only flags (these can be set in the config file also).
       --mailru-token string                                 OAuth Access Token as a JSON blob
       --mailru-token-url string                             Token server url
       --mailru-user string                                  User name (usually email)
+      --mega-2fa string                                     The 2FA code of your MEGA account if the account is set up with one
       --mega-debug                                          Output more debug from Mega
       --mega-description string                             Description of the remote
       --mega-encoding Encoding                              The encoding for the backend (default Slash,InvalidUtf8,Dot)
@@ -892,6 +899,7 @@ Backend-only flags (these can be set in the config file also).
       --protondrive-encoding Encoding                       The encoding for the backend (default Slash,LeftSpace,RightSpace,InvalidUtf8,Dot)
       --protondrive-mailbox-password string                 The mailbox password of your two-password proton account (obscured)
       --protondrive-original-file-size                      Return the file size before encryption (default true)
+      --protondrive-otp-secret-key string                   The OTP secret key (obscured)
       --protondrive-password string                         The password of your proton account (obscured)
       --protondrive-replace-existing-draft                  Create a new revision when filename conflict is detected
       --protondrive-username string                         The username of your proton account
@@ -974,6 +982,7 @@ Backend-only flags (these can be set in the config file also).
       --s3-use-accept-encoding-gzip Accept-Encoding: gzip   Whether to send Accept-Encoding: gzip header (default unset)
       --s3-use-already-exists Tristate                      Set if rclone should report BucketAlreadyExists errors on bucket creation (default unset)
       --s3-use-arn-region                                   If true, enables arn region support for the service
+      --s3-use-data-integrity-protections Tristate          If true use AWS S3 data integrity protections (default unset)
       --s3-use-dual-stack                                   If true use AWS S3 dual-stack endpoint (IPv6 support)
       --s3-use-multipart-etag Tristate                      Whether to use ETag in multipart uploads for verification (default unset)
       --s3-use-multipart-uploads Tristate                   Set if rclone should use multipart uploads (default unset)
@@ -1056,6 +1065,7 @@ Backend-only flags (these can be set in the config file also).
       --sia-encoding Encoding                               The encoding for the backend (default Slash,Question,Hash,Percent,Del,Ctl,InvalidUtf8,Dot)
       --sia-user-agent string                               Siad User Agent (default "Sia-Agent")
       --skip-links                                          Don't warn about skipped symlinks
+      --skip-specials                                       Don't warn about skipped pipes, sockets and device objects
       --smb-case-insensitive                                Whether the server is configured to be case-insensitive (default true)
       --smb-description string                              Description of the remote
       --smb-domain string                                   Domain name for NTLM authentication (default "WORKGROUP")

@@ -323,6 +323,19 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --box-config-credentials
+
+Box App config.json contents.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      config_credentials
+- Env Var:     RCLONE_BOX_CONFIG_CREDENTIALS
+- Type:        string
+- Required:    false
+
 #### --box-access-token
 
 Box App Primary Access Token
@@ -347,10 +360,10 @@ Properties:
 - Type:        string
 - Default:     "user"
 - Examples:
-    - "user"
-        - Rclone should act on behalf of a user.
-    - "enterprise"
-        - Rclone should act on behalf of a service account.
+  - "user"
+    - Rclone should act on behalf of a user.
+  - "enterprise"
+    - Rclone should act on behalf of a service account.
 
 ### Advanced options
 

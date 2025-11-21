@@ -959,13 +959,13 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - The container and its blobs can be accessed only with an authorized request.
-        - It's a default value.
-    - "blob"
-        - Blob data within this container can be read via anonymous request.
-    - "container"
-        - Allow full public read access for container and blob data.
+  - ""
+    - The container and its blobs can be accessed only with an authorized request.
+    - It's a default value.
+  - "blob"
+    - Blob data within this container can be read via anonymous request.
+  - "container"
+    - Allow full public read access for container and blob data.
 
 #### --azureblob-directory-markers
 
@@ -1022,12 +1022,12 @@ Properties:
 - Type:        string
 - Required:    false
 - Choices:
-    - ""
-        - By default, the delete operation fails if a blob has snapshots
-    - "include"
-        - Specify 'include' to remove the root blob and all its snapshots
-    - "only"
-        - Specify 'only' to remove only the snapshots but keep the root blob.
+  - ""
+    - By default, the delete operation fails if a blob has snapshots
+  - "include"
+    - Specify 'include' to remove the root blob and all its snapshots
+  - "only"
+    - Specify 'only' to remove only the snapshots but keep the root blob.
 
 #### --azureblob-description
 

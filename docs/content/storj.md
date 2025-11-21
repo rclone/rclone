@@ -241,10 +241,10 @@ Properties:
 - Type:        string
 - Default:     "existing"
 - Examples:
-    - "existing"
-        - Use an existing access grant.
-    - "new"
-        - Create a new access grant from satellite address, API key, and passphrase.
+  - "existing"
+    - Use an existing access grant.
+  - "new"
+    - Create a new access grant from satellite address, API key, and passphrase.
 
 #### --storj-access-grant
 
@@ -272,12 +272,12 @@ Properties:
 - Type:        string
 - Default:     "us1.storj.io"
 - Examples:
-    - "us1.storj.io"
-        - US1
-    - "eu1.storj.io"
-        - EU1
-    - "ap1.storj.io"
-        - AP1
+  - "us1.storj.io"
+    - US1
+  - "eu1.storj.io"
+    - EU1
+  - "ap1.storj.io"
+    - AP1
 
 #### --storj-api-key
 

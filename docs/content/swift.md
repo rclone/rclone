@@ -274,11 +274,11 @@ Properties:
 - Type:        bool
 - Default:     false
 - Examples:
-    - "false"
-        - Enter swift credentials in the next step.
-    - "true"
-        - Get swift credentials from environment vars.
-        - Leave other fields blank if using this.
+  - "false"
+    - Enter swift credentials in the next step.
+  - "true"
+    - Get swift credentials from environment vars.
+    - Leave other fields blank if using this.
 
 #### --swift-user
 
@@ -313,20 +313,20 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "https://auth.api.rackspacecloud.com/v1.0"
-        - Rackspace US
-    - "https://lon.auth.api.rackspacecloud.com/v1.0"
-        - Rackspace UK
-    - "https://identity.api.rackspacecloud.com/v2.0"
-        - Rackspace v2
-    - "https://auth.storage.memset.com/v1.0"
-        - Memset Memstore UK
-    - "https://auth.storage.memset.com/v2.0"
-        - Memset Memstore UK v2
-    - "https://auth.cloud.ovh.net/v3"
-        - OVH
-    - "https://authenticate.ain.net"
-        - Blomp Cloud Storage
+  - "https://auth.api.rackspacecloud.com/v1.0"
+    - Rackspace US
+  - "https://lon.auth.api.rackspacecloud.com/v1.0"
+    - Rackspace UK
+  - "https://identity.api.rackspacecloud.com/v2.0"
+    - Rackspace v2
+  - "https://auth.storage.memset.com/v1.0"
+    - Memset Memstore UK
+  - "https://auth.storage.memset.com/v2.0"
+    - Memset Memstore UK v2
+  - "https://auth.cloud.ovh.net/v3"
+    - OVH
+  - "https://authenticate.ain.net"
+    - Blomp Cloud Storage
 
 #### --swift-user-id
 
@@ -471,12 +471,12 @@ Properties:
 - Type:        string
 - Default:     "public"
 - Examples:
-    - "public"
-        - Public (default, choose this if not sure)
-    - "internal"
-        - Internal (use internal service net)
-    - "admin"
-        - Admin
+  - "public"
+    - Public (default, choose this if not sure)
+  - "internal"
+    - Internal (use internal service net)
+  - "admin"
+    - Admin
 
 #### --swift-storage-policy
 
@@ -494,12 +494,12 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - Default
-    - "pcs"
-        - OVH Public Cloud Storage
-    - "pca"
-        - OVH Public Cloud Archive
+  - ""
+    - Default
+  - "pcs"
+    - OVH Public Cloud Storage
+  - "pca"
+    - OVH Public Cloud Archive
 
 ### Advanced options
 

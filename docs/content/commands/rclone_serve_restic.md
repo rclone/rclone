@@ -22,7 +22,7 @@ The server will log errors.  Use -v to see access logs.
 `--bwlimit` will be respected for file transfers.
 Use `--stats` to control the stats printing.
 
-## Setting up rclone for use by restic ###
+## Setting up rclone for use by restic
 
 First [set up a remote for your chosen cloud provider](/docs/#configure).
 
@@ -33,7 +33,9 @@ following instructions.
 
 Now start the rclone restic server
 
-    rclone serve restic -v remote:backup
+```console
+rclone serve restic -v remote:backup
+```
 
 Where you can replace "backup" in the above by whatever path in the
 remote you wish to use.
@@ -47,7 +49,7 @@ Adding `--cache-objects=false` will cause rclone to stop caching objects
 returned from the List call. Caching is normally desirable as it speeds
 up downloading objects, saves transactions and uses very little memory.
 
-## Setting up restic to use rclone ###
+## Setting up restic to use rclone
 
 Now you can [follow the restic
 instructions](http://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#rest-server)
@@ -61,33 +63,38 @@ the URL for the REST server.
 
 For example:
 
-    $ export RESTIC_REPOSITORY=rest:http://localhost:8080/
-    $ export RESTIC_PASSWORD=yourpassword
-    $ restic init
-    created restic backend 8b1a4b56ae at rest:http://localhost:8080/
+```console
+$ export RESTIC_REPOSITORY=rest:http://localhost:8080/
+$ export RESTIC_PASSWORD=yourpassword
+$ restic init
+created restic backend 8b1a4b56ae at rest:http://localhost:8080/
 
-    Please note that knowledge of your password is required to access
-    the repository. Losing your password means that your data is
-    irrecoverably lost.
-    $ restic backup /path/to/files/to/backup
-    scan [/path/to/files/to/backup]
-    scanned 189 directories, 312 files in 0:00
-    [0:00] 100.00%  38.128 MiB / 38.128 MiB  501 / 501 items  0 errors  ETA 0:00
-    duration: 0:00
-    snapshot 45c8fdd8 saved
+Please note that knowledge of your password is required to access
+the repository. Losing your password means that your data is
+irrecoverably lost.
+$ restic backup /path/to/files/to/backup
+scan [/path/to/files/to/backup]
+scanned 189 directories, 312 files in 0:00
+[0:00] 100.00%  38.128 MiB / 38.128 MiB  501 / 501 items  0 errors  ETA 0:00
+duration: 0:00
+snapshot 45c8fdd8 saved
 
-### Multiple repositories ####
+```
+
+### Multiple repositories
 
 Note that you can use the endpoint to host multiple repositories.  Do
 this by adding a directory name or path after the URL.  Note that
 these **must** end with /.  Eg
 
-    $ export RESTIC_REPOSITORY=rest:http://localhost:8080/user1repo/
-    # backup user1 stuff
-    $ export RESTIC_REPOSITORY=rest:http://localhost:8080/user2repo/
-    # backup user2 stuff
+```console
+$ export RESTIC_REPOSITORY=rest:http://localhost:8080/user1repo/
+# backup user1 stuff
+$ export RESTIC_REPOSITORY=rest:http://localhost:8080/user2repo/
+# backup user2 stuff
+```
 
-### Private repositories ####
+### Private repositories
 
 The`--private-repos` flag can be used to limit users to repositories starting
 with a path of `/<username>/`.
@@ -123,6 +130,8 @@ inserts leading and trailing "/" on `--baseurl`, so `--baseurl "rclone"`,
 `--baseurl "/rclone"` and `--baseurl "/rclone/"` are all treated
 identically.
 
+`--disable-zip` may be set to disable the zipping download option.
+
 ### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over
@@ -148,13 +157,16 @@ by `--addr`).
 
 This allows rclone to be a socket-activated service.
 It can be configured with .socket and .service unit files as described in
-https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>.
 
 Socket activation can be tested ad-hoc with the `systemd-socket-activate`command
 
-       systemd-socket-activate -l 8000 -- rclone serve
+```console
+systemd-socket-activate -l 8000 -- rclone serve
+```
 
 This will socket-activate rclone on the first connection to port 8000 over TCP.
+
 ### Authentication
 
 By default this will serve files without needing a login.
@@ -163,8 +175,9 @@ You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the `--user` and `--pass` flags.
 
 Alternatively, you can have the reverse proxy manage authentication and use the
-username provided in the configured header with `--user-from-header`  (e.g., `----user-from-header=x-remote-user`).
-Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration may lead to unauthorized access.
+username provided in the configured header with `--user-from-header`  (e.g., `--user-from-header=x-remote-user`).
+Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration
+may lead to unauthorized access.
 
 If either of the above authentication methods is not configured and client
 certificates are required by the `--client-ca` flag passed to the server, the
@@ -176,17 +189,17 @@ authentication.  Bcrypt is recommended.
 
 To create an htpasswd file:
 
-    touch htpasswd
-    htpasswd -B htpasswd user
-    htpasswd -B htpasswd anotherUser
+```console
+touch htpasswd
+htpasswd -B htpasswd user
+htpasswd -B htpasswd anotherUser
+```
 
 The password file can be updated while rclone is running.
 
 Use `--realm` to set the authentication realm.
 
 Use `--salt` to change the password hashing salt from the default.
-
-
 
 ```
 rclone serve restic remote:path [flags]
@@ -222,5 +235,10 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
 
+
+<!-- markdownlint-restore -->

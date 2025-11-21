@@ -177,12 +177,12 @@ Properties:
 - Type:        string
 - Required:    true
 - Examples:
-    - "https://storagemadeeasy.com"
-        - Storage Made Easy US
-    - "https://eu.storagemadeeasy.com"
-        - Storage Made Easy EU
-    - "https://yourfabric.smestorage.com"
-        - Connect to your Enterprise File Fabric
+  - "https://storagemadeeasy.com"
+    - Storage Made Easy US
+  - "https://eu.storagemadeeasy.com"
+    - Storage Made Easy EU
+  - "https://yourfabric.smestorage.com"
+    - Connect to your Enterprise File Fabric
 
 #### --filefabric-root-folder-id
 
