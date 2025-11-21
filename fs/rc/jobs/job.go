@@ -604,7 +604,7 @@ This takes the following parameters:
     "param1": "parameter for the path as documented",
     "param2": "parameter for the path as documented, etc",
 }
-|||json
+|||
 
 The inputs may use |_async|, |_group|, |_config| and |_filter| as normal when using the rc.
 
