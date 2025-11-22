@@ -1047,20 +1047,16 @@ encodings.)
 The following backends have known issues that need more investigation:
 
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
-- `TestGoFile` (`gofile`)
-  - [`TestBisyncRemoteLocal/all_changed`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
-  - [`TestBisyncRemoteLocal/backupdir`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
-  - [`TestBisyncRemoteLocal/basic`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
-  - [`TestBisyncRemoteLocal/changes`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
-  - [`TestBisyncRemoteLocal/check_access`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
-  - [78 more](https://pub.rclone.org/integration-tests/current/)
-- Updated: 2025-08-21-010015
+- `TestDropbox` (`dropbox`)
+  - [`TestBisyncRemoteRemote/normalization`](https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
+- Updated: 2025-11-21-010037
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
 that are deemed unfixable for the time being:
 
 <!--- start list_ignores - DO NOT EDIT THIS SECTION - use make commanddocs --->
+- `TestArchive` (`archive`)
 - `TestCache` (`cache`)
 - `TestFileLu` (`filelu`)
 - `TestFilesCom` (`filescom`)

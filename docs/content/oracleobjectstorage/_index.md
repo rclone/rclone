@@ -348,23 +348,23 @@ Properties:
 - Type:        string
 - Default:     "env_auth"
 - Examples:
-    - "env_auth"
-        - automatically pickup the credentials from runtime(env), first one to provide auth wins
-    - "user_principal_auth"
-        - use an OCI user and an API key for authentication.
-        - you’ll need to put in a config file your tenancy OCID, user OCID, region, the path, fingerprint to an API key.
-        - https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm
-    - "instance_principal_auth"
-        - use instance principals to authorize an instance to make API calls. 
-        - each instance has its own identity, and authenticates using the certificates that are read from instance metadata. 
-        - https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm
-    - "workload_identity_auth"
-        - use workload identity to grant OCI Container Engine for Kubernetes workloads policy-driven access to OCI resources using OCI Identity and Access Management (IAM).
-        - https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm
-    - "resource_principal_auth"
-        - use resource principals to make API calls
-    - "no_auth"
-        - no credentials needed, this is typically for reading public buckets
+  - "env_auth"
+    - automatically pickup the credentials from runtime(env), first one to provide auth wins
+  - "user_principal_auth"
+    - use an OCI user and an API key for authentication.
+    - you’ll need to put in a config file your tenancy OCID, user OCID, region, the path, fingerprint to an API key.
+    - https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm
+  - "instance_principal_auth"
+    - use instance principals to authorize an instance to make API calls. 
+    - each instance has its own identity, and authenticates using the certificates that are read from instance metadata. 
+    - https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm
+  - "workload_identity_auth"
+    - use workload identity to grant OCI Container Engine for Kubernetes workloads policy-driven access to OCI resources using OCI Identity and Access Management (IAM).
+    - https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm
+  - "resource_principal_auth"
+    - use resource principals to make API calls
+  - "no_auth"
+    - no credentials needed, this is typically for reading public buckets
 
 #### --oos-namespace
 
@@ -427,8 +427,8 @@ Properties:
 - Type:        string
 - Default:     "~/.oci/config"
 - Examples:
-    - "~/.oci/config"
-        - oci configuration file location
+  - "~/.oci/config"
+    - oci configuration file location
 
 #### --oos-config-profile
 
@@ -442,8 +442,8 @@ Properties:
 - Type:        string
 - Default:     "Default"
 - Examples:
-    - "Default"
-        - Use the default profile
+  - "Default"
+    - Use the default profile
 
 ### Advanced options
 
@@ -460,12 +460,12 @@ Properties:
 - Type:        string
 - Default:     "Standard"
 - Examples:
-    - "Standard"
-        - Standard storage tier, this is the default tier
-    - "InfrequentAccess"
-        - InfrequentAccess storage tier
-    - "Archive"
-        - Archive storage tier
+  - "Standard"
+    - Standard storage tier, this is the default tier
+  - "InfrequentAccess"
+    - InfrequentAccess storage tier
+  - "Archive"
+    - Archive storage tier
 
 #### --oos-upload-cutoff
 
@@ -677,8 +677,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
+  - ""
+    - None
 
 #### --oos-sse-customer-key
 
@@ -694,8 +694,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
+  - ""
+    - None
 
 #### --oos-sse-customer-key-sha256
 
@@ -710,8 +710,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
+  - ""
+    - None
 
 #### --oos-sse-kms-key-id
 
@@ -727,8 +727,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
+  - ""
+    - None
 
 #### --oos-sse-customer-algorithm
 
@@ -743,10 +743,10 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
-    - "AES256"
-        - AES256
+  - ""
+    - None
+  - "AES256"
+    - AES256
 
 #### --oos-description
 
@@ -780,9 +780,11 @@ See the [metadata](/docs/#metadata) docs for more info.
 
 Here are the commands specific to the oracleobjectstorage backend.
 
-Run them with
+Run them with:
 
-    rclone backend COMMAND remote:
+```console
+rclone backend COMMAND remote:
+```
 
 The help below will explain what arguments each command takes.
 
@@ -794,26 +796,35 @@ These can be run on a running backend using the rc command
 
 ### rename
 
-change the name of an object
+change the name of an object.
 
-    rclone backend rename remote: [options] [<arguments>+]
+```console
+rclone backend rename remote: [options] [<arguments>+]
+```
 
 This command can be used to rename a object.
 
-Usage Examples:
+Usage example:
 
-    rclone backend rename oos:bucket relative-object-path-under-bucket object-new-name
-
+```console
+rclone backend rename oos:bucket relative-object-path-under-bucket object-new-name
+```
 
 ### list-multipart-uploads
 
-List the unfinished multipart uploads
+List the unfinished multipart uploads.
 
-    rclone backend list-multipart-uploads remote: [options] [<arguments>+]
+```console
+rclone backend list-multipart-uploads remote: [options] [<arguments>+]
+```
 
 This command lists the unfinished multipart uploads in JSON format.
 
-    rclone backend list-multipart-uploads oos:bucket/path/to/object
+Usage example:
+
+```console
+rclone backend list-multipart-uploads oos:bucket/path/to/object
+```
 
 It returns a dictionary of buckets with values as lists of unfinished
 multipart uploads.
@@ -821,81 +832,97 @@ multipart uploads.
 You can call it with no bucket in which case it lists all bucket, with
 a bucket or with a bucket and path.
 
-    {
-      "test-bucket": [
-                {
-                        "namespace": "test-namespace",
-                        "bucket": "test-bucket",
-                        "object": "600m.bin",
-                        "uploadId": "51dd8114-52a4-b2f2-c42f-5291f05eb3c8",
-                        "timeCreated": "2022-07-29T06:21:16.595Z",
-                        "storageTier": "Standard"
-                }
-        ]
-
+```json
+{
+    "test-bucket": [
+        {
+            "namespace": "test-namespace",
+            "bucket": "test-bucket",
+            "object": "600m.bin",
+            "uploadId": "51dd8114-52a4-b2f2-c42f-5291f05eb3c8",
+            "timeCreated": "2022-07-29T06:21:16.595Z",
+            "storageTier": "Standard"
+        }
+    ]
+}
 
 ### cleanup
 
 Remove unfinished multipart uploads.
 
-    rclone backend cleanup remote: [options] [<arguments>+]
+```console
+rclone backend cleanup remote: [options] [<arguments>+]
+```
 
 This command removes unfinished multipart uploads of age greater than
 max-age which defaults to 24 hours.
 
-Note that you can use --interactive/-i or --dry-run with this command to see what
-it would do.
+Note that you can use --interactive/-i or --dry-run with this command to see
+what it would do.
 
-    rclone backend cleanup oos:bucket/path/to/object
-    rclone backend cleanup -o max-age=7w oos:bucket/path/to/object
+Usage examples:
+
+```console
+rclone backend cleanup oos:bucket/path/to/object
+rclone backend cleanup -o max-age=7w oos:bucket/path/to/object
+```
 
 Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
 
-
 Options:
 
-- "max-age": Max age of upload to delete
+- "max-age": Max age of upload to delete.
 
 ### restore
 
-Restore objects from Archive to Standard storage
+Restore objects from Archive to Standard storage.
 
-    rclone backend restore remote: [options] [<arguments>+]
+```console
+rclone backend restore remote: [options] [<arguments>+]
+```
 
-This command can be used to restore one or more objects from Archive to Standard storage.
+This command can be used to restore one or more objects from Archive to
+Standard storage.
 
-	Usage Examples:
+Usage examples:
 
-    rclone backend restore oos:bucket/path/to/directory -o hours=HOURS
-    rclone backend restore oos:bucket -o hours=HOURS
+```console
+rclone backend restore oos:bucket/path/to/directory -o hours=HOURS
+rclone backend restore oos:bucket -o hours=HOURS
+```
 
 This flag also obeys the filters. Test first with --interactive/-i or --dry-run flags
 
-	rclone --interactive backend restore --include "*.txt" oos:bucket/path -o hours=72
+```console
+rclone --interactive backend restore --include "*.txt" oos:bucket/path -o hours=72
+```
 
-All the objects shown will be marked for restore, then
+All the objects shown will be marked for restore, then:
 
-	rclone backend restore --include "*.txt" oos:bucket/path -o hours=72
+```console
+rclone backend restore --include "*.txt" oos:bucket/path -o hours=72
+```
 
-	It returns a list of status dictionaries with Object Name and Status
-	keys. The Status will be "RESTORED"" if it was successful or an error message
-	if not.
+It returns a list of status dictionaries with Object Name and Status keys.
+The Status will be "RESTORED"" if it was successful or an error message if not.
 
-	[
-		{
-			"Object": "test.txt"
-			"Status": "RESTORED",
-		},
-		{
-			"Object": "test/file4.txt"
-			"Status": "RESTORED",
-		}
-	]
-
+```json
+[
+    {
+        "Object": "test.txt"
+        "Status": "RESTORED",
+    },
+    {
+        "Object": "test/file4.txt"
+        "Status": "RESTORED",
+    }
+]
+```
 
 Options:
 
-- "hours": The number of hours for which this object will be restored. Default is 24 hrs.
+- "hours": The number of hours for which this object will be restored.
+Default is 24 hrs.
 
 <!-- autogenerated options stop -->
 

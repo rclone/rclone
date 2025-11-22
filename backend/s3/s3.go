@@ -2893,6 +2893,8 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 			SSECustomerKey:       req.SSECustomerKey,
 			SSECustomerKeyMD5:    req.SSECustomerKeyMD5,
 			UploadId:             uid,
+			IfMatch:              copyReq.IfMatch,
+			IfNoneMatch:          copyReq.IfNoneMatch,
 		})
 		return f.shouldRetry(ctx, err)
 	})
@@ -2927,13 +2929,20 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		MetadataDirective: types.MetadataDirectiveCopy,
 	}
 
-	// Update the metadata if it is in use
-	if ci := fs.GetConfig(ctx); ci.Metadata {
-		ui, err := srcObj.prepareUpload(ctx, src, fs.MetadataAsOpenOptions(ctx), true)
-		if err != nil {
-			return nil, fmt.Errorf("failed to prepare upload: %w", err)
-		}
-		setFrom_s3CopyObjectInput_s3PutObjectInput(&req, ui.req)
+	// Build upload options including headers and metadata
+	ci := fs.GetConfig(ctx)
+	uploadOptions := fs.MetadataAsOpenOptions(ctx)
+	for _, option := range ci.UploadHeaders {
+		uploadOptions = append(uploadOptions, option)
+	}
+
+	ui, err := srcObj.prepareUpload(ctx, src, uploadOptions, true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare upload: %w", err)
+	}
+
+	setFrom_s3CopyObjectInput_s3PutObjectInput(&req, ui.req)
+	if ci.Metadata {
 		req.MetadataDirective = types.MetadataDirectiveReplace
 	}
 
@@ -4342,6 +4351,8 @@ func (w *s3ChunkWriter) Close(ctx context.Context) (err error) {
 			SSECustomerKey:       w.multiPartUploadInput.SSECustomerKey,
 			SSECustomerKeyMD5:    w.multiPartUploadInput.SSECustomerKeyMD5,
 			UploadId:             w.uploadID,
+			IfMatch:              w.ui.req.IfMatch,
+			IfNoneMatch:          w.ui.req.IfNoneMatch,
 		})
 		return w.f.shouldRetry(ctx, err)
 	})

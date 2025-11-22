@@ -135,12 +135,12 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "koofr"
-        - Koofr, https://app.koofr.net/
-    - "digistorage"
-        - Digi Storage, https://storage.rcs-rds.ro/
-    - "other"
-        - Any other Koofr API compatible storage service
+  - "koofr"
+    - Koofr, https://app.koofr.net/
+  - "digistorage"
+    - Digi Storage, https://storage.rcs-rds.ro/
+  - "other"
+    - Any other Koofr API compatible storage service
 
 #### --koofr-endpoint
 

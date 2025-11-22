@@ -266,10 +266,10 @@ Properties:
 - Type:        bool
 - Default:     true
 - Examples:
-    - "true"
-        - Enable
-    - "false"
-        - Disable
+  - "true"
+    - Enable
+  - "false"
+    - Disable
 
 ### Advanced options
 
@@ -340,14 +340,14 @@ Properties:
 - Type:        string
 - Default:     "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf"
 - Examples:
-    - ""
-        - Empty list completely disables speedup (put by hash).
-    - "*"
-        - All files will be attempted for speedup.
-    - "*.mkv,*.avi,*.mp4,*.mp3"
-        - Only common audio/video files will be tried for put by hash.
-    - "*.zip,*.gz,*.rar,*.pdf"
-        - Only common archives or PDF books will be tried for speedup.
+  - ""
+    - Empty list completely disables speedup (put by hash).
+  - "*"
+    - All files will be attempted for speedup.
+  - "*.mkv,*.avi,*.mp4,*.mp3"
+    - Only common audio/video files will be tried for put by hash.
+  - "*.zip,*.gz,*.rar,*.pdf"
+    - Only common archives or PDF books will be tried for speedup.
 
 #### --mailru-speedup-max-disk
 
@@ -362,12 +362,12 @@ Properties:
 - Type:        SizeSuffix
 - Default:     3Gi
 - Examples:
-    - "0"
-        - Completely disable speedup (put by hash).
-    - "1G"
-        - Files larger than 1Gb will be uploaded directly.
-    - "3G"
-        - Choose this option if you have less than 3Gb free on local disk.
+  - "0"
+    - Completely disable speedup (put by hash).
+  - "1G"
+    - Files larger than 1Gb will be uploaded directly.
+  - "3G"
+    - Choose this option if you have less than 3Gb free on local disk.
 
 #### --mailru-speedup-max-memory
 
@@ -380,12 +380,12 @@ Properties:
 - Type:        SizeSuffix
 - Default:     32Mi
 - Examples:
-    - "0"
-        - Preliminary hashing will always be done in a temporary disk location.
-    - "32M"
-        - Do not dedicate more than 32Mb RAM for preliminary hashing.
-    - "256M"
-        - You have at most 256Mb RAM free for hash calculations.
+  - "0"
+    - Preliminary hashing will always be done in a temporary disk location.
+  - "32M"
+    - Do not dedicate more than 32Mb RAM for preliminary hashing.
+  - "256M"
+    - You have at most 256Mb RAM free for hash calculations.
 
 #### --mailru-check-hash
 
@@ -398,10 +398,10 @@ Properties:
 - Type:        bool
 - Default:     true
 - Examples:
-    - "true"
-        - Fail with error.
-    - "false"
-        - Ignore and continue.
+  - "true"
+    - Fail with error.
+  - "false"
+    - Ignore and continue.
 
 #### --mailru-user-agent
 

@@ -12,7 +12,6 @@ Prints info about logged in user of remote.
 This prints the details of the person logged in to the cloud storage
 system.
 
-
 ```
 rclone config userinfo remote: [flags]
 ```
@@ -28,5 +27,10 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 
+
+<!-- markdownlint-restore -->

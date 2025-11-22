@@ -179,6 +179,24 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --protondrive-otp-secret-key
+
+The OTP secret key
+
+The value can also be provided with --protondrive-otp-secret-key=ABCDEFGHIJKLMNOPQRSTUVWXYZ234567
+
+The OTP secret key of your proton drive account if the account is set up with 
+two-factor authentication
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      otp_secret_key
+- Env Var:     RCLONE_PROTONDRIVE_OTP_SECRET_KEY
+- Type:        string
+- Required:    false
+
 ### Advanced options
 
 Here are the Advanced options specific to protondrive (Proton Drive).

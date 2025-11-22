@@ -188,8 +188,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "root"
-        - Connect to hdfs as root.
+  - "root"
+    - Connect to hdfs as root.
 
 ### Advanced options
 
@@ -226,8 +226,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "privacy"
-        - Ensure authentication, integrity and encryption enabled.
+  - "privacy"
+    - Ensure authentication, integrity and encryption enabled.
 
 #### --hdfs-encoding
 

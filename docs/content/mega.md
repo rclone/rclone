@@ -232,9 +232,42 @@ Properties:
 - Type:        string
 - Required:    true
 
+#### --mega-2fa
+
+The 2FA code of your MEGA account if the account is set up with one
+
+Properties:
+
+- Config:      2fa
+- Env Var:     RCLONE_MEGA_2FA
+- Type:        string
+- Required:    false
+
 ### Advanced options
 
 Here are the Advanced options specific to mega (Mega).
+
+#### --mega-session-id
+
+Session (internal use only)
+
+Properties:
+
+- Config:      session_id
+- Env Var:     RCLONE_MEGA_SESSION_ID
+- Type:        string
+- Required:    false
+
+#### --mega-master-key
+
+Master key (internal use only)
+
+Properties:
+
+- Config:      master_key
+- Env Var:     RCLONE_MEGA_MASTER_KEY
+- Type:        string
+- Required:    false
 
 #### --mega-debug
 

@@ -13,6 +13,7 @@ Thank you to our sponsors:
 <!-- markdownlint-capture -->
 <!-- markdownlint-disable line-length no-bare-urls -->
 
+{{< sponsor src="/img/logos/rabata/txt_1_300x114.png" width="300" height="200" title="Visit our sponsor Rabata.io" link="https://rabata.io/?utm_source=banner&utm_medium=rclone&utm_content=general">}}
 {{< sponsor src="/img/logos/idrive_e2.svg" width="300" height="200" title="Visit our sponsor IDrive e2" link="https://www.idrive.com/e2/?refer=rclone">}}
 {{< sponsor src="/img/logos/filescom-enterprise-grade-workflows.png" width="300" height="200" title="Start Your Free Trial Today" link="https://files.com/?utm_source=rclone&utm_medium=referral&utm_campaign=banner&utm_term=rclone">}}
 {{< sponsor src="/img/logos/mega-s4.svg" width="300" height="200" title="MEGA S4: New S3 compatible object storage. High scale. Low cost. Free egress." link="https://mega.io/objectstorage?utm_source=rclone&utm_medium=referral&utm_campaign=rclone-mega-s4&mct=rclonepromo">}}
@@ -23,6 +24,7 @@ Thank you to our sponsors:
 {{< sponsor src="/img/logos/filelu-rclone.svg" width="300" height="200" title="Visit our sponsor FileLu" link="https://filelu.com/">}}
 {{< sponsor src="/img/logos/torbox.png" width="200" height="200" title="Visit our sponsor TORBOX" link="https://www.torbox.app/">}}
 {{< sponsor src="/img/logos/spectra-logic.svg" width="300" height="200" title="Visit our sponsor Spectra Logic" link="https://spectralogic.com/">}}
+{{< sponsor src="/img/logos/servercore.svg" width="300" height="200" title="Visit our sponsor servercore" link="https://servercore.com/services/object-storage/?utm_source=rclone.org&utm_medium=referral&utm_campaign=cloud-s3_rclone_231025_paid">}}
 
 <!-- markdownlint-restore -->
 

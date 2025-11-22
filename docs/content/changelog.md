@@ -6,6 +6,130 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.72.0 - 2025-11-21
+
+[See commits](https://github.com/rclone/rclone/compare/v1.71.0...v1.72.0)
+
+- New backends
+  - [Archive](/archive) backend to read archives on cloud storage. (Nick Craig-Wood)
+- New S3 providers
+  - [Cubbit Object Storage](/s3/#Cubbit) (Marco Ferretti)
+  - [FileLu S5 Object Storage](/s3/#filelu-s5) (kingston125)
+  - [Hetzner Object Storage](/s3/#hetzner) (spiffytech)
+  - [Intercolo Object Storage](/s3/#intercolo) (Robin Rolf)
+  - [Rabata S3-compatible secure cloud storage](/s3/#Rabata) (dougal)
+  - [Servercore Object Storage](/s3/#servercore) (dougal)
+  - [SpectraLogic](/s3/#spectralogic) (dougal)
+- New commands
+  - [rclone archive](/commands/rclone_archive/): command to create and read archive files (Fawzib Rojas)
+  - [rclone config string](/commands/rclone_config_string/): for making connection strings (Nick Craig-Wood)
+  - [rclone test speed](/commands/rclone_test_speed/): Add command to test a specified remotes speed (dougal)
+- New Features
+  - backends: many backends have has a paged listing (`ListP`) interface added
+    - this enables progress when listing large directories and reduced memory usage
+  - build
+    - Bump golang.org/x/crypto from 0.43.0 to 0.45.0 to fix CVE-2025-58181 (dependabot[bot])
+    - Modernize code and tests (Nick Craig-Wood, russcoss, juejinyuxitu, reddaisyy, dulanting, Oleksandr Redko)
+    - Update all dependencies (Nick Craig-Wood)
+    - Enable support for `aix/ppc64` (Lakshmi-Surekha)
+  - check: Improved reporting of differences in sizes and contents (albertony)
+  - copyurl: Added `--url` to read URLs from CSV file (S-Pegg1, dougal)
+  - docs:
+    - markdown linting (albertony)
+    - fixes (albertony, Andrew Gunnerson, anon-pradip, Claudius Ellsel, dougal, iTrooz, Jean-Christophe Cura, Joseph Brownlee, kapitainsky, Matt LaPaglia, n4n5, Nick Craig-Wood, nielash, SublimePeace, Ted Robertson, vastonus)
+  - fs: remove unnecessary Seek call on log file (Aneesh Agrawal)
+  - hashsum: Improved output format when listing algorithms (albertony)
+  - lib/http: Cleanup indentation and other whitespace in http serve template (albertony)
+  - lsf: Add support for `unix` and `unixnano` time formats (Motte)
+  - oauthutil: Improved debug logs from token refresh (albertony)
+  - rc
+    - Add [job/batch](/rc/#job-batch) for sending batches of rc commands to run concurrently (Nick Craig-Wood)
+    - Add `runningIds` and `finishedIds` to [job/list](/rc/#job-list) (n4n5)
+    - Add `osVersion`, `osKernel` and `osArch` to [core/version](/rc/#core-version) (Nick Craig-Wood)
+    - Make sure fatal errors run via the rc don't crash rclone (Nick Craig-Wood)
+    - Add `executeId` to job statuses in [job/list](/rc/#job-list) (Nikolay Kiryanov)
+    - `config/unlock`: rename parameter to `configPassword` accept old as well (Nick Craig-Wood)
+  - serve http: Download folders as zip (dougal)
+- Bug Fixes
+  - build
+    - Fix tls: failed to verify certificate: x509: negative serial number (Nick Craig-Wood)
+  - march
+    - Fix `--no-traverse` being very slow (Nick Craig-Wood)
+  - serve s3: Fix log output to remove the EXTRA messages (iTrooz)
+- Mount
+  - Windows: improve error message on missing WinFSP (divinity76)
+- Local
+  - Add `--skip-specials` to ignore special files (Adam Dinwoodie)
+- Azure Blob
+  - Add ListP interface (dougal)
+- Azurefiles
+  - Add ListP interface (Nick Craig-Wood)
+- B2
+  - Add ListP interface (dougal)
+  - Add Server-Side encryption support (fries1234)
+  - Fix "expected a FileSseMode but found: ''" (dougal)
+  - Allow individual old versions to be deleted with `--b2-versions` (dougal)
+- Box
+  - Add ListP interface (Nick Craig-Wood)
+  - Allow configuration with config file contents (Dominik Sander)
+- Compress
+  - Add zstd compression (Alex)
+- Drive
+  - Add ListP interface (Nick Craig-Wood)
+- Dropbox
+  - Add ListP interface (Nick Craig-Wood)
+  - Fix error moving just created objects (Nick Craig-Wood)
+- FTP
+  - Fix SOCKS proxy support (dougal)
+  - Fix transfers from servers that return 250 ok messages (jijamik)
+- Google Cloud Storage
+  - Add ListP interface (dougal)
+  - Fix `--gcs-storage-class` to work with server side copy for objects (Riaz Arbi)
+- HTTP
+  - Add basic metadata and provide it via serve (Oleg Kunitsyn)
+- Jottacloud
+  - Add support for Let's Go Cloud (from MediaMarkt) as a whitelabel service (albertony)
+  - Add support for MediaMarkt Cloud as a whitelabel service (albertony)
+  - Added support for traditional oauth authentication also for the main service (albertony)
+  - Abort attempts to run unsupported rclone authorize command (albertony)
+  - Improved token refresh handling (albertony)
+  - Fix legacy authentication (albertony)
+  - Fix authentication for whitelabel services from Elkjøp subsidiaries (albertony)
+- Mega
+  - Implement 2FA login (iTrooz)
+- Memory
+  - Add ListP interface (dougal)
+- Onedrive
+  - Add ListP interface (Nick Craig-Wood)
+- Oracle Object Storage
+  - Add ListP interface (dougal)
+- Pcloud
+  - Add ListP interface (Nick Craig-Wood)
+- Proton Drive
+  - Automated 2FA login with OTP secret key (Microscotch)
+- S3
+  - Make it easier to add new S3 providers (dougal)
+  - Add `--s3-use-data-integrity-protections` quirk to fix  BadDigest error in Alibaba, Tencent (hunshcn)
+  - Add support for `--upload-header`, `If-Match` and `If-None-Match` (Sean Turner)
+  - Fix single file copying behavior with low permission (hunshcn)
+- SFTP
+  - Fix zombie SSH processes with `--sftp-ssh` (Copilot)
+- Smb
+  - Optimize smb mount performance by avoiding stat checks during initialization (Sudipto Baral)
+- Swift
+  - Add ListP interface (dougal)
+  - If storage_policy isn't set, use the root containers policy (Andrew Ruthven)
+  - Report disk usage in segment containers (Andrew Ruthven)
+- Ulozto
+  - Implement the About functionality (Lukas Krejci)
+  - Fix downloads returning HTML error page (aliaj1)
+- WebDAV
+  - Optimize bearer token fetching with singleflight (hunshcn)
+  - Add ListP interface (Nick Craig-Wood)
+  - Use SpaceSepList to parse bearer token command (hunshcn)
+  - Add `Access-Control-Max-Age` header for CORS preflight caching (viocha)
+  - Fix out of memory with sharepoint-ntlm when uploading large file (Nick Craig-Wood)
+
 ## v1.71.2 - 2025-10-20
 
 [See commits](https://github.com/rclone/rclone/compare/v1.71.1...v1.71.2)
