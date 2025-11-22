@@ -104,7 +104,14 @@ retry:
 		opts.Body = io.TeeReader(opts.Body, reqBody)
 	}
 
-	resp, err := f.client.Call(ctx, opts)
+	var resp *http.Response
+	var err error
+
+	// Use Pacer for rate limiting and standard retries
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.client.Call(ctx, opts)
+		return shouldRetry(ctx, resp, err)
+	})
 	if err != nil {
 		return err
 	}
@@ -119,15 +126,22 @@ retry:
 	body, _ := io.ReadAll(resp.Body)
 	debug(f.opt, 2, "Response body: %s", body)
 
+	// Additional logic for custom retries (e.g. JS Token refresh, domain change)
+	// Note: Pacer handles standard 429/5xx retries above.
+	// This block handles logic-specific retries that require modifying the Fs state.
+
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		err = fmt.Errorf("http error %d: %v", resp.StatusCode, resp.Status)
 		debug(f.opt, 1, "Error: %s", err)
+		// retryErrorCodes handled by pacer mostly, but if specific logic needed:
 		if IsInSlice(resp.StatusCode, retryErrorCodes) {
 			retry++
 			if retry > 2 {
 				return err
 			}
-
+			// Pacer already slept, but if we are here it means pacer gave up or we want to force retry loop for logic
+			// However, pacer.Call returns final error.
+			// We keep this check for backward compat or specific handling not covered by standard pacer
 			time.Sleep(time.Duration(retry) * time.Second)
 			goto retry
 		}
@@ -163,6 +177,24 @@ retry:
 	}
 
 	return nil
+}
+
+// shouldRetry returns a boolean as to whether this resp and err
+// deserve to be retried.
+func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if err != nil {
+		// Check for context cancelled error
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return false, err
+		}
+		return true, err
+	}
+
+	if resp.StatusCode == 429 || (resp.StatusCode >= 500 && resp.StatusCode < 600) {
+		return true, fmt.Errorf("http error %d", resp.StatusCode)
+	}
+
+	return false, nil
 }
 
 func (f *Fs) apiJsToken(ctx context.Context) error {
@@ -213,42 +245,25 @@ func (f *Fs) apiCheckPremium(ctx context.Context) error {
 	return nil
 }
 
-func (f *Fs) apiList(ctx context.Context, dir string) ([]*api.Item, error) {
+// apiList fetches a single page of files from the directory
+func (f *Fs) apiList(ctx context.Context, dir string, page, limit int) ([]*api.Item, error) {
 	if len(dir) == 0 || dir[0] != '/' {
 		dir = "/" + dir
 	}
 
-	page := 1
-	limit := 100
 	opt := NewRequest(http.MethodGet, "/api/list")
 	opt.Parameters.Set("dir", dir)
 	// opt.Parameters.Set("web", "1") // If 1 is passed, the thumbnail field thumbs will be returned.
-	// opt.Parameters.Set("order", ...) // Sorting field: time (modification time), name (file name), size (size; note that directories do not have a size)
-	// if true {
-	// 	opt.Parameters.Set("desc", "1") // 1: descending order; 0: ascending order
-	// }
+	opt.Parameters.Set("page", strconv.Itoa(page))
+	opt.Parameters.Set("num", strconv.Itoa(limit))
 
-	list := make([]*api.Item, 0)
-	for {
-		opt.Parameters.Set("page", strconv.Itoa(page))
-		opt.Parameters.Set("num", strconv.Itoa(limit))
-
-		var res api.ResponseList
-		err := f.apiExec(ctx, opt, &res)
-		if err != nil {
-			return nil, err
-		}
-
-		list = append(list, res.List...)
-
-		if len(res.List) == 0 || len(res.List) < limit {
-			break
-		}
-
-		page++
+	var res api.ResponseList
+	err := f.apiExec(ctx, opt, &res)
+	if err != nil {
+		return nil, err
 	}
 
-	return list, nil
+	return res.List, nil
 }
 
 // files info, can return info about a few files, but we're use it for only one file

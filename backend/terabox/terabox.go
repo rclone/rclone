@@ -29,17 +29,19 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
 
 const (
 	baseURL = "https://www.terabox.com"
 
-	// minSleep       = 400 * time.Millisecond // api is extremely rate limited now
-	// maxSleep       = 5 * time.Second
-	// decayConstant  = 2 // bigger for slower decay, exponential
-	// attackConstant = 0 // start with max sleep
+	minSleep       = 400 * time.Millisecond // api is extremely rate limited now
+	maxSleep       = 5 * time.Second
+	decayConstant  = 2 // bigger for slower decay, exponential
+	attackConstant = 0 // start with max sleep
 )
 
 // Check the interfaces are satisfied
@@ -52,8 +54,9 @@ var (
 	_ fs.Purger         = (*Fs)(nil)
 	_ fs.CleanUpper     = (*Fs)(nil)
 	_ fs.PutUncheckeder = (*Fs)(nil)
-
-	_ fs.Object = (*Object)(nil)
+	_ fs.ListPer        = (*Fs)(nil)
+	_ fs.Shutdowner     = (*Fs)(nil)
+	_ fs.Object         = (*Object)(nil)
 )
 
 func init() {
@@ -134,7 +137,7 @@ type Fs struct {
 	opt      *Options
 	features *fs.Features
 	client   *rest.Client
-	// pacer    *fs.Pacer
+	pacer    *fs.Pacer
 
 	origRoot     string
 	origRootItem *api.Item
@@ -194,9 +197,8 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		root:     root,
 		origRoot: root, // save origin root, because it can change, if path is file
 		opt:      opt,
-		// pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
-
-		baseURL: baseURL,
+		pacer:    fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
+		baseURL:  baseURL,
 		// jsToken: "",
 	}
 
@@ -308,41 +310,74 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	debug(f.opt, 1, "List %s;", dir)
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	debug(f.opt, 1, "ListP %s;", dir)
 
 	if f.root != "/" && f.origRootItem == nil {
-		return nil, fs.ErrorDirNotFound
+		return fs.ErrorDirNotFound
 	}
 
-	list, err := f.apiList(ctx, libPath.Join(f.root, dir))
-	if err != nil {
-		if api.ErrIsNum(err, -9) {
-			return nil, fs.ErrorDirNotFound
-		}
+	listHelper := list.NewHelper(callback)
+	targetDir := libPath.Join(f.root, dir)
+	page := 1
+	limit := 100 // Matches default in apiList
 
-		return nil, err
-	}
-
-	for _, item := range list {
-		remote := libPath.Join(dir, f.opt.Enc.ToStandardName(item.Name))
-		if item.Isdir > 0 {
-			dir := fs.NewDir(remote, time.Time{}).SetID(strconv.FormatUint(item.ID, 10))
-			entries = append(entries, dir)
-		} else {
-			file := &Object{
-				fs:      f,
-				id:      item.ID,
-				remote:  remote,
-				size:    item.Size,
-				modTime: time.Unix(item.ServerModifiedTime, 0),
-				hash:    item.MD5,
+	for {
+		list, err := f.apiList(ctx, targetDir, page, limit)
+		if err != nil {
+			if api.ErrIsNum(err, -9) {
+				return fs.ErrorDirNotFound
 			}
-
-			entries = append(entries, file)
+			return err
 		}
+
+		for _, item := range list {
+			remote := libPath.Join(dir, f.opt.Enc.ToStandardName(item.Name))
+			if item.Isdir > 0 {
+				d := fs.NewDir(remote, time.Time{}).SetID(strconv.FormatUint(item.ID, 10))
+				d.SetSize(item.Size) // Directories in Terabox usually 0, but safe to set
+				if err := listHelper.Add(d); err != nil {
+					return err
+				}
+			} else {
+				file := &Object{
+					fs:      f,
+					id:      item.ID,
+					remote:  remote,
+					size:    item.Size,
+					modTime: time.Unix(item.ServerModifiedTime, 0),
+					hash:    item.MD5,
+				}
+				if err := listHelper.Add(file); err != nil {
+					return err
+				}
+			}
+		}
+
+		// Check if we have reached the end of the list
+		if len(list) < limit {
+			break
+		}
+		page++
 	}
 
-	return entries, nil
+	return listHelper.Flush()
 }
 
 // NewObject finds the Object at remote.  If it can't be found it
@@ -607,6 +642,13 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	debug(f.opt, 1, "CleanUp")
 
 	return f.apiCleanRecycleBin(ctx)
+}
+
+// Shutdown the backend, closing any background tasks and any
+// cached connections.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	debug(f.opt, 1, "Shutdown")
+	return nil
 }
 
 //

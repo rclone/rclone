@@ -12,7 +12,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/teldrive/api"
@@ -23,11 +22,11 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -419,67 +418,62 @@ func (f *Fs) getFileShare(ctx context.Context, id string) (*api.FileShare, error
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
 
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	opts := &api.MetadataRequestOptions{
 		Limit: f.opt.PageSize,
 		Page:  1,
 	}
 
-	files := []api.FileInfo{}
+	for {
+		info, err := f.readMetaDataForPath(ctx, dir, opts)
+		if err != nil {
+			return err
+		}
 
-	info, err := f.readMetaDataForPath(ctx, dir, opts)
-
-	if err != nil {
-		return nil, err
-	}
-
-	files = append(files, info.Files...)
-	mu := sync.Mutex{}
-	if info.Meta.TotalPages > 1 {
-		g, _ := errgroup.WithContext(ctx)
-
-		g.SetLimit(8)
-
-		for i := 2; i <= info.Meta.TotalPages; i++ {
-			page := i
-			g.Go(func() error {
-				opts := &api.MetadataRequestOptions{
-					Limit: f.opt.PageSize,
-					Page:  int64(page),
-				}
-				info, err := f.readMetaDataForPath(ctx, dir, opts)
-				if err != nil {
+		for _, item := range info.Files {
+			remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
+			if item.Type == "folder" {
+				f.dirCache.Put(remote, item.Id)
+				d := fs.NewDir(remote, item.ModTime).SetID(item.Id).SetParentID(item.ParentId).
+					SetSize(item.Size)
+				if err := list.Add(d); err != nil {
 					return err
 				}
-				mu.Lock()
-				files = append(files, info.Files...)
-				mu.Unlock()
-				return nil
-			})
-		}
-		if err := g.Wait(); err != nil {
-			return nil, err
-		}
-	}
-
-	for _, item := range files {
-		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
-		if item.Type == "folder" {
-			f.dirCache.Put(remote, item.Id)
-			d := fs.NewDir(remote, item.ModTime).SetID(item.Id).SetParentID(item.ParentId).
-				SetSize(item.Size)
-			entries = append(entries, d)
-		}
-		if item.Type == "file" {
-			o, err := f.newObjectWithInfo(ctx, remote, &item)
-			if err != nil {
-				continue
+			} else if item.Type == "file" {
+				o, err := f.newObjectWithInfo(ctx, remote, &item)
+				if err != nil {
+					continue
+				}
+				if err := list.Add(o); err != nil {
+					return err
+				}
 			}
-			entries = append(entries, o)
 		}
 
+		if opts.Page >= int64(info.Meta.TotalPages) {
+			break
+		}
+		opts.Page++
 	}
-	return entries, nil
+
+	return list.Flush()
 }
 
 // Return an Object from a path
@@ -1193,6 +1187,11 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	return &fs.Usage{Used: fs.NewUsageValue(total)}, nil
 }
 
+// Shutdown shutdown the fs
+func (f *Fs) Shutdown(ctx context.Context) error {
+	return nil
+}
+
 // Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {
 	return o.fs
@@ -1282,4 +1281,6 @@ var (
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ParentIDer      = (*Object)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.ListPer         = (*Fs)(nil)
+	_ fs.Shutdowner      = (*Fs)(nil)
 )
