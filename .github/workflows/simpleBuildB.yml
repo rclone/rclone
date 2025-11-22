@@ -135,22 +135,22 @@ jobs:
           # Il file compilato è chiamato 'rclone' (o 'rclone.exe' su Windows)
           path: rclone${{ endsWith(matrix.job_name, 'windows') && '.exe' || '' }}
 
-#      - name: Run tests
-#        run: |
-#          make quicktest
-#        if: matrix.quicktest
-#
-#      - name: Race test
-#        run: |
-#          make racequicktest
-#        if: matrix.racequicktest
-#
-#      - name: Run librclone tests
-#        run: |
-#          make -C librclone/ctest test
-#          make -C librclone/ctest clean
-#          librclone/python/test_rclone.py
-#        if: matrix.librclonetest
+      - name: Run tests
+        run: |
+          make quicktest
+        if: matrix.quicktest
+
+      - name: Race test
+        run: |
+          make racequicktest
+        if: matrix.racequicktest
+
+      - name: Run librclone tests
+        run: |
+          make -C librclone/ctest test
+          make -C librclone/ctest clean
+          librclone/python/test_rclone.py
+        if: matrix.librclonetest
 
       - name: Compile all architectures test
         run: |
