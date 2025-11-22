@@ -1,6 +1,6 @@
 ---
 # Github Actions build for rclone (Custom & Clean)
-# Include: Linux x64, Linux ARM64, Windows x64, Android
+# Include: Linux x64, Linux ARM64, Windows x64 (With Icon), Android
 # Exclude: Tests, Lint, Other OS
 
 name: build
@@ -45,7 +45,7 @@ jobs:
             goarch: arm64
             ext: ''
 
-          # --- WINDOWS X64 ---
+          # --- WINDOWS X64 (Con Icona) ---
           - name: windows-amd64
             goos: windows
             goarch: amd64
@@ -53,15 +53,29 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '>=1.24'
           check-latest: true
+
+      # --- STEP PER L'ICONA WINDOWS (INIZIO) ---
+      - name: Install rsrc tool (Windows Only)
+        if: matrix.goos == 'windows'
+        run: go install github.com/akavel/rsrc@latest
+
+      - name: Download Official Icon (Windows Only)
+        if: matrix.goos == 'windows'
+        run: curl -L https://raw.githubusercontent.com/rclone/rclone/master/graphics/logo/ico/logo_symbol_color.ico -o rclone.ico
+
+      - name: Generate Resource .syso (Windows Only)
+        if: matrix.goos == 'windows'
+        run: rsrc -ico rclone.ico -o rclone.syso
+      # --- STEP PER L'ICONA WINDOWS (FINE) ---
 
       - name: Build Rclone (${{ matrix.name }})
         run: |
@@ -71,11 +85,12 @@ jobs:
           export CGO_ENABLED=0
           
           # Calcoliamo una versione fittizia se non c'è tag
-          VERSION="v1.74.0-custom"
+          VERSION="v1.72.0-extra"
           
           echo "Building for $GOOS/$GOARCH..."
           
           # Compilazione ottimizzata (senza debug info per file più piccoli)
+          # Nota: Se presente rclone.syso (creato sopra), Go lo include automaticamente su Windows
           go build -v -trimpath -ldflags "-s -w -X github.com/rclone/rclone/fs.Version=${VERSION}" -o rclone${{ matrix.ext }} .
 
       - name: Check Version (Solo se compatibile con runner)
