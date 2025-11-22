@@ -2,7 +2,7 @@
 # Github Actions build for rclone
 # -*- compile-command: "yamllint -f parsable build.yml" -*-
 
-name: build
+name: buildBAK
 
 # Trigger the workflow on push or pull request
 on:
