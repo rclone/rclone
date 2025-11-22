@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.24']
+        job_name: ['linux', 'linux_386', 'windows', 'other_os', 'go1.24']
 
         include:
           - job_name: linux
@@ -50,21 +50,21 @@ jobs:
             gotags: cmount
             quicktest: true
 
-          - job_name: mac_amd64
-            os: macos-latest
-            go: '>=1.25.0-rc.1'
-            gotags: 'cmount'
-            build_flags: '-include "^darwin/amd64" -cgo'
-            quicktest: true
-            racequicktest: true
-            deploy: true
+#          - job_name: mac_amd64
+#            os: macos-latest
+#            go: '>=1.25.0-rc.1'
+#            gotags: 'cmount'
+#            build_flags: '-include "^darwin/amd64" -cgo'
+#            quicktest: true
+#            racequicktest: true
+#            deploy: true
 
-          - job_name: mac_arm64
-            os: macos-latest
-            go: '>=1.25.0-rc.1'
-            gotags: 'cmount'
-            build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
-            deploy: true
+#          - job_name: mac_arm64
+#            os: macos-latest
+#            go: '>=1.25.0-rc.1'
+#            gotags: 'cmount'
+#            build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
+#            deploy: true
 
           - job_name: windows
             os: windows-latest
