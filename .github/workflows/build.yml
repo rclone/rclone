@@ -169,6 +169,14 @@ jobs:
         run: |
           rclone version
 
+      - name: Upload Built Binary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Il nome dell'artefatto include l'OS/Arch per renderlo unico
+          name: rclone-binaries-${{ matrix.job_name }}
+          # Il file compilato è chiamato 'rclone' (o 'rclone.exe' su Windows)
+          path: rclone${{ endsWith(matrix.job_name, 'windows') && '.exe' || '' }}
+
       - name: Run tests
         run: |
           make quicktest
