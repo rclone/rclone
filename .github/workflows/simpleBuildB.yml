@@ -2,7 +2,7 @@
 # Github Actions Simplebuild for rclone
 # -*- compile-command: "yamllint -f parsable build.yml" -*-
 
-name: simpleBuild2
+name: simpleBuildB
 
 # Trigger the workflow on push or pull request
 on:
@@ -29,7 +29,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.24']
         job_name: ['linux', 'windows', 'go1.25.4']
 
         include:
@@ -44,29 +43,6 @@ jobs:
             librclonetest: true
             deploy: true
 
-#          - job_name: linux_386
-#            os: ubuntu-latest
-#            go: '>=1.25.0-rc.1'
-#            goarch: 386
-#            gotags: cmount
-#            quicktest: true
-
-#          - job_name: mac_amd64
-#            os: macos-latest
-#            go: '>=1.25.0-rc.1'
-#            gotags: 'cmount'
-#            build_flags: '-include "^darwin/amd64" -cgo'
-#            quicktest: true
-#            racequicktest: true
-#            deploy: true
-#
-#          - job_name: mac_arm64
-#            os: macos-latest
-#            go: '>=1.25.0-rc.1'
-#            gotags: 'cmount'
-#            build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
-#            deploy: true
-
           - job_name: windows
             os: windows-latest
             go: '>=1.25.4'
@@ -76,13 +52,6 @@ jobs:
             build_args: '-buildmode exe'
             quicktest: true
             deploy: true
-
-#          - job_name: other_os
-#            os: ubuntu-latest
-#            go: '>=1.25.0-rc.1'
-#            build_flags: '-exclude "^(windows/|darwin/|linux/)"'
-#            compile_all: true
-#            deploy: true
 
           - job_name: go1.25.4
             os: ubuntu-latest
@@ -122,18 +91,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fuse3 libfuse-dev rpm pkg-config git-annex git-annex-remote-rclone nfs-common
         if: matrix.os == 'ubuntu-latest'
-
-#      - name: Install Libraries on macOS
-#        run: |
-#          # https://github.com/Homebrew/brew/issues/15621#issuecomment-1619266788
-#          # https://github.com/orgs/Homebrew/discussions/4612#discussioncomment-6319008
-#          unset HOMEBREW_NO_INSTALL_FROM_API
-#          brew untap --force homebrew/core
-#          brew untap --force homebrew/cask
-#          brew update
-#          brew install --cask macfuse
-#          brew install git-annex git-annex-remote-rclone
-#        if: matrix.os == 'macos-latest'
 
       - name: Install Libraries on Windows
         shell: powershell
