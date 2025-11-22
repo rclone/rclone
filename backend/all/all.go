@@ -4,6 +4,8 @@ package all
 import (
 	// Active file systems
 	_ "github.com/rclone/rclone/backend/alias"
+        _ "github.com/rclone/rclone/backend/alist"
+        _ "github.com/rclone/rclone/backend/alldebrid"
 	_ "github.com/rclone/rclone/backend/archive"
 	_ "github.com/rclone/rclone/backend/azureblob"
 	_ "github.com/rclone/rclone/backend/azurefiles"
@@ -61,6 +63,8 @@ import (
 	_ "github.com/rclone/rclone/backend/storj"
 	_ "github.com/rclone/rclone/backend/sugarsync"
 	_ "github.com/rclone/rclone/backend/swift"
+        _ "github.com/rclone/rclone/backend/teldrive"
+        _ "github.com/rclone/rclone/backend/terabox"
 	_ "github.com/rclone/rclone/backend/ulozto"
 	_ "github.com/rclone/rclone/backend/union"
 	_ "github.com/rclone/rclone/backend/uptobox"
