@@ -392,6 +392,12 @@ jobs:
 
       - name: x64 build
         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-x64 .
+ 
+      - name: Upload Android Binaries Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rclone-android-binaries
+          path: build/rclone-android-*
 
       - name: Upload artifacts
         run: |
