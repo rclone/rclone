@@ -265,7 +265,7 @@ account key" button.
   `https://www.googleapis.com/auth/drive`
   to grant read/write access to Google Drive specifically.
   You can also use `https://www.googleapis.com/auth/drive.readonly` for read
-  only access.
+  only access with `--drive-scope=drive.readonly`.
 - Click "Authorise"
 
 ##### 3. Configure rclone, assuming a new install
