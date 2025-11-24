@@ -1,0 +1,39 @@
+name: Other
+description: Any other S3 compatible provider
+region:
+  '': |-
+    Use this if unsure.
+    Will use v4 signatures and an empty region.
+  other-v2-signature: |-
+    Use this only if v4 signatures don't work.
+    E.g. pre Jewel/v10 CEPH.
+endpoint: {}
+location_constraint: {}
+acl:
+  private: |-
+    Owner gets FULL_CONTROL.
+    No one else has access rights (default).
+  public-read: |-
+    Owner gets FULL_CONTROL.
+    The AllUsers group gets READ access.
+  public-read-write: |-
+    Owner gets FULL_CONTROL.
+    The AllUsers group gets READ and WRITE access.
+    Granting this on a bucket is generally not recommended.
+  authenticated-read: |-
+    Owner gets FULL_CONTROL.
+    The AuthenticatedUsers group gets READ access.
+  bucket-owner-read: |-
+    Object owner gets FULL_CONTROL.
+    Bucket owner gets READ access.
+    If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+  bucket-owner-full-control: |-
+    Both the object owner and the bucket owner get FULL_CONTROL over the object.
+    If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+bucket_acl: true
+quirks:
+  list_version: 1
+  force_path_style: true
+  list_url_encode: false
+  use_multipart_etag: false
+  use_already_exists: false

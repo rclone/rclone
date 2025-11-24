@@ -455,6 +455,11 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 			go func() {
 				defer workerWg.Done()
 				for t := range matchTasks {
+					// Can't match directories with NewObject
+					if _, ok := t.src.(fs.Object); !ok {
+						t.dstMatch <- nil
+						continue
+					}
 					leaf := path.Base(t.src.Remote())
 					dst, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
 					if err != nil {

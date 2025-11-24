@@ -97,7 +97,7 @@ func (e example) output() string {
 func sprintExamples() string {
 	s := "Examples:\n"
 	for _, e := range examples {
-		s += fmt.Sprintf("\n```sh\n%s\n", e.command())
+		s += fmt.Sprintf("\n```console\n%s\n", e.command())
 		s += fmt.Sprintf("// Output: %s\n```\n", e.output())
 	}
 	return s

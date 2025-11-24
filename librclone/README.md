@@ -13,18 +13,22 @@ The shims are a thin wrapper over the rclone RPC.
 
 The implementation is based on cgo; to build it you need Go and a GCC compatible
 C compiler (GCC or Clang). On Windows you can use the MinGW ports, e.g. by installing
-in a [MSYS2](https://www.msys2.org) distribution (you may now install GCC in the newer
-and recommended UCRT64 subsystem, however there were compatibility issues with previous
-versions of cgo where, if not force rebuild with go build option `-a` helped, you had
-to resort to the classic MINGW64 subsystem).
+in a [MSYS2](https://www.msys2.org) distribution (you may now install GCC in the
+newer and recommended UCRT64 subsystem, however there were compatibility issues
+with previous versions of cgo where, if not force rebuild with go build option `-a`
+helped, you had to resort to the classic MINGW64 subsystem).
 
 Build a shared library like this (change from .so to .dll on Windows):
 
-    go build --buildmode=c-shared -o librclone.so github.com/rclone/rclone/librclone
+```console
+go build --buildmode=c-shared -o librclone.so github.com/rclone/rclone/librclone
+```
 
 Build a static library like this (change from .a to .lib on Windows):
 
-    go build --buildmode=c-archive -o librclone.a github.com/rclone/rclone/librclone
+```console
+go build --buildmode=c-archive -o librclone.a github.com/rclone/rclone/librclone
+```
 
 Both the above commands will also generate `librclone.h` which should
 be `#include`d in `C` programs wishing to use the library (with some
@@ -50,7 +54,7 @@ On Windows, when you build a shared library, you can embed version information
 as binary resource. To do that you need to run the following command **before**
 the build command.
 
-```
+```console
 go run bin/resource_windows.go -binary librclone.dll -dir librclone
 ```
 
@@ -75,12 +79,19 @@ The official [C example](#linux-c-example) is targeting Linux/macOS, and will
 not work on Windows. It is very possible to use `librclone` from a C/C++
 application on Windows, but there are some pitfalls that you can avoid by
 following these guidelines:
-- Build `librclone` as shared library, and use run-time dynamic linking (see [linking](#linking)).
-- Do not try to unload the library with `FreeLibrary` (see [unloading](#unloading)).
-- Deallocate returned strings with API function `RcloneFreeString` (see [memory management](#memory-management)).
-- Define struct `RcloneRPCResult`, instead of including `librclone.h` (see [include file](#include-file)).
-- Use UTF-8 encoded strings (see [encoding](#encoding)).
-- Properly escape JSON strings, beware of the native path separator (see [escaping](#escaping)).
+
+- Build `librclone` as shared library, and use run-time dynamic linking
+  (see [linking](#linking)).
+- Do not try to unload the library with `FreeLibrary`
+  (see [unloading](#unloading)).
+- Deallocate returned strings with API function `RcloneFreeString`
+  (see [memory management](#memory-management)).
+- Define struct `RcloneRPCResult`, instead of including `librclone.h`
+  (see [include file](#include-file)).
+- Use UTF-8 encoded strings
+  (see [encoding](#encoding)).
+- Properly escape JSON strings, beware of the native path separator
+  (see [escaping](#escaping)).
 
 #### Linking
 
@@ -130,10 +141,10 @@ either.
 The interface of librclone is so simple, that all you need is to define the
 small struct `RcloneRPCResult`, from [librclone.go](librclone.go):
 
-```C++
+```c++
 struct RcloneRPCResult {
     char* Output;
-    int	Status;
+    int Status;
 };
 ```
 
@@ -161,7 +172,7 @@ own escaping. This is not a Windows-specific issue, but there is the
 additional challenge that native filesystem path separator is the same as
 the escape character, and you may end up with strings like this:
 
-```C++
+```c++
 const char* input = "{"
 "\"fs\": \"C:\\\\Temp\","
 "\"remote\": \"sub/folder\","
@@ -174,7 +185,7 @@ constants, leaving escaping only necessary for the contained JSON.
 
 ## Example in golang
 
-Here is a go example to help you move files : 
+Here is a go example to help you move files:
 
 ```go
 func main() {
@@ -188,11 +199,10 @@ func main() {
     if err != nil {
     fmt.Println(err)
     }
-		
+
     out, status: = librclone.RPC("sync/copy", string(syncRequestJSON))
     fmt.Println("Got status : %d and output %q", status, out)
 }
-
 ```
 
 ## gomobile
@@ -201,7 +211,9 @@ The `gomobile` subdirectory contains the equivalent of the C binding but
 suitable for using with [gomobile](https://pkg.go.dev/golang.org/x/mobile/cmd/gomobile)
 using something like this.
 
-    gomobile bind -v -target=android -javapkg=org.rclone github.com/rclone/rclone/librclone/gomobile
+```console
+gomobile bind -v -target=android -javapkg=org.rclone github.com/rclone/rclone/librclone/gomobile
+```
 
 The command generates an Android library (`aar`) that can be imported
 into an Android application project. Librclone will be contained
@@ -233,8 +245,10 @@ Further docs:
 
 - [gomobile main website](https://pkg.go.dev/golang.org/x/mobile/cmd/gomobile)
 - [gomobile wiki](https://github.com/golang/go/wiki/Mobile)
-- [go issue #16876](https://github.com/golang/go/issues/16876) where the feature was added
-- [gomobile design doc](https://docs.google.com/document/d/1y9hStonl9wpj-5VM-xWrSTuEJFUAxGOXOhxvAs7GZHE/edit) for extra details not in the docs.
+- [go issue #16876](https://github.com/golang/go/issues/16876) where the feature
+  was added
+- [gomobile design doc](https://docs.google.com/document/d/1y9hStonl9wpj-5VM-xWrSTuEJFUAxGOXOhxvAs7GZHE/edit)
+  for extra details not in the docs.
 
 ## python
 
@@ -247,19 +261,20 @@ This needs expanding and submitting to pypi...
 
 ## Rust
 
-Rust bindings are available in the `librclone` crate: https://crates.io/crates/librclone
+Rust bindings are available in the `librclone` crate: <https://crates.io/crates/librclone>
 
 ## PHP
 
-The `php` subdirectory contains how to use the C library librclone in php through foreign 
-function interface (FFI).
+The `php` subdirectory contains how to use the C library librclone in php through
+foreign function interface (FFI).
 
 Useful docs:
+
 - [PHP / FFI](https://www.php.net/manual/en/book.ffi.php)
 
 ## TODO
 
-- Async jobs must currently be cancelled manually at the moment - RcloneFinalize doesn't do it.
+- Async jobs must currently be cancelled manually at the moment - RcloneFinalize
+  doesn't do it.
 - This will use the rclone config system and rclone logging system.
 - Need examples showing how to configure things,
-

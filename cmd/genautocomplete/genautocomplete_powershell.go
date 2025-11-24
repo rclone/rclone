@@ -20,7 +20,7 @@ var powershellCommandDefinition = &cobra.Command{
 
 To load completions in your current shell session:
 
-` + "```sh" + `
+` + "```console" + `
 rclone completion powershell | Out-String | Invoke-Expression
 ` + "```" + `
 

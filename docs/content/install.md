@@ -29,13 +29,13 @@ signatures on the release.
 
 To install rclone on Linux/macOS/BSD systems, run:
 
-```sh
+```console
 sudo -v ; curl https://rclone.org/install.sh | sudo bash
 ```
 
 For beta installation, run:
 
-```sh
+```console
 sudo -v ; curl https://rclone.org/install.sh | sudo bash -s beta
 ```
 
@@ -48,7 +48,7 @@ won't re-download if not needed.
 
 Fetch and unpack
 
-```sh
+```console
 curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
 unzip rclone-current-linux-amd64.zip
 cd rclone-*-linux-amd64
@@ -56,7 +56,7 @@ cd rclone-*-linux-amd64
 
 Copy binary file
 
-```sh
+```console
 sudo cp rclone /usr/bin/
 sudo chown root:root /usr/bin/rclone
 sudo chmod 755 /usr/bin/rclone
@@ -64,7 +64,7 @@ sudo chmod 755 /usr/bin/rclone
 
 Install manpage
 
-```sh
+```console
 sudo mkdir -p /usr/local/share/man/man1
 sudo cp rclone.1 /usr/local/share/man/man1/
 sudo mandb
@@ -72,7 +72,7 @@ sudo mandb
 
 Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
-```sh
+```console
 rclone config
 ```
 
@@ -80,7 +80,7 @@ rclone config
 
 ### Installation with brew {#macos-brew}
 
-```sh
+```console
 brew install rclone
 ```
 
@@ -98,7 +98,7 @@ developers so it may be out of date. Its current version is as below.
 
 On macOS, rclone can also be installed via [MacPorts](https://www.macports.org):
 
-```sh
+```console
 sudo port install rclone
 ```
 
@@ -116,19 +116,19 @@ notarized it is enough to download with `curl`.
 
 Download the latest version of rclone.
 
-```sh
+```console
 cd && curl -O https://downloads.rclone.org/rclone-current-osx-amd64.zip
 ```
 
 Unzip the download and cd to the extracted folder.
 
-```sh
+```console
 unzip -a rclone-current-osx-amd64.zip && cd rclone-*-osx-amd64
 ```
 
 Move rclone to your $PATH. You will be prompted for your password.
 
-```sh
+```console
 sudo mkdir -p /usr/local/bin
 sudo mv rclone /usr/local/bin/
 ```
@@ -137,13 +137,13 @@ sudo mv rclone /usr/local/bin/
 
 Remove the leftover files.
 
-```sh
+```console
 cd .. && rm -rf rclone-*-osx-amd64 rclone-current-osx-amd64.zip
 ```
 
 Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
-```sh
+```console
 rclone config
 ```
 
@@ -153,14 +153,14 @@ When downloading a binary with a web browser, the browser will set the macOS
 gatekeeper quarantine attribute. Starting from Catalina, when attempting to run
 `rclone`, a pop-up will appear saying:
 
-```sh
+```text
 "rclone" cannot be opened because the developer cannot be verified.
 macOS cannot verify that this app is free from malware.
 ```
 
 The simplest fix is to run
 
-```sh
+```console
 xattr -d com.apple.quarantine rclone
 ```
 
@@ -274,7 +274,7 @@ The `:latest` tag will always point to the latest stable release.  You
 can use the `:beta` tag to get the latest build from master.  You can
 also use version tags, e.g. `:1.49.1`, `:1.49` or `:1`.
 
-```sh
+```console
 $ docker pull rclone/rclone:latest
 latest: Pulling from rclone/rclone
 Digest: sha256:0e0ced72671989bb837fea8e88578b3fc48371aa45d209663683e24cfdaa0e11
@@ -357,7 +357,7 @@ kill %1
 
 Make sure you have [Snapd installed](https://snapcraft.io/docs/installing-snapd)
 
-```sh
+```console
 sudo snap install rclone
 ```
 
@@ -384,7 +384,7 @@ Go version 1.24 or newer is required, the latest release is recommended.
 You can get it from your package manager, or download it from
 [golang.org/dl](https://golang.org/dl/). Then you can run the following:
 
-```sh
+```console
 git clone https://github.com/rclone/rclone.git
 cd rclone
 go build
@@ -398,7 +398,7 @@ in the same folder. As an initial check you can now run `./rclone version`
 Note that on macOS and Windows the [mount](https://rclone.org/commands/rclone_mount/)
 command will not be available unless you specify an additional build tag `cmount`.
 
-```sh
+```console
 go build -tags cmount
 ```
 
@@ -424,7 +424,7 @@ You may add arguments `-ldflags -s` to omit symbol table and debug information,
 making the executable file smaller, and `-trimpath` to remove references to
 local file system paths. The official rclone releases are built with both of these.
 
-```sh
+```console
 go build -trimpath -ldflags -s -tags cmount
 ```
 
@@ -435,7 +435,7 @@ or `fs.VersionSuffix` (to keep default number but customize the suffix).
 This can be done from the build command, by adding to the `-ldflags`
 argument value as shown below.
 
-```sh
+```console
 go build -trimpath -ldflags "-s -X github.com/rclone/rclone/fs.Version=v9.9.9-test" -tags cmount
 ```
 
@@ -446,7 +446,7 @@ It generates a Windows resource system object file, with extension .syso, e.g.
 `resource_windows_amd64.syso`, that will be automatically picked up by
 future build commands.
 
-```sh
+```console
 go run bin/resource_windows.go
 ```
 
@@ -458,7 +458,7 @@ override this version variable in the build command as described above, you
 need to do that also when generating the resource file, or else it will still
 use the value from the source.
 
-```sh
+```console
 go run bin/resource_windows.go -version v9.9.9-test
 ```
 
@@ -468,13 +468,13 @@ followed by additional commit details, embeds version information binary resourc
 on Windows, and copies the resulting rclone executable into your GOPATH bin folder
 (`$(go env GOPATH)/bin`, which corresponds to `~/go/bin/rclone` by default).
 
-```sh
+```console
 make
 ```
 
 To include mount command on macOS and Windows with Makefile build:
 
-```sh
+```console
 make GOTAGS=cmount
 ```
 
@@ -491,7 +491,7 @@ The source will be stored it in the Go module cache, and the resulting
 executable will be in your GOPATH bin folder (`$(go env GOPATH)/bin`,
 which corresponds to `~/go/bin/rclone` by default).
 
-```sh
+```console
 go install github.com/rclone/rclone@latest
 ```
 
@@ -511,7 +511,7 @@ Instructions
    your local roles-directory
 2. add the role to the hosts you want rclone installed to:
 
-    ```yml
+    ```yaml
     - hosts: rclone-hosts
       roles:
         - rclone
@@ -638,7 +638,7 @@ Example of a PowerShell command that creates a Windows service for mounting
 some `remote:/files` as drive letter `X:`, for *all* users (service will be
 running as the local system account):
 
-```pwsh
+```powershell
 New-Service -Name Rclone -BinaryPathName 'c:\rclone\rclone.exe mount remote:/files X: --config c:\rclone\config\rclone.conf --log-file c:\rclone\logs\mount.txt'
 ```
 

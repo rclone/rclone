@@ -105,9 +105,7 @@ func TestMultithreadCalculateNumChunks(t *testing.T) {
 		{size: (1 << 20) - 1, chunkSize: 2, wantNumChunks: 1 << 19},
 	} {
 		t.Run(fmt.Sprintf("%+v", test), func(t *testing.T) {
-			mc := &multiThreadCopyState{
-				size: test.size,
-			}
+			mc := &multiThreadCopyState{}
 			mc.numChunks = calculateNumChunks(test.size, test.chunkSize)
 			assert.Equal(t, test.wantNumChunks, mc.numChunks)
 		})

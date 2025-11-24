@@ -13,17 +13,21 @@ Output bash completion script for rclone.
 
 Generates a bash shell autocompletion script for rclone.
 
-By default, when run without any arguments, 
+By default, when run without any arguments,
 
-    rclone completion bash
+```console
+rclone completion bash
+```
 
 the generated script will be written to
 
-    /etc/bash_completion.d/rclone
+```console
+/etc/bash_completion.d/rclone
+```
 
 and so rclone will probably need to be run as root, or with sudo.
 
-If you supply a path to a file as the command line argument, then 
+If you supply a path to a file as the command line argument, then
 the generated script will be written to that file, in which case
 you should not need root privileges.
 
@@ -34,11 +38,12 @@ can logout and login again to use the autocompletion script.
 
 Alternatively, you can source the script directly
 
-    . /path/to/my_bash_completion_scripts/rclone
+```console
+. /path/to/my_bash_completion_scripts/rclone
+```
 
 and the autocompletion functionality will be added to your
 current shell.
-
 
 ```
 rclone completion bash [output_file] [flags]
@@ -54,5 +59,10 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone completion](/commands/rclone_completion/)	 - Output completion script for a given shell.
 
+
+<!-- markdownlint-restore -->

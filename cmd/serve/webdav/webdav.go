@@ -157,13 +157,13 @@ Create a new DWORD BasicAuthLevel with value 2.
 
 You can serve the webdav on a unix socket like this:
 
-` + "```sh" + `
+` + "```console" + `
 rclone serve webdav --addr unix:///tmp/my.socket remote:path
 ` + "```" + `
 
 and connect to it like this using rclone and the webdav backend:
 
-` + "```sh" + `
+` + "```console" + `
 rclone --webdav-unix-socket /tmp/my.socket --webdav-url http://localhost lsf :webdav:
 ` + "```" + `
 

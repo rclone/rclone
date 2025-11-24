@@ -11,6 +11,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"path"
 	"strings"
@@ -37,6 +38,10 @@ func init() {
 		Description: "HTTP",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   `HTTP metadata keys are case insensitive and are always returned in lower case.`,
+		},
 		Options: []fs.Option{{
 			Name:     "url",
 			Help:     "URL of HTTP host to connect to.\n\nE.g. \"https://example.com\", or \"https://user:pass@example.com\" to use a username and password.",
@@ -98,6 +103,40 @@ sizes of any files, and some files that don't exist may be in the listing.`,
 	fs.Register(fsi)
 }
 
+// system metadata keys which this backend owns
+var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"cache-control": {
+		Help:    "Cache-Control header",
+		Type:    "string",
+		Example: "no-cache",
+	},
+	"content-disposition": {
+		Help:    "Content-Disposition header",
+		Type:    "string",
+		Example: "inline",
+	},
+	"content-disposition-filename": {
+		Help:    "Filename retrieved from Content-Disposition header",
+		Type:    "string",
+		Example: "file.txt",
+	},
+	"content-encoding": {
+		Help:    "Content-Encoding header",
+		Type:    "string",
+		Example: "gzip",
+	},
+	"content-language": {
+		Help:    "Content-Language header",
+		Type:    "string",
+		Example: "en-US",
+	},
+	"content-type": {
+		Help:    "Content-Type header",
+		Type:    "string",
+		Example: "text/plain",
+	},
+}
+
 // Options defines the configuration for this backend
 type Options struct {
 	Endpoint string          `config:"url"`
@@ -126,6 +165,13 @@ type Object struct {
 	size        int64
 	modTime     time.Time
 	contentType string
+
+	// Metadata as pointers to strings as they often won't be present
+	contentDisposition         *string // Content-Disposition: header
+	contentDispositionFilename *string // Filename retrieved from Content-Disposition: header
+	cacheControl               *string // Cache-Control: header
+	contentEncoding            *string // Content-Encoding: header
+	contentLanguage            *string // Content-Language: header
 }
 
 // statusError returns an error if the res contained an error
@@ -277,6 +323,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ci:   ci,
 	}
 	f.features = (&fs.Features{
+		ReadMetadata:            true,
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
 
@@ -429,6 +476,29 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 	return names, nil
 }
 
+// parseFilename extracts the filename from a Content-Disposition header
+func parseFilename(contentDisposition string) (string, error) {
+	// Normalize the contentDisposition to canonical MIME format
+	mediaType, params, err := mime.ParseMediaType(contentDisposition)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse contentDisposition: %v", err)
+	}
+
+	// Check if the contentDisposition is an attachment
+	if strings.ToLower(mediaType) != "attachment" {
+		return "", fmt.Errorf("not an attachment: %s", mediaType)
+	}
+
+	// Extract the filename from the parameters
+	filename, ok := params["filename"]
+	if !ok {
+		return "", fmt.Errorf("filename not found in contentDisposition")
+	}
+
+	// Decode filename if it contains special encoding
+	return textproto.TrimString(filename), nil
+}
+
 // Adds the configured headers to the request if any
 func addHeaders(req *http.Request, opt *Options) {
 	for i := 0; i < len(opt.Headers); i += 2 {
@@ -577,6 +647,9 @@ func (o *Object) String() string {
 
 // Remote the name of the remote HTTP file, relative to the fs root
 func (o *Object) Remote() string {
+	if o.contentDispositionFilename != nil {
+		return *o.contentDispositionFilename
+	}
 	return o.remote
 }
 
@@ -634,6 +707,29 @@ func (o *Object) decodeMetadata(ctx context.Context, res *http.Response) error {
 	o.modTime = t
 	o.contentType = res.Header.Get("Content-Type")
 	o.size = rest.ParseSizeFromHeaders(res.Header)
+	contentDisposition := res.Header.Get("Content-Disposition")
+	if contentDisposition != "" {
+		o.contentDisposition = &contentDisposition
+	}
+	if o.contentDisposition != nil {
+		var filename string
+		filename, err = parseFilename(*o.contentDisposition)
+		if err == nil && filename != "" {
+			o.contentDispositionFilename = &filename
+		}
+	}
+	cacheControl := res.Header.Get("Cache-Control")
+	if cacheControl != "" {
+		o.cacheControl = &cacheControl
+	}
+	contentEncoding := res.Header.Get("Content-Encoding")
+	if contentEncoding != "" {
+		o.contentEncoding = &contentEncoding
+	}
+	contentLanguage := res.Header.Get("Content-Language")
+	if contentLanguage != "" {
+		o.contentLanguage = &contentLanguage
+	}
 
 	// If NoSlash is set then check ContentType to see if it is a directory
 	if o.fs.opt.NoSlash {
@@ -722,11 +818,13 @@ var commandHelp = []fs.CommandHelp{{
 	Long: `This set command can be used to update the config parameters
 for a running http backend.
 
-Usage Examples:
+Usage examples:
 
-    rclone backend set remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
-    rclone rc backend/command command=set fs=remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
-    rclone rc backend/command command=set fs=remote: -o url=https://example.com
+` + "```console" + `
+rclone backend set remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
+rclone rc backend/command command=set fs=remote: [-o opt_name=opt_value] [-o opt_name2=opt_value2]
+rclone rc backend/command command=set fs=remote: -o url=https://example.com
+` + "```" + `
 
 The option keys are named as they are in the config file.
 
@@ -734,8 +832,7 @@ This rebuilds the connection to the http backend when it is called with
 the new parameters. Only new parameters need be passed as the values
 will default to those currently in use.
 
-It doesn't return anything.
-`,
+It doesn't return anything.`,
 }}
 
 // Command the backend to run a named command
@@ -771,6 +868,30 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 	}
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	metadata = make(fs.Metadata, 6)
+	if o.contentType != "" {
+		metadata["content-type"] = o.contentType
+	}
+
+	// Set system metadata
+	setMetadata := func(k string, v *string) {
+		if v == nil || *v == "" {
+			return
+		}
+		metadata[k] = *v
+	}
+	setMetadata("content-disposition", o.contentDisposition)
+	setMetadata("content-disposition-filename", o.contentDispositionFilename)
+	setMetadata("cache-control", o.cacheControl)
+	setMetadata("content-language", o.contentLanguage)
+	setMetadata("content-encoding", o.contentEncoding)
+	return metadata, nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs          = &Fs{}
@@ -778,4 +899,5 @@ var (
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
 	_ fs.Commander   = &Fs{}
+	_ fs.Metadataer  = &Object{}
 )

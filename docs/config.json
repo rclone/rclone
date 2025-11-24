@@ -32,6 +32,9 @@
       "renderer": {
         "unsafe": false
       }
+    },
+    "highlight": {
+      "style": "monokailight"
     }
   }
 }

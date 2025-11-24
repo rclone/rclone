@@ -14,25 +14,27 @@ List directories and objects in the path in JSON format.
 
 The output is an array of Items, where each Item looks like this:
 
-    {
-      "Hashes" : {
-         "SHA-1" : "f572d396fae9206628714fb2ce00f72e94f2258f",
-         "MD5" : "b1946ac92492d2347c6235b4d2611184",
-         "DropboxHash" : "ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc"
-      },
-      "ID": "y2djkhiujf83u33",
-      "OrigID": "UYOJVTUW00Q1RzTDA",
-      "IsBucket" : false,
-      "IsDir" : false,
-      "MimeType" : "application/octet-stream",
-      "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
-      "Name" : "file.txt",
-      "Encrypted" : "v0qpsdq8anpci8n929v3uu9338",
-      "EncryptedPath" : "kja9098349023498/v0qpsdq8anpci8n929v3uu9338",
-      "Path" : "full/path/goes/here/file.txt",
-      "Size" : 6,
-      "Tier" : "hot",
-    }
+```json
+{
+  "Hashes" : {
+    "SHA-1" : "f572d396fae9206628714fb2ce00f72e94f2258f",
+    "MD5" : "b1946ac92492d2347c6235b4d2611184",
+    "DropboxHash" : "ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc"
+  },
+  "ID": "y2djkhiujf83u33",
+  "OrigID": "UYOJVTUW00Q1RzTDA",
+  "IsBucket" : false,
+  "IsDir" : false,
+  "MimeType" : "application/octet-stream",
+  "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
+  "Name" : "file.txt",
+  "Encrypted" : "v0qpsdq8anpci8n929v3uu9338",
+  "EncryptedPath" : "kja9098349023498/v0qpsdq8anpci8n929v3uu9338",
+  "Path" : "full/path/goes/here/file.txt",
+  "Size" : 6,
+  "Tier" : "hot",
+}
+```
 
 The exact set of properties included depends on the backend:
 
@@ -94,11 +96,11 @@ Any of the filtering options can be applied to this command.
 
 There are several related list commands
 
-  * `ls` to list size and path of objects only
-  * `lsl` to list modification time, size and path of objects only
-  * `lsd` to list directories only
-  * `lsf` to list objects and directories in easy to parse format
-  * `lsjson` to list objects and directories in JSON format
+- `ls` to list size and path of objects only
+- `lsl` to list modification time, size and path of objects only
+- `lsd` to list directories only
+- `lsf` to list objects and directories in easy to parse format
+- `lsjson` to list objects and directories in JSON format
 
 `ls`,`lsl`,`lsd` are designed to be human-readable.
 `lsf` is designed to be human and machine-readable.
@@ -106,12 +108,12 @@ There are several related list commands
 
 Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the recursion.
 
-The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default - use `-R` to make them recurse.
+The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default -
+use `-R` to make them recurse.
 
 Listing a nonexistent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
 the bucket-based remotes).
-
 
 ```
 rclone lsjson remote:path [flags]
@@ -141,7 +143,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags for filtering directory listings
 
-```
+```text
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -171,12 +173,17 @@ Flags for filtering directory listings
 
 Flags for listing directories
 
-```
+```text
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

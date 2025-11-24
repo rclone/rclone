@@ -15,8 +15,7 @@ paths passed in and how long they can be.  It can take some time.  It will
 write test files into the remote:path passed in.  It outputs a bit of go
 code for each one.
 
-**NB** this can create undeletable files and other hazards - use with care
-
+**NB** this can create undeletable files and other hazards - use with care!
 
 ```
 rclone test info [remote:path]+ [flags]
@@ -41,5 +40,10 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone test](/commands/rclone_test/)	 - Run a test command
 
+
+<!-- markdownlint-restore -->

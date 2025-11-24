@@ -33,7 +33,7 @@ This command can also accept a password through STDIN instead of an
 argument by passing a hyphen as an argument. This will use the first
 line of STDIN as the password not including the trailing newline.
 
-` + "```sh" + `
+` + "```console" + `
 echo "secretpassword" | rclone obscure -
 ` + "```" + `
 

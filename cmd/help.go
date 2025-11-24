@@ -343,9 +343,12 @@ func showBackend(name string) {
 					fmt.Printf("- Examples:\n")
 				}
 				for _, ex := range opt.Examples {
-					fmt.Printf("    - %s\n", quoteString(ex.Value))
+					fmt.Printf("  - %s\n", quoteString(ex.Value))
 					for line := range strings.SplitSeq(ex.Help, "\n") {
-						fmt.Printf("        - %s\n", line)
+						fmt.Printf("    - %s\n", line)
+					}
+					if ex.Provider != "" {
+						fmt.Printf("    - Provider: %s\n", ex.Provider)
 					}
 				}
 			}

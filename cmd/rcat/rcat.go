@@ -28,7 +28,7 @@ var commandDefinition = &cobra.Command{
 	Short: `Copies standard input to file on remote.`,
 	Long: `Reads from standard input (stdin) and copies it to a single remote file.
 
-` + "```sh" + `
+` + "```console" + `
 echo "hello world" | rclone rcat remote:path/to/file
 ffmpeg - | rclone rcat remote:path/to/file
 ` + "```" + `

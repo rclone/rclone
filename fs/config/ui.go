@@ -3,6 +3,7 @@
 package config
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
 	"github.com/peterh/liner"
@@ -25,8 +27,24 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
+var (
+	stdinBufOnce sync.Once
+	stdinBuf     *bufio.Reader
+)
+
 // ReadLine reads an unlimited length line from stdin with a prompt.
 var ReadLine = func(prompt string) string {
+	if !terminal.IsTerminal(int(os.Stdout.Fd())) {
+		stdinBufOnce.Do(func() {
+			stdinBuf = bufio.NewReader(os.Stdin)
+		})
+		line, err := stdinBuf.ReadString('\n')
+		if err != nil && (line == "" || err != io.EOF) {
+			fs.Fatalf(nil, "Failed to read line: %v", err)
+		}
+		return strings.TrimSpace(line)
+	}
+
 	l := liner.NewLiner()
 	defer func() {
 		_ = l.Close()

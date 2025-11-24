@@ -37,6 +37,7 @@ func init() {
 	configCommand.AddCommand(configDisconnectCommand)
 	configCommand.AddCommand(configUserInfoCommand)
 	configCommand.AddCommand(configEncryptionCommand)
+	configCommand.AddCommand(configStringCommand)
 }
 
 var configCommand = &cobra.Command{
@@ -610,6 +611,58 @@ If the config file is not encrypted it will return a non zero exit code.`, "|", 
 		if !config.IsEncrypted() {
 			return errors.New("config file is NOT encrypted")
 		}
+		return nil
+	},
+}
+
+var configStringCommand = &cobra.Command{
+	Use:   "string <remote>",
+	Short: `Print connection string for a single remote.`,
+	Long: strings.ReplaceAll(`Print a connection string for a single remote.
+
+The [connection strings](/docs/#connection-strings) can be used
+wherever a remote is needed and can be more convenient than using the
+config file, especially if using the RC API.
+
+Backend parameters may be provided to the command also.
+
+Example:
+
+|||sh
+$ rclone config string s3:rclone --s3-no-check-bucket
+:s3,access_key_id=XXX,no_check_bucket,provider=AWS,region=eu-west-2,secret_access_key=YYY:rclone
+|||
+
+**NB** the strings are not quoted for use in shells (eg bash,
+powershell, windows cmd). Most will work if enclosed in "double
+quotes", however connection strings that contain double quotes will
+require further quoting which is very shell dependent.
+
+`, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.72",
+	},
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(1, 1, command, args)
+		remote := args[0]
+		fsInfo, _, fsPath, m, err := fs.ConfigFs(remote)
+		if err != nil {
+			return err
+		}
+
+		// Find the overridden options and construct the string
+		overridden := fsInfo.Options.NonDefault(m)
+		var out strings.Builder
+		out.WriteRune(':')
+		out.WriteString(fsInfo.Name)
+		config := overridden.Human()
+		if config != "" {
+			out.WriteRune(',')
+			out.WriteString(config)
+		}
+		out.WriteRune(':')
+		out.WriteString(fsPath)
+		fmt.Println(out.String())
 		return nil
 	},
 }
