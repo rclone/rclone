@@ -3409,9 +3409,11 @@ func (f *Fs) makeShortcut(ctx context.Context, srcPath string, dstFs *Fs, dstPat
 			return nil, fmt.Errorf("failed to find source dir: %w", err)
 		}
 		isDir = true
-	} else {
+	} else if do, ok := srcObj.(fs.IDer); ok {
 		// source was a file
-		srcID = srcObj.(*Object).id
+		srcID = do.ID()
+	} else {
+		return nil, fmt.Errorf("unknown source object: %T", srcObj)
 	}
 	srcID = actualID(srcID) // link to underlying object not to shortcut
 
