@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/backend/azureblob/auth"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,22 +29,28 @@ func (f *Fs) InternalTestAuth(t *testing.T) {
 		{
 			name: "ConnectionString",
 			options: &Options{
-				ShareName:        shareName,
-				ConnectionString: "",
+				ShareName: shareName,
+				Options: auth.Options{
+					ConnectionString: "",
+				},
 			},
 		},
 		{
 			name: "AccountAndKey",
 			options: &Options{
 				ShareName: shareName,
-				Account:   "",
-				Key:       "",
+				Options: auth.Options{
+					Account: "",
+					Key:     "",
+				},
 			}},
 		{
 			name: "SASUrl",
 			options: &Options{
 				ShareName: shareName,
-				SASURL:    "",
+				Options: auth.Options{
+					SASURL: "",
+				},
 			}},
 	}
 
