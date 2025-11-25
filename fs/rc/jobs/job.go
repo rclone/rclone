@@ -380,7 +380,7 @@ func init() {
 		Title: "Reads the status of the job ID",
 		Help: `Parameters:
 
-- jobid - id of the job (integer).
+- jobId - id of the job (integer).
 
 Results:
 
