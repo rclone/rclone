@@ -224,7 +224,7 @@ func TestRcConfigUnlock(t *testing.T) {
 	assert.Nil(t, out)
 
 	in = rc.Params{
-		"config_password": "test",
+		"configPassword": "test",
 	}
 	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
