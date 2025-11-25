@@ -1327,13 +1327,17 @@ func assembleCopyParams(ctx context.Context, f *Fs, src fs.Object, srcProps *blo
 		BlobContentMD5:         srcProps.ContentMD5,
 		BlobContentType:        srcProps.ContentType,
 	}
-	// Optionally deep copy user metadata pointers from source
+	// Optionally deep copy user metadata pointers from source. Normalise keys to
+	// lower-case to avoid duplicate x-ms-meta headers when we later inject/overlay
+	// metadata (Azure treats keys case-insensitively but Go's http.Header will
+	// join duplicate keys into a comma separated list, which breaks shared-key
+	// signing).
 	if includeBaseMeta && len(srcProps.Metadata) > 0 {
 		meta = make(map[string]*string, len(srcProps.Metadata))
 		for k, v := range srcProps.Metadata {
 			if v != nil {
 				vv := *v
-				meta[k] = &vv
+				meta[strings.ToLower(k)] = &vv
 			}
 		}
 	}
