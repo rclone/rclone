@@ -389,8 +389,8 @@ func parseHash(str string) (string, string, error) {
 	if str == "-" {
 		return "", "", nil
 	}
-	if pos := strings.Index(str, ":"); pos > 0 {
-		name, val := str[:pos], str[pos+1:]
+	if before, after, ok := strings.Cut(str, ":"); ok {
+		name, val := before, after
 		if name != "" && val != "" {
 			return name, val, nil
 		}
