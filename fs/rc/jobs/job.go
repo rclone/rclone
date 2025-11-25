@@ -401,9 +401,13 @@ Results:
 
 // Returns the status of a job
 func rcJobStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	jobID, err := in.GetInt64("jobid")
+	jobID, err := in.GetInt64("jobId")
 	if err != nil {
-		return nil, err
+		var err2 error
+		jobID, err2 = in.GetInt64("jobid") // backwards compat
+		if err2 != nil {
+			return nil, err
+		}
 	}
 	job := running.Get(jobID)
 	if job == nil {
