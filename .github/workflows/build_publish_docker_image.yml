@@ -4,6 +4,10 @@
 
 name: Build & Push Docker Images
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref || github.run_id }}
+  cancel-in-progress: true
+
 # Trigger the workflow on push or pull request
 on:
   push:
@@ -41,32 +45,26 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
 
     steps:
-      - name: Free Space
-        shell: bash
-        run: |
-          df -h .
-          # Remove android SDK
-          sudo rm -rf /usr/local/lib/android || true
-          # Remove .net runtime
-          sudo rm -rf /usr/share/dotnet || true
-          df -h .
-
       - name: Checkout Repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set REPO_NAME Variable
+        shell: bash
         run: |
           echo "REPO_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >> ${GITHUB_ENV}
 
       - name: Set PLATFORM Variable
+        shell: bash
         run: |
           platform=${{ matrix.platform }}
           echo "PLATFORM=${platform//\//-}" >> $GITHUB_ENV
 
       - name: Set CACHE_NAME Variable
         shell: python
+        env:
+          GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           import os, re
 
@@ -82,8 +80,11 @@ jobs:
 
           ref_name_slug = "cache"
 
-          if os.environ.get("GITHUB_REF_NAME") and os.environ['GITHUB_EVENT_NAME'] == "pull_request":
-            ref_name_slug += "-pr-" + slugify(os.environ['GITHUB_REF_NAME'])
+          if os.environ.get("GITHUB_REF_NAME"):
+            if os.environ['GITHUB_EVENT_NAME'] == "pull_request":
+              ref_name_slug += "-pr-" + slugify(os.environ['GITHUB_REF_NAME'])
+            elif os.environ['GITHUB_REF_NAME'] != os.environ['GITHUB_EVENT_REPOSITORY_DEFAULT_BRANCH']:
+              ref_name_slug += "-ref-" + slugify(os.environ['GITHUB_REF_NAME'])
 
           with open(os.environ['GITHUB_ENV'], 'a') as env:
               env.write(f"CACHE_NAME={ref_name_slug}\n")
@@ -97,6 +98,12 @@ jobs:
           result-encoding: string
           script: |
             return process.env.ImageOS
+
+      - name: Set CACHE_PREFIX Variable
+        shell: bash
+        run: |
+          cache_prefix=${{ runner.os }}-${{ steps.imageos.outputs.result }}-${{ env.PLATFORM }}-docker-go
+          echo "CACHE_PREFIX=${cache_prefix}" >> $GITHUB_ENV
 
       - name: Extract Metadata (tags, labels) for Docker
         id: meta
@@ -130,22 +137,35 @@ jobs:
       - name: Load Go Build Cache for Docker
         id: go-cache
         uses: actions/cache@v4
+        if: github.ref_name == github.event.repository.default_branch
         with:
-          key: ${{ runner.os }}-${{ steps.imageos.outputs.result }}-go-${{ env.CACHE_NAME }}-${{ env.PLATFORM }}-${{ hashFiles('**/go.mod') }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ steps.imageos.outputs.result }}-go-${{ env.CACHE_NAME }}-${{ env.PLATFORM }}
           # Cache only the go builds, the module download is cached via the docker layer caching
           path: |
-            go-build-cache
+            /tmp/go-build-cache
+          key: ${{ env.CACHE_PREFIX }}-cache-${{ hashFiles('**/go.mod') }}-${{ hashFiles('**/go.sum') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ env.CACHE_PREFIX }}-cache
+
+      - name: Load Go Build Cache for Docker
+        id: go-cache-restore
+        uses: actions/cache/restore@v4
+        if: github.ref_name != github.event.repository.default_branch
+        with:
+          # Cache only the go builds, the module download is cached via the docker layer caching
+          path: |
+            /tmp/go-build-cache
+          key: ${{ env.CACHE_PREFIX }}-cache-${{ hashFiles('**/go.mod') }}-${{ hashFiles('**/go.sum') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ env.CACHE_PREFIX }}-cache
 
       - name: Inject Go Build Cache into Docker
         uses: reproducible-containers/buildkit-cache-dance@v3
         with:
           cache-map: |
             {
-              "go-build-cache": "/root/.cache/go-build"
+              "/tmp/go-build-cache": "/root/.cache/go-build"
             }
-          skip-extraction: ${{ steps.go-cache.outputs.cache-hit }}
+          skip-extraction: ${{ steps.go-cache.outputs.cache-hit || steps.go-cache-restore.outputs.cache-hit }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -172,9 +192,10 @@ jobs:
           outputs: |
             type=image,name=ghcr.io/${{ env.REPO_NAME }},push-by-digest=true,name-canonical=true,push=true
           cache-from: |
-            type=registry,ref=ghcr.io/${{ env.REPO_NAME }}:build-${{ env.CACHE_NAME }}-${{ env.PLATFORM }}
+            type=registry,ref=ghcr.io/${{ env.REPO_NAME }}:build-${{ env.PLATFORM }}-${{ env.CACHE_NAME }}
+            type=registry,ref=ghcr.io/${{ env.REPO_NAME }}:build-${{ env.PLATFORM }}-cache
           cache-to: |
-            type=registry,ref=ghcr.io/${{ env.REPO_NAME }}:build-${{ env.CACHE_NAME }}-${{ env.PLATFORM }},image-manifest=true,mode=max,compression=zstd
+            type=registry,ref=ghcr.io/${{ env.REPO_NAME }}:build-${{ env.PLATFORM }}-${{ env.CACHE_NAME }},image-manifest=true,mode=max,compression=zstd
 
       - name: Export Image Digest
         run: |
@@ -189,6 +210,19 @@ jobs:
           path: /tmp/digests/*
           retention-days: 1
           if-no-files-found: error
+
+      - name: Delete Existing Cache
+        if: github.ref_name == github.event.repository.default_branch && steps.go-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cache_ids=($(gh cache list --key "${{ env.CACHE_PREFIX }}-cache" --json id | jq '.[].id'))
+          for cache_id in "${cache_ids[@]}"; do
+            echo "Deleting Cache: $cache_id"
+            gh cache delete "$cache_id"
+          done
 
   merge-image:
     name: Merge & Push Final Docker Image
@@ -205,6 +239,7 @@ jobs:
           merge-multiple: true
 
       - name: Set REPO_NAME Variable
+        shell: bash
         run: |
           echo "REPO_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >> ${GITHUB_ENV}
 
