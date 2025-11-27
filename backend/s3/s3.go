@@ -346,7 +346,7 @@ If empty, a session name will be generated automatically.`,
 If empty, the default session duration will be used.`,
 			Advanced: true,
 		}, {
-			Name: "external_id",
+			Name: "role_external_id",
 			Help: `External ID for assumed role.
 			
 Leave blank if not using an external ID.`,
@@ -956,7 +956,7 @@ type Options struct {
 	RoleARN                     string               `config:"role_arn"`
 	RoleSessionName             string               `config:"role_session_name"`
 	RoleSessionDuration         fs.Duration          `config:"role_session_duration"`
-	ExternalID                  string               `config:"external_id"`
+	RoleExternalID              string               `config:"role_external_id"`
 	UploadConcurrency           int                  `config:"upload_concurrency"`
 	ForcePathStyle              bool                 `config:"force_path_style"`
 	V2Auth                      bool                 `config:"v2_auth"`
@@ -1339,8 +1339,8 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 			if opt.RoleSessionDuration != 0 {
 				aro.Duration = time.Duration(opt.RoleSessionDuration)
 			}
-			if opt.ExternalID != "" {
-				aro.ExternalID = &opt.ExternalID
+			if opt.RoleExternalID != "" {
+				aro.ExternalID = &opt.RoleExternalID
 			}
 		}
 
