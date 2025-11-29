@@ -1048,3 +1048,5 @@ put them back in again. -->
 - jijamik <30904953+jijamik@users.noreply.github.com>
 - Dominik Sander <git@dsander.de>
 - Nikolay Kiryanov <nikolay@kiryanov.ru>
+- Diana <5275194+DianaNites@users.noreply.github.com>
+- Duncan Smart <duncan.smart@gmail.com>
