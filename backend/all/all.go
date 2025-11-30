@@ -55,6 +55,7 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 	_ "github.com/rclone/rclone/backend/seafile"
 	_ "github.com/rclone/rclone/backend/sftp"
+	_ "github.com/rclone/rclone/backend/shade"
 	_ "github.com/rclone/rclone/backend/sharefile"
 	_ "github.com/rclone/rclone/backend/sia"
 	_ "github.com/rclone/rclone/backend/smb"
