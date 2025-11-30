@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -541,6 +542,11 @@ as the source and the destination will be the same file.
 
 This feature may be useful backups made with --copy-dest.`,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encoder.EncodeZero,
 		}},
 	}
 	fs.Register(fsi)
@@ -548,50 +554,51 @@ This feature may be useful backups made with --copy-dest.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host                    string          `config:"host"`
-	User                    string          `config:"user"`
-	Port                    string          `config:"port"`
-	Pass                    string          `config:"pass"`
-	KeyPem                  string          `config:"key_pem"`
-	KeyFile                 string          `config:"key_file"`
-	KeyFilePass             string          `config:"key_file_pass"`
-	PubKey                  string          `config:"pubkey"`
-	PubKeyFile              string          `config:"pubkey_file"`
-	KnownHostsFile          string          `config:"known_hosts_file"`
-	KeyUseAgent             bool            `config:"key_use_agent"`
-	UseInsecureCipher       bool            `config:"use_insecure_cipher"`
-	DisableHashCheck        bool            `config:"disable_hashcheck"`
-	AskPassword             bool            `config:"ask_password"`
-	PathOverride            string          `config:"path_override"`
-	SetModTime              bool            `config:"set_modtime"`
-	ShellType               string          `config:"shell_type"`
-	Hashes                  fs.CommaSepList `config:"hashes"`
-	Md5sumCommand           string          `config:"md5sum_command"`
-	Sha1sumCommand          string          `config:"sha1sum_command"`
-	Crc32sumCommand         string          `config:"crc32sum_command"`
-	Sha256sumCommand        string          `config:"sha256sum_command"`
-	Blake3sumCommand        string          `config:"blake3sum_command"`
-	Xxh3sumCommand          string          `config:"xxh3sum_command"`
-	Xxh128sumCommand        string          `config:"xxh128sum_command"`
-	SkipLinks               bool            `config:"skip_links"`
-	Subsystem               string          `config:"subsystem"`
-	ServerCommand           string          `config:"server_command"`
-	UseFstat                bool            `config:"use_fstat"`
-	DisableConcurrentReads  bool            `config:"disable_concurrent_reads"`
-	DisableConcurrentWrites bool            `config:"disable_concurrent_writes"`
-	IdleTimeout             fs.Duration     `config:"idle_timeout"`
-	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
-	Concurrency             int             `config:"concurrency"`
-	Connections             int             `config:"connections"`
-	SetEnv                  fs.SpaceSepList `config:"set_env"`
-	Ciphers                 fs.SpaceSepList `config:"ciphers"`
-	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
-	MACs                    fs.SpaceSepList `config:"macs"`
-	HostKeyAlgorithms       fs.SpaceSepList `config:"host_key_algorithms"`
-	SSH                     fs.SpaceSepList `config:"ssh"`
-	SocksProxy              string          `config:"socks_proxy"`
-	HTTPProxy               string          `config:"http_proxy"`
-	CopyIsHardlink          bool            `config:"copy_is_hardlink"`
+	Host                    string               `config:"host"`
+	User                    string               `config:"user"`
+	Port                    string               `config:"port"`
+	Pass                    string               `config:"pass"`
+	KeyPem                  string               `config:"key_pem"`
+	KeyFile                 string               `config:"key_file"`
+	KeyFilePass             string               `config:"key_file_pass"`
+	PubKey                  string               `config:"pubkey"`
+	PubKeyFile              string               `config:"pubkey_file"`
+	KnownHostsFile          string               `config:"known_hosts_file"`
+	KeyUseAgent             bool                 `config:"key_use_agent"`
+	UseInsecureCipher       bool                 `config:"use_insecure_cipher"`
+	DisableHashCheck        bool                 `config:"disable_hashcheck"`
+	AskPassword             bool                 `config:"ask_password"`
+	PathOverride            string               `config:"path_override"`
+	SetModTime              bool                 `config:"set_modtime"`
+	ShellType               string               `config:"shell_type"`
+	Hashes                  fs.CommaSepList      `config:"hashes"`
+	Md5sumCommand           string               `config:"md5sum_command"`
+	Sha1sumCommand          string               `config:"sha1sum_command"`
+	Crc32sumCommand         string               `config:"crc32sum_command"`
+	Sha256sumCommand        string               `config:"sha256sum_command"`
+	Blake3sumCommand        string               `config:"blake3sum_command"`
+	Xxh3sumCommand          string               `config:"xxh3sum_command"`
+	Xxh128sumCommand        string               `config:"xxh128sum_command"`
+	SkipLinks               bool                 `config:"skip_links"`
+	Subsystem               string               `config:"subsystem"`
+	ServerCommand           string               `config:"server_command"`
+	UseFstat                bool                 `config:"use_fstat"`
+	DisableConcurrentReads  bool                 `config:"disable_concurrent_reads"`
+	DisableConcurrentWrites bool                 `config:"disable_concurrent_writes"`
+	IdleTimeout             fs.Duration          `config:"idle_timeout"`
+	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
+	Concurrency             int                  `config:"concurrency"`
+	Connections             int                  `config:"connections"`
+	SetEnv                  fs.SpaceSepList      `config:"set_env"`
+	Ciphers                 fs.SpaceSepList      `config:"ciphers"`
+	KeyExchange             fs.SpaceSepList      `config:"key_exchange"`
+	MACs                    fs.SpaceSepList      `config:"macs"`
+	HostKeyAlgorithms       fs.SpaceSepList      `config:"host_key_algorithms"`
+	SSH                     fs.SpaceSepList      `config:"ssh"`
+	SocksProxy              string               `config:"socks_proxy"`
+	HTTPProxy               string               `config:"http_proxy"`
+	CopyIsHardlink          bool                 `config:"copy_is_hardlink"`
+	Enc                     encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -1362,7 +1369,7 @@ func (f *Fs) dirExists(ctx context.Context, dir string) (bool, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	root := path.Join(f.absRoot, dir)
+	root := path.Join(f.absRoot, f.opt.Enc.FromStandardPath(dir))
 	sftpDir := root
 	if sftpDir == "" {
 		sftpDir = "."
@@ -1380,7 +1387,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, fmt.Errorf("error listing %q: %w", dir, err)
 	}
 	for _, info := range infos {
-		remote := path.Join(dir, info.Name())
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(info.Name()))
 		// If file is a symlink (not a regular file is the best cross platform test we can do), do a stat to
 		// pick up the size and type of the destination, instead of the size and type of the symlink.
 		if !info.Mode().IsRegular() && !info.IsDir() {
@@ -2069,20 +2076,21 @@ func (f *Fs) quoteOrEscapeShellPath(shellPath string) (string, error) {
 
 // remotePath returns the native SFTP path of the file or directory at the remote given
 func (f *Fs) remotePath(remote string) string {
-	return path.Join(f.absRoot, remote)
+	return path.Join(f.absRoot, f.opt.Enc.FromStandardPath(remote))
 }
 
 // remoteShellPath returns the SSH shell path of the file or directory at the remote given
 func (f *Fs) remoteShellPath(remote string) string {
+	encodedRemote := f.opt.Enc.FromStandardPath(remote)
 	if f.opt.PathOverride != "" {
-		shellPath := path.Join(f.opt.PathOverride, remote)
+		shellPath := path.Join(f.opt.PathOverride, encodedRemote)
 		if f.opt.PathOverride[0] == '@' {
-			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, remote)
+			shellPath = path.Join(strings.TrimPrefix(f.opt.PathOverride, "@"), f.absRoot, encodedRemote)
 		}
 		fs.Debugf(f, "Shell path redirected to %q with option path_override", shellPath)
 		return shellPath
 	}
-	shellPath := path.Join(f.absRoot, remote)
+	shellPath := path.Join(f.absRoot, encodedRemote)
 	if f.shellType == "powershell" || f.shellType == "cmd" {
 		// If remote shell is powershell or cmd, then server is probably Windows.
 		// The sftp package converts everything to POSIX paths: Forward slashes, and

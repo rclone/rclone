@@ -67,8 +67,8 @@ const (
 	EncodeExclamation                // !
 
 	// Synthetic
-	EncodeWin         = EncodeColon | EncodeQuestion | EncodeDoubleQuote | EncodeAsterisk | EncodeLtGt | EncodePipe // :?"*<>|
-	EncodeHashPercent = EncodeHash | EncodePercent                                                                  // #%
+	EncodeWin         = EncodeColon | EncodeQuestion | EncodeDoubleQuote | EncodeAsterisk | EncodeLtGt | EncodePipe | EncodeRightSpace | EncodeRightPeriod // :?"*<>| + trailing space/period
+	EncodeHashPercent = EncodeHash | EncodePercent                                                                                                         // #%
 )
 
 // Has returns true if flag is contained in mask
@@ -149,6 +149,9 @@ func init() {
 	alias("RightCrLfHtVt", EncodeRightCrLfHtVt)
 	alias("InvalidUtf8", EncodeInvalidUtf8)
 	alias("Dot", EncodeDot)
+	// Synthetic encodings
+	alias("Win", EncodeWin)
+	alias("HashPercent", EncodeHashPercent)
 }
 
 // ValidStrings returns all the valid MultiEncoder strings

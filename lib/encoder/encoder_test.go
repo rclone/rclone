@@ -26,8 +26,8 @@ func TestEncodeString(t *testing.T) {
 		{EncodeZero, "None"},
 		{EncodeDoubleQuote, "DoubleQuote"},
 		{EncodeDot, "Dot"},
-		{EncodeWin, "LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe"},
-		{EncodeHashPercent, "Hash,Percent"},
+		{EncodeWin, "Win"},
+		{EncodeHashPercent, "HashPercent"},
 		{EncodeSlash | EncodeDollar | EncodeColon, "Slash,Dollar,Colon"},
 		{EncodeSlash | (1 << 31), "Slash,0x80000000"},
 	} {
@@ -48,8 +48,8 @@ func TestEncodeSet(t *testing.T) {
 		{"None", EncodeZero, false},
 		{"DoubleQuote", EncodeDoubleQuote, false},
 		{"Dot", EncodeDot, false},
-		{"LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe", EncodeWin, false},
-		{"Hash,Percent", EncodeHashPercent, false},
+		{"Win", EncodeWin, false},
+		{"HashPercent", EncodeHashPercent, false},
 		{"Slash,Dollar,Colon", EncodeSlash | EncodeDollar | EncodeColon, false},
 		{"Slash,0x80000000", EncodeSlash | (1 << 31), false},
 		{"Blerp", 0, true},
@@ -201,6 +201,80 @@ func TestEncodeDot(t *testing.T) {
 			mask: EncodeDot,
 			in:   ". .",
 			out:  ". .",
+		},
+	} {
+		e := tc.mask
+		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
+			got := e.Encode(tc.in)
+			if got != tc.out {
+				t.Errorf("Encode(%q) want %q got %q", tc.in, tc.out, got)
+			}
+			got2 := e.Decode(got)
+			if got2 != tc.in {
+				t.Errorf("Decode(%q) want %q got %q", got, tc.in, got2)
+			}
+		})
+	}
+}
+
+func TestEncodeWin(t *testing.T) {
+	for i, tc := range []testCase{
+		{
+			mask: EncodeWin,
+			in:   "test:file.txt",
+			out:  "test：file.txt", // Colon encoded to fullwidth
+		}, {
+			mask: EncodeWin,
+			in:   "file?.txt",
+			out:  "file？.txt", // Question mark encoded
+		}, {
+			mask: EncodeWin,
+			in:   `file"name.txt`,
+			out:  "file＂name.txt", // Double quote encoded
+		}, {
+			mask: EncodeWin,
+			in:   "file*.txt",
+			out:  "file＊.txt", // Asterisk encoded
+		}, {
+			mask: EncodeWin,
+			in:   "file<name>.txt",
+			out:  "file＜name＞.txt", // Angle brackets encoded
+		}, {
+			mask: EncodeWin,
+			in:   "file|name.txt",
+			out:  "file｜name.txt", // Pipe encoded
+		}, {
+			mask: EncodeWin,
+			in:   "trailing space ",
+			out:  "trailing space␠", // Trailing space encoded
+		}, {
+			mask: EncodeWin,
+			in:   "trailing period.",
+			out:  "trailing period．", // Trailing period encoded
+		}, {
+			mask: EncodeWin,
+			in:   "multiple:?\"*<>| ",
+			out:  "multiple：？＂＊＜＞｜␠", // All special chars + trailing space
+		}, {
+			mask: EncodeWin,
+			in:   "normal.txt",
+			out:  "normal.txt", // Normal filename unchanged
+		}, {
+			mask: EncodeWin,
+			in:   "file.name.txt",
+			out:  "file.name.txt", // Periods in middle are fine
+		}, {
+			mask: EncodeWin,
+			in:   " leading space",
+			out:  " leading space", // Leading space is OK
+		}, {
+			mask: EncodeWin,
+			in:   ".hidden",
+			out:  ".hidden", // Leading period is OK
+		}, {
+			mask: EncodeWin,
+			in:   "COM1",
+			out:  "COM1", // Reserved names not handled by EncodeWin
 		},
 	} {
 		e := tc.mask
