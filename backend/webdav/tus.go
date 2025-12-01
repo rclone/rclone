@@ -2,6 +2,7 @@ package webdav
 
 /*
    Chunked upload based on the tus protocol for ownCloud Infinite Scale
+   and OpenCloud
    See https://tus.io/protocols/resumable-upload
 */
 
