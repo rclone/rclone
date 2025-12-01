@@ -417,6 +417,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, w.server.HTMLTemplate())
+	directory.DisableZip = true
 	for _, node := range dirEntries {
 		if vfscommon.Opt.NoModTime {
 			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), time.Time{})
