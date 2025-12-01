@@ -1915,6 +1915,9 @@ func Run(t *testing.T, opt *Opt) {
 				}
 				t.Logf("Opening root remote %q path %q from %q", configName, configLeaf, subRemoteName)
 				rootRemote, err := fs.NewFs(context.Background(), configName)
+				if errors.Is(err, fs.ErrorCantListRoot) {
+					t.Skip("Can't list from root on this remote")
+				}
 				require.NoError(t, err)
 
 				file1Root := file1
