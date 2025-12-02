@@ -10,9 +10,9 @@
 >
 > **This project is actively maintained.**
 >
-> There are forks circulating (such as `jabiralam7/bclone-continued`) that falsely imply this project has been discontinued. **This is not true.**
+> There are forks (such as `jabiralam7/bclone-continued`) that were created **in advance** to falsely imply this project has been discontinued. **This is not true.** These forks are a known setup to inject malware at a later date.
 >
-> These forks may contain malicious code or modifications. Please **only download releases from this official repository** and verify the source before running any fork claiming to be a "continuation" of bclone.
+> **Only download releases from this official repository.** Do not trust any fork claiming to be a "continuation" of bclone.
 
 ---
 
