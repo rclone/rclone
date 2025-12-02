@@ -4,6 +4,18 @@
 > Please **read the source code** if you're unsure or want to verify that it behaves as described.  
 > Contributions, feedback, and scrutiny are welcome.
 
+---
+
+> ### 🚨 <ins>**BEWARE OF MALICIOUS FORKS**</ins>
+>
+> **This project is actively maintained.**
+>
+> There are forks (such as `jabiralam7/bclone-continued`) that were created **in advance** to falsely imply this project has been discontinued. **This is not true.** These forks are a known setup to inject malware at a later date.
+>
+> **Only download releases from this official repository.** Do not trust any fork claiming to be a "continuation" of bclone.
+
+---
+
 [<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
 <!-- markdownlint-disable-next-line no-inline-html -->
 [<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
