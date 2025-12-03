@@ -16,6 +16,7 @@ import (
 	_ "github.com/rclone/rclone/backend/compress"
 	_ "github.com/rclone/rclone/backend/crypt"
 	_ "github.com/rclone/rclone/backend/doi"
+	_ "github.com/rclone/rclone/backend/drime"
 	_ "github.com/rclone/rclone/backend/drive"
 	_ "github.com/rclone/rclone/backend/dropbox"
 	_ "github.com/rclone/rclone/backend/fichier"

@@ -40,6 +40,7 @@ directories to and from different cloud storage providers.
 - DigitalOcean Spaces [:page_facing_up:](https://rclone.org/s3/#digitalocean-spaces)
 - Digi Storage [:page_facing_up:](https://rclone.org/koofr/#digi-storage)
 - Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)
+- Drime [:page_facing_up:](https://rclone.org/s3/#drime)
 - Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
 - Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
 - Exaba [:page_facing_up:](https://rclone.org/s3/#exaba)
