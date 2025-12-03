@@ -987,10 +987,14 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Mega Quota: %w", err)
 	}
+	free := q.Mstrg - q.Cstrg
+	if q.Mstrg < q.Cstrg {
+		free = 0
+	}
 	usage := &fs.Usage{
-		Total: fs.NewUsageValue(q.Mstrg),           // quota of bytes that can be used
-		Used:  fs.NewUsageValue(q.Cstrg),           // bytes in use
-		Free:  fs.NewUsageValue(q.Mstrg - q.Cstrg), // bytes which can be uploaded before reaching the quota
+		Total: fs.NewUsageValue(q.Mstrg), // quota of bytes that can be used
+		Used:  fs.NewUsageValue(q.Cstrg), // bytes in use
+		Free:  fs.NewUsageValue(free),    // bytes which can be uploaded before reaching the quota
 	}
 	return usage, nil
 }
