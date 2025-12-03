@@ -43,6 +43,7 @@ See the following for detailed instructions for
 - [Crypt](/crypt/) - to encrypt other remotes
 - [DigitalOcean Spaces](/s3/#digitalocean-spaces)
 - [Digi Storage](/koofr/#digi-storage)
+- [Drime](/drime/)
 - [Dropbox](/dropbox/)
 - [Enterprise File Fabric](/filefabric/)
 - [FileLu Cloud Storage](/filelu/)
