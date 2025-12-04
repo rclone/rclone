@@ -133,14 +133,11 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		Concurrency:       f.opt.Concurrency,
 		LeavePartsOnError: false,
 	}
-	fs.Debugf(o, "open chunk writer: started multipart upload: %v", remote)
 	return info, chunkWriter, err
 }
 
 // WriteChunk will write chunk number with reader bytes, where chunk number >= 0
 func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error) {
-
-	fs.Debugf(s.f, "Multipart upload parts: %d", chunkNumber+1)
 
 	token, err := s.f.refreshJWTToken(ctx)
 	if err != nil {
@@ -156,10 +153,6 @@ func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 	}
 
 	if err != nil {
-		fs.Debugf(s.f, "Failed to copy chunk: %v", err)
-		if err != nil {
-			return 0, err
-		}
 		return 0, fmt.Errorf("failed to read chunk: %w", err)
 	}
 	// Get presigned URL for this part
@@ -183,10 +176,6 @@ func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 	})
 
 	if err != nil {
-		fs.Debugf(s.f, "Failed to upload part TEST: %v", err)
-		if err != nil {
-			return 0, err
-		}
 		return 0, fmt.Errorf("failed to get part URL: %w", err)
 	}
 	opts := rest.Opts{
@@ -234,7 +223,6 @@ func (s *shadeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 		PartNumber: int32(chunkNumber + 1),
 		ETag:       etag,
 	})
-	fs.Debugf(s.f, "Part upload completed: %d", chunkNumber+1)
 	return n, nil
 }
 
@@ -259,7 +247,6 @@ func (s *shadeChunkWriter) Close(ctx context.Context) error {
 
 	token, err := s.f.refreshJWTToken(ctx)
 	if err != nil {
-		fs.Debugf(s.f, "Failed to get token: %v", err)
 		return err
 	}
 
@@ -297,7 +284,6 @@ func (s *shadeChunkWriter) Close(ctx context.Context) error {
 		return fmt.Errorf("failed to complete multipart upload: %w", err)
 	}
 
-	fs.Debugf(s.f, "Successfully uploaded file via multipart: %s", s.o.remote)
 	return nil
 }
 
@@ -307,7 +293,6 @@ func (s *shadeChunkWriter) Close(ctx context.Context) error {
 func (s *shadeChunkWriter) Abort(ctx context.Context) error {
 	token, err := s.f.refreshJWTToken(ctx)
 	if err != nil {
-		fs.Debugf(s.f, "Failed to get token for abort: %v", err)
 		return err
 	}
 
@@ -334,6 +319,5 @@ func (s *shadeChunkWriter) Abort(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to abort multipart upload: %w", err)
 	}
-	fs.Debugf(s.f, "Successfully aborted multipart upload")
 	return nil
 }

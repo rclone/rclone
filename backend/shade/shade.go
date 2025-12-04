@@ -4,9 +4,7 @@ package shade
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -80,6 +78,16 @@ func init() {
 			Default:  maxUploadParts,
 			Advanced: true,
 		}, {
+			Name:     "token",
+			Help:     "JWT Token for performing Shade FS operations. Don't set this value - rclone will set it automatically",
+			Default:  "",
+			Advanced: true,
+		}, {
+			Name:     "token_expiry",
+			Help:     "JWT Token Expiration time. Don't set this value - rclone will set it automatically",
+			Default:  "",
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -92,19 +100,14 @@ func init() {
 
 // refreshJWTToken retrieves or refreshes the ShadeFS token
 func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
-	fs.Debugf(f, "Checking if token is valid...")
 	f.tokenMu.Lock()
 	defer f.tokenMu.Unlock()
 	// Return existing token if it's still valid
 	checkTime := f.tokenExp.Add(-2 * time.Minute)
 	//If the token expires in less than two minutes, just get a new one
 	if f.token != "" && time.Now().Before(checkTime) {
-
-		fs.Debugf(f, "Using existing token (expires in %v)", time.Until(f.tokenExp))
 		return f.token, nil
 	}
-
-	fs.Debugf(f, "Token expired or not set, requesting new token from API")
 
 	// Token has expired or doesn't exist, get a new one
 	opts := rest.Opts{
@@ -151,8 +154,6 @@ func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("empty token received from server")
 	}
 
-	fs.Debugf(f, "Successfully obtained new token")
-
 	parts := strings.Split(tokenStr, ".")
 	if len(parts) < 2 {
 		return "", fmt.Errorf("invalid token received from server")
@@ -174,6 +175,10 @@ func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
 
 	f.token = tokenStr
 	f.tokenExp = time.Unix(exp, 0)
+
+	f.m.Set("token", f.token)
+	f.m.Set("token_expiry", f.tokenExp.Format(time.RFC3339))
+
 	return f.token, nil
 }
 
@@ -213,6 +218,8 @@ type Options struct {
 	ChunkSize      fs.SizeSuffix `config:"chunk_size"`
 	MaxUploadParts int           `config:"max_upload_parts"`
 	Concurrency    int           `config:"upload_concurrency"`
+	Token          string        `config:"token"`
+	TokenExpiry    string        `config:"token_expiry"`
 	Encoding       encoder.MultiEncoder
 }
 
@@ -230,6 +237,7 @@ type Fs struct {
 	token        string       // ShadeFS token
 	tokenExp     time.Time    // Token expiration time
 	tokenMu      sync.Mutex
+	m            configmap.Mapper //Config Mapper to store tokens for future use
 	recursive    bool
 	createdDirs  map[string]bool // Cache of directories we've created
 	createdDirMu sync.RWMutex    // Mutex for createdDirs map
@@ -375,7 +383,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Hashes returns the supported hash types
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.MD5)
+	return hash.Set(hash.None)
 }
 
 // Features returns the optional features of this Fs
@@ -399,11 +407,13 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:        root,
 		opt:         *opt,
 		drive:       opt.Drive,
+		m:           m,
 		srv:         rest.NewClient(fshttp.NewClient(ctx)).SetRoot(defaultEndpoint),
 		apiSrv:      rest.NewClient(fshttp.NewClient(ctx)),
 		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		recursive:   true,
 		createdDirs: make(map[string]bool),
+		token:       opt.Token,
 	}
 
 	f.features = &fs.Features{
@@ -413,6 +423,15 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		Move:                    f.Move,
 		DirMove:                 f.DirMove,
 		OpenChunkWriter:         f.OpenChunkWriter,
+	}
+
+	if opt.TokenExpiry != "" {
+		tokenExpiry, err := time.Parse(time.RFC3339, opt.TokenExpiry)
+		if err != nil {
+			fs.Errorf(nil, "Failed to parse token_expiry option: %v", err)
+		} else {
+			f.tokenExp = tokenExpiry
+		}
 	}
 
 	// Set the endpoint
@@ -430,13 +449,9 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	} else if opt.ChunkSize > fs.SizeSuffix(maxChunkSize) {
 		return nil, fmt.Errorf("chunk_size %d is greater than maximum %d", opt.ChunkSize, maxChunkSize)
 	}
-	fs.Debugf(f, "Using chunk size: %d bytes", opt.ChunkSize)
 
 	// Ensure root doesn't have trailing slash
 	f.root = strings.Trim(f.root, "/")
-	if f.root != "" {
-		fs.Debugf(f, "Root directory is: %s", f.root)
-	}
 
 	// Check that we can log in by getting a token
 	_, err = f.refreshJWTToken(ctx)
@@ -457,7 +472,6 @@ func NewFS(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // NewObject finds the Object at remote
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	fs.Debugf(f, "Finding object: %s", remote)
 
 	fullPath := f.buildFullPath(remote)
 
@@ -465,29 +479,22 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	res, err := f.callAPI(ctx, "GET", fmt.Sprintf("/%s/fs/attr?path=%s", f.drive, fullPath), &response)
 
 	if res != nil && res.StatusCode == http.StatusNotFound {
-		fs.Debugf(f, "Object not found")
 		return nil, fs.ErrorObjectNotFound
 	}
 
 	if err != nil {
-		fs.Debugf(f, "Error from NewObject call: %v", err)
 		return nil, err
 	}
 
 	if res != nil && res.StatusCode != http.StatusOK {
-		fs.Debugf(f, "Bad status code from server: %d", res.StatusCode)
 		return nil, fmt.Errorf("attr failed with status code: %d", res.StatusCode)
 	}
 
-	fs.Debugf(f, "Received object info: type=%s, size=%d", response.Type, response.Size)
-
 	if response.Type == "tree" {
-		fs.Debugf(f, "Path is a directory: %s", remote)
 		return nil, fs.ErrorIsDir
 	}
 
 	if response.Type != "file" {
-		fs.Debugf(f, "Path is not a file: %s (type=%s)", remote, response.Type)
 		return nil, fmt.Errorf("path is not a file: %s", remote)
 	}
 
@@ -527,14 +534,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	if res.StatusCode != http.StatusOK {
-		fs.Debugf(f, "Bad status code from server: %d", res.StatusCode)
 		return nil, fmt.Errorf("listdir failed with status code: %d", res.StatusCode)
 	}
 
-	fs.Debugf(f, "Received %d entries from server", len(response))
 	for _, r := range response {
 		if r.Draft {
-			fs.Debugf(f, "Skipping draft file: %s", r.Path)
 			continue
 		}
 
@@ -542,13 +546,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		entryPath := strings.TrimPrefix(r.Path, "/")
 		if f.root != "" {
 			if !strings.HasPrefix(entryPath, f.root) {
-				fs.Debugf(f, "Path %s doesn't have root prefix %s, skipping", entryPath, f.root)
 				continue
 			}
 			entryPath = strings.TrimPrefix(strings.TrimPrefix(entryPath, f.root), "/")
 		}
-
-		fs.Debugf(f, "Processing entry: %s, type: %s, size: %d", entryPath, r.Type, r.Size)
 
 		if r.Type == "file" {
 			entries = append(entries, &Object{
@@ -599,7 +600,6 @@ func (f *Fs) ensureDirectoryPath(ctx context.Context, dirPath string) error {
 	f.createdDirMu.RLock()
 	if f.createdDirs[dirPath] {
 		f.createdDirMu.RUnlock()
-		fs.Debugf(f, "Directory already created (cached): %s", dirPath)
 		return nil
 	}
 	f.createdDirMu.RUnlock()
@@ -622,13 +622,11 @@ func (f *Fs) ensureDirectoryPath(ctx context.Context, dirPath string) error {
 
 	// If all directories are cached, we're done
 	if len(dirsToCreate) == 0 {
-		fs.Debugf(f, "All parent directories already created (cached)")
 		return nil
 	}
 
 	// Create each directory in order
 	for _, dir := range dirsToCreate {
-		fs.Debugf(f, "Creating directory: %s", dir)
 
 		fullPath := url.QueryEscape(dir)
 		res, err := f.callAPI(ctx, "POST", fmt.Sprintf("/%s/fs/mkdir?path=%s", f.drive, fullPath), nil)
@@ -636,14 +634,12 @@ func (f *Fs) ensureDirectoryPath(ctx context.Context, dirPath string) error {
 		// If directory already exists, that's fine
 		if err == nil && res != nil {
 			if res.StatusCode == http.StatusConflict || res.StatusCode == http.StatusUnprocessableEntity {
-				fs.Debugf(f, "Directory already exists on server: %s", dir)
 				f.createdDirMu.Lock()
 				f.createdDirs[dir] = true
 				f.createdDirMu.Unlock()
 			} else if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 				fs.Debugf(f, "Failed to create directory %s: status code %d", dir, res.StatusCode)
 			} else {
-				fs.Debugf(f, "Successfully created directory: %s", dir)
 				f.createdDirMu.Lock()
 				f.createdDirs[dir] = true
 				f.createdDirMu.Unlock()
@@ -667,7 +663,6 @@ func (f *Fs) ensureDirectoryPath(ctx context.Context, dirPath string) error {
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, "Creating directory: %s", dir)
 
 	// Build the full path for the directory
 	fullPath := dir
@@ -693,7 +688,6 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	f.createdDirs[fullPath] = true
 	f.createdDirMu.Unlock()
 
-	fs.Debugf(f, "Successfully created directory: %s", dir)
 	return nil
 }
 
@@ -701,19 +695,16 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, "Removing directory: %s", dir)
 	fullPath := f.buildFullPath(dir)
 
 	if fullPath == "" {
 		return errors.New("cannot delete root directory")
 	}
 
-	fs.Debugf(f, "Encoded path for rmdir: %s", fullPath)
 	var response []api.ListDirResponse
 	res, err := f.callAPI(ctx, "GET", fmt.Sprintf("/%s/fs/listdir?path=%s", f.drive, fullPath), &response)
 
 	if res != nil && res.StatusCode != http.StatusOK {
-		fs.Debugf(f, "Failed to list dirs: status code %d", res.StatusCode)
 		return err
 	}
 
@@ -724,7 +715,6 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	// Use the delete endpoint which handles both files and directories
 	res, err = f.callAPI(ctx, "POST", fmt.Sprintf("/%s/fs/delete?path=%s", f.drive, fullPath), nil)
 	if err != nil {
-		fs.Debugf(f, "Error removing directory: %v", err)
 		return err
 	}
 	defer fs.CheckClose(res.Body, &err)
@@ -745,7 +735,6 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 	f.createdDirs[unescapedPath] = false
 
-	fs.Debugf(f, "Successfully removed directory: %s", dir)
 	return nil
 }
 
@@ -781,48 +770,7 @@ func (o *Object) Remote() string {
 
 // Hash returns the requested hash of the object content
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.MD5 {
-		return "", hash.ErrUnsupported
-	}
-	if o.Size() == 0 {
-		return "d41d8cd98f00b204e9800998ecf8427e", nil
-	}
-
-	var body io.ReadCloser
-	var err error
-
-	if o.original != "" {
-		resp, err := http.Get(o.original)
-		if err != nil {
-			return "", err
-		}
-		defer func() {
-			if cerr := resp.Body.Close(); cerr != nil && err == nil {
-				err = fmt.Errorf("failed to close response body: %w", cerr)
-			}
-		}()
-		if resp.StatusCode != http.StatusOK {
-			return "", fmt.Errorf("unexpected status %d fetching %s", resp.StatusCode, o.original)
-		}
-		body = resp.Body
-	} else {
-		body, err = o.Open(ctx)
-		if err != nil {
-			return "", err
-		}
-		defer func() {
-			if cerr := body.Close(); cerr != nil && err == nil {
-				err = fmt.Errorf("failed to close body: %w", cerr)
-			}
-		}()
-	}
-
-	h := md5.New()
-	if _, err := io.Copy(h, body); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(h.Sum(nil)), nil
+	return "", hash.ErrUnsupported
 }
 
 // Size returns the size of the object
@@ -848,7 +796,6 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	fs.Debugf(o.fs, "Opening file: %s", o.remote)
 
 	if o.size == 0 {
 		// Empty file: return an empty reader
@@ -891,14 +838,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 		res, err = client.Do(req)
 		if err != nil {
-			fs.Debugf(o.fs, "Initial download request failed: %v", err)
 			return false, err
 		}
 		return res.StatusCode == http.StatusTooManyRequests, nil
 	})
 
 	if err != nil {
-		fs.Debugf(o.fs, "Download request failed: %v", err)
 		return nil, fmt.Errorf("download request failed: %w", err)
 	}
 	if res == nil {
@@ -908,7 +853,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	// Handle response based on status code
 	switch res.StatusCode {
 	case http.StatusOK:
-		fs.Debugf(o.fs, "Received file directly from ShadeFS")
 		return res.Body, nil
 
 	case http.StatusTemporaryRedirect:
@@ -916,7 +860,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		bodyBytes, err := io.ReadAll(res.Body)
 		fs.CheckClose(res.Body, &err) // Close body after reading
 		if err != nil {
-			fs.Debugf(o.fs, "Failed to read redirect body: %v", err)
 			return nil, fmt.Errorf("failed to read redirect body: %w", err)
 		}
 
@@ -932,10 +875,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 
 		err = o.fs.pacer.Call(func() (bool, error) {
-			fs.Debugf(o.fs, "Downloading file: %s", presignedURL)
 			downloadRes, err = client.Call(ctx, &opts)
 			if err != nil {
-				fs.Debugf(o.fs, "Failed to fetch presigned URL: %v", err)
 				return false, err
 			}
 			if downloadRes == nil {
@@ -962,7 +903,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	default:
 		body, _ := io.ReadAll(res.Body)
 		fs.CheckClose(res.Body, &err)
-		fs.Debugf(o.fs, "Unexpected status code from ShadeFS: %d, body: %q", res.StatusCode, string(body))
 		return nil, fmt.Errorf("download failed with status %d: %q", res.StatusCode, string(body))
 	}
 }
@@ -973,12 +913,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	fs.Debugf(o.fs, "Uploading file: %s", o.remote)
-
-	if src.Size() < 0 {
-		//Indeterminate sizes not supported
-		return fs.ErrorCantMove
-	}
 
 	//Need to ensure parent directories exist before updating
 	err := o.fs.ensureParentDirectories(ctx, o.remote)
@@ -1000,10 +934,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove removes the object
 func (o *Object) Remove(ctx context.Context) error {
-	fs.Debugf(o.fs, "Removing file: %s", o.remote)
 
 	fullPath := o.fs.buildFullPath(o.remote)
-	fs.Debugf(o.fs, "Encoded path for delete: %s", fullPath)
 
 	res, err := o.fs.callAPI(ctx, "POST", fmt.Sprintf("/%s/fs/delete?path=%s", o.fs.drive, fullPath), nil)
 	if err != nil {
@@ -1058,7 +990,6 @@ func (d *Directory) Storable() bool {
 
 // Open returns an error for directories
 func (d *Directory) Open() (io.ReadCloser, error) {
-	fs.Debugf(d.fs, "Attempted to open directory: %s", d.remote)
 	return nil, fs.ErrorIsDir
 }
 
