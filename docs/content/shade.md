@@ -85,9 +85,7 @@ y/e/d> y
 
 ### Modification times and hashes
 
-Shade does not support modification times and hashes yet. This means that rclone will consider size and name when considering which files need to sync.
-
-Additionally, this means that when copying files to Shade, by default rclone will first upload the file, then download it again in its entirety to recalculate the hash for verification. In order to circumvent this, you could use the --ignore-checksum flag, but then the contents of the files on Shade would not be verified against what was uploaded.
+Shade does not support hashes and writing mod times.
 
 
 ### Transfers
