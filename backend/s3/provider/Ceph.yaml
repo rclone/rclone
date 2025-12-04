@@ -18,3 +18,4 @@ quirks:
   list_version: 1
   force_path_style: true
   list_url_encode: false
+  use_already_exists: false
