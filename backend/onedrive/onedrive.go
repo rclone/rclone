@@ -155,6 +155,11 @@ See: https://github.com/rclone/rclone/issues/1716
 			Default:  fs.SizeSuffix(-1),
 			Advanced: true,
 		}, {
+			Name:     "tenant_url",
+			Help:     "The tenant URL for non-admin OneDrive access.",
+			Default:  "",
+			Advanced: true,
+		}, {
 			Name: "chunk_size",
 			Help: `Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
 
@@ -471,7 +476,15 @@ isn't always desirable to set the permissions from the metadata.
 // Get the region and graphURL from the config
 func getRegionURL(m configmap.Mapper) (region, graphURL string) {
 	region, _ = m.Get("region")
+
 	graphURL = graphAPIEndpoint[region] + "/v1.0"
+
+	// Check if tenant_url is provided for non-admin mode
+	tenantURL, _ := m.Get("tenant_url")
+	if tenantURL != "" {
+		graphURL = tenantURL + "/v2.0"
+	}
+
 	return region, graphURL
 }
 
@@ -764,6 +777,7 @@ type Options struct {
 	Region                  string               `config:"region"`
 	UploadCutoff            fs.SizeSuffix        `config:"upload_cutoff"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
+	TenantURL               string               `config:"tenant_url"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
@@ -1069,6 +1083,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
+
+	if opt.TenantURL != "" {
+		rootURL = opt.TenantURL + "/v2.0" + "/drives/" + opt.DriveID
+	}
 
 	oauthConfig, err := makeOauthConfig(ctx, opt)
 	if err != nil {
@@ -2738,7 +2756,13 @@ func (o *Object) ID() string {
 // and returns itemID, driveID, rootURL.
 // Such a normalized ID can come from (*Item).GetID()
 func (f *Fs) parseNormalizedID(ID string) (string, string, string) {
-	rootURL := graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
+	var rootURL string
+	if f.opt.TenantURL != "" {
+		rootURL = f.opt.TenantURL + "/v2.0/drives"
+	} else {
+		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
+	}
+
 	if strings.Contains(ID, "#") {
 		s := strings.Split(ID, "#")
 		return s[1], s[0], rootURL
@@ -2933,7 +2957,12 @@ func (f *Fs) changeNotifyNextChange(ctx context.Context, token string) (delta ap
 }
 
 func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
-	rootURL := graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
+	var rootURL string
+	if f.opt.TenantURL != "" {
+		rootURL = f.opt.TenantURL + "/v2.0/drives"
+	} else {
+		rootURL = graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
+	}
 
 	return rest.Opts{
 		Method:     "GET",
