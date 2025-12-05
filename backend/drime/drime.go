@@ -98,6 +98,7 @@ Leave this blank normally, rclone will fill it in automatically.
 				encoder.EncodeColon |
 				encoder.EncodeLtGt |
 				encoder.EncodeQuestion |
+				encoder.EncodeLeftSpace |
 				encoder.EncodeBackSlash |
 				encoder.EncodePipe |
 				encoder.EncodeExclamation |
@@ -793,11 +794,12 @@ func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) e
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(ctx context.Context, id string) error {
 	opts := rest.Opts{
-		Method: "DELETE",
-		Path:   "/contents/",
+		Method: "POST",
+		Path:   "/file-entries/delete",
 	}
 	request := api.DeleteRequest{
-		ContentsID: id,
+		EntryIds:      []string{id},
+		DeleteForever: false, // FIXME: hard delete?
 	}
 	var result api.DeleteResponse
 	err := f.pacer.Call(func() (bool, error) {
@@ -861,7 +863,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	return fs.ModTimeNotSupported
 }
 
 // Purge deletes all the files and the container
@@ -1402,6 +1404,22 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return err
+	}
+
+	// If the file exists, delete it after a successful upload
+	if o.id != "" {
+		id := o.id
+		o.id = ""
+		defer func() {
+			if err != nil {
+				return
+			}
+			fs.Debugf(o, "Removing old object on successful upload")
+			deleteErr := o.fs.deleteObject(ctx, id)
+			if deleteErr != nil {
+				err = fmt.Errorf("failed to delete existing object: %w", deleteErr)
+			}
+		}()
 	}
 
 	// Do the upload

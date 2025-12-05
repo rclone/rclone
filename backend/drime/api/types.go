@@ -93,7 +93,7 @@ type CreateFolderRequest struct {
 
 type CreateFolderResponse struct {
 	Status string `json:"status"`
-	Folder Item   `json:"fileEntry"`
+	Folder Item   `json:"folder"`
 }
 
 const (
@@ -267,7 +267,8 @@ type AccountsGet struct {
 
 // DeleteRequest is the input to DELETE /contents
 type DeleteRequest struct {
-	ContentsID string `json:"contentsId"` // comma separated list of IDs
+	EntryIds      []string `json:"entryIds"`
+	DeleteForever bool     `json:"deleteForever"`
 }
 
 // DeleteResponse is the input to DELETE /contents
