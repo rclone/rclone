@@ -101,13 +101,88 @@ Cleaned up 5 broken objects (freed 3.0 KiB)
 - Orphaned particles from failed operations
 - Does NOT remove valid objects (2+ particles)
 
+### Backend Commands
+
+Level3 provides several backend-specific commands for management and recovery:
+
+#### Status Command
+
+Check backend health and get recovery guidance:
+
+```bash
+rclone backend status level3:
+```
+
+Shows:
+- Health status of all three backends (even, odd, parity)
+- Impact assessment (what operations work)
+- Complete recovery guide for degraded mode
+- Step-by-step instructions for backend replacement
+
+#### Rebuild Command
+
+Rebuild all missing particles on a replacement backend after replacing a failed backend:
+
+```bash
+# Auto-detect which backend needs rebuild
+rclone backend rebuild level3:
+
+# Or specify the backend
+rclone backend rebuild level3: odd
+
+# Check what needs rebuild without actually rebuilding
+rclone backend rebuild level3: -o check-only=true
+```
+
+The rebuild process:
+1. Scans for missing particles
+2. Reconstructs data from other two backends
+3. Uploads restored particles
+4. Shows progress and ETA
+5. Verifies integrity
+
+**Note**: Rebuild is different from self-healing - it's a manual, complete restoration after backend replacement.
+
+#### Heal Command
+
+Proactively heal all degraded objects (objects with exactly 2 of 3 particles):
+
+```bash
+rclone backend heal level3:
+```
+
+The heal command:
+- Scans all objects in the remote
+- Identifies objects with exactly 2 of 3 particles (degraded state)
+- Reconstructs and uploads the missing particle
+- Reports summary of healed objects
+
+**Example output**:
+```
+Heal Summary
+══════════════════════════════════════════
+
+Files scanned:      100
+Healthy (3/3):       85
+Healed (2/3→3/3):   12
+Unrecoverable (≤1): 3
+```
+
+**When to use**:
+- Periodic maintenance
+- After recovering from backend failures
+- Before important operations
+- When you want to ensure all objects are fully healthy
+
+**Note**: The heal command works regardless of the `auto_heal` setting - it's always available as an explicit admin command. This is different from `auto_heal` which heals objects automatically during reads.
+
 ### Object and Directory States
 
 | Particles/Backends | State | auto_cleanup | auto_heal | Behavior |
 |-------------------|-------|--------------|-----------|----------|
 | **3/3** | Healthy | N/A | N/A | Normal operations |
 | **2/3** | Degraded | N/A | ✅ Enabled | Reconstruct missing particle/directory |
-| **2/3** | Degraded | N/A | ❌ Disabled | No reconstruction (manual rebuild needed) |
+| **2/3** | Degraded | N/A | ❌ Disabled | No automatic reconstruction (use `heal` command or `rebuild`) |
 | **1/3** | Orphaned | ✅ Enabled | N/A | Hide from listings, delete if accessed |
 | **1/3** | Orphaned | ❌ Disabled | N/A | Show in listings, operations may fail |
 
