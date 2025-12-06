@@ -159,6 +159,57 @@ The rebuild process will:
 Note: This is different from self-healing which happens automatically during
 reads. Rebuild is a manual, complete restoration after backend replacement.
 `,
+}, {
+	Name:  "heal",
+	Short: "Heal all degraded objects (2/3 particles present)",
+	Long: `Scans the entire remote and heals any objects that have exactly 2 of 3 particles.
+
+This is an explicit, admin-driven alternative to automatic self-healing on read.
+Use this when you want to proactively heal all degraded objects rather than
+waiting for them to be accessed during normal operations.
+
+Usage:
+
+    rclone backend heal level3:
+
+The heal command will:
+  1. Scan all objects in the remote
+  2. Identify objects with exactly 2 of 3 particles (degraded state)
+  3. Reconstruct and upload the missing particle
+  4. Report summary of healed objects
+
+Output includes:
+  • Total files scanned
+  • Number of healthy files (3/3 particles)
+  • Number of healed files (2/3→3/3)
+  • Number of unrecoverable files (≤1 particle)
+  • List of unrecoverable objects (if any)
+
+Examples:
+
+    # Heal all degraded objects
+    rclone backend heal level3:
+
+    # Example output:
+    # Heal Summary
+    # ══════════════════════════════════════════
+    # 
+    # Files scanned:      100
+    # Healthy (3/3):       85
+    # Healed (2/3→3/3):   12
+    # Unrecoverable (≤1): 3
+
+Note: This is different from auto_heal which heals objects automatically
+during reads. The heal command proactively heals all degraded objects at once,
+which is useful for:
+  • Periodic maintenance
+  • After recovering from backend failures
+  • Before important operations
+  • When you want to ensure all objects are fully healthy
+
+The heal command works regardless of the auto_heal setting - it's always
+available as an explicit admin command.
+`,
 }}
 
 // Options defines the configuration for this backend
@@ -405,9 +456,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}
 
 	// Apply defaults if not explicitly set
-	// auto_cleanup defaults to true; auto_heal is opt-in and defaults to false.
+	// Both auto_cleanup and auto_heal default to true for best user experience.
 	if _, ok := m.Get("auto_cleanup"); !ok {
 		opt.AutoCleanup = true
+	}
+	if _, ok := m.Get("auto_heal"); !ok {
+		opt.AutoHeal = true
 	}
 
 	if opt.Even == "" {

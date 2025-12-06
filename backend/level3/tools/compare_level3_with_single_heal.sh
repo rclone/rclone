@@ -200,15 +200,6 @@ run_read_heal_scenario() {
   local backend="$1"
   log_info "suite" "Running read-heal scenario '${backend}' (${STORAGE_TYPE})"
 
-  # NOTE: For now, read-heal scenarios are only enforced for MinIO-backed level3.
-  # The local level3 backend is covered by Go tests and will be wired into the
-  # backend heal command in a later iteration. To avoid flaky or misleading
-  # results, we currently skip local read-heal checks here.
-  if [[ "${STORAGE_TYPE}" == "local" ]]; then
-    record_heal_result "PASS" "${backend}" "Skipped for local backend (heal semantics under active development; see Go tests)."
-    return 0
-  fi
-
   purge_remote_root "${LEVEL3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
 
