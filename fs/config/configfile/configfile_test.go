@@ -2,6 +2,7 @@ package configfile
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -360,5 +361,41 @@ func TestConfigFileSaveSymlinkAbsolute(t *testing.T) {
 		target := filepath.Join("b", "c", "configfiletarget")
 		resolvedTarget := filepath.Join(filepath.Dir(link), target)
 		testSymlink(t, link, target, resolvedTarget)
+	})
+}
+
+type pipedInput struct {
+	io.Reader
+}
+
+func (p *pipedInput) Read(b []byte) (int, error) {
+	return p.Reader.Read(b)
+}
+
+func (_ *pipedInput) Seek(_ int64, _ int) (int64, error) {
+	return 0, fmt.Errorf("Seek not supported")
+}
+
+func TestPipedConfig(t *testing.T) {
+	t.Run("DoesNotSupportSeeking", func(t *testing.T) {
+		r := &pipedInput{strings.NewReader("")}
+		_, err := r.Seek(0, io.SeekStart)
+		require.Error(t, err)
+	})
+
+	t.Run("IsSupported", func(t *testing.T) {
+		r := &pipedInput{strings.NewReader(configData)}
+		_, err := config.Decrypt(r)
+		require.NoError(t, err)
+	})
+
+	t.Run("PlainTextConfigIsNotConsumedByCryptCheck", func(t *testing.T) {
+		in := &pipedInput{strings.NewReader(configData)}
+
+		r, _ := config.Decrypt(in)
+		got, err := io.ReadAll(r)
+		require.NoError(t, err)
+
+		assert.Equal(t, configData, string(got))
 	})
 }

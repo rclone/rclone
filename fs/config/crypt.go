@@ -77,8 +77,9 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 		if strings.HasPrefix(l, "RCLONE_ENCRYPT_V") {
 			return nil, errors.New("unsupported configuration encryption - update rclone for support")
 		}
+		// Restore non-seekable plain-text stream to its original state
 		if _, err := b.Seek(0, io.SeekStart); err != nil {
-			return nil, err
+			return io.MultiReader(strings.NewReader(l+"\n"), r), nil
 		}
 		return b, nil
 	}
