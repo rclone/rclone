@@ -9,6 +9,7 @@
 ## 🔴 High Priority
 
 ### Q1: Update Rollback Not Working Properly
+**Status**: 🚨 **ACTIVE** - Still needs implementation
 **Issue**: The `Update` operation does not properly rollback when rollback is enabled (`rollback=true`).
 
 **Current Status**:
@@ -39,7 +40,10 @@
 
 ---
 
-### Q2: Backend Help Command Behavior
+## 🟢 Low Priority
+
+### Q6: Backend Help Command Behavior
+**Status**: 🟢 **ACTIVE** - Low priority (help command is optional)
 **Question**: How should `rclone backend help level3:` behave?
 
 **Context**:
@@ -92,9 +96,8 @@ RAID 3 Backend
 
 ---
 
-## 🔴 High Priority
-
 ### Q2: Streaming Support for Large Files 🚨 **CRITICAL**
+**Status**: 🚨 **ACTIVE** - Blocking production use with large files
 **Question**: How should level3 handle large files (10+ GB) without loading entire file into memory?
 
 **Updated**: 2025-11-03  
@@ -209,9 +212,61 @@ func (w *level3ChunkWriter) WriteChunk(ctx, chunkNum int, reader io.ReadSeeker) 
 
 ---
 
+## ✅ Resolved Questions
+
+**Note**: These questions have been resolved and should be moved to `DESIGN_DECISIONS.md` for historical reference.
+
+### Q4: Rebuild Command for Backend Replacement ✅ **IMPLEMENTED**
+**Date**: 2025-11-02  
+**Resolution Date**: 2025-12-07  
+**Status**: ✅ **IMPLEMENTED** - The rebuild command is fully functional
+
+**Original Question**: How should we implement RAID 3 rebuild when a backend is permanently replaced?
+
+**Resolution**: 
+The rebuild command has been fully implemented in `level3.go` (function `rebuildCommand` starting at line 1230). All proposed features are working:
+
+✅ **Implemented Features**:
+- Manual rebuild command: `rclone backend rebuild level3: [even|odd|parity]`
+- Auto-detection: `rclone backend rebuild level3:` (auto-detects which backend needs rebuild)
+- Check-only mode: `-o check-only=true`
+- Dry-run mode: `-o dry-run=true`
+- Priority options: `-o priority=auto|dirs-small|dirs|small`
+
+**Documentation**: See `rclone backend help level3:` for full usage details. Also documented in `README.md` section "Backend Commands > Rebuild Command".
+
 ---
 
+### Q5: Configurable Write Policy ✅ **RESOLVED - DECISION MADE**
+**Status**: ✅ **RESOLVED** - Decision: Not implementing (keep simple)
+
+**Original Question**: Should users be able to choose degraded write mode?
+
+**Resolution**: Not implementing for now. Current strict write policy (all 3 backends required) matches hardware RAID 3 behavior and ensures data consistency. Keep implementation simple.
+
+**Reconsider if**: Users request this feature
+
+**References**: `docs/ERROR_HANDLING_ANALYSIS.md` Option B
+
+---
+
+### Q7: Move with Degraded Source ✅ **RESOLVED - DECISION MADE**
+**Status**: ✅ **RESOLVED** - Decision: Keep current behavior (documented)
+
+**Original Question**: Current behavior allows moving files with missing particles. Is this desired?
+
+**Resolution**: Keep current behavior (flexible). Move succeeds even with degraded source, propagating degraded state to new location. This matches user expectations and avoids blocking moves unnecessarily.
+
+**Documented**: This behavior is documented as known/expected.
+
+**Reconsider if**: Users report confusion or data loss
+
+---
+
+## 🟢 Low Priority (Active Questions)
+
 ### Q3: Chunk/Block-Level Striping
+**Status**: 🟢 **ACTIVE** - Low priority
 **Question**: Should level3 support block-level striping instead of byte-level?
 
 **Context**:
@@ -236,171 +291,9 @@ func (w *level3ChunkWriter) WriteChunk(ctx, chunkNum int, reader io.ReadSeeker) 
 
 ---
 
-### Q4: Rebuild Command for Backend Replacement
-**Date**: 2025-11-02  
-**Question**: How should we implement RAID 3 rebuild when a backend is permanently replaced?
 
-**Context**:
-- Hardware RAID 3 has a rebuild process: failed drive → replace → rebuild → healthy
-- Level3 needs similar process: failed backend → replace → ??? → healthy
-- Currently: Self-healing is automatic/opportunistic, not complete/deliberate
-
-**Scenario**:
-```
-Day 0: Odd backend fails (disk crash, account closed, etc.)
-  → Self-healing handles reads ✅
-  → Writes blocked (strict policy) ❌
-  
-Day 1: User creates new odd backend (empty)
-  → Updates rclone.conf
-  → Needs to restore ALL particles to new backend
-  → How to do this?
-```
-
-**Options**:
-
-**A) Manual Rebuild Command** (Recommended):
-```bash
-# Check what needs rebuild
-rclone backend rebuild level3: -o check-only=true
-
-# Rebuild specific backend
-rclone backend rebuild level3: odd
-
-# With options
-rclone backend rebuild level3: odd -o priority=small
-```
-
-**B) Automatic Detection**:
-```bash
-# Auto-detect which backend needs rebuild
-rclone backend rebuild level3:
-# Prompts: "Odd backend missing 1,247 files. Rebuild? (y/n)"
-```
-
-**C) Use rclone sync** (doesn't work):
-```bash
-rclone sync level3: new-odd:
-# ❌ Would sync merged files, not particles
-# ❌ Doesn't understand particle structure
-```
-
-**Proposed Features**:
-
-**MVP (Phase 1)**:
-- Basic rebuild command
-- Progress display
-- Verification
-
-**Advanced (Phase 2)**:
-- Check/analysis mode (`-o check-only=true`)
-- Priority options (`-o priority=dirs|small|large`)
-- Size filtering (`-o max-size=100M`)
-- Dry-run (`-o dry-run=true`)
-
-**Verification (Phase 3)**:
-- Separate verify command
-- Health status report
-
-**Terminology Decision**:
-- ✅ **"Rebuild"** (standard RAID term, not "recover")
-- Used by: mdadm, hardware RAID, ZFS (resilver), industry standard
-
-**Implementation Complexity**:
-- MVP: ~200 lines, 4-6 hours
-- Full: ~1,250 lines, 14-23 hours
-- Reuses existing: SplitBytes(), MergeBytes(), CalculateParity()
-
-**vs. Self-Healing**:
-- Self-healing: Automatic, opportunistic, gradual (during reads)
-- Rebuild: Manual, complete, fast (dedicated process)
-- **Both needed!** Different use cases
-
-**Investigation**:
-- [x] Research RAID terminology → "Rebuild" is standard
-- [x] Check rclone backend command pattern → `fs.Commander` interface
-- [x] Design command structure → Single command with options
-- [ ] Decide if/when to implement
-
-**User-Centric Approach** (NEW):
-
-The concern: Users may not know about `backend` commands or how to discover them!
-
-**Better UX - Multi-Layer Discovery**:
-
-1. **Enhanced Error Messages** (when write fails):
-   ```
-   ERROR: Cannot write - level3 DEGRADED (odd unavailable)
-   Diagnose: rclone backend status level3:
-   ```
-
-2. **`status` Command** (central diagnostic tool):
-   ```bash
-   $ rclone backend status level3:
-   # Shows: Full health report + step-by-step recovery guide
-   ```
-
-3. **`rebuild` Command** (for actual rebuild):
-   ```bash
-   $ rclone backend rebuild level3: odd
-   # Or: rclone backend status level3: --rebuild
-   ```
-
-**Benefits**:
-- ✅ Error messages guide users
-- ✅ `status` command provides complete recovery guide
-- ✅ No RAID knowledge required
-- ✅ Natural discovery path
-
-**Recommendation**: 
-- **Phase 1**: Enhanced error messages (1 hour) ⭐ **Do first**
-- **Phase 2**: `status` command (3-4 hours) ⭐ **Critical for UX**
-- **Phase 3**: `rebuild` command (4-6 hours) ⭐ **Completes workflow**
-
-**Total effort**: 8-11 hours for excellent UX
-
-**Priority**: 🟡 **Medium-High** (critical for production usability)
-
-**Who decides**: You (maintainer)
-
-**References**: 
-- See `backend rebuild` command implementation in level3.go
-
----
-
-## 🟢 Low Priority
-
-### Q5: Configurable Write Policy
-**Question**: Should users be able to choose degraded write mode?
-
-**Context**: Some users might prefer high availability over consistency
-
-**Decision**: Not implementing for now (keep simple)
-
-**Reconsider if**: Users request this feature
-
-**References**: `docs/ERROR_HANDLING_ANALYSIS.md` Option B
-
----
-
-
-### Q7: Move with Degraded Source
-**Question**: Current behavior allows moving files with missing particles. Is this desired?
-
-**Current**: Move succeeds, degraded state propagated to new location
-
-**Options**:
-- Keep current (flexible)
-- Require all particles (strict)
-- Reconstruct first (smart but slow)
-
-**Decision**: Keep current, documented as known behavior
-
-**Reconsider if**: Users report confusion or data loss
-
----
-
-### Q8: Cross-Backend Move/Copy
+### Q8: Cross-Backend Move/Copy ⚠️ **NEEDS INVESTIGATION**
+**Status**: 🟢 **ACTIVE** - Needs testing/investigation
 **Question**: How should level3 handle copying FROM level3 TO level3?
 
 **Context**: Same backend overlap issue as `union` and `combine`
@@ -414,6 +307,7 @@ The concern: Users may not know about `backend` commands or how to discover them
 ---
 
 ### Q9: Compression Support with Streaming 🔮 **DECISION NEEDED**
+**Status**: 🟢 **ACTIVE** - Research complete, awaiting decision
 **Question**: Should level3 support optional compression (Snappy/Gzip) to reduce storage overhead, and how should it be implemented?
 
 **Updated**: 2025-11-04  
@@ -540,6 +434,7 @@ D) **None** (Current):
 ---
 
 ### Q10: Backend-Specific Commands Support 🤝 **COMMUNITY DISCUSSION**
+**Status**: 🟡 **ACTIVE** - Awaiting rclone community discussion
 **Question**: Should level3 support backend-specific commands when all three remotes use the same backend type?
 
 **Updated**: 2025-11-04  
@@ -723,7 +618,8 @@ C) **Support All Commands**:
 
 ## 🟡 Medium Priority
 
-### Q12: Bucket/Directory Renaming (DirMove) Limitation with S3
+### Q11: Bucket/Directory Renaming (DirMove) Limitation with S3
+**Status**: 🟡 **ACTIVE** - Known limitation, may improve error messages
 **Question**: How should level3 handle directory/bucket renaming when underlying backends don't support DirMove?
 
 **Date Added**: November 6, 2025  
@@ -821,11 +717,25 @@ TIP: Use 'rclone copy' + 'rclone purge' instead for large datasets
 
 ## 📊 Statistics
 
-**Total Open Questions**: 10  
-**High Priority**: 2 (Q1: Backend Help, Q2: Streaming 🚨 **CRITICAL**)  
-**Medium-High Priority**: 1 (Q10: Backend Commands & Tags 🤝 - awaiting community discussion)  
-**Medium Priority**: 2 (Q4: Rebuild Command, Q12: DirMove Limitation)  
-**Low Priority**: 5 (Q3, Q5, Q7, Q8, Q9)  
+**Total Active Questions**: 8  
+**Resolved Questions**: 3 (Q4, Q5, Q7 - see "Resolved Questions" section above)
+
+**Active Questions by Priority**:
+- 🔴 **High Priority**: 1 
+  - Q2: Streaming Support for Large Files 🚨 **CRITICAL**
+- 🟡 **Medium Priority**: 2
+  - Q1: Update Rollback Not Working Properly
+  - Q10: Backend-Specific Commands Support 🤝 (awaiting community discussion)
+  - Q11: Bucket/Directory Renaming (DirMove) Limitation
+- 🟢 **Low Priority**: 5
+  - Q3: Chunk/Block-Level Striping
+  - Q6: Backend Help Command Behavior
+  - Q8: Cross-Backend Move/Copy
+  - Q9: Compression Support with Streaming 🔮
+
+**Question Numbering**:
+- Active: Q1, Q2, Q3, Q6, Q8, Q9, Q10, Q11
+- Resolved: Q4 (Rebuild Command - IMPLEMENTED), Q5 (Configurable Write Policy), Q7 (Move with Degraded Source)  
 
 **Decisions Made**: See `DESIGN_DECISIONS.md` for resolved questions
 

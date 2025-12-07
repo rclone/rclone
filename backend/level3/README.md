@@ -279,7 +279,7 @@ The Update operation rollback mechanism is not working properly when `rollback=t
 
 **See also**: 
 - `backend/level3/tools/UPDATE_ROLLBACK_ISSUE.md` - Detailed analysis of the issue
-- `backend/level3/OPEN_QUESTIONS.md` - Q1: Update Rollback Not Working Properly
+- `backend/level3/OPEN_QUESTIONS.md` - Q1: Update Rollback Not Working Properly (active issue)
 
 ---
 
@@ -475,11 +475,8 @@ The backend performs integrity checks:
 
 ### Limitations
 
-#### Data Loss Risk
-**Critical:** If either remote fails, **ALL data is lost**. This backend provides:
-- ❌ No redundancy
-- ❌ No parity (yet - planned for future)
-- ❌ No recovery from single backend failure
+#### Outdated Documentation Note
+The following sections may contain outdated information about missing features. Parity is now implemented and single backend failure recovery is supported through degraded mode reads and self-healing.
 
 #### Memory Usage
 - Files are buffered entirely in memory during upload/download
@@ -729,12 +726,14 @@ The level3 backend:
 | Feature | Duplicate | Level3 (RAID 3) |
 |---------|-----------|-----------------|
 | **Number of backends** | 2 | 3 |
-| **Data redundancy** | ✅ Full (identical copies) | ⏳ With parity (future) |
-| **Storage efficiency** | 50% (2x storage) | 67% (1.5x storage) |
-| **Single backend failure** | ✅ Still works | ⏳ Future (parity reconstruction) |
-| **Current status** | ✅ Fully redundant | ⚠️ Needs both even+odd |
+| **Data redundancy** | ✅ Full (identical copies) | ✅ With parity (XOR) |
+| **Storage efficiency** | 50% (2x storage) | ~67% (1.5x storage) |
+| **Single backend failure** | ✅ Still works | ✅ Degraded mode reads + self-healing |
+| **Current status** | ✅ Fully redundant | ✅ Parity implemented |
 | **Use case** | Backup, redundancy | Efficient fault-tolerance |
-| **Read from** | Either backend | Both even+odd required |
-| **Write to** | Both (identical) | All 3 (striped+parity) |
+| **Read from** | Either backend | Any 2 of 3 (degraded mode) |
+| **Write to** | Both (identical) | All 3 required (strict RAID 3) |
 | **Parity** | ❌ None | ✅ XOR parity |
+| **Single backend failure** | ✅ Still works | ✅ Degraded mode reads + self-healing |
+| **Backend replacement** | ✅ Manual copy | ✅ Rebuild command available |
 
