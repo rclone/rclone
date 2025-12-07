@@ -330,25 +330,25 @@ If empty it will default to the environment variable "AWS_PROFILE" or
 		}, {
 			Name: "role_arn",
 			Help: `ARN of the IAM role to assume.
-			
+
 Leave blank if not using assume role.`,
 			Advanced: true,
 		}, {
 			Name: "role_session_name",
 			Help: `Session name for assumed role.
-			
+
 If empty, a session name will be generated automatically.`,
 			Advanced: true,
 		}, {
 			Name: "role_session_duration",
 			Help: `Session duration for assumed role.
-			
+
 If empty, the default session duration will be used.`,
 			Advanced: true,
 		}, {
 			Name: "role_external_id",
 			Help: `External ID for assumed role.
-			
+
 Leave blank if not using an external ID.`,
 			Advanced: true,
 		}, {
@@ -842,6 +842,7 @@ const (
 	maxUploadParts      = 10000 // maximum allowed number of parts in a multi-part upload
 	minChunkSize        = fs.SizeSuffix(1024 * 1024 * 5)
 	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
+	purgeBatchSize      = 1000 // the max number of objects allowed in a DeleteObjects request
 	maxUploadCutoff     = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 	minSleep            = 10 * time.Millisecond           // In case of error, start at 10ms sleep.
 	maxExpireDuration   = fs.Duration(7 * 24 * time.Hour) // max expiry is 1 week
@@ -3582,11 +3583,10 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 	}
 
 	// Delete Config.Transfers in parallel
-	delChan := make(fs.ObjectsChan, f.ci.Transfers)
+	workerCount := f.ci.Transfers
+	delChan := make(fs.ObjectsChan, workerCount)
 	delErr := make(chan error, 1)
-	go func() {
-		delErr <- operations.DeleteFiles(ctx, delChan)
-	}()
+	go f.batchDelete(ctx, delErr, bucket, delChan, workerCount)
 	checkErr(f.list(ctx, listOpt{
 		bucket:        bucket,
 		directory:     directory,
@@ -3639,6 +3639,61 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 		checkErr(f.Rmdir(ctx, dir))
 	}
 	return errReturn
+}
+
+func (f *Fs) batchDelete(ctx context.Context, delErr chan error, bucket string, delChan fs.ObjectsChan, workerCount int) {
+	defer close(delErr)
+
+	errG := &errgroup.Group{}
+	for i := 0; i < workerCount; i++ {
+		errG.Go(func() error {
+			batchSize := purgeBatchSize
+			quiet := true // remove unnecessary data from response speeding up processing
+			req := s3.DeleteObjectsInput{
+				Bucket: &bucket,
+				Delete: &types.Delete{
+					Objects: make([]types.ObjectIdentifier, 0, batchSize),
+					Quiet:   &quiet,
+				},
+			}
+			if f.opt.RequesterPays {
+				req.RequestPayer = types.RequestPayerRequester
+			}
+			for obj := range delChan {
+				s3Obj := obj.(*Object)
+				_, s3ObjBucketPath := s3Obj.split()
+				req.Delete.Objects = append(req.Delete.Objects, types.ObjectIdentifier{
+					Key:       &s3ObjBucketPath,
+					VersionId: s3Obj.versionID,
+				})
+
+				if len(req.Delete.Objects) >= batchSize {
+					innErr := f.pacer.Call(func() (bool, error) {
+						_, innErr := f.c.DeleteObjects(ctx, &req)
+						return f.shouldRetry(ctx, innErr)
+					})
+					if innErr != nil {
+						return innErr
+					}
+					req.Delete.Objects = make([]types.ObjectIdentifier, 0, batchSize)
+				}
+			}
+			if len(req.Delete.Objects) > 0 { // last batch
+				return f.pacer.Call(func() (bool, error) {
+					_, innErr := f.c.DeleteObjects(ctx, &req)
+					return f.shouldRetry(ctx, innErr)
+				})
+			}
+			return nil
+		})
+	}
+
+	err := errG.Wait()
+	if err != nil {
+		delErr <- fserrors.FatalError(err)
+		return
+	}
+	delErr <- nil
 }
 
 // Purge deletes all the files and directories including the old versions.
