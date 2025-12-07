@@ -17,6 +17,7 @@ Here is an overview of the major features of each cloud storage system.
 | Name                         | Hash              | ModTime | Case Insensitive | Duplicate Files | MIME Type | Metadata |
 | ---------------------------- |:-----------------:|:-------:|:----------------:|:---------------:|:---------:|:--------:|
 | 1Fichier                     | Whirlpool         | -       | No               | Yes             | R         | -        |
+| 123Pan                       | MD5               | R/W     | No               | No              | -         | -        |
 | Akamai Netstorage            | MD5, SHA256       | R/W     | No               | No              | R         | -        |
 | Amazon S3 (or S3 compatible) | MD5               | R/W     | No               | No              | R/W       | RWU      |
 | Backblaze B2                 | SHA1              | R/W     | No               | No              | R/W       | -        |
@@ -509,6 +510,7 @@ upon backend-specific capabilities.
 | Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | MultithreadUpload | LinkSharing  | About | EmptyDir |
 | ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------------|:------------:|:-----:|:--------:|
 | 1Fichier                     | No    | Yes  | Yes  | No      | No      | No    | No           | No                | Yes          | No    | Yes      |
+| 123Pan                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |
 | Akamai Netstorage            | Yes   | No   | No   | No      | No      | Yes   | Yes          | No                | No           | No    | Yes      |
 | Amazon S3 (or S3 compatible) | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes               | Yes          | No    | No       |
 | Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes               | Yes          | No    | No       |

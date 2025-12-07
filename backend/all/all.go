@@ -3,6 +3,7 @@ package all
 
 import (
 	// Active file systems
+	_ "github.com/rclone/rclone/backend/123pan"
 	_ "github.com/rclone/rclone/backend/alias"
 	_ "github.com/rclone/rclone/backend/archive"
 	_ "github.com/rclone/rclone/backend/azureblob"

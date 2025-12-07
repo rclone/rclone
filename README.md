@@ -24,6 +24,7 @@ directories to and from different cloud storage providers.
 ## Storage providers
 
 - 1Fichier [:page_facing_up:](https://rclone.org/fichier/)
+- 123Pan [:page_facing_up:](https://rclone.org/123pan/)
 - Akamai Netstorage [:page_facing_up:](https://rclone.org/netstorage/)
 - Alibaba Cloud (Aliyun) Object Storage System (OSS) [:page_facing_up:](https://rclone.org/s3/#alibaba-oss)
 - Amazon S3 [:page_facing_up:](https://rclone.org/s3/)

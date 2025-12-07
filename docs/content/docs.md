@@ -29,6 +29,7 @@ rclone config
 See the following for detailed instructions for
 
 - [1Fichier](/fichier/)
+- [123Pan](/123pan/)
 - [Akamai Netstorage](/netstorage/)
 - [Alias](/alias/)
 - [Archive](/archive/)
