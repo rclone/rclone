@@ -63,8 +63,8 @@ func TestPutFailsWithUnavailableBackend(t *testing.T) {
 
 	// Test with each backend unavailable
 	testCases := []struct {
-		name              string
-		setupBackends     func() (string, string, string, func())
+		name               string
+		setupBackends      func() (string, string, string, func())
 		unavailableBackend string
 	}{
 		{
@@ -125,9 +125,8 @@ func TestPutFailsWithUnavailableBackend(t *testing.T) {
 			require.Error(t, err, "Put should fail when %s backend unavailable", tc.unavailableBackend)
 			t.Logf("Put correctly failed with error: %v", err)
 
-			// Verify no particles were created in available backends
-			// (errgroup context cancellation should prevent this)
-			// Only check the backends that actually exist
+			// Verify no particles were created in available backends (rollback occurred)
+			// With rollback enabled (default), all successfully uploaded particles should be removed
 			switch tc.unavailableBackend {
 			case "even":
 				// Even is /nonexistent, check odd and parity
@@ -135,23 +134,25 @@ func TestPutFailsWithUnavailableBackend(t *testing.T) {
 				parityPath := filepath.Join(parityDir, remote+".parity-ol")
 				_, errOdd := os.Stat(oddPath)
 				_, errParity := os.Stat(parityPath)
-				// These may or may not exist depending on race conditions
-				// The important thing is that Put failed
-				t.Logf("Odd exists: %v, Parity exists: %v", errOdd == nil, errParity == nil)
+				// Rollback should have removed any successfully uploaded particles
+				assert.True(t, os.IsNotExist(errOdd), "Odd particle should not exist (rollback should remove it)")
+				assert.True(t, os.IsNotExist(errParity), "Parity particle should not exist (rollback should remove it)")
 			case "odd":
 				// Odd is /nonexistent, check even and parity
 				evenPath := filepath.Join(evenDir, remote)
 				parityPath := filepath.Join(parityDir, remote+".parity-ol")
 				_, errEven := os.Stat(evenPath)
 				_, errParity := os.Stat(parityPath)
-				t.Logf("Even exists: %v, Parity exists: %v", errEven == nil, errParity == nil)
+				assert.True(t, os.IsNotExist(errEven), "Even particle should not exist (rollback should remove it)")
+				assert.True(t, os.IsNotExist(errParity), "Parity particle should not exist (rollback should remove it)")
 			case "parity":
 				// Parity is /nonexistent, check even and odd
 				evenPath := filepath.Join(evenDir, remote)
 				oddPath := filepath.Join(oddDir, remote)
 				_, errEven := os.Stat(evenPath)
 				_, errOdd := os.Stat(oddPath)
-				t.Logf("Even exists: %v, Odd exists: %v", errEven == nil, errOdd == nil)
+				assert.True(t, os.IsNotExist(errEven), "Even particle should not exist (rollback should remove it)")
+				assert.True(t, os.IsNotExist(errOdd), "Odd particle should not exist (rollback should remove it)")
 			}
 		})
 	}
@@ -214,7 +215,7 @@ func TestDeleteSucceedsWithUnavailableBackend(t *testing.T) {
 	// Verify even and parity particles were deleted
 	evenPath := filepath.Join(evenDir, remote)
 	parityPath := filepath.Join(parityDir, remote+".parity-ol")
-	
+
 	_, err = os.Stat(evenPath)
 	assert.True(t, os.IsNotExist(err), "even particle should be deleted")
 	_, err = os.Stat(parityPath)
@@ -286,7 +287,7 @@ func TestDeleteWithMissingParticles(t *testing.T) {
 	// Verify remaining particles are deleted
 	evenPath := filepath.Join(evenDir, remote)
 	parityPath := filepath.Join(parityDir, remote+".parity-ol")
-	
+
 	_, err = os.Stat(evenPath)
 	assert.True(t, os.IsNotExist(err), "even particle should be deleted")
 	_, err = os.Stat(parityPath)
@@ -337,25 +338,68 @@ func TestMoveFailsWithUnavailableBackend(t *testing.T) {
 	_, err = f.NewObject(ctx, oldRemote)
 	require.NoError(t, err)
 
-	// NOTE: Testing Move with truly unavailable backend is complex because:
-	// 1. NewFs may fail with unavailable backend (can't create test Fs)
-	// 2. chmod doesn't reliably make local backend unavailable
-	// 3. Need to mock backend behavior (complex)
-	//
-	// The Move implementation uses errgroup (same as Put), so it inherits
-	// the strict behavior: if ANY backend move fails, the entire Move fails.
-	//
-	// For comprehensive Move failure testing, use interactive tests with MinIO
-	// where you can stop a backend and verify Move fails.
-	
-	t.Skip("Move failure with unavailable backend requires mocked backends or MinIO testing")
-	
-	// If we could simulate unavailable backend:
-	// newRemote := "renamed.txt"
-	// doMove := f.Features().Move
-	// newObj, err := doMove(ctx, oldObj, newRemote)
-	// require.Error(t, err, "Move should fail")
-	// Verify original file unchanged
+	// Test Move with backend unavailable by making a backend read-only
+	// This simulates backend unavailability for the Move operation
+	oldObj, err := f.NewObject(ctx, oldRemote)
+	require.NoError(t, err)
+
+	// Make odd backend read-only to simulate unavailability
+	err = os.Chmod(oddDir, 0444)
+	require.NoError(t, err)
+	defer func() {
+		os.Chmod(oddDir, 0755) // Restore for cleanup
+	}()
+
+	// Attempt move - should fail
+	newRemote := "renamed.txt"
+	doMove := f.Features().Move
+	require.NotNil(t, doMove)
+	_, err = doMove(ctx, oldObj, newRemote)
+
+	// Move should fail
+	require.Error(t, err, "Move should fail when backend unavailable")
+
+	// Verify original file still exists (move should not have partially succeeded)
+	oldObj2, err := f.NewObject(ctx, oldRemote)
+	require.NoError(t, err, "Original file should still exist after failed move")
+	rc, err := oldObj2.Open(ctx)
+	require.NoError(t, err)
+	gotData, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, data, gotData, "Original file content should be unchanged")
+
+	// Verify no file exists at destination (rollback should have removed any partially moved particles)
+	newObj2, err := f.NewObject(ctx, newRemote)
+	require.Error(t, err, "New file should not exist (rollback should have removed it)")
+	require.Nil(t, newObj2)
+
+	// Verify original particles still exist at source location
+	// Note: We can't check odd backend directly because it's read-only,
+	// but we can verify through the level3 interface
+	evenPath := filepath.Join(evenDir, oldRemote)
+	_, err = os.Stat(evenPath)
+	assert.NoError(t, err, "Even particle should still exist at source")
+
+	// For odd, we verify through level3 interface since directory is read-only
+	// If the file is readable through level3, the particle exists
+	_, err = oldObj2.Open(ctx)
+	assert.NoError(t, err, "Original file should still be readable (particles exist)")
+
+	// Check parity - need to find which suffix was used
+	parityOdd := level3.GetParityFilename(oldRemote, true)
+	parityEven := level3.GetParityFilename(oldRemote, false)
+	parityPathOdd := filepath.Join(parityDir, parityOdd)
+	parityPathEven := filepath.Join(parityDir, parityEven)
+
+	// Check which parity file exists
+	_, errOdd := os.Stat(parityPathOdd)
+	_, errEven := os.Stat(parityPathEven)
+	if errOdd == nil {
+		assert.NoError(t, errOdd, "Parity particle (odd-length) should still exist at source")
+	} else {
+		assert.NoError(t, errEven, "Parity particle (even-length) should still exist at source")
+	}
 }
 
 // TestMoveWithMissingSourceParticle tests Move behavior when source particle
@@ -416,12 +460,12 @@ func TestMoveWithMissingSourceParticle(t *testing.T) {
 	// Move behavior with missing source particle:
 	// Current implementation may succeed (moves even+parity, ignores missing odd)
 	// OR may fail (depending on backend Move implementation)
-	// 
+	//
 	// For now, we just verify that IF it succeeds, the data is correct
 	if err != nil {
 		// Expected: Move failed due to missing particle
 		t.Logf("Move failed as expected: %v", err)
-		
+
 		// Original file should still be readable
 		oldObj2, err := f.NewObject(ctx, oldRemote)
 		require.NoError(t, err, "Original file should still exist")
@@ -436,7 +480,7 @@ func TestMoveWithMissingSourceParticle(t *testing.T) {
 		// Verify data integrity at new location
 		t.Logf("Move succeeded despite missing particle (may be valid behavior)")
 		require.NotNil(t, newObj)
-		
+
 		newObj2, err := f.NewObject(ctx, newRemote)
 		require.NoError(t, err)
 		rc, err := newObj2.Open(ctx)
@@ -592,24 +636,34 @@ func TestUpdateFailsWithUnavailableBackend(t *testing.T) {
 	_, err = f.NewObject(ctx, remote)
 	require.NoError(t, err)
 
-	// NOTE: Similar to TestMoveFailsWithUnavailableBackend, testing Update
-	// with unavailable backend is complex with local filesystem.
-	//
-	// The Update implementation uses errgroup (same as Put), so it inherits
-	// the strict behavior: if ANY backend update fails, the entire Update fails.
-	//
-	// However, Update has additional complexity:
-	// - It may partially update some backends before failing
-	// - Original data may be lost if rollback not implemented
-	// - This is a known risk area that needs careful implementation
-	
-	t.Skip("Update failure testing requires mocked backends or MinIO testing")
-	
-	// If we could reliably simulate unavailable backend:
-	// newData := []byte("Updated content")
-	// err = obj.Update(ctx, bytes.NewReader(newData), ...)
-	// require.Error(t, err, "Update should fail")
-	// Verify original data preserved
+	// Get the object to update
+	obj, err := f.NewObject(ctx, remote)
+	require.NoError(t, err)
+
+	// Make odd backend read-only to simulate failure during update
+	err = os.Chmod(oddDir, 0444)
+	require.NoError(t, err)
+	defer func() {
+		os.Chmod(oddDir, 0755) // Restore for cleanup
+	}()
+
+	// Attempt update - should fail
+	newData := []byte("Updated content that should not be saved")
+	newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
+	err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
+
+	// Update should fail
+	require.Error(t, err, "Update should fail when backend unavailable")
+
+	// Verify original file content is preserved (rollback should have restored it)
+	obj2, err := f.NewObject(ctx, remote)
+	require.NoError(t, err, "Original file should still exist after failed update")
+	rc, err := obj2.Open(ctx)
+	require.NoError(t, err)
+	gotData, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback should have restored it)")
 }
 
 // TestHealthCheckEnforcesStrictWrites tests that the pre-flight health check
@@ -665,14 +719,14 @@ func TestHealthCheckEnforcesStrictWrites(t *testing.T) {
 	// Verify no particles created in available backends
 	evenPath := filepath.Join(evenDir, remote)
 	parityPath := filepath.Join(parityDir, remote+".parity-ol")
-	
+
 	_, errEven := os.Stat(evenPath)
 	_, errParity := os.Stat(parityPath)
-	
+
 	// Health check should fail BEFORE creating any particles
 	assert.True(t, os.IsNotExist(errEven), "No even particle should be created (health check failed)")
 	assert.True(t, os.IsNotExist(errParity), "No parity particle should be created (health check failed)")
-	
+
 	t.Logf("Health check correctly prevented write operation")
 }
 
@@ -737,7 +791,7 @@ func TestSetModTimeFailsInDegradedMode(t *testing.T) {
 	// Attempt SetModTime on the object (obj is from f2, which is fully available)
 	// The health check in SetModTime is on o.fs, which is f2 (all backends available)
 	// To test degraded mode, we need to manually copy particles to degraded fs and get object from there
-	
+
 	// Copy particles to first fs (degraded)
 	// Even particle
 	evenSrc := filepath.Join(evenDir2, remote)
@@ -746,7 +800,7 @@ func TestSetModTimeFailsInDegradedMode(t *testing.T) {
 	require.NoError(t, err)
 	err = os.WriteFile(evenDst, srcData, 0644)
 	require.NoError(t, err)
-	
+
 	// Parity particle (find which suffix was used)
 	parityOdd := level3.GetParityFilename(remote, true)
 	paritySrc := filepath.Join(parityDir2, parityOdd)
@@ -759,11 +813,11 @@ func TestSetModTimeFailsInDegradedMode(t *testing.T) {
 	require.NoError(t, err)
 	err = os.WriteFile(parityDst, srcData, 0644)
 	require.NoError(t, err)
-	
+
 	// Now create degraded fs and get object from it
 	fDegraded, err := level3.NewFs(ctx, "TestSetModTimeDegraded", "", m)
 	require.NoError(t, err)
-	
+
 	objDegraded, err := fDegraded.NewObject(ctx, remote)
 	require.NoError(t, err, "Should be able to get object in degraded mode for reading")
 
@@ -773,11 +827,11 @@ func TestSetModTimeFailsInDegradedMode(t *testing.T) {
 
 	// Should fail with enhanced error message
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "cannot write - level3 backend is DEGRADED", 
+	assert.Contains(t, err.Error(), "cannot write - level3 backend is DEGRADED",
 		"Error should mention degraded mode")
-	assert.Contains(t, err.Error(), "UNAVAILABLE", 
+	assert.Contains(t, err.Error(), "UNAVAILABLE",
 		"Error should show unavailable backend")
-	assert.Contains(t, err.Error(), "rclone backend status level3:", 
+	assert.Contains(t, err.Error(), "rclone backend status level3:",
 		"Error should guide to status command")
 
 	t.Logf("✅ SetModTime correctly blocked in degraded mode with helpful error")
@@ -823,20 +877,20 @@ func TestMkdirFailsInDegradedMode(t *testing.T) {
 
 	// Should fail with enhanced error message
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "cannot write - level3 backend is DEGRADED", 
+	assert.Contains(t, err.Error(), "cannot write - level3 backend is DEGRADED",
 		"Error should mention degraded mode")
-	assert.Contains(t, err.Error(), "❌ odd:    UNAVAILABLE", 
+	assert.Contains(t, err.Error(), "❌ odd:    UNAVAILABLE",
 		"Error should show odd backend status")
-	assert.Contains(t, err.Error(), "rclone backend status level3:", 
+	assert.Contains(t, err.Error(), "rclone backend status level3:",
 		"Error should guide to status command")
 
 	// Verify no directory created in available backends
 	evenPath := filepath.Join(evenDir, "newdir")
 	parityPath := filepath.Join(parityDir, "newdir")
-	
+
 	_, errEven := os.Stat(evenPath)
 	_, errParity := os.Stat(parityPath)
-	
+
 	// Health check should fail BEFORE creating any directories
 	assert.True(t, os.IsNotExist(errEven), "No even directory should be created")
 	assert.True(t, os.IsNotExist(errParity), "No parity directory should be created")
@@ -892,10 +946,10 @@ func TestRmdirSucceedsInDegradedMode(t *testing.T) {
 	// Verify directories removed from available backends
 	evenPath := filepath.Join(evenDir, dirName)
 	parityPath := filepath.Join(parityDir, dirName)
-	
+
 	_, errEven := os.Stat(evenPath)
 	_, errParity := os.Stat(parityPath)
-	
+
 	assert.True(t, os.IsNotExist(errEven), "Even directory should be removed")
 	assert.True(t, os.IsNotExist(errParity), "Parity directory should be removed")
 
@@ -1001,3 +1055,312 @@ func TestListWorksInDegradedMode(t *testing.T) {
 	t.Logf("✅ List correctly worked in degraded mode, showing %d reconstructable files", len(listed))
 }
 
+// =============================================================================
+// Phase 3 - Rollback Tests
+// =============================================================================
+//
+// These tests verify that rollback mechanism works correctly when operations fail.
+// Rollback ensures all-or-nothing semantics: if any particle operation fails,
+// all successfully completed operations are rolled back.
+
+// TestPutRollbackOnFailure tests that Put operations roll back successfully
+// uploaded particles when a backend fails during upload.
+//
+// This test verifies:
+//   - Put tracks successfully uploaded particles
+//   - On failure, rollback removes all uploaded particles
+//   - No partial files remain after failed Put
+//   - All-or-nothing guarantee is maintained
+func TestPutRollbackOnFailure(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":     evenDir,
+		"odd":      oddDir,
+		"parity":   parityDir,
+		"rollback": "true", // Explicitly enable rollback
+	}
+	f, err := level3.NewFs(ctx, "TestPutRollback", "", m)
+	require.NoError(t, err)
+
+	// Create a file first to establish the directory structure
+	remote := "test_rollback.txt"
+	data := []byte("Test data for rollback")
+
+	// Make parity backend read-only after Put starts to simulate failure mid-upload
+	// We'll do this by making parity dir read-only before the operation
+	err = os.Chmod(parityDir, 0444)
+	require.NoError(t, err)
+	defer func() {
+		os.Chmod(parityDir, 0755) // Restore for cleanup
+	}()
+
+	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(data), info)
+
+	// Put should fail
+	require.Error(t, err, "Put should fail when parity backend becomes unavailable")
+
+	// Verify no particles were created (rollback should have removed them)
+	// Note: Since parity directory is read-only, we can't directly check it,
+	// but we can verify through the level3 interface that the file doesn't exist
+	evenPath := filepath.Join(evenDir, remote)
+	oddPath := filepath.Join(oddDir, remote)
+
+	_, err = os.Stat(evenPath)
+	assert.True(t, os.IsNotExist(err), "Even particle should not exist (rollback should remove it)")
+	_, err = os.Stat(oddPath)
+	assert.True(t, os.IsNotExist(err), "Odd particle should not exist (rollback should remove it)")
+
+	// Verify file doesn't exist through level3 interface (confirms no particles remain)
+	_, err = f.NewObject(ctx, remote)
+	assert.Error(t, err, "File should not exist after failed Put (rollback should have removed all particles)")
+
+	t.Logf("✅ Put rollback correctly removed all uploaded particles")
+}
+
+// TestMoveRollbackOnFailure tests that Move operations roll back successfully
+// moved particles when a backend fails during move.
+//
+// This test verifies:
+//   - Move tracks successfully moved particles
+//   - On failure, rollback moves particles back to source
+//   - Original file remains intact after failed Move
+//   - No file exists at destination after failed Move
+//   - All-or-nothing guarantee is maintained
+func TestMoveRollbackOnFailure(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":     evenDir,
+		"odd":      oddDir,
+		"parity":   parityDir,
+		"rollback": "true", // Explicitly enable rollback
+	}
+	f, err := level3.NewFs(ctx, "TestMoveRollback", "", m)
+	require.NoError(t, err)
+
+	// Create a file
+	oldRemote := "original.txt"
+	data := []byte("Move rollback test data")
+	info := object.NewStaticObjectInfo(oldRemote, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Verify file exists
+	oldObj, err := f.NewObject(ctx, oldRemote)
+	require.NoError(t, err)
+
+	// Make odd backend read-only to simulate failure during move
+	err = os.Chmod(oddDir, 0444)
+	require.NoError(t, err)
+	defer func() {
+		os.Chmod(oddDir, 0755) // Restore for cleanup
+	}()
+
+	// Attempt move - should fail
+	newRemote := "moved.txt"
+	doMove := f.Features().Move
+	require.NotNil(t, doMove)
+	newObj, err := doMove(ctx, oldObj, newRemote)
+
+	// Move should fail
+	require.Error(t, err, "Move should fail when backend unavailable")
+	require.Nil(t, newObj)
+
+	// Verify original file still exists and is unchanged
+	oldObj2, err := f.NewObject(ctx, oldRemote)
+	require.NoError(t, err, "Original file should still exist after failed move")
+	rc, err := oldObj2.Open(ctx)
+	require.NoError(t, err)
+	gotData, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, data, gotData, "Original file content should be unchanged")
+
+	// Verify no file exists at destination (rollback should have removed it)
+	newObj2, err := f.NewObject(ctx, newRemote)
+	require.Error(t, err, "New file should not exist (rollback should have removed it)")
+	require.Nil(t, newObj2)
+
+	// Verify original particles still exist at source location
+	// Note: We can't check odd backend directly because it's read-only,
+	// but we can verify through the level3 interface
+	evenPath := filepath.Join(evenDir, oldRemote)
+	_, err = os.Stat(evenPath)
+	assert.NoError(t, err, "Even particle should still exist at source")
+
+	// For odd, we verify through level3 interface since directory is read-only
+	// If the file is readable through level3, the particle exists
+	rc2, err := oldObj2.Open(ctx)
+	assert.NoError(t, err, "Original file should still be readable (particles exist)")
+	rc2.Close()
+
+	// Check parity - need to find which suffix was used
+	parityOdd := level3.GetParityFilename(oldRemote, true)
+	parityEven := level3.GetParityFilename(oldRemote, false)
+	parityPathOdd := filepath.Join(parityDir, parityOdd)
+	parityPathEven := filepath.Join(parityDir, parityEven)
+
+	// Check which parity file exists
+	_, errOdd := os.Stat(parityPathOdd)
+	_, errEven := os.Stat(parityPathEven)
+	if errOdd == nil {
+		assert.NoError(t, errOdd, "Parity particle (odd-length) should still exist at source")
+	} else {
+		assert.NoError(t, errEven, "Parity particle (even-length) should still exist at source")
+	}
+
+	t.Logf("✅ Move rollback correctly restored all particles to source location")
+}
+
+// TestRollbackDisabled tests that operations don't rollback when rollback is disabled.
+//
+// This test verifies:
+//   - With rollback=false, failed operations don't clean up partial state
+//   - Partial files may remain after failures
+//   - Useful for debugging scenarios where you want to inspect partial state
+func TestRollbackDisabled(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":     evenDir,
+		"odd":      oddDir,
+		"parity":   parityDir,
+		"rollback": "false", // Disable rollback
+	}
+	f, err := level3.NewFs(ctx, "TestRollbackDisabled", "", m)
+	require.NoError(t, err)
+
+	// Test Put with rollback disabled
+	remote := "partial.txt"
+	data := []byte("Partial file test")
+
+	// Make parity backend read-only to cause failure
+	err = os.Chmod(parityDir, 0444)
+	require.NoError(t, err)
+	defer func() {
+		os.Chmod(parityDir, 0755)
+	}()
+
+	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(data), info)
+
+	// Put should fail
+	require.Error(t, err, "Put should fail when backend unavailable")
+
+	// With rollback disabled, some particles may remain
+	// (This is expected behavior when rollback is disabled)
+	evenPath := filepath.Join(evenDir, remote)
+	oddPath := filepath.Join(oddDir, remote)
+
+	// We can't reliably test that particles exist because errgroup context
+	// cancellation may prevent some uploads from completing
+	// The key is that rollback=false means we won't actively clean up
+	_, errEven := os.Stat(evenPath)
+	_, errOdd := os.Stat(oddPath)
+
+	t.Logf("With rollback disabled, particles may remain: even exists=%v, odd exists=%v",
+		errEven == nil, errOdd == nil)
+
+	t.Logf("✅ Rollback disabled test completed (partial state may remain)")
+}
+
+// TestUpdateRollbackOnFailure tests that Update operations roll back successfully
+// updated particles when a backend fails during update.
+//
+// This test verifies:
+//   - Update moves original particles to temp locations first
+//   - On failure, rollback restores original particles from temp locations
+//   - Original file data is preserved after failed Update
+//   - No partial updates remain
+//   - All-or-nothing guarantee is maintained
+func TestUpdateRollbackOnFailure(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":     evenDir,
+		"odd":      oddDir,
+		"parity":   parityDir,
+		"rollback": "true", // Explicitly enable rollback
+	}
+	f, err := level3.NewFs(ctx, "TestUpdateRollback", "", m)
+	require.NoError(t, err)
+
+	// Create original file
+	remote := "update_rollback_test.txt"
+	originalData := []byte("Original content for rollback test")
+	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(originalData)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(originalData), info)
+	require.NoError(t, err)
+
+	// Verify file exists
+	obj, err := f.NewObject(ctx, remote)
+	require.NoError(t, err)
+
+	// Make odd backend read-only to simulate failure during update
+	err = os.Chmod(oddDir, 0444)
+	require.NoError(t, err)
+	defer func() {
+		os.Chmod(oddDir, 0755) // Restore for cleanup
+	}()
+
+	// Attempt update - should fail
+	newData := []byte("New content that should not be saved")
+	newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
+	err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
+
+	// Update should fail
+	require.Error(t, err, "Update should fail when backend unavailable")
+
+	// Verify original file content is preserved (rollback should have restored it)
+	obj2, err := f.NewObject(ctx, remote)
+	require.NoError(t, err, "Original file should still exist after failed update")
+	rc, err := obj2.Open(ctx)
+	require.NoError(t, err)
+	gotData, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback should have restored from temp)")
+
+	// Verify no temp particles remain (should be cleaned up after rollback)
+	evenTempPath := filepath.Join(evenDir, remote+".tmp.even")
+	parityName := level3.GetParityFilename(remote, len(originalData)%2 == 1)
+	parityTempPath := filepath.Join(parityDir, parityName+".tmp.parity")
+
+	_, err = os.Stat(evenTempPath)
+	assert.True(t, os.IsNotExist(err), "Temp even particle should not exist (should be cleaned up after rollback)")
+	// Odd temp can't be checked due to read-only, but if rollback worked, file content should be original
+	_, err = os.Stat(parityTempPath)
+	assert.True(t, os.IsNotExist(err), "Temp parity particle should not exist (should be cleaned up after rollback)")
+
+	t.Logf("✅ Update rollback correctly restored original particles from temp locations")
+}

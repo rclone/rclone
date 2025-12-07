@@ -5,9 +5,12 @@
 # Error handling validation harness for the rclone level3 backend.
 #
 # This script tests that write operations (Move, Update) properly fail when
-# backends are unavailable, following RAID 3 strict write policy. Works with
-# MinIO-backed level3 configurations, stopping containers to simulate backend
-# unavailability.
+# backends are unavailable, following RAID 3 strict write policy. Tests verify
+# that rollback mechanism prevents partial operations (all-or-nothing guarantee).
+# Rollback-disabled tests use rclone connection strings (remote,rollback=false:path)
+# to test behavior without rollback, without requiring a second remote configuration.
+# Works with MinIO-backed level3 configurations, stopping containers to simulate
+# backend unavailability.
 #
 # Usage:
 #   compare_level3_with_single_errors.sh [options] <command> [args]
@@ -123,16 +126,29 @@ parse_args() {
 print_scenarios() {
   cat <<EOF
 Available error scenarios:
-  move-fail-even     Stop even backend and verify Move fails.
-  move-fail-odd      Stop odd backend and verify Move fails.
-  move-fail-parity   Stop parity backend and verify Move fails.
-  update-fail-even   Stop even backend and verify Update fails.
-  update-fail-odd    Stop odd backend and verify Update fails.
-  update-fail-parity Stop parity backend and verify Update fails.
+  move-fail-even              Stop even backend and verify Move fails (with rollback).
+  move-fail-odd               Stop odd backend and verify Move fails (with rollback).
+  move-fail-parity            Stop parity backend and verify Move fails (with rollback).
+  update-fail-even            Stop even backend and verify Update fails (with rollback).
+  update-fail-odd             Stop odd backend and verify Update fails (with rollback).
+  update-fail-parity          Stop parity backend and verify Update fails (with rollback).
+  rollback-disabled-move-fail-even     Stop even backend and verify Move fails (rollback disabled, partial moves allowed).
+  rollback-disabled-move-fail-odd      Stop odd backend and verify Move fails (rollback disabled, partial moves allowed).
+  rollback-disabled-move-fail-parity   Stop parity backend and verify Move fails (rollback disabled, partial moves allowed).
+  rollback-disabled-update-fail-even   Stop even backend and verify Update fails (rollback disabled, partial updates allowed).
+  rollback-disabled-update-fail-odd    Stop odd backend and verify Update fails (rollback disabled, partial updates allowed).
+  rollback-disabled-update-fail-parity Stop parity backend and verify Update fails (rollback disabled, partial updates allowed).
 EOF
 }
 
 ERROR_RESULTS=()
+
+# Helper to construct rollback-disabled remote path using connection string syntax
+# Uses rclone connection string: remote,rollback=false:path
+get_rollback_disabled_path() {
+  local path="$1"
+  echo "${LEVEL3_REMOTE},rollback=false:${path}"
+}
 
 reset_error_results() {
   ERROR_RESULTS=()
@@ -258,7 +274,7 @@ run_move_fail_scenario() {
   fi
 
   # IMPORTANT: Check file state WHILE backend is still down
-  # This catches partial moves that create degraded files at new location
+  # With rollback enabled (default), failed moves should leave no trace at destination
   
   # Verify original file still exists (move should not have partially succeeded)
   # Note: This check might fail if we need the down backend, but we check with available backends
@@ -266,7 +282,7 @@ run_move_fail_scenario() {
   check_result=$(capture_command "check_after" ls "${LEVEL3_REMOTE}:${test_file}")
   IFS='|' read -r check_status check_stdout check_stderr <<<"${check_result}"
   
-  # Verify new file does NOT exist (move should have failed completely)
+  # Verify new file does NOT exist (rollback should have cleaned up any partial moves)
   # Note: level3 can list files in degraded mode (2/3 particles), so we check this carefully
   local new_check_result new_check_status new_check_stdout new_check_stderr
   new_check_result=$(capture_command "check_new" ls "${LEVEL3_REMOTE}:${new_file}")
@@ -289,54 +305,18 @@ run_move_fail_scenario() {
   fi
 
   if [[ "${new_check_status}" -eq 0 ]]; then
-    # New file exists - this indicates partial move
-    # This is a known limitation: Move operations don't rollback completed moves
-    # See: backend/level3/docs/ERROR_HANDLING_POLICY.md line 182
-    # "Limitation: Already-completed operations aren't undone!"
-    #
-    # The Move implementation should prevent moves when backend is unavailable
-    # (via checkAllBackendsAvailable), but if a race condition occurs or the
-    # check passes but backend fails during move, partial moves can occur.
-    #
-    # This test correctly detects this scenario. The move command failed (non-zero exit),
-    # but some particles were already moved before the failure.
-    
-    local file_name=$(basename "${new_file}")
-    local file_dir=$(dirname "${new_file}")
-    local particles_moved=""
-    
-    # Check odd backend (if even was stopped)
-    if [[ "${backend}" != "odd" ]]; then
-      if object_exists_in_backend "odd" "${file_dir}" "${file_name}"; then
-        particles_moved="${particles_moved} odd"
-      fi
-    fi
-    
-    # Check parity backend
-    if [[ "${backend}" != "parity" ]]; then
-      local parity_name
-      # Parity files have suffixes, but we can check if any parity file exists
-      # For now, just note that we detected the file
-      particles_moved="${particles_moved} (parity-check-skipped)"
-    fi
-    
-    log_warn "move" "⚠️  PARTIAL MOVE DETECTED: New file exists after failed move."
-    log_warn "move" "This is a known limitation - Move operations don't rollback completed moves."
-    log_warn "move" "See: backend/level3/docs/ERROR_HANDLING_POLICY.md (Rollback Strategy for Move)"
+    # New file exists - this indicates partial move occurred despite rollback
+    # With rollback enabled (default), this should NOT happen
+    # If it does, it means rollback failed or was disabled
+    log_fail "move" "Partial move detected: New file exists after failed move (rollback should have prevented this)."
     log_note "move" "File detected at: ${new_file}"
-    if [[ -n "${particles_moved}" ]]; then
-      log_note "move" "Particles that appear to have moved:${particles_moved}"
-    fi
+    log_note "move" "This indicates rollback did not work correctly or was disabled."
     
     # Clean up the partially moved file
     log_info "cleanup" "Removing partially moved file at ${new_file}"
     rclone_cmd delete "${LEVEL3_REMOTE}:${new_file}" >/dev/null 2>&1 || true
     
-    # For now, we document this as a known limitation rather than a hard failure
-    # The test successfully detected the partial move scenario
-    record_error_result "FAIL" "move-fail-${backend}" "New file exists after failed move (partial move occurred - known limitation: no rollback)."
-    log_note "move" "Move command correctly returned non-zero exit code."
-    log_note "move" "However, partial move occurred due to lack of rollback mechanism."
+    record_error_result "FAIL" "move-fail-${backend}" "New file exists after failed move (rollback should have prevented partial move)."
     rm -f "${check_stdout}" "${check_stderr}" "${new_check_stdout}" "${new_check_stderr}" "${move_stdout}" "${move_stderr}"
     
     return 1
@@ -470,6 +450,237 @@ run_update_fail_scenario() {
   return 0
 }
 
+run_move_fail_scenario_no_rollback() {
+  local backend="$1"
+  log_info "suite" "Running rollback-disabled move-fail scenario '${backend}' (${STORAGE_TYPE})"
+
+  # These tests require MinIO to simulate unavailable backends
+  if [[ "${STORAGE_TYPE}" != "minio" ]]; then
+    record_error_result "PASS" "rollback-disabled-move-fail-${backend}" "Skipped for local backend (requires MinIO to stop containers)."
+    return 0
+  fi
+
+  purge_remote_root "${LEVEL3_REMOTE}"
+  purge_remote_root "${SINGLE_REMOTE}"
+
+  # Create a test file using the regular remote (rollback enabled by default)
+  local dataset_id
+  dataset_id=$(create_test_dataset "rollback-disabled-move-fail-${backend}") || {
+    record_error_result "FAIL" "rollback-disabled-move-fail-${backend}" "Failed to create dataset."
+    return 1
+  }
+  log_info "scenario:rollback-disabled-move-fail-${backend}" "Dataset ${dataset_id} created (will use connection string with rollback=false)."
+
+  local test_file="${dataset_id}/${TARGET_OBJECT}"
+  local new_file="${dataset_id}/moved_${TARGET_OBJECT}"
+
+  # Verify file exists before move attempt (using connection string with rollback=false)
+  local test_file_path new_file_path
+  test_file_path=$(get_rollback_disabled_path "${test_file}")
+  new_file_path=$(get_rollback_disabled_path "${new_file}")
+
+  local check_result check_status check_stdout check_stderr
+  check_result=$(capture_command "check_before" ls "${test_file_path}")
+  IFS='|' read -r check_status check_stdout check_stderr <<<"${check_result}"
+  if [[ "${check_status}" -ne 0 ]]; then
+    record_error_result "FAIL" "rollback-disabled-move-fail-${backend}" "Test file does not exist before move attempt."
+    rm -f "${check_stdout}" "${check_stderr}"
+    return 1
+  fi
+  rm -f "${check_stdout}" "${check_stderr}"
+
+  # Stop the backend to simulate unavailability
+  log_info "scenario:rollback-disabled-move-fail-${backend}" "Stopping '${backend}' backend to simulate unavailability."
+  stop_single_minio_container "${backend}"
+
+  # Wait for container to fully stop
+  sleep 3
+  local port
+  case "${backend}" in
+    even) port="${MINIO_EVEN_PORT}" ;;
+    odd) port="${MINIO_ODD_PORT}" ;;
+    parity) port="${MINIO_PARITY_PORT}" ;;
+  esac
+  
+  # Verify port is actually closed
+  local retries=10
+  while (( retries > 0 )); do
+    if ! nc -z localhost "${port}" >/dev/null 2>&1; then
+      break
+    fi
+    log_info "scenario:rollback-disabled-move-fail-${backend}" "Waiting for backend port ${port} to close..."
+    sleep 1
+    ((retries--))
+  done
+
+  # Attempt move using connection string with rollback=false - should fail
+  local move_result move_status move_stdout move_stderr
+  move_result=$(capture_command "move_attempt" move "${test_file_path}" "${new_file_path}")
+  IFS='|' read -r move_status move_stdout move_stderr <<<"${move_result}"
+  print_if_verbose "move attempt" "${move_stdout}" "${move_stderr}"
+
+  # Verify move failed (non-zero exit status)
+  if [[ "${move_status}" -eq 0 ]]; then
+    start_single_minio_container "${backend}"
+    record_error_result "FAIL" "rollback-disabled-move-fail-${backend}" "Move succeeded when it should have failed (backend '${backend}' was unavailable)."
+    rm -f "${move_stdout}" "${move_stderr}"
+    return 1
+  fi
+
+  # Restore backend now
+  log_info "scenario:rollback-disabled-move-fail-${backend}" "Restoring '${backend}' backend."
+  start_single_minio_container "${backend}"
+  if ! wait_for_minio_port "${port}"; then
+    log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+  fi
+
+  # With rollback disabled, partial moves are expected
+  # Check if new file exists (partial move occurred) using connection string
+  local new_check_result new_check_status new_check_stdout new_check_stderr
+  new_check_result=$(capture_command "check_new" ls "${new_file_path}")
+  IFS='|' read -r new_check_status new_check_stdout new_check_stderr <<<"${new_check_result}"
+
+  # Verify original file - may or may not exist depending on which particles moved
+  local check_result check_status check_stdout check_stderr
+  check_result=$(capture_command "check_after" ls "${test_file_path}")
+  IFS='|' read -r check_status check_stdout check_stderr <<<"${check_result}"
+
+  if [[ "${new_check_status}" -eq 0 ]]; then
+    # Partial move occurred - this is expected with rollback disabled
+    log_info "rollback-disabled" "Partial move detected: New file exists after failed move (expected with rollback=false)."
+    
+    # Clean up the partially moved file using connection string
+    log_info "cleanup" "Removing partially moved file at ${new_file}"
+    rclone_cmd delete "${new_file_path}" >/dev/null 2>&1 || true
+    
+    record_error_result "PASS" "rollback-disabled-move-fail-${backend}" "Move correctly failed and partial move occurred (expected with rollback=false)."
+    rm -f "${check_stdout}" "${check_stderr}" "${new_check_stdout}" "${new_check_stderr}" "${move_stdout}" "${move_stderr}"
+    return 0
+  else
+    # No partial move - this might happen if move failed early before any particles moved
+    log_info "rollback-disabled" "No partial move detected (move failed before any particles moved)."
+    record_error_result "PASS" "rollback-disabled-move-fail-${backend}" "Move correctly failed with no partial move (failed early)."
+    rm -f "${check_stdout}" "${check_stderr}" "${new_check_stdout}" "${new_check_stderr}" "${move_stdout}" "${move_stderr}"
+    return 0
+  fi
+}
+
+run_update_fail_scenario_no_rollback() {
+  local backend="$1"
+  log_info "suite" "Running rollback-disabled update-fail scenario '${backend}' (${STORAGE_TYPE})"
+
+  # These tests require MinIO to simulate unavailable backends
+  if [[ "${STORAGE_TYPE}" != "minio" ]]; then
+    record_error_result "PASS" "rollback-disabled-update-fail-${backend}" "Skipped for local backend (requires MinIO to stop containers)."
+    return 0
+  fi
+
+  purge_remote_root "${LEVEL3_REMOTE}"
+  purge_remote_root "${SINGLE_REMOTE}"
+
+  # Create a test file using the regular remote (rollback enabled by default)
+  local dataset_id
+  dataset_id=$(create_test_dataset "rollback-disabled-update-fail-${backend}") || {
+    record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Failed to create dataset."
+    return 1
+  }
+  log_info "scenario:rollback-disabled-update-fail-${backend}" "Dataset ${dataset_id} created (will use connection string with rollback=false)."
+
+  local test_file="${dataset_id}/${TARGET_OBJECT}"
+
+  # Get original file content for verification (using connection string with rollback=false)
+  local test_file_path
+  test_file_path=$(get_rollback_disabled_path "${test_file}")
+
+  local original_content
+  original_content=$(mktemp) || {
+    record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Failed to create temp file for original content."
+    return 1
+  }
+
+  local get_result get_status get_stdout get_stderr
+  get_result=$(capture_command "get_original" cat "${test_file_path}")
+  IFS='|' read -r get_status get_stdout get_stderr <<<"${get_result}"
+  if [[ "${get_status}" -ne 0 ]]; then
+    record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Failed to read original file content."
+    rm -f "${get_stdout}" "${get_stderr}" "${original_content}"
+    return 1
+  fi
+  cp "${get_stdout}" "${original_content}"
+  rm -f "${get_stdout}" "${get_stderr}"
+
+  # Stop the backend to simulate unavailability
+  log_info "scenario:rollback-disabled-update-fail-${backend}" "Stopping '${backend}' backend to simulate unavailability."
+  stop_single_minio_container "${backend}"
+
+  # Wait a moment for container to fully stop
+  sleep 2
+
+  # Create updated content
+  local updated_content
+  updated_content=$(mktemp) || {
+    record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Failed to create temp file for updated content."
+    rm -f "${original_content}"
+    return 1
+  }
+  echo "Updated content for rollback-disabled update-fail-${backend} test" > "${updated_content}"
+
+  # Attempt update (using copy as update) with connection string rollback=false - should fail
+  local update_result update_status update_stdout update_stderr
+  update_result=$(capture_command "update_attempt" copyto "${updated_content}" "${test_file_path}")
+  IFS='|' read -r update_status update_stdout update_stderr <<<"${update_result}"
+  print_if_verbose "update attempt" "${update_stdout}" "${update_stderr}"
+
+  # Restore backend
+  log_info "scenario:rollback-disabled-update-fail-${backend}" "Restoring '${backend}' backend."
+  start_single_minio_container "${backend}"
+
+  # Wait for container to be ready
+  local port
+  case "${backend}" in
+    even) port="${MINIO_EVEN_PORT}" ;;
+    odd) port="${MINIO_ODD_PORT}" ;;
+    parity) port="${MINIO_PARITY_PORT}" ;;
+  esac
+  if ! wait_for_minio_port "${port}"; then
+    log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+  fi
+
+  # Verify update failed (non-zero exit status)
+  if [[ "${update_status}" -eq 0 ]]; then
+    record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Update succeeded when it should have failed (backend '${backend}' was unavailable)."
+    rm -f "${update_stdout}" "${update_stderr}" "${original_content}" "${updated_content}"
+    return 1
+  fi
+
+  # With rollback disabled, partial updates may occur
+  # Verify file still exists and check if content changed using connection string
+  local verify_result verify_status verify_stdout verify_stderr
+  verify_result=$(capture_command "verify_original" cat "${test_file_path}")
+  IFS='|' read -r verify_status verify_stdout verify_stderr <<<"${verify_result}"
+  
+  if [[ "${verify_status}" -ne 0 ]]; then
+    record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "File missing after failed update."
+    rm -f "${verify_stdout}" "${verify_stderr}" "${update_stdout}" "${update_stderr}" "${original_content}" "${updated_content}"
+    return 1
+  fi
+
+  # Check if content changed (partial update may have occurred)
+  if ! cmp -s "${original_content}" "${verify_stdout}"; then
+    # Partial update occurred - this is expected with rollback disabled
+    log_info "rollback-disabled" "Partial update detected: File content changed after failed update (expected with rollback=false)."
+    record_error_result "PASS" "rollback-disabled-update-fail-${backend}" "Update correctly failed and partial update occurred (expected with rollback=false)."
+    rm -f "${verify_stdout}" "${verify_stderr}" "${update_stdout}" "${update_stderr}" "${original_content}" "${updated_content}"
+    return 0
+  else
+    # No partial update - content unchanged
+    log_info "rollback-disabled" "No partial update detected (update failed before any changes)."
+    record_error_result "PASS" "rollback-disabled-update-fail-${backend}" "Update correctly failed with no partial update (failed early)."
+    rm -f "${verify_stdout}" "${verify_stderr}" "${update_stdout}" "${update_stderr}" "${original_content}" "${updated_content}"
+    return 0
+  fi
+}
+
 run_error_scenario() {
   local scenario="$1"
   case "${scenario}" in
@@ -479,6 +690,12 @@ run_error_scenario() {
     update-fail-even) run_update_fail_scenario "even" ;;
     update-fail-odd) run_update_fail_scenario "odd" ;;
     update-fail-parity) run_update_fail_scenario "parity" ;;
+    rollback-disabled-move-fail-even) run_move_fail_scenario_no_rollback "even" ;;
+    rollback-disabled-move-fail-odd) run_move_fail_scenario_no_rollback "odd" ;;
+    rollback-disabled-move-fail-parity) run_move_fail_scenario_no_rollback "parity" ;;
+    rollback-disabled-update-fail-even) run_update_fail_scenario_no_rollback "even" ;;
+    rollback-disabled-update-fail-odd) run_update_fail_scenario_no_rollback "odd" ;;
+    rollback-disabled-update-fail-parity) run_update_fail_scenario_no_rollback "parity" ;;
     *)
       record_error_result "FAIL" "${scenario}" "Unknown scenario."
       return 1

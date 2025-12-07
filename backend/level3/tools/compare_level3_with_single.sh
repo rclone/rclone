@@ -916,7 +916,7 @@ run_mkdir_test() {
   local timestamp random_suffix
   timestamp=$(date +%Y%m%d%H%M%S)
   printf -v random_suffix '%04d' $((RANDOM % 10000))
-  test_id="compare-mkdir-${timestamp}-${random_suffix}"
+  test_id="cmp-mkdir-${timestamp}-${random_suffix}"
 
   log "Running mkdir test with identifier '${test_id}'"
 

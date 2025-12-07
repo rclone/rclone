@@ -41,6 +41,7 @@ rclone config create myremote level3 \
     parity remote3:
 # auto_cleanup defaults to true
 # auto_heal defaults to true
+# rollback defaults to true (all-or-nothing guarantee)
 ```
 
 **Conservative mode** (cleanup only, no auto-reconstruction):
@@ -52,6 +53,7 @@ rclone config create myremote level3 \
     auto_cleanup true \
     auto_heal false
 # Hides broken items but doesn't auto-reconstruct missing particles
+# rollback still enabled by default (all-or-nothing guarantee)
 ```
 
 **Debugging mode** (see everything, no automatic changes):
@@ -64,6 +66,27 @@ rclone config create myremote level3 \
     auto_heal false
 # Shows all objects/directories including broken ones
 # No automatic reconstruction or cleanup
+# rollback still enabled by default (all-or-nothing guarantee)
+```
+
+**Rollback Configuration:**
+
+The `rollback` option controls whether write operations (Put, Update, Move) automatically rollback successful particle operations if any particle operation fails. This provides an **all-or-nothing guarantee** - either all particles are written/moved/updated, or none are.
+
+- **`rollback=true`** (default): Automatically rollback on failure. Prevents partial operations that would create degraded files. Recommended for production use.
+  - ✅ **Put rollback**: Fully working
+  - ✅ **Move rollback**: Fully working
+  - ⚠️ **Update rollback**: Currently not working properly (see Known Limitations below)
+- **`rollback=false`**: No automatic rollback. Failed operations may leave partial files. Only use for debugging or special cases.
+
+**Example with rollback disabled** (debugging):
+```bash
+rclone config create myremote level3 \
+    even remote1: \
+    odd remote2: \
+    parity remote3: \
+    rollback false
+# Allows partial operations for debugging purposes
 ```
 
 ### Behavior Matrix
@@ -232,6 +255,33 @@ $ rclone cat level3:file.txt
 ```
 
 ## ⚠️ Current Limitations
+
+### Update Rollback Not Working Properly
+
+**Status**: ⚠️ Known Issue
+
+The Update operation rollback mechanism is not working properly when `rollback=true` (default). 
+
+**What works**:
+- ✅ Put rollback: Fully functional
+- ✅ Move rollback: Fully functional
+- ❌ Update rollback: Implementation exists but has issues
+
+**Impact**:
+- When Update operations fail with `rollback=true`, particles may not be properly restored from temporary locations
+- This can lead to degraded files (missing particles) in some failure scenarios
+- Affects mainly backends that don't support server-side Move operations (e.g., S3/MinIO that only support Copy)
+
+**Workaround**:
+- Use `rollback=false` for Update operations if you need to work around this limitation
+- Or ensure all three underlying backends support server-side Move operations
+- Monitor Update operations and manually fix degraded files if needed
+
+**See also**: 
+- `backend/level3/tools/UPDATE_ROLLBACK_ISSUE.md` - Detailed analysis of the issue
+- `backend/level3/OPEN_QUESTIONS.md` - Q1: Update Rollback Not Working Properly
+
+---
 
 ### File Size Limitation
 
@@ -496,18 +546,58 @@ The level3 backend follows **hardware RAID 3 behavior** for error handling:
 - **Pre-flight health check** before each write operation
 - Fail immediately if any backend unavailable
 - **Do NOT create partially-written files or corrupted data**
+- **Automatic rollback** (enabled by default) ensures all-or-nothing guarantee
 - Matches hardware RAID 3 controller behavior
 
 **Implementation**:
 - Health check tests all 3 backends before write (5-second timeout)
 - Clear error message: `"write blocked in degraded mode (RAID 3 policy)"`
 - Prevents corruption from rclone's retry logic
-- Overhead: +0.2 seconds (acceptable for safety)
+- **Rollback mechanism**: If any particle operation fails, all successful operations are automatically rolled back
+- Overhead: +0.2 seconds for health check (acceptable for safety)
 
 ### Delete Operations ✅ Best Effort
 - Succeed if any backends are reachable
 - Ignore "not found" errors (idempotent)
 - Safe to delete files with missing particles
+
+### Rollback Mechanism ✅ All-or-Nothing Guarantee
+
+The level3 backend implements automatic rollback for write operations (Put, Update, Move) when `rollback=true` (default). This ensures an **all-or-nothing guarantee**: either all particles are successfully written/moved/updated, or none are.
+
+**Current Status**:
+- ✅ **Put rollback**: Fully working - automatically removes uploaded particles on failure
+- ✅ **Move rollback**: Fully working - automatically moves particles back to original locations on failure
+- ⚠️ **Update rollback**: **Not working properly** - implementation exists but has issues (see Known Limitations)
+
+**How it works**:
+
+1. **Put Operation**: Tracks successfully uploaded particles. If any particle upload fails, all uploaded particles are automatically removed.
+2. **Move Operation**: Tracks successfully moved particles. If any particle move fails, all moved particles are automatically moved back to their original locations.
+3. **Update Operation**: Uses move-to-temp pattern - original particles are moved to temporary locations before updating. If update fails, original particles should be restored from temp locations. **⚠️ Currently not working properly - rollback restoration may fail.**
+
+**Benefits**:
+- ✅ Prevents partial operations that would create degraded files
+- ✅ Ensures data consistency - no corrupted or partially-written files
+- ✅ Automatic cleanup on failure - no manual intervention needed
+- ✅ Best-effort rollback - logs errors but doesn't fail if rollback itself encounters issues
+
+**Example**:
+```bash
+# Attempt to move file when one backend becomes unavailable mid-operation
+$ rclone move level3:file.txt level3:moved/file.txt
+❌ Error: move failed - odd backend unavailable
+
+# With rollback enabled (default):
+✅ Original file still exists at source (rollback restored it)
+✅ No file exists at destination (partial moves were rolled back)
+✅ All-or-nothing guarantee maintained - no degraded files created
+
+# With rollback disabled:
+⚠️ Some particles may have moved (partial move occurred)
+⚠️ File may exist at destination in degraded state
+⚠️ Original file may be partially missing
+```
 
 ### Rationale
 
@@ -519,6 +609,13 @@ This policy ensures **data consistency** while maximizing **read availability**:
 - Matches industry-standard RAID 3 behavior
 - Avoids performance degradation (every new file needing reconstruction)
 - Fails fast with clear error messages
+
+**Why automatic rollback?**
+- **All-or-nothing guarantee**: Either all particles are written/moved/updated, or none are
+- Prevents partial operations that would create degraded files
+- Ensures data consistency even if backends fail during operations
+- Automatically cleans up successful particle operations if any particle operation fails
+- Can be disabled for debugging purposes (not recommended for production)
 
 **Why best-effort deletes?**
 - Missing particle = already deleted (same end state)
@@ -545,6 +642,13 @@ INFO: Self-healing upload completed
 $ echo "new data" | rclone rcat level3:file.txt
 ❌ Error: update blocked in degraded mode (RAID 3 policy): odd backend unavailable
 # Original file preserved - NO CORRUPTION!
+
+# If update starts but backend fails mid-operation:
+$ rclone copyto updated.txt level3:file.txt
+❌ Error: update failed - parity backend unavailable
+# ⚠️ NOTE: Update rollback is currently not working properly
+# With rollback enabled, restoration may fail in some scenarios
+# See "Known Limitations" section above for details
 
 # Deletes still work!
 $ rclone delete level3:file.txt

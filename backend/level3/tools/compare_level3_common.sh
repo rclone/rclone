@@ -115,7 +115,8 @@ ensure_rclone_config() {
 }
 
 rclone_cmd() {
-  rclone --config "${RCLONE_CONFIG}" "$@"
+  # Use --retries 1 for faster failure in tests (avoid 3 retries causing long delays)
+  rclone --config "${RCLONE_CONFIG}" --retries 1 "$@"
 }
 
 capture_command() {
@@ -525,7 +526,7 @@ create_test_dataset() {
   local timestamp random_suffix test_id
   timestamp=$(date +%Y%m%d%H%M%S)
   printf -v random_suffix '%04d' $((RANDOM % 10000))
-  test_id="compare-${label}-${timestamp}-${random_suffix}"
+  test_id="cmp-${label}-${timestamp}-${random_suffix}"
 
   local tmpfile1 tmpfile2
   tmpfile1=$(mktemp) || return 1

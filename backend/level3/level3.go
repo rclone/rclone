@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -76,6 +77,11 @@ This should be in the form 'remote:path'.`,
 		}, {
 			Name:     "auto_heal",
 			Help:     "Automatically reconstruct missing particles/directories (2/3 present)",
+			Default:  true,
+			Advanced: false,
+		}, {
+			Name:     "rollback",
+			Help:     "Automatically rollback successful operations if any particle operation fails (all-or-nothing guarantee)",
 			Default:  true,
 			Advanced: false,
 		}},
@@ -220,6 +226,7 @@ type Options struct {
 	TimeoutMode string `config:"timeout_mode"`
 	AutoCleanup bool   `config:"auto_cleanup"`
 	AutoHeal    bool   `config:"auto_heal"`
+	Rollback    bool   `config:"rollback"`
 }
 
 // uploadJob represents a particle that needs to be uploaded for self-healing
@@ -407,6 +414,14 @@ func StripParitySuffix(filename string) (string, bool, bool) {
 	return filename, false, false
 }
 
+// IsTempFile checks if a filename is a temporary file created during Update rollback
+// Temporary files have suffixes like .tmp.even, .tmp.odd, .tmp.parity
+func IsTempFile(filename string) bool {
+	return strings.HasSuffix(filename, ".tmp.even") ||
+		strings.HasSuffix(filename, ".tmp.odd") ||
+		strings.HasSuffix(filename, ".tmp.parity")
+}
+
 // ValidateParticleSizes checks if particle sizes are valid
 func ValidateParticleSizes(evenSize, oddSize int64) bool {
 	return evenSize == oddSize || evenSize == oddSize+1
@@ -462,6 +477,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}
 	if _, ok := m.Get("auto_heal"); !ok {
 		opt.AutoHeal = true
+	}
+	if _, ok := m.Get("rollback"); !ok {
+		opt.Rollback = true
 	}
 
 	if opt.Even == "" {
@@ -525,30 +543,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 
 	// Create even remote (even-indexed bytes)
 	go func() {
-		evenPath := opt.Even
-		if root != "" {
-			evenPath = path.Join(opt.Even, root)
-		}
+		evenPath := fspath.JoinRootPath(opt.Even, root)
 		fs, err := cache.Get(initCtx, evenPath)
 		fsCh <- fsResult{"even", fs, err}
 	}()
 
 	// Create odd remote (odd-indexed bytes)
 	go func() {
-		oddPath := opt.Odd
-		if root != "" {
-			oddPath = path.Join(opt.Odd, root)
-		}
+		oddPath := fspath.JoinRootPath(opt.Odd, root)
 		fs, err := cache.Get(initCtx, oddPath)
 		fsCh <- fsResult{"odd", fs, err}
 	}()
 
 	// Create parity remote
 	go func() {
-		parityPath := opt.Parity
-		if root != "" {
-			parityPath = path.Join(opt.Parity, root)
-		}
+		parityPath := fspath.JoinRootPath(opt.Parity, root)
 		fs, err := cache.Get(initCtx, parityPath)
 		fsCh <- fsResult{"parity", fs, err}
 	}()
@@ -618,28 +627,19 @@ checkRemotes:
 		fsCh2 := make(chan fsResult, 3)
 
 		go func() {
-			evenPath := opt.Even
-			if adjustedRoot != "" {
-				evenPath = path.Join(opt.Even, adjustedRoot)
-			}
+			evenPath := fspath.JoinRootPath(opt.Even, adjustedRoot)
 			fs, err := cache.Get(initCtx2, evenPath)
 			fsCh2 <- fsResult{"even", fs, err}
 		}()
 
 		go func() {
-			oddPath := opt.Odd
-			if adjustedRoot != "" {
-				oddPath = path.Join(opt.Odd, adjustedRoot)
-			}
+			oddPath := fspath.JoinRootPath(opt.Odd, adjustedRoot)
 			fs, err := cache.Get(initCtx2, oddPath)
 			fsCh2 <- fsResult{"odd", fs, err}
 		}()
 
 		go func() {
-			parityPath := opt.Parity
-			if adjustedRoot != "" {
-				parityPath = path.Join(opt.Parity, adjustedRoot)
-			}
+			parityPath := fspath.JoinRootPath(opt.Parity, adjustedRoot)
 			fs, err := cache.Get(initCtx2, parityPath)
 			fsCh2 <- fsResult{"parity", fs, err}
 		}()
@@ -686,8 +686,9 @@ checkRemotes:
 		About:                   f.About,
 	}).Fill(ctx, f)
 
-	// Enable Move if all backends support it
-	if f.even.Features().Move != nil && f.odd.Features().Move != nil && f.parity.Features().Move != nil {
+	// Enable Move if all backends support Move or Copy (like union/combine backends)
+	// This allows level3 to work with backends like S3/MinIO that support Copy but not Move
+	if operations.CanServerSideMove(f.even) && operations.CanServerSideMove(f.odd) && operations.CanServerSideMove(f.parity) {
 		f.features.Move = f.Move
 	}
 
@@ -876,6 +877,8 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 		// Acceptable list errors (backend is available):
 		//   - ErrorDirNotFound: Directory doesn't exist yet (empty backend)
 		//   - ErrorIsFile: Path points to a file
+		//   - InvalidBucketName: Configuration error (backend path misconfigured, not availability issue)
+		//     This can happen with stale Fs cache or path parsing issues, but indicates config problem
 		if listErr == nil || errors.Is(listErr, fs.ErrorDirNotFound) || errors.Is(listErr, fs.ErrorIsFile) {
 			// Backend seems available, verify we can write
 			// Try mkdir on a test path (won't actually create if Fs is at file level)
@@ -899,7 +902,14 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 			return healthResult{name, mkdirErr}
 		}
 
-		// List failed with real error (connection refused, etc.)
+		// List failed with real error
+		// Check if it's an InvalidBucketName error (configuration issue, not availability)
+		if listErr != nil && strings.Contains(listErr.Error(), "InvalidBucketName") {
+			// InvalidBucketName indicates a configuration/parsing issue, not backend unavailability
+			// Return this as an error so it's reported, but it's different from connection errors
+			return healthResult{name, fmt.Errorf("%s backend configuration error (InvalidBucketName): %w", name, listErr)}
+		}
+		// Other errors (connection refused, timeout, etc.)
 		return healthResult{name, listErr}
 	}
 
@@ -1696,19 +1706,32 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	// Create a map to track all entries (excluding parity files with suffixes)
 	entryMap := make(map[string]fs.DirEntry)
 
-	// Add even entries
+	// Add even entries (filter out temporary files created during Update rollback)
 	for _, entry := range entriesEven {
-		entryMap[entry.Remote()] = entry
+		remote := entry.Remote()
+		// Skip temporary files created during Update rollback
+		if IsTempFile(remote) {
+			fs.Debugf(f, "List: Skipping temp file %s", remote)
+			continue
+		}
+		entryMap[remote] = entry
 	}
 
-	// Add odd entries (merge with even)
+	// Add odd entries (merge with even, filter out temporary files)
 	for _, entry := range entriesOdd {
-		if _, exists := entryMap[entry.Remote()]; !exists {
-			entryMap[entry.Remote()] = entry
+		remote := entry.Remote()
+		// Skip temporary files created during Update rollback
+		if IsTempFile(remote) {
+			fs.Debugf(f, "List: Skipping temp file %s", remote)
+			continue
+		}
+		if _, exists := entryMap[remote]; !exists {
+			entryMap[remote] = entry
 		}
 	}
 
 	// Filter out parity files from parity backend (they have .parity-el or .parity-ol suffix)
+	// Also filter out temporary files created during Update rollback
 	// but include directories
 	for _, entry := range entriesParity {
 		remote := entry.Remote()
@@ -1716,6 +1739,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		_, isParity, _ := StripParitySuffix(remote)
 		if isParity {
 			// Don't add parity files to the list
+			continue
+		}
+		// Skip temporary files created during Update rollback
+		if IsTempFile(remote) {
+			fs.Debugf(f, "List: Skipping temp file %s", remote)
 			continue
 		}
 		// Add non-parity entries (directories mainly)
@@ -1789,16 +1817,42 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		presentCount++
 	}
 	if presentCount < 2 {
-		// Prefer returning a not found style error
+		// File doesn't exist (less than 2/3 particles present)
+		// If one backend is unavailable (connection error), but file doesn't exist on available backends,
+		// return ObjectNotFound to allow move to proceed (Move() will check backend availability and handle rollback)
+
+		// Check if we have connection errors (backend unavailable) vs ObjectNotFound (file doesn't exist)
+		hasConnectionError := false
+
+		// Check if any backend returned a connection error (not ObjectNotFound)
+		if errEven != nil && !errors.Is(errEven, fs.ErrorObjectNotFound) {
+			hasConnectionError = true
+		}
+		if errOdd != nil && !errors.Is(errOdd, fs.ErrorObjectNotFound) {
+			hasConnectionError = true
+		}
+		// Parity is present if either check succeeds, so if presentCount < 2, both checks failed
+		if !parityPresent && errParityOL != nil && errParityEL != nil {
+			if !errors.Is(errParityOL, fs.ErrorObjectNotFound) || !errors.Is(errParityEL, fs.ErrorObjectNotFound) {
+				hasConnectionError = true
+			}
+		}
+
+		// If we have connection errors but file doesn't exist on available backends,
+		// return ObjectNotFound to allow move to proceed (Move() will check backend availability)
+		if hasConnectionError {
+			return nil, fs.ErrorObjectNotFound
+		}
+
+		// All backends returned ObjectNotFound or file is truly missing
+		// Prefer returning the first error if available, otherwise ObjectNotFound
 		if errEven != nil {
 			return nil, errEven
 		}
 		if errOdd != nil {
 			return nil, errOdd
 		}
-		if !parityPresent {
-			return nil, fs.ErrorObjectNotFound
-		}
+		return nil, fs.ErrorObjectNotFound
 	}
 
 	return &Object{fs: f, remote: remote}, nil
@@ -1870,35 +1924,58 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		remote:     GetParityFilename(src.Remote(), isOddLength),
 	}
 
+	// Track uploaded particles for rollback
+	var uploadedParticles []fs.Object
+	var uploadedMu sync.Mutex
+	defer func() {
+		if err != nil && f.opt.Rollback {
+			uploadedMu.Lock()
+			particles := uploadedParticles
+			uploadedMu.Unlock()
+			if rollbackErr := f.rollbackPut(ctx, particles); rollbackErr != nil {
+				fs.Errorf(f, "Rollback failed during Put: %v", rollbackErr)
+			}
+		}
+	}()
+
 	g, gCtx := errgroup.WithContext(ctx)
 
 	// Upload even bytes
 	g.Go(func() error {
 		reader := bytes.NewReader(evenData)
-		_, err := f.even.Put(gCtx, reader, evenInfo, options...)
+		obj, err := f.even.Put(gCtx, reader, evenInfo, options...)
 		if err != nil {
 			return fmt.Errorf("failed to upload even particle: %w", err)
 		}
+		uploadedMu.Lock()
+		uploadedParticles = append(uploadedParticles, obj)
+		uploadedMu.Unlock()
 		return nil
 	})
 
 	// Upload odd bytes
 	g.Go(func() error {
 		reader := bytes.NewReader(oddData)
-		_, err := f.odd.Put(gCtx, reader, oddInfo, options...)
+		obj, err := f.odd.Put(gCtx, reader, oddInfo, options...)
 		if err != nil {
 			return fmt.Errorf("failed to upload odd particle: %w", err)
 		}
+		uploadedMu.Lock()
+		uploadedParticles = append(uploadedParticles, obj)
+		uploadedMu.Unlock()
 		return nil
 	})
 
 	// Upload parity
 	g.Go(func() error {
 		reader := bytes.NewReader(parityData)
-		_, err := f.parity.Put(gCtx, reader, parityInfo, options...)
+		obj, err := f.parity.Put(gCtx, reader, parityInfo, options...)
 		if err != nil {
 			return fmt.Errorf("failed to upload parity particle: %w", err)
 		}
+		uploadedMu.Lock()
+		uploadedParticles = append(uploadedParticles, obj)
+		uploadedMu.Unlock()
 		return nil
 	})
 
@@ -2121,94 +2198,346 @@ func (f *Fs) listDirectories(ctx context.Context, dir string) (fs.DirEntries, er
 
 // Move src to this remote using server-side move operations if possible
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	// Pre-flight check: Enforce strict RAID 3 write policy
-	// Fail immediately if any backend is unavailable to prevent degraded moves
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return nil, fmt.Errorf("move blocked in degraded mode (RAID 3 policy): %w", err)
-	}
-
-	// Disable retries for strict RAID 3 write policy
-	ctx = f.disableRetriesForWrites(ctx)
-
 	// Check if src is from this level3 backend
 	srcObj, ok := src.(*Object)
 	if !ok {
 		return nil, fs.ErrorCantMove
 	}
 
-	// We need to determine the suffix for source parity file
-	// by checking both possible suffixes
+	// Determine source parity name (needed for cleanup)
 	var srcParityName string
 	parityOddSrc := GetParityFilename(srcObj.remote, true)
 	parityEvenSrc := GetParityFilename(srcObj.remote, false)
-
-	// Check which parity file exists
 	_, errOdd := f.parity.NewObject(ctx, parityOddSrc)
 	if errOdd == nil {
 		srcParityName = parityOddSrc
 	} else {
 		srcParityName = parityEvenSrc
 	}
-
-	// Determine suffix from source parity name
 	_, isParity, isOddLength := StripParitySuffix(srcParityName)
 	if !isParity {
-		isOddLength = false // Default to even if no parity found
+		isOddLength = false
 	}
-
-	// Get destination parity name
 	dstParityName := GetParityFilename(remote, isOddLength)
 
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	// Fail immediately if any backend is unavailable to prevent degraded moves
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		// Even though we're failing early, clean up any destination files from previous attempts
+		if f.opt.Rollback {
+			allDestinations := []moveState{
+				{"even", srcObj.remote, remote},
+				{"odd", srcObj.remote, remote},
+				{"parity", srcParityName, dstParityName},
+			}
+			if cleanupErr := f.rollbackMoves(ctx, allDestinations); cleanupErr != nil {
+				fs.Debugf(f, "Cleanup of destination files failed: %v", cleanupErr)
+			}
+		}
+		return nil, fmt.Errorf("move blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+	fs.Debugf(f, "Move: all backends available, proceeding with move")
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = f.disableRetriesForWrites(ctx)
+
+	// Track successful moves for rollback
+	type moveResult struct {
+		state   moveState
+		success bool
+		err     error
+	}
+
+	var successMoves []moveState
+	var movesMu sync.Mutex
+	var moveErr error
+	defer func() {
+		if moveErr != nil && f.opt.Rollback {
+			movesMu.Lock()
+			moves := successMoves
+			movesMu.Unlock()
+
+			// If we have tracked moves, roll them back
+			if len(moves) > 0 {
+				if rollbackErr := f.rollbackMoves(ctx, moves); rollbackErr != nil {
+					fs.Errorf(f, "Rollback failed during Move: %v", rollbackErr)
+				}
+			}
+
+			// Also check for destination files that might exist even if not tracked
+			// This handles edge cases where Copy succeeded but Delete failed
+			allDestinations := []moveState{
+				{"even", srcObj.remote, remote},
+				{"odd", srcObj.remote, remote},
+				{"parity", srcParityName, dstParityName},
+			}
+			if cleanupErr := f.rollbackMoves(ctx, allDestinations); cleanupErr != nil {
+				fs.Debugf(f, "Cleanup check for untracked destination files failed: %v", cleanupErr)
+			}
+		}
+	}()
+
+	results := make(chan moveResult, 3)
 	g, gCtx := errgroup.WithContext(ctx)
 
 	// Move on even
 	g.Go(func() error {
 		obj, err := f.even.NewObject(gCtx, srcObj.remote)
 		if err != nil {
+			results <- moveResult{moveState{"even", srcObj.remote, remote}, false, nil}
 			return nil // Ignore if not found
 		}
-		if do := f.even.Features().Move; do != nil {
-			_, err = do(gCtx, obj, remote)
+		_, err = moveOrCopyParticle(gCtx, f.even, obj, remote)
+		if err != nil {
+			results <- moveResult{moveState{"even", srcObj.remote, remote}, false, err}
 			return err
 		}
-		return fs.ErrorCantMove
+		results <- moveResult{moveState{"even", srcObj.remote, remote}, true, nil}
+		return nil
 	})
 
 	// Move on odd
 	g.Go(func() error {
 		obj, err := f.odd.NewObject(gCtx, srcObj.remote)
 		if err != nil {
+			results <- moveResult{moveState{"odd", srcObj.remote, remote}, false, nil}
 			return nil // Ignore if not found
 		}
-		if do := f.odd.Features().Move; do != nil {
-			_, err = do(gCtx, obj, remote)
+		_, err = moveOrCopyParticle(gCtx, f.odd, obj, remote)
+		if err != nil {
+			results <- moveResult{moveState{"odd", srcObj.remote, remote}, false, err}
 			return err
 		}
-		return fs.ErrorCantMove
+		results <- moveResult{moveState{"odd", srcObj.remote, remote}, true, nil}
+		return nil
 	})
 
 	// Move parity
 	g.Go(func() error {
 		obj, err := f.parity.NewObject(gCtx, srcParityName)
 		if err != nil {
+			results <- moveResult{moveState{"parity", srcParityName, dstParityName}, false, nil}
 			return nil // Ignore if not found
 		}
-		if do := f.parity.Features().Move; do != nil {
-			_, err = do(gCtx, obj, dstParityName)
+		_, err = moveOrCopyParticle(gCtx, f.parity, obj, dstParityName)
+		if err != nil {
+			results <- moveResult{moveState{"parity", srcParityName, dstParityName}, false, err}
 			return err
 		}
-		return fs.ErrorCantMove
+		results <- moveResult{moveState{"parity", srcParityName, dstParityName}, true, nil}
+		return nil
 	})
 
-	err := g.Wait()
-	if err != nil {
-		return nil, err
+	moveErr = g.Wait()
+	close(results)
+
+	// Collect results
+	var firstError error
+	for result := range results {
+		if result.success {
+			movesMu.Lock()
+			successMoves = append(successMoves, result.state)
+			movesMu.Unlock()
+		} else if result.err != nil && firstError == nil {
+			firstError = result.err
+		}
+	}
+
+	// If any failed, rollback will happen in defer
+	if firstError != nil || moveErr != nil {
+		if firstError != nil {
+			moveErr = firstError
+		}
+		return nil, moveErr
 	}
 
 	return &Object{
 		fs:     f,
 		remote: remote,
 	}, nil
+}
+
+// moveState tracks the state of a move operation for rollback purposes
+type moveState struct {
+	backend string
+	srcName string
+	dstName string
+}
+
+// rollbackPut removes all successfully uploaded particles (best-effort cleanup)
+func (f *Fs) rollbackPut(ctx context.Context, uploadedParticles []fs.Object) error {
+	for _, obj := range uploadedParticles {
+		if err := obj.Remove(ctx); err != nil {
+			fs.Errorf(f, "Failed to remove uploaded particle during rollback: %v", err)
+			// Continue with cleanup - best effort
+		}
+	}
+	return nil
+}
+
+// rollbackUpdate restores original particles from temporary locations (best-effort cleanup)
+func (f *Fs) rollbackUpdate(ctx context.Context, tempParticles map[string]fs.Object) error {
+	g, _ := errgroup.WithContext(ctx)
+
+	for backendName, tempObj := range tempParticles {
+		backendName := backendName // Capture for goroutine
+		tempObj := tempObj         // Capture for goroutine
+
+		g.Go(func() error {
+			tempRemote := tempObj.Remote()
+			var originalRemote string
+
+			// Extract original remote from temp remote name
+			if strings.HasSuffix(tempRemote, ".tmp."+backendName) {
+				originalRemote = tempRemote[:len(tempRemote)-len(".tmp."+backendName)]
+			} else {
+				fs.Errorf(f, "Unexpected temp remote format for %s: %s", backendName, tempRemote)
+				return nil
+			}
+
+			var backend fs.Fs
+			switch backendName {
+			case "even":
+				backend = f.even
+			case "odd":
+				backend = f.odd
+			case "parity":
+				backend = f.parity
+			default:
+				return nil
+			}
+
+			// Try to move back from temp location to original
+			if do := backend.Features().Move; do != nil {
+				_, err := do(ctx, tempObj, originalRemote)
+				if err == nil {
+					return nil // Successfully moved back
+				}
+				fs.Debugf(f, "Rollback move back failed for %s, trying to delete temp: %v", backendName, err)
+			}
+
+			// Fallback: Delete temp particle (best effort)
+			if err := tempObj.Remove(ctx); err != nil {
+				fs.Errorf(f, "Rollback cleanup failed for %s: could not remove temp particle: %v", backendName, err)
+			}
+			return nil
+		})
+	}
+
+	_ = g.Wait() // Best effort - don't return errors
+	return nil
+}
+
+// rollbackMoves attempts to move particles back from destination to source (best-effort cleanup)
+func (f *Fs) rollbackMoves(ctx context.Context, moves []moveState) error {
+	g, _ := errgroup.WithContext(ctx)
+
+	for _, move := range moves {
+		move := move // Capture for goroutine
+		g.Go(func() error {
+			var backend fs.Fs
+			switch move.backend {
+			case "even":
+				backend = f.even
+			case "odd":
+				backend = f.odd
+			case "parity":
+				backend = f.parity
+			default:
+				return nil
+			}
+
+			// Try to move back
+			dstObj, err := backend.NewObject(ctx, move.dstName)
+			if err != nil {
+				return nil // Already rolled back or doesn't exist
+			}
+
+			if do := backend.Features().Move; do != nil {
+				_, err := do(ctx, dstObj, move.srcName)
+				if err == nil {
+					return nil // Successfully moved back
+				}
+				// Move back failed - try to delete from destination
+				fs.Debugf(f, "Rollback move back failed for %s, deleting: %v", move.backend, err)
+			}
+
+			// Fallback: Delete from destination
+			if err := dstObj.Remove(ctx); err != nil {
+				fs.Errorf(f, "Rollback delete failed for %s: %v", move.backend, err)
+			}
+			return nil
+		})
+	}
+
+	_ = g.Wait() // Best effort - don't return errors
+	return nil
+}
+
+// moveOrCopyParticleToTemp moves or copies a particle to a temporary location using
+// server-side Move if available, or Copy+Delete as fallback (like operations.Move).
+// This allows the move-to-temp rollback pattern to work with backends like S3/MinIO
+// that support Copy but not Move.
+func moveOrCopyParticleToTemp(ctx context.Context, backend fs.Fs, obj fs.Object, tempRemote string) (fs.Object, error) {
+	// Try Move first if available
+	if doMove := backend.Features().Move; doMove != nil {
+		moved, err := doMove(ctx, obj, tempRemote)
+		if err == nil {
+			return moved, nil
+		}
+		// Move failed - fall back to Copy+Delete
+		fs.Debugf(obj, "Move failed, falling back to Copy+Delete: %v", err)
+	}
+
+	// Fallback to Copy+Delete (like operations.Move does)
+	if doCopy := backend.Features().Copy; doCopy != nil {
+		// Copy to temp location
+		copied, err := doCopy(ctx, obj, tempRemote)
+		if err != nil {
+			return nil, fmt.Errorf("failed to copy particle to temp: %w", err)
+		}
+		// Delete original (best effort - if this fails, we still have the copy)
+		if delErr := obj.Remove(ctx); delErr != nil {
+			fs.Errorf(obj, "Failed to delete original after copy to temp (non-fatal): %v", delErr)
+		}
+		return copied, nil
+	}
+
+	// Neither Move nor Copy is available
+	return nil, fmt.Errorf("backend does not support Move or Copy")
+}
+
+// moveOrCopyParticle moves or copies a particle from source to destination using
+// server-side Move if available, or Copy+Delete as fallback (consistent with union backend pattern).
+// This allows Move operations to work with backends like S3/MinIO that support Copy but not Move.
+func moveOrCopyParticle(ctx context.Context, backend fs.Fs, obj fs.Object, destRemote string) (fs.Object, error) {
+	// Check if backend supports Move or Copy (consistent with union backend)
+	backendFeatures := backend.Features()
+	do := backendFeatures.Move
+	if backendFeatures.Move == nil {
+		do = backendFeatures.Copy
+	}
+	if do == nil {
+		return nil, fmt.Errorf("backend does not support Move or Copy")
+	}
+
+	// Perform Move or Copy
+	dstObj, err := do(ctx, obj, destRemote)
+	if err != nil {
+		return nil, fmt.Errorf("failed to move/copy particle: %w", err)
+	}
+	if dstObj == nil {
+		return nil, fmt.Errorf("destination object not found after move/copy")
+	}
+
+	// Delete the source object if Copy was used (consistent with union backend pattern)
+	if backendFeatures.Move == nil {
+		if delErr := obj.Remove(ctx); delErr != nil {
+			return nil, fmt.Errorf("failed to delete original after copy: %w", delErr)
+		}
+	}
+
+	return dstObj, nil
 }
 
 // DirMove moves src:srcRemote to this remote at dstRemote
@@ -3313,18 +3642,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Disable retries for strict RAID 3 write policy
 	ctx = o.fs.disableRetriesForWrites(ctx)
 
-	// Read original particle sizes for rollback validation
-	originalEvenObj, errEven := o.fs.even.NewObject(ctx, o.remote)
-	originalOddObj, errOdd := o.fs.odd.NewObject(ctx, o.remote)
-
-	var originalEvenSize, originalOddSize int64
-	if errEven == nil {
-		originalEvenSize = originalEvenObj.Size()
-	}
-	if errOdd == nil {
-		originalOddSize = originalOddObj.Size()
-	}
-
 	// Read data once
 	data, err := io.ReadAll(in)
 	if err != nil {
@@ -3339,7 +3656,20 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Determine if original data is odd length
 	isOddLength := len(data)%2 == 1
+	parityName := GetParityFilename(o.remote, isOddLength)
 
+	// Two code paths: original approach (rollback disabled) or move-to-temp pattern (rollback enabled)
+	if !o.fs.opt.Rollback {
+		// Original approach: Update particles in place (no rollback)
+		return o.updateInPlace(ctx, evenData, oddData, parityData, parityName, src, options...)
+	}
+
+	// Rollback enabled: Use move-to-temp pattern for rollback safety
+	return o.updateWithRollback(ctx, evenData, oddData, parityData, parityName, src, options...)
+}
+
+// updateInPlace performs Update using the original approach (direct update on particle objects)
+func (o *Object) updateInPlace(ctx context.Context, evenData, oddData, parityData []byte, parityName string, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	// Create wrapper ObjectInfo for each particle
 	evenInfo := &particleObjectInfo{
 		ObjectInfo: src,
@@ -3352,56 +3682,215 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	parityInfo := &particleObjectInfo{
 		ObjectInfo: src,
 		size:       int64(len(parityData)),
-		remote:     GetParityFilename(o.remote, isOddLength),
+		remote:     parityName,
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)
 
-	// Update even
+	// Update even particle
 	g.Go(func() error {
 		obj, err := o.fs.even.NewObject(gCtx, o.remote)
 		if err != nil {
 			return fmt.Errorf("even particle not found: %w", err)
 		}
 		reader := bytes.NewReader(evenData)
-		err = obj.Update(gCtx, reader, evenInfo, options...)
-		if err != nil {
-			return fmt.Errorf("failed to update even particle: %w", err)
-		}
-		return nil
+		return obj.Update(gCtx, reader, evenInfo, options...)
 	})
 
-	// Update odd
+	// Update odd particle
 	g.Go(func() error {
 		obj, err := o.fs.odd.NewObject(gCtx, o.remote)
 		if err != nil {
 			return fmt.Errorf("odd particle not found: %w", err)
 		}
 		reader := bytes.NewReader(oddData)
-		err = obj.Update(gCtx, reader, oddInfo, options...)
+		return obj.Update(gCtx, reader, oddInfo, options...)
+	})
+
+	// Update or create parity particle
+	g.Go(func() error {
+		obj, err := o.fs.parity.NewObject(gCtx, parityName)
 		if err != nil {
-			return fmt.Errorf("failed to update odd particle: %w", err)
+			// Parity doesn't exist, create it with Put
+			reader := bytes.NewReader(parityData)
+			_, err := o.fs.parity.Put(gCtx, reader, parityInfo, options...)
+			return err
 		}
+		// Parity exists, update it
+		reader := bytes.NewReader(parityData)
+		return obj.Update(gCtx, reader, parityInfo, options...)
+	})
+
+	return g.Wait()
+}
+
+// updateWithRollback performs Update using move-to-temp pattern for rollback safety
+func (o *Object) updateWithRollback(ctx context.Context, evenData, oddData, parityData []byte, parityName string, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	// Move original particles to temporary locations for rollback safety
+	tempParticles := make(map[string]fs.Object)
+	var tempMu sync.Mutex
+	defer func() {
+		if err != nil && len(tempParticles) > 0 {
+			tempMu.Lock()
+			temps := tempParticles
+			tempMu.Unlock()
+			if rollbackErr := o.fs.rollbackUpdate(ctx, temps); rollbackErr != nil {
+				fs.Errorf(o.fs, "Rollback failed during Update: %v", rollbackErr)
+			}
+		} else if err == nil && len(tempParticles) > 0 {
+			// Success: delete temp particles
+			tempMu.Lock()
+			temps := tempParticles
+			tempMu.Unlock()
+			for _, tempObj := range temps {
+				if delErr := tempObj.Remove(ctx); delErr != nil {
+					fs.Debugf(o.fs, "Failed to remove temp particle after successful update: %v", delErr)
+				}
+			}
+		}
+	}()
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Move original particles to temp locations
+	// Even particle
+	g.Go(func() error {
+		obj, err := o.fs.even.NewObject(gCtx, o.remote)
+		if err != nil {
+			return fmt.Errorf("even particle not found: %w", err)
+		}
+		tempRemote := o.remote + ".tmp.even"
+		moved, err := moveOrCopyParticleToTemp(gCtx, o.fs.even, obj, tempRemote)
+		if err != nil {
+			return fmt.Errorf("failed to move/copy even particle to temp: %w", err)
+		}
+		tempMu.Lock()
+		tempParticles["even"] = moved
+		tempMu.Unlock()
+		return nil
+	})
+
+	// Odd particle
+	g.Go(func() error {
+		obj, err := o.fs.odd.NewObject(gCtx, o.remote)
+		if err != nil {
+			return fmt.Errorf("odd particle not found: %w", err)
+		}
+		tempRemote := o.remote + ".tmp.odd"
+		moved, err := moveOrCopyParticleToTemp(gCtx, o.fs.odd, obj, tempRemote)
+		if err != nil {
+			return fmt.Errorf("failed to move/copy odd particle to temp: %w", err)
+		}
+		tempMu.Lock()
+		tempParticles["odd"] = moved
+		tempMu.Unlock()
+		return nil
+	})
+
+	// Parity particle
+	g.Go(func() error {
+		obj, err := o.fs.parity.NewObject(gCtx, parityName)
+		if err != nil {
+			// Parity might not exist, that's ok
+			return nil
+		}
+		tempRemote := parityName + ".tmp.parity"
+		moved, err := moveOrCopyParticleToTemp(gCtx, o.fs.parity, obj, tempRemote)
+		if err != nil {
+			return fmt.Errorf("failed to move/copy parity particle to temp: %w", err)
+		}
+		tempMu.Lock()
+		tempParticles["parity"] = moved
+		tempMu.Unlock()
+		return nil
+	})
+
+	err = g.Wait()
+	if err != nil {
+		return err
+	}
+
+	// Verify that moves to temp succeeded by checking temp particles exist
+	tempMu.Lock()
+	tempCount := len(tempParticles)
+	evenMoved := tempParticles["even"]
+	oddMoved := tempParticles["odd"]
+	tempMu.Unlock()
+
+	if tempCount == 0 {
+		return fmt.Errorf("move-to-temp failed: no particles moved to temp locations")
+	}
+
+	if evenMoved == nil || oddMoved == nil {
+		return fmt.Errorf("move-to-temp failed: even=%v, odd=%v (at least even and odd must be moved)",
+			evenMoved != nil, oddMoved != nil)
+	}
+
+	// Verify temp particles actually exist at temp locations
+	if _, err := o.fs.even.NewObject(ctx, evenMoved.Remote()); err != nil {
+		return fmt.Errorf("move-to-temp verification failed: even particle not found at temp location %s: %w", evenMoved.Remote(), err)
+	}
+	if _, err := o.fs.odd.NewObject(ctx, oddMoved.Remote()); err != nil {
+		return fmt.Errorf("move-to-temp verification failed: odd particle not found at temp location %s: %w", oddMoved.Remote(), err)
+	}
+
+	// Create wrapper ObjectInfo for each particle
+	// IMPORTANT: Use o.remote (the actual file path) not src.Remote() which might have suffixes
+	// The test may pass ObjectInfo with a different remote name that should be ignored
+	evenInfo := &particleObjectInfo{
+		ObjectInfo: src,
+		size:       int64(len(evenData)),
+		remote:     o.remote, // Use the object's remote, not src.Remote()
+	}
+	oddInfo := &particleObjectInfo{
+		ObjectInfo: src,
+		size:       int64(len(oddData)),
+		remote:     o.remote, // Use the object's remote, not src.Remote()
+	}
+	parityInfo := &particleObjectInfo{
+		ObjectInfo: src,
+		size:       int64(len(parityData)),
+		remote:     parityName,
+	}
+
+	// Upload new particles at original location
+	g, gCtx = errgroup.WithContext(ctx)
+
+	var evenObjPut, oddObjPut fs.Object
+	var putMu sync.Mutex
+
+	// Update even
+	g.Go(func() error {
+		reader := bytes.NewReader(evenData)
+		obj, err := o.fs.even.Put(gCtx, reader, evenInfo, options...)
+		if err != nil {
+			return fmt.Errorf("failed to upload even particle: %w", err)
+		}
+		putMu.Lock()
+		evenObjPut = obj
+		putMu.Unlock()
+		return nil
+	})
+
+	// Update odd
+	g.Go(func() error {
+		reader := bytes.NewReader(oddData)
+		obj, err := o.fs.odd.Put(gCtx, reader, oddInfo, options...)
+		if err != nil {
+			return fmt.Errorf("failed to upload odd particle: %w", err)
+		}
+		putMu.Lock()
+		oddObjPut = obj
+		putMu.Unlock()
 		return nil
 	})
 
 	// Update or create parity
 	g.Go(func() error {
-		parityName := GetParityFilename(o.remote, isOddLength)
-		obj, err := o.fs.parity.NewObject(gCtx, parityName)
 		reader := bytes.NewReader(parityData)
+		_, err := o.fs.parity.Put(gCtx, reader, parityInfo, options...)
 		if err != nil {
-			// Parity doesn't exist, create it
-			_, err = o.fs.parity.Put(gCtx, reader, parityInfo, options...)
-			if err != nil {
-				return fmt.Errorf("failed to create parity particle: %w", err)
-			}
-			return nil
-		}
-		// Parity exists, update it
-		err = obj.Update(gCtx, reader, parityInfo, options...)
-		if err != nil {
-			return fmt.Errorf("failed to update parity particle: %w", err)
+			return fmt.Errorf("failed to upload parity particle: %w", err)
 		}
 		return nil
 	})
@@ -3411,30 +3900,48 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	// CRITICAL: Validate particle sizes after update to prevent corruption
-	// This catches cases where partial updates occurred before error
-	evenObj, errEvenNew := o.fs.even.NewObject(ctx, o.remote)
-	oddObj, errOddNew := o.fs.odd.NewObject(ctx, o.remote)
+	// Get objects returned from Put for validation
+	putMu.Lock()
+	evenObj := evenObjPut
+	oddObj := oddObjPut
+	putMu.Unlock()
 
-	if errEvenNew != nil || errOddNew != nil {
-		return fmt.Errorf("update validation failed: particles missing after update")
+	if evenObj == nil || oddObj == nil {
+		return fmt.Errorf("Put operations completed but objects are nil: even=%v, odd=%v", evenObj != nil, oddObj != nil)
 	}
 
+	// Verify files actually exist on filesystem by trying to read them
+	// This ensures they're not just in-memory objects but actually persisted
+	evenRC, errEvenOpen := evenObj.Open(ctx)
+	if errEvenOpen != nil {
+		return fmt.Errorf("validation failed: cannot open even particle after Put: %w", errEvenOpen)
+	}
+	evenRC.Close()
+
+	oddRC, errOddOpen := oddObj.Open(ctx)
+	if errOddOpen != nil {
+		return fmt.Errorf("validation failed: cannot open odd particle after Put: %w", errOddOpen)
+	}
+	oddRC.Close()
+
+	// Validate particle sizes
 	if !ValidateParticleSizes(evenObj.Size(), oddObj.Size()) {
 		fs.Errorf(o, "CORRUPTION DETECTED: invalid particle sizes after update: even=%d, odd=%d (expected %d, %d)",
 			evenObj.Size(), oddObj.Size(), len(evenData), len(oddData))
-
-		// Attempt to restore original sizes (best effort)
-		if originalEvenSize > 0 && originalOddSize > 0 {
-			fs.Errorf(o, "Update created corrupted state - original sizes were even=%d, odd=%d",
-				originalEvenSize, originalOddSize)
-		}
-
-		return fmt.Errorf("update failed: invalid particle sizes (even=%d, odd=%d) - FILE MAY BE CORRUPTED",
+		err = fmt.Errorf("update failed: invalid particle sizes (even=%d, odd=%d) - FILE MAY BE CORRUPTED",
 			evenObj.Size(), oddObj.Size())
+		return err
 	}
 
 	fs.Debugf(o, "Update successful, validated particle sizes: even=%d, odd=%d", evenObj.Size(), oddObj.Size())
+
+	// Note: We intentionally do NOT verify the file through level3.NewObject/Open here.
+	// The validation above (opening particles directly and checking sizes) is sufficient
+	// since we use o.remote (not src.Remote()) for particle paths. A final level3
+	// interface check was used during debugging but proved redundant once the root cause
+	// (using src.Remote() instead of o.remote) was fixed. If issues arise in the future,
+	// adding back a level3 interface verification here can help diagnose path/visibility issues.
+
 	return nil
 }
 

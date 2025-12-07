@@ -2,13 +2,44 @@
 
 **Purpose**: Track design questions that need decisions  
 **Process**: Add questions as they arise, document decisions in `DESIGN_DECISIONS.md` when resolved  
-**Last Updated**: November 16, 2025
+**Last Updated**: December 7, 2025
 
 ---
 
 ## 🔴 High Priority
 
-### Q1: Backend Help Command Behavior
+### Q1: Update Rollback Not Working Properly
+**Issue**: The `Update` operation does not properly rollback when rollback is enabled (`rollback=true`).
+
+**Current Status**:
+- ✅ Put rollback: Working correctly
+- ✅ Move rollback: Working correctly  
+- ❌ Update rollback: Not working properly
+
+**Context**:
+- Update operation uses a "move-to-temp" pattern when `rollback=true` (similar to chunker backend)
+- When rollback is enabled, original particles are moved to temporary locations before applying updates
+- If the update fails, particles should be restored from temp locations
+- Current implementation may not be properly restoring particles on failure
+
+**Impact**:
+- Users with `rollback=true` (default) may experience incomplete updates if any particle update fails
+- Can lead to degraded files (missing particles) which violates the all-or-nothing guarantee
+- `README.md` currently documents that rollback works for "Put, Update, Move", but Update rollback needs to be fixed
+
+**Next Steps**:
+1. Investigate why Update rollback isn't working (debugging was started but reverted)
+2. Test Update rollback scenarios similar to `move-fail` tests
+3. Fix the rollback mechanism for Update operations
+4. Update documentation to accurately reflect status
+
+**Related Files**:
+- `backend/level3/level3.go` - `Update()` and `updateWithRollback()` functions
+- `backend/level3/tools/compare_level3_with_single_errors.sh` - May need `update-fail` tests
+
+---
+
+### Q2: Backend Help Command Behavior
 **Question**: How should `rclone backend help level3:` behave?
 
 **Context**:
