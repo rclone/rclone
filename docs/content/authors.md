@@ -1052,3 +1052,4 @@ put them back in again. -->
 - Duncan Smart <duncan.smart@gmail.com>
 - vicerace <vicerace@sohu.com>
 - Cliff Frey <cliff@openai.com>
+- Vladislav Tropnikov <vtr.name@gmail.com>
