@@ -20,6 +20,8 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
+var warnStreamUpload sync.Once
+
 type shadeChunkWriter struct {
 	initToken        string
 	chunkSize        int64
@@ -68,7 +70,18 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 
 	// calculate size of parts
 	chunkSize := f.opt.ChunkSize
-	chunkSize = chunksize.Calculator(src, size, uploadParts, chunkSize)
+
+	// size can be -1 here meaning we don't know the size of the incoming file. We use ChunkSize
+	// buffers here (default 64 MB). With a maximum number of parts (10,000) this will be a file of
+	// 640 GB.
+	if size == -1 {
+		warnStreamUpload.Do(func() {
+			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
+				chunkSize, fs.SizeSuffix(int64(chunkSize)*int64(uploadParts)))
+		})
+	} else {
+		chunkSize = chunksize.Calculator(src, size, uploadParts, chunkSize)
+	}
 
 	token, err := o.fs.refreshJWTToken(ctx)
 	if err != nil {
