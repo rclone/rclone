@@ -2204,6 +2204,13 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
+	// Normalize remote path: remove leading slashes and clean the path.
+	// The remote parameter should be relative to f.Root(), but it might include
+	// path components if extracted from a full path. We normalize it to ensure
+	// consistent behavior regardless of how it was constructed.
+	remote = strings.TrimPrefix(remote, "/")
+	remote = path.Clean(remote)
+
 	// Determine source parity name (needed for cleanup)
 	var srcParityName string
 	parityOddSrc := GetParityFilename(srcObj.remote, true)
