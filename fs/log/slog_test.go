@@ -198,6 +198,17 @@ func TestAddOutputUseJSONLog(t *testing.T) {
 	assert.Equal(t, "2020/01/02 03:04:05 INFO  : world\n", extraText)
 }
 
+// Test JSON log includes PID when logFormatPid is set.
+func TestJSONLogWithPid(t *testing.T) {
+	buf := &bytes.Buffer{}
+	h := NewOutputHandler(buf, nil, logFormatJSON|logFormatPid)
+
+	r := slog.NewRecord(t0, slog.LevelInfo, "hello", 0)
+	require.NoError(t, h.Handle(context.Background(), r))
+	output := buf.String()
+	assert.Contains(t, output, fmt.Sprintf(`"pid":%d`, os.Getpid()))
+}
+
 // Test WithAttrs and WithGroup return new handlers with same settings.
 func TestWithAttrsAndGroup(t *testing.T) {
 	buf := &bytes.Buffer{}

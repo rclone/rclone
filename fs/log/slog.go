@@ -310,6 +310,10 @@ func (h *OutputHandler) jsonLog(ctx context.Context, buf *bytes.Buffer, r slog.R
 	r.AddAttrs(
 		slog.String("source", getCaller(2)),
 	)
+	// Add PID if requested
+	if h.format&logFormatPid != 0 {
+		r.AddAttrs(slog.Int("pid", os.Getpid()))
+	}
 	h.mu.Lock()
 	err = h.jsonHandler.Handle(ctx, r)
 	if err == nil {
