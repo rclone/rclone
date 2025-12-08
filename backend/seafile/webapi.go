@@ -688,7 +688,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath stri
 		"need_idx_progress": {"true"},
 		"replace":           {"1"},
 	}
-	formReader, contentType, _, err := rest.MultipartUpload(ctx, in, parameters, "file", f.opt.Enc.FromStandardName(filename))
+	formReader, contentType, _, err := rest.MultipartUpload(ctx, in, parameters, "file", f.opt.Enc.FromStandardName(filename), "application/octet-stream")
 	if err != nil {
 		return nil, fmt.Errorf("failed to make multipart upload: %w", err)
 	}

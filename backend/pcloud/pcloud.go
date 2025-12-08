@@ -1459,7 +1459,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// opts.Body=0), so upload it as a multipart form POST with
 	// Content-Length set.
 	if size == 0 {
-		formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, opts.Parameters, "content", leaf)
+		formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, opts.Parameters, "content", leaf, opts.ContentType)
 		if err != nil {
 			return fmt.Errorf("failed to make multipart upload for 0 length file: %w", err)
 		}
