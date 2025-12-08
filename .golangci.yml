@@ -17,6 +17,14 @@ linters:
     #- prealloc # TODO
     - revive
     - unconvert
+  exclusions:
+    rules:
+      - linters:
+          - revive
+        text: 'var-naming: avoid meaningless package names'
+      - linters:
+          - revive
+        text: 'var-naming: avoid package names that conflict with Go standard library package names'
   # Configure checks. Mostly using defaults but with some commented exceptions.
   settings:
     govet:
@@ -135,6 +143,7 @@ linters:
           disabled: false
         - name: var-naming
           disabled: false
+
 
 formatters:
   enable:
