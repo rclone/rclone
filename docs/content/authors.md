@@ -1054,3 +1054,4 @@ put them back in again. -->
 - Cliff Frey <cliff@openai.com>
 - Vladislav Tropnikov <vtr.name@gmail.com>
 - Leo <i@hardrain980.com>
+- Johannes Rothe <mail@johannes-rothe.de>
