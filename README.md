@@ -109,6 +109,7 @@ directories to and from different cloud storage providers.
 - Selectel Object Storage [:page_facing_up:](https://rclone.org/s3/#selectel)
 - Servercore Object Storage [:page_facing_up:](https://rclone.org/s3/#servercore)
 - SFTP [:page_facing_up:](https://rclone.org/sftp/)
+- Shade [:page_facing_up:](https://rclone.org/shade/)
 - SMB / CIFS [:page_facing_up:](https://rclone.org/smb/)
 - Spectra Logic [:page_facing_up:](https://rclone.org/s3/#spectralogic)
 - StackPath [:page_facing_up:](https://rclone.org/s3/#stackpath)
