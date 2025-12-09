@@ -1055,3 +1055,4 @@ put them back in again. -->
 - Vladislav Tropnikov <vtr.name@gmail.com>
 - Leo <i@hardrain980.com>
 - Johannes Rothe <mail@johannes-rothe.de>
+- Tingsong Xu <tingsong.xu@rightcapital.com>
