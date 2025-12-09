@@ -372,7 +372,7 @@ func (p *pipedInput) Read(b []byte) (int, error) {
 	return p.Reader.Read(b)
 }
 
-func (_ *pipedInput) Seek(_ int64, _ int) (int64, error) {
+func (*pipedInput) Seek(int64, int) (int64, error) {
 	return 0, fmt.Errorf("Seek not supported")
 }
 
