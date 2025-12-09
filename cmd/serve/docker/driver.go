@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -78,11 +77,6 @@ func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOp
 		drv.exitOnce.Do(drv.Exit)
 	})
 
-	// notify systemd
-	if _, err := daemon.SdNotify(false, daemon.SdNotifyReady); err != nil {
-		return nil, fmt.Errorf("failed to notify systemd: %w", err)
-	}
-
 	return drv, nil
 }
 
@@ -92,10 +86,6 @@ func (drv *Driver) Exit() {
 	drv.mu.Lock()
 	defer drv.mu.Unlock()
 
-	reportErr(func() error {
-		_, err := daemon.SdNotify(false, daemon.SdNotifyStopping)
-		return err
-	}())
 	drv.monChan <- true // ask monitor to exit
 	for _, vol := range drv.volumes {
 		reportErr(vol.unmountAll())
