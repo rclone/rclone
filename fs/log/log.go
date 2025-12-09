@@ -209,7 +209,7 @@ func InitLogging() {
 	// Log file output
 	if Opt.File != "" {
 		var w io.Writer
-		if Opt.MaxSize == 0 {
+		if Opt.MaxSize < 0 {
 			// No log rotation - just open the file as normal
 			// We'll capture tracebacks like this too.
 			f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
