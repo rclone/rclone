@@ -7,13 +7,11 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/rclone/rclone/fs"
 )
 
 // httpReader implements intelligent HTTP reading with ETag support and range requests
-// Based on the working Stash implementation with proper streaming support
 type httpReader struct {
 	ctx         context.Context
 	url         string
@@ -28,42 +26,24 @@ type httpReader struct {
 	contentMD5  string
 	retryCount  int
 	maxRetries  int
-	acceptRange bool
-	initialized bool
-}
-
-// createStreamingHTTPClient creates an HTTP client optimized for streaming large files
-func createStreamingHTTPClient() *http.Client {
-	return &http.Client{
-		// No timeout for streaming large files - let the context handle cancellation
-		Timeout: 0,
-		Transport: &http.Transport{
-			// Short timeout for initial response headers
-			ResponseHeaderTimeout: 10 * time.Second,
-			// Disable compression to avoid buffering entire file
-			DisableCompression: true,
-			// Connection pooling settings
-			MaxIdleConns:        100,
-			MaxIdleConnsPerHost: 10,
-			IdleConnTimeout:     90 * time.Second,
-		},
-	}
+	acceptRange bool // Server supports range requests
 }
 
 // newHTTPReader creates a new HTTP reader with ETag support
-// Does NOT make an initial request - opens stream on first read
 func newHTTPReader(ctx context.Context, url string, client *http.Client, size int64, options []fs.OpenOption) (*httpReader, error) {
-	// Use streaming-optimized client instead of default
-	streamClient := createStreamingHTTPClient()
-
 	r := &httpReader{
-		ctx:         ctx,
-		url:         url,
-		client:      streamClient,
-		size:        size,
-		options:     options,
-		maxRetries:  3,
-		initialized: false,
+		ctx:        ctx,
+		url:        url,
+		client:     client,
+		size:       size,
+		options:    options,
+		maxRetries: 3, // Retry up to 3 times on network errors
+	}
+
+	// Make initial request to get ETag and validate
+	err := r.openStream(0)
+	if err != nil {
+		return nil, err
 	}
 
 	return r, nil
@@ -82,14 +62,10 @@ func (r *httpReader) openStream(offset int64) error {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Set User-Agent - some servers require this
-	req.Header.Set("User-Agent", "rclone/mediavfs")
-
 	// Add range header if we have an offset or if specified in options
-	rangeStart, rangeEnd := offset, int64(-1)
-	needsRange := offset > 0 || hasRangeOption(r.options)
+	if offset > 0 || hasRangeOption(r.options) {
+		rangeStart, rangeEnd := offset, int64(-1)
 
-	if needsRange {
 		// Check if a specific range was requested in options
 		for _, opt := range r.options {
 			if rangeOpt, ok := opt.(*fs.RangeOption); ok {
@@ -105,21 +81,18 @@ func (r *httpReader) openStream(offset int64) error {
 			req.Header.Set("Range", fmt.Sprintf("bytes=%d-", rangeStart))
 		}
 
-		fs.Debugf(nil, "mediavfs: requesting range bytes=%d-%v", rangeStart, rangeEnd)
-
-		// CRITICAL: Use If-Range with ETag if we have one
-		// This ensures we get partial content only if file hasn't changed
+		// Use If-Range with ETag if we have one to ensure we get the same file
 		r.etagMu.Lock()
 		if r.etag != "" {
 			req.Header.Set("If-Range", r.etag)
-			fs.Debugf(nil, "mediavfs: setting If-Range with ETag: %s", r.etag)
 		}
 		r.etagMu.Unlock()
 	}
 
 	// Add any custom headers from options
 	for k, v := range fs.OpenOptionHeaders(r.options) {
-		if k != "Range" && k != "If-Range" && k != "User-Agent" {
+		// Don't override Range header we set above
+		if k != "Range" && k != "If-Range" {
 			req.Header.Set(k, v)
 		}
 	}
@@ -130,30 +103,21 @@ func (r *httpReader) openStream(offset int64) error {
 		return fmt.Errorf("HTTP request failed: %w", err)
 	}
 
-	// Accept both 200 (full content) and 206 (partial content)
+	// Check status code
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusPartialContent {
 		_ = res.Body.Close()
 		return fmt.Errorf("HTTP error: %s (status %d)", res.Status, res.StatusCode)
-	}
-
-	// If we requested range but got 200, server doesn't support ranges properly
-	if needsRange && res.StatusCode == http.StatusOK {
-		fs.Debugf(nil, "mediavfs: range request returned 200 instead of 206 - server may not support ranges")
-		r.acceptRange = false
-	} else if res.StatusCode == http.StatusPartialContent {
-		r.acceptRange = true
 	}
 
 	// Store or validate ETag
 	newETag := res.Header.Get("ETag")
 	if newETag != "" {
 		r.etagMu.Lock()
-		if !r.initialized {
+		if r.etag == "" {
 			// First request, store the ETag
 			r.etag = newETag
 			fs.Debugf(nil, "mediavfs: stored ETag: %s", r.etag)
-			r.initialized = true
-		} else if r.etag != "" && r.etag != newETag {
+		} else if r.etag != newETag {
 			// ETag changed - file was modified on server
 			r.etagMu.Unlock()
 			_ = res.Body.Close()
@@ -162,27 +126,39 @@ func (r *httpReader) openStream(offset int64) error {
 		r.etagMu.Unlock()
 	}
 
-	// Check for Accept-Ranges header
+	// Store Content-MD5 if present
+	if md5 := res.Header.Get("Content-MD5"); md5 != "" {
+		r.contentMD5 = md5
+	}
+
+	// Check if server supports range requests
 	acceptRanges := res.Header.Get("Accept-Ranges")
 	if acceptRanges != "" && acceptRanges != "none" {
 		r.acceptRange = true
 		fs.Debugf(nil, "mediavfs: server supports range requests: %s", acceptRanges)
 	}
 
-	// Store Content-MD5 if present
-	if md5 := res.Header.Get("Content-MD5"); md5 != "" {
-		r.contentMD5 = md5
-	}
-
-	// Log Content-Range for debugging
-	if contentRange := res.Header.Get("Content-Range"); contentRange != "" {
-		fs.Debugf(nil, "mediavfs: partial content range: %s", contentRange)
+	// Validate range response
+	if offset > 0 || hasRangeOption(r.options) {
+		if res.StatusCode == http.StatusPartialContent {
+			r.acceptRange = true // Definitely supports ranges
+			// Parse Content-Range header to validate
+			contentRange := res.Header.Get("Content-Range")
+			if contentRange != "" {
+				fs.Debugf(nil, "mediavfs: partial content range: %s", contentRange)
+			}
+		} else if res.StatusCode == http.StatusOK && r.etag != "" {
+			// Server doesn't support ranges but honored If-Range with full content
+			// We'll need to skip to the offset ourselves
+			r.acceptRange = false
+			fs.Debugf(nil, "mediavfs: server doesn't support ranges, will skip to offset")
+		}
 	}
 
 	r.res = res
 	r.offset = offset
 
-	// If we got full content (200) but need an offset, discard bytes
+	// If we got full content but need an offset, discard bytes until we reach it
 	if res.StatusCode == http.StatusOK && offset > 0 {
 		fs.Debugf(nil, "mediavfs: discarding %d bytes to reach offset", offset)
 		_, err := io.CopyN(io.Discard, res.Body, offset)
@@ -197,11 +173,8 @@ func (r *httpReader) openStream(offset int64) error {
 
 // Read reads data from the HTTP stream
 func (r *httpReader) Read(p []byte) (n int, err error) {
-	// Open stream on first read if not already open
 	if r.res == nil {
-		if err := r.openStream(r.offset); err != nil {
-			return 0, err
-		}
+		return 0, io.EOF
 	}
 
 	n, err = r.res.Body.Read(p)
@@ -215,7 +188,7 @@ func (r *httpReader) Read(p []byte) (n int, err error) {
 			return n, err
 		}
 
-		fs.Debugf(nil, "mediavfs: read error at offset %d (attempt %d/%d): %v",
+		fs.Debugf(nil, "mediavfs: read error at offset %d (attempt %d/%d), attempting to resume: %v",
 			r.offset, r.retryCount+1, r.maxRetries, err)
 
 		r.retryCount++
@@ -224,7 +197,7 @@ func (r *httpReader) Read(p []byte) (n int, err error) {
 		if reopenErr := r.openStream(r.offset); reopenErr == nil {
 			// Successfully reopened, reset retry count and try reading again
 			fs.Debugf(nil, "mediavfs: successfully resumed at offset %d", r.offset)
-			r.retryCount = 0
+			r.retryCount = 0 // Reset on successful recovery
 			return r.Read(p)
 		} else {
 			fs.Debugf(nil, "mediavfs: failed to resume: %v", reopenErr)
@@ -329,15 +302,20 @@ func (r *seekableHTTPReader) Seek(offset int64, whence int) (int64, error) {
 
 // RangeSeek implements fs.RangeSeeker
 func (r *seekableHTTPReader) RangeSeek(offset int64, whence int, length int64) (int64, error) {
+	// First seek to the offset
 	newOffset, err := r.Seek(offset, whence)
 	if err != nil {
 		return 0, err
 	}
-	_ = length // Length hint, not used currently
+
+	// If length is specified, we could optimize by adding it to the Range header
+	// For now, the openStream function will handle this via fs.RangeOption
+	_ = length
+
 	return newOffset, nil
 }
 
-// optimizedHTTPReader is a simpler reader for full-file streaming
+// optimizedHTTPReader is a simpler reader for cases where we don't need seeking
 type optimizedHTTPReader struct {
 	ctx     context.Context
 	url     string
@@ -349,16 +327,10 @@ type optimizedHTTPReader struct {
 
 // newOptimizedHTTPReader creates a simple HTTP reader for streaming
 func newOptimizedHTTPReader(ctx context.Context, url string, client *http.Client, options []fs.OpenOption) (io.ReadCloser, error) {
-	// Use streaming-optimized client
-	streamClient := createStreamingHTTPClient()
-
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-
-	// Set User-Agent
-	req.Header.Set("User-Agent", "rclone/mediavfs")
 
 	// Add headers from options
 	for k, v := range fs.OpenOptionHeaders(options) {
@@ -366,12 +338,12 @@ func newOptimizedHTTPReader(ctx context.Context, url string, client *http.Client
 	}
 
 	// Execute request
-	res, err := streamClient.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
 
-	// Accept both 200 and 206
+	// Check status code
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusPartialContent {
 		_ = res.Body.Close()
 		return nil, fmt.Errorf("HTTP error: %s (status %d)", res.Status, res.StatusCode)
@@ -380,7 +352,7 @@ func newOptimizedHTTPReader(ctx context.Context, url string, client *http.Client
 	r := &optimizedHTTPReader{
 		ctx:     ctx,
 		url:     url,
-		client:  streamClient,
+		client:  client,
 		options: options,
 		res:     res,
 		etag:    res.Header.Get("ETag"),

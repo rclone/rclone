@@ -27,23 +27,12 @@ const (
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
 	decayConstant = 2
-	defaultPageSize = 1000 // Default number of files to load per directory listing
 )
 
 var (
 	errNotWritable = errors.New("mediavfs is read-only except for move/rename operations")
 	errCrossUser   = errors.New("cannot move files between different users")
 )
-
-// convertUnixTimestamp converts a Unix timestamp (seconds or milliseconds) to time.Time
-func convertUnixTimestamp(timestamp int64) time.Time {
-	// If timestamp is > 10^10, it's likely in milliseconds
-	if timestamp > 10000000000 {
-		return time.Unix(timestamp/1000, (timestamp%1000)*1000000)
-	}
-	// Otherwise assume seconds
-	return time.Unix(timestamp, 0)
-}
 
 func init() {
 	fsi := &fs.RegInfo{
@@ -157,12 +146,43 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(time.Hour)
 
+	// Create custom HTTP client with redirect handling that preserves headers
+	baseClient := fshttp.NewClient(ctx)
+	customClient := &http.Client{
+		Transport: baseClient.Transport,
+		Timeout:   0, // No timeout for streaming large files
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after 10 redirects")
+			}
+			if len(via) > 0 {
+				originalReq := via[0]
+				// Preserve Range header (critical for resume/seeking)
+				if rangeHeader := originalReq.Header.Get("Range"); rangeHeader != "" {
+					req.Header.Set("Range", rangeHeader)
+					fs.Debugf(nil, "mediavfs: preserving Range header on redirect: %s", rangeHeader)
+				}
+				// Preserve If-Range header (critical for ETag validation)
+				if ifRangeHeader := originalReq.Header.Get("If-Range"); ifRangeHeader != "" {
+					req.Header.Set("If-Range", ifRangeHeader)
+				}
+				// Preserve User-Agent
+				if userAgent := originalReq.Header.Get("User-Agent"); userAgent != "" {
+					req.Header.Set("User-Agent", userAgent)
+				}
+				fs.Debugf(nil, "mediavfs: following redirect from %s to %s",
+					via[len(via)-1].URL.Redacted(), req.URL.Redacted())
+			}
+			return nil
+		},
+	}
+
 	f := &Fs{
 		name:       name,
 		root:       root,
 		opt:        *opt,
 		db:         db,
-		httpClient: fshttp.NewClient(ctx),
+		httpClient: customClient,
 	}
 
 	f.features = (&fs.Features{
@@ -247,50 +267,21 @@ func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
 
 // listUserFiles lists files and directories for a specific user and path
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
-	// Normalize dirPath for comparison
-	dirPath = strings.Trim(dirPath, "/")
+	// Query to get all files for the user
+	query := fmt.Sprintf(`
+		SELECT
+			media_key,
+			file_name,
+			COALESCE(name, file_name) as display_name,
+			COALESCE(path, '') as display_path,
+			size_bytes,
+			utc_timestamp
+		FROM %s
+		WHERE user_name = $1
+		ORDER BY display_path, display_name
+	`, f.opt.TableName)
 
-	// Query to get files in the specific directory with pagination
-	// Use SQL filtering to avoid loading all files
-	var query string
-	var args []interface{}
-
-	if dirPath == "" {
-		// Root directory - get files with empty path and subdirectories
-		query = fmt.Sprintf(`
-			SELECT
-				media_key,
-				file_name,
-				COALESCE(name, file_name) as display_name,
-				COALESCE(path, '') as display_path,
-				size_bytes,
-				utc_timestamp
-			FROM %s
-			WHERE user_name = $1
-			ORDER BY display_path, display_name
-			LIMIT $2
-		`, f.opt.TableName)
-		args = []interface{}{userName, defaultPageSize}
-	} else {
-		// Specific directory - get files where path matches or starts with dirPath
-		query = fmt.Sprintf(`
-			SELECT
-				media_key,
-				file_name,
-				COALESCE(name, file_name) as display_name,
-				COALESCE(path, '') as display_path,
-				size_bytes,
-				utc_timestamp
-			FROM %s
-			WHERE user_name = $1
-				AND (COALESCE(path, '') = $2 OR COALESCE(path, '') LIKE $3)
-			ORDER BY display_path, display_name
-			LIMIT $4
-		`, f.opt.TableName)
-		args = []interface{}{userName, dirPath, dirPath + "/%", defaultPageSize}
-	}
-
-	rows, err := f.db.QueryContext(ctx, query, args...)
+	rows, err := f.db.QueryContext(ctx, query, userName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query files: %w", err)
 	}
@@ -298,6 +289,9 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 	// Track directories we've already added
 	dirsSeen := make(map[string]bool)
+
+	// Normalize dirPath for comparison
+	dirPath = strings.Trim(dirPath, "/")
 	var dirPrefix string
 	if dirPath != "" {
 		dirPrefix = dirPath + "/"
@@ -305,20 +299,17 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 	for rows.Next() {
 		var (
-			mediaKey      string
-			fileName      string
-			displayName   string
-			displayPath   string
-			sizeBytes     int64
-			timestampUnix int64
+			mediaKey    string
+			fileName    string
+			displayName string
+			displayPath string
+			sizeBytes   int64
+			timestamp   time.Time
 		)
 
-		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestampUnix); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestamp); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
-
-		// Convert Unix timestamp (milliseconds) to time.Time
-		timestamp := convertUnixTimestamp(timestampUnix)
 
 		// Construct the full path
 		var fullPath string
@@ -422,20 +413,17 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	for rows.Next() {
 		var (
-			mediaKey      string
-			fileName      string
-			displayName   string
-			displayPath   string
-			sizeBytes     int64
-			timestampUnix int64
+			mediaKey    string
+			fileName    string
+			displayName string
+			displayPath string
+			sizeBytes   int64
+			timestamp   time.Time
 		)
 
-		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestampUnix); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestamp); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
-
-		// Convert Unix timestamp (milliseconds) to time.Time
-		timestamp := convertUnixTimestamp(timestampUnix)
 
 		// Construct the full path
 		var fullPath string
@@ -583,33 +571,38 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
-// Open opens the file for reading with ETag support and intelligent range handling
+// Open opens the file for reading
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	// Build the download URL
 	url := fmt.Sprintf("%s/%s", o.fs.opt.DownloadURL, o.mediaKey)
 
-	// Check if we need seeking capability
-	needsSeek := false
-	for _, opt := range options {
-		if _, ok := opt.(*fs.SeekOption); ok {
-			needsSeek = true
-			break
-		}
+	// Create the HTTP request
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Use seekable reader if seeking is needed, otherwise use optimized streaming reader
-	if needsSeek {
-		return newSeekableHTTPReader(ctx, url, o.fs.httpClient, o.size, options)
+	// Set User-Agent header
+	req.Header.Set("User-Agent", "AndroidDownloadManager/13")
+
+	// Add range headers if specified in options
+	for k, v := range fs.OpenOptionHeaders(options) {
+		req.Header.Add(k, v)
 	}
 
-	// For simple streaming without seeking, use the optimized reader
-	// If there's a range option, the intelligent reader will handle it
-	if hasRangeOption(options) {
-		return newHTTPReader(ctx, url, o.fs.httpClient, o.size, options)
+	// Execute the request
+	res, err := o.fs.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 
-	// For simple full-file reads, use the optimized reader
-	return newOptimizedHTTPReader(ctx, url, o.fs.httpClient, options)
+	// Check status code
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		_ = res.Body.Close()
+		return nil, fmt.Errorf("HTTP error: %s", res.Status)
+	}
+
+	return res.Body, nil
 }
 
 // Update is not supported
