@@ -1057,3 +1057,4 @@ put them back in again. -->
 - Johannes Rothe <mail@johannes-rothe.de>
 - Tingsong Xu <tingsong.xu@rightcapital.com>
 - Jonas Tingeborn <134889+jojje@users.noreply.github.com>
+- jhasse-shade <jacob@shade.inc>
