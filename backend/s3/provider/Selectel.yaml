@@ -2,7 +2,17 @@ name: Selectel
 description: Selectel Object Storage
 region:
   ru-1: St. Petersburg
+  ru-3: St. Petersburg
+  ru-7: Moscow
+  gis-1: Moscow
+  kz-1: Kazakhstan
+  uz-2: Uzbekistan
 endpoint:
-  s3.ru-1.storage.selcloud.ru: Saint Petersburg
+  s3.ru-1.storage.selcloud.ru: St. Petersburg
+  s3.ru-3.storage.selcloud.ru: St. Petersburg
+  s3.ru-7.storage.selcloud.ru: Moscow
+  s3.gis-1.storage.selcloud.ru: Moscow
+  s3.kz-1.storage.selcloud.ru: Kazakhstan
+  s3.uz-2.storage.selcloud.ru: Uzbekistan
 quirks:
   list_url_encode: false
