@@ -157,16 +157,18 @@ type Options struct {
 
 // Fs represents a connection to the media database
 type Fs struct {
-	name        string
-	root        string
-	opt         Options
-	features    *fs.Features
-	db          *sql.DB
-	httpClient  *http.Client
-	urlCache    *urlCache
-	fileCache   *fileCache
-	virtualDirs map[string]bool // Track virtual directories created in memory
-	vdirMu      sync.RWMutex    // Mutex for virtualDirs
+	name          string
+	root          string
+	opt           Options
+	features      *fs.Features
+	db            *sql.DB
+	httpClient    *http.Client
+	urlCache      *urlCache
+	fileCache     *fileCache
+	virtualDirs   map[string]bool // Track virtual directories created in memory
+	vdirMu        sync.RWMutex    // Mutex for virtualDirs
+	pollChanges   chan string     // Channel for change notifications
+	pollCloseOnce sync.Once       // Ensure we only close once
 }
 
 // Object represents a media file in the database
@@ -291,11 +293,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		urlCache:    newURLCache(),
 		fileCache:   newFileCache(),
 		virtualDirs: make(map[string]bool),
+		pollChanges: make(chan string, 1), // Buffered channel for change notifications
 	}
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 		CaseInsensitive:         false,
+		ChangeNotify:            f.ChangeNotify,
+		UnWrap:                  f.UnWrap,
 	}).Fill(ctx, f)
 
 	// Start polling goroutine if poll_interval is set
@@ -429,6 +434,15 @@ func (f *Fs) pollDatabaseForChanges(ctx context.Context) {
 
 		if newCount != oldCount {
 			fs.Debugf(nil, "mediavfs: poll updated user %s: %d -> %d files", userName, oldCount, newCount)
+
+			// Send change notification for this user's directory
+			select {
+			case f.pollChanges <- userName:
+				fs.Debugf(nil, "mediavfs: sent change notification for user %s", userName)
+			default:
+				// Channel is full, skip notification (non-blocking)
+				fs.Debugf(nil, "mediavfs: skipped change notification for user %s (channel full)", userName)
+			}
 		}
 	}
 }
@@ -532,6 +546,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 	// Track directories we've already added
 	dirsSeen := make(map[string]bool)
+	var dirsSeenMu sync.Mutex
 
 	// Normalize dirPath for comparison
 	dirPath = strings.Trim(dirPath, "/")
@@ -540,95 +555,147 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		dirPrefix = dirPath + "/"
 	}
 
-	// Process cached files
-	for _, cf := range cachedFiles {
-		timestamp := convertUnixTimestamp(cf.timestampUnix)
+	// Process cached files concurrently for better performance with large file counts
+	const numWorkers = 8
+	const chunkSize = 1000
 
-		// Determine the display name and path
-		var displayName, displayPath string
-
-		if cf.customName != "" {
-			// Use custom name if set
-			displayName = cf.customName
-		} else {
-			// Extract name from fileName (handles paths in file_name)
-			_, displayName = extractPathAndName(cf.fileName)
+	// Split files into chunks
+	var chunks [][]cachedFile
+	for i := 0; i < len(cachedFiles); i += chunkSize {
+		end := i + chunkSize
+		if end > len(cachedFiles) {
+			end = len(cachedFiles)
 		}
-
-		if cf.customPath != "" {
-			// Use custom path if set
-			displayPath = strings.Trim(cf.customPath, "/")
-		} else {
-			// Extract path from fileName if it contains "/"
-			extractedPath, _ := extractPathAndName(cf.fileName)
-			displayPath = strings.Trim(extractedPath, "/")
-		}
-
-		// Construct the full path
-		var fullPath string
-		if displayPath != "" {
-			fullPath = displayPath + "/" + displayName
-		} else {
-			fullPath = displayName
-		}
-
-		// Check if this file is in the current directory or a subdirectory
-		if dirPath == "" {
-			// We're at the root of the user's directory
-			// Check if file is directly in root or in a subdirectory
-			if strings.Contains(fullPath, "/") {
-				// This is in a subdirectory
-				subDir := strings.SplitN(fullPath, "/", 2)[0]
-				if !dirsSeen[subDir] {
-					entries = append(entries, fs.NewDir(userName+"/"+subDir, time.Time{}))
-					dirsSeen[subDir] = true
-				}
-			} else {
-				// This is a file directly in the root
-				remote := userName + "/" + fullPath
-				entries = append(entries, &Object{
-					fs:          f,
-					remote:      remote,
-					mediaKey:    cf.mediaKey,
-					size:        cf.sizeBytes,
-					modTime:     timestamp,
-					userName:    userName,
-					displayName: displayName,
-					displayPath: displayPath,
-				})
-			}
-		} else {
-			// We're in a specific subdirectory
-			// Check if file is in this directory or a deeper subdirectory
-			if !strings.HasPrefix(fullPath, dirPrefix) {
-				continue // Not in this directory
-			}
-
-			remainder := strings.TrimPrefix(fullPath, dirPrefix)
-			if strings.Contains(remainder, "/") {
-				// This is in a subdirectory
-				subDir := strings.SplitN(remainder, "/", 2)[0]
-				fullSubDir := dirPath + "/" + subDir
-				if !dirsSeen[fullSubDir] {
-					entries = append(entries, fs.NewDir(userName+"/"+fullSubDir, time.Time{}))
-					dirsSeen[fullSubDir] = true
-				}
-			} else {
-				// This is a file directly in this directory
-				remote := userName + "/" + fullPath
-				entries = append(entries, &Object{
-					fs:          f,
-					remote:      remote,
-					mediaKey:    cf.mediaKey,
-					size:        cf.sizeBytes,
-					modTime:     timestamp,
-					userName:    userName,
-					displayName: displayName,
-					displayPath: displayPath,
-				})
-			}
-		}
+		chunks = append(chunks, cachedFiles[i:end])
 	}
+
+	// Process chunks concurrently
+	var wg sync.WaitGroup
+	var entriesMu sync.Mutex
+	chunkChan := make(chan []cachedFile, len(chunks))
+
+	// Send chunks to channel
+	for _, chunk := range chunks {
+		chunkChan <- chunk
+	}
+	close(chunkChan)
+
+	// Start workers
+	workers := numWorkers
+	if workers > len(chunks) {
+		workers = len(chunks)
+	}
+	if workers == 0 {
+		workers = 1
+	}
+
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			for chunk := range chunkChan {
+				localEntries := make([]fs.DirEntry, 0, len(chunk))
+
+				for _, cf := range chunk {
+					timestamp := convertUnixTimestamp(cf.timestampUnix)
+
+					// Determine the display name and path
+					var displayName, displayPath string
+
+					if cf.customName != "" {
+						displayName = cf.customName
+					} else {
+						_, displayName = extractPathAndName(cf.fileName)
+					}
+
+					if cf.customPath != "" {
+						displayPath = strings.Trim(cf.customPath, "/")
+					} else {
+						extractedPath, _ := extractPathAndName(cf.fileName)
+						displayPath = strings.Trim(extractedPath, "/")
+					}
+
+					// Construct the full path
+					var fullPath string
+					if displayPath != "" {
+						fullPath = displayPath + "/" + displayName
+					} else {
+						fullPath = displayName
+					}
+
+					// Check if this file is in the current directory or a subdirectory
+					if dirPath == "" {
+						// We're at the root of the user's directory
+						if strings.Contains(fullPath, "/") {
+							// This is in a subdirectory
+							subDir := strings.SplitN(fullPath, "/", 2)[0]
+							dirsSeenMu.Lock()
+							if !dirsSeen[subDir] {
+								localEntries = append(localEntries, fs.NewDir(userName+"/"+subDir, time.Time{}))
+								dirsSeen[subDir] = true
+							}
+							dirsSeenMu.Unlock()
+						} else {
+							// This is a file directly in the root
+							remote := userName + "/" + fullPath
+							localEntries = append(localEntries, &Object{
+								fs:          f,
+								remote:      remote,
+								mediaKey:    cf.mediaKey,
+								size:        cf.sizeBytes,
+								modTime:     timestamp,
+								userName:    userName,
+								displayName: displayName,
+								displayPath: displayPath,
+							})
+						}
+					} else {
+						// We're in a specific subdirectory
+						if !strings.HasPrefix(fullPath, dirPrefix) {
+							continue // Not in this directory
+						}
+
+						remainder := strings.TrimPrefix(fullPath, dirPrefix)
+						if strings.Contains(remainder, "/") {
+							// This is in a subdirectory
+							subDir := strings.SplitN(remainder, "/", 2)[0]
+							fullSubDir := dirPath + "/" + subDir
+							dirsSeenMu.Lock()
+							if !dirsSeen[fullSubDir] {
+								localEntries = append(localEntries, fs.NewDir(userName+"/"+fullSubDir, time.Time{}))
+								dirsSeen[fullSubDir] = true
+							}
+							dirsSeenMu.Unlock()
+						} else {
+							// This is a file directly in this directory
+							remote := userName + "/" + fullPath
+							localEntries = append(localEntries, &Object{
+								fs:          f,
+								remote:      remote,
+								mediaKey:    cf.mediaKey,
+								size:        cf.sizeBytes,
+								modTime:     timestamp,
+								userName:    userName,
+								displayName: displayName,
+								displayPath: displayPath,
+							})
+						}
+					}
+				}
+
+				// Add local entries to shared entries slice
+				entriesMu.Lock()
+				entries = append(entries, localEntries...)
+				entriesMu.Unlock()
+			}
+		}()
+	}
+
+	// Wait for all workers to complete
+	wg.Wait()
+
+	fs.Debugf(nil, "mediavfs: processed %d files concurrently (%d workers, %d chunks)", len(cachedFiles), workers, len(chunks))
 
 	// Add virtual directories created via Mkdir
 	f.vdirMu.RLock()
@@ -872,11 +939,53 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 		close(f.fileCache.stopChan)
 	}
 
+	// Close pollChanges channel safely
+	f.pollCloseOnce.Do(func() {
+		if f.pollChanges != nil {
+			close(f.pollChanges)
+		}
+	})
+
 	// Close database connection
 	if f.db != nil {
 		return f.db.Close()
 	}
 	return nil
+}
+
+// ChangeNotify calls the passed function with a path that has had changes.
+// If the implementation uses polling, it should adhere to the given interval.
+func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
+	fs.Debugf(nil, "mediavfs: ChangeNotify started")
+
+	for {
+		select {
+		case <-ctx.Done():
+			fs.Debugf(nil, "mediavfs: ChangeNotify stopping due to context cancellation")
+			return
+		case path, ok := <-f.pollChanges:
+			if !ok {
+				fs.Debugf(nil, "mediavfs: ChangeNotify stopping due to channel closure")
+				return
+			}
+			// Notify that this path has changed
+			fs.Debugf(nil, "mediavfs: notifying change for path: %s", path)
+			notifyFunc(path, fs.EntryDirectory)
+		case interval, ok := <-pollIntervalChan:
+			if !ok {
+				fs.Debugf(nil, "mediavfs: ChangeNotify stopping due to pollIntervalChan closure")
+				return
+			}
+			if interval > 0 {
+				fs.Debugf(nil, "mediavfs: poll interval updated to %v", interval)
+			}
+		}
+	}
+}
+
+// UnWrap returns the Fs that this Fs is wrapping
+func (f *Fs) UnWrap() fs.Fs {
+	return f
 }
 
 // Object methods
@@ -1027,7 +1136,8 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = (*Fs)(nil)
-	_ fs.Object = (*Object)(nil)
-	_ fs.Mover  = (*Fs)(nil)
+	_ fs.Fs           = (*Fs)(nil)
+	_ fs.Object       = (*Object)(nil)
+	_ fs.Mover        = (*Fs)(nil)
+	_ fs.ChangeNotify = (*Fs)(nil)
 )
