@@ -127,12 +127,35 @@ When you read a file:
 4. The local server redirects to the actual file location (e.g., on a CDN)
 5. The file content is streamed back through rclone
 
-### Range Requests
+### Range Requests and ETag Support
 
-The backend fully supports HTTP range requests, enabling:
-- Partial file reads
-- Resume interrupted downloads
-- Efficient seeking in large files
+The backend features an intelligent HTTP client with advanced capabilities:
+
+**ETag Support:**
+- Automatically caches ETags from initial requests
+- Uses `If-Range` headers with ETags to ensure file consistency
+- Detects file changes on the server via ETag mismatches
+- Prevents corrupted downloads when files are modified mid-stream
+
+**Range Request Handling:**
+- Full support for HTTP range requests (206 Partial Content)
+- Automatic detection of server range support via `Accept-Ranges` header
+- Falls back to full downloads with byte skipping if ranges aren't supported
+- Enables efficient seeking in large files without downloading the entire file
+
+**Automatic Resume:**
+- Automatically retries on network errors (up to 3 attempts)
+- Resumes from the exact byte position on connection failures
+- Uses range requests to continue downloads seamlessly
+- Resets retry counter on successful reads for long-running transfers
+
+**Performance Optimizations:**
+- Different reader implementations based on access patterns:
+  - `seekableHTTPReader`: For random access and seeking (e.g., video playback)
+  - `httpReader`: For streaming with range support (e.g., resume downloads)
+  - `optimizedHTTPReader`: For simple full-file reads (e.g., copy operations)
+- Minimal overhead for common operations
+- Efficient connection reuse via HTTP client pooling
 
 ### Move/Rename Operations
 
@@ -158,10 +181,58 @@ This backend is ideal for:
 - Enabling standard file operations on database-managed content
 - Integrating with applications that store file metadata in PostgreSQL
 
+## Technical Details
+
+### HTTP Client Implementation
+
+The backend uses a sophisticated HTTP client implementation that adapts to different use cases:
+
+1. **ETag Tracking**: On the first request, the client stores the ETag from the server. On subsequent range requests, it includes `If-Range: <etag>` to ensure the file hasn't changed. If the ETag doesn't match, the server returns 200 OK with the full new file instead of 206 Partial Content.
+
+2. **Automatic Recovery**: If a network error occurs during reading, the client automatically attempts to resume from the last successful position using a range request. It retries up to 3 times before giving up.
+
+3. **Smart Reader Selection**: The `Open()` method analyzes the requested options and selects the optimal reader:
+   - If seeking is needed (`fs.SeekOption`), uses `seekableHTTPReader` with full seek support
+   - If range reading is needed (`fs.RangeOption`), uses `httpReader` with ETag tracking
+   - Otherwise, uses `optimizedHTTPReader` for simple streaming
+
+4. **Connection Pooling**: Uses rclone's standard HTTP client with connection pooling for efficient reuse of TCP connections.
+
+### Example HTTP Flow
+
+```
+Initial Request:
+  GET /gphotos/download/abc123 HTTP/1.1
+
+  Response:
+  HTTP/1.1 200 OK
+  ETag: "abc123-v1"
+  Accept-Ranges: bytes
+  Content-Length: 1048576
+
+Range Request with ETag:
+  GET /gphotos/download/abc123 HTTP/1.1
+  Range: bytes=524288-
+  If-Range: "abc123-v1"
+
+  Response (if file unchanged):
+  HTTP/1.1 206 Partial Content
+  ETag: "abc123-v1"
+  Content-Range: bytes 524288-1048575/1048576
+
+  Response (if file changed):
+  HTTP/1.1 200 OK
+  ETag: "abc123-v2"
+  Content-Length: 1048576
+```
+
 ## Example: Complete Setup
 
 1. **Setup PostgreSQL with media data**
 2. **Create HTTP redirect server** (already implemented per requirements)
+   - Ensure server returns proper `ETag` headers for file consistency
+   - Ensure server supports `Range` requests and returns `Accept-Ranges: bytes`
+   - Ensure server honors `If-Range` header for conditional range requests
 3. **Configure rclone**:
    ```bash
    rclone config create gphotos mediavfs \
@@ -173,4 +244,7 @@ This backend is ideal for:
    rclone ls gphotos:
    rclone copy gphotos:alice/vacation.jpg ~/Pictures/
    rclone moveto gphotos:alice/photo.jpg gphotos:alice/2024/photo.jpg
+
+   # Mount for video streaming (automatic seeking support)
+   rclone mount gphotos: /mnt/media --vfs-cache-mode full
    ```
