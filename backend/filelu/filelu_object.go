@@ -1,7 +1,6 @@
 package filelu
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -59,80 +58,61 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Open opens the object for reading
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	filePath := path.Join(o.fs.root, o.remote)
-	// Get direct link
+
+	// 1) Resolve direct link + size
 	directLink, size, err := o.fs.getDirectLink(ctx, filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get direct link: %w", err)
+		return nil, fmt.Errorf("getDirectLink failed: %w", err)
 	}
 
 	o.size = size
 
-	// Offset and Count for range download
-	var offset int64
-	var count int64
+	// 2) Parse Range options
+	var offset int64 = 0
+	var count int64 = -1
+
 	fs.FixRangeOption(options, o.size)
-	for _, option := range options {
-		switch x := option.(type) {
+	for _, opt := range options {
+		switch x := opt.(type) {
 		case *fs.RangeOption:
-			offset, count = x.Decode(o.size)
-			if count < 0 {
-				count = o.size - offset
-			}
+			off, cnt := x.Decode(o.size)
+			offset, count = off, cnt
 		case *fs.SeekOption:
 			offset = x.Offset
-			count = o.size
-		default:
-			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
-			}
+			count = o.size - offset
 		}
 	}
 
-	var reader io.ReadCloser
-	err = o.fs.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
-		if err != nil {
-			return false, fmt.Errorf("failed to create download request: %w", err)
-		}
-
-		resp, err := o.fs.client.Do(req)
-		if err != nil {
-			return shouldRetry(err), fmt.Errorf("failed to download file: %w", err)
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			defer func() {
-				if err := resp.Body.Close(); err != nil {
-					fs.Logf(nil, "Failed to close response body: %v", err)
-				}
-			}()
-			return false, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
-		}
-
-		// Wrap the response body to handle offset and count
-		currentContents, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return false, fmt.Errorf("failed to read response body: %w", err)
-		}
-
-		if offset > 0 {
-			if offset > int64(len(currentContents)) {
-				return false, fmt.Errorf("offset %d exceeds file size %d", offset, len(currentContents))
-			}
-			currentContents = currentContents[offset:]
-		}
-		if count > 0 && count < int64(len(currentContents)) {
-			currentContents = currentContents[:count]
-		}
-		reader = io.NopCloser(bytes.NewReader(currentContents))
-
-		return false, nil
-	})
+	// 3) Build HTTP request
+	req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return reader, nil
+	// 4) Apply HTTP Range if needed
+	if offset > 0 || count >= 0 {
+		if count >= 0 {
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+count-1))
+		} else {
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
+		}
+	}
+
+	// 5) Perform request
+	resp, err := o.fs.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("download request failed: %w", err)
+	}
+
+	// 6) Validate response codes
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// 7) Return streaming body (NO buffering!)
+	return resp.Body, nil
 }
 
 // Update updates the object with new data
