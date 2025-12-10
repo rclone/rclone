@@ -146,12 +146,43 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(time.Hour)
 
+	// Create custom HTTP client with redirect handling that preserves headers
+	baseClient := fshttp.NewClient(ctx)
+	customClient := &http.Client{
+		Transport: baseClient.Transport,
+		Timeout:   0, // No timeout for streaming large files
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after 10 redirects")
+			}
+			if len(via) > 0 {
+				originalReq := via[0]
+				// Preserve Range header (critical for resume/seeking)
+				if rangeHeader := originalReq.Header.Get("Range"); rangeHeader != "" {
+					req.Header.Set("Range", rangeHeader)
+					fs.Debugf(nil, "mediavfs: preserving Range header on redirect: %s", rangeHeader)
+				}
+				// Preserve If-Range header (critical for ETag validation)
+				if ifRangeHeader := originalReq.Header.Get("If-Range"); ifRangeHeader != "" {
+					req.Header.Set("If-Range", ifRangeHeader)
+				}
+				// Preserve User-Agent
+				if userAgent := originalReq.Header.Get("User-Agent"); userAgent != "" {
+					req.Header.Set("User-Agent", userAgent)
+				}
+				fs.Debugf(nil, "mediavfs: following redirect from %s to %s",
+					via[len(via)-1].URL.Redacted(), req.URL.Redacted())
+			}
+			return nil
+		},
+	}
+
 	f := &Fs{
 		name:       name,
 		root:       root,
 		opt:        *opt,
 		db:         db,
-		httpClient: fshttp.NewClient(ctx),
+		httpClient: customClient,
 	}
 
 	f.features = (&fs.Features{
@@ -550,6 +581,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+
+	// Set User-Agent header
+	req.Header.Set("User-Agent", "AndroidDownloadManager/13")
 
 	// Add range headers if specified in options
 	for k, v := range fs.OpenOptionHeaders(options) {
