@@ -1301,6 +1301,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 	testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
+	accounting.GlobalStats().ResetCounters()
 
 	r.CheckLocalListing(
 		t,
