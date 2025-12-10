@@ -102,14 +102,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			return false, fmt.Errorf("failed to download file: HTTP %d %s", resp.StatusCode, body)
 		}
 
 		if offset > 0 {
 			_, err = io.CopyN(io.Discard, resp.Body, offset)
 			if err != nil {
-				resp.Body.Close()
+				_ = resp.Body.Close()
 				return false, fmt.Errorf("failed to skip offset: %w", err)
 			}
 		}
