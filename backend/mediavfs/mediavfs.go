@@ -122,13 +122,15 @@ type Options struct {
 
 // Fs represents a connection to the media database
 type Fs struct {
-	name       string
-	root       string
-	opt        Options
-	features   *fs.Features
-	db         *sql.DB
-	httpClient *http.Client
-	urlCache   *urlCache
+	name        string
+	root        string
+	opt         Options
+	features    *fs.Features
+	db          *sql.DB
+	httpClient  *http.Client
+	urlCache    *urlCache
+	virtualDirs map[string]bool // Track virtual directories created in memory
+	vdirMu      sync.RWMutex    // Mutex for virtualDirs
 }
 
 // Object represents a media file in the database
@@ -245,12 +247,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	f := &Fs{
-		name:       name,
-		root:       root,
-		opt:        *opt,
-		db:         db,
-		httpClient: customClient,
-		urlCache:   newURLCache(),
+		name:        name,
+		root:        root,
+		opt:         *opt,
+		db:          db,
+		httpClient:  customClient,
+		urlCache:    newURLCache(),
+		virtualDirs: make(map[string]bool),
 	}
 
 	f.features = (&fs.Features{
@@ -345,7 +348,7 @@ func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
 
 // listUserFiles lists files and directories for a specific user and path
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
-	// Query to get all files for the user with LIMIT for lazy loading
+	// Query to get all files for the user (no LIMIT - load all files)
 	query := fmt.Sprintf(`
 		SELECT
 			media_key,
@@ -357,7 +360,6 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		FROM %s
 		WHERE user_name = $1
 		ORDER BY file_name
-		LIMIT 1000
 	`, f.opt.TableName)
 
 	rows, err := f.db.QueryContext(ctx, query, userName)
@@ -482,6 +484,56 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		return nil, fmt.Errorf("error iterating files: %w", err)
 	}
 
+	// Add virtual directories created via Mkdir
+	f.vdirMu.RLock()
+	for vdir := range f.virtualDirs {
+		// Check if this virtual directory belongs to this user and path
+		vdirUser, vdirPath := splitUserPath(vdir)
+		if vdirUser != userName {
+			continue
+		}
+
+		// Check if it's in the current directory we're listing
+		if dirPath == "" {
+			// Root level - add if it's a top-level dir
+			if !strings.Contains(vdirPath, "/") && vdirPath != "" && !dirsSeen[vdirPath] {
+				entries = append(entries, fs.NewDir(userName+"/"+vdirPath, time.Time{}))
+				dirsSeen[vdirPath] = true
+			} else if strings.Contains(vdirPath, "/") {
+				// It's nested, add the top-level part
+				topDir := strings.SplitN(vdirPath, "/", 2)[0]
+				if !dirsSeen[topDir] {
+					entries = append(entries, fs.NewDir(userName+"/"+topDir, time.Time{}))
+					dirsSeen[topDir] = true
+				}
+			}
+		} else {
+			// We're in a subdirectory
+			dirPrefix := dirPath + "/"
+			if strings.HasPrefix(vdirPath, dirPrefix) {
+				remainder := strings.TrimPrefix(vdirPath, dirPrefix)
+				if !strings.Contains(remainder, "/") && remainder != "" && !dirsSeen[vdirPath] {
+					// Direct child directory
+					entries = append(entries, fs.NewDir(userName+"/"+vdirPath, time.Time{}))
+					dirsSeen[vdirPath] = true
+				} else if strings.Contains(remainder, "/") {
+					// Nested subdirectory
+					subDir := strings.SplitN(remainder, "/", 2)[0]
+					fullSubDir := dirPath + "/" + subDir
+					if !dirsSeen[fullSubDir] {
+						entries = append(entries, fs.NewDir(userName+"/"+fullSubDir, time.Time{}))
+						dirsSeen[fullSubDir] = true
+					}
+				}
+			} else if vdirPath == dirPath && !dirsSeen[vdirPath] {
+				// The virtual directory is exactly this path
+				entries = append(entries, fs.NewDir(userName+"/"+vdirPath, time.Time{}))
+				dirsSeen[vdirPath] = true
+			}
+		}
+	}
+	f.vdirMu.RUnlock()
+
 	return entries, nil
 }
 
@@ -503,7 +555,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 			utc_timestamp
 		FROM %s
 		WHERE user_name = $1
-		LIMIT 1000
 	`, f.opt.TableName)
 
 	rows, err := f.db.QueryContext(ctx, query, userName)
@@ -579,8 +630,16 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return nil, errNotWritable
 }
 
-// Mkdir is not supported (directories are virtual)
+// Mkdir creates a virtual directory in memory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	// Store the full path including username
+	fullPath := strings.Trim(path.Join(f.root, dir), "/")
+
+	f.vdirMu.Lock()
+	f.virtualDirs[fullPath] = true
+	f.vdirMu.Unlock()
+
+	fs.Debugf(nil, "mediavfs: created virtual directory: %s", fullPath)
 	return nil // Virtual directories, always succeed
 }
 
@@ -615,6 +674,17 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		newName = dstPath
 	}
 
+	// Check if moving to a virtual directory - if so, remove it from virtual dirs
+	if newPath != "" {
+		vdirPath := dstUser + "/" + newPath
+		f.vdirMu.Lock()
+		if f.virtualDirs[vdirPath] {
+			delete(f.virtualDirs, vdirPath)
+			fs.Debugf(nil, "mediavfs: removed virtual directory after file move: %s", vdirPath)
+		}
+		f.vdirMu.Unlock()
+	}
+
 	// Update the database
 	query := fmt.Sprintf(`
 		UPDATE %s
@@ -627,8 +697,21 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fmt.Errorf("failed to move file: %w", err)
 	}
 
-	// Return new object
-	return f.NewObject(ctx, remote)
+	// Update the object in-place for real-time changes (no DB re-query)
+	newObj := &Object{
+		fs:          f,
+		remote:      remote,
+		mediaKey:    srcObj.mediaKey,
+		size:        srcObj.size,
+		modTime:     srcObj.modTime,
+		userName:    dstUser,
+		displayName: newName,
+		displayPath: newPath,
+	}
+
+	fs.Debugf(nil, "mediavfs: moved %s to %s (real-time update)", srcObj.remote, remote)
+
+	return newObj, nil
 }
 
 // DirMove is not supported
