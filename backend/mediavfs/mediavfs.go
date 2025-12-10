@@ -25,10 +25,12 @@ import (
 )
 
 const (
-	minSleep      = 10 * time.Millisecond
-	maxSleep      = 2 * time.Second
-	decayConstant = 2
-	cacheTTL      = 2 * time.Hour // Cache resolved URLs and ETags for 2 hours
+	minSleep       = 10 * time.Millisecond
+	maxSleep       = 2 * time.Second
+	decayConstant  = 2
+	cacheTTL       = 2 * time.Hour   // Cache resolved URLs and ETags for 2 hours
+	chunkSize      = 1000             // Load files in chunks of 1000
+	defaultPollInt = 30 * time.Second // Default polling interval
 )
 
 var (
@@ -50,9 +52,36 @@ type urlCache struct {
 	mu    sync.RWMutex
 }
 
+// cachedFile stores file metadata from database
+type cachedFile struct {
+	mediaKey    string
+	fileName    string
+	customName  string
+	customPath  string
+	sizeBytes   int64
+	timestampUnix int64
+}
+
+// fileCache stores all files with lazy loading support
+type fileCache struct {
+	files       map[string][]cachedFile // key: userName, value: list of files
+	lastPoll    time.Time
+	mu          sync.RWMutex
+	stopChan    chan struct{}
+	pollRunning bool
+}
+
 func newURLCache() *urlCache {
 	return &urlCache{
 		cache: make(map[string]*urlMetadata),
+	}
+}
+
+func newFileCache() *fileCache {
+	return &fileCache{
+		files:    make(map[string][]cachedFile),
+		lastPoll: time.Now(),
+		stopChan: make(chan struct{}),
 	}
 }
 
@@ -108,6 +137,11 @@ func init() {
 			Help:     "Name of the media table in the database.",
 			Default:  "media",
 			Advanced: true,
+		}, {
+			Name:     "poll_interval",
+			Help:     "How often to poll the database for new files.\n\nSet to 0 to disable polling.",
+			Default:  fs.Duration(defaultPollInt),
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -115,9 +149,10 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	DBConnection string `config:"db_connection"`
-	DownloadURL  string `config:"download_url"`
-	TableName    string `config:"table_name"`
+	DBConnection string      `config:"db_connection"`
+	DownloadURL  string      `config:"download_url"`
+	TableName    string      `config:"table_name"`
+	PollInterval fs.Duration `config:"poll_interval"`
 }
 
 // Fs represents a connection to the media database
@@ -129,6 +164,7 @@ type Fs struct {
 	db          *sql.DB
 	httpClient  *http.Client
 	urlCache    *urlCache
+	fileCache   *fileCache
 	virtualDirs map[string]bool // Track virtual directories created in memory
 	vdirMu      sync.RWMutex    // Mutex for virtualDirs
 }
@@ -253,6 +289,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		db:          db,
 		httpClient:  customClient,
 		urlCache:    newURLCache(),
+		fileCache:   newFileCache(),
 		virtualDirs: make(map[string]bool),
 	}
 
@@ -260,6 +297,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 		CaseInsensitive:         false,
 	}).Fill(ctx, f)
+
+	// Start polling goroutine if poll_interval is set
+	if f.opt.PollInterval > 0 {
+		go f.startPolling(ctx)
+		fs.Debugf(nil, "mediavfs: started polling with interval %v", time.Duration(f.opt.PollInterval))
+	}
 
 	// Validate root path if specified
 	if root != "" {
@@ -294,6 +337,100 @@ func extractPathAndName(fileName string) (path string, name string) {
 		return fileName[:lastSlash], fileName[lastSlash+1:]
 	}
 	return "", fileName
+}
+
+// startPolling polls the database for new/updated files
+func (f *Fs) startPolling(ctx context.Context) {
+	f.fileCache.mu.Lock()
+	if f.fileCache.pollRunning {
+		f.fileCache.mu.Unlock()
+		return
+	}
+	f.fileCache.pollRunning = true
+	f.fileCache.mu.Unlock()
+
+	ticker := time.NewTicker(time.Duration(f.opt.PollInterval))
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-f.fileCache.stopChan:
+			return
+		case <-ticker.C:
+			// Poll all users and update cache
+			f.pollDatabaseForChanges(ctx)
+		}
+	}
+}
+
+// pollDatabaseForChanges queries the database for all files and updates the cache
+func (f *Fs) pollDatabaseForChanges(ctx context.Context) {
+	// Get all users first
+	usersQuery := fmt.Sprintf("SELECT DISTINCT user_name FROM %s WHERE user_name IS NOT NULL", f.opt.TableName)
+	rows, err := f.db.QueryContext(ctx, usersQuery)
+	if err != nil {
+		fs.Errorf(nil, "mediavfs: poll error getting users: %v", err)
+		return
+	}
+	defer rows.Close()
+
+	var users []string
+	for rows.Next() {
+		var userName string
+		if err := rows.Scan(&userName); err != nil {
+			fs.Errorf(nil, "mediavfs: poll error scanning user: %v", err)
+			continue
+		}
+		users = append(users, userName)
+	}
+	rows.Close()
+
+	// For each user, load all files and update cache
+	for _, userName := range users {
+		filesQuery := fmt.Sprintf(`
+			SELECT
+				media_key,
+				file_name,
+				COALESCE(name, '') as custom_name,
+				COALESCE(path, '') as custom_path,
+				size_bytes,
+				utc_timestamp
+			FROM %s
+			WHERE user_name = $1
+			ORDER BY file_name
+		`, f.opt.TableName)
+
+		fileRows, err := f.db.QueryContext(ctx, filesQuery, userName)
+		if err != nil {
+			fs.Errorf(nil, "mediavfs: poll error getting files for user %s: %v", userName, err)
+			continue
+		}
+
+		var userFiles []cachedFile
+		for fileRows.Next() {
+			var cf cachedFile
+			if err := fileRows.Scan(&cf.mediaKey, &cf.fileName, &cf.customName, &cf.customPath, &cf.sizeBytes, &cf.timestampUnix); err != nil {
+				fs.Errorf(nil, "mediavfs: poll error scanning file: %v", err)
+				continue
+			}
+			userFiles = append(userFiles, cf)
+		}
+		fileRows.Close()
+
+		// Update cache
+		f.fileCache.mu.Lock()
+		oldCount := len(f.fileCache.files[userName])
+		f.fileCache.files[userName] = userFiles
+		newCount := len(userFiles)
+		f.fileCache.lastPoll = time.Now()
+		f.fileCache.mu.Unlock()
+
+		if newCount != oldCount {
+			fs.Debugf(nil, "mediavfs: poll updated user %s: %d -> %d files", userName, oldCount, newCount)
+		}
+	}
 }
 
 // List the objects and directories in dir into entries
@@ -346,27 +483,52 @@ func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
 	return entries, nil
 }
 
-// listUserFiles lists files and directories for a specific user and path
+// listUserFiles lists files and directories for a specific user and path using cache
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
-	// Query to get all files for the user (no LIMIT - load all files)
-	query := fmt.Sprintf(`
-		SELECT
-			media_key,
-			file_name,
-			COALESCE(name, '') as custom_name,
-			COALESCE(path, '') as custom_path,
-			size_bytes,
-			utc_timestamp
-		FROM %s
-		WHERE user_name = $1
-		ORDER BY file_name
-	`, f.opt.TableName)
+	// Try to get files from cache first
+	f.fileCache.mu.RLock()
+	cachedFiles, found := f.fileCache.files[userName]
+	f.fileCache.mu.RUnlock()
 
-	rows, err := f.db.QueryContext(ctx, query, userName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query files: %w", err)
+	// If not in cache or cache is empty, load from database
+	if !found || len(cachedFiles) == 0 {
+		// Load files from database in chunks
+		query := fmt.Sprintf(`
+			SELECT
+				media_key,
+				file_name,
+				COALESCE(name, '') as custom_name,
+				COALESCE(path, '') as custom_path,
+				size_bytes,
+				utc_timestamp
+			FROM %s
+			WHERE user_name = $1
+			ORDER BY file_name
+		`, f.opt.TableName)
+
+		rows, err := f.db.QueryContext(ctx, query, userName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query files: %w", err)
+		}
+
+		// Load all files for this user (they'll be cached for next time)
+		for rows.Next() {
+			var cf cachedFile
+			if err := rows.Scan(&cf.mediaKey, &cf.fileName, &cf.customName, &cf.customPath, &cf.sizeBytes, &cf.timestampUnix); err != nil {
+				rows.Close()
+				return nil, fmt.Errorf("failed to scan file: %w", err)
+			}
+			cachedFiles = append(cachedFiles, cf)
+		}
+		rows.Close()
+
+		// Store in cache
+		f.fileCache.mu.Lock()
+		f.fileCache.files[userName] = cachedFiles
+		f.fileCache.mu.Unlock()
+
+		fs.Debugf(nil, "mediavfs: loaded %d files for user %s into cache", len(cachedFiles), userName)
 	}
-	defer rows.Close()
 
 	// Track directories we've already added
 	dirsSeen := make(map[string]bool)
@@ -378,39 +540,27 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		dirPrefix = dirPath + "/"
 	}
 
-	for rows.Next() {
-		var (
-			mediaKey      string
-			fileName      string
-			customName    string
-			customPath    string
-			sizeBytes     int64
-			timestampUnix int64
-		)
-
-		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
-			return nil, fmt.Errorf("failed to scan file: %w", err)
-		}
-
-		timestamp := convertUnixTimestamp(timestampUnix)
+	// Process cached files
+	for _, cf := range cachedFiles {
+		timestamp := convertUnixTimestamp(cf.timestampUnix)
 
 		// Determine the display name and path
 		var displayName, displayPath string
 
-		if customName != "" {
+		if cf.customName != "" {
 			// Use custom name if set
-			displayName = customName
+			displayName = cf.customName
 		} else {
 			// Extract name from fileName (handles paths in file_name)
-			_, displayName = extractPathAndName(fileName)
+			_, displayName = extractPathAndName(cf.fileName)
 		}
 
-		if customPath != "" {
+		if cf.customPath != "" {
 			// Use custom path if set
-			displayPath = strings.Trim(customPath, "/")
+			displayPath = strings.Trim(cf.customPath, "/")
 		} else {
 			// Extract path from fileName if it contains "/"
-			extractedPath, _ := extractPathAndName(fileName)
+			extractedPath, _ := extractPathAndName(cf.fileName)
 			displayPath = strings.Trim(extractedPath, "/")
 		}
 
@@ -439,8 +589,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				entries = append(entries, &Object{
 					fs:          f,
 					remote:      remote,
-					mediaKey:    mediaKey,
-					size:        sizeBytes,
+					mediaKey:    cf.mediaKey,
+					size:        cf.sizeBytes,
 					modTime:     timestamp,
 					userName:    userName,
 					displayName: displayName,
@@ -469,8 +619,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				entries = append(entries, &Object{
 					fs:          f,
 					remote:      remote,
-					mediaKey:    mediaKey,
-					size:        sizeBytes,
+					mediaKey:    cf.mediaKey,
+					size:        cf.sizeBytes,
 					modTime:     timestamp,
 					userName:    userName,
 					displayName: displayName,
@@ -478,10 +628,6 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				})
 			}
 		}
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating files: %w", err)
 	}
 
 	// Add virtual directories created via Mkdir
@@ -721,6 +867,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Shutdown the backend
 func (f *Fs) Shutdown(ctx context.Context) error {
+	// Stop polling goroutine
+	if f.fileCache != nil {
+		close(f.fileCache.stopChan)
+	}
+
+	// Close database connection
 	if f.db != nil {
 		return f.db.Close()
 	}
