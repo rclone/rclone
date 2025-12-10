@@ -57,64 +57,64 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Open opens the object for reading
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-    filePath := path.Join(o.fs.root, o.remote)
+	filePath := path.Join(o.fs.root, o.remote)
 
-    // 1) Resolve direct link + size
-    directLink, size, err := o.fs.getDirectLink(ctx, filePath)
-    if err != nil {
-        return nil, fmt.Errorf("getDirectLink failed: %w", err)
-    }
+	// 1) Resolve direct link + size
+	directLink, size, err := o.fs.getDirectLink(ctx, filePath)
+	if err != nil {
+		return nil, fmt.Errorf("getDirectLink failed: %w", err)
+	}
 
-    o.size = size
+	o.size = size
 
-    // 2) Parse Range options
-    var offset int64
-    var count int64 = -1
+	// 2) Parse Range options
+	var offset int64
+	var count int64 = -1
 
-    fs.FixRangeOption(options, o.size)
-    for _, opt := range options {
-        switch x := opt.(type) {
-        case *fs.RangeOption:
-            off, cnt := x.Decode(o.size)
-            offset, count = off, cnt
-        case *fs.SeekOption:
-            offset = x.Offset
-            count = o.size - offset
-        }
-    }
+	fs.FixRangeOption(options, o.size)
+	for _, opt := range options {
+		switch x := opt.(type) {
+		case *fs.RangeOption:
+			off, cnt := x.Decode(o.size)
+			offset, count = off, cnt
+		case *fs.SeekOption:
+			offset = x.Offset
+			count = o.size - offset
+		}
+	}
 
-    // 3) Build HTTP request
-    req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
-    if err != nil {
-        return nil, err
-    }
+	// 3) Build HTTP request
+	req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
+	if err != nil {
+		return nil, err
+	}
 
-    // 4) Apply HTTP Range if needed
-    if offset > 0 || count >= 0 {
-        if count >= 0 {
-            req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+count-1))
-        } else {
-            req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
-        }
-    }
+	// 4) Apply HTTP Range if needed
+	if offset > 0 || count >= 0 {
+		if count >= 0 {
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+count-1))
+		} else {
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
+		}
+	}
 
-    // 5) Perform request
-    resp, err := o.fs.client.Do(req)
-    if err != nil {
-        return nil, fmt.Errorf("download request failed: %w", err)
-    }
+	// 5) Perform request
+	resp, err := o.fs.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("download request failed: %w", err)
+	}
 
-    // 6) Validate response codes
-    if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-        body, _ := io.ReadAll(resp.Body)
-        if cerr := resp.Body.Close(); cerr != nil {
-    fs.Logf(o.fs, "failed to close response body: %v", cerr)
-}
-        return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
-    }
+	// 6) Validate response codes
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+		body, _ := io.ReadAll(resp.Body)
+		if cerr := resp.Body.Close(); cerr != nil {
+			fs.Logf(o.fs, "failed to close response body: %v", cerr)
+		}
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+	}
 
-    // 7) Return streaming body (NO buffering!)
-    return resp.Body, nil
+	// 7) Return streaming body (NO buffering!)
+	return resp.Body, nil
 }
 
 // Update updates the object with new data
