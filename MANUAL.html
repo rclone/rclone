@@ -233,7 +233,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Nov 21, 2025</p>
+<p class="date">Dec 10, 2025</p>
 </header>
 <h1 id="name">NAME</h1>
 <p>rclone - manage files on cloud storage</p>
@@ -4531,9 +4531,9 @@ SquareBracket</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,command=echo&quot;
 // Output: stories/The Quick Brown Fox!.txt</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{YYYYMMDD}&quot;
-// Output: stories/The Quick Brown Fox!-20251121</code></pre>
+// Output: stories/The Quick Brown Fox!-20251210</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!&quot; --name-transform &quot;date=-{macfriendlytime}&quot;
-// Output: stories/The Quick Brown Fox!-2025-11-21 0505PM</code></pre>
+// Output: stories/The Quick Brown Fox!-2025-12-10 1247PM</code></pre>
 <pre class="console"><code>rclone convmv &quot;stories/The Quick Brown Fox!.txt&quot; --name-transform &quot;all,regex=[\\.\\w]/ab&quot;
 // Output: ababababababab/ababab ababababab ababababab ababab!abababab</code></pre>
 <p>The regex command generally accepts Perl-style regular expressions,
@@ -22567,7 +22567,7 @@ split into groups.</p>
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.72.0&quot;)</code></pre>
+      --user-agent string                  Set the user-agent to a specified string (default &quot;rclone/v1.72.1&quot;)</code></pre>
 <h2 id="performance">Performance</h2>
 <p>Flags helpful for increasing performance.</p>
 <pre><code>      --buffer-size SizeSuffix   In memory buffer size when reading files for each --transfer (default 16Mi)
@@ -23024,7 +23024,7 @@ split into groups.</p>
       --gcs-description string                              Description of the remote
       --gcs-directory-markers                               Upload an empty object with a trailing slash when a new directory is created
       --gcs-encoding Encoding                               The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
-      --gcs-endpoint string                                 Endpoint for the service
+      --gcs-endpoint string                                 Custom endpoint for the storage API. Leave blank to use the provider default
       --gcs-env-auth                                        Get GCP IAM credentials from runtime (environment variables or instance meta data if no env vars)
       --gcs-location string                                 Location for the newly created buckets
       --gcs-no-check-bucket                                 If set, don&#39;t attempt to check the bucket exists or create it
@@ -25234,7 +25234,29 @@ investigation:</p>
 <li><a
 href="https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt"><code>TestBisyncRemoteRemote/normalization</code></a></li>
 </ul></li>
-<li>Updated: 2025-11-21-010037
+<li><code>TestGoFile</code> (<code>gofile</code>)
+<ul>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt"><code>TestBisyncRemoteLocal/all_changed</code></a></li>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt"><code>TestBisyncRemoteLocal/backupdir</code></a></li>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt"><code>TestBisyncRemoteLocal/basic</code></a></li>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt"><code>TestBisyncRemoteLocal/changes</code></a></li>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt"><code>TestBisyncRemoteLocal/check_access</code></a></li>
+<li><a href="https://pub.rclone.org/integration-tests/current/">78
+more</a></li>
+</ul></li>
+<li><code>TestPcloud</code> (<code>pcloud</code>)
+<ul>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt"><code>TestBisyncRemoteRemote/check_access</code></a></li>
+<li><a
+href="https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt"><code>TestBisyncRemoteRemote/check_access_filters</code></a></li>
+</ul></li>
+<li>Updated: 2025-12-10-010012
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs ---></li>
 </ul>
 <p>The following backends either have not been tested recently or have
@@ -28374,15 +28396,30 @@ centers for low latency.</li>
 <li>St. Petersburg</li>
 <li>Provider: Selectel,Servercore</li>
 </ul></li>
-<li>"gis-1"
+<li>"ru-3"
 <ul>
-<li>Moscow</li>
-<li>Provider: Servercore</li>
+<li>St. Petersburg</li>
+<li>Provider: Selectel</li>
 </ul></li>
 <li>"ru-7"
 <ul>
 <li>Moscow</li>
-<li>Provider: Servercore</li>
+<li>Provider: Selectel,Servercore</li>
+</ul></li>
+<li>"gis-1"
+<ul>
+<li>Moscow</li>
+<li>Provider: Selectel,Servercore</li>
+</ul></li>
+<li>"kz-1"
+<ul>
+<li>Kazakhstan</li>
+<li>Provider: Selectel</li>
+</ul></li>
+<li>"uz-2"
+<ul>
+<li>Uzbekistan</li>
+<li>Provider: Selectel</li>
 </ul></li>
 <li>"uz-2"
 <ul>
@@ -29690,17 +29727,37 @@ AWS,Alibaba,ArvanCloud,Ceph,ChinaMobile,Cloudflare,Cubbit,DigitalOcean,Dreamhost
 </ul></li>
 <li>"s3.ru-1.storage.selcloud.ru"
 <ul>
-<li>Saint Petersburg</li>
+<li>St. Petersburg</li>
+<li>Provider: Selectel</li>
+</ul></li>
+<li>"s3.ru-3.storage.selcloud.ru"
+<ul>
+<li>St. Petersburg</li>
+<li>Provider: Selectel</li>
+</ul></li>
+<li>"s3.ru-7.storage.selcloud.ru"
+<ul>
+<li>Moscow</li>
 <li>Provider: Selectel,Servercore</li>
 </ul></li>
 <li>"s3.gis-1.storage.selcloud.ru"
 <ul>
 <li>Moscow</li>
-<li>Provider: Servercore</li>
+<li>Provider: Selectel,Servercore</li>
 </ul></li>
-<li>"s3.ru-7.storage.selcloud.ru"
+<li>"s3.kz-1.storage.selcloud.ru"
 <ul>
-<li>Moscow</li>
+<li>Kazakhstan</li>
+<li>Provider: Selectel</li>
+</ul></li>
+<li>"s3.uz-2.storage.selcloud.ru"
+<ul>
+<li>Uzbekistan</li>
+<li>Provider: Selectel</li>
+</ul></li>
+<li>"s3.ru-1.storage.selcloud.ru"
+<ul>
+<li>Saint Petersburg</li>
 <li>Provider: Servercore</li>
 </ul></li>
 <li>"s3.uz-2.srvstorage.uz"
@@ -41496,6 +41553,9 @@ storage options, and sharing capabilities. With support for high storage
 limits and seamless integration with rclone, FileLu makes managing files
 in the cloud easy. Its cross-platform file backup services let you
 upload and back up files from any internet-connected device.</p>
+<p><strong>Note</strong> FileLu now has a fully featured S3 backend <a
+href="/s3#filelu-s5">FileLu S5</a>, an industry standard S3 compatible
+object store.</p>
 <h2 id="configuration-16">Configuration</h2>
 <p>Here is an example of how to make a remote called
 <code>filelu</code>. First, run:</p>
@@ -43418,14 +43478,36 @@ decompressed.</p>
 <li>Default: false</li>
 </ul>
 <h4 id="gcs-endpoint">--gcs-endpoint</h4>
-<p>Endpoint for the service.</p>
-<p>Leave blank normally.</p>
+<p>Custom endpoint for the storage API. Leave blank to use the provider
+default.</p>
+<p>When using a custom endpoint that includes a subpath (e.g.
+example.org/custom/endpoint), the subpath will be ignored during upload
+operations due to a limitation in the underlying Google API Go client
+library. Download and listing operations will work correctly with the
+full endpoint path. If you require subpath support for uploads, avoid
+using subpaths in your custom endpoint configuration.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: endpoint</li>
 <li>Env Var: RCLONE_GCS_ENDPOINT</li>
 <li>Type: string</li>
 <li>Required: false</li>
+<li>Examples:
+<ul>
+<li>"storage.example.org"
+<ul>
+<li>Specify a custom endpoint</li>
+</ul></li>
+<li>"storage.example.org:4443"
+<ul>
+<li>Specifying a custom endpoint with port</li>
+</ul></li>
+<li>"storage.example.org:4443/gcs/api"
+<ul>
+<li>Specifying a subpath, see the note, uploads won't use the custom
+path!</li>
+</ul></li>
+</ul></li>
 </ul>
 <h4 id="gcs-encoding">--gcs-encoding</h4>
 <p>The encoding for the backend.</p>
@@ -43670,7 +43752,7 @@ account. It is a ~21 character numerical string.</li>
 <code>https://www.googleapis.com/auth/drive</code> to grant read/write
 access to Google Drive specifically. You can also use
 <code>https://www.googleapis.com/auth/drive.readonly</code> for read
-only access.</li>
+only access with <code>--drive-scope=drive.readonly</code>.</li>
 <li>Click "Authorise"</li>
 </ul>
 <h5 id="configure-rclone-assuming-a-new-install">3. Configure rclone,
@@ -62593,6 +62675,32 @@ the output.</p>
 <!-- autogenerated options stop -->
 <!-- markdownlint-disable line-length -->
 <h1 id="changelog-1">Changelog</h1>
+<h2 id="v1.72.1---2025-12-10">v1.72.1 - 2025-12-10</h2>
+<p><a
+href="https://github.com/rclone/rclone/compare/v1.72.0...v1.72.1">See
+commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>build: update to go1.25.5 to fix <a
+href="https://pkg.go.dev/vuln/GO-2025-4155">CVE-2025-61729</a></li>
+<li>doc fixes (Duncan Smart, Nick Craig-Wood)</li>
+<li>configfile: Fix piped config support (Jonas Tingeborn)</li>
+<li>log
+<ul>
+<li>Fix PID not included in JSON log output (Tingsong Xu)</li>
+<li>Fix backtrace not going to the --log-file (Nick Craig-Wood)</li>
+</ul></li>
+</ul></li>
+<li>Google Cloud Storage
+<ul>
+<li>Improve endpoint parameter docs (Johannes Rothe)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Add missing regions for Selectel provider (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.72.0---2025-11-21">v1.72.0 - 2025-11-21</h2>
 <p><a
 href="https://github.com/rclone/rclone/compare/v1.71.0...v1.72.0">See

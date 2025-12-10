@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "rclone" "1" "Nov 21, 2025" "User Manual" ""
+.TH "rclone" "1" "Dec 10, 2025" "User Manual" ""
 .hy
 .SH NAME
 .PP
@@ -6260,14 +6260,14 @@ rclone convmv \[dq]stories/The Quick Brown Fox!.txt\[dq] --name-transform \[dq]a
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{YYYYMMDD}\[dq]
-// Output: stories/The Quick Brown Fox!-20251121
+// Output: stories/The Quick Brown Fox!-20251210
 \f[R]
 .fi
 .IP
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{macfriendlytime}\[dq]
-// Output: stories/The Quick Brown Fox!-2025-11-21 0505PM
+// Output: stories/The Quick Brown Fox!-2025-12-10 1247PM
 \f[R]
 .fi
 .IP
@@ -31741,7 +31741,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.72.0\[dq])
+      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.72.1\[dq])
 \f[R]
 .fi
 .SS Performance
@@ -32258,7 +32258,7 @@ Backend-only flags (these can be set in the config file also).
       --gcs-description string                              Description of the remote
       --gcs-directory-markers                               Upload an empty object with a trailing slash when a new directory is created
       --gcs-encoding Encoding                               The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
-      --gcs-endpoint string                                 Endpoint for the service
+      --gcs-endpoint string                                 Custom endpoint for the storage API. Leave blank to use the provider default
       --gcs-env-auth                                        Get GCP IAM credentials from runtime (environment variables or instance meta data if no env vars)
       --gcs-location string                                 Location for the newly created buckets
       --gcs-no-check-bucket                                 If set, don\[aq]t attempt to check the bucket exists or create it
@@ -34968,7 +34968,31 @@ The following backends have known issues that need more investigation:
 \f[V]TestBisyncRemoteRemote/normalization\f[R] (https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
 .RE
 .IP \[bu] 2
-Updated: 2025-11-21-010037
+\f[V]TestGoFile\f[R] (\f[V]gofile\f[R])
+.RS 2
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/all_changed\f[R] (https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/backupdir\f[R] (https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/basic\f[R] (https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/changes\f[R] (https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteLocal/check_access\f[R] (https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+.IP \[bu] 2
+78 more (https://pub.rclone.org/integration-tests/current/)
+.RE
+.IP \[bu] 2
+\f[V]TestPcloud\f[R] (\f[V]pcloud\f[R])
+.RS 2
+.IP \[bu] 2
+\f[V]TestBisyncRemoteRemote/check_access\f[R] (https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteRemote/check_access_filters\f[R] (https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+.RE
+.IP \[bu] 2
+Updated: 2025-12-10-010012
 .PP
 The following backends either have not been tested recently or have
 known issues that are deemed unfixable for the time being:
@@ -39263,12 +39287,13 @@ Petersburg
 Provider: Selectel,Servercore
 .RE
 .IP \[bu] 2
-\[dq]gis-1\[dq]
+\[dq]ru-3\[dq]
 .RS 2
 .IP \[bu] 2
-Moscow
+St.
+Petersburg
 .IP \[bu] 2
-Provider: Servercore
+Provider: Selectel
 .RE
 .IP \[bu] 2
 \[dq]ru-7\[dq]
@@ -39276,7 +39301,31 @@ Provider: Servercore
 .IP \[bu] 2
 Moscow
 .IP \[bu] 2
-Provider: Servercore
+Provider: Selectel,Servercore
+.RE
+.IP \[bu] 2
+\[dq]gis-1\[dq]
+.RS 2
+.IP \[bu] 2
+Moscow
+.IP \[bu] 2
+Provider: Selectel,Servercore
+.RE
+.IP \[bu] 2
+\[dq]kz-1\[dq]
+.RS 2
+.IP \[bu] 2
+Kazakhstan
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]uz-2\[dq]
+.RS 2
+.IP \[bu] 2
+Uzbekistan
+.IP \[bu] 2
+Provider: Selectel
 .RE
 .IP \[bu] 2
 \[dq]uz-2\[dq]
@@ -41371,7 +41420,25 @@ Provider: SeaweedFS
 \[dq]s3.ru-1.storage.selcloud.ru\[dq]
 .RS 2
 .IP \[bu] 2
-Saint Petersburg
+St.
+Petersburg
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]s3.ru-3.storage.selcloud.ru\[dq]
+.RS 2
+.IP \[bu] 2
+St.
+Petersburg
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]s3.ru-7.storage.selcloud.ru\[dq]
+.RS 2
+.IP \[bu] 2
+Moscow
 .IP \[bu] 2
 Provider: Selectel,Servercore
 .RE
@@ -41381,13 +41448,29 @@ Provider: Selectel,Servercore
 .IP \[bu] 2
 Moscow
 .IP \[bu] 2
-Provider: Servercore
+Provider: Selectel,Servercore
 .RE
 .IP \[bu] 2
-\[dq]s3.ru-7.storage.selcloud.ru\[dq]
+\[dq]s3.kz-1.storage.selcloud.ru\[dq]
 .RS 2
 .IP \[bu] 2
-Moscow
+Kazakhstan
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]s3.uz-2.storage.selcloud.ru\[dq]
+.RS 2
+.IP \[bu] 2
+Uzbekistan
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]s3.ru-1.storage.selcloud.ru\[dq]
+.RS 2
+.IP \[bu] 2
+Saint Petersburg
 .IP \[bu] 2
 Provider: Servercore
 .RE
@@ -57445,6 +57528,9 @@ With support for high storage limits and seamless integration with
 rclone, FileLu makes managing files in the cloud easy.
 Its cross-platform file backup services let you upload and back up files
 from any internet-connected device.
+.PP
+\f[B]Note\f[R] FileLu now has a fully featured S3 backend FileLu S5, an
+industry standard S3 compatible object store.
 .SS Configuration
 .PP
 Here is an example of how to make a remote called \f[V]filelu\f[R].
@@ -60216,9 +60302,17 @@ Type: bool
 Default: false
 .SS --gcs-endpoint
 .PP
-Endpoint for the service.
+Custom endpoint for the storage API.
+Leave blank to use the provider default.
 .PP
-Leave blank normally.
+When using a custom endpoint that includes a subpath (e.g.
+example.org/custom/endpoint), the subpath will be ignored during upload
+operations due to a limitation in the underlying Google API Go client
+library.
+Download and listing operations will work correctly with the full
+endpoint path.
+If you require subpath support for uploads, avoid using subpaths in your
+custom endpoint configuration.
 .PP
 Properties:
 .IP \[bu] 2
@@ -60229,6 +60323,29 @@ Env Var: RCLONE_GCS_ENDPOINT
 Type: string
 .IP \[bu] 2
 Required: false
+.IP \[bu] 2
+Examples:
+.RS 2
+.IP \[bu] 2
+\[dq]storage.example.org\[dq]
+.RS 2
+.IP \[bu] 2
+Specify a custom endpoint
+.RE
+.IP \[bu] 2
+\[dq]storage.example.org:4443\[dq]
+.RS 2
+.IP \[bu] 2
+Specifying a custom endpoint with port
+.RE
+.IP \[bu] 2
+\[dq]storage.example.org:4443/gcs/api\[dq]
+.RS 2
+.IP \[bu] 2
+Specifying a subpath, see the note, uploads won\[aq]t use the custom
+path!
+.RE
+.RE
 .SS --gcs-encoding
 .PP
 The encoding for the backend.
@@ -60557,7 +60674,7 @@ In the next field, \[dq]OAuth Scopes\[dq], enter
 access to Google Drive specifically.
 You can also use
 \f[V]https://www.googleapis.com/auth/drive.readonly\f[R] for read only
-access.
+access with \f[V]--drive-scope=drive.readonly\f[R].
 .IP \[bu] 2
 Click \[dq]Authorise\[dq]
 .SS 3. Configure rclone, assuming a new install
@@ -87115,6 +87232,40 @@ Options:
 .IP \[bu] 2
 \[dq]error\[dq]: Return an error based on option value.
 .SH Changelog
+.SS v1.72.1 - 2025-12-10
+.PP
+See commits (https://github.com/rclone/rclone/compare/v1.72.0...v1.72.1)
+.IP \[bu] 2
+Bug Fixes
+.RS 2
+.IP \[bu] 2
+build: update to go1.25.5 to fix
+CVE-2025-61729 (https://pkg.go.dev/vuln/GO-2025-4155)
+.IP \[bu] 2
+doc fixes (Duncan Smart, Nick Craig-Wood)
+.IP \[bu] 2
+configfile: Fix piped config support (Jonas Tingeborn)
+.IP \[bu] 2
+log
+.RS 2
+.IP \[bu] 2
+Fix PID not included in JSON log output (Tingsong Xu)
+.IP \[bu] 2
+Fix backtrace not going to the --log-file (Nick Craig-Wood)
+.RE
+.RE
+.IP \[bu] 2
+Google Cloud Storage
+.RS 2
+.IP \[bu] 2
+Improve endpoint parameter docs (Johannes Rothe)
+.RE
+.IP \[bu] 2
+S3
+.RS 2
+.IP \[bu] 2
+Add missing regions for Selectel provider (Nick Craig-Wood)
+.RE
 .SS v1.72.0 - 2025-11-21
 .PP
 See commits (https://github.com/rclone/rclone/compare/v1.71.0...v1.72.0)

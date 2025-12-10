@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Nov 21, 2025
+% Dec 10, 2025
 
 # NAME
 
@@ -5369,12 +5369,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20251121
+// Output: stories/The Quick Brown Fox!-20251210
 ```
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2025-11-21 0505PM
+// Output: stories/The Quick Brown Fox!-2025-12-10 1247PM
 ```
 
 ```console
@@ -24802,7 +24802,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.72.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.72.1")
 ```
 
 
@@ -25319,7 +25319,7 @@ Backend-only flags (these can be set in the config file also).
       --gcs-description string                              Description of the remote
       --gcs-directory-markers                               Upload an empty object with a trailing slash when a new directory is created
       --gcs-encoding Encoding                               The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
-      --gcs-endpoint string                                 Endpoint for the service
+      --gcs-endpoint string                                 Custom endpoint for the storage API. Leave blank to use the provider default
       --gcs-env-auth                                        Get GCP IAM credentials from runtime (environment variables or instance meta data if no env vars)
       --gcs-location string                                 Location for the newly created buckets
       --gcs-no-check-bucket                                 If set, don't attempt to check the bucket exists or create it
@@ -27514,7 +27514,17 @@ The following backends have known issues that need more investigation:
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 - `TestDropbox` (`dropbox`)
   - [`TestBisyncRemoteRemote/normalization`](https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
-- Updated: 2025-11-21-010037
+- `TestGoFile` (`gofile`)
+  - [`TestBisyncRemoteLocal/all_changed`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [`TestBisyncRemoteLocal/backupdir`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [`TestBisyncRemoteLocal/basic`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [`TestBisyncRemoteLocal/changes`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [`TestBisyncRemoteLocal/check_access`](https://pub.rclone.org/integration-tests/current/gofile-cmd.bisync-TestGoFile-1.txt)
+  - [78 more](https://pub.rclone.org/integration-tests/current/)
+- `TestPcloud` (`pcloud`)
+  - [`TestBisyncRemoteRemote/check_access`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+  - [`TestBisyncRemoteRemote/check_access_filters`](https://pub.rclone.org/integration-tests/current/pcloud-cmd.bisync-TestPcloud-1.txt)
+- Updated: 2025-12-10-010012
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
@@ -30343,12 +30353,21 @@ Properties:
   - "ru-1"
     - St. Petersburg
     - Provider: Selectel,Servercore
-  - "gis-1"
-    - Moscow
-    - Provider: Servercore
+  - "ru-3"
+    - St. Petersburg
+    - Provider: Selectel
   - "ru-7"
     - Moscow
-    - Provider: Servercore
+    - Provider: Selectel,Servercore
+  - "gis-1"
+    - Moscow
+    - Provider: Selectel,Servercore
+  - "kz-1"
+    - Kazakhstan
+    - Provider: Selectel
+  - "uz-2"
+    - Uzbekistan
+    - Provider: Selectel
   - "uz-2"
     - Tashkent, Uzbekistan
     - Provider: Servercore
@@ -31140,13 +31159,25 @@ Properties:
     - SeaweedFS S3 localhost
     - Provider: SeaweedFS
   - "s3.ru-1.storage.selcloud.ru"
-    - Saint Petersburg
+    - St. Petersburg
+    - Provider: Selectel
+  - "s3.ru-3.storage.selcloud.ru"
+    - St. Petersburg
+    - Provider: Selectel
+  - "s3.ru-7.storage.selcloud.ru"
+    - Moscow
     - Provider: Selectel,Servercore
   - "s3.gis-1.storage.selcloud.ru"
     - Moscow
-    - Provider: Servercore
-  - "s3.ru-7.storage.selcloud.ru"
-    - Moscow
+    - Provider: Selectel,Servercore
+  - "s3.kz-1.storage.selcloud.ru"
+    - Kazakhstan
+    - Provider: Selectel
+  - "s3.uz-2.storage.selcloud.ru"
+    - Uzbekistan
+    - Provider: Selectel
+  - "s3.ru-1.storage.selcloud.ru"
+    - Saint Petersburg
     - Provider: Servercore
   - "s3.uz-2.srvstorage.uz"
     - Tashkent, Uzbekistan
@@ -43973,6 +44004,9 @@ managing files in the cloud easy. Its cross-platform file backup
 services let you upload and back up files from any internet-connected
 device.
 
+**Note** FileLu now has a fully featured S3 backend [FileLu S5](/s3#filelu-s5),
+an industry standard S3 compatible object store.
+
 ## Configuration
 
 Here is an example of how to make a remote called `filelu`. First, run:
@@ -46071,9 +46105,14 @@ Properties:
 
 #### --gcs-endpoint
 
-Endpoint for the service.
+Custom endpoint for the storage API. Leave blank to use the provider default.
 
-Leave blank normally.
+When using a custom endpoint that includes a subpath (e.g. example.org/custom/endpoint),
+the subpath will be ignored during upload operations due to a limitation in the
+underlying Google API Go client library.
+Download and listing operations will work correctly with the full endpoint path.
+If you require subpath support for uploads, avoid using subpaths in your custom
+endpoint configuration.
 
 Properties:
 
@@ -46081,6 +46120,13 @@ Properties:
 - Env Var:     RCLONE_GCS_ENDPOINT
 - Type:        string
 - Required:    false
+- Examples:
+  - "storage.example.org"
+    - Specify a custom endpoint
+  - "storage.example.org:4443"
+    - Specifying a custom endpoint with port
+  - "storage.example.org:4443/gcs/api"
+    - Specifying a subpath, see the note, uploads won't use the custom path!
 
 #### --gcs-encoding
 
@@ -46379,7 +46425,7 @@ account key" button.
   `https://www.googleapis.com/auth/drive`
   to grant read/write access to Google Drive specifically.
   You can also use `https://www.googleapis.com/auth/drive.readonly` for read
-  only access.
+  only access with `--drive-scope=drive.readonly`.
 - Click "Authorise"
 
 ##### 3. Configure rclone, assuming a new install
@@ -66867,6 +66913,22 @@ Options:
 
 # Changelog
 
+## v1.72.1 - 2025-12-10
+
+[See commits](https://github.com/rclone/rclone/compare/v1.72.0...v1.72.1)
+
+- Bug Fixes
+  - build: update to go1.25.5 to fix [CVE-2025-61729](https://pkg.go.dev/vuln/GO-2025-4155)
+  - doc fixes (Duncan Smart, Nick Craig-Wood)
+  - configfile: Fix piped config support (Jonas Tingeborn)
+  - log
+    - Fix PID not included in JSON log output (Tingsong Xu)
+    - Fix backtrace not going to the --log-file (Nick Craig-Wood)
+- Google Cloud Storage
+  - Improve endpoint parameter docs (Johannes Rothe)
+- S3
+  - Add missing regions for Selectel provider (Nick Craig-Wood)
+
 ## v1.72.0 - 2025-11-21
 
 [See commits](https://github.com/rclone/rclone/compare/v1.71.0...v1.72.0)
@@ -66887,7 +66949,7 @@ Options:
   - [rclone test speed](https://rclone.org/commands/rclone_test_speed/): Add command to test a specified remotes speed (dougal)
 - New Features
   - backends: many backends have has a paged listing (`ListP`) interface added
-      - this enables progress when listing large directories and reduced memory usage
+    - this enables progress when listing large directories and reduced memory usage
   - build
     - Bump golang.org/x/crypto from 0.43.0 to 0.45.0 to fix CVE-2025-58181 (dependabot[bot])
     - Modernize code and tests (Nick Craig-Wood, russcoss, juejinyuxitu, reddaisyy, dulanting, Oleksandr Redko)

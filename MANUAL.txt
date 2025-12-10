@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Nov 21, 2025
+Dec 10, 2025
 
 NAME
 
@@ -4588,10 +4588,10 @@ Examples:
     // Output: stories/The Quick Brown Fox!.txt
 
     rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-    // Output: stories/The Quick Brown Fox!-20251121
+    // Output: stories/The Quick Brown Fox!-20251210
 
     rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-    // Output: stories/The Quick Brown Fox!-2025-11-21 0505PM
+    // Output: stories/The Quick Brown Fox!-2025-12-10 1247PM
 
     rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,regex=[\\.\\w]/ab"
     // Output: ababababababab/ababab ababababab ababababab ababab!abababab
@@ -23110,7 +23110,7 @@ Flags for general networking and HTTP stuff.
           --tpslimit float                     Limit HTTP transactions per second to this
           --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
           --use-cookies                        Enable session cookiejar
-          --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.72.0")
+          --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.72.1")
 
 Performance
 
@@ -23597,7 +23597,7 @@ Backend-only flags (these can be set in the config file also).
           --gcs-description string                              Description of the remote
           --gcs-directory-markers                               Upload an empty object with a trailing slash when a new directory is created
           --gcs-encoding Encoding                               The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
-          --gcs-endpoint string                                 Endpoint for the service
+          --gcs-endpoint string                                 Custom endpoint for the storage API. Leave blank to use the provider default
           --gcs-env-auth                                        Get GCP IAM credentials from runtime (environment variables or instance meta data if no env vars)
           --gcs-location string                                 Location for the newly created buckets
           --gcs-no-check-bucket                                 If set, don't attempt to check the bucket exists or create it
@@ -25734,7 +25734,17 @@ The following backends have known issues that need more investigation:
 
 -   TestDropbox (dropbox)
     -   TestBisyncRemoteRemote/normalization
--   Updated: 2025-11-21-010037
+-   TestGoFile (gofile)
+    -   TestBisyncRemoteLocal/all_changed
+    -   TestBisyncRemoteLocal/backupdir
+    -   TestBisyncRemoteLocal/basic
+    -   TestBisyncRemoteLocal/changes
+    -   TestBisyncRemoteLocal/check_access
+    -   78 more
+-   TestPcloud (pcloud)
+    -   TestBisyncRemoteRemote/check_access
+    -   TestBisyncRemoteRemote/check_access_filters
+-   Updated: 2025-12-10-010012
 
 The following backends either have not been tested recently or have
 known issues that are deemed unfixable for the time being:
@@ -28517,12 +28527,21 @@ Properties:
     -   "ru-1"
         -   St. Petersburg
         -   Provider: Selectel,Servercore
-    -   "gis-1"
-        -   Moscow
-        -   Provider: Servercore
+    -   "ru-3"
+        -   St. Petersburg
+        -   Provider: Selectel
     -   "ru-7"
         -   Moscow
-        -   Provider: Servercore
+        -   Provider: Selectel,Servercore
+    -   "gis-1"
+        -   Moscow
+        -   Provider: Selectel,Servercore
+    -   "kz-1"
+        -   Kazakhstan
+        -   Provider: Selectel
+    -   "uz-2"
+        -   Uzbekistan
+        -   Provider: Selectel
     -   "uz-2"
         -   Tashkent, Uzbekistan
         -   Provider: Servercore
@@ -29315,13 +29334,25 @@ Properties:
         -   SeaweedFS S3 localhost
         -   Provider: SeaweedFS
     -   "s3.ru-1.storage.selcloud.ru"
-        -   Saint Petersburg
+        -   St. Petersburg
+        -   Provider: Selectel
+    -   "s3.ru-3.storage.selcloud.ru"
+        -   St. Petersburg
+        -   Provider: Selectel
+    -   "s3.ru-7.storage.selcloud.ru"
+        -   Moscow
         -   Provider: Selectel,Servercore
     -   "s3.gis-1.storage.selcloud.ru"
         -   Moscow
-        -   Provider: Servercore
-    -   "s3.ru-7.storage.selcloud.ru"
-        -   Moscow
+        -   Provider: Selectel,Servercore
+    -   "s3.kz-1.storage.selcloud.ru"
+        -   Kazakhstan
+        -   Provider: Selectel
+    -   "s3.uz-2.storage.selcloud.ru"
+        -   Uzbekistan
+        -   Provider: Selectel
+    -   "s3.ru-1.storage.selcloud.ru"
+        -   Saint Petersburg
         -   Provider: Servercore
     -   "s3.uz-2.srvstorage.uz"
         -   Tashkent, Uzbekistan
@@ -41720,6 +41751,9 @@ integration with rclone, FileLu makes managing files in the cloud easy.
 Its cross-platform file backup services let you upload and back up files
 from any internet-connected device.
 
+Note FileLu now has a fully featured S3 backend FileLu S5, an industry
+standard S3 compatible object store.
+
 Configuration
 
 Here is an example of how to make a remote called filelu. First, run:
@@ -43696,9 +43730,15 @@ Properties:
 
 --gcs-endpoint
 
-Endpoint for the service.
+Custom endpoint for the storage API. Leave blank to use the provider
+default.
 
-Leave blank normally.
+When using a custom endpoint that includes a subpath (e.g.
+example.org/custom/endpoint), the subpath will be ignored during upload
+operations due to a limitation in the underlying Google API Go client
+library. Download and listing operations will work correctly with the
+full endpoint path. If you require subpath support for uploads, avoid
+using subpaths in your custom endpoint configuration.
 
 Properties:
 
@@ -43706,6 +43746,14 @@ Properties:
 -   Env Var: RCLONE_GCS_ENDPOINT
 -   Type: string
 -   Required: false
+-   Examples:
+    -   "storage.example.org"
+        -   Specify a custom endpoint
+    -   "storage.example.org:4443"
+        -   Specifying a custom endpoint with port
+    -   "storage.example.org:4443/gcs/api"
+        -   Specifying a subpath, see the note, uploads won't use the
+            custom path!
 
 --gcs-encoding
 
@@ -43989,7 +44037,8 @@ key" button.
 -   In the next field, "OAuth Scopes", enter
     https://www.googleapis.com/auth/drive to grant read/write access to
     Google Drive specifically. You can also use
-    https://www.googleapis.com/auth/drive.readonly for read only access.
+    https://www.googleapis.com/auth/drive.readonly for read only access
+    with --drive-scope=drive.readonly.
 -   Click "Authorise"
 
 3. Configure rclone, assuming a new install
@@ -64009,6 +64058,22 @@ Options:
 -   "error": Return an error based on option value.
 
 Changelog
+
+v1.72.1 - 2025-12-10
+
+See commits
+
+-   Bug Fixes
+    -   build: update to go1.25.5 to fix CVE-2025-61729
+    -   doc fixes (Duncan Smart, Nick Craig-Wood)
+    -   configfile: Fix piped config support (Jonas Tingeborn)
+    -   log
+        -   Fix PID not included in JSON log output (Tingsong Xu)
+        -   Fix backtrace not going to the --log-file (Nick Craig-Wood)
+-   Google Cloud Storage
+    -   Improve endpoint parameter docs (Johannes Rothe)
+-   S3
+    -   Add missing regions for Selectel provider (Nick Craig-Wood)
 
 v1.72.0 - 2025-11-21
 
