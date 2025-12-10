@@ -540,35 +540,33 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
-// Open opens the file for reading
+// Open opens the file for reading with ETag support and intelligent range handling
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	// Build the download URL
 	url := fmt.Sprintf("%s/%s", o.fs.opt.DownloadURL, o.mediaKey)
 
-	// Create the HTTP request
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+	// Check if we need seeking capability
+	needsSeek := false
+	for _, opt := range options {
+		if _, ok := opt.(*fs.SeekOption); ok {
+			needsSeek = true
+			break
+		}
 	}
 
-	// Add range headers if specified in options
-	for k, v := range fs.OpenOptionHeaders(options) {
-		req.Header.Add(k, v)
+	// Use seekable reader if seeking is needed, otherwise use optimized streaming reader
+	if needsSeek {
+		return newSeekableHTTPReader(ctx, url, o.fs.httpClient, o.size, options)
 	}
 
-	// Execute the request
-	res, err := o.fs.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %w", err)
+	// For simple streaming without seeking, use the optimized reader
+	// If there's a range option, the intelligent reader will handle it
+	if hasRangeOption(options) {
+		return newHTTPReader(ctx, url, o.fs.httpClient, o.size, options)
 	}
 
-	// Check status code
-	if res.StatusCode < 200 || res.StatusCode > 299 {
-		_ = res.Body.Close()
-		return nil, fmt.Errorf("HTTP error: %s", res.Status)
-	}
-
-	return res.Body, nil
+	// For simple full-file reads, use the optimized reader
+	return newOptimizedHTTPReader(ctx, url, o.fs.httpClient, options)
 }
 
 // Update is not supported
