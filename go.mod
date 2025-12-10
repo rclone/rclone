@@ -59,6 +59,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.97
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/sys/mountinfo v0.7.2
+	github.com/namecrane/hoist v0.0.0-20250527012958-4ac36e537a8b
 	github.com/ncw/swift/v2 v2.0.5
 	github.com/oracle/oci-go-sdk/v65 v65.104.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -220,6 +221,7 @@ require (
 	github.com/panjf2000/ants/v2 v2.11.3 // indirect
 	github.com/pengsrc/go-shared v0.2.1-0.20190131101655-1999055a4a14 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
+	github.com/philippseith/signalr v0.6.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -246,6 +248,8 @@ require (
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/willscott/go-nfs-client v0.0.0-20251022144359-801f10d98886 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
