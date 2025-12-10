@@ -494,6 +494,18 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 			}
 			in.ServerSideMoveEnd(newDst.Size()) // account the bytes for the server-side transfer
 			_ = in.Close()
+
+			{
+				fsrc := src.Fs()
+				fdst := newDst.Fs()
+
+				fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+				fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
+
+				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+					fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst)
+				}
+			}
 			return newDst, nil
 		case fs.ErrorCantMove:
 			fs.Debugf(src, "Can't move, switching to copy")
@@ -513,6 +525,17 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	if err != nil {
 		fs.Errorf(src, "Not deleting source as copy failed: %v", err)
 		return newDst, err
+	}
+	{
+		fsrc := src.Fs()
+		fdst := newDst.Fs()
+
+		fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+		fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
+
+		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+			fdstEx.NotifyLinkRootTransferComplete(ctx, src, fsrcEx, newDst)
+		}
 	}
 	// Delete src if no error on copy
 	return newDst, DeleteFile(ctx, src)
@@ -2083,6 +2106,22 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			needTransfer = false
 		}
 	}
+
+	{
+		fsrc := srcObj.Fs()
+
+		fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+		fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
+
+		if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+			needTransfer, err = fdstEx.RegisterLinkRoot(ctx, srcObj, fsrcEx, dstObj, srcObj.Remote(), needTransfer)
+			if err != nil {
+				fs.Errorf(srcObj, "Failed to register link root: %s", err)
+				return
+			}
+		}
+	}
+
 	if needTransfer {
 		// If destination already exists, then we must move it into --backup-dir if required
 		if dstObj != nil && backupDir != nil {
