@@ -27,12 +27,23 @@ const (
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
 	decayConstant = 2
+	defaultPageSize = 1000 // Default number of files to load per directory listing
 )
 
 var (
 	errNotWritable = errors.New("mediavfs is read-only except for move/rename operations")
 	errCrossUser   = errors.New("cannot move files between different users")
 )
+
+// convertUnixTimestamp converts a Unix timestamp (seconds or milliseconds) to time.Time
+func convertUnixTimestamp(timestamp int64) time.Time {
+	// If timestamp is > 10^10, it's likely in milliseconds
+	if timestamp > 10000000000 {
+		return time.Unix(timestamp/1000, (timestamp%1000)*1000000)
+	}
+	// Otherwise assume seconds
+	return time.Unix(timestamp, 0)
+}
 
 func init() {
 	fsi := &fs.RegInfo{
@@ -236,21 +247,50 @@ func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
 
 // listUserFiles lists files and directories for a specific user and path
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
-	// Query to get all files for the user
-	query := fmt.Sprintf(`
-		SELECT
-			media_key,
-			file_name,
-			COALESCE(name, file_name) as display_name,
-			COALESCE(path, '') as display_path,
-			size_bytes,
-			utc_timestamp
-		FROM %s
-		WHERE user_name = $1
-		ORDER BY display_path, display_name
-	`, f.opt.TableName)
+	// Normalize dirPath for comparison
+	dirPath = strings.Trim(dirPath, "/")
 
-	rows, err := f.db.QueryContext(ctx, query, userName)
+	// Query to get files in the specific directory with pagination
+	// Use SQL filtering to avoid loading all files
+	var query string
+	var args []interface{}
+
+	if dirPath == "" {
+		// Root directory - get files with empty path and subdirectories
+		query = fmt.Sprintf(`
+			SELECT
+				media_key,
+				file_name,
+				COALESCE(name, file_name) as display_name,
+				COALESCE(path, '') as display_path,
+				size_bytes,
+				utc_timestamp
+			FROM %s
+			WHERE user_name = $1
+			ORDER BY display_path, display_name
+			LIMIT $2
+		`, f.opt.TableName)
+		args = []interface{}{userName, defaultPageSize}
+	} else {
+		// Specific directory - get files where path matches or starts with dirPath
+		query = fmt.Sprintf(`
+			SELECT
+				media_key,
+				file_name,
+				COALESCE(name, file_name) as display_name,
+				COALESCE(path, '') as display_path,
+				size_bytes,
+				utc_timestamp
+			FROM %s
+			WHERE user_name = $1
+				AND (COALESCE(path, '') = $2 OR COALESCE(path, '') LIKE $3)
+			ORDER BY display_path, display_name
+			LIMIT $4
+		`, f.opt.TableName)
+		args = []interface{}{userName, dirPath, dirPath + "/%", defaultPageSize}
+	}
+
+	rows, err := f.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query files: %w", err)
 	}
@@ -258,9 +298,6 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 	// Track directories we've already added
 	dirsSeen := make(map[string]bool)
-
-	// Normalize dirPath for comparison
-	dirPath = strings.Trim(dirPath, "/")
 	var dirPrefix string
 	if dirPath != "" {
 		dirPrefix = dirPath + "/"
@@ -268,17 +305,20 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 	for rows.Next() {
 		var (
-			mediaKey    string
-			fileName    string
-			displayName string
-			displayPath string
-			sizeBytes   int64
-			timestamp   time.Time
+			mediaKey      string
+			fileName      string
+			displayName   string
+			displayPath   string
+			sizeBytes     int64
+			timestampUnix int64
 		)
 
-		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestamp); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
+
+		// Convert Unix timestamp (milliseconds) to time.Time
+		timestamp := convertUnixTimestamp(timestampUnix)
 
 		// Construct the full path
 		var fullPath string
@@ -382,17 +422,20 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	for rows.Next() {
 		var (
-			mediaKey    string
-			fileName    string
-			displayName string
-			displayPath string
-			sizeBytes   int64
-			timestamp   time.Time
+			mediaKey      string
+			fileName      string
+			displayName   string
+			displayPath   string
+			sizeBytes     int64
+			timestampUnix int64
 		)
 
-		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestamp); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
+
+		// Convert Unix timestamp (milliseconds) to time.Time
+		timestamp := convertUnixTimestamp(timestampUnix)
 
 		// Construct the full path
 		var fullPath string
