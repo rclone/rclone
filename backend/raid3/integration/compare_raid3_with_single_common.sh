@@ -162,59 +162,61 @@ create_rclone_config() {
 # Local storage remotes
 [${LOCAL_EVEN_REMOTE}]
 type = local
-nounc = true
 
 [${LOCAL_ODD_REMOTE}]
 type = local
-nounc = true
 
 [${LOCAL_PARITY_REMOTE}]
 type = local
-nounc = true
-
-[${LOCAL_SINGLE_REMOTE}]
-type = local
-nounc = true
 
 # RAID3 remote using local storage
 [localraid3]
 type = raid3
-even = ${LOCAL_EVEN_REMOTE}:
-odd = ${LOCAL_ODD_REMOTE}:
-parity = ${LOCAL_PARITY_REMOTE}:
+even = ${LOCAL_EVEN_REMOTE}:${LOCAL_EVEN_DIR}
+odd = ${LOCAL_ODD_REMOTE}:${LOCAL_ODD_DIR}
+parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR}
+timeout_mode = aggressive
+auto_cleanup = true
+auto_heal = false
+
+# Single local remote (alias type)
+[${LOCAL_SINGLE_REMOTE}]
+type = alias
+remote = ${LOCAL_SINGLE_DIR}
 
 # MinIO S3 remotes
 [${MINIO_EVEN_REMOTE}]
 type = s3
-provider = MinIO
+provider = Minio
+env_auth = false
 access_key_id = ${MINIO_EVEN_USER:-even}
 secret_access_key = ${MINIO_EVEN_PASS:-evenpass88}
-endpoint = http://localhost:${MINIO_EVEN_PORT}
-force_path_style = true
+endpoint = http://127.0.0.1:${MINIO_EVEN_PORT}
+acl = private
+no_check_bucket = false
+max_retries = 1
 
 [${MINIO_ODD_REMOTE}]
 type = s3
-provider = MinIO
+provider = Minio
+env_auth = false
 access_key_id = ${MINIO_ODD_USER:-odd}
 secret_access_key = ${MINIO_ODD_PASS:-oddpass88}
-endpoint = http://localhost:${MINIO_ODD_PORT}
-force_path_style = true
+endpoint = http://127.0.0.1:${MINIO_ODD_PORT}
+acl = private
+no_check_bucket = false
+max_retries = 1
 
 [${MINIO_PARITY_REMOTE}]
 type = s3
-provider = MinIO
+provider = Minio
+env_auth = false
 access_key_id = ${MINIO_PARITY_USER:-parity}
 secret_access_key = ${MINIO_PARITY_PASS:-paritypass88}
-endpoint = http://localhost:${MINIO_PARITY_PORT}
-force_path_style = true
-
-[${MINIO_SINGLE_REMOTE}]
-type = s3
-provider = MinIO
-access_key_id = ${MINIO_SINGLE_USER:-single}
-secret_access_key = ${MINIO_SINGLE_PASS:-singlepass88}
-endpoint = http://localhost:${MINIO_SINGLE_PORT}
-force_path_style = true
+endpoint = http://127.0.0.1:${MINIO_PARITY_PORT}
+acl = private
+no_check_bucket = false
+max_retries = 1
 
 # RAID3 remote using MinIO storage
 [minioraid3]
@@ -222,6 +224,20 @@ type = raid3
 even = ${MINIO_EVEN_REMOTE}:
 odd = ${MINIO_ODD_REMOTE}:
 parity = ${MINIO_PARITY_REMOTE}:
+timeout_mode = aggressive
+auto_cleanup = true
+auto_heal = false
+
+[${MINIO_SINGLE_REMOTE}]
+type = s3
+provider = Minio
+env_auth = false
+access_key_id = ${MINIO_SINGLE_USER:-single}
+secret_access_key = ${MINIO_SINGLE_PASS:-singlepass88}
+endpoint = http://127.0.0.1:${MINIO_SINGLE_PORT}
+acl = private
+no_check_bucket = false
+max_retries = 1
 EOF
   
   log_pass "config" "Config file created successfully: ${config_file}"

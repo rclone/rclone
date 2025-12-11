@@ -742,6 +742,8 @@ The `backend/raid3/integration/` directory contains comprehensive Bash-based int
 - `compare_raid3_with_single_heal.sh` - Auto-heal functionality tests
 - `compare_raid3_with_single_errors.sh` - Error handling and rollback tests
 
+**Platform Compatibility**: These scripts are Bash-based and work on Linux and macOS. They will **not work natively on Windows** due to Unix-specific commands and paths. To run on Windows, use WSL (Windows Subsystem for Linux), Git Bash, or Cygwin.
+
 #### Test-Specific Configuration File
 
 The integration test scripts automatically use a test-specific rclone configuration file if it exists:
@@ -765,10 +767,12 @@ cd ${HOME}/go/raid3storage
 ./backend/raid3/integration/compare_raid3_with_single_rebuild.sh create-config
 ```
 
-This creates `${WORKDIR}/rclone_raid3_integration_tests.config` with all required remotes:
-- Local storage remotes (localeven, localodd, localparity, localsingle)
-- MinIO S3 remotes (minioeven, minioodd, minioparity, miniosingle)
-- RAID3 remotes (localraid3, minioraid3)
+This creates `${WORKDIR}/rclone_raid3_integration_tests.config` with all required remotes configured and ready to use:
+- Local storage remotes (localeven, localodd, localparity, localsingle) with proper `path` parameters
+- MinIO S3 remotes (minioeven, minioodd, minioparity, miniosingle) with endpoint configuration
+- RAID3 remotes (localraid3, minioraid3) combining the backends
+
+The generated config file is complete and functional. Directory paths are based on `${WORKDIR}` defaults (defined in `compare_raid3_env.sh`) and can be customized via `compare_raid3_env.local.sh` (see "Customizing Test Configuration" below).
 
 **Custom Config Location**:
 

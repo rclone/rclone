@@ -368,9 +368,8 @@ run_all_heal_scenarios() {
 
 main() {
   parse_args "$@"
-  ensure_workdir
   
-  # Handle create-config command (doesn't need storage-type or config file check)
+  # Handle create-config command early (doesn't need workdir check or storage-type)
   if [[ "${COMMAND}" == "create-config" ]]; then
     local config_file="${RCLONE_CONFIG_CUSTOM:-${WORKDIR}/rclone_raid3_integration_tests.config}"
     if create_rclone_config "${config_file}" "${FORCE_CONFIG}"; then
@@ -381,6 +380,7 @@ main() {
     fi
   fi
   
+  ensure_workdir
   ensure_rclone_config
 
   case "${COMMAND}" in
