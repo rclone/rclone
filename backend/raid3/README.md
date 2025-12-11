@@ -1,6 +1,6 @@
 # RAID3 Backend - RAID 3 Storage
 
-The `raid3` backend implements **RAID 3** storage with byte-level data striping and XOR parity across three remotes. Data is split into even and odd byte indices, with parity calculated to enable future recovery from single backend failures.
+The `raid3` backend implements **RAID 3** storage with byte-level data striping and XOR parity across three remotes. Data is split into even and odd byte indices, with parity calculated to enable future rebuild from single backend failures.
 
 ## 🎯 RAID 3 Features
 
@@ -10,17 +10,17 @@ The `raid3` backend implements **RAID 3** storage with byte-level data striping 
 - ✅ Parity files with length indicators (.parity-el/.parity-ol)
 - ✅ All three particles uploaded/deleted in parallel
 - ✅ **Automatic parity reconstruction** (degraded mode reads)
-- ✅ **Automatic self-healing** (background particle restoration)
+- ✅ **Automatic heal** (background particle restoration)
 
 **Storage Efficiency:**
 - Uses ~150% storage (50% overhead for parity)
 - Better than full duplication (200% storage)
-- Enables single-backend failure recovery
+- Enables single-backend failure rebuild
 
 **Degraded Mode (Hardware RAID 3 Compliant):**
 - ✅ **Reads** work with ANY 2 of 3 backends available
 - ✅ Missing particles are automatically reconstructed from parity
-- ✅ **Self-healing** automatically restores missing particles in background
+- ✅ **Heal** automatically restores missing particles in background
 - ❌ **Writes** require ALL 3 backends available (strict RAID 3 behavior)
 - ✅ **Deletes** work with ANY backends available (idempotent)
 
@@ -115,7 +115,7 @@ Cleaned up 5 broken objects (freed 3.0 KiB)
 
 **When to use**:
 - Cleaning up after backend failures
-- Recovering from partial write operations
+- Rebuilding from partial write operations
 - Periodic maintenance
 - Before switching from `auto_cleanup=false` to `auto_cleanup=true`
 
@@ -126,11 +126,11 @@ Cleaned up 5 broken objects (freed 3.0 KiB)
 
 ### Backend Commands
 
-Level3 provides several backend-specific commands for management and recovery:
+Level3 provides several backend-specific commands for management and rebuild:
 
 #### Status Command
 
-Check backend health and get recovery guidance:
+Check backend health and get rebuild guidance:
 
 ```bash
 rclone backend status raid3:
@@ -139,7 +139,7 @@ rclone backend status raid3:
 Shows:
 - Health status of all three backends (even, odd, parity)
 - Impact assessment (what operations work)
-- Complete recovery guide for degraded mode
+- Complete rebuild guide for degraded mode
 - Step-by-step instructions for backend replacement
 
 #### Rebuild Command
@@ -164,7 +164,12 @@ The rebuild process:
 4. Shows progress and ETA
 5. Verifies integrity
 
-**Note**: Rebuild is different from self-healing - it's a manual, complete restoration after backend replacement.
+**Note**: Rebuild is different from heal - it's a manual, complete restoration after backend replacement.
+
+**Directory Handling:**
+- Rebuild command processes files and their parent directories are automatically created during file uploads
+- Empty directories that exist on 2/3 backends are automatically reconstructed by auto-heal when accessed (via `List()` operations)
+- This ensures complete directory structure is maintained without requiring explicit directory rebuild commands
 
 #### Heal Command
 
@@ -188,12 +193,12 @@ Heal Summary
 Files scanned:      100
 Healthy (3/3):       85
 Healed (2/3→3/3):   12
-Unrecoverable (≤1): 3
+Unrebuildable (≤1): 3
 ```
 
 **When to use**:
 - Periodic maintenance
-- After recovering from backend failures
+- After rebuilding from backend failures
 - Before important operations
 - When you want to ensure all objects are fully healthy
 
@@ -220,12 +225,12 @@ Unrecoverable (≤1): 3
 # auto_heal=true (default)
 $ rclone cat raid3:file.txt
 # ✅ Reads successfully (reconstructs from even+odd or parity)
-# ✅ Queues missing particle for upload (self-healing)
+# ✅ Queues missing particle for upload (heal)
 
 # auto_heal=false
 $ rclone cat raid3:file.txt  
 # ✅ Reads successfully (reconstructs from available particles)
-# ❌ Does NOT queue self-healing upload
+# ❌ Does NOT queue heal upload
 ```
 
 **Directory on 2/3 backends** (degraded, reconstructable):
@@ -233,13 +238,18 @@ $ rclone cat raid3:file.txt
 # auto_heal=true (default)
 $ rclone ls raid3:mydir
 # ✅ Lists contents
-# ✅ Creates missing directory on 3rd backend (reconstruction)
+# ✅ Automatically creates missing directory on 3rd backend during access (2/3 → 3/3)
+#    This happens transparently - no manual intervention needed
 
 # auto_heal=false
 $ rclone ls raid3:mydir
 # ✅ Lists contents  
-# ❌ Does NOT create missing directory
+# ❌ Does NOT create missing directory (directory remains degraded)
 ```
+
+**Note**: Directory reconstruction via auto-heal complements the rebuild command:
+- **Rebuild command**: Rebuilds file particles (parent directories created automatically during file uploads)
+- **Auto-heal during access**: Reconstructs empty directories that exist on 2/3 backends when accessed
 
 **File with 1/3 particles** (orphaned, cannot reconstruct):
 ```bash
@@ -355,17 +365,28 @@ When downloading, the backend:
 3. Merges even and odd bytes back into the original data
 4. Returns the reconstructed file
 
-### Degraded Mode & Self-Healing
+### Degraded Mode & Heal
 
-**Automatic Reconstruction:**
+**Automatic File Reconstruction:**
 When one data particle (even or odd) is missing but parity is available:
 1. Backend detects the missing particle
 2. Reads the available data particle + parity particle
 3. Reconstructs the missing data using XOR operation
 4. Returns the complete file to the user
-5. **Queues the missing particle for background upload (self-healing)**
+5. **Queues the missing particle for background upload (heal)**
 
-**Self-Healing Process:**
+**Automatic Directory Reconstruction:**
+When a directory exists on 2/3 backends and is accessed (via `List()` operation):
+1. Backend detects the directory exists on exactly 2 backends
+2. If `auto_heal=true` (default), automatically creates the missing directory on the third backend
+3. Directory is immediately available on all 3 backends (2/3 → 3/3)
+4. This happens transparently during normal directory access operations
+
+**Note**: Directory reconstruction complements the rebuild command:
+- **Rebuild command**: Rebuilds file particles on a replacement backend (handles files and their parent directories)
+- **Auto-heal during access**: Reconstructs empty directories that exist on 2/3 backends (handles directory structure)
+
+**Heal Process (Files):**
 1. Missing particle is calculated during reconstruction
 2. Upload is queued to a background worker
 3. User gets data immediately (6-7 seconds with aggressive timeout)
@@ -376,16 +397,16 @@ When one data particle (even or odd) is missing but parity is available:
 ```bash
 $ rclone cat raid3:file.txt
 2025/11/02 10:00:00 INFO  : file.txt: Reconstructed from even+parity (degraded mode)
-2025/11/02 10:00:00 INFO  : raid3: Queued odd particle for self-healing upload: file.txt
+2025/11/02 10:00:00 INFO  : raid3: Queued odd particle for heal upload: file.txt
 Hello World!
-2025/11/02 10:00:07 INFO  : raid3: Waiting for 1 self-healing upload(s) to complete...
-2025/11/02 10:00:10 INFO  : raid3: Self-healing upload completed for file.txt (odd)
-2025/11/02 10:00:10 INFO  : raid3: Self-healing complete
+2025/11/02 10:00:07 INFO  : raid3: Waiting for 1 heal upload(s) to complete...
+2025/11/02 10:00:10 INFO  : raid3: Heal upload completed for file.txt (odd)
+2025/11/02 10:00:10 INFO  : raid3: Heal complete
 ```
 
 **Performance:**
 - **Normal operation** (all particles healthy): 6-7 seconds
-- **Degraded mode with self-healing**: 9-10 seconds (6-7s read + 2-3s upload)
+- **Degraded mode with heal**: 9-10 seconds (6-7s read + 2-3s upload)
 - **No delay** when all particles are available (Shutdown exits immediately)
 
 ## Configuration
@@ -476,7 +497,7 @@ The backend performs integrity checks:
 ### Limitations
 
 #### Outdated Documentation Note
-The following sections may contain outdated information about missing features. Parity is now implemented and single backend failure recovery is supported through degraded mode reads and self-healing.
+The following sections may contain outdated information about missing features. Parity is now implemented and single backend failure rebuild is supported through degraded mode reads and heal.
 
 #### Memory Usage
 - Files are buffered entirely in memory during upload/download
@@ -535,7 +556,7 @@ The raid3 backend follows **hardware RAID 3 behavior** for error handling:
 ### Read Operations ✅ Degraded Mode Supported
 - Work with **ANY 2 of 3** backends available
 - Automatically reconstruct missing particles from parity
-- Self-healing restores missing particles in background
+- Heal restores missing particles in background
 - **Example**: If odd backend is down, reads use even + parity
 
 ### Write Operations ❌ All Backends Required (Strict Enforcement)
@@ -633,7 +654,7 @@ $ rclone copy local:newfile.txt level3:
 # But reads still work!
 $ rclone cat raid3:file.txt
 ✅ Success - reconstructed from even+parity (~7s)
-INFO: Self-healing upload completed
+INFO: Heal upload completed
 
 # Updates also blocked in degraded mode (prevents corruption)
 $ echo "new data" | rclone rcat raid3:file.txt
@@ -712,6 +733,111 @@ A comprehensive test script is available at `/tmp/test-raid3.sh` that tests:
 - ✅ MD5 hash verification
 - ✅ Deletion of all three particles
 
+### Integration Test Scripts
+
+The `backend/raid3/integration/` directory contains comprehensive Bash-based integration test scripts for validating raid3 backend functionality:
+
+- `compare_raid3_with_single.sh` - Black-box comparison tests
+- `compare_raid3_with_single_rebuild.sh` - Rebuild command validation
+- `compare_raid3_with_single_heal.sh` - Auto-heal functionality tests
+- `compare_raid3_with_single_errors.sh` - Error handling and rollback tests
+
+#### Test-Specific Configuration File
+
+The integration test scripts automatically use a test-specific rclone configuration file if it exists:
+
+**Location**: `${WORKDIR}/rclone_raid3_integration_tests.config`
+
+Where `WORKDIR` defaults to `${HOME}/go/raid3storage` (can be overridden via environment variable).
+
+**Config File Resolution Priority**:
+1. `--config` option (if provided on command line)
+2. Test-specific config: `${WORKDIR}/rclone_raid3_integration_tests.config` (if exists)
+3. `RCLONE_CONFIG` environment variable (if set)
+4. Default: `~/.config/rclone/rclone.conf`
+
+**Creating the Test Config File**:
+
+Use the `create-config` command to generate a suitable config file:
+
+```bash
+cd ${HOME}/go/raid3storage
+./backend/raid3/integration/compare_raid3_with_single_rebuild.sh create-config
+```
+
+This creates `${WORKDIR}/rclone_raid3_integration_tests.config` with all required remotes:
+- Local storage remotes (localeven, localodd, localparity, localsingle)
+- MinIO S3 remotes (minioeven, minioodd, minioparity, miniosingle)
+- RAID3 remotes (localraid3, minioraid3)
+
+**Custom Config Location**:
+
+To use a different config file:
+
+```bash
+./compare_raid3_with_single_rebuild.sh --config /path/to/custom.conf test even
+```
+
+**Overwriting Existing Config**:
+
+To overwrite an existing test config file:
+
+```bash
+./compare_raid3_with_single_rebuild.sh --force create-config
+```
+
+**Example Usage**:
+
+```bash
+# 1. Create test config file
+cd ${HOME}/go/raid3storage
+./backend/raid3/integration/compare_raid3_with_single_rebuild.sh create-config
+
+# 2. Run tests (config file is automatically detected)
+./backend/raid3/integration/compare_raid3_with_single_rebuild.sh --storage-type local test
+
+# 3. Check which config file is being used (visible in script output)
+# Scripts log: "Using rclone config: /path/to/config"
+```
+
+#### Customizing Test Configuration
+
+You can override default test configuration values by creating `compare_raid3_env.local.sh` in the `backend/raid3/integration/` directory. This file is automatically sourced by all test scripts if present, allowing you to customize settings without modifying tracked files.
+
+**Location**: `backend/raid3/integration/compare_raid3_env.local.sh`
+
+**What Can Be Overridden**:
+
+All variables defined in `compare_raid3_env.sh` can be overridden, including:
+
+- **Directories**: `LOCAL_EVEN_DIR`, `LOCAL_ODD_DIR`, `LOCAL_PARITY_DIR`, `LOCAL_SINGLE_DIR`, `MINIO_EVEN_DIR`, etc.
+- **Remote names**: `LOCAL_EVEN_REMOTE`, `LOCAL_ODD_REMOTE`, `MINIO_EVEN_REMOTE`, etc., or `RAID3_REMOTE`/`SINGLE_REMOTE` for main remotes
+- **MinIO configuration**: `MINIO_EVEN_NAME`, `MINIO_ODD_NAME`, `MINIO_EVEN_PORT`, `MINIO_ODD_PORT`, etc.
+- **Base paths**: `WORKDIR` (affects all directory defaults)
+
+**Example**:
+
+```bash
+# Create compare_raid3_env.local.sh in backend/raid3/integration/
+cat > backend/raid3/integration/compare_raid3_env.local.sh << 'EOF'
+#!/usr/bin/env bash
+# Custom remote names matching your rclone.conf
+RAID3_REMOTE="myraid3"
+SINGLE_REMOTE="mysingle"
+
+# Custom MinIO ports (if default ports conflict)
+MINIO_EVEN_PORT=9101
+MINIO_ODD_PORT=9102
+MINIO_PARITY_PORT=9103
+MINIO_SINGLE_PORT=9104
+
+# Custom work directory
+WORKDIR="${HOME}/custom/raid3test"
+EOF
+```
+
+The scripts will automatically use these overrides when present. This file should not be committed to version control (add to `.gitignore`).
+
 ## Implementation Notes
 
 The raid3 backend:
@@ -728,12 +854,12 @@ The raid3 backend:
 | **Number of backends** | 2 | 3 |
 | **Data redundancy** | ✅ Full (identical copies) | ✅ With parity (XOR) |
 | **Storage efficiency** | 50% (2x storage) | ~67% (1.5x storage) |
-| **Single backend failure** | ✅ Still works | ✅ Degraded mode reads + self-healing |
+| **Single backend failure** | ✅ Still works | ✅ Degraded mode reads + heal |
 | **Current status** | ✅ Fully redundant | ✅ Parity implemented |
 | **Use case** | Backup, redundancy | Efficient fault-tolerance |
 | **Read from** | Either backend | Any 2 of 3 (degraded mode) |
 | **Write to** | Both (identical) | All 3 required (strict RAID 3) |
 | **Parity** | ❌ None | ✅ XOR parity |
-| **Single backend failure** | ✅ Still works | ✅ Degraded mode reads + self-healing |
+| **Single backend failure** | ✅ Still works | ✅ Degraded mode reads + heal |
 | **Backend replacement** | ✅ Manual copy | ✅ Rebuild command available |
 

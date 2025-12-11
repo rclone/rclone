@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 #
-# compare_raid3_with_single_recover.sh
+# compare_raid3_with_single_rebuild.sh
 # -------------------------------------
-# Recovery-focused harness for rclone raid3 backends.
+# Rebuild-focused harness for rclone raid3 backends.
 #
 # This script simulates disk swaps for individual raid3 remotes (even/odd/parity),
 # runs `rclone backend rebuild`, and validates that the dataset is restored
 # (or fails as expected) for both local and MinIO-backed configurations.
 #
 # Usage:
-#   compare_raid3_with_single_recover.sh [options] <command> [args]
+#   compare_raid3_with_single_rebuild.sh [options] <command> [args]
 #
 # Commands:
 #   start                 Start MinIO containers (requires --storage-type=minio).
 #   stop                  Stop MinIO containers (requires --storage-type=minio).
 #   teardown              Purge all data from the selected storage-type.
-#   list                  Show available recovery scenarios.
+#   list                  Show available rebuild scenarios.
 #   test [name]           Run a named scenario (even|odd|parity). If omitted, runs all.
 #
 # Options:
@@ -33,8 +33,45 @@ set -euo pipefail
 
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-# shellcheck source=backend/raid3/integration/compare_raid3_common.sh
-. "${SCRIPT_DIR}/compare_raid3_common.sh"
+
+# Parse --config and --force options early (before sourcing common.sh)
+# This allows users to override the config file location
+# We'll store the original arguments and filter out --config/--force for later parsing
+ORIGINAL_ARGS=("$@")
+RCLONE_CONFIG_CUSTOM=""
+FORCE_CONFIG=0
+FILTERED_ARGS=()
+
+while [[ ${#ORIGINAL_ARGS[@]} -gt 0 ]]; do
+  case "${ORIGINAL_ARGS[0]}" in
+    --config)
+      if [[ ${#ORIGINAL_ARGS[@]} -lt 2 ]]; then
+        echo "ERROR: --config requires an argument" >&2
+        exit 1
+      fi
+      RCLONE_CONFIG_CUSTOM="${ORIGINAL_ARGS[1]}"
+      ORIGINAL_ARGS=("${ORIGINAL_ARGS[@]:2}")
+      ;;
+    --config=*)
+      RCLONE_CONFIG_CUSTOM="${ORIGINAL_ARGS[0]#*=}"
+      ORIGINAL_ARGS=("${ORIGINAL_ARGS[@]:1}")
+      ;;
+    --force)
+      FORCE_CONFIG=1
+      ORIGINAL_ARGS=("${ORIGINAL_ARGS[@]:1}")
+      ;;
+    *)
+      FILTERED_ARGS+=("${ORIGINAL_ARGS[0]}")
+      ORIGINAL_ARGS=("${ORIGINAL_ARGS[@]:1}")
+      ;;
+  esac
+done
+
+# Set filtered args for main parsing
+set -- "${FILTERED_ARGS[@]}"
+
+# shellcheck source=backend/raid3/integration/compare_raid3_with_single_common.sh
+. "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
 VERBOSE=0
 STORAGE_TYPE=""
@@ -49,16 +86,25 @@ Commands:
   start                      Start MinIO containers (requires --storage-type=minio).
   stop                       Stop MinIO containers (requires --storage-type=minio).
   teardown                   Purge all test data for the selected storage type.
-  list                       Show available recovery scenarios.
+  list                       Show available rebuild scenarios.
   test [name]                Run the named scenario (even|odd|parity). Without a name, runs all.
+  create-config              Create a test-specific rclone config file.
 
 Options:
   --storage-type <local|minio>   Select backend pair (required for start/stop/test/teardown).
+  --config <path>                 Use a custom rclone config file (overrides automatic detection).
+  --force                          Overwrite existing config file when using create-config.
   -v, --verbose                  Show stdout/stderr from rclone commands.
   -h, --help                     Display this help.
 
-Environment:
-  RCLONE_CONFIG                  Path to rclone.conf (default: ${RCLONE_CONFIG})
+Config File Resolution:
+  The script uses the following priority order to find the rclone config:
+  1. --config option (if provided)
+  2. Test-specific config: \${WORKDIR}/rclone_raid3_integration_tests.config (if exists)
+  3. RCLONE_CONFIG environment variable (if set)
+  4. Default: ~/.config/rclone/rclone.conf
+
+  Use 'create-config' command to generate the test-specific config file.
 
 The script must be executed from ${WORKDIR}.
 EOF
@@ -87,7 +133,7 @@ parse_args() {
         usage
         exit 0
         ;;
-      start|stop|teardown|list|test)
+      start|stop|teardown|list|test|create-config)
         if [[ -n "${COMMAND}" ]]; then
           die "Multiple commands provided: '${COMMAND}' and '$1'"
         fi
@@ -109,6 +155,9 @@ parse_args() {
   case "${COMMAND}" in
     start|stop|teardown|test)
       [[ -n "${STORAGE_TYPE}" ]] || die "--storage-type must be provided for '${COMMAND}'"
+      ;;
+    create-config)
+      # create-config doesn't need storage-type
       ;;
   esac
 
@@ -150,7 +199,7 @@ print_scenario_summary() {
 
 list_scenarios() {
   cat <<EOF
-Available recovery scenarios:
+Available rebuild scenarios:
   even    Simulate even backend swap and verify rebuild (success + failure cases).
   odd     Simulate odd backend swap and verify rebuild (success + failure cases).
   parity  Simulate parity backend swap and verify rebuild (success + failure cases).
@@ -288,21 +337,21 @@ run_rebuild_success_scenario() {
     return 1
   fi
 
-  local recovered_dir
-  recovered_dir=$(mktemp -d) || { rm -rf "${ref_dir}"; return 1; }
-  if ! rclone_cmd copy "${RAID3_REMOTE}:${dataset_id}" "${recovered_dir}" >/dev/null; then
+  local rebuilt_dir
+  rebuilt_dir=$(mktemp -d) || { rm -rf "${ref_dir}"; return 1; }
+  if ! rclone_cmd copy "${RAID3_REMOTE}:${dataset_id}" "${rebuilt_dir}" >/dev/null; then
     log "Failed to download rebuilt dataset for comparison."
-    rm -rf "${ref_dir}" "${recovered_dir}"
+    rm -rf "${ref_dir}" "${rebuilt_dir}"
     return 1
   fi
 
-  if ! diff -qr "${ref_dir}" "${recovered_dir}" >/dev/null; then
+  if ! diff -qr "${ref_dir}" "${rebuilt_dir}" >/dev/null; then
     log "Rebuilt dataset differs from reference for backend '${backend}'."
-    rm -rf "${ref_dir}" "${recovered_dir}"
+    rm -rf "${ref_dir}" "${rebuilt_dir}"
     return 1
   fi
 
-  rm -rf "${ref_dir}" "${recovered_dir}"
+  rm -rf "${ref_dir}" "${rebuilt_dir}"
   log "Rebuild success scenario for '${backend}' completed; dataset retained for inspection."
   return 0
 }
@@ -334,7 +383,7 @@ run_rebuild_failure_scenario() {
     log "Rebuild command returned status ${lvl_status} as expected when '${backend}' and '${secondary}' are missing."
   else
     if grep -q "Files rebuilt: 0/" <<<"${summary_content}"; then
-      log "Rebuild reported zero files rebuilt, indicating it could not recover '${backend}' with only one source."
+      log "Rebuild reported zero files rebuilt, indicating it could not rebuild '${backend}' with only one source."
     else
       log "Expected rebuild summary to report zero files rebuilt, but got:"
       log "${summary_content}"
@@ -412,7 +461,7 @@ run_rebuild_failure_scenario() {
   fi
 
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${check_stdout}" "${check_stderr}"
-  log_info "scenario:${backend}" "Failure-mode dataset ${dataset_id} confirmed unrecoverable; cleaning up particles."
+  log_info "scenario:${backend}" "Failure-mode dataset ${dataset_id} confirmed unrebuildable; cleaning up particles."
   cleanup_raid3_dataset_raw "${dataset_id}"
   log_info "scenario:${backend}" "Failure-mode dataset ${dataset_id} removed from underlying remotes."
   log_info "scenario:${backend}" "Rebuild failure scenario for '${backend}' verified (check reported mismatch)."
@@ -421,7 +470,7 @@ run_rebuild_failure_scenario() {
 
 run_rebuild_scenarios() {
   local backend="$1"
-  log_info "suite" "Running recovery scenarios for '${backend}' (${STORAGE_TYPE})"
+  log_info "suite" "Running rebuild scenarios for '${backend}' (${STORAGE_TYPE})"
 
   if ! run_rebuild_failure_scenario "${backend}"; then
     log_warn "suite" "Failure scenario failed for backend '${backend}'."
@@ -453,6 +502,18 @@ run_all_scenarios() {
 main() {
   parse_args "$@"
   ensure_workdir
+  
+  # Handle create-config command (doesn't need storage-type or config file check)
+  if [[ "${COMMAND}" == "create-config" ]]; then
+    local config_file="${RCLONE_CONFIG_CUSTOM:-${WORKDIR}/rclone_raid3_integration_tests.config}"
+    if create_rclone_config "${config_file}" "${FORCE_CONFIG}"; then
+      log_info "config" "Config file ready at: ${config_file}"
+      exit 0
+    else
+      exit 1
+    fi
+  fi
+  
   ensure_rclone_config
 
   case "${COMMAND}" in
@@ -518,4 +579,3 @@ main() {
 }
 
 main "$@"
-

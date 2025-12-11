@@ -1,14 +1,14 @@
 // Package raid3 implements a backend that splits data across two remotes using byte-level striping
 package raid3
 
-// This file contains the self-healing infrastructure for automatic particle reconstruction.
+// This file contains the heal infrastructure for automatic particle reconstruction.
 //
 // It includes:
 //   - uploadJob and uploadQueue types for managing background uploads
-//   - backgroundUploader: Goroutine workers for processing self-healing uploads
+//   - backgroundUploader: Goroutine workers for processing heal uploads
 //   - uploadParticle: Upload a reconstructed particle to its backend
 //   - queueParticleUpload: Queue a particle for background upload (deduplicated)
-//   - Self-healing is triggered automatically when reading degraded objects (2/3 particles)
+//   - Heal is triggered automatically when reading degraded objects (2/3 particles)
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 )
 
-// uploadJob represents a particle that needs to be uploaded for self-healing
+// uploadJob represents a particle that needs to be uploaded for heal
 type uploadJob struct {
 	remote       string
 	particleType string // "even", "odd", or "parity"
@@ -29,7 +29,7 @@ type uploadJob struct {
 	isOddLength  bool
 }
 
-// uploadQueue manages pending self-healing uploads
+// uploadQueue manages pending heal uploads
 type uploadQueue struct {
 	mu      sync.Mutex
 	pending map[string]bool // key: remote+particleType, value: true if queued
@@ -75,10 +75,10 @@ func (q *uploadQueue) len() int {
 	return len(q.pending)
 }
 
-// backgroundUploader runs as a goroutine to process self-healing uploads
+// backgroundUploader runs as a goroutine to process heal uploads
 func (f *Fs) backgroundUploader(ctx context.Context, workerID int) {
-	fs.Debugf(f, "Self-healing worker %d started", workerID)
-	defer fs.Debugf(f, "Self-healing worker %d stopped", workerID)
+	fs.Debugf(f, "Heal worker %d started", workerID)
+	defer fs.Debugf(f, "Heal worker %d stopped", workerID)
 
 	for {
 		select {
@@ -88,14 +88,14 @@ func (f *Fs) backgroundUploader(ctx context.Context, workerID int) {
 				return
 			}
 
-			fs.Infof(f, "Self-healing: uploading %s particle for %s", job.particleType, job.remote)
+			fs.Infof(f, "Heal: uploading %s particle for %s", job.particleType, job.remote)
 
 			err := f.uploadParticle(ctx, job)
 			if err != nil {
-				fs.Errorf(f, "Self-healing upload failed for %s (%s): %v", job.remote, job.particleType, err)
+				fs.Errorf(f, "Heal upload failed for %s (%s): %v", job.remote, job.particleType, err)
 				// TODO: Could implement retry logic here
 			} else {
-				fs.Infof(f, "Self-healing upload completed for %s (%s)", job.remote, job.particleType)
+				fs.Infof(f, "Heal upload completed for %s (%s)", job.remote, job.particleType)
 			}
 
 			// Remove from pending map and mark as done
@@ -154,7 +154,7 @@ func (f *Fs) queueParticleUpload(remote, particleType string, data []byte, isOdd
 
 	if f.uploadQueue.add(job) {
 		f.uploadWg.Add(1)
-		fs.Infof(f, "Queued %s particle for self-healing upload: %s", particleType, remote)
+		fs.Infof(f, "Queued %s particle for heal upload: %s", particleType, remote)
 	} else {
 		fs.Debugf(f, "Upload already queued for %s particle: %s", particleType, remote)
 	}

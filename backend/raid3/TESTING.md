@@ -43,7 +43,7 @@ go test ./backend/raid3 -run "TestStandard" -test.short -v
 
 ### Run Specific Test
 ```bash
-go test -run TestSelfHealing ./backend/raid3/
+go test -run TestHeal ./backend/raid3/
 ```
 
 ### Run with Verbose Output
@@ -51,9 +51,9 @@ go test -run TestSelfHealing ./backend/raid3/
 go test -v ./backend/raid3/...
 ```
 
-### Run Only Self-Healing Tests
+### Run Only Heal Tests
 ```bash
-go test -run TestSelfHealing ./backend/raid3/
+go test -run TestHeal ./backend/raid3/
 ```
 
 ---
@@ -113,27 +113,27 @@ go test -run TestSelfHealing ./backend/raid3/
 
 ---
 
-### Self-Healing Tests
+### Heal Tests
 
-**`TestSelfHealing`**
+**`TestHeal`**
 - Odd particle automatic restoration
 - Verifies background upload queue
 - Validates restored particle correctness
 
-**`TestSelfHealingEvenParticle`**
+**`TestHealEvenParticle`**
 - Even particle automatic restoration
-- Ensures symmetry in self-healing
+- Ensures symmetry in heal
 
-**`TestSelfHealingNoQueue`**
-- Verifies fast Shutdown() when no healing needed
+**`TestHealNoQueue`**
+- Verifies fast Shutdown() when no heal needed
 - Tests Solution D (hybrid) optimization
 - Ensures <100ms exit when healthy
 
-**`TestSelfHealingLargeFile`**
-- Self-healing with 100 KB file
+**`TestHealLargeFile`**
+- Heal with 100 KB file
 - Stress-tests memory and upload handling
 
-**`TestSelfHealingShutdownTimeout`** (skipped)
+**`TestHealShutdownTimeout`** (skipped)
 - Would test 60-second timeout in Shutdown()
 - Requires mocked slow backend (future enhancement)
 
@@ -148,7 +148,7 @@ go test -run TestSelfHealing ./backend/raid3/
 | Validation | 1 | ~30 | Size validation |
 | Parity | 2 | ~100 | XOR calculation |
 | Reconstruction | 4 | ~200 | Degraded mode |
-| Self-Healing | 4 | ~250 | Background uploads |
+| Heal | 4 | ~250 | Background uploads |
 | **Total** | **16** | **~800** | **Comprehensive** |
 
 ---
@@ -159,7 +159,7 @@ go test -run TestSelfHealing ./backend/raid3/
 |---------------|----------|-------|
 | Unit tests | <0.01s | Fast, run frequently |
 | Integration | 0.07s | Comprehensive, run before commit |
-| Self-healing | <0.01s | Fast, includes background workers |
+| Heal | <0.01s | Fast, includes background workers |
 | Large file | 0.01s | 1 MB test, acceptable performance |
 | **Total** | **~0.37s** | **Entire suite** |
 
@@ -173,7 +173,7 @@ go test -run TestSelfHealing ./backend/raid3/
 2. **Data Integrity** - Round-trip, reconstruction correctness
 3. **Edge Cases** - Empty files, single bytes, odd/even lengths
 4. **Degraded Mode** - All combinations of missing particles
-5. **Self-Healing** - Background uploads, deduplication, shutdown
+5. **Heal** - Background uploads, deduplication, shutdown
 6. **Performance** - Large files, acceptable execution time
 7. **Integration** - Full rclone compatibility
 
@@ -183,8 +183,8 @@ go test -run TestSelfHealing ./backend/raid3/
 2. Concurrent operations (multiple readers/writers)
 3. Very large files (>100 MB)
 4. Shutdown timeout with slow backends (requires mocking)
-5. Retry logic for failed self-healing uploads
-6. Parity particle self-healing
+5. Retry logic for failed heal uploads
+6. Parity particle heal
 
 ---
 
@@ -247,7 +247,7 @@ go test ./backend/raid3 -run "TestStandard" -v 2>&1 | grep -i "particle"
 3. Check size formulas (`TestSizeFormulaWithParity`)
 4. Look for off-by-one errors in byte indices
 
-### If Self-Healing Tests Fail:
+### If Heal Tests Fail:
 
 1. Check if background workers started correctly
 2. Verify Shutdown() is being called
@@ -262,7 +262,7 @@ go test ./backend/raid3 -run "TestStandard" -v 2>&1 | grep -i "particle"
 When adding new tests, follow these guidelines:
 
 1. **Add doc comment** using the standard structure
-2. **Choose appropriate section** (unit, integration, self-healing)
+2. **Choose appropriate section** (unit, integration, heal)
 3. **Test both success and failure paths**
 4. **Include edge cases** (empty, single byte, odd/even lengths)
 5. **Verify error messages** are helpful
@@ -571,9 +571,9 @@ The script `backend/raid3/integration/compare_raid3_with_single.sh` supplements 
 - Compares exit codes and command outputs to confirm raid3 mirrors the single backend's behaviour.
 - Designed for incremental growth—run `./compare_raid3_with_single.sh list` to see available tests, or `./compare_raid3_with_single.sh test <name>` (optionally with `--storage-type=local|minio`) to execute individual cases.
 
-### Recovery Harness
+### Rebuild Harness
 
-`backend/raid3/integration/compare_raid3_with_single_recover.sh` focuses on simulated disk swaps and rebuild workflows:
+`backend/raid3/integration/compare_raid3_with_single_rebuild.sh` focuses on simulated disk swaps and rebuild workflows:
 
 - Shares the same safety guards and helper functions via `compare_raid3_common.sh`.
 - Exercises both MinIO (Docker-backed) and local raid3 remotes.
@@ -616,4 +616,4 @@ The raid3 backend is production-ready with enterprise-grade testing!
 
 - `README.md` - User guide and usage examples
 - `RAID3.md` - Technical specification
-- `docs/SELF_HEALING_IMPLEMENTATION.md` - Self-healing details
+- `docs/SELF_HEALING_IMPLEMENTATION.md` - Heal details

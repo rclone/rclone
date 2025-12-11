@@ -7,7 +7,7 @@ package raid3
 //   - Backend registration and configuration options (init, Options struct)
 //   - Fs struct and NewFs constructor with degraded mode support
 //   - Core filesystem operations: List, NewObject, Put, Mkdir, Rmdir, Move, DirMove
-//   - Self-healing infrastructure initialization (upload queue, background workers)
+//   - Heal infrastructure initialization (upload queue, background workers)
 //   - Degraded mode detection and error handling (checkAllBackendsAvailable)
 //   - Cleanup operations for broken objects (CleanUp, findBrokenObjects)
 //   - Directory reconstruction and orphan cleanup (reconstructMissingDirectory, cleanupOrphanedDirectory)
@@ -103,9 +103,9 @@ This should be in the form 'remote:path'.`,
 // commandHelp defines the backend-specific commands
 var commandHelp = []fs.CommandHelp{{
 	Name:  "status",
-	Short: "Show backend health and recovery guide",
+	Short: "Show backend health and rebuild guide",
 	Long: `Shows the health status of all three backends and provides step-by-step
-recovery guidance if any backend is unavailable.
+rebuild guidance if any backend is unavailable.
 
 This is the primary diagnostic tool for raid3 - run this first when you
 encounter errors or want to check backend health.
@@ -117,7 +117,7 @@ Usage:
 Output includes:
   • Health status of all three backends (even, odd, parity)
   • Impact assessment (what operations work)
-  • Complete recovery guide for degraded mode
+  • Complete rebuild guide for degraded mode
   • Step-by-step instructions for backend replacement
 
 This command is mentioned in error messages when writes fail in degraded mode.
@@ -172,7 +172,7 @@ The rebuild process will:
   4. Show progress and ETA
   5. Verify integrity
 
-Note: This is different from self-healing which happens automatically during
+Note: This is different from heal which happens automatically during
 reads. Rebuild is a manual, complete restoration after backend replacement.
 `,
 }, {
@@ -180,7 +180,7 @@ reads. Rebuild is a manual, complete restoration after backend replacement.
 	Short: "Heal all degraded objects (2/3 particles present)",
 	Long: `Scans the entire remote and heals any objects that have exactly 2 of 3 particles.
 
-This is an explicit, admin-driven alternative to automatic self-healing on read.
+This is an explicit, admin-driven alternative to automatic heal on read.
 Use this when you want to proactively heal all degraded objects rather than
 waiting for them to be accessed during normal operations.
 
@@ -198,8 +198,8 @@ Output includes:
   • Total files scanned
   • Number of healthy files (3/3 particles)
   • Number of healed files (2/3→3/3)
-  • Number of unrecoverable files (≤1 particle)
-  • List of unrecoverable objects (if any)
+  • Number of unrebuildable files (≤1 particle)
+  • List of unrebuildable objects (if any)
 
 Examples:
 
@@ -213,13 +213,13 @@ Examples:
     # Files scanned:      100
     # Healthy (3/3):       85
     # Healed (2/3→3/3):   12
-    # Unrecoverable (≤1): 3
+    # Unrebuildable (≤1): 3
 
 Note: This is different from auto_heal which heals objects automatically
 during reads. The heal command proactively heals all degraded objects at once,
 which is useful for:
   • Periodic maintenance
-  • After recovering from backend failures
+  • After rebuilding from backend failures
   • Before important operations
   • When you want to ensure all objects are fully healthy
 
@@ -496,7 +496,7 @@ checkRemotes:
 		f.features.DirMove = f.DirMove
 	}
 
-	// Initialize self-healing infrastructure
+	// Initialize heal infrastructure
 	f.uploadQueue = newUploadQueue()
 	f.uploadCtx, f.uploadCancel = context.WithCancel(context.Background())
 	f.uploadWorkers = 2 // 2 concurrent upload workers
@@ -637,7 +637,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 // checkAllBackendsAvailable performs a quick health check to see if all three
 // backends are reachable. This is used to enforce strict write policy.
 //
-// Returns: enhanced error with recovery guidance if any backend is unavailable
+// Returns: enhanced error with rebuild guidance if any backend is unavailable
 func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 	// Quick timeout for health check
 	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -735,10 +735,10 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 	return nil
 }
 
-// formatDegradedModeError creates a user-friendly error message with recovery guidance
+// formatDegradedModeError creates a user-friendly error message with rebuild guidance
 // when the backend is in degraded mode (one or more backends unavailable).
 //
-// This implements Phase 1 of user-centric recovery: guide users at point of failure.
+// This implements Phase 1 of user-centric rebuild: guide users at point of failure.
 func (f *Fs) formatDegradedModeError(failedBackend string, evenOK, oddOK, parityOK bool, backendErr error) error {
 	// Status icons
 	evenIcon := "✅"
@@ -780,7 +780,7 @@ What to do:
   
   2. If backend is permanently failed:
      Run: rclone backend status raid3:
-     This will guide you through replacement and recovery
+     This will guide you through replacement and rebuild
   
   3. For more help:
      Documentation: rclone help raid3
@@ -795,7 +795,7 @@ Technical details: %w`,
 		backendErr)
 }
 
-// Shutdown waits for pending self-healing uploads to complete
+// Shutdown waits for pending heal uploads to complete
 func (f *Fs) Shutdown(ctx context.Context) error {
 	// Check if there are pending uploads
 	if f.uploadQueue.len() == 0 {
@@ -803,7 +803,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 		return nil
 	}
 
-	fs.Infof(f, "Waiting for %d self-healing upload(s) to complete...", f.uploadQueue.len())
+	fs.Infof(f, "Waiting for %d heal upload(s) to complete...", f.uploadQueue.len())
 
 	// Close the job channel to signal no more jobs
 	close(f.uploadQueue.jobs)
@@ -817,15 +817,15 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 
 	select {
 	case <-done:
-		fs.Infof(f, "Self-healing complete")
+		fs.Infof(f, "Heal complete")
 		f.uploadCancel()
 		return nil
 	case <-time.After(60 * time.Second):
-		fs.Errorf(f, "Timeout waiting for self-healing uploads (some may be incomplete)")
+		fs.Errorf(f, "Timeout waiting for heal uploads (some may be incomplete)")
 		f.uploadCancel()
-		return errors.New("timeout waiting for self-healing uploads")
+		return errors.New("timeout waiting for heal uploads")
 	case <-ctx.Done():
-		fs.Errorf(f, "Context cancelled while waiting for self-healing uploads")
+		fs.Errorf(f, "Context cancelled while waiting for heal uploads")
 		f.uploadCancel()
 		return ctx.Err()
 	}
@@ -984,7 +984,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	// Reconstruct missing directories (1dm case: directory exists on 2/3 backends)
-	// This implements self-healing for degraded directory state
+	// This implements heal for degraded directory state
 	if f.opt.AutoHeal {
 		f.reconstructMissingDirectory(ctx, dir, errEven, errOdd)
 	}
@@ -1171,7 +1171,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	// Pre-flight health check: Enforce strict RAID 3 write policy
 	// Consistent with Put/Update/Move operations
 	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return err // Returns enhanced error with recovery guidance
+		return err // Returns enhanced error with rebuild guidance
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -1650,7 +1650,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 }
 
 // reconstructMissingDirectory creates missing directories when directory exists on 2/3 backends
-// This implements self-healing for 1dm case (directory degraded but reconstructable)
+// This implements heal for 1dm case (directory degraded but reconstructable)
 // Called by List() when auto_cleanup is enabled
 func (f *Fs) reconstructMissingDirectory(ctx context.Context, dir string, errEven, errOdd error) {
 	// Check which backends have the directory

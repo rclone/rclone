@@ -158,14 +158,14 @@ For byte i in reconstructed:
 
 ## Benefits of RAID 3
 
-- **Future fault tolerance**: Will recover from single backend failure (to be implemented)
+- **Future fault tolerance**: Will rebuild from single backend failure (to be implemented)
 - **Parity storage**: Only ~50% overhead compared to full duplication
 - **Byte-level granularity**: More thorough than block-level RAID
 
 ## Current Limitations
 
 - Parity reconstruction not yet implemented (files need both even and odd particles)
-- Cannot recover from failure of even or odd backend yet
+- Cannot rebuild from failure of even or odd backend yet
 - Memory buffering of entire files
 - Cannot move files within same RAID 3 backend (rclone overlap detection)
 
@@ -182,8 +182,9 @@ The raid3 backend implements **hardware RAID 3 error handling**:
 
 **raid3 Implementation**:
 - **Reads**: Work with 2 of 3 backends (degraded mode) ✅
-  - Automatic parity reconstruction
-  - Self-healing background uploads
+  - Automatic parity reconstruction for files
+  - Heal background uploads for file particles
+  - Automatic directory reconstruction when accessing directories (2/3 → 3/3)
   - Transparent to users
 - **Writes**: Require all 3 backends (strict mode with health check) ❌
   - Pre-flight health check before Put/Update/Move
@@ -211,7 +212,7 @@ The raid3 backend implements **hardware RAID 3 error handling**:
 
 **Performance**:
 - Avoids reconstruction overhead for new files
-- Self-healing only for pre-existing degraded files
+- Heal only for pre-existing degraded files
 - Better user experience
 - Health check adds minimal overhead (+0.2s)
 
@@ -259,7 +260,7 @@ ERROR: write blocked in degraded mode (RAID 3 policy): odd backend unavailable
 **When backend unavailable during read**:
 ```
 INFO: Reconstructed file.txt from odd+parity (degraded mode)
-INFO: Queued even particle for self-healing
+INFO: Queued even particle for heal
 ```
 
 **User action**: None - operation succeeds automatically
@@ -269,7 +270,7 @@ INFO: Queued even particle for self-healing
 ERROR: update failed: invalid particle sizes (even=11, odd=14) - FILE MAY BE CORRUPTED
 ```
 
-**User action**: File may need recovery. Use degraded mode read to reconstruct, then re-upload.
+**User action**: File may need rebuild. Use degraded mode read to reconstruct, then re-upload.
 
 ## Testing
 

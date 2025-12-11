@@ -407,7 +407,7 @@ func TestMoveFailsWithUnavailableBackend(t *testing.T) {
 //
 // When a source file is in degraded state (missing one particle), Move should
 // fail because we can't move a partially-existing file. The user should read
-// the file first (which triggers self-healing) and then move it.
+// the file first (which triggers heal) and then move it.
 //
 // This test verifies:
 //   - Move fails when source even particle missing
@@ -503,7 +503,7 @@ func TestMoveWithMissingSourceParticle(t *testing.T) {
 //   - Read succeeds when odd backend unavailable (uses even+parity)
 //   - Read succeeds when parity backend unavailable (uses even+odd)
 //   - Data is correctly reconstructed
-//   - Self-healing is triggered
+//   - Heal is triggered
 //
 // Failure indicates: Degraded mode reads don't work, which defeats the
 // purpose of RAID 3 redundancy.
@@ -742,11 +742,11 @@ func TestHealthCheckEnforcesStrictWrites(t *testing.T) {
 //
 // SetModTime is a write operation (modifies metadata) and should follow the
 // strict write policy like Put/Update/Move/Mkdir. In degraded mode, SetModTime
-// should fail with a helpful error message guiding the user to recovery.
+// should fail with a helpful error message guiding the user to rebuild.
 //
 // This test verifies:
 //   - SetModTime blocks when backend unavailable (strict write policy)
-//   - Error message is helpful (shows backend status + recovery steps)
+//   - Error message is helpful (shows backend status + rebuild steps)
 //   - Consistent with other write operations (Put/Update/Move/Mkdir)
 //   - Pre-flight health check prevents partial modifications
 //
@@ -846,7 +846,7 @@ func TestSetModTimeFailsInDegradedMode(t *testing.T) {
 //
 // This test verifies:
 //   - Mkdir blocks when backend unavailable (strict write policy)
-//   - Error message is helpful (shows backend status + recovery steps)
+//   - Error message is helpful (shows backend status + rebuild steps)
 //   - Consistent with other write operations
 //   - Pre-flight health check prevents partial directory creation
 //

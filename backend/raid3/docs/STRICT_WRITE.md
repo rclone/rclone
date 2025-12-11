@@ -26,7 +26,7 @@ Before every write operation, the backend performs a pre-flight health check:
 1. **Health Check**: Tests all 3 backends with parallel `List()` operations
 2. **Timeout**: 5-second timeout per backend
 3. **Early Failure**: Returns error immediately if any backend unavailable
-4. **Clear Error**: Provides actionable error message with recovery guidance
+4. **Clear Error**: Provides actionable error message with rebuild guidance
 
 ## Error Messages
 

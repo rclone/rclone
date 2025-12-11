@@ -300,7 +300,7 @@ After optimization, we should achieve:
 
 ### Supporting
 - `backend/raid3/helpers.go` - Utility functions
-- `backend/raid3/healing.go` - Self-healing operations
+- `backend/raid3/heal.go` - Heal operations
 
 ## Conclusion
 

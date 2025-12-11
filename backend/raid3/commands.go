@@ -5,10 +5,10 @@ package raid3
 //
 // It includes:
 //   - Command dispatcher (status, rebuild, heal)
-//   - statusCommand: Backend health check and recovery guidance
+//   - statusCommand: Backend health check and rebuild guidance
 //   - rebuildCommand: Rebuild missing particles after backend replacement
 //   - healCommand: Proactively heal all degraded objects (2/3 particles)
-//   - Recovery guidance and user-friendly error messages
+//   - Rebuild guidance and user-friendly error messages
 
 import (
 	"bytes"
@@ -38,8 +38,8 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 	}
 }
 
-// statusCommand shows backend health and provides recovery guidance
-// This implements Phase 2 of user-centric recovery
+// statusCommand shows backend health and provides rebuild guidance
+// This implements Phase 2 of user-centric rebuild
 func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any, err error) {
 	// Check health of all backends
 	type backendHealth struct {
@@ -148,14 +148,14 @@ func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any,
 	if isDegraded {
 		report.WriteString("  • Reads:  ✅ Working (automatic parity reconstruction)\n")
 		report.WriteString("  • Writes: ❌ Blocked (RAID 3 data safety policy)\n")
-		report.WriteString("  • Self-healing: ⚠️  Cannot restore (backend unavailable)\n")
+		report.WriteString("  • Heal: ⚠️  Cannot restore (backend unavailable)\n")
 	} else {
 		report.WriteString("  • Reads:  ✅ All operations working\n")
 		report.WriteString("  • Writes: ✅ All operations working\n")
-		report.WriteString("  • Self-healing: ✅ Available if needed\n")
+		report.WriteString("  • Heal: ✅ Available if needed\n")
 	}
 
-	// If degraded, show recovery guide
+	// If degraded, show rebuild guide
 	if isDegraded {
 		// Identify which backend failed
 		failedBackend := ""
@@ -168,7 +168,7 @@ func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any,
 		}
 
 		report.WriteString("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-		report.WriteString("Recovery Guide\n")
+		report.WriteString("Rebuild Guide\n")
 		report.WriteString("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
 
 		report.WriteString(fmt.Sprintf("STEP 1: Check if %s backend failure is temporary\n\n", failedBackend))
@@ -189,7 +189,7 @@ func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any,
 		report.WriteString("  $ rclone backend rebuild raid3:\n")
 		report.WriteString("  (Rebuilds all missing data - may take time)\n\n")
 
-		report.WriteString("STEP 5: Verify recovery\n\n")
+		report.WriteString("STEP 5: Verify rebuild\n\n")
 		report.WriteString("  $ rclone backend status raid3:\n")
 		report.WriteString("  Should show: ✅ HEALTHY\n\n")
 
@@ -200,7 +200,7 @@ func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any,
 }
 
 // rebuildCommand rebuilds missing particles on a replacement backend
-// This implements Phase 3 of user-centric recovery
+// This implements Phase 3 of user-centric rebuild
 func (f *Fs) rebuildCommand(ctx context.Context, arg []string, opt map[string]string) (out any, err error) {
 	// Parse options
 	checkOnly := opt["check-only"] == "true"
@@ -381,9 +381,56 @@ func (f *Fs) rebuildCommand(ctx context.Context, arg []string, opt map[string]st
 }
 
 // healCommand scans the entire remote and heals any objects that have exactly 2 of 3 particles.
-// This is an explicit, admin-driven alternative to automatic self-healing on read.
+// This is an explicit, admin-driven alternative to automatic heal on read.
+// If a file path is provided in arg[0], only that file is healed.
 func (f *Fs) healCommand(ctx context.Context, arg []string, opt map[string]string) (out any, err error) {
-	// For now we ignore args/opts and heal from the root of the remote.
+	// If file path provided, heal only that file
+	if len(arg) > 0 {
+		remote := arg[0]
+		fs.Infof(f, "Healing single file: %q", remote)
+
+		pi, err := f.particleInfoForObject(ctx, remote)
+		if err != nil {
+			// Check if file doesn't exist (less than 2 particles)
+			_, objErr := f.NewObject(ctx, remote)
+			if objErr != nil {
+				return nil, fmt.Errorf("heal: file not found: %q", remote)
+			}
+			return nil, fmt.Errorf("heal: failed to inspect %q: %w", remote, err)
+		}
+
+		var report strings.Builder
+		report.WriteString("Heal Summary\n")
+		report.WriteString("══════════════════════════════════════════\n\n")
+		report.WriteString(fmt.Sprintf("File:               %s\n", remote))
+
+		switch pi.count {
+		case 3:
+			report.WriteString("Status:             ✅ Healthy (3/3 particles)\n")
+			report.WriteString("Action:             No healing needed\n")
+			fs.Infof(f, "File %q is already healthy (3/3 particles)", remote)
+		case 2:
+			if err := f.healObject(ctx, pi); err != nil {
+				report.WriteString("Status:             ❌ Failed to heal\n")
+				report.WriteString(fmt.Sprintf("Error:              %v\n", err))
+				fs.Errorf(f, "Heal: failed to heal %q: %v", remote, err)
+				return report.String(), err
+			}
+			report.WriteString("Status:             ✅ Healed (2/3→3/3)\n")
+			report.WriteString("Action:             Missing particle restored\n")
+			fs.Infof(f, "File %q healed successfully", remote)
+		default:
+			// 0 or 1 particle present – unrebuildable with RAID3
+			report.WriteString(fmt.Sprintf("Status:             ❌ Unrebuildable (%d/3 particles)\n", pi.count))
+			report.WriteString("Action:             Manual rebuild or restore needed\n")
+			fs.Errorf(f, "File %q cannot be healed: only %d/3 particles present", remote, pi.count)
+			return report.String(), fmt.Errorf("cannot heal %q: only %d/3 particles present (need at least 2)", remote, pi.count)
+		}
+
+		return report.String(), nil
+	}
+
+	// No file path provided - heal all files
 	fs.Infof(f, "Starting full heal of raid3 backend...")
 
 	// Enumerate all objects in the raid3 namespace
@@ -395,15 +442,15 @@ func (f *Fs) healCommand(ctx context.Context, arg []string, opt map[string]strin
 		return nil, fmt.Errorf("failed to list objects: %w", err)
 	}
 
-	var total, healthy, healed, unrecoverable int
-	var unrecoverableRemotes []string
+	var total, healthy, healed, unrebuildable int
+	var unrebuildableRemotes []string
 
 	for _, remote := range remotes {
 		pi, err := f.particleInfoForObject(ctx, remote)
 		if err != nil {
 			fs.Errorf(f, "Heal: failed to inspect %q: %v", remote, err)
-			unrecoverable++
-			unrecoverableRemotes = append(unrecoverableRemotes, remote)
+			unrebuildable++
+			unrebuildableRemotes = append(unrebuildableRemotes, remote)
 			continue
 		}
 		total++
@@ -414,15 +461,15 @@ func (f *Fs) healCommand(ctx context.Context, arg []string, opt map[string]strin
 		case 2:
 			if err := f.healObject(ctx, pi); err != nil {
 				fs.Errorf(f, "Heal: failed to heal %q: %v", pi.remote, err)
-				unrecoverable++
-				unrecoverableRemotes = append(unrecoverableRemotes, pi.remote)
+				unrebuildable++
+				unrebuildableRemotes = append(unrebuildableRemotes, pi.remote)
 			} else {
 				healed++
 			}
 		default:
-			// 0 or 1 particle present – unrecoverable with RAID3
-			unrecoverable++
-			unrecoverableRemotes = append(unrecoverableRemotes, pi.remote)
+			// 0 or 1 particle present – unrebuildable with RAID3
+			unrebuildable++
+			unrebuildableRemotes = append(unrebuildableRemotes, pi.remote)
 		}
 	}
 
@@ -432,16 +479,16 @@ func (f *Fs) healCommand(ctx context.Context, arg []string, opt map[string]strin
 	report.WriteString(fmt.Sprintf("Files scanned:      %d\n", total))
 	report.WriteString(fmt.Sprintf("Healthy (3/3):      %d\n", healthy))
 	report.WriteString(fmt.Sprintf("Healed (2/3→3/3):   %d\n", healed))
-	report.WriteString(fmt.Sprintf("Unrecoverable (≤1): %d\n", unrecoverable))
+	report.WriteString(fmt.Sprintf("Unrebuildable (≤1): %d\n", unrebuildable))
 
-	if unrecoverable > 0 {
-		report.WriteString("\nUnrecoverable objects (manual recovery or restore needed):\n")
-		for _, r := range unrecoverableRemotes {
+	if unrebuildable > 0 {
+		report.WriteString("\nUnrebuildable objects (manual rebuild or restore needed):\n")
+		for _, r := range unrebuildableRemotes {
 			report.WriteString("  - " + r + "\n")
 		}
 	}
 
-	fs.Infof(f, "Heal completed: %d scanned, %d healed, %d unrecoverable.", total, healed, unrecoverable)
+	fs.Infof(f, "Heal completed: %d scanned, %d healed, %d unrebuildable.", total, healed, unrebuildable)
 	return report.String(), nil
 }
 

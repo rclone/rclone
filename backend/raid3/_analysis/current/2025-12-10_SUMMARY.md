@@ -195,7 +195,7 @@ When implemented, the backend will be able to reconstruct data if either the eve
 ```go
 for i := 0; i < len(reconstructed); i++ {
     if i % 2 == 0 {
-        reconstructed[i] = parity[i/2] ^ odd[i/2]  // Recover even byte
+        reconstructed[i] = parity[i/2] ^ odd[i/2]  // Rebuild even byte
     } else {
         reconstructed[i] = odd[i/2]                 // Use existing odd byte
     }
@@ -208,12 +208,12 @@ for i := 0; i < len(reconstructed); i++ {
     if i % 2 == 0 {
         reconstructed[i] = even[i/2]                // Use existing even byte
     } else {
-        reconstructed[i] = parity[i/2] ^ even[i/2]  // Recover odd byte
+        reconstructed[i] = parity[i/2] ^ even[i/2]  // Rebuild odd byte
     }
 }
 ```
 
-This will provide true RAID 3 fault tolerance with single-backend failure recovery.
+This will provide true RAID 3 fault tolerance with single-backend failure rebuild.
 
 ## Performance Characteristics
 

@@ -1095,14 +1095,14 @@ func TestDeepNestedDirectories(t *testing.T) {
 // race conditions and concurrency issues.
 //
 // In production, raid3 may face concurrent operations: multiple uploads,
-// simultaneous reads during self-healing, or operations during degraded mode.
+// simultaneous reads during heal, or operations during degraded mode.
 // This test stresses the backend with concurrent operations to ensure thread
 // safety and detect race conditions.
 //
 // This test verifies:
 //   - Concurrent Put operations don't corrupt data
 //   - Concurrent reads work correctly
-//   - Self-healing queue handles concurrent uploads
+//   - Heal queue handles concurrent uploads
 //   - No race conditions in particle management
 //   - Errgroup coordination works correctly
 //
@@ -1119,11 +1119,11 @@ func TestConcurrentOperations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping stress test in short mode")
 	}
-	// NOTE: This test exercises concurrent self-healing behaviour. While auto_heal
+	// NOTE: This test exercises concurrent heal behaviour. While auto_heal
 	// semantics are being revised and made explicit via backend commands, this
 	// stress-test is temporarily disabled to avoid flakiness tied to timing of
 	// background uploads.
-	t.Skip("Concurrent self-healing stress-test temporarily disabled while auto_heal behaviour is revised")
+	t.Skip("Concurrent heal stress-test temporarily disabled while auto_heal behaviour is revised")
 
 	ctx := context.Background()
 	evenDir := t.TempDir()
@@ -1228,9 +1228,9 @@ func TestConcurrentOperations(t *testing.T) {
 	}
 	require.Empty(t, readErrList, "concurrent Read operations should succeed")
 
-	// Test 3: Concurrent operations with self-healing
-	// Delete odd particles to trigger self-healing on next read
-	t.Log("Testing concurrent reads with self-healing...")
+	// Test 3: Concurrent operations with heal
+	// Delete odd particles to trigger heal on next read
+	t.Log("Testing concurrent reads with heal...")
 	healRemotes := []string{
 		"concurrent-file-0.txt",
 		"concurrent-file-1.txt",
@@ -1243,7 +1243,7 @@ func TestConcurrentOperations(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// Read all heal files concurrently (should trigger self-healing)
+	// Read all heal files concurrently (should trigger heal)
 	var wg3 sync.WaitGroup
 	healErrors := make(chan error, len(healRemotes))
 
@@ -1280,9 +1280,9 @@ func TestConcurrentOperations(t *testing.T) {
 	for err := range healErrors {
 		healErrList = append(healErrList, err)
 	}
-	require.Empty(t, healErrList, "concurrent self-healing should succeed")
+	require.Empty(t, healErrList, "concurrent heal should succeed")
 
-	// Wait for self-healing to complete
+	// Wait for heal to complete
 	shutdowner, ok := f.(fs.Shutdowner)
 	require.True(t, ok, "fs should implement Shutdowner")
 	err = shutdowner.Shutdown(ctx)

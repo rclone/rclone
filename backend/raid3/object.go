@@ -8,7 +8,7 @@ package raid3
 //   - Directory type for directory entries
 //   - particleObjectInfo wrapper for particle-specific metadata
 //   - Object methods: Open, Size, ModTime, Hash, Remove, Update
-//   - Particle reading and reconstruction logic with self-healing support
+//   - Particle reading and reconstruction logic with heal support
 //   - Degraded mode handling (2/3 particles present) with automatic reconstruction
 
 import (
@@ -161,7 +161,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	// SetModTime is a write operation (modifies metadata)
 	// Consistent with Put/Update/Move/Mkdir operations
 	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
-		return err // Returns enhanced error with recovery guidance
+		return err // Returns enhanced error with rebuild guidance
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -319,7 +319,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			}
 			fs.Infof(o, "Reconstructed %s from even+parity (degraded mode)", o.remote)
 
-			// Self-healing: queue missing odd particle for upload (if auto_heal enabled)
+			// Heal: queue missing odd particle for upload (if auto_heal enabled)
 			if o.fs.opt.AutoHeal {
 				_, oddData := SplitBytes(merged)
 				o.fs.queueParticleUpload(o.remote, "odd", oddData, isOddLength)
@@ -352,7 +352,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			}
 			fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode)", o.remote)
 
-			// Self-healing: queue missing even particle for upload (if auto_heal enabled)
+			// Heal: queue missing even particle for upload (if auto_heal enabled)
 			if o.fs.opt.AutoHeal {
 				evenData, _ := SplitBytes(merged)
 				o.fs.queueParticleUpload(o.remote, "even", evenData, isOddLength)

@@ -17,7 +17,7 @@ backend/raid3/
 ├── TESTING.md             ⭐ Complete testing guide (automated, manual, integration)
 ├── raid3.go              💻 Main implementation
 ├── raid3_test.go         🧪 Core tests
-├── level3_selfhealing_test.go  🧪 Self-healing tests
+├── raid3_heal_test.go  🧪 Heal tests
 ├── level3_errors_test.go  🧪 Error case tests
 └── docs/                  📚 Detailed documentation (26 files)
 ```
@@ -38,7 +38,7 @@ backend/raid3/
 - `S3_TIMEOUT_RESEARCH.md` - S3 timeout research findings
 - `PHASE2_AND_ALTERNATIVES.md` - Alternative solutions evaluated
 - `CONFIG_OVERRIDE_AND_HEALTHCHECK.md` - Config override solution
-- `SELF_HEALING_RESEARCH.md` - Self-healing design research
+- `SELF_HEALING_RESEARCH.md` - Heal design research
 - `TEST_DOCUMENTATION_PROPOSAL.md` - Test documentation structure
 - `TODO_S3_IMPROVEMENTS.md` - Future improvements (archived)
 
@@ -47,7 +47,7 @@ backend/raid3/
 - `IMPLEMENTATION_COMPLETE.md` - Final implementation summary
 - `IMPLEMENTATION_STATUS.md` - Overall project status
 - `TIMEOUT_MODE_IMPLEMENTATION.md` - Timeout mode implementation
-- `SELF_HEALING_IMPLEMENTATION.md` - Self-healing implementation
+- `SELF_HEALING_IMPLEMENTATION.md` - Heal implementation
 - `STRICT_WRITE_FIX.md` - Critical corruption fix (IMPORTANT!)
 - `FIXES_COMPLETE.md` - Summary of all bug fixes
 

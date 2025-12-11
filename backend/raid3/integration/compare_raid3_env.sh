@@ -3,8 +3,8 @@
 # compare_raid3_env.sh
 # ----------------------
 # Default environment for raid3 bash-based comparison/recovery/heal scripts.
-# You can copy this file to compare_raid3_env.local.sh and adjust values to
-# match your local setup; the scripts will source that file if present.
+# You can create compare_raid3_env.local.sh with custom values to override
+# defaults; the scripts will automatically source that file if present.
 #
 
 # Root directory where test data lives

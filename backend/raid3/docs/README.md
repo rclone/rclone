@@ -37,9 +37,9 @@ This directory contains detailed design documents, implementation notes, test re
 - **[S3_TIMEOUT_RESEARCH.md](S3_TIMEOUT_RESEARCH.md)** - Research on S3 timeout issues
 - **[CONFIG_OVERRIDE_AND_HEALTHCHECK.md](CONFIG_OVERRIDE_AND_HEALTHCHECK.md)** - Config override solution
 
-**Self-Healing**:
-- **[SELF_HEALING_RESEARCH.md](SELF_HEALING_RESEARCH.md)** - Research on self-healing approaches
-- **[SELF_HEALING_IMPLEMENTATION.md](SELF_HEALING_IMPLEMENTATION.md)** - Implementation of background self-healing
+**Heal**:
+- **[SELF_HEALING_RESEARCH.md](SELF_HEALING_RESEARCH.md)** - Research on heal approaches
+- **[SELF_HEALING_IMPLEMENTATION.md](SELF_HEALING_IMPLEMENTATION.md)** - Implementation of background heal
 
 **Alternative Approaches**:
 - **[PHASE2_AND_ALTERNATIVES.md](PHASE2_AND_ALTERNATIVES.md)** - Alternative solutions evaluated
@@ -108,7 +108,7 @@ This directory contains detailed design documents, implementation notes, test re
 
 1. **Initial Implementation** - Basic RAID 3 with parity
 2. **Phase 1** - Degraded mode reads & reconstruction
-3. **Self-Healing** - Background particle restoration
+3. **Heal** - Background particle restoration
 4. **Timeout Modes** - S3/MinIO performance optimization
 5. **Phase 2** - Error handling & strict write enforcement
 6. **Bug Fixes** - Critical corruption fixes

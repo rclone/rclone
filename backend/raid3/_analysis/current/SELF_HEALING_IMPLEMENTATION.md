@@ -1,13 +1,13 @@
-# Self-Healing Implementation Complete
+# Heal Implementation Complete
 
 **Date**: November 2, 2025  
-**Feature**: Automatic background self-healing for raid3 RAID 3 backend
+**Feature**: Automatic background heal for raid3 RAID 3 backend
 
 ---
 
 ## ✅ Implementation Complete
 
-The level3 backend now supports **automatic self-healing** using a background worker pattern.
+The level3 backend now supports **automatic heal** using a background worker pattern.
 
 ---
 
@@ -30,7 +30,7 @@ The level3 backend now supports **automatic self-healing** using a background wo
    - 60-second timeout for safety
    - Early exit when no healing needed
 
-4. **Self-Healing Integration** (`Object.Open()`)
+4. **Heal Integration** (`Object.Open()`)
    - Detects degraded mode (missing particle)
    - Reconstructs data from available particles
    - Queues missing particle for background upload
@@ -66,8 +66,8 @@ User: rclone cat level3:file.txt
 ├─ Background worker uploads odd particle (2-3 seconds)
 └─ Shutdown() waits for upload to complete
 
-User sees: "Waiting for 1 self-healing upload(s) to complete..."
-User sees: "Self-healing complete"
+User sees: "Waiting for 1 heal upload(s) to complete..."
+User sees: "Heal complete"
 ```
 
 **Total time**: ~9-10 seconds (6-7s read + 2-3s upload) ✅
@@ -97,10 +97,10 @@ ok  	github.com/rclone/rclone/backend/raid3	0.219s
 
 ### Test Coverage:
 
-- ✅ Odd particle self-healing
-- ✅ Even particle self-healing
+- ✅ Odd particle heal
+- ✅ Even particle heal
 - ✅ No queue when all particles present
-- ✅ Large file (100 KB) self-healing
+- ✅ Large file (100 KB) heal
 - ✅ All previous tests still passing
 
 ---
@@ -140,7 +140,7 @@ ok  	github.com/rclone/rclone/backend/raid3	0.219s
 
 1. **`raid3.go`**:
    - Added `uploadQueue` struct and methods
-   - Added self-healing fields to `Fs` struct
+   - Added heal fields to `Fs` struct
    - Implemented `Shutdown()` method
    - Implemented `backgroundUploader()` worker
    - Implemented `uploadParticle()` method
@@ -162,12 +162,12 @@ ok  	github.com/rclone/rclone/backend/raid3	0.219s
 ```bash
 $ rclone cat level3:file.txt
 2025/11/02 10:00:00 INFO  : file.txt: Reconstructed from even+parity (degraded mode)
-2025/11/02 10:00:00 INFO  : level3: Queued odd particle for self-healing upload: file.txt
+2025/11/02 10:00:00 INFO  : level3: Queued odd particle for heal upload: file.txt
 Hello World!
-2025/11/02 10:00:07 INFO  : level3: Waiting for 1 self-healing upload(s) to complete...
-2025/11/02 10:00:07 INFO  : level3: Self-healing: uploading odd particle for file.txt
-2025/11/02 10:00:10 INFO  : level3: Self-healing upload completed for file.txt (odd)
-2025/11/02 10:00:10 INFO  : level3: Self-healing complete
+2025/11/02 10:00:07 INFO  : level3: Waiting for 1 heal upload(s) to complete...
+2025/11/02 10:00:07 INFO  : level3: Heal: uploading odd particle for file.txt
+2025/11/02 10:00:10 INFO  : level3: Heal upload completed for file.txt (odd)
+2025/11/02 10:00:10 INFO  : level3: Heal complete
 ```
 
 **Total**: ~10 seconds (7s read + 3s upload)
@@ -176,9 +176,9 @@ Hello World!
 
 ## ⚙️ Configuration
 
-### Self-Healing is Always Enabled
+### Heal is Always Enabled
 
-No configuration needed - self-healing is automatic and always enabled.
+No configuration needed - heal is automatic and always enabled.
 
 ### Background Workers
 
@@ -237,7 +237,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
     }
     
     // Wait for uploads with timeout
-    fs.Infof(f, "Waiting for %d self-healing upload(s)...", f.uploadQueue.len())
+    fs.Infof(f, "Waiting for %d heal upload(s)...", f.uploadQueue.len())
     // ... wait logic ...
 }
 ```
@@ -261,7 +261,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 
 | Feature | level3 | Ceph | ZFS | Hardware RAID |
 |---------|--------|------|-----|---------------|
-| Auto self-healing | ✅ | ✅ | ✅ | ✅ |
+| Auto heal | ✅ | ✅ | ✅ | ✅ |
 | Background uploads | ✅ | ✅ | ✅ | ✅ |
 | Non-blocking reads | ✅ | ✅ | ✅ | ✅ |
 | Deduplication | ✅ | ✅ | ✅ | ✅ |
@@ -280,7 +280,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 - Shutdown behavior
 
 ### Integration Tests:
-- Full self-healing workflow
+- Full heal workflow
 - Odd particle restoration
 - Even particle restoration
 - No-queue optimization
@@ -306,7 +306,7 @@ ok  	github.com/rclone/rclone/backend/raid3	0.286s
 
 ## ✨ Summary
 
-The level3 backend now provides **automatic, transparent, production-ready self-healing**:
+The level3 backend now provides **automatic, transparent, production-ready heal**:
 
 ✅ Detects missing particles during reads  
 ✅ Reconstructs data from available particles  

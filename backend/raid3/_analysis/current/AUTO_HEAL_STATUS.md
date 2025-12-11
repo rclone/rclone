@@ -59,7 +59,7 @@
     Short: "Heal all degraded objects (2/3 particles present)",
     Long: `Scans the entire remote and heals any objects that have exactly 2 of 3 particles.
     
-This is an explicit, admin-driven alternative to automatic self-healing on read.
+This is an explicit, admin-driven alternative to automatic heal on read.
 Use this when you want to proactively heal all degraded objects rather than
 waiting for them to be accessed.
 
@@ -84,7 +84,7 @@ Examples:
     # Files scanned:      100
     # Healthy (3/3):       85
     # Healed (2/3→3/3):   12
-    # Unrecoverable (≤1): 3
+    # Unrebuildable (≤1): 3
 `,
 },
 ```
@@ -98,7 +98,7 @@ Examples:
 **Location**: `raid3_test.go` line 1126
 
 **Status**: Test is skipped with comment:
-> "Concurrent self-healing stress-test temporarily disabled while auto_heal behaviour is revised"
+> "Concurrent heal stress-test temporarily disabled while auto_heal behaviour is revised"
 
 **Current State**: 
 - Auto-heal implementation is complete and working
@@ -150,7 +150,7 @@ Examples:
    - `TestAutoHealDirectoryReconstruction` - tests directory healing
    - `TestAutoHealDirMove` - tests healing during moves
    - `TestHealCommandReconstructsMissingParticle` - tests heal command
-   - `TestSelfHealing` - tests automatic healing on read
+   - `TestHeal` - tests automatic heal on read
 
 ---
 

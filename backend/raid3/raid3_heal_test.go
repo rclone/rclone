@@ -18,13 +18,13 @@ import (
 )
 
 // =============================================================================
-// Self-Healing Tests
+// Heal Tests
 // =============================================================================
 
-// TestSelfHealing tests automatic background restoration of missing odd
+// TestHeal tests automatic background restoration of missing odd
 // particle.
 //
-// This is the core self-healing feature: when a file is read in degraded
+// This is the core heal feature: when a file is read in degraded
 // mode (odd particle missing), the backend should automatically queue the
 // missing odd particle for upload in the background, and the upload should
 // complete before the command exits.
@@ -36,10 +36,10 @@ import (
 //   - Upload completes during Shutdown()
 //   - Restored particle is byte-for-byte identical to original
 //
-// Failure indicates: Self-healing doesn't work, leaving the backend in
+// Failure indicates: Heal doesn't work, leaving the backend in
 // degraded state permanently. Users would need manual intervention to
 // restore redundancy.
-func TestSelfHealing(t *testing.T) {
+func TestHeal(t *testing.T) {
 	ctx := context.Background()
 
 	// Create three temporary directories
@@ -53,7 +53,7 @@ func TestSelfHealing(t *testing.T) {
 		"parity":    parityDir,
 		"auto_heal": "true",
 	}
-	fsInterface, err := raid3.NewFs(ctx, "TestSelfHealing", "", m)
+	fsInterface, err := raid3.NewFs(ctx, "TestHeal", "", m)
 	require.NoError(t, err)
 
 	// Cast to *raid3.Fs to access Shutdown method
@@ -62,7 +62,7 @@ func TestSelfHealing(t *testing.T) {
 
 	// Upload a test file
 	remote := "test-healing.txt"
-	data := []byte("Hello Self-Healing World!")
+	data := []byte("Hello Heal World!")
 	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
 	_, err = f.Put(ctx, bytes.NewReader(data), info)
 	require.NoError(t, err)
@@ -79,7 +79,7 @@ func TestSelfHealing(t *testing.T) {
 	_, err = os.Stat(parityPath)
 	require.NoError(t, err, "parity particle should exist")
 
-	// Remove odd particle to trigger self-healing
+	// Remove odd particle to trigger heal
 	err = os.Remove(oddPath)
 	require.NoError(t, err)
 
@@ -97,13 +97,13 @@ func TestSelfHealing(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, data, got, "data should be correctly reconstructed")
 
-	// Shutdown and wait for self-healing to complete
+	// Shutdown and wait for heal to complete
 	err = f.Shutdown(ctx)
 	require.NoError(t, err)
 
-	// Verify odd particle was re-created by self-healing
+	// Verify odd particle was re-created by heal
 	_, err = os.Stat(oddPath)
-	require.NoError(t, err, "odd particle should be restored by self-healing")
+	require.NoError(t, err, "odd particle should be restored by heal")
 
 	// Verify the restored particle is correct
 	restoredOddData, err := os.ReadFile(oddPath)
@@ -114,11 +114,11 @@ func TestSelfHealing(t *testing.T) {
 	assert.Equal(t, expectedOdd, restoredOddData, "restored odd particle should match original")
 }
 
-// TestSelfHealingEvenParticle tests automatic background restoration of
+// TestHealEvenParticle tests automatic background restoration of
 // missing even particle.
 //
-// Similar to TestSelfHealing but for the even particle. This ensures
-// self-healing works regardless of which data particle is missing.
+// Similar to TestHeal but for the even particle. This ensures
+// heal works regardless of which data particle is missing.
 //
 // This test verifies:
 //   - Missing even particle is detected during Open()
@@ -127,9 +127,9 @@ func TestSelfHealing(t *testing.T) {
 //   - Upload completes during Shutdown()
 //   - Restored particle is byte-for-byte identical to original
 //
-// Failure indicates: Self-healing only works for odd particles, not even.
+// Failure indicates: Heal only works for odd particles, not even.
 // This would be a critical asymmetry in the implementation.
-func TestSelfHealingEvenParticle(t *testing.T) {
+func TestHealEvenParticle(t *testing.T) {
 	ctx := context.Background()
 
 	// Create three temporary directories
@@ -143,7 +143,7 @@ func TestSelfHealingEvenParticle(t *testing.T) {
 		"parity":    parityDir,
 		"auto_heal": "true",
 	}
-	fsInterface, err := raid3.NewFs(ctx, "TestSelfHealingEven", "", m)
+	fsInterface, err := raid3.NewFs(ctx, "TestHealEven", "", m)
 	require.NoError(t, err)
 
 	f, ok := fsInterface.(*raid3.Fs)
@@ -171,7 +171,7 @@ func TestSelfHealingEvenParticle(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, data, got)
 
-	// Shutdown and wait for self-healing
+	// Shutdown and wait for heal
 	err = f.Shutdown(ctx)
 	require.NoError(t, err)
 
@@ -186,7 +186,7 @@ func TestSelfHealingEvenParticle(t *testing.T) {
 	assert.Equal(t, expectedEven, restoredEvenData)
 }
 
-// TestSelfHealingNoQueue tests that Shutdown() is fast when no self-healing
+// TestHealNoQueue tests that Shutdown() is fast when no heal
 // is needed.
 //
 // This verifies the "hybrid" shutdown behavior (Solution D): when all
@@ -202,7 +202,7 @@ func TestSelfHealingEvenParticle(t *testing.T) {
 // Failure indicates: Performance regression - commands would be slow even
 // when no healing is needed. This would make the backend unacceptable for
 // production use.
-func TestSelfHealingNoQueue(t *testing.T) {
+func TestHealNoQueue(t *testing.T) {
 	ctx := context.Background()
 
 	// Create three temporary directories
@@ -249,22 +249,22 @@ func TestSelfHealingNoQueue(t *testing.T) {
 	assert.Less(t, duration, 100*time.Millisecond, "shutdown should be instant with no pending uploads")
 }
 
-// TestSelfHealingLargeFile tests self-healing with a larger file (100 KB).
+// TestHealLargeFile tests heal with a larger file (100 KB).
 //
-// This ensures self-healing works with realistic file sizes, not just
+// This ensures heal works with realistic file sizes, not just
 // small test data. Large files stress-test the memory handling, upload
 // performance, and ensure the background worker can handle substantial data.
 //
 // This test verifies:
-//   - Self-healing works with 100 KB files
+//   - Heal works with 100 KB files
 //   - Correct particle reconstruction for large data
 //   - Upload completes successfully (not timeout)
 //   - Restored particle is byte-for-byte correct
 //   - No memory or performance issues
 //
-// Failure indicates: Self-healing doesn't work with realistic file sizes.
+// Failure indicates: Heal doesn't work with realistic file sizes.
 // Could indicate memory issues, timeout problems, or buffer limitations.
-func TestSelfHealingLargeFile(t *testing.T) {
+func TestHealLargeFile(t *testing.T) {
 	ctx := context.Background()
 
 	// Create three temporary directories
@@ -325,7 +325,7 @@ func TestSelfHealingLargeFile(t *testing.T) {
 	assert.Equal(t, expectedEven, restoredData)
 }
 
-// TestSelfHealingShutdownTimeout tests that Shutdown() times out gracefully
+// TestHealShutdownTimeout tests that Shutdown() times out gracefully
 // when background uploads are taking too long.
 //
 // This would verify the 60-second timeout in Shutdown() prevents the command
@@ -341,7 +341,7 @@ func TestSelfHealingLargeFile(t *testing.T) {
 // Failure would indicate: Commands could hang forever waiting for uploads.
 //
 // Current status: Skipped (requires mocked backend - future enhancement)
-func TestSelfHealingShutdownTimeout(t *testing.T) {
+func TestHealShutdownTimeout(t *testing.T) {
 	// This test would require mocking a slow backend
 	// For now, we'll skip it as it's complex to set up
 	t.Skip("Shutdown timeout test requires mocked backend (future enhancement)")

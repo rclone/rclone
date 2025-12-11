@@ -84,7 +84,7 @@ New files:     Even ✅  Odd ❌  Parity ✅   (degraded)
 **Consequences**:
 - Old files: can be read normally (fast merge)
 - New files: MUST be reconstructed (slow, uses parity)
-- Self-healing needed for EVERY new file
+- Heal needed for EVERY new file
 
 **Result**: Performance degradation for ALL new files!
 
@@ -94,14 +94,14 @@ New files:     Even ✅  Odd ❌  Parity ✅   (degraded)
 
 **User uploads 100 files while odd backend is down**:
 - 100 files created with missing odd particles
-- 100 self-healing uploads queued
+- 100 heal uploads queued
 - System heavily degraded
 - Performance severely impacted
 
 **vs. Hardware RAID 3**:
 - Writes fail immediately
 - User knows backend is down
-- User waits for backend recovery
+- User waits for backend rebuild
 - No partial state created
 
 ---
@@ -175,7 +175,7 @@ In distributed systems (which level3 effectively is):
 **Reads** (Already implemented):
 - ✅ **Best effort** - work with 2 of 3 backends
 - ✅ Automatic reconstruction
-- ✅ Self-healing in background
+- ✅ Heal in background
 - ✅ **Maximize availability**
 
 **Writes** (Proposed):
@@ -231,7 +231,7 @@ type Options struct {
 **`write_policy = degraded`** (advanced):
 - Put/Update/Move succeed with 2 of 3 backends
 - Creates degraded files immediately
-- Self-healing handles missing particles
+- Heal handles missing particles
 - **For high-availability scenarios**
 
 **Benefits**:
@@ -251,7 +251,7 @@ type Options struct {
 
 **Pros**:
 - ✅ Higher availability (operations don't fail)
-- ✅ Self-healing will eventually restore missing particles
+- ✅ Heal will eventually restore missing particles
 - ✅ User can continue working even with backend down
 
 **Cons**:
@@ -395,7 +395,7 @@ From RAID 3 specification:
 
 **Pros**:
 - Highest availability
-- Self-healing handles missing particles
+- Heal handles missing particles
 
 **Cons**:
 - Creates degraded state on writes
@@ -413,12 +413,12 @@ From RAID 3 specification:
 2. **Simple** - no complex rollback logic
 3. **Safe** - can't corrupt state with partial writes
 4. **Clear semantics** - fail fast when backend down
-5. **Already have self-healing** - for existing degraded files
+5. **Already have heal** - for existing degraded files
 
 **Trade-off Accepted**:
 - Writes fail when backend down (but that's expected!)
 - User gets clear error message
-- Can retry when backend recovers
+- Can retry when backend rebuilds
 
 ---
 
@@ -462,7 +462,7 @@ func (o *Object) Remove(...) error {
 2. **Would Option A (strict)** be acceptable?
    - Reads work in degraded mode ✅
    - Writes fail in degraded mode ❌
-   - Self-healing restores existing files ✅
+   - Heal restores existing files ✅
    - Can't create new files when backend down ❌
 
 3. **Or would you prefer Option B (configurable)**?
@@ -504,7 +504,7 @@ Let me check what commercial RAID implementations actually do...
 2. **Data Safety**: Can't create partial/corrupted files
 3. **Simple**: No complex rollback logic needed
 4. **Predictable**: Clear error when backend unavailable
-5. **Self-Healing Works**: For reads, which is the common case
+5. **Heal Works**: For reads, which is the common case
 6. **Production Safe**: Conservative approach
 
 **Trade-off**:
@@ -575,7 +575,7 @@ I can implement it, but I'd recommend:
 $ rclone copy file.txt level3: --level3-write-policy degraded
 WARNING: Operating in degraded write mode - new files will require reconstruction
 INFO: Uploaded to 2 of 3 backends (odd unavailable)
-INFO: Queued odd particle for self-healing
+INFO: Queued odd particle for heal
 ```
 
 ---

@@ -66,7 +66,7 @@ User uploads → Backend down → Upload fails
 **Avoids Reconstruction Overhead**:
 - New files don't need parity reconstruction
 - Reconstruction only for pre-existing degraded files
-- Self-healing handles recovery in background
+- Heal handles rebuild in background
 
 **Scenario**: Upload 100 files while backend down
 - Strict: All 100 fail (user fixes backend, retries)
@@ -93,7 +93,7 @@ User uploads → Backend down → Upload fails
 **Read Operations**:
 - ✅ NewObject works with 2 of 3 particles
 - ✅ Open reconstructs from parity
-- ✅ Self-healing restores missing particles
+- ✅ Heal restores missing particles
 - ✅ **No changes needed**
 
 **Delete Operations**:
@@ -191,7 +191,7 @@ type Options struct {
 - ❌ Writes fail when backend unavailable
 - ✅ But this is expected RAID behavior!
 - ✅ Reads still work (degraded mode)
-- ✅ Self-healing restores existing files
+- ✅ Heal restores existing files
 
 **Status**: Documented and ready for implementation verification/testing
 

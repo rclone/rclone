@@ -12,7 +12,7 @@ The level3 backend follows **hardware RAID 3 behavior** for error handling:
 ### Read Operations: **Best Effort** (Degraded Mode Supported)
 - ✅ Work with ANY 2 of 3 backends available
 - ✅ Automatic reconstruction from parity
-- ✅ Self-healing restores missing particles
+- ✅ Heal restores missing particles
 - ✅ Performance: 6-7 seconds (S3 aggressive mode)
 
 ### Write Operations: **Atomic** (All Backends Required)
@@ -51,7 +51,7 @@ The level3 backend follows **hardware RAID 3 behavior** for error handling:
 **Performance**:
 - Avoids performance degradation from constant reconstruction
 - New files don't require parity reconstruction
-- Self-healing only for pre-existing degraded files
+- Heal only for pre-existing degraded files
 
 ---
 
@@ -230,7 +230,7 @@ func (f *Fs) Move(...) {
 | **Update** | Works with 2 of 3? | Require all 3 | ⚠️ Verify/enforce |
 | **Move** | Works with 2 of 3? | Require all 3 + rollback | ⚠️ Add rollback |
 | **Remove** | Ignores missing | Same | ✅ Already correct |
-| **Self-healing** | Background upload | Same | ✅ Already correct |
+| **Heal** | Background upload | Same | ✅ Already correct |
 
 ---
 

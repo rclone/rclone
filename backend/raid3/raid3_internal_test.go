@@ -259,7 +259,7 @@ func TestValidateParticleSizes(t *testing.T) {
 //
 // Parity is calculated as even[i] XOR odd[i] for each byte pair. For
 // odd-length files, the last byte of the parity is the last byte of the
-// even particle (no XOR partner). This parity enables recovery when one
+// even particle (no XOR partner). This parity enables rebuild when one
 // data particle is missing.
 //
 // This test verifies:
@@ -269,8 +269,8 @@ func TestValidateParticleSizes(t *testing.T) {
 //   - Various data patterns
 //   - Real-world data (text strings)
 //
-// Failure indicates: Parity would be incorrect, preventing recovery in
-// degraded mode. Self-healing would upload wrong data.
+// Failure indicates: Parity would be incorrect, preventing rebuild in
+// degraded mode. Heal would upload wrong data.
 func TestCalculateParity(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -382,7 +382,7 @@ func TestParityFilenames(t *testing.T) {
 //
 // This verifies the fundamental RAID 3 property: even[i] XOR parity[i] = odd[i]
 // and odd[i] XOR parity[i] = even[i]. This is the mathematical basis for
-// recovery in degraded mode.
+// rebuild in degraded mode.
 //
 // This test verifies:
 //   - Can reconstruct odd bytes from even + parity
@@ -427,7 +427,7 @@ func TestParityReconstruction(t *testing.T) {
 //   - Real-world text data works
 //
 // Failure indicates: Reads would fail when odd backend is down.
-// Self-healing would not work for odd particles.
+// Heal would not work for odd particles.
 func TestReconstructFromEvenAndParity(t *testing.T) {
 	cases := [][]byte{
 		{},
@@ -464,7 +464,7 @@ func TestReconstructFromEvenAndParity(t *testing.T) {
 //   - Real-world text data works
 //
 // Failure indicates: Reads would fail when even backend is down.
-// Self-healing would not work for even particles.
+// Heal would not work for even particles.
 func TestReconstructFromOddAndParity(t *testing.T) {
 	cases := [][]byte{
 		{},
