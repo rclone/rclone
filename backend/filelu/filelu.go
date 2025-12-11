@@ -250,13 +250,19 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 
 // Put uploads a file directly to the destination folder in the FileLu storage system.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	if src.Size() == 0 {
-		return nil, fs.ErrorCantUploadEmptyFiles
-	}
+	size := src.Size()
 
-	err := f.uploadFile(ctx, in, src.Remote())
-	if err != nil {
-		return nil, err
+	if size <= 500*1024*1024 {
+		err := f.uploadFile(ctx, in, src.Remote())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		fullPath := path.Join(f.root, src.Remote())
+		err := f.multipartUpload(ctx, in, fullPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	newObject := &Object{
@@ -265,7 +271,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		size:    src.Size(),
 		modTime: src.ModTime(ctx),
 	}
-	fs.Infof(f, "Put: Successfully uploaded new file %q", src.Remote())
 	return newObject, nil
 }
 
@@ -319,7 +324,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, destinationPath string) (f
 		}
 	}()
 
-	err = f.uploadFile(ctx, reader, destinationPath)
+	err = f.multipartUpload(ctx, reader, destinationPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload file to destination: %w", err)
 	}

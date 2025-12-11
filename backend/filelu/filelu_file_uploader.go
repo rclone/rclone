@@ -1,6 +1,7 @@
 package filelu
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,6 +15,109 @@ import (
 
 	"github.com/rclone/rclone/fs"
 )
+
+const chunkSize = 64 * 1024 * 1024
+
+// multipartUpload uploads a file in fixed-size chunks using the multipart API.
+func (f *Fs) multipartUpload(ctx context.Context, in io.Reader, remote string) error {
+	folder := path.Dir(remote)
+	file := path.Base(remote)
+
+	if folder == "." {
+		folder = ""
+	} else {
+		folder = strings.Trim(folder, "/")
+	}
+
+	if folder != "" {
+		folder = "/" + folder
+	}
+
+	initResp, err := f.multipartInit(ctx, folder, file)
+	if err != nil {
+		return fmt.Errorf("multipart init failed: %w", err)
+	}
+	if err != nil {
+		return fmt.Errorf("multipart init failed: %w", err)
+	}
+	if err != nil {
+		return fmt.Errorf("multipart init failed: %w", err)
+	}
+
+	uploadID := initResp.Result.UploadID
+	sessID := initResp.Result.SessID
+	server := initResp.Result.Server
+	objectPath := initResp.Result.ObjectPath
+
+	buf := make([]byte, 0, chunkSize)
+	tmp := make([]byte, 1024*1024)
+	partNo := 1
+
+	for {
+		n, errRead := in.Read(tmp)
+		if n > 0 {
+			buf = append(buf, tmp[:n]...)
+
+			// If buffer reached chunkSize, upload a full part
+			if len(buf) >= chunkSize {
+				err = f.uploadPart(ctx, server, uploadID, sessID, objectPath, partNo, bytes.NewReader(buf))
+				if err != nil {
+					return fmt.Errorf("upload part %d failed: %w", partNo, err)
+				}
+				partNo++
+				buf = buf[:0]
+			}
+		}
+
+		if errRead == io.EOF {
+			break
+		}
+		if errRead != nil {
+			return fmt.Errorf("read failed: %w", errRead)
+		}
+	}
+
+	if len(buf) > 0 {
+		err = f.uploadPart(ctx, server, uploadID, sessID, objectPath, partNo, bytes.NewReader(buf))
+		if err != nil {
+			return fmt.Errorf("upload part %d failed: %w", partNo, err)
+		}
+	}
+
+	err = f.completeMultipart(ctx, server, uploadID, sessID, objectPath)
+	if err != nil {
+		return fmt.Errorf("complete multipart failed: %w", err)
+	}
+
+	return nil
+}
+
+// uploadPart sends a single multipart chunk to the upload server.
+func (f *Fs) uploadPart(ctx context.Context, server, uploadID, sessID, objectPath string, partNo int, r io.Reader) error {
+	url := fmt.Sprintf("%s?partNumber=%d&uploadId=%s", server, partNo, uploadID)
+
+	req, err := http.NewRequestWithContext(ctx, "PUT", url, r)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("X-RC-Upload-Id", uploadID)
+	req.Header.Set("X-RC-Part-No", fmt.Sprintf("%d", partNo))
+	req.Header.Set("X-Sess-ID", sessID)
+	req.Header.Set("X-Object-Path", objectPath)
+
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("uploadPart failed: %s", resp.Status)
+	}
+
+	return nil
+}
 
 // uploadFile uploads a file to FileLu
 func (f *Fs) uploadFile(ctx context.Context, fileContent io.Reader, fileFullPath string) error {

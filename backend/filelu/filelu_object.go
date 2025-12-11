@@ -138,15 +138,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	if src.Size() <= 0 {
-		return fs.ErrorCantUploadEmptyFiles
+	size := src.Size()
+
+	if size <= 500*1024*1024 {
+		err := o.fs.uploadFile(ctx, in, o.remote)
+		if err != nil {
+			return err
+		}
+	} else {
+		fullPath := path.Join(o.fs.root, o.remote)
+		err := o.fs.multipartUpload(ctx, in, fullPath)
+		if err != nil {
+			return fmt.Errorf("failed to upload file: %w", err)
+		}
 	}
 
-	err := o.fs.uploadFile(ctx, in, o.remote)
-	if err != nil {
-		return fmt.Errorf("failed to upload file: %w", err)
-	}
-	o.size = src.Size()
+	o.size = size
+	o.modTime = src.ModTime(ctx)
 	return nil
 }
 
