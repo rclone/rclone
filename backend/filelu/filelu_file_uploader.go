@@ -34,15 +34,9 @@ func (f *Fs) multipartUpload(ctx context.Context, in io.Reader, remote string) e
 	}
 
 	initResp, err := f.multipartInit(ctx, folder, file)
-	if err != nil {
-		return fmt.Errorf("multipart init failed: %w", err)
-	}
-	if err != nil {
-		return fmt.Errorf("multipart init failed: %w", err)
-	}
-	if err != nil {
-		return fmt.Errorf("multipart init failed: %w", err)
-	}
+if err != nil {
+    return fmt.Errorf("multipart init failed: %w", err)
+}
 
 	uploadID := initResp.Result.UploadID
 	sessID := initResp.Result.SessID
@@ -110,7 +104,7 @@ func (f *Fs) uploadPart(ctx context.Context, server, uploadID, sessID, objectPat
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("uploadPart failed: %s", resp.Status)
