@@ -495,6 +495,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // listUsers returns a list of all unique usernames as directories
 func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
+	fs.Infof(nil, "mediavfs: listUsers called")
+
 	query := fmt.Sprintf(`
 		SELECT DISTINCT user_name
 		FROM %s
@@ -502,24 +504,33 @@ func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
 		ORDER BY user_name
 	`, f.opt.TableName)
 
+	fs.Infof(nil, "mediavfs: listUsers query: %s", query)
+
 	rows, err := f.db.QueryContext(ctx, query)
 	if err != nil {
+		fs.Errorf(nil, "mediavfs: listUsers query failed: %v", err)
 		return nil, fmt.Errorf("failed to query users: %w", err)
 	}
 	defer rows.Close()
 
+	userCount := 0
 	for rows.Next() {
 		var userName string
 		if err := rows.Scan(&userName); err != nil {
+			fs.Errorf(nil, "mediavfs: listUsers scan failed: %v", err)
 			return nil, fmt.Errorf("failed to scan user: %w", err)
 		}
+		fs.Infof(nil, "mediavfs: listUsers found user: '%s'", userName)
 		entries = append(entries, fs.NewDir(userName, time.Time{}))
+		userCount++
 	}
 
 	if err = rows.Err(); err != nil {
+		fs.Errorf(nil, "mediavfs: listUsers iteration error: %v", err)
 		return nil, fmt.Errorf("error iterating users: %w", err)
 	}
 
+	fs.Infof(nil, "mediavfs: listUsers returning %d users, %d entries", userCount, len(entries))
 	return entries, nil
 }
 
@@ -987,7 +998,23 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 // ChangeNotify calls the passed function with a path that has had changes.
 // If the implementation uses polling, it should adhere to the given interval.
 func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
-	fs.Infof(nil, "mediavfs: ChangeNotify started")
+	fs.Infof(nil, "mediavfs: ChangeNotify started, waiting for events...")
+
+	// Immediately try to read the initial poll interval (non-blocking)
+	select {
+	case interval, ok := <-pollIntervalChan:
+		if ok && interval > 0 {
+			fs.Infof(nil, "mediavfs: received INITIAL poll interval from rclone: %v", interval)
+			select {
+			case f.fileCache.intervalUpdate <- interval:
+				fs.Infof(nil, "mediavfs: forwarded initial interval to polling goroutine")
+			default:
+				fs.Infof(nil, "mediavfs: interval update channel full on initial update")
+			}
+		}
+	default:
+		fs.Infof(nil, "mediavfs: no initial poll interval available, using backend default")
+	}
 
 	for {
 		select {
@@ -1016,6 +1043,8 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				default:
 					fs.Infof(nil, "mediavfs: interval update channel full, skipping")
 				}
+			} else {
+				fs.Infof(nil, "mediavfs: received zero/negative poll interval (%v), ignoring", interval)
 			}
 		}
 	}
