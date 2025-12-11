@@ -64,11 +64,12 @@ type cachedFile struct {
 
 // fileCache stores all files with lazy loading support
 type fileCache struct {
-	files       map[string][]cachedFile // key: userName, value: list of files
-	lastPoll    time.Time
-	mu          sync.RWMutex
-	stopChan    chan struct{}
-	pollRunning bool
+	files          map[string][]cachedFile // key: userName, value: list of files
+	lastPoll       time.Time
+	mu             sync.RWMutex
+	stopChan       chan struct{}
+	pollRunning    bool
+	intervalUpdate chan time.Duration // Channel to update poll interval dynamically
 }
 
 func newURLCache() *urlCache {
@@ -79,9 +80,10 @@ func newURLCache() *urlCache {
 
 func newFileCache() *fileCache {
 	return &fileCache{
-		files:    make(map[string][]cachedFile),
-		lastPoll: time.Now(),
-		stopChan: make(chan struct{}),
+		files:          make(map[string][]cachedFile),
+		lastPoll:       time.Now(),
+		stopChan:       make(chan struct{}),
+		intervalUpdate: make(chan time.Duration, 1),
 	}
 }
 
@@ -306,7 +308,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Start polling goroutine if poll_interval is set
 	if f.opt.PollInterval > 0 {
 		go f.startPolling(ctx)
-		fs.Infof(nil, "mediavfs: started polling with interval %v", time.Duration(f.opt.PollInterval))
 	}
 
 	// Validate root path if specified
@@ -344,7 +345,7 @@ func extractPathAndName(fileName string) (path string, name string) {
 	return "", fileName
 }
 
-// startPolling polls the database for new/updated files
+// startPolling polls the database for new/updated files with dynamic interval support
 func (f *Fs) startPolling(ctx context.Context) {
 	f.fileCache.mu.Lock()
 	if f.fileCache.pollRunning {
@@ -354,17 +355,31 @@ func (f *Fs) startPolling(ctx context.Context) {
 	f.fileCache.pollRunning = true
 	f.fileCache.mu.Unlock()
 
-	ticker := time.NewTicker(time.Duration(f.opt.PollInterval))
+	currentInterval := time.Duration(f.opt.PollInterval)
+	ticker := time.NewTicker(currentInterval)
 	defer ticker.Stop()
+
+	fs.Infof(nil, "mediavfs: polling started with interval %v", currentInterval)
 
 	for {
 		select {
 		case <-ctx.Done():
+			fs.Infof(nil, "mediavfs: polling stopped (context done)")
 			return
 		case <-f.fileCache.stopChan:
+			fs.Infof(nil, "mediavfs: polling stopped (stop channel)")
 			return
+		case newInterval := <-f.fileCache.intervalUpdate:
+			// Update the ticker with new interval
+			if newInterval > 0 && newInterval != currentInterval {
+				ticker.Stop()
+				currentInterval = newInterval
+				ticker = time.NewTicker(currentInterval)
+				fs.Infof(nil, "mediavfs: polling interval updated to %v", currentInterval)
+			}
 		case <-ticker.C:
 			// Poll all users and update cache
+			fs.Infof(nil, "mediavfs: polling database (interval: %v)", currentInterval)
 			f.pollDatabaseForChanges(ctx)
 		}
 	}
@@ -450,21 +465,32 @@ func (f *Fs) pollDatabaseForChanges(ctx context.Context) {
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	root := strings.Trim(path.Join(f.root, dir), "/")
+	fs.Infof(nil, "mediavfs: List called for dir='%s', root='%s'", dir, root)
 
 	// If root is empty, list all users
 	if root == "" {
-		return f.listUsers(ctx)
+		fs.Infof(nil, "mediavfs: listing all users (root level)")
+		entries, err = f.listUsers(ctx)
+		fs.Infof(nil, "mediavfs: listUsers returned %d entries, err=%v", len(entries), err)
+		return entries, err
 	}
 
 	userName, subPath := splitUserPath(root)
+	fs.Infof(nil, "mediavfs: split path into userName='%s', subPath='%s'", userName, subPath)
 
 	// If only username is specified, list top-level items for that user
 	if subPath == "" {
-		return f.listUserFiles(ctx, userName, "")
+		fs.Infof(nil, "mediavfs: listing top-level items for user '%s'", userName)
+		entries, err = f.listUserFiles(ctx, userName, "")
+		fs.Infof(nil, "mediavfs: listUserFiles returned %d entries, err=%v", len(entries), err)
+		return entries, err
 	}
 
 	// List files in a specific directory
-	return f.listUserFiles(ctx, userName, subPath)
+	fs.Infof(nil, "mediavfs: listing files in user '%s', subPath '%s'", userName, subPath)
+	entries, err = f.listUserFiles(ctx, userName, subPath)
+	fs.Infof(nil, "mediavfs: listUserFiles returned %d entries, err=%v", len(entries), err)
+	return entries, err
 }
 
 // listUsers returns a list of all unique usernames as directories
@@ -499,10 +525,15 @@ func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
 
 // listUserFiles lists files and directories for a specific user and path using cache
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
+	fs.Infof(nil, "mediavfs: listUserFiles called for userName='%s', dirPath='%s'", userName, dirPath)
+
 	// Try to get files from cache first
 	f.fileCache.mu.RLock()
 	cachedFiles, found := f.fileCache.files[userName]
+	cacheSize := len(cachedFiles)
 	f.fileCache.mu.RUnlock()
+
+	fs.Infof(nil, "mediavfs: cache lookup: found=%v, cacheSize=%d", found, cacheSize)
 
 	// If not in cache or cache is empty, load from database
 	if !found || len(cachedFiles) == 0 {
@@ -977,7 +1008,14 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				return
 			}
 			if interval > 0 {
-				fs.Infof(nil, "mediavfs: poll interval updated to %v", interval)
+				fs.Infof(nil, "mediavfs: received poll interval update from rclone: %v", interval)
+				// Forward the interval to the polling goroutine
+				select {
+				case f.fileCache.intervalUpdate <- interval:
+					fs.Infof(nil, "mediavfs: forwarded interval update to polling goroutine")
+				default:
+					fs.Infof(nil, "mediavfs: interval update channel full, skipping")
+				}
 			}
 		}
 	}
