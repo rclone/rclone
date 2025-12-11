@@ -267,7 +267,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				// Preserve Range header (critical for resume/seeking)
 				if rangeHeader := originalReq.Header.Get("Range"); rangeHeader != "" {
 					req.Header.Set("Range", rangeHeader)
-					fs.Debugf(nil, "mediavfs: preserving Range header on redirect: %s", rangeHeader)
+					fs.Infof(nil, "mediavfs: preserving Range header on redirect: %s", rangeHeader)
 				}
 				// Preserve If-Range header (critical for ETag validation)
 				if ifRangeHeader := originalReq.Header.Get("If-Range"); ifRangeHeader != "" {
@@ -277,7 +277,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				if userAgent := originalReq.Header.Get("User-Agent"); userAgent != "" {
 					req.Header.Set("User-Agent", userAgent)
 				}
-				fs.Debugf(nil, "mediavfs: following redirect from %s to %s",
+				fs.Infof(nil, "mediavfs: following redirect from %s to %s",
 					via[len(via)-1].URL.Redacted(), req.URL.Redacted())
 			}
 			return nil
@@ -306,7 +306,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Start polling goroutine if poll_interval is set
 	if f.opt.PollInterval > 0 {
 		go f.startPolling(ctx)
-		fs.Debugf(nil, "mediavfs: started polling with interval %v", time.Duration(f.opt.PollInterval))
+		fs.Infof(nil, "mediavfs: started polling with interval %v", time.Duration(f.opt.PollInterval))
 	}
 
 	// Validate root path if specified
@@ -433,15 +433,15 @@ func (f *Fs) pollDatabaseForChanges(ctx context.Context) {
 		f.fileCache.mu.Unlock()
 
 		if newCount != oldCount {
-			fs.Debugf(nil, "mediavfs: poll updated user %s: %d -> %d files", userName, oldCount, newCount)
+			fs.Infof(nil, "mediavfs: poll updated user %s: %d -> %d files", userName, oldCount, newCount)
 
 			// Send change notification for this user's directory
 			select {
 			case f.pollChanges <- userName:
-				fs.Debugf(nil, "mediavfs: sent change notification for user %s", userName)
+				fs.Infof(nil, "mediavfs: sent change notification for user %s", userName)
 			default:
 				// Channel is full, skip notification (non-blocking)
-				fs.Debugf(nil, "mediavfs: skipped change notification for user %s (channel full)", userName)
+				fs.Infof(nil, "mediavfs: skipped change notification for user %s (channel full)", userName)
 			}
 		}
 	}
@@ -541,7 +541,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		f.fileCache.files[userName] = cachedFiles
 		f.fileCache.mu.Unlock()
 
-		fs.Debugf(nil, "mediavfs: loaded %d files for user %s into cache", len(cachedFiles), userName)
+		fs.Infof(nil, "mediavfs: loaded %d files for user %s into cache", len(cachedFiles), userName)
 	}
 
 	// Track directories we've already added
@@ -695,7 +695,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	// Wait for all workers to complete
 	wg.Wait()
 
-	fs.Debugf(nil, "mediavfs: processed %d files concurrently (%d workers, %d chunks)", len(cachedFiles), workers, len(chunks))
+	fs.Infof(nil, "mediavfs: processed %d files concurrently (%d workers, %d chunks)", len(cachedFiles), workers, len(chunks))
 
 	// Add virtual directories created via Mkdir
 	f.vdirMu.RLock()
@@ -852,7 +852,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	f.virtualDirs[fullPath] = true
 	f.vdirMu.Unlock()
 
-	fs.Debugf(nil, "mediavfs: created virtual directory: %s", fullPath)
+	fs.Infof(nil, "mediavfs: created virtual directory: %s", fullPath)
 	return nil // Virtual directories, always succeed
 }
 
@@ -893,7 +893,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		f.vdirMu.Lock()
 		if f.virtualDirs[vdirPath] {
 			delete(f.virtualDirs, vdirPath)
-			fs.Debugf(nil, "mediavfs: removed virtual directory after file move: %s", vdirPath)
+			fs.Infof(nil, "mediavfs: removed virtual directory after file move: %s", vdirPath)
 		}
 		f.vdirMu.Unlock()
 	}
@@ -922,7 +922,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		displayPath: newPath,
 	}
 
-	fs.Debugf(nil, "mediavfs: moved %s to %s (real-time update)", srcObj.remote, remote)
+	fs.Infof(nil, "mediavfs: moved %s to %s (real-time update)", srcObj.remote, remote)
 
 	return newObj, nil
 }
@@ -956,28 +956,28 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 // ChangeNotify calls the passed function with a path that has had changes.
 // If the implementation uses polling, it should adhere to the given interval.
 func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
-	fs.Debugf(nil, "mediavfs: ChangeNotify started")
+	fs.Infof(nil, "mediavfs: ChangeNotify started")
 
 	for {
 		select {
 		case <-ctx.Done():
-			fs.Debugf(nil, "mediavfs: ChangeNotify stopping due to context cancellation")
+			fs.Infof(nil, "mediavfs: ChangeNotify stopping due to context cancellation")
 			return
 		case path, ok := <-f.pollChanges:
 			if !ok {
-				fs.Debugf(nil, "mediavfs: ChangeNotify stopping due to channel closure")
+				fs.Infof(nil, "mediavfs: ChangeNotify stopping due to channel closure")
 				return
 			}
 			// Notify that this path has changed
-			fs.Debugf(nil, "mediavfs: notifying change for path: %s", path)
+			fs.Infof(nil, "mediavfs: notifying change for path: %s", path)
 			notifyFunc(path, fs.EntryDirectory)
 		case interval, ok := <-pollIntervalChan:
 			if !ok {
-				fs.Debugf(nil, "mediavfs: ChangeNotify stopping due to pollIntervalChan closure")
+				fs.Infof(nil, "mediavfs: ChangeNotify stopping due to pollIntervalChan closure")
 				return
 			}
 			if interval > 0 {
-				fs.Debugf(nil, "mediavfs: poll interval updated to %v", interval)
+				fs.Infof(nil, "mediavfs: poll interval updated to %v", interval)
 			}
 		}
 	}
@@ -1050,10 +1050,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		resolvedURL = cachedMeta.resolvedURL
 		etag = cachedMeta.etag
 		fileSize = cachedMeta.size
-		fs.Debugf(nil, "mediavfs: using cached URL and ETag for %s", o.mediaKey)
+		fs.Infof(nil, "mediavfs: using cached URL and ETag for %s", o.mediaKey)
 	} else {
 		// First time accessing this file - resolve URL and get ETag via HEAD request
-		fs.Debugf(nil, "mediavfs: resolving URL and fetching metadata for %s", o.mediaKey)
+		fs.Infof(nil, "mediavfs: resolving URL and fetching metadata for %s", o.mediaKey)
 
 		headReq, err := http.NewRequestWithContext(ctx, "HEAD", initialURL, nil)
 		if err != nil {
@@ -1085,7 +1085,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			size:        fileSize,
 		})
 
-		fs.Debugf(nil, "mediavfs: cached URL and ETag=%s for %s", etag, o.mediaKey)
+		fs.Infof(nil, "mediavfs: cached URL and ETag=%s for %s", etag, o.mediaKey)
 	}
 
 	// Now make the actual GET request to the resolved URL
@@ -1119,7 +1119,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, fmt.Errorf("HTTP error: %s (status %d)", res.Status, res.StatusCode)
 	}
 
-	fs.Debugf(nil, "mediavfs: opened %s with status %d", o.mediaKey, res.StatusCode)
+	fs.Infof(nil, "mediavfs: opened %s with status %d", o.mediaKey, res.StatusCode)
 
 	return res.Body, nil
 }
@@ -1136,8 +1136,8 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs           = (*Fs)(nil)
-	_ fs.Object       = (*Object)(nil)
-	_ fs.Mover        = (*Fs)(nil)
-	_ fs.ChangeNotify = (*Fs)(nil)
+	_ fs.Fs             = (*Fs)(nil)
+	_ fs.Object         = (*Object)(nil)
+	_ fs.Mover          = (*Fs)(nil)
+	_ fs.ChangeNotifier = (*Fs)(nil)
 )
