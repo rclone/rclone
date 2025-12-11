@@ -16,6 +16,84 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
+// MultipartInitResponse represents the response from multipart/init.
+type MultipartInitResponse struct {
+	Status int    `json:"status"`
+	Msg    string `json:"msg"`
+	Result struct {
+		UploadID   string `json:"upload_id"`
+		SessID     string `json:"sess_id"`
+		Server     string `json:"server"`
+		FolderID   int64  `json:"folder_id"`
+		ObjectPath string `json:"object_path"`
+	} `json:"result"`
+}
+
+// multipartInit starts a new multipart upload and returns server details.
+func (f *Fs) multipartInit(ctx context.Context, folderPath, filename string) (*MultipartInitResponse, error) {
+	apiURL := fmt.Sprintf("%s/multipart/init?key=%s&filename=%s&folder_path=%s",
+		f.endpoint,
+		url.QueryEscape(f.opt.Key),
+		url.QueryEscape(filename),
+		url.QueryEscape(folderPath),
+	)
+
+	var result MultipartInitResponse
+
+	err := f.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		if err != nil {
+			return false, err
+		}
+
+		resp, err := f.client.Do(req)
+		if err != nil {
+			return false, err
+		}
+		defer resp.Body.Close()
+
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return false, err
+		}
+
+		if result.Status != 200 {
+			return false, fmt.Errorf("multipart init error: %s", result.Msg)
+		}
+
+		return false, err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+// completeMultipart finalizes the multipart upload on the file server.
+func (f *Fs) completeMultipart(ctx context.Context, server string, uploadID string, sessID string, objectPath string) error {
+	req, err := http.NewRequestWithContext(ctx, "POST", server, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("X-RC-Upload-Id", uploadID)
+	req.Header.Set("X-Sess-ID", sessID)
+	req.Header.Set("X-Object-Path", objectPath)
+
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 202 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("completeMultipart failed %d: %s", resp.StatusCode, string(body))
+	}
+	return nil
+}
+
 // createFolder creates a folder at the specified path.
 func (f *Fs) createFolder(ctx context.Context, dirPath string) (*api.CreateFolderResponse, error) {
 	encodedDir := f.fromStandardPath(dirPath)
