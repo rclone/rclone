@@ -50,8 +50,8 @@ func (f *Fs) multipartInit(ctx context.Context, folderPath, filename string) (*M
 		if err != nil {
 			return false, err
 		}
-		defer func() { _ = resp.Body.Close() }()
-		
+		defer resp.Body.Close()
+
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 			return false, err
 		}
@@ -85,7 +85,7 @@ func (f *Fs) completeMultipart(ctx context.Context, server string, uploadID stri
 	if err != nil {
 		return err
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 202 {
 		body, _ := io.ReadAll(resp.Body)
