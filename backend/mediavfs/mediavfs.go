@@ -295,7 +295,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		urlCache:    newURLCache(),
 		fileCache:   newFileCache(),
 		virtualDirs: make(map[string]bool),
-		pollChanges: make(chan string, 1), // Buffered channel for change notifications
+		pollChanges: make(chan string, 10), // Buffered channel for change notifications (increased for root + user notifications)
 	}
 
 	f.features = (&fs.Features{
@@ -450,12 +450,19 @@ func (f *Fs) pollDatabaseForChanges(ctx context.Context) {
 		if newCount != oldCount {
 			fs.Infof(nil, "mediavfs: poll updated user %s: %d -> %d files", userName, oldCount, newCount)
 
-			// Send change notification for this user's directory
+			// Send change notification for the root directory (forces VFS to re-read user list)
+			select {
+			case f.pollChanges <- "":
+				fs.Infof(nil, "mediavfs: sent change notification for ROOT directory")
+			default:
+				fs.Infof(nil, "mediavfs: skipped change notification for ROOT (channel full)")
+			}
+
+			// Also send change notification for this specific user's directory
 			select {
 			case f.pollChanges <- userName:
 				fs.Infof(nil, "mediavfs: sent change notification for user %s", userName)
 			default:
-				// Channel is full, skip notification (non-blocking)
 				fs.Infof(nil, "mediavfs: skipped change notification for user %s (channel full)", userName)
 			}
 		}
