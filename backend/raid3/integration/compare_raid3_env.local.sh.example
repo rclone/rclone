@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#
+# compare_raid3_env.local.sh.example
+# -----------------------------------
+# Example local override file for customizing integration test script configuration.
+#
+# To use this file:
+#   1. Copy this file to compare_raid3_env.local.sh
+#   2. Uncomment and adjust the remote names to match your rclone.conf
+#   3. The scripts will automatically source this file if present
+#
+
+# Override remote names if your rclone.conf uses different names than the defaults:
+# RAID3_REMOTE="myraid3"      # Override for both local and minio storage types
+# SINGLE_REMOTE="mysingle"    # Override for single backend remote name
