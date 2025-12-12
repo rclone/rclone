@@ -18,6 +18,7 @@ import (
 var (
 	opt      operations.ListJSONOpt
 	statOnly bool
+	pretty   bool
 )
 
 func init() {
@@ -34,6 +35,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &opt.Metadata, "metadata", "M", false, "Add metadata to the listing", "")
 	flags.StringArrayVarP(cmdFlags, &opt.HashTypes, "hash-type", "", nil, "Show only this hash type (may be repeated)", "")
 	flags.BoolVarP(cmdFlags, &statOnly, "stat", "", false, "Just return the info for the pointed to file", "")
+	flags.BoolVarP(cmdFlags, &pretty, "pretty", "", false, "Pretty-print output by formatting it with indentation, newlines and spaces", "")
 }
 
 var commandDefinition = &cobra.Command{
@@ -147,7 +149,12 @@ can be processed line by line as each item is written on individual lines
 				if err != nil {
 					return err
 				}
-				out, err := json.MarshalIndent(item, "", "\t")
+				var out []byte
+				if pretty {
+					out, err = json.MarshalIndent(item, "", "\t")
+				} else {
+					out, err = json.Marshal(item)
+				}
 				if err != nil {
 					return fmt.Errorf("failed to marshal list object: %w", err)
 				}
@@ -159,22 +166,44 @@ can be processed line by line as each item is written on individual lines
 			} else {
 				fmt.Println("[")
 				first := true
-				err := operations.ListJSON(context.Background(), fsrc, remote, &opt, func(item *operations.ListJSONItem) error {
-					out, err := json.Marshal(item)
-					if err != nil {
-						return fmt.Errorf("failed to marshal list object: %w", err)
-					}
-					if first {
-						first = false
-					} else {
-						fmt.Print(",\n")
-					}
-					_, err = os.Stdout.Write(out)
-					if err != nil {
-						return fmt.Errorf("failed to write to output: %w", err)
-					}
-					return nil
-				})
+				var err error
+				if pretty {
+					err = operations.ListJSON(context.Background(), fsrc, remote, &opt, func(item *operations.ListJSONItem) error {
+						out, err := json.MarshalIndent(item, "\t", "\t")
+						if err != nil {
+							return fmt.Errorf("failed to marshal list object: %w", err)
+						}
+						if first {
+							fmt.Print("\t")
+							first = false
+						} else {
+							fmt.Print(",\n\t")
+						}
+						_, err = os.Stdout.Write(out)
+						if err != nil {
+							return fmt.Errorf("failed to write to output: %w", err)
+						}
+						return nil
+					})
+
+				} else {
+					err = operations.ListJSON(context.Background(), fsrc, remote, &opt, func(item *operations.ListJSONItem) error {
+						out, err := json.Marshal(item)
+						if err != nil {
+							return fmt.Errorf("failed to marshal list object: %w", err)
+						}
+						if first {
+							first = false
+						} else {
+							fmt.Print(",\n")
+						}
+						_, err = os.Stdout.Write(out)
+						if err != nil {
+							return fmt.Errorf("failed to write to output: %w", err)
+						}
+						return nil
+					})
+				}
 				if err != nil {
 					return err
 				}
