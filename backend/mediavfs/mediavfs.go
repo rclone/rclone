@@ -19,7 +19,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 )
 
@@ -86,6 +85,16 @@ type Object struct {
 	displayPath string // The path to display (from 'path' column or derived from remote)
 }
 
+// convertUnixTimestamp converts a Unix timestamp (seconds or milliseconds) to time.Time
+func convertUnixTimestamp(timestamp int64) time.Time {
+	// If timestamp is > 10^10, it's likely in milliseconds
+	if timestamp > 10000000000 {
+		return time.Unix(timestamp/1000, (timestamp%1000)*1000000)
+	}
+	// Otherwise assume seconds
+	return time.Unix(timestamp, 0)
+}
+
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {
 	return f.name
@@ -146,12 +155,27 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(time.Hour)
 
+	// Create custom HTTP client
+	customClient := &http.Client{
+		Timeout: 0, // No timeout for streaming
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after 10 redirects")
+			}
+			// Preserve Range header across redirects (critical for seeking)
+			if len(via) > 0 && via[0].Header.Get("Range") != "" {
+				req.Header.Set("Range", via[0].Header.Get("Range"))
+			}
+			return nil
+		},
+	}
+
 	f := &Fs{
 		name:       name,
 		root:       root,
 		opt:        *opt,
 		db:         db,
-		httpClient: fshttp.NewClient(ctx),
+		httpClient: customClient,
 	}
 
 	f.features = (&fs.Features{
@@ -268,17 +292,19 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 	for rows.Next() {
 		var (
-			mediaKey    string
-			fileName    string
-			displayName string
-			displayPath string
-			sizeBytes   int64
-			timestamp   time.Time
+			mediaKey      string
+			fileName      string
+			displayName   string
+			displayPath   string
+			sizeBytes     int64
+			timestampUnix int64
 		)
 
-		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestamp); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
+
+		timestamp := convertUnixTimestamp(timestampUnix)
 
 		// Construct the full path
 		var fullPath string
@@ -382,17 +408,19 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	for rows.Next() {
 		var (
-			mediaKey    string
-			fileName    string
-			displayName string
-			displayPath string
-			sizeBytes   int64
-			timestamp   time.Time
+			mediaKey      string
+			fileName      string
+			displayName   string
+			displayPath   string
+			sizeBytes     int64
+			timestampUnix int64
 		)
 
-		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestamp); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
+
+		timestamp := convertUnixTimestamp(timestampUnix)
 
 		// Construct the full path
 		var fullPath string
