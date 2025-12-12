@@ -305,13 +305,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		UnWrap:                  f.UnWrap,
 	}).Fill(ctx, f)
 
-	// CRITICAL: Perform initial database load BEFORE VFS can cache empty directories
-	// This prevents the "empty mount" issue where VFS caches empty root before polling runs
-	fs.Infof(nil, "mediavfs: performing initial database load...")
-	f.pollDatabaseForChanges(ctx)
-	fs.Infof(nil, "mediavfs: initial database load complete, cache populated")
-
 	// Start polling goroutine if poll_interval is set
+	// NOTE: Do NOT call pollDatabaseForChanges here - it blocks mount initialization
+	// The cache will be populated lazily on first List() call or by the polling goroutine
 	if f.opt.PollInterval > 0 {
 		go f.startPolling(ctx)
 	}
