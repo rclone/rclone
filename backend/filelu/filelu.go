@@ -321,8 +321,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, destinationPath string) (f
 		return nil, fmt.Errorf("failed to open source object: %w", err)
 	}
 	defer func() {
-		if cerr := reader.Close(); cerr != nil {
-			fs.Logf(nil, "failed to close reader: %v", cerr)
+		if err := reader.Close(); err != nil {
+			fs.Logf(nil, "Failed to close file body: %v", err)
 		}
 	}()
 
