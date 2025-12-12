@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -27,12 +28,67 @@ const (
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
 	decayConstant = 2
+	cacheTTL      = 2 * time.Hour // Cache resolved URLs and ETags for 2 hours
 )
 
 var (
 	errNotWritable = errors.New("mediavfs is read-only except for move/rename operations")
 	errCrossUser   = errors.New("cannot move files between different users")
 )
+
+// urlMetadata stores cached URL resolution and ETag information
+type urlMetadata struct {
+	resolvedURL string
+	etag        string
+	size        int64
+	expiresAt   time.Time
+}
+
+// urlCache is a TTL cache for resolved URLs and their ETags
+type urlCache struct {
+	cache map[string]*urlMetadata
+	mu    sync.RWMutex
+}
+
+func newURLCache() *urlCache {
+	return &urlCache{
+		cache: make(map[string]*urlMetadata),
+	}
+}
+
+func (c *urlCache) get(key string) (*urlMetadata, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	meta, ok := c.cache[key]
+	if !ok {
+		return nil, false
+	}
+
+	// Check if expired
+	if time.Now().After(meta.expiresAt) {
+		return nil, false
+	}
+
+	return meta, true
+}
+
+func (c *urlCache) set(key string, meta *urlMetadata) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	meta.expiresAt = time.Now().Add(cacheTTL)
+	c.cache[key] = meta
+
+	// Simple cleanup: remove expired entries if cache is too large
+	if len(c.cache) > 1000 {
+		for k, v := range c.cache {
+			if time.Now().After(v.expiresAt) {
+				delete(c.cache, k)
+			}
+		}
+	}
+}
 
 func init() {
 	fsi := &fs.RegInfo{
@@ -72,6 +128,7 @@ type Fs struct {
 	features   *fs.Features
 	db         *sql.DB
 	httpClient *http.Client
+	urlCache   *urlCache
 }
 
 // Object represents a media file in the database
@@ -170,6 +227,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				// Preserve Range header (critical for resume/seeking)
 				if rangeHeader := originalReq.Header.Get("Range"); rangeHeader != "" {
 					req.Header.Set("Range", rangeHeader)
+					fs.Debugf(nil, "mediavfs: preserving Range header on redirect: %s", rangeHeader)
 				}
 				// Preserve If-Range header (critical for ETag validation)
 				if ifRangeHeader := originalReq.Header.Get("If-Range"); ifRangeHeader != "" {
@@ -179,6 +237,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				if userAgent := originalReq.Header.Get("User-Agent"); userAgent != "" {
 					req.Header.Set("User-Agent", userAgent)
 				}
+				fs.Debugf(nil, "mediavfs: following redirect from %s to %s",
+					via[len(via)-1].URL.Redacted(), req.URL.Redacted())
 			}
 			return nil
 		},
@@ -190,6 +250,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:        *opt,
 		db:         db,
 		httpClient: customClient,
+		urlCache:   newURLCache(),
 	}
 
 	f.features = (&fs.Features{
@@ -220,6 +281,16 @@ func splitUserPath(remote string) (userName string, filePath string) {
 		return parts[0], ""
 	}
 	return parts[0], parts[1]
+}
+
+// extractPathAndName extracts path and name from file_name if it contains "/"
+// e.g., "photos/vacation/img.jpg" -> "photos/vacation", "img.jpg"
+func extractPathAndName(fileName string) (path string, name string) {
+	if strings.Contains(fileName, "/") {
+		lastSlash := strings.LastIndex(fileName, "/")
+		return fileName[:lastSlash], fileName[lastSlash+1:]
+	}
+	return "", fileName
 }
 
 // List the objects and directories in dir into entries
@@ -274,18 +345,19 @@ func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
 
 // listUserFiles lists files and directories for a specific user and path
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
-	// Query to get all files for the user
+	// Query to get all files for the user with LIMIT for lazy loading
 	query := fmt.Sprintf(`
 		SELECT
 			media_key,
 			file_name,
-			COALESCE(name, file_name) as display_name,
-			COALESCE(path, '') as display_path,
+			COALESCE(name, '') as custom_name,
+			COALESCE(path, '') as custom_path,
 			size_bytes,
 			utc_timestamp
 		FROM %s
 		WHERE user_name = $1
-		ORDER BY display_path, display_name
+		ORDER BY file_name
+		LIMIT 1000
 	`, f.opt.TableName)
 
 	rows, err := f.db.QueryContext(ctx, query, userName)
@@ -308,21 +380,40 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		var (
 			mediaKey      string
 			fileName      string
-			displayName   string
-			displayPath   string
+			customName    string
+			customPath    string
 			sizeBytes     int64
 			timestampUnix int64
 		)
 
-		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestampUnix); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
 
 		timestamp := convertUnixTimestamp(timestampUnix)
 
+		// Determine the display name and path
+		var displayName, displayPath string
+
+		if customName != "" {
+			// Use custom name if set
+			displayName = customName
+		} else {
+			// Extract name from fileName (handles paths in file_name)
+			_, displayName = extractPathAndName(fileName)
+		}
+
+		if customPath != "" {
+			// Use custom path if set
+			displayPath = strings.Trim(customPath, "/")
+		} else {
+			// Extract path from fileName if it contains "/"
+			extractedPath, _ := extractPathAndName(fileName)
+			displayPath = strings.Trim(extractedPath, "/")
+		}
+
 		// Construct the full path
 		var fullPath string
-		displayPath = strings.Trim(displayPath, "/")
 		if displayPath != "" {
 			fullPath = displayPath + "/" + displayName
 		} else {
@@ -406,12 +497,13 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		SELECT
 			media_key,
 			file_name,
-			COALESCE(name, file_name) as display_name,
-			COALESCE(path, '') as display_path,
+			COALESCE(name, '') as custom_name,
+			COALESCE(path, '') as custom_path,
 			size_bytes,
 			utc_timestamp
 		FROM %s
 		WHERE user_name = $1
+		LIMIT 1000
 	`, f.opt.TableName)
 
 	rows, err := f.db.QueryContext(ctx, query, userName)
@@ -424,21 +516,36 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		var (
 			mediaKey      string
 			fileName      string
-			displayName   string
-			displayPath   string
+			customName    string
+			customPath    string
 			sizeBytes     int64
 			timestampUnix int64
 		)
 
-		if err := rows.Scan(&mediaKey, &fileName, &displayName, &displayPath, &sizeBytes, &timestampUnix); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
 
 		timestamp := convertUnixTimestamp(timestampUnix)
 
+		// Determine the display name and path (same logic as listUserFiles)
+		var displayName, displayPath string
+
+		if customName != "" {
+			displayName = customName
+		} else {
+			_, displayName = extractPathAndName(fileName)
+		}
+
+		if customPath != "" {
+			displayPath = strings.Trim(customPath, "/")
+		} else {
+			extractedPath, _ := extractPathAndName(fileName)
+			displayPath = strings.Trim(extractedPath, "/")
+		}
+
 		// Construct the full path
 		var fullPath string
-		displayPath = strings.Trim(displayPath, "/")
 		if displayPath != "" {
 			fullPath = displayPath + "/" + displayName
 		} else {
@@ -582,13 +689,63 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
-// Open opens the file for reading
+// Open opens the file for reading with URL caching and ETag support
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	// Build the download URL
-	url := fmt.Sprintf("%s/%s", o.fs.opt.DownloadURL, o.mediaKey)
+	// Build the initial download URL (may return 302 redirect)
+	initialURL := fmt.Sprintf("%s/%s", o.fs.opt.DownloadURL, o.mediaKey)
 
-	// Create the HTTP request
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	// Check if we have cached metadata for this URL
+	cacheKey := o.mediaKey
+	cachedMeta, found := o.fs.urlCache.get(cacheKey)
+
+	var resolvedURL, etag string
+	var fileSize int64
+
+	if found {
+		// Use cached metadata
+		resolvedURL = cachedMeta.resolvedURL
+		etag = cachedMeta.etag
+		fileSize = cachedMeta.size
+		fs.Debugf(nil, "mediavfs: using cached URL and ETag for %s", o.mediaKey)
+	} else {
+		// First time accessing this file - resolve URL and get ETag via HEAD request
+		fs.Debugf(nil, "mediavfs: resolving URL and fetching metadata for %s", o.mediaKey)
+
+		headReq, err := http.NewRequestWithContext(ctx, "HEAD", initialURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create HEAD request: %w", err)
+		}
+		headReq.Header.Set("User-Agent", "AndroidDownloadManager/13")
+
+		headResp, err := o.fs.httpClient.Do(headReq)
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute HEAD request: %w", err)
+		}
+		defer headResp.Body.Close()
+
+		// Get the final URL after any redirects
+		resolvedURL = headResp.Request.URL.String()
+
+		// Get ETag and size from headers
+		etag = headResp.Header.Get("ETag")
+		if contentLength := headResp.Header.Get("Content-Length"); contentLength != "" {
+			fmt.Sscanf(contentLength, "%d", &fileSize)
+		} else {
+			fileSize = o.size
+		}
+
+		// Cache the metadata
+		o.fs.urlCache.set(cacheKey, &urlMetadata{
+			resolvedURL: resolvedURL,
+			etag:        etag,
+			size:        fileSize,
+		})
+
+		fs.Debugf(nil, "mediavfs: cached URL and ETag=%s for %s", etag, o.mediaKey)
+	}
+
+	// Now make the actual GET request to the resolved URL
+	req, err := http.NewRequestWithContext(ctx, "GET", resolvedURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -596,9 +753,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	// Set User-Agent header
 	req.Header.Set("User-Agent", "AndroidDownloadManager/13")
 
+	// Add If-Range header with ETag if we have it
+	if etag != "" {
+		req.Header.Set("If-Range", etag)
+	}
+
 	// Add range headers if specified in options
 	for k, v := range fs.OpenOptionHeaders(options) {
-		req.Header.Add(k, v)
+		req.Header.Set(k, v)
 	}
 
 	// Execute the request
@@ -607,11 +769,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 
-	// Check status code
-	if res.StatusCode < 200 || res.StatusCode > 299 {
+	// Check status code - accept both 200 and 206
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusPartialContent {
 		_ = res.Body.Close()
-		return nil, fmt.Errorf("HTTP error: %s", res.Status)
+		return nil, fmt.Errorf("HTTP error: %s (status %d)", res.Status, res.StatusCode)
 	}
+
+	fs.Debugf(nil, "mediavfs: opened %s with status %d", o.mediaKey, res.StatusCode)
 
 	return res.Body, nil
 }
