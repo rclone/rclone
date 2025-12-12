@@ -314,21 +314,30 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, destinationPath string) (f
 		return nil, nil
 	}
 
+	size := src.Size()
+
 	reader, err := src.Open(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open source object: %w", err)
 	}
-	defer func() {
-		if err := reader.Close(); err != nil {
-			fs.Logf(nil, "Failed to close file body: %v", err)
-		}
-	}()
+	defer reader.Close()
 
-	err = f.multipartUpload(ctx, reader, destinationPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload file to destination: %w", err)
+	fullPath := destinationPath
+	if !strings.HasPrefix(fullPath, "/") {
+		fullPath = path.Join(f.root, fullPath)
 	}
 
+	if size <= 500*1024*1024 {
+		err = f.uploadFile(ctx, reader, destinationPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload small file: %w", err)
+		}
+	} else {
+		err = f.multipartUpload(ctx, reader, fullPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to multipart upload: %w", err)
+		}
+	}
 	if err := src.Remove(ctx); err != nil {
 		return nil, fmt.Errorf("failed to delete source file: %w", err)
 	}
