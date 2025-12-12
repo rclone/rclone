@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 )
 
@@ -155,16 +156,29 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(time.Hour)
 
-	// Create custom HTTP client
+	// Create custom HTTP client with redirect handling that preserves headers
+	baseClient := fshttp.NewClient(ctx)
 	customClient := &http.Client{
-		Timeout: 0, // No timeout for streaming
+		Transport: baseClient.Transport,
+		Timeout:   0, // No timeout for streaming large files
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 10 {
 				return fmt.Errorf("stopped after 10 redirects")
 			}
-			// Preserve Range header across redirects (critical for seeking)
-			if len(via) > 0 && via[0].Header.Get("Range") != "" {
-				req.Header.Set("Range", via[0].Header.Get("Range"))
+			if len(via) > 0 {
+				originalReq := via[0]
+				// Preserve Range header (critical for resume/seeking)
+				if rangeHeader := originalReq.Header.Get("Range"); rangeHeader != "" {
+					req.Header.Set("Range", rangeHeader)
+				}
+				// Preserve If-Range header (critical for ETag validation)
+				if ifRangeHeader := originalReq.Header.Get("If-Range"); ifRangeHeader != "" {
+					req.Header.Set("If-Range", ifRangeHeader)
+				}
+				// Preserve User-Agent
+				if userAgent := originalReq.Header.Get("User-Agent"); userAgent != "" {
+					req.Header.Set("User-Agent", userAgent)
+				}
 			}
 			return nil
 		},
@@ -578,6 +592,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+
+	// Set User-Agent header
+	req.Header.Set("User-Agent", "AndroidDownloadManager/13")
 
 	// Add range headers if specified in options
 	for k, v := range fs.OpenOptionHeaders(options) {
