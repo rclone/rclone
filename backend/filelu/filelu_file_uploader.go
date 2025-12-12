@@ -20,18 +20,30 @@ const chunkSize = 64 * 1024 * 1024
 
 // multipartUpload uploads a file in fixed-size chunks using the multipart API.
 func (f *Fs) multipartUpload(ctx context.Context, in io.Reader, remote string) error {
-	folder := path.Dir(remote)
-	file := path.Base(remote)
-
-	if folder == "." {
-		folder = ""
-	} else {
-		folder = strings.Trim(folder, "/")
+	dir := path.Dir(remote)
+	if dir == "." {
+		dir = ""
 	}
 
+	if dir != "" {
+		_, err := f.List(ctx, dir)
+		if err != nil {
+			if errors.Is(err, fs.ErrorDirNotFound) {
+				if err := f.Mkdir(ctx, dir); err != nil {
+					return fmt.Errorf("failed to create directory: %w", err)
+				}
+			} else {
+				return err
+			}
+		}
+	}
+
+	folder := strings.Trim(dir, "/")
 	if folder != "" {
 		folder = "/" + folder
 	}
+
+	file := path.Base(remote)
 
 	initResp, err := f.multipartInit(ctx, folder, file)
 	if err != nil {
