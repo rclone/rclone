@@ -161,6 +161,13 @@ header is added and the default (private) will be used.
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "user_project",
+			Help: `If requester pays option is enabled and provider is set to "Other", this project will be billed for requests.
+
+Example use case: This is required for Google Cloud Storage buckets. 
+The value can either be the project number or project ID of the billing project.`,
+			Advanced: true,
+		}, {
 			Name: "server_side_encryption",
 			Help: "The server-side encryption algorithm used when storing this object in S3.",
 		}, {
@@ -992,6 +999,7 @@ type Options struct {
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
+	UserProject                 string               `config:"user_project"`
 }
 
 // Fs represents a remote s3 server
@@ -1255,6 +1263,36 @@ func fixupRequest(o *s3.Options, opt *Options) {
 	})
 }
 
+// addXAmzUserProjectHeader adds the `x-amz-user-project` header to requests before signing.
+// This is necessary if the requester pays flag is set, and e.g. the remote provider is Google Cloud Storage.
+//
+// While GCS supports both `x-amz` and `x-goog` header prefixes, it's not allowed to mix them in a single request.
+// As we use `x-amz` headers in header signing already, we use `x-amz` prefix.
+//
+// In GCS's case, if `x-amz-user-project` header is not specified when `requester_pays` flag is set, requests will fail.
+func addXAmzUserProjectHeader(o *s3.Options, userProject string) {
+	fixup := middleware.FinalizeMiddlewareFunc(
+		"AddXAmzUserProjectHeader",
+		func(ctx context.Context, in middleware.FinalizeInput, next middleware.FinalizeHandler) (out middleware.FinalizeOutput, metadata middleware.Metadata, err error) {
+			req, ok := in.Request.(*smithyhttp.Request)
+			if !ok {
+				return out, metadata, fmt.Errorf("addXAmzUserProjectHeader: unexpected request middleware type %T", in.Request)
+			}
+
+			req.Header.Set("x-amz-user-project", userProject)
+
+			return next.HandleFinalize(ctx, in)
+		},
+	)
+
+	o.APIOptions = append(o.APIOptions, func(stack *middleware.Stack) error {
+		if err := stack.Finalize.Insert(fixup, "Signing", middleware.Before); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 // A logger for the S3 SDK
 type s3logger struct{}
 
@@ -1405,6 +1443,14 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 				s3Opt.HTTPSignerV4 = &v2Signer{opt: opt}
 			})
 		}
+	}
+
+	// If provider is Other and UserProject is set, add x-amz-user-project header to the request
+	if opt.Provider == "Other" && opt.UserProject != "" {
+		fs.Debugf(nil, "Using user project '%s' for Requester Pays", opt.UserProject)
+		options = append(options, func(o *s3.Options) {
+			addXAmzUserProjectHeader(o, opt.UserProject)
+		})
 	}
 
 	// Fixup the request if needed
