@@ -14,6 +14,9 @@ managing files in the cloud easy. Its cross-platform file backup
 services let you upload and back up files from any internet-connected
 device.
 
+**Note** FileLu now has a fully featured S3 backend [FileLu S5](/s3#filelu-s5),
+an industry standard S3 compatible object store.
+
 ## Configuration
 
 Here is an example of how to make a remote called `filelu`. First, run:

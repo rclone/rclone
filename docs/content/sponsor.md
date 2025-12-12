@@ -19,8 +19,9 @@ Thank you to our sponsors:
 {{< sponsor src="/img/logos/mega-s4.svg" width="300" height="200" title="MEGA S4: New S3 compatible object storage. High scale. Low cost. Free egress." link="https://mega.io/objectstorage?utm_source=rclone&utm_medium=referral&utm_campaign=rclone-mega-s4&mct=rclonepromo">}}
 {{< sponsor src="/img/logos/sia.svg" width="200" height="200" title="Visit our sponsor sia" link="https://sia.tech">}}
 {{< sponsor src="/img/logos/route4me.svg" width="400" height="200" title="Visit our sponsor Route4Me" link="https://route4me.com/">}}
-{{< sponsor src="/img/logos/rcloneview.svg" width="300" height="200" title="Visit our sponsor RcloneView" link="https://rcloneview.com/">}}
+{{< sponsor src="/img/logos/rcloneview-banner.svg" width="300" height="200" title="Visit our sponsor RcloneView" link="https://rcloneview.com/">}}
 {{< sponsor src="/img/logos/rcloneui.svg" width="300" height="200" title="Visit our sponsor RcloneUI" link="https://github.com/rclone-ui/rclone-ui">}}
+{{< sponsor src="/img/logos/shade.svg" width="300" height="200" title="Visit our sponsor Shade" link="https://shade.inc">}}
 {{< sponsor src="/img/logos/filelu-rclone.svg" width="300" height="200" title="Visit our sponsor FileLu" link="https://filelu.com/">}}
 {{< sponsor src="/img/logos/torbox.png" width="200" height="200" title="Visit our sponsor TORBOX" link="https://www.torbox.app/">}}
 {{< sponsor src="/img/logos/spectra-logic.svg" width="300" height="200" title="Visit our sponsor Spectra Logic" link="https://spectralogic.com/">}}
