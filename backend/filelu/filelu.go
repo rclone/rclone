@@ -320,7 +320,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, destinationPath string) (f
 	if err != nil {
 		return nil, fmt.Errorf("failed to open source object: %w", err)
 	}
-	defer reader.Close()
+	defer func() {
+		if cerr := reader.Close(); cerr != nil {
+			fs.Logf(nil, "failed to close reader: %v", cerr)
+		}
+	}()
 
 	fullPath := destinationPath
 	if !strings.HasPrefix(fullPath, "/") {
