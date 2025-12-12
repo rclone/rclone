@@ -37,42 +37,6 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# Parse --config and --force options early (before sourcing common.sh)
-# This allows users to override the config file location
-# We'll store the original arguments and filter out --config/--force for later parsing
-ORIGINAL_ARGS=("$@")
-RCLONE_CONFIG_CUSTOM=""
-FORCE_CONFIG=0
-FILTERED_ARGS=()
-
-while [[ ${#ORIGINAL_ARGS[@]} -gt 0 ]]; do
-  case "${ORIGINAL_ARGS[0]}" in
-    --config)
-      if [[ ${#ORIGINAL_ARGS[@]} -lt 2 ]]; then
-        echo "ERROR: --config requires an argument" >&2
-        exit 1
-      fi
-      RCLONE_CONFIG_CUSTOM="${ORIGINAL_ARGS[1]}"
-      ORIGINAL_ARGS=("${ORIGINAL_ARGS[@]:2}")
-      ;;
-    --config=*)
-      RCLONE_CONFIG_CUSTOM="${ORIGINAL_ARGS[0]#*=}"
-      ORIGINAL_ARGS=("${ORIGINAL_ARGS[@]:1}")
-      ;;
-    --force)
-      FORCE_CONFIG=1
-      ORIGINAL_ARGS=("${ORIGINAL_ARGS[@]:1}")
-      ;;
-    *)
-      FILTERED_ARGS+=("${ORIGINAL_ARGS[0]}")
-      ORIGINAL_ARGS=("${ORIGINAL_ARGS[@]:1}")
-      ;;
-  esac
-done
-
-# Set filtered args for main parsing
-set -- "${FILTERED_ARGS[@]}"
-
 # shellcheck source=backend/raid3/integration/compare_raid3_with_single_common.sh
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
@@ -93,23 +57,11 @@ Commands:
   teardown                   Purge all test data for the selected storage type.
   list                       Show available tests.
   test <name>                Run the named test (e.g. "mkdir").
-  create-config              Create a test-specific rclone config file.
 
 Options:
   --storage-type <local|minio>   Select backend pair (required for start/stop/test/teardown).
-  --config <path>                 Use a custom rclone config file (overrides automatic detection).
-  --force                          Overwrite existing config file when using create-config.
   -v, --verbose                  Show stdout/stderr from both rclone invocations.
   -h, --help                     Display this help.
-
-Config File Resolution:
-  The script uses the following priority order to find the rclone config:
-  1. --config option (if provided)
-  2. Test-specific config: \${WORKDIR}/rclone_raid3_integration_tests.config (if exists)
-  3. RCLONE_CONFIG environment variable (if set)
-  4. Default: ~/.config/rclone/rclone.conf
-
-  Use 'create-config' command to generate the test-specific config file.
 
 The script must be executed from ${WORKDIR}.
 EOF
@@ -138,7 +90,7 @@ parse_args() {
         usage
         exit 0
         ;;
-      start|stop|teardown|list|test|create-config)
+      start|stop|teardown|list|test)
         if [[ -n "${COMMAND}" ]]; then
           die "Multiple commands provided: '${COMMAND}' and '$1'"
         fi
@@ -160,9 +112,6 @@ parse_args() {
   case "${COMMAND}" in
     start|stop|teardown|test)
       [[ -n "${STORAGE_TYPE}" ]] || die "--storage-type must be provided for '${COMMAND}'"
-      ;;
-    create-config)
-      # create-config doesn't need storage-type
       ;;
   esac
 
@@ -1187,18 +1136,6 @@ run_single_test() {
 
 main() {
   parse_args "$@"
-  
-  # Handle create-config command early (doesn't need workdir check or storage-type)
-  if [[ "${COMMAND}" == "create-config" ]]; then
-    local config_file="${RCLONE_CONFIG_CUSTOM:-${WORKDIR}/rclone_raid3_integration_tests.config}"
-    if create_rclone_config "${config_file}" "${FORCE_CONFIG}"; then
-      log_info "config" "Config file ready at: ${config_file}"
-      exit 0
-    else
-      exit 1
-    fi
-  fi
-  
   ensure_workdir
   ensure_rclone_config
 

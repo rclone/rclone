@@ -1,27 +1,65 @@
 # Shared helpers for raid3 comparison and rebuild scripts.
 # This file is sourced by compare_raid3_with_single*.sh variants.
 
-WORKDIR="${WORKDIR:-${HOME}/go/raid3storage}"
+# Check if running on native Windows (cmd.exe/PowerShell)
+# Note: Git Bash (OSTYPE=msys) and Cygwin (OSTYPE=cygwin) are allowed as they provide Unix-like environments
+if [[ -n "${WINDIR:-}" ]] || [[ -n "${SYSTEMROOT:-}" ]]; then
+  # Check if we're in WSL, Git Bash, or Cygwin (these should work)
+  if [[ "${OSTYPE:-}" != "msys" ]] && [[ "${OSTYPE:-}" != "cygwin" ]] && [[ ! -f /proc/version ]] && [[ ! -d /usr/bin ]]; then
+    cat >&2 <<EOF
+ERROR: These integration test scripts cannot run natively on Windows (cmd.exe or PowerShell).
+
+These Bash-based integration test scripts require a Unix-like environment.
+To run on Windows, please use one of the following options:
+
+1. Windows Subsystem for Linux (WSL)
+   - Install WSL from Microsoft Store
+   - Run the scripts from within a WSL terminal
+
+2. Git Bash
+   - Install Git for Windows (includes Git Bash)
+   - Run the scripts from Git Bash terminal
+
+3. Cygwin
+   - Install Cygwin
+   - Run the scripts from Cygwin terminal
+
+For more information, see the README.md documentation.
+EOF
+    exit 1
+  fi
+fi
+
+# Read workdir from .rclone_raid3_integration_tests.workdir file if it exists
+# Otherwise fall back to default
+WORKDIR_FILE="${HOME}/.rclone_raid3_integration_tests.workdir"
+if [[ -f "${WORKDIR_FILE}" ]]; then
+  # Read first line and trim whitespace
+  WORKDIR=$(head -n1 "${WORKDIR_FILE}" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' || echo "")
+  if [[ -z "${WORKDIR}" ]]; then
+    printf '[%s] ERROR: Workdir file exists but is empty: %s\n' "${SCRIPT_NAME:-compare_raid3_with_single_common.sh}" "${WORKDIR_FILE}" >&2
+    printf '[%s] ERROR: Please run setup.sh to reconfigure the test environment.\n' "${SCRIPT_NAME:-compare_raid3_with_single_common.sh}" >&2
+    exit 1
+  fi
+  # Resolve to absolute path if directory exists
+  if [[ -d "${WORKDIR}" ]]; then
+    resolved_workdir=$(cd -- "${WORKDIR}" 2>/dev/null && pwd 2>/dev/null || echo "")
+    if [[ -n "${resolved_workdir}" ]]; then
+      WORKDIR="${resolved_workdir}"
+    fi
+  fi
+else
+  # Fall back to default if workdir file doesn't exist
+  WORKDIR="${WORKDIR:-${HOME}/go/raid3storage}"
+fi
 
 # Determine script directory so we can locate optional env overrides.
 SCRIPT_DIR=${SCRIPT_DIR:-$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 
-# Resolve rclone config file with priority order:
-# 1. RCLONE_CONFIG_CUSTOM (set by --config option in scripts)
-# 2. Test-specific config file in WORKDIR (if exists)
-# 3. RCLONE_CONFIG environment variable (if set)
-# 4. Default rclone config location
+# Resolve rclone config file - only use test-specific config file
+# This is the strict approach: tests only use the config file created by setup.sh
 TEST_SPECIFIC_CONFIG="${WORKDIR}/rclone_raid3_integration_tests.config"
-if [[ -n "${RCLONE_CONFIG_CUSTOM:-}" ]]; then
-  RCLONE_CONFIG="${RCLONE_CONFIG_CUSTOM}"
-elif [[ -f "${TEST_SPECIFIC_CONFIG}" ]]; then
-  RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
-elif [[ -n "${RCLONE_CONFIG:-}" ]]; then
-  # RCLONE_CONFIG already set (from env or compare_raid3_env.sh)
-  :
-else
-  RCLONE_CONFIG="${HOME}/.config/rclone/rclone.conf"
-fi
+RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
 
 # Load default environment (required – tracked in git).
 if [[ ! -f "${SCRIPT_DIR}/compare_raid3_env.sh" ]]; then
@@ -116,19 +154,57 @@ log() {
 }
 
 die() {
-  printf '[%s] ERROR: %s\n' "${SCRIPT_NAME}" "$*" >&2
+  local prefix="[${SCRIPT_NAME}] ERROR:"
+  # Print each argument on a new line
+  for msg in "$@"; do
+    printf '%s %s\n' "${prefix}" "${msg}" >&2
+    prefix="[${SCRIPT_NAME}]"
+  done
   exit 1
 }
 
 ensure_workdir() {
+  # Check if workdir file exists
+  if [[ ! -f "${WORKDIR_FILE}" ]]; then
+    local setup_script="${SCRIPT_DIR:-$(dirname "${BASH_SOURCE[0]}")}/setup.sh"
+    die "Integration test environment not set up." \
+        "The workdir file is missing: ${WORKDIR_FILE}" \
+        "Please run: ${setup_script}" \
+        "This will create the test environment and configuration file."
+  fi
+  
+  # Check if workdir exists
+  if [[ ! -d "${WORKDIR}" ]]; then
+    local setup_script="${SCRIPT_DIR:-$(dirname "${BASH_SOURCE[0]}")}/setup.sh"
+    die "Integration test working directory does not exist: ${WORKDIR}" \
+        "The workdir file points to a non-existent directory." \
+        "Please run: ${setup_script} --workdir <path>" \
+        "This will recreate the test environment."
+  fi
+  
+  # Check if we're running from the correct directory
   if [[ "${PWD}" != "${WORKDIR}" ]]; then
-    die "This script must be run from ${WORKDIR} (current: ${PWD})"
+    die "This script must be run from ${WORKDIR} (current: ${PWD})" \
+        "Please change to the working directory: cd ${WORKDIR}"
   fi
 }
 
 ensure_rclone_config() {
   log_info "config" "Using rclone config: ${RCLONE_CONFIG}"
-  [[ -f "${RCLONE_CONFIG}" ]] || die "rclone config not found at ${RCLONE_CONFIG}"
+  
+  if [[ ! -f "${RCLONE_CONFIG}" ]]; then
+    local setup_script="${SCRIPT_DIR:-$(dirname "${BASH_SOURCE[0]}")}/setup.sh"
+    # Check if it's the test-specific config that's missing
+    if [[ "${RCLONE_CONFIG}" == "${TEST_SPECIFIC_CONFIG}" ]]; then
+      die "Integration test configuration file not found: ${RCLONE_CONFIG}" \
+          "The test-specific config file is missing." \
+          "Please run: ${setup_script}" \
+          "This will create the configuration file in the working directory."
+    else
+      die "rclone config not found at ${RCLONE_CONFIG}" \
+          "Please ensure the rclone configuration file exists, or run: ${setup_script}"
+    fi
+  fi
 }
 
 create_rclone_config() {
@@ -137,7 +213,7 @@ create_rclone_config() {
   
   if [[ -f "${config_file}" && "${force}" -eq 0 ]]; then
     log_warn "config" "Config file already exists: ${config_file}"
-    log_warn "config" "Use --force to overwrite, or specify a different path with --config"
+    log_warn "config" "Skipping config file creation (idempotent behavior)"
     return 1
   fi
   

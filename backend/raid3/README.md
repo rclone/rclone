@@ -737,6 +737,7 @@ A comprehensive test script is available at `/tmp/test-raid3.sh` that tests:
 
 The `backend/raid3/integration/` directory contains comprehensive Bash-based integration test scripts for validating raid3 backend functionality:
 
+- `setup.sh` - Initial setup script to create test environment and configuration
 - `compare_raid3_with_single.sh` - Black-box comparison tests
 - `compare_raid3_with_single_rebuild.sh` - Rebuild command validation
 - `compare_raid3_with_single_heal.sh` - Auto-heal functionality tests
@@ -744,69 +745,72 @@ The `backend/raid3/integration/` directory contains comprehensive Bash-based int
 
 **Platform Compatibility**: These scripts are Bash-based and work on Linux and macOS. They will **not work natively on Windows** due to Unix-specific commands and paths. To run on Windows, use WSL (Windows Subsystem for Linux), Git Bash, or Cygwin.
 
-#### Test-Specific Configuration File
+#### Setup and Configuration
 
-The integration test scripts automatically use a test-specific rclone configuration file if it exists:
+The integration tests use a strict, simple setup approach to ensure tests run in a defined environment.
+
+**Initial Setup**:
+
+Before running any tests, you must set up the test environment using the `setup.sh` script:
+
+```bash
+# Run setup with default working directory (${HOME}/go/raid3storage)
+./backend/raid3/integration/setup.sh
+
+# Or specify a custom working directory
+./backend/raid3/integration/setup.sh --workdir /path/to/your/test/directory
+```
+
+The `setup.sh` script will:
+1. Create the working directory and all required subdirectories (local and MinIO data directories)
+2. Generate the rclone configuration file: `${WORKDIR}/rclone_raid3_integration_tests.config`
+3. Store the working directory path in: `${HOME}/.rclone_raid3_integration_tests.workdir`
+
+The script is idempotent and safe to run multiple times.
+
+**Test Configuration File**:
+
+The integration test scripts **only** use the test-specific configuration file:
 
 **Location**: `${WORKDIR}/rclone_raid3_integration_tests.config`
 
-Where `WORKDIR` defaults to `${HOME}/go/raid3storage` (can be overridden via environment variable).
+Where `WORKDIR` is determined by reading `${HOME}/.rclone_raid3_integration_tests.workdir` (created by `setup.sh`).
 
-**Config File Resolution Priority**:
-1. `--config` option (if provided on command line)
-2. Test-specific config: `${WORKDIR}/rclone_raid3_integration_tests.config` (if exists)
-3. `RCLONE_CONFIG` environment variable (if set)
-4. Default: `~/.config/rclone/rclone.conf`
-
-**Creating the Test Config File**:
-
-Use the `create-config` command to generate a suitable config file:
-
-```bash
-cd ${HOME}/go/raid3storage
-./backend/raid3/integration/compare_raid3_with_single_rebuild.sh create-config
-```
-
-This creates `${WORKDIR}/rclone_raid3_integration_tests.config` with all required remotes configured and ready to use:
+The configuration file contains all required remotes:
 - Local storage remotes (localeven, localodd, localparity, localsingle) with proper `path` parameters
 - MinIO S3 remotes (minioeven, minioodd, minioparity, miniosingle) with endpoint configuration
 - RAID3 remotes (localraid3, minioraid3) combining the backends
 
-The generated config file is complete and functional. Directory paths are based on `${WORKDIR}` defaults (defined in `compare_raid3_env.sh`) and can be customized via `compare_raid3_env.local.sh` (see "Customizing Test Configuration" below).
+Directory paths are based on `${WORKDIR}` defaults (defined in `compare_raid3_env.sh`) and can be customized via `compare_raid3_env.local.sh` (see "Customizing Test Configuration" below).
 
-**Custom Config Location**:
+**Running Tests**:
 
-To use a different config file:
-
-```bash
-./compare_raid3_with_single_rebuild.sh --config /path/to/custom.conf test even
-```
-
-**Overwriting Existing Config**:
-
-To overwrite an existing test config file:
+All test scripts must be run from the working directory specified during setup:
 
 ```bash
-./compare_raid3_with_single_rebuild.sh --force create-config
+# 1. Set up the test environment (one-time setup)
+./backend/raid3/integration/setup.sh
+
+# 2. Change to the working directory
+cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)
+
+# 3. Run tests
+./backend/raid3/integration/compare_raid3_with_single.sh --storage-type local test mkdir
+
+# The script will automatically use the test-specific config file
 ```
 
-**Example Usage**:
+**Error Messages**:
 
-```bash
-# 1. Create test config file
-cd ${HOME}/go/raid3storage
-./backend/raid3/integration/compare_raid3_with_single_rebuild.sh create-config
-
-# 2. Run tests (config file is automatically detected)
-./backend/raid3/integration/compare_raid3_with_single_rebuild.sh --storage-type local test
-
-# 3. Check which config file is being used (visible in script output)
-# Scripts log: "Using rclone config: /path/to/config"
-```
+If the test environment is not set up, the scripts will provide clear error messages:
+- Missing workdir file: Suggests running `setup.sh`
+- Missing working directory: Suggests running `setup.sh --workdir <path>`
+- Missing config file: Suggests running `setup.sh`
+- Wrong directory: Shows the correct directory to use
 
 #### Customizing Test Configuration
 
-You can override default test configuration values by creating `compare_raid3_env.local.sh` in the `backend/raid3/integration/` directory. This file is automatically sourced by all test scripts if present, allowing you to customize settings without modifying tracked files.
+You can override default test configuration values by creating `compare_raid3_env.local.sh` in the `backend/raid3/integration/` directory. This file is automatically sourced by all test scripts (including `setup.sh`) if present, allowing you to customize settings without modifying tracked files.
 
 **Location**: `backend/raid3/integration/compare_raid3_env.local.sh`
 
@@ -817,7 +821,9 @@ All variables defined in `compare_raid3_env.sh` can be overridden, including:
 - **Directories**: `LOCAL_EVEN_DIR`, `LOCAL_ODD_DIR`, `LOCAL_PARITY_DIR`, `LOCAL_SINGLE_DIR`, `MINIO_EVEN_DIR`, etc.
 - **Remote names**: `LOCAL_EVEN_REMOTE`, `LOCAL_ODD_REMOTE`, `MINIO_EVEN_REMOTE`, etc., or `RAID3_REMOTE`/`SINGLE_REMOTE` for main remotes
 - **MinIO configuration**: `MINIO_EVEN_NAME`, `MINIO_ODD_NAME`, `MINIO_EVEN_PORT`, `MINIO_ODD_PORT`, etc.
-- **Base paths**: `WORKDIR` (affects all directory defaults)
+- **Base paths**: `WORKDIR` (can also be set via `setup.sh --workdir <path>`)
+
+**Note**: If you override `WORKDIR` in `compare_raid3_env.local.sh`, make sure to run `setup.sh` again to update the stored working directory path.
 
 **Example**:
 
@@ -835,12 +841,17 @@ MINIO_ODD_PORT=9102
 MINIO_PARITY_PORT=9103
 MINIO_SINGLE_PORT=9104
 
-# Custom work directory
+# Custom work directory (optional - can also use setup.sh --workdir)
 WORKDIR="${HOME}/custom/raid3test"
 EOF
+
+# After creating the override file, run setup.sh to apply the changes
+./backend/raid3/integration/setup.sh
 ```
 
 The scripts will automatically use these overrides when present. This file should not be committed to version control (add to `.gitignore`).
+
+**Important**: After modifying `compare_raid3_env.local.sh`, you must run `setup.sh` again to regenerate the configuration file with the new settings.
 
 ## Implementation Notes
 
