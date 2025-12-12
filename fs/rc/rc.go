@@ -83,18 +83,10 @@ var OptionsInfo = fs.Options{{
 	Default: fs.Duration(10 * time.Second),
 	Help:    "Interval to check for expired async jobs",
 	Groups:  "RC",
-}, {
-	Name:    "metrics_addr",
-	Default: []string{},
-	Help:    "IPaddress:Port or :Port to bind metrics server to",
-	Groups:  "Metrics",
 }}.
 	AddPrefix(libhttp.ConfigInfo, "rc", "RC").
 	AddPrefix(libhttp.AuthConfigInfo, "rc", "RC").
 	AddPrefix(libhttp.TemplateConfigInfo, "rc", "RC").
-	AddPrefix(libhttp.ConfigInfo, "metrics", "Metrics").
-	AddPrefix(libhttp.AuthConfigInfo, "metrics", "Metrics").
-	AddPrefix(libhttp.TemplateConfigInfo, "metrics", "Metrics").
 	SetDefault("rc_addr", []string{"localhost:5572"})
 
 func init() {
@@ -117,9 +109,6 @@ type Options struct {
 	WebGUINoOpenBrowser bool                   `config:"rc_web_gui_no_open_browser"` // set to disable auto opening browser
 	WebGUIFetchURL      string                 `config:"rc_web_fetch_url"`           // set the default url for fetching webgui
 	EnableMetrics       bool                   `config:"rc_enable_metrics"`          // set to disable prometheus metrics on /metrics
-	MetricsHTTP         libhttp.Config         `config:"metrics"`
-	MetricsAuth         libhttp.AuthConfig     `config:"metrics"`
-	MetricsTemplate     libhttp.TemplateConfig `config:"metrics"`
 	JobExpireDuration   fs.Duration            `config:"rc_job_expire_duration"`
 	JobExpireInterval   fs.Duration            `config:"rc_job_expire_interval"`
 }
