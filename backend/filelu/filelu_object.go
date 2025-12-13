@@ -1,7 +1,6 @@
 package filelu
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -59,7 +58,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Open opens the object for reading
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	filePath := path.Join(o.fs.root, o.remote)
-	// Get direct link
+
 	directLink, size, err := o.fs.getDirectLink(ctx, filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get direct link: %w", err)
@@ -67,10 +66,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	o.size = size
 
-	// Offset and Count for range download
 	var offset int64
 	var count int64
 	fs.FixRangeOption(options, o.size)
+
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.RangeOption:
@@ -89,45 +88,47 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	var reader io.ReadCloser
+
 	err = o.fs.pacer.Call(func() (bool, error) {
 		req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
 		if err != nil {
-			return false, fmt.Errorf("failed to create download request: %w", err)
+			return false, err
 		}
 
 		resp, err := o.fs.client.Do(req)
 		if err != nil {
-			return shouldRetry(err), fmt.Errorf("failed to download file: %w", err)
+			return shouldRetry(err), err
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			defer func() {
-				if err := resp.Body.Close(); err != nil {
-					fs.Logf(nil, "Failed to close response body: %v", err)
-				}
-			}()
-			return false, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
-		}
-
-		// Wrap the response body to handle offset and count
-		currentContents, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return false, fmt.Errorf("failed to read response body: %w", err)
+			body, _ := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			return false, fmt.Errorf("failed to download file: HTTP %d %s", resp.StatusCode, body)
 		}
 
 		if offset > 0 {
-			if offset > int64(len(currentContents)) {
-				return false, fmt.Errorf("offset %d exceeds file size %d", offset, len(currentContents))
+			_, err = io.CopyN(io.Discard, resp.Body, offset)
+			if err != nil {
+				_ = resp.Body.Close()
+				return false, fmt.Errorf("failed to skip offset: %w", err)
 			}
-			currentContents = currentContents[offset:]
 		}
-		if count > 0 && count < int64(len(currentContents)) {
-			currentContents = currentContents[:count]
+
+		if count > 0 {
+			reader = struct {
+				io.Reader
+				io.Closer
+			}{
+				Reader: io.LimitReader(resp.Body, count),
+				Closer: resp.Body,
+			}
+		} else {
+			reader = resp.Body
 		}
-		reader = io.NopCloser(bytes.NewReader(currentContents))
 
 		return false, nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -137,15 +138,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	if src.Size() <= 0 {
-		return fs.ErrorCantUploadEmptyFiles
+	size := src.Size()
+
+	if size <= 500*1024*1024 {
+		err := o.fs.uploadFile(ctx, in, o.remote)
+		if err != nil {
+			return err
+		}
+	} else {
+		fullPath := path.Join(o.fs.root, o.remote)
+		err := o.fs.multipartUpload(ctx, in, fullPath)
+		if err != nil {
+			return fmt.Errorf("failed to upload file: %w", err)
+		}
 	}
 
-	err := o.fs.uploadFile(ctx, in, o.remote)
-	if err != nil {
-		return fmt.Errorf("failed to upload file: %w", err)
-	}
-	o.size = src.Size()
+	o.size = size
+	o.modTime = src.ModTime(ctx)
 	return nil
 }
 
