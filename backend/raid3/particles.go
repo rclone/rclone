@@ -1,4 +1,4 @@
-// Package raid3 implements a backend that splits data across two remotes using byte-level striping
+// Package raid3 implements a backend that splits data across three remotes using byte-level striping
 package raid3
 
 // This file contains core particle operations for data splitting and reconstruction.
@@ -174,31 +174,31 @@ func (f *Fs) reconstructParityParticle(ctx context.Context, evenFs, oddFs fs.Fs,
 	// Read even particle
 	evenObj, err := evenFs.NewObject(ctx, remote)
 	if err != nil {
-		return nil, fmt.Errorf("even particle not found: %w", err)
+		return nil, fmt.Errorf("%s: even particle not found: %w", evenFs.Name(), err)
 	}
 	evenReader, err := evenObj.Open(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open even particle: %w", err)
+		return nil, fmt.Errorf("%s: failed to open even particle: %w", evenFs.Name(), err)
 	}
 	evenData, err := io.ReadAll(evenReader)
 	evenReader.Close()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read even particle: %w", err)
+		return nil, fmt.Errorf("%s: failed to read even particle: %w", evenFs.Name(), err)
 	}
 
 	// Read odd particle
 	oddObj, err := oddFs.NewObject(ctx, remote)
 	if err != nil {
-		return nil, fmt.Errorf("odd particle not found: %w", err)
+		return nil, fmt.Errorf("%s: odd particle not found: %w", oddFs.Name(), err)
 	}
 	oddReader, err := oddObj.Open(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open odd particle: %w", err)
+		return nil, fmt.Errorf("%s: failed to open odd particle: %w", oddFs.Name(), err)
 	}
 	oddData, err := io.ReadAll(oddReader)
 	oddReader.Close()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read odd particle: %w", err)
+		return nil, fmt.Errorf("%s: failed to read odd particle: %w", oddFs.Name(), err)
 	}
 
 	// Calculate parity
@@ -225,34 +225,34 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 		if err == nil {
 			isOddLength = false
 		} else {
-			return nil, fmt.Errorf("parity particle not found (tried both suffixes): %w", err)
+			return nil, fmt.Errorf("%s: parity particle not found (tried both suffixes): %w", parityFs.Name(), err)
 		}
 	}
 
 	// Read parity data
 	parityReader, err := parityObj.Open(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open parity particle: %w", err)
+		return nil, fmt.Errorf("%s: failed to open parity particle: %w", parityFs.Name(), err)
 	}
 	parityData, err := io.ReadAll(parityReader)
 	parityReader.Close()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read parity particle: %w", err)
+		return nil, fmt.Errorf("%s: failed to read parity particle: %w", parityFs.Name(), err)
 	}
 
 	// Read the available data particle
 	dataObj, err := dataFs.NewObject(ctx, remote)
 	if err != nil {
-		return nil, fmt.Errorf("data particle not found: %w", err)
+		return nil, fmt.Errorf("%s: data particle not found: %w", dataFs.Name(), err)
 	}
 	dataReader, err := dataObj.Open(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open data particle: %w", err)
+		return nil, fmt.Errorf("%s: failed to open data particle: %w", dataFs.Name(), err)
 	}
 	dataData, err := io.ReadAll(dataReader)
 	dataReader.Close()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read data particle: %w", err)
+		return nil, fmt.Errorf("%s: failed to read data particle: %w", dataFs.Name(), err)
 	}
 
 	// Reconstruct missing particle

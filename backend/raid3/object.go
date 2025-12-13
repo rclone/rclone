@@ -1,4 +1,4 @@
-// Package raid3 implements a backend that splits data across two remotes using byte-level striping
+// Package raid3 implements a backend that splits data across three remotes using byte-level striping
 package raid3
 
 // This file contains the Object and Directory types and their methods.
@@ -245,23 +245,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		// Read both and merge
 		evenReader, err := evenObj.Open(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open even particle: %w", err)
+			return nil, fmt.Errorf("%s: failed to open even particle: %w", o.fs.even.Name(), err)
 		}
 		oddReader, err := oddObj.Open(ctx)
 		if err != nil {
 			evenReader.Close()
-			return nil, fmt.Errorf("failed to open odd particle: %w", err)
+			return nil, fmt.Errorf("%s: failed to open odd particle: %w", o.fs.odd.Name(), err)
 		}
 		evenData, err := io.ReadAll(evenReader)
 		evenReader.Close()
 		if err != nil {
 			oddReader.Close()
-			return nil, fmt.Errorf("failed to read even particle: %w", err)
+			return nil, fmt.Errorf("%s: failed to read even particle: %w", o.fs.even.Name(), err)
 		}
 		oddData, err := io.ReadAll(oddReader)
 		oddReader.Close()
 		if err != nil {
-			return nil, fmt.Errorf("failed to read odd particle: %w", err)
+			return nil, fmt.Errorf("%s: failed to read odd particle: %w", o.fs.odd.Name(), err)
 		}
 		merged, err = MergeBytes(evenData, oddData)
 		if err != nil {
@@ -295,23 +295,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		if errEven == nil {
 			evenReader, err := evenObj.Open(ctx)
 			if err != nil {
-				return nil, fmt.Errorf("failed to open even particle: %w", err)
+				return nil, fmt.Errorf("%s: failed to open even particle: %w", o.fs.even.Name(), err)
 			}
 			parityReader, err := parityObj.Open(ctx)
 			if err != nil {
 				evenReader.Close()
-				return nil, fmt.Errorf("failed to open parity particle: %w", err)
+				return nil, fmt.Errorf("%s: failed to open parity particle: %w", o.fs.parity.Name(), err)
 			}
 			evenData, err := io.ReadAll(evenReader)
 			evenReader.Close()
 			if err != nil {
 				parityReader.Close()
-				return nil, fmt.Errorf("failed to read even particle: %w", err)
+				return nil, fmt.Errorf("%s: failed to read even particle: %w", o.fs.even.Name(), err)
 			}
 			parityData, err := io.ReadAll(parityReader)
 			parityReader.Close()
 			if err != nil {
-				return nil, fmt.Errorf("failed to read parity particle: %w", err)
+				return nil, fmt.Errorf("%s: failed to read parity particle: %w", o.fs.parity.Name(), err)
 			}
 			merged, err = ReconstructFromEvenAndParity(evenData, parityData, isOddLength)
 			if err != nil {
@@ -328,23 +328,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		} else if errOdd == nil {
 			oddReader, err := oddObj.Open(ctx)
 			if err != nil {
-				return nil, fmt.Errorf("failed to open odd particle: %w", err)
+				return nil, fmt.Errorf("%s: failed to open odd particle: %w", o.fs.odd.Name(), err)
 			}
 			parityReader, err := parityObj.Open(ctx)
 			if err != nil {
 				oddReader.Close()
-				return nil, fmt.Errorf("failed to open parity particle: %w", err)
+				return nil, fmt.Errorf("%s: failed to open parity particle: %w", o.fs.parity.Name(), err)
 			}
 			oddData, err := io.ReadAll(oddReader)
 			oddReader.Close()
 			if err != nil {
 				parityReader.Close()
-				return nil, fmt.Errorf("failed to read odd particle: %w", err)
+				return nil, fmt.Errorf("%s: failed to read odd particle: %w", o.fs.odd.Name(), err)
 			}
 			parityData, err := io.ReadAll(parityReader)
 			parityReader.Close()
 			if err != nil {
-				return nil, fmt.Errorf("failed to read parity particle: %w", err)
+				return nil, fmt.Errorf("%s: failed to read parity particle: %w", o.fs.parity.Name(), err)
 			}
 			merged, err = ReconstructFromOddAndParity(oddData, parityData, isOddLength)
 			if err != nil {
@@ -723,7 +723,7 @@ func (o *Object) updateWithRollback(ctx context.Context, evenData, oddData, pari
 
 	// Note: We intentionally do NOT verify the file through raid3.NewObject/Open here.
 	// The validation above (opening particles directly and checking sizes) is sufficient
-	// since we use o.remote (not src.Remote()) for particle paths. A final level3
+	// since we use o.remote (not src.Remote()) for particle paths. A final raid3
 	// interface check was used during debugging but proved redundant once the root cause
 	// (using src.Remote() instead of o.remote) was fixed. If issues arise in the future,
 	// adding back a raid3 interface verification here can help diagnose path/visibility issues.

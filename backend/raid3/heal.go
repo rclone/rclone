@@ -1,4 +1,4 @@
-// Package raid3 implements a backend that splits data across two remotes using byte-level striping
+// Package raid3 implements a backend that splits data across three remotes using byte-level striping
 package raid3
 
 // This file contains the heal infrastructure for automatic particle reconstruction.

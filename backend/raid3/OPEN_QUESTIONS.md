@@ -19,6 +19,104 @@ For **user documentation**, see [`README.md`](README.md).
 
 ## 🔴 High Priority
 
+### Q13: Fix Memory Buffering (Implement Streaming)
+**Status**: 🔴 **ACTIVE** - Critical for large file support
+**Date Added**: December 10, 2025  
+**Priority**: High (blocks production use with large files)
+
+**Context**: 
+- Current implementation loads entire files into memory using `io.ReadAll()`
+- Memory usage is ~3× file size (original + even + odd + parity + working copies)
+- Cannot handle files larger than available memory
+- No streaming support - must wait for entire file before processing
+
+**Impact**:
+- Files >1 GB require excessive memory
+- Files >10 GB are impractical
+- No streaming - poor performance for large files
+- Blocks production use with large datasets
+
+**Related**: Q2 (Streaming Support for Large Files) - this is the implementation of that requirement
+
+**Investigation**:
+- [ ] Design streaming architecture using rclone's buffer pool
+- [ ] Implement chunk-level striping with io.Pipe
+- [ ] Test with large files (10+ GB)
+- [ ] Measure memory usage improvements
+
+**Recommendation**: Implement streaming support using rclone's `lib/pool` buffer pool for chunk-level operations
+
+**Who decides**: Maintainer
+
+**Deadline**: Before production use with large files
+
+---
+
+### Q14: Optimize Health Checks (Add Caching)
+**Status**: 🔴 **ACTIVE** - Performance optimization
+**Date Added**: December 10, 2025  
+**Priority**: High (affects write performance)
+
+**Context**:
+- `checkAllBackendsAvailable()` is called before every write operation
+- Performs network I/O to all three backends on every write
+- Adds significant latency to write operations
+- No caching mechanism - redundant checks
+
+**Impact**:
+- Slower write operations
+- Unnecessary network traffic
+- Poor performance in high-throughput scenarios
+
+**Options**:
+- A) Add TTL-based caching for health status
+- B) Make health checks optional/configurable
+- C) Cache health status per-backend with individual TTLs
+
+**Investigation**:
+- [ ] Measure current health check overhead
+- [ ] Design caching mechanism
+- [ ] Implement TTL-based cache
+- [ ] Test performance improvements
+
+**Recommendation**: Implement TTL-based caching (Option A) with configurable TTL
+
+**Who decides**: Maintainer
+
+**Deadline**: Before production use
+
+---
+
+### Q15: Make Background Worker Context Respect Cancellation
+**Status**: 🔴 **ACTIVE** - Resource management
+**Date Added**: December 10, 2025  
+**Priority**: High (affects graceful shutdown)
+
+**Context**:
+- Background upload workers use `context.Background()` created in `NewFs`
+- Workers don't respect parent context cancellation
+- Can't gracefully stop workers when parent context is cancelled
+- May continue processing after shutdown requested
+
+**Impact**:
+- Workers may not stop on context cancellation
+- Resource leaks if context is cancelled
+- Poor integration with rclone's context management
+
+**Investigation**:
+- [ ] Review how other backends handle background worker contexts
+- [ ] Design context propagation mechanism
+- [ ] Implement context-aware workers
+- [ ] Test graceful shutdown behavior
+
+**Recommendation**: Derive worker context from parent context passed to `NewFs` or provide cancellation mechanism
+
+**Who decides**: Maintainer
+
+**Deadline**: Before production use
+
+---
+
 ### Q1: Update Rollback Not Working Properly
 **Status**: 🚨 **ACTIVE** - Still needs implementation
 **Issue**: The `Update` operation does not properly rollback when rollback is enabled (`rollback=true`).
@@ -301,6 +399,95 @@ The rebuild command has been fully implemented in `raid3.go` (function `rebuildC
 ---
 
 ## 🟢 Low Priority (Active Questions)
+
+### Q17: Improve Test Context Usage
+**Status**: 🟢 **ACTIVE** - Test quality improvement
+**Date Added**: December 10, 2025  
+**Priority**: Low (test quality, not blocking)
+
+**Context**:
+- Many tests use `context.Background()` (53 instances found)
+- Some long-running tests should use `context.WithTimeout()` for cancellation
+- Tests may hang if operations don't complete
+- No timeout protection in tests
+
+**Impact**:
+- Tests may hang indefinitely
+- Poor test reliability
+- No timeout protection
+
+**Investigation**:
+- [ ] Review all test context usage
+- [ ] Identify tests that need timeouts
+- [ ] Add timeouts to long-running tests
+- [ ] Document best practices
+
+**Recommendation**: Add timeouts to long-running tests, keep `context.Background()` for simple tests
+
+**Who decides**: Maintainer
+
+**Deadline**: None (test quality improvement)
+
+---
+
+### Q18: Document Size() Context Limitation
+**Status**: 🟢 **ACTIVE** - Documentation improvement
+**Date Added**: December 10, 2025  
+**Priority**: Low (documentation, not blocking)
+
+**Context**:
+- `Size()` method doesn't accept context parameter (matches rclone interface)
+- Internal operations use `context.Background()` which can't be cancelled
+- Operations may not respect cancellation
+- Should be documented for users
+
+**Impact**:
+- Users may not understand cancellation limitations
+- Operations can't be cancelled via context
+- Potential resource leaks
+
+**Investigation**:
+- [ ] Document the limitation in code comments
+- [ ] Add note to README if needed
+- [ ] Consider if interface change is needed (unlikely)
+
+**Recommendation**: Add code comments documenting the limitation
+
+**Who decides**: Maintainer
+
+**Deadline**: None (documentation improvement)
+
+---
+
+### Q19: Add More Granular Error Types
+**Status**: 🟢 **ACTIVE** - Error handling improvement
+**Date Added**: December 10, 2025  
+**Priority**: Low (error handling, not blocking)
+
+**Context**:
+- Current error handling uses generic `fmt.Errorf()` with backend names
+- Could benefit from more specific error types
+- Better error classification for debugging
+- More granular error handling possible
+
+**Impact**:
+- Better error messages for users
+- Easier debugging
+- More precise error handling
+
+**Investigation**:
+- [ ] Review error handling patterns in other backends
+- [ ] Design error type hierarchy
+- [ ] Implement specific error types
+- [ ] Update error handling throughout codebase
+
+**Recommendation**: Consider adding specific error types for common scenarios (degraded mode, particle missing, etc.)
+
+**Who decides**: Maintainer
+
+**Deadline**: None (error handling improvement)
+
+---
 
 ### Q3: Chunk/Block-Level Striping
 **Status**: 🟢 **ACTIVE** - Low priority
@@ -655,6 +842,43 @@ C) **Support All Commands**:
 
 ## 🟡 Medium Priority
 
+### Q16: Make Hardcoded Values Configurable
+**Status**: 🟡 **ACTIVE** - Code quality improvement
+**Date Added**: December 10, 2025  
+**Priority**: Medium (code quality, not blocking)
+
+**Context**:
+- Several hardcoded values in the codebase:
+  - Upload workers: `f.uploadWorkers = 2` (hardcoded in `raid3.go:502`)
+  - Queue buffer: `make(chan *uploadJob, 100)` (hardcoded in `heal.go:43`)
+  - Shutdown timeout: `60 * time.Second` (hardcoded in `raid3.go:823`)
+- No way for users to tune these values
+- May not be optimal for all use cases
+
+**Impact**:
+- Cannot optimize for different workloads
+- May be suboptimal for high-throughput scenarios
+- Less flexible than other rclone backends
+
+**Options**:
+- A) Add configuration options for all hardcoded values
+- B) Add configuration for critical values only
+- C) Keep hardcoded but document them
+
+**Investigation**:
+- [ ] Identify all hardcoded values
+- [ ] Determine which should be configurable
+- [ ] Design configuration options
+- [ ] Add to Options struct
+
+**Recommendation**: Add configuration options for upload workers and queue buffer size (Option B)
+
+**Who decides**: Maintainer
+
+**Deadline**: None (code quality improvement)
+
+---
+
 ### Q11: Bucket/Directory Renaming (DirMove) Limitation with S3
 **Status**: 🟡 **ACTIVE** - Known limitation, may improve error messages
 **Question**: How should raid3 handle directory/bucket renaming when underlying backends don't support DirMove?
@@ -754,24 +978,31 @@ TIP: Use 'rclone copy' + 'rclone purge' instead for large datasets
 
 ## 📊 Statistics
 
-**Total Active Questions**: 8  
+**Total Active Questions**: 15  
 **Resolved Questions**: 3 (Q4, Q5, Q7 - see "Resolved Questions" section above)
 
 **Active Questions by Priority**:
-- 🔴 **High Priority**: 1 
+- 🔴 **High Priority**: 4 
   - Q2: Streaming Support for Large Files 🚨 **CRITICAL**
-- 🟡 **Medium Priority**: 2
+  - Q13: Fix Memory Buffering (Implement Streaming)
+  - Q14: Optimize Health Checks (Add Caching)
+  - Q15: Make Background Worker Context Respect Cancellation
+- 🟡 **Medium Priority**: 3
   - Q1: Update Rollback Not Working Properly
   - Q10: Backend-Specific Commands Support 🤝 (awaiting community discussion)
   - Q11: Bucket/Directory Renaming (DirMove) Limitation
-- 🟢 **Low Priority**: 5
+  - Q16: Make Hardcoded Values Configurable
+- 🟢 **Low Priority**: 8
   - Q3: Chunk/Block-Level Striping
   - Q6: Backend Help Command Behavior
   - Q8: Cross-Backend Move/Copy
   - Q9: Compression Support with Streaming 🔮
+  - Q17: Improve Test Context Usage
+  - Q18: Document Size() Context Limitation
+  - Q19: Add More Granular Error Types
 
 **Question Numbering**:
-- Active: Q1, Q2, Q3, Q6, Q8, Q9, Q10, Q11
+- Active: Q1, Q2, Q3, Q6, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, Q16, Q17, Q18, Q19
 - Resolved: Q4 (Rebuild Command - IMPLEMENTED), Q5 (Configurable Write Policy), Q7 (Move with Degraded Source)  
 
 **Decisions Made**: See `DESIGN_DECISIONS.md` for resolved questions
@@ -803,9 +1034,9 @@ TIP: Use 'rclone copy' + 'rclone purge' instead for large datasets
 **Items to Check**:
 
 1. **Test Function Names**:
-   - [ ] Review test function names like `TestLevel3`, `TestLevel3Balanced`, `TestLevel3Aggressive` in `raid3_test.go`
-   - [ ] Consider renaming to `TestRAID3*` for consistency (optional, not breaking)
-   - [ ] **Current**: Function names still use "Level3" - acceptable as internal naming, but could be updated for clarity
+   - [x] Review test function names like `TestLevel3`, `TestLevel3Balanced`, `TestLevel3Aggressive` in `raid3_test.go`
+   - [x] Consider renaming to `TestRAID3*` for consistency (optional, not breaking)
+   - [x] **Completed**: Test variable names have been updated to `TestRAID3`, `TestRAID3Balanced`, `TestRAID3Aggressive` for consistency
 
 2. **CI/CD Configuration**:
    - [ ] Check `.github/workflows/*.yml` for any references to `level3` backend

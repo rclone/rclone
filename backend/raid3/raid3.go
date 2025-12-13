@@ -1,4 +1,4 @@
-// Package raid3 implements a backend that splits data across two remotes using byte-level striping
+// Package raid3 implements a backend that splits data across three remotes using byte-level striping
 package raid3
 
 // This file contains the main Fs implementation, registration, and core filesystem operations.
@@ -38,7 +38,7 @@ import (
 func init() {
 	fsi := &fs.RegInfo{
 		Name:        "raid3",
-		Description: "Level 3 storage with byte-level data striping across two remotes",
+		Description: "RAID 3 storage with byte-level data striping across three remotes",
 		NewFs:       NewFs,
 		MetadataInfo: &fs.MetadataInfo{
 			Help: `Any metadata supported by the underlying remotes is read and written.`,
@@ -494,6 +494,11 @@ checkRemotes:
 	// Enable DirMove if all backends support it
 	if f.even.Features().DirMove != nil && f.odd.Features().DirMove != nil && f.parity.Features().DirMove != nil {
 		f.features.DirMove = f.DirMove
+	}
+
+	// Enable Purge if all backends support it
+	if f.even.Features().Purge != nil && f.odd.Features().Purge != nil && f.parity.Features().Purge != nil {
+		f.features.Purge = f.Purge
 	}
 
 	// Initialize heal infrastructure
@@ -1121,7 +1126,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		reader := bytes.NewReader(evenData)
 		obj, err := f.even.Put(gCtx, reader, evenInfo, options...)
 		if err != nil {
-			return fmt.Errorf("failed to upload even particle: %w", err)
+			return fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
 		}
 		uploadedMu.Lock()
 		uploadedParticles = append(uploadedParticles, obj)
@@ -1134,7 +1139,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		reader := bytes.NewReader(oddData)
 		obj, err := f.odd.Put(gCtx, reader, oddInfo, options...)
 		if err != nil {
-			return fmt.Errorf("failed to upload odd particle: %w", err)
+			return fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
 		}
 		uploadedMu.Lock()
 		uploadedParticles = append(uploadedParticles, obj)
@@ -1147,7 +1152,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		reader := bytes.NewReader(parityData)
 		obj, err := f.parity.Put(gCtx, reader, parityInfo, options...)
 		if err != nil {
-			return fmt.Errorf("failed to upload parity particle: %w", err)
+			return fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
 		}
 		uploadedMu.Lock()
 		uploadedParticles = append(uploadedParticles, obj)
@@ -1179,7 +1184,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	g.Go(func() error {
 		err := f.even.Mkdir(gCtx, dir)
 		if err != nil {
-			return fmt.Errorf("even mkdir failed: %w", err)
+			return fmt.Errorf("%s: mkdir failed: %w", f.even.Name(), err)
 		}
 		return nil
 	})
@@ -1187,7 +1192,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	g.Go(func() error {
 		err := f.odd.Mkdir(gCtx, dir)
 		if err != nil {
-			return fmt.Errorf("odd mkdir failed: %w", err)
+			return fmt.Errorf("%s: mkdir failed: %w", f.odd.Name(), err)
 		}
 		return nil
 	})
@@ -1195,7 +1200,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	g.Go(func() error {
 		err := f.parity.Mkdir(gCtx, dir)
 		if err != nil {
-			return fmt.Errorf("parity mkdir failed: %w", err)
+			return fmt.Errorf("%s: mkdir failed: %w", f.parity.Name(), err)
 		}
 		return nil
 	})
@@ -1260,6 +1265,53 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	// All backends failed with non-"not found" errors (e.g., "directory not empty")
 	// Return one of them to maintain rclone test compatibility
 	return evenErr
+}
+
+// Purge deletes all the files and directories in the given directory
+//
+// Optional interface: Only implement this if you have a way of
+// deleting all the files quicker than just running Remove() on the
+// result of List()
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	// Check if all backends support Purge
+	evenPurge := f.even.Features().Purge
+	oddPurge := f.odd.Features().Purge
+	parityPurge := f.parity.Features().Purge
+
+	// If all backends support Purge, use it
+	if evenPurge != nil && oddPurge != nil && parityPurge != nil {
+		g, gCtx := errgroup.WithContext(ctx)
+
+		g.Go(func() error {
+			err := evenPurge(gCtx, dir)
+			if err != nil {
+				return fmt.Errorf("%s: purge failed: %w", f.even.Name(), err)
+			}
+			return nil
+		})
+
+		g.Go(func() error {
+			err := oddPurge(gCtx, dir)
+			if err != nil {
+				return fmt.Errorf("%s: purge failed: %w", f.odd.Name(), err)
+			}
+			return nil
+		})
+
+		g.Go(func() error {
+			err := parityPurge(gCtx, dir)
+			if err != nil {
+				return fmt.Errorf("%s: purge failed: %w", f.parity.Name(), err)
+			}
+			return nil
+		})
+
+		return g.Wait()
+	}
+
+	// Fall back to fs.ErrorCantPurge if not all backends support it
+	// This will cause rclone to use the fallback (List + Delete + Rmdir)
+	return fs.ErrorCantPurge
 }
 
 // CleanUp removes broken objects (only 1 particle present)

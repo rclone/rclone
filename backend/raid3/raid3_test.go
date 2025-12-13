@@ -86,7 +86,7 @@ func TestStandard(t *testing.T) {
 	oddDir := t.TempDir()
 	parityDir := t.TempDir()
 
-	name := "TestLevel3"
+	name := "TestRAID3"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		ExtraConfig: []fstests.ExtraConfigItem{
@@ -122,7 +122,7 @@ func TestStandardBalanced(t *testing.T) {
 	oddDir := t.TempDir()
 	parityDir := t.TempDir()
 
-	name := "TestLevel3Balanced"
+	name := "TestRAID3Balanced"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		ExtraConfig: []fstests.ExtraConfigItem{
@@ -160,7 +160,7 @@ func TestStandardAggressive(t *testing.T) {
 	oddDir := t.TempDir()
 	parityDir := t.TempDir()
 
-	name := "TestLevel3Aggressive"
+	name := "TestRAID3Aggressive"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		ExtraConfig: []fstests.ExtraConfigItem{
@@ -210,7 +210,7 @@ func TestAboutAggregatesChildUsage(t *testing.T) {
 	f, ok := fsInterface.(*raid3.Fs)
 	require.True(t, ok)
 	defer func() {
-		_ = f.Shutdown(context.Background())
+		_ = f.Features().Shutdown(context.Background())
 	}()
 
 	usage, err := f.About(ctx)
@@ -1669,6 +1669,99 @@ func TestPurgeWithAutoCleanup(t *testing.T) {
 	}
 
 	t.Logf("✅ Purge with auto-cleanup works without error messages")
+}
+
+// TestPurge tests the Purge() method implementation
+func TestPurge(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temporary directories for three backends
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create raid3 filesystem
+	f, err := raid3.NewFs(ctx, "raid3", "", configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	})
+	require.NoError(t, err, "Failed to create raid3 filesystem")
+	defer func() {
+		_ = f.Features().Shutdown(ctx)
+	}()
+
+	// Create a directory with files
+	dir := "testdir"
+	require.NoError(t, f.Mkdir(ctx, dir))
+
+	// Create some files in the directory
+	for i := 1; i <= 3; i++ {
+		data := []byte(fmt.Sprintf("File %d content", i))
+		_, err := f.Put(ctx, bytes.NewReader(data), object.NewStaticObjectInfo(
+			fmt.Sprintf("%s/file%d.txt", dir, i),
+			time.Now(),
+			int64(len(data)),
+			true,
+			nil,
+			f,
+		))
+		require.NoError(t, err, "Failed to create file %d", i)
+	}
+
+	// Verify files exist
+	entries, err := f.List(ctx, dir)
+	require.NoError(t, err)
+	fileCount := 0
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			fileCount++
+		}
+	}
+	assert.Equal(t, 3, fileCount, "Should have 3 files before purge")
+
+	// Test Purge() method directly
+	purgeFn := f.Features().Purge
+	if purgeFn == nil {
+		// If Purge is not supported (e.g., local backend doesn't support it),
+		// use operations.Purge which will fall back to List+Delete+Rmdir
+		// This is the expected behavior when not all backends support Purge
+		err = operations.Purge(ctx, f, dir)
+		require.NoError(t, err, "Purge should succeed via fallback")
+	} else {
+		// Purge the directory using direct method (when all backends support it)
+		err = purgeFn(ctx, dir)
+		// If it returns ErrorCantPurge, that's also valid - use fallback
+		if err != nil && errors.Is(err, fs.ErrorCantPurge) {
+			err = operations.Purge(ctx, f, dir)
+		}
+		require.NoError(t, err, "Purge should succeed")
+	}
+
+	// Verify directory is empty (or doesn't exist)
+	entries, err = f.List(ctx, dir)
+	if err == nil {
+		// Directory still exists but should be empty
+		fileCount = 0
+		for _, entry := range entries {
+			if _, ok := entry.(fs.Object); ok {
+				fileCount++
+			}
+		}
+		assert.Equal(t, 0, fileCount, "Directory should be empty after purge")
+	} else {
+		// Directory was removed (also valid)
+		assert.True(t, errors.Is(err, fs.ErrorDirNotFound) || os.IsNotExist(err),
+			"Directory should be removed or not found after purge")
+	}
+
+	// Verify files are gone from all backends
+	for i := 1; i <= 3; i++ {
+		remote := fmt.Sprintf("%s/file%d.txt", dir, i)
+		_, err := f.NewObject(ctx, remote)
+		assert.True(t, errors.Is(err, fs.ErrorObjectNotFound),
+			"File %d should be deleted", i)
+	}
 }
 
 // TestCleanUpOrphanedFiles tests cleanup of manually created files without proper suffixes
