@@ -1,8 +1,19 @@
-# Open Questions - Level3 Backend
+# Open Questions - raid3 Backend
 
-**Purpose**: Track design questions that need decisions  
-**Process**: Add questions as they arise, document decisions in `DESIGN_DECISIONS.md` when resolved  
-**Last Updated**: December 7, 2025
+## Purpose of This Document
+
+This document tracks **open design questions and pending decisions** for the raid3 backend. It serves as:
+
+- **Question registry** - Centralized list of issues requiring decisions
+- **Priority tracking** - High/medium/low priority classification
+- **Status monitoring** - Active, resolved, or deferred questions
+- **Decision workflow** - Process for moving questions to decisions
+
+**Process**: Add questions as they arise, document decisions in [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md) when resolved  
+**Last Updated**: December 8, 2025
+
+For **resolved decisions**, see [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md).  
+For **user documentation**, see [`README.md`](README.md).
 
 ---
 
@@ -23,10 +34,36 @@
 - If the update fails, particles should be restored from temp locations
 - Current implementation may not be properly restoring particles on failure
 
+**Known Issues**:
+1. **Move-to-temp pattern fails with Copy+Delete backends**:
+   - Original implementation relied on server-side `Move` operations
+   - S3/MinIO backends only support `Copy` operations
+   - Copy+Delete fallback was added but rollback restoration may fail
+
+2. **Rollback restoration may not work**:
+   - When update fails, particles should be moved back from temp locations
+   - If backend doesn't support Move, Copy+Delete fallback may not work correctly
+   - Original particles may not be restored, leaving files in degraded state
+
+3. **Testing incomplete**:
+   - No comprehensive tests for Update rollback scenarios
+   - `update-fail` tests may not exist or may be skipped
+
+**Potential Failure Points**:
+1. **Move to temp phase**: Fails if backend doesn't support Move and Copy+Delete fails
+2. **Apply update phase**: Fails if any particle update fails (original particles already moved to temp)
+3. **Rollback phase**: Fails if Move back from temp doesn't work or Copy+Delete fallback fails
+
 **Impact**:
 - Users with `rollback=true` (default) may experience incomplete updates if any particle update fails
 - Can lead to degraded files (missing particles) which violates the all-or-nothing guarantee
 - `README.md` currently documents that rollback works for "Put, Update, Move", but Update rollback needs to be fixed
+
+**Solution Options**:
+1. Fix Move-to-Temp Pattern: Improve `updateWithRollback()` to correctly handle Copy+Delete for backends without Move support
+2. Improve Rollback Restoration: Fix `rollbackUpdate()` to use `operations.CanServerSideMove()` consistently and implement Copy+Delete fallback
+3. Add Comprehensive Testing: Create `update-fail` tests similar to `move-fail` scenarios
+4. Consider Alternative Approach: Use a different rollback strategy or document limitations
 
 **Next Steps**:
 1. Investigate why Update rollback isn't working (debugging was started but reverted)
@@ -35,7 +72,7 @@
 4. Update documentation to accurately reflect status
 
 **Related Files**:
-- `backend/raid3/raid3.go` - `Update()` and `updateWithRollback()` functions
+- `backend/raid3/raid3.go` - `Update()`, `updateWithRollback()`, and `rollbackUpdate()` functions
 - `backend/raid3/integration/compare_raid3_with_single_errors.sh` - May need `update-fail` tests
 
 ---

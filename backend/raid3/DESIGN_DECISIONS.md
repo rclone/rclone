@@ -1,8 +1,19 @@
-# Design Decisions - Level3 Backend
+# Design Decisions - raid3 Backend
 
-**Purpose**: Document key design decisions, rationale, and alternatives considered  
+## Purpose of This Document
+
+This document records **key architectural and design decisions** made during the development of the raid3 backend. It serves as:
+
+- **Decision log** - Historical record of why certain choices were made
+- **Rationale documentation** - Explanation of trade-offs and alternatives considered
+- **Reference for maintainers** - Understanding the reasoning behind current implementation
+- **Future guidance** - Context for similar decisions that may arise
+
 **Format**: Lightweight ADR (Architecture Decision Record) style  
-**Last Updated**: November 2, 2025
+**Last Updated**: December 8, 2025
+
+For **user documentation**, see [`README.md`](README.md).  
+For **open questions and pending decisions**, see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md).
 
 ---
 
@@ -124,14 +135,14 @@
 
 ---
 
-### DD-004: Self-Healing with Background Workers
+### DD-004: Auto-Heal with Background Workers
 **Date**: 2025-11-01  
 **Status**: ✅ Accepted  
 
 **Context**: When reading in degraded mode, should missing particles be restored automatically?
 
 **Decision**: **Solution D (Hybrid Auto-detect)** with background workers:
-- Queue missing particles for upload during reads
+- Queue missing particles for upload during reads (controlled by `auto_heal` option)
 - Background workers process uploads asynchronously
 - Shutdown waits for uploads ONLY if queue non-empty
 - Deduplication prevents duplicate uploads
@@ -148,13 +159,21 @@
 - **C**: User-initiated rebuild (manual)
 
 **Consequences**:
-- ✅ Automatic healing (no user intervention)
+- ✅ Automatic healing (no user intervention when `auto_heal=true`)
 - ✅ Fast when not needed (immediate exit)
 - ✅ Reliable when needed (waits for uploads)
 - ⚠️ Background workers add complexity
 - ✅ Graceful shutdown within 60 seconds
+- ✅ Configurable via `auto_heal` option (default: `true`)
+- ✅ Explicit `heal` command available for proactive healing
 
-**References**: `docs/SELF_HEALING_IMPLEMENTATION.md`, `docs/SELF_HEALING_RESEARCH.md`
+**Implementation Notes**:
+- Implemented as `auto_heal` configuration option (default: `true`)
+- Background workers handle upload queue (`heal.go`)
+- Explicit `rclone backend heal raid3:` command available for manual healing
+- Directory reconstruction also supported during `List()` operations
+
+**References**: `docs/SELF_HEALING_IMPLEMENTATION.md`, `docs/SELF_HEALING_RESEARCH.md`, `README.md` (Auto-Heal section)
 
 ---
 
@@ -298,12 +317,12 @@ Parity: [A^B, C^D, E^F, G]  (4 bytes)
 **Options**:
 - **A**: Aggregated information (like `union` backend)
 - **B**: Per-remote information (like `combine` backend)
-- **C**: Level3-specific help (custom)
+- **C**: raid3-specific help (custom)
 
 **Considerations**:
 - Union: Shows combined capabilities
 - Combine: Shows per-remote details
-- Level3: Has 3 remotes with specific roles (even/odd/parity)
+- raid3: Has 3 remotes with specific roles (even/odd/parity)
 
 **Investigation Needed**:
 - Check union backend implementation
@@ -317,10 +336,10 @@ Parity: [A^B, C^D, E^F, G]  (4 bytes)
 ---
 
 ### OQ-002: Streaming Support (Large Files)
-**Date**: TBD  
+**Date**: 2025-11-03  
 **Status**: 🔴 Open  
 
-**Question**: Should level3 support streaming for large files instead of loading entire file into memory?
+**Question**: Should raid3 support streaming for large files instead of loading entire file into memory?
 
 **Current**: Loads entire file into memory for splitting
 
@@ -406,7 +425,7 @@ Parity: [A^B, C^D, E^F, G]  (4 bytes)
 **Status**: All accepted and implemented  
 **Open Questions**: 3 (low priority)  
 
-This document provides a quick reference for understanding WHY the level3 backend works the way it does.
+This document provides a quick reference for understanding WHY the raid3 backend works the way it does.
 
 For detailed implementation notes, see files in `docs/` directory.
 

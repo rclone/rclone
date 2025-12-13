@@ -1,5 +1,46 @@
 # RAID3 Backend - RAID 3 Storage
 
+## Purpose of This Document
+
+This document is the **main user guide** for the rclone `raid3` backend. It provides:
+
+- **Complete usage instructions** - How to configure and use the raid3 backend
+- **Feature documentation** - All available options, commands, and behaviors
+- **Configuration examples** - Step-by-step setup guides
+- **Backend commands** - Detailed documentation for `status`, `rebuild`, and `heal` commands
+- **Error handling** - How the backend behaves in degraded mode
+- **Testing** - Quick test examples and links to comprehensive testing documentation
+- **Limitations** - Known issues and workarounds
+
+For **technical details** about how RAID 3 works, see [`RAID3.md`](RAID3.md).  
+For **testing documentation**, see [`TESTING.md`](TESTING.md).  
+For **design decisions**, see [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md).
+
+---
+
+## ⚠️ Status: Alpha / Experimental
+
+**This backend is in early development (Alpha stage)** and is provided for testing and evaluation purposes.
+
+**What this means:**
+- ✅ Core functionality is implemented and tested
+- ✅ Basic operations (Put, Get, Delete, List) work correctly
+- ✅ Degraded mode reads and automatic heal work
+- ✅ Rebuild and heal commands are functional
+- ⚠️ Some features have known limitations (see "Current Limitations" below)
+- ⚠️ API and behavior may change in future versions
+- ⚠️ **Not recommended for production use with critical data**
+
+**Before testing:**
+- Read the "Current Limitations" section below
+- Start with small test files (< 100 MiB recommended due to memory buffering)
+- Use the provided test setup for a safe testing environment (see "Getting Started with Test Environment" below)
+- Report issues and feedback to help improve the backend
+
+**Quick testing setup:** The easiest way to get started is using our integration test setup, which provides a ready-to-use environment with both local filesystem and MinIO (S3) examples. See the ["Getting Started with Test Environment"](#getting-started-with-test-environment) section below.
+
+---
+
 The `raid3` backend implements **RAID 3** storage with byte-level data striping and XOR parity across three remotes. Data is split into even and odd byte indices, with parity calculated to enable future rebuild from single backend failures.
 
 ## 🎯 RAID 3 Features
@@ -288,8 +329,7 @@ The Update operation rollback mechanism is not working properly when `rollback=t
 - Monitor Update operations and manually fix degraded files if needed
 
 **See also**: 
-- `backend/raid3/integration/UPDATE_ROLLBACK_ISSUE.md` - Detailed analysis of the issue
-- `backend/raid3/OPEN_QUESTIONS.md` - Q1: Update Rollback Not Working Properly (active issue)
+- `backend/raid3/OPEN_QUESTIONS.md` - Q1: Update Rollback Not Working Properly (active issue with detailed analysis)
 
 ---
 
@@ -673,6 +713,323 @@ $ rclone delete raid3:file.txt
 ✅ Success - deleted from available backends
 ```
 
+## Getting Started with Test Environment
+
+The easiest way to explore the raid3 backend is using our integration test setup, which creates a complete working environment with pre-configured remotes. This setup is safe for experimentation and provides both local filesystem and MinIO (S3) examples.
+
+### Step 1: Set Up the Test Environment
+
+```bash
+# Navigate to the rclone source directory containing the experimental raid3 backend
+# This should be the directory where you have the rclone source with the raid3 backend
+cd /path/to/rclone/with/raid3/backend
+
+# Run the setup script (creates test directories and config file)
+./backend/raid3/integration/setup.sh
+
+# The setup script will:
+# - Create working directory: ${HOME}/go/raid3storage (or custom path with --workdir)
+# - Generate rclone config: ${WORKDIR}/rclone_raid3_integration_tests.config
+# - Create all required subdirectories for local and MinIO storage
+```
+
+### Step 2: Navigate to the Test Directory
+
+```bash
+# Change to the working directory
+cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)
+
+# The config file is automatically used by test scripts
+# For manual use, specify it with --config
+CONFIG="${PWD}/rclone_raid3_integration_tests.config"
+```
+
+### Step 3: Explore the Test Remotes
+
+The test setup provides these remotes (in the generated config file):
+
+**Local filesystem remotes:**
+- `localraid3` - RAID3 backend using local directories
+- `localsingle` - Single local backend (for comparison)
+
+**MinIO (S3) remotes:**
+- `minioraid3` - RAID3 backend using MinIO containers
+- `miniosingle` - Single MinIO backend (for comparison)
+
+### Step 4: Basic Operations with Test Setup
+
+#### Using Local Filesystem Backend
+
+```bash
+# Set config path (e.g., /home/alice/go/raid3storage/rclone_raid3_integration_tests.config)
+CONFIG="${PWD}/rclone_raid3_integration_tests.config"
+
+# Create a test file
+echo "Hello, RAID3!" > test.txt
+
+# Upload to raid3 backend
+rclone --config "${CONFIG}" copy test.txt localraid3:
+
+# List files (parity files are hidden)
+rclone --config "${CONFIG}" ls localraid3:
+
+# Download and verify
+rclone --config "${CONFIG}" copy localraid3:test.txt downloaded.txt
+diff test.txt downloaded.txt  # Should be identical
+
+# Inspect the particles (even, odd, parity)
+ls -lh ${HOME}/go/raid3storage/even_local/
+ls -lh ${HOME}/go/raid3storage/odd_local/
+ls -lh ${HOME}/go/raid3storage/parity_local/  # Note .parity-el suffix
+```
+
+#### Using MinIO (S3) Backend
+
+```bash
+# Start MinIO containers (if not already running)
+./backend/raid3/integration/compare_raid3_with_single.sh --storage-type minio start
+
+# Upload to MinIO-based raid3
+rclone --config "${CONFIG}" copy test.txt minioraid3:
+
+# List and verify
+rclone --config "${CONFIG}" ls minioraid3:
+rclone --config "${CONFIG}" copy minioraid3:test.txt downloaded_minio.txt
+diff test.txt downloaded_minio.txt
+```
+
+### Step 5: Explore Degraded Mode
+
+```bash
+# Simulate a backend failure by removing one particle
+rm ${HOME}/go/raid3storage/even_local/test.txt
+
+# Read still works! (reconstructs from odd + parity)
+rclone --config "${CONFIG}" cat localraid3:test.txt
+
+# With auto_heal enabled (default), the missing particle is queued for upload
+# Check that it was restored
+ls -lh ${HOME}/go/raid3storage/even_local/test.txt  # Should exist again
+```
+
+### Step 6: Test Backend Commands
+
+```bash
+# Check backend health
+rclone --config "${CONFIG}" backend status localraid3:
+
+# Heal all degraded objects
+rclone --config "${CONFIG}" backend heal localraid3:
+
+# Simulate rebuild scenario (remove all particles from one backend)
+rm -rf ${HOME}/go/raid3storage/even_local/*
+rclone --config "${CONFIG}" backend rebuild localraid3: even
+```
+
+### Step 7: Run Integration Tests
+
+The test setup also includes comprehensive integration tests:
+
+```bash
+# List available tests
+./backend/raid3/integration/compare_raid3_with_single.sh list
+
+# Run a specific test
+./backend/raid3/integration/compare_raid3_with_single.sh --storage-type local test mkdir
+
+# Run heal tests
+./backend/raid3/integration/compare_raid3_with_single_heal.sh --storage-type local test even
+
+# Run rebuild tests
+./backend/raid3/integration/compare_raid3_with_single_rebuild.sh --storage-type local test odd
+```
+
+### Test Environment Details
+
+**Configuration file location:**
+- `${WORKDIR}/rclone_raid3_integration_tests.config`
+- Where `WORKDIR` defaults to `${HOME}/go/raid3storage`
+
+**Local storage directories:**
+- Even particles: `${WORKDIR}/even_local/`
+- Odd particles: `${WORKDIR}/odd_local/`
+- Parity particles: `${WORKDIR}/parity_local/`
+- Single backend: `${WORKDIR}/single_local/`
+
+**MinIO containers:**
+- Automatically started/stopped by test scripts
+- Ports: 9001 (even), 9002 (odd), 9003 (parity), 9004 (single)
+- Data directories: `${WORKDIR}/even_minio/`, etc.
+
+**For more details:** See [`backend/raid3/integration/README.md`](integration/README.md) for complete documentation.
+
+### More Examples: Playing with the Test Setup
+
+Here are more examples to explore raid3 features using the test environment:
+
+#### Example 1: Verify Byte-Level Striping
+
+```bash
+# Create a file with known content
+echo -n "ABCDEFGH" > test_stripe.txt  # 8 bytes
+
+# Upload
+rclone --config "${CONFIG}" copy test_stripe.txt localraid3:
+
+# Check even bytes (A, C, E, G)
+hexdump -C ${HOME}/go/raid3storage/even_local/test_stripe.txt
+# Should show: 41 43 45 47 (A, C, E, G in hex)
+
+# Check odd bytes (B, D, F, H)
+hexdump -C ${HOME}/go/raid3storage/odd_local/test_stripe.txt
+# Should show: 42 44 46 48 (B, D, F, H in hex)
+
+# Check parity (XOR of pairs)
+hexdump -C ${HOME}/go/raid3storage/parity_local/test_stripe.txt.parity-el
+# Should show: 03 03 03 03 (A^B, C^D, E^F, G^H)
+```
+
+#### Example 2: Test Degraded Mode Reconstruction
+
+```bash
+# Upload a file
+echo "Important data" > important.txt
+rclone --config "${CONFIG}" copy important.txt localraid3:
+
+# Simulate even backend failure
+rm ${HOME}/go/raid3storage/even_local/important.txt
+
+# Read still works (reconstructs from odd + parity)
+rclone --config "${CONFIG}" cat localraid3:important.txt
+# Output: Important data
+
+# Verify reconstruction worked
+rclone --config "${CONFIG}" copy localraid3:important.txt reconstructed.txt
+diff important.txt reconstructed.txt  # Should be identical
+```
+
+#### Example 3: Test Auto-Heal
+
+```bash
+# Upload a file
+echo "Test heal" > heal_test.txt
+rclone --config "${CONFIG}" copy heal_test.txt localraid3:
+
+# Remove odd particle (simulate failure)
+rm ${HOME}/go/raid3storage/odd_local/heal_test.txt
+
+# Read triggers auto-heal (with auto_heal=true, default)
+rclone --config "${CONFIG}" cat localraid3:heal_test.txt
+
+# Wait a moment, then verify particle was restored
+sleep 2
+ls -lh ${HOME}/go/raid3storage/odd_local/heal_test.txt  # Should exist
+```
+
+#### Example 4: Test Rebuild Command
+
+```bash
+# Upload several files
+for i in {1..5}; do
+  echo "File $i" > file$i.txt
+  rclone --config "${CONFIG}" copy file$i.txt localraid3:
+done
+
+# Simulate complete backend replacement (remove all even particles)
+rm -rf ${HOME}/go/raid3storage/even_local/*
+
+# Rebuild the even backend
+rclone --config "${CONFIG}" backend rebuild localraid3: even
+
+# Verify files were rebuilt
+rclone --config "${CONFIG}" ls localraid3:  # Should show all 5 files
+ls ${HOME}/go/raid3storage/even_local/      # Should have 5 particles
+```
+
+#### Example 5: Test Heal Command
+
+```bash
+# Upload files
+for i in {1..3}; do
+  echo "Data $i" > data$i.txt
+  rclone --config "${CONFIG}" copy data$i.txt localraid3:
+done
+
+# Degrade files (remove parity particles)
+rm ${HOME}/go/raid3storage/parity_local/*.parity-*
+
+# Heal all degraded objects
+rclone --config "${CONFIG}" backend heal localraid3:
+
+# Verify parity particles were restored
+ls ${HOME}/go/raid3storage/parity_local/  # Should have 3 .parity-* files
+```
+
+#### Example 6: Compare RAID3 vs Single Backend
+
+```bash
+# Upload same file to both
+echo "Comparison test" > compare.txt
+rclone --config "${CONFIG}" copy compare.txt localraid3:
+rclone --config "${CONFIG}" copy compare.txt localsingle:
+
+# Compare directory structures
+echo "=== RAID3 (3 particles) ==="
+ls -lh ${HOME}/go/raid3storage/even_local/
+ls -lh ${HOME}/go/raid3storage/odd_local/
+ls -lh ${HOME}/go/raid3storage/parity_local/
+
+echo "=== Single (1 copy) ==="
+ls -lh ${HOME}/go/raid3storage/single_local/
+
+# Both should have the same logical content
+rclone --config "${CONFIG}" cat localraid3:compare.txt
+rclone --config "${CONFIG}" cat localsingle:compare.txt
+```
+
+#### Example 7: Test Error Handling (Degraded Writes)
+
+```bash
+# Upload a file first
+echo "Test file" > test.txt
+rclone --config "${CONFIG}" copy test.txt localraid3:
+
+# Simulate backend failure (remove even directory access)
+# Note: This is just for testing - in real scenarios, the backend would be unavailable
+chmod 000 ${HOME}/go/raid3storage/even_local
+
+# Try to upload (should fail with clear error)
+echo "New data" | rclone --config "${CONFIG}" rcat localraid3:newfile.txt
+# Expected: ERROR: write blocked in degraded mode (RAID 3 policy)
+
+# Restore access
+chmod 755 ${HOME}/go/raid3storage/even_local
+
+# Now upload should work
+echo "New data" | rclone --config "${CONFIG}" rcat localraid3:newfile.txt
+```
+
+#### Example 8: Inspect Parity Files
+
+```bash
+# Upload files of different lengths
+echo -n "Even" > even.txt      # 4 bytes (even length)
+echo -n "Odd!" > odd.txt       # 4 bytes (even length, but let's make it odd)
+echo -n "X" > odd.txt          # 1 byte (odd length)
+
+rclone --config "${CONFIG}" copy even.txt localraid3:
+rclone --config "${CONFIG}" copy odd.txt localraid3:
+
+# Check parity file suffixes
+ls ${HOME}/go/raid3storage/parity_local/
+# Should show: even.txt.parity-el (even length)
+#              odd.txt.parity-ol (odd length)
+
+# The suffix indicates how to reconstruct the file
+```
+
+---
+
 ## Testing
 
 ### Quick Test with Three Local Directories
@@ -735,123 +1092,34 @@ A comprehensive test script is available at `/tmp/test-raid3.sh` that tests:
 
 ### Integration Test Scripts
 
-The `backend/raid3/integration/` directory contains comprehensive Bash-based integration test scripts for validating raid3 backend functionality:
+The `backend/raid3/integration/` directory contains comprehensive Bash-based integration test scripts for validating raid3 backend functionality. These scripts supplement the Go-based unit and integration tests with black-box testing scenarios.
 
-- `setup.sh` - Initial setup script to create test environment and configuration
-- `compare_raid3_with_single.sh` - Black-box comparison tests
-- `compare_raid3_with_single_rebuild.sh` - Rebuild command validation
-- `compare_raid3_with_single_heal.sh` - Auto-heal functionality tests
-- `compare_raid3_with_single_errors.sh` - Error handling and rollback tests
+**📚 For complete documentation, see [`backend/raid3/integration/README.md`](integration/README.md)**
 
-**Platform Compatibility**: These scripts are Bash-based and work on Linux and macOS. They will **not work natively on Windows** due to Unix-specific commands and paths. To run on Windows, use WSL (Windows Subsystem for Linux), Git Bash, or Cygwin.
+**Quick Overview**:
 
-#### Setup and Configuration
+- **`setup.sh`** - Initial setup script to create test environment and configuration
+- **`compare_raid3_with_single.sh`** - Black-box comparison tests
+- **`compare_raid3_with_single_rebuild.sh`** - Rebuild command validation
+- **`compare_raid3_with_single_heal.sh`** - Auto-heal functionality tests
+- **`compare_raid3_with_single_errors.sh`** - Error handling and rollback tests
 
-The integration tests use a strict, simple setup approach to ensure tests run in a defined environment.
+**Platform Compatibility**: These scripts are Bash-based and work on Linux, macOS, WSL, Git Bash, and Cygwin. They will **not work natively on Windows** (cmd.exe or PowerShell).
 
-**Initial Setup**:
-
-Before running any tests, you must set up the test environment using the `setup.sh` script:
+**Quick Start**:
 
 ```bash
-# Run setup with default working directory (${HOME}/go/raid3storage)
+# 1. Initial setup (one-time)
 ./backend/raid3/integration/setup.sh
 
-# Or specify a custom working directory
-./backend/raid3/integration/setup.sh --workdir /path/to/your/test/directory
-```
-
-The `setup.sh` script will:
-1. Create the working directory and all required subdirectories (local and MinIO data directories)
-2. Generate the rclone configuration file: `${WORKDIR}/rclone_raid3_integration_tests.config`
-3. Store the working directory path in: `${HOME}/.rclone_raid3_integration_tests.workdir`
-
-The script is idempotent and safe to run multiple times.
-
-**Test Configuration File**:
-
-The integration test scripts **only** use the test-specific configuration file:
-
-**Location**: `${WORKDIR}/rclone_raid3_integration_tests.config`
-
-Where `WORKDIR` is determined by reading `${HOME}/.rclone_raid3_integration_tests.workdir` (created by `setup.sh`).
-
-The configuration file contains all required remotes:
-- Local storage remotes (localeven, localodd, localparity, localsingle) with proper `path` parameters
-- MinIO S3 remotes (minioeven, minioodd, minioparity, miniosingle) with endpoint configuration
-- RAID3 remotes (localraid3, minioraid3) combining the backends
-
-Directory paths are based on `${WORKDIR}` defaults (defined in `compare_raid3_env.sh`) and can be customized via `compare_raid3_env.local.sh` (see "Customizing Test Configuration" below).
-
-**Running Tests**:
-
-All test scripts must be run from the working directory specified during setup:
-
-```bash
-# 1. Set up the test environment (one-time setup)
-./backend/raid3/integration/setup.sh
-
-# 2. Change to the working directory
+# 2. Navigate to work directory
 cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)
 
 # 3. Run tests
 ./backend/raid3/integration/compare_raid3_with_single.sh --storage-type local test mkdir
-
-# The script will automatically use the test-specific config file
 ```
 
-**Error Messages**:
-
-If the test environment is not set up, the scripts will provide clear error messages:
-- Missing workdir file: Suggests running `setup.sh`
-- Missing working directory: Suggests running `setup.sh --workdir <path>`
-- Missing config file: Suggests running `setup.sh`
-- Wrong directory: Shows the correct directory to use
-
-#### Customizing Test Configuration
-
-You can override default test configuration values by creating `compare_raid3_env.local.sh` in the `backend/raid3/integration/` directory. This file is automatically sourced by all test scripts (including `setup.sh`) if present, allowing you to customize settings without modifying tracked files.
-
-**Location**: `backend/raid3/integration/compare_raid3_env.local.sh`
-
-**What Can Be Overridden**:
-
-All variables defined in `compare_raid3_env.sh` can be overridden, including:
-
-- **Directories**: `LOCAL_EVEN_DIR`, `LOCAL_ODD_DIR`, `LOCAL_PARITY_DIR`, `LOCAL_SINGLE_DIR`, `MINIO_EVEN_DIR`, etc.
-- **Remote names**: `LOCAL_EVEN_REMOTE`, `LOCAL_ODD_REMOTE`, `MINIO_EVEN_REMOTE`, etc., or `RAID3_REMOTE`/`SINGLE_REMOTE` for main remotes
-- **MinIO configuration**: `MINIO_EVEN_NAME`, `MINIO_ODD_NAME`, `MINIO_EVEN_PORT`, `MINIO_ODD_PORT`, etc.
-- **Base paths**: `WORKDIR` (can also be set via `setup.sh --workdir <path>`)
-
-**Note**: If you override `WORKDIR` in `compare_raid3_env.local.sh`, make sure to run `setup.sh` again to update the stored working directory path.
-
-**Example**:
-
-```bash
-# Create compare_raid3_env.local.sh in backend/raid3/integration/
-cat > backend/raid3/integration/compare_raid3_env.local.sh << 'EOF'
-#!/usr/bin/env bash
-# Custom remote names matching your rclone.conf
-RAID3_REMOTE="myraid3"
-SINGLE_REMOTE="mysingle"
-
-# Custom MinIO ports (if default ports conflict)
-MINIO_EVEN_PORT=9101
-MINIO_ODD_PORT=9102
-MINIO_PARITY_PORT=9103
-MINIO_SINGLE_PORT=9104
-
-# Custom work directory (optional - can also use setup.sh --workdir)
-WORKDIR="${HOME}/custom/raid3test"
-EOF
-
-# After creating the override file, run setup.sh to apply the changes
-./backend/raid3/integration/setup.sh
-```
-
-The scripts will automatically use these overrides when present. This file should not be committed to version control (add to `.gitignore`).
-
-**Important**: After modifying `compare_raid3_env.local.sh`, you must run `setup.sh` again to regenerate the configuration file with the new settings.
+For detailed setup instructions, configuration options, troubleshooting, and complete usage examples, see the [Integration Tests README](integration/README.md).
 
 ## Implementation Notes
 

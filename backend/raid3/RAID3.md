@@ -1,5 +1,20 @@
 # RAID3 Backend - RAID 3 Implementation
 
+## Purpose of This Document
+
+This document explains **how RAID 3 works in principle**, both for traditional hardware RAID 3 and for the rclone `raid3` backend implementation. It focuses on the **fundamental concepts** of RAID 3 storage:
+
+- **Byte-level striping** (how data is split across backends)
+- **XOR parity calculation** (how redundancy is computed)
+- **Reconstruction algorithms** (how missing data is recovered)
+- **Hardware RAID 3 compliance** (how the implementation matches industry standards)
+
+For **usage instructions**, **configuration options**, **backend commands** (rebuild, heal, status), and **operational details**, see the main [`README.md`](README.md) file.
+
+This document serves as a **technical reference** for understanding the RAID 3 algorithm and how it's implemented in the rclone backend.
+
+---
+
 ## Overview
 
 The `raid3` backend implements RAID 3 storage with byte-level striping across three remotes:
@@ -44,7 +59,7 @@ Parity files are named with suffixes to indicate original data length:
 - `.parity-el` - Even-length original data
 - `.parity-ol` - Odd-length original data
 
-This information is essential for future reconstruction from parity.
+This information is essential for correct reconstruction from parity, as the algorithm differs slightly for even-length vs odd-length files.
 
 ## Configuration
 
@@ -118,10 +133,18 @@ diff test.txt downloaded.txt  # Should be identical
 - Parity file gets appropriate suffix (.parity-el or .parity-ol)
 
 ### Download
-- Reads even and odd particles
-- Validates sizes
-- Merges bytes back to original
-- Parity is ignored during download (used only for future reconstruction)
+- **Normal mode** (all 3 backends available):
+  - Reads even and odd particles
+  - Validates sizes
+  - Merges bytes back to original
+  - Parity is not needed but can be used for verification
+- **Degraded mode** (1 backend missing):
+  - Automatically reconstructs missing particle from the other two
+  - If even missing: reconstructs from `odd + parity`
+  - If odd missing: reconstructs from `even + parity`
+  - If parity missing: uses `even + odd` (no reconstruction needed)
+  - Transparent to users - operations succeed automatically
+  - With `auto_heal=true` (default): queues missing particle for background upload
 
 ### Delete
 - Removes all three particles (even, odd, parity)
@@ -132,7 +155,11 @@ diff test.txt downloaded.txt  # Should be identical
 - Filters out parity files (hidden from user)
 - Shows original (reconstructed) file sizes
 
-## Future: Reconstruction from Parity
+## Reconstruction from Parity (Implemented)
+
+The raid3 backend **fully implements** parity reconstruction. When any single backend fails, data can be reconstructed from the remaining two backends.
+
+### Reconstruction Algorithms
 
 **When even particle is lost:**
 ```
@@ -156,18 +183,45 @@ For byte i in reconstructed:
 - No problem - can still reconstruct from even+odd
 - Can regenerate parity from even+odd
 
+### Implementation Status
+
+✅ **Automatic reconstruction during reads** (degraded mode):
+- Works transparently when accessing files
+- Reconstructs missing particles on-the-fly
+- No user intervention required
+
+✅ **Rebuild command** (`rclone backend rebuild raid3:`):
+- Complete restoration after backend replacement
+- Rebuilds all missing particles on a new backend
+- Supports check-only mode and dry-run
+
+✅ **Heal command** (`rclone backend heal raid3:`):
+- Proactively heals all degraded objects (2/3 particles)
+- Reconstructs and uploads missing particles
+- Works regardless of `auto_heal` setting
+
+✅ **Auto-heal** (`auto_heal=true` by default):
+- Automatically queues missing particles for upload during reads
+- Background restoration of degraded files
+- Also reconstructs missing directories during `List()` operations
+
 ## Benefits of RAID 3
 
-- **Future fault tolerance**: Will rebuild from single backend failure (to be implemented)
-- **Parity storage**: Only ~50% overhead compared to full duplication
-- **Byte-level granularity**: More thorough than block-level RAID
+- ✅ **Fault tolerance**: Can rebuild from single backend failure (fully implemented)
+- ✅ **Parity storage**: Only ~50% overhead compared to full duplication (200% for full duplication)
+- ✅ **Byte-level granularity**: More thorough than block-level RAID
+- ✅ **Automatic recovery**: Degraded mode reads work transparently
+- ✅ **Backend commands**: Rebuild and heal commands for maintenance
 
 ## Current Limitations
 
-- Parity reconstruction not yet implemented (files need both even and odd particles)
-- Cannot rebuild from failure of even or odd backend yet
-- Memory buffering of entire files
-- Cannot move files within same RAID 3 backend (rclone overlap detection)
+- ⚠️ **Memory buffering**: Currently loads entire files into memory during upload/download
+  - Limits practical file size to ~500 MiB - 1 GB
+  - See `README.md` for details and future streaming support plans
+- ⚠️ **Update rollback**: Update operation rollback not working properly when `rollback=true`
+  - Put and Move rollback work correctly
+  - See `OPEN_QUESTIONS.md` Q1 for details
+- ✅ **Move within backend**: Now supported (DirMove implemented)
 
 ## Error Handling - RAID 3 Compliance
 
@@ -282,4 +336,19 @@ Comprehensive testing included:
 - ✅ MD5 hash verification
 - ✅ Particle size validation
 - ✅ Deletion of all three particles
+- ✅ Degraded mode read tests (reconstruction from 2/3 particles)
+- ✅ Rebuild command tests
+- ✅ Heal command tests
+- ✅ Auto-heal and auto-cleanup tests
+- ✅ Directory reconstruction tests
+- ✅ Error handling and rollback tests
+
+---
+
+## Related Documentation
+
+- **`README.md`**: Complete user guide, configuration, commands, and usage examples
+- **`TESTING.md`**: Testing strategy and test coverage details
+- **`DESIGN_DECISIONS.md`**: Design choices and rationale
+- **`OPEN_QUESTIONS.md`**: Known issues and future enhancements
 

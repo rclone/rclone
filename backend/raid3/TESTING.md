@@ -1,5 +1,24 @@
 # Testing the RAID3 Backend
 
+## Purpose of This Document
+
+This document provides **comprehensive testing documentation** for the raid3 backend. It covers:
+
+- **Test suite overview** - Types of tests and their purposes
+- **Unit tests** - Core functionality testing
+- **Integration tests** - Full rclone compatibility testing
+- **Bash integration tests** - Black-box testing scenarios
+- **Test organization** - How tests are structured and where to find them
+- **Running tests** - How to execute tests locally and in CI/CD
+- **Writing tests** - Guidelines for adding new tests
+- **Test checklist** - Pre-commit verification steps
+
+For **user documentation**, see [`README.md`](README.md).  
+For **technical RAID 3 details**, see [`RAID3.md`](RAID3.md).  
+For **integration test setup and usage**, see [`integration/README.md`](integration/README.md).
+
+---
+
 ## Test Suite Overview
 
 The raid3 backend includes comprehensive testing following rclone conventions.
@@ -561,41 +580,36 @@ To add to CI/CD:
 
 ## Bash Integration Test Harnesses
 
-### Comparison Harness
+The `backend/raid3/integration/` directory contains comprehensive Bash-based integration test scripts that supplement the Go-based tests with black-box testing scenarios.
 
-The script `backend/raid3/integration/compare_raid3_with_single.sh` supplements the Go-based tests with a black-box comparison between raid3 and the corresponding single backend remotes.
+**📚 For complete documentation, setup instructions, and usage examples, see [`backend/raid3/integration/README.md`](integration/README.md)**
 
-- Covers common rclone commands (`mkdir`, `ls`, `lsd`, `cat`, `delete`, `copy`, `move`, `check`, `sync`, `purge`, etc.).
-- Works with both MinIO (S3) and local filesystem remotes using the names defined in `rclone.conf` (`minioraid3`, `miniosingle`, `localraid3`, `localsingle`).
-- Assumes all three raid3 remotes are healthy; degraded scenarios will be handled by a dedicated fault-testing script.
-- Compares exit codes and command outputs to confirm raid3 mirrors the single backend's behaviour.
-- Designed for incremental growth—run `./compare_raid3_with_single.sh list` to see available tests, or `./compare_raid3_with_single.sh test <name>` (optionally with `--storage-type=local|minio`) to execute individual cases.
+### Overview
 
-### Rebuild Harness
+The integration test suite includes:
 
-`backend/raid3/integration/compare_raid3_with_single_rebuild.sh` focuses on simulated disk swaps and rebuild workflows:
+1. **Comparison Harness** (`compare_raid3_with_single.sh`):
+   - Black-box comparison between raid3 and single backend remotes
+   - Covers common rclone commands (`mkdir`, `ls`, `lsd`, `cat`, `delete`, `copy`, `move`, `check`, `sync`, `purge`, etc.)
+   - Compares exit codes and command outputs to confirm raid3 mirrors single backend behavior
 
-- Shares the same safety guards and helper functions via `compare_raid3_common.sh`.
-- Exercises both MinIO (Docker-backed) and local raid3 remotes.
-- Provides `start|stop|teardown|list|test` commands consistent with the comparison harness.
-- For each backend (`even`, `odd`, `parity`) runs two scenarios:
-  - **Failure:** wipes the target backend plus an additional source, confirming `rclone backend rebuild` fails gracefully.
-  - **Success:** wipes the target backend only, runs `rclone backend rebuild`, then validates with `rclone check` and a byte-for-byte comparison against a preserved reference dataset.
-- Leaves reconstructed datasets in place for manual inspection; `teardown` removes all state.
+2. **Rebuild Harness** (`compare_raid3_with_single_rebuild.sh`):
+   - Validates `rclone backend rebuild` command after simulated backend replacement
+   - Tests rebuild scenarios for each backend (even, odd, parity)
+   - Validates with `rclone check` and byte-for-byte comparison
 
-### Healing Harness
+3. **Heal Harness** (`compare_raid3_with_single_heal.sh`):
+   - Validates degraded-read behavior and explicit `backend heal` command
+   - Tests automatic particle reconstruction
+   - Covers directory reconstruction scenarios
 
-`backend/raid3/integration/compare_raid3_with_single_heal.sh` validates degraded-read behaviour and the explicit `backend heal` command when any particle backend is missing:
+4. **Error Handling Harness** (`compare_raid3_with_single_errors.sh`):
+   - Validates error handling, rollback behavior, and degraded mode write blocking
+   - Tests health check functionality
 
-- Uses the shared helpers/autostart logic from `compare_raid3_common.sh`.
-- Covers both local and MinIO storage types (auto-starting MinIO containers on demand).
-- Scenarios:
-  - `even`, `odd`, `parity`: delete all particles on the selected backend, verify degraded reads still work via `rclone cat`, then run `rclone backend heal raid3:` and wait for the missing particle to reappear on the affected backend.
-  - `even-list`, `odd-list`, `parity-list`:
-    - For `--storage-type=local`: delete particles, run `rclone ls`, and confirm listings do **not** heal (read-only semantics).
-    - For `--storage-type=minio`: delete particles, run `rclone ls`, and assert that listing succeeds; MinIO-backed raid3 may opportunistically heal during listing, which is accepted for now and documented as backend-dependent behaviour.
-- Reports status with `PASS/FAIL` tags and a summary block so degraded behaviour is easy to spot in logs.
-- `teardown` purges raid3/single remotes and cleans the corresponding local directories.
+All scripts share common infrastructure via `compare_raid3_with_single_common.sh` and support both local filesystem and MinIO (S3) storage backends.
+
+For detailed information about each script, usage examples, configuration, and troubleshooting, see the [Integration Tests README](integration/README.md).
 
 ---
 
