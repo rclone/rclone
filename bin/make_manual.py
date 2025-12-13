@@ -60,6 +60,7 @@ docs = [
     "iclouddrive.md",
     "internetarchive.md",
     "jottacloud.md",
+    "kdrive.md",
     "koofr.md",
     "linkbox.md",
     "mailru.md",

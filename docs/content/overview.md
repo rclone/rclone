@@ -38,6 +38,7 @@ Here is an overview of the major features of each cloud storage system.
 | iCloud Drive                 | -                 | R       | No               | No              | -         | -        |
 | Internet Archive             | MD5, SHA1, CRC32  | R/W ¹¹  | No               | No              | -         | RWU      |
 | Jottacloud                   | MD5               | R/W     | Yes              | No              | R         | RW       |
+| kDrive                       | XXH3              | R       | No               | No              | -         | -        |
 | Koofr                        | MD5               | -       | Yes              | No              | -         | -        |
 | Linkbox                      | -                 | R       | No               | No              | -         | -        |
 | Mail.ru Cloud                | Mailru ⁶          | R/W     | Yes              | No              | -         | -        |
@@ -531,6 +532,7 @@ upon backend-specific capabilities.
 | ImageKit                     | Yes   | No   | Yes  | No      | No      | No    | No           | No                | No           | No    | Yes      |
 | Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | No                | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | No                | Yes          | Yes   | Yes      |
+| kDrive                       | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | No                | No           | Yes   | Yes      |
 | Koofr                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |
 | Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |
