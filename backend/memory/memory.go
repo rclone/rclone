@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -24,7 +25,8 @@ import (
 var (
 	hashType = hash.MD5
 	// the object storage is persistent
-	buckets = newBucketsInfo()
+	buckets      = newBucketsInfo()
+	errWriteOnly = errors.New("can't read when using --memory-discard")
 )
 
 // Register with Fs
@@ -33,12 +35,32 @@ func init() {
 		Name:        "memory",
 		Description: "In memory object storage system.",
 		NewFs:       NewFs,
-		Options:     []fs.Option{},
+		Options: []fs.Option{{
+			Name:     "discard",
+			Default:  false,
+			Advanced: true,
+			Help: `If set all writes will be discarded and reads will return an error
+
+If set then when files are uploaded the contents not be saved. The
+files will appear to have been uploaded but will give an error on
+read. Files will have their MD5 sum calculated on upload which takes
+very little CPU time and allows the transfers to be checked.
+
+This can be useful for testing performance.
+
+Probably most easily used by using the connection string syntax:
+
+    :memory,discard:bucket
+
+`,
+		}},
 	})
 }
 
 // Options defines the configuration for this backend
-type Options struct{}
+type Options struct {
+	Discard bool `config:"discard"`
+}
 
 // Fs represents a remote memory server
 type Fs struct {
@@ -164,6 +186,7 @@ type objectData struct {
 	hash     string
 	mimeType string
 	data     []byte
+	size     int64
 }
 
 // Object describes a memory object
@@ -558,7 +581,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hashType {
 		return "", hash.ErrUnsupported
 	}
-	if o.od.hash == "" {
+	if o.od.hash == "" && !o.fs.opt.Discard {
 		sum := md5.Sum(o.od.data)
 		o.od.hash = hex.EncodeToString(sum[:])
 	}
@@ -567,7 +590,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	return int64(len(o.od.data))
+	return o.od.size
 }
 
 // ModTime returns the modification time of the object
@@ -593,6 +616,9 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	if o.fs.opt.Discard {
+		return nil, errWriteOnly
+	}
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
@@ -624,13 +650,24 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	bucket, bucketPath := o.split()
-	data, err := io.ReadAll(in)
+	var data []byte
+	var size int64
+	var hash string
+	if o.fs.opt.Discard {
+		h := md5.New()
+		size, err = io.Copy(h, in)
+		hash = hex.EncodeToString(h.Sum(nil))
+	} else {
+		data, err = io.ReadAll(in)
+		size = int64(len(data))
+	}
 	if err != nil {
 		return fmt.Errorf("failed to update memory object: %w", err)
 	}
 	o.od = &objectData{
 		data:     data,
-		hash:     "",
+		size:     size,
+		hash:     hash,
 		modTime:  src.ModTime(ctx),
 		mimeType: fs.MimeType(ctx, src),
 	}
