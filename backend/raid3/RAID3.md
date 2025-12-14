@@ -134,9 +134,9 @@ diff test.txt downloaded.txt  # Should be identical
 
 ### Download
 - **Normal mode** (all 3 backends available):
-  - Reads even and odd particles
-  - Validates sizes
-  - Merges bytes back to original
+- Reads even and odd particles
+- Validates sizes
+- Merges bytes back to original
   - Parity is not needed but can be used for verification
 - **Degraded mode** (1 backend missing):
   - Automatically reconstructs missing particle from the other two

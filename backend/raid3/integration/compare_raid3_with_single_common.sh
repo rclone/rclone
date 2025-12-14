@@ -50,7 +50,7 @@ if [[ -f "${WORKDIR_FILE}" ]]; then
   fi
 else
   # Fall back to default if workdir file doesn't exist
-  WORKDIR="${WORKDIR:-${HOME}/go/raid3storage}"
+WORKDIR="${WORKDIR:-${HOME}/go/raid3storage}"
 fi
 
 # Determine script directory so we can locate optional env overrides.
@@ -59,7 +59,7 @@ SCRIPT_DIR=${SCRIPT_DIR:-$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 # Resolve rclone config file - only use test-specific config file
 # This is the strict approach: tests only use the config file created by setup.sh
 TEST_SPECIFIC_CONFIG="${WORKDIR}/rclone_raid3_integration_tests.config"
-RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
+  RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
 
 # Load default environment (required – tracked in git).
 if [[ ! -f "${SCRIPT_DIR}/compare_raid3_env.sh" ]]; then
