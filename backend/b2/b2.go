@@ -607,29 +607,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to authorize account: %w", err)
 	}
-	// If this is a key limited to one or more buckets, one of them must exist
-	// and be ours.
-	if f.rootBucket != "" && len(f.info.APIs.Storage.Allowed.Buckets) != 0 {
-		buckets := f.info.APIs.Storage.Allowed.Buckets
-		var rootFound = false
-		var rootID string
-		for _, b := range buckets {
-			allowedBucket := f.opt.Enc.ToStandardName(b.Name)
-			if allowedBucket == "" {
-				fs.Debugf(f, "bucket %q that application key is restricted to no longer exists", b.ID)
-				continue
-			}
-
-			if allowedBucket == f.rootBucket {
-				rootFound = true
-				rootID = b.ID
-			}
+	// If this is a key limited to a single bucket, it must exist already
+	if f.rootBucket != "" && f.info.Allowed.BucketID != "" {
+		allowedBucket := f.opt.Enc.ToStandardName(f.info.Allowed.BucketName)
+		if allowedBucket == "" {
+			return nil, errors.New("bucket that application key is restricted to no longer exists")
 		}
-		if !rootFound {
-			return nil, fmt.Errorf("you must use bucket(s) %q with this application key", buckets)
+		if allowedBucket != f.rootBucket {
+			return nil, fmt.Errorf("you must use bucket %q with this application key", allowedBucket)
 		}
 		f.cache.MarkOK(f.rootBucket)
-		f.setBucketID(f.rootBucket, rootID)
+		f.setBucketID(f.rootBucket, f.info.Allowed.BucketID)
 	}
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		// Check to see if the (bucket,directory) is actually an existing file
@@ -655,7 +643,7 @@ func (f *Fs) authorizeAccount(ctx context.Context) error {
 	defer f.authMu.Unlock()
 	opts := rest.Opts{
 		Method:       "GET",
-		Path:         "/b2api/v4/b2_authorize_account",
+		Path:         "/b2api/v1/b2_authorize_account",
 		RootURL:      f.opt.Endpoint,
 		UserName:     f.opt.Account,
 		Password:     f.opt.Key,
@@ -668,13 +656,13 @@ func (f *Fs) authorizeAccount(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to authenticate: %w", err)
 	}
-	f.srv.SetRoot(f.info.APIs.Storage.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
+	f.srv.SetRoot(f.info.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
 	return nil
 }
 
 // hasPermission returns if the current AuthorizationToken has the selected permission
 func (f *Fs) hasPermission(permission string) bool {
-	return slices.Contains(f.info.APIs.Storage.Allowed.Capabilities, permission)
+	return slices.Contains(f.info.Allowed.Capabilities, permission)
 }
 
 // getUploadURL returns the upload info with the UploadURL and the AuthorizationToken
@@ -1079,68 +1067,44 @@ type listBucketFn func(*api.Bucket) error
 
 // listBucketsToFn lists the buckets to the function supplied
 func (f *Fs) listBucketsToFn(ctx context.Context, bucketName string, fn listBucketFn) error {
-	responses := make([]api.ListBucketsResponse, len(f.info.APIs.Storage.Allowed.Buckets))[:0]
-
-	for i := range f.info.APIs.Storage.Allowed.Buckets {
-		b := &f.info.APIs.Storage.Allowed.Buckets[i]
-		// Empty names indicate a bucket that no longer exists, this is non-fatal
-		// for multi-bucket API keys.
-		if b.Name == "" {
-			continue
-		}
-		// When requesting a specific bucket skip over non-matching names
-		if bucketName != "" && b.Name != bucketName {
-			continue
-		}
-
-		var account = api.ListBucketsRequest{
-			AccountID: f.info.AccountID,
-			BucketID:  b.ID,
-		}
-		if bucketName != "" && account.BucketID == "" {
-			account.BucketName = f.opt.Enc.FromStandardName(bucketName)
-		}
-
-		var response api.ListBucketsResponse
-		opts := rest.Opts{
-			Method: "POST",
-			Path:   "/b2_list_buckets",
-		}
-		err := f.pacer.Call(func() (bool, error) {
-			resp, err := f.srv.CallJSON(ctx, &opts, &account, &response)
-			return f.shouldRetry(ctx, resp, err)
-		})
-		if err != nil {
-			return err
-		}
-		responses = append(responses, response)
+	var account = api.ListBucketsRequest{
+		AccountID: f.info.AccountID,
+		BucketID:  f.info.Allowed.BucketID,
+	}
+	if bucketName != "" && account.BucketID == "" {
+		account.BucketName = f.opt.Enc.FromStandardName(bucketName)
 	}
 
+	var response api.ListBucketsResponse
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/b2_list_buckets",
+	}
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, &account, &response)
+		return f.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
 	f.bucketIDMutex.Lock()
 	f.bucketTypeMutex.Lock()
 	f._bucketID = make(map[string]string, 1)
 	f._bucketType = make(map[string]string, 1)
-
-	for ri := range responses {
-		response := &responses[ri]
-		for i := range response.Buckets {
-			bucket := &response.Buckets[i]
-			bucket.Name = f.opt.Enc.ToStandardName(bucket.Name)
-			f.cache.MarkOK(bucket.Name)
-			f._bucketID[bucket.Name] = bucket.ID
-			f._bucketType[bucket.Name] = bucket.Type
-		}
+	for i := range response.Buckets {
+		bucket := &response.Buckets[i]
+		bucket.Name = f.opt.Enc.ToStandardName(bucket.Name)
+		f.cache.MarkOK(bucket.Name)
+		f._bucketID[bucket.Name] = bucket.ID
+		f._bucketType[bucket.Name] = bucket.Type
 	}
 	f.bucketTypeMutex.Unlock()
 	f.bucketIDMutex.Unlock()
-	for ri := range responses {
-		response := &responses[ri]
-		for i := range response.Buckets {
-			bucket := &response.Buckets[i]
-			err := fn(bucket)
-			if err != nil {
-				return err
-			}
+	for i := range response.Buckets {
+		bucket := &response.Buckets[i]
+		err = fn(bucket)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -1642,7 +1606,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	bucket, bucketPath := f.split(remote)
 	var RootURL string
 	if f.opt.DownloadURL == "" {
-		RootURL = f.info.APIs.Storage.DownloadURL
+		RootURL = f.info.DownloadURL
 	} else {
 		RootURL = f.opt.DownloadURL
 	}
@@ -1993,7 +1957,7 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 	// Use downloadUrl from backblaze if downloadUrl is not set
 	// otherwise use the custom downloadUrl
 	if o.fs.opt.DownloadURL == "" {
-		opts.RootURL = o.fs.info.APIs.Storage.DownloadURL
+		opts.RootURL = o.fs.info.DownloadURL
 	} else {
 		opts.RootURL = o.fs.opt.DownloadURL
 	}
