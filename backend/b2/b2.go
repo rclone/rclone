@@ -1081,10 +1081,21 @@ type listBucketFn func(*api.Bucket) error
 func (f *Fs) listBucketsToFn(ctx context.Context, bucketName string, fn listBucketFn) error {
 	responses := make([]api.ListBucketsResponse, len(f.info.APIs.Storage.Allowed.Buckets))[:0]
 
-	call := func(id string) error {
+	for i := range f.info.APIs.Storage.Allowed.Buckets {
+		b := &f.info.APIs.Storage.Allowed.Buckets[i]
+		// Empty names indicate a bucket that no longer exists, this is non-fatal
+		// for multi-bucket API keys.
+		if b.Name == "" {
+			continue
+		}
+		// When requesting a specific bucket skip over non-matching names
+		if bucketName != "" && b.Name != bucketName {
+			continue
+		}
+
 		var account = api.ListBucketsRequest{
 			AccountID: f.info.AccountID,
-			BucketID:  id,
+			BucketID:  b.ID,
 		}
 		if bucketName != "" && account.BucketID == "" {
 			account.BucketName = f.opt.Enc.FromStandardName(bucketName)
@@ -1103,32 +1114,6 @@ func (f *Fs) listBucketsToFn(ctx context.Context, bucketName string, fn listBuck
 			return err
 		}
 		responses = append(responses, response)
-		return nil
-	}
-
-	for i := range f.info.APIs.Storage.Allowed.Buckets {
-		b := &f.info.APIs.Storage.Allowed.Buckets[i]
-		// Empty names indicate a bucket that no longer exists, this is non-fatal
-		// for multi-bucket API keys.
-		if b.Name == "" {
-			continue
-		}
-		// When requesting a specific bucket skip over non-matching names
-		if bucketName != "" && b.Name != bucketName {
-			continue
-		}
-
-		err := call(b.ID)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(f.info.APIs.Storage.Allowed.Buckets) == 0 {
-		err := call("")
-		if err != nil {
-			return err
-		}
 	}
 
 	f.bucketIDMutex.Lock()
