@@ -171,7 +171,7 @@ type Fs struct {
 	dirCache     *dircache.DirCache     // Map of directory path to directory id
 	pacer        *fs.Pacer              // pacer for API calls
 	tokenRenewer *oauthutil.Renew       // renew the token on expiry
-	lastDiffID   int64					// change tracking state for diff long-polling
+	lastDiffID   int64                  // change tracking state for diff long-polling
 }
 
 // Object describes a pcloud object
@@ -334,8 +334,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if !canCleanup {
 		f.features.CleanUp = nil
 	}
-	// Enable ChangeNotify using pCloud diff long-polling
-	f.features.ChangeNotify = f.changeNotify
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
@@ -1036,8 +1034,8 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// changeNotify implements fs.Features.ChangeNotify
-func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType), ch <-chan time.Duration) {
+// ChangeNotify implements fs.Features.ChangeNotify
+func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType), ch <-chan time.Duration) {
 	// Start long-poll loop in background
 	go f.changeNotifyLoop(ctx, notify, ch)
 }
@@ -1048,105 +1046,10 @@ func (f *Fs) changeNotifyLoop(ctx context.Context, notify func(string, fs.EntryT
 	interval := 30 * time.Second
 
 	// Start with diffID = 0 to get the current state
-	var diffID int64 = 0
-
-	// Cache to map FolderID (int64) -> Rclone Path (string)
-	// This local cache is essential because the API provides events by ID,
-	// but rclone needs paths. We cannot rely on rclone's internal dirCache
-	// here as it is optimized for Path->ID, not ID->Path.
-	folderPathCache := make(map[int64]string)
-	folderPathCache[0] = "" // Initialize with Root
-
-	// Safety: Limit cache size to prevent memory leaks on long-running mounts
-	const maxCacheSize = 10000
-
-	// Forward declaration for recursion
-	var resolvePath func(int64) string
-
-	// Helper: Recursively resolve pCloud folder ID to rclone relative path
-	resolvePath = func(folderID int64) string {
-		// 0. Base case: Root
-		if folderID == 0 {
-			return ""
-		}
-
-		// 1. Check local cache first
-		if p, ok := folderPathCache[folderID]; ok {
-			return p
-		}
-
-		// 2. API Call: Fetch metadata (Name & ParentID)
-		// We MUST call the API here because the changeNotify loop is isolated
-		// and doesn't know about folders listed by the user in the mount.
-		// "nostats=1" keeps the call lightweight.
-		opts := rest.Opts{
-			Method: "GET",
-			Path:   "/listfolder",
-			Parameters: url.Values{
-				"folderid": {strconv.FormatInt(folderID, 10)},
-				"nostats":  {"1"},
-			},
-		}
-
-		var res api.ItemResult
-		// Short timeout to prevent hanging if the API is slow
-		lookupCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-
-		err := f.pacer.Call(func() (bool, error) {
-			_, err := f.srv.CallJSON(lookupCtx, &opts, nil, &res)
-			return shouldRetry(lookupCtx, nil, err)
-		})
-
-		if err != nil {
-			fs.Debugf(f, "ChangeNotify: could not resolve path for folderID %d: %v", folderID, err)
-			return "" // Ignore this path if we can't resolve it
-		}
-
-		name := res.Metadata.Name
-		
-		// Handle type safety for ParentFolderID
-		var parentID int64
-		// pCloud API sometimes returns numbers as different JSON types
-		parentID = int64(res.Metadata.ParentFolderID)
-
-		// 3. Recursive Resolution
-		// We recurse up the tree to build the full path.
-		// Since we cache the results, this expensive chain only happens ONCE
-		// per folder branch per session.
-		parentPath := resolvePath(parentID)
-
-		// Construct the full path
-		fullPath := path.Join(parentPath, name)
-
-		// 4. Handle Mount Root filtering
-		finalPath := fullPath
-		if f.root != "" {
-			if !strings.HasPrefix(fullPath, f.root) {
-				// The change happened outside our mount point.
-				// We cache it as empty/ignored to prevent retrying this ID.
-				folderPathCache[folderID] = ""
-				return ""
-			}
-			// Strip the mount root prefix
-			finalPath = strings.TrimPrefix(fullPath, f.root)
-			finalPath = strings.TrimPrefix(finalPath, "/")
-		}
-
-		// Save to cache so next time it's instant
-		folderPathCache[folderID] = finalPath
-		return finalPath
-	}
+	var diffID int64
 
 	// Helper to process changes from the diff API
 	handleChanges := func(entries []map[string]any) {
-		// Safety: Clear cache if it gets too big (prevent memory leak)
-		if len(folderPathCache) > maxCacheSize {
-			fs.Debugf(f, "ChangeNotify: cache limit reached (%d), clearing cache", maxCacheSize)
-			folderPathCache = make(map[int64]string)
-			folderPathCache[0] = ""
-		}
-
 		notifiedPaths := make(map[string]bool)
 
 		for _, entry := range entries {
@@ -1168,38 +1071,43 @@ func (f *Fs) changeNotifyLoop(ctx context.Context, notify func(string, fs.EntryT
 				}
 			}
 
-			// Resolve the path (this might trigger the recursive API calls)
-			resolvedPath := resolvePath(pid)
-			
-			// If resolvedPath is empty, it means either:
-			// 1. It's the root (which we don't notify usually)
-			// 2. We failed to lookup
-			// 3. It's outside the mount point
-			if resolvedPath == "" && pid != 0 {
+			// Resolve the path using dirCache.GetInv
+			// pCloud uses "d" prefix for directory IDs in cache, but API returns numbers
+			dirID := fmt.Sprintf("d%d", pid)
+			parentPath, ok := f.dirCache.GetInv(dirID)
+
+			if !ok {
+				// Parent not in cache, so we can ignore this change as it is outside
+				// of what the mount has seen or cares about.
 				continue
 			}
 
+			name, _ := meta["name"].(string)
+			fullPath := path.Join(parentPath, name)
+
 			// Deduplicate notifications for this batch
-			if !notifiedPaths[resolvedPath] {
-				fs.Debugf(f, "ChangeNotify: detected change in %q", resolvedPath)
-				notify(resolvedPath, fs.EntryDirectory)
-				notifiedPaths[resolvedPath] = true
+			if !notifiedPaths[fullPath] {
+				fs.Debugf(f, "ChangeNotify: detected change in %q", fullPath)
+				notify(fullPath, fs.EntryDirectory)
+				notifiedPaths[fullPath] = true
 			}
 		}
 	}
 
 	for {
-		// 1. Check context and channel
+		// Check context and channel
 		select {
 		case <-ctx.Done():
 			return
 		case newInterval, ok := <-ch:
-			if !ok { return }
+			if !ok {
+				return
+			}
 			interval = newInterval
 		default:
 		}
 
-		// 2. Setup /diff Request
+		// Setup /diff Request
 		opts := rest.Opts{
 			Method:     "GET",
 			Path:       "/diff",
@@ -1210,24 +1118,21 @@ func (f *Fs) changeNotifyLoop(ctx context.Context, notify func(string, fs.EntryT
 			opts.Parameters.Set("diffid", strconv.FormatInt(diffID, 10))
 			opts.Parameters.Set("block", "1")
 		} else {
-			opts.Parameters.Set("last", "0") 
+			opts.Parameters.Set("last", "0")
 		}
 
-		// 3. Perform Long-Poll
+		// Perform Long-Poll
 		// Timeout set to 90s (server usually blocks for 60s max)
 		reqCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
-		var result struct {
-			Result  int              `json:"result"`
-			DiffID  int64            `json:"diffid"`
-			Entries []map[string]any `json:"entries"`
-			Error   string           `json:"error"`
-		}
-		
+		var result api.DiffResult
+
 		_, err := f.srv.CallJSON(reqCtx, &opts, nil, &result)
 		cancel()
 
 		if err != nil {
-			if errors.Is(err, context.Canceled) { return }
+			if errors.Is(err, context.Canceled) {
+				return
+			}
 			// Ignore timeout errors as they are normal for long-polling
 			if !errors.Is(err, context.DeadlineExceeded) {
 				fs.Infof(f, "ChangeNotify: polling error: %v. Waiting %v.", err, interval)
@@ -1622,6 +1527,7 @@ var (
 	_ fs.ListPer         = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
+	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 )
