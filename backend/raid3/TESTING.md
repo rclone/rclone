@@ -328,33 +328,33 @@ go tool cover -html=coverage.out
 
 ### Quick Functional Test
 
+Use the `setup.sh` script from the `integration/` directory for easy test environment setup. See [`integration/README.md`](integration/README.md) for complete details.
+
 ```bash
-# Configuration
-cat > /tmp/raid3-test.conf << 'EOF'
-[raid3]
-type = raid3
-even = /tmp/raid3-test/even
-odd = /tmp/raid3-test/odd
-parity = /tmp/raid3-test/parity
-EOF
+# Quick setup using setup.sh
+cd backend/raid3/integration
+./setup.sh
 
-# Setup
-mkdir -p /tmp/raid3-test/{even,odd,parity,source,dest}
-echo "Hello, World!" > /tmp/raid3-test/source/test.txt
+# Use the generated config
+cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)
+rclone --config rclone_raid3_integration_tests.config ls localraid3:
+```
 
-# Upload
-./rclone --config /tmp/raid3-test.conf copy /tmp/raid3-test/source/test.txt raid3:
+After setup, you can test basic operations:
 
-# Verify particles
-ls -lh /tmp/raid3-test/even/test.txt      # 7 bytes
-ls -lh /tmp/raid3-test/odd/test.txt       # 7 bytes  
-ls -lh /tmp/raid3-test/parity/*.parity-*  # 7 bytes (.parity-el)
+```bash
+# Upload a test file
+echo "Hello, World!" > test.txt
+rclone --config rclone_raid3_integration_tests.config copy test.txt localraid3:
 
-# Download
-./rclone --config /tmp/raid3-test.conf copy raid3:test.txt /tmp/raid3-test/dest/
+# Verify particles were created
+ls -lh ${WORKDIR}/local/even/test.txt      # 7 bytes
+ls -lh ${WORKDIR}/local/odd/test.txt       # 7 bytes  
+ls -lh ${WORKDIR}/local/parity/*.parity-*  # 7 bytes (.parity-el)
 
-# Verify
-diff /tmp/raid3-test/source/test.txt /tmp/raid3-test/dest/test.txt
+# Download and verify
+rclone --config rclone_raid3_integration_tests.config copy localraid3:test.txt downloaded.txt
+diff test.txt downloaded.txt
 # Should output nothing (files identical)
 ```
 
@@ -362,10 +362,12 @@ diff /tmp/raid3-test/source/test.txt /tmp/raid3-test/dest/test.txt
 
 This shows how to run three local MinIO servers and a `raid3` remote over them, then run basic commands (including degraded read).
 
+**Note:** If you've already run `setup.sh`, the MinIO data directories are already created and you can skip the directory creation step below.
+
 1) Start three MinIO servers (Docker)
 
 ```bash
-# Create storage directories
+# Create storage directories (skip if you've run setup.sh)
 mkdir -p ~/go/raid3storage/{even_minio,odd_minio,parity_minio}
 
 # Start minioeven
@@ -502,31 +504,6 @@ hexdump -C /tmp/raid3-test/parity/test.txt.parity-el
 
 ---
 
-## Test Results
-
-### Unit Tests: ✅ ALL PASSING
-```
-PASS: TestSplitBytes (7 sub-tests)
-PASS: TestMergeBytes (7 sub-tests)  
-PASS: TestSplitMergeRoundtrip (7 sub-tests)
-PASS: TestValidateParticleSizes (6 sub-tests)
-PASS: TestCalculateParity (7 sub-tests)
-PASS: TestParityFilenames (4 sub-tests)
-PASS: TestParityReconstruction
-```
-
-### Integration Tests: ✅ PASSING
-```
-PASS: TestStandard
-  - File operations ✓
-  - Directory operations ✓
-  - Seek/Range support ✓
-  - Hash calculations ✓
-  - All standard rclone fs tests ✓
-```
-
----
-
 ## Known Test Limitations
 
 Some tests are SKIPped because the backend doesn't implement optional features:
@@ -540,21 +517,6 @@ These are all optional features - the backend is fully functional without them.
 
 ---
 
-## Comparison with Other Backends
-
-The raid3 backend follows the same testing pattern as:
-- `backend/union` - Virtual backend with multiple upstreams
-- `backend/combine` - Virtual backend combining remotes
-- `backend/chunker` - Virtual backend with data transformation
-
-All use:
-- `fstests.Run()` for integration tests
-- Unit tests for internal functions
-- `ExtraConfig` for test configuration
-- `QuickTestOK` for faster test iteration
-
----
-
 ## Continuous Integration
 
 To add to CI/CD:
@@ -563,18 +525,6 @@ To add to CI/CD:
 - name: Test RAID3 Backend
   run: go test ./backend/raid3 -v
 ```
-
----
-
-## ✅ Test Checklist Before Commit
-
-- [ ] All tests pass: `go test ./backend/raid3/...`
-- [ ] Build succeeds: `go build`
-- [ ] New tests have doc comments
-- [ ] Edge cases are covered
-- [ ] No test takes >1 second
-- [ ] Temp resources are cleaned up
-- [ ] Documentation updated if behavior changes
 
 ---
 
@@ -630,4 +580,4 @@ The raid3 backend is production-ready with enterprise-grade testing!
 
 - `README.md` - User guide and usage examples
 - `RAID3.md` - Technical specification
-- `docs/SELF_HEALING_IMPLEMENTATION.md` - Heal details
+- `docs/SELF_HEALING.md` - Heal functionality guide
