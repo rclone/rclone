@@ -7,7 +7,7 @@
 
 ## ✅ Official Decision
 
-The level3 backend will follow **hardware RAID 3 error handling behavior**:
+The raid3 backend follows **hardware RAID 3 error handling behavior**:
 
 ### Policy:
 
@@ -122,7 +122,7 @@ User uploads → Backend down → Upload fails
 ### Completed ✅
 
 1. **`ERROR_HANDLING_POLICY.md`** - Official policy document
-2. **`ERROR_HANDLING_ANALYSIS.md`** - Analysis and comparison
+2. **`ERROR_HANDLING_POLICY.md`** - Official policy document
 3. **`README.md`** - Updated degraded mode section with policy
 4. **`RAID3.md`** - Added error handling compliance section
 5. **`TESTS.md`** - Added policy summary
@@ -197,5 +197,5 @@ type Options struct {
 
 ---
 
-**This makes level3 a true, compliant RAID 3 implementation!** 🎯
+**This makes raid3 a true, compliant RAID 3 implementation!** 🎯
 

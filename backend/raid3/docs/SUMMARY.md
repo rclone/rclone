@@ -1,4 +1,4 @@
-# Level3 RAID 3 Implementation - Complete Summary
+# RAID3 Backend Implementation Summary
 
 ## ✅ Implementation Status: COMPLETE
 
@@ -46,10 +46,10 @@ Parity: [d[0]^d[1], d[2]^d[3], d[4]^d[5], d[6]]
 - Parity stored with correct suffix
 
 ### 5. Download Operations (✅ Step 7)
-- Retrieves even and odd particles
+- Retrieves even and odd particles (or reconstructs from parity if one missing)
 - Validates sizes
 - Merges bytes back to original
-- Parity currently ignored (reconstruction to be implemented later)
+- Automatic reconstruction from parity when needed (degraded mode)
 
 ### 6. Query & Modification (✅ Step 8)
 - **Directories**: Created/removed on all three backends
@@ -109,8 +109,8 @@ All XOR calculations verified correct! ✓
 ## Configuration Example
 
 ```ini
-[mylevel3]
-type = level3
+[raid3]
+type = raid3
 even = /path/to/backend1
 odd = /path/to/backend2
 parity = /path/to/backend3
@@ -120,19 +120,16 @@ parity = /path/to/backend3
 
 ```bash
 # Upload (splits and calculates parity)
-rclone copy /source mylevel3:
+rclone copy /source raid3:
 
-# Download (reconstructs from even+odd)
-rclone copy mylevel3: /dest
+# Download (reconstructs from even+odd or parity if needed)
+rclone copy raid3: /dest
 
 # List (parity files hidden)
-rclone ls mylevel3:
+rclone ls raid3:
 
 # Delete (removes all three particles)
-rclone delete mylevel3:file.txt
-
-# For single file download (workaround for copyto issue)
-rclone cat mylevel3:file.txt > output.txt
+rclone delete raid3:file.txt
 ```
 
 ## Files Created
@@ -153,7 +150,7 @@ backend/raid3/
 ```
 
 **Also Modified:**
-- `backend/all/all.go` - Registered level3 backend
+- `backend/all/all.go` - Registered raid3 backend
 
 ## Key Functions
 
@@ -185,11 +182,11 @@ func validateParticleSizes(evenSize, oddSize int64) bool {
 }
 ```
 
-## Future Work
+## Implementation Status
 
-### Parity Reconstruction (Next Phase)
+### Parity Reconstruction (✅ Implemented)
 
-When implemented, the backend will be able to reconstruct data if either the even OR odd backend fails:
+The backend can reconstruct data if either the even OR odd backend fails:
 
 **If even backend fails:**
 ```go
@@ -213,7 +210,7 @@ for i := 0; i < len(reconstructed); i++ {
 }
 ```
 
-This will provide true RAID 3 fault tolerance with single-backend failure rebuild.
+This provides true RAID 3 fault tolerance with single-backend failure recovery.
 
 ## Performance Characteristics
 
@@ -225,10 +222,9 @@ This will provide true RAID 3 fault tolerance with single-backend failure rebuil
 
 ## Known Limitations
 
-1. **Parity reconstruction not yet implemented** - Both even and odd needed for reads
-2. **Memory buffering** - Entire files loaded into memory
-3. **Overlap detection** - Cannot move within same level3 backend
-4. **Single-file copyto** - Use `rclone cat` instead
+1. **Memory buffering** - Entire files loaded into memory (streaming support planned)
+2. **Update rollback** - Update operation rollback not working properly (see OPEN_QUESTIONS.md)
+3. **Move within backend** - Now supported (DirMove implemented)
 
 These are documented with workarounds in README.md.
 
@@ -247,7 +243,5 @@ These are documented with workarounds in README.md.
 
 ## Conclusion
 
-The Level3 RAID 3 backend is **fully functional and production-ready** for byte-level striping with XOR parity. All specified requirements have been implemented and thoroughly tested.
-
-The foundation is in place for adding parity reconstruction in a future update, which will provide true fault tolerance with single-backend failure recovery.
+The raid3 backend is **fully functional** for byte-level striping with XOR parity and automatic reconstruction. Core requirements have been implemented and tested. See `README.md` for current limitations and future enhancements.
 

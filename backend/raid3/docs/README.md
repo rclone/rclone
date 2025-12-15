@@ -28,7 +28,7 @@ This directory contains detailed design documents, implementation notes, test re
 
 **Error Handling & RAID 3 Compliance**:
 - **[ERROR_HANDLING_POLICY.md](ERROR_HANDLING_POLICY.md)** - Official error handling policy (strict writes)
-- **[ERROR_HANDLING_ANALYSIS.md](ERROR_HANDLING_ANALYSIS.md)** - Analysis of error handling options
+- **[DECISION_SUMMARY.md](DECISION_SUMMARY.md)** - Error handling decision and rationale
 - **[DECISION_SUMMARY.md](DECISION_SUMMARY.md)** - Key design decisions (hardware RAID 3 compliance)
 
 **Timeout & Performance**:
@@ -48,7 +48,7 @@ This directory contains detailed design documents, implementation notes, test re
 
 ### Bug Fixes & Critical Issues
 
-- **[STRICT_WRITE_FIX.md](STRICT_WRITE_FIX.md)** - Fix for write corruption bugs (CRITICAL)
+- **[STRICT_WRITE.md](STRICT_WRITE.md)** - Strict write policy and fix for write corruption bugs (CRITICAL)
 - **[MINIO_TEST_RESULTS_PHASE2.md](MINIO_TEST_RESULTS_PHASE2.md)** - Bug findings from MinIO testing
 
 ---
@@ -86,11 +86,11 @@ This directory contains detailed design documents, implementation notes, test re
 **...the design decisions**:
 1. [DECISION_SUMMARY.md](DECISION_SUMMARY.md) - Key decisions
 2. [ERROR_HANDLING_POLICY.md](ERROR_HANDLING_POLICY.md) - Strict write policy
-3. [ERROR_HANDLING_ANALYSIS.md](ERROR_HANDLING_ANALYSIS.md) - Why we chose this approach
+3. [DECISION_SUMMARY.md](DECISION_SUMMARY.md) - Why we chose this approach
 
 **...the bug fixes**:
 1. [FIXES_COMPLETE.md](FIXES_COMPLETE.md) - Summary of all fixes
-2. [STRICT_WRITE_FIX.md](STRICT_WRITE_FIX.md) - Critical corruption fix
+2. [STRICT_WRITE.md](STRICT_WRITE.md) - Critical corruption fix
 3. [MINIO_TEST_RESULTS_PHASE2.md](MINIO_TEST_RESULTS_PHASE2.md) - How bugs were found
 
 **...how to test**:

@@ -86,8 +86,33 @@ This provides defense-in-depth even if health check is somehow bypassed.
 | **Data Safety** | ⚠️ Risk of corruption | ✅ Guaranteed |
 | **Consistency** | ⚠️ Partial state possible | ✅ All-or-nothing |
 
-## Related Documentation
+## Implementation Details
 
-For detailed fix documentation, see `_analysis/current/STRICT_WRITE_FIX.md`.
+### Health Check Function
+
+The health check uses parallel `List()` operations with timeout:
+
+```go
+func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
+    checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel()
+    
+    // Parallel checks on all 3 backends
+    // Returns error if ANY backend unavailable
+}
+```
+
+### Code Changes
+
+**Files Modified**:
+- `raid3.go` - Added `checkAllBackendsAvailable()` function
+- `raid3.go` - Modified `Put()`, `Update()`, `Move()` to add health check
+- `object.go` - Added particle size validation after Update
+
+**Lines Added**: ~60 lines
+
+**Complexity**: Low - single health check function, simple integration
+
+## Related Documentation
 
 For error handling policy, see [ERROR_HANDLING_POLICY.md](ERROR_HANDLING_POLICY.md).

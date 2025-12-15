@@ -32,7 +32,7 @@ backend/raid3/
 
 #### Design & Research (10 files)
 - `ERROR_HANDLING_POLICY.md` - Official error handling policy
-- `ERROR_HANDLING_ANALYSIS.md` - Analysis of error handling options
+- `DECISION_SUMMARY.md` - Error handling decision and rationale
 - `DECISION_SUMMARY.md` - Key design decisions
 - `TIMEOUT_OPTION_DESIGN.md` - Timeout mode design
 - `S3_TIMEOUT_RESEARCH.md` - S3 timeout research findings
@@ -46,7 +46,7 @@ backend/raid3/
 - `SUMMARY.md` - Implementation overview
 - `IMPLEMENTATION_COMPLETE.md` - Final implementation summary
 - `IMPLEMENTATION_STATUS.md` - Overall project status
-- `STRICT_WRITE_FIX.md` - Critical corruption fix (IMPORTANT!)
+- `STRICT_WRITE.md` - Strict write policy and critical corruption fix (IMPORTANT!)
 - `FIXES_COMPLETE.md` - Summary of all bug fixes
 
 #### User Documentation (2 files)
@@ -102,7 +102,7 @@ backend/raid3/
 
 ### For Researchers/Maintainers:
 → Browse `docs/` by topic:
-  - Bug fixes: `STRICT_WRITE_FIX.md`, `FIXES_COMPLETE.md`
+  - Bug fixes: `STRICT_WRITE.md`, `FIXES_COMPLETE.md`
   - Design: `ERROR_HANDLING_POLICY.md`, `DECISION_SUMMARY.md`
   - Testing: `COMPREHENSIVE_TEST_RESULTS.md`
   - Implementation: `SUMMARY.md`, `IMPLEMENTATION_COMPLETE.md`

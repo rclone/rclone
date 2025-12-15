@@ -100,7 +100,7 @@ For **open questions and pending decisions**, see [`OPEN_QUESTIONS.md`](OPEN_QUE
 - ⚠️ +0.2s overhead per write operation (acceptable)
 - ✅ Simple to implement
 
-**References**: `docs/STRICT_WRITE_FIX.md`, `docs/FIXES_COMPLETE.md`
+**References**: `docs/STRICT_WRITE.md`, `docs/FIXES_COMPLETE.md`
 
 ---
 

@@ -381,7 +381,7 @@ The rebuild command has been fully implemented in `raid3.go` (function `rebuildC
 
 **Reconsider if**: Users request this feature
 
-**References**: `docs/ERROR_HANDLING_ANALYSIS.md` Option B
+**References**: `docs/DECISION_SUMMARY.md` (discusses configurable write policy option)
 
 ---
 
