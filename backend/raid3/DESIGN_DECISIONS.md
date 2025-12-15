@@ -131,7 +131,7 @@ For **open questions and pending decisions**, see [`OPEN_QUESTIONS.md`](OPEN_QUE
 - ⚠️ Configuration complexity (3 modes to understand)
 - ✅ No architectural changes
 
-**References**: `docs/TIMEOUT_MODE_IMPLEMENTATION.md`, `docs/S3_TIMEOUT_RESEARCH.md`
+**References**: `docs/TIMEOUT_MODE.md`, `docs/S3_TIMEOUT_RESEARCH.md`
 
 ---
 
@@ -173,7 +173,7 @@ For **open questions and pending decisions**, see [`OPEN_QUESTIONS.md`](OPEN_QUE
 - Explicit `rclone backend heal raid3:` command available for manual healing
 - Directory reconstruction also supported during `List()` operations
 
-**References**: `docs/SELF_HEALING_IMPLEMENTATION.md`, `docs/SELF_HEALING_RESEARCH.md`, `README.md` (Auto-Heal section)
+**References**: `docs/SELF_HEALING.md`, `docs/SELF_HEALING_RESEARCH.md`, `README.md` (Auto-Heal section)
 
 ---
 

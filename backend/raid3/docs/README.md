@@ -32,14 +32,14 @@ This directory contains detailed design documents, implementation notes, test re
 - **[DECISION_SUMMARY.md](DECISION_SUMMARY.md)** - Key design decisions (hardware RAID 3 compliance)
 
 **Timeout & Performance**:
+- **[TIMEOUT_MODE.md](TIMEOUT_MODE.md)** - User guide for timeout modes (standard/balanced/aggressive)
 - **[TIMEOUT_OPTION_DESIGN.md](TIMEOUT_OPTION_DESIGN.md)** - Design for timeout modes
-- **[TIMEOUT_MODE_IMPLEMENTATION.md](TIMEOUT_MODE_IMPLEMENTATION.md)** - Implementation of aggressive/balanced/standard modes
 - **[S3_TIMEOUT_RESEARCH.md](S3_TIMEOUT_RESEARCH.md)** - Research on S3 timeout issues
 - **[CONFIG_OVERRIDE_AND_HEALTHCHECK.md](CONFIG_OVERRIDE_AND_HEALTHCHECK.md)** - Config override solution
 
 **Heal**:
+- **[SELF_HEALING.md](SELF_HEALING.md)** - User guide for heal functionality
 - **[SELF_HEALING_RESEARCH.md](SELF_HEALING_RESEARCH.md)** - Research on heal approaches
-- **[SELF_HEALING_IMPLEMENTATION.md](SELF_HEALING_IMPLEMENTATION.md)** - Implementation of background heal
 
 **Alternative Approaches**:
 - **[PHASE2_AND_ALTERNATIVES.md](PHASE2_AND_ALTERNATIVES.md)** - Alternative solutions evaluated
@@ -98,7 +98,7 @@ This directory contains detailed design documents, implementation notes, test re
 2. [COMPREHENSIVE_TEST_RESULTS.md](COMPREHENSIVE_TEST_RESULTS.md) - Expected results
 
 **...S3/MinIO performance**:
-1. [TIMEOUT_MODE_IMPLEMENTATION.md](TIMEOUT_MODE_IMPLEMENTATION.md) - Timeout modes
+1. [TIMEOUT_MODE.md](TIMEOUT_MODE.md) - Timeout modes configuration
 2. [S3_TIMEOUT_RESEARCH.md](S3_TIMEOUT_RESEARCH.md) - Research findings
 3. [COMPREHENSIVE_TEST_RESULTS.md](COMPREHENSIVE_TEST_RESULTS.md) - Performance metrics
 

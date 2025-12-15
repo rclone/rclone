@@ -121,6 +121,4 @@ The backend logs the selected mode:
 
 ## Related Documentation
 
-For detailed implementation notes, see `_analysis/current/TIMEOUT_MODE_IMPLEMENTATION.md`.
-
 For S3 timeout research, see `_analysis/research/S3_TIMEOUT_RESEARCH.md`.

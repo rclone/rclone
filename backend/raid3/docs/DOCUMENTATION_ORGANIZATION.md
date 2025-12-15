@@ -42,14 +42,16 @@ backend/raid3/
 - `TEST_DOCUMENTATION_PROPOSAL.md` - Test documentation structure
 - `TODO_S3_IMPROVEMENTS.md` - Future improvements (archived)
 
-#### Implementation Notes (7 files)
+#### Implementation Notes (5 files)
 - `SUMMARY.md` - Implementation overview
 - `IMPLEMENTATION_COMPLETE.md` - Final implementation summary
 - `IMPLEMENTATION_STATUS.md` - Overall project status
-- `TIMEOUT_MODE_IMPLEMENTATION.md` - Timeout mode implementation
-- `SELF_HEALING_IMPLEMENTATION.md` - Heal implementation
 - `STRICT_WRITE_FIX.md` - Critical corruption fix (IMPORTANT!)
 - `FIXES_COMPLETE.md` - Summary of all bug fixes
+
+#### User Documentation (2 files)
+- `TIMEOUT_MODE.md` - Timeout mode configuration guide
+- `SELF_HEALING.md` - Heal functionality guide
 
 #### Test Results & Plans (8 files)
 - `COMPREHENSIVE_TEST_RESULTS.md` - Complete test results with performance

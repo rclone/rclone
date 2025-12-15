@@ -28,11 +28,12 @@ When accessing a directory that exists on 2/3 backends (via `List()` operation):
 
 ## Features
 
-- **Automatic**: No user configuration needed - always enabled
+- **Automatic**: Enabled by default (`auto_heal=true`) - can be disabled if needed
 - **Transparent**: Works automatically during normal read operations
 - **Non-Blocking**: Reads return immediately, upload happens in background
 - **Deduplication**: Multiple reads of the same file don't create duplicate uploads
 - **Graceful Shutdown**: Waits for pending uploads to complete before exit
+- **Explicit Heal Command**: `rclone backend heal raid3:` to proactively heal all degraded objects
 
 ## Performance
 
@@ -63,10 +64,46 @@ Hello World!
 
 ## Configuration
 
-Heal is always enabled - no configuration needed.
+Auto-heal is enabled by default (`auto_heal=true`) but can be disabled:
+
+```ini
+[raid3]
+type = raid3
+even = remote1:
+odd = remote2:
+parity = remote3:
+auto_heal = false  # Disable automatic healing
+```
+
+When `auto_heal=false`:
+- Files can still be read in degraded mode (reconstruction works)
+- Missing particles are NOT automatically uploaded
+- Use the explicit `heal` command to restore degraded objects
 
 The backend uses 2 concurrent background workers by default (hardcoded, not configurable).
 
+## Explicit Heal Command
+
+In addition to automatic healing during reads, you can proactively heal all degraded objects:
+
+```bash
+rclone backend heal raid3:
+```
+
+This command:
+- Scans all objects in the remote
+- Identifies objects with exactly 2 of 3 particles (degraded state)
+- Reconstructs and uploads missing particles
+- Reports a summary of healed objects
+
+**When to use**:
+- Periodic maintenance
+- After rebuilding from backend failures
+- Before important operations
+- When you want to ensure all objects are fully healthy
+
+**Note**: The `heal` command works regardless of the `auto_heal` setting - it's always available as an explicit admin command.
+
 ## Related Documentation
 
-For detailed implementation notes, see `_analysis/current/SELF_HEALING_IMPLEMENTATION.md`.
+For S3 timeout research related to degraded mode performance, see `_analysis/research/S3_TIMEOUT_RESEARCH.md`.
