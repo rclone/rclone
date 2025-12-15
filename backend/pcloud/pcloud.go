@@ -1099,7 +1099,7 @@ func (f *Fs) changeNotifyLoop(ctx context.Context, notify func(string, fs.EntryT
 			}
 		}
 	}
-	
+
 	for {
 		// Check context and channel
 		select {
