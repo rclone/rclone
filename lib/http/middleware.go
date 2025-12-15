@@ -199,6 +199,36 @@ func MiddlewareCORS(allowOrigin string) Middleware {
 	}
 }
 
+// MiddlewareResponseHeader instantiates middleware that apply custom headers to every response
+func MiddlewareResponseHeader(entries []string) Middleware {
+	type pair struct {
+		key   string
+		value string
+	}
+	pairs := make([]pair, 0, len(entries))
+
+	for _, entry := range entries {
+		parts := strings.SplitN(entry, ":", 2)
+		if len(parts) != 2 {
+			fs.Logf(nil, "Warning: Skipping invalid response header pair: %q", entry)
+			continue
+		}
+		pairs = append(pairs, pair{
+			key:   strings.TrimSpace(parts[0]),
+			value: strings.TrimSpace(parts[1]),
+		})
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			for _, pair := range pairs {
+				w.Header().Set(pair.key, pair.value)
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // MiddlewareStripPrefix instantiates middleware that removes the BaseURL from the path
 func MiddlewareStripPrefix(prefix string) Middleware {
 	return func(next http.Handler) http.Handler {

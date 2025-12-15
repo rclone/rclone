@@ -159,6 +159,10 @@ var ConfigInfo = fs.Options{{
 	Name:    "allow_origin",
 	Default: "",
 	Help:    "Origin which cross-domain request (CORS) can be executed from",
+}, {
+	Name:    "response_header",
+	Default: []string{},
+	Help:    "Custom response headers for response, repeatable",
 }}
 
 // Config contains options for the http Server
@@ -173,8 +177,9 @@ type Config struct {
 	TLSCertBody        []byte      `config:"-"`                    // TLS PEM public key certificate body (can also include intermediate/CA certificates), ignores TLSCert
 	TLSKeyBody         []byte      `config:"-"`                    // TLS PEM private key body, ignores TLSKey
 	ClientCA           string      `config:"client_ca"`            // Path to TLS PEM CA file with certificate authorities to verify clients with
-	MinTLSVersion      string      `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable.
-	AllowOrigin        string      `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header
+	MinTLSVersion      string      `config:"min_tls_version"`      // MinTLSVersion contains the minimum TLS version that is acceptable
+	AllowOrigin        string      `config:"allow_origin"`         // AllowOrigin sets the Access-Control-Allow-Origin header+
+	ResponseHeader     []string    `config:"response_header"`      // Custom response headers for response, repeatable
 }
 
 // AddFlagsPrefix adds flags for the httplib
@@ -189,6 +194,7 @@ func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.StringVarP(flagSet, &cfg.BaseURL, prefix+"baseurl", "", cfg.BaseURL, "Prefix for URLs - leave blank for root", prefix)
 	flags.StringVarP(flagSet, &cfg.MinTLSVersion, prefix+"min-tls-version", "", cfg.MinTLSVersion, "Minimum TLS version that is acceptable", prefix)
 	flags.StringVarP(flagSet, &cfg.AllowOrigin, prefix+"allow-origin", "", cfg.AllowOrigin, "Origin which cross-domain request (CORS) can be executed from", prefix)
+	flags.StringArrayVarP(flagSet, &cfg.ResponseHeader, prefix+"response-header", "", cfg.ResponseHeader, "Header: Value, custom response headers for response", prefix)
 }
 
 // AddHTTPFlagsPrefix adds flags for the httplib
@@ -334,6 +340,7 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 	}
 
 	s.mux.Use(MiddlewareCORS(s.cfg.AllowOrigin))
+	s.mux.Use(MiddlewareResponseHeader(s.cfg.ResponseHeader))
 
 	s.initAuth()
 
