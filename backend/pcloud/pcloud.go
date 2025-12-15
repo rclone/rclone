@@ -1085,15 +1085,21 @@ func (f *Fs) changeNotifyLoop(ctx context.Context, notify func(string, fs.EntryT
 			name, _ := meta["name"].(string)
 			fullPath := path.Join(parentPath, name)
 
+			// Determine EntryType (File or Directory)
+			entryType := fs.EntryObject
+			if isFolder, ok := meta["isfolder"].(bool); ok && isFolder {
+				entryType = fs.EntryDirectory
+			}
+
 			// Deduplicate notifications for this batch
 			if !notifiedPaths[fullPath] {
-				fs.Debugf(f, "ChangeNotify: detected change in %q", fullPath)
-				notify(fullPath, fs.EntryDirectory)
+				fs.Debugf(f, "ChangeNotify: detected change in %q (type: %v)", fullPath, entryType)
+				notify(fullPath, entryType)
 				notifiedPaths[fullPath] = true
 			}
 		}
 	}
-
+	
 	for {
 		// Check context and channel
 		select {
