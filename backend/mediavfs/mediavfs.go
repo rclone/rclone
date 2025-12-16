@@ -232,7 +232,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	baseClient := fshttp.NewClient(ctx)
 	customClient := &http.Client{
 		Transport: baseClient.Transport,
-		Timeout:   0, // No timeout for streaming large files
+		Timeout:   60 * time.Second, // 60 second timeout to prevent indefinite hangs
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 10 {
 				return fmt.Errorf("stopped after 10 redirects")
@@ -1131,15 +1131,38 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		// First time accessing this file - resolve URL and get ETag via HEAD request
 		fs.Debugf(nil, "mediavfs: resolving URL and fetching metadata for %s", o.mediaKey)
 
-		headReq, err := http.NewRequestWithContext(ctx, "HEAD", initialURL, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create HEAD request: %w", err)
-		}
-		headReq.Header.Set("User-Agent", "AndroidDownloadManager/13")
+		// Retry HEAD request with exponential backoff for transient errors
+		var headResp *http.Response
+		var headErr error
+		for attempt := 0; attempt < 3; attempt++ {
+			if attempt > 0 {
+				sleepTime := time.Duration(1<<uint(attempt-1)) * time.Second
+				fs.Debugf(nil, "mediavfs: retrying HEAD request after %v (attempt %d/3)", sleepTime, attempt+1)
+				time.Sleep(sleepTime)
+			}
 
-		headResp, err := o.fs.httpClient.Do(headReq)
-		if err != nil {
-			return nil, fmt.Errorf("failed to execute HEAD request: %w", err)
+			headReq, err := http.NewRequestWithContext(ctx, "HEAD", initialURL, nil)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create HEAD request: %w", err)
+			}
+			headReq.Header.Set("User-Agent", "AndroidDownloadManager/13")
+
+			headResp, headErr = o.fs.httpClient.Do(headReq)
+			if headErr == nil {
+				// Success - check if we should retry based on status code
+				if headResp.StatusCode == http.StatusTooManyRequests ||
+					headResp.StatusCode == http.StatusServiceUnavailable ||
+					headResp.StatusCode >= 500 {
+					headResp.Body.Close()
+					headErr = fmt.Errorf("transient HTTP error: %s (status %d)", headResp.Status, headResp.StatusCode)
+					continue
+				}
+				break // Success
+			}
+		}
+
+		if headErr != nil {
+			return nil, fmt.Errorf("failed to execute HEAD request after retries: %w", headErr)
 		}
 		defer headResp.Body.Close()
 
@@ -1164,35 +1187,59 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		fs.Debugf(nil, "mediavfs: cached URL and ETag=%s for %s", etag, o.mediaKey)
 	}
 
-	// Now make the actual GET request to the resolved URL
-	req, err := http.NewRequestWithContext(ctx, "GET", resolvedURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+	// Now make the actual GET request to the resolved URL with retry logic
+	var res *http.Response
+	var getErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 {
+			sleepTime := time.Duration(1<<uint(attempt-1)) * time.Second
+			fs.Debugf(nil, "mediavfs: retrying GET request after %v (attempt %d/3)", sleepTime, attempt+1)
+			time.Sleep(sleepTime)
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "GET", resolvedURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		// Set User-Agent header
+		req.Header.Set("User-Agent", "AndroidDownloadManager/13")
+
+		// Add If-Range header with ETag if we have it
+		if etag != "" {
+			req.Header.Set("If-Range", etag)
+		}
+
+		// Add range headers if specified in options
+		for k, v := range fs.OpenOptionHeaders(options) {
+			req.Header.Set(k, v)
+		}
+
+		// Execute the request
+		res, getErr = o.fs.httpClient.Do(req)
+		if getErr == nil {
+			// Check status code - accept both 200 and 206
+			if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusPartialContent {
+				break // Success
+			}
+
+			// Check if we should retry based on status code
+			if res.StatusCode == http.StatusTooManyRequests ||
+				res.StatusCode == http.StatusServiceUnavailable ||
+				res.StatusCode >= 500 {
+				res.Body.Close()
+				getErr = fmt.Errorf("transient HTTP error: %s (status %d)", res.Status, res.StatusCode)
+				continue
+			}
+
+			// Permanent error - don't retry
+			res.Body.Close()
+			return nil, fmt.Errorf("HTTP error: %s (status %d)", res.Status, res.StatusCode)
+		}
 	}
 
-	// Set User-Agent header
-	req.Header.Set("User-Agent", "AndroidDownloadManager/13")
-
-	// Add If-Range header with ETag if we have it
-	if etag != "" {
-		req.Header.Set("If-Range", etag)
-	}
-
-	// Add range headers if specified in options
-	for k, v := range fs.OpenOptionHeaders(options) {
-		req.Header.Set(k, v)
-	}
-
-	// Execute the request
-	res, err := o.fs.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %w", err)
-	}
-
-	// Check status code - accept both 200 and 206
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusPartialContent {
-		_ = res.Body.Close()
-		return nil, fmt.Errorf("HTTP error: %s (status %d)", res.Status, res.StatusCode)
+	if getErr != nil {
+		return nil, fmt.Errorf("failed to open file after retries: %w", getErr)
 	}
 
 	fs.Debugf(nil, "mediavfs: opened %s with status %d", o.mediaKey, res.StatusCode)
