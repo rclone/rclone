@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	errNotWritable = errors.New("mediavfs is read-only except for move/rename operations")
+	errNotWritable = errors.New("mediavfs is read-only - files cannot be created, modified, or deleted from database")
 	errCrossUser   = errors.New("cannot move files between different users")
 )
 
@@ -118,6 +118,7 @@ type Options struct {
 	DBConnection string `config:"db_connection"`
 	DownloadURL  string `config:"download_url"`
 	TableName    string `config:"table_name"`
+	BatchSize    int    `config:"batch_size"`
 }
 
 // Fs represents a connection to the media database
@@ -131,6 +132,18 @@ type Fs struct {
 	urlCache    *urlCache
 	virtualDirs map[string]bool // Track virtual directories created in memory
 	vdirMu      sync.RWMutex    // Mutex for virtualDirs
+	// lazyMeta stores metadata loaded asynchronously for large listings
+	lazyMeta map[string]*Object
+	lazyMu   sync.RWMutex
+	// dirCache caches directory listings to avoid reloading on every change
+	dirCache map[string]*dirCacheEntry
+	dirMu    sync.RWMutex
+}
+
+// dirCacheEntry represents a cached directory listing
+type dirCacheEntry struct {
+	entries   fs.DirEntries
+	expiresAt time.Time
 }
 
 // Object represents a media file in the database
@@ -254,12 +267,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		httpClient:  customClient,
 		urlCache:    newURLCache(),
 		virtualDirs: make(map[string]bool),
+		lazyMeta:    make(map[string]*Object),
+		dirCache:    make(map[string]*dirCacheEntry),
 	}
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 		CaseInsensitive:         false,
 	}).Fill(ctx, f)
+
+	// Enable ChangeNotify support so vfs can poll this backend
+	f.features.ChangeNotify = f.ChangeNotify
 
 	// Validate root path if specified
 	if root != "" {
@@ -300,20 +318,47 @@ func extractPathAndName(fileName string) (path string, name string) {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	root := strings.Trim(path.Join(f.root, dir), "/")
 
-	// If root is empty, list all users
+	// Check cache first
+	cacheKey := root
+	if cacheKey == "" {
+		cacheKey = "." // Use "." for root
+	}
+
+	f.dirMu.RLock()
+	if entry, ok := f.dirCache[cacheKey]; ok && time.Now().Before(entry.expiresAt) {
+		f.dirMu.RUnlock()
+		fs.Debugf(f, "List cache hit for %s", dir)
+		return entry.entries, nil
+	}
+	f.dirMu.RUnlock()
+
+	// Cache miss or expired, load from database
+	var result fs.DirEntries
 	if root == "" {
-		return f.listUsers(ctx)
+		result, err = f.listUsers(ctx)
+	} else {
+		userName, subPath := splitUserPath(root)
+		if subPath == "" {
+			result, err = f.listUserFiles(ctx, userName, "")
+		} else {
+			result, err = f.listUserFiles(ctx, userName, subPath)
+		}
 	}
 
-	userName, subPath := splitUserPath(root)
-
-	// If only username is specified, list top-level items for that user
-	if subPath == "" {
-		return f.listUserFiles(ctx, userName, "")
+	if err != nil {
+		return nil, err
 	}
 
-	// List files in a specific directory
-	return f.listUserFiles(ctx, userName, subPath)
+	// Cache the result with a long TTL (1 hour)
+	f.dirMu.Lock()
+	f.dirCache[cacheKey] = &dirCacheEntry{
+		entries:   result,
+		expiresAt: time.Now().Add(time.Hour),
+	}
+	f.dirMu.Unlock()
+
+	fs.Debugf(f, "List cached %s with %d entries", dir, len(result))
+	return result, nil
 }
 
 // listUsers returns a list of all unique usernames as directories
@@ -348,7 +393,7 @@ func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
 
 // listUserFiles lists files and directories for a specific user and path
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
-	// Query to get all files for the user (no LIMIT - load all files)
+	// Fast initial query: get identifying fields only so listing is quick
 	query := fmt.Sprintf(`
 		SELECT
 			media_key,
@@ -387,7 +432,6 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			sizeBytes     int64
 			timestampUnix int64
 		)
-
 		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
@@ -427,11 +471,14 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			// We're at the root of the user's directory
 			// Check if file is directly in root or in a subdirectory
 			if strings.Contains(fullPath, "/") {
-				// This is in a subdirectory
-				subDir := strings.SplitN(fullPath, "/", 2)[0]
-				if !dirsSeen[subDir] {
-					entries = append(entries, fs.NewDir(userName+"/"+subDir, time.Time{}))
-					dirsSeen[subDir] = true
+				// This is in a subdirectory - add all intermediate directories
+				pathParts := strings.Split(fullPath, "/")
+				for i := 0; i < len(pathParts)-1; i++ { // -1 because last part is the filename
+					dirName := strings.Join(pathParts[:i+1], "/")
+					if !dirsSeen[dirName] {
+						entries = append(entries, fs.NewDir(userName+"/"+dirName, time.Time{}))
+						dirsSeen[dirName] = true
+					}
 				}
 			} else {
 				// This is a file directly in the root
@@ -534,7 +581,94 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	}
 	f.vdirMu.RUnlock()
 
+	// Start background metadata population for this user if batching enabled
+	if f.opt.BatchSize > 0 {
+		go f.populateMetadata(userName)
+	}
+
 	return entries, nil
+}
+
+// populateMetadata loads size/modtime/mediaKey for a user's files in batches
+func (f *Fs) populateMetadata(userName string) {
+	batch := f.opt.BatchSize
+	if batch <= 0 {
+		batch = 1000
+	}
+
+	offset := 0
+	for {
+		query := fmt.Sprintf(`
+			SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp
+			FROM %s
+			WHERE user_name = $1
+			ORDER BY file_name
+			LIMIT $2 OFFSET $3
+		`, f.opt.TableName)
+
+		rows, err := f.db.Query(query, userName, batch, offset)
+		if err != nil {
+			fs.Errorf(f, "mediavfs: populateMetadata query failed: %v", err)
+			return
+		}
+
+		count := 0
+		for rows.Next() {
+			var mediaKey, fileName, customName, customPath string
+			var sizeBytes int64
+			var timestampUnix int64
+			if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
+				fs.Errorf(f, "mediavfs: populateMetadata scan failed: %v", err)
+				continue
+			}
+
+			// compute display path/name as in listUserFiles
+			var displayName, displayPath string
+			if customName != "" {
+				displayName = customName
+			} else {
+				_, displayName = extractPathAndName(fileName)
+			}
+			if customPath != "" {
+				displayPath = strings.Trim(customPath, "/")
+			} else {
+				extractedPath, _ := extractPathAndName(fileName)
+				displayPath = strings.Trim(extractedPath, "/")
+			}
+
+			var fullPath string
+			if displayPath != "" {
+				fullPath = displayPath + "/" + displayName
+			} else {
+				fullPath = displayName
+			}
+
+			key := userName + "/" + fullPath
+			obj := &Object{
+				fs:          f,
+				remote:      key,
+				mediaKey:    mediaKey,
+				size:        sizeBytes,
+				modTime:     convertUnixTimestamp(timestampUnix),
+				userName:    userName,
+				displayName: displayName,
+				displayPath: displayPath,
+			}
+
+			f.lazyMu.Lock()
+			f.lazyMeta[key] = obj
+			f.lazyMu.Unlock()
+
+			count++
+		}
+		rows.Close()
+
+		if count < batch {
+			// finished
+			return
+		}
+		offset += batch
+	}
 }
 
 // NewObject finds the Object at remote
@@ -543,6 +677,14 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if userName == "" || filePath == "" {
 		return nil, fs.ErrorIsDir
 	}
+
+	// Fast path: check if we've loaded metadata asynchronously
+	f.lazyMu.RLock()
+	if o, ok := f.lazyMeta[remote]; ok {
+		f.lazyMu.RUnlock()
+		return o, nil
+	}
+	f.lazyMu.RUnlock()
 
 	// Try to find the file by matching the constructed path
 	query := fmt.Sprintf(`
@@ -620,6 +762,132 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return nil, fs.ErrorObjectNotFound
 }
 
+// ChangeNotify calls the passed function with a path that has had changes.
+// The implementation must empty the channel and stop when it is closed.
+func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
+	go f.changeNotify(ctx, notify, newInterval)
+}
+
+func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
+	// Initialize lastTimestamp from DB
+	var lastTimestamp int64
+	row := f.db.QueryRowContext(ctx, fmt.Sprintf("SELECT COALESCE(MAX(utc_timestamp),0) FROM %s", f.opt.TableName))
+	if err := row.Scan(&lastTimestamp); err != nil {
+		fs.Errorf(f, "mediavfs: ChangeNotify unable to read initial timestamp: %v", err)
+		lastTimestamp = 0
+	}
+
+	// Get initial interval
+	dur, ok := <-newInterval
+	if !ok {
+		return
+	}
+	ticker := time.NewTicker(dur)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case d, ok := <-newInterval:
+			if !ok {
+				ticker.Stop()
+				return
+			}
+			fs.Debugf(f, "mediavfs: ChangeNotify interval updated to %s", d)
+			ticker.Reset(d)
+
+		case <-ticker.C:
+			// Query for rows newer than lastTimestamp
+			query := fmt.Sprintf(`
+				SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp, user_name
+				FROM %s
+				WHERE utc_timestamp > $1
+				ORDER BY utc_timestamp
+			`, f.opt.TableName)
+
+			rows, err := f.db.QueryContext(ctx, query, lastTimestamp)
+			if err != nil {
+				fs.Errorf(f, "mediavfs: ChangeNotify query failed: %v", err)
+				continue
+			}
+
+			maxTs := lastTimestamp
+			changedUsers := make(map[string]bool)
+			changedPaths := make(map[string]fs.EntryType) // Collect unique paths to notify
+			for rows.Next() {
+				var mediaKey, fileName, customName, customPath, uName string
+				var sizeBytes, ts int64
+				if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &ts, &uName); err != nil {
+					fs.Errorf(f, "mediavfs: ChangeNotify scan failed: %v", err)
+					continue
+				}
+
+				if ts > maxTs {
+					maxTs = ts
+				}
+
+				changedUsers[uName] = true
+
+				var displayName, displayPath string
+				if customName != "" {
+					displayName = customName
+				} else {
+					_, displayName = extractPathAndName(fileName)
+				}
+				if customPath != "" {
+					displayPath = strings.Trim(customPath, "/")
+				} else {
+					extractedPath, _ := extractPathAndName(fileName)
+					displayPath = strings.Trim(extractedPath, "/")
+				}
+
+				var fullPath string
+				if displayPath != "" {
+					fullPath = displayPath + "/" + displayName
+				} else {
+					fullPath = displayName
+				}
+
+				// Collect unique paths to notify (avoid duplicate notifications)
+				if displayPath != "" {
+					changedPaths[uName+"/"+displayPath] = fs.EntryDirectory
+				}
+				changedPaths[uName+"/"+fullPath] = fs.EntryObject
+			}
+			rows.Close()
+
+			// Send notifications for all changed paths
+			for path, entryType := range changedPaths {
+				notify(path, entryType)
+			}
+
+			// Invalidate caches if changes were detected
+			if len(changedUsers) > 0 {
+				// Clear our internal caches
+				f.lazyMu.Lock()
+				f.lazyMeta = make(map[string]*Object)
+				f.lazyMu.Unlock()
+
+				// Invalidate directory cache for affected users
+				f.dirMu.Lock()
+				for userName := range changedUsers {
+					// Invalidate user's root directory and any subdirectories that might be affected
+					for cacheKey := range f.dirCache {
+						if strings.HasPrefix(cacheKey, userName+"/") || cacheKey == userName {
+							delete(f.dirCache, cacheKey)
+							fs.Debugf(f, "Invalidated dir cache for %s", cacheKey)
+						}
+					}
+				}
+				// Also invalidate root cache in case new users were added
+				delete(f.dirCache, ".")
+				f.dirMu.Unlock()
+			}
+
+			lastTimestamp = maxTs
+		}
+	}
+}
+
 // Put is not supported
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return nil, errNotWritable
@@ -644,8 +912,12 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 }
 
 // Rmdir is not supported
+// Rmdir is allowed for directory operations but doesn't delete from database
+// (directories are virtual user folders that shouldn't be removed)
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return errNotWritable
+	fs.Debugf(f, "Rmdir called on %s - allowed for directory operations, directory remains in database", dir)
+	// Don't actually delete from database - just allow the operation
+	return nil
 }
 
 // Move moves src to this remote
@@ -655,11 +927,14 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
+	fs.Debugf(f, "Move called: src=%s, dst=%s", src.Remote(), remote)
+
 	// Check that both source and destination are for the same user
 	srcUser, _ := splitUserPath(src.Remote())
 	dstUser, dstPath := splitUserPath(remote)
 
 	if srcUser != dstUser {
+		fs.Debugf(f, "Move failed: cross-user move not allowed")
 		return nil, errCrossUser
 	}
 
@@ -694,8 +969,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	_, err := f.db.ExecContext(ctx, query, newName, newPath, srcObj.mediaKey)
 	if err != nil {
+		fs.Debugf(f, "Move failed: database update error: %v", err)
 		return nil, fmt.Errorf("failed to move file: %w", err)
 	}
+
+	fs.Debugf(f, "Move succeeded: updated %s to name=%s, path=%s", srcObj.mediaKey, newName, newPath)
 
 	// Update the object in-place for real-time changes (no DB re-query)
 	newObj := &Object{
@@ -714,9 +992,68 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return newObj, nil
 }
 
-// DirMove is not supported
+// DirMove moves a directory within the same remote
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
-	return fs.ErrorCantDirMove
+	_, ok := src.(*Fs)
+	if !ok {
+		return fs.ErrorCantDirMove
+	}
+
+	// Check that both source and destination are for the same user
+	srcUser, srcPath := splitUserPath(srcRemote)
+	dstUser, dstPath := splitUserPath(dstRemote)
+
+	if srcUser != dstUser {
+		return errCrossUser
+	}
+
+	// Normalize paths
+	srcPath = strings.Trim(srcPath, "/")
+	dstPath = strings.Trim(dstPath, "/")
+
+	if srcPath == "" {
+		return fmt.Errorf("cannot move root directory")
+	}
+
+	// Update virtual directories
+	f.vdirMu.Lock()
+	// Remove old virtual directory
+	if f.virtualDirs[srcRemote] {
+		delete(f.virtualDirs, srcRemote)
+	}
+	// Add new virtual directory
+	f.virtualDirs[dstRemote] = true
+	f.vdirMu.Unlock()
+
+	// Update all files in the database that have paths starting with srcPath
+	srcPathPrefix := srcPath + "/"
+
+	// First, update files with exact path match
+	query1 := fmt.Sprintf(`
+		UPDATE %s
+		SET path = $1
+		WHERE user_name = $2 AND path = $3
+	`, f.opt.TableName)
+
+	_, err := f.db.ExecContext(ctx, query1, dstPath, dstUser, srcPath)
+	if err != nil {
+		return fmt.Errorf("failed to move directory (exact match): %w", err)
+	}
+
+	// Then, update files with path prefix match
+	query2 := fmt.Sprintf(`
+		UPDATE %s
+		SET path = REPLACE(path, $1, $2)
+		WHERE user_name = $3 AND path LIKE $4
+	`, f.opt.TableName)
+
+	_, err = f.db.ExecContext(ctx, query2, srcPathPrefix, dstPath+"/", dstUser, srcPathPrefix+"%")
+	if err != nil {
+		return fmt.Errorf("failed to move directory (prefix match): %w", err)
+	}
+
+	fs.Debugf(nil, "mediavfs: moved directory %s to %s", srcRemote, dstRemote)
+	return nil
 }
 
 // Shutdown the backend
@@ -868,9 +1205,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return errNotWritable
 }
 
-// Remove is not supported
+// Remove is allowed for move operations but doesn't delete from database
+// (VFS layer may do copy+delete for renames)
 func (o *Object) Remove(ctx context.Context) error {
-	return errNotWritable
+	fs.Debugf(o.fs, "Remove called on %s - allowed for move operations, file remains in database", o.Remote())
+	// Don't actually delete from database - just allow the operation
+	return nil
 }
 
 // Check the interfaces are satisfied
