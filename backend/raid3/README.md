@@ -14,7 +14,8 @@ This document is the **main user guide** for the rclone `raid3` backend. It prov
 
 For **technical details** about how RAID 3 works, see [`RAID3.md`](RAID3.md).  
 For **testing documentation**, see [`TESTING.md`](TESTING.md).  
-For **design decisions**, see [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md).
+For **design decisions**, see [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md).  
+For **contributing guidelines**, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ---
 
