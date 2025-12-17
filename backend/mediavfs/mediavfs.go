@@ -393,35 +393,55 @@ func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
 
 // listUserFiles lists files and directories for a specific user and path
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
-	// Fast initial query: get identifying fields only so listing is quick
-	query := fmt.Sprintf(`
-		SELECT
-			media_key,
-			file_name,
-			COALESCE(name, '') as custom_name,
-			COALESCE(path, '') as custom_path,
-			size_bytes,
-			utc_timestamp
-		FROM %s
-		WHERE user_name = $1
-		ORDER BY file_name
-	`, f.opt.TableName)
+	// Normalize dirPath for comparison
+	dirPath = strings.Trim(dirPath, "/")
 
-	rows, err := f.db.QueryContext(ctx, query, userName)
+	var query string
+	var args []interface{}
+
+	if dirPath == "" {
+		// At root of user directory - select files where path IS NULL or empty
+		query = fmt.Sprintf(`
+			SELECT
+				media_key,
+				file_name,
+				COALESCE(name, '') as custom_name,
+				COALESCE(path, '') as custom_path,
+				size_bytes,
+				utc_timestamp
+			FROM %s
+			WHERE user_name = $1
+			  AND (path IS NULL OR path = '')
+			ORDER BY file_name
+		`, f.opt.TableName)
+		args = []interface{}{userName}
+	} else {
+		// In a subdirectory - select files where path = dirPath OR path starts with dirPath/
+		query = fmt.Sprintf(`
+			SELECT
+				media_key,
+				file_name,
+				COALESCE(name, '') as custom_name,
+				COALESCE(path, '') as custom_path,
+				size_bytes,
+				utc_timestamp
+			FROM %s
+			WHERE user_name = $1
+			  AND (path = $2 OR path LIKE $3)
+			ORDER BY file_name
+		`, f.opt.TableName)
+		args = []interface{}{userName, dirPath, dirPath + "/%"}
+	}
+
+	rows, err := f.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query files: %w", err)
 	}
 	defer rows.Close()
 
-	// Track directories we've already added
+	// Track what we've added to prevent duplicates
 	dirsSeen := make(map[string]bool)
-
-	// Normalize dirPath for comparison
-	dirPath = strings.Trim(dirPath, "/")
-	var dirPrefix string
-	if dirPath != "" {
-		dirPrefix = dirPath + "/"
-	}
+	filesSeen := make(map[string]bool)
 
 	for rows.Next() {
 		var (
@@ -438,91 +458,82 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 		timestamp := convertUnixTimestamp(timestampUnix)
 
-		// Determine the display name and path
+		// Core logic for display name and path
+		// name=NULL, path=NULL     → /user_name/file_name
+		// name=SET,  path=NULL     → /user_name/name
+		// name=NULL, path=SET      → /user_name/path/file_name
+		// name=SET,  path=SET      → /user_name/path/name
 		var displayName, displayPath string
 
+		// Display name: use 'name' if set, else use 'file_name'
 		if customName != "" {
-			// Use custom name if set
 			displayName = customName
 		} else {
-			// Extract name from fileName (handles paths in file_name)
-			_, displayName = extractPathAndName(fileName)
+			displayName = fileName
 		}
 
+		// Display path: use 'path' if set, else empty (strip slashes)
 		if customPath != "" {
-			// Use custom path if set
 			displayPath = strings.Trim(customPath, "/")
 		} else {
-			// Extract path from fileName if it contains "/"
-			extractedPath, _ := extractPathAndName(fileName)
-			displayPath = strings.Trim(extractedPath, "/")
+			displayPath = ""
 		}
 
-		// Construct the full path
-		var fullPath string
-		if displayPath != "" {
-			fullPath = displayPath + "/" + displayName
-		} else {
-			fullPath = displayName
-		}
-
-		// Check if this file is in the current directory or a subdirectory
+		// Now determine if this entry should be shown in current directory
 		if dirPath == "" {
-			// We're at the root of the user's directory
-			// Check if file is directly in root or in a subdirectory
-			if strings.Contains(fullPath, "/") {
-				// This is in a subdirectory - add all intermediate directories
-				pathParts := strings.Split(fullPath, "/")
-				for i := 0; i < len(pathParts)-1; i++ { // -1 because last part is the filename
-					dirName := strings.Join(pathParts[:i+1], "/")
-					if !dirsSeen[dirName] {
-						entries = append(entries, fs.NewDir(userName+"/"+dirName, time.Time{}))
-						dirsSeen[dirName] = true
-					}
+			// We're at user root level
+			if displayPath == "" {
+				// File is directly in root (path is NULL/empty)
+				remote := userName + "/" + displayName
+				if !filesSeen[remote] {
+					entries = append(entries, &Object{
+						fs:          f,
+						remote:      remote,
+						mediaKey:    mediaKey,
+						size:        sizeBytes,
+						modTime:     timestamp,
+						userName:    userName,
+						displayName: displayName,
+						displayPath: displayPath,
+					})
+					filesSeen[remote] = true
 				}
 			} else {
-				// This is a file directly in the root
-				remote := userName + "/" + fullPath
-				entries = append(entries, &Object{
-					fs:          f,
-					remote:      remote,
-					mediaKey:    mediaKey,
-					size:        sizeBytes,
-					modTime:     timestamp,
-					userName:    userName,
-					displayName: displayName,
-					displayPath: displayPath,
-				})
+				// File has a path - show only the first-level directory
+				firstDir := strings.SplitN(displayPath, "/", 2)[0]
+				if !dirsSeen[firstDir] {
+					entries = append(entries, fs.NewDir(userName+"/"+firstDir, time.Time{}))
+					dirsSeen[firstDir] = true
+				}
 			}
 		} else {
-			// We're in a specific subdirectory
-			// Check if file is in this directory or a deeper subdirectory
-			if !strings.HasPrefix(fullPath, dirPrefix) {
-				continue // Not in this directory
-			}
+			// We're in a subdirectory
+			if displayPath == dirPath {
+				// File is directly in this directory
+				remote := userName + "/" + displayPath + "/" + displayName
+				if !filesSeen[remote] {
+					entries = append(entries, &Object{
+						fs:          f,
+						remote:      remote,
+						mediaKey:    mediaKey,
+						size:        sizeBytes,
+						modTime:     timestamp,
+						userName:    userName,
+						displayName: displayName,
+						displayPath: displayPath,
+					})
+					filesSeen[remote] = true
+				}
+			} else if strings.HasPrefix(displayPath, dirPath+"/") {
+				// File is in a subdirectory - show the immediate subdir
+				remainder := strings.TrimPrefix(displayPath, dirPath+"/")
+				firstSubDir := strings.SplitN(remainder, "/", 2)[0]
+				fullSubDir := dirPath + "/" + firstSubDir
 
-			remainder := strings.TrimPrefix(fullPath, dirPrefix)
-			if strings.Contains(remainder, "/") {
-				// This is in a subdirectory
-				subDir := strings.SplitN(remainder, "/", 2)[0]
-				fullSubDir := dirPath + "/" + subDir
 				if !dirsSeen[fullSubDir] {
 					entries = append(entries, fs.NewDir(userName+"/"+fullSubDir, time.Time{}))
 					dirsSeen[fullSubDir] = true
 				}
-			} else {
-				// This is a file directly in this directory
-				remote := userName + "/" + fullPath
-				entries = append(entries, &Object{
-					fs:          f,
-					remote:      remote,
-					mediaKey:    mediaKey,
-					size:        sizeBytes,
-					modTime:     timestamp,
-					userName:    userName,
-					displayName: displayName,
-					displayPath: displayPath,
-				})
 			}
 		}
 	}
@@ -624,16 +635,17 @@ func (f *Fs) populateMetadata(userName string) {
 
 			// compute display path/name as in listUserFiles
 			var displayName, displayPath string
+			// Display name: use 'name' if set, else use 'file_name'
 			if customName != "" {
 				displayName = customName
 			} else {
-				_, displayName = extractPathAndName(fileName)
+				displayName = fileName
 			}
+			// Display path: use 'path' if set, else empty
 			if customPath != "" {
 				displayPath = strings.Trim(customPath, "/")
 			} else {
-				extractedPath, _ := extractPathAndName(fileName)
-				displayPath = strings.Trim(extractedPath, "/")
+				displayPath = ""
 			}
 
 			var fullPath string
@@ -722,19 +734,24 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		timestamp := convertUnixTimestamp(timestampUnix)
 
 		// Determine the display name and path (same logic as listUserFiles)
+		// name=NULL, path=NULL     → /user_name/file_name
+		// name=SET,  path=NULL     → /user_name/name
+		// name=NULL, path=SET      → /user_name/path/file_name
+		// name=SET,  path=SET      → /user_name/path/name
 		var displayName, displayPath string
 
+		// Display name: use 'name' if set, else use 'file_name'
 		if customName != "" {
 			displayName = customName
 		} else {
-			_, displayName = extractPathAndName(fileName)
+			displayName = fileName
 		}
 
+		// Display path: use 'path' if set, else empty (strip slashes)
 		if customPath != "" {
 			displayPath = strings.Trim(customPath, "/")
 		} else {
-			extractedPath, _ := extractPathAndName(fileName)
-			displayPath = strings.Trim(extractedPath, "/")
+			displayPath = ""
 		}
 
 		// Construct the full path
@@ -828,16 +845,17 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 				changedUsers[uName] = true
 
 				var displayName, displayPath string
+				// Display name: use 'name' if set, else use 'file_name'
 				if customName != "" {
 					displayName = customName
 				} else {
-					_, displayName = extractPathAndName(fileName)
+					displayName = fileName
 				}
+				// Display path: use 'path' if set, else empty
 				if customPath != "" {
 					displayPath = strings.Trim(customPath, "/")
 				} else {
-					extractedPath, _ := extractPathAndName(fileName)
-					displayPath = strings.Trim(extractedPath, "/")
+					displayPath = ""
 				}
 
 				var fullPath string
