@@ -1,10 +1,10 @@
-// Test Drime filesystem interface
-package drime_test
+// Drime filesystem interface
+package drime
 
 import (
 	"testing"
 
-	"github.com/rclone/rclone/backend/drime"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
@@ -12,6 +12,22 @@ import (
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestDrime:",
-		NilObject:  (*drime.Object)(nil),
+		NilObject:  (*Object)(nil),
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			MinChunkSize: minChunkSize,
+		},
 	})
 }
+
+func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setUploadChunkSize(cs)
+}
+
+func (f *Fs) SetUploadCutoff(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setUploadCutoff(cs)
+}
+
+var (
+	_ fstests.SetUploadChunkSizer = (*Fs)(nil)
+	_ fstests.SetUploadCutoffer   = (*Fs)(nil)
+)

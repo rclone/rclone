@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/backend/drime/api"
@@ -151,6 +152,14 @@ this may help to speed up the transfers.`,
 			Default:  4,
 			Advanced: true,
 		}, {
+			Name: "upload_cutoff",
+			Help: `Cutoff for switching to chunked upload.
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+The minimum is 0 and the maximum is 5 GiB.`,
+			Default:  defaultUploadCutoff,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -188,6 +197,7 @@ type Options struct {
 	UploadConcurrency int                  `config:"upload_concurrency"`
 	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
 	HardDelete        bool                 `config:"hard_delete"`
+	UploadCutoff      fs.SizeSuffix        `config:"upload_cutoff"`
 	ListChunk         int                  `config:"list_chunk"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
@@ -218,6 +228,28 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	if cs < minChunkSize {
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
+func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	if err == nil {
+		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
+	}
+	return
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {
@@ -333,6 +365,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, fmt.Errorf("drime: chunk size: %w", err)
 	}
 
 	root = parsePath(root)
@@ -1015,12 +1052,21 @@ func (f *Fs) Hashes() hash.Set {
 var warnStreamUpload sync.Once
 
 type drimeChunkWriter struct {
-	uploadID         string
-	key              string
-	chunkSize        int64
-	size             int64
-	f                *Fs
-	o                *Object
+	uploadID  string
+	key       string
+	chunkSize int64
+	size      int64
+	f         *Fs
+	o         *Object
+	written   atomic.Int64
+
+	uploadName   string // uuid
+	leaf         string
+	mime         string
+	extension    string
+	parentID     json.Number
+	relativePath string
+
 	completedParts   []api.CompletedPart
 	completedPartsMu sync.Mutex
 }
@@ -1060,11 +1106,13 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		chunkSize = chunksize.Calculator(src, size, maxUploadParts, chunkSize)
 	}
 
+	createSize := max(0, size)
+
 	// Initiate multipart upload
 	req := api.MultiPartCreateRequest{
 		Filename:     leaf,
 		Mime:         fs.MimeType(ctx, src),
-		Size:         size,
+		Size:         createSize,
 		Extension:    strings.TrimPrefix(path.Ext(leaf), `.`),
 		ParentID:     json.Number(directoryID),
 		RelativePath: f.opt.Enc.FromStandardPath(path.Join(f.root, remote)),
@@ -1087,13 +1135,27 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		return info, nil, fmt.Errorf("failed to initiate multipart upload: %w", err)
 	}
 
+	mime := fs.MimeType(ctx, src)
+	ext := strings.TrimPrefix(path.Ext(leaf), ".")
+	// must have file extension for multipart upload
+	if ext == "" {
+		ext = "bin"
+	}
+	rel := f.opt.Enc.FromStandardPath(path.Join(f.root, remote))
+
 	chunkWriter := &drimeChunkWriter{
-		uploadID:  resp.UploadID,
-		key:       resp.Key,
-		chunkSize: int64(chunkSize),
-		size:      size,
-		f:         f,
-		o:         o,
+		uploadID:     resp.UploadID,
+		key:          resp.Key,
+		chunkSize:    int64(chunkSize),
+		size:         size,
+		f:            f,
+		o:            o,
+		uploadName:   path.Base(resp.Key),
+		leaf:         leaf,
+		mime:         mime,
+		extension:    ext,
+		parentID:     json.Number(directoryID),
+		relativePath: rel,
 	}
 	info = fs.ChunkWriterInfo{
 		ChunkSize:         int64(chunkSize),
@@ -1184,6 +1246,10 @@ func (s *drimeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 		PartNumber: int32(chunkNumber),
 		ETag:       etag,
 	})
+
+	// Count size written for unkown file sizes
+	s.written.Add(chunkSize)
+
 	return chunkSize, nil
 }
 
@@ -1214,6 +1280,36 @@ func (s *drimeChunkWriter) Close(ctx context.Context) error {
 
 	if err != nil {
 		return fmt.Errorf("failed to complete multipart upload: %w", err)
+	}
+
+	finalSize := s.size
+	if finalSize < 0 {
+		finalSize = s.written.Load()
+	}
+
+	// s3/entries request to create drime object from multipart upload
+	req := api.MultiPartEntriesRequest{
+		ClientMime:      s.mime,
+		ClientName:      s.leaf,
+		Filename:        s.uploadName,
+		Size:            finalSize,
+		ClientExtension: s.extension,
+		ParentID:        s.parentID,
+		RelativePath:    s.relativePath,
+	}
+
+	entriesOpts := rest.Opts{
+		Method: "POST",
+		Path:   "/s3/entries",
+	}
+
+	var res api.MultiPartEntriesResponse
+	err = s.f.pacer.Call(func() (bool, error) {
+		res, err := s.f.srv.CallJSON(ctx, &entriesOpts, req, &res)
+		return shouldRetry(ctx, res, err)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create entry after multipart upload: %w", err)
 	}
 
 	return nil

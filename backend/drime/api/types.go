@@ -208,6 +208,22 @@ type MultiPartCompleteResponse struct {
 	Location string `json:"location"`
 }
 
+// MultiPartEntriesRequest is the input to POST /s3/entries
+type MultiPartEntriesRequest struct {
+	ClientMime      string      `json:"clientMime"`
+	ClientName      string      `json:"clientName"`
+	Filename        string      `json:"filename"`
+	Size            int64       `json:"size"`
+	ClientExtension string      `json:"clientExtension"`
+	ParentID        json.Number `json:"parent_id"`
+	RelativePath    string      `json:"relativePath"`
+}
+
+// MultiPartEntriesResponse is the result of POST /s3/entries
+type MultiPartEntriesResponse struct {
+	FileEntry Item `json:"fileEntry"`
+}
+
 // MultiPartAbort is the input of POST /s3/multipart/abort
 type MultiPartAbort struct {
 	UploadID string `json:"uploadId"`
