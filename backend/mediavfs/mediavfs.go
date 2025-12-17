@@ -242,7 +242,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				// Preserve Range header (critical for resume/seeking)
 				if rangeHeader := originalReq.Header.Get("Range"); rangeHeader != "" {
 					req.Header.Set("Range", rangeHeader)
-					fs.Debugf(nil, "mediavfs: preserving Range header on redirect: %s", rangeHeader)
+					fs.Infof(nil, "mediavfs: preserving Range header on redirect: %s", rangeHeader)
 				}
 				// Preserve If-Range header (critical for ETag validation)
 				if ifRangeHeader := originalReq.Header.Get("If-Range"); ifRangeHeader != "" {
@@ -252,7 +252,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				if userAgent := originalReq.Header.Get("User-Agent"); userAgent != "" {
 					req.Header.Set("User-Agent", userAgent)
 				}
-				fs.Debugf(nil, "mediavfs: following redirect from %s to %s",
+				fs.Infof(nil, "mediavfs: following redirect from %s to %s",
 					via[len(via)-1].URL.Redacted(), req.URL.Redacted())
 			}
 			return nil
@@ -327,7 +327,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	f.dirMu.RLock()
 	if entry, ok := f.dirCache[cacheKey]; ok && time.Now().Before(entry.expiresAt) {
 		f.dirMu.RUnlock()
-		fs.Debugf(f, "List cache hit for %s", dir)
+		fs.Infof(f, "List cache hit for %s", dir)
 		return entry.entries, nil
 	}
 	f.dirMu.RUnlock()
@@ -357,7 +357,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	f.dirMu.Unlock()
 
-	fs.Debugf(f, "List cached %s with %d entries", dir, len(result))
+	fs.Infof(f, "List cached %s with %d entries", dir, len(result))
 	return result, nil
 }
 
@@ -792,7 +792,7 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 				ticker.Stop()
 				return
 			}
-			fs.Debugf(f, "mediavfs: ChangeNotify interval updated to %s", d)
+			fs.Infof(f, "mediavfs: ChangeNotify interval updated to %s", d)
 			ticker.Reset(d)
 
 		case <-ticker.C:
@@ -874,7 +874,7 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 					for cacheKey := range f.dirCache {
 						if strings.HasPrefix(cacheKey, userName+"/") || cacheKey == userName {
 							delete(f.dirCache, cacheKey)
-							fs.Debugf(f, "Invalidated dir cache for %s", cacheKey)
+							fs.Infof(f, "Invalidated dir cache for %s", cacheKey)
 						}
 					}
 				}
@@ -907,7 +907,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	f.virtualDirs[fullPath] = true
 	f.vdirMu.Unlock()
 
-	fs.Debugf(nil, "mediavfs: created virtual directory: %s", fullPath)
+	fs.Infof(nil, "mediavfs: created virtual directory: %s", fullPath)
 	return nil // Virtual directories, always succeed
 }
 
@@ -915,7 +915,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // Rmdir is allowed for directory operations but doesn't delete from database
 // (directories are virtual user folders that shouldn't be removed)
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, "Rmdir called on %s - allowed for directory operations, directory remains in database", dir)
+	fs.Infof(f, "Rmdir called on %s - allowed for directory operations, directory remains in database", dir)
 	// Don't actually delete from database - just allow the operation
 	return nil
 }
@@ -927,14 +927,14 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
-	fs.Debugf(f, "Move called: src=%s, dst=%s", src.Remote(), remote)
+	fs.Infof(f, "Move called: src=%s, dst=%s", src.Remote(), remote)
 
 	// Check that both source and destination are for the same user
 	srcUser, _ := splitUserPath(src.Remote())
 	dstUser, dstPath := splitUserPath(remote)
 
 	if srcUser != dstUser {
-		fs.Debugf(f, "Move failed: cross-user move not allowed")
+		fs.Infof(f, "Move failed: cross-user move not allowed")
 		return nil, errCrossUser
 	}
 
@@ -955,7 +955,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		f.vdirMu.Lock()
 		if f.virtualDirs[vdirPath] {
 			delete(f.virtualDirs, vdirPath)
-			fs.Debugf(nil, "mediavfs: removed virtual directory after file move: %s", vdirPath)
+			fs.Infof(nil, "mediavfs: removed virtual directory after file move: %s", vdirPath)
 		}
 		f.vdirMu.Unlock()
 	}
@@ -969,11 +969,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	_, err := f.db.ExecContext(ctx, query, newName, newPath, srcObj.mediaKey)
 	if err != nil {
-		fs.Debugf(f, "Move failed: database update error: %v", err)
+		fs.Infof(f, "Move failed: database update error: %v", err)
 		return nil, fmt.Errorf("failed to move file: %w", err)
 	}
 
-	fs.Debugf(f, "Move succeeded: updated %s to name=%s, path=%s", srcObj.mediaKey, newName, newPath)
+	fs.Infof(f, "Move succeeded: updated %s to name=%s, path=%s", srcObj.mediaKey, newName, newPath)
 
 	// Update the object in-place for real-time changes (no DB re-query)
 	newObj := &Object{
@@ -987,7 +987,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		displayPath: newPath,
 	}
 
-	fs.Debugf(nil, "mediavfs: moved %s to %s (real-time update)", srcObj.remote, remote)
+	fs.Infof(nil, "mediavfs: moved %s to %s (real-time update)", srcObj.remote, remote)
 
 	return newObj, nil
 }
@@ -1052,7 +1052,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fmt.Errorf("failed to move directory (prefix match): %w", err)
 	}
 
-	fs.Debugf(nil, "mediavfs: moved directory %s to %s", srcRemote, dstRemote)
+	fs.Infof(nil, "mediavfs: moved directory %s to %s", srcRemote, dstRemote)
 	return nil
 }
 
@@ -1126,10 +1126,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		resolvedURL = cachedMeta.resolvedURL
 		etag = cachedMeta.etag
 		fileSize = cachedMeta.size
-		fs.Debugf(nil, "mediavfs: using cached URL and ETag for %s", o.mediaKey)
+		fs.Infof(nil, "mediavfs: using cached URL and ETag for %s", o.mediaKey)
 	} else {
 		// First time accessing this file - resolve URL and get ETag via HEAD request
-		fs.Debugf(nil, "mediavfs: resolving URL and fetching metadata for %s", o.mediaKey)
+		fs.Infof(nil, "mediavfs: resolving URL and fetching metadata for %s", o.mediaKey)
 
 		// Retry HEAD request with exponential backoff for transient errors
 		var headResp *http.Response
@@ -1137,7 +1137,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		for attempt := 0; attempt < 3; attempt++ {
 			if attempt > 0 {
 				sleepTime := time.Duration(1<<uint(attempt-1)) * time.Second
-				fs.Debugf(nil, "mediavfs: retrying HEAD request after %v (attempt %d/3)", sleepTime, attempt+1)
+				fs.Infof(nil, "mediavfs: retrying HEAD request after %v (attempt %d/3)", sleepTime, attempt+1)
 				time.Sleep(sleepTime)
 			}
 
@@ -1184,7 +1184,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			size:        fileSize,
 		})
 
-		fs.Debugf(nil, "mediavfs: cached URL and ETag=%s for %s", etag, o.mediaKey)
+		fs.Infof(nil, "mediavfs: cached URL and ETag=%s for %s", etag, o.mediaKey)
 	}
 
 	// Now make the actual GET request to the resolved URL with retry logic
@@ -1193,7 +1193,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	for attempt := 0; attempt < 3; attempt++ {
 		if attempt > 0 {
 			sleepTime := time.Duration(1<<uint(attempt-1)) * time.Second
-			fs.Debugf(nil, "mediavfs: retrying GET request after %v (attempt %d/3)", sleepTime, attempt+1)
+			fs.Infof(nil, "mediavfs: retrying GET request after %v (attempt %d/3)", sleepTime, attempt+1)
 			time.Sleep(sleepTime)
 		}
 
@@ -1242,7 +1242,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, fmt.Errorf("failed to open file after retries: %w", getErr)
 	}
 
-	fs.Debugf(nil, "mediavfs: opened %s with status %d", o.mediaKey, res.StatusCode)
+	fs.Infof(nil, "mediavfs: opened %s with status %d", o.mediaKey, res.StatusCode)
 
 	return res.Body, nil
 }
@@ -1255,7 +1255,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove is allowed for move operations but doesn't delete from database
 // (VFS layer may do copy+delete for renames)
 func (o *Object) Remove(ctx context.Context) error {
-	fs.Debugf(o.fs, "Remove called on %s - allowed for move operations, file remains in database", o.Remote())
+	fs.Infof(o.fs, "Remove called on %s - allowed for move operations, file remains in database", o.Remote())
 	// Don't actually delete from database - just allow the operation
 	return nil
 }
