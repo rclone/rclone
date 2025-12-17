@@ -27,11 +27,22 @@ import (
 )
 
 const (
-	apiBaseURL = "https://open-api.123pan.com"
-	rootID     = "0"
-	minSleep   = 200 * time.Millisecond
-	maxSleep   = 5 * time.Second
+	apiBaseURL     = "https://open-api.123pan.com"
+	rootID         = "0"
+	minSleep       = 200 * time.Millisecond
+	maxSleep       = 5 * time.Second
+	trashBatchSize = 100 // Maximum files per trash API call
 )
+
+// parseID converts a string directory ID to int64
+func parseID(id string) (int64, error) {
+	return strconv.ParseInt(id, 10, 64)
+}
+
+// formatID converts an int64 ID to string
+func formatID(id int64) string {
+	return strconv.FormatInt(id, 10)
+}
 
 // Register with Fs
 func init() {
@@ -107,33 +118,54 @@ type Options struct {
 }
 
 // QPSLimits defines rate limits for different APIs
+// See: https://123yunpan.yuque.com/org-wiki-123yunpan-muaork/cr6ced/txgcvbfgh0gtuad5
 type QPSLimits struct {
-	FileList     int
-	FileMove     int
-	FileDelete   int
-	Mkdir        int
-	DownloadInfo int
-	UploadCreate int
+	FileList       int // api/v2/file/list
+	FileMove       int // api/v1/file/move
+	FileTrash      int // api/v1/file/trash
+	FileDelete     int // api/v1/file/delete (permanent delete)
+	Mkdir          int // upload/v1/file/mkdir
+	DownloadInfo   int // api/v1/file/download_info
+	UploadCreate   int // upload/v2/file/create
+	UploadComplete int // upload/v2/file/upload_complete
+	FileRename     int // api/v1/file/name
+	ShareCreate    int // api/v1/share/create
 }
 
+const unlimitedQPS = 100 // Use high value for "unlimited" APIs
+
 var (
-	// Rate limits for free users
+	// Rate limits for free users (Developer API mode)
+	// Documented: api/v2/file/list=5, file/move=3, file/delete=1, mkdir=5
+	// Customer service confirmed: upload_complete=5, create=1, download_info=2
+	// Unlimited: file/name, share/create, file/trash
 	freeUserQPS = QPSLimits{
-		FileList:     5,
-		FileMove:     3,
-		FileDelete:   1,
-		Mkdir:        5,
-		DownloadInfo: 5,
-		UploadCreate: 2,
+		FileList:       5,            // documented
+		FileMove:       3,            // documented
+		FileTrash:      unlimitedQPS, // confirmed unlimited
+		FileDelete:     1,            // documented
+		Mkdir:          5,            // documented
+		DownloadInfo:   2,            // confirmed: 2 QPS
+		UploadCreate:   1,            // confirmed: 1 QPS
+		UploadComplete: 5,            // confirmed: 5 QPS
+		FileRename:     unlimitedQPS, // confirmed unlimited
+		ShareCreate:    unlimitedQPS, // confirmed unlimited
 	}
-	// Rate limits for VIP users
+	// Rate limits for VIP users (Developer API mode)
+	// Documented: api/v2/file/list=10, file/move=10, file/delete=10, mkdir=20
+	// Customer service confirmed: upload_complete=20, create=20, download_info=unlimited
+	// Unlimited: file/name, share/create, file/trash
 	vipUserQPS = QPSLimits{
-		FileList:     10,
-		FileMove:     10,
-		FileDelete:   10,
-		Mkdir:        20,
-		DownloadInfo: 10,
-		UploadCreate: 5,
+		FileList:       10,           // documented
+		FileMove:       10,           // documented
+		FileTrash:      unlimitedQPS, // confirmed unlimited
+		FileDelete:     10,           // documented
+		Mkdir:          20,           // documented
+		DownloadInfo:   unlimitedQPS, // confirmed unlimited
+		UploadCreate:   20,           // confirmed: 20 QPS
+		UploadComplete: 20,           // confirmed: 20 QPS
+		FileRename:     unlimitedQPS, // confirmed unlimited
+		ShareCreate:    unlimitedQPS, // confirmed unlimited
 	}
 )
 
@@ -294,30 +326,45 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// forEachFile iterates over all files in a directory, calling fn for each file.
-// If fn returns true, the iteration stops early (useful for search operations).
-// Returns an error if the listing fails.
-func (f *Fs) forEachFile(ctx context.Context, parentID int64, fn func(file api.File) (stop bool)) error {
+// listAllFiles fetches all files in a directory
+// Note: No caching is used to ensure consistency across Fs instances.
+// The API rate limits are handled by the pacer.
+func (f *Fs) listAllFiles(ctx context.Context, parentID int64) ([]api.File, error) {
+	// Fetch from API
+	var allFiles []api.File
 	lastFileID := int64(0)
 	for lastFileID != -1 {
 		resp, err := f.listFiles(ctx, parentID, 100, lastFileID)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
-		for _, file := range resp.Data.FileList {
-			if fn(file) {
-				return nil
-			}
-		}
+		allFiles = append(allFiles, resp.Data.FileList...)
 		lastFileID = resp.Data.LastFileID
+	}
+	return allFiles, nil
+}
+
+// forEachFile iterates over all files in a directory, calling fn for each file.
+// If fn returns true, the iteration stops early (useful for search operations).
+// Returns an error if the listing fails.
+// This method uses directory listing cache to reduce API calls.
+func (f *Fs) forEachFile(ctx context.Context, parentID int64, fn func(file api.File) (stop bool)) error {
+	files, err := f.listAllFiles(ctx, parentID)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if fn(file) {
+			return nil
+		}
 	}
 	return nil
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	parentID, err := strconv.ParseInt(pathID, 10, 64)
+	parentID, err := parseID(pathID)
 	if err != nil {
 		return "", false, err
 	}
@@ -325,7 +372,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	err = f.forEachFile(ctx, parentID, func(file api.File) bool {
 		standardName := f.opt.Enc.ToStandardName(file.Filename)
 		if file.Trashed == 0 && standardName == leaf && file.Type == 1 {
-			pathIDOut = strconv.FormatInt(file.FileID, 10)
+			pathIDOut = formatID(file.FileID)
 			found = true
 			return true
 		}
@@ -337,7 +384,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	parentID, err := strconv.ParseInt(pathID, 10, 64)
+	parentID, err := parseID(pathID)
 	if err != nil {
 		return "", err
 	}
@@ -347,7 +394,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		return "", err
 	}
 
-	return strconv.FormatInt(resp.Data.DirID, 10), nil
+	return formatID(resp.Data.DirID), nil
 }
 
 // List the objects and directories in dir into entries
@@ -357,7 +404,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 
-	parentID, err := strconv.ParseInt(directoryID, 10, 64)
+	parentID, err := parseID(directoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -373,9 +420,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if file.Type == 1 {
 			// Directory
 			modTime := parseTime(file.UpdateAt)
-			d := fs.NewDir(remote, modTime).SetID(strconv.FormatInt(file.FileID, 10))
+			d := fs.NewDir(remote, modTime).SetID(formatID(file.FileID))
 			entries = append(entries, d)
-			f.dirCache.Put(remote, strconv.FormatInt(file.FileID, 10))
+			f.dirCache.Put(remote, formatID(file.FileID))
 		} else {
 			// File
 			o := &Object{
@@ -451,7 +498,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil, err
 	}
 
-	parentID, err := strconv.ParseInt(directoryID, 10, 64)
+	parentID, err := parseID(directoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -478,7 +525,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return err
 	}
 
-	folderID, err := strconv.ParseInt(directoryID, 10, 64)
+	folderID, err := parseID(directoryID)
 	if err != nil {
 		return err
 	}
@@ -537,7 +584,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	dstParentID, err := strconv.ParseInt(dstDirectoryID, 10, 64)
+	dstParentID, err := parseID(dstDirectoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -584,7 +631,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	dstParentID, err := strconv.ParseInt(dstDirectoryID, 10, 64)
+	dstParentID, err := parseID(dstDirectoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -645,7 +692,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		if err != nil {
 			return "", err
 		}
-		dirIDInt, err := strconv.ParseInt(dirID, 10, 64)
+		dirIDInt, err := parseID(dirID)
 		if err != nil {
 			return "", err
 		}
@@ -683,6 +730,158 @@ func (f *Fs) createShareLink(ctx context.Context, fileID int64, name string, exp
 	}
 
 	return "https://www.123pan.com/s/" + resp.Data.ShareKey, nil
+}
+
+// Purge deletes all the files and directories in dir
+//
+// 123pan's trash API can delete directories including their contents.
+// If that fails, we fall back to batch deletion for efficiency.
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, false)
+}
+
+// purgeCheck removes the directory, if check is set then it
+// refuses to do so if it has anything in (for Rmdir)
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+
+	dirID, err := parseID(directoryID)
+	if err != nil {
+		return err
+	}
+
+	if check {
+		// Check if directory is empty (for Rmdir)
+		var hasContent bool
+		err = f.forEachFile(ctx, dirID, func(file api.File) bool {
+			if file.Trashed == 0 {
+				hasContent = true
+				return true // stop iteration
+			}
+			return false
+		})
+		if err != nil {
+			return err
+		}
+		if hasContent {
+			return fs.ErrorDirectoryNotEmpty
+		}
+	}
+
+	// 123pan's trash API doesn't reliably support recursive delete for non-empty directories.
+	// It may return success but not actually delete the contents.
+	// So we always delete contents first, then delete the directory itself.
+
+	// Recursively collect all file IDs (deepest first for safe deletion)
+	fileIDs, err := f.collectAllFileIDs(ctx, dirID)
+	if err != nil {
+		return fmt.Errorf("Purge: failed to collect files: %w", err)
+	}
+
+	// Batch delete files
+	for i := 0; i < len(fileIDs); i += trashBatchSize {
+		end := i + trashBatchSize
+		if end > len(fileIDs) {
+			end = len(fileIDs)
+		}
+		if err := f.trashBatch(ctx, fileIDs[i:end]); err != nil {
+			return fmt.Errorf("Purge: batch delete failed: %w", err)
+		}
+	}
+
+	// Delete the directory itself (unless it's the true root directory)
+	// When dir == "" but dirID != "0", we're deleting a subdirectory that is the root of this Fs
+	if directoryID != rootID {
+		if err := f.trash(ctx, dirID); err != nil {
+			return fmt.Errorf("Purge: failed to delete directory: %w", err)
+		}
+	}
+
+	f.dirCache.FlushDir(dir)
+	return nil
+}
+
+// collectAllFileIDs recursively collects all file and directory IDs under parentID
+// Returns IDs in reverse order (deepest first) for safe deletion
+func (f *Fs) collectAllFileIDs(ctx context.Context, parentID int64) ([]int64, error) {
+	var result []int64
+
+	err := f.forEachFile(ctx, parentID, func(file api.File) bool {
+		if file.Trashed != 0 {
+			return false
+		}
+		if file.Type == 1 {
+			// Directory - recurse first, then add directory ID
+			subIDs, err := f.collectAllFileIDs(ctx, file.FileID)
+			if err == nil {
+				result = append(result, subIDs...)
+			}
+			result = append(result, file.FileID)
+		} else {
+			// File
+			result = append(result, file.FileID)
+		}
+		return false
+	})
+
+	return result, err
+}
+
+// CleanUp empties the trash by permanently deleting all trashed files
+func (f *Fs) CleanUp(ctx context.Context) error {
+	// Collect all trashed file IDs by traversing the entire file tree
+	// Note: 123pan's file list API returns both normal and trashed files
+	trashedIDs, err := f.collectTrashedFileIDs(ctx, 0) // 0 is root
+	if err != nil {
+		return fmt.Errorf("CleanUp: failed to collect trashed files: %w", err)
+	}
+
+	if len(trashedIDs) == 0 {
+		fs.Debugf(f, "CleanUp: no trashed files found")
+		return nil
+	}
+
+	fs.Debugf(f, "CleanUp: found %d trashed files to permanently delete", len(trashedIDs))
+
+	// Batch delete (max trashBatchSize per API call)
+	for i := 0; i < len(trashedIDs); i += trashBatchSize {
+		end := i + trashBatchSize
+		if end > len(trashedIDs) {
+			end = len(trashedIDs)
+		}
+		if err := f.deletePermanently(ctx, trashedIDs[i:end]); err != nil {
+			return fmt.Errorf("CleanUp: batch delete failed: %w", err)
+		}
+	}
+
+	fs.Infof(f, "CleanUp: permanently deleted %d trashed files", len(trashedIDs))
+	return nil
+}
+
+// collectTrashedFileIDs recursively collects all trashed file IDs under parentID
+func (f *Fs) collectTrashedFileIDs(ctx context.Context, parentID int64) ([]int64, error) {
+	var result []int64
+
+	err := f.forEachFile(ctx, parentID, func(file api.File) bool {
+		if file.Trashed != 0 {
+			// This file is in trash - collect it
+			result = append(result, file.FileID)
+		}
+		if file.Type == 1 {
+			// Directory - recurse into it (regardless of trashed status)
+			// to find any trashed files inside
+			subIDs, err := f.collectTrashedFileIDs(ctx, file.FileID)
+			if err == nil {
+				result = append(result, subIDs...)
+			}
+		}
+		return false
+	})
+
+	return result, err
 }
 
 // ------------------------------------------------------------
@@ -737,7 +936,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // ID returns the object ID
 func (o *Object) ID() string {
-	return strconv.FormatInt(o.id, 10)
+	return formatID(o.id)
 }
 
 // Open opens the Object for reading
@@ -819,7 +1018,7 @@ func (o *Object) readMetaData(ctx context.Context) error {
 		return err
 	}
 
-	parentID, err := strconv.ParseInt(directoryID, 10, 64)
+	parentID, err := parseID(directoryID)
 	if err != nil {
 		return err
 	}
@@ -863,6 +1062,8 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.Purger          = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
 	_ dircache.DirCacher = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)

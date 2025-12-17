@@ -3,9 +3,9 @@ package pan123
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +16,13 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
+const (
+	maxAPIRetries     = 10          // Maximum retries for API-level 429 errors
+	baseRetryDelay    = time.Second // Base delay for exponential backoff
+	maxRetryDelay     = 30 * time.Second
+	tokenRefreshEarly = 5 * time.Minute // Refresh token before expiry
+)
+
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	429, // Too Many Requests
@@ -23,6 +30,19 @@ var retryErrorCodes = []int{
 	502, // Bad Gateway
 	503, // Service Unavailable
 	504, // Gateway Timeout
+}
+
+// calculateRetryDelay calculates retry delay with exponential backoff and jitter
+// The jitter helps prevent thundering herd problem when multiple requests retry simultaneously
+func calculateRetryDelay(attempt int, baseDelay time.Duration, maxDelay time.Duration) time.Duration {
+	// Exponential backoff: baseDelay * 2^attempt
+	delay := baseDelay * time.Duration(1<<uint(attempt))
+	if delay > maxDelay {
+		delay = maxDelay
+	}
+	// Add 0-25% random jitter to avoid thundering herd
+	jitter := time.Duration(rand.Float64() * 0.25 * float64(delay))
+	return delay + jitter
 }
 
 // shouldRetry returns a boolean as to whether this resp and err deserve to be retried
@@ -38,8 +58,8 @@ func (f *Fs) getAccessToken(ctx context.Context) error {
 	f.tokenMu.Lock()
 	defer f.tokenMu.Unlock()
 
-	// If token is still valid (refresh 5 minutes early), return
-	if f.opt.AccessToken != "" && time.Now().Add(5*time.Minute).Before(f.tokenExpiry) {
+	// If token is still valid (refresh early), return
+	if f.opt.AccessToken != "" && time.Now().Add(tokenRefreshEarly).Before(f.tokenExpiry) {
 		// Ensure Authorization header is set
 		f.srv.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
 		return nil
@@ -143,7 +163,7 @@ func (f *Fs) initUserLevel(ctx context.Context, forceRefresh bool) error {
 	}
 
 	// Cache VIP level to config
-	f.m.Set("vip_level", strconv.Itoa(vipLevel))
+	f.m.Set("vip_level", formatID(int64(vipLevel)))
 	f.opt.VipLevel = vipLevel
 
 	// Set QPS limits based on VIP status
@@ -173,10 +193,14 @@ func (f *Fs) initAPIPacers(ctx context.Context) {
 
 	f.apiPacers["file_list"] = createPacer(f.qpsLimits.FileList)
 	f.apiPacers["file_move"] = createPacer(f.qpsLimits.FileMove)
+	f.apiPacers["file_trash"] = createPacer(f.qpsLimits.FileTrash)
 	f.apiPacers["file_delete"] = createPacer(f.qpsLimits.FileDelete)
 	f.apiPacers["mkdir"] = createPacer(f.qpsLimits.Mkdir)
 	f.apiPacers["download_info"] = createPacer(f.qpsLimits.DownloadInfo)
 	f.apiPacers["upload_create"] = createPacer(f.qpsLimits.UploadCreate)
+	f.apiPacers["upload_complete"] = createPacer(f.qpsLimits.UploadComplete)
+	f.apiPacers["file_rename"] = createPacer(f.qpsLimits.FileRename)
+	f.apiPacers["share_create"] = createPacer(f.qpsLimits.ShareCreate)
 	f.apiPacers["default"] = createPacer(5)
 }
 
@@ -189,8 +213,7 @@ func (f *Fs) getPacer(apiName string) *fs.Pacer {
 }
 
 // callAPI makes an API call with automatic token refresh on token errors
-func (f *Fs) callAPI(ctx context.Context, opts *rest.Opts, request, response interface{}, pacerName string) error {
-	// Ensure token is valid
+func (f *Fs) callAPI(ctx context.Context, opts *rest.Opts, request interface{}, response api.Response, pacerName string) error {
 	if err := f.getAccessToken(ctx); err != nil {
 		return err
 	}
@@ -198,17 +221,11 @@ func (f *Fs) callAPI(ctx context.Context, opts *rest.Opts, request, response int
 	p := f.getPacer(pacerName)
 	retryToken := true
 	retryVipRefresh := true
-	maxAPIRetries := 10 // Maximum retries for API-level 429 errors
 	apiRetryCount := 0
-	apiRetryDelay := time.Second // Initial delay for API 429 retry
 
 	for {
-		var resp *http.Response
-		var err error
-
-		err = p.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(ctx, opts, request, response)
-			// Check for HTTP 429 (rate limit) - may need to refresh VIP level
+		err := p.Call(func() (bool, error) {
+			resp, err := f.srv.CallJSON(ctx, opts, request, response)
 			if resp != nil && resp.StatusCode == 429 && retryVipRefresh {
 				retryVipRefresh = false
 				fs.Debugf(f, "HTTP rate limit hit (429), refreshing VIP level...")
@@ -217,69 +234,76 @@ func (f *Fs) callAPI(ctx context.Context, opts *rest.Opts, request, response int
 			return shouldRetry(ctx, resp, err)
 		})
 
-		if err == nil {
-			// Check for API-level errors
-			if baseResp, ok := response.(interface{ IsError() bool }); ok && baseResp.IsError() {
-				// Get the error code and message
-				var code int
-				var message string
-				if apiResp, ok := response.(*api.BaseResponse); ok {
-					code = apiResp.Code
-					message = apiResp.Message
-				} else if getter, ok := response.(interface{ GetCode() int }); ok {
-					code = getter.GetCode()
-					if msgGetter, ok := response.(interface{ GetMessage() string }); ok {
-						message = msgGetter.GetMessage()
-					}
-				}
+		if err != nil {
+			return err
+		}
 
-				// Check for API-level rate limit (code 429)
-				if code == 429 {
-					apiRetryCount++
-					if apiRetryCount <= maxAPIRetries {
-						fs.Debugf(f, "API rate limit hit (429), retry %d/%d after %v...", apiRetryCount, maxAPIRetries, apiRetryDelay)
-						// Refresh VIP level on first rate limit hit
-						if apiRetryCount == 1 && retryVipRefresh {
-							retryVipRefresh = false
-							_ = f.initUserLevel(ctx, true)
-						}
-						select {
-						case <-ctx.Done():
-							return ctx.Err()
-						case <-time.After(apiRetryDelay):
-						}
-						// Exponential backoff with cap at 30 seconds
-						apiRetryDelay *= 2
-						if apiRetryDelay > 30*time.Second {
-							apiRetryDelay = 30 * time.Second
-						}
-						continue
-					}
-					return fmt.Errorf("API rate limit exceeded after %d retries: %s (code %d)", maxAPIRetries, message, code)
-				}
-
-				// Check if token needs refresh (code 401 or token-related message)
-				isTokenError := code == 401 || strings.Contains(strings.ToLower(message), "token")
-				if isTokenError && retryToken {
-					retryToken = false
-					f.tokenExpiry = time.Time{} // Force refresh
-					if err := f.getAccessToken(ctx); err != nil {
-						return err
-					}
-					// Token was refreshed, also refresh VIP level
-					if f.tokenJustRefresh {
-						f.tokenJustRefresh = false
-						_ = f.initUserLevel(ctx, true)
-					}
-					continue
-				}
-				return fmt.Errorf("API error: %s (code %d)", message, code)
-			}
+		// Check for API-level errors
+		if !response.IsError() {
 			return nil
 		}
 
+		code, message := response.GetCode(), response.GetMessage()
+
+		// Handle API-level rate limit (code 429)
+		if code == 429 {
+			apiRetryCount++
+			if apiRetryCount > maxAPIRetries {
+				return fmt.Errorf("API rate limit exceeded after %d retries: %s (code %d)", maxAPIRetries, message, code)
+			}
+			if err := f.handleRateLimit(ctx, apiRetryCount, &retryVipRefresh); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// Handle token errors (code 401 or token-related message)
+		if f.isTokenError(code, message) && retryToken {
+			retryToken = false
+			if err := f.refreshToken(ctx); err != nil {
+				return err
+			}
+			continue
+		}
+
+		return fmt.Errorf("API error: %s (code %d)", message, code)
+	}
+}
+
+// isTokenError checks if the error is token-related
+func (f *Fs) isTokenError(code int, message string) bool {
+	return code == 401 || strings.Contains(strings.ToLower(message), "token")
+}
+
+// handleRateLimit handles API rate limit with exponential backoff
+func (f *Fs) handleRateLimit(ctx context.Context, retryCount int, retryVipRefresh *bool) error {
+	retryDelay := calculateRetryDelay(retryCount-1, baseRetryDelay, maxRetryDelay)
+	fs.Debugf(f, "API rate limit hit (429), retry %d/%d after %v...", retryCount, maxAPIRetries, retryDelay)
+
+	if retryCount == 1 && *retryVipRefresh {
+		*retryVipRefresh = false
+		_ = f.initUserLevel(ctx, true)
+	}
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(retryDelay):
+		return nil
+	}
+}
+
+// refreshToken forces a token refresh
+func (f *Fs) refreshToken(ctx context.Context) error {
+	f.tokenExpiry = time.Time{} // Force refresh
+	if err := f.getAccessToken(ctx); err != nil {
 		return err
 	}
+	if f.tokenJustRefresh {
+		f.tokenJustRefresh = false
+		_ = f.initUserLevel(ctx, true)
+	}
+	return nil
 }
 
 // getUserInfo gets user information from the API
@@ -301,10 +325,10 @@ func (f *Fs) getUserInfo(ctx context.Context) (*api.UserInfoResponse, error) {
 // listFiles lists files in a directory
 func (f *Fs) listFiles(ctx context.Context, parentID int64, limit int, lastFileID int64) (*api.FileListResponse, error) {
 	params := url.Values{}
-	params.Set("parentFileId", strconv.FormatInt(parentID, 10))
-	params.Set("limit", strconv.Itoa(limit))
+	params.Set("parentFileId", formatID(parentID))
+	params.Set("limit", formatID(int64(limit)))
 	if lastFileID > 0 {
-		params.Set("lastFileId", strconv.FormatInt(lastFileID, 10))
+		params.Set("lastFileId", formatID(lastFileID))
 	}
 
 	opts := rest.Opts{
@@ -325,7 +349,7 @@ func (f *Fs) listFiles(ctx context.Context, parentID int64, limit int, lastFileI
 // getDownloadInfo gets download URL for a file
 func (f *Fs) getDownloadInfo(ctx context.Context, fileID int64) (*api.DownloadInfoResponse, error) {
 	params := url.Values{}
-	params.Set("fileId", strconv.FormatInt(fileID, 10))
+	params.Set("fileId", formatID(fileID))
 
 	opts := rest.Opts{
 		Method:     "GET",
@@ -392,22 +416,38 @@ func (f *Fs) rename(ctx context.Context, fileID int64, newName string) error {
 	}
 
 	var resp api.BaseResponse
-	return f.callAPI(ctx, &opts, req, &resp, "default")
+	return f.callAPI(ctx, &opts, req, &resp, "file_rename")
 }
 
 // trash moves a file/directory to trash
 func (f *Fs) trash(ctx context.Context, fileID int64) error {
-	req := &api.TrashRequest{
-		FileIDs: []int64{fileID},
+	return f.trashBatch(ctx, []int64{fileID})
+}
+
+// trashBatch moves multiple files/directories to trash (max trashBatchSize per call)
+func (f *Fs) trashBatch(ctx context.Context, fileIDs []int64) error {
+	return f.batchDeleteFiles(ctx, fileIDs, "/api/v1/file/trash", "file_trash")
+}
+
+// deletePermanently permanently deletes files from trash (max trashBatchSize per call)
+// Note: Files must be in trash before they can be permanently deleted
+func (f *Fs) deletePermanently(ctx context.Context, fileIDs []int64) error {
+	return f.batchDeleteFiles(ctx, fileIDs, "/api/v1/file/delete", "file_delete")
+}
+
+// batchDeleteFiles is a generic batch delete method for trash and permanent delete
+func (f *Fs) batchDeleteFiles(ctx context.Context, fileIDs []int64, path, pacerName string) error {
+	if len(fileIDs) == 0 {
+		return nil
+	}
+	if len(fileIDs) > trashBatchSize {
+		return fmt.Errorf("batch delete: too many files (%d), max %d per call", len(fileIDs), trashBatchSize)
 	}
 
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/api/v1/file/trash",
-	}
-
+	req := &api.TrashRequest{FileIDs: fileIDs}
+	opts := rest.Opts{Method: "POST", Path: path}
 	var resp api.BaseResponse
-	return f.callAPI(ctx, &opts, req, &resp, "file_delete")
+	return f.callAPI(ctx, &opts, req, &resp, pacerName)
 }
 
 // createFile creates a file entry (returns instant upload status)
@@ -446,7 +486,7 @@ func (f *Fs) completeUpload(ctx context.Context, preuploadID string) (*api.Uploa
 	}
 
 	var resp api.UploadCompleteResponse
-	err := f.callAPI(ctx, &opts, req, &resp, "default")
+	err := f.callAPI(ctx, &opts, req, &resp, "upload_complete")
 	if err != nil {
 		return nil, err
 	}
@@ -459,7 +499,7 @@ func (f *Fs) createShare(ctx context.Context, fileID int64, fileName string, exp
 	req := &api.ShareCreateRequest{
 		ShareName:   fileName,
 		ShareExpire: expireDays,
-		FileIDList:  strconv.FormatInt(fileID, 10),
+		FileIDList:  formatID(fileID),
 	}
 
 	opts := rest.Opts{
@@ -468,7 +508,7 @@ func (f *Fs) createShare(ctx context.Context, fileID int64, fileName string, exp
 	}
 
 	var resp api.ShareCreateResponse
-	err := f.callAPI(ctx, &opts, req, &resp, "default")
+	err := f.callAPI(ctx, &opts, req, &resp, "share_create")
 	if err != nil {
 		return nil, err
 	}
