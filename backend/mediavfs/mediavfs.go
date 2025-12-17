@@ -400,7 +400,10 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	var args []interface{}
 
 	if dirPath == "" {
-		// At root of user directory - fetch ALL files to discover directories
+		// At root of user directory - fetch files at root and first-level directories
+		// path IS NULL OR path = '' → files at root
+		// path NOT LIKE '%/%' → files in first-level dirs (e.g., 'photos')
+		// Excludes deeper paths like 'photos/vacation'
 		query = fmt.Sprintf(`
 			SELECT
 				media_key,
@@ -411,6 +414,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				utc_timestamp
 			FROM %s
 			WHERE user_name = $1
+			  AND (path IS NULL OR path = '' OR path NOT LIKE '%%/%%')
 			ORDER BY file_name
 		`, f.opt.TableName)
 		args = []interface{}{userName}
