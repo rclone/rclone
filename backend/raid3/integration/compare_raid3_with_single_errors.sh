@@ -184,6 +184,14 @@ run_move_fail_scenario() {
     return 0
   fi
 
+  # Ensure all backends are ready before starting (important after previous scenario restored a backend)
+  log_info "scenario:move-fail-${backend}" "Verifying all backends are ready before starting scenario."
+  for check_backend in even odd parity; do
+    if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
+      log_warn "scenario:move-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+    fi
+  done
+
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
 
@@ -250,6 +258,10 @@ run_move_fail_scenario() {
     # Restore backend before returning error
     log_info "scenario:move-fail-${backend}" "Restoring '${backend}' backend before error exit."
     start_single_minio_container "${backend}"
+    # Wait for backend to be ready (for next scenario)
+    if wait_for_minio_port "${port}" 2>/dev/null; then
+      wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+    fi
     record_error_result "FAIL" "move-fail-${backend}" "Move succeeded when it should have failed (backend '${backend}' was unavailable)."
     log_note "move" "Move stdout: ${move_stdout}"
     log_note "move" "Move stderr: ${move_stderr}"
@@ -290,9 +302,16 @@ run_move_fail_scenario() {
   log_info "scenario:move-fail-${backend}" "Restoring '${backend}' backend."
   start_single_minio_container "${backend}"
 
-  # Wait for container to be ready (reuse port variable set earlier)
+  # Wait for container port to be open
   if ! wait_for_minio_port "${port}"; then
+    log_warn "scenario:move-fail-${backend}" "Backend port ${port} did not open in time."
+  fi
+
+  # Wait for MinIO to be fully ready (not just port open, but S3 API ready)
+  if ! wait_for_minio_backend_ready "${backend}"; then
     log_warn "scenario:move-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+  else
+    log_info "scenario:move-fail-${backend}" "Backend '${backend}' confirmed ready."
   fi
 
   # Now verify the checks we did while backend was down
@@ -335,6 +354,14 @@ run_update_fail_scenario() {
     record_error_result "PASS" "update-fail-${backend}" "Skipped for local backend (requires MinIO to stop containers)."
     return 0
   fi
+
+  # Ensure all backends are ready before starting (important after previous scenario restored a backend)
+  log_info "scenario:update-fail-${backend}" "Verifying all backends are ready before starting scenario."
+  for check_backend in even odd parity; do
+    if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
+      log_warn "scenario:update-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+    fi
+  done
 
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
@@ -392,7 +419,7 @@ run_update_fail_scenario() {
   log_info "scenario:update-fail-${backend}" "Restoring '${backend}' backend."
   start_single_minio_container "${backend}"
 
-  # Wait for container to be ready
+  # Wait for container port to be open
   local port
   case "${backend}" in
     even) port="${MINIO_EVEN_PORT}" ;;
@@ -400,11 +427,22 @@ run_update_fail_scenario() {
     parity) port="${MINIO_PARITY_PORT}" ;;
   esac
   if ! wait_for_minio_port "${port}"; then
+    log_warn "scenario:update-fail-${backend}" "Backend port ${port} did not open in time."
+  fi
+
+  # Wait for MinIO to be fully ready (not just port open, but S3 API ready)
+  if ! wait_for_minio_backend_ready "${backend}"; then
     log_warn "scenario:update-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+  else
+    log_info "scenario:update-fail-${backend}" "Backend '${backend}' confirmed ready."
   fi
 
   # Verify update failed (non-zero exit status)
   if [[ "${update_status}" -eq 0 ]]; then
+    # Backend was already restored earlier, but ensure it's ready for next scenario
+    if wait_for_minio_port "${port}" 2>/dev/null; then
+      wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+    fi
     record_error_result "FAIL" "update-fail-${backend}" "Update succeeded when it should have failed (backend '${backend}' was unavailable)."
     log_note "update" "Update stdout: ${update_stdout}"
     log_note "update" "Update stderr: ${update_stderr}"
@@ -457,6 +495,14 @@ run_move_fail_scenario_no_rollback() {
     record_error_result "PASS" "rollback-disabled-move-fail-${backend}" "Skipped for local backend (requires MinIO to stop containers)."
     return 0
   fi
+
+  # Ensure all backends are ready before starting (important after previous scenario restored a backend)
+  log_info "scenario:rollback-disabled-move-fail-${backend}" "Verifying all backends are ready before starting scenario."
+  for check_backend in even odd parity; do
+    if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
+      log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+    fi
+  done
 
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
@@ -520,6 +566,10 @@ run_move_fail_scenario_no_rollback() {
   # Verify move failed (non-zero exit status)
   if [[ "${move_status}" -eq 0 ]]; then
     start_single_minio_container "${backend}"
+    # Wait for backend to be ready (for next scenario)
+    if wait_for_minio_port "${port}" 2>/dev/null; then
+      wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+    fi
     record_error_result "FAIL" "rollback-disabled-move-fail-${backend}" "Move succeeded when it should have failed (backend '${backend}' was unavailable)."
     rm -f "${move_stdout}" "${move_stderr}"
     return 1
@@ -529,7 +579,14 @@ run_move_fail_scenario_no_rollback() {
   log_info "scenario:rollback-disabled-move-fail-${backend}" "Restoring '${backend}' backend."
   start_single_minio_container "${backend}"
   if ! wait_for_minio_port "${port}"; then
+    log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend port ${port} did not open in time."
+  fi
+
+  # Wait for MinIO to be fully ready (not just port open, but S3 API ready)
+  if ! wait_for_minio_backend_ready "${backend}"; then
     log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+  else
+    log_info "scenario:rollback-disabled-move-fail-${backend}" "Backend '${backend}' confirmed ready."
   fi
 
   # With rollback disabled, partial moves are expected
@@ -572,6 +629,14 @@ run_update_fail_scenario_no_rollback() {
     record_error_result "PASS" "rollback-disabled-update-fail-${backend}" "Skipped for local backend (requires MinIO to stop containers)."
     return 0
   fi
+
+  # Ensure all backends are ready before starting (important after previous scenario restored a backend)
+  log_info "scenario:rollback-disabled-update-fail-${backend}" "Verifying all backends are ready before starting scenario."
+  for check_backend in even odd parity; do
+    if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
+      log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+    fi
+  done
 
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
@@ -633,7 +698,7 @@ run_update_fail_scenario_no_rollback() {
   log_info "scenario:rollback-disabled-update-fail-${backend}" "Restoring '${backend}' backend."
   start_single_minio_container "${backend}"
 
-  # Wait for container to be ready
+  # Wait for container port to be open
   local port
   case "${backend}" in
     even) port="${MINIO_EVEN_PORT}" ;;
@@ -641,11 +706,22 @@ run_update_fail_scenario_no_rollback() {
     parity) port="${MINIO_PARITY_PORT}" ;;
   esac
   if ! wait_for_minio_port "${port}"; then
+    log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend port ${port} did not open in time."
+  fi
+
+  # Wait for MinIO to be fully ready (not just port open, but S3 API ready)
+  if ! wait_for_minio_backend_ready "${backend}"; then
     log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+  else
+    log_info "scenario:rollback-disabled-update-fail-${backend}" "Backend '${backend}' confirmed ready."
   fi
 
   # Verify update failed (non-zero exit status)
   if [[ "${update_status}" -eq 0 ]]; then
+    # Backend was already restored earlier, but ensure it's ready for next scenario
+    if wait_for_minio_port "${port}" 2>/dev/null; then
+      wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+    fi
     record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Update succeeded when it should have failed (backend '${backend}' was unavailable)."
     rm -f "${update_stdout}" "${update_stderr}" "${original_content}" "${updated_content}"
     return 1

@@ -962,11 +962,26 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for _, entry := range entryMap {
 		switch e := entry.(type) {
 		case fs.Object:
-			// If auto_cleanup is enabled, filter out broken objects (< 2 particles)
+			// If auto_cleanup is enabled, handle broken objects (< 2 particles)
 			if f.opt.AutoCleanup {
 				particleCount := f.countParticlesSync(ctx, e.Remote())
 				if particleCount < 2 {
-					fs.Debugf(f, "List: Skipping broken object %s (only %d particle)", e.Remote(), particleCount)
+					// Check if all backends are available for auto-delete
+					if err := f.checkAllBackendsAvailable(ctx); err == nil {
+						// All backends available - auto-delete broken object
+						particleInfo, err := f.particleInfoForObject(ctx, e.Remote())
+						if err == nil {
+							if delErr := f.removeBrokenObject(ctx, particleInfo); delErr != nil {
+								fs.Debugf(f, "List: Failed to auto-delete broken object %s: %v", e.Remote(), delErr)
+							} else {
+								fs.Debugf(f, "List: Auto-deleted broken object %s", e.Remote())
+							}
+						}
+					} else {
+						// Not all backends available - hide broken object (don't delete)
+						fs.Debugf(f, "List: Hiding broken object %s (only %d particle, backends unavailable)", e.Remote(), particleCount)
+					}
+					// Hide broken object (whether deleted or not)
 					continue
 				}
 			}
@@ -1210,61 +1225,89 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // Rmdir removes a directory
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	// Best-effort delete policy (like Remove)
-	// Try to remove from all backends
-	// Return error only if ALL backends report the SAME error (not found, not empty, etc.)
-	var (
-		evenErr, oddErr, parityErr error
-	)
-
-	// Try even
-	evenErr = f.even.Rmdir(ctx, dir)
-
-	// Try odd
-	oddErr = f.odd.Rmdir(ctx, dir)
-
-	// Try parity
-	parityErr = f.parity.Rmdir(ctx, dir)
-
-	// If at least one backend succeeded, consider it success (best-effort)
-	if evenErr == nil || oddErr == nil || parityErr == nil {
-		return nil
+	// Pre-flight check: Enforce strict RAID 3 delete policy
+	// Fail immediately if any backend is unavailable to prevent partial deletes
+	// Note: The health check only creates a test directory, not the target directory
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("rmdir blocked in degraded mode (RAID 3 policy): %w", err)
 	}
 
-	// All backends failed. Check what kind of failures
-	// Handle both fs.ErrorDirNotFound and OS-level "not exist" errors
-	evenNotFound := errors.Is(evenErr, fs.ErrorDirNotFound) || os.IsNotExist(evenErr)
-	oddNotFound := errors.Is(oddErr, fs.ErrorDirNotFound) || os.IsNotExist(oddErr)
-	parityNotFound := errors.Is(parityErr, fs.ErrorDirNotFound) || os.IsNotExist(parityErr)
+	// Use regular goroutines to collect all errors (not errgroup to avoid context cancellation)
+	type rmdirResult struct {
+		err error
+	}
+	results := make(chan rmdirResult, 3)
 
-	// Best-effort logic for degraded mode:
-	// - If removing a truly non-existent directory (all backends agree it never existed),
-	//   return error for compatibility with rclone test suite
-	// - If in degraded mode (some backends unavailable/inaccessible), treat as success
-	//   because we successfully removed from available backends
+	go func() {
+		results <- rmdirResult{err: f.even.Rmdir(ctx, dir)}
+	}()
+	go func() {
+		results <- rmdirResult{err: f.odd.Rmdir(ctx, dir)}
+	}()
+	go func() {
+		results <- rmdirResult{err: f.parity.Rmdir(ctx, dir)}
+	}()
 
-	// Check if this looks like a truly non-existent directory vs degraded mode
-	// In degraded mode, at least one backend would have a different error than "not found"
-	// (e.g., connection refused, backend unavailable, etc.)
-	allNotFound := evenNotFound && oddNotFound && parityNotFound
-
-	if allNotFound {
-		// All backends consistently report "directory not found"
-		// This is the expected behavior for removing a non-existent directory
-		return fs.ErrorDirNotFound
+	var evenErr, oddErr, parityErr error
+	for i := 0; i < 3; i++ {
+		result := <-results
+		switch i {
+		case 0:
+			evenErr = result.err
+		case 1:
+			oddErr = result.err
+		case 2:
+			parityErr = result.err
+		}
 	}
 
-	// Mixed results: some "not found", some other errors
-	// This indicates degraded mode or partial success
-	// Treat as success (best-effort) if any backend reported "not found"
-	// (meaning directory was removed or doesn't exist on available backends)
-	if evenNotFound || oddNotFound || parityNotFound {
-		return nil
+	// Collect non-nil errors (union backend pattern: return error if ANY backend returns error)
+	var allErrors []error
+	if evenErr != nil {
+		allErrors = append(allErrors, evenErr)
+	}
+	if oddErr != nil {
+		allErrors = append(allErrors, oddErr)
+	}
+	if parityErr != nil {
+		allErrors = append(allErrors, parityErr)
 	}
 
-	// All backends failed with non-"not found" errors (e.g., "directory not empty")
-	// Return one of them to maintain rclone test compatibility
-	return evenErr
+	// If all backends returned errors, check if they're all "not found" type
+	if len(allErrors) == 3 {
+		allNotFound := true
+		for _, err := range allErrors {
+			// Check for both fs.ErrorDirNotFound and os.ErrNotExist (local backend returns os.ErrNotExist)
+			if !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
+				allNotFound = false
+				break
+			}
+		}
+		if allNotFound {
+			// All backends returned ErrorDirNotFound
+			// Always return ErrorDirNotFound for test compatibility (TestStandard/FsRmdirNotFound)
+			// The Rmdirs fallback path in operations.Purge will handle ErrorDirNotFound correctly
+			// by collecting it and wrapping it, but the test expects ErrorDirNotFound for direct calls
+			return fs.ErrorDirNotFound
+		}
+	}
+
+	// Convert individual ErrorDirNotFound to nil (idempotent behavior)
+	// This handles the case where some backends succeed and some return ErrorDirNotFound
+	var filteredErrors []error
+	for _, err := range allErrors {
+		if !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
+			filteredErrors = append(filteredErrors, err)
+		}
+	}
+
+	// If any non-ErrorDirNotFound error exists, return first error
+	if len(filteredErrors) > 0 {
+		return filteredErrors[0]
+	}
+
+	// All succeeded or all returned ErrorDirNotFound (idempotent)
+	return nil
 }
 
 // Purge deletes all the files and directories in the given directory
@@ -1273,6 +1316,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge(ctx context.Context, dir string) error {
+	// Pre-flight check: Enforce strict RAID 3 delete policy
+	// Fail immediately if any backend is unavailable to prevent partial purges
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("purge blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
 	// Check if all backends support Purge
 	evenPurge := f.even.Features().Purge
 	oddPurge := f.odd.Features().Purge
@@ -1282,41 +1331,87 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	if evenPurge != nil && oddPurge != nil && parityPurge != nil {
 		g, gCtx := errgroup.WithContext(ctx)
 
+		var evenErr, oddErr, parityErr error
+
 		g.Go(func() error {
-			err := evenPurge(gCtx, dir)
-			if err != nil {
-				return fmt.Errorf("%s: purge failed: %w", f.even.Name(), err)
-			}
+			evenErr = evenPurge(gCtx, dir)
 			return nil
 		})
 
 		g.Go(func() error {
-			err := oddPurge(gCtx, dir)
-			if err != nil {
-				return fmt.Errorf("%s: purge failed: %w", f.odd.Name(), err)
-			}
+			oddErr = oddPurge(gCtx, dir)
 			return nil
 		})
 
 		g.Go(func() error {
-			err := parityPurge(gCtx, dir)
-			if err != nil {
-				return fmt.Errorf("%s: purge failed: %w", f.parity.Name(), err)
-			}
+			parityErr = parityPurge(gCtx, dir)
 			return nil
 		})
 
-		return g.Wait()
+		if err := g.Wait(); err != nil {
+			return err
+		}
+
+		// Check if all backends returned ErrorDirNotFound
+		allNotFound := errors.Is(evenErr, fs.ErrorDirNotFound) &&
+			errors.Is(oddErr, fs.ErrorDirNotFound) &&
+			errors.Is(parityErr, fs.ErrorDirNotFound)
+
+		if allNotFound {
+			// If all backends return ErrorDirNotFound, convert to nil (idempotent behavior)
+			// This matches union backend's behavior (line 255-256)
+			return nil
+		}
+
+		// Convert individual ErrorDirNotFound to nil (idempotent behavior)
+		// This handles the case where some backends succeed and some return ErrorDirNotFound
+		if errors.Is(evenErr, fs.ErrorDirNotFound) {
+			evenErr = nil
+		}
+		if errors.Is(oddErr, fs.ErrorDirNotFound) {
+			oddErr = nil
+		}
+		if errors.Is(parityErr, fs.ErrorDirNotFound) {
+			parityErr = nil
+		}
+
+		// Collect non-nil errors
+		var allErrors []error
+		if evenErr != nil {
+			allErrors = append(allErrors, fmt.Errorf("%s: purge failed: %w", f.even.Name(), evenErr))
+		}
+		if oddErr != nil {
+			allErrors = append(allErrors, fmt.Errorf("%s: purge failed: %w", f.odd.Name(), oddErr))
+		}
+		if parityErr != nil {
+			allErrors = append(allErrors, fmt.Errorf("%s: purge failed: %w", f.parity.Name(), parityErr))
+		}
+
+		// Return first error if any, otherwise success
+		if len(allErrors) > 0 {
+			return allErrors[0]
+		}
+
+		return nil
 	}
 
 	// Fall back to fs.ErrorCantPurge if not all backends support it
 	// This will cause rclone to use the fallback (List + Delete + Rmdir)
+	// The fallback will handle non-existent directories appropriately (idempotent)
+	// Note: We don't return ErrorDirNotFound here because the fallback path is idempotent
+	// and will return nil for non-existent directories, which matches union backend's behavior
 	return fs.ErrorCantPurge
 }
 
 // CleanUp removes broken objects (only 1 particle present)
 // This implements the optional fs.CleanUpper interface
 func (f *Fs) CleanUp(ctx context.Context) error {
+	// Pre-flight check: Enforce strict RAID 3 delete policy
+	// Fail immediately if any backend is unavailable to prevent partial cleanup
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("cleanup blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
 	fs.Infof(f, "Scanning for broken objects...")
 
 	// Scan root directory recursively
@@ -1755,6 +1850,69 @@ func (f *Fs) reconstructMissingDirectory(ctx context.Context, dir string, errEve
 			}
 		}
 	}
+}
+
+// checkSubdirectoryExists checks if a subdirectory exists by listing the parent directory
+// and searching for it. This follows union backend's findEntry pattern.
+// Returns true if subdirectory exists, false otherwise.
+func (f *Fs) checkSubdirectoryExists(ctx context.Context, backend fs.Fs, subDirName string) bool {
+	// Get the full remote string for this backend
+	remoteString := fs.ConfigString(backend)
+
+	// Split into remote name and path
+	remoteName, remotePath, err := fspath.SplitFs(remoteString)
+	if err != nil {
+		fs.Debugf(f, "Rmdir: Failed to split remote string %q: %v", remoteString, err)
+		// Fallback to direct List() check
+		_, listErr := backend.List(ctx, "")
+		return listErr == nil
+	}
+
+	// Get parent path
+	parentPath := path.Dir(remotePath)
+	if parentPath == "." {
+		parentPath = ""
+	}
+
+	// Construct parent remote string
+	parentRemote := remoteName
+	if parentRemote != "" {
+		parentRemote += ":"
+	}
+	parentRemote += parentPath
+
+	// Get parent Fs
+	parentFs, err := cache.Get(ctx, parentRemote)
+	if err != nil {
+		fs.Debugf(f, "Rmdir: Failed to get parent Fs %q: %v", parentRemote, err)
+		// Fallback to direct List() check
+		_, listErr := backend.List(ctx, "")
+		return listErr == nil
+	}
+
+	// List parent directory and search for subdirectory
+	entries, err := parentFs.List(ctx, "")
+	if err != nil {
+		fs.Debugf(f, "Rmdir: Failed to list parent directory %q: %v", parentRemote, err)
+		return false
+	}
+
+	// Search for subdirectory in entries
+	caseInsensitive := parentFs.Features().CaseInsensitive
+	for _, entry := range entries {
+		entryRemote := entry.Remote()
+		found := false
+		if caseInsensitive {
+			found = strings.EqualFold(entryRemote, subDirName)
+		} else {
+			found = (entryRemote == subDirName)
+		}
+		if found {
+			return true
+		}
+	}
+
+	return false
 }
 
 // cleanupOrphanedDirectory removes directories that exist on < 2 backends

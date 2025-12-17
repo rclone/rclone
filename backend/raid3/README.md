@@ -64,85 +64,50 @@ The `raid3` backend implements **RAID 3** storage with byte-level data striping 
 - ✅ Missing particles are automatically reconstructed from parity
 - ✅ **Heal** automatically restores missing particles in background
 - ❌ **Writes** require ALL 3 backends available (strict RAID 3 behavior)
-- ✅ **Deletes** work with ANY backends available (idempotent)
+- ❌ **Deletes** require ALL 3 backends available (strict RAID 3 behavior)
 
 ## 🧹 Auto-Cleanup and Auto-Heal
 
 **By default**, raid3 provides two automatic features for handling degraded states:
 
-- **`auto_cleanup`**: Hides/deletes orphaned items (1/3 particles - cannot reconstruct)
+- **`auto_cleanup`**: Auto-deletes orphaned items (1/3 particles) when all remotes available, hides them when remotes missing
 - **`auto_heal`**: Reconstructs missing items (2/3 particles - can reconstruct)
 
 ### Configuration Options
 
-**Default behavior** (recommended - full automation):
+**Default** (recommended):
 ```bash
 rclone config create myremote raid3 \
     even remote1: \
     odd remote2: \
     parity remote3:
-# auto_cleanup defaults to true
-# auto_heal defaults to true
-# rollback defaults to true (all-or-nothing guarantee)
+# auto_cleanup=true, auto_heal=true, rollback=true (defaults)
 ```
 
 **Conservative mode** (cleanup only, no auto-reconstruction):
 ```bash
-rclone config create myremote raid3 \
-    even remote1: \
-    odd remote2: \
-    parity remote3: \
-    auto_cleanup true \
-    auto_heal false
-# Hides broken items but doesn't auto-reconstruct missing particles
-# rollback still enabled by default (all-or-nothing guarantee)
+# Same as default above, but add: auto_heal false
 ```
 
-**Debugging mode** (see everything, no automatic changes):
+**Debugging mode** (no automatic changes):
 ```bash
-rclone config create myremote raid3 \
-    even remote1: \
-    odd remote2: \
-    parity remote3: \
-    auto_cleanup false \
-    auto_heal false
-# Shows all objects/directories including broken ones
-# No automatic reconstruction or cleanup
-# rollback still enabled by default (all-or-nothing guarantee)
+# Same as default above, but add: auto_cleanup false auto_heal false
 ```
 
-**Rollback Configuration:**
-
-The `rollback` option controls whether write operations (Put, Update, Move) automatically rollback successful particle operations if any particle operation fails. This provides an **all-or-nothing guarantee** - either all particles are written/moved/updated, or none are.
-
-- **`rollback=true`** (default): Automatically rollback on failure. Prevents partial operations that would create degraded files. Recommended for production use.
-  - ✅ **Put rollback**: Fully working
-  - ✅ **Move rollback**: Fully working
-  - ⚠️ **Update rollback**: Currently not working properly (see Known Limitations below)
-- **`rollback=false`**: No automatic rollback. Failed operations may leave partial files. Only use for debugging or special cases.
-
-**Example with rollback disabled** (debugging):
-```bash
-rclone config create myremote raid3 \
-    even remote1: \
-    odd remote2: \
-    parity remote3: \
-    rollback false
-# Allows partial operations for debugging purposes
-```
+**Rollback**: `rollback=true` (default) provides all-or-nothing guarantee. Put/Move rollback fully working; Update rollback has issues (see Known Limitations).
 
 ### Behavior Matrix
 
 | auto_cleanup | auto_heal | Behavior |
 |--------------|-----------|----------|
-| `true` (default) | `true` (default) | Hide orphans (1/3) + Reconstruct degraded (2/3) - **Recommended** |
-| `true` | `false` | Hide orphans, but don't auto-reconstruct - **Conservative** |
+| `true` (default) | `true` (default) | Auto-delete orphans (1/3) when all remotes available + Reconstruct degraded (2/3) - **Recommended** |
+| `true` | `false` | Auto-delete orphans when all remotes available, but don't auto-reconstruct - **Conservative** |
 | `false` | `true` | Show everything + Reconstruct degraded - **Debugging with healing** |
 | `false` | `false` | Show everything, no changes - **Raw debugging mode** |
 
 ### CleanUp Command
 
-**Important**: `auto_cleanup=true` only **hides** broken objects from listings. To **actually delete** them, you must run the cleanup command:
+**Important**: `auto_cleanup=true` **auto-deletes** broken objects (objects with only 1/3 particles - cannot be reconstructed) from listings when all 3 remotes are available. When one or more remotes are unavailable, broken objects are **hidden** (not deleted) to prevent data loss. With `auto_cleanup=false`, broken objects are **visible** in listings but cannot be read. Objects with 2/3 particles (degraded but reconstructable) are always shown regardless of `auto_cleanup` setting. To manually delete broken objects, you can run the cleanup command:
 
 ```bash
 $ rclone cleanup myremote:mybucket
@@ -151,9 +116,9 @@ Found 5 broken objects (total size: 3.0 KiB)
 Cleaned up 5 broken objects (freed 3.0 KiB)
 ```
 
-**Note**: Broken objects are physically deleted from the remotes only when:
-- You explicitly run `rclone cleanup`
-- You delete/remove objects (best-effort cleanup during delete operations)
+**Note**: Broken objects are physically deleted from the remotes when:
+- `auto_cleanup=true` and all 3 remotes are available (automatic during `rclone ls` or similar listing operations)
+- You explicitly run `rclone cleanup` (requires all 3 remotes available)
 
 **When to use**:
 - Cleaning up after backend failures
@@ -162,9 +127,9 @@ Cleaned up 5 broken objects (freed 3.0 KiB)
 - Before switching from `auto_cleanup=false` to `auto_cleanup=true`
 
 **What it removes**:
-- Objects with only 1 particle (even, odd, or parity)
+- Objects with only 1 particle (1/3 - cannot be reconstructed)
 - Orphaned particles from failed operations
-- Does NOT remove valid objects (2+ particles)
+- Does NOT remove valid objects (2/3 or 3/3 particles)
 
 ### Backend Commands
 
@@ -221,30 +186,7 @@ Proactively heal all degraded objects (objects with exactly 2 of 3 particles):
 rclone backend heal raid3:
 ```
 
-The heal command:
-- Scans all objects in the remote
-- Identifies objects with exactly 2 of 3 particles (degraded state)
-- Reconstructs and uploads the missing particle
-- Reports summary of healed objects
-
-**Example output**:
-```
-Heal Summary
-══════════════════════════════════════════
-
-Files scanned:      100
-Healthy (3/3):       85
-Healed (2/3→3/3):   12
-Unrebuildable (≤1): 3
-```
-
-**When to use**:
-- Periodic maintenance
-- After rebuilding from backend failures
-- Before important operations
-- When you want to ensure all objects are fully healthy
-
-**Note**: The heal command works regardless of the `auto_heal` setting - it's always available as an explicit admin command. This is different from `auto_heal` which heals objects automatically during reads.
+Scans all objects, identifies degraded ones (2/3 particles), reconstructs and uploads missing particles. Works regardless of `auto_heal` setting. For details, see [`docs/SELF_HEALING.md`](docs/SELF_HEALING.md).
 
 ### Object and Directory States
 
@@ -256,55 +198,7 @@ Unrebuildable (≤1): 3
 | **1/3** | Orphaned | ✅ Enabled | N/A | Hide from listings, delete if accessed |
 | **1/3** | Orphaned | ❌ Disabled | N/A | Show in listings, operations may fail |
 
-**Terminology**:
-- **Degraded** (2/3): Missing 1 particle/directory - **can reconstruct** ✅
-- **Orphaned** (1/3): Missing 2 particles/directories - **cannot reconstruct** ❌
-
-**Examples**:
-
-**File with 2/3 particles** (degraded, reconstructable):
-```bash
-# auto_heal=true (default)
-$ rclone cat raid3:file.txt
-# ✅ Reads successfully (reconstructs from even+odd or parity)
-# ✅ Queues missing particle for upload (heal)
-
-# auto_heal=false
-$ rclone cat raid3:file.txt  
-# ✅ Reads successfully (reconstructs from available particles)
-# ❌ Does NOT queue heal upload
-```
-
-**Directory on 2/3 backends** (degraded, reconstructable):
-```bash
-# auto_heal=true (default)
-$ rclone ls raid3:mydir
-# ✅ Lists contents
-# ✅ Automatically creates missing directory on 3rd backend during access (2/3 → 3/3)
-#    This happens transparently - no manual intervention needed
-
-# auto_heal=false
-$ rclone ls raid3:mydir
-# ✅ Lists contents  
-# ❌ Does NOT create missing directory (directory remains degraded)
-```
-
-**Note**: Directory reconstruction via auto-heal complements the rebuild command:
-- **Rebuild command**: Rebuilds file particles (parent directories created automatically during file uploads)
-- **Auto-heal during access**: Reconstructs empty directories that exist on 2/3 backends when accessed
-
-**File with 1/3 particles** (orphaned, cannot reconstruct):
-```bash
-# auto_cleanup=true (default)
-$ rclone ls raid3:
-# ✅ File hidden from listing (not shown)
-
-# auto_cleanup=false (debugging)
-$ rclone ls raid3:
-# ✅ File shown in listing
-$ rclone cat raid3:file.txt
-# ❌ Fails: cannot reconstruct from 1 particle
-```
+**Terminology**: **Degraded** (2/3) = missing 1 particle, can reconstruct ✅. **Orphaned** (1/3) = missing 2 particles, cannot reconstruct ❌.
 
 ## ⚠️ Current Limitations
 
@@ -408,47 +302,11 @@ When downloading, the backend:
 
 ### Degraded Mode & Heal
 
-**Automatic File Reconstruction:**
-When one data particle (even or odd) is missing but parity is available:
-1. Backend detects the missing particle
-2. Reads the available data particle + parity particle
-3. Reconstructs the missing data using XOR operation
-4. Returns the complete file to the user
-5. **Queues the missing particle for background upload (heal)**
+When one particle is missing (2/3 present), reads automatically reconstruct from the other two particles. With `auto_heal=true` (default), missing particles are queued for background upload. Directories missing on one backend are automatically created during `List()` operations.
 
-**Automatic Directory Reconstruction:**
-When a directory exists on 2/3 backends and is accessed (via `List()` operation):
-1. Backend detects the directory exists on exactly 2 backends
-2. If `auto_heal=true` (default), automatically creates the missing directory on the third backend
-3. Directory is immediately available on all 3 backends (2/3 → 3/3)
-4. This happens transparently during normal directory access operations
+**Performance**: Normal reads 6-7s, degraded reads with heal 9-10s.
 
-**Note**: Directory reconstruction complements the rebuild command:
-- **Rebuild command**: Rebuilds file particles on a replacement backend (handles files and their parent directories)
-- **Auto-heal during access**: Reconstructs empty directories that exist on 2/3 backends (handles directory structure)
-
-**Heal Process (Files):**
-1. Missing particle is calculated during reconstruction
-2. Upload is queued to a background worker
-3. User gets data immediately (6-7 seconds with aggressive timeout)
-4. Background worker uploads the missing particle (2-3 seconds)
-5. Command waits for upload to complete before exiting (~9-10 seconds total)
-
-**Example:**
-```bash
-$ rclone cat raid3:file.txt
-2025/11/02 10:00:00 INFO  : file.txt: Reconstructed from even+parity (degraded mode)
-2025/11/02 10:00:00 INFO  : raid3: Queued odd particle for heal upload: file.txt
-Hello World!
-2025/11/02 10:00:07 INFO  : raid3: Waiting for 1 heal upload(s) to complete...
-2025/11/02 10:00:10 INFO  : raid3: Heal upload completed for file.txt (odd)
-2025/11/02 10:00:10 INFO  : raid3: Heal complete
-```
-
-**Performance:**
-- **Normal operation** (all particles healthy): 6-7 seconds
-- **Degraded mode with heal**: 9-10 seconds (6-7s read + 2-3s upload)
-- **No delay** when all particles are available (Shutdown exits immediately)
+For details, see [`docs/SELF_HEALING.md`](docs/SELF_HEALING.md).
 
 ## Configuration
 
@@ -511,29 +369,7 @@ Creates the directory in both remotes.
 
 ## Particle Validation
 
-The backend performs integrity checks:
-
-1. **Size validation**: Ensures even particle size equals odd size or is one byte larger
-2. **Existence check**: Verifies both particles exist before attempting reconstruction
-3. **Error reporting**: Clear error messages if particles are missing or invalid
-
-## Behavior Details
-
-### Upload Operations
-- Reads entire file into memory
-- Splits into even/odd bytes
-- Writes both particles in parallel to both remotes
-
-### Download Operations
-- Retrieves both particles in parallel
-- Validates particle sizes
-- Merges bytes back into original sequence
-- Returns reconstructed data
-
-### Hash Calculation
-- Must reconstruct entire file to calculate hash
-- Hashes are computed on the merged data, not particles
-- Transparent to the user - appears as normal file hash
+The backend performs integrity checks: size validation (ensures even particle size equals odd size or is one byte larger), existence checks (verifies both particles exist before attempting reconstruction), and clear error reporting if particles are missing or invalid.
 
 ### Limitations
 
@@ -594,125 +430,23 @@ rclone cat myraid3:test.txt > notes_merged.txt
 
 The raid3 backend follows **hardware RAID 3 behavior** for error handling:
 
-### Read Operations ✅ Degraded Mode Supported
-- Work with **ANY 2 of 3** backends available
-- Automatically reconstruct missing particles from parity
-- Heal restores missing particles in background
-- **Example**: If odd backend is down, reads use even + parity
+| Operation | Degraded Mode | Policy |
+|-----------|---------------|--------|
+| **Read** | ✅ Supported | Works with ANY 2 of 3 backends (automatic reconstruction) |
+| **Write** (Put, Update, Move) | ❌ Blocked | Requires ALL 3 backends (strict enforcement with pre-flight health check) |
+| **Delete** | ✅ Supported | Best effort (idempotent, succeeds if any backend reachable) |
 
-### Write Operations ❌ All Backends Required (Strict Enforcement)
-- **Require ALL 3 backends** available (Put, Update, Move)
-- **Pre-flight health check** before each write operation
-- Fail immediately if any backend unavailable
-- **Do NOT create partially-written files or corrupted data**
-- **Automatic rollback** (enabled by default) ensures all-or-nothing guarantee
-- Matches hardware RAID 3 controller behavior
+**Key Features**:
+- **Pre-flight health check**: Tests all 3 backends before writes (5-second timeout, +0.2s overhead)
+- **Automatic rollback**: When `rollback=true` (default), failed write operations are automatically rolled back (all-or-nothing guarantee)
+- **Clear error messages**: `"write blocked in degraded mode (RAID 3 policy)"` when backend unavailable
 
-**Implementation**:
-- Health check tests all 3 backends before write (5-second timeout)
-- Clear error message: `"write blocked in degraded mode (RAID 3 policy)"`
-- Prevents corruption from rclone's retry logic
-- **Rollback mechanism**: If any particle operation fails, all successful operations are automatically rolled back
-- Overhead: +0.2 seconds for health check (acceptable for safety)
+**Rollback Status**:
+- ✅ Put rollback: Fully working
+- ✅ Move rollback: Fully working
+- ⚠️ Update rollback: Not working properly (see Known Limitations)
 
-### Delete Operations ✅ Best Effort
-- Succeed if any backends are reachable
-- Ignore "not found" errors (idempotent)
-- Safe to delete files with missing particles
-
-### Rollback Mechanism ✅ All-or-Nothing Guarantee
-
-The raid3 backend implements automatic rollback for write operations (Put, Update, Move) when `rollback=true` (default). This ensures an **all-or-nothing guarantee**: either all particles are successfully written/moved/updated, or none are.
-
-**Current Status**:
-- ✅ **Put rollback**: Fully working - automatically removes uploaded particles on failure
-- ✅ **Move rollback**: Fully working - automatically moves particles back to original locations on failure
-- ⚠️ **Update rollback**: **Not working properly** - implementation exists but has issues (see Known Limitations)
-
-**How it works**:
-
-1. **Put Operation**: Tracks successfully uploaded particles. If any particle upload fails, all uploaded particles are automatically removed.
-2. **Move Operation**: Tracks successfully moved particles. If any particle move fails, all moved particles are automatically moved back to their original locations.
-3. **Update Operation**: Uses move-to-temp pattern - original particles are moved to temporary locations before updating. If update fails, original particles should be restored from temp locations. **⚠️ Currently not working properly - rollback restoration may fail.**
-
-**Benefits**:
-- ✅ Prevents partial operations that would create degraded files
-- ✅ Ensures data consistency - no corrupted or partially-written files
-- ✅ Automatic cleanup on failure - no manual intervention needed
-- ✅ Best-effort rollback - logs errors but doesn't fail if rollback itself encounters issues
-
-**Example**:
-```bash
-# Attempt to move file when one backend becomes unavailable mid-operation
-$ rclone move raid3:file.txt raid3:moved/file.txt
-❌ Error: move failed - odd backend unavailable
-
-# With rollback enabled (default):
-✅ Original file still exists at source (rollback restored it)
-✅ No file exists at destination (partial moves were rolled back)
-✅ All-or-nothing guarantee maintained - no degraded files created
-
-# With rollback disabled:
-⚠️ Some particles may have moved (partial move occurred)
-⚠️ File may exist at destination in degraded state
-⚠️ Original file may be partially missing
-```
-
-### Rationale
-
-This policy ensures **data consistency** while maximizing **read availability**:
-
-**Why strict writes with health check?**
-- Prevents creating degraded files from the start
-- **Prevents corruption** from partial updates on retries
-- Matches industry-standard RAID 3 behavior
-- Avoids performance degradation (every new file needing reconstruction)
-- Fails fast with clear error messages
-
-**Why automatic rollback?**
-- **All-or-nothing guarantee**: Either all particles are written/moved/updated, or none are
-- Prevents partial operations that would create degraded files
-- Ensures data consistency even if backends fail during operations
-- Automatically cleans up successful particle operations if any particle operation fails
-- Can be disabled for debugging purposes (not recommended for production)
-
-**Why best-effort deletes?**
-- Missing particle = already deleted (same end state)
-- Idempotent delete is user-friendly
-- Can't make state worse by deleting
-
-**Example workflow**:
-```bash
-# Normal operation - all backends up
-$ rclone copy local:file.txt raid3:
-✅ Success - all 3 particles created (with health check: ~1.2s)
-
-# One backend goes down
-$ rclone copy local:newfile.txt level3:
-❌ Error: write blocked in degraded mode (RAID 3 policy): odd backend unavailable
-# Fails in ~5 seconds (health check timeout)
-
-# But reads still work!
-$ rclone cat raid3:file.txt
-✅ Success - reconstructed from even+parity (~7s)
-INFO: Heal upload completed
-
-# Updates also blocked in degraded mode (prevents corruption)
-$ echo "new data" | rclone rcat raid3:file.txt
-❌ Error: update blocked in degraded mode (RAID 3 policy): odd backend unavailable
-# Original file preserved - NO CORRUPTION!
-
-# If update starts but backend fails mid-operation:
-$ rclone copyto updated.txt raid3:file.txt
-❌ Error: update failed - parity backend unavailable
-# ⚠️ NOTE: Update rollback is currently not working properly
-# With rollback enabled, restoration may fail in some scenarios
-# See "Known Limitations" section above for details
-
-# Deletes still work!
-$ rclone delete raid3:file.txt
-✅ Success - deleted from available backends
-```
+For detailed error handling policy, rationale, and implementation details, see [`docs/STRICT_WRITE.md`](docs/STRICT_WRITE.md).
 
 ## Getting Started with Test Environment
 
@@ -864,11 +598,9 @@ The test setup also includes comprehensive integration tests:
 
 **For more details:** See [`backend/raid3/integration/README.md`](integration/README.md) for complete documentation.
 
-### More Examples: Playing with the Test Setup
+### Additional Examples
 
-Here are more examples to explore raid3 features using the test environment:
-
-#### Example 1: Verify Byte-Level Striping
+#### Example: Verify Byte-Level Striping
 
 ```bash
 # Create a file with known content
@@ -890,7 +622,7 @@ hexdump -C ${HOME}/go/raid3storage/parity_local/test_stripe.txt.parity-el
 # Should show: 03 03 03 03 (A^B, C^D, E^F, G^H)
 ```
 
-#### Example 2: Test Degraded Mode Reconstruction
+#### Example: Test Degraded Mode Reconstruction
 
 ```bash
 # Upload a file
@@ -909,187 +641,13 @@ rclone --config "${CONFIG}" copy localraid3:important.txt reconstructed.txt
 diff important.txt reconstructed.txt  # Should be identical
 ```
 
-#### Example 3: Test Auto-Heal
-
-```bash
-# Upload a file
-echo "Test heal" > heal_test.txt
-rclone --config "${CONFIG}" copy heal_test.txt localraid3:
-
-# Remove odd particle (simulate failure)
-rm ${HOME}/go/raid3storage/odd_local/heal_test.txt
-
-# Read triggers auto-heal (with auto_heal=true, default)
-rclone --config "${CONFIG}" cat localraid3:heal_test.txt
-
-# Wait a moment, then verify particle was restored
-sleep 2
-ls -lh ${HOME}/go/raid3storage/odd_local/heal_test.txt  # Should exist
-```
-
-#### Example 4: Test Rebuild Command
-
-```bash
-# Upload several files
-for i in {1..5}; do
-  echo "File $i" > file$i.txt
-  rclone --config "${CONFIG}" copy file$i.txt localraid3:
-done
-
-# Simulate complete backend replacement (remove all even particles)
-rm -rf ${HOME}/go/raid3storage/even_local/*
-
-# Rebuild the even backend
-rclone --config "${CONFIG}" backend rebuild localraid3: even
-
-# Verify files were rebuilt
-rclone --config "${CONFIG}" ls localraid3:  # Should show all 5 files
-ls ${HOME}/go/raid3storage/even_local/      # Should have 5 particles
-```
-
-#### Example 5: Test Heal Command
-
-```bash
-# Upload files
-for i in {1..3}; do
-  echo "Data $i" > data$i.txt
-  rclone --config "${CONFIG}" copy data$i.txt localraid3:
-done
-
-# Degrade files (remove parity particles)
-rm ${HOME}/go/raid3storage/parity_local/*.parity-*
-
-# Heal all degraded objects
-rclone --config "${CONFIG}" backend heal localraid3:
-
-# Verify parity particles were restored
-ls ${HOME}/go/raid3storage/parity_local/  # Should have 3 .parity-* files
-```
-
-#### Example 6: Compare RAID3 vs Single Backend
-
-```bash
-# Upload same file to both
-echo "Comparison test" > compare.txt
-rclone --config "${CONFIG}" copy compare.txt localraid3:
-rclone --config "${CONFIG}" copy compare.txt localsingle:
-
-# Compare directory structures
-echo "=== RAID3 (3 particles) ==="
-ls -lh ${HOME}/go/raid3storage/even_local/
-ls -lh ${HOME}/go/raid3storage/odd_local/
-ls -lh ${HOME}/go/raid3storage/parity_local/
-
-echo "=== Single (1 copy) ==="
-ls -lh ${HOME}/go/raid3storage/single_local/
-
-# Both should have the same logical content
-rclone --config "${CONFIG}" cat localraid3:compare.txt
-rclone --config "${CONFIG}" cat localsingle:compare.txt
-```
-
-#### Example 7: Test Error Handling (Degraded Writes)
-
-```bash
-# Upload a file first
-echo "Test file" > test.txt
-rclone --config "${CONFIG}" copy test.txt localraid3:
-
-# Simulate backend failure (remove even directory access)
-# Note: This is just for testing - in real scenarios, the backend would be unavailable
-chmod 000 ${HOME}/go/raid3storage/even_local
-
-# Try to upload (should fail with clear error)
-echo "New data" | rclone --config "${CONFIG}" rcat localraid3:newfile.txt
-# Expected: ERROR: write blocked in degraded mode (RAID 3 policy)
-
-# Restore access
-chmod 755 ${HOME}/go/raid3storage/even_local
-
-# Now upload should work
-echo "New data" | rclone --config "${CONFIG}" rcat localraid3:newfile.txt
-```
-
-#### Example 8: Inspect Parity Files
-
-```bash
-# Upload files of different lengths
-echo -n "Even" > even.txt      # 4 bytes (even length)
-echo -n "Odd!" > odd.txt       # 4 bytes (even length, but let's make it odd)
-echo -n "X" > odd.txt          # 1 byte (odd length)
-
-rclone --config "${CONFIG}" copy even.txt localraid3:
-rclone --config "${CONFIG}" copy odd.txt localraid3:
-
-# Check parity file suffixes
-ls ${HOME}/go/raid3storage/parity_local/
-# Should show: even.txt.parity-el (even length)
-#              odd.txt.parity-ol (odd length)
-
-# The suffix indicates how to reconstruct the file
-```
+For more examples, see [`integration/README.md`](integration/README.md).
 
 ---
 
 ## Testing
 
-### Quick Test with Three Local Directories
-
-```bash
-# Set up config
-cat > /tmp/raid3-test.conf << EOF
-[raid3]
-type = raid3
-even = /tmp/raid3-test/even
-odd = /tmp/raid3-test/odd
-parity = /tmp/raid3-test/parity
-EOF
-
-# Create test directories
-mkdir -p /tmp/raid3-test/{even,odd,parity,source,dest}
-
-# Create test data (even-length and odd-length)
-echo "Hello, World!" > /tmp/raid3-test/source/test_even.txt  # 14 bytes
-echo "Test file!" > /tmp/raid3-test/source/test_odd.txt      # 11 bytes
-
-# Upload with RAID 3 striping and parity
-rclone --config /tmp/raid3-test.conf copy /tmp/raid3-test/source/ raid3: -v
-
-# Verify particles
-echo "=== Even bytes ==="
-ls -lh /tmp/raid3-test/even/          # 7 bytes and 6 bytes
-hexdump -C /tmp/raid3-test/even/test_even.txt
-
-echo "=== Odd bytes ==="
-ls -lh /tmp/raid3-test/odd/           # 7 bytes and 5 bytes  
-hexdump -C /tmp/raid3-test/odd/test_even.txt
-
-echo "=== Parity (with suffixes) ==="
-ls -lh /tmp/raid3-test/parity/        # .parity-el and .parity-ol files
-hexdump -C /tmp/raid3-test/parity/test_even.txt.parity-el
-
-# Download (reconstructs from even+odd, ignores parity)
-rclone --config /tmp/raid3-test.conf copy raid3: /tmp/raid3-test/dest/ -v
-
-# Verify reconstruction
-diff /tmp/raid3-test/source/test_even.txt /tmp/raid3-test/dest/test_even.txt
-# ✓ Files are identical!
-
-# Verify MD5 hashes
-md5sum /tmp/raid3-test/source/*.txt
-md5sum /tmp/raid3-test/dest/*.txt
-# Hashes should match perfectly
-```
-
-### Automated Test Script
-
-A comprehensive test script is available at `/tmp/test-raid3.sh` that tests:
-- ✅ Upload with byte striping
-- ✅ Parity calculation and suffix assignment
-- ✅ File listing (parity files hidden)
-- ✅ Download and reconstruction
-- ✅ MD5 hash verification
-- ✅ Deletion of all three particles
+For comprehensive testing documentation, see [`TESTING.md`](TESTING.md).
 
 ### Integration Test Scripts
 

@@ -10,7 +10,7 @@ The raid3 backend enforces a strict write policy that blocks all write operation
 | **Write (Put)** | ❌ Blocked | Requires all 3 backends available |
 | **Write (Update)** | ❌ Blocked | Requires all 3 backends available |
 | **Move/Rename** | ❌ Blocked | Requires all 3 backends available |
-| **Delete** | ✅ Supported | Best-effort (idempotent) |
+| **Delete (Remove, Rmdir, Purge, CleanUp)** | ❌ Blocked | Requires all 3 backends available |
 
 ## Why Strict Writes?
 
@@ -115,4 +115,4 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 
 ## Related Documentation
 
-For error handling policy, see [ERROR_HANDLING_POLICY.md](ERROR_HANDLING_POLICY.md).
+For error handling policy, see [ERROR_HANDLING.md](ERROR_HANDLING.md).

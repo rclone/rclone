@@ -733,6 +733,12 @@ func (o *Object) updateWithRollback(ctx context.Context, evenData, oddData, pari
 
 // Remove removes the object
 func (o *Object) Remove(ctx context.Context) error {
+	// Pre-flight check: Enforce strict RAID 3 delete policy
+	// Fail immediately if any backend is unavailable to prevent partial deletes
+	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("delete blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
 	g, gCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {

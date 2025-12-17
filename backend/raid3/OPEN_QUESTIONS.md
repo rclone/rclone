@@ -381,7 +381,7 @@ The rebuild command has been fully implemented in `raid3.go` (function `rebuildC
 
 **Reconsider if**: Users request this feature
 
-**References**: `docs/DECISION_SUMMARY.md` (discusses configurable write policy option)
+**References**: `docs/ERROR_HANDLING.md` (discusses configurable write policy option)
 
 ---
 
@@ -842,6 +842,52 @@ C) **Support All Commands**:
 
 ## 🟡 Medium Priority
 
+### Q20: FsRmdirNotFound Test Failure
+**Status**: 🟡 **ACTIVE** - Test failure needs investigation
+**Date Added**: December 17, 2025  
+**Priority**: Medium (test compatibility issue)
+
+**Context**:
+- `TestStandard/FsRmdirNotFound` test is failing
+- Test expects `Rmdir("")` on a non-existent root to return `fs.ErrorDirNotFound`
+- Current implementation returns `nil` instead of `fs.ErrorDirNotFound`
+- Test runs before `Mkdir("")` is called, so root should not exist
+
+**Current Behavior**:
+- `Rmdir("")` returns `nil` when test expects `fs.ErrorDirNotFound`
+- This suggests either:
+  1. Root exists from a previous test (test isolation issue)
+  2. Logic for returning `ErrorDirNotFound` is not being reached
+  3. All backends are returning `nil` (success) instead of `ErrorDirNotFound`
+
+**Code Location**:
+- `backend/raid3/raid3.go` - `Rmdir()` function (lines ~1226-1311)
+- Test: `fstest/fstests/fstests.go` - `TestStandard/FsRmdirNotFound` (line ~519-526)
+
+**Related**:
+- `FsPurgeRoot` test is now passing (fixed in same session)
+- `Rmdir` was made idempotent to work with `Rmdirs` fallback path in `operations.Purge`
+
+**Investigation Needed**:
+- [ ] Verify test isolation - does root exist from previous test?
+- [ ] Check if all backends return `ErrorDirNotFound` for non-existent root
+- [ ] Review `Rmdir` logic - ensure `ErrorDirNotFound` is returned when appropriate
+- [ ] Compare with union backend's `Rmdir` behavior for non-existent directories
+- [ ] Check if upfront existence check is needed (was removed to fix `FsPurgeRoot`)
+
+**Impact**:
+- Test failure prevents full test suite from passing
+- May indicate incorrect behavior for `Rmdir` on non-existent directories
+- Could affect user experience if `Rmdir` doesn't return expected errors
+
+**Recommendation**: Investigate why `Rmdir` returns `nil` instead of `ErrorDirNotFound` for non-existent root. May need to restore upfront existence check or adjust logic to handle both test compatibility and `Rmdirs` fallback path correctly.
+
+**Who decides**: Maintainer
+
+**Deadline**: Before next release
+
+---
+
 ### Q16: Make Hardcoded Values Configurable
 **Status**: 🟡 **ACTIVE** - Code quality improvement
 **Date Added**: December 10, 2025  
@@ -978,7 +1024,7 @@ TIP: Use 'rclone copy' + 'rclone purge' instead for large datasets
 
 ## 📊 Statistics
 
-**Total Active Questions**: 15  
+**Total Active Questions**: 16  
 **Resolved Questions**: 3 (Q4, Q5, Q7 - see "Resolved Questions" section above)
 
 **Active Questions by Priority**:
@@ -987,11 +1033,12 @@ TIP: Use 'rclone copy' + 'rclone purge' instead for large datasets
   - Q13: Fix Memory Buffering (Implement Streaming)
   - Q14: Optimize Health Checks (Add Caching)
   - Q15: Make Background Worker Context Respect Cancellation
-- 🟡 **Medium Priority**: 3
+- 🟡 **Medium Priority**: 4
   - Q1: Update Rollback Not Working Properly
   - Q10: Backend-Specific Commands Support 🤝 (awaiting community discussion)
   - Q11: Bucket/Directory Renaming (DirMove) Limitation
   - Q16: Make Hardcoded Values Configurable
+  - Q20: FsRmdirNotFound Test Failure
 - 🟢 **Low Priority**: 8
   - Q3: Chunk/Block-Level Striping
   - Q6: Backend Help Command Behavior
@@ -1002,7 +1049,7 @@ TIP: Use 'rclone copy' + 'rclone purge' instead for large datasets
   - Q19: Add More Granular Error Types
 
 **Question Numbering**:
-- Active: Q1, Q2, Q3, Q6, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, Q16, Q17, Q18, Q19
+- Active: Q1, Q2, Q3, Q6, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, Q16, Q17, Q18, Q19, Q20
 - Resolved: Q4 (Rebuild Command - IMPLEMENTED), Q5 (Configurable Write Policy), Q7 (Move with Degraded Source)  
 
 **Decisions Made**: See `DESIGN_DECISIONS.md` for resolved questions

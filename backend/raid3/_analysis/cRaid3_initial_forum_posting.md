@@ -86,6 +86,10 @@ The **pre‑MVP** is available for download and testing here: **https://github.c
 RAID3 is **amazingly fast, simple, deterministic, and state‑light**.  
 In traditional disk arrays, the parity disk was a bottleneck — but in **cloud storage this limitation doesn’t exist**, making RAID3 an ideal starting point for reliable, multi‑provider redundancy.
 
+***
+
+### Future directions: more flexibility and encryption?
+
 As we refine raid3, we hope to identify what’s needed for stable, high‑performance distributed backends in rclone.  
 If the community finds this approach useful, we plan to explore more advanced (but probably more demanding) options such as **Erasure Coding** and **Threshold Encryption** (see the 2021 forum topic [*“Can we add erasure coding to rclone?”*](https://forum.rclone.org/t/can-we-add-erasure-coding-to-rclone/23684) between @hvrietsc (Hans) and @ncw (Nick)).
 

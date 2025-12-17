@@ -68,7 +68,7 @@ For **open questions and pending decisions**, see [`OPEN_QUESTIONS.md`](OPEN_QUE
 - ❌ Writes fail when backend unavailable (expected RAID behavior)
 - ✅ Simple implementation
 
-**References**: `docs/ERROR_HANDLING_POLICY.md`, `docs/DECISION_SUMMARY.md`
+**References**: `docs/ERROR_HANDLING.md`
 
 ---
 

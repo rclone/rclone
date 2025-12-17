@@ -30,10 +30,8 @@ backend/raid3/
 
 **26 files organized by topic**:
 
-#### Design & Research (10 files)
-- `ERROR_HANDLING_POLICY.md` - Official error handling policy
-- `DECISION_SUMMARY.md` - Error handling decision and rationale
-- `DECISION_SUMMARY.md` - Key design decisions
+#### Design & Research (9 files)
+- `ERROR_HANDLING.md` - Error handling policy and decision (merged from ERROR_HANDLING_POLICY.md + DECISION_SUMMARY.md)
 - `TIMEOUT_OPTION_DESIGN.md` - Timeout mode design
 - `S3_TIMEOUT_RESEARCH.md` - S3 timeout research findings
 - `PHASE2_AND_ALTERNATIVES.md` - Alternative solutions evaluated
@@ -103,7 +101,7 @@ backend/raid3/
 ### For Researchers/Maintainers:
 → Browse `docs/` by topic:
   - Bug fixes: `STRICT_WRITE.md`, `FIXES_COMPLETE.md`
-  - Design: `ERROR_HANDLING_POLICY.md`, `DECISION_SUMMARY.md`
+  - Design: `ERROR_HANDLING.md`
   - Testing: `COMPREHENSIVE_TEST_RESULTS.md`
   - Implementation: `SUMMARY.md`, `IMPLEMENTATION_COMPLETE.md`
 

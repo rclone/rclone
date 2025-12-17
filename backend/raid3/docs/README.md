@@ -27,9 +27,7 @@ This directory contains detailed design documents, implementation notes, test re
 ### Design & Research
 
 **Error Handling & RAID 3 Compliance**:
-- **[ERROR_HANDLING_POLICY.md](ERROR_HANDLING_POLICY.md)** - Official error handling policy (strict writes)
-- **[DECISION_SUMMARY.md](DECISION_SUMMARY.md)** - Error handling decision and rationale
-- **[DECISION_SUMMARY.md](DECISION_SUMMARY.md)** - Key design decisions (hardware RAID 3 compliance)
+- **[ERROR_HANDLING.md](ERROR_HANDLING.md)** - Error handling policy and decision (merged from ERROR_HANDLING_POLICY.md + DECISION_SUMMARY.md)
 
 **Timeout & Performance**:
 - **[TIMEOUT_MODE.md](TIMEOUT_MODE.md)** - User guide for timeout modes (standard/balanced/aggressive)
@@ -84,9 +82,8 @@ This directory contains detailed design documents, implementation notes, test re
 3. See [SUMMARY.md](SUMMARY.md) for implementation overview
 
 **...the design decisions**:
-1. [DECISION_SUMMARY.md](DECISION_SUMMARY.md) - Key decisions
-2. [ERROR_HANDLING_POLICY.md](ERROR_HANDLING_POLICY.md) - Strict write policy
-3. [DECISION_SUMMARY.md](DECISION_SUMMARY.md) - Why we chose this approach
+1. [ERROR_HANDLING.md](ERROR_HANDLING.md) - Error handling policy and rationale
+2. [../DESIGN_DECISIONS.md](../DESIGN_DECISIONS.md) - All design decisions
 
 **...the bug fixes**:
 1. [FIXES_COMPLETE.md](FIXES_COMPLETE.md) - Summary of all fixes

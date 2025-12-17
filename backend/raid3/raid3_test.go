@@ -1353,7 +1353,8 @@ func TestAutoCleanupDefault(t *testing.T) {
 	t.Logf("✅ Auto-cleanup defaults to true: broken objects are hidden without explicit config")
 }
 
-// TestAutoCleanupEnabled tests that broken objects (1 particle) are hidden when auto_cleanup=true
+// TestAutoCleanupEnabled tests that broken objects (1 particle) are auto-deleted
+// when auto_cleanup=true and all 3 remotes are available.
 func TestAutoCleanupEnabled(t *testing.T) {
 	ctx := context.Background()
 
@@ -1386,7 +1387,11 @@ func TestAutoCleanupEnabled(t *testing.T) {
 	err = os.WriteFile(brokenPath, brokenData, 0644)
 	require.NoError(t, err, "Failed to create broken object particle")
 
-	// List should show only the valid object, not the broken one
+	// Verify broken object exists before List
+	_, err = os.Stat(brokenPath)
+	require.NoError(t, err, "Broken object should exist before List")
+
+	// List should auto-delete the broken object (all remotes available)
 	entries, err := l3fs.List(ctx, "")
 	require.NoError(t, err, "List should succeed")
 
@@ -1399,9 +1404,17 @@ func TestAutoCleanupEnabled(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, 1, objectCount, "Should see exactly 1 object (broken.txt should be hidden)")
+	assert.Equal(t, 1, objectCount, "Should see exactly 1 object (broken.txt should be auto-deleted)")
 
-	t.Logf("✅ Auto-cleanup enabled: broken objects are hidden")
+	// Verify broken object was actually deleted (not just hidden)
+	_, err = os.Stat(brokenPath)
+	assert.True(t, os.IsNotExist(err), "Broken object should be deleted, not just hidden")
+
+	// Verify broken object cannot be accessed via raid3 interface
+	_, err = l3fs.NewObject(ctx, "broken.txt")
+	assert.Error(t, err, "Broken object should not exist after auto-delete")
+
+	t.Logf("✅ Auto-cleanup enabled: broken objects are auto-deleted when all remotes available")
 }
 
 // TestAutoCleanupDisabled tests that broken objects are visible when auto_cleanup=false
@@ -1461,6 +1474,92 @@ func TestAutoCleanupDisabled(t *testing.T) {
 	assert.Nil(t, brokenObj, "Broken object should be nil")
 
 	t.Logf("✅ Auto-cleanup disabled: broken objects are visible")
+}
+
+// TestAutoCleanupEnabledMissingRemote tests that broken objects are hidden (not deleted)
+// when auto_cleanup=true but one or more remotes are unavailable.
+func TestAutoCleanupEnabledMissingRemote(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temporary directories for three backends
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	// Create a broken object manually (only 1 particle in even)
+	brokenData := []byte("broken file")
+	brokenPath := filepath.Join(evenDir, "broken.txt")
+	err := os.WriteFile(brokenPath, brokenData, 0644)
+	require.NoError(t, err, "Failed to create broken object particle")
+
+	// Now create filesystem with one backend unavailable
+	l3fs2, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
+		"even":         evenDir,
+		"odd":          "/nonexistent/odd", // Unavailable
+		"parity":       parityDir,
+		"auto_cleanup": "true",
+	})
+	require.NoError(t, err, "Failed to create level3 filesystem with unavailable backend")
+	defer func() {
+		_ = l3fs2.Features().Shutdown(ctx)
+	}()
+
+	// Verify broken object exists before List
+	_, err = os.Stat(brokenPath)
+	require.NoError(t, err, "Broken object should exist before List")
+
+	// List should hide the broken object (not delete, since remotes unavailable)
+	entries, err := l3fs2.List(ctx, "")
+	require.NoError(t, err, "List should succeed")
+
+	// Count objects
+	objectCount := 0
+	for _, entry := range entries {
+		if _, ok := entry.(fs.Object); ok {
+			objectCount++
+		}
+	}
+
+	assert.Equal(t, 0, objectCount, "Should see no objects (broken.txt should be hidden)")
+
+	// Verify broken object still exists (not deleted, just hidden)
+	_, err = os.Stat(brokenPath)
+	assert.NoError(t, err, "Broken object should still exist (hidden, not deleted)")
+
+	// Verify broken object cannot be accessed via raid3 interface (hidden)
+	_, err = l3fs2.NewObject(ctx, "broken.txt")
+	assert.Error(t, err, "Broken object should not be accessible (hidden)")
+
+	// Restore backend and verify object appears again
+	l3fs3, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "true",
+	})
+	require.NoError(t, err, "Failed to create level3 filesystem with all backends")
+	defer func() {
+		_ = l3fs3.Features().Shutdown(ctx)
+	}()
+
+	// Now List should auto-delete the broken object (all remotes available)
+	entries2, err := l3fs3.List(ctx, "")
+	require.NoError(t, err, "List should succeed")
+
+	objectCount2 := 0
+	for _, entry := range entries2 {
+		if _, ok := entry.(fs.Object); ok {
+			objectCount2++
+		}
+	}
+
+	assert.Equal(t, 0, objectCount2, "Should see no objects after auto-delete")
+
+	// Verify broken object was deleted
+	_, err = os.Stat(brokenPath)
+	assert.True(t, os.IsNotExist(err), "Broken object should be deleted when all remotes available")
+
+	t.Logf("✅ Auto-cleanup enabled: broken objects are hidden when remotes unavailable, auto-deleted when all remotes available")
 }
 
 // TestCleanUpCommand tests the CleanUp() method that removes broken objects

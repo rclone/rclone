@@ -409,6 +409,51 @@ wait_for_minio_port() {
   return 1
 }
 
+# Wait for MinIO backend to be ready by attempting a simple S3 operation
+# This verifies MinIO is not just listening on the port, but actually ready to accept requests
+wait_for_minio_backend_ready() {
+  local backend="$1"
+  local remote
+  case "${backend}" in
+    even) remote="${MINIO_EVEN_REMOTE}" ;;
+    odd) remote="${MINIO_ODD_REMOTE}" ;;
+    parity) remote="${MINIO_PARITY_REMOTE}" ;;
+    *) return 1 ;;
+  esac
+
+  local retries=30
+  local delay=1
+  while (( retries > 0 )); do
+    # Attempt a simple S3 operation (ls) to verify MinIO is ready
+    # Capture both stdout and stderr to check for success or acceptable errors
+    local output
+    output=$(rclone_cmd ls "${remote}:" 2>&1)
+    local status=$?
+    
+    # Success (status 0) means backend is ready
+    if [[ ${status} -eq 0 ]]; then
+      return 0
+    fi
+    
+    # ErrorDirNotFound is also acceptable (backend is ready, just empty)
+    if echo "${output}" | grep -qiE "(directory not found|bucket.*not found|no such bucket)"; then
+      return 0
+    fi
+    
+    # Connection errors mean backend is not ready yet - keep retrying
+    if echo "${output}" | grep -qiE "(connection reset|connection refused|no route to host|timeout)"; then
+      sleep "${delay}"
+      (( retries-- ))
+      continue
+    fi
+    
+    # Other errors might indicate backend is ready but has issues - accept as ready
+    # (better to proceed than wait forever)
+    return 0
+  done
+  return 1
+}
+
 minio_container_for_backend() {
   local backend="$1"
   case "${backend}" in

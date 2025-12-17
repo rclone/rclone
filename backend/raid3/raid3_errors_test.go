@@ -3,7 +3,6 @@ package raid3_test
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -158,23 +157,22 @@ func TestPutFailsWithUnavailableBackend(t *testing.T) {
 	}
 }
 
-// TestDeleteSucceedsWithUnavailableBackend tests that Delete succeeds when
-// one backend is unavailable.
+// TestDeleteFailsWithUnavailableBackend tests that Delete fails when
+// one backend is unavailable (strict RAID 3 delete policy).
 //
-// Unlike writes (strict), deletes use best-effort approach. This is safe
-// because "missing particle" and "deleted particle" have the same end state.
-// This matches RAID 3 behavior where cleanup operations should be resilient.
+// Delete operations follow strict RAID 3 policy: require all 3 backends available.
+// This ensures consistency and prevents partial deletes that could leave the system
+// in an inconsistent state.
 //
 // This test verifies:
-//   - Delete succeeds when even backend unavailable
-//   - Delete succeeds when odd backend unavailable
-//   - Delete succeeds when parity backend unavailable
-//   - Reachable backends have particles deleted
-//   - No errors returned to user
+//   - Delete fails when even backend unavailable
+//   - Delete fails when odd backend unavailable
+//   - Delete fails when parity backend unavailable
+//   - Error message indicates degraded mode
+//   - No particles are deleted (operation fails before deletion)
 //
-// Failure indicates: Delete is too strict, which would prevent cleanup
-// operations when backends are temporarily unavailable.
-func TestDeleteSucceedsWithUnavailableBackend(t *testing.T) {
+// Failure indicates: Delete not following strict RAID 3 delete policy.
+func TestDeleteFailsWithUnavailableBackend(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
@@ -208,21 +206,28 @@ func TestDeleteSucceedsWithUnavailableBackend(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Chmod(oddDir, 0755) // Restore for cleanup
 
-	// Delete should still succeed (best effort)
+	// Delete should fail (strict RAID 3 policy)
 	err = obj.Remove(ctx)
-	require.NoError(t, err, "Delete should succeed even when odd backend unavailable")
+	require.Error(t, err, "Delete should fail when backend unavailable (strict RAID 3 policy)")
+	assert.Contains(t, err.Error(), "degraded mode", "Error should mention degraded mode")
+	assert.Contains(t, err.Error(), "RAID 3 policy", "Error should mention RAID 3 policy")
 
-	// Verify even and parity particles were deleted
+	// Verify no particles were deleted (operation failed before deletion)
+	// Note: We can't check odd particle directly because directory is read-only
 	evenPath := filepath.Join(evenDir, remote)
 	parityPath := filepath.Join(parityDir, remote+".parity-ol")
 
 	_, err = os.Stat(evenPath)
-	assert.True(t, os.IsNotExist(err), "even particle should be deleted")
+	assert.NoError(t, err, "even particle should still exist (delete failed)")
 	_, err = os.Stat(parityPath)
-	assert.True(t, os.IsNotExist(err), "parity particle should be deleted")
+	assert.NoError(t, err, "parity particle should still exist (delete failed)")
 
-	// Odd particle may still exist (backend was unavailable)
-	// This is acceptable for best-effort delete
+	// Verify odd particle exists through raid3 interface (since directory is read-only)
+	obj2, err := f.NewObject(ctx, remote)
+	require.NoError(t, err, "Object should still exist (delete failed)")
+	require.NotNil(t, obj2, "Object should not be nil")
+
+	t.Logf("✅ Delete correctly failed in degraded mode (strict RAID 3 policy)")
 }
 
 // TestDeleteWithMissingParticles tests that Delete succeeds when particles
@@ -898,22 +903,21 @@ func TestMkdirFailsInDegradedMode(t *testing.T) {
 	t.Logf("✅ Mkdir correctly blocked in degraded mode with helpful error")
 }
 
-// TestRmdirSucceedsInDegradedMode tests that Rmdir succeeds when a backend
-// is unavailable (best-effort delete policy).
+// TestRmdirFailsInDegradedMode tests that Rmdir fails when a backend
+// is unavailable (strict RAID 3 delete policy).
 //
-// Rmdir is a delete operation and should follow the best-effort policy:
-// succeed even if some backends are unavailable or directories are already
-// removed. This is idempotent and consistent with Remove().
+// Rmdir is a delete operation and should follow strict RAID 3 policy:
+// require all 3 backends available. This ensures consistency and prevents
+// partial deletes that could leave the system in an inconsistent state.
 //
 // This test verifies:
-//   - Rmdir succeeds when backend unavailable (best-effort policy)
-//   - Idempotent (can delete multiple times)
+//   - Rmdir fails when backend unavailable (strict RAID 3 policy)
+//   - Error message indicates degraded mode
+//   - No directories are removed (operation fails before deletion)
 //   - Consistent with Remove() behavior
-//   - Removes directories from available backends
 //
-// Failure indicates: Directory removal not following RAID 3 best-effort
-// delete policy, or inconsistent with Remove().
-func TestRmdirSucceedsInDegradedMode(t *testing.T) {
+// Failure indicates: Directory removal not following strict RAID 3 delete policy.
+func TestRmdirFailsInDegradedMode(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
@@ -939,27 +943,156 @@ func TestRmdirSucceedsInDegradedMode(t *testing.T) {
 	f, err := raid3.NewFs(ctx, "TestRmdir", "", m)
 	require.NoError(t, err)
 
-	// Rmdir should succeed (best-effort)
+	// Rmdir should fail (strict RAID 3 policy)
 	err = f.Rmdir(ctx, dirName)
-	require.NoError(t, err, "Rmdir should succeed in degraded mode (best-effort)")
+	require.Error(t, err, "Rmdir should fail in degraded mode (strict RAID 3 policy)")
+	assert.Contains(t, err.Error(), "degraded mode", "Error should mention degraded mode")
+	assert.Contains(t, err.Error(), "RAID 3 policy", "Error should mention RAID 3 policy")
 
-	// Verify directories removed from available backends
+	// Verify directories were not removed (operation failed before deletion)
 	evenPath := filepath.Join(evenDir, dirName)
 	parityPath := filepath.Join(parityDir, dirName)
 
 	_, errEven := os.Stat(evenPath)
 	_, errParity := os.Stat(parityPath)
 
-	assert.True(t, os.IsNotExist(errEven), "Even directory should be removed")
-	assert.True(t, os.IsNotExist(errParity), "Parity directory should be removed")
+	assert.NoError(t, errEven, "Even directory should still exist (rmdir failed)")
+	assert.NoError(t, errParity, "Parity directory should still exist (rmdir failed)")
 
-	// Note: Rmdir is NOT idempotent (consistent with Unix rmdir behavior)
-	// Second call should return "directory not found" error
-	err = f.Rmdir(ctx, dirName)
-	require.Error(t, err, "Rmdir of already-removed directory should error")
-	assert.True(t, errors.Is(err, fs.ErrorDirNotFound), "Should return directory not found error")
+	t.Logf("✅ Rmdir correctly failed in degraded mode (strict RAID 3 policy)")
+}
 
-	t.Logf("✅ Rmdir correctly succeeded in degraded mode (best-effort)")
+// TestPurgeFailsInDegradedMode tests that Purge fails when a backend
+// is unavailable (strict RAID 3 delete policy).
+//
+// Purge is a delete operation and should follow strict RAID 3 policy:
+// require all 3 backends available. This ensures consistency and prevents
+// partial purges that could leave the system in an inconsistent state.
+//
+// This test verifies:
+//   - Purge fails when backend unavailable (strict RAID 3 policy)
+//   - Error message indicates degraded mode
+//   - No files are deleted (operation fails before deletion)
+//
+// Failure indicates: Purge not following strict RAID 3 delete policy.
+func TestPurgeFailsInDegradedMode(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    "/nonexistent/odd", // Unavailable
+		"parity": parityDir,
+	}
+
+	f, err := raid3.NewFs(ctx, "TestPurge", "", m)
+	require.NoError(t, err)
+
+	// Create a file first (need all backends for Put)
+	m2 := configmap.Simple{
+		"even":   evenDir,
+		"odd":    t.TempDir(),
+		"parity": parityDir,
+	}
+	f2, err := raid3.NewFs(ctx, "TestPurge", "", m2)
+	require.NoError(t, err)
+
+	remote := "testfile.txt"
+	data := []byte("Test data")
+	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f2.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Purge should fail (strict RAID 3 policy)
+	purgeFn := f.Features().Purge
+	if purgeFn == nil {
+		t.Skip("Backend does not support Purge")
+	}
+	err = purgeFn(ctx, "")
+	require.Error(t, err, "Purge should fail in degraded mode (strict RAID 3 policy)")
+	assert.Contains(t, err.Error(), "degraded mode", "Error should mention degraded mode")
+	assert.Contains(t, err.Error(), "RAID 3 policy", "Error should mention RAID 3 policy")
+
+	// Verify file still exists (operation failed before deletion)
+	_, err = f2.NewObject(ctx, remote)
+	require.NoError(t, err, "File should still exist (purge failed)")
+
+	t.Logf("✅ Purge correctly failed in degraded mode (strict RAID 3 policy)")
+}
+
+// TestCleanUpFailsInDegradedMode tests that CleanUp fails when a backend
+// is unavailable (strict RAID 3 delete policy).
+//
+// CleanUp is a delete operation and should follow strict RAID 3 policy:
+// require all 3 backends available. This ensures consistency and prevents
+// partial cleanup that could leave the system in an inconsistent state.
+//
+// This test verifies:
+//   - CleanUp fails when backend unavailable (strict RAID 3 policy)
+//   - Error message indicates degraded mode
+//   - No broken objects are deleted (operation fails before deletion)
+//
+// Failure indicates: CleanUp not following strict RAID 3 delete policy.
+func TestCleanUpFailsInDegradedMode(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+
+	f, err := raid3.NewFs(ctx, "TestCleanUp", "", m)
+	require.NoError(t, err)
+
+	// Create a broken object (only 1 particle)
+	remote := "broken.txt"
+	data := []byte("Broken object")
+	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Remove 2 particles to create broken object
+	evenPath := filepath.Join(evenDir, remote)
+	oddPath := filepath.Join(oddDir, remote)
+	err = os.Remove(evenPath)
+	require.NoError(t, err)
+	err = os.Remove(oddPath)
+	require.NoError(t, err)
+
+	// Now make one backend unavailable
+	m = configmap.Simple{
+		"even":   evenDir,
+		"odd":    "/nonexistent/odd", // Unavailable
+		"parity": parityDir,
+	}
+
+	f, err = raid3.NewFs(ctx, "TestCleanUp", "", m)
+	require.NoError(t, err)
+
+	// CleanUp should fail (strict RAID 3 policy)
+	cleanupFn := f.Features().CleanUp
+	if cleanupFn == nil {
+		t.Skip("Backend does not support CleanUp")
+	}
+	err = cleanupFn(ctx)
+	require.Error(t, err, "CleanUp should fail in degraded mode (strict RAID 3 policy)")
+	assert.Contains(t, err.Error(), "degraded mode", "Error should mention degraded mode")
+	assert.Contains(t, err.Error(), "RAID 3 policy", "Error should mention RAID 3 policy")
+
+	t.Logf("✅ CleanUp correctly failed in degraded mode (strict RAID 3 policy)")
 }
 
 // TestListWorksInDegradedMode tests that List succeeds when a backend is
