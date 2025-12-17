@@ -400,24 +400,40 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	var args []interface{}
 
 	if dirPath == "" {
-		// At root of user directory - fetch files at root and first-level directories
-		// path IS NULL OR path = '' → files at root
-		// path NOT LIKE '%/%' → files in first-level dirs (e.g., 'photos')
-		// Excludes deeper paths like 'photos/vacation'
+		// At root of user directory - we need:
+		// 1. Files at root (path NULL or '')
+		// 2. Files in first-level dirs (path without '/')
+		// 3. Discover first-level dirs from nested paths (path with '/')
 		query = fmt.Sprintf(`
-			SELECT
-				media_key,
-				file_name,
-				COALESCE(name, '') as custom_name,
-				COALESCE(path, '') as custom_path,
-				size_bytes,
-				utc_timestamp
-			FROM %s
-			WHERE user_name = $1
-			  AND (path IS NULL OR path = '' OR path NOT LIKE '%%/%%')
+			(
+				SELECT
+					media_key,
+					file_name,
+					COALESCE(name, '') as custom_name,
+					COALESCE(path, '') as custom_path,
+					size_bytes,
+					utc_timestamp
+				FROM %s
+				WHERE user_name = $1
+				  AND (path IS NULL OR path = '' OR path NOT LIKE '%%/%%')
+			)
+			UNION ALL
+			(
+				SELECT DISTINCT ON (split_part(path, '/', 1))
+					media_key,
+					file_name,
+					COALESCE(name, '') as custom_name,
+					COALESCE(path, '') as custom_path,
+					size_bytes,
+					utc_timestamp
+				FROM %s
+				WHERE user_name = $1
+				  AND path LIKE '%%/%%'
+				ORDER BY split_part(path, '/', 1), utc_timestamp DESC
+			)
 			ORDER BY file_name
-		`, f.opt.TableName)
-		args = []interface{}{userName}
+		`, f.opt.TableName, f.opt.TableName)
+		args = []interface{}{userName, userName}
 	} else {
 		// In a subdirectory - select files where path = dirPath OR path starts with dirPath/
 		query = fmt.Sprintf(`
