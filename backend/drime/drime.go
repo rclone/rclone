@@ -1030,6 +1030,12 @@ type drimeChunkWriter struct {
 // Pass in the remote and the src object
 // You can also use options to hint at the desired chunk size
 func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+	// Create the directory for the object if it doesn't exist
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return info, nil, err
+	}
+
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
@@ -1056,10 +1062,12 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 
 	// Initiate multipart upload
 	req := api.MultiPartCreateRequest{
-		Filename:  f.opt.Enc.FromStandardName(path.Base(remote)),
-		Mime:      fs.MimeType(ctx, src),
-		Size:      size,
-		Extension: f.opt.Enc.FromStandardName(path.Ext(remote)),
+		Filename:     leaf,
+		Mime:         fs.MimeType(ctx, src),
+		Size:         size,
+		Extension:    strings.TrimPrefix(path.Ext(leaf), `.`),
+		ParentID:     json.Number(directoryID),
+		RelativePath: f.opt.Enc.FromStandardPath(path.Join(f.root, remote)),
 	}
 
 	var resp api.MultiPartCreateResponse
@@ -1168,7 +1176,6 @@ func (s *drimeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 
 	// Get ETag from response
 	etag := uploadRes.Header.Get("ETag")
-	etag = strings.Trim(etag, `"`)
 	fs.CheckClose(uploadRes.Body, &err)
 
 	s.completedPartsMu.Lock()

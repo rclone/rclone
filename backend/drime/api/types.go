@@ -161,10 +161,12 @@ type CopyResponse struct {
 
 // MultiPartCreateRequest is the input of POST /s3/multipart/create
 type MultiPartCreateRequest struct {
-	Filename  string `json:"filename"`
-	Mime      string `json:"mime"`
-	Size      int64  `json:"size"`
-	Extension string `json:"extension"`
+	Filename     string      `json:"filename"`
+	Mime         string      `json:"mime"`
+	Size         int64       `json:"size"`
+	Extension    string      `json:"extension"`
+	ParentID     json.Number `json:"parent_id"`
+	RelativePath string      `json:"relativePath"`
 }
 
 // MultiPartCreateResponse is returned by POST /s3/multipart/create

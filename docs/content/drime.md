@@ -10,8 +10,8 @@ versionIntroduced: "v1.73"
 on fast, resilient file delivery. It offers both free and paid tiers with
 emphasis on high-speed uploads and link sharing.
 
-The setup Drime you need to log in, go to settings, developer and create
-token to make an API access key. Give it a sensible name and copy the token
+The setup Drime you need to log in, go to Settings, Developer, and create a
+token to use as an API access key. Give it a sensible name and copy the token
 for use in the config.
 
 ## Configuration
