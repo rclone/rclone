@@ -693,6 +693,5 @@ backends:
      # 123pan doesn't support empty files
      - TestRWFileHandleWriteNoWrite
    ignoretests:
-     # bisync and gitannex test requires many operations, will met ERROR due to QPS limits.
-     - cmd/bisync
-     - cmd/gitannex
+     # - cmd/bisync
+     # - cmd/gitannex

@@ -1,6 +1,13 @@
 // Package api provides types for the 123pan API
 package api
 
+// Response is the interface for all API responses
+type Response interface {
+	IsError() bool
+	GetCode() int
+	GetMessage() string
+}
+
 // BaseResponse is the common response structure for all API calls
 type BaseResponse struct {
 	Code     int    `json:"code"`
@@ -133,6 +140,11 @@ type RenameRequest struct {
 
 // TrashRequest for deleting files to trash
 type TrashRequest struct {
+	FileIDs []int64 `json:"fileIDs"`
+}
+
+// DeleteRequest for permanently deleting files (must be in trash first)
+type DeleteRequest struct {
 	FileIDs []int64 `json:"fileIDs"`
 }
 
