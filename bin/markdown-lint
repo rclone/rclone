@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# Run markdown linting locally
+set -e
+
+# Workflow
+build=.github/workflows/build.yml
+
+# Globs read from from $build
+globs=$(awk '/- name: Check Markdown format/{f=1;next} f && /globs:/{f=2;next} f==2 && NF{if($1=="-"){exit} print $0}' $build)
+
+if [ -z "$globs" ]; then
+    echo "Error: No globs found in Check Markdown step in $build" >&2
+    exit 1
+fi
+
+docker run --rm -v $PWD:/workdir --user $(id -u):$(id -g) davidanson/markdownlint-cli2 $globs

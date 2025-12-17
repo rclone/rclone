@@ -4,6 +4,7 @@ package all
 import (
 	// Active file systems
 	_ "github.com/rclone/rclone/backend/alias"
+	_ "github.com/rclone/rclone/backend/archive"
 	_ "github.com/rclone/rclone/backend/azureblob"
 	_ "github.com/rclone/rclone/backend/azurefiles"
 	_ "github.com/rclone/rclone/backend/b2"
@@ -55,6 +56,7 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 	_ "github.com/rclone/rclone/backend/seafile"
 	_ "github.com/rclone/rclone/backend/sftp"
+	_ "github.com/rclone/rclone/backend/shade"
 	_ "github.com/rclone/rclone/backend/sharefile"
 	_ "github.com/rclone/rclone/backend/sia"
 	_ "github.com/rclone/rclone/backend/smb"

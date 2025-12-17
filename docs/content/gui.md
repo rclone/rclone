@@ -13,7 +13,7 @@ change.
 Run this command in a terminal and rclone will download and then
 display the GUI in a web browser.
 
-```sh
+```console
 rclone rcd --rc-web-gui
 ```
 

@@ -11,17 +11,19 @@ command.)  You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
 
 ## Configuration
 
-The initial setup for google cloud storage involves getting a token from Google Cloud Storage
-which you need to do in your browser.  `rclone config` walks you
+The initial setup for google cloud storage involves getting a token from Google
+Cloud Storage which you need to do in your browser.  `rclone config` walks you
 through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```console
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 n) New remote
 d) Delete remote
 q) Quit config
@@ -98,7 +100,9 @@ Choose a number from below, or type in your own value
    \ "us-east1"
 13 / Northern Virginia.
    \ "us-east4"
-14 / Oregon.
+14 / Ohio.
+   \ "us-east5"
+15 / Oregon.
    \ "us-west1"
 location> 12
 The storage class to use when storing objects in Google Cloud Storage.
@@ -145,10 +149,10 @@ y/e/d> y
 ```
 
 See the [remote setup docs](/remote_setup/) for how to set it up on a
-machine with no Internet browser available.
+machine without an internet-connected web browser available.
 
 Note that rclone runs a webserver on your local machine to collect the
-token as returned from Google if using web browser to automatically 
+token as returned from Google if using web browser to automatically
 authenticate. This only
 runs from the moment it opens your browser to the moment you get back
 the verification code.  This is on `http://127.0.0.1:53682/` and this
@@ -159,20 +163,28 @@ This remote is called `remote` and can now be used like this
 
 See all the buckets in your project
 
-    rclone lsd remote:
+```console
+rclone lsd remote:
+```
 
 Make a new bucket
 
-    rclone mkdir remote:bucket
+```console
+rclone mkdir remote:bucket
+```
 
 List the contents of a bucket
 
-    rclone ls remote:bucket
+```console
+rclone ls remote:bucket
+```
 
 Sync `/home/local/directory` to the remote bucket, deleting any excess
 files in the bucket.
 
-    rclone sync --interactive /home/local/directory remote:bucket
+```console
+rclone sync --interactive /home/local/directory remote:bucket
+```
 
 ### Service Account support
 
@@ -203,52 +215,67 @@ environment variable.
 
 ### Service Account Authentication with Access Tokens
 
-Another option for service account authentication is to use access tokens via *gcloud impersonate-service-account*. Access tokens protect security by avoiding the use of the JSON
-key file, which can be breached. They also bypass oauth login flow, which is simpler 
-on remote VMs that lack a web browser.
+Another option for service account authentication is to use access tokens via
+*gcloud impersonate-service-account*. Access tokens protect security by avoiding
+the use of the JSON key file, which can be breached. They also bypass oauth
+login flow, which is simpler on remote VMs that lack a web browser.
 
-If you already have a working service account, skip to step 3. 
+If you already have a working service account, skip to step 3.
 
-#### 1. Create a service account using 
+#### 1. Create a service account using
 
-    gcloud iam service-accounts create gcs-read-only 
+```console
+gcloud iam service-accounts create gcs-read-only
+```
 
 You can re-use an existing service account as well (like the one created above)
 
-#### 2. Attach a Viewer (read-only) or User (read-write) role to the service account 
-     $ PROJECT_ID=my-project
-     $ gcloud --verbose iam service-accounts add-iam-policy-binding \
-        gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  \
-        --member=serviceAccount:gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com \
-        --role=roles/storage.objectViewer
+#### 2. Attach a Viewer (read-only) or User (read-write) role to the service account
 
-Use the Google Cloud console to identify a limited role. Some relevant pre-defined roles:
+```console
+$ PROJECT_ID=my-project
+$ gcloud --verbose iam service-accounts add-iam-policy-binding \
+   gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  \
+   --member=serviceAccount:gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com \
+   --role=roles/storage.objectViewer
+```
 
-* *roles/storage.objectUser* -- read-write access but no admin privileges
-* *roles/storage.objectViewer* -- read-only access to objects
-* *roles/storage.admin*  -- create buckets & administrative roles
+Use the Google Cloud console to identify a limited role. Some relevant
+pre-defined roles:
+
+- *roles/storage.objectUser* -- read-write access but no admin privileges
+- *roles/storage.objectViewer* -- read-only access to objects
+- *roles/storage.admin*  -- create buckets & administrative roles
 
 #### 3. Get a temporary access key for the service account
 
-    $ gcloud auth application-default print-access-token  \
-       --impersonate-service-account \
-          gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  
+```console
+$ gcloud auth application-default print-access-token  \
+   --impersonate-service-account \
+      gcs-read-only@${PROJECT_ID}.iam.gserviceaccount.com  
 
-    ya29.c.c0ASRK0GbAFEewXD [truncated]
+ya29.c.c0ASRK0GbAFEewXD [truncated]
+```
 
 #### 4. Update `access_token` setting
-hit `CTRL-C` when you see *waiting for code*.  This will save the config without doing oauth flow
 
-    rclone config update ${REMOTE_NAME} access_token ya29.c.c0Axxxx
+hit `CTRL-C` when you see *waiting for code*.  This will save the config without
+doing oauth flow
+
+```console
+rclone config update ${REMOTE_NAME} access_token ya29.c.c0Axxxx
+```
 
 #### 5. Run rclone as usual
 
-    rclone ls dev-gcs:${MY_BUCKET}/
+```console
+rclone ls dev-gcs:${MY_BUCKET}/
+```
 
 ### More Info on Service Accounts
 
-* [Official GCS Docs](https://cloud.google.com/compute/docs/access/service-accounts)
-* [Guide on Service Accounts using Key Files (less secure, but similar concepts)](https://forum.rclone.org/t/access-using-google-service-account/24822/2)
+- [Official GCS Docs](https://cloud.google.com/compute/docs/access/service-accounts)
+- [Guide on Service Accounts using Key Files (less secure, but similar concepts)](https://forum.rclone.org/t/access-using-google-service-account/24822/2)
 
 ### Anonymous Access
 
@@ -299,13 +326,16 @@ Note that the last of these is for setting custom metadata in the form
 ### Modification times
 
 Google Cloud Storage stores md5sum natively.
-Google's [gsutil](https://cloud.google.com/storage/docs/gsutil) tool stores modification time
-with one-second precision as `goog-reserved-file-mtime` in file metadata.
+Google's [gsutil](https://cloud.google.com/storage/docs/gsutil) tool stores
+modification time with one-second precision as `goog-reserved-file-mtime` in
+file metadata.
 
-To ensure compatibility with gsutil, rclone stores modification time in 2 separate metadata entries.
-`mtime` uses RFC3339 format with one-nanosecond precision.
-`goog-reserved-file-mtime` uses Unix timestamp format with one-second precision.
-To get modification time from object metadata, rclone reads the metadata in the following order: `mtime`, `goog-reserved-file-mtime`, object updated time.
+To ensure compatibility with gsutil, rclone stores modification time in 2
+separate metadata entries. `mtime` uses RFC3339 format with one-nanosecond
+precision. `goog-reserved-file-mtime` uses Unix timestamp format with one-second
+precision. To get modification time from object metadata, rclone reads the
+metadata in the following order: `mtime`, `goog-reserved-file-mtime`, object
+updated time.
 
 Note that rclone's default modify window is 1ns.
 Files uploaded by gsutil only contain timestamps with one-second precision.
@@ -325,7 +355,7 @@ To avoid these possibly unnecessary updates, use `--modify-window 1s`.
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be used in JSON strings.
 
-{{< rem autogenerated options start" - DO NOT EDIT - instead edit fs.RegInfo in backend/googlecloudstorage/googlecloudstorage.go then run make backenddocs" >}}
+<!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/googlecloudstorage/googlecloudstorage.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
 ### Standard options
 
 Here are the Standard options specific to google cloud storage (Google Cloud Storage (this is not Google Drive)).
@@ -436,24 +466,24 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "authenticatedRead"
-        - Object owner gets OWNER access.
-        - All Authenticated Users get READER access.
-    - "bucketOwnerFullControl"
-        - Object owner gets OWNER access.
-        - Project team owners get OWNER access.
-    - "bucketOwnerRead"
-        - Object owner gets OWNER access.
-        - Project team owners get READER access.
-    - "private"
-        - Object owner gets OWNER access.
-        - Default if left blank.
-    - "projectPrivate"
-        - Object owner gets OWNER access.
-        - Project team members get access according to their roles.
-    - "publicRead"
-        - Object owner gets OWNER access.
-        - All Users get READER access.
+  - "authenticatedRead"
+    - Object owner gets OWNER access.
+    - All Authenticated Users get READER access.
+  - "bucketOwnerFullControl"
+    - Object owner gets OWNER access.
+    - Project team owners get OWNER access.
+  - "bucketOwnerRead"
+    - Object owner gets OWNER access.
+    - Project team owners get READER access.
+  - "private"
+    - Object owner gets OWNER access.
+    - Default if left blank.
+  - "projectPrivate"
+    - Object owner gets OWNER access.
+    - Project team members get access according to their roles.
+  - "publicRead"
+    - Object owner gets OWNER access.
+    - All Users get READER access.
 
 #### --gcs-bucket-acl
 
@@ -466,20 +496,20 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "authenticatedRead"
-        - Project team owners get OWNER access.
-        - All Authenticated Users get READER access.
-    - "private"
-        - Project team owners get OWNER access.
-        - Default if left blank.
-    - "projectPrivate"
-        - Project team members get access according to their roles.
-    - "publicRead"
-        - Project team owners get OWNER access.
-        - All Users get READER access.
-    - "publicReadWrite"
-        - Project team owners get OWNER access.
-        - All Users get WRITER access.
+  - "authenticatedRead"
+    - Project team owners get OWNER access.
+    - All Authenticated Users get READER access.
+  - "private"
+    - Project team owners get OWNER access.
+    - Default if left blank.
+  - "projectPrivate"
+    - Project team members get access according to their roles.
+  - "publicRead"
+    - Project team owners get OWNER access.
+    - All Users get READER access.
+  - "publicReadWrite"
+    - Project team owners get OWNER access.
+    - All Users get WRITER access.
 
 #### --gcs-bucket-policy-only
 
@@ -515,78 +545,80 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - Empty for default location (US)
-    - "asia"
-        - Multi-regional location for Asia
-    - "eu"
-        - Multi-regional location for Europe
-    - "us"
-        - Multi-regional location for United States
-    - "asia-east1"
-        - Taiwan
-    - "asia-east2"
-        - Hong Kong
-    - "asia-northeast1"
-        - Tokyo
-    - "asia-northeast2"
-        - Osaka
-    - "asia-northeast3"
-        - Seoul
-    - "asia-south1"
-        - Mumbai
-    - "asia-south2"
-        - Delhi
-    - "asia-southeast1"
-        - Singapore
-    - "asia-southeast2"
-        - Jakarta
-    - "australia-southeast1"
-        - Sydney
-    - "australia-southeast2"
-        - Melbourne
-    - "europe-north1"
-        - Finland
-    - "europe-west1"
-        - Belgium
-    - "europe-west2"
-        - London
-    - "europe-west3"
-        - Frankfurt
-    - "europe-west4"
-        - Netherlands
-    - "europe-west6"
-        - Zürich
-    - "europe-central2"
-        - Warsaw
-    - "us-central1"
-        - Iowa
-    - "us-east1"
-        - South Carolina
-    - "us-east4"
-        - Northern Virginia
-    - "us-west1"
-        - Oregon
-    - "us-west2"
-        - California
-    - "us-west3"
-        - Salt Lake City
-    - "us-west4"
-        - Las Vegas
-    - "northamerica-northeast1"
-        - Montréal
-    - "northamerica-northeast2"
-        - Toronto
-    - "southamerica-east1"
-        - São Paulo
-    - "southamerica-west1"
-        - Santiago
-    - "asia1"
-        - Dual region: asia-northeast1 and asia-northeast2.
-    - "eur4"
-        - Dual region: europe-north1 and europe-west4.
-    - "nam4"
-        - Dual region: us-central1 and us-east1.
+  - ""
+    - Empty for default location (US)
+  - "asia"
+    - Multi-regional location for Asia
+  - "eu"
+    - Multi-regional location for Europe
+  - "us"
+    - Multi-regional location for United States
+  - "asia-east1"
+    - Taiwan
+  - "asia-east2"
+    - Hong Kong
+  - "asia-northeast1"
+    - Tokyo
+  - "asia-northeast2"
+    - Osaka
+  - "asia-northeast3"
+    - Seoul
+  - "asia-south1"
+    - Mumbai
+  - "asia-south2"
+    - Delhi
+  - "asia-southeast1"
+    - Singapore
+  - "asia-southeast2"
+    - Jakarta
+  - "australia-southeast1"
+    - Sydney
+  - "australia-southeast2"
+    - Melbourne
+  - "europe-north1"
+    - Finland
+  - "europe-west1"
+    - Belgium
+  - "europe-west2"
+    - London
+  - "europe-west3"
+    - Frankfurt
+  - "europe-west4"
+    - Netherlands
+  - "europe-west6"
+    - Zürich
+  - "europe-central2"
+    - Warsaw
+  - "us-central1"
+    - Iowa
+  - "us-east1"
+    - South Carolina
+  - "us-east4"
+    - Northern Virginia
+  - "us-east5"
+    - Ohio
+  - "us-west1"
+    - Oregon
+  - "us-west2"
+    - California
+  - "us-west3"
+    - Salt Lake City
+  - "us-west4"
+    - Las Vegas
+  - "northamerica-northeast1"
+    - Montréal
+  - "northamerica-northeast2"
+    - Toronto
+  - "southamerica-east1"
+    - São Paulo
+  - "southamerica-west1"
+    - Santiago
+  - "asia1"
+    - Dual region: asia-northeast1 and asia-northeast2.
+  - "eur4"
+    - Dual region: europe-north1 and europe-west4.
+  - "nam4"
+    - Dual region: us-central1 and us-east1.
 
 #### --gcs-storage-class
 
@@ -599,20 +631,20 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - Default
-    - "MULTI_REGIONAL"
-        - Multi-regional storage class
-    - "REGIONAL"
-        - Regional storage class
-    - "NEARLINE"
-        - Nearline storage class
-    - "COLDLINE"
-        - Coldline storage class
-    - "ARCHIVE"
-        - Archive storage class
-    - "DURABLE_REDUCED_AVAILABILITY"
-        - Durable reduced availability storage class
+  - ""
+    - Default
+  - "MULTI_REGIONAL"
+    - Multi-regional storage class
+  - "REGIONAL"
+    - Regional storage class
+  - "NEARLINE"
+    - Nearline storage class
+  - "COLDLINE"
+    - Coldline storage class
+  - "ARCHIVE"
+    - Archive storage class
+  - "DURABLE_REDUCED_AVAILABILITY"
+    - Durable reduced availability storage class
 
 #### --gcs-env-auth
 
@@ -627,10 +659,10 @@ Properties:
 - Type:        bool
 - Default:     false
 - Examples:
-    - "false"
-        - Enter credentials in the next step.
-    - "true"
-        - Get GCP IAM credentials from the environment (env vars or IAM).
+  - "false"
+    - Enter credentials in the next step.
+  - "true"
+    - Get GCP IAM credentials from the environment (env vars or IAM).
 
 ### Advanced options
 
@@ -678,6 +710,8 @@ Properties:
 Use client credentials OAuth flow.
 
 This will use the OAUTH2 client Credentials Flow as described in RFC 6749.
+
+Note that this option is NOT supported by all backends.
 
 Properties:
 
@@ -786,7 +820,7 @@ Properties:
 - Type:        string
 - Required:    false
 
-{{< rem autogenerated options stop >}}
+<!-- autogenerated options stop -->
 
 ## Limitations
 
@@ -795,5 +829,5 @@ this capability cannot determine free space for an rclone mount or
 use policy `mfs` (most free space) as a member of an rclone union
 remote.
 
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
-
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+and [rclone about](https://rclone.org/commands/rclone_about/).

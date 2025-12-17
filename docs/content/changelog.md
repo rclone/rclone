@@ -6,6 +6,299 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.72.1 - 2025-12-10
+
+[See commits](https://github.com/rclone/rclone/compare/v1.72.0...v1.72.1)
+
+- Bug Fixes
+  - build: update to go1.25.5 to fix [CVE-2025-61729](https://pkg.go.dev/vuln/GO-2025-4155)
+  - doc fixes (Duncan Smart, Nick Craig-Wood)
+  - configfile: Fix piped config support (Jonas Tingeborn)
+  - log
+    - Fix PID not included in JSON log output (Tingsong Xu)
+    - Fix backtrace not going to the --log-file (Nick Craig-Wood)
+- Google Cloud Storage
+  - Improve endpoint parameter docs (Johannes Rothe)
+- S3
+  - Add missing regions for Selectel provider (Nick Craig-Wood)
+
+## v1.72.0 - 2025-11-21
+
+[See commits](https://github.com/rclone/rclone/compare/v1.71.0...v1.72.0)
+
+- New backends
+  - [Archive](/archive) backend to read archives on cloud storage. (Nick Craig-Wood)
+- New S3 providers
+  - [Cubbit Object Storage](/s3/#Cubbit) (Marco Ferretti)
+  - [FileLu S5 Object Storage](/s3/#filelu-s5) (kingston125)
+  - [Hetzner Object Storage](/s3/#hetzner) (spiffytech)
+  - [Intercolo Object Storage](/s3/#intercolo) (Robin Rolf)
+  - [Rabata S3-compatible secure cloud storage](/s3/#Rabata) (dougal)
+  - [Servercore Object Storage](/s3/#servercore) (dougal)
+  - [SpectraLogic](/s3/#spectralogic) (dougal)
+- New commands
+  - [rclone archive](/commands/rclone_archive/): command to create and read archive files (Fawzib Rojas)
+  - [rclone config string](/commands/rclone_config_string/): for making connection strings (Nick Craig-Wood)
+  - [rclone test speed](/commands/rclone_test_speed/): Add command to test a specified remotes speed (dougal)
+- New Features
+  - backends: many backends have has a paged listing (`ListP`) interface added
+    - this enables progress when listing large directories and reduced memory usage
+  - build
+    - Bump golang.org/x/crypto from 0.43.0 to 0.45.0 to fix CVE-2025-58181 (dependabot[bot])
+    - Modernize code and tests (Nick Craig-Wood, russcoss, juejinyuxitu, reddaisyy, dulanting, Oleksandr Redko)
+    - Update all dependencies (Nick Craig-Wood)
+    - Enable support for `aix/ppc64` (Lakshmi-Surekha)
+  - check: Improved reporting of differences in sizes and contents (albertony)
+  - copyurl: Added `--url` to read URLs from CSV file (S-Pegg1, dougal)
+  - docs:
+    - markdown linting (albertony)
+    - fixes (albertony, Andrew Gunnerson, anon-pradip, Claudius Ellsel, dougal, iTrooz, Jean-Christophe Cura, Joseph Brownlee, kapitainsky, Matt LaPaglia, n4n5, Nick Craig-Wood, nielash, SublimePeace, Ted Robertson, vastonus)
+  - fs: remove unnecessary Seek call on log file (Aneesh Agrawal)
+  - hashsum: Improved output format when listing algorithms (albertony)
+  - lib/http: Cleanup indentation and other whitespace in http serve template (albertony)
+  - lsf: Add support for `unix` and `unixnano` time formats (Motte)
+  - oauthutil: Improved debug logs from token refresh (albertony)
+  - rc
+    - Add [job/batch](/rc/#job-batch) for sending batches of rc commands to run concurrently (Nick Craig-Wood)
+    - Add `runningIds` and `finishedIds` to [job/list](/rc/#job-list) (n4n5)
+    - Add `osVersion`, `osKernel` and `osArch` to [core/version](/rc/#core-version) (Nick Craig-Wood)
+    - Make sure fatal errors run via the rc don't crash rclone (Nick Craig-Wood)
+    - Add `executeId` to job statuses in [job/list](/rc/#job-list) (Nikolay Kiryanov)
+    - `config/unlock`: rename parameter to `configPassword` accept old as well (Nick Craig-Wood)
+  - serve http: Download folders as zip (dougal)
+- Bug Fixes
+  - build
+    - Fix tls: failed to verify certificate: x509: negative serial number (Nick Craig-Wood)
+  - march
+    - Fix `--no-traverse` being very slow (Nick Craig-Wood)
+  - serve s3: Fix log output to remove the EXTRA messages (iTrooz)
+- Mount
+  - Windows: improve error message on missing WinFSP (divinity76)
+- Local
+  - Add `--skip-specials` to ignore special files (Adam Dinwoodie)
+- Azure Blob
+  - Add ListP interface (dougal)
+- Azurefiles
+  - Add ListP interface (Nick Craig-Wood)
+- B2
+  - Add ListP interface (dougal)
+  - Add Server-Side encryption support (fries1234)
+  - Fix "expected a FileSseMode but found: ''" (dougal)
+  - Allow individual old versions to be deleted with `--b2-versions` (dougal)
+- Box
+  - Add ListP interface (Nick Craig-Wood)
+  - Allow configuration with config file contents (Dominik Sander)
+- Compress
+  - Add zstd compression (Alex)
+- Drive
+  - Add ListP interface (Nick Craig-Wood)
+- Dropbox
+  - Add ListP interface (Nick Craig-Wood)
+  - Fix error moving just created objects (Nick Craig-Wood)
+- FTP
+  - Fix SOCKS proxy support (dougal)
+  - Fix transfers from servers that return 250 ok messages (jijamik)
+- Google Cloud Storage
+  - Add ListP interface (dougal)
+  - Fix `--gcs-storage-class` to work with server side copy for objects (Riaz Arbi)
+- HTTP
+  - Add basic metadata and provide it via serve (Oleg Kunitsyn)
+- Jottacloud
+  - Add support for Let's Go Cloud (from MediaMarkt) as a whitelabel service (albertony)
+  - Add support for MediaMarkt Cloud as a whitelabel service (albertony)
+  - Added support for traditional oauth authentication also for the main service (albertony)
+  - Abort attempts to run unsupported rclone authorize command (albertony)
+  - Improved token refresh handling (albertony)
+  - Fix legacy authentication (albertony)
+  - Fix authentication for whitelabel services from Elkjøp subsidiaries (albertony)
+- Mega
+  - Implement 2FA login (iTrooz)
+- Memory
+  - Add ListP interface (dougal)
+- Onedrive
+  - Add ListP interface (Nick Craig-Wood)
+- Oracle Object Storage
+  - Add ListP interface (dougal)
+- Pcloud
+  - Add ListP interface (Nick Craig-Wood)
+- Proton Drive
+  - Automated 2FA login with OTP secret key (Microscotch)
+- S3
+  - Make it easier to add new S3 providers (dougal)
+  - Add `--s3-use-data-integrity-protections` quirk to fix  BadDigest error in Alibaba, Tencent (hunshcn)
+  - Add support for `--upload-header`, `If-Match` and `If-None-Match` (Sean Turner)
+  - Fix single file copying behavior with low permission (hunshcn)
+- SFTP
+  - Fix zombie SSH processes with `--sftp-ssh` (Copilot)
+- Smb
+  - Optimize smb mount performance by avoiding stat checks during initialization (Sudipto Baral)
+- Swift
+  - Add ListP interface (dougal)
+  - If storage_policy isn't set, use the root containers policy (Andrew Ruthven)
+  - Report disk usage in segment containers (Andrew Ruthven)
+- Ulozto
+  - Implement the About functionality (Lukas Krejci)
+  - Fix downloads returning HTML error page (aliaj1)
+- WebDAV
+  - Optimize bearer token fetching with singleflight (hunshcn)
+  - Add ListP interface (Nick Craig-Wood)
+  - Use SpaceSepList to parse bearer token command (hunshcn)
+  - Add `Access-Control-Max-Age` header for CORS preflight caching (viocha)
+  - Fix out of memory with sharepoint-ntlm when uploading large file (Nick Craig-Wood)
+
+## v1.71.2 - 2025-10-20
+
+[See commits](https://github.com/rclone/rclone/compare/v1.71.1...v1.71.2)
+
+- Bug Fixes
+  - build
+    - update Go to 1.25.3
+    - Update Docker image Alpine version to fix CVE-2025-9230
+  - bisync: Fix race when CaptureOutput is used concurrently (Nick Craig-Wood)
+  - doc fixes (albertony, dougal, iTrooz, Matt LaPaglia, Nick Craig-Wood)
+  - index: Add missing providers (dougal)
+  - serve http: Fix: logging URL on start (dougal)
+- Azurefiles
+  - Fix server side copy not waiting for completion (Vikas Bhansali)
+- B2
+  - Fix 1TB+ uploads (dougal)
+- Google Cloud Storage
+  - Add region us-east5 (Dulani Woods)
+- Mega
+  - Fix 402 payment required errors (Nick Craig-Wood)
+- Pikpak
+  - Fix unnecessary retries by using URL expire parameter (Youfu Zhang)
+
+## v1.71.1 - 2025-09-24
+
+[See commits](https://github.com/rclone/rclone/compare/v1.71.0...v1.71.1)
+
+- Bug Fixes
+  - bisync: Fix error handling for renamed conflicts (nielash)
+  - march: Fix deadlock when using --fast-list on syncs (Nick Craig-Wood)
+  - operations: Fix partial name collisions for non --inplace copies (Nick Craig-Wood)
+  - pacer: Fix deadlock with --max-connections (Nick Craig-Wood)
+  - doc fixes (albertony, anon-pradip, Claudius Ellsel, dougal, Jean-Christophe Cura, Nick Craig-Wood, nielash)
+- Mount
+  - Do not log successful unmount as an error (Tilman Vogel)
+- VFS
+  - Fix SIGHUP killing serve instead of flushing directory caches (dougal)
+- Local
+  - Fix rmdir "Access is denied" on windows (nielash)
+- Box
+  - Fix about after change in API return (Nick Craig-Wood)
+- Combine
+  - Propagate SlowHash feature (skbeh)
+- Drive
+  - Update making your own client ID instructions (Ed Craig-Wood)
+- Internet Archive
+  - Fix server side copy files with spaces (Nick Craig-Wood)
+
+## v1.71.0 - 2025-08-22
+
+[See commits](https://github.com/rclone/rclone/compare/v1.70.0...v1.71.0)
+
+- New S3 providers
+  - [Exaba](/s3/#exaba) (Nick Craig-Wood)
+    - We've been working with Exaba and they would love early adopters, self-hosters and testers
+  - [OVHcloud Object Storage](/s3/#ovhcloud) (Florent Vennetier)
+  - [Zata](/s3/#Zata) ($@M@RTH_)
+- New Features
+  - Allow [global config to be overriden or set on backend creation](/docs/#globalconfig) (Nick Craig-Wood)
+  - bisync: Promoted from beta to stable (nielash)
+  - build
+    - Update to go1.25 and make go1.24 the minimum required version (Nick Craig-Wood)
+    - Update all dependencies (Nick Craig-Wood)
+    - Upgrade golangci-lint to v2 and fix code and config (albertony)
+    - Add markdown linting to workflow and fix all the docs (albertony)
+    - Extend check for edits of autogenerated files to all commits in a pull request (albertony)
+    - Set default shell to bash in build.yml (Ross Smith II)
+  - config
+    - Make parsing of `Duration` options consistent (albertony)
+    - Add error if `RCLONE_CONFIG_PASS` was supplied it but didn't decrypt the config (n4n5)
+  - copy, copyto: Implement logger flags to store result of sync (Marvin Rösch)
+  - doc fixes (albertony, Ali Zein Yousuf, Binbin Qian, curlwget, Ed Craig-Wood, jinjingroad, Lucas Bremgartner, n4n5, Nick Craig-Wood)
+  - hash: Add support for BLAKE3, XXH3, XXH128 (albertony)
+  - http
+    - Add `--client-pass` support for encrypted `--client-key` files (Nick Craig-Wood)
+    - Allow setting of `--http-proxy` from the command line (Nick Craig-Wood)
+  - lib/mmap: Convert to using unsafe.Slice to avoid deprecated reflect.SliceHeader (cui)
+  - lib/transform: Avoid empty charmap entry (albertony)
+  - log: Add log rotation options when using [`--log-file`](/docs/#log-file-string) (Nick Craig-Wood)
+  - move, moveto: Implement logger flags to store result of sync (Marvin Rösch)
+  - pool: Unify memory between multipart and asyncreader to use one pool (Nick Craig-Wood)
+  - purge: Exit with a fatal error if filters are set on `rclone purge` (Nick Craig-Wood)
+  - rc
+    - Add `config/unlock` to unlock the config file (n4n5)
+    - Fix `config/listremotes` to send an empty array instead of nil (n4n5)
+    - Populate transfer snapshot with "what" value (Timothy Jacobs)
+  - serve sftp: Add support for more hashes (crc32, sha256, blake3, xxh3, xxh128) (albertony)
+  - transform: Add `truncate_keep_extension` and `truncate_bytes` (nielash)
+- Bug Fixes
+  - about: Fix potential overflow of about in various backends (Nick Craig-Wood)
+  - accounting
+    - Fix incorrect stats with `--transfers=1` (Yu Xin)
+    - Fix stats (`speed=0` and `eta=nil`) when starting jobs via rc (Nick Craig-Wood)
+  - bisync
+    - Fix concurrent runs via rc (nielash)
+    - Fix `--no-slow-hash` settings on path2 (nielash)
+  - config: fix problem reading pasted tokens over 4095 bytes (Nick Craig-Wood)
+  - oauthutil: Fix nil pointer crash when started with expired token (Nick Craig-Wood)
+  - operations: Fix too many connections open when using `--max-buffer-memory` (Nick Craig-Wood)
+  - pool: Fix deadlock with `--max-buffer-memory` and multipart transfers (Nick Craig-Wood)
+  - rc: Fix `operations/check` ignoring `oneWay` parameter (houance)
+- Mount
+  - Fix identification of symlinks in directory listings (huangnauh)
+- Local
+  - Configurable supported hashes (albertony)
+  - Fix `--copy-links` on Windows when listing Junction points (Anagh Kumar Baranwal)
+- Azure Blob
+  - Add support for client assertion based authentication (Vikas Bhansali)
+  - Fix deadlock with `--max-connections` with `InvalidBlockOrBlob` errors (Nick Craig-Wood)
+  - Fix double accounting for multipart uploads (Nick Craig-Wood)
+- Azurefiles
+  - Add support for client assertion based authentication (Vikas Bhansali)
+  - Fix hash getting erased when modtime is set (nielash)
+- Box
+  - Fix about: cannot unmarshal number 1.0e+18 into Go struct field (Nick Craig-Wood)
+- Combine
+  - Fix directory not found errors with ListP interface (Nick Craig-Wood)
+- Filescom
+  - Document that hashes need to be enabled (Nick Craig-Wood)
+- FTP
+  - Allow insecure TLS ciphers (Anagh Kumar Baranwal)
+  - Make TLS config default to global TLS config (Nick Craig-Wood)
+    - This allows `--ca-cert`, `--client-cert` etc to be used.
+    - This also allows `override.ca_cert = XXX` to be used in the config file.
+- Googlephotos
+  - Added warning for Google Photos compatability-fixes (raider13209)
+- Imagekit
+  - Return correct error when attempting to upload zero length files (Nick Craig-Wood)
+  - Don't low level retry uploads (Nick Craig-Wood)
+  - Remove server side Copy method as it was downloading and uploading (Nick Craig-Wood)
+- Internetarchive
+  - Fix server side copy of files with `&` (Nick Craig-Wood)
+- Mega
+  - Fix tls handshake failure (necaran)
+- Oracleobjectstorage
+  - Add read only metadata support (praveen-solanki-oracle)
+- Pikpak
+  - Rewrite upload to bypass AWS S3 manager (wiserain)
+  - Enhance Move for better handling of error and name collision (wiserain)
+  - Enhance Copy method to handle name collisions and improve error management (wiserain)
+  - Add file name integrity check during upload (wiserain)
+- S3
+  - Add `--s3-use-arn-region` flag (Nick Craig-Wood)
+  - Fix memory leak by cloning strings (liubingrun)
+  - Fix multipart upload and server side copy when using bucket policy SSE-C (Albin Parou)
+  - Fix `Content-Type: aws-chunked` causing upload errors with `--metadata` (Nick Craig-Wood)
+- SFTP
+  - Add support for more hashes (crc32, sha256, blake3, xxh3, xxh128) (albertony)
+- Smb
+  - Add `--smb-kerberos-ccache` option to set kerberos ccache per smb backend (Sudipto Baral)
+  - Refresh Kerberos credentials when ccache file changes (Sudipto Baral)
+  - Improve multithreaded upload performance using multiple connections (Sudipto Baral)
+
 ## v1.70.3 - 2025-07-09
 
 [See commits](https://github.com/rclone/rclone/compare/v1.70.2...v1.70.3)
@@ -39,12 +332,6 @@ description: "Rclone Changelog"
   - doc fixes (Ali Zein Yousuf, Nick Craig-Wood)
 - Local
   - Fix --skip-links on Windows when skipping Junction points (Nick Craig-Wood)
-- Combine
-  - Fix directory not found errors with ListP interface (Nick Craig-Wood)
-- Mega
-  - Fix tls handshake failure (necaran)
-- Pikpak
-  - Fix uploads fail with "aws-chunked encoding is not supported" error (Nick Craig-Wood)
 
 ## v1.70.1 - 2025-06-19
 

@@ -1,0 +1,140 @@
+name: AWS
+description: Amazon Web Services (AWS) S3
+region:
+  us-east-1: |-
+    The default endpoint - a good choice if you are unsure.
+    US Region, Northern Virginia, or Pacific Northwest.
+    Leave location constraint empty.
+  us-east-2: |-
+    US East (Ohio) Region.
+    Needs location constraint us-east-2.
+  us-west-1: |-
+    US West (Northern California) Region.
+    Needs location constraint us-west-1.
+  us-west-2: |-
+    US West (Oregon) Region.
+    Needs location constraint us-west-2.
+  ca-central-1: |-
+    Canada (Central) Region.
+    Needs location constraint ca-central-1.
+  eu-west-1: |-
+    EU (Ireland) Region.
+    Needs location constraint EU or eu-west-1.
+  eu-west-2: |-
+    EU (London) Region.
+    Needs location constraint eu-west-2.
+  eu-west-3: |-
+    EU (Paris) Region.
+    Needs location constraint eu-west-3.
+  eu-north-1: |-
+    EU (Stockholm) Region.
+    Needs location constraint eu-north-1.
+  eu-south-1: |-
+    EU (Milan) Region.
+    Needs location constraint eu-south-1.
+  eu-central-1: |-
+    EU (Frankfurt) Region.
+    Needs location constraint eu-central-1.
+  ap-southeast-1: |-
+    Asia Pacific (Singapore) Region.
+    Needs location constraint ap-southeast-1.
+  ap-southeast-2: |-
+    Asia Pacific (Sydney) Region.
+    Needs location constraint ap-southeast-2.
+  ap-northeast-1: |-
+    Asia Pacific (Tokyo) Region.
+    Needs location constraint ap-northeast-1.
+  ap-northeast-2: |-
+    Asia Pacific (Seoul).
+    Needs location constraint ap-northeast-2.
+  ap-northeast-3: |-
+    Asia Pacific (Osaka-Local).
+    Needs location constraint ap-northeast-3.
+  ap-south-1: |-
+    Asia Pacific (Mumbai).
+    Needs location constraint ap-south-1.
+  ap-east-1: |-
+    Asia Pacific (Hong Kong) Region.
+    Needs location constraint ap-east-1.
+  sa-east-1: |-
+    South America (Sao Paulo) Region.
+    Needs location constraint sa-east-1.
+  il-central-1: |-
+    Israel (Tel Aviv) Region.
+    Needs location constraint il-central-1.
+  me-south-1: |-
+    Middle East (Bahrain) Region.
+    Needs location constraint me-south-1.
+  af-south-1: |-
+    Africa (Cape Town) Region.
+    Needs location constraint af-south-1.
+  cn-north-1: |-
+    China (Beijing) Region.
+    Needs location constraint cn-north-1.
+  cn-northwest-1: |-
+    China (Ningxia) Region.
+    Needs location constraint cn-northwest-1.
+  us-gov-east-1: |-
+    AWS GovCloud (US-East) Region.
+    Needs location constraint us-gov-east-1.
+  us-gov-west-1: |-
+    AWS GovCloud (US) Region.
+    Needs location constraint us-gov-west-1.
+endpoint: {}
+location_constraint:
+  '': Empty for US Region, Northern Virginia, or Pacific Northwest
+  us-east-2: US East (Ohio) Region
+  us-west-1: US West (Northern California) Region
+  us-west-2: US West (Oregon) Region
+  ca-central-1: Canada (Central) Region
+  eu-west-1: EU (Ireland) Region
+  eu-west-2: EU (London) Region
+  eu-west-3: EU (Paris) Region
+  eu-north-1: EU (Stockholm) Region
+  eu-south-1: EU (Milan) Region
+  EU: EU Region
+  ap-southeast-1: Asia Pacific (Singapore) Region
+  ap-southeast-2: Asia Pacific (Sydney) Region
+  ap-northeast-1: Asia Pacific (Tokyo) Region
+  ap-northeast-2: Asia Pacific (Seoul) Region
+  ap-northeast-3: Asia Pacific (Osaka-Local) Region
+  ap-south-1: Asia Pacific (Mumbai) Region
+  ap-east-1: Asia Pacific (Hong Kong) Region
+  sa-east-1: South America (Sao Paulo) Region
+  il-central-1: Israel (Tel Aviv) Region
+  me-south-1: Middle East (Bahrain) Region
+  af-south-1: Africa (Cape Town) Region
+  cn-north-1: China (Beijing) Region
+  cn-northwest-1: China (Ningxia) Region
+  us-gov-east-1: AWS GovCloud (US-East) Region
+  us-gov-west-1: AWS GovCloud (US) Region
+acl: {}
+storage_class:
+  '': Default
+  STANDARD: Standard storage class
+  REDUCED_REDUNDANCY: Reduced redundancy storage class
+  STANDARD_IA: Standard Infrequent Access storage class
+  ONEZONE_IA: One Zone Infrequent Access storage class
+  GLACIER: Glacier Flexible Retrieval storage class
+  DEEP_ARCHIVE: Glacier Deep Archive storage class
+  INTELLIGENT_TIERING: Intelligent-Tiering storage class
+  GLACIER_IR: Glacier Instant Retrieval storage class
+server_side_encryption:
+  '': None
+  AES256: AES256
+  aws:kms: aws:kms
+bucket_acl: true
+directory_bucket: true
+leave_parts_on_error: true
+requester_pays: true
+sse_customer_algorithm: true
+sse_customer_key: true
+sse_customer_key_base64: true
+sse_customer_key_md5: true
+sse_kms_key_id: true
+sts_endpoint: true
+use_accelerate_endpoint: true
+quirks:
+  might_gzip: false # Never auto gzips objects
+  use_unsigned_payload: false # AWS has trailer support which means it adds checksums in the trailer without seeking
+  use_data_integrity_protections: true

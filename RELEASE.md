@@ -21,6 +21,7 @@ This file describes how to make the various kinds of releases
 - make doc
 - git status - to check for new man pages - git add them
 - git commit -a -v -m "Version v1.XX.0"
+- make check
 - make retag
 - git push origin # without --follow-tags so it doesn't push the tag if it fails
 - git push --follow-tags origin
@@ -60,7 +61,7 @@ If `make updatedirect` added a `toolchain` directive then remove it.
 We don't want to force a toolchain on our users. Linux packagers are
 often using a version of Go that is a few versions out of date.
 
-```sh
+```console
 go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all > /tmp/potential-upgrades
 go get -d $(cat /tmp/potential-upgrades)
 go mod tidy -go=1.22 -compat=1.22
@@ -70,7 +71,7 @@ If the `go mod tidy` fails use the output from it to remove the
 package which can't be upgraded from `/tmp/potential-upgrades` when
 done
 
-```sh
+```console
 git co go.mod go.sum
 ```
 
@@ -102,7 +103,7 @@ The above procedure will not upgrade major versions, so v2 to v3.
 However this tool can show which major versions might need to be
 upgraded:
 
-```sh
+```console
 go run github.com/icholy/gomajor@latest list -major
 ```
 
@@ -112,7 +113,7 @@ Expect API breakage when updating major versions.
 
 At some point after the release run
 
-```sh
+```console
 bin/tidy-beta v1.55
 ```
 
@@ -159,7 +160,7 @@ which is a private repo containing artwork from sponsors.
 
 Create an update website branch based off the last release
 
-```sh
+```console
 git co -b update-website
 ```
 
@@ -167,19 +168,19 @@ If the branch already exists, double check there are no commits that need saving
 
 Now reset the branch to the last release
 
-```sh
+```console
 git reset --hard v1.64.0
 ```
 
 Create the changes, check them in, test with `make serve` then
 
-```sh
+```console
 make upload_test_website
 ```
 
 Check out <https://test.rclone.org> and when happy
 
-```sh
+```console
 make upload_website
 ```
 
@@ -189,14 +190,14 @@ Cherry pick any changes back to master and the stable branch if it is active.
 
 To do a basic build of rclone's docker image to debug builds locally:
 
-```sh
+```console
 docker buildx build --load -t rclone/rclone:testing --progress=plain .
 docker run --rm rclone/rclone:testing version
 ```
 
 To test the multipatform build
 
-```sh
+```console
 docker buildx build -t rclone/rclone:testing --progress=plain --platform linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6 .
 ```
 
@@ -204,6 +205,6 @@ To make a full build then set the tags correctly and add `--push`
 
 Note that you can't only build one architecture - you need to build them all.
 
-```sh
+```console
 docker buildx build --platform linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6 -t rclone/rclone:1.54.1 -t rclone/rclone:1.54 -t rclone/rclone:1 -t rclone/rclone:latest --push .
 ```

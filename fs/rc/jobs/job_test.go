@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"runtime"
 	"testing"
@@ -55,7 +56,7 @@ func TestJobsExpire(t *testing.T) {
 		return in, nil
 	}, rc.Params{"_async": true})
 	require.NoError(t, err)
-	assert.Equal(t, 1, len(out))
+	assert.Equal(t, 2, len(out), "check output has jobid and executeId")
 	<-wait
 	assert.Equal(t, job.ID, gotJobID, "check can get JobID from ctx")
 	assert.Equal(t, job, gotJob, "check can get Job from ctx")
@@ -93,6 +94,18 @@ func TestJobsIDs(t *testing.T) {
 		gotIDs[0], gotIDs[1] = gotIDs[1], gotIDs[0]
 	}
 	assert.Equal(t, wantIDs, gotIDs)
+}
+
+func TestJobsExecuteIDs(t *testing.T) {
+	ctx := context.Background()
+	jobs := newJobs()
+	job1, _, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
+	require.NoError(t, err)
+	job2, _, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
+	require.NoError(t, err)
+	assert.Equal(t, executeID, job1.ExecuteID, "execute ID should match global executeID")
+	assert.Equal(t, executeID, job2.ExecuteID, "execute ID should match global executeID")
+	assert.True(t, job1.ExecuteID == job2.ExecuteID, "just to be sure, all the jobs share the same executeID")
 }
 
 func TestJobsGet(t *testing.T) {
@@ -206,7 +219,7 @@ func TestJobRunPanic(t *testing.T) {
 	runtime.Gosched() // yield to make sure job is updated
 
 	// Wait a short time for the panic to propagate
-	for i := uint(0); i < 10; i++ {
+	for i := range uint(10) {
 		job.mu.Lock()
 		e := job.Error
 		job.mu.Unlock()
@@ -233,7 +246,8 @@ func TestJobsNewJob(t *testing.T) {
 	job, out, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), job.ID)
-	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
+	assert.Equal(t, executeID, job.ExecuteID)
+	assert.Equal(t, rc.Params{"jobid": int64(1), "executeId": executeID}, out)
 	assert.Equal(t, job, jobs.Get(1))
 	assert.NotEmpty(t, job.Stop)
 }
@@ -243,8 +257,9 @@ func TestStartJob(t *testing.T) {
 	jobID.Store(0)
 	job, out, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
-	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
+	assert.Equal(t, rc.Params{"jobid": int64(1), "executeId": executeID}, out)
 	assert.Equal(t, int64(1), job.ID)
+	assert.Equal(t, executeID, job.ExecuteID)
 }
 
 func TestExecuteJob(t *testing.T) {
@@ -349,6 +364,7 @@ func TestRcJobStatus(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, float64(1), out["id"])
+	assert.Equal(t, executeID, out["executeId"])
 	assert.Equal(t, "", out["error"])
 	assert.Equal(t, false, out["finished"])
 	assert.Equal(t, false, out["success"])
@@ -376,7 +392,10 @@ func TestRcJobList(t *testing.T) {
 	out1, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out1)
+	assert.Equal(t, executeID, out1["executeId"], "should have executeId")
 	assert.Equal(t, []int64{1}, out1["jobids"], "should have job listed")
+	assert.Equal(t, []int64{1}, out1["runningIds"], "should have running job")
+	assert.Equal(t, []int64{}, out1["finishedIds"], "should not have finished job")
 
 	_, _, err = NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
@@ -389,7 +408,6 @@ func TestRcJobList(t *testing.T) {
 	require.NotNil(t, out2)
 	assert.Equal(t, 2, len(out2["jobids"].([]int64)), "should have all jobs listed")
 
-	require.NotNil(t, out1["executeId"], "should have executeId")
 	assert.Equal(t, out1["executeId"], out2["executeId"], "executeId should be the same")
 }
 
@@ -539,8 +557,7 @@ func TestOnFinish(t *testing.T) {
 func TestOnFinishAlreadyFinished(t *testing.T) {
 	jobID.Store(0)
 	done := make(chan struct{})
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	job, _, err := NewJob(ctx, shortFn, rc.Params{})
 	assert.NoError(t, err)
 
@@ -602,4 +619,295 @@ func TestOnFinishDataRace(t *testing.T) {
 			t.Fatal("Timeout waiting for all OnFinish calls to fire")
 		}
 	}
+}
+
+// Register some test rc calls
+func init() {
+	rc.Add(rc.Call{
+		Path:         "test/needs_request",
+		NeedsRequest: true,
+	})
+	rc.Add(rc.Call{
+		Path:          "test/needs_response",
+		NeedsResponse: true,
+	})
+
+}
+
+func TestNewJobFromParams(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		in   rc.Params
+		want rc.Params
+	}{{
+		in: rc.Params{
+			"_path": "rc/noop",
+			"a":     "potato",
+		},
+		want: rc.Params{
+			"a": "potato",
+		},
+	}, {
+		in: rc.Params{
+			"_path": "rc/noop",
+			"b":     "sausage",
+		},
+		want: rc.Params{
+			"b": "sausage",
+		},
+	}, {
+		in: rc.Params{
+			"_path": "rc/error",
+			"e":     "sausage",
+		},
+		want: rc.Params{
+			"error": "arbitrary error on input map[e:sausage]",
+			"input": rc.Params{
+				"e": "sausage",
+			},
+			"path":   "rc/error",
+			"status": 500,
+		},
+	}, {
+		in: rc.Params{
+			"_path": "bad/path",
+			"param": "sausage",
+		},
+		want: rc.Params{
+			"error": "couldn't find path \"bad/path\"",
+			"input": rc.Params{
+				"param": "sausage",
+			},
+			"path":   "bad/path",
+			"status": 404,
+		},
+	}, {
+		in: rc.Params{
+			"_path": "test/needs_request",
+		},
+		want: rc.Params{
+			"error":  "can't run path \"test/needs_request\" as it needs the request",
+			"input":  rc.Params{},
+			"path":   "test/needs_request",
+			"status": 400,
+		},
+	}, {
+		in: rc.Params{
+			"_path": "test/needs_response",
+		},
+		want: rc.Params{
+			"error":  "can't run path \"test/needs_response\" as it needs the response",
+			"input":  rc.Params{},
+			"path":   "test/needs_response",
+			"status": 400,
+		},
+	}, {
+		in: rc.Params{
+			"nopath": "BOOM",
+		},
+		want: rc.Params{
+			"error": "Didn't find key \"_path\" in input",
+			"input": rc.Params{
+				"nopath": "BOOM",
+			},
+			"path":   "",
+			"status": 400,
+		},
+	}} {
+		got := NewJobFromParams(ctx, test.in)
+		assert.Equal(t, test.want, got)
+	}
+}
+
+func TestNewJobFromBytes(t *testing.T) {
+	ctx := context.Background()
+	for _, test := range []struct {
+		in   string
+		want string
+	}{{
+		in: `{
+			"_path": "rc/noop",
+			"a":     "potato"
+}`,
+		want: `{
+	"a": "potato"
+}
+`,
+	}, {
+		in: `{
+				"_path": "rc/error",
+				"e":     "sausage"
+			}`,
+		want: `{
+	"error": "arbitrary error on input map[e:sausage]",
+	"input": {
+		"e": "sausage"
+	},
+	"path": "rc/error",
+	"status": 500
+}
+`,
+	}, {
+		in: `parse error`,
+		want: `{
+	"error": "invalid character 'p' looking for beginning of value",
+	"input": null,
+	"path": "unknown",
+	"status": 400
+}
+`,
+	}, {
+		in: `"just a string"`,
+		want: `{
+	"error": "json: cannot unmarshal string into Go value of type rc.Params",
+	"input": null,
+	"path": "unknown",
+	"status": 400
+}
+`,
+	}} {
+		got := NewJobFromBytes(ctx, []byte(test.in))
+		assert.Equal(t, test.want, string(got))
+	}
+}
+
+func TestJobsBatch(t *testing.T) {
+	ctx := context.Background()
+
+	call := rc.Calls.Get("job/batch")
+	assert.NotNil(t, call)
+
+	inJSON := `{
+  "inputs": [
+    {
+      "_path": "rc/noop",
+      "a": "potato"
+    },
+    "bad string",
+    {
+      "_path": "rc/noop",
+      "b": "sausage"
+    },
+    {
+      "_path": "rc/error",
+      "e": "sausage"
+    },
+    {
+      "_path": "bad/path",
+      "param": "sausage"
+    },
+    {
+      "_path": "test/needs_request"
+    },
+    {
+      "_path": "test/needs_response"
+    },
+    {
+      "nopath": "BOOM"
+    }
+  ]
+}
+`
+	var in rc.Params
+	require.NoError(t, json.Unmarshal([]byte(inJSON), &in))
+
+	wantJSON := `{
+  "results": [
+    {
+      "a": "potato"
+    },
+    {
+      "error": "\"inputs\" items must be objects not string",
+      "input": null,
+      "path": "unknown",
+      "status": 400
+    },
+    {
+      "b": "sausage"
+    },
+    {
+      "error": "arbitrary error on input map[e:sausage]",
+      "input": {
+        "e": "sausage"
+      },
+      "path": "rc/error",
+      "status": 500
+    },
+    {
+      "error": "couldn't find path \"bad/path\"",
+      "input": {
+        "param": "sausage"
+      },
+      "path": "bad/path",
+      "status": 404
+    },
+    {
+      "error": "can't run path \"test/needs_request\" as it needs the request",
+      "input": {},
+      "path": "test/needs_request",
+      "status": 400
+    },
+    {
+      "error": "can't run path \"test/needs_response\" as it needs the response",
+      "input": {},
+      "path": "test/needs_response",
+      "status": 400
+    },
+    {
+      "error": "Didn't find key \"_path\" in input",
+      "input": {
+        "nopath": "BOOM"
+      },
+      "path": "",
+      "status": 400
+    }
+  ]
+}
+`
+
+	var want rc.Params
+	require.NoError(t, json.Unmarshal([]byte(wantJSON), &want))
+
+	out, err := call.Fn(ctx, in)
+	require.NoError(t, err)
+
+	var got rc.Params
+	require.NoError(t, rc.Reshape(&got, out))
+
+	assert.Equal(t, want, got)
+}
+
+func TestJobsBatchConcurrent(t *testing.T) {
+	ctx := context.Background()
+	for concurrency := range 10 {
+		in := rc.Params{}
+		var inputs []any
+		var results []rc.Params
+		for i := range 100 {
+			in := map[string]any{
+				"_path": "rc/noop",
+				"i":     i,
+			}
+			inputs = append(inputs, in)
+			results = append(results, rc.Params{
+				"i": i,
+			})
+		}
+		in["inputs"] = inputs
+		want := rc.Params{
+			"results": results,
+		}
+
+		if concurrency > 0 {
+			in["concurrency"] = concurrency
+		}
+		call := rc.Calls.Get("job/batch")
+		assert.NotNil(t, call)
+
+		got, err := call.Fn(ctx, in)
+		require.NoError(t, err)
+
+		assert.Equal(t, want, got)
+	}
+
 }

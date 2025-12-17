@@ -160,7 +160,6 @@ func rcAbout(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	for _, copy := range []bool{false, true} {
-		copy := copy
 		name := "Move"
 		if copy {
 			name = "Copy"
@@ -203,6 +202,7 @@ func init() {
 		help         string
 		noRemote     bool
 		needsRequest bool
+		noCommand    bool
 	}{
 		{name: "mkdir", title: "Make a destination directory or container"},
 		{name: "rmdir", title: "Remove an empty directory or container"},
@@ -211,15 +211,17 @@ func init() {
 		{name: "delete", title: "Remove files in the path", noRemote: true},
 		{name: "deletefile", title: "Remove the single file pointed to"},
 		{name: "copyurl", title: "Copy the URL to the object", help: "- url - string, URL to read from\n - autoFilename - boolean, set to true to retrieve destination file name from url\n"},
-		{name: "uploadfile", title: "Upload file using multiform/form-data", help: "- each part in body represents a file to be uploaded\n", needsRequest: true},
+		{name: "uploadfile", title: "Upload file using multiform/form-data", help: "- each part in body represents a file to be uploaded\n", needsRequest: true, noCommand: true},
 		{name: "cleanup", title: "Remove trashed files in the remote or path", noRemote: true},
 		{name: "settier", title: "Changes storage tier or class on all files in the path", noRemote: true},
-		{name: "settierfile", title: "Changes storage tier or class on the single file pointed to"},
+		{name: "settierfile", title: "Changes storage tier or class on the single file pointed to", noCommand: true},
 	} {
-		op := op
-		remote := "- remote - a path within that remote e.g. \"dir\"\n"
-		if op.noRemote {
-			remote = ""
+		var remote, command string
+		if !op.noRemote {
+			remote = "- remote - a path within that remote e.g. \"dir\"\n"
+		}
+		if !op.noCommand {
+			command = "See the [" + op.name + "](/commands/rclone_" + op.name + "/) command for more information on the above.\n"
 		}
 		rc.Add(rc.Call{
 			Path:         "operations/" + op.name,
@@ -232,9 +234,7 @@ func init() {
 			Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
-` + remote + op.help + `
-See the [` + op.name + `](/commands/rclone_` + op.name + `/) command for more information on the above.
-`,
+` + remote + op.help + "\n" + command,
 		})
 	}
 }

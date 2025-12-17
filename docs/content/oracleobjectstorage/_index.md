@@ -6,30 +6,36 @@ versionIntroduced: "v1.60"
 ---
 
 # {{< icon "fa fa-cloud" >}} Oracle Object Storage
-- [Oracle Object Storage Overview](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)
-- [Oracle Object Storage FAQ](https://www.oracle.com/cloud/storage/object-storage/faq/)
-- [Oracle Object Storage Limits](https://docs.oracle.com/en-us/iaas/Content/Resources/Assets/whitepapers/oci-object-storage-best-practices.pdf)
 
-Paths are specified as `remote:bucket` (or `remote:` for the `lsd` command.)  You may put subdirectories in 
-too, e.g. `remote:bucket/path/to/dir`.
+Object Storage provided by the Oracle Cloud Infrastructure (OCI).
+Read more at <oracle.com>:
+
+- [Oracle Object Storage Overview](https://docs.oracle.com/iaas/Content/Object/Concepts/objectstorageoverview.htm)
+- [Oracle Object Storage FAQ](https://www.oracle.com/cloud/storage/object-storage/faq/)
+
+Paths are specified as `remote:bucket` (or `remote:` for the `lsd` command).
+You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
 
 Sample command to transfer local artifacts to remote:bucket in oracle object storage:
 
-`rclone -vvv  --progress --stats-one-line --max-stats-groups 10 --log-format date,time,UTC,longfile --fast-list --buffer-size 256Mi --oos-no-check-bucket --oos-upload-cutoff 10Mi --multi-thread-cutoff 16Mi --multi-thread-streams 3000 --transfers 3000 --checkers 64  --retries 2  --oos-chunk-size 10Mi --oos-upload-concurrency 10000  --oos-attempt-resume-upload --oos-leave-parts-on-error sync ./artifacts  remote:bucket -vv`
+```console
+rclone -vvv  --progress --stats-one-line --max-stats-groups 10 --log-format date,time,UTC,longfile --fast-list --buffer-size 256Mi --oos-no-check-bucket --oos-upload-cutoff 10Mi --multi-thread-cutoff 16Mi --multi-thread-streams 3000 --transfers 3000 --checkers 64  --retries 2  --oos-chunk-size 10Mi --oos-upload-concurrency 10000  --oos-attempt-resume-upload --oos-leave-parts-on-error sync ./artifacts  remote:bucket -vv
+```
 
 ## Configuration
 
-Here is an example of making an oracle object storage configuration. `rclone config` walks you 
-through it.
+Here is an example of making an oracle object storage configuration. `rclone config`
+walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
-     rclone config
+```console
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-
-```
+```text
 n) New remote
 d) Delete remote
 r) Rename remote
@@ -133,121 +139,153 @@ y/e/d> y
 
 See all buckets
 
-    rclone lsd remote:
+```console
+rclone lsd remote:
+```
 
 Create a new bucket
 
-    rclone mkdir remote:bucket
+```console
+rclone mkdir remote:bucket
+```
 
 List the contents of a bucket
 
-    rclone ls remote:bucket
-    rclone ls remote:bucket --max-depth 1
+```console
+rclone ls remote:bucket
+rclone ls remote:bucket --max-depth 1
+```
 
-## Authentication Providers 
+## Authentication Providers
 
-OCI has various authentication methods. To learn more about authentication methods please refer [oci authentication 
-methods](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdk_authentication_methods.htm) 
+OCI has various authentication methods. To learn more about authentication methods
+please refer [oci authentication methods](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdk_authentication_methods.htm)
 These choices can be specified in the rclone config file.
 
 Rclone supports the following OCI authentication provider.
 
-    User Principal
-    Instance Principal
-    Resource Principal
-    Workload Identity
-    No authentication
+```text
+User Principal
+Instance Principal
+Resource Principal
+Workload Identity
+No authentication
+```
 
 ### User Principal
 
 Sample rclone config file for Authentication Provider User Principal:
 
-    [oos]
-    type = oracleobjectstorage
-    namespace = id<redacted>34
-    compartment = ocid1.compartment.oc1..aa<redacted>ba
-    region = us-ashburn-1
-    provider = user_principal_auth
-    config_file = /home/opc/.oci/config
-    config_profile = Default
+```ini
+[oos]
+type = oracleobjectstorage
+namespace = id<redacted>34
+compartment = ocid1.compartment.oc1..aa<redacted>ba
+region = us-ashburn-1
+provider = user_principal_auth
+config_file = /home/opc/.oci/config
+config_profile = Default
+```
 
 Advantages:
-- One can use this method from any server within OCI or on-premises or from other cloud provider.
+
+- One can use this method from any server within OCI or on-premises or from
+  other cloud provider.
 
 Considerations:
-- you need to configure user’s privileges / policy to allow access to object storage
+
+- you need to configure user’s privileges / policy to allow access to object
+  storage
 - Overhead of managing users and keys.
-- If the user is deleted, the config file will no longer work and may cause automation regressions that use the user's credentials.
+- If the user is deleted, the config file will no longer work and may cause
+  automation regressions that use the user's credentials.
 
-###  Instance Principal
+### Instance Principal
 
-An OCI compute instance can be authorized to use rclone by using it's identity and certificates as an instance principal. 
-With this approach no credentials have to be stored and managed.
+An OCI compute instance can be authorized to use rclone by using it's identity
+and certificates as an instance principal. With this approach no credentials
+have to be stored and managed.
 
 Sample rclone configuration file for Authentication Provider Instance Principal:
 
-    [opc@rclone ~]$ cat ~/.config/rclone/rclone.conf
-    [oos]
-    type = oracleobjectstorage
-    namespace = id<redacted>fn
-    compartment = ocid1.compartment.oc1..aa<redacted>k7a
-    region = us-ashburn-1
-    provider = instance_principal_auth
+```console
+[opc@rclone ~]$ cat ~/.config/rclone/rclone.conf
+[oos]
+type = oracleobjectstorage
+namespace = id<redacted>fn
+compartment = ocid1.compartment.oc1..aa<redacted>k7a
+region = us-ashburn-1
+provider = instance_principal_auth
+```
 
 Advantages:
 
-- With instance principals, you don't need to configure user credentials and transfer/ save it to disk in your compute 
-  instances or rotate the credentials.
+- With instance principals, you don't need to configure user credentials and
+  transfer/ save it to disk in your compute instances or rotate the credentials.
 - You don’t need to deal with users and keys.
-- Greatly helps in automation as you don't have to manage access keys, user private keys, storing them in vault, 
-  using kms etc.
+- Greatly helps in automation as you don't have to manage access keys, user
+  private keys, storing them in vault, using kms etc.
 
 Considerations:
 
-- You need to configure a dynamic group having this instance as member and add policy to read object storage to that 
-  dynamic group.
+- You need to configure a dynamic group having this instance as member and add
+  policy to read object storage to that dynamic group.
 - Everyone who has access to this machine can execute the CLI commands.
-- It is applicable for oci compute instances only. It cannot be used on external instance or resources.
+- It is applicable for oci compute instances only. It cannot be used on external
+  instance or resources.
 
 ### Resource Principal
 
-Resource principal auth is very similar to instance principal auth but used for resources that are not 
-compute instances such as [serverless functions](https://docs.oracle.com/en-us/iaas/Content/Functions/Concepts/functionsoverview.htm). 
-To use resource principal ensure Rclone process is started with these environment variables set in its process.
+Resource principal auth is very similar to instance principal auth but used for
+resources that are not  compute instances such as
+[serverless functions](https://docs.oracle.com/en-us/iaas/Content/Functions/Concepts/functionsoverview.htm).
+To use resource principal ensure Rclone process is started with these environment
+variables set in its process.
 
-    export OCI_RESOURCE_PRINCIPAL_VERSION=2.2
-    export OCI_RESOURCE_PRINCIPAL_REGION=us-ashburn-1
-    export OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM=/usr/share/model-server/key.pem
-    export OCI_RESOURCE_PRINCIPAL_RPST=/usr/share/model-server/security_token
+```console
+export OCI_RESOURCE_PRINCIPAL_VERSION=2.2
+export OCI_RESOURCE_PRINCIPAL_REGION=us-ashburn-1
+export OCI_RESOURCE_PRINCIPAL_PRIVATE_PEM=/usr/share/model-server/key.pem
+export OCI_RESOURCE_PRINCIPAL_RPST=/usr/share/model-server/security_token
+```
 
 Sample rclone configuration file for Authentication Provider Resource Principal:
 
-    [oos]
-    type = oracleobjectstorage
-    namespace = id<redacted>34
-    compartment = ocid1.compartment.oc1..aa<redacted>ba
-    region = us-ashburn-1
-    provider = resource_principal_auth
+```ini
+[oos]
+type = oracleobjectstorage
+namespace = id<redacted>34
+compartment = ocid1.compartment.oc1..aa<redacted>ba
+region = us-ashburn-1
+provider = resource_principal_auth
+```
 
 ### Workload Identity
-Workload Identity auth may be used when running Rclone from Kubernetes pod on a Container Engine for Kubernetes (OKE) cluster.
-For more details on configuring Workload Identity, see [Granting Workloads Access to OCI Resources](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm).
-To use workload identity, ensure Rclone is started with these environment variables set in its process.
 
-    export OCI_RESOURCE_PRINCIPAL_VERSION=2.2
-    export OCI_RESOURCE_PRINCIPAL_REGION=us-ashburn-1
+Workload Identity auth may be used when running Rclone from Kubernetes pod on
+a Container Engine for Kubernetes (OKE) cluster. For more details on configuring
+Workload Identity, see [Granting Workloads Access to OCI Resources](https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm).
+To use workload identity, ensure Rclone is started with these environment
+variables set in its process.
+
+```console
+export OCI_RESOURCE_PRINCIPAL_VERSION=2.2
+export OCI_RESOURCE_PRINCIPAL_REGION=us-ashburn-1
+```
 
 ### No authentication
 
 Public buckets do not require any authentication mechanism to read objects.
 Sample rclone configuration file for No authentication:
-    
-    [oos]
-    type = oracleobjectstorage
-    namespace = id<redacted>34
-    compartment = ocid1.compartment.oc1..aa<redacted>ba
-    region = us-ashburn-1
-    provider = no_auth
+
+```ini
+[oos]
+type = oracleobjectstorage
+namespace = id<redacted>34
+compartment = ocid1.compartment.oc1..aa<redacted>ba
+region = us-ashburn-1
+provider = no_auth
+```
 
 ### Modification times and hashes
 
@@ -256,10 +294,11 @@ The modification time is stored as metadata on the object as
 
 If the modification time needs to be updated rclone will attempt to perform a server
 side copy to update the modification if the object can be copied in a single part.
-In the case the object is larger than 5Gb, the object will be uploaded rather than copied.
+In the case the object is larger than 5Gb, the object will be uploaded rather than
+copied.
 
-Note that reading this from the object takes an additional `HEAD` request as the metadata
-isn't returned in object listings.
+Note that reading this from the object takes an additional `HEAD` request as the
+metadata isn't returned in object listings.
 
 The MD5 hash algorithm is supported.
 
@@ -293,7 +332,7 @@ throughput (16M would be sensible).  Increasing either of these will
 use more memory.  The default values are high enough to gain most of
 the possible performance without using too much memory.
 
-{{< rem autogenerated options start" - DO NOT EDIT - instead edit fs.RegInfo in backend/oracleobjectstorage/oracleobjectstorage.go then run make backenddocs" >}}
+<!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/oracleobjectstorage/oracleobjectstorage.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
 ### Standard options
 
 Here are the Standard options specific to oracleobjectstorage (Oracle Cloud Infrastructure Object Storage).
@@ -309,23 +348,23 @@ Properties:
 - Type:        string
 - Default:     "env_auth"
 - Examples:
-    - "env_auth"
-        - automatically pickup the credentials from runtime(env), first one to provide auth wins
-    - "user_principal_auth"
-        - use an OCI user and an API key for authentication.
-        - you’ll need to put in a config file your tenancy OCID, user OCID, region, the path, fingerprint to an API key.
-        - https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm
-    - "instance_principal_auth"
-        - use instance principals to authorize an instance to make API calls. 
-        - each instance has its own identity, and authenticates using the certificates that are read from instance metadata. 
-        - https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm
-    - "workload_identity_auth"
-        - use workload identity to grant OCI Container Engine for Kubernetes workloads policy-driven access to OCI resources using OCI Identity and Access Management (IAM).
-        - https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm
-    - "resource_principal_auth"
-        - use resource principals to make API calls
-    - "no_auth"
-        - no credentials needed, this is typically for reading public buckets
+  - "env_auth"
+    - automatically pickup the credentials from runtime(env), first one to provide auth wins
+  - "user_principal_auth"
+    - use an OCI user and an API key for authentication.
+    - you’ll need to put in a config file your tenancy OCID, user OCID, region, the path, fingerprint to an API key.
+    - https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm
+  - "instance_principal_auth"
+    - use instance principals to authorize an instance to make API calls. 
+    - each instance has its own identity, and authenticates using the certificates that are read from instance metadata. 
+    - https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm
+  - "workload_identity_auth"
+    - use workload identity to grant OCI Container Engine for Kubernetes workloads policy-driven access to OCI resources using OCI Identity and Access Management (IAM).
+    - https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm
+  - "resource_principal_auth"
+    - use resource principals to make API calls
+  - "no_auth"
+    - no credentials needed, this is typically for reading public buckets
 
 #### --oos-namespace
 
@@ -388,8 +427,8 @@ Properties:
 - Type:        string
 - Default:     "~/.oci/config"
 - Examples:
-    - "~/.oci/config"
-        - oci configuration file location
+  - "~/.oci/config"
+    - oci configuration file location
 
 #### --oos-config-profile
 
@@ -403,8 +442,8 @@ Properties:
 - Type:        string
 - Default:     "Default"
 - Examples:
-    - "Default"
-        - Use the default profile
+  - "Default"
+    - Use the default profile
 
 ### Advanced options
 
@@ -421,12 +460,12 @@ Properties:
 - Type:        string
 - Default:     "Standard"
 - Examples:
-    - "Standard"
-        - Standard storage tier, this is the default tier
-    - "InfrequentAccess"
-        - InfrequentAccess storage tier
-    - "Archive"
-        - Archive storage tier
+  - "Standard"
+    - Standard storage tier, this is the default tier
+  - "InfrequentAccess"
+    - InfrequentAccess storage tier
+  - "Archive"
+    - Archive storage tier
 
 #### --oos-upload-cutoff
 
@@ -638,8 +677,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
+  - ""
+    - None
 
 #### --oos-sse-customer-key
 
@@ -655,8 +694,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
+  - ""
+    - None
 
 #### --oos-sse-customer-key-sha256
 
@@ -671,8 +710,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
+  - ""
+    - None
 
 #### --oos-sse-kms-key-id
 
@@ -688,8 +727,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
+  - ""
+    - None
 
 #### --oos-sse-customer-algorithm
 
@@ -704,10 +743,10 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - None
-    - "AES256"
-        - AES256
+  - ""
+    - None
+  - "AES256"
+    - AES256
 
 #### --oos-description
 
@@ -720,13 +759,32 @@ Properties:
 - Type:        string
 - Required:    false
 
+### Metadata
+
+User metadata is stored as opc-meta- keys.
+
+Here are the possible system metadata items for the oracleobjectstorage backend.
+
+| Name | Help | Type | Example | Read Only |
+|------|------|------|---------|-----------|
+| opc-meta-atime | Time of last access | ISO 8601 | 2025-06-30T22:27:43-04:00 | N |
+| opc-meta-btime | Time of file birth (creation) | ISO 8601 | 2025-06-30T22:27:43-04:00 | N |
+| opc-meta-gid | Group ID of owner | decimal number | 500 | N |
+| opc-meta-mode | File type and mode | octal, unix style | 0100664 | N |
+| opc-meta-mtime | Time of last modification | ISO 8601 | 2025-06-30T22:27:43-04:00 | N |
+| opc-meta-uid | User ID of owner | decimal number | 500 | N |
+
+See the [metadata](/docs/#metadata) docs for more info.
+
 ## Backend commands
 
 Here are the commands specific to the oracleobjectstorage backend.
 
-Run them with
+Run them with:
 
-    rclone backend COMMAND remote:
+```console
+rclone backend COMMAND remote:
+```
 
 The help below will explain what arguments each command takes.
 
@@ -738,26 +796,35 @@ These can be run on a running backend using the rc command
 
 ### rename
 
-change the name of an object
+change the name of an object.
 
-    rclone backend rename remote: [options] [<arguments>+]
+```console
+rclone backend rename remote: [options] [<arguments>+]
+```
 
 This command can be used to rename a object.
 
-Usage Examples:
+Usage example:
 
-    rclone backend rename oos:bucket relative-object-path-under-bucket object-new-name
-
+```console
+rclone backend rename oos:bucket relative-object-path-under-bucket object-new-name
+```
 
 ### list-multipart-uploads
 
-List the unfinished multipart uploads
+List the unfinished multipart uploads.
 
-    rclone backend list-multipart-uploads remote: [options] [<arguments>+]
+```console
+rclone backend list-multipart-uploads remote: [options] [<arguments>+]
+```
 
 This command lists the unfinished multipart uploads in JSON format.
 
-    rclone backend list-multipart-uploads oos:bucket/path/to/object
+Usage example:
+
+```console
+rclone backend list-multipart-uploads oos:bucket/path/to/object
+```
 
 It returns a dictionary of buckets with values as lists of unfinished
 multipart uploads.
@@ -765,83 +832,100 @@ multipart uploads.
 You can call it with no bucket in which case it lists all bucket, with
 a bucket or with a bucket and path.
 
-    {
-      "test-bucket": [
-                {
-                        "namespace": "test-namespace",
-                        "bucket": "test-bucket",
-                        "object": "600m.bin",
-                        "uploadId": "51dd8114-52a4-b2f2-c42f-5291f05eb3c8",
-                        "timeCreated": "2022-07-29T06:21:16.595Z",
-                        "storageTier": "Standard"
-                }
-        ]
-
+```json
+{
+    "test-bucket": [
+        {
+            "namespace": "test-namespace",
+            "bucket": "test-bucket",
+            "object": "600m.bin",
+            "uploadId": "51dd8114-52a4-b2f2-c42f-5291f05eb3c8",
+            "timeCreated": "2022-07-29T06:21:16.595Z",
+            "storageTier": "Standard"
+        }
+    ]
+}
 
 ### cleanup
 
 Remove unfinished multipart uploads.
 
-    rclone backend cleanup remote: [options] [<arguments>+]
+```console
+rclone backend cleanup remote: [options] [<arguments>+]
+```
 
 This command removes unfinished multipart uploads of age greater than
 max-age which defaults to 24 hours.
 
-Note that you can use --interactive/-i or --dry-run with this command to see what
-it would do.
+Note that you can use --interactive/-i or --dry-run with this command to see
+what it would do.
 
-    rclone backend cleanup oos:bucket/path/to/object
-    rclone backend cleanup -o max-age=7w oos:bucket/path/to/object
+Usage examples:
+
+```console
+rclone backend cleanup oos:bucket/path/to/object
+rclone backend cleanup -o max-age=7w oos:bucket/path/to/object
+```
 
 Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
 
-
 Options:
 
-- "max-age": Max age of upload to delete
+- "max-age": Max age of upload to delete.
 
 ### restore
 
-Restore objects from Archive to Standard storage
+Restore objects from Archive to Standard storage.
 
-    rclone backend restore remote: [options] [<arguments>+]
+```console
+rclone backend restore remote: [options] [<arguments>+]
+```
 
-This command can be used to restore one or more objects from Archive to Standard storage.
+This command can be used to restore one or more objects from Archive to
+Standard storage.
 
-	Usage Examples:
+Usage examples:
 
-    rclone backend restore oos:bucket/path/to/directory -o hours=HOURS
-    rclone backend restore oos:bucket -o hours=HOURS
+```console
+rclone backend restore oos:bucket/path/to/directory -o hours=HOURS
+rclone backend restore oos:bucket -o hours=HOURS
+```
 
 This flag also obeys the filters. Test first with --interactive/-i or --dry-run flags
 
-	rclone --interactive backend restore --include "*.txt" oos:bucket/path -o hours=72
+```console
+rclone --interactive backend restore --include "*.txt" oos:bucket/path -o hours=72
+```
 
-All the objects shown will be marked for restore, then
+All the objects shown will be marked for restore, then:
 
-	rclone backend restore --include "*.txt" oos:bucket/path -o hours=72
+```console
+rclone backend restore --include "*.txt" oos:bucket/path -o hours=72
+```
 
-	It returns a list of status dictionaries with Object Name and Status
-	keys. The Status will be "RESTORED"" if it was successful or an error message
-	if not.
+It returns a list of status dictionaries with Object Name and Status keys.
+The Status will be "RESTORED"" if it was successful or an error message if not.
 
-	[
-		{
-			"Object": "test.txt"
-			"Status": "RESTORED",
-		},
-		{
-			"Object": "test/file4.txt"
-			"Status": "RESTORED",
-		}
-	]
-
+```json
+[
+    {
+        "Object": "test.txt"
+        "Status": "RESTORED",
+    },
+    {
+        "Object": "test/file4.txt"
+        "Status": "RESTORED",
+    }
+]
+```
 
 Options:
 
-- "hours": The number of hours for which this object will be restored. Default is 24 hrs.
+- "hours": The number of hours for which this object will be restored.
+Default is 24 hrs.
 
-{{< rem autogenerated options stop >}}
+<!-- autogenerated options stop -->
 
 ## Tutorials
+
 ### [Mounting Buckets](/oracleobjectstorage/tutorial_mount/)

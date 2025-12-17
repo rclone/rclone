@@ -13,9 +13,8 @@ Obscure password for use in the rclone config file.
 In the rclone config file, human-readable passwords are
 obscured. Obscuring them is done by encrypting them and writing them
 out in base64. This is **not** a secure way of encrypting these
-passwords as rclone can decrypt them - it is to prevent "eyedropping"
-- namely someone seeing a password in the rclone config file by
-accident.
+passwords as rclone can decrypt them - it is to prevent "eyedropping" -
+namely someone seeing a password in the rclone config file by accident.
 
 Many equally important things (like access tokens) are not obscured in
 the config file. However it is very hard to shoulder surf a 64
@@ -25,7 +24,9 @@ This command can also accept a password through STDIN instead of an
 argument by passing a hyphen as an argument. This will use the first
 line of STDIN as the password not including the trailing newline.
 
-    echo "secretpassword" | rclone obscure -
+```console
+echo "secretpassword" | rclone obscure -
+```
 
 If there is no data on STDIN to read, rclone obscure will default to
 obfuscating the hyphen itself.
@@ -48,5 +49,10 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

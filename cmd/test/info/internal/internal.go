@@ -36,7 +36,6 @@ var PositionList = []Position{PositionMiddle, PositionLeft, PositionRight}
 
 // ControlResult contains the result of a single character test
 type ControlResult struct {
-	Text       string `json:"-"`
 	WriteError map[Position]string
 	GetError   map[Position]string
 	InList     map[Position]Presence
@@ -95,7 +94,7 @@ func (e *Position) UnmarshalText(text []byte) error {
 	switch s := strings.ToLower(string(text)); s {
 	default:
 		*e = PositionNone
-		for _, p := range strings.Split(s, ",") {
+		for p := range strings.SplitSeq(s, ",") {
 			switch p {
 			case "left":
 				*e |= PositionLeft

@@ -77,7 +77,7 @@ func (conflictLoserChoices) Type() string {
 // ConflictLoserList is a list of --conflict-loser flag choices used in the help
 var ConflictLoserList = Opt.ConflictLoser.Help()
 
-func (b *bisyncRun) setResolveDefaults(ctx context.Context) error {
+func (b *bisyncRun) setResolveDefaults() error {
 	if b.opt.ConflictLoser == ConflictLoserSkip {
 		b.opt.ConflictLoser = ConflictLoserNumber
 	}
@@ -135,7 +135,7 @@ type namePair struct {
 	newName string
 }
 
-func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias string, renameSkipped, copy1to2, copy2to1 *bilib.Names, ds1, ds2 *deltaSet) error {
+func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias string, renameSkipped, copy1to2, copy2to1 *bilib.Names, ds1, ds2 *deltaSet) (err error) {
 	winningPath := 0
 	if b.opt.ConflictResolve != PreferNone {
 		winningPath = b.conflictWinner(ds1, ds2, file, alias)
@@ -197,7 +197,7 @@ func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias s
 	// note also that deletes and renames are mutually exclusive -- we never delete one path and rename the other.
 	if b.opt.ConflictLoser == ConflictLoserDelete && winningPath == 1 {
 		// delete 2, copy 1 to 2
-		err = b.delete(ctxMove, r.path2, path2, path1, b.fs2, 2, 1, renameSkipped)
+		err = b.delete(ctxMove, r.path2, path2, b.fs2, 2, renameSkipped)
 		if err != nil {
 			return err
 		}
@@ -207,7 +207,7 @@ func (b *bisyncRun) resolve(ctxMove context.Context, path1, path2, file, alias s
 		copy1to2.Add(r.path1.oldName)
 	} else if b.opt.ConflictLoser == ConflictLoserDelete && winningPath == 2 {
 		// delete 1, copy 2 to 1
-		err = b.delete(ctxMove, r.path1, path1, path2, b.fs1, 1, 2, renameSkipped)
+		err = b.delete(ctxMove, r.path1, path1, b.fs1, 1, renameSkipped)
 		if err != nil {
 			return err
 		}
@@ -261,15 +261,15 @@ func (ri *renamesInfo) getNames(is1to2 bool) (srcOldName, srcNewName, dstOldName
 func (b *bisyncRun) numerate(ctx context.Context, startnum int, file, alias string) int {
 	for i := startnum; i < math.MaxInt; i++ {
 		iStr := fmt.Sprint(i)
-		if !ls1.has(SuffixName(ctx, file, b.opt.ConflictSuffix1+iStr)) &&
-			!ls1.has(SuffixName(ctx, alias, b.opt.ConflictSuffix1+iStr)) &&
-			!ls2.has(SuffixName(ctx, file, b.opt.ConflictSuffix2+iStr)) &&
-			!ls2.has(SuffixName(ctx, alias, b.opt.ConflictSuffix2+iStr)) {
+		if !b.march.ls1.has(SuffixName(ctx, file, b.opt.ConflictSuffix1+iStr)) &&
+			!b.march.ls1.has(SuffixName(ctx, alias, b.opt.ConflictSuffix1+iStr)) &&
+			!b.march.ls2.has(SuffixName(ctx, file, b.opt.ConflictSuffix2+iStr)) &&
+			!b.march.ls2.has(SuffixName(ctx, alias, b.opt.ConflictSuffix2+iStr)) {
 			// make sure it still holds true with suffixes switched (it should)
-			if !ls1.has(SuffixName(ctx, file, b.opt.ConflictSuffix2+iStr)) &&
-				!ls1.has(SuffixName(ctx, alias, b.opt.ConflictSuffix2+iStr)) &&
-				!ls2.has(SuffixName(ctx, file, b.opt.ConflictSuffix1+iStr)) &&
-				!ls2.has(SuffixName(ctx, alias, b.opt.ConflictSuffix1+iStr)) {
+			if !b.march.ls1.has(SuffixName(ctx, file, b.opt.ConflictSuffix2+iStr)) &&
+				!b.march.ls1.has(SuffixName(ctx, alias, b.opt.ConflictSuffix2+iStr)) &&
+				!b.march.ls2.has(SuffixName(ctx, file, b.opt.ConflictSuffix1+iStr)) &&
+				!b.march.ls2.has(SuffixName(ctx, alias, b.opt.ConflictSuffix1+iStr)) {
 				fs.Debugf(file, "The first available suffix is: %s", iStr)
 				return i
 			}
@@ -280,10 +280,10 @@ func (b *bisyncRun) numerate(ctx context.Context, startnum int, file, alias stri
 
 // like numerate, but consider only one side's suffix (for when suffixes are different)
 func (b *bisyncRun) numerateSingle(ctx context.Context, startnum int, file, alias string, path int) int {
-	lsA, lsB := ls1, ls2
+	lsA, lsB := b.march.ls1, b.march.ls2
 	suffix := b.opt.ConflictSuffix1
 	if path == 2 {
-		lsA, lsB = ls2, ls1
+		lsA, lsB = b.march.ls2, b.march.ls1
 		suffix = b.opt.ConflictSuffix2
 	}
 	for i := startnum; i < math.MaxInt; i++ {
@@ -299,7 +299,7 @@ func (b *bisyncRun) numerateSingle(ctx context.Context, startnum int, file, alia
 	return 0 // not really possible, as no one has 9223372036854775807 conflicts, and if they do, they have bigger problems
 }
 
-func (b *bisyncRun) rename(ctx context.Context, thisNamePair namePair, thisPath, thatPath string, thisFs fs.Fs, thisPathNum, thatPathNum, winningPath int, q, renameSkipped *bilib.Names) error {
+func (b *bisyncRun) rename(ctx context.Context, thisNamePair namePair, thisPath, thatPath string, thisFs fs.Fs, thisPathNum, thatPathNum, winningPath int, q, renameSkipped *bilib.Names) (err error) {
 	if winningPath == thisPathNum {
 		b.indent(fmt.Sprintf("!Path%d", thisPathNum), thisPath+thisNamePair.newName, fmt.Sprintf("Not renaming Path%d copy, as it was determined the winner", thisPathNum))
 	} else {
@@ -321,7 +321,7 @@ func (b *bisyncRun) rename(ctx context.Context, thisNamePair namePair, thisPath,
 	return nil
 }
 
-func (b *bisyncRun) delete(ctx context.Context, thisNamePair namePair, thisPath, thatPath string, thisFs fs.Fs, thisPathNum, thatPathNum int, renameSkipped *bilib.Names) error {
+func (b *bisyncRun) delete(ctx context.Context, thisNamePair namePair, thisPath string, thisFs fs.Fs, thisPathNum int, renameSkipped *bilib.Names) (err error) {
 	skip := operations.SkipDestructive(ctx, thisNamePair.oldName, "delete")
 	if !skip {
 		b.indent(fmt.Sprintf("!Path%d", thisPathNum), thisPath+thisNamePair.oldName, fmt.Sprintf("Deleting Path%d copy", thisPathNum))
@@ -359,17 +359,17 @@ func (b *bisyncRun) conflictWinner(ds1, ds2 *deltaSet, remote1, remote2 string) 
 		return 2
 	case PreferNewer, PreferOlder:
 		t1, t2 := ds1.time[remote1], ds2.time[remote2]
-		return b.resolveNewerOlder(t1, t2, remote1, remote2, b.opt.ConflictResolve)
+		return b.resolveNewerOlder(t1, t2, remote1, b.opt.ConflictResolve)
 	case PreferLarger, PreferSmaller:
 		s1, s2 := ds1.size[remote1], ds2.size[remote2]
-		return b.resolveLargerSmaller(s1, s2, remote1, remote2, b.opt.ConflictResolve)
+		return b.resolveLargerSmaller(s1, s2, remote1, b.opt.ConflictResolve)
 	default:
 		return 0
 	}
 }
 
 // returns the winning path number, or 0 if winner can't be determined
-func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1, remote2 string, prefer Prefer) int {
+func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1 string, prefer Prefer) int {
 	if fs.GetModifyWindow(b.octx, b.fs1, b.fs2) == fs.ModTimeNotSupported {
 		fs.Infof(remote1, "Winner cannot be determined as at least one path lacks modtime support.")
 		return 0
@@ -380,31 +380,31 @@ func (b *bisyncRun) resolveNewerOlder(t1, t2 time.Time, remote1, remote2 string,
 	}
 	if t1.After(t2) {
 		if prefer == PreferNewer {
-			fs.Infof(remote1, "Path1 is newer. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t1.Sub(t2))
+			fs.Infof(remote1, "Path1 is newer. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t1.Sub(t2))
 			return 1
 		} else if prefer == PreferOlder {
-			fs.Infof(remote1, "Path2 is older. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t1.Sub(t2))
+			fs.Infof(remote1, "Path2 is older. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t1.Sub(t2))
 			return 2
 		}
 	} else if t1.Before(t2) {
 		if prefer == PreferNewer {
-			fs.Infof(remote1, "Path2 is newer. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t2.Sub(t1))
+			fs.Infof(remote1, "Path2 is newer. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
 			return 2
 		} else if prefer == PreferOlder {
-			fs.Infof(remote1, "Path1 is older. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t2.Sub(t1))
+			fs.Infof(remote1, "Path1 is older. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
 			return 1
 		}
 	}
 	if t1.Equal(t2) {
-		fs.Infof(remote1, "Winner cannot be determined as times are equal. Path1: %v, Path2: %v, Difference: %s", t1.Local(), t2.Local(), t2.Sub(t1))
+		fs.Infof(remote1, "Winner cannot be determined as times are equal. Path1: %v, Path2: %v, Difference: %s", t1.In(LogTZ), t2.In(LogTZ), t2.Sub(t1))
 		return 0
 	}
-	fs.Errorf(remote1, "Winner cannot be determined. Path1: %v, Path2: %v", t1.Local(), t2.Local()) // shouldn't happen unless prefer is of wrong type
+	fs.Errorf(remote1, "Winner cannot be determined. Path1: %v, Path2: %v", t1.In(LogTZ), t2.In(LogTZ)) // shouldn't happen unless prefer is of wrong type
 	return 0
 }
 
 // returns the winning path number, or 0 if winner can't be determined
-func (b *bisyncRun) resolveLargerSmaller(s1, s2 int64, remote1, remote2 string, prefer Prefer) int {
+func (b *bisyncRun) resolveLargerSmaller(s1, s2 int64, remote1 string, prefer Prefer) int {
 	if s1 < 0 || s2 < 0 {
 		fs.Infof(remote1, "Winner cannot be determined as at least one size is unknown. Path1: %v, Path2: %v", s1, s2)
 		return 0

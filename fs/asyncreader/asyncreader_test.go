@@ -150,13 +150,13 @@ func TestAsyncReaderSizes(t *testing.T) {
 
 	var texts [31]string
 	str := ""
-	all := ""
+	var all strings.Builder
 	for i := range len(texts) - 1 {
 		texts[i] = str + "\n"
-		all += texts[i]
+		all.WriteString(texts[i])
 		str += string(rune(i)%26 + 'a')
 	}
-	texts[len(texts)-1] = all
+	texts[len(texts)-1] = all.String()
 
 	for h := range len(texts) {
 		text := texts[h]
@@ -191,13 +191,13 @@ func TestAsyncReaderWriteTo(t *testing.T) {
 
 	var texts [31]string
 	str := ""
-	all := ""
+	var all strings.Builder
 	for i := range len(texts) - 1 {
 		texts[i] = str + "\n"
-		all += texts[i]
+		all.WriteString(texts[i])
 		str += string(rune(i)%26 + 'a')
 	}
-	texts[len(texts)-1] = all
+	texts[len(texts)-1] = all.String()
 
 	for h := range len(texts) {
 		text := texts[h]

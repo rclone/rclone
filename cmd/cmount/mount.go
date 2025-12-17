@@ -8,6 +8,7 @@ package cmount
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"os"
 	"runtime"
 	"time"
@@ -149,7 +150,11 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				errChan <- fmt.Errorf("mount failed: %v", r)
+				err := fmt.Errorf("mount failed: %v", r)
+				if strings.Contains(strings.ToLower(err.Error()), "cannot find winfsp") {
+					err = fmt.Errorf("%w\nHint: Install WinFsp from https://winfsp.dev/rel/", err)
+				}
+				errChan <- err
 			}
 		}()
 		var err error

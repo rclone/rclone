@@ -590,7 +590,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", err
 	}
 	bucket, bucketPath := f.split(remote)
-	return path.Join(f.opt.FrontEndpoint, "/download/", bucket, quotePath(bucketPath)), nil
+	return path.Join(f.opt.FrontEndpoint, "/download/", bucket, rest.URLPathEscapeAll(bucketPath)), nil
 }
 
 // Copy src to this remote using server-side copy operations.
@@ -622,7 +622,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 		"x-archive-auto-make-bucket": "1",
 		"x-archive-queue-derive":     "0",
 		"x-archive-keep-old-version": "0",
-		"x-amz-copy-source":          quotePath(path.Join("/", srcBucket, srcPath)),
+		"x-amz-copy-source":          rest.URLPathEscapeAll(path.Join("/", srcBucket, srcPath)),
 		"x-amz-metadata-directive":   "COPY",
 		"x-archive-filemeta-sha1":    srcObj.sha1,
 		"x-archive-filemeta-md5":     srcObj.md5,
@@ -778,7 +778,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	// make a GET request to (frontend)/download/:item/:path
 	opts := rest.Opts{
 		Method:  "GET",
-		Path:    path.Join("/download/", o.fs.root, quotePath(o.fs.opt.Enc.FromStandardPath(o.remote))),
+		Path:    path.Join("/download/", o.fs.root, rest.URLPathEscapeAll(o.fs.opt.Enc.FromStandardPath(o.remote))),
 		Options: optionsFixed,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1332,16 +1332,6 @@ func trimPathPrefix(s, prefix string, enc encoder.MultiEncoder) string {
 	}
 	prefix = enc.ToStandardPath(strings.TrimRight(prefix, "/"))
 	return enc.ToStandardPath(strings.TrimPrefix(s, prefix+"/"))
-}
-
-// mimics urllib.parse.quote() on Python; exclude / from url.PathEscape
-func quotePath(s string) string {
-	seg := strings.Split(s, "/")
-	newValues := []string{}
-	for _, v := range seg {
-		newValues = append(newValues, url.PathEscape(v))
-	}
-	return strings.Join(newValues, "/")
 }
 
 var (

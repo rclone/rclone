@@ -12,9 +12,9 @@ description: "Rclone Authors and Contributors"
 
 ## Contributors
 
-{{< rem `email addresses removed from here need to be added to
+<!-- email addresses removed from here need to be added to
 bin/.ignore-emails to make sure update-authors.py doesn't immediately
-put them back in again.` >}}
+put them back in again. -->
 
 - Alex Couper <amcouper@gmail.com>
 - Leonid Shalupov <leonid@shalupov.com> <shalupov@diverse.org.ru>
@@ -990,7 +990,7 @@ put them back in again.` >}}
 - Ross Smith II <ross@smithii.com>
 - Vikas Bhansali <64532198+vibhansa-msft@users.noreply.github.com>
 - Sudipto Baral <sudiptobaral.me@gmail.com>
-- Sam Pegg <samrpegg@gmail.com>
+- Sam Pegg <samrpegg@gmail.com> <70067376+S-Pegg1@users.noreply.github.com>
 - liubingrun <liubr1@chinatelecom.cn>
 - Albin Parou <fumesover@gmail.com>
 - n4n5 <56606507+Its-Just-Nans@users.noreply.github.com>
@@ -998,3 +998,63 @@ put them back in again.` >}}
 - houance <45840516+houance@users.noreply.github.com>
 - Yu Xin <3188+is@users.noreply.github.com>
 - Antonin Goude <antonin.goude@ovhcloud.com>
+- Timothy Jacobs <timothy@ironbounddesigns.com>
+- praveen-solanki-oracle <praveen.solanki@oracle.com>
+- huangnauh <huanglibo2010@gmail.com>
+- Lucas Bremgartner <breml@users.noreply.github.com>
+- Binbin Qian <qianbinbin@hotmail.com>
+- cui <523516579@qq.com>
+- Tilman Vogel <tilman.vogel@web.de>
+- skbeh <60107333+skbeh@users.noreply.github.com>
+- Claudius Ellsel <claudius.ellsel@live.de>
+- Motte <37443982+dmotte@users.noreply.github.com>
+- dougal <dougal.craigwood@gmail.com> <147946567+roucc@users.noreply.github.com>
+- anon-pradip <pradipsubedi360@gmail.com>
+- Robin Rolf <imer@imer.cc>
+- Jean-Christophe Cura <jcaspes@gmail.com>
+- russcoss <russcoss@outlook.com>
+- Matt LaPaglia <mlapaglia@gmail.com>
+- Youfu Zhang <1315097+zhangyoufu@users.noreply.github.com>
+- juejinyuxitu <juejinyuxitu@outlook.com>
+- iTrooz <hey@itrooz.fr>
+- Microscotch <github.com@microscotch.net>
+- Andrew Ruthven <andrew@etc.gen.nz>
+- spiffytech <git@spiffy.tech>
+- Dulani Woods <Dulani@gmail.com>
+- Marco Ferretti <mferretti93@gmail.com>
+- hunshcn <hunsh.cn@gmail.com>
+- vastonus <vastonus@outlook.com>
+- Oleksandr Redko <oleksandr.red+github@gmail.com>
+- reddaisyy <reddaisy@outlook.jp>
+- viocha <viocha@qq.com>
+- Aneesh Agrawal <aneesh@anthropic.com>
+- divinity76 <hans@loltek.net>
+- Andrew Gunnerson <accounts+github@chiller3.com>
+- Lakshmi-Surekha <Lakshmi.Kovvuri@ibm.com>
+- dulanting <dulanting@outlook.jp>
+- Adam Dinwoodie <me-and@users.noreply.github.com>
+- Lukas Krejci <metlos@users.noreply.github.com>
+- Riaz Arbi <riazarbi@users.noreply.github.com>
+- Fawzib Rojas <fawzib.rojas@gmail.com>
+- fries1234 <fries1234@protonmail.com>
+- Joseph Brownlee <39440458+JellyJoe198@users.noreply.github.com>
+- Ted Robertson <10043369+tredondo@users.noreply.github.com>
+- SublimePeace <184005903+SublimePeace@users.noreply.github.com>
+- Copilot <198982749+Copilot@users.noreply.github.com>
+- Alex <64072843+A1ex3@users.noreply.github.com>
+- n4n5 <its.just.n4n5@gmail.com>
+- aliaj1 <ali19961@gmail.com>
+- Sean Turner <30396892+seanturner026@users.noreply.github.com>
+- jijamik <30904953+jijamik@users.noreply.github.com>
+- Dominik Sander <git@dsander.de>
+- Nikolay Kiryanov <nikolay@kiryanov.ru>
+- Diana <5275194+DianaNites@users.noreply.github.com>
+- Duncan Smart <duncan.smart@gmail.com>
+- vicerace <vicerace@sohu.com>
+- Cliff Frey <cliff@openai.com>
+- Vladislav Tropnikov <vtr.name@gmail.com>
+- Leo <i@hardrain980.com>
+- Johannes Rothe <mail@johannes-rothe.de>
+- Tingsong Xu <tingsong.xu@rightcapital.com>
+- Jonas Tingeborn <134889+jojje@users.noreply.github.com>
+- jhasse-shade <jacob@shade.inc>

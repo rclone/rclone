@@ -7,5 +7,5 @@ package config
 
 // ReadPassword reads a password with echoing it to the terminal.
 func ReadPassword() string {
-	return ReadLine()
+	return ReadLine("")
 }

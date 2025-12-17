@@ -1508,8 +1508,30 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 	}
 	if new.File == nil {
 		return nil, fmt.Errorf("invalid response: %+v", new)
-	} else if new.File.Phase == api.PhaseTypeComplete {
-		// early return; in case of zero-byte objects
+	}
+
+	defer atexit.OnError(&err, func() {
+		fs.Debugf(leaf, "canceling upload: %v", err)
+		if cancelErr := f.deleteObjects(ctx, []string{new.File.ID}, false); cancelErr != nil {
+			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
+		}
+		if new.Task != nil {
+			if cancelErr := f.deleteTask(ctx, new.Task.ID, false); cancelErr != nil {
+				fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
+			}
+			fs.Debugf(leaf, "waiting %v for the cancellation to be effective", taskWaitTime)
+			time.Sleep(taskWaitTime)
+		}
+	})()
+
+	// Note: The API might automatically append a numbered suffix to the filename,
+	// even if a file with the same name does not exist in the target directory.
+	if upName := f.opt.Enc.ToStandardName(new.File.Name); leaf != upName {
+		return nil, fserrors.NoRetryError(fmt.Errorf("uploaded file name mismatch: expected %q, got %q", leaf, upName))
+	}
+
+	// early return; in case of zero-byte objects or uploaded by matched gcid
+	if new.File.Phase == api.PhaseTypeComplete {
 		if acc, ok := in.(*accounting.Account); ok && acc != nil {
 			// if `in io.Reader` is still in type of `*accounting.Account` (meaning that it is unused)
 			// it is considered as a server side copy as no incoming/outgoing traffic occur at all
@@ -1518,18 +1540,6 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 		}
 		return new.File, nil
 	}
-
-	defer atexit.OnError(&err, func() {
-		fs.Debugf(leaf, "canceling upload: %v", err)
-		if cancelErr := f.deleteObjects(ctx, []string{new.File.ID}, false); cancelErr != nil {
-			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
-		}
-		if cancelErr := f.deleteTask(ctx, new.Task.ID, false); cancelErr != nil {
-			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
-		}
-		fs.Debugf(leaf, "waiting %v for the cancellation to be effective", taskWaitTime)
-		time.Sleep(taskWaitTime)
-	})()
 
 	if uploadType == api.UploadTypeForm && new.Form != nil {
 		err = f.uploadByForm(ctx, in, req.Name, size, new.Form, options...)
@@ -1541,6 +1551,9 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload: %w", err)
+	}
+	if new.Task == nil {
+		return new.File, nil
 	}
 	return new.File, f.waitTask(ctx, new.Task.ID)
 }
@@ -1665,39 +1678,43 @@ func (f *Fs) decompressDir(ctx context.Context, filename, id, password string, s
 
 var commandHelp = []fs.CommandHelp{{
 	Name:  "addurl",
-	Short: "Add offline download task for url",
+	Short: "Add offline download task for url.",
 	Long: `This command adds offline download task for url.
 
-Usage:
+Usage example:
 
-    rclone backend addurl pikpak:dirpath url
+` + "```console" + `
+rclone backend addurl pikpak:dirpath url
+` + "```" + `
 
-Downloads will be stored in 'dirpath'. If 'dirpath' is invalid, 
-download will fallback to default 'My Pack' folder.
-`,
+Downloads will be stored in 'dirpath'. If 'dirpath' is invalid,
+download will fallback to default 'My Pack' folder.`,
 }, {
 	Name:  "decompress",
-	Short: "Request decompress of a file/files in a folder",
+	Short: "Request decompress of a file/files in a folder.",
 	Long: `This command requests decompress of file/files in a folder.
 
-Usage:
+Usage examples:
 
-    rclone backend decompress pikpak:dirpath {filename} -o password=password
-    rclone backend decompress pikpak:dirpath {filename} -o delete-src-file
+` + "```console" + `
+rclone backend decompress pikpak:dirpath {filename} -o password=password
+rclone backend decompress pikpak:dirpath {filename} -o delete-src-file
+` + "```" + `
 
-An optional argument 'filename' can be specified for a file located in 
-'pikpak:dirpath'. You may want to pass '-o password=password' for a 
-password-protected files. Also, pass '-o delete-src-file' to delete 
+An optional argument 'filename' can be specified for a file located in
+'pikpak:dirpath'. You may want to pass '-o password=password' for a
+password-protected files. Also, pass '-o delete-src-file' to delete
 source files after decompression finished.
 
 Result:
 
-    {
-        "Decompressed": 17,
-        "SourceDeleted": 0,
-        "Errors": 0
-    }
-`,
+` + "```json" + `
+{
+    "Decompressed": 17,
+    "SourceDeleted": 0,
+    "Errors": 0
+}
+` + "```",
 }}
 
 // Command the backend to run a named command

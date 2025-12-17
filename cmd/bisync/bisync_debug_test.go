@@ -98,7 +98,7 @@ func (b *bisyncTest) generateDebuggers() {
 	}
 
 	variations := []string{"LocalRemote", "RemoteLocal", "RemoteRemote"}
-	debuggers := ""
+	var debuggers strings.Builder
 
 	for _, backend := range config.Backends {
 		if backend.Remote == "" {
@@ -113,17 +113,17 @@ func (b *bisyncTest) generateDebuggers() {
 				name := fmt.Sprintf("Test %s %s %s", backend.Remote, testcase, variation)
 				switch variation {
 				case "LocalRemote":
-					debuggers += fmt.Sprintf(debugFormat, name, "local", backend.Remote, testcase)
+					debuggers.WriteString(fmt.Sprintf(debugFormat, name, "local", backend.Remote, testcase))
 				case "RemoteLocal":
-					debuggers += fmt.Sprintf(debugFormat, name, backend.Remote, "local", testcase)
+					debuggers.WriteString(fmt.Sprintf(debugFormat, name, backend.Remote, "local", testcase))
 				case "RemoteRemote":
-					debuggers += fmt.Sprintf(debugFormat, name, backend.Remote, backend.Remote, testcase)
+					debuggers.WriteString(fmt.Sprintf(debugFormat, name, backend.Remote, backend.Remote, testcase))
 				}
 			}
 		}
 	}
 
-	out := fmt.Sprintf(docFormat, debuggers)
+	out := fmt.Sprintf(docFormat, debuggers.String())
 	outpath := "./testdata/bisync_vscode_debuggers_launch.json"
 	err = os.WriteFile(outpath, []byte(out), bilib.PermSecure)
 	assert.NoError(b.t, err, "writing golden file %s", outpath)

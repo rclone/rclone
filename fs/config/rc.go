@@ -20,7 +20,7 @@ Unlocks the config file if it is locked.
 
 Parameters:
 
-- 'config_password' - password to unlock the config file
+- 'configPassword' - password to unlock the config file
 
 A good idea is to disable AskPassword before making this call
 `,
@@ -30,9 +30,13 @@ A good idea is to disable AskPassword before making this call
 // Unlock the config file
 // A good idea is to disable AskPassword before making this call
 func rcConfigPassword(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	configPass, err := in.GetString("config_password")
+	configPass, err := in.GetString("configPassword")
 	if err != nil {
-		return nil, err
+		var err2 error
+		configPass, err2 = in.GetString("config_password") // backwards compat
+		if err2 != nil {
+			return nil, err
+		}
 	}
 	if SetConfigPassword(configPass) != nil {
 		return nil, errors.New("failed to set config password")
@@ -145,7 +149,6 @@ func rcProviders(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 func init() {
 	for _, name := range []string{"create", "update", "password"} {
-		name := name
 		extraHelp := ""
 		if name == "create" {
 			extraHelp = "- type - type of the new remote\n"

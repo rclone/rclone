@@ -3,6 +3,7 @@ package config_test
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
@@ -19,6 +20,12 @@ const testName = "configTestNameForRc"
 
 func TestRc(t *testing.T) {
 	ctx := context.Background()
+	oldConfigFile := config.GetConfigPath()
+	defer func() {
+		require.NoError(t, config.SetConfigPath(oldConfigFile))
+	}()
+	// Set a temporary config file
+	require.NoError(t, config.SetConfigPath(filepath.Join(t.TempDir(), "rclone.conf")))
 	configfile.Install()
 	// Create the test remote
 	call := rc.Calls.Get("config/create")
@@ -208,13 +215,26 @@ func TestRcPaths(t *testing.T) {
 func TestRcConfigUnlock(t *testing.T) {
 	call := rc.Calls.Get("config/unlock")
 	assert.NotNil(t, call)
+
 	in := rc.Params{
-		"config_password": "test",
+		"configPassword": "test",
 	}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
-
-	assert.Nil(t, err)
 	assert.Nil(t, out)
 
+	in = rc.Params{
+		"config_password": "test",
+	}
+	out, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	assert.Nil(t, out)
+
+	in = rc.Params{
+		"bad_config_password": "test",
+	}
+	out, err = call.Fn(context.Background(), in)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, `Didn't find key "configPassword" in input`)
+	assert.Nil(t, out)
 }

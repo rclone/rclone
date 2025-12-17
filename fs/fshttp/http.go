@@ -6,6 +6,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -18,7 +20,9 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/lib/structs"
+	"github.com/youmark/pkcs8"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -28,7 +32,7 @@ const (
 )
 
 var (
-	transport    http.RoundTripper
+	transport    *Transport
 	noTransport  = new(sync.Once)
 	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	logMutex     sync.Mutex
@@ -48,10 +52,160 @@ func ResetTransport() {
 	noTransport = new(sync.Once)
 }
 
+// LoadKeyPair loads a TLS certificate and private key from PEM-encoded files,
+// with extended support for encrypted private keys.
+//
+// This function is designed as a robust replacement for tls.X509KeyPair,
+// providing the same core functionality but adding support for
+// password-protected private keys.
+//
+// The certificate file (certFile) must contain one or more PEM-encoded
+// certificates. The first certificate is treated as the leaf certificate, and
+// any subsequent certificates are treated as its chain.
+//
+// The key file (keyFile) must contain a PEM-encoded private key. Supported
+// formats are:
+//
+//   - Unencrypted PKCS#1 ("BEGIN RSA PRIVATE KEY")
+//   - Unencrypted PKCS#8 ("BEGIN PRIVATE KEY")
+//   - Encrypted PKCS#8 ("BEGIN ENCRYPTED PRIVATE KEY")
+//   - Legacy PEM encryption (e.g., DEK-Info headers), which are automatically detected.
+//
+// The password parameter is used to decrypt the private key. If the
+// key is not encrypted, this parameter is ignored and can be an empty
+// string. The password should be an obscured string.
+//
+// On success, it returns a fully populated tls.Certificate struct, including the
+// Leaf certificate field.
+func LoadKeyPair(certFile, keyFile, password string) (cert tls.Certificate, err error) {
+	certPEM, err := os.ReadFile(certFile)
+	if err != nil {
+		return cert, fmt.Errorf("read cert: %w", err)
+	}
+	keyPEM, err := os.ReadFile(keyFile)
+	if err != nil {
+		return cert, fmt.Errorf("read key: %w", err)
+	}
+	if password != "" {
+		password, err = obscure.Reveal(password)
+		if err != nil {
+			return cert, fmt.Errorf("reveal key password: %w", err)
+		}
+	}
+
+	// Fast path: unencrypted PKCS#1/PKCS#8
+	cert, err = tls.X509KeyPair(certPEM, keyPEM)
+	if err == nil {
+		if len(cert.Certificate) == 0 {
+			return cert, errors.New("no certificates parsed")
+		}
+		leaf, err := x509.ParseCertificate(cert.Certificate[0])
+		if err != nil {
+			return cert, fmt.Errorf("parse leaf: %w", err)
+		}
+		cert.Leaf = leaf
+		return cert, nil
+	}
+
+	// Decrypt / parse key manually
+	block, rest := pem.Decode(keyPEM)
+	if block == nil {
+		return cert, errors.New("no PEM block in key")
+	}
+	if len(rest) != 0 {
+		fs.Debugf(nil, "Trailing data (%d bytes) in key PEM loaded from %q", len(rest), keyFile)
+	}
+
+	var privKey any
+	switch {
+	case block.Type == "ENCRYPTED PRIVATE KEY":
+		if password == "" {
+			return cert, errors.New("key is encrypted but no --client-pass provided")
+		}
+		privKey, err = pkcs8.ParsePKCS8PrivateKey(block.Bytes, []byte(password))
+		if err != nil {
+			return cert, fmt.Errorf("parse encrypted PKCS#8: %w", err)
+		}
+
+	case x509.IsEncryptedPEMBlock(block): //nolint:staticcheck // this is Legacy and insecure
+		if password == "" {
+			return cert, errors.New("key is encrypted but no --client-pass provided")
+		}
+		der, err := x509.DecryptPEMBlock(block, []byte(password)) //nolint:staticcheck // this is Legacy and insecure
+		if err != nil {
+			return cert, fmt.Errorf("decrypt PEM key: %w", err)
+		}
+		// Try PKCS#8, then RSA PKCS#1, then EC
+		if k, kerr1 := x509.ParsePKCS8PrivateKey(der); kerr1 == nil {
+			privKey = k
+		} else if k, kerr2 := x509.ParsePKCS1PrivateKey(der); kerr2 == nil {
+			privKey = k
+		} else if k, kerr3 := x509.ParseECPrivateKey(der); kerr3 == nil {
+			privKey = k
+		} else {
+			return cert, fmt.Errorf("parse decrypted key: pkcs8: %v, pkcs1: %v, ec: %v", kerr1, kerr2, kerr3)
+		}
+
+	default:
+		// Unencrypted specific types
+		switch block.Type {
+		case "PRIVATE KEY":
+			k, kerr := x509.ParsePKCS8PrivateKey(block.Bytes)
+			if kerr != nil {
+				return cert, fmt.Errorf("parse PKCS#8: %w", kerr)
+			}
+			privKey = k
+		case "RSA PRIVATE KEY":
+			k, kerr := x509.ParsePKCS1PrivateKey(block.Bytes)
+			if kerr != nil {
+				return cert, fmt.Errorf("parse PKCS#1 RSA: %w", kerr)
+			}
+			privKey = k
+		case "EC PRIVATE KEY":
+			k, kerr := x509.ParseECPrivateKey(block.Bytes)
+			if kerr != nil {
+				return cert, fmt.Errorf("parse EC: %w", kerr)
+			}
+			privKey = k
+		default:
+			return cert, fmt.Errorf("unsupported key type %q", block.Type)
+		}
+	}
+
+	// Build cert chain from PEM
+	var certDERs [][]byte
+	for rest := certPEM; ; {
+		var b *pem.Block
+		b, rest = pem.Decode(rest)
+		if b == nil {
+			break
+		}
+		if b.Type == "CERTIFICATE" {
+			certDERs = append(certDERs, b.Bytes)
+		}
+	}
+	if len(certDERs) == 0 {
+		return cert, fmt.Errorf("no CERTIFICATE blocks in %s", certFile)
+	}
+
+	cert = tls.Certificate{
+		Certificate: certDERs,
+		PrivateKey:  privKey,
+	}
+
+	// Leaf is always the first certificate
+	cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		return cert, fmt.Errorf("parse leaf: %w", err)
+	}
+
+	return cert, nil
+}
+
 // NewTransportCustom returns an http.RoundTripper with the correct timeouts.
 // The customize function is called if set to give the caller an opportunity to
 // customize any defaults in the Transport.
-func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) http.RoundTripper {
+func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) *Transport {
 	ci := fs.GetConfig(ctx)
 	// Start with a sensible set of defaults then override.
 	// This also means we get new stuff when it gets added to go
@@ -85,16 +239,9 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 		if ci.ClientCert == "" || ci.ClientKey == "" {
 			fs.Fatalf(nil, "Both --client-cert and --client-key must be set")
 		}
-		cert, err := tls.LoadX509KeyPair(ci.ClientCert, ci.ClientKey)
+		cert, err := LoadKeyPair(ci.ClientCert, ci.ClientKey, ci.ClientPass)
 		if err != nil {
 			fs.Fatalf(nil, "Failed to load --client-cert/--client-key pair: %v", err)
-		}
-		if cert.Leaf == nil {
-			// Leaf is always the first certificate
-			cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
-			if err != nil {
-				fs.Fatalf(nil, "Failed to parse the certificate")
-			}
 		}
 		t.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
@@ -145,7 +292,7 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 }
 
 // NewTransport returns an http.RoundTripper with the correct timeouts
-func NewTransport(ctx context.Context) http.RoundTripper {
+func NewTransport(ctx context.Context) *Transport {
 	(*noTransport).Do(func() {
 		transport = NewTransportCustom(ctx, nil)
 	})
@@ -187,14 +334,12 @@ func NewClientWithUnixSocket(ctx context.Context, path string) *http.Client {
 // * Updates metrics
 type Transport struct {
 	*http.Transport
+	ci            *fs.ConfigInfo
 	dump          fs.DumpFlags
 	filterRequest func(req *http.Request)
 	userAgent     string
 	headers       []*fs.HTTPOption
 	metrics       *Metrics
-	// Filename of the client cert in case we need to reload it
-	clientCert string
-	clientKey  string
 	// Mutex for serializing attempts at reloading the certificates
 	reloadMutex sync.Mutex
 }
@@ -203,13 +348,12 @@ type Transport struct {
 // roundtrips including the body if logBody is set.
 func newTransport(ci *fs.ConfigInfo, transport *http.Transport) *Transport {
 	return &Transport{
-		Transport:  transport,
-		dump:       ci.Dump,
-		userAgent:  ci.UserAgent,
-		headers:    ci.Headers,
-		metrics:    DefaultMetrics,
-		clientCert: ci.ClientCert,
-		clientKey:  ci.ClientKey,
+		Transport: transport,
+		ci:        ci,
+		dump:      ci.Dump,
+		userAgent: ci.UserAgent,
+		headers:   ci.Headers,
+		metrics:   DefaultMetrics,
 	}
 }
 
@@ -309,19 +453,9 @@ func (t *Transport) reloadCertificates() {
 	if !isCertificateExpired(t.TLSClientConfig) {
 		return
 	}
-
-	cert, err := tls.LoadX509KeyPair(t.clientCert, t.clientKey)
+	cert, err := LoadKeyPair(t.ci.ClientCert, t.ci.ClientKey, t.ci.ClientPass)
 	if err != nil {
 		fs.Fatalf(nil, "Failed to load --client-cert/--client-key pair: %v", err)
-	}
-	// Check if we need to parse the certificate again, we need it
-	// for checking the expiration date
-	if cert.Leaf == nil {
-		// Leaf is always the first certificate
-		cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
-		if err != nil {
-			fs.Fatalf(nil, "Failed to parse the certificate")
-		}
 	}
 	t.TLSClientConfig.Certificates = []tls.Certificate{cert}
 }

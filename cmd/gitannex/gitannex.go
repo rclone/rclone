@@ -539,7 +539,7 @@ var command = &cobra.Command{
 	Aliases: []string{uniqueCommandName},
 	Use:     subcommandName,
 	Short:   "Speaks with git-annex over stdin/stdout.",
-	Long:    gitannexHelp,
+	Long:    strings.TrimSpace(gitannexHelp),
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.67.0",
 	},

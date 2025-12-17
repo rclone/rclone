@@ -400,7 +400,7 @@ type quirks struct {
 }
 
 func (q *quirks) parseQuirks(option string) {
-	for _, flag := range strings.Split(option, ",") {
+	for flag := range strings.SplitSeq(option, ",") {
 		switch strings.ToLower(strings.TrimSpace(flag)) {
 		case "binlist":
 			// The official client sometimes uses a so called "bin" protocol,
@@ -1770,7 +1770,7 @@ func (f *Fs) parseSpeedupPatterns(patternString string) (err error) {
 	f.speedupAny = false
 	uniqueValidPatterns := make(map[string]any)
 
-	for _, pattern := range strings.Split(patternString, ",") {
+	for pattern := range strings.SplitSeq(patternString, ",") {
 		pattern = strings.ToLower(strings.TrimSpace(pattern))
 		if pattern == "" {
 			continue

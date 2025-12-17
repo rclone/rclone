@@ -12,8 +12,10 @@ Copies standard input to file on remote.
 
 Reads from standard input (stdin) and copies it to a single remote file.
 
-    echo "hello world" | rclone rcat remote:path/to/file
-    ffmpeg - | rclone rcat remote:path/to/file
+```console
+echo "hello world" | rclone rcat remote:path/to/file
+ffmpeg - | rclone rcat remote:path/to/file
+```
 
 If the remote file already exists, it will be overwritten.
 
@@ -58,7 +60,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Important flags useful for most commands
 
-```
+```text
   -n, --dry-run         Do a trial run with no permanent changes
   -i, --interactive     Enable interactive mode
   -v, --verbose count   Print lots more stuff (repeat for more)
@@ -66,5 +68,10 @@ Important flags useful for most commands
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

@@ -149,9 +149,9 @@ uses) to make things easy for users. However this does not provide
 absolute control over the matching, so for advanced users rclone also
 provides a regular expression syntax.
 
-The regular expressions used are as defined in the [Go regular
-expression reference](https://golang.org/pkg/regexp/syntax/). Regular
-expressions should be enclosed in `{{` `}}`. They will match only the
+Rclone generally accepts Perl-style regular expressions, the exact syntax
+is defined in the [Go regular expression reference](https://golang.org/pkg/regexp/syntax/).
+Regular expressions should be enclosed in `{{` `}}`. They will match only the
 last path segment if the glob doesn't start with `/` or the whole path
 name if it does. Note that rclone does not attempt to parse the
 supplied regular expression, meaning that using any regular expression
@@ -468,14 +468,14 @@ E.g. `rclone ls remote: --include "*.{png,jpg}"` lists the files on
 E.g. multiple rclone copy commands can be combined with `--include` and a
 pattern-list.
 
-```sh
+```console
 rclone copy /vol1/A remote:A
 rclone copy /vol1/B remote:B
 ```
 
 is equivalent to:
 
-```sh
+```console
 rclone copy /vol1 remote: --include "{A,B}/**"
 ```
 
@@ -677,7 +677,7 @@ user2/prefect
 
 Then copy these to a remote:
 
-```sh
+```console
 rclone copy --files-from files-from.txt /home remote:backup
 ```
 
@@ -699,7 +699,7 @@ Alternatively if `/` is chosen as root `files-from.txt` will be:
 
 The copy command will be:
 
-```sh
+```console
 rclone copy --files-from files-from.txt / remote:backup
 ```
 
@@ -805,7 +805,7 @@ useful for:
 
 The flag takes two parameters expressed as a fraction:
 
-```sh
+```text
 --hash-filter K/N
 ```
 
@@ -824,7 +824,7 @@ Each partition is non-overlapping, ensuring all files are covered without duplic
 
 Use `@` as `K` to randomly select a partition:
 
-```sh
+```text
 --hash-filter @/M
 ```
 
@@ -854,7 +854,7 @@ This will stay constant across retries.
 
 Assuming the current directory contains `file1.jpg` through `file9.jpg`:
 
-```sh
+```console
 $ rclone lsf --hash-filter 0/4 .
 file1.jpg
 file5.jpg
@@ -879,13 +879,13 @@ file5.jpg
 
 ##### Syncing the first quarter of files
 
-```sh
+```console
 rclone sync --hash-filter 1/4 source:path destination:path
 ```
 
 ##### Checking a random 1% of files for integrity
 
-```sh
+```console
 rclone check --download --hash-filter @/100 source:path destination:path
 ```
 
@@ -901,7 +901,7 @@ on the destination which are excluded from the command.
 
 E.g. the scope of `rclone sync --interactive A: B:` can be restricted:
 
-```sh
+```console
 rclone --min-size 50k --delete-excluded sync A: B:
 ```
 
@@ -950,13 +950,13 @@ expressions](#regexp).
 For example if you wished to list only local files with a mode of
 `100664` you could do that with:
 
-```sh
+```console
 rclone lsf -M --files-only --metadata-include "mode=100664" .
 ```
 
 Or if you wished to show files with an `atime`, `mtime` or `btime` at a given date:
 
-```sh
+```console
 rclone lsf -M --files-only --metadata-include "[abm]time=2022-12-16*" .
 ```
 
