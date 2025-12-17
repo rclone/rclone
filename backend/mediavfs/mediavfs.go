@@ -427,7 +427,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 					size_bytes,
 					utc_timestamp
 				FROM %s
-				WHERE user_name = $1
+				WHERE user_name = $2
 				  AND path LIKE '%%/%%'
 				ORDER BY split_part(path, '/', 1), utc_timestamp DESC
 			)
