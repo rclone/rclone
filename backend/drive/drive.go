@@ -2208,6 +2208,8 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return err
 	}
 	directoryID = actualID(directoryID)
+	visited := sync.Map{}
+	visited.Store(directoryID, true)
 
 	mu := sync.Mutex{} // protects in and overflow
 	wg := sync.WaitGroup{}
@@ -2239,8 +2241,14 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	// Send the entry to the caller, queueing any directories as new jobs
 	cb := func(entry fs.DirEntry) error {
 		if d, isDir := entry.(fs.Directory); isDir {
-			job := listREntry{actualID(d.ID()), d.Remote()}
-			sendJob(job)
+			id := actualID(d.ID())
+			if _, alreadyVisited := visited.Load(id); !alreadyVisited {
+				visited.Store(id, true)
+				job := listREntry{id, d.Remote()}
+				sendJob(job)
+			} else {
+				fs.Debugf(f, "Skipping directory %q due to cycle detection", d.Remote())
+			}
 		}
 		mu.Lock()
 		defer mu.Unlock()
