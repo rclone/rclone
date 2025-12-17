@@ -400,7 +400,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	var args []interface{}
 
 	if dirPath == "" {
-		// At root of user directory - select files where path IS NULL or empty
+		// At root of user directory - fetch ALL files to discover directories
 		query = fmt.Sprintf(`
 			SELECT
 				media_key,
@@ -411,7 +411,6 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				utc_timestamp
 			FROM %s
 			WHERE user_name = $1
-			  AND (path IS NULL OR path = '')
 			ORDER BY file_name
 		`, f.opt.TableName)
 		args = []interface{}{userName}
