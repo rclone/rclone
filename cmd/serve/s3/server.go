@@ -70,6 +70,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		w.s3Secret = getAuthSecret(opt.AuthKey)
 	}
 
+	authList, err := authlistResolver(opt.AuthKey)
+	if err != nil {
+		return nil, fmt.Errorf("parsing auth list failed: %q", err)
+	}
+
 	var newLogger logger
 	w.faker = gofakes3.New(
 		newBackend(w),
@@ -77,7 +82,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		gofakes3.WithLogger(newLogger),
 		gofakes3.WithRequestID(rand.Uint64()),
 		gofakes3.WithoutVersioning(),
-		gofakes3.WithV4Auth(authlistResolver(opt.AuthKey)),
+		gofakes3.WithV4Auth(authList),
 		gofakes3.WithIntegrityCheck(true), // Check Content-MD5 if supplied
 	)
 
@@ -92,7 +97,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		w._vfs = vfs.New(f, vfsOpt)
 
 		if len(opt.AuthKey) > 0 {
-			w.faker.AddAuthKeys(authlistResolver(opt.AuthKey))
+			w.faker.AddAuthKeys(authList)
 		}
 	}
 
