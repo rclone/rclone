@@ -22,7 +22,7 @@ type MediaItem struct {
 	UploadStatus             int64
 	QuotaChargedBytes        int64
 	Origin                   string
-	ContentVersion           string
+	ContentVersion           int64
 	TrashTimestamp           int64
 	IsArchived               bool
 	IsFavorite               bool
@@ -209,8 +209,8 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	}
 
 	// Field 2->26: content_version
-	if val, ok := field2["26"].(string); ok {
-		item.ContentVersion = val
+	if val, ok := field2["26"].(uint64); ok {
+		item.ContentVersion = int64(val)
 	}
 
 	// Field 2->16->3: trash_timestamp
