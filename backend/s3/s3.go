@@ -2928,7 +2928,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	req := s3.CopyObjectInput{
 		MetadataDirective: types.MetadataDirectiveCopy,
 	}
-
+	if srcObj.storageClass != nil {
+		req.StorageClass = types.StorageClass(*srcObj.storageClass)
+	}
 	// Build upload options including headers and metadata
 	ci := fs.GetConfig(ctx)
 	uploadOptions := fs.MetadataAsOpenOptions(ctx)
@@ -3769,6 +3771,8 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	}
 	o.setMetaData(resp)
 	// resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
+	fs.Debugf(o, "ReadMetaData -> ETag: %q, Size: %d, LastModified: %v, StorageClass: %q",
+	          *resp.ETag, resp.ContentLength, resp.LastModified, resp.StorageClass)	
 	return nil
 }
 
@@ -4501,7 +4505,13 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		ACL:    types.ObjectCannedACL(o.fs.opt.ACL),
 		Key:    &bucketPath,
 	}
-
+	if tierObj, ok := src.(fs.GetTierer); ok {
+		tier := tierObj.GetTier()
+		if tier != "" {
+			ui.req.StorageClass = types.StorageClass(strings.ToUpper(tier))
+			fs.Debugf(o, "Set storage class during upload: %s", tier)
+		}
+	}
 	// Fetch metadata if --metadata is in use
 	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
 	if err != nil {
