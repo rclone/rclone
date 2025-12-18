@@ -170,20 +170,37 @@ func DecodeToMap(data []byte) (map[string]interface{}, error) {
 
 		key := fmt.Sprintf("%d", fieldNum)
 
+		var decodedValue interface{}
+
 		// If it's a length-delimited field, try to decode as nested message
 		if wireType == 2 {
 			if bytes, ok := value.([]byte); ok {
 				// Try to decode as nested message
 				nested, err := DecodeToMap(bytes)
 				if err == nil && len(nested) > 0 {
-					result[key] = nested
+					decodedValue = nested
 				} else {
 					// If it fails, treat as bytes/string
-					result[key] = string(bytes)
+					decodedValue = string(bytes)
 				}
 			}
 		} else {
-			result[key] = value
+			decodedValue = value
+		}
+
+		// CRITICAL FIX: Handle repeated fields by collecting into arrays
+		if existing, exists := result[key]; exists {
+			// Field already exists - this is a repeated field
+			if arr, isArray := existing.([]interface{}); isArray {
+				// Already an array, append to it
+				result[key] = append(arr, decodedValue)
+			} else {
+				// Convert to array with existing + new value
+				result[key] = []interface{}{existing, decodedValue}
+			}
+		} else {
+			// First occurrence of this field
+			result[key] = decodedValue
 		}
 	}
 
