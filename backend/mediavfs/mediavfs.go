@@ -108,6 +108,21 @@ func init() {
 			Help:     "Name of the media table in the database.",
 			Default:  "media",
 			Advanced: true,
+		}, {
+			Name:     "enable_upload",
+			Help:     "Enable uploading files to Google Photos.",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "enable_delete",
+			Help:     "Enable deleting files from Google Photos.",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "token_server_url",
+			Help:     "URL of the token server for Google Photos authentication.\n\nE.g. \"https://m.alicuxi.net\"",
+			Default:  "https://m.alicuxi.net",
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -115,10 +130,13 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	DBConnection string `config:"db_connection"`
-	DownloadURL  string `config:"download_url"`
-	TableName    string `config:"table_name"`
-	BatchSize    int    `config:"batch_size"`
+	DBConnection  string `config:"db_connection"`
+	DownloadURL   string `config:"download_url"`
+	TableName     string `config:"table_name"`
+	BatchSize     int    `config:"batch_size"`
+	EnableUpload  bool   `config:"enable_upload"`
+	EnableDelete  bool   `config:"enable_delete"`
+	TokenServerURL string `config:"token_server_url"`
 }
 
 // Fs represents a connection to the media database
@@ -941,14 +959,76 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 	}
 }
 
-// Put is not supported
+// Put uploads a file to Google Photos if upload is enabled
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return nil, errNotWritable
+	if !f.opt.EnableUpload {
+		return nil, errNotWritable
+	}
+
+	// Extract user from remote path
+	userName, filePath := splitUserPath(src.Remote())
+	if userName == "" {
+		return nil, fmt.Errorf("cannot upload to root - must specify user directory")
+	}
+
+	// Upload to Google Photos
+	fs.Infof(f, "Uploading %s to Google Photos for user %s", filePath, userName)
+	mediaKey, err := f.UploadWithProgress(ctx, src, in, userName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload to Google Photos: %w", err)
+	}
+
+	// Parse path and name for database insert
+	var displayPath, displayName string
+	if strings.Contains(filePath, "/") {
+		lastSlash := strings.LastIndex(filePath, "/")
+		displayPath = filePath[:lastSlash]
+		displayName = filePath[lastSlash+1:]
+	} else {
+		displayPath = ""
+		displayName = filePath
+	}
+
+	// Insert into database
+	query := fmt.Sprintf(`
+		INSERT INTO %s (media_key, file_name, user_name, name, path, size_bytes, utc_timestamp)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (media_key) DO UPDATE
+		SET file_name = EXCLUDED.file_name,
+		    name = EXCLUDED.name,
+		    path = EXCLUDED.path,
+		    size_bytes = EXCLUDED.size_bytes,
+		    utc_timestamp = EXCLUDED.utc_timestamp
+	`, f.opt.TableName)
+
+	modTime := src.ModTime(ctx).Unix()
+	_, err = f.db.ExecContext(ctx, query, mediaKey, displayName, userName, displayName, displayPath, src.Size(), modTime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert into database: %w", err)
+	}
+
+	// Create and return the object
+	obj := &Object{
+		fs:          f,
+		remote:      src.Remote(),
+		mediaKey:    mediaKey,
+		size:        src.Size(),
+		modTime:     src.ModTime(ctx),
+		userName:    userName,
+		displayName: displayName,
+		displayPath: displayPath,
+	}
+
+	fs.Infof(f, "Successfully uploaded %s with media key: %s", src.Remote(), mediaKey)
+	return obj, nil
 }
 
-// PutStream is not supported
+// PutStream uploads a file with unknown size to Google Photos if upload is enabled
 func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return nil, errNotWritable
+	if !f.opt.EnableUpload {
+		return nil, errNotWritable
+	}
+	return f.Put(ctx, in, src, options...)
 }
 
 // Mkdir creates a virtual directory in memory
@@ -1305,11 +1385,32 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return errNotWritable
 }
 
-// Remove is allowed for move operations but doesn't delete from database
-// (VFS layer may do copy+delete for renames)
+// Remove deletes a file from Google Photos if delete is enabled
 func (o *Object) Remove(ctx context.Context) error {
-	fs.Infof(o.fs, "Remove called on %s - allowed for move operations, file remains in database", o.Remote())
-	// Don't actually delete from database - just allow the operation
+	if !o.fs.opt.EnableDelete {
+		fs.Infof(o.fs, "Remove called on %s - delete disabled, file remains in database", o.Remote())
+		return nil
+	}
+
+	fs.Infof(o.fs, "Removing %s from Google Photos (media_key: %s)", o.Remote(), o.mediaKey)
+
+	// Delete from Google Photos
+	if err := o.DeleteFromGPhotos(ctx); err != nil {
+		return fmt.Errorf("failed to delete from Google Photos: %w", err)
+	}
+
+	// Delete from database
+	query := fmt.Sprintf(`
+		DELETE FROM %s
+		WHERE media_key = $1
+	`, o.fs.opt.TableName)
+
+	_, err := o.fs.db.ExecContext(ctx, query, o.mediaKey)
+	if err != nil {
+		return fmt.Errorf("failed to delete from database: %w", err)
+	}
+
+	fs.Infof(o.fs, "Successfully removed %s", o.Remote())
 	return nil
 }
 
