@@ -64,11 +64,6 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 
 ---
 
-### Q20: FsRmdirNotFound Test Failure
-**Status**: 🟡 **ACTIVE** - Test failure needs investigation  
-**Priority**: Medium
-
-`TestStandard/FsRmdirNotFound` test failing: `Rmdir("")` returns `nil` instead of `fs.ErrorDirNotFound` for non-existent root. Investigate test isolation, backend behavior, and `Rmdir` logic. May need to restore upfront existence check or adjust logic for test compatibility.
 
 ---
 
@@ -141,6 +136,26 @@ Current error handling uses generic `fmt.Errorf()`. Consider adding specific err
 ## ✅ Resolved Questions
 
 **Note**: These questions have been resolved and should be moved to [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md) for historical reference.
+
+### Q20: FsRmdirNotFound Test Failure ✅ **RESOLVED**
+**Date**: 2025-12-18  
+**Status**: ✅ **RESOLVED** - Test now passes
+
+**Original Question**: `TestStandard/FsRmdirNotFound` test failing: `Rmdir("")` returns `nil` instead of `fs.ErrorDirNotFound` for non-existent root.
+
+**Resolution**: 
+Fixed by implementing existence check before attempting removal, following union backend pattern. The issue was that the health check (`checkAllBackendsAvailable()`) was called before the existence check, causing side effects. 
+
+**Implementation**:
+- Added `checkDirectoryExists()` helper function to check directory existence across all backends using `List()` calls
+- Modified `Rmdir()` to check existence first (before health check) and return `fs.ErrorDirNotFound` immediately if directory doesn't exist
+- Simplified error handling logic since existence is now checked upfront
+
+**Test Results**: All `TestStandard/FsRmdirNotFound` tests now pass (standard, balanced, aggressive timeout modes).
+
+**References**: 
+- Implementation: `backend/raid3/raid3.go` (lines 743-828, 1315-1333)
+- Union backend reference: `backend/union/union.go:127-144`
 
 ### Q4: Rebuild Command for Backend Replacement ✅ **IMPLEMENTED**
 **Date**: 2025-11-02  
@@ -236,7 +251,7 @@ Document the decision in [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md), update th
 
 ## 📊 Statistics
 
-Total active questions: 15. Resolved questions: 3 (Q4, Q5, Q7). Active questions by priority: High Priority (3) - Q2: Streaming Support, Q14: Health Check Caching, Q15: Background Worker Context. Medium Priority (6) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values, Q20: Test Failure. Low Priority (6) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types. Critical issues: 1 (Q2: Large file streaming blocking production use).
+Total active questions: 14. Resolved questions: 4 (Q4, Q5, Q7, Q20). Active questions by priority: High Priority (3) - Q2: Streaming Support, Q14: Health Check Caching, Q15: Background Worker Context. Medium Priority (5) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values. Low Priority (6) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types. Critical issues: 1 (Q2: Large file streaming blocking production use).
 
 
 **Use this file to track decisions before they're made!** 🤔

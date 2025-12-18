@@ -740,6 +740,95 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 	return nil
 }
 
+// checkDirectoryExists checks if a directory exists by calling List() on all backends.
+// Returns true if directory exists on at least one backend, false if it doesn't exist on any backend.
+// Returns an error if any backend returns a non-"not found" error.
+func (f *Fs) checkDirectoryExists(ctx context.Context, dir string) (bool, error) {
+	type listResult struct {
+		exists bool
+		err    error
+	}
+	results := make(chan listResult, 3)
+
+	// Check each backend in parallel
+	// For root directory (dir == ""), List("") returns ErrorDirNotFound if directory doesn't exist
+	// For subdirectories, we need to check if the directory exists
+	go func() {
+		_, err := f.even.List(ctx, dir)
+		// If List() returns no error, directory exists
+		// If List() returns ErrorDirNotFound or os.ErrNotExist, directory doesn't exist
+		exists := err == nil
+		// If error is ErrorDirNotFound or os.ErrNotExist, directory doesn't exist (not an error)
+		if err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
+			results <- listResult{exists: false, err: fmt.Errorf("%s: %w", f.even.Name(), err)}
+			return
+		}
+		// Preserve the error (even if it's ErrorDirNotFound) so we can detect it in collection
+		results <- listResult{exists: exists, err: err}
+	}()
+
+	go func() {
+		_, err := f.odd.List(ctx, dir)
+		exists := err == nil
+		if err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
+			results <- listResult{exists: false, err: fmt.Errorf("%s: %w", f.odd.Name(), err)}
+			return
+		}
+		results <- listResult{exists: exists, err: err}
+	}()
+
+	go func() {
+		_, err := f.parity.List(ctx, dir)
+		exists := err == nil
+		if err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
+			results <- listResult{exists: false, err: fmt.Errorf("%s: %w", f.parity.Name(), err)}
+			return
+		}
+		results <- listResult{exists: exists, err: err}
+	}()
+
+	// Collect results
+	var hasError error
+	anyExists := false
+	notFoundCount := 0
+	for i := 0; i < 3; i++ {
+		result := <-results
+		if result.exists {
+			// Directory exists on this backend
+			anyExists = true
+		} else if result.err != nil {
+			// Check if this is a "not found" error
+			if errors.Is(result.err, fs.ErrorDirNotFound) || os.IsNotExist(result.err) {
+				notFoundCount++
+			} else {
+				// Non-"not found" error
+				hasError = result.err
+			}
+		} else {
+			// err is nil but exists is false - this shouldn't happen, treat as not found
+			notFoundCount++
+		}
+	}
+
+	// If any backend returned a non-"not found" error, return it
+	if hasError != nil {
+		return false, hasError
+	}
+
+	// If directory exists on any backend, it exists
+	if anyExists {
+		return true, nil
+	}
+
+	// If all backends returned "not found" errors, directory doesn't exist
+	if notFoundCount == 3 {
+		return false, nil
+	}
+
+	// Default: directory doesn't exist
+	return false, nil
+}
+
 // formatDegradedModeError creates a user-friendly error message with rebuild guidance
 // when the backend is in degraded mode (one or more backends unavailable).
 //
@@ -1225,6 +1314,18 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // Rmdir removes a directory
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	// Check if directory exists before health check (union backend pattern)
+	// This ensures we return fs.ErrorDirNotFound immediately when directory doesn't exist,
+	// matching test expectations (TestStandard/FsRmdirNotFound)
+	// We check existence first to avoid side effects from health check
+	dirExists, err := f.checkDirectoryExists(ctx, dir)
+	if err != nil {
+		return fmt.Errorf("failed to check directory existence: %w", err)
+	}
+	if !dirExists {
+		return fs.ErrorDirNotFound
+	}
+
 	// Pre-flight check: Enforce strict RAID 3 delete policy
 	// Fail immediately if any backend is unavailable to prevent partial deletes
 	// Note: The health check only creates a test directory, not the target directory
@@ -1232,6 +1333,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return fmt.Errorf("rmdir blocked in degraded mode (RAID 3 policy): %w", err)
 	}
 
+	// Directory exists, proceed with removal
 	// Use regular goroutines to collect all errors (not errgroup to avoid context cancellation)
 	type rmdirResult struct {
 		err error
@@ -1261,7 +1363,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		}
 	}
 
-	// Collect non-nil errors (union backend pattern: return error if ANY backend returns error)
+	// Collect non-nil errors
 	var allErrors []error
 	if evenErr != nil {
 		allErrors = append(allErrors, evenErr)
@@ -1273,27 +1375,9 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		allErrors = append(allErrors, parityErr)
 	}
 
-	// If all backends returned errors, check if they're all "not found" type
-	if len(allErrors) == 3 {
-		allNotFound := true
-		for _, err := range allErrors {
-			// Check for both fs.ErrorDirNotFound and os.ErrNotExist (local backend returns os.ErrNotExist)
-			if !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
-				allNotFound = false
-				break
-			}
-		}
-		if allNotFound {
-			// All backends returned ErrorDirNotFound
-			// Always return ErrorDirNotFound for test compatibility (TestStandard/FsRmdirNotFound)
-			// The Rmdirs fallback path in operations.Purge will handle ErrorDirNotFound correctly
-			// by collecting it and wrapping it, but the test expects ErrorDirNotFound for direct calls
-			return fs.ErrorDirNotFound
-		}
-	}
-
 	// Convert individual ErrorDirNotFound to nil (idempotent behavior)
 	// This handles the case where some backends succeed and some return ErrorDirNotFound
+	// (e.g., if directory was removed on one backend but not others)
 	var filteredErrors []error
 	for _, err := range allErrors {
 		if !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
