@@ -3,7 +3,6 @@ package mediavfs
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -153,51 +152,6 @@ func (f *Fs) UpdateSyncState(ctx context.Context, user string, stateToken, pageT
 	}
 
 	return nil
-}
-
-// MediaItem represents a media item from Google Photos
-type MediaItem struct {
-	MediaKey                string
-	FileName                string
-	DedupKey                string
-	IsCanonical             bool
-	Type                    int
-	Caption                 *string
-	CollectionID            string
-	SizeBytes               int64
-	QuotaChargedBytes       int64
-	Origin                  string
-	ContentVersion          int
-	UTCTimestamp            int64
-	ServerCreationTimestamp int64
-	TimezoneOffset          *int
-	Width                   *int
-	Height                  *int
-	RemoteURL               string
-	UploadStatus            *int
-	TrashTimestamp          *int64
-	IsArchived              bool
-	IsFavorite              bool
-	IsLocked                bool
-	IsOriginalQuality       bool
-	Latitude                *float64
-	Longitude               *float64
-	LocationName            *string
-	LocationID              *string
-	IsEdited                bool
-	Make                    *string
-	Model                   *string
-	Aperture                *float64
-	ShutterSpeed            *float64
-	ISO                     *int
-	FocalLength             *float64
-	Duration                *int
-	CaptureFrameRate        *float64
-	EncodedFrameRate        *float64
-	IsMicroVideo            bool
-	MicroVideoWidth         *int
-	MicroVideoHeight        *int
-	UserName                string
 }
 
 // InsertMediaItems inserts or updates media items in the database
@@ -445,27 +399,24 @@ func (f *Fs) incrementalSync(ctx context.Context, api *GPhotoAPI, user string, s
 	return nil
 }
 
-// parseLibraryResponse parses the Google Photos library response
-// This is a simplified version - in production, you'd need to properly decode protobuf
+// parseLibraryResponse parses the Google Photos library response using protobuf decoding
 func parseLibraryResponse(response []byte, user string) (stateToken, pageToken string, items []MediaItem, deletions []string, err error) {
-	var data map[string]interface{}
-	if err := json.Unmarshal(response, &data); err != nil {
-		return "", "", nil, nil, fmt.Errorf("failed to parse response: %w", err)
+	// Decode protobuf response to map structure
+	data, err := DecodeToMap(response)
+	if err != nil {
+		return "", "", nil, nil, fmt.Errorf("failed to decode protobuf response: %w", err)
 	}
 
-	// Extract state and page tokens
-	if respData, ok := data["1"].(map[string]interface{}); ok {
-		if token, ok := respData["6"].(string); ok {
-			stateToken = token
-		}
-		if token, ok := respData["1"].(string); ok {
-			pageToken = token
-		}
-
-		// Parse media items (simplified - actual implementation would need proper protobuf parsing)
-		// For now, return empty to avoid errors
-		// TODO: Implement proper protobuf parsing or use the actual API response format
+	// Parse using the proper parser
+	newStateToken, newPageToken, mediaItems, mediaKeysToDelete, err := ParseDbUpdate(data)
+	if err != nil {
+		return "", "", nil, nil, fmt.Errorf("failed to parse library update: %w", err)
 	}
 
-	return stateToken, pageToken, items, deletions, nil
+	// Set user_name for all items
+	for i := range mediaItems {
+		mediaItems[i].UserName = user
+	}
+
+	return newStateToken, newPageToken, mediaItems, mediaKeysToDelete, nil
 }

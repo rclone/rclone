@@ -177,19 +177,15 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 
 // GetUploadToken obtains an upload token from Google Photos
 func (api *GPhotoAPI) GetUploadToken(ctx context.Context, sha1HashB64 string, fileSize int64) (string, error) {
-	// Encode protobuf message (simplified - using JSON for now)
-	// In production, you'd use actual protobuf encoding
-	protoBody := map[string]interface{}{
-		"1": 2,
-		"2": 2,
-		"3": 1,
-		"4": 3,
-		"7": fileSize,
-	}
+	// Encode protobuf message matching Python implementation
+	encoder := NewProtoEncoder()
+	encoder.EncodeInt32(1, 2)
+	encoder.EncodeInt32(2, 2)
+	encoder.EncodeInt32(3, 1)
+	encoder.EncodeInt32(4, 3)
+	encoder.EncodeInt64(7, fileSize)
 
-	// For simplicity, marshal as JSON (in production, use protobuf)
-	// This is placeholder - actual implementation would use blackboxprotobuf equivalent
-	serializedData, _ := json.Marshal(protoBody)
+	serializedData := encoder.Bytes()
 
 	headers := map[string]string{
 		"Content-Type":            "application/x-protobuf",
@@ -215,17 +211,19 @@ func (api *GPhotoAPI) GetUploadToken(ctx context.Context, sha1HashB64 string, fi
 
 // FindRemoteMediaByHash checks if a file with the given SHA1 hash already exists
 func (api *GPhotoAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte) (string, error) {
-	// Encode protobuf message
-	protoBody := map[string]interface{}{
-		"1": map[string]interface{}{
-			"1": map[string]interface{}{
-				"1": base64.StdEncoding.EncodeToString(sha1Hash),
-			},
-			"2": map[string]interface{}{},
-		},
-	}
+	// Encode nested protobuf message matching Python implementation
+	// Field 1 -> Field 1 -> Field 1: base64-encoded SHA1 hash
+	innermost := NewProtoEncoder()
+	innermost.EncodeString(1, base64.StdEncoding.EncodeToString(sha1Hash))
 
-	serializedData, _ := json.Marshal(protoBody)
+	middle := NewProtoEncoder()
+	middle.EncodeMessage(1, innermost.Bytes())
+	middle.EncodeMessage(2, []byte{}) // Empty message
+
+	encoder := NewProtoEncoder()
+	encoder.EncodeMessage(1, middle.Bytes())
+
+	serializedData := encoder.Bytes()
 
 	headers := map[string]string{
 		"Content-Type": "application/x-protobuf",
@@ -239,13 +237,18 @@ func (api *GPhotoAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte
 	}
 	defer resp.Body.Close()
 
-	// Parse response (simplified)
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	// Parse protobuf response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return "", err
 	}
 
-	// Extract media key if found
+	result, err := DecodeToMap(respBody)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract media key if found (field 1 -> field 2 -> field 1)
 	if mediaData, ok := result["1"].(map[string]interface{}); ok {
 		if mediaInfo, ok := mediaData["2"].(map[string]interface{}); ok {
 			if mediaKey, ok := mediaInfo["1"].(string); ok {
@@ -274,7 +277,7 @@ func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, conten
 
 // CommitUpload commits the uploaded file to Google Photos
 func (api *GPhotoAPI) CommitUpload(ctx context.Context, fileName string, sha1Hash []byte, fileSize int64, uploadTimestamp int64, model, quality string) (string, error) {
-	qualityMap := map[string]int{
+	qualityMap := map[string]int32{
 		"saver":    1,
 		"original": 3,
 	}
@@ -283,28 +286,34 @@ func (api *GPhotoAPI) CommitUpload(ctx context.Context, fileName string, sha1Has
 		uploadTimestamp = time.Now().Unix()
 	}
 
-	// Simplified protobuf structure
-	protoBody := map[string]interface{}{
-		"1": map[string]interface{}{
-			"2": fileName,
-			"3": base64.StdEncoding.EncodeToString(sha1Hash),
-			"4": map[string]interface{}{
-				"1": uploadTimestamp,
-				"2": 46000000,
-			},
-			"7":  qualityMap[quality],
-			"10": 1,
-			"17": 0,
-		},
-		"2": map[string]interface{}{
-			"3": model,
-			"4": "Google",
-			"5": 28, // Android API version
-		},
-		"3": []byte{1, 3},
-	}
+	// Build nested protobuf structure matching Python implementation
+	// Field 1 -> Field 4
+	timestampMsg := NewProtoEncoder()
+	timestampMsg.EncodeInt64(1, uploadTimestamp)
+	timestampMsg.EncodeInt32(2, 46000000)
 
-	serializedData, _ := json.Marshal(protoBody)
+	// Field 1
+	field1 := NewProtoEncoder()
+	field1.EncodeString(2, fileName)
+	field1.EncodeString(3, base64.StdEncoding.EncodeToString(sha1Hash))
+	field1.EncodeMessage(4, timestampMsg.Bytes())
+	field1.EncodeInt32(7, qualityMap[quality])
+	field1.EncodeInt32(10, 1)
+	field1.EncodeInt32(17, 0)
+
+	// Field 2
+	field2 := NewProtoEncoder()
+	field2.EncodeString(3, model)
+	field2.EncodeString(4, "Google")
+	field2.EncodeInt32(5, 28) // Android API version
+
+	// Main message
+	encoder := NewProtoEncoder()
+	encoder.EncodeMessage(1, field1.Bytes())
+	encoder.EncodeMessage(2, field2.Bytes())
+	encoder.EncodeBytes(3, []byte{1, 3})
+
+	serializedData := encoder.Bytes()
 
 	headers := map[string]string{
 		"Content-Type":           "application/x-protobuf",
@@ -320,13 +329,18 @@ func (api *GPhotoAPI) CommitUpload(ctx context.Context, fileName string, sha1Has
 	}
 	defer resp.Body.Close()
 
-	// Parse response to get media key
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	// Parse protobuf response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return "", err
 	}
 
-	// Extract media key
+	result, err := DecodeToMap(respBody)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract media key (field 1 -> field 3 -> field 1)
 	if mediaData, ok := result["1"].(map[string]interface{}); ok {
 		if keyData, ok := mediaData["3"].(map[string]interface{}); ok {
 			if mediaKey, ok := keyData["1"].(string); ok {
@@ -350,28 +364,46 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 
 		batch := dedupKeys[i:end]
 
-		protoBody := map[string]interface{}{
-			"2": 1,
-			"3": batch,
-			"4": 1,
-			"8": map[string]interface{}{
-				"4": map[string]interface{}{
-					"2": map[string]interface{}{},
-					"3": map[string]interface{}{"1": map[string]interface{}{}},
-					"4": map[string]interface{}{},
-					"5": map[string]interface{}{"1": map[string]interface{}{}},
-				},
-			},
-			"9": map[string]interface{}{
-				"1": 5,
-				"2": map[string]interface{}{
-					"1": "49029607",
-					"2": "28",
-				},
-			},
-		}
+		// Build nested protobuf structure for MoveToTrash
+		// Field 8 -> Field 4 -> Fields 2, 3, 4, 5
+		field8_4_3_1 := NewProtoEncoder() // Empty message
+		field8_4_3 := NewProtoEncoder()
+		field8_4_3.EncodeMessage(1, field8_4_3_1.Bytes())
 
-		serializedData, _ := json.Marshal(protoBody)
+		field8_4_5_1 := NewProtoEncoder() // Empty message
+		field8_4_5 := NewProtoEncoder()
+		field8_4_5.EncodeMessage(1, field8_4_5_1.Bytes())
+
+		field8_4 := NewProtoEncoder()
+		field8_4.EncodeMessage(2, []byte{}) // Empty message
+		field8_4.EncodeMessage(3, field8_4_3.Bytes())
+		field8_4.EncodeMessage(4, []byte{}) // Empty message
+		field8_4.EncodeMessage(5, field8_4_5.Bytes())
+
+		field8 := NewProtoEncoder()
+		field8.EncodeMessage(4, field8_4.Bytes())
+
+		// Field 9 -> Field 2
+		field9_2 := NewProtoEncoder()
+		field9_2.EncodeString(1, "49029607")
+		field9_2.EncodeString(2, "28")
+
+		field9 := NewProtoEncoder()
+		field9.EncodeInt32(1, 5)
+		field9.EncodeMessage(2, field9_2.Bytes())
+
+		// Main message
+		encoder := NewProtoEncoder()
+		encoder.EncodeInt32(2, 1)
+		// Encode dedup keys as repeated string field
+		for _, key := range batch {
+			encoder.EncodeString(3, key)
+		}
+		encoder.EncodeInt32(4, 1)
+		encoder.EncodeMessage(8, field8.Bytes())
+		encoder.EncodeMessage(9, field9.Bytes())
+
+		serializedData := encoder.Bytes()
 
 		headers := map[string]string{
 			"Content-Type": "application/x-protobuf",
@@ -391,16 +423,20 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 
 // GetLibraryState gets the current library state from Google Photos
 func (api *GPhotoAPI) GetLibraryState(ctx context.Context, stateToken, pageToken string) ([]byte, error) {
-	// Construct protobuf request (simplified - using placeholder)
-	protoBody := map[string]interface{}{
-		"1": map[string]interface{}{
-			"6": stateToken,
-			"4": pageToken,
-			"7": 2,
-		},
+	// Build protobuf request matching Python implementation
+	field1 := NewProtoEncoder()
+	if stateToken != "" {
+		field1.EncodeString(6, stateToken)
 	}
+	if pageToken != "" {
+		field1.EncodeString(4, pageToken)
+	}
+	field1.EncodeInt32(7, 2)
 
-	serializedData, _ := json.Marshal(protoBody)
+	encoder := NewProtoEncoder()
+	encoder.EncodeMessage(1, field1.Bytes())
+
+	serializedData := encoder.Bytes()
 
 	headers := map[string]string{
 		"Content-Type":             "application/x-protobuf",
