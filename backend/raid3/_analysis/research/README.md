@@ -8,7 +8,7 @@ This directory contains research and analysis documents that were moved from `do
 - **MOCKED_BACKENDS_ANALYSIS.md** - Analysis of how other rclone backends handle mocking
 - **DOCUMENTATION_CLEANUP_ANALYSIS.md** - Temporary cleanup analysis document
 - **S3_TIMEOUT_RESEARCH.md** - Research on S3 timeout issues in degraded mode
-- **SELF_HEALING_RESEARCH.md** - Research on heal approaches (see `docs/SELF_HEALING.md` for user guide)
+- **SELF_HEALING_RESEARCH.md** - Research on heal approaches (see `docs/CLEAN_HEAL.md` for user guide)
 - **RAID3_VS_RAID5_ANALYSIS.md** - Analysis comparing RAID3 vs RAID5 for cloud storage
 - **BACKEND_COMMANDS_ANALYSIS.md** - Analysis of backend commands and whether raid3 should support them
 

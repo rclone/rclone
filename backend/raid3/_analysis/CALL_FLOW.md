@@ -266,7 +266,7 @@ User: rclone copy file.txt raid3:
 
 ### Key Points
 
-- **Memory Usage**: Entire file buffered in memory (see OPEN_QUESTIONS.md Q13 for streaming)
+- **Memory Usage**: Entire file buffered in memory (see [`../docs/OPEN_QUESTIONS.md`](../docs/OPEN_QUESTIONS.md) Q13 for streaming)
 - **Error Handling**: If any upload fails, others are cancelled via errgroup
 - **Rollback**: If enabled, successfully uploaded particles are deleted on error
 
@@ -851,11 +851,11 @@ NewFs() [raid3.go:264]
 ## Related Documentation
 
 - [`README.md`](../README.md) - User guide
-- [`RAID3.md`](../RAID3.md) - Technical details on RAID 3
-- [`TESTING.md`](../TESTING.md) - Testing documentation
-- [`OPEN_QUESTIONS.md`](../OPEN_QUESTIONS.md) - Known limitations and future work
-- [`STRICT_WRITE.md`](../docs/STRICT_WRITE.md) - Write policy details
-- [`SELF_HEALING.md`](../docs/SELF_HEALING.md) - Heal functionality documentation
+- [`RAID3.md`](../docs/RAID3.md) - Technical details on RAID 3
+- [`TESTING.md`](../docs/TESTING.md) - Testing documentation
+- [`OPEN_QUESTIONS.md`](../docs/OPEN_QUESTIONS.md) - Known limitations and future work
+- [`STRICT_WRITE_POLICY.md`](../docs/STRICT_WRITE_POLICY.md) - Write policy details
+- [`CLEAN_HEAL.md`](../docs/CLEAN_HEAL.md) - Self-maintenance documentation (healing and cleanup)
 
 ---
 

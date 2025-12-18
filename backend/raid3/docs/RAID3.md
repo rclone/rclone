@@ -9,7 +9,7 @@ This document explains **how RAID 3 works in principle**, both for traditional h
 - **Reconstruction algorithms** (how missing data is recovered)
 - **Hardware RAID 3 compliance** (how the implementation matches industry standards)
 
-For **usage instructions**, **configuration options**, **backend commands** (rebuild, heal, status), and **operational details**, see the main [`README.md`](README.md) file.
+For **usage instructions**, **configuration options**, **backend commands** (rebuild, heal, status), and **operational details**, see the main [`../README.md`](../README.md) file.
 
 This document serves as a **technical reference** for understanding the RAID 3 algorithm and how it's implemented in the rclone backend.
 
@@ -185,43 +185,15 @@ For byte i in reconstructed:
 
 ### Implementation Status
 
-✅ **Automatic reconstruction during reads** (degraded mode):
-- Works transparently when accessing files
-- Reconstructs missing particles on-the-fly
-- No user intervention required
-
-✅ **Rebuild command** (`rclone backend rebuild raid3:`):
-- Complete restoration after backend replacement
-- Rebuilds all missing particles on a new backend
-- Supports check-only mode and dry-run
-
-✅ **Heal command** (`rclone backend heal raid3:`):
-- Proactively heals all degraded objects (2/3 particles)
-- Reconstructs and uploads missing particles
-- Works regardless of `auto_heal` setting
-
-✅ **Auto-heal** (`auto_heal=true` by default):
-- Automatically queues missing particles for upload during reads
-- Background restoration of degraded files
-- Also reconstructs missing directories during `List()` operations
+Automatic reconstruction during reads (degraded mode) works transparently when accessing files, reconstructs missing particles on-the-fly, and requires no user intervention. The rebuild command (`rclone backend rebuild raid3:`) provides complete restoration after backend replacement, rebuilds all missing particles on a new backend, and supports check-only mode and dry-run. The heal command (`rclone backend heal raid3:`) proactively heals all degraded objects (2/3 particles), reconstructs and uploads missing particles, and works regardless of `auto_heal` setting. Auto-heal (`auto_heal=true` by default) automatically queues missing particles for upload during reads, provides background restoration of degraded files, and also reconstructs missing directories during `List()` operations.
 
 ## Benefits of RAID 3
 
-- ✅ **Fault tolerance**: Can rebuild from single backend failure (fully implemented)
-- ✅ **Parity storage**: Only ~50% overhead compared to full duplication (200% for full duplication)
-- ✅ **Byte-level granularity**: More thorough than block-level RAID
-- ✅ **Automatic recovery**: Degraded mode reads work transparently
-- ✅ **Backend commands**: Rebuild and heal commands for maintenance
+RAID 3 provides fault tolerance by enabling rebuild from single backend failure (fully implemented), parity storage with only ~50% overhead compared to full duplication (200% for full duplication), byte-level granularity that is more thorough than block-level RAID, automatic recovery with degraded mode reads working transparently, and backend commands (rebuild and heal) for maintenance.
 
 ## Current Limitations
 
-- ⚠️ **Memory buffering**: Currently loads entire files into memory during upload/download
-  - Limits practical file size to ~500 MiB - 1 GB
-  - See `README.md` for details and future streaming support plans
-- ⚠️ **Update rollback**: Update operation rollback not working properly when `rollback=true`
-  - Put and Move rollback work correctly
-  - See `OPEN_QUESTIONS.md` Q1 for details
-- ✅ **Move within backend**: Now supported (DirMove implemented)
+Memory buffering currently loads entire files into memory during upload/download, limiting practical file size to ~500 MiB - 1 GB (see `README.md` for details and future streaming support plans). Update rollback is not working properly when `rollback=true` (Put and Move rollback work correctly; see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q1 for details). Move within backend is now supported (DirMove implemented).
 
 ## Error Handling - RAID 3 Compliance
 
@@ -229,46 +201,11 @@ The raid3 backend implements **hardware RAID 3 error handling**:
 
 ### Degraded Mode Behavior
 
-**Hardware RAID 3 Standard**:
-- **Reads**: Work in degraded mode (with N-1 drives) ✅
-- **Writes**: Blocked in degraded mode (require all drives) ❌
-- **Rationale**: Consistency over availability for writes
-
-**raid3 Implementation**:
-- **Reads**: Work with 2 of 3 backends (degraded mode) ✅
-  - Automatic parity reconstruction for files
-  - Heal background uploads for file particles
-  - Automatic directory reconstruction when accessing directories (2/3 → 3/3)
-  - Transparent to users
-- **Writes**: Require all 3 backends (strict mode with health check) ❌
-  - Pre-flight health check before Put/Update/Move
-  - Fail immediately if any backend unavailable (5-second timeout)
-  - Prevents creating partially-written or corrupted files
-  - Blocks rclone's retry logic from creating degraded state
-  - Clear error: "write blocked in degraded mode (RAID 3 policy)"
-- **Deletes**: Best effort (idempotent) ✅
-  - Succeed if any backends reachable
-  - Ignore "not found" errors
-  - Safe for cleanup
+Hardware RAID 3 standard: reads work in degraded mode (with N-1 drives), writes are blocked in degraded mode (require all drives), with rationale being consistency over availability for writes. The raid3 implementation: reads work with 2 of 3 backends (degraded mode) with automatic parity reconstruction for files, heal background uploads for file particles, automatic directory reconstruction when accessing directories (2/3 → 3/3), and are transparent to users. Writes require all 3 backends (strict mode with health check) with pre-flight health check before Put/Update/Move, fail immediately if any backend unavailable (5-second timeout), prevent creating partially-written or corrupted files, block rclone's retry logic from creating degraded state, and provide clear error "write blocked in degraded mode (RAID 3 policy)". Deletes use best effort (idempotent), succeed if any backends reachable, ignore "not found" errors, and are safe for cleanup.
 
 ### Why Strict Writes?
 
-**Industry Standard**:
-- All hardware RAID 3 controllers block writes in degraded mode
-- Linux MD RAID default behavior
-- Proven approach for 30+ years
-
-**Data Safety**:
-- Prevents creating degraded files from the start
-- Every file is fully replicated or not created
-- No partial states or inconsistencies
-- **Prevents corruption from partial updates**
-
-**Performance**:
-- Avoids reconstruction overhead for new files
-- Heal only for pre-existing degraded files
-- Better user experience
-- Health check adds minimal overhead (+0.2s)
+Strict writes match the industry standard: all hardware RAID 3 controllers block writes in degraded mode, matching Linux MD RAID default behavior, and this is a proven approach used for 30+ years. Data safety: prevents creating degraded files from the start, ensures every file is fully replicated or not created, eliminates partial states or inconsistencies, and prevents corruption from partial updates. Performance: avoids reconstruction overhead for new files, heal only for pre-existing degraded files, provides better user experience, and health check adds minimal overhead (+0.2s).
 
 ### Implementation Details
 
@@ -282,11 +219,7 @@ checkAllBackendsAvailable(ctx) {
 }
 ```
 
-**Why Health Check is Needed**:
-- Prevents rclone's command-level retry logic from creating degraded files
-- Detects unavailability BEFORE attempting write
-- Fails on first attempt (no retries can bypass)
-- Critical for Update operations (prevents corruption)
+The health check is needed to prevent rclone's command-level retry logic from creating degraded files, detect unavailability before attempting write, fail on first attempt (no retries can bypass), and is critical for Update operations (prevents corruption).
 
 **Before Fix** (discovered during testing):
 ```
@@ -328,20 +261,7 @@ ERROR: update failed: invalid particle sizes (even=11, odd=14) - FILE MAY BE COR
 
 ## Testing
 
-Comprehensive testing included:
-- ✅ Unit tests for split/merge
-- ✅ Unit tests for XOR parity calculation  
-- ✅ Unit tests for parity reconstruction logic
-- ✅ End-to-end tests with even and odd length files
-- ✅ MD5 hash verification
-- ✅ Particle size validation
-- ✅ Deletion of all three particles
-- ✅ Degraded mode read tests (reconstruction from 2/3 particles)
-- ✅ Rebuild command tests
-- ✅ Heal command tests
-- ✅ Auto-heal and auto-cleanup tests
-- ✅ Directory reconstruction tests
-- ✅ Error handling and rollback tests
+Comprehensive testing includes unit tests for split/merge, XOR parity calculation, and parity reconstruction logic; end-to-end tests with even and odd length files; MD5 hash verification; particle size validation; deletion of all three particles; degraded mode read tests (reconstruction from 2/3 particles); rebuild command tests; heal command tests; auto-heal and auto-cleanup tests; directory reconstruction tests; and error handling and rollback tests.
 
 ---
 

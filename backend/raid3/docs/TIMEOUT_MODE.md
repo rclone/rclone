@@ -4,85 +4,27 @@ The raid3 backend supports configurable timeout behavior through the `timeout_mo
 
 ## Configuration Options
 
-The `timeout_mode` option has three modes:
+The `timeout_mode` option has three modes. Standard (default) is best for local filesystem storage, uses global rclone timeout settings, and makes no changes to default behavior (safe default, no breaking changes). Balanced is best for reliable S3/MinIO backends, provides faster failover in degraded mode (~30-60s vs 2-5 minutes), offers a good balance of reliability and speed, and is optimized for S3/MinIO backends. Aggressive is best for testing and degraded mode scenarios, provides fastest failover (~10-20s vs 2-5 minutes), but may be too aggressive for production use.
 
-### Standard (Default)
-
-**Best for**: Local filesystem storage
-
-- Uses global rclone timeout settings
-- Default retries: 10
-- Connection timeout: 60 seconds
-- Data timeout: 5 minutes
-- **No changes to default behavior**
-
-### Balanced
-
-**Best for**: Reliable S3/MinIO backends
-
-- Retries: 3
-- Connection timeout: 15 seconds
-- Data timeout: 30 seconds
-- Degraded failover: ~30-60 seconds
-- **Good balance of reliability and speed**
-
-### Aggressive
-
-**Best for**: Testing, degraded mode scenarios
-
-- Retries: 1
-- Connection timeout: 5 seconds
-- Data timeout: 10 seconds
-- Degraded failover: ~10-20 seconds
-- **Fastest failover, best for degraded mode**
-
-## Timeout Comparison
-
-| Mode | Retries | ConnTimeout | Timeout | Degraded Failover | Use Case |
-|------|---------|-------------|---------|-------------------|----------|
-| **standard** | 10 (global) | 60s | 5m | 2-5 minutes | Local/file storage |
-| **balanced** | 3 | 15s | 30s | ~30-60 seconds | Reliable S3 |
-| **aggressive** | 1 | 5s | 10s | ~10-20 seconds | Degraded mode testing |
+Timeout values: standard uses 10 retries (global), 60s ConnTimeout, 5m Timeout, 2-5 minutes degraded failover, for local/file storage; balanced uses 3 retries, 15s ConnTimeout, 30s Timeout, ~30-60 seconds degraded failover, for reliable S3; aggressive uses 1 retry, 5s ConnTimeout, 10s Timeout, ~10-20 seconds degraded failover, for degraded mode testing.
 
 ## Configuration Examples
 
-### Local Storage (Standard)
+The `timeout_mode` option applies to all three remotes (even, odd, parity) uniformly.
 
 ```ini
-[mylevel3local]
-type = raid3
-even = /mnt/disk1/even
-odd = /mnt/disk2/odd
-parity = /mnt/disk3/parity
-timeout_mode = standard
-```
-
-### Reliable S3 (Balanced)
-
-```ini
-[mylevel3s3]
+[mylevel3]
 type = raid3
 even = s3even:bucket
-odd = s3odd:bucket
-parity = s3parity:bucket
-timeout_mode = balanced
-```
-
-### Testing/Degraded Mode (Aggressive)
-
-```ini
-[mylevel3test]
-type = raid3
-even = minioeven:
-odd = minioodd:
-parity = minioparity:
-timeout_mode = aggressive
+odd = s3odd:bucket          # Same timeout_mode applies
+parity = s3parity:bucket    # Same timeout_mode applies
+timeout_mode = balanced     # Options: standard, balanced, aggressive
 ```
 
 ## Command Line
 
 ```bash
-# Create with aggressive mode
+# Create with timeout mode (applies to all three remotes)
 rclone config create mylevel3 raid3 \
   even=/path/even \
   odd=/path/odd \
@@ -92,32 +34,7 @@ rclone config create mylevel3 raid3 \
 
 ## Logging
 
-The backend logs the selected mode:
-
-- **Standard**: `DEBUG : raid3: Using standard timeout mode (global settings)`
-- **Balanced**: `NOTICE: raid3: Using balanced timeout mode (retries=3, contimeout=15s, timeout=30s)`
-- **Aggressive**: `NOTICE: raid3: Using aggressive timeout mode (retries=1, contimeout=5s, timeout=10s)`
-
-## Benefits
-
-- **User Control**: Choose speed/reliability trade-off
-- **Safe Default**: Standard mode = no surprises
-- **Clear Choices**: Mode names explain purpose
-- **No Breaking Changes**: Default behavior unchanged
-- **S3 Optimized**: Balanced/aggressive modes improve S3 degraded mode performance
-
-## Performance Impact
-
-**Standard Mode**: No change from default rclone behavior
-
-**Balanced Mode**: 
-- Faster failover in degraded mode (~30-60s vs 2-5 minutes)
-- Still reliable for normal operations
-
-**Aggressive Mode**:
-- Fastest failover (~10-20s vs 2-5 minutes)
-- Best for testing and degraded mode scenarios
-- May be too aggressive for production use
+The backend logs the selected mode: Standard logs `DEBUG : raid3: Using standard timeout mode (global settings)`, Balanced logs `NOTICE: raid3: Using balanced timeout mode (retries=3, contimeout=15s, timeout=30s)`, and Aggressive logs `NOTICE: raid3: Using aggressive timeout mode (retries=1, contimeout=5s, timeout=10s)`.
 
 ## Related Documentation
 

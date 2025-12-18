@@ -13,7 +13,7 @@ This document provides **complete documentation** for the Bash-based integration
 
 These scripts supplement the Go-based unit and integration tests with black-box testing scenarios for complex real-world use cases.
 
-For **main testing documentation**, see [`../TESTING.md`](../TESTING.md).  
+For **main testing documentation**, see [`../docs/TESTING.md`](../docs/TESTING.md).  
 For **user documentation**, see [`../README.md`](../README.md).
 
 ---
@@ -218,7 +218,7 @@ The test scripts provide clear error messages if the environment is not set up:
 ## 📚 Additional Documentation
 
 - **Setup and Configuration Details**: See [`../README.md`](../README.md#integration-test-scripts) for comprehensive setup instructions
-- **Technical Details**: See [`../TESTING.md`](../TESTING.md#bash-integration-test-harnesses) for implementation details
+- **Technical Details**: See [`../docs/TESTING.md`](../docs/TESTING.md#bash-integration-test-harnesses) for implementation details
 - **Script Help**: Run any script with `-h` or `--help` for usage information
 
 ## 🔍 File Structure
