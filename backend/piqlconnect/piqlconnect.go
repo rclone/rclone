@@ -196,13 +196,14 @@ func (f *Fs) getFiles(ctx context.Context, segments []string) (files []api.Item,
 	values.Set("path", packageRelativePath)
 	resp, err := f.client.CallJSON(ctx, &rest.Opts{Path: "/files", Parameters: values}, nil, &files)
 	if err != nil {
-		if resp.StatusCode == 403 {
+		switch resp.StatusCode {
+		case http.StatusForbidden:
 			return nil, fs.ErrorIsFile
-		}
-		if resp.StatusCode == 404 {
+		case http.StatusNotFound:
 			return nil, fs.ErrorDirNotFound
+		default:
+			return nil, err
 		}
-		return nil, err
 	}
 	return files, nil
 }
