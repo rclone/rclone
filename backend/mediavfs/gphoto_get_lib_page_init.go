@@ -76,37 +76,27 @@ func buildGetLibraryPageInitMessage(pageToken string) map[string]interface{} {
 	// Build field["1"] structure
 	field1 := map[string]interface{}{
 		"1": field1_1_full,
-			"2": map[string]interface{}{
-				"1": map[string]interface{}{
-					"2":  map[string]interface{}{},
-					"3":  map[string]interface{}{},
-					"4":  map[string]interface{}{},
-					"5":  map[string]interface{}{},
-					"6":  map[string]interface{}{"1": map[string]interface{}{}, "2": map[string]interface{}{}, "3": map[string]interface{}{}, "4": map[string]interface{}{}, "5": map[string]interface{}{}, "7": map[string]interface{}{}},
-					"7":  map[string]interface{}{},
-					"8":  map[string]interface{}{},
-					"10": map[string]interface{}{},
-					"12": map[string]interface{}{},
-					"13": map[string]interface{}{"2": map[string]interface{}{}, "3": map[string]interface{}{}},
-					"15": map[string]interface{}{"1": map[string]interface{}{}},
-					"18": map[string]interface{}{},
-				},
-			},
-			"3": map[string]interface{}{
-				"2": map[string]interface{}{},
-				"3": map[string]interface{}{
-					"2": map[string]interface{}{},
-					"3": map[string]interface{}{},
-				},
-			},
-		},
 		"2": map[string]interface{}{
 			"1": map[string]interface{}{
-				"1": map[string]interface{}{
-					"1": map[string]interface{}{
-						"1": map[string]interface{}{},
-					},
-				},
+				"2":  map[string]interface{}{},
+				"3":  map[string]interface{}{},
+				"4":  map[string]interface{}{},
+				"5":  map[string]interface{}{},
+				"6":  map[string]interface{}{"1": map[string]interface{}{}, "2": map[string]interface{}{}, "3": map[string]interface{}{}, "4": map[string]interface{}{}, "5": map[string]interface{}{}, "7": map[string]interface{}{}},
+				"7":  map[string]interface{}{},
+				"8":  map[string]interface{}{},
+				"10": map[string]interface{}{},
+				"12": map[string]interface{}{},
+				"13": map[string]interface{}{"2": map[string]interface{}{}, "3": map[string]interface{}{}},
+				"15": map[string]interface{}{"1": map[string]interface{}{}},
+				"18": map[string]interface{}{},
+			},
+		},
+		"3": map[string]interface{}{
+			"2": map[string]interface{}{},
+			"3": map[string]interface{}{
+				"2": map[string]interface{}{},
+				"3": map[string]interface{}{},
 			},
 		},
 	}
@@ -118,5 +108,14 @@ func buildGetLibraryPageInitMessage(pageToken string) map[string]interface{} {
 
 	return map[string]interface{}{
 		"1": field1,
+		"2": map[string]interface{}{
+			"1": map[string]interface{}{
+				"1": map[string]interface{}{
+					"1": map[string]interface{}{
+						"1": map[string]interface{}{},
+					},
+				},
+			},
+		},
 	}
 }
