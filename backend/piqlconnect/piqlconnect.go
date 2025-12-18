@@ -56,7 +56,7 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	ApiKey  string               `config:"api_key"`
+	APIKey  string               `config:"api_key"`
 	RootURL string               `config:"root_url"`
 	Enc     encoder.MultiEncoder `config:"encoding"`
 }
@@ -66,10 +66,10 @@ type Fs struct {
 	name           string            // name of this remote
 	root           string            // the path we are working on
 	opt            Options           // parsed options
-	organisationId string            // the organisation ID in piqlConnect
+	organisationID string            // the organisation ID in piqlConnect
 	httpClient     *http.Client      // http Client used for external HTTP calls (file downloads / uploads)
 	client         *rest.Client      // rest Client used for API calls
-	packageIdCache map[string]string // map of package name to package ID
+	packageIDCache map[string]string // map of package name to package ID
 }
 
 // Object represents a piqlConnect object
@@ -125,12 +125,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	httpclient := fshttp.NewClient(ctx)
 	client := rest.NewClient(httpclient)
 	client.SetRoot(opt.RootURL)
-	client.SetHeader("Authorization", "Bearer "+opt.ApiKey)
+	client.SetHeader("Authorization", "Bearer "+opt.APIKey)
 	resp, err := client.Call(ctx, &rest.Opts{Path: "/user/api-key/organisation"})
 	if err != nil {
 		return nil, err
 	}
-	organisationIdBytes, err := io.ReadAll(resp.Body)
+	organisationIDBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -139,10 +139,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:           name,
 		root:           root,
 		opt:            opt,
-		organisationId: string(organisationIdBytes),
+		organisationID: string(organisationIDBytes),
 		httpClient:     httpclient,
 		client:         client,
-		packageIdCache: make(map[string]string),
+		packageIDCache: make(map[string]string),
 	}
 
 	_, err = f.List(ctx, "")
@@ -183,12 +183,15 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 func (f *Fs) getFiles(ctx context.Context, segments []string) (files []api.Item, err error) {
 	packageName := segments[1]
 	values := url.Values{}
-	values.Set("organisationId", f.organisationId)
-	if f.packageIdCache[packageName] == "" {
-		f.listPackages(ctx, segments[0])
+	values.Set("organisationId", f.organisationID)
+	if f.packageIDCache[packageName] == "" {
+		_, err := f.listPackages(ctx, segments[0])
+		if err != nil {
+			return nil, err
+		}
 	}
-	packageId := f.packageIdCache[packageName]
-	values.Set("packageId", packageId)
+	packageID := f.packageIDCache[packageName]
+	values.Set("packageId", packageID)
 	packageRelativePath := f.opt.Enc.FromStandardPath(strings.Join(segments[2:], "/"))
 	values.Set("path", packageRelativePath)
 	resp, err := f.client.CallJSON(ctx, &rest.Opts{Path: "/files", Parameters: values}, nil, &files)
@@ -237,7 +240,7 @@ func (f *Fs) listFiles(ctx context.Context, absolutePath string) (entries fs.Dir
 func (f *Fs) listPackages(ctx context.Context, absolutePath string) (entries fs.DirEntries, err error) {
 	segments := getPathSegments(absolutePath)
 	values := url.Values{}
-	values.Set("organisationId", f.organisationId)
+	values.Set("organisationId", f.organisationID)
 
 	ps := []api.Package{}
 	_, err = f.client.CallJSON(ctx, &rest.Opts{Path: "/packages", Parameters: values}, nil, &ps)
@@ -245,7 +248,7 @@ func (f *Fs) listPackages(ctx context.Context, absolutePath string) (entries fs.
 		return nil, err
 	}
 	for _, p := range ps {
-		f.packageIdCache[p.Name] = p.Id
+		f.packageIDCache[p.Name] = p.ID
 		mtime, err := time.Parse(time.RFC3339, p.UpdatedAt)
 		if err != nil {
 			return nil, err
@@ -297,12 +300,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ...fs.OpenOption) (fs.Object, error) {
 	dir := path.Join(f.root, src.Remote())
 	segments := f.getAbsolutePathSegments(src.Remote())
-	if f.packageIdCache[segments[1]] == "" {
-		f.listPackages(ctx, dir)
+	if f.packageIDCache[segments[1]] == "" {
+		_, err := f.listPackages(ctx, dir)
+		if err != nil {
+			return nil, err
+		}
 	}
 	reqBody := api.CreateFileUrl{
-		OrganisationId: f.organisationId,
-		PackageId:      f.packageIdCache[segments[1]],
+		OrganisationID: f.organisationID,
+		PackageID:      f.packageIDCache[segments[1]],
 		Files:          [1]api.FilePath{{Path: f.opt.Enc.FromStandardPath(strings.Join(segments[2:], "/"))}},
 		Method:         "OVERWRITE",
 	}
@@ -314,11 +320,11 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 	size := src.Size()
 	if size > 4000*1024*1024 {
 		i := 0
-		bytes_left := size
-		for bytes_left > 0 {
+		bytesLeft := size
+		for bytesLeft > 0 {
 			i++
-			chunkSize := min(4000*1024*1024, bytes_left)
-			bytes_left -= chunkSize
+			chunkSize := min(4000*1024*1024, bytesLeft)
+			bytesLeft -= chunkSize
 			url := results[0] + "&comp=block&blockid=" + url.QueryEscape(base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(i))))
 			req, err := http.NewRequestWithContext(ctx, "PUT", url, io.LimitReader(in, chunkSize))
 			if err != nil {
@@ -334,7 +340,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 				if err != nil {
 					return nil, err
 				}
-				return nil, fmt.Errorf("invalid http response code from azure: " + azureResp.Status + "\n" + string(azureRespBytes))
+				return nil, fmt.Errorf("invalid http response code from azure: %s\n%s", azureResp.Status, string(azureRespBytes))
 			}
 		}
 
@@ -357,7 +363,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 			if err != nil {
 				return nil, err
 			}
-			return nil, fmt.Errorf("invalid http response code from azure: " + resp.Status + "\n" + string(respBytes))
+			return nil, fmt.Errorf("invalid http response code from azure: %s\n%s", resp.Status, string(respBytes))
 		}
 	} else {
 		if size == 0 {
@@ -378,18 +384,18 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 			if err != nil {
 				return nil, err
 			}
-			return nil, fmt.Errorf("invalid http response code from azure: " + azureResp.Status + "\n" + string(azureRespBytes))
+			return nil, fmt.Errorf("invalid http response code from azure: %s\n%s", azureResp.Status, string(azureRespBytes))
 		}
 
 	}
 
 	filesReqBody := api.CreateFile{
-		OrganisationId: f.organisationId,
-		PackageId:      f.packageIdCache[segments[1]],
+		OrganisationID: f.organisationID,
+		PackageID:      f.packageIDCache[segments[1]],
 		Files:          [1]api.FilePathSize{{Path: f.opt.Enc.FromStandardPath(strings.Join(segments[2:], "/")), Size: size}},
 	}
-	var fileIds [1]string
-	_, err = f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/files"}, &filesReqBody, &fileIds)
+	var fileIDs [1]string
+	_, err = f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/files"}, &filesReqBody, &fileIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -398,7 +404,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 		remote:  src.Remote(),
 		size:    size,
 		modTime: time.Now(), // TODO: getFiles from remote?
-		id:      fileIds[0],
+		id:      fileIDs[0],
 	}, nil
 
 }
@@ -409,34 +415,31 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if len(segments) < 2 {
 		return nil
 	}
-	if f.packageIdCache[segments[1]] == "" {
-		f.listPackages(ctx, segments[0])
+	if f.packageIDCache[segments[1]] == "" {
+		_, err := f.listPackages(ctx, segments[0])
+		if err != nil {
+			return err
+		}
 	}
 	for i := range len(segments[2:]) {
 		createFolder := api.CreateFolder{
-			OrganisationId: f.organisationId,
-			PackageId:      f.packageIdCache[segments[1]],
+			OrganisationID: f.organisationID,
+			PackageID:      f.packageIDCache[segments[1]],
 			FolderPath:     f.opt.Enc.FromStandardPath(strings.Join(segments[2:3+i], "/")),
 		}
 
-		resp, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders"}, &createFolder, nil)
+		_, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders"}, &createFolder, nil)
 		if err != nil {
 			return err
 		}
-		folderIdBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		folderId := string(folderIdBytes)
-		_ = folderId
 	}
 	return nil
 }
 
 func (f *Fs) deleteObject(ctx context.Context, packageName string, id string) error {
 	removeFile := api.RemoveFile{
-		OrganisationId: f.organisationId,
-		PackageId:      f.packageIdCache[packageName],
+		OrganisationID: f.organisationID,
+		PackageID:      f.packageIDCache[packageName],
 		FileIds:        [1]string{id},
 	}
 	_, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/files/delete"}, &removeFile, nil)
@@ -446,17 +449,23 @@ func (f *Fs) deleteObject(ctx context.Context, packageName string, id string) er
 	return nil
 }
 
+// Rmdir deletes the root folder
+//
+// Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	segments := f.getAbsolutePathSegments(dir)
 	if len(segments) < 2 {
 		return fs.ErrorDirNotFound
 	}
-	if f.packageIdCache[segments[1]] == "" {
-		f.listPackages(ctx, segments[0])
+	if f.packageIDCache[segments[1]] == "" {
+		_, err := f.listPackages(ctx, segments[0])
+		if err != nil {
+			return err
+		}
 	}
 	removeFolder := api.RemoveFolder{
-		OrganisationId: f.organisationId,
-		PackageId:      f.packageIdCache[segments[1]],
+		OrganisationID: f.organisationID,
+		PackageID:      f.packageIDCache[segments[1]],
 		FolderPaths:    [1]string{strings.Join(segments[2:], "/")},
 		Recursive:      false,
 	}
@@ -473,20 +482,20 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // Purge deletes all the files and the container
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	segments := f.getAbsolutePathSegments(dir)
-	if f.packageIdCache[segments[1]] == "" {
-		f.listPackages(ctx, segments[0])
+	if f.packageIDCache[segments[1]] == "" {
+		_, err := f.listPackages(ctx, segments[0])
+		if err != nil {
+			return err
+		}
 	}
 	removeFolder := api.RemoveFolder{
-		OrganisationId: f.organisationId,
-		PackageId:      f.packageIdCache[segments[1]],
+		OrganisationID: f.organisationID,
+		PackageID:      f.packageIDCache[segments[1]],
 		FolderPaths:    [1]string{strings.Join(segments[2:], "/")},
 		Recursive:      true,
 	}
 	_, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/folders/delete"}, &removeFolder, nil)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // ------------------------------------------------------------
@@ -515,12 +524,15 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 		return "", hash.ErrUnsupported
 	}
 	segments := o.fs.getAbsolutePathSegments(o.remote)
-	if o.fs.packageIdCache[segments[1]] == "" {
-		o.fs.listPackages(ctx, segments[0])
+	if o.fs.packageIDCache[segments[1]] == "" {
+		_, err := o.fs.listPackages(ctx, segments[0])
+		if err != nil {
+			return "", err
+		}
 	}
 	reqBody := api.CreateFileUrl{
-		OrganisationId: o.fs.organisationId,
-		PackageId:      o.fs.packageIdCache[segments[1]],
+		OrganisationID: o.fs.organisationID,
+		PackageID:      o.fs.packageIDCache[segments[1]],
 		Files:          [1]api.FilePath{{Path: path.Join(segments[2:]...)}},
 		Method:         "READ",
 	}
@@ -556,11 +568,11 @@ func (o *Object) setMetaData(info *api.Item) error {
 	}
 	modTime, err := time.Parse(time.RFC3339, info.UpdatedAt)
 	if err != nil {
-		return err
+		return fmt.Errorf("parsing updatedAt as RFC3339: %w", err)
 	}
 	o.size = info.Size
 	o.modTime = modTime
-	o.id = info.Id
+	o.id = info.ID
 	return nil
 }
 
@@ -585,8 +597,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		// if packageRelativePath == o.fs.opt.Enc.ToStandardPath(entry.Path) {
 		// Encoding test wants:
 		if packageRelativePath == o.fs.opt.Enc.Decode(entry.Path) {
-			o.setMetaData(&entry)
-			return nil
+			return o.setMetaData(&entry)
 		}
 	}
 	return fs.ErrorObjectNotFound
@@ -600,13 +611,16 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	segments := o.fs.getAbsolutePathSegments(o.remote)
-	if o.fs.packageIdCache[segments[1]] == "" {
-		o.fs.listPackages(ctx, segments[0])
+	if o.fs.packageIDCache[segments[1]] == "" {
+		_, err := o.fs.listPackages(ctx, segments[0])
+		if err != nil {
+			return err
+		}
 	}
 
 	touchFile := api.TouchFile{
-		OrganisationId: o.fs.organisationId,
-		PackageId:      o.fs.packageIdCache[segments[1]],
+		OrganisationID: o.fs.organisationID,
+		PackageID:      o.fs.packageIDCache[segments[1]],
 		Files:          [1]string{path.Join(segments[2:]...)},
 	}
 	_, err := o.fs.client.CallJSON(ctx, &rest.Opts{
@@ -643,12 +657,15 @@ func (f *Fs) absolutePathToRclone(absolutePath string) string {
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	segments := o.fs.getAbsolutePathSegments(o.remote)
-	if o.fs.packageIdCache[segments[1]] == "" {
-		o.fs.listPackages(ctx, segments[0])
+	if o.fs.packageIDCache[segments[1]] == "" {
+		_, err := o.fs.listPackages(ctx, segments[0])
+		if err != nil {
+			return nil, err
+		}
 	}
 	downloadFile := api.DownloadFile{
-		OrganisationId: o.fs.organisationId,
-		PackageId:      o.fs.packageIdCache[segments[1]],
+		OrganisationID: o.fs.organisationID,
+		PackageID:      o.fs.packageIDCache[segments[1]],
 		BlobNames:      [1]string{o.fs.opt.Enc.FromStandardPath(strings.Join(segments[2:], "/"))},
 	}
 	resp, err := o.fs.client.CallJSON(ctx, &rest.Opts{
@@ -658,18 +675,18 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	sasUrlBytes, err := io.ReadAll(resp.Body)
+	sasURLBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequestWithContext(ctx, "GET", string(sasUrlBytes), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", string(sasURLBytes), nil)
 	if err != nil {
 		return nil, err
 	}
 	for _, option := range options {
 		req.Header.Set(option.Header())
 	}
-	resp, err = o.fs.httpClient.Get(string(sasUrlBytes))
+	resp, err = o.fs.httpClient.Get(string(sasURLBytes))
 	if err != nil {
 		return nil, err
 	}
@@ -694,16 +711,21 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	segments := o.fs.getAbsolutePathSegments(o.remote)
-	if o.fs.packageIdCache[segments[1]] == "" {
-		o.fs.listPackages(ctx, segments[0])
+	if o.fs.packageIDCache[segments[1]] == "" {
+		_, err := o.fs.listPackages(ctx, segments[0])
+		if err != nil {
+			return err
+		}
 	}
 	return o.fs.deleteObject(ctx, segments[1], o.id)
 }
 
+// Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
+// Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
 }
