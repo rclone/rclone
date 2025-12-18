@@ -54,6 +54,15 @@ type MediaItem struct {
 	ThumbnailURL             sql.NullString
 }
 
+// Helper function to get map keys for debugging
+func getKeys(m map[string]interface{}) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // ParseDbUpdate parses the library state response from Google Photos
 func ParseDbUpdate(data map[string]interface{}) (stateToken string, nextPageToken string, mediaItems []MediaItem, mediaKeysToDelete []string, err error) {
 	// Get top-level field 1
@@ -66,20 +75,35 @@ func ParseDbUpdate(data map[string]interface{}) (stateToken string, nextPageToke
 		return "", "", nil, nil, fmt.Errorf("invalid response structure: field 1 is not a map (type: %T)", data["1"])
 	}
 
+	// Debug: Log field1 structure
+	fmt.Printf("DEBUG ParseDbUpdate: field1 keys = %v\n", getKeys(field1))
+
 	// Extract tokens
 	if token, ok := field1["6"].(string); ok {
 		stateToken = token
+		fmt.Printf("DEBUG ParseDbUpdate: stateToken = %q\n", token)
 	}
 	if token, ok := field1["1"].(string); ok {
 		nextPageToken = token
+		fmt.Printf("DEBUG ParseDbUpdate: nextPageToken = %q\n", token)
 	}
 
 	// Parse media items (field 2)
 	if field2Data, ok := field1["2"]; ok {
+		fmt.Printf("DEBUG ParseDbUpdate: field2Data type = %T\n", field2Data)
+		if arr, isArray := field2Data.([]interface{}); isArray {
+			fmt.Printf("DEBUG ParseDbUpdate: field2 is ARRAY with %d items\n", len(arr))
+		} else if m, isMap := field2Data.(map[string]interface{}); isMap {
+			fmt.Printf("DEBUG ParseDbUpdate: field2 is MAP with keys: %v\n", getKeys(m))
+		}
+
 		mediaItems, err = parseMediaItems(field2Data)
 		if err != nil {
 			return "", "", nil, nil, fmt.Errorf("failed to parse media items: %w", err)
 		}
+		fmt.Printf("DEBUG ParseDbUpdate: parsed %d media items\n", len(mediaItems))
+	} else {
+		fmt.Printf("DEBUG ParseDbUpdate: field2 NOT FOUND in field1\n")
 	}
 
 	// Parse deletions (field 9)
