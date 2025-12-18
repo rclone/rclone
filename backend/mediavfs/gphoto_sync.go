@@ -278,32 +278,80 @@ func (f *Fs) SyncFromGooglePhotos(ctx context.Context, user string) error {
 }
 
 // initialSync performs the initial full sync from Google Photos
+// Workflow matches Python's _cache_init:
+// 1. Call get_library_state("") once to establish state_token
+// 2. Use get_library_page_init(page_token) for pagination
 func (f *Fs) initialSync(ctx context.Context, api *GPhotoAPI, user string) error {
-	pageToken := ""
-	var finalStateToken string
+	// Step 1: Get initial library state (establishes state_token)
+	fs.Debugf(f, "Getting initial library state")
+	response, err := api.GetLibraryState(ctx, "", "")
+	if err != nil {
+		return fmt.Errorf("failed to get initial library state: %w", err)
+	}
 
-	for {
-		// Get library page using INIT template (returns batches of items)
-		fs.Debugf(f, "Fetching library page (pageToken=%q)", pageToken)
+	// Parse initial response
+	stateToken, pageToken, mediaItems, deletions, err := parseLibraryResponse(response, user)
+	if err != nil {
+		return fmt.Errorf("failed to parse initial library response: %w", err)
+	}
+
+	fs.Debugf(f, "Initial state: stateToken=%q, pageToken=%q, items=%d", stateToken, pageToken, len(mediaItems))
+
+	// Insert/delete from initial response
+	if len(mediaItems) > 0 {
+		fs.Infof(f, "Syncing %d media items from initial state", len(mediaItems))
+		if err := f.InsertMediaItems(ctx, mediaItems); err != nil {
+			return fmt.Errorf("failed to insert media items: %w", err)
+		}
+	}
+	if len(deletions) > 0 {
+		fs.Infof(f, "Deleting %d items", len(deletions))
+		if err := f.DeleteMediaItems(ctx, deletions); err != nil {
+			return fmt.Errorf("failed to delete media items: %w", err)
+		}
+	}
+
+	// Save state after initial fetch
+	if err := f.UpdateSyncState(ctx, user, stateToken, pageToken, false); err != nil {
+		return fmt.Errorf("failed to update sync state: %w", err)
+	}
+
+	// Step 2: If there's a page token, paginate through remaining items
+	if pageToken != "" {
+		fs.Debugf(f, "Paginating remaining items with pageToken")
+		if err := f.processInitPages(ctx, api, user, stateToken, pageToken); err != nil {
+			return fmt.Errorf("failed to process init pages: %w", err)
+		}
+	}
+
+	// Mark initial sync as complete
+	if err := f.UpdateSyncState(ctx, user, stateToken, "", true); err != nil {
+		return fmt.Errorf("failed to mark sync complete: %w", err)
+	}
+
+	fs.Infof(f, "Initial sync completed for user %s", user)
+	return nil
+}
+
+// processInitPages paginates through remaining items during initial sync
+// Matches Python's _process_pages_init
+func (f *Fs) processInitPages(ctx context.Context, api *GPhotoAPI, user string, stateToken string, pageToken string) error {
+	for pageToken != "" {
+		fs.Debugf(f, "Fetching next page (pageToken=%q)", pageToken)
 		response, err := api.GetLibraryPageInit(ctx, pageToken)
 		if err != nil {
 			return fmt.Errorf("failed to get library page: %w", err)
 		}
 
-		// Parse response
-		newStateToken, newPageToken, mediaItems, deletions, err := parseLibraryResponse(response, user)
+		// Parse response - IGNORE state_token during pagination, only use page_token
+		_, nextPageToken, mediaItems, deletions, err := parseLibraryResponse(response, user)
 		if err != nil {
-			return fmt.Errorf("failed to parse library response: %w", err)
-		}
-
-		// Save the final state token for when sync completes
-		if newStateToken != "" {
-			finalStateToken = newStateToken
+			return fmt.Errorf("failed to parse library page: %w", err)
 		}
 
 		// Insert media items
 		if len(mediaItems) > 0 {
-			fs.Infof(f, "Syncing %d media items", len(mediaItems))
+			fs.Infof(f, "Syncing %d media items from page", len(mediaItems))
 			if err := f.InsertMediaItems(ctx, mediaItems); err != nil {
 				return fmt.Errorf("failed to insert media items: %w", err)
 			}
@@ -317,26 +365,15 @@ func (f *Fs) initialSync(ctx context.Context, api *GPhotoAPI, user string) error
 			}
 		}
 
-		// Update pagination token
-		pageToken = newPageToken
-
-		// Save progress (but don't mark as complete yet)
-		if err := f.UpdateSyncState(ctx, user, finalStateToken, pageToken, false); err != nil {
+		// Update ONLY page_token (keep original state_token from step 1)
+		if err := f.UpdateSyncState(ctx, user, stateToken, nextPageToken, false); err != nil {
 			return fmt.Errorf("failed to update sync state: %w", err)
 		}
 
-		// Check if we're done (no more pages)
-		if pageToken == "" {
-			break
-		}
+		// Move to next page
+		pageToken = nextPageToken
 	}
 
-	// Mark initial sync as complete
-	if err := f.UpdateSyncState(ctx, user, finalStateToken, "", true); err != nil {
-		return fmt.Errorf("failed to mark sync complete: %w", err)
-	}
-
-	fs.Infof(f, "Initial sync completed for user %s", user)
 	return nil
 }
 
