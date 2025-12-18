@@ -73,14 +73,9 @@ func buildGetLibraryPageInitMessage(pageToken string) map[string]interface{} {
 		"23": map[string]interface{}{},
 	}
 
-	// Add page_token if provided
-	if pageToken != "" {
-		field1_1_full["4"] = pageToken
-	}
-
-	return map[string]interface{}{
-		"1": map[string]interface{}{
-			"1": field1_1_full,
+	// Build field["1"] structure
+	field1 := map[string]interface{}{
+		"1": field1_1_full,
 			"2": map[string]interface{}{
 				"1": map[string]interface{}{
 					"2":  map[string]interface{}{},
@@ -114,5 +109,14 @@ func buildGetLibraryPageInitMessage(pageToken string) map[string]interface{} {
 				},
 			},
 		},
+	}
+
+	// CRITICAL FIX: Add page_token at the correct level ["1"]["4"], not ["1"]["1"]["4"]
+	if pageToken != "" {
+		field1["4"] = pageToken
+	}
+
+	return map[string]interface{}{
+		"1": field1,
 	}
 }

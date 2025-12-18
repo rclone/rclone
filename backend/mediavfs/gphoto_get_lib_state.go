@@ -74,11 +74,6 @@ func buildGetLibraryStateMessage(stateToken, pageToken string) map[string]interf
 		"24": map[string]interface{}{},
 	}
 
-	// Add page_token if provided
-	if pageToken != "" {
-		field1_1_full["4"] = pageToken
-	}
-
 	field1_2 := map[string]interface{}{
 		"1": map[string]interface{}{
 			"2":  map[string]interface{}{},
@@ -180,6 +175,11 @@ func buildGetLibraryStateMessage(stateToken, pageToken string) map[string]interf
 		"2": field1_2,
 		"3": field1_3,
 		"7": 2, // Mode field
+	}
+
+	// Add page_token if provided - CRITICAL FIX: must be at ["1"]["4"], not ["1"]["1"]["4"]
+	if pageToken != "" {
+		field1["4"] = pageToken
 	}
 
 	// Add state_token if provided
