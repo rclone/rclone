@@ -279,20 +279,26 @@ func (f *Fs) SyncFromGooglePhotos(ctx context.Context, user string) error {
 
 // initialSync performs the initial full sync from Google Photos
 func (f *Fs) initialSync(ctx context.Context, api *GPhotoAPI, user string) error {
-	stateToken := ""
 	pageToken := ""
+	var finalStateToken string
 
 	for {
-		// Get library state
-		response, err := api.GetLibraryState(ctx, stateToken, pageToken)
+		// Get library page using INIT template (returns batches of items)
+		fs.Debugf(f, "Fetching library page (pageToken=%q)", pageToken)
+		response, err := api.GetLibraryPageInit(ctx, pageToken)
 		if err != nil {
-			return fmt.Errorf("failed to get library state: %w", err)
+			return fmt.Errorf("failed to get library page: %w", err)
 		}
 
 		// Parse response
 		newStateToken, newPageToken, mediaItems, deletions, err := parseLibraryResponse(response, user)
 		if err != nil {
 			return fmt.Errorf("failed to parse library response: %w", err)
+		}
+
+		// Save the final state token for when sync completes
+		if newStateToken != "" {
+			finalStateToken = newStateToken
 		}
 
 		// Insert media items
@@ -311,23 +317,22 @@ func (f *Fs) initialSync(ctx context.Context, api *GPhotoAPI, user string) error
 			}
 		}
 
-		// Update state
-		stateToken = newStateToken
+		// Update pagination token
 		pageToken = newPageToken
 
-		// Save progress
-		if err := f.UpdateSyncState(ctx, user, stateToken, pageToken, false); err != nil {
+		// Save progress (but don't mark as complete yet)
+		if err := f.UpdateSyncState(ctx, user, finalStateToken, pageToken, false); err != nil {
 			return fmt.Errorf("failed to update sync state: %w", err)
 		}
 
-		// Check if we're done
+		// Check if we're done (no more pages)
 		if pageToken == "" {
 			break
 		}
 	}
 
 	// Mark initial sync as complete
-	if err := f.UpdateSyncState(ctx, user, stateToken, "", true); err != nil {
+	if err := f.UpdateSyncState(ctx, user, finalStateToken, "", true); err != nil {
 		return fmt.Errorf("failed to mark sync complete: %w", err)
 	}
 

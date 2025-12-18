@@ -482,7 +482,68 @@ func (api *GPhotoAPI) GetLibraryState(ctx context.Context, stateToken, pageToken
 	return data, nil
 }
 
-// GetLibraryPage gets a page of library results
+// GetLibraryPage gets a page of library results (for incremental sync)
 func (api *GPhotoAPI) GetLibraryPage(ctx context.Context, pageToken, stateToken string) ([]byte, error) {
 	return api.GetLibraryState(ctx, stateToken, pageToken)
+}
+
+// GetLibraryPageInit gets a page of library results during initial sync
+// This uses a different message template that returns batches of items
+func (api *GPhotoAPI) GetLibraryPageInit(ctx context.Context, pageToken string) ([]byte, error) {
+	// Build protobuf message using init template
+	protoBody := buildGetLibraryPageInitMessage(pageToken)
+
+	// Encode using Google's official protobuf wire format
+	serializedData, err := EncodeDynamicMessage(protoBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode library page init message: %w", err)
+	}
+
+	headers := map[string]string{
+		"Content-Type":             "application/x-protobuf",
+		"x-goog-ext-173412678-bin": "CgcIAhClARgC",
+		"x-goog-ext-174067345-bin": "CgIIAg==",
+	}
+
+	resp, err := api.request(ctx, "POST",
+		"https://photosdata-pa.googleapis.com/6439526531001121323/18047484249733410717",
+		headers, bytes.NewReader(serializedData))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Log response headers
+	fs.Debugf(nil, "gphoto: response Content-Encoding: %s", resp.Header.Get("Content-Encoding"))
+	fs.Debugf(nil, "gphoto: response Content-Length: %s", resp.Header.Get("Content-Length"))
+
+	// Check if response is gzip compressed
+	var reader io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		fs.Debugf(nil, "gphoto: response is gzip compressed, decompressing")
+		gzipReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzipReader.Close()
+		reader = gzipReader
+	}
+
+	// Read response body
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Log first bytes for debugging
+	hexLen := 60
+	if hexLen > len(data) {
+		hexLen = len(data)
+	}
+	if hexLen > 0 {
+		fs.Debugf(nil, "gphoto: read %d bytes from response body", len(data))
+		fs.Debugf(nil, "gphoto: first %d bytes (hex): %x", hexLen, data[:hexLen])
+		fs.Debugf(nil, "gphoto: first %d bytes (decimal): %v", hexLen, data[:hexLen])
+	}
+	return data, nil
 }
