@@ -139,7 +139,17 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 				return nil, protowire.ParseError(n)
 			}
 			data = data[n:]
-			result[fieldNum] = val
+			// Handle repeated fields
+			if existing, exists := result[fieldNum]; exists {
+				// Convert to array if not already
+				if arr, isArray := existing.([]interface{}); isArray {
+					result[fieldNum] = append(arr, val)
+				} else {
+					result[fieldNum] = []interface{}{existing, val}
+				}
+			} else {
+				result[fieldNum] = val
+			}
 
 		case protowire.BytesType:
 			val, n := protowire.ConsumeBytes(data)
@@ -148,20 +158,32 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 			}
 			data = data[n:]
 
-			// Try to decode as nested message
-			// Only attempt if the bytes look like they could be protobuf (not empty, reasonable size)
+			// Decode the value (nested message or string)
+			var decodedVal interface{}
 			if len(val) > 0 && len(val) < 10000000 { // sanity check size
 				if nested, err := DecodeDynamicMessage(val); err == nil && len(nested) > 0 {
-					result[fieldNum] = nested
+					decodedVal = nested
 				} else {
 					// If decoding failed, treat as string
-					result[fieldNum] = string(val)
+					decodedVal = string(val)
 				}
 			} else if len(val) == 0 {
-				result[fieldNum] = ""
+				decodedVal = ""
 			} else {
 				// Too large, keep as bytes
-				result[fieldNum] = val
+				decodedVal = val
+			}
+
+			// Handle repeated fields
+			if existing, exists := result[fieldNum]; exists {
+				// Convert to array if not already
+				if arr, isArray := existing.([]interface{}); isArray {
+					result[fieldNum] = append(arr, decodedVal)
+				} else {
+					result[fieldNum] = []interface{}{existing, decodedVal}
+				}
+			} else {
+				result[fieldNum] = decodedVal
 			}
 
 		case protowire.Fixed32Type:
@@ -170,7 +192,16 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 				return nil, protowire.ParseError(n)
 			}
 			data = data[n:]
-			result[fieldNum] = val
+			// Handle repeated fields
+			if existing, exists := result[fieldNum]; exists {
+				if arr, isArray := existing.([]interface{}); isArray {
+					result[fieldNum] = append(arr, val)
+				} else {
+					result[fieldNum] = []interface{}{existing, val}
+				}
+			} else {
+				result[fieldNum] = val
+			}
 
 		case protowire.Fixed64Type:
 			val, n := protowire.ConsumeFixed64(data)
@@ -178,7 +209,16 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 				return nil, protowire.ParseError(n)
 			}
 			data = data[n:]
-			result[fieldNum] = val
+			// Handle repeated fields
+			if existing, exists := result[fieldNum]; exists {
+				if arr, isArray := existing.([]interface{}); isArray {
+					result[fieldNum] = append(arr, val)
+				} else {
+					result[fieldNum] = []interface{}{existing, val}
+				}
+			} else {
+				result[fieldNum] = val
+			}
 
 		case protowire.StartGroupType:
 			// Deprecated group type - skip until EndGroupType
