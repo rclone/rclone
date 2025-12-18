@@ -7,7 +7,7 @@
 | `--name-transform suffix_keep_extension=XXXX` | Appends XXXX to the file name while preserving the original file extension. |
 | `--name-transform trimprefix=XXXX` | Removes XXXX if it appears at the start of the file name. |
 | `--name-transform trimsuffix=XXXX` | Removes XXXX if it appears at the end of the file name. |
-| `--name-transform regex=pattern/replacement` | Applies a regex-based transformation. |
+| `--name-transform regex=/pattern/replacement/` | Applies a regex-based transformation. |
 | `--name-transform replace=old:new` | Replaces occurrences of old with new in the file name. |
 | `--name-transform date={YYYYMMDD}` | Appends or prefixes the specified date format. |
 | `--name-transform truncate=N` | Truncates the file name to a maximum of N characters. |
@@ -151,82 +151,82 @@ SquareBracket
 
 Examples:
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,uppercase"
 // Output: STORIES/THE QUICK BROWN FOX!.TXT
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,replace=Fox:Turtle" --name-transform "all,replace=Quick:Slow"
 // Output: stories/The Slow Brown Turtle!.txt
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,base64encode"
 // Output: c3Rvcmllcw==/VGhlIFF1aWNrIEJyb3duIEZveCEudHh0
 ```
 
-```console
+```sh
 rclone convmv "c3Rvcmllcw==/VGhlIFF1aWNrIEJyb3duIEZveCEudHh0" --name-transform "all,base64decode"
 // Output: stories/The Quick Brown Fox!.txt
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox Went to the Café!.txt" --name-transform "all,nfc"
 // Output: stories/The Quick Brown 🦊 Fox Went to the Café!.txt
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox Went to the Café!.txt" --name-transform "all,nfd"
 // Output: stories/The Quick Brown 🦊 Fox Went to the Café!.txt
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox!.txt" --name-transform "all,ascii"
 // Output: stories/The Quick Brown  Fox!.txt
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,trimsuffix=.txt"
 // Output: stories/The Quick Brown Fox!
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,prefix=OLD_"
 // Output: OLD_stories/OLD_The Quick Brown Fox!.txt
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox Went to the Café!.txt" --name-transform "all,charmap=ISO-8859-7"
 // Output: stories/The Quick Brown _ Fox Went to the Caf_!.txt
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox: A Memoir [draft].txt" --name-transform "all,encoder=Colon,SquareBracket"
 // Output: stories/The Quick Brown Fox： A Memoir ［draft］.txt
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown 🦊 Fox Went to the Café!.txt" --name-transform "all,truncate=21"
 // Output: stories/The Quick Brown 🦊 Fox
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=echo"
 // Output: stories/The Quick Brown Fox!.txt
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20251121
+// Output: stories/The Quick Brown Fox!-20250830
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2025-11-21 0508PM
+// Output: stories/The Quick Brown Fox!-2025-08-30 1234AM
 ```
 
-```console
+```sh
 rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,regex=[\\.\\w]/ab"
 // Output: ababababababab/ababab ababababab ababababab ababab!abababab
 ```

@@ -29,7 +29,7 @@ var commandDefinition = &cobra.Command{
 	Short: `Generate public link to file/folder.`,
 	Long: `Create, retrieve or remove a public link to the given file or folder.
 
-` + "```console" + `
+` + "```sh" + `
 rclone link remote:path/to/file
 rclone link remote:path/to/folder/
 rclone link --unlink remote:path/to/folder/

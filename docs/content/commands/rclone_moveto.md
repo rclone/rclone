@@ -19,22 +19,18 @@ like the [move](/commands/rclone_move/) command.
 
 So
 
-```console
-rclone moveto src dst
-```
+    rclone moveto src dst
 
 where src and dst are rclone paths, either remote:path or
 /path/to/local or C:\windows\path\if\on\windows.
 
 This will:
 
-```text
-if src is file
-    move it to dst, overwriting an existing file if it exists
-if src is directory
-    move it to dst, overwriting existing files if they exist
-    see move command for full details
-```
+    if src is file
+        move it to dst, overwriting an existing file if it exists
+    if src is directory
+        move it to dst, overwriting existing files if they exist
+        see move command for full details
 
 This doesn't transfer files that are identical on src and dst, testing
 by size and modification time or MD5SUM.  src will be deleted on
@@ -45,13 +41,12 @@ successful transfer.
 
 **Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics.
 
-## Logger Flags
+# Logger Flags
 
-The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error`
-flags write paths, one per line, to the file name (or stdout if it is `-`)
-supplied. What they write is described in the help below. For example
-`--differ` will write all paths which are present on both the source and
-destination but different.
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match` and `--error` flags write paths,
+one per line, to the file name (or stdout if it is `-`) supplied. What they write is described
+in the help below. For example `--differ` will write all paths which are present
+on both the source and destination but different.
 
 The `--combined` flag will write a file (or stdout) which contains all
 file paths with a symbol and then a space and then the path to tell
@@ -84,7 +79,9 @@ are not currently supported:
 
 Note also that each file is logged during execution, as opposed to after, so it
 is most useful as a predictor of what SHOULD happen to each file
-(which may or may not match what actually DID).
+(which may or may not match what actually DID.)
+
+
 
 ```
 rclone moveto source:path dest:path [flags]
@@ -109,7 +106,7 @@ rclone moveto source:path dest:path [flags]
       --missing-on-dst string   Report all files missing from the destination to this file
       --missing-on-src string   Report all files missing from the source to this file
   -s, --separator string        Separator for the items in the format (default ";")
-  -t, --timeformat string       Specify a custom time format - see docs for details (default: 2006-01-02 15:04:05)
+  -t, --timeformat string       Specify a custom time format, or 'max' for max precision supported by remote (default: 2006-01-02 15:04:05)
 ```
 
 Options shared with other commands are described next.
@@ -119,7 +116,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags for anything which can copy a file
 
-```text
+```
       --check-first                                 Do all the checks before starting transfers
   -c, --checksum                                    Check for changes with size & checksum (if available, or fallback to size only)
       --compare-dest stringArray                    Include additional server-side paths during comparison
@@ -160,7 +157,7 @@ Flags for anything which can copy a file
 
 Important flags useful for most commands
 
-```text
+```
   -n, --dry-run         Do a trial run with no permanent changes
   -i, --interactive     Enable interactive mode
   -v, --verbose count   Print lots more stuff (repeat for more)
@@ -170,7 +167,7 @@ Important flags useful for most commands
 
 Flags for filtering directory listings
 
-```text
+```
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -200,17 +197,12 @@ Flags for filtering directory listings
 
 Flags for listing directories
 
-```text
+```
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
 ## See Also
 
-<!-- markdownlint-capture -->
-<!-- markdownlint-disable ul-style line-length -->
-
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
-
-<!-- markdownlint-restore -->

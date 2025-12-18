@@ -18,7 +18,7 @@ var Command = &cobra.Command{
 
 Select which test command you want with the subcommand, eg
 
-` + "```console" + `
+` + "```sh" + `
 rclone test memory remote:
 ` + "```" + `
 

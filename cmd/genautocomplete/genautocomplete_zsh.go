@@ -21,14 +21,14 @@ var zshCommandDefinition = &cobra.Command{
 This writes to /usr/share/zsh/vendor-completions/_rclone by default so will
 probably need to be run with sudo or as root, e.g.
 
-` + "```console" + `
+` + "```sh" + `
 sudo rclone completion zsh
 ` + "```" + `
 
 Logout and login again to use the autocompletion scripts, or source
 them directly
 
-` + "```console" + `
+` + "```sh" + `
 autoload -U compinit && compinit
 ` + "```" + `
 

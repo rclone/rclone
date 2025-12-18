@@ -20,7 +20,7 @@ You can either use an htpasswd file which can take lots of users, or
 set a single username and password with the ` + "`--{{ .Prefix }}user` and `--{{ .Prefix }}pass`" + ` flags.
 
 Alternatively, you can have the reverse proxy manage authentication and use the
-username provided in the configured header with ` + "`--user-from-header`" + `  (e.g., ` + "`--{{ .Prefix }}user-from-header=x-remote-user`" + `).
+username provided in the configured header with ` + "`--user-from-header`" + `  (e.g., ` + "`--{{ .Prefix }}--user-from-header=x-remote-user`" + `).
 Ensure the proxy is trusted and headers cannot be spoofed, as misconfiguration
 may lead to unauthorized access.
 
@@ -34,7 +34,7 @@ authentication.  Bcrypt is recommended.
 
 To create an htpasswd file:
 
-` + "```console" + `
+` + "```sh" + `
 touch htpasswd
 htpasswd -B htpasswd user
 htpasswd -B htpasswd anotherUser

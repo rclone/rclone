@@ -4,7 +4,6 @@ package cryptdecode
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/cmd"
@@ -34,7 +33,7 @@ If you supply the ` + "`--reverse`" + ` flag, it will return encrypted file name
 
 use it like this
 
-` + "```console" + `
+` + "```sh" + `
 rclone cryptdecode encryptedremote: encryptedfilename1 encryptedfilename2
 rclone cryptdecode --reverse encryptedremote: filename1 filename2
 ` + "```" + `
@@ -68,32 +67,32 @@ command. See the documentation on the [crypt](/crypt/) overlay for more info.`,
 
 // cryptDecode returns the unencrypted file name
 func cryptDecode(cipher *crypt.Cipher, args []string) error {
-	var output strings.Builder
+	output := ""
 
 	for _, encryptedFileName := range args {
 		fileName, err := cipher.DecryptFileName(encryptedFileName)
 		if err != nil {
-			output.WriteString(fmt.Sprintln(encryptedFileName, "\t", "Failed to decrypt"))
+			output += fmt.Sprintln(encryptedFileName, "\t", "Failed to decrypt")
 		} else {
-			output.WriteString(fmt.Sprintln(encryptedFileName, "\t", fileName))
+			output += fmt.Sprintln(encryptedFileName, "\t", fileName)
 		}
 	}
 
-	fmt.Print(output.String())
+	fmt.Print(output)
 
 	return nil
 }
 
 // cryptEncode returns the encrypted file name
 func cryptEncode(cipher *crypt.Cipher, args []string) error {
-	var output strings.Builder
+	output := ""
 
 	for _, fileName := range args {
 		encryptedFileName := cipher.EncryptFileName(fileName)
-		output.WriteString(fmt.Sprintln(fileName, "\t", encryptedFileName))
+		output += fmt.Sprintln(fileName, "\t", encryptedFileName)
 	}
 
-	fmt.Print(output.String())
+	fmt.Print(output)
 
 	return nil
 }

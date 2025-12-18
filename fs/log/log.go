@@ -209,12 +209,16 @@ func InitLogging() {
 	// Log file output
 	if Opt.File != "" {
 		var w io.Writer
-		if Opt.MaxSize < 0 {
+		if Opt.MaxSize == 0 {
 			// No log rotation - just open the file as normal
 			// We'll capture tracebacks like this too.
 			f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
 			if err != nil {
 				fs.Fatalf(nil, "Failed to open log file: %v", err)
+			}
+			_, err = f.Seek(0, io.SeekEnd)
+			if err != nil {
+				fs.Errorf(nil, "Failed to seek log file to end: %v", err)
 			}
 			redirectStderr(f)
 			w = f

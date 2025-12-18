@@ -1,0 +1,199 @@
+name: build-and-release
+
+on:
+  push:
+    tags:
+      - '**'
+
+jobs:
+  build:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.23']
+
+        include:
+          - job_name: linux
+            os: ubuntu-latest
+            go: '>=1.24.0-rc.1'
+            gotags: cmount
+            build_flags: '-include "^linux/"'
+            check: true
+            quicktest: true
+            racequicktest: true
+            librclonetest: true
+            deploy: true
+
+          - job_name: linux_386
+            os: ubuntu-latest
+            go: '>=1.24.0-rc.1'
+            goarch: 386
+            gotags: cmount
+            quicktest: true
+
+          - job_name: mac_amd64
+            os: macos-latest
+            go: '>=1.24.0-rc.1'
+            gotags: 'cmount'
+            build_flags: '-include "^darwin/amd64" -cgo'
+            quicktest: true
+            racequicktest: true
+            deploy: true
+
+          - job_name: mac_arm64
+            os: macos-latest
+            go: '>=1.24.0-rc.1'
+            gotags: 'cmount'
+            build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
+            deploy: true
+
+          - job_name: windows
+            os: windows-latest
+            go: '>=1.24.0-rc.1'
+            gotags: cmount
+            cgo: '0'
+            build_flags: '-include "^windows/"'
+            build_args: '-buildmode exe'
+            quicktest: true
+            deploy: true
+
+          - job_name: other_os
+            os: ubuntu-latest
+            go: '>=1.24.0-rc.1'
+            build_flags: '-exclude "^(windows/|darwin/|linux/)"'
+            compile_all: true
+            deploy: true
+
+          - job_name: go1.23
+            os: ubuntu-latest
+            go: '1.23'
+            quicktest: true
+            racequicktest: true
+
+    name: ${{ matrix.job_name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          check-latest: true
+
+      - name: Set environment variables
+        shell: bash
+        run: |
+          echo 'GOTAGS=${{ matrix.gotags }}' >> $GITHUB_ENV
+          echo 'BUILD_FLAGS=${{ matrix.build_flags }}' >> $GITHUB_ENV
+          echo 'BUILD_ARGS=${{ matrix.build_args }}' >> $GITHUB_ENV
+          if [[ "${{ matrix.goarch }}" != "" ]]; then echo 'GOARCH=${{ matrix.goarch }}' >> $GITHUB_ENV ; fi
+          if [[ "${{ matrix.cgo }}" != "" ]]; then echo 'CGO_ENABLED=${{ matrix.cgo }}' >> $GITHUB_ENV ; fi
+
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          sudo modprobe fuse
+          sudo chmod 666 /dev/fuse
+          sudo chown root:$USER /etc/fuse.conf
+          sudo apt-get update
+          sudo apt-get install -y fuse3 libfuse-dev rpm pkg-config git-annex git-annex-remote-rclone nfs-common
+
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          unset HOMEBREW_NO_INSTALL_FROM_API
+          brew untap --force homebrew/core
+          brew untap --force homebrew/cask
+          brew update
+          brew install --cask macfuse
+          brew install git-annex git-annex-remote-rclone
+
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          choco install -y winfsp zip
+          echo "CPATH=C:\Program Files\WinFsp\inc\fuse;C:\Program Files (x86)\WinFsp\inc\fuse" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          if ($env:GOARCH -eq "386") {
+            choco install -y mingw --forcex86 --force
+            echo "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw32\\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+          $path = (get-command mingw32-make.exe).Path
+          Copy-Item -Path $path -Destination (Join-Path (Split-Path -Path $path) 'make.exe')
+
+      - name: Build rclone
+        shell: bash
+        run: make
+
+      - name: Run quick tests
+        if: matrix.quicktest
+        shell: bash
+        run: make quicktest
+
+      - name: Run race tests
+        if: matrix.racequicktest
+        shell: bash
+        run: make racequicktest
+
+      - name: Run librclone tests
+        if: matrix.librclonetest
+        shell: bash
+        run: |
+          make -C librclone/ctest test
+          make -C librclone/ctest clean
+          librclone/python/test_rclone.py
+
+      - name: Compile all architectures
+        if: matrix.compile_all
+        shell: bash
+        run: |
+          make
+          make compile_all
+
+      - name: Package artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp rclone* dist/ || true
+          cp build/* dist/ || true
+        continue-on-error: true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rclone-${{ matrix.job_name }}
+          path: dist/
+          retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Remove non-zip artifacts
+        run: |
+          find ./artifacts -type f ! -name '*.zip' -delete
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref }}
+          files: ./artifacts/**/*.zip
+          fail_on_unmatched_files: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

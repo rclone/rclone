@@ -56,24 +56,24 @@ var speedCmd = &cobra.Command{
 	Short: `Run a speed test to the remote`,
 	Long: `Run a speed test to the remote.
 
-This command runs a series of uploads and downloads to the remote, measuring
-and printing the speed of each test using varying file sizes and numbers of
-files.
+	This command runs a series of uploads and downloads to the remote, measuring
+	and printing the speed of each test using varying file sizes and numbers of
+	files.
 
-Test time can be innaccurate with small file caps and large files. As it
-uses the results of an initial test to determine how many files to use in
-each subsequent test.
+	Test time can be innaccurate with small file caps and large files. As it
+	uses the results of an initial test to determine how many files to use in
+	each subsequent test.
 
-It is recommended to use -q flag for a simpler output. e.g.:
+	It is recommended to use -q flag for a simpler output. e.g.:
+	
+	    rlone test speed remote: -q
 
-    rclone test speed remote: -q
+	**NB** This command will create and delete files on the remote in a randomly
+	named directory which should be tidied up after.
 
-**NB** This command will create and delete files on the remote in a randomly
-named directory which will be automatically removed on a clean exit.
-
-You can use the --json flag to only print the results in JSON format.`,
+	You can use the --json flag to only print the results in JSON format.`,
 	Annotations: map[string]string{
-		"versionIntroduced": "v1.72",
+		"versionIntroduced": "v1.73",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		ctx := command.Context()

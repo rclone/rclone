@@ -15,6 +15,8 @@ mounting them, listing them in lots of different ways.
 See the home page (https://rclone.org/) for installation, usage,
 documentation, changelog and configuration walkthroughs.
 
+
+
 ```
 rclone [flags]
 ```
@@ -24,8 +26,6 @@ rclone [flags]
 ```
       --alias-description string                            Description of the remote
       --alias-remote string                                 Remote or path to alias
-      --archive-description string                          Description of the remote
-      --archive-remote string                               Remote to wrap to read archives from
       --ask-password                                        Allow prompt for password for encrypted configuration (default true)
       --auto-confirm                                        If enabled, do not request console confirmation
       --azureblob-access-tier string                        Access tier of blob: hot, cool, cold or archive
@@ -105,10 +105,6 @@ rclone [flags]
       --b2-hard-delete                                      Permanently delete files on remote removal, otherwise hide files
       --b2-key string                                       Application Key
       --b2-lifecycle int                                    Set the number of days deleted files should be kept when creating a bucket
-      --b2-sse-customer-algorithm string                    If using SSE-C, the server-side encryption algorithm used when storing this object in B2
-      --b2-sse-customer-key string                          To use SSE-C, you may provide the secret encryption key encoded in a UTF-8 compatible string to encrypt/decrypt your data
-      --b2-sse-customer-key-base64 string                   To use SSE-C, you may provide the secret encryption key encoded in Base64 format to encrypt/decrypt your data
-      --b2-sse-customer-key-md5 string                      If using SSE-C you may provide the secret encryption key MD5 checksum (optional)
       --b2-test-mode string                                 A flag string for X-Bz-Test-Mode header for debugging
       --b2-upload-concurrency int                           Concurrency for multipart uploads (default 4)
       --b2-upload-cutoff SizeSuffix                         Cutoff for switching to chunked upload (default 200Mi)
@@ -185,7 +181,7 @@ rclone [flags]
       --combine-upstreams SpaceSepList                      Upstreams for combining
       --compare-dest stringArray                            Include additional server-side paths during comparison
       --compress-description string                         Description of the remote
-      --compress-level string                               GZIP (levels -2 to 9):
+      --compress-level int                                  GZIP compression level (-2 to 9) (default -1)
       --compress-mode string                                Compression mode (default "gzip")
       --compress-ram-cache-limit SizeSuffix                 Some remotes don't allow the upload of files with unknown size (default 20Mi)
       --compress-remote string                              Remote to compress
@@ -553,7 +549,6 @@ rclone [flags]
       --max-size SizeSuffix                                 Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P (default off)
       --max-stats-groups int                                Maximum number of stats groups to keep in memory, on max oldest is discarded (default 1000)
       --max-transfer SizeSuffix                             Maximum size of data to transfer (default off)
-      --mega-2fa string                                     The 2FA code of your MEGA account if the account is set up with one
       --mega-debug                                          Output more debug from Mega
       --mega-description string                             Description of the remote
       --mega-encoding Encoding                              The encoding for the backend (default Slash,InvalidUtf8,Dot)
@@ -720,7 +715,6 @@ rclone [flags]
       --protondrive-encoding Encoding                       The encoding for the backend (default Slash,LeftSpace,RightSpace,InvalidUtf8,Dot)
       --protondrive-mailbox-password string                 The mailbox password of your two-password proton account (obscured)
       --protondrive-original-file-size                      Return the file size before encryption (default true)
-      --protondrive-otp-secret-key string                   The OTP secret key (obscured)
       --protondrive-password string                         The password of your proton account (obscured)
       --protondrive-replace-existing-draft                  Create a new revision when filename conflict is detected
       --protondrive-username string                         The username of your proton account
@@ -837,7 +831,6 @@ rclone [flags]
       --s3-use-accept-encoding-gzip Accept-Encoding: gzip   Whether to send Accept-Encoding: gzip header (default unset)
       --s3-use-already-exists Tristate                      Set if rclone should report BucketAlreadyExists errors on bucket creation (default unset)
       --s3-use-arn-region                                   If true, enables arn region support for the service
-      --s3-use-data-integrity-protections Tristate          If true use AWS S3 data integrity protections (default unset)
       --s3-use-dual-stack                                   If true use AWS S3 dual-stack endpoint (IPv6 support)
       --s3-use-multipart-etag Tristate                      Whether to use ETag in multipart uploads for verification (default unset)
       --s3-use-multipart-uploads Tristate                   Set if rclone should use multipart uploads (default unset)
@@ -922,7 +915,6 @@ rclone [flags]
       --sia-user-agent string                               Siad User Agent (default "Sia-Agent")
       --size-only                                           Skip based on size only, not modtime or checksum
       --skip-links                                          Don't warn about skipped symlinks
-      --skip-specials                                       Don't warn about skipped pipes, sockets and device objects
       --smb-case-insensitive                                Whether the server is configured to be case-insensitive (default true)
       --smb-description string                              Description of the remote
       --smb-domain string                                   Domain name for NTLM authentication (default "WORKGROUP")
@@ -1023,7 +1015,7 @@ rclone [flags]
       --use-json-log                                        Use json log format
       --use-mmap                                            Use mmap allocator (see docs)
       --use-server-modtime                                  Use server modified time instead of object metadata
-      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.72.0")
+      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.73.1")
   -v, --verbose count                                       Print lots more stuff (repeat for more)
   -V, --version                                             Print the version number
       --webdav-auth-redirect                                Preserve authentication on redirect
@@ -1065,11 +1057,7 @@ rclone [flags]
 
 ## See Also
 
-<!-- markdownlint-capture -->
-<!-- markdownlint-disable ul-style line-length -->
-
 * [rclone about](/commands/rclone_about/)	 - Get quota information from the remote.
-* [rclone archive](/commands/rclone_archive/)	 - Perform an action on an archive.
 * [rclone authorize](/commands/rclone_authorize/)	 - Remote authorization.
 * [rclone backend](/commands/rclone_backend/)	 - Run a backend-specific command.
 * [rclone bisync](/commands/rclone_bisync/)	 - Perform bidirectional synchronization between two paths.
@@ -1123,5 +1111,3 @@ rclone [flags]
 * [rclone tree](/commands/rclone_tree/)	 - List the contents of the remote in a tree like fashion.
 * [rclone version](/commands/rclone_version/)	 - Show the version number.
 
-
-<!-- markdownlint-restore -->

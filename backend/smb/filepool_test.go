@@ -200,7 +200,7 @@ func TestFilePool_ConcurrentAccess(t *testing.T) {
 	pool := newFilePool(ctx, fs, "testshare", "/test/path")
 
 	const numGoroutines = 10
-	for range numGoroutines {
+	for i := 0; i < numGoroutines; i++ {
 		mockFile := newMockFile()
 		pool.pool = append(pool.pool, mockFile)
 	}
@@ -208,7 +208,7 @@ func TestFilePool_ConcurrentAccess(t *testing.T) {
 	// Test concurrent get operations
 	done := make(chan bool, numGoroutines)
 
-	for range numGoroutines {
+	for i := 0; i < numGoroutines; i++ {
 		go func() {
 			defer func() { done <- true }()
 
@@ -219,7 +219,7 @@ func TestFilePool_ConcurrentAccess(t *testing.T) {
 		}()
 	}
 
-	for range numGoroutines {
+	for i := 0; i < numGoroutines; i++ {
 		<-done
 	}
 

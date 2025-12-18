@@ -21,14 +21,14 @@ var fishCommandDefinition = &cobra.Command{
 This writes to /etc/fish/completions/rclone.fish by default so will
 probably need to be run with sudo or as root, e.g.
 
-` + "```console" + `
+` + "```sh" + `
 sudo rclone completion fish
 ` + "```" + `
 
 Logout and login again to use the autocompletion scripts, or source
 them directly
 
-` + "```console" + `
+` + "```sh" + `
 . /etc/fish/completions/rclone.fish
 ` + "```" + `
 

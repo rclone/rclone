@@ -87,6 +87,14 @@ func (rw *RW) SetAccounting(account RWAccount) *RW {
 	return rw
 }
 
+// Account sets the accounting function to account for n bytes being read
+func (rw *RW) Account(n int) *RW {
+	if rw.account != nil {
+		rw.account(n)
+	}
+	return rw
+}
+
 // DelayAccountinger enables an accounting delay
 type DelayAccountinger interface {
 	// DelayAccounting makes sure the accounting function only

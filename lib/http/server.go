@@ -59,8 +59,6 @@ inserts leading and trailing "/" on ` + "`--{{ .Prefix }}baseurl`" + `, so ` + "
 ` + "`--{{ .Prefix }}baseurl \"/rclone\"` and `--{{ .Prefix }}baseurl \"/rclone/\"`" + ` are all treated
 identically.
 
-` + "`--{{ .Prefix }}disable-zip`" + ` may be set to disable the zipping download option.
-
 #### TLS (SSL)
 
 By default this will serve over http.  If you want you can serve over
@@ -90,7 +88,7 @@ It can be configured with .socket and .service unit files as described in
 
 Socket activation can be tested ad-hoc with the ` + "`systemd-socket-activate`" + `command
 
-` + "```console" + `
+` + "```sh" + `
 systemd-socket-activate -l 8000 -- rclone serve
 ` + "```" + `
 
@@ -525,6 +523,8 @@ func (s *Server) initTLS() error {
 func (s *Server) Serve() {
 	s.wg.Add(len(s.instances))
 	for _, ii := range s.instances {
+		// TODO: decide how/when to log listening url
+		// log.Printf("listening on %s", ii.url)
 		go ii.serve(&s.wg)
 	}
 	// Install an atexit handler to shutdown gracefully

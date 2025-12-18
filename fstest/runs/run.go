@@ -157,7 +157,7 @@ func testsToRegexp(tests []string) string {
 	// Make a trie showing which parts are used at each level
 	for _, test := range tests {
 		parent := split
-		for name := range strings.SplitSeq(test, "/") {
+		for _, name := range strings.Split(test, "/") {
 			current := parent[name]
 			if current == nil {
 				current = trie{}

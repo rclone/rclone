@@ -185,7 +185,7 @@ rc` command.
 
 You can use it like this:
 
-```console
+```sh
 $ rclone rc rc/noop param1=one param2=two
 {
     "param1": "one",
@@ -196,14 +196,14 @@ $ rclone rc rc/noop param1=one param2=two
 If the remote is running on a different URL than the default
 `http://localhost:5572/`, use the `--url` option to specify it:
 
-```console
+```sh
 rclone rc --url http://some.remote:1234/ rc/noop
 ```
 
 Or, if the remote is listening on a Unix socket, use the `--unix-socket` option
 instead:
 
-```console
+```sh
 rclone rc --unix-socket /tmp/rclone.sock rc/noop
 ```
 
@@ -216,7 +216,7 @@ remote server.
 `rclone rc` also supports a `--json` flag which can be used to send
 more complicated input parameters.
 
-```console
+```sh
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 } }' rc/noop
 {
     "p1": [
@@ -236,13 +236,13 @@ If the parameter being passed is an object then it can be passed as a
 JSON string rather than using the `--json` flag which simplifies the
 command line.
 
-```console
+```sh
 rclone rc operations/list fs=/tmp remote=test opt='{"showHash": true}'
 ```
 
 Rather than
 
-```console
+```sh
 rclone rc operations/list --json '{"fs": "/tmp", "remote": "test", "opt": {"showHash": true}}'
 ```
 
@@ -257,9 +257,9 @@ Each rc call is classified as a job and it is assigned its own id. By default
 jobs are executed immediately as they are created or synchronously.
 
 If `_async` has a true value when supplied to an rc call then it will
-return immediately with a job id and execute id, and the task will be run in the
-background. The `job/status` call can be used to get information of
-the background job. The job can be queried for up to 1 minute after
+return immediately with a job id and the task will be run in the
+background.  The `job/status` call can be used to get information of
+the background job.  The job can be queried for up to 1 minute after
 it has finished.
 
 It is recommended that potentially long running jobs, e.g. `sync/sync`,
@@ -269,29 +269,22 @@ response timing out.
 
 Starting a job with the `_async` flag:
 
-```console
+```sh
 $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 }, "_async": true }' rc/noop
 {
-    "jobid": 2,
-    "executeId": "d794c33c-463e-4acf-b911-f4b23e4f40b7"
+    "jobid": 2
 }
 ```
-
-The `jobid` is a unique identifier for the job within this rclone instance.
-The `executeId` identifies the rclone process instance and changes after
-rclone restart. Together, the pair (`executeId`, `jobid`) uniquely identifies
-a job across rclone restarts.
 
 Query the status to see if the job has finished.  For more information
 on the meaning of these return parameters see the `job/status` call.
 
-```console
+```sh
 $ rclone rc --json '{ "jobid":2 }' job/status
 {
     "duration": 0.000124163,
     "endTime": "2018-10-27T11:38:07.911245881+01:00",
     "error": "",
-    "executeId": "d794c33c-463e-4acf-b911-f4b23e4f40b7",
     "finished": true,
     "id": 2,
     "output": {
@@ -312,30 +305,16 @@ $ rclone rc --json '{ "jobid":2 }' job/status
 }
 ```
 
-`job/list` can be used to show running or recently completed jobs along with their status
+`job/list` can be used to show the running or recently completed jobs
 
-```console
+```sh
 $ rclone rc job/list
 {
-    "executeId": "d794c33c-463e-4acf-b911-f4b23e4f40b7",
-    "finished_ids": [
-        1
-    ],
     "jobids": [
-        1,
-        2
-    ],
-    "running_ids": [
         2
     ]
 }
 ```
-
-This shows:
-- `executeId` - the current rclone instance ID (same for all jobs, changes after restart)
-- `jobids` - array of all job IDs (both running and finished)
-- `running_ids` - array of currently running job IDs
-- `finished_ids` - array of finished job IDs
 
 ### Setting config flags with _config
 
@@ -345,14 +324,14 @@ duration of an rc call only then pass in the `_config` parameter.
 This should be in the same format as the `main` key returned by
 [options/get](#options-get).
 
-```console
+```sh
 rclone rc --loopback options/get blocks=main
 ```
 
 You can see more help on these options with this command (see [the
 options blocks section](#option-blocks) for more info).
 
-```console
+```sh
 rclone rc --loopback options/info blocks=main
 ```
 
@@ -365,7 +344,7 @@ parameter, you would pass this parameter in your JSON blob.
 
 If using `rclone rc` this could be passed as
 
-```console
+```sh
 rclone rc sync/sync ... _config='{"CheckSum": true}'
 ```
 
@@ -392,20 +371,20 @@ pass in the `_filter` parameter.
 This should be in the same format as the `filter` key returned by
 [options/get](#options-get).
 
-```console
+```sh
 rclone rc --loopback options/get blocks=filter
 ```
 
 You can see more help on these options with this command (see [the
 options blocks section](#option-blocks) for more info).
 
-```console
+```sh
 rclone rc --loopback options/info blocks=filter
 ```
 
 For example, if you wished to run a sync with these flags
 
-```text
+```sh
 --max-size 1M --max-age 42s --include "a" --include "b"
 ```
 
@@ -417,7 +396,7 @@ you would pass this parameter in your JSON blob.
 
 If using `rclone rc` this could be passed as
 
-```console
+```sh
 rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
 ```
 
@@ -447,7 +426,7 @@ value. This allows caller to group stats under their own name.
 
 Stats for specific group can be accessed by passing `group` to `core/stats`:
 
-```console
+```sh
 $ rclone rc --json '{ "group": "job/1" }' core/stats
 {
     "speed": 12345
@@ -598,7 +577,7 @@ And this is equivalent to `/tmp/dir`
 ```
 
 ## Supported commands
-<!-- autogenerated start "- run make rcdocs - don't edit here" -->
+{{< rem autogenerated start "- run make rcdocs - don't edit here" >}}
 ### backend/command: Runs a backend command. {#backend-command}
 
 This takes the following parameters:
@@ -810,7 +789,7 @@ Unlocks the config file if it is locked.
 
 Parameters:
 
-- 'configPassword' - password to unlock the config file
+- 'config_password' - password to unlock the config file
 
 A good idea is to disable AskPassword before making this call
 
@@ -1108,20 +1087,17 @@ Returns the following values:
 }
 ```
 
-### core/version: Shows the current version of rclone, Go and the OS. {#core-version}
+### core/version: Shows the current version of rclone and the go runtime. {#core-version}
 
-This shows the current versions of rclone, Go and the OS:
+This shows the current version of go and the go runtime:
 
-- version - rclone version, e.g. "v1.71.2"
+- version - rclone version, e.g. "v1.53.0"
 - decomposed - version number as [major, minor, patch]
 - isGit - boolean - true if this was compiled from the git version
 - isBeta - boolean - true if this is a beta version
-- os - OS in use as according to Go GOOS (e.g. "linux")
-- osKernel - OS Kernel version (e.g. "6.8.0-86-generic (x86_64)")
-- osVersion -  OS Version (e.g. "ubuntu 24.04 (64 bit)")
-- osArch - cpu architecture in use (e.g. "arm64 (ARMv8 compatible)")
-- arch - cpu architecture in use according to Go GOARCH (e.g. "arm64")
-- goVersion - version of Go runtime in use (e.g. "go1.25.0")
+- os - OS in use as according to Go
+- arch - cpu architecture in use according to Go
+- goVersion - version of Go runtime in use
 - linking - type of rclone executable (static or dynamic)
 - goTags - space separated build tags or "none"
 
@@ -1231,67 +1207,6 @@ Returns
 
 **Authentication is required for this call.**
 
-### job/batch: Run a batch of rclone rc commands concurrently. {#job-batch}
-
-This takes the following parameters:
-
-- concurrency - int - do this many commands concurrently. Defaults to `--transfers` if not set.
-- inputs - an list of inputs to the commands with an extra `_path` parameter
-
-```json
-{
-    "_path": "rc/path",
-    "param1": "parameter for the path as documented",
-    "param2": "parameter for the path as documented, etc",
-}
-```
-
-The inputs may use `_async`, `_group`, `_config` and `_filter` as normal when using the rc.
-
-Returns:
-
-- results - a list of results from the commands with one entry for each in inputs.
-
-For example:
-
-```sh
-rclone rc job/batch --json '{
-  "inputs": [
-    {
-      "_path": "rc/noop",
-      "parameter": "OK"
-    },
-    {
-      "_path": "rc/error",
-      "parameter": "BAD"
-    }
-  ]
-}
-'
-```
-
-Gives the result:
-
-```json
-{
-  "results": [
-    {
-      "parameter": "OK"
-    },
-    {
-      "error": "arbitrary error on input map[parameter:BAD]",
-      "input": {
-        "parameter": "BAD"
-      },
-      "path": "rc/error",
-      "status": 500
-    }
-  ]
-}
-```
-
-**Authentication is required for this call.**
-
 ### job/list: Lists the IDs of the running jobs {#job-list}
 
 Parameters: None.
@@ -1300,8 +1215,6 @@ Results:
 
 - executeId - string id of rclone executing (change after restart)
 - jobids - array of integer job ids (starting at 1 on each restart)
-- runningIds - array of integer job ids that are running
-- finishedIds - array of integer job ids that are finished
 
 ### job/status: Reads the status of the job ID {#job-status}
 
@@ -1317,7 +1230,6 @@ Results:
 - error - error from the job or empty string for no error
 - finished - boolean whether the job has finished or not
 - id - as passed in above
-- executeId - rclone instance ID (changes after restart); combined with id uniquely identifies a job
 - startTime - time the job started (e.g. "2018-10-26T18:50:20.528336039+01:00")
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
@@ -1366,18 +1278,14 @@ This takes the following parameters:
 
 Example:
 
-```console
-rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
-rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
-rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
-```
+    rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
+    rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
+    rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
 
 The vfsOpt are as described in options/get and can be seen in the the
 "vfs" section when running and the mountOpt can be seen in the "mount" section:
 
-```console
-rclone rc options/get
-```
+    rclone rc options/get
 
 **Authentication is required for this call.**
 
@@ -1820,6 +1728,8 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 
+See the [settierfile](/commands/rclone_settierfile/) command for more information on the above.
+
 **Authentication is required for this call.**
 
 ### operations/size: Count the number of bytes and files in remote {#operations-size}
@@ -1864,6 +1774,8 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 - each part in body represents a file to be uploaded
+
+See the [uploadfile](/commands/rclone_uploadfile/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -2042,11 +1954,6 @@ Example:
 This returns an error with the input as part of its error string.
 Useful for testing error handling.
 
-### rc/fatal: This returns an fatal error {#rc-fatal}
-
-This returns an error with the input as part of its error string.
-Useful for testing error handling.
-
 ### rc/list: List all the registered remote control commands {#rc-list}
 
 This lists all the registered remote control commands as a JSON map in
@@ -2065,11 +1972,6 @@ purposes.  It can be used to check that rclone is still alive and to
 check that parameter passing is working properly.
 
 **Authentication is required for this call.**
-
-### rc/panic: This returns an error by panicking {#rc-panic}
-
-This returns an error with the input as part of its error string.
-Useful for testing error handling.
 
 ### serve/list: Show running servers {#serve-list}
 
@@ -2342,7 +2244,7 @@ This is only useful if `--vfs-cache-mode` > off. If you call it when
 the `--vfs-cache-mode` is off, it will return an empty result.
 
     {
-        "queue": // an array of files queued for upload
+        "queued": // an array of files queued for upload
         [
             {
                 "name":      "file",   // string: name (full path) of the file,
@@ -2462,7 +2364,7 @@ supplied and if there is only one VFS in use then that VFS will be
 used. If there is more than one VFS in use then the "fs" parameter
 must be supplied.
 
-<!-- autogenerated stop -->
+{{< rem autogenerated stop >}}
 
 ## Accessing the remote control via HTTP {#api-http}
 
@@ -2514,7 +2416,7 @@ The response to a preflight OPTIONS request will echo the requested
 
 ### Using POST with URL parameters only
 
-```console
+```sh
 curl -X POST 'http://localhost:5572/rc/noop?potato=1&sausage=2'
 ```
 
@@ -2529,7 +2431,7 @@ Response
 
 Here is what an error response looks like:
 
-```console
+```sh
 curl -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 ```
 
@@ -2545,7 +2447,7 @@ curl -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 
 Note that curl doesn't return errors to the shell unless you use the `-f` option
 
-```console
+```sh
 $ curl -f -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 curl: (22) The requested URL returned error: 400 Bad Request
 $ echo $?
@@ -2554,7 +2456,7 @@ $ echo $?
 
 ### Using POST with a form
 
-```console
+```sh
 curl --data "potato=1" --data "sausage=2" http://localhost:5572/rc/noop
 ```
 
@@ -2570,7 +2472,7 @@ Response
 Note that you can combine these with URL parameters too with the POST
 parameters taking precedence.
 
-```console
+```sh
 curl --data "potato=1" --data "sausage=2" "http://localhost:5572/rc/noop?rutabaga=3&sausage=4"
 ```
 
@@ -2587,7 +2489,7 @@ Response
 
 ### Using POST with a JSON blob
 
-```console
+```sh
 curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' http://localhost:5572/rc/noop
 ```
 
@@ -2603,7 +2505,7 @@ response
 This can be combined with URL parameters too if required.  The JSON
 blob takes precedence.
 
-```console
+```sh
 curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' 'http://localhost:5572/rc/noop?rutabaga=3&potato=4'
 ```
 
@@ -2626,7 +2528,7 @@ To use these, first [install go](https://golang.org/doc/install).
 
 To profile rclone's memory use you can run:
 
-```console
+```sh
 go tool pprof -web http://localhost:5572/debug/pprof/heap
 ```
 
@@ -2635,7 +2537,7 @@ memory.
 
 You can also use the `-text` flag to produce a textual summary
 
-```console
+```sh
 $ go tool pprof -text http://localhost:5572/debug/pprof/heap
 Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       flat  flat%   sum%        cum   cum%
@@ -2660,7 +2562,7 @@ alive which should have been garbage collected.
 
 See all active go routines using
 
-```console
+```sh
 curl http://localhost:5572/debug/pprof/goroutine?debug=1
 ```
 

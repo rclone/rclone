@@ -45,10 +45,6 @@ var OptionsInfo = fs.Options{{
 	Name:    "disable_dir_list",
 	Default: false,
 	Help:    "Disable HTML directory list on GET request for a directory",
-}, {
-	Name:    "disable_zip",
-	Default: false,
-	Help:    "Disable zip download of directories",
 }}.
 	Add(libhttp.ConfigInfo).
 	Add(libhttp.AuthConfigInfo).
@@ -61,7 +57,6 @@ type Options struct {
 	Template       libhttp.TemplateConfig
 	EtagHash       string `config:"etag_hash"`
 	DisableDirList bool   `config:"disable_dir_list"`
-	DisableZip     bool   `config:"disable_zip"`
 }
 
 // Opt is options set by command line flags
@@ -162,13 +157,13 @@ Create a new DWORD BasicAuthLevel with value 2.
 
 You can serve the webdav on a unix socket like this:
 
-` + "```console" + `
+` + "```sh" + `
 rclone serve webdav --addr unix:///tmp/my.socket remote:path
 ` + "```" + `
 
 and connect to it like this using rclone and the webdav backend:
 
-` + "```console" + `
+` + "```sh" + `
 rclone --webdav-unix-socket /tmp/my.socket --webdav-url http://localhost lsf :webdav:
 ` + "```" + `
 
@@ -413,24 +408,6 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 		return
 	}
 	dir := node.(*vfs.Dir)
-
-	if r.URL.Query().Get("download") == "zip" && !w.opt.DisableZip {
-		fs.Infof(dirRemote, "%s: Zipping directory", r.RemoteAddr)
-		zipName := path.Base(dirRemote)
-		if dirRemote == "" {
-			zipName = "root"
-		}
-		rw.Header().Set("Content-Disposition", "attachment; filename=\""+zipName+".zip\"")
-		rw.Header().Set("Content-Type", "application/zip")
-		rw.Header().Set("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
-		err := vfs.CreateZip(ctx, dir, rw)
-		if err != nil {
-			serve.Error(ctx, dirRemote, rw, "Failed to create zip", err)
-			return
-		}
-		return
-	}
-
 	dirEntries, err := dir.ReadDirAll()
 
 	if err != nil {
@@ -440,7 +417,6 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, w.server.HTMLTemplate())
-	directory.DisableZip = w.opt.DisableZip
 	for _, node := range dirEntries {
 		if vfscommon.Opt.NoModTime {
 			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), time.Time{})

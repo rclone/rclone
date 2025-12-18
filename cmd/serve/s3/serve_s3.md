@@ -33,14 +33,14 @@ cause problems for S3 clients which rely on the Etag being the MD5.
 For a simple set up, to serve `remote:path` over s3, run the server
 like this:
 
-```console
+```sh
 rclone serve s3 --auth-key ACCESS_KEY_ID,SECRET_ACCESS_KEY remote:path
 ```
 
 For example, to use a simple folder in the filesystem, run the server
 with a command like this:
 
-```console
+```sh
 rclone serve s3 --auth-key ACCESS_KEY_ID,SECRET_ACCESS_KEY local:/path/to/folder
 ```
 

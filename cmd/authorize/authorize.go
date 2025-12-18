@@ -23,15 +23,15 @@ func init() {
 }
 
 var commandDefinition = &cobra.Command{
-	Use:   "authorize <backendname> [base64_json_blob | client_id client_secret]",
+	Use:   "authorize <fs name> [base64_json_blob | client_id client_secret]",
 	Short: `Remote authorization.`,
 	Long: `Remote authorization. Used to authorize a remote or headless
-rclone from a machine with a browser. Use as instructed by rclone config.
-See also the [remote setup documentation](/remote_setup).
+rclone from a machine with a browser - use as instructed by
+rclone config.
 
 The command requires 1-3 arguments:
 
-- Name of a backend (e.g. "drive", "s3")
+- fs name (e.g., "drive", "s3", etc.)
 - Either a base64 encoded JSON blob obtained from a previous rclone config session
 - Or a client_id and client_secret pair obtained from the remote service
 

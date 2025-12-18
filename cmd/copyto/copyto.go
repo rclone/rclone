@@ -35,7 +35,7 @@ name.  If the source is a directory then it acts exactly like the
 
 So
 
-` + "```console" + `
+` + "```sh" + `
 rclone copyto src dst
 ` + "```" + `
 

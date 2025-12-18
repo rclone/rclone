@@ -23,7 +23,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "cryptcheck remote:path cryptedremote:path",
 	Short: `Cryptcheck checks the integrity of an encrypted remote.`,
-	Long: `Checks a remote against an [encrypted](/crypt/) remote. This is the equivalent
+	Long: `Checks a remote against a [crypted](/crypt/) remote. This is the equivalent
 of running rclone [check](/commands/rclone_check/), but able to check the
 checksums of the encrypted remote.
 
@@ -37,14 +37,14 @@ checksum of the file it has just encrypted.
 
 Use it like this
 
-` + "```console" + `
+` + "```sh" + `
 rclone cryptcheck /path/to/files encryptedremote:path
 ` + "```" + `
 
 You can use it like this also, but that will involve downloading all
 the files in ` + "`remote:path`" + `.
 
-` + "```console" + `
+` + "```sh" + `
 rclone cryptcheck remote:path encryptedremote:path
 ` + "```" + `
 

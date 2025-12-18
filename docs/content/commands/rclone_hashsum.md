@@ -29,27 +29,24 @@ as a relative path).
 
 Run without a hash to see the list of all supported hashes, e.g.
 
-```console
-$ rclone hashsum
-Supported hashes are:
-- md5
-- sha1
-- whirlpool
-- crc32
-- sha256
-- sha512
-- blake3
-- xxh3
-- xxh128
-```
+    $ rclone hashsum
+    Supported hashes are:
+      * md5
+      * sha1
+      * whirlpool
+      * crc32
+      * sha256
+      * sha512
+      * blake3
+      * xxh3
+      * xxh128
 
 Then
 
-```console
-rclone hashsum MD5 remote:path
-```
+    $ rclone hashsum MD5 remote:path
 
 Note that hash names are case insensitive and values are output in lower case.
+
 
 ```
 rclone hashsum [<hash> remote:path] [flags]
@@ -72,7 +69,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Flags for filtering directory listings
 
-```text
+```
       --delete-excluded                     Delete files on dest excluded from sync
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read file exclude patterns from file (use - to read from stdin)
@@ -102,17 +99,12 @@ Flags for filtering directory listings
 
 Flags for listing directories
 
-```text
+```
       --default-time Time   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --fast-list           Use recursive list if available; uses more memory but fewer transactions
 ```
 
 ## See Also
 
-<!-- markdownlint-capture -->
-<!-- markdownlint-disable ul-style line-length -->
-
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
-
-<!-- markdownlint-restore -->
