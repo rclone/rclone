@@ -3771,8 +3771,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	}
 	o.setMetaData(resp)
 	// resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
-	fs.Debugf(o, "ReadMetaData -> ETag: %q, Size: %d, LastModified: %v, StorageClass: %q",
-	          *resp.ETag, resp.ContentLength, resp.LastModified, resp.StorageClass)	
 	return nil
 }
 
@@ -4509,7 +4507,6 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		tier := tierObj.GetTier()
 		if tier != "" {
 			ui.req.StorageClass = types.StorageClass(strings.ToUpper(tier))
-			fs.Debugf(o, "Set storage class during upload: %s", tier)
 		}
 	}
 	// Fetch metadata if --metadata is in use
