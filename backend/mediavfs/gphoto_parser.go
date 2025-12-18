@@ -59,7 +59,11 @@ func ParseDbUpdate(data map[string]interface{}) (stateToken string, nextPageToke
 	// Get top-level field 1
 	field1, ok := data["1"].(map[string]interface{})
 	if !ok {
-		return "", "", nil, nil, fmt.Errorf("invalid response structure: missing field 1")
+		// Field 1 might be empty string when sync is complete (no more data)
+		if _, isEmpty := data["1"].(string); isEmpty {
+			return "", "", nil, nil, nil
+		}
+		return "", "", nil, nil, fmt.Errorf("invalid response structure: field 1 is not a map (type: %T)", data["1"])
 	}
 
 	// Extract tokens
