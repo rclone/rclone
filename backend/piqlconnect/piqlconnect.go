@@ -214,6 +214,7 @@ func (f *Fs) listFiles(ctx context.Context, absolutePath string) (entries fs.Dir
 	if err != nil {
 		return nil, err
 	}
+	entries = make(fs.DirEntries, 0, len(files))
 	for _, file := range files {
 		// go test -v -run TestIntegration/FsMkdir/FsEncoding wants:
 		// file.Path = segments[0] + "/" + segments[1] + "/" + f.opt.Enc.ToStandardPath(file.Path)
@@ -444,10 +445,7 @@ func (f *Fs) deleteObject(ctx context.Context, packageName string, id string) er
 		FileIds:        [1]string{id},
 	}
 	_, err := f.client.CallJSON(ctx, &rest.Opts{Method: "POST", Path: "/files/delete"}, &removeFile, nil)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // Rmdir deletes the root folder
@@ -475,9 +473,8 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		if resp.StatusCode == 404 {
 			return fs.ErrorDirNotFound
 		}
-		return err
 	}
-	return nil
+	return err
 }
 
 // Purge deletes all the files and the container
@@ -628,10 +625,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 		Method: "POST",
 		Path:   "/files/touch",
 	}, &touchFile, nil)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // Storable returns a boolean showing whether this object is storable
@@ -703,10 +697,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	_, err = o.fs.Put(ctx, in, src, options...)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // Remove an object
