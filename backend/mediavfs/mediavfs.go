@@ -409,8 +409,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				SELECT
 					media_key,
 					file_name,
-					COALESCE(name, '') as name,
-					COALESCE(path, '') as path,
+					COALESCE(name, '') as custom_name,
+					COALESCE(path, '') as custom_path,
 					size_bytes,
 					utc_timestamp
 				FROM %s
@@ -422,8 +422,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				SELECT DISTINCT ON (path)
 					media_key,
 					file_name,
-					COALESCE(name, '') as name,
-					COALESCE(path, '') as path,
+					COALESCE(name, '') as custom_name,
+					COALESCE(path, '') as custom_path,
 					size_bytes,
 					utc_timestamp
 				FROM %s
@@ -438,8 +438,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				SELECT DISTINCT ON (split_part(path, '/', 1))
 					media_key,
 					file_name,
-					COALESCE(name, '') as name,
-					COALESCE(path, '') as path,
+					COALESCE(name, '') as custom_name,
+					COALESCE(path, '') as custom_path,
 					size_bytes,
 					utc_timestamp
 				FROM %s
@@ -456,8 +456,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			SELECT
 				media_key,
 				file_name,
-				COALESCE(name, '') as name,
-				COALESCE(path, '') as path,
+				COALESCE(name, '') as custom_name,
+				COALESCE(path, '') as custom_path,
 				size_bytes,
 				utc_timestamp
 			FROM %s
@@ -482,12 +482,12 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		var (
 			mediaKey      string
 			fileName      string
-			nameCol       string
-			pathCol       string
+			customName    string
+			customPath    string
 			sizeBytes     int64
 			timestampUnix int64
 		)
-		if err := rows.Scan(&mediaKey, &fileName, &nameCol, &pathCol, &sizeBytes, &timestampUnix); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
 
@@ -501,15 +501,15 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		var displayName, displayPath string
 
 		// Display name: use 'name' if set, else use 'file_name'
-		if nameCol != "" {
-			displayName = nameCol
+		if customName != "" {
+			displayName = customName
 		} else {
 			displayName = fileName
 		}
 
 		// Display path: use 'path' if set, else empty (strip slashes)
-		if pathCol != "" {
-			displayPath = strings.Trim(pathCol, "/")
+		if customPath != "" {
+			displayPath = strings.Trim(customPath, "/")
 		} else {
 			displayPath = ""
 		}
@@ -645,7 +645,7 @@ func (f *Fs) populateMetadata(userName string) {
 	offset := 0
 	for {
 		query := fmt.Sprintf(`
-			SELECT media_key, file_name, COALESCE(name, '') as name, COALESCE(path, '') as path, size_bytes, utc_timestamp
+			SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp
 			FROM %s
 			WHERE user_name = $1
 			ORDER BY file_name
@@ -660,10 +660,10 @@ func (f *Fs) populateMetadata(userName string) {
 
 		count := 0
 		for rows.Next() {
-			var mediaKey, fileName, nameCol, pathCol string
+			var mediaKey, fileName, customName, customPath string
 			var sizeBytes int64
 			var timestampUnix int64
-			if err := rows.Scan(&mediaKey, &fileName, &nameCol, &pathCol, &sizeBytes, &timestampUnix); err != nil {
+			if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
 				fs.Errorf(f, "mediavfs: populateMetadata scan failed: %v", err)
 				continue
 			}
@@ -671,14 +671,14 @@ func (f *Fs) populateMetadata(userName string) {
 			// compute display path/name as in listUserFiles
 			var displayName, displayPath string
 			// Display name: use 'name' if set, else use 'file_name'
-			if nameCol != "" {
-				displayName = nameCol
+			if customName != "" {
+				displayName = customName
 			} else {
 				displayName = fileName
 			}
 			// Display path: use 'path' if set, else empty
-			if pathCol != "" {
-				displayPath = strings.Trim(pathCol, "/")
+			if customPath != "" {
+				displayPath = strings.Trim(customPath, "/")
 			} else {
 				displayPath = ""
 			}
@@ -738,8 +738,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		SELECT
 			media_key,
 			file_name,
-			COALESCE(name, '') as name,
-			COALESCE(path, '') as path,
+			COALESCE(name, '') as custom_name,
+			COALESCE(path, '') as custom_path,
 			size_bytes,
 			utc_timestamp
 		FROM %s
@@ -756,13 +756,13 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		var (
 			mediaKey      string
 			fileName      string
-			nameCol       string
-			pathCol       string
+			customName    string
+			customPath    string
 			sizeBytes     int64
 			timestampUnix int64
 		)
 
-		if err := rows.Scan(&mediaKey, &fileName, &nameCol, &pathCol, &sizeBytes, &timestampUnix); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
 
@@ -776,15 +776,15 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		var displayName, displayPath string
 
 		// Display name: use 'name' if set, else use 'file_name'
-		if nameCol != "" {
-			displayName = nameCol
+		if customName != "" {
+			displayName = customName
 		} else {
 			displayName = fileName
 		}
 
 		// Display path: use 'path' if set, else empty (strip slashes)
-		if pathCol != "" {
-			displayPath = strings.Trim(pathCol, "/")
+		if customPath != "" {
+			displayPath = strings.Trim(customPath, "/")
 		} else {
 			displayPath = ""
 		}
@@ -850,7 +850,7 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 		case <-ticker.C:
 			// Query for rows newer than lastTimestamp
 			query := fmt.Sprintf(`
-				SELECT media_key, file_name, COALESCE(name, '') as name, COALESCE(path, '') as path, size_bytes, utc_timestamp, user_name
+				SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp, user_name
 				FROM %s
 				WHERE utc_timestamp > $1
 				ORDER BY utc_timestamp
@@ -866,9 +866,9 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 			changedUsers := make(map[string]bool)
 			changedPaths := make(map[string]fs.EntryType) // Collect unique paths to notify
 			for rows.Next() {
-				var mediaKey, fileName, nameCol, pathCol, uName string
+				var mediaKey, fileName, customName, customPath, uName string
 				var sizeBytes, ts int64
-				if err := rows.Scan(&mediaKey, &fileName, &nameCol, &pathCol, &sizeBytes, &ts, &uName); err != nil {
+				if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &ts, &uName); err != nil {
 					fs.Errorf(f, "mediavfs: ChangeNotify scan failed: %v", err)
 					continue
 				}
@@ -881,14 +881,14 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 
 				var displayName, displayPath string
 				// Display name: use 'name' if set, else use 'file_name'
-				if nameCol != "" {
-					displayName = nameCol
+				if customName != "" {
+					displayName = customName
 				} else {
 					displayName = fileName
 				}
 				// Display path: use 'path' if set, else empty
-				if pathCol != "" {
-					displayPath = strings.Trim(pathCol, "/")
+				if customPath != "" {
+					displayPath = strings.Trim(customPath, "/")
 				} else {
 					displayPath = ""
 				}
