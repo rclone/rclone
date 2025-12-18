@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"moul.io/http2curl/v2"
 )
 
 func TestCleanAuth(t *testing.T) {
@@ -58,6 +59,32 @@ func TestCleanAuths(t *testing.T) {
 	} {
 		got := string(cleanAuths([]byte(test.in)))
 		assert.Equal(t, test.want, got, test.in)
+	}
+}
+
+func TestCleanCurl(t *testing.T) {
+	for _, test := range []struct {
+		in   []string
+		want []string
+	}{{
+		[]string{""},
+		[]string{""},
+	}, {
+		[]string{"floo"},
+		[]string{"floo"},
+	}, {
+		[]string{"'Authorization: AAAAAAAAA'", "'Potato: Help'", ""},
+		[]string{"'Authorization: XXXX'", "'Potato: Help'", ""},
+	}, {
+		[]string{"'X-Auth-Token: AAAAAAAAA'", "'Potato: Help'", ""},
+		[]string{"'X-Auth-Token: XXXX'", "'Potato: Help'", ""},
+	}, {
+		[]string{"'X-Auth-Token: AAAAAAAAA'", "'Authorization: AAAAAAAAA'", "'Potato: Help'", ""},
+		[]string{"'X-Auth-Token: XXXX'", "'Authorization: XXXX'", "'Potato: Help'", ""},
+	}} {
+		in := http2curl.CurlCommand(test.in)
+		cleanCurl(&in)
+		assert.Equal(t, test.want, test.in, test.in)
 	}
 }
 
