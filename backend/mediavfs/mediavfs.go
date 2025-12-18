@@ -402,8 +402,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	if dirPath == "" {
 		// At root of user directory - we need:
 		// 1. Files at root (path NULL or '')
-		// 2. Files in first-level dirs (path without '/')
-		// 3. Discover first-level dirs from nested paths (path with '/')
+		// 2. One file per first-level dir (path without '/')
+		// 3. One file per first-level dir (from nested paths with '/')
 		query = fmt.Sprintf(`
 			(
 				SELECT
@@ -415,7 +415,23 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 					utc_timestamp
 				FROM %s
 				WHERE user_name = $1
-				  AND (path IS NULL OR path = '' OR path NOT LIKE '%%/%%')
+				  AND (path IS NULL OR path = '')
+			)
+			UNION ALL
+			(
+				SELECT DISTINCT ON (path)
+					media_key,
+					file_name,
+					COALESCE(name, '') as custom_name,
+					COALESCE(path, '') as custom_path,
+					size_bytes,
+					utc_timestamp
+				FROM %s
+				WHERE user_name = $2
+				  AND path IS NOT NULL
+				  AND path != ''
+				  AND path NOT LIKE '%%/%%'
+				ORDER BY path, utc_timestamp DESC
 			)
 			UNION ALL
 			(
@@ -427,13 +443,13 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 					size_bytes,
 					utc_timestamp
 				FROM %s
-				WHERE user_name = $1
+				WHERE user_name = $3
 				  AND path LIKE '%%/%%'
 				ORDER BY split_part(path, '/', 1), utc_timestamp DESC
 			)
 			ORDER BY file_name
-		`, f.opt.TableName, f.opt.TableName)
-		args = []interface{}{userName, userName}
+		`, f.opt.TableName, f.opt.TableName, f.opt.TableName)
+		args = []interface{}{userName, userName, userName}
 	} else {
 		// In a subdirectory - select files where path = dirPath OR path starts with dirPath/
 		query = fmt.Sprintf(`
