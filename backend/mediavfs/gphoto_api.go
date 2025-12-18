@@ -2,6 +2,7 @@ package mediavfs
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -446,8 +447,39 @@ func (api *GPhotoAPI) GetLibraryState(ctx context.Context, stateToken, pageToken
 	}
 	defer resp.Body.Close()
 
+	// Log response headers
+	fs.Debugf(nil, "gphoto: response Content-Encoding: %s", resp.Header.Get("Content-Encoding"))
+	fs.Debugf(nil, "gphoto: response Content-Length: %s", resp.Header.Get("Content-Length"))
+
+	// Check if response is gzip compressed
+	var reader io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		fs.Debugf(nil, "gphoto: response is gzip compressed, decompressing")
+		gzipReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzipReader.Close()
+		reader = gzipReader
+	}
+
 	// Read response body
-	return io.ReadAll(resp.Body)
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Log first bytes for debugging
+	hexLen := 60
+	if hexLen > len(data) {
+		hexLen = len(data)
+	}
+	if hexLen > 0 {
+		fs.Debugf(nil, "gphoto: read %d bytes from response body", len(data))
+		fs.Debugf(nil, "gphoto: first %d bytes (hex): %x", hexLen, data[:hexLen])
+		fs.Debugf(nil, "gphoto: first %d bytes (decimal): %v", hexLen, data[:hexLen])
+	}
+	return data, nil
 }
 
 // GetLibraryPage gets a page of library results

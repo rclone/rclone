@@ -103,13 +103,32 @@ func appendNestedMessage(buf []byte, num protowire.Number, value map[string]inte
 // DecodeDynamicMessage decodes a protobuf message to a map structure
 func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
+	originalLen := len(data)
+	bytesProcessed := 0
+
+	// Log first 40 bytes for debugging
+	hexLen := 40
+	if hexLen > len(data) {
+		hexLen = len(data)
+	}
+	if hexLen > 0 {
+		fmt.Printf("DecodeDynamicMessage: first %d bytes: %x\n", hexLen, data[:hexLen])
+	}
 
 	for len(data) > 0 {
 		num, typ, n := protowire.ConsumeTag(data)
 		if n < 0 {
-			return nil, protowire.ParseError(n)
+			// Log position and surrounding bytes for debugging
+			pos := originalLen - len(data)
+			hexLen := 40
+			if hexLen > len(data) {
+				hexLen = len(data)
+			}
+			hexDump := fmt.Sprintf("%x", data[0:hexLen])
+			return nil, fmt.Errorf("invalid tag at byte %d/%d, hex context: %s, error: %v", pos, originalLen, hexDump, protowire.ParseError(n))
 		}
 		data = data[n:]
+		bytesProcessed += n
 
 		fieldNum := fmt.Sprintf("%d", num)
 
@@ -130,11 +149,19 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 			data = data[n:]
 
 			// Try to decode as nested message
-			if nested, err := DecodeDynamicMessage(val); err == nil && len(nested) > 0 {
-				result[fieldNum] = nested
+			// Only attempt if the bytes look like they could be protobuf (not empty, reasonable size)
+			if len(val) > 0 && len(val) < 10000000 { // sanity check size
+				if nested, err := DecodeDynamicMessage(val); err == nil && len(nested) > 0 {
+					result[fieldNum] = nested
+				} else {
+					// If decoding failed, treat as string
+					result[fieldNum] = string(val)
+				}
+			} else if len(val) == 0 {
+				result[fieldNum] = ""
 			} else {
-				// If it fails, treat as string/bytes
-				result[fieldNum] = string(val)
+				// Too large, keep as bytes
+				result[fieldNum] = val
 			}
 
 		case protowire.Fixed32Type:
@@ -153,8 +180,39 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 			data = data[n:]
 			result[fieldNum] = val
 
+		case protowire.StartGroupType:
+			// Deprecated group type - skip until EndGroupType
+			depth := 1
+			for len(data) > 0 && depth > 0 {
+				num2, typ2, n2 := protowire.ConsumeTag(data)
+				if n2 < 0 {
+					return nil, fmt.Errorf("invalid group tag at field %d", num)
+				}
+				data = data[n2:]
+
+				if typ2 == protowire.StartGroupType {
+					depth++
+				} else if typ2 == protowire.EndGroupType && num2 == num {
+					depth--
+				} else {
+					// Skip the field value
+					n3 := protowire.ConsumeFieldValue(num2, typ2, data)
+					if n3 < 0 {
+						return nil, fmt.Errorf("invalid field value in group at field %d", num)
+					}
+					data = data[n3:]
+				}
+			}
+			// Don't store group data, just skip it
+
+		case protowire.EndGroupType:
+			// End of group - should not appear at top level
+			return nil, fmt.Errorf("unexpected end group at field %d", num)
+
 		default:
-			return nil, fmt.Errorf("unknown wire type: %v", typ)
+			// Unknown wire type - try to skip it gracefully
+			// This handles any malformed or unknown data
+			return nil, fmt.Errorf("unknown wire type %d at field %d (might be corrupted data)", typ, num)
 		}
 	}
 
