@@ -110,7 +110,7 @@ func init() {
 		}, {
 			Name:     "table_name",
 			Help:     "Name of the media table in the database.",
-			Default:  "media",
+			Default:  "remote_media",
 			Advanced: true,
 		}, {
 			Name:     "enable_upload",

@@ -12,9 +12,9 @@ import (
 
 // InitializeDatabase creates the necessary tables if they don't exist
 func (f *Fs) InitializeDatabase(ctx context.Context) error {
-	// Create remote_media table
-	_, err := f.db.ExecContext(ctx, `
-		CREATE TABLE IF NOT EXISTS remote_media (
+	// Create media table (using configured table name)
+	query := fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s (
 			media_key TEXT PRIMARY KEY,
 			file_name TEXT,
 			dedup_key TEXT,
@@ -59,9 +59,11 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 			name TEXT,
 			path TEXT
 		)
-	`)
+	`, f.opt.TableName)
+
+	_, err := f.db.ExecContext(ctx, query)
 	if err != nil {
-		return fmt.Errorf("failed to create remote_media table: %w", err)
+		return fmt.Errorf("failed to create %s table: %w", f.opt.TableName, err)
 	}
 
 	// Create state table for tracking sync progress
@@ -80,12 +82,15 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 	}
 
 	// Create indices for better performance
-	_, err = f.db.ExecContext(ctx, `
-		CREATE INDEX IF NOT EXISTS idx_remote_media_user_name ON remote_media(user_name);
-		CREATE INDEX IF NOT EXISTS idx_remote_media_file_name ON remote_media(file_name);
-		CREATE INDEX IF NOT EXISTS idx_remote_media_dedup_key ON remote_media(dedup_key);
-		CREATE INDEX IF NOT EXISTS idx_remote_media_size_timestamp ON remote_media(size_bytes, utc_timestamp);
-	`)
+	indexQuery := fmt.Sprintf(`
+		CREATE INDEX IF NOT EXISTS idx_%s_user_name ON %s(user_name);
+		CREATE INDEX IF NOT EXISTS idx_%s_file_name ON %s(file_name);
+		CREATE INDEX IF NOT EXISTS idx_%s_dedup_key ON %s(dedup_key);
+		CREATE INDEX IF NOT EXISTS idx_%s_size_timestamp ON %s(size_bytes, utc_timestamp);
+	`, f.opt.TableName, f.opt.TableName, f.opt.TableName, f.opt.TableName,
+		f.opt.TableName, f.opt.TableName, f.opt.TableName, f.opt.TableName)
+
+	_, err = f.db.ExecContext(ctx, indexQuery)
 	if err != nil {
 		return fmt.Errorf("failed to create indices: %w", err)
 	}
@@ -207,8 +212,9 @@ func (f *Fs) InsertMediaItems(ctx context.Context, items []MediaItem) error {
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.PrepareContext(ctx, `
-		INSERT INTO remote_media (
+	query := fmt.Sprintf(`
+		INSERT INTO %s (`, f.opt.TableName)
+	query += `
 			media_key, file_name, dedup_key, is_canonical, type, caption, collection_id,
 			size_bytes, quota_charged_bytes, origin, content_version, utc_timestamp,
 			server_creation_timestamp, timezone_offset, width, height, remote_url,
@@ -232,7 +238,9 @@ func (f *Fs) InsertMediaItems(ctx context.Context, items []MediaItem) error {
 			trash_timestamp = EXCLUDED.trash_timestamp,
 			is_archived = EXCLUDED.is_archived,
 			is_favorite = EXCLUDED.is_favorite
-	`)
+	`
+
+	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
@@ -270,9 +278,9 @@ func (f *Fs) DeleteMediaItems(ctx context.Context, mediaKeys []string) error {
 	}
 
 	// Convert to array format for PostgreSQL
-	query := `DELETE FROM remote_media WHERE media_key = ANY($1)`
+	query := fmt.Sprintf(`DELETE FROM %s WHERE media_key = ANY($1)`, f.opt.TableName)
 
-	// Create a PostgreSQL array string
+	// Execute delete
 	result, err := f.db.ExecContext(ctx, query, mediaKeys)
 	if err != nil {
 		return fmt.Errorf("failed to delete media items: %w", err)

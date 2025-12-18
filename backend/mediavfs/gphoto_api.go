@@ -46,20 +46,28 @@ func (api *GPhotoAPI) GetAuthToken(ctx context.Context, force bool) error {
 		url += "?force=true"
 	}
 
+	fs.Debugf(nil, "gphoto: requesting token from %s for user %s (force=%v)", url, api.user, force)
+
 	req, err := http.NewRequestWithContext(ctx, "POST", url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create token request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer @localhost@")
+	fs.Debugf(nil, "gphoto: token request headers: Authorization=Bearer @localhost@")
 
 	resp, err := api.httpClient.Do(req)
 	if err != nil {
+		fs.Errorf(nil, "gphoto: token request failed: %v", err)
 		return fmt.Errorf("failed to fetch token: %w", err)
 	}
 	defer resp.Body.Close()
 
+	fs.Debugf(nil, "gphoto: token response status: %d %s", resp.StatusCode, resp.Status)
+	fs.Debugf(nil, "gphoto: token response headers: Content-Type=%s", resp.Header.Get("Content-Type"))
+
 	if resp.StatusCode != http.StatusOK {
+		fs.Errorf(nil, "gphoto: token request failed with status %d", resp.StatusCode)
 		return fmt.Errorf("token request failed with status %d", resp.StatusCode)
 	}
 
@@ -67,11 +75,18 @@ func (api *GPhotoAPI) GetAuthToken(ctx context.Context, force bool) error {
 		Token string `json:"token"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		fs.Errorf(nil, "gphoto: failed to decode token response: %v", err)
 		return fmt.Errorf("failed to decode token response: %w", err)
 	}
 
+	// Mask token for logging (show first/last 8 chars only)
+	maskedToken := tokenResp.Token
+	if len(maskedToken) > 16 {
+		maskedToken = maskedToken[:8] + "..." + maskedToken[len(maskedToken)-8:]
+	}
+	fs.Infof(nil, "gphoto: obtained auth token for user %s: %s", api.user, maskedToken)
+
 	api.token = tokenResp.Token
-	fs.Infof(nil, "gphoto: obtained auth token for user %s", api.user)
 	return nil
 }
 
@@ -108,14 +123,33 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			req.Header.Set(k, v)
 		}
 
+		// Log request details
+		fs.Debugf(nil, "gphoto: API request: %s %s", method, url)
+		fs.Debugf(nil, "gphoto: request headers: User-Agent=%s, Content-Type=%s",
+			req.Header.Get("User-Agent"), req.Header.Get("Content-Type"))
+		if api.token != "" {
+			maskedToken := api.token
+			if len(maskedToken) > 16 {
+				maskedToken = maskedToken[:8] + "..." + maskedToken[len(maskedToken)-8:]
+			}
+			fs.Debugf(nil, "gphoto: request Authorization: Bearer %s", maskedToken)
+		}
+
 		resp, err = api.httpClient.Do(req)
 		if err != nil {
+			fs.Errorf(nil, "gphoto: API request failed: %v", err)
 			return nil, err
 		}
+
+		// Log response details
+		fs.Debugf(nil, "gphoto: API response: %d %s", resp.StatusCode, resp.Status)
+		fs.Debugf(nil, "gphoto: response headers: Content-Type=%s, Content-Length=%s",
+			resp.Header.Get("Content-Type"), resp.Header.Get("Content-Length"))
 
 		// Handle status codes
 		switch resp.StatusCode {
 		case http.StatusOK, http.StatusPartialContent:
+			fs.Debugf(nil, "gphoto: request successful")
 			return resp, nil
 
 		case http.StatusUnauthorized, http.StatusForbidden:
