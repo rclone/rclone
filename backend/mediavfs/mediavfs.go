@@ -96,6 +96,10 @@ func init() {
 		Description: "PostgreSQL Media Virtual Filesystem",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
+			Name:     "user",
+			Help:     "Google Photos username for this mount.\n\nEach user should have a separate mount.",
+			Required: true,
+		}, {
 			Name:     "db_connection",
 			Help:     "PostgreSQL connection string.\n\nE.g. \"postgres://user:password@localhost/dbname?sslmode=disable\"",
 			Required: true,
@@ -130,6 +134,7 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
+	User           string `config:"user"`
 	DBConnection  string `config:"db_connection"`
 	DownloadURL   string `config:"download_url"`
 	TableName     string `config:"table_name"`
@@ -137,6 +142,8 @@ type Options struct {
 	EnableUpload  bool   `config:"enable_upload"`
 	EnableDelete  bool   `config:"enable_delete"`
 	TokenServerURL string `config:"token_server_url"`
+	AutoSync      bool   `config:"auto_sync"`
+	SyncInterval  int    `config:"sync_interval"`
 }
 
 // Fs represents a connection to the media database
@@ -297,6 +304,31 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Enable ChangeNotify support so vfs can poll this backend
 	f.features.ChangeNotify = f.ChangeNotify
 
+	// Initialize database schema
+	fs.Infof(f, "Initializing database schema...")
+	if err := f.InitializeDatabase(ctx); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	// Perform initial sync if needed
+	if opt.User != "" {
+		fs.Infof(f, "Checking sync state for user: %s", opt.User)
+		state, err := f.GetSyncState(ctx, opt.User)
+		if err != nil {
+			fs.Errorf(f, "Failed to get sync state: %v", err)
+		} else if !state.InitComplete {
+			fs.Infof(f, "Performing initial sync for user: %s", opt.User)
+			go func() {
+				if err := f.SyncFromGooglePhotos(context.Background(), opt.User); err != nil {
+					fs.Errorf(f, "Initial sync failed: %v", err)
+				}
+			}()
+		} else {
+			fs.Infof(f, "User %s already synced (last sync: %d)", opt.User, state.LastSyncTime)
+		}
+	}
+
 	// Validate root path if specified
 	if root != "" {
 		_, err := f.NewObject(ctx, root)
@@ -351,17 +383,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	f.dirMu.RUnlock()
 
 	// Cache miss or expired, load from database
+	// Use configured user for per-user mounts
 	var result fs.DirEntries
-	if root == "" {
-		result, err = f.listUsers(ctx)
-	} else {
-		userName, subPath := splitUserPath(root)
-		if subPath == "" {
-			result, err = f.listUserFiles(ctx, userName, "")
-		} else {
-			result, err = f.listUserFiles(ctx, userName, subPath)
-		}
-	}
+	result, err = f.listUserFiles(ctx, f.opt.User, root)
 
 	if err != nil {
 		return nil, err
@@ -738,8 +762,11 @@ func (f *Fs) populateMetadata(userName string) {
 
 // NewObject finds the Object at remote
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	userName, filePath := splitUserPath(remote)
-	if userName == "" || filePath == "" {
+	// Use configured user for per-user mounts
+	userName := f.opt.User
+	filePath := remote
+
+	if filePath == "" {
 		return nil, fs.ErrorIsDir
 	}
 
@@ -965,11 +992,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, errNotWritable
 	}
 
-	// Extract user from remote path
-	userName, filePath := splitUserPath(src.Remote())
-	if userName == "" {
-		return nil, fmt.Errorf("cannot upload to root - must specify user directory")
-	}
+	// Use configured user for per-user mounts
+	userName := f.opt.User
+	filePath := src.Remote()
 
 	// Upload to Google Photos
 	fs.Infof(f, "Uploading %s to Google Photos for user %s", filePath, userName)

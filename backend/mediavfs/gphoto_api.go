@@ -354,3 +354,39 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 
 	return nil
 }
+
+// GetLibraryState gets the current library state from Google Photos
+func (api *GPhotoAPI) GetLibraryState(ctx context.Context, stateToken, pageToken string) ([]byte, error) {
+	// Construct protobuf request (simplified - using placeholder)
+	protoBody := map[string]interface{}{
+		"1": map[string]interface{}{
+			"6": stateToken,
+			"4": pageToken,
+			"7": 2,
+		},
+	}
+
+	serializedData, _ := json.Marshal(protoBody)
+
+	headers := map[string]string{
+		"Content-Type":             "application/x-protobuf",
+		"x-goog-ext-173412678-bin": "CgcIAhClARgC",
+		"x-goog-ext-174067345-bin": "CgIIAg==",
+	}
+
+	resp, err := api.request(ctx, "POST",
+		"https://photosdata-pa.googleapis.com/6439526531001121323/18047484249733410717",
+		headers, bytes.NewReader(serializedData))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	return io.ReadAll(resp.Body)
+}
+
+// GetLibraryPage gets a page of library results
+func (api *GPhotoAPI) GetLibraryPage(ctx context.Context, pageToken, stateToken string) ([]byte, error) {
+	return api.GetLibraryState(ctx, stateToken, pageToken)
+}
