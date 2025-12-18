@@ -423,13 +423,11 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 
 // GetLibraryState gets the current library state from Google Photos
 func (api *GPhotoAPI) GetLibraryState(ctx context.Context, stateToken, pageToken string) ([]byte, error) {
-	// Build the complex protobuf message using type definitions
-	// This matches Python's get_library_state exactly
+	// Build protobuf message using official Google protobuf library
 	protoBody := buildGetLibraryStateMessage(stateToken, pageToken)
 
-	// Encode using typed encoder with message type definition
-	typedef := GetLibStateTypeDef()
-	serializedData, err := EncodeMessage(protoBody, typedef)
+	// Encode using Google's official protobuf wire format
+	serializedData, err := EncodeDynamicMessage(protoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode library state message: %w", err)
 	}
