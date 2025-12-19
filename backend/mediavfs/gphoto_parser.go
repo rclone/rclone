@@ -139,6 +139,7 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 // Field 2->4 can be either:
 //  1. A string (direct filename)
 //  2. A map with field 14 containing the filename (as string or byte array)
+//  3. A map with other fields - try to find filename in available fields
 func extractFileName(field24 interface{}, mediaKey string) (string, error) {
 	// Case 1: Direct string
 	if fileName, ok := field24.(string); ok {
@@ -173,9 +174,22 @@ func extractFileName(field24 interface{}, mediaKey string) (string, error) {
 			}
 		}
 
-		// If field 14 doesn't exist, try other fields as fallback
-		// Some items might have the filename in a different field
-		return "", fmt.Errorf("field 2->4 is a map but field 14 not found for media_key %s", mediaKey)
+		// If field 14 doesn't exist, log available fields and try alternatives
+		fs.Infof(nil, "mediavfs: field 2->4 is map without field 14 for %s, available fields: %v", mediaKey, getMapKeys(field24Map))
+
+		// Try other common fields that might contain filename
+		// Check all string fields in the map as potential filenames
+		for k, v := range field24Map {
+			if strVal, ok := v.(string); ok && strVal != "" {
+				fs.Infof(nil, "mediavfs: Using field 2->4[%s] as filename for %s: %s", k, mediaKey, strVal)
+				return strVal, nil
+			}
+		}
+
+		// No string field found, generate a filename from media_key
+		generatedName := fmt.Sprintf("%s.unknown", mediaKey)
+		fs.Infof(nil, "mediavfs: Generating filename for %s: %s", mediaKey, generatedName)
+		return generatedName, nil
 	}
 
 	return "", fmt.Errorf("field 2->4 has unexpected type %T for media_key %s", field24, mediaKey)
@@ -288,11 +302,17 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 		}
 	}
 
-	// Final warning - only for problematic files
-	if item.DedupKey == "" && debugThis {
-		fs.Infof(nil, "mediavfs: WARNING dedup_key is EMPTY for %s (file: %s)", item.MediaKey, item.FileName)
-		fs.Infof(nil, "mediavfs: WARNING field2[21]=%v", field2["21"])
-		fs.Infof(nil, "mediavfs: WARNING field2[13]=%v", field2["13"])
+	// Final fallback: if dedup_key is still empty, use media_key as dedup_key
+	// This handles cases where field2[21] and field2[13] are nested maps instead of bytes/strings
+	if item.DedupKey == "" {
+		if debugThis {
+			fs.Infof(nil, "mediavfs: WARNING dedup_key is EMPTY for %s (file: %s)", item.MediaKey, item.FileName)
+			fs.Infof(nil, "mediavfs: WARNING field2[21]=%v", field2["21"])
+			fs.Infof(nil, "mediavfs: WARNING field2[13]=%v", field2["13"])
+		}
+		// Use media_key as fallback dedup_key
+		item.DedupKey = item.MediaKey
+		fs.Infof(nil, "mediavfs: Using media_key as dedup_key for %s", item.MediaKey)
 	}
 
 	// Field 2->1->1: collection_id (optional - default to empty)

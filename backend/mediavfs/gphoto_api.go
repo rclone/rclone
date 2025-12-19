@@ -619,8 +619,17 @@ func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (stri
 		return "", err
 	}
 
+	// Debug: log response status and first few bytes
+	fs.Debugf(nil, "gphoto: GetDownloadURL response status=%d, body_len=%d, first_bytes=%x",
+		resp.StatusCode, len(respBody), respBody[:min(len(respBody), 50)])
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("GetDownloadURL failed with status %d: %s", resp.StatusCode, string(respBody))
+	}
+
 	result, err := DecodeToMap(respBody)
 	if err != nil {
+		fs.Errorf(nil, "gphoto: Failed to decode GetDownloadURL response: %v, first_bytes=%x", err, respBody[:min(len(respBody), 50)])
 		return "", err
 	}
 
