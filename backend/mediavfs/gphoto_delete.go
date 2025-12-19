@@ -42,13 +42,23 @@ func (f *Fs) DeleteByMediaKeys(ctx context.Context, mediaKeys []string, user str
 
 // DeleteObject removes an object from Google Photos
 func (o *Object) DeleteFromGPhotos(ctx context.Context) error {
-	// Get the dedup key or media key from the object
-	// This requires the database to store the dedup key
-	// For now, we'll use the media key
+	// Query the database to get the dedup_key for this media_key
+	// Google Photos API requires dedup_key, not media_key
+	query := fmt.Sprintf(`SELECT dedup_key FROM %s WHERE media_key = $1`, o.fs.opt.TableName)
 
-	fs.Infof(o.fs, "Deleting object %s (media_key: %s)", o.remote, o.mediaKey)
+	var dedupKey string
+	err := o.fs.db.QueryRowContext(ctx, query, o.mediaKey).Scan(&dedupKey)
+	if err != nil {
+		return fmt.Errorf("failed to get dedup_key for media_key %s: %w", o.mediaKey, err)
+	}
 
-	return o.fs.DeleteByMediaKeys(ctx, []string{o.mediaKey}, o.userName)
+	if dedupKey == "" {
+		return fmt.Errorf("dedup_key is empty for media_key %s", o.mediaKey)
+	}
+
+	fs.Infof(o.fs, "Deleting object %s (media_key: %s, dedup_key: %s)", o.remote, o.mediaKey, dedupKey)
+
+	return o.fs.DeleteFromGPhotos(ctx, []string{dedupKey}, o.userName)
 }
 
 // BatchDelete deletes multiple files in batches
