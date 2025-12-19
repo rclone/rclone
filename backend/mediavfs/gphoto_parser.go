@@ -218,6 +218,12 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	// Field 2->4: file_name (REQUIRED - must exist and be a string, but can be empty)
 	fileName, ok := field2["4"].(string)
 	if !ok {
+		// Debug: Check what type it actually is
+		if val, exists := field2["4"]; exists {
+			fmt.Printf("DEBUG: field2[\"4\"] exists but wrong type for media_key %s: type=%T, value=%v\n", item.MediaKey, val, val)
+		} else {
+			fmt.Printf("DEBUG: field2[\"4\"] does NOT exist for media_key %s. field2 keys: %v\n", item.MediaKey, getKeys(field2))
+		}
 		return item, fmt.Errorf("missing required field: file_name (field 2->4) for media_key %s", item.MediaKey)
 	}
 	item.FileName = fileName
