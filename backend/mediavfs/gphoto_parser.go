@@ -213,39 +213,62 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 		return item, fmt.Errorf("missing required field: type (field 5->1) for media_key %s", item.MediaKey)
 	}
 
+	// Debug: list of media_keys with known empty dedup_key issues
+	debugMediaKeys := map[string]bool{
+		"AF1QipNUQyoob3Aw2yZahYwG5OX7ipb_MBf_HC8g-0So": true,
+		"AF1QipP4mj-s7sitRKGb2yenPIr66a3PH5QzaRnlOPpK": true,
+		"AF1QipOvzOeMUrrtKPl74aTKzrLrP6xWIUKFDkhhKqd-": true,
+		"AF1QipMmQLnWK9G18i19a9ZSkYye5tcUzNceh90AL4bq": true,
+		"AF1QipMxFMhyRa225fsbEE1s5OSGpIIHGr5VDqwFhyBo": true,
+	}
+	debugThis := debugMediaKeys[item.MediaKey]
+
 	// Parse dedup_key from field 2->21
 	if field21, ok := field2["21"].(map[string]interface{}); ok {
-		// Debug: log field21 structure
-		fmt.Printf("DEBUG: field2[21] exists for %s, keys=%v\n", item.MediaKey, getMapKeys(field21))
+		if debugThis {
+			fmt.Printf("DEBUG: field2[21] exists for %s, keys=%v\n", item.MediaKey, getMapKeys(field21))
+		}
 		for key, val := range field21 {
-			fmt.Printf("DEBUG: field2[21][%q] = type=%T, value=%v\n", key, val, val)
+			if debugThis {
+				fmt.Printf("DEBUG: field2[21][%q] = type=%T, value=%v\n", key, val, val)
+			}
 			if key[0] == '1' {
 				if dedupKey, ok := val.(string); ok {
 					item.DedupKey = dedupKey
-					fmt.Printf("DEBUG: Got dedup_key from field2[21][%q] = %q\n", key, dedupKey)
+					if debugThis {
+						fmt.Printf("DEBUG: Got dedup_key from field2[21][%q] = %q\n", key, dedupKey)
+					}
 					break
-				} else {
+				} else if debugThis {
 					fmt.Printf("DEBUG: field2[21][%q] value is NOT a string, type=%T\n", key, val)
 				}
 			}
 		}
-	} else {
+	} else if debugThis {
 		fmt.Printf("DEBUG: field2[21] does NOT exist for %s, field2[21]=%v\n", item.MediaKey, field2["21"])
 	}
 
 	// Fallback: try to get dedup_key from field 2->13->1
 	if item.DedupKey == "" {
-		fmt.Printf("DEBUG: dedup_key still empty for %s, trying fallback field2[13]\n", item.MediaKey)
+		if debugThis {
+			fmt.Printf("DEBUG: dedup_key still empty for %s, trying fallback field2[13]\n", item.MediaKey)
+		}
 		if field13, ok := field2["13"].(map[string]interface{}); ok {
-			fmt.Printf("DEBUG: field2[13] exists, field2[13][1]=%v (type=%T)\n", field13["1"], field13["1"])
+			if debugThis {
+				fmt.Printf("DEBUG: field2[13] exists, field2[13][1]=%v (type=%T)\n", field13["1"], field13["1"])
+			}
 			// Try as []byte first
 			if hashBytes, ok := field13["1"].([]byte); ok {
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
-				fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as []byte = %q\n", item.DedupKey)
+				if debugThis {
+					fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as []byte = %q\n", item.DedupKey)
+				}
 			} else if hashStr, ok := field13["1"].(string); ok {
 				// Handle string containing binary data
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString([]byte(hashStr)))
-				fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as string = %q\n", item.DedupKey)
+				if debugThis {
+					fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as string = %q\n", item.DedupKey)
+				}
 			} else if hashInterface, ok := field13["1"].([]interface{}); ok {
 				// Convert []interface{} to []byte
 				hashBytes := make([]byte, len(hashInterface))
@@ -258,16 +281,20 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 					}
 				}
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
-				fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as []interface{} = %q\n", item.DedupKey)
+				if debugThis {
+					fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as []interface{} = %q\n", item.DedupKey)
+				}
 			}
-		} else {
+		} else if debugThis {
 			fmt.Printf("DEBUG: field2[13] does NOT exist or not a map for %s\n", item.MediaKey)
 		}
 	}
 
-	// Final warning
-	if item.DedupKey == "" {
+	// Final warning - only for problematic files
+	if item.DedupKey == "" && debugThis {
 		fmt.Printf("WARNING: dedup_key is EMPTY for %s (file: %s)\n", item.MediaKey, item.FileName)
+		fmt.Printf("WARNING: field2[21]=%v\n", field2["21"])
+		fmt.Printf("WARNING: field2[13]=%v\n", field2["13"])
 	}
 
 	// Field 2->1->1: collection_id (REQUIRED)
