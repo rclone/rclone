@@ -274,6 +274,23 @@ func extractFileName(field24 interface{}, mediaKey string) (string, error) {
 				fs.Infof(nil, "mediavfs: Found filename in field2[4][6] for %s: %s", mediaKey, fileName)
 				return fileName, nil
 			}
+			// Try as array - field 6 might be repeated, look for the longest string
+			if arr, ok := field6.([]interface{}); ok && len(arr) > 0 {
+				fs.Infof(nil, "mediavfs: field2[4][6] is array with %d elements", len(arr))
+				var longestFileName string
+				for i, elem := range arr {
+					if fileName, ok := asString(elem); ok && fileName != "" {
+						fs.Infof(nil, "mediavfs: field2[4][6][%d] = %q (len=%d)", i, fileName, len(fileName))
+						if len(fileName) > len(longestFileName) {
+							longestFileName = fileName
+						}
+					}
+				}
+				if longestFileName != "" {
+					fs.Infof(nil, "mediavfs: Using longest filename from field2[4][6]: %s", longestFileName)
+					return longestFileName, nil
+				}
+			}
 			// Try as nested map
 			if nestedMap, ok := field6.(map[string]interface{}); ok {
 				fs.Infof(nil, "mediavfs: field2[4][6] is nested map with keys=%v", getMapKeys(nestedMap))
