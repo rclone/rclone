@@ -2,6 +2,7 @@
 package piqlconnect
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/hex"
@@ -294,6 +295,24 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return f.listPackages(ctx, segments[0])
 }
 
+func makeBlockListStringForPut(i int) bytes.Buffer {
+	var blocklist bytes.Buffer
+	blocklist.Grow(256)
+	blocklist.WriteString(`<?xml version="1.0" encoding="utf-8"?><BlockList>`)
+	for j := 1; j <= i; j++ {
+		blocklist.WriteString("<Uncommitted>")
+		var src [20]byte
+		dec := strconv.AppendInt(src[:0], int64(j), 10)
+
+		var dst [28]byte
+		b64 := base64.StdEncoding.AppendEncode(dst[:0], dec)
+		blocklist.Write(b64)
+		blocklist.WriteString("</Uncommitted>")
+	}
+	blocklist.WriteString("</BlockList>")
+	return blocklist
+}
+
 // Put the object
 //
 // Copy the reader in to the new object which is returned.
@@ -346,16 +365,13 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, optons ..
 			}
 		}
 
-		blocklist := "<?xml version=\"1.0\" encoding=\"utf-8\"?><BlockList>"
-		for j := 1; j <= i; j++ {
-			blocklist += "<Uncommitted>" + base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(j))) + "</Uncommitted>"
-		}
-		blocklist += "</BlockList>"
-		req, err := http.NewRequestWithContext(ctx, "PUT", results[0]+"&comp=blocklist", strings.NewReader(blocklist))
+		blocklist := makeBlockListStringForPut(i)
+		len := blocklist.Len()
+		req, err := http.NewRequestWithContext(ctx, "PUT", results[0]+"&comp=blocklist", &blocklist)
 		if err != nil {
 			return nil, err
 		}
-		req.ContentLength = int64(len(blocklist))
+		req.ContentLength = int64(len)
 		resp, err := f.httpClient.Do(req)
 		if err != nil {
 			return nil, err
