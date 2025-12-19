@@ -123,6 +123,15 @@ func init() {
 			Help:     "URL of the token server for Google Photos authentication.\n\nE.g. \"https://m.alicuxi.net\"",
 			Default:  "https://m.alicuxi.net",
 			Advanced: true,
+		}, {
+			Name:     "auto_sync",
+			Help:     "Enable automatic background sync to detect new files uploaded via Google Photos web/app.",
+			Default:  false,
+		}, {
+			Name:     "sync_interval",
+			Help:     "Interval between automatic syncs in seconds. Only used when auto_sync is enabled.",
+			Default:  60,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -159,6 +168,8 @@ type Fs struct {
 	// dirCache caches directory listings to avoid reloading on every change
 	dirCache map[string]*dirCacheEntry
 	dirMu    sync.RWMutex
+	// syncStop channel to stop background sync goroutine
+	syncStop chan struct{}
 }
 
 // dirCacheEntry represents a cached directory listing
@@ -301,6 +312,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		virtualDirs: make(map[string]bool),
 		lazyMeta:    make(map[string]*Object),
 		dirCache:    make(map[string]*dirCacheEntry),
+		syncStop:    make(chan struct{}),
 	}
 
 	// Initialize Google Photos API client for download URLs
@@ -333,9 +345,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				if err := f.SyncFromGooglePhotos(context.Background(), opt.User); err != nil {
 					fs.Errorf(f, "Initial sync failed: %v", err)
 				}
+				// Start background sync after initial sync completes if enabled
+				if opt.AutoSync {
+					f.startBackgroundSync()
+				}
 			}()
 		} else {
 			fs.Infof(f, "User %s already synced (last sync: %d)", opt.User, state.LastSyncTime)
+			// Start background sync immediately if already synced and auto_sync is enabled
+			if opt.AutoSync {
+				f.startBackgroundSync()
+			}
 		}
 	}
 
@@ -1298,8 +1318,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return nil
 }
 
-// Shutdown the backend
+// Shutdown the backend, stopping background sync and closing connections
 func (f *Fs) Shutdown(ctx context.Context) error {
+	// Stop background sync if running
+	if f.syncStop != nil {
+		close(f.syncStop)
+	}
 	if f.db != nil {
 		return f.db.Close()
 	}
@@ -1526,9 +1550,40 @@ func (o *Object) Remove(ctx context.Context) error {
 	return nil
 }
 
+// startBackgroundSync starts a goroutine that performs periodic syncs
+func (f *Fs) startBackgroundSync() {
+	interval := time.Duration(f.opt.SyncInterval) * time.Second
+	if interval < 10*time.Second {
+		interval = 10 * time.Second // Minimum 10 seconds
+	}
+
+	fs.Infof(f, "Starting background sync every %v", interval)
+
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-f.syncStop:
+				fs.Infof(f, "Background sync stopped")
+				return
+			case <-ticker.C:
+				fs.Infof(f, "Background sync: syncing from Google Photos...")
+				if err := f.SyncFromGooglePhotos(context.Background(), f.opt.User); err != nil {
+					fs.Errorf(f, "Background sync failed: %v", err)
+				} else {
+					fs.Infof(f, "Background sync completed successfully")
+				}
+			}
+		}
+	}()
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = (*Fs)(nil)
-	_ fs.Object = (*Object)(nil)
-	_ fs.Mover  = (*Fs)(nil)
+	_ fs.Fs       = (*Fs)(nil)
+	_ fs.Object   = (*Object)(nil)
+	_ fs.Mover    = (*Fs)(nil)
+	_ fs.Shutdowner = (*Fs)(nil)
 )
