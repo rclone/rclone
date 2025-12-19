@@ -53,6 +53,15 @@ type MediaItem struct {
 	ThumbnailURL             sql.NullString
 }
 
+// Helper function to get map keys for debugging
+func getMapKeys(m map[string]interface{}) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // ParseDbUpdate parses the library state response from Google Photos
 func ParseDbUpdate(data map[string]interface{}) (stateToken string, nextPageToken string, mediaItems []MediaItem, mediaKeysToDelete []string, err error) {
 	// Get top-level field 1
@@ -206,22 +215,33 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 
 	// Parse dedup_key from field 2->21
 	if field21, ok := field2["21"].(map[string]interface{}); ok {
+		// Debug: log field21 structure
+		fmt.Printf("DEBUG: field2[21] exists for %s, keys=%v\n", item.MediaKey, getMapKeys(field21))
 		for key, val := range field21 {
+			fmt.Printf("DEBUG: field2[21][%q] = type=%T, value=%v\n", key, val, val)
 			if key[0] == '1' {
 				if dedupKey, ok := val.(string); ok {
 					item.DedupKey = dedupKey
+					fmt.Printf("DEBUG: Got dedup_key from field2[21][%q] = %q\n", key, dedupKey)
 					break
+				} else {
+					fmt.Printf("DEBUG: field2[21][%q] value is NOT a string, type=%T\n", key, val)
 				}
 			}
 		}
+	} else {
+		fmt.Printf("DEBUG: field2[21] does NOT exist for %s, field2[21]=%v\n", item.MediaKey, field2["21"])
 	}
 
 	// Fallback: try to get dedup_key from field 2->13->1
 	if item.DedupKey == "" {
+		fmt.Printf("DEBUG: dedup_key still empty for %s, trying fallback field2[13]\n", item.MediaKey)
 		if field13, ok := field2["13"].(map[string]interface{}); ok {
+			fmt.Printf("DEBUG: field2[13] exists, field2[13][1]=%v (type=%T)\n", field13["1"], field13["1"])
 			// Try as []byte first
 			if hashBytes, ok := field13["1"].([]byte); ok {
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
+				fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as []byte = %q\n", item.DedupKey)
 			} else if hashInterface, ok := field13["1"].([]interface{}); ok {
 				// Convert []interface{} to []byte
 				hashBytes := make([]byte, len(hashInterface))
@@ -234,8 +254,16 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 					}
 				}
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
+				fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as []interface{} = %q\n", item.DedupKey)
 			}
+		} else {
+			fmt.Printf("DEBUG: field2[13] does NOT exist or not a map for %s\n", item.MediaKey)
 		}
+	}
+
+	// Final warning
+	if item.DedupKey == "" {
+		fmt.Printf("WARNING: dedup_key is EMPTY for %s (file: %s)\n", item.MediaKey, item.FileName)
 	}
 
 	// Field 2->1->1: collection_id (REQUIRED)
