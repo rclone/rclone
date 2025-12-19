@@ -199,56 +199,86 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 }
 
 // extractFileName extracts the filename from field 2->4
-// Field 2->4 can be either:
-//  1. Raw bytes (filename as bytes) - now the most common case
-//  2. A string (direct filename)
-//  3. A map with field 14 containing the filename
+// Field 2->4 should be raw bytes containing the filename string
+// In rare cases it might be a nested message with field 14 containing the filename
 func extractFileName(field24 interface{}, mediaKey string) (string, error) {
-	// Case 1: Raw bytes - convert directly to string (most common now)
-	if fileBytes, ok := field24.([]byte); ok {
-		return string(fileBytes), nil
-	}
-
-	// Case 2: Direct string
-	if fileName, ok := field24.(string); ok {
+	// Case 1: Already a string (rare but possible)
+	if fileName, ok := field24.(string); ok && fileName != "" {
 		return fileName, nil
 	}
 
-	// Case 3: Nested map - try to extract filename from nested structure
-	if field24Map, ok := asMap(field24); ok {
-		// Priority order for finding filename:
-		// 1. Field 14 (primary filename field)
-		// 2. Any other string/bytes field as fallback
+	// Case 2: Raw bytes - this is the filename directly (most common case)
+	// The filename bytes should NOT be decoded as protobuf - they are just UTF-8 text
+	if fileBytes, ok := field24.([]byte); ok && len(fileBytes) > 0 {
+		// Convert bytes directly to string - this is the filename
+		return string(fileBytes), nil
+	}
 
-		// Try to get field 14 from the nested map
-		if field14, exists := field24Map["14"]; exists {
-			// Field 14 as bytes or string
-			if fileName, ok := asString(field14); ok {
+	// Case 3: Repeated field - field 4 might appear multiple times
+	// Take the first element that looks like a filename
+	if arr, ok := field24.([]interface{}); ok && len(arr) > 0 {
+		for _, elem := range arr {
+			// Try as bytes
+			if fileBytes, ok := elem.([]byte); ok && len(fileBytes) > 0 {
+				return string(fileBytes), nil
+			}
+			// Try as string
+			if fileName, ok := elem.(string); ok && fileName != "" {
 				return fileName, nil
 			}
 		}
+	}
 
-		// Fallback: try field 6 which sometimes contains filename info
-		if fileName, ok := asString(field24Map["6"]); ok && fileName != "" {
-			fs.Debugf(nil, "mediavfs: Using field 2->4[6] as filename for %s: %s", mediaKey, fileName)
-			return fileName, nil
+	// Case 4: Already decoded map (shouldn't happen normally, but handle gracefully)
+	// This means field 2->4's bytes were incorrectly decoded as nested protobuf
+	// Try to find a string field that could be the filename
+	if field24Map, ok := field24.(map[string]interface{}); ok {
+		fs.Debugf(nil, "mediavfs: field2[4] for %s is a map (keys=%v), looking for filename field", mediaKey, getMapKeys(field24Map))
+
+		// Try field 14 first (sometimes used for filename)
+		if field14, exists := field24Map["14"]; exists {
+			if fileName, ok := asString(field14); ok && fileName != "" {
+				fs.Debugf(nil, "mediavfs: Found filename in field2[4][14] for %s: %s", mediaKey, fileName)
+				return fileName, nil
+			}
 		}
-
-		// Try any other string/bytes field
+		// Try field 6
+		if field6, exists := field24Map["6"]; exists {
+			if fileName, ok := asString(field6); ok && fileName != "" {
+				fs.Debugf(nil, "mediavfs: Found filename in field2[4][6] for %s: %s", mediaKey, fileName)
+				return fileName, nil
+			}
+		}
+		// Try any bytes field and convert to string (might be the original filename bytes)
 		for k, v := range field24Map {
-			if strVal, ok := asString(v); ok && strVal != "" {
-				fs.Debugf(nil, "mediavfs: Using field 2->4[%s] as filename for %s: %s", k, mediaKey, strVal)
+			if fileBytes, ok := v.([]byte); ok && len(fileBytes) > 0 {
+				fileName := string(fileBytes)
+				if isProbablyString(fileBytes) {
+					fs.Debugf(nil, "mediavfs: Using field2[4][%s] bytes as filename for %s: %s", k, mediaKey, fileName)
+					return fileName, nil
+				}
+			}
+		}
+		// Try any string field
+		for k, v := range field24Map {
+			if strVal, ok := v.(string); ok && strVal != "" {
+				fs.Debugf(nil, "mediavfs: Using field2[4][%s] string as filename for %s: %s", k, mediaKey, strVal)
 				return strVal, nil
 			}
 		}
+	}
 
-		// No string field found, generate a filename from media_key
+	// Case 5: nil or empty - field 4 doesn't exist
+	if field24 == nil {
 		generatedName := fmt.Sprintf("%s.unknown", mediaKey)
-		fs.Infof(nil, "mediavfs: Generating filename for %s (no string fields in field 2->4): %s", mediaKey, generatedName)
+		fs.Debugf(nil, "mediavfs: field2[4] is nil for %s, generating filename: %s", mediaKey, generatedName)
 		return generatedName, nil
 	}
 
-	return "", fmt.Errorf("field 2->4 has unexpected type %T for media_key %s", field24, mediaKey)
+	// No filename found, generate one
+	generatedName := fmt.Sprintf("%s.unknown", mediaKey)
+	fs.Infof(nil, "mediavfs: Generating filename for %s (field2[4] type=%T): %s", mediaKey, field24, generatedName)
+	return generatedName, nil
 }
 
 func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
