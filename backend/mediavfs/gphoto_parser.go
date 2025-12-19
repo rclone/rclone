@@ -202,9 +202,9 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	item := MediaItem{}
 
-	// Field 1: media_key (REQUIRED)
+	// Field 1: media_key (REQUIRED - must exist and be a string, but can be empty)
 	mediaKey, ok := d["1"].(string)
-	if !ok || mediaKey == "" {
+	if !ok {
 		return item, fmt.Errorf("missing required field: media_key (field 1)")
 	}
 	item.MediaKey = mediaKey
@@ -215,9 +215,9 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 		return item, fmt.Errorf("missing required field 2 in media item %s", item.MediaKey)
 	}
 
-	// Field 2->4: file_name (REQUIRED)
+	// Field 2->4: file_name (REQUIRED - must exist and be a string, but can be empty)
 	fileName, ok := field2["4"].(string)
-	if !ok || fileName == "" {
+	if !ok {
 		return item, fmt.Errorf("missing required field: file_name (field 2->4) for media_key %s", item.MediaKey)
 	}
 	item.FileName = fileName
