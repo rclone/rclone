@@ -177,9 +177,17 @@ func extractFileName(field24 interface{}, mediaKey string) (string, error) {
 				return string(bytes), nil
 			}
 
-			// Field 14 is a nested map - this shouldn't happen with the protobuf decoder fix
-			// Log for debugging but fall through to other fallbacks
-			fs.Debugf(nil, "mediavfs: field 2->4->14 is a nested map for %s, trying fallbacks", mediaKey)
+			// Field 14 is a nested map - this means the filename bytes were incorrectly
+			// parsed as protobuf. Try to re-encode and recover the original filename.
+			if nestedMap, ok := field14.(map[string]interface{}); ok {
+				// Re-encode the nested map back to bytes and use as filename
+				if recoveredBytes, err := EncodeDynamicMessage(nestedMap); err == nil && len(recoveredBytes) > 0 {
+					recoveredFilename := string(recoveredBytes)
+					fs.Debugf(nil, "mediavfs: Recovered filename from nested map for %s: %s", mediaKey, recoveredFilename)
+					return recoveredFilename, nil
+				}
+				fs.Debugf(nil, "mediavfs: field 2->4->14 is a nested map for %s, trying fallbacks", mediaKey)
+			}
 		}
 
 		// Fallback: try other string fields in the map

@@ -619,6 +619,20 @@ func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (stri
 		return "", err
 	}
 
+	// Check if response is gzip compressed (magic bytes: 1f 8b)
+	if len(respBody) >= 2 && respBody[0] == 0x1f && respBody[1] == 0x8b {
+		fs.Debugf(nil, "gphoto: GetDownloadURL response is gzip compressed, decompressing")
+		gzipReader, err := gzip.NewReader(bytes.NewReader(respBody))
+		if err != nil {
+			return "", fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzipReader.Close()
+		respBody, err = io.ReadAll(gzipReader)
+		if err != nil {
+			return "", fmt.Errorf("failed to decompress gzip response: %w", err)
+		}
+	}
+
 	// Debug: log response status and first few bytes
 	fs.Debugf(nil, "gphoto: GetDownloadURL response status=%d, body_len=%d, first_bytes=%x",
 		resp.StatusCode, len(respBody), respBody[:min(len(respBody), 50)])
