@@ -453,9 +453,5 @@ func parseLibraryResponse(response []byte, user string) (stateToken, pageToken s
 		return "", "", nil, nil, fmt.Errorf("failed to parse library update: %w", err)
 	}
 
-	// Set user_name for all items
-	for i := range mediaItems {
-	}
-
 	return newStateToken, newPageToken, mediaItems, mediaKeysToDelete, nil
 }

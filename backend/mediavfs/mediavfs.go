@@ -235,8 +235,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Ensure download URL doesn't have trailing slash
 	opt.DownloadURL = strings.TrimSuffix(opt.DownloadURL, "/")
 
+	// Modify database connection string to include username in database name
+	// This ensures each user gets their own database
+	dbConnStr, err := modifyDBConnectionForUser(opt.DBConnection, opt.User)
+	if err != nil {
+		return nil, fmt.Errorf("failed to modify database connection: %w", err)
+	}
+
 	// Connect to PostgreSQL
-	db, err := sql.Open("postgres", opt.DBConnection)
+	db, err := sql.Open("postgres", dbConnStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -364,6 +371,60 @@ func extractPathAndName(fileName string) (path string, name string) {
 	return "", fileName
 }
 
+// sanitizeUsername converts a username to a valid database name component
+// e.g., "user@example.com" -> "user_example_com"
+func sanitizeUsername(username string) string {
+	// Replace @ and . with underscores
+	sanitized := strings.ReplaceAll(username, "@", "_")
+	sanitized = strings.ReplaceAll(sanitized, ".", "_")
+	sanitized = strings.ReplaceAll(sanitized, "-", "_")
+	sanitized = strings.ReplaceAll(sanitized, " ", "_")
+	// Convert to lowercase for consistency
+	sanitized = strings.ToLower(sanitized)
+	return sanitized
+}
+
+// modifyDBConnectionForUser modifies the PostgreSQL connection string to include
+// the username in the database name, ensuring each user has their own database
+func modifyDBConnectionForUser(connStr, username string) (string, error) {
+	if username == "" {
+		return connStr, nil // No user specified, use connection string as-is
+	}
+
+	// Parse the connection string to extract components
+	// Format: postgres://user:password@host:port/database?params
+	// We need to modify the database name to append sanitized username
+
+	// Find the database name (after last / before ?)
+	lastSlash := strings.LastIndex(connStr, "/")
+	if lastSlash == -1 {
+		return "", fmt.Errorf("invalid PostgreSQL connection string: no database specified")
+	}
+
+	beforeDB := connStr[:lastSlash+1]
+	afterSlash := connStr[lastSlash+1:]
+
+	// Check if there are query parameters
+	questionMark := strings.Index(afterSlash, "?")
+	var dbName, params string
+	if questionMark != -1 {
+		dbName = afterSlash[:questionMark]
+		params = afterSlash[questionMark:]
+	} else {
+		dbName = afterSlash
+		params = ""
+	}
+
+	// Append sanitized username to database name
+	sanitized := sanitizeUsername(username)
+	newDBName := dbName + "_" + sanitized
+
+	// Reconstruct the connection string
+	newConnStr := beforeDB + newDBName + params
+
+	return newConnStr, nil
+}
+
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	root := strings.Trim(path.Join(f.root, dir), "/")
@@ -403,37 +464,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return result, nil
 }
 
-// listUsers returns a list of all unique usernames as directories
-func (f *Fs) listUsers(ctx context.Context) (entries fs.DirEntries, err error) {
-	query := fmt.Sprintf(`
-		SELECT DISTINCT user_name
-		FROM %s
-		WHERE user_name IS NOT NULL
-		ORDER BY user_name
-	`, f.opt.TableName)
+// listUsers is no longer needed - single user per database
+// Removed in favor of single-user per database model
 
-	rows, err := f.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query users: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var userName string
-		if err := rows.Scan(&userName); err != nil {
-			return nil, fmt.Errorf("failed to scan user: %w", err)
-		}
-		entries = append(entries, fs.NewDir(userName, time.Time{}))
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating users: %w", err)
-	}
-
-	return entries, nil
-}
-
-// listUserFiles lists files and directories for a specific user and path
+// listUserFiles lists files and directories for a specific path
+// Note: userName parameter kept for path construction but not used in SQL queries (single-user per DB)
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
 	// Normalize dirPath for comparison
 	dirPath = strings.Trim(dirPath, "/")
@@ -442,7 +477,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	var args []interface{}
 
 	if dirPath == "" {
-		// At root of user directory - we need:
+		// At root directory - we need:
 		// 1. Files at root (path NULL or '')
 		// 2. One file per first-level dir (path without '/')
 		// 3. One file per first-level dir (from nested paths with '/')
@@ -456,8 +491,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 					size_bytes,
 					utc_timestamp
 				FROM %s
-				WHERE user_name = $1
-				  AND (path IS NULL OR path = '')
+				WHERE (path IS NULL OR path = '')
 			)
 			UNION ALL
 			(
@@ -469,8 +503,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 					size_bytes,
 					utc_timestamp
 				FROM %s
-				WHERE user_name = $2
-				  AND path IS NOT NULL
+				WHERE path IS NOT NULL
 				  AND path != ''
 				  AND path NOT LIKE '%%/%%'
 				ORDER BY path, utc_timestamp DESC
@@ -485,13 +518,12 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 					size_bytes,
 					utc_timestamp
 				FROM %s
-				WHERE user_name = $3
-				  AND path LIKE '%%/%%'
+				WHERE path LIKE '%%/%%'
 				ORDER BY split_part(path, '/', 1), utc_timestamp DESC
 			)
 			ORDER BY file_name
 		`, f.opt.TableName, f.opt.TableName, f.opt.TableName)
-		args = []interface{}{userName, userName, userName}
+		args = []interface{}{}
 	} else {
 		// In a subdirectory - select files where path = dirPath OR path starts with dirPath/
 		query = fmt.Sprintf(`
@@ -503,11 +535,10 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				size_bytes,
 				utc_timestamp
 			FROM %s
-			WHERE user_name = $1
-			  AND (path = $2 OR path LIKE $3)
+			WHERE (path = $1 OR path LIKE $2)
 			ORDER BY file_name
 		`, f.opt.TableName)
-		args = []interface{}{userName, dirPath, dirPath + "/%"}
+		args = []interface{}{dirPath, dirPath + "/%"}
 	}
 
 	rows, err := f.db.QueryContext(ctx, query, args...)
@@ -677,7 +708,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	return entries, nil
 }
 
-// populateMetadata loads size/modtime/mediaKey for a user's files in batches
+// populateMetadata loads size/modtime/mediaKey for files in batches
 func (f *Fs) populateMetadata(userName string) {
 	batch := f.opt.BatchSize
 	if batch <= 0 {
@@ -689,12 +720,11 @@ func (f *Fs) populateMetadata(userName string) {
 		query := fmt.Sprintf(`
 			SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp
 			FROM %s
-			WHERE user_name = $1
 			ORDER BY file_name
-			LIMIT $2 OFFSET $3
+			LIMIT $1 OFFSET $2
 		`, f.opt.TableName)
 
-		rows, err := f.db.Query(query, userName, batch, offset)
+		rows, err := f.db.Query(query, batch, offset)
 		if err != nil {
 			fs.Errorf(f, "mediavfs: populateMetadata query failed: %v", err)
 			return
@@ -788,10 +818,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 			size_bytes,
 			utc_timestamp
 		FROM %s
-		WHERE user_name = $1
 	`, f.opt.TableName)
 
-	rows, err := f.db.QueryContext(ctx, query, userName)
+	rows, err := f.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query file: %w", err)
 	}
@@ -895,7 +924,7 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 		case <-ticker.C:
 			// Query for rows newer than lastTimestamp
 			query := fmt.Sprintf(`
-				SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp, user_name
+				SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp
 				FROM %s
 				WHERE utc_timestamp > $1
 				ORDER BY utc_timestamp
@@ -908,12 +937,12 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 			}
 
 			maxTs := lastTimestamp
-			changedUsers := make(map[string]bool)
+			userName := f.opt.User // Use the configured user for path construction
 			changedPaths := make(map[string]fs.EntryType) // Collect unique paths to notify
 			for rows.Next() {
-				var mediaKey, fileName, customName, customPath, uName string
+				var mediaKey, fileName, customName, customPath string
 				var sizeBytes, ts int64
-				if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &ts, &uName); err != nil {
+				if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &ts); err != nil {
 					fs.Errorf(f, "mediavfs: ChangeNotify scan failed: %v", err)
 					continue
 				}
@@ -921,8 +950,6 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 				if ts > maxTs {
 					maxTs = ts
 				}
-
-				changedUsers[uName] = true
 
 				var displayName, displayPath string
 				// Display name: use 'name' if set, else use 'file_name'
@@ -947,9 +974,9 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 
 				// Collect unique paths to notify (avoid duplicate notifications)
 				if displayPath != "" {
-					changedPaths[uName+"/"+displayPath] = fs.EntryDirectory
+					changedPaths[userName+"/"+displayPath] = fs.EntryDirectory
 				}
-				changedPaths[uName+"/"+fullPath] = fs.EntryObject
+				changedPaths[userName+"/"+fullPath] = fs.EntryObject
 			}
 			rows.Close()
 
@@ -959,25 +986,19 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 			}
 
 			// Invalidate caches if changes were detected
-			if len(changedUsers) > 0 {
+			if len(changedPaths) > 0 {
 				// Clear our internal caches
 				f.lazyMu.Lock()
 				f.lazyMeta = make(map[string]*Object)
 				f.lazyMu.Unlock()
 
-				// Invalidate directory cache for affected users
+				// Invalidate directory cache (single-user per database)
 				f.dirMu.Lock()
-				for userName := range changedUsers {
-					// Invalidate user's root directory and any subdirectories that might be affected
-					for cacheKey := range f.dirCache {
-						if strings.HasPrefix(cacheKey, userName+"/") || cacheKey == userName {
-							delete(f.dirCache, cacheKey)
-							fs.Infof(f, "Invalidated dir cache for %s", cacheKey)
-						}
-					}
+				// Invalidate all directory caches since changes were detected
+				for cacheKey := range f.dirCache {
+					delete(f.dirCache, cacheKey)
+					fs.Infof(f, "Invalidated dir cache for %s", cacheKey)
 				}
-				// Also invalidate root cache in case new users were added
-				delete(f.dirCache, ".")
 				f.dirMu.Unlock()
 			}
 
@@ -1016,8 +1037,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	// Insert into database
 	query := fmt.Sprintf(`
-		INSERT INTO %s (media_key, file_name, user_name, name, path, size_bytes, utc_timestamp)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO %s (media_key, file_name, name, path, size_bytes, utc_timestamp)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (media_key) DO UPDATE
 		SET file_name = EXCLUDED.file_name,
 		    name = EXCLUDED.name,
@@ -1027,7 +1048,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	`, f.opt.TableName)
 
 	modTime := src.ModTime(ctx).Unix()
-	_, err = f.db.ExecContext(ctx, query, mediaKey, displayName, userName, displayName, displayPath, src.Size(), modTime)
+	_, err = f.db.ExecContext(ctx, query, mediaKey, displayName, displayName, displayPath, src.Size(), modTime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert into database: %w", err)
 	}
@@ -1190,10 +1211,10 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	query1 := fmt.Sprintf(`
 		UPDATE %s
 		SET path = $1
-		WHERE user_name = $2 AND path = $3
+		WHERE path = $2
 	`, f.opt.TableName)
 
-	_, err := f.db.ExecContext(ctx, query1, dstPath, dstUser, srcPath)
+	_, err := f.db.ExecContext(ctx, query1, dstPath, srcPath)
 	if err != nil {
 		return fmt.Errorf("failed to move directory (exact match): %w", err)
 	}
@@ -1202,10 +1223,10 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	query2 := fmt.Sprintf(`
 		UPDATE %s
 		SET path = REPLACE(path, $1, $2)
-		WHERE user_name = $3 AND path LIKE $4
+		WHERE path LIKE $3
 	`, f.opt.TableName)
 
-	_, err = f.db.ExecContext(ctx, query2, srcPathPrefix, dstPath+"/", dstUser, srcPathPrefix+"%")
+	_, err = f.db.ExecContext(ctx, query2, srcPathPrefix, dstPath+"/", srcPathPrefix+"%")
 	if err != nil {
 		return fmt.Errorf("failed to move directory (prefix match): %w", err)
 	}
