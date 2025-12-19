@@ -167,25 +167,34 @@ func ParseDbUpdate(data map[string]interface{}) (stateToken string, nextPageToke
 
 func parseMediaItems(data interface{}) ([]MediaItem, error) {
 	var items []MediaItem
+	var skipped int
 
 	// Handle both single item (dict) and multiple items (list)
 	switch v := data.(type) {
 	case map[string]interface{}:
 		item, err := parseMediaItem(v)
 		if err != nil {
-			return nil, err
+			fmt.Printf("WARNING: Skipping media item due to error: %v\n", err)
+			skipped++
+		} else {
+			items = append(items, item)
 		}
-		items = append(items, item)
 	case []interface{}:
-		for _, itemData := range v {
+		for i, itemData := range v {
 			if itemMap, ok := itemData.(map[string]interface{}); ok {
 				item, err := parseMediaItem(itemMap)
 				if err != nil {
-					return nil, err
+					fmt.Printf("WARNING: Skipping media item #%d due to error: %v\n", i, err)
+					skipped++
+				} else {
+					items = append(items, item)
 				}
-				items = append(items, item)
 			}
 		}
+	}
+
+	if skipped > 0 {
+		fmt.Printf("WARNING: Skipped %d media items with missing required fields\n", skipped)
 	}
 
 	return items, nil
@@ -194,15 +203,35 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	item := MediaItem{}
 
-	// Field 1: media_key
-	if val, ok := d["1"].(string); ok {
-		item.MediaKey = val
+	// Field 1: media_key (REQUIRED)
+	mediaKey, ok := d["1"].(string)
+	if !ok || mediaKey == "" {
+		return item, fmt.Errorf("missing required field: media_key (field 1)")
 	}
+	item.MediaKey = mediaKey
 
-	// Field 2: metadata
+	// Field 2: metadata (REQUIRED)
 	field2, ok := d["2"].(map[string]interface{})
 	if !ok {
-		return item, fmt.Errorf("missing field 2 in media item")
+		return item, fmt.Errorf("missing required field 2 in media item %s", item.MediaKey)
+	}
+
+	// Field 2->4: file_name (REQUIRED)
+	fileName, ok := field2["4"].(string)
+	if !ok || fileName == "" {
+		return item, fmt.Errorf("missing required field: file_name (field 2->4) for media_key %s", item.MediaKey)
+	}
+	item.FileName = fileName
+
+	// Field 5: type info (REQUIRED)
+	field5, ok := d["5"].(map[string]interface{})
+	if !ok {
+		return item, fmt.Errorf("missing required field 5 for media_key %s", item.MediaKey)
+	}
+	if typeVal, ok := field5["1"].(uint64); ok {
+		item.Type = int64(typeVal)
+	} else {
+		return item, fmt.Errorf("missing required field: type (field 5->1) for media_key %s", item.MediaKey)
 	}
 
 	// Parse dedup_key from field 2->21
@@ -226,16 +255,15 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 		}
 	}
 
-	// Field 2->4: file_name
-	if val, ok := field2["4"].(string); ok {
-		item.FileName = val
-	}
-
-	// Field 2->1->1: collection_id
+	// Field 2->1->1: collection_id (REQUIRED)
 	if field2_1, ok := field2["1"].(map[string]interface{}); ok {
 		if val, ok := field2_1["1"].(string); ok {
 			item.CollectionID = val
+		} else {
+			return item, fmt.Errorf("missing required field: collection_id (field 2->1->1) for media_key %s", item.MediaKey)
 		}
+	} else {
+		return item, fmt.Errorf("missing required field 2->1 for media_key %s", item.MediaKey)
 	}
 
 	// Field 2->10: size_bytes
