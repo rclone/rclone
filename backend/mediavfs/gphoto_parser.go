@@ -242,6 +242,10 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 			if hashBytes, ok := field13["1"].([]byte); ok {
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
 				fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as []byte = %q\n", item.DedupKey)
+			} else if hashStr, ok := field13["1"].(string); ok {
+				// Handle string containing binary data
+				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString([]byte(hashStr)))
+				fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as string = %q\n", item.DedupKey)
 			} else if hashInterface, ok := field13["1"].([]interface{}); ok {
 				// Convert []interface{} to []byte
 				hashBytes := make([]byte, len(hashInterface))
