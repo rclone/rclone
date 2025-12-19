@@ -179,11 +179,12 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 				decodedVal = string(val)
 			} else {
 				// Try to decode as nested message
-				if nested, err := DecodeDynamicMessage(val); err == nil && len(nested) > 0 {
+				if nested, err := DecodeDynamicMessage(val); err == nil && len(nested) > 0 && isProbablyValidMessage(nested) {
 					decodedVal = nested
 				} else {
-					// If decoding failed, treat as string
-					decodedVal = string(val)
+					// If decoding failed or message looks invalid, keep as raw bytes
+					// This preserves hash/binary data that was incorrectly parsed
+					decodedVal = val
 				}
 			}
 
@@ -343,4 +344,70 @@ func isProbablyString(data []byte) bool {
 	// This threshold helps distinguish filenames from protobuf data
 	ratio := float64(printableCount) / float64(len(data))
 	return ratio > 0.8
+}
+
+// isProbablyValidMessage checks if a decoded message looks like a legitimate protobuf message
+// Returns false if the message has characteristics of incorrectly parsed binary data
+func isProbablyValidMessage(msg map[string]interface{}) bool {
+	if len(msg) == 0 {
+		return false
+	}
+
+	suspiciousCount := 0
+
+	for fieldNumStr, val := range msg {
+		var fieldNum int
+		fmt.Sscanf(fieldNumStr, "%d", &fieldNum)
+
+		// Very high field numbers (>500) strongly suggest bad parsing
+		if fieldNum > 500 {
+			return false
+		}
+
+		// Field numbers > 50 are somewhat unusual
+		if fieldNum > 50 {
+			suspiciousCount++
+		}
+
+		// Check for suspiciously large uint64 values
+		// Real protobuf messages rarely have values > 1 billion in scalar fields
+		// Binary data parsed as varints often produces huge numbers
+		switch v := val.(type) {
+		case uint64:
+			if v > 1000000000000 { // > 1 trillion is very suspicious
+				suspiciousCount++
+			}
+		case []interface{}:
+			// Check array elements for huge values
+			for _, elem := range v {
+				if u, ok := elem.(uint64); ok && u > 1000000000000 {
+					suspiciousCount++
+				}
+			}
+		}
+	}
+
+	// If we have multiple suspicious indicators, this is probably not a real message
+	if suspiciousCount >= 2 {
+		return false
+	}
+
+	// Small messages with only high field numbers are suspicious
+	if len(msg) <= 3 {
+		hasLowFieldNum := false
+		for fieldNumStr := range msg {
+			var fieldNum int
+			fmt.Sscanf(fieldNumStr, "%d", &fieldNum)
+			if fieldNum <= 15 {
+				hasLowFieldNum = true
+				break
+			}
+		}
+		// Real nested messages almost always have at least one low field number
+		if !hasLowFieldNum && len(msg) > 0 {
+			return false
+		}
+	}
+
+	return true
 }

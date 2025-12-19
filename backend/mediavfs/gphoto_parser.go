@@ -264,14 +264,24 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 				fs.Infof(nil, "mediavfs: field2[21][%q] = type=%T, value=%v", key, val, val)
 			}
 			if key[0] == '1' {
+				// Try string first
 				if dedupKey, ok := val.(string); ok {
 					item.DedupKey = dedupKey
 					if debugThis {
-						fs.Infof(nil, "mediavfs: Got dedup_key from field2[21][%q] = %q", key, dedupKey)
+						fs.Infof(nil, "mediavfs: Got dedup_key from field2[21][%q] as string = %q", key, dedupKey)
 					}
 					break
-				} else if debugThis {
-					fs.Infof(nil, "mediavfs: field2[21][%q] value is NOT a string, type=%T", key, val)
+				}
+				// Try []byte (raw bytes from protobuf decoder)
+				if dedupBytes, ok := val.([]byte); ok {
+					item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(dedupBytes))
+					if debugThis {
+						fs.Infof(nil, "mediavfs: Got dedup_key from field2[21][%q] as []byte = %q", key, item.DedupKey)
+					}
+					break
+				}
+				if debugThis {
+					fs.Infof(nil, "mediavfs: field2[21][%q] value is NOT a string or []byte, type=%T", key, val)
 				}
 			}
 		}
