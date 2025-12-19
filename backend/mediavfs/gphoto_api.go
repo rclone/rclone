@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -264,8 +263,8 @@ func (api *GPhotoAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte
 	return "", nil // File not found
 }
 
-// UploadFile uploads file content to Google Photos
-func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, content io.Reader, fileSize int64) error {
+// UploadFile uploads file content to Google Photos and returns the decoded response
+func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, content io.Reader, fileSize int64) ([]byte, error) {
 	url := fmt.Sprintf("https://photos.googleapis.com/data/upload/uploadmedia/interactive?upload_id=%s", uploadToken)
 
 	headers := map[string]string{
@@ -277,16 +276,22 @@ func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, conten
 
 	resp, err := api.request(ctx, "PUT", url, headers, content)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
+	// Read the response body - this is needed for commit
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
 	fs.Infof(nil, "gphoto: upload complete")
-	return nil
+	return respBody, nil
 }
 
 // CommitUpload commits the uploaded file to Google Photos
-func (api *GPhotoAPI) CommitUpload(ctx context.Context, fileName string, sha1Hash []byte, fileSize int64, uploadTimestamp int64, model, quality string) (string, error) {
+func (api *GPhotoAPI) CommitUpload(ctx context.Context, uploadResponse []byte, fileName string, sha1Hash []byte, fileSize int64, uploadTimestamp int64, model, quality string) (string, error) {
 	qualityMap := map[string]int32{
 		"saver":    1,
 		"original": 3,
@@ -297,21 +302,29 @@ func (api *GPhotoAPI) CommitUpload(ctx context.Context, fileName string, sha1Has
 	}
 
 	// Build nested protobuf structure matching Python implementation
-	// Field 1 -> Field 4
+	// Field 1 -> Field 4: timestamp message
 	timestampMsg := NewProtoEncoder()
 	timestampMsg.EncodeInt64(1, uploadTimestamp)
 	timestampMsg.EncodeInt32(2, 46000000)
 
-	// Field 1
+	// Field 1: main content message
 	field1 := NewProtoEncoder()
+	// Field 1.1: upload response (raw protobuf bytes from upload)
+	field1.EncodeMessage(1, uploadResponse)
+	// Field 1.2: file name
 	field1.EncodeString(2, fileName)
-	field1.EncodeString(3, base64.StdEncoding.EncodeToString(sha1Hash))
+	// Field 1.3: SHA1 hash as raw bytes (NOT base64)
+	field1.EncodeBytes(3, sha1Hash)
+	// Field 1.4: timestamp
 	field1.EncodeMessage(4, timestampMsg.Bytes())
+	// Field 1.7: quality
 	field1.EncodeInt32(7, qualityMap[quality])
+	// Field 1.10: unknown (always 1)
 	field1.EncodeInt32(10, 1)
+	// Field 1.17: unknown (always 0)
 	field1.EncodeInt32(17, 0)
 
-	// Field 2
+	// Field 2: device info
 	field2 := NewProtoEncoder()
 	field2.EncodeString(3, model)
 	field2.EncodeString(4, "Google")

@@ -78,7 +78,8 @@ func (f *Fs) UploadFileToGPhotos(ctx context.Context, filePath string, user stri
 	}
 	defer file.Close()
 
-	if err := api.UploadFile(ctx, uploadToken, file, fileSize); err != nil {
+	uploadResponse, err := api.UploadFile(ctx, uploadToken, file, fileSize)
+	if err != nil {
 		return "", fmt.Errorf("failed to upload file: %w", err)
 	}
 
@@ -89,7 +90,7 @@ func (f *Fs) UploadFileToGPhotos(ctx context.Context, filePath string, user stri
 	model := "Pixel XL"
 	quality := "original"
 
-	mediaKey, err := api.CommitUpload(ctx, fileName, hashBytes, fileSize, uploadTimestamp, model, quality)
+	mediaKey, err := api.CommitUpload(ctx, uploadResponse, fileName, hashBytes, fileSize, uploadTimestamp, model, quality)
 	if err != nil {
 		return "", fmt.Errorf("failed to commit upload: %w", err)
 	}
@@ -155,7 +156,8 @@ func (f *Fs) UploadWithProgress(ctx context.Context, src fs.ObjectInfo, in io.Re
 
 	// Upload file
 	fs.Infof(f, "Uploading file")
-	if err := api.UploadFile(ctx, uploadToken, tmpFile, written); err != nil {
+	uploadResponse, err := api.UploadFile(ctx, uploadToken, tmpFile, written)
+	if err != nil {
 		return "", fmt.Errorf("failed to upload file: %w", err)
 	}
 
@@ -166,7 +168,7 @@ func (f *Fs) UploadWithProgress(ctx context.Context, src fs.ObjectInfo, in io.Re
 	model := "Pixel XL"
 	quality := "original"
 
-	mediaKey, err := api.CommitUpload(ctx, fileName, hashBytes, written, uploadTimestamp, model, quality)
+	mediaKey, err := api.CommitUpload(ctx, uploadResponse, fileName, hashBytes, written, uploadTimestamp, model, quality)
 	if err != nil {
 		return "", fmt.Errorf("failed to commit upload: %w", err)
 	}
