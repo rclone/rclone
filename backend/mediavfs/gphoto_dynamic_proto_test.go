@@ -63,8 +63,8 @@ func TestIsProbablyString(t *testing.T) {
 }
 
 func TestDecodeDynamicMessage_FilenameNotCorrupted(t *testing.T) {
-	// This test verifies that a filename string is not incorrectly parsed as a nested message
-	// The filename "analvids.20.01.13..." should remain a string, not become a map
+	// This test verifies that a filename is preserved as bytes (not incorrectly parsed as a nested message)
+	// The filename "analvids.20.01.13..." should remain as bytes, not become a map
 
 	filename := "analvids.20.01.13.lauren.phillips.gio1281.piss.version.4k.mp4"
 
@@ -84,11 +84,16 @@ func TestDecodeDynamicMessage_FilenameNotCorrupted(t *testing.T) {
 		t.Fatalf("DecodeDynamicMessage failed: %v", err)
 	}
 
-	// Field 4 should still be a string, not a map
+	// Field 4 should be bytes (not a map), which can be converted to string
 	field4 := decoded["4"]
-	decodedFilename, ok := field4.(string)
-	if !ok {
-		t.Fatalf("Field 4 should be a string, got %T: %v", field4, field4)
+	var decodedFilename string
+	switch v := field4.(type) {
+	case []byte:
+		decodedFilename = string(v)
+	case string:
+		decodedFilename = v
+	default:
+		t.Fatalf("Field 4 should be bytes or string, got %T: %v", field4, field4)
 	}
 
 	if decodedFilename != filename {

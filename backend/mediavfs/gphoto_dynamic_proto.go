@@ -165,27 +165,15 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 			}
 			data = data[n:]
 
-			// Decode the value (nested message or string)
-			// Use heuristic: if bytes look like printable text, treat as string
-			// This prevents filenames from being incorrectly parsed as protobuf messages
+			// Keep bytes as-is - don't try to recursively decode
+			// The higher-level parser will interpret the bytes as needed
+			// This matches how Python's blackboxprotobuf works
 			var decodedVal interface{}
 			if len(val) == 0 {
 				decodedVal = ""
-			} else if len(val) >= 10000000 {
-				// Too large, keep as bytes
-				decodedVal = val
-			} else if isProbablyString(val) {
-				// Bytes look like printable text, treat as string
-				decodedVal = string(val)
 			} else {
-				// Try to decode as nested message
-				if nested, err := DecodeDynamicMessage(val); err == nil && len(nested) > 0 && isProbablyValidMessage(nested) {
-					decodedVal = nested
-				} else {
-					// If decoding failed or message looks invalid, keep as raw bytes
-					// This preserves hash/binary data that was incorrectly parsed
-					decodedVal = val
-				}
+				// Just keep as raw bytes - let parser decide how to interpret
+				decodedVal = val
 			}
 
 			// Handle repeated fields

@@ -64,23 +64,74 @@ func getMapKeys(m map[string]interface{}) []string {
 	return keys
 }
 
+// asMap tries to interpret a value as a map (decoding bytes if needed)
+func asMap(v interface{}) (map[string]interface{}, bool) {
+	// Already a map
+	if m, ok := v.(map[string]interface{}); ok {
+		return m, true
+	}
+	// Raw bytes - try to decode as protobuf message
+	if b, ok := v.([]byte); ok {
+		if m, err := DecodeDynamicMessage(b); err == nil && len(m) > 0 {
+			return m, true
+		}
+	}
+	return nil, false
+}
+
+// asString tries to interpret a value as a string
+func asString(v interface{}) (string, bool) {
+	// Already a string
+	if s, ok := v.(string); ok {
+		return s, true
+	}
+	// Raw bytes - convert to string
+	if b, ok := v.([]byte); ok {
+		return string(b), true
+	}
+	return "", false
+}
+
+// asBytes gets raw bytes from a value
+func asBytes(v interface{}) ([]byte, bool) {
+	if b, ok := v.([]byte); ok {
+		return b, true
+	}
+	if s, ok := v.(string); ok {
+		return []byte(s), true
+	}
+	return nil, false
+}
+
+// asUint64 tries to interpret a value as uint64
+func asUint64(v interface{}) (uint64, bool) {
+	if u, ok := v.(uint64); ok {
+		return u, true
+	}
+	return 0, false
+}
+
 // ParseDbUpdate parses the library state response from Google Photos
 func ParseDbUpdate(data map[string]interface{}) (stateToken string, nextPageToken string, mediaItems []MediaItem, mediaKeysToDelete []string, err error) {
 	// Get top-level field 1
-	field1, ok := data["1"].(map[string]interface{})
+	field1, ok := asMap(data["1"])
 	if !ok {
 		// Field 1 might be empty string when sync is complete (no more data)
 		if _, isEmpty := data["1"].(string); isEmpty {
+			return "", "", nil, nil, nil
+		}
+		// Or empty bytes
+		if b, ok := data["1"].([]byte); ok && len(b) == 0 {
 			return "", "", nil, nil, nil
 		}
 		return "", "", nil, nil, fmt.Errorf("invalid response structure: field 1 is not a map (type: %T)", data["1"])
 	}
 
 	// Extract tokens
-	if token, ok := field1["6"].(string); ok {
+	if token, ok := asString(field1["6"]); ok {
 		stateToken = token
 	}
-	if token, ok := field1["1"].(string); ok {
+	if token, ok := asString(field1["1"]); ok {
 		nextPageToken = token
 	}
 
@@ -104,7 +155,7 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 	var items []MediaItem
 	var skipped int
 
-	// Handle both single item (dict) and multiple items (list)
+	// Handle both single item (dict/bytes) and multiple items (list)
 	switch v := data.(type) {
 	case map[string]interface{}:
 		item, err := parseMediaItem(v)
@@ -114,9 +165,21 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 		} else {
 			items = append(items, item)
 		}
+	case []byte:
+		// Single item as bytes - decode first
+		if itemMap, ok := asMap(v); ok {
+			item, err := parseMediaItem(itemMap)
+			if err != nil {
+				fs.Infof(nil, "mediavfs: Skipping media item due to error: %v", err)
+				skipped++
+			} else {
+				items = append(items, item)
+			}
+		}
 	case []interface{}:
 		for i, itemData := range v {
-			if itemMap, ok := itemData.(map[string]interface{}); ok {
+			// Try to get as map (handles both map and bytes)
+			if itemMap, ok := asMap(itemData); ok {
 				item, err := parseMediaItem(itemMap)
 				if err != nil {
 					fs.Infof(nil, "mediavfs: Skipping media item #%d due to error: %v", i, err)
@@ -137,69 +200,43 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 
 // extractFileName extracts the filename from field 2->4
 // Field 2->4 can be either:
-//  1. A string (direct filename) - most common case after protobuf decoder fix
-//  2. A map with field 14 containing the filename (as string or byte array)
-//  3. A map with other fields - try to find filename in available fields
+//  1. Raw bytes (filename as bytes) - now the most common case
+//  2. A string (direct filename)
+//  3. A map with field 14 containing the filename
 func extractFileName(field24 interface{}, mediaKey string) (string, error) {
-	// Case 1: Direct string (most common case)
+	// Case 1: Raw bytes - convert directly to string (most common now)
+	if fileBytes, ok := field24.([]byte); ok {
+		return string(fileBytes), nil
+	}
+
+	// Case 2: Direct string
 	if fileName, ok := field24.(string); ok {
 		return fileName, nil
 	}
 
-	// Case 2: Nested map - try to extract filename from nested structure
-	if field24Map, ok := field24.(map[string]interface{}); ok {
+	// Case 3: Nested map - try to extract filename from nested structure
+	if field24Map, ok := asMap(field24); ok {
 		// Priority order for finding filename:
 		// 1. Field 14 (primary filename field)
-		// 2. Any other string field as fallback
+		// 2. Any other string/bytes field as fallback
 
 		// Try to get field 14 from the nested map
 		if field14, exists := field24Map["14"]; exists {
-			// Field 14 can be a string or byte array
-			if fileName, ok := field14.(string); ok {
+			// Field 14 as bytes or string
+			if fileName, ok := asString(field14); ok {
 				return fileName, nil
 			}
-
-			// Field 14 might be a byte array []interface{} that needs conversion
-			if byteArray, ok := field14.([]interface{}); ok {
-				// Convert []interface{} to string
-				bytes := make([]byte, 0, len(byteArray))
-				for _, b := range byteArray {
-					switch v := b.(type) {
-					case uint64:
-						bytes = append(bytes, byte(v))
-					case int64:
-						bytes = append(bytes, byte(v))
-					case string:
-						// If it's already a string in the array, append its bytes
-						bytes = append(bytes, []byte(v)...)
-					}
-				}
-				return string(bytes), nil
-			}
-
-			// Field 14 is a nested map - this means the filename bytes were incorrectly
-			// parsed as protobuf. Try to re-encode and recover the original filename.
-			if nestedMap, ok := field14.(map[string]interface{}); ok {
-				// Re-encode the nested map back to bytes and use as filename
-				if recoveredBytes, err := EncodeDynamicMessage(nestedMap); err == nil && len(recoveredBytes) > 0 {
-					recoveredFilename := string(recoveredBytes)
-					fs.Debugf(nil, "mediavfs: Recovered filename from nested map for %s: %s", mediaKey, recoveredFilename)
-					return recoveredFilename, nil
-				}
-				fs.Debugf(nil, "mediavfs: field 2->4->14 is a nested map for %s, trying fallbacks", mediaKey)
-			}
 		}
 
-		// Fallback: try other string fields in the map
-		// Prefer field 6 which sometimes contains filename info
-		if field6, ok := field24Map["6"].(string); ok && field6 != "" {
-			fs.Debugf(nil, "mediavfs: Using field 2->4[6] as filename for %s: %s", mediaKey, field6)
-			return field6, nil
+		// Fallback: try field 6 which sometimes contains filename info
+		if fileName, ok := asString(field24Map["6"]); ok && fileName != "" {
+			fs.Debugf(nil, "mediavfs: Using field 2->4[6] as filename for %s: %s", mediaKey, fileName)
+			return fileName, nil
 		}
 
-		// Try any other string field
+		// Try any other string/bytes field
 		for k, v := range field24Map {
-			if strVal, ok := v.(string); ok && strVal != "" {
+			if strVal, ok := asString(v); ok && strVal != "" {
 				fs.Debugf(nil, "mediavfs: Using field 2->4[%s] as filename for %s: %s", k, mediaKey, strVal)
 				return strVal, nil
 			}
@@ -218,14 +255,14 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	item := MediaItem{}
 
 	// Field 1: media_key (REQUIRED - must exist and be a string, but can be empty)
-	mediaKey, ok := d["1"].(string)
+	mediaKey, ok := asString(d["1"])
 	if !ok {
 		return item, fmt.Errorf("missing required field: media_key (field 1)")
 	}
 	item.MediaKey = mediaKey
 
 	// Field 2: metadata (REQUIRED)
-	field2, ok := d["2"].(map[string]interface{})
+	field2, ok := asMap(d["2"])
 	if !ok {
 		return item, fmt.Errorf("missing required field 2 in media item %s", item.MediaKey)
 	}
@@ -238,8 +275,8 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	item.FileName = fileName
 
 	// Field 5: type info (optional - default to 0)
-	if field5, ok := d["5"].(map[string]interface{}); ok {
-		if typeVal, ok := field5["1"].(uint64); ok {
+	if field5, ok := asMap(d["5"]); ok {
+		if typeVal, ok := asUint64(field5["1"]); ok {
 			item.Type = int64(typeVal)
 		}
 	}
@@ -255,7 +292,7 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	debugThis := debugMediaKeys[item.MediaKey]
 
 	// Parse dedup_key from field 2->21
-	if field21, ok := field2["21"].(map[string]interface{}); ok {
+	if field21, ok := asMap(field2["21"]); ok {
 		if debugThis {
 			fs.Infof(nil, "mediavfs: field2[21] exists for %s, keys=%v", item.MediaKey, getMapKeys(field21))
 		}
@@ -264,24 +301,16 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 				fs.Infof(nil, "mediavfs: field2[21][%q] = type=%T, value=%v", key, val, val)
 			}
 			if key[0] == '1' {
-				// Try string first
-				if dedupKey, ok := val.(string); ok {
-					item.DedupKey = dedupKey
-					if debugThis {
-						fs.Infof(nil, "mediavfs: Got dedup_key from field2[21][%q] as string = %q", key, dedupKey)
-					}
-					break
-				}
-				// Try []byte (raw bytes from protobuf decoder)
-				if dedupBytes, ok := val.([]byte); ok {
+				// Try to get as bytes (most common for dedup_key)
+				if dedupBytes, ok := asBytes(val); ok {
 					item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(dedupBytes))
 					if debugThis {
-						fs.Infof(nil, "mediavfs: Got dedup_key from field2[21][%q] as []byte = %q", key, item.DedupKey)
+						fs.Infof(nil, "mediavfs: Got dedup_key from field2[21][%q] = %q", key, item.DedupKey)
 					}
 					break
 				}
 				if debugThis {
-					fs.Infof(nil, "mediavfs: field2[21][%q] value is NOT a string or []byte, type=%T", key, val)
+					fs.Infof(nil, "mediavfs: field2[21][%q] value cannot be converted to bytes, type=%T", key, val)
 				}
 			}
 		}
@@ -294,37 +323,18 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 		if debugThis {
 			fs.Infof(nil, "mediavfs: dedup_key still empty for %s, trying fallback field2[13]", item.MediaKey)
 		}
-		if field13, ok := field2["13"].(map[string]interface{}); ok {
+		if field13, ok := asMap(field2["13"]); ok {
 			if debugThis {
 				fs.Infof(nil, "mediavfs: field2[13] exists, field2[13][1]=%v (type=%T)", field13["1"], field13["1"])
 			}
-			// Try as []byte first
-			if hashBytes, ok := field13["1"].([]byte); ok {
+			// Try to get as bytes
+			if hashBytes, ok := asBytes(field13["1"]); ok {
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
 				if debugThis {
-					fs.Infof(nil, "mediavfs: Got dedup_key from field2[13][1] as []byte = %q", item.DedupKey)
+					fs.Infof(nil, "mediavfs: Got dedup_key from field2[13][1] = %q", item.DedupKey)
 				}
-			} else if hashStr, ok := field13["1"].(string); ok {
-				// Handle string containing binary data
-				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString([]byte(hashStr)))
-				if debugThis {
-					fs.Infof(nil, "mediavfs: Got dedup_key from field2[13][1] as string = %q", item.DedupKey)
-				}
-			} else if hashInterface, ok := field13["1"].([]interface{}); ok {
-				// Convert []interface{} to []byte
-				hashBytes := make([]byte, len(hashInterface))
-				for i, v := range hashInterface {
-					switch val := v.(type) {
-					case uint64:
-						hashBytes[i] = byte(val)
-					case int64:
-						hashBytes[i] = byte(val)
-					}
-				}
-				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
-				if debugThis {
-					fs.Infof(nil, "mediavfs: Got dedup_key from field2[13][1] as []interface{} = %q", item.DedupKey)
-				}
+			} else if debugThis {
+				fs.Infof(nil, "mediavfs: field2[13][1] cannot be converted to bytes, type=%T", field13["1"])
 			}
 		} else if debugThis {
 			fs.Infof(nil, "mediavfs: field2[13] does NOT exist or not a map for %s", item.MediaKey)
@@ -345,50 +355,50 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	}
 
 	// Field 2->1->1: collection_id (optional - default to empty)
-	if field2_1, ok := field2["1"].(map[string]interface{}); ok {
-		if val, ok := field2_1["1"].(string); ok {
+	if field2_1, ok := asMap(field2["1"]); ok {
+		if val, ok := asString(field2_1["1"]); ok {
 			item.CollectionID = val
 		}
 	}
 
 	// Field 2->10: size_bytes
-	if val, ok := field2["10"].(uint64); ok {
+	if val, ok := asUint64(field2["10"]); ok {
 		item.SizeBytes = int64(val)
 	}
 
 	// Field 2->8: timezone_offset
-	if val, ok := field2["8"].(uint64); ok {
+	if val, ok := asUint64(field2["8"]); ok {
 		item.TimezoneOffset = int64(val)
 	}
 
 	// Field 2->7: utc_timestamp
-	if val, ok := field2["7"].(uint64); ok {
+	if val, ok := asUint64(field2["7"]); ok {
 		item.UTCTimestamp = int64(val)
 	}
 
 	// Field 2->9: server_creation_timestamp
-	if val, ok := field2["9"].(uint64); ok {
+	if val, ok := asUint64(field2["9"]); ok {
 		item.ServerCreationTimestamp = int64(val)
 	}
 
 	// Field 2->11: upload_status
-	if val, ok := field2["11"].(uint64); ok {
+	if val, ok := asUint64(field2["11"]); ok {
 		item.UploadStatus = int64(val)
 	}
 
 	// Field 2->35: quota info
-	if field35, ok := field2["35"].(map[string]interface{}); ok {
-		if val, ok := field35["2"].(uint64); ok {
+	if field35, ok := asMap(field2["35"]); ok {
+		if val, ok := asUint64(field35["2"]); ok {
 			item.QuotaChargedBytes = int64(val)
 		}
-		if val, ok := field35["3"].(uint64); ok {
+		if val, ok := asUint64(field35["3"]); ok {
 			item.IsOriginalQuality = val == 2
 		}
 	}
 
 	// Field 2->30->1: origin
-	if field30, ok := field2["30"].(map[string]interface{}); ok {
-		if val, ok := field30["1"].(uint64); ok {
+	if field30, ok := asMap(field2["30"]); ok {
+		if val, ok := asUint64(field30["1"]); ok {
 			originMap := map[uint64]string{
 				1: "self",
 				3: "partner",
@@ -401,44 +411,44 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	}
 
 	// Field 2->26: content_version
-	if val, ok := field2["26"].(uint64); ok {
+	if val, ok := asUint64(field2["26"]); ok {
 		item.ContentVersion = int64(val)
 	}
 
 	// Field 2->16->3: trash_timestamp
-	if field16, ok := field2["16"].(map[string]interface{}); ok {
-		if val, ok := field16["3"].(uint64); ok {
+	if field16, ok := asMap(field2["16"]); ok {
+		if val, ok := asUint64(field16["3"]); ok {
 			item.TrashTimestamp = int64(val)
 		}
 	}
 
 	// Field 2->29->1: is_archived
-	if field29, ok := field2["29"].(map[string]interface{}); ok {
-		if val, ok := field29["1"].(uint64); ok {
+	if field29, ok := asMap(field2["29"]); ok {
+		if val, ok := asUint64(field29["1"]); ok {
 			item.IsArchived = val == 1
 		}
 	}
 
 	// Field 2->31->1: is_favorite
-	if field31, ok := field2["31"].(map[string]interface{}); ok {
-		if val, ok := field31["1"].(uint64); ok {
+	if field31, ok := asMap(field2["31"]); ok {
+		if val, ok := asUint64(field31["1"]); ok {
 			item.IsFavorite = val == 1
 		}
 	}
 
 	// Field 2->39->1: is_locked
-	if field39, ok := field2["39"].(map[string]interface{}); ok {
-		if val, ok := field39["1"].(uint64); ok {
+	if field39, ok := asMap(field2["39"]); ok {
+		if val, ok := asUint64(field39["1"]); ok {
 			item.IsLocked = val == 1
 		}
 	}
 
 	// Field 2->5: check is_canonical (property 27 means not canonical)
 	item.IsCanonical = true
-	if field5, ok := field2["5"].([]interface{}); ok {
-		for _, prop := range field5 {
-			if propMap, ok := prop.(map[string]interface{}); ok {
-				if val, ok := propMap["1"].(uint64); ok && val == 27 {
+	if field5List, ok := field2["5"].([]interface{}); ok {
+		for _, prop := range field5List {
+			if propMap, ok := asMap(prop); ok {
+				if val, ok := asUint64(propMap["1"]); ok && val == 27 {
 					item.IsCanonical = false
 					break
 				}
@@ -447,38 +457,38 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	}
 
 	// Field 5: type and media-specific data
-	if field5, ok := d["5"].(map[string]interface{}); ok {
-		if val, ok := field5["1"].(uint64); ok {
+	if field5, ok := asMap(d["5"]); ok {
+		if val, ok := asUint64(field5["1"]); ok {
 			item.Type = int64(val)
 		}
 
 		// Field 5->2: photo data
-		if field5_2, ok := field5["2"].(map[string]interface{}); ok {
+		if field5_2, ok := asMap(field5["2"]); ok {
 			item.IsEdited = false
 			if _, hasField4 := field5_2["4"]; hasField4 {
 				item.IsEdited = true
 			}
 
-			if field5_2_1, ok := field5_2["1"].(map[string]interface{}); ok {
-				if url, ok := field5_2_1["1"].(string); ok {
+			if field5_2_1, ok := asMap(field5_2["1"]); ok {
+				if url, ok := asString(field5_2_1["1"]); ok {
 					item.RemoteURL = sql.NullString{String: url, Valid: true}
 				}
 
 				// Field 5->2->1->9: dimensions and EXIF
-				if field9, ok := field5_2_1["9"].(map[string]interface{}); ok {
-					if val, ok := field9["1"].(uint64); ok {
+				if field9, ok := asMap(field5_2_1["9"]); ok {
+					if val, ok := asUint64(field9["1"]); ok {
 						item.Width = sql.NullInt64{Int64: int64(val), Valid: true}
 					}
-					if val, ok := field9["2"].(uint64); ok {
+					if val, ok := asUint64(field9["2"]); ok {
 						item.Height = sql.NullInt64{Int64: int64(val), Valid: true}
 					}
 
 					// Field 5->2->1->9->5: EXIF data
-					if field9_5, ok := field9["5"].(map[string]interface{}); ok {
-						if val, ok := field9_5["1"].(string); ok {
+					if field9_5, ok := asMap(field9["5"]); ok {
+						if val, ok := asString(field9_5["1"]); ok {
 							item.Make = sql.NullString{String: val, Valid: true}
 						}
-						if val, ok := field9_5["2"].(string); ok {
+						if val, ok := asString(field9_5["2"]); ok {
 							item.Model = sql.NullString{String: val, Valid: true}
 						}
 					}
@@ -487,38 +497,38 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 		}
 
 		// Field 5->3: video data
-		if field5_3, ok := field5["3"].(map[string]interface{}); ok {
-			if field5_3_2, ok := field5_3["2"].(map[string]interface{}); ok {
-				if url, ok := field5_3_2["1"].(string); ok {
+		if field5_3, ok := asMap(field5["3"]); ok {
+			if field5_3_2, ok := asMap(field5_3["2"]); ok {
+				if url, ok := asString(field5_3_2["1"]); ok {
 					item.RemoteURL = sql.NullString{String: url, Valid: true}
 				}
 			}
 
-			if field5_3_4, ok := field5_3["4"].(map[string]interface{}); ok {
-				if val, ok := field5_3_4["1"].(uint64); ok {
+			if field5_3_4, ok := asMap(field5_3["4"]); ok {
+				if val, ok := asUint64(field5_3_4["1"]); ok {
 					item.Duration = sql.NullInt64{Int64: int64(val), Valid: true}
 				}
-				if val, ok := field5_3_4["4"].(uint64); ok {
+				if val, ok := asUint64(field5_3_4["4"]); ok {
 					item.Width = sql.NullInt64{Int64: int64(val), Valid: true}
 				}
-				if val, ok := field5_3_4["5"].(uint64); ok {
+				if val, ok := asUint64(field5_3_4["5"]); ok {
 					item.Height = sql.NullInt64{Int64: int64(val), Valid: true}
 				}
 			}
 		}
 
 		// Field 5->5: micro video
-		if field5_5, ok := field5["5"].(map[string]interface{}); ok {
-			if field5_5_2, ok := field5_5["2"].(map[string]interface{}); ok {
-				if field5_5_2_4, ok := field5_5_2["4"].(map[string]interface{}); ok {
+		if field5_5, ok := asMap(field5["5"]); ok {
+			if field5_5_2, ok := asMap(field5_5["2"]); ok {
+				if field5_5_2_4, ok := asMap(field5_5_2["4"]); ok {
 					item.IsMicroVideo = true
-					if val, ok := field5_5_2_4["1"].(uint64); ok {
+					if val, ok := asUint64(field5_5_2_4["1"]); ok {
 						item.Duration = sql.NullInt64{Int64: int64(val), Valid: true}
 					}
-					if val, ok := field5_5_2_4["4"].(uint64); ok {
+					if val, ok := asUint64(field5_5_2_4["4"]); ok {
 						item.MicroVideoWidth = sql.NullInt64{Int64: int64(val), Valid: true}
 					}
-					if val, ok := field5_5_2_4["5"].(uint64); ok {
+					if val, ok := asUint64(field5_5_2_4["5"]); ok {
 						item.MicroVideoHeight = sql.NullInt64{Int64: int64(val), Valid: true}
 					}
 				}
@@ -527,8 +537,8 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	}
 
 	// Field 17: location data
-	if field17, ok := d["17"].(map[string]interface{}); ok {
-		if field17_1, ok := field17["1"].(map[string]interface{}); ok {
+	if field17, ok := asMap(d["17"]); ok {
+		if field17_1, ok := asMap(field17["1"]); ok {
 			// Note: These are fixed32 values that need conversion
 			if val, ok := field17_1["1"].(uint32); ok {
 				item.Latitude = sql.NullFloat64{Float64: fixed32ToFloat(val), Valid: true}
@@ -538,13 +548,13 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 			}
 		}
 
-		if field17_5, ok := field17["5"].(map[string]interface{}); ok {
-			if field17_5_2, ok := field17_5["2"].(map[string]interface{}); ok {
-				if val, ok := field17_5_2["1"].(string); ok {
+		if field17_5, ok := asMap(field17["5"]); ok {
+			if field17_5_2, ok := asMap(field17_5["2"]); ok {
+				if val, ok := asString(field17_5_2["1"]); ok {
 					item.LocationName = sql.NullString{String: val, Valid: true}
 				}
 			}
-			if val, ok := field17_5["3"].(string); ok {
+			if val, ok := asString(field17_5["3"]); ok {
 				item.LocationID = sql.NullString{String: val, Valid: true}
 			}
 		}
@@ -556,15 +566,21 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 func parseDeletions(data interface{}) []string {
 	var mediaKeys []string
 
-	// Handle both single item (dict) and multiple items (list)
+	// Handle both single item (dict/bytes) and multiple items (list)
 	switch v := data.(type) {
 	case map[string]interface{}:
 		if key := parseDeletionItem(v); key != "" {
 			mediaKeys = append(mediaKeys, key)
 		}
+	case []byte:
+		if itemMap, ok := asMap(v); ok {
+			if key := parseDeletionItem(itemMap); key != "" {
+				mediaKeys = append(mediaKeys, key)
+			}
+		}
 	case []interface{}:
 		for _, itemData := range v {
-			if itemMap, ok := itemData.(map[string]interface{}); ok {
+			if itemMap, ok := asMap(itemData); ok {
 				if key := parseDeletionItem(itemMap); key != "" {
 					mediaKeys = append(mediaKeys, key)
 				}
@@ -577,21 +593,21 @@ func parseDeletions(data interface{}) []string {
 
 func parseDeletionItem(d map[string]interface{}) string {
 	// Field 1: deletion data
-	field1, ok := d["1"].(map[string]interface{})
+	field1, ok := asMap(d["1"])
 	if !ok {
 		return ""
 	}
 
 	// Field 1->1: type
-	delType, ok := field1["1"].(uint64)
+	delType, ok := asUint64(field1["1"])
 	if !ok {
 		return ""
 	}
 
 	// Type 1 means media deletion
 	if delType == 1 {
-		if field1_2, ok := field1["2"].(map[string]interface{}); ok {
-			if mediaKey, ok := field1_2["1"].(string); ok {
+		if field1_2, ok := asMap(field1["2"]); ok {
+			if mediaKey, ok := asString(field1_2["1"]); ok {
 				return mediaKey
 			}
 		}
