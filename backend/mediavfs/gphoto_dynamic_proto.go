@@ -105,19 +105,6 @@ func appendNestedMessage(buf []byte, num protowire.Number, value map[string]inte
 func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 	originalLen := len(data)
-	bytesProcessed := 0
-
-	// Track field occurrences for debugging repeated fields
-	fieldCounts := make(map[string]int)
-
-	// Log first 40 bytes for debugging
-	hexLen := 40
-	if hexLen > len(data) {
-		hexLen = len(data)
-	}
-	if hexLen > 0 {
-		fmt.Printf("DecodeDynamicMessage: first %d bytes: %x\n", hexLen, data[:hexLen])
-	}
 
 	for len(data) > 0 {
 		num, typ, n := protowire.ConsumeTag(data)
@@ -132,12 +119,8 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 			return nil, fmt.Errorf("invalid tag at byte %d/%d, hex context: %s, error: %v", pos, originalLen, hexDump, protowire.ParseError(n))
 		}
 		data = data[n:]
-		bytesProcessed += n
 
 		fieldNum := fmt.Sprintf("%d", num)
-
-		// Track field occurrences
-		fieldCounts[fieldNum]++
 
 		switch typ {
 		case protowire.VarintType:
@@ -255,21 +238,6 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 			// Unknown wire type - try to skip it gracefully
 			// This handles any malformed or unknown data
 			return nil, fmt.Errorf("unknown wire type %d at field %d (might be corrupted data)", typ, num)
-		}
-	}
-
-	// Debug: Report any repeated fields at the TOP LEVEL ONLY (to avoid spam from nested messages)
-	if originalLen > 1000000 { // Only for large messages (>1MB) which is likely the top-level response
-		repeatedFields := make([]string, 0)
-		for field, count := range fieldCounts {
-			if count > 1 {
-				repeatedFields = append(repeatedFields, fmt.Sprintf("%s(x%d)", field, count))
-			}
-		}
-		if len(repeatedFields) > 0 {
-			fmt.Printf("DEBUG DecodeDynamicMessage: Repeated fields in %d-byte message: %v\n", originalLen, repeatedFields)
-		} else {
-			fmt.Printf("DEBUG DecodeDynamicMessage: No repeated fields found in %d-byte message\n", originalLen)
 		}
 	}
 
