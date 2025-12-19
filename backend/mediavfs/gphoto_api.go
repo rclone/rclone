@@ -213,9 +213,9 @@ func (api *GPhotoAPI) GetUploadToken(ctx context.Context, sha1HashB64 string, fi
 // FindRemoteMediaByHash checks if a file with the given SHA1 hash already exists
 func (api *GPhotoAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte) (string, error) {
 	// Encode nested protobuf message matching Python implementation
-	// Field 1 -> Field 1 -> Field 1: base64-encoded SHA1 hash
+	// Field 1 -> Field 1 -> Field 1: raw SHA1 hash bytes (NOT base64)
 	innermost := NewProtoEncoder()
-	innermost.EncodeString(1, base64.StdEncoding.EncodeToString(sha1Hash))
+	innermost.EncodeBytes(1, sha1Hash)
 
 	middle := NewProtoEncoder()
 	middle.EncodeMessage(1, innermost.Bytes())
@@ -249,11 +249,14 @@ func (api *GPhotoAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte
 		return "", err
 	}
 
-	// Extract media key if found (field 1 -> field 2 -> field 1)
+	// Extract media key if found (field 1 -> field 2 -> field 2 -> field 1)
+	// Python: decoded_message["1"].get("2", {}).get("2", {}).get("1", None)
 	if mediaData, ok := result["1"].(map[string]interface{}); ok {
-		if mediaInfo, ok := mediaData["2"].(map[string]interface{}); ok {
-			if mediaKey, ok := mediaInfo["1"].(string); ok {
-				return mediaKey, nil
+		if field2, ok := mediaData["2"].(map[string]interface{}); ok {
+			if field2_2, ok := field2["2"].(map[string]interface{}); ok {
+				if mediaKey, ok := field2_2["1"].(string); ok {
+					return mediaKey, nil
+				}
 			}
 		}
 	}
