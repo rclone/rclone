@@ -237,9 +237,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Modify database connection string to include username in database name
 	// This ensures each user gets their own database
-	dbConnStr, err := modifyDBConnectionForUser(opt.DBConnection, opt.User)
+	dbConnStr, userDBName, err := modifyDBConnectionForUser(opt.DBConnection, opt.User)
 	if err != nil {
 		return nil, fmt.Errorf("failed to modify database connection: %w", err)
+	}
+
+	// Create the database if it doesn't exist (only if username is specified)
+	if opt.User != "" && userDBName != "" {
+		if err := ensureDatabaseExists(ctx, opt.DBConnection, userDBName); err != nil {
+			return nil, fmt.Errorf("failed to ensure database exists: %w", err)
+		}
 	}
 
 	// Connect to PostgreSQL
@@ -386,9 +393,10 @@ func sanitizeUsername(username string) string {
 
 // modifyDBConnectionForUser modifies the PostgreSQL connection string to include
 // the username in the database name, ensuring each user has their own database
-func modifyDBConnectionForUser(connStr, username string) (string, error) {
+// Returns: (modified connection string, new database name, error)
+func modifyDBConnectionForUser(connStr, username string) (string, string, error) {
 	if username == "" {
-		return connStr, nil // No user specified, use connection string as-is
+		return connStr, "", nil // No user specified, use connection string as-is
 	}
 
 	// Parse the connection string to extract components
@@ -398,7 +406,7 @@ func modifyDBConnectionForUser(connStr, username string) (string, error) {
 	// Find the database name (after last / before ?)
 	lastSlash := strings.LastIndex(connStr, "/")
 	if lastSlash == -1 {
-		return "", fmt.Errorf("invalid PostgreSQL connection string: no database specified")
+		return "", "", fmt.Errorf("invalid PostgreSQL connection string: no database specified")
 	}
 
 	beforeDB := connStr[:lastSlash+1]
@@ -422,7 +430,62 @@ func modifyDBConnectionForUser(connStr, username string) (string, error) {
 	// Reconstruct the connection string
 	newConnStr := beforeDB + newDBName + params
 
-	return newConnStr, nil
+	return newConnStr, newDBName, nil
+}
+
+// ensureDatabaseExists creates the database if it doesn't already exist
+func ensureDatabaseExists(ctx context.Context, baseConnStr, dbName string) error {
+	// Connect to the default 'postgres' database to check/create the target database
+	// We need to replace the database name in the connection string with 'postgres'
+	lastSlash := strings.LastIndex(baseConnStr, "/")
+	if lastSlash == -1 {
+		return fmt.Errorf("invalid PostgreSQL connection string")
+	}
+
+	beforeDB := baseConnStr[:lastSlash+1]
+	afterSlash := baseConnStr[lastSlash+1:]
+
+	// Extract params if present
+	questionMark := strings.Index(afterSlash, "?")
+	var params string
+	if questionMark != -1 {
+		params = afterSlash[questionMark:]
+	} else {
+		params = ""
+	}
+
+	// Connect to the 'postgres' database
+	postgresConnStr := beforeDB + "postgres" + params
+
+	db, err := sql.Open("postgres", postgresConnStr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to postgres database: %w", err)
+	}
+	defer db.Close()
+
+	// Check if database exists
+	var exists bool
+	query := "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)"
+	err = db.QueryRowContext(ctx, query, dbName).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("failed to check if database exists: %w", err)
+	}
+
+	if !exists {
+		// Create the database
+		// Note: Database names cannot be parameterized, so we need to sanitize and use string formatting
+		// The dbName should already be sanitized by sanitizeUsername, but let's be extra careful
+		createQuery := fmt.Sprintf("CREATE DATABASE %s", dbName)
+		_, err = db.ExecContext(ctx, createQuery)
+		if err != nil {
+			return fmt.Errorf("failed to create database %s: %w", dbName, err)
+		}
+		fs.Infof(nil, "Created database: %s", dbName)
+	} else {
+		fs.Infof(nil, "Database already exists: %s", dbName)
+	}
+
+	return nil
 }
 
 // List the objects and directories in dir into entries
