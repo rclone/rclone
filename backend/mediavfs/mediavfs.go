@@ -104,10 +104,6 @@ func init() {
 			Help:     "PostgreSQL connection string.\n\nE.g. \"postgres://user:password@localhost/dbname?sslmode=disable\"",
 			Required: true,
 		}, {
-			Name:     "download_url",
-			Help:     "Base URL for file downloads.\n\nE.g. \"http://localhost/gphotos/download\"",
-			Required: true,
-		}, {
 			Name:     "table_name",
 			Help:     "Name of the media table in the database.",
 			Default:  "remote_media",
@@ -136,7 +132,6 @@ func init() {
 type Options struct {
 	User           string `config:"user"`
 	DBConnection  string `config:"db_connection"`
-	DownloadURL   string `config:"download_url"`
 	TableName     string `config:"table_name"`
 	BatchSize     int    `config:"batch_size"`
 	EnableUpload  bool   `config:"enable_upload"`
@@ -154,6 +149,7 @@ type Fs struct {
 	features    *fs.Features
 	db          *sql.DB
 	httpClient  *http.Client
+	api         *GPhotoAPI // Google Photos API client for download URLs
 	urlCache    *urlCache
 	virtualDirs map[string]bool // Track virtual directories created in memory
 	vdirMu      sync.RWMutex    // Mutex for virtualDirs
@@ -232,9 +228,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	// Ensure download URL doesn't have trailing slash
-	opt.DownloadURL = strings.TrimSuffix(opt.DownloadURL, "/")
-
 	// Modify database connection string to include username in database name
 	// This ensures each user gets their own database
 	dbConnStr, userDBName, err := modifyDBConnectionForUser(opt.DBConnection, opt.User)
@@ -309,6 +302,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		lazyMeta:    make(map[string]*Object),
 		dirCache:    make(map[string]*dirCacheEntry),
 	}
+
+	// Initialize Google Photos API client for download URLs
+	f.api = NewGPhotoAPI(opt.TokenServerURL, opt.User, customClient)
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -1005,7 +1001,6 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 			}
 
 			maxTs := lastTimestamp
-			userName := f.opt.User // Use the configured user for path construction
 			changedPaths := make(map[string]fs.EntryType) // Collect unique paths to notify
 			for rows.Next() {
 				var mediaKey, fileName, customName, customPath string
@@ -1358,8 +1353,11 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // Open opens the file for reading with URL caching and ETag support
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	// Build the initial download URL (may return 302 redirect)
-	initialURL := fmt.Sprintf("%s/%s", o.fs.opt.DownloadURL, o.mediaKey)
+	// Get the download URL from Google Photos API
+	initialURL, err := o.fs.api.GetDownloadURL(ctx, o.mediaKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get download URL: %w", err)
+	}
 
 	// Check if we have cached metadata for this URL
 	cacheKey := o.mediaKey

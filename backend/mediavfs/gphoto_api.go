@@ -547,3 +547,103 @@ func (api *GPhotoAPI) GetLibraryPageInit(ctx context.Context, pageToken string) 
 	}
 	return data, nil
 }
+
+// GetDownloadURL gets the download URL for a media item
+// Based on Python implementation: api.get_download_url()
+func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (string, error) {
+	// Build protobuf message matching Python implementation
+	// Field 1 -> Field 1 -> Field 1: media_key
+	field1_1 := NewProtoEncoder()
+	field1_1.EncodeString(1, mediaKey)
+
+	field1 := NewProtoEncoder()
+	field1.EncodeMessage(1, field1_1.Bytes())
+
+	// Field 2 -> Field 1 -> Field 7 -> Field 2: empty message
+	field2_1_7_2 := NewProtoEncoder()
+	// Empty message
+
+	field2_1_7 := NewProtoEncoder()
+	field2_1_7.EncodeMessage(2, field2_1_7_2.Bytes())
+
+	field2_1 := NewProtoEncoder()
+	field2_1.EncodeMessage(7, field2_1_7.Bytes())
+
+	// Field 2 -> Field 5 -> Field 2, 3, 5
+	field2_5_2 := NewProtoEncoder()
+	// Empty message
+
+	field2_5_3 := NewProtoEncoder()
+	// Empty message
+
+	field2_5_5_1 := NewProtoEncoder()
+	// Empty message
+
+	field2_5_5 := NewProtoEncoder()
+	field2_5_5.EncodeMessage(1, field2_5_5_1.Bytes())
+	field2_5_5.EncodeInt32(3, 0)
+
+	field2_5 := NewProtoEncoder()
+	field2_5.EncodeMessage(2, field2_5_2.Bytes())
+	field2_5.EncodeMessage(3, field2_5_3.Bytes())
+	field2_5.EncodeMessage(5, field2_5_5.Bytes())
+
+	field2 := NewProtoEncoder()
+	field2.EncodeMessage(1, field2_1.Bytes())
+	field2.EncodeMessage(5, field2_5.Bytes())
+
+	// Main message
+	encoder := NewProtoEncoder()
+	encoder.EncodeMessage(1, field1.Bytes())
+	encoder.EncodeMessage(2, field2.Bytes())
+
+	serializedData := encoder.Bytes()
+
+	headers := map[string]string{
+		"Content-Type":             "application/x-protobuf",
+		"x-goog-ext-173412678-bin": "CgcIAhClARgC",
+		"x-goog-ext-174067345-bin": "CgIIAg==",
+	}
+
+	resp, err := api.request(ctx, "POST",
+		"https://photosdata-pa.googleapis.com/$rpc/social.frontend.photos.preparedownloaddata.v1.PhotosPrepareDownloadDataService/PhotosPrepareDownload",
+		headers, bytes.NewReader(serializedData))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Parse protobuf response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	result, err := DecodeToMap(respBody)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract download URL from response
+	// Path: response["1"]["5"]["3"]["5"] (or response["1"]["5"]["2"]["5"] for edited version)
+	if field1Data, ok := result["1"].(map[string]interface{}); ok {
+		if field5Data, ok := field1Data["5"].(map[string]interface{}); ok {
+			// Try field 3 -> field 5 (original file URL)
+			if field3Data, ok := field5Data["3"].(map[string]interface{}); ok {
+				if url, ok := field3Data["5"].(string); ok {
+					fs.Debugf(nil, "gphoto: got download URL for %s", mediaKey)
+					return url, nil
+				}
+			}
+			// Fallback: try field 2 -> field 5 (edited version URL)
+			if field2Data, ok := field5Data["2"].(map[string]interface{}); ok {
+				if url, ok := field2Data["5"].(string); ok {
+					fs.Debugf(nil, "gphoto: got download URL (edited) for %s", mediaKey)
+					return url, nil
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("download URL not found in response for media_key %s", mediaKey)
+}
