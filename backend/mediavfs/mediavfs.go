@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"sync"
@@ -395,17 +396,23 @@ func extractPathAndName(fileName string) (path string, name string) {
 }
 
 // buildConnectionString combines base connection string with database name
-// baseConn format: postgres://user:password@host:port?params
+// baseConn format: postgres://user:password@host:port?params or postgres://user:password@host:port/?params
 // Returns: postgres://user:password@host:port/dbname?params
 func buildConnectionString(baseConn, dbName string) string {
-	// Find where to insert the database name (before ? if exists)
-	questionMark := strings.Index(baseConn, "?")
-	if questionMark != -1 {
-		// Has query params: insert db name before ?
-		return baseConn[:questionMark] + "/" + dbName + baseConn[questionMark:]
+	u, err := url.Parse(baseConn)
+	if err != nil {
+		// Fallback to simple string manipulation if URL parsing fails
+		questionMark := strings.Index(baseConn, "?")
+		if questionMark != -1 {
+			base := strings.TrimSuffix(baseConn[:questionMark], "/")
+			return base + "/" + dbName + baseConn[questionMark:]
+		}
+		base := strings.TrimSuffix(baseConn, "/")
+		return base + "/" + dbName
 	}
-	// No query params: just append /dbname
-	return baseConn + "/" + dbName
+	// Set the path to just the database name
+	u.Path = "/" + dbName
+	return u.String()
 }
 
 // ensureDatabaseExists creates the database if it doesn't already exist
