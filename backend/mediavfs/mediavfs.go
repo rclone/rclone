@@ -1069,18 +1069,19 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	// Insert into database
 	query := fmt.Sprintf(`
-		INSERT INTO %s (media_key, file_name, name, path, size_bytes, utc_timestamp)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO %s (media_key, file_name, name, path, size_bytes, utc_timestamp, user_name)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (media_key) DO UPDATE
 		SET file_name = EXCLUDED.file_name,
 		    name = EXCLUDED.name,
 		    path = EXCLUDED.path,
 		    size_bytes = EXCLUDED.size_bytes,
-		    utc_timestamp = EXCLUDED.utc_timestamp
+		    utc_timestamp = EXCLUDED.utc_timestamp,
+		    user_name = EXCLUDED.user_name
 	`, f.opt.TableName)
 
 	modTime := src.ModTime(ctx).Unix()
-	_, err = f.db.ExecContext(ctx, query, mediaKey, displayName, displayName, displayPath, src.Size(), modTime)
+	_, err = f.db.ExecContext(ctx, query, mediaKey, displayName, displayName, displayPath, src.Size(), modTime, userName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert into database: %w", err)
 	}
