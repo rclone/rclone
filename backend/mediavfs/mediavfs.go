@@ -304,7 +304,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// Initialize Google Photos API client for download URLs
-	f.api = NewGPhotoAPI(opt.TokenServerURL, opt.User, customClient)
+	f.api = NewGPhotoAPI(opt.User, opt.TokenServerURL, customClient)
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,

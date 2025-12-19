@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+
+	"github.com/rclone/rclone/fs"
 )
 
 // MediaItem represents a Google Photos media item with all metadata
@@ -107,7 +109,7 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 	case map[string]interface{}:
 		item, err := parseMediaItem(v)
 		if err != nil {
-			fmt.Printf("WARNING: Skipping media item due to error: %v\n", err)
+			fs.Infof(nil, "mediavfs: Skipping media item due to error: %v", err)
 			skipped++
 		} else {
 			items = append(items, item)
@@ -117,7 +119,7 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 			if itemMap, ok := itemData.(map[string]interface{}); ok {
 				item, err := parseMediaItem(itemMap)
 				if err != nil {
-					fmt.Printf("WARNING: Skipping media item #%d due to error: %v\n", i, err)
+					fs.Infof(nil, "mediavfs: Skipping media item #%d due to error: %v", i, err)
 					skipped++
 				} else {
 					items = append(items, item)
@@ -127,7 +129,7 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 	}
 
 	if skipped > 0 {
-		fmt.Printf("WARNING: Skipped %d media items with missing required fields\n", skipped)
+		fs.Infof(nil, "mediavfs: Skipped %d media items with missing required fields", skipped)
 	}
 
 	return items, nil
@@ -202,15 +204,11 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	}
 	item.FileName = fileName
 
-	// Field 5: type info (REQUIRED)
-	field5, ok := d["5"].(map[string]interface{})
-	if !ok {
-		return item, fmt.Errorf("missing required field 5 for media_key %s", item.MediaKey)
-	}
-	if typeVal, ok := field5["1"].(uint64); ok {
-		item.Type = int64(typeVal)
-	} else {
-		return item, fmt.Errorf("missing required field: type (field 5->1) for media_key %s", item.MediaKey)
+	// Field 5: type info (optional - default to 0)
+	if field5, ok := d["5"].(map[string]interface{}); ok {
+		if typeVal, ok := field5["1"].(uint64); ok {
+			item.Type = int64(typeVal)
+		}
 	}
 
 	// Debug: list of media_keys with known empty dedup_key issues
@@ -226,48 +224,48 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	// Parse dedup_key from field 2->21
 	if field21, ok := field2["21"].(map[string]interface{}); ok {
 		if debugThis {
-			fmt.Printf("DEBUG: field2[21] exists for %s, keys=%v\n", item.MediaKey, getMapKeys(field21))
+			fs.Infof(nil, "mediavfs: field2[21] exists for %s, keys=%v", item.MediaKey, getMapKeys(field21))
 		}
 		for key, val := range field21 {
 			if debugThis {
-				fmt.Printf("DEBUG: field2[21][%q] = type=%T, value=%v\n", key, val, val)
+				fs.Infof(nil, "mediavfs: field2[21][%q] = type=%T, value=%v", key, val, val)
 			}
 			if key[0] == '1' {
 				if dedupKey, ok := val.(string); ok {
 					item.DedupKey = dedupKey
 					if debugThis {
-						fmt.Printf("DEBUG: Got dedup_key from field2[21][%q] = %q\n", key, dedupKey)
+						fs.Infof(nil, "mediavfs: Got dedup_key from field2[21][%q] = %q", key, dedupKey)
 					}
 					break
 				} else if debugThis {
-					fmt.Printf("DEBUG: field2[21][%q] value is NOT a string, type=%T\n", key, val)
+					fs.Infof(nil, "mediavfs: field2[21][%q] value is NOT a string, type=%T", key, val)
 				}
 			}
 		}
 	} else if debugThis {
-		fmt.Printf("DEBUG: field2[21] does NOT exist for %s, field2[21]=%v\n", item.MediaKey, field2["21"])
+		fs.Infof(nil, "mediavfs: field2[21] does NOT exist for %s, field2[21]=%v", item.MediaKey, field2["21"])
 	}
 
 	// Fallback: try to get dedup_key from field 2->13->1
 	if item.DedupKey == "" {
 		if debugThis {
-			fmt.Printf("DEBUG: dedup_key still empty for %s, trying fallback field2[13]\n", item.MediaKey)
+			fs.Infof(nil, "mediavfs: dedup_key still empty for %s, trying fallback field2[13]", item.MediaKey)
 		}
 		if field13, ok := field2["13"].(map[string]interface{}); ok {
 			if debugThis {
-				fmt.Printf("DEBUG: field2[13] exists, field2[13][1]=%v (type=%T)\n", field13["1"], field13["1"])
+				fs.Infof(nil, "mediavfs: field2[13] exists, field2[13][1]=%v (type=%T)", field13["1"], field13["1"])
 			}
 			// Try as []byte first
 			if hashBytes, ok := field13["1"].([]byte); ok {
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
 				if debugThis {
-					fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as []byte = %q\n", item.DedupKey)
+					fs.Infof(nil, "mediavfs: Got dedup_key from field2[13][1] as []byte = %q", item.DedupKey)
 				}
 			} else if hashStr, ok := field13["1"].(string); ok {
 				// Handle string containing binary data
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString([]byte(hashStr)))
 				if debugThis {
-					fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as string = %q\n", item.DedupKey)
+					fs.Infof(nil, "mediavfs: Got dedup_key from field2[13][1] as string = %q", item.DedupKey)
 				}
 			} else if hashInterface, ok := field13["1"].([]interface{}); ok {
 				// Convert []interface{} to []byte
@@ -282,30 +280,26 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 				}
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
 				if debugThis {
-					fmt.Printf("DEBUG: Got dedup_key from field2[13][1] as []interface{} = %q\n", item.DedupKey)
+					fs.Infof(nil, "mediavfs: Got dedup_key from field2[13][1] as []interface{} = %q", item.DedupKey)
 				}
 			}
 		} else if debugThis {
-			fmt.Printf("DEBUG: field2[13] does NOT exist or not a map for %s\n", item.MediaKey)
+			fs.Infof(nil, "mediavfs: field2[13] does NOT exist or not a map for %s", item.MediaKey)
 		}
 	}
 
 	// Final warning - only for problematic files
 	if item.DedupKey == "" && debugThis {
-		fmt.Printf("WARNING: dedup_key is EMPTY for %s (file: %s)\n", item.MediaKey, item.FileName)
-		fmt.Printf("WARNING: field2[21]=%v\n", field2["21"])
-		fmt.Printf("WARNING: field2[13]=%v\n", field2["13"])
+		fs.Infof(nil, "mediavfs: WARNING dedup_key is EMPTY for %s (file: %s)", item.MediaKey, item.FileName)
+		fs.Infof(nil, "mediavfs: WARNING field2[21]=%v", field2["21"])
+		fs.Infof(nil, "mediavfs: WARNING field2[13]=%v", field2["13"])
 	}
 
-	// Field 2->1->1: collection_id (REQUIRED)
+	// Field 2->1->1: collection_id (optional - default to empty)
 	if field2_1, ok := field2["1"].(map[string]interface{}); ok {
 		if val, ok := field2_1["1"].(string); ok {
 			item.CollectionID = val
-		} else {
-			return item, fmt.Errorf("missing required field: collection_id (field 2->1->1) for media_key %s", item.MediaKey)
 		}
-	} else {
-		return item, fmt.Errorf("missing required field 2->1 for media_key %s", item.MediaKey)
 	}
 
 	// Field 2->10: size_bytes
