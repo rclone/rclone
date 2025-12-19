@@ -629,11 +629,11 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 		timestamp := convertUnixTimestamp(timestampUnix)
 
-		// Core logic for display name and path
-		// name=NULL, path=NULL     → /user_name/file_name
-		// name=SET,  path=NULL     → /user_name/name
-		// name=NULL, path=SET      → /user_name/path/file_name
-		// name=SET,  path=SET      → /user_name/path/name
+		// Core logic for display name and path (single-user model, no username prefix)
+		// name=NULL, path=NULL     → /file_name
+		// name=SET,  path=NULL     → /name
+		// name=NULL, path=SET      → /path/file_name
+		// name=SET,  path=SET      → /path/name
 		var displayName, displayPath string
 
 		// Display name: use 'name' if set, else use 'file_name'
@@ -652,10 +652,10 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 		// Now determine if this entry should be shown in current directory
 		if dirPath == "" {
-			// We're at user root level
+			// We're at root level
 			if displayPath == "" {
 				// File is directly in root (path is NULL/empty)
-				remote := userName + "/" + displayName
+				remote := displayName
 				if !filesSeen[remote] {
 					entries = append(entries, &Object{
 						fs:          f,
@@ -673,7 +673,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				// File has a path - show only the first-level directory
 				firstDir := strings.SplitN(displayPath, "/", 2)[0]
 				if !dirsSeen[firstDir] {
-					entries = append(entries, fs.NewDir(userName+"/"+firstDir, time.Time{}))
+					entries = append(entries, fs.NewDir(firstDir, time.Time{}))
 					dirsSeen[firstDir] = true
 				}
 			}
@@ -681,7 +681,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			// We're in a subdirectory
 			if displayPath == dirPath {
 				// File is directly in this directory
-				remote := userName + "/" + displayPath + "/" + displayName
+				remote := displayPath + "/" + displayName
 				if !filesSeen[remote] {
 					entries = append(entries, &Object{
 						fs:          f,
@@ -702,7 +702,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				fullSubDir := dirPath + "/" + firstSubDir
 
 				if !dirsSeen[fullSubDir] {
-					entries = append(entries, fs.NewDir(userName+"/"+fullSubDir, time.Time{}))
+					entries = append(entries, fs.NewDir(fullSubDir, time.Time{}))
 					dirsSeen[fullSubDir] = true
 				}
 			}
@@ -716,23 +716,28 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	// Add virtual directories created via Mkdir
 	f.vdirMu.RLock()
 	for vdir := range f.virtualDirs {
-		// Check if this virtual directory belongs to this user and path
-		vdirUser, vdirPath := splitUserPath(vdir)
-		if vdirUser != userName {
-			continue
+		// Since we're single-user per database, treat vdir as path only (no username prefix)
+		// Extract path from vdir
+		vdirPath := vdir
+		if strings.Contains(vdir, "/") {
+			// If vdir has format "username/path", extract path part
+			parts := strings.SplitN(vdir, "/", 2)
+			if len(parts) == 2 {
+				vdirPath = parts[1]
+			}
 		}
 
 		// Check if it's in the current directory we're listing
 		if dirPath == "" {
 			// Root level - add if it's a top-level dir
 			if !strings.Contains(vdirPath, "/") && vdirPath != "" && !dirsSeen[vdirPath] {
-				entries = append(entries, fs.NewDir(userName+"/"+vdirPath, time.Time{}))
+				entries = append(entries, fs.NewDir(vdirPath, time.Time{}))
 				dirsSeen[vdirPath] = true
 			} else if strings.Contains(vdirPath, "/") {
 				// It's nested, add the top-level part
 				topDir := strings.SplitN(vdirPath, "/", 2)[0]
 				if !dirsSeen[topDir] {
-					entries = append(entries, fs.NewDir(userName+"/"+topDir, time.Time{}))
+					entries = append(entries, fs.NewDir(topDir, time.Time{}))
 					dirsSeen[topDir] = true
 				}
 			}
@@ -743,20 +748,20 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				remainder := strings.TrimPrefix(vdirPath, dirPrefix)
 				if !strings.Contains(remainder, "/") && remainder != "" && !dirsSeen[vdirPath] {
 					// Direct child directory
-					entries = append(entries, fs.NewDir(userName+"/"+vdirPath, time.Time{}))
+					entries = append(entries, fs.NewDir(vdirPath, time.Time{}))
 					dirsSeen[vdirPath] = true
 				} else if strings.Contains(remainder, "/") {
 					// Nested subdirectory
 					subDir := strings.SplitN(remainder, "/", 2)[0]
 					fullSubDir := dirPath + "/" + subDir
 					if !dirsSeen[fullSubDir] {
-						entries = append(entries, fs.NewDir(userName+"/"+fullSubDir, time.Time{}))
+						entries = append(entries, fs.NewDir(fullSubDir, time.Time{}))
 						dirsSeen[fullSubDir] = true
 					}
 				}
 			} else if vdirPath == dirPath && !dirsSeen[vdirPath] {
 				// The virtual directory is exactly this path
-				entries = append(entries, fs.NewDir(userName+"/"+vdirPath, time.Time{}))
+				entries = append(entries, fs.NewDir(vdirPath, time.Time{}))
 				dirsSeen[vdirPath] = true
 			}
 		}
@@ -825,7 +830,7 @@ func (f *Fs) populateMetadata(userName string) {
 				fullPath = displayName
 			}
 
-			key := userName + "/" + fullPath
+			key := fullPath // No username prefix in single-user model
 			obj := &Object{
 				fs:          f,
 				remote:      key,
@@ -1037,9 +1042,9 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 
 				// Collect unique paths to notify (avoid duplicate notifications)
 				if displayPath != "" {
-					changedPaths[userName+"/"+displayPath] = fs.EntryDirectory
+					changedPaths[displayPath] = fs.EntryDirectory
 				}
-				changedPaths[userName+"/"+fullPath] = fs.EntryObject
+				changedPaths[fullPath] = fs.EntryObject
 			}
 			rows.Close()
 
