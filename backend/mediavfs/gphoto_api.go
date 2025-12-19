@@ -262,10 +262,15 @@ func (api *GPhotoAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte
 }
 
 // UploadFile uploads file content to Google Photos
-func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, content io.Reader) error {
+func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, content io.Reader, fileSize int64) error {
 	url := fmt.Sprintf("https://photos.googleapis.com/data/upload/uploadmedia/interactive?upload_id=%s", uploadToken)
 
-	headers := map[string]string{}
+	headers := map[string]string{
+		"Content-Type":   "application/octet-stream",
+		"Content-Length": fmt.Sprintf("%d", fileSize),
+	}
+
+	fs.Infof(nil, "gphoto: uploading %d bytes...", fileSize)
 
 	resp, err := api.request(ctx, "PUT", url, headers, content)
 	if err != nil {
@@ -273,6 +278,7 @@ func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, conten
 	}
 	defer resp.Body.Close()
 
+	fs.Infof(nil, "gphoto: upload complete")
 	return nil
 }
 

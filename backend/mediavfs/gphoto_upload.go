@@ -78,7 +78,7 @@ func (f *Fs) UploadFileToGPhotos(ctx context.Context, filePath string, user stri
 	}
 	defer file.Close()
 
-	if err := api.UploadFile(ctx, uploadToken, file); err != nil {
+	if err := api.UploadFile(ctx, uploadToken, file, fileSize); err != nil {
 		return "", fmt.Errorf("failed to upload file: %w", err)
 	}
 
@@ -155,7 +155,7 @@ func (f *Fs) UploadWithProgress(ctx context.Context, src fs.ObjectInfo, in io.Re
 
 	// Upload file
 	fs.Infof(f, "Uploading file")
-	if err := api.UploadFile(ctx, uploadToken, tmpFile); err != nil {
+	if err := api.UploadFile(ctx, uploadToken, tmpFile, written); err != nil {
 		return "", fmt.Errorf("failed to upload file: %w", err)
 	}
 
