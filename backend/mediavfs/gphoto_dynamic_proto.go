@@ -2,6 +2,7 @@ package mediavfs
 
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
@@ -165,19 +166,25 @@ func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
 			data = data[n:]
 
 			// Decode the value (nested message or string)
+			// Use heuristic: if bytes look like printable text, treat as string
+			// This prevents filenames from being incorrectly parsed as protobuf messages
 			var decodedVal interface{}
-			if len(val) > 0 && len(val) < 10000000 { // sanity check size
+			if len(val) == 0 {
+				decodedVal = ""
+			} else if len(val) >= 10000000 {
+				// Too large, keep as bytes
+				decodedVal = val
+			} else if isProbablyString(val) {
+				// Bytes look like printable text, treat as string
+				decodedVal = string(val)
+			} else {
+				// Try to decode as nested message
 				if nested, err := DecodeDynamicMessage(val); err == nil && len(nested) > 0 {
 					decodedVal = nested
 				} else {
 					// If decoding failed, treat as string
 					decodedVal = string(val)
 				}
-			} else if len(val) == 0 {
-				decodedVal = ""
-			} else {
-				// Too large, keep as bytes
-				decodedVal = val
 			}
 
 			// Handle repeated fields
@@ -309,3 +316,31 @@ func CloneMessage(data map[string]interface{}) map[string]interface{} {
 }
 
 var _ proto.Message // Ensure we're compatible with proto.Message interface
+
+// isProbablyString checks if bytes look like printable text (UTF-8 or ASCII)
+// Returns true if the bytes are likely a string rather than a nested protobuf message
+func isProbablyString(data []byte) bool {
+	if len(data) == 0 {
+		return true
+	}
+
+	// Check if it's valid UTF-8
+	if !utf8.Valid(data) {
+		return false
+	}
+
+	// Count printable vs non-printable characters
+	printableCount := 0
+	for _, b := range data {
+		// Allow printable ASCII (32-126), tab (9), newline (10), carriage return (13)
+		// and high bytes that are part of valid UTF-8 sequences (checked above)
+		if (b >= 32 && b <= 126) || b == 9 || b == 10 || b == 13 || b >= 128 {
+			printableCount++
+		}
+	}
+
+	// If more than 80% of bytes are printable, it's probably a string
+	// This threshold helps distinguish filenames from protobuf data
+	ratio := float64(printableCount) / float64(len(data))
+	return ratio > 0.8
+}

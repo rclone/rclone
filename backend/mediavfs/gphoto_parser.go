@@ -137,17 +137,21 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 
 // extractFileName extracts the filename from field 2->4
 // Field 2->4 can be either:
-//  1. A string (direct filename)
+//  1. A string (direct filename) - most common case after protobuf decoder fix
 //  2. A map with field 14 containing the filename (as string or byte array)
 //  3. A map with other fields - try to find filename in available fields
 func extractFileName(field24 interface{}, mediaKey string) (string, error) {
-	// Case 1: Direct string
+	// Case 1: Direct string (most common case)
 	if fileName, ok := field24.(string); ok {
 		return fileName, nil
 	}
 
-	// Case 2: Nested map with field 14
+	// Case 2: Nested map - try to extract filename from nested structure
 	if field24Map, ok := field24.(map[string]interface{}); ok {
+		// Priority order for finding filename:
+		// 1. Field 14 (primary filename field)
+		// 2. Any other string field as fallback
+
 		// Try to get field 14 from the nested map
 		if field14, exists := field24Map["14"]; exists {
 			// Field 14 can be a string or byte array
@@ -172,23 +176,30 @@ func extractFileName(field24 interface{}, mediaKey string) (string, error) {
 				}
 				return string(bytes), nil
 			}
+
+			// Field 14 is a nested map - this shouldn't happen with the protobuf decoder fix
+			// Log for debugging but fall through to other fallbacks
+			fs.Debugf(nil, "mediavfs: field 2->4->14 is a nested map for %s, trying fallbacks", mediaKey)
 		}
 
-		// If field 14 doesn't exist, log available fields and try alternatives
-		fs.Infof(nil, "mediavfs: field 2->4 is map without field 14 for %s, available fields: %v", mediaKey, getMapKeys(field24Map))
+		// Fallback: try other string fields in the map
+		// Prefer field 6 which sometimes contains filename info
+		if field6, ok := field24Map["6"].(string); ok && field6 != "" {
+			fs.Debugf(nil, "mediavfs: Using field 2->4[6] as filename for %s: %s", mediaKey, field6)
+			return field6, nil
+		}
 
-		// Try other common fields that might contain filename
-		// Check all string fields in the map as potential filenames
+		// Try any other string field
 		for k, v := range field24Map {
 			if strVal, ok := v.(string); ok && strVal != "" {
-				fs.Infof(nil, "mediavfs: Using field 2->4[%s] as filename for %s: %s", k, mediaKey, strVal)
+				fs.Debugf(nil, "mediavfs: Using field 2->4[%s] as filename for %s: %s", k, mediaKey, strVal)
 				return strVal, nil
 			}
 		}
 
 		// No string field found, generate a filename from media_key
 		generatedName := fmt.Sprintf("%s.unknown", mediaKey)
-		fs.Infof(nil, "mediavfs: Generating filename for %s: %s", mediaKey, generatedName)
+		fs.Infof(nil, "mediavfs: Generating filename for %s (no string fields in field 2->4): %s", mediaKey, generatedName)
 		return generatedName, nil
 	}
 
