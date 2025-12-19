@@ -239,22 +239,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	// Modify database connection string to include username in database name
-	// This ensures each user gets their own database
-	dbConnStr, userDBName, err := modifyDBConnectionForUser(opt.DBConnection, opt.User)
-	if err != nil {
-		return nil, fmt.Errorf("failed to modify database connection: %w", err)
-	}
-
-	// Create the database if it doesn't exist (only if username is specified)
-	if opt.User != "" && userDBName != "" {
-		if err := ensureDatabaseExists(ctx, opt.DBConnection, userDBName); err != nil {
-			return nil, fmt.Errorf("failed to ensure database exists: %w", err)
-		}
-	}
-
-	// Connect to PostgreSQL
-	db, err := sql.Open("postgres", dbConnStr)
+	// Connect to PostgreSQL using the connection string directly
+	// All users share the same database, distinguished by user_name column
+	db, err := sql.Open("postgres", opt.DBConnection)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -394,116 +381,6 @@ func extractPathAndName(fileName string) (path string, name string) {
 	return "", fileName
 }
 
-// sanitizeUsername converts a username to a valid database name component
-// e.g., "user@example.com" -> "user_example_com"
-func sanitizeUsername(username string) string {
-	// Replace @ and . with underscores
-	sanitized := strings.ReplaceAll(username, "@", "_")
-	sanitized = strings.ReplaceAll(sanitized, ".", "_")
-	sanitized = strings.ReplaceAll(sanitized, "-", "_")
-	sanitized = strings.ReplaceAll(sanitized, " ", "_")
-	// Convert to lowercase for consistency
-	sanitized = strings.ToLower(sanitized)
-	return sanitized
-}
-
-// modifyDBConnectionForUser modifies the PostgreSQL connection string to include
-// the username in the database name, ensuring each user has their own database
-// Returns: (modified connection string, new database name, error)
-func modifyDBConnectionForUser(connStr, username string) (string, string, error) {
-	if username == "" {
-		return connStr, "", nil // No user specified, use connection string as-is
-	}
-
-	// Parse the connection string to extract components
-	// Format: postgres://user:password@host:port/database?params
-	// We need to modify the database name to append sanitized username
-
-	// Find the database name (after last / before ?)
-	lastSlash := strings.LastIndex(connStr, "/")
-	if lastSlash == -1 {
-		return "", "", fmt.Errorf("invalid PostgreSQL connection string: no database specified")
-	}
-
-	beforeDB := connStr[:lastSlash+1]
-	afterSlash := connStr[lastSlash+1:]
-
-	// Check if there are query parameters
-	questionMark := strings.Index(afterSlash, "?")
-	var dbName, params string
-	if questionMark != -1 {
-		dbName = afterSlash[:questionMark]
-		params = afterSlash[questionMark:]
-	} else {
-		dbName = afterSlash
-		params = ""
-	}
-
-	// Append sanitized username to database name
-	sanitized := sanitizeUsername(username)
-	newDBName := dbName + "_" + sanitized
-
-	// Reconstruct the connection string
-	newConnStr := beforeDB + newDBName + params
-
-	return newConnStr, newDBName, nil
-}
-
-// ensureDatabaseExists creates the database if it doesn't already exist
-func ensureDatabaseExists(ctx context.Context, baseConnStr, dbName string) error {
-	// Connect to the default 'postgres' database to check/create the target database
-	// We need to replace the database name in the connection string with 'postgres'
-	lastSlash := strings.LastIndex(baseConnStr, "/")
-	if lastSlash == -1 {
-		return fmt.Errorf("invalid PostgreSQL connection string")
-	}
-
-	beforeDB := baseConnStr[:lastSlash+1]
-	afterSlash := baseConnStr[lastSlash+1:]
-
-	// Extract params if present
-	questionMark := strings.Index(afterSlash, "?")
-	var params string
-	if questionMark != -1 {
-		params = afterSlash[questionMark:]
-	} else {
-		params = ""
-	}
-
-	// Connect to the 'postgres' database
-	postgresConnStr := beforeDB + "postgres" + params
-
-	db, err := sql.Open("postgres", postgresConnStr)
-	if err != nil {
-		return fmt.Errorf("failed to connect to postgres database: %w", err)
-	}
-	defer db.Close()
-
-	// Check if database exists
-	var exists bool
-	query := "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)"
-	err = db.QueryRowContext(ctx, query, dbName).Scan(&exists)
-	if err != nil {
-		return fmt.Errorf("failed to check if database exists: %w", err)
-	}
-
-	if !exists {
-		// Create the database
-		// Note: Database names cannot be parameterized, so we need to sanitize and use string formatting
-		// The dbName should already be sanitized by sanitizeUsername, but let's be extra careful
-		createQuery := fmt.Sprintf("CREATE DATABASE %s", dbName)
-		_, err = db.ExecContext(ctx, createQuery)
-		if err != nil {
-			return fmt.Errorf("failed to create database %s: %w", dbName, err)
-		}
-		fs.Infof(nil, "Created database: %s", dbName)
-	} else {
-		fs.Infof(nil, "Database already exists: %s", dbName)
-	}
-
-	return nil
-}
-
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	root := strings.Trim(path.Join(f.root, dir), "/")
@@ -547,7 +424,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Removed in favor of single-user per database model
 
 // listUserFiles lists files and directories for a specific path
-// Note: userName parameter kept for path construction but not used in SQL queries (single-user per DB)
+// Filters by user_name to support multi-user single-table model
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
 	// Normalize dirPath for comparison
 	dirPath = strings.Trim(dirPath, "/")
@@ -570,7 +447,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 					size_bytes,
 					utc_timestamp
 				FROM %s
-				WHERE (path IS NULL OR path = '')
+				WHERE user_name = $1 AND (path IS NULL OR path = '')
 			)
 			UNION ALL
 			(
@@ -582,7 +459,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 					size_bytes,
 					utc_timestamp
 				FROM %s
-				WHERE path IS NOT NULL
+				WHERE user_name = $1 AND path IS NOT NULL
 				  AND path != ''
 				  AND path NOT LIKE '%%/%%'
 				ORDER BY path, utc_timestamp DESC
@@ -597,12 +474,12 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 					size_bytes,
 					utc_timestamp
 				FROM %s
-				WHERE path LIKE '%%/%%'
+				WHERE user_name = $1 AND path LIKE '%%/%%'
 				ORDER BY split_part(path, '/', 1), utc_timestamp DESC
 			)
 			ORDER BY file_name
 		`, f.opt.TableName, f.opt.TableName, f.opt.TableName)
-		args = []interface{}{}
+		args = []interface{}{userName}
 	} else {
 		// In a subdirectory - select files where path = dirPath OR path starts with dirPath/
 		query = fmt.Sprintf(`
@@ -614,10 +491,10 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				size_bytes,
 				utc_timestamp
 			FROM %s
-			WHERE (path = $1 OR path LIKE $2)
+			WHERE user_name = $1 AND (path = $2 OR path LIKE $3)
 			ORDER BY file_name
 		`, f.opt.TableName)
-		args = []interface{}{dirPath, dirPath + "/%"}
+		args = []interface{}{userName, dirPath, dirPath + "/%"}
 	}
 
 	rows, err := f.db.QueryContext(ctx, query, args...)
@@ -902,9 +779,10 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 			size_bytes,
 			utc_timestamp
 		FROM %s
+		WHERE user_name = $1
 	`, f.opt.TableName)
 
-	rows, err := f.db.QueryContext(ctx, query)
+	rows, err := f.db.QueryContext(ctx, query, f.opt.User)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query file: %w", err)
 	}
@@ -981,7 +859,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType)
 func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
 	// Initialize lastTimestamp from DB
 	var lastTimestamp int64
-	row := f.db.QueryRowContext(ctx, fmt.Sprintf("SELECT COALESCE(MAX(utc_timestamp),0) FROM %s", f.opt.TableName))
+	row := f.db.QueryRowContext(ctx, fmt.Sprintf("SELECT COALESCE(MAX(utc_timestamp),0) FROM %s WHERE user_name = $1", f.opt.TableName), f.opt.User)
 	if err := row.Scan(&lastTimestamp); err != nil {
 		fs.Errorf(f, "mediavfs: ChangeNotify unable to read initial timestamp: %v", err)
 		lastTimestamp = 0
@@ -1010,11 +888,11 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 			query := fmt.Sprintf(`
 				SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp
 				FROM %s
-				WHERE utc_timestamp > $1
+				WHERE user_name = $1 AND utc_timestamp > $2
 				ORDER BY utc_timestamp
 			`, f.opt.TableName)
 
-			rows, err := f.db.QueryContext(ctx, query, lastTimestamp)
+			rows, err := f.db.QueryContext(ctx, query, f.opt.User, lastTimestamp)
 			if err != nil {
 				fs.Errorf(f, "mediavfs: ChangeNotify query failed: %v", err)
 				continue

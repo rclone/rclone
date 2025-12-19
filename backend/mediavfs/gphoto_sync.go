@@ -64,15 +64,15 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 		return fmt.Errorf("failed to create %s table: %w", f.opt.TableName, err)
 	}
 
-	// Create state table for tracking sync progress (single row for this database/user)
+	// Create state table for tracking sync progress (one row per user)
 	_, err = f.db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS state (
-			id INTEGER PRIMARY KEY DEFAULT 1,
+			id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 			state_token TEXT,
 			page_token TEXT,
 			init_complete BOOLEAN DEFAULT FALSE,
 			last_sync_time BIGINT,
-			CHECK (id = 1)
+			user_name TEXT UNIQUE
 		)
 	`)
 	if err != nil {
@@ -104,21 +104,22 @@ type SyncState struct {
 	LastSyncTime int64
 }
 
-// GetSyncState retrieves the sync state (single row for this database)
+// GetSyncState retrieves the sync state for the current user
 func (f *Fs) GetSyncState(ctx context.Context) (*SyncState, error) {
 	var state SyncState
 	err := f.db.QueryRowContext(ctx, `
 		SELECT state_token, page_token, init_complete, COALESCE(last_sync_time, 0)
 		FROM state
-		WHERE id = 1
-	`).Scan(&state.StateToken, &state.PageToken, &state.InitComplete, &state.LastSyncTime)
+		WHERE user_name = $1
+	`, f.opt.User).Scan(&state.StateToken, &state.PageToken, &state.InitComplete, &state.LastSyncTime)
 
 	if err == sql.ErrNoRows {
-		// Create initial state (id will default to 1)
+		// Create initial state for this user
 		_, err = f.db.ExecContext(ctx, `
-			INSERT INTO state (state_token, page_token, init_complete, last_sync_time)
-			VALUES ('', '', FALSE, 0)
-		`)
+			INSERT INTO state (state_token, page_token, init_complete, last_sync_time, user_name)
+			VALUES ('', '', FALSE, 0, $1)
+			ON CONFLICT (user_name) DO NOTHING
+		`, f.opt.User)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create initial state: %w", err)
 		}
@@ -137,13 +138,13 @@ func (f *Fs) GetSyncState(ctx context.Context) (*SyncState, error) {
 	return &state, nil
 }
 
-// UpdateSyncState updates the sync state
+// UpdateSyncState updates the sync state for the current user
 func (f *Fs) UpdateSyncState(ctx context.Context, stateToken, pageToken string, initComplete bool) error {
 	_, err := f.db.ExecContext(ctx, `
 		UPDATE state
 		SET state_token = $1, page_token = $2, init_complete = $3, last_sync_time = $4
-		WHERE id = 1
-	`, stateToken, pageToken, initComplete, time.Now().Unix())
+		WHERE user_name = $5
+	`, stateToken, pageToken, initComplete, time.Now().Unix(), f.opt.User)
 
 	if err != nil {
 		return fmt.Errorf("failed to update sync state: %w", err)
@@ -174,11 +175,11 @@ func (f *Fs) InsertMediaItems(ctx context.Context, items []MediaItem) error {
 			is_original_quality, latitude, longitude, location_name, location_id,
 			is_edited, make, model, aperture, shutter_speed, iso, focal_length,
 			duration, capture_frame_rate, encoded_frame_rate, is_micro_video,
-			micro_video_width, micro_video_height
+			micro_video_width, micro_video_height, user_name
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
 			$17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-			$31, $32, $33, $34, $35, $36, $37, $38, $39, $40
+			$31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41
 		)
 		ON CONFLICT (media_key) DO UPDATE SET
 			file_name = EXCLUDED.file_name,
@@ -209,7 +210,7 @@ func (f *Fs) InsertMediaItems(ctx context.Context, items []MediaItem) error {
 			item.LocationID, item.IsEdited, item.Make, item.Model, item.Aperture,
 			item.ShutterSpeed, item.ISO, item.FocalLength, item.Duration,
 			item.CaptureFrameRate, item.EncodedFrameRate, item.IsMicroVideo,
-			item.MicroVideoWidth, item.MicroVideoHeight,
+			item.MicroVideoWidth, item.MicroVideoHeight, f.opt.User,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to insert media item %s: %w", item.MediaKey, err)
