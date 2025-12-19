@@ -101,8 +101,12 @@ func init() {
 			Required: true,
 		}, {
 			Name:     "db_connection",
-			Help:     "PostgreSQL connection string.\n\nE.g. \"postgres://user:password@localhost/dbname?sslmode=disable\"",
+			Help:     "PostgreSQL connection string (without database name).\n\nE.g. \"postgres://user:password@localhost:5432?sslmode=disable\"",
 			Required: true,
+		}, {
+			Name:     "db_name",
+			Help:     "Name of the PostgreSQL database to use.",
+			Default:  "gphotos",
 		}, {
 			Name:     "table_name",
 			Help:     "Name of the media table in the database.",
@@ -140,14 +144,15 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	User           string `config:"user"`
-	DBConnection  string `config:"db_connection"`
-	TableName     string `config:"table_name"`
-	BatchSize     int    `config:"batch_size"`
-	EnableUpload  bool   `config:"enable_upload"`
-	EnableDelete  bool   `config:"enable_delete"`
+	DBConnection   string `config:"db_connection"`
+	DBName         string `config:"db_name"`
+	TableName      string `config:"table_name"`
+	BatchSize      int    `config:"batch_size"`
+	EnableUpload   bool   `config:"enable_upload"`
+	EnableDelete   bool   `config:"enable_delete"`
 	TokenServerURL string `config:"token_server_url"`
-	AutoSync      bool   `config:"auto_sync"`
-	SyncInterval  int    `config:"sync_interval"`
+	AutoSync       bool   `config:"auto_sync"`
+	SyncInterval   int    `config:"sync_interval"`
 }
 
 // Fs represents a connection to the media database
@@ -239,14 +244,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	// Build the full connection string with database name
+	dbConnStr := buildConnectionString(opt.DBConnection, opt.DBName)
+
 	// Ensure the database exists (create if needed)
-	if err := ensureDatabaseExists(ctx, opt.DBConnection); err != nil {
+	if err := ensureDatabaseExists(ctx, opt.DBConnection, opt.DBName); err != nil {
 		return nil, fmt.Errorf("failed to ensure database exists: %w", err)
 	}
 
-	// Connect to PostgreSQL using the connection string directly
+	// Connect to PostgreSQL
 	// All users share the same database, distinguished by user_name column
-	db, err := sql.Open("postgres", opt.DBConnection)
+	db, err := sql.Open("postgres", dbConnStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -386,35 +394,28 @@ func extractPathAndName(fileName string) (path string, name string) {
 	return "", fileName
 }
 
-// ensureDatabaseExists creates the database if it doesn't already exist
-func ensureDatabaseExists(ctx context.Context, connStr string) error {
-	// Parse the connection string to extract the database name
-	// Format: postgres://user:password@host:port/database?params
-	lastSlash := strings.LastIndex(connStr, "/")
-	if lastSlash == -1 {
-		return fmt.Errorf("invalid PostgreSQL connection string: no database specified")
-	}
-
-	beforeDB := connStr[:lastSlash+1]
-	afterSlash := connStr[lastSlash+1:]
-
-	// Extract database name and params
-	questionMark := strings.Index(afterSlash, "?")
-	var dbName, params string
+// buildConnectionString combines base connection string with database name
+// baseConn format: postgres://user:password@host:port?params
+// Returns: postgres://user:password@host:port/dbname?params
+func buildConnectionString(baseConn, dbName string) string {
+	// Find where to insert the database name (before ? if exists)
+	questionMark := strings.Index(baseConn, "?")
 	if questionMark != -1 {
-		dbName = afterSlash[:questionMark]
-		params = afterSlash[questionMark:]
-	} else {
-		dbName = afterSlash
-		params = ""
+		// Has query params: insert db name before ?
+		return baseConn[:questionMark] + "/" + dbName + baseConn[questionMark:]
 	}
+	// No query params: just append /dbname
+	return baseConn + "/" + dbName
+}
 
+// ensureDatabaseExists creates the database if it doesn't already exist
+func ensureDatabaseExists(ctx context.Context, baseConn, dbName string) error {
 	if dbName == "" {
-		return fmt.Errorf("invalid PostgreSQL connection string: empty database name")
+		return fmt.Errorf("database name cannot be empty")
 	}
 
-	// Connect to the 'postgres' database to check/create the target database
-	postgresConnStr := beforeDB + "postgres" + params
+	// Connect to the 'postgres' system database
+	postgresConnStr := buildConnectionString(baseConn, "postgres")
 
 	db, err := sql.Open("postgres", postgresConnStr)
 	if err != nil {
