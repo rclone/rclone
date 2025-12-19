@@ -87,20 +87,14 @@ func init() {
 				Name:     config.ConfigEncoding,
 				Help:     config.ConfigEncodingHelp,
 				Advanced: true,
-				// 123pan has similar restrictions to OneDrive/Windows:
-				// - Reserved characters: \ / : * ? " < > |
-				// - Names can't begin with space, period, tilde, or control chars
-				// - Names can't end with space, period, or control chars
+				// Encoding is identical to OneDrive
 				Default: (encoder.Display |
 					encoder.EncodeBackSlash |
 					encoder.EncodeLeftSpace |
-					encoder.EncodeLeftPeriod |
 					encoder.EncodeLeftTilde |
-					encoder.EncodeLeftCrLfHtVt |
-					encoder.EncodeRightSpace |
 					encoder.EncodeRightPeriod |
-					encoder.EncodeRightCrLfHtVt |
-					encoder.EncodeWin | // :?"*<>|
+					encoder.EncodeRightSpace |
+					encoder.EncodeWin |
 					encoder.EncodeInvalidUtf8),
 			},
 		},
