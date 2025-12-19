@@ -175,6 +175,23 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 	return resp, err
 }
 
+// readResponseBody reads the response body, decompressing if gzip-encoded
+func readResponseBody(resp *http.Response) ([]byte, error) {
+	var reader io.Reader = resp.Body
+
+	// Check if response is gzip-compressed
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzReader.Close()
+		reader = gzReader
+	}
+
+	return io.ReadAll(reader)
+}
+
 // GetUploadToken obtains an upload token from Google Photos
 func (api *GPhotoAPI) GetUploadToken(ctx context.Context, sha1HashB64 string, fileSize int64) (string, error) {
 	// Encode protobuf message matching Python implementation
@@ -238,7 +255,7 @@ func (api *GPhotoAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte
 	defer resp.Body.Close()
 
 	// Parse protobuf response
-	respBody, err := io.ReadAll(resp.Body)
+	respBody, err := readResponseBody(resp)
 	if err != nil {
 		return "", err
 	}
@@ -281,7 +298,7 @@ func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, conten
 	defer resp.Body.Close()
 
 	// Read the response body - this is needed for commit
-	respBody, err := io.ReadAll(resp.Body)
+	respBody, err := readResponseBody(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -352,8 +369,8 @@ func (api *GPhotoAPI) CommitUpload(ctx context.Context, uploadResponse []byte, f
 	}
 	defer resp.Body.Close()
 
-	// Parse protobuf response
-	respBody, err := io.ReadAll(resp.Body)
+	// Parse protobuf response (may be gzip compressed)
+	respBody, err := readResponseBody(resp)
 	if err != nil {
 		return "", err
 	}
@@ -636,7 +653,7 @@ func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (stri
 	defer resp.Body.Close()
 
 	// Parse protobuf response
-	respBody, err := io.ReadAll(resp.Body)
+	respBody, err := readResponseBody(resp)
 	if err != nil {
 		return "", err
 	}
