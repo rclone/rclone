@@ -314,7 +314,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Perform initial sync if needed
 	if opt.User != "" {
 		fs.Infof(f, "Checking sync state for user: %s", opt.User)
-		state, err := f.GetSyncState(ctx, opt.User)
+		state, err := f.GetSyncState(ctx)
 		if err != nil {
 			fs.Errorf(f, "Failed to get sync state: %v", err)
 		} else if !state.InitComplete {

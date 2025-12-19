@@ -48,7 +48,6 @@ type MediaItem struct {
 	IsMicroVideo             bool
 	MicroVideoWidth          sql.NullInt64
 	MicroVideoHeight         sql.NullInt64
-	UserName                 string
 	ParsedName               sql.NullString
 	DownloadURL              sql.NullString
 	ThumbnailURL             sql.NullString

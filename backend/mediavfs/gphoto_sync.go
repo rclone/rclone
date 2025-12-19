@@ -54,7 +54,6 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 			is_micro_video BOOLEAN,
 			micro_video_width INTEGER,
 			micro_video_height INTEGER,
-			user_name TEXT,
 			name TEXT,
 			path TEXT
 		)
@@ -65,15 +64,15 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 		return fmt.Errorf("failed to create %s table: %w", f.opt.TableName, err)
 	}
 
-	// Create state table for tracking sync progress
+	// Create state table for tracking sync progress (single row for this database/user)
 	_, err = f.db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS state (
-			id SERIAL PRIMARY KEY,
+			id INTEGER PRIMARY KEY DEFAULT 1,
 			state_token TEXT,
 			page_token TEXT,
 			init_complete BOOLEAN DEFAULT FALSE,
-			user_name TEXT UNIQUE,
-			last_sync_time BIGINT
+			last_sync_time BIGINT,
+			CHECK (id = 1)
 		)
 	`)
 	if err != nil {
@@ -82,12 +81,11 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 
 	// Create indices for better performance
 	indexQuery := fmt.Sprintf(`
-		CREATE INDEX IF NOT EXISTS idx_%s_user_name ON %s(user_name);
 		CREATE INDEX IF NOT EXISTS idx_%s_file_name ON %s(file_name);
 		CREATE INDEX IF NOT EXISTS idx_%s_dedup_key ON %s(dedup_key);
 		CREATE INDEX IF NOT EXISTS idx_%s_size_timestamp ON %s(size_bytes, utc_timestamp);
 	`, f.opt.TableName, f.opt.TableName, f.opt.TableName, f.opt.TableName,
-		f.opt.TableName, f.opt.TableName, f.opt.TableName, f.opt.TableName)
+		f.opt.TableName, f.opt.TableName)
 
 	_, err = f.db.ExecContext(ctx, indexQuery)
 	if err != nil {
@@ -106,21 +104,21 @@ type SyncState struct {
 	LastSyncTime int64
 }
 
-// GetSyncState retrieves the sync state for a user
-func (f *Fs) GetSyncState(ctx context.Context, user string) (*SyncState, error) {
+// GetSyncState retrieves the sync state (single row for this database)
+func (f *Fs) GetSyncState(ctx context.Context) (*SyncState, error) {
 	var state SyncState
 	err := f.db.QueryRowContext(ctx, `
 		SELECT state_token, page_token, init_complete, COALESCE(last_sync_time, 0)
 		FROM state
-		WHERE user_name = $1
-	`, user).Scan(&state.StateToken, &state.PageToken, &state.InitComplete, &state.LastSyncTime)
+		WHERE id = 1
+	`).Scan(&state.StateToken, &state.PageToken, &state.InitComplete, &state.LastSyncTime)
 
 	if err == sql.ErrNoRows {
-		// Create initial state
+		// Create initial state (id will default to 1)
 		_, err = f.db.ExecContext(ctx, `
-			INSERT INTO state (state_token, page_token, init_complete, user_name, last_sync_time)
-			VALUES ('', '', FALSE, $1, 0)
-		`, user)
+			INSERT INTO state (state_token, page_token, init_complete, last_sync_time)
+			VALUES ('', '', FALSE, 0)
+		`)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create initial state: %w", err)
 		}
@@ -139,13 +137,13 @@ func (f *Fs) GetSyncState(ctx context.Context, user string) (*SyncState, error) 
 	return &state, nil
 }
 
-// UpdateSyncState updates the sync state for a user
-func (f *Fs) UpdateSyncState(ctx context.Context, user string, stateToken, pageToken string, initComplete bool) error {
+// UpdateSyncState updates the sync state
+func (f *Fs) UpdateSyncState(ctx context.Context, stateToken, pageToken string, initComplete bool) error {
 	_, err := f.db.ExecContext(ctx, `
 		UPDATE state
 		SET state_token = $1, page_token = $2, init_complete = $3, last_sync_time = $4
-		WHERE user_name = $5
-	`, stateToken, pageToken, initComplete, time.Now().Unix(), user)
+		WHERE id = 1
+	`, stateToken, pageToken, initComplete, time.Now().Unix())
 
 	if err != nil {
 		return fmt.Errorf("failed to update sync state: %w", err)
@@ -176,11 +174,11 @@ func (f *Fs) InsertMediaItems(ctx context.Context, items []MediaItem) error {
 			is_original_quality, latitude, longitude, location_name, location_id,
 			is_edited, make, model, aperture, shutter_speed, iso, focal_length,
 			duration, capture_frame_rate, encoded_frame_rate, is_micro_video,
-			micro_video_width, micro_video_height, user_name
+			micro_video_width, micro_video_height
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
 			$17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-			$31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41
+			$31, $32, $33, $34, $35, $36, $37, $38, $39, $40
 		)
 		ON CONFLICT (media_key) DO UPDATE SET
 			file_name = EXCLUDED.file_name,
@@ -211,7 +209,7 @@ func (f *Fs) InsertMediaItems(ctx context.Context, items []MediaItem) error {
 			item.LocationID, item.IsEdited, item.Make, item.Model, item.Aperture,
 			item.ShutterSpeed, item.ISO, item.FocalLength, item.Duration,
 			item.CaptureFrameRate, item.EncodedFrameRate, item.IsMicroVideo,
-			item.MicroVideoWidth, item.MicroVideoHeight, item.UserName,
+			item.MicroVideoWidth, item.MicroVideoHeight,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to insert media item %s: %w", item.MediaKey, err)
@@ -257,7 +255,7 @@ func (f *Fs) SyncFromGooglePhotos(ctx context.Context, user string) error {
 	}
 
 	// Get current sync state
-	state, err := f.GetSyncState(ctx, user)
+	state, err := f.GetSyncState(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get sync state: %w", err)
 	}
@@ -312,7 +310,7 @@ func (f *Fs) initialSync(ctx context.Context, api *GPhotoAPI, user string) error
 	}
 
 	// Save state after initial fetch
-	if err := f.UpdateSyncState(ctx, user, stateToken, pageToken, false); err != nil {
+	if err := f.UpdateSyncState(ctx, stateToken, pageToken, false); err != nil {
 		return fmt.Errorf("failed to update sync state: %w", err)
 	}
 
@@ -325,7 +323,7 @@ func (f *Fs) initialSync(ctx context.Context, api *GPhotoAPI, user string) error
 	}
 
 	// Mark initial sync as complete
-	if err := f.UpdateSyncState(ctx, user, stateToken, "", true); err != nil {
+	if err := f.UpdateSyncState(ctx, stateToken, "", true); err != nil {
 		return fmt.Errorf("failed to mark sync complete: %w", err)
 	}
 
@@ -366,7 +364,7 @@ func (f *Fs) processInitPages(ctx context.Context, api *GPhotoAPI, user string, 
 		}
 
 		// Update ONLY page_token (keep original state_token from step 1)
-		if err := f.UpdateSyncState(ctx, user, stateToken, nextPageToken, false); err != nil {
+		if err := f.UpdateSyncState(ctx, stateToken, nextPageToken, false); err != nil {
 			return fmt.Errorf("failed to update sync state: %w", err)
 		}
 
@@ -432,7 +430,7 @@ func (f *Fs) incrementalSync(ctx context.Context, api *GPhotoAPI, user string, s
 	}
 
 	// Update state
-	if err := f.UpdateSyncState(ctx, user, newStateToken, "", true); err != nil {
+	if err := f.UpdateSyncState(ctx, newStateToken, "", true); err != nil {
 		return fmt.Errorf("failed to update sync state: %w", err)
 	}
 
@@ -457,7 +455,6 @@ func parseLibraryResponse(response []byte, user string) (stateToken, pageToken s
 
 	// Set user_name for all items
 	for i := range mediaItems {
-		mediaItems[i].UserName = user
 	}
 
 	return newStateToken, newPageToken, mediaItems, mediaKeysToDelete, nil
