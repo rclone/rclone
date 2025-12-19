@@ -1377,13 +1377,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // Open opens the file for reading with URL caching and ETag support
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	// Get the download URL from Google Photos API
-	initialURL, err := o.fs.api.GetDownloadURL(ctx, o.mediaKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get download URL: %w", err)
-	}
-
-	// Check if we have cached metadata for this URL
+	// Check if we have cached metadata for this media key FIRST
 	cacheKey := o.mediaKey
 	cachedMeta, found := o.fs.urlCache.get(cacheKey)
 
@@ -1391,13 +1385,21 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	var fileSize int64
 
 	if found {
-		// Use cached metadata
+		// Use cached metadata - skip API call entirely
 		resolvedURL = cachedMeta.resolvedURL
 		etag = cachedMeta.etag
 		fileSize = cachedMeta.size
-		fs.Infof(nil, "mediavfs: using cached URL and ETag for %s", o.mediaKey)
+		fs.Infof(nil, "mediavfs: using cached URL for %s (TTL cache hit)", o.mediaKey)
 	} else {
-		// First time accessing this file - resolve URL and get ETag via HEAD request
+		// Cache miss - need to get download URL from API
+		fs.Infof(nil, "mediavfs: cache miss for %s, fetching download URL from API", o.mediaKey)
+
+		initialURL, err := o.fs.api.GetDownloadURL(ctx, o.mediaKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get download URL: %w", err)
+		}
+
+		// Resolve URL and get ETag via HEAD request
 		fs.Infof(nil, "mediavfs: resolving URL and fetching metadata for %s", o.mediaKey)
 
 		// Retry HEAD request with exponential backoff for transient errors
@@ -1453,7 +1455,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			size:        fileSize,
 		})
 
-		fs.Infof(nil, "mediavfs: cached URL and ETag=%s for %s", etag, o.mediaKey)
+		fs.Infof(nil, "mediavfs: cached URL for %s (TTL: %v)", o.mediaKey, cacheTTL)
 	}
 
 	// Now make the actual GET request to the resolved URL with retry logic
