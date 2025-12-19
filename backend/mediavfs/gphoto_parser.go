@@ -294,10 +294,31 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	// Fallback: try to get dedup_key from field 2->13->1
 	if item.DedupKey == "" {
 		if field13, ok := field2["13"].(map[string]interface{}); ok {
+			// Try as []byte first
 			if hashBytes, ok := field13["1"].([]byte); ok {
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
+			} else if hashInterface, ok := field13["1"].([]interface{}); ok {
+				// Convert []interface{} to []byte
+				hashBytes := make([]byte, len(hashInterface))
+				for i, v := range hashInterface {
+					switch val := v.(type) {
+					case uint64:
+						hashBytes[i] = byte(val)
+					case int64:
+						hashBytes[i] = byte(val)
+					}
+				}
+				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
+			} else if field13["1"] != nil {
+				// Debug: log unexpected type
+				fmt.Printf("DEBUG: dedup_key field 2->13->1 has unexpected type for media_key %s: type=%T, value=%v\n", item.MediaKey, field13["1"], field13["1"])
 			}
 		}
+	}
+
+	// Final debug: warn if dedup_key is still empty
+	if item.DedupKey == "" {
+		fmt.Printf("DEBUG: dedup_key is empty for media_key %s. field2[21]=%v, field2[13]=%v\n", item.MediaKey, field2["21"], field2["13"])
 	}
 
 	// Field 2->1->1: collection_id (REQUIRED)
