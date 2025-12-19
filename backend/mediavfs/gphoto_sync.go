@@ -442,7 +442,8 @@ func (f *Fs) incrementalSync(ctx context.Context, api *GPhotoAPI, user string, s
 // parseLibraryResponse parses the Google Photos library response using protobuf decoding
 func parseLibraryResponse(response []byte, user string) (stateToken, pageToken string, items []MediaItem, deletions []string, err error) {
 	// Decode protobuf response to map structure
-	data, err := DecodeToMap(response)
+	// Use DecodeDynamicMessage which keeps bytes as bytes (doesn't recursively decode)
+	data, err := DecodeDynamicMessage(response)
 	if err != nil {
 		return "", "", nil, nil, fmt.Errorf("failed to decode protobuf response: %w", err)
 	}
