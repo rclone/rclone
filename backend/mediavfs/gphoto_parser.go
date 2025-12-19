@@ -199,6 +199,52 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 	return items, nil
 }
 
+// extractFileName extracts the filename from field 2->4
+// Field 2->4 can be either:
+//  1. A string (direct filename)
+//  2. A map with field 14 containing the filename (as string or byte array)
+func extractFileName(field24 interface{}, mediaKey string) (string, error) {
+	// Case 1: Direct string
+	if fileName, ok := field24.(string); ok {
+		return fileName, nil
+	}
+
+	// Case 2: Nested map with field 14
+	if field24Map, ok := field24.(map[string]interface{}); ok {
+		// Try to get field 14 from the nested map
+		if field14, exists := field24Map["14"]; exists {
+			// Field 14 can be a string or byte array
+			if fileName, ok := field14.(string); ok {
+				return fileName, nil
+			}
+
+			// Field 14 might be a byte array []interface{} that needs conversion
+			if byteArray, ok := field14.([]interface{}); ok {
+				// Convert []interface{} to string
+				bytes := make([]byte, 0, len(byteArray))
+				for _, b := range byteArray {
+					switch v := b.(type) {
+					case uint64:
+						bytes = append(bytes, byte(v))
+					case int64:
+						bytes = append(bytes, byte(v))
+					case string:
+						// If it's already a string in the array, append its bytes
+						bytes = append(bytes, []byte(v)...)
+					}
+				}
+				return string(bytes), nil
+			}
+		}
+
+		// If field 14 doesn't exist, try other fields as fallback
+		// Some items might have the filename in a different field
+		return "", fmt.Errorf("field 2->4 is a map but field 14 not found for media_key %s", mediaKey)
+	}
+
+	return "", fmt.Errorf("field 2->4 has unexpected type %T for media_key %s", field24, mediaKey)
+}
+
 func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	item := MediaItem{}
 
@@ -215,16 +261,10 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 		return item, fmt.Errorf("missing required field 2 in media item %s", item.MediaKey)
 	}
 
-	// Field 2->4: file_name (REQUIRED - must exist and be a string, but can be empty)
-	fileName, ok := field2["4"].(string)
-	if !ok {
-		// Debug: Check what type it actually is
-		if val, exists := field2["4"]; exists {
-			fmt.Printf("DEBUG: field2[\"4\"] exists but wrong type for media_key %s: type=%T, value=%v\n", item.MediaKey, val, val)
-		} else {
-			fmt.Printf("DEBUG: field2[\"4\"] does NOT exist for media_key %s. field2 keys: %v\n", item.MediaKey, getKeys(field2))
-		}
-		return item, fmt.Errorf("missing required field: file_name (field 2->4) for media_key %s", item.MediaKey)
+	// Field 2->4: file_name (REQUIRED - can be string or nested map with field 14)
+	fileName, err := extractFileName(field2["4"], item.MediaKey)
+	if err != nil {
+		return item, err
 	}
 	item.FileName = fileName
 
