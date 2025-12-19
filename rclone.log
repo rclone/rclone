@@ -1131,3 +1131,19 @@
 2025/12/19 05:02:05 INFO  : Media VFS root '': Syncing 500 media items from page
 2025/12/19 05:02:07 INFO  : Media VFS root '': Syncing 372 media items from page
 2025/12/19 05:02:07 INFO  : Media VFS root '': Initial sync completed for user alicuxi1980
+2025/12/19 05:02:52 INFO  : Media VFS root '': List cached  with 41138 entries
+2025/12/19 05:07:37 INFO  : gphoto: obtained auth token for user alicuxi1980: ya29.m.C...Mc2hRMAA
+2025/12/19 05:07:37 ERROR : gphoto: Failed to decode GetDownloadURL response: unknown wire type: 7, first_bytes=1f8b08000000000002ff955439cb2c0901f45b56743f0d6455585e68e6f2665e5fd3c76a60dfc7f4357dcc4c3742d3f77d9f
+2025/12/19 05:07:37 ERROR : IO error: failed to get download URL: unknown wire type: 7
+2025/12/19 05:07:38 ERROR : gphoto: Failed to decode GetDownloadURL response: unknown wire type: 7, first_bytes=1f8b08000000000002ff955439cfeb6819e51b0d82f9a0400348a35bd231bace7dbddb03055ee2c4cbe72576bc0929b2e3dd
+2025/12/19 05:07:38 ERROR : IO error: failed to get download URL: unknown wire type: 7
+2025/12/19 05:07:38 ERROR : gphoto: Failed to decode GetDownloadURL response: unknown wire type: 7, first_bytes=1f8b08000000000002ff95543bafec6601cc8982480e14280129ba251dd1ddbdfefc58db81023fd6af5def7e7ead1f42b2bc
+2025/12/19 05:07:38 ERROR : IO error: failed to get download URL: unknown wire type: 7
+2025/12/19 05:07:38 ERROR : gphoto: Failed to decode GetDownloadURL response: unknown wire type: 7, first_bytes=1f8b08000000000002ff9594bbcbf46819c67d9715dd570b591596afb473f9325fce87d5c21c26996426c9243393c3208427
+2025/12/19 05:07:38 ERROR : IO error: failed to get download URL: unknown wire type: 7
+2025/12/19 05:07:38 ERROR : gphoto: Failed to decode GetDownloadURL response: unknown wire type: 7, first_bytes=1f8b08000000000002ff9554b9cfec7601e48b82201f14288014bd928ee8799ffdf31d28f0b56b7b7daf6f2159bed7eb737d
+2025/12/19 05:07:38 ERROR : IO error: failed to get download URL: unknown wire type: 7
+2025/12/19 05:07:39 ERROR : gphoto: Failed to decode GetDownloadURL response: unknown wire type: 7, first_bytes=1f8b08000000000002ff955439cb2c0901f45b56743f0d6455585e68e6f2665edfc76ae0f435dd3d3d3d7d5f084d4fdff731
+2025/12/19 05:07:39 ERROR : IO error: failed to get download URL: unknown wire type: 7
+2025/12/19 05:07:39 ERROR : gphoto: Failed to decode GetDownloadURL response: unknown wire type: 7, first_bytes=1f8b08000000000002ff955439cfec0615e58b82205f28a24024f44aba44cff3bc2f40813d335ec6fb321edb8a64791defcb
+2025/12/19 05:07:39 ERROR : IO error: failed to get download URL: unknown wire type: 7
