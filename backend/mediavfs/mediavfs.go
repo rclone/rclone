@@ -239,6 +239,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	// Ensure the database exists (create if needed)
+	if err := ensureDatabaseExists(ctx, opt.DBConnection); err != nil {
+		return nil, fmt.Errorf("failed to ensure database exists: %w", err)
+	}
+
 	// Connect to PostgreSQL using the connection string directly
 	// All users share the same database, distinguished by user_name column
 	db, err := sql.Open("postgres", opt.DBConnection)
@@ -379,6 +384,64 @@ func extractPathAndName(fileName string) (path string, name string) {
 		return fileName[:lastSlash], fileName[lastSlash+1:]
 	}
 	return "", fileName
+}
+
+// ensureDatabaseExists creates the database if it doesn't already exist
+func ensureDatabaseExists(ctx context.Context, connStr string) error {
+	// Parse the connection string to extract the database name
+	// Format: postgres://user:password@host:port/database?params
+	lastSlash := strings.LastIndex(connStr, "/")
+	if lastSlash == -1 {
+		return fmt.Errorf("invalid PostgreSQL connection string: no database specified")
+	}
+
+	beforeDB := connStr[:lastSlash+1]
+	afterSlash := connStr[lastSlash+1:]
+
+	// Extract database name and params
+	questionMark := strings.Index(afterSlash, "?")
+	var dbName, params string
+	if questionMark != -1 {
+		dbName = afterSlash[:questionMark]
+		params = afterSlash[questionMark:]
+	} else {
+		dbName = afterSlash
+		params = ""
+	}
+
+	if dbName == "" {
+		return fmt.Errorf("invalid PostgreSQL connection string: empty database name")
+	}
+
+	// Connect to the 'postgres' database to check/create the target database
+	postgresConnStr := beforeDB + "postgres" + params
+
+	db, err := sql.Open("postgres", postgresConnStr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to postgres database: %w", err)
+	}
+	defer db.Close()
+
+	// Check if database exists
+	var exists bool
+	query := "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)"
+	err = db.QueryRowContext(ctx, query, dbName).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("failed to check if database exists: %w", err)
+	}
+
+	if !exists {
+		// Create the database
+		// Note: Database names cannot be parameterized in CREATE DATABASE
+		createQuery := fmt.Sprintf("CREATE DATABASE %q", dbName)
+		_, err = db.ExecContext(ctx, createQuery)
+		if err != nil {
+			return fmt.Errorf("failed to create database %s: %w", dbName, err)
+		}
+		fs.Infof(nil, "Created database: %s", dbName)
+	}
+
+	return nil
 }
 
 // List the objects and directories in dir into entries
