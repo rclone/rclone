@@ -53,15 +53,6 @@ type MediaItem struct {
 	ThumbnailURL             sql.NullString
 }
 
-// Helper function to get map keys for debugging
-func getKeys(m map[string]interface{}) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
 // ParseDbUpdate parses the library state response from Google Photos
 func ParseDbUpdate(data map[string]interface{}) (stateToken string, nextPageToken string, mediaItems []MediaItem, mediaKeysToDelete []string, err error) {
 	// Get top-level field 1
@@ -74,85 +65,19 @@ func ParseDbUpdate(data map[string]interface{}) (stateToken string, nextPageToke
 		return "", "", nil, nil, fmt.Errorf("invalid response structure: field 1 is not a map (type: %T)", data["1"])
 	}
 
-	// Debug: Log field1 structure
-	fmt.Printf("DEBUG ParseDbUpdate: field1 keys = %v\n", getKeys(field1))
-	fmt.Printf("DEBUG ParseDbUpdate: field1 has %d keys\n", len(field1))
-
-	// Debug: Check types of ALL fields in field1
-	for _, key := range []string{"1", "2", "3", "4", "5", "6", "9", "12"} {
-		if val, ok := field1[key]; ok {
-			switch v := val.(type) {
-			case []interface{}:
-				fmt.Printf("DEBUG ParseDbUpdate: field1[\"%s\"] = ARRAY[%d]\n", key, len(v))
-			case map[string]interface{}:
-				fmt.Printf("DEBUG ParseDbUpdate: field1[\"%s\"] = MAP[%d]\n", key, len(v))
-			case string:
-				fmt.Printf("DEBUG ParseDbUpdate: field1[\"%s\"] = string(%d chars)\n", key, len(v))
-			default:
-				fmt.Printf("DEBUG ParseDbUpdate: field1[\"%s\"] = %T\n", key, v)
-			}
-		}
-	}
-
 	// Extract tokens
 	if token, ok := field1["6"].(string); ok {
 		stateToken = token
-		fmt.Printf("DEBUG ParseDbUpdate: stateToken = %q (length=%d)\n", token, len(token))
 	}
 	if token, ok := field1["1"].(string); ok {
 		nextPageToken = token
-		fmt.Printf("DEBUG ParseDbUpdate: nextPageToken = %q (length=%d)\n", token, len(token))
 	}
 
 	// Parse media items (field 2)
 	if field2Data, ok := field1["2"]; ok {
-		// DETAILED DEBUG: What is field2Data exactly?
-		switch v := field2Data.(type) {
-		case map[string]interface{}:
-			fmt.Printf("DEBUG ParseDbUpdate: field2 is a SINGLE MAP (1 media item)\n")
-			fmt.Printf("DEBUG ParseDbUpdate: field2 MAP keys: %v\n", getKeys(v))
-			// This is expected behavior when there's only 1 item
-		case []interface{}:
-			fmt.Printf("DEBUG ParseDbUpdate: field2 is an ARRAY with %d items (GOOD!)\n", len(v))
-			if len(v) > 0 {
-				switch first := v[0].(type) {
-				case map[string]interface{}:
-					fmt.Printf("DEBUG ParseDbUpdate: first item is MAP with keys: %v\n", getKeys(first))
-				default:
-					fmt.Printf("DEBUG ParseDbUpdate: first item type: %T\n", first)
-				}
-			}
-		default:
-			fmt.Printf("DEBUG ParseDbUpdate: field2 has unexpected type: %T\n", v)
-		}
-
 		mediaItems, err = parseMediaItems(field2Data)
 		if err != nil {
 			return "", "", nil, nil, fmt.Errorf("failed to parse media items: %w", err)
-		}
-		fmt.Printf("DEBUG ParseDbUpdate: parseMediaItems returned %d media items\n", len(mediaItems))
-
-		// Extra verification: show first media item's key
-		if len(mediaItems) > 0 {
-			fmt.Printf("DEBUG ParseDbUpdate: first media_key: %q\n", mediaItems[0].MediaKey)
-		}
-	}
-
-	// Check field 3 (collections?) and field 4
-	if field3Data, ok := field1["3"]; ok {
-		switch v := field3Data.(type) {
-		case []interface{}:
-			fmt.Printf("DEBUG ParseDbUpdate: field 3 has %d items (SKIPPING - collections?)\n", len(v))
-		case map[string]interface{}:
-			fmt.Printf("DEBUG ParseDbUpdate: field 3 is a map with %d keys (SKIPPING)\n", len(v))
-		}
-	}
-	if field4Data, ok := field1["4"]; ok {
-		switch v := field4Data.(type) {
-		case []interface{}:
-			fmt.Printf("DEBUG ParseDbUpdate: field 4 has %d items (WHAT IS THIS?)\n", len(v))
-		default:
-			fmt.Printf("DEBUG ParseDbUpdate: field 4 type: %T\n", v)
 		}
 	}
 
@@ -309,16 +234,8 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 					}
 				}
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
-			} else if field13["1"] != nil {
-				// Debug: log unexpected type
-				fmt.Printf("DEBUG: dedup_key field 2->13->1 has unexpected type for media_key %s: type=%T, value=%v\n", item.MediaKey, field13["1"], field13["1"])
 			}
 		}
-	}
-
-	// Final debug: warn if dedup_key is still empty
-	if item.DedupKey == "" {
-		fmt.Printf("DEBUG: dedup_key is empty for media_key %s. field2[21]=%v, field2[13]=%v\n", item.MediaKey, field2["21"], field2["13"])
 	}
 
 	// Field 2->1->1: collection_id (REQUIRED)
