@@ -169,9 +169,9 @@ func (f *Fs) initUserLevel(ctx context.Context, forceRefresh bool) error {
 	// Set QPS limits based on VIP status
 	f.setQPSLimits(vipLevel)
 	if f.isVip {
-		fs.Infof(f, "VIP user detected (level %d), using higher QPS limits", f.vipLevel)
+		fs.Debugf(f, "VIP user detected (level %d), using higher QPS limits", f.vipLevel)
 	} else {
-		fs.Infof(f, "Free user detected, using standard QPS limits")
+		fs.Debugf(f, "Free user detected, using standard QPS limits")
 	}
 
 	// Initialize per-API pacers
@@ -220,14 +220,13 @@ func (f *Fs) callAPI(ctx context.Context, opts *rest.Opts, request interface{}, 
 
 	p := f.getPacer(pacerName)
 	retryToken := true
-	retryVipRefresh := true
 	apiRetryCount := 0
 
 	for {
 		err := p.Call(func() (bool, error) {
 			resp, err := f.srv.CallJSON(ctx, opts, request, response)
-			if resp != nil && resp.StatusCode == 429 && retryVipRefresh {
-				retryVipRefresh = false
+			if resp != nil && resp.StatusCode == 429 && !f.vipRefreshed {
+				f.vipRefreshed = true
 				fs.Debugf(f, "HTTP rate limit hit (429), refreshing VIP level...")
 				_ = f.initUserLevel(ctx, true)
 			}
@@ -251,7 +250,7 @@ func (f *Fs) callAPI(ctx context.Context, opts *rest.Opts, request interface{}, 
 			if apiRetryCount > maxAPIRetries {
 				return fmt.Errorf("API rate limit exceeded after %d retries: %s (code %d)", maxAPIRetries, message, code)
 			}
-			if err := f.handleRateLimit(ctx, apiRetryCount, &retryVipRefresh); err != nil {
+			if err := f.handleRateLimit(ctx, apiRetryCount); err != nil {
 				return err
 			}
 			continue
@@ -276,12 +275,12 @@ func (f *Fs) isTokenError(code int, message string) bool {
 }
 
 // handleRateLimit handles API rate limit with exponential backoff
-func (f *Fs) handleRateLimit(ctx context.Context, retryCount int, retryVipRefresh *bool) error {
+func (f *Fs) handleRateLimit(ctx context.Context, retryCount int) error {
 	retryDelay := calculateRetryDelay(retryCount-1, baseRetryDelay, maxRetryDelay)
 	fs.Debugf(f, "API rate limit hit (429), retry %d/%d after %v...", retryCount, maxAPIRetries, retryDelay)
 
-	if retryCount == 1 && *retryVipRefresh {
-		*retryVipRefresh = false
+	if retryCount == 1 && !f.vipRefreshed {
+		f.vipRefreshed = true
 		_ = f.initUserLevel(ctx, true)
 	}
 
