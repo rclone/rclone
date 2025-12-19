@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -65,13 +64,13 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 	}
 
 	// Create state table for tracking sync progress (one row per user)
+	// Matches Python schema - no last_sync_time column
 	_, err = f.db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS state (
 			id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 			state_token TEXT,
 			page_token TEXT,
 			init_complete BOOLEAN DEFAULT FALSE,
-			last_sync_time BIGINT,
 			user_name TEXT UNIQUE
 		)
 	`)
@@ -101,23 +100,22 @@ type SyncState struct {
 	StateToken   string
 	PageToken    string
 	InitComplete bool
-	LastSyncTime int64
 }
 
 // GetSyncState retrieves the sync state for the current user
 func (f *Fs) GetSyncState(ctx context.Context) (*SyncState, error) {
 	var state SyncState
 	err := f.db.QueryRowContext(ctx, `
-		SELECT state_token, page_token, init_complete, COALESCE(last_sync_time, 0)
+		SELECT state_token, page_token, init_complete
 		FROM state
 		WHERE user_name = $1
-	`, f.opt.User).Scan(&state.StateToken, &state.PageToken, &state.InitComplete, &state.LastSyncTime)
+	`, f.opt.User).Scan(&state.StateToken, &state.PageToken, &state.InitComplete)
 
 	if err == sql.ErrNoRows {
 		// Create initial state for this user
 		_, err = f.db.ExecContext(ctx, `
-			INSERT INTO state (state_token, page_token, init_complete, last_sync_time, user_name)
-			VALUES ('', '', FALSE, 0, $1)
+			INSERT INTO state (state_token, page_token, init_complete, user_name)
+			VALUES ('', '', FALSE, $1)
 			ON CONFLICT (user_name) DO NOTHING
 		`, f.opt.User)
 		if err != nil {
@@ -127,7 +125,6 @@ func (f *Fs) GetSyncState(ctx context.Context) (*SyncState, error) {
 			StateToken:   "",
 			PageToken:    "",
 			InitComplete: false,
-			LastSyncTime: 0,
 		}, nil
 	}
 
@@ -142,9 +139,9 @@ func (f *Fs) GetSyncState(ctx context.Context) (*SyncState, error) {
 func (f *Fs) UpdateSyncState(ctx context.Context, stateToken, pageToken string, initComplete bool) error {
 	_, err := f.db.ExecContext(ctx, `
 		UPDATE state
-		SET state_token = $1, page_token = $2, init_complete = $3, last_sync_time = $4
-		WHERE user_name = $5
-	`, stateToken, pageToken, initComplete, time.Now().Unix(), f.opt.User)
+		SET state_token = $1, page_token = $2, init_complete = $3
+		WHERE user_name = $4
+	`, stateToken, pageToken, initComplete, f.opt.User)
 
 	if err != nil {
 		return fmt.Errorf("failed to update sync state: %w", err)

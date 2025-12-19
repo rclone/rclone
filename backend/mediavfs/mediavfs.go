@@ -338,7 +338,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				}
 			}()
 		} else {
-			fs.Infof(f, "User %s already synced (last sync: %d)", opt.User, state.LastSyncTime)
+			fs.Infof(f, "User %s already synced", opt.User)
 			// Start background sync immediately if already synced and auto_sync is enabled
 			if opt.AutoSync {
 				f.startBackgroundSync()
