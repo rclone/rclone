@@ -267,11 +267,24 @@ func extractFileName(field24 interface{}, mediaKey string) (string, error) {
 			}
 		}
 
-		// Try field 6
+		// Try field 6 - this is often where the filename is
 		if field6, exists := field24Map["6"]; exists {
+			fs.Infof(nil, "mediavfs: field2[4][6] for %s: type=%T", mediaKey, field6)
 			if fileName, ok := asString(field6); ok && fileName != "" {
 				fs.Infof(nil, "mediavfs: Found filename in field2[4][6] for %s: %s", mediaKey, fileName)
 				return fileName, nil
+			}
+			// Try as nested map
+			if nestedMap, ok := field6.(map[string]interface{}); ok {
+				fs.Infof(nil, "mediavfs: field2[4][6] is nested map with keys=%v", getMapKeys(nestedMap))
+				for _, key := range []string{"1", "2", "6", "14"} {
+					if val, exists := nestedMap[key]; exists {
+						if fileName, ok := asString(val); ok && fileName != "" {
+							fs.Infof(nil, "mediavfs: Found filename in field2[4][6][%s]: %s", key, fileName)
+							return fileName, nil
+						}
+					}
+				}
 			}
 		}
 
