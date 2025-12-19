@@ -202,6 +202,9 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 // Field 2->4 should be raw bytes containing the filename string
 // In rare cases it might be a nested message with field 14 containing the filename
 func extractFileName(field24 interface{}, mediaKey string) (string, error) {
+	// Debug: log the type of field24 for troubleshooting
+	fs.Debugf(nil, "mediavfs: extractFileName for %s: field24 type=%T", mediaKey, field24)
+
 	// Case 1: Already a string (rare but possible)
 	if fileName, ok := field24.(string); ok && fileName != "" {
 		return fileName, nil
@@ -296,6 +299,9 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	if !ok {
 		return item, fmt.Errorf("missing required field 2 in media item %s", item.MediaKey)
 	}
+
+	// Debug: log field2 keys and field2["4"] type
+	fs.Debugf(nil, "mediavfs: parseMediaItem %s: field2 keys=%v, field2[4] type=%T", mediaKey, getMapKeys(field2), field2["4"])
 
 	// Field 2->4: file_name (REQUIRED - can be string or nested map with field 14)
 	fileName, err := extractFileName(field2["4"], item.MediaKey)
