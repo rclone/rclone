@@ -53,6 +53,7 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 			is_micro_video BOOLEAN,
 			micro_video_width INTEGER,
 			micro_video_height INTEGER,
+			user_name TEXT,
 			name TEXT,
 			path TEXT
 		)
@@ -62,6 +63,12 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create %s table: %w", f.opt.TableName, err)
 	}
+
+	// Add user_name column if it doesn't exist (for existing tables)
+	alterQuery := fmt.Sprintf(`
+		ALTER TABLE %s ADD COLUMN IF NOT EXISTS user_name TEXT
+	`, f.opt.TableName)
+	_, _ = f.db.ExecContext(ctx, alterQuery) // Ignore error if column exists
 
 	// Create state table for tracking sync progress (one row per user)
 	// Matches Python schema - no last_sync_time column
