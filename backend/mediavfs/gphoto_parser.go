@@ -348,10 +348,14 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	item.MediaKey = mediaKey
 
 	// Field 2: metadata (REQUIRED)
+	// Log what type d["2"] is before decoding
+	fs.Infof(nil, "mediavfs: parseMediaItem %s: d[2] type=%T", mediaKey, d["2"])
 	field2, ok := asMap(d["2"])
 	if !ok {
 		return item, fmt.Errorf("missing required field 2 in media item %s", item.MediaKey)
 	}
+	// Log what type field2["4"] is after decoding
+	fs.Infof(nil, "mediavfs: parseMediaItem %s: field2[4] type=%T", mediaKey, field2["4"])
 
 	// Field 2->4: file_name (REQUIRED - can be string or nested map with field 14)
 	fileName, err := extractFileName(field2["4"], item.MediaKey)
