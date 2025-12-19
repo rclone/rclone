@@ -91,8 +91,12 @@ func (f *Fs) uploadLargeFile(ctx context.Context, in io.Reader, parentID int64, 
 
 // prepareStreamingUpload calculates MD5 and prepares reader for streaming upload
 func (f *Fs) prepareStreamingUpload(in io.Reader, filename string, size int64) (string, io.Reader, error) {
-	// Check if we can seek
-	if seeker, canSeek := in.(io.Seeker); canSeek {
+	// Unwrap accounting to check if the underlying reader can seek
+	// We need to check the underlying reader because accounting wrappers
+	// implement io.Seeker but may delegate to readers that don't support Seek
+	// (e.g., asyncreader.AsyncReader)
+	unwrapped, wrap := accounting.UnWrap(in)
+	if seeker, canSeek := unwrapped.(io.Seeker); canSeek {
 		fs.Debugf(f, "Calculating MD5 for large file %s (streaming)", filename)
 		hasher := md5.New()
 		n, err := io.Copy(hasher, in)
@@ -105,7 +109,8 @@ func (f *Fs) prepareStreamingUpload(in io.Reader, filename string, size int64) (
 		if _, err = seeker.Seek(0, io.SeekStart); err != nil {
 			return "", nil, fmt.Errorf("failed to seek: %w", err)
 		}
-		return hex.EncodeToString(hasher.Sum(nil)), in, nil
+		// Re-wrap the reader with accounting if it was wrapped before
+		return hex.EncodeToString(hasher.Sum(nil)), wrap(unwrapped), nil
 	}
 
 	// Cannot seek, use RepeatableReader

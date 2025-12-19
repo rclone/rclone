@@ -182,6 +182,7 @@ type Fs struct {
 	tokenMu          *sync.Mutex          // mutex for token refresh
 	tokenExpiry      time.Time            // token expiration time
 	tokenJustRefresh bool                 // flag to indicate token was just refreshed
+	vipRefreshed     bool                 // flag to indicate VIP level was refreshed due to 429
 	uid              uint64               // user ID
 	isVip            bool                 // whether user is VIP
 	vipLevel         int                  // VIP level: 0=free, 1=VIP, 2=SVIP, 3=长期VIP
