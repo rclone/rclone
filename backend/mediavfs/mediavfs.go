@@ -165,9 +165,7 @@ type Fs struct {
 	db          *sql.DB
 	httpClient  *http.Client
 	api         *GPhotoAPI // Google Photos API client for download URLs
-	urlCache    *urlCache
-	virtualDirs map[string]bool // Track virtual directories created in memory
-	vdirMu      sync.RWMutex    // Mutex for virtualDirs
+	urlCache *urlCache
 	// lazyMeta stores metadata loaded asynchronously for large listings
 	lazyMeta map[string]*Object
 	lazyMu   sync.RWMutex
@@ -310,10 +308,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:        root,
 		opt:         *opt,
 		db:          db,
-		httpClient:  customClient,
-		urlCache:    newURLCache(),
-		virtualDirs: make(map[string]bool),
-		lazyMeta:    make(map[string]*Object),
+		httpClient: customClient,
+		urlCache:   newURLCache(),
+		lazyMeta:   make(map[string]*Object),
 		dirCache:    make(map[string]*dirCacheEntry),
 		syncStop:    make(chan struct{}),
 	}
@@ -509,88 +506,32 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Removed in favor of single-user per database model
 
 // listUserFiles lists files and directories for a specific path
-// Filters by user_name to support multi-user single-table model
+// Now uses DB-based folders (type = -1) for much faster directory listing
 func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string) (entries fs.DirEntries, err error) {
 	// Normalize dirPath for comparison
 	dirPath = strings.Trim(dirPath, "/")
 
-	var query string
-	var args []interface{}
+	// Simple query: get all items where path = dirPath
+	// Folders have type = -1, files have type >= 0
+	query := fmt.Sprintf(`
+		SELECT
+			media_key,
+			file_name,
+			COALESCE(name, '') as custom_name,
+			COALESCE(path, '') as custom_path,
+			COALESCE(type, 0) as item_type,
+			COALESCE(size_bytes, 0) as size_bytes,
+			COALESCE(utc_timestamp, 0) as utc_timestamp
+		FROM %s
+		WHERE user_name = $1 AND COALESCE(path, '') = $2
+		ORDER BY type ASC, file_name ASC
+	`, f.opt.TableName)
 
-	if dirPath == "" {
-		// At root directory - we need:
-		// 1. Files at root (path NULL or '')
-		// 2. One file per first-level dir (path without '/')
-		// 3. One file per first-level dir (from nested paths with '/')
-		query = fmt.Sprintf(`
-			(
-				SELECT
-					media_key,
-					file_name,
-					COALESCE(name, '') as custom_name,
-					COALESCE(path, '') as custom_path,
-					size_bytes,
-					utc_timestamp
-				FROM %s
-				WHERE user_name = $1 AND (path IS NULL OR path = '')
-			)
-			UNION ALL
-			(
-				SELECT DISTINCT ON (path)
-					media_key,
-					file_name,
-					COALESCE(name, '') as custom_name,
-					COALESCE(path, '') as custom_path,
-					size_bytes,
-					utc_timestamp
-				FROM %s
-				WHERE user_name = $1 AND path IS NOT NULL
-				  AND path != ''
-				  AND path NOT LIKE '%%/%%'
-				ORDER BY path, utc_timestamp DESC
-			)
-			UNION ALL
-			(
-				SELECT DISTINCT ON (split_part(path, '/', 1))
-					media_key,
-					file_name,
-					COALESCE(name, '') as custom_name,
-					COALESCE(path, '') as custom_path,
-					size_bytes,
-					utc_timestamp
-				FROM %s
-				WHERE user_name = $1 AND path LIKE '%%/%%'
-				ORDER BY split_part(path, '/', 1), utc_timestamp DESC
-			)
-			ORDER BY file_name
-		`, f.opt.TableName, f.opt.TableName, f.opt.TableName)
-		args = []interface{}{userName}
-	} else {
-		// In a subdirectory - select files where path = dirPath OR path starts with dirPath/
-		query = fmt.Sprintf(`
-			SELECT
-				media_key,
-				file_name,
-				COALESCE(name, '') as custom_name,
-				COALESCE(path, '') as custom_path,
-				size_bytes,
-				utc_timestamp
-			FROM %s
-			WHERE user_name = $1 AND (path = $2 OR path LIKE $3)
-			ORDER BY file_name
-		`, f.opt.TableName)
-		args = []interface{}{userName, dirPath, dirPath + "/%"}
-	}
-
-	rows, err := f.db.QueryContext(ctx, query, args...)
+	rows, err := f.db.QueryContext(ctx, query, userName, dirPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query files: %w", err)
 	}
 	defer rows.Close()
-
-	// Track what we've added to prevent duplicates
-	dirsSeen := make(map[string]bool)
-	filesSeen := make(map[string]bool)
 
 	for rows.Next() {
 		var (
@@ -598,153 +539,55 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			fileName      string
 			customName    string
 			customPath    string
+			itemType      int64
 			sizeBytes     int64
 			timestampUnix int64
 		)
-		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
+		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &itemType, &sizeBytes, &timestampUnix); err != nil {
 			return nil, fmt.Errorf("failed to scan file: %w", err)
 		}
 
-		timestamp := convertUnixTimestamp(timestampUnix)
-
-		// Core logic for display name and path (single-user model, no username prefix)
-		// name=NULL, path=NULL     → /file_name
-		// name=SET,  path=NULL     → /name
-		// name=NULL, path=SET      → /path/file_name
-		// name=SET,  path=SET      → /path/name
-		var displayName, displayPath string
-
 		// Display name: use 'name' if set, else use 'file_name'
+		displayName := fileName
 		if customName != "" {
 			displayName = customName
-		} else {
-			displayName = fileName
 		}
 
-		// Display path: use 'path' if set, else empty (strip slashes)
-		if customPath != "" {
-			displayPath = strings.Trim(customPath, "/")
-		} else {
-			displayPath = ""
-		}
-
-		// Now determine if this entry should be shown in current directory
-		if dirPath == "" {
-			// We're at root level
-			if displayPath == "" {
-				// File is directly in root (path is NULL/empty)
-				remote := displayName
-				if !filesSeen[remote] {
-					entries = append(entries, &Object{
-						fs:          f,
-						remote:      remote,
-						mediaKey:    mediaKey,
-						size:        sizeBytes,
-						modTime:     timestamp,
-						userName:    userName,
-						displayName: displayName,
-						displayPath: displayPath,
-					})
-					filesSeen[remote] = true
-				}
+		if itemType == -1 {
+			// This is a folder
+			var folderPath string
+			if dirPath == "" {
+				folderPath = displayName
 			} else {
-				// File has a path - show only the first-level directory
-				firstDir := strings.SplitN(displayPath, "/", 2)[0]
-				if !dirsSeen[firstDir] {
-					entries = append(entries, fs.NewDir(firstDir, time.Time{}))
-					dirsSeen[firstDir] = true
-				}
+				folderPath = dirPath + "/" + displayName
 			}
+			entries = append(entries, fs.NewDir(folderPath, time.Time{}))
 		} else {
-			// We're in a subdirectory
-			if displayPath == dirPath {
-				// File is directly in this directory
-				remote := displayPath + "/" + displayName
-				if !filesSeen[remote] {
-					entries = append(entries, &Object{
-						fs:          f,
-						remote:      remote,
-						mediaKey:    mediaKey,
-						size:        sizeBytes,
-						modTime:     timestamp,
-						userName:    userName,
-						displayName: displayName,
-						displayPath: displayPath,
-					})
-					filesSeen[remote] = true
-				}
-			} else if strings.HasPrefix(displayPath, dirPath+"/") {
-				// File is in a subdirectory - show the immediate subdir
-				remainder := strings.TrimPrefix(displayPath, dirPath+"/")
-				firstSubDir := strings.SplitN(remainder, "/", 2)[0]
-				fullSubDir := dirPath + "/" + firstSubDir
-
-				if !dirsSeen[fullSubDir] {
-					entries = append(entries, fs.NewDir(fullSubDir, time.Time{}))
-					dirsSeen[fullSubDir] = true
-				}
+			// This is a file
+			var remote string
+			if dirPath == "" {
+				remote = displayName
+			} else {
+				remote = dirPath + "/" + displayName
 			}
+
+			timestamp := convertUnixTimestamp(timestampUnix)
+			entries = append(entries, &Object{
+				fs:          f,
+				remote:      remote,
+				mediaKey:    mediaKey,
+				size:        sizeBytes,
+				modTime:     timestamp,
+				userName:    userName,
+				displayName: displayName,
+				displayPath: dirPath,
+			})
 		}
 	}
 
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating files: %w", err)
 	}
-
-	// Add virtual directories created via Mkdir
-	f.vdirMu.RLock()
-	for vdir := range f.virtualDirs {
-		// Since we're single-user per database, treat vdir as path only (no username prefix)
-		// Extract path from vdir
-		vdirPath := vdir
-		if strings.Contains(vdir, "/") {
-			// If vdir has format "username/path", extract path part
-			parts := strings.SplitN(vdir, "/", 2)
-			if len(parts) == 2 {
-				vdirPath = parts[1]
-			}
-		}
-
-		// Check if it's in the current directory we're listing
-		if dirPath == "" {
-			// Root level - add if it's a top-level dir
-			if !strings.Contains(vdirPath, "/") && vdirPath != "" && !dirsSeen[vdirPath] {
-				entries = append(entries, fs.NewDir(vdirPath, time.Time{}))
-				dirsSeen[vdirPath] = true
-			} else if strings.Contains(vdirPath, "/") {
-				// It's nested, add the top-level part
-				topDir := strings.SplitN(vdirPath, "/", 2)[0]
-				if !dirsSeen[topDir] {
-					entries = append(entries, fs.NewDir(topDir, time.Time{}))
-					dirsSeen[topDir] = true
-				}
-			}
-		} else {
-			// We're in a subdirectory
-			dirPrefix := dirPath + "/"
-			if strings.HasPrefix(vdirPath, dirPrefix) {
-				remainder := strings.TrimPrefix(vdirPath, dirPrefix)
-				if !strings.Contains(remainder, "/") && remainder != "" && !dirsSeen[vdirPath] {
-					// Direct child directory
-					entries = append(entries, fs.NewDir(vdirPath, time.Time{}))
-					dirsSeen[vdirPath] = true
-				} else if strings.Contains(remainder, "/") {
-					// Nested subdirectory
-					subDir := strings.SplitN(remainder, "/", 2)[0]
-					fullSubDir := dirPath + "/" + subDir
-					if !dirsSeen[fullSubDir] {
-						entries = append(entries, fs.NewDir(fullSubDir, time.Time{}))
-						dirsSeen[fullSubDir] = true
-					}
-				}
-			} else if vdirPath == dirPath && !dirsSeen[vdirPath] {
-				// The virtual directory is exactly this path
-				entries = append(entries, fs.NewDir(vdirPath, time.Time{}))
-				dirsSeen[vdirPath] = true
-			}
-		}
-	}
-	f.vdirMu.RUnlock()
 
 	// Start background metadata population for this user if batching enabled
 	if f.opt.BatchSize > 0 {
@@ -1182,25 +1025,137 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.Put(ctx, in, src, options...)
 }
 
-// Mkdir creates a virtual directory in memory
-func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	// Store the full path including username
-	fullPath := strings.Trim(path.Join(f.root, dir), "/")
+// ensureFoldersExist creates all parent folders for a given path in the database
+// Folders are stored at their PARENT's path with their name as file_name
+// For example, to create folder "a/b/c":
+//   - folder "a": path='', file_name='a'
+//   - folder "b": path='a', file_name='b'
+//   - folder "c": path='a/b', file_name='c'
+func (f *Fs) ensureFoldersExist(ctx context.Context, userName string, folderPath string) error {
+	if folderPath == "" {
+		return nil
+	}
 
-	f.vdirMu.Lock()
-	f.virtualDirs[fullPath] = true
-	f.vdirMu.Unlock()
+	folderPath = strings.Trim(folderPath, "/")
+	parts := strings.Split(folderPath, "/")
 
-	fs.Infof(nil, "mediavfs: created virtual directory: %s", fullPath)
-	return nil // Virtual directories, always succeed
+	// Build each level of the path and insert
+	parentPath := ""
+	for i, part := range parts {
+		// The full path of this folder (for media_key)
+		var fullPath string
+		if i == 0 {
+			fullPath = part
+		} else {
+			fullPath = parentPath + "/" + part
+		}
+
+		mediaKey := fmt.Sprintf("folder:%s:%s", userName, fullPath)
+
+		// Insert folder if not exists (type = -1 for folders)
+		// path = parent's path, file_name = folder's name
+		query := fmt.Sprintf(`
+			INSERT INTO %s (media_key, file_name, path, type, user_name)
+			VALUES ($1, $2, $3, -1, $4)
+			ON CONFLICT (media_key) DO NOTHING
+		`, f.opt.TableName)
+
+		_, err := f.db.ExecContext(ctx, query, mediaKey, part, parentPath, userName)
+		if err != nil {
+			return fmt.Errorf("failed to create folder %s: %w", fullPath, err)
+		}
+
+		// Update parentPath for next iteration
+		parentPath = fullPath
+	}
+
+	return nil
 }
 
-// Rmdir is not supported
-// Rmdir is allowed for directory operations but doesn't delete from database
-// (directories are virtual user folders that shouldn't be removed)
+// Mkdir creates a directory in the database (type = -1)
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	// Get the full path
+	fullPath := strings.Trim(path.Join(f.root, dir), "/")
+	if fullPath == "" {
+		return nil // Root always exists
+	}
+
+	// Parse user from path
+	userName, folderPath := splitUserPath(fullPath)
+	if userName == "" {
+		userName = f.opt.User
+	}
+	if folderPath == "" {
+		return nil // Just the user root, always exists
+	}
+
+	// Create all folders in the path (including parents)
+	if err := f.ensureFoldersExist(ctx, userName, folderPath); err != nil {
+		return err
+	}
+
+	fs.Infof(nil, "mediavfs: created directory: %s", fullPath)
+	return nil
+}
+
+// Rmdir deletes a folder from the database (only if empty)
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	fs.Infof(f, "Rmdir called on %s - allowed for directory operations, directory remains in database", dir)
-	// Don't actually delete from database - just allow the operation
+	fullPath := strings.Trim(path.Join(f.root, dir), "/")
+	if fullPath == "" {
+		return fmt.Errorf("cannot remove root directory")
+	}
+
+	userName, folderPath := splitUserPath(fullPath)
+	if userName == "" {
+		userName = f.opt.User
+	}
+	if folderPath == "" {
+		return fmt.Errorf("cannot remove user root directory")
+	}
+
+	// Check if folder has any files (files have path = folderPath)
+	checkFilesQuery := fmt.Sprintf(`
+		SELECT COUNT(*) FROM %s
+		WHERE user_name = $1 AND path = $2 AND type != -1
+	`, f.opt.TableName)
+
+	var count int
+	err := f.db.QueryRowContext(ctx, checkFilesQuery, userName, folderPath).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check if folder is empty: %w", err)
+	}
+
+	if count > 0 {
+		return fmt.Errorf("directory not empty: %s", dir)
+	}
+
+	// Check for subfolders (subfolders have path = folderPath, type = -1)
+	checkSubfoldersQuery := fmt.Sprintf(`
+		SELECT COUNT(*) FROM %s
+		WHERE user_name = $1 AND path = $2 AND type = -1
+	`, f.opt.TableName)
+
+	err = f.db.QueryRowContext(ctx, checkSubfoldersQuery, userName, folderPath).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check for subfolders: %w", err)
+	}
+
+	if count > 0 {
+		return fmt.Errorf("directory not empty (has subfolders): %s", dir)
+	}
+
+	// Delete the folder row (folder's media_key is folder:user:fullPath)
+	mediaKey := fmt.Sprintf("folder:%s:%s", userName, folderPath)
+	deleteQuery := fmt.Sprintf(`
+		DELETE FROM %s WHERE media_key = $1
+	`, f.opt.TableName)
+
+	_, err = f.db.ExecContext(ctx, deleteQuery, mediaKey)
+	if err != nil {
+		return fmt.Errorf("failed to remove folder: %w", err)
+	}
+
+	fs.Infof(f, "mediavfs: removed directory: %s", fullPath)
 	return nil
 }
 
@@ -1233,15 +1188,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		newName = dstPath
 	}
 
-	// Check if moving to a virtual directory - if so, remove it from virtual dirs
+	// Ensure parent folders exist in database
 	if newPath != "" {
-		vdirPath := dstUser + "/" + newPath
-		f.vdirMu.Lock()
-		if f.virtualDirs[vdirPath] {
-			delete(f.virtualDirs, vdirPath)
-			fs.Infof(nil, "mediavfs: removed virtual directory after file move: %s", vdirPath)
+		if err := f.ensureFoldersExist(ctx, dstUser, newPath); err != nil {
+			return nil, fmt.Errorf("failed to create parent folders: %w", err)
 		}
-		f.vdirMu.Unlock()
 	}
 
 	// Update the database
@@ -1299,41 +1250,81 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fmt.Errorf("cannot move root directory")
 	}
 
-	// Update virtual directories
-	f.vdirMu.Lock()
-	// Remove old virtual directory
-	if f.virtualDirs[srcRemote] {
-		delete(f.virtualDirs, srcRemote)
+	// Ensure destination parent folders exist
+	if strings.Contains(dstPath, "/") {
+		parentPath := dstPath[:strings.LastIndex(dstPath, "/")]
+		if err := f.ensureFoldersExist(ctx, dstUser, parentPath); err != nil {
+			return fmt.Errorf("failed to create parent folders: %w", err)
+		}
 	}
-	// Add new virtual directory
-	f.virtualDirs[dstRemote] = true
-	f.vdirMu.Unlock()
 
-	// Update all files in the database that have paths starting with srcPath
-	srcPathPrefix := srcPath + "/"
+	// Get the new folder name (last component of dstPath)
+	dstFolderName := dstPath
+	if strings.Contains(dstPath, "/") {
+		dstFolderName = dstPath[strings.LastIndex(dstPath, "/")+1:]
+	}
 
-	// First, update files with exact path match
+	// Get the new parent path (for the folder row)
+	dstParentPath := ""
+	if strings.Contains(dstPath, "/") {
+		dstParentPath = dstPath[:strings.LastIndex(dstPath, "/")]
+	}
+
+	// Update the source folder row itself
+	srcMediaKey := fmt.Sprintf("folder:%s:%s", srcUser, srcPath)
+	dstMediaKey := fmt.Sprintf("folder:%s:%s", dstUser, dstPath)
+
+	// Delete any existing folder at destination (in case of overwrite)
+	deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE media_key = $1`, f.opt.TableName)
+	_, _ = f.db.ExecContext(ctx, deleteQuery, dstMediaKey)
+
+	// Update source folder to destination
+	updateFolderQuery := fmt.Sprintf(`
+		UPDATE %s
+		SET media_key = $1, file_name = $2, path = $3
+		WHERE media_key = $4
+	`, f.opt.TableName)
+
+	_, err := f.db.ExecContext(ctx, updateFolderQuery, dstMediaKey, dstFolderName, dstParentPath, srcMediaKey)
+	if err != nil {
+		return fmt.Errorf("failed to move folder row: %w", err)
+	}
+
+	// Update all items (files and subfolders) that have path = srcPath
 	query1 := fmt.Sprintf(`
 		UPDATE %s
 		SET path = $1
-		WHERE path = $2
+		WHERE user_name = $2 AND path = $3
 	`, f.opt.TableName)
 
-	_, err := f.db.ExecContext(ctx, query1, dstPath, srcPath)
+	_, err = f.db.ExecContext(ctx, query1, dstPath, srcUser, srcPath)
 	if err != nil {
-		return fmt.Errorf("failed to move directory (exact match): %w", err)
+		return fmt.Errorf("failed to move directory contents (exact match): %w", err)
 	}
 
-	// Then, update files with path prefix match
+	// Update all items with path starting with srcPath/
+	srcPathPrefix := srcPath + "/"
 	query2 := fmt.Sprintf(`
 		UPDATE %s
-		SET path = REPLACE(path, $1, $2)
-		WHERE path LIKE $3
+		SET path = $1 || SUBSTRING(path FROM $2)
+		WHERE user_name = $3 AND path LIKE $4
 	`, f.opt.TableName)
 
-	_, err = f.db.ExecContext(ctx, query2, srcPathPrefix, dstPath+"/", srcPathPrefix+"%")
+	_, err = f.db.ExecContext(ctx, query2, dstPath, len(srcPath)+1, srcUser, srcPathPrefix+"%")
 	if err != nil {
-		return fmt.Errorf("failed to move directory (prefix match): %w", err)
+		return fmt.Errorf("failed to move directory contents (prefix match): %w", err)
+	}
+
+	// Update media_keys for subfolder rows
+	updateSubfolderKeysQuery := fmt.Sprintf(`
+		UPDATE %s
+		SET media_key = 'folder:' || $1 || ':' || path || '/' || file_name
+		WHERE user_name = $1 AND type = -1 AND (path = $2 OR path LIKE $3)
+	`, f.opt.TableName)
+
+	_, err = f.db.ExecContext(ctx, updateSubfolderKeysQuery, srcUser, dstPath, dstPath+"/%")
+	if err != nil {
+		return fmt.Errorf("failed to update subfolder keys: %w", err)
 	}
 
 	fs.Infof(nil, "mediavfs: moved directory %s to %s", srcRemote, dstRemote)

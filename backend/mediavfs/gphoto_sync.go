@@ -99,7 +99,121 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 		return fmt.Errorf("failed to create indices: %w", err)
 	}
 
+	// Add index for path column (important for folder-based queries)
+	pathIndexQuery := fmt.Sprintf(`
+		CREATE INDEX IF NOT EXISTS idx_%s_user_path ON %s(user_name, path);
+		CREATE INDEX IF NOT EXISTS idx_%s_user_path_type ON %s(user_name, path, type);
+	`, f.opt.TableName, f.opt.TableName, f.opt.TableName, f.opt.TableName)
+
+	_, err = f.db.ExecContext(ctx, pathIndexQuery)
+	if err != nil {
+		return fmt.Errorf("failed to create path indices: %w", err)
+	}
+
+	// Migrate existing paths to folder rows (one-time migration)
+	if err := f.migrateFoldersFromPaths(ctx); err != nil {
+		fs.Errorf(f, "Failed to migrate folders from paths (non-fatal): %v", err)
+	}
+
 	fs.Infof(f, "Database schema initialized successfully")
+	return nil
+}
+
+// migrateFoldersFromPaths creates folder rows from existing file paths
+// This is a one-time migration that extracts unique directory paths from files
+// and creates folder rows (type = -1) for each unique directory
+func (f *Fs) migrateFoldersFromPaths(ctx context.Context) error {
+	// Only migrate if there are files with paths but no folder rows
+	var folderCount int
+	checkQuery := fmt.Sprintf(`
+		SELECT COUNT(*) FROM %s WHERE type = -1
+	`, f.opt.TableName)
+	if err := f.db.QueryRowContext(ctx, checkQuery).Scan(&folderCount); err != nil {
+		return fmt.Errorf("failed to check folder count: %w", err)
+	}
+
+	// If we already have folder rows, skip migration
+	if folderCount > 0 {
+		fs.Debugf(f, "Folder rows already exist (%d), skipping migration", folderCount)
+		return nil
+	}
+
+	// Check if there are any files with paths to migrate
+	var fileWithPathCount int
+	fileCheckQuery := fmt.Sprintf(`
+		SELECT COUNT(*) FROM %s
+		WHERE path IS NOT NULL AND path != '' AND type != -1
+	`, f.opt.TableName)
+	if err := f.db.QueryRowContext(ctx, fileCheckQuery).Scan(&fileWithPathCount); err != nil {
+		return fmt.Errorf("failed to check files with paths: %w", err)
+	}
+
+	if fileWithPathCount == 0 {
+		fs.Debugf(f, "No files with paths to migrate")
+		return nil
+	}
+
+	fs.Infof(f, "Migrating %d files with paths to folder rows...", fileWithPathCount)
+
+	// Use a CTE to extract all unique directory paths and create folder rows
+	// For each file path like "a/b/c", we need folders: "a" (at path ""), "b" (at path "a"), "c" (at path "a/b")
+	migrationQuery := fmt.Sprintf(`
+		WITH RECURSIVE
+		-- Get all unique (user_name, path) combinations from files
+		file_paths AS (
+			SELECT DISTINCT user_name, path
+			FROM %s
+			WHERE path IS NOT NULL AND path != '' AND (type IS NULL OR type != -1)
+		),
+		-- Recursively split paths into all parent directories
+		all_dirs AS (
+			-- Base case: full paths
+			SELECT user_name, path as full_path
+			FROM file_paths
+
+			UNION
+
+			-- Recursive case: parent directories
+			SELECT user_name,
+				   SUBSTRING(full_path FROM 1 FOR LENGTH(full_path) - POSITION('/' IN REVERSE(full_path)))
+			FROM all_dirs
+			WHERE full_path LIKE '%%/%%'
+		),
+		-- Get unique directories with their parent path and folder name
+		unique_dirs AS (
+			SELECT DISTINCT
+				user_name,
+				full_path,
+				CASE
+					WHEN full_path NOT LIKE '%%/%%' THEN ''
+					ELSE SUBSTRING(full_path FROM 1 FOR LENGTH(full_path) - POSITION('/' IN REVERSE(full_path)))
+				END as parent_path,
+				CASE
+					WHEN full_path NOT LIKE '%%/%%' THEN full_path
+					ELSE SUBSTRING(full_path FROM LENGTH(full_path) - POSITION('/' IN REVERSE(full_path)) + 2)
+				END as folder_name
+			FROM all_dirs
+			WHERE full_path != ''
+		)
+		INSERT INTO %s (media_key, file_name, path, type, user_name)
+		SELECT
+			'folder:' || user_name || ':' || full_path,
+			folder_name,
+			parent_path,
+			-1,
+			user_name
+		FROM unique_dirs
+		ON CONFLICT (media_key) DO NOTHING
+	`, f.opt.TableName, f.opt.TableName)
+
+	result, err := f.db.ExecContext(ctx, migrationQuery)
+	if err != nil {
+		return fmt.Errorf("failed to migrate folders: %w", err)
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	fs.Infof(f, "Created %d folder rows from existing paths", rowsAffected)
+
 	return nil
 }
 
