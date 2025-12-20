@@ -795,6 +795,19 @@ func (f *Fs) invalidateCaches() {
 	f.dirMu.Unlock()
 }
 
+// invalidateDirCache invalidates only the cache for a specific directory path
+// This is much more efficient than invalidateCaches() for single-file operations
+func (f *Fs) invalidateDirCache(dirPath string) {
+	cacheKey := dirPath
+	if cacheKey == "" {
+		cacheKey = "."
+	}
+
+	f.dirMu.Lock()
+	delete(f.dirCache, cacheKey)
+	f.dirMu.Unlock()
+}
+
 // ChangeNotify calls the passed function with a path that has had changes.
 // The implementation must empty the channel and stop when it is closed.
 func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
@@ -836,7 +849,7 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 
 		case event := <-notifyEvents:
 			// Real-time notification from PostgreSQL
-			fs.Infof(f, "mediavfs: Real-time notification received: %s for %s", event.Action, event.MediaKey)
+			fs.Debugf(f, "mediavfs: Real-time notification received: %s for %s", event.Action, event.MediaKey)
 
 			// Query the specific media item to get its path
 			query := fmt.Sprintf(`
@@ -848,9 +861,9 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 			err := f.db.QueryRowContext(ctx, query, event.MediaKey, f.opt.User).Scan(&fileName, &customName, &customPath)
 
 			if event.Action == "DELETE" {
-				// For deletes, we can't query the row anymore, so just invalidate caches
-				f.invalidateCaches()
-				// Notify root to trigger full refresh
+				// For deletes, we can't query the row anymore, so just invalidate root cache
+				// This is less destructive than invalidateCaches() - only affects root listing
+				f.invalidateDirCache("")
 				notify("", fs.EntryDirectory)
 			} else if err == nil {
 				// Build the display path
@@ -868,7 +881,10 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 					fullPath = displayName
 				}
 				notify(fullPath, fs.EntryObject)
-				f.invalidateCaches()
+
+				// Only invalidate the specific directory, not ALL caches
+				// This is the key performance fix for bulk operations
+				f.invalidateDirCache(displayPath)
 			} else {
 				fs.Debugf(f, "mediavfs: Could not find media_key %s: %v", event.MediaKey, err)
 			}
@@ -931,26 +947,26 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 			}
 			rows.Close()
 
-			// Send notifications for all changed paths
+			// Send notifications and invalidate only the affected directories
+			affectedDirs := make(map[string]bool)
 			for path, entryType := range changedPaths {
 				notify(path, entryType)
+				// Track which directories need invalidation
+				if entryType == fs.EntryDirectory {
+					affectedDirs[path] = true
+				} else {
+					// For files, invalidate their parent directory
+					if idx := strings.LastIndex(path, "/"); idx > 0 {
+						affectedDirs[path[:idx]] = true
+					} else {
+						affectedDirs[""] = true // Root directory
+					}
+				}
 			}
 
-			// Invalidate caches if changes were detected
-			if len(changedPaths) > 0 {
-				// Clear our internal caches
-				f.lazyMu.Lock()
-				f.lazyMeta = make(map[string]*Object)
-				f.lazyMu.Unlock()
-
-				// Invalidate directory cache (single-user per database)
-				f.dirMu.Lock()
-				// Invalidate all directory caches since changes were detected
-				for cacheKey := range f.dirCache {
-					delete(f.dirCache, cacheKey)
-					fs.Infof(f, "Invalidated dir cache for %s", cacheKey)
-				}
-				f.dirMu.Unlock()
+			// Only invalidate the specific directories that changed
+			for dir := range affectedDirs {
+				f.invalidateDirCache(dir)
 			}
 
 			lastTimestamp = maxTs
