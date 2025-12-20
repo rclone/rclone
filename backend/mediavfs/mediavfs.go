@@ -808,6 +808,70 @@ func (f *Fs) invalidateDirCache(dirPath string) {
 	f.dirMu.Unlock()
 }
 
+// removeFromDirCache removes a specific entry from a directory's cache
+// Returns true if the entry was found and removed
+func (f *Fs) removeFromDirCache(dirPath string, entryName string) bool {
+	cacheKey := dirPath
+	if cacheKey == "" {
+		cacheKey = "."
+	}
+
+	f.dirMu.Lock()
+	defer f.dirMu.Unlock()
+
+	cached, exists := f.dirCache[cacheKey]
+	if !exists {
+		return false
+	}
+
+	// Find and remove the entry
+	newEntries := make(fs.DirEntries, 0, len(cached.entries)-1)
+	found := false
+	for _, entry := range cached.entries {
+		// Get the base name of the entry
+		baseName := entry.Remote()
+		if idx := strings.LastIndex(baseName, "/"); idx >= 0 {
+			baseName = baseName[idx+1:]
+		}
+		if baseName != entryName {
+			newEntries = append(newEntries, entry)
+		} else {
+			found = true
+		}
+	}
+
+	if found {
+		f.dirCache[cacheKey] = &dirCacheEntry{
+			entries:   newEntries,
+			expiresAt: cached.expiresAt,
+		}
+	}
+	return found
+}
+
+// addToDirCache adds an entry to a directory's cache
+// If the cache doesn't exist, this is a no-op (cache will be populated on next list)
+func (f *Fs) addToDirCache(dirPath string, entry fs.DirEntry) {
+	cacheKey := dirPath
+	if cacheKey == "" {
+		cacheKey = "."
+	}
+
+	f.dirMu.Lock()
+	defer f.dirMu.Unlock()
+
+	cached, exists := f.dirCache[cacheKey]
+	if !exists {
+		return // Cache doesn't exist, will be populated on next list
+	}
+
+	// Add the entry to the cache
+	f.dirCache[cacheKey] = &dirCacheEntry{
+		entries:   append(cached.entries, entry),
+		expiresAt: cached.expiresAt,
+	}
+}
+
 // ChangeNotify calls the passed function with a path that has had changes.
 // The implementation must empty the channel and stop when it is closed.
 func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
@@ -1040,8 +1104,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		displayPath: displayPath,
 	}
 
-	// Invalidate cache for the containing directory
-	f.invalidateDirCache(displayPath)
+	// Add to destination directory cache instead of invalidating
+	f.addToDirCache(displayPath, obj)
 
 	fs.Infof(f, "Successfully uploaded %s with media key: %s", src.Remote(), mediaKey)
 	return obj, nil
@@ -1142,12 +1206,12 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return err
 	}
 
-	// Invalidate cache for the parent directory where the new folder appears
+	// Add the new folder to parent directory cache instead of invalidating
 	parentPath := ""
 	if strings.Contains(folderPath, "/") {
 		parentPath = folderPath[:strings.LastIndex(folderPath, "/")]
 	}
-	f.invalidateDirCache(parentPath)
+	f.addToDirCache(parentPath, fs.NewDir(folderPath, time.Time{}))
 
 	fs.Infof(nil, "mediavfs: created directory: %s", folderPath)
 	return nil
@@ -1206,12 +1270,14 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return fmt.Errorf("failed to remove folder: %w", err)
 	}
 
-	// Invalidate the parent directory's cache where the folder was listed
+	// Remove the folder from parent directory's cache
 	parentPath := ""
+	folderName := folderPath
 	if strings.Contains(folderPath, "/") {
 		parentPath = folderPath[:strings.LastIndex(folderPath, "/")]
+		folderName = folderPath[strings.LastIndex(folderPath, "/")+1:]
 	}
-	f.invalidateDirCache(parentPath)
+	f.removeFromDirCache(parentPath, folderName)
 
 	// Remove from folderExistsCache
 	cacheKey := userName + ":" + folderPath
@@ -1281,11 +1347,13 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		displayPath: newPath,
 	}
 
-	// Invalidate cache for both source and destination directories
-	f.invalidateDirCache(srcObj.displayPath) // Source directory
-	f.invalidateDirCache(newPath)            // Destination directory
+	// Update caches directly instead of invalidating (avoids full re-fetch)
+	// Remove from source directory cache
+	f.removeFromDirCache(srcObj.displayPath, srcObj.displayName)
+	// Add to destination directory cache
+	f.addToDirCache(newPath, newObj)
 
-	fs.Infof(nil, "mediavfs: moved %s to %s (real-time update)", srcObj.remote, remote)
+	fs.Infof(nil, "mediavfs: moved %s to %s (cache updated)", srcObj.remote, remote)
 
 	return newObj, nil
 }
@@ -1639,8 +1707,8 @@ func (o *Object) Remove(ctx context.Context) error {
 		return fmt.Errorf("failed to delete from database: %w", err)
 	}
 
-	// Invalidate cache for the containing directory
-	o.fs.invalidateDirCache(o.displayPath)
+	// Remove from cache instead of invalidating
+	o.fs.removeFromDirCache(o.displayPath, o.displayName)
 
 	fs.Infof(o.fs, "Successfully removed %s", o.Remote())
 	return nil
