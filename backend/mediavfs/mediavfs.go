@@ -1040,6 +1040,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		displayPath: displayPath,
 	}
 
+	// Invalidate cache for the containing directory
+	f.invalidateDirCache(displayPath)
+
 	fs.Infof(f, "Successfully uploaded %s with media key: %s", src.Remote(), mediaKey)
 	return obj, nil
 }
@@ -1139,6 +1142,13 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return err
 	}
 
+	// Invalidate cache for the parent directory where the new folder appears
+	parentPath := ""
+	if strings.Contains(folderPath, "/") {
+		parentPath = folderPath[:strings.LastIndex(folderPath, "/")]
+	}
+	f.invalidateDirCache(parentPath)
+
 	fs.Infof(nil, "mediavfs: created directory: %s", folderPath)
 	return nil
 }
@@ -1195,6 +1205,19 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to remove folder: %w", err)
 	}
+
+	// Invalidate the parent directory's cache where the folder was listed
+	parentPath := ""
+	if strings.Contains(folderPath, "/") {
+		parentPath = folderPath[:strings.LastIndex(folderPath, "/")]
+	}
+	f.invalidateDirCache(parentPath)
+
+	// Remove from folderExistsCache
+	cacheKey := userName + ":" + folderPath
+	f.folderCacheMu.Lock()
+	delete(f.folderExistsCache, cacheKey)
+	f.folderCacheMu.Unlock()
 
 	fs.Infof(f, "mediavfs: removed directory: %s", folderPath)
 	return nil
@@ -1257,6 +1280,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		displayName: newName,
 		displayPath: newPath,
 	}
+
+	// Invalidate cache for both source and destination directories
+	f.invalidateDirCache(srcObj.displayPath) // Source directory
+	f.invalidateDirCache(newPath)            // Destination directory
 
 	fs.Infof(nil, "mediavfs: moved %s to %s (real-time update)", srcObj.remote, remote)
 
@@ -1358,6 +1385,25 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if err != nil {
 		return fmt.Errorf("failed to update subfolder keys: %w", err)
 	}
+
+	// Invalidate caches for source and destination parent directories
+	srcParentPath := ""
+	if strings.Contains(srcPath, "/") {
+		srcParentPath = srcPath[:strings.LastIndex(srcPath, "/")]
+	}
+	f.invalidateDirCache(srcParentPath) // Source parent where folder was listed
+
+	f.invalidateDirCache(dstParentPath) // Destination parent where folder now appears
+
+	// Also invalidate caches for the source and destination directories themselves
+	f.invalidateDirCache(srcPath)
+	f.invalidateDirCache(dstPath)
+
+	// Update folderExistsCache - remove old path, add new path
+	f.folderCacheMu.Lock()
+	delete(f.folderExistsCache, userName+":"+srcPath)
+	f.folderExistsCache[userName+":"+dstPath] = true
+	f.folderCacheMu.Unlock()
 
 	fs.Infof(nil, "mediavfs: moved directory %s to %s", srcRemote, dstRemote)
 	return nil
@@ -1592,6 +1638,9 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete from database: %w", err)
 	}
+
+	// Invalidate cache for the containing directory
+	o.fs.invalidateDirCache(o.displayPath)
 
 	fs.Infof(o.fs, "Successfully removed %s", o.Remote())
 	return nil
