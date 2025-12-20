@@ -172,6 +172,9 @@ type Fs struct {
 	// dirCache caches directory listings to avoid reloading on every change
 	dirCache map[string]*dirCacheEntry
 	dirMu    sync.RWMutex
+	// folderExistsCache tracks folders we've already created/verified in this session
+	folderExistsCache map[string]bool
+	folderCacheMu     sync.RWMutex
 	// syncStop channel to stop background sync goroutine
 	syncStop chan struct{}
 	// notifyListener for PostgreSQL LISTEN/NOTIFY real-time updates
@@ -308,11 +311,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:        root,
 		opt:         *opt,
 		db:          db,
-		httpClient: customClient,
-		urlCache:   newURLCache(),
-		lazyMeta:   make(map[string]*Object),
-		dirCache:    make(map[string]*dirCacheEntry),
-		syncStop:    make(chan struct{}),
+		httpClient:        customClient,
+		urlCache:          newURLCache(),
+		lazyMeta:          make(map[string]*Object),
+		dirCache:          make(map[string]*dirCacheEntry),
+		folderExistsCache: make(map[string]bool),
+		syncStop:          make(chan struct{}),
 	}
 
 	// Initialize Google Photos API client for download URLs
@@ -1038,12 +1042,23 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 //   - folder "a": path='', file_name='a'
 //   - folder "b": path='a', file_name='b'
 //   - folder "c": path='a/b', file_name='c'
+// Uses in-memory cache to avoid redundant DB queries during bulk operations
 func (f *Fs) ensureFoldersExist(ctx context.Context, userName string, folderPath string) error {
 	if folderPath == "" {
 		return nil
 	}
 
 	folderPath = strings.Trim(folderPath, "/")
+
+	// Check if this exact folder path is already cached
+	cacheKey := userName + ":" + folderPath
+	f.folderCacheMu.RLock()
+	if f.folderExistsCache[cacheKey] {
+		f.folderCacheMu.RUnlock()
+		return nil // Already verified/created
+	}
+	f.folderCacheMu.RUnlock()
+
 	parts := strings.Split(folderPath, "/")
 
 	// Build each level of the path and insert
@@ -1057,19 +1072,32 @@ func (f *Fs) ensureFoldersExist(ctx context.Context, userName string, folderPath
 			fullPath = parentPath + "/" + part
 		}
 
-		mediaKey := fmt.Sprintf("folder:%s:%s", userName, fullPath)
+		// Check cache for this specific folder level
+		levelCacheKey := userName + ":" + fullPath
+		f.folderCacheMu.RLock()
+		exists := f.folderExistsCache[levelCacheKey]
+		f.folderCacheMu.RUnlock()
 
-		// Insert folder if not exists (type = -1 for folders)
-		// path = parent's path, file_name = folder's name
-		query := fmt.Sprintf(`
-			INSERT INTO %s (media_key, file_name, path, type, user_name)
-			VALUES ($1, $2, $3, -1, $4)
-			ON CONFLICT (media_key) DO NOTHING
-		`, f.opt.TableName)
+		if !exists {
+			mediaKey := fmt.Sprintf("folder:%s:%s", userName, fullPath)
 
-		_, err := f.db.ExecContext(ctx, query, mediaKey, part, parentPath, userName)
-		if err != nil {
-			return fmt.Errorf("failed to create folder %s: %w", fullPath, err)
+			// Insert folder if not exists (type = -1 for folders)
+			// path = parent's path, file_name = folder's name
+			query := fmt.Sprintf(`
+				INSERT INTO %s (media_key, file_name, path, type, user_name)
+				VALUES ($1, $2, $3, -1, $4)
+				ON CONFLICT (media_key) DO NOTHING
+			`, f.opt.TableName)
+
+			_, err := f.db.ExecContext(ctx, query, mediaKey, part, parentPath, userName)
+			if err != nil {
+				return fmt.Errorf("failed to create folder %s: %w", fullPath, err)
+			}
+
+			// Mark this folder as existing in cache
+			f.folderCacheMu.Lock()
+			f.folderExistsCache[levelCacheKey] = true
+			f.folderCacheMu.Unlock()
 		}
 
 		// Update parentPath for next iteration
