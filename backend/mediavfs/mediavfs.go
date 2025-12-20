@@ -1166,16 +1166,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
-	fs.Infof(f, "Move called: src=%s, dst=%s", src.Remote(), remote)
+	// In single-user mode, use f.opt.User as the username
+	userName := f.opt.User
+	dstPath := strings.Trim(remote, "/")
 
-	// Check that both source and destination are for the same user
-	srcUser, _ := splitUserPath(src.Remote())
-	dstUser, dstPath := splitUserPath(remote)
-
-	if srcUser != dstUser {
-		fs.Infof(f, "Move failed: cross-user move not allowed")
-		return nil, errCrossUser
-	}
+	fs.Infof(f, "Move called: src=%s, dst=%s for user %s", src.Remote(), remote, userName)
 
 	// Parse the new path and name
 	var newPath, newName string
@@ -1190,7 +1185,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Ensure parent folders exist in database
 	if newPath != "" {
-		if err := f.ensureFoldersExist(ctx, dstUser, newPath); err != nil {
+		if err := f.ensureFoldersExist(ctx, userName, newPath); err != nil {
 			return nil, fmt.Errorf("failed to create parent folders: %w", err)
 		}
 	}
@@ -1217,7 +1212,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		mediaKey:    srcObj.mediaKey,
 		size:        srcObj.size,
 		modTime:     srcObj.modTime,
-		userName:    dstUser,
+		userName:    userName,
 		displayName: newName,
 		displayPath: newPath,
 	}
@@ -1234,26 +1229,22 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorCantDirMove
 	}
 
-	// Check that both source and destination are for the same user
-	srcUser, srcPath := splitUserPath(srcRemote)
-	dstUser, dstPath := splitUserPath(dstRemote)
-
-	if srcUser != dstUser {
-		return errCrossUser
-	}
-
-	// Normalize paths
-	srcPath = strings.Trim(srcPath, "/")
-	dstPath = strings.Trim(dstPath, "/")
+	// In single-user mode, use f.opt.User as the username
+	// The remote paths are just the directory paths without username prefix
+	userName := f.opt.User
+	srcPath := strings.Trim(srcRemote, "/")
+	dstPath := strings.Trim(dstRemote, "/")
 
 	if srcPath == "" {
 		return fmt.Errorf("cannot move root directory")
 	}
 
+	fs.Infof(nil, "mediavfs: DirMove from %s to %s for user %s", srcPath, dstPath, userName)
+
 	// Ensure destination parent folders exist
 	if strings.Contains(dstPath, "/") {
 		parentPath := dstPath[:strings.LastIndex(dstPath, "/")]
-		if err := f.ensureFoldersExist(ctx, dstUser, parentPath); err != nil {
+		if err := f.ensureFoldersExist(ctx, userName, parentPath); err != nil {
 			return fmt.Errorf("failed to create parent folders: %w", err)
 		}
 	}
@@ -1271,8 +1262,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	// Update the source folder row itself
-	srcMediaKey := fmt.Sprintf("folder:%s:%s", srcUser, srcPath)
-	dstMediaKey := fmt.Sprintf("folder:%s:%s", dstUser, dstPath)
+	srcMediaKey := fmt.Sprintf("folder:%s:%s", userName, srcPath)
+	dstMediaKey := fmt.Sprintf("folder:%s:%s", userName, dstPath)
 
 	// Delete any existing folder at destination (in case of overwrite)
 	deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE media_key = $1`, f.opt.TableName)
@@ -1297,7 +1288,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		WHERE user_name = $2 AND path = $3
 	`, f.opt.TableName)
 
-	_, err = f.db.ExecContext(ctx, query1, dstPath, srcUser, srcPath)
+	_, err = f.db.ExecContext(ctx, query1, dstPath, userName, srcPath)
 	if err != nil {
 		return fmt.Errorf("failed to move directory contents (exact match): %w", err)
 	}
@@ -1310,7 +1301,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		WHERE user_name = $3 AND path LIKE $4
 	`, f.opt.TableName)
 
-	_, err = f.db.ExecContext(ctx, query2, dstPath, len(srcPath)+1, srcUser, srcPathPrefix+"%")
+	_, err = f.db.ExecContext(ctx, query2, dstPath, len(srcPath)+1, userName, srcPathPrefix+"%")
 	if err != nil {
 		return fmt.Errorf("failed to move directory contents (prefix match): %w", err)
 	}
@@ -1322,7 +1313,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		WHERE user_name = $1 AND type = -1 AND (path = $2 OR path LIKE $3)
 	`, f.opt.TableName)
 
-	_, err = f.db.ExecContext(ctx, updateSubfolderKeysQuery, srcUser, dstPath, dstPath+"/%")
+	_, err = f.db.ExecContext(ctx, updateSubfolderKeysQuery, userName, dstPath, dstPath+"/%")
 	if err != nil {
 		return fmt.Errorf("failed to update subfolder keys: %w", err)
 	}
