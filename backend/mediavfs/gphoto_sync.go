@@ -157,6 +157,7 @@ func (f *Fs) migrateFoldersFromPaths(ctx context.Context) error {
 
 	// Use a CTE to extract all unique directory paths and create folder rows for this user only
 	// For each file path like "a/b/c", we need folders: "a" (at path ""), "b" (at path "a"), "c" (at path "a/b")
+	// Note: Using REGEXP_REPLACE instead of REVERSE (which doesn't exist in PostgreSQL)
 	migrationQuery := fmt.Sprintf(`
 		WITH RECURSIVE
 		-- Get all unique paths for this user
@@ -173,8 +174,8 @@ func (f *Fs) migrateFoldersFromPaths(ctx context.Context) error {
 
 			UNION
 
-			-- Recursive case: parent directories
-			SELECT SUBSTRING(full_path FROM 1 FOR LENGTH(full_path) - POSITION('/' IN REVERSE(full_path)))
+			-- Recursive case: parent directories (remove last path component)
+			SELECT REGEXP_REPLACE(full_path, '/[^/]+$', '')
 			FROM all_dirs
 			WHERE full_path LIKE '%%/%%'
 		),
@@ -182,13 +183,15 @@ func (f *Fs) migrateFoldersFromPaths(ctx context.Context) error {
 		unique_dirs AS (
 			SELECT DISTINCT
 				full_path,
+				-- Parent path: remove last component (or empty if no slash)
 				CASE
 					WHEN full_path NOT LIKE '%%/%%' THEN ''
-					ELSE SUBSTRING(full_path FROM 1 FOR LENGTH(full_path) - POSITION('/' IN REVERSE(full_path)))
+					ELSE REGEXP_REPLACE(full_path, '/[^/]+$', '')
 				END as parent_path,
+				-- Folder name: last component only
 				CASE
 					WHEN full_path NOT LIKE '%%/%%' THEN full_path
-					ELSE SUBSTRING(full_path FROM LENGTH(full_path) - POSITION('/' IN REVERSE(full_path)) + 2)
+					ELSE REGEXP_REPLACE(full_path, '^.+/', '')
 				END as folder_name
 			FROM all_dirs
 			WHERE full_path != ''
