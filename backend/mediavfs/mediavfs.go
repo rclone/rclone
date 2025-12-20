@@ -1074,44 +1074,34 @@ func (f *Fs) ensureFoldersExist(ctx context.Context, userName string, folderPath
 
 // Mkdir creates a directory in the database (type = -1)
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	// Get the full path
-	fullPath := strings.Trim(path.Join(f.root, dir), "/")
-	if fullPath == "" {
+	// Get the full path (in single-user mode, this is just the folder path)
+	folderPath := strings.Trim(path.Join(f.root, dir), "/")
+	if folderPath == "" {
 		return nil // Root always exists
 	}
 
-	// Parse user from path
-	userName, folderPath := splitUserPath(fullPath)
-	if userName == "" {
-		userName = f.opt.User
-	}
-	if folderPath == "" {
-		return nil // Just the user root, always exists
-	}
+	// Use configured user
+	userName := f.opt.User
 
 	// Create all folders in the path (including parents)
 	if err := f.ensureFoldersExist(ctx, userName, folderPath); err != nil {
 		return err
 	}
 
-	fs.Infof(nil, "mediavfs: created directory: %s", fullPath)
+	fs.Infof(nil, "mediavfs: created directory: %s", folderPath)
 	return nil
 }
 
 // Rmdir deletes a folder from the database (only if empty)
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	fullPath := strings.Trim(path.Join(f.root, dir), "/")
-	if fullPath == "" {
+	// Get the full path (in single-user mode, this is just the folder path)
+	folderPath := strings.Trim(path.Join(f.root, dir), "/")
+	if folderPath == "" {
 		return fmt.Errorf("cannot remove root directory")
 	}
 
-	userName, folderPath := splitUserPath(fullPath)
-	if userName == "" {
-		userName = f.opt.User
-	}
-	if folderPath == "" {
-		return fmt.Errorf("cannot remove user root directory")
-	}
+	// Use configured user
+	userName := f.opt.User
 
 	// Check if folder has any files (files have path = folderPath)
 	checkFilesQuery := fmt.Sprintf(`
@@ -1155,7 +1145,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return fmt.Errorf("failed to remove folder: %w", err)
 	}
 
-	fs.Infof(f, "mediavfs: removed directory: %s", fullPath)
+	fs.Infof(f, "mediavfs: removed directory: %s", folderPath)
 	return nil
 }
 
