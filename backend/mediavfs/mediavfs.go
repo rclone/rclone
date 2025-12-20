@@ -176,6 +176,8 @@ type Fs struct {
 	dirMu    sync.RWMutex
 	// syncStop channel to stop background sync goroutine
 	syncStop chan struct{}
+	// notifyListener for PostgreSQL LISTEN/NOTIFY real-time updates
+	notifyListener *NotifyListener
 }
 
 // dirCacheEntry represents a cached directory listing
@@ -332,6 +334,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err := f.InitializeDatabase(ctx); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	// Setup PostgreSQL LISTEN/NOTIFY trigger for real-time updates
+	if err := f.SetupNotifyTrigger(ctx); err != nil {
+		fs.Errorf(f, "Failed to setup notify trigger (non-fatal): %v", err)
+	}
+
+	// Start PostgreSQL notification listener for real-time updates
+	f.notifyListener = NewNotifyListener(dbConnStr, opt.User)
+	if err := f.notifyListener.Start(ctx); err != nil {
+		fs.Errorf(f, "Failed to start notify listener (falling back to polling): %v", err)
+		f.notifyListener = nil
 	}
 
 	// Perform initial sync if needed
@@ -921,6 +935,19 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return nil, fs.ErrorObjectNotFound
 }
 
+// invalidateCaches clears all internal caches
+func (f *Fs) invalidateCaches() {
+	f.lazyMu.Lock()
+	f.lazyMeta = make(map[string]*Object)
+	f.lazyMu.Unlock()
+
+	f.dirMu.Lock()
+	for cacheKey := range f.dirCache {
+		delete(f.dirCache, cacheKey)
+	}
+	f.dirMu.Unlock()
+}
+
 // ChangeNotify calls the passed function with a path that has had changes.
 // The implementation must empty the channel and stop when it is closed.
 func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
@@ -944,6 +971,12 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 	ticker := time.NewTicker(dur)
 	defer ticker.Stop()
 
+	// Get notify listener events channel (may be nil if listener failed to start)
+	var notifyEvents <-chan MediaChangeEvent
+	if f.notifyListener != nil {
+		notifyEvents = f.notifyListener.Events()
+	}
+
 	for {
 		select {
 		case d, ok := <-newInterval:
@@ -953,6 +986,45 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 			}
 			fs.Infof(f, "mediavfs: ChangeNotify interval updated to %s", d)
 			ticker.Reset(d)
+
+		case event := <-notifyEvents:
+			// Real-time notification from PostgreSQL
+			fs.Infof(f, "mediavfs: Real-time notification received: %s for %s", event.Action, event.MediaKey)
+
+			// Query the specific media item to get its path
+			query := fmt.Sprintf(`
+				SELECT file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path
+				FROM %s WHERE media_key = $1 AND user_name = $2
+			`, f.opt.TableName)
+
+			var fileName, customName, customPath string
+			err := f.db.QueryRowContext(ctx, query, event.MediaKey, f.opt.User).Scan(&fileName, &customName, &customPath)
+
+			if event.Action == "DELETE" {
+				// For deletes, we can't query the row anymore, so just invalidate caches
+				f.invalidateCaches()
+				// Notify root to trigger full refresh
+				notify("", fs.EntryDirectory)
+			} else if err == nil {
+				// Build the display path
+				displayName := customName
+				if displayName == "" {
+					displayName = fileName
+				}
+				displayPath := strings.Trim(customPath, "/")
+
+				var fullPath string
+				if displayPath != "" {
+					fullPath = displayPath + "/" + displayName
+					notify(displayPath, fs.EntryDirectory)
+				} else {
+					fullPath = displayName
+				}
+				notify(fullPath, fs.EntryObject)
+				f.invalidateCaches()
+			} else {
+				fs.Debugf(f, "mediavfs: Could not find media_key %s: %v", event.MediaKey, err)
+			}
 
 		case <-ticker.C:
 			// Query for rows newer than lastTimestamp
