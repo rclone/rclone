@@ -14,6 +14,7 @@ const (
 	ItemTypeFolder = "folder"
 )
 
+// User information
 type User struct {
 	Email            string      `json:"email"`
 	ID               json.Number `json:"id"`
@@ -24,6 +25,7 @@ type User struct {
 	DisplayName      string      `json:"display_name"`
 }
 
+// Permissions for a file
 type Permissions struct {
 	FilesUpdate   bool `json:"files.update"`
 	FilesCreate   bool `json:"files.create"`
@@ -69,6 +71,7 @@ type Item struct {
 	Permissions  Permissions `json:"permissions"`
 }
 
+// Listing response
 type Listing struct {
 	CurrentPage int    `json:"current_page"`
 	Data        []Item `json:"data"`
@@ -81,16 +84,19 @@ type Listing struct {
 	Total       int    `json:"total"`
 }
 
+// UploadResponse for a file
 type UploadResponse struct {
 	Status    string `json:"status"`
 	FileEntry Item   `json:"fileEntry"`
 }
 
+// CreateFolderRequest for a folder
 type CreateFolderRequest struct {
 	Name     string      `json:"name"`
 	ParentID json.Number `json:"parentId,omitempty"`
 }
 
+// CreateFolderResponse for a folder
 type CreateFolderResponse struct {
 	Status string `json:"status"`
 	Folder Item   `json:"folder"`
@@ -112,7 +118,7 @@ var _ error = (*Error)(nil)
 
 // DeleteRequest is the input to DELETE /file-entries
 type DeleteRequest struct {
-	EntryIds      []string `json:"entryIds"`
+	EntryIDs      []string `json:"entryIds"`
 	DeleteForever bool     `json:"deleteForever"`
 }
 
@@ -137,7 +143,7 @@ type UpdateItemResponse struct {
 
 // MoveRequest is the input to /file-entries/move
 type MoveRequest struct {
-	EntryIds      []string `json:"entryIds"`
+	EntryIDs      []string `json:"entryIds"`
 	DestinationID string   `json:"destinationId"`
 }
 
@@ -149,7 +155,7 @@ type MoveResponse struct {
 
 // CopyRequest is the input to /file-entries/duplicate
 type CopyRequest struct {
-	EntryIds      []string `json:"entryIds"`
+	EntryIDs      []string `json:"entryIds"`
 	DestinationID string   `json:"destinationId"`
 }
 

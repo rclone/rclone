@@ -40,6 +40,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
@@ -245,9 +246,7 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 }
 
 func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
-	if err == nil {
-		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
-	}
+	old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
 	return
 }
 
@@ -535,6 +534,9 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	if directoriesOnly {
 		opts.Parameters.Add("type", api.ItemTypeFolder)
 	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
+	}
 	opts.Parameters.Set("perPage", strconv.Itoa(f.opt.ListChunk))
 	page := 1
 OUTER:
@@ -700,7 +702,7 @@ func (f *Fs) deleteObject(ctx context.Context, id string) error {
 		Path:   "/file-entries/delete",
 	}
 	request := api.DeleteRequest{
-		EntryIds:      []string{id},
+		EntryIDs:      []string{id},
 		DeleteForever: f.opt.HardDelete,
 	}
 	var result api.DeleteResponse
@@ -806,7 +808,7 @@ func (f *Fs) rename(ctx context.Context, id, newLeaf string) (item *api.Item, er
 func (f *Fs) move(ctx context.Context, id, newDirID string) (err error) {
 	var resp *http.Response
 	var request = api.MoveRequest{
-		EntryIds:      []string{id},
+		EntryIDs:      []string{id},
 		DestinationID: newDirID,
 	}
 	var result api.MoveResponse
@@ -944,7 +946,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) copy(ctx context.Context, id, newDirID string) (item *api.Item, err error) {
 	var resp *http.Response
 	var request = api.CopyRequest{
-		EntryIds:      []string{id},
+		EntryIDs:      []string{id},
 		DestinationID: newDirID,
 	}
 	var result api.CopyResponse
@@ -1059,6 +1061,7 @@ type drimeChunkWriter struct {
 	f         *Fs
 	o         *Object
 	written   atomic.Int64
+	fileEntry api.Item
 
 	uploadName   string // uuid
 	leaf         string
@@ -1247,7 +1250,7 @@ func (s *drimeChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, read
 		ETag:       etag,
 	})
 
-	// Count size written for unkown file sizes
+	// Count size written for unknown file sizes
 	s.written.Add(chunkSize)
 
 	return chunkSize, nil
@@ -1311,6 +1314,7 @@ func (s *drimeChunkWriter) Close(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create entry after multipart upload: %w", err)
 	}
+	s.fileEntry = res.FileEntry
 
 	return nil
 }
@@ -1460,6 +1464,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // The new object may have been created if an error is returned.
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	remote := o.Remote()
+	size := src.Size()
 
 	// Create the directory for the object if it doesn't exist
 	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
@@ -1481,6 +1486,19 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				err = fmt.Errorf("failed to delete existing object: %w", deleteErr)
 			}
 		}()
+	}
+
+	if size < 0 || size > int64(o.fs.opt.UploadCutoff) {
+		chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
+			Open:        o.fs,
+			OpenOptions: options,
+		})
+		if err != nil {
+			return err
+		}
+		s := chunkWriter.(*drimeChunkWriter)
+
+		return o.setMetaData(&s.fileEntry)
 	}
 
 	// Do the upload
