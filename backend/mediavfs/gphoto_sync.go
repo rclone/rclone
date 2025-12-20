@@ -120,69 +120,67 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 }
 
 // migrateFoldersFromPaths creates folder rows from existing file paths
-// This is a one-time migration that extracts unique directory paths from files
+// This is a per-user migration that extracts unique directory paths from files
 // and creates folder rows (type = -1) for each unique directory
 func (f *Fs) migrateFoldersFromPaths(ctx context.Context) error {
-	// Only migrate if there are files with paths but no folder rows
+	// Only migrate for the current user if they have no folder rows yet
 	var folderCount int
 	checkQuery := fmt.Sprintf(`
-		SELECT COUNT(*) FROM %s WHERE type = -1
+		SELECT COUNT(*) FROM %s WHERE type = -1 AND user_name = $1
 	`, f.opt.TableName)
-	if err := f.db.QueryRowContext(ctx, checkQuery).Scan(&folderCount); err != nil {
+	if err := f.db.QueryRowContext(ctx, checkQuery, f.opt.User).Scan(&folderCount); err != nil {
 		return fmt.Errorf("failed to check folder count: %w", err)
 	}
 
-	// If we already have folder rows, skip migration
+	// If this user already has folder rows, skip migration
 	if folderCount > 0 {
-		fs.Debugf(f, "Folder rows already exist (%d), skipping migration", folderCount)
+		fs.Debugf(f, "Folder rows already exist for user %s (%d), skipping migration", f.opt.User, folderCount)
 		return nil
 	}
 
-	// Check if there are any files with paths to migrate
+	// Check if this user has any files with paths to migrate
 	var fileWithPathCount int
 	fileCheckQuery := fmt.Sprintf(`
 		SELECT COUNT(*) FROM %s
-		WHERE path IS NOT NULL AND path != '' AND type != -1
+		WHERE path IS NOT NULL AND path != '' AND (type IS NULL OR type != -1) AND user_name = $1
 	`, f.opt.TableName)
-	if err := f.db.QueryRowContext(ctx, fileCheckQuery).Scan(&fileWithPathCount); err != nil {
+	if err := f.db.QueryRowContext(ctx, fileCheckQuery, f.opt.User).Scan(&fileWithPathCount); err != nil {
 		return fmt.Errorf("failed to check files with paths: %w", err)
 	}
 
 	if fileWithPathCount == 0 {
-		fs.Debugf(f, "No files with paths to migrate")
+		fs.Debugf(f, "No files with paths to migrate for user %s", f.opt.User)
 		return nil
 	}
 
-	fs.Infof(f, "Migrating %d files with paths to folder rows...", fileWithPathCount)
+	fs.Infof(f, "Migrating %d files with paths to folder rows for user %s...", fileWithPathCount, f.opt.User)
 
-	// Use a CTE to extract all unique directory paths and create folder rows
+	// Use a CTE to extract all unique directory paths and create folder rows for this user only
 	// For each file path like "a/b/c", we need folders: "a" (at path ""), "b" (at path "a"), "c" (at path "a/b")
 	migrationQuery := fmt.Sprintf(`
 		WITH RECURSIVE
-		-- Get all unique (user_name, path) combinations from files
+		-- Get all unique paths for this user
 		file_paths AS (
-			SELECT DISTINCT user_name, path
+			SELECT DISTINCT path
 			FROM %s
-			WHERE path IS NOT NULL AND path != '' AND (type IS NULL OR type != -1)
+			WHERE path IS NOT NULL AND path != '' AND (type IS NULL OR type != -1) AND user_name = $1
 		),
 		-- Recursively split paths into all parent directories
 		all_dirs AS (
 			-- Base case: full paths
-			SELECT user_name, path as full_path
+			SELECT path as full_path
 			FROM file_paths
 
 			UNION
 
 			-- Recursive case: parent directories
-			SELECT user_name,
-				   SUBSTRING(full_path FROM 1 FOR LENGTH(full_path) - POSITION('/' IN REVERSE(full_path)))
+			SELECT SUBSTRING(full_path FROM 1 FOR LENGTH(full_path) - POSITION('/' IN REVERSE(full_path)))
 			FROM all_dirs
 			WHERE full_path LIKE '%%/%%'
 		),
 		-- Get unique directories with their parent path and folder name
 		unique_dirs AS (
 			SELECT DISTINCT
-				user_name,
 				full_path,
 				CASE
 					WHEN full_path NOT LIKE '%%/%%' THEN ''
@@ -197,22 +195,22 @@ func (f *Fs) migrateFoldersFromPaths(ctx context.Context) error {
 		)
 		INSERT INTO %s (media_key, file_name, path, type, user_name)
 		SELECT
-			'folder:' || user_name || ':' || full_path,
+			'folder:' || $1 || ':' || full_path,
 			folder_name,
 			parent_path,
 			-1,
-			user_name
+			$1
 		FROM unique_dirs
 		ON CONFLICT (media_key) DO NOTHING
 	`, f.opt.TableName, f.opt.TableName)
 
-	result, err := f.db.ExecContext(ctx, migrationQuery)
+	result, err := f.db.ExecContext(ctx, migrationQuery, f.opt.User)
 	if err != nil {
 		return fmt.Errorf("failed to migrate folders: %w", err)
 	}
 
 	rowsAffected, _ := result.RowsAffected()
-	fs.Infof(f, "Created %d folder rows from existing paths", rowsAffected)
+	fs.Infof(f, "Created %d folder rows from existing paths for user %s", rowsAffected, f.opt.User)
 
 	return nil
 }
