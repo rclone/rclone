@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/lib/pq"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -234,11 +235,11 @@ func (f *Fs) DeleteMediaItems(ctx context.Context, mediaKeys []string) error {
 		return nil
 	}
 
-	// Convert to array format for PostgreSQL
+	// Convert to array format for PostgreSQL using pq.Array
 	query := fmt.Sprintf(`DELETE FROM %s WHERE media_key = ANY($1)`, f.opt.TableName)
 
-	// Execute delete
-	result, err := f.db.ExecContext(ctx, query, mediaKeys)
+	// Execute delete with pq.Array to properly convert Go slice to PostgreSQL array
+	result, err := f.db.ExecContext(ctx, query, pq.Array(mediaKeys))
 	if err != nil {
 		return fmt.Errorf("failed to delete media items: %w", err)
 	}
