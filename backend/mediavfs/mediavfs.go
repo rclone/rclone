@@ -982,6 +982,13 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		displayName = filePath
 	}
 
+	// Ensure parent folders exist in database
+	if displayPath != "" {
+		if err := f.ensureFoldersExist(ctx, userName, displayPath); err != nil {
+			return nil, fmt.Errorf("failed to create parent folders: %w", err)
+		}
+	}
+
 	// Insert into database
 	query := fmt.Sprintf(`
 		INSERT INTO %s (media_key, file_name, name, path, size_bytes, utc_timestamp, user_name)
