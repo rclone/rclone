@@ -59,7 +59,7 @@ SCRIPT_DIR=${SCRIPT_DIR:-$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 # Resolve rclone config file - only use test-specific config file
 # This is the strict approach: tests only use the config file created by setup.sh
 TEST_SPECIFIC_CONFIG="${WORKDIR}/rclone_raid3_integration_tests.config"
-  RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
+RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
 
 # Load default environment (required – tracked in git).
 if [[ ! -f "${SCRIPT_DIR}/compare_raid3_env.sh" ]]; then
@@ -190,21 +190,15 @@ ensure_workdir() {
 }
 
 ensure_rclone_config() {
-  log_info "config" "Using rclone config: ${RCLONE_CONFIG}"
-  
+  # Verify that rclone_raid3_integration_tests.config exists
   if [[ ! -f "${RCLONE_CONFIG}" ]]; then
     local setup_script="${SCRIPT_DIR:-$(dirname "${BASH_SOURCE[0]}")}/setup.sh"
-    # Check if it's the test-specific config that's missing
-    if [[ "${RCLONE_CONFIG}" == "${TEST_SPECIFIC_CONFIG}" ]]; then
-      die "Integration test configuration file not found: ${RCLONE_CONFIG}" \
-          "The test-specific config file is missing." \
-          "Please run: ${setup_script}" \
-          "This will create the configuration file in the working directory."
-    else
-      die "rclone config not found at ${RCLONE_CONFIG}" \
-          "Please ensure the rclone configuration file exists, or run: ${setup_script}"
-    fi
+    die "Integration test configuration file not found: ${RCLONE_CONFIG}" \
+        "The test-specific config file is missing." \
+        "Please run: ${setup_script}" \
+        "This will create the configuration file: ${RCLONE_CONFIG}"
   fi
+  log_info "config" "Using rclone config: ${RCLONE_CONFIG}"
 }
 
 create_rclone_config() {

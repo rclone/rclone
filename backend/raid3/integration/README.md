@@ -92,7 +92,9 @@ The configuration file contains:
 - MinIO S3 remotes (minioeven, minioodd, minioparity, miniosingle)
 - RAID3 remotes (localraid3, minioraid3)
 
-**Important**: The test scripts **only** use this test-specific config file. They do not use your default `~/.config/rclone/rclone.conf`.
+**Important**: 
+- The test scripts **only** use this test-specific config file. They do not use your default `~/.config/rclone/rclone.conf`.
+- Tests **verify that the config file exists** before running. If the config file is missing, tests will exit with an error message directing you to run `setup.sh`.
 
 ### Customizing Test Configuration
 
@@ -212,8 +214,10 @@ The test scripts provide clear error messages if the environment is not set up:
 |-------|----------|
 | Missing workdir file | Run `./setup.sh` |
 | Missing working directory | Run `./setup.sh --workdir <path>` |
-| Missing config file | Run `./setup.sh` |
+| Missing config file | Run `./setup.sh` to create `${WORKDIR}/rclone_raid3_integration_tests.config` |
 | Wrong directory | Change to the directory shown in the error message |
+
+**Note**: All test scripts verify that `rclone_raid3_integration_tests.config` exists before executing any tests. If the config file is missing, the script will exit immediately with a clear error message indicating that you need to run `setup.sh` first.
 
 ## 📚 Additional Documentation
 
