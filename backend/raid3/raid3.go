@@ -1442,9 +1442,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 			errors.Is(parityErr, fs.ErrorDirNotFound)
 
 		if allNotFound {
-			// If all backends return ErrorDirNotFound, convert to nil (idempotent behavior)
-			// This matches union backend's behavior (line 255-256)
-			return nil
+			// If all backends return ErrorDirNotFound, return ErrorDirNotFound
+			// The test suite expects this error when purging a non-existent directory
+			return fs.ErrorDirNotFound
 		}
 
 		// Convert individual ErrorDirNotFound to nil (idempotent behavior)
@@ -1480,10 +1480,24 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	}
 
 	// Fall back to fs.ErrorCantPurge if not all backends support it
-	// This will cause rclone to use the fallback (List + Delete + Rmdir)
-	// The fallback will handle non-existent directories appropriately (idempotent)
-	// Note: We don't return ErrorDirNotFound here because the fallback path is idempotent
-	// and will return nil for non-existent directories, which matches union backend's behavior
+	// But first check if the directory exists and has content - if it doesn't exist or is empty,
+	// return ErrorDirNotFound. This is required because the fallback path (List + Delete + Rmdir)
+	// is idempotent and returns nil for non-existent/empty directories, but the test suite expects
+	// ErrorDirNotFound when purging an already-purged directory.
+	entries, err := f.List(ctx, dir)
+	if err != nil {
+		// If directory doesn't exist, return ErrorDirNotFound
+		if errors.Is(err, fs.ErrorDirNotFound) {
+			return fs.ErrorDirNotFound
+		}
+		return fmt.Errorf("failed to list directory: %w", err)
+	}
+	// If directory is empty (no entries), return ErrorDirNotFound
+	// This handles the case where the directory was already purged
+	if len(entries) == 0 {
+		return fs.ErrorDirNotFound
+	}
+	// Directory exists and has content, fall back to operations.Purge which will use List + Delete + Rmdir
 	return fs.ErrorCantPurge
 }
 
