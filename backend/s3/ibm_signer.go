@@ -18,17 +18,23 @@ type Authenticator interface {
 // IbmIamSigner is a structure for signing requests using IBM IAM.
 // Requires APIKey and Resource InstanceID
 type IbmIamSigner struct {
-	APIKey     string
-	InstanceID string
-	Auth       Authenticator
+	APIKey      string
+	InstanceID  string
+	IAMEndpoint string
+	Auth        Authenticator
 }
-// IamEndpoint set the private IAM endpoint which is accessible on public and private clsters
-// If not set, IamAuthenticator sets defualt value i.e., public IAM endpoint which is not accessible on private clusters
-const IamEndpoint = "https://private.iam.cloud.ibm.com"
 
 // SignHTTP signs requests using IBM IAM token.
 func (signer *IbmIamSigner) SignHTTP(ctx context.Context, credentials aws.Credentials, req *http.Request, payloadHash string, service string, region string, signingTime time.Time, optFns ...func(*v4signer.SignerOptions)) error {
 	var authenticator Authenticator
+
+	// IamEndpoint set the private IAM endpoint which is accessible on public and private clsters
+	// If not set, IamAuthenticator sets defualt value i.e., public IAM endpoint which is not accessible on private clusters
+	IamEndpoint := "https://private.iam.cloud.ibm.com"
+
+	if signer.IAMEndpoint != "" {
+		IamEndpoint = signer.IAMEndpoint
+	}
 	if signer.Auth != nil {
 		authenticator = signer.Auth
 	} else {
