@@ -95,6 +95,7 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 	var resp *http.Response
 	var err error
 	var bodyBytes []byte
+	authRetries := 0 // Track auth failures to escalate to force refresh
 
 	// If body is provided, read it into memory so we can retry
 	if body != nil {
@@ -169,8 +170,12 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 
 		case http.StatusUnauthorized, http.StatusForbidden:
 			resp.Body.Close()
-			fs.Infof(nil, "gphoto: token expired (status %d), refreshing...", resp.StatusCode)
-			if err := api.GetAuthToken(ctx, true); err != nil {
+			authRetries++
+			// First auth failure: try refreshing without force
+			// Second auth failure: force refresh to get a completely new token
+			forceRefresh := authRetries > 1
+			fs.Infof(nil, "gphoto: token expired (status %d), refreshing (force=%v)...", resp.StatusCode, forceRefresh)
+			if err := api.GetAuthToken(ctx, forceRefresh); err != nil {
 				return nil, err
 			}
 			continue
@@ -618,14 +623,6 @@ func (api *GPhotoAPI) GetLibraryPageInit(ctx context.Context, pageToken string) 
 // GetDownloadURL gets the download URL for a media item
 // Based on Python implementation: api.get_download_url()
 func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (string, error) {
-	// Python implementation refreshes token before each call
-	// token = await self.get_auth_token(user)
-	if api.tokenServerURL != "" {
-		if err := api.GetAuthToken(ctx, false); err != nil {
-			return "", fmt.Errorf("failed to get auth token: %w", err)
-		}
-	}
-
 	// Build protobuf message matching Python implementation
 	// Field 1 -> Field 1 -> Field 1: media_key
 	field1_1 := NewProtoEncoder()
