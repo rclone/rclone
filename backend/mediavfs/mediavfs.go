@@ -557,22 +557,30 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			displayName = customName
 		}
 
+		// Calculate path relative to f.root for the remote field
+		// dirPath is the full database path, but remote should be relative to f.root
+		relativeDirPath := dirPath
+		if f.root != "" && strings.HasPrefix(dirPath, f.root) {
+			relativeDirPath = strings.TrimPrefix(dirPath, f.root)
+			relativeDirPath = strings.TrimPrefix(relativeDirPath, "/")
+		}
+
 		if itemType == -1 {
 			// This is a folder
 			var folderPath string
-			if dirPath == "" {
+			if relativeDirPath == "" {
 				folderPath = displayName
 			} else {
-				folderPath = dirPath + "/" + displayName
+				folderPath = relativeDirPath + "/" + displayName
 			}
 			entries = append(entries, fs.NewDir(folderPath, time.Time{}))
 		} else {
 			// This is a file
 			var remote string
-			if dirPath == "" {
+			if relativeDirPath == "" {
 				remote = displayName
 			} else {
-				remote = dirPath + "/" + displayName
+				remote = relativeDirPath + "/" + displayName
 			}
 
 			timestamp := convertUnixTimestamp(timestampUnix)
