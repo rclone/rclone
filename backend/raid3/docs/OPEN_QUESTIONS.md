@@ -1,6 +1,6 @@
 # Open Questions - raid3 Backend
 
-This document tracks open design questions and pending decisions for the raid3 backend, serving as a question registry (centralized list of issues requiring decisions), priority tracking (high/medium/low priority classification), status monitoring (active, resolved, or deferred questions), and decision workflow (process for moving questions to decisions). Process: Add questions as they arise, document decisions in [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md) when resolved. Last Updated: December 8, 2025. For resolved decisions, see [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md). For user documentation, see [`README.md`](../README.md).
+This document tracks open design questions and pending decisions for the raid3 backend, serving as a question registry (centralized list of issues requiring decisions), priority tracking (high/medium/low priority classification), status monitoring (active, resolved, or deferred questions), and decision workflow (process for moving questions to decisions). Process: Add questions as they arise, document decisions in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) when resolved. Last Updated: December 8, 2025. For resolved decisions, see [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md). For user documentation, see [`README.md`](../README.md).
 
 ---
 
@@ -218,7 +218,7 @@ oddReader, err := oddObj.Open(ctx, filteredOptions...)   // Then this
 
 ## ✅ Resolved Questions
 
-**Note**: These questions have been resolved and should be moved to [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md) for historical reference.
+**Note**: These questions have been resolved and should be moved to [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) for historical reference.
 
 ### Q2: Streaming Support for Large Files ✅ **RESOLVED**
 **Date**: 2025-12-22  
@@ -227,7 +227,7 @@ oddReader, err := oddObj.Open(ctx, filteredOptions...)   // Then this
 **Original Question**: Should raid3 support streaming for large files instead of loading entire file into memory?
 
 **Resolution**: 
-Implemented pipelined chunked streaming approach (see DD-009 in [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md)). The implementation reads files in 2MB chunks, splits each chunk into even/odd/parity particles, and uploads them sequentially while reading the next chunk in parallel. This provides bounded memory usage (~5MB) and enables efficient handling of very large files.
+Implemented pipelined chunked streaming approach (see DD-009 in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md)). The implementation reads files in 2MB chunks, splits each chunk into even/odd/parity particles, and uploads them sequentially while reading the next chunk in parallel. This provides bounded memory usage (~5MB) and enables efficient handling of very large files.
 
 **Implementation Details**:
 - Default mode: `use_streaming=true` (pipelined chunked approach)
@@ -237,7 +237,7 @@ Implemented pipelined chunked streaming approach (see DD-009 in [`DESIGN_DECISIO
 - All Go tests passing
 
 **References**: 
-- Design Decision: [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md) DD-009
+- Design Decision: [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) DD-009
 - Implementation Analysis: `_analysis/SIMPLIFIED_PIPELINED_APPROACH.md`
 - Refactoring Analysis: `_analysis/REVERT_VS_MODIFY_ANALYSIS.md`
 
@@ -307,7 +307,7 @@ The rebuild command has been fully implemented in `raid3.go` (function `rebuildC
 
 ### When a Question is Answered
 
-Document the decision in [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md), update this file (move question to "Resolved" section or delete), implement the decision in code, update user documentation if user-facing, and add tests if needed.
+Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md), update this file (move question to "Resolved" section or delete), implement the decision in code, update user documentation if user-facing, and add tests if needed.
 
 ### Template for New Questions:
 

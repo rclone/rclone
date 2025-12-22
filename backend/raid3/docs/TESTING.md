@@ -144,52 +144,13 @@ func TestXxx(t *testing.T) {
 
 ## 🐛 Debugging Failed Tests
 
-```bash
-# Run with more verbosity
-go test ./backend/raid3 -v -vv
-
-# Run specific failing test
-go test ./backend/raid3 -run "TestStandard/FsMkdir/FsPutFiles/ObjectOpenSeek" -v
-
-# Check particle sizes during test
-go test ./backend/raid3 -run "TestStandard" -v 2>&1 | grep -i "particle"
-```
+The standard Go test flags `-v` and `-vv` are supported for increased verbosity.
 
 **If `TestStandard` fails**: Check which sub-test failed, look at error message for specific operation, verify all three temp directories are writable, check for file system permissions issues.
 
 **If reconstruction tests fail**: Check XOR parity calculation (`TestCalculateParity`), verify split/merge logic (`TestSplitBytes`, `TestMergeBytes`), check size formulas (`TestSizeFormulaWithParity`), look for off-by-one errors in byte indices.
 
 **If heal tests fail**: Check if background workers started correctly, verify Shutdown() is being called, check for goroutine leaks or panics, verify file system write permissions, check timing (is Shutdown() timing out?).
-
----
-
-## 📚 Adding New Tests
-
-When adding new tests: add doc comment using the standard structure, choose appropriate section (unit, integration, heal), test both success and failure paths, include edge cases (empty, single byte, odd/even lengths), verify error messages are helpful, keep tests fast (<1 second if possible), clean up resources (use `t.TempDir()`, defer cleanup).
-
-Example:
-
-```go
-// TestNewFeature tests [description].
-//
-// [Importance/context]
-//
-// This test verifies:
-//   - [Expected behavior]
-//
-// Failure indicates: [Impact]
-func TestNewFeature(t *testing.T) {
-    // Setup
-    ctx := context.Background()
-    
-    // Test
-    result, err := newFeature()
-    
-    // Verify
-    require.NoError(t, err)
-    assert.Equal(t, expected, result)
-}
-```
 
 ---
 
@@ -261,59 +222,11 @@ docker run -d --name minioparity \
 
 Note: Each container runs the MinIO console on its internal port `:9001`, but Docker maps them to different host ports (9004, 9005, 9006), so there's no conflict.
 
-**2) rclone config for three MinIO S3 remotes and a `raid3` remote**
+**2) rclone config**
 
-Append to your rclone config (e.g. `~/.config/rclone/rclone.conf`):
+You can use the config file created by `setup.sh` (located at `${WORKDIR}/rclone_raid3_integration_tests.config`) for your own tests. Otherwise, add the content of that config file to your own rclone config (e.g. `~/.config/rclone/rclone.conf`).
 
-```ini
-[minioeven]
-type = s3
-provider = Minio
-env_auth = false
-access_key_id = even
-secret_access_key = evenpass8
-endpoint = http://127.0.0.1:9001
-acl = private
-no_check_bucket = true
-
-[minioodd]
-type = s3
-provider = Minio
-env_auth = false
-access_key_id = odd
-secret_access_key = oddpass88
-endpoint = http://127.0.0.1:9002
-acl = private
-no_check_bucket = true
-
-[minioparity]
-type = s3
-provider = Minio
-env_auth = false
-access_key_id = parity
-secret_access_key = parityp8
-endpoint = http://127.0.0.1:9003
-acl = private
-no_check_bucket = true
-
-[minioraid3]
-type = raid3
-even = minioeven:
-odd = minioodd:
-parity = minioparity:
-```
-
-**3) Example usage**
-
-```bash
-rclone mkdir minioraid3:testdir
-echo "hello raid3" > /tmp/hello.txt
-rclone copy /tmp/hello.txt minioraid3:testdir
-rclone cat minioraid3:testdir/hello.txt
-rclone ls minioeven:testdir  # Inspect underlying remotes
-```
-
-**4) Degraded read test**
+**3) Degraded read test**
 
 ```bash
 docker stop minioodd  # Stop odd; raid3 should reconstruct from even+parity
@@ -345,7 +258,7 @@ hexdump -C /tmp/raid3-test/parity/test.txt.parity-el  # Parity (XOR)
 
 ## Known Test Limitations
 
-Some tests are SKIPped because the backend doesn't implement optional features: `OpenWriterAt` (not needed), `OpenChunkWriter` (not applicable), `ChangeNotify` (not applicable), `FsPutStream` (could be implemented in future), `Shutdown` (not needed). These are all optional features - the backend is fully functional without them.
+Some tests are SKIPped because the backend doesn't implement optional features: `OpenWriterAt` (not needed), `OpenChunkWriter` (not applicable), `ChangeNotify` (not applicable), `FsPutStream` (could be implemented in future), `Shutdown` (not needed). These are all optional features.
 
 ---
 

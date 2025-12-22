@@ -11,13 +11,13 @@ These documents were planning/decision documents that are no longer relevant aft
 - **Purpose**: Decision document analyzing whether to revert or modify the io.Pipe implementation
 - **Status**: Decision made (modify), implementation complete
 - **Reason**: No longer relevant - the decision was made and implemented
-- **Action**: ✅ **DELETED** (decision is documented in `docs/DESIGN_DECISIONS.md` as DD-009)
+- **Action**: ✅ **DELETED** (decision is documented in `DESIGN_DECISIONS.md` as DD-009)
 
 ### 2. `SIMPLIFIED_PIPELINED_APPROACH.md` ✅ **DELETED**
 - **Purpose**: Analysis and plan for the pipelined chunked approach
 - **Status**: Approach has been fully implemented
 - **Reason**: Planning document that's now complete
-- **Action**: ✅ **DELETED** (implementation details are in code and `docs/DESIGN_DECISIONS.md`)
+- **Action**: ✅ **DELETED** (implementation details are in code and `DESIGN_DECISIONS.md`)
 
 ### 3. `STREAMING_IMPLEMENTATION_FIXES.md` ✅ **DELETED**
 - **Purpose**: Documents all fixes for the old io.Pipe + StreamSplitter approach
@@ -43,7 +43,7 @@ These documents contain outdated information about streaming:
 
 These documents are still relevant and should be kept:
 
-### 1. `docs/DESIGN_DECISIONS.md`
+### 1. `DESIGN_DECISIONS.md`
 - Contains DD-009 documenting the pipelined streaming implementation decision
 - **Action**: Already updated ✅
 

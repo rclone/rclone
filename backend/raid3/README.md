@@ -1,6 +1,6 @@
 # RAID3 Backend - RAID 3 Storage
 
-This document is the main user guide for the rclone `raid3` backend, providing usage instructions, configuration examples, backend commands (`status`, `rebuild`, `heal`), error handling details, and known limitations. For technical RAID 3 details, testing documentation, design decisions, and contributing guidelines, see [`docs/RAID3.md`](docs/RAID3.md), [`docs/TESTING.md`](docs/TESTING.md), [`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md), and [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
+This document is the main user guide for the rclone `raid3` backend, providing usage instructions, configuration examples, backend commands (`status`, `rebuild`, `heal`), error handling details, and known limitations. For technical RAID 3 details, testing documentation, design decisions, and contributing guidelines, see [`docs/RAID3.md`](docs/RAID3.md), [`docs/TESTING.md`](docs/TESTING.md), [`_analysis/DESIGN_DECISIONS.md`](_analysis/DESIGN_DECISIONS.md), and [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
 
 ---
 

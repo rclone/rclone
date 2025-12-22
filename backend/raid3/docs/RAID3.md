@@ -2,16 +2,12 @@
 
 ## Purpose of This Document
 
-This document explains **how RAID 3 works in principle**, both for traditional hardware RAID 3 and for the rclone `raid3` backend implementation. It focuses on the **fundamental concepts** of RAID 3 storage:
+This document serves as a **technical reference** and explains **how RAID 3 works in principle**, both for traditional hardware RAID 3 and for the rclone `raid3` backend implementation. It focuses on the **fundamental concepts** of RAID 3 storage:
 
-- **Byte-level striping** (how data is split across backends)
-- **XOR parity calculation** (how redundancy is computed)
-- **Reconstruction algorithms** (how missing data is recovered)
-- **Hardware RAID 3 compliance** (how the implementation matches industry standards)
+**Byte-level striping** (how data is split across backends), **XOR parity calculation** (how redundancy is computed), **Reconstruction algorithms** (how missing data is recovered) and **Hardware RAID 3 compliance** (how the implementation matches standards).
 
 For **usage instructions**, **configuration options**, **backend commands** (rebuild, heal, status), and **operational details**, see the main [`../README.md`](../README.md) file.
 
-This document serves as a **technical reference** for understanding the RAID 3 algorithm and how it's implemented in the rclone backend.
 
 ---
 
@@ -178,9 +174,7 @@ For byte i in reconstructed:
     data[i] = parity[i/2] XOR even[i/2]
 ```
 
-**When parity is lost:**
-- No problem - can still reconstruct from even+odd
-- Can regenerate parity from even+odd
+**When parity is lost:** No problem, can still reconstruct from even+odd.
 
 ### Implementation Status
 
@@ -206,68 +200,12 @@ Hardware RAID 3 standard: reads work in degraded mode (with N-1 drives), writes 
 
 Strict writes match the industry standard: all hardware RAID 3 controllers block writes in degraded mode, matching Linux MD RAID default behavior, and this is a proven approach used for 30+ years. Data safety: prevents creating degraded files from the start, ensures every file is fully replicated or not created, eliminates partial states or inconsistencies, and prevents corruption from partial updates. Performance: avoids reconstruction overhead for new files, heal only for pre-existing degraded files, provides better user experience, and health check adds minimal overhead (+0.2s).
 
-### Implementation Details
-
-**Health Check Mechanism**:
-```go
-// Before each write operation (Put, Update, Move)
-checkAllBackendsAvailable(ctx) {
-    // Test all 3 backends with parallel List() calls
-    // 5-second timeout per backend
-    // Return error if ANY unavailable
-}
-```
-
-The health check is needed to prevent rclone's command-level retry logic from creating degraded files, detect unavailability before attempting write, fail on first attempt (no retries can bypass), and is critical for Update operations (prevents corruption).
-
-**Before Fix** (discovered during testing):
-```
-Attempt 1: Put fails ✅
-Retry:     Put succeeds partially ❌
-Result:    Degraded file created!
-```
-
-**After Fix** (health check):
-```
-Health Check: Backend unavailable detected ❌
-Result:        Write blocked immediately
-File:          Original preserved ✅
-```
-
-### Error Messages
-
-**When backend unavailable during write** (Put, Update, Move):
-```
-ERROR: write blocked in degraded mode (RAID 3 policy): odd backend unavailable
-```
-
-**User action**: Fix backend, then retry operation
-
-**When backend unavailable during read**:
-```
-INFO: Reconstructed file.txt from odd+parity (degraded mode)
-INFO: Queued even particle for heal
-```
-
-**User action**: None - operation succeeds automatically
-
-**When corruption detected** (Update validation):
-```
-ERROR: update failed: invalid particle sizes (even=11, odd=14) - FILE MAY BE CORRUPTED
-```
-
-**User action**: File may need rebuild. Use degraded mode read to reconstruct, then re-upload.
-
-## Testing
-
-Comprehensive testing includes unit tests for split/merge, XOR parity calculation, and parity reconstruction logic; end-to-end tests with even and odd length files; MD5 hash verification; particle size validation; deletion of all three particles; degraded mode read tests (reconstruction from 2/3 particles); rebuild command tests; heal command tests; auto-heal and auto-cleanup tests; directory reconstruction tests; and error handling and rollback tests.
-
 ---
 
 ## Related Documentation
 
 - **`README.md`**: Complete user guide, configuration, commands, and usage examples
 - **`TESTING.md`**: Testing strategy and test coverage details
-- **`DESIGN_DECISIONS.md`**: Design choices and rationale
+- **`_analysis/DESIGN_DECISIONS.md`**: Design choices and rationale
 - **`OPEN_QUESTIONS.md`**: Known issues and future enhancements
 

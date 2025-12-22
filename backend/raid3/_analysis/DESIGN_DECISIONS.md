@@ -1,12 +1,12 @@
 # Design Decisions - raid3 Backend
 
-This document records key architectural and design decisions made during the development of the raid3 backend, serving as a decision log (historical record of why certain choices were made), rationale documentation (explanation of trade-offs and alternatives considered), reference for maintainers (understanding the reasoning behind current implementation), and future guidance (context for similar decisions that may arise). Format: Lightweight ADR (Architecture Decision Record) style. Last Updated: December 8, 2025. For user documentation, see [`README.md`](README.md). For open questions and pending decisions, see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md).
+This document records key architectural and design decisions made during the development of the raid3 backend, serving as a decision log (historical record of why certain choices were made), rationale documentation (explanation of trade-offs and alternatives considered), reference for maintainers (understanding the reasoning behind current implementation), and future guidance (context for similar decisions that may arise). Format: Lightweight ADR (Architecture Decision Record) style. Last Updated: December 8, 2025. For user documentation, see [`../README.md`](../README.md). For open questions and pending decisions, see [`../docs/OPEN_QUESTIONS.md`](../docs/OPEN_QUESTIONS.md).
 
 ---
 
 ## How to Use This Document
 
-To add a new decision, add a new section with sequential number (DD-XXX), include Context, Decision, Rationale, Alternatives, and Status, and link to detailed docs in `docs/` if available. Format: DD-XXX: [Title], Date: YYYY-MM-DD, Status: Accepted | Proposed | Deprecated, Context: What problem are we solving?, Decision: What did we decide?, Rationale: Why this choice?, Alternatives: What else was considered?, Consequences: Trade-offs and implications, References: Links to detailed docs.
+To add a new decision, add a new section with sequential number (DD-XXX), include Context, Decision, Rationale, Alternatives, and Status, and link to detailed docs in `../docs/` if available. Format: DD-XXX: [Title], Date: YYYY-MM-DD, Status: Accepted | Proposed | Deprecated, Context: What problem are we solving?, Decision: What did we decide?, Rationale: Why this choice?, Alternatives: What else was considered?, Consequences: Trade-offs and implications, References: Links to detailed docs.
 
 ---
 
@@ -22,7 +22,7 @@ To add a new decision, add a new section with sequential number (DD-XXX), includ
 
 **Rationale**: Matches hardware RAID 3 controllers (industry standard), prevents creating degraded files from the start, avoids performance degradation (reconstruction overhead), and ensures data consistency. **Alternatives Considered**: Option B (configurable with default strict, optional degraded writes), Option C (always allow degraded writes for high availability). **Consequences**: Data consistency guaranteed, no corruption possible, writes fail when backend unavailable (expected RAID behavior), and simple implementation.
 
-**References**: `docs/ERROR_HANDLING.md`
+**References**: `../docs/ERROR_HANDLING.md`
 
 ---
 
@@ -36,7 +36,7 @@ To add a new decision, add a new section with sequential number (DD-XXX), includ
 
 **Rationale**: Prevents rclone's retry logic from creating partial files, critical for preventing Update corruption, provides fast failure (5 seconds) vs hanging (minutes), and provides clear error messages. **Alternatives Considered**: Disable retries globally (affects all operations), add rollback logic (complex), trust errgroup alone (insufficient - retries bypass it). **Consequences**: Prevents all corruption scenarios, fast failure in degraded mode, +0.2s overhead per write operation (acceptable), and simple to implement.
 
-**References**: `docs/STRICT_WRITE_POLICY.md`, `docs/FIXES_COMPLETE.md`
+**References**: `../docs/STRICT_WRITE_POLICY.md`, `../docs/FIXES_COMPLETE.md`
 
 ---
 
@@ -50,7 +50,7 @@ To add a new decision, add a new section with sequential number (DD-XXX), includ
 
 **Rationale**: Reduces failover time from 5 minutes to 6-7 seconds (aggressive), allows user to choose based on their backend type, and uses `fs.AddConfig()` for local override. **Alternatives Considered**: Modify AWS SDK (rejected - too invasive), use different S3 SDK (rejected - architectural change), global timeout override (rejected - affects all backends). **Consequences**: Fast degraded mode (6-7 seconds), user choice for different scenarios, configuration complexity (3 modes to understand), and no architectural changes.
 
-**References**: `docs/TIMEOUT_MODE.md`, `docs/S3_TIMEOUT_RESEARCH.md`
+**References**: `../docs/TIMEOUT_MODE.md`, `../docs/S3_TIMEOUT_RESEARCH.md`
 
 ---
 
@@ -66,7 +66,7 @@ To add a new decision, add a new section with sequential number (DD-XXX), includ
 
 **Implementation Notes**: Implemented as `auto_heal` configuration option (default: `true`), background workers handle upload queue (`heal.go`), explicit `rclone backend heal raid3:` command available for manual healing, directory reconstruction also supported during `List()` operations.
 
-**References**: `docs/CLEAN_HEAL.md`, `docs/SELF_HEALING_RESEARCH.md`, `README.md` (Auto-Heal section)
+**References**: `../docs/CLEAN_HEAL.md`, `../docs/SELF_HEALING_RESEARCH.md`, `../README.md` (Auto-Heal section)
 
 ---
 
@@ -80,7 +80,7 @@ To add a new decision, add a new section with sequential number (DD-XXX), includ
 
 **Rationale**: Distinctive suffixes (no collision with real files), encodes essential reconstruction information, and simple to parse and validate. **Alternatives Considered**: `.parity` only (rejected - doesn't encode length), `.el` and `.ol` only (rejected - too generic), metadata in separate file (rejected - too complex). **Consequences**: Clear identification of parity files, reconstruction possible without even/odd particles, and simple implementation.
 
-**References**: [`RAID3.md`](RAID3.md)
+**References**: [`../docs/RAID3.md`](../docs/RAID3.md)
 
 ---
 
@@ -94,7 +94,7 @@ To add a new decision, add a new section with sequential number (DD-XXX), includ
 
 **Rationale**: True RAID 3 behavior (byte-level), simple algorithm (no block alignment), works with any file size, and even distribution for small files. **Alternatives Considered**: Block-level striping (RAID 5 style - more complex), variable-size chunks (unnecessary complexity). **Consequences**: Simple implementation, works with any file size, and perfect 50/50 distribution.
 
-**References**: [`RAID3.md`](RAID3.md)
+**References**: [`../docs/RAID3.md`](../docs/RAID3.md)
 
 ---
 
@@ -114,7 +114,7 @@ Parity: [A^B, C^D, E^F, G]  (4 bytes)
 
 **Rationale**: Mathematically correct for XOR reconstruction, parity size equals even size (consistent), enables reconstruction from any 2 particles. **Alternatives Considered**: Pad odd data with zero (rejected - changes data), store last byte separately (rejected - too complex). **Consequences**: Correct reconstruction math, simple implementation, works for all file sizes.
 
-**References**: [`RAID3.md`](RAID3.md)
+**References**: [`../docs/RAID3.md`](../docs/RAID3.md)
 
 ---
 
@@ -139,7 +139,7 @@ Parity: [A^B, C^D, E^F, G]  (4 bytes)
 
 **Rationale**: Clear purpose for each test, helps debugging (know what's broken), improves maintainability, self-documenting code. **Alternatives Considered**: Minimal comments (rejected - hard to maintain), external test documentation only (rejected - comments better). **Consequences**: Self-documenting tests, easier debugging, better maintainability, more verbose test files.
 
-**References**: `TEST_DOCUMENTATION_PROPOSAL.md`, [`TESTING.md`](TESTING.md)
+**References**: `TEST_DOCUMENTATION_PROPOSAL.md`, [`../docs/TESTING.md`](../docs/TESTING.md)
 
 ---
 
@@ -165,7 +165,7 @@ Parity: [A^B, C^D, E^F, G]  (4 bytes)
 
 **Rationale**: Eliminates `io.Pipe` buffer limitations (64KB fixed buffer), simplifies synchronization (no complex goroutine coordination), provides predictable memory usage (~5MB for double buffering), easier error handling (linear flow), and fewer edge cases (no pipe buffer overflow). **Alternatives Considered**: Keep `io.Pipe` approach with fixes (rejected - too complex), revert to buffered approach only (rejected - doesn't scale). **Consequences**: Simpler code (~480 lines reduction), bounded memory usage, works reliably for large files, slightly less parallelism than concurrent uploads (acceptable trade-off), and all tests pass.
 
-**References**: `_analysis/SIMPLIFIED_PIPELINED_APPROACH.md`, `_analysis/REVERT_VS_MODIFY_ANALYSIS.md`, `_analysis/STREAMING_IMPLEMENTATION_FIXES.md`
+**References**: `SIMPLIFIED_PIPELINED_APPROACH.md`, `REVERT_VS_MODIFY_ANALYSIS.md`, `STREAMING_IMPLEMENTATION_FIXES.md`
 
 ---
 
@@ -227,5 +227,5 @@ Create decision records for architectural choices with multiple viable options, 
 
 ## 🎯 Summary
 
-Total decisions documented: 9. Status: All accepted and implemented. Open questions: 2 (low priority). This document provides a quick reference for understanding why the raid3 backend works the way it does. For detailed implementation notes, see files in `docs/` directory.
+Total decisions documented: 9. Status: All accepted and implemented. Open questions: 2 (low priority). This document provides a quick reference for understanding why the raid3 backend works the way it does. For detailed implementation notes, see files in `../docs/` directory.
 
