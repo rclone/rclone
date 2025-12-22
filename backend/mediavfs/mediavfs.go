@@ -1034,8 +1034,14 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	userName := f.opt.User
 	filePath := src.Remote()
 
+	// Combine root with the file path to get full destination path
+	fullPath := filePath
+	if f.root != "" {
+		fullPath = f.root + "/" + filePath
+	}
+
 	// Upload to Google Photos
-	fs.Infof(f, "Uploading %s to Google Photos for user %s", filePath, userName)
+	fs.Infof(f, "Uploading %s to Google Photos for user %s", fullPath, userName)
 	mediaKey, err := f.UploadWithProgress(ctx, src, in, userName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload to Google Photos: %w", err)
@@ -1043,13 +1049,13 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	// Parse path and name for database insert
 	var displayPath, displayName string
-	if strings.Contains(filePath, "/") {
-		lastSlash := strings.LastIndex(filePath, "/")
-		displayPath = filePath[:lastSlash]
-		displayName = filePath[lastSlash+1:]
+	if strings.Contains(fullPath, "/") {
+		lastSlash := strings.LastIndex(fullPath, "/")
+		displayPath = fullPath[:lastSlash]
+		displayName = fullPath[lastSlash+1:]
 	} else {
 		displayPath = ""
-		displayName = filePath
+		displayName = fullPath
 	}
 
 	// Ensure parent folders exist in database
@@ -1093,7 +1099,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	// Add to destination directory cache instead of invalidating
 	f.addToDirCache(displayPath, obj)
 
-	fs.Infof(f, "Successfully uploaded %s with media key: %s", src.Remote(), mediaKey)
+	fs.Infof(f, "Successfully uploaded %s with media key: %s", fullPath, mediaKey)
 	return obj, nil
 }
 
