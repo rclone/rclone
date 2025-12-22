@@ -94,6 +94,15 @@ func (api *GPhotoAPI) GetAuthToken(ctx context.Context, force bool) error {
 func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers map[string]string, body io.Reader) (*http.Response, error) {
 	var resp *http.Response
 	var err error
+	var bodyBytes []byte
+
+	// If body is provided, read it into memory so we can retry
+	if body != nil {
+		bodyBytes, err = io.ReadAll(body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read request body: %w", err)
+		}
+	}
 
 	for retry := 0; retry < 5; retry++ {
 		// Ensure we have a token
@@ -103,7 +112,13 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			}
 		}
 
-		req, err := http.NewRequestWithContext(ctx, method, url, body)
+		// Create new body reader for each retry
+		var reqBody io.Reader
+		if bodyBytes != nil {
+			reqBody = bytes.NewReader(bodyBytes)
+		}
+
+		req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create request: %w", err)
 		}
@@ -124,7 +139,7 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 		}
 
 		// Log request details
-		fs.Debugf(nil, "gphoto: API request: %s %s", method, url)
+		fs.Debugf(nil, "gphoto: API request: %s %s (attempt %d)", method, url, retry+1)
 		fs.Debugf(nil, "gphoto: request headers: User-Agent=%s, Content-Type=%s",
 			req.Header.Get("User-Agent"), req.Header.Get("Content-Type"))
 		if api.token != "" {
@@ -160,11 +175,24 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			}
 			continue
 
+		case http.StatusTooManyRequests: // 429
+			resp.Body.Close()
+			backoff := time.Duration(1<<uint(retry)) * time.Second // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+			fs.Infof(nil, "gphoto: rate limited (429), waiting %v before retry...", backoff)
+			time.Sleep(backoff)
+			continue
+
 		case http.StatusInternalServerError, http.StatusServiceUnavailable:
 			resp.Body.Close()
-			retry++
-			time.Sleep(1 * time.Second)
+			backoff := time.Duration(1<<uint(retry)) * time.Second // Exponential backoff
+			fs.Infof(nil, "gphoto: server error (%d), waiting %v before retry...", resp.StatusCode, backoff)
+			time.Sleep(backoff)
 			continue
+
+		case http.StatusNotFound: // 404
+			// Return the response so caller can handle it
+			fs.Debugf(nil, "gphoto: resource not found (404)")
+			return resp, nil
 
 		default:
 			resp.Body.Close()
@@ -172,7 +200,7 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 		}
 	}
 
-	return resp, err
+	return resp, fmt.Errorf("max retries exceeded")
 }
 
 // readResponseBody reads the response body, decompressing if gzip-encoded
@@ -590,6 +618,14 @@ func (api *GPhotoAPI) GetLibraryPageInit(ctx context.Context, pageToken string) 
 // GetDownloadURL gets the download URL for a media item
 // Based on Python implementation: api.get_download_url()
 func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (string, error) {
+	// Python implementation refreshes token before each call
+	// token = await self.get_auth_token(user)
+	if api.tokenServerURL != "" {
+		if err := api.GetAuthToken(ctx, false); err != nil {
+			return "", fmt.Errorf("failed to get auth token: %w", err)
+		}
+	}
+
 	// Build protobuf message matching Python implementation
 	// Field 1 -> Field 1 -> Field 1: media_key
 	field1_1 := NewProtoEncoder()
@@ -652,6 +688,11 @@ func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (stri
 	}
 	defer resp.Body.Close()
 
+	// Handle 404 - resource not found
+	if resp.StatusCode == http.StatusNotFound {
+		return "", fmt.Errorf("media item not found: %s", mediaKey)
+	}
+
 	// Parse protobuf response
 	respBody, err := readResponseBody(resp)
 	if err != nil {
@@ -687,25 +728,36 @@ func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (stri
 	}
 
 	// Extract download URL from response
-	// Path: response["1"]["5"]["3"]["5"] (or response["1"]["5"]["2"]["5"] for edited version)
+	// Based on Python: output_dict["1"]["5"]["2"]["5"] for edited, output_dict["1"]["5"]["2"]["6"] for original
 	if field1Data, ok := result["1"].(map[string]interface{}); ok {
 		if field5Data, ok := field1Data["5"].(map[string]interface{}); ok {
-			// Try field 3 -> field 5 (original file URL)
-			if field3Data, ok := field5Data["3"].(map[string]interface{}); ok {
-				if url, ok := field3Data["5"].(string); ok {
-					fs.Debugf(nil, "gphoto: got download URL for %s", mediaKey)
+			if field2Data, ok := field5Data["2"].(map[string]interface{}); ok {
+				// Try field 6 first (original file URL)
+				if url, ok := field2Data["6"].(string); ok && url != "" {
+					fs.Debugf(nil, "gphoto: got original download URL for %s", mediaKey)
+					return url, nil
+				}
+				// Fallback to field 5 (edited version URL)
+				if url, ok := field2Data["5"].(string); ok && url != "" {
+					fs.Debugf(nil, "gphoto: got edited download URL for %s", mediaKey)
 					return url, nil
 				}
 			}
-			// Fallback: try field 2 -> field 5 (edited version URL)
-			if field2Data, ok := field5Data["2"].(map[string]interface{}); ok {
-				if url, ok := field2Data["5"].(string); ok {
-					fs.Debugf(nil, "gphoto: got download URL (edited) for %s", mediaKey)
+			// Also try field 3 path (alternative response format)
+			if field3Data, ok := field5Data["3"].(map[string]interface{}); ok {
+				if url, ok := field3Data["6"].(string); ok && url != "" {
+					fs.Debugf(nil, "gphoto: got original download URL (field 3) for %s", mediaKey)
+					return url, nil
+				}
+				if url, ok := field3Data["5"].(string); ok && url != "" {
+					fs.Debugf(nil, "gphoto: got edited download URL (field 3) for %s", mediaKey)
 					return url, nil
 				}
 			}
 		}
 	}
 
+	// Log the full result for debugging
+	fs.Debugf(nil, "gphoto: GetDownloadURL response structure: %+v", result)
 	return "", fmt.Errorf("download URL not found in response for media_key %s", mediaKey)
 }
