@@ -58,6 +58,41 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 
 ---
 
+### Q21: Optimize Range Reads for Streaming
+**Status**: 🟡 **ACTIVE** - Streaming optimization  
+**Priority**: Medium
+
+**Question**: Should range reads apply byte ranges directly to particle readers instead of reading entire particles and filtering?
+
+**Context**: Currently, when reading a byte range (e.g., bytes 1000-2000 of a file), the implementation reads entire even and odd particles and then filters the output. This wastes bandwidth and I/O for partial reads, which is common in HTTP range requests, video streaming, and partial file access.
+
+**Current Implementation** (`object.go:494-500`):
+- Reads entire particles: `evenObj.Open(ctx, filteredOptions...)` (reads full particle)
+- Filters output: `newRangeFilterReader(merger, rangeStart, rangeEnd, ...)`
+- For a 1KB range read from a 1GB file, still reads ~500MB of particle data
+
+**Proposed Optimization**:
+- Calculate which byte ranges are needed from each particle based on the requested range
+- Apply range options directly to particle readers: `evenObj.Open(ctx, &fs.RangeOption{Start: particleStart, End: particleEnd}, ...)`
+- Only read the needed bytes from each particle
+
+**Benefit**:
+- Significantly reduces I/O for partial reads (e.g., 1KB range from 1GB file: ~500MB → ~1KB)
+- Improves latency for range requests
+- Better bandwidth utilization
+- Common use case: HTTP range requests, video streaming, database partial reads
+
+**Implementation Complexity**: Medium (3-5 days)
+- Requires byte-to-particle coordinate mapping
+- Need to handle odd-length files correctly
+- Must support both RangeOption and SeekOption
+
+**References**: 
+- Current implementation: `backend/raid3/object.go:494-500`
+- Performance analysis: `_analysis/performance/PERFORMANCE_ANALYSIS.md:265-270`
+
+---
+
 
 ---
 
@@ -124,6 +159,60 @@ Many tests use `context.Background()` (53 instances found). Add timeouts to long
 **Priority**: Low
 
 Current error handling uses generic `fmt.Errorf()`. Consider adding specific error types for common scenarios (degraded mode, particle missing, etc.) for better error classification and debugging.
+
+---
+
+### Q22: Parallel Reader Opening for Streaming Reads
+**Status**: 🟢 **ACTIVE** - Streaming optimization  
+**Priority**: Low
+
+**Question**: Should particle readers be opened concurrently instead of sequentially?
+
+**Context**: In `openStreaming()` (`object.go:479-488`), object lookup is already parallel (lines 434-442), but reader opening is sequential. This adds small latency overhead.
+
+**Current Implementation**:
+```go
+evenReader, err := evenObj.Open(ctx, filteredOptions...)  // Sequential
+oddReader, err := oddObj.Open(ctx, filteredOptions...)   // Then this
+```
+
+**Proposed Optimization**:
+- Open both readers concurrently using `errgroup`
+- Small latency improvement (typically <10ms per read operation)
+
+**Benefit**: Minor latency improvement for read operations
+
+**Implementation Complexity**: Low (1-2 hours)
+- Simple change to use errgroup for parallel opening
+- Already have pattern from other concurrent operations
+
+**References**: 
+- Current implementation: `backend/raid3/object.go:479-488`
+- Similar pattern: `backend/raid3/raid3.go:1252-1293` (concurrent uploads)
+
+---
+
+### Q23: Improve StreamReconstructor Size Mismatch Handling
+**Status**: 🟢 **ACTIVE** - Streaming optimization  
+**Priority**: Low
+
+**Question**: Should StreamReconstructor better handle size mismatches during streaming?
+
+**Context**: When data and parity streams read different amounts during streaming reconstruction, the current implementation processes the minimum. A comment in the code (`particles.go:818`) mentions "future enhancement" for better buffering of excess data.
+
+**Current Behavior**: Works correctly but processes minimum size, potentially requiring additional reads
+
+**Proposed Enhancement**: Better buffering strategy for size mismatches to reduce number of read operations
+
+**Benefit**: Minor efficiency improvement for degraded mode reads
+
+**Implementation Complexity**: Low-Medium (1-2 days)
+- Requires careful handling of buffering logic
+- Must maintain correctness for reconstruction
+
+**References**: 
+- Current implementation: `backend/raid3/particles.go:715-744`
+- Comment: `backend/raid3/particles.go:818`
 
 ---
 
@@ -266,7 +355,7 @@ Document the decision in [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md), update th
 
 ## 📊 Statistics
 
-Total active questions: 13. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (2) - Q14: Health Check Caching, Q15: Background Worker Context. Medium Priority (5) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values. Low Priority (6) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types.
+Total active questions: 16. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (2) - Q14: Health Check Caching, Q15: Background Worker Context. Medium Priority (6) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values, Q21: Range Read Optimization. Low Priority (8) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch.
 
 
 **Use this file to track decisions before they're made!** 🤔

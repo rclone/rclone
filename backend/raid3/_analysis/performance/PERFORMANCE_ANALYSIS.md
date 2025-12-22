@@ -1,7 +1,7 @@
 # RAID3 Performance Analysis
 
 **Date**: 2024-12-19 (Updated: 2025-12-22)  
-**Status**: Analysis Complete - Streaming Implemented  
+**Status**: Analysis Complete - Streaming Implemented with Concurrent Uploads  
 **Issue**: RAID3 backend is 3x slower than standard rclone
 
 ## Executive Summary
@@ -12,7 +12,7 @@ The RAID3 backend implementation has several performance bottlenecks that cause 
 2. **Health check overhead** - Every write operation performs expensive health checks
 3. **Multiple backend operations** - Inherent 3x overhead from RAID3 design
 4. **List operation overhead** - Additional particle existence checks per object
-5. ~~**No streaming support**~~ ✅ **IMPLEMENTED** - Streaming support is now available (pipelined chunked approach, default)
+5. ~~**No streaming support**~~ ✅ **IMPLEMENTED** - Streaming support is now available for both reads and writes (pipelined chunked approach, default)
 
 ## Detailed Bottleneck Analysis
 
@@ -59,7 +59,7 @@ readChunkSize := int64(f.opt.ChunkSize) * 2  // ~2MB
 **Streaming Mode** (default):
 - `backend/raid3/raid3.go:putStreaming()` - Pipelined chunked uploads
 - `backend/raid3/object.go:updateStreaming()` - Pipelined chunked updates
-- `backend/raid3/object.go:openStreaming()` - Uses StreamMerger (still buffers particles)
+- `backend/raid3/object.go:openStreaming()` - Uses StreamMerger for on-the-fly merging
 
 **Legacy Mode** (`use_streaming=false`):
 - `backend/raid3/raid3.go:putBuffered()` - Loads entire file
@@ -166,10 +166,10 @@ readChunkSize := int64(f.opt.ChunkSize) * 2  // ~2MB
 // Read chunk → Split → Upload sequentially → Read next chunk in parallel
 ```
 
-**Open()**: ⚠️ **Partially implemented** - Still uses `StreamMerger` which buffers particles
+**Open()**: ✅ **IMPLEMENTED** - Uses `StreamMerger` for on-the-fly merging
 - Uses `StreamMerger` to merge even + odd streams
-- Still reads entire particles into memory before merging
-- Future optimization: True streaming merge (read and merge on-the-fly)
+- Reads chunks and merges them incrementally (does not wait for entire particles)
+- Bounded memory usage with chunk-sized buffers
 
 #### Impact
 
@@ -179,9 +179,10 @@ readChunkSize := int64(f.opt.ChunkSize) * 2  // ~2MB
 - ✅ **Throughput**: Pipelined reading/uploading
 
 **Streaming Reads** (Open):
-- ⚠️ **Memory**: Still buffers particles (future optimization)
+- ✅ **Memory**: Bounded at ~chunkSize per stream (typically ~8MB per stream)
 - ✅ **Latency**: Can start reading immediately (particles read concurrently)
-- ⚠️ **Throughput**: Merging happens after particles are read (future optimization)
+- ✅ **Throughput**: Merges chunks on-the-fly as they're read
+- ✅ **Parallel Downloads**: Even and odd particles are read concurrently (2025-12-22)
 
 #### Implementation Details
 - **Default**: `use_streaming=true` (pipelined chunked approach)
@@ -214,31 +215,29 @@ To quantify the impact, we need benchmarks comparing:
 
 ### High Priority (Biggest Impact)
 
-#### 1. Streaming Reads (Open()) ⚠️ **PARTIALLY IMPLEMENTED**
-**Current**: Uses `StreamMerger` which buffers particles before merging
-**Status**: ✅ Particles are read concurrently, but merging happens after buffering
-**Proposed**: Stream particles concurrently, merge on-the-fly without buffering
-**Benefit**: 
-- Reduce memory usage further (currently buffers particles)
-- Start returning data immediately (currently waits for particles)
-- Support files larger than memory (currently limited by particle size)
+#### 1. Streaming Reads (Open()) ✅ **IMPLEMENTED & OPTIMIZED**
+**Status**: ✅ **COMPLETE** - `StreamMerger` reads chunks concurrently and merges them on-the-fly
+**Implementation**: 
+- Reads chunks from both particles concurrently using parallel goroutines (2025-12-22)
+- Merges chunks incrementally as they're read
+- Uses bounded memory (chunk-sized buffers per stream)
+- Returns merged data immediately without waiting for entire particles
+- Parallel reading reduces latency when streams have different speeds
 
-**Implementation**:
-- Enhance `StreamMerger` to merge on-the-fly without buffering entire particles
-- Use buffered channels to pipeline read/merge operations
-- Support range reads at particle level (read only needed particles)
+**Note**: The implementation uses chunk-sized buffers (typically 8MB per stream) and parallel I/O for optimal performance.
 
 #### 2. Streaming Writes (Put()) ✅ **IMPLEMENTED** (2025-12-22)
 **Status**: ✅ **COMPLETE** - Pipelined chunked approach implemented
 **Implementation**: 
 - Reads input in 2MB chunks
 - Splits bytes on-the-fly
-- Uploads particles sequentially while reading next chunk in parallel
+- Uploads particles concurrently (even, odd, parity in parallel) while reading next chunk in parallel
 - Bounded memory usage (~5MB)
 
-**Future Optimization**:
-- Consider concurrent particle uploads (currently sequential for simplicity)
-- Optimize chunk size based on backend characteristics
+**Status**: ✅ **OPTIMIZED** - Concurrent particle uploads implemented (2025-12-22)
+- Particles (even, odd, parity) are now uploaded concurrently using `errgroup`
+- Up to ~3x faster upload time per chunk (when network-bound)
+- Matches the pattern used in buffered implementation for consistency
 
 #### 3. Health Check Optimization
 **Current**: Checks all backends before every write
@@ -287,12 +286,11 @@ To quantify the impact, we need benchmarks comparing:
 - List optimization (caching particle counts)
 
 ### Medium (3-5 days)
-- Streaming reads (Open()) - Enhance StreamMerger for true streaming
 - Range read optimization
 
 ### Hard (1-2 weeks)
 - ~~Streaming writes (Put())~~ ✅ **COMPLETE** (2025-12-22)
-- ~~Full streaming support~~ ✅ **MOSTLY COMPLETE** (writes done, reads partially done)
+- ~~Full streaming support~~ ✅ **COMPLETE** (both reads and writes implemented)
 
 ## Success Metrics
 
@@ -304,7 +302,6 @@ To quantify the impact, we need benchmarks comparing:
 - **Throughput**: Match or exceed 80% of single backend throughput
 - **Latency**: Reduce write latency by 50% (remove health check overhead)
 - **CPU**: Reduce CPU usage by 30% (fewer allocations)
-- **Streaming Reads**: True streaming merge without buffering particles
 
 ## Files Requiring Changes
 
@@ -327,9 +324,10 @@ The RAID3 backend has several performance bottlenecks, with significant progress
    - Can handle files much larger than available memory
    - Legacy mode (`use_streaming=false`) still available for small files
 
-### ⚠️ Partially Resolved
-2. **Streaming reads** - Particles read concurrently, but merging still buffers
-   - Future optimization: True streaming merge without buffering
+### ✅ Resolved (2025-12-22)
+2. ~~**Streaming reads**~~ - **Streaming reads implemented**
+   - `StreamMerger` reads chunks and merges them on-the-fly
+   - Bounded memory usage with chunk-sized buffers
 
 ### ❌ Remaining Issues
 3. **Health check overhead** - Unnecessary checks on every write
@@ -339,12 +337,12 @@ The RAID3 backend has several performance bottlenecks, with significant progress
 
 ### Performance Status
 - **Streaming writes**: ✅ Implemented and working (default)
-- **Streaming reads**: ⚠️ Partially implemented (particles read concurrently, but merged after buffering)
+- **Streaming reads**: ✅ Implemented and working (reads chunks and merges on-the-fly)
 - **Overall**: Implementation is functional and can handle large files efficiently with streaming enabled
 
 ### Future Optimization Work
 1. ✅ ~~Streaming writes~~ - **COMPLETE** (2025-12-22)
-2. Enhance streaming reads (true streaming merge without buffering)
+2. ✅ ~~Streaming reads~~ - **COMPLETE** (2025-12-22)
 3. Health check optimization (easiest win)
 4. List optimization (scalability)
 

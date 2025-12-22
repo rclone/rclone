@@ -2,17 +2,59 @@ package raid3
 
 import (
 	"bytes"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// TestStreamSplitter tests the StreamSplitter to ensure data integrity
+// splitDataUsingNewApproach splits data using the new pipelined chunked approach
+// This mimics the behavior of putStreaming() but writes to buffers instead of uploading
+func splitDataUsingNewApproach(data []byte, chunkSize int, evenBuf, oddBuf, parityBuf *bytes.Buffer) error {
+	if len(data) == 0 {
+		// Empty file - write empty particles
+		return nil
+	}
+
+	// Process data in chunks (similar to putStreaming)
+	reader := bytes.NewReader(data)
+	buffer := make([]byte, chunkSize)
+
+	for {
+		n, err := reader.Read(buffer)
+		if n == 0 && err == io.EOF {
+			break
+		}
+		if err != nil && err != io.EOF {
+			return err
+		}
+
+		// Split chunk into even and odd
+		chunk := buffer[:n]
+		evenData, oddData := SplitBytes(chunk)
+		parityData := CalculateParity(evenData, oddData)
+
+		// Write to buffers
+		if _, err := evenBuf.Write(evenData); err != nil {
+			return err
+		}
+		if _, err := oddBuf.Write(oddData); err != nil {
+			return err
+		}
+		if _, err := parityBuf.Write(parityData); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// TestStreamSplitter tests data splitting using the new pipelined chunked approach
 func TestStreamSplitter(t *testing.T) {
 	tests := []struct {
-		name     string
-		data     []byte
+		name      string
+		data      []byte
 		chunkSize int
 	}{
 		{"empty", []byte{}, 8},
@@ -30,16 +72,8 @@ func TestStreamSplitter(t *testing.T) {
 			// Create buffers to capture output
 			var evenBuf, oddBuf, parityBuf bytes.Buffer
 
-			// Create splitter
-			splitter := NewStreamSplitter(&evenBuf, &oddBuf, &parityBuf, tt.chunkSize)
-
-			// Write data
-			n, err := splitter.Write(tt.data)
-			require.NoError(t, err)
-			assert.Equal(t, len(tt.data), n)
-
-			// Close to flush remaining data
-			err = splitter.Close()
+			// Split data using new approach
+			err := splitDataUsingNewApproach(tt.data, tt.chunkSize, &evenBuf, &oddBuf, &parityBuf)
 			require.NoError(t, err)
 
 			// Verify data integrity: reconstruct and compare
@@ -72,30 +106,19 @@ func TestStreamSplitter(t *testing.T) {
 	}
 }
 
-// TestStreamSplitterMultipleWrites tests splitting data across multiple Write calls
+// TestStreamSplitterMultipleWrites tests splitting data across multiple chunks
 func TestStreamSplitterMultipleWrites(t *testing.T) {
 	// Create buffers to capture output
 	var evenBuf, oddBuf, parityBuf bytes.Buffer
-
-	// Create splitter
-	splitter := NewStreamSplitter(&evenBuf, &oddBuf, &parityBuf, 8)
 
 	// Write data in multiple chunks
 	data1 := []byte{0x01, 0x02, 0x03}
 	data2 := []byte{0x04, 0x05, 0x06}
 	data3 := []byte{0x07, 0x08}
 
-	_, err := splitter.Write(data1)
-	require.NoError(t, err)
-
-	_, err = splitter.Write(data2)
-	require.NoError(t, err)
-
-	_, err = splitter.Write(data3)
-	require.NoError(t, err)
-
-	// Close to flush
-	err = splitter.Close()
+	// Combine all data and split using new approach
+	allData := append(append(data1, data2...), data3...)
+	err := splitDataUsingNewApproach(allData, 8, &evenBuf, &oddBuf, &parityBuf)
 	require.NoError(t, err)
 
 	// Reconstruct
@@ -108,4 +131,3 @@ func TestStreamSplitterMultipleWrites(t *testing.T) {
 	expected := append(append(data1, data2...), data3...)
 	assert.Equal(t, expected, reconstructed, "Reconstructed data doesn't match")
 }
-

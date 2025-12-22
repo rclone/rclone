@@ -1114,37 +1114,63 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	totalOddWritten += int64(len(oddData))
 	isOddLength = (len(evenData) > len(oddData))
 
-	// Update first chunk sequentially
+	// Update first chunk concurrently
 	evenInfo := createParticleInfo(src, "even", int64(len(evenData)), isOddLength)
-	err2 = evenObj.Update(ctx, bytes.NewReader(evenData), evenInfo, options...)
-	if err2 != nil {
-		return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err2)
-	}
-	uploadedParticles = append(uploadedParticles, evenObj)
-
 	oddInfo := createParticleInfo(src, "odd", int64(len(oddData)), isOddLength)
-	err2 = oddObj.Update(ctx, bytes.NewReader(oddData), oddInfo, options...)
-	if err2 != nil {
-		return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err2)
-	}
-	uploadedParticles = append(uploadedParticles, oddObj)
-
 	parityInfo := createParticleInfo(src, "parity", int64(len(parityData)), isOddLength)
 	parityInfo.remote = parityName
-	if parityObj != nil {
-		// Parity exists, update it
-		err2 = parityObj.Update(ctx, bytes.NewReader(parityData), parityInfo, options...)
-		if err2 != nil {
-			return fmt.Errorf("%s: failed to update parity particle: %w", o.fs.parity.Name(), err2)
+
+	g, gCtx := errgroup.WithContext(ctx)
+	var uploadedMu sync.Mutex
+
+	g.Go(func() error {
+		err := evenObj.Update(gCtx, bytes.NewReader(evenData), evenInfo, options...)
+		if err != nil {
+			return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err)
 		}
-		uploadedParticles = append(uploadedParticles, parityObj)
-	} else {
-		// Parity doesn't exist, create it with Put
-		newParityObj, err3 := o.fs.parity.Put(ctx, bytes.NewReader(parityData), parityInfo, options...)
-		if err3 != nil {
-			return fmt.Errorf("%s: failed to create parity particle: %w", o.fs.parity.Name(), err3)
+		uploadedMu.Lock()
+		uploadedParticles = append(uploadedParticles, evenObj)
+		uploadedMu.Unlock()
+		return nil
+	})
+
+	g.Go(func() error {
+		err := oddObj.Update(gCtx, bytes.NewReader(oddData), oddInfo, options...)
+		if err != nil {
+			return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err)
 		}
-		uploadedParticles = append(uploadedParticles, newParityObj)
+		uploadedMu.Lock()
+		uploadedParticles = append(uploadedParticles, oddObj)
+		uploadedMu.Unlock()
+		return nil
+	})
+
+	g.Go(func() error {
+		if parityObj != nil {
+			// Parity exists, update it
+			err := parityObj.Update(gCtx, bytes.NewReader(parityData), parityInfo, options...)
+			if err != nil {
+				return fmt.Errorf("%s: failed to update parity particle: %w", o.fs.parity.Name(), err)
+			}
+			uploadedMu.Lock()
+			uploadedParticles = append(uploadedParticles, parityObj)
+			uploadedMu.Unlock()
+		} else {
+			// Parity doesn't exist, create it with Put
+			newParityObj, err := o.fs.parity.Put(gCtx, bytes.NewReader(parityData), parityInfo, options...)
+			if err != nil {
+				return fmt.Errorf("%s: failed to create parity particle: %w", o.fs.parity.Name(), err)
+			}
+			uploadedMu.Lock()
+			parityObj = newParityObj
+			uploadedParticles = append(uploadedParticles, newParityObj)
+			uploadedMu.Unlock()
+		}
+		return nil
+	})
+
+	if err2 = g.Wait(); err2 != nil {
+		return err2
 	}
 
 	// Pipeline remaining chunks
@@ -1165,7 +1191,7 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 			close(readDone)
 		}()
 
-		// Update current chunk (even, odd, parity sequentially)
+		// Update current chunk (even, odd, parity concurrently)
 		// Note: For first iteration, this was already done above, so skip
 		if !firstChunk {
 			currentEven, currentOdd := SplitBytes(current[:currentN])
@@ -1177,31 +1203,47 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 			}
 
 			evenInfo := createParticleInfo(src, "even", int64(len(currentEven)), isOddLength)
-			err2 = evenObj.Update(ctx, bytes.NewReader(currentEven), evenInfo, options...)
-			if err2 != nil {
-				return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err2)
-			}
-
 			oddInfo := createParticleInfo(src, "odd", int64(len(currentOdd)), isOddLength)
-			err2 = oddObj.Update(ctx, bytes.NewReader(currentOdd), oddInfo, options...)
-			if err2 != nil {
-				return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err2)
-			}
-
 			parityInfo := createParticleInfo(src, "parity", int64(len(currentParity)), isOddLength)
 			parityInfo.remote = parityName
-			if parityObj != nil {
-				err2 = parityObj.Update(ctx, bytes.NewReader(currentParity), parityInfo, options...)
-				if err2 != nil {
-					return fmt.Errorf("%s: failed to update parity particle: %w", o.fs.parity.Name(), err2)
+
+			g, gCtx := errgroup.WithContext(ctx)
+
+			g.Go(func() error {
+				err := evenObj.Update(gCtx, bytes.NewReader(currentEven), evenInfo, options...)
+				if err != nil {
+					return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err)
 				}
-			} else {
-				// This shouldn't happen after first chunk, but handle it
-				newParityObj, err3 := o.fs.parity.Put(ctx, bytes.NewReader(currentParity), parityInfo, options...)
-				if err3 != nil {
-					return fmt.Errorf("%s: failed to create parity particle: %w", o.fs.parity.Name(), err3)
+				return nil
+			})
+
+			g.Go(func() error {
+				err := oddObj.Update(gCtx, bytes.NewReader(currentOdd), oddInfo, options...)
+				if err != nil {
+					return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err)
 				}
-				parityObj = newParityObj
+				return nil
+			})
+
+			g.Go(func() error {
+				if parityObj != nil {
+					err := parityObj.Update(gCtx, bytes.NewReader(currentParity), parityInfo, options...)
+					if err != nil {
+						return fmt.Errorf("%s: failed to update parity particle: %w", o.fs.parity.Name(), err)
+					}
+				} else {
+					// This shouldn't happen after first chunk, but handle it
+					newParityObj, err := o.fs.parity.Put(gCtx, bytes.NewReader(currentParity), parityInfo, options...)
+					if err != nil {
+						return fmt.Errorf("%s: failed to create parity particle: %w", o.fs.parity.Name(), err)
+					}
+					parityObj = newParityObj
+				}
+				return nil
+			})
+
+			if err2 = g.Wait(); err2 != nil {
+				return err2
 			}
 		}
 

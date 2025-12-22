@@ -1420,27 +1420,52 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	totalOddWritten += int64(len(oddData))
 	isOddLength = (len(evenData) > len(oddData))
 
-	// Upload first chunk sequentially
+	// Upload first chunk concurrently
 	evenInfo := createParticleInfo(src, "even", int64(len(evenData)), isOddLength)
-	evenObj, err = f.even.Put(ctx, bytes.NewReader(evenData), evenInfo, options...)
-	if err != nil {
-		return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
-	}
-	uploadedParticles = append(uploadedParticles, evenObj)
-
 	oddInfo := createParticleInfo(src, "odd", int64(len(oddData)), isOddLength)
-	oddObj, err = f.odd.Put(ctx, bytes.NewReader(oddData), oddInfo, options...)
-	if err != nil {
-		return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
-	}
-	uploadedParticles = append(uploadedParticles, oddObj)
-
 	parityInfo := createParticleInfo(src, "parity", int64(len(parityData)), isOddLength)
-	parityObj, err := f.parity.Put(ctx, bytes.NewReader(parityData), parityInfo, options...)
-	if err != nil {
-		return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
+
+	g, gCtx := errgroup.WithContext(ctx)
+	var uploadedMu sync.Mutex
+
+	g.Go(func() error {
+		obj, err := f.even.Put(gCtx, bytes.NewReader(evenData), evenInfo, options...)
+		if err != nil {
+			return fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
+		}
+		uploadedMu.Lock()
+		evenObj = obj
+		uploadedParticles = append(uploadedParticles, obj)
+		uploadedMu.Unlock()
+		return nil
+	})
+
+	g.Go(func() error {
+		obj, err := f.odd.Put(gCtx, bytes.NewReader(oddData), oddInfo, options...)
+		if err != nil {
+			return fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
+		}
+		uploadedMu.Lock()
+		oddObj = obj
+		uploadedParticles = append(uploadedParticles, obj)
+		uploadedMu.Unlock()
+		return nil
+	})
+
+	g.Go(func() error {
+		obj, err := f.parity.Put(gCtx, bytes.NewReader(parityData), parityInfo, options...)
+		if err != nil {
+			return fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
+		}
+		uploadedMu.Lock()
+		uploadedParticles = append(uploadedParticles, obj)
+		uploadedMu.Unlock()
+		return nil
+	})
+
+	if err = g.Wait(); err != nil {
+		return nil, err
 	}
-	uploadedParticles = append(uploadedParticles, parityObj)
 
 	// Pipeline remaining chunks
 	current := bufferA
@@ -1460,7 +1485,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 			close(readDone)
 		}()
 
-		// Upload current chunk (even, odd, parity sequentially)
+		// Upload current chunk (even, odd, parity concurrently)
 		// Note: For first iteration, this was already done above, so skip
 		if !firstChunk {
 			currentEven, currentOdd := SplitBytes(current[:currentN])
@@ -1472,25 +1497,49 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 			}
 
 			evenInfo := createParticleInfo(src, "even", int64(len(currentEven)), isOddLength)
-			evenObj, err = f.even.Put(ctx, bytes.NewReader(currentEven), evenInfo, options...)
-			if err != nil {
-				return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
-			}
-			uploadedParticles = append(uploadedParticles, evenObj)
-
 			oddInfo := createParticleInfo(src, "odd", int64(len(currentOdd)), isOddLength)
-			oddObj, err = f.odd.Put(ctx, bytes.NewReader(currentOdd), oddInfo, options...)
-			if err != nil {
-				return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
-			}
-			uploadedParticles = append(uploadedParticles, oddObj)
-
 			parityInfo := createParticleInfo(src, "parity", int64(len(currentParity)), isOddLength)
-			parityObj, err := f.parity.Put(ctx, bytes.NewReader(currentParity), parityInfo, options...)
-			if err != nil {
-				return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
+
+			g, gCtx := errgroup.WithContext(ctx)
+
+			g.Go(func() error {
+				obj, err := f.even.Put(gCtx, bytes.NewReader(currentEven), evenInfo, options...)
+				if err != nil {
+					return fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
+				}
+				uploadedMu.Lock()
+				evenObj = obj
+				uploadedParticles = append(uploadedParticles, obj)
+				uploadedMu.Unlock()
+				return nil
+			})
+
+			g.Go(func() error {
+				obj, err := f.odd.Put(gCtx, bytes.NewReader(currentOdd), oddInfo, options...)
+				if err != nil {
+					return fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
+				}
+				uploadedMu.Lock()
+				oddObj = obj
+				uploadedParticles = append(uploadedParticles, obj)
+				uploadedMu.Unlock()
+				return nil
+			})
+
+			g.Go(func() error {
+				obj, err := f.parity.Put(gCtx, bytes.NewReader(currentParity), parityInfo, options...)
+				if err != nil {
+					return fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
+				}
+				uploadedMu.Lock()
+				uploadedParticles = append(uploadedParticles, obj)
+				uploadedMu.Unlock()
+				return nil
+			})
+
+			if err = g.Wait(); err != nil {
+				return nil, err
 			}
-			uploadedParticles = append(uploadedParticles, parityObj)
 		}
 
 		// Wait for read to complete
