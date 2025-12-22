@@ -41,7 +41,7 @@ func NewNotifyListener(connStr, user string) *NotifyListener {
 	return &NotifyListener{
 		connStr:   connStr,
 		user:      user,
-		eventChan: make(chan MediaChangeEvent, 100),
+		eventChan: make(chan MediaChangeEvent, 10000), // Large buffer for bulk operations
 		stopChan:  make(chan struct{}),
 	}
 }
