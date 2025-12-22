@@ -6,12 +6,6 @@ This document tracks open design questions and pending decisions for the raid3 b
 
 ## 🔴 High Priority
 
-### Q2: Streaming Support for Large Files 🚨 **CRITICAL**
-**Status**: 🚨 **ACTIVE** - Blocking production use with large files  
-**Priority**: High
-
-Current implementation loads entire files into memory (~3× file size). 10 GB file requires ~30 GB RAM (not feasible). Implement streaming using rclone's buffer pool (`lib/pool`), chunk-level striping with io.Pipe, or OpenChunkWriter. Prerequisite for compression support (Q9).
-
 ---
 
 ### Q14: Optimize Health Checks (Add Caching)
@@ -105,7 +99,7 @@ Same backend overlap issue as `union` and `combine`. Likely fails with "overlapp
 **Status**: 🟢 **ACTIVE** - Research complete, awaiting decision  
 **Question**: Should raid3 support optional compression (Snappy/LZ4) to reduce storage overhead?
 
-**Context**: Current storage overhead is 150% (even + odd + parity). Compression could reduce this significantly (e.g., ~75% overhead with Snappy for text files, ~50% savings). **Critical**: Must compress BEFORE splitting to preserve patterns and achieve good compression ratio (compressing after splitting destroys patterns and reduces ratio by ~40%). Requires streaming support first (Q2 - prerequisite). Options: Snappy (fast, low CPU), LZ4 (very fast, low CPU), or configurable. Decision needed: whether to implement, which algorithm, and configuration approach.
+**Context**: Current storage overhead is 150% (even + odd + parity). Compression could reduce this significantly (e.g., ~75% overhead with Snappy for text files, ~50% savings). **Critical**: Must compress BEFORE splitting to preserve patterns and achieve good compression ratio (compressing after splitting destroys patterns and reduces ratio by ~40%). Streaming support is now implemented (see Q2 below - resolved). Options: Snappy (fast, low CPU), LZ4 (very fast, low CPU), or configurable. Decision needed: whether to implement, which algorithm, and configuration approach.
 
 ---
 
@@ -136,6 +130,27 @@ Current error handling uses generic `fmt.Errorf()`. Consider adding specific err
 ## ✅ Resolved Questions
 
 **Note**: These questions have been resolved and should be moved to [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md) for historical reference.
+
+### Q2: Streaming Support for Large Files ✅ **RESOLVED**
+**Date**: 2025-12-22  
+**Status**: ✅ **RESOLVED** - Pipelined chunked streaming implemented
+
+**Original Question**: Should raid3 support streaming for large files instead of loading entire file into memory?
+
+**Resolution**: 
+Implemented pipelined chunked streaming approach (see DD-009 in [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md)). The implementation reads files in 2MB chunks, splits each chunk into even/odd/parity particles, and uploads them sequentially while reading the next chunk in parallel. This provides bounded memory usage (~5MB) and enables efficient handling of very large files.
+
+**Implementation Details**:
+- Default mode: `use_streaming=true` (pipelined chunked approach)
+- Legacy mode: `use_streaming=false` (buffered, loads entire file)
+- Memory usage: ~5MB for double buffering (vs ~3× file size for buffered mode)
+- Chunk size: 2MB read chunks (produces ~1MB per particle)
+- All Go tests passing
+
+**References**: 
+- Design Decision: [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md) DD-009
+- Implementation Analysis: `_analysis/SIMPLIFIED_PIPELINED_APPROACH.md`
+- Refactoring Analysis: `_analysis/REVERT_VS_MODIFY_ANALYSIS.md`
 
 ### Q20: FsRmdirNotFound Test Failure ✅ **RESOLVED**
 **Date**: 2025-12-18  
@@ -251,7 +266,7 @@ Document the decision in [`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md), update th
 
 ## 📊 Statistics
 
-Total active questions: 14. Resolved questions: 4 (Q4, Q5, Q7, Q20). Active questions by priority: High Priority (3) - Q2: Streaming Support, Q14: Health Check Caching, Q15: Background Worker Context. Medium Priority (5) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values. Low Priority (6) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types. Critical issues: 1 (Q2: Large file streaming blocking production use).
+Total active questions: 13. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (2) - Q14: Health Check Caching, Q15: Background Worker Context. Medium Priority (5) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values. Low Priority (6) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types.
 
 
 **Use this file to track decisions before they're made!** 🤔

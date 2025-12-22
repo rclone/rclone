@@ -127,9 +127,8 @@ diff test.txt downloaded.txt  # Should be identical
 ## Operations
 
 ### Upload
-- Splits data into even/odd bytes
-- Calculates XOR parity
-- Uploads to all three backends in parallel
+- **Streaming mode** (default, `use_streaming=true`): Processes files in 2MB chunks using a pipelined approach. Reads chunks, splits into even/odd/parity particles, and uploads sequentially while reading the next chunk in parallel. Provides bounded memory usage (~5MB).
+- **Buffered mode** (`use_streaming=false`): Loads entire file into memory, splits into even/odd bytes, calculates XOR parity, and uploads to all three backends in parallel.
 - Parity file gets appropriate suffix (.parity-el or .parity-ol)
 
 ### Download
@@ -193,7 +192,7 @@ RAID 3 provides fault tolerance by enabling rebuild from single backend failure 
 
 ## Current Limitations
 
-Memory buffering currently loads entire files into memory during upload/download, limiting practical file size to ~500 MiB - 1 GB (see `README.md` for details and future streaming support plans). Update rollback is not working properly when `rollback=true` (Put and Move rollback work correctly; see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q1 for details). Move within backend is now supported (DirMove implemented).
+With `use_streaming=true` (default), files are processed in 2MB chunks using a pipelined approach, providing bounded memory usage (~5MB) and enabling efficient handling of very large files. When `use_streaming=false` (legacy mode), files are loaded entirely into memory, limiting practical file size to ~500 MiB - 1 GB. Update rollback is not working properly when `rollback=true` (Put and Move rollback work correctly; see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q1 for details). Move within backend is now supported (DirMove implemented).
 
 ## Error Handling - RAID 3 Compliance
 

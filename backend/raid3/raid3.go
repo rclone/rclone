@@ -94,6 +94,16 @@ This should be in the form 'remote:path'.`,
 			Help:     "Automatically rollback successful operations if any particle operation fails (all-or-nothing guarantee)",
 			Default:  true,
 			Advanced: false,
+		}, {
+			Name:     "use_streaming",
+			Help:     "Use streaming processing path. When enabled, processes files in chunks instead of loading entire file into memory.",
+			Default:  true,
+			Advanced: true,
+		}, {
+			Name:     "chunk_size",
+			Help:     "Chunk size for streaming operations",
+			Default:  fs.SizeSuffix(8 * 1024 * 1024), // 8 MiB
+			Advanced: true,
 		}},
 		CommandHelp: commandHelp,
 	}
@@ -230,13 +240,15 @@ available as an explicit admin command.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Even        string `config:"even"`
-	Odd         string `config:"odd"`
-	Parity      string `config:"parity"`
-	TimeoutMode string `config:"timeout_mode"`
-	AutoCleanup bool   `config:"auto_cleanup"`
-	AutoHeal    bool   `config:"auto_heal"`
-	Rollback    bool   `config:"rollback"`
+	Even         string       `config:"even"`
+	Odd          string       `config:"odd"`
+	Parity       string       `config:"parity"`
+	TimeoutMode  string       `config:"timeout_mode"`
+	AutoCleanup  bool         `config:"auto_cleanup"`
+	AutoHeal     bool         `config:"auto_heal"`
+	Rollback     bool         `config:"rollback"`
+	UseStreaming bool         `config:"use_streaming"`
+	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
 }
 
 // Fs represents a raid3 backend with striped storage and parity
@@ -279,6 +291,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}
 	if _, ok := m.Get("rollback"); !ok {
 		opt.Rollback = true
+	}
+	if _, ok := m.Get("use_streaming"); !ok {
+		opt.UseStreaming = true
+	}
+	if _, ok := m.Get("chunk_size"); !ok {
+		opt.ChunkSize = fs.SizeSuffix(8 * 1024 * 1024) // 8 MiB default
 	}
 
 	if opt.Even == "" {
@@ -1169,6 +1187,14 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Put uploads an object
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	if f.opt.UseStreaming {
+		return f.putStreaming(ctx, in, src, options...)
+	}
+	return f.putBuffered(ctx, in, src, options...)
+}
+
+// putBuffered uploads an object using the buffered (memory-based) approach
+func (f *Fs) putBuffered(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Pre-flight check: Enforce strict RAID 3 write policy
 	// Fail immediately if any backend is unavailable to prevent degraded writes
 	if err := f.checkAllBackendsAvailable(ctx); err != nil {
@@ -1266,6 +1292,225 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	err = g.Wait()
 	if err != nil {
+		return nil, err
+	}
+
+	return &Object{
+		fs:     f,
+		remote: src.Remote(),
+	}, nil
+}
+
+// createParticleInfo creates a particleObjectInfo for a given particle type
+func createParticleInfo(src fs.ObjectInfo, particleType string, size int64, isOddLength bool) *particleObjectInfo {
+	info := &particleObjectInfo{
+		ObjectInfo: src,
+		size:       size,
+	}
+	
+	if particleType == "parity" {
+		info.remote = GetParityFilename(src.Remote(), isOddLength)
+	}
+	
+	return info
+}
+
+// verifyParticleSizes verifies that uploaded particles have the correct sizes
+func verifyParticleSizes(ctx context.Context, f *Fs, evenObj, oddObj fs.Object, evenWritten, oddWritten int64) error {
+	if evenObj == nil || oddObj == nil {
+		return fmt.Errorf("cannot verify sizes: evenObj=%v, oddObj=%v", evenObj != nil, oddObj != nil)
+	}
+	
+	// Refresh objects from S3 to get actual committed sizes
+	evenRefreshed, err := f.even.NewObject(ctx, evenObj.Remote())
+	if err != nil {
+		return fmt.Errorf("failed to refresh even object from S3: %w", err)
+	}
+	oddRefreshed, err := f.odd.NewObject(ctx, oddObj.Remote())
+	if err != nil {
+		return fmt.Errorf("failed to refresh odd object from S3: %w", err)
+	}
+	
+	evenSize := evenRefreshed.Size()
+	oddSize := oddRefreshed.Size()
+	
+	// Verify sizes match what we wrote
+	if evenSize != evenWritten {
+		return fmt.Errorf("S3 even particle size mismatch: wrote %d bytes but S3 object is %d bytes", evenWritten, evenSize)
+	}
+	if oddSize != oddWritten {
+		return fmt.Errorf("S3 odd particle size mismatch: wrote %d bytes but S3 object is %d bytes", oddWritten, oddSize)
+	}
+	
+	return nil
+}
+
+// putStreaming uploads an object using the pipelined chunked approach
+func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return nil, fmt.Errorf("write blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = f.disableRetriesForWrites(ctx)
+
+	// Configuration: Read 2MB chunks (produces ~1MB per particle)
+	readChunkSize := int64(f.opt.ChunkSize) * 2
+	if readChunkSize < 2*1024*1024 {
+		readChunkSize = 2 * 1024 * 1024 // Minimum 2MB
+	}
+
+	// Allocate buffers for double buffering
+	bufferA := make([]byte, readChunkSize)
+	bufferB := make([]byte, readChunkSize)
+
+	// Track uploaded particles for rollback
+	var uploadedParticles []fs.Object
+	var err error
+	defer func() {
+		if err != nil && f.opt.Rollback {
+			if rollbackErr := f.rollbackPut(ctx, uploadedParticles); rollbackErr != nil {
+				fs.Errorf(f, "Rollback failed during Put (streaming): %v", rollbackErr)
+			}
+		}
+	}()
+
+	// Track sizes for verification
+	var totalEvenWritten, totalOddWritten int64
+	var isOddLength bool
+	var evenObj, oddObj fs.Object
+
+	// Read first chunk
+	var n int
+	n, err = io.ReadFull(in, bufferA)
+	if err == io.EOF && n == 0 {
+		// Empty file - create empty particles
+		evenInfo := createParticleInfo(src, "even", 0, false)
+		evenObj, err = f.even.Put(ctx, bytes.NewReader(nil), evenInfo, options...)
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
+		}
+		uploadedParticles = append(uploadedParticles, evenObj)
+
+		oddInfo := createParticleInfo(src, "odd", 0, false)
+		oddObj, err = f.odd.Put(ctx, bytes.NewReader(nil), oddInfo, options...)
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
+		}
+		uploadedParticles = append(uploadedParticles, oddObj)
+
+		parityInfo := createParticleInfo(src, "parity", 0, false)
+		parityObj, err := f.parity.Put(ctx, bytes.NewReader(nil), parityInfo, options...)
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
+		}
+		uploadedParticles = append(uploadedParticles, parityObj)
+
+		return &Object{fs: f, remote: src.Remote()}, nil
+	}
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return nil, fmt.Errorf("failed to read first chunk: %w", err)
+	}
+
+	// Process first chunk
+	evenData, oddData := SplitBytes(bufferA[:n])
+	parityData := CalculateParity(evenData, oddData)
+	totalEvenWritten += int64(len(evenData))
+	totalOddWritten += int64(len(oddData))
+	isOddLength = (len(evenData) > len(oddData))
+
+	// Upload first chunk sequentially
+	evenInfo := createParticleInfo(src, "even", int64(len(evenData)), isOddLength)
+	evenObj, err = f.even.Put(ctx, bytes.NewReader(evenData), evenInfo, options...)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
+	}
+	uploadedParticles = append(uploadedParticles, evenObj)
+
+	oddInfo := createParticleInfo(src, "odd", int64(len(oddData)), isOddLength)
+	oddObj, err = f.odd.Put(ctx, bytes.NewReader(oddData), oddInfo, options...)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
+	}
+	uploadedParticles = append(uploadedParticles, oddObj)
+
+	parityInfo := createParticleInfo(src, "parity", int64(len(parityData)), isOddLength)
+	parityObj, err := f.parity.Put(ctx, bytes.NewReader(parityData), parityInfo, options...)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
+	}
+	uploadedParticles = append(uploadedParticles, parityObj)
+
+	// Pipeline remaining chunks
+	current := bufferA
+	next := bufferB
+	currentN := n
+	firstChunk := true
+
+	for {
+		// Start reading next chunk in parallel with uploading current (if not first chunk)
+		readDone := make(chan struct{})
+		var readN int
+		var readErr error
+
+		// Start reading next chunk
+		go func() {
+			readN, readErr = in.Read(next)
+			close(readDone)
+		}()
+
+		// Upload current chunk (even, odd, parity sequentially)
+		// Note: For first iteration, this was already done above, so skip
+		if !firstChunk {
+			currentEven, currentOdd := SplitBytes(current[:currentN])
+			currentParity := CalculateParity(currentEven, currentOdd)
+			totalEvenWritten += int64(len(currentEven))
+			totalOddWritten += int64(len(currentOdd))
+			if len(currentEven) > len(currentOdd) {
+				isOddLength = true
+			}
+
+			evenInfo := createParticleInfo(src, "even", int64(len(currentEven)), isOddLength)
+			evenObj, err = f.even.Put(ctx, bytes.NewReader(currentEven), evenInfo, options...)
+			if err != nil {
+				return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
+			}
+			uploadedParticles = append(uploadedParticles, evenObj)
+
+			oddInfo := createParticleInfo(src, "odd", int64(len(currentOdd)), isOddLength)
+			oddObj, err = f.odd.Put(ctx, bytes.NewReader(currentOdd), oddInfo, options...)
+			if err != nil {
+				return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
+			}
+			uploadedParticles = append(uploadedParticles, oddObj)
+
+			parityInfo := createParticleInfo(src, "parity", int64(len(currentParity)), isOddLength)
+			parityObj, err := f.parity.Put(ctx, bytes.NewReader(currentParity), parityInfo, options...)
+			if err != nil {
+				return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
+			}
+			uploadedParticles = append(uploadedParticles, parityObj)
+		}
+
+		// Wait for read to complete
+		<-readDone
+
+		if readErr == io.EOF && readN == 0 {
+			break // No more data
+		}
+		if readErr != nil && readErr != io.EOF && readErr != io.ErrUnexpectedEOF {
+			return nil, fmt.Errorf("failed to read chunk: %w", readErr)
+		}
+
+		// Swap buffers for next iteration
+		current, next = next, current
+		currentN = readN
+		firstChunk = false
+	}
+
+	// Verify sizes
+	if err := verifyParticleSizes(ctx, f, evenObj, oddObj, totalEvenWritten, totalOddWritten); err != nil {
 		return nil, err
 	}
 

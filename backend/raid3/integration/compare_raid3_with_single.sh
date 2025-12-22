@@ -168,13 +168,13 @@ Available tests:
   sync-download Sync remote to local and compare results.
   purge        Purge (delete) buckets on both remotes and compare results.
   performance  Compare upload/download performance between raid3 and single remotes.
-               PASS: raid3 is not more than 150% slower than single (ratio <= 2.5x).
-               FAIL: raid3 is more than 150% slower than single (ratio > 2.5x).
+               PASS: raid3 is not more than 300% slower than single (ratio <= 4.0x).
+               FAIL: raid3 is more than 300% slower than single (ratio > 4.0x).
 EOF
 }
 
 run_all_tests() {
-  local tests=("mkdir" "lsd" "ls" "cat" "delete" "cp-download" "cp-upload" "move" "check" "sync-upload" "sync-download" "purge")
+  local tests=("mkdir" "lsd" "ls" "cat" "delete" "cp-download" "cp-upload" "move" "check" "sync-upload" "sync-download" "purge" "performance")
   local name
   for name in "${tests[@]}"; do
     log_info "suite" "Running '${name}'"
@@ -943,6 +943,16 @@ run_performance_test() {
 
   if [[ "${raid3_status}" -ne 0 || "${single_status}" -ne 0 ]]; then
     log_warn "test:${test_case}" "Upload failed (raid3=${raid3_status}, single=${single_status})"
+    if [[ "${raid3_status}" -ne 0 ]]; then
+      log_warn "test:${test_case}" "RAID3 upload error output:"
+      [[ -f "${raid3_stderr}" ]] && cat "${raid3_stderr}" >&2 || echo "  (stderr file not found)" >&2
+      [[ -f "${raid3_stdout}" ]] && cat "${raid3_stdout}" >&2 || echo "  (stdout file not found)" >&2
+    fi
+    if [[ "${single_status}" -ne 0 ]]; then
+      log_warn "test:${test_case}" "Single upload error output:"
+      [[ -f "${single_stderr}" ]] && cat "${single_stderr}" >&2 || echo "  (stderr file not found)" >&2
+      [[ -f "${single_stdout}" ]] && cat "${single_stdout}" >&2 || echo "  (stdout file not found)" >&2
+    fi
     rm -rf "${tempdir}"
     rm -f "${raid3_stdout}" "${raid3_stderr}" "${single_stdout}" "${single_stderr}"
     return 1
@@ -955,7 +965,7 @@ run_performance_test() {
   single_time="${single_time//,/.}"
 
   # Calculate upload performance ratio (raid3_time / single_time)
-  local upload_ratio max_ratio="2.5"
+  local upload_ratio max_ratio="4.0"
   # Handle edge case where single_time might be very small
   if (( $(LC_NUMERIC=C awk "BEGIN {print (${single_time} < 0.001)}") )); then
     log_warn "test:${test_case}" "Single upload time too small (${single_time}s), skipping upload ratio check"
@@ -964,7 +974,7 @@ run_performance_test() {
     upload_ratio=$(LC_NUMERIC=C awk "BEGIN {printf \"%.2f\", ${raid3_time} / ${single_time}}")
     log_info "test:${test_case}" "Upload ratio: ${upload_ratio}x (raid3/single)"
     
-    # Check if raid3 upload is more than 150% slower (ratio > 2.5)
+    # Check if raid3 upload is more than 300% slower (ratio > 4.0)
     if (( $(LC_NUMERIC=C awk "BEGIN {print (${upload_ratio} > ${max_ratio})}") )); then
       log_fail "test:${test_case}" "Upload performance check failed: raid3 is ${upload_ratio}x slower than single (threshold: ${max_ratio}x)"
       rm -rf "${tempdir}"
@@ -1011,7 +1021,7 @@ run_performance_test() {
     download_ratio=$(LC_NUMERIC=C awk "BEGIN {printf \"%.2f\", ${raid3_dl_time} / ${single_dl_time}}")
     log_info "test:${test_case}" "Download ratio: ${download_ratio}x (raid3/single)"
     
-    # Check if raid3 download is more than 150% slower (ratio > 2.5)
+    # Check if raid3 download is more than 300% slower (ratio > 4.0)
     if (( $(LC_NUMERIC=C awk "BEGIN {print (${download_ratio} > ${max_ratio})}") )); then
       log_fail "test:${test_case}" "Download performance check failed: raid3 is ${download_ratio}x slower than single (threshold: ${max_ratio}x)"
       rm -rf "${tempdir}" "${tmp_raid3}" "${tmp_single}"

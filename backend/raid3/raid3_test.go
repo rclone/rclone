@@ -94,6 +94,7 @@ func TestStandard(t *testing.T) {
 			{Name: name, Key: "even", Value: evenDir},
 			{Name: name, Key: "odd", Value: oddDir},
 			{Name: name, Key: "parity", Value: parityDir},
+			{Name: name, Key: "use_streaming", Value: "true"},
 		},
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
@@ -131,6 +132,7 @@ func TestStandardBalanced(t *testing.T) {
 			{Name: name, Key: "odd", Value: oddDir},
 			{Name: name, Key: "parity", Value: parityDir},
 			{Name: name, Key: "timeout_mode", Value: "balanced"},
+			{Name: name, Key: "use_streaming", Value: "true"},
 		},
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
@@ -169,6 +171,7 @@ func TestStandardAggressive(t *testing.T) {
 			{Name: name, Key: "odd", Value: oddDir},
 			{Name: name, Key: "parity", Value: parityDir},
 			{Name: name, Key: "timeout_mode", Value: "aggressive"},
+			{Name: name, Key: "use_streaming", Value: "true"},
 		},
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
@@ -201,9 +204,10 @@ func TestAboutAggregatesChildUsage(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(parityDir, "file3.bin"), []byte("parity"), 0o644))
 
 	fsInterface, err := raid3.NewFs(ctx, "TestAbout", "", configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	})
 	require.NoError(t, err)
 
@@ -264,10 +268,11 @@ func TestIntegrationStyle_DegradedOpenAndSize(t *testing.T) {
 
 	// Build Fs directly via NewFs using a config map
 	m := configmap.Simple{
-		"even":      evenDir,
-		"odd":       oddDir,
-		"parity":    parityDir,
-		"auto_heal": "true",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_heal":    "true",
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "Lvl3Int", "", m)
 	require.NoError(t, err)
@@ -335,9 +340,10 @@ func TestLargeDataQuick(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "Lvl3Large", "", m)
 	require.NoError(t, err)
@@ -417,9 +423,10 @@ func TestRenameFile(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestRename", "", m)
 	require.NoError(t, err)
@@ -507,9 +514,10 @@ func TestRenameFileDifferentDirectory(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestRenameDir", "", m)
 	require.NoError(t, err)
@@ -581,9 +589,10 @@ func TestDeleteFile(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestDelete", "", m)
 	require.NoError(t, err)
@@ -653,9 +662,10 @@ func TestDeleteFileIdempotent(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestDeleteIdempotent", "", m)
 	require.NoError(t, err)
@@ -711,9 +721,10 @@ func TestMoveFileBetweenDirectories(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestMove", "", m)
 	require.NoError(t, err)
@@ -790,9 +801,10 @@ func TestDirMove(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestDirMove", "", m)
 	require.NoError(t, err)
@@ -906,9 +918,10 @@ func TestRenameFilePreservesParitySuffix(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestRenameParity", "", m)
 	require.NoError(t, err)
@@ -993,9 +1006,10 @@ func TestDeepNestedDirectories(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestDeepNested", "", m)
 	require.NoError(t, err)
@@ -1131,9 +1145,10 @@ func TestConcurrentOperations(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestConcurrent", "", m)
 	require.NoError(t, err)
@@ -1313,9 +1328,10 @@ func TestAutoCleanupDefault(t *testing.T) {
 
 	// Create level3 filesystem WITHOUT specifying auto_cleanup (should default to true)
 	l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 		// auto_cleanup NOT specified - should default to true
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
@@ -1369,6 +1385,7 @@ func TestAutoCleanupEnabled(t *testing.T) {
 		"odd":          oddDir,
 		"parity":       parityDir,
 		"auto_cleanup": "true",
+		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1432,6 +1449,7 @@ func TestAutoCleanupDisabled(t *testing.T) {
 		"odd":          oddDir,
 		"parity":       parityDir,
 		"auto_cleanup": "false",
+		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1498,6 +1516,7 @@ func TestAutoCleanupEnabledMissingRemote(t *testing.T) {
 		"odd":          "/nonexistent/odd", // Unavailable
 		"parity":       parityDir,
 		"auto_cleanup": "true",
+		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem with unavailable backend")
 	defer func() {
@@ -1536,6 +1555,7 @@ func TestAutoCleanupEnabledMissingRemote(t *testing.T) {
 		"odd":          oddDir,
 		"parity":       parityDir,
 		"auto_cleanup": "true",
+		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem with all backends")
 	defer func() {
@@ -1577,6 +1597,7 @@ func TestCleanUpCommand(t *testing.T) {
 		"odd":          oddDir,
 		"parity":       parityDir,
 		"auto_cleanup": "false",
+		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1652,6 +1673,7 @@ func TestCleanUpRecursive(t *testing.T) {
 		"odd":          oddDir,
 		"parity":       parityDir,
 		"auto_cleanup": "false",
+		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1781,9 +1803,10 @@ func TestPurge(t *testing.T) {
 
 	// Create raid3 filesystem
 	f, err := raid3.NewFs(ctx, "raid3", "", configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create raid3 filesystem")
 	defer func() {
@@ -1878,6 +1901,7 @@ func TestCleanUpOrphanedFiles(t *testing.T) {
 		"odd":          oddDir,
 		"parity":       parityDir,
 		"auto_cleanup": "false",
+		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1954,10 +1978,11 @@ func TestAutoHealDirectoryReconstruction(t *testing.T) {
 	// Test with auto_heal=true
 	t.Run("auto_heal=true reconstructs missing directory", func(t *testing.T) {
 		l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-			"even":      evenDir,
-			"odd":       oddDir,
-			"parity":    parityDir,
-			"auto_heal": "true",
+			"even":         evenDir,
+			"odd":          oddDir,
+			"parity":       parityDir,
+			"auto_heal":    "true",
+			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer l3fs.Features().Shutdown(ctx)
@@ -1982,10 +2007,11 @@ func TestAutoHealDirectoryReconstruction(t *testing.T) {
 	// Test with auto_heal=false
 	t.Run("auto_heal=false does NOT reconstruct missing directory", func(t *testing.T) {
 		l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-			"even":      evenDir,
-			"odd":       oddDir,
-			"parity":    parityDir,
-			"auto_heal": "false",
+			"even":         evenDir,
+			"odd":          oddDir,
+			"parity":       parityDir,
+			"auto_heal":    "false",
+			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer l3fs.Features().Shutdown(ctx)
@@ -2020,10 +2046,11 @@ func TestAutoHealDirMove(t *testing.T) {
 	t.Run("auto_heal=true reconstructs during DirMove", func(t *testing.T) {
 		// Create Fs instances
 		l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-			"even":      evenDir,
-			"odd":       oddDir,
-			"parity":    parityDir,
-			"auto_heal": "true",
+			"even":         evenDir,
+			"odd":          oddDir,
+			"parity":       parityDir,
+			"auto_heal":    "true",
+			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer l3fs.Features().Shutdown(ctx)
@@ -2038,19 +2065,21 @@ func TestAutoHealDirMove(t *testing.T) {
 
 		// Create Fs instances for source and destination
 		srcFs, err := raid3.NewFs(ctx, "level3", srcDir, configmap.Simple{
-			"even":      evenDir,
-			"odd":       oddDir,
-			"parity":    parityDir,
-			"auto_heal": "true",
+			"even":         evenDir,
+			"odd":          oddDir,
+			"parity":       parityDir,
+			"auto_heal":    "true",
+			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer srcFs.Features().Shutdown(ctx)
 
 		dstFs, err := raid3.NewFs(ctx, "level3", "move_heal_dst", configmap.Simple{
-			"even":      evenDir,
-			"odd":       oddDir,
-			"parity":    parityDir,
-			"auto_heal": "true",
+			"even":         evenDir,
+			"odd":          oddDir,
+			"parity":       parityDir,
+			"auto_heal":    "true",
+			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer dstFs.Features().Shutdown(ctx)
@@ -2086,19 +2115,21 @@ func TestAutoHealDirMove(t *testing.T) {
 
 		// Create Fs instances
 		srcFs, err := raid3.NewFs(ctx, "level3", srcDir, configmap.Simple{
-			"even":      evenDir,
-			"odd":       oddDir,
-			"parity":    parityDir,
-			"auto_heal": "false",
+			"even":         evenDir,
+			"odd":          oddDir,
+			"parity":       parityDir,
+			"auto_heal":    "false",
+			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer srcFs.Features().Shutdown(ctx)
 
 		dstFs, err := raid3.NewFs(ctx, "level3", "move_noheal_dst", configmap.Simple{
-			"even":      evenDir,
-			"odd":       oddDir,
-			"parity":    parityDir,
-			"auto_heal": "false",
+			"even":         evenDir,
+			"odd":          oddDir,
+			"parity":       parityDir,
+			"auto_heal":    "false",
+			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer dstFs.Features().Shutdown(ctx)

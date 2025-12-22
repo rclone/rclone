@@ -48,10 +48,11 @@ func TestHeal(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":      evenDir,
-		"odd":       oddDir,
-		"parity":    parityDir,
-		"auto_heal": "true",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_heal":    "true",
+		"use_streaming": "false", // Use buffered path for heal tests
 	}
 	fsInterface, err := raid3.NewFs(ctx, "TestHeal", "", m)
 	require.NoError(t, err)
@@ -138,10 +139,11 @@ func TestHealEvenParticle(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":      evenDir,
-		"odd":       oddDir,
-		"parity":    parityDir,
-		"auto_heal": "true",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_heal":    "true",
+		"use_streaming": "false", // Use buffered path for heal tests
 	}
 	fsInterface, err := raid3.NewFs(ctx, "TestHealEven", "", m)
 	require.NoError(t, err)
@@ -211,10 +213,11 @@ func TestHealNoQueue(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":      evenDir,
-		"odd":       oddDir,
-		"parity":    parityDir,
-		"auto_heal": "true",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_heal":    "true",
+		"use_streaming": "false", // Use buffered path for heal tests
 	}
 	fsInterface, err := raid3.NewFs(ctx, "TestNoQueue", "", m)
 	require.NoError(t, err)
@@ -273,10 +276,11 @@ func TestHealLargeFile(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":      evenDir,
-		"odd":       oddDir,
-		"parity":    parityDir,
-		"auto_heal": "true",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_heal":    "true",
+		"use_streaming": "false", // Use buffered path for heal tests
 	}
 	fsInterface, err := raid3.NewFs(ctx, "TestLargeHealing", "", m)
 	require.NoError(t, err)

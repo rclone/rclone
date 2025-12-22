@@ -155,15 +155,27 @@ Parity: [A^B, C^D, E^F, G]  (4 bytes)
 
 ---
 
+### DD-009: Pipelined Chunked Streaming Implementation
+**Date**: 2025-12-22  
+**Status**: ✅ Accepted  
+
+**Context**: The initial streaming implementation used `io.Pipe` with concurrent goroutines, which led to synchronization issues, pipe buffer overflow problems, and complex error handling.
+
+**Decision**: Implement a simplified pipelined chunked approach that reads files in 2MB chunks, splits each chunk into even/odd/parity particles, and uploads them sequentially while reading the next chunk in parallel. This replaces the `io.Pipe` + `StreamSplitter` architecture.
+
+**Rationale**: Eliminates `io.Pipe` buffer limitations (64KB fixed buffer), simplifies synchronization (no complex goroutine coordination), provides predictable memory usage (~5MB for double buffering), easier error handling (linear flow), and fewer edge cases (no pipe buffer overflow). **Alternatives Considered**: Keep `io.Pipe` approach with fixes (rejected - too complex), revert to buffered approach only (rejected - doesn't scale). **Consequences**: Simpler code (~480 lines reduction), bounded memory usage, works reliably for large files, slightly less parallelism than concurrent uploads (acceptable trade-off), and all tests pass.
+
+**References**: `_analysis/SIMPLIFIED_PIPELINED_APPROACH.md`, `_analysis/REVERT_VS_MODIFY_ANALYSIS.md`, `_analysis/STREAMING_IMPLEMENTATION_FIXES.md`
+
+---
+
 ### OQ-002: Streaming Support (Large Files)
 **Date**: 2025-11-03  
-**Status**: 🔴 Open  
+**Status**: ✅ Resolved (2025-12-22)  
 
 **Question**: Should raid3 support streaming for large files instead of loading entire file into memory?
 
-**Current**: Loads entire file into memory for splitting
-
-**Pros of streaming**: Handle files larger than RAM, better memory efficiency, scalability. **Cons**: More complex implementation, hash calculation requires full read anyway, parity requires all data. **Decision Needed**: Determine if memory buffering is acceptable for target use cases.
+**Resolution**: Implemented pipelined chunked streaming approach (see DD-009 above). Streaming is now the default (`use_streaming=true`) and provides bounded memory usage for large files.
 
 ---
 
@@ -215,5 +227,5 @@ Create decision records for architectural choices with multiple viable options, 
 
 ## 🎯 Summary
 
-Total decisions documented: 8. Status: All accepted and implemented. Open questions: 3 (low priority). This document provides a quick reference for understanding why the raid3 backend works the way it does. For detailed implementation notes, see files in `docs/` directory.
+Total decisions documented: 9. Status: All accepted and implemented. Open questions: 2 (low priority). This document provides a quick reference for understanding why the raid3 backend works the way it does. For detailed implementation notes, see files in `docs/` directory.
 

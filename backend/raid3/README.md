@@ -62,11 +62,15 @@ Update operation rollback has issues when `rollback=true` (default); Put and Mov
 
 ### File Size Limitation
 
-The backend loads entire files into memory during operations. Recommended: up to 500 MiB; maximum: ~1-2 GB (depends on RAM). Memory usage is ~3× file size (e.g., 1 GB file requires ~3 GB RAM). A streaming implementation is planned. For files >1 GB, workarounds include using S3 backend directly, Union backend, or splitting files before uploading.
+With `use_streaming=true` (default), the backend uses a pipelined chunked approach that processes files in 2MB chunks, enabling efficient handling of large files without loading entire files into memory. Memory usage is bounded (~5MB for double buffering). For very large files (>10GB), performance may be slightly slower than concurrent uploads, but the implementation is more reliable and simpler. When `use_streaming=false`, files are loaded entirely into memory (legacy mode), limiting practical file size to ~500 MiB - 1 GB depending on available RAM.
 
 ## How It Works
 
 When uploading a file, it is split at the byte level with XOR parity: even-indexed bytes (0, 2, 4, 6, ...) go to the even remote, odd-indexed bytes (1, 3, 5, 7, ...) go to the odd remote, and XOR parity (even[i] XOR odd[i]) goes to the parity remote. For a file of N bytes, the even particle contains `ceil(N/2)` bytes and the odd particle contains `floor(N/2)` bytes, so the even particle size equals the odd size or is one byte larger.
+
+**Streaming Processing** (default, `use_streaming=true`): Files are processed in 2MB chunks using a pipelined approach. The backend reads chunks, splits them into even/odd/parity particles, and uploads them sequentially while reading the next chunk in parallel. This provides bounded memory usage (~5MB) and enables handling of very large files efficiently.
+
+**Buffered Processing** (`use_streaming=false`): Legacy mode that loads entire files into memory before processing. Use only for small files or when streaming is not available.
 
 When downloading, the backend retrieves both particles, validates particle sizes are correct, merges even and odd bytes back into the original data, and returns the reconstructed file. When one particle is missing (2/3 present), reads automatically reconstruct from the other two particles. With `auto_heal=true` (default), missing particles are queued for background upload and directories missing on one backend are automatically created during `List()` operations. Performance: normal reads 6-7s, degraded reads with heal 9-10s. For details, see [`docs/CLEAN_HEAL.md`](docs/CLEAN_HEAL.md).
 
@@ -114,6 +118,6 @@ For comprehensive testing documentation, see [`docs/TESTING.md`](docs/TESTING.md
 
 ## Implementation Notes
 
-The raid3 backend uses `errgroup` for parallel operations, implements byte-level splitting/merging functions, validates particle sizes on every read, computes hashes on reconstructed data, and supports all standard fs operations (Put, Get, Update, Remove, etc.).
+The raid3 backend uses a pipelined chunked approach for streaming uploads (default), implements byte-level splitting/merging functions, validates particle sizes on every read, computes hashes on reconstructed data, supports all standard fs operations (Put, Get, Update, Remove, etc.), and uses `errgroup` for parallel operations where appropriate. The streaming implementation processes files in 2MB chunks, providing bounded memory usage and efficient handling of large files.
 
 

@@ -204,7 +204,14 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // Open opens the object for read, reconstructing from particles
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	fs.Debugf(o, "Open: attempting to get even and odd particles")
+	if o.fs.opt.UseStreaming {
+		return o.openStreaming(ctx, options...)
+	}
+	return o.openBuffered(ctx, options...)
+}
+
+// openBuffered opens the object using the buffered (memory-based) approach
+func (o *Object) openBuffered(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 
 	// Attempt to open both data particles concurrently to avoid blocking
 	type objResult struct {
@@ -215,32 +222,28 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	oddCh := make(chan objResult, 1)
 
 	go func() {
-		fs.Debugf(o, "Open: fetching even particle")
 		obj, err := o.fs.even.NewObject(ctx, o.remote)
-		fs.Debugf(o, "Open: even particle result: err=%v", err)
 		evenCh <- objResult{obj, err}
 	}()
 
 	go func() {
-		fs.Debugf(o, "Open: fetching odd particle")
 		obj, err := o.fs.odd.NewObject(ctx, o.remote)
-		fs.Debugf(o, "Open: odd particle result: err=%v", err)
 		oddCh <- objResult{obj, err}
 	}()
 
 	// Wait for both results
-	fs.Debugf(o, "Open: waiting for particle results")
 	evenRes := <-evenCh
 	oddRes := <-oddCh
 	evenObj, errEven := evenRes.obj, evenRes.err
 	oddObj, errOdd := oddRes.obj, oddRes.err
-	fs.Debugf(o, "Open: got results - even err=%v, odd err=%v", errEven, errOdd)
 
 	var merged []byte
 	if errEven == nil && errOdd == nil {
 		// Validate sizes
-		if !ValidateParticleSizes(evenObj.Size(), oddObj.Size()) {
-			return nil, fmt.Errorf("invalid particle sizes: even=%d, odd=%d", evenObj.Size(), oddObj.Size())
+		evenSize := evenObj.Size()
+		oddSize := oddObj.Size()
+		if !ValidateParticleSizes(evenSize, oddSize) {
+			return nil, fmt.Errorf("invalid particle sizes: even=%d, odd=%d", evenSize, oddSize)
 		}
 		// Read both and merge
 		evenReader, err := evenObj.Open(ctx)
@@ -417,8 +420,308 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	return io.NopCloser(reader), nil
 }
 
+// openStreaming opens the object using the streaming approach
+func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+
+	// Attempt to open both data particles concurrently to avoid blocking
+	type objResult struct {
+		obj fs.Object
+		err error
+	}
+	evenCh := make(chan objResult, 1)
+	oddCh := make(chan objResult, 1)
+
+	go func() {
+		obj, err := o.fs.even.NewObject(ctx, o.remote)
+		evenCh <- objResult{obj, err}
+	}()
+
+	go func() {
+		obj, err := o.fs.odd.NewObject(ctx, o.remote)
+		oddCh <- objResult{obj, err}
+	}()
+
+	// Wait for both results
+	evenRes := <-evenCh
+	oddRes := <-oddCh
+	evenObj, errEven := evenRes.obj, evenRes.err
+	oddObj, errOdd := oddRes.obj, oddRes.err
+
+	chunkSize := int(o.fs.opt.ChunkSize)
+
+	if errEven == nil && errOdd == nil {
+		// Normal mode: both particles available - use StreamMerger
+		// Validate sizes
+		evenSize := evenObj.Size()
+		oddSize := oddObj.Size()
+		if !ValidateParticleSizes(evenSize, oddSize) {
+			return nil, fmt.Errorf("invalid particle sizes: even=%d, odd=%d", evenSize, oddSize)
+		}
+
+		// Extract range/seek options before opening particle readers
+		// We don't want to pass range options to particle readers - they operate on merged coordinates
+		var rangeStart, rangeEnd int64 = 0, -1
+		filteredOptions := make([]fs.OpenOption, 0, len(options))
+		for _, option := range options {
+			switch x := option.(type) {
+			case *fs.RangeOption:
+				rangeStart, rangeEnd = x.Start, x.End
+				// Don't pass range option to particle readers
+			case *fs.SeekOption:
+				rangeStart = x.Offset
+				rangeEnd = -1
+				// Don't pass seek option to particle readers
+			default:
+				filteredOptions = append(filteredOptions, option)
+			}
+		}
+
+		evenReader, err := evenObj.Open(ctx, filteredOptions...)
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to open even particle: %w", o.fs.even.Name(), err)
+		}
+
+		oddReader, err := oddObj.Open(ctx, filteredOptions...)
+		if err != nil {
+			evenReader.Close()
+			return nil, fmt.Errorf("%s: failed to open odd particle: %w", o.fs.odd.Name(), err)
+		}
+
+		merger := NewStreamMerger(evenReader, oddReader, chunkSize)
+
+		// Handle range/seek options by wrapping the merger
+		// For now, we'll apply range filtering on the merged stream (simple approach)
+		// TODO: Optimize to apply range to particle readers directly (future enhancement)
+
+		if rangeStart > 0 || rangeEnd >= 0 {
+			// Apply range filtering on merged stream
+			// This reads the entire stream but filters the output
+			// Future optimization: apply range to particle readers directly
+			return newRangeFilterReader(merger, rangeStart, rangeEnd, o.Size()), nil
+		}
+
+		return merger, nil
+	} else {
+		// Degraded mode: one particle missing - use StreamReconstructor
+		// Find which parity exists and infer original length type
+		parityNameOL := GetParityFilename(o.remote, true)
+		parityObj, errParity := o.fs.parity.NewObject(ctx, parityNameOL)
+		isOddLength := false
+		if errParity == nil {
+			isOddLength = true
+		} else {
+			parityNameEL := GetParityFilename(o.remote, false)
+			parityObj, errParity = o.fs.parity.NewObject(ctx, parityNameEL)
+			if errParity != nil {
+				// Can't reconstruct - not enough particles
+				if errEven != nil && errOdd != nil {
+					return nil, fmt.Errorf("missing particles: even and odd unavailable and no parity found")
+				}
+				if errEven != nil {
+					return nil, fmt.Errorf("missing even particle and no parity found: %w", errEven)
+				}
+				return nil, fmt.Errorf("missing odd particle and no parity found: %w", errOdd)
+			}
+			isOddLength = false
+		}
+
+		// Open known data + parity and reconstruct
+		if errEven == nil {
+			// Extract range/seek options before opening particle readers
+			var rangeStart, rangeEnd int64 = 0, -1
+			filteredOptions := make([]fs.OpenOption, 0, len(options))
+			for _, option := range options {
+				switch x := option.(type) {
+				case *fs.RangeOption:
+					rangeStart, rangeEnd = x.Start, x.End
+					// Don't pass range option to particle readers
+				case *fs.SeekOption:
+					rangeStart = x.Offset
+					rangeEnd = -1
+					// Don't pass seek option to particle readers
+				default:
+					filteredOptions = append(filteredOptions, option)
+				}
+			}
+
+			// Reconstruct from even + parity
+			evenReader, err := evenObj.Open(ctx, filteredOptions...)
+			if err != nil {
+				return nil, fmt.Errorf("%s: failed to open even particle: %w", o.fs.even.Name(), err)
+			}
+
+			parityReader, err := parityObj.Open(ctx, filteredOptions...)
+			if err != nil {
+				evenReader.Close()
+				return nil, fmt.Errorf("%s: failed to open parity particle: %w", o.fs.parity.Name(), err)
+			}
+
+			reconstructor := NewStreamReconstructor(evenReader, parityReader, "even+parity", isOddLength, chunkSize)
+			fs.Infof(o, "Reconstructed %s from even+parity (degraded mode, streaming)", o.remote)
+
+			// Note: Heal operations would need to be adapted for streaming
+			// For now, we skip auto-heal in streaming mode (can be added later)
+
+			if rangeStart > 0 || rangeEnd >= 0 {
+				return newRangeFilterReader(reconstructor, rangeStart, rangeEnd, o.Size()), nil
+			}
+
+			return reconstructor, nil
+
+		} else if errOdd == nil {
+			// Extract range/seek options before opening particle readers
+			var rangeStart, rangeEnd int64 = 0, -1
+			filteredOptions := make([]fs.OpenOption, 0, len(options))
+			for _, option := range options {
+				switch x := option.(type) {
+				case *fs.RangeOption:
+					rangeStart, rangeEnd = x.Start, x.End
+					// Don't pass range option to particle readers
+				case *fs.SeekOption:
+					rangeStart = x.Offset
+					rangeEnd = -1
+					// Don't pass seek option to particle readers
+				default:
+					filteredOptions = append(filteredOptions, option)
+				}
+			}
+
+			// Reconstruct from odd + parity
+			oddReader, err := oddObj.Open(ctx, filteredOptions...)
+			if err != nil {
+				return nil, fmt.Errorf("%s: failed to open odd particle: %w", o.fs.odd.Name(), err)
+			}
+
+			parityReader, err := parityObj.Open(ctx, filteredOptions...)
+			if err != nil {
+				oddReader.Close()
+				return nil, fmt.Errorf("%s: failed to open parity particle: %w", o.fs.parity.Name(), err)
+			}
+
+			reconstructor := NewStreamReconstructor(oddReader, parityReader, "odd+parity", isOddLength, chunkSize)
+			fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode, streaming)", o.remote)
+
+			// Note: Heal operations would need to be adapted for streaming
+			// For now, we skip auto-heal in streaming mode (can be added later)
+
+			if rangeStart > 0 || rangeEnd >= 0 {
+				return newRangeFilterReader(reconstructor, rangeStart, rangeEnd, o.Size()), nil
+			}
+
+			return reconstructor, nil
+
+		} else {
+			return nil, fmt.Errorf("cannot reconstruct: no data particle available")
+		}
+	}
+}
+
+// rangeFilterReader applies range filtering to a stream
+type rangeFilterReader struct {
+	reader     io.ReadCloser
+	rangeStart int64
+	rangeEnd   int64
+	totalSize  int64
+	pos        int64
+}
+
+func newRangeFilterReader(reader io.ReadCloser, rangeStart, rangeEnd int64, totalSize int64) *rangeFilterReader {
+	// Use RangeOption.Decode semantics to interpret the range
+	// This matches the standard rclone behavior
+	opt := &fs.RangeOption{Start: rangeStart, End: rangeEnd}
+	offset, limit := opt.Decode(totalSize)
+	
+	// Decode returns offset and limit (number of bytes to read)
+	// Convert to rangeStart and rangeEnd (inclusive end)
+	rangeStart = offset
+	if limit >= 0 {
+		rangeEnd = offset + limit - 1 // End is inclusive
+	} else {
+		rangeEnd = totalSize - 1 // Read to end
+	}
+
+	// Validate range
+	if rangeStart < 0 {
+		rangeStart = 0
+	}
+	if rangeStart > totalSize {
+		rangeStart = totalSize
+	}
+	if rangeEnd < 0 {
+		rangeEnd = totalSize - 1
+	}
+	if rangeEnd >= totalSize {
+		rangeEnd = totalSize - 1
+	}
+	if rangeEnd < rangeStart {
+		rangeEnd = rangeStart - 1 // Empty range
+	}
+
+	return &rangeFilterReader{
+		reader:     reader,
+		rangeStart: rangeStart,
+		rangeEnd:   rangeEnd,
+		totalSize:  totalSize,
+		pos:        0,
+	}
+}
+
+func (r *rangeFilterReader) Read(p []byte) (n int, err error) {
+	// Skip bytes before rangeStart
+	for r.pos < r.rangeStart {
+		skip := int64(len(p))
+		if skip > r.rangeStart-r.pos {
+			skip = r.rangeStart - r.pos
+		}
+		buf := make([]byte, skip)
+		n, err := r.reader.Read(buf)
+		if err != nil && err != io.EOF {
+			return 0, err
+		}
+		r.pos += int64(n)
+		if err == io.EOF {
+			return 0, io.EOF
+		}
+	}
+
+	// If we're past the range, we're done
+	if r.pos > r.rangeEnd {
+		return 0, io.EOF
+	}
+
+	// Read data within range
+	maxRead := int64(len(p))
+	if r.pos+maxRead > r.rangeEnd+1 {
+		maxRead = r.rangeEnd + 1 - r.pos
+	}
+	if maxRead <= 0 {
+		return 0, io.EOF
+	}
+
+	buf := make([]byte, maxRead)
+	n, err = r.reader.Read(buf)
+	if n > 0 {
+		copy(p, buf[:n])
+		r.pos += int64(n)
+	}
+
+	return n, err
+}
+
+func (r *rangeFilterReader) Close() error {
+	return r.reader.Close()
+}
+
 // Update updates the object
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	if o.fs.opt.UseStreaming {
+		return o.updateStreaming(ctx, in, src, options...)
+	}
+	return o.updateBuffered(ctx, in, src, options...)
+}
+
+// updateBuffered updates the object using the buffered (memory-based) approach
+func (o *Object) updateBuffered(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	// Pre-flight check: Enforce strict RAID 3 write policy
 	// Fail immediately if any backend is unavailable to prevent corrupted updates
 	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
@@ -712,14 +1015,9 @@ func (o *Object) updateWithRollback(ctx context.Context, evenData, oddData, pari
 
 	// Validate particle sizes
 	if !ValidateParticleSizes(evenObj.Size(), oddObj.Size()) {
-		fs.Errorf(o, "CORRUPTION DETECTED: invalid particle sizes after update: even=%d, odd=%d (expected %d, %d)",
-			evenObj.Size(), oddObj.Size(), len(evenData), len(oddData))
-		err = fmt.Errorf("update failed: invalid particle sizes (even=%d, odd=%d) - FILE MAY BE CORRUPTED",
+		return fmt.Errorf("update failed: invalid particle sizes (even=%d, odd=%d)",
 			evenObj.Size(), oddObj.Size())
-		return err
 	}
-
-	fs.Debugf(o, "Update successful, validated particle sizes: even=%d, odd=%d", evenObj.Size(), oddObj.Size())
 
 	// Note: We intentionally do NOT verify the file through raid3.NewObject/Open here.
 	// The validation above (opening particles directly and checking sizes) is sufficient
@@ -727,6 +1025,201 @@ func (o *Object) updateWithRollback(ctx context.Context, evenData, oddData, pari
 	// interface check was used during debugging but proved redundant once the root cause
 	// (using src.Remote() instead of o.remote) was fixed. If issues arise in the future,
 	// adding back a raid3 interface verification here can help diagnose path/visibility issues.
+
+	return nil
+}
+
+// updateStreaming updates the object using the pipelined chunked approach
+func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("update blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = o.fs.disableRetriesForWrites(ctx)
+
+	// Configuration: Read 2MB chunks (produces ~1MB per particle)
+	readChunkSize := int64(o.fs.opt.ChunkSize) * 2
+	if readChunkSize < 2*1024*1024 {
+		readChunkSize = 2 * 1024 * 1024 // Minimum 2MB
+	}
+
+	// Allocate buffers for double buffering
+	bufferA := make([]byte, readChunkSize)
+	bufferB := make([]byte, readChunkSize)
+
+	// Look up existing particle objects
+	evenObj, err := o.fs.even.NewObject(ctx, o.remote)
+	if err != nil {
+		return fmt.Errorf("even particle not found: %w", err)
+	}
+	oddObj, err := o.fs.odd.NewObject(ctx, o.remote)
+	if err != nil {
+		return fmt.Errorf("odd particle not found: %w", err)
+	}
+
+	// Determine parity filename (try even-length first, then odd-length)
+	parityName := GetParityFilename(o.remote, false)
+	parityObj, err := o.fs.parity.NewObject(ctx, parityName)
+	if err != nil {
+		parityName = GetParityFilename(o.remote, true)
+		parityObj, err = o.fs.parity.NewObject(ctx, parityName)
+		if err != nil {
+			// Parity doesn't exist - will create with Put
+			parityObj = nil
+		}
+	}
+
+	// Track uploaded particles for rollback
+	var uploadedParticles []fs.Object
+	var err2 error
+	defer func() {
+		if err2 != nil && o.fs.opt.Rollback {
+			particlesMap := make(map[string]fs.Object)
+			if len(uploadedParticles) > 0 {
+				particlesMap["even"] = uploadedParticles[0]
+			}
+			if len(uploadedParticles) > 1 {
+				particlesMap["odd"] = uploadedParticles[1]
+			}
+			if len(uploadedParticles) > 2 {
+				particlesMap["parity"] = uploadedParticles[2]
+			}
+			if rollbackErr := o.fs.rollbackUpdate(ctx, particlesMap); rollbackErr != nil {
+				fs.Errorf(o.fs, "Rollback failed during Update (streaming): %v", rollbackErr)
+			}
+		}
+	}()
+
+	// Track sizes for verification
+	var totalEvenWritten, totalOddWritten int64
+	var isOddLength bool
+
+	// Read first chunk
+	var n int
+	n, err2 = io.ReadFull(in, bufferA)
+	if err2 == io.EOF && n == 0 {
+		// Empty file - nothing to update
+		return nil
+	}
+	if err2 != nil && err2 != io.EOF && err2 != io.ErrUnexpectedEOF {
+		return fmt.Errorf("failed to read first chunk: %w", err2)
+	}
+
+	// Process first chunk
+	evenData, oddData := SplitBytes(bufferA[:n])
+	parityData := CalculateParity(evenData, oddData)
+	totalEvenWritten += int64(len(evenData))
+	totalOddWritten += int64(len(oddData))
+	isOddLength = (len(evenData) > len(oddData))
+
+	// Update first chunk sequentially
+	evenInfo := createParticleInfo(src, "even", int64(len(evenData)), isOddLength)
+	err2 = evenObj.Update(ctx, bytes.NewReader(evenData), evenInfo, options...)
+	if err2 != nil {
+		return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err2)
+	}
+	uploadedParticles = append(uploadedParticles, evenObj)
+
+	oddInfo := createParticleInfo(src, "odd", int64(len(oddData)), isOddLength)
+	err2 = oddObj.Update(ctx, bytes.NewReader(oddData), oddInfo, options...)
+	if err2 != nil {
+		return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err2)
+	}
+	uploadedParticles = append(uploadedParticles, oddObj)
+
+	parityInfo := createParticleInfo(src, "parity", int64(len(parityData)), isOddLength)
+	parityInfo.remote = parityName
+	if parityObj != nil {
+		// Parity exists, update it
+		err2 = parityObj.Update(ctx, bytes.NewReader(parityData), parityInfo, options...)
+		if err2 != nil {
+			return fmt.Errorf("%s: failed to update parity particle: %w", o.fs.parity.Name(), err2)
+		}
+		uploadedParticles = append(uploadedParticles, parityObj)
+	} else {
+		// Parity doesn't exist, create it with Put
+		newParityObj, err3 := o.fs.parity.Put(ctx, bytes.NewReader(parityData), parityInfo, options...)
+		if err3 != nil {
+			return fmt.Errorf("%s: failed to create parity particle: %w", o.fs.parity.Name(), err3)
+		}
+		uploadedParticles = append(uploadedParticles, newParityObj)
+	}
+
+	// Pipeline remaining chunks
+	current := bufferA
+	next := bufferB
+	currentN := n
+	firstChunk := true
+
+	for {
+		// Start reading next chunk in parallel with uploading current (if not first chunk)
+		readDone := make(chan struct{})
+		var readN int
+		var readErr error
+
+		// Start reading next chunk
+		go func() {
+			readN, readErr = in.Read(next)
+			close(readDone)
+		}()
+
+		// Update current chunk (even, odd, parity sequentially)
+		// Note: For first iteration, this was already done above, so skip
+		if !firstChunk {
+			currentEven, currentOdd := SplitBytes(current[:currentN])
+			currentParity := CalculateParity(currentEven, currentOdd)
+			totalEvenWritten += int64(len(currentEven))
+			totalOddWritten += int64(len(currentOdd))
+			if len(currentEven) > len(currentOdd) {
+				isOddLength = true
+			}
+
+			evenInfo := createParticleInfo(src, "even", int64(len(currentEven)), isOddLength)
+			err2 = evenObj.Update(ctx, bytes.NewReader(currentEven), evenInfo, options...)
+			if err2 != nil {
+				return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err2)
+			}
+
+			oddInfo := createParticleInfo(src, "odd", int64(len(currentOdd)), isOddLength)
+			err2 = oddObj.Update(ctx, bytes.NewReader(currentOdd), oddInfo, options...)
+			if err2 != nil {
+				return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err2)
+			}
+
+			parityInfo := createParticleInfo(src, "parity", int64(len(currentParity)), isOddLength)
+			parityInfo.remote = parityName
+			if parityObj != nil {
+				err2 = parityObj.Update(ctx, bytes.NewReader(currentParity), parityInfo, options...)
+				if err2 != nil {
+					return fmt.Errorf("%s: failed to update parity particle: %w", o.fs.parity.Name(), err2)
+				}
+			} else {
+				// This shouldn't happen after first chunk, but handle it
+				newParityObj, err3 := o.fs.parity.Put(ctx, bytes.NewReader(currentParity), parityInfo, options...)
+				if err3 != nil {
+					return fmt.Errorf("%s: failed to create parity particle: %w", o.fs.parity.Name(), err3)
+				}
+				parityObj = newParityObj
+			}
+		}
+
+		// Wait for read to complete
+		<-readDone
+
+		if readErr == io.EOF && readN == 0 {
+			break // No more data
+		}
+		if readErr != nil && readErr != io.EOF && readErr != io.ErrUnexpectedEOF {
+			return fmt.Errorf("failed to read chunk: %w", readErr)
+		}
+
+		// Swap buffers for next iteration
+		current, next = next, current
+		currentN = readN
+		firstChunk = false
+	}
 
 	return nil
 }
