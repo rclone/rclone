@@ -50,28 +50,19 @@ func (api *GPhotoAPI) GetAuthToken(ctx context.Context, force bool) error {
 		url += "?force=true"
 	}
 
-	fs.Debugf(nil, "gphoto: requesting token from %s for user %s (force=%v)", url, api.user, force)
-
 	req, err := http.NewRequestWithContext(ctx, "POST", url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create token request: %w", err)
 	}
-
 	req.Header.Set("Authorization", "Bearer @localhost@")
-	fs.Debugf(nil, "gphoto: token request headers: Authorization=Bearer @localhost@")
 
 	resp, err := api.httpClient.Do(req)
 	if err != nil {
-		fs.Errorf(nil, "gphoto: token request failed: %v", err)
 		return fmt.Errorf("failed to fetch token: %w", err)
 	}
 	defer resp.Body.Close()
 
-	fs.Debugf(nil, "gphoto: token response status: %d %s", resp.StatusCode, resp.Status)
-	fs.Debugf(nil, "gphoto: token response headers: Content-Type=%s", resp.Header.Get("Content-Type"))
-
 	if resp.StatusCode != http.StatusOK {
-		fs.Errorf(nil, "gphoto: token request failed with status %d", resp.StatusCode)
 		return fmt.Errorf("token request failed with status %d", resp.StatusCode)
 	}
 
@@ -79,16 +70,8 @@ func (api *GPhotoAPI) GetAuthToken(ctx context.Context, force bool) error {
 		Token string `json:"token"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		fs.Errorf(nil, "gphoto: failed to decode token response: %v", err)
 		return fmt.Errorf("failed to decode token response: %w", err)
 	}
-
-	// Mask token for logging (show first/last 8 chars only)
-	maskedToken := tokenResp.Token
-	if len(maskedToken) > 16 {
-		maskedToken = maskedToken[:8] + "..." + maskedToken[len(maskedToken)-8:]
-	}
-	fs.Infof(nil, "gphoto: obtained auth token for user %s: %s", api.user, maskedToken)
 
 	api.token = tokenResp.Token
 	return nil
@@ -143,42 +126,20 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			req.Header.Set(k, v)
 		}
 
-		// Log request details
-		fs.Debugf(nil, "gphoto: API request: %s %s (attempt %d)", method, url, retry+1)
-		fs.Debugf(nil, "gphoto: request headers: User-Agent=%s, Content-Type=%s",
-			req.Header.Get("User-Agent"), req.Header.Get("Content-Type"))
-		if api.token != "" {
-			maskedToken := api.token
-			if len(maskedToken) > 16 {
-				maskedToken = maskedToken[:8] + "..." + maskedToken[len(maskedToken)-8:]
-			}
-			fs.Debugf(nil, "gphoto: request Authorization: Bearer %s", maskedToken)
-		}
-
 		resp, err = api.httpClient.Do(req)
 		if err != nil {
-			fs.Errorf(nil, "gphoto: API request failed: %v", err)
 			return nil, err
 		}
-
-		// Log response details
-		fs.Debugf(nil, "gphoto: API response: %d %s", resp.StatusCode, resp.Status)
-		fs.Debugf(nil, "gphoto: response headers: Content-Type=%s, Content-Length=%s",
-			resp.Header.Get("Content-Type"), resp.Header.Get("Content-Length"))
 
 		// Handle status codes
 		switch resp.StatusCode {
 		case http.StatusOK, http.StatusPartialContent:
-			fs.Debugf(nil, "gphoto: request successful")
 			return resp, nil
 
 		case http.StatusUnauthorized, http.StatusForbidden:
 			resp.Body.Close()
 			authRetries++
-			// First auth failure: try refreshing without force
-			// Second auth failure: force refresh to get a completely new token
 			forceRefresh := authRetries > 1
-			fs.Infof(nil, "gphoto: token expired (status %d), refreshing (force=%v)...", resp.StatusCode, forceRefresh)
 			if err := api.GetAuthToken(ctx, forceRefresh); err != nil {
 				return nil, err
 			}
@@ -186,21 +147,17 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 
 		case http.StatusTooManyRequests: // 429
 			resp.Body.Close()
-			backoff := time.Duration(1<<uint(retry)) * time.Second // Exponential backoff: 1s, 2s, 4s, 8s, 16s
-			fs.Infof(nil, "gphoto: rate limited (429), waiting %v before retry...", backoff)
+			backoff := time.Duration(1<<uint(retry)) * time.Second
 			time.Sleep(backoff)
 			continue
 
 		case http.StatusInternalServerError, http.StatusServiceUnavailable:
 			resp.Body.Close()
-			backoff := time.Duration(1<<uint(retry)) * time.Second // Exponential backoff
-			fs.Infof(nil, "gphoto: server error (%d), waiting %v before retry...", resp.StatusCode, backoff)
+			backoff := time.Duration(1<<uint(retry)) * time.Second
 			time.Sleep(backoff)
 			continue
 
 		case http.StatusNotFound: // 404
-			// Return the response so caller can handle it
-			fs.Debugf(nil, "gphoto: resource not found (404)")
 			return resp, nil
 
 		default:
@@ -523,14 +480,9 @@ func (api *GPhotoAPI) GetLibraryState(ctx context.Context, stateToken, pageToken
 	}
 	defer resp.Body.Close()
 
-	// Log response headers
-	fs.Debugf(nil, "gphoto: response Content-Encoding: %s", resp.Header.Get("Content-Encoding"))
-	fs.Debugf(nil, "gphoto: response Content-Length: %s", resp.Header.Get("Content-Length"))
-
-	// Check if response is gzip compressed
+	// Decompress if gzip compressed
 	var reader io.Reader = resp.Body
 	if resp.Header.Get("Content-Encoding") == "gzip" {
-		fs.Debugf(nil, "gphoto: response is gzip compressed, decompressing")
 		gzipReader, err := gzip.NewReader(resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
@@ -539,23 +491,7 @@ func (api *GPhotoAPI) GetLibraryState(ctx context.Context, stateToken, pageToken
 		reader = gzipReader
 	}
 
-	// Read response body
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	// Log first bytes for debugging
-	hexLen := 60
-	if hexLen > len(data) {
-		hexLen = len(data)
-	}
-	if hexLen > 0 {
-		fs.Debugf(nil, "gphoto: read %d bytes from response body", len(data))
-		fs.Debugf(nil, "gphoto: first %d bytes (hex): %x", hexLen, data[:hexLen])
-		fs.Debugf(nil, "gphoto: first %d bytes (decimal): %v", hexLen, data[:hexLen])
-	}
-	return data, nil
+	return io.ReadAll(reader)
 }
 
 // GetLibraryPage gets a page of library results (for incremental sync)
@@ -589,14 +525,9 @@ func (api *GPhotoAPI) GetLibraryPageInit(ctx context.Context, pageToken string) 
 	}
 	defer resp.Body.Close()
 
-	// Log response headers
-	fs.Debugf(nil, "gphoto: response Content-Encoding: %s", resp.Header.Get("Content-Encoding"))
-	fs.Debugf(nil, "gphoto: response Content-Length: %s", resp.Header.Get("Content-Length"))
-
-	// Check if response is gzip compressed
+	// Decompress if gzip compressed
 	var reader io.Reader = resp.Body
 	if resp.Header.Get("Content-Encoding") == "gzip" {
-		fs.Debugf(nil, "gphoto: response is gzip compressed, decompressing")
 		gzipReader, err := gzip.NewReader(resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
@@ -605,23 +536,7 @@ func (api *GPhotoAPI) GetLibraryPageInit(ctx context.Context, pageToken string) 
 		reader = gzipReader
 	}
 
-	// Read response body
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	// Log first bytes for debugging
-	hexLen := 60
-	if hexLen > len(data) {
-		hexLen = len(data)
-	}
-	if hexLen > 0 {
-		fs.Debugf(nil, "gphoto: read %d bytes from response body", len(data))
-		fs.Debugf(nil, "gphoto: first %d bytes (hex): %x", hexLen, data[:hexLen])
-		fs.Debugf(nil, "gphoto: first %d bytes (decimal): %v", hexLen, data[:hexLen])
-	}
-	return data, nil
+	return io.ReadAll(reader)
 }
 
 // GetDownloadURL gets the download URL for a media item
@@ -702,7 +617,6 @@ func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (stri
 
 	// Check if response is gzip compressed (magic bytes: 1f 8b)
 	if len(respBody) >= 2 && respBody[0] == 0x1f && respBody[1] == 0x8b {
-		fs.Debugf(nil, "gphoto: GetDownloadURL response is gzip compressed, decompressing")
 		gzipReader, err := gzip.NewReader(bytes.NewReader(respBody))
 		if err != nil {
 			return "", fmt.Errorf("failed to create gzip reader: %w", err)
@@ -714,51 +628,36 @@ func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (stri
 		}
 	}
 
-	// Debug: log response status and first few bytes
-	fs.Debugf(nil, "gphoto: GetDownloadURL response status=%d, body_len=%d, first_bytes=%x",
-		resp.StatusCode, len(respBody), respBody[:min(len(respBody), 50)])
-
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("GetDownloadURL failed with status %d: %s", resp.StatusCode, string(respBody))
+		return "", fmt.Errorf("GetDownloadURL failed with status %d", resp.StatusCode)
 	}
 
 	result, err := DecodeToMap(respBody)
 	if err != nil {
-		fs.Errorf(nil, "gphoto: Failed to decode GetDownloadURL response: %v, first_bytes=%x", err, respBody[:min(len(respBody), 50)])
 		return "", err
 	}
 
-	// Extract download URL from response
-	// Based on Python: output_dict["1"]["5"]["2"]["5"] for edited, output_dict["1"]["5"]["2"]["6"] for original
+	// Extract download URL from response (field paths: 1->5->2->6 for original, 1->5->2->5 for edited)
 	if field1Data, ok := result["1"].(map[string]interface{}); ok {
 		if field5Data, ok := field1Data["5"].(map[string]interface{}); ok {
 			if field2Data, ok := field5Data["2"].(map[string]interface{}); ok {
-				// Try field 6 first (original file URL)
 				if url, ok := field2Data["6"].(string); ok && url != "" {
-					fs.Debugf(nil, "gphoto: got original download URL for %s", mediaKey)
 					return url, nil
 				}
-				// Fallback to field 5 (edited version URL)
 				if url, ok := field2Data["5"].(string); ok && url != "" {
-					fs.Debugf(nil, "gphoto: got edited download URL for %s", mediaKey)
 					return url, nil
 				}
 			}
-			// Also try field 3 path (alternative response format)
 			if field3Data, ok := field5Data["3"].(map[string]interface{}); ok {
 				if url, ok := field3Data["6"].(string); ok && url != "" {
-					fs.Debugf(nil, "gphoto: got original download URL (field 3) for %s", mediaKey)
 					return url, nil
 				}
 				if url, ok := field3Data["5"].(string); ok && url != "" {
-					fs.Debugf(nil, "gphoto: got edited download URL (field 3) for %s", mediaKey)
 					return url, nil
 				}
 			}
 		}
 	}
 
-	// Log the full result for debugging
-	fs.Debugf(nil, "gphoto: GetDownloadURL response structure: %+v", result)
 	return "", fmt.Errorf("download URL not found in response for media_key %s", mediaKey)
 }

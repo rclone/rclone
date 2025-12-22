@@ -480,7 +480,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	f.dirMu.RLock()
 	if entry, ok := f.dirCache[cacheKey]; ok && time.Now().Before(entry.expiresAt) {
 		f.dirMu.RUnlock()
-		fs.Infof(f, "List cache hit for %s", dir)
+		fs.Debugf(f, "List cache hit for %s", dir)
 		return entry.entries, nil
 	}
 	f.dirMu.RUnlock()
@@ -502,7 +502,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	f.dirMu.Unlock()
 
-	fs.Infof(f, "List cached %s with %d entries", dir, len(result))
+	fs.Debugf(f, "List cached %s with %d entries", dir, len(result))
 	return result, nil
 }
 
@@ -782,21 +782,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return nil, fs.ErrorObjectNotFound
 }
 
-// invalidateCaches clears all internal caches
-func (f *Fs) invalidateCaches() {
-	f.lazyMu.Lock()
-	f.lazyMeta = make(map[string]*Object)
-	f.lazyMu.Unlock()
-
-	f.dirMu.Lock()
-	for cacheKey := range f.dirCache {
-		delete(f.dirCache, cacheKey)
-	}
-	f.dirMu.Unlock()
-}
-
 // invalidateDirCache invalidates only the cache for a specific directory path
-// This is much more efficient than invalidateCaches() for single-file operations
 func (f *Fs) invalidateDirCache(dirPath string) {
 	cacheKey := dirPath
 	if cacheKey == "" {
@@ -1213,7 +1199,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	}
 	f.addToDirCache(parentPath, fs.NewDir(folderPath, time.Time{}))
 
-	fs.Infof(nil, "mediavfs: created directory: %s", folderPath)
+	fs.Debugf(nil, "mediavfs: created directory: %s", folderPath)
 	return nil
 }
 
@@ -1285,7 +1271,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	delete(f.folderExistsCache, cacheKey)
 	f.folderCacheMu.Unlock()
 
-	fs.Infof(f, "mediavfs: removed directory: %s", folderPath)
+	fs.Debugf(f, "mediavfs: removed directory: %s", folderPath)
 	return nil
 }
 
@@ -1300,7 +1286,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	userName := f.opt.User
 	dstPath := strings.Trim(remote, "/")
 
-	fs.Infof(f, "Move called: src=%s, dst=%s for user %s", src.Remote(), remote, userName)
+	fs.Debugf(f, "Move: %s -> %s", src.Remote(), remote)
 
 	// Parse the new path and name
 	var newPath, newName string
@@ -1329,11 +1315,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	_, err := f.db.ExecContext(ctx, query, newName, newPath, srcObj.mediaKey)
 	if err != nil {
-		fs.Infof(f, "Move failed: database update error: %v", err)
 		return nil, fmt.Errorf("failed to move file: %w", err)
 	}
-
-	fs.Infof(f, "Move succeeded: updated %s to name=%s, path=%s", srcObj.mediaKey, newName, newPath)
 
 	// Update the object in-place for real-time changes (no DB re-query)
 	newObj := &Object{
@@ -1353,7 +1336,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// Add to destination directory cache
 	f.addToDirCache(newPath, newObj)
 
-	fs.Infof(nil, "mediavfs: moved %s to %s (cache updated)", srcObj.remote, remote)
+	fs.Debugf(nil, "Move completed: %s -> %s", srcObj.remote, remote)
 
 	return newObj, nil
 }
@@ -1375,7 +1358,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fmt.Errorf("cannot move root directory")
 	}
 
-	fs.Infof(nil, "mediavfs: DirMove from %s to %s for user %s", srcPath, dstPath, userName)
+	fs.Debugf(nil, "DirMove: %s -> %s", srcPath, dstPath)
 
 	// Ensure destination parent folders exist
 	if strings.Contains(dstPath, "/") {
@@ -1473,7 +1456,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	f.folderExistsCache[userName+":"+dstPath] = true
 	f.folderCacheMu.Unlock()
 
-	fs.Infof(nil, "mediavfs: moved directory %s to %s", srcRemote, dstRemote)
+	fs.Debugf(nil, "DirMove completed: %s -> %s", srcRemote, dstRemote)
 	return nil
 }
 
@@ -1548,10 +1531,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		resolvedURL = cachedMeta.resolvedURL
 		etag = cachedMeta.etag
 		fileSize = cachedMeta.size
-		fs.Infof(nil, "mediavfs: using cached URL for %s (TTL cache hit)", o.mediaKey)
+		fs.Debugf(nil, "URL cache hit for %s", o.mediaKey)
 	} else {
 		// Cache miss - need to get download URL from API
-		fs.Infof(nil, "mediavfs: cache miss for %s, fetching download URL from API", o.mediaKey)
+		fs.Debugf(nil, "URL cache miss for %s", o.mediaKey)
 
 		initialURL, err := o.fs.api.GetDownloadURL(ctx, o.mediaKey)
 		if err != nil {
@@ -1572,7 +1555,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 
 		// Resolve URL and get ETag via HEAD request
-		fs.Infof(nil, "mediavfs: resolving URL and fetching metadata for %s", o.mediaKey)
+		fs.Debugf(nil, "Resolving URL for %s", o.mediaKey)
 
 		// Retry HEAD request with exponential backoff for transient errors
 		var headResp *http.Response
@@ -1580,7 +1563,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		for attempt := 0; attempt < 3; attempt++ {
 			if attempt > 0 {
 				sleepTime := time.Duration(1<<uint(attempt-1)) * time.Second
-				fs.Infof(nil, "mediavfs: retrying HEAD request after %v (attempt %d/3)", sleepTime, attempt+1)
+				fs.Debugf(nil, "Retrying HEAD after %v", sleepTime)
 				time.Sleep(sleepTime)
 			}
 
@@ -1627,7 +1610,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			size:        fileSize,
 		})
 
-		fs.Infof(nil, "mediavfs: cached URL for %s (TTL: %v)", o.mediaKey, cacheTTL)
+		fs.Debugf(nil, "Cached URL for %s", o.mediaKey)
 	}
 
 	// Now make the actual GET request to the resolved URL with retry logic
@@ -1636,7 +1619,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	for attempt := 0; attempt < 3; attempt++ {
 		if attempt > 0 {
 			sleepTime := time.Duration(1<<uint(attempt-1)) * time.Second
-			fs.Infof(nil, "mediavfs: retrying GET request after %v (attempt %d/3)", sleepTime, attempt+1)
+			fs.Debugf(nil, "Retrying GET after %v", sleepTime)
 			time.Sleep(sleepTime)
 		}
 
@@ -1685,7 +1668,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, fmt.Errorf("failed to open file after retries: %w", getErr)
 	}
 
-	fs.Infof(nil, "mediavfs: opened %s with status %d", o.mediaKey, res.StatusCode)
+	fs.Debugf(nil, "Opened %s", o.mediaKey)
 
 	return res.Body, nil
 }
@@ -1698,11 +1681,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove deletes a file from Google Photos if delete is enabled
 func (o *Object) Remove(ctx context.Context) error {
 	if !o.fs.opt.EnableDelete {
-		fs.Infof(o.fs, "Remove called on %s - delete disabled, file remains in database", o.Remote())
+		fs.Debugf(o.fs, "Remove disabled for %s", o.Remote())
 		return nil
 	}
 
-	fs.Infof(o.fs, "Removing %s from Google Photos (media_key: %s)", o.Remote(), o.mediaKey)
+	fs.Debugf(o.fs, "Removing %s", o.Remote())
 
 	// Delete from Google Photos
 	if err := o.DeleteFromGPhotos(ctx); err != nil {
@@ -1723,7 +1706,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	// Remove from cache instead of invalidating
 	o.fs.removeFromDirCache(o.displayPath, o.displayName)
 
-	fs.Infof(o.fs, "Successfully removed %s", o.Remote())
+	fs.Debugf(o.fs, "Removed %s", o.Remote())
 	return nil
 }
 
@@ -1734,7 +1717,7 @@ func (f *Fs) startBackgroundSync() {
 		interval = 10 * time.Second // Minimum 10 seconds
 	}
 
-	fs.Infof(f, "Starting background sync every %v", interval)
+	fs.Debugf(f, "Starting background sync every %v", interval)
 
 	go func() {
 		ticker := time.NewTicker(interval)
@@ -1743,14 +1726,10 @@ func (f *Fs) startBackgroundSync() {
 		for {
 			select {
 			case <-f.syncStop:
-				fs.Infof(f, "Background sync stopped")
 				return
 			case <-ticker.C:
-				fs.Infof(f, "Background sync: syncing from Google Photos...")
 				if err := f.SyncFromGooglePhotos(context.Background(), f.opt.User); err != nil {
 					fs.Errorf(f, "Background sync failed: %v", err)
-				} else {
-					fs.Infof(f, "Background sync completed successfully")
 				}
 			}
 		}

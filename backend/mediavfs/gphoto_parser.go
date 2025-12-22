@@ -252,17 +252,8 @@ func extractFileName(field24 interface{}, mediaKey string) (string, error) {
 		}
 	}
 
-	// Case 5: nil or empty - field 4 doesn't exist
-	if field24 == nil {
-		generatedName := fmt.Sprintf("%s.unknown", mediaKey)
-		fs.Infof(nil, "mediavfs: field2[4] is nil for %s, generating filename: %s", mediaKey, generatedName)
-		return generatedName, nil
-	}
-
-	// No filename found, generate one
-	generatedName := fmt.Sprintf("%s.unknown", mediaKey)
-	fs.Infof(nil, "mediavfs: Generating filename for %s (field2[4] type=%T): %s", mediaKey, field24, generatedName)
-	return generatedName, nil
+	// Case 5: nil or empty - generate filename from media_key
+	return fmt.Sprintf("%s.unknown", mediaKey), nil
 }
 
 func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
@@ -295,77 +286,30 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 		}
 	}
 
-	// Debug: list of media_keys with known empty dedup_key issues
-	debugMediaKeys := map[string]bool{
-		"AF1QipNUQyoob3Aw2yZahYwG5OX7ipb_MBf_HC8g-0So": true,
-		"AF1QipP4mj-s7sitRKGb2yenPIr66a3PH5QzaRnlOPpK": true,
-		"AF1QipOvzOeMUrrtKPl74aTKzrLrP6xWIUKFDkhhKqd-": true,
-		"AF1QipMmQLnWK9G18i19a9ZSkYye5tcUzNceh90AL4bq": true,
-		"AF1QipMxFMhyRa225fsbEE1s5OSGpIIHGr5VDqwFhyBo": true,
-	}
-	debugThis := debugMediaKeys[item.MediaKey]
-
 	// Parse dedup_key from field 2->21
 	if field21, ok := asMap(field2["21"]); ok {
-		if debugThis {
-			fs.Infof(nil, "mediavfs: field2[21] exists for %s, keys=%v", item.MediaKey, getMapKeys(field21))
-		}
 		for key, val := range field21 {
-			if debugThis {
-				fs.Infof(nil, "mediavfs: field2[21][%q] = type=%T, value=%v", key, val, val)
-			}
 			if key[0] == '1' {
-				// Try to get as bytes (most common for dedup_key)
 				if dedupBytes, ok := asBytes(val); ok {
 					item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(dedupBytes))
-					if debugThis {
-						fs.Infof(nil, "mediavfs: Got dedup_key from field2[21][%q] = %q", key, item.DedupKey)
-					}
 					break
-				}
-				if debugThis {
-					fs.Infof(nil, "mediavfs: field2[21][%q] value cannot be converted to bytes, type=%T", key, val)
 				}
 			}
 		}
-	} else if debugThis {
-		fs.Infof(nil, "mediavfs: field2[21] does NOT exist for %s, field2[21]=%v", item.MediaKey, field2["21"])
 	}
 
 	// Fallback: try to get dedup_key from field 2->13->1
 	if item.DedupKey == "" {
-		if debugThis {
-			fs.Infof(nil, "mediavfs: dedup_key still empty for %s, trying fallback field2[13]", item.MediaKey)
-		}
 		if field13, ok := asMap(field2["13"]); ok {
-			if debugThis {
-				fs.Infof(nil, "mediavfs: field2[13] exists, field2[13][1]=%v (type=%T)", field13["1"], field13["1"])
-			}
-			// Try to get as bytes
 			if hashBytes, ok := asBytes(field13["1"]); ok {
 				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
-				if debugThis {
-					fs.Infof(nil, "mediavfs: Got dedup_key from field2[13][1] = %q", item.DedupKey)
-				}
-			} else if debugThis {
-				fs.Infof(nil, "mediavfs: field2[13][1] cannot be converted to bytes, type=%T", field13["1"])
 			}
-		} else if debugThis {
-			fs.Infof(nil, "mediavfs: field2[13] does NOT exist or not a map for %s", item.MediaKey)
 		}
 	}
 
-	// Final fallback: if dedup_key is still empty, use media_key as dedup_key
-	// This handles cases where field2[21] and field2[13] are nested maps instead of bytes/strings
+	// Final fallback: use media_key as dedup_key
 	if item.DedupKey == "" {
-		if debugThis {
-			fs.Infof(nil, "mediavfs: WARNING dedup_key is EMPTY for %s (file: %s)", item.MediaKey, item.FileName)
-			fs.Infof(nil, "mediavfs: WARNING field2[21]=%v", field2["21"])
-			fs.Infof(nil, "mediavfs: WARNING field2[13]=%v", field2["13"])
-		}
-		// Use media_key as fallback dedup_key
 		item.DedupKey = item.MediaKey
-		fs.Infof(nil, "mediavfs: Using media_key as dedup_key for %s", item.MediaKey)
 	}
 
 	// Field 2->1->1: collection_id (optional - default to empty)
