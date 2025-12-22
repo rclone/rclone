@@ -611,7 +611,7 @@ func (f *Fs) populateMetadata(userName string) {
 	offset := 0
 	for {
 		query := fmt.Sprintf(`
-			SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp
+			SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, COALESCE(size_bytes, 0) as size_bytes, COALESCE(utc_timestamp, 0) as utc_timestamp
 			FROM %s
 			ORDER BY file_name
 			LIMIT $1 OFFSET $2
@@ -708,8 +708,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 			file_name,
 			COALESCE(name, '') as custom_name,
 			COALESCE(path, '') as custom_path,
-			size_bytes,
-			utc_timestamp
+			COALESCE(size_bytes, 0) as size_bytes,
+			COALESCE(utc_timestamp, 0) as utc_timestamp
 		FROM %s
 		WHERE user_name = $1
 	`, f.opt.TableName)
@@ -942,7 +942,7 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 		case <-ticker.C:
 			// Query for rows newer than lastTimestamp
 			query := fmt.Sprintf(`
-				SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, size_bytes, utc_timestamp
+				SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, COALESCE(size_bytes, 0) as size_bytes, COALESCE(utc_timestamp, 0) as utc_timestamp
 				FROM %s
 				WHERE user_name = $1 AND utc_timestamp > $2
 				ORDER BY utc_timestamp
