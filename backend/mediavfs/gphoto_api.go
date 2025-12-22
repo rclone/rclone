@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,9 @@ import (
 
 	"github.com/rclone/rclone/fs"
 )
+
+// ErrMediaNotFound is returned when a media item doesn't exist (404)
+var ErrMediaNotFound = errors.New("media item not found")
 
 const (
 	defaultTimeout = 60 * time.Second
@@ -685,9 +689,9 @@ func (api *GPhotoAPI) GetDownloadURL(ctx context.Context, mediaKey string) (stri
 	}
 	defer resp.Body.Close()
 
-	// Handle 404 - resource not found
+	// Handle 404 - resource not found (item deleted from Google Photos)
 	if resp.StatusCode == http.StatusNotFound {
-		return "", fmt.Errorf("media item not found: %s", mediaKey)
+		return "", fmt.Errorf("%w: %s", ErrMediaNotFound, mediaKey)
 	}
 
 	// Parse protobuf response

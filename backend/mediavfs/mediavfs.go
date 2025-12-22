@@ -1555,6 +1555,19 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 		initialURL, err := o.fs.api.GetDownloadURL(ctx, o.mediaKey)
 		if err != nil {
+			// If media not found (404), delete from database and return not found error
+			if errors.Is(err, ErrMediaNotFound) {
+				fs.Infof(nil, "mediavfs: media item %s not found in Google Photos, removing from database", o.mediaKey)
+				deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE media_key = $1`, o.fs.opt.TableName)
+				_, delErr := o.fs.db.ExecContext(ctx, deleteQuery, o.mediaKey)
+				if delErr != nil {
+					fs.Errorf(nil, "mediavfs: failed to delete missing media %s from database: %v", o.mediaKey, delErr)
+				} else {
+					// Invalidate cache for the directory
+					o.fs.removeFromDirCache(o.displayPath, o.displayName)
+				}
+				return nil, fs.ErrorObjectNotFound
+			}
 			return nil, fmt.Errorf("failed to get download URL: %w", err)
 		}
 
