@@ -751,21 +751,21 @@ object also.
 Here is a table of standard system metadata which, if appropriate, a
 backend may implement.
 
-| key                 | description | example |
-|---------------------|-------------|---------|
-| mode                | File type and mode: octal, unix style | 0100664 |
-| uid                 | User ID of owner: decimal number | 500 |
-| gid                 | Group ID of owner: decimal number | 500 |
-| rdev                | Device ID (if special file)  => hexadecimal | 0 |
-| atime               | Time of last access:  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
-| mtime               | Time of last modification:  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
-| btime               | Time of file creation (birth):  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
-| utime               | Time of file upload:  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
-| cache-control       | Cache-Control header | no-cache |
+| key | description | example |
+| --- | ----------- | ------- |
+| mode | File type and mode: octal, unix style | 0100664 |
+| uid | User ID of owner: decimal number | 500 |
+| gid | Group ID of owner: decimal number | 500 |
+| rdev | Device ID (if special file)  => hexadecimal | 0 |
+| atime | Time of last access:  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
+| mtime | Time of last modification:  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
+| btime | Time of file creation (birth):  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
+| utime | Time of file upload:  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
+| cache-control | Cache-Control header | no-cache |
 | content-disposition | Content-Disposition header | inline |
-| content-encoding    | Content-Encoding header | gzip |
-| content-language    | Content-Language header | en-US |
-| content-type        | Content-Type header | text/plain |
+| content-encoding | Content-Encoding header | gzip |
+| content-language | Content-Language header | en-US |
+| content-type | Content-Type header | text/plain |
 
 The metadata keys `mtime` and `content-type` will take precedence if
 supplied in the metadata over reading the `Content-Type` or
@@ -3438,7 +3438,7 @@ many items, the input is treated as a [CSV encoded](https://godoc.org/encoding/c
 string. For example
 
 | Environment variable | Equivalent options |
-|----------------------|--------------------|
+| -------------------- | ------------------ |
 | `RCLONE_EXCLUDE="*.jpg"` | `--exclude "*.jpg"` |
 | `RCLONE_EXCLUDE="*.jpg,*.png"` | `--exclude "*.jpg"` `--exclude "*.png"` |
 | `RCLONE_EXCLUDE='"*.jpg","*.png"'` | `--exclude "*.jpg"` `--exclude "*.png"` |

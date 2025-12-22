@@ -16,7 +16,7 @@ image](https://securebuild.com/images/rclone) through our partner
 ## Release {{% version %}} OS requirements {#osrequirements}
 
 | OS | Minimum Version |
-|:-------:|:-------:|
+| :---: | :---: |
 | Linux | Kernel 3.2 |
 | macOS | 12 (Monterey) |
 | Windows | 10, Server 2016 |
@@ -31,7 +31,7 @@ in the Go Wiki.
 ## Release {{% version %}} {#release}
 
 | Arch-OS | Windows | macOS | Linux | .deb | .rpm | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
-|:-------:|:-------:|:-----:|:-----:|:----:|:----:|:-------:|:------:|:-------:|:-----:|:-------:|
+| :-----: | :-----: | :---: | :---: | :--: | :--: | :-----: | :----: | :-----: | :---: | :-----: |
 | Intel/AMD - 64 Bit | {{< download windows amd64 >}} | {{< download osx amd64 >}} | {{< download linux amd64 >}} | {{< download linux amd64 deb >}} | {{< download linux amd64 rpm >}} | {{< download freebsd amd64 >}} | {{< download netbsd amd64 >}} | {{< download openbsd amd64 >}} | {{< download plan9 amd64 >}} | {{< download solaris amd64 >}} |
 | Intel/AMD - 32 Bit | {{< download windows 386 >}} | - | {{< download linux 386 >}} | {{< download linux 386 deb >}} | {{< download linux 386 rpm >}} | {{< download freebsd 386 >}} | {{< download netbsd 386 >}} | {{< download openbsd 386 >}} | {{< download plan9 386 >}} | - |
 | ARMv5 - 32 Bit NOHF | - | - | {{< download linux arm >}} | {{< download linux arm deb >}} | {{< download linux arm rpm >}} | {{< download freebsd arm >}} | {{< download netbsd arm >}} | - | - | - |
@@ -120,7 +120,7 @@ If you would like to download the current version (maybe from a
 script) from a URL which doesn't change then you can use these links.
 
 | Arch-OS | Windows | macOS | Linux | .deb | .rpm | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
-|:-------:|:-------:|:-----:|:-----:|:----:|:----:|:-------:|:------:|:-------:|:-----:|:-------:|
+| :-----: | :-----: | :---: | :---: | :--: | :--: | :-----: | :----: | :-----: | :---: | :-----: |
 | Intel/AMD - 64 Bit | {{< cdownload windows amd64 >}} | {{< cdownload osx amd64 >}} | {{< cdownload linux amd64 >}} | {{< cdownload linux amd64 deb >}} | {{< cdownload linux amd64 rpm >}} | {{< cdownload freebsd amd64 >}} | {{< cdownload netbsd amd64 >}} | {{< cdownload openbsd amd64 >}} | {{< cdownload plan9 amd64 >}} | {{< cdownload solaris amd64 >}} |
 | Intel/AMD - 32 Bit | {{< cdownload windows 386 >}} | - | {{< cdownload linux 386 >}} | {{< cdownload linux 386 deb >}} | {{< cdownload linux 386 rpm >}} | {{< cdownload freebsd 386 >}} | {{< cdownload netbsd 386 >}} | {{< cdownload openbsd 386 >}} | {{< cdownload plan9 386 >}} | - |
 | ARMv5 - 32 Bit NOHF | - | - | {{< cdownload linux arm >}} | {{< cdownload linux arm deb >}} | {{< cdownload linux arm rpm >}} | {{< cdownload freebsd arm >}} | {{< cdownload netbsd arm >}} | - | - | - |
@@ -137,7 +137,7 @@ Older downloads can be found at <https://downloads.rclone.org/>
 The latest `rclone` version working for:
 
 | OS | Maximum rclone version |
-|:-------:|:-------:|
+| :---: | :---: |
 | Windows 7 | v1.63.1 |
 | Windows Server 2008 | v1.63.1 |
 | Windows Server 2012 | v1.63.1 |

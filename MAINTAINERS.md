@@ -2,27 +2,27 @@
 
 Current active maintainers of rclone are:
 
-| Name             | GitHub ID         | Specific Responsibilities    |
-| :--------------- | :---------------- | :--------------------------  |
-| Nick Craig-Wood  | @ncw              | overall project health       |
-| Stefan Breunig   | @breunigs         |                              |
-| Ishuah Kariuki   | @ishuah           |                              |
-| Remus Bunduc     | @remusb           | cache backend                |
-| Fabian Möller    | @B4dM4n           |                              |
-| Alex Chen        | @Cnly             | onedrive backend             |
-| Sandeep Ummadi   | @sandeepkru       | azureblob backend            |
+| Name             | GitHub ID         | Specific Responsibilities              |
+| :--------------- | :---------------- | :------------------------------------- |
+| Nick Craig-Wood  | @ncw              | overall project health                 |
+| Stefan Breunig   | @breunigs         |                                        |
+| Ishuah Kariuki   | @ishuah           |                                        |
+| Remus Bunduc     | @remusb           | cache backend                          |
+| Fabian Möller    | @B4dM4n           |                                        |
+| Alex Chen        | @Cnly             | onedrive backend                       |
+| Sandeep Ummadi   | @sandeepkru       | azureblob backend                      |
 | Sebastian Bünger | @buengese         | jottacloud, yandex & compress backends |
-| Ivan Andreev     | @ivandeex         | chunker & mailru backends    |
-| Max Sum          | @Max-Sum          | union backend                |
-| Fred             | @creativeprojects | seafile backend              |
-| Caleb Case       | @calebcase        | storj backend                |
-| wiserain         | @wiserain         | pikpak backend               |
-| albertony        | @albertony        |                              |
-| Chun-Hung Tseng  | @henrybear327     | Proton Drive Backend         |
-| Hideo Aoyama     | @boukendesho      | snap packaging               |
-| nielash          | @nielash          | bisync                       |
-| Dan McArdle      | @dmcardle         | gitannex                     |
-| Sam Harrison     | @childish-sambino | filescom                     |
+| Ivan Andreev     | @ivandeex         | chunker & mailru backends              |
+| Max Sum          | @Max-Sum          | union backend                          |
+| Fred             | @creativeprojects | seafile backend                        |
+| Caleb Case       | @calebcase        | storj backend                          |
+| wiserain         | @wiserain         | pikpak backend                         |
+| albertony        | @albertony        |                                        |
+| Chun-Hung Tseng  | @henrybear327     | Proton Drive Backend                   |
+| Hideo Aoyama     | @boukendesho      | snap packaging                         |
+| nielash          | @nielash          | bisync                                 |
+| Dan McArdle      | @dmcardle         | gitannex                               |
+| Sam Harrison     | @childish-sambino | filescom                               |
 
 ## This is a work in progress draft
 
