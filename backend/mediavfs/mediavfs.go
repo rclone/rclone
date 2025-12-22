@@ -820,12 +820,12 @@ func (f *Fs) removeFromDirCache(dirPath string, entryName string) bool {
 	defer f.dirMu.Unlock()
 
 	cached, exists := f.dirCache[cacheKey]
-	if !exists {
+	if !exists || len(cached.entries) == 0 {
 		return false
 	}
 
 	// Find and remove the entry
-	newEntries := make(fs.DirEntries, 0, len(cached.entries)-1)
+	newEntries := make(fs.DirEntries, 0, len(cached.entries))
 	found := false
 	for _, entry := range cached.entries {
 		// Get the base name of the entry
