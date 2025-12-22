@@ -662,6 +662,10 @@ backends:
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
+ - backend: "shade"
+   remote: "TestShade:"
+   fastlist: false
+
  - backend: "archive"
    remote: "TestArchive:"
    fastlist: false
