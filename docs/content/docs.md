@@ -1191,7 +1191,8 @@ on any OS, and the value is defined as following:
 
 - On Windows: `%HOME%` if defined, else `%USERPROFILE%`, or else `%HOMEDRIVE%\%HOMEPATH%`.
 - On Unix: `$HOME` if defined, else by looking up current user in OS-specific user
-  database (e.g. passwd file), or else use the result from shell command `cd && pwd`.
+  database (e.g. passwd file), or else use the result from shell command
+  `cd && pwd`.
 
 If you run `rclone config file` you will see where the default location is for
 you. Running `rclone config touch` will ensure a configuration file exists,
