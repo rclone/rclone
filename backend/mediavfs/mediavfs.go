@@ -469,6 +469,8 @@ func ensureDatabaseExists(ctx context.Context, baseConn, dbName string) error {
 
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	// Normalize dir - remove any trailing slashes
+	dir = strings.Trim(dir, "/")
 	root := strings.Trim(path.Join(f.root, dir), "/")
 
 	// Check cache first
@@ -578,6 +580,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			} else {
 				folderPath = relativeDirPath + "/" + displayName
 			}
+			// Ensure no trailing slashes in folder path
+			folderPath = strings.Trim(folderPath, "/")
 			entries = append(entries, fs.NewDir(folderPath, time.Time{}))
 		} else {
 			// This is a file
@@ -587,6 +591,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			} else {
 				remote = relativeDirPath + "/" + displayName
 			}
+			// Ensure no trailing slashes in file path
+			remote = strings.Trim(remote, "/")
 
 			timestamp := convertUnixTimestamp(timestampUnix)
 			entries = append(entries, &Object{
