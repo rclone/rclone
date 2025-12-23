@@ -129,13 +129,13 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 	return nil
 }
 
-// normalizePathsInDB strips trailing slashes from all path values in the database
+// normalizePathsInDB strips leading/trailing slashes from all path values in the database
 func (f *Fs) normalizePathsInDB(ctx context.Context) error {
 	// Update paths that have trailing slashes
 	query := fmt.Sprintf(`
 		UPDATE %s
-		SET path = RTRIM(path, '/')
-		WHERE path LIKE '%%/'
+		SET path = TRIM(BOTH '/' FROM path)
+		WHERE path LIKE '%%/' OR path LIKE '/%%'
 	`, f.opt.TableName)
 
 	result, err := f.db.ExecContext(ctx, query)
@@ -145,7 +145,7 @@ func (f *Fs) normalizePathsInDB(ctx context.Context) error {
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected > 0 {
-		fs.Infof(f, "Normalized %d paths by removing trailing slashes", rowsAffected)
+		fs.Infof(f, "Normalized %d paths by removing leading/trailing slashes", rowsAffected)
 	}
 
 	// Also normalize file_name column (strip slashes)
@@ -163,6 +163,23 @@ func (f *Fs) normalizePathsInDB(ctx context.Context) error {
 	rowsAffected2, _ := result2.RowsAffected()
 	if rowsAffected2 > 0 {
 		fs.Infof(f, "Normalized %d file_names by removing slashes", rowsAffected2)
+	}
+
+	// Also normalize name column (custom name, strip slashes)
+	query3 := fmt.Sprintf(`
+		UPDATE %s
+		SET name = TRIM(BOTH '/' FROM name)
+		WHERE name LIKE '%%/' OR name LIKE '/%%'
+	`, f.opt.TableName)
+
+	result3, err := f.db.ExecContext(ctx, query3)
+	if err != nil {
+		return fmt.Errorf("failed to normalize names: %w", err)
+	}
+
+	rowsAffected3, _ := result3.RowsAffected()
+	if rowsAffected3 > 0 {
+		fs.Infof(f, "Normalized %d names by removing slashes", rowsAffected3)
 	}
 
 	return nil
