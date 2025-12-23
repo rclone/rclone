@@ -148,13 +148,21 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 		case http.StatusTooManyRequests: // 429
 			resp.Body.Close()
 			backoff := time.Duration(1<<uint(retry)) * time.Second
-			time.Sleep(backoff)
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(backoff):
+			}
 			continue
 
 		case http.StatusInternalServerError, http.StatusServiceUnavailable:
 			resp.Body.Close()
 			backoff := time.Duration(1<<uint(retry)) * time.Second
-			time.Sleep(backoff)
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(backoff):
+			}
 			continue
 
 		case http.StatusNotFound: // 404
