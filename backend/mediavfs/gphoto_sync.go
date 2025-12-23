@@ -115,7 +115,12 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 		fs.Errorf(f, "Failed to normalize paths (non-fatal): %v", err)
 	}
 
-	// Migrate existing paths to folder rows (one-time migration)
+	// Create missing folder rows for paths that have files but no folder entry
+	if err := f.createMissingFolders(ctx); err != nil {
+		fs.Errorf(f, "Failed to create missing folders (non-fatal): %v", err)
+	}
+
+	// Migrate existing paths to folder rows (one-time migration for new users)
 	if err := f.migrateFoldersFromPaths(ctx); err != nil {
 		fs.Errorf(f, "Failed to migrate folders from paths (non-fatal): %v", err)
 	}
@@ -158,6 +163,74 @@ func (f *Fs) normalizePathsInDB(ctx context.Context) error {
 	rowsAffected2, _ := result2.RowsAffected()
 	if rowsAffected2 > 0 {
 		fs.Infof(f, "Normalized %d file_names by removing slashes", rowsAffected2)
+	}
+
+	return nil
+}
+
+// createMissingFolders creates folder rows for any path that has files but no folder entry
+// This runs every time to ensure all folders exist
+func (f *Fs) createMissingFolders(ctx context.Context) error {
+	// Find all unique paths that have files but don't have a corresponding folder row
+	// A folder row for path "a/b" would have: path="a", file_name="b", type=-1
+	query := fmt.Sprintf(`
+		WITH RECURSIVE
+		-- Get all unique paths that have files for this user
+		file_paths AS (
+			SELECT DISTINCT path
+			FROM %s
+			WHERE path IS NOT NULL AND path != '' AND (type IS NULL OR type >= 0) AND user_name = $1
+		),
+		-- Recursively get all parent paths too
+		all_paths AS (
+			SELECT path as full_path FROM file_paths
+			UNION
+			SELECT REGEXP_REPLACE(full_path, '/[^/]+$', '')
+			FROM all_paths
+			WHERE full_path LIKE '%%/%%'
+		),
+		-- Get existing folder paths (constructed from path + '/' + file_name for type=-1)
+		existing_folders AS (
+			SELECT
+				CASE
+					WHEN path IS NULL OR path = '' THEN file_name
+					ELSE path || '/' || file_name
+				END as folder_path
+			FROM %s
+			WHERE type = -1 AND user_name = $1
+		),
+		-- Find missing folders
+		missing AS (
+			SELECT full_path FROM all_paths
+			WHERE full_path != ''
+			AND full_path NOT IN (SELECT folder_path FROM existing_folders)
+		)
+		-- Insert missing folder rows
+		INSERT INTO %s (media_key, file_name, path, type, user_name)
+		SELECT
+			'folder:' || $1 || ':' || full_path,
+			CASE
+				WHEN full_path NOT LIKE '%%/%%' THEN full_path
+				ELSE REGEXP_REPLACE(full_path, '^.+/', '')
+			END,
+			CASE
+				WHEN full_path NOT LIKE '%%/%%' THEN ''
+				ELSE REGEXP_REPLACE(full_path, '/[^/]+$', '')
+			END,
+			-1,
+			$1
+		FROM missing
+		ON CONFLICT (media_key) DO NOTHING
+	`, f.opt.TableName, f.opt.TableName, f.opt.TableName)
+
+	result, err := f.db.ExecContext(ctx, query, f.opt.User)
+	if err != nil {
+		return fmt.Errorf("failed to create missing folders: %w", err)
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected > 0 {
+		fs.Infof(f, "Created %d missing folder rows for user %s", rowsAffected, f.opt.User)
 	}
 
 	return nil
