@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/lib/pq"
@@ -33,6 +34,7 @@ type NotifyListener struct {
 	user        string
 	eventChan   chan MediaChangeEvent
 	stopChan    chan struct{}
+	stopOnce    sync.Once
 	isListening bool
 }
 
@@ -135,20 +137,23 @@ func (nl *NotifyListener) Events() <-chan MediaChangeEvent {
 
 // Stop stops the listener
 func (nl *NotifyListener) Stop() error {
-	if !nl.isListening {
-		return nil
-	}
-
-	close(nl.stopChan)
-	nl.isListening = false
-
-	if nl.listener != nil {
-		if err := nl.listener.Unlisten(NotifyChannel); err != nil {
-			fs.Errorf(nil, "pg_notify: failed to unlisten: %v", err)
+	var err error
+	nl.stopOnce.Do(func() {
+		if !nl.isListening {
+			return
 		}
-		return nl.listener.Close()
-	}
-	return nil
+
+		close(nl.stopChan)
+		nl.isListening = false
+
+		if nl.listener != nil {
+			if unlErr := nl.listener.Unlisten(NotifyChannel); unlErr != nil {
+				fs.Errorf(nil, "pg_notify: failed to unlisten: %v", unlErr)
+			}
+			err = nl.listener.Close()
+		}
+	})
+	return err
 }
 
 // CreateNotifyTriggerSQL returns the SQL to create the notification trigger

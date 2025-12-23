@@ -1511,6 +1511,15 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	if f.syncStop != nil {
 		close(f.syncStop)
 	}
+
+	// Stop the notify listener
+	if f.notifyListener != nil {
+		if err := f.notifyListener.Stop(); err != nil {
+			fs.Errorf(f, "Failed to stop notify listener: %v", err)
+		}
+	}
+
+	// Close database connection
 	if f.db != nil {
 		return f.db.Close()
 	}
