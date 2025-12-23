@@ -163,6 +163,7 @@ type Fs struct {
 	opt         Options
 	features    *fs.Features
 	db          *sql.DB
+	dbConnStr   string // stored for lazy notify listener start
 	httpClient  *http.Client
 	api         *GPhotoAPI // Google Photos API client for download URLs
 	urlCache *urlCache
@@ -177,8 +178,9 @@ type Fs struct {
 	folderCacheMu     sync.RWMutex
 	// syncStop channel to stop background sync goroutine
 	syncStop chan struct{}
-	// notifyListener for PostgreSQL LISTEN/NOTIFY real-time updates
+	// notifyListener for PostgreSQL LISTEN/NOTIFY real-time updates (lazy started)
 	notifyListener *NotifyListener
+	notifyOnce     sync.Once
 }
 
 // dirCacheEntry represents a cached directory listing
@@ -307,10 +309,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	f := &Fs{
-		name:        name,
-		root:        root,
-		opt:         *opt,
-		db:          db,
+		name:              name,
+		root:              root,
+		opt:               *opt,
+		db:                db,
+		dbConnStr:         dbConnStr, // store for lazy notify listener start
 		httpClient:        customClient,
 		urlCache:          newURLCache(),
 		lazyMeta:          make(map[string]*Object),
@@ -338,16 +341,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// Setup PostgreSQL LISTEN/NOTIFY trigger for real-time updates
+	// (trigger is created once, listener is started lazily only for mount)
 	if err := f.SetupNotifyTrigger(ctx); err != nil {
 		fs.Errorf(f, "Failed to setup notify trigger (non-fatal): %v", err)
 	}
 
-	// Start PostgreSQL notification listener for real-time updates
-	f.notifyListener = NewNotifyListener(dbConnStr, opt.User)
-	if err := f.notifyListener.Start(ctx); err != nil {
-		fs.Errorf(f, "Failed to start notify listener (falling back to polling): %v", err)
-		f.notifyListener = nil
-	}
+	// Note: notifyListener is started lazily in ChangeNotify() - only for mount operations
 
 	// Perform initial sync if needed
 	if opt.User != "" {
@@ -896,7 +895,22 @@ func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType)
 	go f.changeNotify(ctx, notify, newInterval)
 }
 
+// startNotifyListener lazily starts the PostgreSQL notify listener (only for mount)
+func (f *Fs) startNotifyListener(ctx context.Context) {
+	f.notifyOnce.Do(func() {
+		fs.Infof(f, "Starting PostgreSQL notify listener (mount detected)")
+		f.notifyListener = NewNotifyListener(f.dbConnStr, f.opt.User)
+		if err := f.notifyListener.Start(ctx); err != nil {
+			fs.Errorf(f, "Failed to start notify listener (falling back to polling): %v", err)
+			f.notifyListener = nil
+		}
+	})
+}
+
 func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
+	// Lazily start notify listener - only called during mount operations
+	f.startNotifyListener(ctx)
+
 	// Initialize lastTimestamp from DB
 	var lastTimestamp int64
 	row := f.db.QueryRowContext(ctx, fmt.Sprintf("SELECT COALESCE(MAX(utc_timestamp),0) FROM %s WHERE user_name = $1", f.opt.TableName), f.opt.User)
