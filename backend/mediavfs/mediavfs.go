@@ -517,6 +517,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 
 	// Simple query: get all items where path = dirPath
 	// Folders have type = -1, files have type >= 0
+	// Exclude trashed items (trash_timestamp > 0)
 	query := fmt.Sprintf(`
 		SELECT
 			media_key,
@@ -528,6 +529,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			COALESCE(utc_timestamp, 0) as utc_timestamp
 		FROM %s
 		WHERE user_name = $1 AND COALESCE(path, '') = $2
+			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
 		ORDER BY type ASC, file_name ASC
 	`, f.opt.TableName)
 
@@ -710,6 +712,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	f.lazyMu.RUnlock()
 
 	// Try to find the file by matching the constructed path
+	// Exclude trashed items (trash_timestamp > 0)
 	query := fmt.Sprintf(`
 		SELECT
 			media_key,
@@ -720,6 +723,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 			COALESCE(utc_timestamp, 0) as utc_timestamp
 		FROM %s
 		WHERE user_name = $1
+			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
 	`, f.opt.TableName)
 
 	rows, err := f.db.QueryContext(ctx, query, f.opt.User)
@@ -1229,9 +1233,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	userName := f.opt.User
 
 	// Check if folder has any files (files have path = folderPath)
+	// Exclude trashed items
 	checkFilesQuery := fmt.Sprintf(`
 		SELECT COUNT(*) FROM %s
 		WHERE user_name = $1 AND path = $2 AND type != -1
+			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
 	`, f.opt.TableName)
 
 	var count int
@@ -1245,9 +1251,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 
 	// Check for subfolders (subfolders have path = folderPath, type = -1)
+	// Exclude trashed items
 	checkSubfoldersQuery := fmt.Sprintf(`
 		SELECT COUNT(*) FROM %s
 		WHERE user_name = $1 AND path = $2 AND type = -1
+			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
 	`, f.opt.TableName)
 
 	err = f.db.QueryRowContext(ctx, checkSubfoldersQuery, userName, folderPath).Scan(&count)
@@ -1440,10 +1448,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	// Update media_keys for subfolder rows
+	// Exclude trashed items
 	updateSubfolderKeysQuery := fmt.Sprintf(`
 		UPDATE %s
 		SET media_key = 'folder:' || $1 || ':' || path || '/' || file_name
 		WHERE user_name = $1 AND type = -1 AND (path = $2 OR path LIKE $3)
+			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
 	`, f.opt.TableName)
 
 	_, err = f.db.ExecContext(ctx, updateSubfolderKeysQuery, userName, dstPath, dstPath+"/%")
