@@ -518,6 +518,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	// Simple query: get all items where path = dirPath
 	// Folders have type = -1, files have type >= 0
 	// Exclude trashed items (trash_timestamp > 0)
+	// Trim trailing slashes from path for comparison
 	query := fmt.Sprintf(`
 		SELECT
 			media_key,
@@ -528,7 +529,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			COALESCE(size_bytes, 0) as size_bytes,
 			COALESCE(utc_timestamp, 0) as utc_timestamp
 		FROM %s
-		WHERE user_name = $1 AND COALESCE(path, '') = $2
+		WHERE user_name = $1 AND TRIM(TRAILING '/' FROM COALESCE(path, '')) = $2
 			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
 		ORDER BY type ASC, file_name ASC
 	`, f.opt.TableName)
@@ -1233,10 +1234,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	userName := f.opt.User
 
 	// Check if folder has any files (files have path = folderPath)
-	// Exclude trashed items
+	// Exclude trashed items, trim trailing slashes from path
 	checkFilesQuery := fmt.Sprintf(`
 		SELECT COUNT(*) FROM %s
-		WHERE user_name = $1 AND path = $2 AND type != -1
+		WHERE user_name = $1 AND TRIM(TRAILING '/' FROM COALESCE(path, '')) = $2 AND type != -1
 			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
 	`, f.opt.TableName)
 
@@ -1251,10 +1252,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 
 	// Check for subfolders (subfolders have path = folderPath, type = -1)
-	// Exclude trashed items
+	// Exclude trashed items, trim trailing slashes from path
 	checkSubfoldersQuery := fmt.Sprintf(`
 		SELECT COUNT(*) FROM %s
-		WHERE user_name = $1 AND path = $2 AND type = -1
+		WHERE user_name = $1 AND TRIM(TRAILING '/' FROM COALESCE(path, '')) = $2 AND type = -1
 			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
 	`, f.opt.TableName)
 
@@ -1423,10 +1424,11 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	// Update all items (files and subfolders) that have path = srcPath
+	// Trim trailing slashes from path for comparison
 	query1 := fmt.Sprintf(`
 		UPDATE %s
 		SET path = $1
-		WHERE user_name = $2 AND path = $3
+		WHERE user_name = $2 AND TRIM(TRAILING '/' FROM COALESCE(path, '')) = $3
 	`, f.opt.TableName)
 
 	_, err = f.db.ExecContext(ctx, query1, dstPath, userName, srcPath)
