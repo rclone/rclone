@@ -19,7 +19,7 @@
 #   test [name]           Run a named scenario (even|odd|parity). If omitted, runs all.
 #
 # Options:
-#   --storage-type <local|minio>   Select backend pair (required for start/stop/test/teardown).
+#   --storage-type <local|minio|mixed>   Select backend pair (required for start/stop/test/teardown).
 #   -v, --verbose                  Show stdout/stderr from rclone commands.
 #   -h, --help                     Display this help text.
 #
@@ -110,8 +110,8 @@ parse_args() {
       ;;
   esac
 
-  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" ]]; then
-    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local' or 'minio'."
+  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
+    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', or 'mixed'."
   fi
 }
 
@@ -194,7 +194,22 @@ simulate_disk_swap() {
   dir=$(remote_data_dir "${backend}")
   log_info "disk-swap" "Simulating disk swap for '${backend}' backend at ${dir}"
 
+  # Determine if this specific backend is MinIO or local
+  # For mixed storage, we need to check the actual backend type, not just STORAGE_TYPE
+  local is_minio_backend=0
   if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+    # All backends are MinIO
+    is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
+    # In mixed storage: even=local, odd=MinIO, parity=local
+    case "${backend}" in
+      odd) is_minio_backend=1 ;;
+      even|parity) is_minio_backend=0 ;;
+      *) die "Unknown backend '${backend}' for mixed storage" ;;
+    esac
+  fi
+
+  if [[ "${is_minio_backend}" -eq 1 ]]; then
     # For MinIO, we need to purge the bucket using rclone, not just wipe the local directory
     # The local directory is where MinIO stores data, but we need to ensure the bucket is empty
     stop_single_minio_container "${backend}"
@@ -455,21 +470,21 @@ main() {
 
   case "${COMMAND}" in
     start)
-      if [[ "${STORAGE_TYPE}" != "minio" ]]; then
-        log "'start' only applies to the MinIO storage type."
+      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
+        log "'start' only applies to MinIO-based storage types (minio or mixed)."
         exit 0
       fi
       start_minio_containers
       ;;
     stop)
-      if [[ "${STORAGE_TYPE}" != "minio" ]]; then
-        log "'stop' only applies to the MinIO storage type."
+      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
+        log "'stop' only applies to MinIO-based storage types (minio or mixed)."
         exit 0
       fi
       stop_minio_containers
       ;;
     teardown)
-      [[ "${STORAGE_TYPE}" != "minio" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
       set_remotes_for_storage_type
       purge_remote_root "${RAID3_REMOTE}"
       purge_remote_root "${SINGLE_REMOTE}"
@@ -490,7 +505,7 @@ main() {
       ;;
     test)
       set_remotes_for_storage_type
-      [[ "${STORAGE_TYPE}" != "minio" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
       reset_scenario_results
       if [[ -z "${COMMAND_ARG}" ]]; then
         if ! run_all_scenarios; then

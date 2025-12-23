@@ -61,6 +61,9 @@ SCRIPT_DIR=${SCRIPT_DIR:-$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 TEST_SPECIFIC_CONFIG="${WORKDIR}/rclone_raid3_integration_tests.config"
 RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
 
+# Initialize VERBOSE if not set (used by purge_remote_root and print_if_verbose)
+VERBOSE="${VERBOSE:-0}"
+
 # Load default environment (required – tracked in git).
 if [[ ! -f "${SCRIPT_DIR}/compare_raid3_env.sh" ]]; then
   printf '[%s] ERROR: Missing required env file: %s\n' "${SCRIPT_NAME:-compare_raid3_with_single_common.sh}" "${SCRIPT_DIR}/compare_raid3_env.sh" >&2
@@ -300,6 +303,17 @@ auto_cleanup = true
 auto_heal = false
 use_streaming = true
 
+# RAID3 remote using local and minio storage (mixed file/object backend)
+[localminioraid3]
+type = raid3
+even = ${LOCAL_EVEN_REMOTE}:${LOCAL_EVEN_DIR}
+odd = ${MINIO_ODD_REMOTE}:
+parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR}
+timeout_mode = aggressive
+auto_cleanup = true
+auto_heal = false
+use_streaming = true
+
 [${MINIO_SINGLE_REMOTE}]
 type = s3
 provider = Minio
@@ -471,6 +485,114 @@ stop_single_minio_container() {
   fi
 }
 
+# Stop or disable a backend to simulate unavailability
+# Handles both MinIO (stop container) and local (rename directory) backends
+stop_backend() {
+  local backend="$1"
+  
+  # Determine if this specific backend is MinIO or local
+  local is_minio_backend=0
+  if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+    # All backends are MinIO
+    is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
+    # In mixed storage: even=local, odd=MinIO, parity=local
+    case "${backend}" in
+      odd) is_minio_backend=1 ;;
+      even|parity) is_minio_backend=0 ;;
+      *) die "Unknown backend '${backend}' for mixed storage" ;;
+    esac
+  fi
+  
+  if [[ "${is_minio_backend}" -eq 1 ]]; then
+    # MinIO backend: stop the container
+    stop_single_minio_container "${backend}"
+  else
+    # Local backend: make the directory unavailable
+    # For local backends, we need to cause actual errors, not just "directory not found"
+    # Strategy: Replace directory with a file - this causes "not a directory" errors
+    local dir
+    dir=$(remote_data_dir "${backend}")
+    if [[ -d "${dir}" ]]; then
+      local backup_dir="${dir}.disabled"
+      log_info "backend" "Disabling local backend '${backend}' by renaming directory: ${dir} -> ${backup_dir}"
+      
+      # Rename directory to backup location
+      mv "${dir}" "${backup_dir}" 2>/dev/null || {
+        log_warn "backend" "Failed to rename directory ${dir}, trying alternative method"
+        # Alternative: Remove all permissions to make it inaccessible
+        chmod 000 "${dir}" 2>/dev/null || true
+        return
+      }
+      
+      # Create a file with the same name - this will cause "not a directory" errors
+      # which RAID3 will treat as a real error (not acceptable like ErrorDirNotFound)
+      touch "${dir}" 2>/dev/null || {
+        log_warn "backend" "Failed to create blocking file at ${dir}"
+        # Fallback: restore directory and try permission method
+        mv "${backup_dir}" "${dir}" 2>/dev/null || true
+        chmod 000 "${dir}" 2>/dev/null || true
+      }
+    fi
+  fi
+}
+
+# Start or enable a backend after it was stopped/disabled
+# Handles both MinIO (start container) and local (restore directory) backends
+start_backend() {
+  local backend="$1"
+  
+  # Determine if this specific backend is MinIO or local
+  local is_minio_backend=0
+  if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+    # All backends are MinIO
+    is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
+    # In mixed storage: even=local, odd=MinIO, parity=local
+    case "${backend}" in
+      odd) is_minio_backend=1 ;;
+      even|parity) is_minio_backend=0 ;;
+      *) die "Unknown backend '${backend}' for mixed storage" ;;
+    esac
+  fi
+  
+  if [[ "${is_minio_backend}" -eq 1 ]]; then
+    # MinIO backend: start the container
+    start_single_minio_container "${backend}"
+  else
+    # Local backend: restore the directory
+    local dir
+    dir=$(remote_data_dir "${backend}")
+    local backup_dir="${dir}.disabled"
+    
+    # Remove the blocking file if it exists
+    if [[ -f "${dir}" ]]; then
+      log_info "backend" "Removing blocking file: ${dir}"
+      rm -f "${dir}" 2>/dev/null || true
+    fi
+    
+    # Restore directory from backup
+    if [[ -d "${backup_dir}" ]]; then
+      log_info "backend" "Restoring local backend '${backend}' by renaming directory: ${backup_dir} -> ${dir}"
+      mv "${backup_dir}" "${dir}" 2>/dev/null || {
+        log_warn "backend" "Failed to restore directory ${backup_dir}"
+      }
+    elif [[ ! -d "${dir}" ]]; then
+      # Directory doesn't exist - might have been made inaccessible via chmod
+      if [[ -e "${dir}" ]]; then
+        # File or inaccessible directory exists - restore permissions
+        log_info "backend" "Restoring local backend '${backend}' by restoring permissions: ${dir}"
+        chmod 755 "${dir}" 2>/dev/null || true
+      else
+        # Doesn't exist - create it
+        log_info "backend" "Creating local backend '${backend}' directory: ${dir}"
+        mkdir -p "${dir}" 2>/dev/null || true
+        chmod 755 "${dir}" 2>/dev/null || true
+      fi
+    fi
+  fi
+}
+
 start_single_minio_container() {
   local backend="$1"
   local name
@@ -515,7 +637,8 @@ start_minio_containers() {
 }
 
 ensure_minio_containers_ready() {
-  if [[ "${STORAGE_TYPE}" != "minio" ]]; then
+  # For mixed storage type, we need MinIO for the odd backend
+  if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
     return 0
   fi
 
@@ -591,12 +714,16 @@ purge_remote_root() {
   fi
 
   if [[ "${#entries[@]}" -eq 0 ]]; then
-    log "  (no top-level directories found on ${remote})"
+    if (( VERBOSE )); then
+      log "  (no top-level directories found on ${remote})"
+    fi
     rclone_cmd purge "${remote}:" >/dev/null 2>&1 || true
   else
     for entry in "${entries[@]}"; do
       if [[ -n "${entry}" ]]; then
-        log "  - purging ${remote}:${entry}"
+        if (( VERBOSE )); then
+          log "  - purging ${remote}:${entry}"
+        fi
         rclone_cmd purge "${remote}:${entry}" >/dev/null 2>&1 || true
       fi
     done
@@ -673,6 +800,16 @@ cleanup_raid3_dataset_raw() {
         rclone_cmd purge "${remote}:${dataset_id}" >/dev/null 2>&1 || true
       done
       ;;
+    mixed)
+      # Mixed: even and parity are local, odd is MinIO
+      if [[ -d "${LOCAL_EVEN_DIR}/${dataset_id}" ]]; then
+        rm -rf "${LOCAL_EVEN_DIR:?}/${dataset_id}"
+      fi
+      if [[ -d "${LOCAL_PARITY_DIR}/${dataset_id}" ]]; then
+        rm -rf "${LOCAL_PARITY_DIR:?}/${dataset_id}"
+      fi
+      rclone_cmd purge "${MINIO_ODD_REMOTE}:${dataset_id}" >/dev/null 2>&1 || true
+      ;;
     *)
       ;;
   esac
@@ -694,6 +831,14 @@ backend_remote_name() {
         even) echo "${MINIO_RAID3_REMOTES[0]}" ;;
         odd) echo "${MINIO_RAID3_REMOTES[1]}" ;;
         parity) echo "${MINIO_RAID3_REMOTES[2]}" ;;
+        *) die "Unknown backend '${backend}'" ;;
+      esac
+      ;;
+    mixed)
+      case "${backend}" in
+        even) echo "${LOCAL_RAID3_REMOTES[0]}" ;;
+        odd) echo "${MINIO_RAID3_REMOTES[1]}" ;;
+        parity) echo "${LOCAL_RAID3_REMOTES[2]}" ;;
         *) die "Unknown backend '${backend}'" ;;
       esac
       ;;
@@ -722,6 +867,14 @@ remote_data_dir() {
         *) die "Unknown backend '${backend}'" ;;
       esac
       ;;
+    mixed)
+      case "${backend}" in
+        even) echo "${LOCAL_RAID3_DIRS[0]}" ;;
+        odd) echo "${MINIO_RAID3_DIRS[1]}" ;;
+        parity) echo "${LOCAL_RAID3_DIRS[2]}" ;;
+        *) die "Unknown backend '${backend}'" ;;
+      esac
+      ;;
     *)
       die "Unsupported storage type '${STORAGE_TYPE}'"
       ;;
@@ -742,6 +895,23 @@ remove_dataset_from_backend() {
       remote=$(backend_remote_name "${backend}")
       rclone_cmd purge "${remote}:${dataset_id}" >/dev/null 2>&1 || true
       ;;
+    mixed)
+      # Mixed: even and parity are local, odd is MinIO
+      case "${backend}" in
+        even|parity)
+          local dir
+          dir=$(remote_data_dir "${backend}")
+          rm -rf "${dir:?}/${dataset_id}"
+          ;;
+        odd)
+          local remote
+          remote=$(backend_remote_name "${backend}")
+          rclone_cmd purge "${remote}:${dataset_id}" >/dev/null 2>&1 || true
+          ;;
+        *)
+          ;;
+      esac
+      ;;
     *)
       ;;
   esac
@@ -761,6 +931,24 @@ object_exists_in_backend() {
       local remote
       remote=$(backend_remote_name "${backend}")
       rclone_cmd lsl "${remote}:${dataset_id}/${relative_path}" >/dev/null 2>&1
+      ;;
+    mixed)
+      # Mixed: even and parity are local, odd is MinIO
+      case "${backend}" in
+        even|parity)
+          local dir
+          dir=$(remote_data_dir "${backend}")
+          [[ -f "${dir}/${dataset_id}/${relative_path}" ]]
+          ;;
+        odd)
+          local remote
+          remote=$(backend_remote_name "${backend}")
+          rclone_cmd lsl "${remote}:${dataset_id}/${relative_path}" >/dev/null 2>&1
+          ;;
+        *)
+          return 1
+          ;;
+      esac
       ;;
     *)
       return 1
@@ -845,6 +1033,11 @@ set_remotes_for_storage_type() {
       # Allow generic override via RAID3_REMOTE environment variable
       RAID3_REMOTE="${RAID3_REMOTE:-minioraid3}"
       SINGLE_REMOTE="${SINGLE_REMOTE:-miniosingle}"
+      ;;
+    mixed)
+      # Mixed storage: local for even/parity, MinIO for odd
+      RAID3_REMOTE="${RAID3_REMOTE:-localminioraid3}"
+      SINGLE_REMOTE="${SINGLE_REMOTE:-localsingle}"
       ;;
     *)
       die "Unsupported storage type '${STORAGE_TYPE}'"

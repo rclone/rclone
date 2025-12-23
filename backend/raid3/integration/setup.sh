@@ -132,9 +132,25 @@ mkdir -p "${MINIO_EVEN_DIR}" "${MINIO_ODD_DIR}" "${MINIO_PARITY_DIR}" "${MINIO_S
 CONFIG_FILE="${WORKDIR}/rclone_raid3_integration_tests.config"
 log_info "setup" "Creating rclone configuration file: ${CONFIG_FILE}"
 
+# Check if config file exists and if it contains the mixed remote
+# If it doesn't have the mixed remote, we'll regenerate it
+NEEDS_REGENERATION=0
+if [[ -f "${CONFIG_FILE}" ]]; then
+  if ! grep -q "^\[localminioraid3\]" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file exists but missing mixed remote - will regenerate"
+    NEEDS_REGENERATION=1
+  fi
+fi
+
 # Use the create_rclone_config function from common.sh
-# Call with force=0 for idempotent behavior (won't overwrite if exists)
-if create_rclone_config "${CONFIG_FILE}" 0; then
+# Call with force=1 if file doesn't exist or needs regeneration, otherwise force=0 for idempotent behavior
+if [[ ${NEEDS_REGENERATION} -eq 1 ]]; then
+  if create_rclone_config "${CONFIG_FILE}" 1; then
+    log_pass "setup" "Config file regenerated successfully: ${CONFIG_FILE}"
+  else
+    die "Failed to regenerate config file: ${CONFIG_FILE}"
+  fi
+elif create_rclone_config "${CONFIG_FILE}" 0; then
   log_pass "setup" "Config file created successfully: ${CONFIG_FILE}"
 else
   # If it failed because file exists, that's fine (idempotent)

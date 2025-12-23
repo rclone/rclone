@@ -73,7 +73,7 @@ All test scripts support these commands:
 
 ### Options
 
-- **`--storage-type <local\|minio>`** - Select backend pair (required for most commands)
+- **`--storage-type <local\|minio\|mixed>`** - Select backend pair (required for most commands)
 - **`-v, --verbose`** - Show detailed output from rclone invocations
 - **`-h, --help`** - Display help text
 
@@ -90,7 +90,10 @@ Where `WORKDIR` is determined by reading `${HOME}/.rclone_raid3_integration_test
 The configuration file contains:
 - Local storage remotes (localeven, localodd, localparity, localsingle)
 - MinIO S3 remotes (minioeven, minioodd, minioparity, miniosingle)
-- RAID3 remotes (localraid3, minioraid3)
+- RAID3 remotes:
+  - `localraid3` - All local file-based backends
+  - `minioraid3` - All MinIO S3 object-based backends
+  - `localminioraid3` - Mixed file/object backends (local even/parity, MinIO odd) for testing heterogeneous storage scenarios
 
 **Important**: 
 - The test scripts **only** use this test-specific config file. They do not use your default `~/.config/rclone/rclone.conf`.
