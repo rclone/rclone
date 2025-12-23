@@ -677,3 +677,21 @@ backends:
      # with the parent backend having a different precision.
      - TestServerSideCopyOverSelf
      - TestServerSideMoveOverSelf
+
+ - backend:  "123pan"
+   remote:   "Test123Pan:"
+   fastlist: false
+   # 123pan has eventual consistency - increase retries and timeout
+   listRetries: 6
+   extraTime: 2.0
+   ignore:
+     # 123pan doesn't support zero-length files
+     - TestIntegration/FsMkdir/FsPutZeroLength
+     # 123pan doesn't support upload files of unknown size
+     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream
+     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
+     # 123pan doesn't support empty files
+     - TestRWFileHandleWriteNoWrite
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
