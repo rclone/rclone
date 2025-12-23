@@ -555,17 +555,19 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		}
 
 		// Display name: use 'name' if set, else use 'file_name'
-		displayName := fileName
+		// Trim any slashes from the display name to prevent path issues
+		displayName := strings.Trim(fileName, "/")
 		if customName != "" {
-			displayName = customName
+			displayName = strings.Trim(customName, "/")
 		}
 
 		// Calculate path relative to f.root for the remote field
 		// dirPath is the full database path, but remote should be relative to f.root
-		relativeDirPath := dirPath
-		if f.root != "" && strings.HasPrefix(dirPath, f.root) {
-			relativeDirPath = strings.TrimPrefix(dirPath, f.root)
-			relativeDirPath = strings.TrimPrefix(relativeDirPath, "/")
+		// Also trim any slashes to prevent double slashes
+		relativeDirPath := strings.Trim(dirPath, "/")
+		if f.root != "" && strings.HasPrefix(relativeDirPath, f.root) {
+			relativeDirPath = strings.TrimPrefix(relativeDirPath, f.root)
+			relativeDirPath = strings.Trim(relativeDirPath, "/")
 		}
 
 		if itemType == -1 {
