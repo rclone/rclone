@@ -711,9 +711,15 @@ func (f *Fs) populateMetadata(userName string) {
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	// Use configured user for per-user mounts
 	userName := f.opt.User
-	filePath := remote
 
-	if filePath == "" {
+	// Combine with root to get full path
+	fullPath := remote
+	if f.root != "" {
+		fullPath = strings.Trim(f.root+"/"+remote, "/")
+	}
+	fullPath = strings.Trim(fullPath, "/")
+
+	if fullPath == "" {
 		return nil, fs.ErrorIsDir
 	}
 
@@ -725,8 +731,33 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 	f.lazyMu.RUnlock()
 
-	// Try to find the file by matching the constructed path
-	// Exclude trashed items (trash_timestamp > 0)
+	// Parse the path to get directory and filename
+	var dirPath, fileName string
+	if idx := strings.LastIndex(fullPath, "/"); idx >= 0 {
+		dirPath = fullPath[:idx]
+		fileName = fullPath[idx+1:]
+	} else {
+		dirPath = ""
+		fileName = fullPath
+	}
+
+	// First check if this is a directory (folder entry)
+	folderQuery := fmt.Sprintf(`
+		SELECT 1 FROM %s
+		WHERE user_name = $1 AND type = -1
+			AND TRIM(BOTH '/' FROM COALESCE(path, '')) = $2
+			AND TRIM(BOTH '/' FROM file_name) = $3
+		LIMIT 1
+	`, f.opt.TableName)
+
+	var exists int
+	err := f.db.QueryRowContext(ctx, folderQuery, userName, dirPath, fileName).Scan(&exists)
+	if err == nil {
+		// It's a directory
+		return nil, fs.ErrorIsDir
+	}
+
+	// Try to find the file by path and name directly
 	query := fmt.Sprintf(`
 		SELECT
 			media_key,
@@ -738,74 +769,49 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		FROM %s
 		WHERE user_name = $1
 			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+			AND TRIM(BOTH '/' FROM COALESCE(path, '')) = $2
+			AND (
+				TRIM(BOTH '/' FROM file_name) = $3
+				OR TRIM(BOTH '/' FROM COALESCE(name, '')) = $3
+			)
+		LIMIT 1
 	`, f.opt.TableName)
 
-	rows, err := f.db.QueryContext(ctx, query, f.opt.User)
+	var (
+		mediaKey      string
+		dbFileName    string
+		customName    string
+		customPath    string
+		sizeBytes     int64
+		timestampUnix int64
+	)
+
+	err = f.db.QueryRowContext(ctx, query, userName, dirPath, fileName).Scan(
+		&mediaKey, &dbFileName, &customName, &customPath, &sizeBytes, &timestampUnix,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query file: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			mediaKey      string
-			fileName      string
-			customName    string
-			customPath    string
-			sizeBytes     int64
-			timestampUnix int64
-		)
-
-		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
-			return nil, fmt.Errorf("failed to scan file: %w", err)
-		}
-
-		timestamp := convertUnixTimestamp(timestampUnix)
-
-		// Determine the display name and path (same logic as listUserFiles)
-		// name=NULL, path=NULL     → /user_name/file_name
-		// name=SET,  path=NULL     → /user_name/name
-		// name=NULL, path=SET      → /user_name/path/file_name
-		// name=SET,  path=SET      → /user_name/path/name
-		var displayName, displayPath string
-
-		// Display name: use 'name' if set, else use 'file_name'
-		if customName != "" {
-			displayName = customName
-		} else {
-			displayName = fileName
-		}
-
-		// Display path: use 'path' if set, else empty (strip slashes)
-		if customPath != "" {
-			displayPath = strings.Trim(customPath, "/")
-		} else {
-			displayPath = ""
-		}
-
-		// Construct the full path
-		var fullPath string
-		if displayPath != "" {
-			fullPath = displayPath + "/" + displayName
-		} else {
-			fullPath = displayName
-		}
-
-		if fullPath == filePath {
-			return &Object{
-				fs:          f,
-				remote:      remote,
-				mediaKey:    mediaKey,
-				size:        sizeBytes,
-				modTime:     timestamp,
-				userName:    userName,
-				displayName: displayName,
-				displayPath: displayPath,
-			}, nil
-		}
+		return nil, fs.ErrorObjectNotFound
 	}
 
-	return nil, fs.ErrorObjectNotFound
+	timestamp := convertUnixTimestamp(timestampUnix)
+
+	// Determine the display name
+	displayName := strings.Trim(dbFileName, "/")
+	if customName != "" {
+		displayName = strings.Trim(customName, "/")
+	}
+	displayPath := strings.Trim(customPath, "/")
+
+	return &Object{
+		fs:          f,
+		remote:      remote,
+		mediaKey:    mediaKey,
+		size:        sizeBytes,
+		modTime:     timestamp,
+		userName:    userName,
+		displayName: displayName,
+		displayPath: displayPath,
+	}, nil
 }
 
 // invalidateDirCache invalidates only the cache for a specific directory path
