@@ -563,6 +563,11 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			displayName = strings.Trim(customName, "/")
 		}
 
+		// Skip entries with empty display names - they would have the same path as the directory
+		if displayName == "" {
+			continue
+		}
+
 		// Calculate path relative to f.root for the remote field
 		// dirPath is the full database path, but remote should be relative to f.root
 		// Also trim any slashes to prevent double slashes
