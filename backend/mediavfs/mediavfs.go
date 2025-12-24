@@ -1746,9 +1746,19 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	return res.Body, nil
 }
 
-// Update is not supported
+// Update replaces the data in the object
+// For Google Photos, we can't truly update - if sizes match, skip; otherwise error
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	return errNotWritable
+	// If the file already exists with the same size, consider it up-to-date
+	// Google Photos doesn't support true updates, and modtime will always differ
+	if o.size == src.Size() {
+		fs.Debugf(o, "File exists with same size (%d bytes), skipping update", o.size)
+		return nil
+	}
+
+	// Sizes differ - can't update in place for Google Photos
+	// User would need to delete and re-upload
+	return fmt.Errorf("cannot update existing file (size differs: local=%d remote=%d) - delete and re-upload instead", src.Size(), o.size)
 }
 
 // Remove deletes a file from Google Photos if delete is enabled
