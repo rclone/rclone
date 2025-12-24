@@ -170,6 +170,9 @@ type Fs struct {
 	// lazyMeta stores metadata loaded asynchronously for large listings
 	lazyMeta map[string]*Object
 	lazyMu   sync.RWMutex
+	// prefetchedDirs tracks which directories have been prefetched for NewObject
+	prefetchedDirs map[string]bool
+	prefetchMu     sync.RWMutex
 	// dirCache caches directory listings to avoid reloading on every change
 	dirCache map[string]*dirCacheEntry
 	dirMu    sync.RWMutex
@@ -322,6 +325,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		httpClient:        customClient,
 		urlCache:          newURLCache(),
 		lazyMeta:          make(map[string]*Object),
+		prefetchedDirs:    make(map[string]bool),
 		dirCache:          make(map[string]*dirCacheEntry),
 		folderExistsCache: make(map[string]bool),
 		syncStop:          make(chan struct{}),
@@ -604,7 +608,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 			remote = strings.Trim(remote, "/")
 
 			timestamp := convertUnixTimestamp(timestampUnix)
-			entries = append(entries, &Object{
+			obj := &Object{
 				fs:          f,
 				remote:      remote,
 				mediaKey:    mediaKey,
@@ -613,7 +617,13 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 				userName:    userName,
 				displayName: displayName,
 				displayPath: dirPath,
-			})
+			}
+			entries = append(entries, obj)
+
+			// Store in lazyMeta cache so NewObject can find it without a DB query
+			f.lazyMu.Lock()
+			f.lazyMeta[remote] = obj
+			f.lazyMu.Unlock()
 		}
 	}
 
@@ -727,7 +737,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fs.ErrorIsDir
 	}
 
-	// Fast path: check if we've loaded metadata asynchronously
+	// Fast path: check if we've loaded metadata in cache
 	f.lazyMu.RLock()
 	if o, ok := f.lazyMeta[remote]; ok {
 		f.lazyMu.RUnlock()
@@ -735,33 +745,67 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 	f.lazyMu.RUnlock()
 
-	// Parse the path to get directory and filename
-	var dirPath, fileName string
+	// Parse the path to get directory
+	var dirPath string
 	if idx := strings.LastIndex(fullPath, "/"); idx >= 0 {
 		dirPath = fullPath[:idx]
-		fileName = fullPath[idx+1:]
 	} else {
 		dirPath = ""
-		fileName = fullPath
 	}
 
-	// First check if this is a directory (folder entry)
+	// Check if we've already prefetched this directory
+	// The prefetch key is the full database path (not relative)
+	prefetchKey := dirPath
+	f.prefetchMu.RLock()
+	alreadyPrefetched := f.prefetchedDirs[prefetchKey]
+	f.prefetchMu.RUnlock()
+
+	if !alreadyPrefetched {
+		// Prefetch the entire directory - this populates lazyMeta for all files in the dir
+		// This is much faster than individual queries when copying many files
+		_, err := f.listUserFiles(ctx, userName, dirPath)
+		if err != nil {
+			fs.Debugf(f, "NewObject prefetch for %s failed: %v", dirPath, err)
+		}
+
+		// Mark directory as prefetched
+		f.prefetchMu.Lock()
+		f.prefetchedDirs[prefetchKey] = true
+		f.prefetchMu.Unlock()
+
+		// Check lazyMeta again after prefetch
+		f.lazyMu.RLock()
+		if o, ok := f.lazyMeta[remote]; ok {
+			f.lazyMu.RUnlock()
+			return o, nil
+		}
+		f.lazyMu.RUnlock()
+	}
+
+	// Directory was prefetched but file not found - check if it's a folder
+	// This is a single query for the specific file/folder
 	folderQuery := fmt.Sprintf(`
-		SELECT 1 FROM %s
-		WHERE user_name = $1 AND type = -1
-			AND TRIM(BOTH '/' FROM COALESCE(path, '')) = $2
-			AND TRIM(BOTH '/' FROM file_name) = $3
+		SELECT type FROM %s
+		WHERE user_name = $1
+			AND TRIM(BOTH '/' FROM COALESCE(path, '')) || '/' || TRIM(BOTH '/' FROM COALESCE(NULLIF(name, ''), file_name)) = $2
+			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
 		LIMIT 1
 	`, f.opt.TableName)
 
-	var exists int
-	err := f.db.QueryRowContext(ctx, folderQuery, userName, dirPath, fileName).Scan(&exists)
+	var itemType int64
+	err := f.db.QueryRowContext(ctx, folderQuery, userName, fullPath).Scan(&itemType)
 	if err == nil {
-		// It's a directory
-		return nil, fs.ErrorIsDir
+		if itemType == -1 {
+			return nil, fs.ErrorIsDir
+		}
+		// It's a file - this shouldn't happen if prefetch worked correctly
+		// but handle it gracefully by doing a full query
+	} else {
+		// Not found at all
+		return nil, fs.ErrorObjectNotFound
 	}
 
-	// Try to find the file by path and name directly
+	// Fallback: file exists but wasn't in cache (shouldn't normally happen)
 	query := fmt.Sprintf(`
 		SELECT
 			media_key,
@@ -773,11 +817,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		FROM %s
 		WHERE user_name = $1
 			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
-			AND TRIM(BOTH '/' FROM COALESCE(path, '')) = $2
-			AND (
-				TRIM(BOTH '/' FROM file_name) = $3
-				OR TRIM(BOTH '/' FROM COALESCE(name, '')) = $3
-			)
+			AND TRIM(BOTH '/' FROM COALESCE(path, '')) || '/' || TRIM(BOTH '/' FROM COALESCE(NULLIF(name, ''), file_name)) = $2
 		LIMIT 1
 	`, f.opt.TableName)
 
@@ -790,7 +830,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		timestampUnix int64
 	)
 
-	err = f.db.QueryRowContext(ctx, query, userName, dirPath, fileName).Scan(
+	err = f.db.QueryRowContext(ctx, query, userName, fullPath).Scan(
 		&mediaKey, &dbFileName, &customName, &customPath, &sizeBytes, &timestampUnix,
 	)
 	if err != nil {
@@ -806,7 +846,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 	displayPath := strings.Trim(customPath, "/")
 
-	return &Object{
+	obj := &Object{
 		fs:          f,
 		remote:      remote,
 		mediaKey:    mediaKey,
@@ -815,7 +855,14 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		userName:    userName,
 		displayName: displayName,
 		displayPath: displayPath,
-	}, nil
+	}
+
+	// Cache for future lookups
+	f.lazyMu.Lock()
+	f.lazyMeta[remote] = obj
+	f.lazyMu.Unlock()
+
+	return obj, nil
 }
 
 // invalidateDirCache invalidates only the cache for a specific directory path
