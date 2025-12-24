@@ -631,10 +631,8 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		return nil, fmt.Errorf("error iterating files: %w", err)
 	}
 
-	// Start background metadata population for this user if batching enabled
-	if f.opt.BatchSize > 0 {
-		go f.populateMetadata(userName)
-	}
+	// Note: lazyMeta is now populated directly in the loop above
+	// No need for background populateMetadata as it's redundant and causes high CPU
 
 	return entries, nil
 }
