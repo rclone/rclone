@@ -250,6 +250,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	// Debug: log config options
+	fs.Debugf(nil, "mediavfs: NewFs called with name=%s root=%s", name, root)
+	fs.Debugf(nil, "mediavfs: Options: User=%s EnableUpload=%v EnableDelete=%v AutoSync=%v",
+		opt.User, opt.EnableUpload, opt.EnableDelete, opt.AutoSync)
+
 	// Build the full connection string with database name
 	dbConnStr := buildConnectionString(opt.DBConnection, opt.DBName)
 
