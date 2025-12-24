@@ -1806,35 +1806,35 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return fmt.Errorf("cannot update existing file (size differs: local=%d remote=%d) - delete and re-upload instead", src.Size(), o.size)
 }
 
-// Remove deletes a file from Google Photos if delete is enabled
+// Remove marks a file for deletion (trash_timestamp = -1) and removes from VFS
+// Actual deletion from Google Photos happens in background batch process
 func (o *Object) Remove(ctx context.Context) error {
 	if !o.fs.opt.EnableDelete {
 		fs.Debugf(o.fs, "Remove disabled for %s", o.Remote())
 		return nil
 	}
 
-	fs.Debugf(o.fs, "Removing %s", o.Remote())
+	fs.Debugf(o.fs, "Marking %s for deletion", o.Remote())
 
-	// Delete from Google Photos
-	if err := o.DeleteFromGPhotos(ctx); err != nil {
-		return fmt.Errorf("failed to delete from Google Photos: %w", err)
-	}
-
-	// Delete from database
+	// Mark for deletion by setting trash_timestamp = -1
+	// This removes it from listings immediately (trash_timestamp != 0 is filtered out)
 	query := fmt.Sprintf(`
-		DELETE FROM %s
+		UPDATE %s SET trash_timestamp = -1
 		WHERE media_key = $1
 	`, o.fs.opt.TableName)
 
 	_, err := o.fs.db.ExecContext(ctx, query, o.mediaKey)
 	if err != nil {
-		return fmt.Errorf("failed to delete from database: %w", err)
+		return fmt.Errorf("failed to mark for deletion: %w", err)
 	}
 
-	// Remove from cache instead of invalidating
+	// Remove from caches
 	o.fs.removeFromDirCache(o.displayPath, o.displayName)
+	o.fs.lazyMu.Lock()
+	delete(o.fs.lazyMeta, o.remote)
+	o.fs.lazyMu.Unlock()
 
-	fs.Debugf(o.fs, "Removed %s", o.Remote())
+	fs.Debugf(o.fs, "Marked %s for deletion (will be batch deleted)", o.Remote())
 	return nil
 }
 
@@ -1856,6 +1856,27 @@ func (f *Fs) startBackgroundSync() {
 			case <-f.syncStop:
 				return
 			case <-ticker.C:
+				// Process pending deletions first (batch delete from Google Photos)
+				if f.opt.EnableDelete {
+					for {
+						deleted, err := f.ProcessPendingDeletions(context.Background(), f.opt.User, 100)
+						if err != nil {
+							fs.Errorf(f, "Background deletion failed: %v", err)
+							break
+						}
+						if deleted == 0 {
+							break // No more pending deletions
+						}
+						// Check if we should stop
+						select {
+						case <-f.syncStop:
+							return
+						default:
+						}
+					}
+				}
+
+				// Then sync from Google Photos
 				if err := f.SyncFromGooglePhotos(context.Background(), f.opt.User); err != nil {
 					fs.Errorf(f, "Background sync failed: %v", err)
 				}

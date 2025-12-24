@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/lib/pq"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -94,6 +95,64 @@ func (f *Fs) BatchDelete(ctx context.Context, dedupKeys []string, user string, b
 
 	fs.Infof(f, "Successfully deleted all %d files", len(dedupKeys))
 	return nil
+}
+
+// ProcessPendingDeletions finds files marked for deletion (trash_timestamp = -1)
+// and batch deletes them from Google Photos, then removes from database
+func (f *Fs) ProcessPendingDeletions(ctx context.Context, user string, batchSize int) (int, error) {
+	if batchSize <= 0 {
+		batchSize = 100
+	}
+
+	// Find files marked for deletion
+	query := fmt.Sprintf(`
+		SELECT media_key, dedup_key
+		FROM %s
+		WHERE user_name = $1 AND trash_timestamp = -1
+		LIMIT $2
+	`, f.opt.TableName)
+
+	rows, err := f.db.QueryContext(ctx, query, user, batchSize)
+	if err != nil {
+		return 0, fmt.Errorf("failed to query pending deletions: %w", err)
+	}
+	defer rows.Close()
+
+	var mediaKeys []string
+	var dedupKeys []string
+
+	for rows.Next() {
+		var mediaKey, dedupKey string
+		if err := rows.Scan(&mediaKey, &dedupKey); err != nil {
+			fs.Errorf(f, "Failed to scan pending deletion: %v", err)
+			continue
+		}
+		if dedupKey != "" {
+			mediaKeys = append(mediaKeys, mediaKey)
+			dedupKeys = append(dedupKeys, dedupKey)
+		}
+	}
+
+	if len(dedupKeys) == 0 {
+		return 0, nil
+	}
+
+	fs.Infof(f, "Processing %d pending deletions for user %s", len(dedupKeys), user)
+
+	// Delete from Google Photos
+	if err := f.DeleteFromGPhotos(ctx, dedupKeys, user); err != nil {
+		return 0, fmt.Errorf("failed to delete from Google Photos: %w", err)
+	}
+
+	// Delete from database
+	deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE media_key = ANY($1)`, f.opt.TableName)
+	_, err = f.db.ExecContext(ctx, deleteQuery, pq.Array(mediaKeys))
+	if err != nil {
+		return len(dedupKeys), fmt.Errorf("deleted from GPhotos but failed to delete from database: %w", err)
+	}
+
+	fs.Infof(f, "Successfully deleted %d files from Google Photos and database", len(dedupKeys))
+	return len(dedupKeys), nil
 }
 
 // CleanupDuplicates finds and removes duplicate files
