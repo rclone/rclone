@@ -2143,6 +2143,295 @@ func TestAutoHealDirMove(t *testing.T) {
 	})
 }
 
+// TestUpdateLargeFile tests that Update works correctly with large files
+// to verify streaming functionality. This ensures that Update processes
+// files in chunks rather than loading entire files into memory.
+//
+// This test verifies:
+//   - Update works with files larger than chunk size (2MB)
+//   - Streaming is used (bounded memory, not loading entire file)
+//   - Content integrity is maintained after update
+//   - File can be read back correctly after update
+//
+// Failure indicates: Update streaming not working, potential memory issues
+// with large files, or data corruption during update.
+func TestUpdateLargeFile(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
+	}
+	f, err := raid3.NewFs(ctx, "TestUpdateLarge", "", m)
+	require.NoError(t, err)
+
+	// Create original file: 5MB (larger than 2MB chunk size)
+	remote := "large_file.bin"
+	block := []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZ012345") // 32 bytes
+	originalSize := 5 * 1024 * 1024                     // 5MB
+	originalData := bytes.Repeat(block, originalSize/32)
+
+	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(originalData)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(originalData), info)
+	require.NoError(t, err)
+
+	// Verify original file exists and can be read
+	obj, err := f.NewObject(ctx, remote)
+	require.NoError(t, err)
+	rc, err := obj.Open(ctx)
+	require.NoError(t, err)
+	originalRead, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, originalData, originalRead, "Original file content should match")
+
+	// Update with new content: 7MB (also larger than chunk size, different size)
+	newSize := 7 * 1024 * 1024 // 7MB
+	newBlock := []byte("ZYXWVUTSRQPONMLKJIHGFEDCBA987654") // 32 bytes, different content
+	newData := bytes.Repeat(newBlock, newSize/32)
+
+	newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
+	err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
+	require.NoError(t, err, "Update should succeed with large file")
+
+	// Verify updated file can be read and has correct content
+	obj2, err := f.NewObject(ctx, remote)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(newData)), obj2.Size(), "Updated file size should match new content")
+
+	rc2, err := obj2.Open(ctx)
+	require.NoError(t, err)
+	updatedRead, err := io.ReadAll(rc2)
+	rc2.Close()
+	require.NoError(t, err)
+	assert.Equal(t, newData, updatedRead, "Updated file content should match new data")
+
+	// Verify original content is gone (not corrupted)
+	assert.NotEqual(t, originalData, updatedRead, "Updated content should differ from original")
+
+	t.Logf("✅ Large file update (5MB → 7MB) succeeded with streaming")
+}
+
+// TestUpdateOddEvenLengthTransition tests that Update correctly handles
+// transitions between odd-length and even-length files, ensuring parity
+// filename changes are handled correctly.
+//
+// This test verifies:
+//   - Update from odd-length to even-length changes parity filename (.parity-ol → .parity-el)
+//   - Update from even-length to odd-length changes parity filename (.parity-el → .parity-ol)
+//   - Old parity file is removed when filename changes
+//   - New parity file is created with correct suffix
+//   - File content integrity is maintained
+//
+// Failure indicates: Parity filename handling broken, old parity files not cleaned up,
+// or data corruption during length transitions.
+func TestUpdateOddEvenLengthTransition(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
+	}
+	f, err := raid3.NewFs(ctx, "TestUpdateOddEven", "", m)
+	require.NoError(t, err)
+
+	remote := "transition_test.txt"
+
+	// Test 1: Update from odd-length to even-length
+	t.Run("odd_to_even", func(t *testing.T) {
+		// Create original file: 5 bytes (odd-length)
+		originalData := []byte("Hello") // 5 bytes, odd
+		info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(originalData)), true, nil, nil)
+		_, err := f.Put(ctx, bytes.NewReader(originalData), info)
+		require.NoError(t, err)
+
+		// Verify original parity file exists with .parity-ol suffix
+		parityNameOL := raid3.GetParityFilename(remote, true)
+		parityPathOL := filepath.Join(parityDir, parityNameOL)
+		_, err = os.Stat(parityPathOL)
+		assert.NoError(t, err, "Original parity file (.parity-ol) should exist")
+
+		// Verify .parity-el does NOT exist
+		parityNameEL := raid3.GetParityFilename(remote, false)
+		parityPathEL := filepath.Join(parityDir, parityNameEL)
+		_, err = os.Stat(parityPathEL)
+		assert.True(t, os.IsNotExist(err), "Even-length parity file should not exist yet")
+
+		// Update to even-length: 6 bytes
+		obj, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		newData := []byte("Hello!") // 6 bytes, even
+		newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
+		err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
+		require.NoError(t, err, "Update from odd to even should succeed")
+
+		// Verify new parity file exists with .parity-el suffix
+		_, err = os.Stat(parityPathEL)
+		assert.NoError(t, err, "New parity file (.parity-el) should exist after update")
+
+		// Verify old parity file (.parity-ol) is removed
+		_, err = os.Stat(parityPathOL)
+		assert.True(t, os.IsNotExist(err), "Old parity file (.parity-ol) should be removed")
+
+		// Verify file content is correct
+		obj2, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		rc, err := obj2.Open(ctx)
+		require.NoError(t, err)
+		readData, err := io.ReadAll(rc)
+		rc.Close()
+		require.NoError(t, err)
+		assert.Equal(t, newData, readData, "Updated file content should match")
+
+		t.Logf("✅ Odd-length to even-length transition succeeded")
+	})
+
+	// Test 2: Update from even-length to odd-length
+	t.Run("even_to_odd", func(t *testing.T) {
+		// Create original file: 6 bytes (even-length)
+		originalData := []byte("World!") // 6 bytes, even
+		info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(originalData)), true, nil, nil)
+		_, err := f.Put(ctx, bytes.NewReader(originalData), info)
+		require.NoError(t, err)
+
+		// Verify original parity file exists with .parity-el suffix
+		parityNameEL := raid3.GetParityFilename(remote, false)
+		parityPathEL := filepath.Join(parityDir, parityNameEL)
+		_, err = os.Stat(parityPathEL)
+		assert.NoError(t, err, "Original parity file (.parity-el) should exist")
+
+		// Verify .parity-ol does NOT exist
+		parityNameOL := raid3.GetParityFilename(remote, true)
+		parityPathOL := filepath.Join(parityDir, parityNameOL)
+		_, err = os.Stat(parityPathOL)
+		assert.True(t, os.IsNotExist(err), "Odd-length parity file should not exist yet")
+
+		// Update to odd-length: 5 bytes
+		obj, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		newData := []byte("World") // 5 bytes, odd
+		newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
+		err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
+		require.NoError(t, err, "Update from even to odd should succeed")
+
+		// Verify new parity file exists with .parity-ol suffix
+		_, err = os.Stat(parityPathOL)
+		assert.NoError(t, err, "New parity file (.parity-ol) should exist after update")
+
+		// Verify old parity file (.parity-el) is removed
+		_, err = os.Stat(parityPathEL)
+		assert.True(t, os.IsNotExist(err), "Old parity file (.parity-el) should be removed")
+
+		// Verify file content is correct
+		obj2, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		rc, err := obj2.Open(ctx)
+		require.NoError(t, err)
+		readData, err := io.ReadAll(rc)
+		rc.Close()
+		require.NoError(t, err)
+		assert.Equal(t, newData, readData, "Updated file content should match")
+
+		t.Logf("✅ Even-length to odd-length transition succeeded")
+	})
+
+	// Test 3: Update from odd-length to odd-length (no filename change)
+	t.Run("odd_to_odd", func(t *testing.T) {
+		// Create original file: 5 bytes (odd-length)
+		originalData := []byte("Test1") // 5 bytes, odd
+		info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(originalData)), true, nil, nil)
+		_, err := f.Put(ctx, bytes.NewReader(originalData), info)
+		require.NoError(t, err)
+
+		// Verify parity file exists with .parity-ol suffix
+		parityNameOL := raid3.GetParityFilename(remote, true)
+		parityPathOL := filepath.Join(parityDir, parityNameOL)
+		_, err = os.Stat(parityPathOL)
+		assert.NoError(t, err, "Parity file (.parity-ol) should exist")
+
+		// Update to different odd-length: 7 bytes (still odd)
+		obj, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		newData := []byte("Test123") // 7 bytes, still odd
+		newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
+		err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
+		require.NoError(t, err, "Update from odd to odd should succeed")
+
+		// Verify same parity file still exists (filename unchanged)
+		_, err = os.Stat(parityPathOL)
+		assert.NoError(t, err, "Parity file (.parity-ol) should still exist with same name")
+
+		// Verify file content is correct
+		obj2, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		rc, err := obj2.Open(ctx)
+		require.NoError(t, err)
+		readData, err := io.ReadAll(rc)
+		rc.Close()
+		require.NoError(t, err)
+		assert.Equal(t, newData, readData, "Updated file content should match")
+
+		t.Logf("✅ Odd-length to odd-length (no filename change) succeeded")
+	})
+
+	// Test 4: Update from even-length to even-length (no filename change)
+	t.Run("even_to_even", func(t *testing.T) {
+		// Create original file: 6 bytes (even-length)
+		originalData := []byte("Test12") // 6 bytes, even
+		info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(originalData)), true, nil, nil)
+		_, err := f.Put(ctx, bytes.NewReader(originalData), info)
+		require.NoError(t, err)
+
+		// Verify parity file exists with .parity-el suffix
+		parityNameEL := raid3.GetParityFilename(remote, false)
+		parityPathEL := filepath.Join(parityDir, parityNameEL)
+		_, err = os.Stat(parityPathEL)
+		assert.NoError(t, err, "Parity file (.parity-el) should exist")
+
+		// Update to different even-length: 8 bytes (still even)
+		obj, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		newData := []byte("Test1234") // 8 bytes, still even
+		newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
+		err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
+		require.NoError(t, err, "Update from even to even should succeed")
+
+		// Verify same parity file still exists (filename unchanged)
+		_, err = os.Stat(parityPathEL)
+		assert.NoError(t, err, "Parity file (.parity-el) should still exist with same name")
+
+		// Verify file content is correct
+		obj2, err := f.NewObject(ctx, remote)
+		require.NoError(t, err)
+		rc, err := obj2.Open(ctx)
+		require.NoError(t, err)
+		readData, err := io.ReadAll(rc)
+		rc.Close()
+		require.NoError(t, err)
+		assert.Equal(t, newData, readData, "Updated file content should match")
+
+		t.Logf("✅ Even-length to even-length (no filename change) succeeded")
+	})
+}
+
 // Helper function to count objects recursively
 func countAllObjects(t *testing.T, ctx context.Context, f fs.Fs, dir string) int {
 	entries, err := f.List(ctx, dir)

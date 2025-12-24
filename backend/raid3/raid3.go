@@ -1345,7 +1345,8 @@ func verifyParticleSizes(ctx context.Context, f *Fs, evenObj, oddObj fs.Object, 
 	return nil
 }
 
-// putStreaming uploads an object using the pipelined chunked approach
+// putStreaming uploads an object using the streaming approach with io.Pipe
+// This mirrors the Get/Open pattern: streams data to Put() calls instead of calling Put() multiple times
 func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Pre-flight check: Enforce strict RAID 3 write policy
 	if err := f.checkAllBackendsAvailable(ctx); err != nil {
@@ -1354,16 +1355,6 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 	// Disable retries for strict RAID 3 write policy
 	ctx = f.disableRetriesForWrites(ctx)
-
-	// Configuration: Read 2MB chunks (produces ~1MB per particle)
-	readChunkSize := int64(f.opt.ChunkSize) * 2
-	if readChunkSize < 2*1024*1024 {
-		readChunkSize = 2 * 1024 * 1024 // Minimum 2MB
-	}
-
-	// Allocate buffers for double buffering
-	bufferA := make([]byte, readChunkSize)
-	bufferB := make([]byte, readChunkSize)
 
 	// Track uploaded particles for rollback
 	var uploadedParticles []fs.Object
@@ -1376,25 +1367,19 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		}
 	}()
 
-	// Track sizes for verification
-	var totalEvenWritten, totalOddWritten int64
-	var isOddLength bool
-	var evenObj, oddObj fs.Object
-
-	// Read first chunk
-	var n int
-	n, err = io.ReadFull(in, bufferA)
-	if err == io.EOF && n == 0 {
+	// Handle empty file case
+	srcSize := src.Size()
+	if srcSize == 0 {
 		// Empty file - create empty particles
 		evenInfo := createParticleInfo(src, "even", 0, false)
-		evenObj, err = f.even.Put(ctx, bytes.NewReader(nil), evenInfo, options...)
+		evenObj, err := f.even.Put(ctx, bytes.NewReader(nil), evenInfo, options...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
 		}
 		uploadedParticles = append(uploadedParticles, evenObj)
 
 		oddInfo := createParticleInfo(src, "odd", 0, false)
-		oddObj, err = f.odd.Put(ctx, bytes.NewReader(nil), oddInfo, options...)
+		oddObj, err := f.odd.Put(ctx, bytes.NewReader(nil), oddInfo, options...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
 		}
@@ -1409,27 +1394,116 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 		return &Object{fs: f, remote: src.Remote()}, nil
 	}
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return nil, fmt.Errorf("failed to read first chunk: %w", err)
+
+	// Configuration: Read 2MB chunks (produces ~1MB per particle)
+	readChunkSize := int64(f.opt.ChunkSize) * 2
+	if readChunkSize < 2*1024*1024 {
+		readChunkSize = 2 * 1024 * 1024 // Minimum 2MB
 	}
 
-	// Process first chunk
-	evenData, oddData := SplitBytes(bufferA[:n])
-	parityData := CalculateParity(evenData, oddData)
-	totalEvenWritten += int64(len(evenData))
-	totalOddWritten += int64(len(oddData))
-	isOddLength = (len(evenData) > len(oddData))
+	// Determine if file is odd-length from source size (if available)
+	// If size is unknown (-1), we'll determine it during streaming
+	isOddLength := srcSize > 0 && srcSize%2 == 1
 
-	// Upload first chunk concurrently
-	evenInfo := createParticleInfo(src, "even", int64(len(evenData)), isOddLength)
-	oddInfo := createParticleInfo(src, "odd", int64(len(oddData)), isOddLength)
-	parityInfo := createParticleInfo(src, "parity", int64(len(parityData)), isOddLength)
+	// Create pipes for streaming even, odd, and parity data
+	evenPipeR, evenPipeW := io.Pipe()
+	oddPipeR, oddPipeW := io.Pipe()
+	parityPipeR, parityPipeW := io.Pipe()
 
+	// Channel to communicate isOddLength from splitter to parity uploader
+	// Only needed if size is unknown (-1)
+	var isOddLengthCh chan bool
+	if srcSize < 0 {
+		isOddLengthCh = make(chan bool, 1)
+		isOddLengthCh <- false // Default to even-length
+	}
+
+	// Track sizes for verification
+	var totalEvenWritten, totalOddWritten int64
+	var evenObj, oddObj fs.Object
+
+	// Use errgroup to coordinate input reading/splitting and Put operations
 	g, gCtx := errgroup.WithContext(ctx)
 	var uploadedMu sync.Mutex
 
+	// Goroutine 1: Read input, split into even/odd/parity, write to pipes
 	g.Go(func() error {
-		obj, err := f.even.Put(gCtx, bytes.NewReader(evenData), evenInfo, options...)
+		defer evenPipeW.Close()
+		defer oddPipeW.Close()
+		defer parityPipeW.Close()
+
+		// Buffer for reading chunks
+		buffer := make([]byte, readChunkSize)
+
+		for {
+			// Read chunk from input
+			n, readErr := in.Read(buffer)
+			if n > 0 {
+				// Split chunk into even and odd bytes
+				evenData, oddData := SplitBytes(buffer[:n])
+				parityData := CalculateParity(evenData, oddData)
+
+				// Track sizes
+				totalEvenWritten += int64(len(evenData))
+				totalOddWritten += int64(len(oddData))
+				
+				// If size was unknown, detect odd-length from chunks
+				if srcSize < 0 && len(evenData) > len(oddData) {
+					// Update channel (non-blocking, will overwrite previous value)
+					select {
+					case isOddLengthCh <- true:
+					default:
+						// Channel already has a value, drain and send new one
+						select {
+						case <-isOddLengthCh:
+							isOddLengthCh <- true
+						default:
+						}
+					}
+				}
+
+				// Write to pipes (these may block if readers are slow, which is fine)
+				if _, err := evenPipeW.Write(evenData); err != nil {
+					return fmt.Errorf("failed to write even data to pipe: %w", err)
+				}
+				if _, err := oddPipeW.Write(oddData); err != nil {
+					return fmt.Errorf("failed to write odd data to pipe: %w", err)
+				}
+				if _, err := parityPipeW.Write(parityData); err != nil {
+					return fmt.Errorf("failed to write parity data to pipe: %w", err)
+				}
+			}
+
+			if readErr == io.EOF {
+				break // End of input
+			}
+			if readErr != nil {
+				return fmt.Errorf("failed to read input: %w", readErr)
+			}
+		}
+
+		// If size was unknown, final check: evenWritten > oddWritten means odd-length
+		if srcSize < 0 && totalEvenWritten > totalOddWritten {
+			select {
+			case isOddLengthCh <- true:
+			default:
+				select {
+				case <-isOddLengthCh:
+					isOddLengthCh <- true
+				default:
+				}
+			}
+		}
+
+		return nil
+	})
+
+	// Goroutine 2: Put even particle (reads from evenPipeR)
+	g.Go(func() error {
+		defer evenPipeR.Close()
+		// Use unknown size (-1) since we're streaming
+		evenInfo := createParticleInfo(src, "even", -1, isOddLength)
+		obj, err := f.even.Put(gCtx, evenPipeR, evenInfo, options...)
 		if err != nil {
 			return fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
 		}
@@ -1440,8 +1514,11 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil
 	})
 
+	// Goroutine 3: Put odd particle (reads from oddPipeR)
 	g.Go(func() error {
-		obj, err := f.odd.Put(gCtx, bytes.NewReader(oddData), oddInfo, options...)
+		defer oddPipeR.Close()
+		oddInfo := createParticleInfo(src, "odd", -1, isOddLength)
+		obj, err := f.odd.Put(gCtx, oddPipeR, oddInfo, options...)
 		if err != nil {
 			return fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
 		}
@@ -1452,8 +1529,24 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil
 	})
 
+	// Goroutine 4: Put parity particle (reads from parityPipeR)
 	g.Go(func() error {
-		obj, err := f.parity.Put(gCtx, bytes.NewReader(parityData), parityInfo, options...)
+		defer parityPipeR.Close()
+		
+		// Get isOddLength - use source size if known, otherwise from channel
+		parityIsOddLength := isOddLength
+		if srcSize < 0 && isOddLengthCh != nil {
+			// Try to get from channel (non-blocking, use latest value)
+			select {
+			case parityIsOddLength = <-isOddLengthCh:
+			default:
+				// Use default (even-length)
+			}
+		}
+		
+		// Create parity info with correct filename
+		parityInfo := createParticleInfo(src, "parity", -1, parityIsOddLength)
+		obj, err := f.parity.Put(gCtx, parityPipeR, parityInfo, options...)
 		if err != nil {
 			return fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
 		}
@@ -1463,99 +1556,9 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil
 	})
 
+	// Wait for all goroutines to complete
 	if err = g.Wait(); err != nil {
 		return nil, err
-	}
-
-	// Pipeline remaining chunks
-	current := bufferA
-	next := bufferB
-	currentN := n
-	firstChunk := true
-
-	for {
-		// Start reading next chunk in parallel with uploading current (if not first chunk)
-		readDone := make(chan struct{})
-		var readN int
-		var readErr error
-
-		// Start reading next chunk
-		go func() {
-			readN, readErr = in.Read(next)
-			close(readDone)
-		}()
-
-		// Upload current chunk (even, odd, parity concurrently)
-		// Note: For first iteration, this was already done above, so skip
-		if !firstChunk {
-			currentEven, currentOdd := SplitBytes(current[:currentN])
-			currentParity := CalculateParity(currentEven, currentOdd)
-			totalEvenWritten += int64(len(currentEven))
-			totalOddWritten += int64(len(currentOdd))
-			if len(currentEven) > len(currentOdd) {
-				isOddLength = true
-			}
-
-			evenInfo := createParticleInfo(src, "even", int64(len(currentEven)), isOddLength)
-			oddInfo := createParticleInfo(src, "odd", int64(len(currentOdd)), isOddLength)
-			parityInfo := createParticleInfo(src, "parity", int64(len(currentParity)), isOddLength)
-
-			g, gCtx := errgroup.WithContext(ctx)
-
-			g.Go(func() error {
-				obj, err := f.even.Put(gCtx, bytes.NewReader(currentEven), evenInfo, options...)
-				if err != nil {
-					return fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
-				}
-				uploadedMu.Lock()
-				evenObj = obj
-				uploadedParticles = append(uploadedParticles, obj)
-				uploadedMu.Unlock()
-				return nil
-			})
-
-			g.Go(func() error {
-				obj, err := f.odd.Put(gCtx, bytes.NewReader(currentOdd), oddInfo, options...)
-				if err != nil {
-					return fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
-				}
-				uploadedMu.Lock()
-				oddObj = obj
-				uploadedParticles = append(uploadedParticles, obj)
-				uploadedMu.Unlock()
-				return nil
-			})
-
-			g.Go(func() error {
-				obj, err := f.parity.Put(gCtx, bytes.NewReader(currentParity), parityInfo, options...)
-				if err != nil {
-					return fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
-				}
-				uploadedMu.Lock()
-				uploadedParticles = append(uploadedParticles, obj)
-				uploadedMu.Unlock()
-				return nil
-			})
-
-			if err = g.Wait(); err != nil {
-				return nil, err
-			}
-		}
-
-		// Wait for read to complete
-		<-readDone
-
-		if readErr == io.EOF && readN == 0 {
-			break // No more data
-		}
-		if readErr != nil && readErr != io.EOF && readErr != io.ErrUnexpectedEOF {
-			return nil, fmt.Errorf("failed to read chunk: %w", readErr)
-		}
-
-		// Swap buffers for next iteration
-		current, next = next, current
-		currentN = readN
-		firstChunk = false
 	}
 
 	// Verify sizes

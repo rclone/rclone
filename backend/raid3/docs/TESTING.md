@@ -188,6 +188,102 @@ rclone --config rclone_raid3_integration_tests.config copy localraid3:test.txt d
 diff test.txt downloaded.txt  # Should output nothing (files identical)
 ```
 
+---
+
+## Running fs/operations and fs/sync Tests
+
+The rclone framework provides comprehensive test suites (`fs/operations` and `fs/sync`) that can be run against any backend, including raid3. These tests validate the full `fs.Fs` interface implementation and ensure compatibility with rclone's core operations.
+
+### Prerequisites
+
+1. **Run the integration test setup** to create the test configuration:
+   ```bash
+   cd backend/raid3/integration
+   ./setup.sh
+   ```
+   This creates the configuration file: `${WORKDIR}/rclone_raid3_integration_tests.config` with remotes:
+   - `localraid3` - All local filesystem backends (simplest, no external dependencies)
+   - `minioraid3` - All MinIO S3 backends (requires MinIO servers running)
+   - `localminioraid3` - Mixed backends (local even/parity, MinIO odd)
+
+2. **Set the RCLONE_CONFIG environment variable** to use the test config file:
+   ```bash
+   export RCLONE_CONFIG=$(cat ${HOME}/.rclone_raid3_integration_tests.workdir)/rclone_raid3_integration_tests.config
+   ```
+
+### Running fs/operations Tests
+
+The `fs/operations` test suite validates all core rclone operations (Put, Get, Update, Delete, List, etc.):
+
+```bash
+# Using localraid3 (simplest, no external dependencies)
+go test ./fs/operations -remote localraid3: -v
+
+# Using minioraid3 (requires MinIO servers running)
+go test ./fs/operations -remote minioraid3: -v
+
+# Using localminioraid3 (mixed backends)
+go test ./fs/operations -remote localminioraid3: -v
+```
+
+### Running fs/sync Tests
+
+The `fs/sync` test suite validates synchronization operations:
+
+```bash
+# Using localraid3
+go test ./fs/sync -remote localraid3: -v
+
+# Using minioraid3 (requires MinIO servers running)
+go test ./fs/sync -remote minioraid3: -v
+
+# Using localminioraid3 (mixed backends)
+go test ./fs/sync -remote localminioraid3: -v
+```
+
+### Complete Example
+
+```bash
+# 1. Setup (one-time)
+cd backend/raid3/integration
+./setup.sh
+
+# 2. Set config environment variable
+export RCLONE_CONFIG=$(cat ${HOME}/.rclone_raid3_integration_tests.workdir)/rclone_raid3_integration_tests.config
+
+# 3. Run tests
+go test ./fs/operations -remote localraid3: -v
+go test ./fs/sync -remote localraid3: -v
+```
+
+### Troubleshooting
+
+**Tests fail with "remote not found" error:**
+- Ensure `setup.sh` has been run successfully
+- Verify the config file exists: `cat ${HOME}/.rclone_raid3_integration_tests.workdir)/rclone_raid3_integration_tests.config`
+- Check that `RCLONE_CONFIG` environment variable is set correctly
+
+**Tests fail with MinIO connection errors:**
+- Ensure MinIO servers are running (for `minioraid3:` and `localminioraid3:` remotes)
+- Check MinIO server ports: 9001 (even), 9002 (odd), 9003 (parity)
+- See MinIO setup instructions in the "Manual Testing" section above
+
+**Tests create test directories:**
+- This is expected behavior - tests create random subdirectories (`rclone-test-xxxxx`) for isolation
+- Test directories are automatically cleaned up after tests complete
+
+**Want to use a different remote name:**
+- The integration test config provides three remotes: `localraid3:`, `minioraid3:`, `localminioraid3:`
+- You can add additional remotes to the config file manually if needed
+- Or copy remotes from the test config to your main rclone config (`~/.config/rclone/rclone.conf`)
+
+### Notes
+
+- **Test isolation**: Each test run creates random subdirectories to avoid conflicts
+- **Config location**: The test config is separate from your main rclone config (`~/.config/rclone/rclone.conf`)
+- **No code changes required**: All testing uses existing rclone infrastructure
+- **Comprehensive coverage**: These tests validate the entire `fs.Fs` interface implementation
+
 ### MinIO (3 local instances)
 
 Run three local MinIO servers and a `raid3` remote over them, then run basic commands (including degraded read). Note: If you've already run `setup.sh`, the MinIO data directories are already created and you can skip the directory creation step.
