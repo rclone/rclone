@@ -1144,14 +1144,16 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	// Parse path and name for database insert
-	var displayPath, displayName string
+	// file_name = original filename only (no path)
+	// name = display name (same as file_name for uploads)
+	// path = directory path
+	fileName := path.Base(src.Remote()) // Original filename only
+	var displayPath string
 	if strings.Contains(fullPath, "/") {
 		lastSlash := strings.LastIndex(fullPath, "/")
 		displayPath = fullPath[:lastSlash]
-		displayName = fullPath[lastSlash+1:]
 	} else {
 		displayPath = ""
-		displayName = fullPath
 	}
 
 	// Ensure parent folders exist in database
@@ -1162,12 +1164,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	// Insert into database
+	// file_name = original filename, name = display name (can be customized), path = folder path
 	query := fmt.Sprintf(`
 		INSERT INTO %s (media_key, file_name, name, path, size_bytes, utc_timestamp, user_name)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (media_key) DO UPDATE
-		SET file_name = EXCLUDED.file_name,
-		    name = EXCLUDED.name,
+		SET name = EXCLUDED.name,
 		    path = EXCLUDED.path,
 		    size_bytes = EXCLUDED.size_bytes,
 		    utc_timestamp = EXCLUDED.utc_timestamp,
@@ -1175,7 +1177,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	`, f.opt.TableName)
 
 	modTime := src.ModTime(ctx).Unix()
-	_, err = f.db.ExecContext(ctx, query, mediaKey, displayName, displayName, displayPath, src.Size(), modTime, userName)
+	_, err = f.db.ExecContext(ctx, query, mediaKey, fileName, fileName, displayPath, src.Size(), modTime, userName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert into database: %w", err)
 	}
@@ -1188,7 +1190,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		size:        src.Size(),
 		modTime:     src.ModTime(ctx),
 		userName:    userName,
-		displayName: displayName,
+		displayName: fileName,
 		displayPath: displayPath,
 	}
 
