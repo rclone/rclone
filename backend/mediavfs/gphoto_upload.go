@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -163,7 +164,7 @@ func (f *Fs) UploadWithProgress(ctx context.Context, src fs.ObjectInfo, in io.Re
 
 	// Commit upload
 	fs.Infof(f, "Committing upload")
-	fileName := src.Remote()
+	fileName := path.Base(src.Remote()) // Only the filename, not full path
 	uploadTimestamp := src.ModTime(ctx).Unix()
 	model := "Pixel XL"
 	quality := "original"
