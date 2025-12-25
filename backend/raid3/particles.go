@@ -597,25 +597,50 @@ func (m *StreamMerger) Read(p []byte) (n int, err error) {
 		// Don't buffer - merge all data
 	} else {
 		// During streaming: merge the minimum, buffer excess
-		mergeSize := len(evenData)
-		if len(oddData) < mergeSize {
-			mergeSize = len(oddData)
-		}
+		// BUT: if one stream is at EOF and the other has data, we need to handle it
+		// For odd-length files, even can be 1 byte larger than odd, and odd might be EOF
+		if m.oddEOF && !m.evenEOF && len(oddData) == 0 && len(evenData) > 0 {
+			// Odd stream is done and empty, even still has data
+			// This is valid for odd-length files (even is 1 byte larger)
+			// Merge all even data with empty odd (MergeBytes handles this)
+			// Don't buffer - merge all even data
+		} else if m.evenEOF && !m.oddEOF && len(evenData) == 0 && len(oddData) > 0 {
+			// Even stream is done and empty, odd still has data
+			// This shouldn't happen (even should always be >= odd), but handle it
+			// Merge all odd data with empty even
+		} else {
+			// Both streams still active or both have data - merge the minimum, buffer excess
+			mergeSize := len(evenData)
+			if len(oddData) < mergeSize {
+				mergeSize = len(oddData)
+			}
 
-		// Buffer excess data
-		if len(evenData) > mergeSize {
-			m.evenPending = append(m.evenPending[:0], evenData[mergeSize:]...)
-			evenData = evenData[:mergeSize]
-		}
-		if len(oddData) > mergeSize {
-			m.oddPending = append(m.oddPending[:0], oddData[mergeSize:]...)
-			oddData = oddData[:mergeSize]
-		}
+			// Special case: if mergeSize is 0 but we have data in one stream and the other is EOF,
+			// we need to merge what we have (for odd-length files)
+			if mergeSize == 0 && len(evenData) > 0 && m.oddEOF {
+				// Odd is EOF and empty, even has data - merge all even
+				mergeSize = len(evenData)
+			} else if mergeSize == 0 && len(oddData) > 0 && m.evenEOF {
+				// Even is EOF and empty, odd has data - merge all odd
+				mergeSize = len(oddData)
+			}
 
-		// After buffering, sizes should match during streaming
-		if len(evenData) != len(oddData) {
-			log.Printf("[StreamMerger] Read: UNEXPECTED SIZE MISMATCH during streaming - even=%d, odd=%d, evenEOF=%v, oddEOF=%v, evenPending=%d, oddPending=%d", len(evenData), len(oddData), m.evenEOF, m.oddEOF, len(m.evenPending), len(m.oddPending))
-			return 0, fmt.Errorf("unexpected size mismatch during streaming: even=%d, odd=%d", len(evenData), len(oddData))
+			// Buffer excess data
+			if len(evenData) > mergeSize {
+				m.evenPending = append(m.evenPending[:0], evenData[mergeSize:]...)
+				evenData = evenData[:mergeSize]
+			}
+			if len(oddData) > mergeSize {
+				m.oddPending = append(m.oddPending[:0], oddData[mergeSize:]...)
+				oddData = oddData[:mergeSize]
+			}
+
+			// After buffering, sizes should match during streaming (unless one is EOF and empty)
+			// For odd-length files, even can be 1 byte larger when odd is EOF
+			if len(evenData) != len(oddData) && !m.evenEOF && !m.oddEOF {
+				log.Printf("[StreamMerger] Read: UNEXPECTED SIZE MISMATCH during streaming - even=%d, odd=%d, evenEOF=%v, oddEOF=%v, evenPending=%d, oddPending=%d", len(evenData), len(oddData), m.evenEOF, m.oddEOF, len(m.evenPending), len(m.oddPending))
+				return 0, fmt.Errorf("unexpected size mismatch during streaming: even=%d, odd=%d", len(evenData), len(oddData))
+			}
 		}
 	}
 

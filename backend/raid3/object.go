@@ -96,7 +96,15 @@ func (o *Object) Size() int64 {
 
 	// Fast path: both data particles exist
 	if errEven == nil && errOdd == nil {
-		return evenObj.Size() + oddObj.Size()
+		evenSize := evenObj.Size()
+		oddSize := oddObj.Size()
+		// Validate sizes are non-negative
+		if evenSize < 0 || oddSize < 0 {
+			// If either size is invalid, try degraded path
+			fs.Debugf(o, "Invalid particle sizes detected (even=%d, odd=%d), falling back to degraded calculation", evenSize, oddSize)
+		} else {
+			return evenSize + oddSize
+		}
 	}
 
 	// Otherwise try parity with either suffix
@@ -116,14 +124,28 @@ func (o *Object) Size() int64 {
 	// If we have one data particle and parity, we can compute size
 	if errEven == nil {
 		// Missing odd: N = even + parity - (isOdd ? 1 : 0)
-		if isOddLength {
-			return evenObj.Size() + parityObj.Size() - 1
+		evenSize := evenObj.Size()
+		paritySize := parityObj.Size()
+		if evenSize < 0 || paritySize < 0 {
+			return -1 // Invalid sizes
 		}
-		return evenObj.Size() + parityObj.Size()
+		if isOddLength {
+			size := evenSize + paritySize - 1
+			if size < 0 {
+				return -1 // Invalid calculation result
+			}
+			return size
+		}
+		return evenSize + paritySize
 	}
 	if errOdd == nil {
 		// Missing even: N = odd + parity (regardless of odd/even length)
-		return oddObj.Size() + parityObj.Size()
+		oddSize := oddObj.Size()
+		paritySize := parityObj.Size()
+		if oddSize < 0 || paritySize < 0 {
+			return -1 // Invalid sizes
+		}
+		return oddSize + paritySize
 	}
 
 	return -1
@@ -131,6 +153,12 @@ func (o *Object) Size() int64 {
 
 // Hash returns the hash of the reconstructed object
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
+	// Verify size is valid before opening
+	reportedSize := o.Size()
+	if reportedSize < 0 {
+		return "", fmt.Errorf("cannot calculate hash: object size is invalid (%d)", reportedSize)
+	}
+
 	// Must reconstruct the full file to calculate hash
 	reader, err := o.Open(ctx)
 	if err != nil {
@@ -143,8 +171,18 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if _, err := io.Copy(hasher, reader); err != nil {
+	
+	bytesRead, err := io.Copy(hasher, reader)
+	if err != nil {
 		return "", err
+	}
+
+	// Verify we read the expected amount of data
+	if reportedSize > 0 && bytesRead == 0 {
+		return "", fmt.Errorf("hash calculation read 0 bytes but Size() reports %d bytes - possible corruption", reportedSize)
+	}
+	if reportedSize > 0 && bytesRead != reportedSize {
+		fs.Debugf(o, "Hash calculation read %d bytes but Size() reports %d bytes", bytesRead, reportedSize)
 	}
 
 	return hasher.SumString(ty, false)
@@ -266,11 +304,18 @@ func (o *Object) openBuffered(ctx context.Context, options ...fs.OpenOption) (io
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to read odd particle: %w", o.fs.odd.Name(), err)
 		}
-		merged, err = MergeBytes(evenData, oddData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to merge particles: %w", err)
-		}
-	} else {
+	merged, err = MergeBytes(evenData, oddData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge particles: %w", err)
+	}
+	
+	// Validate merged data size matches expected
+	expectedSize := evenObj.Size() + oddObj.Size()
+	if int64(len(merged)) != expectedSize {
+		return nil, fmt.Errorf("merged data size mismatch: got %d bytes, expected %d (even=%d, odd=%d)",
+			len(merged), expectedSize, evenObj.Size(), oddObj.Size())
+	}
+} else {
 		// One particle missing - attempt reconstruction using parity
 		// Find which parity exists and infer original length type
 		parityNameOL := GetParityFilename(o.remote, true)
@@ -316,11 +361,22 @@ func (o *Object) openBuffered(ctx context.Context, options ...fs.OpenOption) (io
 			if err != nil {
 				return nil, fmt.Errorf("%s: failed to read parity particle: %w", o.fs.parity.Name(), err)
 			}
-			merged, err = ReconstructFromEvenAndParity(evenData, parityData, isOddLength)
-			if err != nil {
-				return nil, err
-			}
-			fs.Infof(o, "Reconstructed %s from even+parity (degraded mode)", o.remote)
+		merged, err = ReconstructFromEvenAndParity(evenData, parityData, isOddLength)
+		if err != nil {
+			return nil, err
+		}
+		
+		// Validate reconstructed data size
+		expectedSize := evenObj.Size() + parityObj.Size()
+		if isOddLength {
+			expectedSize-- // For odd-length files, size = even + parity - 1
+		}
+		if int64(len(merged)) != expectedSize {
+			return nil, fmt.Errorf("reconstructed data size mismatch: got %d bytes, expected %d (even=%d, parity=%d, isOdd=%v)",
+				len(merged), expectedSize, evenObj.Size(), parityObj.Size(), isOddLength)
+		}
+		
+		fs.Infof(o, "Reconstructed %s from even+parity (degraded mode)", o.remote)
 
 			// Heal: queue missing odd particle for upload (if auto_heal enabled)
 			if o.fs.opt.AutoHeal {
@@ -349,11 +405,19 @@ func (o *Object) openBuffered(ctx context.Context, options ...fs.OpenOption) (io
 			if err != nil {
 				return nil, fmt.Errorf("%s: failed to read parity particle: %w", o.fs.parity.Name(), err)
 			}
-			merged, err = ReconstructFromOddAndParity(oddData, parityData, isOddLength)
-			if err != nil {
-				return nil, err
-			}
-			fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode)", o.remote)
+		merged, err = ReconstructFromOddAndParity(oddData, parityData, isOddLength)
+		if err != nil {
+			return nil, err
+		}
+		
+		// Validate reconstructed data size
+		expectedSize := oddObj.Size() + parityObj.Size() // For odd+parity, size = odd + parity (regardless of isOddLength)
+		if int64(len(merged)) != expectedSize {
+			return nil, fmt.Errorf("reconstructed data size mismatch: got %d bytes, expected %d (odd=%d, parity=%d, isOdd=%v)",
+				len(merged), expectedSize, oddObj.Size(), parityObj.Size(), isOddLength)
+		}
+		
+		fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode)", o.remote)
 
 			// Heal: queue missing even particle for upload (if auto_heal enabled)
 			if o.fs.opt.AutoHeal {
@@ -363,6 +427,20 @@ func (o *Object) openBuffered(ctx context.Context, options ...fs.OpenOption) (io
 
 		} else {
 			return nil, fmt.Errorf("cannot reconstruct: no data particle available")
+		}
+	}
+
+	// Validate that merged data is not empty when it shouldn't be
+	// This catches cases where reconstruction failed silently
+	if len(merged) == 0 {
+		// Check if file should be empty by checking Size()
+		expectedSize := o.Size()
+		if expectedSize > 0 {
+			return nil, fmt.Errorf("reconstructed data is empty but Size() reports %d bytes - possible corruption", expectedSize)
+		}
+		// If Size() also reports 0 or -1, empty data might be valid, but log it
+		if expectedSize == -1 {
+			fs.Debugf(o, "Warning: merged data is empty and Size() reports -1 (file may not exist)")
 		}
 	}
 
@@ -395,25 +473,31 @@ func (o *Object) openBuffered(ctx context.Context, options ...fs.OpenOption) (io
 		if rangeStart < 0 {
 			rangeStart = 0
 		}
-		if rangeStart > totalSize {
-			rangeStart = totalSize
-		}
-
-		// Calculate end
-		var rangedData []byte
-		if rangeEnd < 0 || rangeEnd >= totalSize {
-			// Read to end
-			rangedData = merged[rangeStart:]
+		if rangeStart >= totalSize {
+			// Range starts beyond end - return empty reader
+			// This is valid (e.g., reading from offset 10 of a 5-byte file)
+			reader = bytes.NewReader([]byte{})
 		} else {
-			// Read specific range (end is inclusive)
-			if rangeEnd >= rangeStart {
-				rangedData = merged[rangeStart : rangeEnd+1]
+			// Calculate end
+			var rangedData []byte
+			if rangeEnd < 0 || rangeEnd >= totalSize {
+				// Read to end
+				rangedData = merged[rangeStart:]
 			} else {
-				rangedData = []byte{}
+				// Read specific range (end is inclusive)
+				if rangeEnd >= rangeStart {
+					// Ensure we don't go beyond totalSize
+					if rangeEnd+1 > totalSize {
+						rangeEnd = totalSize - 1
+					}
+					rangedData = merged[rangeStart : rangeEnd+1]
+				} else {
+					rangedData = []byte{}
+				}
 			}
-		}
 
-		reader = bytes.NewReader(rangedData)
+			reader = bytes.NewReader(rangedData)
+		}
 	}
 
 	// Return as ReadCloser (bytes.NewReader supports seeking)
@@ -456,6 +540,19 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		oddSize := oddObj.Size()
 		if !ValidateParticleSizes(evenSize, oddSize) {
 			return nil, fmt.Errorf("invalid particle sizes: even=%d, odd=%d", evenSize, oddSize)
+		}
+		
+		// Validate that expected total size matches Size() method
+		expectedSize := evenSize + oddSize
+		reportedSize := o.Size()
+		if reportedSize != expectedSize && reportedSize >= 0 {
+			fs.Debugf(o, "Size mismatch: Size()=%d, expected from particles=%d (even=%d, odd=%d)", 
+				reportedSize, expectedSize, evenSize, oddSize)
+		}
+		
+		// Ensure we're not opening empty streams when Size() reports data
+		if expectedSize > 0 && (evenSize < 0 || oddSize < 0) {
+			return nil, fmt.Errorf("particles report invalid sizes: even=%d, odd=%d (expected > 0)", evenSize, oddSize)
 		}
 
 		// Extract range/seek options before opening particle readers
@@ -527,6 +624,13 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 
 		// Open known data + parity and reconstruct
 		if errEven == nil {
+			// Validate sizes before reconstruction
+			evenSize := evenObj.Size()
+			paritySize := parityObj.Size()
+			if evenSize < 0 || paritySize < 0 {
+				return nil, fmt.Errorf("invalid particle sizes for reconstruction: even=%d, parity=%d", evenSize, paritySize)
+			}
+			
 			// Extract range/seek options before opening particle readers
 			var rangeStart, rangeEnd int64 = 0, -1
 			filteredOptions := make([]fs.OpenOption, 0, len(options))
@@ -569,6 +673,13 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			return reconstructor, nil
 
 		} else if errOdd == nil {
+			// Validate sizes before reconstruction
+			oddSize := oddObj.Size()
+			paritySize := parityObj.Size()
+			if oddSize < 0 || paritySize < 0 {
+				return nil, fmt.Errorf("invalid particle sizes for reconstruction: odd=%d, parity=%d", oddSize, paritySize)
+			}
+			
 			// Extract range/seek options before opening particle readers
 			var rangeStart, rangeEnd int64 = 0, -1
 			filteredOptions := make([]fs.OpenOption, 0, len(options))
@@ -1353,20 +1464,35 @@ func (o *Object) Remove(ctx context.Context) error {
 		return obj.Remove(gCtx)
 	})
 
-	// Remove parity (try both suffixes)
+	// Remove parity (try both suffixes - delete whichever exists, ignore errors if not found)
 	g.Go(func() error {
+		var parityErr error
+		
+		// Try odd-length parity suffix first
 		parityOdd := GetParityFilename(o.remote, true)
 		obj, err := o.fs.parity.NewObject(gCtx, parityOdd)
 		if err == nil {
-			return obj.Remove(gCtx)
+			parityErr = obj.Remove(gCtx)
+			// Continue to check even-length suffix even if this succeeded
+			// (in case both somehow exist, though they shouldn't)
 		}
 
+		// Try even-length parity suffix
 		parityEven := GetParityFilename(o.remote, false)
 		obj, err = o.fs.parity.NewObject(gCtx, parityEven)
 		if err == nil {
-			return obj.Remove(gCtx)
+			if removeErr := obj.Remove(gCtx); removeErr != nil {
+				// If odd-length deletion had an error, prefer the first error
+				// Otherwise use this error
+				if parityErr == nil {
+					parityErr = removeErr
+				}
+			}
 		}
-		return nil // Ignore if parity not found
+
+		// Return error only if deletion failed (not if not found)
+		// If both weren't found, that's fine - return nil
+		return parityErr
 	})
 
 	return g.Wait()

@@ -240,14 +240,14 @@ available as an explicit admin command.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Even         string       `config:"even"`
-	Odd          string       `config:"odd"`
-	Parity       string       `config:"parity"`
-	TimeoutMode  string       `config:"timeout_mode"`
-	AutoCleanup  bool         `config:"auto_cleanup"`
-	AutoHeal     bool         `config:"auto_heal"`
-	Rollback     bool         `config:"rollback"`
-	UseStreaming bool         `config:"use_streaming"`
+	Even         string        `config:"even"`
+	Odd          string        `config:"odd"`
+	Parity       string        `config:"parity"`
+	TimeoutMode  string        `config:"timeout_mode"`
+	AutoCleanup  bool          `config:"auto_cleanup"`
+	AutoHeal     bool          `config:"auto_heal"`
+	Rollback     bool          `config:"rollback"`
+	UseStreaming bool          `config:"use_streaming"`
 	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
 }
 
@@ -1307,11 +1307,11 @@ func createParticleInfo(src fs.ObjectInfo, particleType string, size int64, isOd
 		ObjectInfo: src,
 		size:       size,
 	}
-	
+
 	if particleType == "parity" {
 		info.remote = GetParityFilename(src.Remote(), isOddLength)
 	}
-	
+
 	return info
 }
 
@@ -1320,7 +1320,7 @@ func verifyParticleSizes(ctx context.Context, f *Fs, evenObj, oddObj fs.Object, 
 	if evenObj == nil || oddObj == nil {
 		return fmt.Errorf("cannot verify sizes: evenObj=%v, oddObj=%v", evenObj != nil, oddObj != nil)
 	}
-	
+
 	// Refresh objects from S3 to get actual committed sizes
 	evenRefreshed, err := f.even.NewObject(ctx, evenObj.Remote())
 	if err != nil {
@@ -1330,10 +1330,10 @@ func verifyParticleSizes(ctx context.Context, f *Fs, evenObj, oddObj fs.Object, 
 	if err != nil {
 		return fmt.Errorf("failed to refresh odd object from S3: %w", err)
 	}
-	
+
 	evenSize := evenRefreshed.Size()
 	oddSize := oddRefreshed.Size()
-	
+
 	// Verify sizes match what we wrote
 	if evenSize != evenWritten {
 		return fmt.Errorf("S3 even particle size mismatch: wrote %d bytes but S3 object is %d bytes", evenWritten, evenSize)
@@ -1341,7 +1341,7 @@ func verifyParticleSizes(ctx context.Context, f *Fs, evenObj, oddObj fs.Object, 
 	if oddSize != oddWritten {
 		return fmt.Errorf("S3 odd particle size mismatch: wrote %d bytes but S3 object is %d bytes", oddWritten, oddSize)
 	}
-	
+
 	return nil
 }
 
@@ -1446,7 +1446,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 				// Track sizes
 				totalEvenWritten += int64(len(evenData))
 				totalOddWritten += int64(len(oddData))
-				
+
 				// If size was unknown, detect odd-length from chunks
 				if srcSize < 0 && len(evenData) > len(oddData) {
 					// Update channel (non-blocking, will overwrite previous value)
@@ -1532,7 +1532,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	// Goroutine 4: Put parity particle (reads from parityPipeR)
 	g.Go(func() error {
 		defer parityPipeR.Close()
-		
+
 		// Get isOddLength - use source size if known, otherwise from channel
 		parityIsOddLength := isOddLength
 		if srcSize < 0 && isOddLengthCh != nil {
@@ -1543,7 +1543,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 				// Use default (even-length)
 			}
 		}
-		
+
 		// Create parity info with correct filename
 		parityInfo := createParticleInfo(src, "parity", -1, parityIsOddLength)
 		obj, err := f.parity.Put(gCtx, parityPipeR, parityInfo, options...)
@@ -1891,7 +1891,7 @@ func (f *Fs) findBrokenObjects(ctx context.Context, dir string) ([]particleInfo,
 
 // Move src to this remote using server-side move operations if possible
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	// Check if src is from this raid3 backend
+	// Check if src is from a raid3 backend (may be different Fs instance for cross-remote moves)
 	srcObj, ok := src.(*Object)
 	if !ok {
 		return nil, fs.ErrorCantMove
@@ -1904,11 +1904,32 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	remote = strings.TrimPrefix(remote, "/")
 	remote = path.Clean(remote)
 
+	// Handle cross-remote moves: if source is from different Fs instance,
+	// we need to get particles from source Fs's backends
+	srcFs := srcObj.fs
+	srcRemote := srcObj.remote
+	isCrossRemote := srcFs != f
+
+	// Early return for move over self (no-op) - POSIX convention
+	// Only check this if source and destination are the same Fs instance
+	// (moving within the same remote, not between different remotes)
+	if srcRemote == remote && !isCrossRemote {
+		// Move over self is a no-op - return source object unchanged
+		return srcObj, nil
+	}
+
 	// Determine source parity name (needed for cleanup)
+	// For cross-remote moves, check source Fs's parity backend
 	var srcParityName string
-	parityOddSrc := GetParityFilename(srcObj.remote, true)
-	parityEvenSrc := GetParityFilename(srcObj.remote, false)
-	_, errOdd := f.parity.NewObject(ctx, parityOddSrc)
+	parityOddSrc := GetParityFilename(srcRemote, true)
+	parityEvenSrc := GetParityFilename(srcRemote, false)
+	
+	// Check in source Fs's parity backend for cross-remote moves
+	parityFs := f.parity
+	if isCrossRemote {
+		parityFs = srcFs.parity
+	}
+	_, errOdd := parityFs.NewObject(ctx, parityOddSrc)
 	if errOdd == nil {
 		srcParityName = parityOddSrc
 	} else {
@@ -1980,41 +2001,51 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	results := make(chan moveResult, 3)
 	g, gCtx := errgroup.WithContext(ctx)
 
+	// Get source backends (may be different for cross-remote moves)
+	srcEven := f.even
+	srcOdd := f.odd
+	srcParity := f.parity
+	if isCrossRemote {
+		srcEven = srcFs.even
+		srcOdd = srcFs.odd
+		srcParity = srcFs.parity
+	}
+
 	// Move on even
 	g.Go(func() error {
-		obj, err := f.even.NewObject(gCtx, srcObj.remote)
+		obj, err := srcEven.NewObject(gCtx, srcRemote)
 		if err != nil {
-			results <- moveResult{moveState{"even", srcObj.remote, remote}, false, nil}
+			results <- moveResult{moveState{"even", srcRemote, remote}, false, nil}
 			return nil // Ignore if not found
 		}
 		_, err = moveOrCopyParticle(gCtx, f.even, obj, remote)
 		if err != nil {
-			results <- moveResult{moveState{"even", srcObj.remote, remote}, false, err}
+			results <- moveResult{moveState{"even", srcRemote, remote}, false, err}
 			return err
 		}
-		results <- moveResult{moveState{"even", srcObj.remote, remote}, true, nil}
+		results <- moveResult{moveState{"even", srcRemote, remote}, true, nil}
 		return nil
 	})
 
 	// Move on odd
 	g.Go(func() error {
-		obj, err := f.odd.NewObject(gCtx, srcObj.remote)
+		obj, err := srcOdd.NewObject(gCtx, srcRemote)
 		if err != nil {
-			results <- moveResult{moveState{"odd", srcObj.remote, remote}, false, nil}
+			results <- moveResult{moveState{"odd", srcRemote, remote}, false, nil}
 			return nil // Ignore if not found
 		}
 		_, err = moveOrCopyParticle(gCtx, f.odd, obj, remote)
 		if err != nil {
-			results <- moveResult{moveState{"odd", srcObj.remote, remote}, false, err}
+			results <- moveResult{moveState{"odd", srcRemote, remote}, false, err}
 			return err
 		}
-		results <- moveResult{moveState{"odd", srcObj.remote, remote}, true, nil}
+		results <- moveResult{moveState{"odd", srcRemote, remote}, true, nil}
 		return nil
 	})
 
 	// Move parity
 	g.Go(func() error {
-		obj, err := f.parity.NewObject(gCtx, srcParityName)
+		obj, err := srcParity.NewObject(gCtx, srcParityName)
 		if err != nil {
 			results <- moveResult{moveState{"parity", srcParityName, dstParityName}, false, nil}
 			return nil // Ignore if not found
