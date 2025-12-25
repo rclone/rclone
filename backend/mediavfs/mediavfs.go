@@ -983,57 +983,97 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 		notifyEvents = f.notifyListener.Events()
 	}
 
+	// Debounce settings for batch processing
+	const debounceDelay = 200 * time.Millisecond
+	var pendingEvents []MediaChangeEvent
+	var debounceTimer *time.Timer
+	var debounceChan <-chan time.Time
+
+	// processPendingEvents handles batched events
+	processPendingEvents := func() {
+		if len(pendingEvents) == 0 {
+			return
+		}
+
+		fs.Debugf(f, "mediavfs: Processing %d batched notifications", len(pendingEvents))
+
+		// Collect unique directories to invalidate
+		dirsToInvalidate := make(map[string]bool)
+		hasDelete := false
+
+		for _, event := range pendingEvents {
+			if event.Action == "DELETE" {
+				hasDelete = true
+				continue
+			}
+
+			// Query the specific media item to get its path
+			query := fmt.Sprintf(`
+				SELECT COALESCE(path, '') as custom_path
+				FROM %s WHERE media_key = $1 AND user_name = $2
+			`, f.opt.TableName)
+
+			var customPath string
+			err := f.db.QueryRowContext(ctx, query, event.MediaKey, f.opt.User).Scan(&customPath)
+			if err == nil {
+				displayPath := strings.Trim(customPath, "/")
+				dirsToInvalidate[displayPath] = true
+			}
+		}
+
+		// Invalidate and notify for each unique directory (once per directory)
+		if hasDelete {
+			// For deletes, invalidate root
+			f.invalidateDirCache("")
+			notify("", fs.EntryDirectory)
+		}
+
+		for dir := range dirsToInvalidate {
+			f.invalidateDirCache(dir)
+			notify(dir, fs.EntryDirectory)
+		}
+
+		fs.Debugf(f, "mediavfs: Invalidated %d unique directories", len(dirsToInvalidate))
+
+		// Clear pending events
+		pendingEvents = nil
+	}
+
 	for {
 		select {
 		case d, ok := <-newInterval:
 			if !ok {
 				ticker.Stop()
+				processPendingEvents() // Process any remaining events
 				return
 			}
 			fs.Infof(f, "mediavfs: ChangeNotify interval updated to %s", d)
 			ticker.Reset(d)
 
 		case event := <-notifyEvents:
-			// Real-time notification from PostgreSQL
-			fs.Debugf(f, "mediavfs: Real-time notification received: %s for %s", event.Action, event.MediaKey)
+			// Add to pending events (debounce)
+			pendingEvents = append(pendingEvents, event)
 
-			// Query the specific media item to get its path
-			query := fmt.Sprintf(`
-				SELECT file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path
-				FROM %s WHERE media_key = $1 AND user_name = $2
-			`, f.opt.TableName)
-
-			var fileName, customName, customPath string
-			err := f.db.QueryRowContext(ctx, query, event.MediaKey, f.opt.User).Scan(&fileName, &customName, &customPath)
-
-			if event.Action == "DELETE" {
-				// For deletes, we can't query the row anymore, so just invalidate root cache
-				// This is less destructive than invalidateCaches() - only affects root listing
-				f.invalidateDirCache("")
-				notify("", fs.EntryDirectory)
-			} else if err == nil {
-				// Build the display path
-				displayName := customName
-				if displayName == "" {
-					displayName = fileName
-				}
-				displayPath := strings.Trim(customPath, "/")
-
-				var fullPath string
-				if displayPath != "" {
-					fullPath = displayPath + "/" + displayName
-					notify(displayPath, fs.EntryDirectory)
-				} else {
-					fullPath = displayName
-				}
-				notify(fullPath, fs.EntryObject)
-
-				// Only invalidate the specific directory, not ALL caches
-				// This is the key performance fix for bulk operations
-				f.invalidateDirCache(displayPath)
+			// Reset/start debounce timer
+			if debounceTimer == nil {
+				debounceTimer = time.NewTimer(debounceDelay)
+				debounceChan = debounceTimer.C
 			} else {
-				fs.Debugf(f, "mediavfs: Could not find media_key %s: %v", event.MediaKey, err)
+				// Reset timer if we're still within the debounce window
+				if !debounceTimer.Stop() {
+					select {
+					case <-debounceTimer.C:
+					default:
+					}
+				}
+				debounceTimer.Reset(debounceDelay)
 			}
+
+		case <-debounceChan:
+			// Debounce timer fired - process all pending events
+			processPendingEvents()
+			debounceTimer = nil
+			debounceChan = nil
 
 		case <-ticker.C:
 			// Query for rows newer than lastTimestamp
