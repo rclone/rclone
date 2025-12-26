@@ -31,6 +31,7 @@ import (
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -503,10 +504,34 @@ checkRemotes:
 		About:                   f.About,
 	}).Fill(ctx, f)
 
+	// Propagate SlowHash if any backend has slow hash
+	// This helps rclone optimize operations when hashing is slow
+	// Safe in degraded mode: if a backend is nil/unavailable, we skip it (assume false)
+	slowHash := false
+	if f.even != nil && f.even.Features().SlowHash {
+		slowHash = true
+	}
+	if f.odd != nil && f.odd.Features().SlowHash {
+		slowHash = true
+	}
+	if f.parity != nil && f.parity.Features().SlowHash {
+		slowHash = true
+	}
+	f.features.SlowHash = slowHash
+
+	// Indicate that this backend wraps other backends
+	// This helps rclone understand the backend architecture
+	f.features.Overlay = true
+
 	// Enable Move if all backends support Move or Copy (like union/combine backends)
 	// This allows raid3 to work with backends like S3/MinIO that support Copy but not Move
 	if operations.CanServerSideMove(f.even) && operations.CanServerSideMove(f.odd) && operations.CanServerSideMove(f.parity) {
 		f.features.Move = f.Move
+	}
+
+	// Enable Copy if all backends support Copy
+	if f.even.Features().Copy != nil && f.odd.Features().Copy != nil && f.parity.Features().Copy != nil {
+		f.features.Copy = f.Copy
 	}
 
 	// Enable DirMove if all backends support it
@@ -517,6 +542,92 @@ checkRemotes:
 	// Enable Purge if all backends support it
 	if f.even.Features().Purge != nil && f.odd.Features().Purge != nil && f.parity.Features().Purge != nil {
 		f.features.Purge = f.Purge
+	}
+
+	// Enable ListR when at least one backend supports ListR or is local
+	// Similar to union backend: enable if any backend supports it, or all are local
+	hasListR := false
+	allLocal := true
+	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
+		if backend != nil {
+			if backend.Features().ListR != nil {
+				hasListR = true
+			}
+			if !backend.Features().IsLocal {
+				allLocal = false
+			}
+		}
+	}
+	if hasListR || allLocal {
+		f.features.ListR = f.ListR
+	}
+
+	// Enable DirSetModTime if at least one backend supports it
+	// Unlike other features, we enable if ANY backend supports it (not all)
+	// This matches union backend behavior - it sets modtime on backends that support it
+	hasDirSetModTime := false
+	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
+		if backend != nil && backend.Features().DirSetModTime != nil {
+			hasDirSetModTime = true
+			break
+		}
+	}
+	if hasDirSetModTime {
+		f.features.DirSetModTime = f.DirSetModTime
+	}
+
+	// Enable metadata features if at least one backend supports them
+	// Unlike other features, metadata is "best effort" - enable if any backend supports it
+	// This matches union backend behavior
+	hasReadMetadata := false
+	hasWriteMetadata := false
+	hasUserMetadata := false
+	hasReadDirMetadata := false
+	hasWriteDirMetadata := false
+	hasUserDirMetadata := false
+
+	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
+		if backend != nil {
+			feat := backend.Features()
+			if feat.ReadMetadata {
+				hasReadMetadata = true
+			}
+			if feat.WriteMetadata {
+				hasWriteMetadata = true
+			}
+			if feat.UserMetadata {
+				hasUserMetadata = true
+			}
+			if feat.ReadDirMetadata {
+				hasReadDirMetadata = true
+			}
+			if feat.WriteDirMetadata {
+				hasWriteDirMetadata = true
+			}
+			if feat.UserDirMetadata {
+				hasUserDirMetadata = true
+			}
+		}
+	}
+
+	f.features.ReadMetadata = hasReadMetadata
+	f.features.WriteMetadata = hasWriteMetadata
+	f.features.UserMetadata = hasUserMetadata
+	f.features.ReadDirMetadata = hasReadDirMetadata
+	f.features.WriteDirMetadata = hasWriteDirMetadata
+	f.features.UserDirMetadata = hasUserDirMetadata
+
+	// Enable MkdirMetadata if at least one backend supports it
+	// This matches union backend behavior
+	hasMkdirMetadata := false
+	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
+		if backend != nil && backend.Features().MkdirMetadata != nil {
+			hasMkdirMetadata = true
+			break
+		}
+	}
+	if hasMkdirMetadata {
+		f.features.MkdirMetadata = f.MkdirMetadata
 	}
 
 	// Initialize heal infrastructure
@@ -1119,6 +1230,195 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return entries, nil
 }
 
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Don't implement this unless you have a more efficient way
+// of listing recursively that doing a directory traversal.
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	// Collect entries from all three backends in parallel
+	// Support degraded mode: works with 2/3 backends (reads work in degraded mode)
+	type listRResult struct {
+		name    string
+		entries []fs.DirEntries
+		err     error
+	}
+	results := make(chan listRResult, 3)
+
+	// ListR on even backend
+	go func() {
+		var evenEntries []fs.DirEntries
+		innerCallback := func(entries fs.DirEntries) error {
+			evenEntries = append(evenEntries, entries)
+			return nil
+		}
+		do := f.even.Features().ListR
+		var err error
+		if do != nil {
+			err = do(ctx, dir, innerCallback)
+		} else {
+			// Fallback to walk.ListR if backend doesn't support ListR
+			err = walk.ListR(ctx, f.even, dir, true, -1, walk.ListAll, innerCallback)
+		}
+		results <- listRResult{"even", evenEntries, err}
+	}()
+
+	// ListR on odd backend
+	go func() {
+		var oddEntries []fs.DirEntries
+		innerCallback := func(entries fs.DirEntries) error {
+			oddEntries = append(oddEntries, entries)
+			return nil
+		}
+		do := f.odd.Features().ListR
+		var err error
+		if do != nil {
+			err = do(ctx, dir, innerCallback)
+		} else {
+			// Fallback to walk.ListR if backend doesn't support ListR
+			err = walk.ListR(ctx, f.odd, dir, true, -1, walk.ListAll, innerCallback)
+		}
+		results <- listRResult{"odd", oddEntries, err}
+	}()
+
+	// ListR on parity backend (errors ignored, similar to List())
+	go func() {
+		var parityEntries []fs.DirEntries
+		innerCallback := func(entries fs.DirEntries) error {
+			parityEntries = append(parityEntries, entries)
+			return nil
+		}
+		do := f.parity.Features().ListR
+		if do != nil {
+			_ = do(ctx, dir, innerCallback) // Ignore errors (similar to List() behavior)
+		} else {
+			// Fallback to walk.ListR if backend doesn't support ListR
+			_ = walk.ListR(ctx, f.parity, dir, true, -1, walk.ListAll, innerCallback) // Ignore errors
+		}
+		// Ignore parity errors (similar to List() behavior)
+		results <- listRResult{"parity", parityEntries, nil}
+	}()
+
+	// Collect results
+	var entriesEven, entriesOdd, entriesParity []fs.DirEntries
+	var errEven, errOdd error
+	for i := 0; i < 3; i++ {
+		res := <-results
+		switch res.name {
+		case "even":
+			entriesEven = res.entries
+			errEven = res.err
+		case "odd":
+			entriesOdd = res.entries
+			errOdd = res.err
+		case "parity":
+			entriesParity = res.entries
+			// Ignore parity errors (already set to nil above)
+		}
+	}
+
+	// Degraded mode support: if even fails, try odd (similar to List())
+	// Only fail if both data backends fail
+	if errEven != nil {
+		if errOdd != nil {
+			// Both data backends failed
+			// Check if both failed with ErrorDirNotFound
+			if errors.Is(errEven, fs.ErrorDirNotFound) && errors.Is(errOdd, fs.ErrorDirNotFound) {
+				return fs.ErrorDirNotFound
+			}
+			// Return even error (prefer even over odd)
+			return errEven
+		}
+		// Continue with odd entries only
+	}
+
+	// Merge entries similar to List() method
+	// Create a map to track all entries (excluding parity files with suffixes)
+	// Use remote path as key to ensure proper deduplication
+	entryMap := make(map[string]fs.DirEntry)
+
+	// Helper function to add entry to map with deduplication
+	addEntry := func(entry fs.DirEntry) {
+		remote := entry.Remote()
+		// Skip temporary files created during Update rollback
+		if IsTempFile(remote) {
+			fs.Debugf(f, "ListR: Skipping temp file %s", remote)
+			return
+		}
+		// Only add if not already present (deduplication)
+		if _, exists := entryMap[remote]; !exists {
+			entryMap[remote] = entry
+		}
+	}
+
+	// Process even entries
+	for _, entryBatch := range entriesEven {
+		for _, entry := range entryBatch {
+			addEntry(entry)
+		}
+	}
+
+	// Process odd entries (merge with even)
+	for _, entryBatch := range entriesOdd {
+		for _, entry := range entryBatch {
+			addEntry(entry)
+		}
+	}
+
+	// Process parity entries (filter out parity files, but include directories)
+	for _, entryBatch := range entriesParity {
+		for _, entry := range entryBatch {
+			remote := entry.Remote()
+
+			// Filter out parity files (they have .parity-el or .parity-ol suffix)
+			_, isParity, _ := StripParitySuffix(remote)
+			if isParity {
+				continue
+			}
+
+			// Add non-parity entries (directories mainly)
+			addEntry(entry)
+		}
+	}
+
+	// Convert map to slice and convert entries to raid3 Object/Directory types
+	// Use the map key (remote path) directly to ensure consistency and prevent duplicates
+	mergedEntries := make(fs.DirEntries, 0, len(entryMap))
+	for remote, entry := range entryMap {
+		var converted fs.DirEntry
+		switch entry.(type) {
+		case fs.Object:
+			converted = &Object{
+				fs:     f,
+				remote: remote,
+			}
+		case fs.Directory:
+			converted = &Directory{
+				fs:     f,
+				remote: remote,
+			}
+		default:
+			// Unknown type, skip
+			continue
+		}
+		mergedEntries = append(mergedEntries, converted)
+	}
+
+	// Call callback with merged entries
+	return callback(mergedEntries)
+}
+
 // NewObject creates a new remote Object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	// Probe particles - must have at least 2 of 3 for RAID 3
@@ -1546,6 +1846,91 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	})
 
 	return g.Wait()
+}
+
+// MkdirMetadata makes a directory with metadata
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	// Pre-flight health check: Enforce strict RAID 3 write policy
+	// Consistent with Put/Update/Move/Mkdir operations
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return nil, fmt.Errorf("mkdirmetadata blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = f.disableRetriesForWrites(ctx)
+
+	// Create directory on all three backends that support MkdirMetadata
+	// For backends that don't support it, fall back to regular Mkdir
+	g, gCtx := errgroup.WithContext(ctx)
+	dirs := make([]fs.Directory, 3)
+	errs := make([]error, 3)
+
+	g.Go(func() error {
+		if do := f.even.Features().MkdirMetadata; do != nil {
+			newDir, err := do(gCtx, dir, metadata)
+			if err != nil {
+				errs[0] = fmt.Errorf("%s: %w", f.even.Name(), err)
+				return errs[0]
+			}
+			dirs[0] = newDir
+		} else {
+			// Fallback to regular Mkdir
+			err := f.even.Mkdir(gCtx, dir)
+			if err != nil {
+				errs[0] = fmt.Errorf("%s: %w", f.even.Name(), err)
+				return errs[0]
+			}
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		if do := f.odd.Features().MkdirMetadata; do != nil {
+			newDir, err := do(gCtx, dir, metadata)
+			if err != nil {
+				errs[1] = fmt.Errorf("%s: %w", f.odd.Name(), err)
+				return errs[1]
+			}
+			dirs[1] = newDir
+		} else {
+			// Fallback to regular Mkdir
+			err := f.odd.Mkdir(gCtx, dir)
+			if err != nil {
+				errs[1] = fmt.Errorf("%s: %w", f.odd.Name(), err)
+				return errs[1]
+			}
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		if do := f.parity.Features().MkdirMetadata; do != nil {
+			newDir, err := do(gCtx, dir, metadata)
+			if err != nil {
+				errs[2] = fmt.Errorf("%s: %w", f.parity.Name(), err)
+				return errs[2]
+			}
+			dirs[2] = newDir
+		} else {
+			// Fallback to regular Mkdir
+			err := f.parity.Mkdir(gCtx, dir)
+			if err != nil {
+				errs[2] = fmt.Errorf("%s: %w", f.parity.Name(), err)
+				return errs[2]
+			}
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	// Return a raid3 Directory
+	return &Directory{
+		fs:     f,
+		remote: dir,
+	}, nil
 }
 
 // Rmdir removes a directory
@@ -2027,6 +2412,202 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}, nil
 }
 
+// Copy src to this remote using server-side copy operations if possible
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	// Check if src is from a raid3 backend (may be different Fs instance for cross-remote copies)
+	srcObj, ok := src.(*Object)
+	if !ok {
+		return nil, fs.ErrorCantCopy
+	}
+
+	// Normalize remote path: remove leading slashes and clean the path.
+	// The remote parameter should be relative to f.Root(), but it might include
+	// path components if extracted from a full path. We normalize it to ensure
+	// consistent behavior regardless of how it was constructed.
+	remote = strings.TrimPrefix(remote, "/")
+	remote = path.Clean(remote)
+
+	// Handle cross-remote copies: if source is from different Fs instance,
+	// we need to get particles from source Fs's backends
+	srcFs := srcObj.fs
+	srcRemote := srcObj.remote
+	isCrossRemote := srcFs != f
+
+	// Determine source parity name (needed for destination parity name)
+	// For cross-remote copies, check source Fs's parity backend
+	var srcParityName string
+	parityOddSrc := GetParityFilename(srcRemote, true)
+	parityEvenSrc := GetParityFilename(srcRemote, false)
+
+	// Check in source Fs's parity backend for cross-remote copies
+	parityFs := f.parity
+	if isCrossRemote {
+		parityFs = srcFs.parity
+	}
+	_, errOdd := parityFs.NewObject(ctx, parityOddSrc)
+	if errOdd == nil {
+		srcParityName = parityOddSrc
+	} else {
+		srcParityName = parityEvenSrc
+	}
+	_, isParity, isOddLength := StripParitySuffix(srcParityName)
+	if !isParity {
+		isOddLength = false
+	}
+	dstParityName := GetParityFilename(remote, isOddLength)
+
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	// Fail immediately if any backend is unavailable to prevent degraded copies
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return nil, fmt.Errorf("copy blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+	fs.Debugf(f, "Copy: all backends available, proceeding with copy")
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = f.disableRetriesForWrites(ctx)
+
+	// Track successful copies for cleanup on error
+	type copyResult struct {
+		backend string
+		success bool
+		err     error
+	}
+
+	var successCopies []string
+	var copiesMu sync.Mutex
+	var copyErr error
+	defer func() {
+		if copyErr != nil && f.opt.Rollback {
+			copiesMu.Lock()
+			copies := successCopies
+			copiesMu.Unlock()
+
+			// Clean up any successfully copied destination files
+			if len(copies) > 0 {
+				g, gCtx := errgroup.WithContext(ctx)
+				for _, backendName := range copies {
+					backendName := backendName
+					g.Go(func() error {
+						var backend fs.Fs
+						var dstRemote string
+						switch backendName {
+						case "even":
+							backend = f.even
+							dstRemote = remote
+						case "odd":
+							backend = f.odd
+							dstRemote = remote
+						case "parity":
+							backend = f.parity
+							dstRemote = dstParityName
+						default:
+							return nil
+						}
+						dstObj, err := backend.NewObject(gCtx, dstRemote)
+						if err != nil {
+							return nil // Already cleaned up or doesn't exist
+						}
+						if delErr := dstObj.Remove(gCtx); delErr != nil {
+							fs.Errorf(f, "Failed to clean up copied %s particle: %v", backendName, delErr)
+						}
+						return nil
+					})
+				}
+				_ = g.Wait() // Best effort cleanup
+			}
+		}
+	}()
+
+	results := make(chan copyResult, 3)
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Get source backends (may be different for cross-remote copies)
+	srcEven := f.even
+	srcOdd := f.odd
+	srcParity := f.parity
+	if isCrossRemote {
+		srcEven = srcFs.even
+		srcOdd = srcFs.odd
+		srcParity = srcFs.parity
+	}
+
+	// Copy on even
+	g.Go(func() error {
+		obj, err := srcEven.NewObject(gCtx, srcRemote)
+		if err != nil {
+			results <- copyResult{"even", false, nil}
+			return nil // Ignore if not found
+		}
+		_, err = copyParticle(gCtx, f.even, obj, remote)
+		if err != nil {
+			results <- copyResult{"even", false, err}
+			return err
+		}
+		results <- copyResult{"even", true, nil}
+		return nil
+	})
+
+	// Copy on odd
+	g.Go(func() error {
+		obj, err := srcOdd.NewObject(gCtx, srcRemote)
+		if err != nil {
+			results <- copyResult{"odd", false, nil}
+			return nil // Ignore if not found
+		}
+		_, err = copyParticle(gCtx, f.odd, obj, remote)
+		if err != nil {
+			results <- copyResult{"odd", false, err}
+			return err
+		}
+		results <- copyResult{"odd", true, nil}
+		return nil
+	})
+
+	// Copy parity
+	g.Go(func() error {
+		obj, err := srcParity.NewObject(gCtx, srcParityName)
+		if err != nil {
+			results <- copyResult{"parity", false, nil}
+			return nil // Ignore if not found
+		}
+		_, err = copyParticle(gCtx, f.parity, obj, dstParityName)
+		if err != nil {
+			results <- copyResult{"parity", false, err}
+			return err
+		}
+		results <- copyResult{"parity", true, nil}
+		return nil
+	})
+
+	copyErr = g.Wait()
+	close(results)
+
+	// Collect results
+	var firstError error
+	for result := range results {
+		if result.success {
+			copiesMu.Lock()
+			successCopies = append(successCopies, result.backend)
+			copiesMu.Unlock()
+		} else if result.err != nil && firstError == nil {
+			firstError = result.err
+		}
+	}
+
+	// If any failed, cleanup will happen in defer
+	if firstError != nil || copyErr != nil {
+		if firstError != nil {
+			copyErr = firstError
+		}
+		return nil, copyErr
+	}
+
+	return &Object{
+		fs:     f,
+		remote: remote,
+	}, nil
+}
+
 // DirMove moves src:srcRemote to this remote at dstRemote
 // using server-side move operations
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
@@ -2159,6 +2740,65 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	return nil
+}
+
+// DirSetModTime sets the directory modtime for dir
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	// Check if directory exists before health check (union backend pattern)
+	// This ensures we return fs.ErrorDirNotFound immediately when directory doesn't exist
+	dirExists, err := f.checkDirectoryExists(ctx, dir)
+	if err != nil {
+		return fmt.Errorf("failed to check directory existence: %w", err)
+	}
+	if !dirExists {
+		return fs.ErrorDirNotFound
+	}
+
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	// DirSetModTime is a metadata write operation (modifies directory metadata)
+	// Consistent with Object.SetModTime, Put, Update, Move, Mkdir operations
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("dirsetmodtime blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = f.disableRetriesForWrites(ctx)
+
+	// Set modtime on all three backends that support it
+	// Use errgroup to collect errors from all backends
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		if do := f.even.Features().DirSetModTime; do != nil {
+			err := do(gCtx, dir, modTime)
+			if err != nil {
+				return fmt.Errorf("%s: %w", f.even.Name(), err)
+			}
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		if do := f.odd.Features().DirSetModTime; do != nil {
+			err := do(gCtx, dir, modTime)
+			if err != nil {
+				return fmt.Errorf("%s: %w", f.odd.Name(), err)
+			}
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		if do := f.parity.Features().DirSetModTime; do != nil {
+			err := do(gCtx, dir, modTime)
+			if err != nil {
+				return fmt.Errorf("%s: %w", f.parity.Name(), err)
+			}
+		}
+		return nil
+	})
+
+	return g.Wait()
 }
 
 // reconstructMissingDirectory creates missing directories when directory exists on 2/3 backends
@@ -2437,8 +3077,17 @@ func (f *Fs) removeBrokenObject(ctx context.Context, p particleInfo) error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs         = (*Fs)(nil)
-	_ fs.CleanUpper = (*Fs)(nil)
-	_ fs.DirMover   = (*Fs)(nil)
-	_ fs.Object     = (*Object)(nil)
+	_ fs.Fs              = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.DirSetModTimer  = (*Fs)(nil)
+	_ fs.MkdirMetadataer = (*Fs)(nil)
+	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.Object          = (*Object)(nil)
+	_ fs.Metadataer      = (*Object)(nil)
+	_ fs.SetMetadataer   = (*Object)(nil)
+	_ fs.Directory       = (*Directory)(nil)
+	_ fs.Metadataer      = (*Directory)(nil)
+	_ fs.SetMetadataer   = (*Directory)(nil)
+	_ fs.SetModTimer     = (*Directory)(nil)
 )

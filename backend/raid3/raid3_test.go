@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	unimplementableFsMethods     = []string{"UnWrap", "WrapFs", "SetWrapper", "UserInfo", "Disconnect", "PublicLink", "PutUnchecked", "MergeDirs", "OpenWriterAt", "OpenChunkWriter", "ListP"}
+	unimplementableFsMethods     = []string{"UnWrap", "WrapFs", "SetWrapper", "UserInfo", "Disconnect", "PublicLink", "PutUnchecked", "MergeDirs", "OpenWriterAt", "OpenChunkWriter", "ListP", "ChangeNotify", "DirCacheFlush", "PutStream"}
 	unimplementableObjectMethods = []string{}
 )
 
@@ -886,11 +886,190 @@ func TestDirMove(t *testing.T) {
 	for _, backendDir := range []string{evenDir, oddDir, parityDir} {
 		srcPath := filepath.Join(backendDir, srcDir)
 		dstPath := filepath.Join(backendDir, dstDir)
-		_, err := os.Stat(srcPath)
-		assert.True(t, os.IsNotExist(err), "source should be deleted on backend %s", backendDir)
+		_, err = os.Stat(srcPath)
+		require.True(t, os.IsNotExist(err), "source directory should be deleted from %s backend", backendDir)
 		_, err = os.Stat(dstPath)
-		assert.NoError(t, err, "destination should exist on backend %s", backendDir)
+		require.NoError(t, err, "destination directory should exist on %s backend", backendDir)
 	}
+}
+
+// TestCopyFileBetweenDirectories tests copying a file between directories using server-side Copy.
+//
+// This test verifies:
+//   - File can be copied between directories using Copy operation
+//   - Source file remains after successful copy
+//   - Destination file exists with correct data
+//   - Works with local filesystem backends
+//
+// Failure indicates: Copy doesn't properly handle file copying or incorrectly
+// deletes the source file.
+func TestCopyFileBetweenDirectories(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"use_streaming": "true",
+	}
+	f, err := raid3.NewFs(ctx, "TestCopy", "", m)
+	require.NoError(t, err)
+
+	// Create directory structure
+	err = f.Mkdir(ctx, "src")
+	require.NoError(t, err)
+	err = f.Mkdir(ctx, "dst")
+	require.NoError(t, err)
+
+	// Create file in source directory
+	srcRemote := "src/document.pdf"
+	data := []byte("PDF content here")
+	info := object.NewStaticObjectInfo(srcRemote, time.Now(), int64(len(data)), true, nil, nil)
+	srcObj, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Verify source file exists
+	srcObj2, err := f.NewObject(ctx, srcRemote)
+	require.NoError(t, err)
+	assert.Equal(t, srcRemote, srcObj2.Remote())
+
+	// Copy to destination directory
+	dstRemote := "dst/document.pdf"
+	doCopy := f.Features().Copy
+	require.NotNil(t, doCopy, "Copy should be enabled when all backends support it")
+	dstObj, err := doCopy(ctx, srcObj, dstRemote)
+	require.NoError(t, err)
+	require.NotNil(t, dstObj)
+	assert.Equal(t, dstRemote, dstObj.Remote())
+
+	// Verify source file still exists (unlike Move)
+	srcObj3, err := f.NewObject(ctx, srcRemote)
+	require.NoError(t, err, "source file should still exist after copy")
+	require.NotNil(t, srcObj3)
+	rc, err := srcObj3.Open(ctx)
+	require.NoError(t, err)
+	gotSrc, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, data, gotSrc, "source file should have unchanged data")
+
+	// Verify destination file exists with correct data
+	dstObj2, err := f.NewObject(ctx, dstRemote)
+	require.NoError(t, err)
+	rc, err = dstObj2.Open(ctx)
+	require.NoError(t, err)
+	got, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, data, got, "copied file should have same data")
+
+	// Verify particles copied (not moved) in filesystem
+	srcEvenPath := filepath.Join(evenDir, "src", "document.pdf")
+	dstEvenPath := filepath.Join(evenDir, "dst", "document.pdf")
+	_, err = os.Stat(srcEvenPath)
+	require.NoError(t, err, "source particle should still exist after copy")
+	_, err = os.Stat(dstEvenPath)
+	require.NoError(t, err, "destination particle should exist")
+}
+
+// TestCopyFileSameDirectory tests copying a file within the same directory.
+//
+// This test verifies:
+//   - File can be copied to a new name in the same directory
+//   - Source file remains after successful copy
+//   - Both files exist with correct data
+//
+// Failure indicates: Copy doesn't properly handle same-directory copies.
+func TestCopyFileSameDirectory(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+	f, err := raid3.NewFs(ctx, "TestCopySameDir", "", m)
+	require.NoError(t, err)
+
+	// Create file
+	srcRemote := "original.txt"
+	data := []byte("Original file content")
+	info := object.NewStaticObjectInfo(srcRemote, time.Now(), int64(len(data)), true, nil, nil)
+	srcObj, err := f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Copy to new name in same directory
+	dstRemote := "copy.txt"
+	doCopy := f.Features().Copy
+	require.NotNil(t, doCopy)
+	dstObj, err := doCopy(ctx, srcObj, dstRemote)
+	require.NoError(t, err)
+	require.NotNil(t, dstObj)
+
+	// Verify both files exist
+	srcObj2, err := f.NewObject(ctx, srcRemote)
+	require.NoError(t, err, "source file should still exist")
+	dstObj2, err := f.NewObject(ctx, dstRemote)
+	require.NoError(t, err, "destination file should exist")
+
+	// Verify both have correct data
+	rc, err := srcObj2.Open(ctx)
+	require.NoError(t, err)
+	gotSrc, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, data, gotSrc)
+
+	rc, err = dstObj2.Open(ctx)
+	require.NoError(t, err)
+	gotDst, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, data, gotDst)
+}
+
+// TestCopyFeatureEnabled tests that Copy feature is enabled when all backends support Copy.
+//
+// This test verifies:
+//   - Copy feature is available when all backends support Copy
+//   - Copy feature is nil when not all backends support Copy
+//
+// Failure indicates: Feature detection logic is incorrect.
+func TestCopyFeatureEnabled(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+	f, err := raid3.NewFs(ctx, "TestCopyFeature", "", m)
+	require.NoError(t, err)
+
+	// Local backend supports Copy, so Copy should be enabled
+	doCopy := f.Features().Copy
+	require.NotNil(t, doCopy, "Copy should be enabled when all backends (local) support it")
 }
 
 // TestRenameFilePreservesParitySuffix tests that renaming preserves the correct

@@ -1362,6 +1362,163 @@ func TestMoveRollbackOnFailure(t *testing.T) {
 	t.Logf("✅ Move rollback correctly restored all particles to source location")
 }
 
+// TestCopyFailsWithUnavailableBackend tests that Copy operations fail when
+// a backend is unavailable, following the strict RAID 3 write policy.
+//
+// This test verifies:
+//   - Copy fails immediately when any backend is unavailable
+//   - Source file remains unchanged after failed copy
+//   - No destination file is created after failed copy
+//   - Error message indicates degraded mode blocking
+//
+// Failure indicates: Copy doesn't properly enforce strict write policy
+// or doesn't fail fast when backends are unavailable.
+func TestCopyFailsWithUnavailableBackend(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
+	}
+	f, err := raid3.NewFs(ctx, "TestCopyFail", "", m)
+	require.NoError(t, err)
+
+	// Create a file
+	oldRemote := "original.txt"
+	data := []byte("Copy should fail")
+	info := object.NewStaticObjectInfo(oldRemote, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Verify file exists
+	oldObj, err := f.NewObject(ctx, oldRemote)
+	require.NoError(t, err)
+
+	// Make odd backend read-only to simulate unavailability
+	err = os.Chmod(oddDir, 0444)
+	require.NoError(t, err)
+	defer func() {
+		os.Chmod(oddDir, 0755) // Restore for cleanup
+	}()
+
+	// Attempt copy - should fail
+	newRemote := "copied.txt"
+	doCopy := f.Features().Copy
+	require.NotNil(t, doCopy)
+	_, err = doCopy(ctx, oldObj, newRemote)
+
+	// Copy should fail
+	require.Error(t, err, "Copy should fail when backend unavailable")
+	require.Contains(t, err.Error(), "degraded mode", "Error should mention degraded mode")
+
+	// Verify original file still exists and is unchanged
+	oldObj2, err := f.NewObject(ctx, oldRemote)
+	require.NoError(t, err, "Original file should still exist after failed copy")
+	rc, err := oldObj2.Open(ctx)
+	require.NoError(t, err)
+	gotData, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, data, gotData, "Original file content should be unchanged")
+
+	// Verify no file exists at destination
+	newObj2, err := f.NewObject(ctx, newRemote)
+	require.Error(t, err, "New file should not exist after failed copy")
+	require.Nil(t, newObj2)
+}
+
+// TestCopyRollbackOnFailure tests that Copy operations roll back successfully
+// copied particles when a backend fails during copy.
+//
+// This test verifies:
+//   - Copy tracks successfully copied particles
+//   - On failure, rollback removes particles from destination
+//   - Original file remains intact after failed Copy
+//   - No file exists at destination after failed Copy
+//   - All-or-nothing guarantee is maintained
+func TestCopyRollbackOnFailure(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	m := configmap.Simple{
+		"even":     evenDir,
+		"odd":      oddDir,
+		"parity":   parityDir,
+		"rollback": "true", // Explicitly enable rollback
+	}
+	f, err := raid3.NewFs(ctx, "TestCopyRollback", "", m)
+	require.NoError(t, err)
+
+	// Create a file
+	oldRemote := "original.txt"
+	data := []byte("Copy rollback test data")
+	info := object.NewStaticObjectInfo(oldRemote, time.Now(), int64(len(data)), true, nil, nil)
+	_, err = f.Put(ctx, bytes.NewReader(data), info)
+	require.NoError(t, err)
+
+	// Verify file exists
+	oldObj, err := f.NewObject(ctx, oldRemote)
+	require.NoError(t, err)
+
+	// Make odd backend read-only to simulate failure during copy
+	err = os.Chmod(oddDir, 0444)
+	require.NoError(t, err)
+	defer func() {
+		os.Chmod(oddDir, 0755) // Restore for cleanup
+	}()
+
+	// Attempt copy - should fail
+	newRemote := "copied.txt"
+	doCopy := f.Features().Copy
+	require.NotNil(t, doCopy)
+	newObj, err := doCopy(ctx, oldObj, newRemote)
+
+	// Copy should fail
+	require.Error(t, err, "Copy should fail when backend unavailable")
+	require.Nil(t, newObj)
+
+	// Verify original file still exists and is unchanged
+	oldObj2, err := f.NewObject(ctx, oldRemote)
+	require.NoError(t, err, "Original file should still exist after failed copy")
+	rc, err := oldObj2.Open(ctx)
+	require.NoError(t, err)
+	gotData, err := io.ReadAll(rc)
+	rc.Close()
+	require.NoError(t, err)
+	assert.Equal(t, data, gotData, "Original file content should be unchanged")
+
+	// Verify no file exists at destination (rollback should have removed it)
+	newObj2, err := f.NewObject(ctx, newRemote)
+	require.Error(t, err, "New file should not exist (rollback should have removed it)")
+	require.Nil(t, newObj2)
+
+	// Verify original particles still exist at source location
+	evenPath := filepath.Join(evenDir, oldRemote)
+	_, err = os.Stat(evenPath)
+	assert.NoError(t, err, "Even particle should still exist at source")
+
+	// For odd, we verify through level3 interface since directory is read-only
+	rc2, err := oldObj2.Open(ctx)
+	assert.NoError(t, err, "Original file should still be readable (particles exist)")
+	rc2.Close()
+
+	t.Logf("✅ Copy rollback correctly preserved original file and cleaned up destination")
+}
+
 // TestRollbackDisabled tests that operations don't rollback when rollback is disabled.
 //
 // This test verifies:

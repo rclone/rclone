@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path"
 	"sync"
 	"time"
 
@@ -46,6 +47,15 @@ func (p *particleObjectInfo) Remote() string {
 // from the actual particle data instead of using the original file's hash
 func (p *particleObjectInfo) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	return "", nil
+}
+
+// Metadata returns metadata from the wrapped ObjectInfo
+// This allows backends to extract metadata during Put operations
+func (p *particleObjectInfo) Metadata(ctx context.Context) (fs.Metadata, error) {
+	if do, ok := p.ObjectInfo.(fs.Metadataer); ok {
+		return do.Metadata(ctx)
+	}
+	return nil, nil
 }
 
 // Object represents a striped object
@@ -233,6 +243,125 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 		obj, err = o.fs.parity.NewObject(gCtx, parityEven)
 		if err == nil {
 			return obj.SetModTime(gCtx, t)
+		}
+		return nil // Ignore if parity not found
+	})
+
+	return g.Wait()
+}
+
+// Metadata returns metadata for the object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	// Read metadata from both even and odd particles and merge them
+	// This ensures we get complete metadata even if one particle has more metadata than the other
+	// Parity backend doesn't contain actual file metadata, so we don't check it
+	var mergedMetadata fs.Metadata
+
+	// Read from even backend
+	obj, err := o.fs.even.NewObject(ctx, o.remote)
+	if err == nil {
+		if do, ok := obj.(fs.Metadataer); ok {
+			evenMeta, err := do.Metadata(ctx)
+			if err == nil && evenMeta != nil {
+				if mergedMetadata == nil {
+					mergedMetadata = make(fs.Metadata)
+				}
+				mergedMetadata.Merge(evenMeta)
+			}
+		}
+	}
+
+	// Read from odd backend and merge
+	obj, err = o.fs.odd.NewObject(ctx, o.remote)
+	if err == nil {
+		if do, ok := obj.(fs.Metadataer); ok {
+			oddMeta, err := do.Metadata(ctx)
+			if err == nil && oddMeta != nil {
+				if mergedMetadata == nil {
+					mergedMetadata = make(fs.Metadata)
+				}
+				mergedMetadata.Merge(oddMeta)
+			}
+		}
+	}
+
+	// Return merged metadata (or nil if no metadata found)
+	return mergedMetadata, nil
+}
+
+// SetMetadata sets metadata for the object
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	// SetMetadata is a metadata write operation
+	// Consistent with Object.SetModTime, Put, Update, Move operations
+	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("setmetadata blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = o.fs.disableRetriesForWrites(ctx)
+
+	// Set metadata on all three backends that support it
+	// Use errgroup to collect errors from all backends
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Set metadata on even particle
+	g.Go(func() error {
+		obj, err := o.fs.even.NewObject(gCtx, o.remote)
+		if err != nil {
+			return nil // Ignore if not found (degraded mode)
+		}
+		if do, ok := obj.(fs.SetMetadataer); ok {
+			err := do.SetMetadata(gCtx, metadata)
+			if err != nil {
+				return fmt.Errorf("%s: %w", o.fs.even.Name(), err)
+			}
+		}
+		return nil
+	})
+
+	// Set metadata on odd particle
+	g.Go(func() error {
+		obj, err := o.fs.odd.NewObject(gCtx, o.remote)
+		if err != nil {
+			return nil // Ignore if not found (degraded mode)
+		}
+		if do, ok := obj.(fs.SetMetadataer); ok {
+			err := do.SetMetadata(gCtx, metadata)
+			if err != nil {
+				return fmt.Errorf("%s: %w", o.fs.odd.Name(), err)
+			}
+		}
+		return nil
+	})
+
+	// Set metadata on parity particle (try both suffixes)
+	g.Go(func() error {
+		parityOdd := GetParityFilename(o.remote, true)
+		obj, err := o.fs.parity.NewObject(gCtx, parityOdd)
+		if err == nil {
+			if do, ok := obj.(fs.SetMetadataer); ok {
+				err := do.SetMetadata(gCtx, metadata)
+				if err != nil {
+					return fmt.Errorf("%s: %w", o.fs.parity.Name(), err)
+				}
+				return nil
+			}
+		}
+
+		parityEven := GetParityFilename(o.remote, false)
+		obj, err = o.fs.parity.NewObject(gCtx, parityEven)
+		if err == nil {
+			if do, ok := obj.(fs.SetMetadataer); ok {
+				err := do.SetMetadata(gCtx, metadata)
+				if err != nil {
+					return fmt.Errorf("%s: %w", o.fs.parity.Name(), err)
+				}
+			}
 		}
 		return nil // Ignore if parity not found
 	})
@@ -1461,8 +1590,200 @@ func (d *Directory) Remote() string {
 }
 
 // ModTime returns the modification time
+// It returns the latest ModTime of all backends that have the directory
 func (d *Directory) ModTime(ctx context.Context) time.Time {
-	return time.Now()
+	var latestTime time.Time
+	backends := []fs.Fs{d.fs.even, d.fs.odd, d.fs.parity}
+	
+	// Get parent directory to list from
+	parent := path.Dir(d.remote)
+	if parent == "." {
+		parent = ""
+	}
+	dirName := path.Base(d.remote)
+	if dirName == "." || dirName == "" {
+		dirName = d.remote
+	}
+	
+	for _, backend := range backends {
+		if backend == nil {
+			continue
+		}
+		// List parent directory to find this directory entry
+		entries, err := backend.List(ctx, parent)
+		if err != nil {
+			continue // Backend doesn't have parent directory
+		}
+		// Find the directory entry
+		for _, entry := range entries {
+			if dir, ok := entry.(fs.Directory); ok && dir.Remote() == d.remote {
+				modTime := dir.ModTime(ctx)
+				if latestTime.IsZero() || latestTime.Before(modTime) {
+					latestTime = modTime
+				}
+				break
+			}
+		}
+	}
+	
+	// If we didn't find any directory, return current time as fallback
+	if latestTime.IsZero() {
+		return time.Now()
+	}
+	return latestTime
+}
+
+// Metadata returns metadata for the directory
+//
+// It should return nil if there is no Metadata
+func (d *Directory) Metadata(ctx context.Context) (fs.Metadata, error) {
+	// Read metadata from all backends and merge them
+	// This ensures consistency with ModTime() which reads from all backends
+	parent := path.Dir(d.remote)
+	if parent == "." {
+		parent = ""
+	}
+	dirName := path.Base(d.remote)
+	if dirName == "." || dirName == "" {
+		dirName = d.remote
+	}
+
+	var mergedMetadata fs.Metadata
+	backends := []fs.Fs{d.fs.even, d.fs.odd, d.fs.parity}
+
+	for _, backend := range backends {
+		if backend == nil {
+			continue
+		}
+		entries, err := backend.List(ctx, parent)
+		if err != nil {
+			continue
+		}
+		// Find the directory entry
+		for _, entry := range entries {
+			if dir, ok := entry.(fs.Directory); ok && dir.Remote() == d.remote {
+				if do, ok := dir.(fs.Metadataer); ok {
+					meta, err := do.Metadata(ctx)
+					if err == nil && meta != nil {
+						if mergedMetadata == nil {
+							mergedMetadata = make(fs.Metadata)
+						}
+						mergedMetadata.Merge(meta)
+					}
+				}
+				break
+			}
+		}
+	}
+
+	// If we have metadata, ensure mtime matches ModTime() to avoid timing precision issues
+	if mergedMetadata != nil {
+		modTime := d.ModTime(ctx)
+		mergedMetadata["mtime"] = modTime.Format(time.RFC3339Nano)
+	}
+
+	return mergedMetadata, nil
+}
+
+// SetMetadata sets metadata for the directory
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	// Check if directory exists before health check (union backend pattern)
+	dirExists, err := d.fs.checkDirectoryExists(ctx, d.remote)
+	if err != nil {
+		return fmt.Errorf("failed to check directory existence: %w", err)
+	}
+	if !dirExists {
+		return fs.ErrorDirNotFound
+	}
+
+	// Pre-flight check: Enforce strict RAID 3 write policy
+	// SetMetadata is a metadata write operation
+	// Consistent with DirSetModTime, Object.SetMetadata operations
+	if err := d.fs.checkAllBackendsAvailable(ctx); err != nil {
+		return fmt.Errorf("setmetadata blocked in degraded mode (RAID 3 policy): %w", err)
+	}
+
+	// Disable retries for strict RAID 3 write policy
+	ctx = d.fs.disableRetriesForWrites(ctx)
+
+	// Set metadata on all three backends that support it
+	// Use errgroup to collect errors from all backends
+	g, gCtx := errgroup.WithContext(ctx)
+
+	parent := path.Dir(d.remote)
+	if parent == "." {
+		parent = ""
+	}
+
+	g.Go(func() error {
+		entries, err := d.fs.even.List(gCtx, parent)
+		if err != nil {
+			return nil // Ignore if directory doesn't exist on this backend
+		}
+		for _, entry := range entries {
+			if dir, ok := entry.(fs.Directory); ok && dir.Remote() == d.remote {
+				if do, ok := dir.(fs.SetMetadataer); ok {
+					err := do.SetMetadata(gCtx, metadata)
+					if err != nil {
+						return fmt.Errorf("%s: %w", d.fs.even.Name(), err)
+					}
+				}
+				break
+			}
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		entries, err := d.fs.odd.List(gCtx, parent)
+		if err != nil {
+			return nil // Ignore if directory doesn't exist on this backend
+		}
+		for _, entry := range entries {
+			if dir, ok := entry.(fs.Directory); ok && dir.Remote() == d.remote {
+				if do, ok := dir.(fs.SetMetadataer); ok {
+					err := do.SetMetadata(gCtx, metadata)
+					if err != nil {
+						return fmt.Errorf("%s: %w", d.fs.odd.Name(), err)
+					}
+				}
+				break
+			}
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		entries, err := d.fs.parity.List(gCtx, parent)
+		if err != nil {
+			return nil // Ignore if directory doesn't exist on this backend
+		}
+		for _, entry := range entries {
+			if dir, ok := entry.(fs.Directory); ok && dir.Remote() == d.remote {
+				if do, ok := dir.(fs.SetMetadataer); ok {
+					err := do.SetMetadata(gCtx, metadata)
+					if err != nil {
+						return fmt.Errorf("%s: %w", d.fs.parity.Name(), err)
+					}
+				}
+				break
+			}
+		}
+		return nil
+	})
+
+	return g.Wait()
+}
+
+// SetModTime sets the modification time of the directory
+func (d *Directory) SetModTime(ctx context.Context, modTime time.Time) error {
+	// Use Fs.DirSetModTime which already implements the logic
+	if do := d.fs.Features().DirSetModTime; do != nil {
+		return do(ctx, d.remote, modTime)
+	}
+	return fs.ErrorNotImplemented
 }
 
 // Size returns the size (always 0 for directories)

@@ -6,7 +6,7 @@ package raid3
 // It includes:
 //   - Timeout mode configuration (applyTimeoutMode, disableRetriesForWrites)
 //   - Rollback operations (rollbackPut, rollbackUpdate, rollbackMoves)
-//   - Particle move/copy helpers (moveOrCopyParticle, moveOrCopyParticleToTemp)
+//   - Particle move/copy helpers (moveOrCopyParticle, moveOrCopyParticleToTemp, copyParticle)
 //   - Directory listing helpers (listDirectories)
 //   - Math utilities (minInt64, maxInt64)
 //   - moveState type for tracking move operations
@@ -288,6 +288,26 @@ func moveOrCopyParticle(ctx context.Context, backend fs.Fs, obj fs.Object, destR
 		if delErr := obj.Remove(ctx); delErr != nil {
 			return nil, fmt.Errorf("failed to delete original after copy: %w", delErr)
 		}
+	}
+
+	return dstObj, nil
+}
+
+// copyParticle copies a particle from source to destination using server-side Copy.
+// Unlike moveOrCopyParticle, this does not delete the source object.
+func copyParticle(ctx context.Context, backend fs.Fs, obj fs.Object, destRemote string) (fs.Object, error) {
+	backendFeatures := backend.Features()
+	if backendFeatures.Copy == nil {
+		return nil, fmt.Errorf("backend does not support Copy")
+	}
+
+	// Perform Copy
+	dstObj, err := backendFeatures.Copy(ctx, obj, destRemote)
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy particle: %w", err)
+	}
+	if dstObj == nil {
+		return nil, fmt.Errorf("destination object not found after copy")
 	}
 
 	return dstObj, nil
