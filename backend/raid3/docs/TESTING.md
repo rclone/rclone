@@ -66,6 +66,7 @@ See [`integration/README.md`](../integration/README.md) for complete documentati
 - `compare_raid3_with_single_rebuild.sh` - Rebuild validation
 - `compare_raid3_with_single_heal.sh` - Heal validation
 - `compare_raid3_with_single_errors.sh` - Error handling
+- `compare_raid3_with_single_all.sh` - Master script to run all tests across all backends
 
 ---
 

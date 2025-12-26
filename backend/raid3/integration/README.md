@@ -60,6 +60,7 @@ cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)
 | **`compare_raid3_with_single_rebuild.sh`** | Rebuild command validation | `start`, `stop`, `teardown`, `list`, `test <name>` |
 | **`compare_raid3_with_single_heal.sh`** | Auto-heal functionality tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
 | **`compare_raid3_with_single_errors.sh`** | Error handling and rollback tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
+| **`compare_raid3_with_single_all.sh`** | Run all test suites across all backends | `[-v]`, `[-h]` |
 
 ### Common Commands
 
@@ -190,10 +191,35 @@ Validates error handling, rollback behavior, and degraded mode write blocking.
 
 **Usage**:
 ```bash
-# Run error handling tests
-./compare_raid3_with_single_errors.sh --storage-type local test put-fail-even
+# Run error handling tests (minio only - requires containers to stop)
+./compare_raid3_with_single_errors.sh --storage-type minio test put-fail-even
 ./compare_raid3_with_single_errors.sh --storage-type minio test move-fail-odd -v
 ```
+
+### Master Test Script (`compare_raid3_with_single_all.sh`)
+
+Runs all test suites across all RAID3 backends with minimal output (pass/fail only).
+
+**What it does**:
+- Runs `compare_raid3_with_single.sh` with local, minio, and mixed storage types
+- Runs `compare_raid3_with_single_heal.sh` with local, minio, and mixed storage types
+- Runs `compare_raid3_with_single_errors.sh` with minio only
+- Runs `compare_raid3_with_single_rebuild.sh` with local, minio, and mixed storage types
+- Provides summary of all test results
+
+**Usage**:
+```bash
+# Run all tests with minimal output (default)
+./compare_raid3_with_single_all.sh
+
+# Run all tests with verbose output
+./compare_raid3_with_single_all.sh --verbose
+
+# Show help
+./compare_raid3_with_single_all.sh --help
+```
+
+**Output**: Shows only pass/fail status for each test combination, with a final summary. Use `--verbose` to see detailed output from individual test scripts.
 
 ## 🖥️ Platform Compatibility
 
@@ -240,7 +266,8 @@ integration/
 ├── compare_raid3_with_single.sh          # Comparison tests
 ├── compare_raid3_with_single_rebuild.sh   # Rebuild tests
 ├── compare_raid3_with_single_heal.sh     # Heal tests
-└── compare_raid3_with_single_errors.sh    # Error handling tests
+├── compare_raid3_with_single_errors.sh    # Error handling tests
+└── compare_raid3_with_single_all.sh       # Master script (runs all tests)
 ```
 
 ## 🚀 Example Workflow
@@ -265,7 +292,10 @@ cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)
 # 6. Run heal tests
 ./backend/raid3/integration/compare_raid3_with_single_heal.sh --storage-type minio test odd -v
 
-# 7. Clean up (optional)
+# 7. Run all tests at once (recommended for CI/validation)
+./backend/raid3/integration/compare_raid3_with_single_all.sh
+
+# 8. Clean up (optional)
 ./backend/raid3/integration/compare_raid3_with_single.sh --storage-type local teardown
 ```
 

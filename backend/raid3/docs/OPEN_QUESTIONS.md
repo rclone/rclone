@@ -198,7 +198,7 @@ oddReader, err := oddObj.Open(ctx, filteredOptions...)   // Then this
 
 **Question**: Should StreamReconstructor better handle size mismatches during streaming?
 
-**Context**: When data and parity streams read different amounts during streaming reconstruction, the current implementation processes the minimum. A comment in the code (`particles.go:818`) mentions "future enhancement" for better buffering of excess data.
+**Context**: When data and parity streams read different amounts during streaming reconstruction, the current implementation processes the minimum. A comment in the code mentions "future enhancement" for better buffering of excess data.
 
 **Current Behavior**: Works correctly but processes minimum size, potentially requiring additional reads
 
@@ -211,8 +211,8 @@ oddReader, err := oddObj.Open(ctx, filteredOptions...)   // Then this
 - Must maintain correctness for reconstruction
 
 **References**: 
-- Current implementation: `backend/raid3/particles.go:715-744`
-- Comment: `backend/raid3/particles.go:818`
+- Current implementation: `backend/raid3/particles.go` (StreamReconstructor)
+- Note: StreamMerger has been moved to `backend/raid3/streammerger.go`
 
 ---
 

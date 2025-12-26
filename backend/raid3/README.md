@@ -114,10 +114,17 @@ The setup provides `localraid3` and `minioraid3` remotes for testing. Basic oper
 
 ## Testing
 
-For comprehensive testing documentation, see [`docs/TESTING.md`](docs/TESTING.md). The `integration/` directory contains Bash-based integration test scripts (`setup.sh`, `compare_raid3_with_single.sh`, `compare_raid3_with_single_rebuild.sh`, `compare_raid3_with_single_heal.sh`, `compare_raid3_with_single_errors.sh`) that supplement Go-based unit and integration tests with black-box testing scenarios. These scripts work on Linux, macOS, WSL, Git Bash, and Cygwin (not natively on Windows). See [`integration/README.md`](integration/README.md) for complete documentation.
+For comprehensive testing documentation, see [`docs/TESTING.md`](docs/TESTING.md). The `integration/` directory contains Bash-based integration test scripts (`setup.sh`, `compare_raid3_with_single.sh`, `compare_raid3_with_single_rebuild.sh`, `compare_raid3_with_single_heal.sh`, `compare_raid3_with_single_errors.sh`, `compare_raid3_with_single_all.sh`) that supplement Go-based unit and integration tests with black-box testing scenarios. These scripts work on Linux, macOS, WSL, Git Bash, and Cygwin (not natively on Windows). See [`integration/README.md`](integration/README.md) for complete documentation. The `compare_raid3_with_single_all.sh` script runs all test suites across all RAID3 backends with minimal output (pass/fail only).
 
 ## Implementation Notes
 
 The raid3 backend uses a pipelined chunked approach for streaming uploads (default), implements byte-level splitting/merging functions, validates particle sizes on every read, computes hashes on reconstructed data, supports all standard fs operations (Put, Get, Update, Remove, etc.), and uses `errgroup` for parallel operations where appropriate. The streaming implementation processes files in 2MB chunks, providing bounded memory usage and efficient handling of large files.
+
+**Code Organization**: The backend is organized into dedicated files for clarity:
+- `particles.go` - Core particle operations (SplitBytes, MergeBytes, CalculateParity, reconstruction functions)
+- `streammerger.go` - StreamMerger type for merging even and odd particle streams during reads
+- `streamsplitter.go` - StreamSplitter type for splitting input streams into even, odd, and parity particles during writes
+- `raid3.go` - Main Fs implementation and filesystem operations
+- `object.go` - Object implementation and operations
 
 

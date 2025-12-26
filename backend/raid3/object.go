@@ -1261,83 +1261,17 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		isOddLengthCh <- false // Default to even-length
 	}
 
-	// Track sizes for verification
-	var totalEvenWritten, totalOddWritten int64
-
 	// Use errgroup to coordinate input reading/splitting and Update operations
 	g, gCtx := errgroup.WithContext(ctx)
 	var uploadedMu sync.Mutex
 
 	// Goroutine 1: Read input, split into even/odd/parity, write to pipes
+	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, int(readChunkSize), isOddLengthCh)
 	g.Go(func() error {
 		defer evenPipeW.Close()
 		defer oddPipeW.Close()
 		defer parityPipeW.Close()
-
-		// Buffer for reading chunks
-		buffer := make([]byte, readChunkSize)
-
-		for {
-			// Read chunk from input
-			n, readErr := in.Read(buffer)
-			if n > 0 {
-				// Split chunk into even and odd bytes
-				evenData, oddData := SplitBytes(buffer[:n])
-				parityData := CalculateParity(evenData, oddData)
-
-				// Track sizes
-				totalEvenWritten += int64(len(evenData))
-				totalOddWritten += int64(len(oddData))
-
-				// If size was unknown, detect odd-length from chunks
-				if srcSize < 0 && len(evenData) > len(oddData) {
-					// Update channel (non-blocking)
-					select {
-					case isOddLengthCh <- true:
-					default:
-						// Channel already has a value, drain and send new one
-						select {
-						case <-isOddLengthCh:
-							isOddLengthCh <- true
-						default:
-						}
-					}
-				}
-
-				// Write to pipes (these may block if readers are slow, which is fine)
-				if _, err := evenPipeW.Write(evenData); err != nil {
-					return fmt.Errorf("failed to write even data to pipe: %w", err)
-				}
-				if _, err := oddPipeW.Write(oddData); err != nil {
-					return fmt.Errorf("failed to write odd data to pipe: %w", err)
-				}
-				if _, err := parityPipeW.Write(parityData); err != nil {
-					return fmt.Errorf("failed to write parity data to pipe: %w", err)
-				}
-			}
-
-			if readErr == io.EOF {
-				break // End of input
-			}
-			if readErr != nil {
-				return fmt.Errorf("failed to read input: %w", readErr)
-			}
-		}
-
-		// If size was unknown, final check: evenWritten > oddWritten means odd-length
-		if srcSize < 0 && totalEvenWritten > totalOddWritten {
-			select {
-			case isOddLengthCh <- true:
-			default:
-				select {
-				case <-isOddLengthCh:
-					isOddLengthCh <- true
-				default:
-				}
-			}
-		}
-
-		return nil
+		return splitter.Split(in)
 	})
 
 	// Goroutine 2: Update even particle (reads from evenPipeR)
@@ -1429,6 +1363,10 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	if err2 = g.Wait(); err2 != nil {
 		return err2
 	}
+
+	// Get written sizes from splitter for verification
+	totalEvenWritten := splitter.GetTotalEvenWritten()
+	totalOddWritten := splitter.GetTotalOddWritten()
 
 	// Verify sizes
 	if err := verifyParticleSizes(ctx, o.fs, evenObj, oddObj, totalEvenWritten, totalOddWritten); err != nil {

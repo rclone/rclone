@@ -1418,8 +1418,6 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		isOddLengthCh <- false // Default to even-length
 	}
 
-	// Track sizes for verification
-	var totalEvenWritten, totalOddWritten int64
 	var evenObj, oddObj fs.Object
 
 	// Use errgroup to coordinate input reading/splitting and Put operations
@@ -1427,75 +1425,12 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	var uploadedMu sync.Mutex
 
 	// Goroutine 1: Read input, split into even/odd/parity, write to pipes
+	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, int(readChunkSize), isOddLengthCh)
 	g.Go(func() error {
 		defer evenPipeW.Close()
 		defer oddPipeW.Close()
 		defer parityPipeW.Close()
-
-		// Buffer for reading chunks
-		buffer := make([]byte, readChunkSize)
-
-		for {
-			// Read chunk from input
-			n, readErr := in.Read(buffer)
-			if n > 0 {
-				// Split chunk into even and odd bytes
-				evenData, oddData := SplitBytes(buffer[:n])
-				parityData := CalculateParity(evenData, oddData)
-
-				// Track sizes
-				totalEvenWritten += int64(len(evenData))
-				totalOddWritten += int64(len(oddData))
-
-				// If size was unknown, detect odd-length from chunks
-				if srcSize < 0 && len(evenData) > len(oddData) {
-					// Update channel (non-blocking, will overwrite previous value)
-					select {
-					case isOddLengthCh <- true:
-					default:
-						// Channel already has a value, drain and send new one
-						select {
-						case <-isOddLengthCh:
-							isOddLengthCh <- true
-						default:
-						}
-					}
-				}
-
-				// Write to pipes (these may block if readers are slow, which is fine)
-				if _, err := evenPipeW.Write(evenData); err != nil {
-					return fmt.Errorf("failed to write even data to pipe: %w", err)
-				}
-				if _, err := oddPipeW.Write(oddData); err != nil {
-					return fmt.Errorf("failed to write odd data to pipe: %w", err)
-				}
-				if _, err := parityPipeW.Write(parityData); err != nil {
-					return fmt.Errorf("failed to write parity data to pipe: %w", err)
-				}
-			}
-
-			if readErr == io.EOF {
-				break // End of input
-			}
-			if readErr != nil {
-				return fmt.Errorf("failed to read input: %w", readErr)
-			}
-		}
-
-		// If size was unknown, final check: evenWritten > oddWritten means odd-length
-		if srcSize < 0 && totalEvenWritten > totalOddWritten {
-			select {
-			case isOddLengthCh <- true:
-			default:
-				select {
-				case <-isOddLengthCh:
-					isOddLengthCh <- true
-				default:
-				}
-			}
-		}
-
-		return nil
+		return splitter.Split(in)
 	})
 
 	// Goroutine 2: Put even particle (reads from evenPipeR)
@@ -1560,6 +1495,10 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	if err = g.Wait(); err != nil {
 		return nil, err
 	}
+
+	// Get written sizes from splitter for verification
+	totalEvenWritten := splitter.GetTotalEvenWritten()
+	totalOddWritten := splitter.GetTotalOddWritten()
 
 	// Verify sizes
 	if err := verifyParticleSizes(ctx, f, evenObj, oddObj, totalEvenWritten, totalOddWritten); err != nil {
@@ -1923,7 +1862,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var srcParityName string
 	parityOddSrc := GetParityFilename(srcRemote, true)
 	parityEvenSrc := GetParityFilename(srcRemote, false)
-	
+
 	// Check in source Fs's parity backend for cross-remote moves
 	parityFs := f.parity
 	if isCrossRemote {
