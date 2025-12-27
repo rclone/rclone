@@ -379,19 +379,56 @@ func (api *GPhotoAPI) CommitUpload(ctx context.Context, uploadResponse []byte, f
 
 	result, err := DecodeToMap(respBody)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to decode response: %w", err)
 	}
+
+	// Log response structure for debugging
+	fs.Debugf(nil, "gphoto: CommitUpload response keys: %v", getMapKeys(result))
 
 	// Extract media key (field 1 -> field 3 -> field 1)
 	if mediaData, ok := result["1"].(map[string]interface{}); ok {
+		fs.Debugf(nil, "gphoto: CommitUpload field 1 keys: %v", getMapKeys(mediaData))
 		if keyData, ok := mediaData["3"].(map[string]interface{}); ok {
+			fs.Debugf(nil, "gphoto: CommitUpload field 1.3 keys: %v", getMapKeys(keyData))
 			if mediaKey, ok := keyData["1"].(string); ok {
 				return mediaKey, nil
 			}
 		}
+		// Try alternate path: field 1 -> field 1 (for duplicates)
+		if mediaKey, ok := mediaData["1"].(string); ok {
+			fs.Infof(nil, "gphoto: Found media key at alternate location (field 1.1)")
+			return mediaKey, nil
+		}
 	}
 
+	// Try to find any string that looks like a media key in the response
+	if mediaKey := findMediaKeyInResponse(result); mediaKey != "" {
+		fs.Infof(nil, "gphoto: Found media key via deep search: %s", mediaKey)
+		return mediaKey, nil
+	}
+
+	// Log the full response for debugging
+	fs.Errorf(nil, "gphoto: CommitUpload response structure: %+v", result)
+
 	return "", fmt.Errorf("media key not found in response")
+}
+
+// findMediaKeyInResponse recursively searches for a media key in the response
+func findMediaKeyInResponse(data interface{}) string {
+	switch v := data.(type) {
+	case map[string]interface{}:
+		for _, val := range v {
+			if result := findMediaKeyInResponse(val); result != "" {
+				return result
+			}
+		}
+	case string:
+		// Media keys are typically long alphanumeric strings
+		if len(v) > 20 && len(v) < 100 {
+			return v
+		}
+	}
+	return ""
 }
 
 // MoveToTrash moves files to trash
