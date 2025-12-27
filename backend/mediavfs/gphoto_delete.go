@@ -101,7 +101,7 @@ func (f *Fs) BatchDelete(ctx context.Context, dedupKeys []string, user string, b
 // and batch deletes them from Google Photos, then removes from database
 func (f *Fs) ProcessPendingDeletions(ctx context.Context, user string, batchSize int) (int, error) {
 	if batchSize <= 0 {
-		batchSize = 50 // Conservative batch size to avoid rate limits
+		batchSize = 100
 	}
 
 	// Find files marked for deletion
