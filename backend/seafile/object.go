@@ -97,7 +97,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return err
 		}
 
-		uploaded, err := o.fs.upload(ctx, in, uploadLink, o.pathInLibrary)
+		uploaded, err := o.fs.upload(ctx, in, uploadLink, o.pathInLibrary, src.ModTime(ctx))
 		if err == ErrorInternalDuringUpload {
 			// This is a temporary error, try again with a new upload link
 			continue
