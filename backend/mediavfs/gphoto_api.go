@@ -466,41 +466,37 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 	for i, dedupKey := range dedupKeys {
 		fs.Debugf(nil, "gphoto: MoveToTrash %d/%d dedup_key=%s", i+1, len(dedupKeys), dedupKey)
 
-		// Build protobuf message for single file delete
-		// Same structure as Python but with single key in list
-		encoder := NewProtoEncoder()
-		encoder.EncodeInt32(2, 1)
-		encoder.EncodeString(3, dedupKey) // Single dedup key
-		encoder.EncodeInt32(4, 1)
+		// Build protobuf structure matching Python exactly
+		// Use EncodeDynamicMessage which handles types correctly
+		protoBody := map[string]interface{}{
+			"2": int64(1),
+			"3": dedupKey, // single string, not a list
+			"4": int64(1),
+			"8": map[string]interface{}{
+				"4": map[string]interface{}{
+					"2": map[string]interface{}{},
+					"3": map[string]interface{}{
+						"1": map[string]interface{}{},
+					},
+					"4": map[string]interface{}{},
+					"5": map[string]interface{}{
+						"1": map[string]interface{}{},
+					},
+				},
+			},
+			"9": map[string]interface{}{
+				"1": int64(5),
+				"2": map[string]interface{}{
+					"1": int64(49029607), // client version as INT
+					"2": "28",            // android version as STRING
+				},
+			},
+		}
 
-		// Field 8
-		field8_4_3_1 := NewProtoEncoder()
-		field8_4_3 := NewProtoEncoder()
-		field8_4_3.EncodeMessage(1, field8_4_3_1.Bytes())
-
-		field8_4_5_1 := NewProtoEncoder()
-		field8_4_5 := NewProtoEncoder()
-		field8_4_5.EncodeMessage(1, field8_4_5_1.Bytes())
-
-		field8_4 := NewProtoEncoder()
-		field8_4.EncodeMessage(2, []byte{})
-		field8_4.EncodeMessage(3, field8_4_3.Bytes())
-		field8_4.EncodeMessage(4, []byte{})
-		field8_4.EncodeMessage(5, field8_4_5.Bytes())
-
-		field8 := NewProtoEncoder()
-		field8.EncodeMessage(4, field8_4.Bytes())
-		encoder.EncodeMessage(8, field8.Bytes())
-
-		// Field 9
-		field9_2 := NewProtoEncoder()
-		field9_2.EncodeInt32(1, 49029607)
-		field9_2.EncodeString(2, "28")
-
-		field9 := NewProtoEncoder()
-		field9.EncodeInt32(1, 5)
-		field9.EncodeMessage(2, field9_2.Bytes())
-		encoder.EncodeMessage(9, field9.Bytes())
+		serializedData, err := EncodeDynamicMessage(protoBody)
+		if err != nil {
+			return fmt.Errorf("failed to encode message: %w", err)
+		}
 
 		headers := map[string]string{
 			"Content-Type": "application/x-protobuf",
@@ -508,7 +504,7 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 
 		resp, err := api.request(ctx, "POST",
 			"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
-			headers, bytes.NewReader(encoder.Bytes()))
+			headers, bytes.NewReader(serializedData))
 		if err != nil {
 			return fmt.Errorf("failed to delete file %d/%d: %w", i+1, len(dedupKeys), err)
 		}
