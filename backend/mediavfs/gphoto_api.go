@@ -174,7 +174,10 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			continue
 
 		case http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+			// Log error body for debugging
+			body, _ := readResponseBody(resp)
 			resp.Body.Close()
+			fs.Errorf(nil, "gphoto: server error (%d), body: %s", resp.StatusCode, string(body))
 			backoff := time.Duration(1<<uint(retry)) * time.Second
 			if backoff > 60*time.Second {
 				backoff = 60 * time.Second
@@ -461,9 +464,7 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 	fs.Infof(nil, "gphoto: MoveToTrash processing %d files", len(dedupKeys))
 
 	for i, dedupKey := range dedupKeys {
-		if (i+1)%10 == 0 || i == len(dedupKeys)-1 {
-			fs.Debugf(nil, "gphoto: MoveToTrash progress: %d/%d", i+1, len(dedupKeys))
-		}
+		fs.Debugf(nil, "gphoto: MoveToTrash %d/%d dedup_key=%s", i+1, len(dedupKeys), dedupKey)
 
 		// Build protobuf message for single file delete
 		// Same structure as Python but with single key in list
