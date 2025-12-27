@@ -174,10 +174,7 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			continue
 
 		case http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
-			// Log error body for debugging
-			body, _ := readResponseBody(resp)
 			resp.Body.Close()
-			fs.Errorf(nil, "gphoto: server error (%d), body: %s", resp.StatusCode, string(body))
 			backoff := time.Duration(1<<uint(retry)) * time.Second
 			if backoff > 60*time.Second {
 				backoff = 60 * time.Second
@@ -459,42 +456,64 @@ func findMediaKeyInResponse(data interface{}) string {
 	return ""
 }
 
-// MoveToTrash moves files to trash (one at a time for reliability)
+// MoveToTrash moves files to trash
 func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
-	fs.Infof(nil, "gphoto: MoveToTrash processing %d files", len(dedupKeys))
+	// Process in batches of 50 (conservative to avoid rate limits)
+	batchSize := 50
+	totalBatches := (len(dedupKeys) + batchSize - 1) / batchSize
 
-	for i, dedupKey := range dedupKeys {
-		fs.Debugf(nil, "gphoto: MoveToTrash %d/%d dedup_key=%s", i+1, len(dedupKeys), dedupKey)
+	fs.Infof(nil, "gphoto: MoveToTrash processing %d files in %d batches", len(dedupKeys), totalBatches)
 
-		// Build protobuf in exact field order matching Python's blackboxprotobuf
-		// Field 8.4 - subfields in order: 2, 3, 4, 5
+	for i := 0; i < len(dedupKeys); i += batchSize {
+		end := i + batchSize
+		if end > len(dedupKeys) {
+			end = len(dedupKeys)
+		}
+
+		batch := dedupKeys[i:end]
+		batchNum := (i / batchSize) + 1
+		fs.Debugf(nil, "gphoto: MoveToTrash batch %d/%d (%d files)", batchNum, totalBatches, len(batch))
+
+		// Build nested protobuf structure for MoveToTrash
+		// Field 8 -> Field 4 -> Fields 2, 3, 4, 5
+		field8_4_3_1 := NewProtoEncoder() // Empty message
+		field8_4_3 := NewProtoEncoder()
+		field8_4_3.EncodeMessage(1, field8_4_3_1.Bytes())
+
+		field8_4_5_1 := NewProtoEncoder() // Empty message
+		field8_4_5 := NewProtoEncoder()
+		field8_4_5.EncodeMessage(1, field8_4_5_1.Bytes())
+
 		field8_4 := NewProtoEncoder()
-		field8_4.EncodeMessage(2, []byte{})              // empty message
-		field8_4.EncodeMessage(3, []byte{0x0a, 0x00})    // field 1 = empty message (tag 0a, len 00)
-		field8_4.EncodeMessage(4, []byte{})              // empty message
-		field8_4.EncodeMessage(5, []byte{0x0a, 0x00})    // field 1 = empty message
+		field8_4.EncodeMessage(2, []byte{}) // Empty message
+		field8_4.EncodeMessage(3, field8_4_3.Bytes())
+		field8_4.EncodeMessage(4, []byte{}) // Empty message
+		field8_4.EncodeMessage(5, field8_4_5.Bytes())
 
-		// Field 8 - only subfield 4
 		field8 := NewProtoEncoder()
 		field8.EncodeMessage(4, field8_4.Bytes())
 
-		// Field 9.2 - subfields in order: 1, 2
+		// Field 9 -> Field 2
 		field9_2 := NewProtoEncoder()
-		field9_2.EncodeInt32(1, 49029607) // client version as INT
-		field9_2.EncodeString(2, "28")    // android version as STRING
+		field9_2.EncodeString(1, "49029607")
+		field9_2.EncodeString(2, "28")
 
-		// Field 9 - subfields in order: 1, 2
 		field9 := NewProtoEncoder()
 		field9.EncodeInt32(1, 5)
 		field9.EncodeMessage(2, field9_2.Bytes())
 
-		// Main message - fields in order: 2, 3, 4, 8, 9
+		// Main message
 		encoder := NewProtoEncoder()
 		encoder.EncodeInt32(2, 1)
-		encoder.EncodeString(3, dedupKey)
+		// Encode dedup keys as repeated string field
+		for _, key := range batch {
+			encoder.EncodeString(3, key)
+		}
 		encoder.EncodeInt32(4, 1)
 		encoder.EncodeMessage(8, field8.Bytes())
 		encoder.EncodeMessage(9, field9.Bytes())
+
+		serializedData := encoder.Bytes()
 
 		headers := map[string]string{
 			"Content-Type": "application/x-protobuf",
@@ -502,18 +521,20 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 
 		resp, err := api.request(ctx, "POST",
 			"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
-			headers, bytes.NewReader(encoder.Bytes()))
+			headers, bytes.NewReader(serializedData))
 		if err != nil {
-			return fmt.Errorf("failed to delete file %d/%d: %w", i+1, len(dedupKeys), err)
+			return fmt.Errorf("batch %d/%d failed: %w", batchNum, totalBatches, err)
 		}
 		resp.Body.Close()
 
-		// Small delay to avoid rate limiting
-		if i < len(dedupKeys)-1 {
+		fs.Debugf(nil, "gphoto: MoveToTrash batch %d/%d completed", batchNum, totalBatches)
+
+		// Small delay between batches to avoid rate limiting
+		if i+batchSize < len(dedupKeys) {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
-			case <-time.After(100 * time.Millisecond):
+			case <-time.After(500 * time.Millisecond):
 			}
 		}
 	}
