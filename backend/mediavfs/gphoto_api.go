@@ -495,8 +495,8 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 
 		// Field 9 -> Field 2
 		field9_2 := NewProtoEncoder()
-		field9_2.EncodeString(1, "49029607")
-		field9_2.EncodeString(2, "28")
+		field9_2.EncodeInt32(1, 49029607) // client version code as INT, not string
+		field9_2.EncodeString(2, "28")    // android API version as string
 
 		field9 := NewProtoEncoder()
 		field9.EncodeInt32(1, 5)
