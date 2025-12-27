@@ -474,46 +474,47 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 		batchNum := (i / batchSize) + 1
 		fs.Debugf(nil, "gphoto: MoveToTrash batch %d/%d (%d files)", batchNum, totalBatches, len(batch))
 
-		// Build nested protobuf structure for MoveToTrash
-		// Field 8 -> Field 4 -> Fields 2, 3, 4, 5
-		field8_4_3_1 := NewProtoEncoder() // Empty message
-		field8_4_3 := NewProtoEncoder()
-		field8_4_3.EncodeMessage(1, field8_4_3_1.Bytes())
-
-		field8_4_5_1 := NewProtoEncoder() // Empty message
-		field8_4_5 := NewProtoEncoder()
-		field8_4_5.EncodeMessage(1, field8_4_5_1.Bytes())
-
-		field8_4 := NewProtoEncoder()
-		field8_4.EncodeMessage(2, []byte{}) // Empty message
-		field8_4.EncodeMessage(3, field8_4_3.Bytes())
-		field8_4.EncodeMessage(4, []byte{}) // Empty message
-		field8_4.EncodeMessage(5, field8_4_5.Bytes())
-
-		field8 := NewProtoEncoder()
-		field8.EncodeMessage(4, field8_4.Bytes())
-
-		// Field 9 -> Field 2
-		field9_2 := NewProtoEncoder()
-		field9_2.EncodeInt32(1, 49029607) // client version code as INT, not string
-		field9_2.EncodeString(2, "28")    // android API version as string
-
-		field9 := NewProtoEncoder()
-		field9.EncodeInt32(1, 5)
-		field9.EncodeMessage(2, field9_2.Bytes())
-
-		// Main message
-		encoder := NewProtoEncoder()
-		encoder.EncodeInt32(2, 1)
-		// Encode dedup keys as repeated string field
-		for _, key := range batch {
-			encoder.EncodeString(3, key)
+		// Log first few dedup keys for debugging
+		if len(batch) > 0 {
+			fs.Debugf(nil, "gphoto: MoveToTrash first dedup_key: %s (len=%d)", batch[0], len(batch[0]))
 		}
-		encoder.EncodeInt32(4, 1)
-		encoder.EncodeMessage(8, field8.Bytes())
-		encoder.EncodeMessage(9, field9.Bytes())
 
-		serializedData := encoder.Bytes()
+		// Build protobuf structure matching Python implementation exactly
+		// Convert batch to []interface{} for repeated field encoding
+		dedupKeysInterface := make([]interface{}, len(batch))
+		for j, key := range batch {
+			dedupKeysInterface[j] = key
+		}
+
+		protoBody := map[string]interface{}{
+			"2": 1,
+			"3": dedupKeysInterface, // repeated string field
+			"4": 1,
+			"8": map[string]interface{}{
+				"4": map[string]interface{}{
+					"2": map[string]interface{}{},
+					"3": map[string]interface{}{
+						"1": map[string]interface{}{},
+					},
+					"4": map[string]interface{}{},
+					"5": map[string]interface{}{
+						"1": map[string]interface{}{},
+					},
+				},
+			},
+			"9": map[string]interface{}{
+				"1": 5,
+				"2": map[string]interface{}{
+					"1": 49029607, // client version code as int
+					"2": "28",     // android API version as string
+				},
+			},
+		}
+
+		serializedData, err := EncodeDynamicMessage(protoBody)
+		if err != nil {
+			return fmt.Errorf("failed to encode MoveToTrash message: %w", err)
+		}
 
 		headers := map[string]string{
 			"Content-Type": "application/x-protobuf",
