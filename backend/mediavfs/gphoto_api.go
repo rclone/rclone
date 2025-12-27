@@ -92,7 +92,8 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 		}
 	}
 
-	for retry := 0; retry < 5; retry++ {
+	var lastStatusCode int
+	for retry := 0; retry < maxRetries; retry++ {
 		// Ensure we have a token
 		if api.token == "" && api.tokenServerURL != "" {
 			if err := api.GetAuthToken(ctx, false); err != nil {
@@ -128,8 +129,21 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 
 		resp, err = api.httpClient.Do(req)
 		if err != nil {
-			return nil, err
+			// Network error - retry with backoff
+			fs.Debugf(nil, "gphoto: request error (retry %d/%d): %v", retry+1, maxRetries, err)
+			backoff := time.Duration(1<<uint(retry)) * time.Second
+			if backoff > 30*time.Second {
+				backoff = 30 * time.Second
+			}
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(backoff):
+			}
+			continue
 		}
+
+		lastStatusCode = resp.StatusCode
 
 		// Handle status codes
 		switch resp.StatusCode {
@@ -148,6 +162,10 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 		case http.StatusTooManyRequests: // 429
 			resp.Body.Close()
 			backoff := time.Duration(1<<uint(retry)) * time.Second
+			if backoff > 60*time.Second {
+				backoff = 60 * time.Second
+			}
+			fs.Infof(nil, "gphoto: rate limited (429), backing off %v (retry %d/%d)", backoff, retry+1, maxRetries)
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
@@ -155,9 +173,13 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			}
 			continue
 
-		case http.StatusInternalServerError, http.StatusServiceUnavailable:
+		case http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
 			resp.Body.Close()
 			backoff := time.Duration(1<<uint(retry)) * time.Second
+			if backoff > 60*time.Second {
+				backoff = 60 * time.Second
+			}
+			fs.Infof(nil, "gphoto: server error (%d), backing off %v (retry %d/%d)", resp.StatusCode, backoff, retry+1, maxRetries)
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
@@ -169,12 +191,15 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			return resp, nil
 
 		default:
+			// Read error response body for debugging
+			body, _ := readResponseBody(resp)
 			resp.Body.Close()
+			fs.Errorf(nil, "gphoto: unexpected HTTP error %d, body: %s", resp.StatusCode, string(body))
 			return nil, fmt.Errorf("HTTP error: status %d", resp.StatusCode)
 		}
 	}
 
-	return resp, fmt.Errorf("max retries exceeded")
+	return resp, fmt.Errorf("max retries exceeded (last status: %d)", lastStatusCode)
 }
 
 // readResponseBody reads the response body, decompressing if gzip-encoded
@@ -433,8 +458,12 @@ func findMediaKeyInResponse(data interface{}) string {
 
 // MoveToTrash moves files to trash
 func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
-	// Process in batches of 500
-	batchSize := 500
+	// Process in batches of 50 (conservative to avoid rate limits)
+	batchSize := 50
+	totalBatches := (len(dedupKeys) + batchSize - 1) / batchSize
+
+	fs.Infof(nil, "gphoto: MoveToTrash processing %d files in %d batches", len(dedupKeys), totalBatches)
+
 	for i := 0; i < len(dedupKeys); i += batchSize {
 		end := i + batchSize
 		if end > len(dedupKeys) {
@@ -442,6 +471,8 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 		}
 
 		batch := dedupKeys[i:end]
+		batchNum := (i / batchSize) + 1
+		fs.Debugf(nil, "gphoto: MoveToTrash batch %d/%d (%d files)", batchNum, totalBatches, len(batch))
 
 		// Build nested protobuf structure for MoveToTrash
 		// Field 8 -> Field 4 -> Fields 2, 3, 4, 5
@@ -492,11 +523,23 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 			"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
 			headers, bytes.NewReader(serializedData))
 		if err != nil {
-			return err
+			return fmt.Errorf("batch %d/%d failed: %w", batchNum, totalBatches, err)
 		}
 		resp.Body.Close()
+
+		fs.Debugf(nil, "gphoto: MoveToTrash batch %d/%d completed", batchNum, totalBatches)
+
+		// Small delay between batches to avoid rate limiting
+		if i+batchSize < len(dedupKeys) {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(500 * time.Millisecond):
+			}
+		}
 	}
 
+	fs.Infof(nil, "gphoto: MoveToTrash completed, %d files moved to trash", len(dedupKeys))
 	return nil
 }
 
