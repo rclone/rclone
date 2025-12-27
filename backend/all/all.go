@@ -18,6 +18,7 @@ import (
 	_ "github.com/rclone/rclone/backend/doi"
 	_ "github.com/rclone/rclone/backend/drive"
 	_ "github.com/rclone/rclone/backend/dropbox"
+	_ "github.com/rclone/rclone/backend/febbox"
 	_ "github.com/rclone/rclone/backend/fichier"
 	_ "github.com/rclone/rclone/backend/filefabric"
 	_ "github.com/rclone/rclone/backend/filelu"
