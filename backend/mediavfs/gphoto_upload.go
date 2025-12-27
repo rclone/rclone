@@ -131,6 +131,11 @@ func (f *Fs) UploadWithProgress(ctx context.Context, src fs.ObjectInfo, in io.Re
 		return "", fmt.Errorf("failed to write temp file: %w", err)
 	}
 
+	// Reject empty files - Google Photos doesn't accept them
+	if written == 0 {
+		return "", fmt.Errorf("cannot upload empty file (0 bytes)")
+	}
+
 	hashBytes := hasher.Sum(nil)
 	hashB64 := base64.StdEncoding.EncodeToString(hashBytes)
 
