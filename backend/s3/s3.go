@@ -1038,6 +1038,16 @@ type Object struct {
 	contentLanguage    *string // Content-Language: header
 }
 
+// Directory represents an S3 directory (when using directory markers)
+type Directory struct {
+	fs      *Fs               // what this object is part of
+	remote  string            // The remote path
+	modTime time.Time         // modification time of the directory
+	size    int64             // size of the directory (usually 0)
+	items   int64             // number of items in the directory (-1 if unknown)
+	meta    map[string]string // The directory metadata if known - may be nil
+}
+
 // safely dereference the pointer, returning a zero T if nil
 func deref[T any](p *T) T {
 	if p == nil {
@@ -1693,6 +1703,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.DirectoryMarkers {
 		f.features.CanHaveEmptyDirectories = true
+		f.features.WriteDirMetadata = true
+		f.features.WriteDirSetModTime = true
+		f.features.ReadDirMetadata = true
+		f.features.UserDirMetadata = true
 	}
 	// f.listMultipartUploads()
 	if !opt.UseMultipartUploads.Value {
@@ -2357,7 +2371,22 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *types.Ob
 		if object.Size != nil {
 			size = *object.Size
 		}
-		d := fs.NewDir(remote, time.Time{}).SetSize(size)
+		modTime := time.Time{}
+		if object.LastModified != nil {
+			modTime = *object.LastModified
+		}
+		// Return our Directory struct when using directory markers
+		// so that it implements the metadata interfaces
+		if f.opt.DirectoryMarkers {
+			return &Directory{
+				fs:      f,
+				remote:  remote,
+				modTime: modTime,
+				size:    size,
+				items:   -1, // unknown
+			}, nil
+		}
+		d := fs.NewDir(remote, modTime).SetSize(size)
 		return d, nil
 	}
 	o, err := f.newObjectWithInfo(ctx, remote, object, versionID)
@@ -2623,6 +2652,152 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return e
 	}
 	return f.createDirectoryMarker(ctx, bucket, dir)
+}
+
+// MkdirMetadata makes the directory passed in as dir.
+//
+// It shouldn't return an error if it already exists.
+//
+// If the metadata is not nil it is set.
+//
+// It returns the directory that was created.
+func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
+	bucket, bucketPath := f.split(dir)
+	// Create bucket if needed
+	err := f.makeBucket(ctx, bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse mtime from metadata if provided
+	modTime := time.Now()
+	if metadata != nil {
+		if mtimeStr, ok := metadata["mtime"]; ok {
+			if parsedTime, err := time.Parse(time.RFC3339Nano, mtimeStr); err == nil {
+				modTime = parsedTime
+			} else if parsedTime, err := time.Parse(time.RFC3339, mtimeStr); err == nil {
+				modTime = parsedTime
+			}
+		}
+	}
+
+	// If not using directory markers or at the bucket root, just return the directory
+	if !f.opt.DirectoryMarkers || bucket == "" || bucketPath == "" {
+		return &Directory{
+			fs:      f,
+			remote:  dir,
+			modTime: modTime,
+			size:    0,
+			items:   -1,
+		}, nil
+	}
+
+	// Create directory marker object with metadata
+	o := &Object{
+		fs:     f,
+		remote: dir + "/",
+		meta: map[string]string{
+			metaMtime: swift.TimeToFloatString(modTime),
+		},
+	}
+
+	// Add user metadata
+	for k, v := range metadata {
+		if k == "mtime" || k == "btime" {
+			continue // already handled
+		}
+		o.meta[k] = v
+	}
+
+	// Check to see if directory marker already exists
+	head, err := o.headObject(ctx)
+	if err == nil {
+		// Directory marker exists, read its modTime
+		existingModTime := modTime
+		if head.LastModified != nil {
+			existingModTime = *head.LastModified
+		}
+		// Read mtime from existing metadata
+		existingMeta := s3MetadataToMap(head.Metadata)
+		if mtimeStr, ok := existingMeta[metaMtime]; ok {
+			if parsedModTime, parseErr := swift.FloatStringToTime(mtimeStr); parseErr == nil {
+				existingModTime = parsedModTime
+			}
+		}
+		// If metadata is provided, we need to update the marker
+		if metadata != nil {
+			// Update the existing marker with new metadata
+			content := io.Reader(strings.NewReader(""))
+			err = o.Update(ctx, content, o)
+			if err != nil {
+				return nil, fmt.Errorf("updating directory marker failed: %w", err)
+			}
+			return &Directory{
+				fs:      f,
+				remote:  dir,
+				modTime: modTime,
+				size:    0,
+				items:   -1,
+				meta:    o.meta,
+			}, nil
+		}
+		return &Directory{
+			fs:      f,
+			remote:  dir,
+			modTime: existingModTime,
+			size:    0,
+			items:   -1,
+			meta:    existingMeta,
+		}, nil
+	}
+
+	// Upload the directory marker
+	fs.Debugf(o, "Creating directory marker with metadata")
+	content := io.Reader(strings.NewReader(""))
+	err = o.Update(ctx, content, o)
+	if err != nil {
+		return nil, fmt.Errorf("creating directory marker failed: %w", err)
+	}
+
+	// Create parent directories as well
+	parentDir := path.Dir(dir)
+	if parentDir != "/" && parentDir != "." && parentDir != "" {
+		err = f.createDirectoryMarker(ctx, bucket, parentDir)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &Directory{
+		fs:      f,
+		remote:  dir,
+		modTime: modTime,
+		size:    0,
+		items:   -1,
+		meta:    o.meta,
+	}, nil
+}
+
+// DirSetModTime sets the modification time of the directory
+func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
+	if !f.opt.DirectoryMarkers {
+		return fs.ErrorNotImplemented
+	}
+	bucket, bucketPath := f.split(dir)
+	if bucket == "" || bucketPath == "" {
+		// Can't set modtime on bucket root
+		return nil
+	}
+	d := &Directory{
+		fs:     f,
+		remote: dir,
+	}
+	// Check if directory marker exists - DirSetModTime should only work on existing directories
+	_, err := d.headDirMarker(ctx)
+	if err != nil {
+		return fs.ErrorDirNotFound
+	}
+	return d.SetModTime(ctx, modTime)
 }
 
 // mkdirParent creates the parent bucket/directory if it doesn't exist
@@ -4844,6 +5019,217 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	return metadata, nil
 }
 
+// ------------------------------------------------------------
+// Directory methods
+// ------------------------------------------------------------
+
+// Fs returns read only access to the Fs that this directory is part of
+func (d *Directory) Fs() fs.Info {
+	return d.fs
+}
+
+// String returns the name of the directory
+func (d *Directory) String() string {
+	return d.remote
+}
+
+// Remote returns the remote path
+func (d *Directory) Remote() string {
+	return d.remote
+}
+
+// ModTime returns the modification date of the directory
+//
+// If one isn't available it returns the configured --default-dir-time
+func (d *Directory) ModTime(ctx context.Context) time.Time {
+	// If we have directory markers enabled and haven't read metadata yet,
+	// read it to get the user-set mtime from metadata
+	if d.fs.opt.DirectoryMarkers && d.meta == nil {
+		_ = d.readMetaData(ctx) // ignore error - just use default if it fails
+	}
+	if !d.modTime.IsZero() {
+		return d.modTime
+	}
+	ci := fs.GetConfig(ctx)
+	return time.Time(ci.DefaultTime)
+}
+
+// Size returns the size of the directory (usually 0 for directories)
+func (d *Directory) Size() int64 {
+	return d.size
+}
+
+// Items returns the count of items in this directory or this
+// directory and subdirectories if known, -1 for unknown
+func (d *Directory) Items() int64 {
+	return d.items
+}
+
+// ID returns the internal ID of this directory if known, or "" otherwise
+func (d *Directory) ID() string {
+	return "" // S3 doesn't have internal IDs for directories
+}
+
+// dirMarkerPath returns the path to the directory marker object
+func (d *Directory) dirMarkerPath() string {
+	return d.remote + "/"
+}
+
+// headDirMarker does a HEAD request on the directory marker object
+func (d *Directory) headDirMarker(ctx context.Context) (*s3.HeadObjectOutput, error) {
+	bucket, bucketPath := d.fs.split(d.dirMarkerPath())
+	req := s3.HeadObjectInput{
+		Bucket: &bucket,
+		Key:    &bucketPath,
+	}
+	return d.fs.headObject(ctx, &req)
+}
+
+// readMetaData reads the metadata from the directory marker object
+func (d *Directory) readMetaData(ctx context.Context) error {
+	if d.meta != nil {
+		return nil
+	}
+	resp, err := d.headDirMarker(ctx)
+	if err != nil {
+		return err
+	}
+	d.meta = s3MetadataToMap(resp.Metadata)
+	if resp.LastModified != nil {
+		d.modTime = *resp.LastModified
+	}
+	// Read mtime from metadata if available
+	if mtimeStr, ok := d.meta[metaMtime]; ok {
+		if modTime, err := swift.FloatStringToTime(mtimeStr); err == nil {
+			d.modTime = modTime
+		}
+	}
+	return nil
+}
+
+// Metadata returns metadata for a Directory
+//
+// It should return nil if there is no Metadata
+func (d *Directory) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	if !d.fs.opt.DirectoryMarkers {
+		return nil, nil
+	}
+	err = d.readMetaData(ctx)
+	if err != nil {
+		// If the directory marker doesn't exist, return empty metadata
+		if err == fs.ErrorObjectNotFound {
+			return fs.Metadata{}, nil
+		}
+		return nil, err
+	}
+	metadata = make(fs.Metadata, len(d.meta)+2)
+	for k, v := range d.meta {
+		switch k {
+		case metaMtime:
+			if modTime, err := swift.FloatStringToTime(v); err == nil {
+				metadata["mtime"] = modTime.Format(time.RFC3339Nano)
+			}
+		case metaMD5Hash:
+			// don't write hash metadata
+		default:
+			metadata[k] = v
+		}
+	}
+	if !d.modTime.IsZero() {
+		metadata["btime"] = d.modTime.Format(time.RFC3339Nano)
+	}
+	return metadata, nil
+}
+
+// SetMetadata sets metadata for a Directory
+//
+// It should return fs.ErrorNotImplemented if it can't set metadata
+func (d *Directory) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	if !d.fs.opt.DirectoryMarkers {
+		return fs.ErrorNotImplemented
+	}
+
+	// Parse mtime from metadata if provided
+	modTime := time.Now()
+	if mtimeStr, ok := metadata["mtime"]; ok {
+		if parsedTime, err := time.Parse(time.RFC3339Nano, mtimeStr); err == nil {
+			modTime = parsedTime
+		} else if parsedTime, err := time.Parse(time.RFC3339, mtimeStr); err == nil {
+			modTime = parsedTime
+		}
+	}
+
+	// Create directory marker object with metadata
+	o := &Object{
+		fs:     d.fs,
+		remote: d.dirMarkerPath(),
+		meta: map[string]string{
+			metaMtime: swift.TimeToFloatString(modTime),
+		},
+	}
+
+	// Add user metadata
+	for k, v := range metadata {
+		if k == "mtime" || k == "btime" {
+			continue // already handled
+		}
+		o.meta[k] = v
+	}
+
+	// Upload the directory marker
+	content := io.Reader(strings.NewReader(""))
+	err := o.Update(ctx, content, o)
+	if err != nil {
+		return fmt.Errorf("setting directory metadata failed: %w", err)
+	}
+
+	// Update local state
+	d.modTime = modTime
+	d.meta = o.meta
+
+	return nil
+}
+
+// SetModTime sets the metadata on the Directory to set the modification date
+//
+// If there is any other metadata it does not overwrite it.
+func (d *Directory) SetModTime(ctx context.Context, t time.Time) error {
+	if !d.fs.opt.DirectoryMarkers {
+		return fs.ErrorNotImplemented
+	}
+
+	// Read existing metadata first to preserve it
+	_ = d.readMetaData(ctx) // ignore error - might not exist yet
+
+	// Create directory marker object with metadata
+	o := &Object{
+		fs:     d.fs,
+		remote: d.dirMarkerPath(),
+		meta:   make(map[string]string),
+	}
+
+	// Preserve existing metadata
+	for k, v := range d.meta {
+		o.meta[k] = v
+	}
+
+	// Set the new mtime
+	o.meta[metaMtime] = swift.TimeToFloatString(t)
+
+	// Upload the directory marker
+	content := io.Reader(strings.NewReader(""))
+	err := o.Update(ctx, content, o)
+	if err != nil {
+		return fmt.Errorf("setting directory modtime failed: %w", err)
+	}
+
+	// Update local state
+	d.modTime = t
+	d.meta = o.meta
+
+	return nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = &Fs{}
@@ -4855,9 +5241,15 @@ var (
 	_ fs.Commander       = &Fs{}
 	_ fs.CleanUpper      = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}
+	_ fs.MkdirMetadataer = &Fs{}
+	_ fs.DirSetModTimer  = &Fs{}
 	_ fs.Object          = &Object{}
 	_ fs.MimeTyper       = &Object{}
 	_ fs.GetTierer       = &Object{}
 	_ fs.SetTierer       = &Object{}
 	_ fs.Metadataer      = &Object{}
+	_ fs.Directory       = (*Directory)(nil)
+	_ fs.Metadataer      = (*Directory)(nil)
+	_ fs.SetMetadataer   = (*Directory)(nil)
+	_ fs.SetModTimer     = (*Directory)(nil)
 )
