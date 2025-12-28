@@ -6,18 +6,21 @@ package raid3
 // It includes:
 //   - Backend registration and configuration options (init, Options struct)
 //   - Fs struct and NewFs constructor with degraded mode support
-//   - Core filesystem operations: List, NewObject, Put, Mkdir, Rmdir, Move, DirMove
+//   - Core filesystem operations: Mkdir, Rmdir, Purge, CleanUp, About, Shutdown
 //   - Heal infrastructure initialization (upload queue, background workers)
-//   - Degraded mode detection and error handling (checkAllBackendsAvailable)
 //   - Cleanup operations for broken objects (CleanUp, findBrokenObjects)
 //   - Directory reconstruction and orphan cleanup (reconstructMissingDirectory, cleanupOrphanedDirectory)
+//
+// Other operations are split into separate files:
+//   - list.go: List, ListR, NewObject
+//   - operations.go: Put, Move, Copy, DirMove
+//   - health.go: checkAllBackendsAvailable, formatDegradedModeError, checkDirectoryExists
+//   - metadata.go: MkdirMetadata, DirSetModTime
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"strings"
@@ -25,14 +28,12 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/fs/walk"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -104,7 +105,7 @@ This should be in the form 'remote:path'.`,
 		}, {
 			Name:     "chunk_size",
 			Help:     "Chunk size for streaming operations",
-			Default:  fs.SizeSuffix(8 * 1024 * 1024), // 8 MiB
+			Default:  fs.SizeSuffix(defaultChunkSize),
 			Advanced: true,
 		}},
 		CommandHelp: commandHelp,
@@ -198,7 +199,11 @@ waiting for them to be accessed during normal operations.
 
 Usage:
 
-    rclone backend heal raid3:
+    rclone backend heal raid3: [file_path]
+
+Options:
+
+  -o dry-run=true    Show what would be healed without making changes
 
 The heal command will:
   1. Scan all objects in the remote
@@ -217,6 +222,12 @@ Examples:
 
     # Heal all degraded objects
     rclone backend heal raid3:
+
+    # Heal a specific file
+    rclone backend heal raid3: path/to/file.txt
+
+    # Dry-run: See what would be healed without making changes
+    rclone backend heal raid3: -o dry-run=true
 
     # Example output:
     # Heal Summary
@@ -297,8 +308,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	if _, ok := m.Get("use_streaming"); !ok {
 		opt.UseStreaming = true
 	}
-	if _, ok := m.Get("chunk_size"); !ok {
-		opt.ChunkSize = fs.SizeSuffix(8 * 1024 * 1024) // 8 MiB default
+		if _, ok := m.Get("chunk_size"); !ok {
+		opt.ChunkSize = fs.SizeSuffix(defaultChunkSize)
 	}
 
 	if opt.Even == "" {
@@ -342,13 +353,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	var initTimeout time.Duration
 	switch opt.TimeoutMode {
 	case "aggressive":
-		initTimeout = 10 * time.Second
+		initTimeout = aggressiveInitTimeout
 	case "balanced":
-		initTimeout = 60 * time.Second
+		initTimeout = balancedInitTimeout
 	case "standard", "":
-		initTimeout = 5 * time.Minute
+		initTimeout = standardInitTimeout
 	default:
-		initTimeout = 10 * time.Second
+		initTimeout = aggressiveInitTimeout
 	}
 	initCtx, cancel := context.WithTimeout(ctx, initTimeout)
 	defer cancel()
@@ -441,7 +452,7 @@ checkRemotes:
 		}
 
 		// Recreate upstreams with adjusted root concurrently
-		initCtx2, cancel2 := context.WithTimeout(ctx, 10*time.Second)
+		initCtx2, cancel2 := context.WithTimeout(ctx, errorIsFileRetryTimeout)
 		defer cancel2()
 		fsCh2 := make(chan fsResult, 3)
 
@@ -632,9 +643,11 @@ checkRemotes:
 	}
 
 	// Initialize heal infrastructure
+	// Derive upload context from parent context for proper cancellation propagation
+	// This ensures that when the parent context is cancelled, heal operations are also cancelled
 	f.uploadQueue = newUploadQueue()
-	f.uploadCtx, f.uploadCancel = context.WithCancel(context.Background())
-	f.uploadWorkers = 2 // 2 concurrent upload workers
+	f.uploadCtx, f.uploadCancel = context.WithCancel(ctx)
+	f.uploadWorkers = defaultUploadWorkers
 
 	// Start background upload workers
 	for i := 0; i < f.uploadWorkers; i++ {
@@ -769,255 +782,6 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 // ensure that if a write fails due to unavailable backend, it fails immediately
 // without retry attempts that could create partial/degraded files.
 
-// checkAllBackendsAvailable performs a quick health check to see if all three
-// backends are reachable. This is used to enforce strict write policy.
-//
-// Returns: enhanced error with rebuild guidance if any backend is unavailable
-func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
-	// Quick timeout for health check
-	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	type healthResult struct {
-		name string
-		err  error
-	}
-	results := make(chan healthResult, 3)
-
-	// Check each backend by attempting to access it
-	// We check write capability since that's what we need for Put/Update/Move
-	checkBackend := func(backend fs.Fs, name string) healthResult {
-		// First, try to list (checks connectivity)
-		_, listErr := backend.List(checkCtx, "")
-
-		// Acceptable list errors (backend is available):
-		//   - ErrorDirNotFound: Directory doesn't exist yet (empty backend)
-		//   - ErrorIsFile: Path points to a file
-		//   - InvalidBucketName: Configuration error (backend path misconfigured, not availability issue)
-		//     This can happen with stale Fs cache or path parsing issues, but indicates config problem
-		if listErr == nil || errors.Is(listErr, fs.ErrorDirNotFound) || errors.Is(listErr, fs.ErrorIsFile) {
-			// Backend seems available, verify we can write
-			// Try mkdir on a test path (won't actually create if Fs is at file level)
-			testDir := ".raid3-health-check-" + name
-			mkdirErr := backend.Mkdir(checkCtx, testDir)
-
-			// Clean up test directory
-			if mkdirErr == nil {
-				_ = backend.Rmdir(checkCtx, testDir)
-			}
-
-			// Acceptable mkdir errors (backend is writable):
-			//   - nil: Successfully created (backend is writable)
-			//   - ErrorDirExists: Dir already exists (backend is writable)
-			//   - os.IsExist: underlying filesystem reports existing dir/file
-			if mkdirErr == nil || errors.Is(mkdirErr, fs.ErrorDirExists) || os.IsExist(mkdirErr) {
-				return healthResult{name, nil} // Backend is available
-			}
-
-			// Mkdir failed with real error (permission, read-only filesystem, etc.)
-			return healthResult{name, mkdirErr}
-		}
-
-		// List failed with real error
-		// Check if it's an InvalidBucketName error (configuration issue, not availability)
-		if strings.Contains(listErr.Error(), "InvalidBucketName") {
-			// InvalidBucketName indicates a configuration/parsing issue, not backend unavailability
-			// Return this as an error so it's reported, but it's different from connection errors
-			return healthResult{name, fmt.Errorf("%s backend configuration error (InvalidBucketName): %w", name, listErr)}
-		}
-		// Other errors (connection refused, timeout, etc.)
-		return healthResult{name, listErr}
-	}
-
-	go func() {
-		results <- checkBackend(f.even, "even")
-	}()
-	go func() {
-		results <- checkBackend(f.odd, "odd")
-	}()
-	go func() {
-		results <- checkBackend(f.parity, "parity")
-	}()
-
-	// Collect results
-	var failedBackend string
-	var backendErr error
-	evenOK := true
-	oddOK := true
-	parityOK := true
-
-	for i := 0; i < 3; i++ {
-		result := <-results
-		if result.err != nil {
-			failedBackend = result.name
-			backendErr = result.err
-			switch result.name {
-			case "even":
-				evenOK = false
-			case "odd":
-				oddOK = false
-			case "parity":
-				parityOK = false
-			}
-		}
-	}
-
-	// If any backend failed, return enhanced error with guidance
-	if backendErr != nil {
-		return f.formatDegradedModeError(failedBackend, evenOK, oddOK, parityOK, backendErr)
-	}
-
-	return nil
-}
-
-// checkDirectoryExists checks if a directory exists by calling List() on all backends.
-// Returns true if directory exists on at least one backend, false if it doesn't exist on any backend.
-// Returns an error if any backend returns a non-"not found" error.
-func (f *Fs) checkDirectoryExists(ctx context.Context, dir string) (bool, error) {
-	type listResult struct {
-		exists bool
-		err    error
-	}
-	results := make(chan listResult, 3)
-
-	// Check each backend in parallel
-	// For root directory (dir == ""), List("") returns ErrorDirNotFound if directory doesn't exist
-	// For subdirectories, we need to check if the directory exists
-	go func() {
-		_, err := f.even.List(ctx, dir)
-		// If List() returns no error, directory exists
-		// If List() returns ErrorDirNotFound or os.ErrNotExist, directory doesn't exist
-		exists := err == nil
-		// If error is ErrorDirNotFound or os.ErrNotExist, directory doesn't exist (not an error)
-		if err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
-			results <- listResult{exists: false, err: fmt.Errorf("%s: %w", f.even.Name(), err)}
-			return
-		}
-		// Preserve the error (even if it's ErrorDirNotFound) so we can detect it in collection
-		results <- listResult{exists: exists, err: err}
-	}()
-
-	go func() {
-		_, err := f.odd.List(ctx, dir)
-		exists := err == nil
-		if err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
-			results <- listResult{exists: false, err: fmt.Errorf("%s: %w", f.odd.Name(), err)}
-			return
-		}
-		results <- listResult{exists: exists, err: err}
-	}()
-
-	go func() {
-		_, err := f.parity.List(ctx, dir)
-		exists := err == nil
-		if err != nil && !errors.Is(err, fs.ErrorDirNotFound) && !os.IsNotExist(err) {
-			results <- listResult{exists: false, err: fmt.Errorf("%s: %w", f.parity.Name(), err)}
-			return
-		}
-		results <- listResult{exists: exists, err: err}
-	}()
-
-	// Collect results
-	var hasError error
-	anyExists := false
-	notFoundCount := 0
-	for i := 0; i < 3; i++ {
-		result := <-results
-		if result.exists {
-			// Directory exists on this backend
-			anyExists = true
-		} else if result.err != nil {
-			// Check if this is a "not found" error
-			if errors.Is(result.err, fs.ErrorDirNotFound) || os.IsNotExist(result.err) {
-				notFoundCount++
-			} else {
-				// Non-"not found" error
-				hasError = result.err
-			}
-		} else {
-			// err is nil but exists is false - this shouldn't happen, treat as not found
-			notFoundCount++
-		}
-	}
-
-	// If any backend returned a non-"not found" error, return it
-	if hasError != nil {
-		return false, hasError
-	}
-
-	// If directory exists on any backend, it exists
-	if anyExists {
-		return true, nil
-	}
-
-	// If all backends returned "not found" errors, directory doesn't exist
-	if notFoundCount == 3 {
-		return false, nil
-	}
-
-	// Default: directory doesn't exist
-	return false, nil
-}
-
-// formatDegradedModeError creates a user-friendly error message with rebuild guidance
-// when the backend is in degraded mode (one or more backends unavailable).
-//
-// This implements Phase 1 of user-centric rebuild: guide users at point of failure.
-func (f *Fs) formatDegradedModeError(failedBackend string, evenOK, oddOK, parityOK bool, backendErr error) error {
-	// Status icons
-	evenIcon := "✅"
-	oddIcon := "✅"
-	parityIcon := "✅"
-	evenStatus := "Available"
-	oddStatus := "Available"
-	parityStatus := "Available"
-
-	if !evenOK {
-		evenIcon = "❌"
-		evenStatus = "UNAVAILABLE"
-	}
-	if !oddOK {
-		oddIcon = "❌"
-		oddStatus = "UNAVAILABLE"
-	}
-	if !parityOK {
-		parityIcon = "❌"
-		parityStatus = "UNAVAILABLE"
-	}
-
-	// Build helpful error message with wrapped backend error
-	return fmt.Errorf(`cannot write - raid3 backend is DEGRADED
-
-Backend Status:
-  %s even:   %s
-  %s odd:    %s
-  %s parity: %s
-
-Impact:
-  • Reads: ✅ Working (automatic parity reconstruction)
-  • Writes: ❌ Blocked (RAID 3 safety - prevents corruption)
-
-What to do:
-  1. Check if %s backend is temporarily down:
-     Run: rclone ls %s
-     If it works, retry your operation
-  
-  2. If backend is permanently failed:
-     Run: rclone backend status raid3:
-     This will guide you through replacement and rebuild
-  
-  3. For more help:
-     Documentation: rclone help raid3
-     Error handling: See README.md
-
-Technical details: %w`,
-		evenIcon, evenStatus,
-		oddIcon, oddStatus,
-		parityIcon, parityStatus,
-		failedBackend,
-		f.getBackendPath(failedBackend),
-		backendErr)
-}
 
 // Shutdown waits for pending heal uploads to complete
 func (f *Fs) Shutdown(ctx context.Context) error {
@@ -1044,7 +808,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 		fs.Infof(f, "Heal complete")
 		f.uploadCancel()
 		return nil
-	case <-time.After(60 * time.Second):
+	case <-time.After(defaultShutdownTimeout):
 		fs.Errorf(f, "Timeout waiting for heal uploads (some may be incomplete)")
 		f.uploadCancel()
 		return errors.New("timeout waiting for heal uploads")
@@ -1060,825 +824,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 // countParticles counts the number of particles on a backend
 
 // List the objects and directories in dir into entries
-func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// Get entries from all three remotes concurrently
-	type listResult struct {
-		name    string
-		entries fs.DirEntries
-		err     error
-	}
-	listCh := make(chan listResult, 3)
 
-	go func() {
-		entries, err := f.even.List(ctx, dir)
-		listCh <- listResult{"even", entries, err}
-	}()
-
-	go func() {
-		entries, err := f.odd.List(ctx, dir)
-		listCh <- listResult{"odd", entries, err}
-	}()
-
-	go func() {
-		entries, err := f.parity.List(ctx, dir)
-		listCh <- listResult{"parity", entries, err}
-	}()
-
-	// Collect results
-	var entriesEven, entriesOdd, entriesParity fs.DirEntries
-	var errEven, errOdd error
-	for i := 0; i < 3; i++ {
-		res := <-listCh
-		switch res.name {
-		case "even":
-			entriesEven = res.entries
-			errEven = res.err
-		case "odd":
-			entriesOdd = res.entries
-			errOdd = res.err
-		case "parity":
-			entriesParity = res.entries
-			// Ignore parity errors
-		}
-	}
-
-	// If even fails, try odd
-	if errEven != nil {
-		if errOdd != nil {
-			// Both data backends failed - check if this is an orphaned directory
-			// that should be cleaned up before returning error
-			if f.opt.AutoCleanup {
-				// Check parity to see if directory is orphaned (exists only on parity)
-				_, errParity := f.parity.List(ctx, dir)
-
-				// If parity exists but both data backends don't, this is orphaned
-				if errParity == nil {
-					dirPath := dir
-					if dirPath == "" {
-						dirPath = f.root
-					}
-					fs.Infof(f, "Auto-cleanup: removing orphaned directory %q (exists on 1/3 backends - parity only)", dirPath)
-					_ = f.parity.Rmdir(ctx, dir)
-					return nil, nil // Return empty list, no error
-				}
-			}
-			return nil, errEven // Return even error
-		}
-		// Continue with odd entries
-	}
-
-	// Create a map to track all entries (excluding parity files with suffixes)
-	entryMap := make(map[string]fs.DirEntry)
-
-	// Add even entries (filter out temporary files created during Update rollback)
-	for _, entry := range entriesEven {
-		remote := entry.Remote()
-		// Skip temporary files created during Update rollback
-		if IsTempFile(remote) {
-			fs.Debugf(f, "List: Skipping temp file %s", remote)
-			continue
-		}
-		entryMap[remote] = entry
-	}
-
-	// Add odd entries (merge with even, filter out temporary files)
-	for _, entry := range entriesOdd {
-		remote := entry.Remote()
-		// Skip temporary files created during Update rollback
-		if IsTempFile(remote) {
-			fs.Debugf(f, "List: Skipping temp file %s", remote)
-			continue
-		}
-		if _, exists := entryMap[remote]; !exists {
-			entryMap[remote] = entry
-		}
-	}
-
-	// Filter out parity files from parity backend (they have .parity-el or .parity-ol suffix)
-	// Also filter out temporary files created during Update rollback
-	// but include directories
-	for _, entry := range entriesParity {
-		remote := entry.Remote()
-		// Strip parity suffix if it's a parity file
-		_, isParity, _ := StripParitySuffix(remote)
-		if isParity {
-			// Don't add parity files to the list
-			continue
-		}
-		// Skip temporary files created during Update rollback
-		if IsTempFile(remote) {
-			fs.Debugf(f, "List: Skipping temp file %s", remote)
-			continue
-		}
-		// Add non-parity entries (directories mainly)
-		if _, exists := entryMap[remote]; !exists {
-			entryMap[remote] = entry
-		}
-	}
-
-	// Convert map back to slice
-	entries = make(fs.DirEntries, 0, len(entryMap))
-	for _, entry := range entryMap {
-		switch e := entry.(type) {
-		case fs.Object:
-			// If auto_cleanup is enabled, handle broken objects (< 2 particles)
-			if f.opt.AutoCleanup {
-				particleCount := f.countParticlesSync(ctx, e.Remote())
-				if particleCount < 2 {
-					// Check if all backends are available for auto-delete
-					if err := f.checkAllBackendsAvailable(ctx); err == nil {
-						// All backends available - auto-delete broken object
-						particleInfo, err := f.particleInfoForObject(ctx, e.Remote())
-						if err == nil {
-							if delErr := f.removeBrokenObject(ctx, particleInfo); delErr != nil {
-								fs.Debugf(f, "List: Failed to auto-delete broken object %s: %v", e.Remote(), delErr)
-							} else {
-								fs.Debugf(f, "List: Auto-deleted broken object %s", e.Remote())
-							}
-						}
-					} else {
-						// Not all backends available - hide broken object (don't delete)
-						fs.Debugf(f, "List: Hiding broken object %s (only %d particle, backends unavailable)", e.Remote(), particleCount)
-					}
-					// Hide broken object (whether deleted or not)
-					continue
-				}
-			}
-			entries = append(entries, &Object{
-				fs:     f,
-				remote: e.Remote(),
-			})
-		case fs.Directory:
-			entries = append(entries, &Directory{
-				fs:     f,
-				remote: e.Remote(),
-			})
-		}
-	}
-
-	// If auto_cleanup is enabled and the directory is empty, check for orphaned buckets/directories
-	// Orphaned buckets exist on < 2 backends and should be removed
-	if f.opt.AutoCleanup && len(entries) == 0 {
-		f.cleanupOrphanedDirectory(ctx, dir, errEven, errOdd)
-	}
-
-	// Reconstruct missing directories (1dm case: directory exists on 2/3 backends)
-	// This implements heal for degraded directory state
-	if f.opt.AutoHeal {
-		f.reconstructMissingDirectory(ctx, dir, errEven, errOdd)
-	}
-
-	return entries, nil
-}
-
-// ListR lists the objects and directories of the Fs starting
-// from dir recursively into out.
-//
-// dir should be "" to start from the root, and should not
-// have trailing slashes.
-//
-// This should return ErrDirNotFound if the directory isn't
-// found.
-//
-// It should call callback for each tranche of entries read.
-// These need not be returned in any particular order.  If
-// callback returns an error then the listing will stop
-// immediately.
-//
-// Don't implement this unless you have a more efficient way
-// of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	// Track error count before starting to detect degraded mode errors
-	// In degraded mode (2/3 backends), errors from the failed backend should not
-	// cause exit status 3 - the operation succeeds with warnings
-	stats := accounting.Stats(ctx)
-	initialErrorCount := stats.GetErrors()
-
-	// Collect entries from all three backends in parallel
-	// Support degraded mode: works with 2/3 backends (reads work in degraded mode)
-	type listRResult struct {
-		name    string
-		entries []fs.DirEntries
-		err     error
-	}
-	results := make(chan listRResult, 3)
-
-	// ListR on even backend
-	go func() {
-		var evenEntries []fs.DirEntries
-		innerCallback := func(entries fs.DirEntries) error {
-			// Make a copy of entries to avoid modification after callback returns
-			entriesCopy := make(fs.DirEntries, len(entries))
-			copy(entriesCopy, entries)
-			evenEntries = append(evenEntries, entriesCopy)
-			return nil
-		}
-		do := f.even.Features().ListR
-		var err error
-		if do != nil {
-			err = do(ctx, dir, innerCallback)
-		} else {
-			// Fallback to walk.ListR if backend doesn't support ListR
-			err = walk.ListR(ctx, f.even, dir, true, -1, walk.ListAll, innerCallback)
-		}
-		results <- listRResult{"even", evenEntries, err}
-	}()
-
-	// ListR on odd backend
-	go func() {
-		var oddEntries []fs.DirEntries
-		innerCallback := func(entries fs.DirEntries) error {
-			// Make a copy of entries to avoid modification after callback returns
-			entriesCopy := make(fs.DirEntries, len(entries))
-			copy(entriesCopy, entries)
-			oddEntries = append(oddEntries, entriesCopy)
-			return nil
-		}
-		do := f.odd.Features().ListR
-		var err error
-		if do != nil {
-			err = do(ctx, dir, innerCallback)
-		} else {
-			// Fallback to walk.ListR if backend doesn't support ListR
-			err = walk.ListR(ctx, f.odd, dir, true, -1, walk.ListAll, innerCallback)
-		}
-		results <- listRResult{"odd", oddEntries, err}
-	}()
-
-	// ListR on parity backend (errors ignored, similar to List())
-	go func() {
-		var parityEntries []fs.DirEntries
-		innerCallback := func(entries fs.DirEntries) error {
-			// Make a copy of entries to avoid modification after callback returns
-			entriesCopy := make(fs.DirEntries, len(entries))
-			copy(entriesCopy, entries)
-			parityEntries = append(parityEntries, entriesCopy)
-			return nil
-		}
-		do := f.parity.Features().ListR
-		if do != nil {
-			_ = do(ctx, dir, innerCallback) // Ignore errors (similar to List() behavior)
-		} else {
-			// Fallback to walk.ListR if backend doesn't support ListR
-			_ = walk.ListR(ctx, f.parity, dir, true, -1, walk.ListAll, innerCallback) // Ignore errors
-		}
-		// Ignore parity errors (similar to List() behavior)
-		results <- listRResult{"parity", parityEntries, nil}
-	}()
-
-	// Collect results
-	var entriesEven, entriesOdd, entriesParity []fs.DirEntries
-	var errEven, errOdd error
-	for i := 0; i < 3; i++ {
-		res := <-results
-		switch res.name {
-		case "even":
-			entriesEven = res.entries
-			errEven = res.err
-		case "odd":
-			entriesOdd = res.entries
-			errOdd = res.err
-		case "parity":
-			entriesParity = res.entries
-			// Ignore parity errors (already set to nil above)
-		}
-	}
-
-	// Degraded mode support: if even fails, try odd (similar to List())
-	// Only fail if both data backends fail
-	// If one data backend succeeds, we can list successfully (degraded mode)
-	if errEven != nil {
-		if errOdd != nil {
-			// Both data backends failed
-			// Check if both failed with ErrorDirNotFound
-			if errors.Is(errEven, fs.ErrorDirNotFound) && errors.Is(errOdd, fs.ErrorDirNotFound) {
-				return fs.ErrorDirNotFound
-			}
-			// Return even error (prefer even over odd)
-			return errEven
-		}
-		// Even failed but odd succeeded - this is degraded mode
-		// Continue with odd entries only - listing can succeed with 2/3 backends
-		// Don't return error - degraded mode is acceptable for reads
-	}
-
-	// Merge entries similar to List() method
-	// Create a map to track all entries (excluding parity files with suffixes)
-	// Use remote path as key to ensure proper deduplication
-	entryMap := make(map[string]fs.DirEntry)
-
-	// Helper function to add entry to map with deduplication
-	addEntry := func(entry fs.DirEntry) {
-		remote := entry.Remote()
-		// Skip temporary files created during Update rollback
-		if IsTempFile(remote) {
-			return
-		}
-		// Only add if not already present (deduplication)
-		if _, exists := entryMap[remote]; !exists {
-			entryMap[remote] = entry
-		}
-	}
-
-	// Process even entries
-	for _, entryBatch := range entriesEven {
-		for _, entry := range entryBatch {
-			addEntry(entry)
-		}
-	}
-
-	// Process odd entries (merge with even)
-	for _, entryBatch := range entriesOdd {
-		for _, entry := range entryBatch {
-			addEntry(entry)
-		}
-	}
-
-	// Process parity entries (filter out parity files, but include directories)
-	for _, entryBatch := range entriesParity {
-		for _, entry := range entryBatch {
-			remote := entry.Remote()
-
-			// Filter out parity files (they have .parity-el or .parity-ol suffix)
-			_, isParity, _ := StripParitySuffix(remote)
-			if isParity {
-				continue
-			}
-
-			// Add non-parity entries (directories mainly)
-			addEntry(entry)
-		}
-	}
-
-	// Convert map to slice and convert entries to raid3 Object/Directory types
-	// Use the map key (remote path) directly to ensure consistency and prevent duplicates
-	mergedEntries := make(fs.DirEntries, 0, len(entryMap))
-	objectCount := 0
-	dirCount := 0
-	for remote, entry := range entryMap {
-		var converted fs.DirEntry
-		switch entry.(type) {
-		case fs.Object:
-			converted = &Object{
-				fs:     f,
-				remote: remote,
-			}
-			objectCount++
-		case fs.Directory:
-			converted = &Directory{
-				fs:     f,
-				remote: remote,
-			}
-			dirCount++
-		default:
-			// Unknown type, skip
-			continue
-		}
-		mergedEntries = append(mergedEntries, converted)
-	}
-	fs.Infof(f, "ListR(%q): converted %d objects, %d dirs", dir, objectCount, dirCount)
-
-	// Call callback with merged entries
-	// If callback returns an error, return it
-	// Otherwise return nil (success) even if one backend failed (degraded mode)
-	fs.Infof(f, "ListR(%q): calling callback with %d merged entries", dir, len(mergedEntries))
-	if err := callback(mergedEntries); err != nil {
-		fs.Infof(f, "ListR(%q): callback returned error: %v", dir, err)
-		return err
-	}
-	fs.Infof(f, "ListR(%q): callback succeeded", dir)
-
-	// Degraded mode succeeded: we have at least 2 of 3 backends available
-	// This is expected behavior for RAID 3 reads in degraded mode
-	// Clear errors that were counted for the failed backend to prevent exit status 3
-	// Hardware RAID 3: reads succeed with warnings in degraded mode
-	// Degraded mode succeeds if:
-	// - Both data backends succeed (parity can fail) - RAID 3 only needs 2/3 for reads
-	// - One data backend succeeds (other data backend can fail) - still have 2/3
-	degradedModeSucceeded := (errEven == nil && errOdd == nil) || // Both data backends succeeded
-		(errEven != nil && errOdd == nil) || // Even failed, odd succeeded
-		(errOdd != nil && errEven == nil) // Odd failed, even succeeded
-
-	// Reset errors when degraded mode succeeds and we listed files
-	// This prevents exit status 3 for degraded mode reads (hardware RAID 3 behavior)
-	// Note: We only reset if we actually listed files (len(mergedEntries) > 0)
-	// This prevents resetting errors when enumeration fails completely
-	if degradedModeSucceeded && len(mergedEntries) > 0 {
-		// Degraded mode: we have at least 2/3 backends (the two data backends)
-		// The operation succeeded (files were listed), so clear degraded mode errors
-		// Only reset if we actually listed files (len(mergedEntries) > 0) and this is the top-level call (dir == "")
-		// This prevents resetting errors during recursive enumeration (e.g., heal command)
-		// Errors were already logged as warnings, which is correct behavior
-		currentErrorCount := stats.GetErrors()
-		if currentErrorCount > initialErrorCount {
-			// Errors were counted for the failed backend during degraded mode
-			// Since the operation succeeded (we have 2/3 backends), clear these errors
-			// to prevent exit status 3 (hardware RAID 3 behavior: reads succeed with warnings)
-			stats.ResetErrors()
-			// Note: This clears all errors, including any pre-existing ones
-			// This is acceptable because:
-			// 1. Degraded mode is a read operation and shouldn't fail
-			// 2. Pre-existing errors from other operations are not relevant to this read
-			// 3. Hardware RAID 3: reads succeed in degraded mode (exit status 0)
-		}
-	}
-
-	// Success - return nil even if one backend failed (degraded mode is acceptable for reads)
-	// Hardware RAID 3 behavior: reads succeed with warnings in degraded mode
-	return nil
-}
-
-// NewObject creates a new remote Object
-func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	// Probe particles - must have at least 2 of 3 for RAID 3
-	_, errEven := f.even.NewObject(ctx, remote)
-	_, errOdd := f.odd.NewObject(ctx, remote)
-	// Try both parity suffixes to detect presence
-	_, errParityOL := f.parity.NewObject(ctx, GetParityFilename(remote, true))
-	_, errParityEL := f.parity.NewObject(ctx, GetParityFilename(remote, false))
-
-	parityPresent := errParityOL == nil || errParityEL == nil
-	evenPresent := errEven == nil
-	oddPresent := errOdd == nil
-
-	// Allow object if any two of the three are present
-	presentCount := 0
-	if evenPresent {
-		presentCount++
-	}
-	if oddPresent {
-		presentCount++
-	}
-	if parityPresent {
-		presentCount++
-	}
-	if presentCount < 2 {
-		// File doesn't exist (less than 2/3 particles present)
-		// If one backend is unavailable (connection error), but file doesn't exist on available backends,
-		// return ObjectNotFound to allow move to proceed (Move() will check backend availability and handle rollback)
-
-		// Check if we have connection errors (backend unavailable) vs ObjectNotFound (file doesn't exist)
-		hasConnectionError := false
-
-		// Check if any backend returned a connection error (not ObjectNotFound)
-		if errEven != nil && !errors.Is(errEven, fs.ErrorObjectNotFound) {
-			hasConnectionError = true
-		}
-		if errOdd != nil && !errors.Is(errOdd, fs.ErrorObjectNotFound) {
-			hasConnectionError = true
-		}
-		// Parity is present if either check succeeds, so if presentCount < 2, both checks failed
-		if !parityPresent && errParityOL != nil && errParityEL != nil {
-			if !errors.Is(errParityOL, fs.ErrorObjectNotFound) || !errors.Is(errParityEL, fs.ErrorObjectNotFound) {
-				hasConnectionError = true
-			}
-		}
-
-		// If we have connection errors but file doesn't exist on available backends,
-		// return ObjectNotFound to allow move to proceed (Move() will check backend availability)
-		if hasConnectionError {
-			return nil, fs.ErrorObjectNotFound
-		}
-
-		// All backends returned ObjectNotFound or file is truly missing
-		// Prefer returning the first error if available, otherwise ObjectNotFound
-		if errEven != nil {
-			return nil, errEven
-		}
-		if errOdd != nil {
-			return nil, errOdd
-		}
-		return nil, fs.ErrorObjectNotFound
-	}
-
-	return &Object{fs: f, remote: remote}, nil
-}
-
-// Put uploads an object
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	if f.opt.UseStreaming {
-		return f.putStreaming(ctx, in, src, options...)
-	}
-	return f.putBuffered(ctx, in, src, options...)
-}
-
-// putBuffered uploads an object using the buffered (memory-based) approach
-func (f *Fs) putBuffered(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	// Pre-flight check: Enforce strict RAID 3 write policy
-	// Fail immediately if any backend is unavailable to prevent degraded writes
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return nil, fmt.Errorf("write blocked in degraded mode (RAID 3 policy): %w", err)
-	}
-
-	// Disable retries for strict RAID 3 write policy
-	// This prevents rclone's retry logic from creating degraded files
-	ctx = f.disableRetriesForWrites(ctx)
-
-	// Read all data
-	data, err := io.ReadAll(in)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read data: %w", err)
-	}
-
-	// Split into even and odd bytes
-	evenData, oddData := SplitBytes(data)
-
-	// Calculate parity
-	parityData := CalculateParity(evenData, oddData)
-
-	// Determine if original data is odd length
-	isOddLength := len(data)%2 == 1
-
-	// Create wrapper ObjectInfo for each particle
-	evenInfo := &particleObjectInfo{
-		ObjectInfo: src,
-		size:       int64(len(evenData)),
-	}
-	oddInfo := &particleObjectInfo{
-		ObjectInfo: src,
-		size:       int64(len(oddData)),
-	}
-	parityInfo := &particleObjectInfo{
-		ObjectInfo: src,
-		size:       int64(len(parityData)),
-		remote:     GetParityFilename(src.Remote(), isOddLength),
-	}
-
-	// Track uploaded particles for rollback
-	var uploadedParticles []fs.Object
-	var uploadedMu sync.Mutex
-	defer func() {
-		if err != nil && f.opt.Rollback {
-			uploadedMu.Lock()
-			particles := uploadedParticles
-			uploadedMu.Unlock()
-			if rollbackErr := f.rollbackPut(ctx, particles); rollbackErr != nil {
-				fs.Errorf(f, "Rollback failed during Put: %v", rollbackErr)
-			}
-		}
-	}()
-
-	g, gCtx := errgroup.WithContext(ctx)
-
-	// Upload even bytes
-	g.Go(func() error {
-		reader := bytes.NewReader(evenData)
-		obj, err := f.even.Put(gCtx, reader, evenInfo, options...)
-		if err != nil {
-			return fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
-		}
-		uploadedMu.Lock()
-		uploadedParticles = append(uploadedParticles, obj)
-		uploadedMu.Unlock()
-		return nil
-	})
-
-	// Upload odd bytes
-	g.Go(func() error {
-		reader := bytes.NewReader(oddData)
-		obj, err := f.odd.Put(gCtx, reader, oddInfo, options...)
-		if err != nil {
-			return fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
-		}
-		uploadedMu.Lock()
-		uploadedParticles = append(uploadedParticles, obj)
-		uploadedMu.Unlock()
-		return nil
-	})
-
-	// Upload parity
-	g.Go(func() error {
-		reader := bytes.NewReader(parityData)
-		obj, err := f.parity.Put(gCtx, reader, parityInfo, options...)
-		if err != nil {
-			return fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
-		}
-		uploadedMu.Lock()
-		uploadedParticles = append(uploadedParticles, obj)
-		uploadedMu.Unlock()
-		return nil
-	})
-
-	err = g.Wait()
-	if err != nil {
-		return nil, err
-	}
-
-	return &Object{
-		fs:     f,
-		remote: src.Remote(),
-	}, nil
-}
-
-// createParticleInfo creates a particleObjectInfo for a given particle type
-func createParticleInfo(src fs.ObjectInfo, particleType string, size int64, isOddLength bool) *particleObjectInfo {
-	info := &particleObjectInfo{
-		ObjectInfo: src,
-		size:       size,
-	}
-
-	if particleType == "parity" {
-		info.remote = GetParityFilename(src.Remote(), isOddLength)
-	}
-
-	return info
-}
-
-// verifyParticleSizes verifies that uploaded particles have the correct sizes
-func verifyParticleSizes(ctx context.Context, f *Fs, evenObj, oddObj fs.Object, evenWritten, oddWritten int64) error {
-	if evenObj == nil || oddObj == nil {
-		return fmt.Errorf("cannot verify sizes: evenObj=%v, oddObj=%v", evenObj != nil, oddObj != nil)
-	}
-
-	// Refresh objects from S3 to get actual committed sizes
-	evenRefreshed, err := f.even.NewObject(ctx, evenObj.Remote())
-	if err != nil {
-		return fmt.Errorf("failed to refresh even object from S3: %w", err)
-	}
-	oddRefreshed, err := f.odd.NewObject(ctx, oddObj.Remote())
-	if err != nil {
-		return fmt.Errorf("failed to refresh odd object from S3: %w", err)
-	}
-
-	evenSize := evenRefreshed.Size()
-	oddSize := oddRefreshed.Size()
-
-	// Verify sizes match what we wrote
-	if evenSize != evenWritten {
-		return fmt.Errorf("S3 even particle size mismatch: wrote %d bytes but S3 object is %d bytes", evenWritten, evenSize)
-	}
-	if oddSize != oddWritten {
-		return fmt.Errorf("S3 odd particle size mismatch: wrote %d bytes but S3 object is %d bytes", oddWritten, oddSize)
-	}
-
-	return nil
-}
-
-// putStreaming uploads an object using the streaming approach with io.Pipe
-// This mirrors the Get/Open pattern: streams data to Put() calls instead of calling Put() multiple times
-func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	// Pre-flight check: Enforce strict RAID 3 write policy
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return nil, fmt.Errorf("write blocked in degraded mode (RAID 3 policy): %w", err)
-	}
-
-	// Disable retries for strict RAID 3 write policy
-	ctx = f.disableRetriesForWrites(ctx)
-
-	// Track uploaded particles for rollback
-	var uploadedParticles []fs.Object
-	var err error
-	defer func() {
-		if err != nil && f.opt.Rollback {
-			if rollbackErr := f.rollbackPut(ctx, uploadedParticles); rollbackErr != nil {
-				fs.Errorf(f, "Rollback failed during Put (streaming): %v", rollbackErr)
-			}
-		}
-	}()
-
-	// Handle empty file case
-	srcSize := src.Size()
-	if srcSize == 0 {
-		// Empty file - create empty particles
-		evenInfo := createParticleInfo(src, "even", 0, false)
-		evenObj, err := f.even.Put(ctx, bytes.NewReader(nil), evenInfo, options...)
-		if err != nil {
-			return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
-		}
-		uploadedParticles = append(uploadedParticles, evenObj)
-
-		oddInfo := createParticleInfo(src, "odd", 0, false)
-		oddObj, err := f.odd.Put(ctx, bytes.NewReader(nil), oddInfo, options...)
-		if err != nil {
-			return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
-		}
-		uploadedParticles = append(uploadedParticles, oddObj)
-
-		parityInfo := createParticleInfo(src, "parity", 0, false)
-		parityObj, err := f.parity.Put(ctx, bytes.NewReader(nil), parityInfo, options...)
-		if err != nil {
-			return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
-		}
-		uploadedParticles = append(uploadedParticles, parityObj)
-
-		return &Object{fs: f, remote: src.Remote()}, nil
-	}
-
-	// Configuration: Read 2MB chunks (produces ~1MB per particle)
-	readChunkSize := int64(f.opt.ChunkSize) * 2
-	if readChunkSize < 2*1024*1024 {
-		readChunkSize = 2 * 1024 * 1024 // Minimum 2MB
-	}
-
-	// Determine if file is odd-length from source size (if available)
-	// If size is unknown (-1), we'll determine it during streaming
-	isOddLength := srcSize > 0 && srcSize%2 == 1
-
-	// Create pipes for streaming even, odd, and parity data
-	evenPipeR, evenPipeW := io.Pipe()
-	oddPipeR, oddPipeW := io.Pipe()
-	parityPipeR, parityPipeW := io.Pipe()
-
-	// Channel to communicate isOddLength from splitter to parity uploader
-	// Only needed if size is unknown (-1)
-	var isOddLengthCh chan bool
-	if srcSize < 0 {
-		isOddLengthCh = make(chan bool, 1)
-		isOddLengthCh <- false // Default to even-length
-	}
-
-	var evenObj, oddObj fs.Object
-
-	// Use errgroup to coordinate input reading/splitting and Put operations
-	g, gCtx := errgroup.WithContext(ctx)
-	var uploadedMu sync.Mutex
-
-	// Goroutine 1: Read input, split into even/odd/parity, write to pipes
-	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, int(readChunkSize), isOddLengthCh)
-	g.Go(func() error {
-		defer evenPipeW.Close()
-		defer oddPipeW.Close()
-		defer parityPipeW.Close()
-		return splitter.Split(in)
-	})
-
-	// Goroutine 2: Put even particle (reads from evenPipeR)
-	g.Go(func() error {
-		defer evenPipeR.Close()
-		// Use unknown size (-1) since we're streaming
-		evenInfo := createParticleInfo(src, "even", -1, isOddLength)
-		obj, err := f.even.Put(gCtx, evenPipeR, evenInfo, options...)
-		if err != nil {
-			return fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
-		}
-		uploadedMu.Lock()
-		evenObj = obj
-		uploadedParticles = append(uploadedParticles, obj)
-		uploadedMu.Unlock()
-		return nil
-	})
-
-	// Goroutine 3: Put odd particle (reads from oddPipeR)
-	g.Go(func() error {
-		defer oddPipeR.Close()
-		oddInfo := createParticleInfo(src, "odd", -1, isOddLength)
-		obj, err := f.odd.Put(gCtx, oddPipeR, oddInfo, options...)
-		if err != nil {
-			return fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
-		}
-		uploadedMu.Lock()
-		oddObj = obj
-		uploadedParticles = append(uploadedParticles, obj)
-		uploadedMu.Unlock()
-		return nil
-	})
-
-	// Goroutine 4: Put parity particle (reads from parityPipeR)
-	g.Go(func() error {
-		defer parityPipeR.Close()
-
-		// Get isOddLength - use source size if known, otherwise from channel
-		parityIsOddLength := isOddLength
-		if srcSize < 0 && isOddLengthCh != nil {
-			// Try to get from channel (non-blocking, use latest value)
-			select {
-			case parityIsOddLength = <-isOddLengthCh:
-			default:
-				// Use default (even-length)
-			}
-		}
-
-		// Create parity info with correct filename
-		parityInfo := createParticleInfo(src, "parity", -1, parityIsOddLength)
-		obj, err := f.parity.Put(gCtx, parityPipeR, parityInfo, options...)
-		if err != nil {
-			return fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
-		}
-		uploadedMu.Lock()
-		uploadedParticles = append(uploadedParticles, obj)
-		uploadedMu.Unlock()
-		return nil
-	})
-
-	// Wait for all goroutines to complete
-	if err = g.Wait(); err != nil {
-		return nil, err
-	}
-
-	// Get written sizes from splitter for verification
-	totalEvenWritten := splitter.GetTotalEvenWritten()
-	totalOddWritten := splitter.GetTotalOddWritten()
-
-	// Verify sizes
-	if err := verifyParticleSizes(ctx, f, evenObj, oddObj, totalEvenWritten, totalOddWritten); err != nil {
-		return nil, err
-	}
-
-	return &Object{
-		fs:     f,
-		remote: src.Remote(),
-	}, nil
-}
 
 // Mkdir makes a directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
@@ -1915,91 +861,6 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	})
 
 	return g.Wait()
-}
-
-// MkdirMetadata makes a directory with metadata
-func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
-	// Pre-flight health check: Enforce strict RAID 3 write policy
-	// Consistent with Put/Update/Move/Mkdir operations
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return nil, fmt.Errorf("mkdirmetadata blocked in degraded mode (RAID 3 policy): %w", err)
-	}
-
-	// Disable retries for strict RAID 3 write policy
-	ctx = f.disableRetriesForWrites(ctx)
-
-	// Create directory on all three backends that support MkdirMetadata
-	// For backends that don't support it, fall back to regular Mkdir
-	g, gCtx := errgroup.WithContext(ctx)
-	dirs := make([]fs.Directory, 3)
-	errs := make([]error, 3)
-
-	g.Go(func() error {
-		if do := f.even.Features().MkdirMetadata; do != nil {
-			newDir, err := do(gCtx, dir, metadata)
-			if err != nil {
-				errs[0] = fmt.Errorf("%s: %w", f.even.Name(), err)
-				return errs[0]
-			}
-			dirs[0] = newDir
-		} else {
-			// Fallback to regular Mkdir
-			err := f.even.Mkdir(gCtx, dir)
-			if err != nil {
-				errs[0] = fmt.Errorf("%s: %w", f.even.Name(), err)
-				return errs[0]
-			}
-		}
-		return nil
-	})
-
-	g.Go(func() error {
-		if do := f.odd.Features().MkdirMetadata; do != nil {
-			newDir, err := do(gCtx, dir, metadata)
-			if err != nil {
-				errs[1] = fmt.Errorf("%s: %w", f.odd.Name(), err)
-				return errs[1]
-			}
-			dirs[1] = newDir
-		} else {
-			// Fallback to regular Mkdir
-			err := f.odd.Mkdir(gCtx, dir)
-			if err != nil {
-				errs[1] = fmt.Errorf("%s: %w", f.odd.Name(), err)
-				return errs[1]
-			}
-		}
-		return nil
-	})
-
-	g.Go(func() error {
-		if do := f.parity.Features().MkdirMetadata; do != nil {
-			newDir, err := do(gCtx, dir, metadata)
-			if err != nil {
-				errs[2] = fmt.Errorf("%s: %w", f.parity.Name(), err)
-				return errs[2]
-			}
-			dirs[2] = newDir
-		} else {
-			// Fallback to regular Mkdir
-			err := f.parity.Mkdir(gCtx, dir)
-			if err != nil {
-				errs[2] = fmt.Errorf("%s: %w", f.parity.Name(), err)
-				return errs[2]
-			}
-		}
-		return nil
-	})
-
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
-
-	// Return a raid3 Directory
-	return &Directory{
-		fs:     f,
-		remote: dir,
-	}, nil
 }
 
 // Rmdir removes a directory
@@ -2244,20 +1105,18 @@ func (f *Fs) findBrokenObjects(ctx context.Context, dir string) ([]particleInfo,
 	var brokenObjects []particleInfo
 	var totalSize int64
 
-	// Scan current directory
-	particles, err := f.scanParticles(ctx, dir)
+	// Use scanParticles to get all objects from all backends (including broken ones)
+	// This directly lists from all three backends without filtering
+	allParticles, err := f.scanParticles(ctx, dir)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Find broken objects (count == 1)
-	for _, p := range particles {
-		if p.count == 1 {
-			// Get size of the single particle
-			size := f.getBrokenObjectSize(ctx, p)
-			p.size = size
-			totalSize += size
-			brokenObjects = append(brokenObjects, p)
+	// Filter for broken objects (less than 2 particles)
+	for _, pi := range allParticles {
+		if pi.count < 2 {
+			brokenObjects = append(brokenObjects, pi)
+			totalSize += f.getBrokenObjectSize(ctx, pi)
 		}
 	}
 
@@ -2267,10 +1126,11 @@ func (f *Fs) findBrokenObjects(ctx context.Context, dir string) ([]particleInfo,
 		fs.Debugf(f, "Failed to list directories in %s: %v", dir, err)
 	} else {
 		for _, entry := range entries {
-			if _, ok := entry.(fs.Directory); ok {
-				subBroken, subSize, err := f.findBrokenObjects(ctx, entry.Remote())
+			if dirEntry, ok := entry.(fs.Directory); ok {
+				// Recursively scan subdirectory
+				subBroken, subSize, err := f.findBrokenObjects(ctx, dirEntry.Remote())
 				if err != nil {
-					fs.Errorf(f, "Failed to scan directory %s: %v", entry.Remote(), err)
+					fs.Errorf(f, "Failed to scan directory %s: %v", dirEntry.Remote(), err)
 					continue
 				}
 				brokenObjects = append(brokenObjects, subBroken...)
@@ -2282,590 +1142,77 @@ func (f *Fs) findBrokenObjects(ctx context.Context, dir string) ([]particleInfo,
 	return brokenObjects, totalSize, nil
 }
 
-// Move src to this remote using server-side move operations if possible
-func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	// Check if src is from a raid3 backend (may be different Fs instance for cross-remote moves)
-	srcObj, ok := src.(*Object)
-	if !ok {
-		return nil, fs.ErrorCantMove
-	}
-
-	// Normalize remote path: remove leading slashes and clean the path.
-	// The remote parameter should be relative to f.Root(), but it might include
-	// path components if extracted from a full path. We normalize it to ensure
-	// consistent behavior regardless of how it was constructed.
-	remote = strings.TrimPrefix(remote, "/")
-	remote = path.Clean(remote)
-
-	// Handle cross-remote moves: if source is from different Fs instance,
-	// we need to get particles from source Fs's backends
-	srcFs := srcObj.fs
-	srcRemote := srcObj.remote
-	isCrossRemote := srcFs != f
-
-	// Early return for move over self (no-op) - POSIX convention
-	// Only check this if source and destination are the same Fs instance
-	// (moving within the same remote, not between different remotes)
-	if srcRemote == remote && !isCrossRemote {
-		// Move over self is a no-op - return source object unchanged
-		return srcObj, nil
-	}
-
-	// Determine source parity name (needed for cleanup)
-	// For cross-remote moves, check source Fs's parity backend
-	var srcParityName string
-	parityOddSrc := GetParityFilename(srcRemote, true)
-	parityEvenSrc := GetParityFilename(srcRemote, false)
-
-	// Check in source Fs's parity backend for cross-remote moves
-	parityFs := f.parity
-	if isCrossRemote {
-		parityFs = srcFs.parity
-	}
-	_, errOdd := parityFs.NewObject(ctx, parityOddSrc)
-	if errOdd == nil {
-		srcParityName = parityOddSrc
-	} else {
-		srcParityName = parityEvenSrc
-	}
-	_, isParity, isOddLength := StripParitySuffix(srcParityName)
-	if !isParity {
-		isOddLength = false
-	}
-	dstParityName := GetParityFilename(remote, isOddLength)
-
-	// Pre-flight check: Enforce strict RAID 3 write policy
-	// Fail immediately if any backend is unavailable to prevent degraded moves
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		// Even though we're failing early, clean up any destination files from previous attempts
-		if f.opt.Rollback {
-			allDestinations := []moveState{
-				{"even", srcObj.remote, remote},
-				{"odd", srcObj.remote, remote},
-				{"parity", srcParityName, dstParityName},
-			}
-			if cleanupErr := f.rollbackMoves(ctx, allDestinations); cleanupErr != nil {
-				fs.Debugf(f, "Cleanup of destination files failed: %v", cleanupErr)
-			}
-		}
-		return nil, fmt.Errorf("move blocked in degraded mode (RAID 3 policy): %w", err)
-	}
-	fs.Debugf(f, "Move: all backends available, proceeding with move")
-
-	// Disable retries for strict RAID 3 write policy
-	ctx = f.disableRetriesForWrites(ctx)
-
-	// Track successful moves for rollback
-	type moveResult struct {
-		state   moveState
-		success bool
-		err     error
-	}
-
-	var successMoves []moveState
-	var movesMu sync.Mutex
-	var moveErr error
-	defer func() {
-		if moveErr != nil && f.opt.Rollback {
-			movesMu.Lock()
-			moves := successMoves
-			movesMu.Unlock()
-
-			// If we have tracked moves, roll them back
-			if len(moves) > 0 {
-				if rollbackErr := f.rollbackMoves(ctx, moves); rollbackErr != nil {
-					fs.Errorf(f, "Rollback failed during Move: %v", rollbackErr)
-				}
-			}
-
-			// Also check for destination files that might exist even if not tracked
-			// This handles edge cases where Copy succeeded but Delete failed
-			allDestinations := []moveState{
-				{"even", srcObj.remote, remote},
-				{"odd", srcObj.remote, remote},
-				{"parity", srcParityName, dstParityName},
-			}
-			if cleanupErr := f.rollbackMoves(ctx, allDestinations); cleanupErr != nil {
-				fs.Debugf(f, "Cleanup check for untracked destination files failed: %v", cleanupErr)
-			}
-		}
-	}()
-
-	results := make(chan moveResult, 3)
-	g, gCtx := errgroup.WithContext(ctx)
-
-	// Get source backends (may be different for cross-remote moves)
-	srcEven := f.even
-	srcOdd := f.odd
-	srcParity := f.parity
-	if isCrossRemote {
-		srcEven = srcFs.even
-		srcOdd = srcFs.odd
-		srcParity = srcFs.parity
-	}
-
-	// Move on even
-	g.Go(func() error {
-		obj, err := srcEven.NewObject(gCtx, srcRemote)
-		if err != nil {
-			results <- moveResult{moveState{"even", srcRemote, remote}, false, nil}
-			return nil // Ignore if not found
-		}
-		_, err = moveOrCopyParticle(gCtx, f.even, obj, remote)
-		if err != nil {
-			results <- moveResult{moveState{"even", srcRemote, remote}, false, err}
-			return err
-		}
-		results <- moveResult{moveState{"even", srcRemote, remote}, true, nil}
-		return nil
-	})
-
-	// Move on odd
-	g.Go(func() error {
-		obj, err := srcOdd.NewObject(gCtx, srcRemote)
-		if err != nil {
-			results <- moveResult{moveState{"odd", srcRemote, remote}, false, nil}
-			return nil // Ignore if not found
-		}
-		_, err = moveOrCopyParticle(gCtx, f.odd, obj, remote)
-		if err != nil {
-			results <- moveResult{moveState{"odd", srcRemote, remote}, false, err}
-			return err
-		}
-		results <- moveResult{moveState{"odd", srcRemote, remote}, true, nil}
-		return nil
-	})
-
-	// Move parity
-	g.Go(func() error {
-		obj, err := srcParity.NewObject(gCtx, srcParityName)
-		if err != nil {
-			results <- moveResult{moveState{"parity", srcParityName, dstParityName}, false, nil}
-			return nil // Ignore if not found
-		}
-		_, err = moveOrCopyParticle(gCtx, f.parity, obj, dstParityName)
-		if err != nil {
-			results <- moveResult{moveState{"parity", srcParityName, dstParityName}, false, err}
-			return err
-		}
-		results <- moveResult{moveState{"parity", srcParityName, dstParityName}, true, nil}
-		return nil
-	})
-
-	moveErr = g.Wait()
-	close(results)
-
-	// Collect results
-	var firstError error
-	for result := range results {
-		if result.success {
-			movesMu.Lock()
-			successMoves = append(successMoves, result.state)
-			movesMu.Unlock()
-		} else if result.err != nil && firstError == nil {
-			firstError = result.err
+// getBrokenObjectSize gets the size of a broken object's single particle
+func (f *Fs) getBrokenObjectSize(ctx context.Context, p particleInfo) int64 {
+	if p.evenExists {
+		obj, err := f.even.NewObject(ctx, p.remote)
+		if err == nil {
+			return obj.Size()
 		}
 	}
-
-	// If any failed, rollback will happen in defer
-	if firstError != nil || moveErr != nil {
-		if firstError != nil {
-			moveErr = firstError
+	if p.oddExists {
+		obj, err := f.odd.NewObject(ctx, p.remote)
+		if err == nil {
+			return obj.Size()
 		}
-		return nil, moveErr
 	}
-
-	return &Object{
-		fs:     f,
-		remote: remote,
-	}, nil
+	if p.parityExists {
+		// Try both parity suffixes
+		obj, err := f.parity.NewObject(ctx, GetParityFilename(p.remote, true))
+		if err == nil {
+			return obj.Size()
+		}
+		obj, err = f.parity.NewObject(ctx, GetParityFilename(p.remote, false))
+		if err == nil {
+			return obj.Size()
+		}
+	}
+	return 0
 }
 
-// Copy src to this remote using server-side copy operations if possible
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	// Check if src is from a raid3 backend (may be different Fs instance for cross-remote copies)
-	srcObj, ok := src.(*Object)
-	if !ok {
-		return nil, fs.ErrorCantCopy
-	}
-
-	// Normalize remote path: remove leading slashes and clean the path.
-	// The remote parameter should be relative to f.Root(), but it might include
-	// path components if extracted from a full path. We normalize it to ensure
-	// consistent behavior regardless of how it was constructed.
-	remote = strings.TrimPrefix(remote, "/")
-	remote = path.Clean(remote)
-
-	// Handle cross-remote copies: if source is from different Fs instance,
-	// we need to get particles from source Fs's backends
-	srcFs := srcObj.fs
-	srcRemote := srcObj.remote
-	isCrossRemote := srcFs != f
-
-	// Determine source parity name (needed for destination parity name)
-	// For cross-remote copies, check source Fs's parity backend
-	var srcParityName string
-	parityOddSrc := GetParityFilename(srcRemote, true)
-	parityEvenSrc := GetParityFilename(srcRemote, false)
-
-	// Check in source Fs's parity backend for cross-remote copies
-	parityFs := f.parity
-	if isCrossRemote {
-		parityFs = srcFs.parity
-	}
-	_, errOdd := parityFs.NewObject(ctx, parityOddSrc)
-	if errOdd == nil {
-		srcParityName = parityOddSrc
-	} else {
-		srcParityName = parityEvenSrc
-	}
-	_, isParity, isOddLength := StripParitySuffix(srcParityName)
-	if !isParity {
-		isOddLength = false
-	}
-	dstParityName := GetParityFilename(remote, isOddLength)
-
-	// Pre-flight check: Enforce strict RAID 3 write policy
-	// Fail immediately if any backend is unavailable to prevent degraded copies
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return nil, fmt.Errorf("copy blocked in degraded mode (RAID 3 policy): %w", err)
-	}
-	fs.Debugf(f, "Copy: all backends available, proceeding with copy")
-
-	// Disable retries for strict RAID 3 write policy
-	ctx = f.disableRetriesForWrites(ctx)
-
-	// Track successful copies for cleanup on error
-	type copyResult struct {
-		backend string
-		success bool
-		err     error
-	}
-
-	var successCopies []string
-	var copiesMu sync.Mutex
-	var copyErr error
-	defer func() {
-		if copyErr != nil && f.opt.Rollback {
-			copiesMu.Lock()
-			copies := successCopies
-			copiesMu.Unlock()
-
-			// Clean up any successfully copied destination files
-			if len(copies) > 0 {
-				g, gCtx := errgroup.WithContext(ctx)
-				for _, backendName := range copies {
-					backendName := backendName
-					g.Go(func() error {
-						var backend fs.Fs
-						var dstRemote string
-						switch backendName {
-						case "even":
-							backend = f.even
-							dstRemote = remote
-						case "odd":
-							backend = f.odd
-							dstRemote = remote
-						case "parity":
-							backend = f.parity
-							dstRemote = dstParityName
-						default:
-							return nil
-						}
-						dstObj, err := backend.NewObject(gCtx, dstRemote)
-						if err != nil {
-							return nil // Already cleaned up or doesn't exist
-						}
-						if delErr := dstObj.Remove(gCtx); delErr != nil {
-							fs.Errorf(f, "Failed to clean up copied %s particle: %v", backendName, delErr)
-						}
-						return nil
-					})
-				}
-				_ = g.Wait() // Best effort cleanup
-			}
-		}
-	}()
-
-	results := make(chan copyResult, 3)
+// removeBrokenObject removes a broken object from all backends where it exists
+func (f *Fs) removeBrokenObject(ctx context.Context, p particleInfo) error {
 	g, gCtx := errgroup.WithContext(ctx)
 
-	// Get source backends (may be different for cross-remote copies)
-	srcEven := f.even
-	srcOdd := f.odd
-	srcParity := f.parity
-	if isCrossRemote {
-		srcEven = srcFs.even
-		srcOdd = srcFs.odd
-		srcParity = srcFs.parity
-	}
-
-	// Copy on even
-	g.Go(func() error {
-		obj, err := srcEven.NewObject(gCtx, srcRemote)
-		if err != nil {
-			results <- copyResult{"even", false, nil}
-			return nil // Ignore if not found
-		}
-		_, err = copyParticle(gCtx, f.even, obj, remote)
-		if err != nil {
-			results <- copyResult{"even", false, err}
-			return err
-		}
-		results <- copyResult{"even", true, nil}
-		return nil
-	})
-
-	// Copy on odd
-	g.Go(func() error {
-		obj, err := srcOdd.NewObject(gCtx, srcRemote)
-		if err != nil {
-			results <- copyResult{"odd", false, nil}
-			return nil // Ignore if not found
-		}
-		_, err = copyParticle(gCtx, f.odd, obj, remote)
-		if err != nil {
-			results <- copyResult{"odd", false, err}
-			return err
-		}
-		results <- copyResult{"odd", true, nil}
-		return nil
-	})
-
-	// Copy parity
-	g.Go(func() error {
-		obj, err := srcParity.NewObject(gCtx, srcParityName)
-		if err != nil {
-			results <- copyResult{"parity", false, nil}
-			return nil // Ignore if not found
-		}
-		_, err = copyParticle(gCtx, f.parity, obj, dstParityName)
-		if err != nil {
-			results <- copyResult{"parity", false, err}
-			return err
-		}
-		results <- copyResult{"parity", true, nil}
-		return nil
-	})
-
-	copyErr = g.Wait()
-	close(results)
-
-	// Collect results
-	var firstError error
-	for result := range results {
-		if result.success {
-			copiesMu.Lock()
-			successCopies = append(successCopies, result.backend)
-			copiesMu.Unlock()
-		} else if result.err != nil && firstError == nil {
-			firstError = result.err
-		}
-	}
-
-	// If any failed, cleanup will happen in defer
-	if firstError != nil || copyErr != nil {
-		if firstError != nil {
-			copyErr = firstError
-		}
-		return nil, copyErr
-	}
-
-	return &Object{
-		fs:     f,
-		remote: remote,
-	}, nil
-}
-
-// DirMove moves src:srcRemote to this remote at dstRemote
-// using server-side move operations
-func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
-	// Pre-flight check: Enforce strict RAID 3 write policy
-	// Fail immediately if any backend is unavailable to prevent incomplete moves
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return fmt.Errorf("dirmove blocked in degraded mode (RAID 3 policy): %w", err)
-	}
-
-	// Check if src is a raid3 backend
-	srcFs, ok := src.(*Fs)
-	if !ok {
-		return fs.ErrorCantDirMove
-	}
-
-	// Check if source and destination are the same backend
-	if f.name != srcFs.name {
-		return fs.ErrorCantDirMove
-	}
-
-	// Prepare destination: if the target directory already exists but is empty (common
-	// when the test harness pre-creates it), remove it so the backend DirMove can succeed.
-	// If it exists with contents we must fail with fs.ErrorDirExists.
-	checkAndCleanupDestination := func(remote string) error {
-		entries, err := f.List(ctx, remote)
-		switch {
-		case err == nil:
-			if len(entries) > 0 {
-				return fs.ErrorDirExists
-			}
-			if rmErr := f.Rmdir(ctx, remote); rmErr != nil && !errors.Is(rmErr, fs.ErrorDirNotFound) {
-				return fmt.Errorf("failed to remove empty destination %q: %w", remote, rmErr)
-			}
-		case errors.Is(err, fs.ErrorDirNotFound):
-			// Nothing to do - destination does not exist
-		default:
-			return err
-		}
-		return nil
-	}
-
-	if dstRemote == "" {
-		if err := checkAndCleanupDestination(""); err != nil {
-			return err
-		}
-	} else {
-		// Ensure intermediate parent directories exist so per-backend DirMove
-		// gets consistent expectations.
-		parent := path.Dir(dstRemote)
-		if parent != "." && parent != "/" {
-			if mkErr := f.Mkdir(ctx, parent); mkErr != nil && !errors.Is(mkErr, fs.ErrorDirExists) {
-				return fmt.Errorf("failed to prepare destination parent %q: %w", parent, mkErr)
-			}
-		}
-		if err := checkAndCleanupDestination(dstRemote); err != nil {
-			return err
-		}
-	}
-
-	// Disable retries for strict RAID 3 write policy
-	ctx = f.disableRetriesForWrites(ctx)
-
-	g, gCtx := errgroup.WithContext(ctx)
-
-	// Move on even - use best-effort approach for degraded directories
-	g.Go(func() error {
-		if do := f.even.Features().DirMove; do != nil {
-			err := do(gCtx, srcFs.even, srcRemote, dstRemote)
+	if p.evenExists {
+		g.Go(func() error {
+			obj, err := f.even.NewObject(gCtx, p.remote)
 			if err != nil {
-				// If source doesn't exist on this backend, create destination instead (reconstruction)
-				// Only if auto_heal is enabled
-				if (os.IsNotExist(err) || errors.Is(err, fs.ErrorDirNotFound)) && f.opt.AutoHeal {
-					fs.Infof(f, "DirMove: source missing on even, creating destination (reconstruction)")
-					return f.even.Mkdir(gCtx, dstRemote)
-				}
-				if errors.Is(err, fs.ErrorDirExists) {
-					return fs.ErrorDirExists
-				}
-				return fmt.Errorf("even dirmove failed: %w", err)
+				return nil // Already removed or doesn't exist
 			}
-			return nil
-		}
-		return fs.ErrorCantDirMove
-	})
-
-	// Move on odd
-	g.Go(func() error {
-		if do := f.odd.Features().DirMove; do != nil {
-			err := do(gCtx, srcFs.odd, srcRemote, dstRemote)
-			if err != nil {
-				// If source doesn't exist on this backend, create destination instead (reconstruction)
-				// Only if auto_heal is enabled
-				if (os.IsNotExist(err) || errors.Is(err, fs.ErrorDirNotFound)) && f.opt.AutoHeal {
-					fs.Infof(f, "DirMove: source missing on odd, creating destination (reconstruction)")
-					return f.odd.Mkdir(gCtx, dstRemote)
-				}
-				if errors.Is(err, fs.ErrorDirExists) {
-					return fs.ErrorDirExists
-				}
-				return fmt.Errorf("odd dirmove failed: %w", err)
-			}
-			return nil
-		}
-		return fs.ErrorCantDirMove
-	})
-
-	// Move on parity
-	g.Go(func() error {
-		if do := f.parity.Features().DirMove; do != nil {
-			err := do(gCtx, srcFs.parity, srcRemote, dstRemote)
-			if err != nil {
-				// If source doesn't exist on this backend, create destination instead (reconstruction)
-				// Only if auto_heal is enabled
-				if (os.IsNotExist(err) || errors.Is(err, fs.ErrorDirNotFound)) && f.opt.AutoHeal {
-					fs.Infof(f, "DirMove: source missing on parity, creating destination (reconstruction)")
-					return f.parity.Mkdir(gCtx, dstRemote)
-				}
-				if errors.Is(err, fs.ErrorDirExists) {
-					return fs.ErrorDirExists
-				}
-				return fmt.Errorf("parity dirmove failed: %w", err)
-			}
-			return nil
-		}
-		return fs.ErrorCantDirMove
-	})
-
-	if err := g.Wait(); err != nil {
-		return err
+			return obj.Remove(gCtx)
+		})
 	}
 
-	return nil
-}
-
-// DirSetModTime sets the directory modtime for dir
-func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
-	// Check if directory exists before health check (union backend pattern)
-	// This ensures we return fs.ErrorDirNotFound immediately when directory doesn't exist
-	dirExists, err := f.checkDirectoryExists(ctx, dir)
-	if err != nil {
-		return fmt.Errorf("failed to check directory existence: %w", err)
-	}
-	if !dirExists {
-		return fs.ErrorDirNotFound
+	if p.oddExists {
+		g.Go(func() error {
+			obj, err := f.odd.NewObject(gCtx, p.remote)
+			if err != nil {
+				return nil // Already removed or doesn't exist
+			}
+			return obj.Remove(gCtx)
+		})
 	}
 
-	// Pre-flight check: Enforce strict RAID 3 write policy
-	// DirSetModTime is a metadata write operation (modifies directory metadata)
-	// Consistent with Object.SetModTime, Put, Update, Move, Mkdir operations
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return fmt.Errorf("dirsetmodtime blocked in degraded mode (RAID 3 policy): %w", err)
+	if p.parityExists {
+		g.Go(func() error {
+			// Try both parity suffixes first (normal case)
+			obj, err := f.parity.NewObject(gCtx, GetParityFilename(p.remote, true))
+			if err == nil {
+				return obj.Remove(gCtx)
+			}
+			obj, err = f.parity.NewObject(gCtx, GetParityFilename(p.remote, false))
+			if err == nil {
+				return obj.Remove(gCtx)
+			}
+			// Also try the original name (for orphaned files without suffix)
+			obj, err = f.parity.NewObject(gCtx, p.remote)
+			if err == nil {
+				return obj.Remove(gCtx)
+			}
+			return nil // No parity found
+		})
 	}
-
-	// Disable retries for strict RAID 3 write policy
-	ctx = f.disableRetriesForWrites(ctx)
-
-	// Set modtime on all three backends that support it
-	// Use errgroup to collect errors from all backends
-	g, gCtx := errgroup.WithContext(ctx)
-
-	g.Go(func() error {
-		if do := f.even.Features().DirSetModTime; do != nil {
-			err := do(gCtx, dir, modTime)
-			if err != nil {
-				return fmt.Errorf("%s: %w", f.even.Name(), err)
-			}
-		}
-		return nil
-	})
-
-	g.Go(func() error {
-		if do := f.odd.Features().DirSetModTime; do != nil {
-			err := do(gCtx, dir, modTime)
-			if err != nil {
-				return fmt.Errorf("%s: %w", f.odd.Name(), err)
-			}
-		}
-		return nil
-	})
-
-	g.Go(func() error {
-		if do := f.parity.Features().DirSetModTime; do != nil {
-			err := do(gCtx, dir, modTime)
-			if err != nil {
-				return fmt.Errorf("%s: %w", f.parity.Name(), err)
-			}
-		}
-		return nil
-	})
 
 	return g.Wait()
 }
@@ -3058,90 +1405,6 @@ func (f *Fs) cleanupOrphanedDirectory(ctx context.Context, dir string, errEven, 
 			}
 		}
 	}
-}
-
-// getBrokenObjectSize gets the size of a broken object's single particle
-func (f *Fs) getBrokenObjectSize(ctx context.Context, p particleInfo) int64 {
-	if p.evenExists {
-		obj, err := f.even.NewObject(ctx, p.remote)
-		if err == nil {
-			return obj.Size()
-		}
-	}
-	if p.oddExists {
-		obj, err := f.odd.NewObject(ctx, p.remote)
-		if err == nil {
-			return obj.Size()
-		}
-	}
-	if p.parityExists {
-		// Try both parity suffixes
-		parityOL := GetParityFilename(p.remote, true)
-		obj, err := f.parity.NewObject(ctx, parityOL)
-		if err == nil {
-			return obj.Size()
-		}
-		parityEL := GetParityFilename(p.remote, false)
-		obj, err = f.parity.NewObject(ctx, parityEL)
-		if err == nil {
-			return obj.Size()
-		}
-		// Also try without suffix (for orphaned files)
-		obj, err = f.parity.NewObject(ctx, p.remote)
-		if err == nil {
-			return obj.Size()
-		}
-	}
-	return 0
-}
-
-// removeBrokenObject removes all particles of a broken object
-func (f *Fs) removeBrokenObject(ctx context.Context, p particleInfo) error {
-	g, gCtx := errgroup.WithContext(ctx)
-
-	if p.evenExists {
-		g.Go(func() error {
-			obj, err := f.even.NewObject(gCtx, p.remote)
-			if err != nil {
-				return nil // Already gone
-			}
-			return obj.Remove(gCtx)
-		})
-	}
-
-	if p.oddExists {
-		g.Go(func() error {
-			obj, err := f.odd.NewObject(gCtx, p.remote)
-			if err != nil {
-				return nil // Already gone
-			}
-			return obj.Remove(gCtx)
-		})
-	}
-
-	if p.parityExists {
-		g.Go(func() error {
-			// Try both suffixes
-			parityOL := GetParityFilename(p.remote, true)
-			obj, err := f.parity.NewObject(gCtx, parityOL)
-			if err == nil {
-				return obj.Remove(gCtx)
-			}
-			parityEL := GetParityFilename(p.remote, false)
-			obj, err = f.parity.NewObject(gCtx, parityEL)
-			if err == nil {
-				return obj.Remove(gCtx)
-			}
-			// Also try without suffix (for orphaned files manually created)
-			obj, err = f.parity.NewObject(gCtx, p.remote)
-			if err == nil {
-				return obj.Remove(gCtx)
-			}
-			return nil // No parity found
-		})
-	}
-
-	return g.Wait()
 }
 
 // Check the interfaces are satisfied

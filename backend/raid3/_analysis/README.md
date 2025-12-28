@@ -9,6 +9,8 @@ This directory contains analysis, planning, and research documents for the RAID3
 - `performance/` - Performance analysis and optimization plans
 - `design/` - Design decisions and architectural analysis
 - `plans/` - Implementation plans and task breakdowns
+- `IMPROVEMENT_PLAN.md` - Improvement plan and task tracking
+- `NAMING_CONVENTIONS.md` - Naming conventions documentation
 
 ## Purpose
 

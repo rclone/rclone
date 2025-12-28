@@ -7,10 +7,10 @@ We’ve built a new virtual backend for **rclone** called **cRaid3**, combining 
 
 Dear rclone community,
 
-Hard disks fail. That’s why we have RAID — multiple drives working together so that when one goes down, your data stays safe and accessible.  
+Hard disks fail. That's why we have RAID — multiple drives working together so that when one goes down, your data stays safe and accessible.  
 The same principle applies to cloud storage: an **account can get compromised**, a **provider can disappear**, or access to a **geographic region**, or even to entire organizations like **NGOs** or **companies**, can suddenly be blocked. When that happens, both current and historical data may be at risk.
 
-To address this, we built **cloud raid3** or **cRaid3**, a new **virtual backend for rclone** that combines **three remotes into one fault‑tolerant storage system**.
+To address this, we built **cloud raid3**,  **cRaid3** or in short **raid3** — a new **virtual backend for rclone** that combines **three remotes into one fault‑tolerant storage system**.
 
 ***
 
@@ -58,7 +58,8 @@ This provides **fault tolerance with only ~50 % storage overhead**.
 Integration test scripts and a setup helper are included:
 
 ```bash
-$ rclone --config $HOME/go/raid3storage/rclone_raid3_integration_tests.config ls localraid3:
+$ cd backend/raid3/integration && ./setup.sh
+$ rclone --config $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)/rclone_raid3_integration_tests.config ls localraid3:
 ```
 
 Make sure to `go build` and `go install` the forked rclone binary before testing.  
@@ -68,23 +69,33 @@ If you have **MinIO** running in Docker, the provided config also includes a `mi
 
 ### 💬 Request for feedback
 
-This is a **pre‑MVP** — currently slow, no streaming support yet — but functional and ready for experimentation.  
-We’d appreciate feedback from the community, especially on design questions such as:
+This is an **alpha/experimental** implementation — core functionality is working and tested.  
+**Current status:**
+- ✅ Streaming support implemented (default: `use_streaming=true`)
+- ✅ Degraded mode reads (works with 2/3 backends, automatic reconstruction)
+- ✅ Automatic heal (`auto_heal=true` by default, background particle restoration)
+- ✅ Auto-cleanup (`auto_cleanup=true` by default, removes orphaned objects)
+- ✅ Backend commands: `status`, `rebuild`, `heal`
+- ✅ Test suite: 96 PASS, 0 FAIL (fs/sync and fs/operations tests)
 
+We'd appreciate feedback from the community, especially on issues such as:
+
+- Should we call our new backend **cRaid3** or simply **raid3** ?  
 - What should `rclone size` return — original data size or total across all parts?  
-- How should `rclone md5sum` behave — should we store the original file’s checksum explicitly?  
-- Could the **chunker** or **crypt** virtual remote wrap the **cRaid3** remote?
+- How should `rclone md5sum` behave — should we store the original file's checksum explicitly?  
+- Could the **chunker** or **crypt** virtual remote wrap the **raid3** remote?
 
-Or simple questions like: Should we call it **cRaid3** or just **raid3**? The current **pre-MVP** is just called **raid3**.
+**Known limitations:**
+Update operation rollback has issues when `rollback=true` (Put and Move rollback work correctly), see [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md) for details.
 
-The **pre‑MVP** is available for download and testing here: **https://github.com/Breschling/rclone.git** . 
+The implementation is available for download and testing here: **https://github.com/Breschling/rclone.git** . 
 
 ***
 
 ### Why RAID3?
 
-RAID3 is **amazingly fast, simple, deterministic, and state‑light**.  
-In traditional disk arrays, the parity disk was a bottleneck — but in **cloud storage this limitation doesn’t exist**, making RAID3 an ideal starting point for reliable, multi‑provider redundancy.
+RAID3 is **fast, simple, deterministic, and state‑light**.  
+In traditional disk arrays, the parity disk was a bottleneck — but in **cloud storage this limitation doesn't exist**, making RAID3 an ideal starting point for reliable, multi‑provider redundancy.
 
 ***
 
@@ -92,9 +103,5 @@ In traditional disk arrays, the parity disk was a bottleneck — but in **cloud 
 
 As we refine raid3, we hope to identify what’s needed for stable, high‑performance distributed backends in rclone.  
 If the community finds this approach useful, we plan to explore more advanced (but probably more demanding) options such as **Erasure Coding** and **Threshold Encryption** (see the 2021 forum topic [*“Can we add erasure coding to rclone?”*](https://forum.rclone.org/t/can-we-add-erasure-coding-to-rclone/23684) between @hvrietsc (Hans) and @ncw (Nick)).
-
-***
-
-Let’s start simple, let’s start now — and make cloud storage a bit more failure‑proof 🚀
 
 ***

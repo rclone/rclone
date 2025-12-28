@@ -98,8 +98,11 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 }
 
 // Size returns the size of the reconstructed object
+// Note: This method doesn't accept a context parameter as it matches the rclone fs.Object interface.
+// Internal operations use context.Background() which cannot be cancelled.
+// This is a limitation of the rclone interface design.
 func (o *Object) Size() int64 {
-	ctx := context.Background()
+	ctx := context.Background() // Interface limitation: Size() doesn't accept context
 	// Try to fetch particles
 	evenObj, errEven := o.fs.even.NewObject(ctx, o.remote)
 	oddObj, errOdd := o.fs.odd.NewObject(ctx, o.remote)
@@ -166,7 +169,7 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	// Verify size is valid before opening
 	reportedSize := o.Size()
 	if reportedSize < 0 {
-		return "", fmt.Errorf("cannot calculate hash: object size is invalid (%d)", reportedSize)
+		return "", formatOperationError("hash calculation failed", fmt.Sprintf("object size is invalid (%d)", reportedSize), nil)
 	}
 
 	// Must reconstruct the full file to calculate hash
@@ -189,7 +192,7 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 
 	// Verify we read the expected amount of data
 	if reportedSize > 0 && bytesRead == 0 {
-		return "", fmt.Errorf("hash calculation read 0 bytes but Size() reports %d bytes - possible corruption", reportedSize)
+		return "", formatOperationError("hash calculation failed", fmt.Sprintf("read 0 bytes but Size() reports %d bytes - possible corruption", reportedSize), nil)
 	}
 	if reportedSize > 0 && bytesRead != reportedSize {
 		fs.Debugf(o, "Hash calculation read %d bytes but Size() reports %d bytes", bytesRead, reportedSize)
@@ -295,11 +298,25 @@ func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
 //
 // It should return fs.ErrorNotImplemented if it can't set metadata
 func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	// Input validation
+	if err := validateContext(ctx, "setmetadata"); err != nil {
+		return err
+	}
+	if o == nil {
+		return formatOperationError("setmetadata failed", "object cannot be nil", nil)
+	}
+	if err := validateRemote(o.remote, "setmetadata"); err != nil {
+		return err
+	}
+	if metadata == nil {
+		return formatOperationError("setmetadata failed", "metadata cannot be nil", nil)
+	}
+
 	// Pre-flight check: Enforce strict RAID 3 write policy
 	// SetMetadata is a metadata write operation
 	// Consistent with Object.SetModTime, Put, Update, Move operations
 	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
-		return fmt.Errorf("setmetadata blocked in degraded mode (RAID 3 policy): %w", err)
+		return formatOperationError("setmetadata blocked in degraded mode (RAID 3 policy)", "", err)
 	}
 
 	// Disable retries for strict RAID 3 write policy
@@ -318,7 +335,7 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 		if do, ok := obj.(fs.SetMetadataer); ok {
 			err := do.SetMetadata(gCtx, metadata)
 			if err != nil {
-				return fmt.Errorf("%s: %w", o.fs.even.Name(), err)
+				return formatBackendError(o.fs.even, "setmetadata failed", fmt.Sprintf("remote %q", o.remote), err)
 			}
 		}
 		return nil
@@ -333,7 +350,7 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 		if do, ok := obj.(fs.SetMetadataer); ok {
 			err := do.SetMetadata(gCtx, metadata)
 			if err != nil {
-				return fmt.Errorf("%s: %w", o.fs.odd.Name(), err)
+				return formatBackendError(o.fs.odd, "setmetadata failed", fmt.Sprintf("remote %q", o.remote), err)
 			}
 		}
 		return nil
@@ -347,7 +364,7 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 			if do, ok := obj.(fs.SetMetadataer); ok {
 				err := do.SetMetadata(gCtx, metadata)
 				if err != nil {
-					return fmt.Errorf("%s: %w", o.fs.parity.Name(), err)
+					return formatBackendError(o.fs.parity, "setmetadata failed", fmt.Sprintf("remote %q", o.remote), err)
 				}
 				return nil
 			}
@@ -359,7 +376,7 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 			if do, ok := obj.(fs.SetMetadataer); ok {
 				err := do.SetMetadata(gCtx, metadata)
 				if err != nil {
-					return fmt.Errorf("%s: %w", o.fs.parity.Name(), err)
+					return formatBackendError(o.fs.parity, "setmetadata failed", fmt.Sprintf("remote %q", o.remote), err)
 				}
 			}
 		}
@@ -371,6 +388,17 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 
 // Open opens the object for read, reconstructing from particles
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	// Input validation
+	if err := validateContext(ctx, "open"); err != nil {
+		return nil, err
+	}
+	if o == nil {
+		return nil, formatOperationError("open failed", "object cannot be nil", nil)
+	}
+	if err := validateRemote(o.remote, "open"); err != nil {
+		return nil, err
+	}
+
 	if o.fs.opt.UseStreaming {
 		return o.openStreaming(ctx, options...)
 	}
@@ -379,183 +407,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // openBuffered opens the object using the buffered (memory-based) approach
 func (o *Object) openBuffered(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-
-	// Attempt to open both data particles concurrently to avoid blocking
-	type objResult struct {
-		obj fs.Object
-		err error
-	}
-	evenCh := make(chan objResult, 1)
-	oddCh := make(chan objResult, 1)
-
-	go func() {
-		obj, err := o.fs.even.NewObject(ctx, o.remote)
-		evenCh <- objResult{obj, err}
-	}()
-
-	go func() {
-		obj, err := o.fs.odd.NewObject(ctx, o.remote)
-		oddCh <- objResult{obj, err}
-	}()
-
-	// Wait for both results
-	evenRes := <-evenCh
-	oddRes := <-oddCh
-	evenObj, errEven := evenRes.obj, evenRes.err
-	oddObj, errOdd := oddRes.obj, oddRes.err
+	// Input validation (context and remote already validated in Open())
+	// Attempt to open both data particles concurrently
+	evenObj, errEven, oddObj, errOdd := o.getDataParticles(ctx)
 
 	var merged []byte
+	var err error
 	if errEven == nil && errOdd == nil {
-		// Validate sizes
-		evenSize := evenObj.Size()
-		oddSize := oddObj.Size()
-		if !ValidateParticleSizes(evenSize, oddSize) {
-			return nil, fmt.Errorf("invalid particle sizes: even=%d, odd=%d", evenSize, oddSize)
-		}
-		// Read both and merge
-		evenReader, err := evenObj.Open(ctx)
+		// Both particles exist - merge them
+		merged, err = o.mergeDataParticles(ctx, evenObj, oddObj)
 		if err != nil {
-			return nil, fmt.Errorf("%s: failed to open even particle: %w", o.fs.even.Name(), err)
+			return nil, err
 		}
-		oddReader, err := oddObj.Open(ctx)
-		if err != nil {
-			evenReader.Close()
-			return nil, fmt.Errorf("%s: failed to open odd particle: %w", o.fs.odd.Name(), err)
-		}
-		evenData, err := io.ReadAll(evenReader)
-		evenReader.Close()
-		if err != nil {
-			oddReader.Close()
-			return nil, fmt.Errorf("%s: failed to read even particle: %w", o.fs.even.Name(), err)
-		}
-		oddData, err := io.ReadAll(oddReader)
-		oddReader.Close()
-		if err != nil {
-			return nil, fmt.Errorf("%s: failed to read odd particle: %w", o.fs.odd.Name(), err)
-		}
-	merged, err = MergeBytes(evenData, oddData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to merge particles: %w", err)
-	}
-	
-	// Validate merged data size matches expected
-	expectedSize := evenObj.Size() + oddObj.Size()
-	if int64(len(merged)) != expectedSize {
-		return nil, fmt.Errorf("merged data size mismatch: got %d bytes, expected %d (even=%d, odd=%d)",
-			len(merged), expectedSize, evenObj.Size(), oddObj.Size())
-	}
-} else {
+	} else {
 		// One particle missing - attempt reconstruction using parity
-		// Find which parity exists and infer original length type
-		parityNameOL := GetParityFilename(o.remote, true)
-		parityObj, errParity := o.fs.parity.NewObject(ctx, parityNameOL)
-		isOddLength := false
-		if errParity == nil {
-			isOddLength = true
-		} else {
-			parityNameEL := GetParityFilename(o.remote, false)
-			parityObj, errParity = o.fs.parity.NewObject(ctx, parityNameEL)
-			if errParity != nil {
-				// Can't reconstruct - not enough particles
-				if errEven != nil && errOdd != nil {
-					return nil, fmt.Errorf("missing particles: even and odd unavailable and no parity found")
-				}
-				if errEven != nil {
-					return nil, fmt.Errorf("missing even particle and no parity found: %w", errEven)
-				}
-				return nil, fmt.Errorf("missing odd particle and no parity found: %w", errOdd)
-			}
-			isOddLength = false
-		}
-
-		// Open known data + parity and reconstruct
-		if errEven == nil {
-			evenReader, err := evenObj.Open(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("%s: failed to open even particle: %w", o.fs.even.Name(), err)
-			}
-			parityReader, err := parityObj.Open(ctx)
-			if err != nil {
-				evenReader.Close()
-				return nil, fmt.Errorf("%s: failed to open parity particle: %w", o.fs.parity.Name(), err)
-			}
-			evenData, err := io.ReadAll(evenReader)
-			evenReader.Close()
-			if err != nil {
-				parityReader.Close()
-				return nil, fmt.Errorf("%s: failed to read even particle: %w", o.fs.even.Name(), err)
-			}
-			parityData, err := io.ReadAll(parityReader)
-			parityReader.Close()
-			if err != nil {
-				return nil, fmt.Errorf("%s: failed to read parity particle: %w", o.fs.parity.Name(), err)
-			}
-		merged, err = ReconstructFromEvenAndParity(evenData, parityData, isOddLength)
+		merged, err = o.reconstructFromParity(ctx, evenObj, errEven, oddObj, errOdd)
 		if err != nil {
 			return nil, err
-		}
-		
-		// Validate reconstructed data size
-		expectedSize := evenObj.Size() + parityObj.Size()
-		if isOddLength {
-			expectedSize-- // For odd-length files, size = even + parity - 1
-		}
-		if int64(len(merged)) != expectedSize {
-			return nil, fmt.Errorf("reconstructed data size mismatch: got %d bytes, expected %d (even=%d, parity=%d, isOdd=%v)",
-				len(merged), expectedSize, evenObj.Size(), parityObj.Size(), isOddLength)
-		}
-		
-		fs.Infof(o, "Reconstructed %s from even+parity (degraded mode)", o.remote)
-
-			// Heal: queue missing odd particle for upload (if auto_heal enabled)
-			if o.fs.opt.AutoHeal {
-				_, oddData := SplitBytes(merged)
-				o.fs.queueParticleUpload(o.remote, "odd", oddData, isOddLength)
-			}
-
-		} else if errOdd == nil {
-			oddReader, err := oddObj.Open(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("%s: failed to open odd particle: %w", o.fs.odd.Name(), err)
-			}
-			parityReader, err := parityObj.Open(ctx)
-			if err != nil {
-				oddReader.Close()
-				return nil, fmt.Errorf("%s: failed to open parity particle: %w", o.fs.parity.Name(), err)
-			}
-			oddData, err := io.ReadAll(oddReader)
-			oddReader.Close()
-			if err != nil {
-				parityReader.Close()
-				return nil, fmt.Errorf("%s: failed to read odd particle: %w", o.fs.odd.Name(), err)
-			}
-			parityData, err := io.ReadAll(parityReader)
-			parityReader.Close()
-			if err != nil {
-				return nil, fmt.Errorf("%s: failed to read parity particle: %w", o.fs.parity.Name(), err)
-			}
-		merged, err = ReconstructFromOddAndParity(oddData, parityData, isOddLength)
-		if err != nil {
-			return nil, err
-		}
-		
-		// Validate reconstructed data size
-		expectedSize := oddObj.Size() + parityObj.Size() // For odd+parity, size = odd + parity (regardless of isOddLength)
-		if int64(len(merged)) != expectedSize {
-			return nil, fmt.Errorf("reconstructed data size mismatch: got %d bytes, expected %d (odd=%d, parity=%d, isOdd=%v)",
-				len(merged), expectedSize, oddObj.Size(), parityObj.Size(), isOddLength)
-		}
-		
-		fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode)", o.remote)
-
-			// Heal: queue missing even particle for upload (if auto_heal enabled)
-			if o.fs.opt.AutoHeal {
-				evenData, _ := SplitBytes(merged)
-				o.fs.queueParticleUpload(o.remote, "even", evenData, isOddLength)
-			}
-
-		} else {
-			return nil, fmt.Errorf("cannot reconstruct: no data particle available")
 		}
 	}
 
@@ -565,7 +433,7 @@ func (o *Object) openBuffered(ctx context.Context, options ...fs.OpenOption) (io
 		// Check if file should be empty by checking Size()
 		expectedSize := o.Size()
 		if expectedSize > 0 {
-			return nil, fmt.Errorf("reconstructed data is empty but Size() reports %d bytes - possible corruption", expectedSize)
+			return nil, formatOperationError("open failed", fmt.Sprintf("reconstructed data is empty but Size() reports %d bytes - possible corruption for remote %q", expectedSize, o.remote), nil)
 		}
 		// If Size() also reports 0 or -1, empty data might be valid, but log it
 		if expectedSize == -1 {
@@ -633,6 +501,209 @@ func (o *Object) openBuffered(ctx context.Context, options ...fs.OpenOption) (io
 	return io.NopCloser(reader), nil
 }
 
+// getDataParticles attempts to open both data particles concurrently
+func (o *Object) getDataParticles(ctx context.Context) (evenObj fs.Object, errEven error, oddObj fs.Object, errOdd error) {
+	type objResult struct {
+		obj fs.Object
+		err error
+	}
+	evenCh := make(chan objResult, 1)
+	oddCh := make(chan objResult, 1)
+
+	go func() {
+		obj, err := o.fs.even.NewObject(ctx, o.remote)
+		evenCh <- objResult{obj, err}
+	}()
+
+	go func() {
+		obj, err := o.fs.odd.NewObject(ctx, o.remote)
+		oddCh <- objResult{obj, err}
+	}()
+
+	evenRes := <-evenCh
+	oddRes := <-oddCh
+	return evenRes.obj, evenRes.err, oddRes.obj, oddRes.err
+}
+
+// mergeDataParticles reads and merges both data particles when both are available
+func (o *Object) mergeDataParticles(ctx context.Context, evenObj, oddObj fs.Object) ([]byte, error) {
+	// Validate sizes
+	evenSize := evenObj.Size()
+	oddSize := oddObj.Size()
+	if !ValidateParticleSizes(evenSize, oddSize) {
+		return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes: even=%d, odd=%d for remote %q", evenSize, oddSize, o.remote), nil)
+	}
+
+	// Read both particles
+	evenReader, err := evenObj.Open(ctx)
+	if err != nil {
+		return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+	defer evenReader.Close()
+
+	oddReader, err := oddObj.Open(ctx)
+	if err != nil {
+		return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+	defer oddReader.Close()
+
+	evenData, err := io.ReadAll(evenReader)
+	if err != nil {
+		return nil, formatParticleError(o.fs.even, "even", "read failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+
+	oddData, err := io.ReadAll(oddReader)
+	if err != nil {
+		return nil, formatParticleError(o.fs.odd, "odd", "read failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+
+	// Merge particles
+	merged, err := MergeBytes(evenData, oddData)
+	if err != nil {
+		return nil, formatOperationError("open failed", fmt.Sprintf("failed to merge particles for remote %q", o.remote), err)
+	}
+
+	// Validate merged data size matches expected
+	expectedSize := evenObj.Size() + oddObj.Size()
+	if int64(len(merged)) != expectedSize {
+		return nil, formatOperationError("open failed", fmt.Sprintf("merged data size mismatch: got %d bytes, expected %d (even=%d, odd=%d) for remote %q",
+			len(merged), expectedSize, evenObj.Size(), oddObj.Size(), o.remote), nil)
+	}
+
+	return merged, nil
+}
+
+// reconstructFromParity reconstructs data when one particle is missing using parity
+func (o *Object) reconstructFromParity(ctx context.Context, evenObj fs.Object, errEven error, oddObj fs.Object, errOdd error) ([]byte, error) {
+	// Find which parity exists and infer original length type
+	parityNameOL := GetParityFilename(o.remote, true)
+	parityObj, errParity := o.fs.parity.NewObject(ctx, parityNameOL)
+	isOddLength := false
+	if errParity == nil {
+		isOddLength = true
+	} else {
+		parityNameEL := GetParityFilename(o.remote, false)
+		parityObj, errParity = o.fs.parity.NewObject(ctx, parityNameEL)
+		if errParity != nil {
+			// Can't reconstruct - not enough particles
+			if errEven != nil && errOdd != nil {
+				return nil, formatOperationError("open failed", fmt.Sprintf("missing particles: even and odd unavailable and no parity found for remote %q", o.remote), nil)
+			}
+			if errEven != nil {
+				return nil, formatNotFoundError(o.fs.even, "even particle", fmt.Sprintf("remote %q (parity also missing)", o.remote), errEven)
+			}
+			return nil, formatNotFoundError(o.fs.odd, "odd particle", fmt.Sprintf("remote %q (parity also missing)", o.remote), errOdd)
+		}
+		isOddLength = false
+	}
+
+	// Reconstruct based on which data particle is available
+	if errEven == nil {
+		return o.reconstructFromEvenAndParity(ctx, evenObj, parityObj, isOddLength)
+	} else if errOdd == nil {
+		return o.reconstructFromOddAndParity(ctx, oddObj, parityObj, isOddLength)
+	} else {
+		return nil, formatOperationError("open failed", fmt.Sprintf("cannot reconstruct remote %q: no data particle available", o.remote), nil)
+	}
+}
+
+// reconstructFromEvenAndParity reconstructs data from even particle and parity
+func (o *Object) reconstructFromEvenAndParity(ctx context.Context, evenObj, parityObj fs.Object, isOddLength bool) ([]byte, error) {
+	evenReader, err := evenObj.Open(ctx)
+	if err != nil {
+		return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+	defer evenReader.Close()
+
+	parityReader, err := parityObj.Open(ctx)
+	if err != nil {
+		return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+	defer parityReader.Close()
+
+	evenData, err := io.ReadAll(evenReader)
+	if err != nil {
+		return nil, formatParticleError(o.fs.even, "even", "read failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+
+	parityData, err := io.ReadAll(parityReader)
+	if err != nil {
+		return nil, formatParticleError(o.fs.parity, "parity", "read failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+
+	merged, err := ReconstructFromEvenAndParity(evenData, parityData, isOddLength)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate reconstructed data size
+	expectedSize := evenObj.Size() + parityObj.Size()
+	if isOddLength {
+		expectedSize-- // For odd-length files, size = even + parity - 1
+	}
+	if int64(len(merged)) != expectedSize {
+		return nil, formatOperationError("open failed", fmt.Sprintf("reconstructed data size mismatch: got %d bytes, expected %d (even=%d, parity=%d, isOdd=%v) for remote %q",
+			len(merged), expectedSize, evenObj.Size(), parityObj.Size(), isOddLength, o.remote), nil)
+	}
+
+	fs.Infof(o, "Reconstructed %s from even+parity (degraded mode)", o.remote)
+
+	// Heal: queue missing odd particle for upload (if auto_heal enabled)
+	if o.fs.opt.AutoHeal {
+		_, oddData := SplitBytes(merged)
+		o.fs.queueParticleUpload(o.remote, "odd", oddData, isOddLength)
+	}
+
+	return merged, nil
+}
+
+// reconstructFromOddAndParity reconstructs data from odd particle and parity
+func (o *Object) reconstructFromOddAndParity(ctx context.Context, oddObj, parityObj fs.Object, isOddLength bool) ([]byte, error) {
+	oddReader, err := oddObj.Open(ctx)
+	if err != nil {
+		return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+	defer oddReader.Close()
+
+	parityReader, err := parityObj.Open(ctx)
+	if err != nil {
+		return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+	defer parityReader.Close()
+
+	oddData, err := io.ReadAll(oddReader)
+	if err != nil {
+		return nil, formatParticleError(o.fs.odd, "odd", "read failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+
+	parityData, err := io.ReadAll(parityReader)
+	if err != nil {
+		return nil, formatParticleError(o.fs.parity, "parity", "read failed", fmt.Sprintf("remote %q", o.remote), err)
+	}
+
+	merged, err := ReconstructFromOddAndParity(oddData, parityData, isOddLength)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate reconstructed data size
+	expectedSize := oddObj.Size() + parityObj.Size() // For odd+parity, size = odd + parity (regardless of isOddLength)
+	if int64(len(merged)) != expectedSize {
+		return nil, formatOperationError("open failed", fmt.Sprintf("reconstructed data size mismatch: got %d bytes, expected %d (odd=%d, parity=%d, isOdd=%v) for remote %q",
+			len(merged), expectedSize, oddObj.Size(), parityObj.Size(), isOddLength, o.remote), nil)
+	}
+
+	fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode)", o.remote)
+
+	// Heal: queue missing even particle for upload (if auto_heal enabled)
+	if o.fs.opt.AutoHeal {
+		evenData, _ := SplitBytes(merged)
+		o.fs.queueParticleUpload(o.remote, "even", evenData, isOddLength)
+	}
+
+	return merged, nil
+}
+
 // openStreaming opens the object using the streaming approach
 func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 
@@ -668,7 +739,7 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		evenSize := evenObj.Size()
 		oddSize := oddObj.Size()
 		if !ValidateParticleSizes(evenSize, oddSize) {
-			return nil, fmt.Errorf("invalid particle sizes: even=%d, odd=%d", evenSize, oddSize)
+			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes: even=%d, odd=%d for remote %q", evenSize, oddSize, o.remote), nil)
 		}
 		
 		// Validate that expected total size matches Size() method
@@ -704,13 +775,13 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 
 		evenReader, err := evenObj.Open(ctx, filteredOptions...)
 		if err != nil {
-			return nil, fmt.Errorf("%s: failed to open even particle: %w", o.fs.even.Name(), err)
+			return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 		}
 
 		oddReader, err := oddObj.Open(ctx, filteredOptions...)
 		if err != nil {
 			evenReader.Close()
-			return nil, fmt.Errorf("%s: failed to open odd particle: %w", o.fs.odd.Name(), err)
+			return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 		}
 
 		merger := NewStreamMerger(evenReader, oddReader, chunkSize)
@@ -757,7 +828,7 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			evenSize := evenObj.Size()
 			paritySize := parityObj.Size()
 			if evenSize < 0 || paritySize < 0 {
-				return nil, fmt.Errorf("invalid particle sizes for reconstruction: even=%d, parity=%d", evenSize, paritySize)
+				return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: even=%d, parity=%d for remote %q", evenSize, paritySize, o.remote), nil)
 			}
 			
 			// Extract range/seek options before opening particle readers
@@ -780,13 +851,13 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			// Reconstruct from even + parity
 			evenReader, err := evenObj.Open(ctx, filteredOptions...)
 			if err != nil {
-				return nil, fmt.Errorf("%s: failed to open even particle: %w", o.fs.even.Name(), err)
+				return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 			}
 
 			parityReader, err := parityObj.Open(ctx, filteredOptions...)
 			if err != nil {
 				evenReader.Close()
-				return nil, fmt.Errorf("%s: failed to open parity particle: %w", o.fs.parity.Name(), err)
+				return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 			}
 
 			reconstructor := NewStreamReconstructor(evenReader, parityReader, "even+parity", isOddLength, chunkSize)
@@ -806,7 +877,7 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			oddSize := oddObj.Size()
 			paritySize := parityObj.Size()
 			if oddSize < 0 || paritySize < 0 {
-				return nil, fmt.Errorf("invalid particle sizes for reconstruction: odd=%d, parity=%d", oddSize, paritySize)
+				return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: odd=%d, parity=%d for remote %q", oddSize, paritySize, o.remote), nil)
 			}
 			
 			// Extract range/seek options before opening particle readers
@@ -829,13 +900,13 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			// Reconstruct from odd + parity
 			oddReader, err := oddObj.Open(ctx, filteredOptions...)
 			if err != nil {
-				return nil, fmt.Errorf("%s: failed to open odd particle: %w", o.fs.odd.Name(), err)
+				return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 			}
 
 			parityReader, err := parityObj.Open(ctx, filteredOptions...)
 			if err != nil {
 				oddReader.Close()
-				return nil, fmt.Errorf("%s: failed to open parity particle: %w", o.fs.parity.Name(), err)
+				return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 			}
 
 			reconstructor := NewStreamReconstructor(oddReader, parityReader, "odd+parity", isOddLength, chunkSize)
@@ -954,6 +1025,23 @@ func (r *rangeFilterReader) Close() error {
 
 // Update updates the object
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	// Input validation
+	if err := validateContext(ctx, "update"); err != nil {
+		return err
+	}
+	if o == nil {
+		return formatOperationError("update failed", "object cannot be nil", nil)
+	}
+	if err := validateRemote(o.remote, "update"); err != nil {
+		return err
+	}
+	if err := validateObjectInfo(src, "update"); err != nil {
+		return err
+	}
+	if in == nil {
+		return formatOperationError("update failed", "input reader cannot be nil", nil)
+	}
+
 	if o.fs.opt.UseStreaming {
 		return o.updateStreaming(ctx, in, src, options...)
 	}
@@ -1255,8 +1343,7 @@ func (o *Object) updateWithRollback(ctx context.Context, evenData, oddData, pari
 
 	// Validate particle sizes
 	if !ValidateParticleSizes(evenObj.Size(), oddObj.Size()) {
-		return fmt.Errorf("update failed: invalid particle sizes (even=%d, odd=%d)",
-			evenObj.Size(), oddObj.Size())
+		return formatOperationError("update failed", fmt.Sprintf("invalid particle sizes (even=%d, odd=%d) for remote %q", evenObj.Size(), oddObj.Size(), o.remote), nil)
 	}
 
 	// Note: We intentionally do NOT verify the file through raid3.NewObject/Open here.
@@ -1369,8 +1456,8 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 
 	// Configuration: Read 2MB chunks (produces ~1MB per particle)
 	readChunkSize := int64(o.fs.opt.ChunkSize) * 2
-	if readChunkSize < 2*1024*1024 {
-		readChunkSize = 2 * 1024 * 1024 // Minimum 2MB
+	if readChunkSize < minReadChunkSize {
+		readChunkSize = minReadChunkSize
 	}
 
 	// Determine if file is odd-length from source size (if available)
@@ -1507,10 +1594,21 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 
 // Remove removes the object
 func (o *Object) Remove(ctx context.Context) error {
+	// Input validation
+	if err := validateContext(ctx, "remove"); err != nil {
+		return err
+	}
+	if o == nil {
+		return formatOperationError("remove failed", "object cannot be nil", nil)
+	}
+	if err := validateRemote(o.remote, "remove"); err != nil {
+		return err
+	}
+
 	// Pre-flight check: Enforce strict RAID 3 delete policy
 	// Fail immediately if any backend is unavailable to prevent partial deletes
 	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
-		return fmt.Errorf("delete blocked in degraded mode (RAID 3 policy): %w", err)
+		return formatOperationError("delete blocked in degraded mode (RAID 3 policy)", "", err)
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)

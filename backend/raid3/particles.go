@@ -23,6 +23,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
+	"golang.org/x/sync/errgroup"
 )
 
 // SplitBytes splits data into even and odd indexed bytes
@@ -45,9 +46,18 @@ func SplitBytes(data []byte) (even []byte, odd []byte) {
 
 // MergeBytes merges even and odd indexed bytes back into original data
 func MergeBytes(even []byte, odd []byte) ([]byte, error) {
+	// Input validation - allow nil slices (they will be treated as empty)
+	// This is necessary for edge cases like empty files or single-byte files
+	if even == nil {
+		even = []byte{}
+	}
+	if odd == nil {
+		odd = []byte{}
+	}
+
 	// Validate sizes: even should equal odd or be one byte larger
 	if len(even) != len(odd) && len(even) != len(odd)+1 {
-		return nil, fmt.Errorf("invalid particle sizes: even=%d, odd=%d (expected even=odd or even=odd+1)", len(even), len(odd))
+		return nil, formatOperationError("merge particles failed", fmt.Sprintf("invalid particle sizes: even=%d, odd=%d (expected even=odd or even=odd+1)", len(even), len(odd)), nil)
 	}
 
 	result := make([]byte, len(even)+len(odd))
@@ -85,7 +95,7 @@ func CalculateParity(even []byte, odd []byte) []byte {
 // If isOddLength is true, the last even byte equals the last parity byte.
 func ReconstructFromEvenAndParity(even []byte, parity []byte, isOddLength bool) ([]byte, error) {
 	if len(even) != len(parity) {
-		return nil, fmt.Errorf("invalid sizes for reconstruction (even=%d parity=%d)", len(even), len(parity))
+		return nil, formatOperationError("reconstruct failed", fmt.Sprintf("invalid sizes for reconstruction (even=%d parity=%d)", len(even), len(parity)), nil)
 	}
 
 	// Reconstruct odd bytes from parity ^ even
@@ -174,34 +184,47 @@ func (f *Fs) countParticles(ctx context.Context, backend fs.Fs) (int64, error) {
 
 // reconstructParityParticle reconstructs a parity particle from even + odd
 func (f *Fs) reconstructParityParticle(ctx context.Context, evenFs, oddFs fs.Fs, remote string) ([]byte, error) {
+	// Input validation
+	if err := validateContext(ctx, "reconstructParityParticle"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(evenFs, "evenFs", "reconstructParityParticle"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(oddFs, "oddFs", "reconstructParityParticle"); err != nil {
+		return nil, err
+	}
+	if err := validateRemote(remote, "reconstructParityParticle"); err != nil {
+		return nil, err
+	}
 	// Read even particle
 	evenObj, err := evenFs.NewObject(ctx, remote)
 	if err != nil {
-		return nil, fmt.Errorf("%s: even particle not found: %w", evenFs.Name(), err)
+		return nil, formatNotFoundError(evenFs, "even particle", fmt.Sprintf("remote %q", remote), err)
 	}
 	evenReader, err := evenObj.Open(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to open even particle: %w", evenFs.Name(), err)
+		return nil, formatParticleError(evenFs, "even", "open failed", fmt.Sprintf("remote %q", remote), err)
 	}
 	evenData, err := io.ReadAll(evenReader)
 	evenReader.Close()
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to read even particle: %w", evenFs.Name(), err)
+		return nil, formatParticleError(evenFs, "even", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
 
 	// Read odd particle
 	oddObj, err := oddFs.NewObject(ctx, remote)
 	if err != nil {
-		return nil, fmt.Errorf("%s: odd particle not found: %w", oddFs.Name(), err)
+		return nil, formatNotFoundError(oddFs, "odd particle", fmt.Sprintf("remote %q", remote), err)
 	}
 	oddReader, err := oddObj.Open(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to open odd particle: %w", oddFs.Name(), err)
+		return nil, formatParticleError(oddFs, "odd", "open failed", fmt.Sprintf("remote %q", remote), err)
 	}
 	oddData, err := io.ReadAll(oddReader)
 	oddReader.Close()
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to read odd particle: %w", oddFs.Name(), err)
+		return nil, formatParticleError(oddFs, "odd", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
 
 	// Calculate parity
@@ -211,6 +234,22 @@ func (f *Fs) reconstructParityParticle(ctx context.Context, evenFs, oddFs fs.Fs,
 
 // reconstructDataParticle reconstructs a data particle (even or odd) from the other data + parity
 func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs, remote string, targetType string) ([]byte, error) {
+	// Input validation
+	if err := validateContext(ctx, "reconstructDataParticle"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(dataFs, "dataFs", "reconstructDataParticle"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(parityFs, "parityFs", "reconstructDataParticle"); err != nil {
+		return nil, err
+	}
+	if err := validateRemote(remote, "reconstructDataParticle"); err != nil {
+		return nil, err
+	}
+	if targetType != "even" && targetType != "odd" {
+		return nil, formatOperationError("reconstructDataParticle failed", fmt.Sprintf("invalid targetType: %s (must be: even or odd)", targetType), nil)
+	}
 	// For data particles, we need to read from parity backend with suffix
 	// First, try to find the parity file
 	parityOdd := GetParityFilename(remote, true)
@@ -228,34 +267,34 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 		if err == nil {
 			isOddLength = false
 		} else {
-			return nil, fmt.Errorf("%s: parity particle not found (tried both suffixes): %w", parityFs.Name(), err)
+			return nil, formatNotFoundError(parityFs, "parity particle", fmt.Sprintf("remote %q (tried both suffixes)", remote), err)
 		}
 	}
 
 	// Read parity data
 	parityReader, err := parityObj.Open(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to open parity particle: %w", parityFs.Name(), err)
+		return nil, formatParticleError(parityFs, "parity", "open failed", fmt.Sprintf("remote %q", remote), err)
 	}
 	parityData, err := io.ReadAll(parityReader)
 	parityReader.Close()
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to read parity particle: %w", parityFs.Name(), err)
+		return nil, formatParticleError(parityFs, "parity", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
 
 	// Read the available data particle
 	dataObj, err := dataFs.NewObject(ctx, remote)
 	if err != nil {
-		return nil, fmt.Errorf("%s: data particle not found: %w", dataFs.Name(), err)
+		return nil, formatNotFoundError(dataFs, "data particle", fmt.Sprintf("remote %q", remote), err)
 	}
 	dataReader, err := dataObj.Open(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to open data particle: %w", dataFs.Name(), err)
+		return nil, formatParticleError(dataFs, "data", "open failed", fmt.Sprintf("remote %q", remote), err)
 	}
 	dataData, err := io.ReadAll(dataReader)
 	dataReader.Close()
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to read data particle: %w", dataFs.Name(), err)
+		return nil, formatParticleError(dataFs, "data", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
 
 	// Reconstruct missing particle
@@ -263,7 +302,7 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 		// Reconstruct even from odd + parity
 		reconstructed, err := ReconstructFromOddAndParity(dataData, parityData, isOddLength)
 		if err != nil {
-			return nil, fmt.Errorf("failed to reconstruct even particle: %w", err)
+			return nil, formatOperationError("reconstruct even particle failed", fmt.Sprintf("remote %q", remote), err)
 		}
 		evenData, _ := SplitBytes(reconstructed)
 		return evenData, nil
@@ -271,7 +310,7 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 		// Reconstruct odd from even + parity
 		reconstructed, err := ReconstructFromEvenAndParity(dataData, parityData, isOddLength)
 		if err != nil {
-			return nil, fmt.Errorf("failed to reconstruct odd particle: %w", err)
+			return nil, formatOperationError("reconstruct odd particle failed", fmt.Sprintf("remote %q", remote), err)
 		}
 		_, oddData := SplitBytes(reconstructed)
 		return oddData, nil
@@ -319,26 +358,55 @@ func (f *Fs) countParticlesSync(ctx context.Context, remote string) int {
 }
 
 // particleInfoForObject inspects a single object and returns which particles exist.
+// All particle existence checks are performed in parallel for better performance.
 func (f *Fs) particleInfoForObject(ctx context.Context, remote string) (particleInfo, error) {
 	pi := particleInfo{remote: remote}
+	g, gCtx := errgroup.WithContext(ctx)
 
-	// Check even
-	if _, err := f.even.NewObject(ctx, remote); err == nil {
-		pi.evenExists = true
+	// Use local variables to avoid race conditions
+	var evenExists, oddExists, parityExists bool
+
+	// Check even particle in parallel
+	g.Go(func() error {
+		if _, err := f.even.NewObject(gCtx, remote); err == nil {
+			evenExists = true
+		}
+		return nil
+	})
+
+	// Check odd particle in parallel
+	g.Go(func() error {
+		if _, err := f.odd.NewObject(gCtx, remote); err == nil {
+			oddExists = true
+		}
+		return nil
+	})
+
+	// Check parity particle (both suffixes) in parallel
+	g.Go(func() error {
+		// Try odd-length suffix first
+		if _, errOL := f.parity.NewObject(gCtx, GetParityFilename(remote, true)); errOL == nil {
+			parityExists = true
+		} else {
+			// Try even-length suffix
+			if _, errEL := f.parity.NewObject(gCtx, GetParityFilename(remote, false)); errEL == nil {
+				parityExists = true
+			}
+		}
+		return nil
+	})
+
+	// Wait for all checks to complete
+	if err := g.Wait(); err != nil {
+		return pi, err
 	}
 
-	// Check odd
-	if _, err := f.odd.NewObject(ctx, remote); err == nil {
-		pi.oddExists = true
-	}
+	// Set results after all goroutines complete (no race condition)
+	pi.evenExists = evenExists
+	pi.oddExists = oddExists
+	pi.parityExists = parityExists
 
-	// Check parity (both suffixes)
-	if _, errOL := f.parity.NewObject(ctx, GetParityFilename(remote, true)); errOL == nil {
-		pi.parityExists = true
-	} else if _, errEL := f.parity.NewObject(ctx, GetParityFilename(remote, false)); errEL == nil {
-		pi.parityExists = true
-	}
-
+	// Calculate count
 	pi.count = 0
 	if pi.evenExists {
 		pi.count++
@@ -355,11 +423,35 @@ func (f *Fs) particleInfoForObject(ctx context.Context, remote string) (particle
 
 // scanParticles scans a directory and returns particle information for all objects
 // This is used by the Cleanup() command to identify broken objects
+// All backend List operations are performed in parallel for better performance
 func (f *Fs) scanParticles(ctx context.Context, dir string) ([]particleInfo, error) {
-	// Collect all entries from all backends (without filtering)
-	entriesEven, _ := f.even.List(ctx, dir)
-	entriesOdd, _ := f.odd.List(ctx, dir)
-	entriesParity, _ := f.parity.List(ctx, dir)
+	// Collect all entries from all backends in parallel (without filtering)
+	var entriesEven, entriesOdd, entriesParity fs.DirEntries
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// List even backend in parallel
+	g.Go(func() error {
+		entriesEven, _ = f.even.List(gCtx, dir)
+		return nil // Ignore errors, same as original implementation
+	})
+
+	// List odd backend in parallel
+	g.Go(func() error {
+		entriesOdd, _ = f.odd.List(gCtx, dir)
+		return nil // Ignore errors, same as original implementation
+	})
+
+	// List parity backend in parallel
+	g.Go(func() error {
+		entriesParity, _ = f.parity.List(gCtx, dir)
+		return nil // Ignore errors, same as original implementation
+	})
+
+	// Wait for all List operations to complete
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
 
 	// Build map of all unique object paths
 	objectMap := make(map[string]*particleInfo)
@@ -541,7 +633,7 @@ func (r *StreamReconstructor) Read(p []byte) (n int, err error) {
 		r.dataEOF = true
 	}
 	if dataErr != nil {
-		return 0, fmt.Errorf("failed to read data particle: %w", dataErr)
+		return 0, formatOperationError("stream reconstruction failed", "failed to read data particle", dataErr)
 	}
 
 	parityN = parityRes.n
@@ -550,7 +642,7 @@ func (r *StreamReconstructor) Read(p []byte) (n int, err error) {
 		r.parityEOF = true
 	}
 	if parityErr != nil {
-		return 0, fmt.Errorf("failed to read parity particle: %w", parityErr)
+		return 0, formatOperationError("stream reconstruction failed", "failed to read parity particle", parityErr)
 	}
 
 	// If both are EOF, we're done
@@ -573,7 +665,7 @@ func (r *StreamReconstructor) Read(p []byte) (n int, err error) {
 		// But during streaming, we might read different amounts
 		// Only validate strictly if both streams are at EOF
 		if r.dataEOF && r.parityEOF {
-			return 0, fmt.Errorf("invalid sizes for reconstruction (data=%d parity=%d)", len(dataData), len(parityData))
+			return 0, formatOperationError("stream reconstruction failed", fmt.Sprintf("invalid sizes for reconstruction (data=%d parity=%d)", len(dataData), len(parityData)), nil)
 		}
 		// During streaming, allow size mismatch but log a warning
 		// This can happen if one stream reads more than the other
@@ -598,11 +690,11 @@ func (r *StreamReconstructor) Read(p []byte) (n int, err error) {
 	} else if r.mode == "odd+parity" {
 		reconstructed, reconErr = ReconstructFromOddAndParity(dataData, parityData, r.isOddLength)
 	} else {
-		return 0, fmt.Errorf("invalid reconstruction mode: %s", r.mode)
+			return 0, formatOperationError("stream reconstruction failed", fmt.Sprintf("invalid reconstruction mode: %s", r.mode), nil)
 	}
 
 	if reconErr != nil {
-		return 0, fmt.Errorf("failed to reconstruct: %w", reconErr)
+		return 0, formatOperationError("stream reconstruction failed", "", reconErr)
 	}
 
 	// Store reconstructed data in output buffer
@@ -631,12 +723,12 @@ func (r *StreamReconstructor) Close() error {
 	var errs []error
 	if r.dataReader != nil {
 		if err := r.dataReader.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("failed to close data reader: %w", err))
+			errs = append(errs, formatOperationError("close failed", "failed to close data reader", err))
 		}
 	}
 	if r.parityReader != nil {
 		if err := r.parityReader.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("failed to close parity reader: %w", err))
+			errs = append(errs, formatOperationError("close failed", "failed to close parity reader", err))
 		}
 	}
 	if len(errs) > 0 {

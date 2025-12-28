@@ -1,6 +1,6 @@
 # Testing the RAID3 Backend
 
-This document provides testing documentation for the raid3 backend. For user documentation, see [`../README.md`](../README.md). For technical RAID 3 details, see [`RAID3.md`](RAID3.md). For integration test setup, see [`../integration/README.md`](../integration/README.md).
+This document provides testing documentation for the raid3 backend. For user documentation, see [`../README.md`](../README.md). For technical RAID 3 details, see [`RAID3.md`](RAID3.md). For integration test setup, see [`../integration/README.md`](../integration/README.md). For naming conventions, see [`../_analysis/NAMING_CONVENTIONS.md`](../_analysis/NAMING_CONVENTIONS.md).
 
 ---
 
@@ -39,6 +39,9 @@ go test ./backend/raid3 -run "^Test(Split|Merge|Calculate|Parity|Validate)" -v
 
 # Integration tests
 go test ./backend/raid3 -run "TestStandard" -v
+
+# Race condition detection (see Race Detection section below)
+go test ./backend/raid3 -race -v
 ```
 
 ### Rclone Framework Tests (Type 3)
@@ -164,6 +167,86 @@ docker start minioodd
 **MinIO connection errors**: Ensure MinIO servers are running (ports 9001, 9002, 9003).
 
 ---
+
+## Race Condition Detection
+
+The raid3 backend uses extensive concurrency (goroutines, errgroup, channels) for parallel operations. Race condition detection is critical to ensure thread safety.
+
+### Running Tests with Race Detector
+
+```bash
+# Run all tests with race detector
+go test ./backend/raid3 -race -v
+
+# Run specific concurrent test with race detector
+go test ./backend/raid3 -race -run TestConcurrentOperations -v
+
+# Run all tests including race detection (slower but comprehensive)
+go test ./backend/raid3 -race -timeout 10m -v
+```
+
+### Race Detection in CI/CD
+
+For continuous integration, always run tests with the race detector:
+
+```bash
+# Full test suite with race detection
+go test ./backend/raid3 -race -timeout 10m -count=1 -v
+```
+
+### What the Race Detector Checks
+
+The race detector identifies:
+- **Concurrent map access** - Multiple goroutines accessing maps without synchronization
+- **Concurrent slice access** - Unsynchronized slice reads/writes
+- **Shared variable access** - Variables accessed from multiple goroutines without locks
+- **Channel synchronization issues** - Improper channel usage patterns
+
+### Known Race-Safe Patterns
+
+The following patterns are used throughout the codebase and are race-safe:
+- **errgroup** - Used for coordinating parallel backend operations
+- **sync.Mutex** - Protects shared state (e.g., `uploadQueue.pending` map)
+- **Local variables** - Results stored in local variables before assignment to shared structs
+- **Channel synchronization** - Channels used for goroutine coordination
+
+### Example: Race-Safe Pattern
+
+```go
+// ✅ Race-safe: Local variables, then assign after Wait()
+var evenExists, oddExists, parityExists bool
+g, gCtx := errgroup.WithContext(ctx)
+g.Go(func() error {
+    _, err := f.even.NewObject(gCtx, remote)
+    evenExists = (err == nil)
+    return nil // Ignore errors for existence check
+})
+// ... similar for odd and parity ...
+g.Wait()
+// Now safe to assign to shared struct
+pi.evenExists = evenExists
+pi.oddExists = oddExists
+pi.parityExists = parityExists
+```
+
+### TestConcurrentOperations
+
+The `TestConcurrentOperations` test is specifically designed to stress-test concurrent operations:
+
+```bash
+# Run with race detector (recommended)
+go test ./backend/raid3 -race -run TestConcurrentOperations -v
+
+# Run without race detector (faster, but less safe)
+go test ./backend/raid3 -run TestConcurrentOperations -v
+```
+
+This test verifies:
+- Concurrent Put operations don't corrupt data
+- Concurrent reads work correctly
+- Heal queue handles concurrent uploads
+- No race conditions in particle management
+- Errgroup coordination works correctly
 
 ## Test Coverage Report
 

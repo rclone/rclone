@@ -2,6 +2,10 @@
 
 This document outlines how to contribute to the raid3 backend development. For general rclone contribution guidelines, see the main [CONTRIBUTING.md](../../CONTRIBUTING.md) in the rclone repository root.
 
+## Code Style and Naming Conventions
+
+Before contributing, please review the [NAMING_CONVENTIONS.md](../_analysis/NAMING_CONVENTIONS.md) document which outlines the naming conventions used throughout the raid3 backend. Consistency in naming helps maintain code readability and makes the codebase easier to navigate.
+
 ---
 
 ## ⚠️ Important: Pre-MVP Status

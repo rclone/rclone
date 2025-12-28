@@ -40,7 +40,7 @@ type uploadQueue struct {
 func newUploadQueue() *uploadQueue {
 	return &uploadQueue{
 		pending: make(map[string]bool),
-		jobs:    make(chan *uploadJob, 100), // Buffer up to 100 pending uploads
+		jobs:    make(chan *uploadJob, defaultUploadQueueSize),
 	}
 }
 

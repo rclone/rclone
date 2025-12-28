@@ -9,12 +9,15 @@ package raid3
 //   - Particle move/copy helpers (moveOrCopyParticle, moveOrCopyParticleToTemp, copyParticle)
 //   - Directory listing helpers (listDirectories)
 //   - Math utilities (minInt64, maxInt64)
+//   - Error formatting helpers (formatBackendError, formatParticleError)
+//   - Input validation helpers (validateRemote, validateChunkSize, validateContext)
 //   - moveState type for tracking move operations
 
 import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -232,6 +235,20 @@ func (f *Fs) rollbackMoves(ctx context.Context, moves []moveState) error {
 // This allows the move-to-temp rollback pattern to work with backends like S3/MinIO
 // that support Copy but not Move.
 func moveOrCopyParticleToTemp(ctx context.Context, backend fs.Fs, obj fs.Object, tempRemote string) (fs.Object, error) {
+	// Input validation
+	if err := validateContext(ctx, "moveOrCopyParticleToTemp"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(backend, "backend", "moveOrCopyParticleToTemp"); err != nil {
+		return nil, err
+	}
+	if obj == nil {
+		return nil, formatOperationError("moveOrCopyParticleToTemp failed", "object cannot be nil", nil)
+	}
+	if err := validateRemote(tempRemote, "moveOrCopyParticleToTemp"); err != nil {
+		return nil, err
+	}
+
 	// Try Move first if available
 	if doMove := backend.Features().Move; doMove != nil {
 		moved, err := doMove(ctx, obj, tempRemote)
@@ -264,6 +281,20 @@ func moveOrCopyParticleToTemp(ctx context.Context, backend fs.Fs, obj fs.Object,
 // server-side Move if available, or Copy+Delete as fallback (consistent with union backend pattern).
 // This allows Move operations to work with backends like S3/MinIO that support Copy but not Move.
 func moveOrCopyParticle(ctx context.Context, backend fs.Fs, obj fs.Object, destRemote string) (fs.Object, error) {
+	// Input validation
+	if err := validateContext(ctx, "moveOrCopyParticle"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(backend, "backend", "moveOrCopyParticle"); err != nil {
+		return nil, err
+	}
+	if obj == nil {
+		return nil, formatOperationError("moveOrCopyParticle failed", "object cannot be nil", nil)
+	}
+	if err := validateRemote(destRemote, "moveOrCopyParticle"); err != nil {
+		return nil, err
+	}
+
 	// Check if backend supports Move or Copy (consistent with union backend)
 	backendFeatures := backend.Features()
 	do := backendFeatures.Move
@@ -296,6 +327,20 @@ func moveOrCopyParticle(ctx context.Context, backend fs.Fs, obj fs.Object, destR
 // copyParticle copies a particle from source to destination using server-side Copy.
 // Unlike moveOrCopyParticle, this does not delete the source object.
 func copyParticle(ctx context.Context, backend fs.Fs, obj fs.Object, destRemote string) (fs.Object, error) {
+	// Input validation
+	if err := validateContext(ctx, "copyParticle"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(backend, "backend", "copyParticle"); err != nil {
+		return nil, err
+	}
+	if obj == nil {
+		return nil, formatOperationError("copyParticle failed", "object cannot be nil", nil)
+	}
+	if err := validateRemote(destRemote, "copyParticle"); err != nil {
+		return nil, err
+	}
+
 	backendFeatures := backend.Features()
 	if backendFeatures.Copy == nil {
 		return nil, fmt.Errorf("backend does not support Copy")
@@ -311,4 +356,208 @@ func copyParticle(ctx context.Context, backend fs.Fs, obj fs.Object, destRemote 
 	}
 
 	return dstObj, nil
+}
+
+// Error formatting helpers for consistent error messages across the codebase
+
+// formatBackendError formats an error with backend name prefix
+// Format: "backend: operation failed: context: %w"
+func formatBackendError(backend fs.Fs, operation, context string, err error) error {
+	if context != "" {
+		return fmt.Errorf("%s: %s: %s: %w", backend.Name(), operation, context, err)
+	}
+	return fmt.Errorf("%s: %s: %w", backend.Name(), operation, err)
+}
+
+// formatParticleError formats an error for particle operations
+// Format: "backend: particle operation failed: context: %w"
+func formatParticleError(backend fs.Fs, particleType, operation, context string, err error) error {
+	if context != "" {
+		return fmt.Errorf("%s: %s particle %s: %s: %w", backend.Name(), particleType, operation, context, err)
+	}
+	return fmt.Errorf("%s: %s particle %s: %w", backend.Name(), particleType, operation, err)
+}
+
+// formatOperationError formats an error for general operations
+// Format: "operation failed: context: %w"
+func formatOperationError(operation, context string, err error) error {
+	if context != "" {
+		if err != nil {
+			return fmt.Errorf("%s: %s: %w", operation, context, err)
+		}
+		return fmt.Errorf("%s: %s", operation, context)
+	}
+	if err != nil {
+		return fmt.Errorf("%s: %w", operation, err)
+	}
+	return fmt.Errorf("%s", operation)
+}
+
+// formatNotFoundError formats a "not found" error
+// Format: "backend: resource not found: context: %w"
+func formatNotFoundError(backend fs.Fs, resource, context string, err error) error {
+	if context != "" {
+		return fmt.Errorf("%s: %s not found: %s: %w", backend.Name(), resource, context, err)
+	}
+	return fmt.Errorf("%s: %s not found: %w", backend.Name(), resource, err)
+}
+
+// Input validation helpers
+
+// validateRemote validates that a remote path is not empty and properly formatted
+func validateRemote(remote string, operation string) error {
+	if remote == "" {
+		return formatOperationError(operation+" failed", "remote path cannot be empty", nil)
+	}
+	// Check for invalid characters that could cause issues
+	if strings.Contains(remote, "\x00") {
+		return formatOperationError(operation+" failed", fmt.Sprintf("remote path contains null byte: %q", remote), nil)
+	}
+	return nil
+}
+
+// validateContext validates that a context is not nil
+func validateContext(ctx context.Context, operation string) error {
+	if ctx == nil {
+		return formatOperationError(operation+" failed", "context cannot be nil", nil)
+	}
+	// Check if context is already cancelled
+	if err := ctx.Err(); err != nil {
+		return formatOperationError(operation+" failed", "context already cancelled", err)
+	}
+	return nil
+}
+
+// validateObjectInfo validates that ObjectInfo is not nil and has required fields
+func validateObjectInfo(src fs.ObjectInfo, operation string) error {
+	if src == nil {
+		return formatOperationError(operation+" failed", "ObjectInfo cannot be nil", nil)
+	}
+	if src.Remote() == "" {
+		return formatOperationError(operation+" failed", "ObjectInfo.Remote() cannot be empty", nil)
+	}
+	return nil
+}
+
+// validateChunkSize validates that chunk size is within acceptable bounds
+func validateChunkSize(chunkSize int64) error {
+	// Minimum reasonable chunk size: 1KB
+	const minChunkSize = 1024
+	if chunkSize < minChunkSize {
+		return formatOperationError("validation failed", fmt.Sprintf("chunk size %d is too small (minimum: %d)", chunkSize, minChunkSize), nil)
+	}
+	// Maximum reasonable chunk size: 1GB
+	const maxChunkSize = 1024 * 1024 * 1024
+	if chunkSize > maxChunkSize {
+		return formatOperationError("validation failed", fmt.Sprintf("chunk size %d is too large (maximum: %d)", chunkSize, maxChunkSize), nil)
+	}
+	return nil
+}
+
+// validateBackend validates that a backend filesystem is not nil
+func validateBackend(backend fs.Fs, backendName, operation string) error {
+	if backend == nil {
+		return formatOperationError(operation+" failed", fmt.Sprintf("%s backend cannot be nil", backendName), nil)
+	}
+	return nil
+}
+
+// getSourceBackends returns the appropriate source backends for cross-remote operations
+func (f *Fs) getSourceBackends(srcFs *Fs, isCrossRemote bool) (srcEven, srcOdd, srcParity fs.Fs) {
+	if isCrossRemote {
+		return srcFs.even, srcFs.odd, srcFs.parity
+	}
+	return f.even, f.odd, f.parity
+}
+
+// moveResult tracks the result of a single particle move operation
+type moveResult struct {
+	state   moveState
+	success bool
+	err     error
+}
+
+// performMoves performs move operations on all three backends in parallel
+func (f *Fs) performMoves(ctx context.Context, srcEven, srcOdd, srcParity fs.Fs, srcRemote, remote, srcParityName, dstParityName string) ([]moveState, error) {
+	// Input validation
+	if err := validateContext(ctx, "performMoves"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(srcEven, "srcEven", "performMoves"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(srcOdd, "srcOdd", "performMoves"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(srcParity, "srcParity", "performMoves"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(f.even, "even", "performMoves"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(f.odd, "odd", "performMoves"); err != nil {
+		return nil, err
+	}
+	if err := validateBackend(f.parity, "parity", "performMoves"); err != nil {
+		return nil, err
+	}
+	type trackedMove struct {
+		successMoves []moveState
+		movesMu      sync.Mutex
+	}
+
+	tracked := &trackedMove{}
+	results := make(chan moveResult, 3)
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Move on even
+	g.Go(func() error {
+		return f.moveParticle(gCtx, srcEven, f.even, srcRemote, remote, "even", results)
+	})
+
+	// Move on odd
+	g.Go(func() error {
+		return f.moveParticle(gCtx, srcOdd, f.odd, srcRemote, remote, "odd", results)
+	})
+
+	// Move parity
+	g.Go(func() error {
+		return f.moveParticle(gCtx, srcParity, f.parity, srcParityName, dstParityName, "parity", results)
+	})
+
+	moveErr := g.Wait()
+	close(results)
+
+	// Collect results
+	var firstError error
+	for result := range results {
+		if result.success {
+			tracked.movesMu.Lock()
+			tracked.successMoves = append(tracked.successMoves, result.state)
+			tracked.movesMu.Unlock()
+		} else if result.err != nil && firstError == nil {
+			firstError = result.err
+		}
+	}
+
+	if firstError != nil {
+		return tracked.successMoves, firstError
+	}
+	return tracked.successMoves, moveErr
+}
+
+// moveParticle performs a single particle move operation
+func (f *Fs) moveParticle(ctx context.Context, srcBackend, dstBackend fs.Fs, srcRemote, dstRemote, particleType string, results chan<- moveResult) error {
+	obj, err := srcBackend.NewObject(ctx, srcRemote)
+	if err != nil {
+		results <- moveResult{moveState{particleType, srcRemote, dstRemote}, false, nil}
+		return nil // Ignore if not found
+	}
+	_, err = moveOrCopyParticle(ctx, dstBackend, obj, dstRemote)
+	if err != nil {
+		results <- moveResult{moveState{particleType, srcRemote, dstRemote}, false, err}
+		return err
+	}
+	results <- moveResult{moveState{particleType, srcRemote, dstRemote}, true, nil}
+	return nil
 }
