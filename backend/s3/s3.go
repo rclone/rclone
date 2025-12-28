@@ -1707,6 +1707,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.WriteDirSetModTime = true
 		f.features.ReadDirMetadata = true
 		f.features.UserDirMetadata = true
+	} else {
+		// Disable directory metadata features when DirectoryMarkers is not set
+		f.features.MkdirMetadata = nil
+		f.features.DirSetModTime = nil
 	}
 	// f.listMultipartUploads()
 	if !opt.UseMultipartUploads.Value {
