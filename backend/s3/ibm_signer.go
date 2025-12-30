@@ -30,8 +30,8 @@ func (signer *IbmIamSigner) SignHTTP(ctx context.Context, credentials aws.Creden
 
 	// IamEndpoint specifies the IBM IAM endpoint to be used for IAM authentication.
 	// It is set from the rclone config option `ibm_iam_endpoint`.
-	// If not provided, it defaults to the IBM private IAM endpoint, which is accessible on both public and private clusters
-	IamEndpoint := "https://private.iam.cloud.ibm.com"
+	// If not provided, it defaults to public IBM IAM endpoint.
+	IamEndpoint := "https://iam.cloud.ibm.com"
 
 	if signer.IAMEndpoint != "" {
 		IamEndpoint = signer.IAMEndpoint
