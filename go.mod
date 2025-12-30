@@ -36,6 +36,7 @@ require (
 	github.com/diskfs/go-diskfs v1.7.0
 	github.com/dop251/scsu v0.0.0-20220106150536-84ac88021d00
 	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.5
+	github.com/emersion/go-imap/v2 v2.0.0-beta.7
 	github.com/gabriel-vasile/mimetype v1.4.11
 	github.com/gdamore/tcell/v2 v2.9.0
 	github.com/go-chi/chi/v5 v5.2.3
@@ -158,6 +159,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ebitengine/purego v0.9.1 // indirect
 	github.com/emersion/go-message v0.18.2 // indirect
+	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43 // indirect
 	github.com/emersion/go-vcard v0.0.0-20241024213814-c9703dde27ff // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/flynn/noise v1.1.0 // indirect

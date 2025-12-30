@@ -31,6 +31,7 @@ import (
 	_ "github.com/rclone/rclone/backend/hidrive"
 	_ "github.com/rclone/rclone/backend/http"
 	_ "github.com/rclone/rclone/backend/iclouddrive"
+	_ "github.com/rclone/rclone/backend/imap"
 	_ "github.com/rclone/rclone/backend/imagekit"
 	_ "github.com/rclone/rclone/backend/internetarchive"
 	_ "github.com/rclone/rclone/backend/jottacloud"
