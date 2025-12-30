@@ -28,8 +28,9 @@ type IbmIamSigner struct {
 func (signer *IbmIamSigner) SignHTTP(ctx context.Context, credentials aws.Credentials, req *http.Request, payloadHash string, service string, region string, signingTime time.Time, optFns ...func(*v4signer.SignerOptions)) error {
 	var authenticator Authenticator
 
-	// IamEndpoint set the private IAM endpoint which is accessible on public and private clsters
-	// If not set, IamAuthenticator sets defualt value i.e., public IAM endpoint which is not accessible on private clusters
+	// IamEndpoint specifies the IBM IAM endpoint to be used for IAM authentication.
+	// It is set from the rclone config option `ibm_iam_endpoint`.
+	// If not provided, it defaults to the IBM private IAM endpoint, which is accessible on both public and private clusters
 	IamEndpoint := "https://private.iam.cloud.ibm.com"
 
 	if signer.IAMEndpoint != "" {
