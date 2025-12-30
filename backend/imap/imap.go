@@ -349,14 +349,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		mailbox, msgName := splitPath(root)
 		if msgName != "" {
 			// It might be a file, check if parent mailbox exists
-			c, err := f.getConnection(ctx)
-			if err != nil {
-				return nil, err
+			c, connErr := f.getConnection(ctx)
+			if connErr != nil {
+				return nil, connErr
 			}
-			defer f.putConnection(&c, err)
 
-			_, err = c.Select(mailbox, &imap.SelectOptions{ReadOnly: true}).Wait()
-			if err == nil {
+			var isFile bool
+			_, selectErr := c.Select(mailbox, &imap.SelectOptions{ReadOnly: true}).Wait()
+			if selectErr == nil {
 				// Parent mailbox exists, check if it's a file
 				uid := parseUID(msgName)
 				if uid > 0 {
@@ -368,13 +368,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 						InternalDate: true,
 						RFC822Size:   true,
 					}
-					msgs, err := c.Fetch(seqSet, fetchOptions).Collect()
-					if err == nil && len(msgs) > 0 {
-						// It's a file, return fs pointing to parent
-						f.root = mailbox
-						return f, fs.ErrorIsFile
+					msgs, fetchErr := c.Fetch(seqSet, fetchOptions).Collect()
+					if fetchErr == nil && len(msgs) > 0 {
+						isFile = true
 					}
 				}
+			}
+			f.putConnection(&c, nil)
+
+			if isFile {
+				// It's a file, return fs pointing to parent
+				f.root = mailbox
+				return f, fs.ErrorIsFile
 			}
 		}
 	}
@@ -447,7 +452,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, fmt.Errorf("List: %w", err)
 	}
-	defer f.putConnection(&c, err)
+	defer func() { f.putConnection(&c, err) }()
 
 	mailboxPath := path.Join(f.root, dir)
 	if mailboxPath == "" {
@@ -462,16 +467,17 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			pattern = mailboxPath + "/*"
 		}
 		listCmd := c.List("", pattern, nil)
-		mailboxes, err := listCmd.Collect()
-		if err != nil {
-			return nil, fmt.Errorf("failed to list mailboxes: %w", err)
+		mailboxes, listErr := listCmd.Collect()
+		if listErr != nil {
+			err = fmt.Errorf("failed to list mailboxes: %w", listErr)
+			return nil, err
 		}
 
 		// Also list the root level
 		if mailboxPath == "*" {
 			rootList := c.List("", "*", nil)
-			rootMailboxes, err := rootList.Collect()
-			if err == nil {
+			rootMailboxes, rootErr := rootList.Collect()
+			if rootErr == nil {
 				mailboxes = append(mailboxes, rootMailboxes...)
 			}
 		}
@@ -519,13 +525,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		currentMailbox = "INBOX"
 	}
 
-	selectCmd, err := c.Select(currentMailbox, &imap.SelectOptions{ReadOnly: true}).Wait()
-	if err != nil {
+	selectCmd, selectErr := c.Select(currentMailbox, &imap.SelectOptions{ReadOnly: true}).Wait()
+	if selectErr != nil {
 		// Mailbox doesn't exist, just return what we have
 		if len(entries) > 0 {
 			return entries, nil
 		}
-		return nil, fs.ErrorDirNotFound
+		err = fs.ErrorDirNotFound
+		return nil, err
 	}
 
 	if selectCmd.NumMessages == 0 {
@@ -544,9 +551,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		Envelope:     true,
 	}
 
-	msgs, err := c.Fetch(seqSet, fetchOptions).Collect()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch messages: %w", err)
+	msgs, fetchErr := c.Fetch(seqSet, fetchOptions).Collect()
+	if fetchErr != nil {
+		err = fmt.Errorf("failed to fetch messages: %w", fetchErr)
+		return nil, err
 	}
 
 	for _, msg := range msgs {
@@ -566,7 +574,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 }
 
 // NewObject finds the Object at remote
-func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (obj fs.Object, err error) {
 	mailbox, msgName := splitPath(path.Join(f.root, remote))
 	if msgName == "" {
 		return nil, fs.ErrorIsDir
@@ -576,11 +584,12 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.putConnection(&c, err)
+	defer func() { f.putConnection(&c, err) }()
 
-	_, err = c.Select(mailbox, &imap.SelectOptions{ReadOnly: true}).Wait()
-	if err != nil {
-		return nil, fs.ErrorObjectNotFound
+	_, selectErr := c.Select(mailbox, &imap.SelectOptions{ReadOnly: true}).Wait()
+	if selectErr != nil {
+		err = fs.ErrorObjectNotFound
+		return nil, err
 	}
 
 	// Try to parse UID from filename
@@ -599,8 +608,11 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		UID:          true,
 	}
 
-	msgs, err := c.Fetch(seqSet, fetchOptions).Collect()
-	if err != nil || len(msgs) == 0 {
+	msgs, fetchErr := c.Fetch(seqSet, fetchOptions).Collect()
+	if fetchErr != nil || len(msgs) == 0 {
+		if fetchErr != nil {
+			err = fetchErr
+		}
 		return nil, fs.ErrorObjectNotFound
 	}
 
@@ -616,7 +628,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // Put uploads a message to the mailbox
-func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (obj fs.Object, err error) {
 	remote := src.Remote()
 	mailbox, _ := splitPath(path.Join(f.root, remote))
 	if mailbox == "" {
@@ -627,12 +639,13 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err != nil {
 		return nil, err
 	}
-	defer f.putConnection(&c, err)
+	defer func() { f.putConnection(&c, err) }()
 
 	// Read the message content
-	data, err := io.ReadAll(in)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read message: %w", err)
+	data, readErr := io.ReadAll(in)
+	if readErr != nil {
+		err = fmt.Errorf("failed to read message: %w", readErr)
+		return nil, err
 	}
 
 	// Append the message
@@ -640,16 +653,19 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		Flags: []imap.Flag{},
 	}
 	appendCmd := c.Append(mailbox, int64(len(data)), appendOptions)
-	if _, err := appendCmd.Write(data); err != nil {
-		return nil, fmt.Errorf("failed to write message: %w", err)
+	if _, writeErr := appendCmd.Write(data); writeErr != nil {
+		err = fmt.Errorf("failed to write message: %w", writeErr)
+		return nil, err
 	}
-	if err := appendCmd.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close append: %w", err)
+	if closeErr := appendCmd.Close(); closeErr != nil {
+		err = fmt.Errorf("failed to close append: %w", closeErr)
+		return nil, err
 	}
 
-	resp, err := appendCmd.Wait()
-	if err != nil {
-		return nil, fmt.Errorf("failed to append message: %w", err)
+	resp, waitErr := appendCmd.Wait()
+	if waitErr != nil {
+		err = fmt.Errorf("failed to append message: %w", waitErr)
+		return nil, err
 	}
 
 	var uid uint32
@@ -668,7 +684,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 }
 
 // Mkdir creates the mailbox
-func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	mailboxPath := path.Join(f.root, dir)
 	if mailboxPath == "" {
 		return nil
@@ -678,21 +694,22 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	defer f.putConnection(&c, err)
+	defer func() { f.putConnection(&c, err) }()
 
-	err = c.Create(mailboxPath, nil).Wait()
-	if err != nil {
+	createErr := c.Create(mailboxPath, nil).Wait()
+	if createErr != nil {
 		// Ignore "already exists" errors
-		if !strings.Contains(err.Error(), "ALREADYEXISTS") &&
-			!strings.Contains(err.Error(), "already exists") {
-			return fmt.Errorf("failed to create mailbox: %w", err)
+		if !strings.Contains(createErr.Error(), "ALREADYEXISTS") &&
+			!strings.Contains(createErr.Error(), "already exists") {
+			err = fmt.Errorf("failed to create mailbox: %w", createErr)
+			return err
 		}
 	}
 	return nil
 }
 
 // Rmdir deletes the mailbox if empty
-func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	mailboxPath := path.Join(f.root, dir)
 	if mailboxPath == "" {
 		return fs.ErrorDirNotFound
@@ -702,12 +719,13 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	defer f.putConnection(&c, err)
+	defer func() { f.putConnection(&c, err) }()
 
 	// Check if mailbox is empty
-	selectCmd, err := c.Select(mailboxPath, &imap.SelectOptions{ReadOnly: true}).Wait()
-	if err != nil {
-		return fs.ErrorDirNotFound
+	selectCmd, selectErr := c.Select(mailboxPath, &imap.SelectOptions{ReadOnly: true}).Wait()
+	if selectErr != nil {
+		err = fs.ErrorDirNotFound
+		return err
 	}
 
 	if selectCmd.NumMessages > 0 {
@@ -715,13 +733,15 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 
 	// Close the mailbox before deleting
-	if err := c.Unselect().Wait(); err != nil {
-		return fmt.Errorf("failed to unselect mailbox: %w", err)
+	if unselectErr := c.Unselect().Wait(); unselectErr != nil {
+		err = fmt.Errorf("failed to unselect mailbox: %w", unselectErr)
+		return err
 	}
 
-	err = c.Delete(mailboxPath).Wait()
-	if err != nil {
-		return fmt.Errorf("failed to delete mailbox: %w", err)
+	deleteErr := c.Delete(mailboxPath).Wait()
+	if deleteErr != nil {
+		err = fmt.Errorf("failed to delete mailbox: %w", deleteErr)
+		return err
 	}
 	return nil
 }
@@ -838,16 +858,17 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 // Remove deletes the object
-func (o *Object) Remove(ctx context.Context) error {
+func (o *Object) Remove(ctx context.Context) (err error) {
 	c, err := o.fs.getConnection(ctx)
 	if err != nil {
 		return err
 	}
-	defer o.fs.putConnection(&c, err)
+	defer func() { o.fs.putConnection(&c, err) }()
 
-	_, err = c.Select(o.mailbox, &imap.SelectOptions{ReadOnly: false}).Wait()
-	if err != nil {
-		return fmt.Errorf("failed to select mailbox: %w", err)
+	_, selectErr := c.Select(o.mailbox, &imap.SelectOptions{ReadOnly: false}).Wait()
+	if selectErr != nil {
+		err = fmt.Errorf("failed to select mailbox: %w", selectErr)
+		return err
 	}
 
 	seqSet := imap.UIDSet{}
@@ -860,14 +881,16 @@ func (o *Object) Remove(ctx context.Context) error {
 		Silent: true,
 	}
 	storeCmd := c.Store(seqSet, storeFlags, nil)
-	if err := storeCmd.Close(); err != nil {
-		return fmt.Errorf("failed to mark message as deleted: %w", err)
+	if storeErr := storeCmd.Close(); storeErr != nil {
+		err = fmt.Errorf("failed to mark message as deleted: %w", storeErr)
+		return err
 	}
 
 	// Expunge to permanently delete
 	expungeCmd := c.Expunge()
-	if err := expungeCmd.Close(); err != nil {
-		return fmt.Errorf("failed to expunge: %w", err)
+	if expungeErr := expungeCmd.Close(); expungeErr != nil {
+		err = fmt.Errorf("failed to expunge: %w", expungeErr)
+		return err
 	}
 
 	return nil
