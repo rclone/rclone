@@ -285,8 +285,8 @@ rclone v1.49.1
 - go version: go1.12.9
 ```
 
-There are a few command line options to consider when starting an rclone Docker container
-from the rclone image.
+There are a few command line options to consider when starting an rclone Docker
+container from the rclone image.
 
 - You need to mount the host rclone config dir at `/config/rclone` into the Docker
   container. Due to the fact that rclone updates tokens inside its config file,
@@ -300,8 +300,8 @@ from the rclone image.
   data files reside on the host with a non-root UID:GID, you need to pass these
   on the container start command line.
 
-- If you want to access the RC interface (either via the API or the Web UI), it is
-  required to set the `--rc-addr` to `:5572` in order to connect to it from outside
+- If you want to access the RC interface (either via the API or the Web UI), it
+  is required to set the `--rc-addr` to `:5572` in order to connect to it from outside
   the container. An explanation about why this is necessary can be found in an old
   [pythonspeed.com](https://web.archive.org/web/20200808071950/https://pythonspeed.com/articles/docker-connection-refused/)
   article.
@@ -309,9 +309,9 @@ from the rclone image.
     probably set it to listen to localhost only, with `127.0.0.1:5572` as the
     value for `--rc-addr`
 
-- It is possible to use `rclone mount` inside a userspace Docker container, and expose
-  the resulting fuse mount to the host. The exact `docker run` options to do that
-  might vary slightly between hosts. See, e.g. the discussion in this
+- It is possible to use `rclone mount` inside a userspace Docker container, and
+  expose the resulting fuse mount to the host. The exact `docker run` options to
+  do that might vary slightly between hosts. See, e.g. the discussion in this
   [thread](https://github.com/moby/moby/issues/9448).
 
   You also need to mount the host `/etc/passwd` and `/etc/group` for fuse to work
@@ -542,8 +542,8 @@ To override them set the corresponding options (as command-line arguments, or as
 
 After installing and configuring rclone, as described above, you are ready to use
 rclone as an interactive command line utility. If your goal is to perform *periodic*
-operations, such as a regular [sync](https://rclone.org/commands/rclone_sync/), you
-will probably want to configure your rclone command in your operating system's
+operations, such as a regular [sync](https://rclone.org/commands/rclone_sync/),
+you will probably want to configure your rclone command in your operating system's
 scheduler. If you need to expose *service*-like features, such as
 [remote control](https://rclone.org/rc/), [GUI](https://rclone.org/gui/),
 [serve](https://rclone.org/commands/rclone_serve/) or [mount](https://rclone.org/commands/rclone_mount/),
@@ -583,9 +583,9 @@ c:\rclone\rclone.exe sync c:\files remote:/files --no-console --log-file c:\rclo
 
 As mentioned in the [mount](https://rclone.org/commands/rclone_mount/) documentation,
 mounted drives created as Administrator are not visible to other accounts, not even
-the account that was elevated as Administrator. By running the mount command as the
-built-in `SYSTEM` user account, it will create drives accessible for everyone on
-the system. Both scheduled task and Windows service can be used to achieve this.
+the account that was elevated as Administrator. By running the mount command as
+the built-in `SYSTEM` user account, it will create drives accessible for everyone
+on the system. Both scheduled task and Windows service can be used to achieve this.
 
 NOTE: Remember that when rclone runs as the `SYSTEM` user, the user profile
 that it sees will not be yours. This means that if you normally run rclone with
@@ -615,8 +615,8 @@ will often give you better results.
 
 #### Start from Task Scheduler
 
-Task Scheduler is an administrative tool built into Windows, and it can be used to
-configure rclone to be started automatically in a highly configurable way, e.g.
+Task Scheduler is an administrative tool built into Windows, and it can be used
+to configure rclone to be started automatically in a highly configurable way, e.g.
 periodically on a schedule, on user log on, or at system startup. It can run
 be configured to run as the current user, or for a mount command that needs to
 be available to all users it can run as the `SYSTEM` user.
@@ -656,18 +656,18 @@ To Windows service running any rclone command, the excellent third-party utility
 [NSSM](http://nssm.cc), the "Non-Sucking Service Manager", can be used.
 It includes some advanced features such as adjusting process priority, defining
 process environment variables, redirect to file anything written to stdout, and
-customized response to different exit codes, with a GUI to configure everything from
-(although it can also be used from command line ).
+customized response to different exit codes, with a GUI to configure everything
+from (although it can also be used from command line ).
 
 There are also several other alternatives. To mention one more,
 [WinSW](https://github.com/winsw/winsw), "Windows Service Wrapper", is worth checking
 out. It requires .NET Framework, but it is preinstalled on newer versions of Windows,
 and it also provides alternative standalone distributions which includes necessary
 runtime (.NET 5). WinSW is a command-line only utility, where you have to manually
-create an XML file with service configuration. This may be a drawback for some, but
-it can also be an advantage as it is easy to back up and reuse the configuration
-settings, without having go through manual steps in a GUI. One thing to note is that
-by default it does not restart the service on error, one have to explicit enable
+create an XML file with service configuration. This may be a drawback for some,
+but it can also be an advantage as it is easy to back up and reuse the configuration
+settings, without having go through manual steps in a GUI. One thing to note is
+that by default it does not restart the service on error, one have to explicit enable
 this in the configuration file (via the "onfailure" parameter).
 
 ### Autostart on Linux
@@ -676,8 +676,8 @@ this in the configuration file (via the "onfailure" parameter).
 
 To always run rclone in background, relevant for mount commands etc,
 you can use systemd to set up rclone as a system or user service. Running as a
-system service ensures that it is run at startup even if the user it is running as
-has no active session. Running rclone as a user service ensures that it only
+system service ensures that it is run at startup even if the user it is running
+as has no active session. Running rclone as a user service ensures that it only
 starts after the configured user has logged into the system.
 
 #### Run periodically from cron
