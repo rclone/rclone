@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/transform"
+	"golang.org/x/sync/semaphore"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -41,9 +42,10 @@ type March struct {
 	NoCheckDest            bool            // transfer all objects regardless without checking dst
 	NoUnicodeNormalization bool            // don't normalize unicode characters in filenames
 	// internal state
-	srcListDir listDirFn // function to call to list a directory in the src
-	dstListDir listDirFn // function to call to list a directory in the dst
-	transforms []matchTransformFn
+	srcListDir   listDirFn // function to call to list a directory in the src
+	dstListDir   listDirFn // function to call to list a directory in the dst
+	transforms   []matchTransformFn
+	newObjectSem *semaphore.Weighted // make sure we don't call too many NewObjects simultaneously
 }
 
 // Marcher is called on each match
@@ -78,6 +80,8 @@ func (m *March) init(ctx context.Context) {
 	if m.Fdst.Features().CaseInsensitive || ci.IgnoreCaseSync {
 		m.transforms = append(m.transforms, strings.ToLower)
 	}
+	// Only allow ci.Checkers simultaneous calls to NewObject
+	m.newObjectSem = semaphore.NewWeighted(int64(ci.Checkers))
 }
 
 // srcOrDstKey turns a directory entry into a sort key using the defined transforms.
@@ -461,7 +465,12 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 						continue
 					}
 					leaf := path.Base(t.src.Remote())
+					if err := m.newObjectSem.Acquire(m.Ctx, 1); err != nil {
+						t.dstMatch <- nil
+						continue
+					}
 					dst, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
+					m.newObjectSem.Release(1)
 					if err != nil {
 						dst = nil
 					}
