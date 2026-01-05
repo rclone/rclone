@@ -15,7 +15,7 @@ func (f *Fs) DeleteFromGPhotos(ctx context.Context, dedupKeys []string, user str
 	}
 
 	// Initialize API client
-	api := NewGPhotoAPI(user, "https://m.alicuxi.net", f.httpClient)
+	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
 
 	// Ensure we have a token
 	if err := api.GetAuthToken(ctx, false); err != nil {

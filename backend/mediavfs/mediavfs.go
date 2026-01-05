@@ -125,9 +125,8 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "token_server_url",
-			Help:     "URL of the token server for Google Photos authentication.\n\nE.g. \"https://m.alicuxi.net\"",
-			Default:  "https://m.alicuxi.net",
-			Advanced: true,
+			Help:     "URL of the token server for Google Photos authentication (required).",
+			Required: true,
 		}, {
 			Name:     "auto_sync",
 			Help:     "Enable automatic background sync to detect new files uploaded via Google Photos web/app.",
