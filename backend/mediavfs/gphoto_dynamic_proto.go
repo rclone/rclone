@@ -1,0 +1,369 @@
+package mediavfs
+
+import (
+	"fmt"
+	"unicode/utf8"
+
+	"google.golang.org/protobuf/encoding/protowire"
+	"google.golang.org/protobuf/proto"
+)
+
+// EncodeDynamicMessage encodes a nested map structure to protobuf using Google's official library
+// This replaces our custom encoder with the official implementation
+func EncodeDynamicMessage(data map[string]interface{}) ([]byte, error) {
+	buf := make([]byte, 0, 1024)
+	return appendMessage(buf, data)
+}
+
+// appendMessage appends a message to the buffer
+func appendMessage(buf []byte, data map[string]interface{}) ([]byte, error) {
+	for fieldNumStr, value := range data {
+		var fieldNum int
+		fmt.Sscanf(fieldNumStr, "%d", &fieldNum)
+
+		var err error
+		buf, err = appendField(buf, protowire.Number(fieldNum), value)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return buf, nil
+}
+
+// appendField appends a field to the buffer
+func appendField(buf []byte, num protowire.Number, value interface{}) ([]byte, error) {
+	switch v := value.(type) {
+	case int:
+		return appendVarint(buf, num, int64(v))
+	case int32:
+		return appendVarint(buf, num, int64(v))
+	case int64:
+		return appendVarint(buf, num, v)
+	case uint32:
+		return appendVarint(buf, num, int64(v))
+	case uint64:
+		return appendVarint(buf, num, int64(v))
+	case float64:
+		return appendVarint(buf, num, int64(v))
+	case string:
+		return appendString(buf, num, v)
+	case []byte:
+		return appendBytes(buf, num, v)
+	case map[string]interface{}:
+		return appendNestedMessage(buf, num, v)
+	case []interface{}:
+		// Repeated field - encode each element
+		for _, item := range v {
+			var err error
+			buf, err = appendField(buf, num, item)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return buf, nil
+	default:
+		return buf, fmt.Errorf("unsupported type: %T", value)
+	}
+}
+
+// appendVarint appends a varint field
+func appendVarint(buf []byte, num protowire.Number, value int64) ([]byte, error) {
+	buf = protowire.AppendTag(buf, num, protowire.VarintType)
+	buf = protowire.AppendVarint(buf, uint64(value))
+	return buf, nil
+}
+
+// appendString appends a string field
+func appendString(buf []byte, num protowire.Number, value string) ([]byte, error) {
+	buf = protowire.AppendTag(buf, num, protowire.BytesType)
+	buf = protowire.AppendString(buf, value)
+	return buf, nil
+}
+
+// appendBytes appends a bytes field
+func appendBytes(buf []byte, num protowire.Number, value []byte) ([]byte, error) {
+	buf = protowire.AppendTag(buf, num, protowire.BytesType)
+	buf = protowire.AppendBytes(buf, value)
+	return buf, nil
+}
+
+// appendNestedMessage appends a nested message field
+func appendNestedMessage(buf []byte, num protowire.Number, value map[string]interface{}) ([]byte, error) {
+	// Encode the nested message first
+	nestedBuf, err := appendMessage(nil, value)
+	if err != nil {
+		return nil, err
+	}
+
+	// Then append it as a bytes field
+	buf = protowire.AppendTag(buf, num, protowire.BytesType)
+	buf = protowire.AppendBytes(buf, nestedBuf)
+	return buf, nil
+}
+
+// DecodeDynamicMessage decodes a protobuf message to a map structure
+func DecodeDynamicMessage(data []byte) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+	originalLen := len(data)
+
+	for len(data) > 0 {
+		num, typ, n := protowire.ConsumeTag(data)
+		if n < 0 {
+			// Log position and surrounding bytes for debugging
+			pos := originalLen - len(data)
+			hexLen := 40
+			if hexLen > len(data) {
+				hexLen = len(data)
+			}
+			hexDump := fmt.Sprintf("%x", data[0:hexLen])
+			return nil, fmt.Errorf("invalid tag at byte %d/%d, hex context: %s, error: %v", pos, originalLen, hexDump, protowire.ParseError(n))
+		}
+		data = data[n:]
+
+		fieldNum := fmt.Sprintf("%d", num)
+
+		switch typ {
+		case protowire.VarintType:
+			val, n := protowire.ConsumeVarint(data)
+			if n < 0 {
+				return nil, protowire.ParseError(n)
+			}
+			data = data[n:]
+			// Handle repeated fields
+			if existing, exists := result[fieldNum]; exists {
+				// Convert to array if not already
+				if arr, isArray := existing.([]interface{}); isArray {
+					result[fieldNum] = append(arr, val)
+				} else {
+					result[fieldNum] = []interface{}{existing, val}
+				}
+			} else {
+				result[fieldNum] = val
+			}
+
+		case protowire.BytesType:
+			val, n := protowire.ConsumeBytes(data)
+			if n < 0 {
+				return nil, protowire.ParseError(n)
+			}
+			data = data[n:]
+
+			// Keep bytes as-is - don't try to recursively decode
+			// The higher-level parser will interpret the bytes as needed
+			// This matches how Python's blackboxprotobuf works
+			var decodedVal interface{}
+			if len(val) == 0 {
+				decodedVal = ""
+			} else {
+				// Just keep as raw bytes - let parser decide how to interpret
+				decodedVal = val
+			}
+
+			// Handle repeated fields
+			if existing, exists := result[fieldNum]; exists {
+				// Convert to array if not already
+				if arr, isArray := existing.([]interface{}); isArray {
+					result[fieldNum] = append(arr, decodedVal)
+				} else {
+					result[fieldNum] = []interface{}{existing, decodedVal}
+				}
+			} else {
+				result[fieldNum] = decodedVal
+			}
+
+		case protowire.Fixed32Type:
+			val, n := protowire.ConsumeFixed32(data)
+			if n < 0 {
+				return nil, protowire.ParseError(n)
+			}
+			data = data[n:]
+			// Handle repeated fields
+			if existing, exists := result[fieldNum]; exists {
+				if arr, isArray := existing.([]interface{}); isArray {
+					result[fieldNum] = append(arr, val)
+				} else {
+					result[fieldNum] = []interface{}{existing, val}
+				}
+			} else {
+				result[fieldNum] = val
+			}
+
+		case protowire.Fixed64Type:
+			val, n := protowire.ConsumeFixed64(data)
+			if n < 0 {
+				return nil, protowire.ParseError(n)
+			}
+			data = data[n:]
+			// Handle repeated fields
+			if existing, exists := result[fieldNum]; exists {
+				if arr, isArray := existing.([]interface{}); isArray {
+					result[fieldNum] = append(arr, val)
+				} else {
+					result[fieldNum] = []interface{}{existing, val}
+				}
+			} else {
+				result[fieldNum] = val
+			}
+
+		case protowire.StartGroupType:
+			// Deprecated group type - skip until EndGroupType
+			depth := 1
+			for len(data) > 0 && depth > 0 {
+				num2, typ2, n2 := protowire.ConsumeTag(data)
+				if n2 < 0 {
+					return nil, fmt.Errorf("invalid group tag at field %d", num)
+				}
+				data = data[n2:]
+
+				if typ2 == protowire.StartGroupType {
+					depth++
+				} else if typ2 == protowire.EndGroupType && num2 == num {
+					depth--
+				} else {
+					// Skip the field value
+					n3 := protowire.ConsumeFieldValue(num2, typ2, data)
+					if n3 < 0 {
+						return nil, fmt.Errorf("invalid field value in group at field %d", num)
+					}
+					data = data[n3:]
+				}
+			}
+			// Don't store group data, just skip it
+
+		case protowire.EndGroupType:
+			// End of group - should not appear at top level
+			return nil, fmt.Errorf("unexpected end group at field %d", num)
+
+		default:
+			// Unknown wire type - try to skip it gracefully
+			// This handles any malformed or unknown data
+			return nil, fmt.Errorf("unknown wire type %d at field %d (might be corrupted data)", typ, num)
+		}
+	}
+
+	return result, nil
+}
+
+// Helper to check if message is well-formed
+func ValidateMessage(data []byte) error {
+	_, err := DecodeDynamicMessage(data)
+	return err
+}
+
+// Size returns the encoded size of a message
+func MessageSize(data map[string]interface{}) int {
+	encoded, err := EncodeDynamicMessage(data)
+	if err != nil {
+		return 0
+	}
+	return len(encoded)
+}
+
+// Clone creates a deep copy of a message
+func CloneMessage(data map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range data {
+		if nested, ok := v.(map[string]interface{}); ok {
+			result[k] = CloneMessage(nested)
+		} else {
+			result[k] = v
+		}
+	}
+	return result
+}
+
+var _ proto.Message // Ensure we're compatible with proto.Message interface
+
+// isProbablyString checks if bytes look like printable text (UTF-8 or ASCII)
+// Returns true if the bytes are likely a string rather than a nested protobuf message
+func isProbablyString(data []byte) bool {
+	if len(data) == 0 {
+		return true
+	}
+
+	// Check if it's valid UTF-8
+	if !utf8.Valid(data) {
+		return false
+	}
+
+	// Count printable vs non-printable characters
+	printableCount := 0
+	for _, b := range data {
+		// Allow printable ASCII (32-126), tab (9), newline (10), carriage return (13)
+		// and high bytes that are part of valid UTF-8 sequences (checked above)
+		if (b >= 32 && b <= 126) || b == 9 || b == 10 || b == 13 || b >= 128 {
+			printableCount++
+		}
+	}
+
+	// If more than 80% of bytes are printable, it's probably a string
+	// This threshold helps distinguish filenames from protobuf data
+	ratio := float64(printableCount) / float64(len(data))
+	return ratio > 0.8
+}
+
+// isProbablyValidMessage checks if a decoded message looks like a legitimate protobuf message
+// Returns false if the message has characteristics of incorrectly parsed binary data
+func isProbablyValidMessage(msg map[string]interface{}) bool {
+	if len(msg) == 0 {
+		return false
+	}
+
+	suspiciousCount := 0
+
+	for fieldNumStr, val := range msg {
+		var fieldNum int
+		fmt.Sscanf(fieldNumStr, "%d", &fieldNum)
+
+		// Very high field numbers (>500) strongly suggest bad parsing
+		if fieldNum > 500 {
+			return false
+		}
+
+		// Field numbers > 50 are somewhat unusual
+		if fieldNum > 50 {
+			suspiciousCount++
+		}
+
+		// Check for suspiciously large uint64 values
+		// Real protobuf messages rarely have values > 1 billion in scalar fields
+		// Binary data parsed as varints often produces huge numbers
+		switch v := val.(type) {
+		case uint64:
+			if v > 1000000000000 { // > 1 trillion is very suspicious
+				suspiciousCount++
+			}
+		case []interface{}:
+			// Check array elements for huge values
+			for _, elem := range v {
+				if u, ok := elem.(uint64); ok && u > 1000000000000 {
+					suspiciousCount++
+				}
+			}
+		}
+	}
+
+	// If we have multiple suspicious indicators, this is probably not a real message
+	if suspiciousCount >= 2 {
+		return false
+	}
+
+	// Small messages with only high field numbers are suspicious
+	if len(msg) <= 3 {
+		hasLowFieldNum := false
+		for fieldNumStr := range msg {
+			var fieldNum int
+			fmt.Sscanf(fieldNumStr, "%d", &fieldNum)
+			if fieldNum <= 15 {
+				hasLowFieldNum = true
+				break
+			}
+		}
+		// Real nested messages almost always have at least one low field number
+		if !hasLowFieldNum && len(msg) > 0 {
+			return false
+		}
+	}
+
+	return true
+}
