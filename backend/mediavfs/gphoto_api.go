@@ -433,17 +433,15 @@ func findMediaKeyInResponse(data interface{}) string {
 
 // MoveToTrash moves files to trash
 func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
-	// Process in batches of 500
-	batchSize := 500
-	for i := 0; i < len(dedupKeys); i += batchSize {
-		end := i + batchSize
-		if end > len(dedupKeys) {
-			end = len(dedupKeys)
+	// Delete files one at a time since batch delete doesn't work
+	fs.Infof(nil, "gphoto: MoveToTrash processing %d files (one at a time)", len(dedupKeys))
+
+	for i, dedupKey := range dedupKeys {
+		if (i+1)%10 == 0 || i == len(dedupKeys)-1 {
+			fs.Debugf(nil, "gphoto: MoveToTrash progress: %d/%d", i+1, len(dedupKeys))
 		}
 
-		batch := dedupKeys[i:end]
-
-		// Build nested protobuf structure for MoveToTrash
+		// Build nested protobuf structure for MoveToTrash (single file)
 		// Field 8 -> Field 4 -> Fields 2, 3, 4, 5
 		field8_4_3_1 := NewProtoEncoder() // Empty message
 		field8_4_3 := NewProtoEncoder()
@@ -471,18 +469,13 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 		field9.EncodeInt32(1, 5)
 		field9.EncodeMessage(2, field9_2.Bytes())
 
-		// Main message
+		// Main message with single dedup key
 		encoder := NewProtoEncoder()
 		encoder.EncodeInt32(2, 1)
-		// Encode dedup keys as repeated string field
-		for _, key := range batch {
-			encoder.EncodeString(3, key)
-		}
+		encoder.EncodeString(3, dedupKey) // Single key
 		encoder.EncodeInt32(4, 1)
 		encoder.EncodeMessage(8, field8.Bytes())
 		encoder.EncodeMessage(9, field9.Bytes())
-
-		serializedData := encoder.Bytes()
 
 		headers := map[string]string{
 			"Content-Type": "application/x-protobuf",
@@ -490,13 +483,19 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 
 		resp, err := api.request(ctx, "POST",
 			"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
-			headers, bytes.NewReader(serializedData))
+			headers, bytes.NewReader(encoder.Bytes()))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to delete file %d/%d (key=%s): %w", i+1, len(dedupKeys), dedupKey, err)
 		}
 		resp.Body.Close()
+
+		// Small delay between requests to avoid rate limiting
+		if i < len(dedupKeys)-1 {
+			time.Sleep(50 * time.Millisecond)
+		}
 	}
 
+	fs.Infof(nil, "gphoto: MoveToTrash completed, %d files moved to trash", len(dedupKeys))
 	return nil
 }
 
