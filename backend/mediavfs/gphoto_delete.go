@@ -14,13 +14,8 @@ func (f *Fs) DeleteFromGPhotos(ctx context.Context, dedupKeys []string, user str
 		return nil
 	}
 
-	// Initialize API client
+	// Initialize API client (token is fetched lazily on first request)
 	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
-
-	// Ensure we have a token
-	if err := api.GetAuthToken(ctx, false); err != nil {
-		return fmt.Errorf("failed to get auth token: %w", err)
-	}
 
 	// Move to trash
 	fs.Debugf(f, "Moving %d files to trash", len(dedupKeys))

@@ -501,13 +501,8 @@ func (f *Fs) DeleteMediaItems(ctx context.Context, mediaKeys []string) error {
 
 // SyncFromGooglePhotos syncs media from Google Photos to the database
 func (f *Fs) SyncFromGooglePhotos(ctx context.Context, user string) error {
-	// Initialize API client
+	// Initialize API client (token is fetched lazily on first request)
 	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
-
-	// Ensure we have a token
-	if err := api.GetAuthToken(ctx, false); err != nil {
-		return fmt.Errorf("failed to get auth token: %w", err)
-	}
 
 	// Get current sync state
 	state, err := f.GetSyncState(ctx)
