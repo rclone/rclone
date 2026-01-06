@@ -440,15 +440,9 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 	fs.Infof(nil, "gphoto: MoveToTrash processing %d files (one at a time)", len(dedupKeys))
 
 	for i, dedupKey := range dedupKeys {
-		tokenPreview := "empty"
-		if len(api.token) > 20 {
-			tokenPreview = api.token[:20] + "..."
-		} else if len(api.token) > 0 {
-			tokenPreview = api.token
-		}
-		fs.Debugf(nil, "gphoto: MoveToTrash %d/%d key=%s token=%s", i+1, len(dedupKeys), dedupKey, tokenPreview)
+		fs.Debugf(nil, "gphoto: MoveToTrash %d/%d key=%s", i+1, len(dedupKeys), dedupKey)
 
-		// Build nested protobuf structure for MoveToTrash (single file)
+		// Build nested protobuf structure for MoveToTrash
 		// Field 8 -> Field 4 -> Fields 2, 3, 4, 5
 		field8_4_3_1 := NewProtoEncoder() // Empty message
 		field8_4_3 := NewProtoEncoder()
@@ -476,10 +470,14 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 		field9.EncodeInt32(1, 5)
 		field9.EncodeMessage(2, field9_2.Bytes())
 
-		// Main message with single dedup key
+		// Main message - encode as repeated field (same as batch with 1 item)
 		encoder := NewProtoEncoder()
 		encoder.EncodeInt32(2, 1)
-		encoder.EncodeString(3, dedupKey) // Single key
+		// Encode dedup key as repeated string field (matching Python's Sequence encoding)
+		batch := []string{dedupKey}
+		for _, key := range batch {
+			encoder.EncodeString(3, key)
+		}
 		encoder.EncodeInt32(4, 1)
 		encoder.EncodeMessage(8, field8.Bytes())
 		encoder.EncodeMessage(9, field9.Bytes())
