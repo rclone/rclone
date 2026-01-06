@@ -183,6 +183,10 @@ type Fs struct {
 	// notifyListener for PostgreSQL LISTEN/NOTIFY real-time updates (lazy started)
 	notifyListener *NotifyListener
 	notifyOnce     sync.Once
+	// mountReady is closed when the mount is ready (ChangeNotify has been called)
+	// Put operations wait for this before uploading
+	mountReady     chan struct{}
+	mountReadyOnce sync.Once
 }
 
 // dirCacheEntry represents a cached directory listing
@@ -328,6 +332,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		dirCache:          make(map[string]*dirCacheEntry),
 		folderExistsCache: make(map[string]bool),
 		syncStop:          make(chan struct{}),
+		mountReady:        make(chan struct{}),
 	}
 
 	// Initialize Google Photos API client for download URLs
@@ -941,6 +946,11 @@ func (f *Fs) addToDirCache(dirPath string, entry fs.DirEntry) {
 // ChangeNotify calls the passed function with a path that has had changes.
 // The implementation must empty the channel and stop when it is closed.
 func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType), newInterval <-chan time.Duration) {
+	// Signal that mount is ready - this is called by VFS when mount is set up
+	f.mountReadyOnce.Do(func() {
+		fs.Debugf(f, "Mount ready - ChangeNotify called")
+		close(f.mountReady)
+	})
 	go f.changeNotify(ctx, notify, newInterval)
 }
 
@@ -1163,6 +1173,15 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	if !f.opt.EnableUpload {
 		return nil, errNotWritable
+	}
+
+	// Wait for mount to be ready before uploading
+	// This ensures the filesystem is accessible before background uploads start
+	select {
+	case <-f.mountReady:
+		// Mount is ready, proceed with upload
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
 
 	// Use configured user for per-user mounts
