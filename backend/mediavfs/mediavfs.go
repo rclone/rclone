@@ -34,7 +34,6 @@ const (
 
 var (
 	errNotWritable = errors.New("mediavfs is read-only - files cannot be created, modified, or deleted from database")
-	errCrossUser   = errors.New("cannot move files between different users")
 )
 
 // urlMetadata stores cached URL resolution and ETag information
@@ -403,26 +402,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// splitUserPath splits a path into username and the rest
-// e.g., "john/photos/img.jpg" -> "john", "photos/img.jpg"
-func splitUserPath(remote string) (userName string, filePath string) {
-	parts := strings.SplitN(remote, "/", 2)
-	if len(parts) == 1 {
-		return parts[0], ""
-	}
-	return parts[0], parts[1]
-}
-
-// extractPathAndName extracts path and name from file_name if it contains "/"
-// e.g., "photos/vacation/img.jpg" -> "photos/vacation", "img.jpg"
-func extractPathAndName(fileName string) (path string, name string) {
-	if strings.Contains(fileName, "/") {
-		lastSlash := strings.LastIndex(fileName, "/")
-		return fileName[:lastSlash], fileName[lastSlash+1:]
-	}
-	return "", fileName
-}
-
 // buildConnectionString combines base connection string with database name
 // baseConn format: postgres://user:password@host:port?params or postgres://user:password@host:port/?params
 // Returns: postgres://user:password@host:port/dbname?params
@@ -646,88 +625,6 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	// No need for background populateMetadata as it's redundant and causes high CPU
 
 	return entries, nil
-}
-
-// populateMetadata loads size/modtime/mediaKey for files in batches
-func (f *Fs) populateMetadata(userName string) {
-	batch := f.opt.BatchSize
-	if batch <= 0 {
-		batch = 1000
-	}
-
-	offset := 0
-	for {
-		query := fmt.Sprintf(`
-			SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, COALESCE(size_bytes, 0) as size_bytes, COALESCE(utc_timestamp, 0) as utc_timestamp
-			FROM %s
-			ORDER BY file_name
-			LIMIT $1 OFFSET $2
-		`, f.opt.TableName)
-
-		rows, err := f.db.Query(query, batch, offset)
-		if err != nil {
-			fs.Errorf(f, "mediavfs: populateMetadata query failed: %v", err)
-			return
-		}
-
-		count := 0
-		for rows.Next() {
-			var mediaKey, fileName, customName, customPath string
-			var sizeBytes int64
-			var timestampUnix int64
-			if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &sizeBytes, &timestampUnix); err != nil {
-				fs.Errorf(f, "mediavfs: populateMetadata scan failed: %v", err)
-				continue
-			}
-
-			// compute display path/name as in listUserFiles
-			var displayName, displayPath string
-			// Display name: use 'name' if set, else use 'file_name'
-			if customName != "" {
-				displayName = customName
-			} else {
-				displayName = fileName
-			}
-			// Display path: use 'path' if set, else empty
-			if customPath != "" {
-				displayPath = strings.Trim(customPath, "/")
-			} else {
-				displayPath = ""
-			}
-
-			var fullPath string
-			if displayPath != "" {
-				fullPath = displayPath + "/" + displayName
-			} else {
-				fullPath = displayName
-			}
-
-			key := fullPath // No username prefix in single-user model
-			obj := &Object{
-				fs:          f,
-				remote:      key,
-				mediaKey:    mediaKey,
-				size:        sizeBytes,
-				modTime:     convertUnixTimestamp(timestampUnix),
-				userName:    userName,
-				displayName: displayName,
-				displayPath: displayPath,
-			}
-
-			f.lazyMu.Lock()
-			f.lazyMeta[key] = obj
-			f.lazyMu.Unlock()
-
-			count++
-		}
-		rows.Close()
-
-		if count < batch {
-			// finished
-			return
-		}
-		offset += batch
-	}
 }
 
 // NewObject finds the Object at remote
