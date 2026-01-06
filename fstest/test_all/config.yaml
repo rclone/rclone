@@ -677,3 +677,6 @@ backends:
      # with the parent backend having a different precision.
      - TestServerSideCopyOverSelf
      - TestServerSideMoveOverSelf
+ - backend:  "kvfs"
+   remote:   "TestKvfs:"
+   fastlist: false
