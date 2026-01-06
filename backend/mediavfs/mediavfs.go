@@ -208,10 +208,11 @@ type Object struct {
 }
 
 // convertUnixTimestamp converts a Unix timestamp (seconds or milliseconds) to time.Time
+// Always returns second precision to match Precision() and avoid modtime comparison issues
 func convertUnixTimestamp(timestamp int64) time.Time {
-	// If timestamp is > 10^10, it's likely in milliseconds
+	// If timestamp is > 10^10, it's likely in milliseconds - convert to seconds
 	if timestamp > 10000000000 {
-		return time.Unix(timestamp/1000, (timestamp%1000)*1000000)
+		return time.Unix(timestamp/1000, 0)
 	}
 	// Otherwise assume seconds
 	return time.Unix(timestamp, 0)
