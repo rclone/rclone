@@ -901,7 +901,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 		resultchan <- result
 	}(c)
-	c = nil
 
 	// Wait for List for up to Timeout seconds
 	timer := time.NewTimer(f.ci.TimeoutOrInfinite())
