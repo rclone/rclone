@@ -287,12 +287,11 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	}
 
 	// Parse dedup_key from field 2->21
-	// The raw bytes ARE the dedup_key string (not binary that needs encoding)
 	if field21, ok := asMap(field2["21"]); ok {
 		for key, val := range field21 {
 			if key[0] == '1' {
 				if dedupBytes, ok := asBytes(val); ok {
-					item.DedupKey = string(dedupBytes)
+					item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(dedupBytes))
 					break
 				}
 			}
@@ -303,7 +302,7 @@ func parseMediaItem(d map[string]interface{}) (MediaItem, error) {
 	if item.DedupKey == "" {
 		if field13, ok := asMap(field2["13"]); ok {
 			if hashBytes, ok := asBytes(field13["1"]); ok {
-				item.DedupKey = string(hashBytes)
+				item.DedupKey = urlsafeBase64(base64.StdEncoding.EncodeToString(hashBytes))
 			}
 		}
 	}

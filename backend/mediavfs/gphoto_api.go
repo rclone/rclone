@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -479,8 +480,19 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 	encoder := NewProtoEncoder()
 	encoder.EncodeInt32(2, 1)
 	// Field 3 is repeated - encode each dedup_key with the same field number
+	// Database stores base64-encoded dedup_keys, need to decode before sending
 	for _, dedupKey := range dedupKeys {
-		encoder.EncodeString(3, dedupKey)
+		// Decode from URL-safe base64 (database format) to get raw dedup_key
+		decoded, err := base64.URLEncoding.DecodeString(dedupKey)
+		if err != nil {
+			// Try with padding if needed
+			decoded, err = base64.RawURLEncoding.DecodeString(dedupKey)
+			if err != nil {
+				fs.Errorf(nil, "gphoto: failed to decode dedup_key %s: %v", dedupKey, err)
+				continue
+			}
+		}
+		encoder.EncodeString(3, string(decoded))
 	}
 	encoder.EncodeInt32(4, 1)
 	encoder.EncodeMessage(8, field8.Bytes())
