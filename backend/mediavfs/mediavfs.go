@@ -1954,10 +1954,203 @@ func (f *Fs) startBackgroundSync() {
 	}()
 }
 
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order. If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	// Signal mount is ready when ListR is called
+	f.mountReadyOnce.Do(func() {
+		fs.Debugf(f, "Mount ready - ListR called")
+		close(f.mountReady)
+	})
+
+	userName := f.opt.User
+	rootPath := strings.Trim(path.Join(f.root, dir), "/")
+
+	fs.Debugf(f, "ListR called for dir=%s rootPath=%s", dir, rootPath)
+
+	// Query ALL files and folders recursively under rootPath
+	// Files have path starting with rootPath (or equal to rootPath)
+	// This is a single query that gets everything
+	var query string
+	var rows *sql.Rows
+	var err error
+
+	if rootPath == "" {
+		// List everything for this user
+		query = fmt.Sprintf(`
+			SELECT
+				media_key,
+				file_name,
+				COALESCE(name, '') as custom_name,
+				COALESCE(path, '') as custom_path,
+				COALESCE(type, 0) as item_type,
+				COALESCE(size_bytes, 0) as size_bytes,
+				COALESCE(utc_timestamp, 0) as utc_timestamp
+			FROM %s
+			WHERE user_name = $1
+				AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+			ORDER BY path, type ASC, file_name ASC
+		`, f.opt.TableName)
+		rows, err = f.db.QueryContext(ctx, query, userName)
+	} else {
+		// List everything under rootPath (path = rootPath OR path starts with rootPath/)
+		query = fmt.Sprintf(`
+			SELECT
+				media_key,
+				file_name,
+				COALESCE(name, '') as custom_name,
+				COALESCE(path, '') as custom_path,
+				COALESCE(type, 0) as item_type,
+				COALESCE(size_bytes, 0) as size_bytes,
+				COALESCE(utc_timestamp, 0) as utc_timestamp
+			FROM %s
+			WHERE user_name = $1
+				AND (TRIM(TRAILING '/' FROM COALESCE(path, '')) = $2
+				     OR COALESCE(path, '') LIKE $3)
+				AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+			ORDER BY path, type ASC, file_name ASC
+		`, f.opt.TableName)
+		rows, err = f.db.QueryContext(ctx, query, userName, rootPath, rootPath+"/%")
+	}
+
+	if err != nil {
+		return fmt.Errorf("ListR query failed: %w", err)
+	}
+	defer rows.Close()
+
+	// Collect entries in batches to send to callback
+	var entries fs.DirEntries
+	seenDirs := make(map[string]bool) // Track directories we've already added
+	const batchSize = 1000
+
+	for rows.Next() {
+		var (
+			mediaKey      string
+			fileName      string
+			customName    string
+			customPath    string
+			itemType      int64
+			sizeBytes     int64
+			timestampUnix int64
+		)
+		if err := rows.Scan(&mediaKey, &fileName, &customName, &customPath, &itemType, &sizeBytes, &timestampUnix); err != nil {
+			return fmt.Errorf("ListR scan failed: %w", err)
+		}
+
+		// Display name: use 'name' if set, else use 'file_name'
+		displayName := strings.Trim(fileName, "/")
+		if customName != "" {
+			displayName = strings.Trim(customName, "/")
+		}
+
+		if displayName == "" {
+			continue
+		}
+
+		// Calculate path relative to f.root
+		dbPath := strings.Trim(customPath, "/")
+		var relativePath string
+		if f.root == "" {
+			relativePath = dbPath
+		} else if dbPath == f.root {
+			relativePath = ""
+		} else if strings.HasPrefix(dbPath, f.root+"/") {
+			relativePath = strings.TrimPrefix(dbPath, f.root+"/")
+		} else if !strings.HasPrefix(dbPath, f.root) {
+			// Path doesn't match our root, skip
+			continue
+		} else {
+			relativePath = dbPath
+		}
+
+		// Build the remote path
+		var remote string
+		if relativePath == "" {
+			remote = displayName
+		} else {
+			remote = relativePath + "/" + displayName
+		}
+
+		// Also add parent directories that we haven't seen yet
+		if relativePath != "" {
+			parts := strings.Split(relativePath, "/")
+			for i := range parts {
+				dirPath := strings.Join(parts[:i+1], "/")
+				if !seenDirs[dirPath] {
+					seenDirs[dirPath] = true
+					entries = append(entries, fs.NewDir(dirPath, time.Time{}))
+				}
+			}
+		}
+
+		if itemType == -1 {
+			// This is a folder
+			if !seenDirs[remote] {
+				seenDirs[remote] = true
+				entries = append(entries, fs.NewDir(remote, time.Time{}))
+			}
+		} else {
+			// This is a file
+			timestamp := convertUnixTimestamp(timestampUnix)
+			obj := &Object{
+				fs:          f,
+				remote:      remote,
+				mediaKey:    mediaKey,
+				size:        sizeBytes,
+				modTime:     timestamp,
+				userName:    userName,
+				displayName: displayName,
+				displayPath: dbPath,
+			}
+			entries = append(entries, obj)
+
+			// Store in lazyMeta cache for fast NewObject lookups
+			f.lazyMu.Lock()
+			f.lazyMeta[remote] = obj
+			f.lazyMu.Unlock()
+		}
+
+		// Send batch to callback when we reach batchSize
+		if len(entries) >= batchSize {
+			err = callback(entries)
+			if err != nil {
+				return err
+			}
+			entries = nil
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("ListR iteration error: %w", err)
+	}
+
+	// Send remaining entries
+	if len(entries) > 0 {
+		err = callback(entries)
+		if err != nil {
+			return err
+		}
+	}
+
+	fs.Debugf(f, "ListR completed")
+	return nil
+}
+
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*Fs)(nil)
-	_ fs.Object   = (*Object)(nil)
-	_ fs.Mover    = (*Fs)(nil)
+	_ fs.Fs         = (*Fs)(nil)
+	_ fs.Object     = (*Object)(nil)
+	_ fs.Mover      = (*Fs)(nil)
 	_ fs.Shutdowner = (*Fs)(nil)
+	_ fs.ListRer    = (*Fs)(nil)
 )
