@@ -23,12 +23,12 @@ func (f *Fs) DeleteFromGPhotos(ctx context.Context, dedupKeys []string, user str
 	}
 
 	// Move to trash
-	fs.Infof(f, "Moving %d files to trash", len(dedupKeys))
+	fs.Debugf(f, "Moving %d files to trash", len(dedupKeys))
 	if err := api.MoveToTrash(ctx, dedupKeys); err != nil {
 		return fmt.Errorf("failed to move files to trash: %w", err)
 	}
 
-	fs.Infof(f, "Successfully moved %d files to trash", len(dedupKeys))
+	fs.Debugf(f, "Successfully moved %d files to trash", len(dedupKeys))
 	return nil
 }
 
@@ -57,7 +57,7 @@ func (o *Object) DeleteFromGPhotos(ctx context.Context) error {
 		return fmt.Errorf("dedup_key is empty for media_key %s", o.mediaKey)
 	}
 
-	fs.Infof(o.fs, "Deleting object %s (media_key: %s, dedup_key: %s)", o.remote, o.mediaKey, dedupKey)
+	fs.Debugf(o.fs, "Deleting object %s (media_key: %s, dedup_key: %s)", o.remote, o.mediaKey, dedupKey)
 
 	return o.fs.DeleteFromGPhotos(ctx, []string{dedupKey}, o.userName)
 }
@@ -69,7 +69,7 @@ func (f *Fs) BatchDelete(ctx context.Context, dedupKeys []string, user string, b
 	}
 
 	totalBatches := (len(dedupKeys) + batchSize - 1) / batchSize
-	fs.Infof(f, "Deleting %d files in %d batches of up to %d", len(dedupKeys), totalBatches, batchSize)
+	fs.Debugf(f, "Deleting %d files in %d batches of up to %d", len(dedupKeys), totalBatches, batchSize)
 
 	for i := 0; i < len(dedupKeys); i += batchSize {
 		end := i + batchSize
@@ -80,7 +80,7 @@ func (f *Fs) BatchDelete(ctx context.Context, dedupKeys []string, user string, b
 		batch := dedupKeys[i:end]
 		batchNum := (i / batchSize) + 1
 
-		fs.Infof(f, "Processing batch %d/%d (%d files)", batchNum, totalBatches, len(batch))
+		fs.Debugf(f, "Processing batch %d/%d (%d files)", batchNum, totalBatches, len(batch))
 
 		if err := f.DeleteFromGPhotos(ctx, batch, user); err != nil {
 			return fmt.Errorf("failed to delete batch %d: %w", batchNum, err)
@@ -93,7 +93,7 @@ func (f *Fs) BatchDelete(ctx context.Context, dedupKeys []string, user string, b
 		}
 	}
 
-	fs.Infof(f, "Successfully deleted all %d files", len(dedupKeys))
+	fs.Debugf(f, "Successfully deleted all %d files", len(dedupKeys))
 	return nil
 }
 
@@ -137,7 +137,7 @@ func (f *Fs) ProcessPendingDeletions(ctx context.Context, user string, batchSize
 		return 0, nil
 	}
 
-	fs.Infof(f, "Processing %d pending deletions for user %s", len(dedupKeys), user)
+	fs.Debugf(f, "Processing %d pending deletions for user %s", len(dedupKeys), user)
 
 	// Delete from Google Photos
 	if err := f.DeleteFromGPhotos(ctx, dedupKeys, user); err != nil {
@@ -221,7 +221,7 @@ func (f *Fs) CleanupDuplicates(ctx context.Context, user string) error {
 			continue
 		}
 
-		fs.Infof(f, "Found %d duplicates of %s (size: %d)", len(group.items), group.name, group.size)
+		fs.Debugf(f, "Found %d duplicates of %s (size: %d)", len(group.items), group.name, group.size)
 
 		// Keep the first one (newest due to ORDER BY timestamp DESC), delete the rest
 		for i := 1; i < len(group.items); i++ {
@@ -230,11 +230,11 @@ func (f *Fs) CleanupDuplicates(ctx context.Context, user string) error {
 	}
 
 	if len(toDelete) == 0 {
-		fs.Infof(f, "No duplicates found for user %s", user)
+		fs.Debugf(f, "No duplicates found for user %s", user)
 		return nil
 	}
 
-	fs.Infof(f, "Found %d duplicate files to delete for user %s", len(toDelete), user)
+	fs.Debugf(f, "Found %d duplicate files to delete for user %s", len(toDelete), user)
 
 	// Delete in batches
 	return f.BatchDelete(ctx, toDelete, user, 500)

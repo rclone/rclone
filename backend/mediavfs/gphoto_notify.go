@@ -54,11 +54,11 @@ func (nl *NotifyListener) Start(ctx context.Context) error {
 	eventCallback := func(ev pq.ListenerEventType, err error) {
 		switch ev {
 		case pq.ListenerEventConnected:
-			fs.Infof(nil, "pg_notify: connected to PostgreSQL")
+			fs.Debugf(nil, "pg_notify: connected to PostgreSQL")
 		case pq.ListenerEventDisconnected:
 			fs.Errorf(nil, "pg_notify: disconnected from PostgreSQL: %v", err)
 		case pq.ListenerEventReconnected:
-			fs.Infof(nil, "pg_notify: reconnected to PostgreSQL")
+			fs.Debugf(nil, "pg_notify: reconnected to PostgreSQL")
 		case pq.ListenerEventConnectionAttemptFailed:
 			fs.Errorf(nil, "pg_notify: connection attempt failed: %v", err)
 		}
@@ -74,7 +74,7 @@ func (nl *NotifyListener) Start(ctx context.Context) error {
 	}
 
 	nl.isListening = true
-	fs.Infof(nil, "pg_notify: listening on channel '%s' for user '%s'", NotifyChannel, nl.user)
+	fs.Debugf(nil, "pg_notify: listening on channel '%s' for user '%s'", NotifyChannel, nl.user)
 
 	// Start processing notifications in background
 	go nl.processNotifications(ctx)
@@ -87,10 +87,10 @@ func (nl *NotifyListener) processNotifications(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			fs.Infof(nil, "pg_notify: context cancelled, stopping listener")
+			fs.Debugf(nil, "pg_notify: context cancelled, stopping listener")
 			return
 		case <-nl.stopChan:
-			fs.Infof(nil, "pg_notify: stop signal received")
+			fs.Debugf(nil, "pg_notify: stop signal received")
 			return
 		case notification := <-nl.listener.Notify:
 			if notification == nil {
@@ -246,6 +246,6 @@ func (f *Fs) SetupNotifyTrigger(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create notify trigger: %w", err)
 	}
-	fs.Infof(f, "Created PostgreSQL notify trigger on table '%s'", f.opt.TableName)
+	fs.Debugf(f, "Created PostgreSQL notify trigger on table '%s'", f.opt.TableName)
 	return nil
 }

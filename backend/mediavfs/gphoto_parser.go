@@ -160,7 +160,7 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 	case map[string]interface{}:
 		item, err := parseMediaItem(v)
 		if err != nil {
-			fs.Infof(nil, "mediavfs: Skipping media item due to error: %v", err)
+			fs.Debugf(nil, "mediavfs: Skipping media item due to error: %v", err)
 			skipped++
 		} else {
 			items = append(items, item)
@@ -170,7 +170,7 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 		if itemMap, ok := asMap(v); ok {
 			item, err := parseMediaItem(itemMap)
 			if err != nil {
-				fs.Infof(nil, "mediavfs: Skipping media item due to error: %v", err)
+				fs.Debugf(nil, "mediavfs: Skipping media item due to error: %v", err)
 				skipped++
 			} else {
 				items = append(items, item)
@@ -182,7 +182,7 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 			if itemMap, ok := asMap(itemData); ok {
 				item, err := parseMediaItem(itemMap)
 				if err != nil {
-					fs.Infof(nil, "mediavfs: Skipping media item #%d due to error: %v", i, err)
+					fs.Debugf(nil, "mediavfs: Skipping media item #%d due to error: %v", i, err)
 					skipped++
 				} else {
 					items = append(items, item)
@@ -192,7 +192,7 @@ func parseMediaItems(data interface{}) ([]MediaItem, error) {
 	}
 
 	if skipped > 0 {
-		fs.Infof(nil, "mediavfs: Skipped %d media items with missing required fields", skipped)
+		fs.Debugf(nil, "mediavfs: Skipped %d media items with missing required fields", skipped)
 	}
 
 	return items, nil

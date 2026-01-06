@@ -295,7 +295,7 @@ func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, conten
 		"Content-Length": fmt.Sprintf("%d", fileSize),
 	}
 
-	fs.Infof(nil, "gphoto: uploading %d bytes...", fileSize)
+	fs.Debugf(nil, "gphoto: uploading %d bytes...", fileSize)
 
 	resp, err := api.request(ctx, "PUT", url, headers, content)
 	if err != nil {
@@ -309,7 +309,7 @@ func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, conten
 		return nil, err
 	}
 
-	fs.Infof(nil, "gphoto: upload complete")
+	fs.Debugf(nil, "gphoto: upload complete")
 	return respBody, nil
 }
 
@@ -400,14 +400,14 @@ func (api *GPhotoAPI) CommitUpload(ctx context.Context, uploadResponse []byte, f
 		}
 		// Try alternate path: field 1 -> field 1 (for duplicates)
 		if mediaKey, ok := mediaData["1"].(string); ok {
-			fs.Infof(nil, "gphoto: Found media key at alternate location (field 1.1)")
+			fs.Debugf(nil, "gphoto: Found media key at alternate location (field 1.1)")
 			return mediaKey, nil
 		}
 	}
 
 	// Try to find any string that looks like a media key in the response
 	if mediaKey := findMediaKeyInResponse(result); mediaKey != "" {
-		fs.Infof(nil, "gphoto: Found media key via deep search: %s", mediaKey)
+		fs.Debugf(nil, "gphoto: Found media key via deep search: %s", mediaKey)
 		return mediaKey, nil
 	}
 
@@ -437,7 +437,7 @@ func findMediaKeyInResponse(data interface{}) string {
 
 // MoveToTrash moves files to trash (supports batch deletion)
 func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
-	fs.Infof(nil, "gphoto: MoveToTrash processing %d files", len(dedupKeys))
+	fs.Debugf(nil, "gphoto: MoveToTrash processing %d files", len(dedupKeys))
 
 	// Build nested protobuf structure for MoveToTrash
 	// Matching exact structure from captured Google Photos app request:
@@ -510,7 +510,7 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 	}
 	resp.Body.Close()
 
-	fs.Infof(nil, "gphoto: MoveToTrash completed, %d files moved to trash", len(dedupKeys))
+	fs.Debugf(nil, "gphoto: MoveToTrash completed, %d files moved to trash", len(dedupKeys))
 	return nil
 }
 

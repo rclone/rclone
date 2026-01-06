@@ -298,7 +298,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				// Preserve Range header (critical for resume/seeking)
 				if rangeHeader := originalReq.Header.Get("Range"); rangeHeader != "" {
 					req.Header.Set("Range", rangeHeader)
-					fs.Infof(nil, "mediavfs: preserving Range header on redirect: %s", rangeHeader)
+					fs.Debugf(nil, "mediavfs: preserving Range header on redirect: %s", rangeHeader)
 				}
 				// Preserve If-Range header (critical for ETag validation)
 				if ifRangeHeader := originalReq.Header.Get("If-Range"); ifRangeHeader != "" {
@@ -308,7 +308,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				if userAgent := originalReq.Header.Get("User-Agent"); userAgent != "" {
 					req.Header.Set("User-Agent", userAgent)
 				}
-				fs.Infof(nil, "mediavfs: following redirect from %s to %s",
+				fs.Debugf(nil, "mediavfs: following redirect from %s to %s",
 					via[len(via)-1].URL.Redacted(), req.URL.Redacted())
 			}
 			return nil
@@ -342,7 +342,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features.ChangeNotify = f.ChangeNotify
 
 	// Initialize database schema
-	fs.Infof(f, "Initializing database schema...")
+	fs.Debugf(f, "Initializing database schema...")
 	if err := f.InitializeDatabase(ctx); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
@@ -358,7 +358,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Perform initial sync if needed
 	if opt.User != "" {
-		fs.Infof(f, "Checking sync state for user: %s", opt.User)
+		fs.Debugf(f, "Checking sync state for user: %s", opt.User)
 		state, err := f.GetSyncState(ctx)
 		if err != nil {
 			fs.Errorf(f, "Failed to get sync state: %v", err)
@@ -374,7 +374,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				}
 			}()
 		} else {
-			fs.Infof(f, "User %s already synced", opt.User)
+			fs.Debugf(f, "User %s already synced", opt.User)
 			// Start background sync immediately if already synced and auto_sync is enabled
 			if opt.AutoSync {
 				f.startBackgroundSync()
@@ -947,7 +947,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType)
 // startNotifyListener lazily starts the PostgreSQL notify listener (only for mount)
 func (f *Fs) startNotifyListener(ctx context.Context) {
 	f.notifyOnce.Do(func() {
-		fs.Infof(f, "Starting PostgreSQL notify listener (mount detected)")
+		fs.Debugf(f, "Starting PostgreSQL notify listener (mount detected)")
 		f.notifyListener = NewNotifyListener(f.dbConnStr, f.opt.User)
 		if err := f.notifyListener.Start(ctx); err != nil {
 			fs.Errorf(f, "Failed to start notify listener (falling back to polling): %v", err)
@@ -1046,7 +1046,7 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 				processPendingEvents() // Process any remaining events
 				return
 			}
-			fs.Infof(f, "mediavfs: ChangeNotify interval updated to %s", d)
+			fs.Debugf(f, "mediavfs: ChangeNotify interval updated to %s", d)
 			ticker.Reset(d)
 
 		case event := <-notifyEvents:
@@ -1176,7 +1176,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	// Upload to Google Photos
-	fs.Infof(f, "Uploading %s to Google Photos for user %s", fullPath, userName)
+	fs.Debugf(f, "Uploading %s to Google Photos for user %s", fullPath, userName)
 	mediaKey, err := f.UploadWithProgress(ctx, src, in, userName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload to Google Photos: %w", err)
@@ -1699,7 +1699,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		if err != nil {
 			// If media not found (404), delete from database and return not found error
 			if errors.Is(err, ErrMediaNotFound) {
-				fs.Infof(nil, "mediavfs: media item %s not found in Google Photos, removing from database", o.mediaKey)
+				fs.Debugf(nil, "mediavfs: media item %s not found in Google Photos, removing from database", o.mediaKey)
 				deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE media_key = $1`, o.fs.opt.TableName)
 				_, delErr := o.fs.db.ExecContext(ctx, deleteQuery, o.mediaKey)
 				if delErr != nil {
