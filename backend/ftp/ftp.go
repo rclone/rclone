@@ -892,7 +892,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	resultchan := make(chan []*ftp.Entry, 1)
 	errchan := make(chan error, 1)
-	go func() {
+	go func(c *ftp.ServerConn) {
 		result, err := c.List(f.dirFromStandardPath(path.Join(f.root, dir)))
 		f.putFtpConnection(&c, err)
 		if err != nil {
@@ -900,7 +900,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			return
 		}
 		resultchan <- result
-	}()
+	}(c)
+	c = nil
 
 	// Wait for List for up to Timeout seconds
 	timer := time.NewTimer(f.ci.TimeoutOrInfinite())
