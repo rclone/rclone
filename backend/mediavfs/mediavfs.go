@@ -481,6 +481,12 @@ func ensureDatabaseExists(ctx context.Context, baseConn, dbName string) error {
 
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	// Signal mount is ready when first List is called
+	f.mountReadyOnce.Do(func() {
+		fs.Debugf(f, "Mount ready - List called")
+		close(f.mountReady)
+	})
+
 	// Normalize dir - remove any trailing slashes
 	dir = strings.Trim(dir, "/")
 	root := strings.Trim(path.Join(f.root, dir), "/")
@@ -1175,11 +1181,14 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, errNotWritable
 	}
 
-	// Wait for mount to be ready before uploading
+	// Wait for mount to be ready before uploading (max 5 seconds)
 	// This ensures the filesystem is accessible before background uploads start
 	select {
 	case <-f.mountReady:
 		// Mount is ready, proceed with upload
+	case <-time.After(5 * time.Second):
+		// Timeout - proceed anyway (handles non-mount usage like rclone copy)
+		fs.Debugf(f, "Mount ready timeout - proceeding with upload")
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
