@@ -440,9 +440,13 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 	fs.Infof(nil, "gphoto: MoveToTrash processing %d files (one at a time)", len(dedupKeys))
 
 	for i, dedupKey := range dedupKeys {
-		if (i+1)%10 == 0 || i == len(dedupKeys)-1 {
-			fs.Debugf(nil, "gphoto: MoveToTrash progress: %d/%d", i+1, len(dedupKeys))
+		tokenPreview := "empty"
+		if len(api.token) > 20 {
+			tokenPreview = api.token[:20] + "..."
+		} else if len(api.token) > 0 {
+			tokenPreview = api.token
 		}
+		fs.Debugf(nil, "gphoto: MoveToTrash %d/%d key=%s token=%s", i+1, len(dedupKeys), dedupKey, tokenPreview)
 
 		// Build nested protobuf structure for MoveToTrash (single file)
 		// Field 8 -> Field 4 -> Fields 2, 3, 4, 5
