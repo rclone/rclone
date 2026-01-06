@@ -156,7 +156,10 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			continue
 
 		case http.StatusInternalServerError, http.StatusServiceUnavailable:
+			// Log error body for debugging
+			body, _ := readResponseBody(resp)
 			resp.Body.Close()
+			fs.Errorf(nil, "gphoto: server error (%d), body: %s", resp.StatusCode, string(body))
 			backoff := time.Duration(1<<uint(retry)) * time.Second
 			select {
 			case <-ctx.Done():
