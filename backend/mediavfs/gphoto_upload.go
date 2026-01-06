@@ -34,8 +34,8 @@ func CalculateSHA1Hash(filePath string) ([]byte, string, error) {
 
 // UploadFileToGPhotos uploads a file to Google Photos
 func (f *Fs) UploadFileToGPhotos(ctx context.Context, filePath string, user string) (string, error) {
-	// Initialize API client (token is fetched lazily on first request)
-	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
+	// Use the shared API client (token is fetched lazily and cached)
+	api := f.api
 
 	// Calculate SHA1 hash
 	fs.Debugf(f, "Calculating SHA1 hash for %s", filePath)
@@ -97,8 +97,8 @@ func (f *Fs) UploadFileToGPhotos(ctx context.Context, filePath string, user stri
 
 // UploadWithProgress uploads a file with progress reporting
 func (f *Fs) UploadWithProgress(ctx context.Context, src fs.ObjectInfo, in io.Reader, user string) (string, error) {
-	// Initialize API client (token is fetched lazily on first request)
-	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
+	// Use the shared API client (token is fetched lazily and cached)
+	api := f.api
 
 	// For now, we need to read the entire file to calculate hash
 	// In a production implementation, you'd want to use a temporary file or streaming hash
