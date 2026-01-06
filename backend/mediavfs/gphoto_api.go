@@ -443,41 +443,46 @@ func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error
 		fs.Debugf(nil, "gphoto: MoveToTrash %d/%d key=%s", i+1, len(dedupKeys), dedupKey)
 
 		// Build nested protobuf structure for MoveToTrash
-		// Field 8 -> Field 4 -> Fields 2, 3, 4, 5
-		field8_4_3_1 := NewProtoEncoder() // Empty message
+		// Matching exact structure from captured Google Photos app request:
+		// {
+		//   "2": 1,
+		//   "3": "dedup_key",
+		//   "4": 1,
+		//   "8": {"4": {"2": "", "3": {"1": ""}, "4": "", "5": {"1": ""}}},
+		//   "9": {"1": 5, "2": {"1": 51079550, "2": "33"}}
+		// }
+
+		// Field 8.4.3: message with field 1 = empty string
 		field8_4_3 := NewProtoEncoder()
-		field8_4_3.EncodeMessage(1, field8_4_3_1.Bytes())
+		field8_4_3.EncodeString(1, "")
 
-		field8_4_5_1 := NewProtoEncoder() // Empty message
+		// Field 8.4.5: message with field 1 = empty string
 		field8_4_5 := NewProtoEncoder()
-		field8_4_5.EncodeMessage(1, field8_4_5_1.Bytes())
+		field8_4_5.EncodeString(1, "")
 
+		// Field 8.4: contains empty strings and nested messages
 		field8_4 := NewProtoEncoder()
-		field8_4.EncodeMessage(2, []byte{}) // Empty message
+		field8_4.EncodeString(2, "")
 		field8_4.EncodeMessage(3, field8_4_3.Bytes())
-		field8_4.EncodeMessage(4, []byte{}) // Empty message
+		field8_4.EncodeString(4, "")
 		field8_4.EncodeMessage(5, field8_4_5.Bytes())
 
 		field8 := NewProtoEncoder()
 		field8.EncodeMessage(4, field8_4.Bytes())
 
-		// Field 9 -> Field 2
+		// Field 9.2: version info (INT for field 1, STRING for field 2)
 		field9_2 := NewProtoEncoder()
-		field9_2.EncodeString(1, "49029607")
-		field9_2.EncodeString(2, "28")
+		field9_2.EncodeInt32(1, 51079550) // App version as INT
+		field9_2.EncodeString(2, "33")    // Android API version
 
 		field9 := NewProtoEncoder()
 		field9.EncodeInt32(1, 5)
 		field9.EncodeMessage(2, field9_2.Bytes())
 
-		// Main message - encode as repeated field (same as batch with 1 item)
+		// Main message
 		encoder := NewProtoEncoder()
 		encoder.EncodeInt32(2, 1)
-		// Encode dedup key as repeated string field (matching Python's Sequence encoding)
-		batch := []string{dedupKey}
-		for _, key := range batch {
-			encoder.EncodeString(3, key)
-		}
+		encoder.EncodeString(3, dedupKey) // Single dedup_key directly
 		encoder.EncodeInt32(4, 1)
 		encoder.EncodeMessage(8, field8.Bytes())
 		encoder.EncodeMessage(9, field9.Bytes())
