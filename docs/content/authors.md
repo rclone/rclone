@@ -1048,3 +1048,18 @@ put them back in again. -->
 - jijamik <30904953+jijamik@users.noreply.github.com>
 - Dominik Sander <git@dsander.de>
 - Nikolay Kiryanov <nikolay@kiryanov.ru>
+- Diana <5275194+DianaNites@users.noreply.github.com>
+- Duncan Smart <duncan.smart@gmail.com>
+- vicerace <vicerace@sohu.com>
+- Cliff Frey <cliff@openai.com>
+- Vladislav Tropnikov <vtr.name@gmail.com>
+- Leo <i@hardrain980.com>
+- Johannes Rothe <mail@johannes-rothe.de>
+- Tingsong Xu <tingsong.xu@rightcapital.com>
+- Jonas Tingeborn <134889+jojje@users.noreply.github.com>
+- jhasse-shade <jacob@shade.inc>
+- vyv03354 <VYV03354@nifty.ne.jp>
+- masrlinu <masrlinu@users.noreply.github.com> <5259918+masrlinu@users.noreply.github.com>
+- vupn0712 <126212736+vupn0712@users.noreply.github.com>
+- darkdragon-001 <darkdragon-001@users.noreply.github.com>
+- sys6101 <csvmen@gmail.com>

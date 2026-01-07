@@ -222,3 +222,11 @@ type UserInfo struct {
 		} `json:"steps"`
 	} `json:"journey"`
 }
+
+// DiffResult is the response from /diff
+type DiffResult struct {
+	Result  int              `json:"result"`
+	DiffID  int64            `json:"diffid"`
+	Entries []map[string]any `json:"entries"`
+	Error   string           `json:"error"`
+}
