@@ -59,6 +59,7 @@ Here is an overview of the major features of each cloud storage system.
 | Quatrix by Maytech           | -                 | R/W     | No               | No              | -         | -        |
 | Seafile                      | -                 | -       | No               | No              | -         | -        |
 | SFTP                         | MD5, SHA1 ²       | DR/W    | Depends          | No              | -         | -        |
+| Shade                        | -                 | -       | Yes              | No              | -         | -        |
 | Sia                          | -                 | -       | No               | No              | -         | -        |
 | SMB                          | -                 | R/W     | Yes              | No              | -         | -        |
 | SugarSync                    | -                 | -       | No               | No              | -         | -        |
@@ -540,7 +541,7 @@ upon backend-specific capabilities.
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | Yes   | Yes      |
 | OpenStack Swift              | Yes ¹ | Yes  | No   | No      | No      | Yes   | Yes          | No                | No           | Yes   | No       |
 | Oracle Object Storage        | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes               | No           | No    | No       |
-| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |
+| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | No                | Yes          | Yes   | Yes      |
 | PikPak                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | Yes          | Yes   | Yes      |
 | Pixeldrain                   | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | No                | Yes          | Yes   | Yes      |
