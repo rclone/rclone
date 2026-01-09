@@ -221,11 +221,18 @@ type Object struct {
 	displayPath string // The path to display (from 'path' column or derived from remote)
 }
 
-// convertUnixTimestamp converts a Unix timestamp (seconds or milliseconds) to time.Time
+// convertUnixTimestamp converts a Unix timestamp (seconds, milliseconds, or microseconds) to time.Time
 // Always returns second precision to match Precision() and avoid modtime comparison issues
 func convertUnixTimestamp(timestamp int64) time.Time {
-	// If timestamp is > 10^10, it's likely in milliseconds - convert to seconds
-	if timestamp > 10000000000 {
+	// Detect timestamp precision and convert to seconds:
+	// - Microseconds (> 10^15): divide by 1,000,000
+	// - Milliseconds (> 10^12): divide by 1,000
+	// - Seconds (< 10^12): use as-is
+	// Current Unix time is ~1.7 billion (1.7 × 10^9) seconds
+	if timestamp > 1000000000000000 { // > 10^15, likely microseconds
+		return time.Unix(timestamp/1000000, 0)
+	}
+	if timestamp > 1000000000000 { // > 10^12, likely milliseconds
 		return time.Unix(timestamp/1000, 0)
 	}
 	// Otherwise assume seconds

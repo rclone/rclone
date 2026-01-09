@@ -441,7 +441,8 @@ func (f *Fs) InsertMediaItems(ctx context.Context, items []MediaItem) error {
 			is_canonical = EXCLUDED.is_canonical,
 			size_bytes = EXCLUDED.size_bytes,
 			content_version = EXCLUDED.content_version,
-			utc_timestamp = EXCLUDED.utc_timestamp,
+			-- Do NOT update utc_timestamp for existing files to keep modtime stable
+			-- This prevents stashapp from detecting "file changed" on VFS remount
 			trash_timestamp = EXCLUDED.trash_timestamp,
 			is_archived = EXCLUDED.is_archived,
 			is_favorite = EXCLUDED.is_favorite
