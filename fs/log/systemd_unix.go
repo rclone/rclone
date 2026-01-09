@@ -16,7 +16,7 @@ func startSystemdLog(handler *OutputHandler) bool {
 	handler.clearFormatFlags(logFormatDate | logFormatTime | logFormatMicroseconds | logFormatUTC | logFormatLongFile | logFormatShortFile | logFormatPid)
 	handler.setFormatFlags(logFormatNoLevel)
 	handler.SetOutput(func(level slog.Level, text string) {
-		_ = journal.Print(slogLevelToSystemdPriority(level), "%-6s: %s\n", level, text)
+		_ = journal.Print(slogLevelToSystemdPriority(level), "%-6s: %s", level, text)
 	})
 	return true
 }
