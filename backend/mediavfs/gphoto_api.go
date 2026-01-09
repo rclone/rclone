@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -26,8 +27,10 @@ const (
 // GPhotoAPI handles Google Photos API interactions
 type GPhotoAPI struct {
 	token          string
+	tokenExpiry    int64 // Token expiry in milliseconds
 	httpClient     *http.Client
 	tokenServerURL string
+	nativeAuth     *GooglePhotosAuth // Native auth client (optional)
 	userAgent      string
 	user           string
 	timeout        time.Duration
@@ -44,8 +47,75 @@ func NewGPhotoAPI(user string, tokenServerURL string, httpClient *http.Client) *
 	}
 }
 
+// NewGPhotoAPIWithNativeAuth creates a new Google Photos API client with native authentication
+func NewGPhotoAPIWithNativeAuth(user, tokenServerURL, masterToken, privateKeyS, androidID string, httpClient *http.Client) (*GPhotoAPI, error) {
+	api := &GPhotoAPI{
+		user:           user,
+		tokenServerURL: tokenServerURL,
+		httpClient:     httpClient,
+		userAgent:      "com.google.android.apps.photos/49029607 (Linux; U; Android 9; en_US; Pixel XL; Build/PQ2A.190205.001; Cronet/127.0.6510.5) (gzip)",
+		timeout:        defaultTimeout,
+	}
+
+	// If master token is provided, create native auth client
+	if masterToken != "" {
+		email := user
+		if !strings.Contains(email, "@") {
+			email = user + "@gmail.com"
+		}
+		nativeAuth, err := NewGooglePhotosAuth(email, masterToken, androidID, privateKeyS, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create native auth: %w", err)
+		}
+		api.nativeAuth = nativeAuth
+		fs.Debugf(nil, "gphoto: using native token generation for %s", user)
+	}
+
+	return api, nil
+}
+
 // GetAuthToken fetches or refreshes the authentication token
 func (api *GPhotoAPI) GetAuthToken(ctx context.Context, force bool) error {
+	// Use native auth if available
+	if api.nativeAuth != nil {
+		return api.getNativeAuthToken(ctx, force)
+	}
+
+	// Fall back to token server
+	return api.getTokenServerToken(ctx, force)
+}
+
+// getNativeAuthToken gets token using native authentication
+func (api *GPhotoAPI) getNativeAuthToken(ctx context.Context, force bool) error {
+	// Check if current token is still valid (with 60s buffer)
+	if !force && api.token != "" && api.tokenExpiry > 0 {
+		nowMs := time.Now().UnixMilli()
+		if nowMs < (api.tokenExpiry - 60000) {
+			return nil // Token still valid
+		}
+	}
+
+	result, err := api.nativeAuth.GetToken(ctx)
+	if err != nil {
+		return fmt.Errorf("native token fetch failed: %w", err)
+	}
+
+	if result.Error != "" {
+		return fmt.Errorf("native token error: %s", result.Error)
+	}
+
+	api.token = result.Token
+	api.tokenExpiry = result.Expiry
+	fs.Debugf(nil, "gphoto: obtained native token, expires at %d", api.tokenExpiry)
+	return nil
+}
+
+// getTokenServerToken gets token from external token server
+func (api *GPhotoAPI) getTokenServerToken(ctx context.Context, force bool) error {
+	if api.tokenServerURL == "" {
+		return fmt.Errorf("no token server URL configured and no native auth available")
+	}
+
 	url := fmt.Sprintf("%s/token/%s", api.tokenServerURL, api.user)
 	if force {
 		url += "?force=true"
@@ -94,8 +164,8 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 	}
 
 	for retry := 0; retry < 5; retry++ {
-		// Ensure we have a token
-		if api.token == "" && api.tokenServerURL != "" {
+		// Ensure we have a valid token
+		if api.token == "" || (api.nativeAuth != nil && api.tokenExpiry > 0 && time.Now().UnixMilli() >= api.tokenExpiry-60000) {
 			if err := api.GetAuthToken(ctx, false); err != nil {
 				return nil, err
 			}

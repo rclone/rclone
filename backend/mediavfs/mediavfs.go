@@ -125,8 +125,20 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "token_server_url",
-			Help:     "URL of the token server for Google Photos authentication (required).",
-			Required: true,
+			Help:     "URL of the token server for Google Photos authentication.\n\nNot required if master_token is provided.",
+		}, {
+			Name:     "master_token",
+			Help:     "Google account master token (aas_et/...) for native authentication.\n\nThis allows native token generation without a separate token server.",
+			Advanced: true,
+		}, {
+			Name:     "private_key_s",
+			Help:     "Private key scalar (hex) for token binding.\n\nOptional. Only needed if token binding is required.",
+			Advanced: true,
+		}, {
+			Name:     "android_id",
+			Help:     "Android device ID for authentication.\n\nDefaults to a generic ID if not provided.",
+			Default:  "",
+			Advanced: true,
 		}, {
 			Name:     "auto_sync",
 			Help:     "Enable automatic background sync to detect new files uploaded via Google Photos web/app.",
@@ -151,6 +163,9 @@ type Options struct {
 	EnableUpload   bool   `config:"enable_upload"`
 	EnableDelete   bool   `config:"enable_delete"`
 	TokenServerURL string `config:"token_server_url"`
+	MasterToken    string `config:"master_token"`
+	PrivateKeyS    string `config:"private_key_s"`
+	AndroidID      string `config:"android_id"`
 	AutoSync       bool   `config:"auto_sync"`
 	SyncInterval   int    `config:"sync_interval"`
 }
@@ -337,7 +352,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// Initialize Google Photos API client for download URLs
-	f.api = NewGPhotoAPI(opt.User, opt.TokenServerURL, customClient)
+	// Use native auth if master_token is provided, otherwise fall back to token server
+	if opt.MasterToken != "" {
+		api, err := NewGPhotoAPIWithNativeAuth(opt.User, opt.TokenServerURL, opt.MasterToken, opt.PrivateKeyS, opt.AndroidID, customClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create API client with native auth: %w", err)
+		}
+		f.api = api
+	} else if opt.TokenServerURL != "" {
+		f.api = NewGPhotoAPI(opt.User, opt.TokenServerURL, customClient)
+	} else {
+		return nil, fmt.Errorf("either master_token or token_server_url must be provided")
+	}
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
