@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1712,6 +1713,9 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // Open opens the file for reading with URL caching and ETag support
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	// Log file being opened
+	fs.Infof(o, "Opening file: %s", o.remote)
+
 	// Check if we have cached metadata for this media key FIRST
 	cacheKey := o.mediaKey
 	cachedMeta, found := o.fs.urlCache.get(cacheKey)
@@ -1724,31 +1728,32 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		resolvedURL = cachedMeta.resolvedURL
 		etag = cachedMeta.etag
 		fileSize = cachedMeta.size
-		fs.Debugf(nil, "URL cache hit for %s", o.mediaKey)
+		fs.Debugf(o, "URL cache hit for %s", o.remote)
 	} else {
 		// Cache miss - need to get download URL from API
-		fs.Debugf(nil, "URL cache miss for %s", o.mediaKey)
+		fs.Debugf(o, "URL cache miss, fetching download URL for %s", o.remote)
 
 		initialURL, err := o.fs.api.GetDownloadURL(ctx, o.mediaKey)
 		if err != nil {
 			// If media not found (404), delete from database and return not found error
 			if errors.Is(err, ErrMediaNotFound) {
-				fs.Debugf(nil, "mediavfs: media item %s not found in Google Photos, removing from database", o.mediaKey)
+				fs.Errorf(o, "File not found in Google Photos: %s - removing from database", o.remote)
 				deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE media_key = $1`, o.fs.opt.TableName)
 				_, delErr := o.fs.db.ExecContext(ctx, deleteQuery, o.mediaKey)
 				if delErr != nil {
-					fs.Errorf(nil, "mediavfs: failed to delete missing media %s from database: %v", o.mediaKey, delErr)
+					fs.Errorf(o, "Failed to delete missing media from database: %v", delErr)
 				} else {
 					// Invalidate cache for the directory
 					o.fs.removeFromDirCache(o.displayPath, o.displayName)
 				}
 				return nil, fs.ErrorObjectNotFound
 			}
-			return nil, fmt.Errorf("failed to get download URL: %w", err)
+			fs.Errorf(o, "Failed to get download URL for %s: %v", o.remote, err)
+			return nil, fmt.Errorf("failed to get download URL for %s: %w", o.remote, err)
 		}
 
 		// Resolve URL and get ETag via HEAD request
-		fs.Debugf(nil, "Resolving URL for %s", o.mediaKey)
+		fs.Debugf(o, "Resolving URL for %s", o.remote)
 
 		// Retry HEAD request with exponential backoff for transient errors
 		var headResp *http.Response
@@ -1756,32 +1761,51 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		for attempt := 0; attempt < 3; attempt++ {
 			if attempt > 0 {
 				sleepTime := time.Duration(1<<uint(attempt-1)) * time.Second
-				fs.Debugf(nil, "Retrying HEAD after %v", sleepTime)
+				fs.Debugf(o, "Retrying HEAD for %s after %v (attempt %d/3)", o.remote, sleepTime, attempt+1)
 				time.Sleep(sleepTime)
 			}
 
 			headReq, err := http.NewRequestWithContext(ctx, "HEAD", initialURL, nil)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create HEAD request: %w", err)
+				fs.Errorf(o, "Failed to create HEAD request for %s: %v", o.remote, err)
+				return nil, fmt.Errorf("failed to create HEAD request for %s: %w", o.remote, err)
 			}
 			headReq.Header.Set("User-Agent", "AndroidDownloadManager/13")
 
 			headResp, headErr = o.fs.httpClient.Do(headReq)
 			if headErr == nil {
 				// Success - check if we should retry based on status code
-				if headResp.StatusCode == http.StatusTooManyRequests ||
-					headResp.StatusCode == http.StatusServiceUnavailable ||
-					headResp.StatusCode >= 500 {
+				if headResp.StatusCode == http.StatusTooManyRequests {
+					// Rate limited - check Retry-After header
+					retryAfter := headResp.Header.Get("Retry-After")
+					waitTime := time.Duration(1<<uint(attempt)) * time.Second
+					if retryAfter != "" {
+						if seconds, err := strconv.Atoi(retryAfter); err == nil {
+							waitTime = time.Duration(seconds) * time.Second
+						}
+					}
+					fs.Errorf(o, "Rate limited (429) for %s, waiting %v before retry", o.remote, waitTime)
 					headResp.Body.Close()
-					headErr = fmt.Errorf("transient HTTP error: %s (status %d)", headResp.Status, headResp.StatusCode)
+					time.Sleep(waitTime)
+					headErr = fmt.Errorf("rate limited (429)")
+					continue
+				}
+				if headResp.StatusCode == http.StatusServiceUnavailable ||
+					headResp.StatusCode >= 500 {
+					fs.Errorf(o, "Server error (%d) for %s: %s", headResp.StatusCode, o.remote, headResp.Status)
+					headResp.Body.Close()
+					headErr = fmt.Errorf("server error: %s (status %d)", headResp.Status, headResp.StatusCode)
 					continue
 				}
 				break // Success
+			} else {
+				fs.Errorf(o, "HEAD request failed for %s: %v", o.remote, headErr)
 			}
 		}
 
 		if headErr != nil {
-			return nil, fmt.Errorf("failed to execute HEAD request after retries: %w", headErr)
+			fs.Errorf(o, "Failed to resolve URL for %s after 3 attempts: %v", o.remote, headErr)
+			return nil, fmt.Errorf("failed to resolve URL for %s: %w", o.remote, headErr)
 		}
 		defer headResp.Body.Close()
 
@@ -1803,22 +1827,24 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			size:        fileSize,
 		})
 
-		fs.Debugf(nil, "Cached URL for %s", o.mediaKey)
+		fs.Debugf(o, "Cached URL for %s", o.remote)
 	}
 
 	// Now make the actual GET request to the resolved URL with retry logic
+	fs.Infof(o, "Downloading: %s", o.remote)
 	var res *http.Response
 	var getErr error
 	for attempt := 0; attempt < 3; attempt++ {
 		if attempt > 0 {
 			sleepTime := time.Duration(1<<uint(attempt-1)) * time.Second
-			fs.Debugf(nil, "Retrying GET after %v", sleepTime)
+			fs.Infof(o, "Retrying download for %s after %v (attempt %d/3)", o.remote, sleepTime, attempt+1)
 			time.Sleep(sleepTime)
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "GET", resolvedURL, nil)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create request: %w", err)
+			fs.Errorf(o, "Failed to create GET request for %s: %v", o.remote, err)
+			return nil, fmt.Errorf("failed to create request for %s: %w", o.remote, err)
 		}
 
 		// Set User-Agent header
@@ -1843,25 +1869,44 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			}
 
 			// Check if we should retry based on status code
-			if res.StatusCode == http.StatusTooManyRequests ||
-				res.StatusCode == http.StatusServiceUnavailable ||
-				res.StatusCode >= 500 {
+			if res.StatusCode == http.StatusTooManyRequests {
+				// Rate limited - check Retry-After header
+				retryAfter := res.Header.Get("Retry-After")
+				waitTime := time.Duration(1<<uint(attempt)) * time.Second
+				if retryAfter != "" {
+					if seconds, err := strconv.Atoi(retryAfter); err == nil {
+						waitTime = time.Duration(seconds) * time.Second
+					}
+				}
+				fs.Errorf(o, "Rate limited (429) downloading %s, waiting %v before retry", o.remote, waitTime)
 				res.Body.Close()
-				getErr = fmt.Errorf("transient HTTP error: %s (status %d)", res.Status, res.StatusCode)
+				time.Sleep(waitTime)
+				getErr = fmt.Errorf("rate limited (429)")
+				continue
+			}
+			if res.StatusCode == http.StatusServiceUnavailable ||
+				res.StatusCode >= 500 {
+				fs.Errorf(o, "Server error (%d) downloading %s: %s", res.StatusCode, o.remote, res.Status)
+				res.Body.Close()
+				getErr = fmt.Errorf("server error: %s (status %d)", res.Status, res.StatusCode)
 				continue
 			}
 
 			// Permanent error - don't retry
+			fs.Errorf(o, "Download failed for %s: HTTP %d %s", o.remote, res.StatusCode, res.Status)
 			res.Body.Close()
-			return nil, fmt.Errorf("HTTP error: %s (status %d)", res.Status, res.StatusCode)
+			return nil, fmt.Errorf("download failed for %s: HTTP %d %s", o.remote, res.StatusCode, res.Status)
+		} else {
+			fs.Errorf(o, "GET request failed for %s: %v", o.remote, getErr)
 		}
 	}
 
 	if getErr != nil {
-		return nil, fmt.Errorf("failed to open file after retries: %w", getErr)
+		fs.Errorf(o, "Failed to download %s after 3 attempts: %v", o.remote, getErr)
+		return nil, fmt.Errorf("failed to download %s: %w", o.remote, getErr)
 	}
 
-	fs.Debugf(nil, "Opened %s", o.mediaKey)
+	fs.Infof(o, "Download started: %s (%d bytes)", o.remote, fileSize)
 
 	return res.Body, nil
 }
