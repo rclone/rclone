@@ -2,7 +2,7 @@
 
 ## Purpose of This Document
 
-This document provides **complete documentation** for the Bash-based integration test scripts in the `integration/` directory. It covers:
+This document provides **complete documentation** for the Bash-based integration test scripts in the `test/` directory. It covers:
 
 - **Quick start guide** - How to set up and run tests quickly
 - **Test script descriptions** - What each script does and when to use it
@@ -27,35 +27,31 @@ This directory contains comprehensive Bash-based integration test scripts for va
 Run the setup script to create the test environment:
 
 ```bash
-# Default working directory: ${HOME}/go/raid3storage
+cd backend/raid3/test
 ./setup.sh
-
-# Or specify a custom directory
-./setup.sh --workdir /path/to/your/test/directory
 ```
 
 The setup script will:
-- Create the working directory and all required subdirectories
-- Generate the rclone configuration file: `${WORKDIR}/rclone_raid3_integration_tests.config`
-- Store the working directory path in: `${HOME}/.rclone_raid3_integration_tests.workdir`
+- Create the `_data` subdirectory and all required subdirectories within it
+- Generate the rclone configuration file: `rclone_raid3_integration_tests.config` in the test directory
 
 ### 2. Run Tests
 
-All test scripts must be run from the working directory:
+All test scripts must be run from the test directory:
 
 ```bash
-# Change to the working directory
-cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)
+# Change to the test directory
+cd backend/raid3/test
 
 # Run a test
-./backend/raid3/integration/compare_raid3_with_single.sh --storage-type local test mkdir
+./compare_raid3_with_single.sh --storage-type local test mkdir
 ```
 
 ## 📁 Test Scripts
 
 | Script | Purpose | Commands |
 |--------|---------|----------|
-| **`setup.sh`** | Initial environment setup | `setup.sh [--workdir <path>]` |
+| **`setup.sh`** | Initial environment setup | `setup.sh` |
 | **`compare_raid3_with_single.sh`** | Black-box comparison tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
 | **`compare_raid3_with_single_rebuild.sh`** | Rebuild command validation | `start`, `stop`, `teardown`, `list`, `test <name>` |
 | **`compare_raid3_with_single_heal.sh`** | Auto-heal functionality tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
@@ -84,9 +80,9 @@ All test scripts support these commands:
 
 The integration tests use a **strict, test-specific configuration file**:
 
-**Location**: `${WORKDIR}/rclone_raid3_integration_tests.config`
+**Location**: `backend/raid3/test/rclone_raid3_integration_tests.config`
 
-Where `WORKDIR` is determined by reading `${HOME}/.rclone_raid3_integration_tests.workdir` (created by `setup.sh`).
+The config file is created in the test directory by `setup.sh`.
 
 The configuration file contains:
 - Local storage remotes (localeven, localodd, localparity, localsingle)
@@ -114,8 +110,8 @@ MINIO_ODD_PORT=9102
 MINIO_PARITY_PORT=9103
 MINIO_SINGLE_PORT=9104
 
-# Custom work directory (optional - can also use setup.sh --workdir)
-WORKDIR="${HOME}/custom/raid3test"
+# Custom data directory (optional)
+DATA_DIR="${SCRIPT_DIR}/custom_data"
 EOF
 
 # Run setup again to apply changes
@@ -241,10 +237,8 @@ The test scripts provide clear error messages if the environment is not set up:
 
 | Error | Solution |
 |-------|----------|
-| Missing workdir file | Run `./setup.sh` |
-| Missing working directory | Run `./setup.sh --workdir <path>` |
-| Missing config file | Run `./setup.sh` to create `${WORKDIR}/rclone_raid3_integration_tests.config` |
-| Wrong directory | Change to the directory shown in the error message |
+| Missing config file | Run `./setup.sh` to create `rclone_raid3_integration_tests.config` |
+| Wrong directory | Change to `backend/raid3/test` directory |
 
 **Note**: All test scripts verify that `rclone_raid3_integration_tests.config` exists before executing any tests. If the config file is missing, the script will exit immediately with a clear error message indicating that you need to run `setup.sh` first.
 
@@ -257,7 +251,7 @@ The test scripts provide clear error messages if the environment is not set up:
 ## 🔍 File Structure
 
 ```
-integration/
+test/
 ├── README.md                              # This file
 ├── setup.sh                               # Initial setup script
 ├── compare_raid3_env.sh                  # Default environment variables
@@ -267,36 +261,43 @@ integration/
 ├── compare_raid3_with_single_rebuild.sh   # Rebuild tests
 ├── compare_raid3_with_single_heal.sh     # Heal tests
 ├── compare_raid3_with_single_errors.sh    # Error handling tests
-└── compare_raid3_with_single_all.sh       # Master script (runs all tests)
+├── compare_raid3_with_single_all.sh       # Master script (runs all tests)
+├── rclone_raid3_integration_tests.config  # Config file (created by setup.sh)
+└── _data/                                 # Test data directory (created by setup.sh, gitignored)
+    ├── even_local/
+    ├── odd_local/
+    ├── single_local/
+    ├── parity_local/
+    ├── even_minio/
+    ├── odd_minio/
+    ├── single_minio/
+    └── parity_minio/
 ```
 
 ## 🚀 Example Workflow
 
 ```bash
 # 1. Initial setup (one-time)
-cd /path/to/rclone/backend/raid3/integration
+cd backend/raid3/test
 ./setup.sh
 
-# 2. Navigate to work directory
-cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)
+# 2. List available tests
+./compare_raid3_with_single.sh list
 
-# 3. List available tests
-./backend/raid3/integration/compare_raid3_with_single.sh list
+# 3. Run a comparison test
+./compare_raid3_with_single.sh --storage-type local test mkdir
 
-# 4. Run a comparison test
-./backend/raid3/integration/compare_raid3_with_single.sh --storage-type local test mkdir
+# 4. Run rebuild tests
+./compare_raid3_with_single_rebuild.sh --storage-type local test even
 
-# 5. Run rebuild tests
-./backend/raid3/integration/compare_raid3_with_single_rebuild.sh --storage-type local test even
+# 5. Run heal tests
+./compare_raid3_with_single_heal.sh --storage-type minio test odd -v
 
-# 6. Run heal tests
-./backend/raid3/integration/compare_raid3_with_single_heal.sh --storage-type minio test odd -v
+# 6. Run all tests at once (recommended for CI/validation)
+./compare_raid3_with_single_all.sh
 
-# 7. Run all tests at once (recommended for CI/validation)
-./backend/raid3/integration/compare_raid3_with_single_all.sh
-
-# 8. Clean up (optional)
-./backend/raid3/integration/compare_raid3_with_single.sh --storage-type local teardown
+# 7. Clean up (optional)
+./compare_raid3_with_single.sh --storage-type local teardown
 ```
 
 ## 💡 Tips

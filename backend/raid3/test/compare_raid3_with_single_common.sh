@@ -30,36 +30,19 @@ EOF
   fi
 fi
 
-# Read workdir from .rclone_raid3_integration_tests.workdir file if it exists
-# Otherwise fall back to default
-WORKDIR_FILE="${HOME}/.rclone_raid3_integration_tests.workdir"
-if [[ -f "${WORKDIR_FILE}" ]]; then
-  # Read first line and trim whitespace
-  WORKDIR=$(head -n1 "${WORKDIR_FILE}" 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' || echo "")
-  if [[ -z "${WORKDIR}" ]]; then
-    printf '[%s] ERROR: Workdir file exists but is empty: %s\n' "${SCRIPT_NAME:-compare_raid3_with_single_common.sh}" "${WORKDIR_FILE}" >&2
-    printf '[%s] ERROR: Please run setup.sh to reconfigure the test environment.\n' "${SCRIPT_NAME:-compare_raid3_with_single_common.sh}" >&2
-    exit 1
-  fi
-  # Resolve to absolute path if directory exists
-  if [[ -d "${WORKDIR}" ]]; then
-    resolved_workdir=$(cd -- "${WORKDIR}" 2>/dev/null && pwd 2>/dev/null || echo "")
-    if [[ -n "${resolved_workdir}" ]]; then
-      WORKDIR="${resolved_workdir}"
-    fi
-  fi
-else
-  # Fall back to default if workdir file doesn't exist
-WORKDIR="${WORKDIR:-${HOME}/go/raid3storage}"
-fi
-
 # Determine script directory so we can locate optional env overrides.
 SCRIPT_DIR=${SCRIPT_DIR:-$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 
+# Data directory is relative to script directory
+DATA_DIR="${DATA_DIR:-${SCRIPT_DIR}/_data}"
+
 # Resolve rclone config file - only use test-specific config file
 # This is the strict approach: tests only use the config file created by setup.sh
-TEST_SPECIFIC_CONFIG="${WORKDIR}/rclone_raid3_integration_tests.config"
+TEST_SPECIFIC_CONFIG="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"
 RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
+
+# For backward compatibility, set WORKDIR to SCRIPT_DIR (used in some cleanup functions)
+WORKDIR="${SCRIPT_DIR}"
 
 # Initialize VERBOSE if not set (used by purge_remote_root and print_if_verbose)
 VERBOSE="${VERBOSE:-0}"
@@ -167,28 +150,16 @@ die() {
 }
 
 ensure_workdir() {
-  # Check if workdir file exists
-  if [[ ! -f "${WORKDIR_FILE}" ]]; then
-    local setup_script="${SCRIPT_DIR:-$(dirname "${BASH_SOURCE[0]}")}/setup.sh"
-    die "Integration test environment not set up." \
-        "The workdir file is missing: ${WORKDIR_FILE}" \
-        "Please run: ${setup_script}" \
-        "This will create the test environment and configuration file."
-  fi
-  
-  # Check if workdir exists
-  if [[ ! -d "${WORKDIR}" ]]; then
-    local setup_script="${SCRIPT_DIR:-$(dirname "${BASH_SOURCE[0]}")}/setup.sh"
-    die "Integration test working directory does not exist: ${WORKDIR}" \
-        "The workdir file points to a non-existent directory." \
-        "Please run: ${setup_script} --workdir <path>" \
-        "This will recreate the test environment."
+  # Check if script directory exists
+  if [[ ! -d "${SCRIPT_DIR}" ]]; then
+    die "Integration test directory does not exist: ${SCRIPT_DIR}" \
+        "Please ensure you are running from the correct location."
   fi
   
   # Check if we're running from the correct directory
-  if [[ "${PWD}" != "${WORKDIR}" ]]; then
-    die "This script must be run from ${WORKDIR} (current: ${PWD})" \
-        "Please change to the working directory: cd ${WORKDIR}"
+  if [[ "${PWD}" != "${SCRIPT_DIR}" ]]; then
+    die "This script must be run from ${SCRIPT_DIR} (current: ${PWD})" \
+        "Please change to the test directory: cd ${SCRIPT_DIR}"
   fi
 }
 

@@ -5,18 +5,15 @@
 # Setup script for RAID3 integration tests.
 #
 # This script initializes the test environment by:
-# 1. Creating a working directory for test data
-# 2. Creating all required subdirectories (local and MinIO data directories)
-# 3. Generating the rclone configuration file
-# 4. Storing the working directory path in $HOME/.rclone_raid3_integration_tests.workdir
+# 1. Creating the _data subdirectory for test data
+# 2. Creating all required subdirectories (local and MinIO data directories) within _data
+# 3. Generating the rclone configuration file in the test directory
 #
 # Usage:
-#   setup.sh [--workdir <path>]
-#
-# Options:
-#   --workdir <path>   Specify the working directory (default: ${HOME}/go/raid3storage)
+#   setup.sh
 #
 # The script is idempotent and can be run multiple times safely.
+# Tests should be run from the test directory: backend/raid3/test
 # -----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -53,37 +50,24 @@ fi
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# Default workdir
-DEFAULT_WORKDIR="${HOME}/go/raid3storage"
-WORKDIR="${DEFAULT_WORKDIR}"
-
 # Parse arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --workdir)
-      shift
-      [[ $# -gt 0 ]] || { echo "ERROR: --workdir requires an argument" >&2; exit 1; }
-      WORKDIR="$1"
-      ;;
-    --workdir=*)
-      WORKDIR="${1#*=}"
-      ;;
     -h|--help)
       cat <<EOF
-Usage: ${SCRIPT_NAME} [--workdir <path>]
+Usage: ${SCRIPT_NAME}
 
 Setup the RAID3 integration test environment.
 
 Options:
-  --workdir <path>   Specify the working directory (default: ${DEFAULT_WORKDIR})
   -h, --help         Display this help message
 
 This script will:
-  1. Create the working directory and all required subdirectories
-  2. Create the rclone configuration file: \${WORKDIR}/rclone_raid3_integration_tests.config
-  3. Store the working directory path in: \${HOME}/.rclone_raid3_integration_tests.workdir
+  1. Create the _data subdirectory and all required subdirectories within it
+  2. Create the rclone configuration file: \${SCRIPT_DIR}/rclone_raid3_integration_tests.config
 
 The script is idempotent and safe to run multiple times.
+Tests should be run from the test directory: backend/raid3/test
 EOF
       exit 0
       ;;
@@ -96,30 +80,22 @@ EOF
   shift
 done
 
-# Resolve absolute path
-if [[ -d "${WORKDIR}" ]]; then
-  WORKDIR=$(cd -- "${WORKDIR}" && pwd)
-elif [[ -d "$(dirname "${WORKDIR}")" ]]; then
-  # Parent exists, we'll create the directory
-  WORKDIR=$(cd -- "$(dirname "${WORKDIR}")" && pwd)/$(basename "${WORKDIR}")
-else
-  echo "ERROR: Parent directory of workdir does not exist: $(dirname "${WORKDIR}")" >&2
-  exit 1
-fi
+# Create _data directory path (will be created later)
+DATA_DIR="${SCRIPT_DIR}/_data"
 
 # Source common.sh to get environment variables and helper functions
-# We need to set WORKDIR, SCRIPT_DIR, and SCRIPT_NAME before sourcing so it uses our values
-export WORKDIR
+# We need to set SCRIPT_DIR, SCRIPT_NAME, and DATA_DIR before sourcing so it uses our values
 export SCRIPT_DIR
 export SCRIPT_NAME
-# shellcheck source=backend/raid3/integration/compare_raid3_with_single_common.sh
+export DATA_DIR
+# shellcheck source=backend/raid3/test/compare_raid3_with_single_common.sh
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
-# Create working directory
-log_info "setup" "Creating working directory: ${WORKDIR}"
-mkdir -p "${WORKDIR}" || die "Failed to create working directory: ${WORKDIR}"
+# Create _data directory
+log_info "setup" "Creating data directory: ${DATA_DIR}"
+mkdir -p "${DATA_DIR}" || die "Failed to create data directory: ${DATA_DIR}"
 
-# Create all required subdirectories
+# Create all required subdirectories within _data
 log_info "setup" "Creating local storage directories"
 mkdir -p "${LOCAL_EVEN_DIR}" "${LOCAL_ODD_DIR}" "${LOCAL_PARITY_DIR}" "${LOCAL_SINGLE_DIR}" || \
   die "Failed to create local storage directories"
@@ -129,7 +105,7 @@ mkdir -p "${MINIO_EVEN_DIR}" "${MINIO_ODD_DIR}" "${MINIO_PARITY_DIR}" "${MINIO_S
   die "Failed to create MinIO data directories"
 
 # Create the rclone config file
-CONFIG_FILE="${WORKDIR}/rclone_raid3_integration_tests.config"
+CONFIG_FILE="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"
 log_info "setup" "Creating rclone configuration file: ${CONFIG_FILE}"
 
 # Check if config file exists and if it contains the mixed remote
@@ -162,18 +138,13 @@ else
   fi
 fi
 
-# Store workdir path in $HOME/.rclone_raid3_integration_tests.workdir
-WORKDIR_FILE="${HOME}/.rclone_raid3_integration_tests.workdir"
-log_info "setup" "Storing working directory path: ${WORKDIR_FILE}"
-echo "${WORKDIR}" > "${WORKDIR_FILE}" || die "Failed to write workdir file: ${WORKDIR_FILE}"
-
 log_pass "setup" "Setup completed successfully!"
-log_info "setup" "Working directory: ${WORKDIR}"
+log_info "setup" "Test directory: ${SCRIPT_DIR}"
+log_info "setup" "Data directory: ${DATA_DIR}"
 log_info "setup" "Config file: ${CONFIG_FILE}"
-log_info "setup" "Workdir file: ${WORKDIR_FILE}"
 log_info "setup" ""
-log_info "setup" "You can now run the integration tests from: ${WORKDIR}"
-log_info "setup" "Example: cd ${WORKDIR} && ./backend/raid3/integration/compare_raid3_with_single.sh test mkdir --storage-type=local"
+log_info "setup" "You can now run the integration tests from: ${SCRIPT_DIR}"
+log_info "setup" "Example: cd ${SCRIPT_DIR} && ./compare_raid3_with_single.sh test mkdir --storage-type=local"
 log_info "setup" ""
 log_info "setup" "This config file can also be used for Go-based tests (fs/operations, fs/sync):"
 log_info "setup" "  RCLONE_CONFIG=${CONFIG_FILE} go test ./fs/operations -remote localraid3: -v"

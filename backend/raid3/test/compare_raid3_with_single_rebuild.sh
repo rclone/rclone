@@ -26,7 +26,7 @@
 # Environment:
 #   RCLONE_CONFIG   Path to rclone configuration file (default: $HOME/.config/rclone/rclone.conf).
 #
-# Safety guard: the script must be executed from $HOME/go/raid3storage.
+# Safety guard: the script must be executed from backend/raid3/test directory.
 # -----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -34,7 +34,7 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# shellcheck source=backend/raid3/integration/compare_raid3_with_single_common.sh
+# shellcheck source=backend/raid3/test/compare_raid3_with_single_common.sh
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
 VERBOSE=0

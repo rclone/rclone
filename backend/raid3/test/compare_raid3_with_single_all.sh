@@ -21,7 +21,7 @@
 #   RCLONE_CONFIG   Path to rclone configuration file.
 #                   Defaults to $HOME/.config/rclone/rclone.conf.
 #
-# Safety guard: the script must be executed from $HOME/go/raid3storage.
+# Safety guard: the script must be executed from backend/raid3/test directory.
 # -----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -139,9 +139,9 @@ parse_args() {
 }
 
 ensure_workdir() {
-  local expected_dir="${HOME}/go/raid3storage"
-  if [[ "$(pwd)" != "${expected_dir}" ]]; then
-    echo "Error: This script must be run from ${expected_dir}" >&2
+  # Script must be run from the test directory (where this script is located)
+  if [[ "$(pwd)" != "${SCRIPT_DIR}" ]]; then
+    echo "Error: This script must be run from ${SCRIPT_DIR}" >&2
     echo "Current directory: $(pwd)" >&2
     exit 1
   fi

@@ -106,15 +106,15 @@ The raid3 backend follows hardware RAID 3 behavior: reads work with ANY 2 of 3 b
 
 ## Getting Started with Test Environment
 
-The easiest way to explore the raid3 backend is using the integration test setup, which creates a complete working environment with pre-configured remotes (both local filesystem and MinIO/S3 examples). Run `./backend/raid3/integration/setup.sh` to create the working directory (defaults to `${HOME}/go/raid3storage`) and generate the config file. Navigate to the work directory with `cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)` and set `CONFIG="${PWD}/rclone_raid3_integration_tests.config"`.
+The easiest way to explore the raid3 backend is using the integration test setup, which creates a complete working environment with pre-configured remotes (both local filesystem and MinIO/S3 examples). Run `cd backend/raid3/test && ./setup.sh` to create the test data directories and generate the config file. The config file will be created at `backend/raid3/test/rclone_raid3_integration_tests.config`.
 
-The setup provides `localraid3` and `minioraid3` remotes for testing. Basic operations work as expected: upload splits files, download reconstructs them, and degraded mode can be tested by removing particles. Backend commands (`status`, `heal`, `rebuild`) can be tested using these remotes. For MinIO, start containers with `./backend/raid3/integration/compare_raid3_with_single.sh --storage-type minio start`. Integration tests are available via the scripts in `integration/` directory. See [`integration/README.md`](integration/README.md) for complete documentation.
+The setup provides `localraid3` and `minioraid3` remotes for testing. Basic operations work as expected: upload splits files, download reconstructs them, and degraded mode can be tested by removing particles. Backend commands (`status`, `heal`, `rebuild`) can be tested using these remotes. For MinIO, start containers with `./compare_raid3_with_single.sh --storage-type minio start`. Integration tests are available via the scripts in `test/` directory. See [`test/README.md`](test/README.md) for complete documentation.
 
 ---
 
 ## Testing
 
-For comprehensive testing documentation, see [`docs/TESTING.md`](docs/TESTING.md). The `integration/` directory contains Bash-based integration test scripts (`setup.sh`, `compare_raid3_with_single.sh`, `compare_raid3_with_single_rebuild.sh`, `compare_raid3_with_single_heal.sh`, `compare_raid3_with_single_errors.sh`, `compare_raid3_with_single_all.sh`) that supplement Go-based unit and integration tests with black-box testing scenarios. These scripts work on Linux, macOS, WSL, Git Bash, and Cygwin (not natively on Windows). See [`integration/README.md`](integration/README.md) for complete documentation. The `compare_raid3_with_single_all.sh` script runs all test suites across all RAID3 backends with minimal output (pass/fail only).
+For comprehensive testing documentation, see [`docs/TESTING.md`](docs/TESTING.md). The `test/` directory contains Bash-based integration test scripts (`setup.sh`, `compare_raid3_with_single.sh`, `compare_raid3_with_single_rebuild.sh`, `compare_raid3_with_single_heal.sh`, `compare_raid3_with_single_errors.sh`, `compare_raid3_with_single_all.sh`) that supplement Go-based unit and integration tests with black-box testing scenarios. These scripts work on Linux, macOS, WSL, Git Bash, and Cygwin (not natively on Windows). See [`test/README.md`](test/README.md) for complete documentation. The `compare_raid3_with_single_all.sh` script runs all test suites across all RAID3 backends with minimal output (pass/fail only).
 
 ## Implementation Notes
 

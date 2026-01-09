@@ -1,6 +1,6 @@
 # Testing the RAID3 Backend
 
-This document provides testing documentation for the raid3 backend. For user documentation, see [`../README.md`](../README.md). For technical RAID 3 details, see [`RAID3.md`](RAID3.md). For integration test setup, see [`../integration/README.md`](../integration/README.md). For naming conventions, see [`../_analysis/NAMING_CONVENTIONS.md`](../_analysis/NAMING_CONVENTIONS.md).
+This document provides testing documentation for the raid3 backend. For user documentation, see [`../README.md`](../README.md). For technical RAID 3 details, see [`RAID3.md`](RAID3.md). For integration test setup, see [`../test/README.md`](../test/README.md). For naming conventions, see [`../_analysis/NAMING_CONVENTIONS.md`](../_analysis/NAMING_CONVENTIONS.md).
 
 ---
 
@@ -10,7 +10,7 @@ The raid3 backend provides three types of tests:
 
 1. **Go tests provided by the raid3 backend** - Unit and integration tests in the `backend/raid3` package. Run with `go test ./backend/raid3 -v`. Includes core RAID 3 operations (split, merge, parity), degraded mode, and heal functionality.
 
-2. **Shell-script based tests provided by the raid3 backend** - Bash integration test harnesses in `backend/raid3/integration/`. Black-box testing for comparison, rebuild, heal, and error handling scenarios. See [`integration/README.md`](../integration/README.md).
+2. **Shell-script based tests provided by the raid3 backend** - Bash integration test harnesses in `backend/raid3/test/`. Black-box testing for comparison, rebuild, heal, and error handling scenarios. See [`test/README.md`](../test/README.md).
 
 3. **Go tests provided by the rclone project** - Comprehensive test suites (`fs/operations` and `fs/sync`) that validate the full `fs.Fs` interface. Run with `go test ./fs/operations -remote localraid3: -v` and `go test ./fs/sync -remote localraid3: -v`.
 
@@ -48,23 +48,23 @@ go test ./backend/raid3 -race -v
 
 ```bash
 # Setup (one-time)
-cd backend/raid3/integration && ./setup.sh
+cd backend/raid3/test && ./setup.sh
 
 # Run from rclone root
-export RCLONE_CONFIG=$(cat ${HOME}/.rclone_raid3_integration_tests.workdir)/rclone_raid3_integration_tests.config
+export RCLONE_CONFIG=backend/raid3/test/rclone_raid3_integration_tests.config
 go test ./fs/operations -remote localraid3: -v
 go test ./fs/sync -remote localraid3: -v
 ```
 
 **Alternative** (inline config):
 ```bash
-RCLONE_CONFIG=$(cat ${HOME}/.rclone_raid3_integration_tests.workdir)/rclone_raid3_integration_tests.config \
+RCLONE_CONFIG=backend/raid3/test/rclone_raid3_integration_tests.config \
   go test ./fs/operations -remote localraid3: -v
 ```
 
 ### Bash Integration Tests (Type 2)
 
-See [`integration/README.md`](../integration/README.md) for complete documentation. Scripts include:
+See [`test/README.md`](../test/README.md) for complete documentation. Scripts include:
 - `compare_raid3_with_single.sh` - Comparison harness
 - `compare_raid3_with_single_rebuild.sh` - Rebuild validation
 - `compare_raid3_with_single_heal.sh` - Heal validation
@@ -110,12 +110,11 @@ See [`integration/README.md`](../integration/README.md) for complete documentati
 
 ## Manual Testing
 
-Use `setup.sh` from `integration/` directory for test environment setup:
+Use `setup.sh` from `test/` directory for test environment setup:
 
 ```bash
-cd backend/raid3/integration
+cd backend/raid3/test
 ./setup.sh
-cd $(cat ${HOME}/.rclone_raid3_integration_tests.workdir)
 
 # Upload and verify
 echo "Hello, World!" > test.txt
@@ -268,4 +267,4 @@ Some tests are SKIPped for optional features: `OpenWriterAt`, `OpenChunkWriter`,
 - [`../README.md`](../README.md) - User guide and usage examples
 - [`RAID3.md`](RAID3.md) - Technical specification
 - [`CLEAN_HEAL.md`](CLEAN_HEAL.md) - Self-maintenance guide
-- [`../integration/README.md`](../integration/README.md) - Bash integration tests
+- [`../test/README.md`](../test/README.md) - Bash integration tests

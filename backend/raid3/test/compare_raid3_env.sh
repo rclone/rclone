@@ -7,17 +7,19 @@
 # defaults; the scripts will automatically source that file if present.
 #
 
-# Root directory where test data lives
-WORKDIR="${WORKDIR:-${HOME}/go/raid3storage}"
+# Script directory (set by scripts that source this file)
+# Data directory is relative to script directory
+SCRIPT_DIR="${SCRIPT_DIR:-$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+DATA_DIR="${DATA_DIR:-${SCRIPT_DIR}/_data}"
 
 # rclone configuration file
 RCLONE_CONFIG="${RCLONE_CONFIG:-${HOME}/.config/rclone/rclone.conf}"
 
-# Local raid3 backend directories
-LOCAL_EVEN_DIR="${LOCAL_EVEN_DIR:-${WORKDIR}/even_local}"
-LOCAL_ODD_DIR="${LOCAL_ODD_DIR:-${WORKDIR}/odd_local}"
-LOCAL_PARITY_DIR="${LOCAL_PARITY_DIR:-${WORKDIR}/parity_local}"
-LOCAL_SINGLE_DIR="${LOCAL_SINGLE_DIR:-${WORKDIR}/single_local}"
+# Local raid3 backend directories (relative to test/_data)
+LOCAL_EVEN_DIR="${LOCAL_EVEN_DIR:-${DATA_DIR}/even_local}"
+LOCAL_ODD_DIR="${LOCAL_ODD_DIR:-${DATA_DIR}/odd_local}"
+LOCAL_PARITY_DIR="${LOCAL_PARITY_DIR:-${DATA_DIR}/parity_local}"
+LOCAL_SINGLE_DIR="${LOCAL_SINGLE_DIR:-${DATA_DIR}/single_local}"
 
 # Local remote names as defined in rclone.conf
 LOCAL_EVEN_REMOTE="${LOCAL_EVEN_REMOTE:-localeven}"
@@ -29,11 +31,11 @@ LOCAL_SINGLE_REMOTE="${LOCAL_SINGLE_REMOTE:-localsingle}"
 # Default: localraid3 / minioraid3
 # Can be overridden via RAID3_REMOTE environment variable if your config uses different names
 
-# MinIO-backed raid3 backend directories
-MINIO_EVEN_DIR="${MINIO_EVEN_DIR:-${WORKDIR}/even_minio}"
-MINIO_ODD_DIR="${MINIO_ODD_DIR:-${WORKDIR}/odd_minio}"
-MINIO_PARITY_DIR="${MINIO_PARITY_DIR:-${WORKDIR}/parity_minio}"
-MINIO_SINGLE_DIR="${MINIO_SINGLE_DIR:-${WORKDIR}/single_minio}"
+# MinIO-backed raid3 backend directories (relative to test/_data)
+MINIO_EVEN_DIR="${MINIO_EVEN_DIR:-${DATA_DIR}/even_minio}"
+MINIO_ODD_DIR="${MINIO_ODD_DIR:-${DATA_DIR}/odd_minio}"
+MINIO_PARITY_DIR="${MINIO_PARITY_DIR:-${DATA_DIR}/parity_minio}"
+MINIO_SINGLE_DIR="${MINIO_SINGLE_DIR:-${DATA_DIR}/single_minio}"
 
 # MinIO remote names as defined in rclone.conf
 MINIO_EVEN_REMOTE="${MINIO_EVEN_REMOTE:-minioeven}"
