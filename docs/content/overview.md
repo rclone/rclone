@@ -23,6 +23,7 @@ Here is an overview of the major features of each cloud storage system.
 | Box                          | SHA1              | R/W     | Yes              | No              | -         | -        |
 | Citrix ShareFile             | MD5               | R/W     | Yes              | No              | -         | -        |
 | Cloudinary                   | MD5               | R       | No               | Yes             | -         | -        |
+| Drime                        | -                 | -       | No               | No              | R/W       | -        |
 | Dropbox                      | DBHASH ¹          | R       | Yes              | No              | -         | -        |
 | Enterprise File Fabric       | -                 | R/W     | Yes              | No              | R/W       | -        |
 | FileLu Cloud Storage         | MD5               | R/W     | No               | Yes             | R         | -        |
@@ -515,6 +516,7 @@ upon backend-specific capabilities.
 | Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes               | Yes          | No    | No       |
 | Box                          | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                | No           | No    | Yes      |
+| Drime                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes               | No           | No    | Yes      |
 | Dropbox                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No                | Yes          | Yes   | Yes      |
 | Cloudinary                   | No    | No   | No   | No      | No      | No    | Yes          | No                | No           | No    | No       |
 | Enterprise File Fabric       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No                | No           | No    | Yes      |
