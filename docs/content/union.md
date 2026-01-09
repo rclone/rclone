@@ -155,17 +155,21 @@ as necessary.
 ### Quota Relevant Policies
 
 Some policies rely on quota information. These policies should be used only if
-your upstreams support the respective quota fields.
+your upstreams support the respective quota fields. To check if your upstream supports the field,
+run `rclone about remote: [flags]` and see if the required field exists.
 
-| Policy     | Required Field |
-|------------|----------------|
-| lfs, eplfs | Free           |
-| mfs, epmfs | Free           |
-| lus, eplus | Used           |
-| lno, eplno | Objects        |
+| Policy     |   Required Field   |
+|------------|--------------------|
+| lfs, eplfs | Free               |
+| mfs, epmfs | Free               |
+| lus, eplus | Used               |
+| lno, eplno | Objects, Used¹     |
 
-To check if your upstream supports the field, run `rclone about remote: [flags]`
-and see if the required field exists.
+¹ Objects are only available for S3-based upstreams. For better compatibility, since
+rclone v1.72.0 there is a fallback to normal listing (the same one performed by `rclone size`).
+When that happens, the following log message will appear on each operation:
+`WARNING: Number of objects not supported for upstream X, falling back to listing (this will be slower)...`.
+This usually consumes more API requests on the underlying remote. To avoid that, use another policy.
 
 ### Filters
 
