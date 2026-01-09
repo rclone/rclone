@@ -673,24 +673,38 @@ func (f *Fs) listDir(ctx context.Context, prefix string, filter api.SearchFilter
 	if err != nil {
 		return nil, err
 	}
-	// Dedupe the file names
-	dupes := map[string]int{}
+	// Count occurrences of IDs and filenames
+	filenameCount := map[string]int{}
+	seenIDs := map[string]bool{}
 	for _, entry := range entries {
 		o, ok := entry.(*Object)
 		if ok {
-			dupes[o.remote]++
-		}
-	}
-	for _, entry := range entries {
-		o, ok := entry.(*Object)
-		if ok {
-			duplicated := dupes[o.remote] > 1
-			if duplicated || o.remote == "" {
-				o.remote = addFileID(o.remote, o.id)
+			if seenIDs[o.id] {
+				continue
 			}
+			seenIDs[o.id] = true
+			filenameCount[o.remote]++
 		}
 	}
-	return entries, err
+	seenIDs = map[string]bool{}
+	newEntries := make([]fs.DirEntry, 0, len(entries))
+	for _, entry := range entries {
+		o, ok := entry.(*Object)
+		if !ok {
+			newEntries = append(newEntries, entry)
+			continue
+		}
+		// IDs are unique, but API can return duplicates when an image is in multiple albums, skip them
+		if seenIDs[o.id] {
+			continue
+		}
+		seenIDs[o.id] = true
+		if o.remote == "" || filenameCount[o.remote] > 1 {
+			o.remote = addFileID(o.remote, o.id)
+		}
+		newEntries = append(newEntries, o)
+	}
+	return newEntries, err
 }
 
 // listUploads lists a single directory from the uploads
