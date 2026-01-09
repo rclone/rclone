@@ -2063,6 +2063,11 @@ func (f *Fs) startBackgroundSync() {
 	fs.Debugf(f, "Starting background sync every %v", interval)
 
 	go func() {
+		// Do immediate sync on startup
+		if err := f.SyncFromGooglePhotos(context.Background(), f.opt.User); err != nil {
+			fs.Errorf(f, "Initial background sync failed: %v", err)
+		}
+
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
