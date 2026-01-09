@@ -70,13 +70,20 @@ NB If filename_encryption is "off" then this option will do nothing.`,
 			},
 		}, {
 			Name:       "password",
-			Help:       "Password or pass phrase for encryption.",
+			Help:       "Password or pass phrase for encryption.\n\npassword or password command is required.",
 			IsPassword: true,
-			Required:   true,
+		}, {
+			Name:       "password_command",
+			Help:       "Command to retrieve the password or pass phrase for encryption.\n\npassword or password command is required.",
+			IsPassword: false,
 		}, {
 			Name:       "password2",
 			Help:       "Password or pass phrase for salt.\n\nOptional but recommended.\nShould be different to the previous password.",
 			IsPassword: true,
+		}, {
+			Name:       "password2_command",
+			Help:       "Command to retrieve the password or pass phrase for salt.\n\nOptional but recommended.\nShould be different to the previous password.",
+			IsPassword: false,
 		}, {
 			Name:    "server_side_across_configs",
 			Default: false,
@@ -182,18 +189,30 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	if err != nil {
 		return nil, err
 	}
-	if opt.Password == "" {
-		return nil, errors.New("password not set in config file")
-	}
-	password, err := obscure.Reveal(opt.Password)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt password: %w", err)
+	var password string
+	if opt.Password != "" {
+		password, err = obscure.Reveal(opt.Password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt password: %w", err)
+		}
+	} else if len(opt.PasswordCommand) != 0 {
+		password, err = fs.ExecCommand(opt.PasswordCommand)
+		if err != nil {
+			return nil, fmt.Errorf("--crypt-password-command failed: %w", err)
+		}
+	} else {
+		return nil, errors.New("--crypt-password or --crypt-password-command is required")
 	}
 	var salt string
 	if opt.Password2 != "" {
 		salt, err = obscure.Reveal(opt.Password2)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt password2: %w", err)
+			return nil, fmt.Errorf("failed to decrypt salt: %w", err)
+		}
+	} else if len(opt.Password2Command) != 0 {
+		salt, err = fs.ExecCommand(opt.Password2Command)
+		if err != nil {
+			return nil, fmt.Errorf("--crypt-password2-command failed: %w", err)
 		}
 	}
 	enc, err := NewNameEncoding(opt.FilenameEncoding)
@@ -302,18 +321,20 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 
 // Options defines the configuration for this backend
 type Options struct {
-	Remote                  string `config:"remote"`
-	FilenameEncryption      string `config:"filename_encryption"`
-	DirectoryNameEncryption bool   `config:"directory_name_encryption"`
-	NoDataEncryption        bool   `config:"no_data_encryption"`
-	Password                string `config:"password"`
-	Password2               string `config:"password2"`
-	ServerSideAcrossConfigs bool   `config:"server_side_across_configs"`
-	ShowMapping             bool   `config:"show_mapping"`
-	PassBadBlocks           bool   `config:"pass_bad_blocks"`
-	FilenameEncoding        string `config:"filename_encoding"`
-	Suffix                  string `config:"suffix"`
-	StrictNames             bool   `config:"strict_names"`
+	Remote                  string          `config:"remote"`
+	FilenameEncryption      string          `config:"filename_encryption"`
+	DirectoryNameEncryption bool            `config:"directory_name_encryption"`
+	NoDataEncryption        bool            `config:"no_data_encryption"`
+	Password                string          `config:"password"`
+	PasswordCommand         fs.SpaceSepList `config:"password_command"`
+	Password2               string          `config:"password2"`
+	Password2Command        fs.SpaceSepList `config:"password2_command"`
+	ServerSideAcrossConfigs bool            `config:"server_side_across_configs"`
+	ShowMapping             bool            `config:"show_mapping"`
+	PassBadBlocks           bool            `config:"pass_bad_blocks"`
+	FilenameEncoding        string          `config:"filename_encoding"`
+	Suffix                  string          `config:"suffix"`
+	StrictNames             bool            `config:"strict_names"`
 }
 
 // Fs represents a wrapped fs.Fs
