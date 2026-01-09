@@ -374,6 +374,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 		CaseInsensitive:         false,
+		// SlowModTime tells VFS cache to skip ModTime in fingerprint calculation
+		// This prevents cache invalidation due to timestamp precision differences
+		SlowModTime: true,
 	}).Fill(ctx, f)
 
 	// Enable ChangeNotify support so vfs can poll this backend
