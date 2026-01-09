@@ -67,11 +67,12 @@ type Downloaders struct {
 	wg     sync.WaitGroup
 
 	// Read write
-	mu         sync.Mutex
-	dls        []*downloader
-	waiters    []waiter
-	errorCount int   // number of consecutive errors
-	lastErr    error // last error received
+	mu               sync.Mutex
+	dls              []*downloader
+	waiters          []waiter
+	errorCount       int       // number of consecutive errors
+	lastErr          error     // last error received
+	lastOutOfSpaceLog time.Time // last time we logged out of space message
 }
 
 // waiter is a range we are waiting for and a channel to signal when
@@ -153,10 +154,15 @@ func (dls *Downloaders) _countErrors(n int64, err error) {
 	}
 	if err != nil {
 		//if err != syscall.ENOSPC {
+		oldErrorCount := dls.errorCount
 		dls.errorCount++
 		//}
 		dls.lastErr = err
-		fs.Infof(dls.src, "vfs cache: downloader: error count now %d: %v", dls.errorCount, err)
+		// Only log every 5 errors for out-of-space to reduce spam
+		isOutOfSpace := fserrors.IsErrNoSpace(err) || err.Error() == "no space left on device"
+		if !isOutOfSpace || dls.errorCount <= 1 || dls.errorCount%5 == 0 || oldErrorCount == 0 {
+			fs.Infof(dls.src, "vfs cache: downloader: error count now %d: %v", dls.errorCount, err)
+		}
 	}
 }
 
@@ -429,7 +435,12 @@ func (dls *Downloaders) kickWaiters() (err error) {
 		}
 	}
 	if fserrors.IsErrNoSpace(dls.lastErr) {
-		fs.Errorf(dls.src, "vfs cache: cache is out of space %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
+		// Rate limit out of space messages to avoid spam (log at most once per 10 seconds)
+		now := time.Now()
+		if dls.lastOutOfSpaceLog.IsZero() || now.Sub(dls.lastOutOfSpaceLog) > 10*time.Second {
+			fs.Errorf(dls.src, "vfs cache: cache is out of space %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
+			dls.lastOutOfSpaceLog = now
+		}
 		dls._closeWaiters(dls.lastErr)
 		return dls.lastErr
 	}
