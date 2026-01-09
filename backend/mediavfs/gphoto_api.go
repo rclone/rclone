@@ -17,8 +17,9 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
-// Global semaphore to limit concurrent API calls (prevents rate limiting)
-var apiSemaphore = make(chan struct{}, 3) // Max 3 concurrent API calls
+// Global semaphore to serialize API calls (prevents rate limiting)
+// Only 1 concurrent API call - subsequent requests queue until current completes
+var apiSemaphore = make(chan struct{}, 1)
 
 // ErrMediaNotFound is returned when a media item doesn't exist (404)
 var ErrMediaNotFound = errors.New("media item not found")
