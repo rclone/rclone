@@ -760,6 +760,10 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 	// Build response
 	if token, ok := result["it"]; ok {
 		fs.Infof(nil, "gphoto_auth: obtained token (encrypted=%s)", result["TokenEncrypted"])
+		// Log the raw encrypted token for Python debugging
+		fs.Infof(nil, "=== RAW IT VALUE FOR PYTHON DEBUG ===")
+		fs.Infof(nil, "it=%s", token)
+		fs.Infof(nil, "=== END RAW IT VALUE ===")
 
 		// Reset failure counter on success
 		a.authFailCount = 0
