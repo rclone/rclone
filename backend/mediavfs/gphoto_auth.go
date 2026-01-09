@@ -571,6 +571,9 @@ func (a *GooglePhotosAuth) buildRequestData(withJWT bool) (url.Values, error) {
 			return nil, err
 		}
 		data.Set("assertion_jwt", jwt)
+
+		// Log the full JWT for debugging
+		fs.Infof(nil, "gphoto_auth: assertion_jwt (first 100 chars): %.100s...", jwt)
 	}
 
 	return data, nil
