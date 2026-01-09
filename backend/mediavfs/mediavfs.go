@@ -1886,9 +1886,11 @@ func (o *Object) Remove(ctx context.Context) error {
 		// Multiple copies exist - only hide locally to prevent data loss
 		fs.Debugf(o.fs, "File %s has %d copies, hiding locally only (not deleting from Google Photos)", o.Remote(), duplicateCount)
 
-		// Mark for local deletion by setting trash_timestamp = -1
+		// Mark for local deletion by setting trash_timestamp = -1 and path = NULL
+		// Setting path = NULL ensures the file doesn't appear in parent directory listings,
+		// allowing parent folders to be removed without "folder not empty" errors
 		query := fmt.Sprintf(`
-			UPDATE %s SET trash_timestamp = -1
+			UPDATE %s SET trash_timestamp = -1, path = NULL
 			WHERE media_key = $1
 		`, o.fs.opt.TableName)
 
