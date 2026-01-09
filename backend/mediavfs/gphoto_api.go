@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -19,6 +20,10 @@ import (
 
 // ErrMediaNotFound is returned when a media item doesn't exist (404)
 var ErrMediaNotFound = errors.New("media item not found")
+
+// Request counter for debugging rate limits
+var apiRequestCount int64
+var apiRequestMu sync.Mutex
 
 const (
 	defaultTimeout = 60 * time.Second
@@ -92,9 +97,12 @@ func (api *GPhotoAPI) getNativeAuthToken(ctx context.Context, force bool) error 
 	if !force && api.token != "" && api.tokenExpiry > 0 {
 		nowMs := time.Now().UnixMilli()
 		if nowMs < (api.tokenExpiry - 60000) {
+			fs.Debugf(nil, "gphoto: reusing cached token (expires in %ds)", (api.tokenExpiry-nowMs)/1000)
 			return nil // Token still valid
 		}
 	}
+
+	fs.Infof(nil, "gphoto: requesting new token (force=%v, hasToken=%v, expiry=%d)", force, api.token != "", api.tokenExpiry)
 
 	result, err := api.nativeAuth.GetToken(ctx)
 	if err != nil {
@@ -107,7 +115,7 @@ func (api *GPhotoAPI) getNativeAuthToken(ctx context.Context, force bool) error 
 
 	api.token = result.Token
 	api.tokenExpiry = result.Expiry
-	fs.Debugf(nil, "gphoto: obtained native token, expires at %d", api.tokenExpiry)
+	fs.Infof(nil, "gphoto: obtained native token, expires at %d (in %ds)", api.tokenExpiry, (api.tokenExpiry-time.Now().UnixMilli())/1000)
 	return nil
 }
 
@@ -200,13 +208,22 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 		}
 
 		resp, err = api.httpClient.Do(req)
+
+		// Count requests for debugging
+		apiRequestMu.Lock()
+		apiRequestCount++
+		reqNum := apiRequestCount
+		apiRequestMu.Unlock()
+
 		if err != nil {
+			fs.Debugf(nil, "gphoto: request #%d failed: %v", reqNum, err)
 			return nil, err
 		}
 
 		// Handle status codes
 		switch resp.StatusCode {
 		case http.StatusOK, http.StatusPartialContent:
+			fs.Debugf(nil, "gphoto: request #%d OK (%d)", reqNum, resp.StatusCode)
 			return resp, nil
 
 		case http.StatusUnauthorized, http.StatusForbidden:
@@ -237,7 +254,7 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 				backoff = 60 * time.Second
 			}
 			resp.Body.Close()
-			fs.Infof(nil, "gphoto: rate limited (429), retry %d/5, waiting %s", retry+1, backoff)
+			fs.Infof(nil, "gphoto: request #%d rate limited (429), retry %d/5, waiting %s", reqNum, retry+1, backoff)
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
