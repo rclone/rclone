@@ -334,6 +334,9 @@ func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, erro
 	message := []byte(headerB64 + "." + payloadB64)
 	hash := sha256.Sum256(message)
 
+	// Log the message hash for debugging
+	fs.Infof(nil, "gphoto_auth: JWT message hash: %x", hash[:16])
+
 	r, s, err := ecdsa.Sign(rand.Reader, a.privateKey, hash[:])
 	if err != nil {
 		return "", err
@@ -346,6 +349,9 @@ func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, erro
 	sigBytes := make([]byte, 64)
 	copy(sigBytes[32-len(rBytes):32], rBytes)
 	copy(sigBytes[64-len(sBytes):64], sBytes)
+
+	// Log signature for debugging
+	fs.Infof(nil, "gphoto_auth: JWT sig r (first 8): %x, s (first 8): %x", sigBytes[:8], sigBytes[32:40])
 
 	sigB64 := base64URLEncode(sigBytes)
 
