@@ -641,7 +641,10 @@ func (f *Fs) incrementalSync(ctx context.Context, api *GPhotoAPI, user string, s
 
 	// Insert/update media items
 	if len(mediaItems) > 0 {
-		fs.Debugf(f, "Syncing %d updated items", len(mediaItems))
+		fs.Infof(f, "Syncing %d updated items", len(mediaItems))
+		for _, item := range mediaItems {
+			fs.Infof(f, "  + %s (size=%d, key=%s)", item.FileName, item.SizeBytes, item.MediaKey)
+		}
 		if err := f.InsertMediaItems(ctx, mediaItems); err != nil {
 			return fmt.Errorf("failed to insert media items: %w", err)
 		}
@@ -649,7 +652,10 @@ func (f *Fs) incrementalSync(ctx context.Context, api *GPhotoAPI, user string, s
 
 	// Delete items
 	if len(deletions) > 0 {
-		fs.Debugf(f, "Deleting %d items", len(deletions))
+		fs.Infof(f, "Deleting %d items", len(deletions))
+		for _, key := range deletions {
+			fs.Infof(f, "  - %s", key)
+		}
 		if err := f.DeleteMediaItems(ctx, deletions); err != nil {
 			return fmt.Errorf("failed to delete media items: %w", err)
 		}
@@ -668,12 +674,18 @@ func (f *Fs) incrementalSync(ctx context.Context, api *GPhotoAPI, user string, s
 		}
 
 		if len(mediaItems) > 0 {
+			for _, item := range mediaItems {
+				fs.Infof(f, "  + %s (size=%d, key=%s)", item.FileName, item.SizeBytes, item.MediaKey)
+			}
 			if err := f.InsertMediaItems(ctx, mediaItems); err != nil {
 				return fmt.Errorf("failed to insert media items: %w", err)
 			}
 		}
 
 		if len(deletions) > 0 {
+			for _, key := range deletions {
+				fs.Infof(f, "  - %s", key)
+			}
 			if err := f.DeleteMediaItems(ctx, deletions); err != nil {
 				return fmt.Errorf("failed to delete media items: %w", err)
 			}
