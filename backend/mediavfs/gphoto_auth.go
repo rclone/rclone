@@ -1,6 +1,7 @@
 package mediavfs
 
 import (
+	"compress/gzip"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -657,7 +658,17 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 
 	errorMsg := result["Error"]
 	if errorMsg == "" {
-		errorMsg = "Unknown error"
+		// No Error key found - check what keys we did get
+		if len(result) == 0 {
+			errorMsg = "Empty or unparseable response (raw body logged above)"
+		} else {
+			// List all keys we found for debugging
+			var keys []string
+			for k := range result {
+				keys = append(keys, k)
+			}
+			errorMsg = fmt.Sprintf("No Error key in response; keys found: %v", keys)
+		}
 	}
 	fs.Errorf(nil, "gphoto_auth: token request failed: %s", errorMsg)
 	return nil, fmt.Errorf("token request failed: %s", errorMsg)
@@ -680,12 +691,33 @@ func (a *GooglePhotosAuth) doAuthRequest(ctx context.Context, data url.Values, h
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	// Handle gzip decompression if response is compressed
+	var reader io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzReader.Close()
+		reader = gzReader
+	}
+
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}
 
 	fs.Infof(nil, "gphoto_auth: response status=%d, body_len=%d", resp.StatusCode, len(body))
+
+	// For non-200 status codes, log the raw response body to help debugging
+	if resp.StatusCode != http.StatusOK {
+		// Log the raw body (truncate if too long)
+		bodyStr := string(body)
+		if len(bodyStr) > 500 {
+			bodyStr = bodyStr[:500] + "..."
+		}
+		fs.Errorf(nil, "gphoto_auth: error response (status=%d): %s", resp.StatusCode, bodyStr)
+	}
 
 	return parseAuthResponse(string(body)), nil
 }
