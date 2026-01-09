@@ -1372,7 +1372,57 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 
 	if count > 0 {
-		return fmt.Errorf("directory not empty (has subfolders): %s", dir)
+		// Check if any subfolder contains visible items
+		// If all subfolders are empty (only contain hidden items), we can delete them
+		hasVisibleSubfolderContent := false
+		subfolderQuery := fmt.Sprintf(`
+			SELECT media_key FROM %s
+			WHERE user_name = $1 AND TRIM(TRAILING '/' FROM COALESCE(path, '')) = $2 AND type = -1
+				AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+		`, f.opt.TableName)
+		subRows, err := f.db.QueryContext(ctx, subfolderQuery, userName, folderPath)
+		if err != nil {
+			return fmt.Errorf("failed to query subfolders: %w", err)
+		}
+		defer subRows.Close()
+
+		var emptySubfolders []string
+		for subRows.Next() {
+			var subMediaKey string
+			if err := subRows.Scan(&subMediaKey); err != nil {
+				continue
+			}
+			// Extract subfolder path from media_key (format: folder:user:path)
+			parts := strings.SplitN(subMediaKey, ":", 3)
+			if len(parts) != 3 {
+				continue
+			}
+			subfolderPath := parts[2]
+
+			// Check if this subfolder has any visible content
+			visibleQuery := fmt.Sprintf(`
+				SELECT COUNT(*) FROM %s
+				WHERE user_name = $1 AND TRIM(TRAILING '/' FROM COALESCE(path, '')) = $2
+					AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+			`, f.opt.TableName)
+			var visibleCount int
+			f.db.QueryRowContext(ctx, visibleQuery, userName, subfolderPath).Scan(&visibleCount)
+			if visibleCount > 0 {
+				hasVisibleSubfolderContent = true
+				break
+			}
+			emptySubfolders = append(emptySubfolders, subMediaKey)
+		}
+
+		if hasVisibleSubfolderContent {
+			return fmt.Errorf("directory not empty (has subfolders): %s", dir)
+		}
+
+		// Delete empty subfolders
+		for _, subKey := range emptySubfolders {
+			delQuery := fmt.Sprintf(`DELETE FROM %s WHERE media_key = $1`, f.opt.TableName)
+			f.db.ExecContext(ctx, delQuery, subKey)
+		}
 	}
 
 	// Delete the folder row (folder's media_key is folder:user:fullPath)
