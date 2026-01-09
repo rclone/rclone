@@ -393,16 +393,21 @@ func (a *GooglePhotosAuth) generateEphemeralKey() (map[string]interface{}, error
 // decryptToken decrypts an encrypted token using Tink ECIES-AEAD-HKDF.
 func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (string, error) {
 	if a.ephemeralPrivateKey == nil {
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - no ephemeral private key")
 		return "", errors.New("no ephemeral private key available")
 	}
 
 	ciphertext, err := base64URLDecode(encryptedToken)
 	if err != nil {
-		return encryptedToken, nil // Return original on decode error
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - base64 decode error: %v", err)
+		return encryptedToken, nil
 	}
+
+	fs.Infof(nil, "gphoto_auth: decrypt - ciphertext length: %d", len(ciphertext))
 
 	// Minimum size: 5 (prefix) + 65 (EC point) + 12 (IV) + 16 (tag)
 	if len(ciphertext) < 98 {
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - ciphertext too short: %d < 98", len(ciphertext))
 		return encryptedToken, nil
 	}
 
@@ -411,7 +416,10 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 	senderPubBytes := ciphertext[5:70]
 	aesCiphertext := ciphertext[70:]
 
+	fs.Infof(nil, "gphoto_auth: decrypt - prefix: %x, EC point first byte: %02x", ciphertext[:5], senderPubBytes[0])
+
 	if senderPubBytes[0] != 0x04 {
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - expected EC point 0x04, got 0x%02x", senderPubBytes[0])
 		return encryptedToken, nil
 	}
 
@@ -442,11 +450,15 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 	hkdfReader := hkdf.New(sha256.New, hkdfIKM, nil, nil)
 	aesKey := make([]byte, 16) // AES-128
 	if _, err := io.ReadFull(hkdfReader, aesKey); err != nil {
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - HKDF error: %v", err)
 		return encryptedToken, nil
 	}
 
+	fs.Infof(nil, "gphoto_auth: decrypt - AES key derived, aesCiphertext len: %d", len(aesCiphertext))
+
 	// AES-GCM decryption
 	if len(aesCiphertext) < 28 { // 12 (IV) + 16 (tag minimum)
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - aesCiphertext too short: %d", len(aesCiphertext))
 		return encryptedToken, nil
 	}
 
@@ -455,26 +467,34 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 
 	block, err := aes.NewCipher(aesKey)
 	if err != nil {
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - AES cipher error: %v", err)
 		return encryptedToken, nil
 	}
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - GCM error: %v", err)
 		return encryptedToken, nil
 	}
 
 	tokenBytes, err := aesGCM.Open(nil, nonce, ciphertextWithTag, nil)
 	if err != nil {
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - GCM decrypt error: %v", err)
 		return encryptedToken, nil
 	}
 
 	tokenStr := string(tokenBytes)
+	fs.Infof(nil, "gphoto_auth: decrypt SUCCESS - token prefix: %.20s...", tokenStr)
 
 	// Apply microg-style processing for ya29.m. tokens
 	if strings.HasPrefix(tokenStr, "ya29.m.") && itMetadata != "" {
+		fs.Infof(nil, "gphoto_auth: applying microg-style processing")
 		processed, err := a.processTokenMicrogStyle(tokenStr, itMetadata)
-		if err == nil {
+		if err != nil {
+			fs.Errorf(nil, "gphoto_auth: microg processing failed: %v", err)
+		} else {
 			tokenStr = processed
+			fs.Infof(nil, "gphoto_auth: microg processing SUCCESS")
 		}
 	}
 
