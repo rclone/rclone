@@ -384,6 +384,16 @@ func (a *GooglePhotosAuth) generateEphemeralKey() (map[string]interface{}, error
 
 	keysetBytes := encodeTinkKeyset(keyID, xPadded, yPadded)
 
+	// Log ephemeral key details for debugging
+	fs.Infof(nil, "=== EPHEMERAL KEY DEBUG ===")
+	fs.Infof(nil, "ephemeral private D: %x", privateKey.D.Bytes())
+	fs.Infof(nil, "ephemeral public X: %x", xPadded)
+	fs.Infof(nil, "ephemeral public Y: %x", yPadded)
+	fs.Infof(nil, "keyID: %08x", keyID)
+	fs.Infof(nil, "keyset bytes: %x", keysetBytes)
+	fs.Infof(nil, "keyset b64: %s", base64URLEncode(keysetBytes))
+	fs.Infof(nil, "=== END EPHEMERAL KEY DEBUG ===")
+
 	return map[string]interface{}{
 		"kty":                     "type.googleapis.com/google.crypto.tink.EciesAeadHkdfPublicKey",
 		"TinkKeysetPublicKeyInfo": base64URLEncode(keysetBytes),
@@ -445,16 +455,31 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 		sharedSecret = padded
 	}
 
-	// HKDF key derivation
+	// Log all intermediate values for comparison with Python
+	fs.Infof(nil, "=== DECRYPT DEBUG START ===")
+	fs.Infof(nil, "senderPubBytes (65 bytes): %x", senderPubBytes)
+	fs.Infof(nil, "senderX: %x", senderX.Bytes())
+	fs.Infof(nil, "senderY: %x", senderY.Bytes())
+	fs.Infof(nil, "ephemeralPrivateKey.D: %x", a.ephemeralPrivateKey.D.Bytes())
+	fs.Infof(nil, "sharedSecret (32 bytes): %x", sharedSecret)
+
+	// HKDF key derivation - match Python's HKDF(salt=b"", info=b"")
+	// Note: Go's hkdf.New with nil salt uses zero-filled salt of hash length,
+	// but we need empty salt to match Python/Tink behavior
 	hkdfIKM := append(senderPubBytes, sharedSecret...)
-	hkdfReader := hkdf.New(sha256.New, hkdfIKM, nil, nil)
+	fs.Infof(nil, "hkdfIKM (97 bytes): %x", hkdfIKM)
+
+	hkdfReader := hkdf.New(sha256.New, hkdfIKM, []byte{}, []byte{})
 	aesKey := make([]byte, 16) // AES-128
 	if _, err := io.ReadFull(hkdfReader, aesKey); err != nil {
 		fs.Errorf(nil, "gphoto_auth: decrypt failed - HKDF error: %v", err)
 		return encryptedToken, nil
 	}
 
-	fs.Infof(nil, "gphoto_auth: decrypt - AES key derived, aesCiphertext len: %d", len(aesCiphertext))
+	fs.Infof(nil, "aesKey (16 bytes): %x", aesKey)
+	fs.Infof(nil, "aesCiphertext length: %d", len(aesCiphertext))
+	fs.Infof(nil, "nonce will be: %x", aesCiphertext[0:12])
+	fs.Infof(nil, "=== DECRYPT DEBUG END ===")
 
 	// AES-GCM decryption
 	if len(aesCiphertext) < 28 { // 12 (IV) + 16 (tag minimum)
