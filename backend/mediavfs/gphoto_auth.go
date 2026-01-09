@@ -467,7 +467,10 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 	// IKM = sender_pub_bytes || shared_secret
 	// Salt = empty (RFC 5869: empty salt treated as hash-length zeros)
 	// Info = empty
-	hkdfIKM := append(senderPubBytes, sharedSecret...)
+	// IMPORTANT: Must copy senderPubBytes to avoid mutating ciphertext slice!
+	hkdfIKM := make([]byte, len(senderPubBytes)+len(sharedSecret))
+	copy(hkdfIKM, senderPubBytes)
+	copy(hkdfIKM[len(senderPubBytes):], sharedSecret)
 	fs.Infof(nil, "HKDF: IKM=senderPub||sharedSecret (%d bytes)", len(hkdfIKM))
 
 	hkdfReader := hkdf.New(sha256.New, hkdfIKM, nil, nil)
