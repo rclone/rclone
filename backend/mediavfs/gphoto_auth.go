@@ -219,6 +219,7 @@ type GooglePhotosAuth struct {
 	ephemeralPrivateKey *ecdsa.PrivateKey
 	httpClient          *http.Client
 	mu                  sync.Mutex
+	authFailCount       int // Track consecutive auth failures
 }
 
 // NewGooglePhotosAuth creates a new GooglePhotosAuth instance.
@@ -244,7 +245,11 @@ func NewGooglePhotosAuth(email, masterToken, androidID string, privateKeyHex str
 		}
 		auth.privateKey = privateKey
 		auth.issuer = auth.getIssuer()
-		fs.Debugf(nil, "gphoto_auth: computed issuer=%s", auth.issuer)
+
+		// Log public key coordinates for debugging (compare with Python output)
+		fs.Infof(nil, "gphoto_auth: public key X (first 8 bytes): %x", privateKey.X.Bytes()[:8])
+		fs.Infof(nil, "gphoto_auth: public key Y (first 8 bytes): %x", privateKey.Y.Bytes()[:8])
+		fs.Infof(nil, "gphoto_auth: computed issuer=%s", auth.issuer)
 	}
 
 	return auth, nil
@@ -280,22 +285,28 @@ func (a *GooglePhotosAuth) getIssuer() string {
 		return ""
 	}
 
+	// Log SPKI hex for debugging (compare with Python's output)
+	fs.Debugf(nil, "gphoto_auth: SPKI length=%d, first 32 bytes: %x", len(spki), spki[:32])
+	fs.Debugf(nil, "gphoto_auth: SPKI last 32 bytes: %x", spki[len(spki)-32:])
+
 	hash := sha256.Sum256(spki)
+	fs.Debugf(nil, "gphoto_auth: SPKI SHA256: %x", hash[:])
 	return base64URLEncode(hash[:])
 }
 
 // signJWT signs a JWT with ES256.
 func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, error) {
-	header := map[string]string{"alg": "ES256", "typ": "JWT"}
+	// Use fixed header JSON to match Python's output exactly
+	// Python: json.dumps({"alg": "ES256", "typ": "JWT"}, separators=(',', ':'))
+	headerJSON := []byte(`{"alg":"ES256","typ":"JWT"}`)
 
-	headerJSON, err := json.Marshal(header)
-	if err != nil {
-		return "", err
-	}
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		return "", err
 	}
+
+	// Log the payload for debugging
+	fs.Debugf(nil, "gphoto_auth: JWT payload JSON: %s", string(payloadJSON))
 
 	headerB64 := base64URLEncode(headerJSON)
 	payloadB64 := base64URLEncode(payloadJSON)
@@ -318,7 +329,10 @@ func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, erro
 
 	sigB64 := base64URLEncode(sigBytes)
 
-	return headerB64 + "." + payloadB64 + "." + sigB64, nil
+	jwt := headerB64 + "." + payloadB64 + "." + sigB64
+	fs.Debugf(nil, "gphoto_auth: JWT length=%d, header=%s", len(jwt), headerB64)
+
+	return jwt, nil
 }
 
 // generateEphemeralKey generates an ephemeral key and stores the private key for later decryption.
@@ -580,6 +594,13 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	// Check if we've had too many consecutive auth failures
+	if a.authFailCount >= 3 {
+		fs.Errorf(nil, "gphoto_auth: FATAL - %d consecutive auth failures, exiting to prevent flooding Google servers", a.authFailCount)
+		fs.Errorf(nil, "gphoto_auth: Please check your master_token and private_key_s configuration")
+		panic("gphoto_auth: too many consecutive auth failures - check credentials")
+	}
+
 	fs.Infof(nil, "gphoto_auth: requesting token for %s (has_private_key=%v)", a.email, a.privateKey != nil)
 
 	headers := map[string]string{
@@ -629,6 +650,9 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 	if token, ok := result["it"]; ok {
 		fs.Infof(nil, "gphoto_auth: obtained token (encrypted=%s)", result["TokenEncrypted"])
 
+		// Reset failure counter on success
+		a.authFailCount = 0
+
 		// Decrypt if token is encrypted
 		if result["TokenEncrypted"] == "1" && a.ephemeralPrivateKey != nil {
 			decrypted, _ := a.decryptToken(token, result["itMetadata"])
@@ -649,6 +673,9 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 		}, nil
 	}
 
+	// Auth failed - increment failure counter
+	a.authFailCount++
+
 	errorMsg := result["Error"]
 	if errorMsg == "" {
 		// No Error key found - check what keys we did get
@@ -663,7 +690,7 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 			errorMsg = fmt.Sprintf("No Error key in response; keys found: %v", keys)
 		}
 	}
-	fs.Errorf(nil, "gphoto_auth: token request failed: %s", errorMsg)
+	fs.Errorf(nil, "gphoto_auth: token request failed (attempt %d/3): %s", a.authFailCount, errorMsg)
 	return nil, fmt.Errorf("token request failed: %s", errorMsg)
 }
 
