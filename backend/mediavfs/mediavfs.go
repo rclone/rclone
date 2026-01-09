@@ -518,6 +518,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 	// Simple query: get all items where path = dirPath
 	// Folders have type = -1, files have type >= 0
 	// Exclude trashed items (trash_timestamp > 0)
+	// Only show canonical files (is_canonical = true or NULL for backwards compatibility)
 	// Trim trailing slashes from path for comparison
 	query := fmt.Sprintf(`
 		SELECT
@@ -531,6 +532,7 @@ func (f *Fs) listUserFiles(ctx context.Context, userName string, dirPath string)
 		FROM %s
 		WHERE user_name = $1 AND TRIM(TRAILING '/' FROM COALESCE(path, '')) = $2
 			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+			AND (is_canonical IS NULL OR is_canonical = true)
 		ORDER BY type ASC, file_name ASC
 	`, f.opt.TableName)
 
@@ -690,11 +692,13 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	// Directory was prefetched but file not found - check if it's a folder
 	// This is a single query for the specific file/folder
+	// Only show canonical files (is_canonical = true or NULL for backwards compatibility)
 	folderQuery := fmt.Sprintf(`
 		SELECT type FROM %s
 		WHERE user_name = $1
 			AND TRIM(BOTH '/' FROM COALESCE(path, '')) || '/' || TRIM(BOTH '/' FROM COALESCE(NULLIF(name, ''), file_name)) = $2
 			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+			AND (is_canonical IS NULL OR is_canonical = true)
 		LIMIT 1
 	`, f.opt.TableName)
 
@@ -712,6 +716,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 
 	// Fallback: file exists but wasn't in cache (shouldn't normally happen)
+	// Only show canonical files (is_canonical = true or NULL for backwards compatibility)
 	query := fmt.Sprintf(`
 		SELECT
 			media_key,
@@ -723,6 +728,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		FROM %s
 		WHERE user_name = $1
 			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+			AND (is_canonical IS NULL OR is_canonical = true)
 			AND TRIM(BOTH '/' FROM COALESCE(path, '')) || '/' || TRIM(BOTH '/' FROM COALESCE(NULLIF(name, ''), file_name)) = $2
 		LIMIT 1
 	`, f.opt.TableName)
@@ -1823,27 +1829,12 @@ func (f *Fs) startBackgroundSync() {
 			case <-f.syncStop:
 				return
 			case <-ticker.C:
-				// Process pending deletions first (batch delete from Google Photos)
-				if f.opt.EnableDelete {
-					for {
-						deleted, err := f.ProcessPendingDeletions(context.Background(), f.opt.User, 100)
-						if err != nil {
-							fs.Errorf(f, "Background deletion failed: %v", err)
-							break
-						}
-						if deleted == 0 {
-							break // No more pending deletions
-						}
-						// Check if we should stop
-						select {
-						case <-f.syncStop:
-							return
-						default:
-						}
-					}
-				}
+				// Note: We intentionally do NOT process pending deletions here.
+				// Files marked with trash_timestamp = -1 are hidden locally only.
+				// We don't delete from Google Photos to prevent data loss
+				// (deleting one file might remove all duplicates).
 
-				// Then sync from Google Photos
+				// Sync from Google Photos
 				if err := f.SyncFromGooglePhotos(context.Background(), f.opt.User); err != nil {
 					fs.Errorf(f, "Background sync failed: %v", err)
 				}
@@ -1879,6 +1870,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) e
 	// Query ALL files and folders recursively under rootPath
 	// Files have path starting with rootPath (or equal to rootPath)
 	// This is a single query that gets everything
+	// Only show canonical files (is_canonical = true or NULL for backwards compatibility)
 	var query string
 	var rows *sql.Rows
 	var err error
@@ -1897,6 +1889,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) e
 			FROM %s
 			WHERE user_name = $1
 				AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+				AND (is_canonical IS NULL OR is_canonical = true)
 			ORDER BY path, type ASC, file_name ASC
 		`, f.opt.TableName)
 		rows, err = f.db.QueryContext(ctx, query, userName)
@@ -1916,6 +1909,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) e
 				AND (TRIM(TRAILING '/' FROM COALESCE(path, '')) = $2
 				     OR COALESCE(path, '') LIKE $3)
 				AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+				AND (is_canonical IS NULL OR is_canonical = true)
 			ORDER BY path, type ASC, file_name ASC
 		`, f.opt.TableName)
 		rows, err = f.db.QueryContext(ctx, query, userName, rootPath, rootPath+"/%")
