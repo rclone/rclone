@@ -255,10 +255,10 @@ func (f *Fs) String() string {
 }
 
 // Precision of the ModTimes in this Fs
-// Return ModTimeNotSupported to exclude ModTime from VFS cache fingerprints
-// This prevents cache invalidation due to timestamp precision differences
+// Return 24 hours precision - we truncate ModTime to date only to avoid
+// VFS cache invalidation due to timestamp precision differences
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	return 24 * time.Hour
 }
 
 // Hashes returns the supported hash types of the filesystem
@@ -1683,9 +1683,11 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// ModTime returns the modification time
+// ModTime returns the modification time truncated to day precision
+// This avoids VFS cache invalidation due to timestamp precision differences
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	return o.modTime
+	// Truncate to start of day (midnight UTC) for stable fingerprints
+	return o.modTime.UTC().Truncate(24 * time.Hour)
 }
 
 // Size returns the size of the object
