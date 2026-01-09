@@ -10,6 +10,7 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
@@ -243,6 +244,7 @@ func NewGooglePhotosAuth(email, masterToken, androidID string, privateKeyHex str
 		}
 		auth.privateKey = privateKey
 		auth.issuer = auth.getIssuer()
+		fs.Debugf(nil, "gphoto_auth: computed issuer=%s", auth.issuer)
 	}
 
 	return auth, nil
@@ -267,25 +269,16 @@ func (a *GooglePhotosAuth) createPrivateKey(hexStr string) (*ecdsa.PrivateKey, e
 }
 
 // getIssuer computes the issuer string from the public key.
+// Uses standard x509.MarshalPKIXPublicKey for proper DER-encoded SubjectPublicKeyInfo.
 func (a *GooglePhotosAuth) getIssuer() string {
-	// Marshal public key to DER format (SubjectPublicKeyInfo)
-	pubBytes := elliptic.Marshal(a.privateKey.Curve, a.privateKey.X, a.privateKey.Y)
-
-	// Build SubjectPublicKeyInfo manually
-	// OID for id-ecPublicKey: 1.2.840.10045.2.1
-	// OID for secp256r1: 1.2.840.10045.3.1.7
-	algorithmIdentifier := []byte{
-		0x30, 0x13, // SEQUENCE, length 19
-		0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, // OID id-ecPublicKey
-		0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, // OID secp256r1
+	// Marshal public key to DER-encoded SubjectPublicKeyInfo (SPKI) format
+	// This is equivalent to Python's:
+	// public_key.public_bytes(encoding=DER, format=SubjectPublicKeyInfo)
+	spki, err := x509.MarshalPKIXPublicKey(&a.privateKey.PublicKey)
+	if err != nil {
+		fs.Errorf(nil, "gphoto_auth: failed to marshal public key: %v", err)
+		return ""
 	}
-
-	// BIT STRING header for public key
-	bitString := append([]byte{0x03, byte(len(pubBytes) + 1), 0x00}, pubBytes...)
-
-	// Full SubjectPublicKeyInfo
-	spki := append([]byte{0x30, byte(len(algorithmIdentifier) + len(bitString))}, algorithmIdentifier...)
-	spki = append(spki, bitString...)
 
 	hash := sha256.Sum256(spki)
 	return base64URLEncode(hash[:])
