@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -180,7 +181,8 @@ type Fs struct {
 	dbConnStr   string // stored for lazy notify listener start
 	httpClient  *http.Client
 	api         *GPhotoAPI // Google Photos API client for download URLs
-	urlCache *urlCache
+	urlCache    *urlCache
+	urlFetchGroup singleflight.Group // Coalesces duplicate URL fetch requests
 	// lazyMeta stores metadata loaded asynchronously for large listings
 	lazyMeta map[string]*Object
 	lazyMu   sync.RWMutex
@@ -1737,28 +1739,29 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
-// Open opens the file for reading with URL caching and ETag support
-func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	// Check if we have cached metadata for this media key FIRST
+// fetchURLMetadata gets the download URL and metadata, using singleflight to coalesce duplicate requests
+func (o *Object) fetchURLMetadata(ctx context.Context) (*urlMetadata, error) {
 	cacheKey := o.mediaKey
-	cachedMeta, found := o.fs.urlCache.get(cacheKey)
 
-	var resolvedURL, etag string
-	var fileSize int64
-
-	if found {
-		// Use cached metadata - skip API call entirely
-		resolvedURL = cachedMeta.resolvedURL
-		etag = cachedMeta.etag
-		fileSize = cachedMeta.size
+	// Check cache first (fast path)
+	if cachedMeta, found := o.fs.urlCache.get(cacheKey); found {
 		fs.Debugf(o, "URL cache hit for %s", o.remote)
-	} else {
-		// Cache miss - need to get download URL from API
+		return cachedMeta, nil
+	}
+
+	// Use singleflight to coalesce duplicate requests for the same file
+	// If 10 calls request the same URL, only 1 actually fetches it
+	result, err, shared := o.fs.urlFetchGroup.Do(cacheKey, func() (interface{}, error) {
+		// Re-check cache (another goroutine may have populated it)
+		if cachedMeta, found := o.fs.urlCache.get(cacheKey); found {
+			fs.Debugf(o, "URL cache hit (after singleflight) for %s", o.remote)
+			return cachedMeta, nil
+		}
+
 		fs.Debugf(o, "Fetching download URL for %s", o.remote)
 
 		initialURL, err := o.fs.api.GetDownloadURL(ctx, o.mediaKey)
 		if err != nil {
-			// If media not found (404), delete from database and return not found error
 			if errors.Is(err, ErrMediaNotFound) {
 				fs.Errorf(o, "File not found in Google Photos: %s - removing from database", o.remote)
 				deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE media_key = $1`, o.fs.opt.TableName)
@@ -1766,7 +1769,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 				if delErr != nil {
 					fs.Errorf(o, "Failed to delete missing media from database: %v", delErr)
 				} else {
-					// Invalidate cache for the directory
 					o.fs.removeFromDirCache(o.displayPath, o.displayName)
 				}
 				return nil, fs.ErrorObjectNotFound
@@ -1778,7 +1780,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		// Resolve URL and get ETag via HEAD request
 		fs.Debugf(o, "Resolving URL for %s", o.remote)
 
-		// Retry HEAD request with exponential backoff for transient errors
 		var headResp *http.Response
 		var headErr error
 		for attempt := 0; attempt < 3; attempt++ {
@@ -1790,16 +1791,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 			headReq, err := http.NewRequestWithContext(ctx, "HEAD", initialURL, nil)
 			if err != nil {
-				fs.Errorf(o, "Failed to create HEAD request for %s: %v", o.remote, err)
 				return nil, fmt.Errorf("failed to create HEAD request for %s: %w", o.remote, err)
 			}
 			headReq.Header.Set("User-Agent", "AndroidDownloadManager/13")
 
 			headResp, headErr = o.fs.httpClient.Do(headReq)
 			if headErr == nil {
-				// Success - check if we should retry based on status code
 				if headResp.StatusCode == http.StatusTooManyRequests {
-					// Rate limited - check Retry-After header
 					retryAfter := headResp.Header.Get("Retry-After")
 					waitTime := time.Duration(1<<uint(attempt)) * time.Second
 					if retryAfter != "" {
@@ -1813,8 +1811,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 					headErr = fmt.Errorf("rate limited (429)")
 					continue
 				}
-				if headResp.StatusCode == http.StatusServiceUnavailable ||
-					headResp.StatusCode >= 500 {
+				if headResp.StatusCode == http.StatusServiceUnavailable || headResp.StatusCode >= 500 {
 					fs.Debugf(o, "Server error (%d) for %s: %s", headResp.StatusCode, o.remote, headResp.Status)
 					headResp.Body.Close()
 					headErr = fmt.Errorf("server error: %s (status %d)", headResp.Status, headResp.StatusCode)
@@ -1827,16 +1824,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 
 		if headErr != nil {
-			fs.Errorf(o, "Failed to resolve URL for %s after 3 attempts: %v", o.remote, headErr)
 			return nil, fmt.Errorf("failed to resolve URL for %s: %w", o.remote, headErr)
 		}
 		defer headResp.Body.Close()
 
-		// Get the final URL after any redirects
-		resolvedURL = headResp.Request.URL.String()
-
-		// Get ETag and size from headers
-		etag = headResp.Header.Get("ETag")
+		resolvedURL := headResp.Request.URL.String()
+		etag := headResp.Header.Get("ETag")
+		var fileSize int64
 		if contentLength := headResp.Header.Get("Content-Length"); contentLength != "" {
 			fmt.Sscanf(contentLength, "%d", &fileSize)
 		} else {
@@ -1844,14 +1838,39 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 
 		// Cache the metadata
-		o.fs.urlCache.set(cacheKey, &urlMetadata{
+		meta := &urlMetadata{
 			resolvedURL: resolvedURL,
 			etag:        etag,
 			size:        fileSize,
-		})
-
+		}
+		o.fs.urlCache.set(cacheKey, meta)
 		fs.Debugf(o, "Cached URL for %s", o.remote)
+
+		return meta, nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
+
+	if shared {
+		fs.Debugf(o, "URL fetch shared with another request for %s", o.remote)
+	}
+
+	return result.(*urlMetadata), nil
+}
+
+// Open opens the file for reading with URL caching and ETag support
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	// Get URL metadata (uses singleflight to coalesce duplicate requests)
+	meta, err := o.fetchURLMetadata(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resolvedURL := meta.resolvedURL
+	etag := meta.etag
+	fileSize := meta.size
 
 	// Now make the actual GET request to the resolved URL with retry logic
 	fs.Debugf(o, "Downloading: %s", o.remote)
