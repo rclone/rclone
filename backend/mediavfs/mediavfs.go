@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 )
@@ -1095,6 +1096,13 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		fs.Debugf(f, "Mount ready timeout - proceeding with upload")
 	case <-ctx.Done():
 		return nil, ctx.Err()
+	}
+
+	// Skip zero-byte files - Google Photos doesn't accept them
+	// Use NoRetryError to prevent infinite retry loops
+	if src.Size() == 0 {
+		fs.Infof(f, "Skipping zero-byte file: %s (Google Photos doesn't accept empty files)", src.Remote())
+		return nil, fserrors.NoRetryError(fmt.Errorf("cannot upload zero-byte file %q: Google Photos doesn't accept empty files", src.Remote()))
 	}
 
 	// Use configured user for per-user mounts
