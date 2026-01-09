@@ -74,11 +74,10 @@ func authEncodeVarintField(fieldNum int, value uint64) []byte {
 // encodeTinkKeyset encodes a Tink ECIES-AEAD-HKDF keyset for Google Photos token binding.
 func encodeTinkKeyset(keyID uint32, xBytes, yBytes []byte) []byte {
 	// Build KeyTemplate (for AES-128-GCM)
-	// Structure: {1: type_url, 2: {2: 16}, 3: 1}
-	keyTemplateValue := authEncodeVarintField(2, 16) // field 2 = key_size = 16
+	keyTemplateValue := authEncodeVarintField(2, 16)
 	keyTemplate := authEncodeBytesField(1, []byte(aesGCMTypeURL))
 	keyTemplate = append(keyTemplate, authEncodeBytesField(2, keyTemplateValue)...)
-	keyTemplate = append(keyTemplate, authEncodeVarintField(3, 1)...) // output_prefix_type = TINK
+	keyTemplate = append(keyTemplate, authEncodeVarintField(3, 1)...)
 
 	// kem_params: {1: 2, 2: 3} (curve=P256, hash=SHA256)
 	kemParams := authEncodeVarintField(1, 2)
@@ -87,17 +86,16 @@ func encodeTinkKeyset(keyID uint32, xBytes, yBytes []byte) []byte {
 	// dem_params: {2: KeyTemplate}
 	demParams := authEncodeBytesField(2, keyTemplate)
 
-	// params (NESTED): {1: kem_params, 2: dem_params, 3: 1}
+	// params: {1: kem_params, 2: dem_params, 3: 1}
 	params := authEncodeBytesField(1, kemParams)
 	params = append(params, authEncodeBytesField(2, demParams)...)
-	params = append(params, authEncodeVarintField(3, 1)...) // ec_point_format = UNCOMPRESSED
+	params = append(params, authEncodeVarintField(3, 1)...)
 
 	// Always prepend 0x00 to coordinates (Google's Tink impl always adds this prefix)
 	xEncoded := append([]byte{0x00}, xBytes...)
 	yEncoded := append([]byte{0x00}, yBytes...)
 
 	// EciesAeadHkdfPublicKey value: {2: params, 3: x, 4: y}
-	// NO version field (field 1)
 	pubKeyValue := authEncodeBytesField(2, params)
 	pubKeyValue = append(pubKeyValue, authEncodeBytesField(3, xEncoded)...)
 	pubKeyValue = append(pubKeyValue, authEncodeBytesField(4, yEncoded)...)
@@ -105,13 +103,13 @@ func encodeTinkKeyset(keyID uint32, xBytes, yBytes []byte) []byte {
 	// keyData: {1: type_url, 2: pub_key_value, 3: 3}
 	keyData := authEncodeBytesField(1, []byte(eciesTypeURL))
 	keyData = append(keyData, authEncodeBytesField(2, pubKeyValue)...)
-	keyData = append(keyData, authEncodeVarintField(3, 3)...) // key_material_type = ASYMMETRIC_PUBLIC
+	keyData = append(keyData, authEncodeVarintField(3, 3)...)
 
 	// key message: {1: keyData, 2: 1, 3: key_id, 4: 1}
 	keyMsg := authEncodeBytesField(1, keyData)
-	keyMsg = append(keyMsg, authEncodeVarintField(2, 1)...)           // status = ENABLED
+	keyMsg = append(keyMsg, authEncodeVarintField(2, 1)...)
 	keyMsg = append(keyMsg, authEncodeVarintField(3, uint64(keyID))...)
-	keyMsg = append(keyMsg, authEncodeVarintField(4, 1)...)           // output_prefix_type = TINK
+	keyMsg = append(keyMsg, authEncodeVarintField(4, 1)...)
 
 	// keyset: {1: key_id, 2: key_msg}
 	keyset := authEncodeVarintField(1, uint64(keyID))
@@ -127,7 +125,6 @@ func base64URLEncode(data []byte) string {
 
 // base64URLDecode decodes base64url data with or without padding.
 func base64URLDecode(data string) ([]byte, error) {
-	// Add padding if needed
 	switch len(data) % 4 {
 	case 2:
 		data += "=="
@@ -191,7 +188,6 @@ func authParseProtoFields(data []byte) map[int]protoField {
 			pos += int(length)
 			fields[fieldNum] = protoField{wireType: wireType, data: fieldData}
 		default:
-			// Unknown wire type, stop parsing
 			return fields
 		}
 	}
@@ -244,11 +240,7 @@ func NewGooglePhotosAuth(email, masterToken, androidID string, privateKeyHex str
 		}
 		auth.privateKey = privateKey
 		auth.issuer = auth.getIssuer()
-
-		// Log public key coordinates for debugging (compare with Python output)
-		fs.Infof(nil, "gphoto_auth: public key X (first 8 bytes): %x", privateKey.X.Bytes()[:8])
-		fs.Infof(nil, "gphoto_auth: public key Y (first 8 bytes): %x", privateKey.Y.Bytes()[:8])
-		fs.Infof(nil, "gphoto_auth: computed issuer=%s", auth.issuer)
+		fs.Debugf(nil, "gphoto_auth: token binding enabled for %s", email)
 	}
 
 	return auth, nil
@@ -273,30 +265,18 @@ func (a *GooglePhotosAuth) createPrivateKey(hexStr string) (*ecdsa.PrivateKey, e
 }
 
 // getIssuer computes the issuer string from the public key.
-// Uses standard x509.MarshalPKIXPublicKey for proper DER-encoded SubjectPublicKeyInfo.
 func (a *GooglePhotosAuth) getIssuer() string {
-	// Marshal public key to DER-encoded SubjectPublicKeyInfo (SPKI) format
-	// This is equivalent to Python's:
-	// public_key.public_bytes(encoding=DER, format=SubjectPublicKeyInfo)
 	spki, err := x509.MarshalPKIXPublicKey(&a.privateKey.PublicKey)
 	if err != nil {
 		fs.Errorf(nil, "gphoto_auth: failed to marshal public key: %v", err)
 		return ""
 	}
-
-	// Log SPKI hex for debugging (compare with Python's output)
-	fs.Infof(nil, "gphoto_auth: SPKI length=%d, first 32 bytes: %x", len(spki), spki[:32])
-	fs.Infof(nil, "gphoto_auth: SPKI last 32 bytes: %x", spki[len(spki)-32:])
-
 	hash := sha256.Sum256(spki)
-	fs.Infof(nil, "gphoto_auth: SPKI SHA256: %x", hash[:])
 	return base64URLEncode(hash[:])
 }
 
 // signJWT signs a JWT with ES256.
-// The payload must be serialized in the exact order Python uses (insertion order).
 func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, error) {
-	// Use fixed header JSON to match Python's output exactly
 	headerJSON := []byte(`{"alg":"ES256","typ":"JWT"}`)
 
 	// Build payload JSON manually to match Python's key order exactly
@@ -338,26 +318,7 @@ func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, erro
 	copy(sigBytes[64-len(sBytes):64], sBytes)
 	sigB64 := base64URLEncode(sigBytes)
 
-	// Self-verify the signature to ensure it's valid
-	valid := ecdsa.Verify(&a.privateKey.PublicKey, hash[:], r, s)
-	fs.Infof(nil, "gphoto_auth: signature self-verify: %v", valid)
-
-	jwt := headerB64 + "." + payloadB64 + "." + sigB64
-
-	// Print ALL debug info at once
-	fs.Infof(nil, "=== JWT DEBUG START ===")
-	fs.Infof(nil, "header_json: %s", string(headerJSON))
-	fs.Infof(nil, "payload_json: %s", string(payloadJSON))
-	fs.Infof(nil, "header_b64: %s", headerB64)
-	fs.Infof(nil, "payload_b64: %s", payloadB64)
-	fs.Infof(nil, "message_hash: %x", hash[:])
-	fs.Infof(nil, "sig_r: %x", sigBytes[:32])
-	fs.Infof(nil, "sig_s: %x", sigBytes[32:])
-	fs.Infof(nil, "sig_b64: %s", sigB64)
-	fs.Infof(nil, "full_jwt: %s", jwt)
-	fs.Infof(nil, "=== JWT DEBUG END ===")
-
-	return jwt, nil
+	return headerB64 + "." + payloadB64 + "." + sigB64, nil
 }
 
 // generateEphemeralKey generates an ephemeral key and stores the private key for later decryption.
@@ -384,16 +345,6 @@ func (a *GooglePhotosAuth) generateEphemeralKey() (map[string]interface{}, error
 
 	keysetBytes := encodeTinkKeyset(keyID, xPadded, yPadded)
 
-	// Log ephemeral key details for debugging
-	fs.Infof(nil, "=== EPHEMERAL KEY DEBUG ===")
-	fs.Infof(nil, "ephemeral private D: %x", privateKey.D.Bytes())
-	fs.Infof(nil, "ephemeral public X: %x", xPadded)
-	fs.Infof(nil, "ephemeral public Y: %x", yPadded)
-	fs.Infof(nil, "keyID: %08x", keyID)
-	fs.Infof(nil, "keyset bytes: %x", keysetBytes)
-	fs.Infof(nil, "keyset b64: %s", base64URLEncode(keysetBytes))
-	fs.Infof(nil, "=== END EPHEMERAL KEY DEBUG ===")
-
 	return map[string]interface{}{
 		"kty":                     "type.googleapis.com/google.crypto.tink.EciesAeadHkdfPublicKey",
 		"TinkKeysetPublicKeyInfo": base64URLEncode(keysetBytes),
@@ -403,7 +354,6 @@ func (a *GooglePhotosAuth) generateEphemeralKey() (map[string]interface{}, error
 // decryptToken decrypts an encrypted token using Tink ECIES-AEAD-HKDF.
 func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (string, error) {
 	if a.ephemeralPrivateKey == nil {
-		fs.Errorf(nil, "gphoto_auth: decrypt failed - no ephemeral private key")
 		return "", errors.New("no ephemeral private key available")
 	}
 
@@ -412,8 +362,6 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 		fs.Errorf(nil, "gphoto_auth: decrypt failed - base64 decode error: %v", err)
 		return encryptedToken, nil
 	}
-
-	fs.Infof(nil, "gphoto_auth: decrypt - ciphertext length: %d", len(ciphertext))
 
 	// Minimum size: 5 (prefix) + 65 (EC point) + 12 (IV) + 16 (tag)
 	if len(ciphertext) < 98 {
@@ -425,8 +373,6 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 	// Encapsulated key: uncompressed EC point (65 bytes: 0x04 + 32x + 32y)
 	senderPubBytes := ciphertext[5:70]
 	aesCiphertext := ciphertext[70:]
-
-	fs.Infof(nil, "gphoto_auth: decrypt - prefix: %x, EC point first byte: %02x", ciphertext[:5], senderPubBytes[0])
 
 	if senderPubBytes[0] != 0x04 {
 		fs.Errorf(nil, "gphoto_auth: decrypt failed - expected EC point 0x04, got 0x%02x", senderPubBytes[0])
@@ -455,15 +401,7 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 		sharedSecret = padded
 	}
 
-	// Log all intermediate values for comparison with Python
-	fs.Infof(nil, "=== DECRYPT DEBUG START ===")
-	fs.Infof(nil, "senderPubBytes (65 bytes): %x", senderPubBytes)
-	fs.Infof(nil, "senderX: %x", senderX.Bytes())
-	fs.Infof(nil, "senderY: %x", senderY.Bytes())
-	fs.Infof(nil, "ephemeralPrivateKey.D: %x", a.ephemeralPrivateKey.D.Bytes())
-	fs.Infof(nil, "sharedSecret (32 bytes): %x", sharedSecret)
-
-	// HKDF key derivation (verified to match Python):
+	// HKDF key derivation:
 	// IKM = sender_pub_bytes || shared_secret
 	// Salt = empty (RFC 5869: empty salt treated as hash-length zeros)
 	// Info = empty
@@ -471,7 +409,6 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 	hkdfIKM := make([]byte, len(senderPubBytes)+len(sharedSecret))
 	copy(hkdfIKM, senderPubBytes)
 	copy(hkdfIKM[len(senderPubBytes):], sharedSecret)
-	fs.Infof(nil, "HKDF: IKM=senderPub||sharedSecret (%d bytes)", len(hkdfIKM))
 
 	hkdfReader := hkdf.New(sha256.New, hkdfIKM, nil, nil)
 	aesKey := make([]byte, 16) // AES-128
@@ -480,33 +417,13 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 		return encryptedToken, nil
 	}
 
-	fs.Infof(nil, "aesKey (16 bytes): %x", aesKey)
-	fs.Infof(nil, "aesCiphertext length: %d", len(aesCiphertext))
-	fs.Infof(nil, "aesCiphertext first 20 bytes: %x", aesCiphertext[:min(20, len(aesCiphertext))])
-	fs.Infof(nil, "=== DECRYPT DEBUG END ===")
-
-	// AES-GCM decryption
-	// Tink's inner AEAD (AES-GCM) also has a 5-byte prefix (version + key_id) before IV
-	// So structure is: [5-byte prefix][12-byte IV][ciphertext][16-byte tag]
-	// Total minimum: 5 + 12 + 16 = 33 bytes
-	if len(aesCiphertext) < 33 {
-		// Try without inner prefix (some implementations don't have it)
-		if len(aesCiphertext) < 28 { // 12 (IV) + 16 (tag minimum)
-			fs.Errorf(nil, "gphoto_auth: decrypt failed - aesCiphertext too short: %d", len(aesCiphertext))
-			return encryptedToken, nil
-		}
-	}
-
-	// Try both with and without inner 5-byte prefix
+	// AES-GCM decryption - try both with and without inner 5-byte prefix
 	var nonce, ciphertextWithTag []byte
 	var decryptError error
 	var tokenBytes []byte
 
 	// First try: skip inner 5-byte prefix (Tink full format)
 	if len(aesCiphertext) >= 33 {
-		fs.Infof(nil, "gphoto_auth: trying with 5-byte inner prefix skip")
-		innerPrefix := aesCiphertext[0:5]
-		fs.Infof(nil, "gphoto_auth: inner prefix: %x", innerPrefix)
 		nonce = aesCiphertext[5:17]
 		ciphertextWithTag = aesCiphertext[17:]
 
@@ -518,13 +435,16 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 				if decryptError == nil {
 					goto success
 				}
-				fs.Infof(nil, "gphoto_auth: with inner prefix failed: %v, trying without", decryptError)
 			}
 		}
 	}
 
 	// Second try: no inner prefix
-	fs.Infof(nil, "gphoto_auth: trying without inner prefix")
+	if len(aesCiphertext) < 28 {
+		fs.Errorf(nil, "gphoto_auth: decrypt failed - aesCiphertext too short: %d", len(aesCiphertext))
+		return encryptedToken, nil
+	}
+
 	nonce = aesCiphertext[0:12]
 	ciphertextWithTag = aesCiphertext[12:]
 
@@ -550,17 +470,14 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 
 success:
 	tokenStr := string(tokenBytes)
-	fs.Infof(nil, "gphoto_auth: decrypt SUCCESS - token prefix: %.20s...", tokenStr)
 
 	// Apply microg-style processing for ya29.m. tokens
 	if strings.HasPrefix(tokenStr, "ya29.m.") && itMetadata != "" {
-		fs.Infof(nil, "gphoto_auth: applying microg-style processing")
 		processed, err := a.processTokenMicrogStyle(tokenStr, itMetadata)
 		if err != nil {
 			fs.Errorf(nil, "gphoto_auth: microg processing failed: %v", err)
 		} else {
 			tokenStr = processed
-			fs.Infof(nil, "gphoto_auth: microg processing SUCCESS")
 		}
 	}
 
@@ -569,17 +486,14 @@ success:
 
 // processTokenMicrogStyle processes token using microg-style HMAC signature recalculation.
 func (a *GooglePhotosAuth) processTokenMicrogStyle(tokenStr, itMetadata string) (string, error) {
-	// Decode the proto part of the token
 	protoB64 := tokenStr[7:] // Skip "ya29.m."
 	protoBytes, err := base64URLDecode(protoB64)
 	if err != nil {
 		return tokenStr, err
 	}
 
-	// Parse all fields from the decrypted token
 	fields := authParseProtoFields(protoBytes)
 
-	// Extract field 1 (auth) and field 3 (HMAC key)
 	field1, ok1 := fields[1]
 	if !ok1 || field1.wireType != 2 {
 		return tokenStr, errors.New("field 1 not found")
@@ -592,37 +506,30 @@ func (a *GooglePhotosAuth) processTokenMicrogStyle(tokenStr, itMetadata string) 
 	}
 	hmacKey := field3.data
 
-	// Parse itMetadata to get effectiveDurationSeconds (field 4)
 	metaBytes, err := base64URLDecode(itMetadata)
 	if err != nil {
 		return tokenStr, err
 	}
 	metaFields := authParseProtoFields(metaBytes)
 
-	effectiveDuration := uint64(3660) // Default
+	effectiveDuration := uint64(3660)
 	if field4, ok := metaFields[4]; ok && field4.wireType == 0 {
 		effectiveDuration = field4.value
 	}
 
-	// Build OAuthAuthorization: {2: effectiveDurationSeconds}
 	oauthAuth := authEncodeVarintField(2, effectiveDuration)
-
-	// Build OAuthTokenData: {1: fieldType=1 (SCOPE), 2: authorization, 3: durationMillis=0}
-	oauthTokenData := authEncodeVarintField(1, 1) // fieldType = 1 (SCOPE)
+	oauthTokenData := authEncodeVarintField(1, 1)
 	oauthTokenData = append(oauthTokenData, authEncodeBytesField(2, oauthAuth)...)
-	oauthTokenData = append(oauthTokenData, authEncodeVarintField(3, 0)...) // durationMillis = 0
+	oauthTokenData = append(oauthTokenData, authEncodeVarintField(3, 0)...)
 
-	// HMAC-SHA256 sign the OAuthTokenData using field 3 as key
 	mac := hmac.New(sha256.New, hmacKey)
 	mac.Write(oauthTokenData)
 	newSignature := mac.Sum(nil)
 
-	// Build new ItAuthData: {1: auth, 2: OAuthTokenData, 3: new_signature}
 	newProto := authEncodeBytesField(1, authBytes)
 	newProto = append(newProto, authEncodeBytesField(2, oauthTokenData)...)
 	newProto = append(newProto, authEncodeBytesField(3, newSignature)...)
 
-	// Append remaining fields (4, 5, 6, etc.) from original token
 	for fieldNum := 4; fieldNum <= 10; fieldNum++ {
 		if field, ok := fields[fieldNum]; ok {
 			if field.wireType == 0 {
@@ -633,9 +540,7 @@ func (a *GooglePhotosAuth) processTokenMicrogStyle(tokenStr, itMetadata string) 
 		}
 	}
 
-	// Encode the new token
-	newToken := "ya29.m." + base64URLEncode(newProto)
-	return newToken, nil
+	return "ya29.m." + base64URLEncode(newProto), nil
 }
 
 // buildRequestData builds the request data for the auth endpoint.
@@ -682,9 +587,6 @@ func (a *GooglePhotosAuth) buildRequestData(withJWT bool) (url.Values, error) {
 			return nil, err
 		}
 		data.Set("assertion_jwt", jwt)
-
-		// Log the full JWT for debugging
-		fs.Infof(nil, "gphoto_auth: assertion_jwt (first 100 chars): %.100s...", jwt)
 	}
 
 	return data, nil
@@ -695,15 +597,13 @@ func parseAuthResponse(responseText string) map[string]string {
 	result := make(map[string]string)
 	for _, line := range strings.Split(strings.TrimSpace(responseText), "\n") {
 		if idx := strings.Index(line, "="); idx != -1 {
-			key := line[:idx]
-			value := line[idx+1:]
-			result[key] = value
+			result[line[:idx]] = line[idx+1:]
 		}
 	}
 	return result
 }
 
-// GetToken gets an OAuth token. Tries without JWT first, falls back to JWT if needed.
+// GetToken gets an OAuth token.
 func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -711,11 +611,10 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 	// Check if we've had too many consecutive auth failures
 	if a.authFailCount >= 3 {
 		fs.Errorf(nil, "gphoto_auth: FATAL - %d consecutive auth failures, exiting to prevent flooding Google servers", a.authFailCount)
-		fs.Errorf(nil, "gphoto_auth: Please check your master_token and private_key_s configuration")
 		panic("gphoto_auth: too many consecutive auth failures - check credentials")
 	}
 
-	fs.Infof(nil, "gphoto_auth: requesting token for %s (has_private_key=%v)", a.email, a.privateKey != nil)
+	fs.Debugf(nil, "gphoto_auth: requesting token for %s", a.email)
 
 	headers := map[string]string{
 		"Content-Type":    "application/x-www-form-urlencoded",
@@ -730,14 +629,11 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 
 	if a.privateKey != nil {
 		data, err = a.buildRequestData(true)
-		if err != nil {
-			return nil, err
-		}
 	} else {
 		data, err = a.buildRequestData(false)
-		if err != nil {
-			return nil, err
-		}
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	result, err = a.doAuthRequest(ctx, data, headers)
@@ -748,7 +644,6 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 	// Retry with JWT if initial request failed and we have a private key
 	if _, hasError := result["Error"]; hasError && a.privateKey != nil {
 		if _, hasJWT := data["assertion_jwt"]; !hasJWT {
-			fs.Infof(nil, "gphoto_auth: retrying with JWT assertion")
 			data, err = a.buildRequestData(true)
 			if err != nil {
 				return nil, err
@@ -762,12 +657,6 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 
 	// Build response
 	if token, ok := result["it"]; ok {
-		fs.Infof(nil, "gphoto_auth: obtained token (encrypted=%s)", result["TokenEncrypted"])
-		// Log the raw encrypted token for Python debugging
-		fs.Infof(nil, "=== RAW IT VALUE FOR PYTHON DEBUG ===")
-		fs.Infof(nil, "it=%s", token)
-		fs.Infof(nil, "=== END RAW IT VALUE ===")
-
 		// Reset failure counter on success
 		a.authFailCount = 0
 
@@ -783,6 +672,8 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 			expiry *= 1000 // Convert to ms
 		}
 
+		fs.Debugf(nil, "gphoto_auth: obtained token for %s (expires in %ds)", a.email, expiry/1000)
+
 		return &TokenResult{
 			Token:  token,
 			Expiry: expiry,
@@ -796,11 +687,9 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 
 	errorMsg := result["Error"]
 	if errorMsg == "" {
-		// No Error key found - check what keys we did get
 		if len(result) == 0 {
-			errorMsg = "Empty or unparseable response (raw body logged above)"
+			errorMsg = "Empty or unparseable response"
 		} else {
-			// List all keys we found for debugging
 			var keys []string
 			for k := range result {
 				keys = append(keys, k)
@@ -814,17 +703,7 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 
 // doAuthRequest performs the HTTP request to Google's auth endpoint.
 func (a *GooglePhotosAuth) doAuthRequest(ctx context.Context, data url.Values, headers map[string]string) (map[string]string, error) {
-	encodedData := data.Encode()
-
-	// Log request details for debugging
-	fs.Infof(nil, "=== REQUEST DEBUG ===")
-	fs.Infof(nil, "Token (first 50): %.50s...", data.Get("Token"))
-	fs.Infof(nil, "Email: %s", data.Get("Email"))
-	fs.Infof(nil, "assertion_jwt present: %v", data.Get("assertion_jwt") != "")
-	fs.Infof(nil, "Request body length: %d", len(encodedData))
-	fs.Infof(nil, "=== END REQUEST DEBUG ===")
-
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://android.googleapis.com/auth", strings.NewReader(encodedData))
+	req, err := http.NewRequestWithContext(ctx, "POST", "https://android.googleapis.com/auth", strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -855,11 +734,7 @@ func (a *GooglePhotosAuth) doAuthRequest(ctx context.Context, data url.Values, h
 		return nil, err
 	}
 
-	fs.Infof(nil, "gphoto_auth: response status=%d, body_len=%d", resp.StatusCode, len(body))
-
-	// For non-200 status codes, log the raw response body to help debugging
 	if resp.StatusCode != http.StatusOK {
-		// Log the raw body (truncate if too long)
 		bodyStr := string(body)
 		if len(bodyStr) > 500 {
 			bodyStr = bodyStr[:500] + "..."
@@ -878,7 +753,7 @@ func (a *GooglePhotosAuth) HasTokenBinding() bool {
 // AccountCredentials holds the credentials for an account.
 type AccountCredentials struct {
 	MasterToken string `json:"master_token"`
-	PrivateKeyS string `json:"private_key_s,omitempty"` // hex-encoded private key scalar (optional)
+	PrivateKeyS string `json:"private_key_s,omitempty"`
 }
 
 // TokenManager manages tokens for multiple accounts with caching.
@@ -960,7 +835,7 @@ func (tm *TokenManager) GetCachedToken(user string) string {
 	return ""
 }
 
-// GetToken gets a token for a user, using cache if valid.
+// GetToken gets a token for a user, using cache if valid, auto-refreshes if expired.
 func (tm *TokenManager) GetToken(ctx context.Context, user string, force bool) (*TokenResult, error) {
 	username := normalizeUser(user)
 
@@ -972,6 +847,7 @@ func (tm *TokenManager) GetToken(ctx context.Context, user string, force bool) (
 		return nil, fmt.Errorf("unknown account: %s", username)
 	}
 
+	// Use cache if valid and not forcing refresh
 	if !force && tm.isTokenValid(username, 60000) {
 		tm.mu.RLock()
 		cached := tm.cache[username]
@@ -983,6 +859,7 @@ func (tm *TokenManager) GetToken(ctx context.Context, user string, force bool) (
 		}, nil
 	}
 
+	// Fetch fresh token
 	result, err := auth.GetToken(ctx)
 	if err != nil {
 		return nil, err
@@ -992,6 +869,7 @@ func (tm *TokenManager) GetToken(ctx context.Context, user string, force bool) (
 		return nil, fmt.Errorf("token fetch failed: %s", result.Error)
 	}
 
+	// Update cache
 	tm.mu.Lock()
 	tm.cache[username] = &cachedToken{
 		token:  result.Token,
