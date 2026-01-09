@@ -21,7 +21,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 )
@@ -1125,10 +1124,18 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	// Skip zero-byte files - Google Photos doesn't accept them
-	// Use NoRetryError to prevent infinite retry loops
+	// Return a dummy object to signal success so VFS removes the file from queue
 	if src.Size() == 0 {
 		fs.Infof(f, "Skipping zero-byte file: %s (Google Photos doesn't accept empty files)", src.Remote())
-		return nil, fserrors.NoRetryError(fmt.Errorf("cannot upload zero-byte file %q: Google Photos doesn't accept empty files", src.Remote()))
+		// Return a dummy object representing the "uploaded" empty file
+		// This tells VFS the upload succeeded and to remove it from the upload queue
+		return &Object{
+			fs:       f,
+			remote:   src.Remote(),
+			size:     0,
+			modTime:  src.ModTime(ctx),
+			mediaKey: "empty-file-skipped",
+		}, nil
 	}
 
 	// Use configured user for per-user mounts
