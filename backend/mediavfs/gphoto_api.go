@@ -153,7 +153,8 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 	var resp *http.Response
 	var err error
 	var bodyBytes []byte
-	authRetries := 0 // Track auth failures to escalate to force refresh
+	authRetries := 0    // Track auth failures to escalate to force refresh
+	lastStatusCode := 0 // Track last status code for error reporting
 
 	// If body is provided, read it into memory so we can retry
 	if body != nil {
@@ -208,17 +209,21 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			return resp, nil
 
 		case http.StatusUnauthorized, http.StatusForbidden:
+			lastStatusCode = resp.StatusCode
 			resp.Body.Close()
 			authRetries++
 			forceRefresh := authRetries > 1
+			fs.Debugf(nil, "gphoto: auth error (%d), retry %d/5, forceRefresh=%v", lastStatusCode, retry+1, forceRefresh)
 			if err := api.GetAuthToken(ctx, forceRefresh); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("auth refresh failed after %d: %w", lastStatusCode, err)
 			}
 			continue
 
 		case http.StatusTooManyRequests: // 429
+			lastStatusCode = resp.StatusCode
 			resp.Body.Close()
 			backoff := time.Duration(1<<uint(retry)) * time.Second
+			fs.Debugf(nil, "gphoto: rate limited (429), retry %d/5, backoff %s", retry+1, backoff)
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
@@ -227,10 +232,11 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			continue
 
 		case http.StatusInternalServerError, http.StatusServiceUnavailable:
+			lastStatusCode = resp.StatusCode
 			// Log error body for debugging
 			body, _ := readResponseBody(resp)
 			resp.Body.Close()
-			fs.Errorf(nil, "gphoto: server error (%d), body: %s", resp.StatusCode, string(body))
+			fs.Errorf(nil, "gphoto: server error (%d), retry %d/5, body: %s", resp.StatusCode, retry+1, string(body))
 			backoff := time.Duration(1<<uint(retry)) * time.Second
 			select {
 			case <-ctx.Done():
@@ -248,7 +254,7 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 		}
 	}
 
-	return resp, fmt.Errorf("max retries exceeded")
+	return resp, fmt.Errorf("max retries exceeded (last status: %d)", lastStatusCode)
 }
 
 // readResponseBody reads the response body, decompressing if gzip-encoded
