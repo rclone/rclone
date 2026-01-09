@@ -1713,9 +1713,6 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // Open opens the file for reading with URL caching and ETag support
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	// Log file being opened
-	fs.Infof(o, "Opening file: %s", o.remote)
-
 	// Check if we have cached metadata for this media key FIRST
 	cacheKey := o.mediaKey
 	cachedMeta, found := o.fs.urlCache.get(cacheKey)
@@ -1731,7 +1728,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		fs.Debugf(o, "URL cache hit for %s", o.remote)
 	} else {
 		// Cache miss - need to get download URL from API
-		fs.Debugf(o, "URL cache miss, fetching download URL for %s", o.remote)
+		fs.Debugf(o, "Fetching download URL for %s", o.remote)
 
 		initialURL, err := o.fs.api.GetDownloadURL(ctx, o.mediaKey)
 		if err != nil {
@@ -1784,7 +1781,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 							waitTime = time.Duration(seconds) * time.Second
 						}
 					}
-					fs.Errorf(o, "Rate limited (429) for %s, waiting %v before retry", o.remote, waitTime)
+					fs.Infof(o, "Rate limited (429) for %s, waiting %v before retry", o.remote, waitTime)
 					headResp.Body.Close()
 					time.Sleep(waitTime)
 					headErr = fmt.Errorf("rate limited (429)")
@@ -1792,14 +1789,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 				}
 				if headResp.StatusCode == http.StatusServiceUnavailable ||
 					headResp.StatusCode >= 500 {
-					fs.Errorf(o, "Server error (%d) for %s: %s", headResp.StatusCode, o.remote, headResp.Status)
+					fs.Debugf(o, "Server error (%d) for %s: %s", headResp.StatusCode, o.remote, headResp.Status)
 					headResp.Body.Close()
 					headErr = fmt.Errorf("server error: %s (status %d)", headResp.Status, headResp.StatusCode)
 					continue
 				}
 				break // Success
 			} else {
-				fs.Errorf(o, "HEAD request failed for %s: %v", o.remote, headErr)
+				fs.Debugf(o, "HEAD request failed for %s: %v", o.remote, headErr)
 			}
 		}
 
@@ -1831,13 +1828,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	// Now make the actual GET request to the resolved URL with retry logic
-	fs.Infof(o, "Downloading: %s", o.remote)
+	fs.Debugf(o, "Downloading: %s", o.remote)
 	var res *http.Response
 	var getErr error
 	for attempt := 0; attempt < 3; attempt++ {
 		if attempt > 0 {
 			sleepTime := time.Duration(1<<uint(attempt-1)) * time.Second
-			fs.Infof(o, "Retrying download for %s after %v (attempt %d/3)", o.remote, sleepTime, attempt+1)
+			fs.Debugf(o, "Retrying download for %s after %v (attempt %d/3)", o.remote, sleepTime, attempt+1)
 			time.Sleep(sleepTime)
 		}
 
@@ -1878,7 +1875,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 						waitTime = time.Duration(seconds) * time.Second
 					}
 				}
-				fs.Errorf(o, "Rate limited (429) downloading %s, waiting %v before retry", o.remote, waitTime)
+				fs.Infof(o, "Rate limited (429) downloading %s, waiting %v before retry", o.remote, waitTime)
 				res.Body.Close()
 				time.Sleep(waitTime)
 				getErr = fmt.Errorf("rate limited (429)")
@@ -1886,7 +1883,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			}
 			if res.StatusCode == http.StatusServiceUnavailable ||
 				res.StatusCode >= 500 {
-				fs.Errorf(o, "Server error (%d) downloading %s: %s", res.StatusCode, o.remote, res.Status)
+				fs.Debugf(o, "Server error (%d) downloading %s: %s", res.StatusCode, o.remote, res.Status)
 				res.Body.Close()
 				getErr = fmt.Errorf("server error: %s (status %d)", res.Status, res.StatusCode)
 				continue
@@ -1897,7 +1894,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			res.Body.Close()
 			return nil, fmt.Errorf("download failed for %s: HTTP %d %s", o.remote, res.StatusCode, res.Status)
 		} else {
-			fs.Errorf(o, "GET request failed for %s: %v", o.remote, getErr)
+			fs.Debugf(o, "GET request failed for %s: %v", o.remote, getErr)
 		}
 	}
 
@@ -1906,7 +1903,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		return nil, fmt.Errorf("failed to download %s: %w", o.remote, getErr)
 	}
 
-	fs.Infof(o, "Download started: %s (%d bytes)", o.remote, fileSize)
+	fs.Debugf(o, "Download started: %s (%d bytes)", o.remote, fileSize)
 
 	return res.Body, nil
 }
