@@ -503,11 +503,27 @@ func (auth *GooglePhotosAuth) buildRequestData(withJWT bool) url.Values {
 		ephemeralKey, err := auth.generateEphemeralKey()
 		if err == nil {
 			payload["ephemeral_key"] = ephemeralKey
+		} else {
+			fs.Errorf(nil, "gphoto_auth: failed to generate ephemeral key: %v", err)
 		}
+
+		fs.Infof(nil, "gphoto_auth: JWT issuer: %s", auth.issuer)
+
+		// Log payload for debugging
+		payloadJSON, _ := json.Marshal(payload)
+		fs.Infof(nil, "gphoto_auth: JWT payload: %s", string(payloadJSON))
 
 		jwt, err := auth.signJWT(payload)
 		if err == nil {
 			data.Set("assertion_jwt", jwt)
+			// Log first 100 chars of JWT
+			jwtPreview := jwt
+			if len(jwtPreview) > 100 {
+				jwtPreview = jwtPreview[:100]
+			}
+			fs.Infof(nil, "gphoto_auth: JWT generated (len=%d): %s...", len(jwt), jwtPreview)
+		} else {
+			fs.Errorf(nil, "gphoto_auth: failed to sign JWT: %v", err)
 		}
 	}
 
