@@ -14,8 +14,8 @@ func (f *Fs) DeleteFromGPhotos(ctx context.Context, dedupKeys []string, user str
 		return nil
 	}
 
-	// Initialize API client (token is fetched lazily on first request)
-	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
+	// Use the shared API client (with native auth if configured)
+	api := f.api
 
 	// Move to trash
 	fs.Debugf(f, "Moving %d files to trash", len(dedupKeys))

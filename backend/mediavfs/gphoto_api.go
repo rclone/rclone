@@ -34,6 +34,7 @@ const (
 type GPhotoAPI struct {
 	token          string
 	tokenExpiry    int64 // Token expiry in milliseconds
+	tokenMu        sync.Mutex // Protects token access to prevent race conditions
 	httpClient     *http.Client
 	tokenServerURL string
 	nativeAuth     *GooglePhotosAuth // Native auth client (optional)
@@ -93,7 +94,11 @@ func (api *GPhotoAPI) GetAuthToken(ctx context.Context, force bool) error {
 
 // getNativeAuthToken gets token using native authentication
 func (api *GPhotoAPI) getNativeAuthToken(ctx context.Context, force bool) error {
+	api.tokenMu.Lock()
+	defer api.tokenMu.Unlock()
+
 	// Check if current token is still valid (with 60s buffer)
+	// Re-check after acquiring lock in case another goroutine just refreshed
 	if !force && api.token != "" && api.tokenExpiry > 0 {
 		nowMs := time.Now().UnixMilli()
 		if nowMs < (api.tokenExpiry - 60000) {

@@ -502,8 +502,8 @@ func (f *Fs) DeleteMediaItems(ctx context.Context, mediaKeys []string) error {
 
 // SyncFromGooglePhotos syncs media from Google Photos to the database
 func (f *Fs) SyncFromGooglePhotos(ctx context.Context, user string) error {
-	// Initialize API client (token is fetched lazily on first request)
-	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
+	// Use the shared API client (with native auth if configured)
+	api := f.api
 
 	// Get current sync state
 	state, err := f.GetSyncState(ctx)
