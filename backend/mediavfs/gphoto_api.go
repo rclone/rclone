@@ -68,7 +68,7 @@ func NewGPhotoAPIWithNativeAuth(user, tokenServerURL, masterToken, privateKeyS, 
 			return nil, fmt.Errorf("failed to create native auth: %w", err)
 		}
 		api.nativeAuth = nativeAuth
-		fs.Debugf(nil, "gphoto: using native token generation for %s", user)
+		fs.Infof(nil, "gphoto: using native token generation for %s", user)
 	}
 
 	return api, nil
