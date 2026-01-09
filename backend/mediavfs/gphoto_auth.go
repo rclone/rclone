@@ -536,6 +536,8 @@ type TokenResult struct {
 
 // GetToken fetches an OAuth token from Google
 func (auth *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
+	fs.Infof(nil, "gphoto_auth: requesting token for %s (has_private_key=%v)", auth.email, auth.privateKey != nil)
+
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/x-www-form-urlencoded")
 	headers.Set("User-Agent", "GoogleAuth/1.4 (generic_x86 PPR1.180610.011); gzip")
@@ -565,6 +567,7 @@ func (auth *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error
 	result := parseResponse(string(body))
 
 	// Log auth response for debugging
+	fs.Debugf(nil, "gphoto_auth: response status=%d, has_it=%v, has_error=%v", resp.StatusCode, result["it"] != "", result["Error"] != "")
 	if result["Error"] != "" {
 		fs.Errorf(nil, "gphoto_auth: token request error: %s", result["Error"])
 	}
@@ -621,6 +624,10 @@ func (auth *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error
 		}, nil
 	}
 
+	// No token in response
+	if result["Error"] == "" {
+		fs.Errorf(nil, "gphoto_auth: no token in response and no error")
+	}
 	return &TokenResult{
 		Error: result["Error"],
 	}, nil
