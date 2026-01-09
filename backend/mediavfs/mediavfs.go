@@ -1779,35 +1779,86 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return fmt.Errorf("cannot update existing file (size differs: local=%d remote=%d) - delete and re-upload instead", src.Size(), o.size)
 }
 
-// Remove marks a file for deletion (trash_timestamp = -1) and removes from VFS
-// Actual deletion from Google Photos happens in background batch process
+// Remove deletes a file - checks for duplicates first to prevent data loss
+// If file has duplicates (same dedup_key), only hides locally (trash_timestamp = -1)
+// If file is unique, deletes from Google Photos server and database
 func (o *Object) Remove(ctx context.Context) error {
 	if !o.fs.opt.EnableDelete {
 		fs.Debugf(o.fs, "Remove disabled for %s", o.Remote())
 		return nil
 	}
 
-	fs.Debugf(o.fs, "Marking %s for deletion", o.Remote())
+	fs.Debugf(o.fs, "Checking duplicates before removing %s", o.Remote())
 
-	// Mark for deletion by setting trash_timestamp = -1
-	// This removes it from listings immediately (trash_timestamp != 0 is filtered out)
-	query := fmt.Sprintf(`
-		UPDATE %s SET trash_timestamp = -1
-		WHERE media_key = $1
-	`, o.fs.opt.TableName)
-
-	_, err := o.fs.db.ExecContext(ctx, query, o.mediaKey)
+	// Get the dedup_key for this file
+	var dedupKey string
+	dedupQuery := fmt.Sprintf(`SELECT COALESCE(dedup_key, '') FROM %s WHERE media_key = $1`, o.fs.opt.TableName)
+	err := o.fs.db.QueryRowContext(ctx, dedupQuery, o.mediaKey).Scan(&dedupKey)
 	if err != nil {
-		return fmt.Errorf("failed to mark for deletion: %w", err)
+		return fmt.Errorf("failed to get dedup_key: %w", err)
 	}
 
-	// Remove from caches
+	// Count how many files share this dedup_key (excluding already trashed files)
+	var duplicateCount int
+	if dedupKey != "" {
+		countQuery := fmt.Sprintf(`
+			SELECT COUNT(*) FROM %s
+			WHERE dedup_key = $1
+			AND (trash_timestamp IS NULL OR trash_timestamp = 0)
+		`, o.fs.opt.TableName)
+		err = o.fs.db.QueryRowContext(ctx, countQuery, dedupKey).Scan(&duplicateCount)
+		if err != nil {
+			return fmt.Errorf("failed to count duplicates: %w", err)
+		}
+	} else {
+		// No dedup_key means we can't check for duplicates, treat as unique
+		duplicateCount = 1
+	}
+
+	// Remove from caches first
 	o.fs.removeFromDirCache(o.displayPath, o.displayName)
 	o.fs.lazyMu.Lock()
 	delete(o.fs.lazyMeta, o.remote)
 	o.fs.lazyMu.Unlock()
 
-	fs.Debugf(o.fs, "Marked %s for deletion (will be batch deleted)", o.Remote())
+	if duplicateCount <= 1 {
+		// This is the only copy - safe to delete from Google Photos
+		fs.Debugf(o.fs, "File %s is unique (no duplicates), deleting from Google Photos", o.Remote())
+
+		if dedupKey != "" {
+			// Delete from Google Photos
+			if err := o.fs.DeleteFromGPhotos(ctx, []string{dedupKey}, o.userName); err != nil {
+				fs.Errorf(o.fs, "Failed to delete from Google Photos: %v", err)
+				// Still mark as deleted locally even if Google delete fails
+			}
+		}
+
+		// Delete from database
+		deleteQuery := fmt.Sprintf(`DELETE FROM %s WHERE media_key = $1`, o.fs.opt.TableName)
+		_, err = o.fs.db.ExecContext(ctx, deleteQuery, o.mediaKey)
+		if err != nil {
+			return fmt.Errorf("failed to delete from database: %w", err)
+		}
+
+		fs.Infof(o.fs, "Deleted %s from Google Photos and database", o.Remote())
+	} else {
+		// Multiple copies exist - only hide locally to prevent data loss
+		fs.Debugf(o.fs, "File %s has %d copies, hiding locally only (not deleting from Google Photos)", o.Remote(), duplicateCount)
+
+		// Mark for local deletion by setting trash_timestamp = -1
+		query := fmt.Sprintf(`
+			UPDATE %s SET trash_timestamp = -1
+			WHERE media_key = $1
+		`, o.fs.opt.TableName)
+
+		_, err = o.fs.db.ExecContext(ctx, query, o.mediaKey)
+		if err != nil {
+			return fmt.Errorf("failed to mark for deletion: %w", err)
+		}
+
+		fs.Infof(o.fs, "Hidden %s locally (has %d duplicates, not deleted from Google Photos)", o.Remote(), duplicateCount)
+	}
+
 	return nil
 }
 
