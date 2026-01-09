@@ -17,10 +17,6 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
-// Global semaphore to serialize API calls (prevents rate limiting)
-// Only 1 concurrent API call - subsequent requests queue until current completes
-var apiSemaphore = make(chan struct{}, 1)
-
 // ErrMediaNotFound is returned when a media item doesn't exist (404)
 var ErrMediaNotFound = errors.New("media item not found")
 
@@ -155,14 +151,6 @@ func (api *GPhotoAPI) getTokenServerToken(ctx context.Context, force bool) error
 
 // request makes an authenticated HTTP request with retry logic
 func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers map[string]string, body io.Reader) (*http.Response, error) {
-	// Acquire semaphore to limit concurrent API calls
-	select {
-	case apiSemaphore <- struct{}{}:
-		defer func() { <-apiSemaphore }()
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-
 	var resp *http.Response
 	var err error
 	var bodyBytes []byte
