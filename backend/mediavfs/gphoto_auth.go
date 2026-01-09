@@ -463,15 +463,14 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 	fs.Infof(nil, "ephemeralPrivateKey.D: %x", a.ephemeralPrivateKey.D.Bytes())
 	fs.Infof(nil, "sharedSecret (32 bytes): %x", sharedSecret)
 
-	// MicroG-style HKDF key derivation:
-	// IKM = shared_secret only (not concatenated with pub key)
-	// Salt = sender public key bytes (kem_bytes)
+	// HKDF key derivation (verified to match Python):
+	// IKM = sender_pub_bytes || shared_secret
+	// Salt = empty (RFC 5869: empty salt treated as hash-length zeros)
 	// Info = empty
-	hkdfIKM := sharedSecret
-	hkdfSalt := senderPubBytes
-	fs.Infof(nil, "microg HKDF: IKM=sharedSecret(%d), salt=senderPubBytes(%d)", len(hkdfIKM), len(hkdfSalt))
+	hkdfIKM := append(senderPubBytes, sharedSecret...)
+	fs.Infof(nil, "HKDF: IKM=senderPub||sharedSecret (%d bytes)", len(hkdfIKM))
 
-	hkdfReader := hkdf.New(sha256.New, hkdfIKM, hkdfSalt, []byte{})
+	hkdfReader := hkdf.New(sha256.New, hkdfIKM, nil, nil)
 	aesKey := make([]byte, 16) // AES-128
 	if _, err := io.ReadFull(hkdfReader, aesKey); err != nil {
 		fs.Errorf(nil, "gphoto_auth: decrypt failed - HKDF error: %v", err)
