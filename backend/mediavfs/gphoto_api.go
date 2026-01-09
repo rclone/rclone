@@ -97,7 +97,7 @@ func (api *GPhotoAPI) getNativeAuthToken(ctx context.Context, force bool) error 
 	if !force && api.token != "" && api.tokenExpiry > 0 {
 		nowMs := time.Now().UnixMilli()
 		if nowMs < (api.tokenExpiry - 60000) {
-			fs.Debugf(nil, "gphoto: reusing cached token (expires in %ds)", (api.tokenExpiry-nowMs)/1000)
+			fs.Infof(nil, "gphoto: reusing cached token (expires in %ds)", (api.tokenExpiry-nowMs)/1000)
 			return nil // Token still valid
 		}
 	}
