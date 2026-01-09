@@ -478,36 +478,73 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 
 	fs.Infof(nil, "aesKey (16 bytes): %x", aesKey)
 	fs.Infof(nil, "aesCiphertext length: %d", len(aesCiphertext))
-	fs.Infof(nil, "nonce will be: %x", aesCiphertext[0:12])
+	fs.Infof(nil, "aesCiphertext first 20 bytes: %x", aesCiphertext[:min(20, len(aesCiphertext))])
 	fs.Infof(nil, "=== DECRYPT DEBUG END ===")
 
 	// AES-GCM decryption
-	if len(aesCiphertext) < 28 { // 12 (IV) + 16 (tag minimum)
-		fs.Errorf(nil, "gphoto_auth: decrypt failed - aesCiphertext too short: %d", len(aesCiphertext))
-		return encryptedToken, nil
+	// Tink's inner AEAD (AES-GCM) also has a 5-byte prefix (version + key_id) before IV
+	// So structure is: [5-byte prefix][12-byte IV][ciphertext][16-byte tag]
+	// Total minimum: 5 + 12 + 16 = 33 bytes
+	if len(aesCiphertext) < 33 {
+		// Try without inner prefix (some implementations don't have it)
+		if len(aesCiphertext) < 28 { // 12 (IV) + 16 (tag minimum)
+			fs.Errorf(nil, "gphoto_auth: decrypt failed - aesCiphertext too short: %d", len(aesCiphertext))
+			return encryptedToken, nil
+		}
 	}
 
-	nonce := aesCiphertext[0:12]
-	ciphertextWithTag := aesCiphertext[12:]
+	// Try both with and without inner 5-byte prefix
+	var nonce, ciphertextWithTag []byte
+	var decryptError error
+	var tokenBytes []byte
 
-	block, err := aes.NewCipher(aesKey)
-	if err != nil {
-		fs.Errorf(nil, "gphoto_auth: decrypt failed - AES cipher error: %v", err)
-		return encryptedToken, nil
+	// First try: skip inner 5-byte prefix (Tink full format)
+	if len(aesCiphertext) >= 33 {
+		fs.Infof(nil, "gphoto_auth: trying with 5-byte inner prefix skip")
+		innerPrefix := aesCiphertext[0:5]
+		fs.Infof(nil, "gphoto_auth: inner prefix: %x", innerPrefix)
+		nonce = aesCiphertext[5:17]
+		ciphertextWithTag = aesCiphertext[17:]
+
+		block, err := aes.NewCipher(aesKey)
+		if err == nil {
+			aesGCM, err := cipher.NewGCM(block)
+			if err == nil {
+				tokenBytes, decryptError = aesGCM.Open(nil, nonce, ciphertextWithTag, nil)
+				if decryptError == nil {
+					goto success
+				}
+				fs.Infof(nil, "gphoto_auth: with inner prefix failed: %v, trying without", decryptError)
+			}
+		}
 	}
 
-	aesGCM, err := cipher.NewGCM(block)
-	if err != nil {
-		fs.Errorf(nil, "gphoto_auth: decrypt failed - GCM error: %v", err)
-		return encryptedToken, nil
+	// Second try: no inner prefix
+	fs.Infof(nil, "gphoto_auth: trying without inner prefix")
+	nonce = aesCiphertext[0:12]
+	ciphertextWithTag = aesCiphertext[12:]
+
+	{
+		block, err := aes.NewCipher(aesKey)
+		if err != nil {
+			fs.Errorf(nil, "gphoto_auth: decrypt failed - AES cipher error: %v", err)
+			return encryptedToken, nil
+		}
+
+		aesGCM, err := cipher.NewGCM(block)
+		if err != nil {
+			fs.Errorf(nil, "gphoto_auth: decrypt failed - GCM error: %v", err)
+			return encryptedToken, nil
+		}
+
+		tokenBytes, decryptError = aesGCM.Open(nil, nonce, ciphertextWithTag, nil)
+		if decryptError != nil {
+			fs.Errorf(nil, "gphoto_auth: decrypt failed - GCM decrypt error: %v", decryptError)
+			return encryptedToken, nil
+		}
 	}
 
-	tokenBytes, err := aesGCM.Open(nil, nonce, ciphertextWithTag, nil)
-	if err != nil {
-		fs.Errorf(nil, "gphoto_auth: decrypt failed - GCM decrypt error: %v", err)
-		return encryptedToken, nil
-	}
-
+success:
 	tokenStr := string(tokenBytes)
 	fs.Infof(nil, "gphoto_auth: decrypt SUCCESS - token prefix: %.20s...", tokenStr)
 
