@@ -13,7 +13,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -295,14 +294,35 @@ func (a *GooglePhotosAuth) getIssuer() string {
 }
 
 // signJWT signs a JWT with ES256.
+// The payload must be serialized in the exact order Python uses (insertion order).
 func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, error) {
 	// Use fixed header JSON to match Python's output exactly
 	// Python: json.dumps({"alg": "ES256", "typ": "JWT"}, separators=(',', ':'))
 	headerJSON := []byte(`{"alg":"ES256","typ":"JWT"}`)
 
-	payloadJSON, err := json.Marshal(payload)
-	if err != nil {
-		return "", err
+	// Build payload JSON manually to match Python's key order exactly
+	// Python order: namespace, aud, iss, iat, ephemeral_key (with kty before TinkKeysetPublicKeyInfo)
+	var payloadJSON []byte
+	if ephKey, ok := payload["ephemeral_key"].(map[string]interface{}); ok {
+		// With ephemeral key - build in Python's exact order
+		payloadJSON = []byte(fmt.Sprintf(
+			`{"namespace":%q,"aud":%q,"iss":%q,"iat":%d,"ephemeral_key":{"kty":%q,"TinkKeysetPublicKeyInfo":%q}}`,
+			payload["namespace"],
+			payload["aud"],
+			payload["iss"],
+			int64(payload["iat"].(int64)),
+			ephKey["kty"],
+			ephKey["TinkKeysetPublicKeyInfo"],
+		))
+	} else {
+		// Without ephemeral key
+		payloadJSON = []byte(fmt.Sprintf(
+			`{"namespace":%q,"aud":%q,"iss":%q,"iat":%d}`,
+			payload["namespace"],
+			payload["aud"],
+			payload["iss"],
+			int64(payload["iat"].(int64)),
+		))
 	}
 
 	// Log the payload for debugging
