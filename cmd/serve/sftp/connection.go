@@ -291,7 +291,7 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 				}
 			}
 			fs.Debugf(c.what, " - accepted: %v\n", ok)
-			err = req.Reply(ok, reply)
+			err := req.Reply(ok, reply)
 			if err != nil {
 				fs.Errorf(c.what, "Failed to Reply to request: %v", err)
 				return
