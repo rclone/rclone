@@ -338,6 +338,10 @@ func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, erro
 	copy(sigBytes[64-len(sBytes):64], sBytes)
 	sigB64 := base64URLEncode(sigBytes)
 
+	// Self-verify the signature to ensure it's valid
+	valid := ecdsa.Verify(&a.privateKey.PublicKey, hash[:], r, s)
+	fs.Infof(nil, "gphoto_auth: signature self-verify: %v", valid)
+
 	jwt := headerB64 + "." + payloadB64 + "." + sigB64
 
 	// Print ALL debug info at once
