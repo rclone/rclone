@@ -207,6 +207,10 @@ github.com/cloudsoda/sddl v0.0.0-20250224235906-926454e91efc/go.mod h1:uvR42Hb/t
 github.com/cloudwego/base64x v0.1.5 h1:XPciSp1xaq2VCSt6lF0phncD4koWyULpl5bUxbfCyP4=
 github.com/cloudwego/base64x v0.1.5/go.mod h1:0zlkT4Wn5C6NdauXdJRhSKRlJvmclQ1hhJgA0rcu/8w=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
+github.com/coderFrankenstain/Proton-API-Bridge v1.1.0 h1:G51zblki27qXmVYZoktnOVuLEcjKaH6O1+zDiHjGOz0=
+github.com/coderFrankenstain/Proton-API-Bridge v1.1.0/go.mod h1:gunH16hf6U74W2b9CGDaWRadiLICsoJ6KRkSt53zLts=
+github.com/coderFrankenstain/go-proton-api v1.1.0 h1:Ld+jhTLBVIlaCu3NuqAR3CuCGpWxOfvp5iix47nwMU8=
+github.com/coderFrankenstain/go-proton-api v1.1.0/go.mod h1:w63MZuzufKcIZ93pwRgiOtxMXYafI8H74D77AxytOBc=
 github.com/colinmarc/hdfs/v2 v2.4.0 h1:v6R8oBx/Wu9fHpdPoJJjpGSUxo8NhHIwrwsfhFvU9W0=
 github.com/colinmarc/hdfs/v2 v2.4.0/go.mod h1:0NAO+/3knbMx6+5pCv+Hcbaz4xn/Zzbn9+WIib2rKVI=
 github.com/coreos/go-semver v0.3.1 h1:yi21YpKnrx1gt5R+la8n5WgS0kCrsPp33dmEyHReZr4=
@@ -415,10 +419,6 @@ github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ
 github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru/v2 v2.0.7 h1:a+bsQ5rvGLjzHuww6tVxozPZFVghXaHOwFs4luLUK2k=
 github.com/hashicorp/golang-lru/v2 v2.0.7/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM=
-github.com/henrybear327/Proton-API-Bridge v1.0.0 h1:gjKAaWfKu++77WsZTHg6FUyPC5W0LTKWQciUm8PMZb0=
-github.com/henrybear327/Proton-API-Bridge v1.0.0/go.mod h1:gunH16hf6U74W2b9CGDaWRadiLICsoJ6KRkSt53zLts=
-github.com/henrybear327/go-proton-api v1.0.0 h1:zYi/IbjLwFAW7ltCeqXneUGJey0TN//Xo851a/BgLXw=
-github.com/henrybear327/go-proton-api v1.0.0/go.mod h1:w63MZuzufKcIZ93pwRgiOtxMXYafI8H74D77AxytOBc=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
