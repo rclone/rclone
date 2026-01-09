@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -246,7 +247,34 @@ type Object struct {
 // shouldRetry returns a boolean as to whether this err deserves to be
 // retried.  It returns the err as a convenience
 func shouldRetry(ctx context.Context, err error) (bool, error) {
-	return false, err
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
+	if err == nil {
+		return false, nil
+	}
+
+	errStr := err.Error()
+
+	// Transient storage block errors (Code=200501)
+	if strings.Contains(errStr, "Code=200501") {
+		fs.Debugf(nil, "Retrying storage block error: %v", err)
+		return true, err
+	}
+
+	// Rate limiting (429)
+	if strings.Contains(errStr, "Status=429") {
+		return true, err
+	}
+
+	// Server errors (5xx)
+	for _, code := range []int{500, 502, 503, 504} {
+		if strings.Contains(errStr, fmt.Sprintf("Status=%d", code)) {
+			return true, err
+		}
+	}
+
+	return fserrors.ShouldRetry(err), err
 }
 
 //------------------------------------------------------------------------------
