@@ -724,7 +724,17 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 
 // doAuthRequest performs the HTTP request to Google's auth endpoint.
 func (a *GooglePhotosAuth) doAuthRequest(ctx context.Context, data url.Values, headers map[string]string) (map[string]string, error) {
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://android.googleapis.com/auth", strings.NewReader(data.Encode()))
+	encodedData := data.Encode()
+
+	// Log request details for debugging
+	fs.Infof(nil, "=== REQUEST DEBUG ===")
+	fs.Infof(nil, "Token (first 50): %.50s...", data.Get("Token"))
+	fs.Infof(nil, "Email: %s", data.Get("Email"))
+	fs.Infof(nil, "assertion_jwt present: %v", data.Get("assertion_jwt") != "")
+	fs.Infof(nil, "Request body length: %d", len(encodedData))
+	fs.Infof(nil, "=== END REQUEST DEBUG ===")
+
+	req, err := http.NewRequestWithContext(ctx, "POST", "https://android.googleapis.com/auth", strings.NewReader(encodedData))
 	if err != nil {
 		return nil, err
 	}
