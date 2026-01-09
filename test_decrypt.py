@@ -1,26 +1,38 @@
 #!/usr/bin/env python3
 """
-Test script to show HKDF values - pure Python implementation.
-Run with: python3 test_decrypt.py
+Debug script to show decryption values.
+Paste your decrypt function here and call debug_decrypt() with the encrypted token.
 """
 
 import hashlib
 import hmac
+import base64
 
-def hkdf_extract(salt, ikm, hash_algo=hashlib.sha256):
+def base64url_decode(data):
+    """Decode base64url without padding."""
+    padding = 4 - len(data) % 4
+    if padding != 4:
+        data += '=' * padding
+    return base64.urlsafe_b64decode(data)
+
+def base64url_encode(data):
+    """Encode to base64url without padding."""
+    return base64.urlsafe_b64encode(data).rstrip(b'=').decode()
+
+def hkdf_extract(salt, ikm):
     """HKDF Extract step."""
     if salt is None or len(salt) == 0:
-        salt = b'\x00' * hash_algo().digest_size
-    return hmac.new(salt, ikm, hash_algo).digest()
+        salt = b'\x00' * 32  # SHA256 digest size
+    return hmac.new(salt, ikm, hashlib.sha256).digest()
 
-def hkdf_expand(prk, info, length, hash_algo=hashlib.sha256):
+def hkdf_expand(prk, info, length):
     """HKDF Expand step."""
-    hash_len = hash_algo().digest_size
+    hash_len = 32
     n = (length + hash_len - 1) // hash_len
     okm = b""
     t = b""
     for i in range(1, n + 1):
-        t = hmac.new(prk, t + info + bytes([i]), hash_algo).digest()
+        t = hmac.new(prk, t + info + bytes([i]), hashlib.sha256).digest()
         okm += t
     return okm[:length]
 
@@ -29,39 +41,120 @@ def hkdf(ikm, salt, info, length):
     prk = hkdf_extract(salt, ikm)
     return hkdf_expand(prk, info, length)
 
-# Values from Go debug output
-shared_secret_hex = "30ad4580d37c8098ac4f09c9e35c146eb44e43ca48ac477e9484a66429a24543"
-sender_pub_hex = "046fd9d34a28758d9845787084526df32e49adee71993c64b2af36e3379c609eebc62c5bd58c6c1dc86ee06188e1307ce4222279b7204edfc96171ab7b74359358"
+def debug_decrypt(encrypted_token_b64, ephemeral_private_key_hex):
+    """
+    Debug decryption - shows all intermediate values.
 
-shared_secret = bytes.fromhex(shared_secret_hex)
-sender_pub = bytes.fromhex(sender_pub_hex)
+    Args:
+        encrypted_token_b64: The base64url encoded encrypted token (from 'it' field in response)
+        ephemeral_private_key_hex: The hex string of the ephemeral private key D value
+    """
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-print("=== Python HKDF Test ===")
-print(f"shared_secret ({len(shared_secret)} bytes): {shared_secret.hex()}")
-print(f"sender_pub ({len(sender_pub)} bytes): {sender_pub.hex()}")
+    print("=== PYTHON DECRYPT DEBUG ===")
 
-# Test 1: IKM = sender_pub || shared_secret, salt=b"", info=b""
-print("\n--- Test 1: IKM = sender_pub || shared_secret, salt=b'', info=b'' ---")
-ikm1 = sender_pub + shared_secret
-key1 = hkdf(ikm1, b"", b"", 16)
-print(f"IKM ({len(ikm1)} bytes)")
-print(f"AES key: {key1.hex()}")
+    # Decode ciphertext
+    ciphertext = base64url_decode(encrypted_token_b64)
+    print(f"ciphertext total length: {len(ciphertext)}")
+    print(f"ciphertext first 20 bytes: {ciphertext[:20].hex()}")
 
-# Test 2: IKM = shared_secret, salt=sender_pub, info=b""
-print("\n--- Test 2: IKM = shared_secret, salt=sender_pub, info=b'' ---")
-key2 = hkdf(shared_secret, sender_pub, b"", 16)
-print(f"AES key: {key2.hex()}")
+    # Parse structure
+    prefix = ciphertext[0:5]
+    print(f"prefix (5 bytes): {prefix.hex()}")
 
-# Test 3: IKM = shared_secret, salt=b"", info=b""
-print("\n--- Test 3: IKM = shared_secret, salt=b'', info=b'' ---")
-key3 = hkdf(shared_secret, b"", b"", 16)
-print(f"AES key: {key3.hex()}")
+    sender_pub_bytes = ciphertext[5:70]
+    print(f"sender_pub_bytes (65 bytes): {sender_pub_bytes.hex()}")
+    print(f"sender_pub first byte: {sender_pub_bytes[0]:02x} (should be 04)")
 
-# Test 4: IKM = sender_pub || shared_secret, salt=None (32 zero bytes)
-print("\n--- Test 4: IKM = sender_pub || shared_secret, salt=None (zeros) ---")
-key4 = hkdf(ikm1, None, b"", 16)
-print(f"AES key: {key4.hex()}")
+    aes_ciphertext = ciphertext[70:]
+    print(f"aes_ciphertext length: {len(aes_ciphertext)}")
+    print(f"aes_ciphertext first 20 bytes: {aes_ciphertext[:20].hex()}")
 
-# Go's current output was: aesKey (16 bytes): 6104b3ee2ea3a6b51d5ddf0f5b92f504
-print("\n=== Go produced: 6104b3ee2ea3a6b51d5ddf0f5b92f504 (with old IKM=pub||secret, salt=empty) ===")
-print("Which test above matches the correct Python output?")
+    # Extract sender public key coordinates
+    sender_x = int.from_bytes(sender_pub_bytes[1:33], 'big')
+    sender_y = int.from_bytes(sender_pub_bytes[33:65], 'big')
+    print(f"sender_x: {sender_x:064x}")
+    print(f"sender_y: {sender_y:064x}")
+
+    # Load ephemeral private key
+    ephemeral_d = int(ephemeral_private_key_hex, 16)
+    print(f"ephemeral_private_d: {ephemeral_d:064x}")
+
+    # Reconstruct sender public key
+    sender_pub = ec.EllipticCurvePublicNumbers(sender_x, sender_y, ec.SECP256R1()).public_key(default_backend())
+
+    # Create ephemeral private key
+    ephemeral_private = ec.derive_private_key(ephemeral_d, ec.SECP256R1(), default_backend())
+
+    # ECDH to get shared secret
+    from cryptography.hazmat.primitives import serialization
+    shared_key = ephemeral_private.exchange(ec.ECDH(), sender_pub)
+    print(f"shared_secret (32 bytes): {shared_key.hex()}")
+
+    # HKDF
+    hkdf_ikm = sender_pub_bytes + shared_key
+    print(f"hkdf_ikm length: {len(hkdf_ikm)}")
+    aes_key = hkdf(hkdf_ikm, b"", b"", 16)
+    print(f"aes_key (16 bytes): {aes_key.hex()}")
+
+    # Now try different IV positions
+    print("\n=== TRYING DIFFERENT CIPHERTEXT STRUCTURES ===")
+
+    # Structure 1: No inner prefix - IV at byte 0
+    print("\n--- Structure 1: IV at byte 0 ---")
+    iv1 = aes_ciphertext[0:12]
+    ct1 = aes_ciphertext[12:]
+    print(f"iv: {iv1.hex()}")
+    print(f"ciphertext+tag length: {len(ct1)}")
+    try:
+        aesgcm = AESGCM(aes_key)
+        plaintext = aesgcm.decrypt(iv1, ct1, None)
+        print(f"SUCCESS! plaintext: {plaintext[:50]}...")
+        return plaintext
+    except Exception as e:
+        print(f"Failed: {e}")
+
+    # Structure 2: 5-byte inner prefix - IV at byte 5
+    print("\n--- Structure 2: IV at byte 5 (skip 5-byte prefix) ---")
+    inner_prefix = aes_ciphertext[0:5]
+    iv2 = aes_ciphertext[5:17]
+    ct2 = aes_ciphertext[17:]
+    print(f"inner_prefix: {inner_prefix.hex()}")
+    print(f"iv: {iv2.hex()}")
+    print(f"ciphertext+tag length: {len(ct2)}")
+    try:
+        aesgcm = AESGCM(aes_key)
+        plaintext = aesgcm.decrypt(iv2, ct2, None)
+        print(f"SUCCESS! plaintext: {plaintext[:50]}...")
+        return plaintext
+    except Exception as e:
+        print(f"Failed: {e}")
+
+    # Structure 3: Maybe the outer prefix is different?
+    print("\n--- Structure 3: Different outer structure ---")
+    # Try with 1-byte version prefix only
+    sender_pub_bytes_v2 = ciphertext[1:66]
+    aes_ciphertext_v2 = ciphertext[66:]
+    print(f"With 1-byte prefix: sender_pub={sender_pub_bytes_v2[:5].hex()}..., aes_ct len={len(aes_ciphertext_v2)}")
+
+    print("\n=== END PYTHON DECRYPT DEBUG ===")
+    return None
+
+
+# If you have the encrypted token and ephemeral key, uncomment and fill in:
+# encrypted_token = "YOUR_ENCRYPTED_TOKEN_BASE64URL_HERE"
+# ephemeral_key = "YOUR_EPHEMERAL_PRIVATE_KEY_HEX_HERE"
+# debug_decrypt(encrypted_token, ephemeral_key)
+
+print("""
+To use this script:
+1. Add your decrypt code or use the debug_decrypt function above
+2. Call it with the encrypted token (base64url) and ephemeral private key (hex)
+
+Example:
+    encrypted_token = "AZvRxyz..."  # from Go's 'it' response field
+    ephemeral_key = "c5cb0e307f5424..."  # from Go's ephemeralPrivateKey.D output
+    debug_decrypt(encrypted_token, ephemeral_key)
+""")
