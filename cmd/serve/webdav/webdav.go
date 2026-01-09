@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -213,14 +214,15 @@ done by the permissions on the socket.
 // might apply". In particular, whether or not renaming a file or directory
 // overwriting another existing file or directory is an error is OS-dependent.
 type WebDAV struct {
-	server        *libhttp.Server
-	opt           Options
-	f             fs.Fs
-	_vfs          *vfs.VFS // don't use directly, use getVFS
-	webdavhandler *webdav.Handler
-	proxy         *proxy.Proxy
-	ctx           context.Context // for global config
-	etagHashType  hash.Type
+	server         *libhttp.Server
+	opt            Options
+	f              fs.Fs
+	_vfs           *vfs.VFS // don't use directly, use getVFS
+	webdavhandler  *webdav.Handler
+	proxy          *proxy.Proxy
+	ctx            context.Context // for global config
+	etagHashType   hash.Type
+	metricsCleanup func()
 }
 
 // check interface
@@ -294,6 +296,10 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	for _, method := range methods {
 		chi.RegisterMethod(method)
 		router.Method(method, "/*", w)
+	}
+
+	if metrics.Enabled() {
+		w.metricsCleanup = metrics.TrackFS(ctx, f)
 	}
 
 	return w, nil
@@ -460,6 +466,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 //
 // Use s.Close() and s.Wait() to shutdown server
 func (w *WebDAV) Serve() error {
+	defer w.closeMetrics()
 	w.server.Serve()
 	fs.Logf(w.f, "WebDav Server started on %s", w.server.URLs())
 	w.server.Wait()
@@ -473,7 +480,18 @@ func (w *WebDAV) Addr() net.Addr {
 
 // Shutdown the server
 func (w *WebDAV) Shutdown() error {
-	return w.server.Shutdown()
+	if err := w.server.Shutdown(); err != nil {
+		return err
+	}
+	w.closeMetrics()
+	return nil
+}
+
+func (w *WebDAV) closeMetrics() {
+	if w.metricsCleanup != nil {
+		w.metricsCleanup()
+		w.metricsCleanup = nil
+	}
 }
 
 // logRequest is called by the webdav module on every request
