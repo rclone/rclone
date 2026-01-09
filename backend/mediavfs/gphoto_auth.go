@@ -1,6 +1,7 @@
 package mediavfs
 
 import (
+	"compress/gzip"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -559,21 +560,36 @@ func (auth *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	// Handle gzip response
+	var reader io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzReader.Close()
+		reader = gzReader
+	}
+
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
+	// Log raw response for debugging
+	fs.Debugf(nil, "gphoto_auth: raw response (%d bytes): %s", len(body), string(body))
+
 	result := parseResponse(string(body))
 
 	// Log auth response for debugging
-	fs.Debugf(nil, "gphoto_auth: response status=%d, has_it=%v, has_error=%v", resp.StatusCode, result["it"] != "", result["Error"] != "")
+	fs.Infof(nil, "gphoto_auth: response status=%d, has_it=%v, has_error=%v", resp.StatusCode, result["it"] != "", result["Error"] != "")
 	if result["Error"] != "" {
 		fs.Errorf(nil, "gphoto_auth: token request error: %s", result["Error"])
 	}
 
 	// If error and we have private key but didn't try JWT, retry with JWT
 	if result["Error"] != "" && auth.privateKey != nil && data.Get("assertion_jwt") == "" {
+		fs.Infof(nil, "gphoto_auth: retrying with JWT assertion")
 		data = auth.buildRequestData(true)
 
 		req, err = http.NewRequestWithContext(ctx, "POST", "https://android.googleapis.com/auth", strings.NewReader(data.Encode()))
@@ -582,18 +598,31 @@ func (auth *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error
 		}
 		req.Header = headers
 
-		resp, err = auth.httpClient.Do(req)
+		resp2, err := auth.httpClient.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to send request: %w", err)
 		}
-		defer resp.Body.Close()
+		defer resp2.Body.Close()
 
-		body, err = io.ReadAll(resp.Body)
+		// Handle gzip response
+		reader = resp2.Body
+		if resp2.Header.Get("Content-Encoding") == "gzip" {
+			gzReader, err := gzip.NewReader(resp2.Body)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+			}
+			defer gzReader.Close()
+			reader = gzReader
+		}
+
+		body, err = io.ReadAll(reader)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read response: %w", err)
 		}
 
+		fs.Debugf(nil, "gphoto_auth: retry raw response (%d bytes): %s", len(body), string(body))
 		result = parseResponse(string(body))
+		fs.Infof(nil, "gphoto_auth: retry response has_it=%v, has_error=%v", result["it"] != "", result["Error"] != "")
 	}
 
 	// Build response
@@ -624,13 +653,13 @@ func (auth *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error
 		}, nil
 	}
 
-	// No token in response
-	if result["Error"] == "" {
-		fs.Errorf(nil, "gphoto_auth: no token in response and no error")
+	// No token in response - this is a fatal error
+	errMsg := result["Error"]
+	if errMsg == "" {
+		errMsg = "no token in response (empty response from Google)"
 	}
-	return &TokenResult{
-		Error: result["Error"],
-	}, nil
+	fs.Errorf(nil, "gphoto_auth: token request failed: %s", errMsg)
+	return nil, fmt.Errorf("token request failed: %s", errMsg)
 }
 
 // AccountCredentials holds the credentials for a Google account
