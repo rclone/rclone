@@ -297,14 +297,11 @@ func (a *GooglePhotosAuth) getIssuer() string {
 // The payload must be serialized in the exact order Python uses (insertion order).
 func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, error) {
 	// Use fixed header JSON to match Python's output exactly
-	// Python: json.dumps({"alg": "ES256", "typ": "JWT"}, separators=(',', ':'))
 	headerJSON := []byte(`{"alg":"ES256","typ":"JWT"}`)
 
 	// Build payload JSON manually to match Python's key order exactly
-	// Python order: namespace, aud, iss, iat, ephemeral_key (with kty before TinkKeysetPublicKeyInfo)
 	var payloadJSON []byte
 	if ephKey, ok := payload["ephemeral_key"].(map[string]interface{}); ok {
-		// With ephemeral key - build in Python's exact order
 		payloadJSON = []byte(fmt.Sprintf(
 			`{"namespace":%q,"aud":%q,"iss":%q,"iat":%d,"ephemeral_key":{"kty":%q,"TinkKeysetPublicKeyInfo":%q}}`,
 			payload["namespace"],
@@ -315,7 +312,6 @@ func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, erro
 			ephKey["TinkKeysetPublicKeyInfo"],
 		))
 	} else {
-		// Without ephemeral key
 		payloadJSON = []byte(fmt.Sprintf(
 			`{"namespace":%q,"aud":%q,"iss":%q,"iat":%d}`,
 			payload["namespace"],
@@ -325,38 +321,37 @@ func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, erro
 		))
 	}
 
-	// Log the payload for debugging
-	fs.Infof(nil, "gphoto_auth: JWT payload JSON: %s", string(payloadJSON))
-
 	headerB64 := base64URLEncode(headerJSON)
 	payloadB64 := base64URLEncode(payloadJSON)
-
 	message := []byte(headerB64 + "." + payloadB64)
 	hash := sha256.Sum256(message)
-
-	// Log the message hash for debugging
-	fs.Infof(nil, "gphoto_auth: JWT message hash: %x", hash[:16])
 
 	r, s, err := ecdsa.Sign(rand.Reader, a.privateKey, hash[:])
 	if err != nil {
 		return "", err
 	}
 
-	// Convert r and s to fixed 32-byte representations
 	rBytes := r.Bytes()
 	sBytes := s.Bytes()
-
 	sigBytes := make([]byte, 64)
 	copy(sigBytes[32-len(rBytes):32], rBytes)
 	copy(sigBytes[64-len(sBytes):64], sBytes)
-
-	// Log signature for debugging
-	fs.Infof(nil, "gphoto_auth: JWT sig r (first 8): %x, s (first 8): %x", sigBytes[:8], sigBytes[32:40])
-
 	sigB64 := base64URLEncode(sigBytes)
 
 	jwt := headerB64 + "." + payloadB64 + "." + sigB64
-	fs.Infof(nil, "gphoto_auth: JWT length=%d, header=%s", len(jwt), headerB64)
+
+	// Print ALL debug info at once
+	fs.Infof(nil, "=== JWT DEBUG START ===")
+	fs.Infof(nil, "header_json: %s", string(headerJSON))
+	fs.Infof(nil, "payload_json: %s", string(payloadJSON))
+	fs.Infof(nil, "header_b64: %s", headerB64)
+	fs.Infof(nil, "payload_b64: %s", payloadB64)
+	fs.Infof(nil, "message_hash: %x", hash[:])
+	fs.Infof(nil, "sig_r: %x", sigBytes[:32])
+	fs.Infof(nil, "sig_s: %x", sigBytes[32:])
+	fs.Infof(nil, "sig_b64: %s", sigB64)
+	fs.Infof(nil, "full_jwt: %s", jwt)
+	fs.Infof(nil, "=== JWT DEBUG END ===")
 
 	return jwt, nil
 }
