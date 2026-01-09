@@ -463,13 +463,15 @@ func (a *GooglePhotosAuth) decryptToken(encryptedToken, itMetadata string) (stri
 	fs.Infof(nil, "ephemeralPrivateKey.D: %x", a.ephemeralPrivateKey.D.Bytes())
 	fs.Infof(nil, "sharedSecret (32 bytes): %x", sharedSecret)
 
-	// HKDF key derivation - match Python's HKDF(salt=b"", info=b"")
-	// Note: Go's hkdf.New with nil salt uses zero-filled salt of hash length,
-	// but we need empty salt to match Python/Tink behavior
-	hkdfIKM := append(senderPubBytes, sharedSecret...)
-	fs.Infof(nil, "hkdfIKM (97 bytes): %x", hkdfIKM)
+	// MicroG-style HKDF key derivation:
+	// IKM = shared_secret only (not concatenated with pub key)
+	// Salt = sender public key bytes (kem_bytes)
+	// Info = empty
+	hkdfIKM := sharedSecret
+	hkdfSalt := senderPubBytes
+	fs.Infof(nil, "microg HKDF: IKM=sharedSecret(%d), salt=senderPubBytes(%d)", len(hkdfIKM), len(hkdfSalt))
 
-	hkdfReader := hkdf.New(sha256.New, hkdfIKM, []byte{}, []byte{})
+	hkdfReader := hkdf.New(sha256.New, hkdfIKM, hkdfSalt, []byte{})
 	aesKey := make([]byte, 16) // AES-128
 	if _, err := io.ReadFull(hkdfReader, aesKey); err != nil {
 		fs.Errorf(nil, "gphoto_auth: decrypt failed - HKDF error: %v", err)
