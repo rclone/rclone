@@ -214,7 +214,6 @@ type GooglePhotosAuth struct {
 	ephemeralPrivateKey *ecdsa.PrivateKey
 	httpClient          *http.Client
 	mu                  sync.Mutex
-	authFailCount       int // Track consecutive auth failures
 }
 
 // NewGooglePhotosAuth creates a new GooglePhotosAuth instance.
@@ -608,12 +607,6 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	// Check if we've had too many consecutive auth failures
-	if a.authFailCount >= 3 {
-		fs.Errorf(nil, "gphoto_auth: FATAL - %d consecutive auth failures, exiting to prevent flooding Google servers", a.authFailCount)
-		panic("gphoto_auth: too many consecutive auth failures - check credentials")
-	}
-
 	fs.Debugf(nil, "gphoto_auth: requesting token for %s", a.email)
 
 	headers := map[string]string{
@@ -657,9 +650,6 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 
 	// Build response
 	if token, ok := result["it"]; ok {
-		// Reset failure counter on success
-		a.authFailCount = 0
-
 		// Decrypt if token is encrypted
 		if result["TokenEncrypted"] == "1" && a.ephemeralPrivateKey != nil {
 			decrypted, _ := a.decryptToken(token, result["itMetadata"])
@@ -682,9 +672,7 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 		}, nil
 	}
 
-	// Auth failed - increment failure counter
-	a.authFailCount++
-
+	// Auth failed
 	errorMsg := result["Error"]
 	if errorMsg == "" {
 		if len(result) == 0 {
@@ -697,7 +685,7 @@ func (a *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error) {
 			errorMsg = fmt.Sprintf("No Error key in response; keys found: %v", keys)
 		}
 	}
-	fs.Errorf(nil, "gphoto_auth: token request failed (attempt %d/3): %s", a.authFailCount, errorMsg)
+	fs.Errorf(nil, "gphoto_auth: token request failed: %s", errorMsg)
 	return nil, fmt.Errorf("token request failed: %s", errorMsg)
 }
 

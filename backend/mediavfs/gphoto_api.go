@@ -26,36 +26,14 @@ const (
 
 // GPhotoAPI handles Google Photos API interactions
 type GPhotoAPI struct {
-	token             string
-	tokenExpiry       int64 // Token expiry in milliseconds
-	httpClient        *http.Client
-	tokenServerURL    string
-	nativeAuth        *GooglePhotosAuth // Native auth client (optional)
-	userAgent         string
-	user              string
-	timeout           time.Duration
-	consecutiveErrors int // Track consecutive errors to prevent flooding
-}
-
-const maxConsecutiveErrors = 3
-
-// checkAndPanicOnTooManyErrors panics if too many consecutive errors
-func (api *GPhotoAPI) checkAndPanicOnTooManyErrors(operation string) {
-	if api.consecutiveErrors >= maxConsecutiveErrors {
-		fs.Errorf(nil, "gphoto: FATAL - %d consecutive errors during %s, exiting to prevent flooding Google servers", api.consecutiveErrors, operation)
-		panic(fmt.Sprintf("gphoto: too many consecutive errors (%d) during %s - check configuration", api.consecutiveErrors, operation))
-	}
-}
-
-// recordError increments error counter and checks for fatal threshold
-func (api *GPhotoAPI) recordError(operation string) {
-	api.consecutiveErrors++
-	api.checkAndPanicOnTooManyErrors(operation)
-}
-
-// recordSuccess resets the error counter
-func (api *GPhotoAPI) recordSuccess() {
-	api.consecutiveErrors = 0
+	token          string
+	tokenExpiry    int64 // Token expiry in milliseconds
+	httpClient     *http.Client
+	tokenServerURL string
+	nativeAuth     *GooglePhotosAuth // Native auth client (optional)
+	userAgent      string
+	user           string
+	timeout        time.Duration
 }
 
 // NewGPhotoAPI creates a new Google Photos API client
@@ -119,16 +97,13 @@ func (api *GPhotoAPI) getNativeAuthToken(ctx context.Context, force bool) error 
 
 	result, err := api.nativeAuth.GetToken(ctx)
 	if err != nil {
-		api.recordError("native_auth")
 		return fmt.Errorf("native token fetch failed: %w", err)
 	}
 
 	if result.Error != "" {
-		api.recordError("native_auth")
 		return fmt.Errorf("native token error: %s", result.Error)
 	}
 
-	api.recordSuccess()
 	api.token = result.Token
 	api.tokenExpiry = result.Expiry
 	fs.Debugf(nil, "gphoto: obtained native token, expires at %d", api.tokenExpiry)
@@ -230,13 +205,11 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 		// Handle status codes
 		switch resp.StatusCode {
 		case http.StatusOK, http.StatusPartialContent:
-			api.recordSuccess()
 			return resp, nil
 
 		case http.StatusUnauthorized, http.StatusForbidden:
 			resp.Body.Close()
 			authRetries++
-			api.recordError("auth")
 			forceRefresh := authRetries > 1
 			if err := api.GetAuthToken(ctx, forceRefresh); err != nil {
 				return nil, err
@@ -245,7 +218,6 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 
 		case http.StatusTooManyRequests: // 429
 			resp.Body.Close()
-			api.recordError("rate_limit")
 			backoff := time.Duration(1<<uint(retry)) * time.Second
 			select {
 			case <-ctx.Done():
@@ -259,7 +231,6 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			body, _ := readResponseBody(resp)
 			resp.Body.Close()
 			fs.Errorf(nil, "gphoto: server error (%d), body: %s", resp.StatusCode, string(body))
-			api.recordError("server_error")
 			backoff := time.Duration(1<<uint(retry)) * time.Second
 			select {
 			case <-ctx.Done():
@@ -269,12 +240,10 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			continue
 
 		case http.StatusNotFound: // 404
-			api.recordSuccess() // 404 is a valid response
 			return resp, nil
 
 		default:
 			resp.Body.Close()
-			api.recordError("http_error")
 			return nil, fmt.Errorf("HTTP error: status %d", resp.StatusCode)
 		}
 	}
