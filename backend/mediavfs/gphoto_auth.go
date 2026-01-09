@@ -9,6 +9,7 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -98,39 +99,17 @@ func createPrivateKey(hexScalar string) (*ecdsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-// computeIssuer computes the issuer (SHA256 hash of public key, base64url encoded)
+// computeIssuer computes the issuer (SHA256 hash of DER-encoded public key, base64url encoded)
 func (auth *GooglePhotosAuth) computeIssuer() string {
-	// Marshal public key to DER format (SubjectPublicKeyInfo)
-	pubKeyBytes := elliptic.Marshal(auth.privateKey.Curve, auth.privateKey.X, auth.privateKey.Y)
-
-	// Build SubjectPublicKeyInfo manually
-	// OID for id-ecPublicKey: 1.2.840.10045.2.1
-	// OID for secp256r1: 1.2.840.10045.3.1.7
-	algorithmIdentifier := []byte{
-		0x30, 0x13, // SEQUENCE (19 bytes)
-		0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, // OID: id-ecPublicKey
-		0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, // OID: secp256r1
+	// Use x509 to properly marshal the public key to PKIX/SubjectPublicKeyInfo format
+	// This matches Python's: public_key.public_bytes(encoding=DER, format=SubjectPublicKeyInfo)
+	pubKeyDER, err := x509.MarshalPKIXPublicKey(&auth.privateKey.PublicKey)
+	if err != nil {
+		fs.Errorf(nil, "gphoto_auth: failed to marshal public key: %v", err)
+		return ""
 	}
 
-	// BIT STRING wrapper for public key
-	bitString := make([]byte, 2+len(pubKeyBytes))
-	bitString[0] = 0x03                    // BIT STRING tag
-	bitString[1] = byte(len(pubKeyBytes)) + 1 // Length + 1 for unused bits
-	copy(bitString[2:], []byte{0x00})      // Unused bits = 0
-	copy(bitString[2:], pubKeyBytes)
-
-	// Final SubjectPublicKeyInfo
-	spki := make([]byte, 2+len(algorithmIdentifier)+2+len(pubKeyBytes)+1)
-	spki[0] = 0x30 // SEQUENCE
-	spki[1] = byte(len(algorithmIdentifier) + 2 + len(pubKeyBytes) + 1)
-	copy(spki[2:], algorithmIdentifier)
-	offset := 2 + len(algorithmIdentifier)
-	spki[offset] = 0x03                       // BIT STRING
-	spki[offset+1] = byte(len(pubKeyBytes) + 1) // Length + 1 for unused bits byte
-	spki[offset+2] = 0x00                     // Unused bits = 0
-	copy(spki[offset+3:], pubKeyBytes)
-
-	hash := sha256.Sum256(spki)
+	hash := sha256.Sum256(pubKeyDER)
 	return base64.RawURLEncoding.EncodeToString(hash[:])
 }
 
@@ -585,6 +564,11 @@ func (auth *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error
 
 	result := parseResponse(string(body))
 
+	// Log auth response for debugging
+	if result["Error"] != "" {
+		fs.Errorf(nil, "gphoto_auth: token request error: %s", result["Error"])
+	}
+
 	// If error and we have private key but didn't try JWT, retry with JWT
 	if result["Error"] != "" && auth.privateKey != nil && data.Get("assertion_jwt") == "" {
 		data = auth.buildRequestData(true)
@@ -611,11 +595,16 @@ func (auth *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error
 
 	// Build response
 	if token, ok := result["it"]; ok {
+		fs.Infof(nil, "gphoto_auth: obtained token (encrypted=%s)", result["TokenEncrypted"])
+
 		// Decrypt if token is encrypted
 		if result["TokenEncrypted"] == "1" {
 			decrypted, err := auth.decryptToken(token, result["itMetadata"])
-			if err == nil {
+			if err != nil {
+				fs.Errorf(nil, "gphoto_auth: token decryption failed: %v", err)
+			} else {
 				token = decrypted
+				fs.Debugf(nil, "gphoto_auth: token decrypted successfully")
 			}
 		}
 
