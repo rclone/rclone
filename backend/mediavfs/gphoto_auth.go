@@ -285,11 +285,11 @@ func (a *GooglePhotosAuth) getIssuer() string {
 	}
 
 	// Log SPKI hex for debugging (compare with Python's output)
-	fs.Debugf(nil, "gphoto_auth: SPKI length=%d, first 32 bytes: %x", len(spki), spki[:32])
-	fs.Debugf(nil, "gphoto_auth: SPKI last 32 bytes: %x", spki[len(spki)-32:])
+	fs.Infof(nil, "gphoto_auth: SPKI length=%d, first 32 bytes: %x", len(spki), spki[:32])
+	fs.Infof(nil, "gphoto_auth: SPKI last 32 bytes: %x", spki[len(spki)-32:])
 
 	hash := sha256.Sum256(spki)
-	fs.Debugf(nil, "gphoto_auth: SPKI SHA256: %x", hash[:])
+	fs.Infof(nil, "gphoto_auth: SPKI SHA256: %x", hash[:])
 	return base64URLEncode(hash[:])
 }
 
@@ -326,7 +326,7 @@ func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, erro
 	}
 
 	// Log the payload for debugging
-	fs.Debugf(nil, "gphoto_auth: JWT payload JSON: %s", string(payloadJSON))
+	fs.Infof(nil, "gphoto_auth: JWT payload JSON: %s", string(payloadJSON))
 
 	headerB64 := base64URLEncode(headerJSON)
 	payloadB64 := base64URLEncode(payloadJSON)
@@ -350,7 +350,7 @@ func (a *GooglePhotosAuth) signJWT(payload map[string]interface{}) (string, erro
 	sigB64 := base64URLEncode(sigBytes)
 
 	jwt := headerB64 + "." + payloadB64 + "." + sigB64
-	fs.Debugf(nil, "gphoto_auth: JWT length=%d, header=%s", len(jwt), headerB64)
+	fs.Infof(nil, "gphoto_auth: JWT length=%d, header=%s", len(jwt), headerB64)
 
 	return jwt, nil
 }
