@@ -494,8 +494,7 @@ func (f *Fs) String() string {
 
 // Precision of the ModTimes in this Fs
 func (f *Fs) Precision() time.Duration {
-	// The API doesn't support setting the modified time
-	return fs.ModTimeNotSupported
+	return time.Second
 }
 
 // Hashes returns the supported hash sets.
