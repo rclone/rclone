@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 )
 
 // ErrMediaNotFound is returned when a media item doesn't exist (404)
@@ -211,6 +212,9 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 		for k, v := range headers {
 			req.Header.Set(k, v)
 		}
+
+		// Respect global --tpslimit if set
+		accounting.LimitTPS(ctx)
 
 		resp, err = api.httpClient.Do(req)
 
