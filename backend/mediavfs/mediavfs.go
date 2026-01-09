@@ -929,8 +929,18 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 	if !ok {
 		return
 	}
-	ticker := time.NewTicker(dur)
-	defer ticker.Stop()
+
+	// Create ticker only if interval > 0 (0 means polling disabled)
+	var ticker *time.Ticker
+	var tickerChan <-chan time.Time
+	if dur > 0 {
+		ticker = time.NewTicker(dur)
+		tickerChan = ticker.C
+		defer ticker.Stop()
+		fs.Debugf(f, "mediavfs: ChangeNotify polling enabled with interval %s", dur)
+	} else {
+		fs.Debugf(f, "mediavfs: ChangeNotify polling disabled (interval=0), using DB notify only")
+	}
 
 	// Get notify listener events channel (may be nil if listener failed to start)
 	var notifyEvents <-chan MediaChangeEvent
@@ -998,12 +1008,28 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 		select {
 		case d, ok := <-newInterval:
 			if !ok {
-				ticker.Stop()
+				if ticker != nil {
+					ticker.Stop()
+				}
 				processPendingEvents() // Process any remaining events
 				return
 			}
 			fs.Debugf(f, "mediavfs: ChangeNotify interval updated to %s", d)
-			ticker.Reset(d)
+			if d > 0 {
+				if ticker == nil {
+					ticker = time.NewTicker(d)
+					tickerChan = ticker.C
+				} else {
+					ticker.Reset(d)
+				}
+			} else {
+				// Disable polling
+				if ticker != nil {
+					ticker.Stop()
+					ticker = nil
+					tickerChan = nil
+				}
+			}
 
 		case event := <-notifyEvents:
 			// Add to pending events (debounce)
@@ -1030,7 +1056,7 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 			debounceTimer = nil
 			debounceChan = nil
 
-		case <-ticker.C:
+		case <-tickerChan:
 			// Query for rows newer than lastTimestamp
 			query := fmt.Sprintf(`
 				SELECT media_key, file_name, COALESCE(name, '') as custom_name, COALESCE(path, '') as custom_path, COALESCE(size_bytes, 0) as size_bytes, COALESCE(utc_timestamp, 0) as utc_timestamp
