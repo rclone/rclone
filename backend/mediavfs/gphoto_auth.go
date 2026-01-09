@@ -577,7 +577,7 @@ func (auth *GooglePhotosAuth) GetToken(ctx context.Context) (*TokenResult, error
 	}
 
 	// Log raw response for debugging
-	fs.Debugf(nil, "gphoto_auth: raw response (%d bytes): %s", len(body), string(body))
+	fs.Infof(nil, "gphoto_auth: raw response (%d bytes): %s", len(body), string(body))
 
 	result := parseResponse(string(body))
 
