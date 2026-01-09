@@ -34,26 +34,21 @@ func CalculateSHA1Hash(filePath string) ([]byte, string, error) {
 
 // UploadFileToGPhotos uploads a file to Google Photos
 func (f *Fs) UploadFileToGPhotos(ctx context.Context, filePath string, user string) (string, error) {
-	// Initialize API client if not exists
-	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
-
-	// Ensure we have a token
-	if err := api.GetAuthToken(ctx, false); err != nil {
-		return "", fmt.Errorf("failed to get auth token: %w", err)
-	}
+	// Use the shared API client (token is fetched lazily and cached)
+	api := f.api
 
 	// Calculate SHA1 hash
-	fs.Infof(f, "Calculating SHA1 hash for %s", filePath)
+	fs.Debugf(f, "Calculating SHA1 hash for %s", filePath)
 	hashBytes, hashB64, err := CalculateSHA1Hash(filePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to calculate hash: %w", err)
 	}
 
 	// Check if file already exists
-	fs.Infof(f, "Checking if file exists in Google Photos")
+	fs.Debugf(f, "Checking if file exists in Google Photos")
 	existingMediaKey, err := api.FindRemoteMediaByHash(ctx, hashBytes)
 	if err == nil && existingMediaKey != "" {
-		fs.Infof(f, "File already exists in Google Photos with media key: %s", existingMediaKey)
+		fs.Debugf(f, "File already exists in Google Photos with media key: %s", existingMediaKey)
 		return existingMediaKey, nil
 	}
 
@@ -65,14 +60,14 @@ func (f *Fs) UploadFileToGPhotos(ctx context.Context, filePath string, user stri
 	fileSize := fileInfo.Size()
 
 	// Get upload token
-	fs.Infof(f, "Getting upload token for %s (size: %d bytes)", filePath, fileSize)
+	fs.Debugf(f, "Getting upload token for %s (size: %d bytes)", filePath, fileSize)
 	uploadToken, err := api.GetUploadToken(ctx, hashB64, fileSize)
 	if err != nil {
 		return "", fmt.Errorf("failed to get upload token: %w", err)
 	}
 
 	// Upload file
-	fs.Infof(f, "Uploading file %s", filePath)
+	fs.Debugf(f, "Uploading file %s", filePath)
 	file, err := os.Open(filePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open file for upload: %w", err)
@@ -85,7 +80,7 @@ func (f *Fs) UploadFileToGPhotos(ctx context.Context, filePath string, user stri
 	}
 
 	// Commit upload
-	fs.Infof(f, "Committing upload for %s", filePath)
+	fs.Debugf(f, "Committing upload for %s", filePath)
 	fileName := fileInfo.Name()
 	uploadTimestamp := fileInfo.ModTime().Unix()
 	model := "Pixel XL"
@@ -102,17 +97,12 @@ func (f *Fs) UploadFileToGPhotos(ctx context.Context, filePath string, user stri
 
 // UploadWithProgress uploads a file with progress reporting
 func (f *Fs) UploadWithProgress(ctx context.Context, src fs.ObjectInfo, in io.Reader, user string) (string, error) {
-	// Initialize API client
-	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
-
-	// Ensure we have a token
-	if err := api.GetAuthToken(ctx, false); err != nil {
-		return "", fmt.Errorf("failed to get auth token: %w", err)
-	}
+	// Use the shared API client (token is fetched lazily and cached)
+	api := f.api
 
 	// For now, we need to read the entire file to calculate hash
 	// In a production implementation, you'd want to use a temporary file or streaming hash
-	fs.Infof(f, "Reading file to calculate SHA1 hash")
+	fs.Debugf(f, "Reading file to calculate SHA1 hash")
 
 	// Create a temporary file
 	tmpFile, err := os.CreateTemp("", "gphoto-upload-*")
@@ -139,17 +129,17 @@ func (f *Fs) UploadWithProgress(ctx context.Context, src fs.ObjectInfo, in io.Re
 	hashBytes := hasher.Sum(nil)
 	hashB64 := base64.StdEncoding.EncodeToString(hashBytes)
 
-	fs.Infof(f, "Calculated SHA1 hash: %s", hashB64)
+	fs.Debugf(f, "Calculated SHA1 hash: %s", hashB64)
 
 	// Check if file already exists
 	existingMediaKey, err := api.FindRemoteMediaByHash(ctx, hashBytes)
 	if err == nil && existingMediaKey != "" {
-		fs.Infof(f, "File already exists in Google Photos with media key: %s", existingMediaKey)
+		fs.Debugf(f, "File already exists in Google Photos with media key: %s", existingMediaKey)
 		return existingMediaKey, nil
 	}
 
 	// Get upload token
-	fs.Infof(f, "Getting upload token (size: %d bytes)", written)
+	fs.Debugf(f, "Getting upload token (size: %d bytes)", written)
 	uploadToken, err := api.GetUploadToken(ctx, hashB64, written)
 	if err != nil {
 		return "", fmt.Errorf("failed to get upload token: %w", err)
@@ -161,14 +151,14 @@ func (f *Fs) UploadWithProgress(ctx context.Context, src fs.ObjectInfo, in io.Re
 	}
 
 	// Upload file
-	fs.Infof(f, "Uploading file")
+	fs.Debugf(f, "Uploading file")
 	uploadResponse, err := api.UploadFile(ctx, uploadToken, tmpFile, written)
 	if err != nil {
 		return "", fmt.Errorf("failed to upload file: %w", err)
 	}
 
 	// Commit upload
-	fs.Infof(f, "Committing upload")
+	fs.Debugf(f, "Committing upload")
 	fileName := path.Base(src.Remote()) // Only the filename, not full path
 	uploadTimestamp := src.ModTime(ctx).Unix()
 	model := "Pixel XL"
@@ -241,7 +231,7 @@ func (f *Fs) MonitorAndUpload(ctx context.Context, uploadPath string, user strin
 					continue
 				}
 
-				fs.Infof(f, "Uploaded %s -> %s", filePath, mediaKey)
+				fs.Debugf(f, "Uploaded %s -> %s", filePath, mediaKey)
 
 				// Optionally remove file after successful upload
 				// os.Remove(filePath)

@@ -125,7 +125,7 @@ func (f *Fs) InitializeDatabase(ctx context.Context) error {
 		fs.Errorf(f, "Failed to migrate folders from paths (non-fatal): %v", err)
 	}
 
-	fs.Infof(f, "Database schema initialized successfully")
+	fs.Debugf(f, "Database schema initialized successfully")
 	return nil
 }
 
@@ -145,7 +145,7 @@ func (f *Fs) normalizePathsInDB(ctx context.Context) error {
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected > 0 {
-		fs.Infof(f, "Normalized %d paths by removing leading/trailing slashes", rowsAffected)
+		fs.Debugf(f, "Normalized %d paths by removing leading/trailing slashes", rowsAffected)
 	}
 
 	// Also normalize file_name column (strip slashes)
@@ -162,7 +162,7 @@ func (f *Fs) normalizePathsInDB(ctx context.Context) error {
 
 	rowsAffected2, _ := result2.RowsAffected()
 	if rowsAffected2 > 0 {
-		fs.Infof(f, "Normalized %d file_names by removing slashes", rowsAffected2)
+		fs.Debugf(f, "Normalized %d file_names by removing slashes", rowsAffected2)
 	}
 
 	// Also normalize name column (custom name, strip slashes)
@@ -179,7 +179,7 @@ func (f *Fs) normalizePathsInDB(ctx context.Context) error {
 
 	rowsAffected3, _ := result3.RowsAffected()
 	if rowsAffected3 > 0 {
-		fs.Infof(f, "Normalized %d names by removing slashes", rowsAffected3)
+		fs.Debugf(f, "Normalized %d names by removing slashes", rowsAffected3)
 	}
 
 	return nil
@@ -247,7 +247,7 @@ func (f *Fs) createMissingFolders(ctx context.Context) error {
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected > 0 {
-		fs.Infof(f, "Created %d missing folder rows for user %s", rowsAffected, f.opt.User)
+		fs.Debugf(f, "Created %d missing folder rows for user %s", rowsAffected, f.opt.User)
 	}
 
 	return nil
@@ -287,7 +287,7 @@ func (f *Fs) migrateFoldersFromPaths(ctx context.Context) error {
 		return nil
 	}
 
-	fs.Infof(f, "Migrating %d files with paths to folder rows for user %s...", fileWithPathCount, f.opt.User)
+	fs.Debugf(f, "Migrating %d files with paths to folder rows for user %s...", fileWithPathCount, f.opt.User)
 
 	// Use a CTE to extract all unique directory paths and create folder rows for this user only
 	// For each file path like "a/b/c", we need folders: "a" (at path ""), "b" (at path "a"), "c" (at path "a/b")
@@ -347,7 +347,7 @@ func (f *Fs) migrateFoldersFromPaths(ctx context.Context) error {
 	}
 
 	rowsAffected, _ := result.RowsAffected()
-	fs.Infof(f, "Created %d folder rows from existing paths for user %s", rowsAffected, f.opt.User)
+	fs.Debugf(f, "Created %d folder rows from existing paths for user %s", rowsAffected, f.opt.User)
 
 	return nil
 }
@@ -494,20 +494,15 @@ func (f *Fs) DeleteMediaItems(ctx context.Context, mediaKeys []string) error {
 	}
 
 	rows, _ := result.RowsAffected()
-	fs.Infof(f, "Deleted %d media items from database", rows)
+	fs.Debugf(f, "Deleted %d media items from database", rows)
 
 	return nil
 }
 
 // SyncFromGooglePhotos syncs media from Google Photos to the database
 func (f *Fs) SyncFromGooglePhotos(ctx context.Context, user string) error {
-	// Initialize API client
+	// Initialize API client (token is fetched lazily on first request)
 	api := NewGPhotoAPI(user, f.opt.TokenServerURL, f.httpClient)
-
-	// Ensure we have a token
-	if err := api.GetAuthToken(ctx, false); err != nil {
-		return fmt.Errorf("failed to get auth token: %w", err)
-	}
 
 	// Get current sync state
 	state, err := f.GetSyncState(ctx)
@@ -552,13 +547,13 @@ func (f *Fs) initialSync(ctx context.Context, api *GPhotoAPI, user string) error
 
 	// Insert/delete from initial response
 	if len(mediaItems) > 0 {
-		fs.Infof(f, "Syncing %d media items from initial state", len(mediaItems))
+		fs.Debugf(f, "Syncing %d media items from initial state", len(mediaItems))
 		if err := f.InsertMediaItems(ctx, mediaItems); err != nil {
 			return fmt.Errorf("failed to insert media items: %w", err)
 		}
 	}
 	if len(deletions) > 0 {
-		fs.Infof(f, "Deleting %d items", len(deletions))
+		fs.Debugf(f, "Deleting %d items", len(deletions))
 		if err := f.DeleteMediaItems(ctx, deletions); err != nil {
 			return fmt.Errorf("failed to delete media items: %w", err)
 		}
@@ -604,7 +599,7 @@ func (f *Fs) processInitPages(ctx context.Context, api *GPhotoAPI, user string, 
 
 		// Insert media items
 		if len(mediaItems) > 0 {
-			fs.Infof(f, "Syncing %d media items from page", len(mediaItems))
+			fs.Debugf(f, "Syncing %d media items from page", len(mediaItems))
 			if err := f.InsertMediaItems(ctx, mediaItems); err != nil {
 				return fmt.Errorf("failed to insert media items: %w", err)
 			}
@@ -612,7 +607,7 @@ func (f *Fs) processInitPages(ctx context.Context, api *GPhotoAPI, user string, 
 
 		// Delete items
 		if len(deletions) > 0 {
-			fs.Infof(f, "Deleting %d items", len(deletions))
+			fs.Debugf(f, "Deleting %d items", len(deletions))
 			if err := f.DeleteMediaItems(ctx, deletions); err != nil {
 				return fmt.Errorf("failed to delete media items: %w", err)
 			}
@@ -645,7 +640,7 @@ func (f *Fs) incrementalSync(ctx context.Context, api *GPhotoAPI, user string, s
 
 	// Insert/update media items
 	if len(mediaItems) > 0 {
-		fs.Infof(f, "Syncing %d updated items", len(mediaItems))
+		fs.Debugf(f, "Syncing %d updated items", len(mediaItems))
 		if err := f.InsertMediaItems(ctx, mediaItems); err != nil {
 			return fmt.Errorf("failed to insert media items: %w", err)
 		}
@@ -653,7 +648,7 @@ func (f *Fs) incrementalSync(ctx context.Context, api *GPhotoAPI, user string, s
 
 	// Delete items
 	if len(deletions) > 0 {
-		fs.Infof(f, "Deleting %d items", len(deletions))
+		fs.Debugf(f, "Deleting %d items", len(deletions))
 		if err := f.DeleteMediaItems(ctx, deletions); err != nil {
 			return fmt.Errorf("failed to delete media items: %w", err)
 		}

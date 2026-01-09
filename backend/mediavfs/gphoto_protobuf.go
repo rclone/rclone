@@ -28,11 +28,6 @@ func encodeVarint(value uint64) []byte {
 	return buf[:n]
 }
 
-// encodeZigZag encodes a signed integer using zigzag encoding
-func encodeZigZag(value int64) uint64 {
-	return uint64((value << 1) ^ (value >> 63))
-}
-
 // encodeTag encodes a field tag and wire type
 func encodeTag(fieldNum int, wireType int) []byte {
 	return encodeVarint(uint64((fieldNum << 3) | wireType))

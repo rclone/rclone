@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -25,8 +27,10 @@ const (
 // GPhotoAPI handles Google Photos API interactions
 type GPhotoAPI struct {
 	token          string
+	tokenExpiry    int64 // Token expiry in milliseconds
 	httpClient     *http.Client
 	tokenServerURL string
+	nativeAuth     *GooglePhotosAuth // Native auth client (optional)
 	userAgent      string
 	user           string
 	timeout        time.Duration
@@ -43,8 +47,75 @@ func NewGPhotoAPI(user string, tokenServerURL string, httpClient *http.Client) *
 	}
 }
 
+// NewGPhotoAPIWithNativeAuth creates a new Google Photos API client with native authentication
+func NewGPhotoAPIWithNativeAuth(user, tokenServerURL, masterToken, privateKeyS, androidID string, httpClient *http.Client) (*GPhotoAPI, error) {
+	api := &GPhotoAPI{
+		user:           user,
+		tokenServerURL: tokenServerURL,
+		httpClient:     httpClient,
+		userAgent:      "com.google.android.apps.photos/49029607 (Linux; U; Android 9; en_US; Pixel XL; Build/PQ2A.190205.001; Cronet/127.0.6510.5) (gzip)",
+		timeout:        defaultTimeout,
+	}
+
+	// If master token is provided, create native auth client
+	if masterToken != "" {
+		email := user
+		if !strings.Contains(email, "@") {
+			email = user + "@gmail.com"
+		}
+		nativeAuth, err := NewGooglePhotosAuth(email, masterToken, androidID, privateKeyS, httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create native auth: %w", err)
+		}
+		api.nativeAuth = nativeAuth
+		fs.Infof(nil, "gphoto: using native token generation for %s", user)
+	}
+
+	return api, nil
+}
+
 // GetAuthToken fetches or refreshes the authentication token
 func (api *GPhotoAPI) GetAuthToken(ctx context.Context, force bool) error {
+	// Use native auth if available
+	if api.nativeAuth != nil {
+		return api.getNativeAuthToken(ctx, force)
+	}
+
+	// Fall back to token server
+	return api.getTokenServerToken(ctx, force)
+}
+
+// getNativeAuthToken gets token using native authentication
+func (api *GPhotoAPI) getNativeAuthToken(ctx context.Context, force bool) error {
+	// Check if current token is still valid (with 60s buffer)
+	if !force && api.token != "" && api.tokenExpiry > 0 {
+		nowMs := time.Now().UnixMilli()
+		if nowMs < (api.tokenExpiry - 60000) {
+			return nil // Token still valid
+		}
+	}
+
+	result, err := api.nativeAuth.GetToken(ctx)
+	if err != nil {
+		return fmt.Errorf("native token fetch failed: %w", err)
+	}
+
+	if result.Error != "" {
+		return fmt.Errorf("native token error: %s", result.Error)
+	}
+
+	api.token = result.Token
+	api.tokenExpiry = result.Expiry
+	fs.Debugf(nil, "gphoto: obtained native token, expires at %d", api.tokenExpiry)
+	return nil
+}
+
+// getTokenServerToken gets token from external token server
+func (api *GPhotoAPI) getTokenServerToken(ctx context.Context, force bool) error {
+	if api.tokenServerURL == "" {
+		return fmt.Errorf("no token server URL configured and no native auth available")
+	}
+
 	url := fmt.Sprintf("%s/token/%s", api.tokenServerURL, api.user)
 	if force {
 		url += "?force=true"
@@ -93,8 +164,8 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 	}
 
 	for retry := 0; retry < 5; retry++ {
-		// Ensure we have a token
-		if api.token == "" && api.tokenServerURL != "" {
+		// Ensure we have a valid token
+		if api.token == "" || (api.nativeAuth != nil && api.tokenExpiry > 0 && time.Now().UnixMilli() >= api.tokenExpiry-60000) {
 			if err := api.GetAuthToken(ctx, false); err != nil {
 				return nil, err
 			}
@@ -156,7 +227,10 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 			continue
 
 		case http.StatusInternalServerError, http.StatusServiceUnavailable:
+			// Log error body for debugging
+			body, _ := readResponseBody(resp)
 			resp.Body.Close()
+			fs.Errorf(nil, "gphoto: server error (%d), body: %s", resp.StatusCode, string(body))
 			backoff := time.Duration(1<<uint(retry)) * time.Second
 			select {
 			case <-ctx.Done():
@@ -291,7 +365,7 @@ func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, conten
 		"Content-Length": fmt.Sprintf("%d", fileSize),
 	}
 
-	fs.Infof(nil, "gphoto: uploading %d bytes...", fileSize)
+	fs.Debugf(nil, "gphoto: uploading %d bytes...", fileSize)
 
 	resp, err := api.request(ctx, "PUT", url, headers, content)
 	if err != nil {
@@ -305,7 +379,7 @@ func (api *GPhotoAPI) UploadFile(ctx context.Context, uploadToken string, conten
 		return nil, err
 	}
 
-	fs.Infof(nil, "gphoto: upload complete")
+	fs.Debugf(nil, "gphoto: upload complete")
 	return respBody, nil
 }
 
@@ -396,14 +470,14 @@ func (api *GPhotoAPI) CommitUpload(ctx context.Context, uploadResponse []byte, f
 		}
 		// Try alternate path: field 1 -> field 1 (for duplicates)
 		if mediaKey, ok := mediaData["1"].(string); ok {
-			fs.Infof(nil, "gphoto: Found media key at alternate location (field 1.1)")
+			fs.Debugf(nil, "gphoto: Found media key at alternate location (field 1.1)")
 			return mediaKey, nil
 		}
 	}
 
 	// Try to find any string that looks like a media key in the response
 	if mediaKey := findMediaKeyInResponse(result); mediaKey != "" {
-		fs.Infof(nil, "gphoto: Found media key via deep search: %s", mediaKey)
+		fs.Debugf(nil, "gphoto: Found media key via deep search: %s", mediaKey)
 		return mediaKey, nil
 	}
 
@@ -431,71 +505,82 @@ func findMediaKeyInResponse(data interface{}) string {
 	return ""
 }
 
-// MoveToTrash moves files to trash
+// MoveToTrash moves files to trash (supports batch deletion)
 func (api *GPhotoAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
-	// Delete files one at a time since batch delete doesn't work
-	fs.Infof(nil, "gphoto: MoveToTrash processing %d files (one at a time)", len(dedupKeys))
+	fs.Debugf(nil, "gphoto: MoveToTrash processing %d files", len(dedupKeys))
 
-	for i, dedupKey := range dedupKeys {
-		if (i+1)%10 == 0 || i == len(dedupKeys)-1 {
-			fs.Debugf(nil, "gphoto: MoveToTrash progress: %d/%d", i+1, len(dedupKeys))
-		}
+	// Build nested protobuf structure for MoveToTrash
+	// Matching exact structure from captured Google Photos app request:
+	// {
+	//   "2": 1,
+	//   "3": ["dedup_key1", "dedup_key2", ...],  // repeated field
+	//   "4": 1,
+	//   "8": {"4": {"2": "", "3": {"1": ""}, "4": "", "5": {"1": ""}}},
+	//   "9": {"1": 5, "2": {"1": 51079550, "2": "33"}}
+	// }
 
-		// Build nested protobuf structure for MoveToTrash (single file)
-		// Field 8 -> Field 4 -> Fields 2, 3, 4, 5
-		field8_4_3_1 := NewProtoEncoder() // Empty message
-		field8_4_3 := NewProtoEncoder()
-		field8_4_3.EncodeMessage(1, field8_4_3_1.Bytes())
+	// Field 8.4.3: message with field 1 = empty string
+	field8_4_3 := NewProtoEncoder()
+	field8_4_3.EncodeString(1, "")
 
-		field8_4_5_1 := NewProtoEncoder() // Empty message
-		field8_4_5 := NewProtoEncoder()
-		field8_4_5.EncodeMessage(1, field8_4_5_1.Bytes())
+	// Field 8.4.5: message with field 1 = empty string
+	field8_4_5 := NewProtoEncoder()
+	field8_4_5.EncodeString(1, "")
 
-		field8_4 := NewProtoEncoder()
-		field8_4.EncodeMessage(2, []byte{}) // Empty message
-		field8_4.EncodeMessage(3, field8_4_3.Bytes())
-		field8_4.EncodeMessage(4, []byte{}) // Empty message
-		field8_4.EncodeMessage(5, field8_4_5.Bytes())
+	// Field 8.4: contains empty strings and nested messages
+	field8_4 := NewProtoEncoder()
+	field8_4.EncodeString(2, "")
+	field8_4.EncodeMessage(3, field8_4_3.Bytes())
+	field8_4.EncodeString(4, "")
+	field8_4.EncodeMessage(5, field8_4_5.Bytes())
 
-		field8 := NewProtoEncoder()
-		field8.EncodeMessage(4, field8_4.Bytes())
+	field8 := NewProtoEncoder()
+	field8.EncodeMessage(4, field8_4.Bytes())
 
-		// Field 9 -> Field 2
-		field9_2 := NewProtoEncoder()
-		field9_2.EncodeString(1, "49029607")
-		field9_2.EncodeString(2, "28")
+	// Field 9.2: version info (INT for field 1, STRING for field 2)
+	field9_2 := NewProtoEncoder()
+	field9_2.EncodeInt32(1, 51079550) // App version as INT
+	field9_2.EncodeString(2, "33")    // Android API version
 
-		field9 := NewProtoEncoder()
-		field9.EncodeInt32(1, 5)
-		field9.EncodeMessage(2, field9_2.Bytes())
+	field9 := NewProtoEncoder()
+	field9.EncodeInt32(1, 5)
+	field9.EncodeMessage(2, field9_2.Bytes())
 
-		// Main message with single dedup key
-		encoder := NewProtoEncoder()
-		encoder.EncodeInt32(2, 1)
-		encoder.EncodeString(3, dedupKey) // Single key
-		encoder.EncodeInt32(4, 1)
-		encoder.EncodeMessage(8, field8.Bytes())
-		encoder.EncodeMessage(9, field9.Bytes())
-
-		headers := map[string]string{
-			"Content-Type": "application/x-protobuf",
-		}
-
-		resp, err := api.request(ctx, "POST",
-			"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
-			headers, bytes.NewReader(encoder.Bytes()))
+	// Main message
+	encoder := NewProtoEncoder()
+	encoder.EncodeInt32(2, 1)
+	// Field 3 is repeated - encode each dedup_key with the same field number
+	// Database stores base64-encoded dedup_keys, need to decode before sending
+	for _, dedupKey := range dedupKeys {
+		// Decode from URL-safe base64 (database format) to get raw dedup_key
+		decoded, err := base64.URLEncoding.DecodeString(dedupKey)
 		if err != nil {
-			return fmt.Errorf("failed to delete file %d/%d (key=%s): %w", i+1, len(dedupKeys), dedupKey, err)
+			// Try with padding if needed
+			decoded, err = base64.RawURLEncoding.DecodeString(dedupKey)
+			if err != nil {
+				fs.Errorf(nil, "gphoto: failed to decode dedup_key %s: %v", dedupKey, err)
+				continue
+			}
 		}
-		resp.Body.Close()
+		encoder.EncodeString(3, string(decoded))
+	}
+	encoder.EncodeInt32(4, 1)
+	encoder.EncodeMessage(8, field8.Bytes())
+	encoder.EncodeMessage(9, field9.Bytes())
 
-		// Small delay between requests to avoid rate limiting
-		if i < len(dedupKeys)-1 {
-			time.Sleep(50 * time.Millisecond)
-		}
+	headers := map[string]string{
+		"Content-Type": "application/x-protobuf",
 	}
 
-	fs.Infof(nil, "gphoto: MoveToTrash completed, %d files moved to trash", len(dedupKeys))
+	resp, err := api.request(ctx, "POST",
+		"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
+		headers, bytes.NewReader(encoder.Bytes()))
+	if err != nil {
+		return fmt.Errorf("failed to move files to trash: %w", err)
+	}
+	resp.Body.Close()
+
+	fs.Debugf(nil, "gphoto: MoveToTrash completed, %d files moved to trash", len(dedupKeys))
 	return nil
 }
 
