@@ -10,11 +10,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 )
+
+// Global semaphore to limit concurrent API calls (prevents rate limiting)
+var apiSemaphore = make(chan struct{}, 3) // Max 3 concurrent API calls
 
 // ErrMediaNotFound is returned when a media item doesn't exist (404)
 var ErrMediaNotFound = errors.New("media item not found")
@@ -150,6 +154,14 @@ func (api *GPhotoAPI) getTokenServerToken(ctx context.Context, force bool) error
 
 // request makes an authenticated HTTP request with retry logic
 func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers map[string]string, body io.Reader) (*http.Response, error) {
+	// Acquire semaphore to limit concurrent API calls
+	select {
+	case apiSemaphore <- struct{}{}:
+		defer func() { <-apiSemaphore }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+
 	var resp *http.Response
 	var err error
 	var bodyBytes []byte
@@ -221,9 +233,22 @@ func (api *GPhotoAPI) request(ctx context.Context, method, url string, headers m
 
 		case http.StatusTooManyRequests: // 429
 			lastStatusCode = resp.StatusCode
-			resp.Body.Close()
+			// Check Retry-After header
 			backoff := time.Duration(1<<uint(retry)) * time.Second
-			fs.Debugf(nil, "gphoto: rate limited (429), retry %d/5, backoff %s", retry+1, backoff)
+			if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
+				if seconds, err := strconv.Atoi(retryAfter); err == nil && seconds > 0 {
+					backoff = time.Duration(seconds) * time.Second
+				}
+			}
+			// Minimum 5 second backoff for rate limits, max 60 seconds
+			if backoff < 5*time.Second {
+				backoff = 5 * time.Second
+			}
+			if backoff > 60*time.Second {
+				backoff = 60 * time.Second
+			}
+			resp.Body.Close()
+			fs.Infof(nil, "gphoto: rate limited (429), retry %d/5, waiting %s", retry+1, backoff)
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
