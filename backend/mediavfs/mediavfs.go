@@ -255,8 +255,10 @@ func (f *Fs) String() string {
 }
 
 // Precision of the ModTimes in this Fs
+// Return ModTimeNotSupported to exclude ModTime from VFS cache fingerprints
+// This prevents cache invalidation due to timestamp precision differences
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	return fs.ModTimeNotSupported
 }
 
 // Hashes returns the supported hash types of the filesystem
@@ -374,9 +376,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 		CaseInsensitive:         false,
-		// SlowModTime tells VFS cache to skip ModTime in fingerprint calculation
-		// This prevents cache invalidation due to timestamp precision differences
-		SlowModTime: true,
 	}).Fill(ctx, f)
 
 	// Enable ChangeNotify support so vfs can poll this backend
