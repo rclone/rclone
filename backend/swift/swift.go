@@ -977,8 +977,12 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		Objects: fs.NewUsageValue(objects), // objects in use
 	}
 	if total > 0 {
+		free := total - used
+		if total < used {
+			free = 0
+		}
 		usage.Total = fs.NewUsageValue(total)
-		usage.Free = fs.NewUsageValue(total - used)
+		usage.Free = fs.NewUsageValue(free)
 	}
 	return usage, nil
 }
