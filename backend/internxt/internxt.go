@@ -12,12 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StarHack/go-internxt-drive/auth"
-	"github.com/StarHack/go-internxt-drive/buckets"
-	config "github.com/StarHack/go-internxt-drive/config"
-	"github.com/StarHack/go-internxt-drive/files"
-	"github.com/StarHack/go-internxt-drive/folders"
-	"github.com/StarHack/go-internxt-drive/users"
+	"github.com/StarHack/go-internxt-drive/internxtclient"
 	"github.com/rclone/rclone/fs"
 	rclone_config "github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -92,14 +87,12 @@ type Options struct {
 
 // Fs represents an Internxt remote
 type Fs struct {
-	name           string
-	root           string
-	opt            Options
-	dirCache       *dircache.DirCache
-	cfg            *config.Config
-	loginResponse  *auth.LoginResponse
-	accessResponse *auth.AccessResponse
-	features       *fs.Features
+	name     string
+	root     string
+	opt      Options
+	dirCache *dircache.DirCache
+	client   *internxtclient.Client
+	features *fs.Features
 }
 
 // Object holds the data for a remote file object
@@ -147,42 +140,31 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	cfg := config.NewDefault(opt.Email, clearPassword)
-	loginResponse, err := auth.Login(cfg)
+
+	// Create the client with credentials
+	client, err := internxtclient.NewWithCredentials(opt.Email, clearPassword)
 	if err != nil {
 		return nil, err
 	}
 
 	if opt.Use2FA {
-		fmt.Print("Enter your 2FA code: ")
-		var code string
-		_, err := fmt.Scanln(&code)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read 2FA code: %w", err)
-		}
-		cfg.TFA = code
-	}
-
-	accessResponse, err := auth.AccessLogin(cfg, loginResponse)
-	if err != nil {
-		return nil, err
+		// TODO: Implement 2FA support with the new client API
+		// The new client branch may handle 2FA differently
+		return nil, fmt.Errorf("2FA is not yet implemented with the new client API")
 	}
 
 	f := &Fs{
-		name:           name,
-		root:           root,
-		opt:            *opt,
-		cfg:            cfg,
-		loginResponse:  loginResponse,
-		accessResponse: accessResponse,
+		name:   name,
+		root:   root,
+		opt:    *opt,
+		client: client,
 	}
 
 	f.features = (&fs.Features{
-		ReadMimeType:      false,
-		WriteMimeType:     false,
-		BucketBased:       false,
-		BucketBasedRootOK: false,
-		//ChunkWriterDoesntSeek:    false,
+		ReadMimeType:             false,
+		WriteMimeType:            false,
+		BucketBased:              false,
+		BucketBasedRootOK:        false,
 		WriteDirSetModTime:       false,
 		WriteMetadata:            false,
 		WriteDirMetadata:         false,
@@ -194,7 +176,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Handle leading and trailing slashes
 	root = strings.Trim(root, "/")
-	f.dirCache = dircache.New(root, cfg.RootFolderID, f)
+	rootFolderID := ""
+	if client.UserData != nil && client.UserData.AccessData != nil && client.UserData.AccessData.User != nil {
+		rootFolderID = client.UserData.AccessData.User.RootFolderUUID
+	}
+	f.dirCache = dircache.New(root, rootFolderID, f)
 
 	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
@@ -203,7 +189,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		newRoot, remote := dircache.SplitPath(root)
 
 		tempF := *f
-		tempF.dirCache = dircache.New(newRoot, f.cfg.RootFolderID, &tempF)
+		tempF.dirCache = dircache.New(newRoot, rootFolderID, &tempF)
 		tempF.root = newRoot
 		// Make new Fs which is the parent
 		err = tempF.dirCache.FindRoot(ctx, false)
@@ -267,9 +253,8 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 	}
 
 	if check {
-		// Replace these calls with GetFolderContent? (fmt.Sprintf("/storage/v2/folder/%d%s", folderID, query))
 		// Check folders and files separately in case we only need to call the API once.
-		childFolders, err := folders.ListAllFolders(f.cfg, id)
+		childFolders, err := f.client.Folders.ListAllFolders(id)
 		if err != nil {
 			return err
 		}
@@ -278,7 +263,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 			return fs.ErrorDirectoryNotEmpty
 		}
 
-		childFiles, err := folders.ListAllFiles(f.cfg, id)
+		childFiles, err := f.client.Folders.ListAllFiles(id)
 		if err != nil {
 			return err
 		}
@@ -288,7 +273,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 		}
 	}
 
-	err = folders.DeleteFolder(f.cfg, id)
+	err = f.client.Folders.DeleteFolder(id)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return fs.ErrorDirNotFound
@@ -306,7 +291,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 // If found, it returns its UUID and true. If not found, returns "", false.
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, error) {
 	//fmt.Printf("FindLeaf pathID: %s, leaf: %s\n", pathID, leaf)
-	entries, err := folders.ListAllFolders(f.cfg, pathID)
+	entries, err := f.client.Folders.ListAllFolders(pathID)
 	if err != nil {
 		return "", false, err
 	}
@@ -320,7 +305,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 
 // CreateDir creates a new directory
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error) {
-	resp, err := folders.CreateFolder(f.cfg, folders.CreateFolderRequest{
+	resp, err := f.client.Folders.CreateFolder(internxtclient.CreateFolderRequest{
 		PlainName:        f.opt.Encoding.FromStandardName(leaf),
 		ParentFolderUUID: pathID,
 		ModificationTime: time.Now().UTC().Format(time.RFC3339),
@@ -341,7 +326,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 	}
 	var out fs.DirEntries
 
-	foldersList, err := folders.ListAllFolders(f.cfg, dirID)
+	foldersList, err := f.client.Folders.ListAllFolders(dirID)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +334,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		remote := filepath.Join(dir, f.opt.Encoding.ToStandardName(e.PlainName))
 		out = append(out, fs.NewDir(remote, e.ModificationTime))
 	}
-	filesList, err := folders.ListAllFiles(f.cfg, dirID)
+	filesList, err := f.client.Folders.ListAllFiles(dirID)
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +387,7 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 	if err != nil {
 		return err
 	}
-	if err := folders.DeleteFolder(f.cfg, dirID); err != nil {
+	if err := f.client.Folders.DeleteFolder(dirID); err != nil {
 		return err
 	}
 	f.dirCache.FlushDir(remote)
@@ -435,7 +420,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// If we're doing both, we should rename to a temp name in case there's a file
 	// with the same name at the destination folder (we can't rename AND move with one call)
 	if doMove && doRename {
-		newFile, err := files.UpdateFileMeta(f.cfg, srcObj.uuid, &folders.File{Type: "__RCLONE_MOVE__"})
+		newFile, err := f.client.Files.UpdateFileMeta(srcObj.uuid, &internxtclient.File{Type: "__RCLONE_MOVE__"})
 		if err != nil {
 			return nil, err
 		}
@@ -444,7 +429,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	if doMove {
-		newFile, err := files.MoveFile(f.cfg, srcObj.uuid, dstDirectoryID)
+		newFile, err := f.client.Files.MoveFile(srcObj.uuid, dstDirectoryID)
 		if err != nil {
 			return nil, err
 		}
@@ -457,12 +442,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		name := strings.TrimSuffix(base, filepath.Ext(base))
 		ext := strings.TrimPrefix(filepath.Ext(base), ".")
 
-		updated := &folders.File{
+		updated := &internxtclient.File{
 			PlainName: f.opt.Encoding.FromStandardName(name),
 			Type:      f.opt.Encoding.FromStandardName(ext),
 		}
 
-		newFile, err := files.UpdateFileMeta(f.cfg, srcObj.uuid, updated)
+		newFile, err := f.client.Files.UpdateFileMeta(srcObj.uuid, updated)
 		if err != nil {
 			return nil, err
 		}
@@ -491,7 +476,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// If we're moving AND renaming we need to set a temp name first, else we risk collisions
 	if doMove && doRename {
-		err = folders.RenameFolder(f.cfg, srcID, f.opt.Encoding.FromStandardName(dstLeaf+".__RCLONE_MOVE__"))
+		err = f.client.Folders.RenameFolder(srcID, f.opt.Encoding.FromStandardName(dstLeaf+".__RCLONE_MOVE__"))
 		if err != nil {
 			return err
 		}
@@ -499,7 +484,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	if doMove {
-		err = folders.MoveFolder(f.cfg, srcID, dstDirectoryID)
+		err = f.client.Folders.MoveFolder(srcID, dstDirectoryID)
 		if err != nil && !strings.Contains(err.Error(), "409") {
 			return err
 		}
@@ -508,7 +493,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	if doRename {
-		err = folders.RenameFolder(f.cfg, srcID, f.opt.Encoding.FromStandardName(dstLeaf))
+		err = f.client.Folders.RenameFolder(srcID, f.opt.Encoding.FromStandardName(dstLeaf))
 		if err != nil && !strings.Contains(err.Error(), "409") {
 			return err
 		}
@@ -539,7 +524,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fs.ErrorObjectNotFound
 	}
 
-	files, err := folders.ListAllFiles(f.cfg, dirID)
+	files, err := f.client.Folders.ListAllFiles(dirID)
 	if err != nil {
 		return nil, err
 	}
@@ -563,7 +548,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 // newObjectWithFile returns a new object by file info
-func newObjectWithFile(f *Fs, remote string, file *folders.File) fs.Object {
+func newObjectWithFile(f *Fs, remote string, file *internxtclient.File) fs.Object {
 	size, _ := file.Size.Int64()
 	return &Object{
 		f:       f,
@@ -617,12 +602,12 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	internxtLimit, err := users.GetLimit(f.cfg)
+	internxtLimit, err := f.client.Users.GetLimit()
 	if err != nil {
 		return nil, err
 	}
 
-	internxtUsage, err := users.GetUsage(f.cfg)
+	internxtUsage, err := f.client.Users.GetUsage()
 	if err != nil {
 		return nil, err
 	}
@@ -652,7 +637,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if o.f.opt.SimulateEmptyFiles && o.size == 0 {
 		return io.NopCloser(bytes.NewReader(nil)), nil
 	}
-	return buckets.DownloadFileStream(o.f.cfg, o.id, rangeValue)
+	return o.f.client.Buckets.DownloadFileStream(o.id, rangeValue)
 }
 
 // Update updates an existing file
@@ -695,7 +680,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	if o.uuid != "" || existsInBackend {
-		if err := files.DeleteFile(o.f.cfg, o.uuid); err != nil {
+		if err := o.f.client.Files.DeleteFile(o.uuid); err != nil {
 			return fs.ErrorNotAFile
 		}
 	}
@@ -706,7 +691,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	meta, err := buckets.UploadFileStream(o.f.cfg, dirID, o.f.opt.Encoding.FromStandardName(filepath.Base(o.remote)), in, src.Size(), src.ModTime(ctx))
+	meta, err := o.f.client.Buckets.UploadFileStream(dirID, o.f.opt.Encoding.FromStandardName(filepath.Base(o.remote)), in, src.Size(), src.ModTime(ctx))
 	if err != nil {
 		return err
 	}
@@ -723,7 +708,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove deletes a file
 func (o *Object) Remove(ctx context.Context) error {
-	err := files.DeleteFile(o.f.cfg, o.uuid)
+	err := o.f.client.Files.DeleteFile(o.uuid)
 	time.Sleep(500 * time.Millisecond) // REMOVE THIS, use pacer to check for consistency?
 	return err
 }
