@@ -61,6 +61,7 @@ See the following for detailed instructions for
 - [iCloud Drive](/iclouddrive/)
 - [Internet Archive](/internetarchive/)
 - [Jottacloud](/jottacloud/)
+- [kDrive](/kdrive/)
 - [Koofr](/koofr/)
 - [Linkbox](/linkbox/)
 - [Mail.ru Cloud](/mailru/)
