@@ -395,8 +395,8 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		return result, nil
 	}
 
-	var recursiveContents func(currentDirID string, fromCursor string)
-	recursiveContents = func(currentDirID string, fromCursor string) {
+	var recursiveContents func(currentDirID string, currentSubDir string, fromCursor string)
+	recursiveContents = func(currentDirID string, currentSubDir string, fromCursor string) {
 		result, err := listSomeFiles(currentDirID, fromCursor)
 		if err != nil {
 			return
@@ -415,22 +415,22 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 				}
 			}
 			item.Name = f.opt.Enc.ToStandardName(item.Name)
-			item.FullPath = f.opt.Enc.ToStandardPath(item.FullPath)
+			item.FullPath = path.Join(currentSubDir, item.Name)
 			if fn(item) {
 				found = true
 				break
 			}
 			if recursive && item.Type == "dir" {
-				recursiveContents(strconv.Itoa(item.ID), "" /*reset cursor*/)
+				recursiveContents(strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), "" /*reset cursor*/)
 			}
 		}
 
 		// Then load the rest of the files in that folder and apply the same logic
 		if result.HasMore {
-			recursiveContents(currentDirID, result.Cursor)
+			recursiveContents(currentDirID, currentSubDir, result.Cursor)
 		}
 	}
-	recursiveContents(dirID, "")
+	recursiveContents(dirID, "", "")
 	return
 }
 
@@ -444,7 +444,7 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 	}
 	var iErr error
 	_, err = f.listAll(ctx, directoryID, false, false, recursive, func(info *api.Item) bool {
-		remote := parsePath(strings.TrimPrefix(info.FullPath, "/"+f.root))
+		remote := path.Join(dir, info.FullPath)
 		if info.Type == "dir" {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, strconv.Itoa(info.ID))
