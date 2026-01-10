@@ -1122,6 +1122,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	o.size = size
+	o.setHash(strings.TrimPrefix(result.Data.Hash, "xxh3:"))
 	return o.readMetaData(ctx)
 }
 
