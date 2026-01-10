@@ -79,6 +79,9 @@ func init() {
 			Name: "vendor",
 			Help: "Name of the WebDAV site/service/software you are using.",
 			Examples: []fs.OptionExample{{
+				Value: "dcache",
+				Help:  "dCache WebDAV door",
+			}, {
 				Value: "fastmail",
 				Help:  "Fastmail Files",
 			}, {
@@ -229,6 +232,7 @@ type Fs struct {
 	chunksUploadURL    string        // upload URL for nextcloud chunked
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
 	authSingleflight   *singleflight.Group
+	setModTimeError    error // the error if setModTime is called
 }
 
 // Object describes a webdav object
@@ -630,6 +634,10 @@ var nextCloudURLRegex = regexp.MustCompile(`^(.*)/dav/files/([^/]+)`)
 // setQuirks adjusts the Fs for the vendor passed in
 func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 	switch vendor {
+	case "dcache":
+		f.precision = time.Second
+		f.useOCMtime = true
+		f.setModTimeError = fs.ErrorCantSetModTimeWithoutDelete
 	case "fastmail":
 		f.canStream = true
 		f.precision = time.Second
@@ -1452,6 +1460,9 @@ var owncloudPropsetWithChecksum = `<?xml version="1.0" encoding="utf-8" ?>
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	if o.fs.setModTimeError != nil {
+		return o.fs.setModTimeError
+	}
 	if o.fs.propsetMtime {
 		checksums := ""
 		if o.fs.hasOCSHA1 && o.sha1 != "" {
