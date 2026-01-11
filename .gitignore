@@ -22,3 +22,4 @@ resource_windows_*.syso
 .devcontainer
 backend/raid3/test/_data
 backend/raid3/_analysis
+.cursor/prompts
