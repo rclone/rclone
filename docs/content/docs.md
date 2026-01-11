@@ -1626,6 +1626,10 @@ original-file-name.XXXXXX.partial
 (rclone will make sure the final name is no longer than 100 characters
 by truncating the `original-file-name` part if necessary).
 
+By default, the partial file is stored in the same directory as the
+destination file. You can use [--partial-dir](#partial-dir) to store
+partial files in a separate directory instead.
+
 When the upload is complete, rclone will rename the `.partial` file to
 the correct name, overwriting any existing file at that point. If the
 upload fails then the `.partial` file will be deleted.
@@ -2422,6 +2426,32 @@ being more of a best efforts flag rather than a perfect ordering.
 If you want perfect ordering then you will need to specify
 [--check-first](#check-first) which will find all the files which need
 transferring first before transferring any.
+
+### --partial-dir string {#partial-dir}
+
+When [--inplace](#inplace) is not used, this option specifies a
+directory where partial files are stored during transfer, similar to
+rsync's `--partial-dir` option.
+
+When set, partial files are stored in the specified directory with
+the destination's relative path structure preserved. For example,
+when copying to `dest/subdir/file.txt` with `--partial-dir /tmp/partial`,
+the partial file will be stored at `/tmp/partial/subdir/file.txt.HASH.partial`.
+
+After a successful transfer, the file is moved from the partial
+directory to the final destination. If the transfer fails, the
+partial file remains in the partial directory.
+
+This is useful when you want to keep partial files separate from
+the destination directory, for example to avoid cluttering the
+destination with incomplete files or to use a different filesystem
+for temporary storage.
+
+The [--partial-suffix](#partial-suffix) is still applied to files
+in the partial directory.
+
+The default is empty (disabled), which means partial files are
+stored in the destination directory as before.
 
 ### --partial-suffix string {#partial-suffix}
 
