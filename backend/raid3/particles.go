@@ -549,9 +549,9 @@ func NewStreamReconstructor(dataReader, parityReader io.ReadCloser, mode string,
 		parityBuffer: make([]byte, chunkSize),
 		outputBuffer: make([]byte, 0, chunkSize*2), // Output buffer (empty initially, capacity 2x chunk size)
 		dataPos:      0,
-		parityPos:     0,
-		dataEOF:       false,
-		parityEOF:     false,
+		parityPos:    0,
+		dataEOF:      false,
+		parityEOF:    false,
 	}
 }
 
@@ -690,7 +690,7 @@ func (r *StreamReconstructor) Read(p []byte) (n int, err error) {
 	} else if r.mode == "odd+parity" {
 		reconstructed, reconErr = ReconstructFromOddAndParity(dataData, parityData, r.isOddLength)
 	} else {
-			return 0, formatOperationError("stream reconstruction failed", fmt.Sprintf("invalid reconstruction mode: %s", r.mode), nil)
+		return 0, formatOperationError("stream reconstruction failed", fmt.Sprintf("invalid reconstruction mode: %s", r.mode), nil)
 	}
 
 	if reconErr != nil {
@@ -736,4 +736,3 @@ func (r *StreamReconstructor) Close() error {
 	}
 	return nil
 }
-

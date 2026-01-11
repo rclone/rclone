@@ -8,6 +8,48 @@ This document tracks open design questions and pending decisions for the raid3 b
 
 ---
 
+### Q24: Intermittent FsListRLevel2 Test Failure (Duplicate Directory)
+**Status**: 🔴 **ACTIVE** - Investigation ongoing  
+**Priority**: High (test reliability)
+
+**Issue**: The `FsListRLevel2` test intermittently fails (~50% failure rate) with duplicate directory entries:
+- **Expected**: `[]string{"hello? sausage", "hello? sausage/êé"}` (2 entries)
+- **Actual**: `[]string{"hello? sausage", "hello? sausage/êé", "hello? sausage/êé"}` (3 entries - duplicate)
+
+**Investigation Status**:
+- ✅ Our `ListR` callback correctly returns unique entries (verified with duplicate detection code - no duplicates before callback)
+- ✅ Removed `stats.ResetErrors()` to fix test state leakage (this fixed other intermittent failures)
+- ✅ Deduplication logic in `ListR` is correct (uses map with remote path as key)
+- ✅ Confirmed duplicate appears **after** our callback returns (in `walkRDirTree`/`DirTree` processing)
+- 🔍 Test passes individually but fails intermittently when run together (~50% failure rate)
+- 🔍 Union backend doesn't have this issue (verified - union tests pass consistently)
+
+**Technical Analysis**:
+- `walkRDirTree` processes directories differently based on slash count:
+  - `"hello? sausage"` (0 slashes, maxLevel=2): uses `dirs.AddDir(x)` (slashes < maxLevel-1)
+  - `"hello? sausage/êé"` (1 slash, maxLevel=2): uses `dirs.Add(x)` (slashes == maxLevel-1)
+- `DirTree.Add()` doesn't deduplicate - it just appends to slices
+- `walkR()` extracts entries from `DirTree` and passes them to test callback
+- Our callback is called exactly once (verified)
+
+**Possible Causes**:
+1. Framework bug in `walkRDirTree`/`DirTree` when `maxLevel >= 0` - most likely cause
+2. Race condition or state issue in `DirTree` processing (intermittent nature suggests this)
+3. Difference in how `raid3` vs `union` backend entries are processed by framework
+
+**Next Steps**:
+- Continue investigation to create minimal reproducer
+- If confirmed framework bug, file upstream issue with rclone project
+- Document as known limitation if confirmed framework bug
+- **Temporary workaround**: Test skipped in `test_runner.sh` (see test runner for details)
+
+**References**:
+- Investigation notes: `backend/raid3/_analysis/DUPLICATE_DIRECTORY_BUG_ANALYSIS.md`
+- Code: `backend/raid3/list.go` (ListR implementation)
+- Framework code: `fs/walk/walk.go` (walkRDirTree), `fs/dirtree/dirtree.go` (DirTree)
+
+---
+
 ### Q14: Optimize Health Checks (Add Caching)
 **Status**: 🔴 **ACTIVE** - Performance optimization  
 **Priority**: High (affects write performance)
@@ -355,7 +397,7 @@ Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIG
 
 ## 📊 Statistics
 
-Total active questions: 16. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (2) - Q14: Health Check Caching, Q15: Background Worker Context. Medium Priority (6) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values, Q21: Range Read Optimization. Low Priority (8) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch.
+Total active questions: 17. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (3) - Q14: Health Check Caching, Q15: Background Worker Context, Q24: Intermittent FsListRLevel2 Test Failure. Medium Priority (6) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values, Q21: Range Read Optimization. Low Priority (8) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch.
 
 
 **Use this file to track decisions before they're made!** 🤔

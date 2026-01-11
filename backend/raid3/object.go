@@ -184,7 +184,7 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	bytesRead, err := io.Copy(hasher, reader)
 	if err != nil {
 		return "", err
@@ -741,15 +741,15 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		if !ValidateParticleSizes(evenSize, oddSize) {
 			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes: even=%d, odd=%d for remote %q", evenSize, oddSize, o.remote), nil)
 		}
-		
+
 		// Validate that expected total size matches Size() method
 		expectedSize := evenSize + oddSize
 		reportedSize := o.Size()
 		if reportedSize != expectedSize && reportedSize >= 0 {
-			fs.Debugf(o, "Size mismatch: Size()=%d, expected from particles=%d (even=%d, odd=%d)", 
+			fs.Debugf(o, "Size mismatch: Size()=%d, expected from particles=%d (even=%d, odd=%d)",
 				reportedSize, expectedSize, evenSize, oddSize)
 		}
-		
+
 		// Ensure we're not opening empty streams when Size() reports data
 		if expectedSize > 0 && (evenSize < 0 || oddSize < 0) {
 			return nil, fmt.Errorf("particles report invalid sizes: even=%d, odd=%d (expected > 0)", evenSize, oddSize)
@@ -830,7 +830,7 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			if evenSize < 0 || paritySize < 0 {
 				return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: even=%d, parity=%d for remote %q", evenSize, paritySize, o.remote), nil)
 			}
-			
+
 			// Extract range/seek options before opening particle readers
 			var rangeStart, rangeEnd int64 = 0, -1
 			filteredOptions := make([]fs.OpenOption, 0, len(options))
@@ -879,7 +879,7 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			if oddSize < 0 || paritySize < 0 {
 				return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: odd=%d, parity=%d for remote %q", oddSize, paritySize, o.remote), nil)
 			}
-			
+
 			// Extract range/seek options before opening particle readers
 			var rangeStart, rangeEnd int64 = 0, -1
 			filteredOptions := make([]fs.OpenOption, 0, len(options))
@@ -941,7 +941,7 @@ func newRangeFilterReader(reader io.ReadCloser, rangeStart, rangeEnd int64, tota
 	// This matches the standard rclone behavior
 	opt := &fs.RangeOption{Start: rangeStart, End: rangeEnd}
 	offset, limit := opt.Decode(totalSize)
-	
+
 	// Decode returns offset and limit (number of bytes to read)
 	// Convert to rangeStart and rangeEnd (inclusive end)
 	rangeStart = offset
@@ -1632,7 +1632,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	// Remove parity (try both suffixes - delete whichever exists, ignore errors if not found)
 	g.Go(func() error {
 		var parityErr error
-		
+
 		// Try odd-length parity suffix first
 		parityOdd := GetParityFilename(o.remote, true)
 		obj, err := o.fs.parity.NewObject(gCtx, parityOdd)
@@ -1692,7 +1692,7 @@ func (d *Directory) Remote() string {
 func (d *Directory) ModTime(ctx context.Context) time.Time {
 	var latestTime time.Time
 	backends := []fs.Fs{d.fs.even, d.fs.odd, d.fs.parity}
-	
+
 	// Get parent directory to list from
 	parent := path.Dir(d.remote)
 	if parent == "." {
@@ -1702,7 +1702,7 @@ func (d *Directory) ModTime(ctx context.Context) time.Time {
 	if dirName == "." || dirName == "" {
 		dirName = d.remote
 	}
-	
+
 	for _, backend := range backends {
 		if backend == nil {
 			continue
@@ -1723,7 +1723,7 @@ func (d *Directory) ModTime(ctx context.Context) time.Time {
 			}
 		}
 	}
-	
+
 	// If we didn't find any directory, return current time as fallback
 	if latestTime.IsZero() {
 		return time.Now()

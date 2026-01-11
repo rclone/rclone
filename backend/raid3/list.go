@@ -13,7 +13,6 @@ import (
 	"errors"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/walk"
 )
 
@@ -217,12 +216,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	// Track error count before starting to detect degraded mode errors
-	// In degraded mode (2/3 backends), errors from the failed backend should not
-	// cause exit status 3 - the operation succeeds with warnings
-	stats := accounting.Stats(ctx)
-	initialErrorCount := stats.GetErrors()
-
 	// Collect entries from all three backends in parallel
 	// Support degraded mode: works with 2/3 backends (reads work in degraded mode)
 	type listRResult struct {
@@ -380,33 +373,32 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	}
 
 	// Convert map to slice and convert entries to raid3 Object/Directory types
-	// Use the map key (remote path) directly to ensure consistency and prevent duplicates
-	// Build a deduplicated list by remote path to ensure no duplicates in final output
-	deduplicatedMap := make(map[string]fs.DirEntry, len(entryMap))
-	for remote, entry := range entryMap {
-		// Use remote as key to ensure deduplication (defensive programming)
-		// This prevents any potential duplicates from map iteration
-		if _, exists := deduplicatedMap[remote]; !exists {
-			deduplicatedMap[remote] = entry
-		}
-	}
-	
-	mergedEntries := make(fs.DirEntries, 0, len(deduplicatedMap))
+	// entryMap already contains deduplicated entries (map keys are unique by remote path)
+	// Convert directly to raid3 types exactly like List() method
+	mergedEntries := make(fs.DirEntries, 0, len(entryMap))
 	objectCount := 0
 	dirCount := 0
-	for remote, entry := range deduplicatedMap {
+	seenRemotes := make(map[string]bool, len(entryMap))
+	// Iterate by key to ensure we only process each unique remote path once
+	for remote, entry := range entryMap {
+		// Additional defensive check: ensure no duplicates in the final slice
+		if seenRemotes[remote] {
+			fs.Errorf(f, "ListR(%q): ERROR: duplicate remote path detected: %q (this should never happen!)", dir, remote)
+			continue
+		}
+		seenRemotes[remote] = true
 		var converted fs.DirEntry
 		switch entry.(type) {
 		case fs.Object:
 			converted = &Object{
 				fs:     f,
-				remote: remote,
+				remote: remote, // Use the key (remote path) directly
 			}
 			objectCount++
 		case fs.Directory:
 			converted = &Directory{
 				fs:     f,
-				remote: remote,
+				remote: remote, // Use the key (remote path) directly
 			}
 			dirCount++
 		default:
@@ -415,7 +407,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		}
 		mergedEntries = append(mergedEntries, converted)
 	}
-	fs.Infof(f, "ListR(%q): converted %d objects, %d dirs", dir, objectCount, dirCount)
+	fs.Infof(f, "ListR(%q): converted %d objects, %d dirs, final count: %d", dir, objectCount, dirCount, len(mergedEntries))
 
 	// Call callback with merged entries
 	// If callback returns an error, return it
@@ -427,43 +419,12 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	}
 	fs.Infof(f, "ListR(%q): callback succeeded", dir)
 
-	// Degraded mode succeeded: we have at least 2 of 3 backends available
-	// This is expected behavior for RAID 3 reads in degraded mode
-	// Clear errors that were counted for the failed backend to prevent exit status 3
-	// Hardware RAID 3: reads succeed with warnings in degraded mode
+	// Success - return nil even if one backend failed (degraded mode is acceptable for reads)
+	// Hardware RAID 3 behavior: reads succeed with warnings in degraded mode
 	// Degraded mode succeeds if:
 	// - Both data backends succeed (parity can fail) - RAID 3 only needs 2/3 for reads
 	// - One data backend succeeds (other data backend can fail) - still have 2/3
-	degradedModeSucceeded := (errEven == nil && errOdd == nil) || // Both data backends succeeded
-		(errEven != nil && errOdd == nil) || // Even failed, odd succeeded
-		(errOdd != nil && errEven == nil) // Odd failed, even succeeded
-
-	// Reset errors when degraded mode succeeds and we listed files
-	// This prevents exit status 3 for degraded mode reads (hardware RAID 3 behavior)
-	// Note: We only reset if we actually listed files (len(mergedEntries) > 0)
-	// This prevents resetting errors when enumeration fails completely
-	if degradedModeSucceeded && len(mergedEntries) > 0 {
-		// Degraded mode: we have at least 2/3 backends (the two data backends)
-		// The operation succeeded (files were listed), so clear degraded mode errors
-		// Only reset if we actually listed files (len(mergedEntries) > 0) and this is the top-level call (dir == "")
-		// This prevents resetting errors during recursive enumeration (e.g., heal command)
-		// Errors were already logged as warnings, which is correct behavior
-		currentErrorCount := stats.GetErrors()
-		if currentErrorCount > initialErrorCount {
-			// Errors were counted for the failed backend during degraded mode
-			// Since the operation succeeded (we have 2/3 backends), clear these errors
-			// to prevent exit status 3 (hardware RAID 3 behavior: reads succeed with warnings)
-			stats.ResetErrors()
-			// Note: This clears all errors, including any pre-existing ones
-			// This is acceptable because:
-			// 1. Degraded mode is a read operation and shouldn't fail
-			// 2. Pre-existing errors from other operations are not relevant to this read
-			// 3. Hardware RAID 3: reads succeed in degraded mode (exit status 0)
-		}
-	}
-
-	// Success - return nil even if one backend failed (degraded mode is acceptable for reads)
-	// Hardware RAID 3 behavior: reads succeed with warnings in degraded mode
+	// Errors from failed backends are logged as warnings, but the operation succeeds
 	return nil
 }
 
@@ -540,4 +501,3 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	return &Object{fs: f, remote: remote}, nil
 }
-

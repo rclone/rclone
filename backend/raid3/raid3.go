@@ -308,7 +308,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	if _, ok := m.Get("use_streaming"); !ok {
 		opt.UseStreaming = true
 	}
-		if _, ok := m.Get("chunk_size"); !ok {
+	if _, ok := m.Get("chunk_size"); !ok {
 		opt.ChunkSize = fs.SizeSuffix(defaultChunkSize)
 	}
 
@@ -782,7 +782,6 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 // ensure that if a write fails due to unavailable backend, it fails immediately
 // without retry attempts that could create partial/degraded files.
 
-
 // Shutdown waits for pending heal uploads to complete
 func (f *Fs) Shutdown(ctx context.Context) error {
 	// Check if there are pending uploads
@@ -824,7 +823,6 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 // countParticles counts the number of particles on a backend
 
 // List the objects and directories in dir into entries
-
 
 // Mkdir makes a directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {

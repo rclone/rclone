@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"golang.org/x/sync/errgroup"
@@ -193,7 +194,12 @@ func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any,
 		report.WriteString(fmt.Sprintf("  $ rclone ls new-%s-backend:    # Verify accessible\n\n", failedBackend))
 
 		report.WriteString("STEP 3: Update rclone.conf\n\n")
-		report.WriteString("  Edit: ~/.config/rclone/rclone.conf\n")
+		configPath := config.GetConfigPath()
+		if configPath != "" {
+			report.WriteString(fmt.Sprintf("  Edit: %s\n", configPath))
+		} else {
+			report.WriteString("  Edit: your rclone config file\n")
+		}
 		report.WriteString(fmt.Sprintf("  Change: %s = new-%s-backend:\n\n", failedBackend, failedBackend))
 
 		report.WriteString("STEP 4: Rebuild missing particles\n\n")

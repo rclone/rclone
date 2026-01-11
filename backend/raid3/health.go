@@ -267,4 +267,3 @@ Technical details: %w`,
 		f.getBackendPath(failedBackend),
 		backendErr)
 }
-
