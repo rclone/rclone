@@ -347,6 +347,6 @@ if [ $FAILED -eq 0 ]; then
     echo "✅ All tests passed!"
     exit 0
 else
-    echo "❌ $FAILED test(s) failed"
+    echo "❌ ${FAILED} test(s) failed"
     exit 1
 fi
