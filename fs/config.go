@@ -553,7 +553,7 @@ var ConfigOptionsInfo = Options{{
 }, {
 	Name:    "partial_dir",
 	Default: "",
-	Help:    "put a partially transferred file into DIR",
+	Help:    "Directory to store partial files during transfer",
 	Groups:  "Copy",
 }, {
 	Name:     "max_connections",
