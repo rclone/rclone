@@ -1060,3 +1060,6 @@ put them back in again. -->
 - jhasse-shade <jacob@shade.inc>
 - vyv03354 <VYV03354@nifty.ne.jp>
 - masrlinu <masrlinu@users.noreply.github.com> <5259918+masrlinu@users.noreply.github.com>
+- vupn0712 <126212736+vupn0712@users.noreply.github.com>
+- darkdragon-001 <darkdragon-001@users.noreply.github.com>
+- sys6101 <csvmen@gmail.com>

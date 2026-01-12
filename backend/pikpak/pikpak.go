@@ -1384,7 +1384,7 @@ func (f *Fs) uploadByForm(ctx context.Context, in io.Reader, name string, size i
 	for i := range iVal.NumField() {
 		params.Set(iTyp.Field(i).Tag.Get("json"), iVal.Field(i).String())
 	}
-	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, params, "file", name)
+	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, params, "file", name, "application/octet-stream")
 	if err != nil {
 		return fmt.Errorf("failed to make multipart upload: %w", err)
 	}
