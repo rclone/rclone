@@ -22,6 +22,7 @@ import (
 	_ "github.com/rclone/rclone/backend/fichier"
 	_ "github.com/rclone/rclone/backend/filefabric"
 	_ "github.com/rclone/rclone/backend/filelu"
+	_ "github.com/rclone/rclone/backend/filen"
 	_ "github.com/rclone/rclone/backend/filescom"
 	_ "github.com/rclone/rclone/backend/ftp"
 	_ "github.com/rclone/rclone/backend/gofile"
