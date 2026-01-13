@@ -47,6 +47,7 @@ See the following for detailed instructions for
 - [Dropbox](/dropbox/)
 - [Enterprise File Fabric](/filefabric/)
 - [FileLu Cloud Storage](/filelu/)
+- [Filen](/filen/)
 - [Files.com](/filescom/)
 - [FTP](/ftp/)
 - [Gofile](/gofile/)
