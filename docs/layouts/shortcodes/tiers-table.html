@@ -1,0 +1,41 @@
+<table>
+  <thead>
+    <tr>
+      <th>Backend</th>
+      <th>Tier</th>
+      <th>Maintainers</th>
+      <th>Features</th>
+      <th>Tests</th>
+      <th>Integrity</th>
+      <th>Perf</th>
+      <th>Adoption</th>
+      <th>Docs</th>
+      <th>Security</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range $name, $data := site.Data.backends }}
+    <tr>
+      <td style="font-weight: bold;">
+          <a href="/{{ $name | urlize }}">{{ $data.name }}</a>
+      </td>
+      <td>
+        {{ partial "tier.html" (dict "name" $name "align" false) }}
+      </td>
+      <td>{{ $data.maintainers | default "-" }}</td>
+      <td>{{ $data.features_score | string | default "-" }}</td>
+      <td>
+        <span class="{{ if eq $data.integration_tests "Passing" }}text-success{{ else }}text-danger{{ end }}">
+          {{ if eq $data.integration_tests "Passing" }}&#10004;{{ else }}&#10006;{{ end }}
+        </span>
+        {{ $data.integration_tests | default "-" }}
+      </td>
+      <td>{{ $data.data_integrity | default "-" }}</td>
+      <td>{{ $data.performance | default "-" }}</td>
+      <td>{{ $data.adoption | default "-" }}</td>
+      <td>{{ $data.docs | default "-" }}</td>
+      <td>{{ $data.security | default "-" }}</td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>

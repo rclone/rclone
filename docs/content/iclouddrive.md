@@ -2,7 +2,6 @@
 title: "iCloud Drive"
 description: "Rclone docs for iCloud Drive"
 versionIntroduced: "v1.69"
-status: Beta
 ---
 
 # {{< icon "fa fa-cloud" >}} iCloud Drive

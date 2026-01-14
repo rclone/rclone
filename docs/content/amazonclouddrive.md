@@ -2,7 +2,7 @@
 title: "Amazon Drive"
 description: "Rclone docs for Amazon Drive"
 versionIntroduced: "v1.20"
-status: Deprecated
+status: Removed
 ---
 
 # {{< icon "fab fa-amazon" >}} Amazon Drive
