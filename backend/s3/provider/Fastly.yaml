@@ -8,8 +8,6 @@ endpoint:
   us-east.object.fastlystorage.app: US East
   us-west.object.fastlystorage.app: US West
   eu-central.object.fastlystorage.app: EU Central
-server_side_encryption:
-  aws:kms: aws:kms
 quirks:
   force_path_style: true
   use_already_exists: false
