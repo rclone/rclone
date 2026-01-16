@@ -21,5 +21,6 @@ __pycache__
 resource_windows_*.syso
 .devcontainer
 backend/raid3/test/_data
+backend/raid3/test/rclone_raid3_integration_tests.config
 backend/raid3/_analysis
 .cursor/prompts
