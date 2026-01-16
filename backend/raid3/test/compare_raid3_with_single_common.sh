@@ -36,11 +36,6 @@ SCRIPT_DIR=${SCRIPT_DIR:-$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 # Data directory is relative to script directory
 DATA_DIR="${DATA_DIR:-${SCRIPT_DIR}/_data}"
 
-# Resolve rclone config file - only use test-specific config file
-# This is the strict approach: tests only use the config file created by setup.sh
-TEST_SPECIFIC_CONFIG="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"
-RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
-
 # For backward compatibility, set WORKDIR to SCRIPT_DIR (used in some cleanup functions)
 WORKDIR="${SCRIPT_DIR}"
 
@@ -60,6 +55,13 @@ if [[ -f "${SCRIPT_DIR}/compare_raid3_env.local.sh" ]]; then
   # shellcheck source=/dev/null
   . "${SCRIPT_DIR}/compare_raid3_env.local.sh"
 fi
+
+# Resolve rclone config file - only use test-specific config file
+# This is the strict approach: tests only use the config file created by setup.sh
+# IMPORTANT: Set this AFTER sourcing env files to ensure it takes precedence
+# and cannot be overridden by compare_raid3_env.local.sh
+TEST_SPECIFIC_CONFIG="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"
+RCLONE_CONFIG="${TEST_SPECIFIC_CONFIG}"
 
 # Directory layout used by the configured backends. All variables below are
 # expected to come from compare_raid3_env.sh (or its local override).
@@ -194,6 +196,26 @@ create_rclone_config() {
   
   log_info "config" "Creating rclone config file: ${config_file}"
   
+  # Convert absolute paths to relative paths (relative to test directory)
+  # This ensures the config file is portable across different machines
+  make_relative_path() {
+    local abs_path="$1"
+    local test_dir="${SCRIPT_DIR}"
+    # If path is within test directory, make it relative
+    if [[ "${abs_path}" == "${test_dir}"/* ]]; then
+      echo "${abs_path#${test_dir}/}"
+    else
+      # If path is outside test directory, keep absolute (shouldn't happen in normal case)
+      echo "${abs_path}"
+    fi
+  }
+  
+  local LOCAL_EVEN_DIR_REL LOCAL_ODD_DIR_REL LOCAL_PARITY_DIR_REL LOCAL_SINGLE_DIR_REL
+  LOCAL_EVEN_DIR_REL=$(make_relative_path "${LOCAL_EVEN_DIR}")
+  LOCAL_ODD_DIR_REL=$(make_relative_path "${LOCAL_ODD_DIR}")
+  LOCAL_PARITY_DIR_REL=$(make_relative_path "${LOCAL_PARITY_DIR}")
+  LOCAL_SINGLE_DIR_REL=$(make_relative_path "${LOCAL_SINGLE_DIR}")
+  
   # Generate config file content
   cat > "${config_file}" <<EOF
 # rclone configuration file for raid3 integration tests
@@ -202,6 +224,7 @@ create_rclone_config() {
 #
 # This config file contains remotes for testing the raid3 backend.
 # You can edit this file to customize remote names or paths.
+# NOTE: Paths are relative to the test directory (backend/raid3/test)
 #
 # Local storage remotes
 [${LOCAL_EVEN_REMOTE}]
@@ -216,9 +239,9 @@ type = local
 # RAID3 remote using local storage
 [localraid3]
 type = raid3
-even = ${LOCAL_EVEN_REMOTE}:${LOCAL_EVEN_DIR}
-odd = ${LOCAL_ODD_REMOTE}:${LOCAL_ODD_DIR}
-parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR}
+even = ${LOCAL_EVEN_REMOTE}:${LOCAL_EVEN_DIR_REL}
+odd = ${LOCAL_ODD_REMOTE}:${LOCAL_ODD_DIR_REL}
+parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR_REL}
 timeout_mode = aggressive
 auto_cleanup = true
 auto_heal = false
@@ -227,7 +250,7 @@ use_streaming = true
 # Single local remote (alias type)
 [${LOCAL_SINGLE_REMOTE}]
 type = alias
-remote = ${LOCAL_SINGLE_DIR}
+remote = ${LOCAL_SINGLE_DIR_REL}
 
 # MinIO S3 remotes
 [${MINIO_EVEN_REMOTE}]
@@ -277,9 +300,9 @@ use_streaming = true
 # RAID3 remote using local and minio storage (mixed file/object backend)
 [localminioraid3]
 type = raid3
-even = ${LOCAL_EVEN_REMOTE}:${LOCAL_EVEN_DIR}
+even = ${LOCAL_EVEN_REMOTE}:${LOCAL_EVEN_DIR_REL}
 odd = ${MINIO_ODD_REMOTE}:
-parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR}
+parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR_REL}
 timeout_mode = aggressive
 auto_cleanup = true
 auto_heal = false
