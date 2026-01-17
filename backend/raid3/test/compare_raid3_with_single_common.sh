@@ -168,10 +168,15 @@ ensure_workdir() {
 ensure_rclone_config() {
   # Verify that rclone_raid3_integration_tests.config exists
   if [[ ! -f "${RCLONE_CONFIG}" ]]; then
-    local setup_script="${SCRIPT_DIR:-$(dirname "${BASH_SOURCE[0]}")}/setup.sh"
+    local setup_script="${SCRIPT_DIR}/setup.sh"
     die "Integration test configuration file not found: ${RCLONE_CONFIG}" \
-        "The test-specific config file is missing." \
-        "Please run: ${setup_script}" \
+        "" \
+        "The test-specific config file is missing. You need to run the setup script first." \
+        "" \
+        "Please run:" \
+        "  cd ${SCRIPT_DIR}" \
+        "  ./setup.sh" \
+        "" \
         "This will create the configuration file: ${RCLONE_CONFIG}"
   fi
   log_info "config" "Using rclone config: ${RCLONE_CONFIG}"
@@ -325,9 +330,48 @@ EOF
   return 0
 }
 
+# Find the rclone binary - requires local build in repo root
+find_rclone_binary() {
+  # Find repository root by looking for rclone.go or Makefile
+  # Script is in backend/raid3/test, so repo root is 3 levels up
+  local repo_root
+  repo_root=$(cd "${SCRIPT_DIR}/../../.." && pwd)
+  
+  # Check if this looks like the repo root
+  if [[ -f "${repo_root}/rclone.go" ]] || [[ -f "${repo_root}/Makefile" ]]; then
+    # Check for local rclone binary
+    if [[ -f "${repo_root}/rclone" ]] && [[ -x "${repo_root}/rclone" ]]; then
+      echo "${repo_root}/rclone"
+      return 0
+    elif [[ -f "${repo_root}/rclone.exe" ]] && [[ -x "${repo_root}/rclone.exe" ]]; then
+      echo "${repo_root}/rclone.exe"
+      return 0
+    else
+      # Local binary not found - provide helpful error message
+      die "Local rclone binary not found in repository root: ${repo_root}" \
+          "The integration tests require a locally built rclone binary." \
+          "" \
+          "Please compile rclone first:" \
+          "  cd ${repo_root}" \
+          "  go build" \
+          "" \
+          "After building, the binary should be at: ${repo_root}/rclone"
+    fi
+  else
+    # Couldn't find repo root
+    die "Could not find repository root (looking for rclone.go or Makefile)" \
+        "Expected repository root at: ${repo_root}" \
+        "Please ensure you are running the tests from the rclone repository."
+  fi
+}
+
+# Cache the rclone binary path (can be overridden via RCLONE_BINARY env var)
+RCLONE_BINARY="${RCLONE_BINARY:-$(find_rclone_binary)}"
+
 rclone_cmd() {
   # Use --retries 1 for faster failure in tests (avoid 3 retries causing long delays)
-  rclone --config "${RCLONE_CONFIG}" --retries 1 "$@"
+  # Use local rclone binary from repo root if available, otherwise system rclone
+  "${RCLONE_BINARY}" --config "${RCLONE_CONFIG}" --retries 1 "$@"
 }
 
 capture_command() {
