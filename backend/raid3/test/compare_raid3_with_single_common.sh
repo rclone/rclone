@@ -338,35 +338,56 @@ find_rclone_binary() {
   repo_root=$(cd "${SCRIPT_DIR}/../../.." && pwd)
   
   # Check if this looks like the repo root
-  if [[ -f "${repo_root}/rclone.go" ]] || [[ -f "${repo_root}/Makefile" ]]; then
-    # Check for local rclone binary
-    if [[ -f "${repo_root}/rclone" ]] && [[ -x "${repo_root}/rclone" ]]; then
-      echo "${repo_root}/rclone"
-      return 0
-    elif [[ -f "${repo_root}/rclone.exe" ]] && [[ -x "${repo_root}/rclone.exe" ]]; then
-      echo "${repo_root}/rclone.exe"
-      return 0
-    else
-      # Local binary not found - provide helpful error message
-      die "Local rclone binary not found in repository root: ${repo_root}" \
-          "The integration tests require a locally built rclone binary." \
-          "" \
-          "Please compile rclone first:" \
-          "  cd ${repo_root}" \
-          "  go build" \
-          "" \
-          "After building, the binary should be at: ${repo_root}/rclone"
-    fi
-  else
+  if [[ ! -f "${repo_root}/rclone.go" ]] && [[ ! -f "${repo_root}/Makefile" ]]; then
     # Couldn't find repo root
     die "Could not find repository root (looking for rclone.go or Makefile)" \
         "Expected repository root at: ${repo_root}" \
         "Please ensure you are running the tests from the rclone repository."
   fi
+  
+  # Check for local rclone binary in repo root (where 'go build' puts it)
+  # We ONLY use the repo root version to ensure tests use the locally compiled version
+  if [[ -f "${repo_root}/rclone" ]] && [[ -x "${repo_root}/rclone" ]]; then
+    echo "${repo_root}/rclone"
+    return 0
+  elif [[ -f "${repo_root}/rclone.exe" ]] && [[ -x "${repo_root}/rclone.exe" ]]; then
+    echo "${repo_root}/rclone.exe"
+    return 0
+  fi
+  
+  # Binary not found in repo root - provide helpful error message
+  die "Local rclone binary not found in repository root: ${repo_root}" \
+      "The integration tests require a locally built rclone binary in the repository root." \
+      "" \
+      "Please compile rclone first:" \
+      "  cd ${repo_root}" \
+      "  go build" \
+      "" \
+      "This will create the binary at: ${repo_root}/rclone" \
+      "" \
+      "Note: The tests use the binary from the repository root, not from \$GOPATH/bin," \
+      "to ensure you're testing the version you're actively developing."
 }
 
 # Cache the rclone binary path (can be overridden via RCLONE_BINARY env var)
 RCLONE_BINARY="${RCLONE_BINARY:-$(find_rclone_binary)}"
+
+ensure_rclone_binary() {
+  # Verify that the rclone binary exists and is executable
+  if [[ ! -f "${RCLONE_BINARY}" ]]; then
+    die "Rclone binary not found: ${RCLONE_BINARY}" \
+        "The integration tests require a locally built rclone binary." \
+        "" \
+        "Please compile rclone first:" \
+        "  cd $(cd "${SCRIPT_DIR}/../../.." && pwd)" \
+        "  go build"
+  fi
+  if [[ ! -x "${RCLONE_BINARY}" ]]; then
+    die "Rclone binary is not executable: ${RCLONE_BINARY}" \
+        "Please check the file permissions."
+  fi
+  log_info "binary" "Using rclone binary: ${RCLONE_BINARY}"
+}
 
 rclone_cmd() {
   # Use --retries 1 for faster failure in tests (avoid 3 retries causing long delays)

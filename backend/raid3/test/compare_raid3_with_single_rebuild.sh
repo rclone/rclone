@@ -466,6 +466,7 @@ run_all_scenarios() {
 main() {
   parse_args "$@"
   ensure_workdir
+  ensure_rclone_binary
   ensure_rclone_config
 
   case "${COMMAND}" in

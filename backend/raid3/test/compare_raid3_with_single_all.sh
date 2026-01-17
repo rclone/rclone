@@ -29,6 +29,10 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
+# Source common script to get ensure_rclone_binary and other helper functions
+# shellcheck source=backend/raid3/test/compare_raid3_with_single_common.sh
+. "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
+
 VERBOSE=0
 
 # Storage types to test
@@ -138,20 +142,15 @@ parse_args() {
   done
 }
 
-ensure_workdir() {
-  # Script must be run from the test directory (where this script is located)
-  if [[ "$(pwd)" != "${SCRIPT_DIR}" ]]; then
-    echo "Error: This script must be run from ${SCRIPT_DIR}" >&2
-    echo "Current directory: $(pwd)" >&2
-    exit 1
-  fi
-}
+# ensure_workdir is now provided by compare_raid3_with_single_common.sh
+# (removed local definition to avoid conflicts)
 
 # ------------------------------- main logic ---------------------------------
 
 main() {
   parse_args "$@"
   ensure_workdir
+  ensure_rclone_binary
   
   log "=========================================="
   log "Running all RAID3 integration tests"
