@@ -764,7 +764,7 @@ func SetCacheDir(path string) (err error) {
 //
 // To override the default we therefore set environment variable TMPDIR
 // on Unix systems, and both TMP and TEMP on Windows (they are almost exclusively
-// aliases for the same path, and programs may refer to to either of them).
+// aliases for the same path, and programs may refer to either of them).
 // This should make all libraries and forked processes use the same.
 func SetTempDir(path string) (err error) {
 	var tempDir string
