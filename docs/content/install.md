@@ -76,6 +76,14 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 rclone config
 ```
 
+### Using mise {#linux-mise}
+
+If you are using [mise](https://mise.jdx.dev), you can install rclone using a command like:
+
+```console
+mise use -g clone@latest
+```
+
 ## macOS installation {#macos}
 
 ### Installation with brew {#macos-brew}
@@ -164,6 +172,14 @@ The simplest fix is to run
 xattr -d com.apple.quarantine rclone
 ```
 
+### Using mise {#macos-mise}
+
+If you are using [mise](https://mise.jdx.dev), you can install rclone using a command like:
+
+```console
+mise use -g clone@latest
+```
+
 ## Windows installation {#windows}
 
 ### Precompiled binary {#windows-precompiled}
@@ -242,6 +258,14 @@ Note that this is a third party installer not controlled by the rclone
 developers so it may be out of date. Its current version is as below.
 
 [![Scoop package](https://repology.org/badge/version-for-repo/scoop/rclone.svg)](https://repology.org/project/rclone/versions)
+
+### Using mise {#windows-mise}
+
+If you are using [mise](https://mise.jdx.dev), you can install rclone using a command like:
+
+```console
+mise use -g clone@latest
+```
 
 ## Package manager installation {#package-manager}
 
