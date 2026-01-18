@@ -79,7 +79,7 @@ type Options struct {
 	File                 string        `config:"log_file"`             // Log everything to this file
 	MaxSize              fs.SizeSuffix `config:"log_file_max_size"`    // Max size of log file
 	MaxBackups           int           `config:"log_file_max_backups"` // Max backups of log file
-	MaxAge               fs.Duration   `config:"log_file_max_age"`     // Max age of of log file
+	MaxAge               fs.Duration   `config:"log_file_max_age"`     // Max age of log file
 	Compress             bool          `config:"log_file_compress"`    // Set to compress log file
 	Format               logFormat     `config:"log_format"`           // Comma separated list of log format options
 	UseSyslog            bool          `config:"syslog"`               // Use Syslog for logging

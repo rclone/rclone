@@ -1258,7 +1258,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 			fs.Debugf(f, "Failed to resolve path using RealPath: %v", err)
 			cwd, err := c.sftpClient.Getwd()
 			if err != nil {
-				fs.Debugf(f, "Failed to to read current directory - using relative paths: %v", err)
+				fs.Debugf(f, "Failed to read current directory - using relative paths: %v", err)
 			} else {
 				f.absRoot = path.Join(cwd, f.root)
 				fs.Debugf(f, "Relative path joined with current directory to get absolute path %q", f.absRoot)

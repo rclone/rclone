@@ -180,7 +180,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 
 // GetPasswordCommand gets the password using the --password-command setting
 //
-// If the the --password-command flag was not in use it returns "", nil
+// If the --password-command flag was not in use it returns "", nil
 func GetPasswordCommand(ctx context.Context) (pass string, err error) {
 	ci := fs.GetConfig(ctx)
 	if len(ci.PasswordCommand) == 0 {
