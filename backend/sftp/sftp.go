@@ -2052,12 +2052,24 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	return hashString, nil
 }
 
+// This should match PowerShell's definition of single quotes
+// https://github.com/PowerShell/PowerShell/blob/1241ad2794cc84c18554e36ce658bfd86781cf8e/src/System.Management.Automation/engine/parser/CharTraits.cs#L267-L271
+var powerShellQuoteReplacer = sync.OnceValue(func() *strings.Replacer {
+	return strings.NewReplacer(
+		"'", "''",
+		"‛", "'‛",
+		"‘", "'‘",
+		"’", "'’",
+		"‚", "'‚",
+	)
+})
+
 // quoteOrEscapeShellPath makes path a valid string argument in configured shell
 // and also ensures it cannot cause unintended behavior.
 func quoteOrEscapeShellPath(shellType string, shellPath string) (string, error) {
 	// PowerShell
 	if shellType == "powershell" {
-		return "'" + strings.ReplaceAll(shellPath, "'", "''") + "'", nil
+		return "'" + powerShellQuoteReplacer().Replace(shellPath) + "'", nil
 	}
 	// Windows Command Prompt
 	if shellType == "cmd" {
