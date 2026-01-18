@@ -311,6 +311,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	o := &Object{
 		fs:     f,
 		remote: remote,
+		mtime:  srcObj.mtime,
+		size:   srcObj.size,
 	}
 	fromFullPath := path.Join(src.Fs().Root(), srcObj.remote)
 	toFullPath := path.Join(f.root, remote)
@@ -367,7 +369,18 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 
-	err := f.ensureParentDirectories(ctx, dstRemote)
+	fullPathSrc := f.buildFullPath(srcRemote)
+	fullPathSrcUnencoded, err := url.QueryUnescape(fullPathSrc)
+	if err != nil {
+		return err
+	}
+
+	fullPathDstUnencoded, err := url.QueryUnescape(fullPath)
+	if err != nil {
+		return err
+	}
+
+	err = f.ensureParentDirectories(ctx, dstRemote)
 	if err != nil {
 		return err
 	}
@@ -378,6 +391,15 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	_, err = f.Move(ctx, o, dstRemote)
+
+	if err == nil {
+
+		f.createdDirMu.Lock()
+		f.createdDirs[fullPathSrcUnencoded] = false
+		f.createdDirs[fullPathDstUnencoded] = true
+		f.createdDirMu.Unlock()
+	}
+
 	return err
 }
 

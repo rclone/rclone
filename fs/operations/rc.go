@@ -921,6 +921,18 @@ See the [hashsum](/commands/rclone_hashsum/) command for more information on the
 	})
 }
 
+// Parse download, base64 and hashType parameters
+func parseHashParameters(in rc.Params) (download bool, base64 bool, ht hash.Type, err error) {
+	download, _ = in.GetBool("download")
+	base64, _ = in.GetBool("base64")
+	hashType, err := in.GetString("hashType")
+	if err != nil {
+		return
+	}
+	err = ht.Set(hashType)
+	return
+}
+
 // Hashsum a directory
 func rcHashsum(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	ctx, f, err := rc.GetFsNamedFileOK(ctx, in, "fs")
@@ -928,16 +940,9 @@ func rcHashsum(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
-	download, _ := in.GetBool("download")
-	base64, _ := in.GetBool("base64")
-	hashType, err := in.GetString("hashType")
+	download, base64, ht, err := parseHashParameters(in)
 	if err != nil {
-		return nil, fmt.Errorf("%s\n%w", hash.HelpString(0), err)
-	}
-	var ht hash.Type
-	err = ht.Set(hashType)
-	if err != nil {
-		return nil, fmt.Errorf("%s\n%w", hash.HelpString(0), err)
+		return out, err
 	}
 
 	hashes := []string{}
@@ -945,6 +950,67 @@ func rcHashsum(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = rc.Params{
 		"hashType": ht.String(),
 		"hashsum":  hashes,
+	}
+	return out, err
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "operations/hashsumfile",
+		AuthRequired: true,
+		Fn:           rcHashsumFile,
+		Title:        "Produces a hash for a single file.",
+		Help: `Produces a hash for a single file using the hash named.
+
+This takes the following parameters:
+
+- fs - a remote name string e.g. "drive:"
+- remote - a path within that remote e.g. "file.txt"
+- hashType - type of hash to be used
+- download - check by downloading rather than with hash (boolean)
+- base64 - output the hashes in base64 rather than hex (boolean)
+
+If you supply the download flag, it will download the data from the
+remote and create the hash on the fly. This can be useful for remotes
+that don't support the given hash or if you really want to read all
+the data.
+
+Returns:
+
+- hash - hash for the file
+- hashType - type of hash used
+
+Example:
+
+    $ rclone rc --loopback operations/hashsumfile fs=/ remote=/bin/bash hashType=MD5 download=true base64=true
+    {
+        "hashType": "md5",
+        "hash": "MDMw-fG2YXs7Uz5Nz-H68A=="
+    }
+
+See the [hashsum](/commands/rclone_hashsum/) command for more information on the above.
+`,
+	})
+}
+
+// Hashsum a file
+func rcHashsumFile(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	f, remote, err := rc.GetFsAndRemote(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	download, base64, ht, err := parseHashParameters(in)
+	if err != nil {
+		return out, err
+	}
+	o, err := f.NewObject(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+	sum, err := HashSum(ctx, ht, base64, download, o)
+	out = rc.Params{
+		"hashType": ht.String(),
+		"hash":     sum,
 	}
 	return out, err
 }

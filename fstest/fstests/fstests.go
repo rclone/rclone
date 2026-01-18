@@ -1273,10 +1273,14 @@ func Run(t *testing.T, opt *Opt) {
 				assert.Equal(t, file2Copy.Path, dst.Remote())
 
 				// check that mutating dst does not mutate src
-				err = dst.SetModTime(ctx, fstest.Time("2004-03-03T04:05:06.499999999Z"))
-				if err != fs.ErrorCantSetModTimeWithoutDelete && err != fs.ErrorCantSetModTime {
-					assert.NoError(t, err)
-					assert.False(t, src.ModTime(ctx).Equal(dst.ModTime(ctx)), "mutating dst should not mutate src -- is it Copying by pointer?")
+				if !strings.Contains(fs.ConfigStringFull(f), "copy_is_hardlink") {
+					err = dst.SetModTime(ctx, fstest.Time("2004-03-03T04:05:06.499999999Z"))
+					if err != fs.ErrorCantSetModTimeWithoutDelete && err != fs.ErrorCantSetModTime {
+						assert.NoError(t, err)
+						// Re-read the source and check its modtime
+						src = fstest.NewObject(ctx, t, f, src.Remote())
+						assert.False(t, src.ModTime(ctx).Equal(dst.ModTime(ctx)), "mutating dst should not mutate src -- is it Copying by pointer?")
+					}
 				}
 
 				// Delete copy

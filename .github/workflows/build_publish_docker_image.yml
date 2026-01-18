@@ -129,7 +129,7 @@ jobs:
 
       - name: Load Go Build Cache for Docker
         id: go-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: ${{ runner.os }}-${{ steps.imageos.outputs.result }}-go-${{ env.CACHE_NAME }}-${{ env.PLATFORM }}-${{ hashFiles('**/go.mod') }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
@@ -183,7 +183,7 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload Image Digest
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: digests-${{ env.PLATFORM }}
           path: /tmp/digests/*
@@ -198,7 +198,7 @@ jobs:
 
     steps:
       - name: Download Image Digests
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: /tmp/digests
           pattern: digests-*
