@@ -226,7 +226,7 @@ func (f *Fs) Precision() time.Duration {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.SHA512)
+	return hash.Set(hash.BLAKE3)
 }
 
 // Features returns the optional features of this Fs
@@ -659,7 +659,7 @@ func (o *Object) Size() int64 {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
-	if ty != hash.SHA512 {
+	if ty != hash.BLAKE3 {
 		return "", hash.ErrUnsupported
 	}
 	if o.file.Hash == "" {
