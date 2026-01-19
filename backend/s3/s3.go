@@ -990,7 +990,7 @@ type Options struct {
 	DirectoryBucket             bool                 `config:"directory_bucket"`
 	IBMAPIKey                   string               `config:"ibm_api_key"`
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
-	IBMIAMEndpoint               string               `config:"ibm_iam_endpoint"`
+	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
 }
