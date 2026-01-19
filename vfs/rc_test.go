@@ -125,3 +125,54 @@ func TestRcStats(t *testing.T) {
 	assert.Equal(t, 1, out["metadataCache"].(rc.Params)["dirs"])
 	assert.Equal(t, vfs.Opt, out["opt"].(vfscommon.Options))
 }
+
+func TestRcTransfers(t *testing.T) {
+	// Test with default VFS (no cache) - should return empty
+	r, vfs, call := rcNewRun(t, "vfs/transfers")
+	_, _ = r, vfs
+	in := rc.Params{"fs": fs.ConfigString(r.Fremote)}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+
+	// With no cache, should return empty transfers and zeroed summary
+	transfers := out["transfers"]
+	assert.NotNil(t, transfers)
+
+	summary, ok := out["summary"].(rc.Params)
+	require.True(t, ok)
+	assert.Equal(t, 0, summary["activeReads"])
+	assert.Equal(t, 0, summary["activeDownloads"])
+	assert.Equal(t, 0, summary["totalOpenFiles"])
+	assert.Equal(t, false, summary["outOfSpace"])
+}
+
+func TestRcTransfersWithCache(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping test on non local remote")
+	}
+	opt := vfscommon.Opt
+	opt.CacheMode = vfscommon.CacheModeFull
+	opt.CachePollInterval = 0
+	r, vfs := newTestVFSOpt(t, &opt)
+	call := rc.Calls.Get("vfs/transfers")
+	assert.NotNil(t, call)
+
+	in := rc.Params{"fs": fs.ConfigString(r.Fremote)}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+
+	// With cache enabled but no open files, should return empty transfers
+	summary, ok := out["summary"].(rc.Params)
+	require.True(t, ok)
+	assert.Equal(t, 0, summary["activeReads"])
+	assert.Equal(t, 0, summary["activeDownloads"])
+	assert.Equal(t, 0, summary["totalOpenFiles"])
+
+	// totalCacheFiles and totalCacheBytes should be present
+	_, ok = summary["totalCacheFiles"]
+	assert.True(t, ok)
+	_, ok = summary["totalCacheBytes"]
+	assert.True(t, ok)
+
+	_ = vfs
+}

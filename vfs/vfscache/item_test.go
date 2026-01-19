@@ -582,3 +582,80 @@ func TestItemReadWrite(t *testing.T) {
 		assert.False(t, item.remove(fileName))
 	})
 }
+
+func TestReadSpeedCalculator(t *testing.T) {
+	t.Run("NewCalculatorZeroSpeed", func(t *testing.T) {
+		sc := newReadSpeedCalculator()
+		assert.Equal(t, float64(0), sc.Speed())
+	})
+
+	t.Run("FirstSampleSetsSpeed", func(t *testing.T) {
+		sc := newReadSpeedCalculator()
+		// First sample just records time, no speed yet
+		sc.AddSample(1024)
+		// Speed should still be 0 since we need two samples
+		// (first sample has no previous time to measure against)
+		speed := sc.Speed()
+		assert.Equal(t, float64(0), speed)
+	})
+
+	t.Run("SubsequentSamplesCalculateSpeed", func(t *testing.T) {
+		sc := newReadSpeedCalculator()
+		sc.AddSample(1024)
+		time.Sleep(50 * time.Millisecond)
+		avg := sc.AddSample(1024)
+		// Should have a positive speed after two samples
+		assert.Greater(t, avg, float64(0))
+		// Speed should be roughly 1024 / 0.05 = ~20480 bytes/sec
+		// Allow wide range due to timer imprecision
+		assert.Greater(t, avg, float64(1000))
+	})
+
+	t.Run("EMASmoothing", func(t *testing.T) {
+		sc := newReadSpeedCalculator()
+		sc.AddSample(1024)
+		time.Sleep(50 * time.Millisecond)
+		speed1 := sc.AddSample(1024)
+		time.Sleep(50 * time.Millisecond)
+		speed2 := sc.AddSample(1024)
+		// EMA should be similar for consistent reads
+		// Both should be positive
+		assert.Greater(t, speed1, float64(0))
+		assert.Greater(t, speed2, float64(0))
+	})
+
+	t.Run("DecayAfterInactivity", func(t *testing.T) {
+		sc := newReadSpeedCalculator()
+		sc.AddSample(1024)
+		time.Sleep(50 * time.Millisecond)
+		sc.AddSample(1024)
+		// Should have positive speed
+		assert.Greater(t, sc.Speed(), float64(0))
+		// Wait for decay (> 2 seconds)
+		time.Sleep(2100 * time.Millisecond)
+		assert.Equal(t, float64(0), sc.Speed())
+	})
+}
+
+func TestItemTransferStats(t *testing.T) {
+	_, c := newItemTestCache(t)
+	item, _ := c.get("potato")
+
+	require.NoError(t, item.Open(nil))
+	defer func() { _ = item.Close(nil) }()
+
+	stats := item.TransferStats()
+	assert.Equal(t, "potato", stats["name"])
+	assert.Equal(t, 1, stats["opens"])
+	assert.Equal(t, false, stats["downloading"])
+	assert.Equal(t, int64(0), stats["readBytes"])
+	assert.Equal(t, int64(0), stats["readOffset"])
+	assert.Equal(t, 0, stats["readOffsetPercentage"])
+	assert.Equal(t, int64(0), stats["readSpeed"])
+
+	// cacheStatus should be present
+	_, ok := stats["cacheStatus"]
+	assert.True(t, ok)
+	_, ok = stats["cacheBytes"]
+	assert.True(t, ok)
+}
