@@ -83,7 +83,7 @@ y/e/d> y
 ### Modification times and hashes
 Modification times are fully supported for files, for directories, only the creation time matters.
 
-Filen supports SHA512 hashes.
+Filen supports Blake3 hashes.
 
 ### Restricted filename characters
 Invalid UTF-8 bytes will be [replaced](/overview/#invalid-utf8)
