@@ -81,7 +81,7 @@ rclone config
 If you are using [mise](https://mise.jdx.dev), you can install rclone using a command like:
 
 ```console
-mise use -g clone@latest
+mise use -g rclone@latest
 ```
 
 ## macOS installation {#macos}
@@ -177,7 +177,7 @@ xattr -d com.apple.quarantine rclone
 If you are using [mise](https://mise.jdx.dev), you can install rclone using a command like:
 
 ```console
-mise use -g clone@latest
+mise use -g rclone@latest
 ```
 
 ## Windows installation {#windows}
@@ -264,7 +264,7 @@ developers so it may be out of date. Its current version is as below.
 If you are using [mise](https://mise.jdx.dev), you can install rclone using a command like:
 
 ```console
-mise use -g clone@latest
+mise use -g rclone@latest
 ```
 
 ## Package manager installation {#package-manager}
