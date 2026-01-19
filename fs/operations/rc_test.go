@@ -561,7 +561,7 @@ func TestUploadFile(t *testing.T) {
 		assert.NoError(t, currentFile.Close())
 	}()
 
-	formReader, contentType, _, err := rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName)
+	formReader, contentType, _, err := rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName, "application/octet-stream")
 	require.NoError(t, err)
 
 	httpReq := httptest.NewRequest("POST", "/", formReader)
@@ -587,7 +587,7 @@ func TestUploadFile(t *testing.T) {
 		assert.NoError(t, currentFile2.Close())
 	}()
 
-	formReader, contentType, _, err = rest.MultipartUpload(ctx, currentFile2, url.Values{}, "file", testFileName)
+	formReader, contentType, _, err = rest.MultipartUpload(ctx, currentFile2, url.Values{}, "file", testFileName, "application/octet-stream")
 	require.NoError(t, err)
 
 	httpReq = httptest.NewRequest("POST", "/", formReader)

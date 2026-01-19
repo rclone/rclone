@@ -72,7 +72,7 @@ func (ik *ImageKit) Upload(ctx context.Context, file io.Reader, param UploadPara
 
 	response := &UploadResult{}
 
-	formReader, contentType, _, err := rest.MultipartUpload(ctx, file, formParams, "file", param.FileName)
+	formReader, contentType, _, err := rest.MultipartUpload(ctx, file, formParams, "file", param.FileName, "application/octet-stream")
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to make multipart upload: %w", err)
