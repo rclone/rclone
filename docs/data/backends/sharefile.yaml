@@ -1,0 +1,17 @@
+backend: sharefile
+name: Sharefile
+tier: Tier 5
+maintainers: Core
+features_score: 4
+integration_tests: Disabled
+data_integrity: Modtime
+performance: Medium
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestSharefile:'
+features: null
+hashes:
+- md5
+precision: 1000000000

@@ -1,0 +1,16 @@
+backend: iclouddrive
+name: Iclouddrive
+tier: Tier 4
+maintainers: External
+features_score: 3
+integration_tests: Flaky
+data_integrity: Modtime
+performance: Low
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestICloudDrive:'
+features: null
+hashes: null
+precision: null
