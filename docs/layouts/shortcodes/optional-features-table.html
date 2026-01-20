@@ -1,0 +1,40 @@
+<table>
+  <thead>
+    <tr>
+      <th align="left">Name</th>
+      <th align="center">Purge</th>
+      <th align="center">Copy</th>
+      <th align="center">Move</th>
+      <th align="center">DirMove</th>
+      <th align="center">CleanUp</th>
+      <th align="center">ListR</th>
+      <th align="center">StreamUpload</th>
+      <th align="left">MultithreadUpload</th>
+      <th align="center">LinkSharing</th>
+      <th align="center">About</th>
+      <th align="center">EmptyDir</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range sort site.Data.backends "name" "asc" }}
+    {{ if .virtual }}{{ continue }} {{ end }}
+    <tr>
+      <td align="left" style="font-weight: bold;">
+          <a href="/{{ .backend | urlize }}">{{ .name }}</a>
+      </td>
+      
+      <td align="center">{{ partial "bool.html" (in .features "Purge") }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "Copy") }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "Move") }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "DirMove") }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "CleanUp") }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "ListR") }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "PutStream") }}</td>
+      <td align="center">{{ partial "bool.html" (or (in .features "OpenChunkWriter") (in .features "OpenWriterAt")) }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "PublicLink") }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "About") }}</td>
+      <td align="center">{{ partial "bool.html" (in .features "CanHaveEmptyDirectories") }}</td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
