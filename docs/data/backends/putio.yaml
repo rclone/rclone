@@ -1,0 +1,28 @@
+backend: putio
+name: Putio
+tier: Tier 2
+maintainers: Core
+features_score: 5
+integration_tests: Flaky
+data_integrity: Hash
+performance: Low
+adoption: Often used
+docs: Full
+security: High
+virtual: false
+remote: 'TestPutio:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CleanUp
+- Copy
+- DirCacheFlush
+- DirMove
+- DuplicateFiles
+- Move
+- Purge
+- PutUnchecked
+- ReadMimeType
+hashes:
+- crc32
+precision: 1000000000

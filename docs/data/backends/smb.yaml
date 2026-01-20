@@ -1,0 +1,26 @@
+backend: smb
+name: SMB
+tier: Tier 2
+maintainers: External
+features_score: 5
+integration_tests: Passing
+data_integrity: Modtime
+performance: Medium
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: TestSMB:rclone
+features:
+- About
+- BucketBased
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- DirMove
+- Move
+- OpenWriterAt
+- PartialUploads
+- PutStream
+- Shutdown
+hashes: []
+precision: 1000000

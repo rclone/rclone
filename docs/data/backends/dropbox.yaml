@@ -1,0 +1,29 @@
+backend: dropbox
+name: Dropbox
+tier: Tier 1
+maintainers: Core
+features_score: 6
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestDropbox:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- ChangeNotify
+- Copy
+- DirMove
+- ListP
+- Move
+- PublicLink
+- Purge
+- PutStream
+- Shutdown
+hashes:
+- dropbox
+precision: 1000000000

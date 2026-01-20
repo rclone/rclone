@@ -1,0 +1,16 @@
+backend: crypt
+name: Crypt
+tier: Tier 1
+maintainers: Core
+features_score: 7
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: true
+remote: 'TestCryptLocal:'
+features: null
+hashes: null
+precision: null

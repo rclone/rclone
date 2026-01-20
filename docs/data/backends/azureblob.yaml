@@ -1,0 +1,34 @@
+backend: azureblob
+name: Azure Blob
+tier: Tier 1
+maintainers: Core
+features_score: 7
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestAzureBlob:'
+features:
+- BucketBased
+- BucketBasedRootOK
+- Copy
+- DoubleSlash
+- GetTier
+- ListP
+- ListR
+- OpenChunkWriter
+- Purge
+- PutStream
+- ReadMetadata
+- ReadMimeType
+- ServerSideAcrossConfigs
+- SetTier
+- UserMetadata
+- WriteMetadata
+- WriteMimeType
+hashes:
+- md5
+precision: 1

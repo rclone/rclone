@@ -1,0 +1,27 @@
+backend: mega
+name: Mega
+tier: Tier 2
+maintainers: Core
+features_score: 3
+integration_tests: Flaky
+data_integrity: Other
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestMega:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CleanUp
+- DirCacheFlush
+- DirMove
+- DuplicateFiles
+- MergeDirs
+- Move
+- PublicLink
+- Purge
+- PutUnchecked
+hashes: []
+precision: 3153600000000000000

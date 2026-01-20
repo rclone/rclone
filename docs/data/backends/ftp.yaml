@@ -1,0 +1,22 @@
+backend: ftp
+name: FTP
+tier: Tier 1
+maintainers: Core
+features_score: 4
+integration_tests: Passing
+data_integrity: Modtime
+performance: High
+adoption: Widely used
+docs: Full
+security: Varies
+virtual: false
+remote: 'TestFTPProftpd:'
+features:
+- CanHaveEmptyDirectories
+- DirMove
+- Move
+- PartialUploads
+- PutStream
+- Shutdown
+hashes: []
+precision: 1000000000

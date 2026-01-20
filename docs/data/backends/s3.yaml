@@ -1,0 +1,37 @@
+backend: s3
+name: S3
+tier: Tier 1
+maintainers: Core
+features_score: 7
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestS3:'
+features:
+- BucketBased
+- BucketBasedRootOK
+- CleanUp
+- Command
+- Copy
+- DoubleSlash
+- GetTier
+- ListP
+- ListR
+- OpenChunkWriter
+- PublicLink
+- Purge
+- PutStream
+- ReadMetadata
+- ReadMimeType
+- SetTier
+- SlowModTime
+- UserMetadata
+- WriteMetadata
+- WriteMimeType
+hashes:
+- md5
+precision: 1
