@@ -642,6 +642,20 @@ checkRemotes:
 		f.features.MkdirMetadata = f.MkdirMetadata
 	}
 
+	// Enable PutStream if all backends support it OR if use_streaming is enabled
+	// PutStream is used for unknown-size uploads, which raid3 handles via putStreaming()
+	if f.opt.UseStreaming {
+		f.features.PutStream = f.PutStream
+	} else {
+		// In buffered mode, check if all backends support PutStream
+		evenPutStream := f.even.Features().PutStream != nil
+		oddPutStream := f.odd.Features().PutStream != nil
+		parityPutStream := f.parity.Features().PutStream != nil
+		if evenPutStream && oddPutStream && parityPutStream {
+			f.features.PutStream = f.PutStream
+		}
+	}
+
 	// Initialize heal infrastructure
 	// Derive upload context from parent context for proper cancellation propagation
 	// This ensures that when the parent context is cancelled, heal operations are also cancelled
@@ -1413,6 +1427,7 @@ var (
 	_ fs.DirSetModTimer  = (*Fs)(nil)
 	_ fs.MkdirMetadataer = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.PutStreamer     = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.Metadataer      = (*Object)(nil)
 	_ fs.SetMetadataer   = (*Object)(nil)
