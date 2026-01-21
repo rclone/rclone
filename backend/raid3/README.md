@@ -88,6 +88,27 @@ parity = /path/to/backend3     # XOR parity (or dropbox:parity)
 
 All three remotes can use different storage backends (local filesystem, S3, Google Drive, Dropbox, etc.).
 
+## Feature Handling with Mixed Remotes
+
+When using different remote types (e.g., mixing object storage like S3 with file storage like local filesystem), raid3 automatically intersects features from all three backends. Most features require **all backends** to support them (AND logic), ensuring compatibility across the union. However, raid3 uses **best-effort** logic for metadata features (OR logic), allowing metadata operations to work if **any backend** supports them, since operations check per-backend support before calling.
+
+**Features requiring all backends** (AND logic):
+- `BucketBased`, `SetTier`, `GetTier`, `ServerSideAcrossConfigs`, `PartialUploads`
+- `Copy`, `Move`, `DirMove` operations
+- `ReadMimeType`, `WriteMimeType`, `CanHaveEmptyDirectories`
+
+**Features using best-effort** (OR logic, raid3-specific):
+- `ReadMetadata`, `WriteMetadata`, `UserMetadata` (object metadata)
+- `ReadDirMetadata`, `WriteDirMetadata`, `UserDirMetadata` (directory metadata)
+- `DirSetModTime`, `MkdirMetadata` (directory operations)
+- `CaseInsensitive` (more permissive: any case-insensitive backend makes the whole union case-insensitive)
+
+**Always available** (raid3 implements independently):
+- `Shutdown` (waits for heal uploads to complete)
+- `CleanUp` (removes broken objects with 1/3 particles)
+
+**Example**: Mixing S3 (object storage) with local filesystem will disable `BucketBased` and tier features (`SetTier`, `GetTier`) since local filesystem doesn't support them, but metadata features will work if either backend supports them.
+
 ## Usage Examples
 
 Standard rclone commands work with raid3: `rclone copy /local/files myraid3:` splits files and uploads particles, `rclone copy myraid3: /local/destination` reconstructs files from particles, `rclone ls myraid3:` shows files with original sizes, and `rclone mkdir myraid3:newdir` creates directories on all remotes.

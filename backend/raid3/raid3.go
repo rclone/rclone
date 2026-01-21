@@ -506,28 +506,48 @@ checkRemotes:
 	// Get the intersection of hash types
 	f.hashSet = f.even.Hashes().Overlap(f.odd.Hashes()).Overlap(f.parity.Hashes())
 
+	// Create features with optimistic defaults (like union backend)
+	// Mask() will intersect these with all backends
 	f.features = (&fs.Features{
-		CaseInsensitive:         f.even.Features().CaseInsensitive || f.odd.Features().CaseInsensitive || f.parity.Features().CaseInsensitive,
-		DuplicateFiles:          false,
-		ReadMimeType:            f.even.Features().ReadMimeType && f.odd.Features().ReadMimeType,
-		WriteMimeType:           f.even.Features().WriteMimeType && f.odd.Features().WriteMimeType,
-		CanHaveEmptyDirectories: f.even.Features().CanHaveEmptyDirectories && f.odd.Features().CanHaveEmptyDirectories && f.parity.Features().CanHaveEmptyDirectories,
-		BucketBased:             f.even.Features().BucketBased && f.odd.Features().BucketBased && f.parity.Features().BucketBased,
-		About:                   f.About,
+		CaseInsensitive:          true,
+		DuplicateFiles:           false,
+		ReadMimeType:             true,
+		WriteMimeType:            true,
+		CanHaveEmptyDirectories:  true,
+		BucketBased:              true,
+		BucketBasedRootOK:        true,
+		SetTier:                  true,
+		GetTier:                  true,
+		ServerSideAcrossConfigs:  true,
+		ReadMetadata:             true,
+		WriteMetadata:            true,
+		UserMetadata:             true,
+		ReadDirMetadata:          true,
+		WriteDirMetadata:         true,
+		WriteDirSetModTime:       true,
+		UserDirMetadata:          true,
+		DirModTimeUpdatesOnWrite: true,
+		FilterAware:              true,
+		PartialUploads:           true,
+		About:                    f.About,
 	}).Fill(ctx, f)
 
-	// Propagate SlowHash if any backend has slow hash
-	// This helps rclone optimize operations when hashing is slow
-	// Safe in degraded mode: if a backend is nil/unavailable, we skip it (assume false)
+	// Mask with all three backends (intersect features)
+	// Handle degraded mode: skip nil backends
+	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
+		if backend != nil {
+			f.features = f.features.Mask(ctx, backend)
+		}
+	}
+
+	// Apply special overrides (like union backend)
+	// SlowHash: Override Mask()'s AND logic with OR logic (any backend has it)
 	slowHash := false
-	if f.even != nil && f.even.Features().SlowHash {
-		slowHash = true
-	}
-	if f.odd != nil && f.odd.Features().SlowHash {
-		slowHash = true
-	}
-	if f.parity != nil && f.parity.Features().SlowHash {
-		slowHash = true
+	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
+		if backend != nil && backend.Features().SlowHash {
+			slowHash = true
+			break
+		}
 	}
 	f.features.SlowHash = slowHash
 
@@ -535,68 +555,66 @@ checkRemotes:
 	// This helps rclone understand the backend architecture
 	f.features.Overlay = true
 
-	// Enable Move if all backends support Move or Copy (like union/combine backends)
-	// This allows raid3 to work with backends like S3/MinIO that support Copy but not Move
-	if operations.CanServerSideMove(f.even) && operations.CanServerSideMove(f.odd) && operations.CanServerSideMove(f.parity) {
-		f.features.Move = f.Move
-	}
-
-	// Enable Copy if all backends support Copy
-	if f.even.Features().Copy != nil && f.odd.Features().Copy != nil && f.parity.Features().Copy != nil {
-		f.features.Copy = f.Copy
-	}
-
-	// Enable DirMove if all backends support it
-	if f.even.Features().DirMove != nil && f.odd.Features().DirMove != nil && f.parity.Features().DirMove != nil {
-		f.features.DirMove = f.DirMove
-	}
-
-	// Enable Purge if all backends support it
-	if f.even.Features().Purge != nil && f.odd.Features().Purge != nil && f.parity.Features().Purge != nil {
-		f.features.Purge = f.Purge
-	}
-
-	// Enable ListR when at least one backend supports ListR or is local
-	// Similar to union backend: enable if any backend supports it, or all are local
-	hasListR := false
-	allLocal := true
+	// Move: Custom check (all must support Move or Copy)
+	// Mask() handles this, but we verify and set the function pointer
+	canMove := true
 	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
-		if backend != nil {
-			if backend.Features().ListR != nil {
-				hasListR = true
-			}
-			if !backend.Features().IsLocal {
-				allLocal = false
-			}
-		}
-	}
-	if hasListR || allLocal {
-		f.features.ListR = f.ListR
-	}
-
-	// Enable DirSetModTime if at least one backend supports it
-	// Unlike other features, we enable if ANY backend supports it (not all)
-	// This matches union backend behavior - it sets modtime on backends that support it
-	hasDirSetModTime := false
-	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
-		if backend != nil && backend.Features().DirSetModTime != nil {
-			hasDirSetModTime = true
+		if backend != nil && !operations.CanServerSideMove(backend) {
+			canMove = false
 			break
 		}
 	}
-	if hasDirSetModTime {
-		f.features.DirSetModTime = f.DirSetModTime
+	if canMove {
+		f.features.Move = f.Move
 	}
 
-	// Enable metadata features if at least one backend supports them
-	// Unlike other features, metadata is "best effort" - enable if any backend supports it
-	// This matches union backend behavior
+	// Copy, DirMove, Purge: Handled by Mask() (all must support)
+	// Function pointers are already set correctly by Mask() if all backends support them
+
+	// ListR: Special logic (any supports OR all are local)
+	// Similar to union backend: enable if any backend supports it, or all are local
+	if f.features.ListR == nil {
+		hasListR := false
+		allLocal := true
+		for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
+			if backend != nil {
+				if backend.Features().ListR != nil {
+					hasListR = true
+				}
+				if !backend.Features().IsLocal {
+					allLocal = false
+				}
+			}
+		}
+		if hasListR || allLocal {
+			f.features.ListR = f.ListR
+		}
+	}
+
+	// Disable ListP always (like union backend)
+	f.features.ListP = nil
+
+	// CaseInsensitive: Override Mask()'s AND logic with OR logic (more permissive)
+	// This keeps raid3's current behavior - any backend being case-insensitive makes the whole union case-insensitive
+	hasCaseInsensitive := false
+	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
+		if backend != nil && backend.Features().CaseInsensitive {
+			hasCaseInsensitive = true
+			break
+		}
+	}
+	f.features.CaseInsensitive = hasCaseInsensitive
+
+	// Override metadata features with OR logic (raid3-specific: best-effort)
+	// Mask() sets them to AND, but raid3 needs OR because operations check per-backend support
 	hasReadMetadata := false
 	hasWriteMetadata := false
 	hasUserMetadata := false
 	hasReadDirMetadata := false
 	hasWriteDirMetadata := false
 	hasUserDirMetadata := false
+	hasWriteDirSetModTime := false
+	hasDirModTimeUpdatesOnWrite := false
 
 	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
 		if backend != nil {
@@ -619,6 +637,12 @@ checkRemotes:
 			if feat.UserDirMetadata {
 				hasUserDirMetadata = true
 			}
+			if feat.WriteDirSetModTime {
+				hasWriteDirSetModTime = true
+			}
+			if feat.DirModTimeUpdatesOnWrite {
+				hasDirModTimeUpdatesOnWrite = true
+			}
 		}
 	}
 
@@ -628,9 +652,22 @@ checkRemotes:
 	f.features.ReadDirMetadata = hasReadDirMetadata
 	f.features.WriteDirMetadata = hasWriteDirMetadata
 	f.features.UserDirMetadata = hasUserDirMetadata
+	f.features.WriteDirSetModTime = hasWriteDirSetModTime
+	f.features.DirModTimeUpdatesOnWrite = hasDirModTimeUpdatesOnWrite
 
-	// Enable MkdirMetadata if at least one backend supports it
-	// This matches union backend behavior
+	// DirSetModTime: Override with OR logic (any backend supports it)
+	hasDirSetModTime := false
+	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
+		if backend != nil && backend.Features().DirSetModTime != nil {
+			hasDirSetModTime = true
+			break
+		}
+	}
+	if hasDirSetModTime {
+		f.features.DirSetModTime = f.DirSetModTime
+	}
+
+	// MkdirMetadata: Override with OR logic (any backend supports it)
 	hasMkdirMetadata := false
 	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
 		if backend != nil && backend.Features().MkdirMetadata != nil {
@@ -655,6 +692,13 @@ checkRemotes:
 			f.features.PutStream = f.PutStream
 		}
 	}
+
+	// Shutdown and CleanUp: raid3 implements these independently of backends
+	// Override Mask() which may have set them to nil
+	// Shutdown waits for heal uploads to complete
+	// CleanUp removes broken objects (1 particle)
+	f.features.Shutdown = f.Shutdown
+	f.features.CleanUp = f.CleanUp
 
 	// Initialize heal infrastructure
 	// Derive upload context from parent context for proper cancellation propagation

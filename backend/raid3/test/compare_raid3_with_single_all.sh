@@ -4,11 +4,12 @@
 # ----------------------------------
 # Master test script that runs all integration tests across all RAID3 backends.
 #
-# This script runs all 4 test suites:
+# This script runs all 5 test suites:
 #   - compare_raid3_with_single.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_heal.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_errors.sh (with minio only)
 #   - compare_raid3_with_single_rebuild.sh (with local, minio, mixed)
+#   - compare_raid3_with_single_features.sh (with mixed only)
 #
 # Usage:
 #   compare_raid3_with_single_all.sh [options]
@@ -45,6 +46,7 @@ TEST_SCRIPTS=(
   "compare_raid3_with_single_heal.sh:local,minio,mixed"
   "compare_raid3_with_single_errors.sh:minio"
   "compare_raid3_with_single_rebuild.sh:local,minio,mixed"
+  "compare_raid3_with_single_features.sh:mixed"
 )
 
 # ---------------------------- helper functions ------------------------------
@@ -62,6 +64,7 @@ This script runs all integration tests across all RAID3 backends:
   - compare_raid3_with_single_heal.sh (local, minio, mixed)
   - compare_raid3_with_single_errors.sh (minio only)
   - compare_raid3_with_single_rebuild.sh (local, minio, mixed)
+  - compare_raid3_with_single_features.sh (mixed only)
 
 Each test suite is run with the appropriate storage types, and only
 pass/fail status is shown unless --verbose is used.
@@ -188,11 +191,47 @@ main() {
     for storage_type in "${storage_types_array[@]}"; do
       total_tests=$((total_tests + 1))
       
-      if run_test_script "${script_path}" "${storage_type}"; then
-        passed_tests=$((passed_tests + 1))
+      # For features script, we need to pass the test name
+      if [[ "${script_name}" == "compare_raid3_with_single_features.sh" ]]; then
+        # Features script requires test name, run mixed-features test
+        if [[ "${storage_type}" == "mixed" ]]; then
+          log_test_start "${script_name}" "${storage_type}"
+          local cmd_args=("--storage-type" "${storage_type}" "test" "mixed-features")
+          if [[ "${VERBOSE}" -eq 1 ]]; then
+            cmd_args+=("-v")
+          fi
+          
+          if [[ "${VERBOSE}" -eq 1 ]]; then
+            if "${script_path}" "${cmd_args[@]}"; then
+              log_test_result "${script_name}" "${storage_type}" "PASS"
+              passed_tests=$((passed_tests + 1))
+            else
+              log_test_result "${script_name}" "${storage_type}" "FAIL"
+              failed_tests=$((failed_tests + 1))
+              failed_test_list+=("${script_name} (${storage_type})")
+            fi
+          else
+            if "${script_path}" "${cmd_args[@]}" >/dev/null 2>&1; then
+              log_test_result "${script_name}" "${storage_type}" "PASS"
+              passed_tests=$((passed_tests + 1))
+            else
+              log_test_result "${script_name}" "${storage_type}" "FAIL"
+              failed_tests=$((failed_tests + 1))
+              failed_test_list+=("${script_name} (${storage_type})")
+            fi
+          fi
+        else
+          # Skip non-mixed storage types for features script
+          log "⊘ SKIP: ${script_name} (${storage_type}) - features test only supports mixed"
+          total_tests=$((total_tests - 1))
+        fi
       else
-        failed_tests=$((failed_tests + 1))
-        failed_test_list+=("${script_name} (${storage_type})")
+        if run_test_script "${script_path}" "${storage_type}"; then
+          passed_tests=$((passed_tests + 1))
+        else
+          failed_tests=$((failed_tests + 1))
+          failed_test_list+=("${script_name} (${storage_type})")
+        fi
       fi
     done
     
