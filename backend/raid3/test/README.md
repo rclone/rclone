@@ -195,26 +195,37 @@ Validates error handling, rollback behavior, and degraded mode write blocking.
 
 ### Feature Handling Tests (`compare_raid3_with_single_features.sh`)
 
-Validates feature handling when mixing different remote types (local filesystem + MinIO S3).
+Validates feature handling across different remote type configurations.
 
 **What it tests**:
-- Feature intersection with mixed remotes (AND logic for most features)
+- **local**: Feature handling when all three backends are local filesystem
+- **minio**: Feature handling when all three backends are MinIO object storage
+- **mixed**: Feature intersection when mixing local and MinIO backends (AND logic for most features)
 - Best-effort features (OR logic for metadata, raid3-specific)
 - Always-available features (Shutdown, CleanUp - raid3 implements independently)
-- Verifies features are correctly disabled when mixing incompatible backends
+- Verifies features are correctly intersected/disabled when mixing incompatible backends
 
 **Usage**:
 ```bash
-# Run all feature handling tests (mixed only - requires local + MinIO)
+# Run all feature handling tests for a storage type
+./compare_raid3_with_single_features.sh --storage-type local test
+./compare_raid3_with_single_features.sh --storage-type minio test
 ./compare_raid3_with_single_features.sh --storage-type mixed test
 
 # Run a specific test
+./compare_raid3_with_single_features.sh --storage-type local test local-features
+./compare_raid3_with_single_features.sh --storage-type minio test minio-features
 ./compare_raid3_with_single_features.sh --storage-type mixed test mixed-features
 
 # With verbose output
 ./compare_raid3_with_single_features.sh --storage-type mixed test -v
 ./compare_raid3_with_single_features.sh --storage-type mixed test mixed-features -v
 ```
+
+**What it tests**:
+- **local**: Verifies features when all three backends are local filesystem
+- **minio**: Verifies features when all three backends are MinIO object storage
+- **mixed**: Verifies feature intersection when mixing local and MinIO backends
 
 ### Master Test Script (`compare_raid3_with_single_all.sh`)
 

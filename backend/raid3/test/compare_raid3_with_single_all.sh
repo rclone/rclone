@@ -46,7 +46,7 @@ TEST_SCRIPTS=(
   "compare_raid3_with_single_heal.sh:local,minio,mixed"
   "compare_raid3_with_single_errors.sh:minio"
   "compare_raid3_with_single_rebuild.sh:local,minio,mixed"
-  "compare_raid3_with_single_features.sh:mixed"
+  "compare_raid3_with_single_features.sh:local,minio,mixed"
 )
 
 # ---------------------------- helper functions ------------------------------

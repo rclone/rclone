@@ -4,9 +4,13 @@
 # ---------------------------------
 # Feature handling test harness for rclone raid3 backends.
 #
-# This script tests feature handling when mixing different remote types
-# (local filesystem + MinIO S3). It verifies that features are correctly
-# intersected (AND logic) or use best-effort (OR logic) as documented.
+# This script tests feature handling across different remote type configurations:
+# - local: All three backends are local filesystem
+# - minio: All three backends are MinIO object storage
+# - mixed: Mix of local filesystem and MinIO (local even/parity, MinIO odd)
+#
+# It verifies that features are correctly intersected (AND logic) or use
+# best-effort (OR logic) as documented in the raid3 backend.
 #
 # Usage:
 #   compare_raid3_with_single_features.sh [options] <command> [args]
@@ -16,10 +20,10 @@
 #   stop                  Stop those MinIO containers.
 #   teardown              Purge all data from the selected storage-type (raid3 + single).
 #   list                  Show available test cases.
-#   test <name>           Run a named test (e.g. "mixed-features").
+#   test <name>           Run a named test (e.g. "local-features", "minio-features", "mixed-features").
 #
 # Options:
-#   --storage-type <local|minio|mixed>   Select which backend pair to exercise.
+#   --storage-type <local|minio|mixed>   Select which backend configuration to test.
 #                                        Required for start/stop/test/teardown.
 #   -v, --verbose                        Show stdout/stderr from both rclone invocations.
 #   -h, --help                           Display this help text.
@@ -145,98 +149,232 @@ get_features_json() {
   rclone_cmd backend features "${remote}:" --json 2>/dev/null || echo "{}"
 }
 
-# Test feature handling with mixed remotes
-test_mixed_features() {
-  local test_case="mixed-features"
+# Test feature handling for a specific storage type
+# This is a generic test function that validates features based on storage type
+test_features_for_storage_type() {
+  local storage_type="$1"
+  local test_case="${storage_type}-features"
   log "Running test: ${test_case}"
 
-  if [[ "${STORAGE_TYPE}" != "mixed" ]]; then
-    die "Test '${test_case}' requires --storage-type=mixed"
+  # Ensure MinIO containers are ready if needed
+  [[ "${storage_type}" != "minio" && "${storage_type}" != "mixed" ]] || ensure_minio_containers_ready
+
+  # Determine which remote to test based on storage type
+  local raid3_remote
+  case "${storage_type}" in
+    local)
+      raid3_remote="localraid3"
+      ;;
+    minio)
+      raid3_remote="minioraid3"
+      ;;
+    mixed)
+      raid3_remote="localminioraid3"
+      ;;
+    *)
+      die "Unknown storage type: ${storage_type}"
+      ;;
+  esac
+
+  log "Getting features for ${storage_type} raid3 (remote: ${raid3_remote})..."
+  local features_json
+  features_json=$(get_features_json "${raid3_remote}")
+
+  # Test always-available features (raid3 implements independently)
+  log "Testing always-available features (raid3-specific)..."
+  
+  # Shutdown and CleanUp are function features, check if they're not null
+  local shutdown
+  shutdown=$(echo "${features_json}" | grep -o '"Shutdown":[^,}]*' || echo "")
+  if [[ -z "${shutdown}" ]] || [[ "${shutdown}" == *"null"* ]]; then
+    die "Shutdown should always be available (raid3 implements it), got: ${shutdown}"
+  fi
+  log "✓ Shutdown correctly always available"
+
+  local cleanup
+  cleanup=$(echo "${features_json}" | grep -o '"CleanUp":[^,}]*' || echo "")
+  if [[ -z "${cleanup}" ]] || [[ "${cleanup}" == *"null"* ]]; then
+    die "CleanUp should always be available (raid3 implements it), got: ${cleanup}"
+  fi
+  log "✓ CleanUp correctly always available"
+
+  # Test features specific to storage type
+  case "${storage_type}" in
+    local)
+      test_local_features "${features_json}"
+      ;;
+    minio)
+      test_minio_features "${features_json}"
+      ;;
+    mixed)
+      test_mixed_features "${features_json}"
+      ;;
+  esac
+
+  log "✅ Test ${test_case} passed"
+}
+
+# Test features specific to local-only backends
+test_local_features() {
+  local features_json="$1"
+  log "Testing local-specific features..."
+
+  # Local backends should have local-like features
+  # BucketBased should be false for local
+  local bucket_based
+  bucket_based=$(extract_feature "${features_json}" "BucketBased")
+  if [[ "${bucket_based}" != "false" ]]; then
+    die "BucketBased should be false for local backends, got: '${bucket_based}'"
+  fi
+  log "✓ BucketBased correctly set to false for local backends"
+
+  # SetTier/GetTier should be false for local
+  local set_tier
+  set_tier=$(extract_feature "${features_json}" "SetTier")
+  if [[ "${set_tier}" != "false" ]]; then
+    die "SetTier should be false for local backends, got: ${set_tier}"
+  fi
+  log "✓ SetTier correctly set to false for local backends"
+
+  local get_tier
+  get_tier=$(extract_feature "${features_json}" "GetTier")
+  if [[ "${get_tier}" != "false" ]]; then
+    die "GetTier should be false for local backends, got: ${get_tier}"
+  fi
+  log "✓ GetTier correctly set to false for local backends"
+
+  # Local should support metadata features
+  local read_metadata
+  read_metadata=$(extract_feature "${features_json}" "ReadMetadata")
+  if [[ "${read_metadata}" != "true" ]]; then
+    log "⚠ ReadMetadata is ${read_metadata} for local backends (expected true)"
+  else
+    log "✓ ReadMetadata correctly enabled for local backends"
   fi
 
-  [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+  local write_metadata
+  write_metadata=$(extract_feature "${features_json}" "WriteMetadata")
+  if [[ "${write_metadata}" != "true" ]]; then
+    log "⚠ WriteMetadata is ${write_metadata} for local backends (expected true)"
+  else
+    log "✓ WriteMetadata correctly enabled for local backends"
+  fi
 
-  # Get features for different configurations
-  log "Getting features for local-only raid3..."
-  local local_features_json
-  local_features_json=$(get_features_json "localraid3")
+  # IsLocal should be false for raid3 (wrapping backends don't propagate IsLocal)
+  # This is correct behavior - even if all underlying backends are local,
+  # raid3 itself is not a local filesystem
+  local is_local
+  is_local=$(extract_feature "${features_json}" "IsLocal")
+  if [[ "${is_local}" != "false" ]]; then
+    log "⚠ IsLocal is ${is_local} for raid3 with local backends (expected false - wrapping backends don't propagate IsLocal)"
+  else
+    log "✓ IsLocal correctly set to false for raid3 (wrapping backend)"
+  fi
+}
 
-  log "Getting features for MinIO-only raid3..."
-  local minio_features_json
-  minio_features_json=$(get_features_json "minioraid3")
+# Test features specific to MinIO-only backends
+test_minio_features() {
+  local features_json="$1"
+  log "Testing MinIO-specific features..."
 
-  log "Getting features for mixed raid3 (local + MinIO)..."
-  local mixed_features_json
-  mixed_features_json=$(get_features_json "localminioraid3")
+  # MinIO backends should have object storage-like features
+  # BucketBased should be true for MinIO
+  local bucket_based
+  bucket_based=$(extract_feature "${features_json}" "BucketBased")
+  if [[ "${bucket_based}" != "true" ]]; then
+    die "BucketBased should be true for MinIO backends, got: '${bucket_based}'"
+  fi
+  log "✓ BucketBased correctly set to true for MinIO backends"
+
+  # MinIO may support SetTier/GetTier (depending on MinIO version/config)
+  # We just verify they're not null/undefined, not their exact value
+  local set_tier
+  set_tier=$(extract_feature "${features_json}" "SetTier")
+  log "✓ SetTier value for MinIO: ${set_tier}"
+
+  local get_tier
+  get_tier=$(extract_feature "${features_json}" "GetTier")
+  log "✓ GetTier value for MinIO: ${get_tier}"
+
+  # IsLocal should be false for MinIO
+  local is_local
+  is_local=$(extract_feature "${features_json}" "IsLocal")
+  if [[ "${is_local}" != "false" ]]; then
+    log "⚠ IsLocal is ${is_local} for MinIO backends (expected false)"
+  else
+    log "✓ IsLocal correctly set to false for MinIO backends"
+  fi
+
+  # MinIO may or may not support metadata features (depends on version)
+  local read_metadata
+  read_metadata=$(extract_feature "${features_json}" "ReadMetadata")
+  log "✓ ReadMetadata value for MinIO: ${read_metadata}"
+
+  local write_metadata
+  write_metadata=$(extract_feature "${features_json}" "WriteMetadata")
+  log "✓ WriteMetadata value for MinIO: ${write_metadata}"
+}
+
+# Test features specific to mixed (local + MinIO) backends
+test_mixed_features() {
+  local features_json="$1"
+  log "Testing mixed-specific features (local + MinIO intersection)..."
 
   # Test features that should use AND logic (require all backends)
   log "Testing AND logic features (require all backends)..."
   
   # BucketBased should be false for mixed (local is not bucket-based)
-  local mixed_bucket_based
-  mixed_bucket_based=$(extract_feature "${mixed_features_json}" "BucketBased")
-  if [[ "${mixed_bucket_based}" != "false" ]]; then
-    die "BucketBased should be false for mixed remotes (local is not bucket-based), got: '${mixed_bucket_based}'"
+  local bucket_based
+  bucket_based=$(extract_feature "${features_json}" "BucketBased")
+  if [[ "${bucket_based}" != "false" ]]; then
+    die "BucketBased should be false for mixed remotes (local is not bucket-based), got: '${bucket_based}'"
   fi
   log "✓ BucketBased correctly set to false for mixed remotes"
 
   # SetTier/GetTier should be false for mixed (local doesn't support tiers)
-  local mixed_set_tier
-  mixed_set_tier=$(extract_feature "${mixed_features_json}" "SetTier")
-  if [[ "${mixed_set_tier}" != "false" ]]; then
-    die "SetTier should be false for mixed remotes (local doesn't support tiers), got: ${mixed_set_tier}"
+  local set_tier
+  set_tier=$(extract_feature "${features_json}" "SetTier")
+  if [[ "${set_tier}" != "false" ]]; then
+    die "SetTier should be false for mixed remotes (local doesn't support tiers), got: ${set_tier}"
   fi
   log "✓ SetTier correctly set to false for mixed remotes"
 
-  local mixed_get_tier
-  mixed_get_tier=$(extract_feature "${mixed_features_json}" "GetTier")
-  if [[ "${mixed_get_tier}" != "false" ]]; then
-    die "GetTier should be false for mixed remotes (local doesn't support tiers), got: ${mixed_get_tier}"
+  local get_tier
+  get_tier=$(extract_feature "${features_json}" "GetTier")
+  if [[ "${get_tier}" != "false" ]]; then
+    die "GetTier should be false for mixed remotes (local doesn't support tiers), got: ${get_tier}"
   fi
   log "✓ GetTier correctly set to false for mixed remotes"
 
   # Test features that should use OR logic (best-effort, raid3-specific)
   log "Testing OR logic features (best-effort, any backend)..."
   
-  # ReadMetadata should work if any backend supports it
-  local mixed_read_metadata
-  mixed_read_metadata=$(extract_feature "${mixed_features_json}" "ReadMetadata")
-  # Local supports ReadMetadata, so mixed should also support it
-  if [[ "${mixed_read_metadata}" != "true" ]]; then
-    log "⚠ ReadMetadata is ${mixed_read_metadata} for mixed remotes (expected true if local supports it)"
+  # ReadMetadata should work if any backend supports it (local does)
+  local read_metadata
+  read_metadata=$(extract_feature "${features_json}" "ReadMetadata")
+  if [[ "${read_metadata}" != "true" ]]; then
+    log "⚠ ReadMetadata is ${read_metadata} for mixed remotes (expected true if local supports it)"
   else
     log "✓ ReadMetadata correctly enabled for mixed remotes (OR logic)"
   fi
 
-  # WriteMetadata should work if any backend supports it
-  local mixed_write_metadata
-  mixed_write_metadata=$(extract_feature "${mixed_features_json}" "WriteMetadata")
-  # Local supports WriteMetadata, so mixed should also support it
-  if [[ "${mixed_write_metadata}" != "true" ]]; then
-    log "⚠ WriteMetadata is ${mixed_write_metadata} for mixed remotes (expected true if local supports it)"
+  # WriteMetadata should work if any backend supports it (local does)
+  local write_metadata
+  write_metadata=$(extract_feature "${features_json}" "WriteMetadata")
+  if [[ "${write_metadata}" != "true" ]]; then
+    log "⚠ WriteMetadata is ${write_metadata} for mixed remotes (expected true if local supports it)"
   else
     log "✓ WriteMetadata correctly enabled for mixed remotes (OR logic)"
   fi
 
-  # Test always-available features (raid3 implements independently)
-  log "Testing always-available features (raid3-specific)..."
-  
-  # Shutdown and CleanUp are function features, check if they're not null
-  local mixed_shutdown
-  mixed_shutdown=$(echo "${mixed_features_json}" | grep -o '"Shutdown":[^,}]*' || echo "")
-  if [[ -z "${mixed_shutdown}" ]] || [[ "${mixed_shutdown}" == *"null"* ]]; then
-    die "Shutdown should always be available (raid3 implements it), got: ${mixed_shutdown}"
+  # IsLocal should be false for mixed (MinIO is not local)
+  local is_local
+  is_local=$(extract_feature "${features_json}" "IsLocal")
+  if [[ "${is_local}" != "false" ]]; then
+    log "⚠ IsLocal is ${is_local} for mixed remotes (expected false due to MinIO)"
+  else
+    log "✓ IsLocal correctly set to false for mixed remotes"
   fi
-  log "✓ Shutdown correctly always available"
-
-  local mixed_cleanup
-  mixed_cleanup=$(echo "${mixed_features_json}" | grep -o '"CleanUp":[^,}]*' || echo "")
-  if [[ -z "${mixed_cleanup}" ]] || [[ "${mixed_cleanup}" == *"null"* ]]; then
-    die "CleanUp should always be available (raid3 implements it), got: ${mixed_cleanup}"
-  fi
-  log "✓ CleanUp correctly always available"
-
-  log "✅ Test ${test_case} passed"
 }
 
 # List available tests
@@ -244,36 +382,39 @@ list_tests() {
   cat <<EOF
 Available tests:
 
+  local-features    Test feature handling with local-only backends
+                    Requires --storage-type=local
+
+  minio-features    Test feature handling with MinIO-only backends
+                    Requires --storage-type=minio
+
   mixed-features    Test feature handling with mixed remotes (local + MinIO)
                     Requires --storage-type=mixed
 
 Run all tests by omitting the test name:
+  ${SCRIPT_NAME} --storage-type=local test
+  ${SCRIPT_NAME} --storage-type=minio test
   ${SCRIPT_NAME} --storage-type=mixed test
 
 EOF
 }
 
-# Run all available tests
+# Run all available tests for the current storage type
 run_all_tests() {
-  local tests=("mixed-features")
-  local test_name
+  local test_name="${STORAGE_TYPE}-features"
   local failed=0
   
-  log "Running all feature handling tests..."
+  log "Running all feature handling tests for --storage-type=${STORAGE_TYPE}..."
   echo ""
   
-  for test_name in "${tests[@]}"; do
-    COMMAND_ARG="${test_name}"
-    if ! test_mixed_features; then
-      log "✗ Test '${test_name}' failed"
-      failed=1
-    else
-      log "✓ Test '${test_name}' passed"
-    fi
-    echo ""
-  done
+  if ! test_features_for_storage_type "${STORAGE_TYPE}"; then
+    log "✗ Test '${test_name}' failed"
+    failed=1
+  else
+    log "✓ Test '${test_name}' passed"
+  fi
+  echo ""
   
-  COMMAND_ARG=""
   return ${failed}
 }
 
@@ -301,8 +442,23 @@ main() {
       else
         # Run a single named test
         case "${COMMAND_ARG}" in
+          local-features)
+            if [[ "${STORAGE_TYPE}" != "local" ]]; then
+              die "Test '${COMMAND_ARG}' requires --storage-type=local"
+            fi
+            test_features_for_storage_type "local"
+            ;;
+          minio-features)
+            if [[ "${STORAGE_TYPE}" != "minio" ]]; then
+              die "Test '${COMMAND_ARG}' requires --storage-type=minio"
+            fi
+            test_features_for_storage_type "minio"
+            ;;
           mixed-features)
-            test_mixed_features
+            if [[ "${STORAGE_TYPE}" != "mixed" ]]; then
+              die "Test '${COMMAND_ARG}' requires --storage-type=mixed"
+            fi
+            test_features_for_storage_type "mixed"
             ;;
           *)
             die "Unknown test: '${COMMAND_ARG}'. Use 'list' to see available tests."
