@@ -21,6 +21,7 @@ import (
 var (
 	download          = false
 	oneway            = false
+	ReportDirs        = false
 	combined          = ""
 	missingOnSrc      = ""
 	missingOnDst      = ""
@@ -41,6 +42,7 @@ func init() {
 // AddFlags adds the check flags to the cmdFlags command
 func AddFlags(cmdFlags *pflag.FlagSet) {
 	flags.BoolVarP(cmdFlags, &oneway, "one-way", "", oneway, "Check one way only, source files must exist on remote", "")
+	flags.BoolVarP(cmdFlags, &ReportDirs, "report-dirs", "", ReportDirs, "Report directory differences in addition to files", "")
 	flags.StringVarP(cmdFlags, &combined, "combined", "", combined, "Make a combined report of changes to this file", "")
 	flags.StringVarP(cmdFlags, &missingOnSrc, "missing-on-src", "", missingOnSrc, "Report all files missing from the source to this file", "")
 	flags.StringVarP(cmdFlags, &missingOnDst, "missing-on-dst", "", missingOnDst, "Report all files missing from the destination to this file", "")
@@ -81,9 +83,10 @@ func GetCheckOpt(fsrc, fdst fs.Fs) (opt *operations.CheckOpt, close func(), err 
 	closers := []io.Closer{}
 
 	opt = &operations.CheckOpt{
-		Fsrc:   fsrc,
-		Fdst:   fdst,
-		OneWay: oneway,
+		Fsrc:       fsrc,
+		Fdst:       fdst,
+		OneWay:     oneway,
+		ReportDirs: ReportDirs,
 	}
 
 	open := func(name string, pout *io.Writer) error {
