@@ -13,6 +13,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
+	"time"
 
 	"golang.org/x/crypto/nacl/secretbox"
 
@@ -39,11 +41,78 @@ var (
 	// loaded. This can be used to pass the configKey to a child
 	// process.
 	PassConfigKeyForDaemonization = false
+
+	// configPassCache stores the cached password from --password-command
+	configPassCache struct {
+		mu         sync.Mutex
+		password   string
+		expiresAt  time.Time
+		cacheTTL   time.Duration
+		inUse      bool
+	}
 )
 
 // IsEncrypted returns true if the config file is encrypted
 func IsEncrypted() bool {
 	return len(configKey) > 0
+}
+
+// getCachedPassword returns the cached password if it exists and hasn't expired.
+// Returns empty string if cache is disabled, expired, or not set.
+func getCachedPassword() string {
+	configPassCache.mu.Lock()
+	defer configPassCache.mu.Unlock()
+
+	if !configPassCache.inUse {
+		return ""
+	}
+
+	if time.Now().After(configPassCache.expiresAt) {
+		// Cache expired - clear it
+		fs.Debugf(nil, "config-pass-cache: cached password expired")
+		configPassCache.password = ""
+		configPassCache.inUse = false
+		return ""
+	}
+
+	fs.Debugf(nil, "config-pass-cache: using cached password (expires in %v)", time.Until(configPassCache.expiresAt).Round(time.Second))
+	return configPassCache.password
+}
+
+// setCachedPassword stores the password in the cache with the specified TTL.
+// Does nothing if ttl is 0 or negative.
+func setCachedPassword(password string, ttl time.Duration) {
+	if ttl <= 0 {
+		return
+	}
+
+	configPassCache.mu.Lock()
+	defer configPassCache.mu.Unlock()
+
+	configPassCache.password = password
+	configPassCache.expiresAt = time.Now().Add(ttl)
+	configPassCache.cacheTTL = ttl
+	configPassCache.inUse = true
+	fs.Infof(nil, "config-pass-cache: password cached for %v", ttl)
+}
+
+// ClearPasswordCache clears the cached password. This is useful for testing
+// or when the user wants to force re-authentication.
+func ClearPasswordCache() {
+	configPassCache.mu.Lock()
+	defer configPassCache.mu.Unlock()
+
+	configPassCache.password = ""
+	configPassCache.expiresAt = time.Time{}
+	configPassCache.cacheTTL = 0
+	configPassCache.inUse = false
+}
+
+// IsPasswordCacheActive returns true if the password cache is currently active
+func IsPasswordCacheActive() bool {
+	configPassCache.mu.Lock()
+	defer configPassCache.mu.Unlock()
+	return configPassCache.inUse && time.Now().Before(configPassCache.expiresAt)
 }
 
 // Decrypt will automatically decrypt a reader
@@ -181,10 +250,23 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 // GetPasswordCommand gets the password using the --password-command setting
 //
 // If the --password-command flag was not in use it returns "", nil
+//
+// If --config-pass-cache is set to a positive duration, the password will be
+// cached in memory for that duration. Subsequent calls within the TTL will
+// return the cached password without re-invoking the command.
 func GetPasswordCommand(ctx context.Context) (pass string, err error) {
 	ci := fs.GetConfig(ctx)
 	if len(ci.PasswordCommand) == 0 {
 		return "", nil
+	}
+
+	cacheTTL := time.Duration(ci.ConfigPassCache)
+
+	// Check cache if caching is enabled
+	if cacheTTL > 0 {
+		if cachedPass := getCachedPassword(); cachedPass != "" {
+			return cachedPass, nil
+		}
 	}
 
 	var stdout bytes.Buffer
@@ -209,6 +291,12 @@ func GetPasswordCommand(ctx context.Context) (pass string, err error) {
 	if pass == "" {
 		return pass, errors.New("--password-command returned empty string")
 	}
+
+	// Cache the password if caching is enabled
+	if cacheTTL > 0 {
+		setCachedPassword(pass, cacheTTL)
+	}
+
 	return pass, nil
 }
 
@@ -315,9 +403,10 @@ func SetConfigPassword(password string) error {
 	return nil
 }
 
-// ClearConfigPassword sets the current the password to empty
+// ClearConfigPassword sets the current the password to empty and clears the password cache
 func ClearConfigPassword() {
 	configKey = nil
+	ClearPasswordCache()
 }
 
 // changeConfigPassword will query the user twice

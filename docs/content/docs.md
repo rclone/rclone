@@ -1267,6 +1267,45 @@ of the resolved configuration file, but if this directory is also a
 symbolic link it will not be resolved and the temporary files will be
 written to the location of the directory symbolic link.
 
+### --config-pass-cache Duration {#config-pass-cache}
+
+Cache the decrypted configuration password in memory for the specified
+duration when using [`--password-command`](#password-command). This is
+an **opt-in** feature that reduces the number of times the password
+command is executed during a session.
+
+This flag only takes effect when all of the following conditions are met:
+
+- The configuration file is encrypted
+- The password is supplied via `--password-command`
+- A valid duration greater than 0 is specified
+
+**Examples:**
+
+```text
+--config-pass-cache=1h     # Cache for 1 hour
+--config-pass-cache=30m    # Cache for 30 minutes
+--config-pass-cache=24h    # Cache for 24 hours
+```
+
+**Duration format:** Uses Go's standard duration syntax (e.g., `1h`, `30m`,
+`2h30m`, `300s`). See [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
+
+**Security considerations:**
+
+- The password is cached **in memory only** - it is never written to disk
+- The cache is scoped to the **current rclone process** only - not shared between processes
+- The cache is automatically cleared when the TTL expires
+- The cache is cleared when the rclone process exits
+- Do NOT use very long cache durations on shared systems
+
+**Default:** Disabled (cache duration is 0).
+
+When not set or set to 0, the password command is executed each time
+decryption is needed, preserving the existing behavior.
+
+See the [Configuration Encryption](#configuration-encryption) for more info.
+
 ### --contimeout Duration
 
 Set the connection timeout. This should be in go time format which
@@ -2457,6 +2496,10 @@ Note that when changing the configuration password the environment
 variable `RCLONE_PASSWORD_CHANGE=1` will be set. This can be used to
 distinguish initial decryption of the config file from the new
 password.
+
+To reduce how often the password command is executed, you can use
+[`--config-pass-cache`](#config-pass-cache) to cache the password in
+memory for a specified duration.
 
 See the [Configuration Encryption](#configuration-encryption) for more info.
 

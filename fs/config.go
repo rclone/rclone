@@ -142,6 +142,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Command for supplying password for encrypted configuration",
 	Groups:  "Config",
 }, {
+	Name:    "config_pass_cache",
+	Default: time.Duration(0),
+	Help:    "Cache the config password in memory for the specified duration when using --password-command (0 to disable)",
+	Groups:  "Config",
+}, {
 	Name:    "max_delete",
 	Default: int64(-1),
 	Help:    "When synchronizing, limit the number of deletes",
@@ -632,6 +637,7 @@ type ConfigInfo struct {
 	StatsFileNameLength        int               `config:"stats_file_name_length"`
 	AskPassword                bool              `config:"ask_password"`
 	PasswordCommand            SpaceSepList      `config:"password_command"`
+	ConfigPassCache            Duration          `config:"config_pass_cache"`
 	UseServerModTime           bool              `config:"use_server_modtime"`
 	MaxTransfer                SizeSuffix        `config:"max_transfer"`
 	MaxDuration                Duration          `config:"max_duration"`
