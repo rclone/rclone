@@ -11,19 +11,24 @@ Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol).
 
 The SFTP backend can be used with a number of different providers:
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable line-length no-bare-urls -->
+
 {{< provider_list >}}
 {{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box">}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net">}}
 {{< /provider_list >}}
+
+<!-- markdownlint-restore -->
 
 SFTP runs over SSH v2 and is installed as standard with most modern
 SSH installations.
 
 Paths are specified as `remote:path`. If the path does not begin with
 a `/` it is relative to the home directory of the user.  An empty path
-`remote:` refers to the user's home directory. For example, `rclone lsd remote:` 
-would list the home directory of the user configured in the rclone remote config 
-(`i.e /home/sftpuser`). However, `rclone lsd remote:/` would list the root 
+`remote:` refers to the user's home directory. For example, `rclone lsd remote:`
+would list the home directory of the user configured in the rclone remote config
+(`i.e /home/sftpuser`). However, `rclone lsd remote:/` would list the root
 directory for remote machine (i.e. `/`)
 
 Note that some SFTP servers will need the leading / - Synology is a
@@ -37,12 +42,14 @@ the server, see [shell access considerations](#shell-access-considerations).
 
 Here is an example of making an SFTP configuration.  First run
 
-    rclone config
+```console
+rclone config
+```
 
 This will guide you through an interactive setup process.
 
-```
-No remotes found, make a new one?
+```text
+No remotes found, make a new one\?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -93,50 +100,67 @@ This remote is called `remote` and can now be used like this:
 
 See all directories in the home directory
 
-    rclone lsd remote:
+```console
+rclone lsd remote:
+```
 
 See all directories in the root directory
 
-    rclone lsd remote:/
+```console
+rclone lsd remote:/
+```
 
 Make a new directory
 
-    rclone mkdir remote:path/to/directory
+```console
+rclone mkdir remote:path/to/directory
+```
 
 List the contents of a directory
 
-    rclone ls remote:path/to/directory
+```console
+rclone ls remote:path/to/directory
+```
 
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-    rclone sync --interactive /home/local/directory remote:directory
+```console
+rclone sync --interactive /home/local/directory remote:directory
+```
 
 Mount the remote path `/srv/www-data/` to the local path
 `/mnt/www-data`
 
-    rclone mount remote:/srv/www-data/ /mnt/www-data
+```console
+rclone mount remote:/srv/www-data/ /mnt/www-data
+```
 
 ### SSH Authentication
 
 The SFTP remote supports three authentication methods:
 
-  * Password
-  * Key file, including certificate signed keys
-  * ssh-agent
+- Password
+- Key file, including certificate signed keys
+- ssh-agent
 
 Key files should be PEM-encoded private key files. For instance `/home/$USER/.ssh/id_rsa`.
 Only unencrypted OpenSSH or PEM encrypted files are supported.
 
-The key file can be specified in either an external file (key_file) or contained within the 
-rclone config file (key_pem).  If using key_pem in the config file, the entry should be on a
-single line with new line ('\n' or '\r\n') separating lines.  i.e.
+The key file can be specified in either an external file (key_file) or contained
+within the  rclone config file (key_pem).  If using key_pem in the config file,
+the entry should be on a single line with new line ('\n' or '\r\n') separating lines.
+I.e.
 
-    key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----END RSA PRIVATE KEY-----
+```text
+key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----END RSA PRIVATE KEY-----
+```
 
 This will generate it correctly for key_pem for use in the config:
 
-    awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
+```console
+awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
+```
 
 If you don't specify `pass`, `key_file`, or `key_pem` or `ask_password` then
 rclone will attempt to contact an ssh-agent. You can also specify `key_use_agent`
@@ -164,7 +188,7 @@ typically saved as `/home/$USER/.ssh/id_rsa.pub`. Setting this path in
 
 Example:
 
-```
+```ini
 [remote]
 type = sftp
 host = example.com
@@ -178,7 +202,7 @@ merged file in both places.
 
 Note: the cert must come first in the file.  e.g.
 
-```
+```console
 cat id_rsa-cert.pub id_rsa > merged_key
 ```
 
@@ -194,7 +218,7 @@ by `OpenSSH` or can point to a unique file.
 
 e.g. using the OpenSSH `known_hosts` file:
 
-```
+```ini
 [remote]
 type = sftp
 host = example.com
@@ -205,30 +229,36 @@ known_hosts_file = ~/.ssh/known_hosts
 
 Alternatively you can create your own known hosts file like this:
 
-```
+```console
 ssh-keyscan -t dsa,rsa,ecdsa,ed25519 example.com >> known_hosts
 ```
 
 There are some limitations:
 
-* `rclone` will not _manage_ this file for you.  If the key is missing or
-wrong then the connection will be refused.
-* If the server is set up for a certificate host key then the entry in
-the `known_hosts` file _must_ be the `@cert-authority` entry for the CA
+- `rclone` will not *manage* this file for you.  If the key is missing or
+  wrong then the connection will be refused.
+- If the server is set up for a certificate host key then the entry in
+  the `known_hosts` file *must* be the `@cert-authority` entry for the CA
 
 If the host key provided by the server does not match the one in the
 file (or is missing) then the connection will be aborted and an error
 returned such as
 
-    NewFs: couldn't connect SSH: ssh: handshake failed: knownhosts: key mismatch
+```text
+NewFs: couldn't connect SSH: ssh: handshake failed: knownhosts: key mismatch
+```
 
 or
 
-    NewFs: couldn't connect SSH: ssh: handshake failed: knownhosts: key is unknown
+```text
+NewFs: couldn't connect SSH: ssh: handshake failed: knownhosts: key is unknown
+```
 
 If you see an error such as
 
-    NewFs: couldn't connect SSH: ssh: handshake failed: ssh: no authorities for hostname: example.com:22
+```text
+NewFs: couldn't connect SSH: ssh: handshake failed: ssh: no authorities for hostname: example.com:22
+```
 
 then it is likely the server has presented a CA signed host certificate
 and you will need to add the appropriate `@cert-authority` entry.
@@ -242,11 +272,15 @@ Note that there seem to be various problems with using an ssh-agent on
 macOS due to recent changes in the OS.  The most effective work-around
 seems to be to start an ssh-agent in each session, e.g.
 
-    eval `ssh-agent -s` && ssh-add -A
+```console
+eval `ssh-agent -s` && ssh-add -A
+```
 
 And then at the end of the session
 
-    eval `ssh-agent -k`
+```console
+eval `ssh-agent -k`
+```
 
 These commands can be used in scripts of course.
 
@@ -263,7 +297,8 @@ and if shell access is available at all.
 Most servers run on some version of Unix, and then a basic Unix shell can
 be assumed, without further distinction. Windows 10, Server 2019, and later
 can also run a SSH server, which is a port of OpenSSH (see official
-[installation guide](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse)). On a Windows server the shell handling is different: Although it can also
+[installation guide](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse)).
+On a Windows server the shell handling is different: Although it can also
 be set up to use a Unix type shell, e.g. Cygwin bash, the default is to
 use Windows Command Prompt (cmd.exe), and PowerShell is a recommended
 alternative. All of these have behave differently, which rclone must handle.
@@ -318,29 +353,30 @@ is able to use checksumming if the same login has shell access,
 and can execute remote commands. If there is a command that can
 calculate compatible checksums on the remote system, Rclone can
 then be configured to execute this whenever a checksum is needed,
-and read back the results. Currently MD5 and SHA-1 are supported.
+and read back the results. By default MD5 and SHA-1 are considered,
+but also CRC32, SHA-256, BLAKE3, XXH3 and XXH128 are supported,
+option `hashes` can be set to specify which to consider.
 
 Normally this requires an external utility being available on
-the server. By default rclone will try commands `md5sum`, `md5`
-and `rclone md5sum` for MD5 checksums, and the first one found usable
-will be picked. Same with `sha1sum`, `sha1` and `rclone sha1sum`
-commands for SHA-1 checksums. These utilities normally need to
-be in the remote's PATH to be found.
+the server. E.g. for MD5 checksums, by default rclone will try commands
+`md5sum`, `md5` and `rclone md5sum`, and the first one found
+usable will be picked. These utilities normally need to be in the
+remote's PATH to be found.
 
 In some cases the shell itself is capable of calculating checksums.
 PowerShell is an example of such a shell. If rclone detects that the
 remote shell is PowerShell, which means it most probably is a
 Windows OpenSSH server, rclone will use a predefined script block
-to produce the checksums when no external checksum commands are found
-(see [shell access](#shell-access)). This assumes PowerShell version
-4.0 or newer.
+to produce the checksums for MD5, SHA-1 and SHA-256 when no external
+checksum commands are found (see [shell access](#shell-access)). This
+assumes PowerShell version 4.0 or newer.
 
-The options `md5sum_command` and `sha1_command` can be used to customize
-the command to be executed for calculation of checksums. You can for
-example set a specific path to where md5sum and sha1sum executables
-are located, or use them to specify some other tools that print checksums
-in compatible format. The value can include command-line arguments,
-or even shell script blocks as with PowerShell. Rclone has subcommands
+The options `md5sum_command`, `sha1_command`, etc. can be used to customize
+the commands to be executed for calculation of checksums. You can for
+example set a specific path to where the md5sum executable are located,
+or specify some other tool that print checksums in compatible format.
+The value can include command-line arguments, or even shell script blocks
+as with PowerShell. Rclone has subcommands [hashsum](/commands/rclone_hashsum/),
 [md5sum](/commands/rclone_md5sum/) and [sha1sum](/commands/rclone_sha1sum/)
 that use compatible format, which means if you have an rclone executable
 on the server it can be used. As mentioned above, they will be automatically
@@ -356,11 +392,14 @@ configuration, so next time it will use the same. Value `none`
 will be set if none of the default commands could be used for a specific
 algorithm, and this algorithm will not be supported by the remote.
 
-Disabling the checksumming may be required if you are connecting to SFTP servers
-which are not under your control, and to which the execution of remote shell
-commands is prohibited.  Set the configuration option `disable_hashcheck`
-to `true` to disable checksumming entirely, or set `shell_type` to `none`
-to disable all functionality based on remote shell command execution.
+Disabling the checksumming completely may be required if you are connecting to
+SFTP servers which are not under your control, and to which the execution of
+remote shell commands is prohibited. Set the configuration option `disable_hashcheck`
+to `true` to disable checksumming entirely (you get the same effect by setting
+option `hashes` to `none` or options `md5sum_command`, `sha1_command` etc.
+to `none`). Set option `shell_type` to `none` to not only disable checksumming,
+but also disable all other functionality that are based on remote shell command
+execution.
 
 ### Modification times and hashes
 
@@ -389,7 +428,7 @@ with a Windows OpenSSH server, rclone will use a built-in shell command
 (see [shell access](#shell-access)). If none of the above is applicable,
 `about` will fail.
 
-{{< rem autogenerated options start" - DO NOT EDIT - instead edit fs.RegInfo in backend/sftp/sftp.go then run make backenddocs" >}}
+<!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/sftp/sftp.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
 ### Standard options
 
 Here are the Standard options specific to sftp (SSH/SFTP).
@@ -562,10 +601,10 @@ Properties:
 - Type:        bool
 - Default:     false
 - Examples:
-    - "false"
-        - Use default Cipher list.
-    - "true"
-        - Enables the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange.
+  - "false"
+    - Use default Cipher list.
+  - "true"
+    - Enables the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange.
 
 #### --sftp-disable-hashcheck
 
@@ -635,8 +674,8 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "~/.ssh/known_hosts"
-        - Use OpenSSH's known_hosts file.
+  - "~/.ssh/known_hosts"
+    - Use OpenSSH's known_hosts file.
 
 #### --sftp-ask-password
 
@@ -712,18 +751,29 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - "none"
-        - No shell access
-    - "unix"
-        - Unix shell
-    - "powershell"
-        - PowerShell
-    - "cmd"
-        - Windows Command Prompt
+  - "none"
+    - No shell access
+  - "unix"
+    - Unix shell
+  - "powershell"
+    - PowerShell
+  - "cmd"
+    - Windows Command Prompt
+
+#### --sftp-hashes
+
+Comma separated list of supported checksum types.
+
+Properties:
+
+- Config:      hashes
+- Env Var:     RCLONE_SFTP_HASHES
+- Type:        CommaSepList
+- Default:     
 
 #### --sftp-md5sum-command
 
-The command used to read md5 hashes.
+The command used to read MD5 hashes.
 
 Leave blank for autodetect.
 
@@ -736,7 +786,7 @@ Properties:
 
 #### --sftp-sha1sum-command
 
-The command used to read sha1 hashes.
+The command used to read SHA-1 hashes.
 
 Leave blank for autodetect.
 
@@ -744,6 +794,71 @@ Properties:
 
 - Config:      sha1sum_command
 - Env Var:     RCLONE_SFTP_SHA1SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-crc32sum-command
+
+The command used to read CRC-32 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      crc32sum_command
+- Env Var:     RCLONE_SFTP_CRC32SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-sha256sum-command
+
+The command used to read SHA-256 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      sha256sum_command
+- Env Var:     RCLONE_SFTP_SHA256SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-blake3sum-command
+
+The command used to read BLAKE3 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      blake3sum_command
+- Env Var:     RCLONE_SFTP_BLAKE3SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-xxh3sum-command
+
+The command used to read XXH3 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      xxh3sum_command
+- Env Var:     RCLONE_SFTP_XXH3SUM_COMMAND
+- Type:        string
+- Required:    false
+
+#### --sftp-xxh128sum-command
+
+The command used to read XXH128 hashes.
+
+Leave blank for autodetect.
+
+Properties:
+
+- Config:      xxh128sum_command
+- Env Var:     RCLONE_SFTP_XXH128SUM_COMMAND
 - Type:        string
 - Required:    false
 
@@ -1071,6 +1186,12 @@ URL for HTTP CONNECT proxy
 
 Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
 
+Supports the format http://user:pass@host:port, http://host:port, http://host.
+
+Example:
+
+    http://myUser:myPass@proxyhostname.example.com:8000
+
 
 Properties:
 
@@ -1116,7 +1237,7 @@ Properties:
 - Type:        string
 - Required:    false
 
-{{< rem autogenerated options stop >}}
+<!-- autogenerated options stop -->
 
 ## Limitations
 

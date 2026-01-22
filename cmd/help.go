@@ -30,9 +30,7 @@ var Root = &cobra.Command{
 mounting them, listing them in lots of different ways.
 
 See the home page (https://rclone.org/) for installation, usage,
-documentation, changelog and configuration walkthroughs.
-
-`,
+documentation, changelog and configuration walkthroughs.`,
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
 		atexit.Run()
@@ -345,9 +343,12 @@ func showBackend(name string) {
 					fmt.Printf("- Examples:\n")
 				}
 				for _, ex := range opt.Examples {
-					fmt.Printf("    - %s\n", quoteString(ex.Value))
-					for _, line := range strings.Split(ex.Help, "\n") {
-						fmt.Printf("        - %s\n", line)
+					fmt.Printf("  - %s\n", quoteString(ex.Value))
+					for line := range strings.SplitSeq(ex.Help, "\n") {
+						fmt.Printf("    - %s\n", line)
+					}
+					if ex.Provider != "" {
+						fmt.Printf("    - Provider: %s\n", ex.Provider)
 					}
 				}
 			}

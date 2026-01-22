@@ -51,6 +51,7 @@ import (
 	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -72,6 +73,7 @@ const (
 	emulatorAccount      = "devstoreaccount1"
 	emulatorAccountKey   = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 	emulatorBlobEndpoint = "http://127.0.0.1:10000/devstoreaccount1"
+	sasCopyValidity      = time.Hour // how long SAS should last when doing server side copy
 )
 
 var (
@@ -84,12 +86,56 @@ var (
 	metadataMu sync.Mutex
 )
 
+// system metadata keys which this backend owns
+var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"cache-control": {
+		Help:    "Cache-Control header",
+		Type:    "string",
+		Example: "no-cache",
+	},
+	"content-disposition": {
+		Help:    "Content-Disposition header",
+		Type:    "string",
+		Example: "inline",
+	},
+	"content-encoding": {
+		Help:    "Content-Encoding header",
+		Type:    "string",
+		Example: "gzip",
+	},
+	"content-language": {
+		Help:    "Content-Language header",
+		Type:    "string",
+		Example: "en-US",
+	},
+	"content-type": {
+		Help:    "Content-Type header",
+		Type:    "string",
+		Example: "text/plain",
+	},
+	"tier": {
+		Help:     "Tier of the object",
+		Type:     "string",
+		Example:  "Hot",
+		ReadOnly: true,
+	},
+	"mtime": {
+		Help:    "Time of last modification, read from rclone metadata",
+		Type:    "RFC 3339",
+		Example: "2006-01-02T15:04:05.999999999Z07:00",
+	},
+}
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "azureblob",
 		Description: "Microsoft Azure Blob Storage",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   `User metadata is stored as x-ms-meta- keys. Azure metadata keys are case insensitive and are always returned in lower case.`,
+		},
 		Options: []fs.Option{{
 			Name: "account",
 			Help: `Azure Storage Account Name.
@@ -559,6 +605,11 @@ type Fs struct {
 	pacer         *fs.Pacer                    // To pace and retry the API calls
 	uploadToken   *pacer.TokenDispenser        // control concurrency
 	publicAccess  container.PublicAccessType   // Container Public Access Level
+
+	// user delegation cache
+	userDelegationMu     sync.Mutex
+	userDelegation       *service.UserDelegationCredential
+	userDelegationExpiry time.Time
 }
 
 // Object describes an azure object
@@ -803,6 +854,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		ReadMimeType:            true,
 		WriteMimeType:           true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 		BucketBased:             true,
 		BucketBasedRootOK:       true,
 		SetTier:                 true,
@@ -984,6 +1038,38 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
 		}
+	case opt.ClientID != "" && opt.Tenant != "" && opt.MSIClientID != "":
+		// Workload Identity based authentication
+		var options azidentity.ManagedIdentityCredentialOptions
+		options.ID = azidentity.ClientID(opt.MSIClientID)
+
+		msiCred, err := azidentity.NewManagedIdentityCredential(&options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+
+		getClientAssertions := func(context.Context) (string, error) {
+			token, err := msiCred.GetToken(context.Background(), policy.TokenRequestOptions{
+				Scopes: []string{"api://AzureADTokenExchange"},
+			})
+
+			if err != nil {
+				return "", fmt.Errorf("failed to acquire MSI token: %w", err)
+			}
+
+			return token.Token, nil
+		}
+
+		assertOpts := &azidentity.ClientAssertionCredentialOptions{}
+		f.cred, err = azidentity.NewClientAssertionCredential(
+			opt.Tenant,
+			opt.ClientID,
+			getClientAssertions,
+			assertOpts)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire client assertion token: %w", err)
+		}
 	case opt.UseAZ:
 		var options = azidentity.AzureCLICredentialOptions{}
 		f.cred, err = azidentity.NewAzureCLICredential(&options)
@@ -1116,6 +1202,289 @@ func (o *Object) updateMetadataWithModTime(modTime time.Time) {
 
 	// Set modTimeKey in it
 	o.meta[modTimeKey] = modTime.Format(timeFormatOut)
+}
+
+// parseXMsTags parses the value of the x-ms-tags header into a map.
+// It expects comma-separated key=value pairs. Whitespace around keys and
+// values is trimmed. Empty pairs and empty keys are rejected.
+func parseXMsTags(s string) (map[string]string, error) {
+	if strings.TrimSpace(s) == "" {
+		return map[string]string{}, nil
+	}
+	out := make(map[string]string)
+	parts := strings.Split(s, ",")
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		kv := strings.SplitN(p, "=", 2)
+		if len(kv) != 2 {
+			return nil, fmt.Errorf("invalid tag %q", p)
+		}
+		k := strings.TrimSpace(kv[0])
+		v := strings.TrimSpace(kv[1])
+		if k == "" {
+			return nil, fmt.Errorf("invalid tag key in %q", p)
+		}
+		out[k] = v
+	}
+	return out, nil
+}
+
+// mapMetadataToAzure maps a generic metadata map to Azure HTTP headers,
+// user metadata, tags and optional modTime override.
+// Reserved x-ms-* keys (except x-ms-tags) are ignored for user metadata.
+//
+// Pass a logger to surface non-fatal parsing issues (e.g. bad mtime).
+func mapMetadataToAzure(meta map[string]string, logf func(string, ...any)) (headers blob.HTTPHeaders, userMeta map[string]*string, tags map[string]string, modTime *time.Time, err error) {
+	if meta == nil {
+		return headers, nil, nil, nil, nil
+	}
+	tmp := make(map[string]string)
+	for k, v := range meta {
+		lowerKey := strings.ToLower(k)
+		switch lowerKey {
+		case "cache-control":
+			headers.BlobCacheControl = pString(v)
+		case "content-disposition":
+			headers.BlobContentDisposition = pString(v)
+		case "content-encoding":
+			headers.BlobContentEncoding = pString(v)
+		case "content-language":
+			headers.BlobContentLanguage = pString(v)
+		case "content-type":
+			headers.BlobContentType = pString(v)
+		case "x-ms-tags":
+			parsed, perr := parseXMsTags(v)
+			if perr != nil {
+				return headers, nil, nil, nil, perr
+			}
+			// allocate only if there are tags
+			if len(parsed) > 0 {
+				tags = parsed
+			}
+		case "mtime":
+			// Accept multiple layouts for tolerance
+			var parsed time.Time
+			var pErr error
+			for _, layout := range []string{time.RFC3339Nano, time.RFC3339, timeFormatOut} {
+				parsed, pErr = time.Parse(layout, v)
+				if pErr == nil {
+					modTime = &parsed
+					break
+				}
+			}
+			// Log and ignore if unparseable
+			if modTime == nil && logf != nil {
+				logf("metadata: couldn't parse mtime %q: %v", v, pErr)
+			}
+		case "tier":
+			// ignore - handled elsewhere
+		default:
+			// Filter out other reserved headers so they don't end up as user metadata
+			if strings.HasPrefix(lowerKey, "x-ms-") {
+				continue
+			}
+			tmp[lowerKey] = v
+		}
+	}
+	userMeta = toAzureMetaPtr(tmp)
+	return headers, userMeta, tags, modTime, nil
+}
+
+// toAzureMetaPtr converts a map[string]string to map[string]*string as used by Azure SDK
+func toAzureMetaPtr(in map[string]string) map[string]*string {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]*string, len(in))
+	for k, v := range in {
+		vv := v
+		out[k] = &vv
+	}
+	return out
+}
+
+// assembleCopyParams prepares headers, metadata and tags for copy operations.
+//
+// It starts from the source properties, optionally overlays mapped metadata
+// from rclone's metadata options, ensures mtime presence when mapping is
+// enabled, and returns whether mapping was actually requested (hadMapping).
+// assembleCopyParams prepares headers, metadata and tags for copy operations.
+//
+// If includeBaseMeta is true, start user metadata from the source's metadata
+// and overlay mapped values. This matches multipart copy commit behavior.
+// If false, only include mapped user metadata (no source baseline) which
+// matches previous singlepart StartCopyFromURL semantics.
+func assembleCopyParams(ctx context.Context, f *Fs, src fs.Object, srcProps *blob.GetPropertiesResponse, includeBaseMeta bool) (headers blob.HTTPHeaders, meta map[string]*string, tags map[string]string, hadMapping bool, err error) {
+	// Start from source properties
+	headers = blob.HTTPHeaders{
+		BlobCacheControl:       srcProps.CacheControl,
+		BlobContentDisposition: srcProps.ContentDisposition,
+		BlobContentEncoding:    srcProps.ContentEncoding,
+		BlobContentLanguage:    srcProps.ContentLanguage,
+		BlobContentMD5:         srcProps.ContentMD5,
+		BlobContentType:        srcProps.ContentType,
+	}
+	// Optionally deep copy user metadata pointers from source. Normalise keys to
+	// lower-case to avoid duplicate x-ms-meta headers when we later inject/overlay
+	// metadata (Azure treats keys case-insensitively but Go's http.Header will
+	// join duplicate keys into a comma separated list, which breaks shared-key
+	// signing).
+	if includeBaseMeta && len(srcProps.Metadata) > 0 {
+		meta = make(map[string]*string, len(srcProps.Metadata))
+		for k, v := range srcProps.Metadata {
+			if v != nil {
+				vv := *v
+				meta[strings.ToLower(k)] = &vv
+			}
+		}
+	}
+
+	// Only consider mapping if metadata pipeline is enabled
+	if fs.GetConfig(ctx).Metadata {
+		mapped, mapErr := fs.GetMetadataOptions(ctx, f, src, fs.MetadataAsOpenOptions(ctx))
+		if mapErr != nil {
+			return headers, meta, nil, false, fmt.Errorf("failed to map metadata: %w", mapErr)
+		}
+		if mapped != nil {
+			// Map rclone metadata to Azure shapes
+			mappedHeaders, userMeta, mappedTags, mappedModTime, herr := mapMetadataToAzure(mapped, func(format string, args ...any) { fs.Debugf(f, format, args...) })
+			if herr != nil {
+				return headers, meta, nil, false, fmt.Errorf("metadata mapping: %w", herr)
+			}
+			hadMapping = true
+			// Overlay headers (only non-nil)
+			if mappedHeaders.BlobCacheControl != nil {
+				headers.BlobCacheControl = mappedHeaders.BlobCacheControl
+			}
+			if mappedHeaders.BlobContentDisposition != nil {
+				headers.BlobContentDisposition = mappedHeaders.BlobContentDisposition
+			}
+			if mappedHeaders.BlobContentEncoding != nil {
+				headers.BlobContentEncoding = mappedHeaders.BlobContentEncoding
+			}
+			if mappedHeaders.BlobContentLanguage != nil {
+				headers.BlobContentLanguage = mappedHeaders.BlobContentLanguage
+			}
+			if mappedHeaders.BlobContentType != nil {
+				headers.BlobContentType = mappedHeaders.BlobContentType
+			}
+			// Overlay user metadata
+			if len(userMeta) > 0 {
+				if meta == nil {
+					meta = make(map[string]*string, len(userMeta))
+				}
+				for k, v := range userMeta {
+					meta[k] = v
+				}
+			}
+			// Apply tags if any
+			if len(mappedTags) > 0 {
+				tags = mappedTags
+			}
+			// Ensure mtime present using mapped or source time
+			if _, ok := meta[modTimeKey]; !ok {
+				when := src.ModTime(ctx)
+				if mappedModTime != nil {
+					when = *mappedModTime
+				}
+				val := when.Format(time.RFC3339Nano)
+				if meta == nil {
+					meta = make(map[string]*string, 1)
+				}
+				meta[modTimeKey] = &val
+			}
+			// Ensure content-type fallback to source if not set by mapper
+			if headers.BlobContentType == nil {
+				headers.BlobContentType = srcProps.ContentType
+			}
+		} else {
+			// Mapping enabled but not provided: ensure mtime present based on source ModTime
+			if _, ok := meta[modTimeKey]; !ok {
+				when := src.ModTime(ctx)
+				val := when.Format(time.RFC3339Nano)
+				if meta == nil {
+					meta = make(map[string]*string, 1)
+				}
+				meta[modTimeKey] = &val
+			}
+		}
+	}
+
+	return headers, meta, tags, hadMapping, nil
+}
+
+// applyMappedMetadata applies mapped metadata and headers to the object state for uploads.
+//
+// It reads `--metadata`, `--metadata-set`, and `--metadata-mapper` outputs via fs.GetMetadataOptions
+// and updates o.meta, o.tags and ui.httpHeaders accordingly.
+func (o *Object) applyMappedMetadata(ctx context.Context, src fs.ObjectInfo, ui *uploadInfo, options []fs.OpenOption) (modTime time.Time, err error) {
+	// Start from the source modtime; may be overridden by metadata
+	modTime = src.ModTime(ctx)
+
+	// Fetch mapped metadata if --metadata is enabled
+	meta, err := fs.GetMetadataOptions(ctx, o.fs, src, options)
+	if err != nil {
+		return modTime, err
+	}
+	if meta == nil {
+		// No metadata processing requested
+		return modTime, nil
+	}
+
+	// Map metadata using common helper
+	headers, userMeta, tags, mappedModTime, err := mapMetadataToAzure(meta, func(format string, args ...any) { fs.Debugf(o, format, args...) })
+	if err != nil {
+		return modTime, err
+	}
+	// Merge headers into ui
+	if headers.BlobCacheControl != nil {
+		ui.httpHeaders.BlobCacheControl = headers.BlobCacheControl
+	}
+	if headers.BlobContentDisposition != nil {
+		ui.httpHeaders.BlobContentDisposition = headers.BlobContentDisposition
+	}
+	if headers.BlobContentEncoding != nil {
+		ui.httpHeaders.BlobContentEncoding = headers.BlobContentEncoding
+	}
+	if headers.BlobContentLanguage != nil {
+		ui.httpHeaders.BlobContentLanguage = headers.BlobContentLanguage
+	}
+	if headers.BlobContentType != nil {
+		ui.httpHeaders.BlobContentType = headers.BlobContentType
+	}
+
+	// Apply user metadata to o.meta with a single critical section
+	if len(userMeta) > 0 {
+		metadataMu.Lock()
+		if o.meta == nil {
+			o.meta = make(map[string]string, len(userMeta))
+		}
+		for k, v := range userMeta {
+			if v != nil {
+				o.meta[k] = *v
+			}
+		}
+		metadataMu.Unlock()
+	}
+
+	// Apply tags
+	if len(tags) > 0 {
+		if o.tags == nil {
+			o.tags = make(map[string]string, len(tags))
+		}
+		for k, v := range tags {
+			o.tags[k] = v
+		}
+	}
+
+	if mappedModTime != nil {
+		modTime = *mappedModTime
+	}
+
+	return modTime, nil
 }
 
 // Returns whether file is a directory marker or not
@@ -1299,9 +1668,9 @@ func (f *Fs) containerOK(container string) bool {
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, containerName, directory, prefix string, addContainer bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, containerName, directory, prefix string, addContainer bool, callback func(fs.DirEntry) error) (err error) {
 	if !f.containerOK(containerName) {
-		return nil, fs.ErrorDirNotFound
+		return fs.ErrorDirNotFound
 	}
 	err = f.list(ctx, containerName, directory, prefix, addContainer, false, int32(f.opt.ListChunkSize), func(remote string, object *container.BlobItem, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
@@ -1309,16 +1678,16 @@ func (f *Fs) listDir(ctx context.Context, containerName, directory, prefix strin
 			return err
 		}
 		if entry != nil {
-			entries = append(entries, entry)
+			return callback(entry)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// container must be present if listing succeeded
 	f.cache.MarkOK(containerName)
-	return entries, nil
+	return nil
 }
 
 // listContainers returns all the containers to out
@@ -1354,14 +1723,47 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	container, directory := f.split(dir)
 	if container == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listContainers(ctx)
+		entries, err := f.listContainers(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, container, directory, f.rootDirectory, f.rootContainer == "", list.Add)
+		if err != nil {
+			return err
+		}
+
 	}
-	return f.listDir(ctx, container, directory, f.rootDirectory, f.rootContainer == "")
+	return list.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -1688,6 +2090,38 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.deleteContainer(ctx, container)
 }
 
+// Get a user delegation which is valid for at least sasCopyValidity
+//
+// This value is cached in f
+func (f *Fs) getUserDelegation(ctx context.Context) (*service.UserDelegationCredential, error) {
+	f.userDelegationMu.Lock()
+	defer f.userDelegationMu.Unlock()
+
+	if f.userDelegation != nil && time.Until(f.userDelegationExpiry) > sasCopyValidity {
+		return f.userDelegation, nil
+	}
+
+	// Validity window
+	start := time.Now().UTC()
+	expiry := start.Add(2 * sasCopyValidity)
+	startStr := start.Format(time.RFC3339)
+	expiryStr := expiry.Format(time.RFC3339)
+
+	// Acquire user delegation key from the service client
+	info := service.KeyInfo{
+		Start:  &startStr,
+		Expiry: &expiryStr,
+	}
+	userDelegationKey, err := f.svc.GetUserDelegationCredential(ctx, info, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user delegation key: %w", err)
+	}
+
+	f.userDelegation = userDelegationKey
+	f.userDelegationExpiry = expiry
+	return f.userDelegation, nil
+}
+
 // getAuth gets auth to copy o.
 //
 // tokenOK is used to signal that token based auth (Microsoft Entra
@@ -1699,7 +2133,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // URL (not a SAS) and token will be empty.
 //
 // If tokenOK is true it may also return a token for the auth.
-func (o *Object) getAuth(ctx context.Context, tokenOK bool, noAuth bool) (srcURL string, token *string, err error) {
+func (o *Object) getAuth(ctx context.Context, noAuth bool) (srcURL string, err error) {
 	f := o.fs
 	srcBlobSVC := o.getBlobSVC()
 	srcURL = srcBlobSVC.URL()
@@ -1708,29 +2142,47 @@ func (o *Object) getAuth(ctx context.Context, tokenOK bool, noAuth bool) (srcURL
 	case noAuth:
 		// If same storage account then no auth needed
 	case f.cred != nil:
-		if !tokenOK {
-			return srcURL, token, errors.New("not supported: Microsoft Entra ID")
-		}
-		options := policy.TokenRequestOptions{}
-		accessToken, err := f.cred.GetToken(ctx, options)
+		// Generate a User Delegation SAS URL using Azure AD credentials
+		userDelegationKey, err := f.getUserDelegation(ctx)
 		if err != nil {
-			return srcURL, token, fmt.Errorf("failed to create access token: %w", err)
+			return "", fmt.Errorf("sas creation: %w", err)
 		}
-		token = &accessToken.Token
+
+		// Build the SAS values
+		perms := sas.BlobPermissions{Read: true}
+		container, containerPath := o.split()
+		start := time.Now().UTC()
+		expiry := start.Add(sasCopyValidity)
+		vals := sas.BlobSignatureValues{
+			StartTime:     start,
+			ExpiryTime:    expiry,
+			Permissions:   perms.String(),
+			ContainerName: container,
+			BlobName:      containerPath,
+		}
+
+		// Sign with the delegation key
+		queryParameters, err := vals.SignWithUserDelegation(userDelegationKey)
+		if err != nil {
+			return "", fmt.Errorf("signing SAS with user delegation failed: %w", err)
+		}
+
+		// Append the SAS to the URL
+		srcURL = srcBlobSVC.URL() + "?" + queryParameters.Encode()
 	case f.sharedKeyCred != nil:
 		// Generate a short lived SAS URL if using shared key credentials
-		expiry := time.Now().Add(time.Hour)
+		expiry := time.Now().Add(sasCopyValidity)
 		sasOptions := blob.GetSASURLOptions{}
 		srcURL, err = srcBlobSVC.GetSASURL(sas.BlobPermissions{Read: true}, expiry, &sasOptions)
 		if err != nil {
-			return srcURL, token, fmt.Errorf("failed to create SAS URL: %w", err)
+			return srcURL, fmt.Errorf("failed to create SAS URL: %w", err)
 		}
 	case f.anonymous || f.opt.SASURL != "":
 		// If using a SASURL or anonymous, no need for any extra auth
 	default:
-		return srcURL, token, errors.New("unknown authentication type")
+		return srcURL, errors.New("unknown authentication type")
 	}
-	return srcURL, token, nil
+	return srcURL, nil
 }
 
 // Do multipart parallel copy.
@@ -1751,7 +2203,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 	o.fs = f
 	o.remote = remote
 
-	srcURL, token, err := src.getAuth(ctx, true, false)
+	srcURL, err := src.getAuth(ctx, false)
 	if err != nil {
 		return nil, fmt.Errorf("multipart copy: %w", err)
 	}
@@ -1795,7 +2247,8 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 					Count:  partSize,
 				},
 				// Specifies the authorization scheme and signature for the copy source.
-				CopySourceAuthorization: token,
+				// We use SAS URLs as this doesn't seem to work always
+				// CopySourceAuthorization: token,
 				// CPKInfo *blob.CPKInfo
 				// CPKScopeInfo *blob.CPKScopeInfo
 			}
@@ -1828,18 +2281,19 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 		return nil, err
 	}
 
-	// Convert metadata from source object
+	// Prepare metadata/headers/tags for destination
+	// For multipart commit, include base metadata from source then overlay mapped
+	commitHeaders, commitMeta, commitTags, _, err := assembleCopyParams(ctx, f, src, srcProperties, true)
+	if err != nil {
+		return nil, fmt.Errorf("multipart copy: %w", err)
+	}
+
+	// Convert metadata from source or mapper
 	options := blockblob.CommitBlockListOptions{
-		Metadata: srcProperties.Metadata,
-		Tier:     parseTier(f.opt.AccessTier),
-		HTTPHeaders: &blob.HTTPHeaders{
-			BlobCacheControl:       srcProperties.CacheControl,
-			BlobContentDisposition: srcProperties.ContentDisposition,
-			BlobContentEncoding:    srcProperties.ContentEncoding,
-			BlobContentLanguage:    srcProperties.ContentLanguage,
-			BlobContentMD5:         srcProperties.ContentMD5,
-			BlobContentType:        srcProperties.ContentType,
-		},
+		Metadata:    commitMeta,
+		Tags:        commitTags,
+		Tier:        parseTier(f.opt.AccessTier),
+		HTTPHeaders: &commitHeaders,
 	}
 
 	// Finalise the upload session
@@ -1865,14 +2319,40 @@ func (f *Fs) copySinglepart(ctx context.Context, remote, dstContainer, dstPath s
 	dstBlobSVC := f.getBlobSVC(dstContainer, dstPath)
 
 	// Get the source auth - none needed for same storage account
-	srcURL, _, err := src.getAuth(ctx, false, f == src.fs)
+	srcURL, err := src.getAuth(ctx, f == src.fs)
 	if err != nil {
 		return nil, fmt.Errorf("single part copy: source auth: %w", err)
 	}
 
-	// Start the copy
+	// Prepare mapped metadata/tags/headers if requested
 	options := blob.StartCopyFromURLOptions{
 		Tier: parseTier(f.opt.AccessTier),
+	}
+	var postHeaders *blob.HTTPHeaders
+	// Read source properties and assemble params; this also handles the case when mapping is disabled
+	srcProps, err := src.readMetaDataAlways(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("single part copy: read source properties: %w", err)
+	}
+	// For singlepart copy, do not include base metadata from source in StartCopyFromURL
+	headers, meta, tags, hadMapping, aerr := assembleCopyParams(ctx, f, src, srcProps, false)
+	if aerr != nil {
+		return nil, fmt.Errorf("single part copy: %w", aerr)
+	}
+	// Apply tags and post-copy headers only when mapping requested changes
+	if len(tags) > 0 {
+		options.BlobTags = make(map[string]string, len(tags))
+		for k, v := range tags {
+			options.BlobTags[k] = v
+		}
+	}
+	if hadMapping {
+		// Only set metadata explicitly when mapping was requested; otherwise
+		// let the service copy source metadata (including mtime) automatically.
+		if len(meta) > 0 {
+			options.Metadata = meta
+		}
+		postHeaders = &headers
 	}
 	var startCopy blob.StartCopyFromURLResponse
 	err = f.pacer.Call(func() (bool, error) {
@@ -1902,6 +2382,16 @@ func (f *Fs) copySinglepart(ctx context.Context, remote, dstContainer, dstPath s
 		copyStatus = getMetadata.CopyStatus
 		pollTime = min(2*pollTime, time.Second)
 	}
+
+	// If mapper requested header changes, set them post-copy
+	if postHeaders != nil {
+		blb := f.getBlobSVC(dstContainer, dstPath)
+		_, setErr := blb.SetHTTPHeaders(ctx, *postHeaders, nil)
+		if setErr != nil {
+			return nil, fmt.Errorf("single part copy: failed to set headers: %w", setErr)
+		}
+	}
+	// Metadata (when requested) is set via StartCopyFromURL options.Metadata
 
 	return f.NewObject(ctx, remote)
 }
@@ -2029,10 +2519,38 @@ func (o *Object) getMetadata() (metadata map[string]*string) {
 	}
 	metadata = make(map[string]*string, len(o.meta))
 	for k, v := range o.meta {
-		v := v
 		metadata[k] = &v
 	}
 	return metadata
+}
+
+// Metadata returns metadata for an object
+//
+// It returns a combined view of system and user metadata.
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	// Ensure metadata is loaded
+	if err := o.readMetaData(ctx); err != nil {
+		return nil, err
+	}
+
+	m := fs.Metadata{}
+
+	// System metadata we expose
+	if !o.modTime.IsZero() {
+		m["mtime"] = o.modTime.Format(time.RFC3339Nano)
+	}
+	if o.accessTier != "" {
+		m["tier"] = string(o.accessTier)
+	}
+
+	// Merge user metadata (already lower-cased keys)
+	metadataMu.Lock()
+	for k, v := range o.meta {
+		m[k] = v
+	}
+	metadataMu.Unlock()
+
+	return m, nil
 }
 
 // decodeMetaDataFromPropertiesResponse sets the metadata from the data passed in
@@ -2581,6 +3099,13 @@ func (w *azChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader 
 		return -1, err
 	}
 
+	// Only account after the checksum reads have been done
+	if do, ok := reader.(pool.DelayAccountinger); ok {
+		// To figure out this number, do a transfer and if the accounted size is 0 or a
+		// multiple of what it should be, increase or decrease this number.
+		do.DelayAccounting(2)
+	}
+
 	// Upload the block, with MD5 for check
 	m := md5.New()
 	currentChunkSize, err := io.Copy(m, reader)
@@ -2866,16 +3391,18 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	// 	containerPath = containerPath[:len(containerPath)-1]
 	// }
 
-	// Update Mod time
-	o.updateMetadataWithModTime(src.ModTime(ctx))
-	if err != nil {
-		return ui, err
-	}
-
-	// Create the HTTP headers for the upload
+	// Start with default content-type based on source
 	ui.httpHeaders = blob.HTTPHeaders{
 		BlobContentType: pString(fs.MimeType(ctx, src)),
 	}
+
+	// Apply mapped metadata/headers/tags if requested
+	modTime, err := o.applyMappedMetadata(ctx, src, &ui, options)
+	if err != nil {
+		return ui, err
+	}
+	// Ensure mtime is set in metadata based on possibly overridden modTime
+	o.updateMetadataWithModTime(modTime)
 
 	// Compute the Content-MD5 of the file. As we stream all uploads it
 	// will be set in PutBlockList API call using the 'x-ms-blob-content-md5' header
@@ -3057,6 +3584,7 @@ var (
 	_ fs.PutStreamer     = &Fs{}
 	_ fs.Purger          = &Fs{}
 	_ fs.ListRer         = &Fs{}
+	_ fs.ListPer         = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}
 	_ fs.Object          = &Object{}
 	_ fs.MimeTyper       = &Object{}

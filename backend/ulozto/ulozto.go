@@ -97,7 +97,8 @@ any root slug set.`,
 				Advanced: true,
 				Default:  encoder.Display | encoder.EncodeInvalidUtf8 | encoder.EncodeBackSlash,
 			},
-		}})
+		},
+	})
 }
 
 // Fs represents a remote uloz.to storage
@@ -143,7 +144,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.rest.SetHeader("X-Auth-Token", f.opt.AppToken)
 
 	auth, err := f.authenticate(ctx)
-
 	if err != nil {
 		return f, err
 	}
@@ -176,6 +176,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	return f, err
+}
+
+// About implements the Abouter interface for Uloz.to.
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	used, err := f.getUsedSize(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	usage := fs.Usage{
+		Used: &used,
+	}
+
+	return &usage, nil
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -253,7 +267,6 @@ func (f *Fs) authenticate(ctx context.Context) (response *api.AuthenticateRespon
 		httpResp, err := f.rest.CallJSON(ctx, &opts, &authRequest, &response)
 		return f.shouldRetry(ctx, httpResp, err, false)
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -261,6 +274,32 @@ func (f *Fs) authenticate(ctx context.Context) (response *api.AuthenticateRespon
 	f.rest.SetHeader("X-User-Token", response.TokenID)
 
 	return response, nil
+}
+
+func (f *Fs) getUsedSize(ctx context.Context) (int64, error) {
+	rootID, err := f.dirCache.RootID(ctx, false)
+	if err != nil {
+		return 0, err
+	}
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   fmt.Sprintf("/v6/user/%s/folder/%s/folder-sizes", f.opt.Username, rootID),
+		Parameters: url.Values{
+			"recursive": []string{"true"},
+		},
+	}
+
+	folderSizes := api.FolderSizesResponse{}
+
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, nil, &folderSizes)
+		return f.shouldRetry(ctx, resp, err, true)
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return folderSizes[rootID].Recursive.FilesSize, nil
 }
 
 // UploadSession represents a single Uloz.to upload session.
@@ -310,7 +349,6 @@ func (session *UploadSession) renewUploadSession(ctx context.Context) error {
 		httpResp, err := session.Filesystem.rest.CallJSON(ctx, &opts, &createUploadURLReq, &response)
 		return session.Filesystem.shouldRetry(ctx, httpResp, err, true)
 	})
-
 	if err != nil {
 		return err
 	}
@@ -324,14 +362,12 @@ func (session *UploadSession) renewUploadSession(ctx context.Context) error {
 
 func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info fs.ObjectInfo, payload io.Reader) (fs.Object, error) {
 	session, err := f.createUploadSession(ctx)
-
 	if err != nil {
 		return nil, err
 	}
 
 	hashes := hash.NewHashSet(hash.MD5, hash.SHA256)
 	hasher, err := hash.NewMultiHasherTypes(hashes)
-
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +396,6 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 		httpResp, err := f.cdn.CallJSON(ctx, &opts, nil, &uploadResponse)
 		return f.shouldRetry(ctx, httpResp, err, true)
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +421,6 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 	}
 
 	encodedMetadata, err := metadata.encode()
-
 	if err != nil {
 		return nil, err
 	}
@@ -412,7 +446,6 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 		httpResp, err := session.Filesystem.rest.CallJSON(ctx, &opts, &updateReq, &updateResponse)
 		return f.shouldRetry(ctx, httpResp, err, true)
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -438,7 +471,6 @@ func (f *Fs) uploadUnchecked(ctx context.Context, name, parentSlug string, info 
 		httpResp, err := session.Filesystem.rest.CallJSON(ctx, &opts, &commitRequest, &commitResponse)
 		return f.shouldRetry(ctx, httpResp, err, true)
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -468,7 +500,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // Uloz.to allows to have multiple files of the same name in the same folder.
 func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	filename, folderSlug, err := f.dirCache.FindPath(ctx, src.Remote(), true)
-
 	if err != nil {
 		return nil, err
 	}
@@ -484,7 +515,6 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 
 func (f *Fs) isDirEmpty(ctx context.Context, slug string) (empty bool, err error) {
 	folders, err := f.fetchListFolderPage(ctx, slug, "", 1, 0)
-
 	if err != nil {
 		return false, err
 	}
@@ -494,7 +524,6 @@ func (f *Fs) isDirEmpty(ctx context.Context, slug string) (empty bool, err error
 	}
 
 	files, err := f.fetchListFilePage(ctx, slug, "", 1, 0)
-
 	if err != nil {
 		return false, err
 	}
@@ -509,13 +538,11 @@ func (f *Fs) isDirEmpty(ctx context.Context, slug string) (empty bool, err error
 // Rmdir implements the mandatory method fs.Fs.Rmdir.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	slug, err := f.dirCache.FindDir(ctx, dir, false)
-
 	if err != nil {
 		return err
 	}
 
 	empty, err := f.isDirEmpty(ctx, slug)
-
 	if err != nil {
 		return err
 	}
@@ -534,7 +561,6 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		httpResp, err := f.rest.CallJSON(ctx, &opts, req, nil)
 		return f.shouldRetry(ctx, httpResp, err, true)
 	})
-
 	if err != nil {
 		return err
 	}
@@ -558,7 +584,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	filename, folderSlug, err := f.dirCache.FindPath(ctx, remote, true)
-
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +625,6 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		httpResp, err := f.rest.CallJSON(ctx, &opts, &req, nil)
 		return f.shouldRetry(ctx, httpResp, err, true)
 	})
-
 	if err != nil {
 		return err
 	}
@@ -741,7 +765,6 @@ func (o *Object) updateFileProperties(ctx context.Context, req any) (err error) 
 		httpResp, err := o.fs.rest.CallJSON(ctx, &opts, &req, &resp)
 		return o.fs.shouldRetry(ctx, httpResp, err, true)
 	})
-
 	if err != nil {
 		return err
 	}
@@ -778,8 +801,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 	req := &api.GetDownloadLinkRequest{
 		Slug:      o.slug,
 		UserLogin: o.fs.opt.Username,
-		// Has to be set but doesn't seem to be used server side.
-		DeviceID: "foobar",
+		DeviceID:  fmt.Sprintf("%d", time.Now().UnixNano()),
 	}
 
 	var resp *api.GetDownloadLinkResponse
@@ -792,16 +814,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		return nil, err
 	}
 
+	downloadURL := resp.Link
+	if resp.Hash != "" {
+		if strings.Contains(downloadURL, "?") {
+			downloadURL += "&"
+		} else {
+			downloadURL += "?"
+		}
+		downloadURL += "hash=" + url.QueryEscape(resp.Hash)
+	}
+
 	opts = rest.Opts{
 		Method:  "GET",
-		RootURL: resp.Link,
+		RootURL: downloadURL,
 		Options: options,
 	}
 
 	var httpResp *http.Response
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		httpResp, err = o.fs.cdn.Call(ctx, &opts)
+		httpResp, err = o.fs.rest.Call(ctx, &opts)
 		return o.fs.shouldRetry(ctx, httpResp, err, true)
 	})
 	if err != nil {
@@ -870,7 +902,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		remote:   o.Remote(),
 	}
 	newo, err := o.fs.PutUnchecked(ctx, in, info, options...)
-
 	if err != nil {
 		return err
 	}
@@ -914,7 +945,6 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 	// The time the object was last modified on the server - a handwavy guess, but we don't have any better
 	return o.remoteFsMtime
-
 }
 
 // Fs implements the mandatory method fs.Object.Fs
@@ -1053,7 +1083,6 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 	}
 
 	files, err := f.listFiles(ctx, folderSlug, filename)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1065,7 +1094,6 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 	}
 
 	folders, err := f.listFolders(ctx, folderSlug, filename)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1136,8 +1164,8 @@ func (f *Fs) fetchListFolderPage(
 	folderSlug string,
 	searchQuery string,
 	limit int,
-	offset int) (folders []api.Folder, err error) {
-
+	offset int,
+) (folders []api.Folder, err error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       "/v9/user/" + f.opt.Username + "/folder/" + folderSlug + "/folder-list",
@@ -1160,7 +1188,6 @@ func (f *Fs) fetchListFolderPage(
 		httpResp, err := f.rest.CallJSON(ctx, &opts, nil, &respBody)
 		return f.shouldRetry(ctx, httpResp, err, true)
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -1175,8 +1202,8 @@ func (f *Fs) fetchListFolderPage(
 func (f *Fs) listFolders(
 	ctx context.Context,
 	folderSlug string,
-	searchQuery string) (folders []api.Folder, err error) {
-
+	searchQuery string,
+) (folders []api.Folder, err error) {
 	targetPageSize := f.opt.ListPageSize
 	lastPageSize := targetPageSize
 	offset := 0
@@ -1204,8 +1231,8 @@ func (f *Fs) fetchListFilePage(
 	folderSlug string,
 	searchQuery string,
 	limit int,
-	offset int) (folders []api.File, err error) {
-
+	offset int,
+) (folders []api.File, err error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       "/v8/user/" + f.opt.Username + "/folder/" + folderSlug + "/file-list",
@@ -1227,7 +1254,6 @@ func (f *Fs) fetchListFilePage(
 		httpResp, err := f.rest.CallJSON(ctx, &opts, nil, &respBody)
 		return f.shouldRetry(ctx, httpResp, err, true)
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("couldn't list files: %w", err)
 	}
@@ -1242,8 +1268,8 @@ func (f *Fs) fetchListFilePage(
 func (f *Fs) listFiles(
 	ctx context.Context,
 	folderSlug string,
-	searchQuery string) (folders []api.File, err error) {
-
+	searchQuery string,
+) (folders []api.File, err error) {
 	targetPageSize := f.opt.ListPageSize
 	lastPageSize := targetPageSize
 	offset := 0

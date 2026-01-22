@@ -19,12 +19,8 @@ import (
 )
 
 var (
-	once      sync.Once
-	configDir string // where the config is stored
-	// Note of running servers
-	runningMu   sync.Mutex
-	running     = map[string]int{}
-	errNotFound = errors.New("command not found")
+	findConfigOnce sync.Once
+	configDir      string // where the config is stored
 )
 
 // Assume we are run somewhere within the rclone root
@@ -42,25 +38,26 @@ func findConfig() (string, error) {
 	return "", errors.New("couldn't find testserver config files - run from within rclone source")
 }
 
-// run the command returning the output and an error
-func run(name, command string) (out []byte, err error) {
-	cmdPath := filepath.Join(configDir, name)
-	fi, err := os.Stat(cmdPath)
-	if err != nil || fi.IsDir() {
-		return nil, errNotFound
-	}
-	cmd := exec.Command(cmdPath, command)
-	out, err = cmd.CombinedOutput()
-	if err != nil {
-		err = fmt.Errorf("failed to run %s %s\n%s: %w", cmdPath, command, string(out), err)
-	}
-	return out, err
+// returns path to a script to start this server
+func cmdPath(name string) string {
+	return filepath.Join(configDir, name)
 }
 
-// Check to see if the server is running
-func isRunning(name string) bool {
-	_, err := run(name, "status")
-	return err == nil
+// return true if the server with name has a start command
+func hasStartCommand(name string) bool {
+	fi, err := os.Stat(cmdPath(name))
+	return err == nil && !fi.IsDir()
+}
+
+// run the command returning the output and an error
+func run(name, command string) (out []byte, err error) {
+	script := cmdPath(name)
+	cmd := exec.Command(script, command)
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		err = fmt.Errorf("failed to run %s %s\n%s: %w", script, command, string(out), err)
+	}
+	return out, err
 }
 
 // envKey returns the environment variable name to set name, key
@@ -71,8 +68,7 @@ func envKey(name, key string) string {
 // match a line of config var=value
 var matchLine = regexp.MustCompile(`^([a-zA-Z_]+)=(.*)$`)
 
-// Start the server and set its env vars
-// Call with the mutex held
+// Start the server and env vars so rclone can use it
 func start(name string) error {
 	fs.Logf(name, "Starting server")
 	out, err := run(name, "start")
@@ -82,7 +78,7 @@ func start(name string) error {
 	// parse the output and set environment vars from it
 	var connect string
 	var connectDelay time.Duration
-	for _, line := range bytes.Split(out, []byte("\n")) {
+	for line := range bytes.SplitSeq(out, []byte("\n")) {
 		line = bytes.TrimSpace(line)
 		part := matchLine.FindSubmatch(line)
 		if part != nil {
@@ -110,7 +106,7 @@ func start(name string) error {
 		return nil
 	}
 	// If we got a _connect value then try to connect to it
-	const maxTries = 30
+	const maxTries = 100
 	var rdBuf = make([]byte, 1)
 	for i := 1; i <= maxTries; i++ {
 		if i != 0 {
@@ -144,73 +140,59 @@ func start(name string) error {
 	return fmt.Errorf("failed to connect to %q on %q", name, connect)
 }
 
-// Start starts the named test server which can be stopped by the
-// function returned.
-func Start(remoteName string) (fn func(), err error) {
-	if remoteName == "" {
-		// don't start the local backend
-		return func() {}, nil
+// Stops the named test server
+func stop(name string) {
+	fs.Logf(name, "Stopping server")
+	_, err := run(name, "stop")
+	if err != nil {
+		fs.Errorf(name, "Failed to stop server: %v", err)
 	}
-	parsed, err := fspath.Parse(remoteName)
+}
+
+// No server to stop so do nothing
+func stopNothing() {
+}
+
+// Start starts the test server for remoteName.
+//
+// This must be stopped by calling the function returned when finished.
+func Start(remote string) (fn func(), err error) {
+	// don't start the local backend
+	if remote == "" {
+		return stopNothing, nil
+	}
+	parsed, err := fspath.Parse(remote)
 	if err != nil {
 		return nil, err
 	}
 	name := parsed.ConfigString
+	// don't start the local backend
 	if name == "" {
-		// don't start the local backend
-		return func() {}, nil
+		return stopNothing, nil
 	}
 
 	// Make sure we know where the config is
-	once.Do(func() {
+	findConfigOnce.Do(func() {
 		configDir, err = findConfig()
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	runningMu.Lock()
-	defer runningMu.Unlock()
-
-	if running[name] <= 0 {
-		// if server isn't running check to see if this server has
-		// been started already but not by us and stop it if so
-		if os.Getenv(envKey(name, "type")) == "" && isRunning(name) {
-			stop(name)
-		}
-		if !isRunning(name) {
-			err = start(name)
-			if err == errNotFound {
-				// if no file found then don't start or stop
-				return func() {}, nil
-			} else if err != nil {
-				return nil, err
-			}
-			running[name] = 0
-		} else {
-			running[name] = 1
-		}
+	// If remote has no start command then do nothing
+	if !hasStartCommand(name) {
+		return stopNothing, nil
 	}
-	running[name]++
 
+	// Start the server
+	err = start(name)
+	if err != nil {
+		return nil, err
+	}
+
+	// And return a function to stop it
 	return func() {
-		runningMu.Lock()
-		defer runningMu.Unlock()
 		stop(name)
 	}, nil
 
-}
-
-// Stops the named test server
-// Call with the mutex held
-func stop(name string) {
-	running[name]--
-	if running[name] <= 0 {
-		_, err := run(name, "stop")
-		if err != nil {
-			fs.Errorf(name, "Failed to stop server: %v", err)
-		}
-		running[name] = 0
-		fs.Logf(name, "Stopped server")
-	}
 }

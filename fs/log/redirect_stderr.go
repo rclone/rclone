@@ -1,6 +1,6 @@
 // Log the panic to the log file - for oses which can't do this
 
-//go:build !windows && !darwin && !dragonfly && !freebsd && !linux && !nacl && !netbsd && !openbsd
+//go:build !windows && !darwin && !dragonfly && !freebsd && !linux && !nacl && !netbsd && !openbsd && !aix
 
 package log
 

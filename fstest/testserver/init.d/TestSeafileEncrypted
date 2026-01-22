@@ -35,7 +35,7 @@ start() {
         | sed 's/^{"token":"\(.*\)"}$/\1/'`
 
     # create encrypted library
-    curl -X POST -d "name=${TEST_LIBRARY}&passwd=${TEST_LIBRARY_PASSWORD}" -H "Authorization: Token ${TOKEN}" "http://${SEAFILE_IP}:${SEAFILE_PORT}/api2/repos/"
+    curl --silent -o /dev/null -X POST -d "name=${TEST_LIBRARY}&passwd=${TEST_LIBRARY_PASSWORD}" -H "Authorization: Token ${TOKEN}" "http://${SEAFILE_IP}:${SEAFILE_PORT}/api2/repos/"
 
     echo _connect=${SEAFILE_IP}:${SEAFILE_PORT}
     echo type=seafile

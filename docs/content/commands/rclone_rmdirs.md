@@ -29,7 +29,6 @@ if you have thousands of empty directories consider increasing this number.
 To delete a path and any objects in it, use the [purge](/commands/rclone_purge/)
 command.
 
-
 ```
 rclone rmdirs remote:path [flags]
 ```
@@ -48,7 +47,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 Important flags useful for most commands
 
-```
+```text
   -n, --dry-run         Do a trial run with no permanent changes
   -i, --interactive     Enable interactive mode
   -v, --verbose count   Print lots more stuff (repeat for more)
@@ -56,5 +55,10 @@ Important flags useful for most commands
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
+
+<!-- markdownlint-restore -->

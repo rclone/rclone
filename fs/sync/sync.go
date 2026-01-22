@@ -194,7 +194,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		return nil, err
 	}
 	if ci.MaxDuration > 0 {
-		s.maxDurationEndTime = time.Now().Add(ci.MaxDuration)
+		s.maxDurationEndTime = time.Now().Add(time.Duration(ci.MaxDuration))
 		fs.Infof(s.fdst, "Transfer session %v deadline: %s", ci.CutoffMode, s.maxDurationEndTime.Format("2006/01/02 15:04:05"))
 	}
 	// If a max session duration has been defined add a deadline
@@ -743,7 +743,7 @@ func parseTrackRenamesStrategy(strategies string) (strategy trackRenamesStrategy
 	if len(strategies) == 0 {
 		return strategy, nil
 	}
-	for _, s := range strings.Split(strategies, ",") {
+	for s := range strings.SplitSeq(strategies, ",") {
 		switch s {
 		case "hash":
 			strategy |= trackRenamesStrategyHash

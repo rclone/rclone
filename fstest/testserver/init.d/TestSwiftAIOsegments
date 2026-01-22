@@ -8,9 +8,11 @@ PORT=28632
 . $(dirname "$0")/docker.bash
 
 start() {
+    # We need to replace the remakerings in the container to create Policy-1.
     docker run --rm -d --name ${NAME} \
            -p 127.0.0.1:${PORT}:8080 \
-           bouncestorage/swift-aio
+	   -v $(dirname "$0")/TestSwiftAIO.d/remakerings:/etc/swift/remakerings:ro \
+           openstackswift/saio
     
     echo type=swift
     echo env_auth=false

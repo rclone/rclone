@@ -31,7 +31,7 @@ func camelToSnake(in string) string {
 //
 // Builtin types are expected to be encoding as their natural
 // stringificatons as produced by fmt.Sprint except for []string which
-// is expected to be encoded a a CSV with empty array encoded as "".
+// is expected to be encoded as a CSV with empty array encoded as "".
 //
 // Any other types are expected to be encoded by their String()
 // methods and decoded by their `Set(s string) error` methods.
@@ -93,7 +93,7 @@ func StringToInterface(def any, in string) (newValue any, err error) {
 //
 // Builtin types are expected to be encoding as their natural
 // stringificatons as produced by fmt.Sprint except for []string which
-// is expected to be encoded a a CSV with empty array encoded as "".
+// is expected to be encoded as a CSV with empty array encoded as "".
 //
 // Any other types are expected to be encoded by their String()
 // methods and decoded by their `Set(s string) error` methods.
@@ -261,7 +261,7 @@ func Set(config configmap.Getter, opt any) (err error) {
 }
 
 // setIfSameType set aPtr with b if they are the same type or returns false.
-func setIfSameType(aPtr interface{}, b interface{}) bool {
+func setIfSameType(aPtr any, b any) bool {
 	aVal := reflect.ValueOf(aPtr).Elem()
 	bVal := reflect.ValueOf(b)
 

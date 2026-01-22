@@ -30,6 +30,9 @@ They should be bound to localhost so they are not accessible externally.
 | 28634 | TestSMBKerberos |
 | 28635 | TestS3Exaba |
 | 28636 | TestS3Exaba |
+| 28637 | TestSMBKerberosCcache |
+| 28638 | TestSMBKerberosCcache |
+| 28639 | TestWebdavInfiniteScale |
 | 38081 | TestWebdavOwncloud |
 
 ## Non localhost tests

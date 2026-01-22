@@ -18,7 +18,7 @@ type headerLink struct {
 }
 
 func parseLinkHeader(header string) (links []headerLink) {
-	for _, link := range strings.Split(header, ",") {
+	for link := range strings.SplitSeq(header, ",") {
 		link = strings.TrimSpace(link)
 		parsed := parseLink(link)
 		if parsed != nil {
@@ -30,7 +30,7 @@ func parseLinkHeader(header string) (links []headerLink) {
 
 func parseLink(link string) (parsedLink *headerLink) {
 	var parts []string
-	for _, part := range strings.Split(link, ";") {
+	for part := range strings.SplitSeq(link, ";") {
 		parts = append(parts, strings.TrimSpace(part))
 	}
 

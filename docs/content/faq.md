@@ -2,15 +2,16 @@
 title: "FAQ"
 description: "Rclone Frequently Asked Questions"
 ---
+<!-- markdownlint-disable heading-increment -->
 
 # Frequently Asked Questions
 
-### Do all cloud storage systems support all rclone commands ###
+### Do all cloud storage systems support all rclone commands
 
 Yes they do.  All the rclone commands (e.g. `sync`, `copy`, etc.) will
 work on all the remote storage systems.
 
-### Can I copy the config from one machine to another ###
+### Can I copy the config from one machine to another
 
 Sure!  Rclone stores all of its config in a single file.  If you want
 to find this file, run `rclone config file` which will tell you where
@@ -18,7 +19,7 @@ it is.
 
 See the [remote setup docs](/remote_setup/) for more info.
 
-### How do I configure rclone on a remote / headless box with no browser? ###
+### How do I configure rclone on a remote / headless box with no browser?
 
 This has now been documented in its own [remote setup page](/remote_setup/).
 
@@ -32,11 +33,11 @@ If you need to configure a remote, see the [config help docs](/docs/#configure).
 If you are using rclone entirely with [on the fly remotes](/docs/#backend-path-to-dir),
 you can create an empty config file to get rid of this notice, for example:
 
-```
+```console
 rclone config touch
 ```
 
-### Can rclone sync directly from drive to s3 ###
+### Can rclone sync directly from drive to s3
 
 Rclone can sync between two remote cloud storage systems just fine.
 
@@ -47,15 +48,16 @@ The syncs would be incremental (on a file by file basis).
 
 e.g.
 
-    rclone sync --interactive drive:Folder s3:bucket
+```console
+rclone sync --interactive drive:Folder s3:bucket
+```
 
-
-### Using rclone from multiple locations at the same time ###
+### Using rclone from multiple locations at the same time
 
 You can use rclone from multiple places at the same time if you choose
 different subdirectory for the output, e.g.
 
-```
+```console
 Server A> rclone sync --interactive /tmp/whatever remote:ServerA
 Server B> rclone sync --interactive /tmp/whatever remote:ServerB
 ```
@@ -63,7 +65,7 @@ Server B> rclone sync --interactive /tmp/whatever remote:ServerB
 If you sync to the same directory then you should use rclone copy
 otherwise the two instances of rclone may delete each other's files, e.g.
 
-```
+```console
 Server A> rclone copy /tmp/whatever remote:Backup
 Server B> rclone copy /tmp/whatever remote:Backup
 ```
@@ -72,7 +74,7 @@ The file names you upload from Server A and Server B should be
 different in this case, otherwise some file systems (e.g. Drive) may
 make duplicates.
 
-### Why doesn't rclone support partial transfers / binary diffs like rsync? ###
+### Why doesn't rclone support partial transfers / binary diffs like rsync?
 
 Rclone stores each file you transfer as a native object on the remote
 cloud storage system.  This means that you can see the files you
@@ -94,12 +96,12 @@ it would be possible to make partial downloads work.  However to make
 this work efficiently this would require storing a significant amount
 of metadata, which breaks the desired 1:1 mapping of files to objects.
 
-### Can rclone do bi-directional sync? ###
+### Can rclone do bi-directional sync?
 
 Yes, since rclone v1.58.0, [bidirectional cloud sync](/bisync/) is
 available.
 
-### Can I use rclone with an HTTP proxy? ###
+### Can I use rclone with an HTTP proxy?
 
 Yes. rclone will follow the standard environment variables for
 proxies, similar to cURL and other programs.
@@ -112,23 +114,26 @@ The content of the variable is `protocol://server:port`.  The protocol
 value is the one used to talk to the proxy server, itself, and is commonly
 either `http` or `socks5`.
 
-Slightly annoyingly, there is no _standard_ for the name; some applications
+Slightly annoyingly, there is no *standard* for the name; some applications
 may use `http_proxy` but another one `HTTP_PROXY`.  The `Go` libraries
 used by `rclone` will try both variations, but you may wish to set all
 possibilities.  So, on Linux, you may end up with code similar to
 
-    export http_proxy=http://proxyserver:12345
-    export https_proxy=$http_proxy
-    export HTTP_PROXY=$http_proxy
-    export HTTPS_PROXY=$http_proxy
-
+```console
+export http_proxy=http://proxyserver:12345
+export https_proxy=$http_proxy
+export HTTP_PROXY=$http_proxy
+export HTTPS_PROXY=$http_proxy
+```
 
 Note: If the proxy server requires a username and password, then use
 
-    export http_proxy=http://username:password@proxyserver:12345
-    export https_proxy=$http_proxy
-    export HTTP_PROXY=$http_proxy
-    export HTTPS_PROXY=$http_proxy
+```console
+export http_proxy=http://username:password@proxyserver:12345
+export https_proxy=$http_proxy
+export HTTP_PROXY=$http_proxy
+export HTTPS_PROXY=$http_proxy
+```
 
 The `NO_PROXY` allows you to disable the proxy for specific hosts.
 Hosts must be comma separated, and can contain domains or parts.
@@ -136,44 +141,73 @@ For instance "foo.com" also matches "bar.foo.com".
 
 e.g.
 
-    export no_proxy=localhost,127.0.0.0/8,my.host.name
-    export NO_PROXY=$no_proxy
+```console
+export no_proxy=localhost,127.0.0.0/8,my.host.name
+export NO_PROXY=$no_proxy
+```
 
 Note that the FTP backend does not support `ftp_proxy` yet.
 
-### Rclone gives x509: failed to load system roots and no roots provided error ###
+You can use the command line argument `--http-proxy` to set the proxy,
+and in turn use an override in the config file if you want it set for
+a single backend, eg `override.http_proxy = http://...` in the config
+file.
 
-This means that `rclone` can't find the SSL root certificates.  Likely
-you are running `rclone` on a NAS with a cut-down Linux OS, or
-possibly on Solaris.
+The FTP and SFTP backends have their own `http_proxy` settings to
+support an HTTP CONNECT proxy (
+[--ftp-http-proxy](https://rclone.org/ftp/#ftp-http-proxy) and
+[--sftp-http-proxy](https://rclone.org/ftp/#sftp-http-proxy) )
+
+### Rclone gives x509 SSL root certificates error
+
+`x509: failed to load system roots and no roots provided` means that `rclone` can't
+find the SSL root certificates.  Likely you are running `rclone` on a NAS with
+a cut-down Linux OS, or possibly on Solaris.
+
+`x509: certificate signed by unknown authority` error may occur on outdated systems,
+where `rclone` can't verify the server with the SSL root certificates.
 
 Rclone (via the Go runtime) tries to load the root certificates from
 these places on Linux.
 
-    "/etc/ssl/certs/ca-certificates.crt", // Debian/Ubuntu/Gentoo etc.
-    "/etc/pki/tls/certs/ca-bundle.crt",   // Fedora/RHEL
-    "/etc/ssl/ca-bundle.pem",             // OpenSUSE
-    "/etc/pki/tls/cacert.pem",            // OpenELEC
+```text
+"/etc/ssl/certs/ca-certificates.crt", // Debian/Ubuntu/Gentoo etc.
+"/etc/pki/tls/certs/ca-bundle.crt",   // Fedora/RHEL
+"/etc/ssl/ca-bundle.pem",             // OpenSUSE
+"/etc/pki/tls/cacert.pem",            // OpenELEC
+```
 
 So doing something like this should fix the problem.  It also sets the
 time which is important for SSL to work properly.
 
-```
+```console
 mkdir -p /etc/ssl/certs/
 curl -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
 ntpclient -s -h pool.ntp.org
 ```
 
-The two environment variables `SSL_CERT_FILE` and `SSL_CERT_DIR`, mentioned in the [x509 package](https://godoc.org/crypto/x509),
-provide an additional way to provide the SSL root certificates.
+The two environment variables `SSL_CERT_FILE` and `SSL_CERT_DIR`, mentioned in
+the [x509 package](https://godoc.org/crypto/x509), provide an additional way to
+provide the SSL root certificates on Unix systems other than macOS.
 
-Note that you may need to add the `--insecure` option to the `curl` command line if it doesn't work without.
+Note that you may need to add the `--insecure` option to the `curl` command line
+if it doesn't work without.
 
-```
+```console
 curl --insecure -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
 ```
 
-### Rclone gives Failed to load config file: function not implemented error ###
+On macOS, you can install
+[ca-certificates](https://formulae.brew.sh/formula/ca-certificates) with
+Homebrew, and specify the SSL root certificates with the
+[--ca-cert](/docs/#ca-cert-stringarray) flag.
+
+```console
+brew install ca-certificates
+find $(brew --prefix)/etc/ca-certificates -type f
+```
+
+### Rclone gives Failed to load config file: function not implemented error
 
 Likely this means that you are running rclone on Linux version not
 supported by the go runtime, ie earlier than version 2.6.23.
@@ -181,7 +215,7 @@ supported by the go runtime, ie earlier than version 2.6.23.
 See the [system requirements section in the go install
 docs](https://golang.org/doc/install) for full details.
 
-### All my uploaded docx/xlsx/pptx files appear as archive/zip ###
+### All my uploaded docx/xlsx/pptx files appear as archive/zip
 
 This is caused by uploading these files from a Windows computer which
 hasn't got the Microsoft Office suite installed.  The easiest way to
@@ -189,12 +223,12 @@ fix is to install the Word viewer and the Microsoft Office
 Compatibility Pack for Word, Excel, and PowerPoint 2007 and later
 versions' file formats
 
-### tcp lookup some.domain.com no such host ###
+### tcp lookup some.domain.com no such host
 
 This happens when rclone cannot resolve a domain. Please check that
 your DNS setup is generally working, e.g.
 
-```
+```sh
 # both should print a long list of possible IP addresses
 dig www.googleapis.com          # resolve using your default DNS
 dig www.googleapis.com @8.8.8.8 # resolve with Google's DNS server
@@ -203,7 +237,6 @@ dig www.googleapis.com @8.8.8.8 # resolve with Google's DNS server
 If you are using `systemd-resolved` (default on Arch Linux), ensure it
 is at version 233 or higher. Previous releases contain a bug which
 causes not all domains to be resolved properly.
-
 
 The Go resolver decision can be influenced with the `GODEBUG=netdns=...`
 environment variable. This also allows to resolve certain issues with
@@ -214,17 +247,20 @@ name resolver by setting `GODEBUG=netdns=cgo` (and recompile rclone
 from source with CGO enabled if necessary). See the
 [name resolution section in the go docs](https://golang.org/pkg/net/#hdr-Name_Resolution).
 
-### Failed to start auth webserver on Windows ###
-```
+### Failed to start auth webserver on Windows
+
+```text
 Error: config failed to refresh token: failed to start auth webserver: listen tcp 127.0.0.1:53682: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
 ...
 yyyy/mm/dd hh:mm:ss Fatal error: config failed to refresh token: failed to start auth webserver: listen tcp 127.0.0.1:53682: bind: An attempt was made to access a socket in a way forbidden by its access permissions.
 ```
 
-This is sometimes caused by the Host Network Service causing issues with opening the port on the host.
+This is sometimes caused by the Host Network Service causing issues with opening
+the port on the host.
 
 A simple solution may be restarting the Host Network Service with eg. Powershell
-```
+
+```powershell
 Restart-Service hns
 ```
 
@@ -233,7 +269,7 @@ Restart-Service hns
 It is likely you have more than 10,000 files that need to be
 synced. By default, rclone only gets 10,000 files ahead in a sync so as
 not to use up too much memory. You can change this default with the
-[--max-backlog](/docs/#max-backlog-n) flag.
+[--max-backlog](/docs/#max-backlog-int) flag.
 
 ### Rclone is using too much memory or appears to have a memory leak
 
@@ -247,7 +283,7 @@ value, say `export GOGC=20`.  This will make the garbage collector
 work harder, reducing memory size at the expense of CPU usage.
 
 The most common cause of rclone using lots of memory is a single
-directory with millions of files in. 
+directory with millions of files in.
 
 Before rclone v1.70 has to load this entirely into memory as rclone
 objects. Each rclone object takes 0.5k-1k of memory. There is
@@ -279,4 +315,4 @@ Unicode characters when transferring to one storage system, and replacing
 back again when transferring to a different storage system where the
 original characters are supported. When the same Unicode characters
 are intentionally used in file names, this replacement strategy leads
-to unwanted renames. Read more [here](/overview/#restricted-filenames-caveats).
+to unwanted renames. Read more under section [caveats](/overview/#restricted-filenames-caveats).

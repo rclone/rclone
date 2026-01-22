@@ -154,6 +154,37 @@ func (os Options) NonDefault(m configmap.Getter) configmap.Simple {
 	return nonDefault
 }
 
+// NonDefaultRC discovers which config values aren't at their default
+//
+// It expects a pointer to the current config struct in opts.
+//
+// It returns the overridden config in rc config format.
+func (os Options) NonDefaultRC(opts any) (map[string]any, error) {
+	items, err := configstruct.Items(opts)
+	if err != nil {
+		return nil, err
+	}
+	itemsByName := map[string]*configstruct.Item{}
+	for i := range items {
+		item := &items[i]
+		itemsByName[item.Name] = item
+	}
+	var nonDefault = map[string]any{}
+	for i := range os {
+		opt := &os[i]
+		item, found := itemsByName[opt.Name]
+		if !found {
+			return nil, fmt.Errorf("key %q in OptionsInfo not found in Options struct", opt.Name)
+		}
+		value := fmt.Sprint(item.Value)
+		defaultValue := fmt.Sprint(opt.Default)
+		if value != defaultValue {
+			nonDefault[item.Field] = item.Value
+		}
+	}
+	return nonDefault, nil
+}
+
 // HasAdvanced discovers if any options have an Advanced setting
 func (os Options) HasAdvanced() bool {
 	for i := range os {

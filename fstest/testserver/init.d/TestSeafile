@@ -43,7 +43,7 @@ start() {
         | sed 's/^{"token":"\(.*\)"}$/\1/'`
 
     # create default library
-    curl -X POST -H "Authorization: Token ${TOKEN}" "http://${SEAFILE_IP}:${SEAFILE_PORT}/api2/default-repo/"
+    curl --silent -o /dev/null -X POST -H "Authorization: Token ${TOKEN}" "http://${SEAFILE_IP}:${SEAFILE_PORT}/api2/default-repo/"
 
     echo _connect=${SEAFILE_IP}:${SEAFILE_PORT}
     echo type=seafile

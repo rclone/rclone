@@ -57,11 +57,11 @@ def make_out(data, indent=""):
             return
         del(data[category])
         if indent != "" and len(lines) == 1:
-            out_lines.append(indent+"* " + title+": " + lines[0])
+            out_lines.append(indent+"- " + title+": " + lines[0])
             return
-        out_lines.append(indent+"* " + title)
+        out_lines.append(indent+"- " + title)
         for line in lines:
-            out_lines.append(indent+"    * " + line)
+            out_lines.append(indent+"  - " + line)
     return out, out_lines
 
 
@@ -129,12 +129,12 @@ def main():
                 new_features[name].append(message)
 
     # Output new features
-    out, new_features_lines = make_out(new_features, indent="    ")
+    out, new_features_lines = make_out(new_features, indent="  ")
     for name in sorted(new_features.keys()):
         out(name)
 
     # Output bugfixes
-    out, bugfix_lines = make_out(bugfixes, indent="    ")
+    out, bugfix_lines = make_out(bugfixes, indent="  ")
     for name in sorted(bugfixes.keys()):
         out(name)
 
@@ -163,15 +163,15 @@ def main():
 
 [See commits](https://github.com/rclone/rclone/compare/%(version)s...%(next_version)s)
 
-* New backends
-* New commands
-* New Features
+- New backends
+- New commands
+- New Features
 %(new_features)s
-* Bug Fixes
+- Bug Fixes
 %(bugfixes)s
 %(backend_changes)s""" % locals())
     sys.stdout.write(old_tail)
-                
+
 
 if __name__ == "__main__":
     main()

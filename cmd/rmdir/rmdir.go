@@ -21,8 +21,7 @@ has any objects in it, not even empty subdirectories. Use
 command [rmdirs](/commands/rclone_rmdirs/) (or [delete](/commands/rclone_delete/)
 with option ` + "`--rmdirs`" + `) to do that.
 
-To delete a path and any objects in it, use [purge](/commands/rclone_purge/) command.
-`,
+To delete a path and any objects in it, use [purge](/commands/rclone_purge/) command.`,
 	Annotations: map[string]string{
 		"groups": "Important",
 	},

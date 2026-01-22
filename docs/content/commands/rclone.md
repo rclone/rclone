@@ -15,8 +15,6 @@ mounting them, listing them in lots of different ways.
 See the home page (https://rclone.org/) for installation, usage,
 documentation, changelog and configuration walkthroughs.
 
-
-
 ```
 rclone [flags]
 ```
@@ -26,6 +24,8 @@ rclone [flags]
 ```
       --alias-description string                            Description of the remote
       --alias-remote string                                 Remote or path to alias
+      --archive-description string                          Description of the remote
+      --archive-remote string                               Remote to wrap to read archives from
       --ask-password                                        Allow prompt for password for encrypted configuration (default true)
       --auto-confirm                                        If enabled, do not request console confirmation
       --azureblob-access-tier string                        Access tier of blob: hot, cool, cold or archive
@@ -105,6 +105,10 @@ rclone [flags]
       --b2-hard-delete                                      Permanently delete files on remote removal, otherwise hide files
       --b2-key string                                       Application Key
       --b2-lifecycle int                                    Set the number of days deleted files should be kept when creating a bucket
+      --b2-sse-customer-algorithm string                    If using SSE-C, the server-side encryption algorithm used when storing this object in B2
+      --b2-sse-customer-key string                          To use SSE-C, you may provide the secret encryption key encoded in a UTF-8 compatible string to encrypt/decrypt your data
+      --b2-sse-customer-key-base64 string                   To use SSE-C, you may provide the secret encryption key encoded in Base64 format to encrypt/decrypt your data
+      --b2-sse-customer-key-md5 string                      If using SSE-C you may provide the secret encryption key MD5 checksum (optional)
       --b2-test-mode string                                 A flag string for X-Bz-Test-Mode header for debugging
       --b2-upload-concurrency int                           Concurrency for multipart uploads (default 4)
       --b2-upload-cutoff SizeSuffix                         Cutoff for switching to chunked upload (default 200Mi)
@@ -165,6 +169,7 @@ rclone [flags]
       --chunker-remote string                               Remote to chunk/unchunk
       --client-cert string                                  Client SSL certificate (PEM) for mutual TLS auth
       --client-key string                                   Client SSL private key (PEM) for mutual TLS auth
+      --client-pass string                                  Password for client SSL private key (PEM) for mutual TLS auth (obscured) (obscured)
       --cloudinary-adjust-media-files-extensions            Cloudinary handles media formats as a file attribute and strips it from the name, which is unlike most other file systems (default true)
       --cloudinary-api-key string                           Cloudinary API Key
       --cloudinary-api-secret string                        Cloudinary API Secret
@@ -180,7 +185,7 @@ rclone [flags]
       --combine-upstreams SpaceSepList                      Upstreams for combining
       --compare-dest stringArray                            Include additional server-side paths during comparison
       --compress-description string                         Description of the remote
-      --compress-level int                                  GZIP compression level (-2 to 9) (default -1)
+      --compress-level string                               GZIP (levels -2 to 9):
       --compress-mode string                                Compression mode (default "gzip")
       --compress-ram-cache-limit SizeSuffix                 Some remotes don't allow the upload of files with unknown size (default 20Mi)
       --compress-remote string                              Remote to compress
@@ -327,6 +332,7 @@ rclone [flags]
       --fix-case                                            Force rename of case insensitive dest to match source
       --fs-cache-expire-duration Duration                   Cache remotes for this long (0 to disable caching) (default 5m0s)
       --fs-cache-expire-interval Duration                   Interval to check for expired remotes (default 1m0s)
+      --ftp-allow-insecure-tls-ciphers                      Allow insecure TLS ciphers
       --ftp-ask-password                                    Allow asking for FTP password when needed
       --ftp-close-timeout Duration                          Maximum time to wait for a response to close (default 1m0s)
       --ftp-concurrency int                                 Maximum number of FTP simultaneous connections, 0 for unlimited
@@ -339,6 +345,7 @@ rclone [flags]
       --ftp-explicit-tls                                    Use Explicit FTPS (FTP over TLS)
       --ftp-force-list-hidden                               Use LIST -a to force listing of hidden files and folders. This will disable the use of MLSD
       --ftp-host string                                     FTP host to connect to
+      --ftp-http-proxy string                               URL for HTTP CONNECT proxy
       --ftp-idle-timeout Duration                           Max time before closing idle connections (default 1m0s)
       --ftp-no-check-certificate                            Do not verify the TLS certificate of the server
       --ftp-no-check-upload                                 Don't check the upload is OK
@@ -432,6 +439,7 @@ rclone [flags]
       --http-no-escape                                      Do not escape URL metacharacters in path names
       --http-no-head                                        Don't use HEAD requests
       --http-no-slash                                       Set this if the site doesn't end directories with /
+      --http-proxy string                                   HTTP proxy URL
       --http-url string                                     URL of HTTP host to connect to
       --human-readable                                      Print numbers in a human-readable format, sizes with suffix Ki|Mi|Gi|Ti|Pi
       --iclouddrive-apple-id string                         Apple ID
@@ -499,6 +507,7 @@ rclone [flags]
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
       --local-description string                            Description of the remote
       --local-encoding Encoding                             The encoding for the backend (default Slash,Dot)
+      --local-hashes CommaSepList                           Comma separated list of supported checksum types
       --local-links                                         Translate symlinks to/from regular files with a '.rclonelink' extension for the local backend
       --local-no-check-updated                              Don't check to see if the files change during upload
       --local-no-clone                                      Disable reflink cloning for server-side copies
@@ -510,6 +519,10 @@ rclone [flags]
       --local-unicode-normalization                         Apply unicode NFC normalization to paths and filenames
       --local-zero-size-links                               Assume the Stat size of links is zero (and read them instead) (deprecated)
       --log-file string                                     Log everything to this file
+      --log-file-compress                                   If set, compress rotated log files using gzip
+      --log-file-max-age Duration                           Maximum duration to retain old log files (eg "7d") (default 0s)
+      --log-file-max-backups int                            Maximum number of old log files to retain
+      --log-file-max-size SizeSuffix                        Maximum size of the log file before it's rotated (eg "10M") (default off)
       --log-format Bits                                     Comma separated list of log format options (default date,time)
       --log-level LogLevel                                  Log level DEBUG|INFO|NOTICE|ERROR (default NOTICE)
       --log-systemd                                         Activate systemd integration for the logger
@@ -540,6 +553,7 @@ rclone [flags]
       --max-size SizeSuffix                                 Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P (default off)
       --max-stats-groups int                                Maximum number of stats groups to keep in memory, on max oldest is discarded (default 1000)
       --max-transfer SizeSuffix                             Maximum size of data to transfer (default off)
+      --mega-2fa string                                     The 2FA code of your MEGA account if the account is set up with one
       --mega-debug                                          Output more debug from Mega
       --mega-description string                             Description of the remote
       --mega-encoding Encoding                              The encoding for the backend (default Slash,InvalidUtf8,Dot)
@@ -680,7 +694,8 @@ rclone [flags]
       --pikpak-pass string                                  Pikpak password (obscured)
       --pikpak-root-folder-id string                        ID of the root folder
       --pikpak-trashed-only                                 Only show files that are in the trash
-      --pikpak-upload-concurrency int                       Concurrency for multipart uploads (default 5)
+      --pikpak-upload-concurrency int                       Concurrency for multipart uploads (default 4)
+      --pikpak-upload-cutoff SizeSuffix                     Cutoff for switching to chunked upload (default 200Mi)
       --pikpak-use-trash                                    Send files to the trash instead of deleting permanently (default true)
       --pikpak-user string                                  Pikpak username
       --pikpak-user-agent string                            HTTP user agent for pikpak (default "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0")
@@ -705,6 +720,7 @@ rclone [flags]
       --protondrive-encoding Encoding                       The encoding for the backend (default Slash,LeftSpace,RightSpace,InvalidUtf8,Dot)
       --protondrive-mailbox-password string                 The mailbox password of your two-password proton account (obscured)
       --protondrive-original-file-size                      Return the file size before encryption (default true)
+      --protondrive-otp-secret-key string                   The OTP secret key (obscured)
       --protondrive-password string                         The password of your proton account (obscured)
       --protondrive-replace-existing-draft                  Create a new revision when filename conflict is detected
       --protondrive-username string                         The username of your proton account
@@ -820,6 +836,8 @@ rclone [flags]
       --s3-use-accelerate-endpoint                          If true use the AWS S3 accelerated endpoint
       --s3-use-accept-encoding-gzip Accept-Encoding: gzip   Whether to send Accept-Encoding: gzip header (default unset)
       --s3-use-already-exists Tristate                      Set if rclone should report BucketAlreadyExists errors on bucket creation (default unset)
+      --s3-use-arn-region                                   If true, enables arn region support for the service
+      --s3-use-data-integrity-protections Tristate          If true use AWS S3 data integrity protections (default unset)
       --s3-use-dual-stack                                   If true use AWS S3 dual-stack endpoint (IPv6 support)
       --s3-use-multipart-etag Tristate                      Whether to use ETag in multipart uploads for verification (default unset)
       --s3-use-multipart-uploads Tristate                   Set if rclone should use multipart uploads (default unset)
@@ -833,7 +851,7 @@ rclone [flags]
       --seafile-2fa                                         Two-factor authentication ('true' if the account has 2FA enabled)
       --seafile-create-library                              Should rclone create a library if it doesn't exist
       --seafile-description string                          Description of the remote
-      --seafile-encoding Encoding                           The encoding for the backend (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
+      --seafile-encoding Encoding                           The encoding for the backend (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8,Dot)
       --seafile-library string                              Name of the library
       --seafile-library-key string                          Library password (for encrypted libraries only) (obscured)
       --seafile-pass string                                 Password (obscured)
@@ -841,15 +859,18 @@ rclone [flags]
       --seafile-user string                                 User name (usually email address)
       --server-side-across-configs                          Allow server-side operations (e.g. copy) to work across different configs
       --sftp-ask-password                                   Allow asking for SFTP password when needed
+      --sftp-blake3sum-command string                       The command used to read BLAKE3 hashes
       --sftp-chunk-size SizeSuffix                          Upload and download chunk size (default 32Ki)
       --sftp-ciphers SpaceSepList                           Space separated list of ciphers to be used for session encryption, ordered by preference
       --sftp-concurrency int                                The maximum number of outstanding requests for one file (default 64)
       --sftp-connections int                                Maximum number of SFTP simultaneous connections, 0 for unlimited
       --sftp-copy-is-hardlink                               Set to enable server side copies using hardlinks
+      --sftp-crc32sum-command string                        The command used to read CRC-32 hashes
       --sftp-description string                             Description of the remote
       --sftp-disable-concurrent-reads                       If set don't use concurrent reads
       --sftp-disable-concurrent-writes                      If set don't use concurrent writes
       --sftp-disable-hashcheck                              Disable the execution of SSH commands to determine if remote file hashing is available
+      --sftp-hashes CommaSepList                            Comma separated list of supported checksum types
       --sftp-host string                                    SSH host to connect to
       --sftp-host-key-algorithms SpaceSepList               Space separated list of host key algorithms, ordered by preference
       --sftp-http-proxy string                              URL for HTTP CONNECT proxy
@@ -861,7 +882,7 @@ rclone [flags]
       --sftp-key-use-agent                                  When set forces the usage of the ssh-agent
       --sftp-known-hosts-file string                        Optional path to known_hosts file
       --sftp-macs SpaceSepList                              Space separated list of MACs (message authentication code) algorithms, ordered by preference
-      --sftp-md5sum-command string                          The command used to read md5 hashes
+      --sftp-md5sum-command string                          The command used to read MD5 hashes
       --sftp-pass string                                    SSH password, leave blank to use ssh-agent (obscured)
       --sftp-path-override string                           Override path used by SSH shell commands
       --sftp-port int                                       SSH port number (default 22)
@@ -870,7 +891,8 @@ rclone [flags]
       --sftp-server-command string                          Specifies the path or command to run a sftp server on the remote host
       --sftp-set-env SpaceSepList                           Environment variables to pass to sftp and commands
       --sftp-set-modtime                                    Set the modified time on the remote if set (default true)
-      --sftp-sha1sum-command string                         The command used to read sha1 hashes
+      --sftp-sha1sum-command string                         The command used to read SHA-1 hashes
+      --sftp-sha256sum-command string                       The command used to read SHA-256 hashes
       --sftp-shell-type string                              The type of SSH shell on remote server, if any
       --sftp-skip-links                                     Set to skip any symlinks and any other non regular files
       --sftp-socks-proxy string                             Socks 5 proxy host
@@ -879,6 +901,8 @@ rclone [flags]
       --sftp-use-fstat                                      If set use fstat instead of stat
       --sftp-use-insecure-cipher                            Enable the use of insecure ciphers and key exchange methods
       --sftp-user string                                    SSH username (default "$USER")
+      --sftp-xxh128sum-command string                       The command used to read XXH128 hashes
+      --sftp-xxh3sum-command string                         The command used to read XXH3 hashes
       --sharefile-auth-url string                           Auth server URL
       --sharefile-chunk-size SizeSuffix                     Upload chunk size (default 64Mi)
       --sharefile-client-credentials                        Use client credentials OAuth flow
@@ -898,6 +922,7 @@ rclone [flags]
       --sia-user-agent string                               Siad User Agent (default "Sia-Agent")
       --size-only                                           Skip based on size only, not modtime or checksum
       --skip-links                                          Don't warn about skipped symlinks
+      --skip-specials                                       Don't warn about skipped pipes, sockets and device objects
       --smb-case-insensitive                                Whether the server is configured to be case-insensitive (default true)
       --smb-description string                              Description of the remote
       --smb-domain string                                   Domain name for NTLM authentication (default "WORKGROUP")
@@ -905,6 +930,7 @@ rclone [flags]
       --smb-hide-special-share                              Hide special shares (e.g. print$) which users aren't supposed to access (default true)
       --smb-host string                                     SMB server hostname to connect to
       --smb-idle-timeout Duration                           Max time before closing idle connections (default 1m0s)
+      --smb-kerberos-ccache string                          Path to the Kerberos credential cache (krb5cc)
       --smb-pass string                                     SMB password (obscured)
       --smb-port int                                        SMB port number (default 445)
       --smb-spn string                                      Service principal name
@@ -989,15 +1015,11 @@ rclone [flags]
       --union-search-policy string                          Policy to choose upstream on SEARCH category (default "ff")
       --union-upstreams string                              List of space separated upstreams
   -u, --update                                              Skip files that are newer on the destination
-      --uptobox-access-token string                         Your access token
-      --uptobox-description string                          Description of the remote
-      --uptobox-encoding Encoding                           The encoding for the backend (default Slash,LtGt,DoubleQuote,BackQuote,Del,Ctl,LeftSpace,InvalidUtf8,Dot)
-      --uptobox-private                                     Set to make uploaded files private
       --use-cookies                                         Enable session cookiejar
       --use-json-log                                        Use json log format
       --use-mmap                                            Use mmap allocator (see docs)
       --use-server-modtime                                  Use server modified time instead of object metadata
-      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.70.0")
+      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.72.0")
   -v, --verbose count                                       Print lots more stuff (repeat for more)
   -V, --version                                             Print the version number
       --webdav-auth-redirect                                Preserve authentication on redirect
@@ -1039,7 +1061,11 @@ rclone [flags]
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone about](/commands/rclone_about/)	 - Get quota information from the remote.
+* [rclone archive](/commands/rclone_archive/)	 - Perform an action on an archive.
 * [rclone authorize](/commands/rclone_authorize/)	 - Remote authorization.
 * [rclone backend](/commands/rclone_backend/)	 - Run a backend-specific command.
 * [rclone bisync](/commands/rclone_bisync/)	 - Perform bidirectional synchronization between two paths.
@@ -1093,3 +1119,5 @@ rclone [flags]
 * [rclone tree](/commands/rclone_tree/)	 - List the contents of the remote in a tree like fashion.
 * [rclone version](/commands/rclone_version/)	 - Show the version number.
 
+
+<!-- markdownlint-restore -->

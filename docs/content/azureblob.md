@@ -15,11 +15,13 @@ command.)  You may put subdirectories in too, e.g.
 Here is an example of making a Microsoft Azure Blob Storage
 configuration.  For a remote called `remote`.  First run:
 
-     rclone config
+```console
+rclone config
+```
 
 This will guide you through an interactive setup process:
 
-```
+```text
 No remotes found, make a new one?
 n) New remote
 s) Set configuration password
@@ -55,20 +57,28 @@ y/e/d> y
 
 See all containers
 
-    rclone lsd remote:
+```console
+rclone lsd remote:
+```
 
 Make a new container
 
-    rclone mkdir remote:container
+```console
+rclone mkdir remote:container
+```
 
 List the contents of a container
 
-    rclone ls remote:container
+```console
+rclone ls remote:container
+```
 
 Sync `/home/local/directory` to the remote container, deleting any excess
 files in the container.
 
-    rclone sync --interactive /home/local/directory remote:container
+```console
+rclone sync --interactive /home/local/directory remote:container
+```
 
 ### --fast-list
 
@@ -92,6 +102,26 @@ flag. Note that rclone can't set `LastModified`, so using the
 MD5 hashes are stored with blobs. However blobs that were uploaded in
 chunks only have an MD5 if the source remote was capable of MD5
 hashes, e.g. the local disk.
+
+### Metadata and tags
+
+Rclone can map arbitrary metadata to Azure Blob headers, user metadata, and tags
+when `--metadata` is enabled (or when using `--metadata-set` / `--metadata-mapper`).
+
+- Headers: Set these keys in metadata to map to the corresponding blob headers:
+  - `cache-control`, `content-disposition`, `content-encoding`, `content-language`, `content-type`.
+- User metadata: Any other non-reserved keys are written as user metadata
+  (keys are normalized to lowercase). Keys starting with `x-ms-` are reserved and
+  are not stored as user metadata.
+- Tags: Provide `x-ms-tags` as a comma-separated list of `key=value` pairs, e.g.
+  `x-ms-tags=env=dev,team=sync`. These are applied as blob tags on upload and on
+  server-side copies. Whitespace around keys/values is ignored.
+- Modtime override: Provide `mtime` in RFC3339/RFC3339Nano format to override the
+  stored modtime persisted in user metadata. If `mtime` cannot be parsed, rclone
+  logs a debug message and ignores the override.
+
+Notes:
+- Rclone ignores reserved `x-ms-*` keys (except `x-ms-tags`) for user metadata.
 
 ### Performance
 
@@ -147,26 +177,35 @@ user with a password, depending on which environment variable are set.
 It reads configuration from these variables, in the following order:
 
 1. Service principal with client secret
-    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its "directory" ID.
+    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its
+      "directory" ID.
     - `AZURE_CLIENT_ID`: the service principal's client ID
     - `AZURE_CLIENT_SECRET`: one of the service principal's client secrets
 2. Service principal with certificate
-    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its "directory" ID.
+    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its
+      "directory" ID.
     - `AZURE_CLIENT_ID`: the service principal's client ID
-    - `AZURE_CLIENT_CERTIFICATE_PATH`: path to a PEM or PKCS12 certificate file including the private key.
-    - `AZURE_CLIENT_CERTIFICATE_PASSWORD`: (optional) password for the certificate file.
-    - `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN`: (optional) Specifies whether an authentication request will include an x5c header to support subject name / issuer based authentication. When set to "true" or "1", authentication requests include the x5c header.
+    - `AZURE_CLIENT_CERTIFICATE_PATH`: path to a PEM or PKCS12 certificate file
+      including the private key.
+    - `AZURE_CLIENT_CERTIFICATE_PASSWORD`: (optional) password for the
+      certificate file.
+    - `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN`: (optional) Specifies whether an
+      authentication request will include an x5c header to support subject
+      name / issuer based authentication. When set to "true" or "1",
+      authentication requests include the x5c header.
 3. User with username and password
     - `AZURE_TENANT_ID`: (optional) tenant to authenticate in. Defaults to "organizations".
-    - `AZURE_CLIENT_ID`: client ID of the application the user will authenticate to
+    - `AZURE_CLIENT_ID`: client ID of the application the user will authenticate
+      to
     - `AZURE_USERNAME`: a username (usually an email address)
     - `AZURE_PASSWORD`: the user's password
 4. Workload Identity
-    - `AZURE_TENANT_ID`: Tenant to authenticate in.
-    - `AZURE_CLIENT_ID`: Client ID of the application the user will authenticate to.
-    - `AZURE_FEDERATED_TOKEN_FILE`: Path to projected service account token file.
-    - `AZURE_AUTHORITY_HOST`: Authority of an Azure Active Directory endpoint (default: login.microsoftonline.com).
-
+    - `AZURE_TENANT_ID`: Tenant to authenticate in
+    - `AZURE_CLIENT_ID`: Client ID of the application the user will authenticate
+      to
+    - `AZURE_FEDERATED_TOKEN_FILE`: Path to projected service account token file
+    - `AZURE_AUTHORITY_HOST`: Authority of an Azure Active Directory endpoint
+      (default: login.microsoftonline.com).
 
 ##### Env Auth: 2. Managed Service Identity Credentials
 
@@ -193,19 +232,27 @@ Credentials created with the `az` tool can be picked up using `env_auth`.
 
 For example if you were to login with a service principal like this:
 
-    az login --service-principal -u XXX -p XXX --tenant XXX
+```console
+az login --service-principal -u XXX -p XXX --tenant XXX
+```
 
 Then you could access rclone resources like this:
 
-    rclone lsf :azureblob,env_auth,account=ACCOUNT:CONTAINER
+```console
+rclone lsf :azureblob,env_auth,account=ACCOUNT:CONTAINER
+```
 
 Or
 
-    rclone lsf --azureblob-env-auth --azureblob-account=ACCOUNT :azureblob:CONTAINER
+```console
+rclone lsf --azureblob-env-auth --azureblob-account=ACCOUNT :azureblob:CONTAINER
+```
 
 Which is analogous to using the `az` tool:
 
-    az storage blob list --container-name CONTAINER --account-name ACCOUNT --auth-mode login
+```console
+az storage blob list --container-name CONTAINER --account-name ACCOUNT --auth-mode login
+```
 
 #### Account and Shared Key
 
@@ -226,18 +273,24 @@ explorer in the Azure portal.
 If you use a container level SAS URL, rclone operations are permitted
 only on a particular container, e.g.
 
-    rclone ls azureblob:container
+```console
+rclone ls azureblob:container
+```
 
 You can also list the single container from the root. This will only
 show the container specified by the SAS URL.
 
-    $ rclone lsd azureblob:
-    container/
+```console
+$ rclone lsd azureblob:
+container/
+```
 
 Note that you can't see or access any other containers - this will
 fail
 
-    rclone ls azureblob:othercontainer
+```console
+rclone ls azureblob:othercontainer
+```
 
 Container level SAS URLs are useful for temporarily allowing third
 parties access to a single container or putting credentials into an
@@ -245,7 +298,8 @@ untrusted environment such as a CI build server.
 
 #### Service principal with client secret
 
-If these variables are set, rclone will authenticate with a service principal with a client secret.
+If these variables are set, rclone will authenticate with a service principal
+with a client secret.
 
 - `tenant`: ID of the service principal's tenant. Also called its "directory" ID.
 - `client_id`: the service principal's client ID
@@ -256,13 +310,18 @@ The credentials can also be placed in a file using the
 
 #### Service principal with certificate
 
-If these variables are set, rclone will authenticate with a service principal with certificate.
+If these variables are set, rclone will authenticate with a service principal
+with certificate.
 
 - `tenant`: ID of the service principal's tenant. Also called its "directory" ID.
 - `client_id`: the service principal's client ID
-- `client_certificate_path`: path to a PEM or PKCS12 certificate file including the private key.
+- `client_certificate_path`: path to a PEM or PKCS12 certificate file including
+  the private key.
 - `client_certificate_password`: (optional) password for the certificate file.
-- `client_send_certificate_chain`: (optional) Specifies whether an authentication request will include an x5c header to support subject name / issuer based authentication. When set to "true" or "1", authentication requests include the x5c header.
+- `client_send_certificate_chain`: (optional) Specifies whether an
+  authentication request will include an x5c header to support subject name /
+  issuer based authentication. When set to "true" or "1", authentication
+  requests include the x5c header.
 
 **NB** `client_certificate_password` must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
@@ -297,6 +356,19 @@ be explicitly specified using exactly one of the `msi_object_id`,
 If none of `msi_object_id`, `msi_client_id`, or `msi_mi_res_id` is
 set, this is is equivalent to using `env_auth`.
 
+#### Fedrated Identity Credentials
+
+If these variables are set, rclone will authenticate with fedrated identity.
+
+- `tenant_id`: tenant_id to authenticate in storage
+- `client_id`: client ID of the application the user will authenticate to storage
+- `msi_client_id`: managed identity client ID of the application the user will
+  authenticate to
+
+By default "api://AzureADTokenExchange" is used as scope for token retrieval
+over MSI. This token is then exchanged for actual storage token using
+'tenant_id' and 'client_id'.
+
 #### Azure CLI tool `az` {#use_az}
 
 Set to use the [Azure CLI tool `az`](https://learn.microsoft.com/en-us/cli/azure/)
@@ -312,9 +384,11 @@ Don't set `env_auth` at the same time.
 If you want to access resources with public anonymous access then set
 `account` only. You can do this without making an rclone config:
 
-    rclone lsf :azureblob,account=ACCOUNT:CONTAINER
+```console
+rclone lsf :azureblob,account=ACCOUNT:CONTAINER
+```
 
-{{< rem autogenerated options start" - DO NOT EDIT - instead edit fs.RegInfo in backend/azureblob/azureblob.go then run make backenddocs" >}}
+<!-- autogenerated options start - DO NOT EDIT - instead edit fs.RegInfo in backend/azureblob/azureblob.go and run make backenddocs to verify --> <!-- markdownlint-disable-line line-length -->
 ### Standard options
 
 Here are the Standard options specific to azureblob (Microsoft Azure Blob Storage).
@@ -905,13 +979,13 @@ Properties:
 - Type:        string
 - Required:    false
 - Examples:
-    - ""
-        - The container and its blobs can be accessed only with an authorized request.
-        - It's a default value.
-    - "blob"
-        - Blob data within this container can be read via anonymous request.
-    - "container"
-        - Allow full public read access for container and blob data.
+  - ""
+    - The container and its blobs can be accessed only with an authorized request.
+    - It's a default value.
+  - "blob"
+    - Blob data within this container can be read via anonymous request.
+  - "container"
+    - Allow full public read access for container and blob data.
 
 #### --azureblob-directory-markers
 
@@ -968,12 +1042,12 @@ Properties:
 - Type:        string
 - Required:    false
 - Choices:
-    - ""
-        - By default, the delete operation fails if a blob has snapshots
-    - "include"
-        - Specify 'include' to remove the root blob and all its snapshots
-    - "only"
-        - Specify 'only' to remove only the snapshots but keep the root blob.
+  - ""
+    - By default, the delete operation fails if a blob has snapshots
+  - "include"
+    - Specify 'include' to remove the root blob and all its snapshots
+  - "only"
+    - Specify 'only' to remove only the snapshots but keep the root blob.
 
 #### --azureblob-description
 
@@ -986,11 +1060,11 @@ Properties:
 - Type:        string
 - Required:    false
 
-{{< rem autogenerated options stop >}}
+<!-- autogenerated options stop -->
 
 ### Custom upload headers
 
-You can set custom upload headers with the `--header-upload` flag. 
+You can set custom upload headers with the `--header-upload` flag.
 
 - Cache-Control
 - Content-Disposition
@@ -999,19 +1073,21 @@ You can set custom upload headers with the `--header-upload` flag.
 - Content-Type
 - X-MS-Tags
 
-Eg `--header-upload "Content-Type: text/potato"` or `--header-upload "X-MS-Tags: foo=bar"`
+Eg `--header-upload "Content-Type: text/potato"` or
+`--header-upload "X-MS-Tags: foo=bar"`.
 
 ## Limitations
 
 MD5 sums are only uploaded with chunked files if the source has an MD5
 sum.  This will always be the case for a local to azure copy.
 
-`rclone about` is not supported by the Microsoft Azure Blob storage backend. Backends without
-this capability cannot determine free space for an rclone mount or
-use policy `mfs` (most free space) as a member of an rclone union
+`rclone about` is not supported by the Microsoft Azure Blob storage backend.
+Backends without this capability cannot determine free space for an rclone
+mount or use policy `mfs` (most free space) as a member of an rclone union
 remote.
 
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+and [rclone about](https://rclone.org/commands/rclone_about/).
 
 ## Azure Storage Emulator Support
 

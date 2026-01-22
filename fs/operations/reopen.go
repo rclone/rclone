@@ -20,6 +20,7 @@ type AccountFn func(n int) error
 type ReOpen struct {
 	ctx         context.Context
 	mu          sync.Mutex      // mutex to protect the below
+	readAtMu    sync.Mutex      // mutex to serialize the ReadAt calls
 	src         fs.Object       // object to open
 	baseOptions []fs.OpenOption // options to pass to initial open and where offset == 0
 	options     []fs.OpenOption // option to pass on subsequent opens where offset != 0
@@ -230,6 +231,35 @@ func (h *ReOpen) Read(p []byte) (n int, err error) {
 		err = accErr
 	}
 	return n, err
+}
+
+// ReadAt reads len(p) bytes at absolute offset off without changing
+// the read position.
+//
+// Note: operations are serialized; it won't behave like a truly
+// concurrent ReaderAt.
+func (h *ReOpen) ReadAt(p []byte, off int64) (n int, err error) {
+	h.readAtMu.Lock()
+	defer h.readAtMu.Unlock()
+
+	// Save current position
+	cur, err := h.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return 0, err
+	}
+	// Seek to requested offset
+	if _, err = h.Seek(off, io.SeekStart); err != nil {
+		return 0, err
+	}
+	// Restore position on exit
+	defer func() {
+		if _, seekErr := h.Seek(cur, io.SeekStart); seekErr != nil && err == nil {
+			err = seekErr
+		}
+	}()
+
+	// Fill p fully unless EOF
+	return h.Read(p)
 }
 
 // Seek sets the offset for the next Read or Write to offset, interpreted

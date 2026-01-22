@@ -14,13 +14,14 @@ Rclone test is used to run test commands.
 
 Select which test command you want with the subcommand, eg
 
-    rclone test memory remote:
+```console
+rclone test memory remote:
+```
 
 Each subcommand has its own options which you can see in their help.
 
 **NB** Be careful running these commands, they may do strange things
 so reading their documentation first is recommended.
-
 
 ## Options
 
@@ -32,6 +33,9 @@ See the [global flags page](/flags/) for global options not listed here.
 
 ## See Also
 
+<!-- markdownlint-capture -->
+<!-- markdownlint-disable ul-style line-length -->
+
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone test changenotify](/commands/rclone_test_changenotify/)	 - Log any change notify requests for the remote passed in.
 * [rclone test histogram](/commands/rclone_test_histogram/)	 - Makes a histogram of file name characters.
@@ -39,4 +43,7 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone test makefile](/commands/rclone_test_makefile/)	 - Make files with random contents of the size given
 * [rclone test makefiles](/commands/rclone_test_makefiles/)	 - Make a random file hierarchy in a directory
 * [rclone test memory](/commands/rclone_test_memory/)	 - Load all the objects at remote:path into memory and report memory stats.
+* [rclone test speed](/commands/rclone_test_speed/)	 - Run a speed test to the remote
 
+
+<!-- markdownlint-restore -->

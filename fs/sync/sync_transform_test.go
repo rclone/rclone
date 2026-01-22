@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/rclone/rclone/backend/all"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -136,7 +137,7 @@ func makeTestFiles(t *testing.T, r *fstest.Run, dir string) []fstest.Item {
 	items := []fstest.Item{}
 	for _, c := range alphabet {
 		var out strings.Builder
-		for i := rune(0); i < 7; i++ {
+		for i := range rune(7) {
 			out.WriteRune(c + i)
 		}
 		fileName := path.Join(dir, fmt.Sprintf("%04d-%s.txt", n, out.String()))
@@ -507,6 +508,7 @@ func TestError(t *testing.T) {
 	err = Sync(ctx, r.Fremote, r.Flocal, true)
 	// testLoggerVsLsf(ctx, r.Fremote, r.Flocal, operations.GetLoggerOpt(ctx).JSON, t)
 	assert.Error(t, err)
+	accounting.GlobalStats().ResetCounters()
 
 	r.CheckLocalListing(t, []fstest.Item{file1}, []string{"toe", "toe/toe"})
 	r.CheckRemoteListing(t, []fstest.Item{file1}, []string{"toe", "toe/toe"})

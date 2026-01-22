@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -110,6 +111,17 @@ Metadata is supported on files and directories.
 
 This flag disables warning messages on skipped symlinks or junction
 points, as you explicitly acknowledge that they should be skipped.`,
+				Default:  false,
+				NoPrefix: true,
+				Advanced: true,
+			},
+			{
+				Name: "skip_specials",
+				Help: `Don't warn about skipped pipes, sockets and device objects.
+
+This flag disables warning messages on skipped pipes, sockets and
+device objects, as you explicitly acknowledge that they should be
+skipped.`,
 				Default:  false,
 				NoPrefix: true,
 				Advanced: true,
@@ -306,6 +318,12 @@ only useful for reading.
 				}},
 			},
 			{
+				Name:     "hashes",
+				Help:     `Comma separated list of supported checksum types.`,
+				Default:  fs.CommaSepList{},
+				Advanced: true,
+			},
+			{
 				Name:     config.ConfigEncoding,
 				Help:     config.ConfigEncodingHelp,
 				Advanced: true,
@@ -321,6 +339,7 @@ type Options struct {
 	FollowSymlinks    bool                 `config:"copy_links"`
 	TranslateSymlinks bool                 `config:"links"`
 	SkipSymlinks      bool                 `config:"skip_links"`
+	SkipSpecials      bool                 `config:"skip_specials"`
 	UTFNorm           bool                 `config:"unicode_normalization"`
 	NoCheckUpdated    bool                 `config:"no_check_updated"`
 	NoUNC             bool                 `config:"nounc"`
@@ -331,6 +350,7 @@ type Options struct {
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
 	TimeType          timeType             `config:"time_type"`
+	Hashes            fs.CommaSepList      `config:"hashes"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	NoClone           bool                 `config:"no_clone"`
 }
@@ -664,8 +684,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			name := fi.Name()
 			mode := fi.Mode()
 			newRemote := f.cleanRemote(dir, name)
+			symlinkFlag := os.ModeSymlink
+			if runtime.GOOS == "windows" {
+				symlinkFlag |= os.ModeIrregular
+			}
 			// Follow symlinks if required
-			if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
+			if f.opt.FollowSymlinks && (mode&symlinkFlag) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
 				fi, err = os.Stat(localPath)
 				// Quietly skip errors on excluded files and directories
@@ -687,13 +711,13 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
-				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
+				if (mode&symlinkFlag) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
 					d := f.newDirectory(newRemote, fi)
 					entries = append(entries, d)
 				}
 			} else {
 				// Check whether this link should be translated
-				if f.opt.TranslateSymlinks && fi.Mode()&os.ModeSymlink != 0 {
+				if f.opt.TranslateSymlinks && fi.Mode()&symlinkFlag != 0 {
 					newRemote += fs.LinkSuffix
 				}
 				// Don't include non directory if not included
@@ -830,7 +854,13 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	} else if !fi.IsDir() {
 		return fs.ErrorIsFile
 	}
-	return os.Remove(localPath)
+	err := os.Remove(localPath)
+	if runtime.GOOS == "windows" && errors.Is(err, iofs.ErrPermission) { // https://github.com/golang/go/issues/26295
+		if os.Chmod(localPath, 0o600) == nil {
+			err = os.Remove(localPath)
+		}
+	}
+	return err
 }
 
 // Precision of the file system
@@ -1021,18 +1051,30 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
+	if len(f.opt.Hashes) > 0 {
+		// Return only configured hashes.
+		// Note: Could have used hash.SupportOnly to limit supported hashes for all hash related features.
+		var supported hash.Set
+		for _, hashName := range f.opt.Hashes {
+			var ht hash.Type
+			if err := ht.Set(hashName); err != nil {
+				fs.Infof(nil, "Invalid token %q in hash string %q", hashName, f.opt.Hashes.String())
+			}
+			supported.Add(ht)
+		}
+		return supported
+	}
 	return hash.Supported()
 }
 
 var commandHelp = []fs.CommandHelp{
 	{
 		Name:  "noop",
-		Short: "A null operation for testing backend commands",
-		Long: `This is a test command which has some options
-you can try to change the output.`,
+		Short: "A null operation for testing backend commands.",
+		Long:  `This is a test command which has some options you can try to change the output.`,
 		Opts: map[string]string{
-			"echo":  "echo the input arguments",
-			"error": "return an error based on option value",
+			"echo":  "Echo the input arguments.",
+			"error": "Return an error based on option value.",
 		},
 	},
 }
@@ -1215,7 +1257,9 @@ func (o *Object) Storable() bool {
 		}
 		return false
 	} else if mode&(os.ModeNamedPipe|os.ModeSocket|os.ModeDevice) != 0 {
-		fs.Logf(o, "Can't transfer non file/directory")
+		if !o.fs.opt.SkipSpecials {
+			fs.Logf(o, "Can't transfer non file/directory")
+		}
 		return false
 	} else if mode&os.ModeDir != 0 {
 		// fs.Debugf(o, "Skipping directory")

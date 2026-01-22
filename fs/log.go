@@ -7,6 +7,9 @@ import (
 	"log/slog"
 	"os"
 	"slices"
+	"strings"
+
+	"github.com/rclone/rclone/lib/caller"
 )
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
@@ -196,12 +199,42 @@ func Panicf(o any, text string, args ...any) {
 	panic(fmt.Sprintf(text, args...))
 }
 
+// Panic if this called from an rc job.
+//
+// This means fatal errors get turned into panics which get caught by
+// the rc job handler so they don't crash rclone.
+//
+// This detects if we are being called from an rc Job by looking for
+// Job.run in the call stack.
+//
+// Ideally we would do this by passing a context about but we don't
+// have one with the logging calls yet.
+//
+// This is tested in fs/rc/internal_job_test.go in TestInternalFatal.
+func panicIfRcJob(o any, text string, args []any) {
+	if !caller.Present("(*Job).run") {
+		return
+	}
+	var errTxt strings.Builder
+	_, _ = errTxt.WriteString("fatal error: ")
+	if o != nil {
+		_, _ = fmt.Fprintf(&errTxt, "%v: ", o)
+	}
+	if args != nil {
+		_, _ = fmt.Fprintf(&errTxt, text, args...)
+	} else {
+		_, _ = errTxt.WriteString(text)
+	}
+	panic(errTxt.String())
+}
+
 // Fatal writes critical log output for this Object or Fs and calls os.Exit(1).
 // It should always be seen by the user.
 func Fatal(o any, text string) {
 	if GetConfig(context.TODO()).LogLevel >= LogLevelCritical {
 		LogPrint(LogLevelCritical, o, text)
 	}
+	panicIfRcJob(o, text, nil)
 	os.Exit(1)
 }
 
@@ -211,6 +244,7 @@ func Fatalf(o any, text string, args ...any) {
 	if GetConfig(context.TODO()).LogLevel >= LogLevelCritical {
 		LogPrintf(LogLevelCritical, o, text, args...)
 	}
+	panicIfRcJob(o, text, args)
 	os.Exit(1)
 }
 

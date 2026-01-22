@@ -223,14 +223,44 @@ E.g. the second example above should be rewritten as:
 				},
 			},
 		}, {
+			Name:     "hashes",
+			Help:     `Comma separated list of supported checksum types.`,
+			Default:  fs.CommaSepList{},
+			Advanced: true,
+		}, {
 			Name:     "md5sum_command",
 			Default:  "",
-			Help:     "The command used to read md5 hashes.\n\nLeave blank for autodetect.",
+			Help:     "The command used to read MD5 hashes.\n\nLeave blank for autodetect.",
 			Advanced: true,
 		}, {
 			Name:     "sha1sum_command",
 			Default:  "",
-			Help:     "The command used to read sha1 hashes.\n\nLeave blank for autodetect.",
+			Help:     "The command used to read SHA-1 hashes.\n\nLeave blank for autodetect.",
+			Advanced: true,
+		}, {
+			Name:     "crc32sum_command",
+			Default:  "",
+			Help:     "The command used to read CRC-32 hashes.\n\nLeave blank for autodetect.",
+			Advanced: true,
+		}, {
+			Name:     "sha256sum_command",
+			Default:  "",
+			Help:     "The command used to read SHA-256 hashes.\n\nLeave blank for autodetect.",
+			Advanced: true,
+		}, {
+			Name:     "blake3sum_command",
+			Default:  "",
+			Help:     "The command used to read BLAKE3 hashes.\n\nLeave blank for autodetect.",
+			Advanced: true,
+		}, {
+			Name:     "xxh3sum_command",
+			Default:  "",
+			Help:     "The command used to read XXH3 hashes.\n\nLeave blank for autodetect.",
+			Advanced: true,
+		}, {
+			Name:     "xxh128sum_command",
+			Default:  "",
+			Help:     "The command used to read XXH128 hashes.\n\nLeave blank for autodetect.",
 			Advanced: true,
 		}, {
 			Name:     "skip_links",
@@ -489,6 +519,12 @@ Example:
 			Help: `URL for HTTP CONNECT proxy
 
 Set this to a URL for an HTTP proxy which supports the HTTP CONNECT verb.
+
+Supports the format http://user:pass@host:port, http://host:port, http://host.
+
+Example:
+
+    http://myUser:myPass@proxyhostname.example.com:8000
 `,
 			Advanced: true,
 		}, {
@@ -535,8 +571,14 @@ type Options struct {
 	PathOverride            string          `config:"path_override"`
 	SetModTime              bool            `config:"set_modtime"`
 	ShellType               string          `config:"shell_type"`
+	Hashes                  fs.CommaSepList `config:"hashes"`
 	Md5sumCommand           string          `config:"md5sum_command"`
 	Sha1sumCommand          string          `config:"sha1sum_command"`
+	Crc32sumCommand         string          `config:"crc32sum_command"`
+	Sha256sumCommand        string          `config:"sha256sum_command"`
+	Blake3sumCommand        string          `config:"blake3sum_command"`
+	Xxh3sumCommand          string          `config:"xxh3sum_command"`
+	Xxh128sumCommand        string          `config:"xxh128sum_command"`
 	SkipLinks               bool            `config:"skip_links"`
 	Subsystem               string          `config:"subsystem"`
 	ServerCommand           string          `config:"server_command"`
@@ -585,13 +627,18 @@ type Fs struct {
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
 type Object struct {
-	fs      *Fs
-	remote  string
-	size    int64       // size of the object
-	modTime uint32      // modification time of the object as unix time
-	mode    os.FileMode // mode bits from the file
-	md5sum  *string     // Cached MD5 checksum
-	sha1sum *string     // Cached SHA1 checksum
+	fs        *Fs
+	remote    string
+	size      int64       // size of the object
+	modTime   uint32      // modification time of the object as unix time
+	mode      os.FileMode // mode bits from the file
+	md5sum    *string     // Cached MD5 checksum
+	sha1sum   *string     // Cached SHA-1 checksum
+	crc32sum  *string     // Cached CRC-32 checksum
+	sha256sum *string     // Cached SHA-256 checksum
+	blake3sum *string     // Cached BLAKE3 checksum
+	xxh3sum   *string     // Cached XXH3 checksum
+	xxh128sum *string     // Cached XXH128 checksum
 }
 
 // conn encapsulates an ssh client and corresponding sftp client
@@ -878,20 +925,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.Port = "22"
 	}
 
-	// get proxy URL if set
-	if opt.HTTPProxy != "" {
-		proxyURL, err := url.Parse(opt.HTTPProxy)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse HTTP Proxy URL: %w", err)
-		}
-		f.proxyURL = proxyURL
-	}
-
+	// Set up sshConfig here from opt
+	// **NB** everything else should be setup in NewFsWithConnection
 	sshConfig := &ssh.ClientConfig{
 		User:            opt.User,
 		Auth:            []ssh.AuthMethod{},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         f.ci.ConnectTimeout,
+		Timeout:         time.Duration(f.ci.ConnectTimeout),
 		ClientVersion:   "SSH-2.0-" + f.ci.UserAgent,
 	}
 
@@ -1134,9 +1174,19 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	f.mkdirLock = newStringLock()
 	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 	f.savedpswd = ""
+
 	// set the pool drainer timer going
 	if f.opt.IdleTimeout > 0 {
 		f.drain = time.AfterFunc(time.Duration(f.opt.IdleTimeout), func() { _ = f.drainPool(ctx) })
+	}
+
+	// get proxy URL if set
+	if opt.HTTPProxy != "" {
+		proxyURL, err := url.Parse(opt.HTTPProxy)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse HTTP Proxy URL: %w", err)
+		}
+		f.proxyURL = proxyURL
 	}
 
 	f.features = (&fs.Features{
@@ -1208,7 +1258,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 			fs.Debugf(f, "Failed to resolve path using RealPath: %v", err)
 			cwd, err := c.sftpClient.Getwd()
 			if err != nil {
-				fs.Debugf(f, "Failed to to read current directory - using relative paths: %v", err)
+				fs.Debugf(f, "Failed to read current directory - using relative paths: %v", err)
 			} else {
 				f.absRoot = path.Join(cwd, f.root)
 				fs.Debugf(f, "Relative path joined with current directory to get absolute path %q", f.absRoot)
@@ -1643,14 +1693,112 @@ func (f *Fs) Hashes() hash.Set {
 		return *f.cachedHashes
 	}
 
-	hashSet := hash.NewHashSet()
-	f.cachedHashes = &hashSet
+	hashTypesSupported := hash.NewHashSet()
+	f.cachedHashes = &hashTypesSupported
 
 	if f.opt.DisableHashCheck || f.shellType == shellTypeNotSupported {
-		return hashSet
+		return hashTypesSupported
 	}
 
-	// look for a hash command which works
+	hashTypes := hash.NewHashSet()
+	if len(f.opt.Hashes) > 0 {
+		for _, hashName := range f.opt.Hashes {
+			var hashType hash.Type
+			if err := hashType.Set(hashName); err != nil {
+				fs.Infof(nil, "Invalid token %q in hash string %q", hashName, f.opt.Hashes.String())
+			}
+			hashTypes.Add(hashType)
+		}
+	} else {
+		hashTypes.Add(hash.MD5, hash.SHA1)
+	}
+
+	hashCommands := map[hash.Type]struct {
+		option       *string
+		emptyHash    string
+		hashCommands []struct{ hashFile, hashEmpty string }
+	}{
+		hash.MD5: {
+			&f.opt.Md5sumCommand,
+			"d41d8cd98f00b204e9800998ecf8427e",
+			[]struct{ hashFile, hashEmpty string }{
+				{"md5sum", "md5sum"},
+				{"md5 -r", "md5 -r"},
+				{"rclone md5sum", "rclone md5sum"},
+			},
+		},
+		hash.SHA1: {
+			&f.opt.Sha1sumCommand,
+			"da39a3ee5e6b4b0d3255bfef95601890afd80709",
+			[]struct{ hashFile, hashEmpty string }{
+				{"sha1sum", "sha1sum"},
+				{"sha1 -r", "sha1 -r"},
+				{"rclone sha1sum", "rclone sha1sum"},
+			},
+		},
+		hash.CRC32: {
+			&f.opt.Sha1sumCommand,
+			"00000000",
+			[]struct{ hashFile, hashEmpty string }{
+				{"crc32", "crc32"},
+				{"rclone hashsum crc32", "rclone hashsum crc32"},
+			},
+		},
+		hash.SHA256: {
+			&f.opt.Sha256sumCommand,
+			"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+			[]struct{ hashFile, hashEmpty string }{
+				{"sha256sum", "sha1sum"},
+				{"sha256 -r", "sha1 -r"},
+				{"rclone hashsum sha256", "rclone hashsum sha256"},
+			},
+		},
+		hash.BLAKE3: {
+			&f.opt.Blake3sumCommand,
+			"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+			[]struct{ hashFile, hashEmpty string }{
+				{"b3sum", "b3sum"},
+				{"rclone hashsum blake3", "rclone hashsum blake3"},
+			},
+		},
+		hash.XXH3: {
+			&f.opt.Xxh3sumCommand,
+			"2d06800538d394c2",
+			[]struct{ hashFile, hashEmpty string }{
+				// The xxhsum tool uses a non-standard prefix "XXH3_" preceding the hash output for the 64-bit variant
+				// of XXH3, to avoid confusion with the older 64-bit algorithm XXH64. This was introduced in version
+				// 0.8.3 released Dec 30, 2024. Older versions only supported the alternative BSD style output format,
+				// otherwise optional with argument --tag. We are currently not expecting these output formats and can
+				// therefore not use the "xxhsum -H3" command or its xxh3sum alias directly.
+				//{"xxh3sum", "xxh3sum"},
+				//{"xxhsum -H3", "xxhsum -H3"},
+				{"rclone hashsum xxh3", "rclone hashsum xxh3"},
+			},
+		},
+		hash.XXH128: {
+			&f.opt.Xxh128sumCommand,
+			"99aa06d3014798d86001c324468d497f",
+			[]struct{ hashFile, hashEmpty string }{
+				{"xxh128sum", "xxh128sum"},
+				{"xxhsum -H2", "xxhsum -H2"},
+				{"rclone hashsum xxh128", "rclone hashsum xxh128"},
+			},
+		},
+	}
+	if f.shellType == "powershell" {
+		for _, hashType := range []hash.Type{hash.MD5, hash.SHA1, hash.SHA256} {
+			if entry, ok := hashCommands[hashType]; ok {
+				entry.hashCommands = append(hashCommands[hashType].hashCommands, struct {
+					hashFile, hashEmpty string
+				}{
+					fmt.Sprintf("&{param($Path);Get-FileHash -Algorithm %v -LiteralPath $Path -ErrorAction Stop|Select-Object -First 1 -ExpandProperty Hash|ForEach-Object{\"$($_.ToLower())  ${Path}\"}}", hashType),
+					fmt.Sprintf("Get-FileHash -Algorithm %v -InputStream ([System.IO.MemoryStream]::new()) -ErrorAction Stop|Select-Object -First 1 -ExpandProperty Hash|ForEach-Object{$_.ToLower()}", hashType),
+				})
+				hashCommands[hashType] = entry
+			}
+		}
+	}
+
 	checkHash := func(hashType hash.Type, commands []struct{ hashFile, hashEmpty string }, expected string, hashCommand *string, changed *bool) bool {
 		if *hashCommand == hashCommandNotSupported {
 			return false
@@ -1679,55 +1827,25 @@ func (f *Fs) Hashes() hash.Set {
 	}
 
 	changed := false
-	md5Commands := []struct {
-		hashFile, hashEmpty string
-	}{
-		{"md5sum", "md5sum"},
-		{"md5 -r", "md5 -r"},
-		{"rclone md5sum", "rclone md5sum"},
+	for _, hashType := range hashTypes.Array() {
+		if entry, ok := hashCommands[hashType]; ok {
+			if works := checkHash(hashType, entry.hashCommands, entry.emptyHash, entry.option, &changed); works {
+				hashTypesSupported.Add(hashType)
+			}
+		}
 	}
-	sha1Commands := []struct {
-		hashFile, hashEmpty string
-	}{
-		{"sha1sum", "sha1sum"},
-		{"sha1 -r", "sha1 -r"},
-		{"rclone sha1sum", "rclone sha1sum"},
-	}
-	if f.shellType == "powershell" {
-		md5Commands = append(md5Commands, struct {
-			hashFile, hashEmpty string
-		}{
-			"&{param($Path);Get-FileHash -Algorithm MD5 -LiteralPath $Path -ErrorAction Stop|Select-Object -First 1 -ExpandProperty Hash|ForEach-Object{\"$($_.ToLower())  ${Path}\"}}",
-			"Get-FileHash -Algorithm MD5 -InputStream ([System.IO.MemoryStream]::new()) -ErrorAction Stop|Select-Object -First 1 -ExpandProperty Hash|ForEach-Object{$_.ToLower()}",
-		})
-
-		sha1Commands = append(sha1Commands, struct {
-			hashFile, hashEmpty string
-		}{
-			"&{param($Path);Get-FileHash -Algorithm SHA1 -LiteralPath $Path -ErrorAction Stop|Select-Object -First 1 -ExpandProperty Hash|ForEach-Object{\"$($_.ToLower())  ${Path}\"}}",
-			"Get-FileHash -Algorithm SHA1 -InputStream ([System.IO.MemoryStream]::new()) -ErrorAction Stop|Select-Object -First 1 -ExpandProperty Hash|ForEach-Object{$_.ToLower()}",
-		})
-	}
-
-	md5Works := checkHash(hash.MD5, md5Commands, "d41d8cd98f00b204e9800998ecf8427e", &f.opt.Md5sumCommand, &changed)
-	sha1Works := checkHash(hash.SHA1, sha1Commands, "da39a3ee5e6b4b0d3255bfef95601890afd80709", &f.opt.Sha1sumCommand, &changed)
 
 	if changed {
 		// Save permanently in config to avoid the extra work next time
-		fs.Debugf(f, "Setting hash command for %v to %q (set sha1sum_command to override)", hash.MD5, f.opt.Md5sumCommand)
-		f.m.Set("md5sum_command", f.opt.Md5sumCommand)
-		fs.Debugf(f, "Setting hash command for %v to %q (set md5sum_command to override)", hash.SHA1, f.opt.Sha1sumCommand)
-		f.m.Set("sha1sum_command", f.opt.Sha1sumCommand)
+		for _, hashType := range hashTypes.Array() {
+			if entry, ok := hashCommands[hashType]; ok {
+				fs.Debugf(f, "Setting hash command for %v to %q (set %vsum_command to override)", hashType, *entry.option, hashType)
+				f.m.Set(fmt.Sprintf("%vsum_command", hashType), *entry.option)
+			}
+		}
 	}
 
-	if sha1Works {
-		hashSet.Add(hash.SHA1)
-	}
-	if md5Works {
-		hashSet.Add(hash.MD5)
-	}
-
-	return hashSet
+	return hashTypesSupported
 }
 
 // About gets usage stats
@@ -1754,9 +1872,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		free := vfsStats.FreeSpace()
 		used := total - free
 		return &fs.Usage{
-			Total: fs.NewUsageValue(int64(total)),
-			Used:  fs.NewUsageValue(int64(used)),
-			Free:  fs.NewUsageValue(int64(free)),
+			Total: fs.NewUsageValue(total),
+			Used:  fs.NewUsageValue(used),
+			Free:  fs.NewUsageValue(free),
 		}, nil
 	} else if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -1862,17 +1980,43 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	_ = o.fs.Hashes()
 
 	var hashCmd string
-	if r == hash.MD5 {
+	switch r {
+	case hash.MD5:
 		if o.md5sum != nil {
 			return *o.md5sum, nil
 		}
 		hashCmd = o.fs.opt.Md5sumCommand
-	} else if r == hash.SHA1 {
+	case hash.SHA1:
 		if o.sha1sum != nil {
 			return *o.sha1sum, nil
 		}
 		hashCmd = o.fs.opt.Sha1sumCommand
-	} else {
+	case hash.CRC32:
+		if o.crc32sum != nil {
+			return *o.crc32sum, nil
+		}
+		hashCmd = o.fs.opt.Crc32sumCommand
+	case hash.SHA256:
+		if o.sha256sum != nil {
+			return *o.sha256sum, nil
+		}
+		hashCmd = o.fs.opt.Sha256sumCommand
+	case hash.BLAKE3:
+		if o.blake3sum != nil {
+			return *o.blake3sum, nil
+		}
+		hashCmd = o.fs.opt.Blake3sumCommand
+	case hash.XXH3:
+		if o.xxh3sum != nil {
+			return *o.xxh3sum, nil
+		}
+		hashCmd = o.fs.opt.Xxh3sumCommand
+	case hash.XXH128:
+		if o.xxh128sum != nil {
+			return *o.xxh128sum, nil
+		}
+		hashCmd = o.fs.opt.Xxh128sumCommand
+	default:
 		return "", hash.ErrUnsupported
 	}
 	if hashCmd == "" || hashCmd == hashCommandNotSupported {
@@ -1889,10 +2033,21 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	}
 	hashString := parseHash(outBytes)
 	fs.Debugf(o, "Parsed hash: %s", hashString)
-	if r == hash.MD5 {
+	switch r {
+	case hash.MD5:
 		o.md5sum = &hashString
-	} else if r == hash.SHA1 {
+	case hash.SHA1:
 		o.sha1sum = &hashString
+	case hash.CRC32:
+		o.crc32sum = &hashString
+	case hash.SHA256:
+		o.sha256sum = &hashString
+	case hash.BLAKE3:
+		o.blake3sum = &hashString
+	case hash.XXH3:
+		o.xxh3sum = &hashString
+	case hash.XXH128:
+		o.xxh128sum = &hashString
 	}
 	return hashString, nil
 }
@@ -1957,7 +2112,7 @@ func (f *Fs) remoteShellPath(remote string) string {
 }
 
 // Converts a byte array from the SSH session returned by
-// an invocation of md5sum/sha1sum to a hash string
+// an invocation of hash command to a hash string
 // as expected by the rest of this application
 func parseHash(bytes []byte) string {
 	// For strings with backslash *sum writes a leading \
@@ -2186,6 +2341,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Clear the hash cache since we are about to update the object
 	o.md5sum = nil
 	o.sha1sum = nil
+	o.crc32sum = nil
+	o.sha256sum = nil
+	o.blake3sum = nil
+	o.xxh3sum = nil
+	o.xxh128sum = nil
 	c, err := o.fs.getSftpConnection(ctx)
 	if err != nil {
 		return fmt.Errorf("Update: %w", err)

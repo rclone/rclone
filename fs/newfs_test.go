@@ -42,4 +42,21 @@ func TestNewFs(t *testing.T) {
 
 	assert.Equal(t, ":mockfs{S_NHG}:/tmp", fs.ConfigString(f3))
 	assert.Equal(t, ":mockfs,potato='true':/tmp", fs.ConfigStringFull(f3))
+
+	// Check that the overrides work
+	globalCI := fs.GetConfig(ctx)
+	original := globalCI.UserAgent
+	defer func() {
+		globalCI.UserAgent = original
+	}()
+
+	f4, err := fs.NewFs(ctx, ":mockfs,global.user_agent='julian':/tmp")
+	require.NoError(t, err)
+	assert.Equal(t, ":mockfs", f4.Name())
+	assert.Equal(t, "/tmp", f4.Root())
+
+	assert.Equal(t, ":mockfs:/tmp", fs.ConfigString(f4))
+	assert.Equal(t, ":mockfs:/tmp", fs.ConfigStringFull(f4))
+
+	assert.Equal(t, "julian", globalCI.UserAgent)
 }

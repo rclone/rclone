@@ -1,0 +1,18 @@
+name: Outscale
+description: OUTSCALE Object Storage (OOS)
+region:
+  eu-west-2: Paris, France
+  us-east-2: New Jersey, USA
+  us-west-1: California, USA
+  cloudgouv-eu-west-1: SecNumCloud, Paris, France
+  ap-northeast-1: Tokyo, Japan
+endpoint:
+  oos.eu-west-2.outscale.com: Outscale EU West 2 (Paris)
+  oos.us-east-2.outscale.com: Outscale US east 2 (New Jersey)
+  oos.us-west-1.outscale.com: Outscale EU West 1 (California)
+  oos.cloudgouv-eu-west-1.outscale.com: Outscale SecNumCloud (Paris)
+  oos.ap-northeast-1.outscale.com: Outscale AP Northeast 1 (Japan)
+acl: {}
+bucket_acl: true
+quirks:
+  force_path_style: true

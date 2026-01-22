@@ -29,16 +29,16 @@ func (bp *BwPair) String() string {
 // Set the bandwidth from a string which is either
 // SizeSuffix or SizeSuffix:SizeSuffix (for tx:rx bandwidth)
 func (bp *BwPair) Set(s string) (err error) {
-	colon := strings.Index(s, ":")
+	before, after, ok := strings.Cut(s, ":")
 	stx, srx := s, ""
-	if colon >= 0 {
-		stx, srx = s[:colon], s[colon+1:]
+	if ok {
+		stx, srx = before, after
 	}
 	err = bp.Tx.Set(stx)
 	if err != nil {
 		return err
 	}
-	if colon < 0 {
+	if !ok {
 		bp.Rx = bp.Tx
 	} else {
 		err = bp.Rx.Set(srx)
@@ -151,7 +151,7 @@ func (x *BwTimetable) Set(s string) error {
 	}
 
 	// Split the timetable string by both spaces and semicolons
-	for _, tok := range strings.FieldsFunc(s, func(r rune) bool {
+	for tok := range strings.FieldsFuncSeq(s, func(r rune) bool {
 		return r == ' ' || r == ';'
 	}) {
 		tv := strings.Split(tok, ",")

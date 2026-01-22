@@ -34,8 +34,11 @@ RUN rm -rf /etc/samba/smb.conf /var/lib/samba \
     --dns-backend=SAMBA_INTERNAL \
     --host-name=localhost \
  && samba-tool user add --random-password $USER \
+ && samba-tool user setexpiry $USER --noexpiry \
  && mkdir -m 777 /share /rclone \
  && cat <<EOS >> /etc/samba/smb.conf
+[global]
+server signing = auto
 [public]
 path = /share
 browseable = yes

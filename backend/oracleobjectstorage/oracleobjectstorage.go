@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ncw/swift/v2"
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
 	"github.com/rclone/rclone/fs"
@@ -33,7 +34,44 @@ func init() {
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options:     newOptions(),
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   `User metadata is stored as opc-meta- keys.`,
+		},
 	})
+}
+
+var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"opc-meta-mode": {
+		Help:    "File type and mode",
+		Type:    "octal, unix style",
+		Example: "0100664",
+	},
+	"opc-meta-uid": {
+		Help:    "User ID of owner",
+		Type:    "decimal number",
+		Example: "500",
+	},
+	"opc-meta-gid": {
+		Help:    "Group ID of owner",
+		Type:    "decimal number",
+		Example: "500",
+	},
+	"opc-meta-atime": {
+		Help:    "Time of last access",
+		Type:    "ISO 8601",
+		Example: "2025-06-30T22:27:43-04:00",
+	},
+	"opc-meta-mtime": {
+		Help:    "Time of last modification",
+		Type:    "ISO 8601",
+		Example: "2025-06-30T22:27:43-04:00",
+	},
+	"opc-meta-btime": {
+		Help:    "Time of file birth (creation)",
+		Type:    "ISO 8601",
+		Example: "2025-06-30T22:27:43-04:00",
+	},
 }
 
 // Fs represents a remote object storage server
@@ -82,6 +120,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
+		ReadMetadata:      true,
 		ReadMimeType:      true,
 		WriteMimeType:     true,
 		BucketBased:       true,
@@ -215,15 +254,47 @@ func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return list.WithListP(ctx, dir, f)
+}
+
+// ListP lists the objects and directories of the Fs starting
+// from dir non recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
+	list := list.NewHelper(callback)
 	bucketName, directory := f.split(dir)
 	fs.Debugf(f, "listing: bucket : %v, directory: %v", bucketName, dir)
 	if bucketName == "" {
 		if directory != "" {
-			return nil, fs.ErrorListBucketRequired
+			return fs.ErrorListBucketRequired
 		}
-		return f.listBuckets(ctx)
+		entries, err := f.listBuckets(ctx)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			err = list.Add(entry)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err := f.listDir(ctx, bucketName, directory, f.rootDirectory, f.rootBucket == "", list.Add)
+		if err != nil {
+			return err
+		}
 	}
-	return f.listDir(ctx, bucketName, directory, f.rootDirectory, f.rootBucket == "")
+	return list.Flush()
 }
 
 // listFn is called from list to handle an object.
@@ -372,24 +443,24 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *objectst
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool, callback func(fs.DirEntry) error) (err error) {
 	fn := func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
 		if err != nil {
 			return err
 		}
 		if entry != nil {
-			entries = append(entries, entry)
+			return callback(entry)
 		}
 		return nil
 	}
 	err = f.list(ctx, bucket, directory, prefix, addBucket, false, 0, fn)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// bucket must be present if listing succeeded
 	f.cache.MarkOK(bucket)
-	return entries, nil
+	return nil
 }
 
 // listBuckets returns all the buckets to out
@@ -688,12 +759,45 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	return list.Flush()
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	err = o.readMetaData(ctx)
+	if err != nil {
+		return nil, err
+	}
+	metadata = make(fs.Metadata, len(o.meta)+7)
+	for k, v := range o.meta {
+		switch k {
+		case metaMtime:
+			if modTime, err := swift.FloatStringToTime(v); err == nil {
+				metadata["mtime"] = modTime.Format(time.RFC3339Nano)
+			}
+		case metaMD5Hash:
+			// don't write hash metadata
+		default:
+			metadata[k] = v
+		}
+	}
+	if o.mimeType != "" {
+		metadata["content-type"] = o.mimeType
+	}
+
+	if !o.lastModified.IsZero() {
+		metadata["btime"] = o.lastModified.Format(time.RFC3339Nano)
+	}
+
+	return metadata, nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = &Fs{}
 	_ fs.Copier          = &Fs{}
 	_ fs.PutStreamer     = &Fs{}
 	_ fs.ListRer         = &Fs{}
+	_ fs.ListPer         = &Fs{}
 	_ fs.Commander       = &Fs{}
 	_ fs.CleanUpper      = &Fs{}
 	_ fs.OpenChunkWriter = &Fs{}

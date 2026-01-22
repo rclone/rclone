@@ -1,0 +1,11 @@
+name: Leviia
+description: Leviia Object Storage
+region: {}
+endpoint:
+  s3.leviia.com: |-
+    The default endpoint
+    Leviia
+acl: {}
+bucket_acl: true
+quirks:
+  use_already_exists: false

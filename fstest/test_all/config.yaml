@@ -34,9 +34,9 @@ backends:
    fastlist: true
    ignore:
      - TestCopyFileMaxTransfer
- - backend:  "crypt"
-   remote:   "TestCryptSwift:"
-   fastlist: false
+ # - backend:  "crypt"
+ #   remote:   "TestCryptSwift:"
+ #   fastlist: false
  ## chunker
  - backend:  "chunker"
    remote:   "TestChunkerLocal:"
@@ -67,16 +67,19 @@ backends:
  #   maxfile:  10k
  #   ignore:
  #     - TestApplyTransforms
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bYandex:"
-   fastlist: true
-   maxfile:  1k
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bBox:"
-   fastlist: true
-   maxfile:  1k
-   ignore:
-     - TestIntegration/FsMkdir/FsChangeNotify
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bYandex:"
+ #   fastlist: true
+ #   maxfile:  1k
+ #   ignore:
+ #     # Needs investigation
+ #     - TestDeduplicateNewestByHash
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bBox:"
+ #   fastlist: true
+ #   maxfile:  1k
+ #   ignore:
+ #     - TestIntegration/FsMkdir/FsChangeNotify
  - backend:  "chunker"
    remote:   "TestChunkerS3:"
    fastlist: true
@@ -117,8 +120,6 @@ backends:
      - TestCopyURL
      - TestMoveFileWithIgnoreExisting
      - TestCopyFileCompareDest
-     # fs/sync
-     - TestServerSideMoveOverSelf
      #vfs
      - TestFileSetModTime/cache=off,open=false,write=false
      - TestFileSetModTime/cache=off,open=true,write=false
@@ -133,11 +134,15 @@ backends:
    remote:   "TestCompress:"
    fastlist: false
  - backend:  "compress"
-   remote:   "TestCompressSwift:"
+   remote:   "TestCompressZstd:"
    fastlist: false
+ # - backend:  "compress"
+ #   remote:   "TestCompressSwift:"
+ #   fastlist: false
  - backend:  "compress"
    remote:   "TestCompressDrive:"
    fastlist: false
+   extratime: 2.0
  - backend:  "compress"
    remote:   "TestCompressS3:"
    fastlist: false
@@ -159,6 +164,9 @@ backends:
  - backend:  "gofile"
    remote:   "TestGoFile:"
    fastlist: true
+ - backend: "filen"
+   remote:   "TestFilen:"
+   fastlist: false
  - backend:  "filescom"
    remote:   "TestFilesCom:"
    fastlist: false
@@ -168,13 +176,11 @@ backends:
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage,directory_markers:"
    fastlist: true
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "googlephotos"
    remote:   "TestGooglePhotos:"
@@ -321,7 +327,6 @@ backends:
    remote:   "TestSFTPOpenssh:"
    fastlist: false
    ignoretests:
-     - cmd/bisync
      - cmd/gitannex
  - backend:  "sftp"
    remote:   "TestSFTPRclone:"
@@ -362,11 +367,11 @@ backends:
    fastlist: true
    ignoretests:
      - cmd/gitannex
- - backend:  "swift"
-   remote:   "TestSwift:"
-   fastlist: true
-   ignoretests:
-     - cmd/bisync
+ # - backend:  "swift"
+ #   remote:   "TestSwift:"
+ #   fastlist: true
+ #   ignoretests:
+ #     - cmd/bisync
  # - backend:  "swift"
  #   remote:   "TestSwiftCeph:"
  #   fastlist: true
@@ -418,19 +423,17 @@ backends:
    fastlist: true
    ignore:
      # It just isn't possible to preserve the existing file with azure blob
-     # and make sure we don't leak uncomitted blocks.
+     # and make sure we don't leak uncommitted blocks.
      - TestMultithreadCopyAbort
  - backend:  "azureblob"
    remote:   "TestAzureBlob,directory_markers:"
    fastlist: true
    ignore:
      # It just isn't possible to preserve the existing file with azure blob
-     # and make sure we don't leak uncomitted blocks.
+     # and make sure we don't leak uncommitted blocks.
      - TestMultithreadCopyAbort
  - backend:  "azurefiles"
    remote:   "TestAzureFiles:"
-   ignoretests:
-     - cmd/bisync
  - backend:  "pcloud"
    remote:   "TestPcloud:"
    fastlist: true
@@ -505,6 +508,7 @@ backends:
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
      - TestDirRename
+     - TestFileRename
    ignoretests:
      - cmd/bisync
  - backend:  "opendrive"
@@ -598,6 +602,13 @@ backends:
       - KRB5CCNAME=/tmp/rclone_krb5/ccache
    ignoretests:
      - cmd/gitannex
+ - backend:  "smb"
+   remote:   "TestSMBKerberosCcache:rclone"
+   fastlist: false
+   env:
+     - KRB5_CONFIG=/tmp/rclone_krb5_ccache/krb5.conf
+   ignoretests:
+     - cmd/gitannex
  - backend:  "storj"
    remote:   "TestStorj:"
    fastlist: true
@@ -606,6 +617,7 @@ backends:
  - backend:  "zoho"
    remote:   "TestZoho:"
    fastlist: false
+   extratime: 2.0
    tests:
      - backend
  - backend: "hdfs"
@@ -615,11 +627,6 @@ backends:
      - TestSyncUTFNorm
    ignoretests:
      - cmd/gitannex
- # - backend: "uptobox"
- #   remote: "TestUptobox:"
- #   fastlist: false
- #   ignore:
- #     - TestRWFileHandleWriteNoWrite
  - backend: "oracleobjectstorage"
    remote: "TestOracleObjectStorage:"
    fastlist: true
@@ -653,3 +660,24 @@ backends:
    ignoretests:
      - cmd/bisync
      - cmd/gitannex
+ - backend: "shade"
+   remote: "TestShade:"
+   fastlist: false
+
+ - backend: "archive"
+   remote: "TestArchive:"
+   fastlist: false
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
+   ignore:
+     # These are caused by the archive backend returning the underlying objects
+     # with the parent backend having a different precision.
+     - TestServerSideCopyOverSelf
+     - TestServerSideMoveOverSelf
+ - backend:  "drime"
+   remote:   "TestDrime:"
+   ignoretests:
+     # The TestBisyncRemoteLocal/check_access_filters tests fail due to duplicated objects
+     - cmd/bisync
+   fastlist: false
