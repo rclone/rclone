@@ -4,8 +4,9 @@ package raid3
 import (
 	"fmt"
 	"io"
-	"log"
 	"sync"
+
+	"github.com/rclone/rclone/fs"
 )
 
 // StreamMerger merges even and odd particle streams into original data stream
@@ -51,7 +52,7 @@ func (m *StreamMerger) Read(p []byte) (n int, err error) {
 	defer m.mu.Unlock()
 
 	// If we have buffered output, return it first
-	if m.outputBuffer != nil && len(m.outputBuffer) > 0 && m.evenPos < len(m.outputBuffer) {
+	if len(m.outputBuffer) > 0 && m.evenPos < len(m.outputBuffer) {
 		n = copy(p, m.outputBuffer[m.evenPos:])
 		m.evenPos += n
 		if m.evenPos >= len(m.outputBuffer) {
@@ -173,7 +174,7 @@ func (m *StreamMerger) Read(p []byte) (n int, err error) {
 		// At EOF: allow even to be 1 byte larger (for odd-length files)
 		// Merge all data - MergeBytes can handle even being 1 byte larger
 		if len(evenData) != len(oddData) && len(evenData) != len(oddData)+1 {
-			log.Printf("[StreamMerger] Read: INVALID PARTICLE SIZES at EOF - even=%d, odd=%d, evenPending=%d, oddPending=%d", len(evenData), len(oddData), len(m.evenPending), len(m.oddPending))
+			fs.Logf(nil, "[StreamMerger] Read: INVALID PARTICLE SIZES at EOF - even=%d, odd=%d, evenPending=%d, oddPending=%d", len(evenData), len(oddData), len(m.evenPending), len(m.oddPending))
 			return 0, fmt.Errorf("invalid particle sizes: even=%d, odd=%d (expected even=odd or even=odd+1)", len(evenData), len(oddData))
 		}
 		// Don't buffer - merge all data
@@ -220,7 +221,7 @@ func (m *StreamMerger) Read(p []byte) (n int, err error) {
 			// After buffering, sizes should match during streaming (unless one is EOF and empty)
 			// For odd-length files, even can be 1 byte larger when odd is EOF
 			if len(evenData) != len(oddData) && !m.evenEOF && !m.oddEOF {
-				log.Printf("[StreamMerger] Read: UNEXPECTED SIZE MISMATCH during streaming - even=%d, odd=%d, evenEOF=%v, oddEOF=%v, evenPending=%d, oddPending=%d", len(evenData), len(oddData), m.evenEOF, m.oddEOF, len(m.evenPending), len(m.oddPending))
+				fs.Logf(nil, "[StreamMerger] Read: UNEXPECTED SIZE MISMATCH during streaming - even=%d, odd=%d, evenEOF=%v, oddEOF=%v, evenPending=%d, oddPending=%d", len(evenData), len(oddData), m.evenEOF, m.oddEOF, len(m.evenPending), len(m.oddPending))
 				return 0, fmt.Errorf("unexpected size mismatch during streaming: even=%d, odd=%d", len(evenData), len(oddData))
 			}
 		}

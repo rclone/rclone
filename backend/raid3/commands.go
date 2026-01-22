@@ -25,6 +25,8 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Command dispatches backend commands
@@ -47,10 +49,6 @@ func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any,
 	// Input validation
 	if err := validateContext(ctx, "status"); err != nil {
 		return nil, err
-	}
-	// opt can be nil (optional parameter in rclone commands)
-	if opt == nil {
-		opt = map[string]string{}
 	}
 
 	// Check health of all backends
@@ -135,7 +133,8 @@ func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any,
 			healthText = "HEALTHY"
 		}
 
-		report.WriteString(fmt.Sprintf("  %s %s (%s):\n", icon, strings.Title(h.name), path))
+		caser := cases.Title(language.English)
+		report.WriteString(fmt.Sprintf("  %s %s (%s):\n", icon, caser.String(h.name), path))
 		report.WriteString(fmt.Sprintf("      %s - %s\n", status, healthText))
 	}
 
@@ -219,10 +218,16 @@ func (f *Fs) statusCommand(ctx context.Context, opt map[string]string) (out any,
 // rebuildCommand rebuilds missing particles on a replacement backend
 // This implements Phase 3 of user-centric rebuild
 func (f *Fs) rebuildCommand(ctx context.Context, arg []string, opt map[string]string) (out any, err error) {
+	// opt can be nil (optional parameter in rclone commands)
+	optMap := opt
+	if optMap == nil {
+		optMap = map[string]string{}
+	}
+
 	// Parse options
-	checkOnly := opt["check-only"] == "true"
-	dryRun := opt["dry-run"] == "true"
-	priority := opt["priority"]
+	checkOnly := optMap["check-only"] == "true"
+	dryRun := optMap["dry-run"] == "true"
+	priority := optMap["priority"]
 	if priority == "" {
 		priority = "auto"
 	}

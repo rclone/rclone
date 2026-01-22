@@ -94,7 +94,7 @@ func TestHeal(t *testing.T) {
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got, "data should be correctly reconstructed")
 
@@ -169,7 +169,7 @@ func TestHealEvenParticle(t *testing.T) {
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got)
 
@@ -238,7 +238,7 @@ func TestHealNoQueue(t *testing.T) {
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got)
 
@@ -310,7 +310,7 @@ func TestHealLargeFile(t *testing.T) {
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got)
 

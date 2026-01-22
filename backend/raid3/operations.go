@@ -289,15 +289,15 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	// Goroutine 1: Read input, split into even/odd/parity, write to pipes
 	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, int(readChunkSize), isOddLengthCh)
 	g.Go(func() error {
-		defer evenPipeW.Close()
-		defer oddPipeW.Close()
-		defer parityPipeW.Close()
+		defer func() { _ = evenPipeW.Close() }()
+		defer func() { _ = oddPipeW.Close() }()
+		defer func() { _ = parityPipeW.Close() }()
 		return splitter.Split(in)
 	})
 
 	// Goroutine 2: Put even particle (reads from evenPipeR)
 	g.Go(func() error {
-		defer evenPipeR.Close()
+		defer func() { _ = evenPipeR.Close() }()
 		// Use unknown size (-1) since we're streaming
 		evenInfo := createParticleInfo(src, "even", -1, isOddLength)
 		obj, err := f.even.Put(gCtx, evenPipeR, evenInfo, options...)
@@ -313,7 +313,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 	// Goroutine 3: Put odd particle (reads from oddPipeR)
 	g.Go(func() error {
-		defer oddPipeR.Close()
+		defer func() { _ = oddPipeR.Close() }()
 		oddInfo := createParticleInfo(src, "odd", -1, isOddLength)
 		obj, err := f.odd.Put(gCtx, oddPipeR, oddInfo, options...)
 		if err != nil {
@@ -328,7 +328,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 	// Goroutine 4: Put parity particle (reads from parityPipeR)
 	g.Go(func() error {
-		defer parityPipeR.Close()
+		defer func() { _ = parityPipeR.Close() }()
 
 		// Get isOddLength - use source size if known, otherwise from channel
 		parityIsOddLength := isOddLength
@@ -372,6 +372,8 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		remote: src.Remote(),
 	}, nil
 }
+
+// Move moves an object to a new remote location
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	// Check if src is from a raid3 backend (may be different Fs instance for cross-remote moves)
 	srcObj, ok := src.(*Object)

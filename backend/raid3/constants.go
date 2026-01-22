@@ -31,9 +31,6 @@ const (
 	// defaultChunkSize is the default chunk size for streaming operations (8 MiB)
 	defaultChunkSize = 8 * 1024 * 1024
 
-	// minChunkSize is the minimum allowed chunk size (1 KiB)
-	minChunkSize = 1024
-
 	// minReadChunkSize is the minimum read chunk size for streaming (2 MiB)
 	// This is used when reading input for streaming operations
 	minReadChunkSize = 2 * 1024 * 1024

@@ -204,7 +204,7 @@ func TestDeleteFailsWithUnavailableBackend(t *testing.T) {
 	// Make odd backend unavailable (read-only)
 	err = os.Chmod(oddDir, 0444)
 	require.NoError(t, err)
-	defer os.Chmod(oddDir, 0755) // Restore for cleanup
+	defer func() { _ = os.Chmod(oddDir, 0755) }() // Restore for cleanup
 
 	// Delete should fail (strict RAID 3 policy)
 	err = obj.Remove(ctx)
@@ -352,7 +352,7 @@ func TestMoveFailsWithUnavailableBackend(t *testing.T) {
 	err = os.Chmod(oddDir, 0444)
 	require.NoError(t, err)
 	defer func() {
-		os.Chmod(oddDir, 0755) // Restore for cleanup
+		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
 	}()
 
 	// Attempt move - should fail
@@ -370,7 +370,7 @@ func TestMoveFailsWithUnavailableBackend(t *testing.T) {
 	rc, err := oldObj2.Open(ctx)
 	require.NoError(t, err)
 	gotData, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, gotData, "Original file content should be unchanged")
 
@@ -477,7 +477,7 @@ func TestMoveWithMissingSourceParticle(t *testing.T) {
 		rc, err := oldObj2.Open(ctx)
 		require.NoError(t, err)
 		got, err := io.ReadAll(rc)
-		rc.Close()
+		_ = rc.Close()
 		require.NoError(t, err)
 		assert.Equal(t, data, got)
 	} else {
@@ -491,7 +491,7 @@ func TestMoveWithMissingSourceParticle(t *testing.T) {
 		rc, err := newObj2.Open(ctx)
 		require.NoError(t, err)
 		got, err := io.ReadAll(rc)
-		rc.Close()
+		_ = rc.Close()
 		require.NoError(t, err)
 		assert.Equal(t, data, got, "Moved file should have correct data")
 	}
@@ -554,7 +554,7 @@ func TestReadSucceedsWithUnavailableBackend(t *testing.T) {
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err, "Open should succeed with missing odd particle")
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got, "Data should be correctly reconstructed from even+parity")
 
@@ -575,7 +575,7 @@ func TestReadSucceedsWithUnavailableBackend(t *testing.T) {
 	rc2, err := obj2.Open(ctx)
 	require.NoError(t, err, "Open should succeed with missing even particle")
 	got2, err := io.ReadAll(rc2)
-	rc2.Close()
+	_ = rc2.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got2, "Data should be correctly reconstructed from odd+parity")
 
@@ -594,7 +594,7 @@ func TestReadSucceedsWithUnavailableBackend(t *testing.T) {
 	rc3, err := obj3.Open(ctx)
 	require.NoError(t, err, "Open should succeed with missing parity particle")
 	got3, err := io.ReadAll(rc3)
-	rc3.Close()
+	_ = rc3.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got3, "Data should be correctly merged from even+odd")
 }
@@ -650,7 +650,7 @@ func TestUpdateFailsWithUnavailableBackend(t *testing.T) {
 	err = os.Chmod(oddDir, 0444)
 	require.NoError(t, err)
 	defer func() {
-		os.Chmod(oddDir, 0755) // Restore for cleanup
+		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
 	}()
 
 	// Attempt update - should fail
@@ -667,7 +667,7 @@ func TestUpdateFailsWithUnavailableBackend(t *testing.T) {
 	rc, err := obj2.Open(ctx)
 	require.NoError(t, err)
 	gotData, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback should have restored it)")
 }
@@ -1180,7 +1180,7 @@ func TestListWorksInDegradedMode(t *testing.T) {
 
 	reader, err := obj1.Open(ctx)
 	require.NoError(t, err, "Should be able to open object in degraded mode")
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	readData, err := io.ReadAll(reader)
 	require.NoError(t, err)
@@ -1233,7 +1233,7 @@ func TestPutRollbackOnFailure(t *testing.T) {
 	err = os.Chmod(parityDir, 0444)
 	require.NoError(t, err)
 	defer func() {
-		os.Chmod(parityDir, 0755) // Restore for cleanup
+		_ = os.Chmod(parityDir, 0755) // Restore for cleanup
 	}()
 
 	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
@@ -1303,7 +1303,7 @@ func TestMoveRollbackOnFailure(t *testing.T) {
 	err = os.Chmod(oddDir, 0444)
 	require.NoError(t, err)
 	defer func() {
-		os.Chmod(oddDir, 0755) // Restore for cleanup
+		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
 	}()
 
 	// Attempt move - should fail
@@ -1322,7 +1322,7 @@ func TestMoveRollbackOnFailure(t *testing.T) {
 	rc, err := oldObj2.Open(ctx)
 	require.NoError(t, err)
 	gotData, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, gotData, "Original file content should be unchanged")
 
@@ -1342,7 +1342,7 @@ func TestMoveRollbackOnFailure(t *testing.T) {
 	// If the file is readable through level3, the particle exists
 	rc2, err := oldObj2.Open(ctx)
 	assert.NoError(t, err, "Original file should still be readable (particles exist)")
-	rc2.Close()
+	_ = rc2.Close()
 
 	// Check parity - need to find which suffix was used
 	parityOdd := raid3.GetParityFilename(oldRemote, true)
@@ -1406,7 +1406,7 @@ func TestCopyFailsWithUnavailableBackend(t *testing.T) {
 	err = os.Chmod(oddDir, 0444)
 	require.NoError(t, err)
 	defer func() {
-		os.Chmod(oddDir, 0755) // Restore for cleanup
+		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
 	}()
 
 	// Attempt copy - should fail
@@ -1425,7 +1425,7 @@ func TestCopyFailsWithUnavailableBackend(t *testing.T) {
 	rc, err := oldObj2.Open(ctx)
 	require.NoError(t, err)
 	gotData, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, gotData, "Original file content should be unchanged")
 
@@ -1478,7 +1478,7 @@ func TestCopyRollbackOnFailure(t *testing.T) {
 	err = os.Chmod(oddDir, 0444)
 	require.NoError(t, err)
 	defer func() {
-		os.Chmod(oddDir, 0755) // Restore for cleanup
+		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
 	}()
 
 	// Attempt copy - should fail
@@ -1497,7 +1497,7 @@ func TestCopyRollbackOnFailure(t *testing.T) {
 	rc, err := oldObj2.Open(ctx)
 	require.NoError(t, err)
 	gotData, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, gotData, "Original file content should be unchanged")
 
@@ -1514,7 +1514,7 @@ func TestCopyRollbackOnFailure(t *testing.T) {
 	// For odd, we verify through level3 interface since directory is read-only
 	rc2, err := oldObj2.Open(ctx)
 	assert.NoError(t, err, "Original file should still be readable (particles exist)")
-	rc2.Close()
+	_ = rc2.Close()
 
 	t.Logf("✅ Copy rollback correctly preserved original file and cleaned up destination")
 }
@@ -1552,7 +1552,7 @@ func TestRollbackDisabled(t *testing.T) {
 	err = os.Chmod(parityDir, 0444)
 	require.NoError(t, err)
 	defer func() {
-		os.Chmod(parityDir, 0755)
+		_ = os.Chmod(parityDir, 0755)
 	}()
 
 	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data)), true, nil, nil)
@@ -1621,7 +1621,7 @@ func TestUpdateRollbackOnFailure(t *testing.T) {
 	err = os.Chmod(oddDir, 0444)
 	require.NoError(t, err)
 	defer func() {
-		os.Chmod(oddDir, 0755) // Restore for cleanup
+		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
 	}()
 
 	// Attempt update - should fail
@@ -1638,7 +1638,7 @@ func TestUpdateRollbackOnFailure(t *testing.T) {
 	rc, err := obj2.Open(ctx)
 	require.NoError(t, err)
 	gotData, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback should have restored from temp)")
 

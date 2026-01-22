@@ -42,7 +42,7 @@ func writeSourceFiles(t *testing.T, root string, files []rebuildFile) {
 	}
 }
 
-func uploadDataset(t *testing.T, ctx context.Context, f *raid3.Fs, files []rebuildFile) {
+func uploadDataset(ctx context.Context, t *testing.T, f *raid3.Fs, files []rebuildFile) {
 	t.Helper()
 	dirs := make(map[string]struct{})
 	for _, file := range files {
@@ -88,7 +88,7 @@ func TestRebuildEvenBackendSuccess(t *testing.T) {
 
 	files := defaultRebuildDataset()
 	writeSourceFiles(t, sourceDir, files)
-	uploadDataset(t, ctx, f, files)
+	uploadDataset(ctx, t, f, files)
 
 	for _, file := range files {
 		parityName := raid3.GetParityFilename(file.remote, len(file.data)%2 == 1)
@@ -138,7 +138,7 @@ func TestRebuildEvenBackendFailure(t *testing.T) {
 
 	files := defaultRebuildDataset()
 	writeSourceFiles(t, sourceDir, files)
-	uploadDataset(t, ctx, f, files)
+	uploadDataset(ctx, t, f, files)
 
 	for _, file := range files {
 		parityName := raid3.GetParityFilename(file.remote, len(file.data)%2 == 1)

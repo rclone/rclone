@@ -1329,69 +1329,6 @@ func (f *Fs) reconstructMissingDirectory(ctx context.Context, dir string, errEve
 	}
 }
 
-// checkSubdirectoryExists checks if a subdirectory exists by listing the parent directory
-// and searching for it. This follows union backend's findEntry pattern.
-// Returns true if subdirectory exists, false otherwise.
-func (f *Fs) checkSubdirectoryExists(ctx context.Context, backend fs.Fs, subDirName string) bool {
-	// Get the full remote string for this backend
-	remoteString := fs.ConfigString(backend)
-
-	// Split into remote name and path
-	remoteName, remotePath, err := fspath.SplitFs(remoteString)
-	if err != nil {
-		fs.Debugf(f, "Rmdir: Failed to split remote string %q: %v", remoteString, err)
-		// Fallback to direct List() check
-		_, listErr := backend.List(ctx, "")
-		return listErr == nil
-	}
-
-	// Get parent path
-	parentPath := path.Dir(remotePath)
-	if parentPath == "." {
-		parentPath = ""
-	}
-
-	// Construct parent remote string
-	parentRemote := remoteName
-	if parentRemote != "" {
-		parentRemote += ":"
-	}
-	parentRemote += parentPath
-
-	// Get parent Fs
-	parentFs, err := cache.Get(ctx, parentRemote)
-	if err != nil {
-		fs.Debugf(f, "Rmdir: Failed to get parent Fs %q: %v", parentRemote, err)
-		// Fallback to direct List() check
-		_, listErr := backend.List(ctx, "")
-		return listErr == nil
-	}
-
-	// List parent directory and search for subdirectory
-	entries, err := parentFs.List(ctx, "")
-	if err != nil {
-		fs.Debugf(f, "Rmdir: Failed to list parent directory %q: %v", parentRemote, err)
-		return false
-	}
-
-	// Search for subdirectory in entries
-	caseInsensitive := parentFs.Features().CaseInsensitive
-	for _, entry := range entries {
-		entryRemote := entry.Remote()
-		found := false
-		if caseInsensitive {
-			found = strings.EqualFold(entryRemote, subDirName)
-		} else {
-			found = (entryRemote == subDirName)
-		}
-		if found {
-			return true
-		}
-	}
-
-	return false
-}
-
 // cleanupOrphanedDirectory removes directories that exist on < 2 backends
 // This is called by List() when auto_cleanup is enabled and the directory is empty
 // errEven and errOdd are the errors from the List operations (already performed)

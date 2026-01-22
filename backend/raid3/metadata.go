@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// MkdirMetadata creates a directory with metadata
 func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata) (fs.Directory, error) {
 	// Pre-flight health check: Enforce strict RAID 3 write policy
 	// Consistent with Put/Update/Move/Mkdir operations
@@ -99,6 +100,8 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 		remote: dir,
 	}, nil
 }
+
+// DirSetModTime sets the modification time of a directory
 func (f *Fs) DirSetModTime(ctx context.Context, dir string, modTime time.Time) error {
 	// Check if directory exists before health check (union backend pattern)
 	// This ensures we return fs.ErrorDirNotFound immediately when directory doesn't exist

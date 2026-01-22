@@ -16,7 +16,7 @@ import (
 )
 
 // createTestFile uploads a single file to the raid3 backend and returns its remote path.
-func createTestFile(t *testing.T, ctx context.Context, f *raid3.Fs, name string, data []byte) string {
+func createTestFile(ctx context.Context, t *testing.T, f *raid3.Fs, name string, data []byte) string {
 	t.Helper()
 	info := object.NewStaticObjectInfo(name, time.Now(), int64(len(data)), true, nil, nil)
 	_, err := f.Put(ctx, bytes.NewReader(data), info)
@@ -68,9 +68,9 @@ func TestHealCommandReconstructsMissingParticle(t *testing.T) {
 	t.Cleanup(func() { _ = f.Shutdown(context.Background()) })
 
 	// Upload multiple test files
-	file1 := createTestFile(t, ctx, f, "file1.txt", []byte("file1-data"))
-	file2 := createTestFile(t, ctx, f, "file2.txt", []byte("file2-data"))
-	file3 := createTestFile(t, ctx, f, "file3.txt", []byte("file3-data"))
+	file1 := createTestFile(ctx, t, f, "file1.txt", []byte("file1-data"))
+	file2 := createTestFile(ctx, t, f, "file2.txt", []byte("file2-data"))
+	file3 := createTestFile(ctx, t, f, "file3.txt", []byte("file3-data"))
 
 	// Verify all files exist on all backends initially
 	require.True(t, fileExistsOnDir(t, evenDir, file1))
@@ -129,9 +129,9 @@ func TestHealCommandSingleFile(t *testing.T) {
 	t.Cleanup(func() { _ = f.Shutdown(context.Background()) })
 
 	// Upload multiple test files
-	file1 := createTestFile(t, ctx, f, "file1.txt", []byte("file1-data"))
-	file2 := createTestFile(t, ctx, f, "file2.txt", []byte("file2-data"))
-	file3 := createTestFile(t, ctx, f, "file3.txt", []byte("file3-data"))
+	file1 := createTestFile(ctx, t, f, "file1.txt", []byte("file1-data"))
+	file2 := createTestFile(ctx, t, f, "file2.txt", []byte("file2-data"))
+	file3 := createTestFile(ctx, t, f, "file3.txt", []byte("file3-data"))
 
 	// Verify all files exist on all backends initially
 	require.True(t, fileExistsOnDir(t, evenDir, file1))

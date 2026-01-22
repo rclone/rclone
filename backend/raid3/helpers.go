@@ -439,21 +439,6 @@ func validateObjectInfo(src fs.ObjectInfo, operation string) error {
 	return nil
 }
 
-// validateChunkSize validates that chunk size is within acceptable bounds
-func validateChunkSize(chunkSize int64) error {
-	// Minimum reasonable chunk size: 1KB
-	const minChunkSize = 1024
-	if chunkSize < minChunkSize {
-		return formatOperationError("validation failed", fmt.Sprintf("chunk size %d is too small (minimum: %d)", chunkSize, minChunkSize), nil)
-	}
-	// Maximum reasonable chunk size: 1GB
-	const maxChunkSize = 1024 * 1024 * 1024
-	if chunkSize > maxChunkSize {
-		return formatOperationError("validation failed", fmt.Sprintf("chunk size %d is too large (maximum: %d)", chunkSize, maxChunkSize), nil)
-	}
-	return nil
-}
-
 // validateBackend validates that a backend filesystem is not nil
 func validateBackend(backend fs.Fs, backendName, operation string) error {
 	if backend == nil {

@@ -233,9 +233,6 @@ func TestAboutAggregatesChildUsage(t *testing.T) {
 	}
 }
 
-// remotefname is used with RandomRemoteName fallback
-const remotefname = "file.bin"
-
 // =============================================================================
 // Integration Tests - Degraded Mode
 // =============================================================================
@@ -291,7 +288,7 @@ func TestIntegrationStyle_DegradedOpenAndSize(t *testing.T) {
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got)
 
@@ -307,7 +304,7 @@ func TestIntegrationStyle_DegradedOpenAndSize(t *testing.T) {
 	rc2, err := obj2.Open(ctx)
 	require.NoError(t, err)
 	got2, err := io.ReadAll(rc2)
-	rc2.Close()
+	_ = rc2.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got2)
 }
@@ -364,7 +361,7 @@ func TestLargeDataQuick(t *testing.T) {
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got)
 
@@ -375,7 +372,7 @@ func TestLargeDataQuick(t *testing.T) {
 	rc2, err := obj2.Open(ctx)
 	require.NoError(t, err)
 	got2, err := io.ReadAll(rc2)
-	rc2.Close()
+	_ = rc2.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got2)
 }
@@ -485,7 +482,7 @@ func TestRenameFile(t *testing.T) {
 	rc, err := newObj2.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got, "renamed file should have same data as original")
 }
@@ -556,7 +553,7 @@ func TestRenameFileDifferentDirectory(t *testing.T) {
 	rc, err := newObj2.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got)
 }
@@ -767,7 +764,7 @@ func TestMoveFileBetweenDirectories(t *testing.T) {
 	rc, err := dstObj2.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got, "moved file should have same data")
 
@@ -870,7 +867,7 @@ func TestDirMove(t *testing.T) {
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got, "moved file should have same data")
 
@@ -956,7 +953,7 @@ func TestCopyFileBetweenDirectories(t *testing.T) {
 	rc, err := srcObj3.Open(ctx)
 	require.NoError(t, err)
 	gotSrc, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, gotSrc, "source file should have unchanged data")
 
@@ -966,7 +963,7 @@ func TestCopyFileBetweenDirectories(t *testing.T) {
 	rc, err = dstObj2.Open(ctx)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, got, "copied file should have same data")
 
@@ -1030,14 +1027,14 @@ func TestCopyFileSameDirectory(t *testing.T) {
 	rc, err := srcObj2.Open(ctx)
 	require.NoError(t, err)
 	gotSrc, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, gotSrc)
 
 	rc, err = dstObj2.Open(ctx)
 	require.NoError(t, err)
 	gotDst, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, data, gotDst)
 }
@@ -1246,7 +1243,7 @@ func TestDeepNestedDirectories(t *testing.T) {
 	rc, err := obj2.Open(ctx)
 	require.NoError(t, err)
 	readData, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, deepData, readData, "should read correct data from deep path")
 
@@ -1379,7 +1376,7 @@ func TestConcurrentOperations(t *testing.T) {
 		rc, err := obj.Open(ctx)
 		require.NoError(t, err)
 		data, err := io.ReadAll(rc)
-		rc.Close()
+		_ = rc.Close()
 		require.NoError(t, err)
 
 		expected := fmt.Sprintf("Concurrent content %d", i)
@@ -1408,7 +1405,7 @@ func TestConcurrentOperations(t *testing.T) {
 				readErrors <- fmt.Errorf("file %d: %w", fileNum, err)
 				return
 			}
-			defer rc.Close()
+			defer func() { _ = rc.Close() }()
 
 			_, err = io.ReadAll(rc)
 			if err != nil {
@@ -1462,7 +1459,7 @@ func TestConcurrentOperations(t *testing.T) {
 				healErrors <- err
 				return
 			}
-			defer rc.Close()
+			defer func() { _ = rc.Close() }()
 
 			_, err = io.ReadAll(rc)
 			if err != nil {
@@ -1898,7 +1895,7 @@ func TestCleanUpRecursive(t *testing.T) {
 	require.NoError(t, os.WriteFile(broken5Path, []byte("broken5"), 0644))
 
 	// Count objects before cleanup (should see 5 total)
-	initialCount := countAllObjects(t, ctx, l3fs, "")
+	initialCount := countAllObjects(ctx, t, l3fs, "")
 	assert.Equal(t, 5, initialCount, "Should see 5 objects before cleanup")
 
 	// Run CleanUp
@@ -1908,7 +1905,7 @@ func TestCleanUpRecursive(t *testing.T) {
 	require.NoError(t, err, "CleanUp should succeed")
 
 	// Count objects after cleanup (should see only 2 valid)
-	finalCount := countAllObjects(t, ctx, l3fs, "")
+	finalCount := countAllObjects(ctx, t, l3fs, "")
 	assert.Equal(t, 2, finalCount, "Should see only 2 valid objects after cleanup")
 
 	t.Logf("✅ CleanUp removed broken objects from nested directories")
@@ -2169,7 +2166,7 @@ func TestAutoHealDirectoryReconstruction(t *testing.T) {
 			"use_streaming": "true",
 		})
 		require.NoError(t, err)
-		defer l3fs.Features().Shutdown(ctx)
+		defer func() { _ = l3fs.Features().Shutdown(ctx) }()
 
 		// Manually create directory on 2/3 backends (degraded state - 1dm)
 		testDir := "testdir_heal"
@@ -2198,7 +2195,7 @@ func TestAutoHealDirectoryReconstruction(t *testing.T) {
 			"use_streaming": "true",
 		})
 		require.NoError(t, err)
-		defer l3fs.Features().Shutdown(ctx)
+		defer func() { _ = l3fs.Features().Shutdown(ctx) }()
 
 		// Manually create directory on 2/3 backends (degraded state)
 		testDir := "testdir_noheal"
@@ -2237,7 +2234,7 @@ func TestAutoHealDirMove(t *testing.T) {
 			"use_streaming": "true",
 		})
 		require.NoError(t, err)
-		defer l3fs.Features().Shutdown(ctx)
+		defer func() { _ = l3fs.Features().Shutdown(ctx) }()
 
 		// Create source directory on 2/3 backends only (degraded - 1dm)
 		srcDir := "move_heal_src"
@@ -2256,7 +2253,7 @@ func TestAutoHealDirMove(t *testing.T) {
 			"use_streaming": "true",
 		})
 		require.NoError(t, err)
-		defer srcFs.Features().Shutdown(ctx)
+		defer func() { _ = srcFs.Features().Shutdown(ctx) }()
 
 		dstFs, err := raid3.NewFs(ctx, "level3", "move_heal_dst", configmap.Simple{
 			"even":          evenDir,
@@ -2266,7 +2263,7 @@ func TestAutoHealDirMove(t *testing.T) {
 			"use_streaming": "true",
 		})
 		require.NoError(t, err)
-		defer dstFs.Features().Shutdown(ctx)
+		defer func() { _ = dstFs.Features().Shutdown(ctx) }()
 
 		// Perform DirMove
 		doDirMove := dstFs.Features().DirMove
@@ -2282,12 +2279,12 @@ func TestAutoHealDirMove(t *testing.T) {
 	// Test with auto_heal=false - should fail if directory missing on backend
 	t.Run("auto_heal=false fails DirMove with degraded directory", func(t *testing.T) {
 		// Clean up
-		os.RemoveAll(filepath.Join(evenDir, "move_noheal_src"))
-		os.RemoveAll(filepath.Join(oddDir, "move_noheal_src"))
-		os.RemoveAll(filepath.Join(parityDir, "move_noheal_src"))
-		os.RemoveAll(filepath.Join(evenDir, "move_noheal_dst"))
-		os.RemoveAll(filepath.Join(oddDir, "move_noheal_dst"))
-		os.RemoveAll(filepath.Join(parityDir, "move_noheal_dst"))
+		_ = os.RemoveAll(filepath.Join(evenDir, "move_noheal_src"))
+		_ = os.RemoveAll(filepath.Join(oddDir, "move_noheal_src"))
+		_ = os.RemoveAll(filepath.Join(parityDir, "move_noheal_src"))
+		_ = os.RemoveAll(filepath.Join(evenDir, "move_noheal_dst"))
+		_ = os.RemoveAll(filepath.Join(oddDir, "move_noheal_dst"))
+		_ = os.RemoveAll(filepath.Join(parityDir, "move_noheal_dst"))
 
 		// Create source directory on 2/3 backends only
 		srcDir := "move_noheal_src"
@@ -2306,7 +2303,7 @@ func TestAutoHealDirMove(t *testing.T) {
 			"use_streaming": "true",
 		})
 		require.NoError(t, err)
-		defer srcFs.Features().Shutdown(ctx)
+		defer func() { _ = srcFs.Features().Shutdown(ctx) }()
 
 		dstFs, err := raid3.NewFs(ctx, "level3", "move_noheal_dst", configmap.Simple{
 			"even":          evenDir,
@@ -2316,7 +2313,7 @@ func TestAutoHealDirMove(t *testing.T) {
 			"use_streaming": "true",
 		})
 		require.NoError(t, err)
-		defer dstFs.Features().Shutdown(ctx)
+		defer func() { _ = dstFs.Features().Shutdown(ctx) }()
 
 		// Perform DirMove - should fail because source missing on parity
 		doDirMove := dstFs.Features().DirMove
@@ -2374,7 +2371,7 @@ func TestUpdateLargeFile(t *testing.T) {
 	rc, err := obj.Open(ctx)
 	require.NoError(t, err)
 	originalRead, err := io.ReadAll(rc)
-	rc.Close()
+	_ = rc.Close()
 	require.NoError(t, err)
 	assert.Equal(t, originalData, originalRead, "Original file content should match")
 
@@ -2395,7 +2392,7 @@ func TestUpdateLargeFile(t *testing.T) {
 	rc2, err := obj2.Open(ctx)
 	require.NoError(t, err)
 	updatedRead, err := io.ReadAll(rc2)
-	rc2.Close()
+	_ = rc2.Close()
 	require.NoError(t, err)
 	assert.Equal(t, newData, updatedRead, "Updated file content should match new data")
 
@@ -2481,7 +2478,7 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		rc, err := obj2.Open(ctx)
 		require.NoError(t, err)
 		readData, err := io.ReadAll(rc)
-		rc.Close()
+		_ = rc.Close()
 		require.NoError(t, err)
 		assert.Equal(t, newData, readData, "Updated file content should match")
 
@@ -2530,7 +2527,7 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		rc, err := obj2.Open(ctx)
 		require.NoError(t, err)
 		readData, err := io.ReadAll(rc)
-		rc.Close()
+		_ = rc.Close()
 		require.NoError(t, err)
 		assert.Equal(t, newData, readData, "Updated file content should match")
 
@@ -2569,7 +2566,7 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		rc, err := obj2.Open(ctx)
 		require.NoError(t, err)
 		readData, err := io.ReadAll(rc)
-		rc.Close()
+		_ = rc.Close()
 		require.NoError(t, err)
 		assert.Equal(t, newData, readData, "Updated file content should match")
 
@@ -2608,7 +2605,7 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		rc, err := obj2.Open(ctx)
 		require.NoError(t, err)
 		readData, err := io.ReadAll(rc)
-		rc.Close()
+		_ = rc.Close()
 		require.NoError(t, err)
 		assert.Equal(t, newData, readData, "Updated file content should match")
 
@@ -2617,7 +2614,7 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 }
 
 // Helper function to count objects recursively
-func countAllObjects(t *testing.T, ctx context.Context, f fs.Fs, dir string) int {
+func countAllObjects(ctx context.Context, t *testing.T, f fs.Fs, dir string) int {
 	entries, err := f.List(ctx, dir)
 	require.NoError(t, err, "List should succeed")
 
@@ -2627,7 +2624,7 @@ func countAllObjects(t *testing.T, ctx context.Context, f fs.Fs, dir string) int
 		case fs.Object:
 			count++
 		case fs.Directory:
-			count += countAllObjects(t, ctx, f, e.Remote())
+			count += countAllObjects(ctx, t, f, e.Remote())
 		}
 	}
 	return count

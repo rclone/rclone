@@ -135,6 +135,48 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 
 ---
 
+### Q25: Usage/Quota Caching with Aggregation
+**Status**: 🟡 **ACTIVE** - Performance optimization  
+**Priority**: Medium
+
+**Question**: Should raid3 implement cached quota information with TTL-based expiration similar to union backend?
+
+**Context**: Currently, `About()` method queries all three backends every time it's called, causing network I/O overhead and latency. The union backend implements sophisticated quota caching with background updates that could be adapted for raid3's aggregated usage reporting.
+
+**Current Implementation** (`raid3.go:775-833`):
+- Queries all 3 backends synchronously on every `About()` call
+- No caching of quota information
+- Each call causes 3 backend queries (even, odd, parity)
+- Higher latency for monitoring/status commands
+
+**Proposed Implementation** (inspired by union backend):
+- Add cached `fs.Usage` struct with TTL expiration
+- Background cache updates to avoid blocking
+- Configurable cache duration (default: 120 seconds)
+- Atomic cache expiry tracking with RWMutex protection
+
+**Benefits**:
+- Faster `About()` calls (uses cached values when available)
+- Reduced backend load (fewer quota queries)
+- Better performance for monitoring/status tools
+- More efficient for frequently accessed quota information
+
+**Technical Details**:
+- Similar to union's `upstream/upstream.go` caching mechanism
+- Cache structure: `usage *fs.Usage`, `cacheTime time.Duration`, `cacheExpiry atomic.Int64`
+- Lazy cache updates: first call synchronous, subsequent calls trigger background refresh
+- Handles backend errors gracefully (cached value on error)
+
+**Implementation Complexity**: Medium (2-3 days)
+- Add cache fields to `Fs` struct
+- Implement cache update logic with background goroutines
+- Add config option: `cache_time` (default: 120 seconds)
+- Ensure thread-safe cache access with mutexes
+
+**References**:
+- Current implementation: `backend/raid3/raid3.go:775-833` (About method)
+- Union backend reference: `backend/union/upstream/upstream.go:391-500` (caching mechanism)
+- Related optimization: Q14 (Health Check Caching) uses similar TTL pattern
 
 ---
 
@@ -397,7 +439,7 @@ Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIG
 
 ## 📊 Statistics
 
-Total active questions: 17. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (3) - Q14: Health Check Caching, Q15: Background Worker Context, Q24: Intermittent FsListRLevel2 Test Failure. Medium Priority (6) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values, Q21: Range Read Optimization. Low Priority (8) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch.
+Total active questions: 18. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (3) - Q14: Health Check Caching, Q15: Background Worker Context, Q24: Intermittent FsListRLevel2 Test Failure. Medium Priority (7) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching. Low Priority (8) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch.
 
 
 **Use this file to track decisions before they're made!** 🤔

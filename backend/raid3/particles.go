@@ -207,7 +207,7 @@ func (f *Fs) reconstructParityParticle(ctx context.Context, evenFs, oddFs fs.Fs,
 		return nil, formatParticleError(evenFs, "even", "open failed", fmt.Sprintf("remote %q", remote), err)
 	}
 	evenData, err := io.ReadAll(evenReader)
-	evenReader.Close()
+	fs.CheckClose(evenReader, &err)
 	if err != nil {
 		return nil, formatParticleError(evenFs, "even", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
@@ -222,7 +222,7 @@ func (f *Fs) reconstructParityParticle(ctx context.Context, evenFs, oddFs fs.Fs,
 		return nil, formatParticleError(oddFs, "odd", "open failed", fmt.Sprintf("remote %q", remote), err)
 	}
 	oddData, err := io.ReadAll(oddReader)
-	oddReader.Close()
+	fs.CheckClose(oddReader, &err)
 	if err != nil {
 		return nil, formatParticleError(oddFs, "odd", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
@@ -277,7 +277,7 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 		return nil, formatParticleError(parityFs, "parity", "open failed", fmt.Sprintf("remote %q", remote), err)
 	}
 	parityData, err := io.ReadAll(parityReader)
-	parityReader.Close()
+	fs.CheckClose(parityReader, &err)
 	if err != nil {
 		return nil, formatParticleError(parityFs, "parity", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
@@ -292,7 +292,7 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 		return nil, formatParticleError(dataFs, "data", "open failed", fmt.Sprintf("remote %q", remote), err)
 	}
 	dataData, err := io.ReadAll(dataReader)
-	dataReader.Close()
+	fs.CheckClose(dataReader, &err)
 	if err != nil {
 		return nil, formatParticleError(dataFs, "data", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
@@ -306,15 +306,14 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 		}
 		evenData, _ := SplitBytes(reconstructed)
 		return evenData, nil
-	} else {
-		// Reconstruct odd from even + parity
-		reconstructed, err := ReconstructFromEvenAndParity(dataData, parityData, isOddLength)
-		if err != nil {
-			return nil, formatOperationError("reconstruct odd particle failed", fmt.Sprintf("remote %q", remote), err)
-		}
-		_, oddData := SplitBytes(reconstructed)
-		return oddData, nil
 	}
+	// Reconstruct odd from even + parity
+	reconstructed, err := ReconstructFromEvenAndParity(dataData, parityData, isOddLength)
+	if err != nil {
+		return nil, formatOperationError("reconstruct odd particle failed", fmt.Sprintf("remote %q", remote), err)
+	}
+	_, oddData := SplitBytes(reconstructed)
+	return oddData, nil
 }
 
 // countParticlesSync counts how many particles exist for an object (0-3)
@@ -561,7 +560,7 @@ func (r *StreamReconstructor) Read(p []byte) (n int, err error) {
 	defer r.mu.Unlock()
 
 	// If we have buffered output, return it first
-	if r.outputBuffer != nil && len(r.outputBuffer) > 0 && r.dataPos < len(r.outputBuffer) {
+	if len(r.outputBuffer) > 0 && r.dataPos < len(r.outputBuffer) {
 		n = copy(p, r.outputBuffer[r.dataPos:])
 		r.dataPos += n
 		if r.dataPos >= len(r.outputBuffer) {
