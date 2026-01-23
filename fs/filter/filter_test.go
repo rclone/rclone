@@ -394,7 +394,7 @@ func TestNewFilterMakeListR(t *testing.T) {
 	// Now check an error is returned from NewObject
 	require.NoError(t, f.AddFile("error"))
 	err = listR(context.Background(), "", listRcallback)
-	require.EqualError(t, err, assert.AnError.Error())
+	require.EqualError(t, err, "failed to read --files-from files: assert.AnError general error for testing")
 
 	// The checker will exit by the error above
 	ci := fs.GetConfig(context.Background())
@@ -403,7 +403,7 @@ func TestNewFilterMakeListR(t *testing.T) {
 	// Now check an error is returned from NewObject
 	require.NoError(t, f.AddFile("error"))
 	err = listR(context.Background(), "", listRcallback)
-	require.EqualError(t, err, assert.AnError.Error())
+	require.EqualError(t, err, "failed to read --files-from files: assert.AnError general error for testing")
 }
 
 func TestNewFilterMinSize(t *testing.T) {

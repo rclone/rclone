@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/errcount"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/text/unicode/norm"
 )
@@ -626,6 +627,7 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 			remotes  = make(chan string, checkers)
 			g, gCtx  = errgroup.WithContext(ctx)
 		)
+		ec := errcount.New()
 		for range checkers {
 			g.Go(func() (err error) {
 				var entries = make(fs.DirEntries, 1)
@@ -634,7 +636,8 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 					if err == fs.ErrorObjectNotFound {
 						// Skip files that are not found
 					} else if err != nil {
-						return err
+						fs.Errorf(remote, "--files-from failed to find file: %v", err)
+						ec.Add(err)
 					} else {
 						err = callback(entries)
 						if err != nil {
@@ -654,7 +657,8 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 			}
 		}
 		close(remotes)
-		return g.Wait()
+		ec.Add(g.Wait())
+		return ec.Err("failed to read --files-from files")
 	}
 }
 
