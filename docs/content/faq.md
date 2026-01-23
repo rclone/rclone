@@ -337,12 +337,14 @@ ciphers via `GODEBUG`:
   set GODEBUG=tlsrsakex=1
   rclone copy ...
   ```
+
 - Windows (PowerShell):
 
   ```powershell
   $env:GODEBUG="tlsrsakex=1"
   rclone copy ...
   ```
+
 - Linux/macOS:
 
   ```sh
