@@ -391,19 +391,22 @@ func TestNewFilterMakeListR(t *testing.T) {
 	assert.Equal(t, want, newObjects)
 	assert.Equal(t, want, listRObjects)
 
-	// Now check an error is returned from NewObject
+	// Check that a file which errors on NewObject doesn't stop the
+	// others being listed - the error is counted and logged rather than
+	// being returned.
 	require.NoError(t, f.AddFile("error"))
 	err = listR(context.Background(), "", listRcallback)
-	require.EqualError(t, err, assert.AnError.Error())
+	require.NoError(t, err)
+	assert.Equal(t, want, listRObjects)
 
-	// The checker will exit by the error above
+	// The same with a single checker
 	ci := fs.GetConfig(context.Background())
 	ci.Checkers = 1
 
-	// Now check an error is returned from NewObject
 	require.NoError(t, f.AddFile("error"))
 	err = listR(context.Background(), "", listRcallback)
-	require.EqualError(t, err, assert.AnError.Error())
+	require.NoError(t, err)
+	assert.Equal(t, want, listRObjects)
 }
 
 func TestNewFilterMinSize(t *testing.T) {
