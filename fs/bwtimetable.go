@@ -97,7 +97,7 @@ func validateHour(HHMM string) error {
 		return fmt.Errorf("invalid minute in time specification: %q: %v", HHMM, err)
 	}
 	if mm < 0 || mm > 59 {
-		return fmt.Errorf("invalid minute (must be between 00 and 59): %d", hh)
+		return fmt.Errorf("invalid minute (must be between 00 and 59): %d", mm)
 	}
 	return nil
 }
