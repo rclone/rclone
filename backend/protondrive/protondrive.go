@@ -904,7 +904,7 @@ func (o *Object) Storable() bool {
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	fs.FixRangeOption(options, *o.originalSize)
+	fs.FixRangeOption(options, o.Size())
 	var offset, limit int64 = 0, -1
 	for _, option := range options { // if the caller passes in nil for options, it will become array of nil
 		switch x := option.(type) {
