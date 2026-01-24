@@ -2430,13 +2430,13 @@ transferring first before transferring any.
 ### --partial-dir string {#partial-dir}
 
 When [--inplace](#inplace) is not used, this option specifies a
-directory where partial files are stored during transfer, similar to
-rsync's `--partial-dir` option.
+directory where partial files are stored during transfer.
 
-When set, partial files are stored in the specified directory with
-the destination's relative path structure preserved. For example,
-when copying to `dest/subdir/file.txt` with `--partial-dir /tmp/partial`,
-the partial file will be stored at `/tmp/partial/subdir/file.txt.HASH.partial`.
+The directory is relative to the destination root. When set, partial
+files are stored in the specified directory with the destination's
+relative path structure preserved. For example, when copying to
+`dest/subdir/file.txt` with `--partial-dir /partial`, the partial
+file will be stored at `dest/partial/subdir/file.txt.HASH.partial`.
 
 After a successful transfer, the file is moved from the partial
 directory to the final destination. If the transfer fails, the
@@ -2444,8 +2444,20 @@ partial file remains in the partial directory.
 
 This is useful when you want to keep partial files separate from
 the destination directory, for example to avoid cluttering the
-destination with incomplete files or to use a different filesystem
-for temporary storage.
+destination with incomplete files.
+
+Rclone uses the partial directory as a scratch space and may leave
+empty directories behind once files have been transferred. If you
+want to remove empty directories use [rclone rmdirs](/commands/rclone_rmdirs/)
+to remove them.
+
+The partial directory must be on the same backend as the destination,
+since files need to be moved from the partial directory to the
+destination.
+
+If the partial directory is inside the sync tree then it should be
+excluded from the sync with a [filter rule](/filtering/) otherwise
+the sync will not work correctly.
 
 The [--partial-suffix](#partial-suffix) is still applied to files
 in the partial directory.
