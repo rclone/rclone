@@ -108,13 +108,19 @@ mkdir -p "${MINIO_EVEN_DIR}" "${MINIO_ODD_DIR}" "${MINIO_PARITY_DIR}" "${MINIO_S
 CONFIG_FILE="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"
 log_info "setup" "Creating rclone configuration file: ${CONFIG_FILE}"
 
-# Check if config file exists and if it contains the mixed remote
-# If it doesn't have the mixed remote, we'll regenerate it
+# Check if config file exists and if it contains required remotes
+# If it doesn't have the mixed remote or crypt backends, we'll regenerate it
 # Also check if it contains hardcoded absolute paths (like /Users/username or /home/username)
 NEEDS_REGENERATION=0
 if [[ -f "${CONFIG_FILE}" ]]; then
   if ! grep -q "^\[localminioraid3\]" "${CONFIG_FILE}"; then
     log_info "setup" "Config file exists but missing mixed remote - will regenerate"
+    NEEDS_REGENERATION=1
+  elif ! grep -q "^\[cryptlocalsingle\]" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file exists but missing crypt backends - will regenerate"
+    NEEDS_REGENERATION=1
+  elif ! grep -q "^\[cryptlocalraid3\]" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file exists but missing crypt backends - will regenerate"
     NEEDS_REGENERATION=1
   elif grep -qE "^even = localeven:(/Users/|/home/)" "${CONFIG_FILE}" || \
        grep -qE "^remote = (/Users/|/home/)" "${CONFIG_FILE}"; then
