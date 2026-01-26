@@ -4,19 +4,23 @@
 # ----------------------------------
 # Master test script that runs all integration tests across all RAID3 backends.
 #
-# This script runs all 5 test suites:
+# This script runs all test suites:
 #   - compare_raid3_with_single.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_heal.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_errors.sh (with minio only)
 #   - compare_raid3_with_single_rebuild.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_features.sh (with mixed only)
+#   - compare_raid3_with_single_stacking.sh (with local, minio)
+#   - serverside_operations.sh (with local, minio)
 #
 # Usage:
 #   compare_raid3_with_single_all.sh [options]
 #
 # Options:
-#   -v, --verbose    Show detailed output from individual test scripts
-#   -h, --help       Display this help text
+#   --storage-type <local|minio|mixed>   Filter tests to run only for specified storage type.
+#                                        If not specified, runs all applicable storage types.
+#   -v, --verbose                        Show detailed output from individual test scripts
+#   -h, --help                          Display this help text
 #
 # Environment:
 #   RCLONE_CONFIG   Path to rclone configuration file.
@@ -35,9 +39,7 @@ SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
 VERBOSE=0
-
-# Storage types to test
-STORAGE_TYPES=("local" "minio" "mixed")
+STORAGE_TYPE_FILTER=""  # If set, only run tests for this storage type
 
 # Test scripts and their storage types
 # Format: "script_name:storage_type1,storage_type2,..."
@@ -46,7 +48,9 @@ TEST_SCRIPTS=(
   "compare_raid3_with_single_heal.sh:local,minio,mixed"
   "compare_raid3_with_single_errors.sh:minio"
   "compare_raid3_with_single_rebuild.sh:local,minio,mixed"
-  "compare_raid3_with_single_features.sh:local,minio,mixed"
+  "compare_raid3_with_single_features.sh:mixed"
+  "compare_raid3_with_single_stacking.sh:local,minio"
+  "serverside_operations.sh:local,minio"
 )
 
 # ---------------------------- helper functions ------------------------------
@@ -56,8 +60,10 @@ usage() {
 Usage: ${SCRIPT_NAME} [options]
 
 Options:
-  -v, --verbose    Show detailed output from individual test scripts
-  -h, --help       Display this help text
+  --storage-type <local|minio|mixed>   Filter tests to run only for specified storage type.
+                                        If not specified, runs all applicable storage types.
+  -v, --verbose                        Show detailed output from individual test scripts
+  -h, --help                          Display this help text
 
 This script runs all integration tests across all RAID3 backends:
   - compare_raid3_with_single.sh (local, minio, mixed)
@@ -65,9 +71,14 @@ This script runs all integration tests across all RAID3 backends:
   - compare_raid3_with_single_errors.sh (minio only)
   - compare_raid3_with_single_rebuild.sh (local, minio, mixed)
   - compare_raid3_with_single_features.sh (mixed only)
+  - compare_raid3_with_single_stacking.sh (local, minio)
+  - serverside_operations.sh (local, minio)
 
 Each test suite is run with the appropriate storage types, and only
 pass/fail status is shown unless --verbose is used.
+
+If --storage-type is specified, only tests that support that storage type
+will be run.
 EOF
 }
 
@@ -128,6 +139,26 @@ run_test_script() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      --storage-type)
+        shift
+        [[ $# -gt 0 ]] || { echo "ERROR: --storage-type requires an argument" >&2; usage >&2; exit 1; }
+        STORAGE_TYPE_FILTER="$1"
+        if [[ "${STORAGE_TYPE_FILTER}" != "local" && "${STORAGE_TYPE_FILTER}" != "minio" && "${STORAGE_TYPE_FILTER}" != "mixed" ]]; then
+          echo "ERROR: Invalid storage type '${STORAGE_TYPE_FILTER}'. Expected 'local', 'minio', or 'mixed'." >&2
+          usage >&2
+          exit 1
+        fi
+        shift
+        ;;
+      --storage-type=*)
+        STORAGE_TYPE_FILTER="${1#*=}"
+        if [[ "${STORAGE_TYPE_FILTER}" != "local" && "${STORAGE_TYPE_FILTER}" != "minio" && "${STORAGE_TYPE_FILTER}" != "mixed" ]]; then
+          echo "ERROR: Invalid storage type '${STORAGE_TYPE_FILTER}'. Expected 'local', 'minio', or 'mixed'." >&2
+          usage >&2
+          exit 1
+        fi
+        shift
+        ;;
       -v|--verbose)
         VERBOSE=1
         shift
@@ -157,6 +188,9 @@ main() {
   
   log "=========================================="
   log "Running all RAID3 integration tests"
+  if [[ -n "${STORAGE_TYPE_FILTER}" ]]; then
+    log "Storage type filter: ${STORAGE_TYPE_FILTER}"
+  fi
   log "=========================================="
   echo ""
   
@@ -189,6 +223,11 @@ main() {
     
     # Run test for each storage type
     for storage_type in "${storage_types_array[@]}"; do
+      # Filter by storage type if specified
+      if [[ -n "${STORAGE_TYPE_FILTER}" && "${storage_type}" != "${STORAGE_TYPE_FILTER}" ]]; then
+        continue
+      fi
+      
       total_tests=$((total_tests + 1))
       
       # For features script, we need to pass the test name
@@ -263,4 +302,3 @@ main() {
 
 # Run main function
 main "$@"
-

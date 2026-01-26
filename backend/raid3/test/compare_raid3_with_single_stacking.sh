@@ -554,6 +554,20 @@ Line 4: This file should be encrypted and split into particles correctly."
   return 0
 }
 
+run_all_tests() {
+  local tests=("stacking")
+  local name
+  for name in "${tests[@]}"; do
+    log_info "suite" "Running '${name}'"
+    COMMAND_ARG="${name}"
+    if ! run_single_test; then
+      print_test_summary
+      die "Test '${name}' failed."
+    fi
+  done
+  COMMAND_ARG=""
+}
+
 run_single_test() {
   set_remotes_for_storage_type
   
@@ -619,9 +633,9 @@ main() {
     test)
       reset_test_results
       if [[ -z "${COMMAND_ARG}" ]]; then
-        if ! run_single_test; then
+        if ! run_all_tests; then
           print_test_summary
-          die "Test 'stacking' failed."
+          die "One or more tests failed."
         fi
       else
         if ! run_single_test; then
