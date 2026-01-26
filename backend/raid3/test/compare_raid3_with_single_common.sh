@@ -393,6 +393,25 @@ endpoint = http://127.0.0.1:${MINIO_SINGLE_PORT}
 acl = private
 no_check_bucket = false
 max_retries = 1
+
+# Crypt backends for stacking tests with MinIO
+# cryptminiosingle wraps miniosingle
+[cryptminiosingle]
+type = crypt
+remote = ${MINIO_SINGLE_REMOTE}:
+filename_encryption = standard
+directory_name_encryption = true
+password = ${CRYPT_PASSWORD_OBSCURED}
+password2 = ${CRYPT_SALT_OBSCURED}
+
+# cryptminioraid3 wraps minioraid3
+[cryptminioraid3]
+type = crypt
+remote = minioraid3:
+filename_encryption = standard
+directory_name_encryption = true
+password = ${CRYPT_PASSWORD_OBSCURED}
+password2 = ${CRYPT_SALT_OBSCURED}
 EOF
   
   log_pass "config" "Config file created successfully: ${config_file}"

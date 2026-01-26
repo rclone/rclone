@@ -122,6 +122,12 @@ if [[ -f "${CONFIG_FILE}" ]]; then
   elif ! grep -q "^\[cryptlocalraid3\]" "${CONFIG_FILE}"; then
     log_info "setup" "Config file exists but missing crypt backends - will regenerate"
     NEEDS_REGENERATION=1
+  elif ! grep -q "^\[cryptminiosingle\]" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file exists but missing crypt minio backends - will regenerate"
+    NEEDS_REGENERATION=1
+  elif ! grep -q "^\[cryptminioraid3\]" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file exists but missing crypt minio backends - will regenerate"
+    NEEDS_REGENERATION=1
   elif grep -qE "^even = localeven:(/Users/|/home/)" "${CONFIG_FILE}" || \
        grep -qE "^remote = (/Users/|/home/)" "${CONFIG_FILE}"; then
     log_info "setup" "Config file contains hardcoded absolute paths - will regenerate"
