@@ -44,7 +44,7 @@ omit symbol table and debug information, reducing size by about 25% on Linux and
 
 Note that on macOS and Windows the mount functions will not be available unless
 you add additional argument `-tags cmount`. On Windows this also requires you to
-first install the third party utility [WinFsp](http://www.secfs.net/winfsp/),
+first install the third party utility [WinFsp](https://winfsp.dev),
 with the "Developer" feature selected, and to set environment variable CPATH
 pointing to the fuse include directory within the WinFsp installation
 (typically `C:\Program Files (x86)\WinFsp\inc\fuse`). See also the
