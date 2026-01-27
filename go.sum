@@ -683,6 +683,8 @@ github.com/willscott/go-nfs-client v0.0.0-20251022144359-801f10d98886 h1:DtrBtkg
 github.com/willscott/go-nfs-client v0.0.0-20251022144359-801f10d98886/go.mod h1:Tq++Lr/FgiS3X48q5FETemXiSLGuYMQT2sPjYNPJSwA=
 github.com/winfsp/cgofuse v1.6.1-0.20250813110601-7d90b0992471 h1:aSOo0k+aLWdhUQiUxzv4cZ7cUp3OLP+Qx7cjs6OUxME=
 github.com/winfsp/cgofuse v1.6.1-0.20250813110601-7d90b0992471/go.mod h1:uxjoF2jEYT3+x+vC2KJddEGdk/LU8pRowXmyVMHSV5I=
+github.com/winfsp/cgofuse v1.6.1-0.20260126094232-f2c4fccdb286 h1:tw5GqRXqExB/xghPoPLtVujBe9w9Pg1G78tvXCJNJAA=
+github.com/winfsp/cgofuse v1.6.1-0.20260126094232-f2c4fccdb286/go.mod h1:uxjoF2jEYT3+x+vC2KJddEGdk/LU8pRowXmyVMHSV5I=
 github.com/wk8/go-ordered-map/v2 v2.1.8 h1:5h/BUHu93oj4gIdvHHHGsScSTMijfx5PeYkE/fJgbpc=
 github.com/wk8/go-ordered-map/v2 v2.1.8/go.mod h1:5nJHM5DyteebpVlHnWMV0rPz6Zp7+xBAnxjb1X5vnTw=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
