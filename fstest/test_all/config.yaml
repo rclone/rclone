@@ -675,6 +675,11 @@ backends:
      # with the parent backend having a different precision.
      - TestServerSideCopyOverSelf
      - TestServerSideMoveOverSelf
+ - backend: "internxt"
+   remote: "TestInternxt:"
+   fastlist: false
+   ignore:
+     - TestRWFileHandleWriteNoWrite
  - backend:  "drime"
    remote:   "TestDrime:"
    ignoretests:
