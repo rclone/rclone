@@ -1,4 +1,5 @@
 // Package local provides a filesystem interface
+
 package local
 
 import (
@@ -329,6 +330,12 @@ only useful for reading.
 				Advanced: true,
 				Default:  encoder.OS,
 			},
+			{
+				Name:     "preserve_hlinks",
+				Default:  false,
+				Help:     "Preserve hard links when syncing",
+				Advanced: true,
+			},
 		},
 	}
 	fs.Register(fsi)
@@ -353,6 +360,7 @@ type Options struct {
 	Hashes            fs.CommaSepList      `config:"hashes"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	NoClone           bool                 `config:"no_clone"`
+	PreserveHLinks    bool                 `config:"preserve_hlinks"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -371,6 +379,8 @@ type Fs struct {
 	// do os.Lstat or os.Stat
 	lstat        func(name string) (os.FileInfo, error)
 	objectMetaMu sync.RWMutex // global lock for Object metadata
+
+	hlTracker fs.HLinkTracker
 }
 
 // Object represents a local filesystem object
@@ -379,10 +389,11 @@ type Object struct {
 	remote string // The remote path (encoded path)
 	path   string // The local path (OS path)
 	// When using these items the fs.objectMetaMu must be held
-	size    int64 // file metadata - always present
-	mode    os.FileMode
-	modTime time.Time
-	hashes  map[hash.Type]string // Hashes
+	size      int64 // file metadata - always present
+	mode      os.FileMode
+	modTime   time.Time
+	hashes    map[hash.Type]string // Hashes
+	hlinkInfo any
 	// these are read only and don't need the mutex held
 	translatedLink bool // Is this object a translated link
 }
@@ -506,6 +517,51 @@ func (f *Fs) String() string {
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
 	return f.features
+}
+
+func (f *Fs) ShouldPreserveLinks() bool {
+	return f.opt.PreserveHLinks
+}
+
+func (f *Fs) HLink(ctx context.Context, src string, dst string) error {
+	localSrc := f.localPath(src)
+	localDst := f.localPath(dst)
+
+	err := file.MkdirAll(path.Dir(localDst), 0777)
+	if err != nil {
+		return err
+	}
+
+	err = os.Link(localSrc, localDst)
+	if errors.Is(err, os.ErrExist) {
+		err = os.Remove(localDst)
+
+		if err != nil {
+			return err
+		}
+
+		err = os.Link(localSrc, localDst)
+	}
+
+	return err
+}
+
+func (f *Fs) HLinkID(ctx context.Context, tgt fs.Object) (any, bool) {
+	obj, isObj := tgt.(*Object)
+
+	if !isObj {
+		fs.Debugf(f, "%v is not a *local.Object", obj)
+	}
+
+	return obj.HLinkInfo()
+}
+
+func (f *Fs) RegisterLinkRoot(ctx context.Context, src fs.Object, fsrc fs.Hardlinker, dst fs.Object, dstPath string, willTransfer bool) (bool, error) {
+	return f.hlTracker.RegisterHLinkRoot(ctx, src, fsrc, dst, f, dstPath, willTransfer)
+}
+
+func (f *Fs) NotifyLinkRootTransferComplete(ctx context.Context, src fs.Object, fsrc fs.Hardlinker, dst fs.Object) error {
+	return f.hlTracker.FlushLinkrootLinkQueue(ctx, src, fsrc, dst, f)
 }
 
 // caseInsensitive returns whether the remote is case insensitive or not
@@ -1208,6 +1264,13 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
+// returns HLinkInfo, hasLinkInfo
+func (o *Object) HLinkInfo() (any, bool) {
+	o.fs.objectMetaMu.RLock()
+	defer o.fs.objectMetaMu.RUnlock()
+	return o.hlinkInfo, o.hlinkInfo != nil
+}
+
 // ModTime returns the modification time of the object
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	o.fs.objectMetaMu.RLock()
@@ -1591,6 +1654,8 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	o.modTime = readTime(o.fs.opt.TimeType, info)
 	o.mode = info.Mode()
 	o.fs.objectMetaMu.Unlock()
+
+	o.hlinkInfo = getHLinkInfo(o.path, info)
 	// Read the size of the link.
 	//
 	// The value in info.Size() is not always correct
