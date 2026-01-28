@@ -59,7 +59,7 @@ Here is an overview of the major features of each cloud storage system.
 | Proton Drive                 | SHA1              | R/W     | No               | No              | R         | -        |
 | QingStor                     | MD5               | - ⁹     | No               | No              | R/W       | -        |
 | Quatrix by Maytech           | -                 | R/W     | No               | No              | -         | -        |
-| Seafile                      | -                 | -       | No               | No              | -         | -        |
+| Seafile                      | -                 | R       | No               | No              | -         | -        |
 | SFTP                         | MD5, SHA1 ²       | DR/W    | Depends          | No              | -         | -        |
 | Shade                        | -                 | -       | Yes              | No              | -         | -        |
 | Sia                          | -                 | -       | No               | No              | -         | -        |
