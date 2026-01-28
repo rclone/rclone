@@ -39,6 +39,7 @@ Here is an overview of the major features of each cloud storage system.
 | HTTP                         | -                 | R       | No               | No              | R         | R        |
 | iCloud Drive                 | -                 | R       | No               | No              | -         | -        |
 | Internet Archive             | MD5, SHA1, CRC32  | R/W ¹¹  | No               | No              | -         | RWU      |
+| Internxt                     | -                 | -       | No               | No              | -         | -        |
 | Jottacloud                   | MD5               | R/W     | Yes              | No              | R         | RW       |
 | Koofr                        | MD5               | -       | Yes              | No              | -         | -        |
 | Linkbox                      | -                 | R       | No               | No              | -         | -        |

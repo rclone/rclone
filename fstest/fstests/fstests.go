@@ -701,6 +701,7 @@ func Run(t *testing.T, opt *Opt) {
 					if opt.SkipLeadingDot && test.name == "leading dot" {
 						t.Skip("Skipping " + test.name)
 					}
+
 					// turn raw strings into Standard encoding
 					fileName := encoder.Standard.Encode(test.path)
 					dirName := fileName

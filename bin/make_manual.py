@@ -61,6 +61,7 @@ docs = [
     "imagekit.md",
     "iclouddrive.md",
     "internetarchive.md",
+    "internxt.md",
     "jottacloud.md",
     "koofr.md",
     "linkbox.md",
