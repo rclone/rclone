@@ -11,7 +11,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.3
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azfile v1.5.3
 	github.com/Azure/go-ntlmssp v0.0.2-0.20251110135918-10b7b7e7cd26
-	github.com/FilenCloudDienste/filen-sdk-go v0.0.34
+	github.com/FilenCloudDienste/filen-sdk-go v0.0.35
 	github.com/Files-com/files-sdk-go/v3 v3.2.264
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
 	github.com/a1ex3/zstd-seekable-format-go/pkg v0.10.0
@@ -81,7 +81,7 @@ require (
 	github.com/t3rm1n4l/go-mega v0.0.0-20251031123324-a804aaa87491
 	github.com/unknwon/goconfig v1.0.0
 	github.com/willscott/go-nfs v0.0.3
-	github.com/winfsp/cgofuse v1.6.1-0.20250813110601-7d90b0992471
+	github.com/winfsp/cgofuse v1.6.1-0.20260126094232-f2c4fccdb286
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	github.com/xanzy/ssh-agent v0.3.3
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
@@ -155,8 +155,8 @@ require (
 	github.com/creasty/defaults v1.8.0 // indirect
 	github.com/cronokirby/saferith v0.33.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/dromara/dongle v1.0.1 // indirect
+	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ebitengine/purego v0.9.1 // indirect
 	github.com/emersion/go-message v0.18.2 // indirect

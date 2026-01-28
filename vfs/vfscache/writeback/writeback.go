@@ -254,7 +254,7 @@ func (wb *WriteBack) SetID(pid *Handle) {
 //
 // Use SetID to create Handles in advance of calling Add.
 //
-// If modified is false then it it doesn't cancel a pending upload if
+// If modified is false then it doesn't cancel a pending upload if
 // there is one as there is no need.
 func (wb *WriteBack) Add(id Handle, name string, size int64, modified bool, putFn PutFn) Handle {
 	wb.mu.Lock()
