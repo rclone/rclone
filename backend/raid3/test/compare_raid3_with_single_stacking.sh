@@ -221,7 +221,7 @@ get_relative_path() {
   local test_dir="${SCRIPT_DIR}"
   # If path is within test directory, make it relative
   if [[ "${abs_path}" == "${test_dir}"/* ]]; then
-    echo "${abs_path#${test_dir}/}"
+    echo "${abs_path#"${test_dir}"/}"
   else
     # If path is outside test directory, keep absolute (shouldn't happen in normal case)
     echo "${abs_path}"
@@ -253,7 +253,7 @@ count_files_in_remote() {
   if [[ -n "${ls_output}" ]]; then
     # Filter to only lines that contain a number (file size), which indicates a file listing
     # Exclude .DS_Store files which are macOS system files
-    count=$(echo "${ls_output}" | grep -E "[0-9]" | grep -v "\.DS_Store" | wc -l | tr -d ' ')
+    count=$(echo "${ls_output}" | grep -v "\.DS_Store" | grep -E "[0-9]" | grep -c . 2>/dev/null || echo "0")
   fi
   
   echo "${count}"

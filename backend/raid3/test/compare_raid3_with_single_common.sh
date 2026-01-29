@@ -1,5 +1,6 @@
 # Shared helpers for raid3 comparison and rebuild scripts.
 # This file is sourced by compare_raid3_with_single*.sh variants.
+# shellcheck shell=bash
 
 # Check if running on native Windows (cmd.exe/PowerShell)
 # Note: Git Bash (OSTYPE=msys) and Cygwin (OSTYPE=cygwin) are allowed as they provide Unix-like environments
@@ -70,7 +71,7 @@ LOCAL_RAID3_DIRS=(
   "${LOCAL_ODD_DIR}"
   "${LOCAL_PARITY_DIR}"
 )
-LOCAL_SINGLE_DIR="${LOCAL_SINGLE_DIR}"
+# LOCAL_SINGLE_DIR from compare_raid3_env.sh
 LOCAL_RAID3_REMOTES=(
   "${LOCAL_EVEN_REMOTE}"
   "${LOCAL_ODD_REMOTE}"
@@ -82,7 +83,7 @@ MINIO_RAID3_DIRS=(
   "${MINIO_ODD_DIR}"
   "${MINIO_PARITY_DIR}"
 )
-MINIO_SINGLE_DIR="${MINIO_SINGLE_DIR}"
+# MINIO_SINGLE_DIR from compare_raid3_env.sh
 MINIO_RAID3_REMOTES=(
   "${MINIO_EVEN_REMOTE}"
   "${MINIO_ODD_REMOTE}"
@@ -175,7 +176,7 @@ ensure_rclone_config() {
         "" \
         "Please run:" \
         "  cd ${SCRIPT_DIR}" \
-        "  ./setup.sh" \
+        "  ${setup_script}" \
         "" \
         "This will create the configuration file: ${RCLONE_CONFIG}"
   fi
@@ -208,7 +209,7 @@ create_rclone_config() {
     local test_dir="${SCRIPT_DIR}"
     # If path is within test directory, make it relative
     if [[ "${abs_path}" == "${test_dir}"/* ]]; then
-      echo "${abs_path#${test_dir}/}"
+      echo "${abs_path#"${test_dir}"/}"
     else
       # If path is outside test directory, keep absolute (shouldn't happen in normal case)
       echo "${abs_path}"
