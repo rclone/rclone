@@ -816,15 +816,13 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 		if err != nil {
 			return nil, err
 		}
-		info, meta, err = f.createDir(ctx, parentID, dir, leaf, metadata)
+		_, meta, err = f.createDir(ctx, parentID, dir, leaf, metadata)
 		if err != nil {
 			return nil, err
 		}
-		if f.driveType != driveTypePersonal {
-			// for some reason, OneDrive Business needs this extra step to set modtime, while Personal does not. Seems like a bug...
-			fs.Debugf(dir, "setting time %v", meta.mtime)
-			info, err = meta.Write(ctx, false)
-		}
+		// for some reason, OneDrive Business and Personal needs this extra step to set modtime. Seems like a bug...
+		fs.Debugf(dir, "setting time %v", meta.mtime)
+		info, err = meta.Write(ctx, false)
 	} else if err == nil {
 		// Directory exists and needs updating
 		info, meta, err = f.updateDir(ctx, dirID, dir, metadata)
