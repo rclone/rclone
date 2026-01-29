@@ -159,7 +159,7 @@ func (f *Fs) TestReadMetadata(t *testing.T, r *fstest.Run) {
 		if slices.Contains(optionals, k) {
 			continue
 		}
-		if k == "description" && f.driveType != driveTypePersonal {
+		if k == "description" {
 			continue // not supported
 		}
 		gotV, ok := actualMeta[k]
@@ -196,7 +196,7 @@ func (f *Fs) TestDirectoryMetadata(t *testing.T, r *fstest.Run) {
 			if slices.Contains(optionals, k) {
 				continue
 			}
-			if k == "description" && f.driveType != driveTypePersonal {
+			if k == "description" {
 				continue // not supported
 			}
 			gotV, ok := actualMeta[k]
@@ -417,9 +417,7 @@ func (f *Fs) compareMeta(t *testing.T, expectedMeta, actualMeta fs.Metadata, ign
 			compareTimeStrings(t, k, v, gotV, time.Second)
 			continue
 		case "description":
-			if f.driveType != driveTypePersonal {
-				continue // not supported
-			}
+			continue // not supported
 		}
 		assert.True(t, ok, fmt.Sprintf("expected metadata key is missing: %v", k))
 		assert.Equal(t, v, gotV, actualMeta)
