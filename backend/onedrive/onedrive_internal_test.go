@@ -136,11 +136,6 @@ func (f *Fs) TestReadPermissions(t *testing.T, r *fstest.Run) {
 	_, expectedMeta := f.putWithMeta(ctx, t, &file1, []*api.PermissionsType{}) // return var intentionally switched here
 	permissions := defaultPermissions(f.driveType)
 	_, actualMeta := f.putWithMeta(ctx, t, &file1, permissions)
-	if f.driveType == driveTypePersonal {
-		perms, ok := actualMeta["permissions"]
-		assert.False(t, ok, fmt.Sprintf("permissions metadata key was unexpectedly found: %v", perms))
-		return
-	}
 	assert.JSONEq(t, expectedMeta["permissions"], actualMeta["permissions"])
 }
 
