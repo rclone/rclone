@@ -596,12 +596,10 @@ func (m *Metadata) addPermission(ctx context.Context, p *api.PermissionsType) (n
 
 	req := &api.AddPermissionsRequest{
 		Recipients:    fillRecipients(p, m.fs.driveType),
-		RequireSignIn: m.fs.driveType != driveTypePersonal, // personal and business have conflicting requirements
+		RequireSignIn: true,
 		Roles:         p.Roles,
 	}
-	if m.fs.driveType != driveTypePersonal {
-		req.RetainInheritedPermissions = false // not supported for personal
-	}
+	req.RetainInheritedPermissions = false
 
 	if p.Link != nil && p.Link.Scope == api.AnonymousScope {
 		link, err := m.fs.PublicLink(ctx, m.remote, fs.DurationOff, false)
