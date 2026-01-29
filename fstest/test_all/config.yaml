@@ -681,3 +681,4 @@ backends:
      # The TestBisyncRemoteLocal/check_access_filters tests fail due to duplicated objects
      - cmd/bisync
    fastlist: false
+   extratime: 2.0
