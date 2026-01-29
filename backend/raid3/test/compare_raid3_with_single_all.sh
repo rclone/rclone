@@ -12,6 +12,7 @@
 #   - compare_raid3_with_single_features.sh (with mixed only)
 #   - compare_raid3_with_single_stacking.sh (with local, minio)
 #   - serverside_operations.sh (with local, minio)
+#   - performance_test.sh (with local, minio)
 #
 # Usage:
 #   compare_raid3_with_single_all.sh [options]
@@ -51,6 +52,7 @@ TEST_SCRIPTS=(
   "compare_raid3_with_single_features.sh:mixed"
   "compare_raid3_with_single_stacking.sh:local,minio"
   "serverside_operations.sh:local,minio"
+  "performance_test.sh:local,minio"
 )
 
 # ---------------------------- helper functions ------------------------------
@@ -73,6 +75,7 @@ This script runs all integration tests across all RAID3 backends:
   - compare_raid3_with_single_features.sh (mixed only)
   - compare_raid3_with_single_stacking.sh (local, minio)
   - serverside_operations.sh (local, minio)
+  - performance_test.sh (local, minio)
 
 Each test suite is run with the appropriate storage types, and only
 pass/fail status is shown unless --verbose is used.
@@ -106,7 +109,8 @@ log_test_result() {
 run_test_script() {
   local script_path="$1"
   local storage_type="$2"
-  local script_name=$(basename "${script_path}")
+  local script_name
+  script_name=$(basename "${script_path}")
   
   log_test_start "${script_name}" "${storage_type}"
   
@@ -125,12 +129,15 @@ run_test_script() {
       return 1
     fi
   else
-    # Suppress output, only show errors
+    # Suppress output; on failure re-run with verbose to show reason
     if "${script_path}" "${cmd_args[@]}" >/dev/null 2>&1; then
       log_test_result "${script_name}" "${storage_type}" "PASS"
       return 0
     else
       log_test_result "${script_name}" "${storage_type}" "FAIL"
+      log "Re-running with verbose output to show failure reason:"
+      cmd_args+=("-v")
+      "${script_path}" "${cmd_args[@]}" || true
       return 1
     fi
   fi
@@ -257,6 +264,9 @@ main() {
               log_test_result "${script_name}" "${storage_type}" "FAIL"
               failed_tests=$((failed_tests + 1))
               failed_test_list+=("${script_name} (${storage_type})")
+              log "Re-running with verbose output to show failure reason:"
+              cmd_args+=("-v")
+              "${script_path}" "${cmd_args[@]}" || true
             fi
           fi
         else
