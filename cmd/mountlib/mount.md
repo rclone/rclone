@@ -66,7 +66,7 @@ at all, then 1 PiB is set as both the total and the free size.
 ### Installing on Windows
 
 To run `rclone @ on Windows`, you will need to
-download and install [WinFsp](http://www.secfs.net/winfsp/).
+download and install [WinFsp](https://winfsp.dev).
 
 [WinFsp](https://github.com/winfsp/winfsp) is an open-source
 Windows File System Proxy which makes it easy to write user space file
