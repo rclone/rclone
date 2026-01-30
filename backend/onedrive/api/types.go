@@ -133,7 +133,7 @@ type RemoteItemFacet struct {
 
 // FolderFacet groups folder-related data on OneDrive into a single structure
 type FolderFacet struct {
-	ChildCount int64 `json:"childCount"` // Number of children contained immediately within this container.
+	ChildCount int64 `json:"childCount,omitempty"` // Number of children contained immediately within this container.
 }
 
 // HashesType groups different types of hashes into a single structure, for an item on OneDrive.

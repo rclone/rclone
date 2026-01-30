@@ -2554,7 +2554,7 @@ func (o *Object) cancelUploadSession(ctx context.Context, url string) (err error
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.unAuth.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
 	return
