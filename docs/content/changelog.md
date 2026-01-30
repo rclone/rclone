@@ -6,6 +6,64 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.73.0 - 2026-01-30
+
+[See commits](https://github.com/rclone/rclone/compare/v1.72.0...v1.73.0)
+
+- New backends
+  - [Shade](/shade/) (jhasse-shade)
+  - [Drime](/drime/) (dougal)
+  - [Filen](/filen/) (Enduriel)
+  - [Internxt](/internxt/) (jzunigax2)
+  - New S3 providers
+    - [Bizfly Cloud Simple Storage](/s3/#bizflycloud) (vupn0712)
+- New Features
+  - docs: Add [Support Tiers](/tiers/) to the documentation (Nick Craig-Wood)
+  - rc: Add [operations/hashsumfile](/rc/#operations-hashsumfile) to sum a single file only (Nick Craig-Wood)
+  - serve webdav: Implement download directory as Zip (Leo)
+- Bug Fixes
+  - fs: fix bwlimit: correct reporting (Mikel Olasagasti Uranga)
+  - log: fix systemd adding extra newline (dougal)
+  - docs: fixes (albertony, darkdragon-001, Duncan Smart, hyusap, Marc-Philip, Nick Craig-Wood, vicerace, vyv03354, yuval-cloudinary, yy)
+  - serve s3: Make errors in `--s3-auth-key` fatal (Nick Craig-Wood)
+- Mount
+  - Fix OpenBSD mount support. (Nick Owens)
+- Azure Blob
+  - Add metadata and tags support across upload and copy paths (Cliff Frey)
+  - Factor the common auth into a library (Nick Craig-Wood)
+- Azurefiles
+  - Factor the common auth into a library (Nick Craig-Wood)
+- B2
+  - Support authentication with new bucket restricted application keys (DianaNites)
+- Drive
+  - Add `--drive-metadata-force-expansive-access` flag (Nick Craig-Wood)
+  - Fix crash when trying to creating shortcut to a Google doc (Nick Craig-Wood)
+- FTP
+  - Add http proxy authentication support (Nicolas Dessart)
+- Mega
+  - Reverts TLS workaround (necaran)
+- Memory
+  - Add `--memory-discard` flag for speed testing (Nick Craig-Wood)
+- OneDrive
+  - Fix cancelling multipart upload (Nick Craig-Wood)
+  - Fix setting modification time on directories for OneDrive Personal (Nick Craig-Wood)
+  - Fix OneDrive Personal no longer supports description (Nick Craig-Wood)
+  - Fix require sign in for OneDrive Personal (Nick Craig-Wood)
+  - Fix permissions on OneDrive Personal (Nick Craig-Wood)
+- Oracle Object Storage
+  - Eliminate unnecessary heap allocation (Qingwei Li)
+- Pcloud
+  - Add support for `ChangeNotify` to enable real-time updates in mount (masrlinu)
+- Protondrive
+  - Update to use forks of upstream modules to unblock development (Nick Craig-Wood)
+- S3
+  - Add ability to specify an IAM role for cross-account interaction (Vladislav Tropnikov)
+  - Linode: updated endpoints to use ISO 3166-1 alpha-2 standard (jbagwell-akamai)
+  - Fix Copy ignoring storage class (vupn0712)
+- SFTP
+  - Add http proxy authentication support (Nicolas Dessart)
+  - Eliminate unnecessary heap allocation (Qingwei Li)
+
 ## v1.72.1 - 2025-12-10
 
 [See commits](https://github.com/rclone/rclone/compare/v1.72.0...v1.72.1)

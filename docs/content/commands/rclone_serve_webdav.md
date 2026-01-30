@@ -803,6 +803,7 @@ rclone serve webdav remote:path [flags]
       --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 777)
       --disable-dir-list                       Disable HTML directory list on GET request for a directory
+      --disable-zip                            Disable zip download of directories
       --etag-hash string                       Which hash to use for the ETag, or auto or blank for off
       --file-perms FileMode                    File permissions (default 666)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)

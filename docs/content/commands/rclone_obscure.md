@@ -25,7 +25,7 @@ argument by passing a hyphen as an argument. This will use the first
 line of STDIN as the password not including the trailing newline.
 
 ```console
-echo "secretpassword" | rclone obscure -
+echo 'secretpassword' | rclone obscure -
 ```
 
 If there is no data on STDIN to read, rclone obscure will default to

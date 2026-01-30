@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "rclone" "1" "Nov 21, 2025" "User Manual" ""
+.TH "rclone" "1" "Jan 30, 2026" "User Manual" ""
 .hy
 .SH NAME
 .PP
@@ -239,6 +239,8 @@ Alibaba Cloud (Aliyun) Object Storage System (OSS)
 .IP \[bu] 2
 Amazon S3
 .IP \[bu] 2
+Bizfly Cloud Simple Storage
+.IP \[bu] 2
 Backblaze B2
 .IP \[bu] 2
 Box
@@ -263,6 +265,8 @@ Digi Storage
 .IP \[bu] 2
 Dreamhost
 .IP \[bu] 2
+Drime
+.IP \[bu] 2
 Dropbox
 .IP \[bu] 2
 Enterprise File Fabric
@@ -274,6 +278,8 @@ Fastmail Files
 FileLu Cloud Storage
 .IP \[bu] 2
 FileLu S5 (S3-Compatible Object Storage)
+.IP \[bu] 2
+Filen
 .IP \[bu] 2
 Files.com
 .IP \[bu] 2
@@ -306,6 +312,8 @@ iCloud Drive
 ImageKit
 .IP \[bu] 2
 Internet Archive
+.IP \[bu] 2
+Internxt
 .IP \[bu] 2
 Jottacloud
 .IP \[bu] 2
@@ -411,6 +419,8 @@ Servercore Object Storage
 .IP \[bu] 2
 SFTP
 .IP \[bu] 2
+Shade
+.IP \[bu] 2
 Sia
 .IP \[bu] 2
 SMB / CIFS
@@ -428,8 +438,6 @@ SugarSync
 Tencent Cloud Object Storage (COS)
 .IP \[bu] 2
 Uloz.to
-.IP \[bu] 2
-Uptobox
 .IP \[bu] 2
 Wasabi
 .IP \[bu] 2
@@ -1376,11 +1384,15 @@ DigitalOcean Spaces (https://rclone.org/s3/#digitalocean-spaces)
 .IP \[bu] 2
 Digi Storage (https://rclone.org/koofr/#digi-storage)
 .IP \[bu] 2
+Drime (https://rclone.org/drime/)
+.IP \[bu] 2
 Dropbox (https://rclone.org/dropbox/)
 .IP \[bu] 2
 Enterprise File Fabric (https://rclone.org/filefabric/)
 .IP \[bu] 2
 FileLu Cloud Storage (https://rclone.org/filelu/)
+.IP \[bu] 2
+Filen (https://rclone.org/filen/)
 .IP \[bu] 2
 Files.com (https://rclone.org/filescom/)
 .IP \[bu] 2
@@ -1408,6 +1420,8 @@ HTTP (https://rclone.org/http/)
 iCloud Drive (https://rclone.org/iclouddrive/)
 .IP \[bu] 2
 Internet Archive (https://rclone.org/internetarchive/)
+.IP \[bu] 2
+Internxt (https://rclone.org/internxt/)
 .IP \[bu] 2
 Jottacloud (https://rclone.org/jottacloud/)
 .IP \[bu] 2
@@ -1456,6 +1470,8 @@ Seafile (https://rclone.org/seafile/)
 .IP \[bu] 2
 SFTP (https://rclone.org/sftp/)
 .IP \[bu] 2
+Shade (https://rclone.org/shade/)
+.IP \[bu] 2
 Sia (https://rclone.org/sia/)
 .IP \[bu] 2
 SMB (https://rclone.org/smb/)
@@ -1467,8 +1483,6 @@ SugarSync (https://rclone.org/sugarsync/)
 Union (https://rclone.org/union/)
 .IP \[bu] 2
 Uloz.to (https://rclone.org/ulozto/)
-.IP \[bu] 2
-Uptobox (https://rclone.org/uptobox/)
 .IP \[bu] 2
 WebDAV (https://rclone.org/webdav/)
 .IP \[bu] 2
@@ -2862,6 +2876,12 @@ Note that \f[V]ls\f[R] and \f[V]lsl\f[R] recurse by default - use
 The other list commands \f[V]lsd\f[R],\f[V]lsf\f[R],\f[V]lsjson\f[R] do
 not recurse by default - use \f[V]-R\f[R] to make them recurse.
 .PP
+List commands prefer a recursive method that uses more memory but fewer
+transactions by default.
+Use \f[V]--disable ListR\f[R] to suppress the behavior.
+See \f[V]--fast-list\f[R] (https://rclone.org/docs/#fast-list) for more
+details.
+.PP
 Listing a nonexistent directory will produce an error except for remotes
 which can\[aq]t have empty directories (e.g.
 s3, swift, or gcs - the bucket-based remotes).
@@ -2988,6 +3008,12 @@ Note that \f[V]ls\f[R] and \f[V]lsl\f[R] recurse by default - use
 The other list commands \f[V]lsd\f[R],\f[V]lsf\f[R],\f[V]lsjson\f[R] do
 not recurse by default - use \f[V]-R\f[R] to make them recurse.
 .PP
+List commands prefer a recursive method that uses more memory but fewer
+transactions by default.
+Use \f[V]--disable ListR\f[R] to suppress the behavior.
+See \f[V]--fast-list\f[R] (https://rclone.org/docs/#fast-list) for more
+details.
+.PP
 Listing a nonexistent directory will produce an error except for remotes
 which can\[aq]t have empty directories (e.g.
 s3, swift, or gcs - the bucket-based remotes).
@@ -3099,6 +3125,12 @@ Note that \f[V]ls\f[R] and \f[V]lsl\f[R] recurse by default - use
 .PP
 The other list commands \f[V]lsd\f[R],\f[V]lsf\f[R],\f[V]lsjson\f[R] do
 not recurse by default - use \f[V]-R\f[R] to make them recurse.
+.PP
+List commands prefer a recursive method that uses more memory but fewer
+transactions by default.
+Use \f[V]--disable ListR\f[R] to suppress the behavior.
+See \f[V]--fast-list\f[R] (https://rclone.org/docs/#fast-list) for more
+details.
 .PP
 Listing a nonexistent directory will produce an error except for remotes
 which can\[aq]t have empty directories (e.g.
@@ -6260,14 +6292,14 @@ rclone convmv \[dq]stories/The Quick Brown Fox!.txt\[dq] --name-transform \[dq]a
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{YYYYMMDD}\[dq]
-// Output: stories/The Quick Brown Fox!-20251121
+// Output: stories/The Quick Brown Fox!-20260130
 \f[R]
 .fi
 .IP
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{macfriendlytime}\[dq]
-// Output: stories/The Quick Brown Fox!-2025-11-21 0505PM
+// Output: stories/The Quick Brown Fox!-2026-01-30 0825PM
 \f[R]
 .fi
 .IP
@@ -7643,6 +7675,12 @@ Note that \f[V]ls\f[R] and \f[V]lsl\f[R] recurse by default - use
 The other list commands \f[V]lsd\f[R],\f[V]lsf\f[R],\f[V]lsjson\f[R] do
 not recurse by default - use \f[V]-R\f[R] to make them recurse.
 .PP
+List commands prefer a recursive method that uses more memory but fewer
+transactions by default.
+Use \f[V]--disable ListR\f[R] to suppress the behavior.
+See \f[V]--fast-list\f[R] (https://rclone.org/docs/#fast-list) for more
+details.
+.PP
 Listing a nonexistent directory will produce an error except for remotes
 which can\[aq]t have empty directories (e.g.
 s3, swift, or gcs - the bucket-based remotes).
@@ -7796,9 +7834,8 @@ only, no files/objects.
 If \f[V]--files-only\f[R] is specified then files will be returned only,
 no directories.
 .PP
-If \f[V]--stat\f[R] is set then the the output is not an array of items,
-but instead a single JSON blob will be returned about the item pointed
-to.
+If \f[V]--stat\f[R] is set then the output is not an array of items, but
+instead a single JSON blob will be returned about the item pointed to.
 This will return an error if the item isn\[aq]t found, however on bucket
 based backends (like s3, gcs, b2, azureblob etc) if the item isn\[aq]t
 found it will return an empty directory, as it isn\[aq]t possible to
@@ -7849,6 +7886,12 @@ Note that \f[V]ls\f[R] and \f[V]lsl\f[R] recurse by default - use
 .PP
 The other list commands \f[V]lsd\f[R],\f[V]lsf\f[R],\f[V]lsjson\f[R] do
 not recurse by default - use \f[V]-R\f[R] to make them recurse.
+.PP
+List commands prefer a recursive method that uses more memory but fewer
+transactions by default.
+Use \f[V]--disable ListR\f[R] to suppress the behavior.
+See \f[V]--fast-list\f[R] (https://rclone.org/docs/#fast-list) for more
+details.
 .PP
 Listing a nonexistent directory will produce an error except for remotes
 which can\[aq]t have empty directories (e.g.
@@ -8015,7 +8058,7 @@ feature at all, then 1 PiB is set as both the total and the free size.
 .SS Installing on Windows
 .PP
 To run \f[V]rclone mount on Windows\f[R], you will need to download and
-install WinFsp (http://www.secfs.net/winfsp/).
+install WinFsp (https://winfsp.dev).
 .PP
 WinFsp (https://github.com/winfsp/winfsp) is an open-source Windows File
 System Proxy which makes it easy to write user space file systems for
@@ -9669,7 +9712,7 @@ feature at all, then 1 PiB is set as both the total and the free size.
 .SS Installing on Windows
 .PP
 To run \f[V]rclone nfsmount on Windows\f[R], you will need to download
-and install WinFsp (http://www.secfs.net/winfsp/).
+and install WinFsp (https://winfsp.dev).
 .PP
 WinFsp (https://github.com/winfsp/winfsp) is an open-source Windows File
 System Proxy which makes it easy to write user space file systems for
@@ -10889,7 +10932,7 @@ trailing newline.
 .IP
 .nf
 \f[C]
-echo \[dq]secretpassword\[dq] | rclone obscure -
+echo \[aq]secretpassword\[aq] | rclone obscure -
 \f[R]
 .fi
 .PP
@@ -15929,6 +15972,31 @@ docs (https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html)).
 If \f[V]--auth-key\f[R] is not provided then \f[V]serve s3\f[R] will
 allow anonymous access.
 .PP
+Like all rclone flags \f[V]--auth-key\f[R] can be set via environment
+variables, in this case \f[V]RCLONE_AUTH_KEY\f[R].
+Since this flag can be repeated, the input to \f[V]RCLONE_AUTH_KEY\f[R]
+is CSV encoded.
+Because the \f[V]accessKey,secretKey\f[R] has a comma in, this means it
+needs to be in quotes.
+.IP
+.nf
+\f[C]
+export RCLONE_AUTH_KEY=\[aq]\[dq]user,pass\[dq]\[aq]
+rclone serve s3 ...
+\f[R]
+.fi
+.PP
+Or to supply multiple identities:
+.IP
+.nf
+\f[C]
+export RCLONE_AUTH_KEY=\[aq]\[dq]user1,pass1\[dq],\[dq]user2,pass2\[dq]\[aq]
+rclone serve s3 ...
+\f[R]
+.fi
+.PP
+Setting this variable without quotes will produce an error.
+.PP
 Please note that some clients may require HTTPS endpoints.
 See the SSL docs for more information.
 .PP
@@ -18721,6 +18789,7 @@ rclone serve webdav remote:path [flags]
       --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 777)
       --disable-dir-list                       Disable HTML directory list on GET request for a directory
+      --disable-zip                            Disable zip download of directories
       --etag-hash string                       Which hash to use for the ETag, or auto or blank for off
       --file-perms FileMode                    File permissions (default 666)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
@@ -26787,7 +26856,7 @@ rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt=\[aq]{\[dq]CacheM
 \f[R]
 .fi
 .PP
-The vfsOpt are as described in options/get and can be seen in the the
+The vfsOpt are as described in options/get and can be seen in the
 \[dq]vfs\[dq] section when running and the mountOpt can be seen in the
 \[dq]mount\[dq] section:
 .IP
@@ -27187,6 +27256,51 @@ $ rclone rc --loopback operations/hashsum fs=bin hashType=MD5 download=true base
         \[dq]v1b_OlWCJO9LtNq3EIKkNQ==  bisect-go-rclone.sh\[dq],
         \[dq]VHbmHzHh4taXzgag8BAIKQ==  bisect-rclone.sh\[dq],
     ]
+}
+\f[R]
+.fi
+.PP
+See the hashsum (https://rclone.org/commands/rclone_hashsum/) command
+for more information on the above.
+.PP
+\f[B]Authentication is required for this call.\f[R]
+.SS operations/hashsumfile: Produces a hash for a single file.
+.PP
+Produces a hash for a single file using the hash named.
+.PP
+This takes the following parameters:
+.IP \[bu] 2
+fs - a remote name string e.g.
+\[dq]drive:\[dq]
+.IP \[bu] 2
+remote - a path within that remote e.g.
+\[dq]file.txt\[dq]
+.IP \[bu] 2
+hashType - type of hash to be used
+.IP \[bu] 2
+download - check by downloading rather than with hash (boolean)
+.IP \[bu] 2
+base64 - output the hashes in base64 rather than hex (boolean)
+.PP
+If you supply the download flag, it will download the data from the
+remote and create the hash on the fly.
+This can be useful for remotes that don\[aq]t support the given hash or
+if you really want to read all the data.
+.PP
+Returns:
+.IP \[bu] 2
+hash - hash for the file
+.IP \[bu] 2
+hashType - type of hash used
+.PP
+Example:
+.IP
+.nf
+\f[C]
+$ rclone rc --loopback operations/hashsumfile fs=/ remote=/bin/bash hashType=MD5 download=true base64=true
+{
+    \[dq]hashType\[dq]: \[dq]md5\[dq],
+    \[dq]hash\[dq]: \[dq]MDMw-fG2YXs7Uz5Nz-H68A==\[dq]
 }
 \f[R]
 .fi
@@ -28420,868 +28534,6 @@ underlying differences show through.
 .SS Features
 .PP
 Here is an overview of the major features of each cloud storage system.
-.PP
-.TS
-tab(@);
-lw(17.5n) cw(11.9n) cw(5.6n) cw(11.2n) cw(10.6n) cw(6.9n) cw(6.2n).
-T{
-Name
-T}@T{
-Hash
-T}@T{
-ModTime
-T}@T{
-Case Insensitive
-T}@T{
-Duplicate Files
-T}@T{
-MIME Type
-T}@T{
-Metadata
-T}
-_
-T{
-1Fichier
-T}@T{
-Whirlpool
-T}@T{
--
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-R
-T}@T{
--
-T}
-T{
-Akamai Netstorage
-T}@T{
-MD5, SHA256
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R
-T}@T{
--
-T}
-T{
-Amazon S3 (or S3 compatible)
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R/W
-T}@T{
-RWU
-T}
-T{
-Backblaze B2
-T}@T{
-SHA1
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R/W
-T}@T{
--
-T}
-T{
-Box
-T}@T{
-SHA1
-T}@T{
-R/W
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Citrix ShareFile
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Cloudinary
-T}@T{
-MD5
-T}@T{
-R
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
--
-T}@T{
--
-T}
-T{
-Dropbox
-T}@T{
-DBHASH ¹
-T}@T{
-R
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Enterprise File Fabric
-T}@T{
--
-T}@T{
-R/W
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-R/W
-T}@T{
--
-T}
-T{
-FileLu Cloud Storage
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-R
-T}@T{
--
-T}
-T{
-Files.com
-T}@T{
-MD5, CRC32
-T}@T{
-DR/W
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-R
-T}@T{
--
-T}
-T{
-FTP
-T}@T{
--
-T}@T{
-R/W ¹⁰
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Gofile
-T}@T{
-MD5
-T}@T{
-DR/W
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-R
-T}@T{
--
-T}
-T{
-Google Cloud Storage
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R/W
-T}@T{
--
-T}
-T{
-Google Drive
-T}@T{
-MD5, SHA1, SHA256
-T}@T{
-DR/W
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-R/W
-T}@T{
-DRWU
-T}
-T{
-Google Photos
-T}@T{
--
-T}@T{
--
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-R
-T}@T{
--
-T}
-T{
-HDFS
-T}@T{
--
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-HiDrive
-T}@T{
-HiDrive ¹²
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-HTTP
-T}@T{
--
-T}@T{
-R
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R
-T}@T{
-R
-T}
-T{
-iCloud Drive
-T}@T{
--
-T}@T{
-R
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Internet Archive
-T}@T{
-MD5, SHA1, CRC32
-T}@T{
-R/W ¹¹
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
-RWU
-T}
-T{
-Jottacloud
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-R
-T}@T{
-RW
-T}
-T{
-Koofr
-T}@T{
-MD5
-T}@T{
--
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Linkbox
-T}@T{
--
-T}@T{
-R
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Mail.ru Cloud
-T}@T{
-Mailru ⁶
-T}@T{
-R/W
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Mega
-T}@T{
--
-T}@T{
--
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
--
-T}@T{
--
-T}
-T{
-Memory
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Microsoft Azure Blob Storage
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R/W
-T}@T{
--
-T}
-T{
-Microsoft Azure Files Storage
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-R/W
-T}@T{
--
-T}
-T{
-Microsoft OneDrive
-T}@T{
-QuickXorHash ⁵
-T}@T{
-DR/W
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-R
-T}@T{
-DRW
-T}
-T{
-OpenDrive
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-Yes
-T}@T{
-Partial ⁸
-T}@T{
--
-T}@T{
--
-T}
-T{
-OpenStack Swift
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R/W
-T}@T{
--
-T}
-T{
-Oracle Object Storage
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R/W
-T}@T{
-RU
-T}
-T{
-pCloud
-T}@T{
-MD5, SHA1 ⁷
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-W
-T}@T{
--
-T}
-T{
-PikPak
-T}@T{
-MD5
-T}@T{
-R
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R
-T}@T{
--
-T}
-T{
-Pixeldrain
-T}@T{
-SHA256
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R
-T}@T{
-RW
-T}
-T{
-premiumize.me
-T}@T{
--
-T}@T{
--
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-R
-T}@T{
--
-T}
-T{
-put.io
-T}@T{
-CRC-32
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-R
-T}@T{
--
-T}
-T{
-Proton Drive
-T}@T{
-SHA1
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R
-T}@T{
--
-T}
-T{
-QingStor
-T}@T{
-MD5
-T}@T{
-- ⁹
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R/W
-T}@T{
--
-T}
-T{
-Quatrix by Maytech
-T}@T{
--
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Seafile
-T}@T{
--
-T}@T{
--
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-SFTP
-T}@T{
-MD5, SHA1 ²
-T}@T{
-DR/W
-T}@T{
-Depends
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Sia
-T}@T{
--
-T}@T{
--
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-SMB
-T}@T{
--
-T}@T{
-R/W
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-SugarSync
-T}@T{
--
-T}@T{
--
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Storj
-T}@T{
--
-T}@T{
-R
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Uloz.to
-T}@T{
-MD5, SHA256 ¹³
-T}@T{
--
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
--
-T}@T{
--
-T}
-T{
-Uptobox
-T}@T{
--
-T}@T{
--
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
--
-T}@T{
--
-T}
-T{
-WebDAV
-T}@T{
-MD5, SHA1 ³
-T}@T{
-R ⁴
-T}@T{
-Depends
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-Yandex Disk
-T}@T{
-MD5
-T}@T{
-R/W
-T}@T{
-No
-T}@T{
-No
-T}@T{
-R
-T}@T{
--
-T}
-T{
-Zoho WorkDrive
-T}@T{
--
-T}@T{
--
-T}@T{
-No
-T}@T{
-No
-T}@T{
--
-T}@T{
--
-T}
-T{
-The local filesystem
-T}@T{
-All
-T}@T{
-DR/W
-T}@T{
-Depends
-T}@T{
-No
-T}@T{
--
-T}@T{
-DRWU
-T}
-.TE
-.PP
-¹ Dropbox supports its own custom
-hash (https://www.dropbox.com/developers/reference/content-hash).
-This is an SHA256 sum of all the 4 MiB block SHA256s.
-.PP
-² SFTP supports checksums if the same login has shell access and
-\f[V]md5sum\f[R] or \f[V]sha1sum\f[R] as well as \f[V]echo\f[R] are in
-the remote\[aq]s PATH.
-.PP
-³ WebDAV supports hashes when used with Fastmail Files, Owncloud and
-Nextcloud only.
-.PP
-⁴ WebDAV supports modtimes when used with Fastmail Files, Owncloud and
-Nextcloud only.
-.PP
-⁵
-QuickXorHash (https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash)
-is Microsoft\[aq]s own hash.
-.PP
-⁶ Mail.ru uses its own modified SHA1 hash
-.PP
-⁷ pCloud only supports SHA1 (not MD5) in its EU region
-.PP
-⁸ Opendrive does not support creation of duplicate files using their web
-client interface or other stock clients, but the underlying storage
-platform has been determined to allow duplicate files, and it is
-possible to create them with \f[V]rclone\f[R].
-It may be that this is a mistake or an unsupported feature.
-.PP
-⁹ QingStor does not support SetModTime for objects bigger than 5 GiB.
-.PP
-¹⁰ FTP supports modtimes for the major FTP servers, and also others if
-they advertised required protocol extensions.
-See this (https://rclone.org/ftp/#modification-times) for more details.
-.PP
-¹¹ Internet Archive requires option \f[V]wait_archive\f[R] to be set to
-a non-zero value for full modtime support.
-.PP
-¹² HiDrive supports its own custom
-hash (https://static.hidrive.com/dev/0001).
-It combines SHA1 sums for each 4 KiB block hierarchically to a single
-top-level sum.
-.PP
-¹³ Uloz.to provides server-calculated MD5 hash upon file upload.
-MD5 and SHA256 hashes are client-calculated and stored as metadata
-fields.
 .SS Hash
 .PP
 The cloud storage system supports various hash types of the objects.
@@ -30196,1350 +29448,6 @@ See the metadata docs (https://rclone.org/docs/#metadata) for more info.
 .PP
 All rclone remotes support a base command set.
 Other features depend upon backend-specific capabilities.
-.PP
-.TS
-tab(@);
-lw(14.4n) cw(3.6n) cw(3.1n) cw(3.1n) cw(4.6n) cw(4.6n) cw(3.6n) cw(7.2n) lw(9.8n) cw(7.2n) cw(3.6n) cw(5.1n).
-T{
-Name
-T}@T{
-Purge
-T}@T{
-Copy
-T}@T{
-Move
-T}@T{
-DirMove
-T}@T{
-CleanUp
-T}@T{
-ListR
-T}@T{
-StreamUpload
-T}@T{
-MultithreadUpload
-T}@T{
-LinkSharing
-T}@T{
-About
-T}@T{
-EmptyDir
-T}
-_
-T{
-1Fichier
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-Akamai Netstorage
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-Amazon S3 (or S3 compatible)
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-Backblaze B2
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-Box
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Citrix ShareFile
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-Dropbox
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Cloudinary
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-Enterprise File Fabric
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-Files.com
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-FTP
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-Gofile
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Google Cloud Storage
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-Google Drive
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Google Photos
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-HDFS
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-HiDrive
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-HTTP
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-iCloud Drive
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-ImageKit
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-Internet Archive
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}
-T{
-Jottacloud
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Koofr
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Mail.ru Cloud
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Mega
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Memory
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-Microsoft Azure Blob Storage
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-Microsoft Azure Files Storage
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Microsoft OneDrive
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes ⁵
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-OpenDrive
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-OpenStack Swift
-T}@T{
-Yes ¹
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}
-T{
-Oracle Object Storage
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-pCloud
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-PikPak
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Pixeldrain
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-premiumize.me
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-put.io
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Proton Drive
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-QingStor
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-Quatrix by Maytech
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Seafile
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-SFTP
-T}@T{
-No
-T}@T{
-Yes ⁴
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Sia
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-SMB
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-SugarSync
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-Storj
-T}@T{
-Yes ²
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-Uloz.to
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}
-T{
-Uptobox
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}
-T{
-WebDAV
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes ³
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Yandex Disk
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-Zoho WorkDrive
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-T{
-The local filesystem
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}@T{
-No
-T}@T{
-Yes
-T}@T{
-Yes
-T}
-.TE
-.PP
-¹ Note Swift implements this in order to delete directory markers but it
-doesn\[aq]t actually have a quicker way of deleting files other than
-deleting them individually.
-.PP
-² Storj implements this efficiently only for entire buckets.
-If purging a directory inside a bucket, files are deleted individually.
-.PP
-³ StreamUpload is not supported with Nextcloud
-.PP
-⁴ Use the \f[V]--sftp-copy-is-hardlink\f[R] flag to enable.
-.PP
-⁵ Use the \f[V]--onedrive-delta\f[R] flag to enable.
 .SS Purge
 .PP
 This deletes a directory quicker than just deleting all the files in the
@@ -31625,6 +29533,235 @@ See rclone about command (https://rclone.org/commands/rclone_about/)
 The remote supports empty directories.
 See Limitations (https://rclone.org/bugs/#limitations) for details.
 Most Object/Bucket-based remotes do not support this.
+.SH Tiers
+.PP
+Rclone backends are divided into tiers to give users an idea of the
+stability of each backend.
+.PP
+.TS
+tab(@);
+l l l.
+T{
+Tier
+T}@T{
+Label
+T}@T{
+Intended meaning
+T}
+_
+T{
+T}@T{
+Core
+T}@T{
+Production-grade, first-class
+T}
+T{
+T}@T{
+Stable
+T}@T{
+Well-supported, minor gaps
+T}
+T{
+T}@T{
+Supported
+T}@T{
+Works for many uses; known caveats
+T}
+T{
+T}@T{
+Experimental
+T}@T{
+Use with care; expect gaps/changes
+T}
+T{
+T}@T{
+Deprecated
+T}@T{
+No longer maintained or supported
+T}
+.TE
+.SS Overview
+.PP
+Here is a summary of all backends:
+.SS Scoring
+.PP
+Here is how the backends are scored.
+.SS Features
+.PP
+These are useful optional features a backend should have in rough order
+of importance.
+Each one of these scores a point for the Features column.
+.IP \[bu] 2
+F1: Hash(es)
+.IP \[bu] 2
+F2: Modtime
+.IP \[bu] 2
+F3: Stream upload
+.IP \[bu] 2
+F4: Copy/Move
+.IP \[bu] 2
+F5: DirMove
+.PD 0
+.P
+.PD
+.IP \[bu] 2
+F6: Metadata
+.IP \[bu] 2
+F7: MultipartUpload
+.SS Tier
+.PP
+The tier is decided after determining these attributes.
+Some discretion is allowed in tiering as some of these attributes are
+more important than others.
+.PP
+.TS
+tab(@);
+lw(5.5n) lw(9.2n) lw(11.1n) lw(13.8n) lw(16.6n) lw(13.8n).
+T{
+Attr
+T}@T{
+T1: Core
+T}@T{
+T2: Stable
+T}@T{
+T3: Supported
+T}@T{
+T4: Experimental
+T}@T{
+T5: Incubator
+T}
+_
+T{
+Maintainers
+T}@T{
+>=2
+T}@T{
+>=1
+T}@T{
+>=1
+T}@T{
+>=0
+T}@T{
+>=0
+T}
+T{
+API source
+T}@T{
+Official
+T}@T{
+Official
+T}@T{
+Either
+T}@T{
+Either
+T}@T{
+Either
+T}
+T{
+Features (F1-F7)
+T}@T{
+>=5/7
+T}@T{
+>=4/7
+T}@T{
+>=3/7
+T}@T{
+>=2/7
+T}@T{
+N/A
+T}
+T{
+Integration tests
+T}@T{
+All Green
+T}@T{
+All green
+T}@T{
+Nearly all green
+T}@T{
+Some Flaky
+T}@T{
+N/A
+T}
+T{
+Error handling
+T}@T{
+Pacer
+T}@T{
+Pacer
+T}@T{
+Retries
+T}@T{
+Retries
+T}@T{
+N/A
+T}
+T{
+Data integrity
+T}@T{
+Hashes, alt, modtime
+T}@T{
+Hashes or alt
+T}@T{
+Hash OR modtime
+T}@T{
+Best-effort
+T}@T{
+N/A
+T}
+T{
+Perf baseline
+T}@T{
+Bench within 2x S3
+T}@T{
+Bench doc
+T}@T{
+Anecdotal OK
+T}@T{
+Optional
+T}@T{
+N/A
+T}
+T{
+Adoption
+T}@T{
+widely used
+T}@T{
+often used
+T}@T{
+some use
+T}@T{
+N/A
+T}@T{
+N/A
+T}
+T{
+Docs completeness
+T}@T{
+Full
+T}@T{
+Full
+T}@T{
+Basic
+T}@T{
+Minimal
+T}@T{
+Minimal
+T}
+T{
+Security
+T}@T{
+Principle-of-least-privilege
+T}@T{
+Reasonable scopes
+T}@T{
+Basic auth
+T}@T{
+Works
+T}@T{
+Works
+T}
+.TE
 .SH Global Flags
 .PP
 This describes the global flags available to every rclone command split
@@ -31741,7 +29878,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.72.0\[dq])
+      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.73.0\[dq])
 \f[R]
 .fi
 .SS Performance
@@ -31972,6 +30109,7 @@ Backend-only flags (these can be set in the config file also).
       --azureblob-client-id string                          The ID of the client in use
       --azureblob-client-secret string                      One of the service principal\[aq]s client secrets
       --azureblob-client-send-certificate-chain             Send the certificate chain when using certificate auth
+      --azureblob-connection-string string                  Storage Connection String
       --azureblob-copy-concurrency int                      Concurrency for multipart copy (default 512)
       --azureblob-copy-cutoff SizeSuffix                    Cutoff for switching to multipart copy (default 8Mi)
       --azureblob-delete-snapshots string                   Set to specify how to deal with snapshots on blob deletion
@@ -32008,7 +30146,7 @@ Backend-only flags (these can be set in the config file also).
       --azurefiles-client-id string                         The ID of the client in use
       --azurefiles-client-secret string                     One of the service principal\[aq]s client secrets
       --azurefiles-client-send-certificate-chain            Send the certificate chain when using certificate auth
-      --azurefiles-connection-string string                 Azure Files Connection String
+      --azurefiles-connection-string string                 Storage Connection String
       --azurefiles-description string                       Description of the remote
       --azurefiles-disable-instance-discovery               Skip requesting Microsoft Entra instance metadata
       --azurefiles-encoding Encoding                        The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8,Dot)
@@ -32020,12 +30158,13 @@ Backend-only flags (these can be set in the config file also).
       --azurefiles-msi-mi-res-id string                     Azure resource ID of the user-assigned MSI to use, if any
       --azurefiles-msi-object-id string                     Object ID of the user-assigned MSI to use, if any
       --azurefiles-password string                          The user\[aq]s password (obscured)
-      --azurefiles-sas-url string                           SAS URL
+      --azurefiles-sas-url string                           SAS URL for container level access only
       --azurefiles-service-principal-file string            Path to file containing credentials for use with a service principal
       --azurefiles-share-name string                        Azure Files Share Name
       --azurefiles-tenant string                            ID of the service principal\[aq]s tenant. Also called its directory ID
       --azurefiles-upload-concurrency int                   Concurrency for multipart uploads (default 16)
       --azurefiles-use-az                                   Use Azure CLI tool az for authentication
+      --azurefiles-use-emulator                             Uses local storage emulator if provided as \[aq]true\[aq]
       --azurefiles-use-msi                                  Use a managed service identity to authenticate (only works in Azure)
       --azurefiles-username string                          User name (usually an email address)
       --b2-account string                                   Account ID or Application Key ID
@@ -32127,6 +30266,16 @@ Backend-only flags (these can be set in the config file also).
       --doi-doi string                                      The DOI or the doi.org URL
       --doi-doi-resolver-api-url string                     The URL of the DOI resolver API to use
       --doi-provider string                                 DOI provider
+      --drime-access-token string                           API Access token
+      --drime-chunk-size SizeSuffix                         Chunk size to use for uploading (default 5Mi)
+      --drime-description string                            Description of the remote
+      --drime-encoding Encoding                             The encoding for the backend (default Slash,BackSlash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot)
+      --drime-hard-delete                                   Delete files permanently rather than putting them into the trash
+      --drime-list-chunk int                                Number of items to list in each call (default 1000)
+      --drime-root-folder-id string                         ID of the root folder
+      --drime-upload-concurrency int                        Concurrency for multipart uploads and copies (default 4)
+      --drime-upload-cutoff SizeSuffix                      Cutoff for switching to chunked upload (default 200Mi)
+      --drime-workspace-id string                           Account ID
       --drive-acknowledge-abuse                             Set to allow files which return cannotDownloadAbusiveFile to be downloaded
       --drive-allow-import-name-change                      Allow the filetype to change when uploading Google docs
       --drive-auth-owner-only                               Only consider files owned by the authenticated user
@@ -32147,6 +30296,7 @@ Backend-only flags (these can be set in the config file also).
       --drive-import-formats string                         Comma separated list of preferred formats for uploading Google docs
       --drive-keep-revision-forever                         Keep new head revision of each file forever
       --drive-list-chunk int                                Size of listing chunk 100-1000, 0 to disable (default 1000)
+      --drive-metadata-enforce-expansive-access             Whether the request should enforce expansive access rules
       --drive-metadata-labels Bits                          Control whether labels should be read or written in metadata (default off)
       --drive-metadata-owner Bits                           Control whether owner should be read or written in metadata (default read)
       --drive-metadata-permissions Bits                     Control whether permissions should be read or written in metadata (default off)
@@ -32215,6 +30365,17 @@ Backend-only flags (these can be set in the config file also).
       --filelu-description string                           Description of the remote
       --filelu-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,CrLf,Del,Ctl,LeftSpace,LeftPeriod,LeftTilde,LeftCrLfHtVt,RightSpace,RightPeriod,RightCrLfHtVt,InvalidUtf8,Dot,SquareBracket,Semicolon,Exclamation)
       --filelu-key string                                   Your FileLu Rclone key from My Account
+      --filen-api-key string                                API Key for your Filen account (obscured)
+      --filen-auth-version string                           Authentication Version (internal use only)
+      --filen-base-folder-uuid string                       UUID of Account Root Directory (internal use only)
+      --filen-description string                            Description of the remote
+      --filen-email string                                  Email of your Filen account
+      --filen-encoding Encoding                             The encoding for the backend (default Slash,Del,Ctl,InvalidUtf8,Dot)
+      --filen-master-keys string                            Master Keys (internal use only)
+      --filen-password string                               Password of your Filen account (obscured)
+      --filen-private-key string                            Private RSA Key (internal use only)
+      --filen-public-key string                             Public RSA Key (internal use only)
+      --filen-upload-concurrency int                        Concurrency for chunked uploads (default 16)
       --filescom-api-key string                             The API key used to authenticate with Files.com
       --filescom-description string                         Description of the remote
       --filescom-encoding Encoding                          The encoding for the backend (default Slash,BackSlash,Del,Ctl,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
@@ -32258,7 +30419,7 @@ Backend-only flags (these can be set in the config file also).
       --gcs-description string                              Description of the remote
       --gcs-directory-markers                               Upload an empty object with a trailing slash when a new directory is created
       --gcs-encoding Encoding                               The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
-      --gcs-endpoint string                                 Endpoint for the service
+      --gcs-endpoint string                                 Custom endpoint for the storage API. Leave blank to use the provider default
       --gcs-env-auth                                        Get GCP IAM credentials from runtime (environment variables or instance meta data if no env vars)
       --gcs-location string                                 Location for the newly created buckets
       --gcs-no-check-bucket                                 If set, don\[aq]t attempt to check the bucket exists or create it
@@ -32347,6 +30508,11 @@ Backend-only flags (these can be set in the config file also).
       --internetarchive-item-metadata stringArray           Metadata to be set on the IA item, this is different from file-level metadata that can be set using --metadata-set
       --internetarchive-secret-access-key string            IAS3 Secret Key (password)
       --internetarchive-wait-archive Duration               Timeout for waiting the server\[aq]s processing tasks (specifically archive and book_op) to finish (default 0s)
+      --internxt-description string                         Description of the remote
+      --internxt-email string                               Email of your Internxt account
+      --internxt-encoding Encoding                          The encoding for the backend (default Slash,BackSlash,CrLf,RightPeriod,InvalidUtf8,Dot)
+      --internxt-pass string                                Password (obscured)
+      --internxt-skip-hash-validation                       Skip hash validation when downloading files (default true)
       --jottacloud-auth-url string                          Auth server URL
       --jottacloud-client-credentials                       Use client credentials OAuth flow
       --jottacloud-client-id string                         OAuth Client Id
@@ -32409,6 +30575,7 @@ Backend-only flags (these can be set in the config file also).
       --mega-use-https                                      Use HTTPS for transfers
       --mega-user string                                    User name
       --memory-description string                           Description of the remote
+      --memory-discard                                      If set all writes will be discarded and reads will return an error
       --netstorage-account string                           Set the NetStorage account name
       --netstorage-description string                       Description of the remote
       --netstorage-host string                              Domain+path of NetStorage host to connect to
@@ -32584,6 +30751,10 @@ Backend-only flags (these can be set in the config file also).
       --s3-provider string                                  Choose your S3 provider
       --s3-region string                                    Region to connect to
       --s3-requester-pays                                   Enables requester pays option when interacting with S3 bucket
+      --s3-role-arn string                                  ARN of the IAM role to assume
+      --s3-role-external-id string                          External ID for assumed role
+      --s3-role-session-duration string                     Session duration for assumed role
+      --s3-role-session-name string                         Session name for assumed role
       --s3-sdk-log-mode Bits                                Set to debug the SDK (default Off)
       --s3-secret-access-key string                         AWS Secret Access Key (password)
       --s3-server-side-encryption string                    The server-side encryption algorithm used when storing this object in S3
@@ -32667,6 +30838,16 @@ Backend-only flags (these can be set in the config file also).
       --sftp-user string                                    SSH username (default \[dq]$USER\[dq])
       --sftp-xxh128sum-command string                       The command used to read XXH128 hashes
       --sftp-xxh3sum-command string                         The command used to read XXH3 hashes
+      --shade-api-key string                                An API key for your account
+      --shade-chunk-size SizeSuffix                         Chunk size to use for uploading (default 64Mi)
+      --shade-description string                            Description of the remote
+      --shade-drive-id string                               The ID of your drive, see this in the drive settings. Individual rclone configs must be made per drive
+      --shade-encoding Encoding                             The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --shade-endpoint string                               Endpoint for the service
+      --shade-max-upload-parts int                          Maximum amount of parts in a multipart upload (default 10000)
+      --shade-token string                                  JWT Token for performing Shade FS operations. Don\[aq]t set this value - rclone will set it automatically
+      --shade-token-expiry string                           JWT Token Expiration time. Don\[aq]t set this value - rclone will set it automatically
+      --shade-upload-concurrency int                        Concurrency for multipart uploads and copies. This is the number of chunks of the same file that are uploaded concurrently for multipart uploads and copies (default 4)
       --sharefile-auth-url string                           Auth server URL
       --sharefile-chunk-size SizeSuffix                     Upload chunk size (default 64Mi)
       --sharefile-client-credentials                        Use client credentials OAuth flow
@@ -32758,10 +30939,6 @@ Backend-only flags (these can be set in the config file also).
       --union-min-free-space SizeSuffix                     Minimum viable free space for lfs/eplfs policies (default 1Gi)
       --union-search-policy string                          Policy to choose upstream on SEARCH category (default \[dq]ff\[dq])
       --union-upstreams string                              List of space separated upstreams
-      --uptobox-access-token string                         Your access token
-      --uptobox-description string                          Description of the remote
-      --uptobox-encoding Encoding                           The encoding for the backend (default Slash,LtGt,DoubleQuote,BackQuote,Del,Ctl,LeftSpace,InvalidUtf8,Dot)
-      --uptobox-private                                     Set to make uploaded files private
       --webdav-auth-redirect                                Preserve authentication on redirect
       --webdav-bearer-token string                          Bearer token instead of user/pass (e.g. a Macaroon)
       --webdav-bearer-token-command string                  Command to run to get a bearer token
@@ -34968,7 +33145,19 @@ The following backends have known issues that need more investigation:
 \f[V]TestBisyncRemoteRemote/normalization\f[R] (https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
 .RE
 .IP \[bu] 2
-Updated: 2025-11-21-010037
+\f[V]TestSeafile\f[R] (\f[V]seafile\f[R])
+.RS 2
+.IP \[bu] 2
+\f[V]TestBisyncLocalRemote/volatile\f[R] (https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
+.RE
+.IP \[bu] 2
+\f[V]TestSeafileV6\f[R] (\f[V]seafile\f[R])
+.RS 2
+.IP \[bu] 2
+\f[V]TestBisyncLocalRemote/volatile\f[R] (https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafileV6-1.txt)
+.RE
+.IP \[bu] 2
+Updated: 2026-01-30-010015
 .PP
 The following backends either have not been tested recently or have
 known issues that are deemed unfixable for the time being:
@@ -34976,6 +33165,8 @@ known issues that are deemed unfixable for the time being:
 \f[V]TestArchive\f[R] (\f[V]archive\f[R])
 .IP \[bu] 2
 \f[V]TestCache\f[R] (\f[V]cache\f[R])
+.IP \[bu] 2
+\f[V]TestDrime\f[R] (\f[V]drime\f[R])
 .IP \[bu] 2
 \f[V]TestFileLu\f[R] (\f[V]filelu\f[R])
 .IP \[bu] 2
@@ -36882,6 +35073,8 @@ Cloudflare R2
 .IP \[bu] 2
 Arvan Cloud Object Storage (AOS)
 .IP \[bu] 2
+Bizfly Cloud Simple Storage
+.IP \[bu] 2
 Cubbit DS3
 .IP \[bu] 2
 DigitalOcean Spaces
@@ -37777,6 +35970,85 @@ that the \f[V]aws\f[R] CLI tool does and the other AWS SDKs.
 If none of these option actually end up providing \f[V]rclone\f[R] with
 AWS credentials then S3 interaction will be non-authenticated (see the
 anonymous access section for more info).
+.SS Assume Role (Cross-Account Access)
+.PP
+If you need to access S3 resources in a different AWS account, you can
+use IAM role assumption.
+This is useful for cross-account access scenarios where you have
+credentials in one account but need to access resources in another
+account.
+.PP
+To use assume role, configure the following parameters:
+.IP \[bu] 2
+\f[V]role_arn\f[R] - The ARN (Amazon Resource Name) of the IAM role to
+assume in the target account.
+Format: \f[V]arn:aws:iam::ACCOUNT-ID:role/ROLE-NAME\f[R]
+.IP \[bu] 2
+\f[V]role_session_name\f[R] (optional) - A name for the assumed role
+session.
+If not specified, rclone will generate one automatically.
+.IP \[bu] 2
+\f[V]role_session_duration\f[R] (optional) - Duration for which the
+assumed role credentials are valid.
+If not specified, AWS default duration will be used (typically 1 hour).
+.IP \[bu] 2
+\f[V]role_external_id\f[R] (optional) - An external ID required by the
+role\[aq]s trust policy for additional security.
+This is typically used when the role is accessed by a third party.
+.PP
+The assume role feature works with both direct credentials
+(\f[V]env_auth = false\f[R]) and environment-based authentication
+(\f[V]env_auth = true\f[R]).
+Rclone will first authenticate using the base credentials, then use
+those credentials to assume the specified role.
+.PP
+Example configuration for cross-account access:
+.IP
+.nf
+\f[C]
+[s3-cross-account]
+type = s3
+provider = AWS
+env_auth = true
+region = us-east-1
+role_arn = arn:aws:iam::123456789012:role/CrossAccountS3Role
+role_session_name = rclone-session
+role_external_id = unique-role-external-id-12345
+\f[R]
+.fi
+.PP
+In this example: - Base credentials are obtained from the environment
+(IAM role, credentials file, or environment variables) - These
+credentials are then used to assume the role
+\f[V]CrossAccountS3Role\f[R] in account \f[V]123456789012\f[R] - An
+external ID is provided for additional security as required by the
+role\[aq]s trust policy
+.PP
+The target role\[aq]s trust policy in the destination account must allow
+the source account or user to assume it.
+Example trust policy:
+.IP
+.nf
+\f[C]
+{
+  \[dq]Version\[dq]: \[dq]2012-10-17\[dq],
+  \[dq]Statement\[dq]: [
+    {
+      \[dq]Effect\[dq]: \[dq]Allow\[dq],
+      \[dq]Principal\[dq]: {
+        \[dq]AWS\[dq]: \[dq]arn:aws:iam::SOURCE-ACCOUNT-ID:root\[dq]
+      },
+      \[dq]Action\[dq]: \[dq]sts:AssumeRole\[dq],
+      \[dq]Condition\[dq]: {
+        \[dq]StringEquals\[dq]: {
+          \[dq]sts:ExternalID\[dq]: \[dq]unique-role-external-id-12345\[dq]
+        }
+      }
+    }
+  ]
+}
+\f[R]
+.fi
 .SS S3 Permissions
 .PP
 When using the \f[V]sync\f[R] subcommand of \f[V]rclone\f[R] the
@@ -37894,13 +36166,13 @@ all the files to be uploaded as multipart.
 .SS Standard options
 .PP
 Here are the Standard options specific to s3 (Amazon S3 Compliant
-Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, ChinaMobile,
-Cloudflare, Cubbit, DigitalOcean, Dreamhost, Exaba, FileLu, FlashBlade,
-GCS, Hetzner, HuaweiOBS, IBMCOS, IDrive, Intercolo, IONOS, Leviia,
-Liara, Linode, LyveCloud, Magalu, Mega, Minio, Netease, Outscale,
-OVHcloud, Petabox, Qiniu, Rabata, RackCorp, Rclone, Scaleway, SeaweedFS,
-Selectel, Servercore, SpectraLogic, StackPath, Storj, Synology,
-TencentCOS, Wasabi, Zata, Other).
+Storage Providers including AWS, Alibaba, ArvanCloud, BizflyCloud, Ceph,
+ChinaMobile, Cloudflare, Cubbit, DigitalOcean, Dreamhost, Exaba, FileLu,
+FlashBlade, GCS, Hetzner, HuaweiOBS, IBMCOS, IDrive, Intercolo, IONOS,
+Leviia, Liara, Linode, LyveCloud, Magalu, Mega, Minio, Netease,
+Outscale, OVHcloud, Petabox, Qiniu, Rabata, RackCorp, Rclone, Scaleway,
+SeaweedFS, Selectel, Servercore, SpectraLogic, StackPath, Storj,
+Synology, TencentCOS, Wasabi, Zata, Other).
 .SS --s3-provider
 .PP
 Choose your S3 provider.
@@ -37934,6 +36206,12 @@ Alibaba Cloud Object Storage System (OSS) formerly Aliyun
 .RS 2
 .IP \[bu] 2
 Arvan Cloud Object Storage (AOS)
+.RE
+.IP \[bu] 2
+\[dq]BizflyCloud\[dq]
+.RS 2
+.IP \[bu] 2
+Bizfly Cloud Simple Storage
 .RE
 .IP \[bu] 2
 \[dq]Ceph\[dq]
@@ -38270,7 +36548,7 @@ Config: region
 Env Var: RCLONE_S3_REGION
 .IP \[bu] 2
 Provider:
-AWS,Ceph,Cloudflare,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IBMCOS,Intercolo,IONOS,Leviia,LyveCloud,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,SeaweedFS,Selectel,Servercore,StackPath,Synology,Wasabi,Zata,Other
+AWS,BizflyCloud,Ceph,Cloudflare,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IBMCOS,Intercolo,IONOS,Leviia,LyveCloud,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Scaleway,SeaweedFS,Selectel,Servercore,StackPath,Synology,Wasabi,Zata,Other
 .IP \[bu] 2
 Type: string
 .IP \[bu] 2
@@ -38539,6 +36817,22 @@ AWS GovCloud (US) Region.
 Needs location constraint us-gov-west-1.
 .IP \[bu] 2
 Provider: AWS
+.RE
+.IP \[bu] 2
+\[dq]hn\[dq]
+.RS 2
+.IP \[bu] 2
+Ha Noi
+.IP \[bu] 2
+Provider: BizflyCloud
+.RE
+.IP \[bu] 2
+\[dq]hcm\[dq]
+.RS 2
+.IP \[bu] 2
+Ho Chi Minh
+.IP \[bu] 2
+Provider: BizflyCloud
 .RE
 .IP \[bu] 2
 \[dq]\[dq]
@@ -39263,12 +37557,13 @@ Petersburg
 Provider: Selectel,Servercore
 .RE
 .IP \[bu] 2
-\[dq]gis-1\[dq]
+\[dq]ru-3\[dq]
 .RS 2
 .IP \[bu] 2
-Moscow
+St.
+Petersburg
 .IP \[bu] 2
-Provider: Servercore
+Provider: Selectel
 .RE
 .IP \[bu] 2
 \[dq]ru-7\[dq]
@@ -39276,7 +37571,31 @@ Provider: Servercore
 .IP \[bu] 2
 Moscow
 .IP \[bu] 2
-Provider: Servercore
+Provider: Selectel,Servercore
+.RE
+.IP \[bu] 2
+\[dq]gis-1\[dq]
+.RS 2
+.IP \[bu] 2
+Moscow
+.IP \[bu] 2
+Provider: Selectel,Servercore
+.RE
+.IP \[bu] 2
+\[dq]kz-1\[dq]
+.RS 2
+.IP \[bu] 2
+Kazakhstan
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]uz-2\[dq]
+.RS 2
+.IP \[bu] 2
+Uzbekistan
+.IP \[bu] 2
+Provider: Selectel
 .RE
 .IP \[bu] 2
 \[dq]uz-2\[dq]
@@ -39356,7 +37675,7 @@ Config: endpoint
 Env Var: RCLONE_S3_ENDPOINT
 .IP \[bu] 2
 Provider:
-AWS,Alibaba,ArvanCloud,Ceph,ChinaMobile,Cloudflare,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,FlashBlade,GCS,Hetzner,HuaweiOBS,IBMCOS,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Mega,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Rclone,Scaleway,SeaweedFS,Selectel,Servercore,SpectraLogic,StackPath,Storj,Synology,TencentCOS,Wasabi,Zata,Other
+AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,ChinaMobile,Cloudflare,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,FlashBlade,GCS,Hetzner,HuaweiOBS,IBMCOS,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Mega,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,Rabata,RackCorp,Rclone,Scaleway,SeaweedFS,Selectel,Servercore,SpectraLogic,StackPath,Storj,Synology,TencentCOS,Wasabi,Zata,Other
 .IP \[bu] 2
 Type: string
 .IP \[bu] 2
@@ -39581,6 +37900,22 @@ Provider: ArvanCloud
 Tabriz Iran (Shahriar)
 .IP \[bu] 2
 Provider: ArvanCloud
+.RE
+.IP \[bu] 2
+\[dq]hn.ss.bfcplatform.vn\[dq]
+.RS 2
+.IP \[bu] 2
+Hanoi endpoint
+.IP \[bu] 2
+Provider: BizflyCloud
+.RE
+.IP \[bu] 2
+\[dq]hcm.ss.bfcplatform.vn\[dq]
+.RS 2
+.IP \[bu] 2
+Ho Chi Minh endpoint
+.IP \[bu] 2
+Provider: BizflyCloud
 .RE
 .IP \[bu] 2
 \[dq]eos-wuxi-1.cmecloud.cn\[dq]
@@ -40664,7 +38999,7 @@ Provider: Liara
 \[dq]nl-ams-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Amsterdam (Netherlands), nl-ams-1
+Amsterdam, NL (nl-ams-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40672,7 +39007,7 @@ Provider: Linode
 \[dq]us-southeast-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Atlanta, GA (USA), us-southeast-1
+Atlanta, GA, US (us-southeast-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40680,7 +39015,7 @@ Provider: Linode
 \[dq]in-maa-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Chennai (India), in-maa-1
+Chennai, IN (in-maa-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40688,7 +39023,7 @@ Provider: Linode
 \[dq]us-ord-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Chicago, IL (USA), us-ord-1
+Chicago, IL, US (us-ord-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40696,7 +39031,7 @@ Provider: Linode
 \[dq]eu-central-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Frankfurt (Germany), eu-central-1
+Frankfurt, DE (eu-central-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40704,7 +39039,7 @@ Provider: Linode
 \[dq]id-cgk-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Jakarta (Indonesia), id-cgk-1
+Jakarta, ID (id-cgk-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40712,7 +39047,7 @@ Provider: Linode
 \[dq]gb-lon-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-London 2 (Great Britain), gb-lon-1
+London 2, UK (gb-lon-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40720,7 +39055,7 @@ Provider: Linode
 \[dq]us-lax-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Los Angeles, CA (USA), us-lax-1
+Los Angeles, CA, US (us-lax-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40728,15 +39063,7 @@ Provider: Linode
 \[dq]es-mad-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Madrid (Spain), es-mad-1
-.IP \[bu] 2
-Provider: Linode
-.RE
-.IP \[bu] 2
-\[dq]au-mel-1.linodeobjects.com\[dq]
-.RS 2
-.IP \[bu] 2
-Melbourne (Australia), au-mel-1
+Madrid, ES (es-mad-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40744,7 +39071,7 @@ Provider: Linode
 \[dq]us-mia-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Miami, FL (USA), us-mia-1
+Miami, FL, US (us-mia-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40752,7 +39079,7 @@ Provider: Linode
 \[dq]it-mil-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Milan (Italy), it-mil-1
+Milan, IT (it-mil-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40760,7 +39087,7 @@ Provider: Linode
 \[dq]us-east-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Newark, NJ (USA), us-east-1
+Newark, NJ, US (us-east-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40768,7 +39095,7 @@ Provider: Linode
 \[dq]jp-osa-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Osaka (Japan), jp-osa-1
+Osaka, JP (jp-osa-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40776,7 +39103,7 @@ Provider: Linode
 \[dq]fr-par-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Paris (France), fr-par-1
+Paris, FR (fr-par-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40784,7 +39111,7 @@ Provider: Linode
 \[dq]br-gru-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-São Paulo (Brazil), br-gru-1
+Sao Paulo, BR (br-gru-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40792,7 +39119,7 @@ Provider: Linode
 \[dq]us-sea-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Seattle, WA (USA), us-sea-1
+Seattle, WA, US (us-sea-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40800,7 +39127,7 @@ Provider: Linode
 \[dq]ap-south-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Singapore, ap-south-1
+Singapore, SG (ap-south-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40808,7 +39135,7 @@ Provider: Linode
 \[dq]sg-sin-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Singapore 2, sg-sin-1
+Singapore 2, SG (sg-sin-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -40816,15 +39143,23 @@ Provider: Linode
 \[dq]se-sto-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Stockholm (Sweden), se-sto-1
+Stockholm, SE (se-sto-1)
 .IP \[bu] 2
 Provider: Linode
 .RE
 .IP \[bu] 2
-\[dq]us-iad-1.linodeobjects.com\[dq]
+\[dq]jp-tyo-1.linodeobjects.com\[dq]
 .RS 2
 .IP \[bu] 2
-Washington, DC, (USA), us-iad-1
+Tokyo 3, JP (jp-tyo-1)
+.IP \[bu] 2
+Provider: Linode
+.RE
+.IP \[bu] 2
+\[dq]us-iad-10.linodeobjects.com\[dq]
+.RS 2
+.IP \[bu] 2
+Washington, DC, US (us-iad-10)
 .IP \[bu] 2
 Provider: Linode
 .RE
@@ -41371,7 +39706,25 @@ Provider: SeaweedFS
 \[dq]s3.ru-1.storage.selcloud.ru\[dq]
 .RS 2
 .IP \[bu] 2
-Saint Petersburg
+St.
+Petersburg
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]s3.ru-3.storage.selcloud.ru\[dq]
+.RS 2
+.IP \[bu] 2
+St.
+Petersburg
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]s3.ru-7.storage.selcloud.ru\[dq]
+.RS 2
+.IP \[bu] 2
+Moscow
 .IP \[bu] 2
 Provider: Selectel,Servercore
 .RE
@@ -41381,13 +39734,29 @@ Provider: Selectel,Servercore
 .IP \[bu] 2
 Moscow
 .IP \[bu] 2
-Provider: Servercore
+Provider: Selectel,Servercore
 .RE
 .IP \[bu] 2
-\[dq]s3.ru-7.storage.selcloud.ru\[dq]
+\[dq]s3.kz-1.storage.selcloud.ru\[dq]
 .RS 2
 .IP \[bu] 2
-Moscow
+Kazakhstan
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]s3.uz-2.storage.selcloud.ru\[dq]
+.RS 2
+.IP \[bu] 2
+Uzbekistan
+.IP \[bu] 2
+Provider: Selectel
+.RE
+.IP \[bu] 2
+\[dq]s3.ru-1.storage.selcloud.ru\[dq]
+.RS 2
+.IP \[bu] 2
+Saint Petersburg
 .IP \[bu] 2
 Provider: Servercore
 .RE
@@ -42745,7 +41114,7 @@ Config: acl
 Env Var: RCLONE_S3_ACL
 .IP \[bu] 2
 Provider:
-AWS,Alibaba,ArvanCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
+AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
 .IP \[bu] 2
 Type: string
 .IP \[bu] 2
@@ -42762,7 +41131,7 @@ Owner gets FULL_CONTROL.
 No one else has access rights (default).
 .IP \[bu] 2
 Provider:
-AWS,Alibaba,ArvanCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,Wasabi,Zata,Other
+AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,Wasabi,Zata,Other
 .RE
 .IP \[bu] 2
 \[dq]public-read\[dq]
@@ -42773,7 +41142,7 @@ Owner gets FULL_CONTROL.
 The AllUsers group gets READ access.
 .IP \[bu] 2
 Provider:
-AWS,Alibaba,ArvanCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
+AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
 .RE
 .IP \[bu] 2
 \[dq]public-read-write\[dq]
@@ -42786,7 +41155,7 @@ The AllUsers group gets READ and WRITE access.
 Granting this on a bucket is generally not recommended.
 .IP \[bu] 2
 Provider:
-AWS,Alibaba,ArvanCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
+AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
 .RE
 .IP \[bu] 2
 \[dq]authenticated-read\[dq]
@@ -42797,7 +41166,7 @@ Owner gets FULL_CONTROL.
 The AuthenticatedUsers group gets READ access.
 .IP \[bu] 2
 Provider:
-AWS,Alibaba,ArvanCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
+AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
 .RE
 .IP \[bu] 2
 \[dq]bucket-owner-read\[dq]
@@ -42811,7 +41180,7 @@ If you specify this canned ACL when creating a bucket, Amazon S3 ignores
 it.
 .IP \[bu] 2
 Provider:
-AWS,Alibaba,ArvanCloud,Ceph,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
+AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
 .RE
 .IP \[bu] 2
 \[dq]bucket-owner-full-control\[dq]
@@ -42824,7 +41193,7 @@ If you specify this canned ACL when creating a bucket, Amazon S3 ignores
 it.
 .IP \[bu] 2
 Provider:
-AWS,Alibaba,ArvanCloud,Ceph,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
+AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,StackPath,TencentCOS,Wasabi,Zata,Other
 .RE
 .IP \[bu] 2
 \[dq]private\[dq]
@@ -43175,13 +41544,13 @@ Required: false
 .SS Advanced options
 .PP
 Here are the Advanced options specific to s3 (Amazon S3 Compliant
-Storage Providers including AWS, Alibaba, ArvanCloud, Ceph, ChinaMobile,
-Cloudflare, Cubbit, DigitalOcean, Dreamhost, Exaba, FileLu, FlashBlade,
-GCS, Hetzner, HuaweiOBS, IBMCOS, IDrive, Intercolo, IONOS, Leviia,
-Liara, Linode, LyveCloud, Magalu, Mega, Minio, Netease, Outscale,
-OVHcloud, Petabox, Qiniu, Rabata, RackCorp, Rclone, Scaleway, SeaweedFS,
-Selectel, Servercore, SpectraLogic, StackPath, Storj, Synology,
-TencentCOS, Wasabi, Zata, Other).
+Storage Providers including AWS, Alibaba, ArvanCloud, BizflyCloud, Ceph,
+ChinaMobile, Cloudflare, Cubbit, DigitalOcean, Dreamhost, Exaba, FileLu,
+FlashBlade, GCS, Hetzner, HuaweiOBS, IBMCOS, IDrive, Intercolo, IONOS,
+Leviia, Liara, Linode, LyveCloud, Magalu, Mega, Minio, Netease,
+Outscale, OVHcloud, Petabox, Qiniu, Rabata, RackCorp, Rclone, Scaleway,
+SeaweedFS, Selectel, Servercore, SpectraLogic, StackPath, Storj,
+Synology, TencentCOS, Wasabi, Zata, Other).
 .SS --s3-bucket-acl
 .PP
 Canned ACL used when creating buckets.
@@ -43202,7 +41571,7 @@ Config: bucket_acl
 Env Var: RCLONE_S3_BUCKET_ACL
 .IP \[bu] 2
 Provider:
-AWS,Alibaba,ArvanCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Mega,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,Servercore,StackPath,TencentCOS,Wasabi,Zata,Other
+AWS,Alibaba,ArvanCloud,BizflyCloud,Ceph,ChinaMobile,Cubbit,DigitalOcean,Dreamhost,Exaba,FileLu,GCS,Hetzner,HuaweiOBS,IBMCOS,IDrive,Intercolo,IONOS,Leviia,Liara,Linode,LyveCloud,Magalu,Mega,Minio,Netease,Outscale,OVHcloud,Petabox,Qiniu,RackCorp,Scaleway,SeaweedFS,Servercore,StackPath,TencentCOS,Wasabi,Zata,Other
 .IP \[bu] 2
 Type: string
 .IP \[bu] 2
@@ -43549,6 +41918,66 @@ Properties:
 Config: session_token
 .IP \[bu] 2
 Env Var: RCLONE_S3_SESSION_TOKEN
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --s3-role-arn
+.PP
+ARN of the IAM role to assume.
+.PP
+Leave blank if not using assume role.
+.PP
+Properties:
+.IP \[bu] 2
+Config: role_arn
+.IP \[bu] 2
+Env Var: RCLONE_S3_ROLE_ARN
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --s3-role-session-name
+.PP
+Session name for assumed role.
+.PP
+If empty, a session name will be generated automatically.
+.PP
+Properties:
+.IP \[bu] 2
+Config: role_session_name
+.IP \[bu] 2
+Env Var: RCLONE_S3_ROLE_SESSION_NAME
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --s3-role-session-duration
+.PP
+Session duration for assumed role.
+.PP
+If empty, the default session duration will be used.
+.PP
+Properties:
+.IP \[bu] 2
+Config: role_session_duration
+.IP \[bu] 2
+Env Var: RCLONE_S3_ROLE_SESSION_DURATION
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --s3-role-external-id
+.PP
+External ID for assumed role.
+.PP
+Leave blank if not using an external ID.
+.PP
+Properties:
+.IP \[bu] 2
+Config: role_external_id
+.IP \[bu] 2
+Env Var: RCLONE_S3_ROLE_EXTERNAL_ID
 .IP \[bu] 2
 Type: string
 .IP \[bu] 2
@@ -45106,6 +43535,39 @@ server_side_encryption =
 storage_class =
 \f[R]
 .fi
+.SS BizflyCloud
+.PP
+Bizfly Cloud Simple Storage (https://bizflycloud.vn/simple-storage) is
+an S3-compatible service with regions in Hanoi (HN) and Ho Chi Minh City
+(HCM).
+.PP
+Use the endpoint for your region:
+.IP \[bu] 2
+HN: \f[V]hn.ss.bfcplatform.vn\f[R]
+.IP \[bu] 2
+HCM: \f[V]hcm.ss.bfcplatform.vn\f[R]
+.PP
+A minimal configuration looks like this.
+.IP
+.nf
+\f[C]
+[bizfly]
+type = s3
+provider = BizflyCloud
+env_auth = false
+access_key_id = YOUR_ACCESS_KEY
+secret_access_key = YOUR_SECRET_KEY
+region = HN
+endpoint = hn.ss.bfcplatform.vn
+location_constraint =
+acl =
+server_side_encryption =
+storage_class =
+\f[R]
+.fi
+.PP
+Switch \f[V]region\f[R] and \f[V]endpoint\f[R] to \f[V]HCM\f[R] and
+\f[V]hcm.ss.bfcplatform.vn\f[R] for Ho Chi Minh City.
 .SS Ceph
 .PP
 Ceph (https://ceph.com/) is an open-source, unified, distributed storage
@@ -50948,7 +49410,7 @@ All copy commands send the following 4 requests:
 .IP
 .nf
 \f[C]
-/b2api/v1/b2_authorize_account
+/b2api/v4/b2_authorize_account
 /b2api/v1/b2_create_bucket
 /b2api/v1/b2_list_buckets
 /b2api/v1/b2_list_file_names
@@ -52343,6 +50805,9 @@ Click \f[V]Save Changes\f[R] at the top right.
 The \f[V]cache\f[R] remote wraps another existing remote and stores file
 structure and its data for long running tasks like
 \f[V]rclone mount\f[R].
+.PP
+It is \f[B]deprecated\f[R] so not recommended for use with new
+installations and may be removed at some point.
 .SS Status
 .PP
 The cache backend code is working but it currently doesn\[aq]t have a
@@ -56170,8 +54635,8 @@ Invenio
 .PP
 The URL of the DOI resolver API to use.
 .PP
-The DOI resolver can be set for testing or for cases when the the
-canonical DOI resolver API cannot be used.
+The DOI resolver can be set for testing or for cases when the canonical
+DOI resolver API cannot be used.
 .PP
 Defaults to \[dq]https://doi.org/api\[dq].
 .PP
@@ -56268,6 +54733,374 @@ Only new parameters need be passed as the values will default to those
 currently in use.
 .PP
 It doesn\[aq]t return anything.
+.SH Drime
+.PP
+Drime (https://drime.cloud/) is a cloud storage and transfer service
+focused on fast, resilient file delivery.
+It offers both free and paid tiers with emphasis on high-speed uploads
+and link sharing.
+.PP
+To setup Drime you need to log in, navigate to Settings, Developer, and
+create a token to use as an API access key.
+Give it a sensible name and copy the token for use in the config.
+.SS Configuration
+.PP
+Here is a run through of \f[V]rclone config\f[R] to make a remote called
+\f[V]remote\f[R].
+.PP
+Firstly run:
+.IP
+.nf
+\f[C]
+rclone config
+\f[R]
+.fi
+.PP
+Then follow through the interactive setup:
+.IP
+.nf
+\f[C]
+No remotes found, make a new one?
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+
+Enter name for new remote.
+name> remote
+
+Option Storage.
+Type of storage to configure.
+Choose a number from below, or type in your own value.
+XX / Drime
+   \[rs] (drime)
+Storage> drime
+
+Option access_token.
+API Access token
+You can get this from the web control panel.
+Enter a value. Press Enter to leave empty.
+access_token> YOUR_API_ACCESS_TOKEN
+
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n> n
+
+Configuration complete.
+Options:
+- type: drime
+- access_token: YOUR_API_ACCESS_TOKEN
+Keep this \[dq]remote\[dq] remote?
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+\f[R]
+.fi
+.PP
+Once configured you can then use \f[V]rclone\f[R] like this (replace
+\f[V]remote\f[R] with the name you gave your remote):
+.PP
+List directories and files in the top level of your Drime
+.IP
+.nf
+\f[C]
+rclone lsf remote:
+\f[R]
+.fi
+.PP
+To copy a local directory to a Drime directory called backup
+.IP
+.nf
+\f[C]
+rclone copy /home/source remote:backup
+\f[R]
+.fi
+.SS Modification times and hashes
+.PP
+Drime does not support modification times or hashes.
+.PP
+This means that by default syncs will only use the size of the file to
+determine if it needs updating.
+.PP
+You can use the \f[V]--update\f[R] flag which will use the time the
+object was uploaded.
+For many operations this is sufficient to determine if it has changed.
+However files created with timestamps in the past will be missed by the
+sync if using \f[V]--update\f[R].
+.SS Restricted filename characters
+.PP
+In addition to the default restricted characters
+set (https://rclone.org/overview/#restricted-characters) the following
+characters are also replaced:
+.PP
+.TS
+tab(@);
+l c c.
+T{
+Character
+T}@T{
+Value
+T}@T{
+Replacement
+T}
+_
+T{
+\[rs]
+T}@T{
+0x5C
+T}@T{
+＼
+T}
+.TE
+.PP
+File names can also not start or end with the following characters.
+These only get replaced if they are the first or last character in the
+name:
+.PP
+.TS
+tab(@);
+l c c.
+T{
+Character
+T}@T{
+Value
+T}@T{
+Replacement
+T}
+_
+T{
+SP
+T}@T{
+0x20
+T}@T{
+␠
+T}
+.TE
+.PP
+Invalid UTF-8 bytes will also be
+replaced (https://rclone.org/overview/#invalid-utf8), as they can\[aq]t
+be used in JSON strings.
+.SS Root folder ID
+.PP
+You can set the \f[V]root_folder_id\f[R] for rclone.
+This is the directory (identified by its \f[V]Folder ID\f[R]) that
+rclone considers to be the root of your Drime drive.
+.PP
+Normally you will leave this blank and rclone will determine the correct
+root to use itself and fill in the value in the config file.
+.PP
+However you can set this to restrict rclone to a specific folder
+hierarchy.
+.PP
+In order to do this you will have to find the \f[V]Folder ID\f[R] of the
+directory you wish rclone to display.
+.PP
+You can do this with rclone
+.IP
+.nf
+\f[C]
+$ rclone lsf -Fip --dirs-only remote:
+d6341f53-ee65-4f29-9f59-d11e8070b2a0;Files/
+f4f5c9b8-6ece-478b-b03e-4538edfe5a1c;Photos/
+d50e356c-29ca-4b27-a3a7-494d91026e04;Videos/
+\f[R]
+.fi
+.PP
+The ID to use is the part before the \f[V];\f[R] so you could set
+.IP
+.nf
+\f[C]
+root_folder_id = d6341f53-ee65-4f29-9f59-d11e8070b2a0
+\f[R]
+.fi
+.PP
+To restrict rclone to the \f[V]Files\f[R] directory.
+.SS Standard options
+.PP
+Here are the Standard options specific to drime (Drime).
+.SS --drime-access-token
+.PP
+API Access token
+.PP
+You can get this from the web control panel.
+.PP
+Properties:
+.IP \[bu] 2
+Config: access_token
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_ACCESS_TOKEN
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS Advanced options
+.PP
+Here are the Advanced options specific to drime (Drime).
+.SS --drime-root-folder-id
+.PP
+ID of the root folder
+.PP
+Leave this blank normally, rclone will fill it in automatically.
+.PP
+If you want rclone to be restricted to a particular folder you can fill
+it in - see the docs for more info.
+.PP
+Properties:
+.IP \[bu] 2
+Config: root_folder_id
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_ROOT_FOLDER_ID
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --drime-workspace-id
+.PP
+Account ID
+.PP
+Leave this blank normally unless you wish to specify a Workspace ID.
+.PP
+Properties:
+.IP \[bu] 2
+Config: workspace_id
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_WORKSPACE_ID
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --drime-list-chunk
+.PP
+Number of items to list in each call
+.PP
+Properties:
+.IP \[bu] 2
+Config: list_chunk
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_LIST_CHUNK
+.IP \[bu] 2
+Type: int
+.IP \[bu] 2
+Default: 1000
+.SS --drime-hard-delete
+.PP
+Delete files permanently rather than putting them into the trash.
+.PP
+Properties:
+.IP \[bu] 2
+Config: hard_delete
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_HARD_DELETE
+.IP \[bu] 2
+Type: bool
+.IP \[bu] 2
+Default: false
+.SS --drime-upload-cutoff
+.PP
+Cutoff for switching to chunked upload.
+.PP
+Any files larger than this will be uploaded in chunks of chunk_size.
+The minimum is 0 and the maximum is 5 GiB.
+.PP
+Properties:
+.IP \[bu] 2
+Config: upload_cutoff
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_UPLOAD_CUTOFF
+.IP \[bu] 2
+Type: SizeSuffix
+.IP \[bu] 2
+Default: 200Mi
+.SS --drime-chunk-size
+.PP
+Chunk size to use for uploading.
+.PP
+When uploading files larger than upload_cutoff or files with unknown
+size (e.g.
+from \[dq]rclone rcat\[dq] or uploaded with \[dq]rclone mount\[dq] or
+google photos or google docs) they will be uploaded as multipart uploads
+using this chunk size.
+.PP
+Note that \[dq]--drime-upload-concurrency\[dq] chunks of this size are
+buffered in memory per transfer.
+.PP
+If you are transferring large files over high-speed links and you have
+enough memory, then increasing this will speed up the transfers.
+.PP
+Rclone will automatically increase the chunk size when uploading a large
+file of known size to stay below the 10,000 chunks limit.
+.PP
+Files of unknown size are uploaded with the configured chunk_size.
+Since the default chunk size is 5 MiB and there can be at most 10,000
+chunks, this means that by default the maximum size of a file you can
+stream upload is 48 GiB.
+If you wish to stream upload larger files then you will need to increase
+chunk_size.
+.PP
+Properties:
+.IP \[bu] 2
+Config: chunk_size
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_CHUNK_SIZE
+.IP \[bu] 2
+Type: SizeSuffix
+.IP \[bu] 2
+Default: 5Mi
+.SS --drime-upload-concurrency
+.PP
+Concurrency for multipart uploads and copies.
+.PP
+This is the number of chunks of the same file that are uploaded
+concurrently for multipart uploads and copies.
+.PP
+If you are uploading small numbers of large files over high-speed links
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.
+.PP
+Properties:
+.IP \[bu] 2
+Config: upload_concurrency
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_UPLOAD_CONCURRENCY
+.IP \[bu] 2
+Type: int
+.IP \[bu] 2
+Default: 4
+.SS --drime-encoding
+.PP
+The encoding for the backend.
+.PP
+See the encoding section in the
+overview (https://rclone.org/overview/#encoding) for more info.
+.PP
+Properties:
+.IP \[bu] 2
+Config: encoding
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_ENCODING
+.IP \[bu] 2
+Type: Encoding
+.IP \[bu] 2
+Default: Slash,BackSlash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot
+.SS --drime-description
+.PP
+Description of the remote.
+.PP
+Properties:
+.IP \[bu] 2
+Config: description
+.IP \[bu] 2
+Env Var: RCLONE_DRIME_DESCRIPTION
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS Limitations
+.PP
+Drime only supports filenames up to 255 bytes in length, where filenames
+are encoded in UTF8.
 .SH Dropbox
 .PP
 Paths are specified as \f[V]remote:path\f[R]
@@ -57445,6 +56278,9 @@ With support for high storage limits and seamless integration with
 rclone, FileLu makes managing files in the cloud easy.
 Its cross-platform file backup services let you upload and back up files
 from any internet-connected device.
+.PP
+\f[B]Note\f[R] FileLu now has a fully featured S3 backend FileLu S5, an
+industry standard S3 compatible object store.
 .SS Configuration
 .PP
 Here is an example of how to make a remote called \f[V]filelu\f[R].
@@ -57718,6 +56554,273 @@ for troubleshooting and updates.
 .PP
 For further information, visit FileLu\[aq]s
 website (https://filelu.com/).
+.SH Filen
+.SS Configuration
+.PP
+The initial setup for Filen requires that you get an API key for your
+account, currently this is only possible using the Filen
+CLI (https://github.com/FilenCloudDienste/filen-cli).
+This means you must first download the CLI, login, and then run the
+\f[V]export-api-key\f[R] command.
+.PP
+Here is an example of how to make a remote called \f[V]FilenRemote\f[R].
+First run:
+.IP
+.nf
+\f[C]
+ rclone config
+\f[R]
+.fi
+.PP
+This will guide you through an interactive setup process:
+.IP
+.nf
+\f[C]
+No remotes found, make a new one?
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+
+name> FilenRemote
+Option Storage.
+
+Type of storage to configure.
+Choose a number from below, or type in your own value.
+[snip]
+XX / Filen
+   \[rs] \[dq]filen\[dq]
+[snip]
+Storage> filen
+
+Option Email.
+The email of your Filen account
+Enter a value.
+Email> youremail\[at]provider.com
+
+Option Password.
+The password of your Filen account
+Choose an alternative below.
+y) Yes, type in my own password
+g) Generate random password
+y/g> y
+Enter the password:
+password:
+Confirm the password:
+password:
+
+Option API Key.
+An API Key for your Filen account
+Get this using the Filen CLI export-api-key command
+You can download the Filen CLI from https://github.com/FilenCloudDienste/filen-cli
+Choose an alternative below.
+y) Yes, type in my own password
+g) Generate random password
+y/g> y
+Enter the password:
+password:
+Confirm the password:
+password:
+
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n> n
+
+Configuration complete.
+Options:
+- type: filen
+- Email: youremail\[at]provider.com
+- Password: *** ENCRYPTED ***
+- API Key: *** ENCRYPTED ***
+Keep this \[dq]FilenRemote\[dq] remote?
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+\f[R]
+.fi
+.SS Modification times and hashes
+.PP
+Modification times are fully supported for files, for directories, only
+the creation time matters.
+.PP
+Filen supports Blake3 hashes.
+.SS Restricted filename characters
+.PP
+Invalid UTF-8 bytes will be
+replaced (https://rclone.org/overview/#invalid-utf8)
+.SS API Key
+.SS Standard options
+.PP
+Here are the Standard options specific to filen (Filen).
+.SS --filen-email
+.PP
+Email of your Filen account
+.PP
+Properties:
+.IP \[bu] 2
+Config: email
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_EMAIL
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: true
+.SS --filen-password
+.PP
+Password of your Filen account
+.PP
+\f[B]NB\f[R] Input to this must be obscured - see rclone
+obscure (https://rclone.org/commands/rclone_obscure/).
+.PP
+Properties:
+.IP \[bu] 2
+Config: password
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_PASSWORD
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: true
+.SS --filen-api-key
+.PP
+API Key for your Filen account
+.PP
+Get this using the Filen CLI export-api-key command You can download the
+Filen CLI from https://github.com/FilenCloudDienste/filen-cli
+.PP
+\f[B]NB\f[R] Input to this must be obscured - see rclone
+obscure (https://rclone.org/commands/rclone_obscure/).
+.PP
+Properties:
+.IP \[bu] 2
+Config: api_key
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_API_KEY
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: true
+.SS Advanced options
+.PP
+Here are the Advanced options specific to filen (Filen).
+.SS --filen-upload-concurrency
+.PP
+Concurrency for chunked uploads.
+.PP
+This is the upper limit for how many transfers for the same file are
+running concurrently.
+Setting this above to a value smaller than 1 will cause uploads to
+deadlock.
+.PP
+If you are uploading small numbers of large files over high-speed links
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.
+.PP
+Properties:
+.IP \[bu] 2
+Config: upload_concurrency
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_UPLOAD_CONCURRENCY
+.IP \[bu] 2
+Type: int
+.IP \[bu] 2
+Default: 16
+.SS --filen-encoding
+.PP
+The encoding for the backend.
+.PP
+See the encoding section in the
+overview (https://rclone.org/overview/#encoding) for more info.
+.PP
+Properties:
+.IP \[bu] 2
+Config: encoding
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_ENCODING
+.IP \[bu] 2
+Type: Encoding
+.IP \[bu] 2
+Default: Slash,Del,Ctl,InvalidUtf8,Dot
+.SS --filen-master-keys
+.PP
+Master Keys (internal use only)
+.PP
+Properties:
+.IP \[bu] 2
+Config: master_keys
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_MASTER_KEYS
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --filen-private-key
+.PP
+Private RSA Key (internal use only)
+.PP
+Properties:
+.IP \[bu] 2
+Config: private_key
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_PRIVATE_KEY
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --filen-public-key
+.PP
+Public RSA Key (internal use only)
+.PP
+Properties:
+.IP \[bu] 2
+Config: public_key
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_PUBLIC_KEY
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --filen-auth-version
+.PP
+Authentication Version (internal use only)
+.PP
+Properties:
+.IP \[bu] 2
+Config: auth_version
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_AUTH_VERSION
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --filen-base-folder-uuid
+.PP
+UUID of Account Root Directory (internal use only)
+.PP
+Properties:
+.IP \[bu] 2
+Config: base_folder_uuid
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_BASE_FOLDER_UUID
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --filen-description
+.PP
+Description of the remote.
+.PP
+Properties:
+.IP \[bu] 2
+Config: description
+.IP \[bu] 2
+Env Var: RCLONE_FILEN_DESCRIPTION
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
 .SH Files.com
 .PP
 Files.com (https://www.files.com/) is a cloud storage service that
@@ -58546,6 +57649,17 @@ URL for HTTP CONNECT proxy
 .PP
 Set this to a URL for an HTTP proxy which supports the HTTP CONNECT
 verb.
+.PP
+Supports the format http://user:pass\[at]host:port, http://host:port,
+http://host.
+.PP
+Example:
+.IP
+.nf
+\f[C]
+http://myUser:myPass\[at]proxyhostname.example.com:8000
+\f[R]
+.fi
 .PP
 Properties:
 .IP \[bu] 2
@@ -60216,9 +59330,17 @@ Type: bool
 Default: false
 .SS --gcs-endpoint
 .PP
-Endpoint for the service.
+Custom endpoint for the storage API.
+Leave blank to use the provider default.
 .PP
-Leave blank normally.
+When using a custom endpoint that includes a subpath (e.g.
+example.org/custom/endpoint), the subpath will be ignored during upload
+operations due to a limitation in the underlying Google API Go client
+library.
+Download and listing operations will work correctly with the full
+endpoint path.
+If you require subpath support for uploads, avoid using subpaths in your
+custom endpoint configuration.
 .PP
 Properties:
 .IP \[bu] 2
@@ -60229,6 +59351,29 @@ Env Var: RCLONE_GCS_ENDPOINT
 Type: string
 .IP \[bu] 2
 Required: false
+.IP \[bu] 2
+Examples:
+.RS 2
+.IP \[bu] 2
+\[dq]storage.example.org\[dq]
+.RS 2
+.IP \[bu] 2
+Specify a custom endpoint
+.RE
+.IP \[bu] 2
+\[dq]storage.example.org:4443\[dq]
+.RS 2
+.IP \[bu] 2
+Specifying a custom endpoint with port
+.RE
+.IP \[bu] 2
+\[dq]storage.example.org:4443/gcs/api\[dq]
+.RS 2
+.IP \[bu] 2
+Specifying a subpath, see the note, uploads won\[aq]t use the custom
+path!
+.RE
+.RE
 .SS --gcs-encoding
 .PP
 The encoding for the backend.
@@ -60557,7 +59702,7 @@ In the next field, \[dq]OAuth Scopes\[dq], enter
 access to Google Drive specifically.
 You can also use
 \f[V]https://www.googleapis.com/auth/drive.readonly\f[R] for read only
-access.
+access with \f[V]--drive-scope=drive.readonly\f[R].
 .IP \[bu] 2
 Click \[dq]Authorise\[dq]
 .SS 3. Configure rclone, assuming a new install
@@ -62233,6 +61378,25 @@ If writing fails log errors only, don\[aq]t fail the transfer
 Read and Write the value.
 .RE
 .RE
+.SS --drive-metadata-enforce-expansive-access
+.PP
+Whether the request should enforce expansive access rules.
+.PP
+From Feb 2026 this flag will be set by default so this flag can be used
+for testing before then.
+.PP
+See:
+https://developers.google.com/workspace/drive/api/guides/limited-expansive-access
+.PP
+Properties:
+.IP \[bu] 2
+Config: metadata_enforce_expansive_access
+.IP \[bu] 2
+Env Var: RCLONE_DRIVE_METADATA_ENFORCE_EXPANSIVE_ACCESS
+.IP \[bu] 2
+Type: bool
+.IP \[bu] 2
+Default: false
 .SS --drive-encoding
 .PP
 The encoding for the backend.
@@ -63821,8 +62985,14 @@ If there is a problem with this client_id (eg quota too low or the
 client_id stops working) then you can make your own.
 .PP
 Please follow the steps in the google drive
-docs (https://rclone.org/drive/#making-your-own-client-id).
-You will need these scopes instead of the drive ones detailed:
+docs (https://rclone.org/drive/#making-your-own-client-id) with the
+following differences:
+.IP \[bu] 2
+At step 3, instead of enabling the \[dq]Google Drive API\[dq], search
+for and enable the \[dq]Photos Library API\[dq].
+.IP \[bu] 2
+At step 5, you will need to add different scopes.
+Use these scopes instead of the drive ones:
 .IP
 .nf
 \f[C]
@@ -66770,6 +65940,212 @@ T}
 .TE
 .PP
 See the metadata (https://rclone.org/docs/#metadata) docs for more info.
+.SH Internxt Drive
+.PP
+Internxt Drive (https://internxt.com) is a zero-knowledge encrypted
+cloud storage service.
+.PP
+Paths are specified as \f[V]remote:path\f[R]
+.PP
+Paths may be as deep as required, e.g.
+\f[V]remote:directory/subdirectory\f[R].
+.SS Limitations
+.PP
+\f[B]Note:\f[R] The Internxt backend may not work with all account
+types.
+Please refer to Internxt plan details (https://internxt.com/pricing) or
+contact Internxt support (https://help.internxt.com) to verify rclone
+compatibility with your subscription.
+.SS Configuration
+.PP
+Here is an example of how to make a remote called \f[V]internxt\f[R].
+Run \f[V]rclone config\f[R] and follow the prompts:
+.IP
+.nf
+\f[C]
+No remotes found, make a new one?
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+name> internxt
+Type of storage to configure.
+Choose a number from below, or type in your own value
+[snip]
+XX / Internxt Drive
+   \[rs] \[dq]internxt\[dq]
+[snip]
+Storage> internxt
+
+Option email.
+Email of your Internxt account.
+Enter a value.
+email> user\[at]example.com
+
+Option pass.
+Password.
+Enter a value.
+password>
+
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n> n
+
+Configuration complete.
+Options:
+- type: internxt
+- email: user\[at]example.com
+- pass: *** ENCRYPTED ***
+Keep this \[dq]internxt\[dq] remote?
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+\f[R]
+.fi
+.PP
+If you have two-factor authentication enabled on your Internxt account,
+you will be prompted to enter the code during login.
+.SS Security Considerations
+.PP
+The authentication process stores your password and mnemonic in the
+rclone configuration file.
+It is \f[B]strongly recommended\f[R] to encrypt your rclone config to
+protect these sensitive credentials:
+.IP
+.nf
+\f[C]
+rclone config password
+\f[R]
+.fi
+.PP
+This will prompt you to set a password that encrypts your entire
+configuration file.
+.SS Usage Examples
+.IP
+.nf
+\f[C]
+# List files
+rclone ls internxt:
+
+# Copy files to Internxt
+rclone copy /local/path internxt:remote/path
+
+# Sync local directory to Internxt
+rclone sync /local/path internxt:remote/path
+
+# Mount Internxt Drive as a local filesystem
+rclone mount internxt: /path/to/mountpoint
+
+# Check storage usage
+rclone about internxt:
+\f[R]
+.fi
+.SS Modification times and hashes
+.PP
+The Internxt backend does not support hashes.
+.PP
+Modification times are read from the server but cannot be set.
+The backend reports \f[V]ModTimeNotSupported\f[R] precision, so
+modification times will not be used for sync comparisons.
+.SS Restricted filename characters
+.PP
+The Internxt backend replaces the default restricted characters
+set (https://rclone.org/overview/#restricted-characters).
+.SS Standard options
+.PP
+Here are the Standard options specific to internxt (Internxt Drive).
+.SS --internxt-email
+.PP
+Email of your Internxt account.
+.PP
+Properties:
+.IP \[bu] 2
+Config: email
+.IP \[bu] 2
+Env Var: RCLONE_INTERNXT_EMAIL
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: true
+.SS --internxt-pass
+.PP
+Password.
+.PP
+\f[B]NB\f[R] Input to this must be obscured - see rclone
+obscure (https://rclone.org/commands/rclone_obscure/).
+.PP
+Properties:
+.IP \[bu] 2
+Config: pass
+.IP \[bu] 2
+Env Var: RCLONE_INTERNXT_PASS
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: true
+.SS Advanced options
+.PP
+Here are the Advanced options specific to internxt (Internxt Drive).
+.SS --internxt-mnemonic
+.PP
+Mnemonic (internal use only)
+.PP
+Properties:
+.IP \[bu] 2
+Config: mnemonic
+.IP \[bu] 2
+Env Var: RCLONE_INTERNXT_MNEMONIC
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --internxt-skip-hash-validation
+.PP
+Skip hash validation when downloading files.
+.PP
+By default, hash validation is disabled.
+Set this to false to enable validation.
+.PP
+Properties:
+.IP \[bu] 2
+Config: skip_hash_validation
+.IP \[bu] 2
+Env Var: RCLONE_INTERNXT_SKIP_HASH_VALIDATION
+.IP \[bu] 2
+Type: bool
+.IP \[bu] 2
+Default: true
+.SS --internxt-encoding
+.PP
+The encoding for the backend.
+.PP
+See the encoding section in the
+overview (https://rclone.org/overview/#encoding) for more info.
+.PP
+Properties:
+.IP \[bu] 2
+Config: encoding
+.IP \[bu] 2
+Env Var: RCLONE_INTERNXT_ENCODING
+.IP \[bu] 2
+Type: Encoding
+.IP \[bu] 2
+Default: Slash,BackSlash,CrLf,RightPeriod,InvalidUtf8,Dot
+.SS --internxt-description
+.PP
+Description of the remote.
+.PP
+Properties:
+.IP \[bu] 2
+Config: description
+.IP \[bu] 2
+Env Var: RCLONE_INTERNXT_DESCRIPTION
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
 .SH Jottacloud
 .PP
 Jottacloud is a cloud storage service provider from a Norwegian company,
@@ -69278,6 +68654,35 @@ set (https://rclone.org/overview/#restricted-characters).
 .PP
 Here are the Advanced options specific to memory (In memory object
 storage system.).
+.SS --memory-discard
+.PP
+If set all writes will be discarded and reads will return an error
+.PP
+If set then when files are uploaded the contents not be saved.
+The files will appear to have been uploaded but will give an error on
+read.
+Files will have their MD5 sum calculated on upload which takes very
+little CPU time and allows the transfers to be checked.
+.PP
+This can be useful for testing performance.
+.PP
+Probably most easily used by using the connection string syntax:
+.IP
+.nf
+\f[C]
+:memory,discard:bucket
+\f[R]
+.fi
+.PP
+Properties:
+.IP \[bu] 2
+Config: discard
+.IP \[bu] 2
+Env Var: RCLONE_MEMORY_DISCARD
+.IP \[bu] 2
+Type: bool
+.IP \[bu] 2
+Default: false
 .SS --memory-description
 .PP
 Description of the remote.
@@ -69864,6 +69269,39 @@ MD5 hashes are stored with blobs.
 However blobs that were uploaded in chunks only have an MD5 if the
 source remote was capable of MD5 hashes, e.g.
 the local disk.
+.SS Metadata and tags
+.PP
+Rclone can map arbitrary metadata to Azure Blob headers, user metadata,
+and tags when \f[V]--metadata\f[R] is enabled (or when using
+\f[V]--metadata-set\f[R] / \f[V]--metadata-mapper\f[R]).
+.IP \[bu] 2
+Headers: Set these keys in metadata to map to the corresponding blob
+headers:
+.RS 2
+.IP \[bu] 2
+\f[V]cache-control\f[R], \f[V]content-disposition\f[R],
+\f[V]content-encoding\f[R], \f[V]content-language\f[R],
+\f[V]content-type\f[R].
+.RE
+.IP \[bu] 2
+User metadata: Any other non-reserved keys are written as user metadata
+(keys are normalized to lowercase).
+Keys starting with \f[V]x-ms-\f[R] are reserved and are not stored as
+user metadata.
+.IP \[bu] 2
+Tags: Provide \f[V]x-ms-tags\f[R] as a comma-separated list of
+\f[V]key=value\f[R] pairs, e.g.
+\f[V]x-ms-tags=env=dev,team=sync\f[R].
+These are applied as blob tags on upload and on server-side copies.
+Whitespace around keys/values is ignored.
+.IP \[bu] 2
+Modtime override: Provide \f[V]mtime\f[R] in RFC3339/RFC3339Nano format
+to override the stored modtime persisted in user metadata.
+If \f[V]mtime\f[R] cannot be parsed, rclone logs a debug message and
+ignores the override.
+.PP
+Notes: - Rclone ignores reserved \f[V]x-ms-*\f[R] keys (except
+\f[V]x-ms-tags\f[R]) for user metadata.
 .SS Performance
 .PP
 When uploading large files, increasing the value of
@@ -70305,6 +69743,22 @@ Properties:
 Config: sas_url
 .IP \[bu] 2
 Env Var: RCLONE_AZUREBLOB_SAS_URL
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --azureblob-connection-string
+.PP
+Storage Connection String.
+.PP
+Connection string for the storage.
+Leave blank if using other auth methods.
+.PP
+Properties:
+.IP \[bu] 2
+Config: connection_string
+.IP \[bu] 2
+Env Var: RCLONE_AZUREBLOB_CONNECTION_STRING
 .IP \[bu] 2
 Type: string
 .IP \[bu] 2
@@ -71032,6 +70486,109 @@ Env Var: RCLONE_AZUREBLOB_DESCRIPTION
 Type: string
 .IP \[bu] 2
 Required: false
+.SS Metadata
+.PP
+User metadata is stored as x-ms-meta- keys.
+Azure metadata keys are case insensitive and are always returned in
+lower case.
+.PP
+Here are the possible system metadata items for the azureblob backend.
+.PP
+.TS
+tab(@);
+lw(11.1n) lw(11.1n) lw(11.1n) lw(16.6n) lw(20.3n).
+T{
+Name
+T}@T{
+Help
+T}@T{
+Type
+T}@T{
+Example
+T}@T{
+Read Only
+T}
+_
+T{
+cache-control
+T}@T{
+Cache-Control header
+T}@T{
+string
+T}@T{
+no-cache
+T}@T{
+N
+T}
+T{
+content-disposition
+T}@T{
+Content-Disposition header
+T}@T{
+string
+T}@T{
+inline
+T}@T{
+N
+T}
+T{
+content-encoding
+T}@T{
+Content-Encoding header
+T}@T{
+string
+T}@T{
+gzip
+T}@T{
+N
+T}
+T{
+content-language
+T}@T{
+Content-Language header
+T}@T{
+string
+T}@T{
+en-US
+T}@T{
+N
+T}
+T{
+content-type
+T}@T{
+Content-Type header
+T}@T{
+string
+T}@T{
+text/plain
+T}@T{
+N
+T}
+T{
+mtime
+T}@T{
+Time of last modification, read from rclone metadata
+T}@T{
+RFC 3339
+T}@T{
+2006-01-02T15:04:05.999999999Z07:00
+T}@T{
+N
+T}
+T{
+tier
+T}@T{
+Tier of the object
+T}@T{
+string
+T}@T{
+Hot
+T}@T{
+\f[B]Y\f[R]
+T}
+.TE
+.PP
+See the metadata (https://rclone.org/docs/#metadata) docs for more info.
 .SS Custom upload headers
 .PP
 You can set custom upload headers with the \f[V]--header-upload\f[R]
@@ -71588,8 +71145,7 @@ Azure Storage Account Name.
 .PP
 Set this to the Azure Storage Account Name in use.
 .PP
-Leave blank to use SAS URL or connection string, otherwise it needs to
-be set.
+Leave blank to use SAS URL or Emulator, otherwise it needs to be set.
 .PP
 If this is blank and if env_auth is set it will be read from the
 environment variable \f[V]AZURE_STORAGE_ACCOUNT_NAME\f[R] if possible.
@@ -71599,21 +71155,6 @@ Properties:
 Config: account
 .IP \[bu] 2
 Env Var: RCLONE_AZUREFILES_ACCOUNT
-.IP \[bu] 2
-Type: string
-.IP \[bu] 2
-Required: false
-.SS --azurefiles-share-name
-.PP
-Azure Files Share Name.
-.PP
-This is required and is the name of the share to access.
-.PP
-Properties:
-.IP \[bu] 2
-Config: share_name
-.IP \[bu] 2
-Env Var: RCLONE_AZUREFILES_SHARE_NAME
 .IP \[bu] 2
 Type: string
 .IP \[bu] 2
@@ -71637,7 +71178,7 @@ Default: false
 .PP
 Storage Account Shared Key.
 .PP
-Leave blank to use SAS URL or connection string.
+Leave blank to use SAS URL or Emulator.
 .PP
 Properties:
 .IP \[bu] 2
@@ -71650,9 +71191,9 @@ Type: string
 Required: false
 .SS --azurefiles-sas-url
 .PP
-SAS URL.
+SAS URL for container level access only.
 .PP
-Leave blank if using account/key or connection string.
+Leave blank if using account/key or Emulator.
 .PP
 Properties:
 .IP \[bu] 2
@@ -71665,7 +71206,10 @@ Type: string
 Required: false
 .SS --azurefiles-connection-string
 .PP
-Azure Files Connection String.
+Storage Connection String.
+.PP
+Connection string for the storage.
+Leave blank if using other auth methods.
 .PP
 Properties:
 .IP \[bu] 2
@@ -71759,6 +71303,21 @@ Env Var: RCLONE_AZUREFILES_CLIENT_CERTIFICATE_PASSWORD
 Type: string
 .IP \[bu] 2
 Required: false
+.SS --azurefiles-share-name
+.PP
+Azure Files Share Name.
+.PP
+This is required and is the name of the share to access.
+.PP
+Properties:
+.IP \[bu] 2
+Config: share_name
+.IP \[bu] 2
+Env Var: RCLONE_AZUREFILES_SHARE_NAME
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
 .SS Advanced options
 .PP
 Here are the Advanced options specific to azurefiles (Microsoft Azure
@@ -71826,7 +71385,7 @@ interactive login.
 .nf
 \f[C]
 $ az ad sp create-for-rbac --name \[dq]<name>\[dq] \[rs]
-  --role \[dq]Storage Files Data Owner\[dq] \[rs]
+  --role \[dq]Storage Blob Data Owner\[dq] \[rs]
   --scopes \[dq]/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>\[dq] \[rs]
   > azure-principal.json
 \f[R]
@@ -71834,12 +71393,9 @@ $ az ad sp create-for-rbac --name \[dq]<name>\[dq] \[rs]
 .PP
 See \[dq]Create an Azure service
 principal\[dq] (https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli)
-and \[dq]Assign an Azure role for access to files
+and \[dq]Assign an Azure role for access to blob
 data\[dq] (https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli)
 pages for more details.
-.PP
-\f[B]NB\f[R] this section needs updating for Azure Files - pull requests
-appreciated!
 .PP
 It may be more convenient to put the credentials directly into the
 rclone config file under the \f[V]client_id\f[R], \f[V]tenant\f[R] and
@@ -71855,6 +71411,28 @@ Env Var: RCLONE_AZUREFILES_SERVICE_PRINCIPAL_FILE
 Type: string
 .IP \[bu] 2
 Required: false
+.SS --azurefiles-disable-instance-discovery
+.PP
+Skip requesting Microsoft Entra instance metadata
+.PP
+This should be set true only by applications authenticating in
+disconnected clouds, or private clouds such as Azure Stack.
+.PP
+It determines whether rclone requests Microsoft Entra instance metadata
+from \f[V]https://login.microsoft.com/\f[R] before authenticating.
+.PP
+Setting this to true will skip this request, making you responsible for
+ensuring the configured authority is valid and trustworthy.
+.PP
+Properties:
+.IP \[bu] 2
+Config: disable_instance_discovery
+.IP \[bu] 2
+Env Var: RCLONE_AZUREFILES_DISABLE_INSTANCE_DISCOVERY
+.IP \[bu] 2
+Type: bool
+.IP \[bu] 2
+Default: false
 .SS --azurefiles-use-msi
 .PP
 Use a managed service identity to authenticate (only works in Azure).
@@ -71925,32 +71503,32 @@ Env Var: RCLONE_AZUREFILES_MSI_MI_RES_ID
 Type: string
 .IP \[bu] 2
 Required: false
-.SS --azurefiles-disable-instance-discovery
+.SS --azurefiles-use-emulator
 .PP
-Skip requesting Microsoft Entra instance metadata This should be set
-true only by applications authenticating in disconnected clouds, or
-private clouds such as Azure Stack.
-It determines whether rclone requests Microsoft Entra instance metadata
-from \f[V]https://login.microsoft.com/\f[R] before authenticating.
-Setting this to true will skip this request, making you responsible for
-ensuring the configured authority is valid and trustworthy.
+Uses local storage emulator if provided as \[aq]true\[aq].
+.PP
+Leave blank if using real azure storage endpoint.
 .PP
 Properties:
 .IP \[bu] 2
-Config: disable_instance_discovery
+Config: use_emulator
 .IP \[bu] 2
-Env Var: RCLONE_AZUREFILES_DISABLE_INSTANCE_DISCOVERY
+Env Var: RCLONE_AZUREFILES_USE_EMULATOR
 .IP \[bu] 2
 Type: bool
 .IP \[bu] 2
 Default: false
 .SS --azurefiles-use-az
 .PP
-Use Azure CLI tool az for authentication Set to use the Azure CLI tool
+Use Azure CLI tool az for authentication
+.PP
+Set to use the Azure CLI tool
 az (https://learn.microsoft.com/en-us/cli/azure/) as the sole means of
 authentication.
+.PP
 Setting this can be useful if you wish to use the az CLI on a host with
 a System Managed Identity that you do not want to use.
+.PP
 Don\[aq]t set env_auth at the same time.
 .PP
 Properties:
@@ -73195,7 +72773,7 @@ This is why this flag is not set as the default.
 .PP
 As a rule of thumb if nearly all of your data is under rclone\[aq]s root
 directory (the \f[V]root/directory\f[R] in
-\f[V]onedrive:root/directory\f[R]) then using this flag will be be a big
+\f[V]onedrive:root/directory\f[R]) then using this flag will be a big
 performance win.
 If your data is mostly not under the root then using this flag will be a
 big performance loss.
@@ -73518,7 +73096,7 @@ description
 T}@T{
 A short description of the file.
 Max 1024 characters.
-Only supported for OneDrive Personal.
+No longer supported by Microsoft.
 T}@T{
 string
 T}@T{
@@ -77376,7 +76954,7 @@ Default: 0
 .PP
 Above this size files will be chunked.
 .PP
-Above this size files will be chunked into a a \f[V]_segments\f[R]
+Above this size files will be chunked into a \f[V]_segments\f[R]
 container or a \f[V].file-segments\f[R] directory.
 (See the \f[V]use_segments_container\f[R] option for more info).
 Default for this is 5 GiB which is its maximum value, which means only
@@ -77770,6 +77348,37 @@ So if the folder you want rclone to use your is \[dq]My Music/\[dq],
 then use the returned id from \f[V]rclone lsf\f[R] command (ex.
 \f[V]dxxxxxxxx2\f[R]) as the \f[V]root_folder_id\f[R] variable value in
 the config file.
+.SS Change notifications and mounts
+.PP
+The pCloud backend supports real‑time updates for rclone mounts via
+change notifications.
+rclone uses pCloud\[cq]s diff long‑polling API to detect changes and
+will automatically refresh directory listings in the mounted filesystem
+when changes occur.
+.PP
+Notes and behavior:
+.IP \[bu] 2
+Works automatically when using \f[V]rclone mount\f[R] and requires no
+additional configuration.
+.IP \[bu] 2
+Notifications are directory‑scoped: when rclone detects a change, it
+refreshes the affected directory so new/removed/renamed files become
+visible promptly.
+.IP \[bu] 2
+Updates are near real‑time.
+The backend uses a long‑poll with short fallback polling intervals, so
+you should see changes appear quickly without manual refreshes.
+.PP
+If you want to debug or verify notifications, you can use the helper
+command:
+.IP
+.nf
+\f[C]
+rclone test changenotify remote:
+\f[R]
+.fi
+.PP
+This will log incoming change notifications for the given remote.
 .SS Standard options
 .PP
 Here are the Standard options specific to pcloud (Pcloud).
@@ -82068,6 +81677,17 @@ URL for HTTP CONNECT proxy
 Set this to a URL for an HTTP proxy which supports the HTTP CONNECT
 verb.
 .PP
+Supports the format http://user:pass\[at]host:port, http://host:port,
+http://host.
+.PP
+Example:
+.IP
+.nf
+\f[C]
+http://myUser:myPass\[at]proxyhostname.example.com:8000
+\f[R]
+.fi
+.PP
 Properties:
 .IP \[bu] 2
 Config: http_proxy
@@ -82157,6 +81777,297 @@ Hetzner Storage Boxes are supported through the SFTP backend on port 23.
 .PP
 See Hetzner\[aq]s documentation for
 details (https://docs.hetzner.com/robot/storage-box/access/access-ssh-rsync-borg#rclone)
+.SH Shade
+.PP
+This is a backend for the Shade (https://shade.inc/) platform
+.SS About Shade
+.PP
+Shade (https://shade.inc/) is an AI-powered cloud NAS that makes your
+cloud files behave like a local drive, optimized for media and creative
+workflows.
+It provides fast, secure access with natural-language search, easy
+sharing, and scalable cloud storage.
+.SS Accounts & Pricing
+.PP
+To use this backend, you need to create a free
+account (https://app.shade.inc/) on Shade.
+You can start with a free account and get 20GB of storage for free.
+.SS Usage
+.PP
+Paths are specified as \f[V]remote:path\f[R]
+.PP
+Paths may be as deep as required, e.g.
+\f[V]remote:directory/subdirectory\f[R].
+.SS Configuration
+.PP
+Here is an example of making a Shade configuration.
+.PP
+First, create a create a free account (https://app.shade.inc/) account
+and choose a plan.
+.PP
+You will need to log in and get the \f[V]API Key\f[R] and
+\f[V]Drive ID\f[R] for your account from the settings section of your
+account and created drive respectively.
+.PP
+Now run
+.PP
+\f[V]rclone config\f[R]
+.PP
+Follow this interactive process:
+.IP
+.nf
+\f[C]
+$ rclone config
+e) Edit existing remote
+n) New remote
+d) Delete remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
+q) Quit config
+e/n/d/r/c/s/q> n
+
+Enter name for new remote.
+name> Shade
+
+Option Storage.
+Type of storage to configure.
+Choose a number from below, or type in your own value.
+[OTHER OPTIONS]
+xx / Shade FS
+   \[rs] (shade)
+[OTHER OPTIONS]
+Storage> xx
+
+Option drive_id.
+The ID of your drive, see this in the drive settings. Individual rclone configs must be made per drive.
+Enter a value.
+drive_id> [YOUR_ID]
+
+Option api_key.
+An API key for your account.
+Enter a value.
+api_key> [YOUR_API_KEY]
+
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n> n
+
+Configuration complete.
+Options:
+- type: shade
+- drive_id: [YOUR_ID]
+- api_key: [YOUR_API_KEY]
+Keep this \[dq]Shade\[dq] remote?
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+\f[R]
+.fi
+.SS Modification times and hashes
+.PP
+Shade does not support hashes and writing mod times.
+.SS Transfers
+.PP
+Shade uses multipart uploads by default.
+This means that files will be chunked and sent up to Shade concurrently.
+In order to configure how many simultaneous uploads you want to use,
+upload the \[aq]concurrency\[aq] option in the advanced config section.
+Note that this uses more memory and initiates more http requests.
+.SS Deleting files
+.PP
+Please note that when deleting files in Shade via rclone it will delete
+the file instantly, instead of sending it to the trash.
+This means that it will not be recoverable.
+.SS Standard options
+.PP
+Here are the Standard options specific to shade (Shade FS).
+.SS --shade-drive-id
+.PP
+The ID of your drive, see this in the drive settings.
+Individual rclone configs must be made per drive.
+.PP
+Properties:
+.IP \[bu] 2
+Config: drive_id
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_DRIVE_ID
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: true
+.SS --shade-api-key
+.PP
+An API key for your account.
+.PP
+Properties:
+.IP \[bu] 2
+Config: api_key
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_API_KEY
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: true
+.SS Advanced options
+.PP
+Here are the Advanced options specific to shade (Shade FS).
+.SS --shade-endpoint
+.PP
+Endpoint for the service.
+.PP
+Leave blank normally.
+.PP
+Properties:
+.IP \[bu] 2
+Config: endpoint
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_ENDPOINT
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --shade-chunk-size
+.PP
+Chunk size to use for uploading.
+.PP
+Any files larger than this will be uploaded in chunks of this size.
+.PP
+Note that this is stored in memory per transfer, so increasing it will
+increase memory usage.
+.PP
+Minimum is 5MB, maximum is 5GB.
+.PP
+Properties:
+.IP \[bu] 2
+Config: chunk_size
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_CHUNK_SIZE
+.IP \[bu] 2
+Type: SizeSuffix
+.IP \[bu] 2
+Default: 64Mi
+.SS --shade-upload-concurrency
+.PP
+Concurrency for multipart uploads and copies.
+This is the number of chunks of the same file that are uploaded
+concurrently for multipart uploads and copies.
+.PP
+Properties:
+.IP \[bu] 2
+Config: upload_concurrency
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_UPLOAD_CONCURRENCY
+.IP \[bu] 2
+Type: int
+.IP \[bu] 2
+Default: 4
+.SS --shade-max-upload-parts
+.PP
+Maximum amount of parts in a multipart upload.
+.PP
+Properties:
+.IP \[bu] 2
+Config: max_upload_parts
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_MAX_UPLOAD_PARTS
+.IP \[bu] 2
+Type: int
+.IP \[bu] 2
+Default: 10000
+.SS --shade-token
+.PP
+JWT Token for performing Shade FS operations.
+Don\[aq]t set this value - rclone will set it automatically
+.PP
+Properties:
+.IP \[bu] 2
+Config: token
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_TOKEN
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --shade-token-expiry
+.PP
+JWT Token Expiration time.
+Don\[aq]t set this value - rclone will set it automatically
+.PP
+Properties:
+.IP \[bu] 2
+Config: token_expiry
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_TOKEN_EXPIRY
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS --shade-encoding
+.PP
+The encoding for the backend.
+.PP
+See the encoding section in the
+overview (https://rclone.org/overview/#encoding) for more info.
+.PP
+Properties:
+.IP \[bu] 2
+Config: encoding
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_ENCODING
+.IP \[bu] 2
+Type: Encoding
+.IP \[bu] 2
+Default: Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot
+.SS --shade-description
+.PP
+Description of the remote.
+.PP
+Properties:
+.IP \[bu] 2
+Config: description
+.IP \[bu] 2
+Env Var: RCLONE_SHADE_DESCRIPTION
+.IP \[bu] 2
+Type: string
+.IP \[bu] 2
+Required: false
+.SS Limitations
+.PP
+Note that Shade is case insensitive so you can\[aq]t have a file called
+\[dq]Hello.doc\[dq] and one called \[dq]hello.doc\[dq].
+.PP
+Shade only supports filenames up to 255 characters in length.
+.PP
+\f[V]rclone about\f[R] is not supported by the Shade backend.
+Backends without this capability cannot determine free space for an
+rclone mount or use policy \f[V]mfs\f[R] (most free space) as a member
+of an rclone union remote.
+.PP
+See List of backends that do not support rclone
+about (https://rclone.org/overview/#optional-features) and rclone
+about (https://rclone.org/commands/rclone_about/)
+.SS Backend commands
+.PP
+Here are the commands specific to the shade backend.
+.PP
+Run them with
+.IP
+.nf
+\f[C]
+rclone backend COMMAND remote:
+\f[R]
+.fi
+.PP
+The help below will explain what arguments each command takes.
+.PP
+See the backend (https://rclone.org/commands/rclone_backend/) command
+for more info on how to pass options and arguments.
+.PP
+These can be run on a running backend using the rc command
+backend/command (https://rclone.org/rc/#backend-command).
 .SH SMB
 .PP
 SMB is a communication protocol to share files over
@@ -83787,218 +83698,6 @@ of an rclone union remote.
 See List of backends that do not support rclone
 about (https://rclone.org/overview/#optional-features) and rclone
 about (https://rclone.org/commands/rclone_about/).
-.SH Uptobox
-.PP
-This is a Backend for Uptobox file storage service.
-Uptobox is closer to a one-click hoster than a traditional cloud storage
-provider and therefore not suitable for long term storage.
-.PP
-Paths are specified as \f[V]remote:path\f[R]
-.PP
-Paths may be as deep as required, e.g.
-\f[V]remote:directory/subdirectory\f[R].
-.SS Configuration
-.PP
-To configure an Uptobox backend you\[aq]ll need your personal api token.
-You\[aq]ll find it in your account
-settings (https://uptobox.com/my_account).
-.PP
-Here is an example of how to make a remote called \f[V]remote\f[R] with
-the default setup.
-First run:
-.IP
-.nf
-\f[C]
-rclone config
-\f[R]
-.fi
-.PP
-This will guide you through an interactive setup process:
-.IP
-.nf
-\f[C]
-Current remotes:
-
-Name                 Type
-====                 ====
-TestUptobox          uptobox
-
-e) Edit existing remote
-n) New remote
-d) Delete remote
-r) Rename remote
-c) Copy remote
-s) Set configuration password
-q) Quit config
-e/n/d/r/c/s/q> n
-name> uptobox
-Type of storage to configure.
-Enter a string value. Press Enter for the default (\[dq]\[dq]).
-Choose a number from below, or type in your own value
-[...]
-37 / Uptobox
-   \[rs] \[dq]uptobox\[dq]
-[...]
-Storage> uptobox
-** See help for uptobox backend at: https://rclone.org/uptobox/ **
-
-Your API Key, get it from https://uptobox.com/my_account
-Enter a string value. Press Enter for the default (\[dq]\[dq]).
-api_key> xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Edit advanced config? (y/n)
-y) Yes
-n) No (default)
-y/n> n
-Remote config
---------------------
-[uptobox]
-type = uptobox
-api_key = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
---------------------
-y) Yes this is OK (default)
-e) Edit this remote
-d) Delete this remote
-y/e/d>
-\f[R]
-.fi
-.PP
-Once configured you can then use \f[V]rclone\f[R] like this (replace
-\f[V]remote\f[R] with the name you gave your remote):
-.PP
-List directories in top level of your Uptobox
-.IP
-.nf
-\f[C]
-rclone lsd remote:
-\f[R]
-.fi
-.PP
-List all the files in your Uptobox
-.IP
-.nf
-\f[C]
-rclone ls remote:
-\f[R]
-.fi
-.PP
-To copy a local directory to an Uptobox directory called backup
-.IP
-.nf
-\f[C]
-rclone copy /home/source remote:backup
-\f[R]
-.fi
-.SS Modification times and hashes
-.PP
-Uptobox supports neither modified times nor checksums.
-All timestamps will read as that set by \f[V]--default-time\f[R].
-.SS Restricted filename characters
-.PP
-In addition to the default restricted characters
-set (https://rclone.org/overview/#restricted-characters) the following
-characters are also replaced:
-.PP
-.TS
-tab(@);
-l c c.
-T{
-Character
-T}@T{
-Value
-T}@T{
-Replacement
-T}
-_
-T{
-\[dq]
-T}@T{
-0x22
-T}@T{
-＂
-T}
-T{
-\[ga]
-T}@T{
-0x41
-T}@T{
-｀
-T}
-.TE
-.PP
-Invalid UTF-8 bytes will also be
-replaced (https://rclone.org/overview/#invalid-utf8), as they can\[aq]t
-be used in XML strings.
-.SS Standard options
-.PP
-Here are the Standard options specific to uptobox (Uptobox).
-.SS --uptobox-access-token
-.PP
-Your access token.
-.PP
-Get it from https://uptobox.com/my_account.
-.PP
-Properties:
-.IP \[bu] 2
-Config: access_token
-.IP \[bu] 2
-Env Var: RCLONE_UPTOBOX_ACCESS_TOKEN
-.IP \[bu] 2
-Type: string
-.IP \[bu] 2
-Required: false
-.SS Advanced options
-.PP
-Here are the Advanced options specific to uptobox (Uptobox).
-.SS --uptobox-private
-.PP
-Set to make uploaded files private
-.PP
-Properties:
-.IP \[bu] 2
-Config: private
-.IP \[bu] 2
-Env Var: RCLONE_UPTOBOX_PRIVATE
-.IP \[bu] 2
-Type: bool
-.IP \[bu] 2
-Default: false
-.SS --uptobox-encoding
-.PP
-The encoding for the backend.
-.PP
-See the encoding section in the
-overview (https://rclone.org/overview/#encoding) for more info.
-.PP
-Properties:
-.IP \[bu] 2
-Config: encoding
-.IP \[bu] 2
-Env Var: RCLONE_UPTOBOX_ENCODING
-.IP \[bu] 2
-Type: Encoding
-.IP \[bu] 2
-Default:
-Slash,LtGt,DoubleQuote,BackQuote,Del,Ctl,LeftSpace,InvalidUtf8,Dot
-.SS --uptobox-description
-.PP
-Description of the remote.
-.PP
-Properties:
-.IP \[bu] 2
-Config: description
-.IP \[bu] 2
-Env Var: RCLONE_UPTOBOX_DESCRIPTION
-.IP \[bu] 2
-Type: string
-.IP \[bu] 2
-Required: false
-.SS Limitations
-.PP
-Uptobox will delete inactive files that have not been accessed in 60
-days.
-.PP
-\f[V]rclone about\f[R] is not supported by this backend an overview of
-used space can however been seen in the uptobox web interface.
 .SH Union
 .PP
 The \f[V]union\f[R] backend joins several remotes together to make a
@@ -87115,6 +86814,199 @@ Options:
 .IP \[bu] 2
 \[dq]error\[dq]: Return an error based on option value.
 .SH Changelog
+.SS v1.73.0 - 2026-01-30
+.PP
+See commits (https://github.com/rclone/rclone/compare/v1.72.0...v1.73.0)
+.IP \[bu] 2
+New backends
+.RS 2
+.IP \[bu] 2
+Shade (https://rclone.org/shade/) (jhasse-shade)
+.IP \[bu] 2
+Drime (https://rclone.org/drime/) (dougal)
+.IP \[bu] 2
+Filen (https://rclone.org/filen/) (Enduriel)
+.IP \[bu] 2
+Internxt (https://rclone.org/internxt/) (jzunigax2)
+.IP \[bu] 2
+New S3 providers
+.RS 2
+.IP \[bu] 2
+Bizfly Cloud Simple Storage (https://rclone.org/s3/#bizflycloud)
+(vupn0712)
+.RE
+.RE
+.IP \[bu] 2
+New Features
+.RS 2
+.IP \[bu] 2
+docs: Add Support Tiers (https://rclone.org/tiers/) to the documentation
+(Nick Craig-Wood)
+.IP \[bu] 2
+rc: Add
+operations/hashsumfile (https://rclone.org/rc/#operations-hashsumfile)
+to sum a single file only (Nick Craig-Wood)
+.IP \[bu] 2
+serve webdav: Implement download directory as Zip (Leo)
+.RE
+.IP \[bu] 2
+Bug Fixes
+.RS 2
+.IP \[bu] 2
+fs: fix bwlimit: correct reporting (Mikel Olasagasti Uranga)
+.IP \[bu] 2
+log: fix systemd adding extra newline (dougal)
+.IP \[bu] 2
+docs: fixes (albertony, darkdragon-001, Duncan Smart, hyusap,
+Marc-Philip, Nick Craig-Wood, vicerace, vyv03354, yuval-cloudinary, yy)
+.IP \[bu] 2
+serve s3: Make errors in \f[V]--s3-auth-key\f[R] fatal (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+Mount
+.RS 2
+.IP \[bu] 2
+Fix OpenBSD mount support.
+(Nick Owens)
+.RE
+.IP \[bu] 2
+Azure Blob
+.RS 2
+.IP \[bu] 2
+Add metadata and tags support across upload and copy paths (Cliff Frey)
+.IP \[bu] 2
+Factor the common auth into a library (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+Azurefiles
+.RS 2
+.IP \[bu] 2
+Factor the common auth into a library (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+B2
+.RS 2
+.IP \[bu] 2
+Support authentication with new bucket restricted application keys
+(DianaNites)
+.RE
+.IP \[bu] 2
+Drive
+.RS 2
+.IP \[bu] 2
+Add \f[V]--drive-metadata-force-expansive-access\f[R] flag (Nick
+Craig-Wood)
+.IP \[bu] 2
+Fix crash when trying to creating shortcut to a Google doc (Nick
+Craig-Wood)
+.RE
+.IP \[bu] 2
+FTP
+.RS 2
+.IP \[bu] 2
+Add http proxy authentication support (Nicolas Dessart)
+.RE
+.IP \[bu] 2
+Mega
+.RS 2
+.IP \[bu] 2
+Reverts TLS workaround (necaran)
+.RE
+.IP \[bu] 2
+Memory
+.RS 2
+.IP \[bu] 2
+Add \f[V]--memory-discard\f[R] flag for speed testing (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+OneDrive
+.RS 2
+.IP \[bu] 2
+Fix cancelling multipart upload (Nick Craig-Wood)
+.IP \[bu] 2
+Fix setting modification time on directories for OneDrive Personal (Nick
+Craig-Wood)
+.IP \[bu] 2
+Fix OneDrive Personal no longer supports description (Nick Craig-Wood)
+.IP \[bu] 2
+Fix require sign in for OneDrive Personal (Nick Craig-Wood)
+.IP \[bu] 2
+Fix permissions on OneDrive Personal (Nick Craig-Wood)
+.RE
+.IP \[bu] 2
+Oracle Object Storage
+.RS 2
+.IP \[bu] 2
+Eliminate unnecessary heap allocation (Qingwei Li)
+.RE
+.IP \[bu] 2
+Pcloud
+.RS 2
+.IP \[bu] 2
+Add support for \f[V]ChangeNotify\f[R] to enable real-time updates in
+mount (masrlinu)
+.RE
+.IP \[bu] 2
+Protondrive
+.RS 2
+.IP \[bu] 2
+Update to use forks of upstream modules to unblock development (Nick
+Craig-Wood)
+.RE
+.IP \[bu] 2
+S3
+.RS 2
+.IP \[bu] 2
+Add ability to specify an IAM role for cross-account interaction
+(Vladislav Tropnikov)
+.IP \[bu] 2
+Linode: updated endpoints to use ISO 3166-1 alpha-2 standard
+(jbagwell-akamai)
+.IP \[bu] 2
+Fix Copy ignoring storage class (vupn0712)
+.RE
+.IP \[bu] 2
+SFTP
+.RS 2
+.IP \[bu] 2
+Add http proxy authentication support (Nicolas Dessart)
+.IP \[bu] 2
+Eliminate unnecessary heap allocation (Qingwei Li)
+.RE
+.SS v1.72.1 - 2025-12-10
+.PP
+See commits (https://github.com/rclone/rclone/compare/v1.72.0...v1.72.1)
+.IP \[bu] 2
+Bug Fixes
+.RS 2
+.IP \[bu] 2
+build: update to go1.25.5 to fix
+CVE-2025-61729 (https://pkg.go.dev/vuln/GO-2025-4155)
+.IP \[bu] 2
+doc fixes (Duncan Smart, Nick Craig-Wood)
+.IP \[bu] 2
+configfile: Fix piped config support (Jonas Tingeborn)
+.IP \[bu] 2
+log
+.RS 2
+.IP \[bu] 2
+Fix PID not included in JSON log output (Tingsong Xu)
+.IP \[bu] 2
+Fix backtrace not going to the --log-file (Nick Craig-Wood)
+.RE
+.RE
+.IP \[bu] 2
+Google Cloud Storage
+.RS 2
+.IP \[bu] 2
+Improve endpoint parameter docs (Johannes Rothe)
+.RE
+.IP \[bu] 2
+S3
+.RS 2
+.IP \[bu] 2
+Add missing regions for Selectel provider (Nick Craig-Wood)
+.RE
 .SS v1.72.0 - 2025-11-21
 .PP
 See commits (https://github.com/rclone/rclone/compare/v1.71.0...v1.72.0)
@@ -103780,6 +103672,63 @@ When the same Unicode characters are intentionally used in file names,
 this replacement strategy leads to unwanted renames.
 Read more under section
 caveats (https://rclone.org/overview/#restricted-filenames-caveats).
+.SS Why does rclone fail to connect over TLS but another client works?
+.PP
+If you see TLS handshake failures (or packet captures show the server
+rejecting all offered ciphers), the server/proxy may only support legacy
+TLS cipher suites (for example RSA key-exchange ciphers such as
+\f[V]RSA_WITH_AES_256_CBC_SHA256\f[R], or old 3DES ciphers).
+Recent Go versions (which rclone is built with) have \f[B]removed
+insecure ciphers from the default list\f[R], so rclone may refuse to
+negotiate them even if other tools still do.
+.PP
+If you can\[aq]t update/reconfigure the server/proxy to support modern
+TLS (TLS 1.2/1.3) and ECDHE-based cipher suites you can re-enable legacy
+ciphers via \f[V]GODEBUG\f[R]:
+.IP \[bu] 2
+Windows (cmd.exe):
+.RS 2
+.IP
+.nf
+\f[C]
+set GODEBUG=tlsrsakex=1
+rclone copy ...
+\f[R]
+.fi
+.RE
+.IP \[bu] 2
+Windows (PowerShell):
+.RS 2
+.IP
+.nf
+\f[C]
+$env:GODEBUG=\[dq]tlsrsakex=1\[dq]
+rclone copy ...
+\f[R]
+.fi
+.RE
+.IP \[bu] 2
+Linux/macOS:
+.RS 2
+.IP
+.nf
+\f[C]
+GODEBUG=tlsrsakex=1 rclone copy ...
+\f[R]
+.fi
+.RE
+.PP
+If the server only supports 3DES, try:
+.IP
+.nf
+\f[C]
+GODEBUG=tls3des=1 rclone ...
+\f[R]
+.fi
+.PP
+This applies to \f[B]any rclone feature using TLS\f[R] (HTTPS, FTPS,
+WebDAV over TLS, proxies with TLS interception, etc.).
+Use these workarounds only long enough to get the server/proxy updated.
 .SH License
 .PP
 This is free software under the terms of the MIT license (check the
@@ -105903,6 +105852,57 @@ jijamik <30904953+jijamik@users.noreply.github.com>
 Dominik Sander <git@dsander.de>
 .IP \[bu] 2
 Nikolay Kiryanov <nikolay@kiryanov.ru>
+.IP \[bu] 2
+Diana <5275194+DianaNites@users.noreply.github.com>
+.IP \[bu] 2
+Duncan Smart <duncan.smart@gmail.com>
+.IP \[bu] 2
+vicerace <vicerace@sohu.com>
+.IP \[bu] 2
+Cliff Frey <cliff@openai.com>
+.IP \[bu] 2
+Vladislav Tropnikov <vtr.name@gmail.com>
+.IP \[bu] 2
+Leo <i@hardrain980.com>
+.IP \[bu] 2
+Johannes Rothe <mail@johannes-rothe.de>
+.IP \[bu] 2
+Tingsong Xu <tingsong.xu@rightcapital.com>
+.IP \[bu] 2
+Jonas Tingeborn <134889+jojje@users.noreply.github.com>
+.IP \[bu] 2
+jhasse-shade <jacob@shade.inc>
+.IP \[bu] 2
+vyv03354 <VYV03354@nifty.ne.jp>
+.IP \[bu] 2
+masrlinu <masrlinu@users.noreply.github.com>
+<5259918+masrlinu@users.noreply.github.com>
+.IP \[bu] 2
+vupn0712 <126212736+vupn0712@users.noreply.github.com>
+.IP \[bu] 2
+darkdragon-001 <darkdragon-001@users.noreply.github.com>
+.IP \[bu] 2
+sys6101 <csvmen@gmail.com>
+.IP \[bu] 2
+Nicolas Dessart <nds@outsight.tech>
+.IP \[bu] 2
+Qingwei Li <332664203@qq.com>
+.IP \[bu] 2
+yy <yhymmt37@gmail.com>
+.IP \[bu] 2
+Marc-Philip <marc-philip.werner@sap.com>
+.IP \[bu] 2
+Mikel Olasagasti Uranga <mikel@olasagasti.info>
+.IP \[bu] 2
+Nick Owens <mischief@offblast.org>
+.IP \[bu] 2
+hyusap <paulayush@gmail.com>
+.IP \[bu] 2
+jzunigax2 <125698953+jzunigax2@users.noreply.github.com>
+.IP \[bu] 2
+lullius <lullius@users.noreply.github.com>
+.IP \[bu] 2
+StarHack <StarHack@users.noreply.github.com>
 .SH Contact the rclone project
 .SS Forum
 .PP
