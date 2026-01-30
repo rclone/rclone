@@ -19,7 +19,6 @@ import (
 	"golang.org/x/oauth2"
 )
 
-
 type userInfo struct {
 	RootFolderID string
 	Bucket       string
