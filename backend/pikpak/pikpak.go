@@ -222,6 +222,11 @@ Fill in for rclone to use a non root folder as its starting point.
 			Help:     "Use original file links instead of media links.\n\nThis avoids issues caused by invalid media links, but may reduce download speeds.",
 			Advanced: true,
 		}, {
+			Name:     "proxy_url",
+			Default:  "",
+			Help:     "Cloudflare Worker proxy URL for accelerating downloads.\n\nIf set, download URLs will be proxied through this URL.\nFormat: https://your-worker.your-subdomain.workers.dev\n\nThe proxy will receive requests like:\nhttps://your-worker.workers.dev/https://original-download-url",
+			Advanced: true,
+		}, {
 			Name:     "hash_memory_limit",
 			Help:     "Files bigger than this will be cached on disk to calculate hash if required.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
@@ -303,6 +308,7 @@ type Options struct {
 	UseTrash            bool                 `config:"use_trash"`
 	TrashedOnly         bool                 `config:"trashed_only"`
 	NoMediaLink         bool                 `config:"no_media_link"`
+	ProxyURL            string               `config:"proxy_url"`
 	HashMemoryThreshold fs.SizeSuffix        `config:"hash_memory_limit"`
 	ChunkSize           fs.SizeSuffix        `config:"chunk_size"`
 	UploadCutoff        fs.SizeSuffix        `config:"upload_cutoff"`
@@ -1956,7 +1962,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err = o.setMetaDataWithLink(ctx); err != nil {
 		return nil, fmt.Errorf("can't download: %w", err)
 	}
-	return o.open(ctx, o.link.URL, options...)
+	downloadURL := o.link.URL
+	// Use proxy URL if configured
+	if o.fs.opt.ProxyURL != "" {
+		downloadURL = strings.TrimSuffix(o.fs.opt.ProxyURL, "/") + "/" + downloadURL
+		fs.Debugf(o, "Using proxy URL: %s", downloadURL)
+	}
+	return o.open(ctx, downloadURL, options...)
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
