@@ -743,6 +743,8 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
+// Shutdown the backend, closing any background tasks and any cached
+// connections.
 func (f *Fs) Shutdown(ctx context.Context) error {
 	buckets.WaitForPendingThumbnails()
 
