@@ -342,13 +342,16 @@ func testMountAPI(t *testing.T, sockAddr string) {
 
 	srv := docker.NewServer(drv)
 	go func() {
-		var errServe error
+		var listener net.Listener
+		var err error
 		if unixPath != "" {
-			errServe = srv.ServeUnix(unixPath, os.Getgid())
+			listener, err = srv.ListenUnix(unixPath, os.Getgid())
 		} else {
-			errServe = srv.ServeTCP(sockAddr, testDir, nil, false)
+			listener, err = srv.ListenTCP(sockAddr, testDir, nil, false)
 		}
-		assert.ErrorIs(t, errServe, http.ErrServerClosed)
+		assert.NoError(t, err)
+		err = srv.Serve(listener)
+		assert.ErrorIs(t, err, http.ErrServerClosed)
 	}()
 	defer func() {
 		err := srv.Shutdown(ctx)
