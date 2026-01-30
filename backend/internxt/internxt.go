@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -113,6 +114,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, configIn fs.Co
 	}
 
 	cfg := config.NewDefaultToken("")
+	cfg.HTTPClient = fshttp.NewClient(ctx)
 
 	switch configIn.State {
 	case "":
@@ -259,6 +261,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	cfg := config.NewDefaultToken(oauthToken.AccessToken)
 	cfg.Mnemonic = opt.Mnemonic
 	cfg.SkipHashValidation = opt.SkipHashValidation
+	cfg.HTTPClient = fshttp.NewClient(ctx)
 
 	userInfo, err := getUserInfo(ctx, &userInfoConfig{Token: cfg.Token})
 	if err != nil {
