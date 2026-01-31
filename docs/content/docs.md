@@ -61,6 +61,7 @@ See the following for detailed instructions for
 - [HTTP](/http/)
 - [iCloud Drive](/iclouddrive/)
 - [Internet Archive](/internetarchive/)
+- [Internxt](/internxt/)
 - [Jottacloud](/jottacloud/)
 - [Koofr](/koofr/)
 - [Linkbox](/linkbox/)

@@ -140,6 +140,24 @@ Properties:
 
 Here are the Advanced options specific to filen (Filen).
 
+#### --filen-upload-concurrency
+
+Concurrency for chunked uploads.
+
+This is the upper limit for how many transfers for the same file are running concurrently.
+Setting this above to a value smaller than 1 will cause uploads to deadlock.
+
+If you are uploading small numbers of large files over high-speed links
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_FILEN_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     16
+
 #### --filen-encoding
 
 The encoding for the backend.
@@ -152,28 +170,6 @@ Properties:
 - Env Var:     RCLONE_FILEN_ENCODING
 - Type:        Encoding
 - Default:     Slash,Del,Ctl,InvalidUtf8,Dot
-
-#### --filen-upload-concurrency
-
-Concurrency for multipart uploads.
-
-This is the number of chunks of the same file that are uploaded
-concurrently for multipart uploads.
-
-Note that chunks are stored in memory and there may be up to
-"--transfers" * "--filen-upload-concurrency" chunks stored at once
-in memory.
-
-If you are uploading small numbers of large files over high-speed links
-and these uploads do not fully utilize your bandwidth, then increasing
-this may help to speed up the transfers.
-
-Properties:
-
-- Config:      upload_concurrency
-- Env Var:     RCLONE_FILEN_UPLOAD_CONCURRENCY
-- Type:        int
-- Default:     16
 
 #### --filen-master-keys
 

@@ -1,0 +1,27 @@
+backend: drime
+name: Drime
+tier: Tier 1
+maintainers: Core
+features_score: 4
+integration_tests: Passing
+data_integrity: High
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: false
+remote: 'TestDrime:'
+features:
+- CanHaveEmptyDirectories
+- Copy
+- DirCacheFlush
+- DirMove
+- Move
+- OpenChunkWriter
+- Purge
+- PutStream
+- PutUnchecked
+- ReadMimeType
+- WriteMimeType
+hashes: []
+precision: 3153600000000000000

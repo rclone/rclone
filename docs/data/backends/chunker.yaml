@@ -1,0 +1,16 @@
+backend: chunker
+name: Chunker
+tier: Tier 4
+maintainers: None
+features_score: 7
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Some use
+docs: Full
+security: High
+virtual: true
+remote: 'TestChunkerLocal:'
+features: null
+hashes: null
+precision: null

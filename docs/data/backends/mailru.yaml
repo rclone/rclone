@@ -1,0 +1,27 @@
+backend: mailru
+name: Mailru
+tier: Tier 1
+maintainers: External
+features_score: 6
+integration_tests: Passing
+data_integrity: Hash
+performance: Medium
+adoption: Often used
+docs: Full
+security: High
+virtual: false
+remote: 'TestMailru:'
+features:
+- About
+- CanHaveEmptyDirectories
+- CaseInsensitive
+- CleanUp
+- Copy
+- DirMove
+- Move
+- PublicLink
+- Purge
+- ServerSideAcrossConfigs
+hashes:
+- mailru
+precision: 1000000000

@@ -1,3 +1,9 @@
+---
+title: "Shade"
+description: "Shade Backend Docs"
+versionIntroduced: "v1.73"
+---
+
 # {{< icon "fa fa-moon" >}} Shade
 
 This is a backend for the [Shade](https://shade.inc/) platform
@@ -115,7 +121,7 @@ Properties:
 
 #### --shade-api-key
 
-An API key for your account. You can find this under Settings > API Keys
+An API key for your account.
 
 Properties:
 
@@ -158,6 +164,50 @@ Properties:
 - Env Var:     RCLONE_SHADE_CHUNK_SIZE
 - Type:        SizeSuffix
 - Default:     64Mi
+
+#### --shade-upload-concurrency
+
+Concurrency for multipart uploads and copies. This is the number of chunks of the same file that are uploaded concurrently for multipart uploads and copies.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_SHADE_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     4
+
+#### --shade-max-upload-parts
+
+Maximum amount of parts in a multipart upload.
+
+Properties:
+
+- Config:      max_upload_parts
+- Env Var:     RCLONE_SHADE_MAX_UPLOAD_PARTS
+- Type:        int
+- Default:     10000
+
+#### --shade-token
+
+JWT Token for performing Shade FS operations. Don't set this value - rclone will set it automatically
+
+Properties:
+
+- Config:      token
+- Env Var:     RCLONE_SHADE_TOKEN
+- Type:        string
+- Required:    false
+
+#### --shade-token-expiry
+
+JWT Token Expiration time. Don't set this value - rclone will set it automatically
+
+Properties:
+
+- Config:      token_expiry
+- Env Var:     RCLONE_SHADE_TOKEN_EXPIRY
+- Type:        string
+- Required:    false
 
 #### --shade-encoding
 

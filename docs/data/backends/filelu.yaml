@@ -1,0 +1,21 @@
+backend: filelu
+name: Filelu
+tier: Tier 1
+maintainers: Core
+features_score: 1
+integration_tests: Passing
+data_integrity: Hash
+performance: High
+adoption: Widely used
+docs: Full
+security: High
+virtual: false
+remote: 'TestFileLu:'
+features:
+- About
+- CanHaveEmptyDirectories
+- Move
+- Purge
+- SlowHash
+hashes: []
+precision: 3153600000000000000

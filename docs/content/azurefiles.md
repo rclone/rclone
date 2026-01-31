@@ -359,7 +359,7 @@ Azure Storage Account Name.
 
 Set this to the Azure Storage Account Name in use.
 
-Leave blank to use SAS URL or connection string, otherwise it needs to be set.
+Leave blank to use SAS URL or Emulator, otherwise it needs to be set.
 
 If this is blank and if env_auth is set it will be read from the
 environment variable `AZURE_STORAGE_ACCOUNT_NAME` if possible.
@@ -372,25 +372,11 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --azurefiles-share-name
-
-Azure Files Share Name.
-
-This is required and is the name of the share to access.
-
-
-Properties:
-
-- Config:      share_name
-- Env Var:     RCLONE_AZUREFILES_SHARE_NAME
-- Type:        string
-- Required:    false
-
 #### --azurefiles-env-auth
 
 Read credentials from runtime (environment variables, CLI or MSI).
 
-See the [authentication docs](/azurefiles#authentication) for full info.
+See the [authentication docs](/azureblob#authentication) for full info.
 
 Properties:
 
@@ -403,7 +389,7 @@ Properties:
 
 Storage Account Shared Key.
 
-Leave blank to use SAS URL or connection string.
+Leave blank to use SAS URL or Emulator.
 
 Properties:
 
@@ -414,9 +400,9 @@ Properties:
 
 #### --azurefiles-sas-url
 
-SAS URL.
+SAS URL for container level access only.
 
-Leave blank if using account/key or connection string.
+Leave blank if using account/key or Emulator.
 
 Properties:
 
@@ -427,7 +413,10 @@ Properties:
 
 #### --azurefiles-connection-string
 
-Azure Files Connection String.
+Storage Connection String.
+
+Connection string for the storage. Leave blank if using other auth methods.
+
 
 Properties:
 
@@ -519,6 +508,20 @@ Properties:
 - Type:        string
 - Required:    false
 
+#### --azurefiles-share-name
+
+Azure Files Share Name.
+
+This is required and is the name of the share to access.
+
+
+Properties:
+
+- Config:      share_name
+- Env Var:     RCLONE_AZUREFILES_SHARE_NAME
+- Type:        string
+- Required:    false
+
 ### Advanced options
 
 Here are the Advanced options specific to azurefiles (Microsoft Azure Files).
@@ -581,13 +584,11 @@ Path to file containing credentials for use with a service principal.
 Leave blank normally. Needed only if you want to use a service principal instead of interactive login.
 
     $ az ad sp create-for-rbac --name "<name>" \
-      --role "Storage Files Data Owner" \
+      --role "Storage Blob Data Owner" \
       --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
       > azure-principal.json
 
-See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to files data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
-
-**NB** this section needs updating for Azure Files - pull requests appreciated!
+See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
 
 It may be more convenient to put the credentials directly into the
 rclone config file under the `client_id`, `tenant` and `client_secret`
@@ -600,6 +601,28 @@ Properties:
 - Env Var:     RCLONE_AZUREFILES_SERVICE_PRINCIPAL_FILE
 - Type:        string
 - Required:    false
+
+#### --azurefiles-disable-instance-discovery
+
+Skip requesting Microsoft Entra instance metadata
+
+This should be set true only by applications authenticating in
+disconnected clouds, or private clouds such as Azure Stack.
+
+It determines whether rclone requests Microsoft Entra instance
+metadata from `https://login.microsoft.com/` before
+authenticating.
+
+Setting this to true will skip this request, making you responsible
+for ensuring the configured authority is valid and trustworthy.
+
+
+Properties:
+
+- Config:      disable_instance_discovery
+- Env Var:     RCLONE_AZUREFILES_DISABLE_INSTANCE_DISCOVERY
+- Type:        bool
+- Default:     false
 
 #### --azurefiles-use-msi
 
@@ -660,32 +683,29 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --azurefiles-disable-instance-discovery
+#### --azurefiles-use-emulator
 
-Skip requesting Microsoft Entra instance metadata
-This should be set true only by applications authenticating in
-disconnected clouds, or private clouds such as Azure Stack.
-It determines whether rclone requests Microsoft Entra instance
-metadata from `https://login.microsoft.com/` before
-authenticating.
-Setting this to true will skip this request, making you responsible
-for ensuring the configured authority is valid and trustworthy.
+Uses local storage emulator if provided as 'true'.
 
+Leave blank if using real azure storage endpoint.
 
 Properties:
 
-- Config:      disable_instance_discovery
-- Env Var:     RCLONE_AZUREFILES_DISABLE_INSTANCE_DISCOVERY
+- Config:      use_emulator
+- Env Var:     RCLONE_AZUREFILES_USE_EMULATOR
 - Type:        bool
 - Default:     false
 
 #### --azurefiles-use-az
 
 Use Azure CLI tool az for authentication
+
 Set to use the [Azure CLI tool az](https://learn.microsoft.com/en-us/cli/azure/)
 as the sole means of authentication.
+
 Setting this can be useful if you wish to use the az CLI on a host with
 a System Managed Identity that you do not want to use.
+
 Don't set env_auth at the same time.
 
 
