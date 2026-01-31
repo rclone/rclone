@@ -300,6 +300,26 @@ oddReader, err := oddObj.Open(ctx, filteredOptions...)   // Then this
 
 ---
 
+### Q26: Performance Test Option to Skip Largest File Size
+**Status**: 🟢 **DEFERRED** - Not implementing for now  
+**Priority**: Low
+
+**Question**: Should `performance_test.sh` support an option to skip the test with the largest file size?
+
+**Context**: The performance test uses multiple file sizes (4K, 40K, 400K, 4M, 40M, 4G). The largest size (4G) takes a long time to run (upload + download per iteration, multiple iterations). Users may want a quicker run by skipping the 4G test.
+
+**Proposed Enhancement**: Add a CLI option (e.g. `--skip-largest` or `--max-size 40M`) so the script skips the largest file size when enabled.
+
+**Benefit**: Shorter test runs when full 4G coverage is not needed.
+
+**Implementation**: Deferred; add to open issues for future implementation.
+
+**References**: 
+- Script: `backend/raid3/test/performance_test.sh`
+- File sizes: `FILE_SIZE_LABELS` (4K, 40K, 400K, 4M, 40M, 4G)
+
+---
+
 ## ✅ Resolved Questions
 
 **Note**: These questions have been resolved and should be moved to [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) for historical reference.
@@ -439,7 +459,7 @@ Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIG
 
 ## 📊 Statistics
 
-Total active questions: 18. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (3) - Q14: Health Check Caching, Q15: Background Worker Context, Q24: Intermittent FsListRLevel2 Test Failure. Medium Priority (7) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching. Low Priority (8) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch.
+Total active questions: 19. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (3) - Q14: Health Check Caching, Q15: Background Worker Context, Q24: Intermittent FsListRLevel2 Test Failure. Medium Priority (7) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching. Low Priority (9) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch, Q26: Performance Test Skip Largest File.
 
 
 **Use this file to track decisions before they're made!** 🤔

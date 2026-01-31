@@ -6,7 +6,7 @@
 #
 # This script benchmarks upload/download performance across different
 # configurations (miniosingle/rclone, minioraid3/rclone, miniosingle/mc)
-# using different file sizes (1K, 10M, 1G).
+# using different file sizes (4K, 40K, 400K, 4M, 40M, 4G).
 #
 # Usage:
 #   performance_test.sh [options] <command>
@@ -69,14 +69,17 @@ declare -a LOCAL_CONFIGS=(
 )
 
 # File sizes in bytes (using regular array)
-declare -a FILE_SIZE_LABELS=("1K" "10M" "1G")
+declare -a FILE_SIZE_LABELS=("4K" "40K" "400K" "4M" "40M" "4G")
 
 # Helper function to get file size in bytes
 get_file_size_bytes() {
   case "$1" in
-    "1K") echo "1024" ;;
-    "10M") echo "10485760" ;;
-    "1G") echo "1073741824" ;;
+    "4K") echo "4096" ;;
+    "40K") echo "40960" ;;
+    "400K") echo "409600" ;;
+    "4M") echo "4194304" ;;
+    "40M") echo "41943040" ;;
+    "4G") echo "4294967296" ;;
     *) echo "0" ;;
   esac
 }
@@ -87,7 +90,7 @@ declare -a OPERATIONS=("upload" "download")
 # Results storage: using environment variables to avoid associative arrays
 # (for compatibility with older bash versions that don't support declare -A)
 # Format: RESULT_DURATION_<key>, RESULT_BYTES_<key>, RESULT_STATUS_<key>
-# where key is sanitized (e.g., "miniosingle-rclone_1K_upload" -> "miniosingle-rclone_1K_upload")
+# where key is sanitized (e.g., "miniosingle-rclone_4K_upload" -> "miniosingle-rclone_4K_upload")
 
 # Helper to sanitize key for use in variable name (replace hyphens with underscores)
 sanitize_key() {
@@ -152,7 +155,7 @@ Storage types:
                           - localsingle using rclone
                           - localsingle using cp command
 
-With file sizes: 1K, 10M, 1G
+With file sizes: 4K, 40K, 400K, 4M, 40M, 4G
 Each test runs ${ITERATIONS} iterations (first discarded, remaining averaged).
 
 The script must be executed from ${WORKDIR}.
@@ -289,13 +292,10 @@ create_test_file() {
   if [[ "${size_bytes}" -lt 1048576 ]]; then
     # For files < 1MB, use bs=size_bytes count=1
     dd if=/dev/urandom of="${file_path}" bs="${size_bytes}" count=1 >/dev/null 2>&1
-  elif [[ "${size_bytes}" -lt 1073741824 ]]; then
-    # For files < 1GB, use bs=1M
+  else
+    # For files >= 1MB, use bs=1M count=size_mb
     local size_mb=$((size_bytes / 1048576))
     dd if=/dev/urandom of="${file_path}" bs=1M count="${size_mb}" >/dev/null 2>&1
-  else
-    # For 1GB files, use bs=1M count=1024
-    dd if=/dev/urandom of="${file_path}" bs=1M count=1024 >/dev/null 2>&1
   fi
   
   # Verify file size
@@ -360,14 +360,14 @@ run_mc_test() {
     if (( VERBOSE )); then
       mc cp "${local_file}" "${alias_name}/${remote_path}" 2>"${err_file}"
     else
-      mc cp "${local_file}" "${alias_name}/${remote_path}" >/dev/null 2>"${err_file}"
+      mc cp "${local_file}" "${alias_name}/${remote_path}" 1>/dev/null 2>"${err_file}"
     fi
     status=$?
   else
     if (( VERBOSE )); then
       mc cp "${alias_name}/${remote_path}" "${local_file}" 2>"${err_file}"
     else
-      mc cp "${alias_name}/${remote_path}" "${local_file}" >/dev/null 2>"${err_file}"
+      mc cp "${alias_name}/${remote_path}" "${local_file}" 1>/dev/null 2>"${err_file}"
     fi
     status=$?
   fi
@@ -437,16 +437,18 @@ run_cp_test() {
   printf '%s|%s\n' "${status}" "${elapsed}"
 }
 
-# Run test suite: 11 iterations, discard first, average remaining
+# Run test suite: N iterations (first discarded), each iteration measures both upload and download.
+# Upload and download are measured in one step per iteration for efficiency and comparable conditions.
 run_test_suite() {
   local config_name="$1"
   local remote_or_alias="$2"
   local tool="$3"
   local file_size_label="$4"
   local file_size_bytes="$5"
-  local operation="$6"
   
-  local test_key="${config_name}_${file_size_label}_${operation}"
+  local test_key_base="${config_name}_${file_size_label}"
+  local test_key_upload="${test_key_base}_upload"
+  local test_key_download="${test_key_base}_download"
   local temp_dir
   temp_dir=$(mktemp -d) || die "Failed to create temp directory"
   
@@ -466,16 +468,13 @@ run_test_suite() {
     return 1
   fi
   
-  # Remote path for test
-  # For rclone: use remote:path format
-  # For mc: use alias/bucket/path format (bucket will be created automatically)
-  local remote_path="perf-test/${test_key}/test.bin"
+  # Remote path for test (same path used for upload and download)
+  local remote_path="perf-test/${test_key_base}/test.bin"
   local download_file="${temp_dir}/downloaded.bin"
   
   # Setup mc alias if needed
   local mc_alias=""
   local mc_path=""
-  # For cp, resolve base_dir from remote_or_alias (which is "LOCAL_SINGLE_DIR" placeholder)
   local cp_base_dir=""
   if [[ "${tool}" == "mc" ]]; then
     if ! mc_alias=$(setup_mc_alias); then
@@ -483,100 +482,84 @@ run_test_suite() {
       rm -rf "${temp_dir}"
       return 1
     fi
-    # For mc, we need a bucket name - use a simple test bucket
     local mc_bucket="perftest"
     mc_path="${mc_bucket}/${remote_path}"
     remote_or_alias="${mc_alias}"
   elif [[ "${tool}" == "cp" ]]; then
-    # For cp, remote_or_alias is "LOCAL_SINGLE_DIR" - resolve to actual path
     cp_base_dir="${LOCAL_SINGLE_DIR}"
   fi
   
   # Cleanup remote before test
   if [[ "${tool}" == "rclone" ]]; then
-    rclone_cmd purge "${remote_or_alias}:perf-test/${test_key}/" >/dev/null 2>&1 || true
-    rclone_cmd mkdir "${remote_or_alias}:perf-test/${test_key}/" >/dev/null 2>&1 || true
+    rclone_cmd purge "${remote_or_alias}:perf-test/${test_key_base}/" >/dev/null 2>&1 || true
+    rclone_cmd mkdir "${remote_or_alias}:perf-test/${test_key_base}/" >/dev/null 2>&1 || true
   elif [[ "${tool}" == "mc" ]]; then
-    # For mc, ensure bucket exists and cleanup path
     local mc_bucket="perftest"
-    # Create bucket if it doesn't exist (ignore error if it already exists)
     mc mb "${remote_or_alias}/${mc_bucket}" >/dev/null 2>&1 || true
-    # Remove path if it exists
     mc rm --recursive --force "${remote_or_alias}/${mc_path%/*}/" >/dev/null 2>&1 || true
   elif [[ "${tool}" == "cp" ]]; then
-    # For cp, cleanup local directory
-    rm -rf "${cp_base_dir}/perf-test/${test_key}" 2>/dev/null || true
-    mkdir -p "${cp_base_dir}/perf-test/${test_key}" 2>/dev/null || true
+    rm -rf "${cp_base_dir}/perf-test/${test_key_base}" 2>/dev/null || true
+    mkdir -p "${cp_base_dir}/perf-test/${test_key_base}" 2>/dev/null || true
   fi
   
-  # Array to store durations (excluding first)
-  local -a durations=()
-  local all_passed=1
-  local failed_count=0
-  local valid_count=0
+  local -a upload_durations=()
+  local -a download_durations=()
+  local upload_all_passed=1 download_all_passed=1
+  local upload_valid_count=0 download_valid_count=0
   
   if (( VERBOSE )); then
-    log_info "test" "Running ${ITERATIONS} iterations for ${config_name} ${file_size_label} ${operation}"
+    log_info "test" "Running ${ITERATIONS} iterations for ${config_name} ${file_size_label} (upload + download per iteration)"
   fi
   
   for ((i=1; i<=ITERATIONS; i++)); do
-    local result status elapsed
+    local result status elapsed upload_elapsed download_elapsed
     
-    if [[ "${operation}" == "upload" ]]; then
-      if [[ "${tool}" == "rclone" ]]; then
-        result=$(run_rclone_test "${remote_or_alias}" "upload" "${test_file}" "${remote_path}")
-      elif [[ "${tool}" == "mc" ]]; then
-        result=$(run_mc_test "${remote_or_alias}" "upload" "${test_file}" "${mc_path}")
-      elif [[ "${tool}" == "cp" ]]; then
-        result=$(run_cp_test "${cp_base_dir}" "upload" "${test_file}" "${remote_path}")
-      fi
+    # Upload
+    if [[ "${tool}" == "rclone" ]]; then
+      result=$(run_rclone_test "${remote_or_alias}" "upload" "${test_file}" "${remote_path}")
+    elif [[ "${tool}" == "mc" ]]; then
+      result=$(run_mc_test "${remote_or_alias}" "upload" "${test_file}" "${mc_path}")
     else
-      # Download: first ensure file exists
-      if [[ $i -eq 1 ]]; then
-        # Upload once before download tests
-        if [[ "${tool}" == "rclone" ]]; then
-          rclone_cmd copy "${test_file}" "${remote_or_alias}:${remote_path}" >/dev/null 2>&1 || true
-        elif [[ "${tool}" == "mc" ]]; then
-          mc cp "${test_file}" "${remote_or_alias}/${mc_path}" >/dev/null 2>&1 || true
-        elif [[ "${tool}" == "cp" ]]; then
-          mkdir -p "$(dirname "${cp_base_dir}/${remote_path}")" 2>/dev/null || true
-          cp "${test_file}" "${cp_base_dir}/${remote_path}" 2>/dev/null || true
-        fi
-      fi
-      
-      if [[ "${tool}" == "rclone" ]]; then
-        result=$(run_rclone_test "${remote_or_alias}" "download" "${download_file}" "${remote_path}")
-      elif [[ "${tool}" == "mc" ]]; then
-        result=$(run_mc_test "${remote_or_alias}" "download" "${download_file}" "${mc_path}")
-      elif [[ "${tool}" == "cp" ]]; then
-        result=$(run_cp_test "${cp_base_dir}" "download" "${download_file}" "${remote_path}")
-      fi
+      result=$(run_cp_test "${cp_base_dir}" "upload" "${test_file}" "${remote_path}")
     fi
+    result=$(printf '%s' "${result}" | tail -n1)
+    IFS='|' read -r status upload_elapsed <<<"${result}"
+    if ! [[ "${status}" =~ ^[0-9]+$ ]]; then status=1; fi
+    local upload_ok=0
+    [[ "${status}" -eq 0 ]] && upload_ok=1
+    [[ "${status}" -ne 0 ]] && upload_all_passed=0
     
-    IFS='|' read -r status elapsed <<<"${result}"
-    
-    if [[ "${status}" -ne 0 ]]; then
-      log_warn "test" "Iteration ${i} failed with status ${status}"
-      all_passed=0
-      failed_count=$((failed_count + 1))
+    # Download (data is already there from upload above)
+    if [[ "${tool}" == "rclone" ]]; then
+      result=$(run_rclone_test "${remote_or_alias}" "download" "${download_file}" "${remote_path}")
+    elif [[ "${tool}" == "mc" ]]; then
+      result=$(run_mc_test "${remote_or_alias}" "download" "${download_file}" "${mc_path}")
+    else
+      result=$(run_cp_test "${cp_base_dir}" "download" "${download_file}" "${remote_path}")
     fi
+    result=$(printf '%s' "${result}" | tail -n1)
+    IFS='|' read -r status download_elapsed <<<"${result}"
+    if ! [[ "${status}" =~ ^[0-9]+$ ]]; then status=1; fi
+    local download_ok=0
+    [[ "${status}" -eq 0 ]] && download_ok=1
+    [[ "${status}" -ne 0 ]] && download_all_passed=0
     
     # Discard first iteration, store rest
     if [[ $i -gt 1 ]]; then
-      if [[ "${status}" -eq 0 ]]; then
-        durations+=("${elapsed}")
-        valid_count=$((valid_count + 1))
-        if (( VERBOSE )); then
-          log_info "test" "  Iteration ${i}: ${elapsed}s"
-        fi
-      else
-        if (( VERBOSE )); then
-          log_info "test" "  Iteration ${i}: FAILED (status ${status})"
-        fi
+      if [[ "${upload_ok}" -eq 1 ]]; then
+        upload_durations+=("${upload_elapsed}")
+        upload_valid_count=$((upload_valid_count + 1))
+      fi
+      if [[ "${download_ok}" -eq 1 ]]; then
+        download_durations+=("${download_elapsed}")
+        download_valid_count=$((download_valid_count + 1))
+      fi
+      if (( VERBOSE )); then
+        log_info "test" "  Iteration ${i}: upload ${upload_elapsed}s, download ${download_elapsed}s"
       fi
     else
       if (( VERBOSE )); then
-        log_info "test" "  Iteration ${i} (discarded): ${elapsed}s"
+        log_info "test" "  Iteration ${i} (discarded): upload ${upload_elapsed}s, download ${download_elapsed}s"
       fi
     fi
   done
@@ -586,75 +569,84 @@ run_test_suite() {
     cleanup_mc_alias "${mc_alias}"
   fi
   
-  # Calculate average
-  if [[ ${#durations[@]} -eq 0 ]]; then
-    log_warn "test" "No valid durations collected for ${test_key} (all iterations failed)"
-    rm -rf "${temp_dir}"
-    # Cleanup remote
-    if [[ "${tool}" == "rclone" ]]; then
-      rclone_cmd purge "${remote_or_alias}:perf-test/${test_key}/" >/dev/null 2>&1 || true
-    elif [[ "${tool}" == "mc" ]]; then
-      mc rm --recursive --force "${remote_or_alias}/${mc_path%/*}/" >/dev/null 2>&1 || true
-    elif [[ "${tool}" == "cp" ]]; then
-      rm -rf "${cp_base_dir}/perf-test/${test_key}" 2>/dev/null || true
+  # Compute averages and store upload results
+  if [[ ${#upload_durations[@]} -gt 0 ]]; then
+    local sum=0.0
+    local duration
+    for duration in "${upload_durations[@]}"; do
+      sum=$(LC_NUMERIC=C awk -v s="${sum}" -v d="${duration}" 'BEGIN {printf "%.6f", s + d}')
+    done
+    local avg_upload
+    avg_upload=$(LC_NUMERIC=C awk -v s="${sum}" -v c="${#upload_durations[@]}" 'BEGIN {printf "%.6f", s / c}')
+    local upload_speed
+    upload_speed=$(LC_NUMERIC=C awk -v bytes="${file_size_bytes}" -v dur="${avg_upload}" 'BEGIN {printf "%.0f", bytes / dur}')
+    store_result "${test_key_upload}" "DURATION" "${avg_upload}"
+    store_result "${test_key_upload}" "BYTES" "${file_size_bytes}"
+    if [[ "${upload_all_passed}" -eq 1 ]]; then
+      store_result "${test_key_upload}" "STATUS" "OK"
+    elif [[ ${upload_valid_count} -gt 0 ]]; then
+      store_result "${test_key_upload}" "STATUS" "PARTIAL"
+    else
+      store_result "${test_key_upload}" "STATUS" "FAILED"
     fi
-    return 1
-  fi
-  
-  # If all valid iterations (excluding first) failed, mark as failed
-  if [[ ${valid_count} -eq 0 ]]; then
-    log_warn "test" "All valid iterations failed for ${test_key}"
-    rm -rf "${temp_dir}"
-    # Cleanup remote
-    if [[ "${tool}" == "rclone" ]]; then
-      rclone_cmd purge "${remote_or_alias}:perf-test/${test_key}/" >/dev/null 2>&1 || true
-    elif [[ "${tool}" == "mc" ]]; then
-      mc rm --recursive --force "${remote_or_alias}/${mc_path%/*}/" >/dev/null 2>&1 || true
-    elif [[ "${tool}" == "cp" ]]; then
-      rm -rf "${cp_base_dir}/perf-test/${test_key}" 2>/dev/null || true
+    if (( VERBOSE )); then
+      log_info "test" "${test_key_upload}: average ${avg_upload}s, $(format_speed "${upload_speed}")"
     fi
-    return 1
-  fi
-  
-  local sum=0.0
-  local count=${#durations[@]}
-  for duration in "${durations[@]}"; do
-    sum=$(LC_NUMERIC=C awk -v s="${sum}" -v d="${duration}" 'BEGIN {printf "%.6f", s + d}')
-  done
-  
-  local avg_duration
-  avg_duration=$(LC_NUMERIC=C awk -v s="${sum}" -v c="${count}" 'BEGIN {printf "%.6f", s / c}')
-  
-  # Calculate average speed (bytes/sec)
-  local avg_speed
-  avg_speed=$(LC_NUMERIC=C awk -v bytes="${file_size_bytes}" -v dur="${avg_duration}" 'BEGIN {printf "%.0f", bytes / dur}')
-  
-  # Store results
-  store_result "${test_key}" "DURATION" "${avg_duration}"
-  store_result "${test_key}" "BYTES" "${file_size_bytes}"
-  # Determine status: OK if all iterations passed, PARTIAL if some failed, FAILED if all failed
-  if [[ "${all_passed}" -eq 1 ]]; then
-    store_result "${test_key}" "STATUS" "OK"
-  elif [[ ${valid_count} -gt 0 ]]; then
-    store_result "${test_key}" "STATUS" "PARTIAL"
   else
-    store_result "${test_key}" "STATUS" "FAILED"
+    store_result "${test_key_upload}" "DURATION" ""
+    store_result "${test_key_upload}" "BYTES" "${file_size_bytes}"
+    store_result "${test_key_upload}" "STATUS" "FAILED"
   fi
   
-  if (( VERBOSE )); then
-    log_info "test" "Average duration: ${avg_duration}s, Speed: $(format_speed "${avg_speed}")"
+  # Compute averages and store download results
+  if [[ ${#download_durations[@]} -gt 0 ]]; then
+    local sum=0.0
+    local duration
+    for duration in "${download_durations[@]}"; do
+      sum=$(LC_NUMERIC=C awk -v s="${sum}" -v d="${duration}" 'BEGIN {printf "%.6f", s + d}')
+    done
+    local avg_download
+    avg_download=$(LC_NUMERIC=C awk -v s="${sum}" -v c="${#download_durations[@]}" 'BEGIN {printf "%.6f", s / c}')
+    local download_speed
+    download_speed=$(LC_NUMERIC=C awk -v bytes="${file_size_bytes}" -v dur="${avg_download}" 'BEGIN {printf "%.0f", bytes / dur}')
+    store_result "${test_key_download}" "DURATION" "${avg_download}"
+    store_result "${test_key_download}" "BYTES" "${file_size_bytes}"
+    if [[ "${download_all_passed}" -eq 1 ]]; then
+      store_result "${test_key_download}" "STATUS" "OK"
+    elif [[ ${download_valid_count} -gt 0 ]]; then
+      store_result "${test_key_download}" "STATUS" "PARTIAL"
+    else
+      store_result "${test_key_download}" "STATUS" "FAILED"
+    fi
+    if (( VERBOSE )); then
+      log_info "test" "${test_key_download}: average ${avg_download}s, $(format_speed "${download_speed}")"
+    fi
+  else
+    store_result "${test_key_download}" "DURATION" ""
+    store_result "${test_key_download}" "BYTES" "${file_size_bytes}"
+    store_result "${test_key_download}" "STATUS" "FAILED"
   fi
   
-  # Cleanup
+  if [[ ${#upload_durations[@]} -eq 0 ]] && [[ ${#download_durations[@]} -eq 0 ]]; then
+    log_warn "test" "No valid durations for ${test_key_base} (all iterations failed)"
+    rm -rf "${temp_dir}"
+    if [[ "${tool}" == "rclone" ]]; then
+      rclone_cmd purge "${remote_or_alias}:perf-test/${test_key_base}/" >/dev/null 2>&1 || true
+    elif [[ "${tool}" == "mc" ]]; then
+      mc rm --recursive --force "${remote_or_alias}/${mc_path%/*}/" >/dev/null 2>&1 || true
+    elif [[ "${tool}" == "cp" ]]; then
+      rm -rf "${cp_base_dir}/perf-test/${test_key_base}" 2>/dev/null || true
+    fi
+    return 1
+  fi
+  
   rm -rf "${temp_dir}"
-  
-  # Cleanup remote
   if [[ "${tool}" == "rclone" ]]; then
-    rclone_cmd purge "${remote_or_alias}:perf-test/${test_key}/" >/dev/null 2>&1 || true
+    rclone_cmd purge "${remote_or_alias}:perf-test/${test_key_base}/" >/dev/null 2>&1 || true
   elif [[ "${tool}" == "mc" ]]; then
     mc rm --recursive --force "${remote_or_alias}/${mc_path%/*}/" >/dev/null 2>&1 || true
   elif [[ "${tool}" == "cp" ]]; then
-    rm -rf "${cp_base_dir}/perf-test/${test_key}" 2>/dev/null || true
+    rm -rf "${cp_base_dir}/perf-test/${test_key_base}" 2>/dev/null || true
   fi
   
   return 0
@@ -743,15 +735,19 @@ Available test configurations:
     localsingle-cp       Local single backend using cp command
 
 File sizes tested:
-  1K                  1 kilobyte (1024 bytes)
-  10M                  10 megabytes (10485760 bytes)
-  1G                   1 gigabyte (1073741824 bytes)
+  4K                  4 kilobytes (4096 bytes)
+  40K                 40 kilobytes (40960 bytes)
+  400K                400 kilobytes (409600 bytes)
+  4M                  4 megabytes (4194304 bytes)
+  40M                 40 megabytes (41943040 bytes)
+  4G                  4 gigabytes (4294967296 bytes)
 
 Operations tested:
-  upload               Upload performance
-  download             Download performance
+  upload               Upload performance (measured each iteration)
+  download             Download performance (measured each iteration)
 
-Each test runs ${ITERATIONS} iterations (first iteration discarded, remaining averaged).
+Each (config, size) runs ${ITERATIONS} iterations; each iteration measures both upload and
+download in one step (first iteration discarded, remaining averaged).
 EOF
 }
 
@@ -763,7 +759,7 @@ print_results_table() {
   echo
   
   # Group by file size
-  for size_label in "1K" "10M" "1G"; do
+  for size_label in "${FILE_SIZE_LABELS[@]}"; do
     echo "File Size: ${size_label}"
     printf '=%.0s' {1..50}
     echo
@@ -955,14 +951,13 @@ run_performance_tests() {
       local size_bytes
       size_bytes=$(get_file_size_bytes "${size_label}")
       
-      for operation in "${OPERATIONS[@]}"; do
-        total_tests=$((total_tests + 1))
-        if (( VERBOSE )); then
-          log_info "test" "Running test: ${config_name} ${size_label} ${operation}"
-        fi
-        
-        if run_test_suite "${config_name}" "${remote}" "${tool}" "${size_label}" "${size_bytes}" "${operation}"; then
-          # Check the actual status stored
+      total_tests=$((total_tests + 2))
+      if (( VERBOSE )); then
+        log_info "test" "Running test: ${config_name} ${size_label} (upload + download per iteration)"
+      fi
+      
+      if run_test_suite "${config_name}" "${remote}" "${tool}" "${size_label}" "${size_bytes}"; then
+        for operation in "${OPERATIONS[@]}"; do
           local test_key="${config_name}_${size_label}_${operation}"
           local status
           status=$(get_result "${test_key}" "STATUS" "FAILED")
@@ -975,11 +970,11 @@ run_performance_tests() {
             failed_tests=$((failed_tests + 1))
             log_warn "test" "Test failed: ${config_name} ${size_label} ${operation}"
           fi
-        else
-          failed_tests=$((failed_tests + 1))
-          log_warn "test" "Test failed: ${config_name} ${size_label} ${operation}"
-        fi
-      done
+        done
+      else
+        failed_tests=$((failed_tests + 2))
+        log_warn "test" "Test failed: ${config_name} ${size_label} (upload and download)"
+      fi
     done
   done
   
