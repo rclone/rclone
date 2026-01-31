@@ -4,12 +4,14 @@
 # ----------------------------------
 # Master test script that runs all integration tests across all RAID3 backends.
 #
-# This script runs all 5 test suites:
+# This script runs all 7 test suites:
 #   - compare_raid3_with_single.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_heal.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_errors.sh (with minio only)
 #   - compare_raid3_with_single_rebuild.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_features.sh (with mixed only)
+#   - compare_raid3_with_single_stacking.sh (with local, minio)
+#   - serverside_operations.sh (with local, minio)
 #
 # Usage:
 #   compare_raid3_with_single_all.sh [options]
@@ -30,6 +32,32 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
+# Handle -h/--help early so usage works even when rclone binary is not built
+for arg in "$@"; do
+  if [[ "${arg}" == "-h" || "${arg}" == "--help" ]]; then
+    cat <<EOF
+Usage: ${SCRIPT_NAME} [options]
+
+Options:
+  -v, --verbose    Show detailed output from individual test scripts
+  -h, --help       Display this help text
+
+This script runs all integration tests across all RAID3 backends:
+  - compare_raid3_with_single.sh (local, minio, mixed)
+  - compare_raid3_with_single_heal.sh (local, minio, mixed)
+  - compare_raid3_with_single_errors.sh (minio only)
+  - compare_raid3_with_single_rebuild.sh (local, minio, mixed)
+  - compare_raid3_with_single_features.sh (mixed only)
+  - compare_raid3_with_single_stacking.sh (local, minio)
+  - serverside_operations.sh (local, minio)
+
+Each test suite is run with the appropriate storage types, and only
+pass/fail status is shown unless --verbose is used.
+EOF
+    exit 0
+  fi
+done
+
 # Source common script to get ensure_rclone_binary and other helper functions
 # shellcheck source=compare_raid3_with_single_common.sh
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
@@ -44,6 +72,8 @@ TEST_SCRIPTS=(
   "compare_raid3_with_single_errors.sh:minio"
   "compare_raid3_with_single_rebuild.sh:local,minio,mixed"
   "compare_raid3_with_single_features.sh:local,minio,mixed"
+  "compare_raid3_with_single_stacking.sh:local,minio"
+  "serverside_operations.sh:local,minio"
 )
 
 # ---------------------------- helper functions ------------------------------
@@ -62,6 +92,8 @@ This script runs all integration tests across all RAID3 backends:
   - compare_raid3_with_single_errors.sh (minio only)
   - compare_raid3_with_single_rebuild.sh (local, minio, mixed)
   - compare_raid3_with_single_features.sh (mixed only)
+  - compare_raid3_with_single_stacking.sh (local, minio)
+  - serverside_operations.sh (local, minio)
 
 Each test suite is run with the appropriate storage types, and only
 pass/fail status is shown unless --verbose is used.
