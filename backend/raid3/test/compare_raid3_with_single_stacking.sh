@@ -21,7 +21,7 @@
 #   stop                  Stop those MinIO containers.
 #   teardown              Purge all data from the selected storage-type.
 #   list                  Show available test cases.
-#   test <name>           Run a named test (e.g. "stacking").
+#   test <name>           Run a named test (e.g. "crypt" or "chunker").
 #
 # Options:
 #   --storage-type <local|minio>   Select which backend pair to exercise.
@@ -60,6 +60,9 @@ RAID3_REMOTE=""
 EVEN_REMOTE=""
 ODD_REMOTE=""
 PARITY_REMOTE=""
+# Chunker remote names for chunker test (will be set based on storage type)
+CHUNKER_SINGLE_REMOTE=""
+CHUNKER_RAID3_REMOTE=""
 
 # ---------------------------- helper functions ------------------------------
 
@@ -83,7 +86,7 @@ set_stacking_remotes() {
       PARITY_REMOTE="${MINIO_PARITY_REMOTE}"
       ;;
     *)
-      die "Unsupported storage type '${STORAGE_TYPE}' for stacking test"
+      die "Unsupported storage type '${STORAGE_TYPE}' for crypt test"
       ;;
   esac
   
@@ -96,6 +99,30 @@ set_stacking_remotes() {
   fi
 }
 
+# Set chunker remotes for chunker test (call after set_stacking_remotes)
+set_stacking_chunker_remotes() {
+  case "${STORAGE_TYPE}" in
+    local)
+      CHUNKER_SINGLE_REMOTE="chunkerlocalsingle"
+      CHUNKER_RAID3_REMOTE="chunkerlocalraid3"
+      ;;
+    minio)
+      CHUNKER_SINGLE_REMOTE="chunkerminiosingle"
+      CHUNKER_RAID3_REMOTE="chunkerminioraid3"
+      ;;
+    *)
+      die "Unsupported storage type '${STORAGE_TYPE}' for chunker test"
+      ;;
+  esac
+
+  if ! grep -q "^\[${CHUNKER_SINGLE_REMOTE}\]" "${RCLONE_CONFIG}" 2>/dev/null; then
+    die "Chunker remote '${CHUNKER_SINGLE_REMOTE}' not found in config file. Please run setup.sh to regenerate the config."
+  fi
+  if ! grep -q "^\[${CHUNKER_RAID3_REMOTE}\]" "${RCLONE_CONFIG}" 2>/dev/null; then
+    die "Chunker remote '${CHUNKER_RAID3_REMOTE}' not found in config file. Please run setup.sh to regenerate the config."
+  fi
+}
+
 usage() {
   cat <<EOF
 Usage: ${SCRIPT_NAME} [options] <command> [arguments]
@@ -105,7 +132,7 @@ Commands:
   stop                       Stop MinIO containers (requires --storage-type=minio).
   teardown                   Purge all test data for the selected storage type.
   list                       Show available tests.
-  test <name>                Run the named test (e.g. "stacking").
+  test <name>                Run the named test (e.g. "crypt" or "chunker").
 
 Options:
   --storage-type <local|minio>   Select backend pair (required for start/stop/test/teardown).
@@ -147,10 +174,21 @@ parse_args() {
         COMMAND="$1"
         ;;
       *)
-        if [[ "${COMMAND}" == "test" && -z "${COMMAND_ARG}" ]]; then
+        if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then
+          VERBOSE=1
+        elif [[ "$1" == "-" && $# -gt 1 && "$2" == "v" ]]; then
+          # "test - v" typo: treat as -v (consume "-" and "v")
+          shift
+          shift
+          VERBOSE=1
+          continue
+        elif [[ "$1" == "-" ]]; then
+          # Skip bare "-"
+          :
+        elif [[ "${COMMAND}" == "test" && -z "${COMMAND_ARG}" ]]; then
           COMMAND_ARG="$1"
         else
-          die "Unknown argument: $1"
+          die "Unknown argument: $1 (use -v before the command, e.g. --storage-type minio -v test)"
         fi
         ;;
     esac
@@ -205,10 +243,13 @@ print_test_summary() {
 list_tests() {
   cat <<EOF
 Available tests:
-  stacking    Test crypt backend wrapping localsingle and localraid3 backends.
-              Uploads a file to both crypt backends, verifies encrypted particle
-              files are created correctly, downloads from both, and verifies
-              the downloaded files are identical.
+  crypt    Test crypt backend wrapping localsingle and localraid3 backends.
+           Uploads a file to both crypt backends, verifies encrypted particle
+           files are created correctly, downloads from both, and verifies
+           the downloaded files are identical.
+  chunker  Test chunker over single/raid3; file is chunked into >=2 chunks.
+           Uploads a file to both chunker remotes, verifies chunk+meta files
+           in underlying storage, downloads from both, and verifies identical.
 EOF
 }
 
@@ -351,7 +392,7 @@ run_stacking_test() {
   purge_remote_root "${SINGLE_REMOTE}"
   purge_remote_root "${RAID3_REMOTE}"
   
-  log "Running stacking test"
+  log "Running crypt test"
   
   # Count baseline files in underlying storage AFTER purge
   # After purging the composite remotes, the underlying storage should be empty
@@ -402,8 +443,8 @@ run_stacking_test() {
   local tempdir
   tempdir=$(mktemp -d) || return 1
   
-  local test_file="test_stacking_file.txt"
-  local test_content="This is a test file for stacking virtual remotes with raid3 backend.
+  local test_file="test_crypt_file.txt"
+  local test_content="This is a test file for crypt backend wrapping single/raid3.
 It contains multiple lines to ensure proper encryption and particle splitting.
 Line 2: Testing crypt backend wrapping.
 Line 3: Testing raid3 backend with crypt overlay.
@@ -412,7 +453,7 @@ Line 4: This file should be encrypted and split into particles correctly."
   printf '%s\n' "${test_content}" >"${tempdir}/${test_file}"
   
   local dataset_id
-  dataset_id=$(date +stacking-%Y%m%d%H%M%S-$((RANDOM % 10000)))
+  dataset_id=$(date +crypt-%Y%m%d%H%M%S-$((RANDOM % 10000)))
   
   log "Uploading test file to ${CRYPT_SINGLE_REMOTE}:${dataset_id}"
   local single_upload_result single_upload_status single_upload_stdout single_upload_stderr
@@ -550,12 +591,169 @@ Line 4: This file should be encrypted and split into particles correctly."
   fi
   
   rm -rf "${tempdir}" "${tmp_single}" "${tmp_raid3}"
-  log "stacking test completed successfully"
+  log "crypt test completed successfully"
+  return 0
+}
+
+# Chunker config: chunk_size=100 so a ~250-byte file yields 3 data chunks + 1 metadata (>=2 chunks)
+run_chunker_test() {
+  set_stacking_remotes
+  set_stacking_chunker_remotes
+
+  if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+    log "Waiting for MinIO backends to be ready"
+    wait_for_minio_backend_ready "even"
+    wait_for_minio_backend_ready "odd"
+    wait_for_minio_backend_ready "parity"
+    local single_port="${MINIO_SINGLE_PORT}"
+    local max_attempts=30
+    local attempt=0
+    while [[ ${attempt} -lt ${max_attempts} ]]; do
+      if curl -s "http://127.0.0.1:${single_port}/minio/health/live" >/dev/null 2>&1; then
+        break
+      fi
+      sleep 1
+      attempt=$((attempt + 1))
+    done
+    if [[ ${attempt} -eq ${max_attempts} ]]; then
+      log "WARNING: MinIO single backend may not be ready"
+    fi
+  fi
+
+  log "Purging remotes for clean test state"
+  purge_remote_root "${CHUNKER_SINGLE_REMOTE}"
+  purge_remote_root "${CHUNKER_RAID3_REMOTE}"
+  purge_remote_root "${SINGLE_REMOTE}"
+  purge_remote_root "${RAID3_REMOTE}"
+
+  log "Running chunker test"
+
+  log "Counting baseline files in underlying storage after purge"
+  local single_baseline raid3_baseline
+  single_baseline=$(count_single_files)
+  raid3_baseline=$(count_raid3_particles)
+  log "Baseline after purge: ${single_baseline} file(s) in ${SINGLE_REMOTE}, ${raid3_baseline} file(s) in ${RAID3_REMOTE} backends"
+
+  local tempdir
+  tempdir=$(mktemp -d) || return 1
+
+  local test_file="test_chunker_file.txt"
+  # chunk_size=100B: ensure file is >100 bytes so we get >=2 data chunks + 1 metadata
+  local test_content="This is a test file for chunker (chunker over single/raid3).
+It contains enough bytes to be split into at least 2 chunks (chunk_size=100B).
+Line 2: Testing chunker backend wrapping.
+Line 3: Testing raid3 backend with chunker overlay.
+Line 4: This file should be chunked and stored as multiple chunk files plus metadata.
+Padding: 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 end."
+  printf '%s\n' "${test_content}" >"${tempdir}/${test_file}"
+
+  local dataset_id
+  dataset_id=$(date +chunker-%Y%m%d%H%M%S-$((RANDOM % 10000)))
+
+  log "Uploading test file to ${CHUNKER_SINGLE_REMOTE}:${dataset_id}"
+  local single_upload_result single_upload_status single_upload_stdout single_upload_stderr
+  single_upload_result=$(capture_command "chunkersingle_upload" copy "${tempdir}/${test_file}" "${CHUNKER_SINGLE_REMOTE}:${dataset_id}/${test_file}")
+  IFS='|' read -r single_upload_status single_upload_stdout single_upload_stderr <<<"${single_upload_result}"
+  print_if_verbose "${CHUNKER_SINGLE_REMOTE} upload" "${single_upload_stdout}" "${single_upload_stderr}"
+  if [[ "${single_upload_status}" -ne 0 ]]; then
+    log "Upload to ${CHUNKER_SINGLE_REMOTE} failed with status ${single_upload_status}"
+    rm -f "${single_upload_stdout}" "${single_upload_stderr}"
+    rm -rf "${tempdir}"
+    return 1
+  fi
+  rm -f "${single_upload_stdout}" "${single_upload_stderr}"
+
+  log "Uploading test file to ${CHUNKER_RAID3_REMOTE}:${dataset_id}"
+  local raid3_upload_result raid3_upload_status raid3_upload_stdout raid3_upload_stderr
+  raid3_upload_result=$(capture_command "chunkerraid3_upload" copy "${tempdir}/${test_file}" "${CHUNKER_RAID3_REMOTE}:${dataset_id}/${test_file}")
+  IFS='|' read -r raid3_upload_status raid3_upload_stdout raid3_upload_stderr <<<"${raid3_upload_result}"
+  print_if_verbose "${CHUNKER_RAID3_REMOTE} upload" "${raid3_upload_stdout}" "${raid3_upload_stderr}"
+  if [[ "${raid3_upload_status}" -ne 0 ]]; then
+    log "Upload to ${CHUNKER_RAID3_REMOTE} failed with status ${raid3_upload_status}"
+    rm -f "${raid3_upload_stdout}" "${raid3_upload_stderr}"
+    rm -rf "${tempdir}"
+    return 1
+  fi
+  rm -f "${raid3_upload_stdout}" "${raid3_upload_stderr}"
+
+  sleep 1
+
+  log "Checking chunk+metadata files in underlying storage"
+  local single_file_count raid3_particle_count
+  single_file_count=$(count_single_files)
+  raid3_particle_count=$(count_raid3_particles)
+
+  # With chunk_size=100B, file >100 bytes: at least 2 data chunks + 1 metadata = 3 files on single, 3*3 = 9 particles on raid3
+  local min_single=$((single_baseline + 3))
+  local min_raid3=$((raid3_baseline + 9))
+
+  log "Found ${single_file_count} file(s) in ${SINGLE_REMOTE} (baseline: ${single_baseline}, min expected: ${min_single})"
+  log "Found ${raid3_particle_count} file(s) in ${RAID3_REMOTE} backends (baseline: ${raid3_baseline}, min expected: ${min_raid3})"
+
+  if [[ "${single_file_count}" -lt "${min_single}" ]]; then
+    log "Expected at least ${min_single} chunk+meta file(s) in ${SINGLE_REMOTE} (>=2 chunks + 1 meta), found ${single_file_count}"
+    rm -rf "${tempdir}"
+    return 1
+  fi
+  if [[ "${raid3_particle_count}" -lt "${min_raid3}" ]]; then
+    log "Expected at least ${min_raid3} particle file(s) in ${RAID3_REMOTE} backends, found ${raid3_particle_count}"
+    rm -rf "${tempdir}"
+    return 1
+  fi
+  log "Chunk file count verification passed"
+
+  local tmp_single tmp_raid3
+  tmp_single=$(mktemp -d) || { rm -rf "${tempdir}"; return 1; }
+  tmp_raid3=$(mktemp -d) || { rm -rf "${tempdir}" "${tmp_single}"; return 1; }
+
+  log "Downloading from ${CHUNKER_SINGLE_REMOTE}:${dataset_id}"
+  single_download_result=$(capture_command "chunkersingle_download" copy "${CHUNKER_SINGLE_REMOTE}:${dataset_id}" "${tmp_single}")
+  IFS='|' read -r single_download_status single_download_stdout single_download_stderr <<<"${single_download_result}"
+  print_if_verbose "${CHUNKER_SINGLE_REMOTE} download" "${single_download_stdout}" "${single_download_stderr}"
+  if [[ "${single_download_status}" -ne 0 ]]; then
+    log "Download from ${CHUNKER_SINGLE_REMOTE} failed with status ${single_download_status}"
+    rm -f "${single_download_stdout}" "${single_download_stderr}"
+    rm -rf "${tempdir}" "${tmp_single}" "${tmp_raid3}"
+    return 1
+  fi
+  rm -f "${single_download_stdout}" "${single_download_stderr}"
+
+  log "Downloading from ${CHUNKER_RAID3_REMOTE}:${dataset_id}"
+  raid3_download_result=$(capture_command "chunkerraid3_download" copy "${CHUNKER_RAID3_REMOTE}:${dataset_id}" "${tmp_raid3}")
+  IFS='|' read -r raid3_download_status raid3_download_stdout raid3_download_stderr <<<"${raid3_download_result}"
+  print_if_verbose "${CHUNKER_RAID3_REMOTE} download" "${raid3_download_stdout}" "${raid3_download_stderr}"
+  if [[ "${raid3_download_status}" -ne 0 ]]; then
+    log "Download from ${CHUNKER_RAID3_REMOTE} failed with status ${raid3_download_status}"
+    rm -f "${raid3_download_stdout}" "${raid3_download_stderr}"
+    rm -rf "${tempdir}" "${tmp_single}" "${tmp_raid3}"
+    return 1
+  fi
+  rm -f "${raid3_download_stdout}" "${raid3_download_stderr}"
+
+  if ! diff -qr "${tmp_single}" "${tmp_raid3}" >/dev/null; then
+    log "Downloaded files differ between ${CHUNKER_SINGLE_REMOTE} and ${CHUNKER_RAID3_REMOTE}"
+    diff -qr "${tmp_single}" "${tmp_raid3}" || true
+    rm -rf "${tempdir}" "${tmp_single}" "${tmp_raid3}"
+    return 1
+  fi
+  if ! diff -q "${tempdir}/${test_file}" "${tmp_single}/${test_file}" >/dev/null 2>&1; then
+    log "Downloaded file from ${CHUNKER_SINGLE_REMOTE} does not match original"
+    rm -rf "${tempdir}" "${tmp_single}" "${tmp_raid3}"
+    return 1
+  fi
+  if ! diff -q "${tempdir}/${test_file}" "${tmp_raid3}/${test_file}" >/dev/null 2>&1; then
+    log "Downloaded file from ${CHUNKER_RAID3_REMOTE} does not match original"
+    rm -rf "${tempdir}" "${tmp_single}" "${tmp_raid3}"
+    return 1
+  fi
+
+  rm -rf "${tempdir}" "${tmp_single}" "${tmp_raid3}"
+  log "chunker test completed successfully"
   return 0
 }
 
 run_all_tests() {
-  local tests=("stacking")
+  local tests=("crypt" "chunker")
   local name
   for name in "${tests[@]}"; do
     log_info "suite" "Running '${name}'"
@@ -575,7 +773,8 @@ run_single_test() {
   local test_func=""
   
   case "${test_name}" in
-    stacking) test_func="run_stacking_test" ;;
+    crypt) test_func="run_stacking_test" ;;
+    chunker) test_func="run_chunker_test" ;;
     *) die "Unknown test '${test_name}'. Use '${SCRIPT_NAME} list' to see available tests." ;;
   esac
   
@@ -617,11 +816,14 @@ main() {
     
     teardown)
       set_stacking_remotes
+      set_stacking_chunker_remotes
       # Only purge the remotes - do not clean underlying directories
       # as they are shared infrastructure used by all tests
-      log "Purging crypt and composite remotes"
+      log "Purging crypt, chunker, and composite remotes"
       purge_remote_root "${CRYPT_SINGLE_REMOTE}"
       purge_remote_root "${CRYPT_RAID3_REMOTE}"
+      purge_remote_root "${CHUNKER_SINGLE_REMOTE}"
+      purge_remote_root "${CHUNKER_RAID3_REMOTE}"
       purge_remote_root "${SINGLE_REMOTE}"
       purge_remote_root "${RAID3_REMOTE}"
       ;;

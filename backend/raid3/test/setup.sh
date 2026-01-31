@@ -118,6 +118,15 @@ if [[ -f "${CONFIG_FILE}" ]]; then
   if ! grep -q "^\[localminioraid3\]" "${CONFIG_FILE}"; then
     log_info "setup" "Config file exists but missing mixed remote - will regenerate"
     NEEDS_REGENERATION=1
+  elif ! grep -q "^\[cryptlocalsingle\]" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file exists but missing crypt remotes (stacking tests) - will regenerate"
+    NEEDS_REGENERATION=1
+  elif ! grep -q "^\[chunkerlocalsingle\]" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file exists but missing chunker remotes (stacking_chunker test) - will regenerate"
+    NEEDS_REGENERATION=1
+  elif grep -q "^\[chunkerminiosingle\]" "${CONFIG_FILE}" && ! grep -q "miniosingle:chunker" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file has chunker MinIO remotes without bucket (stacking_chunker MinIO fix) - will regenerate"
+    NEEDS_REGENERATION=1
   elif grep -qE "^even = localeven:(/Users/|/home/)" "${CONFIG_FILE}" || \
        grep -qE "^remote = (/Users/|/home/)" "${CONFIG_FILE}"; then
     log_info "setup" "Config file contains hardcoded absolute paths - will regenerate"
