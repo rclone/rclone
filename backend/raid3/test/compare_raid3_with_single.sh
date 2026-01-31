@@ -37,9 +37,11 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# shellcheck source=backend/raid3/test/compare_raid3_with_single_common.sh
+# shellcheck source=compare_raid3_with_single_common.sh
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
+# VERBOSE is used by sourced compare_raid3_with_single_common.sh (print_if_verbose, purge_remote_root)
+# shellcheck disable=SC2034
 VERBOSE=0
 STORAGE_TYPE=""
 COMMAND=""
@@ -226,16 +228,17 @@ run_lsd_test() {
 }
 
 run_ls_test() {
+  local test_case="ls"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running ls test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local dataset_id
   if ! dataset_id=$(create_test_dataset "ls"); then
-    log "Failed to set up dataset for ls test."
+    log_warn "test:${test_case}" "Failed to set up dataset."
     return 1
   fi
-  log "Dataset created: ${RAID3_REMOTE}:${dataset_id} and ${SINGLE_REMOTE}:${dataset_id} (retained for inspection)"
+  log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained for inspection)."
 
   local lvl_result single_result
   lvl_result=$(capture_command "lvl_ls" ls "${RAID3_REMOTE}:${dataset_id}")
@@ -251,27 +254,28 @@ run_ls_test() {
   print_if_verbose "${SINGLE_REMOTE} ls" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "ls status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
+    log_warn "test:${test_case}" "ls status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
     rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
     return 1
   fi
 
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
-  log "ls test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
 run_cat_test() {
+  local test_case="cat"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running cat test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local dataset_id
   if ! dataset_id=$(create_test_dataset "cat"); then
-    log "Failed to set up dataset for cat test."
+    log_warn "test:${test_case}" "Failed to set up dataset."
     return 1
   fi
-  log "Dataset created: ${RAID3_REMOTE}:${dataset_id} and ${SINGLE_REMOTE}:${dataset_id} (retained for inspection)"
+  log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained for inspection)."
 
   local target_existing="${dataset_id}/dirA/file_nested.txt"
   local target_missing="${dataset_id}/missing.txt"
@@ -290,21 +294,15 @@ run_cat_test() {
   print_if_verbose "${SINGLE_REMOTE} cat existing" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "cat (existing) status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
-    log "Outputs retained for inspection:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "cat (existing) status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
+    log_info "test:${test_case}" "Outputs retained for inspection: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
 
   if [[ "${lvl_status}" -eq 0 ]]; then
     if ! cmp -s "${lvl_stdout}" "${single_stdout}"; then
-      log "cat (existing) output mismatch between raid3 and single backends."
-      log "Outputs retained:"
-      log "  ${lvl_stdout}"
-      log "  ${single_stdout}"
+      log_warn "test:${test_case}" "cat (existing) output mismatch between raid3 and single backends."
+      log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${single_stdout}"
       return 1
     fi
   fi
@@ -341,12 +339,8 @@ run_cat_test() {
   # Both should have no output (0 bytes) and indicate error (either via exit code or stderr)
   # Accept if: both have 0 output AND (both have non-zero exit OR both have error in stderr)
   if [[ "${lvl_output_size}" -ne 0 ]] || [[ "${single_output_size}" -ne 0 ]]; then
-    log "cat (missing) unexpected output: ${RAID3_REMOTE}=${lvl_output_size} bytes, ${SINGLE_REMOTE}=${single_output_size} bytes"
-    log "Outputs retained for inspection:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "cat (missing) unexpected output (${RAID3_REMOTE}=${lvl_output_size} bytes, ${SINGLE_REMOTE}=${single_output_size} bytes)"
+    log_info "test:${test_case}" "Outputs retained for inspection: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
 
@@ -368,34 +362,31 @@ run_cat_test() {
   if [[ "${lvl_output_size}" -eq 0 ]] && [[ "${single_output_size}" -eq 0 ]]; then
     # Both correctly returned no output - file not found
     # Accept regardless of exit code differences (some backends return 0, others return non-zero)
-    log "cat (missing) both backends returned no output - file correctly not found"
+    log_info "test:${test_case}" "cat (missing) both backends returned no output - file correctly not found"
   elif [[ "${lvl_indicates_failure}" -ne "${single_indicates_failure}" ]]; then
-    log "cat (missing) failure indication mismatch: ${RAID3_REMOTE} (exit=${lvl_status}, error=${lvl_has_error}), ${SINGLE_REMOTE} (exit=${single_status}, error=${single_has_error})"
-    log "Outputs retained for inspection:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "cat (missing) failure indication mismatch (${RAID3_REMOTE} exit=${lvl_status} error=${lvl_has_error}, ${SINGLE_REMOTE} exit=${single_status} error=${single_has_error})"
+    log_info "test:${test_case}" "Outputs retained for inspection: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
 
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
-  log "cat test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
 run_copy_download_test() {
+  local test_case="cp-download"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running copy-download test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local dataset_id
   if ! dataset_id=$(create_test_dataset "cp-download"); then
-    log "Failed to set up dataset for copy-download test."
+    log_warn "test:${test_case}" "Failed to set up dataset."
     return 1
   fi
-  log "Dataset created: ${RAID3_REMOTE}:${dataset_id} and ${SINGLE_REMOTE}:${dataset_id} (retained for inspection)"
+  log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained for inspection)."
 
   local tmp_lvl tmp_single
   tmp_lvl=$(mktemp -d) || return 1
@@ -414,12 +405,8 @@ run_copy_download_test() {
   print_if_verbose "${SINGLE_REMOTE} copy (download)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "copy (download) status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
-    log "Outputs retained:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "copy (download) status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
+    log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     rm -rf "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
@@ -428,20 +415,21 @@ run_copy_download_test() {
 
   # Compare directory contents
   if ! diff -qr "${tmp_lvl}" "${tmp_single}" >/dev/null; then
-    log "copy (download) produced different local content between raid3 and single remotes."
+    log_warn "test:${test_case}" "copy (download) produced different local content between raid3 and single remotes."
     rm -rf "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
 
   rm -rf "${tmp_lvl}" "${tmp_single}"
-  log "copy-download test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
 run_copy_upload_test() {
+  local test_case="cp-upload"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running copy-upload test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local tempdir
   tempdir=$(mktemp -d) || return 1
@@ -469,12 +457,8 @@ run_copy_upload_test() {
   print_if_verbose "${SINGLE_REMOTE} copy (upload)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "copy (upload) status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
-    log "Outputs retained:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "copy (upload) status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
+    log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     rm -rf "${tempdir}"
     return 1
   fi
@@ -495,7 +479,7 @@ run_copy_upload_test() {
   print_if_verbose "${SINGLE_REMOTE} copy (verify download)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "Verification copy status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
+    log_warn "test:${test_case}" "Verification copy status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
     rm -rf "${tempdir}" "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
@@ -503,28 +487,29 @@ run_copy_upload_test() {
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
   if ! diff -qr "${tmp_lvl}" "${tmp_single}" >/dev/null; then
-    log "Verification: downloaded content differs between raid3 and single remotes."
+    log_warn "test:${test_case}" "Verification: downloaded content differs between raid3 and single remotes."
     rm -rf "${tempdir}" "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
 
   rm -rf "${tempdir}" "${tmp_lvl}" "${tmp_single}"
 
-  log "copy-upload test completed. Dataset stored as ${dataset_id} on both remotes."
+  log_info "test:${test_case}" "Command comparison completed. Dataset stored as ${dataset_id} on both remotes."
   return 0
 }
 
 run_move_test() {
+  local test_case="move"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running move test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local dataset_id
   if ! dataset_id=$(create_test_dataset "move"); then
-    log "Failed to set up dataset for move test."
+    log_warn "test:${test_case}" "Failed to set up dataset."
     return 1
   fi
-  log "Dataset created: ${RAID3_REMOTE}:${dataset_id} and ${SINGLE_REMOTE}:${dataset_id} (retained for inspection until move completes)"
+  log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained for inspection until move completes)."
 
   local tmp_lvl tmp_single
   tmp_lvl=$(mktemp -d) || return 1
@@ -543,12 +528,8 @@ run_move_test() {
   print_if_verbose "${SINGLE_REMOTE} move" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "move status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
-    log "Outputs retained:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "move status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
+    log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     rm -rf "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
@@ -557,7 +538,7 @@ run_move_test() {
 
   # Compare destination directories
   if ! diff -qr "${tmp_lvl}" "${tmp_single}" >/dev/null; then
-    log "move produced different destination content between raid3 and single remotes."
+    log_warn "test:${test_case}" "move produced different destination content between raid3 and single remotes."
     rm -rf "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
@@ -572,7 +553,7 @@ run_move_test() {
   print_if_verbose "${SINGLE_REMOTE} ls post-move" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "ls post-move status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
+    log_warn "test:${test_case}" "ls post-move status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
     rm -rf "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
@@ -580,21 +561,22 @@ run_move_test() {
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
   rm -rf "${tmp_lvl}" "${tmp_single}"
 
-  log "move test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
 run_delete_test() {
+  local test_case="delete"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running delete test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local dataset_id
   if ! dataset_id=$(create_test_dataset "delete"); then
-    log "Failed to set up dataset for delete test."
+    log_warn "test:${test_case}" "Failed to set up dataset."
     return 1
   fi
-  log "Dataset created: ${RAID3_REMOTE}:${dataset_id} and ${SINGLE_REMOTE}:${dataset_id} (retained for inspection)"
+  log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained for inspection)."
 
   local target_existing="${dataset_id}/dirA/file_nested.txt"
   local target_missing="${dataset_id}/dirA/does_not_exist.txt"
@@ -613,12 +595,8 @@ run_delete_test() {
   print_if_verbose "${SINGLE_REMOTE} delete existing" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "delete (existing) status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
-    log "Outputs retained:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "delete (existing) status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
+    log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
@@ -632,7 +610,7 @@ run_delete_test() {
   print_if_verbose "${SINGLE_REMOTE} ls post-delete" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "ls post-delete status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
+    log_warn "test:${test_case}" "ls post-delete status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
     return 1
   fi
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
@@ -674,32 +652,29 @@ run_delete_test() {
   fi
 
   if [[ "${lvl_acceptable}" -ne "${single_acceptable}" ]]; then
-    log "delete (missing) idempotent behavior mismatch: ${RAID3_REMOTE} (exit=${lvl_status}, error=${lvl_has_error}), ${SINGLE_REMOTE} (exit=${single_status}, error=${single_has_error})"
-    log "Outputs retained:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "delete (missing) idempotent behavior mismatch (${RAID3_REMOTE} exit=${lvl_status} error=${lvl_has_error}, ${SINGLE_REMOTE} exit=${single_status} error=${single_has_error})"
+    log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
 
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
-  log "delete test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
 run_check_test() {
+  local test_case="check"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running check test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local dataset_id
   if ! dataset_id=$(create_test_dataset "check"); then
-    log "Failed to set up dataset for check test."
+    log_warn "test:${test_case}" "Failed to set up dataset."
     return 1
   fi
-  log "Dataset created: ${RAID3_REMOTE}:${dataset_id} and ${SINGLE_REMOTE}:${dataset_id}"
+  log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes."
 
   local lvl_result single_result
   local lvl_status lvl_stdout lvl_stderr
@@ -715,21 +690,14 @@ run_check_test() {
   print_if_verbose "check single->raid3 (match)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "check (match) status mismatch: raid3->single=${lvl_status}, single->raid3=${single_status}"
-    log "Outputs retained:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "check (match) status mismatch (raid3->single=${lvl_status}, single->raid3=${single_status})"
+    log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
 
   if [[ "${lvl_status}" -ne 0 ]]; then
-    log "check (match) failed unexpectedly with status ${lvl_status}; outputs retained."
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "check (match) failed unexpectedly with status ${lvl_status}; outputs retained."
+    log_info "test:${test_case}" "Outputs: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
 
@@ -747,30 +715,27 @@ run_check_test() {
   print_if_verbose "check single->raid3 (mismatch)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "check (mismatch) status mismatch: raid3->single=${lvl_status}, single->raid3=${single_status}"
-    log "Outputs retained:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "check (mismatch) status mismatch (raid3->single=${lvl_status}, single->raid3=${single_status})"
+    log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
 
   if [[ "${lvl_status}" -eq 0 ]]; then
-    log "check (mismatch) unexpectedly succeeded; expected failure due to missing file."
+    log_warn "test:${test_case}" "check (mismatch) unexpectedly succeeded; expected failure due to missing file."
     return 1
   fi
 
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
-  log "check test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
 run_sync_upload_test() {
+  local test_case="sync-upload"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running sync-upload test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   # Initial upload from local -> remote for both backends
   local initial_dir
@@ -795,7 +760,7 @@ run_sync_upload_test() {
   print_if_verbose "${SINGLE_REMOTE} sync (initial upload)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "sync initial upload mismatch: raid3=${lvl_status}, single=${single_status}"
+    log_warn "test:${test_case}" "sync initial upload mismatch (raid3=${lvl_status}, single=${single_status})"
     rm -rf "${initial_dir}"
     return 1
   fi
@@ -817,7 +782,7 @@ run_sync_upload_test() {
   print_if_verbose "${SINGLE_REMOTE} sync (delta)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "sync delta mismatch: raid3=${lvl_status}, single=${single_status}"
+    log_warn "test:${test_case}" "sync delta mismatch (raid3=${lvl_status}, single=${single_status})"
     rm -rf "${initial_dir}"
     return 1
   fi
@@ -838,7 +803,7 @@ run_sync_upload_test() {
   print_if_verbose "${SINGLE_REMOTE} copy (verify sync)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "Verification copy mismatch after sync: raid3=${lvl_status}, single=${single_status}"
+    log_warn "test:${test_case}" "Verification copy mismatch after sync (raid3=${lvl_status}, single=${single_status})"
     rm -rf "${initial_dir}" "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
@@ -846,19 +811,12 @@ run_sync_upload_test() {
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
   if ! diff -qr "${tmp_lvl}" "${tmp_single}" >/dev/null; then
-    log "Verification: remote states differ between raid3 and single after sync."
+    log_warn "test:${test_case}" "Verification: remote states differ between raid3 and single after sync."
     rm -rf "${initial_dir}" "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
 
-  # Ensure the remotes reflect the expected content:
-  # - file1 deleted
-  # - file2 updated
-  # - file3 present
-  local expected_files=(
-    "file3.txt"
-    "subdir/file2.txt"
-  )
+  # Remotes should reflect: file1 deleted, file2 updated, file3 present (verified via diff above)
 
   lvl_result=$(capture_command "lvl_sync_ls" ls "${RAID3_REMOTE}:${dataset_id}")
   single_result=$(capture_command "single_sync_ls" ls "${SINGLE_REMOTE}:${dataset_id}")
@@ -868,7 +826,7 @@ run_sync_upload_test() {
   print_if_verbose "${SINGLE_REMOTE} ls (post-sync)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "Post-sync ls status mismatch: raid3=${lvl_status}, single=${single_status}"
+    log_warn "test:${test_case}" "Post-sync ls status mismatch (raid3=${lvl_status}, single=${single_status})"
     rm -rf "${initial_dir}" "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
@@ -877,18 +835,19 @@ run_sync_upload_test() {
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
   rm -rf "${initial_dir}" "${tmp_lvl}" "${tmp_single}"
-  log "sync-upload test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
 run_sync_download_test() {
+  local test_case="sync-download"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running sync-download test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local dataset_id
   if ! dataset_id=$(create_test_dataset "sync-download"); then
-    log "Failed to set up dataset for sync-download test."
+    log_warn "test:${test_case}" "Failed to set up dataset."
     return 1
   fi
 
@@ -909,7 +868,7 @@ run_sync_download_test() {
   print_if_verbose "${SINGLE_REMOTE} sync (download)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "sync-download status mismatch: raid3=${lvl_status}, single=${single_status}"
+    log_warn "test:${test_case}" "sync-download status mismatch (raid3=${lvl_status}, single=${single_status})"
     rm -rf "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
@@ -917,27 +876,28 @@ run_sync_download_test() {
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
   if ! diff -qr "${tmp_lvl}" "${tmp_single}" >/dev/null; then
-    log "sync-download produced different local content between raid3 and single remotes."
+    log_warn "test:${test_case}" "sync-download produced different local content between raid3 and single remotes."
     rm -rf "${tmp_lvl}" "${tmp_single}"
     return 1
   fi
 
   rm -rf "${tmp_lvl}" "${tmp_single}"
-  log "sync-download test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
 run_purge_test() {
+  local test_case="purge"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  log "Running purge test"
+  log_info "test:${test_case}" "Preparing dataset"
 
   local dataset_id
   if ! dataset_id=$(create_test_dataset "purge"); then
-    log "Failed to set up dataset for purge test."
+    log_warn "test:${test_case}" "Failed to set up dataset."
     return 1
   fi
-  log "Dataset created: ${RAID3_REMOTE}:${dataset_id} and ${SINGLE_REMOTE}:${dataset_id}"
+  log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes."
 
   local lvl_result single_result
   local lvl_status lvl_stdout lvl_stderr
@@ -953,12 +913,8 @@ run_purge_test() {
   print_if_verbose "${SINGLE_REMOTE} purge (first)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "purge status mismatch: raid3=${lvl_status}, single=${single_status}"
-    log "Outputs retained:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "purge status mismatch (raid3=${lvl_status}, single=${single_status})"
+    log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
 
@@ -974,14 +930,14 @@ run_purge_test() {
   print_if_verbose "${SINGLE_REMOTE} lsd (post-purge)" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "lsd post-purge status mismatch: raid3=${lvl_status}, single=${single_status}"
+    log_warn "test:${test_case}" "lsd post-purge status mismatch (raid3=${lvl_status}, single=${single_status})"
     return 1
   fi
 
   # Expect both to report error (bucket gone). Clean up output files.
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
-  log "purge test completed."
+  log_info "test:${test_case}" "Command comparison completed."
   return 0
 }
 
@@ -1120,6 +1076,7 @@ run_performance_test() {
 }
 
 run_mkdir_test() {
+  local test_case="mkdir"
   purge_remote_root "${RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
   local test_id
@@ -1128,7 +1085,7 @@ run_mkdir_test() {
   printf -v random_suffix '%04d' $((RANDOM % 10000))
   test_id="cmp-mkdir-${timestamp}-${random_suffix}"
 
-  log "Running mkdir test with identifier '${test_id}'"
+  log_info "test:${test_case}" "Running with identifier '${test_id}'"
 
   local lvl_result single_result
   lvl_result=$(capture_command "lvl_mkdir" mkdir "${RAID3_REMOTE}:${test_id}")
@@ -1144,17 +1101,14 @@ run_mkdir_test() {
   print_if_verbose "${SINGLE_REMOTE} mkdir" "${single_stdout}" "${single_stderr}"
 
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
-    log "mkdir status mismatch: ${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status}"
+    log_warn "test:${test_case}" "mkdir status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
     rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
     return 1
   fi
 
   if [[ "${lvl_status}" -ne 0 ]]; then
-    log "mkdir failed with status ${lvl_status}; outputs retained for inspection:"
-    log "  ${lvl_stdout}"
-    log "  ${lvl_stderr}"
-    log "  ${single_stdout}"
-    log "  ${single_stderr}"
+    log_warn "test:${test_case}" "mkdir failed with status ${lvl_status}; outputs retained for inspection."
+    log_info "test:${test_case}" "Outputs: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
     return 1
   fi
 
@@ -1173,13 +1127,13 @@ run_mkdir_test() {
   print_if_verbose "${SINGLE_REMOTE} lsd" "${single_check_stdout}" "${single_check_stderr}"
 
   if [[ "${lvl_check_status}" -ne "${single_check_status}" ]]; then
-    log "lsd status mismatch after mkdir: ${RAID3_REMOTE}=${lvl_check_status}, ${SINGLE_REMOTE}=${single_check_status}"
+    log_warn "test:${test_case}" "lsd status mismatch after mkdir (${RAID3_REMOTE}=${lvl_check_status}, ${SINGLE_REMOTE}=${single_check_status})"
     rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
     rm -f "${lvl_check_stdout}" "${lvl_check_stderr}" "${single_check_stdout}" "${single_check_stderr}"
     return 1
   fi
 
-  log "mkdir test succeeded for '${test_id}'."
+  log_info "test:${test_case}" "Command comparison completed for '${test_id}'."
 
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
   rm -f "${lvl_check_stdout}" "${lvl_check_stderr}" "${single_check_stdout}" "${single_check_stderr}"
@@ -1229,7 +1183,7 @@ main() {
   case "${COMMAND}" in
     start)
       if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'start' only applies to MinIO-based storage types (minio or mixed)."
+        log_info "main" "'start' only applies to MinIO-based storage types (minio or mixed)."
         exit 0
       fi
       start_minio_containers
@@ -1237,7 +1191,7 @@ main() {
 
     stop)
       if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'stop' only applies to MinIO-based storage types (minio or mixed)."
+        log_info "main" "'stop' only applies to MinIO-based storage types (minio or mixed)."
         exit 0
       fi
       stop_minio_containers
