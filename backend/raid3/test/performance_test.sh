@@ -983,19 +983,15 @@ run_performance_tests() {
     done
   done
   
-  # Print results
-  print_results_table
-  
-  # Summary
-  echo
-  echo "Summary"
-  echo "======="
-  echo "Total tests: ${total_tests}"
-  echo "Passed: ${passed_tests}"
-  echo "Partial: ${partial_tests}"
-  echo "Failed: ${failed_tests}"
-  echo
-  
+  # Print results table and summary counts only when verbose (harmonized with other test scripts)
+  if (( VERBOSE )); then
+    print_results_table
+    log_info "summary" "Total tests: ${total_tests}"
+    log_info "summary" "Passed: ${passed_tests}"
+    log_info "summary" "Partial: ${partial_tests}"
+    log_info "summary" "Failed: ${failed_tests}"
+  fi
+
   if [[ ${failed_tests} -eq 0 && ${partial_tests} -eq 0 ]]; then
     log_pass "test" "All performance tests completed successfully"
     return 0
