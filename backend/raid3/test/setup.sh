@@ -77,6 +77,8 @@ EOF
       exit 1
       ;;
   esac
+  # Consume current argument; unreachable when --help or *) matched (both exit)
+  # shellcheck disable=SC2317
   shift
 done
 
@@ -88,7 +90,7 @@ DATA_DIR="${SCRIPT_DIR}/_data"
 export SCRIPT_DIR
 export SCRIPT_NAME
 export DATA_DIR
-# shellcheck source=backend/raid3/test/compare_raid3_with_single_common.sh
+# shellcheck source=compare_raid3_with_single_common.sh
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
 # Create _data directory
@@ -108,25 +110,13 @@ mkdir -p "${MINIO_EVEN_DIR}" "${MINIO_ODD_DIR}" "${MINIO_PARITY_DIR}" "${MINIO_S
 CONFIG_FILE="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"
 log_info "setup" "Creating rclone configuration file: ${CONFIG_FILE}"
 
-# Check if config file exists and if it contains required remotes
-# If it doesn't have the mixed remote or crypt backends, we'll regenerate it
+# Check if config file exists and if it contains the mixed remote
+# If it doesn't have the mixed remote, we'll regenerate it
 # Also check if it contains hardcoded absolute paths (like /Users/username or /home/username)
 NEEDS_REGENERATION=0
 if [[ -f "${CONFIG_FILE}" ]]; then
   if ! grep -q "^\[localminioraid3\]" "${CONFIG_FILE}"; then
     log_info "setup" "Config file exists but missing mixed remote - will regenerate"
-    NEEDS_REGENERATION=1
-  elif ! grep -q "^\[cryptlocalsingle\]" "${CONFIG_FILE}"; then
-    log_info "setup" "Config file exists but missing crypt backends - will regenerate"
-    NEEDS_REGENERATION=1
-  elif ! grep -q "^\[cryptlocalraid3\]" "${CONFIG_FILE}"; then
-    log_info "setup" "Config file exists but missing crypt backends - will regenerate"
-    NEEDS_REGENERATION=1
-  elif ! grep -q "^\[cryptminiosingle\]" "${CONFIG_FILE}"; then
-    log_info "setup" "Config file exists but missing crypt minio backends - will regenerate"
-    NEEDS_REGENERATION=1
-  elif ! grep -q "^\[cryptminioraid3\]" "${CONFIG_FILE}"; then
-    log_info "setup" "Config file exists but missing crypt minio backends - will regenerate"
     NEEDS_REGENERATION=1
   elif grep -qE "^even = localeven:(/Users/|/home/)" "${CONFIG_FILE}" || \
        grep -qE "^remote = (/Users/|/home/)" "${CONFIG_FILE}"; then

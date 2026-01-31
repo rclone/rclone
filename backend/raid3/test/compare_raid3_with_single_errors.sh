@@ -38,9 +38,11 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# shellcheck source=backend/raid3/test/compare_raid3_with_single_common.sh
+# shellcheck source=compare_raid3_with_single_common.sh
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
+# VERBOSE is used by sourced compare_raid3_with_single_common.sh (print_if_verbose, purge_remote_root)
+# shellcheck disable=SC2034
 VERBOSE=0
 STORAGE_TYPE=""
 COMMAND=""
@@ -207,18 +209,18 @@ run_move_fail_scenario() {
   local new_file="${dataset_id}/moved_${TARGET_OBJECT}"
 
   # Verify destination file does NOT exist before move attempt (cleanup any leftovers)
-  local pre_check_result pre_check_status pre_check_stdout pre_check_stderr
+  local pre_check_result pre_check_status
   pre_check_result=$(capture_command "pre_check_dest" ls "${RAID3_REMOTE}:${new_file}" 2>/dev/null || echo "1|||")
-  IFS='|' read -r pre_check_status pre_check_stdout pre_check_stderr <<<"${pre_check_result}"
+  IFS='|' read -r pre_check_status _ _ <<<"${pre_check_result}"
   if [[ "${pre_check_status}" -eq 0 ]]; then
     log_warn "scenario:move-fail-${backend}" "Destination file ${new_file} already exists before move attempt. Cleaning up..."
     rclone_cmd delete "${RAID3_REMOTE}:${new_file}" >/dev/null 2>&1 || true
-    
+
     # Verify cleanup worked - wait a moment and check again
     sleep 1
-    local post_cleanup_result post_cleanup_status post_cleanup_stdout post_cleanup_stderr
+    local post_cleanup_result post_cleanup_status
     post_cleanup_result=$(capture_command "post_cleanup_check" ls "${RAID3_REMOTE}:${new_file}" 2>/dev/null || echo "1|||")
-    IFS='|' read -r post_cleanup_status post_cleanup_stdout post_cleanup_stderr <<<"${post_cleanup_result}"
+    IFS='|' read -r post_cleanup_status _ _ <<<"${post_cleanup_result}"
     if [[ "${post_cleanup_status}" -eq 0 ]]; then
       log_warn "scenario:move-fail-${backend}" "Destination file still exists after cleanup attempt. Trying force delete..."
       # Try deleting from individual backends if available
@@ -227,7 +229,7 @@ run_move_fail_scenario() {
       sleep 1
       local final_check_result final_check_status
       final_check_result=$(capture_command "final_cleanup_check" ls "${RAID3_REMOTE}:${new_file}" 2>/dev/null || echo "1|||")
-      IFS='|' read -r final_check_status final_check_stdout final_check_stderr <<<"${final_check_result}"
+      IFS='|' read -r final_check_status _ _ <<<"${final_check_result}"
       if [[ "${final_check_status}" -eq 0 ]]; then
         log_warn "scenario:move-fail-${backend}" "Destination file persists after cleanup - may have incomplete particles. Will verify after move attempt."
       fi

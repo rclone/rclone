@@ -71,7 +71,9 @@ LOCAL_RAID3_DIRS=(
   "${LOCAL_ODD_DIR}"
   "${LOCAL_PARITY_DIR}"
 )
-# LOCAL_SINGLE_DIR from compare_raid3_env.sh
+# Document that LOCAL_SINGLE_DIR comes from env (compare_raid3_env.sh)
+# shellcheck disable=SC2269
+LOCAL_SINGLE_DIR="${LOCAL_SINGLE_DIR}"
 LOCAL_RAID3_REMOTES=(
   "${LOCAL_EVEN_REMOTE}"
   "${LOCAL_ODD_REMOTE}"
@@ -83,7 +85,9 @@ MINIO_RAID3_DIRS=(
   "${MINIO_ODD_DIR}"
   "${MINIO_PARITY_DIR}"
 )
-# MINIO_SINGLE_DIR from compare_raid3_env.sh
+# Document that MINIO_SINGLE_DIR comes from env (compare_raid3_env.sh)
+# shellcheck disable=SC2269
+MINIO_SINGLE_DIR="${MINIO_SINGLE_DIR}"
 MINIO_RAID3_REMOTES=(
   "${MINIO_EVEN_REMOTE}"
   "${MINIO_ODD_REMOTE}"
@@ -169,14 +173,13 @@ ensure_workdir() {
 ensure_rclone_config() {
   # Verify that rclone_raid3_integration_tests.config exists
   if [[ ! -f "${RCLONE_CONFIG}" ]]; then
-    local setup_script="${SCRIPT_DIR}/setup.sh"
     die "Integration test configuration file not found: ${RCLONE_CONFIG}" \
         "" \
         "The test-specific config file is missing. You need to run the setup script first." \
         "" \
         "Please run:" \
         "  cd ${SCRIPT_DIR}" \
-        "  ${setup_script}" \
+        "  ./setup.sh" \
         "" \
         "This will create the configuration file: ${RCLONE_CONFIG}"
   fi
@@ -222,57 +225,6 @@ create_rclone_config() {
   LOCAL_PARITY_DIR_REL=$(make_relative_path "${LOCAL_PARITY_DIR}")
   LOCAL_SINGLE_DIR_REL=$(make_relative_path "${LOCAL_SINGLE_DIR}")
   
-  # Obscure passwords for crypt backends
-  # rclone crypt backend requires passwords to be obscured in the config file
-  # Use test passwords that are consistent across test runs
-  local CRYPT_PASSWORD="testpassword123"
-  local CRYPT_SALT="testsalt456"
-  local CRYPT_PASSWORD_OBSCURED CRYPT_SALT_OBSCURED
-  
-  # Try to find rclone binary for obscuring passwords
-  # We need to obscure passwords before writing to config file
-  local rclone_bin=""
-  if [[ -n "${RCLONE_BINARY:-}" ]] && [[ -x "${RCLONE_BINARY}" ]]; then
-    rclone_bin="${RCLONE_BINARY}"
-  elif command -v rclone >/dev/null 2>&1; then
-    rclone_bin="rclone"
-  else
-    # Try to find rclone binary in repo root (same logic as find_rclone_binary but without die)
-    local repo_root
-    repo_root=$(cd "${SCRIPT_DIR}/../../.." && pwd)
-    if [[ -f "${repo_root}/rclone.go" ]] || [[ -f "${repo_root}/Makefile" ]]; then
-      if [[ -f "${repo_root}/rclone" ]] && [[ -x "${repo_root}/rclone" ]]; then
-        rclone_bin="${repo_root}/rclone"
-      elif [[ -f "${repo_root}/rclone.exe" ]] && [[ -x "${repo_root}/rclone.exe" ]]; then
-        rclone_bin="${repo_root}/rclone.exe"
-      fi
-    fi
-  fi
-  
-  # Obscure passwords using rclone obscure command
-  if [[ -n "${rclone_bin}" ]]; then
-    CRYPT_PASSWORD_OBSCURED=$(echo -n "${CRYPT_PASSWORD}" | "${rclone_bin}" obscure - 2>/dev/null || echo "")
-    CRYPT_SALT_OBSCURED=$(echo -n "${CRYPT_SALT}" | "${rclone_bin}" obscure - 2>/dev/null || echo "")
-    
-    # Verify that obscuring worked
-    if [[ -z "${CRYPT_PASSWORD_OBSCURED}" ]] || [[ -z "${CRYPT_SALT_OBSCURED}" ]]; then
-      log_warn "config" "Failed to obscure crypt passwords, but continuing (rclone may obscure them automatically)"
-      CRYPT_PASSWORD_OBSCURED="${CRYPT_PASSWORD}"
-      CRYPT_SALT_OBSCURED="${CRYPT_SALT}"
-    elif [[ "${CRYPT_PASSWORD_OBSCURED}" == "${CRYPT_PASSWORD}" ]] || [[ "${CRYPT_SALT_OBSCURED}" == "${CRYPT_SALT}" ]]; then
-      log_warn "config" "Password obscuring may have failed (output same as input), but continuing"
-    fi
-  else
-    # If rclone is not available, we cannot obscure passwords
-    # This will cause the crypt backend to fail, but we'll let the user know
-    log_warn "config" "Cannot obscure crypt passwords (rclone not available)"
-    log_warn "config" "The crypt backends will not work until passwords are obscured"
-    log_warn "config" "Please run: rclone obscure 'testpassword123' and rclone obscure 'testsalt456'"
-    log_warn "config" "Then update the config file manually, or regenerate after building rclone"
-    CRYPT_PASSWORD_OBSCURED="${CRYPT_PASSWORD}"
-    CRYPT_SALT_OBSCURED="${CRYPT_SALT}"
-  fi
-  
   # Generate config file content
   cat > "${config_file}" <<EOF
 # rclone configuration file for raid3 integration tests
@@ -308,25 +260,6 @@ use_streaming = true
 [${LOCAL_SINGLE_REMOTE}]
 type = alias
 remote = ${LOCAL_SINGLE_DIR_REL}
-
-# Crypt backends for stacking tests
-# cryptlocalsingle wraps localsingle
-[cryptlocalsingle]
-type = crypt
-remote = ${LOCAL_SINGLE_REMOTE}:
-filename_encryption = standard
-directory_name_encryption = true
-password = ${CRYPT_PASSWORD_OBSCURED}
-password2 = ${CRYPT_SALT_OBSCURED}
-
-# cryptlocalraid3 wraps localraid3
-[cryptlocalraid3]
-type = crypt
-remote = localraid3:
-filename_encryption = standard
-directory_name_encryption = true
-password = ${CRYPT_PASSWORD_OBSCURED}
-password2 = ${CRYPT_SALT_OBSCURED}
 
 # MinIO S3 remotes
 [${MINIO_EVEN_REMOTE}]
@@ -394,25 +327,6 @@ endpoint = http://127.0.0.1:${MINIO_SINGLE_PORT}
 acl = private
 no_check_bucket = false
 max_retries = 1
-
-# Crypt backends for stacking tests with MinIO
-# cryptminiosingle wraps miniosingle
-[cryptminiosingle]
-type = crypt
-remote = ${MINIO_SINGLE_REMOTE}:
-filename_encryption = standard
-directory_name_encryption = true
-password = ${CRYPT_PASSWORD_OBSCURED}
-password2 = ${CRYPT_SALT_OBSCURED}
-
-# cryptminioraid3 wraps minioraid3
-[cryptminioraid3]
-type = crypt
-remote = minioraid3:
-filename_encryption = standard
-directory_name_encryption = true
-password = ${CRYPT_PASSWORD_OBSCURED}
-password2 = ${CRYPT_SALT_OBSCURED}
 EOF
   
   log_pass "config" "Config file created successfully: ${config_file}"
