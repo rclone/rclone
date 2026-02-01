@@ -22249,7 +22249,7 @@ and upload status for each file:
                 "cachedBytes": 0,
                 "dirty": false,
                 "uploading": false,
-                "error": "file does not exist"
+                "error": "file not found or not accessible"
             }
         ],
         "fs": "/mnt/remote"
@@ -22271,8 +22271,10 @@ percentage cached.
 
 The "uploading" field indicates if the file is currently being uploaded.
 
-The "error" field (optional) contains an error message if there was an error
+The "error" field (optional) contains a generic error message if there was an error
 getting file information, such as when the file does not exist or cannot be accessed.
+For security reasons, only a generic message is returned to avoid exposing internal
+details. Detailed error information is logged internally by rclone.
 When present, the "status" will be "NONE" and other fields may have default values.
 
 This command takes an "fs" parameter. If this parameter is not

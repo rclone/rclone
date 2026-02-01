@@ -610,7 +610,8 @@ This returns a JSON object with the following fields:
   - size - total file size in bytes
   - cachedBytes - bytes cached locally
   - dirty - whether the file has uncommitted modifications
-  - error - error message if there was an error getting file information (optional)
+  - error - generic error message if there was an error getting file information (optional).
+    For security, only a generic message is returned; detailed error information is logged internally.
 - fs - file system path
 
 Note: The percentage field indicates how much of the file is cached locally (0-100).
@@ -618,8 +619,8 @@ For "FULL" and "DIRTY" status, it is always 100 since the local file is complete
 For "UPLOADING" status, it is also 100 which represents the percentage of the file
 that is cached locally (not the upload progress). It is only meaningful for "PARTIAL"
 status files where it shows the actual percentage cached.
-If the file cannot be found or accessed, an "error" field will be included with the
-error message.
+If the file cannot be found or accessed, an "error" field will be included with a
+generic message for security (detailed errors are logged internally).
 ` + getVFSHelp,
 	})
 
@@ -802,12 +803,14 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 
 		// File not in cache or cache disabled, return NONE status
 		size := int64(0)
-		sizeError := ""
+		hasError := false
 		// Attempt to get the file size from VFS
 		if node, err := vfs.Stat(path); err == nil {
 			size = node.Size()
 		} else {
-			sizeError = err.Error()
+			// Log the actual error internally but don't expose details to API
+			fs.Debugf(vfs.Fs(), "vfs/file-status: error getting file info for %q: %v", path, err)
+			hasError = true
 		}
 		result = rc.Params{
 			"name":        pathpkg.Base(path),
@@ -818,8 +821,8 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 			"cachedBytes": 0,
 			"dirty":       false,
 		}
-		if sizeError != "" {
-			result["error"] = sizeError
+		if hasError {
+			result["error"] = "file not found or not accessible"
 		}
 		results = append(results, result)
 	}
