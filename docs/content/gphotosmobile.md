@@ -312,8 +312,9 @@ listing and creation are not yet implemented.
 ### Duplicate filenames
 
 If multiple items share the same filename, **all** of them get a suffix
-with their dedup key. For example, two files both named `photo.jpg`
-become `photo_2VRSgGLVhhnUtc6WW3tL1kYSrKE.jpg` and
+with their dedup key (a URL-safe base64-encoded SHA1 hash of the file
+content). For example, two files both named `photo.jpg` become
+`photo_2VRSgGLVhhnUtc6WW3tL1kYSrKE.jpg` and
 `photo_f3TGtgToY86xuq3_IqUp10ZtBnU.jpg`. This ensures filenames are
 stable and deterministic regardless of database ordering between syncs.
 
