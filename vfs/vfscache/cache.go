@@ -968,16 +968,13 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 		prefix += "/"
 	}
 
-	// Snapshot computed status under lock to avoid data races
-	type entry struct {
-		rel        string
-		status     string
-		percentage int
-		totalSize  int64
-		cachedSize int64
-		isDirty    bool
+	// Snapshot items under lock to avoid data races, then compute status
+	// after releasing lock to prevent deadlock with item.mu lock ordering
+	type itemEntry struct {
+		it  *Item
+		rel string
 	}
-	var entries []entry
+	var itemsToProcess []itemEntry
 
 	c.mu.Lock()
 	for name, it := range c.item {
@@ -990,18 +987,32 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 					continue
 				}
 			}
-			status, percentage, totalSize, cachedSize, isDirty := it.VFSStatusCacheDetailed()
-			entries = append(entries, entry{
-				rel:        rel,
-				status:     status,
-				percentage: percentage,
-				totalSize:  totalSize,
-				cachedSize: cachedSize,
-				isDirty:    isDirty,
-			})
+			itemsToProcess = append(itemsToProcess, itemEntry{it: it, rel: rel})
 		}
 	}
 	c.mu.Unlock()
+
+	// Compute status for each item without holding cache lock to avoid deadlock
+	type entry struct {
+		rel        string
+		status     string
+		percentage int
+		totalSize  int64
+		cachedSize int64
+		isDirty    bool
+	}
+	var entries []entry
+	for _, ie := range itemsToProcess {
+		status, percentage, totalSize, cachedSize, isDirty := ie.it.VFSStatusCacheDetailed()
+		entries = append(entries, entry{
+			rel:        ie.rel,
+			status:     status,
+			percentage: percentage,
+			totalSize:  totalSize,
+			cachedSize: cachedSize,
+			isDirty:    isDirty,
+		})
+	}
 
 	// Build results without holding the cache mutex
 	for _, e := range entries {
