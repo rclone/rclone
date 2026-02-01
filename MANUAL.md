@@ -22141,17 +22141,25 @@ overlays.
 
     rclone rc vfs/status
 
-The response includes counts for each cache status type:
+The response includes aggregate statistics and counts for each cache status type:
 
-- "FULL": Files completely cached locally
-- "NONE": Files not cached (remote only)
-- "PARTIAL": Files partially cached
-- "DIRTY": Files modified locally but not uploaded
-- "UPLOADING": Files currently being uploaded
+- "totalFiles": Total number of files in the VFS
+- "totalCachedBytes": Total bytes cached across all files
+- "averageCachePercentage": Average cache percentage across all files (0-100)
+- "counts": Object containing counts for each cache status:
+  - "FULL": Files completely cached locally
+  - "NONE": Files not cached (remote only)
+  - "PARTIAL": Files partially cached
+  - "DIRTY": Files modified locally but not uploaded
+  - "UPLOADING": Files currently being uploaded
+- "fs": File system path
 
 Example response:
 
     {
+        "totalFiles": 255,
+        "totalCachedBytes": 104857600,
+        "averageCachePercentage": 85,
         "counts": {
             "FULL": 15,
             "NONE": 234,
@@ -22213,7 +22221,9 @@ Cache status values:
 - "UPLOADING": File is currently being uploaded
 
 The "percentage" field indicates how much of the file is cached locally
-(0-100). This is only meaningful for "PARTIAL" status files.
+(0-100). This is always 100 for "FULL", "DIRTY", and "UPLOADING" status
+files since the local file is complete. It is only meaningful for
+"PARTIAL" status files.
 
 The "uploading" field indicates if the file is currently being uploaded.
 
