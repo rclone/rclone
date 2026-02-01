@@ -785,13 +785,24 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	for _, path := range paths {
 		var result rc.Params
 
+		// Normalize path to match cache key format
+		cleanPath := strings.Trim(path, "/")
+		cleanPath = pathpkg.Clean(cleanPath)
+		if cleanPath == "." || cleanPath == "/" {
+			cleanPath = ""
+		}
+		baseName := cleanPath
+		if idx := strings.LastIndexByte(baseName, '/'); idx >= 0 {
+			baseName = baseName[idx+1:]
+		}
+
 		// Check if cache is enabled and file exists in cache
 		if vfs.cache != nil {
-			if item := vfs.cache.FindItem(path); item != nil {
+			if item := vfs.cache.FindItem(cleanPath); item != nil {
 				status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
 				isUploading := status == "UPLOADING"
 				result = rc.Params{
-					"name":        pathpkg.Base(path),
+					"name":        baseName,
 					"status":      status,
 					"percentage":  percentage,
 					"uploading":   isUploading,
@@ -807,13 +818,22 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 		// File not in cache or cache disabled, return NONE status
 		size := int64(0)
 		hasError := false
-		// Attempt to get the file size from VFS
-		if node, err := vfs.Stat(path); err == nil {
+		// Attempt to get the file size from VFS using normalized path
+		if node, err := vfs.Stat(cleanPath); err == nil {
 			size = node.Size()
 		} else {
-			// Log the actual error internally but don't expose details to API
-			fs.Debugf(vfs.Fs(), "vfs/file-status: error getting file info for %q: %v", path, err)
+			// Log detailed error internally for debugging
+			fs.Debugf(vfs.Fs(), "vfs/file-status: error getting file info for %q: %v", cleanPath, err)
 			hasError = true
+		}
+		result = rc.Params{
+			"name":        baseName,
+			"status":      "NONE",
+			"percentage":  0,
+			"uploading":   false,
+			"size":        size,
+			"cachedBytes": 0,
+			"dirty":       false,
 		}
 		result = rc.Params{
 			"name":        pathpkg.Base(path),

@@ -956,9 +956,11 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 		"UPLOADING": {},
 	}
 
-	// Normalize to clean slash-separated path without leading "./"
-	cleanDir := strings.TrimPrefix(path.Clean(dirPath), "./")
-	if cleanDir == "." {
+	// Normalize to match cache key format (same as cache.clean() function)
+	cleanDir := dirPath
+	cleanDir = strings.Trim(cleanDir, "/")
+	cleanDir = path.Clean(cleanDir)
+	if cleanDir == "." || cleanDir == "/" {
 		cleanDir = ""
 	}
 	prefix := cleanDir
