@@ -22,11 +22,14 @@ func (rs *RangeSpec) Size() int64 {
 	return rs.rs.Size()
 }
 
-// Present returns true if the entire file is present in the cache
-func (rs *RangeSpec) Present() bool {
-	// This is a simplified implementation
-	// In a real implementation, you'd check if the ranges cover the full file
-	return len(rs.rs) > 0
+// Present returns true if the entire file [0, size) is present in the cache
+func (rs *RangeSpec) Present(size int64) bool {
+	if size <= 0 {
+		return false
+	}
+	// Entire file is present iff there are no missing ranges in [0,size)
+	missing := rs.rs.FindMissing(ranges.Range{Pos: 0, Size: size})
+	return missing.IsEmpty()
 }
 
 // Insert adds a range to the RangeSpec
