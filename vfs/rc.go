@@ -734,12 +734,17 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	for _, path := range paths {
 		// Check if cache is enabled to avoid panic
 		if vfs.cache == nil {
+			size := int64(0)
+			// Attempt to get the file size from VFS even if cache is off
+			if node, err := vfs.Stat(path); err == nil {
+				size = node.Size()
+			}
 			results = append(results, rc.Params{
 				"name":        filepath.Base(path),
 				"status":      "NONE",
 				"percentage":  0,
 				"uploading":   false,
-				"size":        0,
+				"size":        size,
 				"cachedBytes": 0,
 				"dirty":       false,
 			})

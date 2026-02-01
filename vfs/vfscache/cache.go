@@ -997,9 +997,7 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 			"cachedBytes": e.cachedSize,
 			"dirty":       e.isDirty,
 		}
-		if _, exists := filesByStatus[e.status]; exists {
-			filesByStatus[e.status] = append(filesByStatus[e.status], fileInfo)
-		}
+		filesByStatus[e.status] = append(filesByStatus[e.status], fileInfo)
 	}
 
 	return filesByStatus

@@ -1488,10 +1488,6 @@ func (item *Item) _vfsStatusCacheWithPercentageNoLock() (string, int) {
 		return "NONE", 0
 	}
 
-	if cachedSize >= totalSize {
-		return "FULL", 100
-	}
-
 	if cachedSize > 0 {
 		percentage := int((cachedSize * 100) / totalSize)
 		return "PARTIAL", percentage
