@@ -926,7 +926,9 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 		totalPercentage += percentage
 	}
 
-	stats.AverageCachePercentage = totalPercentage / stats.TotalFiles
+	// Use proper rounding: (total + TotalFiles/2) / TotalFiles
+	// This prevents truncation to zero and provides more accurate average
+	stats.AverageCachePercentage = (totalPercentage + stats.TotalFiles/2) / stats.TotalFiles
 	return stats
 }
 
