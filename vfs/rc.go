@@ -835,15 +835,6 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 			"cachedBytes": 0,
 			"dirty":       false,
 		}
-		result = rc.Params{
-			"name":        pathpkg.Base(path),
-			"status":      "NONE",
-			"percentage":  0,
-			"uploading":   false,
-			"size":        size,
-			"cachedBytes": 0,
-			"dirty":       false,
-		}
 		if hasError {
 			result["error"] = "file not found or not accessible"
 		}
