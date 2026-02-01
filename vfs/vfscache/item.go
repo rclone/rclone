@@ -1490,6 +1490,13 @@ func (item *Item) _vfsStatusCacheWithPercentageNoLock() (string, int) {
 
 	if cachedSize > 0 {
 		percentage := int((cachedSize * 100) / totalSize)
+		// Clamp percentage to [0, 100] to handle edge cases
+		if percentage > 100 {
+			percentage = 100
+		}
+		if percentage < 0 {
+			percentage = 0
+		}
 		return "PARTIAL", percentage
 	}
 
@@ -1553,9 +1560,18 @@ func (item *Item) VFSStatusCacheDetailed() (string, int, int64, int64, bool) {
 	totalSize := item.info.Size
 	var cachedSize int64
 	if status == "FULL" || status == "DIRTY" || status == "UPLOADING" {
-		cachedSize = totalSize
-	} else if item.info.Rs != nil {
-		cachedSize = item.info.Rs.Size()
+		// For these statuses, the file is fully cached locally
+		// If totalSize is known, report that. Otherwise, report actual cached size from ranges.
+		if totalSize > 0 {
+			cachedSize = totalSize
+		} else if item.info.Rs != nil {
+			cachedSize = item.info.Rs.Size()
+		}
+	} else {
+		// For PARTIAL and NONE, get cached size from ranges
+		if item.info.Rs != nil {
+			cachedSize = item.info.Rs.Size()
+		}
 	}
 
 	// Get dirty flag
