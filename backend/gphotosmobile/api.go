@@ -54,6 +54,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -64,6 +65,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 )
 
@@ -240,15 +242,77 @@ func (a *MobileAPI) commonHeaders(ctx context.Context) (map[string]string, error
 	}, nil
 }
 
+// retryableStatusCodes lists HTTP status codes that should be retried.
+var retryableStatusCodes = []int{
+	429, // Too Many Requests
+	500, // Internal Server Error
+	502, // Bad Gateway
+	503, // Service Unavailable
+	504, // Gateway Timeout
+}
+
+// apiError represents an HTTP error response from the API.
+// It carries the status code so the retry logic can distinguish
+// retryable server errors (5xx, 429) from permanent client errors (4xx).
+type apiError struct {
+	StatusCode int
+	Body       string
+}
+
+func (e *apiError) Error() string {
+	return fmt.Sprintf("API error %d: %s", e.StatusCode, e.Body)
+}
+
+// shouldRetryAPI returns true if the error deserves a retry.
+// It retries on:
+//   - network-level errors (timeouts, connection resets, etc.) via fserrors.ShouldRetry
+//   - HTTP 429 and 5xx via the status code in apiError
+//
+// It does NOT retry on:
+//   - context cancellation/deadline exceeded
+//   - HTTP 4xx (except 429) — these are permanent client errors
+func shouldRetryAPI(ctx context.Context, err error) bool {
+	if err == nil {
+		return false
+	}
+	// Never retry if the context is done
+	if fserrors.ContextError(ctx, &err) {
+		return false
+	}
+	// Check for retryable HTTP status codes
+	var ae *apiError
+	if errors.As(err, &ae) {
+		for _, code := range retryableStatusCodes {
+			if ae.StatusCode == code {
+				return true
+			}
+		}
+		return false // non-retryable HTTP error (400, 401, 403, 404, etc.)
+	}
+	// For network errors, use rclone's standard retry logic
+	return fserrors.ShouldRetry(err)
+}
+
 // doProtoRequest makes a protobuf API request with up to 3 attempts.
-// It retries on any error with linear backoff (0s, 2s, 4s).
-// TODO: only retry on 429/5xx, not on 400/403/404.
+// It only retries on retryable errors (network errors, 429, 5xx) using
+// exponential backoff with jitter. Non-retryable errors (400, 403, 404)
+// are returned immediately.
 func (a *MobileAPI) doProtoRequest(ctx context.Context, urlStr string, body []byte) ([]byte, error) {
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
 		if attempt > 0 {
-			time.Sleep(time.Duration(attempt) * 2 * time.Second)
-			fs.Debugf(nil, "Retrying request to %s (attempt %d)", urlStr, attempt+1)
+			// Exponential backoff: 1s, 2s (+ up to 500ms jitter)
+			baseDelay := time.Duration(1<<(attempt-1)) * time.Second
+			jitter := time.Duration(time.Now().UnixNano()%500) * time.Millisecond
+			delay := baseDelay + jitter
+			fs.Debugf(nil, "Retrying request to %s (attempt %d/%d, backoff %v)", urlStr, attempt+1, 3, delay)
+			timer := time.NewTimer(delay)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return nil, ctx.Err()
+			case <-timer.C:
+			}
 		}
 
 		result, err := a.doProtoRequestOnce(ctx, urlStr, body)
@@ -256,7 +320,10 @@ func (a *MobileAPI) doProtoRequest(ctx context.Context, urlStr string, body []by
 			return result, nil
 		}
 		lastErr = err
-		fs.Debugf(nil, "Request to %s failed: %v", urlStr, err)
+		if !shouldRetryAPI(ctx, err) {
+			return nil, err // non-retryable, return immediately
+		}
+		fs.Debugf(nil, "Request to %s failed (retryable): %v", urlStr, err)
 	}
 	return nil, lastErr
 }
@@ -284,7 +351,7 @@ func (a *MobileAPI) doProtoRequestOnce(ctx context.Context, urlStr string, body 
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		respBody, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(respBody))
+		return nil, &apiError{StatusCode: resp.StatusCode, Body: string(respBody)}
 	}
 
 	return readResponseBody(resp)
