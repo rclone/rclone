@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
+	pathpkg "path"
 	"strconv"
 	"strings"
 	"time"
@@ -665,6 +665,12 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
+	// Check for recursive parameter
+	recursive, err := in.GetBool("recursive")
+	if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, fmt.Errorf("invalid recursive parameter: %w", err)
+	}
+
 	// Validate directory if specified - ensure it's actually a directory
 	// This prevents files from being accepted in the directory endpoint
 	// Note: We skip this check for the root (empty) path since we're querying cache anyway
@@ -677,19 +683,13 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			return rc.Params{
 				"dir":       dirPath,
 				"files":     filesByStatus,
-				"recursive": false,
+				"recursive": recursive,
 				"fs":        fs.ConfigString(vfs.Fs()),
 			}, nil
 		}
 		if !node.IsDir() {
 			return nil, fmt.Errorf("path %q is not a directory: %s", dirPath, node.Name())
 		}
-	}
-
-	// Check for recursive parameter
-	recursive, err := in.GetBool("recursive")
-	if err != nil && !rc.IsErrParamNotFound(err) {
-		return nil, fmt.Errorf("invalid recursive parameter: %w", err)
 	}
 
 	// Get files status using the cache
@@ -754,69 +754,49 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	// Collect status for each file
 	results := make([]rc.Params, 0, len(paths))
 	for _, path := range paths {
-		// Check if cache is enabled to avoid panic
-		if vfs.cache == nil {
-			size := int64(0)
-			sizeError := ""
-			// Attempt to get the file size from VFS even if cache is off
-			if node, err := vfs.Stat(path); err == nil {
-				size = node.Size()
-			} else {
-				sizeError = err.Error()
+		var result rc.Params
+
+		// Check if cache is enabled and file exists in cache
+		if vfs.cache != nil {
+			if item := vfs.cache.FindItem(path); item != nil {
+				status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
+				isUploading := status == "UPLOADING"
+				result = rc.Params{
+					"name":        pathpkg.Base(path),
+					"status":      status,
+					"percentage":  percentage,
+					"uploading":   isUploading,
+					"size":        totalSize,
+					"cachedBytes": cachedSize,
+					"dirty":       isDirty,
+				}
+				results = append(results, result)
+				continue
 			}
-			result := rc.Params{
-				"name":        filepath.Base(path),
-				"status":      "NONE",
-				"percentage":  0,
-				"uploading":   false,
-				"size":        size,
-				"cachedBytes": 0,
-				"dirty":       false,
-			}
-			if sizeError != "" {
-				result["error"] = sizeError
-			}
-			results = append(results, result)
-			continue
 		}
-		// Use FindItem to avoid creating cache entries for non-existent files
-		item := vfs.cache.FindItem(path)
-		if item == nil {
-			// File not in cache, return NONE status
-			size := int64(0)
-			sizeError := ""
-			// Attempt to get the file size from VFS
-			if node, err := vfs.Stat(path); err == nil {
-				size = node.Size()
-			} else {
-				sizeError = err.Error()
-			}
-			result := rc.Params{
-				"name":        filepath.Base(path),
-				"status":      "NONE",
-				"percentage":  0,
-				"uploading":   false,
-				"size":        size,
-				"cachedBytes": 0,
-				"dirty":       false,
-			}
-			if sizeError != "" {
-				result["error"] = sizeError
-			}
-			results = append(results, result)
-			continue
+
+		// File not in cache or cache disabled, return NONE status
+		size := int64(0)
+		sizeError := ""
+		// Attempt to get the file size from VFS
+		if node, err := vfs.Stat(path); err == nil {
+			size = node.Size()
+		} else {
+			sizeError = err.Error()
 		}
-		status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
-		isUploading := status == "UPLOADING"
-		results = append(results, rc.Params{
-			"name":        filepath.Base(path),
-			"status":      status,
-			"percentage":  percentage,
-			"uploading":   isUploading,
-			"size":        totalSize,
-			"cachedBytes": cachedSize,
-			"dirty":       isDirty,
-		})
+		result = rc.Params{
+			"name":        pathpkg.Base(path),
+			"status":      "NONE",
+			"percentage":  0,
+			"uploading":   false,
+			"size":        size,
+			"cachedBytes": 0,
+			"dirty":       false,
+		}
+		if sizeError != "" {
+			result["error"] = sizeError
+		}
+		results = append(results, result)
 	}
 
 	// Always return results in 'files' array format for consistency
