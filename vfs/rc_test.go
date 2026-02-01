@@ -14,6 +14,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// getInt is a helper to extract integer-like values safely from RC results.
+// JSON decoding may produce different numeric types (int, int64, float64), so
+// we need to handle them all.
+func getInt(v interface{}) (int64, bool) {
+	switch n := v.(type) {
+	case int64:
+		return n, true
+	case int32:
+		return int64(n), true
+	case int:
+		return int64(n), true
+	case float64:
+		return int64(n), true
+	case float32:
+		return int64(n), true
+	default:
+		return 0, false
+	}
+}
+
 func TestRCStatus(t *testing.T) {
 	// Create VFS with test files using standard test helper
 	r, vfs := newTestVFS(t)
@@ -22,7 +42,7 @@ func TestRCStatus(t *testing.T) {
 	r.WriteFile("test.txt", "test content", time.Now())
 
 	// Clear any existing VFS instances to avoid conflicts
-	clearActiveCache()
+	snapshotAndClearActiveCache(t)
 	// Add VFS to active cache
 	addToActiveCache(vfs)
 
@@ -46,39 +66,55 @@ func TestRCStatus(t *testing.T) {
 	assert.Contains(t, result, "totalCachedBytes")
 	assert.Contains(t, result, "averageCachePercentage")
 
-	// Verify types
-	totalFiles, ok := result["totalFiles"].(int)
-	require.True(t, ok)
-	assert.GreaterOrEqual(t, totalFiles, 0)
+	// Verify types using robust helper to handle various numeric types from JSON
+	if n, ok := getInt(result["totalFiles"]); ok {
+		assert.GreaterOrEqual(t, n, int64(0))
+	} else {
+		require.FailNow(t, "totalFiles has unexpected type")
+	}
 
-	fullCount, ok := result["fullCount"].(int)
-	require.True(t, ok)
-	assert.GreaterOrEqual(t, fullCount, 0)
+	if n, ok := getInt(result["fullCount"]); ok {
+		assert.GreaterOrEqual(t, n, int64(0))
+	} else {
+		require.FailNow(t, "fullCount has unexpected type")
+	}
 
-	partialCount, ok := result["partialCount"].(int)
-	require.True(t, ok)
-	assert.GreaterOrEqual(t, partialCount, 0)
+	if n, ok := getInt(result["partialCount"]); ok {
+		assert.GreaterOrEqual(t, n, int64(0))
+	} else {
+		require.FailNow(t, "partialCount has unexpected type")
+	}
 
-	noneCount, ok := result["noneCount"].(int)
-	require.True(t, ok)
-	assert.GreaterOrEqual(t, noneCount, 0)
+	if n, ok := getInt(result["noneCount"]); ok {
+		assert.GreaterOrEqual(t, n, int64(0))
+	} else {
+		require.FailNow(t, "noneCount has unexpected type")
+	}
 
-	dirtyCount, ok := result["dirtyCount"].(int)
-	require.True(t, ok)
-	assert.GreaterOrEqual(t, dirtyCount, 0)
+	if n, ok := getInt(result["dirtyCount"]); ok {
+		assert.GreaterOrEqual(t, n, int64(0))
+	} else {
+		require.FailNow(t, "dirtyCount has unexpected type")
+	}
 
-	uploadingCount, ok := result["uploadingCount"].(int)
-	require.True(t, ok)
-	assert.GreaterOrEqual(t, uploadingCount, 0)
+	if n, ok := getInt(result["uploadingCount"]); ok {
+		assert.GreaterOrEqual(t, n, int64(0))
+	} else {
+		require.FailNow(t, "uploadingCount has unexpected type")
+	}
 
-	totalCachedBytes, ok := result["totalCachedBytes"].(int64)
-	require.True(t, ok)
-	assert.GreaterOrEqual(t, totalCachedBytes, int64(0))
+	if n, ok := getInt(result["totalCachedBytes"]); ok {
+		assert.GreaterOrEqual(t, n, int64(0))
+	} else {
+		require.FailNow(t, "totalCachedBytes has unexpected type")
+	}
 
-	averageCachePercentage, ok := result["averageCachePercentage"].(int)
-	require.True(t, ok)
-	assert.GreaterOrEqual(t, averageCachePercentage, 0)
-	assert.LessOrEqual(t, averageCachePercentage, 100)
+	if n, ok := getInt(result["averageCachePercentage"]); ok {
+		assert.GreaterOrEqual(t, n, int64(0))
+		assert.LessOrEqual(t, n, int64(100))
+	} else {
+		require.FailNow(t, "averageCachePercentage has unexpected type")
+	}
 }
 
 func TestRCFileStatus(t *testing.T) {
@@ -89,7 +125,7 @@ func TestRCFileStatus(t *testing.T) {
 	r.WriteFile("test.txt", "test content", time.Now())
 
 	// Clear any existing VFS instances to avoid conflicts
-	clearActiveCache()
+	snapshotAndClearActiveCache(t)
 	// Add VFS to active cache
 	addToActiveCache(vfs)
 
@@ -173,7 +209,7 @@ func TestRCDirStatus(t *testing.T) {
 	r.WriteFile("testdir/test2.txt", "test content 2", time.Now())
 
 	// Clear any existing VFS instances to avoid conflicts
-	clearActiveCache()
+	snapshotAndClearActiveCache(t)
 	// Add VFS to active cache
 	addToActiveCache(vfs)
 
@@ -252,10 +288,23 @@ func addToActiveCache(vfs *VFS) {
 	active[fsName] = append(active[fsName], vfs)
 }
 
-// Helper function to clear active cache for testing
-func clearActiveCache() {
+// Helper function to clear active cache for testing (state is saved and restored by caller)
+func snapshotAndClearActiveCache(t *testing.T) map[string][]*VFS {
 	activeMu.Lock()
 	defer activeMu.Unlock()
-
+	// Snapshot current state
+	prev := make(map[string][]*VFS, len(active))
+	for k, v := range active {
+		cp := make([]*VFS, len(v))
+		copy(cp, v)
+		prev[k] = cp
+	}
+	// Clear for isolated test
 	active = make(map[string][]*VFS)
+	t.Cleanup(func() {
+		activeMu.Lock()
+		defer activeMu.Unlock()
+		active = prev
+	})
+	return prev
 }
