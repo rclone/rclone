@@ -654,7 +654,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if dirPath != "" {
 		_, err = vfs.Stat(dirPath)
 		if err != nil {
-			return nil, fmt.Errorf("directory not found: %q", dirPath)
+			return nil, fmt.Errorf("directory not found: %q: %w", dirPath, err)
 		}
 	}
 
