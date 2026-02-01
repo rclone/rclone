@@ -1,3 +1,34 @@
+// cache.go provides a local SQLite cache for the Google Photos media library index.
+//
+// # Why SQLite
+//
+// The Google Photos mobile sync API returns the entire library as a stream of
+// protobuf-encoded items. For a library with 35K items, this is ~15MB of data
+// taking ~30 seconds to download. Caching the parsed items in SQLite avoids
+// re-downloading on every rclone invocation.
+//
+// The cache uses modernc.org/sqlite (pure Go, no CGo) with WAL mode for
+// concurrent read/write safety and a 5-second busy timeout.
+//
+// # Schema
+//
+// Two tables:
+//
+//	remote_media — one row per media item (keyed by media_key), 41 columns
+//	               covering all metadata fields from the sync response.
+//
+//	state — singleton row (id=1) tracking sync state:
+//	  state_token    — bookmark for incremental sync (opaque string from server)
+//	  page_token     — pagination cursor for interrupted init (crash recovery)
+//	  init_complete  — 0/1 whether initial full sync has finished
+//	  last_sync_time — unix timestamp of last incremental sync
+//
+// # Cache location
+//
+// Default: <rclone-cache-dir>/gphotosmobile/<remote-name>.db
+// Override: cache_db_path config option.
+//
+// Deleting the .db file forces a full re-sync on next run.
 package gphotosmobile
 
 import (

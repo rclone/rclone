@@ -1,3 +1,83 @@
+// parser.go parses the protobuf responses from the library sync API.
+//
+// This is a direct port of gpmc's db_update_parser.py. The sync API returns
+// a single protobuf message with all data nested under field 1:
+//
+//	Response {
+//	  1 {                          // wrapper
+//	    1: next_page_token         // string, empty when pagination is done
+//	    2: [media_items...]        // repeated, each is a media item
+//	    6: state_token             // string, bookmark for next incremental sync
+//	    9: [deletions...]          // repeated, each is a deletion event
+//	  }
+//	}
+//
+// # Media item structure (each entry in field 1.2)
+//
+// Each media item is a protobuf message with this layout:
+//
+//	MediaEntry {
+//	  1: media_key                 // string, opaque server-assigned ID
+//	  2 {                          // metadata block
+//	    1.1: collection_id         // string, album ID if any
+//	    3: caption                 // string
+//	    4: file_name               // string, original filename
+//	    5: [properties...]         // repeated, property IDs (27 = non-canonical)
+//	    7: utc_timestamp           // varint, millis since epoch
+//	    8: timezone_offset         // varint
+//	    9: server_creation_timestamp
+//	    10: size_bytes             // varint
+//	    11: upload_status          // varint
+//	    13.1: sha1_hash            // bytes (raw 20-byte SHA1)
+//	    16.3: trash_timestamp      // varint
+//	    21.1: dedup_key            // string, URL-safe base64 SHA1
+//	    26: content_version        // varint
+//	    29.1: is_archived          // varint (1=yes)
+//	    30.1: origin               // varint (1=self, 3=partner, 4=shared)
+//	    31.1: is_favorite          // varint (1=yes)
+//	    35.2: quota_charged_bytes  // varint
+//	    35.3: quality_type         // varint (2=original quality)
+//	    39.1: is_locked            // varint (1=yes)
+//	  }
+//	  5 {                          // type info block
+//	    1: type                    // varint (1=photo, 2=video)
+//	    2 {                        // photo info
+//	      1.1: remote_url          // string (thumbnail/preview URL)
+//	      1.9.1: width             // varint
+//	      1.9.2: height            // varint
+//	      1.9.5: EXIF data         // nested message with make, model, aperture, etc.
+//	      4: (presence = edited)   // if field 4 exists, the photo was edited
+//	    }
+//	    3 {                        // video info
+//	      2.1: remote_url          // string
+//	      4.1: duration            // varint (millis)
+//	      4.4: width               // varint
+//	      4.5: height              // varint
+//	      6.4: capture_frame_rate  // varint (IEEE 754 bits)
+//	      6.5: encoded_frame_rate  // varint (IEEE 754 bits)
+//	    }
+//	    5 {                        // micro video / motion photo info
+//	      2.4.1: duration          // varint
+//	      2.4.4: width             // varint
+//	      2.4.5: height            // varint
+//	    }
+//	  }
+//	  17 {                         // location info
+//	    1.1: latitude              // fixed32, scaled by 1e-7
+//	    1.2: longitude             // fixed32, scaled by 1e-7
+//	    5.2.1: location_name       // string
+//	    5.3: location_id           // string
+//	  }
+//	}
+//
+// # Deletion structure (each entry in field 1.9)
+//
+//	DeletionEntry {
+//	  1 {
+//	    1: type                    // varint (1=media item, other types are ignored)
+//	    2.1: media_key             // string, key of the deleted item
+//	  }
+//	}
 package gphotosmobile
 
 import (

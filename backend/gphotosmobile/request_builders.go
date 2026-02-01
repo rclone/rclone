@@ -1,3 +1,54 @@
+// request_builders.go constructs the raw protobuf request bodies for each API call.
+//
+// # Field masks
+//
+// The library sync requests use a "field mask" pattern: the client sends a
+// deeply nested protobuf structure where each present (even empty) field tells
+// the server "I want this field in the response." This is similar to
+// Google's FieldMask concept but encoded in the protobuf payload itself
+// rather than as a separate parameter.
+//
+// For example, to receive EXIF data for photos, the request must include an
+// empty message at the path corresponding to the EXIF fields. If the field
+// mask omits a path, the server omits that data from the response, saving
+// bandwidth.
+//
+// The field masks were captured from the real Google Photos Android app's
+// network traffic. They are verbose and repetitive because three request
+// types (GetLibraryState, GetLibraryPageInit, GetLibraryPage) each need
+// nearly identical masks. The shared parts are factored into helper functions
+// (buildMediaFieldMask, buildMediaTypeFieldMask, buildLocationFieldMask, etc.)
+// but the per-request wrappers still have duplication.
+//
+// # Request structure
+//
+// All three library sync requests share this top-level layout:
+//
+//	Request {
+//	  1 {                        // content wrapper
+//	    1: item_field_mask       // which media item fields to return
+//	    2: collection_field_mask // which album fields to return
+//	    3: envelope_field_mask   // which envelope/metadata fields to return
+//	    4: page_token            // (GetLibraryPage/Init only) pagination cursor
+//	    6: state_token           // (GetLibraryState/Page only) delta bookmark
+//	    7: 2                     // constant
+//	    9: sync_options          // filtering/sorting options
+//	    11: [1, 2, 6]            // item types to include
+//	    12: filter_options        // additional filters
+//	    13: {}                   // empty message (required)
+//	    15.3.1: 1                // constant
+//	  }
+//	  2 {                        // secondary options (always the same)
+//	    1.1.1.1: {}
+//	    1.1.2: {}
+//	    2: {}
+//	  }
+//	}
+//
+// # Upload requests
+//
+// Upload uses a different flow — see buildCommitUploadRequest for its structure.
+// Hash check, trash, and download URL requests each have their own simple formats.
 package gphotosmobile
 
 import (
@@ -784,7 +835,28 @@ func buildHashCheckRequest(sha1Hash []byte) []byte {
 	return outer.Bytes()
 }
 
-// buildCommitUploadRequest builds the commit upload request
+// buildCommitUploadRequest builds the commit upload request.
+// This ties together the uploaded bytes (identified by uploadResponse),
+// the filename, SHA1 hash, timestamp, and device info into a single
+// commit message. The structure is:
+//
+//	{
+//	  1 {                     // file info
+//	    1: uploadResponse     // raw bytes from UploadFile response (opaque token)
+//	    2: fileName           // user-visible filename
+//	    3: sha1Hash           // raw 20-byte SHA1
+//	    4 {1: unix_time, 2: 46000000}  // timestamp + timezone(?)
+//	    7: 3                  // quality=original
+//	    10: 1                 // constant
+//	    17: 0                 // constant
+//	  }
+//	  2 {                     // device info
+//	    3: model              // e.g. "Pixel 9a"
+//	    4: deviceMake         // e.g. "Google"
+//	    5: androidAPIVersion  // e.g. 28
+//	  }
+//	  3: [1, 3]              // constant bytes
+//	}
 func buildCommitUploadRequest(uploadResponse []byte, fileName string, sha1Hash []byte, model, deviceMake string) []byte {
 	outer := NewProtoBuilder()
 
@@ -829,7 +901,10 @@ func buildCommitUploadRequest(uploadResponse []byte, fileName string, sha1Hash [
 	return outer.Bytes()
 }
 
-// buildMoveToTrashRequest builds the move to trash request
+// buildMoveToTrashRequest builds the move to trash request.
+// Items are identified by dedup_key (URL-safe base64 SHA1), not media_key.
+// The request also includes a field mask (field 8) telling the server which
+// response fields to return, and client info (field 9) with the APK version.
 func buildMoveToTrashRequest(dedupKeys []string) []byte {
 	b := NewProtoBuilder()
 	b.AddVarint(2, 1)
@@ -862,7 +937,10 @@ func buildMoveToTrashRequest(dedupKeys []string) []byte {
 	return b.Bytes()
 }
 
-// buildGetDownloadURLsRequest builds the get download URLs request
+// buildGetDownloadURLsRequest builds the request to obtain a time-limited
+// download URL for a media item identified by its media_key.
+// The response contains different URL fields for photos vs videos
+// (see GetDownloadURL in api.go for the response parsing logic).
 func buildGetDownloadURLsRequest(mediaKey string) []byte {
 	outer := NewProtoBuilder()
 

@@ -1,6 +1,16 @@
 package gphotosmobile
 
-// MediaItem represents a media item in Google Photos (matching Python gpmc MediaItem)
+// MediaItem represents a media item in Google Photos.
+// Fields match the Python gpmc MediaItem dataclass. See parser.go for
+// the protobuf field paths that populate each field.
+//
+// Key identifiers:
+//   - MediaKey:  opaque server-assigned string (e.g. "AF1QipN..."). Used to
+//     fetch download URLs and as the SQLite primary key.
+//   - DedupKey:  URL-safe base64 of the SHA1 hash (e.g. "x7K9m..."). Used for
+//     trash operations and deterministic duplicate filename suffixes.
+//   - SHA1Hash:  lowercase hex SHA1 of the original file bytes (e.g. "c7b2bd...").
+//     Exposed via rclone's hash interface for integrity checking.
 type MediaItem struct {
 	MediaKey                string  `db:"media_key"`
 	FileName                string  `db:"file_name"`

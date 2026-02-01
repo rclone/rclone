@@ -1,8 +1,32 @@
 package gphotosmobile
 
-// protowire_utils provides raw protobuf wire encoding/decoding utilities.
-// This is the Go equivalent of what blackboxprotobuf does in Python -
-// working with protobuf at the wire format level without compiled .proto files.
+// protowire_utils provides raw protobuf wire format encoding and decoding.
+//
+// This is the Go equivalent of what Python's blackboxprotobuf library does —
+// it reads and writes protobuf messages without any compiled .proto schema.
+// We use this instead of compiled protobuf because:
+//
+//  1. There is no published .proto schema for the Google Photos mobile API.
+//  2. The field structure was mapped empirically by inspecting request/response
+//     pairs, so field semantics are partially known at best.
+//  3. Working at the wire level lets us match the exact byte output of the
+//     reference Python implementation (gpmc) for correctness verification.
+//
+// # Decoding
+//
+// DecodeRaw(data) returns a ProtoMap (map[field_number][]ProtoValue).
+// WireBytes fields could be strings, raw bytes, or nested messages — the
+// caller decides by calling GetString, GetBytes, or GetMessage. GetMessage
+// recursively decodes the bytes as a nested protobuf message. If the bytes
+// aren't valid protobuf, GetMessage returns an error and the caller can
+// fall back to treating them as raw bytes.
+//
+// # Encoding
+//
+// ProtoBuilder accumulates fields into a byte buffer. AddMessage nests
+// another ProtoBuilder as a length-delimited field. AddEmptyMessage adds
+// a zero-length field (used extensively in field masks to signal "I want
+// this field in the response").
 
 import (
 	"encoding/binary"

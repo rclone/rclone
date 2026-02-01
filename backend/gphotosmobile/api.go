@@ -1,3 +1,53 @@
+// api.go implements the Google Photos mobile API client.
+//
+// # Protocol overview
+//
+// This backend uses the same private API that the Android Google Photos app
+// uses. The API was reverse-engineered by the gpmc project
+// (https://github.com/nicholasgasior/gpmc) by intercepting traffic from the
+// official Google Photos Android app.
+//
+// All API calls use raw protobuf over HTTPS (Content-Type: application/x-protobuf).
+// There is no published .proto schema — the field numbers were mapped by
+// inspecting request/response pairs. The code works at the protobuf wire
+// format level using protowire_utils.go, which is functionally equivalent to
+// Python's blackboxprotobuf library.
+//
+// # Authentication
+//
+// Authentication uses Android device tokens, NOT OAuth2. The flow is:
+//
+//  1. User extracts auth_data from their Android device (via Google Photos
+//     ReVanced + ADB logcat). auth_data is a URL-encoded string containing
+//     fields: androidId, Email, Token, client_sig, callerSig, etc.
+//  2. On each API call, we POST the auth_data to
+//     https://android.googleapis.com/auth to obtain a short-lived bearer
+//     token (the "Auth" field in the response, expiring per the "Expiry" field).
+//  3. The bearer token is sent as "Authorization: Bearer <token>" on all
+//     subsequent API calls.
+//
+// The bearer token is cached in memory and refreshed automatically when
+// the expiry time is reached.
+//
+// # Endpoints
+//
+// The API uses several endpoints, all accepting/returning raw protobuf:
+//
+//   - photosdata-pa.googleapis.com/6439526531001121323/18047484249733410717
+//     Library sync: GetLibraryState, GetLibraryPageInit, GetLibraryPage
+//   - photosdata-pa.googleapis.com/6439526531001121323/5084965799730810217
+//     Hash-based dedup check: FindRemoteMediaByHash
+//   - photosdata-pa.googleapis.com/6439526531001121323/16538846908252377752
+//     Commit upload: CommitUpload
+//   - photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316
+//     Trash: MoveToTrash
+//   - photosdata-pa.googleapis.com/$rpc/social.frontend.photos.preparedownloaddata.v1.PhotosPrepareDownloadDataService/PhotosPrepareDownload
+//     Download URL generation: GetDownloadURL
+//   - photos.googleapis.com/data/upload/uploadmedia/interactive
+//     Binary upload: GetUploadToken + UploadFile
+//
+// The numeric path segments (e.g. 6439526531001121323/18047484249733410717)
+// are opaque service/method identifiers embedded in the Google Photos APK.
 package gphotosmobile
 
 import (
@@ -18,10 +68,15 @@ import (
 )
 
 const (
+	// clientVersionCode identifies the Google Photos APK version we impersonate.
+	// Extracted from the official APK; update this when the real app updates.
 	clientVersionCode = 49029607
+
+	// androidAPIVersion is the Android SDK level we report (28 = Android 9 Pie).
 	androidAPIVersion = 28
-	defaultModel      = "Pixel 9a"
-	defaultMake       = "Google"
+
+	defaultModel = "Pixel 9a"
+	defaultMake  = "Google"
 )
 
 // MobileAPI is the Google Photos mobile API client
@@ -68,7 +123,9 @@ func NewMobileAPI(ctx context.Context, authData, model, deviceMake string) *Mobi
 	return api
 }
 
-// bearerToken returns the current auth token, refreshing if needed
+// bearerToken returns the current auth token, refreshing if needed.
+// The token is cached in memory with its server-provided expiry time.
+// Thread-safe: uses authMu to serialize concurrent refresh attempts.
 func (a *MobileAPI) bearerToken(ctx context.Context) (string, error) {
 	a.authMu.Lock()
 	defer a.authMu.Unlock()
@@ -91,6 +148,16 @@ func (a *MobileAPI) bearerToken(ctx context.Context) (string, error) {
 	return token, nil
 }
 
+// getAuthToken exchanges the long-lived device token for a short-lived bearer token.
+// It POSTs the auth_data fields to https://android.googleapis.com/auth.
+// The response is a newline-delimited key=value text body (NOT protobuf):
+//
+//	Auth=ya29.xxx...
+//	Expiry=1706812345
+//	...
+//
+// The "Auth" value becomes the bearer token and "Expiry" is the unix timestamp
+// when it expires. Typical lifetime is ~1 hour.
 func (a *MobileAPI) getAuthToken(ctx context.Context) (map[string]string, error) {
 	authDataValues, err := url.ParseQuery(a.authData)
 	if err != nil {
@@ -173,7 +240,9 @@ func (a *MobileAPI) commonHeaders(ctx context.Context) (map[string]string, error
 	}, nil
 }
 
-// doProtoRequest makes a protobuf API request with retries
+// doProtoRequest makes a protobuf API request with up to 3 attempts.
+// It retries on any error with linear backoff (0s, 2s, 4s).
+// TODO: only retry on 429/5xx, not on 400/403/404.
 func (a *MobileAPI) doProtoRequest(ctx context.Context, urlStr string, body []byte) ([]byte, error) {
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
@@ -266,7 +335,11 @@ func (a *MobileAPI) GetLibraryPage(ctx context.Context, pageToken, stateToken st
 	)
 }
 
-// FindRemoteMediaByHash checks if a file with the given SHA1 hash exists
+// FindRemoteMediaByHash checks if a file with the given SHA1 hash already
+// exists in the user's library (server-side deduplication). If found, it
+// returns the existing media_key; if not found, it returns "".
+// This is called before uploading to avoid re-uploading identical files.
+// The response media_key is at field path 1.2.2.1.
 func (a *MobileAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte) (string, error) {
 	body := buildHashCheckRequest(sha1Hash)
 
@@ -300,7 +373,19 @@ func (a *MobileAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte) 
 	return f122.GetString(1), nil
 }
 
-// GetUploadToken obtains an upload token
+// GetUploadToken obtains a resumable upload session ID from Google.
+// The flow is a two-phase upload protocol (like GCS resumable uploads):
+//
+//  1. POST a small protobuf body with file metadata + SHA1 hash header.
+//     Google returns the session ID in the X-GUploader-UploadID response header.
+//  2. PUT the actual file bytes to the same URL with ?upload_id=<token>.
+//
+// The protobuf body specifies upload parameters:
+//
+//	{1: 2, 2: 2, 3: 1, 4: 3, 7: fileSize}
+//
+// The X-Goog-Hash header carries the base64-encoded SHA1 for server-side
+// integrity verification. X-Upload-Content-Length tells the server the total size.
 func (a *MobileAPI) GetUploadToken(ctx context.Context, sha1B64 string, fileSize int64) (string, error) {
 	// Build protobuf: {1: 2, 2: 2, 3: 1, 4: 3, 7: fileSize}
 	b := NewProtoBuilder()
@@ -382,7 +467,11 @@ func (a *MobileAPI) UploadFile(ctx context.Context, body io.Reader, size int64, 
 	return readResponseBody(resp)
 }
 
-// CommitUpload commits the uploaded file
+// CommitUpload finalizes an upload by committing it to the user's library.
+// After UploadFile succeeds, the raw protobuf response bytes are passed here
+// as the first field of the commit request (they contain an opaque upload
+// token that Google uses to associate the committed item with the uploaded bytes).
+// The response contains the new item's media_key at field path 1.3.1.
 func (a *MobileAPI) CommitUpload(ctx context.Context, uploadResponse []byte, fileName string, sha1Hash []byte) (string, error) {
 	body := buildCommitUploadRequest(uploadResponse, fileName, sha1Hash, a.model, a.deviceMake)
 
@@ -415,7 +504,11 @@ func (a *MobileAPI) CommitUpload(ctx context.Context, uploadResponse []byte, fil
 	return mediaKey, nil
 }
 
-// MoveToTrash moves items to trash by dedup keys
+// MoveToTrash moves items to trash by their dedup keys.
+// The dedup_key is a URL-safe base64-encoded SHA1 hash that uniquely
+// identifies a media item (distinct from media_key, which is an opaque
+// server-assigned string). Items remain in trash for 60 days before
+// permanent deletion (matching the Google Photos UI behavior).
 func (a *MobileAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
 	body := buildMoveToTrashRequest(dedupKeys)
 	_, err := a.doProtoRequest(ctx,
@@ -425,7 +518,15 @@ func (a *MobileAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
 	return err
 }
 
-// GetDownloadURL gets the download URL for a media item
+// GetDownloadURL obtains a time-limited download URL for a media item.
+// The URL is typically valid for a few hours. The response structure differs
+// by media type:
+//
+//	Photos: URL at field path 1.5.2.6 (original) or 1.5.2.5 (edited)
+//	Videos: URL at field path 1.5.3.5
+//
+// We prefer the original URL (field 6) over the edited one (field 5).
+// If field 2 (photos) is absent, we fall back to field 3 (videos).
 func (a *MobileAPI) GetDownloadURL(ctx context.Context, mediaKey string) (string, error) {
 	body := buildGetDownloadURLsRequest(mediaKey)
 

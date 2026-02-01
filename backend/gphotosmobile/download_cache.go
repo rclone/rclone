@@ -1,3 +1,36 @@
+// download_cache.go manages shared temp file downloads for media files.
+//
+// # Why this exists
+//
+// Google Photos download URLs do NOT support HTTP Range requests. Every
+// download must fetch the entire file from byte 0. However, rclone's VFS
+// layer and chunkedreader frequently close and re-open files at different
+// offsets (e.g. when seeking during video playback). Without caching, each
+// seek would trigger a full re-download from the beginning.
+//
+// # How it works
+//
+//  1. When Open() is called for a media item, getOrStart() either returns
+//     an existing download or starts a new one. A background goroutine
+//     streams the file to a temp file on disk.
+//  2. The returned cachedReader reads from the temp file. If the reader's
+//     position is ahead of what's been downloaded so far, it spin-waits
+//     (10ms polls) until the data arrives.
+//  3. Multiple Open() calls for the same media_key share the same download
+//     and temp file (reference counted via refCount).
+//  4. cachedReader implements fs.RangeSeeker, so rclone can seek without
+//     closing and re-opening. Seeking backwards is instant since the data
+//     is already on disk.
+//  5. When all readers close, a 30-second grace period allows for quick
+//     re-opens before the temp file is cleaned up.
+//
+// # Known limitations
+//
+//   - No maximum cache size: every opened file downloads fully to disk.
+//   - Spin-wait polling: should use sync.Cond for efficiency.
+//   - The background download goroutine uses the context from the first
+//     Open() call. If that context is cancelled, the download fails for
+//     all subsequent readers sharing that entry.
 package gphotosmobile
 
 import (

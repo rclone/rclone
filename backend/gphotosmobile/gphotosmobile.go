@@ -1,4 +1,72 @@
-// Package gphotosmobile provides an interface to Google Photos via the mobile API
+// Package gphotosmobile provides an interface to Google Photos via the mobile API.
+//
+// # Library sync protocol
+//
+// Google Photos uses a delta-sync protocol similar to Google Drive's changes
+// API, but over protobuf. The key concepts:
+//
+//   - state_token: An opaque string representing a point in the library's
+//     change history. Sending a state_token returns only changes SINCE that
+//     point. Sending an empty state_token returns the full library.
+//   - page_token: For large responses, the server paginates. A non-empty
+//     page_token means "there are more results; send this token to get
+//     the next page."
+//
+// # Initial sync (first run)
+//
+// On first run, the cache is empty and init_complete=false in SQLite:
+//
+//  1. Call GetLibraryState("") — empty state_token means "give me everything."
+//  2. Server returns: a batch of items, a new state_token, and possibly a
+//     page_token if the library is large.
+//  3. Save items + tokens to SQLite. If page_token is set, call
+//     GetLibraryPageInit(page_token) repeatedly until page_token is empty.
+//  4. Mark init_complete=true. The state_token is now our bookmark.
+//
+// For a 35K-item library, initial sync takes ~30 seconds and involves
+// 10-20 paginated requests (each returns ~3000 items).
+//
+// # Incremental sync (subsequent runs)
+//
+// On subsequent runs, init_complete=true and we have a saved state_token:
+//
+//  1. Call GetLibraryState(saved_state_token).
+//  2. Server returns only items changed/added/deleted since that token.
+//  3. Upsert changed items, delete removed ones, save new state_token.
+//  4. If page_token is set, call GetLibraryPage(page_token, state_token)
+//     repeatedly until exhausted.
+//
+// Incremental syncs are very fast — typically 0 items if nothing changed,
+// or a handful of items for recent uploads/deletes.
+//
+// # Sync throttling
+//
+// To avoid hammering the API, incremental syncs are throttled to at most
+// once every 30 seconds (syncIntervalSeconds). The last sync time is
+// persisted in SQLite so it survives across rclone invocations within
+// the same cache database. A forceSync flag bypasses the throttle after
+// uploads/deletes so changes appear immediately.
+//
+// # Virtual filesystem
+//
+// The backend presents a virtual directory structure:
+//
+//	/           → shows "media" directory
+//	/media/     → flat listing of all non-trashed items from the cache
+//
+// Albums are not yet implemented. All items appear directly under /media/
+// regardless of any album membership.
+//
+// # Duplicate filenames
+//
+// Google Photos allows multiple items with the same filename (e.g. two
+// different photos both named "IMG_0001.jpg"). When listing, if a filename
+// appears more than once, ALL copies get a deterministic suffix:
+//
+//	IMG_0001_<dedup_key>.jpg
+//
+// where dedup_key is a URL-safe base64-encoded SHA1 hash. This ensures
+// every item has a unique filename and the names are stable across syncs.
 package gphotosmobile
 
 import (
@@ -446,12 +514,20 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return fs.ErrorDirNotFound
 }
 
-// syncIntervalSeconds controls how often incremental syncs happen
+// syncIntervalSeconds controls the minimum interval between incremental syncs.
+// Library listing calls ensureCachePopulated on every List/NewObject, so this
+// prevents excessive API calls when rclone makes many calls in quick succession
+// (e.g. during a recursive listing).
 const syncIntervalSeconds = 30
 
-// ensureCachePopulated does a full init if needed, then an incremental
-// sync if at least syncIntervalSeconds has passed since the last one.
-// The last sync time is persisted in SQLite so it survives across rclone invocations.
+// ensureCachePopulated is the main entry point for keeping the local SQLite
+// cache in sync with the remote Google Photos library. It is called by
+// List, NewObject, and any method that reads from the cache.
+//
+// The logic is:
+//  1. If init_complete is false → run fullCacheInit (downloads entire library).
+//  2. If init_complete is true and ≥30s since last sync → run incrementalSync.
+//  3. If forceSync is true (set after Put/Remove) → sync regardless of time.
 func (f *Fs) ensureCachePopulated(ctx context.Context) error {
 	f.cacheMu.Lock()
 	defer f.cacheMu.Unlock()
@@ -495,7 +571,16 @@ func (f *Fs) ensureCachePopulated(ctx context.Context) error {
 	return nil
 }
 
-// fullCacheInit does the initial full library sync
+// fullCacheInit performs the initial full library download.
+//
+// The sequence is:
+//  1. Check if there's a saved page_token from a previous interrupted init.
+//     If so, resume pagination from where we left off (crash recovery).
+//  2. Call GetLibraryState("") to get the first batch + state_token + page_token.
+//  3. Save everything to SQLite.
+//  4. If page_token is non-empty, paginate via processInitPages until done.
+//
+// Each page returns ~3000 items. Progress is logged with item counts.
 func (f *Fs) fullCacheInit(ctx context.Context) error {
 	stateToken, pageToken, err := f.cache.GetStateTokens()
 	if err != nil {
@@ -576,7 +661,9 @@ func (f *Fs) processInitPages(ctx context.Context, pageToken string) error {
 	return nil
 }
 
-// incrementalSync does an incremental delta sync
+// incrementalSync fetches only changes since the last saved state_token.
+// This is the fast path used on all runs after the initial sync.
+// Typically returns 0 items if nothing changed in the user's library.
 func (f *Fs) incrementalSync(ctx context.Context) error {
 	stateToken, _, err := f.cache.GetStateTokens()
 	if err != nil {
@@ -653,11 +740,15 @@ func (f *Fs) processPages(ctx context.Context, stateToken, pageToken string) err
 	return nil
 }
 
-// About gets quota information from the account
+// About gets quota information from the account.
+// It sends GetLibraryState("") (empty state token) specifically to get the
+// account info block, which is only present in full-sync responses, not in
+// incremental ones. The account info is at field path:
+//
+//	1.4.5.1  = total item count
+//	1.4.8.1  = bytes used against quota
+//	1.4.8.2  = total quota bytes
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	// Send a sync request with empty state token to get the full response
-	// including account info at root.1.4. Incremental responses (with state
-	// token) only include changed items and omit the account info block.
 	respData, err := f.api.GetLibraryState(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get library state: %w", err)
