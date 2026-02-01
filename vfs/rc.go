@@ -695,7 +695,14 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			// If directory doesn't exist in VFS, we'll just return empty results
 			// This allows the endpoint to work for directories that haven't been read yet
 			if errors.Is(err, ENOENT) {
-				filesByStatus := map[string][]rc.Params{}
+				// Return all status categories as empty arrays for API consistency
+				filesByStatus := map[string][]rc.Params{
+					"FULL":      {},
+					"PARTIAL":   {},
+					"NONE":      {},
+					"DIRTY":     {},
+					"UPLOADING": {},
+				}
 				return rc.Params{
 					"dir":       dirPath,
 					"files":     filesByStatus,
@@ -728,11 +735,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	// Prepare the response - always include all categories for a stable API
 	responseFiles := rc.Params{}
 	for _, status := range []string{"FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"} {
-		if files, ok := filesByStatus[status]; ok {
-			responseFiles[status] = files
-		} else {
-			responseFiles[status] = []rc.Params{}
-		}
+		responseFiles[status] = filesByStatus[status]
 	}
 
 	return rc.Params{
