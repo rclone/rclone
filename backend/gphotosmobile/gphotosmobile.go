@@ -72,6 +72,7 @@ package gphotosmobile
 import (
 	"context"
 	"crypto/sha1"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -294,8 +295,11 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	// Search in the cache by filename
 	item, err := f.cache.GetByFileName(fileName)
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fs.ErrorObjectNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("cache lookup failed: %w", err)
 	}
 
 	// Verify the item matches the path context
