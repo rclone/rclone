@@ -12,9 +12,11 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 )
 
 // Register with Fs
@@ -56,7 +58,7 @@ func init() {
 			Sensitive: true,
 		}, {
 			Name:     "cache_db_path",
-			Help:     "Path to SQLite cache database.\n\nLeave empty for default (~/.gpmc/<email>/storage.db).\nThe cache stores the media library index locally for fast listing.",
+			Help:     "Path to SQLite cache database.\n\nThe media library index is cached locally in SQLite for fast listing.\nThe default location is inside rclone's cache directory\n(see --cache-dir) at gphotosmobile/<remote-name>.db.\n\nThe initial sync downloads the full library index and may take a few\nminutes for large libraries. Subsequent runs use fast incremental sync.\nIf this file is deleted, rclone will re-sync the full library on next run.",
 			Default:  "",
 			Advanced: true,
 		}, {
@@ -69,16 +71,24 @@ func init() {
 			Help:     "Device manufacturer to report to Google Photos.\n\nThis is included in upload metadata.\nLeave empty for default (Google).",
 			Default:  "",
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default: (encoder.Base |
+				encoder.EncodeCrLf |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	AuthData    string `config:"auth_data"`
-	CacheDBPath string `config:"cache_db_path"`
-	DeviceModel string `config:"device_model"`
-	DeviceMake  string `config:"device_make"`
+	AuthData    string               `config:"auth_data"`
+	CacheDBPath string               `config:"cache_db_path"`
+	DeviceModel string               `config:"device_model"`
+	DeviceMake  string               `config:"device_make"`
+	Enc         encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote Google Photos storage via mobile API
@@ -150,11 +160,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Determine cache path
 	cachePath := opt.CacheDBPath
 	if cachePath == "" {
-		email := parseEmail(authData)
-		if email == "" {
-			email = "default"
-		}
-		cachePath = defaultCachePath(email)
+		cachePath = defaultCachePath(name)
 	}
 
 	cache, err := NewCache(cachePath)
@@ -205,6 +211,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	// Look up by filename in cache
 	dir, fileName := path.Split(remote)
 	dir = strings.Trim(dir, "/")
+
+	// Decode the filename back to the original name for cache lookup
+	fileName = f.opt.Enc.ToStandardName(fileName)
 
 	// Build the full path for lookup
 	fullRemote := remote
@@ -282,6 +291,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				fileName = fmt.Sprintf("%s_%s%s", base, item.MediaKey[:8], ext)
 			}
 
+			// Encode the filename for rclone's virtual filesystem
+			fileName = f.opt.Enc.FromStandardName(fileName)
+
 			// Remote path is relative to f.root
 			// If f.root is "media", dir will be "" and remote should be just the filename
 			// If f.root is "", dir will be "media" and remote should be "media/filename"
@@ -333,6 +345,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 
 		_, fileName := path.Split(remote)
+		fileName = f.opt.Enc.ToStandardName(fileName)
 		mediaKey, err = f.api.CommitUpload(uploadResp, fileName, sha1Bytes)
 		if err != nil {
 			return nil, fmt.Errorf("commit upload failed: %w", err)

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
+	"github.com/rclone/rclone/fs/config"
 	_ "modernc.org/sqlite" // sqlite driver registration
 )
 
@@ -541,15 +541,10 @@ func nullFloat(nf sql.NullFloat64) float64 {
 	return 0
 }
 
-// defaultCachePath returns the default cache path for a given email
-func defaultCachePath(email string) string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		if runtime.GOOS == "windows" {
-			home = os.Getenv("USERPROFILE")
-		} else {
-			home = os.Getenv("HOME")
-		}
-	}
-	return filepath.Join(home, ".gpmc", email, "storage.db")
+// defaultCachePath returns the default cache path for a given remote name.
+// It uses rclone's cache directory (--cache-dir) with a backend-specific subdirectory.
+// The resulting path is: <cache-dir>/gphotosmobile/<remoteName>.db
+func defaultCachePath(remoteName string) string {
+	dir := filepath.Join(config.GetCacheDir(), "gphotosmobile")
+	return filepath.Join(dir, remoteName+".db")
 }

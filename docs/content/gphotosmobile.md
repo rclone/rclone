@@ -37,7 +37,7 @@ Photos app (see [Prerequisites](#prerequisites)).
 ```text
 rclone <-> gphotos_mobile backend <-> Google Photos Mobile API (protobuf)
                 |
-                +-> SQLite cache (~/.gpmc/<email>/storage.db)
+                +-> SQLite cache (<cache-dir>/gphotosmobile/<remote>.db)
 ```
 
 1. **Authentication**: Uses Android device tokens (obtained via `gms_auth`)
@@ -63,7 +63,11 @@ The library index is cached locally in SQLite for performance:
 - **Sync throttle**: At most one sync every 30 seconds (persisted across
   rclone invocations)
 - **After uploads/deletes**: Immediate sync to reflect changes
-- **Cache location**: `~/.gpmc/<email>/storage.db` (configurable)
+- **Cache location**: `<cache-dir>/gphotosmobile/<remote-name>.db`
+  (where `<cache-dir>` is rclone's `--cache-dir`, typically
+  `~/.cache/rclone` on Linux, `%LocalAppData%\rclone` on Windows)
+- **Cache is regenerable**: If the database is deleted, rclone will
+  re-download the full library index on the next run. No data is lost.
 
 To force a full re-sync, delete the cache database file.
 
@@ -404,4 +408,6 @@ progress in the rclone log output with `-v`.
 
 The item doesn't have a dedup_key in the cache. This can happen for items
 that were synced with incomplete metadata. Try deleting the cache database
-and re-syncing: `rm ~/.gpmc/<email>/storage.db`
+and re-syncing. Delete the cache database file at
+`<cache-dir>/gphotosmobile/<remote-name>.db` (see `rclone help flags`
+for `--cache-dir` location).

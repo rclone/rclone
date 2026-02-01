@@ -186,7 +186,7 @@ backends:
    remote:   "TestGooglePhotos:"
    tests:
      - backend
- - backend:  "gphotos_mobile"
+ - backend:  "gphotosmobile"
    remote:   "TestGPhotosMobile:"
    tests:
      - backend
