@@ -144,6 +144,11 @@ func init() {
 			Default:  "",
 			Advanced: true,
 		}, {
+			Name:     "download_cache",
+			Help:     "Enable download cache for opened files.\n\nGoogle Photos download URLs do not support HTTP Range requests, so\nwithout caching every seek triggers a full re-download. When enabled\n(the default), each file is downloaded once to a local temp file and\nshared across all concurrent readers, with instant seeking support.\n\nDisable this if you only do sequential reads (e.g. rclone copy/sync)\nand want to avoid temp file disk usage. When disabled, Open() returns\nthe raw HTTP response body with no seeking or sharing support.",
+			Default:  true,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -156,11 +161,12 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	AuthData    string               `config:"auth_data"`
-	CacheDBPath string               `config:"cache_db_path"`
-	DeviceModel string               `config:"device_model"`
-	DeviceMake  string               `config:"device_make"`
-	Enc         encoder.MultiEncoder `config:"encoding"`
+	AuthData      string               `config:"auth_data"`
+	CacheDBPath   string               `config:"cache_db_path"`
+	DeviceModel   string               `config:"device_model"`
+	DeviceMake    string               `config:"device_make"`
+	DownloadCache bool                 `config:"download_cache"`
+	Enc           encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote Google Photos storage via mobile API
@@ -247,7 +253,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		api:       api,
 		cache:     cache,
 		startTime: time.Now(),
-		dlCache:   newDownloadCache(api),
+	}
+	if opt.DownloadCache {
+		f.dlCache = newDownloadCache(api)
 	}
 
 	f.features = (&fs.Features{
@@ -502,7 +510,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // Shutdown closes the SQLite cache database and cleans up any download
 // cache temp files. Called by rclone when the Fs is no longer needed.
 func (f *Fs) Shutdown(ctx context.Context) error {
-	f.dlCache.shutdown()
+	if f.dlCache != nil {
+		f.dlCache.shutdown()
+	}
 	return f.cache.Close()
 }
 
@@ -858,14 +868,33 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 }
 
 // Open opens the object for reading.
-// Google Photos download URLs don't support HTTP Range requests,
-// so we use a shared download cache that downloads each file once
-// to a temp file in the background. Multiple Open() calls for the
-// same file share the same download, and the returned reader
+//
+// When download_cache is enabled (default), Google Photos download URLs
+// are fetched once into a shared temp file. Multiple Open() calls for
+// the same file share the same download, and the returned reader
 // implements fs.RangeSeeker for instant seeking within cached data.
+//
+// When download_cache is disabled, Open() streams the HTTP response body
+// directly. This avoids temp file disk usage but does not support
+// seeking — RangeOption/SeekOption are ignored and the caller must read
+// sequentially. This mode is suitable for rclone copy/sync but NOT for
+// rclone mount.
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	if !o.hasMedia || o.media.MediaKey == "" {
 		return nil, errors.New("no media key available")
+	}
+
+	// When download cache is disabled, stream directly from the API
+	if o.fs.dlCache == nil {
+		downloadURL, err := o.fs.api.GetDownloadURL(ctx, o.media.MediaKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get download URL: %w", err)
+		}
+		body, err := o.fs.api.DownloadFile(ctx, downloadURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to download file: %w", err)
+		}
+		return body, nil
 	}
 
 	// Get or start a shared download for this media key
