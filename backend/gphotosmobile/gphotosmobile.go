@@ -223,8 +223,26 @@ func init() {
 		NewFs:       NewFs,
 		MetadataInfo: &fs.MetadataInfo{
 			System: systemMetadataInfo,
-			Help:   `Metadata is returned for all media items. Only "description" (the Google Photos caption) can be written; all other fields are read-only.`,
+			Help:   `Metadata is returned for all media items. The "description" (caption) can be written; all other fields are read-only.`,
 		},
+		CommandHelp: []fs.CommandHelp{{
+			Name:  "set-description",
+			Short: "Set the description (caption) of a media item.",
+			Long: `Set the description (caption) of a media item in Google Photos.
+The description is the text shown under the item in the Google Photos app.
+
+Usage:
+
+    rclone backend set-description remote:media/photo.jpg -o description="Sunset at the beach"
+
+To clear the description:
+
+    rclone backend set-description remote:media/photo.jpg -o description=""
+`,
+			Opts: map[string]string{
+				"description": "The description text to set (empty to clear)",
+			},
+		}},
 		Config: func(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
 			switch configIn.State {
 			case "":
@@ -976,6 +994,42 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
+// Command runs a backend-specific command.
+// Supported commands:
+//   - set-description: set the caption of a media item
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error) {
+	switch name {
+	case "set-description":
+		if len(arg) < 1 {
+			return nil, errors.New("set-description requires a file path argument")
+		}
+		description, ok := opt["description"]
+		if !ok {
+			return nil, errors.New("set-description requires -o description=VALUE")
+		}
+		obj, err := f.NewObject(ctx, arg[0])
+		if err != nil {
+			return nil, err
+		}
+		o := obj.(*Object)
+		if o.media.DedupKey == "" {
+			return nil, errors.New("no dedup key available")
+		}
+		err = f.api.SetCaption(ctx, o.media.DedupKey, description)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set description: %w", err)
+		}
+		f.cacheMu.Lock()
+		f.forceSync = true
+		f.cacheMu.Unlock()
+		_ = f.ensureCachePopulated(ctx)
+		return "description set successfully", nil
+
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // ------------------------------------------------------------
 // Object interface methods
 // ------------------------------------------------------------
@@ -1194,36 +1248,35 @@ func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
 }
 
 // SetMetadata sets metadata on the object.
-// Only the "description" key is writable (sets the Google Photos caption).
+// Currently only the "description" (caption) key is writable.
 // All other keys are silently ignored.
 func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 	if !o.hasMedia {
 		return errors.New("no media info available")
 	}
-
-	description, ok := metadata["description"]
-	if !ok {
-		// No writable keys provided — nothing to do
-		return nil
-	}
-
 	if o.media.DedupKey == "" {
-		return errors.New("no dedup key available for caption update")
+		return errors.New("no dedup key available for metadata update")
 	}
 
-	err := o.fs.api.SetCaption(ctx, o.media.DedupKey, description)
-	if err != nil {
-		return fmt.Errorf("failed to set caption: %w", err)
+	changed := false
+
+	// Handle description (caption)
+	if description, ok := metadata["description"]; ok {
+		err := o.fs.api.SetCaption(ctx, o.media.DedupKey, description)
+		if err != nil {
+			return fmt.Errorf("failed to set caption: %w", err)
+		}
+		o.media.Caption = description
+		changed = true
 	}
 
-	// Update local state
-	o.media.Caption = description
-
-	// Update cache
-	o.fs.cacheMu.Lock()
-	o.fs.forceSync = true
-	o.fs.cacheMu.Unlock()
-	_ = o.fs.ensureCachePopulated(ctx)
+	if changed {
+		// Update cache
+		o.fs.cacheMu.Lock()
+		o.fs.forceSync = true
+		o.fs.cacheMu.Unlock()
+		_ = o.fs.ensureCachePopulated(ctx)
+	}
 	return nil
 }
 
@@ -1253,6 +1306,7 @@ func (o *Object) ID() string {
 var (
 	_ fs.Fs            = (*Fs)(nil)
 	_ fs.Abouter       = (*Fs)(nil)
+	_ fs.Commander     = (*Fs)(nil)
 	_ fs.Shutdowner    = (*Fs)(nil)
 	_ fs.Object        = (*Object)(nil)
 	_ fs.IDer          = (*Object)(nil)
