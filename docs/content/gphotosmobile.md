@@ -312,10 +312,10 @@ listing and creation are not yet implemented.
 ### Duplicate filenames
 
 If multiple items share the same filename, **all** of them get a suffix
-with the first 8 characters of their media key. For example, two files
-both named `photo.jpg` become `photo_AF1QipO2.jpg` and
-`photo_BG2RjqP3.jpg`. This ensures filenames are stable and
-deterministic regardless of database ordering between syncs.
+with their dedup key. For example, two files both named `photo.jpg`
+become `photo_2VRSgGLVhhnUtc6WW3tL1kYSrKE.jpg` and
+`photo_f3TGtgToY86xuq3_IqUp10ZtBnU.jpg`. This ensures filenames are
+stable and deterministic regardless of database ordering between syncs.
 
 Files with unique names are not affected.
 

@@ -289,15 +289,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if item.FileName == "" {
 				continue
 			}
-			// If filename has duplicates, append media_key suffix to ALL of them
+			// If filename has duplicates, append dedup_key suffix to ALL of them
 			// for deterministic naming regardless of database ordering
 			fileName := item.FileName
 			if nameCount[fileName] > 1 {
 				ext := path.Ext(fileName)
 				base := fileName[:len(fileName)-len(ext)]
-				suffix := item.MediaKey
-				if len(suffix) > 8 {
-					suffix = suffix[:8]
+				suffix := item.DedupKey
+				if suffix == "" {
+					suffix = item.MediaKey
 				}
 				fileName = fmt.Sprintf("%s_%s%s", base, suffix, ext)
 			}
