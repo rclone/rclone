@@ -304,6 +304,13 @@ serving reads from there. This means:
 - Additional disk space is used for temp files during downloads
 - Streaming video from mount requires buffering time
 
+### Uploads are media files only
+
+Google Photos only accepts image and video files. Uploading non-media
+files (e.g. `.txt`, `.pdf`, `.zip`) will fail at the commit stage.
+Supported formats include JPEG, PNG, GIF, WebP, HEIC, MP4, MOV, and
+other common photo/video formats.
+
 ### No album support (yet)
 
 The backend currently only exposes the flat `media/` directory. Album
