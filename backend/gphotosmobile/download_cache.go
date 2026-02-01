@@ -28,9 +28,6 @@
 //
 //   - No maximum cache size: every opened file downloads fully to disk.
 //   - Spin-wait polling: should use sync.Cond for efficiency.
-//   - The background download goroutine uses the context from the first
-//     Open() call. If that context is cancelled, the download fails for
-//     all subsequent readers sharing that entry.
 
 package gphotosmobile
 
@@ -107,8 +104,9 @@ func (dc *downloadCache) getOrStart(ctx context.Context, mediaKey string, totalS
 
 	dc.entries[mediaKey] = entry
 
-	// Start background download
-	go dc.download(ctx, entry, mediaKey)
+	// Start background download with a detached context so that
+	// cancellation of the first reader doesn't abort the shared download.
+	go dc.download(context.Background(), entry, mediaKey)
 
 	return entry, nil
 }

@@ -299,6 +299,40 @@ func (c *Cache) GetByFileName(fileName string) (*MediaItem, error) {
 	return scanMediaItem(row)
 }
 
+// GetByDedupKey looks up a media item by its dedup_key
+func (c *Cache) GetByDedupKey(dedupKey string) (*MediaItem, error) {
+	row := c.db.QueryRow(`SELECT
+		media_key, file_name, dedup_key, is_canonical, type, caption,
+		collection_id, size_bytes, quota_charged_bytes, origin,
+		content_version, utc_timestamp, server_creation_timestamp,
+		timezone_offset, width, height, remote_url, upload_status,
+		trash_timestamp, is_archived, is_favorite, is_locked,
+		is_original_quality, latitude, longitude, location_name,
+		location_id, is_edited, make, model, aperture, shutter_speed,
+		iso, focal_length, duration, capture_frame_rate, encoded_frame_rate,
+		is_micro_video, micro_video_width, micro_video_height, sha1_hash
+	FROM remote_media WHERE dedup_key = ? LIMIT 1`, dedupKey)
+
+	return scanMediaItem(row)
+}
+
+// GetByMediaKey looks up a media item by its media_key
+func (c *Cache) GetByMediaKey(mediaKey string) (*MediaItem, error) {
+	row := c.db.QueryRow(`SELECT
+		media_key, file_name, dedup_key, is_canonical, type, caption,
+		collection_id, size_bytes, quota_charged_bytes, origin,
+		content_version, utc_timestamp, server_creation_timestamp,
+		timezone_offset, width, height, remote_url, upload_status,
+		trash_timestamp, is_archived, is_favorite, is_locked,
+		is_original_quality, latitude, longitude, location_name,
+		location_id, is_edited, make, model, aperture, shutter_speed,
+		iso, focal_length, duration, capture_frame_rate, encoded_frame_rate,
+		is_micro_video, micro_video_width, micro_video_height, sha1_hash
+	FROM remote_media WHERE media_key = ? LIMIT 1`, mediaKey)
+
+	return scanMediaItem(row)
+}
+
 // ListAll returns all non-trashed media items
 func (c *Cache) ListAll() ([]MediaItem, error) {
 	rows, err := c.db.Query(`SELECT

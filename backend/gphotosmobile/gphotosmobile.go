@@ -91,6 +91,10 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 )
 
+var (
+	errCantRmdir = errors.New("can't remove virtual directory")
+)
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -300,39 +304,58 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, fmt.Errorf("cache sync failed: %w", err)
 	}
 
-	// Look up by filename in cache
-	dir, fileName := path.Split(remote)
-	dir = strings.Trim(dir, "/")
+	_, fileName := path.Split(remote)
 
 	// Decode the filename back to the original name for cache lookup
 	fileName = f.opt.Enc.ToStandardName(fileName)
 
-	// Build the full path for lookup
-	fullRemote := remote
-	if f.root != "" {
-		fullRemote = f.root + "/" + remote
-	}
-
-	// Search in the cache by filename
+	// Try exact filename match first
 	item, err := f.cache.GetByFileName(fileName)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fs.ErrorObjectNotFound
-	}
-	if err != nil {
+		// If not found, the filename may have a dedup suffix: base_<dedupkey>.ext
+		// Try to parse it and look up by dedup_key
+		item, err = f.findByDedupSuffix(fileName)
+		if err != nil {
+			return nil, fs.ErrorObjectNotFound
+		}
+	} else if err != nil {
 		return nil, fmt.Errorf("cache lookup failed: %w", err)
 	}
 
-	// Verify the item matches the path context
-	_ = fullRemote // In flat mode, we just match by filename
-	_ = dir
-
-	o := &Object{
+	return &Object{
 		fs:       f,
 		remote:   remote,
 		media:    *item,
 		hasMedia: true,
+	}, nil
+}
+
+// findByDedupSuffix parses a filename with a dedup suffix (base_<key>.ext)
+// and looks up the item by its dedup_key or media_key.
+func (f *Fs) findByDedupSuffix(fileName string) (*MediaItem, error) {
+	ext := path.Ext(fileName)
+	base := fileName[:len(fileName)-len(ext)]
+
+	// Find the last underscore — the suffix after it is the dedup_key
+	idx := strings.LastIndex(base, "_")
+	if idx < 0 {
+		return nil, fs.ErrorObjectNotFound
 	}
-	return o, nil
+	suffix := base[idx+1:]
+	if suffix == "" {
+		return nil, fs.ErrorObjectNotFound
+	}
+
+	// Try dedup_key first, then media_key
+	item, err := f.cache.GetByDedupKey(suffix)
+	if err == nil {
+		return item, nil
+	}
+	item, err = f.cache.GetByMediaKey(suffix)
+	if err == nil {
+		return item, nil
+	}
+	return nil, fs.ErrorObjectNotFound
 }
 
 // List the objects and directories in dir into entries
@@ -487,17 +510,22 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	f.cacheMu.Unlock()
 	_ = f.ensureCachePopulated(ctx)
 
-	o := &Object{
-		fs:     f,
-		remote: remote,
-		media: MediaItem{
-			MediaKey:  mediaKey,
-			FileName:  path.Base(remote),
-			SizeBytes: size,
-		},
-		hasMedia: true,
+	// Try to populate full metadata from cache
+	media := MediaItem{
+		MediaKey:  mediaKey,
+		FileName:  path.Base(remote),
+		SizeBytes: size,
 	}
-	return o, nil
+	if cachedItem, err := f.cache.GetByMediaKey(mediaKey); err == nil {
+		media = *cachedItem
+	}
+
+	return &Object{
+		fs:       f,
+		remote:   remote,
+		media:    media,
+		hasMedia: true,
+	}, nil
 }
 
 // Mkdir creates the directory if it doesn't exist.
@@ -542,7 +570,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	switch fullDir {
 	case "", "media":
 		// Virtual directories cannot be removed
-		return errors.New("can't remove virtual directory")
+		return errCantRmdir
 	}
 	return fs.ErrorDirNotFound
 }
