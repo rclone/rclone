@@ -1452,7 +1452,7 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 	return err
 }
 
-// VFSStatusCache returns the cache status of the file, which can be "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING", or "ERROR".
+// VFSStatusCache returns the cache status of the file, which can be "FULL", "PARTIAL", "NONE", "DIRTY", or "UPLOADING".
 func (item *Item) VFSStatusCache() string {
 	status, _ := item.VFSStatusCacheWithPercentage()
 	return status
