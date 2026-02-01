@@ -659,7 +659,10 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	// Check for recursive parameter
-	recursive, _ := in.GetBool("recursive")
+	recursive, err := in.GetBool("recursive")
+	if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, fmt.Errorf("invalid recursive parameter: %w", err)
+	}
 
 	// Get files status using the new optimized method
 	var filesByStatus map[string][]rc.Params
@@ -759,6 +762,7 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	// Always return results in 'files' array format for consistency
 	return rc.Params{
 		"files": results,
+		"fs":    fs.ConfigString(vfs.Fs()),
 	}, nil
 }
 

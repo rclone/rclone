@@ -1473,7 +1473,9 @@ func (item *Item) _vfsStatusCacheWithPercentageNoLock() (string, int) {
 	}
 
 	var cachedSize int64
-	cachedSize = item.info.Rs.Size()
+	if item.info.Rs != nil {
+		cachedSize = item.info.Rs.Size()
+	}
 	totalSize := item.info.Size
 
 	if totalSize <= 0 {
@@ -1556,7 +1558,7 @@ func (item *Item) VFSStatusCacheDetailed() (string, int, int64, int64, bool) {
 	var cachedSize int64
 	if status == "FULL" || status == "DIRTY" || status == "UPLOADING" {
 		cachedSize = totalSize
-	} else {
+	} else if item.info.Rs != nil {
 		cachedSize = item.info.Rs.Size()
 	}
 
