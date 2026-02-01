@@ -679,13 +679,16 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		if err != nil {
 			// If directory doesn't exist in VFS, we'll just return empty results
 			// This allows the endpoint to work for directories that haven't been read yet
-			filesByStatus := map[string][]rc.Params{}
-			return rc.Params{
-				"dir":       dirPath,
-				"files":     filesByStatus,
-				"recursive": recursive,
-				"fs":        fs.ConfigString(vfs.Fs()),
-			}, nil
+			if errors.Is(err, ENOENT) {
+				filesByStatus := map[string][]rc.Params{}
+				return rc.Params{
+					"dir":       dirPath,
+					"files":     filesByStatus,
+					"recursive": recursive,
+					"fs":        fs.ConfigString(vfs.Fs()),
+				}, nil
+			}
+			return nil, err
 		}
 		if !node.IsDir() {
 			return nil, fmt.Errorf("path %q is not a directory: %s", dirPath, node.Name())
