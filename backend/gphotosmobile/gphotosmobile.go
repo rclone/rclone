@@ -222,7 +222,7 @@ func (f *Fs) String() string {
 func (f *Fs) Features() *fs.Features { return f.features }
 
 // Precision of the remote
-func (f *Fs) Precision() time.Duration { return time.Second }
+func (f *Fs) Precision() time.Duration { return fs.ModTimeNotSupported }
 
 // Hashes returns the supported hash sets
 func (f *Fs) Hashes() hash.Set { return hash.Set(hash.SHA1) }

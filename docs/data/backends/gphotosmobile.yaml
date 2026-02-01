@@ -14,6 +14,7 @@ remote: 'TestGPhotosMobile:'
 features:
 - About
 - DuplicateFiles
+- Shutdown
 hashes:
 - SHA-1
-precision: 1000000000
+precision: 3153600000000000000
