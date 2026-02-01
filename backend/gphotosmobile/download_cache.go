@@ -88,7 +88,7 @@ func (dc *downloadCache) getOrStart(ctx context.Context, mediaKey string, totalS
 	}
 
 	// Start new download
-	tmpFile, err := os.CreateTemp("", "gphotos_mobile_*.tmp")
+	tmpFile, err := os.CreateTemp("", "gphotosmobile_*.tmp")
 	if err != nil {
 		return nil, err
 	}

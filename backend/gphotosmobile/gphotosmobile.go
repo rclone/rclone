@@ -219,7 +219,7 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "gphotos_mobile",
+		Name:        "gphotosmobile",
 		Description: "Google Photos (Mobile API - full access)",
 		NewFs:       NewFs,
 		MetadataInfo: &fs.MetadataInfo{
