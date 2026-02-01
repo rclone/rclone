@@ -886,52 +886,56 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 		"UPLOADING": {},
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// Normalize dirPath - ensure it ends with "/" for prefix matching
-	if dirPath != "" && !strings.HasSuffix(dirPath, "/") {
-		dirPath += "/"
+	// Normalize to clean slash-separated path without leading "./"
+	cleanDir := strings.TrimPrefix(path.Clean(dirPath), "./")
+	if cleanDir == "." {
+		cleanDir = ""
+	}
+	prefix := cleanDir
+	if prefix != "" && !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
 	}
 
-	for name, item := range c.item {
-		// Check if the item is in the target directory
-		if dirPath == "" || strings.HasPrefix(name, dirPath) {
-			// If not recursive, ensure we only include direct children
-			if !recursive {
-				var relativePath string
-				if dirPath == "" {
-					relativePath = name
-				} else {
-					relativePath = name[len(dirPath):]
-				}
-				// Check if there are any more slashes (indicating subdirectories)
-				// We only want direct children, so there should be no more slashes
-				if strings.Contains(relativePath, "/") {
+	// Snapshot items under lock to avoid holding lock during processing
+	type entry struct {
+		name string
+		item *Item
+		rel  string
+	}
+	var entries []entry
+
+	c.mu.Lock()
+	for name, it := range c.item {
+		// Ensure we use forward slashes for matching (cache uses slash-separated keys)
+		n := path.Clean(name)
+		if prefix == "" || strings.HasPrefix(n, prefix) {
+			rel := n
+			if prefix != "" {
+				rel = strings.TrimPrefix(n, prefix)
+				// Skip when not recursive and rel contains '/'
+				if !recursive && strings.Contains(rel, "/") {
 					continue
 				}
 			}
+			entries = append(entries, entry{name: n, item: it, rel: rel})
+		}
+	}
+	c.mu.Unlock()
 
-			// Get the status and percentage for this item
-			status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
-
-			// Determine if the file is uploading
-			isUploading := (status == "UPLOADING")
-
-			// Create file info
-			fileInfo := rc.Params{
-				"name":        filepath.Base(name),
-				"percentage":  percentage,
-				"uploading":   isUploading,
-				"size":        totalSize,
-				"cachedBytes": cachedSize,
-				"dirty":       isDirty,
-			}
-
-			// Add to the appropriate status category
-			if files, exists := filesByStatus[status]; exists {
-				filesByStatus[status] = append(files, fileInfo)
-			}
+	// Build results without holding the cache mutex
+	for _, e := range entries {
+		status, percentage, totalSize, cachedSize, isDirty := e.item.VFSStatusCacheDetailed()
+		isUploading := status == "UPLOADING"
+		fileInfo := rc.Params{
+			"name":        e.rel,
+			"percentage":  percentage,
+			"uploading":   isUploading,
+			"size":        totalSize,
+			"cachedBytes": cachedSize,
+			"dirty":       isDirty,
+		}
+		if _, exists := filesByStatus[status]; exists {
+			filesByStatus[status] = append(filesByStatus[status], fileInfo)
 		}
 	}
 
