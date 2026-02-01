@@ -875,6 +875,61 @@ func (c *Cache) TotalInUse() (n int) {
 	return n
 }
 
+// AggregateStats holds aggregate cache statistics
+type AggregateStats struct {
+	TotalFiles             int   `json:"totalFiles"`
+	FullCount              int   `json:"fullCount"`
+	PartialCount           int   `json:"partialCount"`
+	NoneCount              int   `json:"noneCount"`
+	DirtyCount             int   `json:"dirtyCount"`
+	UploadingCount         int   `json:"uploadingCount"`
+	TotalCachedBytes       int64 `json:"totalCachedBytes"`
+	AverageCachePercentage int   `json:"averageCachePercentage"`
+}
+
+// GetAggregateStats returns aggregate cache statistics for all items in the cache
+func (c *Cache) GetAggregateStats() AggregateStats {
+	c.mu.Lock()
+	items := make([]*Item, 0, len(c.item))
+	for _, it := range c.item {
+		items = append(items, it)
+	}
+	c.mu.Unlock()
+
+	stats := AggregateStats{
+		TotalFiles: len(items),
+	}
+
+	if stats.TotalFiles == 0 {
+		return stats
+	}
+
+	var totalPercentage int
+
+	for _, item := range items {
+		status, percentage := item.VFSStatusCacheWithPercentage()
+
+		switch status {
+		case "FULL":
+			stats.FullCount++
+		case "PARTIAL":
+			stats.PartialCount++
+		case "NONE":
+			stats.NoneCount++
+		case "DIRTY":
+			stats.DirtyCount++
+		case "UPLOADING":
+			stats.UploadingCount++
+		}
+
+		stats.TotalCachedBytes += item.getDiskSize()
+		totalPercentage += percentage
+	}
+
+	stats.AverageCachePercentage = totalPercentage / stats.TotalFiles
+	return stats
+}
+
 // GetStatusForDir returns cache status for all files in a specified directory
 // If recursive is true, it includes all subdirectories
 func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.Params {
@@ -896,46 +951,54 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 		prefix += "/"
 	}
 
-	// Snapshot items under lock to avoid holding lock during processing
+	// Snapshot computed status under lock to avoid data races
 	type entry struct {
-		name string
-		item *Item
-		rel  string
+		rel        string
+		status     string
+		percentage int
+		totalSize  int64
+		cachedSize int64
+		isDirty    bool
 	}
 	var entries []entry
 
 	c.mu.Lock()
 	for name, it := range c.item {
-		// Ensure we use forward slashes for matching (cache uses slash-separated keys)
 		n := path.Clean(name)
 		if prefix == "" || strings.HasPrefix(n, prefix) {
 			rel := n
 			if prefix != "" {
 				rel = strings.TrimPrefix(n, prefix)
-				// Skip when not recursive and rel contains '/'
 				if !recursive && strings.Contains(rel, "/") {
 					continue
 				}
 			}
-			entries = append(entries, entry{name: n, item: it, rel: rel})
+			status, percentage, totalSize, cachedSize, isDirty := it.VFSStatusCacheDetailed()
+			entries = append(entries, entry{
+				rel:        rel,
+				status:     status,
+				percentage: percentage,
+				totalSize:  totalSize,
+				cachedSize: cachedSize,
+				isDirty:    isDirty,
+			})
 		}
 	}
 	c.mu.Unlock()
 
 	// Build results without holding the cache mutex
 	for _, e := range entries {
-		status, percentage, totalSize, cachedSize, isDirty := e.item.VFSStatusCacheDetailed()
-		isUploading := status == "UPLOADING"
+		isUploading := e.status == "UPLOADING"
 		fileInfo := rc.Params{
 			"name":        e.rel,
-			"percentage":  percentage,
+			"percentage":  e.percentage,
 			"uploading":   isUploading,
-			"size":        totalSize,
-			"cachedBytes": cachedSize,
-			"dirty":       isDirty,
+			"size":        e.totalSize,
+			"cachedBytes": e.cachedSize,
+			"dirty":       e.isDirty,
 		}
-		if _, exists := filesByStatus[status]; exists {
-			filesByStatus[status] = append(filesByStatus[status], fileInfo)
+		if _, exists := filesByStatus[e.status]; exists {
+			filesByStatus[e.status] = append(filesByStatus[e.status], fileInfo)
 		}
 	}
 
