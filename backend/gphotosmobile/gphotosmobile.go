@@ -277,18 +277,29 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			return nil, fmt.Errorf("cache list failed: %w", err)
 		}
 
-		seen := make(map[string]int)
+		// First pass: count filename occurrences to detect duplicates
+		nameCount := make(map[string]int)
+		for _, item := range items {
+			if item.FileName != "" {
+				nameCount[item.FileName]++
+			}
+		}
+
 		for _, item := range items {
 			if item.FileName == "" {
 				continue
 			}
-			// Handle duplicates by adding media_key suffix
+			// If filename has duplicates, append media_key suffix to ALL of them
+			// for deterministic naming regardless of database ordering
 			fileName := item.FileName
-			seen[fileName]++
-			if seen[fileName] > 1 {
+			if nameCount[fileName] > 1 {
 				ext := path.Ext(fileName)
 				base := fileName[:len(fileName)-len(ext)]
-				fileName = fmt.Sprintf("%s_%s%s", base, item.MediaKey[:8], ext)
+				suffix := item.MediaKey
+				if len(suffix) > 8 {
+					suffix = suffix[:8]
+				}
+				fileName = fmt.Sprintf("%s_%s%s", base, suffix, ext)
 			}
 
 			// Encode the filename for rclone's virtual filesystem
