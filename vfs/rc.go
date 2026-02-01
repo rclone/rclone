@@ -562,7 +562,8 @@ func init() {
 		Fn:    rcStatus,
 		Title: "Get aggregate cache status statistics.",
 		Help: `
-This returns aggregate cache status statistics for the VFS.
+This returns aggregate cache status statistics for the VFS, including
+counts for each cache status type.
 
 This takes the following parameters:
 
@@ -571,13 +572,15 @@ This takes the following parameters:
 This returns a JSON object with the following fields:
 
 - totalFiles - total number of files in VFS
-- fullCount - number of files with FULL cache status
-- partialCount - number of files with PARTIAL cache status  
-- noneCount - number of files with NONE cache status
-- dirtyCount - number of files with DIRTY cache status
-- uploadingCount - number of files with UPLOADING cache status
 - totalCachedBytes - total bytes cached across all files
-- averageCachePercentage - average cache percentage across all files
+- averageCachePercentage - average cache percentage across all files (0-100)
+- counts - object containing counts for each cache status:
+  - FULL - number of files completely cached locally
+  - PARTIAL - number of files partially cached
+  - NONE - number of files not cached (remote only)
+  - DIRTY - number of files modified locally but not uploaded
+  - UPLOADING - number of files currently being uploaded
+- fs - file system path
 ` + getVFSHelp,
 	})
 
@@ -586,7 +589,8 @@ This returns a JSON object with the following fields:
 		Fn:    rcFileStatus,
 		Title: "Get detailed cache status of one or more files.",
 		Help: `
-This returns detailed cache status of files including name and percentage.
+This returns detailed cache status of files including name, status, percentage,
+size, cached bytes, dirty flag, and uploading status.
 
 This takes the following parameters:
 
@@ -598,7 +602,15 @@ This returns a JSON object with the following fields:
 - files - array of file objects with fields:
   - name - leaf name of the file
   - status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
-  - percentage - percentage cached (0-100)
+  - percentage - cache percentage (0-100), representing the percentage of the file cached locally
+  - uploading - whether the file is currently being uploaded
+  - size - total file size in bytes
+  - cachedBytes - bytes cached locally
+  - dirty - whether the file has uncommitted modifications
+- fs - file system path
+
+Note: The percentage field is always 100 for "FULL", "DIRTY", and "UPLOADING" status
+files since the local file is complete. It is only meaningful for "PARTIAL" status files.
 ` + getVFSHelp,
 	})
 
@@ -650,12 +662,21 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
-	// Validate directory - check if it's actually a directory
+	// Validate directory if specified - ensure it's actually a directory
 	// This prevents files from being accepted in the directory endpoint
+	// Note: We skip this check for the root (empty) path since we're querying cache anyway
 	if dirPath != "" {
 		node, err := vfs.Stat(dirPath)
 		if err != nil {
-			return nil, err
+			// If directory doesn't exist in VFS, we'll just return empty results
+			// This allows the endpoint to work for directories that haven't been read yet
+			filesByStatus := map[string][]rc.Params{}
+			return rc.Params{
+				"dir":       dirPath,
+				"files":     filesByStatus,
+				"recursive": false,
+				"fs":        fs.ConfigString(vfs.Fs()),
+			}, nil
 		}
 		if !node.IsDir() {
 			return nil, fmt.Errorf("path %q is not a directory: %s", dirPath, node.Name())
@@ -668,17 +689,11 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, fmt.Errorf("invalid recursive parameter: %w", err)
 	}
 
-	// Get files status using the new optimized method
+	// Get files status using the cache
 	var filesByStatus map[string][]rc.Params
 	if vfs.cache == nil {
 		// If cache is not enabled, return empty results
-		filesByStatus = map[string][]rc.Params{
-			"FULL":      {},
-			"PARTIAL":   {},
-			"NONE":      {},
-			"DIRTY":     {},
-			"UPLOADING": {},
-		}
+		filesByStatus = map[string][]rc.Params{}
 	} else {
 		filesByStatus = vfs.cache.GetStatusForDir(dirPath, recursive)
 	}
@@ -754,7 +769,26 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 			})
 			continue
 		}
-		item := vfs.cache.Item(path)
+		// Use FindItem to avoid creating cache entries for non-existent files
+		item := vfs.cache.FindItem(path)
+		if item == nil {
+			// File not in cache, return NONE status
+			size := int64(0)
+			// Attempt to get the file size from VFS
+			if node, err := vfs.Stat(path); err == nil {
+				size = node.Size()
+			}
+			results = append(results, rc.Params{
+				"name":        filepath.Base(path),
+				"status":      "NONE",
+				"percentage":  0,
+				"uploading":   false,
+				"size":        size,
+				"cachedBytes": 0,
+				"dirty":       false,
+			})
+			continue
+		}
 		status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
 		isUploading := status == "UPLOADING"
 		results = append(results, rc.Params{
@@ -775,73 +809,6 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	}, nil
 }
 
-func init() {
-	rc.Add(rc.Call{
-		Path:  "vfs/file-status",
-		Fn:    rcFileStatus,
-		Title: "Get detailed cache status of one or more files.",
-		Help: `
-This returns detailed cache status of files including name and percentage.
-
-This takes the following parameters:
-
-- fs - select VFS in use (optional)
-- file - path to the file to get status of (can be repeated as file1, file2, etc.)
-
-This returns a JSON object with the following fields:
-
-- files - array of file objects with fields:
-  - name - leaf name of the file
-  - status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
-  - percentage - cache percentage (0-100)
-  - uploading - whether the file is currently being uploaded
-  - size - total file size
-  - cachedBytes - bytes cached locally
-  - dirty - whether the file has uncommitted modifications
-  - fs - file system path
-
-Example:
-  rclone rc vfs/file-status file=document.pdf
-
-For multiple files:
-  rclone rc vfs/file-status file=a file=b
-` + getVFSHelp,
-	})
-}
-
-func init() {
-	rc.Add(rc.Call{
-		Path:  "vfs/file-status",
-		Fn:    rcFileStatus,
-		Title: "Get detailed cache status of one or more files.",
-		Help: `
-This returns detailed cache status of files including name and percentage.
-
-This takes the following parameters:
-
-- fs - select VFS in use (optional)
-- file - path to the file to get status of (can be repeated as file1, file2, etc.)
-
-This returns a JSON object with the following fields:
-
-- files - array of file objects with fields:
-  - name - leaf name of the file
-  - status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
-  - percentage - cache percentage (0-100)
-  - uploading - whether the file is currently being uploaded
-  - size - total file size
-  - cachedBytes - bytes cached locally
-  - dirty - whether the file has uncommitted modifications
-- fs - file system path
-
-Example:
-  rclone rc vfs/file-status file=document.pdf
-
-For multiple files:
-  rclone rc vfs/file-status file=a file=b
-` + getVFSHelp,
-	})
-
 func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	vfs, err := getVFS(in)
 	if err != nil {
@@ -851,13 +818,16 @@ func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if vfs.cache == nil {
 		return rc.Params{
 			"totalFiles":             0,
-			"fullCount":              0,
-			"partialCount":           0,
-			"noneCount":              0,
-			"dirtyCount":             0,
-			"uploadingCount":         0,
 			"totalCachedBytes":       0,
 			"averageCachePercentage": 0,
+			"counts": rc.Params{
+				"FULL":      0,
+				"PARTIAL":   0,
+				"NONE":      0,
+				"DIRTY":     0,
+				"UPLOADING": 0,
+			},
+			"fs": fs.ConfigString(vfs.Fs()),
 		}, nil
 	}
 
@@ -866,12 +836,15 @@ func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 	return rc.Params{
 		"totalFiles":             stats.TotalFiles,
-		"fullCount":              stats.FullCount,
-		"partialCount":           stats.PartialCount,
-		"noneCount":              stats.NoneCount,
-		"dirtyCount":             stats.DirtyCount,
-		"uploadingCount":         stats.UploadingCount,
 		"totalCachedBytes":       stats.TotalCachedBytes,
 		"averageCachePercentage": stats.AverageCachePercentage,
+		"counts": rc.Params{
+			"FULL":      stats.FullCount,
+			"PARTIAL":   stats.PartialCount,
+			"NONE":      stats.NoneCount,
+			"DIRTY":     stats.DirtyCount,
+			"UPLOADING": stats.UploadingCount,
+		},
+		"fs": fs.ConfigString(vfs.Fs()),
 	}, nil
 }
