@@ -145,8 +145,8 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "download_cache",
-			Help:     "Enable download cache for opened files.\n\nGoogle Photos download URLs do not support HTTP Range requests, so\nwithout caching every seek triggers a full re-download. When enabled\n(the default), each file is downloaded once to a local temp file and\nshared across all concurrent readers, with instant seeking support.\n\nDisable this if you only do sequential reads (e.g. rclone copy/sync)\nand want to avoid temp file disk usage. When disabled, Open() returns\nthe raw HTTP response body with no seeking or sharing support.",
-			Default:  true,
+			Help:     "Enable download cache for opened files.\n\nGoogle Photos download URLs do not support HTTP Range requests.\nWhen enabled, each opened file is downloaded once to a local temp\nfile and shared across concurrent readers, with instant seeking.\nThis is useful for rclone mount where the VFS layer needs to seek.\n\nWhen disabled (the default), Open() returns the raw HTTP stream\ndirectly with no temp files. Use --vfs-cache-mode full for mount.",
+			Default:  false,
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,

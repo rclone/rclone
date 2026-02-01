@@ -268,18 +268,16 @@ delete it.
 ## Download cache
 
 Google Photos download URLs do not support HTTP Range requests (partial
-reads). By default the backend enables a **download cache** that downloads
-each opened file to a local temp file in the background and serves reads
-from there. This gives you:
+reads). By default the backend streams downloads directly with no temp
+files, which works well for `rclone copy` and `rclone sync`.
 
-- **Seeking** within an already-opened file is instant (data is on disk)
-- **Multiple opens** of the same file share one download
-- Temp files are cleaned up 30 seconds after the last reader closes
-
-You can disable the download cache with:
+For `rclone mount` or other use cases that need seeking, you can enable
+the optional **download cache**:
 
 ```console
-rclone copy mygphotos:media/ /local/path/ --gphotos-mobile-download-cache=false
+rclone mount mygphotos: /mnt/gphotos \
+    --vfs-cache-mode full \
+    --gphotos-mobile-download-cache=true
 ```
 
 or in your rclone config:
@@ -288,24 +286,21 @@ or in your rclone config:
 [mygphotos]
 type = gphotos_mobile
 auth_data = ...
-download_cache = false
+download_cache = true
 ```
 
-When disabled, `Open()` returns the raw HTTP response body directly with
-no temp files and no seeking support. This is ideal for **sequential reads**
-like `rclone copy` and `rclone sync` since it avoids disk usage for temp
-files. However, it is **not suitable for `rclone mount`** because the VFS
-layer needs to seek within files.
+When enabled, each opened file is downloaded once to a local temp file
+in the background and shared across concurrent readers. This gives you:
+
+- **Seeking** within an already-opened file is instant (data is on disk)
+- **Multiple opens** of the same file share one download
+- Temp files are cleaned up 30 seconds after the last reader closes
 
 ## Mount
 
-When using `rclone mount`, you **must** use `--vfs-cache-mode full` and
-keep `download_cache` enabled (the default).
-
-The download cache provides the seeking support that the VFS layer needs.
-For video playback, the file needs to buffer enough data before playback
-starts. Larger files take longer to start but once buffered, seeking is
-instant.
+When using `rclone mount`, you **must** use `--vfs-cache-mode full`.
+You may also want to enable `download_cache` for better seeking
+performance, though the VFS cache layer can handle it on its own.
 
 Recommended mount flags:
 
@@ -321,17 +316,13 @@ rclone mount mygphotos: /mnt/gphotos \
 
 ### No Range request support
 
-Google Photos download URLs do not support HTTP Range headers. When the
-download cache is enabled (default), the backend works around this by
-downloading entire files to local temp files and serving reads from there.
-This means:
+Google Photos download URLs do not support HTTP Range headers. The
+backend streams each download from byte 0. For `rclone copy`/`rclone sync`
+this is fine since files are read sequentially.
 
-- First access to a large file may be slow (must download fully)
-- Additional disk space is used for temp files during downloads
-- Streaming video from mount requires buffering time
-
-If you only do sequential reads (e.g. `rclone copy`/`rclone sync`), you
-can set `download_cache = false` to skip temp files entirely. See the
+For `rclone mount`, use `--vfs-cache-mode full` so the VFS layer caches
+files locally. You can optionally enable `download_cache = true` for
+additional seeking support at the backend level. See the
 [Download cache](#download-cache) section.
 
 ### Uploads are media files only
