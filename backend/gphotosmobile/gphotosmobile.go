@@ -45,7 +45,7 @@ func init() {
 				deviceModel, _ := m.Get("device_model")
 				deviceMake, _ := m.Get("device_make")
 				api := NewMobileAPI(ctx, authData, deviceModel, deviceMake)
-				_, err := api.bearerToken()
+				_, err := api.bearerToken(ctx)
 				if err != nil {
 					return fs.ConfigError("", fmt.Sprintf("Authentication failed for %s: %v\nCheck that your auth_data is correct and not expired.", email, err))
 				}
@@ -361,12 +361,12 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	sha1B64 := base64.StdEncoding.EncodeToString(sha1Bytes)
 
 	// Check if already exists
-	mediaKey, err := f.api.FindRemoteMediaByHash(sha1Bytes)
+	mediaKey, err := f.api.FindRemoteMediaByHash(ctx, sha1Bytes)
 	if err == nil && mediaKey != "" {
 		fs.Debugf(f, "File %q already exists with media key %s", remote, mediaKey)
 	} else {
 		// Upload
-		uploadToken, err := f.api.GetUploadToken(sha1B64, size)
+		uploadToken, err := f.api.GetUploadToken(ctx, sha1B64, size)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get upload token: %w", err)
 		}
@@ -376,14 +376,14 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 			return nil, fmt.Errorf("failed to seek temp file: %w", err)
 		}
 
-		uploadResp, err := f.api.UploadFile(tmpFile, size, uploadToken)
+		uploadResp, err := f.api.UploadFile(ctx, tmpFile, size, uploadToken)
 		if err != nil {
 			return nil, fmt.Errorf("upload failed: %w", err)
 		}
 
 		_, fileName := path.Split(remote)
 		fileName = f.opt.Enc.ToStandardName(fileName)
-		mediaKey, err = f.api.CommitUpload(uploadResp, fileName, sha1Bytes)
+		mediaKey, err = f.api.CommitUpload(ctx, uploadResp, fileName, sha1Bytes)
 		if err != nil {
 			return nil, fmt.Errorf("commit upload failed: %w", err)
 		}
@@ -511,7 +511,7 @@ func (f *Fs) fullCacheInit(ctx context.Context) error {
 	}
 
 	// Get initial library state
-	respData, err := f.api.GetLibraryState(stateToken)
+	respData, err := f.api.GetLibraryState(ctx, stateToken)
 	if err != nil {
 		return fmt.Errorf("get library state failed: %w", err)
 	}
@@ -548,7 +548,7 @@ func (f *Fs) fullCacheInit(ctx context.Context) error {
 // processInitPages processes paginated init responses
 func (f *Fs) processInitPages(ctx context.Context, pageToken string) error {
 	for pageToken != "" {
-		respData, err := f.api.GetLibraryPageInit(pageToken)
+		respData, err := f.api.GetLibraryPageInit(ctx, pageToken)
 		if err != nil {
 			return fmt.Errorf("get library page init failed: %w", err)
 		}
@@ -588,7 +588,7 @@ func (f *Fs) incrementalSync(ctx context.Context) error {
 		return nil
 	}
 
-	respData, err := f.api.GetLibraryState(stateToken)
+	respData, err := f.api.GetLibraryState(ctx, stateToken)
 	if err != nil {
 		return fmt.Errorf("incremental sync failed: %w", err)
 	}
@@ -625,7 +625,7 @@ func (f *Fs) incrementalSync(ctx context.Context) error {
 // processPages processes paginated delta responses
 func (f *Fs) processPages(ctx context.Context, stateToken, pageToken string) error {
 	for pageToken != "" {
-		respData, err := f.api.GetLibraryPage(pageToken, stateToken)
+		respData, err := f.api.GetLibraryPage(ctx, pageToken, stateToken)
 		if err != nil {
 			return fmt.Errorf("get library page failed: %w", err)
 		}
@@ -658,7 +658,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	// Send a sync request with empty state token to get the full response
 	// including account info at root.1.4. Incremental responses (with state
 	// token) only include changed items and omit the account info block.
-	respData, err := f.api.GetLibraryState("")
+	respData, err := f.api.GetLibraryState(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get library state: %w", err)
 	}
@@ -767,7 +767,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	// Get or start a shared download for this media key
-	entry, err := o.fs.dlCache.getOrStart(o.media.MediaKey, o.media.SizeBytes)
+	entry, err := o.fs.dlCache.getOrStart(ctx, o.media.MediaKey, o.media.SizeBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start download: %w", err)
 	}
@@ -812,7 +812,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	if !o.hasMedia || o.media.DedupKey == "" {
 		return errors.New("no dedup key available for trash operation")
 	}
-	err := o.fs.api.MoveToTrash([]string{o.media.DedupKey})
+	err := o.fs.api.MoveToTrash(ctx, []string{o.media.DedupKey})
 	if err != nil {
 		return err
 	}

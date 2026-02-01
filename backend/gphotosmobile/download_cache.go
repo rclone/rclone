@@ -44,7 +44,7 @@ func newDownloadCache(api *MobileAPI) *downloadCache {
 }
 
 // getOrStart returns an existing download entry or starts a new one
-func (dc *downloadCache) getOrStart(mediaKey string, totalSize int64) (*downloadEntry, error) {
+func (dc *downloadCache) getOrStart(ctx context.Context, mediaKey string, totalSize int64) (*downloadEntry, error) {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
 
@@ -74,14 +74,14 @@ func (dc *downloadCache) getOrStart(mediaKey string, totalSize int64) (*download
 	dc.entries[mediaKey] = entry
 
 	// Start background download
-	go dc.download(entry, mediaKey)
+	go dc.download(ctx, entry, mediaKey)
 
 	return entry, nil
 }
 
 // download fetches the file and writes to the entry's temp file
-func (dc *downloadCache) download(entry *downloadEntry, mediaKey string) {
-	downloadURL, err := dc.api.GetDownloadURL(mediaKey)
+func (dc *downloadCache) download(ctx context.Context, entry *downloadEntry, mediaKey string) {
+	downloadURL, err := dc.api.GetDownloadURL(ctx, mediaKey)
 	if err != nil {
 		entry.mu.Lock()
 		entry.dlErr = err
@@ -90,7 +90,7 @@ func (dc *downloadCache) download(entry *downloadEntry, mediaKey string) {
 		return
 	}
 
-	body, err := dc.api.DownloadFile(downloadURL)
+	body, err := dc.api.DownloadFile(ctx, downloadURL)
 	if err != nil {
 		entry.mu.Lock()
 		entry.dlErr = err

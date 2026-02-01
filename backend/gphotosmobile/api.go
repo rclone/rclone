@@ -69,7 +69,7 @@ func NewMobileAPI(ctx context.Context, authData, model, deviceMake string) *Mobi
 }
 
 // bearerToken returns the current auth token, refreshing if needed
-func (a *MobileAPI) bearerToken() (string, error) {
+func (a *MobileAPI) bearerToken(ctx context.Context) (string, error) {
 	a.authMu.Lock()
 	defer a.authMu.Unlock()
 
@@ -77,7 +77,7 @@ func (a *MobileAPI) bearerToken() (string, error) {
 	expiry, _ := strconv.ParseInt(expiryStr, 10, 64)
 
 	if expiry <= time.Now().Unix() {
-		resp, err := a.getAuthToken()
+		resp, err := a.getAuthToken(ctx)
 		if err != nil {
 			return "", fmt.Errorf("auth token refresh failed: %w", err)
 		}
@@ -91,7 +91,7 @@ func (a *MobileAPI) bearerToken() (string, error) {
 	return token, nil
 }
 
-func (a *MobileAPI) getAuthToken() (map[string]string, error) {
+func (a *MobileAPI) getAuthToken(ctx context.Context) (map[string]string, error) {
 	authDataValues, err := url.ParseQuery(a.authData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse auth data: %w", err)
@@ -113,7 +113,7 @@ func (a *MobileAPI) getAuthToken() (map[string]string, error) {
 		"Token":                        {authDataValues.Get("Token")},
 	}
 
-	req, err := http.NewRequest("POST", "https://android.googleapis.com/auth",
+	req, err := http.NewRequestWithContext(ctx, "POST", "https://android.googleapis.com/auth",
 		strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
@@ -157,8 +157,8 @@ func (a *MobileAPI) getAuthToken() (map[string]string, error) {
 }
 
 // commonHeaders returns headers used for most API calls
-func (a *MobileAPI) commonHeaders() (map[string]string, error) {
-	token, err := a.bearerToken()
+func (a *MobileAPI) commonHeaders(ctx context.Context) (map[string]string, error) {
+	token, err := a.bearerToken(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func (a *MobileAPI) commonHeaders() (map[string]string, error) {
 }
 
 // doProtoRequest makes a protobuf API request with retries
-func (a *MobileAPI) doProtoRequest(urlStr string, body []byte) ([]byte, error) {
+func (a *MobileAPI) doProtoRequest(ctx context.Context, urlStr string, body []byte) ([]byte, error) {
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
 		if attempt > 0 {
@@ -182,7 +182,7 @@ func (a *MobileAPI) doProtoRequest(urlStr string, body []byte) ([]byte, error) {
 			fs.Debugf(nil, "Retrying request to %s (attempt %d)", urlStr, attempt+1)
 		}
 
-		result, err := a.doProtoRequestOnce(urlStr, body)
+		result, err := a.doProtoRequestOnce(ctx, urlStr, body)
 		if err == nil {
 			return result, nil
 		}
@@ -192,13 +192,13 @@ func (a *MobileAPI) doProtoRequest(urlStr string, body []byte) ([]byte, error) {
 	return nil, lastErr
 }
 
-func (a *MobileAPI) doProtoRequestOnce(urlStr string, body []byte) ([]byte, error) {
-	headers, err := a.commonHeaders()
+func (a *MobileAPI) doProtoRequestOnce(ctx context.Context, urlStr string, body []byte) ([]byte, error) {
+	headers, err := a.commonHeaders(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", urlStr, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, "POST", urlStr, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -240,37 +240,37 @@ func readResponseBody(resp *http.Response) ([]byte, error) {
 // --- API Methods ---
 
 // GetLibraryState gets the library state (incremental or initial)
-func (a *MobileAPI) GetLibraryState(stateToken string) ([]byte, error) {
+func (a *MobileAPI) GetLibraryState(ctx context.Context, stateToken string) ([]byte, error) {
 	body := buildGetLibStateRequest(stateToken)
-	return a.doProtoRequest(
+	return a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/6439526531001121323/18047484249733410717",
 		body,
 	)
 }
 
 // GetLibraryPageInit gets a library page during init
-func (a *MobileAPI) GetLibraryPageInit(pageToken string) ([]byte, error) {
+func (a *MobileAPI) GetLibraryPageInit(ctx context.Context, pageToken string) ([]byte, error) {
 	body := buildGetLibPageInitRequest(pageToken)
-	return a.doProtoRequest(
+	return a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/6439526531001121323/18047484249733410717",
 		body,
 	)
 }
 
 // GetLibraryPage gets a library page (delta update)
-func (a *MobileAPI) GetLibraryPage(pageToken, stateToken string) ([]byte, error) {
+func (a *MobileAPI) GetLibraryPage(ctx context.Context, pageToken, stateToken string) ([]byte, error) {
 	body := buildGetLibPageRequest(pageToken, stateToken)
-	return a.doProtoRequest(
+	return a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/6439526531001121323/18047484249733410717",
 		body,
 	)
 }
 
 // FindRemoteMediaByHash checks if a file with the given SHA1 hash exists
-func (a *MobileAPI) FindRemoteMediaByHash(sha1Hash []byte) (string, error) {
+func (a *MobileAPI) FindRemoteMediaByHash(ctx context.Context, sha1Hash []byte) (string, error) {
 	body := buildHashCheckRequest(sha1Hash)
 
-	respBytes, err := a.doProtoRequest(
+	respBytes, err := a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/6439526531001121323/5084965799730810217",
 		body,
 	)
@@ -301,7 +301,7 @@ func (a *MobileAPI) FindRemoteMediaByHash(sha1Hash []byte) (string, error) {
 }
 
 // GetUploadToken obtains an upload token
-func (a *MobileAPI) GetUploadToken(sha1B64 string, fileSize int64) (string, error) {
+func (a *MobileAPI) GetUploadToken(ctx context.Context, sha1B64 string, fileSize int64) (string, error) {
 	// Build protobuf: {1: 2, 2: 2, 3: 1, 4: 3, 7: fileSize}
 	b := NewProtoBuilder()
 	b.AddVarint(1, 2)
@@ -310,12 +310,12 @@ func (a *MobileAPI) GetUploadToken(sha1B64 string, fileSize int64) (string, erro
 	b.AddVarint(4, 3)
 	b.AddVarint(7, uint64(fileSize))
 
-	token, err := a.bearerToken()
+	token, err := a.bearerToken(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	req, err := http.NewRequest("POST",
+	req, err := http.NewRequestWithContext(ctx, "POST",
 		"https://photos.googleapis.com/data/upload/uploadmedia/interactive",
 		bytes.NewReader(b.Bytes()))
 	if err != nil {
@@ -349,15 +349,15 @@ func (a *MobileAPI) GetUploadToken(sha1B64 string, fileSize int64) (string, erro
 }
 
 // UploadFile uploads file data using the upload token, returns raw protobuf response
-func (a *MobileAPI) UploadFile(body io.Reader, size int64, uploadToken string) ([]byte, error) {
-	token, err := a.bearerToken()
+func (a *MobileAPI) UploadFile(ctx context.Context, body io.Reader, size int64, uploadToken string) ([]byte, error) {
+	token, err := a.bearerToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	uploadURL := "https://photos.googleapis.com/data/upload/uploadmedia/interactive?upload_id=" + uploadToken
 
-	req, err := http.NewRequest("PUT", uploadURL, body)
+	req, err := http.NewRequestWithContext(ctx, "PUT", uploadURL, body)
 	if err != nil {
 		return nil, err
 	}
@@ -383,10 +383,10 @@ func (a *MobileAPI) UploadFile(body io.Reader, size int64, uploadToken string) (
 }
 
 // CommitUpload commits the uploaded file
-func (a *MobileAPI) CommitUpload(uploadResponse []byte, fileName string, sha1Hash []byte) (string, error) {
+func (a *MobileAPI) CommitUpload(ctx context.Context, uploadResponse []byte, fileName string, sha1Hash []byte) (string, error) {
 	body := buildCommitUploadRequest(uploadResponse, fileName, sha1Hash, a.model, a.deviceMake)
 
-	respBytes, err := a.doProtoRequest(
+	respBytes, err := a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/6439526531001121323/16538846908252377752",
 		body,
 	)
@@ -416,9 +416,9 @@ func (a *MobileAPI) CommitUpload(uploadResponse []byte, fileName string, sha1Has
 }
 
 // MoveToTrash moves items to trash by dedup keys
-func (a *MobileAPI) MoveToTrash(dedupKeys []string) error {
+func (a *MobileAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
 	body := buildMoveToTrashRequest(dedupKeys)
-	_, err := a.doProtoRequest(
+	_, err := a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
 		body,
 	)
@@ -426,10 +426,10 @@ func (a *MobileAPI) MoveToTrash(dedupKeys []string) error {
 }
 
 // GetDownloadURL gets the download URL for a media item
-func (a *MobileAPI) GetDownloadURL(mediaKey string) (string, error) {
+func (a *MobileAPI) GetDownloadURL(ctx context.Context, mediaKey string) (string, error) {
 	body := buildGetDownloadURLsRequest(mediaKey)
 
-	respBytes, err := a.doProtoRequest(
+	respBytes, err := a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/$rpc/social.frontend.photos.preparedownloaddata.v1.PhotosPrepareDownloadDataService/PhotosPrepareDownload",
 		body,
 	)
@@ -483,13 +483,13 @@ func (a *MobileAPI) GetDownloadURL(mediaKey string) (string, error) {
 }
 
 // DownloadFile downloads a file from the given URL
-func (a *MobileAPI) DownloadFile(downloadURL string, options ...fs.OpenOption) (io.ReadCloser, error) {
-	token, err := a.bearerToken()
+func (a *MobileAPI) DownloadFile(ctx context.Context, downloadURL string, options ...fs.OpenOption) (io.ReadCloser, error) {
+	token, err := a.bearerToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", downloadURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
 	if err != nil {
 		return nil, err
 	}
