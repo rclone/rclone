@@ -86,12 +86,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+
+	"github.com/rclone/rclone/backend/gphotosmobile/api"
 )
 
 // ParseDbUpdate parses the library state response into tokens, media items, and deletions.
 // This is a direct port of gpmc's db_update_parser.py parse_db_update function.
 // Returns: (state_token, next_page_token, media_items, media_keys_to_delete)
-func ParseDbUpdate(data []byte) (string, string, []MediaItem, []string) {
+func ParseDbUpdate(data []byte) (string, string, []api.MediaItem, []string) {
 	root, err := DecodeRaw(data)
 	if err != nil {
 		return "", "", nil, nil
@@ -110,7 +112,7 @@ func ParseDbUpdate(data []byte) (string, string, []MediaItem, []string) {
 	stateToken := field1.GetString(6)
 
 	// Parse media items from field 1.2 (repeated)
-	var mediaItems []MediaItem
+	var mediaItems []api.MediaItem
 	mediaEntries, _ := field1.GetRepeatedMessages(2)
 	for _, entry := range mediaEntries {
 		item, err := parseMediaItem(entry)
@@ -134,7 +136,7 @@ func ParseDbUpdate(data []byte) (string, string, []MediaItem, []string) {
 
 // parseMediaItem parses a single media item from decoded protobuf.
 // Port of _parse_media_item from db_update_parser.py
-func parseMediaItem(d ProtoMap) (*MediaItem, error) {
+func parseMediaItem(d ProtoMap) (*api.MediaItem, error) {
 	// d["1"] = media_key
 	mediaKey := d.GetString(1)
 	if mediaKey == "" {
@@ -156,7 +158,7 @@ func parseMediaItem(d ProtoMap) (*MediaItem, error) {
 	// d["17"] = location info (optional)
 	locInfo, _ := d.GetMessage(17)
 
-	item := &MediaItem{
+	item := &api.MediaItem{
 		MediaKey: mediaKey,
 	}
 

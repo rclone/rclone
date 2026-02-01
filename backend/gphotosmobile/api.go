@@ -67,9 +67,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rclone/rclone/backend/gphotosmobile/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/lib/pacer"
 )
 
 const (
@@ -79,7 +81,12 @@ const (
 	defaultAndroidAPI = 35 // Android 15, shipped with Pixel 9a
 )
 
-// MobileAPI is the Google Photos mobile API client
+// MobileAPI is the Google Photos mobile API client.
+//
+// This client uses raw HTTP with protobuf encoding rather than lib/rest
+// because the Google Photos mobile API uses application/x-protobuf
+// (binary protobuf), not JSON/XML REST. The standard lib/rest helpers
+// (CallJSON, CallXML) are not applicable.
 type MobileAPI struct {
 	authData   string
 	language   string
@@ -89,6 +96,7 @@ type MobileAPI struct {
 	apkVersion int64
 	androidAPI int64
 	client     *http.Client
+	pacer      *fs.Pacer
 	authCache  map[string]string
 	authMu     sync.Mutex
 }
@@ -114,7 +122,7 @@ func NewMobileAPI(ctx context.Context, authData, model, deviceMake string, apkVe
 		androidAPI = defaultAndroidAPI
 	}
 
-	api := &MobileAPI{
+	a := &MobileAPI{
 		authData:   authData,
 		language:   language,
 		model:      model,
@@ -122,15 +130,16 @@ func NewMobileAPI(ctx context.Context, authData, model, deviceMake string, apkVe
 		apkVersion: apkVersion,
 		androidAPI: androidAPI,
 		client:     fshttp.NewClient(ctx),
+		pacer:      fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(100*time.Millisecond))),
 		authCache:  map[string]string{"Expiry": "0", "Auth": ""},
 	}
 
-	api.userAgent = fmt.Sprintf(
+	a.userAgent = fmt.Sprintf(
 		"com.google.android.apps.photos/%d (Linux; U; Android 9; %s; %s; Build/PQ2A.190205.001; Cronet/127.0.6510.5) (gzip)",
 		apkVersion, language, model,
 	)
 
-	return api
+	return a
 }
 
 // bearerToken returns the current auth token, refreshing if needed.
@@ -189,48 +198,53 @@ func (a *MobileAPI) getAuthToken(ctx context.Context) (map[string]string, error)
 		"service":                      {authDataValues.Get("service")},
 		"Token":                        {authDataValues.Get("Token")},
 	}
+	formBody := form.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://android.googleapis.com/auth",
-		strings.NewReader(form.Encode()))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Accept-Encoding", "gzip")
-	req.Header.Set("app", "com.google.android.apps.photos")
-	req.Header.Set("Connection", "Keep-Alive")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("device", authDataValues.Get("androidId"))
-	req.Header.Set("User-Agent", "GoogleAuth/1.4 (Pixel XL PQ2A.190205.001); gzip")
-
-	resp, err := a.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("auth request failed: %w", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("auth failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	body, err := readResponseBody(resp)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string]string)
-	for _, line := range strings.Split(string(body), "\n") {
-		line = strings.TrimSpace(line)
-		if parts := strings.SplitN(line, "=", 2); len(parts) == 2 {
-			result[parts[0]] = parts[1]
+	var result map[string]string
+	err = a.pacer.Call(func() (bool, error) {
+		req, err := http.NewRequestWithContext(ctx, "POST", "https://android.googleapis.com/auth",
+			strings.NewReader(formBody))
+		if err != nil {
+			return false, err
 		}
-	}
 
-	if result["Auth"] == "" {
-		return nil, fmt.Errorf("auth response missing Auth token")
-	}
-	return result, nil
+		req.Header.Set("Accept-Encoding", "gzip")
+		req.Header.Set("app", "com.google.android.apps.photos")
+		req.Header.Set("Connection", "Keep-Alive")
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("device", authDataValues.Get("androidId"))
+		req.Header.Set("User-Agent", "GoogleAuth/1.4 (Pixel XL PQ2A.190205.001); gzip")
+
+		resp, err := a.client.Do(req)
+		if err != nil {
+			return shouldRetry(ctx, err)
+		}
+		defer func() { _ = resp.Body.Close() }()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			body, _ := io.ReadAll(resp.Body)
+			return shouldRetry(ctx, &api.Error{StatusCode: resp.StatusCode, Body: string(body)})
+		}
+
+		body, err := readResponseBody(resp)
+		if err != nil {
+			return false, err
+		}
+
+		result = make(map[string]string)
+		for _, line := range strings.Split(string(body), "\n") {
+			line = strings.TrimSpace(line)
+			if parts := strings.SplitN(line, "=", 2); len(parts) == 2 {
+				result[parts[0]] = parts[1]
+			}
+		}
+
+		if result["Auth"] == "" {
+			return false, fmt.Errorf("auth response missing Auth token")
+		}
+		return false, nil
+	})
+	return result, err
 }
 
 // commonHeaders returns headers used for most API calls
@@ -250,90 +264,51 @@ func (a *MobileAPI) commonHeaders(ctx context.Context) (map[string]string, error
 	}, nil
 }
 
-// retryableStatusCodes lists HTTP status codes that should be retried.
-var retryableStatusCodes = []int{
+// retryErrorCodes is a slice of error codes that we will retry
+var retryErrorCodes = []int{
 	429, // Too Many Requests
 	500, // Internal Server Error
 	502, // Bad Gateway
 	503, // Service Unavailable
 	504, // Gateway Timeout
+	509, // Bandwidth Limit Exceeded
 }
 
-// apiError represents an HTTP error response from the API.
-// It carries the status code so the retry logic can distinguish
-// retryable server errors (5xx, 429) from permanent client errors (4xx).
-type apiError struct {
-	StatusCode int
-	Body       string
-}
-
-func (e *apiError) Error() string {
-	return fmt.Sprintf("API error %d: %s", e.StatusCode, e.Body)
-}
-
-// shouldRetryAPI returns true if the error deserves a retry.
-// It retries on:
-//   - network-level errors (timeouts, connection resets, etc.) via fserrors.ShouldRetry
-//   - HTTP 429 and 5xx via the status code in apiError
-//
-// It does NOT retry on:
-//   - context cancellation/deadline exceeded
-//   - HTTP 4xx (except 429) — these are permanent client errors
-func shouldRetryAPI(ctx context.Context, err error) bool {
+// shouldRetry returns a boolean as to whether this err deserves to
+// be retried. It returns the err as a convenience.
+func shouldRetry(ctx context.Context, err error) (bool, error) {
 	if err == nil {
-		return false
+		return false, nil
 	}
-	// Never retry if the context is done
 	if fserrors.ContextError(ctx, &err) {
-		return false
+		return false, err
 	}
 	// Check for retryable HTTP status codes
-	var ae *apiError
+	var ae *api.Error
 	if errors.As(err, &ae) {
-		for _, code := range retryableStatusCodes {
+		for _, code := range retryErrorCodes {
 			if ae.StatusCode == code {
-				return true
+				return true, err
 			}
 		}
-		return false // non-retryable HTTP error (400, 401, 403, 404, etc.)
+		return false, err // non-retryable HTTP error (400, 401, 403, 404, etc.)
 	}
 	// For network errors, use rclone's standard retry logic
-	return fserrors.ShouldRetry(err)
+	return fserrors.ShouldRetry(err), err
 }
 
-// doProtoRequest makes a protobuf API request with up to 3 attempts.
-// It only retries on retryable errors (network errors, 429, 5xx) using
-// exponential backoff with jitter. Non-retryable errors (400, 403, 404)
-// are returned immediately.
+// doProtoRequest makes a protobuf API request with automatic retry.
+// It uses rclone's standard pacer for exponential backoff and respects
+// --low-level-retries. Only retryable errors (network errors, 429, 5xx)
+// are retried; non-retryable errors (400, 403, 404) are returned immediately.
 func (a *MobileAPI) doProtoRequest(ctx context.Context, urlStr string, body []byte) ([]byte, error) {
-	var lastErr error
-	for attempt := 0; attempt < 3; attempt++ {
-		if attempt > 0 {
-			// Exponential backoff: 1s, 2s (+ up to 500ms jitter)
-			baseDelay := time.Duration(1<<(attempt-1)) * time.Second
-			jitter := time.Duration(time.Now().UnixNano()%500) * time.Millisecond
-			delay := baseDelay + jitter
-			fs.Debugf(nil, "Retrying request to %s (attempt %d/%d, backoff %v)", urlStr, attempt+1, 3, delay)
-			timer := time.NewTimer(delay)
-			select {
-			case <-ctx.Done():
-				timer.Stop()
-				return nil, ctx.Err()
-			case <-timer.C:
-			}
-		}
-
-		result, err := a.doProtoRequestOnce(ctx, urlStr, body)
-		if err == nil {
-			return result, nil
-		}
-		lastErr = err
-		if !shouldRetryAPI(ctx, err) {
-			return nil, err // non-retryable, return immediately
-		}
-		fs.Debugf(nil, "Request to %s failed (retryable): %v", urlStr, err)
-	}
-	return nil, lastErr
+	var result []byte
+	err := a.pacer.Call(func() (bool, error) {
+		var err error
+		result, err = a.doProtoRequestOnce(ctx, urlStr, body)
+		return shouldRetry(ctx, err)
+	})
+	return result, err
 }
 
 func (a *MobileAPI) doProtoRequestOnce(ctx context.Context, urlStr string, body []byte) ([]byte, error) {
@@ -359,7 +334,7 @@ func (a *MobileAPI) doProtoRequestOnce(ctx context.Context, urlStr string, body 
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		respBody, _ := io.ReadAll(resp.Body)
-		return nil, &apiError{StatusCode: resp.StatusCode, Body: string(respBody)}
+		return nil, &api.Error{StatusCode: resp.StatusCode, Body: string(respBody)}
 	}
 
 	return readResponseBody(resp)
@@ -469,46 +444,54 @@ func (a *MobileAPI) GetUploadToken(ctx context.Context, sha1B64 string, fileSize
 	b.AddVarint(3, 1)
 	b.AddVarint(4, 3)
 	b.AddVarint(7, uint64(fileSize))
+	protoBody := b.Bytes()
 
-	token, err := a.bearerToken(ctx)
-	if err != nil {
-		return "", err
-	}
+	var uploadToken string
+	err := a.pacer.Call(func() (bool, error) {
+		token, err := a.bearerToken(ctx)
+		if err != nil {
+			return false, err
+		}
 
-	req, err := http.NewRequestWithContext(ctx, "POST",
-		"https://photos.googleapis.com/data/upload/uploadmedia/interactive",
-		bytes.NewReader(b.Bytes()))
-	if err != nil {
-		return "", err
-	}
+		req, err := http.NewRequestWithContext(ctx, "POST",
+			"https://photos.googleapis.com/data/upload/uploadmedia/interactive",
+			bytes.NewReader(protoBody))
+		if err != nil {
+			return false, err
+		}
 
-	req.Header.Set("Accept-Encoding", "gzip")
-	req.Header.Set("Accept-Language", a.language)
-	req.Header.Set("Content-Type", "application/x-protobuf")
-	req.Header.Set("User-Agent", a.userAgent)
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("X-Goog-Hash", "sha1="+sha1B64)
-	req.Header.Set("X-Upload-Content-Length", strconv.FormatInt(fileSize, 10))
+		req.Header.Set("Accept-Encoding", "gzip")
+		req.Header.Set("Accept-Language", a.language)
+		req.Header.Set("Content-Type", "application/x-protobuf")
+		req.Header.Set("User-Agent", a.userAgent)
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("X-Goog-Hash", "sha1="+sha1B64)
+		req.Header.Set("X-Upload-Content-Length", strconv.FormatInt(fileSize, 10))
 
-	resp, err := a.client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer func() { _ = resp.Body.Close() }()
+		resp, err := a.client.Do(req)
+		if err != nil {
+			return shouldRetry(ctx, err)
+		}
+		defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("upload token error %d: %s", resp.StatusCode, string(body))
-	}
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			body, _ := io.ReadAll(resp.Body)
+			return shouldRetry(ctx, &api.Error{StatusCode: resp.StatusCode, Body: string(body)})
+		}
 
-	uploadToken := resp.Header.Get("X-GUploader-UploadID")
-	if uploadToken == "" {
-		return "", fmt.Errorf("missing X-GUploader-UploadID header")
-	}
-	return uploadToken, nil
+		uploadToken = resp.Header.Get("X-GUploader-UploadID")
+		if uploadToken == "" {
+			return false, fmt.Errorf("missing X-GUploader-UploadID header")
+		}
+		return false, nil
+	})
+	return uploadToken, err
 }
 
-// UploadFile uploads file data using the upload token, returns raw protobuf response
+// UploadFile uploads file data using the upload token, returns raw protobuf response.
+// Note: the body is a stream and cannot be replayed, so this method does not
+// use the pacer for retry. The caller (Put) should handle retries at a higher level.
+// Non-2xx responses are returned as *api.Error for consistent error handling.
 func (a *MobileAPI) UploadFile(ctx context.Context, body io.Reader, size int64, uploadToken string) ([]byte, error) {
 	token, err := a.bearerToken(ctx)
 	if err != nil {
@@ -535,8 +518,8 @@ func (a *MobileAPI) UploadFile(ctx context.Context, body io.Reader, size int64, 
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("upload error %d: %s", resp.StatusCode, string(body))
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, &api.Error{StatusCode: resp.StatusCode, Body: string(respBody)}
 	}
 
 	return readResponseBody(resp)
@@ -670,47 +653,63 @@ func (a *MobileAPI) GetDownloadURL(ctx context.Context, mediaKey string) (string
 	return downloadURL, nil
 }
 
-// DownloadFile downloads a file from the given URL
+// DownloadFile downloads a file from the given URL.
+// It uses the pacer to retry on transient errors.
 func (a *MobileAPI) DownloadFile(ctx context.Context, downloadURL string, options ...fs.OpenOption) (io.ReadCloser, error) {
-	token, err := a.bearerToken(ctx)
+	var resp *http.Response
+	err := a.pacer.Call(func() (bool, error) {
+		token, err := a.bearerToken(ctx)
+		if err != nil {
+			return false, err
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
+		if err != nil {
+			return false, err
+		}
+
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("User-Agent", a.userAgent)
+
+		// Apply range/seek headers from OpenOptions
+		fs.OpenOptionAddHTTPHeaders(req.Header, options)
+
+		resp, err = a.client.Do(req)
+		if err != nil {
+			return shouldRetry(ctx, err)
+		}
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			body, _ := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			return shouldRetry(ctx, &api.Error{StatusCode: resp.StatusCode, Body: string(body)})
+		}
+		return false, nil
+	})
 	if err != nil {
 		return nil, err
 	}
+	return resp.Body, nil
+}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", downloadURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("User-Agent", a.userAgent)
-
-	// Apply range headers if present
-	for _, option := range options {
-		switch o := option.(type) {
-		case *fs.RangeOption:
-			if o.Start >= 0 && o.End >= 0 {
-				req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", o.Start, o.End))
-			} else if o.Start >= 0 {
-				req.Header.Set("Range", fmt.Sprintf("bytes=%d-", o.Start))
-			} else if o.End >= 0 {
-				req.Header.Set("Range", fmt.Sprintf("bytes=-%d", o.End))
-			}
-		case *fs.SeekOption:
-			req.Header.Set("Range", fmt.Sprintf("bytes=%d-", o.Offset))
+// parseEmail extracts the email from URL-encoded auth data
+func parseEmail(authData string) string {
+	for param := range strings.SplitSeq(authData, "&") {
+		if after, ok := strings.CutPrefix(param, "Email="); ok {
+			email := after
+			email = strings.ReplaceAll(email, "%40", "@")
+			return email
 		}
 	}
+	return ""
+}
 
-	resp, err := a.client.Do(req)
-	if err != nil {
-		return nil, err
+// parseLanguage extracts the language from URL-encoded auth data
+func parseLanguage(authData string) string {
+	for param := range strings.SplitSeq(authData, "&") {
+		if after, ok := strings.CutPrefix(param, "lang="); ok {
+			return after
+		}
 	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		_ = resp.Body.Close()
-		return nil, fmt.Errorf("download error %d: %s", resp.StatusCode, string(body))
-	}
-
-	return resp.Body, nil
+	return ""
 }

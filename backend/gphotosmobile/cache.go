@@ -39,6 +39,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/rclone/rclone/backend/gphotosmobile/api"
 	"github.com/rclone/rclone/fs/config"
 	_ "modernc.org/sqlite" // sqlite driver registration
 )
@@ -159,7 +160,7 @@ func (c *Cache) Close() error {
 }
 
 // UpsertItems inserts or updates media items
-func (c *Cache) UpsertItems(items []MediaItem) error {
+func (c *Cache) UpsertItems(items []api.MediaItem) error {
 	if len(items) == 0 {
 		return nil
 	}
@@ -283,7 +284,7 @@ func (c *Cache) DeleteItems(mediaKeys []string) error {
 }
 
 // GetByFileName retrieves a media item by filename
-func (c *Cache) GetByFileName(fileName string) (*MediaItem, error) {
+func (c *Cache) GetByFileName(fileName string) (*api.MediaItem, error) {
 	row := c.db.QueryRow(`SELECT
 		media_key, file_name, dedup_key, is_canonical, type, caption,
 		collection_id, size_bytes, quota_charged_bytes, origin,
@@ -300,7 +301,7 @@ func (c *Cache) GetByFileName(fileName string) (*MediaItem, error) {
 }
 
 // GetByDedupKey looks up a media item by its dedup_key
-func (c *Cache) GetByDedupKey(dedupKey string) (*MediaItem, error) {
+func (c *Cache) GetByDedupKey(dedupKey string) (*api.MediaItem, error) {
 	row := c.db.QueryRow(`SELECT
 		media_key, file_name, dedup_key, is_canonical, type, caption,
 		collection_id, size_bytes, quota_charged_bytes, origin,
@@ -317,7 +318,7 @@ func (c *Cache) GetByDedupKey(dedupKey string) (*MediaItem, error) {
 }
 
 // GetByMediaKey looks up a media item by its media_key
-func (c *Cache) GetByMediaKey(mediaKey string) (*MediaItem, error) {
+func (c *Cache) GetByMediaKey(mediaKey string) (*api.MediaItem, error) {
 	row := c.db.QueryRow(`SELECT
 		media_key, file_name, dedup_key, is_canonical, type, caption,
 		collection_id, size_bytes, quota_charged_bytes, origin,
@@ -334,7 +335,7 @@ func (c *Cache) GetByMediaKey(mediaKey string) (*MediaItem, error) {
 }
 
 // ListAll returns all non-trashed media items
-func (c *Cache) ListAll() ([]MediaItem, error) {
+func (c *Cache) ListAll() ([]api.MediaItem, error) {
 	rows, err := c.db.Query(`SELECT
 		media_key, file_name, dedup_key, is_canonical, type, caption,
 		collection_id, size_bytes, quota_charged_bytes, origin,
@@ -352,7 +353,7 @@ func (c *Cache) ListAll() ([]MediaItem, error) {
 	}
 	defer func() { _ = rows.Close() }()
 
-	var items []MediaItem
+	var items []api.MediaItem
 	for rows.Next() {
 		item, err := scanMediaItemFromRows(rows)
 		if err != nil {
@@ -430,9 +431,9 @@ func (c *Cache) SetLastSyncTime(ts int64) error {
 	return err
 }
 
-// scanMediaItem scans a row into a MediaItem
-func scanMediaItem(row *sql.Row) (*MediaItem, error) {
-	var item MediaItem
+// scanMediaItem scans a row into a api.MediaItem
+func scanMediaItem(row *sql.Row) (*api.MediaItem, error) {
+	var item api.MediaItem
 	var isCanonical, isArchived, isFavorite, isLocked, isOriginalQuality, isEdited, isMicroVideo int
 	var caption, collectionID, origin, remoteURL, locationName, locationID, cameraMake, cameraModel, sha1Hash sql.NullString
 	var lat, lon, aperture, shutterSpeed, focalLength, captureFrameRate, encodedFrameRate sql.NullFloat64
@@ -493,8 +494,8 @@ func scanMediaItem(row *sql.Row) (*MediaItem, error) {
 }
 
 // scanMediaItemFromRows scans from sql.Rows
-func scanMediaItemFromRows(rows *sql.Rows) (*MediaItem, error) {
-	var item MediaItem
+func scanMediaItemFromRows(rows *sql.Rows) (*api.MediaItem, error) {
+	var item api.MediaItem
 	var isCanonical, isArchived, isFavorite, isLocked, isOriginalQuality, isEdited, isMicroVideo int
 	var caption, collectionID, origin, remoteURL, locationName, locationID, cameraMake, cameraModel, sha1Hash sql.NullString
 	var lat, lon, aperture, shutterSpeed, focalLength, captureFrameRate, encodedFrameRate sql.NullFloat64

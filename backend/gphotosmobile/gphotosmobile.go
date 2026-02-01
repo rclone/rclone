@@ -84,6 +84,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rclone/rclone/backend/gphotosmobile/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -333,7 +334,7 @@ type Fs struct {
 	root      string         // the path we are working on
 	opt       Options        // parsed options
 	features  *fs.Features   // optional features
-	api       *MobileAPI     // mobile API client
+	api       *MobileAPI     // mobile API client (includes pacer for rate limiting/retry)
 	cache     *Cache         // SQLite cache
 	cacheMu   sync.Mutex     // protects cache operations
 	startTime time.Time      // time Fs was started
@@ -343,10 +344,10 @@ type Fs struct {
 
 // Object describes a Google Photos media item
 type Object struct {
-	fs       *Fs       // parent Fs
-	remote   string    // remote path
-	media    MediaItem // cached media item info
-	hasMedia bool      // whether media info is populated
+	fs       *Fs           // parent Fs
+	remote   string        // remote path
+	media    api.MediaItem // cached media item info
+	hasMedia bool          // whether media info is populated
 }
 
 // ------------------------------------------------------------
@@ -366,12 +367,6 @@ func (f *Fs) String() string {
 
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features { return f.features }
-
-// Precision of the remote
-func (f *Fs) Precision() time.Duration { return fs.ModTimeNotSupported }
-
-// Hashes returns the supported hash sets
-func (f *Fs) Hashes() hash.Set { return hash.Set(hash.SHA1) }
 
 // NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -424,7 +419,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMetadata:  true,
 	}).Fill(ctx, f)
 
-	// Check if root points to a file
+	// Check if root points to a file.
+	// Note: this calls NewObject which triggers ensureCachePopulated,
+	// so it may cause a full library sync on first run.
 	if root != "" {
 		_, leaf := path.Split(root)
 		_, err := f.NewObject(ctx, leaf)
@@ -440,6 +437,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	return f, nil
 }
+
+// Precision of the remote
+func (f *Fs) Precision() time.Duration { return fs.ModTimeNotSupported }
+
+// Hashes returns the supported hash sets
+func (f *Fs) Hashes() hash.Set { return hash.Set(hash.SHA1) }
 
 // NewObject finds the Object at remote
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
@@ -476,7 +479,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // findByDedupSuffix parses a filename with a dedup suffix (base_<key>.ext)
 // and looks up the item by its dedup_key or media_key.
-func (f *Fs) findByDedupSuffix(fileName string) (*MediaItem, error) {
+func (f *Fs) findByDedupSuffix(fileName string) (*api.MediaItem, error) {
 	ext := path.Ext(fileName)
 	base := fileName[:len(fileName)-len(ext)]
 
@@ -655,7 +658,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	_ = f.ensureCachePopulated(ctx)
 
 	// Try to populate full metadata from cache
-	media := MediaItem{
+	media := api.MediaItem{
 		MediaKey:  mediaKey,
 		FileName:  path.Base(remote),
 		SizeBytes: size,

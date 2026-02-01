@@ -1,4 +1,12 @@
-package gphotosmobile
+// Package api provides types used by the Google Photos Mobile API.
+//
+// Unlike most rclone backends that define JSON-tagged types for REST APIs,
+// these types are populated from raw protobuf wire format responses
+// (see parser.go) and persisted to a local SQLite cache (see cache.go).
+// The `db:` struct tags correspond to SQLite column names.
+package api
+
+import "fmt"
 
 // MediaItem represents a media item in Google Photos.
 // Fields match the Python gpmc MediaItem dataclass. See parser.go for
@@ -9,7 +17,7 @@ package gphotosmobile
 //     fetch download URLs and as the SQLite primary key.
 //   - DedupKey:  URL-safe base64 of the SHA1 hash (e.g. "x7K9m..."). Used for
 //     trash operations and deterministic duplicate filename suffixes.
-//   - SHA1Hash:  lowercase hex SHA1 of the original file bytes (e.g. "c7b2bd...").
+//   - SHA1Hash:  lowercase hex SHA1 hash of the original file bytes (e.g. "c7b2bd...").
 //     Exposed via rclone's hash interface for integrity checking.
 type MediaItem struct {
 	MediaKey                string  `db:"media_key"`
@@ -53,4 +61,17 @@ type MediaItem struct {
 	MicroVideoWidth         int64   `db:"micro_video_width"`
 	MicroVideoHeight        int64   `db:"micro_video_height"`
 	SHA1Hash                string  `db:"sha1_hash"` // lowercase hex SHA1 hash of original file
+}
+
+// Error represents an HTTP error response from the API.
+// It carries the status code so the retry logic can distinguish
+// retryable server errors (5xx, 429) from permanent client errors (4xx).
+type Error struct {
+	StatusCode int
+	Body       string
+}
+
+// Error satisfies the error interface
+func (e *Error) Error() string {
+	return fmt.Sprintf("API error %d: %s", e.StatusCode, e.Body)
 }
