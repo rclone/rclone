@@ -1,9 +1,9 @@
-package gphotos_mobile
+package gphotosmobile
 
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/tls"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fshttp"
 )
 
 const (
-	defaultTimeout    = 300 * time.Second
 	clientVersionCode = 49029607
 	androidAPIVersion = 28
 	defaultModel      = "Pixel 9a"
@@ -26,19 +26,20 @@ const (
 
 // MobileAPI is the Google Photos mobile API client
 type MobileAPI struct {
-	authData  string
-	proxy     string
-	language  string
-	userAgent string
-	model     string
-	make_     string
-	client    *http.Client
-	authCache map[string]string
-	authMu    sync.Mutex
+	authData   string
+	language   string
+	userAgent  string
+	model      string
+	deviceMake string
+	client     *http.Client
+	authCache  map[string]string
+	authMu     sync.Mutex
 }
 
-// NewMobileAPI creates a new mobile API client
-func NewMobileAPI(authData, proxy, model, make_ string) *MobileAPI {
+// NewMobileAPI creates a new mobile API client.
+// It uses rclone's fshttp transport which respects global flags like
+// --proxy, --timeout, --dump, --tpslimit, etc.
+func NewMobileAPI(ctx context.Context, authData, model, deviceMake string) *MobileAPI {
 	language := parseLanguage(authData)
 	if language == "" {
 		language = "en_US"
@@ -46,17 +47,17 @@ func NewMobileAPI(authData, proxy, model, make_ string) *MobileAPI {
 	if model == "" {
 		model = defaultModel
 	}
-	if make_ == "" {
-		make_ = defaultMake
+	if deviceMake == "" {
+		deviceMake = defaultMake
 	}
 
 	api := &MobileAPI{
-		authData:  authData,
-		proxy:     proxy,
-		language:  language,
-		model:     model,
-		make_:     make_,
-		authCache: map[string]string{"Expiry": "0", "Auth": ""},
+		authData:   authData,
+		language:   language,
+		model:      model,
+		deviceMake: deviceMake,
+		client:     fshttp.NewClient(ctx),
+		authCache:  map[string]string{"Expiry": "0", "Auth": ""},
 	}
 
 	api.userAgent = fmt.Sprintf(
@@ -64,26 +65,7 @@ func NewMobileAPI(authData, proxy, model, make_ string) *MobileAPI {
 		clientVersionCode, language, model,
 	)
 
-	api.client = api.newHTTPClient()
-
 	return api
-}
-
-func (a *MobileAPI) newHTTPClient() *http.Client {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-
-	if a.proxy != "" {
-		proxyURL, err := url.Parse(a.proxy)
-		if err == nil {
-			transport.Proxy = http.ProxyURL(proxyURL)
-			transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		}
-	}
-
-	return &http.Client{
-		Transport: transport,
-		Timeout:   defaultTimeout,
-	}
 }
 
 // bearerToken returns the current auth token, refreshing if needed
@@ -148,7 +130,7 @@ func (a *MobileAPI) getAuthToken() (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("auth request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
@@ -229,7 +211,7 @@ func (a *MobileAPI) doProtoRequestOnce(urlStr string, body []byte) ([]byte, erro
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		respBody, _ := io.ReadAll(resp.Body)
@@ -248,7 +230,7 @@ func readResponseBody(resp *http.Response) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("gzip decode failed: %w", err)
 		}
-		defer gzReader.Close()
+		defer func() { _ = gzReader.Close() }()
 		reader = gzReader
 	}
 
@@ -352,7 +334,7 @@ func (a *MobileAPI) GetUploadToken(sha1B64 string, fileSize int64) (string, erro
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
@@ -389,7 +371,7 @@ func (a *MobileAPI) UploadFile(data []byte, uploadToken string) ([]byte, error) 
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
@@ -401,7 +383,7 @@ func (a *MobileAPI) UploadFile(data []byte, uploadToken string) ([]byte, error) 
 
 // CommitUpload commits the uploaded file
 func (a *MobileAPI) CommitUpload(uploadResponse []byte, fileName string, sha1Hash []byte) (string, error) {
-	body := buildCommitUploadRequest(uploadResponse, fileName, sha1Hash, a.model, a.make_)
+	body := buildCommitUploadRequest(uploadResponse, fileName, sha1Hash, a.model, a.deviceMake)
 
 	respBytes, err := a.doProtoRequest(
 		"https://photosdata-pa.googleapis.com/6439526531001121323/16538846908252377752",
@@ -537,7 +519,7 @@ func (a *MobileAPI) DownloadFile(downloadURL string, options ...fs.OpenOption) (
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		return nil, fmt.Errorf("download error %d: %s", resp.StatusCode, string(body))
 	}
 

@@ -1,5 +1,5 @@
-// Package gphotos_mobile provides an interface to Google Photos via the mobile API
-package gphotos_mobile
+// Package gphotosmobile provides an interface to Google Photos via the mobile API
+package gphotosmobile
 
 import (
 	"context"
@@ -15,13 +15,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
-)
-
-var (
-	errReadOnly  = errors.New("google photos mobile backend is read-only for directories")
-	errNoRemove  = errors.New("google photos mobile backend does not support permanent deletion, use move to trash")
-	errNotFound  = fs.ErrorObjectNotFound
-	errCantMkdir = errors.New("can't make directories - use album: prefix to create albums")
 )
 
 // Register with Fs
@@ -44,10 +37,9 @@ func init() {
 					return nil, nil
 				}
 				// Test the auth by getting a bearer token
-				proxy, _ := m.Get("proxy")
 				deviceModel, _ := m.Get("device_model")
 				deviceMake, _ := m.Get("device_make")
-				api := NewMobileAPI(authData, proxy, deviceModel, deviceMake)
+				api := NewMobileAPI(ctx, authData, deviceModel, deviceMake)
 				_, err := api.bearerToken()
 				if err != nil {
 					return fs.ConfigError("", fmt.Sprintf("Authentication failed for %s: %v\nCheck that your auth_data is correct and not expired.", email, err))
@@ -62,11 +54,6 @@ func init() {
 			Help:      "Google Photos mobile API auth data.\n\nThis is the auth string containing your Android device credentials\nfor Google Photos. It starts with 'androidId='.\n\nSee the documentation for instructions on how to obtain it\nusing Google Photos ReVanced and ADB logcat.",
 			Required:  true,
 			Sensitive: true,
-		}, {
-			Name:     "proxy",
-			Help:     "HTTP proxy URL.\n\nFormat: protocol://user:pass@host:port",
-			Default:  "",
-			Advanced: true,
 		}, {
 			Name:     "cache_db_path",
 			Help:     "Path to SQLite cache database.\n\nLeave empty for default (~/.gpmc/<email>/storage.db).\nThe cache stores the media library index locally for fast listing.",
@@ -89,7 +76,6 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	AuthData    string `config:"auth_data"`
-	Proxy       string `config:"proxy"`
 	CacheDBPath string `config:"cache_db_path"`
 	DeviceModel string `config:"device_model"`
 	DeviceMake  string `config:"device_make"`
@@ -159,7 +145,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root = ""
 	}
 
-	api := NewMobileAPI(authData, opt.Proxy, opt.DeviceModel, opt.DeviceMake)
+	api := NewMobileAPI(ctx, authData, opt.DeviceModel, opt.DeviceMake)
 
 	// Determine cache path
 	cachePath := opt.CacheDBPath
@@ -321,17 +307,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Put uploads a file
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
-	size := src.Size()
 
 	// Read the file into memory for hashing and upload
 	data, err := io.ReadAll(in)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
-	if int64(len(data)) != size && size >= 0 {
-		// Allow size mismatch if size is unknown (-1)
-	}
-
 	// Calculate SHA1
 	sha1Bytes, sha1B64 := calculateSHA1(data)
 

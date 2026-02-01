@@ -1,4 +1,4 @@
-package gphotos_mobile
+package gphotosmobile
 
 // MediaItem represents a media item in Google Photos (matching Python gpmc MediaItem)
 type MediaItem struct {

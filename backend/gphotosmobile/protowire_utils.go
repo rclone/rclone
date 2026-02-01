@@ -1,4 +1,4 @@
-package gphotos_mobile
+package gphotosmobile
 
 // protowire_utils provides raw protobuf wire encoding/decoding utilities.
 // This is the Go equivalent of what blackboxprotobuf does in Python -

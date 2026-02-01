@@ -1,4 +1,4 @@
-package gphotos_mobile
+package gphotosmobile
 
 import (
 	"encoding/base64"
@@ -234,10 +234,10 @@ func parseMediaItem(d ProtoMap) (*MediaItem, error) {
 		// videoInfo["6"] = frame rates
 		if frameInfo, err := videoInfo.GetMessage(6); err == nil {
 			if v := frameInfo.GetVarint(4); v != 0 {
-				item.CaptureFrameRate = Int64ToFloat(int64(v))
+				item.CaptureFrameRate = Int64ToFloat(v)
 			}
 			if v := frameInfo.GetVarint(5); v != 0 {
-				item.EncodedFrameRate = Int64ToFloat(int64(v))
+				item.EncodedFrameRate = Int64ToFloat(v)
 			}
 		}
 	}

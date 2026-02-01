@@ -1,4 +1,4 @@
-package gphotos_mobile
+package gphotosmobile
 
 import (
 	"crypto/sha1"

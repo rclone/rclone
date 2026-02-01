@@ -1,4 +1,4 @@
-package gphotos_mobile
+package gphotosmobile
 
 import (
 	"database/sql"
@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	_ "modernc.org/sqlite"
+	_ "modernc.org/sqlite" // sqlite driver registration
 )
 
 // Cache wraps SQLite storage for the media library index
@@ -31,7 +31,7 @@ func NewCache(dbPath string) (*Cache, error) {
 
 	c := &Cache{db: db}
 	if err := c.createTables(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 
@@ -136,7 +136,7 @@ func (c *Cache) UpsertItems(items []MediaItem) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	stmt, err := tx.Prepare(`
 	INSERT INTO remote_media (
@@ -204,7 +204,7 @@ func (c *Cache) UpsertItems(items []MediaItem) error {
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer func() { _ = stmt.Close() }()
 
 	for _, item := range items {
 		_, err = stmt.Exec(
@@ -301,7 +301,7 @@ func (c *Cache) ListAll() ([]MediaItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var items []MediaItem
 	for rows.Next() {
@@ -392,7 +392,7 @@ func (c *Cache) SetLastSyncTime(ts int64) error {
 func scanMediaItem(row *sql.Row) (*MediaItem, error) {
 	var item MediaItem
 	var isCanonical, isArchived, isFavorite, isLocked, isOriginalQuality, isEdited, isMicroVideo int
-	var caption, collectionID, origin, remoteURL, locationName, locationID, make_, model_, sha1Hash sql.NullString
+	var caption, collectionID, origin, remoteURL, locationName, locationID, cameraMake, cameraModel, sha1Hash sql.NullString
 	var lat, lon, aperture, shutterSpeed, focalLength, captureFrameRate, encodedFrameRate sql.NullFloat64
 	var timezoneOffset, width, height, uploadStatus, trashTimestamp, iso, duration, microW, microH sql.NullInt64
 
@@ -405,7 +405,7 @@ func scanMediaItem(row *sql.Row) (*MediaItem, error) {
 		&trashTimestamp, &isArchived, &isFavorite,
 		&isLocked, &isOriginalQuality,
 		&lat, &lon, &locationName, &locationID,
-		&isEdited, &make_, &model_,
+		&isEdited, &cameraMake, &cameraModel,
 		&aperture, &shutterSpeed, &iso, &focalLength,
 		&duration, &captureFrameRate, &encodedFrameRate,
 		&isMicroVideo, &microW, &microH, &sha1Hash,
@@ -427,8 +427,8 @@ func scanMediaItem(row *sql.Row) (*MediaItem, error) {
 	item.RemoteURL = nullStr(remoteURL)
 	item.LocationName = nullStr(locationName)
 	item.LocationID = nullStr(locationID)
-	item.Make = nullStr(make_)
-	item.Model = nullStr(model_)
+	item.Make = nullStr(cameraMake)
+	item.Model = nullStr(cameraModel)
 	item.TimezoneOffset = nullInt(timezoneOffset)
 	item.Width = nullInt(width)
 	item.Height = nullInt(height)
@@ -454,7 +454,7 @@ func scanMediaItem(row *sql.Row) (*MediaItem, error) {
 func scanMediaItemFromRows(rows *sql.Rows) (*MediaItem, error) {
 	var item MediaItem
 	var isCanonical, isArchived, isFavorite, isLocked, isOriginalQuality, isEdited, isMicroVideo int
-	var caption, collectionID, origin, remoteURL, locationName, locationID, make_, model_, sha1Hash sql.NullString
+	var caption, collectionID, origin, remoteURL, locationName, locationID, cameraMake, cameraModel, sha1Hash sql.NullString
 	var lat, lon, aperture, shutterSpeed, focalLength, captureFrameRate, encodedFrameRate sql.NullFloat64
 	var timezoneOffset, width, height, uploadStatus, trashTimestamp, iso, duration, microW, microH sql.NullInt64
 
@@ -467,7 +467,7 @@ func scanMediaItemFromRows(rows *sql.Rows) (*MediaItem, error) {
 		&trashTimestamp, &isArchived, &isFavorite,
 		&isLocked, &isOriginalQuality,
 		&lat, &lon, &locationName, &locationID,
-		&isEdited, &make_, &model_,
+		&isEdited, &cameraMake, &cameraModel,
 		&aperture, &shutterSpeed, &iso, &focalLength,
 		&duration, &captureFrameRate, &encodedFrameRate,
 		&isMicroVideo, &microW, &microH, &sha1Hash,
@@ -489,8 +489,8 @@ func scanMediaItemFromRows(rows *sql.Rows) (*MediaItem, error) {
 	item.RemoteURL = nullStr(remoteURL)
 	item.LocationName = nullStr(locationName)
 	item.LocationID = nullStr(locationID)
-	item.Make = nullStr(make_)
-	item.Model = nullStr(model_)
+	item.Make = nullStr(cameraMake)
+	item.Model = nullStr(cameraModel)
 	item.TimezoneOffset = nullInt(timezoneOffset)
 	item.Width = nullInt(width)
 	item.Height = nullInt(height)

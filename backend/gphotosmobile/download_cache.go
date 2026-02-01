@@ -1,4 +1,4 @@
-package gphotos_mobile
+package gphotosmobile
 
 import (
 	"context"
@@ -98,7 +98,7 @@ func (dc *downloadCache) download(entry *downloadEntry, mediaKey string) {
 		entry.mu.Unlock()
 		return
 	}
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 
 	buf := make([]byte, 256*1024)
 	for {
@@ -148,8 +148,8 @@ func (dc *downloadCache) release(mediaKey string) {
 
 			// Re-check: someone may have opened it again
 			if atomic.LoadInt32(&entry.refCount) <= 0 {
-				entry.tmpFile.Close()
-				os.Remove(entry.path)
+				_ = entry.tmpFile.Close()
+				_ = os.Remove(entry.path)
 				delete(dc.entries, mediaKey)
 				fs.Debugf(nil, "Download cache evicted %s", mediaKey)
 			}
