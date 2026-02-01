@@ -371,15 +371,42 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	return o, nil
 }
 
-// Mkdir creates the directory if it doesn't exist
+// Mkdir creates the directory if it doesn't exist.
+// Only the virtual "media" directory is accepted.
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	// We support creating album directories in the future
-	return nil
+	fullDir := dir
+	if f.root != "" {
+		if dir != "" {
+			fullDir = f.root + "/" + dir
+		} else {
+			fullDir = f.root
+		}
+	}
+	switch fullDir {
+	case "", "media":
+		// These virtual directories always exist
+		return nil
+	}
+	return fs.ErrorDirNotFound
 }
 
-// Rmdir removes the directory
+// Rmdir removes the directory.
+// Virtual directories cannot be removed.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return nil
+	fullDir := dir
+	if f.root != "" {
+		if dir != "" {
+			fullDir = f.root + "/" + dir
+		} else {
+			fullDir = f.root
+		}
+	}
+	switch fullDir {
+	case "", "media":
+		// Virtual directories cannot be removed
+		return errors.New("can't remove virtual directory")
+	}
+	return fs.ErrorDirNotFound
 }
 
 // syncIntervalSeconds controls how often incremental syncs happen
