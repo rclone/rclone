@@ -1458,21 +1458,10 @@ func (item *Item) VFSStatusCache() string {
 	return status
 }
 
-// _vfsStatusCacheWithPercentage is the implementation of VFSStatusCacheWithPercentage but without the lock
-//
+// _vfsStatusCacheWithPercentageNoLock is the implementation of VFSStatusCacheWithPercentage
+// but without checking upload status (which requires writeback.mu)
 // Must be called with the lock held
-func (item *Item) _vfsStatusCacheWithPercentage() (string, int) {
-	// Check if item is being uploaded
-	if item.writeBackID != 0 {
-		if item.c.writeback != nil {
-			// Check upload status
-			isUploading := item.c.writeback.IsUploading(item.writeBackID)
-			if isUploading {
-				return "UPLOADING", 100
-			}
-		}
-	}
-
+func (item *Item) _vfsStatusCacheWithPercentageNoLock() (string, int) {
 	// Check if item is dirty (modified but not uploaded yet)
 	if item.info.Dirty {
 		return "DIRTY", 100
@@ -1509,19 +1498,55 @@ func (item *Item) _vfsStatusCacheWithPercentage() (string, int) {
 // VFSStatusCacheWithPercentage returns the cache status of the file along with percentage cached.
 // Returns status string and percentage (0-100).
 func (item *Item) VFSStatusCacheWithPercentage() (string, int) {
+	// Check upload status first without holding item.mu to respect lock ordering
+	// writeback.mu must be taken before item.mu
+	item.mu.Lock()
+	writeBackID := item.writeBackID
+	item.mu.Unlock()
+
+	if writeBackID != 0 {
+		if item.c.writeback != nil {
+			isUploading := item.c.writeback.IsUploading(writeBackID)
+			if isUploading {
+				return "UPLOADING", 100
+			}
+		}
+	}
+
+	// Now acquire lock for the rest of the status check
 	item.mu.Lock()
 	defer item.mu.Unlock()
-	return item._vfsStatusCacheWithPercentage()
+	return item._vfsStatusCacheWithPercentageNoLock()
 }
 
 // VFSStatusCacheDetailed returns detailed cache status information for the file.
 // Returns status string, percentage (0-100), total size, cached size, and dirty flag.
 func (item *Item) VFSStatusCacheDetailed() (string, int, int64, int64, bool) {
+	// Check upload status first without holding item.mu to respect lock ordering
+	// writeback.mu must be taken before item.mu
+	item.mu.Lock()
+	writeBackID := item.writeBackID
+	item.mu.Unlock()
+
+	isUploading := false
+	if writeBackID != 0 {
+		if item.c.writeback != nil {
+			isUploading = item.c.writeback.IsUploading(writeBackID)
+		}
+	}
+
+	// Now acquire lock for the rest of the status check
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
-	// Get basic status and percentage
-	status, percentage := item._vfsStatusCacheWithPercentage()
+	var status string
+	var percentage int
+
+	if isUploading {
+		status, percentage = "UPLOADING", 100
+	} else {
+		status, percentage = item._vfsStatusCacheWithPercentageNoLock()
+	}
 
 	// Get size information
 	totalSize := item.info.Size
