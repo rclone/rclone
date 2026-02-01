@@ -78,6 +78,7 @@
 //	    2.1: media_key             // string, key of the deleted item
 //	  }
 //	}
+
 package gphotosmobile
 
 import (

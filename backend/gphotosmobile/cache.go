@@ -29,6 +29,7 @@
 // Override: cache_db_path config option.
 //
 // Deleting the .db file forces a full re-sync on next run.
+
 package gphotosmobile
 
 import (

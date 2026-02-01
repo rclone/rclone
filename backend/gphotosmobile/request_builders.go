@@ -49,6 +49,7 @@
 //
 // Upload uses a different flow — see buildCommitUploadRequest for its structure.
 // Hash check, trash, and download URL requests each have their own simple formats.
+
 package gphotosmobile
 
 import (

@@ -31,6 +31,7 @@
 //   - The background download goroutine uses the context from the first
 //     Open() call. If that context is cancelled, the download fails for
 //     all subsequent readers sharing that entry.
+
 package gphotosmobile
 
 import (

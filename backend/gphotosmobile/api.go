@@ -48,6 +48,7 @@
 //
 // The numeric path segments (e.g. 6439526531001121323/18047484249733410717)
 // are opaque service/method identifiers embedded in the Google Photos APK.
+
 package gphotosmobile
 
 import (
