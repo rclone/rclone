@@ -729,8 +729,8 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	// Collect status for each file
 	results := make([]rc.Params, 0, len(paths))
 	for _, path := range paths {
-		item := vfs.cache.Item(path)
-		if item == nil {
+		// Check if cache is enabled to avoid panic
+		if vfs.cache == nil {
 			results = append(results, rc.Params{
 				"name":        filepath.Base(path),
 				"status":      "NONE",
@@ -742,6 +742,7 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 			})
 			continue
 		}
+		item := vfs.cache.Item(path)
 		status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
 		isUploading := status == "UPLOADING"
 		results = append(results, rc.Params{
