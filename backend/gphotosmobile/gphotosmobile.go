@@ -495,6 +495,13 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return fs.ErrorDirNotFound
 }
 
+// Shutdown closes the SQLite cache database and cleans up any download
+// cache temp files. Called by rclone when the Fs is no longer needed.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	f.dlCache.shutdown()
+	return f.cache.Close()
+}
+
 // Rmdir removes the directory.
 // Virtual directories cannot be removed.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
@@ -922,8 +929,9 @@ func (o *Object) ID() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs      = (*Fs)(nil)
-	_ fs.Abouter = (*Fs)(nil)
-	_ fs.Object  = (*Object)(nil)
-	_ fs.IDer    = (*Object)(nil)
+	_ fs.Fs         = (*Fs)(nil)
+	_ fs.Abouter    = (*Fs)(nil)
+	_ fs.Shutdowner = (*Fs)(nil)
+	_ fs.Object     = (*Object)(nil)
+	_ fs.IDer       = (*Object)(nil)
 )

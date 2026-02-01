@@ -160,6 +160,19 @@ func (dc *downloadCache) download(ctx context.Context, entry *downloadEntry, med
 	}
 }
 
+// shutdown closes all temp files and removes them from disk.
+// Called during Fs.Shutdown to ensure no temp files are leaked.
+func (dc *downloadCache) shutdown() {
+	dc.mu.Lock()
+	defer dc.mu.Unlock()
+
+	for key, entry := range dc.entries {
+		_ = entry.tmpFile.Close()
+		_ = os.Remove(entry.path)
+		delete(dc.entries, key)
+	}
+}
+
 // release decrements ref count and cleans up if no readers remain
 func (dc *downloadCache) release(mediaKey string) {
 	dc.mu.Lock()
