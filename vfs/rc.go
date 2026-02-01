@@ -607,10 +607,13 @@ This returns a JSON object with the following fields:
   - size - total file size in bytes
   - cachedBytes - bytes cached locally
   - dirty - whether the file has uncommitted modifications
+  - error - error message if there was an error getting file information (optional)
 - fs - file system path
 
 Note: The percentage field is always 100 for "FULL", "DIRTY", and "UPLOADING" status
 files since the local file is complete. It is only meaningful for "PARTIAL" status files.
+If the file cannot be found or accessed, an "error" field will be included with the
+error message.
 ` + getVFSHelp,
 	})
 
@@ -754,11 +757,14 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 		// Check if cache is enabled to avoid panic
 		if vfs.cache == nil {
 			size := int64(0)
+			sizeError := ""
 			// Attempt to get the file size from VFS even if cache is off
 			if node, err := vfs.Stat(path); err == nil {
 				size = node.Size()
+			} else {
+				sizeError = err.Error()
 			}
-			results = append(results, rc.Params{
+			result := rc.Params{
 				"name":        filepath.Base(path),
 				"status":      "NONE",
 				"percentage":  0,
@@ -766,7 +772,11 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 				"size":        size,
 				"cachedBytes": 0,
 				"dirty":       false,
-			})
+			}
+			if sizeError != "" {
+				result["error"] = sizeError
+			}
+			results = append(results, result)
 			continue
 		}
 		// Use FindItem to avoid creating cache entries for non-existent files
@@ -774,11 +784,14 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 		if item == nil {
 			// File not in cache, return NONE status
 			size := int64(0)
+			sizeError := ""
 			// Attempt to get the file size from VFS
 			if node, err := vfs.Stat(path); err == nil {
 				size = node.Size()
+			} else {
+				sizeError = err.Error()
 			}
-			results = append(results, rc.Params{
+			result := rc.Params{
 				"name":        filepath.Base(path),
 				"status":      "NONE",
 				"percentage":  0,
@@ -786,7 +799,11 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 				"size":        size,
 				"cachedBytes": 0,
 				"dirty":       false,
-			})
+			}
+			if sizeError != "" {
+				result["error"] = sizeError
+			}
+			results = append(results, result)
 			continue
 		}
 		status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
