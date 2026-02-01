@@ -366,6 +366,19 @@ func (c *Cache) Item(name string) (item *Item) {
 	return item
 }
 
+// FindItem looks up a cache item without creating a new one.
+//
+// It returns the item if it exists in the cache, or nil if not found.
+// Unlike Item(), this does not create a new cache entry.
+// name should be a remote path not an osPath
+func (c *Cache) FindItem(name string) (item *Item) {
+	name = clean(name)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	item = c.item[name]
+	return item
+}
+
 // Exists checks to see if the file exists in the cache or not.
 //
 // This is done by bringing the item into the cache which will
