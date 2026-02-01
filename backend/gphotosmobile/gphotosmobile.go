@@ -3,9 +3,12 @@ package gphotosmobile
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"strings"
 	"sync"
@@ -330,14 +333,32 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Put uploads a file
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
+	size := src.Size()
 
-	// Read the file into memory for hashing and upload
-	data, err := io.ReadAll(in)
+	// Stream the input through SHA1 hasher into a temp file
+	// so we never hold the entire file in memory
+	tmpFile, err := os.CreateTemp("", "gphotosmobile_upload_*.tmp")
 	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
-	// Calculate SHA1
-	sha1Bytes, sha1B64 := calculateSHA1(data)
+	tmpPath := tmpFile.Name()
+	defer func() {
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpPath)
+	}()
+
+	hasher := sha1.New()
+	tee := io.TeeReader(in, hasher)
+	written, err := io.Copy(tmpFile, tee)
+	if err != nil {
+		return nil, fmt.Errorf("failed to write temp file: %w", err)
+	}
+	if size < 0 {
+		size = written
+	}
+
+	sha1Bytes := hasher.Sum(nil)
+	sha1B64 := base64.StdEncoding.EncodeToString(sha1Bytes)
 
 	// Check if already exists
 	mediaKey, err := f.api.FindRemoteMediaByHash(sha1Bytes)
@@ -345,12 +366,17 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		fs.Debugf(f, "File %q already exists with media key %s", remote, mediaKey)
 	} else {
 		// Upload
-		uploadToken, err := f.api.GetUploadToken(sha1B64, int64(len(data)))
+		uploadToken, err := f.api.GetUploadToken(sha1B64, size)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get upload token: %w", err)
 		}
 
-		uploadResp, err := f.api.UploadFile(data, uploadToken)
+		// Seek back to start of temp file for upload
+		if _, err := tmpFile.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("failed to seek temp file: %w", err)
+		}
+
+		uploadResp, err := f.api.UploadFile(tmpFile, size, uploadToken)
 		if err != nil {
 			return nil, fmt.Errorf("upload failed: %w", err)
 		}
@@ -375,7 +401,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		media: MediaItem{
 			MediaKey:  mediaKey,
 			FileName:  path.Base(remote),
-			SizeBytes: int64(len(data)),
+			SizeBytes: size,
 		},
 		hasMedia: true,
 	}

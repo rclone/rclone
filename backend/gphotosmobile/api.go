@@ -349,7 +349,7 @@ func (a *MobileAPI) GetUploadToken(sha1B64 string, fileSize int64) (string, erro
 }
 
 // UploadFile uploads file data using the upload token, returns raw protobuf response
-func (a *MobileAPI) UploadFile(data []byte, uploadToken string) ([]byte, error) {
+func (a *MobileAPI) UploadFile(body io.Reader, size int64, uploadToken string) ([]byte, error) {
 	token, err := a.bearerToken()
 	if err != nil {
 		return nil, err
@@ -357,10 +357,11 @@ func (a *MobileAPI) UploadFile(data []byte, uploadToken string) ([]byte, error) 
 
 	uploadURL := "https://photos.googleapis.com/data/upload/uploadmedia/interactive?upload_id=" + uploadToken
 
-	req, err := http.NewRequest("PUT", uploadURL, bytes.NewReader(data))
+	req, err := http.NewRequest("PUT", uploadURL, body)
 	if err != nil {
 		return nil, err
 	}
+	req.ContentLength = size
 
 	req.Header.Set("Accept-Encoding", "gzip")
 	req.Header.Set("Accept-Language", a.language)

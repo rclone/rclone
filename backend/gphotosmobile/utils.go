@@ -1,8 +1,6 @@
 package gphotosmobile
 
 import (
-	"crypto/sha1"
-	"encoding/base64"
 	"strings"
 )
 
@@ -26,13 +24,4 @@ func parseLanguage(authData string) string {
 		}
 	}
 	return ""
-}
-
-// calculateSHA1 calculates the SHA1 hash of data and returns (hash_bytes, hash_base64)
-func calculateSHA1(data []byte) ([]byte, string) {
-	h := sha1.New()
-	h.Write(data)
-	hashBytes := h.Sum(nil)
-	hashB64 := base64.StdEncoding.EncodeToString(hashBytes)
-	return hashBytes, hashB64
 }
