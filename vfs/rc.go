@@ -378,7 +378,7 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	}
 
 	// Collect status for each file
-	var results []rc.Params
+	results := make([]rc.Params, 0, len(paths))
 	for _, path := range paths {
 		if vfs.cache == nil {
 			results = append(results, rc.Params{
@@ -390,23 +390,32 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 				"cachedBytes": 0,
 				"dirty":       false,
 			})
-		} else {
-			item := vfs.cache.Item(path)
-			status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
-
-			// If status is UPLOADING, then the file is uploading
-			isUploading := (status == "UPLOADING")
-
+			continue
+		}
+		item := vfs.cache.Item(path)
+		if item == nil {
 			results = append(results, rc.Params{
 				"name":        filepath.Base(path),
-				"status":      status,
-				"percentage":  percentage,
-				"uploading":   isUploading,
-				"size":        totalSize,
-				"cachedBytes": cachedSize,
-				"dirty":       isDirty,
+				"status":      "NONE",
+				"percentage":  0,
+				"uploading":   false,
+				"size":        0,
+				"cachedBytes": 0,
+				"dirty":       false,
 			})
+			continue
 		}
+		status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
+		isUploading := status == "UPLOADING"
+		results = append(results, rc.Params{
+			"name":        filepath.Base(path),
+			"status":      status,
+			"percentage":  percentage,
+			"uploading":   isUploading,
+			"size":        totalSize,
+			"cachedBytes": cachedSize,
+			"dirty":       isDirty,
+		})
 	}
 
 	// Always return results in 'files' array format for consistency
@@ -502,13 +511,13 @@ func rcForget(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		if strings.HasPrefix(key, "file") {
 			valueString, ok := value.(string)
 			if !ok {
-				continue
+				return nil, fmt.Errorf("value for %q must be a string, got %T", key, value)
 			}
 			filePaths = append(filePaths, valueString)
 		} else if strings.HasPrefix(key, "dir") {
 			valueString, ok := value.(string)
 			if !ok {
-				continue
+				return nil, fmt.Errorf("value for %q must be a string, got %T", key, value)
 			}
 			dirPaths = append(dirPaths, valueString)
 		}
@@ -659,10 +668,6 @@ func rcQueueSetExpiry(ctx context.Context, in rc.Params) (out rc.Params, err err
 	relative, err := in.GetBool("relative")
 	if err != nil && !rc.IsErrParamNotFound(err) {
 		return nil, err
-	}
-	// Default to false if parameter not found
-	if err != nil {
-		relative = false
 	}
 
 	err = vfs.cache.SetExpiry(id, expiry, relative)
