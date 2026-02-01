@@ -975,3 +975,17 @@ func buildGetDownloadURLsRequest(mediaKey string) []byte {
 
 	return outer.Bytes()
 }
+
+// buildSetCaptionRequest builds the request to set or clear an item's caption.
+// The caption is the description text shown in Google Photos under the media item.
+//
+//	Request {
+//	  2: caption   // string: new caption text (empty string to clear)
+//	  3: dedup_key // string: target item's dedup key
+//	}
+func buildSetCaptionRequest(dedupKey, caption string) []byte {
+	b := NewProtoBuilder()
+	b.AddString(2, caption)
+	b.AddString(3, dedupKey)
+	return b.Bytes()
+}

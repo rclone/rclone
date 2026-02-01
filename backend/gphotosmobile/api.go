@@ -41,6 +41,8 @@
 //     Commit upload: CommitUpload
 //   - photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316
 //     Trash: MoveToTrash
+//   - photosdata-pa.googleapis.com/6439526531001121323/1552790390512470739
+//     Set caption: SetCaption
 //   - photosdata-pa.googleapis.com/$rpc/social.frontend.photos.preparedownloaddata.v1.PhotosPrepareDownloadDataService/PhotosPrepareDownload
 //     Download URL generation: GetDownloadURL
 //   - photos.googleapis.com/data/upload/uploadmedia/interactive
@@ -586,6 +588,18 @@ func (a *MobileAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
 	body := buildMoveToTrashRequest(dedupKeys, a.apkVersion, a.androidAPI)
 	_, err := a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
+		body,
+	)
+	return err
+}
+
+// SetCaption sets or clears the caption (description) of a media item.
+// The caption is the description text shown under the item in Google Photos.
+// Pass an empty string to clear the caption.
+func (a *MobileAPI) SetCaption(ctx context.Context, dedupKey, caption string) error {
+	body := buildSetCaptionRequest(dedupKey, caption)
+	_, err := a.doProtoRequest(ctx,
+		"https://photosdata-pa.googleapis.com/6439526531001121323/1552790390512470739",
 		body,
 	)
 	return err

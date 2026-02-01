@@ -79,6 +79,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -95,12 +96,135 @@ var (
 	errCantRmdir = errors.New("can't remove virtual directory")
 )
 
+// systemMetadataInfo describes the system metadata keys for this backend.
+// All keys are read-only except "description" (the Google Photos caption)
+// which can be set via SetMetadata.
+var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"description": {
+		Help:    "Caption/description of the media item in Google Photos.",
+		Type:    "string",
+		Example: "Sunset at the beach",
+	},
+	"media-type": {
+		Help:     "Media type: photo or video.",
+		Type:     "string",
+		Example:  "photo",
+		ReadOnly: true,
+	},
+	"width": {
+		Help:     "Width in pixels.",
+		Type:     "int",
+		Example:  "4032",
+		ReadOnly: true,
+	},
+	"height": {
+		Help:     "Height in pixels.",
+		Type:     "int",
+		Example:  "3024",
+		ReadOnly: true,
+	},
+	"duration": {
+		Help:     "Duration in milliseconds (videos only).",
+		Type:     "int",
+		Example:  "15000",
+		ReadOnly: true,
+	},
+	"latitude": {
+		Help:     "GPS latitude of the media item.",
+		Type:     "float",
+		Example:  "37.7749",
+		ReadOnly: true,
+	},
+	"longitude": {
+		Help:     "GPS longitude of the media item.",
+		Type:     "float",
+		Example:  "-122.4194",
+		ReadOnly: true,
+	},
+	"location-name": {
+		Help:     "Reverse-geocoded location name.",
+		Type:     "string",
+		Example:  "San Francisco, CA",
+		ReadOnly: true,
+	},
+	"camera-make": {
+		Help:     "Camera manufacturer from EXIF.",
+		Type:     "string",
+		Example:  "Google",
+		ReadOnly: true,
+	},
+	"camera-model": {
+		Help:     "Camera model from EXIF.",
+		Type:     "string",
+		Example:  "Pixel 9a",
+		ReadOnly: true,
+	},
+	"aperture": {
+		Help:     "Aperture f-number from EXIF.",
+		Type:     "float",
+		Example:  "1.8",
+		ReadOnly: true,
+	},
+	"shutter-speed": {
+		Help:     "Shutter speed in seconds from EXIF.",
+		Type:     "float",
+		Example:  "0.001",
+		ReadOnly: true,
+	},
+	"iso": {
+		Help:     "ISO sensitivity from EXIF.",
+		Type:     "int",
+		Example:  "100",
+		ReadOnly: true,
+	},
+	"focal-length": {
+		Help:     "Focal length in mm from EXIF.",
+		Type:     "float",
+		Example:  "4.38",
+		ReadOnly: true,
+	},
+	"taken-at": {
+		Help:     "Time the photo/video was taken (UTC).",
+		Type:     "RFC 3339",
+		Example:  "2006-01-02T15:04:05Z",
+		ReadOnly: true,
+	},
+	"uploaded-at": {
+		Help:     "Time the item was uploaded to Google Photos (UTC).",
+		Type:     "RFC 3339",
+		Example:  "2006-01-02T15:04:05Z",
+		ReadOnly: true,
+	},
+	"is-favorite": {
+		Help:     "Whether the item is marked as favorite.",
+		Type:     "bool",
+		Example:  "true",
+		ReadOnly: true,
+	},
+	"is-archived": {
+		Help:     "Whether the item is archived.",
+		Type:     "bool",
+		Example:  "false",
+		ReadOnly: true,
+	},
+	"origin": {
+		Help:     "Origin of the item: self, partner, or shared.",
+		Type:     "string",
+		Example:  "self",
+		ReadOnly: true,
+	},
+}
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "gphotos_mobile",
 		Description: "Google Photos (Mobile API - full access)",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   `Metadata is returned for all media items. Only "description" (the Google Photos caption) can be written; all other fields are read-only.`,
+		},
 		Config: func(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
 			switch configIn.State {
 			case "":
@@ -278,6 +402,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMimeType:   false,
 		WriteMimeType:  false,
 		DuplicateFiles: true,
+		ReadMetadata:   true,
+		WriteMetadata:  true,
 	}).Fill(ctx, f)
 
 	// Check if root points to a file
@@ -977,6 +1103,130 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
+// Metadata returns all available metadata for the object.
+// Most fields are read-only and come from the Google Photos library sync.
+// Only "description" can be modified via SetMetadata.
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	if !o.hasMedia {
+		return nil, nil
+	}
+	m := fs.Metadata{}
+
+	// Description (writable)
+	if o.media.Caption != "" {
+		m["description"] = o.media.Caption
+	}
+
+	// Media type
+	switch o.media.Type {
+	case 1:
+		m["media-type"] = "photo"
+	case 2:
+		m["media-type"] = "video"
+	default:
+		if o.media.Type != 0 {
+			m["media-type"] = strconv.FormatInt(o.media.Type, 10)
+		}
+	}
+
+	// Dimensions
+	if o.media.Width > 0 {
+		m["width"] = strconv.FormatInt(o.media.Width, 10)
+	}
+	if o.media.Height > 0 {
+		m["height"] = strconv.FormatInt(o.media.Height, 10)
+	}
+
+	// Duration (videos)
+	if o.media.Duration > 0 {
+		m["duration"] = strconv.FormatInt(o.media.Duration, 10)
+	}
+
+	// Location
+	if o.media.Latitude != 0 || o.media.Longitude != 0 {
+		m["latitude"] = strconv.FormatFloat(o.media.Latitude, 'f', -1, 64)
+		m["longitude"] = strconv.FormatFloat(o.media.Longitude, 'f', -1, 64)
+	}
+	if o.media.LocationName != "" {
+		m["location-name"] = o.media.LocationName
+	}
+
+	// Camera info
+	if o.media.Make != "" {
+		m["camera-make"] = o.media.Make
+	}
+	if o.media.Model != "" {
+		m["camera-model"] = o.media.Model
+	}
+
+	// EXIF
+	if o.media.Aperture != 0 {
+		m["aperture"] = strconv.FormatFloat(o.media.Aperture, 'f', -1, 64)
+	}
+	if o.media.ShutterSpeed != 0 {
+		m["shutter-speed"] = strconv.FormatFloat(o.media.ShutterSpeed, 'f', -1, 64)
+	}
+	if o.media.ISO > 0 {
+		m["iso"] = strconv.FormatInt(o.media.ISO, 10)
+	}
+	if o.media.FocalLength != 0 {
+		m["focal-length"] = strconv.FormatFloat(o.media.FocalLength, 'f', -1, 64)
+	}
+
+	// Timestamps
+	if o.media.UTCTimestamp > 0 {
+		m["taken-at"] = time.UnixMilli(o.media.UTCTimestamp).UTC().Format(time.RFC3339)
+	}
+	if o.media.ServerCreationTimestamp > 0 {
+		m["uploaded-at"] = time.UnixMilli(o.media.ServerCreationTimestamp).UTC().Format(time.RFC3339)
+	}
+
+	// Flags
+	m["is-favorite"] = strconv.FormatBool(o.media.IsFavorite)
+	m["is-archived"] = strconv.FormatBool(o.media.IsArchived)
+
+	// Origin
+	if o.media.Origin != "" {
+		m["origin"] = o.media.Origin
+	}
+
+	return m, nil
+}
+
+// SetMetadata sets metadata on the object.
+// Only the "description" key is writable (sets the Google Photos caption).
+// All other keys are silently ignored.
+func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
+	if !o.hasMedia {
+		return errors.New("no media info available")
+	}
+
+	description, ok := metadata["description"]
+	if !ok {
+		// No writable keys provided — nothing to do
+		return nil
+	}
+
+	if o.media.DedupKey == "" {
+		return errors.New("no dedup key available for caption update")
+	}
+
+	err := o.fs.api.SetCaption(ctx, o.media.DedupKey, description)
+	if err != nil {
+		return fmt.Errorf("failed to set caption: %w", err)
+	}
+
+	// Update local state
+	o.media.Caption = description
+
+	// Update cache
+	o.fs.cacheMu.Lock()
+	o.fs.forceSync = true
+	o.fs.cacheMu.Unlock()
+	_ = o.fs.ensureCachePopulated(ctx)
+	return nil
+}
+
 // Remove deletes the object (moves to trash)
 func (o *Object) Remove(ctx context.Context) error {
 	if !o.hasMedia || o.media.DedupKey == "" {
@@ -1001,9 +1251,11 @@ func (o *Object) ID() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs         = (*Fs)(nil)
-	_ fs.Abouter    = (*Fs)(nil)
-	_ fs.Shutdowner = (*Fs)(nil)
-	_ fs.Object     = (*Object)(nil)
-	_ fs.IDer       = (*Object)(nil)
+	_ fs.Fs            = (*Fs)(nil)
+	_ fs.Abouter       = (*Fs)(nil)
+	_ fs.Shutdowner    = (*Fs)(nil)
+	_ fs.Object        = (*Object)(nil)
+	_ fs.IDer          = (*Object)(nil)
+	_ fs.Metadataer    = (*Object)(nil)
+	_ fs.SetMetadataer = (*Object)(nil)
 )
