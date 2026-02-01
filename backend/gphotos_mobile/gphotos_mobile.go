@@ -45,7 +45,9 @@ func init() {
 				}
 				// Test the auth by getting a bearer token
 				proxy, _ := m.Get("proxy")
-				api := NewMobileAPI(authData, proxy)
+				deviceModel, _ := m.Get("device_model")
+				deviceMake, _ := m.Get("device_make")
+				api := NewMobileAPI(authData, proxy, deviceModel, deviceMake)
 				_, err := api.bearerToken()
 				if err != nil {
 					return fs.ConfigError("", fmt.Sprintf("Authentication failed for %s: %v\nCheck that your auth_data is correct and not expired.", email, err))
@@ -70,6 +72,16 @@ func init() {
 			Help:     "Path to SQLite cache database.\n\nLeave empty for default (~/.gpmc/<email>/storage.db).\nThe cache stores the media library index locally for fast listing.",
 			Default:  "",
 			Advanced: true,
+		}, {
+			Name:     "device_model",
+			Help:     "Device model to report to Google Photos.\n\nThis is included in the user agent and upload metadata.\nLeave empty for default (Pixel 9a).",
+			Default:  "",
+			Advanced: true,
+		}, {
+			Name:     "device_make",
+			Help:     "Device manufacturer to report to Google Photos.\n\nThis is included in upload metadata.\nLeave empty for default (Google).",
+			Default:  "",
+			Advanced: true,
 		}},
 	})
 }
@@ -79,6 +91,8 @@ type Options struct {
 	AuthData    string `config:"auth_data"`
 	Proxy       string `config:"proxy"`
 	CacheDBPath string `config:"cache_db_path"`
+	DeviceModel string `config:"device_model"`
+	DeviceMake  string `config:"device_make"`
 }
 
 // Fs represents a remote Google Photos storage via mobile API
@@ -145,7 +159,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root = ""
 	}
 
-	api := NewMobileAPI(authData, opt.Proxy)
+	api := NewMobileAPI(authData, opt.Proxy, opt.DeviceModel, opt.DeviceMake)
 
 	// Determine cache path
 	cachePath := opt.CacheDBPath

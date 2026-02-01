@@ -280,6 +280,38 @@ Properties:
 - Type:        string
 - Required:    false
 
+### --gphotos-mobile-device-model
+
+Device model to report to Google Photos.
+
+This is included in the User-Agent string and upload metadata sent to
+Google Photos. It determines how Google identifies the "device" that
+is accessing your library.
+
+Leave empty for the default (Pixel 9a).
+
+Properties:
+
+- Config:      device_model
+- Env Var:     RCLONE_GPHOTOS_MOBILE_DEVICE_MODEL
+- Type:        string
+- Required:    false
+
+### --gphotos-mobile-device-make
+
+Device manufacturer to report to Google Photos.
+
+This is included in upload metadata sent to Google Photos.
+
+Leave empty for the default (Google).
+
+Properties:
+
+- Config:      device_make
+- Env Var:     RCLONE_GPHOTOS_MOBILE_DEVICE_MAKE
+- Type:        string
+- Required:    false
+
 ## Mount
 
 When using `rclone mount`, you **must** use `--vfs-cache-mode full`.

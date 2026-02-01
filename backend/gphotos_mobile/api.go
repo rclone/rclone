@@ -20,7 +20,7 @@ const (
 	defaultTimeout    = 300 * time.Second
 	clientVersionCode = 49029607
 	androidAPIVersion = 28
-	defaultModel      = "Pixel XL"
+	defaultModel      = "Pixel 9a"
 	defaultMake       = "Google"
 )
 
@@ -38,24 +38,30 @@ type MobileAPI struct {
 }
 
 // NewMobileAPI creates a new mobile API client
-func NewMobileAPI(authData string, proxy string) *MobileAPI {
+func NewMobileAPI(authData, proxy, model, make_ string) *MobileAPI {
 	language := parseLanguage(authData)
 	if language == "" {
 		language = "en_US"
+	}
+	if model == "" {
+		model = defaultModel
+	}
+	if make_ == "" {
+		make_ = defaultMake
 	}
 
 	api := &MobileAPI{
 		authData:  authData,
 		proxy:     proxy,
 		language:  language,
-		model:     defaultModel,
-		make_:     defaultMake,
+		model:     model,
+		make_:     make_,
 		authCache: map[string]string{"Expiry": "0", "Auth": ""},
 	}
 
 	api.userAgent = fmt.Sprintf(
 		"com.google.android.apps.photos/%d (Linux; U; Android 9; %s; %s; Build/PQ2A.190205.001; Cronet/127.0.6510.5) (gzip)",
-		clientVersionCode, language, defaultModel,
+		clientVersionCode, language, model,
 	)
 
 	api.client = api.newHTTPClient()
