@@ -1,0 +1,539 @@
+package gphotos_mobile
+
+import (
+	"bytes"
+	"compress/gzip"
+	"crypto/tls"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/rclone/rclone/fs"
+)
+
+const (
+	defaultTimeout    = 300 * time.Second
+	clientVersionCode = 49029607
+	androidAPIVersion = 28
+	defaultModel      = "Pixel XL"
+	defaultMake       = "Google"
+)
+
+// MobileAPI is the Google Photos mobile API client
+type MobileAPI struct {
+	authData  string
+	proxy     string
+	language  string
+	userAgent string
+	model     string
+	make_     string
+	client    *http.Client
+	authCache map[string]string
+	authMu    sync.Mutex
+}
+
+// NewMobileAPI creates a new mobile API client
+func NewMobileAPI(authData string, proxy string) *MobileAPI {
+	language := parseLanguage(authData)
+	if language == "" {
+		language = "en_US"
+	}
+
+	api := &MobileAPI{
+		authData:  authData,
+		proxy:     proxy,
+		language:  language,
+		model:     defaultModel,
+		make_:     defaultMake,
+		authCache: map[string]string{"Expiry": "0", "Auth": ""},
+	}
+
+	api.userAgent = fmt.Sprintf(
+		"com.google.android.apps.photos/%d (Linux; U; Android 9; %s; %s; Build/PQ2A.190205.001; Cronet/127.0.6510.5) (gzip)",
+		clientVersionCode, language, defaultModel,
+	)
+
+	api.client = api.newHTTPClient()
+
+	return api
+}
+
+func (a *MobileAPI) newHTTPClient() *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+
+	if a.proxy != "" {
+		proxyURL, err := url.Parse(a.proxy)
+		if err == nil {
+			transport.Proxy = http.ProxyURL(proxyURL)
+			transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		}
+	}
+
+	return &http.Client{
+		Transport: transport,
+		Timeout:   defaultTimeout,
+	}
+}
+
+// bearerToken returns the current auth token, refreshing if needed
+func (a *MobileAPI) bearerToken() (string, error) {
+	a.authMu.Lock()
+	defer a.authMu.Unlock()
+
+	expiryStr := a.authCache["Expiry"]
+	expiry, _ := strconv.ParseInt(expiryStr, 10, 64)
+
+	if expiry <= time.Now().Unix() {
+		resp, err := a.getAuthToken()
+		if err != nil {
+			return "", fmt.Errorf("auth token refresh failed: %w", err)
+		}
+		a.authCache = resp
+	}
+
+	token := a.authCache["Auth"]
+	if token == "" {
+		return "", fmt.Errorf("auth response missing bearer token")
+	}
+	return token, nil
+}
+
+func (a *MobileAPI) getAuthToken() (map[string]string, error) {
+	authDataValues, err := url.ParseQuery(a.authData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse auth data: %w", err)
+	}
+
+	form := url.Values{
+		"androidId":                    {authDataValues.Get("androidId")},
+		"app":                          {"com.google.android.apps.photos"},
+		"client_sig":                   {authDataValues.Get("client_sig")},
+		"callerPkg":                    {"com.google.android.apps.photos"},
+		"callerSig":                    {authDataValues.Get("callerSig")},
+		"device_country":               {authDataValues.Get("device_country")},
+		"Email":                        {authDataValues.Get("Email")},
+		"google_play_services_version": {authDataValues.Get("google_play_services_version")},
+		"lang":                         {authDataValues.Get("lang")},
+		"oauth2_foreground":            {authDataValues.Get("oauth2_foreground")},
+		"sdk_version":                  {authDataValues.Get("sdk_version")},
+		"service":                      {authDataValues.Get("service")},
+		"Token":                        {authDataValues.Get("Token")},
+	}
+
+	req, err := http.NewRequest("POST", "https://android.googleapis.com/auth",
+		strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("app", "com.google.android.apps.photos")
+	req.Header.Set("Connection", "Keep-Alive")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("device", authDataValues.Get("androidId"))
+	req.Header.Set("User-Agent", "GoogleAuth/1.4 (Pixel XL PQ2A.190205.001); gzip")
+
+	resp, err := a.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("auth request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("auth failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	body, err := readResponseBody(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]string)
+	for _, line := range strings.Split(string(body), "\n") {
+		line = strings.TrimSpace(line)
+		if parts := strings.SplitN(line, "=", 2); len(parts) == 2 {
+			result[parts[0]] = parts[1]
+		}
+	}
+
+	if result["Auth"] == "" {
+		return nil, fmt.Errorf("auth response missing Auth token")
+	}
+	return result, nil
+}
+
+// commonHeaders returns headers used for most API calls
+func (a *MobileAPI) commonHeaders() (map[string]string, error) {
+	token, err := a.bearerToken()
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{
+		"Accept-Encoding":          "gzip",
+		"Accept-Language":          a.language,
+		"Content-Type":             "application/x-protobuf",
+		"User-Agent":               a.userAgent,
+		"Authorization":            "Bearer " + token,
+		"x-goog-ext-173412678-bin": "CgcIAhClARgC",
+		"x-goog-ext-174067345-bin": "CgIIAg==",
+	}, nil
+}
+
+// doProtoRequest makes a protobuf API request with retries
+func (a *MobileAPI) doProtoRequest(urlStr string, body []byte) ([]byte, error) {
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 {
+			time.Sleep(time.Duration(attempt) * 2 * time.Second)
+			fs.Debugf(nil, "Retrying request to %s (attempt %d)", urlStr, attempt+1)
+		}
+
+		result, err := a.doProtoRequestOnce(urlStr, body)
+		if err == nil {
+			return result, nil
+		}
+		lastErr = err
+		fs.Debugf(nil, "Request to %s failed: %v", urlStr, err)
+	}
+	return nil, lastErr
+}
+
+func (a *MobileAPI) doProtoRequestOnce(urlStr string, body []byte) ([]byte, error) {
+	headers, err := a.commonHeaders()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", urlStr, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := a.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	return readResponseBody(resp)
+}
+
+// readResponseBody handles gzip decoding
+func readResponseBody(resp *http.Response) ([]byte, error) {
+	var reader io.Reader = resp.Body
+
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("gzip decode failed: %w", err)
+		}
+		defer gzReader.Close()
+		reader = gzReader
+	}
+
+	return io.ReadAll(reader)
+}
+
+// --- API Methods ---
+
+// GetLibraryState gets the library state (incremental or initial)
+func (a *MobileAPI) GetLibraryState(stateToken string) ([]byte, error) {
+	body := buildGetLibStateRequest(stateToken)
+	return a.doProtoRequest(
+		"https://photosdata-pa.googleapis.com/6439526531001121323/18047484249733410717",
+		body,
+	)
+}
+
+// GetLibraryPageInit gets a library page during init
+func (a *MobileAPI) GetLibraryPageInit(pageToken string) ([]byte, error) {
+	body := buildGetLibPageInitRequest(pageToken)
+	return a.doProtoRequest(
+		"https://photosdata-pa.googleapis.com/6439526531001121323/18047484249733410717",
+		body,
+	)
+}
+
+// GetLibraryPage gets a library page (delta update)
+func (a *MobileAPI) GetLibraryPage(pageToken, stateToken string) ([]byte, error) {
+	body := buildGetLibPageRequest(pageToken, stateToken)
+	return a.doProtoRequest(
+		"https://photosdata-pa.googleapis.com/6439526531001121323/18047484249733410717",
+		body,
+	)
+}
+
+// FindRemoteMediaByHash checks if a file with the given SHA1 hash exists
+func (a *MobileAPI) FindRemoteMediaByHash(sha1Hash []byte) (string, error) {
+	body := buildHashCheckRequest(sha1Hash)
+
+	respBytes, err := a.doProtoRequest(
+		"https://photosdata-pa.googleapis.com/6439526531001121323/5084965799730810217",
+		body,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	// Parse response
+	root, err := DecodeRaw(respBytes)
+	if err != nil {
+		return "", err
+	}
+
+	// Navigate: field1 -> field2 -> field2 -> field1
+	f1, err := root.GetMessage(1)
+	if err != nil {
+		return "", nil // no match
+	}
+	f12, err := f1.GetMessage(2)
+	if err != nil {
+		return "", nil
+	}
+	f122, err := f12.GetMessage(2)
+	if err != nil {
+		return "", nil
+	}
+	return f122.GetString(1), nil
+}
+
+// GetUploadToken obtains an upload token
+func (a *MobileAPI) GetUploadToken(sha1B64 string, fileSize int64) (string, error) {
+	// Build protobuf: {1: 2, 2: 2, 3: 1, 4: 3, 7: fileSize}
+	b := NewProtoBuilder()
+	b.AddVarint(1, 2)
+	b.AddVarint(2, 2)
+	b.AddVarint(3, 1)
+	b.AddVarint(4, 3)
+	b.AddVarint(7, uint64(fileSize))
+
+	token, err := a.bearerToken()
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST",
+		"https://photos.googleapis.com/data/upload/uploadmedia/interactive",
+		bytes.NewReader(b.Bytes()))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("Accept-Language", a.language)
+	req.Header.Set("Content-Type", "application/x-protobuf")
+	req.Header.Set("User-Agent", a.userAgent)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-Goog-Hash", "sha1="+sha1B64)
+	req.Header.Set("X-Upload-Content-Length", strconv.FormatInt(fileSize, 10))
+
+	resp, err := a.client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("upload token error %d: %s", resp.StatusCode, string(body))
+	}
+
+	uploadToken := resp.Header.Get("X-GUploader-UploadID")
+	if uploadToken == "" {
+		return "", fmt.Errorf("missing X-GUploader-UploadID header")
+	}
+	return uploadToken, nil
+}
+
+// UploadFile uploads file data using the upload token, returns raw protobuf response
+func (a *MobileAPI) UploadFile(data []byte, uploadToken string) ([]byte, error) {
+	token, err := a.bearerToken()
+	if err != nil {
+		return nil, err
+	}
+
+	uploadURL := "https://photos.googleapis.com/data/upload/uploadmedia/interactive?upload_id=" + uploadToken
+
+	req, err := http.NewRequest("PUT", uploadURL, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("Accept-Language", a.language)
+	req.Header.Set("User-Agent", a.userAgent)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := a.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("upload error %d: %s", resp.StatusCode, string(body))
+	}
+
+	return readResponseBody(resp)
+}
+
+// CommitUpload commits the uploaded file
+func (a *MobileAPI) CommitUpload(uploadResponse []byte, fileName string, sha1Hash []byte) (string, error) {
+	body := buildCommitUploadRequest(uploadResponse, fileName, sha1Hash, a.model, a.make_)
+
+	respBytes, err := a.doProtoRequest(
+		"https://photosdata-pa.googleapis.com/6439526531001121323/16538846908252377752",
+		body,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	// Parse response: field1 -> field3 -> field1 = media_key
+	root, err := DecodeRaw(respBytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode commit response: %w", err)
+	}
+
+	f1, err := root.GetMessage(1)
+	if err != nil {
+		return "", fmt.Errorf("upload rejected: no field1")
+	}
+	f13, err := f1.GetMessage(3)
+	if err != nil {
+		return "", fmt.Errorf("upload rejected: no field3")
+	}
+	mediaKey := f13.GetString(1)
+	if mediaKey == "" {
+		return "", fmt.Errorf("upload rejected: no media key")
+	}
+	return mediaKey, nil
+}
+
+// MoveToTrash moves items to trash by dedup keys
+func (a *MobileAPI) MoveToTrash(dedupKeys []string) error {
+	body := buildMoveToTrashRequest(dedupKeys)
+	_, err := a.doProtoRequest(
+		"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
+		body,
+	)
+	return err
+}
+
+// GetDownloadURL gets the download URL for a media item
+func (a *MobileAPI) GetDownloadURL(mediaKey string) (string, error) {
+	body := buildGetDownloadURLsRequest(mediaKey)
+
+	respBytes, err := a.doProtoRequest(
+		"https://photosdata-pa.googleapis.com/$rpc/social.frontend.photos.preparedownloaddata.v1.PhotosPrepareDownloadDataService/PhotosPrepareDownload",
+		body,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	// Parse response to extract URL
+	// output_dict["1"]["5"]["2"]["5"] - edited URL
+	// output_dict["1"]["5"]["2"]["6"] - original URL
+	root, err := DecodeRaw(respBytes)
+	if err != nil {
+		return "", err
+	}
+
+	f1, err := root.GetMessage(1)
+	if err != nil {
+		return "", fmt.Errorf("no download info in response")
+	}
+
+	f15, err := f1.GetMessage(5)
+	if err != nil {
+		return "", fmt.Errorf("no download URLs in response")
+	}
+
+	// The URL data location depends on media type:
+	// field 1.5.1 = media type indicator (1=photo, 2=video)
+	// Photos: URLs at 1.5.2.6 (original) / 1.5.2.5 (edited)
+	// Videos: URLs at 1.5.3.5 (download URL)
+	var urlContainer ProtoMap
+
+	// Try field 2 first (photos), then field 3 (videos)
+	urlContainer, err = f15.GetMessage(2)
+	if err != nil {
+		urlContainer, err = f15.GetMessage(3)
+		if err != nil {
+			return "", fmt.Errorf("no download URL data in response")
+		}
+	}
+
+	// Try original URL first (field 6), then edited/video (field 5)
+	downloadURL := urlContainer.GetString(6)
+	if downloadURL == "" {
+		downloadURL = urlContainer.GetString(5)
+	}
+	if downloadURL == "" {
+		return "", fmt.Errorf("no download URL found in response")
+	}
+
+	return downloadURL, nil
+}
+
+// DownloadFile downloads a file from the given URL
+func (a *MobileAPI) DownloadFile(downloadURL string, options ...fs.OpenOption) (io.ReadCloser, error) {
+	token, err := a.bearerToken()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", downloadURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("User-Agent", a.userAgent)
+
+	// Apply range headers if present
+	for _, option := range options {
+		switch o := option.(type) {
+		case *fs.RangeOption:
+			if o.Start >= 0 && o.End >= 0 {
+				req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", o.Start, o.End))
+			} else if o.Start >= 0 {
+				req.Header.Set("Range", fmt.Sprintf("bytes=%d-", o.Start))
+			} else if o.End >= 0 {
+				req.Header.Set("Range", fmt.Sprintf("bytes=-%d", o.End))
+			}
+		case *fs.SeekOption:
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-", o.Offset))
+		}
+	}
+
+	resp, err := a.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, fmt.Errorf("download error %d: %s", resp.StatusCode, string(body))
+	}
+
+	return resp.Body, nil
+}
