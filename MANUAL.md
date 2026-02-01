@@ -22201,13 +22201,23 @@ and upload status for each file:
                 "uploading": false
             },
             {
-                "name": "image.jpg", 
+                "name": "image.jpg",
                 "status": "PARTIAL",
                 "percentage": 67,
                 "size": 2097152,
                 "cachedBytes": 1405870,
                 "dirty": false,
                 "uploading": false
+            },
+            {
+                "name": "nonexistent.pdf",
+                "status": "NONE",
+                "percentage": 0,
+                "size": 0,
+                "cachedBytes": 0,
+                "dirty": false,
+                "uploading": false,
+                "error": "file does not exist"
             }
         ],
         "fs": "/mnt/remote"
@@ -22226,6 +22236,10 @@ files since the local file is complete. It is only meaningful for
 "PARTIAL" status files.
 
 The "uploading" field indicates if the file is currently being uploaded.
+
+The "error" field (optional) contains an error message if there was an error
+getting file information, such as when the file does not exist or cannot be accessed.
+When present, the "status" will be "NONE" and other fields may have default values.
 
 This command takes an "fs" parameter. If this parameter is not
 supplied and if there is only one VFS in use then that VFS will be
