@@ -137,15 +137,6 @@ func (m ProtoMap) GetUint(fieldNum uint64) uint64 {
 	return vals[0].Varint
 }
 
-// GetFixed32 gets fixed32 value
-func (m ProtoMap) GetFixed32(fieldNum uint64) uint32 {
-	vals, ok := m[fieldNum]
-	if !ok || len(vals) == 0 {
-		return 0
-	}
-	return vals[0].Fixed32
-}
-
 // GetMessage decodes an embedded message from a field
 func (m ProtoMap) GetMessage(fieldNum uint64) (ProtoMap, error) {
 	vals, ok := m[fieldNum]
@@ -178,21 +169,6 @@ func (m ProtoMap) GetRepeatedMessages(fieldNum uint64) ([]ProtoMap, error) {
 	return results, nil
 }
 
-// GetRepeatedStrings gets repeated string values
-func (m ProtoMap) GetRepeatedStrings(fieldNum uint64) []string {
-	vals, ok := m[fieldNum]
-	if !ok {
-		return nil
-	}
-	var result []string
-	for _, v := range vals {
-		if v.WireType == WireBytes {
-			result = append(result, string(v.Bytes))
-		}
-	}
-	return result
-}
-
 // Has checks if a field exists
 func (m ProtoMap) Has(fieldNum uint64) bool {
 	vals, ok := m[fieldNum]
@@ -222,21 +198,10 @@ func (b *ProtoBuilder) AddVarint(fieldNum uint64, value uint64) {
 	b.buf = appendVarint(b.buf, value)
 }
 
-// AddSignedVarint adds a signed varint field (using zigzag encoding)
-func (b *ProtoBuilder) AddSignedVarint(fieldNum uint64, value int64) {
-	b.AddVarint(fieldNum, uint64(value))
-}
-
 // AddFixed32 adds a fixed32 field
 func (b *ProtoBuilder) AddFixed32(fieldNum uint64, value uint32) {
 	b.buf = appendVarint(b.buf, (fieldNum<<3)|Wire32Bit)
 	b.buf = binary.LittleEndian.AppendUint32(b.buf, value)
-}
-
-// AddFixed64 adds a fixed64 field
-func (b *ProtoBuilder) AddFixed64(fieldNum uint64, value uint64) {
-	b.buf = appendVarint(b.buf, (fieldNum<<3)|Wire64Bit)
-	b.buf = binary.LittleEndian.AppendUint64(b.buf, value)
 }
 
 // AddBytes adds a bytes field
@@ -259,13 +224,6 @@ func (b *ProtoBuilder) AddMessage(fieldNum uint64, msg *ProtoBuilder) {
 // AddEmptyMessage adds an empty embedded message field
 func (b *ProtoBuilder) AddEmptyMessage(fieldNum uint64) {
 	b.AddBytes(fieldNum, []byte{})
-}
-
-// AddRepeatedVarint adds repeated varint values
-func (b *ProtoBuilder) AddRepeatedVarint(fieldNum uint64, values []uint64) {
-	for _, v := range values {
-		b.AddVarint(fieldNum, v)
-	}
 }
 
 // --- Low-level helpers ---

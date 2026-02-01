@@ -267,23 +267,6 @@ func (c *Cache) GetByFileName(fileName string) (*MediaItem, error) {
 	return scanMediaItem(row)
 }
 
-// GetByMediaKey retrieves a media item by media key
-func (c *Cache) GetByMediaKey(mediaKey string) (*MediaItem, error) {
-	row := c.db.QueryRow(`SELECT
-		media_key, file_name, dedup_key, is_canonical, type, caption,
-		collection_id, size_bytes, quota_charged_bytes, origin,
-		content_version, utc_timestamp, server_creation_timestamp,
-		timezone_offset, width, height, remote_url, upload_status,
-		trash_timestamp, is_archived, is_favorite, is_locked,
-		is_original_quality, latitude, longitude, location_name,
-		location_id, is_edited, make, model, aperture, shutter_speed,
-		iso, focal_length, duration, capture_frame_rate, encoded_frame_rate,
-		is_micro_video, micro_video_width, micro_video_height, sha1_hash
-	FROM remote_media WHERE media_key = ?`, mediaKey)
-
-	return scanMediaItem(row)
-}
-
 // ListAll returns all non-trashed media items
 func (c *Cache) ListAll() ([]MediaItem, error) {
 	rows, err := c.db.Query(`SELECT
@@ -312,13 +295,6 @@ func (c *Cache) ListAll() ([]MediaItem, error) {
 		items = append(items, *item)
 	}
 	return items, rows.Err()
-}
-
-// Count returns the total number of items in the cache
-func (c *Cache) Count() (int, error) {
-	var count int
-	err := c.db.QueryRow("SELECT COUNT(*) FROM remote_media").Scan(&count)
-	return count, err
 }
 
 // GetStateTokens returns (state_token, page_token)
