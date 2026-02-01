@@ -53,6 +53,7 @@
 package gphotosmobile
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -858,7 +859,7 @@ func buildHashCheckRequest(sha1Hash []byte) []byte {
 //	  }
 //	  3: [1, 3]              // constant bytes
 //	}
-func buildCommitUploadRequest(uploadResponse []byte, fileName string, sha1Hash []byte, model, deviceMake string) []byte {
+func buildCommitUploadRequest(uploadResponse []byte, fileName string, sha1Hash []byte, model, deviceMake string, androidAPI int64) []byte {
 	outer := NewProtoBuilder()
 
 	f1 := NewProtoBuilder()
@@ -893,7 +894,7 @@ func buildCommitUploadRequest(uploadResponse []byte, fileName string, sha1Hash [
 	f2 := NewProtoBuilder()
 	f2.AddString(3, model)
 	f2.AddString(4, deviceMake)
-	f2.AddVarint(5, androidAPIVersion)
+	f2.AddVarint(5, uint64(androidAPI))
 	outer.AddMessage(2, f2)
 
 	// field 3 = bytes [1, 3]
@@ -906,7 +907,7 @@ func buildCommitUploadRequest(uploadResponse []byte, fileName string, sha1Hash [
 // Items are identified by dedup_key (URL-safe base64 SHA1), not media_key.
 // The request also includes a field mask (field 8) telling the server which
 // response fields to return, and client info (field 9) with the APK version.
-func buildMoveToTrashRequest(dedupKeys []string) []byte {
+func buildMoveToTrashRequest(dedupKeys []string, apkVersion, androidAPI int64) []byte {
 	b := NewProtoBuilder()
 	b.AddVarint(2, 1)
 	for _, key := range dedupKeys {
@@ -930,8 +931,8 @@ func buildMoveToTrashRequest(dedupKeys []string) []byte {
 	f9 := NewProtoBuilder()
 	f9.AddVarint(1, 5)
 	f9_2 := NewProtoBuilder()
-	f9_2.AddVarint(1, clientVersionCode)
-	f9_2.AddString(2, "28")
+	f9_2.AddVarint(1, uint64(apkVersion))
+	f9_2.AddString(2, fmt.Sprintf("%d", androidAPI))
 	f9.AddMessage(2, f9_2)
 	b.AddMessage(9, f9)
 

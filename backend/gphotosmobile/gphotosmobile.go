@@ -113,7 +113,7 @@ func init() {
 				// Test the auth by getting a bearer token
 				deviceModel, _ := m.Get("device_model")
 				deviceMake, _ := m.Get("device_make")
-				api := NewMobileAPI(ctx, authData, deviceModel, deviceMake)
+				api := NewMobileAPI(ctx, authData, deviceModel, deviceMake, 0, 0)
 				_, err := api.bearerToken(ctx)
 				if err != nil {
 					return fs.ConfigError("", fmt.Sprintf("Authentication failed for %s: %v\nCheck that your auth_data is correct and not expired.", email, err))
@@ -144,6 +144,16 @@ func init() {
 			Default:  "",
 			Advanced: true,
 		}, {
+			Name:     "apk_version",
+			Help:     "Google Photos APK version code to impersonate.\n\nThis is sent in the user agent and protobuf requests.\nUpdate if Google blocks older versions.",
+			Default:  int64(49029607),
+			Advanced: true,
+		}, {
+			Name:     "android_api",
+			Help:     "Android API level to report.\n\n35 corresponds to Android 15, which ships with the default\ndevice model (Pixel 9a). Included in upload metadata.",
+			Default:  int64(35),
+			Advanced: true,
+		}, {
 			Name:     "download_cache",
 			Help:     "Enable download cache for opened files.\n\nGoogle Photos download URLs do not support HTTP Range requests.\nWhen enabled, each opened file is downloaded once to a local temp\nfile and shared across concurrent readers, with instant seeking.\nThis is useful for rclone mount where the VFS layer needs to seek.\n\nWhen disabled (the default), Open() returns the raw HTTP stream\ndirectly with no temp files. Use --vfs-cache-mode full for mount.",
 			Default:  false,
@@ -165,6 +175,8 @@ type Options struct {
 	CacheDBPath   string               `config:"cache_db_path"`
 	DeviceModel   string               `config:"device_model"`
 	DeviceMake    string               `config:"device_make"`
+	APKVersion    int64                `config:"apk_version"`
+	AndroidAPI    int64                `config:"android_api"`
 	DownloadCache bool                 `config:"download_cache"`
 	Enc           encoder.MultiEncoder `config:"encoding"`
 }
@@ -233,7 +245,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root = ""
 	}
 
-	api := NewMobileAPI(ctx, authData, opt.DeviceModel, opt.DeviceMake)
+	api := NewMobileAPI(ctx, authData, opt.DeviceModel, opt.DeviceMake, opt.APKVersion, opt.AndroidAPI)
 
 	// Determine cache path
 	cachePath := opt.CacheDBPath

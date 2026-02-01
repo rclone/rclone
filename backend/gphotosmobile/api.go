@@ -71,15 +71,10 @@ import (
 )
 
 const (
-	// clientVersionCode identifies the Google Photos APK version we impersonate.
-	// Extracted from the official APK; update this when the real app updates.
-	clientVersionCode = 49029607
-
-	// androidAPIVersion is the Android SDK level we report (28 = Android 9 Pie).
-	androidAPIVersion = 28
-
-	defaultModel = "Pixel 9a"
-	defaultMake  = "Google"
+	defaultModel      = "Pixel 9a"
+	defaultMake       = "Google"
+	defaultAPKVersion = 49029607
+	defaultAndroidAPI = 35 // Android 15, shipped with Pixel 9a
 )
 
 // MobileAPI is the Google Photos mobile API client
@@ -89,6 +84,8 @@ type MobileAPI struct {
 	userAgent  string
 	model      string
 	deviceMake string
+	apkVersion int64
+	androidAPI int64
 	client     *http.Client
 	authCache  map[string]string
 	authMu     sync.Mutex
@@ -97,7 +94,7 @@ type MobileAPI struct {
 // NewMobileAPI creates a new mobile API client.
 // It uses rclone's fshttp transport which respects global flags like
 // --proxy, --timeout, --dump, --tpslimit, etc.
-func NewMobileAPI(ctx context.Context, authData, model, deviceMake string) *MobileAPI {
+func NewMobileAPI(ctx context.Context, authData, model, deviceMake string, apkVersion, androidAPI int64) *MobileAPI {
 	language := parseLanguage(authData)
 	if language == "" {
 		language = "en_US"
@@ -108,19 +105,27 @@ func NewMobileAPI(ctx context.Context, authData, model, deviceMake string) *Mobi
 	if deviceMake == "" {
 		deviceMake = defaultMake
 	}
+	if apkVersion == 0 {
+		apkVersion = defaultAPKVersion
+	}
+	if androidAPI == 0 {
+		androidAPI = defaultAndroidAPI
+	}
 
 	api := &MobileAPI{
 		authData:   authData,
 		language:   language,
 		model:      model,
 		deviceMake: deviceMake,
+		apkVersion: apkVersion,
+		androidAPI: androidAPI,
 		client:     fshttp.NewClient(ctx),
 		authCache:  map[string]string{"Expiry": "0", "Auth": ""},
 	}
 
 	api.userAgent = fmt.Sprintf(
 		"com.google.android.apps.photos/%d (Linux; U; Android 9; %s; %s; Build/PQ2A.190205.001; Cronet/127.0.6510.5) (gzip)",
-		clientVersionCode, language, model,
+		apkVersion, language, model,
 	)
 
 	return api
@@ -541,7 +546,7 @@ func (a *MobileAPI) UploadFile(ctx context.Context, body io.Reader, size int64, 
 // token that Google uses to associate the committed item with the uploaded bytes).
 // The response contains the new item's media_key at field path 1.3.1.
 func (a *MobileAPI) CommitUpload(ctx context.Context, uploadResponse []byte, fileName string, sha1Hash []byte) (string, error) {
-	body := buildCommitUploadRequest(uploadResponse, fileName, sha1Hash, a.model, a.deviceMake)
+	body := buildCommitUploadRequest(uploadResponse, fileName, sha1Hash, a.model, a.deviceMake, a.androidAPI)
 
 	respBytes, err := a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/6439526531001121323/16538846908252377752",
@@ -578,7 +583,7 @@ func (a *MobileAPI) CommitUpload(ctx context.Context, uploadResponse []byte, fil
 // server-assigned string). Items remain in trash for 60 days before
 // permanent deletion (matching the Google Photos UI behavior).
 func (a *MobileAPI) MoveToTrash(ctx context.Context, dedupKeys []string) error {
-	body := buildMoveToTrashRequest(dedupKeys)
+	body := buildMoveToTrashRequest(dedupKeys, a.apkVersion, a.androidAPI)
 	_, err := a.doProtoRequest(ctx,
 		"https://photosdata-pa.googleapis.com/6439526531001121323/17490284929287180316",
 		body,
