@@ -92,6 +92,7 @@ require (
 	github.com/zeebo/xxh3 v1.0.2
 	go.etcd.io/bbolt v1.4.3
 	goftp.io/server/v2 v2.0.2
+	modernc.org/sqlite v1.44.3
 	golang.org/x/crypto v0.45.0
 	golang.org/x/net v0.47.0
 	golang.org/x/oauth2 v0.33.0
@@ -270,7 +271,6 @@ require (
 	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.44.3 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 	storj.io/common v0.0.0-20251107171817-6221ae45072c // indirect
 	storj.io/drpc v0.0.35-0.20250513201419-f7819ea69b55 // indirect

@@ -908,7 +908,7 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 
 // Open opens the object for reading.
 //
-// When download_cache is enabled (default), Google Photos download URLs
+// When download_cache is enabled, Google Photos download URLs
 // are fetched once into a shared temp file. Multiple Open() calls for
 // the same file share the same download, and the returned reader
 // implements fs.RangeSeeker for instant seeking within cached data.

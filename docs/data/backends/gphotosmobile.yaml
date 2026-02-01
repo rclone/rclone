@@ -16,5 +16,5 @@ features:
 - DuplicateFiles
 - Shutdown
 hashes:
-- SHA-1
+- sha1
 precision: 3153600000000000000
