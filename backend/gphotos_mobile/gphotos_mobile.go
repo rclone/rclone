@@ -59,7 +59,7 @@ func init() {
 		},
 		Options: []fs.Option{{
 			Name:      "auth_data",
-			Help:      "Google Photos mobile API auth data.\n\nThis is the GP_AUTH_DATA string obtained from the gms_auth tool.\nIt contains your Android device credentials for Google Photos.\n\nTo obtain this:\n1. Install gms_auth on a rooted Android device or emulator\n2. Run: gms_auth <email> <password_or_token>\n3. Copy the full output string (starts with 'androidId=')",
+			Help:      "Google Photos mobile API auth data.\n\nThis is the auth string containing your Android device credentials\nfor Google Photos. It starts with 'androidId='.\n\nSee the documentation for instructions on how to obtain it\nusing Google Photos ReVanced and ADB logcat.",
 			Required:  true,
 			Sensitive: true,
 		}, {

@@ -29,8 +29,8 @@ Android Google Photos app uses, giving you:
 
 This backend does **not** use the official Google Photos REST API. Instead, it
 uses the internal mobile API that the Google Photos Android app communicates
-with. This requires Android device credentials obtained via the `gms_auth`
-tool.
+with. This requires Android device credentials obtained from the Google
+Photos app (see [Prerequisites](#prerequisites)).
 
 ### Architecture
 
@@ -70,18 +70,50 @@ To force a full re-sync, delete the cache database file.
 ## Prerequisites
 
 You need Android device credentials to use this backend. These are obtained
-using the `gms_auth` tool, which requires either:
+from the Google Photos Android app using one of the methods below. You only
+need to do this once -- the credentials do not expire under normal use.
 
-- A **rooted Android device**, or
-- An **Android emulator** (e.g. with Magisk root)
+### Getting auth_data via ReVanced (no root required)
 
-### Getting auth_data
+This is the recommended method. It uses a patched Google Photos app
+(ReVanced) and captures the authentication string via ADB logcat.
 
-1. Install `gms_auth` on a rooted Android device or emulator
-2. Run: `gms_auth <email> <password_or_app_password>`
-3. The output is the `auth_data` string (starts with `androidId=`)
-4. This token does **not** expire (it's a master token), but Google may
-   invalidate it if suspicious activity is detected
+1. Install **GmsCore** (microG) on your Android device or emulator:
+   [https://github.com/ReVanced/GmsCore/releases](https://github.com/ReVanced/GmsCore/releases)
+
+2. Install **Google Photos ReVanced** (patched APK):
+   [https://github.com/j-hc/revanced-magisk-module/releases](https://github.com/j-hc/revanced-magisk-module/releases)
+   (or patch it yourself with ReVanced Manager)
+
+3. Connect the device to your PC via **ADB**.
+
+4. Open a terminal on your PC and run:
+
+   **Windows:**
+
+   ```cmd
+   adb logcat | FINDSTR "auth%2Fphotos.native"
+   ```
+
+   **Linux/macOS:**
+
+   ```shell
+   adb logcat | grep "auth%2Fphotos.native"
+   ```
+
+5. If you are already using ReVanced, remove your Google Account from
+   GmsCore first, then re-add it.
+
+6. Open **Google Photos ReVanced** on the device and log into your account.
+
+7. One or more identical log lines should appear in the terminal.
+
+8. Copy the text starting from `androidId=` to the end of the line.
+   This is your `auth_data` string.
+
+**Note:** The `auth_data` credentials do not expire under normal use, but
+Google may revoke them if it detects unusual activity. Each credential is
+tied to a specific device ID.
 
 ## Configuration
 
@@ -234,13 +266,11 @@ Here are the Standard options specific to gphotos_mobile (Google Photos Mobile A
 
 Google Photos mobile API auth data.
 
-This is the GP_AUTH_DATA string obtained from the gms_auth tool.
-It contains your Android device credentials for Google Photos.
+This is the auth string containing your Android device credentials for
+Google Photos. It starts with `androidId=`.
 
-To obtain this:
-1. Install gms_auth on a rooted Android device or emulator
-2. Run: gms_auth \<email\> \<password_or_token\>
-3. Copy the full output string (starts with 'androidId=')
+See the [Getting auth_data](#getting-auth_data-via-revanced-no-root-required)
+section for instructions on how to obtain it.
 
 Properties:
 
@@ -394,7 +424,6 @@ has some implications:
 - The token does **not** expire normally
 - Google may revoke it if it detects unusual activity
 - Each token is tied to a specific Android device ID
-- You need root access to an Android device or emulator to obtain it
 - The token grants **full access** to the Google account's Photos library
 
 ### Upload deduplication
@@ -422,7 +451,7 @@ trigger an immediate sync.
 | Delete | Only from rclone-created albums | Any item (trash) |
 | Albums | Yes | Not yet |
 | Auth method | OAuth (browser) | Android device token |
-| Requires root Android | No | Yes |
+| Requires root Android | No | No (ReVanced method) |
 | Official API | Yes | No (reverse-engineered) |
 | Rate limits | Google API quotas | No known limits |
 | Mount support | Limited (no sizes by default) | Full (with vfs-cache-mode full) |
@@ -431,8 +460,9 @@ trigger an immediate sync.
 
 ### "auth token refresh failed"
 
-Your `auth_data` may be invalid or revoked. Re-run `gms_auth` to get
-a new token.
+Your `auth_data` may be invalid or revoked. Re-do the
+[credential extraction](#getting-auth_data-via-revanced-no-root-required)
+to get a new token.
 
 ### First run is very slow
 
