@@ -650,11 +650,15 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
-	// Check if directory exists (unless it's root which always exists)
+	// Validate directory - check if it's actually a directory
+	// This prevents files from being accepted in the directory endpoint
 	if dirPath != "" {
-		_, err = vfs.Stat(dirPath)
+		node, err := vfs.Stat(dirPath)
 		if err != nil {
-			return nil, fmt.Errorf("directory not found: %q: %w", dirPath, err)
+			return nil, err
+		}
+		if !node.IsDir() {
+			return nil, fmt.Errorf("path %q is not a directory: %s", dirPath, node.Name())
 		}
 	}
 
@@ -770,6 +774,73 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 		"fs":    fs.ConfigString(vfs.Fs()),
 	}, nil
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/file-status",
+		Fn:    rcFileStatus,
+		Title: "Get detailed cache status of one or more files.",
+		Help: `
+This returns detailed cache status of files including name and percentage.
+
+This takes the following parameters:
+
+- fs - select VFS in use (optional)
+- file - path to the file to get status of (can be repeated as file1, file2, etc.)
+
+This returns a JSON object with the following fields:
+
+- files - array of file objects with fields:
+  - name - leaf name of the file
+  - status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
+  - percentage - cache percentage (0-100)
+  - uploading - whether the file is currently being uploaded
+  - size - total file size
+  - cachedBytes - bytes cached locally
+  - dirty - whether the file has uncommitted modifications
+  - fs - file system path
+
+Example:
+  rclone rc vfs/file-status file=document.pdf
+
+For multiple files:
+  rclone rc vfs/file-status file=a file=b
+` + getVFSHelp,
+	})
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/file-status",
+		Fn:    rcFileStatus,
+		Title: "Get detailed cache status of one or more files.",
+		Help: `
+This returns detailed cache status of files including name and percentage.
+
+This takes the following parameters:
+
+- fs - select VFS in use (optional)
+- file - path to the file to get status of (can be repeated as file1, file2, etc.)
+
+This returns a JSON object with the following fields:
+
+- files - array of file objects with fields:
+  - name - leaf name of the file
+  - status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
+  - percentage - cache percentage (0-100)
+  - uploading - whether the file is currently being uploaded
+  - size - total file size
+  - cachedBytes - bytes cached locally
+  - dirty - whether the file has uncommitted modifications
+- fs - file system path
+
+Example:
+  rclone rc vfs/file-status file=document.pdf
+
+For multiple files:
+  rclone rc vfs/file-status file=a file=b
+` + getVFSHelp,
+	})
 
 func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	vfs, err := getVFS(in)
