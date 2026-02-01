@@ -571,16 +571,19 @@ This takes the following parameters:
 
 This returns a JSON object with the following fields:
 
-- totalFiles - total number of files in VFS
-- totalCachedBytes - total bytes cached across all files
-- averageCachePercentage - average cache percentage across all files (0-100)
+- totalFiles - total number of files currently tracked by the cache (only includes files that have been accessed)
+- totalCachedBytes - total bytes cached across all tracked files
+- averageCachePercentage - average cache percentage across all tracked files (0-100)
 - counts - object containing counts for each cache status:
   - FULL - number of files completely cached locally
   - PARTIAL - number of files partially cached
-  - NONE - number of files not cached (remote only)
+  - NONE - number of tracked files not cached (remote only)
   - DIRTY - number of files modified locally but not uploaded
   - UPLOADING - number of files currently being uploaded
 - fs - file system path
+
+Note: These statistics only reflect files that are currently tracked by the VFS cache.
+Files that have never been accessed through the VFS are not included in these counts.
 ` + getVFSHelp,
 	})
 
@@ -610,8 +613,11 @@ This returns a JSON object with the following fields:
   - error - error message if there was an error getting file information (optional)
 - fs - file system path
 
-Note: The percentage field is always 100 for "FULL", "DIRTY", and "UPLOADING" status
-files since the local file is complete. It is only meaningful for "PARTIAL" status files.
+Note: The percentage field indicates how much of the file is cached locally (0-100).
+For "FULL" and "DIRTY" status, it is always 100 since the local file is complete.
+For "UPLOADING" status, it is also 100 which represents the percentage of the file
+that is cached locally (not the upload progress). It is only meaningful for "PARTIAL"
+status files where it shows the actual percentage cached.
 If the file cannot be found or accessed, an "error" field will be included with the
 error message.
 ` + getVFSHelp,
@@ -622,29 +628,37 @@ error message.
 		Fn:    rcDirStatus,
 		Title: "Get cache status of files in a directory.",
 		Help: `
-This returns cache status for all files in a specified directory, optionally including subdirectories. This is ideal for file manager integrations that need to display cache status overlays for directory listings.
+This returns cache status for files in a specified directory that are currently
+tracked by the VFS cache, optionally including subdirectories. This is ideal for
+file manager integrations that need to display cache status overlays for directory
+listings.
 
 This takes the following parameters:
 
 - fs - select the VFS in use (optional)
-- dir - the path to the directory to get the status of
+- dir - the path to the directory to get the status of (optional, defaults to root)
 - recursive - if true, include all subdirectories (optional, defaults to false)
 
 This returns a JSON object with the following fields:
 
 - dir - the directory path that was scanned
-- files - object containing arrays of files grouped by their cache status:
+- files - object containing arrays of files grouped by their cache status.
+  All status categories are always present (may be empty arrays):
   - FULL - array of completely cached files
-  - PARTIAL - array of partially cached files  
-  - NONE - array of files not cached
+  - PARTIAL - array of partially cached files
+  - NONE - array of tracked files not cached (remote only)
   - DIRTY - array of files modified locally but not uploaded
   - UPLOADING - array of files currently being uploaded
 - Each file entry includes:
-  - name - the file name
-  - percentage - cache percentage (0-100)
+  - name - the file name (use / as path separator)
+  - percentage - cache percentage (0-100). For UPLOADING files, this represents
+    the percentage of the file cached locally, not upload progress
   - uploading - whether the file is currently being uploaded
 - recursive - whether subdirectories were included in the scan
 - fs - the file system path
+
+Note: This endpoint only returns files that are currently tracked by the VFS cache
+(files that have been accessed). It does not list all files in the remote directory.
 
 Example:
   rclone rc vfs/dir-status dir=/documents
@@ -698,17 +712,25 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	// Get files status using the cache
 	var filesByStatus map[string][]rc.Params
 	if vfs.cache == nil {
-		// If cache is not enabled, return empty results
-		filesByStatus = map[string][]rc.Params{}
+		// If cache is not enabled, return empty results with all categories
+		filesByStatus = map[string][]rc.Params{
+			"FULL":      {},
+			"PARTIAL":   {},
+			"NONE":      {},
+			"DIRTY":     {},
+			"UPLOADING": {},
+		}
 	} else {
 		filesByStatus = vfs.cache.GetStatusForDir(dirPath, recursive)
 	}
 
-	// Prepare the response, only include categories that have files
+	// Prepare the response - always include all categories for a stable API
 	responseFiles := rc.Params{}
-	for status, files := range filesByStatus {
-		if len(files) > 0 {
+	for _, status := range []string{"FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"} {
+		if files, ok := filesByStatus[status]; ok {
 			responseFiles[status] = files
+		} else {
+			responseFiles[status] = []rc.Params{}
 		}
 	}
 
