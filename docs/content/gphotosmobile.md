@@ -311,12 +311,13 @@ listing and creation are not yet implemented.
 
 ### Duplicate filenames
 
-If multiple items share the same filename, duplicates get a suffix with
-the first 8 characters of the media key. For example, two files named
-`photo.jpg` become `photo.jpg` and `photo_AF1QipO2.jpg`.
+If multiple items share the same filename, **all** of them get a suffix
+with the first 8 characters of their media key. For example, two files
+both named `photo.jpg` become `photo_AF1QipO2.jpg` and
+`photo_BG2RjqP3.jpg`. This ensures filenames are stable and
+deterministic regardless of database ordering between syncs.
 
-The deduplication only applies within a single directory listing.
-`NewObject()` lookups by filename return the first match.
+Files with unique names are not affected.
 
 ### Deletion is trash only
 
