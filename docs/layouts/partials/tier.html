@@ -1,0 +1,42 @@
+{{/* Context: Accepts .tier (string) OR .name (string) for lookup. Optional: .align (bool) */}}
+
+{{ $tierColors := dict
+  "Tier 1"       "success"
+  "Tier 2"       "success"
+  "Tier 3"       "warning"
+  "Tier 4"       "danger"
+  "Tier 5"       "danger"
+}}
+
+{{ $tierMessages := dict
+  "Tier 1"    "Core: Production-grade, first-class"
+  "Tier 2"    "Stable: Well-supported, minor gaps"
+  "Tier 3"    "Supported: Works for many uses; known caveats"
+  "Tier 4"    "Experimental: Use with care; expect gaps/changes"
+  "Tier 5"    "Deprecated: No longer maintained or supported"
+}}
+
+{{/* Determine the Tier Name */}}
+{{ $currentTier := "" }}
+
+{{ if .tier }}
+  {{/* Direct Tier Usage */}}
+  {{ $currentTier = .tier }}
+{{ else if .name }}
+  {{/*  Backend Lookup Usage */}}
+  {{ $backendName := .name | lower }}
+  {{ $data := index site.Data.backends $backendName }}
+  {{ if $data }}
+    {{ $currentTier = $data.tier }}
+  {{ end }}
+{{ end }}
+
+{{/* Render Badge if a Tier was found */}}
+{{ if $currentTier }}
+  {{ $color := index $tierColors $currentTier | default "secondary" }}
+  {{ $message := index $tierMessages $currentTier | default "" }}
+
+  <a href="/tiers/" class="badge badge-pill badge-{{ $color }} {{ if .align }}float-right{{ end }}" style="{{ if .align }}margin-top: 30px; {{ end }}font-size: 100%" title="{{ $message }}">
+    {{ $currentTier }}
+  </a>
+{{ end }}

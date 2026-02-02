@@ -2,13 +2,15 @@
 title: "Cache"
 description: "Rclone docs for cache remote"
 versionIntroduced: "v1.39"
-status: Deprecated
 ---
 
 # {{< icon "fa fa-archive" >}} Cache
 
 The `cache` remote wraps another existing remote and stores file structure
 and its data for long running tasks like `rclone mount`.
+
+It is **deprecated** so not recommended for use with new installations
+and may be removed at some point.
 
 ## Status
 

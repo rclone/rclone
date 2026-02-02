@@ -64,6 +64,7 @@ directories to and from different cloud storage providers.
 - iCloud Drive [:page_facing_up:](https://rclone.org/iclouddrive/)
 - ImageKit [:page_facing_up:](https://rclone.org/imagekit/)
 - Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
+- Internxt [:page_facing_up:](https://rclone.org/internxt/)
 - Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
 - IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
 - Intercolo Object Storage [:page_facing_up:](https://rclone.org/s3/#intercolo)

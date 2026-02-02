@@ -1,0 +1,18 @@
+backend: cloudinary
+name: Cloudinary
+tier: Tier 3
+maintainers: Core
+features_score: 3
+integration_tests: Failing
+data_integrity: Hash
+performance: High
+adoption: Often used
+docs: Full
+security: High
+virtual: false
+remote: 'TestCloudinary:'
+features:
+- CanHaveEmptyDirectories
+hashes:
+- md5
+precision: 3153600000000000000

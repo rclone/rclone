@@ -41,7 +41,12 @@
           {{ with .Params.status | lower }}
             {{ $statusCode := . }}
             {{ $statusMessage := index $statusMap $statusCode }}
-            <span class="badge badge-pill badge-danger float-right" style="margin-top: 30px; font-size: 100%" title="{{ $statusMessage }}">{{ $statusCode }}</span>
+            <span class="badge badge-pill badge-danger float-right" style="margin-top: 30px; font-size: 100%" title="{{ $statusMessage }}">{{ $statusCode | title }}</span>
+          {{ end }}
+
+          {{ if .Page.File }}
+            {{ $backendName := .Page.File.TranslationBaseName }}
+            {{ partial "tier.html" (dict "name" $backendName "align" true) }}
           {{ end }}
 
           {{ block "main" . }}

@@ -17,12 +17,10 @@ Improvements:
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"path"
 	"slices"
 	"strings"
@@ -256,25 +254,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	defer megaCacheMu.Unlock()
 	srv := megaCache[opt.User]
 	if srv == nil {
-		// srv = mega.New().SetClient(fshttp.NewClient(ctx))
-
-		// Workaround for Mega's use of insecure cipher suites which are no longer supported by default since Go 1.22.
-		// Relevant issues:
-		// https://github.com/rclone/rclone/issues/8565
-		// https://github.com/meganz/webclient/issues/103
-		clt := fshttp.NewClient(ctx)
-		clt.Transport = fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
-			var ids []uint16
-			// Read default ciphers
-			for _, cs := range tls.CipherSuites() {
-				ids = append(ids, cs.ID)
-			}
-			// Insecure but Mega uses TLS_RSA_WITH_AES_128_GCM_SHA256 for storage endpoints
-			// (e.g. https://gfs302n114.userstorage.mega.co.nz) as of June 18, 2025.
-			t.TLSClientConfig.CipherSuites = append(ids, tls.TLS_RSA_WITH_AES_128_GCM_SHA256)
-		})
-		srv = mega.New().SetClient(clt)
-
+		srv = mega.New().SetClient(fshttp.NewClient(ctx))
 		srv.SetRetries(ci.LowLevelRetries) // let mega do the low level retries
 		srv.SetHTTPS(opt.UseHTTPS)
 		srv.SetLogger(func(format string, v ...any) {

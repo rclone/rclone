@@ -2,7 +2,6 @@
 title: "Hasher"
 description: "Better checksums for other remotes"
 versionIntroduced: "v1.57"
-status: Experimental
 ---
 
 # {{< icon "fa fa-check-double" >}} Hasher
