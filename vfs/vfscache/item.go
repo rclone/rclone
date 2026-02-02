@@ -1489,7 +1489,13 @@ func (item *Item) _vfsStatusCacheWithPercentageNoLock() (string, int) {
 	}
 
 	if cachedSize > 0 {
-		percentage := int((cachedSize * 100) / totalSize)
+		var percentage int
+		// Use floating point to avoid overflow for huge files (>92 PB)
+		if cachedSize > 9223372036854775807 {
+			percentage = int(float64(cachedSize) / float64(totalSize) * 100)
+		} else {
+			percentage = int((cachedSize * 100) / totalSize)
+		}
 		// Clamp percentage to [0, 100] to handle edge cases
 		if percentage > 100 {
 			percentage = 100
@@ -1559,23 +1565,51 @@ func (item *Item) VFSStatusCacheDetailed() (string, int, int64, int64, bool) {
 	// Get size information
 	totalSize := item.info.Size
 	var cachedSize int64
-	if status == "FULL" || status == "DIRTY" || status == "UPLOADING" {
-		// For these statuses, the file is fully cached locally
-		// If totalSize is known, report that. Otherwise, report actual cached size from ranges.
-		if totalSize > 0 {
-			cachedSize = totalSize
-		} else if item.info.Rs != nil {
-			cachedSize = item.info.Rs.Size()
-		}
-	} else {
-		// For PARTIAL and NONE, get cached size from ranges
-		if item.info.Rs != nil {
-			cachedSize = item.info.Rs.Size()
-		}
+	if item.info.Rs != nil {
+		cachedSize = item.info.Rs.Size()
+	}
+	// For FULL, DIRTY, or UPLOADING status, if the total size is known,
+	// the cached size should equal the total size.
+	if (status == "FULL" || status == "DIRTY" || status == "UPLOADING") && totalSize > 0 {
+		cachedSize = totalSize
 	}
 
 	// Get dirty flag
 	dirty := item.info.Dirty
 
 	return status, percentage, totalSize, cachedSize, dirty
+}
+
+// VFSStatusCacheDetailedWithDiskSize returns detailed cache status information including
+// disk size for the file, all obtained atomically under item.mu to prevent
+// data races. This is used by GetAggregateStats to get consistent snapshot data.
+func (item *Item) VFSStatusCacheDetailedWithDiskSize() (status string, percentage int, totalSize int64, cachedSize int64, diskSize int64, dirty bool) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	// Check upload status first
+	isUploading := false
+	if item.writeBackID != 0 && item.c.writeback != nil {
+		isUploading = item.c.writeback.IsUploading(item.writeBackID)
+	}
+
+	if isUploading {
+		status, percentage = "UPLOADING", 100
+	} else {
+		status, percentage = item._vfsStatusCacheWithPercentageNoLock()
+	}
+
+	totalSize = item.info.Size
+	if item.info.Rs != nil {
+		cachedSize = item.info.Rs.Size()
+	}
+	// For FULL, DIRTY, or UPLOADING status, if the total size is known,
+	// the cached size should equal the total size.
+	if (status == "FULL" || status == "DIRTY" || status == "UPLOADING") && totalSize > 0 {
+		cachedSize = totalSize
+	}
+
+	diskSize = cachedSize
+	dirty = item.info.Dirty
+	return status, percentage, totalSize, cachedSize, diskSize, dirty
 }
