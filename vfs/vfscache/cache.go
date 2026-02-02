@@ -891,6 +891,7 @@ type AggregateStats struct {
 	NoneCount              int   `json:"noneCount"`
 	DirtyCount             int   `json:"dirtyCount"`
 	UploadingCount         int   `json:"uploadingCount"`
+	ErrorCount             int   `json:"errorCount"`
 	TotalCachedBytes       int64 `json:"totalCachedBytes"`
 	AverageCachePercentage int   `json:"averageCachePercentage"`
 }
@@ -902,10 +903,12 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 	for _, it := range c.item {
 		items = append(items, it)
 	}
+	errorCount := len(c.errItems)
 	c.mu.Unlock()
 
 	stats := AggregateStats{
 		TotalFiles: len(items),
+		ErrorCount: errorCount,
 	}
 
 	if stats.TotalFiles == 0 {
@@ -918,15 +921,15 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 		status, percentage, _, _, diskSize, _ := item.VFSStatusCacheDetailedWithDiskSize()
 
 		switch status {
-		case "FULL":
+		case CacheStatusFull:
 			stats.FullCount++
-		case "PARTIAL":
+		case CacheStatusPartial:
 			stats.PartialCount++
-		case "NONE":
+		case CacheStatusNone:
 			stats.NoneCount++
-		case "DIRTY":
+		case CacheStatusDirty:
 			stats.DirtyCount++
-		case "UPLOADING":
+		case CacheStatusUploading:
 			stats.UploadingCount++
 		}
 
@@ -943,12 +946,9 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 // GetStatusForDir returns cache status for all files in a specified directory
 // If recursive is true, it includes all subdirectories
 func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.Params {
-	filesByStatus := map[string][]rc.Params{
-		"FULL":      {},
-		"PARTIAL":   {},
-		"NONE":      {},
-		"DIRTY":     {},
-		"UPLOADING": {},
+	filesByStatus := make(map[string][]rc.Params)
+	for _, status := range CacheStatuses {
+		filesByStatus[status] = []rc.Params{}
 	}
 
 	// Normalize to match cache key format
@@ -1006,7 +1006,7 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 
 	// Build results without holding the cache mutex
 	for _, e := range entries {
-		isUploading := e.status == "UPLOADING"
+		isUploading := e.status == CacheStatusUploading
 		fileInfo := rc.Params{
 			"name":        e.rel,
 			"percentage":  e.percentage,

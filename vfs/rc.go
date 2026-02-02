@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs/vfscache"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -704,12 +705,9 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	var filesByStatus map[string][]rc.Params
 	if vfs.cache == nil {
 		// If cache is not enabled, return empty results with all categories
-		filesByStatus = map[string][]rc.Params{
-			"FULL":      {},
-			"PARTIAL":   {},
-			"NONE":      {},
-			"DIRTY":     {},
-			"UPLOADING": {},
+		filesByStatus = make(map[string][]rc.Params)
+		for _, status := range vfscache.CacheStatuses {
+			filesByStatus[status] = []rc.Params{}
 		}
 	} else {
 		filesByStatus = vfs.cache.GetStatusForDir(dirPath, recursive)
@@ -717,7 +715,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 	// Prepare the response - always include all categories for a stable API
 	responseFiles := rc.Params{}
-	for _, status := range []string{"FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"} {
+	for _, status := range vfscache.CacheStatuses {
 		responseFiles[status] = filesByStatus[status]
 	}
 
@@ -740,6 +738,9 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 
 	// Check for "file" parameter (single file)
 	if path, err := in.GetString("file"); err == nil {
+		if path == "" {
+			return nil, rc.NewErrParamInvalid(errors.New("empty file parameter"))
+		}
 		paths = append(paths, path)
 	} else if !rc.IsErrParamNotFound(err) {
 		return nil, err
@@ -754,6 +755,9 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 				break // No more file parameters
 			}
 			return nil, pathErr
+		}
+		if path == "" {
+			return nil, rc.NewErrParamInvalid(fmt.Errorf("empty %s parameter", key))
 		}
 		paths = append(paths, path)
 	}
@@ -776,7 +780,7 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 		if vfs.cache != nil {
 			if item := vfs.cache.FindItem(cleanPath); item != nil {
 				status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
-				isUploading := status == "UPLOADING"
+				isUploading := status == vfscache.CacheStatusUploading
 				result = rc.Params{
 					"name":        baseName,
 					"status":      status,
@@ -802,9 +806,9 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 			fs.Debugf(vfs.Fs(), "vfs/file-status: error getting file info for %q: %v", cleanPath, err)
 			hasError = true
 		}
-		fileStatus := "NONE"
+		fileStatus := vfscache.CacheStatusNone
 		if hasError {
-			fileStatus = "ERROR"
+			fileStatus = vfscache.CacheStatusError
 		}
 		result = rc.Params{
 			"name":        baseName,
@@ -835,35 +839,34 @@ func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	if vfs.cache == nil {
+		counts := rc.Params{}
+		for _, status := range vfscache.CacheStatuses {
+			counts[status] = 0
+		}
 		return rc.Params{
 			"totalFiles":             0,
 			"totalCachedBytes":       0,
 			"averageCachePercentage": 0,
-			"counts": rc.Params{
-				"FULL":      0,
-				"PARTIAL":   0,
-				"NONE":      0,
-				"DIRTY":     0,
-				"UPLOADING": 0,
-			},
-			"fs": fs.ConfigString(vfs.Fs()),
+			"counts":                 counts,
+			"fs":                     fs.ConfigString(vfs.Fs()),
 		}, nil
 	}
 
-	// Get aggregate statistics from cache
 	stats := vfs.cache.GetAggregateStats()
+	counts := rc.Params{
+		vfscache.CacheStatusFull:      stats.FullCount,
+		vfscache.CacheStatusPartial:   stats.PartialCount,
+		vfscache.CacheStatusNone:      stats.NoneCount,
+		vfscache.CacheStatusDirty:     stats.DirtyCount,
+		vfscache.CacheStatusUploading: stats.UploadingCount,
+		vfscache.CacheStatusError:     stats.ErrorCount,
+	}
 
 	return rc.Params{
 		"totalFiles":             stats.TotalFiles,
 		"totalCachedBytes":       stats.TotalCachedBytes,
 		"averageCachePercentage": stats.AverageCachePercentage,
-		"counts": rc.Params{
-			"FULL":      stats.FullCount,
-			"PARTIAL":   stats.PartialCount,
-			"NONE":      stats.NoneCount,
-			"DIRTY":     stats.DirtyCount,
-			"UPLOADING": stats.UploadingCount,
-		},
-		"fs": fs.ConfigString(vfs.Fs()),
+		"counts":                 counts,
+		"fs":                     fs.ConfigString(vfs.Fs()),
 	}, nil
 }

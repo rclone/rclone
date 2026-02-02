@@ -22184,6 +22184,7 @@ The response includes aggregate statistics and counts for each cache status type
   - "PARTIAL": Files partially cached
   - "DIRTY": Files modified locally but not uploaded
   - "UPLOADING": Files currently being uploaded
+  - "ERROR": Files with cache errors
 - "fs": File system path
 
 Example response:
@@ -22197,7 +22198,8 @@ Example response:
             "NONE": 234,
             "PARTIAL": 3,
             "DIRTY": 2,
-            "UPLOADING": 1
+            "UPLOADING": 1,
+            "ERROR": 0
         },
         "fs": "/mnt/remote"
     }
