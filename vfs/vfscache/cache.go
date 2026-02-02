@@ -897,19 +897,18 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 	for _, it := range c.item {
 		items = append(items, it)
 	}
-	errorCount := len(c.errItems)
+	errItemsMap := make(map[string]struct{}, len(c.errItems))
+	for name := range c.errItems {
+		errItemsMap[name] = struct{}{}
+	}
 	c.mu.Unlock()
 
 	counts := make(map[string]int)
 	for _, status := range CacheStatuses {
 		counts[status] = 0
 	}
-	counts[CacheStatusError] = errorCount
 
 	stats := AggregateStats{
-		// Note: errorCount tracks items in errItems, but these items are
-		// also included in c.item (see purgeClean retry logic). We don't
-		// add errorCount here to avoid double-counting.
 		TotalFiles: len(items),
 		Counts:     counts,
 	}
@@ -918,19 +917,24 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 		return stats
 	}
 
-	var totalPercentage int
+	var totalPercentage, nonErrorItems int
 
 	for _, item := range items {
 		status, percentage, _, _, diskSize, _ := item.VFSStatusCacheDetailedWithDiskSize()
-
-		stats.Counts[status]++
 		stats.TotalCachedBytes += diskSize
-		totalPercentage += percentage
+
+		if _, isError := errItemsMap[item.name]; isError {
+			stats.Counts[CacheStatusError]++
+		} else {
+			stats.Counts[status]++
+			totalPercentage += percentage
+			nonErrorItems++
+		}
 	}
 
-	// Use proper rounding: (total + count/2) / count
-	// Only include files in c.item for average calculation
-	stats.AverageCachePercentage = (totalPercentage + len(items)/2) / len(items)
+	if nonErrorItems > 0 {
+		stats.AverageCachePercentage = (totalPercentage + nonErrorItems/2) / nonErrorItems
+	}
 	return stats
 }
 
