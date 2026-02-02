@@ -173,6 +173,7 @@ type MultiPartCreateRequest struct {
 	Extension    string      `json:"extension"`
 	ParentID     json.Number `json:"parent_id"`
 	RelativePath string      `json:"relativePath"`
+	WorkspaceID  string      `json:"workspaceId,omitempty"`
 }
 
 // MultiPartCreateResponse is returned by POST /s3/multipart/create
