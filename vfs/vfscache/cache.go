@@ -248,12 +248,7 @@ func getBackends(ctx context.Context, parentPath string, relativeDirPath string)
 //
 // name should be a remote path not an osPath
 func clean(name string) string {
-	name = strings.Trim(name, "/")
-	name = path.Clean(name)
-	if name == "." || name == "/" {
-		name = ""
-	}
-	return name
+	return vfscommon.NormalizePath(name)
 }
 
 // fromOSPath turns a OS path into a standard/remote path
@@ -920,7 +915,7 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 	var totalPercentage int
 
 	for _, item := range items {
-		status, percentage := item.VFSStatusCacheWithPercentage()
+		status, percentage, _, _, diskSize, _ := item.VFSStatusCacheDetailedWithDiskSize()
 
 		switch status {
 		case "FULL":
@@ -935,7 +930,7 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 			stats.UploadingCount++
 		}
 
-		stats.TotalCachedBytes += item.getDiskSize()
+		stats.TotalCachedBytes += diskSize
 		totalPercentage += percentage
 	}
 
@@ -956,13 +951,8 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 		"UPLOADING": {},
 	}
 
-	// Normalize to match cache key format (same as cache.clean() function)
-	cleanDir := dirPath
-	cleanDir = strings.Trim(cleanDir, "/")
-	cleanDir = path.Clean(cleanDir)
-	if cleanDir == "." || cleanDir == "/" {
-		cleanDir = ""
-	}
+	// Normalize to match cache key format
+	cleanDir := vfscommon.NormalizePath(dirPath)
 	prefix := cleanDir
 	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
