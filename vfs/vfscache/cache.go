@@ -891,6 +891,12 @@ type AggregateStats struct {
 }
 
 // GetAggregateStats returns aggregate cache statistics for all items in the cache
+//
+// Note: The diskSize return value from VFSStatusCacheDetailedWithDiskSize
+// represents logical size of cached data on disk, which is used to
+// calculate TotalCachedBytes. This may differ from actual filesystem
+// block allocation for sparse files. The name could be clarified in a
+// future refactor, but semantics are: total bytes logically cached.
 func (c *Cache) GetAggregateStats() AggregateStats {
 	c.mu.Lock()
 	items := make([]*Item, 0, len(c.item))
