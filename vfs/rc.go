@@ -621,8 +621,9 @@ For "FULL" and "DIRTY" status, it is always 100 since the local file is complete
 For "UPLOADING" status, it is also 100 which represents the percentage of the file
 that is cached locally (not the upload progress). It is only meaningful for "PARTIAL"
 status files where it shows the actual percentage cached.
-If the file cannot be found or accessed, an "error" field will be included with a
-generic message for security (detailed errors are logged internally).
+If the file cannot be found or accessed, the status will be "ERROR" and an
+"error" field will be included with a generic message for security (detailed
+errors are logged internally).
 ` + getVFSHelp,
 	})
 
@@ -853,13 +854,9 @@ func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	stats := vfs.cache.GetAggregateStats()
-	counts := rc.Params{
-		vfscache.CacheStatusFull:      stats.FullCount,
-		vfscache.CacheStatusPartial:   stats.PartialCount,
-		vfscache.CacheStatusNone:      stats.NoneCount,
-		vfscache.CacheStatusDirty:     stats.DirtyCount,
-		vfscache.CacheStatusUploading: stats.UploadingCount,
-		vfscache.CacheStatusError:     stats.ErrorCount,
+	counts := rc.Params{}
+	for k, v := range stats.Counts {
+		counts[k] = v
 	}
 
 	return rc.Params{

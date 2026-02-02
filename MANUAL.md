@@ -22277,7 +22277,7 @@ The "error" field (optional) contains a generic error message if there was an er
 getting file information, such as when the file does not exist or cannot be accessed.
 For security reasons, only a generic message is returned to avoid exposing internal
 details. Detailed error information is logged internally by rclone.
-When present, the "status" will be "NONE" and other fields may have default values.
+When present, the "status" will be "ERROR" and other fields may have default values.
 
 This command takes an "fs" parameter. If this parameter is not
 supplied and if there is only one VFS in use then that VFS will be
