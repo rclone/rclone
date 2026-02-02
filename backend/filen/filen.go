@@ -415,12 +415,12 @@ func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader i
 			return totalWritten, err
 		}
 		resp, err := cw.filen.UploadChunk(ctx, &cw.FileUpload, realChunkNumber, chunkReadSlice)
+		if err != nil {
+			return totalWritten, err
+		}
 		select { // only care about getting this once
 		case cw.bucketAndRegion <- *resp:
 		default:
-		}
-		if err != nil {
-			return totalWritten, err
 		}
 		totalWritten += int64(len(chunkReadSlice))
 		realChunkNumber++
