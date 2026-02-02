@@ -76,7 +76,7 @@ func TestRCStatus(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	statusCall := rc.Calls.Get("vfs/status")
 	require.NotNil(t, statusCall)
@@ -159,7 +159,7 @@ func TestRCFileStatus(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
 	require.NotNil(t, fileStatusCall)
@@ -213,7 +213,7 @@ func TestRCFileStatus_MultipleFiles(t *testing.T) {
 	err = file2.Close()
 	require.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
 	require.NotNil(t, fileStatusCall)
@@ -250,7 +250,7 @@ func TestRCFileStatus_InvalidPath(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
 	require.NotNil(t, fileStatusCall)
@@ -320,7 +320,7 @@ func TestRCFileStatus_TooManyFiles(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	params := rc.Params{"fs": fs.ConfigString(r.Fremote), "file": "test.txt"}
 	for i := 1; i <= 110; i++ {
@@ -370,7 +370,7 @@ func TestRCDirStatus(t *testing.T) {
 	err = file3.Close()
 	require.NoError(t, err)
 
-	time.Sleep(200 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	dirStatusCall := rc.Calls.Get("vfs/dir-status")
 	require.NotNil(t, dirStatusCall)
@@ -439,7 +439,7 @@ func TestRCDirStatus_Recursive(t *testing.T) {
 	err = file3.Close()
 	require.NoError(t, err)
 
-	time.Sleep(200 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	dirStatusCall := rc.Calls.Get("vfs/dir-status")
 	require.NotNil(t, dirStatusCall)
@@ -533,7 +533,7 @@ func TestRCDirStatus_Root(t *testing.T) {
 	err = file2.Close()
 	require.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	dirStatusCall := rc.Calls.Get("vfs/dir-status")
 	require.NotNil(t, dirStatusCall)
@@ -586,7 +586,7 @@ func TestRCFileStatus_Lifecycle(t *testing.T) {
 
 	assert.Equal(t, "ERROR", file1["status"], "file should not exist initially")
 
-	time.Sleep(100 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	file, err := vfs.OpenFile("lifecycle.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
@@ -595,7 +595,7 @@ func TestRCFileStatus_Lifecycle(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
+	// TODO: Replace with deterministic wait
 
 	result2, err := fileStatusCall.Fn(context.Background(), rc.Params{
 		"fs":   fs.ConfigString(r.Fremote),
