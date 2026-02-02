@@ -476,8 +476,12 @@ func (f *Fs) createDir(ctx context.Context, pathID, leaf string, modTime time.Ti
 	var resp *http.Response
 	var result api.CreateFolderResponse
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/folders",
+		Method:     "POST",
+		Path:       "/folders",
+		Parameters: url.Values{},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 	mkdir := api.CreateFolderRequest{
 		Name:     f.opt.Enc.FromStandardName(leaf),
@@ -779,8 +783,12 @@ func (f *Fs) patch(ctx context.Context, id, attribute string, value string) (ite
 	}
 	var result api.UpdateItemResponse
 	opts := rest.Opts{
-		Method: "PUT",
-		Path:   "/file-entries/" + id,
+		Method:     "PUT",
+		Path:       "/file-entries/" + id,
+		Parameters: url.Values{},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
@@ -807,8 +815,12 @@ func (f *Fs) move(ctx context.Context, id, newDirID string) (err error) {
 	}
 	var result api.MoveResponse
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/file-entries/move",
+		Method:     "POST",
+		Path:       "/file-entries/move",
+		Parameters: url.Values{},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
@@ -945,8 +957,12 @@ func (f *Fs) copy(ctx context.Context, id, newDirID string) (item *api.Item, err
 	}
 	var result api.CopyResponse
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/file-entries/duplicate",
+		Method:     "POST",
+		Path:       "/file-entries/duplicate",
+		Parameters: url.Values{},
+	}
+	if f.opt.WorkspaceID != "" {
+		opts.Parameters.Set("workspaceId", f.opt.WorkspaceID)
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
@@ -1114,6 +1130,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		Extension:    strings.TrimPrefix(path.Ext(leaf), `.`),
 		ParentID:     json.Number(directoryID),
 		RelativePath: f.opt.Enc.FromStandardPath(path.Join(f.root, remote)),
+		WorkspaceID:  f.opt.WorkspaceID,
 	}
 
 	var resp api.MultiPartCreateResponse
@@ -1509,6 +1526,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		MultipartParams: url.Values{
 			"parentId":     {directoryID},
 			"relativePath": {encodedLeaf},
+			"workspaceId":  {o.fs.opt.WorkspaceID},
 		},
 		MultipartContentName: "file",
 		MultipartFileName:    encodedLeaf,
