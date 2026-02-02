@@ -770,7 +770,7 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 
 	// If no files found, return error
 	if len(paths) == 0 {
-		return nil, errors.New("no file parameter(s) provided")
+		return nil, rc.NewErrParamInvalid(errors.New("no file parameter(s) provided"))
 	}
 
 	// Collect status for each file
