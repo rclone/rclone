@@ -653,6 +653,7 @@ This returns a JSON object with the following fields:
   - NONE - array of tracked files not cached (remote only)
   - DIRTY - array of files modified locally but not uploaded
   - UPLOADING - array of files currently being uploaded
+  - ERROR - array of files with errors (e.g., reset failures)
 - Each file entry includes:
   - name - the file name (use / as path separator)
   - percentage - cache percentage (0-100). For UPLOADING files, this represents

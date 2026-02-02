@@ -22326,7 +22326,8 @@ the response (may be empty arrays):
             ],
             "NONE": [],
             "DIRTY": [],
-            "UPLOADING": []
+            "UPLOADING": [],
+            "ERROR": []
         },
         "fs": "/mnt/remote",
         "recursive": false
@@ -22340,6 +22341,9 @@ the percentage of the file cached locally, not upload progress
 - "size": The total size of the file in bytes
 - "cachedBytes": The number of bytes of the file that are cached locally
 - "dirty": Whether the file has been modified locally but not uploaded
+
+All status categories are always present in the response (may be empty arrays):
+FULL, PARTIAL, NONE, DIRTY, UPLOADING, and ERROR.
 
 Note: This endpoint only returns files that are currently tracked by the VFS cache
 (files that have been accessed through the VFS). It does not list all files in
