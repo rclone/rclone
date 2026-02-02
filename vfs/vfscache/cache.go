@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -885,15 +884,10 @@ func (c *Cache) TotalInUse() (n int) {
 
 // AggregateStats holds aggregate cache statistics
 type AggregateStats struct {
-	TotalFiles             int   `json:"totalFiles"`
-	FullCount              int   `json:"fullCount"`
-	PartialCount           int   `json:"partialCount"`
-	NoneCount              int   `json:"noneCount"`
-	DirtyCount             int   `json:"dirtyCount"`
-	UploadingCount         int   `json:"uploadingCount"`
-	ErrorCount             int   `json:"errorCount"`
-	TotalCachedBytes       int64 `json:"totalCachedBytes"`
-	AverageCachePercentage int   `json:"averageCachePercentage"`
+	TotalFiles             int            `json:"totalFiles"`
+	Counts                 map[string]int `json:"counts"`
+	TotalCachedBytes       int64          `json:"totalCachedBytes"`
+	AverageCachePercentage int            `json:"averageCachePercentage"`
 }
 
 // GetAggregateStats returns aggregate cache statistics for all items in the cache
@@ -906,12 +900,21 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 	errorCount := len(c.errItems)
 	c.mu.Unlock()
 
+	counts := make(map[string]int)
+	for _, status := range CacheStatuses {
+		counts[status] = 0
+	}
+	counts[CacheStatusError] = errorCount
+
 	stats := AggregateStats{
+		// Note: errorCount tracks items in errItems, but these items are
+		// also included in c.item (see purgeClean retry logic). We don't
+		// add errorCount here to avoid double-counting.
 		TotalFiles: len(items),
-		ErrorCount: errorCount,
+		Counts:     counts,
 	}
 
-	if stats.TotalFiles == 0 {
+	if len(items) == 0 {
 		return stats
 	}
 
@@ -920,26 +923,14 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 	for _, item := range items {
 		status, percentage, _, _, diskSize, _ := item.VFSStatusCacheDetailedWithDiskSize()
 
-		switch status {
-		case CacheStatusFull:
-			stats.FullCount++
-		case CacheStatusPartial:
-			stats.PartialCount++
-		case CacheStatusNone:
-			stats.NoneCount++
-		case CacheStatusDirty:
-			stats.DirtyCount++
-		case CacheStatusUploading:
-			stats.UploadingCount++
-		}
-
+		stats.Counts[status]++
 		stats.TotalCachedBytes += diskSize
 		totalPercentage += percentage
 	}
 
-	// Use proper rounding: (total + TotalFiles/2) / TotalFiles
-	// This prevents truncation to zero and provides more accurate average
-	stats.AverageCachePercentage = (totalPercentage + stats.TotalFiles/2) / stats.TotalFiles
+	// Use proper rounding: (total + count/2) / count
+	// Only include files in c.item for average calculation
+	stats.AverageCachePercentage = (totalPercentage + len(items)/2) / len(items)
 	return stats
 }
 
@@ -968,11 +959,10 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 
 	c.mu.Lock()
 	for name, it := range c.item {
-		n := path.Clean(name)
-		if prefix == "" || strings.HasPrefix(n, prefix) {
-			rel := n
+		if prefix == "" || strings.HasPrefix(name, prefix) {
+			rel := name
 			if prefix != "" {
-				rel = strings.TrimPrefix(n, prefix)
+				rel = strings.TrimPrefix(name, prefix)
 				if !recursive && strings.Contains(rel, "/") {
 					continue
 				}
@@ -1021,7 +1011,9 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 	// Sort files within each status group for deterministic output
 	for status := range filesByStatus {
 		sort.Slice(filesByStatus[status], func(i, j int) bool {
-			return filesByStatus[status][i]["name"].(string) < filesByStatus[status][j]["name"].(string)
+			nameI, _ := filesByStatus[status][i]["name"].(string)
+			nameJ, _ := filesByStatus[status][j]["name"].(string)
+			return nameI < nameJ
 		})
 	}
 
