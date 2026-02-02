@@ -3,28 +3,73 @@ package vfs
 import (
 	"context"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+func getInt(v interface{}) (int64, bool) {
+	switch i := v.(type) {
+	case int:
+		return int64(i), true
+	case int64:
+		return i, true
+	case float64:
+		return int64(i), true
+	default:
+		return 0, false
+	}
+}
+
+func clearActiveCache() {
+	activeMu.Lock()
+	for k := range active {
+		delete(active, k)
+	}
+	activeMu.Unlock()
+}
+
+func addToActiveCache(vfs *VFS) {
+	activeMu.Lock()
+	configName := fs.ConfigString(vfs.Fs())
+	active[configName] = append(active[configName], vfs)
+	activeMu.Unlock()
+}
+
+func snapshotAndClearActiveCache(t *testing.T) func() {
+	activeMu.Lock()
+	snapshot := make(map[string][]*VFS, len(active))
+	for k, v := range active {
+		snapshot[k] = append([]*VFS(nil), v...)
+		delete(active, k)
+	}
+	activeMu.Unlock()
+	return func() {
+		activeMu.Lock()
+		for k, v := range snapshot {
+			active[k] = v
+		}
+		activeMu.Unlock()
+	}
+}
 
 func TestRCStatus(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
 
-	ctx := context.Background()
-
-	file, err := vfs.OpenFile("test.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := vfs.OpenFile("test.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file.Write([]byte("test content"))
 	require.NoError(t, err)
@@ -79,7 +124,7 @@ func TestRCStatus_CacheDisabled(t *testing.T) {
 	vfs := New(r.Fremote, &opt)
 	defer vfs.Shutdown()
 
-	prev := snapshotAndClearActiveCache(t)
+	defer snapshotAndClearActiveCache(t)()
 	addToActiveCache(vfs)
 
 	statusCall := rc.Calls.Get("vfs/status")
@@ -102,14 +147,12 @@ func TestRCStatus_CacheDisabled(t *testing.T) {
 
 func TestRCFileStatus(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
 
-	ctx := context.Background()
-
-	file, err := vfs.OpenFile("test.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := vfs.OpenFile("test.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file.Write([]byte("test content"))
 	require.NoError(t, err)
@@ -132,16 +175,16 @@ func TestRCFileStatus(t *testing.T) {
 	require.True(t, ok)
 	assert.Len(t, files, 1)
 
-	file := files[0].(rc.Params)
-	assert.Contains(t, file, "name")
-	assert.Contains(t, file, "status")
-	assert.Contains(t, file, "percentage")
-	assert.Contains(t, file, "size")
-	assert.Contains(t, file, "cachedBytes")
-	assert.Contains(t, file, "dirty")
-	assert.Contains(t, file, "uploading")
+	fileStatus := files[0].(rc.Params)
+	assert.Contains(t, fileStatus, "name")
+	assert.Contains(t, fileStatus, "status")
+	assert.Contains(t, fileStatus, "percentage")
+	assert.Contains(t, fileStatus, "size")
+	assert.Contains(t, fileStatus, "cachedBytes")
+	assert.Contains(t, fileStatus, "dirty")
+	assert.Contains(t, fileStatus, "uploading")
 
-	if n, ok := getInt(file["percentage"]); ok {
+	if n, ok := getInt(fileStatus["percentage"]); ok {
 		assert.GreaterOrEqual(t, n, int64(0))
 		assert.LessOrEqual(t, n, int64(100))
 	} else {
@@ -151,21 +194,19 @@ func TestRCFileStatus(t *testing.T) {
 
 func TestRCFileStatus_MultipleFiles(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
 
-	ctx := context.Background()
-
-	file1, err := vfs.OpenFile("file1.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file1, err := vfs.OpenFile("file1.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file1.Write([]byte("content 1"))
 	require.NoError(t, err)
 	err = file1.Close()
 	require.NoError(t, err)
 
-	file2, err := vfs.OpenFile("file2.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file2, err := vfs.OpenFile("file2.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file2.Write([]byte("content 2"))
 	require.NoError(t, err)
@@ -179,7 +220,7 @@ func TestRCFileStatus_MultipleFiles(t *testing.T) {
 
 	result, err := fileStatusCall.Fn(context.Background(), rc.Params{
 		"fs":    fs.ConfigString(r.Fremote),
-		"file":   "file1.txt",
+		"file":  "file1.txt",
 		"file1": "file2.txt",
 		"file2": "nonexistent.txt",
 	})
@@ -197,14 +238,12 @@ func TestRCFileStatus_MultipleFiles(t *testing.T) {
 
 func TestRCFileStatus_InvalidPath(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
 
-	ctx := context.Background()
-
-	file, err := vfs.OpenFile("test.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := vfs.OpenFile("test.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file.Write([]byte("test content"))
 	require.NoError(t, err)
@@ -227,14 +266,14 @@ func TestRCFileStatus_InvalidPath(t *testing.T) {
 	require.True(t, ok)
 	assert.Len(t, files, 1)
 
-	file := files[0].(rc.Params)
-	assert.Equal(t, "ERROR", file["status"])
-	assert.Contains(t, file, "error")
+	fileStatus := files[0].(rc.Params)
+	assert.Equal(t, "ERROR", fileStatus["status"])
+	assert.Contains(t, fileStatus, "error")
 }
 
 func TestRCFileStatus_EmptyPath(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
@@ -252,7 +291,7 @@ func TestRCFileStatus_EmptyPath(t *testing.T) {
 
 func TestRCFileStatus_NoFiles(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
@@ -269,14 +308,12 @@ func TestRCFileStatus_NoFiles(t *testing.T) {
 
 func TestRCFileStatus_TooManyFiles(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
 
-	ctx := context.Background()
-
-	file, err := vfs.OpenFile("test.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := vfs.OpenFile("test.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file.Write([]byte("test content"))
 	require.NoError(t, err)
@@ -287,39 +324,36 @@ func TestRCFileStatus_TooManyFiles(t *testing.T) {
 
 	params := rc.Params{"fs": fs.ConfigString(r.Fremote), "file": "test.txt"}
 	for i := 1; i <= 110; i++ {
-		key := "file" + string(rune('0'+i))
+		key := "file" + strconv.Itoa(i)
 		params[key] = "test.txt"
 	}
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
 	require.NotNil(t, fileStatusCall)
 
-	_, err := fileStatusCall.Fn(context.Background(), params)
+	_, err = fileStatusCall.Fn(context.Background(), params)
 	require.Error(t, err)
 	assert.Contains(t, strings.ToLower(err.Error()), "too many")
 }
 
-
 func TestRCDirStatus(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
 
-	ctx := context.Background()
-
 	err := vfs.Mkdir("testdir", 0755)
 	require.NoError(t, err)
 
-	file1, err := vfs.OpenFile("testdir/file1.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file1, err := vfs.OpenFile("testdir/file1.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file1.Write([]byte("content 1"))
 	require.NoError(t, err)
 	err = file1.Close()
 	require.NoError(t, err)
 
-	file2, err := vfs.OpenFile("testdir/file2.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file2, err := vfs.OpenFile("testdir/file2.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file2.Write([]byte("content 2"))
 	require.NoError(t, err)
@@ -329,7 +363,7 @@ func TestRCDirStatus(t *testing.T) {
 	err = vfs.Mkdir("testdir/subdir", 0755)
 	require.NoError(t, err)
 
-	file3, err := vfs.OpenFile("testdir/subdir/file3.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file3, err := vfs.OpenFile("testdir/subdir/file3.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file3.Write([]byte("content 3"))
 	require.NoError(t, err)
@@ -373,24 +407,22 @@ func TestRCDirStatus(t *testing.T) {
 
 func TestRCDirStatus_Recursive(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
 
-	ctx := context.Background()
-
 	err := vfs.Mkdir("testdir", 0755)
 	require.NoError(t, err)
 
-	file1, err := vfs.OpenFile("testdir/file1.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file1, err := vfs.OpenFile("testdir/file1.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file1.Write([]byte("content 1"))
 	require.NoError(t, err)
 	err = file1.Close()
 	require.NoError(t, err)
 
-	file2, err := vfs.OpenFile("testdir/file2.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file2, err := vfs.OpenFile("testdir/file2.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file2.Write([]byte("content 2"))
 	require.NoError(t, err)
@@ -400,7 +432,7 @@ func TestRCDirStatus_Recursive(t *testing.T) {
 	err = vfs.Mkdir("testdir/subdir", 0755)
 	require.NoError(t, err)
 
-	file3, err := vfs.OpenFile("testdir/subdir/file3.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file3, err := vfs.OpenFile("testdir/subdir/file3.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file3.Write([]byte("content 3"))
 	require.NoError(t, err)
@@ -446,7 +478,7 @@ func TestRCDirStatus_Recursive(t *testing.T) {
 
 func TestRCDirStatus_NonExistentDirectory(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
@@ -455,7 +487,7 @@ func TestRCDirStatus_NonExistentDirectory(t *testing.T) {
 	require.NotNil(t, dirStatusCall)
 
 	result, err := dirStatusCall.Fn(context.Background(), rc.Params{
-		"fs": fs.ConfigString(r.Fremote),
+		"fs":  fs.ConfigString(r.Fremote),
 		"dir": "nonexistent",
 	})
 	require.NoError(t, err)
@@ -482,21 +514,19 @@ func TestRCDirStatus_NonExistentDirectory(t *testing.T) {
 
 func TestRCDirStatus_Root(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
 
-	ctx := context.Background()
-
-	file1, err := vfs.OpenFile("file1.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file1, err := vfs.OpenFile("file1.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file1.Write([]byte("content 1"))
 	require.NoError(t, err)
 	err = file1.Close()
 	require.NoError(t, err)
 
-	file2, err := vfs.OpenFile("file2.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file2, err := vfs.OpenFile("file2.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file2.Write([]byte("content 2"))
 	require.NoError(t, err)
@@ -535,15 +565,13 @@ func TestRCDirStatus_Root(t *testing.T) {
 
 func TestRCFileStatus_Lifecycle(t *testing.T) {
 	r, vfs := newTestVFS(t)
-	defer cleanupVFS(t, r, vfs)
+	defer cleanupVFS(t, vfs)
 
 	clearActiveCache()
 	addToActiveCache(vfs)
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
 	require.NotNil(t, fileStatusCall)
-
-	ctx := context.Background()
 
 	result1, err := fileStatusCall.Fn(context.Background(), rc.Params{
 		"fs":   fs.ConfigString(r.Fremote),
@@ -560,7 +588,7 @@ func TestRCFileStatus_Lifecycle(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	file, err := vfs.OpenFile("lifecycle.txt", 0, os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := vfs.OpenFile("lifecycle.txt", os.O_CREATE|os.O_WRONLY, 0644)
 	require.NoError(t, err)
 	_, err = file.Write([]byte("test content for lifecycle"))
 	require.NoError(t, err)
