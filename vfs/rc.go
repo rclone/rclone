@@ -379,7 +379,7 @@ parameter.`,
 func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	activeMu.Lock()
 	defer activeMu.Unlock()
-	var names = []string{}
+	names := make([]string, 0)
 	for name, vfses := range active {
 		if len(vfses) == 1 {
 			names = append(names, name)
@@ -582,6 +582,7 @@ This returns a JSON object with the following fields:
   - NONE - number of tracked files not cached (remote only)
   - DIRTY - number of files modified locally but not uploaded
   - UPLOADING - number of files currently being uploaded
+  - ERROR - number of files with errors (e.g., reset failures)
 - fs - file system path
 
 Note: These statistics only reflect files that are currently tracked by the VFS cache.
@@ -750,6 +751,9 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 
 	// Check for multiple file parameters (file1, file2, etc.)
 	for i := 1; ; i++ {
+		if len(paths) >= 100 {
+			return nil, rc.NewErrParamInvalid(errors.New("too many file parameters provided (max 100)"))
+		}
 		key := "file" + strconv.Itoa(i)
 		path, pathErr := in.GetString(key)
 		if pathErr != nil {
