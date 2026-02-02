@@ -604,7 +604,7 @@ This returns a JSON object with the following fields:
 
 - files - array of file objects with fields:
   - name - leaf name of the file
-  - status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING"
+  - status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING", "ERROR"
   - percentage - cache percentage (0-100), representing the percentage of the file cached locally
   - uploading - whether the file is currently being uploaded
   - size - total file size in bytes
@@ -612,7 +612,7 @@ This returns a JSON object with the following fields:
   - dirty - whether the file has uncommitted modifications
   - error - generic error message if there was an error getting file information (optional).
     For security, only a generic message is returned; detailed error information is logged internally.
-- fs - file system path
+  - fs - file system path
 
 Note: The percentage field indicates how much of the file is cached locally (0-100).
 For "FULL" and "DIRTY" status, it is always 100 since the local file is complete.
@@ -815,10 +815,10 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 			}
 		}
 
-		// File not in cache or cache disabled, return NONE status
+		// File not in cache or cache disabled, return NONE or ERROR status
 		size := int64(0)
 		hasError := false
-		// Attempt to get the file size from VFS using normalized path
+		// Attempt to get file size from VFS using normalized path
 		if node, err := vfs.Stat(cleanPath); err == nil {
 			size = node.Size()
 		} else {
@@ -826,9 +826,13 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 			fs.Debugf(vfs.Fs(), "vfs/file-status: error getting file info for %q: %v", cleanPath, err)
 			hasError = true
 		}
+		fileStatus := "NONE"
+		if hasError {
+			fileStatus = "ERROR"
+		}
 		result = rc.Params{
 			"name":        baseName,
-			"status":      "NONE",
+			"status":      fileStatus,
 			"percentage":  0,
 			"uploading":   false,
 			"size":        size,

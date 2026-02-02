@@ -1028,6 +1028,13 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 		filesByStatus[e.status] = append(filesByStatus[e.status], fileInfo)
 	}
 
+	// Sort files within each status group for deterministic output
+	for status := range filesByStatus {
+		sort.Slice(filesByStatus[status], func(i, j int) bool {
+			return filesByStatus[status][i]["name"].(string) < filesByStatus[status][j]["name"].(string)
+		})
+	}
+
 	return filesByStatus
 }
 
