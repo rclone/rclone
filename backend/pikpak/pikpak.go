@@ -1608,7 +1608,7 @@ func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err erro
 // ------------------------------------------------------------
 
 // add offline download task for url
-func (f *Fs) addURL(ctx context.Context, url, path string) (*api.Task, error) {
+func (f *Fs) addURL(ctx context.Context, url, name, path string) (*api.Task, error) {
 	req := api.RequestNewTask{
 		Kind:       api.KindOfFile,
 		UploadType: "UPLOAD_TYPE_URL",
@@ -1616,6 +1616,9 @@ func (f *Fs) addURL(ctx context.Context, url, path string) (*api.Task, error) {
 			URL: url,
 		},
 		FolderType: "DOWNLOAD",
+	}
+	if name != "" {
+		req.Name = f.opt.Enc.FromStandardName(name)
 	}
 	if parentID, err := f.dirCache.FindDir(ctx, path, false); err == nil {
 		req.ParentID = parentIDForRequest(parentID)
@@ -1681,14 +1684,18 @@ var commandHelp = []fs.CommandHelp{{
 	Short: "Add offline download task for url.",
 	Long: `This command adds offline download task for url.
 
-Usage example:
+Usage examples:
 
 ` + "```console" + `
 rclone backend addurl pikpak:dirpath url
+rclone backend addurl pikpak:dirpath url -o name=custom_filename.zip
 ` + "```" + `
 
 Downloads will be stored in 'dirpath'. If 'dirpath' is invalid,
 download will fallback to default 'My Pack' folder.`,
+	Opts: map[string]string{
+		"name": "Custom filename for the downloaded file.",
+	},
 }, {
 	Name:  "decompress",
 	Short: "Request decompress of a file/files in a folder.",
@@ -1732,7 +1739,11 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if len(arg) != 1 {
 			return nil, errors.New("need exactly 1 argument")
 		}
-		return f.addURL(ctx, arg[0], "")
+		filename := ""
+		if name, ok := opt["name"]; ok {
+			filename = name
+		}
+		return f.addURL(ctx, arg[0], filename, "")
 	case "decompress":
 		filename := ""
 		if len(arg) > 0 {
