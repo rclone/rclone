@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 const getVFSHelp = ` 
@@ -686,33 +687,15 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, fmt.Errorf("invalid recursive parameter: %w", err)
 	}
 
-	// Validate directory if specified - ensure it's actually a directory
-	// This prevents files from being accepted in the directory endpoint
-	// Note: We skip this check for the root (empty) path since we're querying cache anyway
+	// Validate directory if specified - ensure it's not a file
+	// We don't check if directory exists in VFS because cache may contain
+	// items under that path even if directory node itself hasn't been read
+	// Instead, we check only that the path isn't a file (non-blocking check)
 	if dirPath != "" {
-		node, err := vfs.Stat(dirPath)
-		if err != nil {
-			// If directory doesn't exist in VFS, we'll just return empty results
-			// This allows the endpoint to work for directories that haven't been read yet
-			if errors.Is(err, ENOENT) {
-				// Return all status categories as empty arrays for API consistency
-				filesByStatus := map[string][]rc.Params{
-					"FULL":      {},
-					"PARTIAL":   {},
-					"NONE":      {},
-					"DIRTY":     {},
-					"UPLOADING": {},
-				}
-				return rc.Params{
-					"dir":       dirPath,
-					"files":     filesByStatus,
-					"recursive": recursive,
-					"fs":        fs.ConfigString(vfs.Fs()),
-				}, nil
-			}
-			return nil, err
-		}
-		if !node.IsDir() {
+		// Normalize path
+		cleanPath := vfscommon.NormalizePath(dirPath)
+		// Check if path is a file by attempting to get it
+		if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
 			return nil, fmt.Errorf("path %q is not a directory: %s", dirPath, node.Name())
 		}
 	}
@@ -786,15 +769,8 @@ func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 		var result rc.Params
 
 		// Normalize path to match cache key format
-		cleanPath := strings.Trim(path, "/")
-		cleanPath = pathpkg.Clean(cleanPath)
-		if cleanPath == "." || cleanPath == "/" {
-			cleanPath = ""
-		}
-		baseName := cleanPath
-		if idx := strings.LastIndexByte(baseName, '/'); idx >= 0 {
-			baseName = baseName[idx+1:]
-		}
+		cleanPath := vfscommon.NormalizePath(path)
+		baseName := pathpkg.Base(cleanPath)
 
 		// Check if cache is enabled and file exists in cache
 		if vfs.cache != nil {
