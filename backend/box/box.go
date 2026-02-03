@@ -12,6 +12,7 @@ package box
 import (
 	"context"
 	"crypto/rsa"
+	"encoding/csv"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -169,6 +170,11 @@ See: https://developer.box.com/guides/authentication/jwt/as-user/
 			Advanced:  true,
 			Sensitive: true,
 		}, {
+			Name:     "report_file",
+			Default:  "rclone_box_report.csv",
+			Help:     "File path for the CSV report. Use {timestamp} to insert current time.",
+			Advanced: false,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -299,6 +305,7 @@ type Options struct {
 	ListChunk     int                  `config:"list_chunk"`
 	OwnedBy       string               `config:"owned_by"`
 	Impersonate   string               `config:"impersonate"`
+	ReportFile    string               `config:"report_file"`
 }
 
 // ItemMeta defines metadata we cache for each Item ID
@@ -321,6 +328,8 @@ type Fs struct {
 	uploadToken     *pacer.TokenDispenser // control concurrency
 	itemMetaCacheMu *sync.Mutex           // protects itemMetaCache
 	itemMetaCache   map[string]ItemMeta   // map of Item ID to selected metadata
+	reportMu        sync.Mutex            // protects report file
+	reportFilePath  string                // resolved path for report file
 }
 
 // Object describes a box object
@@ -487,6 +496,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		itemMetaCacheMu: new(sync.Mutex),
 		itemMetaCache:   make(map[string]ItemMeta),
 	}
+	
+	// Resolve Report File Path
+	reportFile := f.opt.ReportFile
+	if strings.Contains(reportFile, "{timestamp}") {
+		timestamp := time.Now().Format("20060102_150405")
+		reportFile = strings.ReplaceAll(reportFile, "{timestamp}", timestamp)
+	}
+	f.reportFilePath = reportFile
+
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
 		CanHaveEmptyDirectories: true,
@@ -910,9 +928,170 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	return o, o.Update(ctx, in, src, options...)
 }
 
+// timingReader wraps an io.Reader to measure when the read completes
+type timingReader struct {
+	io.Reader
+	ReadDone chan time.Time
+	once     sync.Once
+}
+
+func (tr *timingReader) Read(p []byte) (n int, err error) {
+	n, err = tr.Reader.Read(p)
+	// If we hit EOF or another error, we mark the read as done
+	if err != nil {
+		tr.once.Do(func() {
+			select {
+			case tr.ReadDone <- time.Now():
+			default:
+				// Channel full or no one listening
+			}
+		})
+	}
+	return n, err
+}
+
+// reportTransfer logs the transfer details to a CSV file
+func (f *Fs) reportTransfer(srcName, remote, itemType, method, fileID, folderID, sha1Hash string, err error, fetchDuration, writeDuration, totalDuration time.Duration, size int64) {
+	f.reportMu.Lock()
+	defer f.reportMu.Unlock()
+
+	fname := f.reportFilePath
+	if fname == "" {
+		fname = "rclone_box_report.csv"
+	}
+	fileInfo, errStat := os.Stat(fname)
+
+	file, errFile := os.OpenFile(fname, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if errFile != nil {
+		fs.Errorf(f, "Failed to open report file: %v", errFile)
+		return
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Add Headers if this is a new or empty file
+	if os.IsNotExist(errStat) || (errStat == nil && fileInfo.Size() == 0) {
+		_ = writer.Write([]string{
+			"Source", "Remote_Name", "Target_Path", "File_Size", "Type", "Method", "Status",
+			"Fetch_Time_Sec", "Write_Time_Sec", "Total_Time_Sec",
+			"Speed_MBs", "Suggested_Bottleneck",
+			"File_ID", "Folder_ID", "SHA1_Hash", "Error_Message",
+			"Transfer_Start_Time",
+		})
+	}
+
+	status := "Success"
+	errStr := ""
+	bottleneck := "None/Balanced"
+	speedMBs := "N/A"
+	
+	if err != nil {
+		status = "Failed"
+		errStr = err.Error()
+		bottleneck = "Error"
+	} else if itemType == "File" {
+		// Calculate Speed
+		if totalDuration > 0 {
+			mb := float64(size) / (1024 * 1024)
+			speedMBs = fmt.Sprintf("%.2f", mb/totalDuration.Seconds())
+		}
+
+		// Suggest Bottleneck
+		if fetchDuration > writeDuration*2 {
+			bottleneck = "Source (Slow Read)"
+		} else if writeDuration > fetchDuration {
+			bottleneck = "Destination (Box/Commit)"
+		} else {
+			bottleneck = "Network/Concurrent"
+		}
+		
+		// Attempt to get SHA1 from the object
+		// Since we don't have the object 'o' passed directly here, we rely on the caller to pass it?
+		// No, we can't easily change the signature again without breaking everything.
+		// However, we can look it up if we have the fileID? No, that's an API call.
+		
+		// Wait, the reportTransfer function is a method of *Fs.
+		// The caller (Put, Update, Copy) has access to the *Object 'o'.
+		// The *Object 'o' has the 'sha1' field.
+		// I should update the signature of reportTransfer to accept the hash string.
+	} else {
+		bottleneck = "N/A" // For Folders
+		size = 0           // Ensure size is 0 for folders
+	}
+
+	// Calculate Start Time (Current Time - Total Duration)
+	startTime := time.Now().Add(-totalDuration).Format("2006-01-02 15:04:05.000")
+
+	record := []string{
+		srcName,
+		f.Name(), // Remote Name (e.g. VertiumBox)
+		remote,   // Target Path (without remote prefix)
+		strconv.FormatInt(size, 10),
+		itemType,
+		method,
+		status,
+		fmt.Sprintf("%.3f", fetchDuration.Seconds()),
+		fmt.Sprintf("%.3f", writeDuration.Seconds()),
+		fmt.Sprintf("%.3f", totalDuration.Seconds()),
+		speedMBs,
+		bottleneck,
+		fileID,
+		folderID,
+		sha1Hash,
+		errStr,
+		startTime,
+	}
+
+	if err := writer.Write(record); err != nil {
+		fs.Errorf(f, "Failed to write to report file: %v", err)
+	}
+}
+
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	_, err := f.dirCache.FindDir(ctx, dir, true)
+func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
+	start := time.Now()
+	_, err = f.dirCache.FindDir(ctx, dir, true)
+	duration := time.Since(start)
+
+	// Log the folder creation
+	// Since FindDir returns the ID if found/created, let's try to get it for the report
+	// However, err might be nil but we need the ID. FindDir returns (id, err).
+	// We need to capture the ID.
+	// But the interface for Mkdir is just (err error).
+	// Let's refactor slightly to capture the ID for reporting.
+	// FindDir(ctx, dir, true) is what was called.
+	
+	// We need to call FindDir again or change how we call it? 
+	// The original code was:
+	// _, err := f.dirCache.FindDir(ctx, dir, true)
+	// return err
+	
+	// Let's capture the ID from the FindDir call we are about to make.
+	// But wait, the original code discarded the ID.
+	// The reporting needs the ID.
+	
+	// Re-implementing with ID capture:
+	// id, err := f.dirCache.FindDir(ctx, dir, true)
+	// ... report ...
+	// return err
+	
+	// Wait, I cannot change the signature of Mkdir (it must satisfy fs.Fs).
+	// But I can change the body.
+	
+	// The previous implementation was:
+	// func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	// 	_, err := f.dirCache.FindDir(ctx, dir, true)
+	// 	return err
+	// }
+
+	// New implementation:
+	id, err := f.dirCache.FindDir(ctx, dir, true)
+	
+	// Report
+	f.reportTransfer("[Directory]", dir, "Folder", "N/A", "N/A", id, "", err, 0, 0, duration, 0)
+	
 	return err
 }
 
@@ -986,6 +1165,8 @@ func (f *Fs) Precision() time.Duration {
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	start := time.Now()
+
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -1046,6 +1227,23 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		resp, err = f.srv.CallJSON(ctx, &opts, &copyFile, &info)
 		return shouldRetry(ctx, resp, err)
 	})
+	
+	duration := time.Since(start)
+	var fileID string
+	if info != nil {
+		fileID = info.ID
+	}
+	
+	// Report Server-Side Copy
+	// Fetch Time = 0 (N/A)
+	// Write Time = Duration
+	// Method = "Server-Side Copy"
+	var sha1 string
+	if dstObj != nil {
+		sha1 = dstObj.sha1
+	}
+	f.reportTransfer(src.Remote(), remote, "File", "Server-Side Copy", fileID, directoryID, sha1, err, 0, duration, duration, src.Size())
+
 	if err != nil {
 		return nil, err
 	}
@@ -1742,9 +1940,33 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		defer o.fs.tokenRenewer.Stop()
 	}
 
+	totalStart := time.Now()
+	readDoneChan := make(chan time.Time, 1)
+
+	// Wrap the source reader to catch the "End of File" from the source
+	// We only wrap if we have a reader.
+	var tReader io.Reader
+	if in != nil {
+		tReader = &timingReader{
+			Reader:   in,
+			ReadDone: readDoneChan,
+		}
+	} else {
+		tReader = in
+	}
+
 	size := src.Size()
 	modTime := src.ModTime(ctx)
 	remote := o.Remote()
+
+	// Determine method
+	method := "Single"
+	if size > int64(o.fs.opt.UploadCutoff) {
+		method = "Multipart"
+	}
+	if size < 0 {
+		method = "Stream/Unknown"
+	}
 
 	// Create the directory for the object if it doesn't exist
 	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
@@ -1754,10 +1976,44 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Upload with simple or multipart
 	if size <= int64(o.fs.opt.UploadCutoff) {
-		err = o.upload(ctx, in, leaf, directoryID, modTime, options...)
+		err = o.upload(ctx, tReader, leaf, directoryID, modTime, options...)
 	} else {
-		err = o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime, options...)
+		err = o.uploadMultipart(ctx, tReader, leaf, directoryID, size, modTime, options...)
 	}
+
+	totalEnd := time.Now()
+	totalDuration := totalEnd.Sub(totalStart)
+
+	// Determine Fetch Duration
+	var fetchDuration time.Duration
+	if in != nil {
+		select {
+		case fetchEnd := <-readDoneChan:
+			fetchDuration = fetchEnd.Sub(totalStart)
+		default:
+			// If channel empty (e.g. error before EOF), assume fetch took total time or 0
+			// Use totalDuration as fallback or 0? 
+			// If err != nil, likely failed early.
+			if err != nil {
+				fetchDuration = totalDuration
+			} else {
+				fetchDuration = totalDuration // Should have finished
+			}
+		}
+	} else {
+		fetchDuration = 0
+	}
+
+	// Determine Write Duration
+	// Write Time = Total Time - Fetch Time
+	writeDuration := totalDuration - fetchDuration
+	if writeDuration < 0 {
+		writeDuration = 0
+	}
+
+	// Get parent folder ID for reporting (we already have directoryID from FindPath)
+	o.fs.reportTransfer(src.String(), o.remote, "File", method, o.id, directoryID, o.sha1, err, fetchDuration, writeDuration, totalDuration, size)
+
 	return err
 }
 
