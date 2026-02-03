@@ -944,12 +944,22 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 	return stats
 }
 
+// ItemStatus holds status information for a cache item
+type ItemStatus struct {
+	Name       string
+	Status     string
+	Percentage int
+	TotalSize  int64
+	CachedSize int64
+	IsDirty    bool
+}
+
 // GetStatusForDir returns cache status for all files in a specified directory
 // If recursive is true, it includes all subdirectories
-func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.Params {
-	filesByStatus := make(map[string][]rc.Params)
+func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]ItemStatus {
+	filesByStatus := make(map[string][]ItemStatus)
 	for _, status := range CacheStatuses {
-		filesByStatus[status] = []rc.Params{}
+		filesByStatus[status] = []ItemStatus{}
 	}
 
 	// Normalize to match cache key format
@@ -983,47 +993,22 @@ func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]rc.
 	c.mu.Unlock()
 
 	// Compute status for each item without holding cache lock to avoid deadlock
-	type entry struct {
-		rel        string
-		status     string
-		percentage int
-		totalSize  int64
-		cachedSize int64
-		isDirty    bool
-	}
-	var entries []entry
 	for _, ie := range itemsToProcess {
 		status, percentage, totalSize, cachedSize, isDirty := ie.it.VFSStatusCacheDetailed()
-		entries = append(entries, entry{
-			rel:        ie.rel,
-			status:     status,
-			percentage: percentage,
-			totalSize:  totalSize,
-			cachedSize: cachedSize,
-			isDirty:    isDirty,
+		filesByStatus[status] = append(filesByStatus[status], ItemStatus{
+			Name:       ie.rel,
+			Status:     status,
+			Percentage: percentage,
+			TotalSize:  totalSize,
+			CachedSize: cachedSize,
+			IsDirty:    isDirty,
 		})
-	}
-
-	// Build results without holding the cache mutex
-	for _, e := range entries {
-		isUploading := e.status == CacheStatusUploading
-		fileInfo := rc.Params{
-			"name":        e.rel,
-			"percentage":  e.percentage,
-			"uploading":   isUploading,
-			"size":        e.totalSize,
-			"cachedBytes": e.cachedSize,
-			"dirty":       e.isDirty,
-		}
-		filesByStatus[e.status] = append(filesByStatus[e.status], fileInfo)
 	}
 
 	// Sort files within each status group for deterministic output
 	for status := range filesByStatus {
 		sort.Slice(filesByStatus[status], func(i, j int) bool {
-			nameI, _ := filesByStatus[status][i]["name"].(string)
-			nameJ, _ := filesByStatus[status][j]["name"].(string)
-			return nameI < nameJ
+			return filesByStatus[status][i].Name < filesByStatus[status][j].Name
 		})
 	}
 

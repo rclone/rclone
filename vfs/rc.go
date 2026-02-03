@@ -703,30 +703,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 	if dirPath != "" {
 		// Check if path is a file (not a directory)
-		// First check cache, then fall back to vfs.Stat for files not in cache
-		isFile := false
-		if vfs.cache != nil {
-			if item := vfs.cache.FindItem(cleanPath); item != nil {
-				// Path is in cache, check if it's a file
-				if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
-					isFile = true
-				}
-			} else {
-				// Path not in cache - still need to check if it exists as a file
-				// This handles the case where a file exists but isn't cached
-				if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
-					isFile = true
-				}
-			}
-		} else {
-			// Cache is disabled, must use vfs.Stat
-			if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
-				isFile = true
-			}
-		}
-
-		// If path exists and is not a directory, return error
-		if isFile {
+		if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
 			return nil, rc.NewErrParamInvalid(errors.New(fmt.Sprintf("path %q is not a directory", dirPath)))
 		}
 	}
@@ -740,7 +717,25 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			filesByStatus[status] = []rc.Params{}
 		}
 	} else {
-		filesByStatus = vfs.cache.GetStatusForDir(cleanPath, recursive)
+		// Convert ItemStatus to rc.Params
+		itemsByStatus := vfs.cache.GetStatusForDir(cleanPath, recursive)
+		filesByStatus = make(map[string][]rc.Params)
+
+		for status, items := range itemsByStatus {
+			paramsList := make([]rc.Params, 0, len(items))
+			for _, item := range items {
+				isUploading := item.Status == vfscache.CacheStatusUploading
+				paramsList = append(paramsList, rc.Params{
+					"name":        item.Name,
+					"percentage":  item.Percentage,
+					"uploading":   isUploading,
+					"size":        item.TotalSize,
+					"cachedBytes": item.CachedSize,
+					"dirty":       item.IsDirty,
+				})
+			}
+			filesByStatus[status] = paramsList
+		}
 	}
 
 	// Prepare the response - always include all categories for a stable API
