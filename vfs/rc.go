@@ -277,7 +277,7 @@ func getTimeout(in rc.Params) (time.Duration, error) {
 
 func getStatus(vfs *VFS, in rc.Params) (out rc.Params, err error) {
 	for k, v := range in {
-		return nil, fmt.Errorf("invalid parameter: %s=%s", k, v)
+		return nil, rc.NewErrParamInvalid(errors.New(fmt.Sprintf("invalid parameter: %s=%s", k, v)))
 	}
 	return rc.Params{
 		"enabled":   vfs.Opt.PollInterval != 0,
@@ -334,7 +334,7 @@ func rcPollInterval(ctx context.Context, in rc.Params) (out rc.Params, err error
 		return nil, err
 	}
 	for k, v := range in {
-		return nil, fmt.Errorf("invalid parameter: %s=%s", k, v)
+		return nil, rc.NewErrParamInvalid(errors.New(fmt.Sprintf("invalid parameter: %s=%s", k, v)))
 	}
 	if vfs.pollChan == nil {
 		return nil, errors.New("poll-interval is not supported by this remote")
@@ -689,7 +689,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	// Check for recursive parameter
 	recursive, err := in.GetBool("recursive")
 	if err != nil && !rc.IsErrParamNotFound(err) {
-		return nil, fmt.Errorf("invalid recursive parameter: %w", err)
+		return nil, rc.NewErrParamInvalid(errors.New(fmt.Sprintf("invalid recursive parameter: %v", err)))
 	}
 
 	// Validate directory if specified - ensure it's not a file
@@ -701,10 +701,18 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		// Normalize path
 		cleanPath := vfscommon.NormalizePath(dirPath)
 
-		// First, try to check cache to avoid expensive vfs.Stat call
+		// Check if path is a file (not a directory)
+		// First check cache, then fall back to vfs.Stat for files not in cache
 		isFile := false
 		if vfs.cache != nil {
 			if item := vfs.cache.FindItem(cleanPath); item != nil {
+				// Path is in cache, check if it's a file
+				if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
+					isFile = true
+				}
+			} else {
+				// Path not in cache - still need to check if it exists as a file
+				// This handles the case where a file exists but isn't cached
 				if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
 					isFile = true
 				}
@@ -718,7 +726,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 
 		// If path exists and is not a directory, return error
 		if isFile {
-			return nil, fmt.Errorf("path %q is not a directory: %s", dirPath, cleanPath)
+			return nil, rc.NewErrParamInvalid(errors.New(fmt.Sprintf("path %q is not a directory", dirPath)))
 		}
 	}
 
