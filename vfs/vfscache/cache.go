@@ -884,10 +884,10 @@ func (c *Cache) TotalInUse() (n int) {
 
 // AggregateStats holds aggregate cache statistics
 type AggregateStats struct {
-	TotalFiles             int            `json:"totalFiles"`
+	TotalFiles             int64          `json:"totalFiles"`
 	Counts                 map[string]int `json:"counts"`
 	TotalCachedBytes       int64          `json:"totalCachedBytes"`
-	AverageCachePercentage int            `json:"averageCachePercentage"`
+	AverageCachePercentage int64          `json:"averageCachePercentage"`
 }
 
 // GetAggregateStats returns aggregate cache statistics for all items in the cache
@@ -915,7 +915,7 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 	}
 
 	stats := AggregateStats{
-		TotalFiles: len(items),
+		TotalFiles: int64(len(items)),
 		Counts:     counts,
 	}
 
@@ -923,7 +923,7 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 		return stats
 	}
 
-	var totalPercentage, nonErrorItems int
+	var totalPercentage, nonErrorItems int64
 
 	for _, item := range items {
 		status, percentage, _, _, diskSize, _ := item.VFSStatusCacheDetailedWithDiskSize()
@@ -933,13 +933,13 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 			stats.Counts[CacheStatusError]++
 		} else {
 			stats.Counts[status]++
-			totalPercentage += percentage
+			totalPercentage += int64(percentage)
 			nonErrorItems++
 		}
 	}
 
 	if nonErrorItems > 0 {
-		stats.AverageCachePercentage = (totalPercentage + nonErrorItems/2) / nonErrorItems
+		stats.AverageCachePercentage = (totalPercentage + nonErrorItems/2) / int64(nonErrorItems)
 	}
 	return stats
 }
