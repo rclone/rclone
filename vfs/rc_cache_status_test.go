@@ -40,7 +40,7 @@ func waitForCacheItem(vfs *VFS, path string, timeout time.Duration) bool {
 	return false
 }
 
-func snapshotAndClearActiveCache(t *testing.T) func() {
+func snapshotAndClearActiveCache() func() {
 	activeMu.Lock()
 	snapshot := make(map[string][]*VFS, len(active))
 	for k, v := range active {
@@ -80,7 +80,7 @@ func TestRCStatus(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	file, err := vfs.OpenFile("test.txt", os.O_CREATE|os.O_WRONLY, 0644)
@@ -138,7 +138,7 @@ func TestRCStatus_CacheDisabled(t *testing.T) {
 	vfs := New(r.Fremote, &opt)
 	defer vfs.Shutdown()
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	statusCall := rc.Calls.Get("vfs/status")
@@ -163,7 +163,7 @@ func TestRCFileStatus(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	file, err := vfs.OpenFile("test.txt", os.O_CREATE|os.O_WRONLY, 0644)
@@ -207,7 +207,7 @@ func TestRCFileStatus_MultipleFiles(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	file1, err := vfs.OpenFile("file1.txt", os.O_CREATE|os.O_WRONLY, 0644)
@@ -252,7 +252,7 @@ func TestRCFileStatus_InvalidPath(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	file, err := vfs.OpenFile("test.txt", os.O_CREATE|os.O_WRONLY, 0644)
@@ -287,7 +287,7 @@ func TestRCFileStatus_EmptyPath(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
@@ -305,7 +305,7 @@ func TestRCFileStatus_NoFiles(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
@@ -322,7 +322,7 @@ func TestRCFileStatus_TooManyFiles(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	file, err := vfs.OpenFile("test.txt", os.O_CREATE|os.O_WRONLY, 0644)
@@ -352,7 +352,7 @@ func TestRCDirStatus(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	err := vfs.Mkdir("testdir", 0755)
@@ -422,7 +422,7 @@ func TestRCDirStatus_Recursive(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	err := vfs.Mkdir("testdir", 0755)
@@ -495,7 +495,7 @@ func TestRCDirStatus_NonExistentDirectory(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	dirStatusCall := rc.Calls.Get("vfs/dir-status")
@@ -531,7 +531,7 @@ func TestRCDirStatus_Root(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	file1, err := vfs.OpenFile("file1.txt", os.O_CREATE|os.O_WRONLY, 0644)
@@ -583,7 +583,7 @@ func TestRCFileStatus_Lifecycle(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
@@ -634,7 +634,7 @@ func TestRCDirStatus_EmptyPathHandling(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	file1, err := vfs.OpenFile("file.txt", os.O_CREATE|os.O_WRONLY, 0644)
@@ -677,7 +677,7 @@ func TestRCFileStatus_PathNormalization(t *testing.T) {
 	r, vfs := newTestVFSWithCache(t)
 	defer cleanupVFS(t, vfs)
 
-	defer snapshotAndClearActiveCache(t)()
+	defer snapshotAndClearActiveCache()()
 	addToActiveCache(vfs)
 
 	err := vfs.Mkdir("testdir", 0755)
