@@ -20,4 +20,3 @@ __pycache__
 .DS_Store
 resource_windows_*.syso
 .devcontainer
-AGENTS.md
