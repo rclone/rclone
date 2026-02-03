@@ -583,7 +583,7 @@ This returns a JSON object with the following fields:
   - NONE - number of tracked files not cached (remote only)
   - DIRTY - number of files modified locally but not uploaded
   - UPLOADING - number of files currently being uploaded
-  - ERROR - number of files in error state (items that have experienced errors like reset failures and are tracked in the error items map, regardless of their current cache status)
+  - ERROR - number of files in error state (items that have experienced errors like reset failures). This status takes precedence over others in the counts.
 - fs - file system path
 
 Note: These statistics only reflect files that are currently tracked by the VFS cache.
@@ -616,7 +616,7 @@ This returns a JSON object with the following fields:
   - dirty - whether the file has uncommitted modifications
   - error - generic error message if there was an error getting file information (optional).
     For security, only a generic message is returned; detailed error information is logged internally.
-  - fs - file system path
+- fs - file system path
 
 Note: The percentage field indicates how much of the file is cached locally (0-100).
 For "FULL" and "DIRTY" status, it is always 100 since the local file is complete.
@@ -697,10 +697,11 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	// If cache is available, use it to validate without remote calls.
 	// We don't check if directory exists in VFS because cache may contain
 	// items under that path even if directory node itself hasn't been read
-	if dirPath != "" {
-		// Normalize path
-		cleanPath := vfscommon.NormalizePath(dirPath)
 
+	// Normalize path
+	cleanPath := vfscommon.NormalizePath(dirPath)
+
+	if dirPath != "" {
 		// Check if path is a file (not a directory)
 		// First check cache, then fall back to vfs.Stat for files not in cache
 		isFile := false
@@ -739,7 +740,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			filesByStatus[status] = []rc.Params{}
 		}
 	} else {
-		filesByStatus = vfs.cache.GetStatusForDir(dirPath, recursive)
+		filesByStatus = vfs.cache.GetStatusForDir(cleanPath, recursive)
 	}
 
 	// Prepare the response - always include all categories for a stable API
@@ -749,7 +750,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	return rc.Params{
-		"dir":       dirPath,
+		"dir":       cleanPath,
 		"files":     responseFiles,
 		"recursive": recursive,
 		"fs":        fs.ConfigString(vfs.Fs()),
