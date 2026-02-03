@@ -33,6 +33,21 @@ func addToActiveCache(vfs *VFS) {
 	activeMu.Unlock()
 }
 
+// waitForCacheItem polls until the given path appears in the cache or timeout is reached
+func waitForCacheItem(vfs *VFS, path string, timeout time.Duration) bool {
+	if vfs.cache == nil {
+		return false
+	}
+	start := time.Now()
+	for time.Since(start) < timeout {
+		if item := vfs.cache.FindItem(path); item != nil {
+			return true
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	return false
+}
+
 func snapshotAndClearActiveCache(t *testing.T) func() {
 	activeMu.Lock()
 	snapshot := make(map[string][]*VFS, len(active))
@@ -83,7 +98,7 @@ func TestRCStatus(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "test.txt", 2*time.Second), "test.txt should appear in cache")
 
 	statusCall := rc.Calls.Get("vfs/status")
 	require.NotNil(t, statusCall)
@@ -166,7 +181,7 @@ func TestRCFileStatus(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "test.txt", 2*time.Second), "test.txt should appear in cache")
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
 	require.NotNil(t, fileStatusCall)
@@ -217,7 +232,8 @@ func TestRCFileStatus_MultipleFiles(t *testing.T) {
 	err = file2.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "file1.txt", 2*time.Second), "file1.txt should appear in cache")
+	require.True(t, waitForCacheItem(vfs, "file2.txt", 2*time.Second), "file2.txt should appear in cache")
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
 	require.NotNil(t, fileStatusCall)
@@ -254,7 +270,7 @@ func TestRCFileStatus_InvalidPath(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "test.txt", 2*time.Second), "test.txt should appear in cache")
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
 	require.NotNil(t, fileStatusCall)
@@ -324,7 +340,7 @@ func TestRCFileStatus_TooManyFiles(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "test.txt", 2*time.Second), "test.txt should appear in cache")
 
 	params := rc.Params{"fs": fs.ConfigString(r.Fremote), "file": "test.txt"}
 	for i := 1; i <= 110; i++ {
@@ -374,7 +390,8 @@ func TestRCDirStatus(t *testing.T) {
 	err = file3.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "testdir/file1.txt", 2*time.Second), "testdir/file1.txt should appear in cache")
+	require.True(t, waitForCacheItem(vfs, "testdir/file2.txt", 2*time.Second), "testdir/file2.txt should appear in cache")
 
 	dirStatusCall := rc.Calls.Get("vfs/dir-status")
 	require.NotNil(t, dirStatusCall)
@@ -443,7 +460,9 @@ func TestRCDirStatus_Recursive(t *testing.T) {
 	err = file3.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "testdir/file1.txt", 2*time.Second), "testdir/file1.txt should appear in cache")
+	require.True(t, waitForCacheItem(vfs, "testdir/file2.txt", 2*time.Second), "testdir/file2.txt should appear in cache")
+	require.True(t, waitForCacheItem(vfs, "testdir/subdir/file3.txt", 2*time.Second), "testdir/subdir/file3.txt should appear in cache")
 
 	dirStatusCall := rc.Calls.Get("vfs/dir-status")
 	require.NotNil(t, dirStatusCall)
@@ -537,7 +556,8 @@ func TestRCDirStatus_Root(t *testing.T) {
 	err = file2.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "file1.txt", 2*time.Second), "file1.txt should appear in cache")
+	require.True(t, waitForCacheItem(vfs, "file2.txt", 2*time.Second), "file2.txt should appear in cache")
 
 	dirStatusCall := rc.Calls.Get("vfs/dir-status")
 	require.NotNil(t, dirStatusCall)
@@ -597,7 +617,7 @@ func TestRCFileStatus_Lifecycle(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "lifecycle.txt", 2*time.Second), "lifecycle.txt should appear in cache")
 
 	result2, err := fileStatusCall.Fn(context.Background(), rc.Params{
 		"fs":   fs.ConfigString(r.Fremote),
@@ -632,7 +652,7 @@ func TestRCDirStatus_EmptyPathHandling(t *testing.T) {
 	err = file1.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "file.txt", 2*time.Second), "file.txt should appear in cache")
 
 	dirStatusCall := rc.Calls.Get("vfs/dir-status")
 	require.NotNil(t, dirStatusCall)
@@ -678,7 +698,7 @@ func TestRCFileStatus_PathNormalization(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
-	time.Sleep(500 * time.Millisecond)
+	require.True(t, waitForCacheItem(vfs, "testdir/file.txt", 2*time.Second), "testdir/file.txt should appear in cache")
 
 	fileStatusCall := rc.Calls.Get("vfs/file-status")
 	require.NotNil(t, fileStatusCall)
