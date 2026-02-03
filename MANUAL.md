@@ -22245,7 +22245,7 @@ and upload status for each file:
             },
             {
                 "name": "nonexistent.pdf",
-                "status": "NONE",
+                "status": "ERROR",
                 "percentage": 0,
                 "size": 0,
                 "cachedBytes": 0,
