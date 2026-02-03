@@ -277,7 +277,7 @@ func getTimeout(in rc.Params) (time.Duration, error) {
 
 func getStatus(vfs *VFS, in rc.Params) (out rc.Params, err error) {
 	for k, v := range in {
-		return nil, rc.NewErrParamInvalid(errors.New(fmt.Sprintf("invalid parameter: %s=%s", k, v)))
+		return nil, rc.NewErrParamInvalid(fmt.Errorf("invalid parameter: %s=%s", k, v))
 	}
 	return rc.Params{
 		"enabled":   vfs.Opt.PollInterval != 0,
@@ -334,7 +334,7 @@ func rcPollInterval(ctx context.Context, in rc.Params) (out rc.Params, err error
 		return nil, err
 	}
 	for k, v := range in {
-		return nil, rc.NewErrParamInvalid(errors.New(fmt.Sprintf("invalid parameter: %s=%s", k, v)))
+		return nil, rc.NewErrParamInvalid(fmt.Errorf("invalid parameter: %s=%s", k, v))
 	}
 	if vfs.pollChan == nil {
 		return nil, errors.New("poll-interval is not supported by this remote")
@@ -689,7 +689,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	// Check for recursive parameter
 	recursive, err := in.GetBool("recursive")
 	if err != nil && !rc.IsErrParamNotFound(err) {
-		return nil, rc.NewErrParamInvalid(errors.New(fmt.Sprintf("invalid recursive parameter: %v", err)))
+		return nil, rc.NewErrParamInvalid(fmt.Errorf("invalid recursive parameter: %v", err))
 	}
 
 	// Validate directory if specified - ensure it's not a file
@@ -704,7 +704,7 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if dirPath != "" {
 		// Check if path is a file (not a directory)
 		if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
-			return nil, rc.NewErrParamInvalid(errors.New(fmt.Sprintf("path %q is not a directory", dirPath)))
+			return nil, rc.NewErrParamInvalid(fmt.Errorf("path %q is not a directory", dirPath))
 		}
 	}
 

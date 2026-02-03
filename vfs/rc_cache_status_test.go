@@ -18,14 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func clearActiveCache() {
-	activeMu.Lock()
-	for k := range active {
-		delete(active, k)
-	}
-	activeMu.Unlock()
-}
-
 func addToActiveCache(vfs *VFS) {
 	activeMu.Lock()
 	configName := fs.ConfigString(vfs.Fs())

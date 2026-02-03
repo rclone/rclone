@@ -939,7 +939,7 @@ func (c *Cache) GetAggregateStats() AggregateStats {
 	}
 
 	if nonErrorItems > 0 {
-		stats.AverageCachePercentage = (totalPercentage + nonErrorItems/2) / int64(nonErrorItems)
+		stats.AverageCachePercentage = (totalPercentage + nonErrorItems/2) / nonErrorItems
 	}
 	return stats
 }
