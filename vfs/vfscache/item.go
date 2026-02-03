@@ -1609,7 +1609,7 @@ func (item *Item) VFSStatusCacheDetailed() (string, int, int64, int64, bool) {
 // VFSStatusCacheDetailedWithDiskSize returns detailed cache status information including
 // disk size for the file, all obtained atomically under item.mu to prevent
 // data races. This is used by GetAggregateStats to get consistent snapshot data.
-func (item *Item) VFSStatusCacheDetailedWithDiskSize() (status string, percentage int, totalSize int64, cachedSize int64, diskSize int64, dirty bool) {
+func (item *Item) VFSStatusCacheDetailedWithDiskSize() (status string, percentage int, totalSize int64, cachedSize int64, cachedBytesLogical int64, dirty bool) {
 	// Check upload status first without holding item.mu to respect lock ordering
 	// writeback.mu must be taken before item.mu
 	item.mu.Lock()
@@ -1641,7 +1641,7 @@ func (item *Item) VFSStatusCacheDetailedWithDiskSize() (status string, percentag
 		cachedSize = totalSize
 	}
 
-	diskSize = cachedSize
+	cachedBytesLogical = cachedSize
 	dirty = item.info.Dirty
-	return status, percentage, totalSize, cachedSize, diskSize, dirty
+	return status, percentage, totalSize, cachedSize, cachedBytesLogical, dirty
 }
