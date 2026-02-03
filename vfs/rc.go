@@ -34,9 +34,10 @@ func getVFS(in rc.Params) (vfs *VFS, err error) {
 	if rc.IsErrParamNotFound(err) {
 		var count int
 		vfs, count = activeCacheEntries()
-		if count == 1 {
+		switch count {
+		case 1:
 			return vfs, nil
-		} else if count == 0 {
+		case 0:
 			return nil, errors.New(`no VFS active and "fs" parameter not supplied`)
 		}
 		return nil, errors.New(`more than one VFS active - need "fs" parameter`)
@@ -254,7 +255,7 @@ func getInterval(in rc.Params) (time.Duration, bool, error) {
 		return 0, true, err
 	}
 	if interval < 0 {
-		return 0, true, errors.New("interval must be >= 0")
+		return 0, true, rc.NewErrParamInvalid(errors.New("interval must be >= 0"))
 	}
 	delete(in, k)
 	return interval, true, nil
@@ -453,7 +454,7 @@ This is only useful if |--vfs-cache-mode| > off. If you call it when
 the |--vfs-cache-mode| is off, it will return an empty result.
 
     {
-        "queue": // an array of files queued for upload
+        "queued": // an array of files queued for upload
         [
             {
                 "name":      "file",   // string: name (full path) of the file,
@@ -582,7 +583,7 @@ This returns a JSON object with the following fields:
   - NONE - number of tracked files not cached (remote only)
   - DIRTY - number of files modified locally but not uploaded
   - UPLOADING - number of files currently being uploaded
-  - ERROR - number of files with errors (e.g., reset failures)
+  - ERROR - number of files in error state (items that have experienced errors like reset failures and are tracked in the error items map, regardless of their current cache status)
 - fs - file system path
 
 Note: These statistics only reflect files that are currently tracked by the VFS cache.
@@ -692,15 +693,32 @@ func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	// Validate directory if specified - ensure it's not a file
+	// We prefer checking the cache first to avoid expensive remote lookups.
+	// If cache is available, use it to validate without remote calls.
 	// We don't check if directory exists in VFS because cache may contain
 	// items under that path even if directory node itself hasn't been read
-	// Instead, we check only that the path isn't a file (non-blocking check)
 	if dirPath != "" {
 		// Normalize path
 		cleanPath := vfscommon.NormalizePath(dirPath)
-		// Check if path is a file by attempting to get it
-		if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
-			return nil, fmt.Errorf("path %q is not a directory: %s", dirPath, node.Name())
+
+		// First, try to check cache to avoid expensive vfs.Stat call
+		isFile := false
+		if vfs.cache != nil {
+			if item := vfs.cache.FindItem(cleanPath); item != nil {
+				if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
+					isFile = true
+				}
+			}
+		} else {
+			// Cache is disabled, must use vfs.Stat
+			if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
+				isFile = true
+			}
+		}
+
+		// If path exists and is not a directory, return error
+		if isFile {
+			return nil, fmt.Errorf("path %q is not a directory: %s", dirPath, cleanPath)
 		}
 	}
 
@@ -850,9 +868,9 @@ func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			counts[status] = 0
 		}
 		return rc.Params{
-			"totalFiles":             0,
-			"totalCachedBytes":       0,
-			"averageCachePercentage": 0,
+			"totalFiles":             int64(0),
+			"totalCachedBytes":       int64(0),
+			"averageCachePercentage": int64(0),
 			"counts":                 counts,
 			"fs":                     fs.ConfigString(vfs.Fs()),
 		}, nil
