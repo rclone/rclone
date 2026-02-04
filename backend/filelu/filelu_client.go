@@ -16,6 +16,59 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
+// multipartInit starts a new multipart upload and returns server details.
+func (f *Fs) multipartInit(ctx context.Context, folderPath, filename string) (*api.MultipartInitResponse, error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/multipart/init",
+		Parameters: url.Values{
+			"key":         {f.opt.Key},
+			"filename":    {filename},
+			"folder_path": {folderPath},
+		},
+	}
+
+	var result api.MultipartInitResponse
+
+	err := f.pacer.Call(func() (bool, error) {
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		return fserrors.ShouldRetry(err), err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Status != 200 {
+		return nil, fmt.Errorf("multipart init error: %s", result.Msg)
+	}
+
+	return &result, nil
+}
+
+// completeMultipart finalizes the multipart upload on the file server.
+func (f *Fs) completeMultipart(ctx context.Context, server string, uploadID string, sessID string, objectPath string) error {
+	req, err := http.NewRequestWithContext(ctx, "POST", server, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("X-RC-Upload-Id", uploadID)
+	req.Header.Set("X-Sess-ID", sessID)
+	req.Header.Set("X-Object-Path", objectPath)
+
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != 202 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("completeMultipart failed %d: %s", resp.StatusCode, string(body))
+	}
+	return nil
+}
+
 // createFolder creates a folder at the specified path.
 func (f *Fs) createFolder(ctx context.Context, dirPath string) (*api.CreateFolderResponse, error) {
 	encodedDir := f.fromStandardPath(dirPath)
