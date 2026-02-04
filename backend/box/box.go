@@ -634,6 +634,7 @@ func fieldsValue() url.Values {
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	start := time.Now()
 	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var info *api.Item
@@ -652,6 +653,21 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, &info)
 		return shouldRetry(ctx, resp, err)
 	})
+	
+	duration := time.Since(start)
+	
+	// Determine remote path for reporting
+	dir := f.getFullPath(pathID, leaf)
+	
+	id := ""
+	if info != nil {
+		id = info.ID
+	}
+	
+	// Report folder creation
+	// Note: We use "structure" as srcRemoteName, similar to Mkdir
+	f.ReportTransfer("[Directory]", "structure", dir, "Folder", "Implicit/CreateDir", id, pathID, "", err, 0, 0, duration, 0)
+
 	if err != nil {
 		// fmt.Printf("...Error %v\n", err)
 		return "", err
@@ -950,8 +966,9 @@ func (tr *timingReader) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
-// reportTransfer logs the transfer details to a CSV file
-func (f *Fs) reportTransfer(srcName, remote, itemType, method, fileID, folderID, sha1Hash string, err error, fetchDuration, writeDuration, totalDuration time.Duration, size int64) {
+// ReportTransfer logs the transfer details to a CSV file
+// Exported so it can be called from fs/operations
+func (f *Fs) ReportTransfer(srcName, srcRemoteName, remote, itemType, method, fileID, folderID, sha1Hash string, err error, fetchDuration, writeDuration, totalDuration time.Duration, size int64) {
 	f.reportMu.Lock()
 	defer f.reportMu.Unlock()
 
@@ -959,6 +976,16 @@ func (f *Fs) reportTransfer(srcName, remote, itemType, method, fileID, folderID,
 	if fname == "" {
 		fname = "rclone_box_report.csv"
 	}
+	
+	// Handle {source} placeholder
+	if strings.Contains(fname, "{source}") {
+		safeSrc := "unknown"
+		if srcRemoteName != "" {
+			safeSrc = srcRemoteName
+		}
+		fname = strings.ReplaceAll(fname, "{source}", safeSrc)
+	}
+
 	fileInfo, errStat := os.Stat(fname)
 
 	file, errFile := os.OpenFile(fname, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -1051,47 +1078,7 @@ func (f *Fs) reportTransfer(srcName, remote, itemType, method, fileID, folderID,
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
-	start := time.Now()
 	_, err = f.dirCache.FindDir(ctx, dir, true)
-	duration := time.Since(start)
-
-	// Log the folder creation
-	// Since FindDir returns the ID if found/created, let's try to get it for the report
-	// However, err might be nil but we need the ID. FindDir returns (id, err).
-	// We need to capture the ID.
-	// But the interface for Mkdir is just (err error).
-	// Let's refactor slightly to capture the ID for reporting.
-	// FindDir(ctx, dir, true) is what was called.
-	
-	// We need to call FindDir again or change how we call it? 
-	// The original code was:
-	// _, err := f.dirCache.FindDir(ctx, dir, true)
-	// return err
-	
-	// Let's capture the ID from the FindDir call we are about to make.
-	// But wait, the original code discarded the ID.
-	// The reporting needs the ID.
-	
-	// Re-implementing with ID capture:
-	// id, err := f.dirCache.FindDir(ctx, dir, true)
-	// ... report ...
-	// return err
-	
-	// Wait, I cannot change the signature of Mkdir (it must satisfy fs.Fs).
-	// But I can change the body.
-	
-	// The previous implementation was:
-	// func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	// 	_, err := f.dirCache.FindDir(ctx, dir, true)
-	// 	return err
-	// }
-
-	// New implementation:
-	id, err := f.dirCache.FindDir(ctx, dir, true)
-	
-	// Report
-	f.reportTransfer("[Directory]", dir, "Folder", "N/A", "N/A", id, "", err, 0, 0, duration, 0)
-	
 	return err
 }
 
@@ -1242,7 +1229,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if dstObj != nil {
 		sha1 = dstObj.sha1
 	}
-	f.reportTransfer(src.Remote(), remote, "File", "Server-Side Copy", fileID, directoryID, sha1, err, 0, duration, duration, src.Size())
+	f.ReportTransfer(src.Remote(), src.Fs().Name(), remote, "File", "Server-Side Copy", fileID, directoryID, sha1, err, 0, duration, duration, src.Size())
 
 	if err != nil {
 		return nil, err
@@ -2012,7 +1999,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// Get parent folder ID for reporting (we already have directoryID from FindPath)
-	o.fs.reportTransfer(src.String(), o.remote, "File", method, o.id, directoryID, o.sha1, err, fetchDuration, writeDuration, totalDuration, size)
+	var srcRemoteName string
+	if src.Fs() != nil {
+		srcRemoteName = src.Fs().Name()
+	} else {
+		srcRemoteName = "stream"
+	}
+	o.fs.ReportTransfer(src.String(), srcRemoteName, o.remote, "File", method, o.id, directoryID, o.sha1, err, fetchDuration, writeDuration, totalDuration, size)
 
 	return err
 }
