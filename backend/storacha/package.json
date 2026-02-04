@@ -1,0 +1,10 @@
+{
+  "name": "storacha-rclone-backend",
+  "version": "1.0.0",
+  "description": "Storacha backend for rclone using Node.js subprocess",
+  "type": "module",
+  "main": "storacha-bridge.mjs",
+  "dependencies": {
+    "@storacha/client": "^2.0.3"
+  }
+}

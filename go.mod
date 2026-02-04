@@ -315,6 +315,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
+	rogchap.com/v8go v0.9.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	storj.io/common v0.0.0-20251107171817-6221ae45072c // indirect
 	storj.io/drpc v0.0.35-0.20250513201419-f7819ea69b55 // indirect

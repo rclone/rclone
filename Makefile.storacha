@@ -1,0 +1,29 @@
+// Makefile for Storacha backend
+// This handles bundling the JavaScript SDK
+
+.PHONY: bundle clean install
+
+# Bundle the Storacha SDK for embedding in Go
+bundle: install
+	@echo "Bundling Storacha SDK..."
+	@cd backend/storacha && npm run bundle
+	@echo "Bundle complete!"
+
+# Install npm dependencies
+install:
+	@echo "Installing npm dependencies..."
+	@cd backend/storacha && npm install
+	@echo "Dependencies installed!"
+
+# Clean generated files
+clean:
+	@echo "Cleaning generated files..."
+	@cd backend/storacha && rm -f storacha-sdk-bundle.js storacha-bundle-combined.js
+	@cd backend/storacha && rm -rf node_modules package-lock.json
+	@echo "Clean complete!"
+
+# Build the rclone binary with Storacha support
+build: bundle
+	@echo "Building rclone with Storacha support..."
+	@go build -o bin/rclone .
+	@echo "Build complete!"
