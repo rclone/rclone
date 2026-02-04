@@ -538,7 +538,7 @@ rclone serve dlna remote:path [flags]
       --dir-cache-time Duration                Time to cache directory entries for (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 777)
       --file-perms FileMode                    File permissions (default 666)
-      --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
+      --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 20)
   -h, --help                                   help for dlna
       --interface stringArray                  The interface to use for SSDP (repeat as necessary)
       --link-perms FileMode                    Link permissions (default 666)
@@ -549,15 +549,15 @@ rclone serve dlna remote:path [flags]
       --no-seek                                Don't allow seeking in files
       --poll-interval Duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
       --read-only                              Only allow read-only access
-      --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
-      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 002)
+      --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 502)
+      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 022)
       --vfs-block-norm-dupes                   If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
       --vfs-cache-max-age Duration             Max time since last access of objects in the cache (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache (default off)
       --vfs-cache-min-free-space SizeSuffix    Target minimum free space on the disk containing the cache (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
       --vfs-cache-poll-interval Duration       Interval to poll the cache for stale objects (default 1m0s)
-      --vfs-case-insensitive                   If a file name not found, find a case insensitive match
+      --vfs-case-insensitive                   If a file name not found, find a case insensitive match (default true)
       --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
       --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS

@@ -949,15 +949,17 @@ type timingReader struct {
 	io.Reader
 	ReadDone chan time.Time
 	once     sync.Once
+	lastRead time.Time
 }
 
 func (tr *timingReader) Read(p []byte) (n int, err error) {
 	n, err = tr.Reader.Read(p)
+	tr.lastRead = time.Now()
 	// If we hit EOF or another error, we mark the read as done
 	if err != nil {
 		tr.once.Do(func() {
 			select {
-			case tr.ReadDone <- time.Now():
+			case tr.ReadDone <- tr.lastRead:
 			default:
 				// Channel full or no one listening
 			}
@@ -1933,11 +1935,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Wrap the source reader to catch the "End of File" from the source
 	// We only wrap if we have a reader.
 	var tReader io.Reader
+	var tr *timingReader
 	if in != nil {
-		tReader = &timingReader{
+		tr = &timingReader{
 			Reader:   in,
 			ReadDone: readDoneChan,
 		}
+		tReader = tr
 	} else {
 		tReader = in
 	}
@@ -1978,10 +1982,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		case fetchEnd := <-readDoneChan:
 			fetchDuration = fetchEnd.Sub(totalStart)
 		default:
-			// If channel empty (e.g. error before EOF), assume fetch took total time or 0
-			// Use totalDuration as fallback or 0? 
-			// If err != nil, likely failed early.
-			if err != nil {
+			// If channel empty (e.g. error before EOF, or successful read without explicit EOF)
+			// Try to use the last read time if available
+			if tr != nil && !tr.lastRead.IsZero() {
+				fetchDuration = tr.lastRead.Sub(totalStart)
+			} else if err != nil {
 				fetchDuration = totalDuration
 			} else {
 				fetchDuration = totalDuration // Should have finished

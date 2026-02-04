@@ -131,6 +131,7 @@ rclone [flags]
       --box-impersonate string                              Impersonate this user ID when using a service account
       --box-list-chunk int                                  Size of listing chunk 1-1000 (default 1000)
       --box-owned-by string                                 Only show items owned by the login (email address) passed in
+      --box-report-file string                              File path for the CSV report. Use {timestamp} to insert current time (default "rclone_box_report.csv")
       --box-root-folder-id string                           Fill in for rclone to use a non root folder as its starting point
       --box-token string                                    OAuth Access Token as a JSON blob
       --box-token-url string                                Token server url
@@ -141,14 +142,14 @@ rclone [flags]
       --ca-cert stringArray                                 CA certificate used to verify servers
       --cache-chunk-clean-interval Duration                 How often should the cache perform cleanups of the chunk storage (default 1m0s)
       --cache-chunk-no-memory                               Disable the in-memory cache for storing chunks during streaming
-      --cache-chunk-path string                             Directory to cache chunk files (default "$HOME/.cache/rclone/cache-backend")
+      --cache-chunk-path string                             Directory to cache chunk files (default "/Users/jvandermerwe/Library/Caches/rclone/cache-backend")
       --cache-chunk-size SizeSuffix                         The size of a chunk (partial file data) (default 5Mi)
       --cache-chunk-total-size SizeSuffix                   The total size that the chunks can take up on the local disk (default 10Gi)
-      --cache-db-path string                                Directory to store file structure metadata DB (default "$HOME/.cache/rclone/cache-backend")
+      --cache-db-path string                                Directory to store file structure metadata DB (default "/Users/jvandermerwe/Library/Caches/rclone/cache-backend")
       --cache-db-purge                                      Clear all the cached data for this remote on start
       --cache-db-wait-time Duration                         How long to wait for the DB to be available - 0 is unlimited (default 1s)
       --cache-description string                            Description of the remote
-      --cache-dir string                                    Directory rclone will use for caching (default "$HOME/.cache/rclone")
+      --cache-dir string                                    Directory rclone will use for caching (default "/Users/jvandermerwe/Library/Caches/rclone")
       --cache-info-age Duration                             How long to cache file structure information (directory listings, file size, times, etc.) (default 6h0m0s)
       --cache-plex-insecure string                          Skip all certificate verification when connecting to the Plex server
       --cache-plex-password string                          The password of the Plex user (obscured)
@@ -191,7 +192,7 @@ rclone [flags]
       --compress-mode string                                Compression mode (default "gzip")
       --compress-ram-cache-limit SizeSuffix                 Some remotes don't allow the upload of files with unknown size (default 20Mi)
       --compress-remote string                              Remote to compress
-      --config string                                       Config file (default "$HOME/.config/rclone/rclone.conf")
+      --config string                                       Config file (default "/Users/jvandermerwe/.config/rclone/rclone.conf")
       --contimeout Duration                                 Connect timeout (default 1m0s)
       --copy-dest stringArray                               Implies --compare-dest but also copies files from paths into destination
   -L, --copy-links                                          Follow symlinks and copy the pointed to item
@@ -379,7 +380,7 @@ rclone [flags]
       --ftp-socks-proxy string                              Socks 5 proxy host
       --ftp-tls                                             Use Implicit FTPS (FTP over TLS)
       --ftp-tls-cache-size int                              Size of TLS session cache for all control and data connections (default 32)
-      --ftp-user string                                     FTP username (default "$USER")
+      --ftp-user string                                     FTP username (default "jvandermerwe")
       --ftp-writing-mdtm                                    Use MDTM to set modification time (VsFtpd quirk)
       --gcs-access-token string                             Short-lived access token
       --gcs-anonymous                                       Access public buckets and objects without credentials
@@ -535,7 +536,7 @@ rclone [flags]
       --local-case-insensitive                              Force the filesystem to report itself as case insensitive
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
       --local-description string                            Description of the remote
-      --local-encoding Encoding                             The encoding for the backend (default Slash,Dot)
+      --local-encoding Encoding                             The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --local-hashes CommaSepList                           Comma separated list of supported checksum types
       --local-links                                         Translate symlinks to/from regular files with a '.rclonelink' extension for the local backend
       --local-no-check-updated                              Don't check to see if the files change during upload
@@ -934,7 +935,7 @@ rclone [flags]
       --sftp-subsystem string                               Specifies the SSH2 subsystem on the remote host (default "sftp")
       --sftp-use-fstat                                      If set use fstat instead of stat
       --sftp-use-insecure-cipher                            Enable the use of insecure ciphers and key exchange methods
-      --sftp-user string                                    SSH username (default "$USER")
+      --sftp-user string                                    SSH username (default "jvandermerwe")
       --sftp-xxh128sum-command string                       The command used to read XXH128 hashes
       --sftp-xxh3sum-command string                         The command used to read XXH3 hashes
       --shade-api-key string                                An API key for your account
@@ -979,7 +980,7 @@ rclone [flags]
       --smb-port int                                        SMB port number (default 445)
       --smb-spn string                                      Service principal name
       --smb-use-kerberos                                    Use Kerberos authentication
-      --smb-user string                                     SMB username (default "$USER")
+      --smb-user string                                     SMB username (default "jvandermerwe")
       --stats Duration                                      Interval between printing stats, e.g. 500ms, 60s, 5m (0 to disable) (default 1m0s)
       --stats-file-name-length int                          Max file name length in stats (0 for no limit) (default 45)
       --stats-log-level LogLevel                            Log level to show --stats output DEBUG|INFO|NOTICE|ERROR (default INFO)
@@ -1037,7 +1038,7 @@ rclone [flags]
       --swift-user-id string                                User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID)
       --syslog                                              Use Syslog for logging
       --syslog-facility string                              Facility for syslog, e.g. KERN,USER (default "DAEMON")
-      --temp-dir string                                     Directory rclone will use for temporary files (default "/tmp")
+      --temp-dir string                                     Directory rclone will use for temporary files (default "/var/folders/mr/khs45hds0db65rvbb_7dgs1h0000gp/T/")
       --timeout Duration                                    IO idle timeout (default 5m0s)
       --tpslimit float                                      Limit HTTP transactions per second to this
       --tpslimit-burst int                                  Max burst of transactions for --tpslimit (default 1)
@@ -1063,7 +1064,7 @@ rclone [flags]
       --use-json-log                                        Use json log format
       --use-mmap                                            Use mmap allocator (see docs)
       --use-server-modtime                                  Use server modified time instead of object metadata
-      --user-agent string                                   Set the user-agent to a specified string (default "rclone/v1.73.0")
+      --user-agent string                                   Set the user-agent to a specified string (default "rclone/")
   -v, --verbose count                                       Print lots more stuff (repeat for more)
   -V, --version                                             Print the version number
       --webdav-auth-redirect                                Preserve authentication on redirect
@@ -1125,6 +1126,7 @@ rclone [flags]
 * [rclone copyurl](/commands/rclone_copyurl/)	 - Copy the contents of the URL supplied content to dest:path.
 * [rclone cryptcheck](/commands/rclone_cryptcheck/)	 - Cryptcheck checks the integrity of an encrypted remote.
 * [rclone cryptdecode](/commands/rclone_cryptdecode/)	 - Cryptdecode returns unencrypted file names.
+* [rclone csvrun](/commands/rclone_csvrun/)	 - Read a CSV file and perform file operations (copy/move).
 * [rclone dedupe](/commands/rclone_dedupe/)	 - Interactively find duplicate filenames and delete/rename them.
 * [rclone delete](/commands/rclone_delete/)	 - Remove the files in path.
 * [rclone deletefile](/commands/rclone_deletefile/)	 - Remove a single file from remote.
@@ -1140,7 +1142,6 @@ rclone [flags]
 * [rclone lsl](/commands/rclone_lsl/)	 - List the objects in path with modification time, size and path.
 * [rclone md5sum](/commands/rclone_md5sum/)	 - Produces an md5sum file for all the objects in the path.
 * [rclone mkdir](/commands/rclone_mkdir/)	 - Make the path if it doesn't already exist.
-* [rclone mount](/commands/rclone_mount/)	 - Mount the remote as file system on a mountpoint.
 * [rclone move](/commands/rclone_move/)	 - Move files from source to dest.
 * [rclone moveto](/commands/rclone_moveto/)	 - Move file or directory from source to dest.
 * [rclone ncdu](/commands/rclone_ncdu/)	 - Explore a remote with a text based user interface.

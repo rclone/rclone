@@ -553,8 +553,8 @@ rclone serve docker [flags]
       --attr-timeout Duration                  Time for which file/directory attributes are cached (default 1s)
       --base-dir string                        Base directory for volumes (default "/var/lib/docker-volumes/rclone")
       --daemon                                 Run mount in background and exit parent process (as background output is suppressed, use --log-file with --log-format=pid,... to monitor) (not supported on Windows)
-      --daemon-timeout Duration                Time limit for rclone to respond to kernel (not supported on Windows) (default 0s)
-      --daemon-wait Duration                   Time to wait for ready mount from daemon (maximum time on Linux, constant sleep time on OSX/BSD) (not supported on Windows) (default 1m0s)
+      --daemon-timeout Duration                Time limit for rclone to respond to kernel (not supported on Windows) (default 10m0s)
+      --daemon-wait Duration                   Time to wait for ready mount from daemon (maximum time on Linux, constant sleep time on OSX/BSD) (not supported on Windows) (default 5s)
       --debug-fuse                             Debug the FUSE internals - needs -v
       --default-permissions                    Makes kernel enforce access control based on the file mode (not supported on Windows)
       --devname string                         Set the device name - default is remote:path
@@ -564,7 +564,7 @@ rclone serve docker [flags]
       --file-perms FileMode                    File permissions (default 666)
       --forget-state                           Skip restoring previous state
       --fuse-flag stringArray                  Flags or arguments to be passed direct to libfuse/WinFsp (repeat if required)
-      --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
+      --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 20)
   -h, --help                                   help for docker
       --link-perms FileMode                    Link permissions (default 666)
       --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads (not supported on Windows) (default 128Ki)
@@ -580,16 +580,16 @@ rclone serve docker [flags]
       --poll-interval Duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
       --read-only                              Only allow read-only access
       --socket-addr string                     Address <host:port> or absolute path (default: /run/docker/plugins/rclone.sock)
-      --socket-gid int                         GID for unix socket (default: current process GID) (default 1000)
-      --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
-      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 002)
+      --socket-gid int                         GID for unix socket (default: current process GID) (default 20)
+      --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 502)
+      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 022)
       --vfs-block-norm-dupes                   If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
       --vfs-cache-max-age Duration             Max time since last access of objects in the cache (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache (default off)
       --vfs-cache-min-free-space SizeSuffix    Target minimum free space on the disk containing the cache (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
       --vfs-cache-poll-interval Duration       Interval to poll the cache for stale objects (default 1m0s)
-      --vfs-case-insensitive                   If a file name not found, find a case insensitive match
+      --vfs-case-insensitive                   If a file name not found, find a case insensitive match (default true)
       --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
       --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS

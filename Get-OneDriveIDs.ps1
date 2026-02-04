@@ -1,5 +1,7 @@
 # --- CONFIGURATION ---
-$RemoteName = "BC_EMEA_SPO"  # Name of your rclone remote
+param(
+    [string]$RemoteName = "mysharepoint"
+)
 # ---------------------
 
 # 1. Get the Access Token from rclone config

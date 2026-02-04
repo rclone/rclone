@@ -777,7 +777,7 @@ rclone serve s3 remote:path [flags]
       --etag-hash string                       Which hash to use for the ETag, or auto or blank for off (default "MD5")
       --file-perms FileMode                    File permissions (default 666)
       --force-path-style                       If true use path style access if false use virtual hosted style (default true)
-      --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
+      --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 20)
   -h, --help                                   help for s3
       --htpasswd string                        A htpasswd file - if not provided no authentication is done
       --key string                             TLS PEM Private key
@@ -795,8 +795,8 @@ rclone serve s3 remote:path [flags]
       --salt string                            Password hashing salt (default "dlPL2MqE")
       --server-read-timeout Duration           Timeout for server reading data (default 1h0m0s)
       --server-write-timeout Duration          Timeout for server writing data (default 1h0m0s)
-      --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
-      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 002)
+      --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 502)
+      --umask FileMode                         Override the permission bits set by the filesystem (not supported on Windows) (default 022)
       --user string                            User name for authentication
       --user-from-header string                User name from a defined HTTP header
       --vfs-block-norm-dupes                   If duplicate filenames exist in the same directory (after normalization), log an error and hide the duplicates (may have a performance cost)
@@ -805,7 +805,7 @@ rclone serve s3 remote:path [flags]
       --vfs-cache-min-free-space SizeSuffix    Target minimum free space on the disk containing the cache (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
       --vfs-cache-poll-interval Duration       Interval to poll the cache for stale objects (default 1m0s)
-      --vfs-case-insensitive                   If a file name not found, find a case insensitive match
+      --vfs-case-insensitive                   If a file name not found, find a case insensitive match (default true)
       --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
       --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
       --vfs-links                              Translate symlinks to/from regular files with a '.rclonelink' extension for the VFS

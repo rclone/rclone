@@ -121,7 +121,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.73.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/")
 ```
 
 
@@ -143,9 +143,9 @@ Flags for general configuration of rclone.
 ```
       --ask-password                        Allow prompt for password for encrypted configuration (default true)
       --auto-confirm                        If enabled, do not request console confirmation
-      --cache-dir string                    Directory rclone will use for caching (default "$HOME/.cache/rclone")
+      --cache-dir string                    Directory rclone will use for caching (default "/Users/jvandermerwe/Library/Caches/rclone")
       --color AUTO|NEVER|ALWAYS             When to show colors (and other ANSI codes) AUTO|NEVER|ALWAYS (default AUTO)
-      --config string                       Config file (default "$HOME/.config/rclone/rclone.conf")
+      --config string                       Config file (default "/Users/jvandermerwe/.config/rclone/rclone.conf")
       --default-time Time                   Time to show if modtime is unknown for files and directories (default 2000-01-01T00:00:00Z)
       --disable string                      Disable a comma separated list of features (use --disable help to see a list)
   -n, --dry-run                             Do a trial run with no permanent changes
@@ -162,7 +162,7 @@ Flags for general configuration of rclone.
       --password-command SpaceSepList       Command for supplying password for encrypted configuration
       --retries int                         Retry operations this many times if they fail (default 3)
       --retries-sleep Duration              Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable) (default 0s)
-      --temp-dir string                     Directory rclone will use for temporary files (default "/tmp")
+      --temp-dir string                     Directory rclone will use for temporary files (default "/var/folders/mr/khs45hds0db65rvbb_7dgs1h0000gp/T/")
       --use-mmap                            Use mmap allocator (see docs)
       --use-server-modtime                  Use server modified time instead of object metadata
 ```
@@ -444,16 +444,17 @@ Backend-only flags (these can be set in the config file also).
       --box-impersonate string                              Impersonate this user ID when using a service account
       --box-list-chunk int                                  Size of listing chunk 1-1000 (default 1000)
       --box-owned-by string                                 Only show items owned by the login (email address) passed in
+      --box-report-file string                              File path for the CSV report. Use {timestamp} to insert current time (default "rclone_box_report.csv")
       --box-root-folder-id string                           Fill in for rclone to use a non root folder as its starting point
       --box-token string                                    OAuth Access Token as a JSON blob
       --box-token-url string                                Token server url
       --box-upload-cutoff SizeSuffix                        Cutoff for switching to multipart upload (>= 50 MiB) (default 50Mi)
       --cache-chunk-clean-interval Duration                 How often should the cache perform cleanups of the chunk storage (default 1m0s)
       --cache-chunk-no-memory                               Disable the in-memory cache for storing chunks during streaming
-      --cache-chunk-path string                             Directory to cache chunk files (default "$HOME/.cache/rclone/cache-backend")
+      --cache-chunk-path string                             Directory to cache chunk files (default "/Users/jvandermerwe/Library/Caches/rclone/cache-backend")
       --cache-chunk-size SizeSuffix                         The size of a chunk (partial file data) (default 5Mi)
       --cache-chunk-total-size SizeSuffix                   The total size that the chunks can take up on the local disk (default 10Gi)
-      --cache-db-path string                                Directory to store file structure metadata DB (default "$HOME/.cache/rclone/cache-backend")
+      --cache-db-path string                                Directory to store file structure metadata DB (default "/Users/jvandermerwe/Library/Caches/rclone/cache-backend")
       --cache-db-purge                                      Clear all the cached data for this remote on start
       --cache-db-wait-time Duration                         How long to wait for the DB to be available - 0 is unlimited (default 1s)
       --cache-description string                            Description of the remote
@@ -648,7 +649,7 @@ Backend-only flags (these can be set in the config file also).
       --ftp-socks-proxy string                              Socks 5 proxy host
       --ftp-tls                                             Use Implicit FTPS (FTP over TLS)
       --ftp-tls-cache-size int                              Size of TLS session cache for all control and data connections (default 32)
-      --ftp-user string                                     FTP username (default "$USER")
+      --ftp-user string                                     FTP username (default "jvandermerwe")
       --ftp-writing-mdtm                                    Use MDTM to set modification time (VsFtpd quirk)
       --gcs-access-token string                             Short-lived access token
       --gcs-anonymous                                       Access public buckets and objects without credentials
@@ -782,7 +783,7 @@ Backend-only flags (these can be set in the config file also).
       --local-case-insensitive                              Force the filesystem to report itself as case insensitive
       --local-case-sensitive                                Force the filesystem to report itself as case sensitive
       --local-description string                            Description of the remote
-      --local-encoding Encoding                             The encoding for the backend (default Slash,Dot)
+      --local-encoding Encoding                             The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --local-hashes CommaSepList                           Comma separated list of supported checksum types
       --local-links                                         Translate symlinks to/from regular files with a '.rclonelink' extension for the local backend
       --local-no-check-updated                              Don't check to see if the files change during upload
@@ -1078,7 +1079,7 @@ Backend-only flags (these can be set in the config file also).
       --sftp-subsystem string                               Specifies the SSH2 subsystem on the remote host (default "sftp")
       --sftp-use-fstat                                      If set use fstat instead of stat
       --sftp-use-insecure-cipher                            Enable the use of insecure ciphers and key exchange methods
-      --sftp-user string                                    SSH username (default "$USER")
+      --sftp-user string                                    SSH username (default "jvandermerwe")
       --sftp-xxh128sum-command string                       The command used to read XXH128 hashes
       --sftp-xxh3sum-command string                         The command used to read XXH3 hashes
       --shade-api-key string                                An API key for your account
@@ -1122,7 +1123,7 @@ Backend-only flags (these can be set in the config file also).
       --smb-port int                                        SMB port number (default 445)
       --smb-spn string                                      Service principal name
       --smb-use-kerberos                                    Use Kerberos authentication
-      --smb-user string                                     SMB username (default "$USER")
+      --smb-user string                                     SMB username (default "jvandermerwe")
       --storj-access-grant string                           Access grant
       --storj-api-key string                                API key
       --storj-description string                            Description of the remote
