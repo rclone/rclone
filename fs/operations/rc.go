@@ -192,7 +192,7 @@ func rcMoveOrCopyFile(ctx context.Context, in rc.Params, cp bool) (out rc.Params
 	if err != nil {
 		return nil, err
 	}
-	return nil, moveOrCopyFile(ctx, dstFs, srcFs, dstRemote, srcRemote, cp, false)
+	return nil, MoveOrCopyFile(ctx, dstFs, srcFs, dstRemote, srcRemote, cp, false)
 }
 
 func init() {

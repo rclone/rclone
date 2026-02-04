@@ -418,5 +418,5 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 
 // CopyFile moves a single file possibly to a new name
 func CopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string) (err error) {
-	return moveOrCopyFile(ctx, fdst, fsrc, dstFileName, srcFileName, true, false)
+	return MoveOrCopyFile(ctx, fdst, fsrc, dstFileName, srcFileName, true, false)
 }
