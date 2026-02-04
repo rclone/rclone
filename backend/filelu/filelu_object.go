@@ -1,7 +1,6 @@
 package filelu
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -109,22 +108,25 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			return false, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
 		}
 
-		// Wrap the response body to handle offset and count
-		currentContents, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return false, fmt.Errorf("failed to read response body: %w", err)
+		if offset > 0 {
+			_, err = io.CopyN(io.Discard, resp.Body, offset)
+			if err != nil {
+				_ = resp.Body.Close()
+				return false, fmt.Errorf("failed to skip offset: %w", err)
+			}
 		}
 
-		if offset > 0 {
-			if offset > int64(len(currentContents)) {
-				return false, fmt.Errorf("offset %d exceeds file size %d", offset, len(currentContents))
+		if count > 0 {
+			reader = struct {
+				io.Reader
+				io.Closer
+			}{
+				Reader: io.LimitReader(resp.Body, count),
+				Closer: resp.Body,
 			}
-			currentContents = currentContents[offset:]
+		} else {
+			reader = resp.Body
 		}
-		if count > 0 && count < int64(len(currentContents)) {
-			currentContents = currentContents[:count]
-		}
-		reader = io.NopCloser(bytes.NewReader(currentContents))
 
 		return false, nil
 	})
