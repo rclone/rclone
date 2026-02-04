@@ -87,6 +87,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 	}
 
+	// Wrap the response body to handle offset and count
 	var reader io.ReadCloser
 	err = o.fs.pacer.Call(func() (bool, error) {
 		req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
