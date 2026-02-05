@@ -571,7 +571,7 @@ func (c *Cache) KickCleaner() {
 		fs.Debugf(c.fremote, "vfs cache: in KickCleaner, ready to lock cache mutex")
 		c.mu.Lock()
 		c.outOfSpace = true
-		fs.Logf(c.fremote, "vfs cache: in KickCleaner, ready to kick cleaner")
+		fs.Debugf(c.fremote, "vfs cache: in KickCleaner, ready to kick cleaner")
 		c.kick <- struct{}{}
 		c.mu.Unlock()
 	}
