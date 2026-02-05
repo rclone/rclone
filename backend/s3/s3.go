@@ -1664,6 +1664,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// MD5 digest of their object data.
 		f.etagIsNotMD5 = true
 	}
+	if provider.Quirks.EtagIsNotMD5 != nil && *provider.Quirks.EtagIsNotMD5 {
+		// Provider always returns ETags that are not MD5 (e.g., mandatory encryption)
+		f.etagIsNotMD5 = true
+	}
 	if opt.DirectoryBucket {
 		// Objects uploaded to directory buckets appear to have random ETags
 		//
@@ -1687,6 +1691,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 	if opt.Provider == "AWS" {
 		f.features.DoubleSlash = true
+	}
+	if opt.Provider == "Fastly" {
+		f.features.Copy = nil
 	}
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
