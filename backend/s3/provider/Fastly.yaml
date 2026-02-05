@@ -1,0 +1,16 @@
+name: Fastly
+description: Fastly Object Storage
+region:
+  us-east: US East
+  us-west: US West
+  eu-central: EU Central
+endpoint:
+  us-east.object.fastlystorage.app: US East
+  us-west.object.fastlystorage.app: US West
+  eu-central.object.fastlystorage.app: EU Central
+quirks:
+  force_path_style: true
+  use_already_exists: false
+  use_multipart_etag: false
+  use_multipart_uploads: false
+  etag_is_not_md5: true
