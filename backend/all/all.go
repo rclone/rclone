@@ -69,5 +69,6 @@ import (
 	_ "github.com/rclone/rclone/backend/union"
 	_ "github.com/rclone/rclone/backend/webdav"
 	_ "github.com/rclone/rclone/backend/yandex"
+	_ "github.com/rclone/rclone/backend/youtubemusic"
 	_ "github.com/rclone/rclone/backend/zoho"
 )
