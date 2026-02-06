@@ -167,6 +167,12 @@ func (p *Pacer) beginCall(limitConnections bool) {
 	if sleepTime > 0 {
 		<-p.pacer
 
+		// Re-read the sleep time as it may be stale
+		// after waiting for the pacer token
+		p.mu.Lock()
+		sleepTime = p.state.SleepTime
+		p.mu.Unlock()
+
 		// Restart the timer
 		go func(t time.Duration) {
 			time.Sleep(t)
