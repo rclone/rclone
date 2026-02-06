@@ -27,6 +27,7 @@ Thank you to our sponsors:
 {{< sponsor src="/img/logos/torbox.png" width="200" height="200" title="Visit our sponsor TORBOX" link="https://www.torbox.app/">}}
 {{< sponsor src="/img/logos/spectra-logic.svg" width="300" height="200" title="Visit our sponsor Spectra Logic" link="https://spectralogic.com/">}}
 {{< sponsor src="/img/logos/servercore.svg" width="300" height="200" title="Visit our sponsor servercore" link="https://servercore.com/services/object-storage/?utm_source=rclone.org&utm_medium=referral&utm_campaign=cloud-s3_rclone_231025_paid">}}
+{{< sponsor src="/img/logos/exchangerate-api.png" width="300" height="200" title="Visit our sponsor ExchangeRate-API" link="https://www.exchangerate-api.com/">}}
 
 <!-- markdownlint-restore -->
 
