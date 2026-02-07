@@ -348,7 +348,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 		ExtraHeaders: map[string]string{
 			"Depth": depth,
 		},
-		NoRedirect: true,
+		CheckRedirect: rest.PreserveMethodRedirectFn,
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)

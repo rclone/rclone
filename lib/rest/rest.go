@@ -215,6 +215,22 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 	return &clientCopy
 }
 
+// PreserveMethodRedirectFn is a CheckRedirect function that
+// preserves the original HTTP method on redirects.
+//
+// By default Go's http.Client changes the method to GET on 301, 302,
+// and 303 redirects. This function overrides that behaviour so the
+// original method (e.g. PROPFIND being preserved across a 307) is kept.
+func PreserveMethodRedirectFn(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+	if len(via) > 0 {
+		req.Method = via[0].Method
+	}
+	return nil
+}
+
 // Do calls the internal http.Client.Do method
 func (api *Client) Do(req *http.Request) (*http.Response, error) {
 	return api.c.Do(req)
