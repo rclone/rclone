@@ -355,19 +355,19 @@ type chunkWriter struct {
 	chunkSize       int64
 
 	chunksLock      sync.Mutex
-	knownChunks     map[int][]byte // known chunks to be hashed
-	nextChunkToHash int
+	knownChunks     map[int64][]byte // known chunks to be hashed
+	nextChunkToHash int64
 
 	sizeLock sync.Mutex
 	size     int64
 }
 
 func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error) {
-	realChunkNumber := int(int64(chunkNumber) * (cw.chunkSize) / sdk.ChunkSize)
+	realChunkNumber := int64(chunkNumber) * (cw.chunkSize) / sdk.ChunkSize
 	chunk := make([]byte, sdk.ChunkSize, sdk.ChunkSize+cw.EncryptionKey.Cipher.Overhead())
 
 	totalWritten := int64(0)
-	for sliceStart := 0; sliceStart < int(cw.chunkSize); sliceStart += sdk.ChunkSize {
+	for sliceStart := int64(0); sliceStart < cw.chunkSize; sliceStart += sdk.ChunkSize {
 		chunk = chunk[:sdk.ChunkSize]
 		chunkRead := 0
 		for {
@@ -415,12 +415,12 @@ func (cw *chunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader i
 			return totalWritten, err
 		}
 		resp, err := cw.filen.UploadChunk(ctx, &cw.FileUpload, realChunkNumber, chunkReadSlice)
+		if err != nil {
+			return totalWritten, err
+		}
 		select { // only care about getting this once
 		case cw.bucketAndRegion <- *resp:
 		default:
-		}
-		if err != nil {
-			return totalWritten, err
 		}
 		totalWritten += int64(len(chunkReadSlice))
 		realChunkNumber++
@@ -496,7 +496,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		filen:           f.filen,
 		chunkSize:       chunkSize,
 		bucketAndRegion: make(chan client.V3UploadResponse, 1),
-		knownChunks:     make(map[int][]byte),
+		knownChunks:     make(map[int64][]byte),
 		nextChunkToHash: 0,
 		size:            0,
 	}, nil
@@ -1122,8 +1122,8 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return nil, err
 	}
 
-	total := int64(userInfo.MaxStorage)
-	used := int64(userInfo.UsedStorage)
+	total := userInfo.MaxStorage
+	used := userInfo.UsedStorage
 	free := total - used
 	return &fs.Usage{
 		Total:   &total,
