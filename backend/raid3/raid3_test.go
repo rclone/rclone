@@ -15,6 +15,8 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/raid3"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -87,6 +89,11 @@ func TestStandard(t *testing.T) {
 	parityDir := t.TempDir()
 
 	name := "TestRAID3"
+	t.Cleanup(func() {
+		config.LoadedData().DeleteSection(name)
+		cache.ClearConfig(name)
+		cache.Clear() // clear entire Fs cache so no stale refs from any test remain (fixes -count=N)
+	})
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		ExtraConfig: []fstests.ExtraConfigItem{
@@ -124,6 +131,11 @@ func TestStandardBalanced(t *testing.T) {
 	parityDir := t.TempDir()
 
 	name := "TestRAID3Balanced"
+	t.Cleanup(func() {
+		config.LoadedData().DeleteSection(name)
+		cache.ClearConfig(name)
+		cache.Clear() // clear entire Fs cache so no stale refs from any test remain (fixes -count=N)
+	})
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		ExtraConfig: []fstests.ExtraConfigItem{
@@ -163,6 +175,11 @@ func TestStandardAggressive(t *testing.T) {
 	parityDir := t.TempDir()
 
 	name := "TestRAID3Aggressive"
+	t.Cleanup(func() {
+		config.LoadedData().DeleteSection(name)
+		cache.ClearConfig(name)
+		cache.Clear() // clear entire Fs cache so no stale refs from any test remain (fixes -count=N)
+	})
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		ExtraConfig: []fstests.ExtraConfigItem{

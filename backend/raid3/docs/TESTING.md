@@ -31,8 +31,8 @@ The raid3 backend provides three types of tests:
 ### Backend Tests (Type 1)
 
 ```bash
-# All tests
-go test ./backend/raid3 -v
+# All tests (-parallel 1 avoids test interference from shared global state)
+go test ./backend/raid3 -parallel 1 -v
 
 # Unit tests only
 go test ./backend/raid3 -run "^Test(Split|Merge|Calculate|Parity|Validate)" -v
@@ -43,6 +43,8 @@ go test ./backend/raid3 -run "TestStandard" -v
 # Race condition detection (see Race Detection section below)
 go test ./backend/raid3 -race -v
 ```
+
+**Note:** The full suite may intermittently fail on the `FsListRLevel2` subtest (duplicate directory, see [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) Q24). For a stable run that skips that test, use `./backend/raid3/test_runner.sh 0` from the repo root.
 
 ### Rclone Framework Tests (Type 3)
 

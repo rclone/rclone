@@ -302,7 +302,7 @@ while IFS= read -r test_name; do
     # Always capture exit code to avoid script termination on test failure
     TEST_EXIT_CODE=0
     if [ $VERBOSE -eq 1 ]; then
-        if ! go test -run "^${test_name}$" "$PACKAGE" -v 2>&1; then
+        if ! go test -run "^${test_name}$" "$PACKAGE" -parallel 1 -v 2>&1; then
             TEST_EXIT_CODE=$?
             echo "❌ $test_name FAILED"
             FAILED=$((FAILED + 1))
@@ -312,7 +312,7 @@ while IFS= read -r test_name; do
         fi
     else
         # Quiet mode: suppress output, only show pass/fail
-        if ! go test -run "^${test_name}$" "$PACKAGE" >/dev/null 2>&1; then
+        if ! go test -run "^${test_name}$" "$PACKAGE" -parallel 1 >/dev/null 2>&1; then
             TEST_EXIT_CODE=$?
             echo "❌ FAILED"
             FAILED=$((FAILED + 1))
