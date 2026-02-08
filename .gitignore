@@ -21,6 +21,9 @@ __pycache__
 resource_windows_*.syso
 .devcontainer
 backend/raid3/test/_data
+backend/raid3/test/compare_raid3_env.local.sh
 backend/raid3/test/rclone_raid3_integration_tests.config
+backend/raid3/test/_worktree_*
 backend/raid3/_analysis
 .cursor/prompts
+.cursor/rules/shell-scripts.mdc
