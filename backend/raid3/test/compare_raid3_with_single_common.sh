@@ -880,33 +880,29 @@ stop_minio_containers() {
   fi
 }
 
+# Purge only the contents of the remote root, never the root itself
+# (so that local dirs like even_local, odd_local, etc. are not removed)
 purge_remote_root() {
   local remote="$1"
   log "Purging remote '${remote}:'"
 
-  local entries=()
-  local lsd_output=""
-  if lsd_output=$(rclone_cmd lsd "${remote}:" 2>/dev/null | awk '{print $5}' || true); then
-    while IFS= read -r entry; do
-      [[ -n "${entry}" ]] && entries+=("${entry}")
-    done <<<"${lsd_output}"
-  fi
-
-  if [[ "${#entries[@]}" -eq 0 ]]; then
+  local entry
+  local lsf_output
+  lsf_output=$(rclone_cmd lsf "${remote}:" 2>/dev/null | grep -v '^$' || true)
+  if [[ -z "${lsf_output}" ]]; then
     if (( VERBOSE )); then
-      log "  (no top-level directories found on ${remote})"
+      log "  (no top-level entries on ${remote})"
     fi
-    rclone_cmd purge "${remote}:" >/dev/null 2>&1 || true
-  else
-    for entry in "${entries[@]}"; do
-      if [[ -n "${entry}" ]]; then
-        if (( VERBOSE )); then
-          log "  - purging ${remote}:${entry}"
-        fi
-        rclone_cmd purge "${remote}:${entry}" >/dev/null 2>&1 || true
-      fi
-    done
+    return 0
   fi
+  while IFS= read -r entry; do
+    entry="${entry%/}"
+    [[ -z "${entry}" ]] && continue
+    if (( VERBOSE )); then
+      log "  - purging ${remote}:${entry}"
+    fi
+    rclone_cmd purge "${remote}:${entry}" >/dev/null 2>&1 || true
+  done <<<"${lsf_output}"
 }
 
 verify_directory_empty() {

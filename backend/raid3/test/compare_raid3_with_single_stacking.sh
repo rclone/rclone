@@ -817,9 +817,9 @@ main() {
     teardown)
       set_stacking_remotes
       set_stacking_chunker_remotes
-      # Only purge the remotes - do not clean underlying directories
-      # as they are shared infrastructure used by all tests
-      log "Purging crypt, chunker, and composite remotes"
+      # Only purge the contents of remotes; do not remove root directories
+      # (crypt/chunker/single/raid3 are virtual or underlying storage used by tests)
+      log "Purging contents of test remotes (crypt, chunker, single, raid3)"
       purge_remote_root "${CRYPT_SINGLE_REMOTE}"
       purge_remote_root "${CRYPT_RAID3_REMOTE}"
       purge_remote_root "${CHUNKER_SINGLE_REMOTE}"

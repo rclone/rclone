@@ -230,14 +230,11 @@ simulate_disk_swap() {
       log_warn "disk-swap" "Port ${port} did not open in time, continuing anyway"
     fi
     
-    # Purge the entire bucket to ensure it's truly empty
+    # Empty the bucket contents (never the root) to simulate an empty disk
     local remote
     remote=$(backend_remote_name "${backend}")
-    log_info "disk-swap" "Purging MinIO bucket '${remote}:' to simulate empty disk"
-    
-    # Use delete first (works better with S3/MinIO), then purge for directories
-    rclone_cmd delete "${remote}:" --max-delete 10000 >/dev/null 2>&1 || true
-    rclone_cmd purge "${remote}:" >/dev/null 2>&1 || true
+    log_info "disk-swap" "Purging MinIO remote '${remote}:' contents to simulate empty disk"
+    purge_remote_root "${remote}"
     
     # Brief wait for MinIO to process deletions
     sleep 1
