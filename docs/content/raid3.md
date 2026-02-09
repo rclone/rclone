@@ -182,10 +182,6 @@ Update operation rollback has issues when `rollback=true` (default); Put and Mov
 - Ensure all backends support server-side Move
 - Manually fix degraded files using the `heal` command
 
-### Intermittent Test Failure
-
-The `FsListRLevel2` test fails intermittently (~50% failure rate) when running the full test suite. This is a known framework issue in `walkRDirTree`/`DirTree` processing, not a bug in the raid3 backend code. The backend's deduplication logic is correct and verified. This does not affect actual functionality.
-
 ## Storage Efficiency
 
 The backend enables single-backend failure rebuild using ~150% storage (50% overhead for parity):

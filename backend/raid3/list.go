@@ -14,6 +14,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
+	"golang.org/x/text/unicode/norm"
 )
 
 // List the objects and directories in dir into entries
@@ -326,7 +327,10 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 	// Merge entries similar to List() method
 	// Create a map to track all entries (excluding parity files with suffixes)
-	// Use remote path as key to ensure proper deduplication
+	// Use NFD-normalized remote path as key so that paths that differ only by
+	// Unicode normalization (e.g. NFC vs NFD on macOS) are deduplicated (fixes Q24).
+	// NFD is used because macOS local backend often returns NFD; NFC and NFD
+	// both normalize to the same NFD string, giving one key per logical path.
 	entryMap := make(map[string]fs.DirEntry)
 
 	// Helper function to add entry to map with deduplication
@@ -336,9 +340,10 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		if IsTempFile(remote) {
 			return
 		}
-		// Only add if not already present (deduplication)
-		if _, exists := entryMap[remote]; !exists {
-			entryMap[remote] = entry
+		key := norm.NFD.String(remote)
+		// Only add if not already present (deduplication by normalized path)
+		if _, exists := entryMap[key]; !exists {
+			entryMap[key] = entry
 		}
 	}
 
@@ -372,33 +377,32 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		}
 	}
 
-	// Convert map to slice and convert entries to raid3 Object/Directory types
-	// entryMap already contains deduplicated entries (map keys are unique by remote path)
-	// Convert directly to raid3 types exactly like List() method
+	// Convert map to slice and convert entries to raid3 Object/Directory types.
+	// Deduplicate again by NFC path so that any remaining variants (e.g. different
+	// NFD forms that stayed distinct in entryMap) collapse to one entry per path (Q24).
 	mergedEntries := make(fs.DirEntries, 0, len(entryMap))
 	objectCount := 0
 	dirCount := 0
-	seenRemotes := make(map[string]bool, len(entryMap))
-	// Iterate by key to ensure we only process each unique remote path once
+	seenByNFC := make(map[string]bool, len(entryMap))
+	emitPath := norm.NFC.String
 	for remote, entry := range entryMap {
-		// Additional defensive check: ensure no duplicates in the final slice
-		if seenRemotes[remote] {
-			fs.Errorf(f, "ListR(%q): ERROR: duplicate remote path detected: %q (this should never happen!)", dir, remote)
+		outRemote := emitPath(remote)
+		if seenByNFC[outRemote] {
 			continue
 		}
-		seenRemotes[remote] = true
+		seenByNFC[outRemote] = true
 		var converted fs.DirEntry
 		switch entry.(type) {
 		case fs.Object:
 			converted = &Object{
 				fs:     f,
-				remote: remote, // Use the key (remote path) directly
+				remote: outRemote,
 			}
 			objectCount++
 		case fs.Directory:
 			converted = &Directory{
 				fs:     f,
-				remote: remote, // Use the key (remote path) directly
+				remote: outRemote,
 			}
 			dirCount++
 		default:

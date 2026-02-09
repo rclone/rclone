@@ -8,48 +8,6 @@ This document tracks open design questions and pending decisions for the raid3 b
 
 ---
 
-### Q24: Intermittent FsListRLevel2 Test Failure (Duplicate Directory)
-**Status**: 🔴 **ACTIVE** - Investigation ongoing  
-**Priority**: High (test reliability)
-
-**Issue**: The `FsListRLevel2` test intermittently fails (~50% failure rate) with duplicate directory entries:
-- **Expected**: `[]string{"hello? sausage", "hello? sausage/êé"}` (2 entries)
-- **Actual**: `[]string{"hello? sausage", "hello? sausage/êé", "hello? sausage/êé"}` (3 entries - duplicate)
-
-**Investigation Status**:
-- ✅ Our `ListR` callback correctly returns unique entries (verified with duplicate detection code - no duplicates before callback)
-- ✅ Removed `stats.ResetErrors()` to fix test state leakage (this fixed other intermittent failures)
-- ✅ Deduplication logic in `ListR` is correct (uses map with remote path as key)
-- ✅ Confirmed duplicate appears **after** our callback returns (in `walkRDirTree`/`DirTree` processing)
-- 🔍 Test passes individually but fails intermittently when run together (~50% failure rate)
-- 🔍 Union backend doesn't have this issue (verified - union tests pass consistently)
-
-**Technical Analysis**:
-- `walkRDirTree` processes directories differently based on slash count:
-  - `"hello? sausage"` (0 slashes, maxLevel=2): uses `dirs.AddDir(x)` (slashes < maxLevel-1)
-  - `"hello? sausage/êé"` (1 slash, maxLevel=2): uses `dirs.Add(x)` (slashes == maxLevel-1)
-- `DirTree.Add()` doesn't deduplicate - it just appends to slices
-- `walkR()` extracts entries from `DirTree` and passes them to test callback
-- Our callback is called exactly once (verified)
-
-**Possible Causes**:
-1. Framework bug in `walkRDirTree`/`DirTree` when `maxLevel >= 0` - most likely cause
-2. Race condition or state issue in `DirTree` processing (intermittent nature suggests this)
-3. Difference in how `raid3` vs `union` backend entries are processed by framework
-
-**Next Steps**:
-- Continue investigation to create minimal reproducer
-- If confirmed framework bug, file upstream issue with rclone project
-- Document as known limitation if confirmed framework bug
-- **Temporary workaround**: Test skipped in `test_runner.sh` (see test runner for details)
-
-**References**:
-- Investigation notes: `backend/raid3/_analysis/DUPLICATE_DIRECTORY_BUG_ANALYSIS.md`
-- Code: `backend/raid3/list.go` (ListR implementation)
-- Framework code: `fs/walk/walk.go` (walkRDirTree), `fs/dirtree/dirtree.go` (DirTree)
-
----
-
 ### Q14: Optimize Health Checks (Add Caching)
 **Status**: 🔴 **ACTIVE** - Performance optimization  
 **Priority**: High (affects write performance)
@@ -161,6 +119,8 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 - Better performance for monitoring/status tools
 - More efficient for frequently accessed quota information
 
+**Note**: In-process cache is not serialized; it only helps when the same process calls `About()` more than once (e.g. `rclone mount`, `rclone rcd`, or a long-running GUI). One-shot CLI invocations (`rclone about raid3:`) get no benefit because each run is a new process.
+
 **Technical Details**:
 - Similar to union's `upstream/upstream.go` caching mechanism
 - Cache structure: `usage *fs.Usage`, `cacheTime time.Duration`, `cacheExpiry atomic.Int64`
@@ -180,23 +140,7 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 
 ---
 
-### Q12: Post-Rename Verification Checklist ⚠️ **VERIFY LATER**
-**Status**: 🟡 **ACTIVE** - Items to verify after level3 → raid3 rename  
-**Priority**: Medium
-
-After rename from `level3` to `raid3`, verify: CI/CD configuration (`.github/workflows/*.yml`), external documentation (rclone wiki/docs), example configurations, code comments, variable/constant names. High priority: verify CI/CD and external docs. Most items already completed.
-
----
-
 ## 🟢 Low Priority
-
-### Q3: Chunk/Block-Level Striping
-**Status**: 🟢 **ACTIVE** - Low priority  
-**Question**: Should raid3 support block-level striping instead of byte-level?
-
-Current implementation uses byte-level (RAID 3 style). Block-level (RAID 5 style) would have fewer API calls but more complex implementation. Recommendation: Stay with byte-level (simpler, true RAID 3).
-
----
 
 ### Q6: Backend Help Command Behavior
 **Status**: 🟢 **ACTIVE** - Low priority  
@@ -219,14 +163,6 @@ Same backend overlap issue as `union` and `combine`. Likely fails with "overlapp
 **Question**: Should raid3 support optional compression (Snappy/LZ4) to reduce storage overhead?
 
 **Context**: Current storage overhead is 150% (even + odd + parity). Compression could reduce this significantly (e.g., ~75% overhead with Snappy for text files, ~50% savings). **Critical**: Must compress BEFORE splitting to preserve patterns and achieve good compression ratio (compressing after splitting destroys patterns and reduces ratio by ~40%). Streaming support is now implemented (see Q2 below - resolved). Options: Snappy (fast, low CPU), LZ4 (very fast, low CPU), or configurable. Decision needed: whether to implement, which algorithm, and configuration approach.
-
----
-
-### Q17: Improve Test Context Usage
-**Status**: 🟢 **ACTIVE** - Test quality improvement  
-**Priority**: Low
-
-Many tests use `context.Background()` (53 instances found). Add timeouts to long-running tests using `context.WithTimeout()` for cancellation protection.
 
 ---
 
@@ -320,98 +256,13 @@ oddReader, err := oddObj.Open(ctx, filteredOptions...)   // Then this
 
 ---
 
-## ✅ Resolved Questions
-
-**Note**: These questions have been resolved and should be moved to [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) for historical reference.
-
-### Q2: Streaming Support for Large Files ✅ **RESOLVED**
-**Date**: 2025-12-22  
-**Status**: ✅ **RESOLVED** - Pipelined chunked streaming implemented
-
-**Original Question**: Should raid3 support streaming for large files instead of loading entire file into memory?
-
-**Resolution**: 
-Implemented pipelined chunked streaming approach (see DD-009 in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md)). The implementation reads files in 2MB chunks, splits each chunk into even/odd/parity particles, and uploads them sequentially while reading the next chunk in parallel. This provides bounded memory usage (~5MB) and enables efficient handling of very large files.
-
-**Implementation Details**:
-- Default mode: `use_streaming=true` (pipelined chunked approach)
-- Legacy mode: `use_streaming=false` (buffered, loads entire file)
-- Memory usage: ~5MB for double buffering (vs ~3× file size for buffered mode)
-- Chunk size: 2MB read chunks (produces ~1MB per particle)
-- All Go tests passing
-
-**References**: 
-- Design Decision: [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) DD-009
-- Implementation Analysis: `_analysis/SIMPLIFIED_PIPELINED_APPROACH.md`
-- Refactoring Analysis: `_analysis/REVERT_VS_MODIFY_ANALYSIS.md`
-
-### Q20: FsRmdirNotFound Test Failure ✅ **RESOLVED**
-**Date**: 2025-12-18  
-**Status**: ✅ **RESOLVED** - Test now passes
-
-**Original Question**: `TestStandard/FsRmdirNotFound` test failing: `Rmdir("")` returns `nil` instead of `fs.ErrorDirNotFound` for non-existent root.
-
-**Resolution**: 
-Fixed by implementing existence check before attempting removal, following union backend pattern. The issue was that the health check (`checkAllBackendsAvailable()`) was called before the existence check, causing side effects. 
-
-**Implementation**:
-- Added `checkDirectoryExists()` helper function to check directory existence across all backends using `List()` calls
-- Modified `Rmdir()` to check existence first (before health check) and return `fs.ErrorDirNotFound` immediately if directory doesn't exist
-- Simplified error handling logic since existence is now checked upfront
-
-**Test Results**: All `TestStandard/FsRmdirNotFound` tests now pass (standard, balanced, aggressive timeout modes).
-
-**References**: 
-- Implementation: `backend/raid3/raid3.go` (lines 743-828, 1315-1333)
-- Union backend reference: `backend/union/union.go:127-144`
-
-### Q4: Rebuild Command for Backend Replacement ✅ **IMPLEMENTED**
-**Date**: 2025-11-02  
-**Resolution Date**: 2025-12-07  
-**Status**: ✅ **IMPLEMENTED** - The rebuild command is fully functional
-
-**Original Question**: How should we implement RAID 3 rebuild when a backend is permanently replaced?
-
-**Resolution**: 
-The rebuild command has been fully implemented in `raid3.go` (function `rebuildCommand` starting at line 1230). All proposed features are working:
-
-✅ **Implemented Features**: Manual rebuild command (`rclone backend rebuild raid3: [even|odd|parity]`), auto-detection (`rclone backend rebuild raid3:` auto-detects which backend needs rebuild), check-only mode (`-o check-only=true`), dry-run mode (`-o dry-run=true`), priority options (`-o priority=auto|dirs-small|dirs|small`).
-
-**Documentation**: See `rclone backend help raid3:` for full usage details. Also documented in `README.md` section "Backend Commands > Rebuild Command".
-
----
-
-### Q5: Configurable Write Policy ✅ **RESOLVED - DECISION MADE**
-**Status**: ✅ **RESOLVED** - Decision: Not implementing (keep simple)
-
-**Original Question**: Should users be able to choose degraded write mode?
-
-**Resolution**: Not implementing for now. Current strict write policy (all 3 backends required) matches hardware RAID 3 behavior and ensures data consistency. Keep implementation simple.
-
-**Reconsider if**: Users request this feature
-
-**References**: `docs/ERROR_HANDLING.md` (discusses configurable write policy option)
-
----
-
-### Q7: Move with Degraded Source ✅ **RESOLVED - DECISION MADE**
-**Status**: ✅ **RESOLVED** - Decision: Keep current behavior (documented)
-
-**Original Question**: Current behavior allows moving files with missing particles. Is this desired?
-
-**Resolution**: Keep current behavior (flexible). Move succeeds even with degraded source, propagating degraded state to new location. This matches user expectations and avoids blocking moves unnecessarily.
-
-**Documented**: This behavior is documented as known/expected.
-
-**Reconsider if**: Users report confusion or data loss
-
----
-
 ## 📋 Process for Resolving Questions
+
+**Note**: Resolved questions are recorded in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md).
 
 ### When a Question is Answered
 
-Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md), update this file (move question to "Resolved" section or delete), implement the decision in code, update user documentation if user-facing, and add tests if needed.
+Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md), update this file (remove question or move to resolved in DESIGN_DECISIONS), implement the decision in code, update user documentation if user-facing, and add tests if needed.
 
 ### Template for New Questions:
 
@@ -459,7 +310,7 @@ Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIG
 
 ## 📊 Statistics
 
-Total active questions: 19. Resolved questions: 5 (Q2, Q4, Q5, Q7, Q20). Active questions by priority: High Priority (3) - Q14: Health Check Caching, Q15: Background Worker Context, Q24: Intermittent FsListRLevel2 Test Failure. Medium Priority (7) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q12: Post-Rename Verification, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching. Low Priority (9) - Q3: Block-Level Striping, Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q17: Test Context, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch, Q26: Performance Test Skip Largest File.
+Total active questions: 15. Resolved questions moved to [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) (Q2, Q4, Q5, Q7, Q20, Q24). Active by priority: High (2) - Q14: Health Check Caching, Q15: Background Worker Context. Medium (6) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching. Low (8) - Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch, Q26: Performance Test Skip Largest File.
 
 
 **Use this file to track decisions before they're made!** 🤔
