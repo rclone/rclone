@@ -423,8 +423,8 @@ github.com/hashicorp/golang-lru/v2 v2.0.7/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyf
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
-github.com/internxt/rclone-adapter v0.0.0-20260213125353-6f59c89fcb7c h1:r+KtxPyrhsYeNbsfeqTfEM8xRdwgV6LuNhLZxpXecb4=
-github.com/internxt/rclone-adapter v0.0.0-20260213125353-6f59c89fcb7c/go.mod h1:vdPya4AIcDjvng4ViaAzqjegJf0VHYpYHQguFx5xBp0=
+github.com/internxt/rclone-adapter v0.0.0-20260220172730-613f4cc8b8fd h1:dSIuz2mpJAPQfhHYtG57D0qwSkgC/vQ69gHfeyQ4kxA=
+github.com/internxt/rclone-adapter v0.0.0-20260220172730-613f4cc8b8fd/go.mod h1:vdPya4AIcDjvng4ViaAzqjegJf0VHYpYHQguFx5xBp0=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=
 github.com/jcmturner/aescts/v2 v2.0.0/go.mod h1:AiaICIRyfYg35RUkr8yESTqvSy7csK90qZ5xfvvsoNs=
 github.com/jcmturner/dnsutils/v2 v2.0.0 h1:lltnkeZGL0wILNvrNiVCR6Ro5PGU/SeBvVO/8c/iPbo=
