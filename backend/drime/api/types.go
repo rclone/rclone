@@ -235,6 +235,7 @@ type MultiPartAbort struct {
 	UploadID string `json:"uploadId"`
 	Key      string `json:"key"`
 }
+
 // SpaceUsageResponse is returned by GET /user/space-usage
 type SpaceUsageResponse struct {
 	Used      int64  `json:"used"`
