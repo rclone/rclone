@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 // multipartUpload uploads a file in fixed-size chunks using the multipart API.
@@ -168,9 +169,15 @@ func (f *Fs) uploadFile(ctx context.Context, fileContent io.Reader, fileFullPath
 	return nil
 }
 
-// getUploadServer gets the upload server URL with proper key authentication
 func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
-	apiURL := fmt.Sprintf("%s/upload/server?key=%s", f.endpoint, url.QueryEscape(f.opt.Key))
+
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/upload/server",
+		Parameters: url.Values{
+			"key": {f.opt.Key},
+		},
+	}
 
 	var result struct {
 		Status int    `json:"status"`
@@ -180,34 +187,19 @@ func (f *Fs) getUploadServer(ctx context.Context) (string, string, error) {
 	}
 
 	err := f.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-		if err != nil {
-			return false, fmt.Errorf("failed to create request: %w", err)
-		}
-
-		resp, err := f.client.Do(req)
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 		if err != nil {
 			return shouldRetry(err), fmt.Errorf("failed to get upload server: %w", err)
 		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
-
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return false, fmt.Errorf("error decoding response: %w", err)
-		}
-
-		if result.Status != 200 {
-			return false, fmt.Errorf("API error: %s", result.Msg)
-		}
-
-		return shouldRetryHTTP(resp.StatusCode), nil
+		return false, nil
 	})
 
 	if err != nil {
 		return "", "", err
+	}
+
+	if result.Status != 200 {
+		return "", "", fmt.Errorf("API error: %s", result.Msg)
 	}
 
 	return result.Result, result.SessID, nil
