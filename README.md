@@ -118,7 +118,6 @@ directories to and from different cloud storage providers.
 - Shade [:page_facing_up:](https://rclone.org/shade/)
 - SMB / CIFS [:page_facing_up:](https://rclone.org/smb/)
 - Spectra Logic [:page_facing_up:](https://rclone.org/s3/#spectralogic)
-- StackPath [:page_facing_up:](https://rclone.org/s3/#stackpath)
 - Storj [:page_facing_up:](https://rclone.org/storj/)
 - SugarSync [:page_facing_up:](https://rclone.org/sugarsync/)
 - Synology C2 Object Storage [:page_facing_up:](https://rclone.org/s3/#synology-c2)

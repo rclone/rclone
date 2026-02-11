@@ -211,7 +211,6 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Sia" home="https://sia.tech/" config="/sia/" >}}
 {{< provider name="SMB / CIFS" home="https://en.wikipedia.org/wiki/Server_Message_Block" config="/smb/" >}}
 {{< provider name="Spectra Logic" home="https://spectralogic.com/blackpearl-nearline-object-gateway/" config="/s3/#spectralogic" >}}
-{{< provider name="StackPath" home="https://www.stackpath.com/products/object-storage/" config="/s3/#stackpath" >}}
 {{< provider name="Storj" home="https://storj.io/" config="/storj/" >}}
 {{< provider name="Synology" home="https://c2.synology.com/en-global/object-storage/overview" config="/s3/#synology-c2" >}}
 {{< provider name="SugarSync" home="https://sugarsync.com/" config="/sugarsync/" >}}
