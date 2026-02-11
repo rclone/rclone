@@ -12,6 +12,7 @@ security: High
 virtual: false
 remote: 'TestDrime:'
 features:
+- About
 - CanHaveEmptyDirectories
 - Copy
 - DirCacheFlush
