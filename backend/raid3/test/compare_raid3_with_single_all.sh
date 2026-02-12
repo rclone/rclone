@@ -4,7 +4,7 @@
 # ----------------------------------
 # Master test script that runs all integration tests across all RAID3 backends.
 #
-# This script runs all 7 test suites:
+# This script runs all 8 test suites:
 #   - compare_raid3_with_single.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_heal.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_errors.sh (with minio only)
@@ -12,6 +12,7 @@
 #   - compare_raid3_with_single_features.sh (with mixed only)
 #   - compare_raid3_with_single_stacking.sh (with local, minio)
 #   - serverside_operations.sh (with local, minio)
+#   - performance_test.sh (with local, minio; uses scenario all-but-4G)
 #
 # Usage:
 #   compare_raid3_with_single_all.sh [options]
@@ -50,6 +51,7 @@ This script runs all integration tests across all RAID3 backends:
   - compare_raid3_with_single_features.sh (mixed only)
   - compare_raid3_with_single_stacking.sh (local, minio)
   - serverside_operations.sh (local, minio)
+  - performance_test.sh (local, minio; scenario all-but-4G)
 
 Each test suite is run with the appropriate storage types, and only
 pass/fail status is shown unless --verbose is used.
@@ -74,6 +76,7 @@ TEST_SCRIPTS=(
   "compare_raid3_with_single_features.sh:local,minio,mixed"
   "compare_raid3_with_single_stacking.sh:local,minio"
   "serverside_operations.sh:local,minio"
+  "performance_test.sh:local,minio"
 )
 
 # ---------------------------- helper functions ------------------------------
@@ -94,6 +97,7 @@ This script runs all integration tests across all RAID3 backends:
   - compare_raid3_with_single_features.sh (mixed only)
   - compare_raid3_with_single_stacking.sh (local, minio)
   - serverside_operations.sh (local, minio)
+  - performance_test.sh (local, minio; scenario all-but-4G)
 
 Each test suite is run with the appropriate storage types, and only
 pass/fail status is shown unless --verbose is used.
@@ -217,6 +221,14 @@ main() {
         else
           log_info "all" "SKIP: ${script_name} (${storage_type}) - features test only supports mixed"
           total_tests=$((total_tests - 1))
+        fi
+      # Performance test uses scenario all-but-4G (skip 4G file size)
+      elif [[ "${script_name}" == "performance_test.sh" ]]; then
+        if run_test_script "${script_path}" "${storage_type}" "all-but-4G"; then
+          passed_tests=$((passed_tests + 1))
+        else
+          failed_tests=$((failed_tests + 1))
+          failed_test_list+=("${script_name} (${storage_type})")
         fi
       else
         if run_test_script "${script_path}" "${storage_type}"; then

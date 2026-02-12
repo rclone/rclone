@@ -50,6 +50,10 @@ SKIP_CP=0
 ITERATIONS=11
 STORAGE_TYPE=""
 COMMAND=""
+# Test scenario: "all", "all-but-4G", or a single size (4K, 40K, 400K, 4M, 40M, 4G). Set by parse_args for command 'test'.
+TEST_SCENARIO=""
+# Sizes actually run in this test (set by run_performance_tests for print_results_table)
+declare -a SIZES_RUN=()
 
 # Test configurations (set based on STORAGE_TYPE after parsing args)
 # Format: config_name|remote_or_basedir|tool
@@ -62,10 +66,11 @@ declare -a MINIO_CONFIGS=(
   "miniosingle-mc|miniosingle|mc"
 )
 
-# Local configurations (only single backend, no raid3)
+# Local configurations: cp single, rclone single, rclone raid3
 declare -a LOCAL_CONFIGS=(
-  "localsingle-rclone|localsingle|rclone"
   "localsingle-cp|LOCAL_SINGLE_DIR|cp"
+  "localsingle-rclone|localsingle|rclone"
+  "localraid3-rclone|localraid3|rclone"
 )
 
 # File sizes in bytes (using regular array)
@@ -135,7 +140,10 @@ Commands:
   stop                  Stop MinIO containers (requires --storage-type=minio).
   teardown              Purge all test data (requires --storage-type).
   list                  Show available test configurations.
-  test                  Run all performance tests (requires --storage-type).
+  test [scenario]       Run performance tests (requires --storage-type). Optional scenario:
+                          all           Run all file sizes (default).
+                          all-but-4G    Run all file sizes except 4G.
+                          4K|40K|400K|4M|40M|4G   Run only this file size.
 
 Options:
   --storage-type <type>     Select storage type: 'minio' or 'local'.
@@ -152,8 +160,9 @@ Storage types:
                           - miniosingle using mc command
 
   local                 Tests with local filesystem backends:
-                          - localsingle using rclone
                           - localsingle using cp command
+                          - localsingle using rclone
+                          - localraid3 using rclone
 
 With file sizes: 4K, 40K, 400K, 4M, 40M, 4G
 Each test runs ${ITERATIONS} iterations (first discarded, remaining averaged).
@@ -211,11 +220,24 @@ parse_args() {
         usage
         exit 0
         ;;
-      start|stop|teardown|list|test)
+      start|stop|teardown|list)
         if [[ -n "${COMMAND}" ]]; then
           die "Multiple commands provided: '${COMMAND}' and '$1'"
         fi
         COMMAND="$1"
+        ;;
+      test)
+        if [[ -n "${COMMAND}" ]]; then
+          die "Multiple commands provided: '${COMMAND}' and '$1'"
+        fi
+        COMMAND="test"
+        ;;
+      all|all-but-4G|4K|40K|400K|4M|40M|4G)
+        if [[ "${COMMAND}" == "test" ]]; then
+          TEST_SCENARIO="$1"
+        else
+          die "Unknown argument: $1. See --help."
+        fi
         ;;
       *)
         die "Unknown argument: $1. See --help."
@@ -225,6 +247,10 @@ parse_args() {
   done
 
   [[ -n "${COMMAND}" ]] || die "No command specified. See --help."
+
+  if [[ "${COMMAND}" == "test" && -z "${TEST_SCENARIO}" ]]; then
+    TEST_SCENARIO="all"
+  fi
 
   case "${COMMAND}" in
     start|stop|teardown|test)
@@ -731,8 +757,9 @@ Available test configurations:
     miniosingle-mc       MinIO single backend using mc command
 
   --storage-type=local:
-    localsingle-rclone   Local single backend using rclone
     localsingle-cp       Local single backend using cp command
+    localsingle-rclone   Local single backend using rclone
+    localraid3-rclone    Local RAID3 backend using rclone
 
 File sizes tested:
   4K                  4 kilobytes (4096 bytes)
@@ -741,6 +768,11 @@ File sizes tested:
   4M                  4 megabytes (4194304 bytes)
   40M                 40 megabytes (41943040 bytes)
   4G                  4 gigabytes (4294967296 bytes)
+
+Test scenarios (for 'test' command):
+  test                or  test all           Run all file sizes.
+  test all-but-4G                           Run all file sizes except 4G.
+  test <size>         e.g. test 4M           Run only the given file size (4K|40K|400K|4M|40M|4G).
 
 Operations tested:
   upload               Upload performance (measured each iteration)
@@ -753,13 +785,20 @@ EOF
 
 # Print results table
 print_results_table() {
+  local -a table_sizes=()
+  if [[ ${#SIZES_RUN[@]} -gt 0 ]]; then
+    table_sizes=("${SIZES_RUN[@]}")
+  else
+    table_sizes=("${FILE_SIZE_LABELS[@]}")
+  fi
+
   echo
   echo "Performance Test Results"
   echo "========================"
   echo
-  
+
   # Group by file size
-  for size_label in "${FILE_SIZE_LABELS[@]}"; do
+  for size_label in "${table_sizes[@]}"; do
     echo "File Size: ${size_label}"
     printf '=%.0s' {1..50}
     echo
@@ -778,11 +817,11 @@ print_results_table() {
     # Print results for each config based on storage type
     local -a config_order=()
     if [[ "${STORAGE_TYPE}" == "minio" ]]; then
-      # Order: miniosingle-rclone, miniosingle-mc, minioraid3-rclone
-      config_order=("miniosingle-rclone|rclone single" "miniosingle-mc|mc single" "minioraid3-rclone|rclone raid3")
+      # Order: mc single, rclone single, rclone raid3
+      config_order=("miniosingle-mc|mc single" "miniosingle-rclone|rclone single" "minioraid3-rclone|rclone raid3")
     elif [[ "${STORAGE_TYPE}" == "local" ]]; then
-      # Order: localsingle-rclone, localsingle-cp
-      config_order=("localsingle-rclone|rclone single" "localsingle-cp|cp single")
+      # Order: cp single, rclone single, rclone raid3
+      config_order=("localsingle-cp|cp single" "localsingle-rclone|rclone single" "localraid3-rclone|rclone raid3")
     fi
     
     # First pass: collect all speed values (bytes/sec) for this file-size block to choose one unit per column
@@ -888,8 +927,28 @@ print_results_table() {
 
 # Run performance tests
 run_performance_tests() {
+  # Resolve which file sizes to run from TEST_SCENARIO
+  local -a sizes_to_run=()
+  case "${TEST_SCENARIO}" in
+    all)
+      sizes_to_run=("${FILE_SIZE_LABELS[@]}")
+      ;;
+    all-but-4G)
+      for label in "${FILE_SIZE_LABELS[@]}"; do
+        [[ "${label}" != "4G" ]] && sizes_to_run+=("${label}")
+      done
+      ;;
+    4K|40K|400K|4M|40M|4G)
+      sizes_to_run=("${TEST_SCENARIO}")
+      ;;
+    *)
+      die "Invalid test scenario: '${TEST_SCENARIO}'. Use: all, all-but-4G, or 4K|40K|400K|4M|40M|4G"
+      ;;
+  esac
+  SIZES_RUN=("${sizes_to_run[@]}")
+
   if (( VERBOSE )); then
-    log_info "test" "Starting performance tests (storage-type=${STORAGE_TYPE})"
+    log_info "test" "Starting performance tests (storage-type=${STORAGE_TYPE}, scenario=${TEST_SCENARIO})"
     log_info "test" "Iterations per test: ${ITERATIONS} (first discarded)"
   fi
   
@@ -916,6 +975,9 @@ run_performance_tests() {
       log_info "test" "Ensuring local directories exist"
     fi
     ensure_directory "${LOCAL_SINGLE_DIR}"
+    for dir in "${LOCAL_RAID3_DIRS[@]}"; do
+      ensure_directory "${dir}"
+    done
     
     # Ensure rclone config and binary are available
     ensure_rclone_config
@@ -947,7 +1009,7 @@ run_performance_tests() {
       continue
     fi
     
-    for size_label in "${FILE_SIZE_LABELS[@]}"; do
+    for size_label in "${sizes_to_run[@]}"; do
       local size_bytes
       size_bytes=$(get_file_size_bytes "${size_label}")
       
@@ -1011,6 +1073,9 @@ main() {
           log_info "start" "Ensuring local directories exist"
         fi
         ensure_directory "${LOCAL_SINGLE_DIR}"
+        for dir in "${LOCAL_RAID3_DIRS[@]}"; do
+          ensure_directory "${dir}"
+        done
         if (( VERBOSE )); then
           log_info "start" "Local directories ready"
         fi
@@ -1044,15 +1109,20 @@ main() {
           log_info "teardown" "Teardown completed"
         fi
       elif [[ "${STORAGE_TYPE}" == "local" ]]; then
-        # For local, purge remotes and clean data directory
+        # For local, purge remotes and clean data directories
         if (( VERBOSE )); then
           log_info "teardown" "Purging local remotes"
         fi
         purge_remote_root "localsingle"
-        
-        # Clean up local data directory
+        purge_remote_root "localraid3"
+
+        # Clean up local data directories
         remove_leftover_files "${LOCAL_SINGLE_DIR}"
         verify_directory_empty "${LOCAL_SINGLE_DIR}"
+        for dir in "${LOCAL_RAID3_DIRS[@]}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
         if (( VERBOSE )); then
           log_info "teardown" "Teardown completed"
         fi
