@@ -29,6 +29,24 @@ import (
 	"golang.org/x/text/language"
 )
 
+// readFooterFromBackendObject reads the last FooterSize bytes from a particle object and parses the footer.
+func readFooterFromBackendObject(ctx context.Context, obj fs.Object) (*Footer, error) {
+	size := obj.Size()
+	if size < FooterSize {
+		return nil, fmt.Errorf("particle too small for footer: %d", size)
+	}
+	rd, err := obj.Open(ctx, &fs.RangeOption{Start: size - FooterSize, End: size - 1})
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rd.Close() }()
+	buf := make([]byte, FooterSize)
+	if _, err := io.ReadFull(rd, buf); err != nil {
+		return nil, err
+	}
+	return ParseFooter(buf)
+}
+
 // Command dispatches backend commands
 func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out any, err error) {
 	switch name {
@@ -418,10 +436,38 @@ func (f *Fs) rebuildCommand(ctx context.Context, arg []string, opt map[string]st
 				return nil // Continue with other files
 			}
 
+			// Read footer from source particle to get logical content length, hashes, and mtime
+			sourceFt, err := readFooterFromBackendObject(gCtx, sourceObj)
+			if err != nil {
+				fs.Errorf(f, "Failed to read footer for %s: %v", remote, err)
+				return err
+			}
+			contentLength := sourceFt.ContentLength
+			modTime := time.Unix(sourceFt.Mtime, 0)
+			var currentShard int
+			switch targetBackend {
+			case "even":
+				currentShard = ShardEven
+			case "odd":
+				currentShard = ShardOdd
+			case "parity":
+				currentShard = ShardParity
+			default:
+				currentShard = 0
+			}
+			ft := FooterFromReconstructed(contentLength, sourceFt.MD5[:], sourceFt.SHA256[:], modTime, CompressionNone, currentShard)
+			fb, errMarshal := ft.MarshalBinary()
+			if errMarshal != nil {
+				fs.Errorf(f, "Failed to marshal footer for %s: %v", remote, errMarshal)
+				return errMarshal
+			}
+			uploadData := make([]byte, len(particleData)+FooterSize)
+			copy(uploadData, particleData)
+			copy(uploadData[len(particleData):], fb)
+
 			// Upload to target backend
-			reader := bytes.NewReader(particleData)
-			modTime := sourceObj.ModTime(gCtx)
-			info := object.NewStaticObjectInfo(remote, modTime, int64(len(particleData)), true, nil, nil)
+			reader := bytes.NewReader(uploadData)
+			info := object.NewStaticObjectInfo(remote, modTime, int64(len(uploadData)), true, nil, nil)
 
 			_, err = target.Put(gCtx, reader, info)
 			if err != nil {
@@ -432,7 +478,7 @@ func (f *Fs) rebuildCommand(ctx context.Context, arg []string, opt map[string]st
 			// Update counters (thread-safe)
 			rebuiltMu.Lock()
 			rebuilt++
-			rebuiltSize += int64(len(particleData))
+			rebuiltSize += int64(len(uploadData))
 			rebuiltMu.Unlock()
 
 			return nil
@@ -685,6 +731,12 @@ func (f *Fs) healParityFromData(ctx context.Context, remote string) error {
 		return formatParticleError(f.odd, "odd", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
 
+	if len(evenData) < FooterSize || len(oddData) < FooterSize {
+		return formatOperationError("heal failed", fmt.Sprintf("remote %q: particle too small for footer", remote), nil)
+	}
+	evenData = evenData[:len(evenData)-FooterSize]
+	oddData = oddData[:len(oddData)-FooterSize]
+
 	parityData := CalculateParity(evenData, oddData)
 	isOddLength := (len(evenData)+len(oddData))%2 == 1
 
@@ -700,19 +752,12 @@ func (f *Fs) healParityFromData(ctx context.Context, remote string) error {
 
 // healDataFromParity reconstructs and uploads a missing data particle (even or odd) using the other data particle + parity.
 func (f *Fs) healDataFromParity(ctx context.Context, remote, missing string) error {
-	// Find which parity variant exists and derive original length type
-	parityNameOL := GetParityFilename(remote, true)
-	parityObj, errParity := f.parity.NewObject(ctx, parityNameOL)
-	isOddLength := false
+	var parityObj fs.Object
+	var errParity error
+	var isOddLength bool
+	parityObj, errParity = f.parity.NewObject(ctx, remote)
 	if errParity != nil {
-		parityNameEL := GetParityFilename(remote, false)
-		parityObj, errParity = f.parity.NewObject(ctx, parityNameEL)
-		if errParity != nil {
-			return formatNotFoundError(f.parity, "parity particle", fmt.Sprintf("remote %q", remote), errParity)
-		}
-		isOddLength = false // .parity-el
-	} else {
-		isOddLength = true // .parity-ol
+		return formatNotFoundError(f.parity, "parity particle", fmt.Sprintf("remote %q", remote), errParity)
 	}
 
 	// Read existing data particle and parity
@@ -766,6 +811,15 @@ func (f *Fs) healDataFromParity(ctx context.Context, remote, missing string) err
 	if err != nil {
 		return formatParticleError(f.parity, "parity", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
+
+	if len(dataBytes) < FooterSize || len(parityBytes) < FooterSize {
+		return formatOperationError("heal failed", fmt.Sprintf("remote %q: particle too small for footer", remote), nil)
+	}
+	if ft, parseErr := ParseFooter(parityBytes[len(parityBytes)-FooterSize:]); parseErr == nil {
+		isOddLength = ft.ContentLength%2 == 1
+	}
+	dataBytes = dataBytes[:len(dataBytes)-FooterSize]
+	parityBytes = parityBytes[:len(parityBytes)-FooterSize]
 
 	var merged []byte
 	if missing == "even" {

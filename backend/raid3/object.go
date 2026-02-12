@@ -14,6 +14,7 @@ package raid3
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"path"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -82,17 +84,38 @@ func (o *Object) String() string {
 	return o.remote
 }
 
-// ModTime returns the modification time
+// readFooterFromParticle reads the last FooterSize bytes from a particle and parses the footer.
+// Returns nil if the object is too small or parse fails.
+func (o *Object) readFooterFromParticle(ctx context.Context, obj fs.Object) (*Footer, error) {
+	size := obj.Size()
+	if size < FooterSize {
+		return nil, fmt.Errorf("particle too small for footer: %d", size)
+	}
+	rd, err := obj.Open(ctx, &fs.RangeOption{Start: size - FooterSize, End: size - 1})
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rd.Close() }()
+	buf := make([]byte, FooterSize)
+	if _, err := io.ReadFull(rd, buf); err != nil {
+		return nil, err
+	}
+	return ParseFooter(buf)
+}
+
+// ModTime returns the modification time (from footer)
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	// Get from even
 	obj, err := o.fs.even.NewObject(ctx, o.remote)
 	if err == nil {
-		return obj.ModTime(ctx)
+		if ft, err := o.readFooterFromParticle(ctx, obj); err == nil {
+			return time.Unix(ft.Mtime, 0)
+		}
 	}
-	// Fallback to odd
 	obj, err = o.fs.odd.NewObject(ctx, o.remote)
 	if err == nil {
-		return obj.ModTime(ctx)
+		if ft, err := o.readFooterFromParticle(ctx, obj); err == nil {
+			return time.Unix(ft.Mtime, 0)
+		}
 	}
 	return time.Now()
 }
@@ -103,83 +126,46 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 // This is a limitation of the rclone interface design.
 func (o *Object) Size() int64 {
 	ctx := context.Background() // Interface limitation: Size() doesn't accept context
-	// Try to fetch particles
-	evenObj, errEven := o.fs.even.NewObject(ctx, o.remote)
-	oddObj, errOdd := o.fs.odd.NewObject(ctx, o.remote)
-
-	// Fast path: both data particles exist
-	if errEven == nil && errOdd == nil {
-		evenSize := evenObj.Size()
-		oddSize := oddObj.Size()
-		// Validate sizes are non-negative
-		if evenSize < 0 || oddSize < 0 {
-			// If either size is invalid, try degraded path
-			fs.Debugf(o, "Invalid particle sizes detected (even=%d, odd=%d), falling back to degraded calculation", evenSize, oddSize)
-		} else {
-			return evenSize + oddSize
-		}
-	}
-
-	// Otherwise try parity with either suffix
-	// Determine which parity exists and whether original length is odd
-	parityObj, errParity := o.fs.parity.NewObject(ctx, GetParityFilename(o.remote, true))
-	isOddLength := false
-	if errParity != nil {
-		parityObj, errParity = o.fs.parity.NewObject(ctx, GetParityFilename(o.remote, false))
-		if errParity != nil {
-			return -1
-		}
-		isOddLength = false // .parity-el
-	} else {
-		isOddLength = true // .parity-ol
-	}
-
-	// If we have one data particle and parity, we can compute size
-	if errEven == nil {
-		// Missing odd: N = even + parity - (isOdd ? 1 : 0)
-		evenSize := evenObj.Size()
-		paritySize := parityObj.Size()
-		if evenSize < 0 || paritySize < 0 {
-			return -1 // Invalid sizes
-		}
-		if isOddLength {
-			size := evenSize + paritySize - 1
-			if size < 0 {
-				return -1 // Invalid calculation result
+	for _, fsBackend := range []fs.Fs{o.fs.even, o.fs.odd, o.fs.parity} {
+		obj, err := fsBackend.NewObject(ctx, o.remote)
+		if err == nil {
+			if ft, err := o.readFooterFromParticle(ctx, obj); err == nil {
+				return ft.ContentLength
 			}
-			return size
 		}
-		return evenSize + paritySize
 	}
-	if errOdd == nil {
-		// Missing even: N = odd + parity (regardless of odd/even length)
-		oddSize := oddObj.Size()
-		paritySize := parityObj.Size()
-		if oddSize < 0 || paritySize < 0 {
-			return -1 // Invalid sizes
-		}
-		return oddSize + paritySize
-	}
-
 	return -1
 }
 
 // Hash returns the hash of the reconstructed object
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
-	// Verify size is valid before opening
+	for _, fsBackend := range []fs.Fs{o.fs.even, o.fs.odd, o.fs.parity} {
+		obj, err := fsBackend.NewObject(ctx, o.remote)
+		if err == nil {
+			ft, err := o.readFooterFromParticle(ctx, obj)
+			if err == nil {
+				switch ty {
+				case hash.MD5:
+					return hex.EncodeToString(ft.MD5[:]), nil
+				case hash.SHA256:
+					return hex.EncodeToString(ft.SHA256[:]), nil
+				}
+				break // Footer doesn't have other types, fall through to full stream
+			}
+		}
+	}
+
 	reportedSize := o.Size()
 	if reportedSize < 0 {
 		return "", formatOperationError("hash calculation failed", fmt.Sprintf("object size is invalid (%d)", reportedSize), nil)
 	}
 
-	// Must reconstruct the full file to calculate hash
 	reader, err := o.Open(ctx)
 	if err != nil {
 		return "", err
 	}
 	defer fs.CheckClose(reader, &err)
 
-	// Calculate hash of merged data
 	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(ty))
 	if err != nil {
 		return "", err
@@ -190,7 +176,6 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 		return "", err
 	}
 
-	// Verify we read the expected amount of data
 	if reportedSize > 0 && bytesRead == 0 {
 		return "", formatOperationError("hash calculation failed", fmt.Sprintf("read 0 bytes but Size() reports %d bytes - possible corruption", reportedSize), nil)
 	}
@@ -206,51 +191,61 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// SetModTime sets the modification time
-func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	// Pre-flight health check: Enforce strict RAID 3 write policy
-	// SetModTime is a write operation (modifies metadata)
-	// Consistent with Put/Update/Move/Mkdir operations
+// updateFooterMtime rewrites the 90-byte footer in each particle so that ModTime() returns t.
+// Used by SetModTime and by SetMetadata when metadata["mtime"] is set.
+func (o *Object) updateFooterMtime(ctx context.Context, t time.Time) error {
 	if err := o.fs.checkAllBackendsAvailable(ctx); err != nil {
-		return err // Returns enhanced error with rebuild guidance
+		return err
 	}
-
 	g, gCtx := errgroup.WithContext(ctx)
-
-	g.Go(func() error {
-		obj, err := o.fs.even.NewObject(gCtx, o.remote)
-		if err != nil {
-			return err
-		}
-		return obj.SetModTime(gCtx, t)
-	})
-
-	g.Go(func() error {
-		obj, err := o.fs.odd.NewObject(gCtx, o.remote)
-		if err != nil {
-			return err
-		}
-		return obj.SetModTime(gCtx, t)
-	})
-
-	// Also set mod time on parity files
-	g.Go(func() error {
-		// Try both suffixes to find the parity file
-		parityOdd := GetParityFilename(o.remote, true)
-		obj, err := o.fs.parity.NewObject(gCtx, parityOdd)
-		if err == nil {
-			return obj.SetModTime(gCtx, t)
-		}
-
-		parityEven := GetParityFilename(o.remote, false)
-		obj, err = o.fs.parity.NewObject(gCtx, parityEven)
-		if err == nil {
-			return obj.SetModTime(gCtx, t)
-		}
-		return nil // Ignore if parity not found
-	})
-
+	backends := []fs.Fs{o.fs.even, o.fs.odd, o.fs.parity}
+	for _, backend := range backends {
+		backend := backend
+		g.Go(func() error {
+			obj, err := backend.NewObject(gCtx, o.remote)
+			if err != nil {
+				return err
+			}
+			size := obj.Size()
+			if size < FooterSize {
+				return nil
+			}
+			ft, err := o.readFooterFromParticle(gCtx, obj)
+			if err != nil {
+				return err
+			}
+			newFt := *ft
+			newFt.Mtime = t.Unix()
+			fb, err := newFt.MarshalBinary()
+			if err != nil {
+				return err
+			}
+			var combined io.Reader
+			if size <= FooterSize {
+				combined = bytes.NewReader(fb)
+			} else {
+				payloadReader, err := obj.Open(gCtx, &fs.RangeOption{Start: 0, End: size - FooterSize - 1})
+				if err != nil {
+					return err
+				}
+				payload, err := io.ReadAll(payloadReader)
+				_ = payloadReader.Close()
+				if err != nil {
+					return err
+				}
+				combined = io.MultiReader(bytes.NewReader(payload), bytes.NewReader(fb))
+			}
+			info := object.NewStaticObjectInfo(o.remote, t, size, true, nil, nil)
+			return obj.Update(gCtx, combined, info)
+		})
+	}
 	return g.Wait()
+}
+
+// SetModTime sets the modification time by rewriting the 90-byte footer in each particle
+// so that ModTime() (which reads from the footer) returns the new time.
+func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
+	return o.updateFooterMtime(ctx, t)
 }
 
 // Metadata returns metadata for the object
@@ -322,6 +317,15 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 	// Disable retries for strict RAID 3 write policy
 	ctx = o.fs.disableRetriesForWrites(ctx)
 
+	// If mtime is in metadata, update footer so ModTime() returns it
+	if s, ok := metadata["mtime"]; ok && s != "" {
+		if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
+			if err := o.updateFooterMtime(ctx, t); err != nil {
+				return err
+			}
+		}
+	}
+
 	// Set metadata on all three backends that support it
 	// Use errgroup to collect errors from all backends
 	g, gCtx := errgroup.WithContext(ctx)
@@ -356,22 +360,8 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 		return nil
 	})
 
-	// Set metadata on parity particle (try both suffixes)
 	g.Go(func() error {
-		parityOdd := GetParityFilename(o.remote, true)
-		obj, err := o.fs.parity.NewObject(gCtx, parityOdd)
-		if err == nil {
-			if do, ok := obj.(fs.SetMetadataer); ok {
-				err := do.SetMetadata(gCtx, metadata)
-				if err != nil {
-					return formatBackendError(o.fs.parity, "setmetadata failed", fmt.Sprintf("remote %q", o.remote), err)
-				}
-				return nil
-			}
-		}
-
-		parityEven := GetParityFilename(o.remote, false)
-		obj, err = o.fs.parity.NewObject(gCtx, parityEven)
+		obj, err := o.fs.parity.NewObject(gCtx, o.remote)
 		if err == nil {
 			if do, ok := obj.(fs.SetMetadataer); ok {
 				err := do.SetMetadata(gCtx, metadata)
@@ -380,7 +370,7 @@ func (o *Object) SetMetadata(ctx context.Context, metadata fs.Metadata) error {
 				}
 			}
 		}
-		return nil // Ignore if parity not found
+		return nil
 	})
 
 	return g.Wait()
@@ -433,50 +423,62 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 
 	if errEven == nil && errOdd == nil {
 		// Normal mode: both particles available - use StreamMerger
-		// Validate sizes
 		evenSize := evenObj.Size()
 		oddSize := oddObj.Size()
-		if !ValidateParticleSizes(evenSize, oddSize) {
-			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes: even=%d, odd=%d for remote %q", evenSize, oddSize, o.remote), nil)
+		if evenSize < FooterSize || oddSize < FooterSize {
+			return nil, formatOperationError("open failed", fmt.Sprintf("particle too small for footer: even=%d, odd=%d for remote %q", evenSize, oddSize, o.remote), nil)
+		}
+		evenPayload := evenSize - FooterSize
+		oddPayload := oddSize - FooterSize
+		if !ValidateParticleSizes(evenPayload, oddPayload) {
+			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes: even=%d, odd=%d for remote %q", evenPayload, oddPayload, o.remote), nil)
 		}
 
-		// Validate that expected total size matches Size() method
-		expectedSize := evenSize + oddSize
+		expectedSize := evenPayload + oddPayload
 		reportedSize := o.Size()
 		if reportedSize != expectedSize && reportedSize >= 0 {
 			fs.Debugf(o, "Size mismatch: Size()=%d, expected from particles=%d (even=%d, odd=%d)",
-				reportedSize, expectedSize, evenSize, oddSize)
+				reportedSize, expectedSize, evenPayload, oddPayload)
 		}
 
-		// Ensure we're not opening empty streams when Size() reports data
-		if expectedSize > 0 && (evenSize < 0 || oddSize < 0) {
-			return nil, fmt.Errorf("particles report invalid sizes: even=%d, odd=%d (expected > 0)", evenSize, oddSize)
+		if expectedSize > 0 && (evenPayload < 0 || oddPayload < 0) {
+			return nil, fmt.Errorf("particles report invalid sizes: even=%d, odd=%d (expected > 0)", evenPayload, oddPayload)
+		}
+
+		// Empty file: return a reader that yields 0 bytes (no need to open particles; otherwise we'd read the footer as content)
+		if expectedSize == 0 {
+			return io.NopCloser(bytes.NewReader(nil)), nil
 		}
 
 		// Extract range/seek options before opening particle readers
-		// We don't want to pass range options to particle readers - they operate on merged coordinates
 		var rangeStart, rangeEnd int64 = 0, -1
 		filteredOptions := make([]fs.OpenOption, 0, len(options))
 		for _, option := range options {
 			switch x := option.(type) {
 			case *fs.RangeOption:
 				rangeStart, rangeEnd = x.Start, x.End
-				// Don't pass range option to particle readers
 			case *fs.SeekOption:
 				rangeStart = x.Offset
 				rangeEnd = -1
-				// Don't pass seek option to particle readers
 			default:
 				filteredOptions = append(filteredOptions, option)
 			}
 		}
+		evenOpenOpts := filteredOptions
+		oddOpenOpts := filteredOptions
+		if evenPayload > 0 {
+			evenOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+			evenOpenOpts = append(evenOpenOpts, &fs.RangeOption{Start: 0, End: evenPayload - 1})
+			oddOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+			oddOpenOpts = append(oddOpenOpts, &fs.RangeOption{Start: 0, End: oddPayload - 1})
+		}
 
-		evenReader, err := evenObj.Open(ctx, filteredOptions...)
+		evenReader, err := evenObj.Open(ctx, evenOpenOpts...)
 		if err != nil {
 			return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 		}
 
-		oddReader, err := oddObj.Open(ctx, filteredOptions...)
+		oddReader, err := oddObj.Open(ctx, oddOpenOpts...)
 		if err != nil {
 			_ = evenReader.Close()
 			return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
@@ -498,52 +500,68 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		return merger, nil
 	}
 	// Degraded mode: one particle missing - use StreamReconstructor
-	// Find which parity exists and infer original length type
-	parityNameOL := GetParityFilename(o.remote, true)
-	parityObj, errParity := o.fs.parity.NewObject(ctx, parityNameOL)
-	isOddLength := false
-	if errParity == nil {
-		isOddLength = true
-	} else {
-		parityNameEL := GetParityFilename(o.remote, false)
-		parityObj, errParity = o.fs.parity.NewObject(ctx, parityNameEL)
-		if errParity != nil {
-			// Can't reconstruct - not enough particles
-			if errEven != nil && errOdd != nil {
-				return nil, fmt.Errorf("missing particles: even and odd unavailable and no parity found")
-			}
-			if errEven != nil {
-				return nil, fmt.Errorf("missing even particle and no parity found: %w", errEven)
-			}
-			return nil, fmt.Errorf("missing odd particle and no parity found: %w", errOdd)
+	var parityObj fs.Object
+	var errParity error
+	var isOddLength bool
+	parityObj, errParity = o.fs.parity.NewObject(ctx, o.remote)
+	if errParity != nil {
+		if errEven != nil && errOdd != nil {
+			return nil, fmt.Errorf("missing particles: even and odd unavailable and no parity found")
 		}
-		isOddLength = false
+		if errEven != nil {
+			return nil, fmt.Errorf("missing even particle and no parity found: %w", errEven)
+		}
+		return nil, fmt.Errorf("missing odd particle and no parity found: %w", errOdd)
+	}
+	var sizeForFooter int64
+	var objForFooter fs.Object
+	if errEven == nil {
+		objForFooter = evenObj
+		sizeForFooter = evenObj.Size()
+	} else {
+		objForFooter = oddObj
+		sizeForFooter = oddObj.Size()
+	}
+	if sizeForFooter >= FooterSize {
+		footerReader, ferr := objForFooter.Open(ctx, &fs.RangeOption{Start: sizeForFooter - FooterSize, End: sizeForFooter - 1})
+		if ferr == nil {
+			footerBuf := make([]byte, FooterSize)
+			_, _ = io.ReadFull(footerReader, footerBuf)
+			_ = footerReader.Close()
+			if ft, parseErr := ParseFooter(footerBuf); parseErr == nil {
+				isOddLength = ft.ContentLength%2 == 1
+			}
+		}
 	}
 
 	// Open known data + parity and reconstruct
 	if errEven == nil {
-		// Validate sizes before reconstruction
 		evenSize := evenObj.Size()
 		paritySize := parityObj.Size()
-		if evenSize < 0 || paritySize < 0 {
-			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: even=%d, parity=%d for remote %q", evenSize, paritySize, o.remote), nil)
+		if evenSize < FooterSize || paritySize < FooterSize {
+			return nil, formatOperationError("open failed", fmt.Sprintf("particle too small for footer: even=%d, parity=%d for remote %q", evenSize, paritySize, o.remote), nil)
+		}
+		evenPayload := evenSize - FooterSize
+		parityPayload := paritySize - FooterSize
+		if evenPayload < 0 || parityPayload < 0 {
+			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: even=%d, parity=%d for remote %q", evenPayload, parityPayload, o.remote), nil)
 		}
 
-		// Extract range/seek options before opening particle readers
 		var rangeStart, rangeEnd int64 = 0, -1
 		filteredOptions := make([]fs.OpenOption, 0, len(options))
 		for _, option := range options {
 			switch x := option.(type) {
 			case *fs.RangeOption:
 				rangeStart, rangeEnd = x.Start, x.End
-				// Don't pass range option to particle readers
 			case *fs.SeekOption:
 				rangeStart = x.Offset
 				rangeEnd = -1
-				// Don't pass seek option to particle readers
 			default:
 				filteredOptions = append(filteredOptions, option)
 			}
+		}
+		if evenPayload > 0 {
+			filteredOptions = append(append([]fs.OpenOption{}, filteredOptions...), &fs.RangeOption{Start: 0, End: evenPayload - 1})
 		}
 
 		// Reconstruct from even + parity
@@ -552,7 +570,12 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 		}
 
-		parityReader, err := parityObj.Open(ctx, filteredOptions...)
+		parityOpts := filteredOptions
+		if parityPayload > 0 {
+			parityOpts = append([]fs.OpenOption{}, filteredOptions...)
+			parityOpts = append(parityOpts, &fs.RangeOption{Start: 0, End: parityPayload - 1})
+		}
+		parityReader, err := parityObj.Open(ctx, parityOpts...)
 		if err != nil {
 			_ = evenReader.Close()
 			return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
@@ -571,28 +594,32 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		return reconstructor, nil
 	}
 	if errOdd == nil {
-		// Validate sizes before reconstruction
 		oddSize := oddObj.Size()
 		paritySize := parityObj.Size()
-		if oddSize < 0 || paritySize < 0 {
-			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: odd=%d, parity=%d for remote %q", oddSize, paritySize, o.remote), nil)
+		if oddSize < FooterSize || paritySize < FooterSize {
+			return nil, formatOperationError("open failed", fmt.Sprintf("particle too small for footer: odd=%d, parity=%d for remote %q", oddSize, paritySize, o.remote), nil)
+		}
+		oddPayload := oddSize - FooterSize
+		parityPayload := paritySize - FooterSize
+		if oddPayload < 0 || parityPayload < 0 {
+			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: odd=%d, parity=%d for remote %q", oddPayload, parityPayload, o.remote), nil)
 		}
 
-		// Extract range/seek options before opening particle readers
 		var rangeStart, rangeEnd int64 = 0, -1
 		filteredOptions := make([]fs.OpenOption, 0, len(options))
 		for _, option := range options {
 			switch x := option.(type) {
 			case *fs.RangeOption:
 				rangeStart, rangeEnd = x.Start, x.End
-				// Don't pass range option to particle readers
 			case *fs.SeekOption:
 				rangeStart = x.Offset
 				rangeEnd = -1
-				// Don't pass seek option to particle readers
 			default:
 				filteredOptions = append(filteredOptions, option)
 			}
+		}
+		if oddPayload > 0 {
+			filteredOptions = append(append([]fs.OpenOption{}, filteredOptions...), &fs.RangeOption{Start: 0, End: oddPayload - 1})
 		}
 
 		// Reconstruct from odd + parity
@@ -601,7 +628,12 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 		}
 
-		parityReader, err := parityObj.Open(ctx, filteredOptions...)
+		parityOpts := filteredOptions
+		if parityPayload > 0 {
+			parityOpts = append([]fs.OpenOption{}, filteredOptions...)
+			parityOpts = append(parityOpts, &fs.RangeOption{Start: 0, End: parityPayload - 1})
+		}
+		parityReader, err := parityObj.Open(ctx, parityOpts...)
 		if err != nil {
 			_ = oddReader.Close()
 			return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
@@ -761,24 +793,12 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		return fmt.Errorf("odd particle not found: %w", err)
 	}
 
-	// Determine parity filename (try even-length first, then odd-length)
-	// Store the old file's odd-length status based on which parity file exists
-	oldParityName := GetParityFilename(o.remote, false)
-	parityObj, err := o.fs.parity.NewObject(ctx, oldParityName)
-	oldIsOddLength := false // Default to even-length
+	var parityObj fs.Object
+	parityObj, err = o.fs.parity.NewObject(ctx, o.remote)
 	if err != nil {
-		oldParityName = GetParityFilename(o.remote, true)
-		parityObj, err = o.fs.parity.NewObject(ctx, oldParityName)
-		if err != nil {
-			// Parity doesn't exist - will create with Put
-			parityObj = nil
-			oldParityName = "" // No old parity to clean up
-		} else {
-			oldIsOddLength = true // Found .parity-ol, so old file was odd-length
-		}
+		parityObj = nil
 	}
-	// Initialize parityName - will be updated in goroutine if filename needs to change
-	parityName := oldParityName
+	parityName := o.remote
 
 	// Track uploaded particles for rollback
 	var uploadedParticles []fs.Object
@@ -804,31 +824,40 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	// Handle empty file case
 	srcSize := src.Size()
 	if srcSize == 0 {
-		// Empty file - update with empty data
-		evenInfo := createParticleInfo(src, "even", 0, false)
-		err2 = evenObj.Update(ctx, bytes.NewReader(nil), evenInfo, options...)
+		mtime := effectiveModTime(ctx, o.fs, src, options)
+		ft := FooterFromReconstructed(0, nil, nil, mtime, CompressionNone, ShardEven)
+		fb, _ := ft.MarshalBinary()
+		evenR := bytes.NewReader(fb)
+		ft2 := FooterFromReconstructed(0, nil, nil, mtime, CompressionNone, ShardOdd)
+		fb2, _ := ft2.MarshalBinary()
+		oddR := bytes.NewReader(fb2)
+		ft3 := FooterFromReconstructed(0, nil, nil, mtime, CompressionNone, ShardParity)
+		fb3, _ := ft3.MarshalBinary()
+		parityR := bytes.NewReader(fb3)
+		evenInfo := createParticleInfo(o.fs, src, "even", FooterSize, false)
+		err2 = evenObj.Update(ctx, evenR, evenInfo, options...)
 		if err2 != nil {
 			return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err2)
 		}
 		uploadedParticles = append(uploadedParticles, evenObj)
 
-		oddInfo := createParticleInfo(src, "odd", 0, false)
-		err2 = oddObj.Update(ctx, bytes.NewReader(nil), oddInfo, options...)
+		oddInfo := createParticleInfo(o.fs, src, "odd", FooterSize, false)
+		err2 = oddObj.Update(ctx, oddR, oddInfo, options...)
 		if err2 != nil {
 			return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err2)
 		}
 		uploadedParticles = append(uploadedParticles, oddObj)
 
-		parityInfo := createParticleInfo(src, "parity", 0, false)
+		parityInfo := createParticleInfo(o.fs, src, "parity", FooterSize, false)
 		parityInfo.remote = parityName
 		if parityObj != nil {
-			err2 = parityObj.Update(ctx, bytes.NewReader(nil), parityInfo, options...)
+			err2 = parityObj.Update(ctx, parityR, parityInfo, options...)
 			if err2 != nil {
 				return fmt.Errorf("%s: failed to update parity particle: %w", o.fs.parity.Name(), err2)
 			}
 			uploadedParticles = append(uploadedParticles, parityObj)
 		} else {
-			newParityObj, err := o.fs.parity.Put(ctx, bytes.NewReader(nil), parityInfo, options...)
+			newParityObj, err := o.fs.parity.Put(ctx, parityR, parityInfo, options...)
 			if err != nil {
 				return fmt.Errorf("%s: failed to create parity particle: %w", o.fs.parity.Name(), err)
 			}
@@ -865,19 +894,56 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	g, gCtx := errgroup.WithContext(ctx)
 	var uploadedMu sync.Mutex
 
-	// Goroutine 1: Read input, split into even/odd/parity, write to pipes
+	// Goroutine 1: Read input, split into even/odd/parity, append footer then close
+	hasher := newHashingReader(in)
 	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, int(readChunkSize), isOddLengthCh)
 	g.Go(func() error {
-		defer func() { _ = evenPipeW.Close() }()
-		defer func() { _ = oddPipeW.Close() }()
-		defer func() { _ = parityPipeW.Close() }()
-		return splitter.Split(in)
+		errSplit := splitter.Split(hasher)
+		if errSplit != nil {
+			_ = evenPipeW.Close()
+			_ = oddPipeW.Close()
+			_ = parityPipeW.Close()
+			return errSplit
+		}
+		contentLength := hasher.ContentLength()
+		md5Sum := hasher.MD5Sum()
+		sha256Sum := hasher.SHA256Sum()
+		mtime := effectiveModTime(gCtx, o.fs, src, options)
+		for shard := 0; shard < 3; shard++ {
+			ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, CompressionNone, shard)
+			fb, errMarshal := ft.MarshalBinary()
+			if errMarshal != nil {
+				_ = evenPipeW.Close()
+				_ = oddPipeW.Close()
+				_ = parityPipeW.Close()
+				return errMarshal
+			}
+			var w io.Writer
+			switch shard {
+			case ShardEven:
+				w = evenPipeW
+			case ShardOdd:
+				w = oddPipeW
+			case ShardParity:
+				w = parityPipeW
+			}
+			if _, err := w.Write(fb); err != nil {
+				_ = evenPipeW.Close()
+				_ = oddPipeW.Close()
+				_ = parityPipeW.Close()
+				return err
+			}
+		}
+		_ = evenPipeW.Close()
+		_ = oddPipeW.Close()
+		_ = parityPipeW.Close()
+		return nil
 	})
 
 	// Goroutine 2: Update even particle (reads from evenPipeR)
 	g.Go(func() error {
 		defer func() { _ = evenPipeR.Close() }()
-		evenInfo := createParticleInfo(src, "even", -1, isOddLength)
+		evenInfo := createParticleInfo(o.fs, src, "even", -1, isOddLength)
 		err := evenObj.Update(gCtx, evenPipeR, evenInfo, options...)
 		if err != nil {
 			return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err)
@@ -891,7 +957,7 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	// Goroutine 3: Update odd particle (reads from oddPipeR)
 	g.Go(func() error {
 		defer func() { _ = oddPipeR.Close() }()
-		oddInfo := createParticleInfo(src, "odd", -1, isOddLength)
+		oddInfo := createParticleInfo(o.fs, src, "odd", -1, isOddLength)
 		err := oddObj.Update(gCtx, oddPipeR, oddInfo, options...)
 		if err != nil {
 			return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err)
@@ -917,25 +983,8 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 			}
 		}
 
-		// Determine if parity filename needs to change
-		parityFilenameChanged := false
-		if parityObj != nil && oldIsOddLength != newIsOddLength {
-			// Old and new files have different odd-length status - need to change filename
-			parityFilenameChanged = true
-			// Delete old parity file
-			if err := parityObj.Remove(gCtx); err != nil {
-				return fmt.Errorf("%s: failed to remove old parity particle: %w", o.fs.parity.Name(), err)
-			}
-			parityObj = nil // Will create new one with Put
-		}
-
-		// Use new filename if it changed or if no old parity existed
-		if parityFilenameChanged || oldParityName == "" {
-			parityName = GetParityFilename(o.remote, newIsOddLength)
-		}
-
-		parityInfo := createParticleInfo(src, "parity", -1, newIsOddLength)
-		parityInfo.remote = parityName
+		parityInfo := createParticleInfo(o.fs, src, "parity", -1, newIsOddLength)
+		parityInfo.remote = o.remote
 
 		if parityObj != nil {
 			// Parity exists with correct filename, update it
@@ -964,9 +1013,9 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		return err2
 	}
 
-	// Get written sizes from splitter for verification
-	totalEvenWritten := splitter.GetTotalEvenWritten()
-	totalOddWritten := splitter.GetTotalOddWritten()
+	// Get written sizes from splitter for verification (payload + footer)
+	totalEvenWritten := splitter.GetTotalEvenWritten() + FooterSize
+	totalOddWritten := splitter.GetTotalOddWritten() + FooterSize
 
 	// Verify sizes
 	if err := verifyParticleSizes(ctx, o.fs, evenObj, oddObj, totalEvenWritten, totalOddWritten); err != nil {
@@ -1013,35 +1062,12 @@ func (o *Object) Remove(ctx context.Context) error {
 		return obj.Remove(gCtx)
 	})
 
-	// Remove parity (try both suffixes - delete whichever exists, ignore errors if not found)
 	g.Go(func() error {
-		var parityErr error
-
-		// Try odd-length parity suffix first
-		parityOdd := GetParityFilename(o.remote, true)
-		obj, err := o.fs.parity.NewObject(gCtx, parityOdd)
+		obj, err := o.fs.parity.NewObject(gCtx, o.remote)
 		if err == nil {
-			parityErr = obj.Remove(gCtx)
-			// Continue to check even-length suffix even if this succeeded
-			// (in case both somehow exist, though they shouldn't)
+			return obj.Remove(gCtx)
 		}
-
-		// Try even-length parity suffix
-		parityEven := GetParityFilename(o.remote, false)
-		obj, err = o.fs.parity.NewObject(gCtx, parityEven)
-		if err == nil {
-			if removeErr := obj.Remove(gCtx); removeErr != nil {
-				// If odd-length deletion had an error, prefer the first error
-				// Otherwise use this error
-				if parityErr == nil {
-					parityErr = removeErr
-				}
-			}
-		}
-
-		// Return error only if deletion failed (not if not found)
-		// If both weren't found, that's fine - return nil
-		return parityErr
+		return nil
 	})
 
 	return g.Wait()

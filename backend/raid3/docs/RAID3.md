@@ -57,6 +57,15 @@ Parity files are named with suffixes to indicate original data length:
 
 This information is essential for correct reconstruction from parity, as the algorithm differs slightly for even-length vs odd-length files.
 
+## EC footer
+
+Each particle stores a **90-byte EC footer** at the end. The footer holds logical size, MD5, SHA-256, modification time, and shard index so that:
+
+- **Size**, **ModTime**, and **Hash** (MD5/SHA-256) can be answered with a single range read on one particle, without streaming the full object.
+- All three particles use the **same remote path** (unified naming); which shard is which is determined by the footer’s *current shard* field (0=even, 1=odd, 2=parity).
+
+When **rebuild** (or **heal**) restores a missing particle, it reconstructs the payload from the other two backends and writes a new footer using the logical content length, hashes, and mtime read from a source particle’s footer, so that Size, ModTime, and Hash remain correct after restoration.
+
 ## Configuration
 
 ```ini

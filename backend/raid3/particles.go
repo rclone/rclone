@@ -227,6 +227,12 @@ func (f *Fs) reconstructParityParticle(ctx context.Context, evenFs, oddFs fs.Fs,
 		return nil, formatParticleError(oddFs, "odd", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
 
+	if len(evenData) < FooterSize || len(oddData) < FooterSize {
+		return nil, formatOperationError("reconstructParityParticle failed", fmt.Sprintf("remote %q: particle too small for footer", remote), nil)
+	}
+	evenData = evenData[:len(evenData)-FooterSize]
+	oddData = oddData[:len(oddData)-FooterSize]
+
 	// Calculate parity
 	parityData := CalculateParity(evenData, oddData)
 	return parityData, nil
@@ -250,25 +256,12 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 	if targetType != "even" && targetType != "odd" {
 		return nil, formatOperationError("reconstructDataParticle failed", fmt.Sprintf("invalid targetType: %s (must be: even or odd)", targetType), nil)
 	}
-	// For data particles, we need to read from parity backend with suffix
-	// First, try to find the parity file
-	parityOdd := GetParityFilename(remote, true)
-	parityEven := GetParityFilename(remote, false)
-
 	var parityObj fs.Object
 	var isOddLength bool
 	var err error
-
-	parityObj, err = parityFs.NewObject(ctx, parityOdd)
-	if err == nil {
-		isOddLength = true
-	} else {
-		parityObj, err = parityFs.NewObject(ctx, parityEven)
-		if err == nil {
-			isOddLength = false
-		} else {
-			return nil, formatNotFoundError(parityFs, "parity particle", fmt.Sprintf("remote %q (tried both suffixes)", remote), err)
-		}
+	parityObj, err = parityFs.NewObject(ctx, remote)
+	if err != nil {
+		return nil, formatNotFoundError(parityFs, "parity particle", fmt.Sprintf("remote %q", remote), err)
 	}
 
 	// Read parity data
@@ -296,6 +289,15 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 	if err != nil {
 		return nil, formatParticleError(dataFs, "data", "read failed", fmt.Sprintf("remote %q", remote), err)
 	}
+
+	if len(parityData) < FooterSize || len(dataData) < FooterSize {
+		return nil, formatOperationError("reconstructDataParticle failed", fmt.Sprintf("remote %q: particle too small for footer", remote), nil)
+	}
+	if ft, parseErr := ParseFooter(parityData[len(parityData)-FooterSize:]); parseErr == nil {
+		isOddLength = ft.ContentLength%2 == 1
+	}
+	parityData = parityData[:len(parityData)-FooterSize]
+	dataData = dataData[:len(dataData)-FooterSize]
 
 	// Reconstruct missing particle
 	if targetType == "even" {
@@ -337,11 +339,9 @@ func (f *Fs) countParticlesSync(ctx context.Context, remote string) int {
 		resultCh <- result{"odd", err == nil}
 	}()
 
-	// Check parity particle (both suffixes)
 	go func() {
-		_, errOL := f.parity.NewObject(ctx, GetParityFilename(remote, true))
-		_, errEL := f.parity.NewObject(ctx, GetParityFilename(remote, false))
-		resultCh <- result{"parity", errOL == nil || errEL == nil}
+		_, err := f.parity.NewObject(ctx, remote)
+		resultCh <- result{"parity", err == nil}
 	}()
 
 	// Collect results
@@ -381,16 +381,9 @@ func (f *Fs) particleInfoForObject(ctx context.Context, remote string) (particle
 		return nil
 	})
 
-	// Check parity particle (both suffixes) in parallel
 	g.Go(func() error {
-		// Try odd-length suffix first
-		if _, errOL := f.parity.NewObject(gCtx, GetParityFilename(remote, true)); errOL == nil {
+		if _, err := f.parity.NewObject(gCtx, remote); err == nil {
 			parityExists = true
-		} else {
-			// Try even-length suffix
-			if _, errEL := f.parity.NewObject(gCtx, GetParityFilename(remote, false)); errEL == nil {
-				parityExists = true
-			}
 		}
 		return nil
 	})
@@ -477,26 +470,14 @@ func (f *Fs) scanParticles(ctx context.Context, dir string) ([]particleInfo, err
 		}
 	}
 
-	// Process parity particles
+	// Process parity particles (same path as logical object)
 	for _, entry := range entriesParity {
 		if _, ok := entry.(fs.Object); ok {
 			remote := entry.Remote()
-			// Strip parity suffix to get base object name
-			baseRemote, isParity, _ := StripParitySuffix(remote)
-			if isParity {
-				// Proper parity file with suffix
-				if objectMap[baseRemote] == nil {
-					objectMap[baseRemote] = &particleInfo{remote: baseRemote}
-				}
-				objectMap[baseRemote].parityExists = true
-			} else {
-				// File in parity remote without suffix (orphaned/manually created)
-				// Still track it as it might be a broken object
-				if objectMap[remote] == nil {
-					objectMap[remote] = &particleInfo{remote: remote}
-				}
-				objectMap[remote].parityExists = true
+			if objectMap[remote] == nil {
+				objectMap[remote] = &particleInfo{remote: remote}
 			}
+			objectMap[remote].parityExists = true
 		}
 	}
 

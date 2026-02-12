@@ -1,6 +1,8 @@
 # Open Questions - raid3 Backend
 
-This document tracks open design questions and pending decisions for the raid3 backend, serving as a question registry (centralized list of issues requiring decisions), priority tracking (high/medium/low priority classification), status monitoring (active, resolved, or deferred questions), and decision workflow (process for moving questions to decisions). Process: Add questions as they arise, document decisions in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) when resolved. Last Updated: December 8, 2025. For resolved decisions, see [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md). For user documentation, see [`README.md`](../README.md).
+This document tracks open design questions and pending decisions for the raid3 backend, serving as a question registry (centralized list of issues requiring decisions), priority tracking (high/medium/low priority classification), status monitoring (active, resolved, or deferred questions), and decision workflow (process for moving questions to decisions). Process: Add questions as they arise, document decisions in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) when resolved. **Last reviewed**: 2026-02-12. For user documentation, see [`README.md`](../README.md).
+
+**Review 2026-02-12**: All 17 open items were checked against the codebase. **Q15** (background worker context) is **resolved**: workers use `uploadCtx` derived from `NewFs` and respect `ctx.Done()`. **Q18** is partially done (Size() limitation documented in code). **Q21** and **Q22** line references were updated to current code. **Q25** line reference simplified. No other questions were removed; design/limitation items (Q6, Q8, Q9, Q10, Q11, etc.) remain relevant.
 
 ---
 
@@ -17,10 +19,10 @@ Health checks run before every write operation, causing network I/O overhead. Ad
 ---
 
 ### Q15: Make Background Worker Context Respect Cancellation
-**Status**: 🔴 **ACTIVE** - Resource management  
+**Status**: ✅ **RESOLVED** (2026-02-12)  
 **Priority**: High (affects graceful shutdown)
 
-Background upload workers use `context.Background()` and don't respect parent context cancellation. Derive worker context from parent context passed to `NewFs` or provide cancellation mechanism for graceful shutdown.
+Background upload workers now use a context derived from the parent passed to `NewFs`: `f.uploadCtx, f.uploadCancel = context.WithCancel(ctx)` in `raid3.go`, and `backgroundUploader(ctx, …)` in `heal.go` exits on `<-ctx.Done()`. Workers therefore respect cancellation for graceful shutdown. Move to DESIGN_DECISIONS when that doc exists.
 
 ---
 
@@ -102,9 +104,9 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 
 **Context**: Currently, when reading a byte range (e.g., bytes 1000-2000 of a file), the implementation reads entire even and odd particles and then filters the output. This wastes bandwidth and I/O for partial reads, which is common in HTTP range requests, video streaming, and partial file access.
 
-**Current Implementation** (`object.go:494-500`):
-- Reads entire particles: `evenObj.Open(ctx, filteredOptions...)` (reads full particle)
-- Filters output: `newRangeFilterReader(merger, rangeStart, rangeEnd, ...)`
+**Current Implementation** (`object.go` healthy path ~476-497, degraded paths ~590-591, ~648-649):
+- Reads entire particles: `evenObj.Open(ctx, evenOpenOpts...)` / `oddObj.Open(ctx, oddOpenOpts...)` (full particle when no range, or payload range; range then applied on merged stream)
+- Filters output: `newRangeFilterReader(merger, rangeStart, rangeEnd, ...)` (see TODO in code: "Optimize to apply range to particle readers directly")
 - For a 1KB range read from a 1GB file, still reads ~500MB of particle data
 
 **Proposed Optimization**:
@@ -124,8 +126,7 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 - Must support both RangeOption and SeekOption
 
 **References**: 
-- Current implementation: `backend/raid3/object.go:494-500`
-- Performance analysis: `_analysis/performance/PERFORMANCE_ANALYSIS.md:265-270`
+- Current implementation: `backend/raid3/object.go` (openStreaming range handling and newRangeFilterReader)
 
 ---
 
@@ -137,7 +138,7 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 
 **Context**: Currently, `About()` method queries all three backends every time it's called, causing network I/O overhead and latency. The union backend implements sophisticated quota caching with background updates that could be adapted for raid3's aggregated usage reporting.
 
-**Current Implementation** (`raid3.go:775-833`):
+**Current Implementation** (`raid3.go`, `About` method):
 - Queries all 3 backends synchronously on every `About()` call
 - No caching of quota information
 - Each call causes 3 backend queries (even, odd, parity)
@@ -206,7 +207,7 @@ Same backend overlap issue as `union` and `combine`. Likely fails with "overlapp
 **Status**: 🟢 **ACTIVE** - Documentation improvement  
 **Priority**: Low
 
-`Size()` method doesn't accept context parameter (matches rclone interface), internal operations use `context.Background()` which can't be cancelled. Document this limitation in code comments and README if needed.
+`Size()` method doesn't accept context parameter (matches rclone interface); internal operations use `context.Background()` which can't be cancelled. **Already documented in code**: `object.go` has a comment above `Size()` (interface limitation, use of Background). Optional: add a short note in README "Limitations" if desired.
 
 ---
 
@@ -224,13 +225,7 @@ Current error handling uses generic `fmt.Errorf()`. Consider adding specific err
 
 **Question**: Should particle readers be opened concurrently instead of sequentially?
 
-**Context**: In `openStreaming()` (`object.go:479-488`), object lookup is already parallel (lines 434-442), but reader opening is sequential. This adds small latency overhead.
-
-**Current Implementation**:
-```go
-evenReader, err := evenObj.Open(ctx, filteredOptions...)  // Sequential
-oddReader, err := oddObj.Open(ctx, filteredOptions...)   // Then this
-```
+**Context**: In `openStreaming()` (`object.go`), object lookup is already parallel, but reader opening for the healthy (both particles present) path is sequential (e.g. `evenObj.Open` then `oddObj.Open` at ~476-485). This adds small latency overhead.
 
 **Proposed Optimization**:
 - Open both readers concurrently using `errgroup`
@@ -243,8 +238,8 @@ oddReader, err := oddObj.Open(ctx, filteredOptions...)   // Then this
 - Already have pattern from other concurrent operations
 
 **References**: 
-- Current implementation: `backend/raid3/object.go:479-488`
-- Similar pattern: `backend/raid3/raid3.go:1252-1293` (concurrent uploads)
+- Current implementation: `backend/raid3/object.go` (openStreaming, even/odd Open calls)
+- Similar pattern: `backend/raid3/raid3.go` (concurrent uploads)
 
 ---
 
@@ -346,7 +341,7 @@ Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIG
 
 ## 📊 Statistics
 
-Total active questions: 17. Resolved questions moved to [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) (Q2, Q4, Q5, Q7, Q20, Q24). Active by priority: High (2) - Q14: Health Check Caching, Q15: Background Worker Context. Medium (8) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching, Q27: Heal-on-Read for Streaming (implement TestHeal*), Q28: TestReadSucceedsWithUnavailableBackend (odd+parity). Low (8) - Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch, Q26: Performance Test Skip Largest File.
+Total active questions: 16. Resolved in this file or moved to DESIGN_DECISIONS: Q2, Q4, Q5, Q7, Q15 (resolved 2026-02-12: background workers use context from NewFs), Q20, Q24. Active by priority: High (1) - Q14: Health Check Caching. Medium (8) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching, Q27: Heal-on-Read for Streaming (implement TestHeal*), Q28: TestReadSucceedsWithUnavailableBackend (odd+parity). Low (8) - Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q18: Size() Limitation (code comment done; README optional), Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch, Q26: Performance Test Skip Largest File.
 
 
 **Use this file to track decisions before they're made!** 🤔

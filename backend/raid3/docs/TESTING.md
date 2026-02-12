@@ -18,9 +18,9 @@ The raid3 backend provides three types of tests:
 
 ## ✅ Current Test Status
 
-**Last Updated**: 2025-12-25
+**Last Updated**: 2026-02-12
 
-- **Backend Tests**: ✅ 66 PASS, 0 FAIL, 3 SKIP - `go test ./backend/raid3 -v`
+- **Backend Tests**: ✅ PASS - `go test ./backend/raid3 -v`
 - **fs/sync Tests**: ✅ 96 PASS, 0 FAIL, 12 SKIP - `go test ./fs/sync -remote localraid3: -v`
 - **fs/operations Tests**: ✅ All passing - `go test ./fs/operations -remote localraid3: -v`
 
@@ -66,7 +66,7 @@ RCLONE_CONFIG=backend/raid3/test/rclone_raid3_integration_tests.config \
 
 See [`test/README.md`](../test/README.md) for complete documentation. Scripts include:
 - `compare_raid3_with_single.sh` - Comparison harness
-- `compare_raid3_with_single_rebuild.sh` - Rebuild validation
+- `compare_raid3_with_single_rebuild.sh` - Rebuild validation (success scenarios run `rclone check` after rebuild to verify logical sizes and content match)
 - `compare_raid3_with_single_heal.sh` - Heal validation
 - `compare_raid3_with_single_errors.sh` - Error handling
 - `compare_raid3_with_single_all.sh` - Master script to run all tests across all backends

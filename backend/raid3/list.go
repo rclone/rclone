@@ -123,23 +123,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 	}
 
-	// Filter out parity files from parity backend (they have .parity-el or .parity-ol suffix)
-	// Also filter out temporary files created during Update rollback
-	// but include directories
 	for _, entry := range entriesParity {
 		remote := entry.Remote()
-		// Strip parity suffix if it's a parity file
-		_, isParity, _ := StripParitySuffix(remote)
-		if isParity {
-			// Don't add parity files to the list
-			continue
-		}
-		// Skip temporary files created during Update rollback
 		if IsTempFile(remote) {
 			fs.Debugf(f, "List: Skipping temp file %s", remote)
 			continue
 		}
-		// Add non-parity entries (directories mainly)
 		if _, exists := entryMap[remote]; !exists {
 			entryMap[remote] = entry
 		}
@@ -361,18 +350,8 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		}
 	}
 
-	// Process parity entries (filter out parity files, but include directories)
 	for _, entryBatch := range entriesParity {
 		for _, entry := range entryBatch {
-			remote := entry.Remote()
-
-			// Filter out parity files (they have .parity-el or .parity-ol suffix)
-			_, isParity, _ := StripParitySuffix(remote)
-			if isParity {
-				continue
-			}
-
-			// Add non-parity entries (directories mainly)
 			addEntry(entry)
 		}
 	}
@@ -445,11 +424,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	// Probe particles - must have at least 2 of 3 for RAID 3
 	_, errEven := f.even.NewObject(ctx, remote)
 	_, errOdd := f.odd.NewObject(ctx, remote)
-	// Try both parity suffixes to detect presence
-	_, errParityOL := f.parity.NewObject(ctx, GetParityFilename(remote, true))
-	_, errParityEL := f.parity.NewObject(ctx, GetParityFilename(remote, false))
-
-	parityPresent := errParityOL == nil || errParityEL == nil
+	_, errParity := f.parity.NewObject(ctx, remote)
+	parityPresent := errParity == nil
 	evenPresent := errEven == nil
 	oddPresent := errOdd == nil
 
@@ -479,11 +455,8 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		if errOdd != nil && !errors.Is(errOdd, fs.ErrorObjectNotFound) {
 			hasConnectionError = true
 		}
-		// Parity is present if either check succeeds, so if presentCount < 2, both checks failed
-		if !parityPresent && errParityOL != nil && errParityEL != nil {
-			if !errors.Is(errParityOL, fs.ErrorObjectNotFound) || !errors.Is(errParityEL, fs.ErrorObjectNotFound) {
-				hasConnectionError = true
-			}
+		if !parityPresent && errParity != nil && !errors.Is(errParity, fs.ErrorObjectNotFound) {
+			hasConnectionError = true
 		}
 
 		// If we have connection errors but file doesn't exist on available backends,

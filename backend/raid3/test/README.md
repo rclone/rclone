@@ -148,9 +148,9 @@ Validates the `rclone backend rebuild` command after simulated backend replaceme
 
 **What it tests**:
 - Rebuild scenarios for each backend (even, odd, parity)
-- Failure cases (missing source backends)
-- Success cases (complete rebuild)
-- Validation with `rclone check` and byte-for-byte comparison
+- Failure cases (missing source backends; rebuild reports 0 files rebuilt)
+- Success cases (complete rebuild; post-rebuild `rclone check` passes with correct logical sizes and content)
+- Byte-for-byte comparison of rebuilt dataset against reference copy
 
 **Usage**:
 ```bash

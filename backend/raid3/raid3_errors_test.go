@@ -130,7 +130,7 @@ func TestPutFailsWithUnavailableBackend(t *testing.T) {
 			case "even":
 				// Even is /nonexistent, check odd and parity
 				oddPath := filepath.Join(oddDir, remote)
-				parityPath := filepath.Join(parityDir, remote+".parity-ol")
+				parityPath := filepath.Join(parityDir, remote)
 				_, errOdd := os.Stat(oddPath)
 				_, errParity := os.Stat(parityPath)
 				// Rollback should have removed any successfully uploaded particles
@@ -139,7 +139,7 @@ func TestPutFailsWithUnavailableBackend(t *testing.T) {
 			case "odd":
 				// Odd is /nonexistent, check even and parity
 				evenPath := filepath.Join(evenDir, remote)
-				parityPath := filepath.Join(parityDir, remote+".parity-ol")
+				parityPath := filepath.Join(parityDir, remote)
 				_, errEven := os.Stat(evenPath)
 				_, errParity := os.Stat(parityPath)
 				assert.True(t, os.IsNotExist(errEven), "Even particle should not exist (rollback should remove it)")
@@ -215,7 +215,7 @@ func TestDeleteFailsWithUnavailableBackend(t *testing.T) {
 	// Verify no particles were deleted (operation failed before deletion)
 	// Note: We can't check odd particle directly because directory is read-only
 	evenPath := filepath.Join(evenDir, remote)
-	parityPath := filepath.Join(parityDir, remote+".parity-ol")
+	parityPath := filepath.Join(parityDir, remote)
 
 	_, err = os.Stat(evenPath)
 	assert.NoError(t, err, "even particle should still exist (delete failed)")
@@ -291,7 +291,7 @@ func TestDeleteWithMissingParticles(t *testing.T) {
 
 	// Verify remaining particles are deleted
 	evenPath := filepath.Join(evenDir, remote)
-	parityPath := filepath.Join(parityDir, remote+".parity-ol")
+	parityPath := filepath.Join(parityDir, remote)
 
 	_, err = os.Stat(evenPath)
 	assert.True(t, os.IsNotExist(err), "even particle should be deleted")
@@ -391,20 +391,9 @@ func TestMoveFailsWithUnavailableBackend(t *testing.T) {
 	_, err = oldObj2.Open(ctx)
 	assert.NoError(t, err, "Original file should still be readable (particles exist)")
 
-	// Check parity - need to find which suffix was used
-	parityOdd := raid3.GetParityFilename(oldRemote, true)
-	parityEven := raid3.GetParityFilename(oldRemote, false)
-	parityPathOdd := filepath.Join(parityDir, parityOdd)
-	parityPathEven := filepath.Join(parityDir, parityEven)
-
-	// Check which parity file exists
-	_, errOdd := os.Stat(parityPathOdd)
-	_, errEven := os.Stat(parityPathEven)
-	if errOdd == nil {
-		assert.NoError(t, errOdd, "Parity particle (odd-length) should still exist at source")
-	} else {
-		assert.NoError(t, errEven, "Parity particle (even-length) should still exist at source")
-	}
+	parityPath := filepath.Join(parityDir, oldRemote)
+	_, err = os.Stat(parityPath)
+	assert.NoError(t, err, "Parity particle should still exist at source")
 }
 
 // TestMoveWithMissingSourceParticle tests Move behavior when source particle
@@ -586,7 +575,7 @@ func TestReadSucceedsWithUnavailableBackend(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test reading with parity backend unavailable (even+odd merge - no reconstruction)
-	parityPath := filepath.Join(parityDir, remote+".parity-ol")
+	parityPath := filepath.Join(parityDir, remote)
 	err = os.Remove(parityPath)
 	require.NoError(t, err)
 
@@ -726,7 +715,7 @@ func TestHealthCheckEnforcesStrictWrites(t *testing.T) {
 
 	// Verify no particles created in available backends
 	evenPath := filepath.Join(evenDir, remote)
-	parityPath := filepath.Join(parityDir, remote+".parity-ol")
+	parityPath := filepath.Join(parityDir, remote)
 
 	_, errEven := os.Stat(evenPath)
 	_, errParity := os.Stat(parityPath)
@@ -809,14 +798,8 @@ func TestSetModTimeFailsInDegradedMode(t *testing.T) {
 	err = os.WriteFile(evenDst, srcData, 0644)
 	require.NoError(t, err)
 
-	// Parity particle (find which suffix was used)
-	parityOdd := raid3.GetParityFilename(remote, true)
-	paritySrc := filepath.Join(parityDir2, parityOdd)
-	if _, err := os.Stat(paritySrc); os.IsNotExist(err) {
-		parityEven := raid3.GetParityFilename(remote, false)
-		paritySrc = filepath.Join(parityDir2, parityEven)
-	}
-	parityDst := filepath.Join(parityDir, filepath.Base(paritySrc))
+	paritySrc := filepath.Join(parityDir2, remote)
+	parityDst := filepath.Join(parityDir, remote)
 	srcData, err = os.ReadFile(paritySrc)
 	require.NoError(t, err)
 	err = os.WriteFile(parityDst, srcData, 0644)
@@ -1346,20 +1329,9 @@ func TestMoveRollbackOnFailure(t *testing.T) {
 	assert.NoError(t, err, "Original file should still be readable (particles exist)")
 	_ = rc2.Close()
 
-	// Check parity - need to find which suffix was used
-	parityOdd := raid3.GetParityFilename(oldRemote, true)
-	parityEven := raid3.GetParityFilename(oldRemote, false)
-	parityPathOdd := filepath.Join(parityDir, parityOdd)
-	parityPathEven := filepath.Join(parityDir, parityEven)
-
-	// Check which parity file exists
-	_, errOdd := os.Stat(parityPathOdd)
-	_, errEven := os.Stat(parityPathEven)
-	if errOdd == nil {
-		assert.NoError(t, errOdd, "Parity particle (odd-length) should still exist at source")
-	} else {
-		assert.NoError(t, errEven, "Parity particle (even-length) should still exist at source")
-	}
+	parityPath := filepath.Join(parityDir, oldRemote)
+	_, err = os.Stat(parityPath)
+	assert.NoError(t, err, "Parity particle should still exist at source")
 
 	t.Logf("✅ Move rollback correctly restored all particles to source location")
 }
@@ -1646,8 +1618,7 @@ func TestUpdateRollbackOnFailure(t *testing.T) {
 
 	// Verify no temp particles remain (should be cleaned up after rollback)
 	evenTempPath := filepath.Join(evenDir, remote+".tmp.even")
-	parityName := raid3.GetParityFilename(remote, len(originalData)%2 == 1)
-	parityTempPath := filepath.Join(parityDir, parityName+".tmp.parity")
+	parityTempPath := filepath.Join(parityDir, remote+".tmp.parity")
 
 	_, err = os.Stat(evenTempPath)
 	assert.True(t, os.IsNotExist(err), "Temp even particle should not exist (should be cleaned up after rollback)")

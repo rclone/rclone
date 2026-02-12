@@ -71,7 +71,7 @@ func TestHeal(t *testing.T) {
 	// Verify all three particles exist
 	evenPath := filepath.Join(evenDir, remote)
 	oddPath := filepath.Join(oddDir, remote)
-	parityPath := filepath.Join(parityDir, remote+".parity-ol") // odd length
+	parityPath := filepath.Join(parityDir, remote)
 
 	_, err = os.Stat(evenPath)
 	require.NoError(t, err, "even particle should exist")

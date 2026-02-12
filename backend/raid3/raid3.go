@@ -735,19 +735,25 @@ func (f *Fs) Hashes() hash.Set {
 	return f.hashSet
 }
 
-// Precision returns the precision
+// Precision returns the precision of ModTimes. Raid3 reads ModTime from the
+// 90-byte footer which stores Unix seconds only, so we can never report better
+// than 1-second precision.
 func (f *Fs) Precision() time.Duration {
 	p1 := f.even.Precision()
 	p2 := f.odd.Precision()
 	p3 := f.parity.Precision()
 
-	// Return the maximum precision
+	// Best precision of underlying backends
 	max := p1
 	if p2 > max {
 		max = p2
 	}
 	if p3 > max {
 		max = p3
+	}
+	// Footer only stores Mtime as Unix seconds
+	if max < time.Second {
+		return time.Second
 	}
 	return max
 }
@@ -1193,12 +1199,7 @@ func (f *Fs) getBrokenObjectSize(ctx context.Context, p particleInfo) int64 {
 		}
 	}
 	if p.parityExists {
-		// Try both parity suffixes
-		obj, err := f.parity.NewObject(ctx, GetParityFilename(p.remote, true))
-		if err == nil {
-			return obj.Size()
-		}
-		obj, err = f.parity.NewObject(ctx, GetParityFilename(p.remote, false))
+		obj, err := f.parity.NewObject(ctx, p.remote)
 		if err == nil {
 			return obj.Size()
 		}
@@ -1232,21 +1233,11 @@ func (f *Fs) removeBrokenObject(ctx context.Context, p particleInfo) error {
 
 	if p.parityExists {
 		g.Go(func() error {
-			// Try both parity suffixes first (normal case)
-			obj, err := f.parity.NewObject(gCtx, GetParityFilename(p.remote, true))
+			obj, err := f.parity.NewObject(gCtx, p.remote)
 			if err == nil {
 				return obj.Remove(gCtx)
 			}
-			obj, err = f.parity.NewObject(gCtx, GetParityFilename(p.remote, false))
-			if err == nil {
-				return obj.Remove(gCtx)
-			}
-			// Also try the original name (for orphaned files without suffix)
-			obj, err = f.parity.NewObject(gCtx, p.remote)
-			if err == nil {
-				return obj.Remove(gCtx)
-			}
-			return nil // No parity found
+			return nil
 		})
 	}
 

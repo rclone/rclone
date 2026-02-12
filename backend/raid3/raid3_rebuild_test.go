@@ -91,8 +91,7 @@ func TestRebuildEvenBackendSuccess(t *testing.T) {
 	uploadDataset(ctx, t, f, files)
 
 	for _, file := range files {
-		parityName := raid3.GetParityFilename(file.remote, len(file.data)%2 == 1)
-		_, err := os.Stat(particlePath(parityDir, parityName))
+		_, err := os.Stat(particlePath(parityDir, file.remote))
 		require.NoErrorf(t, err, "expected parity particle for %s", file.remote)
 	}
 
@@ -141,8 +140,7 @@ func TestRebuildEvenBackendFailure(t *testing.T) {
 	uploadDataset(ctx, t, f, files)
 
 	for _, file := range files {
-		parityName := raid3.GetParityFilename(file.remote, len(file.data)%2 == 1)
-		_, err := os.Stat(particlePath(parityDir, parityName))
+		_, err := os.Stat(particlePath(parityDir, file.remote))
 		require.NoErrorf(t, err, "expected parity particle for %s", file.remote)
 	}
 

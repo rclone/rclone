@@ -13,6 +13,8 @@ package raid3
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"sync"
 	"time"
@@ -109,7 +111,8 @@ func (f *Fs) backgroundUploader(ctx context.Context, workerID int) {
 	}
 }
 
-// uploadParticle uploads a single particle to its backend
+// uploadParticle uploads a single particle to its backend.
+// Appends 90-byte footer (hashes, mtime, current shard) to the payload.
 func (f *Fs) uploadParticle(ctx context.Context, job *uploadJob) error {
 	var targetFs fs.Fs
 	var filename string
@@ -123,22 +126,49 @@ func (f *Fs) uploadParticle(ctx context.Context, job *uploadJob) error {
 		filename = job.remote
 	case "parity":
 		targetFs = f.parity
-		filename = GetParityFilename(job.remote, job.isOddLength)
+		filename = job.remote
 	default:
 		return fmt.Errorf("unknown particle type: %s", job.particleType)
 	}
 
+	payload := job.data
+	{
+		contentLength := int64(len(job.data))
+		md5Sum := md5.Sum(job.data)
+		sha256Sum := sha256.Sum256(job.data)
+		mtime := time.Now()
+		var currentShard int
+		switch job.particleType {
+		case "even":
+			currentShard = ShardEven
+		case "odd":
+			currentShard = ShardOdd
+		case "parity":
+			currentShard = ShardParity
+		default:
+			currentShard = 0
+		}
+		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, CompressionNone, currentShard)
+		fb, errMarshal := ft.MarshalBinary()
+		if errMarshal != nil {
+			return errMarshal
+		}
+		payload = make([]byte, len(job.data)+FooterSize)
+		copy(payload, job.data)
+		copy(payload[len(job.data):], fb)
+	}
+
 	// Create a basic ObjectInfo for the particle
-	baseInfo := object.NewStaticObjectInfo(filename, time.Now(), int64(len(job.data)), true, nil, nil)
+	baseInfo := object.NewStaticObjectInfo(filename, time.Now(), int64(len(payload)), true, nil, nil)
 
 	src := &particleObjectInfo{
 		ObjectInfo: baseInfo,
 		remote:     filename,
-		size:       int64(len(job.data)),
+		size:       int64(len(payload)),
 	}
 
 	// Upload the particle
-	reader := bytes.NewReader(job.data)
+	reader := bytes.NewReader(payload)
 	_, err := targetFs.Put(ctx, reader, src)
 	return err
 }

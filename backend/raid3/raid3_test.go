@@ -431,9 +431,9 @@ func TestRenameFile(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestRename", "", m)
 	require.NoError(t, err)
@@ -448,7 +448,7 @@ func TestRenameFile(t *testing.T) {
 	// Verify original file exists (check all three particles)
 	oldEvenPath := filepath.Join(evenDir, oldRemote)
 	oldOddPath := filepath.Join(oddDir, oldRemote)
-	oldParityPath := filepath.Join(parityDir, oldRemote+".parity-ol") // 21 bytes = odd length
+	oldParityPath := filepath.Join(parityDir, oldRemote)
 	_, err = os.Stat(oldEvenPath)
 	require.NoError(t, err, "original even particle should exist")
 	_, err = os.Stat(oldOddPath)
@@ -478,7 +478,7 @@ func TestRenameFile(t *testing.T) {
 	// Verify new particles exist
 	newEvenPath := filepath.Join(evenDir, newRemote)
 	newOddPath := filepath.Join(oddDir, newRemote)
-	newParityPath := filepath.Join(parityDir, newRemote+".parity-ol")
+	newParityPath := filepath.Join(parityDir, newRemote)
 	_, err = os.Stat(newEvenPath)
 	require.NoError(t, err, "new even particle should exist")
 	_, err = os.Stat(newOddPath)
@@ -626,17 +626,14 @@ func TestDeleteFile(t *testing.T) {
 	// Verify all particles are deleted from filesystem
 	evenPath := filepath.Join(evenDir, remote)
 	oddPath := filepath.Join(oddDir, remote)
-	parityOddPath := filepath.Join(parityDir, remote+".parity-ol")
-	parityEvenPath := filepath.Join(parityDir, remote+".parity-el")
+	parityPath := filepath.Join(parityDir, remote)
 
 	_, err = os.Stat(evenPath)
 	require.True(t, os.IsNotExist(err), "even particle should be deleted")
 	_, err = os.Stat(oddPath)
 	require.True(t, os.IsNotExist(err), "odd particle should be deleted")
-	_, err = os.Stat(parityOddPath)
-	require.True(t, os.IsNotExist(err), "odd-length parity particle should be deleted")
-	_, err = os.Stat(parityEvenPath)
-	require.True(t, os.IsNotExist(err), "even-length parity particle should be deleted")
+	_, err = os.Stat(parityPath)
+	require.True(t, os.IsNotExist(err), "parity particle should be deleted")
 }
 
 // TestDeleteFileIdempotent tests that deleting a file multiple times is safe.
@@ -1098,21 +1095,21 @@ func TestRenameFilePreservesParitySuffix(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestRenameParity", "", m)
 	require.NoError(t, err)
 
-	// Test odd-length file (preserves .parity-ol)
+	// Test odd-length file
 	oldRemoteOdd := "odd_file.txt"
 	dataOdd := []byte("1234567890123456789") // 19 bytes = odd length
 	infoOdd := object.NewStaticObjectInfo(oldRemoteOdd, time.Now(), int64(len(dataOdd)), true, nil, nil)
 	_, err = f.Put(ctx, bytes.NewReader(dataOdd), infoOdd)
 	require.NoError(t, err)
 
-	oldParityOddPath := filepath.Join(parityDir, oldRemoteOdd+".parity-ol")
+	oldParityOddPath := filepath.Join(parityDir, oldRemoteOdd)
 	_, err = os.Stat(oldParityOddPath)
 	require.NoError(t, err, "original odd-length parity should exist")
 
@@ -1124,18 +1121,18 @@ func TestRenameFilePreservesParitySuffix(t *testing.T) {
 	_, err = doMove(ctx, oldObjOdd, newRemoteOdd)
 	require.NoError(t, err)
 
-	newParityOddPath := filepath.Join(parityDir, newRemoteOdd+".parity-ol")
+	newParityOddPath := filepath.Join(parityDir, newRemoteOdd)
 	_, err = os.Stat(newParityOddPath)
-	require.NoError(t, err, "renamed file should have .parity-ol suffix (odd length preserved)")
+	require.NoError(t, err, "renamed file parity should exist at same path")
 
-	// Test even-length file (preserves .parity-el)
+	// Test even-length file
 	oldRemoteEven := "even_file.txt"
 	dataEven := []byte("12345678901234567890") // 20 bytes = even length
 	infoEven := object.NewStaticObjectInfo(oldRemoteEven, time.Now(), int64(len(dataEven)), true, nil, nil)
 	_, err = f.Put(ctx, bytes.NewReader(dataEven), infoEven)
 	require.NoError(t, err)
 
-	oldParityEvenPath := filepath.Join(parityDir, oldRemoteEven+".parity-el")
+	oldParityEvenPath := filepath.Join(parityDir, oldRemoteEven)
 	_, err = os.Stat(oldParityEvenPath)
 	require.NoError(t, err, "original even-length parity should exist")
 
@@ -1147,9 +1144,9 @@ func TestRenameFilePreservesParitySuffix(t *testing.T) {
 	_, err = doMoveEven(ctx, oldObjEven, newRemoteEven)
 	require.NoError(t, err)
 
-	newParityEvenPath := filepath.Join(parityDir, newRemoteEven+".parity-el")
+	newParityEvenPath := filepath.Join(parityDir, newRemoteEven)
 	_, err = os.Stat(newParityEvenPath)
-	require.NoError(t, err, "renamed file should have .parity-el suffix (even length preserved)")
+	require.NoError(t, err, "renamed file parity should exist at same path")
 }
 
 // =============================================================================
@@ -1185,9 +1182,9 @@ func TestDeepNestedDirectories(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestDeepNested", "", m)
 	require.NoError(t, err)
@@ -1217,7 +1214,7 @@ func TestDeepNestedDirectories(t *testing.T) {
 	// Verify all three particles exist at correct depth
 	evenPath := filepath.Join(evenDir, "level1/level2/level3/level4/level5/deep-file.txt")
 	oddPath := filepath.Join(oddDir, "level1/level2/level3/level4/level5/deep-file.txt")
-	parityPath := filepath.Join(parityDir, "level1/level2/level3/level4/level5/deep-file.txt.parity-el")
+	parityPath := filepath.Join(parityDir, "level1/level2/level3/level4/level5/deep-file.txt")
 
 	_, err = os.Stat(evenPath)
 	require.NoError(t, err, "even particle should exist at deep path")
@@ -1267,7 +1264,7 @@ func TestDeepNestedDirectories(t *testing.T) {
 	// Verify particles moved to new deep path
 	newEvenPath := filepath.Join(evenDir, "level1/level2/other/level4/level5/moved-file.txt")
 	newOddPath := filepath.Join(oddDir, "level1/level2/other/level4/level5/moved-file.txt")
-	newParityPath := filepath.Join(parityDir, "level1/level2/other/level4/level5/moved-file.txt.parity-el")
+	newParityPath := filepath.Join(parityDir, "level1/level2/other/level4/level5/moved-file.txt")
 
 	_, err = os.Stat(newEvenPath)
 	require.NoError(t, err, "even particle should exist at new deep path")
@@ -2410,9 +2407,9 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestUpdateOddEven", "", m)
 	require.NoError(t, err)
@@ -2427,17 +2424,10 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		_, err := f.Put(ctx, bytes.NewReader(originalData), info)
 		require.NoError(t, err)
 
-		// Verify original parity file exists with .parity-ol suffix
-		parityNameOL := raid3.GetParityFilename(remote, true)
-		parityPathOL := filepath.Join(parityDir, parityNameOL)
-		_, err = os.Stat(parityPathOL)
-		assert.NoError(t, err, "Original parity file (.parity-ol) should exist")
-
-		// Verify .parity-el does NOT exist
-		parityNameEL := raid3.GetParityFilename(remote, false)
-		parityPathEL := filepath.Join(parityDir, parityNameEL)
-		_, err = os.Stat(parityPathEL)
-		assert.True(t, os.IsNotExist(err), "Even-length parity file should not exist yet")
+		// Verify original parity file exists (unified path)
+		parityPath := filepath.Join(parityDir, remote)
+		_, err = os.Stat(parityPath)
+		assert.NoError(t, err, "Original parity file should exist")
 
 		// Update to even-length: 6 bytes
 		obj, err := f.NewObject(ctx, remote)
@@ -2447,13 +2437,9 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
 		require.NoError(t, err, "Update from odd to even should succeed")
 
-		// Verify new parity file exists with .parity-el suffix
-		_, err = os.Stat(parityPathEL)
-		assert.NoError(t, err, "New parity file (.parity-el) should exist after update")
-
-		// Verify old parity file (.parity-ol) is removed
-		_, err = os.Stat(parityPathOL)
-		assert.True(t, os.IsNotExist(err), "Old parity file (.parity-ol) should be removed")
+		// Verify parity file still exists at same path
+		_, err = os.Stat(parityPath)
+		assert.NoError(t, err, "Parity file should exist after update")
 
 		// Verify file content is correct
 		obj2, err := f.NewObject(ctx, remote)
@@ -2476,17 +2462,9 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		_, err := f.Put(ctx, bytes.NewReader(originalData), info)
 		require.NoError(t, err)
 
-		// Verify original parity file exists with .parity-el suffix
-		parityNameEL := raid3.GetParityFilename(remote, false)
-		parityPathEL := filepath.Join(parityDir, parityNameEL)
-		_, err = os.Stat(parityPathEL)
-		assert.NoError(t, err, "Original parity file (.parity-el) should exist")
-
-		// Verify .parity-ol does NOT exist
-		parityNameOL := raid3.GetParityFilename(remote, true)
-		parityPathOL := filepath.Join(parityDir, parityNameOL)
-		_, err = os.Stat(parityPathOL)
-		assert.True(t, os.IsNotExist(err), "Odd-length parity file should not exist yet")
+		parityPath := filepath.Join(parityDir, remote)
+		_, err = os.Stat(parityPath)
+		assert.NoError(t, err, "Original parity file should exist")
 
 		// Update to odd-length: 5 bytes
 		obj, err := f.NewObject(ctx, remote)
@@ -2496,13 +2474,8 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
 		require.NoError(t, err, "Update from even to odd should succeed")
 
-		// Verify new parity file exists with .parity-ol suffix
-		_, err = os.Stat(parityPathOL)
-		assert.NoError(t, err, "New parity file (.parity-ol) should exist after update")
-
-		// Verify old parity file (.parity-el) is removed
-		_, err = os.Stat(parityPathEL)
-		assert.True(t, os.IsNotExist(err), "Old parity file (.parity-el) should be removed")
+		_, err = os.Stat(parityPath)
+		assert.NoError(t, err, "Parity file should exist after update")
 
 		// Verify file content is correct
 		obj2, err := f.NewObject(ctx, remote)
@@ -2525,11 +2498,9 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		_, err := f.Put(ctx, bytes.NewReader(originalData), info)
 		require.NoError(t, err)
 
-		// Verify parity file exists with .parity-ol suffix
-		parityNameOL := raid3.GetParityFilename(remote, true)
-		parityPathOL := filepath.Join(parityDir, parityNameOL)
-		_, err = os.Stat(parityPathOL)
-		assert.NoError(t, err, "Parity file (.parity-ol) should exist")
+		parityPath := filepath.Join(parityDir, remote)
+		_, err = os.Stat(parityPath)
+		assert.NoError(t, err, "Parity file should exist")
 
 		// Update to different odd-length: 7 bytes (still odd)
 		obj, err := f.NewObject(ctx, remote)
@@ -2539,9 +2510,8 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
 		require.NoError(t, err, "Update from odd to odd should succeed")
 
-		// Verify same parity file still exists (filename unchanged)
-		_, err = os.Stat(parityPathOL)
-		assert.NoError(t, err, "Parity file (.parity-ol) should still exist with same name")
+		_, err = os.Stat(parityPath)
+		assert.NoError(t, err, "Parity file should still exist")
 
 		// Verify file content is correct
 		obj2, err := f.NewObject(ctx, remote)
@@ -2564,11 +2534,9 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		_, err := f.Put(ctx, bytes.NewReader(originalData), info)
 		require.NoError(t, err)
 
-		// Verify parity file exists with .parity-el suffix
-		parityNameEL := raid3.GetParityFilename(remote, false)
-		parityPathEL := filepath.Join(parityDir, parityNameEL)
-		_, err = os.Stat(parityPathEL)
-		assert.NoError(t, err, "Parity file (.parity-el) should exist")
+		parityPath := filepath.Join(parityDir, remote)
+		_, err = os.Stat(parityPath)
+		assert.NoError(t, err, "Parity file should exist")
 
 		// Update to different even-length: 8 bytes (still even)
 		obj, err := f.NewObject(ctx, remote)
@@ -2578,9 +2546,8 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
 		require.NoError(t, err, "Update from even to even should succeed")
 
-		// Verify same parity file still exists (filename unchanged)
-		_, err = os.Stat(parityPathEL)
-		assert.NoError(t, err, "Parity file (.parity-el) should still exist with same name")
+		_, err = os.Stat(parityPath)
+		assert.NoError(t, err, "Parity file should still exist")
 
 		// Verify file content is correct
 		obj2, err := f.NewObject(ctx, remote)

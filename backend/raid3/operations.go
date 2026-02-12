@@ -12,13 +12,17 @@ package raid3
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
+	"crypto/sha256"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"os"
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"golang.org/x/sync/errgroup"
@@ -27,6 +31,20 @@ import (
 // Put uploads an object using the streaming path (single code path).
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return f.putStreaming(ctx, in, src, options...)
+}
+
+// effectiveModTime returns the ModTime to use for the footer: from options metadata (e.g. Copy --metadata-set mtime) if present, else src.ModTime.
+func effectiveModTime(ctx context.Context, f *Fs, src fs.ObjectInfo, options []fs.OpenOption) time.Time {
+	meta, err := fs.GetMetadataOptions(ctx, f, src, options)
+	if err != nil || meta == nil {
+		return src.ModTime(ctx)
+	}
+	if s, ok := meta["mtime"]; ok && s != "" {
+		if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
+			return t
+		}
+	}
+	return src.ModTime(ctx)
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
@@ -38,19 +56,45 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return f.Put(ctx, in, src, options...)
 }
 
-// createParticleInfo creates a particleObjectInfo for a given particle type
-func createParticleInfo(src fs.ObjectInfo, particleType string, size int64, isOddLength bool) *particleObjectInfo {
+// createParticleInfo creates a particleObjectInfo for a given particle type.
+// All particles use the same remote path (unified naming with footer).
+func createParticleInfo(f *Fs, src fs.ObjectInfo, particleType string, size int64, isOddLength bool) *particleObjectInfo {
 	info := &particleObjectInfo{
 		ObjectInfo: src,
 		size:       size,
 	}
-
-	if particleType == "parity" {
-		info.remote = GetParityFilename(src.Remote(), isOddLength)
-	}
-
 	return info
 }
+
+// hashingReader wraps a reader and feeds bytes to MD5 and SHA-256 hashers while counting total bytes.
+type hashingReader struct {
+	r      io.Reader
+	md5    hash.Hash
+	sha256 hash.Hash
+	n      int64
+}
+
+func newHashingReader(r io.Reader) *hashingReader {
+	return &hashingReader{
+		r:      r,
+		md5:    md5.New(),
+		sha256: sha256.New(),
+	}
+}
+
+func (h *hashingReader) Read(p []byte) (int, error) {
+	n, err := h.r.Read(p)
+	if n > 0 {
+		_, _ = h.md5.Write(p[:n])
+		_, _ = h.sha256.Write(p[:n])
+		h.n += int64(n)
+	}
+	return n, err
+}
+
+func (h *hashingReader) ContentLength() int64   { return h.n }
+func (h *hashingReader) MD5Sum() [16]byte      { return [16]byte(h.md5.Sum(nil)) }
+func (h *hashingReader) SHA256Sum() [32]byte   { return [32]byte(h.sha256.Sum(nil)) }
 
 // verifyParticleSizes verifies that uploaded particles have the correct sizes
 func verifyParticleSizes(ctx context.Context, f *Fs, evenObj, oddObj fs.Object, evenWritten, oddWritten int64) error {
@@ -106,24 +150,34 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 	// Handle empty file case
 	srcSize := src.Size()
+	mtime := effectiveModTime(ctx, f, src, options)
 	if srcSize == 0 {
-		// Empty file - create empty particles
-		evenInfo := createParticleInfo(src, "even", 0, false)
-		evenObj, err := f.even.Put(ctx, bytes.NewReader(nil), evenInfo, options...)
+		// Empty file - create empty particles (90-byte footer only each)
+		ft := FooterFromReconstructed(0, nil, nil, mtime, CompressionNone, ShardEven)
+		fb, _ := ft.MarshalBinary()
+		evenR := bytes.NewReader(fb)
+		ft2 := FooterFromReconstructed(0, nil, nil, mtime, CompressionNone, ShardOdd)
+		fb2, _ := ft2.MarshalBinary()
+		oddR := bytes.NewReader(fb2)
+		ft3 := FooterFromReconstructed(0, nil, nil, mtime, CompressionNone, ShardParity)
+		fb3, _ := ft3.MarshalBinary()
+		parityR := bytes.NewReader(fb3)
+		evenInfo := createParticleInfo(f, src, "even", FooterSize, false)
+		evenObj, err := f.even.Put(ctx, evenR, evenInfo, options...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
 		}
 		uploadedParticles = append(uploadedParticles, evenObj)
 
-		oddInfo := createParticleInfo(src, "odd", 0, false)
-		oddObj, err := f.odd.Put(ctx, bytes.NewReader(nil), oddInfo, options...)
+		oddInfo := createParticleInfo(f, src, "odd", FooterSize, false)
+		oddObj, err := f.odd.Put(ctx, oddR, oddInfo, options...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
 		}
 		uploadedParticles = append(uploadedParticles, oddObj)
 
-		parityInfo := createParticleInfo(src, "parity", 0, false)
-		parityObj, err := f.parity.Put(ctx, bytes.NewReader(nil), parityInfo, options...)
+		parityInfo := createParticleInfo(f, src, "parity", FooterSize, false)
+		parityObj, err := f.parity.Put(ctx, parityR, parityInfo, options...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
 		}
@@ -161,20 +215,57 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	g, gCtx := errgroup.WithContext(ctx)
 	var uploadedMu sync.Mutex
 
-	// Goroutine 1: Read input, split into even/odd/parity, write to pipes
+	// Goroutine 1: Read input, split into even/odd/parity, write 90-byte footer then close
+	hasher := newHashingReader(in)
 	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, int(readChunkSize), isOddLengthCh)
 	g.Go(func() error {
-		defer func() { _ = evenPipeW.Close() }()
-		defer func() { _ = oddPipeW.Close() }()
-		defer func() { _ = parityPipeW.Close() }()
-		return splitter.Split(in)
+		errSplit := splitter.Split(hasher)
+		if errSplit != nil {
+			_ = evenPipeW.Close()
+			_ = oddPipeW.Close()
+			_ = parityPipeW.Close()
+			return errSplit
+		}
+		contentLength := hasher.ContentLength()
+		md5Sum := hasher.MD5Sum()
+		sha256Sum := hasher.SHA256Sum()
+		streamMtime := effectiveModTime(gCtx, f, src, options)
+		for shard := 0; shard < 3; shard++ {
+			ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], streamMtime, CompressionNone, shard)
+			fb, errMarshal := ft.MarshalBinary()
+			if errMarshal != nil {
+				_ = evenPipeW.Close()
+				_ = oddPipeW.Close()
+				_ = parityPipeW.Close()
+				return errMarshal
+			}
+			var w io.Writer
+			switch shard {
+			case ShardEven:
+				w = evenPipeW
+			case ShardOdd:
+				w = oddPipeW
+			case ShardParity:
+				w = parityPipeW
+			}
+			if _, err := w.Write(fb); err != nil {
+				_ = evenPipeW.Close()
+				_ = oddPipeW.Close()
+				_ = parityPipeW.Close()
+				return err
+			}
+		}
+		_ = evenPipeW.Close()
+		_ = oddPipeW.Close()
+		_ = parityPipeW.Close()
+		return nil
 	})
 
 	// Goroutine 2: Put even particle (reads from evenPipeR)
 	g.Go(func() error {
 		defer func() { _ = evenPipeR.Close() }()
 		// Use unknown size (-1) since we're streaming
-		evenInfo := createParticleInfo(src, "even", -1, isOddLength)
+		evenInfo := createParticleInfo(f, src, "even", -1, isOddLength)
 		obj, err := f.even.Put(gCtx, evenPipeR, evenInfo, options...)
 		if err != nil {
 			return formatParticleError(f.even, "even", "upload failed", fmt.Sprintf("remote %q", src.Remote()), err)
@@ -189,7 +280,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	// Goroutine 3: Put odd particle (reads from oddPipeR)
 	g.Go(func() error {
 		defer func() { _ = oddPipeR.Close() }()
-		oddInfo := createParticleInfo(src, "odd", -1, isOddLength)
+		oddInfo := createParticleInfo(f, src, "odd", -1, isOddLength)
 		obj, err := f.odd.Put(gCtx, oddPipeR, oddInfo, options...)
 		if err != nil {
 			return formatParticleError(f.odd, "odd", "upload failed", fmt.Sprintf("remote %q", src.Remote()), err)
@@ -216,11 +307,10 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 			}
 		}
 
-		// Create parity info with correct filename
-		parityInfo := createParticleInfo(src, "parity", -1, parityIsOddLength)
+		parityInfo := createParticleInfo(f, src, "parity", -1, parityIsOddLength)
 		obj, err := f.parity.Put(gCtx, parityPipeR, parityInfo, options...)
 		if err != nil {
-			return formatParticleError(f.parity, "parity", "upload failed", fmt.Sprintf("remote %q", GetParityFilename(src.Remote(), isOddLength)), err)
+			return formatParticleError(f.parity, "parity", "upload failed", fmt.Sprintf("remote %q", src.Remote()), err)
 		}
 		uploadedMu.Lock()
 		uploadedParticles = append(uploadedParticles, obj)
@@ -233,9 +323,9 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil, err
 	}
 
-	// Get written sizes from splitter for verification
-	totalEvenWritten := splitter.GetTotalEvenWritten()
-	totalOddWritten := splitter.GetTotalOddWritten()
+	// Get written sizes from splitter for verification (payload + footer)
+	totalEvenWritten := splitter.GetTotalEvenWritten() + FooterSize
+	totalOddWritten := splitter.GetTotalOddWritten() + FooterSize
 
 	// Verify sizes
 	if err := verifyParticleSizes(ctx, f, evenObj, oddObj, totalEvenWritten, totalOddWritten); err != nil {
@@ -277,28 +367,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return srcObj, nil
 	}
 
-	// Determine source parity name (needed for cleanup)
-	// For cross-remote moves, check source Fs's parity backend
-	var srcParityName string
-	parityOddSrc := GetParityFilename(srcRemote, true)
-	parityEvenSrc := GetParityFilename(srcRemote, false)
-
-	// Check in source Fs's parity backend for cross-remote moves
-	parityFs := f.parity
-	if isCrossRemote {
-		parityFs = srcFs.parity
-	}
-	_, errOdd := parityFs.NewObject(ctx, parityOddSrc)
-	if errOdd == nil {
-		srcParityName = parityOddSrc
-	} else {
-		srcParityName = parityEvenSrc
-	}
-	_, isParity, isOddLength := StripParitySuffix(srcParityName)
-	if !isParity {
-		isOddLength = false
-	}
-	dstParityName := GetParityFilename(remote, isOddLength)
+	// Parity uses same path as logical object (unified naming)
+	srcParityName := srcRemote
+	dstParityName := remote
 
 	// Pre-flight check: Enforce strict RAID 3 write policy
 	// Fail immediately if any backend is unavailable to prevent degraded moves
@@ -362,10 +433,17 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, moveErr
 	}
 
-	return &Object{
+	newObj := &Object{
 		fs:     f,
 		remote: remote,
-	}, nil
+	}
+	// Apply metadata set from config (e.g. --metadata-set mtime=...) so Move with metadata works
+	if ci := fs.GetConfig(ctx); ci.Metadata && len(ci.MetadataSet) > 0 {
+		if err := newObj.SetMetadata(ctx, ci.MetadataSet); err != nil {
+			return nil, err
+		}
+	}
+	return newObj, nil
 }
 
 // Copy src to this remote using server-side copy operations if possible
@@ -403,28 +481,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcRemote := srcObj.remote
 	isCrossRemote := srcFs != f
 
-	// Determine source parity name (needed for destination parity name)
-	// For cross-remote copies, check source Fs's parity backend
-	var srcParityName string
-	parityOddSrc := GetParityFilename(srcRemote, true)
-	parityEvenSrc := GetParityFilename(srcRemote, false)
-
-	// Check in source Fs's parity backend for cross-remote copies
-	parityFs := f.parity
-	if isCrossRemote {
-		parityFs = srcFs.parity
-	}
-	_, errOdd := parityFs.NewObject(ctx, parityOddSrc)
-	if errOdd == nil {
-		srcParityName = parityOddSrc
-	} else {
-		srcParityName = parityEvenSrc
-	}
-	_, isParity, isOddLength := StripParitySuffix(srcParityName)
-	if !isParity {
-		isOddLength = false
-	}
-	dstParityName := GetParityFilename(remote, isOddLength)
+	// Parity uses same path as logical object (unified naming)
+	srcParityName := srcRemote
+	dstParityName := remote
 
 	// Pre-flight check: Enforce strict RAID 3 write policy
 	// Fail immediately if any backend is unavailable to prevent degraded copies
@@ -572,10 +631,17 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, copyErr
 	}
 
-	return &Object{
+	newObj := &Object{
 		fs:     f,
 		remote: remote,
-	}, nil
+	}
+	// Apply metadata set from config (e.g. --metadata-set mtime=...) so Copy with metadata works
+	if ci := fs.GetConfig(ctx); ci.Metadata && len(ci.MetadataSet) > 0 {
+		if err := newObj.SetMetadata(ctx, ci.MetadataSet); err != nil {
+			return nil, err
+		}
+	}
+	return newObj, nil
 }
 
 // DirMove moves src:srcRemote to this remote at dstRemote

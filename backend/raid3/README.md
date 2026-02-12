@@ -38,7 +38,7 @@ The raid3 backend provides three management commands:
 
 **Status** (`rclone backend status raid3:`): Shows health status of all three backends and impact assessment (what operations work). When in degraded mode, provides complete rebuild guidance with step-by-step instructions for backend replacement.
 
-**Rebuild** (`rclone backend rebuild raid3:` or `rclone backend rebuild raid3: odd`): Rebuilds all missing particles on a replacement backend after replacing a failed backend. The process scans for missing particles, reconstructs data from the other two backends, uploads restored particles with progress/ETA, and verifies integrity. Parent directories are automatically created during file uploads; empty directories are reconstructed by auto-heal when accessed. Use `-o check-only=true` to check what needs rebuild without actually rebuilding.
+**Rebuild** (`rclone backend rebuild raid3:` or `rclone backend rebuild raid3: odd`): Rebuilds all missing particles on a replacement backend after replacing a failed backend. The process scans for missing particles, reconstructs data from the other two backends, and uploads restored particles with a footer taken from a source particle (so logical size, hashes, and modification time remain correct). Progress/ETA and integrity are reported; parent directories are created during uploads; empty directories are reconstructed by auto-heal when accessed. Use `-o check-only=true` to check what needs rebuild without actually rebuilding.
 
 **Heal** (`rclone backend heal raid3:`): Proactively heals all degraded objects (2/3 particles) by scanning, identifying, reconstructing, and uploading missing particles. Works regardless of `auto_heal` setting. For details, see [`docs/CLEAN_HEAL.md`](docs/CLEAN_HEAL.md).
 
@@ -100,6 +100,8 @@ When using different remote types (e.g., mixing object storage like S3 with file
 - `ReadDirMetadata`, `WriteDirMetadata`, `UserDirMetadata` (directory metadata)
 - `DirSetModTime`, `MkdirMetadata` (directory operations)
 - `CaseInsensitive` (more permissive: any case-insensitive backend makes the whole union case-insensitive)
+
+Copy and Move with `--metadata-set mtime=...`, and SetMetadata with an `mtime` key, update the EC footer in all particles so that `ModTime()` returns the set value; Put and Update use mtime from upload options when metadata is in use.
 
 **Always available** (raid3 implements independently):
 - `Shutdown` (waits for heal uploads to complete)
