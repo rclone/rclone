@@ -47,6 +47,7 @@ import (
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
+	"github.com/rclone/rclone/lib/transferaccounter"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -1755,10 +1756,12 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 		blockIDs = make([]string, numParts) // list of blocks for finalize
 		g, gCtx  = errgroup.WithContext(ctx)
 		checker  = newCheckForInvalidBlockOrBlob("copy", o)
+		account  = transferaccounter.Get(ctx)
 	)
 	g.SetLimit(f.opt.CopyConcurrency)
 
 	fs.Debugf(o, "Starting  multipart copy with %d parts of size %v", numParts, fs.SizeSuffix(partSize))
+	account.Start()
 	for partNum := uint64(0); partNum < uint64(numParts); partNum++ {
 		// Fail fast, in case an errgroup managed function returns an error
 		// gCtx is cancelled. There is no point in uploading all the other parts.
@@ -1806,6 +1809,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 				return fmt.Errorf("multipart copy: failed to copy chunk %d with %v bytes: %w", partNum+1, -1, err)
 			}
 			blockIDs[partNum] = blockID
+			account.Add(options.Range.Count)
 			return nil
 		})
 	}
