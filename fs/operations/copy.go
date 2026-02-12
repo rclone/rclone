@@ -148,9 +148,17 @@ func (c *copy) serverSideCopy(ctx context.Context) (actionTaken string, newDst f
 	}
 	in := c.tr.Account(ctx, nil) // account the transfer
 	in.ServerSideTransferStart()
-	newDst, err = doCopy(ctx, c.src, c.remoteForCopy)
+	newCtx, ta := in.NewServerSideCopyAccounter(ctx)
+	newDst, err = doCopy(newCtx, c.src, c.remoteForCopy)
 	if err == nil {
-		in.ServerSideCopyEnd(newDst.Size()) // account the bytes for the server-side transfer
+		var n int64
+		if !ta.Started() {
+			n = newDst.Size()
+		}
+		in.ServerSideCopyEnd(n) // account the bytes for the server-side transfer
+	} else {
+		// Rewind any stats counted on error
+		ta.Reset()
 	}
 	_ = in.Close()
 	if errors.Is(err, fs.ErrorCantCopy) {

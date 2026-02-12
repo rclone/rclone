@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/transferaccounter"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/asyncreader"
@@ -312,6 +313,15 @@ func (acc *Account) serverSideEnd(n int64) {
 	}
 }
 
+// NewServerSideCopyAccounter returns a TransferAccounter for a server
+// side copy and a new ctx with it embedded
+func (acc *Account) NewServerSideCopyAccounter(ctx context.Context) (context.Context, *transferaccounter.TransferAccounter) {
+	return transferaccounter.New(ctx, func(n int64) {
+		acc.stats.AddServerSideCopyBytes(n)
+		acc.accountReadNoNetwork(n)
+	})
+}
+
 // ServerSideCopyEnd accounts for a read of n bytes in a server-side copy
 func (acc *Account) ServerSideCopyEnd(n int64) {
 	acc.stats.AddServerSideCopy(n)
@@ -356,6 +366,17 @@ func (acc *Account) accountRead(n int) {
 
 	TokenBucket.LimitBandwidth(TokenBucketSlotAccounting, n)
 	acc.limitPerFileBandwidth(n)
+}
+
+// Account the read if not using network (eg for server side copies)
+func (acc *Account) accountReadNoNetwork(n int64) {
+	// Update Stats
+	acc.values.mu.Lock()
+	acc.values.lpBytes += int(n)
+	acc.values.bytes += n
+	acc.values.mu.Unlock()
+
+	acc.stats.BytesNoNetwork(n)
 }
 
 // read bytes from the io.Reader passed in and account them

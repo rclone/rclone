@@ -938,6 +938,13 @@ func (s *StatsInfo) AddServerSideMove(n int64) {
 	s.mu.Unlock()
 }
 
+// AddServerSideCopyBytes adds bytes for a server side copy
+func (s *StatsInfo) AddServerSideCopyBytes(n int64) {
+	s.mu.Lock()
+	s.serverSideCopyBytes += n
+	s.mu.Unlock()
+}
+
 // AddServerSideCopy counts a server side copy
 func (s *StatsInfo) AddServerSideCopy(n int64) {
 	s.mu.Lock()
