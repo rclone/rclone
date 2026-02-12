@@ -638,7 +638,21 @@ func (r *StreamReconstructor) Read(p []byte) (n int, err error) {
 	parityN = parityRes.n
 	parityErr = parityRes.err
 	if parityRes.hitEOF {
-		r.parityEOF = true
+		// For odd+parity with odd-length file, parity has one more byte than odd; some readers
+		// return n and EOF together so we get equal lengths. Try one more read before marking EOF.
+		if r.mode == "odd+parity" && r.isOddLength && parityN == dataN {
+			extra, err := r.parityReader.Read(r.parityBuffer[parityN:])
+			if extra > 0 {
+				parityN += extra
+				if err == io.EOF {
+					r.parityEOF = true
+				}
+			} else {
+				r.parityEOF = true
+			}
+		} else {
+			r.parityEOF = true
+		}
 	}
 	if parityErr != nil {
 		return 0, formatOperationError("stream reconstruction failed", "failed to read parity particle", parityErr)
@@ -654,30 +668,48 @@ func (r *StreamReconstructor) Read(p []byte) (n int, err error) {
 		return 0, io.EOF
 	}
 
-	// Validate sizes: data and parity should be same size
-	// For RAID3, data and parity particles should always be the same size
+	// One stream at EOF with same or shorter length: the other may have more bytes (e.g. odd-length file:
+	// odd has 17, parity has 18; first read can return 17 from both). Drain the non-EOF stream.
+	if r.dataEOF && !r.parityEOF && parityN <= dataN {
+		extra, err := r.parityReader.Read(r.parityBuffer[parityN:])
+		parityN += extra
+		if err == io.EOF {
+			r.parityEOF = true
+		} else if err != nil {
+			return 0, formatOperationError("stream reconstruction failed", "failed to read parity particle", err)
+		}
+	}
+	if r.parityEOF && !r.dataEOF && dataN <= parityN {
+		extra, err := r.dataReader.Read(r.dataBuffer[dataN:])
+		dataN += extra
+		if err == io.EOF {
+			r.dataEOF = true
+		} else if err != nil {
+			return 0, formatOperationError("stream reconstruction failed", "failed to read data particle", err)
+		}
+	}
+
+	// Use full read buffers; handle size mismatch per mode and EOF
 	dataData := r.dataBuffer[:dataN]
 	parityData := r.parityBuffer[:parityN]
 
 	if len(dataData) != len(parityData) {
-		// Size mismatch - this should not happen for valid RAID3 files
-		// But during streaming, we might read different amounts
-		// Only validate strictly if both streams are at EOF
-		if r.dataEOF && r.parityEOF {
-			return 0, formatOperationError("stream reconstruction failed", fmt.Sprintf("invalid sizes for reconstruction (data=%d parity=%d)", len(dataData), len(parityData)), nil)
+		// When either stream is at EOF, use full buffers so we don't drop the last byte of the longer stream
+		// (e.g. odd+parity with odd-length file: odd is 1 byte shorter than parity on final chunk)
+		if r.dataEOF || r.parityEOF {
+			// Pass full buffers; ReconstructFromOddAndParity accepts len(odd)+1 == len(parity)
+		} else {
+			// Mid-stream: both streams should match; process minimum to avoid blocking
+			minSize := len(dataData)
+			if len(parityData) < minSize {
+				minSize = len(parityData)
+			}
+			if minSize == 0 {
+				return 0, nil // Wait for more data
+			}
+			dataData = dataData[:minSize]
+			parityData = parityData[:minSize]
 		}
-		// During streaming, allow size mismatch but log a warning
-		// This can happen if one stream reads more than the other
-		// We'll process the minimum and buffer the rest (future enhancement)
-		minSize := len(dataData)
-		if len(parityData) < minSize {
-			minSize = len(parityData)
-		}
-		if minSize == 0 {
-			return 0, nil // Wait for more data
-		}
-		dataData = dataData[:minSize]
-		parityData = parityData[:minSize]
 	}
 
 	// Reconstruct missing particle

@@ -26,6 +26,42 @@ Background upload workers use `context.Background()` and don't respect parent co
 
 ## 🟡 Medium Priority
 
+### Q27: Implement Heal-on-Read for Streaming Path (Tests: TestHeal, TestHealEvenParticle, TestHealLargeFile)
+**Status**: 🟡 **ACTIVE** - Implement to re-enable skipped tests  
+**Priority**: Medium
+
+After dropping the buffered path, the backend is streaming-only. The **heal-on-read** behaviour (queue missing particle for background upload when opening in degraded mode) was only implemented in the removed buffered open path. The streaming path does not call `queueParticleUpload` when reconstructing via `StreamReconstructor`, so auto-heal on read no longer runs.
+
+**Tests currently skipped** (add to implement list so they can be re-enabled):
+- `TestHeal` – odd particle restored by heal after Open+Read and Shutdown
+- `TestHealEvenParticle` – even particle restored by heal after Open+Read and Shutdown
+- `TestHealLargeFile` – same for a larger file (100 KB)
+
+**Implementation options**: (1) When returning a `StreamReconstructor` from `openStreaming`, wrap it in a reader that buffers the reconstructed stream and on `Close()` (or when EOF is seen) reconstructs the missing particle and calls `queueParticleUpload`. (2) Or run a separate goroutine that tees the reconstructed output to a buffer and queues the upload when done. The challenge is that the streaming path does not have the full reconstructed bytes in memory until the stream is consumed.
+
+**References**: `backend/raid3/object.go` (`openStreaming` degraded branch), `backend/raid3/raid3_heal_test.go` (skipped tests).
+
+---
+
+### Q28: Fix or Document TestReadSucceedsWithUnavailableBackend (Odd+Parity Reconstruction)
+**Status**: 🟡 **ACTIVE** - Investigation / fix  
+**Priority**: Medium
+
+**Observed**: With the streaming-only path, `TestReadSucceedsWithUnavailableBackend` fails on the **odd+parity** reconstruction case (even particle missing). The test expects 35 bytes (`"Should be readable in degraded mode"`) but gets 34 bytes; the last byte is wrong (e.g. `0x0b 0x64` instead of `"ode"`). So the last logical byte is lost or corrupted when reconstructing from odd (17 bytes) + parity (18 bytes) for an odd-length file.
+
+**Why it happens**: For a 35-byte logical file, even=18, odd=17, parity=18. In `StreamReconstructor` we read from the odd particle (data) and parity particle in parallel. We then call `ReconstructFromOddAndParity(oddData, parityData, isOddLength)`, which expects `len(parity) >= len(odd)` and for odd-length uses the last parity byte as the last even byte. If the first `Read()` from parity returns **17 bytes and EOF** (instead of 18), we pass 17 and 17 to `ReconstructFromOddAndParity`, which then produces 34 bytes and the last byte is wrong. So the root cause is that the **parity reader is returning 17 bytes and EOF** for an 18-byte file on the first read.
+
+**Places to verify**:
+1. **Actual read lengths**: Add temporary debug in `StreamReconstructor.Read()` to log `dataN` and `parityN` (and `dataRes.hitEOF`, `parityRes.hitEOF`) on the first iteration when both are small. Confirm whether parity returns 17 or 18.
+2. **Underlying reader**: The parity particle is opened with `parityObj.Open(ctx, filteredOptions...)` (no range). For the local backend this is typically an `*os.File`. A single `Read(buf)` with `len(buf) > 18` should return 18 and `nil` (or 18 and EOF). If it returns 17 and EOF, the cause may be backend-specific or a wrapper.
+3. **Chunk size**: Default `chunkSize` is 8 MiB; for a 18-byte file the first read should get all 18 bytes. If any test or config forces a smaller chunk size, that could change behaviour.
+
+**Next steps**: Run with debug logging to confirm `dataN`/`parityN`; if parity really returns 17+EOF, either fix the reader behaviour or add a workaround in `StreamReconstructor` (e.g. ignore EOF when we expect one more byte for odd-length odd+parity and try one more read).
+
+**References**: `backend/raid3/particles.go` (`StreamReconstructor`), `backend/raid3/raid3_errors_test.go` (`TestReadSucceedsWithUnavailableBackend` – currently skipped).
+
+---
+
 ### Q1: Update Rollback Not Working Properly
 **Status**: 🚨 **ACTIVE** - Still needs implementation  
 **Priority**: Medium
@@ -310,7 +346,7 @@ Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIG
 
 ## 📊 Statistics
 
-Total active questions: 15. Resolved questions moved to [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) (Q2, Q4, Q5, Q7, Q20, Q24). Active by priority: High (2) - Q14: Health Check Caching, Q15: Background Worker Context. Medium (6) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching. Low (8) - Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch, Q26: Performance Test Skip Largest File.
+Total active questions: 17. Resolved questions moved to [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) (Q2, Q4, Q5, Q7, Q20, Q24). Active by priority: High (2) - Q14: Health Check Caching, Q15: Background Worker Context. Medium (8) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching, Q27: Heal-on-Read for Streaming (implement TestHeal*), Q28: TestReadSucceedsWithUnavailableBackend (odd+parity). Low (8) - Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q18: Size() Limitation, Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch, Q26: Performance Test Skip Largest File.
 
 
 **Use this file to track decisions before they're made!** 🤔

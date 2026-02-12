@@ -101,7 +101,6 @@ func TestStandard(t *testing.T) {
 			{Name: name, Key: "even", Value: evenDir},
 			{Name: name, Key: "odd", Value: oddDir},
 			{Name: name, Key: "parity", Value: parityDir},
-			{Name: name, Key: "use_streaming", Value: "true"},
 		},
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
@@ -144,7 +143,6 @@ func TestStandardBalanced(t *testing.T) {
 			{Name: name, Key: "odd", Value: oddDir},
 			{Name: name, Key: "parity", Value: parityDir},
 			{Name: name, Key: "timeout_mode", Value: "balanced"},
-			{Name: name, Key: "use_streaming", Value: "true"},
 		},
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
@@ -188,7 +186,6 @@ func TestStandardAggressive(t *testing.T) {
 			{Name: name, Key: "odd", Value: oddDir},
 			{Name: name, Key: "parity", Value: parityDir},
 			{Name: name, Key: "timeout_mode", Value: "aggressive"},
-			{Name: name, Key: "use_streaming", Value: "true"},
 		},
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
@@ -224,7 +221,6 @@ func TestAboutAggregatesChildUsage(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	})
 	require.NoError(t, err)
 
@@ -286,7 +282,6 @@ func TestIntegrationStyle_DegradedOpenAndSize(t *testing.T) {
 		"odd":           oddDir,
 		"parity":        parityDir,
 		"auto_heal":     "true",
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "Lvl3Int", "", m)
 	require.NoError(t, err)
@@ -357,7 +352,6 @@ func TestLargeDataQuick(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "Lvl3Large", "", m)
 	require.NoError(t, err)
@@ -440,7 +434,6 @@ func TestRenameFile(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestRename", "", m)
 	require.NoError(t, err)
@@ -531,7 +524,6 @@ func TestRenameFileDifferentDirectory(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestRenameDir", "", m)
 	require.NoError(t, err)
@@ -606,7 +598,6 @@ func TestDeleteFile(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestDelete", "", m)
 	require.NoError(t, err)
@@ -679,7 +670,6 @@ func TestDeleteFileIdempotent(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestDeleteIdempotent", "", m)
 	require.NoError(t, err)
@@ -738,7 +728,6 @@ func TestMoveFileBetweenDirectories(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestMove", "", m)
 	require.NoError(t, err)
@@ -818,7 +807,6 @@ func TestDirMove(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestDirMove", "", m)
 	require.NoError(t, err)
@@ -931,7 +919,6 @@ func TestCopyFileBetweenDirectories(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestCopy", "", m)
 	require.NoError(t, err)
@@ -1114,7 +1101,6 @@ func TestRenameFilePreservesParitySuffix(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestRenameParity", "", m)
 	require.NoError(t, err)
@@ -1202,7 +1188,6 @@ func TestDeepNestedDirectories(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestDeepNested", "", m)
 	require.NoError(t, err)
@@ -1346,7 +1331,6 @@ func TestConcurrentOperations(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestConcurrent", "", m)
 	require.NoError(t, err)
@@ -1529,7 +1513,6 @@ func TestAutoCleanupDefault(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 		// auto_cleanup NOT specified - should default to true
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
@@ -1583,7 +1566,6 @@ func TestAutoCleanupEnabled(t *testing.T) {
 		"odd":           oddDir,
 		"parity":        parityDir,
 		"auto_cleanup":  "true",
-		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1647,7 +1629,6 @@ func TestAutoCleanupDisabled(t *testing.T) {
 		"odd":           oddDir,
 		"parity":        parityDir,
 		"auto_cleanup":  "false",
-		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1714,7 +1695,6 @@ func TestAutoCleanupEnabledMissingRemote(t *testing.T) {
 		"odd":           "/nonexistent/odd", // Unavailable
 		"parity":        parityDir,
 		"auto_cleanup":  "true",
-		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem with unavailable backend")
 	defer func() {
@@ -1753,7 +1733,6 @@ func TestAutoCleanupEnabledMissingRemote(t *testing.T) {
 		"odd":           oddDir,
 		"parity":        parityDir,
 		"auto_cleanup":  "true",
-		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem with all backends")
 	defer func() {
@@ -1795,7 +1774,6 @@ func TestCleanUpCommand(t *testing.T) {
 		"odd":           oddDir,
 		"parity":        parityDir,
 		"auto_cleanup":  "false",
-		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1871,7 +1849,6 @@ func TestCleanUpRecursive(t *testing.T) {
 		"odd":           oddDir,
 		"parity":        parityDir,
 		"auto_cleanup":  "false",
-		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -2004,7 +1981,6 @@ func TestPurge(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create raid3 filesystem")
 	defer func() {
@@ -2099,7 +2075,6 @@ func TestCleanUpOrphanedFiles(t *testing.T) {
 		"odd":           oddDir,
 		"parity":        parityDir,
 		"auto_cleanup":  "false",
-		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -2180,7 +2155,6 @@ func TestAutoHealDirectoryReconstruction(t *testing.T) {
 			"odd":           oddDir,
 			"parity":        parityDir,
 			"auto_heal":     "true",
-			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = l3fs.Features().Shutdown(ctx) }()
@@ -2209,7 +2183,6 @@ func TestAutoHealDirectoryReconstruction(t *testing.T) {
 			"odd":           oddDir,
 			"parity":        parityDir,
 			"auto_heal":     "false",
-			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = l3fs.Features().Shutdown(ctx) }()
@@ -2248,7 +2221,6 @@ func TestAutoHealDirMove(t *testing.T) {
 			"odd":           oddDir,
 			"parity":        parityDir,
 			"auto_heal":     "true",
-			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = l3fs.Features().Shutdown(ctx) }()
@@ -2267,7 +2239,6 @@ func TestAutoHealDirMove(t *testing.T) {
 			"odd":           oddDir,
 			"parity":        parityDir,
 			"auto_heal":     "true",
-			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = srcFs.Features().Shutdown(ctx) }()
@@ -2277,7 +2248,6 @@ func TestAutoHealDirMove(t *testing.T) {
 			"odd":           oddDir,
 			"parity":        parityDir,
 			"auto_heal":     "true",
-			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = dstFs.Features().Shutdown(ctx) }()
@@ -2317,7 +2287,6 @@ func TestAutoHealDirMove(t *testing.T) {
 			"odd":           oddDir,
 			"parity":        parityDir,
 			"auto_heal":     "false",
-			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = srcFs.Features().Shutdown(ctx) }()
@@ -2327,7 +2296,6 @@ func TestAutoHealDirMove(t *testing.T) {
 			"odd":           oddDir,
 			"parity":        parityDir,
 			"auto_heal":     "false",
-			"use_streaming": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = dstFs.Features().Shutdown(ctx) }()
@@ -2367,7 +2335,6 @@ func TestUpdateLargeFile(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestUpdateLarge", "", m)
 	require.NoError(t, err)
@@ -2446,7 +2413,6 @@ func TestUpdateOddEvenLengthTransition(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	}
 	f, err := raid3.NewFs(ctx, "TestUpdateOddEven", "", m)
 	require.NoError(t, err)
@@ -2668,7 +2634,6 @@ func TestFeatureHandlingWithMask(t *testing.T) {
 		"even":          evenDir,
 		"odd":           oddDir,
 		"parity":        parityDir,
-		"use_streaming": "true",
 	})
 	require.NoError(t, err, "Failed to create raid3 filesystem")
 	defer func() {
@@ -2744,10 +2709,9 @@ func TestFeatureHandlingWithMask(t *testing.T) {
 		assert.NotNil(t, features.About, "About should be available if any backend supports it")
 	})
 
-	// Test PutStream (special logic: use_streaming OR all backends support)
+	// Test PutStream (raid3 is streaming-only; PutStream is always available)
 	t.Run("PutStreamFeature", func(t *testing.T) {
-		// With use_streaming=true, PutStream should be available
-		assert.NotNil(t, features.PutStream, "PutStream should be available with use_streaming=true")
+		assert.NotNil(t, features.PutStream, "PutStream should be available (streaming-only backend)")
 	})
 
 	// Test SlowHash (OR logic: any backend has it)
@@ -2820,7 +2784,7 @@ func TestFeatureIntersectionWithMixedRemotes(t *testing.T) {
 	// Special cases:
 	//   - ListR: available if ANY backend supports it OR all are local
 	//   - ListP: always nil (disabled)
-	//   - PutStream: available if use_streaming=true OR all backends support it
+	//   - PutStream: always available (raid3 is streaming-only)
 	//   - Shutdown: always available (raid3 implements it)
 	//   - CleanUp: always available (raid3 implements it)
 

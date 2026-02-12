@@ -98,11 +98,6 @@ This should be in the form 'remote:path'.`,
 			Default:  true,
 			Advanced: false,
 		}, {
-			Name:     "use_streaming",
-			Help:     "Use streaming processing path. When enabled, processes files in chunks instead of loading entire file into memory.",
-			Default:  true,
-			Advanced: true,
-		}, {
 			Name:     "chunk_size",
 			Help:     "Chunk size for streaming operations",
 			Default:  fs.SizeSuffix(defaultChunkSize),
@@ -260,8 +255,7 @@ type Options struct {
 	AutoCleanup  bool          `config:"auto_cleanup"`
 	AutoHeal     bool          `config:"auto_heal"`
 	Rollback     bool          `config:"rollback"`
-	UseStreaming bool          `config:"use_streaming"`
-	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
+	ChunkSize fs.SizeSuffix `config:"chunk_size"`
 }
 
 // Fs represents a raid3 backend with striped storage and parity
@@ -304,9 +298,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}
 	if _, ok := m.Get("rollback"); !ok {
 		opt.Rollback = true
-	}
-	if _, ok := m.Get("use_streaming"); !ok {
-		opt.UseStreaming = true
 	}
 	if _, ok := m.Get("chunk_size"); !ok {
 		opt.ChunkSize = fs.SizeSuffix(defaultChunkSize)
@@ -679,19 +670,8 @@ checkRemotes:
 		f.features.MkdirMetadata = f.MkdirMetadata
 	}
 
-	// Enable PutStream if all backends support it OR if use_streaming is enabled
-	// PutStream is used for unknown-size uploads, which raid3 handles via putStreaming()
-	if f.opt.UseStreaming {
-		f.features.PutStream = f.PutStream
-	} else {
-		// In buffered mode, check if all backends support PutStream
-		evenPutStream := f.even.Features().PutStream != nil
-		oddPutStream := f.odd.Features().PutStream != nil
-		parityPutStream := f.parity.Features().PutStream != nil
-		if evenPutStream && oddPutStream && parityPutStream {
-			f.features.PutStream = f.PutStream
-		}
-	}
+	// Put is streaming-only; expose PutStream for unknown-size uploads.
+	f.features.PutStream = f.PutStream
 
 	// Shutdown and CleanUp: raid3 implements these independently of backends
 	// Override Mask() which may have set them to nil

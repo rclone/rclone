@@ -4,7 +4,7 @@ package raid3
 // This file contains file operations for the raid3 backend.
 //
 // It includes:
-//   - Put: Upload objects (buffered and streaming)
+//   - Put: Upload objects (streaming)
 //   - Move: Move objects between locations
 //   - Copy: Copy objects between locations
 //   - DirMove: Move directories between locations
@@ -24,12 +24,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Put uploads an object
+// Put uploads an object using the streaming path (single code path).
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	if f.opt.UseStreaming {
-		return f.putStreaming(ctx, in, src, options...)
-	}
-	return f.putBuffered(ctx, in, src, options...)
+	return f.putStreaming(ctx, in, src, options...)
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
@@ -39,128 +36,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // nil and the error
 func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return f.Put(ctx, in, src, options...)
-}
-
-// putBuffered uploads an object using the buffered (memory-based) approach
-func (f *Fs) putBuffered(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	// Input validation
-	if err := validateContext(ctx, "put"); err != nil {
-		return nil, err
-	}
-	if err := validateObjectInfo(src, "put"); err != nil {
-		return nil, err
-	}
-	if err := validateRemote(src.Remote(), "put"); err != nil {
-		return nil, err
-	}
-	if in == nil {
-		return nil, formatOperationError("put failed", "input reader cannot be nil", nil)
-	}
-
-	// Pre-flight check: Enforce strict RAID 3 write policy
-	// Fail immediately if any backend is unavailable to prevent degraded writes
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return nil, formatOperationError("write blocked in degraded mode (RAID 3 policy)", "", err)
-	}
-
-	// Disable retries for strict RAID 3 write policy
-	// This prevents rclone's retry logic from creating degraded files
-	ctx = f.disableRetriesForWrites(ctx)
-
-	// Read all data
-	data, err := io.ReadAll(in)
-	if err != nil {
-		return nil, formatOperationError("put failed", "failed to read data", err)
-	}
-
-	// Split into even and odd bytes
-	evenData, oddData := SplitBytes(data)
-
-	// Calculate parity
-	parityData := CalculateParity(evenData, oddData)
-
-	// Determine if original data is odd length
-	isOddLength := len(data)%2 == 1
-
-	// Create wrapper ObjectInfo for each particle
-	evenInfo := &particleObjectInfo{
-		ObjectInfo: src,
-		size:       int64(len(evenData)),
-	}
-	oddInfo := &particleObjectInfo{
-		ObjectInfo: src,
-		size:       int64(len(oddData)),
-	}
-	parityInfo := &particleObjectInfo{
-		ObjectInfo: src,
-		size:       int64(len(parityData)),
-		remote:     GetParityFilename(src.Remote(), isOddLength),
-	}
-
-	// Track uploaded particles for rollback
-	var uploadedParticles []fs.Object
-	var uploadedMu sync.Mutex
-	defer func() {
-		if err != nil && f.opt.Rollback {
-			uploadedMu.Lock()
-			particles := uploadedParticles
-			uploadedMu.Unlock()
-			if rollbackErr := f.rollbackPut(ctx, particles); rollbackErr != nil {
-				fs.Errorf(f, "Rollback failed during Put: %v", rollbackErr)
-			}
-		}
-	}()
-
-	g, gCtx := errgroup.WithContext(ctx)
-
-	// Upload even bytes
-	g.Go(func() error {
-		reader := bytes.NewReader(evenData)
-		obj, err := f.even.Put(gCtx, reader, evenInfo, options...)
-		if err != nil {
-			return formatParticleError(f.even, "even", "upload failed", fmt.Sprintf("remote %q", src.Remote()), err)
-		}
-		uploadedMu.Lock()
-		uploadedParticles = append(uploadedParticles, obj)
-		uploadedMu.Unlock()
-		return nil
-	})
-
-	// Upload odd bytes
-	g.Go(func() error {
-		reader := bytes.NewReader(oddData)
-		obj, err := f.odd.Put(gCtx, reader, oddInfo, options...)
-		if err != nil {
-			return formatParticleError(f.odd, "odd", "upload failed", fmt.Sprintf("remote %q", src.Remote()), err)
-		}
-		uploadedMu.Lock()
-		uploadedParticles = append(uploadedParticles, obj)
-		uploadedMu.Unlock()
-		return nil
-	})
-
-	// Upload parity
-	g.Go(func() error {
-		reader := bytes.NewReader(parityData)
-		obj, err := f.parity.Put(gCtx, reader, parityInfo, options...)
-		if err != nil {
-			return formatParticleError(f.parity, "parity", "upload failed", fmt.Sprintf("remote %q", GetParityFilename(src.Remote(), isOddLength)), err)
-		}
-		uploadedMu.Lock()
-		uploadedParticles = append(uploadedParticles, obj)
-		uploadedMu.Unlock()
-		return nil
-	})
-
-	err = g.Wait()
-	if err != nil {
-		return nil, err
-	}
-
-	return &Object{
-		fs:     f,
-		remote: src.Remote(),
-	}, nil
 }
 
 // createParticleInfo creates a particleObjectInfo for a given particle type

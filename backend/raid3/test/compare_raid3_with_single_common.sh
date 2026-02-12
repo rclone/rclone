@@ -305,7 +305,6 @@ parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR_REL}
 timeout_mode = aggressive
 auto_cleanup = true
 auto_heal = false
-use_streaming = true
 
 # Single local remote (alias type)
 [${LOCAL_SINGLE_REMOTE}]
@@ -387,7 +386,6 @@ parity = ${MINIO_PARITY_REMOTE}:
 timeout_mode = aggressive
 auto_cleanup = true
 auto_heal = false
-use_streaming = true
 
 # RAID3 remote using local and minio storage (mixed file/object backend)
 [localminioraid3]
@@ -398,7 +396,6 @@ parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR_REL}
 timeout_mode = aggressive
 auto_cleanup = true
 auto_heal = false
-use_streaming = true
 
 [${MINIO_SINGLE_REMOTE}]
 type = s3
