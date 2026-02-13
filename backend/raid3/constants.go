@@ -31,9 +31,18 @@ const (
 	// defaultChunkSize is the default chunk size for streaming operations (8 MiB)
 	defaultChunkSize = 8 * 1024 * 1024
 
-	// minReadChunkSize is the minimum read chunk size for streaming (2 MiB)
-	// This is used when reading input for streaming operations
-	minReadChunkSize = 2 * 1024 * 1024
+	// streamReadChunkSize is the read chunk size for the stream splitter (64 KiB).
+	// Small chunks give natural backpressure and avoid truncation with AsyncReader.
+	// Used by both Put (operations.go) and Update (object.go) streaming paths.
+	streamReadChunkSize = 64 * 1024
+
+	// streamProducerBufferSize is the buffer size (8 MiB) between the source reader
+	// and the stream splitter. A producer goroutine reads from the source into a
+	// pipe; the splitter reads from the pipe via this buffered reader. This decouples
+	// the source (e.g. Account/AsyncReader from rclone copy) from the splitter's write
+	// rate to the three particle pipes, so the full stream is read even when backends
+	// are slow. Matches the compress backend's approach (see backend/compress/compress.go bufferSize).
+	streamProducerBufferSize = 8 * 1024 * 1024
 )
 
 // Upload queue and worker constants

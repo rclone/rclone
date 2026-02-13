@@ -79,6 +79,52 @@ func TestSplitBytes(t *testing.T) {
 	}
 }
 
+// TestSplitBytesWithOffset verifies that splitting with global offset produces
+// correct even/odd assignment across chunk boundaries (e.g. two 1-byte reads
+// at positions 0 and 1 must yield one byte to even and one to odd, not both to even).
+func TestSplitBytesWithOffset(t *testing.T) {
+	// Offset 0 must match SplitBytes
+	t.Run("offset_zero_matches_SplitBytes", func(t *testing.T) {
+		data := []byte{0x01, 0x02, 0x03, 0x04, 0x05}
+		even0, odd0 := SplitBytes(data)
+		even1, odd1 := SplitBytesWithOffset(data, 0)
+		assert.Equal(t, even0, even1)
+		assert.Equal(t, odd0, odd1)
+	})
+	// Two 1-byte reads: position 0 -> even, position 1 -> odd (regression test for compression even=odd+2)
+	t.Run("two_one_byte_reads", func(t *testing.T) {
+		e0, o0 := SplitBytesWithOffset([]byte{0xAA}, 0)
+		e1, o1 := SplitBytesWithOffset([]byte{0xBB}, 1)
+		require.Len(t, e0, 1)
+		require.Len(t, o0, 0)
+		require.Len(t, e1, 0)
+		require.Len(t, o1, 1)
+		assert.Equal(t, byte(0xAA), e0[0])
+		assert.Equal(t, byte(0xBB), o1[0])
+		// Combined: even has 1 byte, odd has 1 byte (valid; was broken as even=2, odd=0)
+		merged, err := MergeBytes(append(e0, e1...), append(o0, o1...))
+		require.NoError(t, err)
+		assert.Equal(t, []byte{0xAA, 0xBB}, merged)
+	})
+	// Chunked split with offset matches single SplitBytes of full stream
+	t.Run("chunked_matches_whole", func(t *testing.T) {
+		full := []byte{0x10, 0x20, 0x30, 0x40, 0x50, 0x60}
+		evenFull, oddFull := SplitBytes(full)
+		var evenChunk, oddChunk []byte
+		for off := 0; off < len(full); off += 2 {
+			chunk := full[off:]
+			if len(chunk) > 2 {
+				chunk = chunk[:2]
+			}
+			e, o := SplitBytesWithOffset(chunk, off)
+			evenChunk = append(evenChunk, e...)
+			oddChunk = append(oddChunk, o...)
+		}
+		assert.Equal(t, evenFull, evenChunk)
+		assert.Equal(t, oddFull, oddChunk)
+	})
+}
+
 // TestMergeBytes tests the reconstruction of original data from even and
 // odd byte slices.
 //
@@ -313,6 +359,12 @@ func TestCalculateParity(t *testing.T) {
 			even:       []byte{0x01, 0x03, 0x05, 0x07},
 			odd:        []byte{0x02, 0x04, 0x06},
 			wantParity: []byte{0x01 ^ 0x02, 0x03 ^ 0x04, 0x05 ^ 0x06, 0x07}, // [0x03, 0x07, 0x03, 0x07]
+		},
+		{
+			name:       "odd one larger (from SplitBytesWithOffset offset-odd chunk)",
+			even:       []byte{0xAA},
+			odd:        []byte{0xBB, 0xCC},
+			wantParity: []byte{0xAA ^ 0xBB}, // parity length = len(even); one odd byte has no partner
 		},
 		{
 			name:       "Hello, World!",

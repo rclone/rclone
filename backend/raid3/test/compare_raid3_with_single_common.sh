@@ -205,6 +205,16 @@ create_rclone_config() {
   
   log_info "config" "Creating rclone config file: ${config_file}"
   
+  # Optional compression for raid3 remotes (when RAID3_COMPRESSION=snappy or zstd, add compression = ...)
+  local raid3_compression_line=""
+  if [[ "${RAID3_COMPRESSION:-}" == "snappy" ]]; then
+    raid3_compression_line="compression = snappy"
+    log_info "config" "RAID3 compression: snappy (raid3 remotes will use compression = snappy)"
+  elif [[ "${RAID3_COMPRESSION:-}" == "zstd" ]]; then
+    raid3_compression_line="compression = zstd"
+    log_info "config" "RAID3 compression: zstd (raid3 remotes will use compression = zstd)"
+  fi
+  
   # Convert absolute paths to relative paths (relative to test directory)
   # This ensures the config file is portable across different machines
   make_relative_path() {
@@ -305,6 +315,7 @@ parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR_REL}
 timeout_mode = aggressive
 auto_cleanup = true
 auto_heal = false
+${raid3_compression_line}
 
 # Single local remote (alias type)
 [${LOCAL_SINGLE_REMOTE}]
@@ -386,6 +397,7 @@ parity = ${MINIO_PARITY_REMOTE}:
 timeout_mode = aggressive
 auto_cleanup = true
 auto_heal = false
+${raid3_compression_line}
 
 # RAID3 remote using local and minio storage (mixed file/object backend)
 [localminioraid3]
@@ -396,6 +408,7 @@ parity = ${LOCAL_PARITY_REMOTE}:${LOCAL_PARITY_DIR_REL}
 timeout_mode = aggressive
 auto_cleanup = true
 auto_heal = false
+${raid3_compression_line}
 
 [${MINIO_SINGLE_REMOTE}]
 type = s3

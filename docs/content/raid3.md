@@ -285,20 +285,30 @@ Properties:
 - Type:        bool
 - Default:     true
 
-### Advanced options
+#### --raid3-compression
 
-Here are the Advanced options specific to raid3 (RAID 3 storage with byte-level data striping across three remotes).
+Compression for object data: none (default), snappy, or zstd.
 
-#### --raid3-use-streaming
-
-Use streaming processing path. When enabled, processes files in chunks instead of loading entire file into memory.
+When set, data is compressed after hashing and before splitting across particles. Reads use the footer to decompress.
+Snappy is fast with moderate ratio; zstd gives better compression at a default level (good balance of speed and ratio).
 
 Properties:
 
-- Config:      use_streaming
-- Env Var:     RCLONE_RAID3_USE_STREAMING
-- Type:        bool
-- Default:     true
+- Config:      compression
+- Env Var:     RCLONE_RAID3_COMPRESSION
+- Type:        string
+- Default:     "none"
+- Examples:
+  - "none"
+    - No compression
+  - "snappy"
+    - Snappy compression (fast)
+  - "zstd"
+    - Zstandard compression (better ratio, default level)
+
+### Advanced options
+
+Here are the Advanced options specific to raid3 (RAID 3 storage with byte-level data striping across three remotes).
 
 #### --raid3-chunk-size
 

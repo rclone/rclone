@@ -204,8 +204,8 @@ func TestStandardAggressive(t *testing.T) {
 // and ensures that calling rclone about on a raid3 remote works when the
 // child remotes implement About.
 func TestAboutAggregatesChildUsage(t *testing.T) {
-	t.Parallel()
-
+	// Do not use t.Parallel() - running alongside TestStandard (fstests.Run) can cause
+	// putStreaming pipe/producer goroutine deadlocks under load.
 	ctx := context.Background()
 
 	evenDir := t.TempDir()

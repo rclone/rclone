@@ -82,9 +82,10 @@ type = raid3
 even = /path/to/backend1       # Even-indexed bytes (or s3:bucket1/data)
 odd = /path/to/backend2        # Odd-indexed bytes (or gdrive:backup/data)
 parity = /path/to/backend3     # XOR parity (or dropbox:parity)
+compression = none              # Optional: none (default), snappy, or zstd
 ```
 
-All three remotes can use different storage backends (local filesystem, S3, Google Drive, Dropbox, etc.).
+All three remotes can use different storage backends (local filesystem, S3, Google Drive, Dropbox, etc.). The **compression** option controls whether object data is compressed before splitting: `none` (default) stores data as-is; `snappy` compresses after hashing (fast, moderate ratio); `zstd` uses Zstandard (better ratio, default level). Reads use the footer to decompress transparently.
 
 ## Feature Handling with Mixed Remotes
 

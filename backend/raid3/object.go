@@ -12,6 +12,7 @@ package raid3
 //   - Degraded mode handling (2/3 particles present) with automatic reconstruction
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/hex"
@@ -156,8 +157,10 @@ func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	}
 
 	reportedSize := o.Size()
+	// When Size() is -1 (e.g. backend inconsistency or race during verify), still compute hash from stream
+	// so copy verification can succeed. We skip size validation in that case.
 	if reportedSize < 0 {
-		return "", formatOperationError("hash calculation failed", fmt.Sprintf("object size is invalid (%d)", reportedSize), nil)
+		fs.Debugf(o, "Hash: Size() returned -1, hashing from stream without size check")
 	}
 
 	reader, err := o.Open(ctx)
@@ -431,7 +434,8 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		evenPayload := evenSize - FooterSize
 		oddPayload := oddSize - FooterSize
 		if !ValidateParticleSizes(evenPayload, oddPayload) {
-			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes: even=%d, odd=%d for remote %q", evenPayload, oddPayload, o.remote), nil)
+			return nil, formatOperationError("open failed",
+				fmt.Sprintf("invalid particle sizes: even=%d, odd=%d for remote %q (expected even=odd or even=odd+1; object may be corrupted from a failed or partial upload; try re-uploading or remove the object and re-upload)", evenPayload, oddPayload, o.remote), nil)
 		}
 
 		expectedSize := evenPayload + oddPayload
@@ -448,6 +452,20 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		// Empty file: return a reader that yields 0 bytes (no need to open particles; otherwise we'd read the footer as content)
 		if expectedSize == 0 {
 			return io.NopCloser(bytes.NewReader(nil)), nil
+		}
+
+		// Read footer from one particle to get compression type before opening payload streams
+		var footer *Footer
+		footerReader, ferr := evenObj.Open(ctx, &fs.RangeOption{Start: evenSize - FooterSize, End: evenSize - 1})
+		if ferr == nil {
+			footerBuf := make([]byte, FooterSize)
+			_, _ = io.ReadFull(footerReader, footerBuf)
+			_ = footerReader.Close()
+			footer, _ = ParseFooter(footerBuf)
+		}
+		compression := CompressionNone
+		if footer != nil {
+			compression = footer.Compression
 		}
 
 		// Extract range/seek options before opening particle readers
@@ -486,6 +504,13 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 
 		merger := NewStreamMerger(evenReader, oddReader, chunkSize)
 
+		// Decompress if object was stored with compression
+		out, err := newDecompressingReadCloser(merger, compression)
+		if err != nil {
+			_ = merger.Close()
+			return nil, err
+		}
+
 		// Handle range/seek options by wrapping the merger
 		// For now, we'll apply range filtering on the merged stream (simple approach)
 		// TODO: Optimize to apply range to particle readers directly (future enhancement)
@@ -494,15 +519,16 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			// Apply range filtering on merged stream
 			// This reads the entire stream but filters the output
 			// Future optimization: apply range to particle readers directly
-			return newRangeFilterReader(merger, rangeStart, rangeEnd, o.Size()), nil
+			return newRangeFilterReader(out, rangeStart, rangeEnd, o.Size()), nil
 		}
 
-		return merger, nil
+		return out, nil
 	}
 	// Degraded mode: one particle missing - use StreamReconstructor
 	var parityObj fs.Object
 	var errParity error
 	var isOddLength bool
+	var degradedFooter *Footer
 	parityObj, errParity = o.fs.parity.NewObject(ctx, o.remote)
 	if errParity != nil {
 		if errEven != nil && errOdd != nil {
@@ -530,8 +556,13 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			_ = footerReader.Close()
 			if ft, parseErr := ParseFooter(footerBuf); parseErr == nil {
 				isOddLength = ft.ContentLength%2 == 1
+				degradedFooter = ft
 			}
 		}
+	}
+	degradedCompression := CompressionNone
+	if degradedFooter != nil {
+		degradedCompression = degradedFooter.Compression
 	}
 
 	// Open known data + parity and reconstruct
@@ -584,14 +615,17 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		reconstructor := NewStreamReconstructor(evenReader, parityReader, "even+parity", isOddLength, chunkSize)
 		fs.Infof(o, "Reconstructed %s from even+parity (degraded mode, streaming)", o.remote)
 
-		// Note: Heal operations would need to be adapted for streaming
-		// For now, we skip auto-heal in streaming mode (can be added later)
-
-		if rangeStart > 0 || rangeEnd >= 0 {
-			return newRangeFilterReader(reconstructor, rangeStart, rangeEnd, o.Size()), nil
+		out, err := newDecompressingReadCloser(reconstructor, degradedCompression)
+		if err != nil {
+			_ = reconstructor.Close()
+			return nil, err
 		}
 
-		return reconstructor, nil
+		if rangeStart > 0 || rangeEnd >= 0 {
+			return newRangeFilterReader(out, rangeStart, rangeEnd, o.Size()), nil
+		}
+
+		return out, nil
 	}
 	if errOdd == nil {
 		oddSize := oddObj.Size()
@@ -642,14 +676,17 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		reconstructor := NewStreamReconstructor(oddReader, parityReader, "odd+parity", isOddLength, chunkSize)
 		fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode, streaming)", o.remote)
 
-		// Note: Heal operations would need to be adapted for streaming
-		// For now, we skip auto-heal in streaming mode (can be added later)
-
-		if rangeStart > 0 || rangeEnd >= 0 {
-			return newRangeFilterReader(reconstructor, rangeStart, rangeEnd, o.Size()), nil
+		out, err := newDecompressingReadCloser(reconstructor, degradedCompression)
+		if err != nil {
+			_ = reconstructor.Close()
+			return nil, err
 		}
 
-		return reconstructor, nil
+		if rangeStart > 0 || rangeEnd >= 0 {
+			return newRangeFilterReader(out, rangeStart, rangeEnd, o.Size()), nil
+		}
+
+		return out, nil
 	}
 	return nil, fmt.Errorf("cannot reconstruct: no data particle available")
 }
@@ -823,15 +860,16 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 
 	// Handle empty file case
 	srcSize := src.Size()
+	compression, _ := ConfigToFooterCompression(o.fs.opt.Compression) // validated in NewFs
 	if srcSize == 0 {
 		mtime := effectiveModTime(ctx, o.fs, src, options)
-		ft := FooterFromReconstructed(0, nil, nil, mtime, CompressionNone, ShardEven)
+		ft := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardEven)
 		fb, _ := ft.MarshalBinary()
 		evenR := bytes.NewReader(fb)
-		ft2 := FooterFromReconstructed(0, nil, nil, mtime, CompressionNone, ShardOdd)
+		ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardOdd)
 		fb2, _ := ft2.MarshalBinary()
 		oddR := bytes.NewReader(fb2)
-		ft3 := FooterFromReconstructed(0, nil, nil, mtime, CompressionNone, ShardParity)
+		ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardParity)
 		fb3, _ := ft3.MarshalBinary()
 		parityR := bytes.NewReader(fb3)
 		evenInfo := createParticleInfo(o.fs, src, "even", FooterSize, false)
@@ -867,12 +905,6 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		return nil
 	}
 
-	// Configuration: Read 2MB chunks (produces ~1MB per particle)
-	readChunkSize := int64(o.fs.opt.ChunkSize) * 2
-	if readChunkSize < minReadChunkSize {
-		readChunkSize = minReadChunkSize
-	}
-
 	// Determine if file is odd-length from source size (if available)
 	// If size is unknown (-1), we'll determine it during streaming
 	isOddLength := srcSize > 0 && srcSize%2 == 1
@@ -890,57 +922,33 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		isOddLengthCh <- false // Default to even-length
 	}
 
-	// Use errgroup to coordinate input reading/splitting and Update operations
+	// Use errgroup for the Update goroutines; run the splitter in the calling goroutine
+	// so the source reader is consumed on the same goroutine that called Update,
+	// avoiding deadlocks with pipe/async readers (same pattern as Put in operations.go).
 	g, gCtx := errgroup.WithContext(ctx)
 	var uploadedMu sync.Mutex
 
-	// Goroutine 1: Read input, split into even/odd/parity, append footer then close
 	hasher := newHashingReader(in)
-	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, int(readChunkSize), isOddLengthCh)
-	g.Go(func() error {
-		errSplit := splitter.Split(hasher)
-		if errSplit != nil {
-			_ = evenPipeW.Close()
-			_ = oddPipeW.Close()
-			_ = parityPipeW.Close()
-			return errSplit
+	splitInput := io.Reader(hasher)
+	if o.fs.opt.Compression != "none" && o.fs.opt.Compression != "" {
+		cr, err := newCompressingReader(hasher, o.fs.opt.Compression)
+		if err != nil {
+			return fmt.Errorf("compression: %w", err)
 		}
-		contentLength := hasher.ContentLength()
-		md5Sum := hasher.MD5Sum()
-		sha256Sum := hasher.SHA256Sum()
-		mtime := effectiveModTime(gCtx, o.fs, src, options)
-		for shard := 0; shard < 3; shard++ {
-			ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, CompressionNone, shard)
-			fb, errMarshal := ft.MarshalBinary()
-			if errMarshal != nil {
-				_ = evenPipeW.Close()
-				_ = oddPipeW.Close()
-				_ = parityPipeW.Close()
-				return errMarshal
-			}
-			var w io.Writer
-			switch shard {
-			case ShardEven:
-				w = evenPipeW
-			case ShardOdd:
-				w = oddPipeW
-			case ShardParity:
-				w = parityPipeW
-			}
-			if _, err := w.Write(fb); err != nil {
-				_ = evenPipeW.Close()
-				_ = oddPipeW.Close()
-				_ = parityPipeW.Close()
-				return err
-			}
-		}
-		_ = evenPipeW.Close()
-		_ = oddPipeW.Close()
-		_ = parityPipeW.Close()
-		return nil
-	})
+		splitInput = cr
+	}
+	// Same producer goroutine + bufio as Put (operations.go) so the full stream is read
+	producerPipeR, producerPipeW := io.Pipe()
+	go func() {
+		_, copyErr := io.Copy(producerPipeW, splitInput)
+		_ = producerPipeW.CloseWithError(copyErr)
+	}()
+	splitInput = bufio.NewReaderSize(producerPipeR, streamProducerBufferSize)
 
-	// Goroutine 2: Update even particle (reads from evenPipeR)
+	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, streamReadChunkSize, isOddLengthCh)
+
+	// Start Update goroutines first so they are reading from pipes when the splitter writes
+	// Goroutine 1: Update even particle (reads from evenPipeR)
 	g.Go(func() error {
 		defer func() { _ = evenPipeR.Close() }()
 		evenInfo := createParticleInfo(o.fs, src, "even", -1, isOddLength)
@@ -954,7 +962,7 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		return nil
 	})
 
-	// Goroutine 3: Update odd particle (reads from oddPipeR)
+	// Goroutine 2: Update odd particle (reads from oddPipeR)
 	g.Go(func() error {
 		defer func() { _ = oddPipeR.Close() }()
 		oddInfo := createParticleInfo(o.fs, src, "odd", -1, isOddLength)
@@ -968,7 +976,7 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		return nil
 	})
 
-	// Goroutine 4: Update or create parity particle (reads from parityPipeR)
+	// Goroutine 3: Update or create parity particle (reads from parityPipeR)
 	g.Go(func() error {
 		defer func() { _ = parityPipeR.Close() }()
 
@@ -1008,7 +1016,51 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		return nil
 	})
 
-	// Wait for all goroutines to complete
+	// Run splitter in this goroutine so the source reader is consumed here (same pattern as Put)
+	errSplit := splitter.Split(splitInput)
+	if errSplit != nil {
+		_ = evenPipeW.CloseWithError(errSplit)
+		_ = oddPipeW.CloseWithError(errSplit)
+		_ = parityPipeW.CloseWithError(errSplit)
+		_ = g.Wait()
+		return errSplit
+	}
+	contentLength := hasher.ContentLength()
+	md5Sum := hasher.MD5Sum()
+	sha256Sum := hasher.SHA256Sum()
+	mtime := effectiveModTime(gCtx, o.fs, src, options)
+	for shard := 0; shard < 3; shard++ {
+		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, shard)
+		fb, errMarshal := ft.MarshalBinary()
+		if errMarshal != nil {
+			_ = evenPipeW.Close()
+			_ = oddPipeW.Close()
+			_ = parityPipeW.Close()
+			_ = g.Wait()
+			return errMarshal
+		}
+		var w io.Writer
+		switch shard {
+		case ShardEven:
+			w = evenPipeW
+		case ShardOdd:
+			w = oddPipeW
+		case ShardParity:
+			w = parityPipeW
+		}
+		if _, err := w.Write(fb); err != nil {
+			_ = evenPipeW.Close()
+			_ = oddPipeW.Close()
+			_ = parityPipeW.Close()
+			_ = g.Wait()
+			return err
+		}
+	}
+	_ = evenPipeW.Close()
+	_ = oddPipeW.Close()
+	_ = parityPipeW.Close()
+
+	// Wait for all Update goroutines to complete
 	if err2 = g.Wait(); err2 != nil {
 		return err2
 	}

@@ -33,8 +33,7 @@ func fileExistsOnDir(t *testing.T, dir string, remote string) bool {
 }
 
 func TestHealCommandReconstructsMissingParticle(t *testing.T) {
-	t.Parallel()
-
+	// Do not use t.Parallel() - running alongside TestStandard can cause deadlocks.
 	ctx := context.Background()
 
 	evenDir := t.TempDir()
@@ -106,8 +105,7 @@ func TestHealCommandReconstructsMissingParticle(t *testing.T) {
 }
 
 func TestHealCommandSingleFile(t *testing.T) {
-	t.Parallel()
-
+	// Do not use t.Parallel() - running alongside TestStandard can cause deadlocks.
 	ctx := context.Background()
 
 	evenDir := t.TempDir()

@@ -55,11 +55,12 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -h|--help)
       cat <<EOF
-Usage: ${SCRIPT_NAME}
+Usage: ${SCRIPT_NAME} [options]
 
 Setup the RAID3 integration test environment.
 
 Options:
+  -c, --compression  Generate config with compression = snappy for raid3 remotes
   -h, --help         Display this help message
 
 This script will:
@@ -70,6 +71,10 @@ The script is idempotent and safe to run multiple times.
 Tests should be run from the test directory: backend/raid3/test
 EOF
       exit 0
+      ;;
+    -c|--compression)
+      export RAID3_COMPRESSION=snappy
+      shift
       ;;
     *)
       echo "ERROR: Unknown option: $1" >&2
@@ -135,8 +140,8 @@ if [[ -f "${CONFIG_FILE}" ]]; then
 fi
 
 # Use the create_rclone_config function from common.sh
-# Call with force=1 if file doesn't exist or needs regeneration, otherwise force=0 for idempotent behavior
-if [[ ${NEEDS_REGENERATION} -eq 1 ]]; then
+# Call with force=1 if file doesn't exist, needs regeneration, or RAID3_COMPRESSION is set (so config matches)
+if [[ ${NEEDS_REGENERATION} -eq 1 || -n "${RAID3_COMPRESSION:-}" ]]; then
   if create_rclone_config "${CONFIG_FILE}" 1; then
     log_pass "setup" "Config file regenerated successfully: ${CONFIG_FILE}"
   else

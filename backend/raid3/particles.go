@@ -44,6 +44,38 @@ func SplitBytes(data []byte) (even []byte, odd []byte) {
 	return even, odd
 }
 
+// SplitBytesWithOffset splits data into even and odd bytes using global stream position.
+// startOffset is the global index of data[0]. Use this when concatenating multiple reads
+// so that bytes are assigned to even/odd by global position (e.g. two 1-byte reads at
+// positions 0 and 1 produce one byte to even and one to odd, not both to even).
+func SplitBytesWithOffset(data []byte, startOffset int) (even []byte, odd []byte) {
+	n := len(data)
+	if n == 0 {
+		return nil, nil
+	}
+	var evenLen, oddLen int
+	if startOffset%2 == 0 {
+		evenLen = (n + 1) / 2
+		oddLen = n / 2
+	} else {
+		evenLen = n / 2
+		oddLen = (n + 1) / 2
+	}
+	even = make([]byte, evenLen)
+	odd = make([]byte, oddLen)
+	var ei, oi int
+	for i := 0; i < n; i++ {
+		if (startOffset+i)%2 == 0 {
+			even[ei] = data[i]
+			ei++
+		} else {
+			odd[oi] = data[i]
+			oi++
+		}
+	}
+	return even, odd
+}
+
 // MergeBytes merges even and odd indexed bytes back into original data
 func MergeBytes(even []byte, odd []byte) ([]byte, error) {
 	// Input validation - allow nil slices (they will be treated as empty)
@@ -71,19 +103,23 @@ func MergeBytes(even []byte, odd []byte) ([]byte, error) {
 	return result, nil
 }
 
-// CalculateParity calculates XOR parity for even and odd particles
-// For even-length data: parity[i] = even[i] XOR odd[i]
-// For odd-length data: parity[i] = even[i] XOR odd[i], except last byte which is just even[last]
+// CalculateParity calculates XOR parity for even and odd particles.
+// Parity length equals even length (RAID 3 layout). Handles both len(even) >= len(odd)
+// and len(odd) == len(even)+1 (from SplitBytesWithOffset when startOffset is odd).
 func CalculateParity(even []byte, odd []byte) []byte {
 	parityLen := len(even) // Parity size always equals even size
 	parity := make([]byte, parityLen)
 
-	// XOR pairs of even and odd bytes
-	for i := 0; i < len(odd); i++ {
+	// XOR pairs: only iterate over indices present in both (avoids panic when len(odd) > len(even))
+	nPair := len(even)
+	if len(odd) < nPair {
+		nPair = len(odd)
+	}
+	for i := 0; i < nPair; i++ {
 		parity[i] = even[i] ^ odd[i]
 	}
 
-	// If odd length, last parity byte is just the last even byte (no XOR partner)
+	// If we have one more even byte than odd, last parity byte is just the last even byte (no XOR partner)
 	if len(even) > len(odd) {
 		parity[len(even)-1] = even[len(even)-1]
 	}

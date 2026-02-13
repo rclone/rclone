@@ -195,11 +195,11 @@ Same backend overlap issue as `union` and `combine`. Likely fails with "overlapp
 
 ---
 
-### Q9: Compression Support with Streaming 🔮 **DECISION NEEDED**
-**Status**: 🟢 **ACTIVE** - Research complete, awaiting decision  
+### Q9: Compression Support with Streaming
+**Status**: ✅ **RESOLVED** - Implemented (Snappy and Zstd)  
 **Question**: Should raid3 support optional compression (Snappy/LZ4) to reduce storage overhead?
 
-**Context**: Current storage overhead is 150% (even + odd + parity). Compression could reduce this significantly (e.g., ~75% overhead with Snappy for text files, ~50% savings). **Critical**: Must compress BEFORE splitting to preserve patterns and achieve good compression ratio (compressing after splitting destroys patterns and reduces ratio by ~40%). Streaming support is now implemented (see Q2 below - resolved). Options: Snappy (fast, low CPU), LZ4 (very fast, low CPU), or configurable. Decision needed: whether to implement, which algorithm, and configuration approach.
+**Resolution**: Implemented. The backend supports optional compression via the `compression` option: `none` (default), `snappy`, or `zstd`. Data is compressed after hashing and before splitting; reads use the footer's Compression field to decompress. Snappy is fast with moderate ratio; zstd gives better compression at a default level. See README Configuration.
 
 ---
 

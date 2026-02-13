@@ -21,6 +21,7 @@
 # Options:
 #   --storage-type <type>    Select storage type: 'minio' or 'local'
 #   -v, --verbose            Verbose output
+#   -c, --compression        Use Snappy compression for raid3 remotes (regenerates config)
 #   --skip-mc                Skip mc tests (if mc not available, minio only)
 #   --skip-cp                Skip cp tests (local only)
 #   --iterations N            Number of iterations (default: 11)
@@ -94,8 +95,19 @@ declare -a OPERATIONS=("upload" "download")
 
 # Results storage: using environment variables to avoid associative arrays
 # (for compatibility with older bash versions that don't support declare -A)
-# Format: RESULT_DURATION_<key>, RESULT_BYTES_<key>, RESULT_STATUS_<key>
-# where key is sanitized (e.g., "miniosingle-rclone_4K_upload" -> "miniosingle-rclone_4K_upload")
+# Format: RESULT_DURATION_<key>, RESULT_BYTES_<key>, RESULT_STATUS_<key>, RESULT_SIZE_<key>
+# where key is sanitized (e.g., "miniosingle-rclone_4K_upload").
+# SIZE is (even_particle + odd_particle) / original_file_size, 3 decimals; local raid3 only.
+#
+# How speed is calculated:
+#   - Time: wall time from just before the copy command starts until it returns (upload or
+#     download). So it is "total time from start of read/transfer until done".
+#   - Bytes: we always use the original (uncompressed) test file size as the reference.
+#     Speed = original_file_size_bytes / elapsed_seconds. So the table shows throughput in
+#     "logical" (uncompressed) bytes per second, not actual bytes transferred (e.g. compressed).
+#   - Size column (raid3 local only): (even_particle_file_size + odd_particle_file_size) /
+#     original_file_size. Particle sizes are the on-disk sizes (compressed payload + footer
+#     when compression is enabled). So with compression the ratio is < 1.
 
 # Helper to sanitize key for use in variable name (replace hyphens with underscores)
 sanitize_key() {
@@ -118,7 +130,7 @@ store_result() {
 # Get result
 get_result() {
   local key="$1"
-  local type="$2"  # DURATION, BYTES, or STATUS
+  local type="$2"  # DURATION, BYTES, STATUS, or SIZE
   local default="${3:-}"
   local sanitized
   sanitized=$(sanitize_key "${key}")
@@ -148,6 +160,7 @@ Commands:
 Options:
   --storage-type <type>     Select storage type: 'minio' or 'local'.
   -v, --verbose             Show verbose output from commands.
+  -c, --compression         Use Snappy compression for raid3 remotes (regenerates config).
   --skip-mc                 Skip mc tests (if mc command not available, minio only).
   --skip-cp                 Skip cp tests (local only).
   -n, --iterations N        Number of iterations per test (default: 11, minimum: 2, first discarded).
@@ -189,6 +202,9 @@ parse_args() {
         ;;
       -v|--verbose)
         VERBOSE=1
+        ;;
+      -c|--compression)
+        export RAID3_COMPRESSION=snappy
         ;;
       --skip-mc)
         SKIP_MC=1
@@ -309,37 +325,74 @@ cleanup_mc_alias() {
   mc alias remove "${alias_name}" >/dev/null 2>&1 || true
 }
 
-# Create test file of exact size
+# Structured sample text (words, sentences) used to fill test files; varied lines add a little randomness.
+PERF_TEST_SAMPLE_TEXT='The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+How vexingly quick daft zebras jump. Sphinx of black quartz, judge my vow. Waltz, bad nymph, for quick jigs vex.
+The five boxing wizards jump quickly. Grumpy wizards make toxic brew for the evil queen and jack.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.
+Raid three stripes bytes across even, odd, and parity. Each particle stores a ninety-byte footer.
+Jagged peaks loom over misty valleys. Crimson leaves drift on autumn winds. Frost patterns bloom at dawn.
+Binary streams flow through silicon paths. Checksums guard the integrity of every block and sector.
+'
+PERF_TEST_CHUNK_SIZE=65536
+
+# Create test file of exact size filled with structured text (words, sentences).
+# Uses a 64KB chunk of repeated sample text; replicates it by appending in a loop
+# (dd count=N only copies the input once when the input file is smaller than N blocks).
+# For large files we use a 1MB write chunk to keep the loop count reasonable (e.g. 4096 for 4GB).
+PERF_TEST_WRITE_CHUNK_SIZE=1048576
+
 create_test_file() {
   local file_path="$1"
   local size_bytes="$2"
-  
-  # Use dd to create file of exact size
-  if [[ "${size_bytes}" -lt 1048576 ]]; then
-    # For files < 1MB, use bs=size_bytes count=1
-    dd if=/dev/urandom of="${file_path}" bs="${size_bytes}" count=1 >/dev/null 2>&1
-  else
-    # For files >= 1MB, use bs=1M count=size_mb
-    local size_mb=$((size_bytes / 1048576))
-    dd if=/dev/urandom of="${file_path}" bs=1M count="${size_mb}" >/dev/null 2>&1
+  local chunk_file="${file_path}.chunk"
+  local actual_size=0
+
+  # Build one chunk (64KB) by repeating sample text; inject a little randomness every few appends
+  : > "${chunk_file}"
+  local append_count=0
+  while [[ "${actual_size}" -lt "${PERF_TEST_CHUNK_SIZE}" ]]; do
+    printf '%s' "${PERF_TEST_SAMPLE_TEXT}" >> "${chunk_file}"
+    append_count=$((append_count + 1))
+    if [[ $((append_count % 7)) -eq 0 ]]; then
+      printf ' %s ' "${RANDOM}" >> "${chunk_file}"
+    fi
+    actual_size=$(stat -f%z "${chunk_file}" 2>/dev/null || stat -c%s "${chunk_file}" 2>/dev/null)
+  done
+  truncate -s "${PERF_TEST_CHUNK_SIZE}" "${chunk_file}" 2>/dev/null || {
+    head -c "${PERF_TEST_CHUNK_SIZE}" "${chunk_file}" > "${chunk_file}.tmp" && mv "${chunk_file}.tmp" "${chunk_file}"
+  }
+
+  # Build a 1MB write chunk (16 x 64KB) to reduce loop iterations for large files
+  local write_chunk="${file_path}.wchunk"
+  : > "${write_chunk}"
+  local j=0
+  while [[ "${j}" -lt 16 ]]; do
+    cat "${chunk_file}" >> "${write_chunk}"
+    j=$((j + 1))
+  done
+
+  # Replicate write chunk (or small chunk for tiny files) to reach target size
+  local full_1mb=$((size_bytes / PERF_TEST_WRITE_CHUNK_SIZE))
+  local remainder=$((size_bytes % PERF_TEST_WRITE_CHUNK_SIZE))
+  : > "${file_path}"
+  local i=0
+  while [[ "${i}" -lt "${full_1mb}" ]]; do
+    cat "${write_chunk}" >> "${file_path}"
+    i=$((i + 1))
+  done
+  # Remainder: use 64KB chunk for the last partial megabyte
+  local remain_chunks=$((remainder / PERF_TEST_CHUNK_SIZE))
+  local remain_bytes=$((remainder % PERF_TEST_CHUNK_SIZE))
+  j=0
+  while [[ "${j}" -lt "${remain_chunks}" ]]; do
+    cat "${chunk_file}" >> "${file_path}"
+    j=$((j + 1))
+  done
+  if [[ "${remain_bytes}" -gt 0 ]]; then
+    head -c "${remain_bytes}" "${chunk_file}" >> "${file_path}"
   fi
-  
-  # Verify file size
-  local actual_size
-  actual_size=$(stat -f%z "${file_path}" 2>/dev/null || stat -c%s "${file_path}" 2>/dev/null)
-  if [[ "${actual_size}" -ne "${size_bytes}" ]]; then
-    log_warn "file" "Created file size ${actual_size} != expected ${size_bytes}, adjusting..."
-    # Truncate or extend to exact size
-    truncate -s "${size_bytes}" "${file_path}" 2>/dev/null || {
-      # Fallback: use head/tail if truncate not available
-      if [[ "${actual_size}" -gt "${size_bytes}" ]]; then
-        head -c "${size_bytes}" "${file_path}" > "${file_path}.tmp" && mv "${file_path}.tmp" "${file_path}"
-      else
-        # Extend file (less common)
-        dd if=/dev/zero of="${file_path}" bs=1 seek="${size_bytes}" count=0 >/dev/null 2>&1 || true
-      fi
-    }
-  fi
+  rm -f "${chunk_file}" "${write_chunk}"
 }
 
 # Run single performance test with rclone
@@ -349,18 +402,31 @@ run_rclone_test() {
   local local_file="$3"
   local remote_path="$4"
   
-  local start_time end_time elapsed status
+  local start_time end_time elapsed status err_file
   start_time=$(date +%s.%N)
+  err_file=$(mktemp)
   
+  # Use more retries for copy so large-file or raid3 operations don't fail on transient timeouts
   set +e
   if [[ "${operation}" == "upload" ]]; then
-    rclone_cmd copy "${local_file}" "${remote}:${remote_path}" >/dev/null 2>&1
+    rclone_cmd --retries 5 copy "${local_file}" "${remote}:${remote_path}" >/dev/null 2>"${err_file}"
     status=$?
   else
-    rclone_cmd copy "${remote}:${remote_path}" "${local_file}" >/dev/null 2>&1
+    rclone_cmd --retries 5 copy "${remote}:${remote_path}" "${local_file}" >/dev/null 2>"${err_file}"
     status=$?
   fi
   set -e
+  
+  if [[ "${status}" -ne 0 ]]; then
+    if (( VERBOSE )); then
+      log_warn "test" "rclone ${operation} failed (exit ${status}): $(cat "${err_file}" 2>/dev/null | head -10)"
+    fi
+    # Save last failure's stderr for diagnosis (upload or download)
+    if [[ -s "${err_file}" ]]; then
+      cp "${err_file}" "${SCRIPT_DIR}/.rclone_perf_last_err.txt" 2>/dev/null || true
+    fi
+  fi
+  rm -f "${err_file}"
   
   end_time=$(date +%s.%N)
   elapsed=$(LC_NUMERIC=C awk -v start="${start_time}" -v end="${end_time}" 'BEGIN {printf "%.6f", end - start}')
@@ -568,7 +634,12 @@ run_test_suite() {
     if ! [[ "${status}" =~ ^[0-9]+$ ]]; then status=1; fi
     local download_ok=0
     [[ "${status}" -eq 0 ]] && download_ok=1
-    [[ "${status}" -ne 0 ]] && download_all_passed=0
+    if [[ "${status}" -ne 0 ]]; then
+      download_all_passed=0
+      if (( VERBOSE )) && [[ "${tool}" == "rclone" ]]; then
+        log_warn "test" "Download failed at iteration ${i} (exit ${status})"
+      fi
+    fi
     
     # Discard first iteration, store rest
     if [[ $i -gt 1 ]]; then
@@ -589,12 +660,88 @@ run_test_suite() {
       fi
     fi
   done
-  
+
+  # For local + localraid3: compute (even+odd size)/original from particle files on disk
+  if [[ "${STORAGE_TYPE}" == "local" ]] && [[ "${config_name}" == "localraid3-rclone" ]]; then
+    local even_base odd_base even_path odd_path even_size odd_size ratio rel_even rel_odd
+    local lsl_even lsl_odd rclone_even_path rclone_odd_path script_prefix
+    if [[ "${LOCAL_EVEN_DIR}" == "${SCRIPT_DIR}"/* ]]; then
+      rel_even="${LOCAL_EVEN_DIR#"${SCRIPT_DIR}/"}"
+      even_base="${PWD}/${rel_even}"
+    elif [[ "${LOCAL_EVEN_DIR}" != /* ]]; then
+      even_base="${PWD}/${LOCAL_EVEN_DIR}"
+    else
+      even_base="${LOCAL_EVEN_DIR}"
+    fi
+    if [[ "${LOCAL_ODD_DIR}" == "${SCRIPT_DIR}"/* ]]; then
+      rel_odd="${LOCAL_ODD_DIR#"${SCRIPT_DIR}/"}"
+      odd_base="${PWD}/${rel_odd}"
+    elif [[ "${LOCAL_ODD_DIR}" != /* ]]; then
+      odd_base="${PWD}/${LOCAL_ODD_DIR}"
+    else
+      odd_base="${LOCAL_ODD_DIR}"
+    fi
+    even_path="${even_base}/perf-test/${test_key_base}/test.bin"
+    odd_path="${odd_base}/perf-test/${test_key_base}/test.bin"
+    even_size=""
+    odd_size=""
+    if [[ -f "${even_path}" ]]; then
+      even_size=$(stat -f%z "${even_path}" 2>/dev/null || stat -c%s "${even_path}" 2>/dev/null)
+    fi
+    if [[ -z "${even_size}" ]] && [[ -d "${even_path}" ]]; then
+      even_path=$(find "${even_path}" -type f 2>/dev/null | head -1)
+      [[ -n "${even_path}" ]] && even_size=$(stat -f%z "${even_path}" 2>/dev/null || stat -c%s "${even_path}" 2>/dev/null)
+    fi
+    if [[ -z "${even_size}" ]]; then
+      even_path=$(find "${even_base}/perf-test/${test_key_base}" -maxdepth 2 -type f 2>/dev/null | head -1)
+      [[ -n "${even_path}" ]] && even_size=$(stat -f%z "${even_path}" 2>/dev/null || stat -c%s "${even_path}" 2>/dev/null)
+    fi
+    if [[ -f "${odd_path}" ]]; then
+      odd_size=$(stat -f%z "${odd_path}" 2>/dev/null || stat -c%s "${odd_path}" 2>/dev/null)
+    fi
+    if [[ -z "${odd_size}" ]] && [[ -d "${odd_path}" ]]; then
+      odd_path=$(find "${odd_path}" -type f 2>/dev/null | head -1)
+      [[ -n "${odd_path}" ]] && odd_size=$(stat -f%z "${odd_path}" 2>/dev/null || stat -c%s "${odd_path}" 2>/dev/null)
+    fi
+    if [[ -z "${odd_size}" ]]; then
+      odd_path=$(find "${odd_base}/perf-test/${test_key_base}" -maxdepth 2 -type f 2>/dev/null | head -1)
+      [[ -n "${odd_path}" ]] && odd_size=$(stat -f%z "${odd_path}" 2>/dev/null || stat -c%s "${odd_path}" 2>/dev/null)
+    fi
+    if [[ -z "${even_size}" ]] || [[ -z "${odd_size}" ]]; then
+      rclone_even_path="${rel_even:-${LOCAL_EVEN_DIR}}/perf-test/${test_key_base}/"
+      rclone_odd_path="${rel_odd:-${LOCAL_ODD_DIR}}/perf-test/${test_key_base}/"
+      script_prefix="${SCRIPT_DIR}/"
+      if [[ "${rclone_even_path}" == /* ]]; then
+        rclone_even_path="${rclone_even_path#${script_prefix}}"
+      fi
+      if [[ "${rclone_odd_path}" == /* ]]; then
+        rclone_odd_path="${rclone_odd_path#${script_prefix}}"
+      fi
+      lsl_even=$(rclone_cmd lsl "${LOCAL_EVEN_REMOTE}:${rclone_even_path}" 2>/dev/null | head -5)
+      lsl_odd=$(rclone_cmd lsl "${LOCAL_ODD_REMOTE}:${rclone_odd_path}" 2>/dev/null | head -5)
+      if [[ -n "${lsl_even}" ]] && [[ -z "${even_size}" ]]; then
+        even_size=$(echo "${lsl_even}" | awk '{ sum += $1 } END { print sum+0 }')
+      fi
+      if [[ -n "${lsl_odd}" ]] && [[ -z "${odd_size}" ]]; then
+        odd_size=$(echo "${lsl_odd}" | awk '{ sum += $1 } END { print sum+0 }')
+      fi
+    fi
+    if [[ -n "${even_size}" ]] && [[ -n "${odd_size}" ]] && [[ "${file_size_bytes}" -gt 0 ]]; then
+      ratio=$(LC_NUMERIC=C awk -v e="${even_size}" -v o="${odd_size}" -v orig="${file_size_bytes}" 'BEGIN {printf "%.3f", (e + o) / orig}')
+      store_result "${test_key_base}" "SIZE" "${ratio}"
+      if (( VERBOSE )); then
+        log_info "test" "Size ratio ${test_key_base}: ${ratio} (even+odd)/original"
+      fi
+    elif (( VERBOSE )); then
+      log_warn "test" "Size ratio ${test_key_base}: could not get sizes (even_path=${even_path} even_size=${even_size:-empty} odd_path=${odd_path} odd_size=${odd_size:-empty})"
+    fi
+  fi
+
   # Cleanup mc alias if used
   if [[ -n "${mc_alias}" ]]; then
     cleanup_mc_alias "${mc_alias}"
   fi
-  
+
   # Compute averages and store upload results
   if [[ ${#upload_durations[@]} -gt 0 ]]; then
     local sum=0.0
@@ -652,7 +799,7 @@ run_test_suite() {
     store_result "${test_key_download}" "BYTES" "${file_size_bytes}"
     store_result "${test_key_download}" "STATUS" "FAILED"
   fi
-  
+
   if [[ ${#upload_durations[@]} -eq 0 ]] && [[ ${#download_durations[@]} -eq 0 ]]; then
     log_warn "test" "No valid durations for ${test_key_base} (all iterations failed)"
     rm -rf "${temp_dir}"
@@ -804,15 +951,27 @@ print_results_table() {
     echo
     echo
     
-    # Print header
-    printf "%-15s | %-10s | %-15s | %-15s | %-15s\n" \
-      "Config" "Status" "Upload" "Download" "Average"
-    printf "%-15s-+-%-10s-+-%-15s-+-%-15s-+-%-15s\n" \
-      "$(printf '%.0s-' {1..15})" \
-      "$(printf '%.0s-' {1..10})" \
-      "$(printf '%.0s-' {1..15})" \
-      "$(printf '%.0s-' {1..15})" \
-      "$(printf '%.0s-' {1..15})"
+    # Print header (Config column 13 chars; add Size only for local storage)
+    if [[ "${STORAGE_TYPE}" == "local" ]]; then
+      printf "%-13s | %-8s | %-12s | %-12s | %-12s | %-7s\n" \
+        "Config" "Status" "Upload" "Download" "Average" "Size"
+      printf "%-13s-+-%-8s-+-%-12s-+-%-12s-+-%-12s-+-%-7s\n" \
+        "$(printf '%.0s-' {1..13})" \
+        "$(printf '%.0s-' {1..8})" \
+        "$(printf '%.0s-' {1..12})" \
+        "$(printf '%.0s-' {1..12})" \
+        "$(printf '%.0s-' {1..12})" \
+        "$(printf '%.0s-' {1..7})"
+    else
+      printf "%-13s | %-8s | %-12s | %-12s | %-12s\n" \
+        "Config" "Status" "Upload" "Download" "Average"
+      printf "%-13s-+-%-8s-+-%-12s-+-%-12s-+-%-12s\n" \
+        "$(printf '%.0s-' {1..13})" \
+        "$(printf '%.0s-' {1..8})" \
+        "$(printf '%.0s-' {1..12})" \
+        "$(printf '%.0s-' {1..12})" \
+        "$(printf '%.0s-' {1..12})"
+    fi
     
     # Print results for each config based on storage type
     local -a config_order=()
@@ -890,6 +1049,8 @@ print_results_table() {
         overall_status="FAILED"
       elif [[ "${upload_status}" == "PARTIAL" ]] || [[ "${download_status}" == "PARTIAL" ]]; then
         overall_status="PARTIAL"
+      elif [[ "${upload_status}" == "SKIPPED" ]] && [[ "${download_status}" == "SKIPPED" ]]; then
+        overall_status="SKIPPED"
       else
         overall_status="OK"
       fi
@@ -917,8 +1078,19 @@ print_results_table() {
       else
         avg_speed_fmt="N/A"
       fi
-      printf "%-15s | %-10s | %-15s | %-15s | %-15s\n" \
-        "${display_name}" "${overall_status}" "${upload_speed_fmt}" "${download_speed_fmt}" "${avg_speed_fmt}"
+      # Size column: (even+odd particle size)/original, local only, 3 decimal places
+      local size_ratio=""
+      if [[ "${STORAGE_TYPE}" == "local" ]]; then
+        size_ratio=$(get_result "${config_name}_${size_label}" "SIZE" "")
+        [[ -z "${size_ratio}" ]] && size_ratio="-"
+      fi
+      if [[ "${STORAGE_TYPE}" == "local" ]]; then
+        printf "%-13s | %-8s | %-12s | %-12s | %-12s | %-7s\n" \
+          "${display_name}" "${overall_status}" "${upload_speed_fmt}" "${download_speed_fmt}" "${avg_speed_fmt}" "${size_ratio}"
+      else
+        printf "%-13s | %-8s | %-12s | %-12s | %-12s\n" \
+          "${display_name}" "${overall_status}" "${upload_speed_fmt}" "${download_speed_fmt}" "${avg_speed_fmt}"
+      fi
     done
     
     echo
@@ -979,8 +1151,13 @@ run_performance_tests() {
       ensure_directory "${dir}"
     done
     
-    # Ensure rclone config and binary are available
-    ensure_rclone_config
+    # Ensure rclone config and binary are available (regenerate config when --compression set)
+    if [[ -n "${RAID3_COMPRESSION:-}" ]] && [[ "${RAID3_COMPRESSION}" == "snappy" || "${RAID3_COMPRESSION}" == "zstd" ]]; then
+      log_info "test" "Regenerating config with compression = ${RAID3_COMPRESSION} for raid3 remotes"
+      create_rclone_config "${TEST_SPECIFIC_CONFIG}" 1 || true
+    else
+      ensure_rclone_config
+    fi
     ensure_rclone_binary
   fi
   

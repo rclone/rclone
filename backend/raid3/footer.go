@@ -26,6 +26,7 @@ var (
 	CompressionNone   = [4]byte{0, 0, 0, 0}
 	CompressionLZ4    = [4]byte{'L', 'Z', '4', ' '}
 	CompressionSnappy = [4]byte{'s', 'z', ' ', ' '}
+	CompressionZstd   = [4]byte{'z', 's', 't', 'd'}
 )
 
 // Shard indices for RAID3 (0=even, 1=odd, 2=parity)

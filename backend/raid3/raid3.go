@@ -102,6 +102,18 @@ This should be in the form 'remote:path'.`,
 			Help:     "Chunk size for streaming operations",
 			Default:  fs.SizeSuffix(defaultChunkSize),
 			Advanced: true,
+		}, {
+			Name: "compression",
+			Help: `Compression for object data: none (default), snappy, or zstd.
+
+When set, data is compressed after hashing and before splitting across particles. Reads use the footer to decompress.
+Snappy is fast with moderate ratio; zstd gives better compression at a default level (good balance of speed and ratio).`,
+			Default: "none",
+			Examples: []fs.OptionExample{
+				{Value: "none", Help: "No compression"},
+				{Value: "snappy", Help: "Snappy compression (fast)"},
+				{Value: "zstd", Help: "Zstandard compression (better ratio, default level)"},
+			},
 		}},
 		CommandHelp: commandHelp,
 	}
@@ -255,7 +267,8 @@ type Options struct {
 	AutoCleanup  bool          `config:"auto_cleanup"`
 	AutoHeal     bool          `config:"auto_heal"`
 	Rollback     bool          `config:"rollback"`
-	ChunkSize fs.SizeSuffix `config:"chunk_size"`
+	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
+	Compression  string        `config:"compression"`
 }
 
 // Fs represents a raid3 backend with striped storage and parity
@@ -301,6 +314,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}
 	if _, ok := m.Get("chunk_size"); !ok {
 		opt.ChunkSize = fs.SizeSuffix(defaultChunkSize)
+	}
+	if _, ok := m.Get("compression"); !ok {
+		opt.Compression = "none"
+	}
+
+	// Validate compression: none, snappy, or zstd
+	if _, err := ConfigToFooterCompression(opt.Compression); err != nil {
+		return nil, err
 	}
 
 	if opt.Even == "" {
@@ -545,6 +566,12 @@ checkRemotes:
 	// Indicate that this backend wraps other backends
 	// This helps rclone understand the backend architecture
 	f.features.Overlay = true
+
+	// Disable multi-thread copy when raid3 is the source: Open() streams from
+	// two particles and validates sizes; range-based multi-thread would open
+	// multiple times and can hit the same validation. Single-thread copy is
+	// more predictable for large files (e.g. 4G).
+	f.features.NoMultiThreading = true
 
 	// Move: Custom check (all must support Move or Copy)
 	// Mask() handles this, but we verify and set the function pointer

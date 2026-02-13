@@ -19,6 +19,7 @@
 #
 # Options:
 #   -v, --verbose    Show detailed output from individual test scripts
+#   -c, --compression Use Snappy compression for raid3 remotes (regenerates config with compression = snappy)
 #   -h, --help       Display this help text
 #
 # Environment:
@@ -41,6 +42,7 @@ Usage: ${SCRIPT_NAME} [options]
 
 Options:
   -v, --verbose    Show detailed output from individual test scripts
+  -c, --compression Use Snappy compression for raid3 remotes (regenerates config with compression = snappy)
   -h, --help       Display this help text
 
 This script runs all integration tests across all RAID3 backends:
@@ -150,6 +152,10 @@ parse_args() {
         VERBOSE=1
         shift
         ;;
+      -c|--compression)
+        export RAID3_COMPRESSION=snappy
+        shift
+        ;;
       -h|--help)
         usage
         exit 0
@@ -172,6 +178,14 @@ main() {
   parse_args "$@"
   ensure_workdir
   ensure_rclone_binary
+
+  # Regenerate config when --compression was set so config matches (compression = snappy or zstd for raid3 remotes)
+  if [[ -n "${RAID3_COMPRESSION:-}" ]] && [[ "${RAID3_COMPRESSION}" == "snappy" || "${RAID3_COMPRESSION}" == "zstd" ]]; then
+    log_info "all" "Regenerating config with compression = ${RAID3_COMPRESSION} for raid3 remotes"
+    create_rclone_config "${TEST_SPECIFIC_CONFIG}" 1 || true
+  else
+    ensure_rclone_config
+  fi
 
   log_info "all" "=========================================="
   log_info "all" "Running all RAID3 integration tests"

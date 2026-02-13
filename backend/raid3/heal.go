@@ -13,8 +13,6 @@ package raid3
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
-	"crypto/sha256"
 	"fmt"
 	"sync"
 	"time"
@@ -112,7 +110,7 @@ func (f *Fs) backgroundUploader(ctx context.Context, workerID int) {
 }
 
 // uploadParticle uploads a single particle to its backend.
-// Appends 90-byte footer (hashes, mtime, current shard) to the payload.
+// Reads the full footer from one of the other two particles and appends a 90-byte footer to the payload.
 func (f *Fs) uploadParticle(ctx context.Context, job *uploadJob) error {
 	var targetFs fs.Fs
 	var filename string
@@ -131,32 +129,55 @@ func (f *Fs) uploadParticle(ctx context.Context, job *uploadJob) error {
 		return fmt.Errorf("unknown particle type: %s", job.particleType)
 	}
 
-	payload := job.data
-	{
-		contentLength := int64(len(job.data))
-		md5Sum := md5.Sum(job.data)
-		sha256Sum := sha256.Sum256(job.data)
-		mtime := time.Now()
-		var currentShard int
-		switch job.particleType {
-		case "even":
-			currentShard = ShardEven
-		case "odd":
-			currentShard = ShardOdd
-		case "parity":
-			currentShard = ShardParity
-		default:
-			currentShard = 0
-		}
-		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, CompressionNone, currentShard)
-		fb, errMarshal := ft.MarshalBinary()
-		if errMarshal != nil {
-			return errMarshal
-		}
-		payload = make([]byte, len(job.data)+FooterSize)
-		copy(payload, job.data)
-		copy(payload[len(job.data):], fb)
+	var currentShard int
+	switch job.particleType {
+	case "even":
+		currentShard = ShardEven
+	case "odd":
+		currentShard = ShardOdd
+	case "parity":
+		currentShard = ShardParity
+	default:
+		currentShard = 0
 	}
+
+	// Read full footer from one of the other two particles (same remote; footers are identical except CurrentShard)
+	var sourceFt *Footer
+	tryOrder := []struct {
+		fs   fs.Fs
+		name string
+	}{}
+	switch job.particleType {
+	case "even":
+		tryOrder = []struct{ fs fs.Fs; name string }{{f.odd, "odd"}, {f.parity, "parity"}}
+	case "odd":
+		tryOrder = []struct{ fs fs.Fs; name string }{{f.even, "even"}, {f.parity, "parity"}}
+	case "parity":
+		tryOrder = []struct{ fs fs.Fs; name string }{{f.even, "even"}, {f.odd, "odd"}}
+	}
+	for _, b := range tryOrder {
+		obj, err := b.fs.NewObject(ctx, job.remote)
+		if err != nil {
+			continue
+		}
+		sourceFt, err = readFooterFromBackendObject(ctx, obj)
+		if err != nil {
+			continue
+		}
+		break
+	}
+	if sourceFt == nil {
+		return fmt.Errorf("could not read footer from any other particle for heal of %s", job.remote)
+	}
+
+	ft := FooterFromReconstructed(sourceFt.ContentLength, sourceFt.MD5[:], sourceFt.SHA256[:], time.Unix(sourceFt.Mtime, 0), sourceFt.Compression, currentShard)
+	fb, errMarshal := ft.MarshalBinary()
+	if errMarshal != nil {
+		return errMarshal
+	}
+	payload := make([]byte, len(job.data)+FooterSize)
+	copy(payload, job.data)
+	copy(payload[len(job.data):], fb)
 
 	// Create a basic ObjectInfo for the particle
 	baseInfo := object.NewStaticObjectInfo(filename, time.Now(), int64(len(payload)), true, nil, nil)

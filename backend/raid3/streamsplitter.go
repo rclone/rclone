@@ -6,6 +6,12 @@ import (
 	"io"
 )
 
+// streamWriteChunkSize is the size of each Write to the downstream pipes.
+// Writing in small chunks avoids deadlock when pipe buffers are small (e.g. 16 KB on macOS):
+// the splitter must not write more than the consumer can accept without blocking, or the
+// splitter blocks and the source (e.g. compressing reader) never gets drained.
+const streamWriteChunkSize = 4 * 1024 // 4 KB, well under typical pipe capacity (16–64 KB) to avoid deadlock with slow consumers
+
 // StreamSplitter splits an input stream into even, odd, and parity particle streams
 // It processes data in chunks to maintain constant memory usage
 type StreamSplitter struct {
@@ -34,17 +40,23 @@ func NewStreamSplitter(evenWriter, oddWriter, parityWriter io.Writer, chunkSize 
 	}
 }
 
-// Split reads from the input reader and splits the data into even, odd, and parity streams
+// Split reads from the input reader and splits the data into even, odd, and parity streams.
+// It reads one chunk at a time and does not read the next chunk until the current one
+// has been written to the downstream pipes (writeInChunks blocks until accepted).
+// This backpressure keeps memory bounded and avoids truncation when the source is
+// an async reader (e.g. accounting with WithBuffer).
 func (s *StreamSplitter) Split(reader io.Reader) error {
 	// Buffer for reading chunks
 	buffer := make([]byte, s.chunkSize)
+	var totalRead int64
 
 	for {
 		// Read chunk from input
 		n, readErr := reader.Read(buffer)
 		if n > 0 {
-			// Split chunk into even and odd bytes
-			evenData, oddData := SplitBytes(buffer[:n])
+			// Split by global position so multiple small reads (e.g. 1-byte at end of compressed stream) assign bytes correctly
+			evenData, oddData := SplitBytesWithOffset(buffer[:n], int(totalRead))
+			totalRead += int64(n)
 			parityData := CalculateParity(evenData, oddData)
 
 			// Track sizes
@@ -66,14 +78,15 @@ func (s *StreamSplitter) Split(reader io.Reader) error {
 				}
 			}
 
-			// Write to pipes (these may block if readers are slow, which is fine)
-			if _, err := s.evenWriter.Write(evenData); err != nil {
+			// Write to pipes in small chunks so we don't fill pipe buffers and deadlock
+			// (consumers may be slow to start or have small buffers, e.g. 16 KB on macOS)
+			if err := writeInChunks(s.evenWriter, evenData, streamWriteChunkSize); err != nil {
 				return fmt.Errorf("failed to write even data: %w", err)
 			}
-			if _, err := s.oddWriter.Write(oddData); err != nil {
+			if err := writeInChunks(s.oddWriter, oddData, streamWriteChunkSize); err != nil {
 				return fmt.Errorf("failed to write odd data: %w", err)
 			}
-			if _, err := s.parityWriter.Write(parityData); err != nil {
+			if err := writeInChunks(s.parityWriter, parityData, streamWriteChunkSize); err != nil {
 				return fmt.Errorf("failed to write parity data: %w", err)
 			}
 		}
@@ -99,6 +112,26 @@ func (s *StreamSplitter) Split(reader io.Reader) error {
 		}
 	}
 
+	return nil
+}
+
+// writeInChunks writes data to w in chunks of at most chunkSize bytes to avoid
+// blocking when w is a pipe with limited buffer capacity.
+func writeInChunks(w io.Writer, data []byte, chunkSize int) error {
+	for len(data) > 0 {
+		n := chunkSize
+		if n > len(data) {
+			n = len(data)
+		}
+		written, err := w.Write(data[:n])
+		if err != nil {
+			return err
+		}
+		if written != n {
+			return fmt.Errorf("short write: wrote %d, expected %d", written, n)
+		}
+		data = data[written:]
+	}
 	return nil
 }
 

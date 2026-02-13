@@ -66,8 +66,7 @@ func particlePath(base, remote string) string {
 }
 
 func TestRebuildEvenBackendSuccess(t *testing.T) {
-	t.Parallel()
-
+	// Do not use t.Parallel() - running alongside TestStandard can cause deadlocks.
 	ctx := context.Background()
 
 	eveDir := t.TempDir()
@@ -115,8 +114,7 @@ func TestRebuildEvenBackendSuccess(t *testing.T) {
 }
 
 func TestRebuildEvenBackendFailure(t *testing.T) {
-	t.Parallel()
-
+	// Do not use t.Parallel() - running alongside TestStandard can cause deadlocks.
 	ctx := context.Background()
 
 	eveDir := t.TempDir()
