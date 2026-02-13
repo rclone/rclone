@@ -13,8 +13,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	internxtauth "github.com/internxt/rclone-adapter/auth"
 	internxtconfig "github.com/internxt/rclone-adapter/config"
+	sdkerrors "github.com/internxt/rclone-adapter/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"golang.org/x/oauth2"
 )
@@ -101,7 +105,6 @@ func jwtToOAuth2Token(jwtString string) (*oauth2.Token, error) {
 }
 
 // computeBasicAuthHeader creates the BasicAuthHeader for bucket operations
-// Following the pattern from SDK's auth/access.go:96-102
 func computeBasicAuthHeader(bridgeUser, userID string) string {
 	sum := sha256.Sum256([]byte(userID))
 	hexPass := hex.EncodeToString(sum[:])
@@ -142,5 +145,102 @@ func refreshJWTToken(ctx context.Context, name string, m configmap.Mapper) error
 	}
 
 	fs.Debugf(name, "Token refreshed successfully, new expiry: %v", token.Expiry)
+	return nil
+}
+
+// reLogin performs a full re-login using stored email+password credentials.
+// Returns the AccessResponse on success, or an error if 2FA is required or login fails.
+func (f *Fs) reLogin(ctx context.Context) (*internxtauth.AccessResponse, error) {
+	password, err := obscure.Reveal(f.opt.Pass)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't decrypt password: %w", err)
+	}
+
+	cfg := internxtconfig.NewDefaultToken("")
+	cfg.HTTPClient = fshttp.NewClient(ctx)
+
+	loginResp, err := internxtauth.Login(ctx, cfg, f.opt.Email)
+	if err != nil {
+		return nil, fmt.Errorf("re-login check failed: %w", err)
+	}
+
+	if loginResp.TFA {
+		return nil, errors.New("account requires 2FA - please run: rclone config reconnect " + f.name + ":")
+	}
+
+	resp, err := internxtauth.DoLogin(ctx, cfg, f.opt.Email, password, "")
+	if err != nil {
+		return nil, fmt.Errorf("re-login failed: %w", err)
+	}
+
+	return resp, nil
+}
+
+// refreshOrReLogin tries to refresh the JWT token first; if that fails with 401,
+// it falls back to a full re-login using stored credentials.
+func (f *Fs) refreshOrReLogin(ctx context.Context) error {
+	refreshErr := refreshJWTToken(ctx, f.name, f.m)
+	if refreshErr == nil {
+		newToken, err := oauthutil.GetToken(f.name, f.m)
+		if err != nil {
+			return fmt.Errorf("failed to get refreshed token: %w", err)
+		}
+		f.cfg.Token = newToken.AccessToken
+		f.cfg.BasicAuthHeader = computeBasicAuthHeader(f.bridgeUser, f.userID)
+		fs.Debugf(f, "Token refresh succeeded")
+		return nil
+	}
+
+	var httpErr *sdkerrors.HTTPError
+	if !errors.As(refreshErr, &httpErr) || httpErr.StatusCode() != 401 {
+		if fserrors.ShouldRetry(refreshErr) {
+			return refreshErr
+		}
+		return refreshErr
+	}
+
+	fs.Debugf(f, "Token refresh returned 401, attempting re-login with stored credentials")
+
+	resp, err := f.reLogin(ctx)
+	if err != nil {
+		return fmt.Errorf("re-login fallback failed: %w", err)
+	}
+
+	oauthToken, err := jwtToOAuth2Token(resp.NewToken)
+	if err != nil {
+		return fmt.Errorf("failed to parse re-login token: %w", err)
+	}
+	err = oauthutil.PutToken(f.name, f.m, oauthToken, true)
+	if err != nil {
+		return fmt.Errorf("failed to save re-login token: %w", err)
+	}
+
+	f.cfg.Token = oauthToken.AccessToken
+	f.bridgeUser = resp.User.BridgeUser
+	f.userID = resp.User.UserID
+	f.cfg.BasicAuthHeader = computeBasicAuthHeader(f.bridgeUser, f.userID)
+	f.cfg.Bucket = resp.User.Bucket
+	f.cfg.RootFolderID = resp.User.RootFolderID
+
+	fs.Debugf(f, "Re-login succeeded, new token expiry: %v", oauthToken.Expiry)
+	return nil
+}
+
+// reAuthorize is called after getting 401 from the server.
+// It serializes re-auth attempts and uses a circuit-breaker to avoid infinite loops.
+func (f *Fs) reAuthorize(ctx context.Context) error {
+	f.authMu.Lock()
+	defer f.authMu.Unlock()
+
+	if f.authFailed {
+		return errors.New("re-authorization permanently failed")
+	}
+
+	err := f.refreshOrReLogin(ctx)
+	if err != nil {
+		f.authFailed = true
+		return err
+	}
+
 	return nil
 }
