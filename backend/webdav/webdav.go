@@ -423,7 +423,7 @@ func (f *Fs) filePath(file string) string {
 	if f.opt.Enc != encoder.EncodeZero {
 		subPath = f.opt.Enc.FromStandardPath(subPath)
 	}
-	return rest.URLPathEscape(subPath)
+	return rest.URLPathEscapeAll(subPath)
 }
 
 // dirPath returns a directory path (f.root, dir)
