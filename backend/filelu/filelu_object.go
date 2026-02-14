@@ -2,7 +2,6 @@ package filelu
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 // Object describes a FileLu object
@@ -194,8 +194,14 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		return "", fmt.Errorf("no valid file code found in the remote path")
 	}
 
-	apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s",
-		o.fs.endpoint, url.QueryEscape(fileCode), url.QueryEscape(o.fs.opt.Key))
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/file/info",
+		Parameters: url.Values{
+			"file_code": {fileCode},
+			"key":       {o.fs.opt.Key},
+		},
+	}
 
 	var result struct {
 		Status int    `json:"status"`
@@ -204,29 +210,18 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 			Hash string `json:"hash"`
 		} `json:"result"`
 	}
+
 	err := o.fs.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-		if err != nil {
-			return false, err
-		}
-		resp, err := o.fs.client.Do(req)
+		_, err := o.fs.srv.CallJSON(ctx, &opts, nil, &result)
 		if err != nil {
 			return shouldRetry(err), err
 		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
-
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return false, err
-		}
-		return shouldRetryHTTP(resp.StatusCode), nil
+		return false, nil
 	})
 	if err != nil {
 		return "", err
 	}
+
 	if result.Status != 200 || len(result.Result) == 0 {
 		return "", fmt.Errorf("error: unable to fetch hash: %s", result.Msg)
 	}
