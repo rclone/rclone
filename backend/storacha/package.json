@@ -5,6 +5,14 @@
   "type": "module",
   "main": "storacha-bridge.mjs",
   "dependencies": {
-    "@storacha/client": "^2.0.3"
+    "@storacha/client": "^2.0.3",
+    "@ipld/dag-pb": "^4.0.0",
+    "@ipld/car": "^5.0.0",
+    "ipfs-unixfs": "^11.0.0",
+    "multiformats": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
+

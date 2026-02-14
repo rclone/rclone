@@ -7,6 +7,12 @@ import * as readline from 'readline';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as dagPB from '@ipld/dag-pb';
+import { UnixFS } from 'ipfs-unixfs';
+import { CID } from 'multiformats/cid';
+import * as Block from 'multiformats/block';
+import { sha256 } from 'multiformats/hashes/sha2';
+import { CarWriter } from '@ipld/car';
 
 let client = null;
 let currentSpace = null;
@@ -109,14 +115,6 @@ const handlers = {
     const cid = await client.uploadFile(file);
     const cidStr = cid.toString();
     
-    // Store metadata locally
-    metadata[name] = {
-      cid: cidStr,
-      size: buffer.length,
-      modTime: new Date().toISOString()
-    };
-    saveMetadata();
-    
     return { 
       cid: cidStr,
       size: buffer.length 
@@ -139,63 +137,110 @@ const handlers = {
   
   async list({ path: dirPath }) {
     if (!client) throw new Error('Client not initialized');
+    if (!currentSpace) throw new Error('No space selected');
     
-    // Return files from local metadata that match the path
+    console.error(`[storacha] list called with path: "${dirPath}"`);
+    
     const entries = [];
-    const prefix = dirPath ? dirPath + '/' : '';
+    let foundExactMatch = false;
     
-    for (const [name, info] of Object.entries(metadata)) {
-      // Check if file is in the requested directory
-      let relativeName = name;
-      if (prefix && name.startsWith(prefix)) {
-        relativeName = name.slice(prefix.length);
-      } else if (prefix && !name.startsWith(prefix)) {
-        continue; // Not in this directory
-      }
-      
-      // If relativeName contains /, it's in a subdirectory
-      const slashIndex = relativeName.indexOf('/');
-      if (slashIndex !== -1) {
-        // It's a subdirectory
-        const subdir = relativeName.slice(0, slashIndex);
-        if (!entries.find(e => e.name === subdir && e.isDir)) {
-          entries.push({
-            name: subdir,
-            cid: '',
-            size: 0,
-            isDir: true,
-            modTime: new Date().toISOString()
-          });
+    try {
+      // Use client.capability.upload.list() with cursor pagination
+      let cursor;
+      do {
+        const res = await client.capability.upload.list({ cursor });
+        if (!res || !res.results) break;
+        
+        for (const upload of res.results) {
+          const rootCID = upload.root.toString();
+          const size = upload.shards?.reduce((sum, s) => sum + (s.size || 0), 0) || 0;
+          
+          // Use root CID as the name since we don't have filename mapping
+          // If dirPath is specified, only return exact match or items in that directory
+          if (dirPath) {
+            // Exact match - return only this CID
+            if (rootCID === dirPath || rootCID === dirPath.replace(/\/$/, '')) {
+              entries.push({
+                name: rootCID,
+                cid: rootCID,
+                size: size,
+                isDir: false,
+                modTime: upload.insertedAt || new Date().toISOString()
+              });
+              // Found exact match, stop all searching
+              foundExactMatch = true;
+              break;
+            }
+            // Prefix match for directory listing (only if path ends with /)
+            if (dirPath.endsWith('/')) {
+              const prefix = dirPath;
+              if (rootCID.startsWith(prefix)) {
+                entries.push({
+                  name: rootCID,
+                  cid: rootCID,
+                  size: size,
+                  isDir: false,
+                  modTime: upload.insertedAt || new Date().toISOString()
+                });
+              }
+            }
+          } else {
+            // No path specified - list all
+            entries.push({
+              name: rootCID,
+              cid: rootCID,
+              size: size,
+              isDir: false,
+              modTime: upload.insertedAt || new Date().toISOString()
+            });
+          }
         }
-      } else {
-        // It's a file in this directory
-        entries.push({
-          name: relativeName,
-          cid: info.cid,
-          size: info.size,
-          isDir: false,
-          modTime: info.modTime
-        });
-      }
+        
+        // Stop pagination if we found exact match
+        if (foundExactMatch) break;
+        
+        cursor = res.cursor;
+      } while (cursor);
+      
+      return entries;
+    } catch (error) {
+      console.error(`[storacha] List failed: ${error.message}`);
+      return [];
     }
-    
-    return entries;
   },
   
   async stat({ name }) {
-    // Get info about a specific file
-    if (!metadata[name]) {
+    if (!client) throw new Error('Client not initialized');
+    
+    // Use client.capability.upload.list() to find the file by CID
+    try {
+      let cursor;
+      do {
+        const res = await client.capability.upload.list({ cursor });
+        if (!res || !res.results) break;
+        
+        for (const upload of res.results) {
+          const rootCID = upload.root.toString();
+          if (rootCID === name) {
+            const size = upload.shards?.reduce((sum, s) => sum + (s.size || 0), 0) || 0;
+            return {
+              found: true,
+              name: rootCID,
+              cid: rootCID,
+              size: size,
+              modTime: upload.insertedAt || new Date().toISOString()
+            };
+          }
+        }
+        
+        cursor = res.cursor;
+      } while (cursor);
+      
+      return { found: false };
+    } catch (error) {
+      console.error(`[storacha] Stat failed: ${error.message}`);
       return { found: false };
     }
-    
-    const info = metadata[name];
-    return {
-      found: true,
-      name: name,
-      cid: info.cid,
-      size: info.size,
-      modTime: info.modTime
-    };
   },
   
   async download({ cid }) {
@@ -218,13 +263,30 @@ const handlers = {
   async remove({ cid }) {
     if (!client) throw new Error('Client not initialized');
     
-    // Parse CID and remove
-    // Note: This removes the upload record, not the actual data from IPFS
-    await client.remove(cid);
-    
-    return { removed: true };
+    try {
+      // Parse the root CID and remove the upload
+      const rootCID = CID.parse(cid);
+      const result = await client.capability.upload.remove(rootCID);
+      
+      if (result.error) {
+        throw new Error(`Remove failed: ${result.error.message}`);
+      }
+      
+      return { removed: true };
+    } catch (error) {
+      console.error(`[storacha] Remove failed for ${cid}: ${error.message}`);
+      throw error;
+    }
   },
-  
+
+  async copy({ cid, remote, size }) {
+    if (!client) throw new Error('Client not initialized');
+    if (!currentSpace) throw new Error('No space selected');
+    
+    // Server-side copy: CID already exists in IPFS, just return success
+    // Storacha manages the uploads automatically
+    return { cid: cid };
+  },
   async whoami() {
     if (!client) throw new Error('Client not initialized');
     

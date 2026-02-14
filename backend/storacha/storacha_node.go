@@ -246,7 +246,44 @@ func (f *Fs) String() string { return "storacha:" + f.spaceDID }
 func (f *Fs) Features() *fs.Features {
 	return (&fs.Features{
 		CanHaveEmptyDirectories: true,
+		Copy:                    f.Copy,
 	}).Fill(context.Background(), f)
+}
+
+// Copy src to this remote using server-side copy operations
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		return nil, fs.ErrorCantCopy
+	}
+
+	resp, err := f.node.Call("copy", map[string]interface{}{
+		"cid":    srcObj.cid,
+		"remote": remote,
+		"size":   srcObj.size,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("copy failed: %w", err)
+	}
+
+	if !resp.Success {
+		return nil, fmt.Errorf("copy failed: %s", resp.Error)
+	}
+
+	var result struct {
+		CID string `json:"cid"`
+	}
+	if err := json.Unmarshal(resp.Result, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse copy result: %w", err)
+	}
+
+	return &Object{
+		fs:      f,
+		remote:  remote,
+		cid:     result.CID,
+		size:    srcObj.size,
+		modTime: srcObj.modTime,
+	}, nil
 }
 
 func (f *Fs) Precision() time.Duration {
@@ -266,8 +303,18 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	// Combine root and dir to get the full path
+	fullPath := dir
+	if f.root != "" {
+		if dir != "" {
+			fullPath = f.root + "/" + dir
+		} else {
+			fullPath = f.root
+		}
+	}
+
 	resp, err := f.node.Call("list", map[string]string{
-		"path": dir,
+		"path": fullPath,
 	})
 	if err != nil {
 		return nil, err
@@ -328,7 +375,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	var result struct {
 		Found   bool   `json:"found"`
-		Name    string `json:"name"`
 		CID     string `json:"cid"`
 		Size    int64  `json:"size"`
 		ModTime string `json:"modTime"`
@@ -390,7 +436,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // Mkdir creates a directory (no-op for Storacha)
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	return nil // Directories are implicit
+	return nil
 }
 
 // Rmdir removes a directory (no-op for Storacha)
