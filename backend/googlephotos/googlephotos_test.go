@@ -173,6 +173,18 @@ func TestIntegration(t *testing.T) {
 				entries, err := f.List(ctx, albumName)
 				require.NoError(t, err)
 				assert.Equal(t, 0, len(entries))
+
+				// Check if transferred to trash
+				entries, err = f.List(ctx, "album/"+trashAlbum)
+				require.NoError(t, err)
+				found := false
+				for _, entry := range entries {
+					leaf := path.Base(entry.Remote())
+					if leaf == fileNameAlbum || leaf == remoteWithID {
+						found = true
+					}
+				}
+				assert.True(t, found, "didn't find deleted file in trash")
 			})
 		})
 

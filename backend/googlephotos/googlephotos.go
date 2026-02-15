@@ -56,6 +56,7 @@ const (
 	scopeAppendOnly             = "https://www.googleapis.com/auth/photoslibrary.appendonly"
 	scopeReadOnly               = "https://www.googleapis.com/auth/photoslibrary.readonly.appcreateddata"
 	scopeReadWrite              = "https://www.googleapis.com/auth/photoslibrary.edit.appcreateddata"
+	trashAlbum                  = "Rclone Trash"
 )
 
 var (
@@ -1236,6 +1237,42 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	})
 	if err != nil {
 		return fmt.Errorf("couldn't delete item from album: %w", err)
+	}
+
+	err = o.moveToTrash(ctx, fileName)
+	if err != nil {
+		return fmt.Errorf("couldn't move item to trash: %w", err)
+	}
+	return nil
+}
+
+// MoveToTrash moves the object to the trash album
+func (o *Object) moveToTrash(ctx context.Context, fileName string) (err error) {
+	trashAlbumPath := path.Join("album", trashAlbum)
+	if strings.HasPrefix(o.fs.root, "album") {
+		trashAlbumPath = trashAlbum
+	}
+
+	err = o.fs.Mkdir(ctx, trashAlbumPath)
+	if err != nil {
+		return err
+	}
+
+	remote := path.Join(trashAlbumPath, fileName)
+	in, err := o.Open(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		errClosed := in.Close()
+		if errClosed != nil && err == nil {
+			err = errClosed
+		}
+	}()
+
+	_, err = o.fs.Put(ctx, in, fs.NewOverrideRemote(o, remote))
+	if err != nil {
+		return err
 	}
 	return nil
 }
