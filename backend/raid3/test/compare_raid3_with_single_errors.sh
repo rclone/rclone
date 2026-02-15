@@ -194,7 +194,7 @@ run_move_fail_scenario() {
     fi
   done
 
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
   # Create a test file
@@ -231,7 +231,8 @@ run_move_fail_scenario() {
       final_check_result=$(capture_command "final_cleanup_check" ls "${RAID3_REMOTE}:${new_file}" 2>/dev/null || echo "1|||")
       IFS='|' read -r final_check_status _ _ <<<"${final_check_result}"
       if [[ "${final_check_status}" -eq 0 ]]; then
-        log_warn "scenario:move-fail-${backend}" "Destination file persists after cleanup - may have incomplete particles. Will verify after move attempt."
+        record_error_result "FAIL" "move-fail-${backend}" "Leftover destination could not be removed. Run: ./compare_raid3_with_single_errors.sh teardown --storage-type=minio && ./compare_raid3_with_single_errors.sh test --storage-type=minio"
+        return 1
       fi
     fi
   fi
@@ -467,7 +468,7 @@ run_update_fail_scenario() {
     fi
   done
 
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
   # Create a test file
@@ -630,7 +631,7 @@ run_move_fail_scenario_no_rollback() {
     fi
   done
 
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
   # Create a test file using the regular remote (rollback enabled by default)
@@ -808,7 +809,7 @@ run_update_fail_scenario_no_rollback() {
     fi
   done
 
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
   # Create a test file using the regular remote (rollback enabled by default)
@@ -986,6 +987,14 @@ main() {
   ensure_rclone_binary
   ensure_rclone_config
 
+  # Prevent rclone from hanging with MinIO (purge, list, copy can block).
+  if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+    export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+    if (( VERBOSE )); then
+      log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (exit 124 = timed out)"
+    fi
+  fi
+
   case "${COMMAND}" in
     start)
       if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
@@ -1004,7 +1013,7 @@ main() {
     teardown)
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
       set_remotes_for_storage_type
-      purge_remote_root "${RAID3_REMOTE}"
+      purge_raid3_remote_root
       purge_remote_root "${SINGLE_REMOTE}"
       if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_RAID3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do

@@ -30,7 +30,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 	}
 
-	// Get entries from all three remotes concurrently
+	// Get entries from all three remotes concurrently.
+	// Use timeouts to avoid indefinite hang when a backend (e.g. MinIO/S3) blocks.
 	type listResult struct {
 		name    string
 		entries fs.DirEntries
@@ -39,17 +40,23 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	listCh := make(chan listResult, 3)
 
 	go func() {
-		entries, err := f.even.List(ctx, dir)
+		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
+		defer cancel()
+		entries, err := f.even.List(listCtx, dir)
 		listCh <- listResult{"even", entries, err}
 	}()
 
 	go func() {
-		entries, err := f.odd.List(ctx, dir)
+		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
+		defer cancel()
+		entries, err := f.odd.List(listCtx, dir)
 		listCh <- listResult{"odd", entries, err}
 	}()
 
 	go func() {
-		entries, err := f.parity.List(ctx, dir)
+		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
+		defer cancel()
+		entries, err := f.parity.List(listCtx, dir)
 		listCh <- listResult{"parity", entries, err}
 	}()
 
@@ -74,11 +81,19 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	// If even fails, try odd
 	if errEven != nil {
 		if errOdd != nil {
-			// Both data backends failed - check if this is an orphaned directory
-			// that should be cleaned up before returning error
+			// Both data backends failed. Treat MinIO "listPathRaw: 0 drives provided" as
+			// directory not found so copy/sync can proceed (S3 does not require listing
+			// destination before write).
+			if isMinIOListPathRawError(errEven) && isMinIOListPathRawError(errOdd) {
+				fs.Debugf(f, "List: treating MinIO list 500 (0 drives provided) as directory not found for %q", dir)
+				return nil, fs.ErrorDirNotFound
+			}
+			// Check if this is an orphaned directory that should be cleaned up before returning error
 			if f.opt.AutoCleanup {
 				// Check parity to see if directory is orphaned (exists only on parity)
-				_, errParity := f.parity.List(ctx, dir)
+				parityCtx, cancel := context.WithTimeout(ctx, listHelperTimeout)
+				defer cancel()
+				_, errParity := f.parity.List(parityCtx, dir)
 
 				// If parity exists but both data backends don't, this is orphaned
 				if errParity == nil {
@@ -206,8 +221,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	// Collect entries from all three backends in parallel
-	// Support degraded mode: works with 2/3 backends (reads work in degraded mode)
+	// Collect entries from all three backends in parallel.
+	// Support degraded mode: works with 2/3 backends (reads work in degraded mode).
+	// Use timeouts to avoid indefinite hang when a backend (e.g. MinIO/S3) blocks.
 	type listRResult struct {
 		name    string
 		entries []fs.DirEntries
@@ -217,6 +233,8 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 	// ListR on even backend
 	go func() {
+		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
+		defer cancel()
 		var evenEntries []fs.DirEntries
 		innerCallback := func(entries fs.DirEntries) error {
 			// Make a copy of entries to avoid modification after callback returns
@@ -228,16 +246,18 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		do := f.even.Features().ListR
 		var err error
 		if do != nil {
-			err = do(ctx, dir, innerCallback)
+			err = do(listCtx, dir, innerCallback)
 		} else {
 			// Fallback to walk.ListR if backend doesn't support ListR
-			err = walk.ListR(ctx, f.even, dir, true, -1, walk.ListAll, innerCallback)
+			err = walk.ListR(listCtx, f.even, dir, true, -1, walk.ListAll, innerCallback)
 		}
 		results <- listRResult{"even", evenEntries, err}
 	}()
 
 	// ListR on odd backend
 	go func() {
+		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
+		defer cancel()
 		var oddEntries []fs.DirEntries
 		innerCallback := func(entries fs.DirEntries) error {
 			// Make a copy of entries to avoid modification after callback returns
@@ -249,16 +269,18 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		do := f.odd.Features().ListR
 		var err error
 		if do != nil {
-			err = do(ctx, dir, innerCallback)
+			err = do(listCtx, dir, innerCallback)
 		} else {
 			// Fallback to walk.ListR if backend doesn't support ListR
-			err = walk.ListR(ctx, f.odd, dir, true, -1, walk.ListAll, innerCallback)
+			err = walk.ListR(listCtx, f.odd, dir, true, -1, walk.ListAll, innerCallback)
 		}
 		results <- listRResult{"odd", oddEntries, err}
 	}()
 
 	// ListR on parity backend (errors ignored, similar to List())
 	go func() {
+		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
+		defer cancel()
 		var parityEntries []fs.DirEntries
 		innerCallback := func(entries fs.DirEntries) error {
 			// Make a copy of entries to avoid modification after callback returns
@@ -269,10 +291,10 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		}
 		do := f.parity.Features().ListR
 		if do != nil {
-			_ = do(ctx, dir, innerCallback) // Ignore errors (similar to List() behavior)
+			_ = do(listCtx, dir, innerCallback) // Ignore errors (similar to List() behavior)
 		} else {
 			// Fallback to walk.ListR if backend doesn't support ListR
-			_ = walk.ListR(ctx, f.parity, dir, true, -1, walk.ListAll, innerCallback) // Ignore errors
+			_ = walk.ListR(listCtx, f.parity, dir, true, -1, walk.ListAll, innerCallback) // Ignore errors
 		}
 		// Ignore parity errors (similar to List() behavior)
 		results <- listRResult{"parity", parityEntries, nil}
@@ -302,6 +324,11 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	if errEven != nil {
 		if errOdd != nil {
 			// Both data backends failed
+			// Treat MinIO "listPathRaw: 0 drives provided" as directory not found (same as List())
+			if isMinIOListPathRawError(errEven) && isMinIOListPathRawError(errOdd) {
+				fs.Debugf(f, "ListR: treating MinIO list 500 (0 drives provided) as directory not found for %q", dir)
+				return fs.ErrorDirNotFound
+			}
 			// Check if both failed with ErrorDirNotFound
 			if errors.Is(errEven, fs.ErrorDirNotFound) && errors.Is(errOdd, fs.ErrorDirNotFound) {
 				return fs.ErrorDirNotFound

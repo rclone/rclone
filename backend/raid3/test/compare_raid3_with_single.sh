@@ -192,7 +192,7 @@ run_all_tests() {
 # ------------------------------ test helpers --------------------------------
 run_lsd_test() {
   local test_case="lsd"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing dataset"
 
@@ -229,7 +229,7 @@ run_lsd_test() {
 
 run_ls_test() {
   local test_case="ls"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing dataset"
 
@@ -266,7 +266,7 @@ run_ls_test() {
 
 run_cat_test() {
   local test_case="cat"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing dataset"
 
@@ -377,7 +377,7 @@ run_cat_test() {
 
 run_copy_download_test() {
   local test_case="cp-download"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing dataset"
 
@@ -427,8 +427,12 @@ run_copy_download_test() {
 
 run_copy_upload_test() {
   local test_case="cp-upload"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
+  # Brief delay after purge for MinIO (reduces intermittent CreateMultipartUpload hangs)
+  if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+    sleep 3
+  fi
   log_info "test:${test_case}" "Preparing dataset"
 
   local tempdir
@@ -444,9 +448,23 @@ run_copy_upload_test() {
   local dataset_id
   dataset_id=$(date +upload-%Y%m%d%H%M%S-$((RANDOM % 10000)))
 
+  local upload_timeout_sec=120
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_copy_upload" copy "${tempdir}" "${RAID3_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "single_copy_upload" copy "${tempdir}" "${SINGLE_REMOTE}:${dataset_id}")
+  if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+    # Raid3 upload to MinIO can hang on CreateMultipartUpload; use timeout and one retry (like sync-upload).
+    lvl_result=$(capture_command_with_timeout "${upload_timeout_sec}" "lvl_copy_upload" copy "${tempdir}" "${RAID3_REMOTE}:${dataset_id}")
+    IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
+    if [[ "${lvl_status}" -eq 124 ]]; then
+      log_info "test:${test_case}" "Copy to raid3 timed out; retrying once after 5s..."
+      sleep 5
+      lvl_result=$(capture_command_with_timeout "${upload_timeout_sec}" "lvl_copy_upload_retry" copy "${tempdir}" "${RAID3_REMOTE}:${dataset_id}")
+      IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
+    fi
+    single_result=$(capture_command_with_timeout "${upload_timeout_sec}" "single_copy_upload" copy "${tempdir}" "${SINGLE_REMOTE}:${dataset_id}")
+  else
+    lvl_result=$(capture_command "lvl_copy_upload" copy "${tempdir}" "${RAID3_REMOTE}:${dataset_id}")
+    single_result=$(capture_command "single_copy_upload" copy "${tempdir}" "${SINGLE_REMOTE}:${dataset_id}")
+  fi
 
   local lvl_status lvl_stdout lvl_stderr
   local single_status single_stdout single_stderr
@@ -459,6 +477,14 @@ run_copy_upload_test() {
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
     log_warn "test:${test_case}" "copy (upload) status mismatch (${RAID3_REMOTE}=${lvl_status}, ${SINGLE_REMOTE}=${single_status})"
     log_info "test:${test_case}" "Outputs retained: ${lvl_stdout} ${lvl_stderr} ${single_stdout} ${single_stderr}"
+    if [[ "${lvl_status}" -eq 124 ]]; then
+      log_warn "test:${test_case}" "Copy to ${RAID3_REMOTE} timed out after ${upload_timeout_sec}s (possible MinIO multipart hang)"
+      if [[ -f "${lvl_stderr}" ]]; then
+        log_warn "test:${test_case}" "Last 30 lines of rclone stderr (copy to raid3):"
+        tail -30 "${lvl_stderr}" | while IFS= read -r line; do log_warn "test:${test_case}" "  ${line}"; done
+      fi
+    fi
+    dump_minio_logs_on_failure "${test_case}"
     rm -rf "${tempdir}"
     return 1
   fi
@@ -500,7 +526,7 @@ run_copy_upload_test() {
 
 run_move_test() {
   local test_case="move"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing dataset"
 
@@ -567,7 +593,7 @@ run_move_test() {
 
 run_delete_test() {
   local test_case="delete"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing dataset"
 
@@ -665,7 +691,7 @@ run_delete_test() {
 
 run_check_test() {
   local test_case="check"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing dataset"
 
@@ -733,8 +759,12 @@ run_check_test() {
 
 run_sync_upload_test() {
   local test_case="sync-upload"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
+  # Brief delay after purge to let MinIO settle (reduces intermittent CreateMultipartUpload hangs)
+  if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+    sleep 3
+  fi
   log_info "test:${test_case}" "Preparing dataset"
 
   # Initial upload from local -> remote for both backends
@@ -747,18 +777,44 @@ run_sync_upload_test() {
   local dataset_id
   dataset_id=$(date +sync-upload-%Y%m%d%H%M%S-$((RANDOM % 10000)))
 
+  # Use timeout for initial sync too (raid3 sync can hang in List/Update path).
+  local sync_timeout_sec=120
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_sync_initial" sync "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "single_sync_initial" sync "${initial_dir}" "${SINGLE_REMOTE}:${dataset_id}")
-
+  lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_initial" sync "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
   local lvl_status lvl_stdout lvl_stderr
-  local single_status single_stdout single_stderr
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
+  # One retry for MinIO when initial sync times out (intermittent CreateMultipartUpload hang)
+  if [[ "${lvl_status}" -eq 124 ]] && [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+    log_info "test:${test_case}" "Initial sync to raid3 timed out; retrying once after 5s..."
+    sleep 5
+    lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_initial_retry" sync "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
+    IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
+  fi
+  single_result=$(capture_command_with_timeout "${sync_timeout_sec}" "single_sync_initial" sync "${initial_dir}" "${SINGLE_REMOTE}:${dataset_id}")
+
+  local single_status single_stdout single_stderr
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
   print_if_verbose "${RAID3_REMOTE} sync (initial upload)" "${lvl_stdout}" "${lvl_stderr}"
   print_if_verbose "${SINGLE_REMOTE} sync (initial upload)" "${single_stdout}" "${single_stderr}"
 
+  if [[ "${lvl_status}" -eq 124 ]]; then
+    log_warn "test:${test_case}" "sync initial upload to ${RAID3_REMOTE} timed out after ${sync_timeout_sec}s (possible raid3 hang)"
+    if [[ -f "${lvl_stderr}" ]]; then
+      log_warn "test:${test_case}" "Last 30 lines of rclone stderr (initial sync to raid3):"
+      tail -30 "${lvl_stderr}" | while IFS= read -r line; do
+        log_warn "test:${test_case}" "  ${line}"
+      done
+    fi
+    dump_minio_logs_on_failure "sync-upload-initial"
+    rm -rf "${initial_dir}"
+    return 1
+  fi
+  if [[ "${single_status}" -eq 124 ]]; then
+    log_warn "test:${test_case}" "sync initial upload to ${SINGLE_REMOTE} timed out after ${sync_timeout_sec}s"
+    rm -rf "${initial_dir}"
+    return 1
+  fi
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
     log_warn "test:${test_case}" "sync initial upload mismatch (raid3=${lvl_status}, single=${single_status})"
     rm -rf "${initial_dir}"
@@ -772,15 +828,44 @@ run_sync_upload_test() {
   printf 'updated sync test file 2\n' >"${initial_dir}/subdir/file2.txt"
   printf 'sync test file 3\n' >"${initial_dir}/file3.txt"
 
-  # Apply sync (the operation under test)
-  lvl_result=$(capture_command "lvl_sync_delta" sync "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "single_sync_delta" sync "${initial_dir}" "${SINGLE_REMOTE}:${dataset_id}")
+  # Apply sync (the operation under test). Use same timeout to avoid hang.
+  # With -v, pass -vv to rclone for debug output (helps diagnose timeout/hang)
+  local sync_extra=()
+  if (( VERBOSE )); then
+    sync_extra=(-vv)
+  fi
+  lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_delta" sync "${sync_extra[@]+"${sync_extra[@]}"}" "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
+  # One retry for MinIO when delta sync times out (intermittent CreateMultipartUpload hang)
+  if [[ "${lvl_status}" -eq 124 ]] && [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+    log_info "test:${test_case}" "Delta sync to raid3 timed out; retrying once after 5s..."
+    sleep 5
+    lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_delta_retry" sync "${sync_extra[@]+"${sync_extra[@]}"}" "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
+    IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
+  fi
+  single_result=$(capture_command_with_timeout "${sync_timeout_sec}" "single_sync_delta" sync "${sync_extra[@]+"${sync_extra[@]}"}" "${initial_dir}" "${SINGLE_REMOTE}:${dataset_id}")
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
   print_if_verbose "${RAID3_REMOTE} sync (delta)" "${lvl_stdout}" "${lvl_stderr}"
   print_if_verbose "${SINGLE_REMOTE} sync (delta)" "${single_stdout}" "${single_stderr}"
 
+  if [[ "${lvl_status}" -eq 124 ]]; then
+    log_warn "test:${test_case}" "sync delta to ${RAID3_REMOTE} timed out after ${sync_timeout_sec}s (possible raid3 hang)"
+    if [[ -f "${lvl_stderr}" ]]; then
+      log_warn "test:${test_case}" "Last 30 lines of rclone stderr (delta sync to raid3):"
+      tail -30 "${lvl_stderr}" | while IFS= read -r line; do
+        log_warn "test:${test_case}" "  ${line}"
+      done
+    fi
+    dump_minio_logs_on_failure "sync-upload-delta"
+    rm -rf "${initial_dir}"
+    return 1
+  fi
+  if [[ "${single_status}" -eq 124 ]]; then
+    log_warn "test:${test_case}" "sync delta to ${SINGLE_REMOTE} timed out after ${sync_timeout_sec}s"
+    rm -rf "${initial_dir}"
+    return 1
+  fi
   if [[ "${lvl_status}" -ne "${single_status}" ]]; then
     log_warn "test:${test_case}" "sync delta mismatch (raid3=${lvl_status}, single=${single_status})"
     rm -rf "${initial_dir}"
@@ -841,7 +926,7 @@ run_sync_upload_test() {
 
 run_sync_download_test() {
   local test_case="sync-download"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing dataset"
 
@@ -888,7 +973,7 @@ run_sync_download_test() {
 
 run_purge_test() {
   local test_case="purge"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing dataset"
 
@@ -943,7 +1028,7 @@ run_purge_test() {
 
 run_performance_test() {
   local test_case="performance"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   log_info "test:${test_case}" "Preparing performance test dataset"
 
@@ -1077,7 +1162,7 @@ run_performance_test() {
 
 run_mkdir_test() {
   local test_case="mkdir"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
   local test_id
   local timestamp random_suffix
@@ -1180,6 +1265,14 @@ main() {
   ensure_rclone_binary
   ensure_rclone_config
 
+  # Prevent rclone from hanging when using MinIO (purge, lsf, sync can block).
+  if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+    export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+    if (( VERBOSE )); then
+      log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (minio/mixed)"
+    fi
+  fi
+
   case "${COMMAND}" in
     start)
       if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
@@ -1200,10 +1293,12 @@ main() {
     teardown)
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
       set_remotes_for_storage_type
-      purge_remote_root "${RAID3_REMOTE}"
+      purge_raid3_remote_root
       purge_remote_root "${SINGLE_REMOTE}"
-
-  if [[ "${STORAGE_TYPE}" == "local" ]]; then
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        sleep 3
+      fi
+      if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_RAID3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"
           verify_directory_empty "${dir}"

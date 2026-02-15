@@ -331,6 +331,9 @@ func TestMoveFailsWithUnavailableBackend(t *testing.T) {
 	}
 	f, err := raid3.NewFs(ctx, "TestMoveFail", "", m)
 	require.NoError(t, err)
+	if f.Features().Move == nil {
+		t.Skip("backend does not support server-side Move (e.g. underlying has Move=nil)")
+	}
 
 	// Create a file
 	oldRemote := "original.txt"
@@ -358,7 +361,6 @@ func TestMoveFailsWithUnavailableBackend(t *testing.T) {
 	// Attempt move - should fail
 	newRemote := "renamed.txt"
 	doMove := f.Features().Move
-	require.NotNil(t, doMove)
 	_, err = doMove(ctx, oldObj, newRemote)
 
 	// Move should fail
@@ -428,6 +430,9 @@ func TestMoveWithMissingSourceParticle(t *testing.T) {
 	}
 	f, err := raid3.NewFs(ctx, "TestMoveMissing", "", m)
 	require.NoError(t, err)
+	if f.Features().Move == nil {
+		t.Skip("backend does not support server-side Move (e.g. underlying has Move=nil)")
+	}
 
 	// Create a file
 	oldRemote := "degraded.txt"
@@ -448,7 +453,6 @@ func TestMoveWithMissingSourceParticle(t *testing.T) {
 	// Attempt to move - should fail because source is degraded
 	newRemote := "moved.txt"
 	doMove := f.Features().Move
-	require.NotNil(t, doMove)
 	newObj, err := doMove(ctx, oldObj, newRemote)
 
 	// Move behavior with missing source particle:
@@ -1272,6 +1276,9 @@ func TestMoveRollbackOnFailure(t *testing.T) {
 	}
 	f, err := raid3.NewFs(ctx, "TestMoveRollback", "", m)
 	require.NoError(t, err)
+	if f.Features().Move == nil {
+		t.Skip("backend does not support server-side Move (e.g. underlying has Move=nil)")
+	}
 
 	// Create a file
 	oldRemote := "original.txt"
@@ -1294,7 +1301,6 @@ func TestMoveRollbackOnFailure(t *testing.T) {
 	// Attempt move - should fail
 	newRemote := "moved.txt"
 	doMove := f.Features().Move
-	require.NotNil(t, doMove)
 	newObj, err := doMove(ctx, oldObj, newRemote)
 
 	// Move should fail
@@ -1364,6 +1370,9 @@ func TestCopyFailsWithUnavailableBackend(t *testing.T) {
 	}
 	f, err := raid3.NewFs(ctx, "TestCopyFail", "", m)
 	require.NoError(t, err)
+	if f.Features().Copy == nil {
+		t.Skip("backend does not support server-side Copy (e.g. local backend)")
+	}
 
 	// Create a file
 	oldRemote := "original.txt"
@@ -1386,7 +1395,6 @@ func TestCopyFailsWithUnavailableBackend(t *testing.T) {
 	// Attempt copy - should fail
 	newRemote := "copied.txt"
 	doCopy := f.Features().Copy
-	require.NotNil(t, doCopy)
 	_, err = doCopy(ctx, oldObj, newRemote)
 
 	// Copy should fail
@@ -1436,6 +1444,9 @@ func TestCopyRollbackOnFailure(t *testing.T) {
 	}
 	f, err := raid3.NewFs(ctx, "TestCopyRollback", "", m)
 	require.NoError(t, err)
+	if f.Features().Copy == nil {
+		t.Skip("backend does not support server-side Copy (e.g. local backend)")
+	}
 
 	// Create a file
 	oldRemote := "original.txt"
@@ -1458,7 +1469,6 @@ func TestCopyRollbackOnFailure(t *testing.T) {
 	// Attempt copy - should fail
 	newRemote := "copied.txt"
 	doCopy := f.Features().Copy
-	require.NotNil(t, doCopy)
 	newObj, err := doCopy(ctx, oldObj, newRemote)
 
 	// Copy should fail

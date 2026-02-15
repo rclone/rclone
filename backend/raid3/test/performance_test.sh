@@ -421,9 +421,8 @@ run_rclone_test() {
     if (( VERBOSE )); then
       log_warn "test" "rclone ${operation} failed (exit ${status}): $(cat "${err_file}" 2>/dev/null | head -10)"
     fi
-    # Save last failure's stderr for diagnosis (upload or download)
     if [[ -s "${err_file}" ]]; then
-      cp "${err_file}" "${SCRIPT_DIR}/.rclone_perf_last_err.txt" 2>/dev/null || true
+      cat "${err_file}" >&2
     fi
   fi
   rm -f "${err_file}"
@@ -712,10 +711,10 @@ run_test_suite() {
       rclone_odd_path="${rel_odd:-${LOCAL_ODD_DIR}}/perf-test/${test_key_base}/"
       script_prefix="${SCRIPT_DIR}/"
       if [[ "${rclone_even_path}" == /* ]]; then
-        rclone_even_path="${rclone_even_path#${script_prefix}}"
+        rclone_even_path="${rclone_even_path#"${script_prefix}"}"
       fi
       if [[ "${rclone_odd_path}" == /* ]]; then
-        rclone_odd_path="${rclone_odd_path#${script_prefix}}"
+        rclone_odd_path="${rclone_odd_path#"${script_prefix}"}"
       fi
       lsl_even=$(rclone_cmd lsl "${LOCAL_EVEN_REMOTE}:${rclone_even_path}" 2>/dev/null | head -5)
       lsl_odd=$(rclone_cmd lsl "${LOCAL_ODD_REMOTE}:${rclone_odd_path}" 2>/dev/null | head -5)

@@ -355,7 +355,8 @@ func (f *Fs) reconstructDataParticle(ctx context.Context, dataFs, parityFs fs.Fs
 }
 
 // countParticlesSync counts how many particles exist for an object (0-3)
-// This is used by List() when auto_cleanup is enabled
+// This is used by List() when auto_cleanup is enabled.
+// Uses timeout to avoid hang when a backend (e.g. MinIO/S3) blocks on NewObject.
 func (f *Fs) countParticlesSync(ctx context.Context, remote string) int {
 	type result struct {
 		name   string
@@ -363,20 +364,23 @@ func (f *Fs) countParticlesSync(ctx context.Context, remote string) int {
 	}
 	resultCh := make(chan result, 3)
 
+	checkCtx, cancel := context.WithTimeout(ctx, listHelperTimeout)
+	defer cancel()
+
 	// Check even particle
 	go func() {
-		_, err := f.even.NewObject(ctx, remote)
+		_, err := f.even.NewObject(checkCtx, remote)
 		resultCh <- result{"even", err == nil}
 	}()
 
 	// Check odd particle
 	go func() {
-		_, err := f.odd.NewObject(ctx, remote)
+		_, err := f.odd.NewObject(checkCtx, remote)
 		resultCh <- result{"odd", err == nil}
 	}()
 
 	go func() {
-		_, err := f.parity.NewObject(ctx, remote)
+		_, err := f.parity.NewObject(checkCtx, remote)
 		resultCh <- result{"parity", err == nil}
 	}()
 

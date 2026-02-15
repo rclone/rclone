@@ -68,13 +68,22 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 		}
 
 		// List failed with real error
+		// Context deadline exceeded: backend may be slow (e.g. MinIO under load), not necessarily down.
+		if errors.Is(listErr, context.DeadlineExceeded) || strings.Contains(listErr.Error(), "deadline exceeded") {
+			return healthResult{name, nil}
+		}
+		// MinIO "listPathRaw: 0 drives provided": list can fail on this path; backend may still accept writes.
+		// Treat as available so copy can proceed (only degrade when direct write fails).
+		if isMinIOListPathRawError(listErr) {
+			return healthResult{name, nil}
+		}
 		// Check if it's an InvalidBucketName error (configuration issue, not availability)
 		if strings.Contains(listErr.Error(), "InvalidBucketName") {
 			// InvalidBucketName indicates a configuration/parsing issue, not backend unavailability
 			// Return this as an error so it's reported, but it's different from connection errors
 			return healthResult{name, fmt.Errorf("%s backend configuration error (InvalidBucketName): %w", name, listErr)}
 		}
-		// Other errors (connection refused, timeout, etc.)
+		// Other errors (connection refused, etc.)
 		return healthResult{name, listErr}
 	}
 

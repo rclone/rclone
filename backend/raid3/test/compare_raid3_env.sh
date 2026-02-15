@@ -54,4 +54,9 @@ MINIO_ODD_PORT="${MINIO_ODD_PORT:-9002}"
 MINIO_PARITY_PORT="${MINIO_PARITY_PORT:-9003}"
 MINIO_SINGLE_PORT="${MINIO_SINGLE_PORT:-9004}"
 
+# MinIO Docker image (Docker Hub). Use RELEASE.2025-09-07 or newer for multipart bugfixes
+# (fixes for AbortMultipartUpload idempotency, conditional checks write for multipart).
+# RELEASE.2025-10-15 not yet on Docker Hub; use MINIO_IMAGE=... to override if needed.
+MINIO_IMAGE="${MINIO_IMAGE:-minio/minio:RELEASE.2025-09-07T16-13-09Z}"
+
 

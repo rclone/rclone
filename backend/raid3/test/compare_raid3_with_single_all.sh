@@ -4,23 +4,23 @@
 # ----------------------------------
 # Master test script that runs all integration tests across all RAID3 backends.
 #
-# This script runs all 8 test suites:
+# This script runs all integration test suites (serverside_operations.sh excluded for now; see backend/raid3/docs/OPEN_ISSUES.md):
 #   - compare_raid3_with_single.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_heal.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_errors.sh (with minio only)
 #   - compare_raid3_with_single_rebuild.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_features.sh (with mixed only)
 #   - compare_raid3_with_single_stacking.sh (with local, minio)
-#   - serverside_operations.sh (with local, minio)
 #   - performance_test.sh (with local, minio; uses scenario all-but-4G)
 #
 # Usage:
 #   compare_raid3_with_single_all.sh [options]
 #
 # Options:
-#   -v, --verbose    Show detailed output from individual test scripts
-#   -c, --compression Use Snappy compression for raid3 remotes (regenerates config with compression = snappy)
-#   -h, --help       Display this help text
+#   -v, --verbose         Show detailed output from individual test scripts
+#   --storage-type <t>    Run only with given backend: local, minio, or mixed.
+#                         If not supplied, runs all storage types for each test.
+#   -h, --help            Display this help text
 #
 # Environment:
 #   RCLONE_CONFIG   Path to rclone configuration file.
@@ -41,18 +41,19 @@ for arg in "$@"; do
 Usage: ${SCRIPT_NAME} [options]
 
 Options:
-  -v, --verbose    Show detailed output from individual test scripts
-  -c, --compression Use Snappy compression for raid3 remotes (regenerates config with compression = snappy)
-  -h, --help       Display this help text
+  -v, --verbose         Show detailed output from individual test scripts
+  --storage-type <t>    Run only with given backend: local, minio, or mixed.
+                        If not supplied, runs all storage types for each test.
+  -h, --help            Display this help text
 
-This script runs all integration tests across all RAID3 backends:
+This script runs all integration tests across all RAID3 backends
+(serverside_operations.sh excluded for now; see backend/raid3/docs/OPEN_ISSUES.md):
   - compare_raid3_with_single.sh (local, minio, mixed)
   - compare_raid3_with_single_heal.sh (local, minio, mixed)
   - compare_raid3_with_single_errors.sh (minio only)
   - compare_raid3_with_single_rebuild.sh (local, minio, mixed)
   - compare_raid3_with_single_features.sh (mixed only)
   - compare_raid3_with_single_stacking.sh (local, minio)
-  - serverside_operations.sh (local, minio)
   - performance_test.sh (local, minio; scenario all-but-4G)
 
 Each test suite is run with the appropriate storage types, and only
@@ -67,6 +68,7 @@ done
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
 VERBOSE=0
+STORAGE_TYPE_FILTER=""
 
 # Test scripts and their storage types
 # Format: "script_name:storage_type1,storage_type2,..."
@@ -77,7 +79,6 @@ TEST_SCRIPTS=(
   "compare_raid3_with_single_rebuild.sh:local,minio,mixed"
   "compare_raid3_with_single_features.sh:local,minio,mixed"
   "compare_raid3_with_single_stacking.sh:local,minio"
-  "serverside_operations.sh:local,minio"
   "performance_test.sh:local,minio"
 )
 
@@ -88,17 +89,19 @@ usage() {
 Usage: ${SCRIPT_NAME} [options]
 
 Options:
-  -v, --verbose    Show detailed output from individual test scripts
-  -h, --help       Display this help text
+  -v, --verbose         Show detailed output from individual test scripts
+  --storage-type <t>    Run only with given backend: local, minio, or mixed.
+                        If not supplied, runs all storage types for each test.
+  -h, --help            Display this help text
 
-This script runs all integration tests across all RAID3 backends:
+This script runs all integration tests across all RAID3 backends
+(serverside_operations.sh excluded for now; see backend/raid3/docs/OPEN_ISSUES.md):
   - compare_raid3_with_single.sh (local, minio, mixed)
   - compare_raid3_with_single_heal.sh (local, minio, mixed)
   - compare_raid3_with_single_errors.sh (minio only)
   - compare_raid3_with_single_rebuild.sh (local, minio, mixed)
   - compare_raid3_with_single_features.sh (mixed only)
   - compare_raid3_with_single_stacking.sh (local, minio)
-  - serverside_operations.sh (local, minio)
   - performance_test.sh (local, minio; scenario all-but-4G)
 
 Each test suite is run with the appropriate storage types, and only
@@ -152,8 +155,14 @@ parse_args() {
         VERBOSE=1
         shift
         ;;
-      -c|--compression)
-        export RAID3_COMPRESSION=snappy
+      --storage-type)
+        shift
+        [[ $# -gt 0 ]] || { echo "Missing argument for --storage-type" >&2; usage >&2; exit 1; }
+        STORAGE_TYPE_FILTER="$1"
+        shift
+        ;;
+      --storage-type=*)
+        STORAGE_TYPE_FILTER="${1#*=}"
         shift
         ;;
       -h|--help)
@@ -167,6 +176,11 @@ parse_args() {
         ;;
     esac
   done
+  if [[ -n "${STORAGE_TYPE_FILTER}" && "${STORAGE_TYPE_FILTER}" != "local" && "${STORAGE_TYPE_FILTER}" != "minio" && "${STORAGE_TYPE_FILTER}" != "mixed" ]]; then
+    echo "Invalid --storage-type '${STORAGE_TYPE_FILTER}'. Expected local, minio, or mixed." >&2
+    usage >&2
+    exit 1
+  fi
 }
 
 # ensure_workdir is now provided by compare_raid3_with_single_common.sh
@@ -179,16 +193,17 @@ main() {
   ensure_workdir
   ensure_rclone_binary
 
-  # Regenerate config when --compression was set so config matches (compression = snappy or zstd for raid3 remotes)
-  if [[ -n "${RAID3_COMPRESSION:-}" ]] && [[ "${RAID3_COMPRESSION}" == "snappy" || "${RAID3_COMPRESSION}" == "zstd" ]]; then
-    log_info "all" "Regenerating config with compression = ${RAID3_COMPRESSION} for raid3 remotes"
-    create_rclone_config "${TEST_SPECIFIC_CONFIG}" 1 || true
-  else
-    ensure_rclone_config
+  # Prevent any single rclone command from hanging (raid3 can block on List/mkdir/copy/sync).
+  export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+  if [[ -n "${RCLONE_TEST_TIMEOUT}" ]]; then
+    log_info "all" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (exit 124 = timed out)"
   fi
+
+  ensure_rclone_config
 
   log_info "all" "=========================================="
   log_info "all" "Running all RAID3 integration tests"
+  [[ -n "${STORAGE_TYPE_FILTER}" ]] && log_info "all" "Storage type filter: ${STORAGE_TYPE_FILTER} only"
   log_info "all" "=========================================="
   echo ""
 
@@ -206,6 +221,20 @@ main() {
     # Split storage types into array
     local storage_types_array=()
     IFS=',' read -ra storage_types_array <<< "${storage_types_str}"
+
+    # Filter to requested storage type if --storage-type was set
+    if [[ -n "${STORAGE_TYPE_FILTER}" ]]; then
+      local filtered=()
+      for st in "${storage_types_array[@]}"; do
+        [[ "${st}" == "${STORAGE_TYPE_FILTER}" ]] && filtered+=("${st}")
+      done
+      if [[ ${#filtered[@]} -gt 0 ]]; then
+        storage_types_array=("${filtered[@]}")
+      else
+        storage_types_array=()
+      fi
+      [[ ${#storage_types_array[@]} -eq 0 ]] && continue
+    fi
 
     script_path="${SCRIPT_DIR}/${script_name}"
 

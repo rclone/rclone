@@ -820,18 +820,20 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	// Disable retries for strict RAID 3 write policy
 	ctx = o.fs.disableRetriesForWrites(ctx)
 
-	// Look up existing particle objects
-	evenObj, err := o.fs.even.NewObject(ctx, o.remote)
+	// Look up existing particle objects (with timeout to avoid hang on MinIO/S3)
+	objCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
+	defer cancel()
+	evenObj, err := o.fs.even.NewObject(objCtx, o.remote)
 	if err != nil {
 		return fmt.Errorf("even particle not found: %w", err)
 	}
-	oddObj, err := o.fs.odd.NewObject(ctx, o.remote)
+	oddObj, err := o.fs.odd.NewObject(objCtx, o.remote)
 	if err != nil {
 		return fmt.Errorf("odd particle not found: %w", err)
 	}
 
 	var parityObj fs.Object
-	parityObj, err = o.fs.parity.NewObject(ctx, o.remote)
+	parityObj, err = o.fs.parity.NewObject(objCtx, o.remote)
 	if err != nil {
 		parityObj = nil
 	}
@@ -1022,7 +1024,10 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		_ = evenPipeW.CloseWithError(errSplit)
 		_ = oddPipeW.CloseWithError(errSplit)
 		_ = parityPipeW.CloseWithError(errSplit)
-		_ = g.Wait()
+		gErr := g.Wait()
+		if gErr != nil {
+			return gErr
+		}
 		return errSplit
 	}
 	contentLength := hasher.ContentLength()

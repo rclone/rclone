@@ -69,7 +69,10 @@ See [`test/README.md`](../test/README.md) for complete documentation. Scripts in
 - `compare_raid3_with_single_rebuild.sh` - Rebuild validation (success scenarios run `rclone check` after rebuild to verify logical sizes and content match)
 - `compare_raid3_with_single_heal.sh` - Heal validation
 - `compare_raid3_with_single_errors.sh` - Error handling
+- `compare_raid3_with_single_features.sh` - Feature handling with mixed remotes
 - `compare_raid3_with_single_all.sh` - Master script to run all tests across all backends
+- `performance_test.sh` - Performance benchmarks (upload/download) for different file sizes and storage types
+- `compression_bench.sh` - Compression ratio for local raid3 (requires `--storage-type=local`; config compression ≠ none)
 
 ---
 

@@ -200,7 +200,7 @@ run_read_heal_scenario() {
   local backend="$1"
   log_info "suite" "Running read-heal scenario '${backend}' (${STORAGE_TYPE})"
 
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
   local dataset_id
@@ -248,7 +248,7 @@ run_listing_scenario() {
   local backend="$1"
   log_info "suite" "Running listing-only scenario '${backend}' (${STORAGE_TYPE})"
 
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
   local dataset_id
@@ -357,7 +357,7 @@ main() {
     teardown)
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
       set_remotes_for_storage_type
-      purge_remote_root "${RAID3_REMOTE}"
+      purge_raid3_remote_root
       purge_remote_root "${SINGLE_REMOTE}"
       if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_RAID3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do

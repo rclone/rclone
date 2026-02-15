@@ -355,6 +355,7 @@ chunk_size = 100B
 hash_type = md5
 
 # MinIO S3 remotes
+# upload_cutoff = 5G reduces multipart use; workaround for MinIO multipart hangs (see README).
 [${MINIO_EVEN_REMOTE}]
 type = s3
 provider = Minio
@@ -365,6 +366,7 @@ endpoint = http://127.0.0.1:${MINIO_EVEN_PORT}
 acl = private
 no_check_bucket = false
 max_retries = 1
+upload_cutoff = 5G
 
 [${MINIO_ODD_REMOTE}]
 type = s3
@@ -376,6 +378,7 @@ endpoint = http://127.0.0.1:${MINIO_ODD_PORT}
 acl = private
 no_check_bucket = false
 max_retries = 1
+upload_cutoff = 5G
 
 [${MINIO_PARITY_REMOTE}]
 type = s3
@@ -387,6 +390,7 @@ endpoint = http://127.0.0.1:${MINIO_PARITY_PORT}
 acl = private
 no_check_bucket = false
 max_retries = 1
+upload_cutoff = 5G
 
 # RAID3 remote using MinIO storage
 [minioraid3]
@@ -420,6 +424,7 @@ endpoint = http://127.0.0.1:${MINIO_SINGLE_PORT}
 acl = private
 no_check_bucket = false
 max_retries = 1
+upload_cutoff = 5G
 
 # Crypt backends for stacking tests with MinIO
 # cryptminiosingle wraps miniosingle
@@ -519,10 +524,74 @@ ensure_rclone_binary() {
   log_info "binary" "Using rclone binary: ${RCLONE_BINARY}"
 }
 
+# rclone_cmd_raw runs rclone with no timeout (used when caller applies its own timeout).
+# When STORAGE_TYPE is minio or mixed, adds short HTTP timeouts (--contimeout 10s --timeout 30s)
+# to reduce MinIO CreateMultipartUpload hangs; child S3 backends inherit these via global config.
+# Uses -q (quiet) unless VERBOSE is set, to suppress NOTICE lines like "Streaming uploads using chunk size 5Mi..."
+rclone_cmd_raw() {
+  local quiet=()
+  [[ "${VERBOSE:-0}" -eq 0 ]] && quiet=(-q)
+  if [[ "${STORAGE_TYPE:-}" == "minio" || "${STORAGE_TYPE:-}" == "mixed" ]]; then
+    "${RCLONE_BINARY}" --config "${RCLONE_CONFIG}" --retries 1 --contimeout 10s --timeout 30s "${quiet[@]+"${quiet[@]}"}" "$@"
+  else
+    "${RCLONE_BINARY}" --config "${RCLONE_CONFIG}" --retries 1 "${quiet[@]+"${quiet[@]}"}" "$@"
+  fi
+}
+
+# rclone_cmd runs rclone. If RCLONE_TEST_TIMEOUT (seconds) is set, the command is run with that timeout
+# to avoid hangs (raid3 backend can block on List/mkdir/copy/sync). Exit 124 on timeout.
 rclone_cmd() {
-  # Use --retries 1 for faster failure in tests (avoid 3 retries causing long delays)
-  # Use local rclone binary from repo root if available, otherwise system rclone
-  "${RCLONE_BINARY}" --config "${RCLONE_CONFIG}" --retries 1 "$@"
+  if [[ -n "${RCLONE_TEST_TIMEOUT:-}" ]] && [[ "${RCLONE_TEST_TIMEOUT}" =~ ^[0-9]+$ ]]; then
+    run_with_timeout "${RCLONE_TEST_TIMEOUT}" rclone_cmd_raw "$@"
+    return $?
+  fi
+  rclone_cmd_raw "$@"
+}
+
+# run_with_timeout runs a command with a timeout (seconds). Portable (no GNU timeout required).
+# Returns 124 on timeout (same as GNU timeout). Exits 125 if timeout_sec is invalid.
+# Uses a process group so on timeout we kill the whole tree (e.g. rclone child), not just the shell.
+run_with_timeout() {
+  local timeout_sec="$1"
+  shift
+  if ! [[ "${timeout_sec}" =~ ^[0-9]+$ ]] || [[ "${timeout_sec}" -lt 1 ]]; then
+    return 125
+  fi
+  # Run in a process group (set -m) so we can kill -9 -$pgrp to stop the whole tree
+  ( set -m; "$@" ) &
+  local pgrp=$!
+  local count=0
+  while (( count < timeout_sec )); do
+    kill -0 "${pgrp}" 2>/dev/null || break
+    sleep 1
+    (( count++ )) || true
+  done
+  if kill -0 "${pgrp}" 2>/dev/null; then
+    kill -9 -"${pgrp}" 2>/dev/null || kill -9 "${pgrp}" 2>/dev/null
+    wait "${pgrp}" 2>/dev/null
+    return 124
+  fi
+  wait "${pgrp}"
+  return $?
+}
+
+# capture_command_with_timeout runs rclone with a timeout and captures stdout/stderr.
+# Use when a step may hang (e.g. sync to raid3). Exit 124 means timeout.
+capture_command_with_timeout() {
+  local timeout_sec="$1"
+  local label="$2"
+  shift 2
+
+  local out_file err_file status
+  out_file=$(mktemp "/tmp/${label}.stdout.XXXXXX")
+  err_file=$(mktemp "/tmp/${label}.stderr.XXXXXX")
+
+  set +e
+  ( run_with_timeout "${timeout_sec}" rclone_cmd "$@" ) >"${out_file}" 2>"${err_file}"
+  status=$?
+  set -e
+
+  printf '%s|%s|%s\n' "${status}" "${out_file}" "${err_file}"
 }
 
 capture_command() {
@@ -596,7 +665,7 @@ container_running() {
 
 wait_for_minio_port() {
   local port="$1"
-  local retries=30
+  local retries=60
   local delay=1
   while (( retries > 0 )); do
     if nc -z localhost "${port}" >/dev/null 2>&1; then
@@ -609,7 +678,8 @@ wait_for_minio_port() {
 }
 
 # Wait for MinIO backend to be ready by attempting a simple S3 operation
-# This verifies MinIO is not just listening on the port, but actually ready to accept requests
+# This verifies MinIO is not just listening on the port, but actually ready to accept requests.
+# Retries on 500 / "0 drives provided" so we don't proceed before MinIO has finished initializing.
 wait_for_minio_backend_ready() {
   local backend="$1"
   local remote
@@ -646,6 +716,13 @@ wait_for_minio_backend_ready() {
       continue
     fi
     
+    # 500 / "0 drives provided" mean MinIO is not ready yet - keep retrying
+    if echo "${output}" | grep -qiE "(InternalError|0 drives provided|StatusCode: 500)"; then
+      sleep "${delay}"
+      (( retries-- ))
+      continue
+    fi
+    
     # Other errors might indicate backend is ready but has issues - accept as ready
     # (better to proceed than wait forever)
     return 0
@@ -661,6 +738,33 @@ minio_container_for_backend() {
     parity) echo "minioparity" ;;
     *) echo "" ;;
   esac
+}
+
+# dump_minio_logs_on_failure writes the last 150 lines of each MinIO container's Docker log
+# to a temp file and logs the path. Call this when a test fails with --storage-type=minio or mixed
+# so you can inspect MinIO behavior (e.g. CreateMultipartUpload, PutObjectPart, timeouts).
+# No-op if STORAGE_TYPE is not minio or mixed, or if Docker is unavailable.
+dump_minio_logs_on_failure() {
+  local label="${1:-failure}"
+  if [[ "${STORAGE_TYPE:-}" != "minio" && "${STORAGE_TYPE:-}" != "mixed" ]]; then
+    return 0
+  fi
+  if ! command -v docker >/dev/null 2>&1; then
+    log_warn "minio-logs" "Docker not available; cannot capture MinIO container logs."
+    return 0
+  fi
+  local log_file
+  log_file=$(mktemp "/tmp/minio_logs_${label}.XXXXXX" 2>/dev/null) || log_file="/tmp/minio_logs_${label}.$$"
+  local tail_lines=150
+  for name in "${MINIO_EVEN_NAME}" "${MINIO_ODD_NAME}" "${MINIO_PARITY_NAME}" "${MINIO_SINGLE_NAME}"; do
+    if container_running "${name}" 2>/dev/null; then
+      { echo "========== docker logs --tail ${tail_lines} ${name} =========="; docker logs --tail "${tail_lines}" "${name}" 2>&1; echo ""; } >>"${log_file}"
+    else
+      echo "(container ${name} not running)" >>"${log_file}"
+    fi
+  done
+  log_warn "minio-logs" "MinIO container logs (last ${tail_lines} lines each) saved to: ${log_file}"
+  log_warn "minio-logs" "Inspect with: cat ${log_file} or: docker logs ${MINIO_EVEN_NAME} 2>&1 | tail -200"
 }
 
 stop_single_minio_container() {
@@ -814,14 +918,16 @@ start_minio_containers() {
     fi
 
     log "Launching container '${name}' (ports ${s3_port}/${console_port})."
+    local data_dir_abs
+    data_dir_abs=$(cd "${data_dir}" && pwd) || data_dir_abs="${data_dir}"
     docker run -d \
       --name "${name}" \
       -p "${s3_port}:9000" \
       -p "${console_port}:9001" \
       -e "MINIO_ROOT_USER=${user}" \
       -e "MINIO_ROOT_PASSWORD=${pass}" \
-      -v "${data_dir}:/data" \
-      quay.io/minio/minio server /data --console-address ":9001" >/dev/null
+      -v "${data_dir_abs}:/data" \
+      "${MINIO_IMAGE:-minio/minio:RELEASE.2025-09-07T16-13-09Z}" server /data --console-address ":9001" >/dev/null
   done
 }
 
@@ -851,14 +957,23 @@ ensure_minio_containers_ready() {
     fi
   done
 
+  # Give MinIO time to bind after start (especially when several containers start at once)
+  if (( started )); then
+    sleep 3
+  fi
+
   # Wait for S3 ports to come online
   local idx=0
   for entry in "${MINIO_CONTAINERS[@]}"; do
     IFS='|' read -r name _ _ _ _ _ <<<"${entry}"
     local port="${MINIO_S3_PORTS[idx]}"
+    if ! container_running "${name}"; then
+      log_fail "autostart" "Container ${name} is not running (may have exited). Run: docker logs ${name}"
+      return 1
+    fi
     log_info "autostart" "Waiting for ${name} (port ${port})..."
     if ! wait_for_minio_port "${port}"; then
-      log_fail "autostart" "Port ${port} for ${name} did not open in time."
+      log_fail "autostart" "Port ${port} for ${name} did not open in time (60s). Run: docker logs ${name}"
       return 1
     fi
     ((idx++))
@@ -890,6 +1005,57 @@ stop_minio_containers() {
   fi
 }
 
+# Purge the raid3 remote by calling purge directly on the 3 underlying remotes
+# (avoids using the raid3 backend for list/purge; reduces risk of hangs with MinIO).
+# For local storage, list/purge only under each backend's raid3 data path (e.g. _data/even_local)
+# so we never remove content from the test folder.
+# Requires STORAGE_TYPE and set_remotes_for_storage_type to have been set.
+purge_raid3_remote_root() {
+  log "Purging raid3 remote (3 underlying remotes: even, odd, parity)"
+  local backends=(even odd parity)
+  local lsf_output lsf_ret entry i remote root_path list_prefix purge_prefix
+  lsf_output=""
+  for i in 0 1 2; do
+    remote=$(backend_remote_name "${backends[i]}")
+    root_path=$(backend_raid3_root_path "${backends[i]}")
+    if [[ -n "${root_path}" ]]; then
+      list_prefix="${remote}:${root_path}"
+    else
+      list_prefix="${remote}:"
+    fi
+    lsf_output="${lsf_output}$(rclone_cmd lsf "${list_prefix}" 2>/dev/null)"
+    lsf_ret=$?
+    if [[ "${lsf_ret}" -eq 124 ]]; then
+      log "WARNING: rclone lsf ${list_prefix} timed out (exit 124)"
+    fi
+    lsf_output="${lsf_output}"$'\n'
+  done
+  lsf_output=$(echo "${lsf_output}" | grep -v '^$' | sort -u || true)
+  if [[ -z "${lsf_output}" ]]; then
+    if (( VERBOSE )); then
+      log "  (no top-level entries on raid3 backends)"
+    fi
+    return 0
+  fi
+  while IFS= read -r entry; do
+    entry="${entry%/}"
+    [[ -z "${entry}" ]] && continue
+    if (( VERBOSE )); then
+      log "  - purging ${entry} on even, odd, parity"
+    fi
+    for i in 0 1 2; do
+      remote=$(backend_remote_name "${backends[i]}")
+      root_path=$(backend_raid3_root_path "${backends[i]}")
+      if [[ -n "${root_path}" ]]; then
+        purge_prefix="${remote}:${root_path}/${entry}"
+      else
+        purge_prefix="${remote}:${entry}"
+      fi
+      rclone_cmd purge "${purge_prefix}" >/dev/null 2>&1 || true
+    done
+  done <<<"${lsf_output}"
+}
+
 # Purge only the contents of the remote root, never the root itself
 # (so that local dirs like even_local, odd_local, etc. are not removed)
 purge_remote_root() {
@@ -897,8 +1063,13 @@ purge_remote_root() {
   log "Purging remote '${remote}:'"
 
   local entry
-  local lsf_output
-  lsf_output=$(rclone_cmd lsf "${remote}:" 2>/dev/null | grep -v '^$' || true)
+  local lsf_output lsf_ret
+  lsf_output=$(rclone_cmd lsf "${remote}:" 2>/dev/null)
+  lsf_ret=$?
+  lsf_output=$(echo "${lsf_output}" | grep -v '^$' || true)
+  if [[ "${lsf_ret}" -eq 124 ]]; then
+    log "WARNING: rclone lsf ${remote} timed out (exit 124); purge may be incomplete"
+  fi
   if [[ -z "${lsf_output}" ]]; then
     if (( VERBOSE )); then
       log "  (no top-level entries on ${remote})"
@@ -1066,6 +1237,30 @@ remote_data_dir() {
   esac
 }
 
+# Path suffix for listing/purging this backend when used as part of the raid3 remote.
+# For local: path relative to test dir (e.g. _data/even_local) so we never list/purge the test folder.
+# For minio/mixed: empty so we use the remote root.
+backend_raid3_root_path() {
+  local backend="$1"
+  case "${STORAGE_TYPE}" in
+    local)
+      local dir
+      dir=$(remote_data_dir "${backend}")
+      if [[ "${dir}" == "${SCRIPT_DIR}"/* ]]; then
+        echo "${dir#"${SCRIPT_DIR}"/}"
+      else
+        echo "${dir}"
+      fi
+      ;;
+    minio|mixed)
+      echo ""
+      ;;
+    *)
+      echo ""
+      ;;
+  esac
+}
+
 remove_dataset_from_backend() {
   local backend="$1"
   local dataset_id="$2"
@@ -1170,7 +1365,7 @@ create_test_dataset() {
   local timestamp random_suffix test_id
   timestamp=$(date +%Y%m%d%H%M%S)
   printf -v random_suffix '%04d' $((RANDOM % 10000))
-  test_id="cmp-${label}-${timestamp}-${random_suffix}"
+  test_id="cmp-${label}-${timestamp}-${random_suffix}-$$"
 
   local tmpfile1 tmpfile2
   tmpfile1=$(mktemp) || return 1

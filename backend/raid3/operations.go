@@ -138,12 +138,16 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	// Disable retries for strict RAID 3 write policy
 	ctx = f.disableRetriesForWrites(ctx)
 
+	// Limit Put operation time to avoid indefinite hang when a backend blocks (e.g. MinIO CreateMultipartUpload)
+	putCtx, putCancel := context.WithTimeout(ctx, putOperationTimeout)
+	defer putCancel()
+
 	// Track uploaded particles for rollback
 	var uploadedParticles []fs.Object
 	var err error
 	defer func() {
 		if err != nil && f.opt.Rollback {
-			if rollbackErr := f.rollbackPut(ctx, uploadedParticles); rollbackErr != nil {
+			if rollbackErr := f.rollbackPut(putCtx, uploadedParticles); rollbackErr != nil {
 				fs.Errorf(f, "Rollback failed during Put (streaming): %v", rollbackErr)
 			}
 		}
@@ -151,7 +155,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 	// Handle empty file case
 	srcSize := src.Size()
-	mtime := effectiveModTime(ctx, f, src, options)
+	mtime := effectiveModTime(putCtx, f, src, options)
 	compression, _ := ConfigToFooterCompression(f.opt.Compression) // validated in NewFs
 	if srcSize == 0 {
 		// Empty file - create empty particles (90-byte footer only each)
@@ -165,21 +169,21 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		fb3, _ := ft3.MarshalBinary()
 		parityR := bytes.NewReader(fb3)
 		evenInfo := createParticleInfo(f, src, "even", FooterSize, false)
-		evenObj, err := f.even.Put(ctx, evenR, evenInfo, options...)
+		evenObj, err := f.even.Put(putCtx, evenR, evenInfo, options...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
 		}
 		uploadedParticles = append(uploadedParticles, evenObj)
 
 		oddInfo := createParticleInfo(f, src, "odd", FooterSize, false)
-		oddObj, err := f.odd.Put(ctx, oddR, oddInfo, options...)
+		oddObj, err := f.odd.Put(putCtx, oddR, oddInfo, options...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
 		}
 		uploadedParticles = append(uploadedParticles, oddObj)
 
 		parityInfo := createParticleInfo(f, src, "parity", FooterSize, false)
-		parityObj, err := f.parity.Put(ctx, parityR, parityInfo, options...)
+		parityObj, err := f.parity.Put(putCtx, parityR, parityInfo, options...)
 		if err != nil {
 			return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
 		}
@@ -242,12 +246,13 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	// Use errgroup for the Put goroutines; run the splitter in the calling goroutine
 	// so the source reader (e.g. accounting.Account from rclone copy) is consumed
 	// on the same goroutine that called Put, avoiding deadlocks with pipe/async readers.
-	g, gCtx := errgroup.WithContext(ctx)
+	g, gCtx := errgroup.WithContext(putCtx)
 	var uploadedMu sync.Mutex
 
 	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, streamReadChunkSize, isOddLengthCh)
 
-	// Start Put goroutines first so they are reading from pipes when the splitter writes
+	// Start Put goroutines with staggered delays to reduce concurrent CreateMultipartUpload
+	// load on MinIO (avoids intermittent hangs when all 3 hit MinIO simultaneously).
 	// Goroutine 1: Put even particle (reads from evenPipeR)
 	g.Go(func() error {
 		defer func() { _ = evenPipeR.Close() }()
@@ -266,6 +271,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 	// Goroutine 2: Put odd particle (reads from oddPipeR)
 	g.Go(func() error {
+		time.Sleep(putStaggerDelay)
 		defer func() { _ = oddPipeR.Close() }()
 		oddInfo := createParticleInfo(f, src, "odd", -1, isOddLength)
 		obj, err := f.odd.Put(gCtx, oddPipeR, oddInfo, options...)
@@ -281,6 +287,7 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 	// Goroutine 3: Put parity particle (reads from parityPipeR)
 	g.Go(func() error {
+		time.Sleep(2 * putStaggerDelay)
 		defer func() { _ = parityPipeR.Close() }()
 
 		// Get isOddLength - use source size if known, otherwise from channel
@@ -311,7 +318,11 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		_ = evenPipeW.CloseWithError(errSplit)
 		_ = oddPipeW.CloseWithError(errSplit)
 		_ = parityPipeW.CloseWithError(errSplit)
-		_ = g.Wait()
+		gErr := g.Wait()
+		// If splitter failed due to a consumer closing the pipe (one Put failed), surface the real backend error
+		if gErr != nil {
+			return nil, gErr
+		}
 		return nil, errSplit
 	}
 	contentLength := hasher.ContentLength()
@@ -397,6 +408,16 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
+	// Server-side move only within the same backend (same config name); reject cross-backend.
+	srcFs := srcObj.fs
+	if srcFs.Name() != f.Name() {
+		return nil, fs.ErrorCantMove
+	}
+	// Call-time check: all three backends must support Move (defensive; Mask should already enforce).
+	if f.even.Features().Move == nil || f.odd.Features().Move == nil || f.parity.Features().Move == nil {
+		return nil, fs.ErrorCantMove
+	}
+
 	// Normalize remote path: remove leading slashes and clean the path.
 	// The remote parameter should be relative to f.Root(), but it might include
 	// path components if extracted from a full path. We normalize it to ensure
@@ -404,9 +425,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	remote = strings.TrimPrefix(remote, "/")
 	remote = path.Clean(remote)
 
-	// Handle cross-remote moves: if source is from different Fs instance,
-	// we need to get particles from source Fs's backends
-	srcFs := srcObj.fs
+	// Same-backend only (srcFs.Name() == f.Name() already enforced above).
 	srcRemote := srcObj.remote
 	isCrossRemote := srcFs != f
 
@@ -510,13 +529,23 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Check if src is from a raid3 backend (may be different Fs instance for cross-remote copies)
+	// Check if src is from a raid3 backend (may be different Fs instance for same-backend, different root)
 	srcObj, ok := src.(*Object)
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
 	if err := validateRemote(srcObj.remote, "copy"); err != nil {
 		return nil, err
+	}
+
+	// Server-side copy only within the same backend (same config name); reject cross-backend.
+	srcFs := srcObj.fs
+	if srcFs.Name() != f.Name() {
+		return nil, fs.ErrorCantCopy
+	}
+	// Call-time check: all three backends must support Copy (defensive; Mask should already enforce).
+	if f.even.Features().Copy == nil || f.odd.Features().Copy == nil || f.parity.Features().Copy == nil {
+		return nil, fs.ErrorCantCopy
 	}
 
 	// Normalize remote path: remove leading slashes and clean the path.
@@ -526,9 +555,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	remote = strings.TrimPrefix(remote, "/")
 	remote = path.Clean(remote)
 
-	// Handle cross-remote copies: if source is from different Fs instance,
-	// we need to get particles from source Fs's backends
-	srcFs := srcObj.fs
 	srcRemote := srcObj.remote
 	isCrossRemote := srcFs != f
 
@@ -710,8 +736,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorCantDirMove
 	}
 
-	// Check if source and destination are the same backend
+	// Server-side DirMove only within the same backend (same config name); reject cross-backend.
 	if f.name != srcFs.name {
+		return fs.ErrorCantDirMove
+	}
+	// Call-time check: all three backends must support DirMove (defensive; Mask should already enforce).
+	if f.even.Features().DirMove == nil || f.odd.Features().DirMove == nil || f.parity.Features().DirMove == nil {
 		return fs.ErrorCantDirMove
 	}
 

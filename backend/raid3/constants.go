@@ -19,11 +19,31 @@ const (
 	// errorIsFileRetryTimeout is used when retrying with adjusted root after ErrorIsFile
 	errorIsFileRetryTimeout = 10 * time.Second
 
-	// healthCheckTimeout is the timeout for health check operations
-	healthCheckTimeout = 5 * time.Second
+	// healthCheckTimeout is the timeout for health check operations.
+	// MinIO/S3 can be slow to respond on List("") under load; use a generous timeout
+	// so we don't mark backends unavailable due to slow response.
+	healthCheckTimeout = 30 * time.Second
 
 	// defaultShutdownTimeout is the default timeout for Shutdown operations
 	defaultShutdownTimeout = 60 * time.Second
+
+	// listHelperTimeout is used for parity.List in List() helpers (cleanupOrphanedDirectory,
+	// reconstructMissingDirectory) to avoid blocking forever if a backend hangs.
+	listHelperTimeout = 30 * time.Second
+
+	// listBackendTimeout is used for List() and ListR() backend calls (even, odd, parity).
+	// Prevents indefinite hang when a backend (e.g. MinIO/S3) blocks on List/ListR.
+	// Sync with MinIO can hang without this; local backends return quickly.
+	listBackendTimeout = 2 * time.Minute
+
+	// putOperationTimeout limits the total Put operation time.
+	// Prevents indefinite hang when a backend (e.g. MinIO/S3) blocks on CreateMultipartUpload.
+	putOperationTimeout = 5 * time.Minute
+
+	// putStaggerDelay is the delay between starting each of the 3 Put goroutines.
+	// Staggering reduces concurrent CreateMultipartUpload load on MinIO, avoiding intermittent hangs.
+	// A short delay (300ms) spreads requests across backends without adding much latency.
+	putStaggerDelay = 300 * time.Millisecond
 )
 
 // Chunk size constants

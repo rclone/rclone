@@ -33,7 +33,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/operations"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -260,15 +259,15 @@ available as an explicit admin command.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Even         string        `config:"even"`
-	Odd          string        `config:"odd"`
-	Parity       string        `config:"parity"`
-	TimeoutMode  string        `config:"timeout_mode"`
-	AutoCleanup  bool          `config:"auto_cleanup"`
-	AutoHeal     bool          `config:"auto_heal"`
-	Rollback     bool          `config:"rollback"`
-	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
-	Compression  string        `config:"compression"`
+	Even        string        `config:"even"`
+	Odd         string        `config:"odd"`
+	Parity      string        `config:"parity"`
+	TimeoutMode string        `config:"timeout_mode"`
+	AutoCleanup bool          `config:"auto_cleanup"`
+	AutoHeal    bool          `config:"auto_heal"`
+	Rollback    bool          `config:"rollback"`
+	ChunkSize   fs.SizeSuffix `config:"chunk_size"`
+	Compression string        `config:"compression"`
 }
 
 // Fs represents a raid3 backend with striped storage and parity
@@ -375,6 +374,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}
 	initCtx, cancel := context.WithTimeout(ctx, initTimeout)
 	defer cancel()
+	// Ensure underlying backends get at least writeRetries so S3/MinIO can retry 503 SlowDown
+	backendCtx := ensureMinRetriesForBackends(initCtx)
 
 	type fsResult struct {
 		name string
@@ -386,21 +387,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	// Create even remote (even-indexed bytes)
 	go func() {
 		evenPath := fspath.JoinRootPath(opt.Even, root)
-		fs, err := cache.Get(initCtx, evenPath)
+		fs, err := cache.Get(backendCtx, evenPath)
 		fsCh <- fsResult{"even", fs, err}
 	}()
 
 	// Create odd remote (odd-indexed bytes)
 	go func() {
 		oddPath := fspath.JoinRootPath(opt.Odd, root)
-		fs, err := cache.Get(initCtx, oddPath)
+		fs, err := cache.Get(backendCtx, oddPath)
 		fsCh <- fsResult{"odd", fs, err}
 	}()
 
 	// Create parity remote
 	go func() {
 		parityPath := fspath.JoinRootPath(opt.Parity, root)
-		fs, err := cache.Get(initCtx, parityPath)
+		fs, err := cache.Get(backendCtx, parityPath)
 		fsCh <- fsResult{"parity", fs, err}
 	}()
 
@@ -466,23 +467,24 @@ checkRemotes:
 		// Recreate upstreams with adjusted root concurrently
 		initCtx2, cancel2 := context.WithTimeout(ctx, errorIsFileRetryTimeout)
 		defer cancel2()
+		backendCtx2 := ensureMinRetriesForBackends(initCtx2)
 		fsCh2 := make(chan fsResult, 3)
 
 		go func() {
 			evenPath := fspath.JoinRootPath(opt.Even, adjustedRoot)
-			fs, err := cache.Get(initCtx2, evenPath)
+			fs, err := cache.Get(backendCtx2, evenPath)
 			fsCh2 <- fsResult{"even", fs, err}
 		}()
 
 		go func() {
 			oddPath := fspath.JoinRootPath(opt.Odd, adjustedRoot)
-			fs, err := cache.Get(initCtx2, oddPath)
+			fs, err := cache.Get(backendCtx2, oddPath)
 			fsCh2 <- fsResult{"odd", fs, err}
 		}()
 
 		go func() {
 			parityPath := fspath.JoinRootPath(opt.Parity, adjustedRoot)
-			fs, err := cache.Get(initCtx2, parityPath)
+			fs, err := cache.Get(backendCtx2, parityPath)
 			fsCh2 <- fsResult{"parity", fs, err}
 		}()
 
@@ -530,7 +532,7 @@ checkRemotes:
 		BucketBasedRootOK:        true,
 		SetTier:                  true,
 		GetTier:                  true,
-		ServerSideAcrossConfigs:  true,
+		ServerSideAcrossConfigs:  false, // Server-side copy/move not supported for now (see docs/OPEN_ISSUES.md)
 		ReadMetadata:             true,
 		WriteMetadata:            true,
 		UserMetadata:             true,
@@ -573,21 +575,8 @@ checkRemotes:
 	// more predictable for large files (e.g. 4G).
 	f.features.NoMultiThreading = true
 
-	// Move: Custom check (all must support Move or Copy)
-	// Mask() handles this, but we verify and set the function pointer
-	canMove := true
-	for _, backend := range []fs.Fs{f.even, f.odd, f.parity} {
-		if backend != nil && !operations.CanServerSideMove(backend) {
-			canMove = false
-			break
-		}
-	}
-	if canMove {
-		f.features.Move = f.Move
-	}
-
-	// Copy, DirMove, Purge: Handled by Mask() (all must support)
-	// Function pointers are already set correctly by Mask() if all backends support them
+	// Server-side Copy/Move/DirMove: advertised only when all three backends support them (Mask above).
+	// We reject cross-backend (different config name) in Copy/Move/DirMove; see operations.go and docs/SERVER_SIDE_OPS_CHECKLIST.md.
 
 	// ListR: Special logic (any supports OR all are local)
 	// Similar to union backend: enable if any backend supports it, or all are local
@@ -1279,8 +1268,10 @@ func (f *Fs) reconstructMissingDirectory(ctx context.Context, dir string, errEve
 	evenExists := errEven == nil
 	oddExists := errOdd == nil
 
-	// Check parity separately
-	_, errParity := f.parity.List(ctx, dir)
+	// Check parity separately (with timeout to avoid blocking forever if backend hangs)
+	listCtx, cancel := context.WithTimeout(ctx, listHelperTimeout)
+	_, errParity := f.parity.List(listCtx, dir)
+	cancel()
 	parityExists := errParity == nil
 
 	// Count how many backends have this directory
@@ -1337,13 +1328,16 @@ func (f *Fs) cleanupOrphanedDirectory(ctx context.Context, dir string, errEven, 
 	evenExists := errEven == nil
 	oddExists := errOdd == nil
 
-	// For parity, we need to check separately since we don't have its error
+	// For parity, we need to check separately since we don't have its error.
+	// Use a timeout to avoid blocking forever if parity.List hangs (fixes sync hang).
 	type dirResult struct {
 		exists bool
 	}
 	resultCh := make(chan dirResult, 1)
 	go func() {
-		_, err := f.parity.List(ctx, dir)
+		listCtx, cancel := context.WithTimeout(ctx, listHelperTimeout)
+		defer cancel()
+		_, err := f.parity.List(listCtx, dir)
 		exists := err == nil
 		resultCh <- dirResult{exists}
 	}()

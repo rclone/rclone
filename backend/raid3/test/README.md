@@ -58,6 +58,8 @@ cd backend/raid3/test
 | **`compare_raid3_with_single_errors.sh`** | Error handling and rollback tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
 | **`compare_raid3_with_single_features.sh`** | Feature handling with mixed remotes | `start`, `stop`, `teardown`, `list`, `test <name>` |
 | **`compare_raid3_with_single_all.sh`** | Run all test suites across all backends | `[-v]`, `[-h]` |
+| **`performance_test.sh`** | Performance benchmarks (upload/download) for different file sizes and storage types | `start`, `stop`, `teardown`, `list`, `test [all\|all-but-4G\|4K\|…]` |
+| **`compression_bench.sh`** | Measures compression ratio for local raid3 (requires `--storage-type=local`; config compression ≠ none) | `--storage-type=local` |
 
 ### Common Commands
 
@@ -339,6 +341,117 @@ cd backend/raid3/test
 # 7. Clean up (optional)
 ./compare_raid3_with_single.sh --storage-type local teardown
 ```
+
+## 🔧 Debugging sync-upload timeout (MinIO + multipart)
+
+If `sync-upload` fails with "timed out after 120s (possible raid3 hang)" when using `--storage-type=minio`:
+
+### Root cause
+
+- **Raid3** uploads via a **streaming** path: it does not know the object size up front, so it passes size `-1` to the underlying S3 backends.
+- **rclone S3** uses **multipart upload** whenever size is unknown (`size < 0`) or ≥ `upload_cutoff`. So every raid3 upload to MinIO goes through multipart (CreateMultipartUpload + parts).
+- **MinIO** has a known history of multipart issues: CreateMultipartUpload or PutObjectPart can hang or timeout (see [minio/minio#9608](https://github.com/minio/minio/issues/9608), [rclone forum](https://forum.rclone.org/t/trouble-uploading-multi-part-files-to-s3-minio/42941)). The last log line before the hang is often:  
+  `NOTICE: S3 bucket …: Streaming uploads using chunk size 5Mi will have maximum file size of 48.828Gi`.
+
+So the timeout is almost certainly **MinIO blocking on multipart** (CreateMultipartUpload or first part), not raid3 itself.
+
+### What we already do
+
+- **upload_cutoff = 5G** is set on all MinIO S3 remotes in the test config. That only avoids multipart when the backend sees a **known** size &lt; 5G. Raid3’s streaming path always sends unknown size, so multipart is still used for sync-upload.
+- **MinIO image** is pinned to `RELEASE.2025-09-07T16-13-09Z` (newest on Docker Hub with multipart bugfixes). Override with `MINIO_IMAGE=minio/minio:latest` if needed.
+- **Timeouts** (e.g. 120s) and stderr dumps on timeout so the run fails clearly instead of hanging forever.
+- **cp-upload** and **sync-upload** use a 120s timeout and one retry for the raid3 upload when using MinIO/mixed; on failure, MinIO container logs are written to a temp file for inspection (see “Analyzing MinIO Docker logs” below).
+
+### Workarounds
+
+1. **Run sync-upload against local only** (avoids MinIO):  
+   `./compare_raid3_with_single.sh test sync-upload --storage-type=local`
+2. **Try a different MinIO version**: set `MINIO_IMAGE=quay.io/minio/minio:latest` (or another tag), recreate containers (`stop` then `start --storage-type=minio`), then rerun the test.
+3. **Increase timeout** for a slow environment:  
+   `RCLONE_TEST_TIMEOUT=300 ./compare_raid3_with_single.sh test sync-upload --storage-type=minio`
+
+### Getting more detail
+
+1. **Run with `-v`** so the last 30 lines of rclone stderr are printed on timeout:  
+   `./compare_raid3_with_single.sh test sync-upload --storage-type=minio -v`
+
+2. **Reproduce manually** to capture full output:
+   ```bash
+   cd backend/raid3/test
+   export RCLONE_CONFIG="${PWD}/rclone_raid3_integration_tests.config"
+   ./setup.sh  # ensure MinIO is running
+   ./compare_raid3_with_single.sh start --storage-type=minio  # if needed
+   mkdir -p /tmp/sync-debug && echo "f1" > /tmp/sync-debug/f1.txt && echo "f2" > /tmp/sync-debug/sub/f2.txt
+   rclone sync /tmp/sync-debug minioraid3:sync-debug-test -vv 2>&1 | tee sync_initial.log
+   rm /tmp/sync-debug/f1.txt && echo "f2 updated" > /tmp/sync-debug/sub/f2.txt && echo "f3" > /tmp/sync-debug/f3.txt
+   rclone sync /tmp/sync-debug minioraid3:sync-debug-test -vv 2>&1 | tee sync_delta.log
+   # If it hangs, sync_delta.log shows where (last line = last operation before hang)
+   ```
+
+3. **Reproduce with MinIO request trace** to see which S3 call MinIO was handling when a hang occurs:
+   ```bash
+   ./repro_minio_timeout_with_trace.sh 10
+   ```
+   This runs cp-upload 10 times with `mc admin trace` on all three raid3 MinIO backends. On failure, the trace is saved to `/tmp/minio_trace_repro/trace.log`; inspect the last lines for the final request before the hang (e.g. `s3.NewMultipartUpload`, `s3.PutObjectPart`). Requires `mc` (MinIO Client).
+
+### Analyzing MinIO Docker logs
+
+When a test fails with `--storage-type=minio` (e.g. timeout 124, or status mismatch), the script may write MinIO container logs to a temp file and log its path, e.g.:
+
+```text
+[compare_raid3_with_single.sh] WARN minio-logs MinIO container logs (last 150 lines each) saved to: /tmp/minio_logs_cp-upload.XXXXXX
+```
+
+**Inspect that file:** `cat /tmp/minio_logs_cp-upload.*` (or the path shown).
+
+**Or capture logs manually** for a specific container (e.g. the one raid3 uses for even/odd/parity):
+
+```bash
+docker logs minioeven  2>&1 | tail -200
+docker logs minioodd   2>&1 | tail -200
+docker logs minioparity 2>&1 | tail -200
+docker logs miniosingle 2>&1 | tail -200
+```
+
+**What to look for:**
+
+- **CreateMultipartUpload** – request may be stuck or very slow; last MinIO log line before a hang is often the S3 API handler for that call.
+- **PutObjectPart** – similar; multipart upload part writes can block.
+- **Timeout / context canceled** – client gave up; check rclone stderr (and `-v` output) for the last operation.
+- **Connection reset / refused** – MinIO restarted or became unavailable; check for OOM or panic in the full log.
+
+For **cp-upload** and **sync-upload**, raid3 uses the streaming path (unknown size), so S3 uses multipart; MinIO’s multipart handling is the usual suspect when the test times out.
+
+## MinIO containers exit immediately
+
+If MinIO containers start then stop right away (Docker Desktop shows them stopping when you press Play):
+
+1. **See why:** Run `docker logs minioeven` (or any of `minioodd`, `minioparity`, `miniosingle`). The last lines usually show the error.
+
+2. **"Unknown xl meta version 3" (or similar):** The data on disk was written by a **newer** MinIO than the image you're running. You must wipe the MinIO data dirs so the current image can start with empty storage:
+   ```bash
+   cd backend/raid3/test
+   ./compare_raid3_with_single.sh stop --storage-type=minio
+   docker rm -f minioeven minioodd minioparity miniosingle 2>/dev/null || true
+   rm -rf _data/even_minio _data/odd_minio _data/parity_minio _data/single_minio
+   ./compare_raid3_with_single.sh start --storage-type=minio
+   ```
+
+3. **Other errors:** Remove containers and optionally wipe data, then start again:
+   ```bash
+   cd backend/raid3/test
+   ./compare_raid3_with_single.sh stop --storage-type=minio
+   docker rm -f minioeven minioodd minioparity miniosingle 2>/dev/null || true
+   rm -rf _data/even_minio _data/odd_minio _data/parity_minio _data/single_minio
+   ./compare_raid3_with_single.sh start --storage-type=minio
+   ```
+
+4. **Try a different image:** If the pinned image fails on your host (e.g. architecture), try the latest image:
+   ```bash
+   MINIO_IMAGE=minio/minio:latest ./compare_raid3_with_single.sh start --storage-type=minio
+   ```
+
+5. **Ports in use:** Ensure nothing else is using ports 9001–9004 (e.g. `lsof -i :9001` on the host).
 
 ## 💡 Tips
 

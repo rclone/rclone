@@ -390,7 +390,7 @@ run_stacking_test() {
   purge_remote_root "${CRYPT_SINGLE_REMOTE}"
   purge_remote_root "${CRYPT_RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
   
   log "Running crypt test"
   
@@ -624,7 +624,7 @@ run_chunker_test() {
   purge_remote_root "${CHUNKER_SINGLE_REMOTE}"
   purge_remote_root "${CHUNKER_RAID3_REMOTE}"
   purge_remote_root "${SINGLE_REMOTE}"
-  purge_remote_root "${RAID3_REMOTE}"
+  purge_raid3_remote_root
 
   log "Running chunker test"
 
@@ -794,7 +794,15 @@ main() {
   ensure_workdir
   ensure_rclone_binary
   ensure_rclone_config
-  
+
+  # Prevent rclone from hanging with MinIO (purge, list, copy can block).
+  if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+    export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+    if (( VERBOSE )); then
+      log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (exit 124 = timed out)"
+    fi
+  fi
+
   case "${COMMAND}" in
     start)
       if [[ "${STORAGE_TYPE}" != "minio" ]]; then
@@ -825,7 +833,7 @@ main() {
       purge_remote_root "${CHUNKER_SINGLE_REMOTE}"
       purge_remote_root "${CHUNKER_RAID3_REMOTE}"
       purge_remote_root "${SINGLE_REMOTE}"
-      purge_remote_root "${RAID3_REMOTE}"
+      purge_raid3_remote_root
       ;;
     
     list)

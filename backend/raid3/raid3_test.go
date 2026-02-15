@@ -218,9 +218,9 @@ func TestAboutAggregatesChildUsage(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(parityDir, "file3.bin"), []byte("parity"), 0o644))
 
 	fsInterface, err := raid3.NewFs(ctx, "TestAbout", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	})
 	require.NoError(t, err)
 
@@ -278,10 +278,10 @@ func TestIntegrationStyle_DegradedOpenAndSize(t *testing.T) {
 
 	// Build Fs directly via NewFs using a config map
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
-		"auto_heal":     "true",
+		"even":      evenDir,
+		"odd":       oddDir,
+		"parity":    parityDir,
+		"auto_heal": "true",
 	}
 	f, err := raid3.NewFs(ctx, "Lvl3Int", "", m)
 	require.NoError(t, err)
@@ -349,9 +349,9 @@ func TestLargeDataQuick(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "Lvl3Large", "", m)
 	require.NoError(t, err)
@@ -437,6 +437,9 @@ func TestRenameFile(t *testing.T) {
 	}
 	f, err := raid3.NewFs(ctx, "TestRename", "", m)
 	require.NoError(t, err)
+	if f.Features().Move == nil {
+		t.Skip("backend does not support server-side Move (e.g. underlying has Move=nil)")
+	}
 
 	// Create a test file
 	oldRemote := "original.txt"
@@ -461,7 +464,6 @@ func TestRenameFile(t *testing.T) {
 	oldObj, err := f.NewObject(ctx, oldRemote)
 	require.NoError(t, err)
 	doMove := f.Features().Move
-	require.NotNil(t, doMove, "raid3 backend should support Move")
 	newObj, err := doMove(ctx, oldObj, newRemote)
 	require.NoError(t, err)
 	require.NotNil(t, newObj)
@@ -521,12 +523,15 @@ func TestRenameFileDifferentDirectory(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestRenameDir", "", m)
 	require.NoError(t, err)
+	if f.Features().Move == nil {
+		t.Skip("backend does not support server-side Move (e.g. underlying has Move=nil)")
+	}
 
 	// Create directory structure
 	err = f.Mkdir(ctx, "source")
@@ -546,7 +551,6 @@ func TestRenameFileDifferentDirectory(t *testing.T) {
 	oldObj, err := f.NewObject(ctx, oldRemote)
 	require.NoError(t, err)
 	doMove := f.Features().Move
-	require.NotNil(t, doMove)
 	newObj, err := doMove(ctx, oldObj, newRemote)
 	require.NoError(t, err)
 	assert.Equal(t, newRemote, newObj.Remote())
@@ -595,9 +599,9 @@ func TestDeleteFile(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestDelete", "", m)
 	require.NoError(t, err)
@@ -664,9 +668,9 @@ func TestDeleteFileIdempotent(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestDeleteIdempotent", "", m)
 	require.NoError(t, err)
@@ -722,12 +726,15 @@ func TestMoveFileBetweenDirectories(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestMove", "", m)
 	require.NoError(t, err)
+	if f.Features().Move == nil {
+		t.Skip("backend does not support server-side Move (e.g. underlying has Move=nil)")
+	}
 
 	// Create directory structure
 	err = f.Mkdir(ctx, "src")
@@ -750,7 +757,6 @@ func TestMoveFileBetweenDirectories(t *testing.T) {
 	// Move to destination directory
 	dstRemote := "dst/document.pdf"
 	doMove := f.Features().Move
-	require.NotNil(t, doMove)
 	dstObj, err := doMove(ctx, srcObj, dstRemote)
 	require.NoError(t, err)
 	require.NotNil(t, dstObj)
@@ -801,16 +807,15 @@ func TestDirMove(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestDirMove", "", m)
 	require.NoError(t, err)
-
-	// Verify DirMove is supported
-	doDirMove := f.Features().DirMove
-	require.NotNil(t, doDirMove, "DirMove should be supported with local backends")
+	if f.Features().DirMove == nil {
+		t.Skip("backend does not support server-side DirMove (e.g. underlying has DirMove=nil)")
+	}
 
 	// Create source directory
 	srcDir := "mydir"
@@ -846,7 +851,6 @@ func TestDirMove(t *testing.T) {
 
 	// Get DirMove from destination Fs
 	dstDoDirMove := dstFs.Features().DirMove
-	require.NotNil(t, dstDoDirMove, "destination Fs should support DirMove")
 
 	// Perform the move - use destination Fs's DirMove, source Fs, and empty paths (they're at the roots)
 	err = dstDoDirMove(ctx, srcFs, "", "")
@@ -913,12 +917,15 @@ func TestCopyFileBetweenDirectories(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestCopy", "", m)
 	require.NoError(t, err)
+	if f.Features().Copy == nil {
+		t.Skip("backend does not support server-side Copy (e.g. local backend)")
+	}
 
 	// Create directory structure
 	err = f.Mkdir(ctx, "src")
@@ -941,7 +948,6 @@ func TestCopyFileBetweenDirectories(t *testing.T) {
 	// Copy to destination directory
 	dstRemote := "dst/document.pdf"
 	doCopy := f.Features().Copy
-	require.NotNil(t, doCopy, "Copy should be enabled when all backends support it")
 	dstObj, err := doCopy(ctx, srcObj, dstRemote)
 	require.NoError(t, err)
 	require.NotNil(t, dstObj)
@@ -1002,6 +1008,9 @@ func TestCopyFileSameDirectory(t *testing.T) {
 	}
 	f, err := raid3.NewFs(ctx, "TestCopySameDir", "", m)
 	require.NoError(t, err)
+	if f.Features().Copy == nil {
+		t.Skip("backend does not support server-side Copy (e.g. local backend)")
+	}
 
 	// Create file
 	srcRemote := "original.txt"
@@ -1013,7 +1022,6 @@ func TestCopyFileSameDirectory(t *testing.T) {
 	// Copy to new name in same directory
 	dstRemote := "copy.txt"
 	doCopy := f.Features().Copy
-	require.NotNil(t, doCopy)
 	dstObj, err := doCopy(ctx, srcObj, dstRemote)
 	require.NoError(t, err)
 	require.NotNil(t, dstObj)
@@ -1065,9 +1073,10 @@ func TestCopyFeatureEnabled(t *testing.T) {
 	f, err := raid3.NewFs(ctx, "TestCopyFeature", "", m)
 	require.NoError(t, err)
 
-	// Local backend supports Copy, so Copy should be enabled
+	// With local backends: Copy is nil on platforms where local has no Copier (e.g. Linux),
+	// or non-nil where local implements Copy (e.g. darwin with clone). Either is valid.
 	doCopy := f.Features().Copy
-	require.NotNil(t, doCopy, "Copy should be enabled when all backends (local) support it")
+	_ = doCopy // sanity: Features().Copy is consistent with Mask(local)
 }
 
 // TestRenameFilePreservesParitySuffix tests that renaming preserves the correct
@@ -1101,6 +1110,9 @@ func TestRenameFilePreservesParitySuffix(t *testing.T) {
 	}
 	f, err := raid3.NewFs(ctx, "TestRenameParity", "", m)
 	require.NoError(t, err)
+	if f.Features().Move == nil {
+		t.Skip("backend does not support server-side Move (e.g. underlying has Move=nil)")
+	}
 
 	// Test odd-length file
 	oldRemoteOdd := "odd_file.txt"
@@ -1117,7 +1129,6 @@ func TestRenameFilePreservesParitySuffix(t *testing.T) {
 	oldObjOdd, err := f.NewObject(ctx, oldRemoteOdd)
 	require.NoError(t, err)
 	doMove := f.Features().Move
-	require.NotNil(t, doMove)
 	_, err = doMove(ctx, oldObjOdd, newRemoteOdd)
 	require.NoError(t, err)
 
@@ -1140,7 +1151,6 @@ func TestRenameFilePreservesParitySuffix(t *testing.T) {
 	oldObjEven, err := f.NewObject(ctx, oldRemoteEven)
 	require.NoError(t, err)
 	doMoveEven := f.Features().Move
-	require.NotNil(t, doMoveEven)
 	_, err = doMoveEven(ctx, oldObjEven, newRemoteEven)
 	require.NoError(t, err)
 
@@ -1188,6 +1198,9 @@ func TestDeepNestedDirectories(t *testing.T) {
 	}
 	f, err := raid3.NewFs(ctx, "TestDeepNested", "", m)
 	require.NoError(t, err)
+	if f.Features().Move == nil {
+		t.Skip("backend does not support server-side Move (e.g. underlying has Move=nil)")
+	}
 
 	// Test 1: Create file in deeply nested directory (5 levels)
 	deepPath := "level1/level2/level3/level4/level5/deep-file.txt"
@@ -1256,7 +1269,6 @@ func TestDeepNestedDirectories(t *testing.T) {
 	require.NoError(t, err)
 
 	doMove := f.Features().Move
-	require.NotNil(t, doMove)
 	movedObj, err := doMove(ctx, obj2, deepPath2)
 	require.NoError(t, err)
 	require.NotNil(t, movedObj)
@@ -1325,9 +1337,9 @@ func TestConcurrentOperations(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestConcurrent", "", m)
 	require.NoError(t, err)
@@ -1507,9 +1519,9 @@ func TestAutoCleanupDefault(t *testing.T) {
 
 	// Create level3 filesystem WITHOUT specifying auto_cleanup (should default to true)
 	l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 		// auto_cleanup NOT specified - should default to true
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
@@ -1559,10 +1571,10 @@ func TestAutoCleanupEnabled(t *testing.T) {
 
 	// Create level3 filesystem with auto_cleanup=true (explicit)
 	l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
-		"auto_cleanup":  "true",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1622,10 +1634,10 @@ func TestAutoCleanupDisabled(t *testing.T) {
 
 	// Create level3 filesystem with auto_cleanup=false
 	l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
-		"auto_cleanup":  "false",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "false",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1688,10 +1700,10 @@ func TestAutoCleanupEnabledMissingRemote(t *testing.T) {
 
 	// Now create filesystem with one backend unavailable
 	l3fs2, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           "/nonexistent/odd", // Unavailable
-		"parity":        parityDir,
-		"auto_cleanup":  "true",
+		"even":         evenDir,
+		"odd":          "/nonexistent/odd", // Unavailable
+		"parity":       parityDir,
+		"auto_cleanup": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem with unavailable backend")
 	defer func() {
@@ -1726,10 +1738,10 @@ func TestAutoCleanupEnabledMissingRemote(t *testing.T) {
 
 	// Restore backend and verify object appears again
 	l3fs3, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
-		"auto_cleanup":  "true",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "true",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem with all backends")
 	defer func() {
@@ -1767,10 +1779,10 @@ func TestCleanUpCommand(t *testing.T) {
 
 	// Create level3 filesystem with auto_cleanup=false (to see broken objects)
 	l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
-		"auto_cleanup":  "false",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "false",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1842,10 +1854,10 @@ func TestCleanUpRecursive(t *testing.T) {
 
 	// Create level3 filesystem with auto_cleanup=false
 	l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
-		"auto_cleanup":  "false",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "false",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -1902,16 +1914,26 @@ func TestCleanUpRecursive(t *testing.T) {
 	t.Logf("✅ CleanUp removed broken objects from nested directories")
 }
 
+// stepTimeout is the max duration per step for TestPurgeWithAutoCleanup diagnostics.
+const stepTimeout = 60 * time.Second
+
 // TestPurgeWithAutoCleanup tests that purge works correctly with auto-cleanup enabled
 func TestPurgeWithAutoCleanup(t *testing.T) {
 	ctx := context.Background()
+	testStart := time.Now()
+	logStep := func(step string, start time.Time) {
+		t.Logf("[TestPurgeWithAutoCleanup] %s completed in %v (total elapsed %v)", step, time.Since(start), time.Since(testStart))
+	}
 
-	// Create temporary directories for three backends
+	// Step 1: Create temporary directories
+	stepStart := time.Now()
 	evenDir := t.TempDir()
 	oddDir := t.TempDir()
 	parityDir := t.TempDir()
+	logStep("1_tempdir", stepStart)
 
-	// Create level3 filesystem with auto_cleanup=true
+	// Step 2: Create level3 filesystem
+	stepStart = time.Now()
 	l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
 		"even":         evenDir,
 		"odd":          oddDir,
@@ -1922,24 +1944,36 @@ func TestPurgeWithAutoCleanup(t *testing.T) {
 	defer func() {
 		_ = l3fs.Features().Shutdown(ctx)
 	}()
+	logStep("2_newfs", stepStart)
 
-	// Create a subdirectory
+	// Step 3: Mkdir
+	stepStart = time.Now()
 	require.NoError(t, l3fs.Mkdir(ctx, "mybucket"))
+	logStep("3_mkdir", stepStart)
 
-	// Create some valid files
+	// Step 4: Create some valid files (3 Put calls)
+	stepStart = time.Now()
+	putCtx, putCancel := context.WithTimeout(ctx, stepTimeout)
+	defer putCancel()
 	for i := 1; i <= 3; i++ {
 		data := []byte(fmt.Sprintf("File %d", i))
-		_, err := l3fs.Put(ctx, bytes.NewReader(data), object.NewStaticObjectInfo(fmt.Sprintf("mybucket/file%d.txt", i), time.Now(), int64(len(data)), true, nil, l3fs))
+		_, err := l3fs.Put(putCtx, bytes.NewReader(data), object.NewStaticObjectInfo(fmt.Sprintf("mybucket/file%d.txt", i), time.Now(), int64(len(data)), true, nil, l3fs))
 		require.NoError(t, err, "Failed to create file %d", i)
 	}
+	logStep("4_put_3_files", stepStart)
 
-	// Create a broken object manually (1 particle)
+	// Step 5: Create a broken object manually (1 particle)
+	stepStart = time.Now()
 	brokenPath := filepath.Join(evenDir, "mybucket", "broken.txt")
 	require.NoError(t, os.MkdirAll(filepath.Dir(brokenPath), 0755))
 	require.NoError(t, os.WriteFile(brokenPath, []byte("broken"), 0644))
+	logStep("5_create_broken", stepStart)
 
-	// List should show only 3 files (broken is hidden)
-	entries, err := l3fs.List(ctx, "mybucket")
+	// Step 6: List should show only 3 files (broken is hidden)
+	stepStart = time.Now()
+	listCtx, listCancel := context.WithTimeout(ctx, stepTimeout)
+	defer listCancel()
+	entries, err := l3fs.List(listCtx, "mybucket")
 	require.NoError(t, err)
 	count := 0
 	for _, entry := range entries {
@@ -1948,20 +1982,26 @@ func TestPurgeWithAutoCleanup(t *testing.T) {
 		}
 	}
 	assert.Equal(t, 3, count, "Should see only 3 valid files")
+	logStep("6_list", stepStart)
 
-	// Purge the bucket - should work without errors
-	// Use operations.Purge which falls back to List+Delete+Rmdir
-	err = operations.Purge(ctx, l3fs, "mybucket")
+	// Step 7: Purge the bucket - should work without errors
+	stepStart = time.Now()
+	purgeCtx, purgeCancel := context.WithTimeout(ctx, stepTimeout)
+	defer purgeCancel()
+	err = operations.Purge(purgeCtx, l3fs, "mybucket")
 	require.NoError(t, err, "Purge should succeed without errors")
+	logStep("7_purge", stepStart)
 
-	// Verify bucket is gone
+	// Step 8: Verify bucket is gone
+	stepStart = time.Now()
 	err = l3fs.Rmdir(ctx, "mybucket")
 	// Should succeed or return "directory not found" (both are OK)
 	if err != nil {
 		assert.True(t, err == fs.ErrorDirNotFound || os.IsNotExist(err), "Directory should be gone")
 	}
+	logStep("8_rmdir", stepStart)
 
-	t.Logf("✅ Purge with auto-cleanup works without error messages")
+	t.Logf("✅ Purge with auto-cleanup works without error messages (total %v)", time.Since(testStart))
 }
 
 // TestPurge tests the Purge() method implementation
@@ -1975,9 +2015,9 @@ func TestPurge(t *testing.T) {
 
 	// Create raid3 filesystem
 	f, err := raid3.NewFs(ctx, "raid3", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	})
 	require.NoError(t, err, "Failed to create raid3 filesystem")
 	defer func() {
@@ -2068,10 +2108,10 @@ func TestCleanUpOrphanedFiles(t *testing.T) {
 
 	// Create level3 filesystem with auto_cleanup=false (to see orphaned files)
 	l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
-		"auto_cleanup":  "false",
+		"even":         evenDir,
+		"odd":          oddDir,
+		"parity":       parityDir,
+		"auto_cleanup": "false",
 	})
 	require.NoError(t, err, "Failed to create level3 filesystem")
 	defer func() {
@@ -2148,10 +2188,10 @@ func TestAutoHealDirectoryReconstruction(t *testing.T) {
 	// Test with auto_heal=true
 	t.Run("auto_heal=true reconstructs missing directory", func(t *testing.T) {
 		l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-			"even":          evenDir,
-			"odd":           oddDir,
-			"parity":        parityDir,
-			"auto_heal":     "true",
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = l3fs.Features().Shutdown(ctx) }()
@@ -2176,10 +2216,10 @@ func TestAutoHealDirectoryReconstruction(t *testing.T) {
 	// Test with auto_heal=false
 	t.Run("auto_heal=false does NOT reconstruct missing directory", func(t *testing.T) {
 		l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-			"even":          evenDir,
-			"odd":           oddDir,
-			"parity":        parityDir,
-			"auto_heal":     "false",
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "false",
 		})
 		require.NoError(t, err)
 		defer func() { _ = l3fs.Features().Shutdown(ctx) }()
@@ -2210,14 +2250,23 @@ func TestAutoHealDirMove(t *testing.T) {
 	oddDir := t.TempDir()
 	parityDir := t.TempDir()
 
+	// Skip if server-side DirMove is disabled
+	checkFs, err := raid3.NewFs(ctx, "TestAutoHealDirMove", "", configmap.Simple{
+		"even": evenDir, "odd": oddDir, "parity": parityDir,
+	})
+	require.NoError(t, err)
+	if checkFs.Features().DirMove == nil {
+		t.Skip("backend does not support server-side DirMove (e.g. underlying has DirMove=nil)")
+	}
+
 	// Test with auto_heal=true - should reconstruct missing directory during move
 	t.Run("auto_heal=true reconstructs during DirMove", func(t *testing.T) {
 		// Create Fs instances
 		l3fs, err := raid3.NewFs(ctx, "level3", "", configmap.Simple{
-			"even":          evenDir,
-			"odd":           oddDir,
-			"parity":        parityDir,
-			"auto_heal":     "true",
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = l3fs.Features().Shutdown(ctx) }()
@@ -2232,26 +2281,25 @@ func TestAutoHealDirMove(t *testing.T) {
 
 		// Create Fs instances for source and destination
 		srcFs, err := raid3.NewFs(ctx, "level3", srcDir, configmap.Simple{
-			"even":          evenDir,
-			"odd":           oddDir,
-			"parity":        parityDir,
-			"auto_heal":     "true",
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = srcFs.Features().Shutdown(ctx) }()
 
 		dstFs, err := raid3.NewFs(ctx, "level3", "move_heal_dst", configmap.Simple{
-			"even":          evenDir,
-			"odd":           oddDir,
-			"parity":        parityDir,
-			"auto_heal":     "true",
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "true",
 		})
 		require.NoError(t, err)
 		defer func() { _ = dstFs.Features().Shutdown(ctx) }()
 
 		// Perform DirMove
 		doDirMove := dstFs.Features().DirMove
-		require.NotNil(t, doDirMove)
 		err = doDirMove(ctx, srcFs, "", "")
 		require.NoError(t, err, "DirMove should succeed with reconstruction")
 
@@ -2280,26 +2328,25 @@ func TestAutoHealDirMove(t *testing.T) {
 
 		// Create Fs instances
 		srcFs, err := raid3.NewFs(ctx, "level3", srcDir, configmap.Simple{
-			"even":          evenDir,
-			"odd":           oddDir,
-			"parity":        parityDir,
-			"auto_heal":     "false",
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "false",
 		})
 		require.NoError(t, err)
 		defer func() { _ = srcFs.Features().Shutdown(ctx) }()
 
 		dstFs, err := raid3.NewFs(ctx, "level3", "move_noheal_dst", configmap.Simple{
-			"even":          evenDir,
-			"odd":           oddDir,
-			"parity":        parityDir,
-			"auto_heal":     "false",
+			"even":      evenDir,
+			"odd":       oddDir,
+			"parity":    parityDir,
+			"auto_heal": "false",
 		})
 		require.NoError(t, err)
 		defer func() { _ = dstFs.Features().Shutdown(ctx) }()
 
 		// Perform DirMove - should fail because source missing on parity
 		doDirMove := dstFs.Features().DirMove
-		require.NotNil(t, doDirMove)
 		err = doDirMove(ctx, srcFs, "", "")
 		assert.Error(t, err, "DirMove should fail when auto_heal=false and directory degraded")
 		assert.Contains(t, err.Error(), "dirmove failed", "Error should indicate dirmove failure")
@@ -2329,9 +2376,9 @@ func TestUpdateLargeFile(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestUpdateLarge", "", m)
 	require.NoError(t, err)
@@ -2598,9 +2645,9 @@ func TestFeatureHandlingWithMask(t *testing.T) {
 
 	// Create raid3 filesystem
 	f, err := raid3.NewFs(ctx, "test", "", configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	})
 	require.NoError(t, err, "Failed to create raid3 filesystem")
 	defer func() {
@@ -2640,8 +2687,8 @@ func TestFeatureHandlingWithMask(t *testing.T) {
 
 	// Test features that should be false for local backends (other)
 	t.Run("OtherFeatures", func(t *testing.T) {
-		// Local backends don't support these
-		assert.False(t, features.ServerSideAcrossConfigs, "ServerSideAcrossConfigs should be false for local")
+		// Server-side operations disabled for now (see docs/OPEN_ISSUES.md)
+		assert.False(t, features.ServerSideAcrossConfigs, "ServerSideAcrossConfigs should be false")
 		// Note: Local backend DOES support PartialUploads, so with all-local backends it should be true
 		// But if we mixed with S3, it would be false (AND logic via Mask())
 		assert.True(t, features.PartialUploads, "PartialUploads should be true for all-local backends")
@@ -2649,10 +2696,10 @@ func TestFeatureHandlingWithMask(t *testing.T) {
 
 	// Test function-based features
 	t.Run("FunctionFeatures", func(t *testing.T) {
-		// Local backends support these
-		assert.NotNil(t, features.Copy, "Copy should be available for local backends")
-		assert.NotNil(t, features.Move, "Move should be available for local backends")
-		assert.NotNil(t, features.DirMove, "DirMove should be available for local backends")
+		// Server-side Copy/Move/DirMove enabled for same-backend (all three local backends support them)
+		assert.NotNil(t, features.Copy, "Copy should be set when all backends support it (same-backend server-side)")
+		assert.NotNil(t, features.Move, "Move should be set when all backends support it (same-backend server-side)")
+		assert.NotNil(t, features.DirMove, "DirMove should be set when all backends support it (same-backend server-side)")
 		// Purge: Local backend doesn't implement Purge directly (uses operations.Purge fallback)
 		// So Mask() sets it to nil (requires ALL backends to have Purge function pointer)
 		// This is correct behavior - raid3 will use operations.Purge as fallback

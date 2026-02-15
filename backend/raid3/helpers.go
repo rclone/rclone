@@ -15,6 +15,7 @@ package raid3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -56,11 +57,31 @@ func applyTimeoutMode(ctx context.Context, mode string) context.Context {
 	}
 }
 
-// disableRetriesForWrites disables retries for write operations to enforce strict RAID 3 policy
+// writeRetries is the number of low-level retries allowed for write operations.
+// Kept low to enforce RAID 3 policy (fail when a backend is down) but high enough
+// to retry transient MinIO/S3 errors (503 SlowDown, CreateBucket/upload init).
+const writeRetries = 5
+
+// ensureMinRetriesForBackends returns a context with LowLevelRetries at least writeRetries.
+// Used when creating the underlying even/odd/parity Fs so their S3 client can retry
+// transient errors (e.g. 503 SlowDown on CreateBucket) even when timeout_mode=aggressive.
+func ensureMinRetriesForBackends(ctx context.Context) context.Context {
+	ci := fs.GetConfig(ctx)
+	if ci.LowLevelRetries >= writeRetries {
+		return ctx
+	}
+	newCtx, newCI := fs.AddConfig(ctx)
+	newCI.LowLevelRetries = writeRetries
+	return newCtx
+}
+
+// disableRetriesForWrites limits retries for write operations to enforce strict RAID 3 policy.
+// We allow writeRetries so transient errors (503 SlowDown, CreateMultipartUpload hang) are
+// retried; a backend that stays failing will still cause the write to fail.
 func (f *Fs) disableRetriesForWrites(ctx context.Context) context.Context {
 	newCtx, ci := fs.AddConfig(ctx)
-	ci.LowLevelRetries = 0 // Disable retries - fail fast
-	fs.Debugf(f, "Disabled retries for write operation (strict RAID 3 policy)")
+	ci.LowLevelRetries = writeRetries
+	fs.Debugf(f, "Limited retries for write operation (LowLevelRetries=%d, strict RAID 3 policy)", writeRetries)
 	return newCtx
 }
 
@@ -376,6 +397,20 @@ func formatParticleError(backend fs.Fs, particleType, operation, context string,
 		return fmt.Errorf("%s: %s particle %s: %s: %w", backend.Name(), particleType, operation, context, err)
 	}
 	return fmt.Errorf("%s: %s particle %s: %w", backend.Name(), particleType, operation, err)
+}
+
+// isMinIOListPathRawError reports whether err is (or wraps) MinIO's "listPathRaw: 0 drives provided"
+// ListObjectsV2 500 InternalError. This occurs when listing a non-existent prefix on MinIO;
+// S3 semantics do not require listing the destination before write/copy. Treating this as
+// "directory not found" allows copy/sync to proceed instead of failing the whole backend.
+func isMinIOListPathRawError(err error) bool {
+	for e := err; e != nil; e = errors.Unwrap(e) {
+		if strings.Contains(e.Error(), "listPathRaw: 0 drives provided") ||
+			(strings.Contains(e.Error(), "InternalError") && strings.Contains(e.Error(), "0 drives")) {
+			return true
+		}
+	}
+	return false
 }
 
 // formatOperationError formats an error for general operations
