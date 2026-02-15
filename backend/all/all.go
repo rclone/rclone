@@ -28,6 +28,7 @@ import (
 	_ "github.com/rclone/rclone/backend/gofile"
 	_ "github.com/rclone/rclone/backend/googlecloudstorage"
 	_ "github.com/rclone/rclone/backend/googlephotos"
+	_ "github.com/rclone/rclone/backend/gphotosmobile"
 	_ "github.com/rclone/rclone/backend/hasher"
 	_ "github.com/rclone/rclone/backend/hdfs"
 	_ "github.com/rclone/rclone/backend/hidrive"

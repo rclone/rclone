@@ -145,6 +145,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Google Cloud Storage" home="https://cloud.google.com/storage/" config="/googlecloudstorage/" >}}
 {{< provider name="Google Drive" home="https://www.google.com/drive/" config="/drive/" >}}
 {{< provider name="Google Photos" home="https://www.google.com/photos/about/" config="/googlephotos/" >}}
+{{< provider name="Google Photos Mobile" home="https://www.google.com/photos/about/" config="/gphotosmobile/" >}}
 {{< provider name="HDFS" home="https://hadoop.apache.org/" config="/hdfs/" >}}
 {{< provider name="Hetzner Object Storage" home="https://www.hetzner.com/storage/object-storage/" config="/s3/#hetzner" >}}
 {{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box" >}}

@@ -186,6 +186,10 @@ backends:
    remote:   "TestGooglePhotos:"
    tests:
      - backend
+ - backend:  "gphotosmobile"
+   remote:   "TestGPhotosMobile:"
+   tests:
+     - backend
  - backend: "hidrive"
    remote:   "TestHiDrive:"
    fastlist: false
