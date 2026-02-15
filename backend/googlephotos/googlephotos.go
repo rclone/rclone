@@ -1239,7 +1239,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 		return fmt.Errorf("couldn't delete item from album: %w", err)
 	}
 
-	err = o.MoveToTrash(ctx, fileName)
+	err = o.moveToTrash(ctx, fileName)
 	if err != nil {
 		return fmt.Errorf("couldn't move item to trash: %w", err)
 	}
@@ -1247,8 +1247,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 }
 
 // MoveToTrash moves the object to the trash album
-func (o *Object) MoveToTrash(ctx context.Context, fileName string) (err error) {
-	// Construct the album path correctly based on root
+func (o *Object) moveToTrash(ctx context.Context, fileName string) (err error) {
 	trashAlbumPath := path.Join("album", trashAlbum)
 	if strings.HasPrefix(o.fs.root, "album") {
 		trashAlbumPath = trashAlbum
@@ -1264,7 +1263,12 @@ func (o *Object) MoveToTrash(ctx context.Context, fileName string) (err error) {
 	if err != nil {
 		return err
 	}
-	defer in.Close()
+	defer func() {
+		errClosed := in.Close()
+		if errClosed != nil && err == nil {
+			err = errClosed
+		}
+	}()
 
 	_, err = o.fs.Put(ctx, in, fs.NewOverrideRemote(o, remote))
 	if err != nil {

@@ -174,7 +174,7 @@ func TestIntegration(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, 0, len(entries))
 
-				// Check if transfered to trash
+				// Check if transferred to trash
 				entries, err = f.List(ctx, "album/"+trashAlbum)
 				require.NoError(t, err)
 				found := false
