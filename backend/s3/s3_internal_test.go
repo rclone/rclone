@@ -498,10 +498,236 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 	// Purge gets tested later
 }
 
+func (f *Fs) InternalTestObjectLock(t *testing.T) {
+	ctx := context.Background()
+
+	// Create a temporary bucket with Object Lock enabled to test on.
+	// This exercises our BucketObjectLockEnabled option and isolates
+	// the test from the main test bucket.
+	lockBucket := f.rootBucket + "-object-lock-" + random.String(8)
+	lockBucket = strings.ToLower(lockBucket)
+
+	// Try to create bucket with Object Lock enabled
+	objectLockEnabled := true
+	req := s3.CreateBucketInput{
+		Bucket:                     &lockBucket,
+		ACL:                        types.BucketCannedACL(f.opt.BucketACL),
+		ObjectLockEnabledForBucket: &objectLockEnabled,
+	}
+	if f.opt.LocationConstraint != "" {
+		req.CreateBucketConfiguration = &types.CreateBucketConfiguration{
+			LocationConstraint: types.BucketLocationConstraint(f.opt.LocationConstraint),
+		}
+	}
+	err := f.pacer.Call(func() (bool, error) {
+		_, err := f.c.CreateBucket(ctx, &req)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		t.Skipf("Object Lock not supported by this provider: CreateBucket with Object Lock failed: %v", err)
+	}
+
+	// Verify Object Lock is actually enabled on the new bucket.
+	// Some S3-compatible servers (e.g. rclone serve s3) accept the
+	// ObjectLockEnabledForBucket flag but don't actually implement Object Lock.
+	var lockCfg *s3.GetObjectLockConfigurationOutput
+	err = f.pacer.Call(func() (bool, error) {
+		var err error
+		lockCfg, err = f.c.GetObjectLockConfiguration(ctx, &s3.GetObjectLockConfigurationInput{
+			Bucket: &lockBucket,
+		})
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil || lockCfg.ObjectLockConfiguration == nil ||
+		lockCfg.ObjectLockConfiguration.ObjectLockEnabled != types.ObjectLockEnabledEnabled {
+		_ = f.pacer.Call(func() (bool, error) {
+			_, err := f.c.DeleteBucket(ctx, &s3.DeleteBucketInput{Bucket: &lockBucket})
+			return f.shouldRetry(ctx, err)
+		})
+		t.Skipf("Object Lock not functional on this provider (GetObjectLockConfiguration: %v)", err)
+	}
+
+	// Switch f to use the Object Lock bucket for this test
+	oldBucket := f.rootBucket
+	oldRoot := f.root
+	oldRootDir := f.rootDirectory
+	f.rootBucket = lockBucket
+	f.root = lockBucket
+	f.rootDirectory = ""
+	defer func() {
+		f.rootBucket = oldBucket
+		f.root = oldRoot
+		f.rootDirectory = oldRootDir
+	}()
+
+	// Helper to remove an object with Object Lock protection
+	removeLocked := func(t *testing.T, obj fs.Object) {
+		t.Helper()
+		o := obj.(*Object)
+		// Remove legal hold if present
+		_ = o.setObjectLegalHold(ctx, types.ObjectLockLegalHoldStatusOff)
+		// Enable bypass governance retention for deletion
+		o.fs.opt.BypassGovernanceRetention = true
+		err := obj.Remove(ctx)
+		o.fs.opt.BypassGovernanceRetention = false
+		assert.NoError(t, err)
+	}
+
+	// Clean up the temporary bucket after all sub-tests
+	defer func() {
+		// List and remove all object versions
+		var objectVersions []types.ObjectIdentifier
+		listReq := &s3.ListObjectVersionsInput{Bucket: &lockBucket}
+		for {
+			var resp *s3.ListObjectVersionsOutput
+			err := f.pacer.Call(func() (bool, error) {
+				var err error
+				resp, err = f.c.ListObjectVersions(ctx, listReq)
+				return f.shouldRetry(ctx, err)
+			})
+			if err != nil {
+				t.Logf("Failed to list object versions for cleanup: %v", err)
+				break
+			}
+			for _, v := range resp.Versions {
+				objectVersions = append(objectVersions, types.ObjectIdentifier{
+					Key:       v.Key,
+					VersionId: v.VersionId,
+				})
+			}
+			for _, m := range resp.DeleteMarkers {
+				objectVersions = append(objectVersions, types.ObjectIdentifier{
+					Key:       m.Key,
+					VersionId: m.VersionId,
+				})
+			}
+			if !aws.ToBool(resp.IsTruncated) {
+				break
+			}
+			listReq.KeyMarker = resp.NextKeyMarker
+			listReq.VersionIdMarker = resp.NextVersionIdMarker
+		}
+		if len(objectVersions) > 0 {
+			bypass := true
+			_ = f.pacer.Call(func() (bool, error) {
+				_, err := f.c.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+					Bucket:                    &lockBucket,
+					BypassGovernanceRetention: &bypass,
+					Delete: &types.Delete{
+						Objects: objectVersions,
+						Quiet:   aws.Bool(true),
+					},
+				})
+				return f.shouldRetry(ctx, err)
+			})
+		}
+		_ = f.pacer.Call(func() (bool, error) {
+			_, err := f.c.DeleteBucket(ctx, &s3.DeleteBucketInput{Bucket: &lockBucket})
+			return f.shouldRetry(ctx, err)
+		})
+	}()
+
+	retainUntilDate := time.Now().UTC().Add(24 * time.Hour).Truncate(time.Second)
+
+	t.Run("Retention", func(t *testing.T) {
+		// Set Object Lock options for this test
+		f.opt.ObjectLockMode = "GOVERNANCE"
+		f.opt.ObjectLockRetainUntilDate = retainUntilDate.Format(time.RFC3339)
+		defer func() {
+			f.opt.ObjectLockMode = ""
+			f.opt.ObjectLockRetainUntilDate = ""
+		}()
+
+		// Upload an object with Object Lock retention
+		contents := random.String(100)
+		item := fstest.NewItem("test-object-lock-retention", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+		obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		defer func() {
+			removeLocked(t, obj)
+		}()
+
+		// Read back metadata and verify Object Lock settings
+		o := obj.(*Object)
+		gotMetadata, err := o.Metadata(ctx)
+		require.NoError(t, err)
+
+		assert.Equal(t, "GOVERNANCE", gotMetadata["object-lock-mode"])
+		gotRetainDate, err := time.Parse(time.RFC3339, gotMetadata["object-lock-retain-until-date"])
+		require.NoError(t, err)
+		assert.WithinDuration(t, retainUntilDate, gotRetainDate, time.Second)
+	})
+
+	t.Run("LegalHold", func(t *testing.T) {
+		// Set Object Lock legal hold option
+		f.opt.ObjectLockLegalHoldStatus = "ON"
+		defer func() {
+			f.opt.ObjectLockLegalHoldStatus = ""
+		}()
+
+		// Upload an object with legal hold
+		contents := random.String(100)
+		item := fstest.NewItem("test-object-lock-legal-hold", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+		obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		defer func() {
+			removeLocked(t, obj)
+		}()
+
+		// Verify legal hold is ON
+		o := obj.(*Object)
+		gotMetadata, err := o.Metadata(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, "ON", gotMetadata["object-lock-legal-hold-status"])
+
+		// Set legal hold to OFF
+		err = o.setObjectLegalHold(ctx, types.ObjectLockLegalHoldStatusOff)
+		require.NoError(t, err)
+
+		// Clear cached metadata and re-read
+		o.meta = nil
+		gotMetadata, err = o.Metadata(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, "OFF", gotMetadata["object-lock-legal-hold-status"])
+	})
+
+	t.Run("SetAfterUpload", func(t *testing.T) {
+		// Test the post-upload API path (PutObjectRetention + PutObjectLegalHold)
+		f.opt.ObjectLockSetAfterUpload = true
+		f.opt.ObjectLockMode = "GOVERNANCE"
+		f.opt.ObjectLockRetainUntilDate = retainUntilDate.Format(time.RFC3339)
+		f.opt.ObjectLockLegalHoldStatus = "ON"
+		defer func() {
+			f.opt.ObjectLockSetAfterUpload = false
+			f.opt.ObjectLockMode = ""
+			f.opt.ObjectLockRetainUntilDate = ""
+			f.opt.ObjectLockLegalHoldStatus = ""
+		}()
+
+		// Upload an object - lock applied AFTER upload via separate API calls
+		contents := random.String(100)
+		item := fstest.NewItem("test-object-lock-after-upload", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+		obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		defer func() {
+			removeLocked(t, obj)
+		}()
+
+		// Verify all Object Lock settings were applied
+		o := obj.(*Object)
+		gotMetadata, err := o.Metadata(ctx)
+		require.NoError(t, err)
+
+		assert.Equal(t, "GOVERNANCE", gotMetadata["object-lock-mode"])
+		gotRetainDate, err := time.Parse(time.RFC3339, gotMetadata["object-lock-retain-until-date"])
+		require.NoError(t, err)
+		assert.WithinDuration(t, retainUntilDate, gotRetainDate, time.Second)
+		assert.Equal(t, "ON", gotMetadata["object-lock-legal-hold-status"])
+	})
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
 	t.Run("Versions", f.InternalTestVersions)
+	t.Run("ObjectLock", f.InternalTestObjectLock)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
