@@ -575,8 +575,11 @@ func (acc *Account) String() string {
 		}
 	}
 
+	var displaySpeedString string
 	if acc.ci.DataRateUnit == "bits" {
-		cur *= 8
+		displaySpeedString = fs.SizeSuffix(cur * 8).BitRateUnit()
+	} else {
+		displaySpeedString = fs.SizeSuffix(cur).ByteRateUnit()
 	}
 
 	percentageDone := 0
@@ -584,12 +587,12 @@ func (acc *Account) String() string {
 		percentageDone = int(100 * float64(a) / float64(b))
 	}
 
-	return fmt.Sprintf("%*s:%3d%% /%s, %s/s, %s",
+	return fmt.Sprintf("%*s:%3d%% / %s, %s, %s",
 		acc.ci.StatsFileNameLength,
 		shortenName(acc.name, acc.ci.StatsFileNameLength),
 		percentageDone,
-		fs.SizeSuffix(b),
-		fs.SizeSuffix(cur),
+		fs.SizeSuffix(b).ByteUnit(),
+		displaySpeedString,
 		etas,
 	)
 }
