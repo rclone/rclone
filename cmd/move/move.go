@@ -3,10 +3,12 @@ package move
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/operations/operationsflags"
 	"github.com/rclone/rclone/fs/sync"
@@ -95,7 +97,16 @@ for more info.
 			if srcFileName == "" {
 				return sync.MoveDir(ctx, fdst, fsrc, deleteEmptySrcDirs, createEmptySrcDirs)
 			}
-			return operations.MoveFile(ctx, fdst, fsrc, srcFileName, srcFileName)
+			// Extract destination filename from args[1]
+			_, dstFileName, err := fspath.Split(args[1])
+			if err != nil {
+				return fmt.Errorf("parsing destination path %q failed: %w", args[1], err)
+			}
+			if dstFileName == "" {
+				// If destination doesn't have a filename, use source filename
+				dstFileName = srcFileName
+			}
+			return operations.MoveFile(ctx, fdst, fsrc, dstFileName, srcFileName)
 		})
 	},
 }
