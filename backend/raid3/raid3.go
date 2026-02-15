@@ -34,6 +34,7 @@ import (
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Register with Fs
@@ -886,6 +887,8 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 
 // Mkdir makes a directory
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	// Normalize to NFC so paths match list output on macOS (local often returns NFD)
+	dir = norm.NFC.String(dir)
 	// Pre-flight health check: Enforce strict RAID 3 write policy
 	// Consistent with Put/Update/Move operations
 	if err := f.checkAllBackendsAvailable(ctx); err != nil {

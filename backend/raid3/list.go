@@ -19,6 +19,7 @@ import (
 
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	dir = norm.NFC.String(dir)
 	// Input validation
 	if err := validateContext(ctx, "list"); err != nil {
 		return nil, err
@@ -221,6 +222,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	dir = norm.NFC.String(dir)
 	// Collect entries from all three backends in parallel.
 	// Support degraded mode: works with 2/3 backends (reads work in degraded mode).
 	// Use timeouts to avoid indefinite hang when a backend (e.g. MinIO/S3) blocks.
@@ -440,6 +442,8 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 // NewObject creates a new remote Object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	// Normalize to NFC so lookups match paths we write (createParticleInfo) and list output on macOS
+	remote = norm.NFC.String(remote)
 	// Input validation
 	if err := validateContext(ctx, "newobject"); err != nil {
 		return nil, err

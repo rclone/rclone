@@ -27,6 +27,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Put uploads an object using the streaming path (single code path).
@@ -59,10 +60,14 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // createParticleInfo creates a particleObjectInfo for a given particle type.
 // All particles use the same remote path (unified naming with footer).
+// The remote path is normalized to NFC so that on macOS (where the local backend
+// often returns NFD from List) write and list paths are consistent and avoid
+// hangs or mismatches in the fstest suite (e.g. FsEncoding/URL_encoding).
 func createParticleInfo(f *Fs, src fs.ObjectInfo, particleType string, size int64, isOddLength bool) *particleObjectInfo {
 	info := &particleObjectInfo{
 		ObjectInfo: src,
 		size:       size,
+		remote:     norm.NFC.String(src.Remote()),
 	}
 	return info
 }
