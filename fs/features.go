@@ -513,6 +513,13 @@ type Purger interface {
 	Purge(ctx context.Context, dir string) error
 }
 
+// RemotePathValidator is an optional interface for Fs.
+//
+// It can be used to reject destination paths early (including in --dry-run).
+type RemotePathValidator interface {
+	ValidateRemotePath(ctx context.Context, remote string) error
+}
+
 // Copier is an optional interface for Fs
 type Copier interface {
 	// Copy src to this remote using server-side copy operations.

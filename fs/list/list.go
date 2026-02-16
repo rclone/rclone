@@ -99,20 +99,20 @@ func DirSortedFn(ctx context.Context, f fs.Fs, includeAll bool, dir string, call
 func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir string,
 	IncludeObject func(ctx context.Context, o fs.Object) bool,
 	IncludeDirectory func(remote string) (bool, error)) (newEntries fs.DirEntries, err error) {
-	newEntries = entries[:0] // in place filter
+	// Normalize the directory we are listing so leading/trailing slashes
+	// don't affect membership checks.
+	dir = strings.Trim(dir, "/")
 	prefix := ""
 	if dir != "" {
-		prefix = dir
-		if !bucket.IsAllSlashes(dir) {
-			prefix += "/"
-		}
+		prefix = dir + "/"
 	}
+
+	newEntries = entries[:0] // in place filter
 	for _, entry := range entries {
 		ok := true
-		// check includes and types
+		// Check includes and types.
 		switch x := entry.(type) {
 		case fs.Object:
-			// Make sure we don't delete excluded files if not required
 			if !includeAll && !IncludeObject(ctx, x) {
 				ok = false
 				fs.Debugf(x, "Excluded")
@@ -131,8 +131,14 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 		default:
 			return nil, fmt.Errorf("unknown object type %T", entry)
 		}
-		// check remote name belongs in this directory
+
+		// Normalize a single leading slash while preserving all-slash values
+		// (notably "/" for root directory entries).
 		remote := entry.Remote()
+		if !bucket.IsAllSlashes(remote) {
+			remote = strings.TrimPrefix(remote, "/")
+		}
+
 		switch {
 		case !ok:
 			// ignore
@@ -148,6 +154,7 @@ func filterDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir 
 		default:
 			// ok
 		}
+
 		if ok {
 			newEntries = append(newEntries, entry)
 		}

@@ -1051,6 +1051,12 @@ func ListDir(ctx context.Context, f fs.Fs, w io.Writer) error {
 
 // Mkdir makes a destination directory or container
 func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
+	if v, ok := f.(fs.RemotePathValidator); ok {
+		if vErr := v.ValidateRemotePath(ctx, dir); vErr != nil {
+			fs.Errorf(dir, "[Folder] %v", vErr)
+			return fs.CountError(ctx, fserrors.NoRetryError(fserrors.NoLowLevelRetryError(vErr)))
+		}
+	}
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "make directory") {
 		return nil
 	}
@@ -1100,6 +1106,12 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 // Fs.DirSetModTime to update the directory modtime if available.
 func MkdirModTime(ctx context.Context, f fs.Fs, dir string, modTime time.Time) (newDst fs.Directory, err error) {
 	logName := fs.LogDirName(f, dir)
+	if v, ok := f.(fs.RemotePathValidator); ok {
+		if vErr := v.ValidateRemotePath(ctx, dir); vErr != nil {
+			fs.Errorf(dir, "[Folder] %v", vErr)
+			return nil, fs.CountError(ctx, fserrors.NoRetryError(fserrors.NoLowLevelRetryError(vErr)))
+		}
+	}
 	if SkipDestructive(ctx, logName, "make directory") {
 		return nil, nil
 	}
@@ -1694,7 +1706,7 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 			fs.Debugf(src, "Destination found in --copy-dest, using server-side copy")
 			return true, nil
 		}
-		fs.Debugf(src, "Unchanged skipping")
+		fs.Infof(src, "Skipped (unchanged)")
 		return true, nil
 	}
 	fs.Debugf(src, "Destination not found in --copy-dest")
@@ -1773,7 +1785,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 			opt := defaultEqualOpt(ctx)
 			opt.forceModTimeMatch = true
 			if equal(ctx, src, dst, opt) {
-				fs.Debugf(src, "Unchanged skipping")
+				fs.Infof(src, "Skipped (unchanged)")
 				return false
 			}
 		default:
@@ -1793,7 +1805,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 			return !equalFn(ctx, src, dst)
 		}
 		if Equal(ctx, src, dst) && !SameObject(src, dst) {
-			fs.Debugf(src, "Unchanged skipping")
+			fs.Infof(src, "Skipped (unchanged)")
 			return false
 		}
 	}
@@ -2643,6 +2655,17 @@ func dirName(f fs.Fs, dst fs.Directory, dir string) any {
 func CopyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, src fs.Directory) (newDst fs.Directory, err error) {
 	ci := fs.GetConfig(ctx)
 	logName := dirName(f, dst, dir)
+	// Pre-validate destination directory path even under --dry-run.
+	dirToCheck := dir
+	if dst != nil {
+		dirToCheck = dst.Remote()
+	}
+	if v, ok := f.(fs.RemotePathValidator); ok {
+		if vErr := v.ValidateRemotePath(ctx, dirToCheck); vErr != nil {
+			fs.Errorf(dirToCheck, "[Folder] %v", vErr)
+			return nil, fs.CountError(ctx, fserrors.NoRetryError(fserrors.NoLowLevelRetryError(vErr)))
+		}
+	}
 	if SkipDestructive(ctx, logName, "update directory metadata") {
 		return nil, nil
 	}
@@ -2703,6 +2726,17 @@ func SetDirModTime(ctx context.Context, f fs.Fs, dst fs.Directory, dir string, m
 	if ci.NoUpdateDirModTime {
 		fs.Debugf(logName, "Skipping set directory modification time as --no-update-dir-modtime is set")
 		return nil, nil
+	}
+	// Pre-validate destination directory path even under --dry-run.
+	dirToCheck := dir
+	if dst != nil {
+		dirToCheck = dst.Remote()
+	}
+	if v, ok := f.(fs.RemotePathValidator); ok {
+		if vErr := v.ValidateRemotePath(ctx, dirToCheck); vErr != nil {
+			fs.Errorf(dirToCheck, "[Folder] %v", vErr)
+			return nil, fs.CountError(ctx, fserrors.NoRetryError(fserrors.NoLowLevelRetryError(vErr)))
+		}
 	}
 	if SkipDestructive(ctx, logName, "set directory modification time") {
 		return nil, nil
