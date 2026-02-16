@@ -129,6 +129,8 @@ func (p *Prop) Hashes() (hashes map[hash.Type]string) {
 					hashes[hash.SHA1] = checksum[5:]
 				case strings.HasPrefix(checksum, "md5:"):
 					hashes[hash.MD5] = checksum[4:]
+					case strings.HasPrefix(checksum, "sha256:"):
+						hashes[hash.SHA256] = checksum[7:]
 				}
 			}
 		}
