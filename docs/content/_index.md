@@ -175,6 +175,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Microsoft Azure Files Storage" home="https://azure.microsoft.com/en-us/services/storage/files/" config="/azurefiles/" >}}
 {{< provider name="Microsoft OneDrive" home="https://onedrive.live.com/" config="/onedrive/" >}}
 {{< provider name="Minio" home="https://www.minio.io/" config="/s3/#minio" >}}
+{{< provider name="NetExplorer" home="https://www.netexplorer.fr/" config="/netexplorer/" >}}
 {{< provider name="Nextcloud" home="https://nextcloud.com/" config="/webdav/#nextcloud" >}}
 {{< provider name="Blomp Cloud Storage" home="https://rclone.org/swift/" config="/swift/" >}}
 {{< provider name="OpenDrive" home="https://www.opendrive.com/" config="/opendrive/" >}}

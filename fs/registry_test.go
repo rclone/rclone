@@ -116,6 +116,7 @@ func TestOptionMarshalJSON(t *testing.T) {
 "Hide": 0,
 "Required": false,
 "IsPassword": false,
+"NoPasswordGenerate": false,
 "NoPrefix": false,
 "Advanced": true,
 "Exclusive": false,
