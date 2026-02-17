@@ -44,6 +44,20 @@ const (
 	// Staggering reduces concurrent CreateMultipartUpload load on MinIO, avoiding intermittent hangs.
 	// A short delay (300ms) spreads requests across backends without adding much latency.
 	putStaggerDelay = 300 * time.Millisecond
+
+	// sequentialOpenDelay is the delay between opening each of the 3 underlying backends in NewFs.
+	// Opening all three in parallel can trigger "unexpected packet" on some SFTP servers (e.g. atmoz/sftp)
+	// when multiple connections are established from the same process. Sequential open with delay avoids that.
+	// Set to 0 to restore parallel open (e.g. for revert).
+	sequentialOpenDelay = 200 * time.Millisecond
+
+	// initOpenRetries is the number of attempts when opening each underlying backend in NewFs.
+	// Some SFTP servers (e.g. atmoz/sftp) can fail the first connection from a process with
+	// "unexpected packet"; retrying once or twice often succeeds.
+	initOpenRetries = 3
+
+	// initOpenRetryDelay is the delay between open attempts for each backend.
+	initOpenRetryDelay = 1 * time.Second
 )
 
 // Chunk size constants

@@ -115,8 +115,8 @@ parse_args() {
       ;;
   esac
 
-  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', or 'mixed'."
+  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" && "${STORAGE_TYPE}" != "sftp" ]]; then
+    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', 'mixed', or 'sftp'."
   fi
 }
 
@@ -341,26 +341,38 @@ main() {
 
   case "${COMMAND}" in
     start)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'start' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        start_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        start_sftp_containers
+      else
+        log "'start' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      start_minio_containers
       ;;
     stop)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'stop' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        stop_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        stop_sftp_containers
+      else
+        log "'stop' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      stop_minio_containers
       ;;
     teardown)
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
       set_remotes_for_storage_type
       purge_raid3_remote_root
       purge_remote_root "${SINGLE_REMOTE}"
       if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_RAID3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        for dir in "${SFTP_RAID3_DIRS[@]}" "${SFTP_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"
           verify_directory_empty "${dir}"
         done
@@ -377,6 +389,7 @@ main() {
     test)
       set_remotes_for_storage_type
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
       reset_heal_results
       if [[ -z "${COMMAND_ARG}" ]]; then
         if ! run_all_heal_scenarios; then

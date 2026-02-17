@@ -19,7 +19,7 @@
 #   test                  Run all performance tests
 #
 # Options:
-#   --storage-type <type>    Select storage type: 'minio' or 'local'
+#   --storage-type <type>    Select storage type: 'minio', 'local', or 'sftp'
 #   -v, --verbose            Verbose output
 #   -c, --compression        Use Snappy compression for raid3 remotes (regenerates config)
 #   --skip-mc                Skip mc tests (if mc not available, minio only)
@@ -72,6 +72,12 @@ declare -a LOCAL_CONFIGS=(
   "localsingle-cp|LOCAL_SINGLE_DIR|cp"
   "localsingle-rclone|localsingle|rclone"
   "localraid3-rclone|localraid3|rclone"
+)
+
+# SFTP configurations (rclone only; no mc for SFTP)
+declare -a SFTP_CONFIGS=(
+  "sftpsingle-rclone|sftpsingle|rclone"
+  "sftpraid3-rclone|sftpraid3|rclone"
 )
 
 # File sizes in bytes (using regular array)
@@ -158,7 +164,7 @@ Commands:
                           4K|40K|400K|4M|40M|4G   Run only this file size.
 
 Options:
-  --storage-type <type>     Select storage type: 'minio' or 'local'.
+  --storage-type <type>     Select storage type: 'minio', 'local', or 'sftp'.
   -v, --verbose             Show verbose output from commands.
   -c, --compression         Use Snappy compression for raid3 remotes (regenerates config).
   --skip-mc                 Skip mc tests (if mc command not available, minio only).
@@ -274,8 +280,8 @@ parse_args() {
       ;;
   esac
 
-  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "local" ]]; then
-    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'minio' or 'local'."
+  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "sftp" ]]; then
+    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'minio', 'local', or 'sftp'."
   fi
 
   # Set CONFIGS based on storage type
@@ -283,6 +289,8 @@ parse_args() {
     CONFIGS=("${MINIO_CONFIGS[@]}")
   elif [[ "${STORAGE_TYPE}" == "local" ]]; then
     CONFIGS=("${LOCAL_CONFIGS[@]}")
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    CONFIGS=("${SFTP_CONFIGS[@]}")
   fi
 }
 
@@ -1158,6 +1166,13 @@ run_performance_tests() {
       ensure_rclone_config
     fi
     ensure_rclone_binary
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    if (( VERBOSE )); then
+      log_info "test" "Ensuring SFTP containers are ready"
+    fi
+    if ! ensure_sftp_containers_ready; then
+      die "SFTP containers are not ready. Please run '${SCRIPT_NAME} start --storage-type=sftp' first."
+    fi
   fi
   
   # Run all test suites
@@ -1244,7 +1259,6 @@ main() {
       if [[ "${STORAGE_TYPE}" == "minio" ]]; then
         start_minio_containers
       elif [[ "${STORAGE_TYPE}" == "local" ]]; then
-        # For local, just ensure directories exist
         if (( VERBOSE )); then
           log_info "start" "Ensuring local directories exist"
         fi
@@ -1255,6 +1269,8 @@ main() {
         if (( VERBOSE )); then
           log_info "start" "Local directories ready"
         fi
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        start_sftp_containers
       fi
       ;;
       
@@ -1265,6 +1281,8 @@ main() {
         if (( VERBOSE )); then
           log_info "stop" "No containers to stop for storage type 'local'"
         fi
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        stop_sftp_containers
       fi
       ;;
       
@@ -1285,14 +1303,11 @@ main() {
           log_info "teardown" "Teardown completed"
         fi
       elif [[ "${STORAGE_TYPE}" == "local" ]]; then
-        # For local, purge remotes and clean data directories
         if (( VERBOSE )); then
           log_info "teardown" "Purging local remotes"
         fi
         purge_remote_root "localsingle"
         purge_remote_root "localraid3"
-
-        # Clean up local data directories
         remove_leftover_files "${LOCAL_SINGLE_DIR}"
         verify_directory_empty "${LOCAL_SINGLE_DIR}"
         for dir in "${LOCAL_RAID3_DIRS[@]}"; do
@@ -1301,6 +1316,20 @@ main() {
         done
         if (( VERBOSE )); then
           log_info "teardown" "Teardown completed"
+        fi
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        if ! ensure_sftp_containers_ready; then
+          log_warn "teardown" "SFTP containers not running; skipping purge"
+        else
+          purge_remote_root "sftpsingle"
+          purge_remote_root "sftpraid3"
+        fi
+        for dir in "${SFTP_RAID3_DIRS[@]}" "${SFTP_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+        if (( VERBOSE )); then
+          log_info "teardown" "Teardown completed (sftp)"
         fi
       fi
       ;;

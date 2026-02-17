@@ -121,8 +121,8 @@ parse_args() {
       ;;
   esac
 
-  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', or 'mixed'."
+  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" && "${STORAGE_TYPE}" != "sftp" ]]; then
+    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', 'mixed', or 'sftp'."
   fi
 }
 
@@ -158,8 +158,9 @@ test_features_for_storage_type() {
   local test_case="${storage_type}-features"
   log "Running test: ${test_case}"
 
-  # Ensure MinIO containers are ready if needed
+  # Ensure MinIO or SFTP containers are ready if needed
   [[ "${storage_type}" != "minio" && "${storage_type}" != "mixed" ]] || ensure_minio_containers_ready
+  [[ "${storage_type}" != "sftp" ]] || ensure_sftp_containers_ready
 
   # Determine which remote to test based on storage type
   local raid3_remote
@@ -172,6 +173,9 @@ test_features_for_storage_type() {
       ;;
     mixed)
       raid3_remote="localminioraid3"
+      ;;
+    sftp)
+      raid3_remote="sftpraid3"
       ;;
     *)
       die "Unknown storage type: ${storage_type}"
@@ -393,10 +397,14 @@ Available tests:
   mixed-features    Test feature handling with mixed remotes (local + MinIO)
                     Requires --storage-type=mixed
 
+  sftp-features     Test feature handling with SFTP-only backends
+                    Requires --storage-type=sftp
+
 Run all tests by omitting the test name:
   ${SCRIPT_NAME} --storage-type=local test
   ${SCRIPT_NAME} --storage-type=minio test
   ${SCRIPT_NAME} --storage-type=mixed test
+  ${SCRIPT_NAME} --storage-type=sftp test
 
 EOF
 }
@@ -462,6 +470,12 @@ main() {
             fi
             test_features_for_storage_type "mixed"
             ;;
+          sftp-features)
+            if [[ "${STORAGE_TYPE}" != "sftp" ]]; then
+              die "Test '${COMMAND_ARG}' requires --storage-type=sftp"
+            fi
+            test_features_for_storage_type "sftp"
+            ;;
           *)
             die "Unknown test: '${COMMAND_ARG}'. Use 'list' to see available tests."
             ;;
@@ -469,39 +483,57 @@ main() {
       fi
       ;;
     start)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'start' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        start_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        start_sftp_containers
+      else
+        log "'start' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      start_minio_containers
       ;;
     stop)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'stop' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        stop_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        stop_sftp_containers
+      else
+        log "'stop' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      stop_minio_containers
       ;;
     teardown)
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
+      set_remotes_for_storage_type
+      purge_raid3_remote_root
+      purge_remote_root "${SINGLE_REMOTE}"
       if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_RAID3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do
           rm -rf "${dir:?}"/*
         done
         log "Teardown complete for local storage"
       elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
-        # Mixed: clean local even/parity dirs and MinIO odd dir
         for dir in "${LOCAL_EVEN_DIR}" "${LOCAL_PARITY_DIR}" "${LOCAL_SINGLE_DIR}"; do
           rm -rf "${dir:?}"/*
         done
-        # MinIO cleanup would require API calls, skip for now
-        log "Teardown complete for mixed storage (local dirs only)"
+        for dir in "${MINIO_RAID3_DIRS[@]}" "${MINIO_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+        log "Teardown complete for mixed storage"
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        for dir in "${SFTP_RAID3_DIRS[@]}" "${SFTP_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+        log "Teardown complete for SFTP storage"
       else
         for dir in "${MINIO_RAID3_DIRS[@]}" "${MINIO_SINGLE_DIR}"; do
-          # MinIO cleanup would require API calls, skip for now
-          :
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
         done
-        log "Teardown complete for MinIO storage (containers not cleaned)"
+        log "Teardown complete for MinIO storage"
       fi
       ;;
     *)

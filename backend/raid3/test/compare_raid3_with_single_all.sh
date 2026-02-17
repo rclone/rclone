@@ -18,7 +18,7 @@
 #
 # Options:
 #   -v, --verbose         Show detailed output from individual test scripts
-#   --storage-type <t>    Run only with given backend: local, minio, or mixed.
+#   --storage-type <t>    Run only with given backend: local, minio, mixed, or sftp.
 #                         If not supplied, runs all storage types for each test.
 #   -h, --help            Display this help text
 #
@@ -42,7 +42,7 @@ Usage: ${SCRIPT_NAME} [options]
 
 Options:
   -v, --verbose         Show detailed output from individual test scripts
-  --storage-type <t>    Run only with given backend: local, minio, or mixed.
+  --storage-type <t>    Run only with given backend: local, minio, mixed, or sftp.
                         If not supplied, runs all storage types for each test.
   -h, --help            Display this help text
 
@@ -72,14 +72,15 @@ STORAGE_TYPE_FILTER=""
 
 # Test scripts and their storage types
 # Format: "script_name:storage_type1,storage_type2,..."
+# stacking does not support sftp (no crypt/chunker sftp remotes in config)
 TEST_SCRIPTS=(
-  "compare_raid3_with_single.sh:local,minio,mixed"
-  "compare_raid3_with_single_heal.sh:local,minio,mixed"
-  "compare_raid3_with_single_errors.sh:minio"
-  "compare_raid3_with_single_rebuild.sh:local,minio,mixed"
-  "compare_raid3_with_single_features.sh:local,minio,mixed"
+  "compare_raid3_with_single.sh:local,minio,mixed,sftp"
+  "compare_raid3_with_single_heal.sh:local,minio,mixed,sftp"
+  "compare_raid3_with_single_errors.sh:minio,sftp"
+  "compare_raid3_with_single_rebuild.sh:local,minio,mixed,sftp"
+  "compare_raid3_with_single_features.sh:local,minio,mixed,sftp"
   "compare_raid3_with_single_stacking.sh:local,minio"
-  "performance_test.sh:local,minio"
+  "performance_test.sh:local,minio,sftp"
 )
 
 # ---------------------------- helper functions ------------------------------
@@ -90,7 +91,7 @@ Usage: ${SCRIPT_NAME} [options]
 
 Options:
   -v, --verbose         Show detailed output from individual test scripts
-  --storage-type <t>    Run only with given backend: local, minio, or mixed.
+  --storage-type <t>    Run only with given backend: local, minio, mixed, or sftp.
                         If not supplied, runs all storage types for each test.
   -h, --help            Display this help text
 
@@ -176,8 +177,8 @@ parse_args() {
         ;;
     esac
   done
-  if [[ -n "${STORAGE_TYPE_FILTER}" && "${STORAGE_TYPE_FILTER}" != "local" && "${STORAGE_TYPE_FILTER}" != "minio" && "${STORAGE_TYPE_FILTER}" != "mixed" ]]; then
-    echo "Invalid --storage-type '${STORAGE_TYPE_FILTER}'. Expected local, minio, or mixed." >&2
+  if [[ -n "${STORAGE_TYPE_FILTER}" && "${STORAGE_TYPE_FILTER}" != "local" && "${STORAGE_TYPE_FILTER}" != "minio" && "${STORAGE_TYPE_FILTER}" != "mixed" && "${STORAGE_TYPE_FILTER}" != "sftp" ]]; then
+    echo "Invalid --storage-type '${STORAGE_TYPE_FILTER}'. Expected local, minio, mixed, or sftp." >&2
     usage >&2
     exit 1
   fi

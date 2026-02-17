@@ -11,6 +11,7 @@ package raid3
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
@@ -40,26 +41,19 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	listCh := make(chan listResult, 3)
 
-	go func() {
+	listOne := func(backend fs.Fs, name string) {
+		if backend == nil {
+			listCh <- listResult{name, nil, fmt.Errorf("%s backend not initialized (degraded mode)", name)}
+			return
+		}
 		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
 		defer cancel()
-		entries, err := f.even.List(listCtx, dir)
-		listCh <- listResult{"even", entries, err}
-	}()
-
-	go func() {
-		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
-		defer cancel()
-		entries, err := f.odd.List(listCtx, dir)
-		listCh <- listResult{"odd", entries, err}
-	}()
-
-	go func() {
-		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
-		defer cancel()
-		entries, err := f.parity.List(listCtx, dir)
-		listCh <- listResult{"parity", entries, err}
-	}()
+		entries, err := backend.List(listCtx, dir)
+		listCh <- listResult{name, entries, err}
+	}
+	go listOne(f.even, "even")
+	go listOne(f.odd, "odd")
+	go listOne(f.parity, "parity")
 
 	// Collect results
 	var entriesEven, entriesOdd, entriesParity fs.DirEntries
@@ -92,19 +86,21 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			// Check if this is an orphaned directory that should be cleaned up before returning error
 			if f.opt.AutoCleanup {
 				// Check parity to see if directory is orphaned (exists only on parity)
-				parityCtx, cancel := context.WithTimeout(ctx, listHelperTimeout)
-				defer cancel()
-				_, errParity := f.parity.List(parityCtx, dir)
+				if f.parity != nil {
+					parityCtx, cancel := context.WithTimeout(ctx, listHelperTimeout)
+					defer cancel()
+					_, errParity := f.parity.List(parityCtx, dir)
 
-				// If parity exists but both data backends don't, this is orphaned
-				if errParity == nil {
-					dirPath := dir
-					if dirPath == "" {
-						dirPath = f.root
+					// If parity exists but both data backends don't, this is orphaned
+					if errParity == nil {
+						dirPath := dir
+						if dirPath == "" {
+							dirPath = f.root
+						}
+						fs.Infof(f, "Auto-cleanup: removing orphaned directory %q (exists on 1/3 backends - parity only)", dirPath)
+						_ = f.parity.Rmdir(ctx, dir)
+						return nil, nil // Return empty list, no error
 					}
-					fs.Infof(f, "Auto-cleanup: removing orphaned directory %q (exists on 1/3 backends - parity only)", dirPath)
-					_ = f.parity.Rmdir(ctx, dir)
-					return nil, nil // Return empty list, no error
 				}
 			}
 			return nil, errEven // Return even error
@@ -235,6 +231,10 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 	// ListR on even backend
 	go func() {
+		if f.even == nil {
+			results <- listRResult{"even", nil, fmt.Errorf("even backend not initialized (degraded mode)")}
+			return
+		}
 		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
 		defer cancel()
 		var evenEntries []fs.DirEntries
@@ -258,6 +258,10 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 	// ListR on odd backend
 	go func() {
+		if f.odd == nil {
+			results <- listRResult{"odd", nil, fmt.Errorf("odd backend not initialized (degraded mode)")}
+			return
+		}
 		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
 		defer cancel()
 		var oddEntries []fs.DirEntries
@@ -281,6 +285,10 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 	// ListR on parity backend (errors ignored, similar to List())
 	go func() {
+		if f.parity == nil {
+			results <- listRResult{"parity", nil, nil} // Degraded: no parity entries
+			return
+		}
 		listCtx, cancel := context.WithTimeout(ctx, listBackendTimeout)
 		defer cancel()
 		var parityEntries []fs.DirEntries
@@ -452,10 +460,23 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
-	// Probe particles - must have at least 2 of 3 for RAID 3
-	_, errEven := f.even.NewObject(ctx, remote)
-	_, errOdd := f.odd.NewObject(ctx, remote)
-	_, errParity := f.parity.NewObject(ctx, remote)
+	// Probe particles - must have at least 2 of 3 for RAID 3 (degraded: nil backend counts as missing)
+	var errEven, errOdd, errParity error
+	if f.even != nil {
+		_, errEven = f.even.NewObject(ctx, remote)
+	} else {
+		errEven = fmt.Errorf("even backend not initialized (degraded mode)")
+	}
+	if f.odd != nil {
+		_, errOdd = f.odd.NewObject(ctx, remote)
+	} else {
+		errOdd = fmt.Errorf("odd backend not initialized (degraded mode)")
+	}
+	if f.parity != nil {
+		_, errParity = f.parity.NewObject(ctx, remote)
+	} else {
+		errParity = fmt.Errorf("parity backend not initialized (degraded mode)")
+	}
 	parityPresent := errParity == nil
 	evenPresent := errEven == nil
 	oddPresent := errOdd == nil
@@ -486,7 +507,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		if errOdd != nil && !errors.Is(errOdd, fs.ErrorObjectNotFound) {
 			hasConnectionError = true
 		}
-		if !parityPresent && errParity != nil && !errors.Is(errParity, fs.ErrorObjectNotFound) {
+		if !parityPresent && !errors.Is(errParity, fs.ErrorObjectNotFound) {
 			hasConnectionError = true
 		}
 

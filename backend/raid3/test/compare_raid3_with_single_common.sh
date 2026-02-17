@@ -100,12 +100,33 @@ MINIO_S3_PORTS=(
   "${MINIO_SINGLE_PORT}"
 )
 
+SFTP_RAID3_DIRS=(
+  "${SFTP_EVEN_DIR}"
+  "${SFTP_ODD_DIR}"
+  "${SFTP_PARITY_DIR}"
+)
+# shellcheck disable=SC2269
+SFTP_SINGLE_DIR="${SFTP_SINGLE_DIR}"
+SFTP_RAID3_REMOTES=(
+  "${SFTP_EVEN_REMOTE}"
+  "${SFTP_ODD_REMOTE}"
+  "${SFTP_PARITY_REMOTE}"
+)
+SFTP_PORTS=(
+  "${SFTP_EVEN_PORT}"
+  "${SFTP_ODD_PORT}"
+  "${SFTP_PARITY_PORT}"
+  "${SFTP_SINGLE_PORT}"
+)
+
 # Directories explicitly allowed for cleanup
 ALLOWED_DATA_DIRS=(
   "${LOCAL_RAID3_DIRS[@]}"
   "${LOCAL_SINGLE_DIR}"
   "${MINIO_RAID3_DIRS[@]}"
   "${MINIO_SINGLE_DIR}"
+  "${SFTP_RAID3_DIRS[@]}"
+  "${SFTP_SINGLE_DIR}"
 )
 
 # Definition of MinIO containers: name|user|password|s3_port|console_port|data_dir
@@ -114,6 +135,14 @@ MINIO_CONTAINERS=(
   "${MINIO_ODD_NAME}|${MINIO_ODD_USER:-odd}|${MINIO_ODD_PASS:-oddpass88}|${MINIO_ODD_PORT}|9005|${MINIO_ODD_DIR}"
   "${MINIO_PARITY_NAME}|${MINIO_PARITY_USER:-parity}|${MINIO_PARITY_PASS:-paritypass88}|${MINIO_PARITY_PORT}|9006|${MINIO_PARITY_DIR}"
   "${MINIO_SINGLE_NAME}|${MINIO_SINGLE_USER:-single}|${MINIO_SINGLE_PASS:-singlepass88}|${MINIO_SINGLE_PORT}|9007|${MINIO_SINGLE_DIR}"
+)
+
+# Definition of SFTP containers: name|user|password|sftp_port|data_dir
+SFTP_CONTAINERS=(
+  "${SFTP_EVEN_NAME}|${SFTP_EVEN_USER:-even}|${SFTP_EVEN_PASS:-evenpass88}|${SFTP_EVEN_PORT}|${SFTP_EVEN_DIR}"
+  "${SFTP_ODD_NAME}|${SFTP_ODD_USER:-odd}|${SFTP_ODD_PASS:-oddpass88}|${SFTP_ODD_PORT}|${SFTP_ODD_DIR}"
+  "${SFTP_PARITY_NAME}|${SFTP_PARITY_USER:-parity}|${SFTP_PARITY_PASS:-paritypass88}|${SFTP_PARITY_PORT}|${SFTP_PARITY_DIR}"
+  "${SFTP_SINGLE_NAME}|${SFTP_SINGLE_USER:-single}|${SFTP_SINGLE_PASS:-singlepass88}|${SFTP_SINGLE_PORT}|${SFTP_SINGLE_DIR}"
 )
 
 log_tag() {
@@ -262,11 +291,16 @@ create_rclone_config() {
     fi
   fi
   
-  # Obscure passwords using rclone obscure command
+  # Obscure passwords using rclone obscure command (crypt and SFTP backends require obscured passwords in config)
+  local SFTP_EVEN_PASS_OBSCURED SFTP_ODD_PASS_OBSCURED SFTP_PARITY_PASS_OBSCURED SFTP_SINGLE_PASS_OBSCURED
   if [[ -n "${rclone_bin}" ]]; then
     CRYPT_PASSWORD_OBSCURED=$(echo -n "${CRYPT_PASSWORD}" | "${rclone_bin}" obscure - 2>/dev/null || echo "")
     CRYPT_SALT_OBSCURED=$(echo -n "${CRYPT_SALT}" | "${rclone_bin}" obscure - 2>/dev/null || echo "")
-    
+    SFTP_EVEN_PASS_OBSCURED=$(echo -n "${SFTP_EVEN_PASS:-evenpass88}" | "${rclone_bin}" obscure - 2>/dev/null || echo "")
+    SFTP_ODD_PASS_OBSCURED=$(echo -n "${SFTP_ODD_PASS:-oddpass88}" | "${rclone_bin}" obscure - 2>/dev/null || echo "")
+    SFTP_PARITY_PASS_OBSCURED=$(echo -n "${SFTP_PARITY_PASS:-paritypass88}" | "${rclone_bin}" obscure - 2>/dev/null || echo "")
+    SFTP_SINGLE_PASS_OBSCURED=$(echo -n "${SFTP_SINGLE_PASS:-singlepass88}" | "${rclone_bin}" obscure - 2>/dev/null || echo "")
+
     # Verify that obscuring worked
     if [[ -z "${CRYPT_PASSWORD_OBSCURED}" ]] || [[ -z "${CRYPT_SALT_OBSCURED}" ]]; then
       log_warn "config" "Failed to obscure crypt passwords, but continuing (rclone may obscure them automatically)"
@@ -274,6 +308,13 @@ create_rclone_config() {
       CRYPT_SALT_OBSCURED="${CRYPT_SALT}"
     elif [[ "${CRYPT_PASSWORD_OBSCURED}" == "${CRYPT_PASSWORD}" ]] || [[ "${CRYPT_SALT_OBSCURED}" == "${CRYPT_SALT}" ]]; then
       log_warn "config" "Password obscuring may have failed (output same as input), but continuing"
+    fi
+    if [[ -z "${SFTP_EVEN_PASS_OBSCURED}" ]] || [[ -z "${SFTP_SINGLE_PASS_OBSCURED}" ]]; then
+      log_warn "config" "Failed to obscure SFTP passwords; SFTP remotes may fail (rclone requires obscured pass in config)"
+      SFTP_EVEN_PASS_OBSCURED="${SFTP_EVEN_PASS:-evenpass88}"
+      SFTP_ODD_PASS_OBSCURED="${SFTP_ODD_PASS:-oddpass88}"
+      SFTP_PARITY_PASS_OBSCURED="${SFTP_PARITY_PASS:-paritypass88}"
+      SFTP_SINGLE_PASS_OBSCURED="${SFTP_SINGLE_PASS:-singlepass88}"
     fi
   else
     # If rclone is not available, we cannot obscure passwords
@@ -284,6 +325,10 @@ create_rclone_config() {
     log_warn "config" "Then update the config file manually, or regenerate after building rclone"
     CRYPT_PASSWORD_OBSCURED="${CRYPT_PASSWORD}"
     CRYPT_SALT_OBSCURED="${CRYPT_SALT}"
+    SFTP_EVEN_PASS_OBSCURED="${SFTP_EVEN_PASS:-evenpass88}"
+    SFTP_ODD_PASS_OBSCURED="${SFTP_ODD_PASS:-oddpass88}"
+    SFTP_PARITY_PASS_OBSCURED="${SFTP_PARITY_PASS:-paritypass88}"
+    SFTP_SINGLE_PASS_OBSCURED="${SFTP_SINGLE_PASS:-singlepass88}"
   fi
   
   # Generate config file content
@@ -457,6 +502,56 @@ type = chunker
 remote = minioraid3:chunker
 chunk_size = 100B
 hash_type = md5
+
+# SFTP remotes (atmoz/sftp containers; host key check left unset for tests; pass must be obscured).
+# atmoz/sftp is SFTP-only (no shell), so we set shell_type = none and disable_hashcheck = true.
+# rclone check then has no common hash with raid3/single and will log "No common hash found - not using a hash for checks"; it compares by size/modtime only.
+[${SFTP_EVEN_REMOTE}]
+type = sftp
+host = 127.0.0.1
+user = ${SFTP_EVEN_USER:-even}
+port = ${SFTP_EVEN_PORT}
+pass = ${SFTP_EVEN_PASS_OBSCURED}
+shell_type = none
+disable_hashcheck = true
+
+[${SFTP_ODD_REMOTE}]
+type = sftp
+host = 127.0.0.1
+user = ${SFTP_ODD_USER:-odd}
+port = ${SFTP_ODD_PORT}
+pass = ${SFTP_ODD_PASS_OBSCURED}
+shell_type = none
+disable_hashcheck = true
+
+[${SFTP_PARITY_REMOTE}]
+type = sftp
+host = 127.0.0.1
+user = ${SFTP_PARITY_USER:-parity}
+port = ${SFTP_PARITY_PORT}
+pass = ${SFTP_PARITY_PASS_OBSCURED}
+shell_type = none
+disable_hashcheck = true
+
+# RAID3 remote using SFTP storage
+[sftpraid3]
+type = raid3
+even = ${SFTP_EVEN_REMOTE}:
+odd = ${SFTP_ODD_REMOTE}:
+parity = ${SFTP_PARITY_REMOTE}:
+timeout_mode = aggressive
+auto_cleanup = true
+auto_heal = false
+${raid3_compression_line}
+
+[${SFTP_SINGLE_REMOTE}]
+type = sftp
+host = 127.0.0.1
+user = ${SFTP_SINGLE_USER:-single}
+port = ${SFTP_SINGLE_PORT}
+pass = ${SFTP_SINGLE_PASS_OBSCURED}
+shell_type = none
+disable_hashcheck = true
 
 EOF
   
@@ -730,12 +825,65 @@ wait_for_minio_backend_ready() {
   return 1
 }
 
+wait_for_sftp_port() {
+  local port="$1"
+  local retries=60
+  local delay=1
+  while (( retries > 0 )); do
+    if nc -z localhost "${port}" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep "${delay}"
+    (( retries-- ))
+  done
+  return 1
+}
+
+wait_for_sftp_backend_ready() {
+  local backend="$1"
+  local remote
+  case "${backend}" in
+    even) remote="${SFTP_EVEN_REMOTE}" ;;
+    odd) remote="${SFTP_ODD_REMOTE}" ;;
+    parity) remote="${SFTP_PARITY_REMOTE}" ;;
+    *) return 1 ;;
+  esac
+
+  local retries=30
+  local delay=1
+  while (( retries > 0 )); do
+    local output
+    output=$(rclone_cmd ls "${remote}:" 2>&1)
+    local status=$?
+    if [[ ${status} -eq 0 ]]; then
+      return 0
+    fi
+    if echo "${output}" | grep -qiE "(connection refused|connection reset|no route to host|timeout)"; then
+      sleep "${delay}"
+      (( retries-- ))
+      continue
+    fi
+    return 0
+  done
+  return 1
+}
+
 minio_container_for_backend() {
   local backend="$1"
   case "${backend}" in
     even) echo "minioeven" ;;
     odd) echo "minioodd" ;;
     parity) echo "minioparity" ;;
+    *) echo "" ;;
+  esac
+}
+
+sftp_container_for_backend() {
+  local backend="$1"
+  case "${backend}" in
+    even) echo "${SFTP_EVEN_NAME}" ;;
+    odd) echo "${SFTP_ODD_NAME}" ;;
+    parity) echo "${SFTP_PARITY_NAME}" ;;
     *) echo "" ;;
   esac
 }
@@ -783,22 +931,23 @@ stop_single_minio_container() {
 stop_backend() {
   local backend="$1"
   
-  # Determine if this specific backend is MinIO or local
+  # Determine if this specific backend is MinIO, SFTP, or local
   local is_minio_backend=0
+  local is_sftp_backend=0
   if [[ "${STORAGE_TYPE}" == "minio" ]]; then
-    # All backends are MinIO
     is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    is_sftp_backend=1
   elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
-    # In mixed storage: even=local, odd=MinIO, parity=local
     case "${backend}" in
       odd) is_minio_backend=1 ;;
       even|parity) is_minio_backend=0 ;;
       *) die "Unknown backend '${backend}' for mixed storage" ;;
     esac
-  fi
-  
-  if [[ "${is_minio_backend}" -eq 1 ]]; then
-    # MinIO backend: stop the container
+  fi  
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    stop_single_sftp_container "${backend}"
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
     stop_single_minio_container "${backend}"
   else
     # Local backend: make the directory unavailable
@@ -835,22 +984,23 @@ stop_backend() {
 start_backend() {
   local backend="$1"
   
-  # Determine if this specific backend is MinIO or local
+  # Determine if this specific backend is MinIO, SFTP, or local
   local is_minio_backend=0
+  local is_sftp_backend=0
   if [[ "${STORAGE_TYPE}" == "minio" ]]; then
-    # All backends are MinIO
     is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    is_sftp_backend=1
   elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
-    # In mixed storage: even=local, odd=MinIO, parity=local
     case "${backend}" in
       odd) is_minio_backend=1 ;;
       even|parity) is_minio_backend=0 ;;
       *) die "Unknown backend '${backend}' for mixed storage" ;;
     esac
   fi
-  
-  if [[ "${is_minio_backend}" -eq 1 ]]; then
-    # MinIO backend: start the container
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    start_single_sftp_container "${backend}"
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
     start_single_minio_container "${backend}"
   else
     # Local backend: restore the directory
@@ -898,6 +1048,31 @@ start_single_minio_container() {
     # Fallback to launching via start_minio_containers (ensures config).
     log_info "docker" "Container '${name}' missing; launching all MinIO containers."
     start_minio_containers
+  fi
+}
+
+stop_single_sftp_container() {
+  local backend="$1"
+  local name
+  name=$(sftp_container_for_backend "${backend}")
+  [[ -n "${name}" ]] || return
+  if container_running "${name}"; then
+    log_info "docker" "Stopping container '${name}' for backend '${backend}'."
+    docker stop "${name}" >/dev/null
+  fi
+}
+
+start_single_sftp_container() {
+  local backend="$1"
+  local name
+  name=$(sftp_container_for_backend "${backend}")
+  [[ -n "${name}" ]] || return
+  if container_exists "${name}"; then
+    log_info "docker" "Starting container '${name}' for backend '${backend}'."
+    docker start "${name}" >/dev/null
+  else
+    log_info "docker" "Container '${name}' missing; launching all SFTP containers."
+    start_sftp_containers
   fi
 }
 
@@ -1002,6 +1177,106 @@ stop_minio_containers() {
 
   if (( ! any_running )); then
     log "No MinIO containers were running."
+  fi
+}
+
+start_sftp_containers() {
+  for entry in "${SFTP_CONTAINERS[@]}"; do
+    IFS='|' read -r name user pass sftp_port data_dir <<<"${entry}"
+    ensure_directory "${data_dir}"
+
+    if container_running "${name}"; then
+      log "Container '${name}' already running – skipping."
+      continue
+    fi
+
+    if container_exists "${name}"; then
+      log "Starting existing container '${name}'."
+      docker start "${name}" >/dev/null
+      continue
+    fi
+
+    log "Launching SFTP container '${name}' (port ${sftp_port})."
+    local data_dir_abs
+    data_dir_abs=$(cd "${data_dir}" && pwd) || data_dir_abs="${data_dir}"
+    # atmoz/sftp: user:pass (no :::upload) so home is /home/user; mount data dir as home
+    docker run -d \
+      --name "${name}" \
+      -p "${sftp_port}:22" \
+      -v "${data_dir_abs}:/home/${user}" \
+      "${SFTP_IMAGE:-atmoz/sftp}" \
+      "${user}:${pass}" >/dev/null
+  done
+}
+
+ensure_sftp_containers_ready() {
+  if [[ "${STORAGE_TYPE}" != "sftp" ]]; then
+    return 0
+  fi
+
+  local entry started=0
+  for entry in "${SFTP_CONTAINERS[@]}"; do
+    IFS='|' read -r name _ _ _ data_dir <<<"${entry}"
+    ensure_directory "${data_dir}"
+    if container_running "${name}"; then
+      log_info "autostart" "Container '${name}' already running."
+      continue
+    fi
+    started=1
+    if container_exists "${name}"; then
+      log_info "autostart" "Starting container '${name}'."
+      docker start "${name}" >/dev/null || return 1
+    else
+      log_info "autostart" "Container '${name}' missing; launching full SFTP set."
+      start_sftp_containers
+      started=0
+      break
+    fi
+  done
+
+  if (( started )); then
+    sleep 2
+  fi
+
+  local idx=0
+  for entry in "${SFTP_CONTAINERS[@]}"; do
+    IFS='|' read -r name _ _ _ _ <<<"${entry}"
+    local port="${SFTP_PORTS[idx]}"
+    if ! container_running "${name}"; then
+      log_fail "autostart" "Container ${name} is not running. Run: docker logs ${name}"
+      return 1
+    fi
+    log_info "autostart" "Waiting for ${name} (port ${port})..."
+    if ! wait_for_sftp_port "${port}"; then
+      log_fail "autostart" "Port ${port} for ${name} did not open in time (60s). Run: docker logs ${name}"
+      return 1
+    fi
+    ((idx++))
+  done
+
+  if (( started )); then
+    log_info "autostart" "SFTP containers are ready."
+  else
+    log_info "autostart" "All SFTP containers already running."
+  fi
+  return 0
+}
+
+stop_sftp_containers() {
+  local any_running=0
+  for entry in "${SFTP_CONTAINERS[@]}"; do
+    IFS='|' read -r name _ <<<"${entry}"
+    if container_running "${name}"; then
+      log "Stopping container '${name}'."
+      docker stop "${name}" >/dev/null
+      any_running=1
+    else
+      log "Container '${name}' not running."
+    fi
+  done
+
+  if (( ! any_running )); then
+    log "No SFTP containers were running."
   fi
 }
 
@@ -1166,6 +1441,12 @@ cleanup_raid3_dataset_raw() {
       fi
       rclone_cmd purge "${MINIO_ODD_REMOTE}:${dataset_id}" >/dev/null 2>&1 || true
       ;;
+    sftp)
+      local remote
+      for remote in "${SFTP_RAID3_REMOTES[@]}"; do
+        rclone_cmd purge "${remote}:${dataset_id}" >/dev/null 2>&1 || true
+      done
+      ;;
     *)
       ;;
   esac
@@ -1195,6 +1476,14 @@ backend_remote_name() {
         even) echo "${LOCAL_RAID3_REMOTES[0]}" ;;
         odd) echo "${MINIO_RAID3_REMOTES[1]}" ;;
         parity) echo "${LOCAL_RAID3_REMOTES[2]}" ;;
+        *) die "Unknown backend '${backend}'" ;;
+      esac
+      ;;
+    sftp)
+      case "${backend}" in
+        even) echo "${SFTP_RAID3_REMOTES[0]}" ;;
+        odd) echo "${SFTP_RAID3_REMOTES[1]}" ;;
+        parity) echo "${SFTP_RAID3_REMOTES[2]}" ;;
         *) die "Unknown backend '${backend}'" ;;
       esac
       ;;
@@ -1231,6 +1520,14 @@ remote_data_dir() {
         *) die "Unknown backend '${backend}'" ;;
       esac
       ;;
+    sftp)
+      case "${backend}" in
+        even) echo "${SFTP_RAID3_DIRS[0]}" ;;
+        odd) echo "${SFTP_RAID3_DIRS[1]}" ;;
+        parity) echo "${SFTP_RAID3_DIRS[2]}" ;;
+        *) die "Unknown backend '${backend}'" ;;
+      esac
+      ;;
     *)
       die "Unsupported storage type '${STORAGE_TYPE}'"
       ;;
@@ -1239,7 +1536,7 @@ remote_data_dir() {
 
 # Path suffix for listing/purging this backend when used as part of the raid3 remote.
 # For local: path relative to test dir (e.g. _data/even_local) so we never list/purge the test folder.
-# For minio/mixed: empty so we use the remote root.
+# For minio/mixed/sftp: empty so we use the remote root.
 backend_raid3_root_path() {
   local backend="$1"
   case "${STORAGE_TYPE}" in
@@ -1252,7 +1549,7 @@ backend_raid3_root_path() {
         echo "${dir}"
       fi
       ;;
-    minio|mixed)
+    minio|mixed|sftp)
       echo ""
       ;;
     *)
@@ -1292,6 +1589,11 @@ remove_dataset_from_backend() {
           ;;
       esac
       ;;
+    sftp)
+      local remote
+      remote=$(backend_remote_name "${backend}")
+      rclone_cmd purge "${remote}:${dataset_id}" >/dev/null 2>&1 || true
+      ;;
     *)
       ;;
   esac
@@ -1329,6 +1631,11 @@ object_exists_in_backend() {
           return 1
           ;;
       esac
+      ;;
+    sftp)
+      local remote
+      remote=$(backend_remote_name "${backend}")
+      rclone_cmd lsl "${remote}:${dataset_id}/${relative_path}" >/dev/null 2>&1
       ;;
     *)
       return 1
@@ -1418,6 +1725,10 @@ set_remotes_for_storage_type() {
       # Mixed storage: local for even/parity, MinIO for odd
       RAID3_REMOTE="${RAID3_REMOTE:-localminioraid3}"
       SINGLE_REMOTE="${SINGLE_REMOTE:-localsingle}"
+      ;;
+    sftp)
+      RAID3_REMOTE="${RAID3_REMOTE:-sftpraid3}"
+      SINGLE_REMOTE="${SINGLE_REMOTE:-sftpsingle}"
       ;;
     *)
       die "Unsupported storage type '${STORAGE_TYPE}'"

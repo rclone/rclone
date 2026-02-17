@@ -111,6 +111,10 @@ log_info "setup" "Creating MinIO data directories"
 mkdir -p "${MINIO_EVEN_DIR}" "${MINIO_ODD_DIR}" "${MINIO_PARITY_DIR}" "${MINIO_SINGLE_DIR}" || \
   die "Failed to create MinIO data directories"
 
+log_info "setup" "Creating SFTP data directories"
+mkdir -p "${SFTP_EVEN_DIR}" "${SFTP_ODD_DIR}" "${SFTP_PARITY_DIR}" "${SFTP_SINGLE_DIR}" || \
+  die "Failed to create SFTP data directories"
+
 # Create the rclone config file
 CONFIG_FILE="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"
 log_info "setup" "Creating rclone configuration file: ${CONFIG_FILE}"
@@ -128,6 +132,12 @@ if [[ -f "${CONFIG_FILE}" ]]; then
     NEEDS_REGENERATION=1
   elif ! grep -q "^\[chunkerlocalsingle\]" "${CONFIG_FILE}"; then
     log_info "setup" "Config file exists but missing chunker remotes (stacking_chunker test) - will regenerate"
+    NEEDS_REGENERATION=1
+  elif ! grep -q "^\[sftpraid3\]" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file exists but missing SFTP remotes - will regenerate"
+    NEEDS_REGENERATION=1
+  elif grep -q "^\[sftpeven\]" "${CONFIG_FILE}" && grep -q "pass = evenpass88" "${CONFIG_FILE}"; then
+    log_info "setup" "Config file has SFTP passwords in plain text (rclone requires obscured) - will regenerate"
     NEEDS_REGENERATION=1
   elif grep -q "^\[chunkerminiosingle\]" "${CONFIG_FILE}" && ! grep -q "miniosingle:chunker" "${CONFIG_FILE}"; then
     log_info "setup" "Config file has chunker MinIO remotes without bucket (stacking_chunker MinIO fix) - will regenerate"

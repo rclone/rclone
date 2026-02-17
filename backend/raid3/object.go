@@ -104,30 +104,32 @@ func (o *Object) readFooterFromParticle(ctx context.Context, obj fs.Object) (*Fo
 	return ParseFooter(buf)
 }
 
-// ModTime returns the modification time (from footer)
+// ModTime returns the modification time (from footer).
+// In degraded mode (nil backend), skips that backend and tries the others.
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	obj, err := o.fs.even.NewObject(ctx, o.remote)
-	if err == nil {
-		if ft, err := o.readFooterFromParticle(ctx, obj); err == nil {
-			return time.Unix(ft.Mtime, 0)
+	for _, fsBackend := range []fs.Fs{o.fs.even, o.fs.odd, o.fs.parity} {
+		if fsBackend == nil {
+			continue
 		}
-	}
-	obj, err = o.fs.odd.NewObject(ctx, o.remote)
-	if err == nil {
-		if ft, err := o.readFooterFromParticle(ctx, obj); err == nil {
-			return time.Unix(ft.Mtime, 0)
+		obj, err := fsBackend.NewObject(ctx, o.remote)
+		if err == nil {
+			if ft, err := o.readFooterFromParticle(ctx, obj); err == nil {
+				return time.Unix(ft.Mtime, 0)
+			}
 		}
 	}
 	return time.Now()
 }
 
-// Size returns the size of the reconstructed object
+// Size returns the size of the reconstructed object.
+// In degraded mode (nil backend), skips that backend and uses the first available particle.
 // Note: This method doesn't accept a context parameter as it matches the rclone fs.Object interface.
-// Internal operations use context.Background() which cannot be cancelled.
-// This is a limitation of the rclone interface design.
 func (o *Object) Size() int64 {
 	ctx := context.Background() // Interface limitation: Size() doesn't accept context
 	for _, fsBackend := range []fs.Fs{o.fs.even, o.fs.odd, o.fs.parity} {
+		if fsBackend == nil {
+			continue
+		}
 		obj, err := fsBackend.NewObject(ctx, o.remote)
 		if err == nil {
 			if ft, err := o.readFooterFromParticle(ctx, obj); err == nil {
@@ -138,9 +140,13 @@ func (o *Object) Size() int64 {
 	return -1
 }
 
-// Hash returns the hash of the reconstructed object
+// Hash returns the hash of the reconstructed object.
+// In degraded mode (nil backend), skips that backend and uses the first available particle.
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	for _, fsBackend := range []fs.Fs{o.fs.even, o.fs.odd, o.fs.parity} {
+		if fsBackend == nil {
+			continue
+		}
 		obj, err := fsBackend.NewObject(ctx, o.remote)
 		if err == nil {
 			ft, err := o.readFooterFromParticle(ctx, obj)
@@ -251,43 +257,29 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	return o.updateFooterMtime(ctx, t)
 }
 
-// Metadata returns metadata for the object
-//
+// Metadata returns metadata for the object.
+// In degraded mode (nil backend), skips that backend.
 // It should return nil if there is no Metadata
 func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
-	// Read metadata from both even and odd particles and merge them
-	// This ensures we get complete metadata even if one particle has more metadata than the other
-	// Parity backend doesn't contain actual file metadata, so we don't check it
+	// Read metadata from even and odd particles and merge (parity doesn't contain file metadata)
 	var mergedMetadata fs.Metadata
-
-	// Read from even backend
-	obj, err := o.fs.even.NewObject(ctx, o.remote)
-	if err == nil {
-		if do, ok := obj.(fs.Metadataer); ok {
-			evenMeta, err := do.Metadata(ctx)
-			if err == nil && evenMeta != nil {
-				if mergedMetadata == nil {
-					mergedMetadata = make(fs.Metadata)
+	for _, fsBackend := range []fs.Fs{o.fs.even, o.fs.odd} {
+		if fsBackend == nil {
+			continue
+		}
+		obj, err := fsBackend.NewObject(ctx, o.remote)
+		if err == nil {
+			if do, ok := obj.(fs.Metadataer); ok {
+				meta, err := do.Metadata(ctx)
+				if err == nil && meta != nil {
+					if mergedMetadata == nil {
+						mergedMetadata = make(fs.Metadata)
+					}
+					mergedMetadata.Merge(meta)
 				}
-				mergedMetadata.Merge(evenMeta)
 			}
 		}
 	}
-
-	// Read from odd backend and merge
-	obj, err = o.fs.odd.NewObject(ctx, o.remote)
-	if err == nil {
-		if do, ok := obj.(fs.Metadataer); ok {
-			oddMeta, err := do.Metadata(ctx)
-			if err == nil && oddMeta != nil {
-				if mergedMetadata == nil {
-					mergedMetadata = make(fs.Metadata)
-				}
-				mergedMetadata.Merge(oddMeta)
-			}
-		}
-	}
-
 	// Return merged metadata (or nil if no metadata found)
 	return mergedMetadata, nil
 }

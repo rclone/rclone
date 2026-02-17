@@ -36,6 +36,9 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 	// Check each backend by attempting to access it
 	// We check write capability since that's what we need for Put/Update/Move
 	checkBackend := func(backend fs.Fs, name string) healthResult {
+		if backend == nil {
+			return healthResult{name, fmt.Errorf("%s backend not initialized (degraded mode)", name)}
+		}
 		// First, try to list (checks connectivity)
 		_, listErr := backend.List(checkCtx, "")
 

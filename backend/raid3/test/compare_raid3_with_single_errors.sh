@@ -62,7 +62,7 @@ Commands:
   test [scenario]            Run all scenarios or a single one.
 
 Options:
-  --storage-type <local|minio|mixed>   Backend pair (required for start/stop/test/teardown).
+  --storage-type <local|minio|mixed|sftp>   Backend pair (required for start/stop/test/teardown).
   -v, --verbose                  Show stdout/stderr from rclone operations.
   -h, --help                     Display this help.
 
@@ -118,8 +118,8 @@ parse_args() {
       ;;
   esac
 
-  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', or 'mixed'."
+  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" && "${STORAGE_TYPE}" != "sftp" ]]; then
+    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', 'mixed', or 'sftp'."
   fi
 }
 
@@ -180,78 +180,156 @@ run_move_fail_scenario() {
   local backend="$1"
   log_info "suite" "Running move-fail scenario '${backend}' (${STORAGE_TYPE})"
 
-  # These tests require MinIO to simulate unavailable backends
-  if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-    record_error_result "PASS" "move-fail-${backend}" "Skipped for local backend (requires MinIO to stop containers)."
+  # These tests require a stoppable backend (MinIO or SFTP); skip for local only
+  if [[ "${STORAGE_TYPE}" == "local" ]]; then
+    record_error_result "PASS" "move-fail-${backend}" "Skipped for local backend (requires MinIO or SFTP to stop containers)."
     return 0
   fi
 
   # Ensure all backends are ready before starting (important after previous scenario restored a backend)
   log_info "scenario:move-fail-${backend}" "Verifying all backends are ready before starting scenario."
-  for check_backend in even odd parity; do
-    if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
-      log_warn "scenario:move-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
-    fi
-  done
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    for check_backend in even odd parity; do
+      if ! wait_for_sftp_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:move-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  else
+    for check_backend in even odd parity; do
+      if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:move-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  fi
 
   purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
-  # Create a test file
+  # SFTP: Restart the backend we are about to stop *after* purge, so it is fresh when raid3
+  # connects (create_test_dataset). Purge uses each backend in separate rclone invocations;
+  # raid3 then opens all three in one process—that often fails if we touched the target
+  # backend just before. Restarting it here ensures the first use after restart is raid3's connect.
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    local sftp_name sftp_port
+    sftp_name=$(sftp_container_for_backend "${backend}")
+    case "${backend}" in
+      even)   sftp_port="${SFTP_EVEN_PORT}" ;;
+      odd)    sftp_port="${SFTP_ODD_PORT}" ;;
+      parity) sftp_port="${SFTP_PARITY_PORT}" ;;
+      *)      sftp_port="" ;;
+    esac
+    if [[ -n "${sftp_name}" ]] && [[ -n "${sftp_port}" ]]; then
+      log_info "scenario:move-fail-${backend}" "Restarting SFTP backend '${backend}' (after purge) for clean state before dataset creation."
+      docker restart "${sftp_name}" >/dev/null 2>&1 || true
+      if ! wait_for_sftp_port "${sftp_port}"; then
+        log_warn "scenario:move-fail-${backend}" "Port ${sftp_port} did not come back after restart."
+      fi
+      sleep 3
+      if ! wait_for_sftp_backend_ready "${backend}" 2>/dev/null; then
+        log_warn "scenario:move-fail-${backend}" "Backend '${backend}' may not be ready after restart, but continuing."
+      fi
+      log_info "scenario:move-fail-${backend}" "Waiting 8s for SFTP to settle after restart before dataset creation."
+      sleep 8
+    fi
+  fi
+
+  # Create dataset; retry for SFTP on transient "unexpected packet" / degraded during NewFs.
   local dataset_id
-  dataset_id=$(create_test_dataset "move-fail-${backend}") || {
-    record_error_result "FAIL" "move-fail-${backend}" "Failed to create dataset."
-    return 1
-  }
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    dataset_id=""
+    local create_attempt=1 create_max=5
+    while (( create_attempt <= create_max )); do
+      dataset_id=$(create_test_dataset "move-fail-${backend}") && break
+      if (( create_attempt >= create_max )); then
+        record_error_result "FAIL" "move-fail-${backend}" "Failed to create dataset after ${create_max} attempts."
+        return 1
+      fi
+      log_info "scenario:move-fail-${backend}" "Dataset creation attempt ${create_attempt} failed (SFTP may be flaky). Retrying in 8s..."
+      sleep 8
+      (( create_attempt++ )) || true
+    done
+  else
+    dataset_id=$(create_test_dataset "move-fail-${backend}") || {
+      record_error_result "FAIL" "move-fail-${backend}" "Failed to create dataset."
+      return 1
+    }
+  fi
   log_info "scenario:move-fail-${backend}" "Dataset ${dataset_id} created."
 
   local test_file="${dataset_id}/${TARGET_OBJECT}"
   local new_file="${dataset_id}/moved_${TARGET_OBJECT}"
 
-  # Verify destination file does NOT exist before move attempt (cleanup any leftovers)
-  local pre_check_result pre_check_status
-  pre_check_result=$(capture_command "pre_check_dest" ls "${RAID3_REMOTE}:${new_file}" 2>/dev/null || echo "1|||")
-  IFS='|' read -r pre_check_status _ _ <<<"${pre_check_result}"
-  if [[ "${pre_check_status}" -eq 0 ]]; then
+  # Verify destination file does NOT exist before move attempt (cleanup any leftovers).
+  # Use lsf on directory so we don't rely on "ls path-to-file" (which can fail when path is a file).
+  local pre_check_result pre_check_status pre_check_stdout pre_check_stderr
+  pre_check_result=$(capture_command "pre_check_dest" lsf "${RAID3_REMOTE}:${dataset_id}/" 2>/dev/null || echo "1|||")
+  IFS='|' read -r pre_check_status pre_check_stdout pre_check_stderr <<<"${pre_check_result}"
+  local dest_existed=0
+  if [[ "${pre_check_status}" -eq 0 ]] && [[ -n "${pre_check_stdout}" ]] && grep -qxF "moved_${TARGET_OBJECT}" "${pre_check_stdout}" 2>/dev/null; then
+    dest_existed=1
+  fi
+  rm -f "${pre_check_stdout}" "${pre_check_stderr}"
+  pre_check_status=0
+  [[ "${dest_existed}" -eq 0 ]] && pre_check_status=1
+  if [[ "${dest_existed}" -eq 1 ]]; then
     log_warn "scenario:move-fail-${backend}" "Destination file ${new_file} already exists before move attempt. Cleaning up..."
     rclone_cmd delete "${RAID3_REMOTE}:${new_file}" >/dev/null 2>&1 || true
 
     # Verify cleanup worked - wait a moment and check again
     sleep 1
-    local post_cleanup_result post_cleanup_status
-    post_cleanup_result=$(capture_command "post_cleanup_check" ls "${RAID3_REMOTE}:${new_file}" 2>/dev/null || echo "1|||")
-    IFS='|' read -r post_cleanup_status _ _ <<<"${post_cleanup_result}"
-    if [[ "${post_cleanup_status}" -eq 0 ]]; then
+    local post_cleanup_result post_cleanup_status post_stdout post_stderr
+    post_cleanup_result=$(capture_command "post_cleanup_check" lsf "${RAID3_REMOTE}:${dataset_id}/" 2>/dev/null || echo "1|||")
+    IFS='|' read -r post_cleanup_status post_stdout post_stderr <<<"${post_cleanup_result}"
+    local dest_still_exists=0
+    if [[ "${post_cleanup_status}" -eq 0 ]] && [[ -n "${post_stdout}" ]] && grep -qxF "moved_${TARGET_OBJECT}" "${post_stdout}" 2>/dev/null; then
+      dest_still_exists=1
+    fi
+    rm -f "${post_stdout}" "${post_stderr}"
+    if [[ "${dest_still_exists}" -eq 1 ]]; then
       log_warn "scenario:move-fail-${backend}" "Destination file still exists after cleanup attempt. Trying force delete..."
       # Try deleting from individual backends if available
       rclone_cmd delete "${RAID3_REMOTE}:${new_file}" --drive-use-trash=false >/dev/null 2>&1 || true
       # Wait a bit more and check one more time
       sleep 1
-      local final_check_result final_check_status
-      final_check_result=$(capture_command "final_cleanup_check" ls "${RAID3_REMOTE}:${new_file}" 2>/dev/null || echo "1|||")
-      IFS='|' read -r final_check_status _ _ <<<"${final_check_result}"
-      if [[ "${final_check_status}" -eq 0 ]]; then
+      local final_check_result final_check_status final_stdout final_stderr
+      final_check_result=$(capture_command "final_cleanup_check" lsf "${RAID3_REMOTE}:${dataset_id}/" 2>/dev/null || echo "1|||")
+      IFS='|' read -r final_check_status final_stdout final_stderr <<<"${final_check_result}"
+      local final_dest_exists=0
+      if [[ "${final_check_status}" -eq 0 ]] && [[ -n "${final_stdout}" ]] && grep -qxF "moved_${TARGET_OBJECT}" "${final_stdout}" 2>/dev/null; then
+        final_dest_exists=1
+      fi
+      rm -f "${final_stdout}" "${final_stderr}"
+      if [[ "${final_dest_exists}" -eq 1 ]]; then
         record_error_result "FAIL" "move-fail-${backend}" "Leftover destination could not be removed. Run: ./compare_raid3_with_single_errors.sh teardown --storage-type=minio && ./compare_raid3_with_single_errors.sh test --storage-type=minio"
         return 1
       fi
     fi
   fi
 
-  # Verify source file exists before move attempt
+  # Verify source file exists before move attempt.
+  # Use lsf on directory (not ls on file path) so existence check works with raid3/SFTP.
   local check_result check_status check_stdout check_stderr
-  check_result=$(capture_command "check_before" ls "${RAID3_REMOTE}:${test_file}")
+  check_result=$(capture_command "check_before" lsf "${RAID3_REMOTE}:${dataset_id}/")
   IFS='|' read -r check_status check_stdout check_stderr <<<"${check_result}"
   if [[ "${check_status}" -ne 0 ]]; then
+    record_error_result "FAIL" "move-fail-${backend}" "Could not list directory before move (exit ${check_status})."
+    rm -f "${check_stdout}" "${check_stderr}"
+    return 1
+  fi
+  if ! grep -qxF "${TARGET_OBJECT}" "${check_stdout}" 2>/dev/null; then
     record_error_result "FAIL" "move-fail-${backend}" "Test file does not exist before move attempt."
     rm -f "${check_stdout}" "${check_stderr}"
     return 1
   fi
   rm -f "${check_stdout}" "${check_stderr}"
 
-  # Determine backend type before stopping
+  # Determine backend type before stopping (for port check and restore)
   local is_minio_backend=0
+  local is_sftp_backend=0
   if [[ "${STORAGE_TYPE}" == "minio" ]]; then
     is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    is_sftp_backend=1
   elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
     case "${backend}" in
       odd) is_minio_backend=1 ;;
@@ -266,35 +344,50 @@ run_move_fail_scenario() {
   # Wait for backend to be fully unavailable
   sleep 3
   
-  # For MinIO backends, verify port is closed
-  # For local backends, verify directory is unavailable
-  
-  if [[ "${is_minio_backend}" -eq 1 ]]; then
+  # For MinIO/SFTP backends, verify port is closed; for local, verify directory is unavailable
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    local port
+    case "${backend}" in
+      even) port="${SFTP_EVEN_PORT}" ;;
+      odd) port="${SFTP_ODD_PORT}" ;;
+      parity) port="${SFTP_PARITY_PORT}" ;;
+    esac
+    local retries=10
+    while (( retries > 0 )); do
+      if ! nc -z localhost "${port}" >/dev/null 2>&1; then
+        break
+      fi
+      log_info "scenario:move-fail-${backend}" "Waiting for backend port ${port} to close..."
+      sleep 1
+      ((retries--))
+    done
+    if nc -z localhost "${port}" >/dev/null 2>&1; then
+      log_warn "scenario:move-fail-${backend}" "Backend port ${port} still open after stop attempt."
+    else
+      log_info "scenario:move-fail-${backend}" "Backend port ${port} confirmed closed."
+    fi
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
     local port
     case "${backend}" in
       even) port="${MINIO_EVEN_PORT}" ;;
       odd) port="${MINIO_ODD_PORT}" ;;
       parity) port="${MINIO_PARITY_PORT}" ;;
     esac
-    
-    # Verify port is actually closed (backend is unreachable)
     local retries=10
     while (( retries > 0 )); do
       if ! nc -z localhost "${port}" >/dev/null 2>&1; then
-        break  # Port is closed, backend is down
+        break
       fi
       log_info "scenario:move-fail-${backend}" "Waiting for backend port ${port} to close..."
       sleep 1
       ((retries--))
     done
-    
     if nc -z localhost "${port}" >/dev/null 2>&1; then
       log_warn "scenario:move-fail-${backend}" "Backend port ${port} still open after stop attempt."
     else
       log_info "scenario:move-fail-${backend}" "Backend port ${port} confirmed closed."
     fi
   else
-    # For local backends, verify directory is unavailable
     local dir
     dir=$(remote_data_dir "${backend}")
     if [[ -d "${dir}" ]]; then
@@ -312,11 +405,19 @@ run_move_fail_scenario() {
 
   # Verify move failed (non-zero exit status) BEFORE restoring backend
   if [[ "${move_status}" -eq 0 ]]; then
-    # Restore backend before returning error
     log_info "scenario:move-fail-${backend}" "Restoring '${backend}' backend before error exit."
     start_backend "${backend}"
-    # Wait for backend to be ready (for next scenario)
-    if [[ "${is_minio_backend}" -eq 1 ]]; then
+    if [[ "${is_sftp_backend}" -eq 1 ]]; then
+      local port
+      case "${backend}" in
+        even) port="${SFTP_EVEN_PORT}" ;;
+        odd) port="${SFTP_ODD_PORT}" ;;
+        parity) port="${SFTP_PARITY_PORT}" ;;
+      esac
+      if wait_for_sftp_port "${port}" 2>/dev/null; then
+        wait_for_sftp_backend_ready "${backend}" 2>/dev/null || true
+      fi
+    elif [[ "${is_minio_backend}" -eq 1 ]]; then
       local port
       case "${backend}" in
         even) port="${MINIO_EVEN_PORT}" ;;
@@ -348,28 +449,28 @@ run_move_fail_scenario() {
     fi
   fi
 
-  # IMPORTANT: Check file state WHILE backend is still down
-  # With rollback enabled (default), failed moves should leave no trace at destination
-  
-  # Verify original file still exists (move should not have partially succeeded)
-  # Note: This check might fail if we need the down backend, but we check with available backends
-  local check_result check_status check_stdout check_stderr
-  check_result=$(capture_command "check_after" ls "${RAID3_REMOTE}:${test_file}")
-  IFS='|' read -r check_status check_stdout check_stderr <<<"${check_result}"
-  
-  # Verify new file does NOT exist (rollback should have cleaned up any partial moves)
-  # Note: raid3 can list files in degraded mode (2/3 particles), so we check this carefully
-  # Since health check happens BEFORE any moves, no particles should be moved at all
-  local new_check_result new_check_status new_check_stdout new_check_stderr
-  new_check_result=$(capture_command "check_new" ls "${RAID3_REMOTE}:${new_file}")
-  IFS='|' read -r new_check_status new_check_stdout new_check_stderr <<<"${new_check_result}"
-  
-  # Restore backend now (after checking state)
+  # Restore backend first so we can reliably verify file state (avoids relying on
+  # degraded-mode ls, which can be flaky or hit code paths that fail with one backend down).
   log_info "scenario:move-fail-${backend}" "Restoring '${backend}' backend."
   start_backend "${backend}"
 
   # Wait for backend to be ready
-  if [[ "${is_minio_backend}" -eq 1 ]]; then
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    local port
+    case "${backend}" in
+      even) port="${SFTP_EVEN_PORT}" ;;
+      odd) port="${SFTP_ODD_PORT}" ;;
+      parity) port="${SFTP_PARITY_PORT}" ;;
+    esac
+    if ! wait_for_sftp_port "${port}"; then
+      log_warn "scenario:move-fail-${backend}" "Backend port ${port} did not open in time."
+    fi
+    if ! wait_for_sftp_backend_ready "${backend}"; then
+      log_warn "scenario:move-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+    else
+      log_info "scenario:move-fail-${backend}" "Backend '${backend}' confirmed ready."
+    fi
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
     local port
     case "${backend}" in
       even) port="${MINIO_EVEN_PORT}" ;;
@@ -379,15 +480,12 @@ run_move_fail_scenario() {
     if ! wait_for_minio_port "${port}"; then
       log_warn "scenario:move-fail-${backend}" "Backend port ${port} did not open in time."
     fi
-
-    # Wait for MinIO to be fully ready (not just port open, but S3 API ready)
     if ! wait_for_minio_backend_ready "${backend}"; then
       log_warn "scenario:move-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
     else
       log_info "scenario:move-fail-${backend}" "Backend '${backend}' confirmed ready."
     fi
   else
-    # For local backends, just verify directory is restored
     local dir
     dir=$(remote_data_dir "${backend}")
     if [[ -d "${dir}" ]]; then
@@ -397,10 +495,38 @@ run_move_fail_scenario() {
     fi
   fi
 
-  # Now verify the checks we did while backend was down
+  # Verify original file still exists and new file does not (move should not have partially succeeded).
+  # For SFTP, list a backend that was never stopped (e.g. odd when we stopped even) so we don't
+  # depend on raid3 list after restore (raid3 list can fail with exit 2/3 right after docker start).
+  # Raid3 uses the same path for particles on each backend, so listing one backend shows the object.
+  local check_result check_status check_stdout check_stderr
+  local list_remote
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    case "${backend}" in
+      even)   list_remote=$(backend_remote_name "odd") ;;
+      odd)    list_remote=$(backend_remote_name "even") ;;
+      parity) list_remote=$(backend_remote_name "even") ;;
+      *)      list_remote="${RAID3_REMOTE}" ;;
+    esac
+    check_result=$(capture_command "check_after" lsf "${list_remote}:${dataset_id}/")
+  else
+    check_result=$(capture_command "check_after" lsf "${RAID3_REMOTE}:${dataset_id}/")
+  fi
+  IFS='|' read -r check_status check_stdout check_stderr <<<"${check_result}"
+
+  local new_check_status=1
+  if [[ "${check_status}" -eq 0 ]] && [[ -n "${check_stdout}" ]] && grep -qxF "moved_${TARGET_OBJECT}" "${check_stdout}" 2>/dev/null; then
+    new_check_status=0
+  fi
+
   if [[ "${check_status}" -ne 0 ]]; then
+    record_error_result "FAIL" "move-fail-${backend}" "Could not list directory after restore (exit ${check_status})."
+    rm -f "${check_stdout}" "${check_stderr}" "${move_stdout}" "${move_stderr}"
+    return 1
+  fi
+  if ! grep -qxF "${TARGET_OBJECT}" "${check_stdout}" 2>/dev/null; then
     record_error_result "FAIL" "move-fail-${backend}" "Original file disappeared after failed move (partial move occurred)."
-    rm -f "${check_stdout}" "${check_stderr}" "${new_check_stdout}" "${new_check_stderr}" "${move_stdout}" "${move_stderr}"
+    rm -f "${check_stdout}" "${check_stderr}" "${move_stdout}" "${move_stderr}"
     return 1
   fi
 
@@ -438,13 +564,13 @@ run_move_fail_scenario() {
       rclone_cmd delete "${RAID3_REMOTE}:${new_file}" >/dev/null 2>&1 || true
       
       record_error_result "FAIL" "move-fail-${backend}" "New file created during move attempt (health check should prevent any moves)."
-      rm -f "${check_stdout}" "${check_stderr}" "${new_check_stdout}" "${new_check_stderr}" "${move_stdout}" "${move_stderr}"
+      rm -f "${check_stdout}" "${check_stderr}" "${move_stdout}" "${move_stderr}"
       
       return 1
     fi
   fi
 
-  rm -f "${check_stdout}" "${check_stderr}" "${new_check_stdout}" "${new_check_stderr}" "${move_stdout}" "${move_stderr}"
+  rm -f "${check_stdout}" "${check_stderr}" "${move_stdout}" "${move_stderr}"
 
   record_error_result "PASS" "move-fail-${backend}" "Move correctly failed with unavailable '${backend}' backend."
   return 0
@@ -454,29 +580,74 @@ run_update_fail_scenario() {
   local backend="$1"
   log_info "suite" "Running update-fail scenario '${backend}' (${STORAGE_TYPE})"
 
-  # These tests require MinIO to simulate unavailable backends
-  if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-    record_error_result "PASS" "update-fail-${backend}" "Skipped for local backend (requires MinIO to stop containers)."
+  # These tests require a stoppable backend (MinIO or SFTP); skip for local only
+  if [[ "${STORAGE_TYPE}" == "local" ]]; then
+    record_error_result "PASS" "update-fail-${backend}" "Skipped for local backend (requires MinIO or SFTP to stop containers)."
     return 0
   fi
 
-  # Ensure all backends are ready before starting (important after previous scenario restored a backend)
   log_info "scenario:update-fail-${backend}" "Verifying all backends are ready before starting scenario."
-  for check_backend in even odd parity; do
-    if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
-      log_warn "scenario:update-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
-    fi
-  done
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    for check_backend in even odd parity; do
+      if ! wait_for_sftp_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:update-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  else
+    for check_backend in even odd parity; do
+      if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:update-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  fi
 
   purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
-  # Create a test file
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    local sftp_name sftp_port
+    sftp_name=$(sftp_container_for_backend "${backend}")
+    case "${backend}" in
+      even)   sftp_port="${SFTP_EVEN_PORT}" ;;
+      odd)    sftp_port="${SFTP_ODD_PORT}" ;;
+      parity) sftp_port="${SFTP_PARITY_PORT}" ;;
+      *)      sftp_port="" ;;
+    esac
+    if [[ -n "${sftp_name}" ]] && [[ -n "${sftp_port}" ]]; then
+      log_info "scenario:update-fail-${backend}" "Restarting SFTP backend '${backend}' (after purge) for clean state before dataset creation."
+      docker restart "${sftp_name}" >/dev/null 2>&1 || true
+      if ! wait_for_sftp_port "${sftp_port}"; then
+        log_warn "scenario:update-fail-${backend}" "Port ${sftp_port} did not come back after restart."
+      fi
+      sleep 3
+      if ! wait_for_sftp_backend_ready "${backend}" 2>/dev/null; then
+        log_warn "scenario:update-fail-${backend}" "Backend '${backend}' may not be ready after restart, but continuing."
+      fi
+      log_info "scenario:update-fail-${backend}" "Waiting 8s for SFTP to settle after restart before dataset creation."
+      sleep 8
+    fi
+  fi
+
   local dataset_id
-  dataset_id=$(create_test_dataset "update-fail-${backend}") || {
-    record_error_result "FAIL" "update-fail-${backend}" "Failed to create dataset."
-    return 1
-  }
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    dataset_id=""
+    local create_attempt=1 create_max=5
+    while (( create_attempt <= create_max )); do
+      dataset_id=$(create_test_dataset "update-fail-${backend}") && break
+      if (( create_attempt >= create_max )); then
+        record_error_result "FAIL" "update-fail-${backend}" "Failed to create dataset after ${create_max} attempts."
+        return 1
+      fi
+      log_info "scenario:update-fail-${backend}" "Dataset creation attempt ${create_attempt} failed (SFTP may be flaky). Retrying in 8s..."
+      sleep 8
+      (( create_attempt++ )) || true
+    done
+  else
+    dataset_id=$(create_test_dataset "update-fail-${backend}") || {
+      record_error_result "FAIL" "update-fail-${backend}" "Failed to create dataset."
+      return 1
+    }
+  fi
   log_info "scenario:update-fail-${backend}" "Dataset ${dataset_id} created."
 
   local test_file="${dataset_id}/${TARGET_OBJECT}"
@@ -504,8 +675,11 @@ run_update_fail_scenario() {
 
   # Determine backend type for later restoration
   local is_minio_backend=0
+  local is_sftp_backend=0
   if [[ "${STORAGE_TYPE}" == "minio" ]]; then
     is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    is_sftp_backend=1
   elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
     case "${backend}" in
       odd) is_minio_backend=1 ;;
@@ -536,7 +710,22 @@ run_update_fail_scenario() {
   start_backend "${backend}"
 
   # Wait for backend to be ready
-  if [[ "${is_minio_backend}" -eq 1 ]]; then
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    local port
+    case "${backend}" in
+      even) port="${SFTP_EVEN_PORT}" ;;
+      odd) port="${SFTP_ODD_PORT}" ;;
+      parity) port="${SFTP_PARITY_PORT}" ;;
+    esac
+    if ! wait_for_sftp_port "${port}"; then
+      log_warn "scenario:update-fail-${backend}" "Backend port ${port} did not open in time."
+    fi
+    if ! wait_for_sftp_backend_ready "${backend}"; then
+      log_warn "scenario:update-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+    else
+      log_info "scenario:update-fail-${backend}" "Backend '${backend}' confirmed ready."
+    fi
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
     local port
     case "${backend}" in
       even) port="${MINIO_EVEN_PORT}" ;;
@@ -546,15 +735,12 @@ run_update_fail_scenario() {
     if ! wait_for_minio_port "${port}"; then
       log_warn "scenario:update-fail-${backend}" "Backend port ${port} did not open in time."
     fi
-
-    # Wait for MinIO to be fully ready (not just port open, but S3 API ready)
     if ! wait_for_minio_backend_ready "${backend}"; then
       log_warn "scenario:update-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
     else
       log_info "scenario:update-fail-${backend}" "Backend '${backend}' confirmed ready."
     fi
   else
-    # For local backends, just verify directory is restored
     local dir
     dir=$(remote_data_dir "${backend}")
     if [[ -d "${dir}" ]]; then
@@ -566,9 +752,26 @@ run_update_fail_scenario() {
 
   # Verify update failed (non-zero exit status)
   if [[ "${update_status}" -eq 0 ]]; then
-    # Backend was already restored earlier, but ensure it's ready for next scenario
-    if wait_for_minio_port "${port}" 2>/dev/null; then
-      wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+    if [[ "${is_sftp_backend}" -eq 1 ]]; then
+      local port
+      case "${backend}" in
+        even) port="${SFTP_EVEN_PORT}" ;;
+        odd) port="${SFTP_ODD_PORT}" ;;
+        parity) port="${SFTP_PARITY_PORT}" ;;
+      esac
+      if wait_for_sftp_port "${port}" 2>/dev/null; then
+        wait_for_sftp_backend_ready "${backend}" 2>/dev/null || true
+      fi
+    elif [[ "${is_minio_backend}" -eq 1 ]]; then
+      local port
+      case "${backend}" in
+        even) port="${MINIO_EVEN_PORT}" ;;
+        odd) port="${MINIO_ODD_PORT}" ;;
+        parity) port="${MINIO_PARITY_PORT}" ;;
+      esac
+      if wait_for_minio_port "${port}" 2>/dev/null; then
+        wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+      fi
     fi
     record_error_result "FAIL" "update-fail-${backend}" "Update succeeded when it should have failed (backend '${backend}' was unavailable)."
     log_note "update" "Update stdout: ${update_stdout}"
@@ -617,29 +820,74 @@ run_move_fail_scenario_no_rollback() {
   local backend="$1"
   log_info "suite" "Running rollback-disabled move-fail scenario '${backend}' (${STORAGE_TYPE})"
 
-  # These tests require MinIO to simulate unavailable backends
-  if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-    record_error_result "PASS" "rollback-disabled-move-fail-${backend}" "Skipped for local backend (requires MinIO to stop containers)."
+  # These tests require a stoppable backend (MinIO or SFTP); skip for local only
+  if [[ "${STORAGE_TYPE}" == "local" ]]; then
+    record_error_result "PASS" "rollback-disabled-move-fail-${backend}" "Skipped for local backend (requires MinIO or SFTP to stop containers)."
     return 0
   fi
 
-  # Ensure all backends are ready before starting (important after previous scenario restored a backend)
   log_info "scenario:rollback-disabled-move-fail-${backend}" "Verifying all backends are ready before starting scenario."
-  for check_backend in even odd parity; do
-    if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
-      log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
-    fi
-  done
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    for check_backend in even odd parity; do
+      if ! wait_for_sftp_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  else
+    for check_backend in even odd parity; do
+      if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  fi
 
   purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
-  # Create a test file using the regular remote (rollback enabled by default)
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    local sftp_name sftp_port
+    sftp_name=$(sftp_container_for_backend "${backend}")
+    case "${backend}" in
+      even)   sftp_port="${SFTP_EVEN_PORT}" ;;
+      odd)    sftp_port="${SFTP_ODD_PORT}" ;;
+      parity) sftp_port="${SFTP_PARITY_PORT}" ;;
+      *)      sftp_port="" ;;
+    esac
+    if [[ -n "${sftp_name}" ]] && [[ -n "${sftp_port}" ]]; then
+      log_info "scenario:rollback-disabled-move-fail-${backend}" "Restarting SFTP backend '${backend}' (after purge) for clean state before dataset creation."
+      docker restart "${sftp_name}" >/dev/null 2>&1 || true
+      if ! wait_for_sftp_port "${sftp_port}"; then
+        log_warn "scenario:rollback-disabled-move-fail-${backend}" "Port ${sftp_port} did not come back after restart."
+      fi
+      sleep 3
+      if ! wait_for_sftp_backend_ready "${backend}" 2>/dev/null; then
+        log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend '${backend}' may not be ready after restart, but continuing."
+      fi
+      log_info "scenario:rollback-disabled-move-fail-${backend}" "Waiting 8s for SFTP to settle after restart before dataset creation."
+      sleep 8
+    fi
+  fi
+
   local dataset_id
-  dataset_id=$(create_test_dataset "rollback-disabled-move-fail-${backend}") || {
-    record_error_result "FAIL" "rollback-disabled-move-fail-${backend}" "Failed to create dataset."
-    return 1
-  }
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    dataset_id=""
+    local create_attempt=1 create_max=5
+    while (( create_attempt <= create_max )); do
+      dataset_id=$(create_test_dataset "rollback-disabled-move-fail-${backend}") && break
+      if (( create_attempt >= create_max )); then
+        record_error_result "FAIL" "rollback-disabled-move-fail-${backend}" "Failed to create dataset after ${create_max} attempts."
+        return 1
+      fi
+      log_info "scenario:rollback-disabled-move-fail-${backend}" "Dataset creation attempt ${create_attempt} failed (SFTP may be flaky). Retrying in 8s..."
+      sleep 8
+      (( create_attempt++ )) || true
+    done
+  else
+    dataset_id=$(create_test_dataset "rollback-disabled-move-fail-${backend}") || {
+      record_error_result "FAIL" "rollback-disabled-move-fail-${backend}" "Failed to create dataset."
+      return 1
+    }
+  fi
   log_info "scenario:rollback-disabled-move-fail-${backend}" "Dataset ${dataset_id} created (will use connection string with rollback=false)."
 
   local test_file="${dataset_id}/${TARGET_OBJECT}"
@@ -662,8 +910,11 @@ run_move_fail_scenario_no_rollback() {
 
   # Determine backend type before stopping
   local is_minio_backend=0
+  local is_sftp_backend=0
   if [[ "${STORAGE_TYPE}" == "minio" ]]; then
     is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    is_sftp_backend=1
   elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
     case "${backend}" in
       odd) is_minio_backend=1 ;;
@@ -678,17 +929,29 @@ run_move_fail_scenario_no_rollback() {
   # Wait for backend to be fully unavailable
   sleep 3
   
-  # For MinIO backends, verify port is closed
-  # For local backends, verify directory is unavailable
-  if [[ "${is_minio_backend}" -eq 1 ]]; then
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    local port
+    case "${backend}" in
+      even) port="${SFTP_EVEN_PORT}" ;;
+      odd) port="${SFTP_ODD_PORT}" ;;
+      parity) port="${SFTP_PARITY_PORT}" ;;
+    esac
+    local retries=10
+    while (( retries > 0 )); do
+      if ! nc -z localhost "${port}" >/dev/null 2>&1; then
+        break
+      fi
+      log_info "scenario:rollback-disabled-move-fail-${backend}" "Waiting for backend port ${port} to close..."
+      sleep 1
+      ((retries--))
+    done
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
     local port
     case "${backend}" in
       even) port="${MINIO_EVEN_PORT}" ;;
       odd) port="${MINIO_ODD_PORT}" ;;
       parity) port="${MINIO_PARITY_PORT}" ;;
     esac
-    
-    # Verify port is actually closed
     local retries=10
     while (( retries > 0 )); do
       if ! nc -z localhost "${port}" >/dev/null 2>&1; then
@@ -699,7 +962,6 @@ run_move_fail_scenario_no_rollback() {
       ((retries--))
     done
   else
-    # For local backends, verify directory is unavailable
     local dir
     dir=$(remote_data_dir "${backend}")
     if [[ -d "${dir}" ]]; then
@@ -717,10 +979,27 @@ run_move_fail_scenario_no_rollback() {
 
   # Verify move failed (non-zero exit status)
   if [[ "${move_status}" -eq 0 ]]; then
-    start_single_minio_container "${backend}"
-    # Wait for backend to be ready (for next scenario)
-    if wait_for_minio_port "${port}" 2>/dev/null; then
-      wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+    start_backend "${backend}"
+    if [[ "${is_sftp_backend}" -eq 1 ]]; then
+      local port
+      case "${backend}" in
+        even) port="${SFTP_EVEN_PORT}" ;;
+        odd) port="${SFTP_ODD_PORT}" ;;
+        parity) port="${SFTP_PARITY_PORT}" ;;
+      esac
+      if wait_for_sftp_port "${port}" 2>/dev/null; then
+        wait_for_sftp_backend_ready "${backend}" 2>/dev/null || true
+      fi
+    elif [[ "${is_minio_backend}" -eq 1 ]]; then
+      local port
+      case "${backend}" in
+        even) port="${MINIO_EVEN_PORT}" ;;
+        odd) port="${MINIO_ODD_PORT}" ;;
+        parity) port="${MINIO_PARITY_PORT}" ;;
+      esac
+      if wait_for_minio_port "${port}" 2>/dev/null; then
+        wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+      fi
     fi
     record_error_result "FAIL" "rollback-disabled-move-fail-${backend}" "Move succeeded when it should have failed (backend '${backend}' was unavailable)."
     rm -f "${move_stdout}" "${move_stderr}"
@@ -732,7 +1011,22 @@ run_move_fail_scenario_no_rollback() {
   start_backend "${backend}"
   
   # Wait for backend to be ready
-  if [[ "${is_minio_backend}" -eq 1 ]]; then
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    local port
+    case "${backend}" in
+      even) port="${SFTP_EVEN_PORT}" ;;
+      odd) port="${SFTP_ODD_PORT}" ;;
+      parity) port="${SFTP_PARITY_PORT}" ;;
+    esac
+    if ! wait_for_sftp_port "${port}"; then
+      log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend port ${port} did not open in time."
+    fi
+    if ! wait_for_sftp_backend_ready "${backend}"; then
+      log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+    else
+      log_info "scenario:rollback-disabled-move-fail-${backend}" "Backend '${backend}' confirmed ready."
+    fi
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
     local port
     case "${backend}" in
       even) port="${MINIO_EVEN_PORT}" ;;
@@ -742,15 +1036,12 @@ run_move_fail_scenario_no_rollback() {
     if ! wait_for_minio_port "${port}"; then
       log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend port ${port} did not open in time."
     fi
-
-    # Wait for MinIO to be fully ready (not just port open, but S3 API ready)
     if ! wait_for_minio_backend_ready "${backend}"; then
       log_warn "scenario:rollback-disabled-move-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
     else
       log_info "scenario:rollback-disabled-move-fail-${backend}" "Backend '${backend}' confirmed ready."
     fi
   else
-    # For local backends, just verify directory is restored
     local dir
     dir=$(remote_data_dir "${backend}")
     if [[ -d "${dir}" ]]; then
@@ -795,29 +1086,74 @@ run_update_fail_scenario_no_rollback() {
   local backend="$1"
   log_info "suite" "Running rollback-disabled update-fail scenario '${backend}' (${STORAGE_TYPE})"
 
-  # These tests require MinIO to simulate unavailable backends
-  if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-    record_error_result "PASS" "rollback-disabled-update-fail-${backend}" "Skipped for local backend (requires MinIO to stop containers)."
+  # These tests require a stoppable backend (MinIO or SFTP); skip for local only
+  if [[ "${STORAGE_TYPE}" == "local" ]]; then
+    record_error_result "PASS" "rollback-disabled-update-fail-${backend}" "Skipped for local backend (requires MinIO or SFTP to stop containers)."
     return 0
   fi
 
-  # Ensure all backends are ready before starting (important after previous scenario restored a backend)
   log_info "scenario:rollback-disabled-update-fail-${backend}" "Verifying all backends are ready before starting scenario."
-  for check_backend in even odd parity; do
-    if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
-      log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
-    fi
-  done
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    for check_backend in even odd parity; do
+      if ! wait_for_sftp_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  else
+    for check_backend in even odd parity; do
+      if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  fi
 
   purge_raid3_remote_root
   purge_remote_root "${SINGLE_REMOTE}"
 
-  # Create a test file using the regular remote (rollback enabled by default)
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    local sftp_name sftp_port
+    sftp_name=$(sftp_container_for_backend "${backend}")
+    case "${backend}" in
+      even)   sftp_port="${SFTP_EVEN_PORT}" ;;
+      odd)    sftp_port="${SFTP_ODD_PORT}" ;;
+      parity) sftp_port="${SFTP_PARITY_PORT}" ;;
+      *)      sftp_port="" ;;
+    esac
+    if [[ -n "${sftp_name}" ]] && [[ -n "${sftp_port}" ]]; then
+      log_info "scenario:rollback-disabled-update-fail-${backend}" "Restarting SFTP backend '${backend}' (after purge) for clean state before dataset creation."
+      docker restart "${sftp_name}" >/dev/null 2>&1 || true
+      if ! wait_for_sftp_port "${sftp_port}"; then
+        log_warn "scenario:rollback-disabled-update-fail-${backend}" "Port ${sftp_port} did not come back after restart."
+      fi
+      sleep 3
+      if ! wait_for_sftp_backend_ready "${backend}" 2>/dev/null; then
+        log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend '${backend}' may not be ready after restart, but continuing."
+      fi
+      log_info "scenario:rollback-disabled-update-fail-${backend}" "Waiting 8s for SFTP to settle after restart before dataset creation."
+      sleep 8
+    fi
+  fi
+
   local dataset_id
-  dataset_id=$(create_test_dataset "rollback-disabled-update-fail-${backend}") || {
-    record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Failed to create dataset."
-    return 1
-  }
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    dataset_id=""
+    local create_attempt=1 create_max=5
+    while (( create_attempt <= create_max )); do
+      dataset_id=$(create_test_dataset "rollback-disabled-update-fail-${backend}") && break
+      if (( create_attempt >= create_max )); then
+        record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Failed to create dataset after ${create_max} attempts."
+        return 1
+      fi
+      log_info "scenario:rollback-disabled-update-fail-${backend}" "Dataset creation attempt ${create_attempt} failed (SFTP may be flaky). Retrying in 8s..."
+      sleep 8
+      (( create_attempt++ )) || true
+    done
+  else
+    dataset_id=$(create_test_dataset "rollback-disabled-update-fail-${backend}") || {
+      record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Failed to create dataset."
+      return 1
+    }
+  fi
   log_info "scenario:rollback-disabled-update-fail-${backend}" "Dataset ${dataset_id} created (will use connection string with rollback=false)."
 
   local test_file="${dataset_id}/${TARGET_OBJECT}"
@@ -845,8 +1181,11 @@ run_update_fail_scenario_no_rollback() {
 
   # Determine backend type before stopping
   local is_minio_backend=0
+  local is_sftp_backend=0
   if [[ "${STORAGE_TYPE}" == "minio" ]]; then
     is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    is_sftp_backend=1
   elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
     case "${backend}" in
       odd) is_minio_backend=1 ;;
@@ -881,7 +1220,22 @@ run_update_fail_scenario_no_rollback() {
   start_backend "${backend}"
 
   # Wait for backend to be ready
-  if [[ "${is_minio_backend}" -eq 1 ]]; then
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    local port
+    case "${backend}" in
+      even) port="${SFTP_EVEN_PORT}" ;;
+      odd) port="${SFTP_ODD_PORT}" ;;
+      parity) port="${SFTP_PARITY_PORT}" ;;
+    esac
+    if ! wait_for_sftp_port "${port}"; then
+      log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend port ${port} did not open in time."
+    fi
+    if ! wait_for_sftp_backend_ready "${backend}"; then
+      log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+    else
+      log_info "scenario:rollback-disabled-update-fail-${backend}" "Backend '${backend}' confirmed ready."
+    fi
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
     local port
     case "${backend}" in
       even) port="${MINIO_EVEN_PORT}" ;;
@@ -891,15 +1245,12 @@ run_update_fail_scenario_no_rollback() {
     if ! wait_for_minio_port "${port}"; then
       log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend port ${port} did not open in time."
     fi
-
-    # Wait for MinIO to be fully ready (not just port open, but S3 API ready)
     if ! wait_for_minio_backend_ready "${backend}"; then
       log_warn "scenario:rollback-disabled-update-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
     else
       log_info "scenario:rollback-disabled-update-fail-${backend}" "Backend '${backend}' confirmed ready."
     fi
   else
-    # For local backends, just verify directory is restored
     local dir
     dir=$(remote_data_dir "${backend}")
     if [[ -d "${dir}" ]]; then
@@ -911,9 +1262,26 @@ run_update_fail_scenario_no_rollback() {
 
   # Verify update failed (non-zero exit status)
   if [[ "${update_status}" -eq 0 ]]; then
-    # Backend was already restored earlier, but ensure it's ready for next scenario
-    if wait_for_minio_port "${port}" 2>/dev/null; then
-      wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+    if [[ "${is_sftp_backend}" -eq 1 ]]; then
+      local port
+      case "${backend}" in
+        even) port="${SFTP_EVEN_PORT}" ;;
+        odd) port="${SFTP_ODD_PORT}" ;;
+        parity) port="${SFTP_PARITY_PORT}" ;;
+      esac
+      if wait_for_sftp_port "${port}" 2>/dev/null; then
+        wait_for_sftp_backend_ready "${backend}" 2>/dev/null || true
+      fi
+    elif [[ "${is_minio_backend}" -eq 1 ]]; then
+      local port
+      case "${backend}" in
+        even) port="${MINIO_EVEN_PORT}" ;;
+        odd) port="${MINIO_ODD_PORT}" ;;
+        parity) port="${MINIO_PARITY_PORT}" ;;
+      esac
+      if wait_for_minio_port "${port}" 2>/dev/null; then
+        wait_for_minio_backend_ready "${backend}" 2>/dev/null || true
+      fi
     fi
     record_error_result "FAIL" "rollback-disabled-update-fail-${backend}" "Update succeeded when it should have failed (backend '${backend}' was unavailable)."
     rm -f "${update_stdout}" "${update_stderr}" "${original_content}" "${updated_content}"
@@ -987,8 +1355,8 @@ main() {
   ensure_rclone_binary
   ensure_rclone_config
 
-  # Prevent rclone from hanging with MinIO (purge, list, copy can block).
-  if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+  # Prevent rclone from hanging with MinIO or SFTP (purge, list, copy can block).
+  if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" || "${STORAGE_TYPE}" == "sftp" ]]; then
     export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
     if (( VERBOSE )); then
       log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (exit 124 = timed out)"
@@ -997,26 +1365,38 @@ main() {
 
   case "${COMMAND}" in
     start)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'start' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        start_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        start_sftp_containers
+      else
+        log "'start' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      start_minio_containers
       ;;
     stop)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'stop' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        stop_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        stop_sftp_containers
+      else
+        log "'stop' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      stop_minio_containers
       ;;
     teardown)
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
       set_remotes_for_storage_type
       purge_raid3_remote_root
       purge_remote_root "${SINGLE_REMOTE}"
       if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_RAID3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        for dir in "${SFTP_RAID3_DIRS[@]}" "${SFTP_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"
           verify_directory_empty "${dir}"
         done
@@ -1033,6 +1413,7 @@ main() {
     test)
       set_remotes_for_storage_type
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
       reset_error_results
       if [[ -z "${COMMAND_ARG}" ]]; then
         if ! run_all_error_scenarios; then

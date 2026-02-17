@@ -112,8 +112,8 @@ parse_args() {
       ;;
   esac
 
-  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', or 'mixed'."
+  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" && "${STORAGE_TYPE}" != "sftp" ]]; then
+    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', 'mixed', or 'sftp'."
   fi
 }
 
@@ -196,14 +196,14 @@ simulate_disk_swap() {
   dir=$(remote_data_dir "${backend}")
   log_info "disk-swap" "Simulating disk swap for '${backend}' backend at ${dir}"
 
-  # Determine if this specific backend is MinIO or local
-  # For mixed storage, we need to check the actual backend type, not just STORAGE_TYPE
+  # Determine if this specific backend is MinIO, SFTP, or local
   local is_minio_backend=0
+  local is_sftp_backend=0
   if [[ "${STORAGE_TYPE}" == "minio" ]]; then
-    # All backends are MinIO
     is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    is_sftp_backend=1
   elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
-    # In mixed storage: even=local, odd=MinIO, parity=local
     case "${backend}" in
       odd) is_minio_backend=1 ;;
       even|parity) is_minio_backend=0 ;;
@@ -211,14 +211,29 @@ simulate_disk_swap() {
     esac
   fi
 
-  if [[ "${is_minio_backend}" -eq 1 ]]; then
-    # For MinIO, we need to purge the bucket using rclone, not just wipe the local directory
-    # The local directory is where MinIO stores data, but we need to ensure the bucket is empty
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    stop_single_sftp_container "${backend}"
+    wipe_remote_directory "${dir}"
+    start_single_sftp_container "${backend}"
+    local port
+    case "${backend}" in
+      even) port="${SFTP_EVEN_PORT}" ;;
+      odd) port="${SFTP_ODD_PORT}" ;;
+      parity) port="${SFTP_PARITY_PORT}" ;;
+      *) die "Unknown backend '${backend}'" ;;
+    esac
+    if ! wait_for_sftp_port "${port}"; then
+      log_warn "disk-swap" "Port ${port} did not open in time, continuing anyway"
+    fi
+    local remote
+    remote=$(backend_remote_name "${backend}")
+    log_info "disk-swap" "Purging SFTP remote '${remote}:' contents to simulate empty disk"
+    purge_remote_root "${remote}"
+    sleep 1
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
     stop_single_minio_container "${backend}"
-    wipe_remote_directory "${dir}"  # Wipe local MinIO data directory
+    wipe_remote_directory "${dir}"
     start_single_minio_container "${backend}"
-    
-    # Wait for MinIO container to be fully ready
     local port
     case "${backend}" in
       even) port="${MINIO_EVEN_PORT:-9001}" ;;
@@ -229,17 +244,12 @@ simulate_disk_swap() {
     if ! wait_for_minio_port "${port}"; then
       log_warn "disk-swap" "Port ${port} did not open in time, continuing anyway"
     fi
-    
-    # Empty the bucket contents (never the root) to simulate an empty disk
     local remote
     remote=$(backend_remote_name "${backend}")
     log_info "disk-swap" "Purging MinIO remote '${remote}:' contents to simulate empty disk"
     purge_remote_root "${remote}"
-    
-    # Brief wait for MinIO to process deletions
     sleep 1
   else
-    # For local storage, wiping the directory is sufficient
     wipe_remote_directory "${dir}"
   fi
 }
@@ -470,26 +480,38 @@ main() {
 
   case "${COMMAND}" in
     start)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'start' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        start_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        start_sftp_containers
+      else
+        log "'start' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      start_minio_containers
       ;;
     stop)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log "'stop' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        stop_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        stop_sftp_containers
+      else
+        log "'stop' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      stop_minio_containers
       ;;
     teardown)
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
       set_remotes_for_storage_type
       purge_raid3_remote_root
       purge_remote_root "${SINGLE_REMOTE}"
       if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_RAID3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        for dir in "${SFTP_RAID3_DIRS[@]}" "${SFTP_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"
           verify_directory_empty "${dir}"
         done
@@ -506,6 +528,7 @@ main() {
     test)
       set_remotes_for_storage_type
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
       reset_scenario_results
       if [[ -z "${COMMAND_ARG}" ]]; then
         if ! run_all_scenarios; then

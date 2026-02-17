@@ -20,8 +20,8 @@
 #   test <name>           Run a named test (e.g. "mkdir") against raid3 vs single.
 #
 # Options:
-#   --storage-type <local|minio>   Select which backend pair to exercise.
-#                                  Required for start/stop/test/teardown.
+#   --storage-type <local|minio|sftp>   Select which backend pair to exercise.
+#                                       Required for start/stop/test/teardown.
 #   -v, --verbose                  Show stdout/stderr from both rclone invocations.
 #   -h, --help                     Display this help text.
 #
@@ -54,14 +54,14 @@ usage() {
 Usage: ${SCRIPT_NAME} [options] <command> [arguments]
 
 Commands:
-  start                      Start MinIO containers (requires --storage-type=minio).
-  stop                       Stop MinIO containers (requires --storage-type=minio).
+  start                      Start MinIO/SFTP containers (requires --storage-type=minio or sftp).
+  stop                       Stop MinIO/SFTP containers (requires --storage-type=minio or sftp).
   teardown                   Purge all test data for the selected storage type.
   list                       Show available tests.
   test <name>                Run the named test (e.g. "mkdir").
 
 Options:
-  --storage-type <local|minio|mixed>   Select backend pair (required for start/stop/test/teardown).
+  --storage-type <local|minio|mixed|sftp>   Select backend pair (required for start/stop/test/teardown).
   -v, --verbose                  Show stdout/stderr from both rclone invocations.
   -h, --help                     Display this help.
 
@@ -117,8 +117,8 @@ parse_args() {
       ;;
   esac
 
-  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', or 'mixed'."
+  if [[ -n "${STORAGE_TYPE}" && "${STORAGE_TYPE}" != "local" && "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" && "${STORAGE_TYPE}" != "sftp" ]]; then
+    die "Invalid storage type '${STORAGE_TYPE}'. Expected 'local', 'minio', 'mixed', or 'sftp'."
   fi
 }
 
@@ -1265,38 +1265,54 @@ main() {
   ensure_rclone_binary
   ensure_rclone_config
 
-  # Prevent rclone from hanging when using MinIO (purge, lsf, sync can block).
+  # Prevent rclone from hanging when using MinIO or SFTP (purge, lsf, sync can block).
   if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
     export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
     if (( VERBOSE )); then
       log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (minio/mixed)"
     fi
   fi
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+    if (( VERBOSE )); then
+      log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (sftp)"
+    fi
+  fi
 
   case "${COMMAND}" in
     start)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log_info "main" "'start' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        start_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        start_sftp_containers
+      else
+        log_info "main" "'start' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      start_minio_containers
       ;;
 
     stop)
-      if [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]]; then
-        log_info "main" "'stop' only applies to MinIO-based storage types (minio or mixed)."
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        stop_minio_containers
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        stop_sftp_containers
+      else
+        log_info "main" "'stop' only applies to MinIO-based (minio or mixed) or SFTP (sftp) storage types."
         exit 0
       fi
-      stop_minio_containers
       ;;
 
     teardown)
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
       set_remotes_for_storage_type
       purge_raid3_remote_root
       purge_remote_root "${SINGLE_REMOTE}"
       if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
         sleep 3
+      fi
+      if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        sleep 2
       fi
       if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_RAID3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do
@@ -1310,6 +1326,11 @@ main() {
           verify_directory_empty "${dir}"
         done
         for dir in "${MINIO_ODD_DIR}" "${MINIO_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        for dir in "${SFTP_RAID3_DIRS[@]}" "${SFTP_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"
           verify_directory_empty "${dir}"
         done
@@ -1327,6 +1348,7 @@ main() {
 
     test)
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
+      [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
       reset_test_results
       if [[ -z "${COMMAND_ARG}" ]]; then
         if ! run_all_tests; then

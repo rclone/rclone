@@ -47,6 +47,36 @@ cd backend/raid3/test
 ./compare_raid3_with_single.sh --storage-type local test mkdir
 ```
 
+### Quick test: sftpsingle remote
+
+To verify the SFTP remotes work (Docker with atmoz/sftp required). On ARM64 (e.g. Apple Silicon) you may see a platform mismatch warning (linux/amd64 vs linux/arm64); the image runs under emulation and is fine for these tests.
+
+```bash
+cd backend/raid3/test
+
+# Ensure config and _data dirs exist (includes even_sftp, odd_sftp, parity_sftp, single_sftp)
+./setup.sh
+
+# Start the four SFTP containers (ports 2221–2224)
+./compare_raid3_with_single.sh start --storage-type=sftp
+
+# Check that sftpsingle works: list root (should be empty or show existing dirs)
+rclone --config rclone_raid3_integration_tests.config lsd sftpsingle:
+
+# Create a test file and copy it to sftpsingle
+echo "hello sftp" > /tmp/hello.txt
+rclone --config rclone_raid3_integration_tests.config copy /tmp/hello.txt sftpsingle:test/
+
+# List again to see test/
+rclone --config rclone_raid3_integration_tests.config ls sftpsingle:
+
+# Run one comparison test (raid3 vs single) with SFTP
+./compare_raid3_with_single.sh --storage-type=sftp test mkdir
+
+# Stop SFTP containers when done
+./compare_raid3_with_single.sh stop --storage-type=sftp
+```
+
 ## 📁 Test Scripts
 
 | Script | Purpose | Commands |
@@ -67,13 +97,13 @@ All test scripts support these commands:
 
 - **`list`** - Show available test cases
 - **`test <name>`** - Run a named test (e.g., `test mkdir`)
-- **`start`** - Start MinIO containers (requires `--storage-type=minio`)
-- **`stop`** - Stop MinIO containers (requires `--storage-type=minio`)
+- **`start`** - Start MinIO or SFTP containers (requires `--storage-type=minio` or `--storage-type=sftp`)
+- **`stop`** - Stop MinIO or SFTP containers (requires `--storage-type=minio` or `--storage-type=sftp`)
 - **`teardown`** - Purge all test data for the selected storage type
 
 ### Options
 
-- **`--storage-type <local\|minio\|mixed>`** - Select backend pair (required for most commands)
+- **`--storage-type <local\|minio\|mixed\|sftp>`** - Select backend pair (required for most commands)
 - **`-v, --verbose`** - Show detailed output from rclone invocations
 - **`-h, --help`** - Display help text
 
@@ -90,10 +120,12 @@ The config file is created in the test directory by `setup.sh`.
 The configuration file contains:
 - Local storage remotes (localeven, localodd, localparity, localsingle)
 - MinIO S3 remotes (minioeven, minioodd, minioparity, miniosingle)
+- SFTP remotes (sftpeven, sftpodd, sftpparity, sftpsingle) for atmoz/sftp Docker containers
 - RAID3 remotes:
   - `localraid3` - All local file-based backends
   - `minioraid3` - All MinIO S3 object-based backends
   - `localminioraid3` - Mixed file/object backends (local even/parity, MinIO odd) for testing heterogeneous storage scenarios
+  - `sftpraid3` - All SFTP backends (one container per shard: even, odd, parity, single)
 
 **Important**: 
 - The test scripts **only** use this test-specific config file. They do not use your default `~/.config/rclone/rclone.conf`.

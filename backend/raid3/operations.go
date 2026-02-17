@@ -418,6 +418,22 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if srcFs.Name() != f.Name() {
 		return nil, fs.ErrorCantMove
 	}
+	// Pre-flight check: all backends must be available (avoid nil deref and enforce strict write policy).
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		if f.opt.Rollback && f.even != nil && f.odd != nil && f.parity != nil {
+			srcParityName := srcObj.remote
+			dstParityName := remote
+			allDestinations := []moveState{
+				{"even", srcObj.remote, remote},
+				{"odd", srcObj.remote, remote},
+				{"parity", srcParityName, dstParityName},
+			}
+			if cleanupErr := f.rollbackMoves(ctx, allDestinations); cleanupErr != nil {
+				fs.Debugf(f, "Cleanup of destination files failed: %v", cleanupErr)
+			}
+		}
+		return nil, formatOperationError("move blocked in degraded mode (RAID 3 policy)", "", err)
+	}
 	// Call-time check: all three backends must support Move (defensive; Mask should already enforce).
 	if f.even.Features().Move == nil || f.odd.Features().Move == nil || f.parity.Features().Move == nil {
 		return nil, fs.ErrorCantMove
@@ -446,22 +462,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcParityName := srcRemote
 	dstParityName := remote
 
-	// Pre-flight check: Enforce strict RAID 3 write policy
-	// Fail immediately if any backend is unavailable to prevent degraded moves
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		// Even though we're failing early, clean up any destination files from previous attempts
-		if f.opt.Rollback {
-			allDestinations := []moveState{
-				{"even", srcObj.remote, remote},
-				{"odd", srcObj.remote, remote},
-				{"parity", srcParityName, dstParityName},
-			}
-			if cleanupErr := f.rollbackMoves(ctx, allDestinations); cleanupErr != nil {
-				fs.Debugf(f, "Cleanup of destination files failed: %v", cleanupErr)
-			}
-		}
-		return nil, formatOperationError("move blocked in degraded mode (RAID 3 policy)", "", err)
-	}
+	// Rollback any partial destination from previous attempts if we're about to fail
+	// (checkAllBackendsAvailable already ran above; this block is for rollback on later errors)
 	fs.Debugf(f, "Move: all backends available, proceeding with move")
 
 	// Disable retries for strict RAID 3 write policy

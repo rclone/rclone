@@ -19,7 +19,7 @@
 #   stop                  Stop those MinIO containers.
 #   teardown              Purge all data from both local and MinIO storage (raid3 + single).
 #   list                  Show available test cases.
-#   test <name>           Run a named test (e.g. "cp-upload"); uses both storage types where needed.
+#   test <name>           Run a named test (e.g. "cp-upload"); uses local, minio, and sftp where needed.
 #
 # Options:
 #   -v, --verbose                  Show stdout/stderr from all rclone invocations.
@@ -38,10 +38,10 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# shellcheck source=backend/raid3/test/compare_raid3_with_single_common.sh
+# shellcheck source=compare_raid3_with_single_common.sh
 . "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
 
-VERBOSE=0
+export VERBOSE=0
 COMMAND=""
 COMMAND_ARG=""
 
@@ -56,11 +56,11 @@ containers for minioraid3. For Go tests (same-backend + cross-backend rejection)
 run: ./run_serverside_go_tests.sh
 
 Commands:
-  start                      Start MinIO containers for raid3 tests (minioraid3/miniosingle).
-  stop                       Stop MinIO containers for raid3 tests.
-  teardown                   Purge all test data for both local and MinIO storage.
+  start                      Start MinIO and SFTP containers for raid3 tests.
+  stop                       Stop MinIO and SFTP containers.
+  teardown                   Purge all test data for local, MinIO, and SFTP storage.
   list                       Show available tests.
-  test <name>                Run the named test (e.g. "cp-upload"); uses both storage types where needed.
+  test <name>                Run the named test (e.g. "cp-upload"); uses local, minio, and sftp where needed.
 
 Options:
   -v, --verbose                  Show stdout/stderr from all rclone invocations.
@@ -142,8 +142,8 @@ print_test_summary() {
 list_tests() {
   cat <<EOF
 Available tests:
-  cp-download        Copy objects from raid3 remote to local and compare with single.
-  cp-upload          Upload from local to raid3 (local or minio); no cross-backend copy.
+  cp-download        Copy from raid3 to local and compare with single (local, minio, sftp).
+  cp-upload          Upload from local to raid3 (local, minio, or sftp); no cross-backend copy.
   cp-minio-to-local  Copy from minioraid3 to localraid3 (MinIO as source, local as dest).
   mv-local-to-minio  Move objects from localraid3 to minioraid3 (server-side move).
   cp-within-local    Server-side copy within localraid3 (src -> dst prefix).
@@ -486,9 +486,9 @@ run_move_local_to_minio_test() {
   rm -f "${mv_out}" "${mv_err}"
 
   # Verify that the source prefix on localraid3 is empty / gone.
-  local src_ls_result src_ls_status src_ls_out src_ls_err
+  local src_ls_result src_ls_out src_ls_err
   src_ls_result=$(capture_command "mv_l2m_src_ls" ls "localraid3:${dataset_id}")
-  IFS='|' read -r src_ls_status src_ls_out src_ls_err <<<"${src_ls_result}"
+  IFS='|' read -r _ src_ls_out src_ls_err <<<"${src_ls_result}"
   print_if_verbose "localraid3 ls (post-move)" "${src_ls_out}" "${src_ls_err}"
 
   # It is acceptable if ls either fails with "not found" or succeeds with no output.
@@ -695,7 +695,7 @@ run_copy_within_minioraid3_test() {
   log "copy-within-minioraid3 test completed."
   return 0
 }
-# Internal: run a test that requires a single storage type (local or minio).
+# Internal: run a test that requires a single storage type (local, minio, or sftp).
 # Sets STORAGE_TYPE for the duration of the test. Used by run_single_test.
 run_pair_test_for_storage_type() {
   local test_func="$1"
@@ -725,12 +725,15 @@ run_single_test() {
     *) die "Unknown test '${test_name}'. Use '${SCRIPT_NAME} list' to see available tests." ;;
   esac
 
-  # Tests that run against both local and minio pair (raid3 vs single)
+  # Tests that run against local, minio, and sftp pair (raid3 vs single)
   if [[ "${test_name}" == "cp-download" || "${test_name}" == "cp-upload" ]]; then
     if ! run_pair_test_for_storage_type "${test_func}" "local" "${test_name}"; then
       return 1
     fi
     if ! run_pair_test_for_storage_type "${test_func}" "minio" "${test_name}"; then
+      return 1
+    fi
+    if ! run_pair_test_for_storage_type "${test_func}" "sftp" "${test_name}"; then
       return 1
     fi
     return 0
@@ -763,14 +766,16 @@ main() {
   case "${COMMAND}" in
     start)
       start_minio_containers
+      start_sftp_containers
       ;;
 
     stop)
       stop_minio_containers
+      stop_sftp_containers
       ;;
 
     teardown)
-      # Purge and clean both local and MinIO storage
+      # Purge and clean local, MinIO, and SFTP storage
       STORAGE_TYPE="local"
       set_remotes_for_storage_type
       purge_raid3_remote_root
@@ -790,6 +795,17 @@ main() {
         remove_leftover_files "${dir}"
         verify_directory_empty "${dir}"
       done
+
+      STORAGE_TYPE="sftp"
+      if ensure_sftp_containers_ready; then
+        set_remotes_for_storage_type
+        purge_raid3_remote_root
+        purge_remote_root "${SINGLE_REMOTE}"
+      fi
+      for dir in "${SFTP_RAID3_DIRS[@]}" "${SFTP_SINGLE_DIR}"; do
+        remove_leftover_files "${dir}"
+        verify_directory_empty "${dir}"
+      done
       ;;
 
     list)
@@ -797,10 +813,11 @@ main() {
       ;;
 
     test)
-      # All tests may use MinIO (cp-download/cp-upload run for both local and minio; mv and cp-within-minio need minio).
-      # Set STORAGE_TYPE so ensure_minio_containers_ready (common script) does not hit unbound variable and actually starts MinIO.
+      # All tests may use MinIO and SFTP (cp-download/cp-upload run for local, minio, and sftp; mv and cp-within-minio need minio).
       STORAGE_TYPE="minio"
       ensure_minio_containers_ready
+      STORAGE_TYPE="sftp"
+      ensure_sftp_containers_ready
       # Avoid indefinite hang on rclone (e.g. MinIO 503 or list hang). Exit 124 = timed out.
       export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
       # Skip cp-minio-to-local by default (MinIO 503 SlowDown in many environments). Set SKIP_CP_MINIO_TO_LOCAL=0 to run it.

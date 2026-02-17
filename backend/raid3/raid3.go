@@ -280,7 +280,7 @@ type Fs struct {
 	even     fs.Fs        // remote for even-indexed bytes
 	odd      fs.Fs        // remote for odd-indexed bytes
 	parity   fs.Fs        // remote for parity data
-	hashSet  hash.Set     // intersection of hash types
+	hashSet  hash.Set     // MD5 and SHA256 (footer hashes of logical object only)
 
 	// Self-healing infrastructure
 	uploadQueue   *uploadQueue
@@ -288,6 +288,27 @@ type Fs struct {
 	uploadCtx     context.Context
 	uploadCancel  context.CancelFunc
 	uploadWorkers int
+}
+
+// openBackendWithRetry opens an underlying backend with retries.
+// Some SFTP servers fail the first connection from a process ("unexpected packet");
+// retrying after a short delay often succeeds.
+func openBackendWithRetry(ctx context.Context, path string) (fs.Fs, error) {
+	var lastErr error
+	for attempt := 1; attempt <= initOpenRetries; attempt++ {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		f, err := cache.Get(ctx, path)
+		if err == nil || err == fs.ErrorIsFile {
+			return f, err
+		}
+		lastErr = err
+		if attempt < initOpenRetries {
+			time.Sleep(initOpenRetryDelay)
+		}
+	}
+	return nil, lastErr
 }
 
 // NewFs constructs an Fs from the path.
@@ -359,9 +380,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 
 	var evenErr, oddErr, parityErr error
 
-	// Create remotes concurrently to avoid blocking on unavailable backends
-	// Use a timeout context to avoid waiting forever for unavailable remotes
-	// Adjust timeout based on timeout_mode
+	// Use a timeout context to avoid waiting forever for unavailable remotes.
+	// Adjust timeout based on timeout_mode.
 	var initTimeout time.Duration
 	switch opt.TimeoutMode {
 	case "aggressive":
@@ -378,75 +398,60 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	// Ensure underlying backends get at least writeRetries so S3/MinIO can retry 503 SlowDown
 	backendCtx := ensureMinRetriesForBackends(initCtx)
 
-	type fsResult struct {
-		name string
-		fs   fs.Fs
-		err  error
+	// Open the three backends sequentially with a short delay between each.
+	// Parallel open can trigger "unexpected packet" on some SFTP servers (e.g. atmoz/sftp)
+	// when multiple connections are established from the same process. To revert to parallel
+	// open, set sequentialOpenDelay to 0 in constants.go and restore the previous goroutine+channel code.
+	var (
+		evenPath, oddPath, parityPath string
+		successCount                 int
+	)
+
+	if initCtx.Err() != nil {
+		goto checkRemotes
 	}
-	fsCh := make(chan fsResult, 3)
+	evenPath = fspath.JoinRootPath(opt.Even, root)
+	f.even, evenErr = openBackendWithRetry(backendCtx, evenPath)
+	if evenErr == nil || evenErr == fs.ErrorIsFile {
+		successCount++
+	} else {
+		fs.Logf(f, "Warning: even remote unavailable: %v", evenErr)
+	}
 
-	// Create even remote (even-indexed bytes)
-	go func() {
-		evenPath := fspath.JoinRootPath(opt.Even, root)
-		fs, err := cache.Get(backendCtx, evenPath)
-		fsCh <- fsResult{"even", fs, err}
-	}()
-
-	// Create odd remote (odd-indexed bytes)
-	go func() {
-		oddPath := fspath.JoinRootPath(opt.Odd, root)
-		fs, err := cache.Get(backendCtx, oddPath)
-		fsCh <- fsResult{"odd", fs, err}
-	}()
-
-	// Create parity remote
-	go func() {
-		parityPath := fspath.JoinRootPath(opt.Parity, root)
-		fs, err := cache.Get(backendCtx, parityPath)
-		fsCh <- fsResult{"parity", fs, err}
-	}()
-
-	// Collect results - wait for all 3 with timeout
-	// In RAID 3, we can tolerate one backend being unavailable
-	successCount := 0
-	for i := 0; i < 3; i++ {
-		select {
-		case res := <-fsCh:
-			switch res.name {
-			case "even":
-				f.even = res.fs
-				evenErr = res.err
-				if evenErr == nil || evenErr == fs.ErrorIsFile {
-					successCount++
-				} else {
-					fs.Logf(f, "Warning: even remote unavailable: %v", evenErr)
-				}
-			case "odd":
-				f.odd = res.fs
-				oddErr = res.err
-				if oddErr == nil || oddErr == fs.ErrorIsFile {
-					successCount++
-				} else {
-					fs.Logf(f, "Warning: odd remote unavailable: %v", oddErr)
-				}
-			case "parity":
-				f.parity = res.fs
-				parityErr = res.err
-				if parityErr == nil || parityErr == fs.ErrorIsFile {
-					successCount++
-				} else {
-					fs.Logf(f, "Warning: parity remote unavailable: %v", parityErr)
-				}
-			}
-		case <-initCtx.Done():
-			// Context cancelled/timeout
-			fs.Logf(f, "Timeout waiting for remotes, have %d/%d available", successCount, 3)
-			if successCount < 2 {
-				return nil, fmt.Errorf("insufficient remotes available (%d/3): %w", successCount, initCtx.Err())
-			}
-			// Have at least 2, can proceed in degraded mode
-			goto checkRemotes
+	if initCtx.Err() != nil {
+		fs.Logf(f, "Timeout waiting for remotes, have %d/%d available", successCount, 3)
+		if successCount < 2 {
+			return nil, fmt.Errorf("insufficient remotes available (%d/3): %w", successCount, initCtx.Err())
 		}
+		goto checkRemotes
+	}
+	if sequentialOpenDelay > 0 {
+		time.Sleep(sequentialOpenDelay)
+	}
+	oddPath = fspath.JoinRootPath(opt.Odd, root)
+	f.odd, oddErr = openBackendWithRetry(backendCtx, oddPath)
+	if oddErr == nil || oddErr == fs.ErrorIsFile {
+		successCount++
+	} else {
+		fs.Logf(f, "Warning: odd remote unavailable: %v", oddErr)
+	}
+
+	if initCtx.Err() != nil {
+		fs.Logf(f, "Timeout waiting for remotes, have %d/%d available", successCount, 3)
+		if successCount < 2 {
+			return nil, fmt.Errorf("insufficient remotes available (%d/3): %w", successCount, initCtx.Err())
+		}
+		goto checkRemotes
+	}
+	if sequentialOpenDelay > 0 {
+		time.Sleep(sequentialOpenDelay)
+	}
+	parityPath = fspath.JoinRootPath(opt.Parity, root)
+	f.parity, parityErr = openBackendWithRetry(backendCtx, parityPath)
+	if parityErr == nil || parityErr == fs.ErrorIsFile {
+		successCount++
+	} else {
+		fs.Logf(f, "Warning: parity remote unavailable: %v", parityErr)
 	}
 
 checkRemotes:
@@ -465,61 +470,53 @@ checkRemotes:
 			adjustedRoot = ""
 		}
 
-		// Recreate upstreams with adjusted root concurrently
+		// Recreate upstreams with adjusted root (sequential open, same as initial NewFs).
+		// Allow degraded mode (2/3) so that when one backend is unavailable we can still
+		// create the Fs and e.g. list/read.
 		initCtx2, cancel2 := context.WithTimeout(ctx, errorIsFileRetryTimeout)
 		defer cancel2()
 		backendCtx2 := ensureMinRetriesForBackends(initCtx2)
-		fsCh2 := make(chan fsResult, 3)
 
-		go func() {
-			evenPath := fspath.JoinRootPath(opt.Even, adjustedRoot)
-			fs, err := cache.Get(backendCtx2, evenPath)
-			fsCh2 <- fsResult{"even", fs, err}
-		}()
-
-		go func() {
-			oddPath := fspath.JoinRootPath(opt.Odd, adjustedRoot)
-			fs, err := cache.Get(backendCtx2, oddPath)
-			fsCh2 <- fsResult{"odd", fs, err}
-		}()
-
-		go func() {
-			parityPath := fspath.JoinRootPath(opt.Parity, adjustedRoot)
-			fs, err := cache.Get(backendCtx2, parityPath)
-			fsCh2 <- fsResult{"parity", fs, err}
-		}()
-
-		// Collect adjusted results
-		for i := 0; i < 3; i++ {
-			res := <-fsCh2
-			switch res.name {
-			case "even":
-				f.even = res.fs
-				evenErr = res.err
-				if evenErr != nil && evenErr != fs.ErrorIsFile {
-					return nil, fmt.Errorf("failed to create even remote: %w", evenErr)
-				}
-			case "odd":
-				f.odd = res.fs
-				oddErr = res.err
-				if oddErr != nil && oddErr != fs.ErrorIsFile {
-					return nil, fmt.Errorf("failed to create odd remote: %w", oddErr)
-				}
-			case "parity":
-				f.parity = res.fs
-				parityErr = res.err
-				if parityErr != nil && parityErr != fs.ErrorIsFile {
-					return nil, fmt.Errorf("failed to create parity remote: %w", parityErr)
-				}
-			}
+		retrySuccessCount := 0
+		evenPath2 := fspath.JoinRootPath(opt.Even, adjustedRoot)
+		f.even, evenErr = openBackendWithRetry(backendCtx2, evenPath2)
+		if evenErr == nil || evenErr == fs.ErrorIsFile {
+			retrySuccessCount++
+		} else {
+			fs.Logf(f, "Warning: even remote unavailable (ErrorIsFile retry): %v", evenErr)
+		}
+		if sequentialOpenDelay > 0 {
+			time.Sleep(sequentialOpenDelay)
+		}
+		oddPath2 := fspath.JoinRootPath(opt.Odd, adjustedRoot)
+		f.odd, oddErr = openBackendWithRetry(backendCtx2, oddPath2)
+		if oddErr == nil || oddErr == fs.ErrorIsFile {
+			retrySuccessCount++
+		} else {
+			fs.Logf(f, "Warning: odd remote unavailable (ErrorIsFile retry): %v", oddErr)
+		}
+		if sequentialOpenDelay > 0 {
+			time.Sleep(sequentialOpenDelay)
+		}
+		parityPath2 := fspath.JoinRootPath(opt.Parity, adjustedRoot)
+		f.parity, parityErr = openBackendWithRetry(backendCtx2, parityPath2)
+		if parityErr == nil || parityErr == fs.ErrorIsFile {
+			retrySuccessCount++
+		} else {
+			fs.Logf(f, "Warning: parity remote unavailable (ErrorIsFile retry): %v", parityErr)
+		}
+		if retrySuccessCount < 2 {
+			return nil, fmt.Errorf("need at least 2 of 3 remotes available after path adjustment, only have %d", retrySuccessCount)
 		}
 
 		// Update root to adjusted value
 		f.root = adjustedRoot
 	}
 
-	// Get the intersection of hash types
-	f.hashSet = f.even.Hashes().Overlap(f.odd.Hashes()).Overlap(f.parity.Hashes())
+	// Hash types: only MD5 and SHA256. Raid3 stores these in the footer for the logical object
+	// and returns them via Object.Hash(). We do not expose hashes from the underlying backends,
+	// as those would be hashes of particles, not of the reconstructed content.
+	f.hashSet = hash.NewHashSet(hash.MD5, hash.SHA256)
 
 	// Create features with optimistic defaults (like union backend)
 	// Mask() will intersect these with all backends
@@ -754,25 +751,32 @@ func (f *Fs) Hashes() hash.Set {
 
 // Precision returns the precision of ModTimes. Raid3 reads ModTime from the
 // 90-byte footer which stores Unix seconds only, so we can never report better
-// than 1-second precision.
+// than 1-second precision. In degraded mode (nil backend), treat missing backend as worst precision.
 func (f *Fs) Precision() time.Duration {
-	p1 := f.even.Precision()
-	p2 := f.odd.Precision()
-	p3 := f.parity.Precision()
-
-	// Best precision of underlying backends
-	max := p1
-	if p2 > max {
-		max = p2
+	worst := time.Duration(-1) // no precision
+	if f.even != nil {
+		if p := f.even.Precision(); p > worst {
+			worst = p
+		}
 	}
-	if p3 > max {
-		max = p3
+	if f.odd != nil {
+		if p := f.odd.Precision(); p > worst {
+			worst = p
+		}
 	}
-	// Footer only stores Mtime as Unix seconds
-	if max < time.Second {
+	if f.parity != nil {
+		if p := f.parity.Precision(); p > worst {
+			worst = p
+		}
+	}
+	// Footer only stores Mtime as Unix seconds; if no backend available use 1s
+	if worst < 0 {
 		return time.Second
 	}
-	return max
+	if worst < time.Second {
+		return time.Second
+	}
+	return worst
 }
 
 // About gets quota information for the raid3 backend by aggregating

@@ -59,4 +59,32 @@ MINIO_SINGLE_PORT="${MINIO_SINGLE_PORT:-9004}"
 # RELEASE.2025-10-15 not yet on Docker Hub; use MINIO_IMAGE=... to override if needed.
 MINIO_IMAGE="${MINIO_IMAGE:-minio/minio:RELEASE.2025-09-07T16-13-09Z}"
 
+# SFTP-backed raid3 backend directories (relative to test/_data), using atmoz/sftp
+SFTP_EVEN_DIR="${SFTP_EVEN_DIR:-${DATA_DIR}/even_sftp}"
+SFTP_ODD_DIR="${SFTP_ODD_DIR:-${DATA_DIR}/odd_sftp}"
+SFTP_PARITY_DIR="${SFTP_PARITY_DIR:-${DATA_DIR}/parity_sftp}"
+SFTP_SINGLE_DIR="${SFTP_SINGLE_DIR:-${DATA_DIR}/single_sftp}"
+
+# SFTP remote names as defined in rclone.conf
+SFTP_EVEN_REMOTE="${SFTP_EVEN_REMOTE:-sftpeven}"
+SFTP_ODD_REMOTE="${SFTP_ODD_REMOTE:-sftpodd}"
+SFTP_PARITY_REMOTE="${SFTP_PARITY_REMOTE:-sftpparity}"
+SFTP_SINGLE_REMOTE="${SFTP_SINGLE_REMOTE:-sftpsingle}"
+
+# SFTP container names and SSH/SFTP host ports (container listens on 22)
+SFTP_EVEN_NAME="${SFTP_EVEN_NAME:-sftpeven}"
+SFTP_ODD_NAME="${SFTP_ODD_NAME:-sftpodd}"
+SFTP_PARITY_NAME="${SFTP_PARITY_NAME:-sftpparity}"
+SFTP_SINGLE_NAME="${SFTP_SINGLE_NAME:-sftpsingle}"
+
+SFTP_EVEN_PORT="${SFTP_EVEN_PORT:-2221}"
+SFTP_ODD_PORT="${SFTP_ODD_PORT:-2222}"
+SFTP_PARITY_PORT="${SFTP_PARITY_PORT:-2223}"
+SFTP_SINGLE_PORT="${SFTP_SINGLE_PORT:-2224}"
+
+# SFTP Docker image (atmoz/sftp).
+# On ARM64 (e.g. Apple Silicon) you may see "platform (linux/amd64) does not match (linux/arm64)";
+# that is expected—Docker runs the image via emulation and it works for these tests.
+# To use a multi-arch image instead, set SFTP_IMAGE in compare_raid3_env.local.sh (e.g. a fork with arm64).
+SFTP_IMAGE="${SFTP_IMAGE:-atmoz/sftp}"
 
