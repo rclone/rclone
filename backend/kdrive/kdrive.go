@@ -3,6 +3,7 @@
 package kdrive
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -25,16 +26,20 @@ import (
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/zeebo/xxh3"
 	"golang.org/x/oauth2"
 	"golang.org/x/text/unicode/norm"
 )
 
 const (
-	minSleep      = 10 * time.Millisecond
-	maxSleep      = 2 * time.Second
-	decayConstant = 2 // bigger for slower decay, exponential
+	defaultEndpoint = "https://api.infomaniak.com"
+	minSleep        = 10 * time.Millisecond
+	maxSleep        = 2 * time.Second
+	decayConstant   = 2                // bigger for slower decay, exponential
+	uploadThreshold = 20 * 1024 * 1024 // 20 Mo
 )
 
 // Register with Fs
@@ -55,25 +60,24 @@ func init() {
 			Name: "root_folder_id",
 			Help: "Fill in for rclone to use a non root folder as its starting point.",
 			// for default root, see https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
-			Default:   "1",
+			Default:   "5",
 			Advanced:  true,
 			Sensitive: true,
 		}, {
-			Name: "account_id",
-			Help: `Fill the account ID that is to be considered for this kdrive.
-When showing a folder on kdrive, you can find the account_id here:
-https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/...`,
-			Default: "",
-		}, {
 			Name: "drive_id",
 			Help: `Fill the drive ID for this kdrive.
-When showing a folder on kdrive, you can find the drive_id here:
-https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...`,
+	When showing a folder on kdrive, you can find the drive_id here:
+	https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...`,
 			Default: "",
 		}, {
 			Name:    "access_token",
 			Help:    `Access token generated in Infomaniak profile manager.`,
 			Default: "",
+		}, {
+			Name:     "endpoint",
+			Help:     "By default, pointing to the production API.",
+			Default:  defaultEndpoint,
+			Advanced: true,
 		},
 		},
 	})
@@ -83,9 +87,9 @@ https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...
 type Options struct {
 	Enc          encoder.MultiEncoder `config:"encoding"`
 	RootFolderID string               `config:"root_folder_id"`
-	AccountID    string               `config:"account_id"`
 	DriveID      string               `config:"drive_id"`
 	AccessToken  string               `config:"access_token"`
+	Endpoint     string               `config:"endpoint"`
 }
 
 // Fs represents a remote kdrive
@@ -247,10 +251,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:  root,
 		opt:   *opt,
 		ts:    ts,
-		srv:   rest.NewClient(oAuthClient).SetRoot("https://api.infomaniak.com"),
+		srv:   rest.NewClient(oAuthClient).SetRoot(opt.Endpoint),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
-	f.cleanupSrv = rest.NewClient(fshttp.NewClient(ctx)).SetRoot("https://api.infomaniak.com")
+	f.cleanupSrv = rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint)
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
 		CanHaveEmptyDirectories: true,
@@ -944,7 +948,7 @@ func (o *Object) retrieveHash(ctx context.Context) (err error) {
 	return nil
 }
 
-// Hash returns the SHA-1 of an object returning a lowercase hex string
+// Hash returns the XXH3 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	var pHash *string
 	switch t {
@@ -964,7 +968,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	err := o.readMetaData(context.TODO())
+	err := o.readMetaData(context.Background())
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
@@ -1041,7 +1045,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: fmt.Sprintf("%s/2/drive/%s/files/%s/download", "https://api.infomaniak.com", o.fs.opt.DriveID, o.id),
+		RootURL: fmt.Sprintf("%s/2/drive/%s/files/%s/download", o.fs.opt.Endpoint, o.fs.opt.DriveID, o.id),
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1061,7 +1065,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	size := src.Size() // NB can upload without size
-	modTime := src.ModTime(ctx)
 	remote := o.Remote()
 
 	if size < 0 {
@@ -1074,34 +1077,56 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	// This API doesn't support chunk uploads, so it's just for now
-	// NOTE: It will fail for any file larger than 1GB
-	// TODO: implement the session multi-chunk API approach
+	// if file size is less than the threshold, upload direct
+	if size <= uploadThreshold {
+		return o.updateDirect(ctx, in, directoryID, leaf, src, options...)
+	}
+	// else, use multipart upload with parallelism
+	return o.updateMultipart(ctx, in, src, options...)
+}
+
+func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, leaf string, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+
 	var resp *http.Response
 	var result api.UploadFileResponse
+
+	// Read the content to calculate hash (files are small, under 20MB)
+	content, err := io.ReadAll(in)
+	if err != nil {
+		return fmt.Errorf("failed to read file content: %w", err)
+	}
+	// Calculate xxh3 hash
+	hasher := xxh3.New()
+	hasher.Write(content)
+	totalHash := fmt.Sprintf("xxh3:%x", hasher.Sum(nil))
+
+	size := src.Size()
 	opts := rest.Opts{
 		Method:           "POST",
 		Path:             fmt.Sprintf("/3/drive/%s/upload", o.fs.opt.DriveID),
-		Body:             in,
+		Body:             bytes.NewReader(content),
 		ContentType:      fs.MimeType(ctx, src),
 		ContentLength:    &size,
 		Parameters:       url.Values{},
 		TransferEncoding: []string{"identity"}, // kdrive doesn't like chunked encoding
 		Options:          options,
 	}
+
 	leaf = o.fs.opt.Enc.FromStandardName(leaf)
 	opts.Parameters.Set("file_name", leaf)
 	opts.Parameters.Set("directory_id", directoryID)
 	opts.Parameters.Set("total_size", fmt.Sprintf("%d", size))
-	opts.Parameters.Set("last_modified_at", fmt.Sprintf("%d", uint64(modTime.Unix())))
+	opts.Parameters.Set("last_modified_at", fmt.Sprintf("%d", uint64(src.ModTime(ctx).Unix())))
 	opts.Parameters.Set("conflict", "version")
 	opts.Parameters.Set("with", "hash")
+	opts.Parameters.Set("total_chunk_hash", totalHash)
 
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.ResultStatus.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
+
 	// TODO: check if the following erroneous behavior also happens on kDrive
 	//       (this workaround comes from the pcloud backend implementation)
 	if err != nil {
@@ -1124,6 +1149,34 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.size = size
 	o.setHash(strings.TrimPrefix(result.Data.Hash, "xxh3:"))
 	return o.readMetaData(ctx)
+}
+
+// updateMultipart uploads large files using chunked upload with parallel streaming
+func (o *Object) updateMultipart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	f := o.fs
+
+	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
+		Open:        f,
+		OpenOptions: options,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Extract the file info from the chunk writer
+	session, ok := chunkWriter.(*uploadSession)
+	if !ok {
+		return fmt.Errorf("unexpected chunk writer type")
+	}
+
+	if session.fileInfo == nil {
+		return fmt.Errorf("upload failed: no file info returned")
+	}
+
+	// Use hash from chunk uploads (stored in session)
+	o.setHash(strings.TrimPrefix(session.hash, "xxh3:"))
+
+	return o.setMetaData(session.fileInfo)
 }
 
 // Remove an object
