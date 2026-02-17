@@ -114,6 +114,16 @@ Snappy is fast with moderate ratio; zstd gives better compression at a default l
 				{Value: "snappy", Help: "Snappy compression (fast)"},
 				{Value: "zstd", Help: "Zstandard compression (better ratio, default level)"},
 			},
+		}, {
+			Name:     "use_spooling",
+			Help:     "Spool particles to local disk before uploading (known size; better for SFTP/MinIO/Meta). Uses temporary disk space ~1× object size.",
+			Default:  true,
+			Advanced: true,
+		}, {
+			Name:     "staging_dir",
+			Help:     "Directory for spooled particles when use_spooling is true. Leave empty for system temp.",
+			Default:  "",
+			Advanced: true,
 		}},
 		CommandHelp: commandHelp,
 	}
@@ -269,6 +279,8 @@ type Options struct {
 	Rollback    bool          `config:"rollback"`
 	ChunkSize   fs.SizeSuffix `config:"chunk_size"`
 	Compression string        `config:"compression"`
+	UseSpooling bool          `config:"use_spooling"`
+	StagingDir  string        `config:"staging_dir"`
 }
 
 // Fs represents a raid3 backend with striped storage and parity
@@ -338,6 +350,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}
 	if _, ok := m.Get("compression"); !ok {
 		opt.Compression = "none"
+	}
+	if _, ok := m.Get("use_spooling"); !ok {
+		opt.UseSpooling = true
+	}
+	if _, ok := m.Get("staging_dir"); !ok {
+		opt.StagingDir = ""
 	}
 
 	// Validate compression: none, snappy, or zstd

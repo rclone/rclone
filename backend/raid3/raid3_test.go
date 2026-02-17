@@ -193,6 +193,38 @@ func TestStandardAggressive(t *testing.T) {
 	})
 }
 
+// TestStandardSpooling runs the full integration suite with use_spooling=true.
+// Puts spool particles to temp files then upload with known size; verifies no regressions.
+func TestStandardSpooling(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	evenDir := t.TempDir()
+	oddDir := t.TempDir()
+	parityDir := t.TempDir()
+
+	name := "TestRAID3Spooling"
+	t.Cleanup(func() {
+		config.LoadedData().DeleteSection(name)
+		cache.ClearConfig(name)
+		cache.Clear()
+	})
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "raid3"},
+			{Name: name, Key: "even", Value: evenDir},
+			{Name: name, Key: "odd", Value: oddDir},
+			{Name: name, Key: "parity", Value: parityDir},
+			{Name: name, Key: "use_spooling", Value: "true"},
+		},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
+		QuickTestOK:                  true,
+	})
+}
+
 // =============================================================================
 // Unit Tests - About (quota aggregation)
 // =============================================================================

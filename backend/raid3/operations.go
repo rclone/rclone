@@ -21,6 +21,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -30,8 +31,14 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-// Put uploads an object using the streaming path (single code path).
+// Put uploads an object. Dispatches to putEmptyFile (size 0), putSpooling (use_spooling true), or putStreaming.
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	if src.Size() == 0 {
+		return f.putEmptyFile(ctx, src, options...)
+	}
+	if f.opt.UseSpooling {
+		return f.putSpooling(ctx, in, src, options...)
+	}
 	return f.putStreaming(ctx, in, src, options...)
 }
 
@@ -72,6 +79,61 @@ func createParticleInfo(f *Fs, src fs.ObjectInfo, particleType string, size int6
 	return info
 }
 
+// putEmptyFile uploads an empty object (three 90-byte footer-only particles). Used by both stream and spool paths.
+func (f *Fs) putEmptyFile(ctx context.Context, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return nil, formatOperationError("write blocked in degraded mode (RAID 3 policy)", "", err)
+	}
+	ctx = f.disableRetriesForWrites(ctx)
+	putCtx, putCancel := context.WithTimeout(ctx, putOperationTimeout)
+	defer putCancel()
+
+	var uploadedParticles []fs.Object
+	var err error
+	defer func() {
+		if err != nil && f.opt.Rollback {
+			if rollbackErr := f.rollbackPut(putCtx, uploadedParticles); rollbackErr != nil {
+				fs.Errorf(f, "Rollback failed during Put (empty file): %v", rollbackErr)
+			}
+		}
+	}()
+
+	mtime := effectiveModTime(putCtx, f, src, options)
+	compression, _ := ConfigToFooterCompression(f.opt.Compression)
+
+	ft := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardEven)
+	fb, _ := ft.MarshalBinary()
+	evenR := bytes.NewReader(fb)
+	evenInfo := createParticleInfo(f, src, "even", FooterSize, false)
+	evenObj, err := f.even.Put(putCtx, evenR, evenInfo, options...)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
+	}
+	uploadedParticles = append(uploadedParticles, evenObj)
+
+	ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardOdd)
+	fb2, _ := ft2.MarshalBinary()
+	oddR := bytes.NewReader(fb2)
+	oddInfo := createParticleInfo(f, src, "odd", FooterSize, false)
+	oddObj, err := f.odd.Put(putCtx, oddR, oddInfo, options...)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
+	}
+	uploadedParticles = append(uploadedParticles, oddObj)
+
+	ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardParity)
+	fb3, _ := ft3.MarshalBinary()
+	parityR := bytes.NewReader(fb3)
+	parityInfo := createParticleInfo(f, src, "parity", FooterSize, false)
+	parityObj, err := f.parity.Put(putCtx, parityR, parityInfo, options...)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
+	}
+	uploadedParticles = append(uploadedParticles, parityObj)
+
+	return &Object{fs: f, remote: src.Remote()}, nil
+}
+
 // hashingReader wraps a reader and feeds bytes to MD5 and SHA-256 hashers while counting total bytes.
 type hashingReader struct {
 	r      io.Reader
@@ -101,6 +163,96 @@ func (h *hashingReader) Read(p []byte) (int, error) {
 func (h *hashingReader) ContentLength() int64   { return h.n }
 func (h *hashingReader) MD5Sum() [16]byte      { return [16]byte(h.md5.Sum(nil)) }
 func (h *hashingReader) SHA256Sum() [32]byte   { return [32]byte(h.sha256.Sum(nil)) }
+
+// particlesBuildResult holds the outcome of buildParticlesToWriters for use by putStreaming and putSpooling.
+type particlesBuildResult struct {
+	ContentLength int64
+	TotalEven     int64
+	TotalOdd      int64
+	MD5Sum        [16]byte
+	SHA256Sum     [32]byte
+	Mtime         time.Time
+	Compression   [4]byte
+}
+
+// buildParticlesToWriters reads from in, splits into even/odd/parity, writes footer to the three writers.
+// Used by both putStreaming (writers are pipe ends) and putSpooling (writers are temp files).
+// isOddLengthCh may be nil when size is known (spool path); for streaming with unknown size it is used by the splitter.
+func buildParticlesToWriters(ctx context.Context, f *Fs, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, srcSize int64, evenW, oddW, parityW io.Writer, isOddLengthCh chan bool) (*particlesBuildResult, error) {
+	compression, _ := ConfigToFooterCompression(f.opt.Compression)
+
+	hasher := newHashingReader(in)
+	var splitInput io.Reader = io.Reader(hasher)
+	if f.opt.Compression != "none" && f.opt.Compression != "" {
+		cr, err := newCompressingReader(hasher, f.opt.Compression)
+		if err != nil {
+			return nil, fmt.Errorf("compression: %w", err)
+		}
+		splitInput = cr
+	}
+
+	producerPipeR, producerPipeW := io.Pipe()
+	producerInput := splitInput // capture for goroutine; must not read from pipe
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				_ = producerPipeW.CloseWithError(fmt.Errorf("producer panic: %v", r))
+			}
+		}()
+		_, copyErr := io.Copy(producerPipeW, producerInput)
+		_ = producerPipeW.CloseWithError(copyErr)
+	}()
+	splitInput = bufio.NewReaderSize(producerPipeR, streamProducerBufferSize)
+
+	splitter := NewStreamSplitter(evenW, oddW, parityW, streamReadChunkSize, isOddLengthCh)
+	if err := splitter.Split(splitInput); err != nil {
+		return nil, err
+	}
+
+	contentLength := hasher.ContentLength()
+	if srcSize >= 0 && contentLength != srcSize {
+		return nil, formatOperationError("upload failed", fmt.Sprintf("stream truncated: read %d bytes, expected %d (possible pipe/async reader backpressure)", contentLength, srcSize), nil)
+	}
+
+	totalEven := splitter.GetTotalEvenWritten()
+	totalOdd := splitter.GetTotalOddWritten()
+	if !ValidateParticleSizes(totalEven, totalOdd) {
+		return nil, formatOperationError("upload failed", fmt.Sprintf("internal: splitter produced invalid particle sizes even=%d, odd=%d (expected even=odd or even=odd+1)", totalEven, totalOdd), nil)
+	}
+
+	md5Sum := hasher.MD5Sum()
+	sha256Sum := hasher.SHA256Sum()
+	mtime := effectiveModTime(ctx, f, src, options)
+	for shard := 0; shard < 3; shard++ {
+		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, shard)
+		fb, errMarshal := ft.MarshalBinary()
+		if errMarshal != nil {
+			return nil, errMarshal
+		}
+		var w io.Writer
+		switch shard {
+		case ShardEven:
+			w = evenW
+		case ShardOdd:
+			w = oddW
+		case ShardParity:
+			w = parityW
+		}
+		if _, err := w.Write(fb); err != nil {
+			return nil, err
+		}
+	}
+
+	return &particlesBuildResult{
+		ContentLength: contentLength,
+		TotalEven:     totalEven,
+		TotalOdd:      totalOdd,
+		MD5Sum:        md5Sum,
+		SHA256Sum:     sha256Sum,
+		Mtime:         mtime,
+		Compression:   compression,
+	}, nil
+}
 
 // verifyParticleSizes verifies that uploaded particles have the correct sizes
 func verifyParticleSizes(ctx context.Context, f *Fs, evenObj, oddObj fs.Object, evenWritten, oddWritten int64) error {
@@ -158,110 +310,26 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		}
 	}()
 
-	// Handle empty file case
+	// putStreaming is only used for non-empty files (empty is handled by putEmptyFile in Put()).
 	srcSize := src.Size()
-	mtime := effectiveModTime(putCtx, f, src, options)
-	compression, _ := ConfigToFooterCompression(f.opt.Compression) // validated in NewFs
-	if srcSize == 0 {
-		// Empty file - create empty particles (90-byte footer only each)
-		ft := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardEven)
-		fb, _ := ft.MarshalBinary()
-		evenR := bytes.NewReader(fb)
-		ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardOdd)
-		fb2, _ := ft2.MarshalBinary()
-		oddR := bytes.NewReader(fb2)
-		ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardParity)
-		fb3, _ := ft3.MarshalBinary()
-		parityR := bytes.NewReader(fb3)
-		evenInfo := createParticleInfo(f, src, "even", FooterSize, false)
-		evenObj, err := f.even.Put(putCtx, evenR, evenInfo, options...)
-		if err != nil {
-			return nil, fmt.Errorf("%s: failed to upload even particle: %w", f.even.Name(), err)
-		}
-		uploadedParticles = append(uploadedParticles, evenObj)
-
-		oddInfo := createParticleInfo(f, src, "odd", FooterSize, false)
-		oddObj, err := f.odd.Put(putCtx, oddR, oddInfo, options...)
-		if err != nil {
-			return nil, fmt.Errorf("%s: failed to upload odd particle: %w", f.odd.Name(), err)
-		}
-		uploadedParticles = append(uploadedParticles, oddObj)
-
-		parityInfo := createParticleInfo(f, src, "parity", FooterSize, false)
-		parityObj, err := f.parity.Put(putCtx, parityR, parityInfo, options...)
-		if err != nil {
-			return nil, fmt.Errorf("%s: failed to upload parity particle: %w", f.parity.Name(), err)
-		}
-		uploadedParticles = append(uploadedParticles, parityObj)
-
-		return &Object{fs: f, remote: src.Remote()}, nil
-	}
-
-	// Single streaming path for all non-empty files (chunker-style: one path, no size-based buffering).
-	// Producer goroutine + 8 MiB bufio decouples source from splitter so the full stream
-	// is read even when particle pipes backpressure. Small objects are just short streams.
-
-	// Determine if file is odd-length from source size (if available)
-	// If size is unknown (-1), we'll determine it during streaming
 	isOddLength := srcSize > 0 && srcSize%2 == 1
 
-	hasher := newHashingReader(in)
-	var splitInput io.Reader = io.Reader(hasher)
-	if f.opt.Compression != "none" && f.opt.Compression != "" {
-		cr, err := newCompressingReader(hasher, f.opt.Compression)
-		if err != nil {
-			return nil, fmt.Errorf("compression: %w", err)
-		}
-		splitInput = cr
-	}
-
-	// Decouple source from splitter with a producer goroutine and large buffer (see
-	// backend/compress: pipe + bufio so the full stream is read even when particle
-	// pipes backpressure). The producer reads from splitInput into a pipe; the
-	// splitter reads from the pipe via an 8 MiB bufio. When the splitter blocks on
-	// writing to the three particle pipes, it stops reading from the bufio; the bufio
-	// can hold up to streamProducerBufferSize, so the source is fully drained.
-	producerPipeR, producerPipeW := io.Pipe()
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				_ = producerPipeW.CloseWithError(fmt.Errorf("producer panic: %v", r))
-			}
-		}()
-		_, copyErr := io.Copy(producerPipeW, splitInput)
-		_ = producerPipeW.CloseWithError(copyErr)
-	}()
-	splitInput = bufio.NewReaderSize(producerPipeR, streamProducerBufferSize)
-
-	// Create pipes for streaming even, odd, and parity data
 	evenPipeR, evenPipeW := io.Pipe()
 	oddPipeR, oddPipeW := io.Pipe()
 	parityPipeR, parityPipeW := io.Pipe()
 
-	// Channel to communicate isOddLength from splitter to parity uploader
-	// Only needed if size is unknown (-1)
 	var isOddLengthCh chan bool
 	if srcSize < 0 {
 		isOddLengthCh = make(chan bool, 1)
-		isOddLengthCh <- false // Default to even-length
+		isOddLengthCh <- false
 	}
 
 	var evenObj, oddObj fs.Object
-
-	// Use errgroup for the Put goroutines; run the splitter in the calling goroutine
-	// so the source reader (e.g. accounting.Account from rclone copy) is consumed
-	// on the same goroutine that called Put, avoiding deadlocks with pipe/async readers.
 	g, gCtx := errgroup.WithContext(putCtx)
 	var uploadedMu sync.Mutex
 
-	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, streamReadChunkSize, isOddLengthCh)
-
-	// Start Put goroutines with staggered delays to reduce concurrent CreateMultipartUpload
-	// load on MinIO (avoids intermittent hangs when all 3 hit MinIO simultaneously).
-	// Goroutine 1: Put even particle (reads from evenPipeR)
 	g.Go(func() error {
 		defer func() { _ = evenPipeR.Close() }()
-		// Use unknown size (-1) since we're streaming
 		evenInfo := createParticleInfo(f, src, "even", -1, isOddLength)
 		obj, err := f.even.Put(gCtx, evenPipeR, evenInfo, options...)
 		if err != nil {
@@ -274,7 +342,6 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil
 	})
 
-	// Goroutine 2: Put odd particle (reads from oddPipeR)
 	g.Go(func() error {
 		time.Sleep(putStaggerDelay)
 		defer func() { _ = oddPipeR.Close() }()
@@ -290,22 +357,16 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil
 	})
 
-	// Goroutine 3: Put parity particle (reads from parityPipeR)
 	g.Go(func() error {
 		time.Sleep(2 * putStaggerDelay)
 		defer func() { _ = parityPipeR.Close() }()
-
-		// Get isOddLength - use source size if known, otherwise from channel
 		parityIsOddLength := isOddLength
 		if srcSize < 0 && isOddLengthCh != nil {
-			// Try to get from channel (non-blocking, use latest value)
 			select {
 			case parityIsOddLength = <-isOddLengthCh:
 			default:
-				// Use default (even-length)
 			}
 		}
-
 		parityInfo := createParticleInfo(f, src, "parity", -1, parityIsOddLength)
 		obj, err := f.parity.Put(gCtx, parityPipeR, parityInfo, options...)
 		if err != nil {
@@ -317,92 +378,171 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil
 	})
 
-	// Run splitter in this goroutine so the source reader (e.g. Account from copy) is consumed here
-	errSplit := splitter.Split(splitInput)
-	if errSplit != nil {
-		_ = evenPipeW.CloseWithError(errSplit)
-		_ = oddPipeW.CloseWithError(errSplit)
-		_ = parityPipeW.CloseWithError(errSplit)
-		gErr := g.Wait()
-		// If splitter failed due to a consumer closing the pipe (one Put failed), surface the real backend error
-		if gErr != nil {
+	res, errBuild := buildParticlesToWriters(putCtx, f, in, src, options, srcSize, evenPipeW, oddPipeW, parityPipeW, isOddLengthCh)
+	if errBuild != nil {
+		_ = evenPipeW.CloseWithError(errBuild)
+		_ = oddPipeW.CloseWithError(errBuild)
+		_ = parityPipeW.CloseWithError(errBuild)
+		if gErr := g.Wait(); gErr != nil {
 			return nil, gErr
 		}
-		return nil, errSplit
-	}
-	contentLength := hasher.ContentLength()
-	// When source size is known, detect truncation (e.g. pipe/AsyncReader backpressure or early EOF)
-	if srcSize >= 0 && contentLength != srcSize {
-		_ = evenPipeW.CloseWithError(fmt.Errorf("stream truncated: read %d bytes, expected %d", contentLength, srcSize))
-		_ = oddPipeW.CloseWithError(fmt.Errorf("stream truncated: read %d bytes, expected %d", contentLength, srcSize))
-		_ = parityPipeW.CloseWithError(fmt.Errorf("stream truncated: read %d bytes, expected %d", contentLength, srcSize))
-		_ = g.Wait()
-		err = formatOperationError("upload failed", fmt.Sprintf("stream truncated: read %d bytes, expected %d (possible pipe/async reader backpressure)", contentLength, srcSize), nil)
-		return nil, err
-	}
-	// Defensive: splitter must produce even/odd sizes that differ by 0 or 1 (RAID 3 layout)
-	totalEvenPayload := splitter.GetTotalEvenWritten()
-	totalOddPayload := splitter.GetTotalOddWritten()
-	if !ValidateParticleSizes(totalEvenPayload, totalOddPayload) {
-		_ = evenPipeW.CloseWithError(fmt.Errorf("internal: splitter produced invalid sizes even=%d odd=%d", totalEvenPayload, totalOddPayload))
-		_ = oddPipeW.CloseWithError(fmt.Errorf("internal: splitter produced invalid sizes even=%d odd=%d", totalEvenPayload, totalOddPayload))
-		_ = parityPipeW.CloseWithError(fmt.Errorf("internal: splitter produced invalid sizes even=%d odd=%d", totalEvenPayload, totalOddPayload))
-		_ = g.Wait()
-		err = formatOperationError("upload failed", fmt.Sprintf("internal: splitter produced invalid particle sizes even=%d, odd=%d (expected even=odd or even=odd+1)", totalEvenPayload, totalOddPayload), nil)
-		return nil, err
-	}
-	md5Sum := hasher.MD5Sum()
-	sha256Sum := hasher.SHA256Sum()
-	streamMtime := effectiveModTime(gCtx, f, src, options)
-	for shard := 0; shard < 3; shard++ {
-		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], streamMtime, compression, shard)
-		fb, errMarshal := ft.MarshalBinary()
-		if errMarshal != nil {
-			_ = evenPipeW.Close()
-			_ = oddPipeW.Close()
-			_ = parityPipeW.Close()
-			_ = g.Wait()
-			return nil, errMarshal
-		}
-		var w io.Writer
-		switch shard {
-		case ShardEven:
-			w = evenPipeW
-		case ShardOdd:
-			w = oddPipeW
-		case ShardParity:
-			w = parityPipeW
-		}
-		if _, err := w.Write(fb); err != nil {
-			_ = evenPipeW.Close()
-			_ = oddPipeW.Close()
-			_ = parityPipeW.Close()
-			_ = g.Wait()
-			return nil, err
-		}
+		return nil, errBuild
 	}
 	_ = evenPipeW.Close()
 	_ = oddPipeW.Close()
 	_ = parityPipeW.Close()
 
-	// Wait for all Put goroutines to complete
 	if err = g.Wait(); err != nil {
 		return nil, err
 	}
 
-	// Get written sizes from splitter for verification (payload + footer)
-	totalEvenWritten := splitter.GetTotalEvenWritten() + FooterSize
-	totalOddWritten := splitter.GetTotalOddWritten() + FooterSize
-
-	// Verify sizes
+	totalEvenWritten := res.TotalEven + FooterSize
+	totalOddWritten := res.TotalOdd + FooterSize
 	if err := verifyParticleSizes(ctx, f, evenObj, oddObj, totalEvenWritten, totalOddWritten); err != nil {
 		return nil, err
 	}
 
-	return &Object{
-		fs:     f,
-		remote: src.Remote(),
-	}, nil
+	return &Object{fs: f, remote: src.Remote()}, nil
+}
+
+// putSpooling writes particles to local temp files, then uploads with known size. Pre-flight runs after spooling.
+func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	srcSize := src.Size()
+
+	// Use rclone's temp location (same as fs/operations spool and fs/newfs TemporaryLocalFs):
+	// when staging_dir is not set, use os.TempDir() which respects --temp-dir / TMPDIR.
+	// Create with 0700 so only we can access it and avoid permission issues.
+	var stagingDir string
+	if f.opt.StagingDir != "" {
+		sanitized := strings.ReplaceAll(src.Remote(), "/", "_")
+		sanitized = strings.ReplaceAll(sanitized, ":", "_")
+		stagingDir = filepath.Join(f.opt.StagingDir, fmt.Sprintf("rclone-raid3-%s-%d", sanitized, time.Now().UnixNano()))
+		if err := os.MkdirAll(stagingDir, 0700); err != nil {
+			return nil, fmt.Errorf("staging dir: %w", err)
+		}
+	} else {
+		var err error
+		stagingDir, err = os.MkdirTemp(os.TempDir(), "rclone-raid3-*")
+		if err != nil {
+			return nil, fmt.Errorf("staging dir: %w", err)
+		}
+	}
+	defer func() { _ = os.RemoveAll(stagingDir) }()
+
+	evenPath := filepath.Join(stagingDir, "even")
+	oddPath := filepath.Join(stagingDir, "odd")
+	parityPath := filepath.Join(stagingDir, "parity")
+
+	evenFile, err := os.Create(evenPath)
+	if err != nil {
+		return nil, fmt.Errorf("create even particle file: %w", err)
+	}
+	oddFile, err := os.Create(oddPath)
+	if err != nil {
+		_ = evenFile.Close()
+		return nil, fmt.Errorf("create odd particle file: %w", err)
+	}
+	parityFile, err := os.Create(parityPath)
+	if err != nil {
+		_ = evenFile.Close()
+		_ = oddFile.Close()
+		return nil, fmt.Errorf("create parity particle file: %w", err)
+	}
+
+	res, errBuild := buildParticlesToWriters(ctx, f, in, src, options, srcSize, evenFile, oddFile, parityFile, nil)
+	if errBuild != nil {
+		_ = evenFile.Close()
+		_ = oddFile.Close()
+		_ = parityFile.Close()
+		return nil, errBuild
+	}
+
+	if err := evenFile.Close(); err != nil {
+		return nil, fmt.Errorf("close even particle file: %w", err)
+	}
+	if err := oddFile.Close(); err != nil {
+		return nil, fmt.Errorf("close odd particle file: %w", err)
+	}
+	if err := parityFile.Close(); err != nil {
+		return nil, fmt.Errorf("close parity particle file: %w", err)
+	}
+
+	evenStat, err := os.Stat(evenPath)
+	if err != nil {
+		return nil, fmt.Errorf("stat even particle: %w", err)
+	}
+	oddStat, err := os.Stat(oddPath)
+	if err != nil {
+		return nil, fmt.Errorf("stat odd particle: %w", err)
+	}
+	parityStat, err := os.Stat(parityPath)
+	if err != nil {
+		return nil, fmt.Errorf("stat parity particle: %w", err)
+	}
+
+	evenSize := evenStat.Size()
+	oddSize := oddStat.Size()
+	paritySize := parityStat.Size()
+	isOddLength := res.TotalEven > res.TotalOdd
+
+	// Pre-flight after spool: backends only needed for upload phase
+	if err := f.checkAllBackendsAvailable(ctx); err != nil {
+		return nil, formatOperationError("write blocked in degraded mode (RAID 3 policy)", "", err)
+	}
+	ctx = f.disableRetriesForWrites(ctx)
+	uploadCtx, uploadCancel := context.WithTimeout(ctx, putOperationTimeout)
+	defer uploadCancel()
+
+	var uploadedParticles []fs.Object
+	var errUpload error
+	defer func() {
+		if errUpload != nil && f.opt.Rollback {
+			if rollbackErr := f.rollbackPut(uploadCtx, uploadedParticles); rollbackErr != nil {
+				fs.Errorf(f, "Rollback failed during Put (spool): %v", rollbackErr)
+			}
+		}
+	}()
+
+	evenR, err := os.Open(evenPath)
+	if err != nil {
+		return nil, fmt.Errorf("open even particle for upload: %w", err)
+	}
+	defer func() { _ = evenR.Close() }()
+	evenInfo := createParticleInfo(f, src, "even", evenSize, isOddLength)
+	evenObj, err := f.even.Put(uploadCtx, evenR, evenInfo, options...)
+	if err != nil {
+		errUpload = err
+		return nil, formatParticleError(f.even, "even", "upload failed", fmt.Sprintf("remote %q", src.Remote()), err)
+	}
+	uploadedParticles = append(uploadedParticles, evenObj)
+
+	oddR, err := os.Open(oddPath)
+	if err != nil {
+		return nil, fmt.Errorf("open odd particle for upload: %w", err)
+	}
+	defer func() { _ = oddR.Close() }()
+	oddInfo := createParticleInfo(f, src, "odd", oddSize, isOddLength)
+	oddObj, err := f.odd.Put(uploadCtx, oddR, oddInfo, options...)
+	if err != nil {
+		errUpload = err
+		return nil, formatParticleError(f.odd, "odd", "upload failed", fmt.Sprintf("remote %q", src.Remote()), err)
+	}
+	uploadedParticles = append(uploadedParticles, oddObj)
+
+	parityR, err := os.Open(parityPath)
+	if err != nil {
+		return nil, fmt.Errorf("open parity particle for upload: %w", err)
+	}
+	defer func() { _ = parityR.Close() }()
+	parityInfo := createParticleInfo(f, src, "parity", paritySize, isOddLength)
+	parityObj, err := f.parity.Put(uploadCtx, parityR, parityInfo, options...)
+	if err != nil {
+		errUpload = err
+		return nil, formatParticleError(f.parity, "parity", "upload failed", fmt.Sprintf("remote %q", src.Remote()), err)
+	}
+	uploadedParticles = append(uploadedParticles, parityObj)
+
+	return &Object{fs: f, remote: src.Remote()}, nil
 }
 
 // Move moves an object to a new remote location

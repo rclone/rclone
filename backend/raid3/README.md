@@ -83,9 +83,13 @@ even = /path/to/backend1       # Even-indexed bytes (or s3:bucket1/data)
 odd = /path/to/backend2        # Odd-indexed bytes (or gdrive:backup/data)
 parity = /path/to/backend3     # XOR parity (or dropbox:parity)
 compression = none              # Optional: none (default), snappy, or zstd
+use_spooling = true             # Default: spool particles to disk before upload (set false for streaming)
+staging_dir =                   # Optional: dir for spooled particles (default: system temp)
 ```
 
 All three remotes can use different storage backends (local filesystem, S3, Google Drive, Dropbox, etc.). The **compression** option controls whether object data is compressed before splitting: `none` (default) stores data as-is; `snappy` compresses after hashing (fast, moderate ratio); `zstd` uses Zstandard (better ratio, default level). Reads use the footer to decompress transparently.
+
+**Spooling (`use_spooling`)**: When `true`, the backend writes particles to local temp files first, then uploads them with known size. This helps with SFTP timeouts, MinIO retries, and backends that require known size (e.g. Meta). Temporary disk space of about 1× the object size is required. Pre-flight (backend availability) runs after spooling, so upload retries can reuse the staged files. Leave `staging_dir` empty to use the system temp directory, or set it to a path (e.g. a fast SSD) for spool files.
 
 ## Feature Handling with Mixed Remotes
 

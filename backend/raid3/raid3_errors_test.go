@@ -201,8 +201,8 @@ func TestDeleteFailsWithUnavailableBackend(t *testing.T) {
 	obj, err := f.NewObject(ctx, remote)
 	require.NoError(t, err)
 
-	// Make odd backend unavailable (read-only)
-	err = os.Chmod(oddDir, 0444)
+	// Make odd backend unavailable for write (dir 0555 = listable but not writable, so no permission denied on list)
+	err = os.Chmod(oddDir, 0555)
 	require.NoError(t, err)
 	defer func() { _ = os.Chmod(oddDir, 0755) }() // Restore for cleanup
 
@@ -213,7 +213,7 @@ func TestDeleteFailsWithUnavailableBackend(t *testing.T) {
 	assert.Contains(t, err.Error(), "RAID 3 policy", "Error should mention RAID 3 policy")
 
 	// Verify no particles were deleted (operation failed before deletion)
-	// Note: We can't check odd particle directly because directory is read-only
+	// Note: We don't check odd particle here; directory is not writable (0555)
 	evenPath := filepath.Join(evenDir, remote)
 	parityPath := filepath.Join(parityDir, remote)
 
@@ -346,13 +346,13 @@ func TestMoveFailsWithUnavailableBackend(t *testing.T) {
 	_, err = f.NewObject(ctx, oldRemote)
 	require.NoError(t, err)
 
-	// Test Move with backend unavailable by making a backend read-only
+	// Test Move with backend unavailable by making a backend not writable (0555 = listable, no write)
 	// This simulates backend unavailability for the Move operation
 	oldObj, err := f.NewObject(ctx, oldRemote)
 	require.NoError(t, err)
 
-	// Make odd backend read-only to simulate unavailability
-	err = os.Chmod(oddDir, 0444)
+	// Make odd backend not writable (0555) to simulate unavailability
+	err = os.Chmod(oddDir, 0555)
 	require.NoError(t, err)
 	defer func() {
 		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
@@ -641,8 +641,8 @@ func TestUpdateFailsWithUnavailableBackend(t *testing.T) {
 	obj, err := f.NewObject(ctx, remote)
 	require.NoError(t, err)
 
-	// Make odd backend read-only to simulate failure during update
-	err = os.Chmod(oddDir, 0444)
+	// Make odd backend not writable (0555) to simulate failure during update
+	err = os.Chmod(oddDir, 0555)
 	require.NoError(t, err)
 	defer func() {
 		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
@@ -1218,8 +1218,8 @@ func TestPutRollbackOnFailure(t *testing.T) {
 	data := []byte("Test data for rollback")
 
 	// Make parity backend read-only after Put starts to simulate failure mid-upload
-	// We'll do this by making parity dir read-only before the operation
-	err = os.Chmod(parityDir, 0444)
+	// We'll do this by making parity dir not writable (0555) before the operation
+	err = os.Chmod(parityDir, 0555)
 	require.NoError(t, err)
 	defer func() {
 		_ = os.Chmod(parityDir, 0755) // Restore for cleanup
@@ -1291,8 +1291,8 @@ func TestMoveRollbackOnFailure(t *testing.T) {
 	oldObj, err := f.NewObject(ctx, oldRemote)
 	require.NoError(t, err)
 
-	// Make odd backend read-only to simulate failure during move
-	err = os.Chmod(oddDir, 0444)
+	// Make odd backend not writable (0555) to simulate failure during move
+	err = os.Chmod(oddDir, 0555)
 	require.NoError(t, err)
 	defer func() {
 		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
@@ -1385,8 +1385,8 @@ func TestCopyFailsWithUnavailableBackend(t *testing.T) {
 	oldObj, err := f.NewObject(ctx, oldRemote)
 	require.NoError(t, err)
 
-	// Make odd backend read-only to simulate unavailability
-	err = os.Chmod(oddDir, 0444)
+	// Make odd backend not writable (0555) to simulate unavailability
+	err = os.Chmod(oddDir, 0555)
 	require.NoError(t, err)
 	defer func() {
 		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
@@ -1459,8 +1459,8 @@ func TestCopyRollbackOnFailure(t *testing.T) {
 	oldObj, err := f.NewObject(ctx, oldRemote)
 	require.NoError(t, err)
 
-	// Make odd backend read-only to simulate failure during copy
-	err = os.Chmod(oddDir, 0444)
+	// Make odd backend not writable (0555) to simulate failure during copy
+	err = os.Chmod(oddDir, 0555)
 	require.NoError(t, err)
 	defer func() {
 		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
@@ -1532,8 +1532,8 @@ func TestRollbackDisabled(t *testing.T) {
 	remote := "partial.txt"
 	data := []byte("Partial file test")
 
-	// Make parity backend read-only to cause failure
-	err = os.Chmod(parityDir, 0444)
+	// Make parity backend not writable (0555) to cause failure
+	err = os.Chmod(parityDir, 0555)
 	require.NoError(t, err)
 	defer func() {
 		_ = os.Chmod(parityDir, 0755)
@@ -1601,8 +1601,8 @@ func TestUpdateRollbackOnFailure(t *testing.T) {
 	obj, err := f.NewObject(ctx, remote)
 	require.NoError(t, err)
 
-	// Make odd backend read-only to simulate failure during update
-	err = os.Chmod(oddDir, 0444)
+	// Make odd backend not writable (0555) to simulate failure during update
+	err = os.Chmod(oddDir, 0555)
 	require.NoError(t, err)
 	defer func() {
 		_ = os.Chmod(oddDir, 0755) // Restore for cleanup

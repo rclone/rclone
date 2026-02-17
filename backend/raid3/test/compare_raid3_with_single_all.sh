@@ -25,6 +25,9 @@
 # Environment:
 #   RCLONE_CONFIG   Path to rclone configuration file.
 #                   Defaults to $HOME/.config/rclone/rclone.conf.
+#   COMPARE_ALL_SLEEP_BETWEEN_TESTS  Seconds to sleep between test script runs (default: 2).
+#                   Helps avoid failures when tests pass individually but fail in sequence
+#                   (e.g. heal/rebuild background work or filesystem state). Set to 0 to disable.
 #
 # Safety guard: the script must be executed from backend/raid3/test directory.
 # -----------------------------------------------------------------------------
@@ -69,6 +72,8 @@ done
 
 VERBOSE=0
 STORAGE_TYPE_FILTER=""
+# Seconds to wait between test runs so previous test's rclone/FS state can settle (avoid sequential failures)
+SLEEP_BETWEEN_TESTS="${COMPARE_ALL_SLEEP_BETWEEN_TESTS:-2}"
 
 # Test scripts and their storage types
 # Format: "script_name:storage_type1,storage_type2,..."
@@ -205,6 +210,7 @@ main() {
   log_info "all" "=========================================="
   log_info "all" "Running all RAID3 integration tests"
   [[ -n "${STORAGE_TYPE_FILTER}" ]] && log_info "all" "Storage type filter: ${STORAGE_TYPE_FILTER} only"
+  [[ "${SLEEP_BETWEEN_TESTS}" -gt 0 ]] && log_info "all" "Sleep between tests: ${SLEEP_BETWEEN_TESTS}s (set COMPARE_ALL_SLEEP_BETWEEN_TESTS=0 to disable)"
   log_info "all" "=========================================="
   echo ""
 
@@ -281,6 +287,11 @@ main() {
           failed_tests=$((failed_tests + 1))
           failed_test_list+=("${script_name} (${storage_type})")
         fi
+      fi
+
+      # Allow previous test's rclone/FS state to settle before next run (avoids sequential failures)
+      if [[ "${SLEEP_BETWEEN_TESTS}" -gt 0 ]]; then
+        sleep "${SLEEP_BETWEEN_TESTS}"
       fi
     done
 
