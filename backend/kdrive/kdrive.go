@@ -30,7 +30,6 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/xxh3"
-	"golang.org/x/oauth2"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -98,12 +97,10 @@ type Fs struct {
 	root       string             // the path we are working on
 	opt        Options            // parsed options
 	features   *fs.Features       // optional features
-	ts         oauth2.TokenSource // the token source, used to create new clients
 	srv        *rest.Client       // the connection to the server
 	cleanupSrv *rest.Client       // the connection used for the cleanup method
 	dirCache   *dircache.DirCache // Map of directory path to directory id
 	pacer      *fs.Pacer          // pacer for API calls
-	// tokenRenewer *oauthutil.Renew       // renew the token on expiry
 }
 
 // Object describes a kdrive object
@@ -227,18 +224,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	root = parsePath(root)
 	fs.Debugf(ctx, "NewFs: for root=%s", root)
 
-	staticToken := oauth2.Token{AccessToken: opt.AccessToken}
-	ts := oauth2.StaticTokenSource(&staticToken)
-	oAuthClient := oauth2.NewClient(ctx, ts)
-
 	f := &Fs{
 		name:  name,
 		root:  root,
 		opt:   *opt,
-		ts:    ts,
-		srv:   rest.NewClient(oAuthClient).SetRoot(opt.Endpoint),
+		srv:   rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
+	f.srv.SetHeader("Authorization", "Bearer "+opt.AccessToken)
 	f.cleanupSrv = rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint)
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
