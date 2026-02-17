@@ -149,7 +149,8 @@ func parsePath(path string) (root string) {
 
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
-	429, // Too Many Requests.
+	408, // Request Timeout
+	429, // Too Many Requests
 	500, // Internal Server Error
 	502, // Bad Gateway
 	503, // Service Unavailable
@@ -163,24 +164,8 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	doRetry := false
 
-	// Check if it is an api.Error
-	if _, ok := err.(*api.ResultStatus); ok {
-		// Errors are classified as 1xx, 2xx, etc.
-		switch resp.StatusCode / 100 {
-		case 4: // 4xxx: rate limiting
-			doRetry = true
-		case 5: // 5xxx: internal errors
-			doRetry = true
-		}
-	}
-
-	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
-		doRetry = true
-		fs.Debugf(nil, "Should retry: %v", err)
-	}
-	return doRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // readMetaDataForPath reads the metadata from the path
@@ -399,10 +384,15 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		return result, nil
 	}
 
+	var listErr error
 	var recursiveContents func(currentDirID string, currentSubDir string, fromCursor string)
 	recursiveContents = func(currentDirID string, currentSubDir string, fromCursor string) {
+		if listErr != nil {
+			return
+		}
 		result, err := listSomeFiles(currentDirID, fromCursor)
 		if err != nil {
+			listErr = err
 			return
 		}
 
@@ -435,6 +425,9 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		}
 	}
 	recursiveContents(dirID, "", "")
+	if listErr != nil {
+		return found, listErr
+	}
 	return
 }
 
@@ -608,9 +601,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return fmt.Errorf("rmdir failed: %w", err)
 	}
 	f.dirCache.FlushDir(dir)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -1164,11 +1155,7 @@ func (o *Object) updateMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	}
 
 	// Extract the file info from the chunk writer
-	session, ok := chunkWriter.(*uploadSession)
-	if !ok {
-		return fmt.Errorf("unexpected chunk writer type")
-	}
-
+	session := chunkWriter.(*uploadSession)
 	if session.fileInfo == nil {
 		return fmt.Errorf("upload failed: no file info returned")
 	}
