@@ -215,3 +215,94 @@ func TestListRecursive(t *testing.T) {
 	assert.Contains(t, remoteList, "test-list-subfolder/test-list-subsubfolder")
 	assert.Contains(t, remoteList, "test-list-subfolder/test-list-subsubfolder/test-list-subsubfile.txt")
 }
+
+// TestPublicLink tests the creation and deletion of public links
+// go test -v ./backend/kdrive/ -remote TestKdrive: -run TestPublicLink -verbose
+func TestPublicLink(t *testing.T) {
+	ctx := context.Background()
+	fRemote := setupTestFs(t)
+
+	if fRemote.Features().PublicLink == nil {
+		t.Skip("PublicLink not supported")
+	}
+
+	// Create a test file
+	testContent := []byte("Test content for public link")
+	testFile := fmt.Sprintf("test-link-file-%d.txt", time.Now().UnixNano())
+	src := object.NewStaticObjectInfo(testFile, time.Now(), int64(len(testContent)), true, nil, fRemote)
+
+	obj, err := fRemote.Put(ctx, bytes.NewReader(testContent), src)
+	require.NoError(t, err, "Failed to create test file")
+	require.NotNil(t, obj)
+
+	testFile2 := fmt.Sprintf("test-link-file-%d.txt", time.Now().UnixNano())
+	src = object.NewStaticObjectInfo(testFile2, time.Now(), int64(len(testContent)), true, nil, fRemote)
+
+	obj, err = fRemote.Put(ctx, bytes.NewReader(testContent), src)
+	require.NoError(t, err, "Failed to create test file")
+	require.NotNil(t, obj)
+
+	// Test 1: Create public link for file
+	t.Run("Create link for file", func(t *testing.T) {
+		link, err := fRemote.Features().PublicLink(ctx, testFile, 0, false)
+		require.NoError(t, err)
+		assert.NotEmpty(t, link)
+		assert.Contains(t, link, "infomaniak")
+		fs.Debugf(nil, "Created public link: %s", link)
+	})
+
+	// Test 2: Get existing link (should return the same link)
+	t.Run("Get existing link for file", func(t *testing.T) {
+		link, err := fRemote.Features().PublicLink(ctx, testFile, 0, false)
+		require.NoError(t, err)
+		assert.NotEmpty(t, link)
+		fs.Debugf(nil, "Retrieved public link: %s", link)
+	})
+
+	// Test 3: Create public link with expiration
+	t.Run("Create link with expiration", func(t *testing.T) {
+		expire := fs.Duration(24 * time.Hour)
+		link, err := fRemote.Features().PublicLink(ctx, testFile, expire, false)
+		require.NoError(t, err)
+		assert.NotEmpty(t, link)
+		fs.Debugf(nil, "Created public link with expiration: %s", link)
+	})
+
+	// Test 4: Test with directory
+	t.Run("Create link for directory", func(t *testing.T) {
+		testDir := fmt.Sprintf("test-link-dir-%d", time.Now().UnixNano())
+		err := fRemote.Mkdir(ctx, testDir)
+		require.NoError(t, err)
+
+		link, err := fRemote.Features().PublicLink(ctx, testDir, 0, false)
+		require.NoError(t, err)
+		assert.NotEmpty(t, link)
+		assert.Contains(t, link, "infomaniak")
+		fs.Debugf(nil, "Created public link for directory: %s", link)
+
+		// Clean up the directory using Rmdir instead of dirCache
+		err = fRemote.Rmdir(ctx, testDir)
+		if err != nil {
+			t.Logf("Warning: failed to remove test directory: %v", err)
+		}
+	})
+
+	// Test 5: Remove public link
+	t.Run("Remove public link", func(t *testing.T) {
+		_, err := fRemote.Features().PublicLink(ctx, testFile, 0, true)
+		require.NoError(t, err)
+		fs.Debugf(nil, "Removed public link for: %s", testFile)
+	})
+
+	// Test 6: Try to remove link for non-existent file (should error)
+	t.Run("Remove link for non-existent file fails", func(t *testing.T) {
+		_, err := fRemote.Features().PublicLink(ctx, "non-existent-file.txt", 0, true)
+		assert.Error(t, err)
+	})
+
+	// Test 7: Try to non existent link (should error)
+	t.Run("Remove non-existent link fails", func(t *testing.T) {
+		_, err := fRemote.Features().PublicLink(ctx, testFile2, 0, true)
+		assert.Error(t, err)
+	})
+}
