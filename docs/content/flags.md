@@ -121,7 +121,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.73.0")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.73.1")
 ```
 
 
@@ -605,9 +605,11 @@ Backend-only flags (these can be set in the config file also).
       --filefabric-token-expiry string                      Token expiry time
       --filefabric-url string                               URL of the Enterprise File Fabric to connect to
       --filefabric-version string                           Version read from the file fabric
+      --filelu-chunk-size SizeSuffix                        Chunk size to use for uploading. Used for multipart uploads (default 64Mi)
       --filelu-description string                           Description of the remote
       --filelu-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,CrLf,Del,Ctl,LeftSpace,LeftPeriod,LeftTilde,LeftCrLfHtVt,RightSpace,RightPeriod,RightCrLfHtVt,InvalidUtf8,Dot,SquareBracket,Semicolon,Exclamation)
       --filelu-key string                                   Your FileLu Rclone key from My Account
+      --filelu-upload-cutoff SizeSuffix                     Cutoff for switching to chunked upload. Any files larger than this will be uploaded in chunks of chunk_size (default 500Mi)
       --filen-api-key string                                API Key for your Filen account (obscured)
       --filen-auth-version string                           Authentication Version (internal use only)
       --filen-base-folder-uuid string                       UUID of Account Root Directory (internal use only)

@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "rclone" "1" "Jan 30, 2026" "User Manual" ""
+.TH "rclone" "1" "Feb 17, 2026" "User Manual" ""
 .hy
 .SH NAME
 .PP
@@ -6292,14 +6292,14 @@ rclone convmv \[dq]stories/The Quick Brown Fox!.txt\[dq] --name-transform \[dq]a
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{YYYYMMDD}\[dq]
-// Output: stories/The Quick Brown Fox!-20260130
+// Output: stories/The Quick Brown Fox!-20260217
 \f[R]
 .fi
 .IP
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{macfriendlytime}\[dq]
-// Output: stories/The Quick Brown Fox!-2026-01-30 0825PM
+// Output: stories/The Quick Brown Fox!-2026-02-17 0451PM
 \f[R]
 .fi
 .IP
@@ -6832,6 +6832,20 @@ incompatible with \f[V]--urls\f[R].
 This will do \f[V]--transfers\f[R] copies in parallel.
 Note that if \f[V]--auto-filename\f[R] is desired for all URLs then a
 file with only URLs and no filename can be used.
+.PP
+Each FILENAME in the CSV file can start with a relative path which will
+be appended to the destination path provided at the command line.
+For example, running the command shown above with the following CSV file
+will write two files to the destination:
+\f[V]remote:dir/local/path/bar.json\f[R] and
+\f[V]remote:dir/another/local/directory/qux.json\f[R]
+.IP
+.nf
+\f[C]
+https://example.org/foo/bar.json,local/path/bar.json
+https://example.org/qux/baz.json,another/local/directory/qux.json
+\f[R]
+.fi
 .SS Troubleshooting
 .PP
 If you can\[aq]t get \f[V]rclone copyurl\f[R] to work then here are some
@@ -29878,7 +29892,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.73.0\[dq])
+      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.73.1\[dq])
 \f[R]
 .fi
 .SS Performance
@@ -30362,9 +30376,11 @@ Backend-only flags (these can be set in the config file also).
       --filefabric-token-expiry string                      Token expiry time
       --filefabric-url string                               URL of the Enterprise File Fabric to connect to
       --filefabric-version string                           Version read from the file fabric
+      --filelu-chunk-size SizeSuffix                        Chunk size to use for uploading. Used for multipart uploads (default 64Mi)
       --filelu-description string                           Description of the remote
       --filelu-encoding Encoding                            The encoding for the backend (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,CrLf,Del,Ctl,LeftSpace,LeftPeriod,LeftTilde,LeftCrLfHtVt,RightSpace,RightPeriod,RightCrLfHtVt,InvalidUtf8,Dot,SquareBracket,Semicolon,Exclamation)
       --filelu-key string                                   Your FileLu Rclone key from My Account
+      --filelu-upload-cutoff SizeSuffix                     Cutoff for switching to chunked upload. Any files larger than this will be uploaded in chunks of chunk_size (default 500Mi)
       --filen-api-key string                                API Key for your Filen account (obscured)
       --filen-auth-version string                           Authentication Version (internal use only)
       --filen-base-folder-uuid string                       UUID of Account Root Directory (internal use only)
@@ -33145,19 +33161,23 @@ The following backends have known issues that need more investigation:
 \f[V]TestBisyncRemoteRemote/normalization\f[R] (https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
 .RE
 .IP \[bu] 2
-\f[V]TestSeafile\f[R] (\f[V]seafile\f[R])
+\f[V]TestInternxt\f[R] (\f[V]internxt\f[R])
 .RS 2
 .IP \[bu] 2
-\f[V]TestBisyncLocalRemote/volatile\f[R] (https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafile-1.txt)
+\f[V]TestBisyncLocalRemote/all_changed\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncLocalRemote/ext_paths\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncLocalRemote/max_delete_path1\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteRemote/basic\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
+.IP \[bu] 2
+\f[V]TestBisyncRemoteRemote/concurrent\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
+.IP \[bu] 2
+5 more (https://pub.rclone.org/integration-tests/current/)
 .RE
 .IP \[bu] 2
-\f[V]TestSeafileV6\f[R] (\f[V]seafile\f[R])
-.RS 2
-.IP \[bu] 2
-\f[V]TestBisyncLocalRemote/volatile\f[R] (https://pub.rclone.org/integration-tests/current/seafile-cmd.bisync-TestSeafileV6-1.txt)
-.RE
-.IP \[bu] 2
-Updated: 2026-01-30-010015
+Updated: 2026-02-17-010016
 .PP
 The following backends either have not been tested recently or have
 known issues that are deemed unfixable for the time being:
@@ -56514,6 +56534,34 @@ Required: true
 .SS Advanced options
 .PP
 Here are the Advanced options specific to filelu (FileLu Cloud Storage).
+.SS --filelu-upload-cutoff
+.PP
+Cutoff for switching to chunked upload.
+Any files larger than this will be uploaded in chunks of chunk_size.
+.PP
+Properties:
+.IP \[bu] 2
+Config: upload_cutoff
+.IP \[bu] 2
+Env Var: RCLONE_FILELU_UPLOAD_CUTOFF
+.IP \[bu] 2
+Type: SizeSuffix
+.IP \[bu] 2
+Default: 500Mi
+.SS --filelu-chunk-size
+.PP
+Chunk size to use for uploading.
+Used for multipart uploads.
+.PP
+Properties:
+.IP \[bu] 2
+Config: chunk_size
+.IP \[bu] 2
+Env Var: RCLONE_FILELU_CHUNK_SIZE
+.IP \[bu] 2
+Type: SizeSuffix
+.IP \[bu] 2
+Default: 64Mi
 .SS --filelu-encoding
 .PP
 The encoding for the backend.
@@ -86814,6 +86862,71 @@ Options:
 .IP \[bu] 2
 \[dq]error\[dq]: Return an error based on option value.
 .SH Changelog
+.SS v1.73.1 - 2026-02-17
+.PP
+See commits (https://github.com/rclone/rclone/compare/v1.73.0...v1.73.1)
+.IP \[bu] 2
+Bug Fixes
+.RS 2
+.IP \[bu] 2
+accounting: Fix missing server side stats from core/stats rc (Nick
+Craig-Wood)
+.IP \[bu] 2
+build
+.RS 2
+.IP \[bu] 2
+Fix CVE-2025-68121 by updating go to 1.25.7 or later (Nick Craig-Wood)
+.IP \[bu] 2
+Bump github.com/go-chi/chi/v5 from 5.2.3 to 5.2.5 to fix GO-2026-4316
+(albertony)
+.RE
+.IP \[bu] 2
+docs: Extend copyurl docs with an example of CSV FILENAMEs starting with
+a path.
+(Jack Kelly)
+.IP \[bu] 2
+march: Fix runtime: program exceeds 10000-thread limit (Nick Craig-Wood)
+.IP \[bu] 2
+pacer
+.RS 2
+.IP \[bu] 2
+Fix deadlock between pacer token and --max-connections (Nick Craig-Wood)
+.IP \[bu] 2
+Re-read the sleep time as it may be stale (Nick Craig-Wood)
+.RE
+.RE
+.IP \[bu] 2
+Drime
+.RS 2
+.IP \[bu] 2
+Fix files and directories being created in the default workspace (Nick
+Craig-Wood)
+.RE
+.IP \[bu] 2
+Filelu
+.RS 2
+.IP \[bu] 2
+Avoid buffering entire file in memory (kingston125)
+.IP \[bu] 2
+Add multipart upload support with configurable cutoff (kingston125)
+.RE
+.IP \[bu] 2
+Filen
+.RS 2
+.IP \[bu] 2
+Fix 32 bit targets not being able to list directories (Enduriel)
+.IP \[bu] 2
+Fix potential panic in case of error during upload (Enduriel)
+.RE
+.IP \[bu] 2
+Internxt
+.RS 2
+.IP \[bu] 2
+Implement re-login under refresh logic, improve retry logic (José
+Zúniga) -S3
+.IP \[bu] 2
+Set list_version to 2 for FileLu S3 configuration (kingston125)
+.RE
 .SS v1.73.0 - 2026-01-30
 .PP
 See commits (https://github.com/rclone/rclone/compare/v1.72.0...v1.73.0)
