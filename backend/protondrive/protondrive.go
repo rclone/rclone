@@ -155,7 +155,7 @@ The app version string indicates the client that is currently performing
 the API request. This information is required and will be sent with every 
 API request.`,
 			Advanced: true,
-			Default:  "macos-drive@1.0.0-alpha.1+rclone",
+			Default:  "external-drive-rclone@1.0.0",
 		}, {
 			Name: "replace_existing_draft",
 			Help: `Create a new revision when filename conflict is detected
