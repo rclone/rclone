@@ -796,61 +796,131 @@ func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
 
-/*
-// The PublicLink method is currently disabled, not sure which API should be used here
-func (f *Fs) linkDir(ctx context.Context, dirID string, expire fs.Duration) (string, error) {
+// getFileIDFromPath returns the file/directory ID from a remote path
+func (f *Fs) getFileIDFromPath(ctx context.Context, remote string) (string, error) {
+	// Try to find as directory first
+	directoryID, err := f.dirCache.FindDir(ctx, remote, false)
+	if err == nil {
+		return directoryID, nil
+	}
+
+	// If not a directory, try to find as file
+	info, err := f.readMetaDataForPath(ctx, remote)
+	if err != nil {
+		return "", err
+	}
+	return strconv.Itoa(info.ID), nil
+}
+
+func (f *Fs) getPublicLink(ctx context.Context, fileID string) (string, error) {
 	opts := rest.Opts{
-		Method:     "GET",
-		Path:       fmt.Sprintf("/2/drive/%s/files/%s/link", f.opt.DriveID, dirID),
-		Parameters: url.Values{},
+		Method: "GET",
+		Path:   fmt.Sprintf("/2/drive/%s/files/%s/link", f.opt.DriveID, fileID),
 	}
 	var result api.PubLinkResult
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
-		err = result.ResultStatus.Update(err)
+		err = result.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
+
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get public link: %w", err)
 	}
-	return result.Data.URL, err
+
+	// check if the shared link is blocked
+	if result.Data.AccessBlocked == true {
+		return "", nil
+	}
+
+	// check if the shared link is expired
+	if result.Data.ValidUntil > 0 {
+		// ValidUntil is a Unix timestamp (UTC)
+		if time.Now().Unix() > int64(result.Data.ValidUntil) {
+			// link is expired
+			return "", nil
+		}
+	}
+
+	return result.Data.URL, nil
 }
 
-func (f *Fs) linkFile(ctx context.Context, path string, expire fs.Duration) (string, error) {
-	obj, err := f.NewObject(ctx, path)
-	if err != nil {
-		return "", err
-	}
-	o := obj.(*Object)
+func (f *Fs) deletePublicLink(ctx context.Context, fileID string) error {
 	opts := rest.Opts{
-		Method:     "GET",
-		Path:       fmt.Sprintf("/2/drive/%s/files/%s/link", f.opt.DriveID, o.id),
-		Parameters: url.Values{},
+		Method: "DELETE",
+		Path:   fmt.Sprintf("/2/drive/%s/files/%s/link", f.opt.DriveID, fileID),
 	}
-	var result api.PubLinkResult
-	err = f.pacer.Call(func() (bool, error) {
+	var result api.ResultStatus
+	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		err = result.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to remove public link: %w", err)
+	}
+
+	return nil
+}
+
+func (f *Fs) createPublicLink(ctx context.Context, fileID string, expire fs.Duration) (string, error) {
+	createReq := struct {
+		Right      string `json:"right"` // true for read access
+		ValidUntil int    `json:"valid_until,omitempty"`
+	}{
+		Right: "public",
+	}
+
+	// Set expiry if provided
+	if expire > 0 {
+		createReq.ValidUntil = int(time.Now().Add(time.Duration(expire)).Unix())
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   fmt.Sprintf("/2/drive/%s/files/%s/link", f.opt.DriveID, fileID),
+	}
+
+	var result api.PubLinkResult
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, createReq, &result)
 		err = result.ResultStatus.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
+
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create public link: %w", err)
 	}
+
 	return result.Data.URL, nil
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
+// If unlink is true, it removes the existing public link.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
-	dirID, err := f.dirCache.FindDir(ctx, remote, false)
-	if err == fs.ErrorDirNotFound {
-		return f.linkFile(ctx, remote, expire)
-	}
+	fileID, err := f.getFileIDFromPath(ctx, remote)
 	if err != nil {
 		return "", err
 	}
-	return f.linkDir(ctx, dirID, expire)
+
+	if unlink {
+		// Remove existing public link
+		err = f.deletePublicLink(ctx, fileID)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Check if link exists
+	url, err := f.getPublicLink(ctx, fileID)
+	if url != "" {
+		return url, nil
+	}
+
+	// Create or get existing public link
+	return f.createPublicLink(ctx, fileID, expire)
 }
-*/
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
@@ -1192,6 +1262,7 @@ var (
 	_ fs.ListPer         = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 )
