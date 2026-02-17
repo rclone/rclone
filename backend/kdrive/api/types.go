@@ -271,3 +271,34 @@ type QuotaInfo struct {
 		UsedSize int64 `json:"used_size"`
 	} `json:"data"`
 }
+
+type SessionStartResponse struct {
+	Result string `json:"result"`
+	Data   struct {
+		Token     string `json:"token"`
+		UploadURL string `json:"upload_url"` // URL pour uploader les chunks
+	} `json:"data"`
+}
+
+type ChunkUploadResponse struct {
+	Result string `json:"result"`
+	Data   struct {
+		ReceivedBytes int64  `json:"received_bytes"`
+		Hash          string `json:"hash,omitempty"` // Only present when requested with with:'hash'
+	} `json:"data"`
+}
+
+type SessionFinishResponse struct {
+	Result string `json:"result"`
+	Data   struct {
+		Token   string `json:"token"`
+		File    Item   `json:"file"`
+		Result  bool   `json:"result"`
+		Message string `json:"message"`
+	} `json:"data"`
+}
+
+type SessionCancelResponse struct {
+	Result string `json:"result"`
+	Data   Item   `json:"data"`
+}
