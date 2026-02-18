@@ -65,7 +65,7 @@ func (e *ResultStatus) Error() string {
 }
 
 // IsError returns true if there is an error
-func (e ResultStatus) IsError() bool {
+func (e *ResultStatus) IsError() bool {
 	return e.Status != "success"
 }
 
