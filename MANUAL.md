@@ -23758,6 +23758,36 @@ supplied and if there is only one VFS in use then that VFS will be
 used. If there is more than one VFS in use then the "fs" parameter
 must be supplied.
 
+### vfs/stats: Get stats for a VFS. {#vfs-stats}
+
+This returns stats for the selected VFS.
+
+    rclone rc vfs/stats
+
+The response includes:
+
+- `diskCache`: Status of the disk cache (only present if --vfs-cache-mode > off)
+  - `bytesUsed`: Bytes used by the cache
+  - `erroredFiles`: Number of files with errors
+  - `files`: Number of files in the cache
+  - `hashType`: Hash type used
+  - `outOfSpace`: Whether the cache is out of space
+  - `path`: Path to the cache directory
+  - `pathMeta`: Path to the cache metadata directory
+  - `uploadsInProgress`: Number of uploads currently in progress
+  - `uploadsQueued`: Number of uploads queued
+- `fs`: File system path
+- `inUse`: Number of uses
+- `metadataCache`: Status of the in-memory metadata cache
+  - `dirs`: Number of directories cached
+  - `files`: Number of files cached
+- `opt`: VFS options
+
+This command takes an "fs" parameter. If this parameter is not
+supplied and if there is only one VFS in use then that VFS will be
+used. If there is more than one VFS in use then the "fs" parameter
+must be supplied.
+
 ### vfs/queue: Queue info for a VFS. {#vfs-queue}
 
 This returns info about the upload queue for the selected VFS.
@@ -23848,7 +23878,204 @@ supplied and if there is only one VFS in use then that VFS will be
 used. If there is more than one VFS in use then the "fs" parameter
 must be supplied.
 
-### vfs/stats: Stats for a VFS. {#vfs-stats}
+### vfs/status: Get cache status for a VFS. {#vfs-status}
+
+This returns cache status information for the selected VFS, providing
+an overview of the cache state including the number of tracked files in each
+cache status category.
+
+This is useful for monitoring the overall cache health and usage patterns,
+particularly for file manager integrations that need to display cache status
+overlays.
+
+    rclone rc vfs/status
+
+The response includes aggregate statistics and counts for each cache status type:
+
+- "totalFiles": Total number of files currently tracked by the VFS cache.
+  Only includes files that have been accessed through the VFS. Files that have
+  never been accessed are not included in this count.
+- "totalCachedBytes": Total bytes cached across all tracked files
+- "averageCachePercentage": Average cache percentage across all tracked files (0-100)
+- "counts": Object containing counts for each cache status:
+  - "FULL": Files completely cached locally
+  - "NONE": Tracked files not cached (remote only)
+  - "PARTIAL": Files partially cached
+  - "DIRTY": Files modified locally but not uploaded
+  - "UPLOADING": Files currently being uploaded
+  - "ERROR": Files with cache errors
+- "fs": File system path
+
+Example response:
+
+    {
+        "totalFiles": 255,
+        "totalCachedBytes": 104857600,
+        "averageCachePercentage": 85,
+        "counts": {
+            "FULL": 15,
+            "NONE": 234,
+            "PARTIAL": 3,
+            "DIRTY": 2,
+            "UPLOADING": 1,
+            "ERROR": 0
+        },
+        "fs": "/mnt/remote"
+    }
+
+This command takes an "fs" parameter. If this parameter is not
+supplied and if there is only one VFS in use then that VFS will be
+used. If there is more than one VFS in use then the "fs" parameter
+must be supplied.
+
+### vfs/file-status: Get cache status for specific files. {#vfs-file-status}
+
+This returns detailed cache status for specific files in the VFS. This is
+particularly useful for file manager integrations that need to display
+cache status overlays on individual files.
+
+Files are specified using the "file" parameter, which can be repeated
+multiple times to query several files at once (file1, file2, etc.).
+
+    rclone rc vfs/file-status file=document.pdf file=image.jpg
+
+The response includes cache status, percentage cached (if applicable),
+and upload status for each file:
+
+    {
+        "files": [
+            {
+                "name": "document.pdf",
+                "status": "FULL",
+                "percentage": 100,
+                "size": 1048576,
+                "cachedBytes": 1048576,
+                "dirty": false,
+                "uploading": false
+            },
+            {
+                "name": "image.jpg",
+                "status": "PARTIAL",
+                "percentage": 67,
+                "size": 2097152,
+                "cachedBytes": 1405870,
+                "dirty": false,
+                "uploading": false
+            },
+            {
+                "name": "nonexistent.pdf",
+                "status": "ERROR",
+                "percentage": 0,
+                "size": 0,
+                "cachedBytes": 0,
+                "dirty": false,
+                "uploading": false,
+                "error": "file not found or not accessible"
+            }
+        ],
+        "fs": "/mnt/remote"
+    }
+
+Cache status values:
+- "FULL": File is completely cached locally
+- "NONE": File is not cached (remote only)
+- "PARTIAL": File is partially cached
+- "DIRTY": File has been modified locally but not uploaded
+- "UPLOADING": File is currently being uploaded
+
+The "percentage" field indicates how much of the file is cached locally
+(0-100). For "FULL" and "DIRTY" status files, this is always 100 since
+the local file is complete. For "UPLOADING" status files, this is also 100
+representing the percentage of the file cached locally (not the upload progress).
+It is only meaningful for "PARTIAL" status files where it shows the actual
+percentage cached.
+
+The "uploading" field indicates if the file is currently being uploaded.
+
+The "error" field (optional) contains a generic error message if there was an error
+getting file information, such as when the file does not exist or cannot be accessed.
+For security reasons, only a generic message is returned to avoid exposing internal
+details. Detailed error information is logged internally by rclone.
+When present, the "status" will be "ERROR" and other fields may have default values.
+
+This command takes an "fs" parameter. If this parameter is not
+supplied and if there is only one VFS in use then that VFS will be
+used. If there is more than one VFS in use then the "fs" parameter
+must be supplied.
+
+### vfs/dir-status: Get cache status for files in a directory. {#vfs-dir-status}
+
+This returns cache status for files in a specified directory that are
+currently tracked by the VFS cache, optionally including subdirectories.
+This is ideal for file manager integrations that need to display cache status
+overlays for directory listings.
+
+The directory is specified using the "dir" parameter (optional, defaults to root).
+Use "recursive=true" to include all subdirectories.
+
+    rclone rc vfs/dir-status dir=/documents
+    rclone rc vfs/dir-status dir=/documents recursive=true
+
+The response groups files by their cache status and provides detailed
+information about each file. All status categories are always present in
+the response (may be empty arrays):
+
+    {
+        "dir": "/documents",
+        "files": {
+            "FULL": [
+                {
+                    "name": "report.pdf",
+                    "percentage": 100,
+                    "size": 1048576,
+                    "cachedBytes": 1048576,
+                    "dirty": false,
+                    "uploading": false
+                }
+            ],
+            "PARTIAL": [
+                {
+                    "name": "video.mp4",
+                    "percentage": 45,
+                    "size": 104857600,
+                    "cachedBytes": 47185920,
+                    "dirty": false,
+                    "uploading": false
+                }
+            ],
+            "NONE": [],
+            "DIRTY": [],
+            "UPLOADING": [],
+            "ERROR": []
+        },
+        "fs": "/mnt/remote",
+        "recursive": false
+    }
+
+Each file entry includes:
+- "name": The file name relative to the directory (use / as path separator)
+- "percentage": Cache percentage (0-100). For UPLOADING files, this represents
+the percentage of the file cached locally, not upload progress
+- "uploading": Whether the file is currently being uploaded
+- "size": The total size of the file in bytes
+- "cachedBytes": The number of bytes of the file that are cached locally
+- "dirty": Whether the file has been modified locally but not uploaded
+
+All status categories are always present in the response (may be empty arrays):
+FULL, PARTIAL, NONE, DIRTY, UPLOADING, and ERROR.
+
+Note: This endpoint only returns files that are currently tracked by the VFS cache
+(files that have been accessed through the VFS). It does not list all files in
+the remote directory. The "recursive" field indicates whether subdirectories were
+included in the scan.
+
+This command takes an "fs" parameter. If this parameter is not
+supplied and if there is only one VFS in use then that VFS will be
+used. If there is more than one VFS in use then the "fs" parameter
+must be supplied.
+
+
+## Accessing the remote control via HTTP {#api-http}
 
 This returns stats for the selected VFS.
 
