@@ -54,6 +54,10 @@ func TestShellEscapePowerShell(t *testing.T) {
 		{"c:/test&notepad", "'c:/test&notepad'"},
 		{"c:/test\"&\"notepad", "'c:/test\"&\"notepad'"},
 		{"c:/test'&'notepad", "'c:/test''&''notepad'"},
+		{"/test/‘/2018", "'/test/'‘/2018'"},
+		{"/test/’/2019", "'/test/'’/2019'"},
+		{"/test/‚/201a", "'/test/'‚/201a'"},
+		{"/test/‛/201b", "'/test/'‛/201b'"},
 	} {
 		got, err := quoteOrEscapeShellPath("powershell", test.unescaped)
 		assert.NoError(t, err)
