@@ -16,20 +16,30 @@ type Authenticator interface {
 }
 
 // IbmIamSigner is a structure for signing requests using IBM IAM.
-// Requeres APIKey and Resource InstanceID
+// Requires APIKey and Resource InstanceID
 type IbmIamSigner struct {
-	APIKey     string
-	InstanceID string
-	Auth       Authenticator
+	APIKey      string
+	InstanceID  string
+	IAMEndpoint string
+	Auth        Authenticator
 }
 
 // SignHTTP signs requests using IBM IAM token.
 func (signer *IbmIamSigner) SignHTTP(ctx context.Context, credentials aws.Credentials, req *http.Request, payloadHash string, service string, region string, signingTime time.Time, optFns ...func(*v4signer.SignerOptions)) error {
 	var authenticator Authenticator
+
+	// IamEndpoint specifies the IBM IAM endpoint to be used for IAM authentication.
+	// It is set from the rclone config option `ibm_iam_endpoint`.
+	// If not provided, it defaults to public IBM IAM endpoint.
+	IamEndpoint := "https://iam.cloud.ibm.com"
+
+	if signer.IAMEndpoint != "" {
+		IamEndpoint = signer.IAMEndpoint
+	}
 	if signer.Auth != nil {
 		authenticator = signer.Auth
 	} else {
-		authenticator = &core.IamAuthenticator{ApiKey: signer.APIKey}
+		authenticator = &core.IamAuthenticator{ApiKey: signer.APIKey, URL: IamEndpoint}
 	}
 	token, err := authenticator.GetToken()
 	if err != nil {
