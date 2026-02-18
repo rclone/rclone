@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"path"
 	"slices"
@@ -729,8 +730,8 @@ func parseXMsTags(s string) (map[string]string, error) {
 		return map[string]string{}, nil
 	}
 	out := make(map[string]string)
-	parts := strings.Split(s, ",")
-	for _, p := range parts {
+	parts := strings.SplitSeq(s, ",")
+	for p := range parts {
 		p = strings.TrimSpace(p)
 		if p == "" {
 			continue
@@ -893,9 +894,7 @@ func assembleCopyParams(ctx context.Context, f *Fs, src fs.Object, srcProps *blo
 				if meta == nil {
 					meta = make(map[string]*string, len(userMeta))
 				}
-				for k, v := range userMeta {
-					meta[k] = v
-				}
+				maps.Copy(meta, userMeta)
 			}
 			// Apply tags if any
 			if len(mappedTags) > 0 {
@@ -992,9 +991,7 @@ func (o *Object) applyMappedMetadata(ctx context.Context, src fs.ObjectInfo, ui 
 		if o.tags == nil {
 			o.tags = make(map[string]string, len(tags))
 		}
-		for k, v := range tags {
-			o.tags[k] = v
-		}
+		maps.Copy(o.tags, tags)
 	}
 
 	if mappedModTime != nil {
@@ -1859,9 +1856,7 @@ func (f *Fs) copySinglepart(ctx context.Context, remote, dstContainer, dstPath s
 	// Apply tags and post-copy headers only when mapping requested changes
 	if len(tags) > 0 {
 		options.BlobTags = make(map[string]string, len(tags))
-		for k, v := range tags {
-			options.BlobTags[k] = v
-		}
+		maps.Copy(options.BlobTags, tags)
 	}
 	if hadMapping {
 		// Only set metadata explicitly when mapping was requested; otherwise
@@ -2062,9 +2057,7 @@ func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
 
 	// Merge user metadata (already lower-cased keys)
 	metadataMu.Lock()
-	for k, v := range o.meta {
-		m[k] = v
-	}
+	maps.Copy(m, o.meta)
 	metadataMu.Unlock()
 
 	return m, nil
