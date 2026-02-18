@@ -675,9 +675,16 @@ backends:
      # with the parent backend having a different precision.
      - TestServerSideCopyOverSelf
      - TestServerSideMoveOverSelf
+ - backend: "internxt"
+   remote: "TestInternxt:"
+   fastlist: false
+   listretries: 5
+   ignore:
+     - TestRWFileHandleWriteNoWrite
  - backend:  "drime"
    remote:   "TestDrime:"
    ignoretests:
      # The TestBisyncRemoteLocal/check_access_filters tests fail due to duplicated objects
      - cmd/bisync
    fastlist: false
+   extratime: 2.0

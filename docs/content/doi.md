@@ -113,7 +113,7 @@ Properties:
 
 The URL of the DOI resolver API to use.
 
-The DOI resolver can be set for testing or for cases when the the canonical DOI resolver API cannot be used.
+The DOI resolver can be set for testing or for cases when the canonical DOI resolver API cannot be used.
 
 Defaults to "https://doi.org/api".
 

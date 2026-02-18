@@ -1,9 +1,7 @@
 package filelu
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,6 +14,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 // Object describes a FileLu object
@@ -88,6 +87,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		}
 	}
 
+	// Wrap the response body to handle offset and count
 	var reader io.ReadCloser
 	err = o.fs.pacer.Call(func() (bool, error) {
 		req, err := http.NewRequestWithContext(ctx, "GET", directLink, nil)
@@ -109,22 +109,25 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			return false, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
 		}
 
-		// Wrap the response body to handle offset and count
-		currentContents, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return false, fmt.Errorf("failed to read response body: %w", err)
+		if offset > 0 {
+			_, err = io.CopyN(io.Discard, resp.Body, offset)
+			if err != nil {
+				_ = resp.Body.Close()
+				return false, fmt.Errorf("failed to skip offset: %w", err)
+			}
 		}
 
-		if offset > 0 {
-			if offset > int64(len(currentContents)) {
-				return false, fmt.Errorf("offset %d exceeds file size %d", offset, len(currentContents))
+		if count > 0 {
+			reader = struct {
+				io.Reader
+				io.Closer
+			}{
+				Reader: io.LimitReader(resp.Body, count),
+				Closer: resp.Body,
 			}
-			currentContents = currentContents[offset:]
+		} else {
+			reader = resp.Body
 		}
-		if count > 0 && count < int64(len(currentContents)) {
-			currentContents = currentContents[:count]
-		}
-		reader = io.NopCloser(bytes.NewReader(currentContents))
 
 		return false, nil
 	})
@@ -137,15 +140,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // Update updates the object with new data
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	if src.Size() <= 0 {
-		return fs.ErrorCantUploadEmptyFiles
+	size := src.Size()
+
+	if size <= int64(o.fs.opt.UploadCutoff) {
+		err := o.fs.uploadFile(ctx, in, o.remote)
+		if err != nil {
+			return err
+		}
+	} else {
+		fullPath := path.Join(o.fs.root, o.remote)
+		err := o.fs.multipartUpload(ctx, in, fullPath)
+		if err != nil {
+			return fmt.Errorf("failed to upload file: %w", err)
+		}
 	}
 
-	err := o.fs.uploadFile(ctx, in, o.remote)
-	if err != nil {
-		return fmt.Errorf("failed to upload file: %w", err)
-	}
-	o.size = src.Size()
+	o.size = size
+	o.modTime = src.ModTime(ctx)
 	return nil
 }
 
@@ -183,8 +194,14 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 		return "", fmt.Errorf("no valid file code found in the remote path")
 	}
 
-	apiURL := fmt.Sprintf("%s/file/info?file_code=%s&key=%s",
-		o.fs.endpoint, url.QueryEscape(fileCode), url.QueryEscape(o.fs.opt.Key))
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/file/info",
+		Parameters: url.Values{
+			"file_code": {fileCode},
+			"key":       {o.fs.opt.Key},
+		},
+	}
 
 	var result struct {
 		Status int    `json:"status"`
@@ -193,29 +210,18 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 			Hash string `json:"hash"`
 		} `json:"result"`
 	}
+
 	err := o.fs.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-		if err != nil {
-			return false, err
-		}
-		resp, err := o.fs.client.Do(req)
+		_, err := o.fs.srv.CallJSON(ctx, &opts, nil, &result)
 		if err != nil {
 			return shouldRetry(err), err
 		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
-
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return false, err
-		}
-		return shouldRetryHTTP(resp.StatusCode), nil
+		return false, nil
 	})
 	if err != nil {
 		return "", err
 	}
+
 	if result.Status != 200 || len(result.Result) == 0 {
 		return "", fmt.Errorf("error: unable to fetch hash: %s", result.Msg)
 	}

@@ -2,7 +2,6 @@
 title: "Proton Drive"
 description: "Rclone docs for Proton Drive"
 versionIntroduced: "v1.64.0"
-status: Beta
 ---
 
 # {{< icon "fa fa-folder" >}} Proton Drive

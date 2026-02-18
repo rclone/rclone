@@ -1,9 +1,7 @@
 package filelu
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,40 +14,82 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 )
 
+// multipartInit starts a new multipart upload and returns server details.
+func (f *Fs) multipartInit(ctx context.Context, folderPath, filename string) (*api.MultipartInitResponse, error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/multipart/init",
+		Parameters: url.Values{
+			"key":         {f.opt.Key},
+			"filename":    {filename},
+			"folder_path": {folderPath},
+		},
+	}
+
+	var result api.MultipartInitResponse
+
+	err := f.pacer.Call(func() (bool, error) {
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		return fserrors.ShouldRetry(err), err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if result.Status != 200 {
+		return nil, fmt.Errorf("multipart init error: %s", result.Msg)
+	}
+
+	return &result, nil
+}
+
+// completeMultipart finalizes the multipart upload on the file server.
+func (f *Fs) completeMultipart(ctx context.Context, server string, uploadID string, sessID string, objectPath string) error {
+	req, err := http.NewRequestWithContext(ctx, "POST", server, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("X-RC-Upload-Id", uploadID)
+	req.Header.Set("X-Sess-ID", sessID)
+	req.Header.Set("X-Object-Path", objectPath)
+
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != 202 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("completeMultipart failed %d: %s", resp.StatusCode, string(body))
+	}
+	return nil
+}
+
 // createFolder creates a folder at the specified path.
 func (f *Fs) createFolder(ctx context.Context, dirPath string) (*api.CreateFolderResponse, error) {
 	encodedDir := f.fromStandardPath(dirPath)
-	apiURL := fmt.Sprintf("%s/folder/create?folder_path=%s&key=%s",
-		f.endpoint,
-		url.QueryEscape(encodedDir),
-		url.QueryEscape(f.opt.Key), // assuming f.opt.Key is the correct field
-	)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/folder/create",
+		Parameters: url.Values{
+			"folder_path": {encodedDir},
+			"key":         {f.opt.Key},
+		},
 	}
 
-	var resp *http.Response
-	result := api.CreateFolderResponse{}
-	err = f.pacer.Call(func() (bool, error) {
-		var innerErr error
-		resp, innerErr = f.client.Do(req)
-		return fserrors.ShouldRetry(innerErr), innerErr
+	var result api.CreateFolderResponse
+
+	err := f.pacer.Call(func() (bool, error) {
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		return fserrors.ShouldRetry(err), err
 	})
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			fs.Logf(nil, "Failed to close response body: %v", err)
-		}
-	}()
 
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
-	}
 	if result.Status != 200 {
 		return nil, fmt.Errorf("error: %s", result.Msg)
 	}
@@ -61,44 +101,29 @@ func (f *Fs) createFolder(ctx context.Context, dirPath string) (*api.CreateFolde
 // getFolderList List both files and folders in a directory.
 func (f *Fs) getFolderList(ctx context.Context, path string) (*api.FolderListResponse, error) {
 	encodedDir := f.fromStandardPath(path)
-	apiURL := fmt.Sprintf("%s/folder/list?folder_path=%s&key=%s",
-		f.endpoint,
-		url.QueryEscape(encodedDir),
-		url.QueryEscape(f.opt.Key),
-	)
 
-	var body []byte
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/folder/list",
+		Parameters: url.Values{
+			"folder_path": {encodedDir},
+			"key":         {f.opt.Key},
+		},
+	}
+
+	var response api.FolderListResponse
+
 	err := f.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-		if err != nil {
-			return false, fmt.Errorf("failed to create request: %w", err)
-		}
-
-		resp, err := f.client.Do(req)
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &response)
 		if err != nil {
 			return shouldRetry(err), fmt.Errorf("failed to list directory: %w", err)
 		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
-
-		body, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return false, fmt.Errorf("error reading response body: %w", err)
-		}
-
-		return shouldRetryHTTP(resp.StatusCode), nil
+		return false, nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	var response api.FolderListResponse
-	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&response); err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
-	}
 	if response.Status != 200 {
 		if strings.Contains(response.Msg, "Folder not found") {
 			return nil, fs.ErrorDirNotFound
@@ -115,41 +140,27 @@ func (f *Fs) getFolderList(ctx context.Context, path string) (*api.FolderListRes
 	}
 
 	return &response, nil
-
 }
 
 // deleteFolder deletes a folder at the specified path.
 func (f *Fs) deleteFolder(ctx context.Context, fullPath string) error {
 	fullPath = f.fromStandardPath(fullPath)
-	deleteURL := fmt.Sprintf("%s/folder/delete?folder_path=%s&key=%s",
-		f.endpoint,
-		url.QueryEscape(fullPath),
-		url.QueryEscape(f.opt.Key),
-	)
+
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/folder/delete",
+		Parameters: url.Values{
+			"folder_path": {fullPath},
+			"key":         {f.opt.Key},
+		},
+	}
 
 	delResp := api.DeleteFolderResponse{}
+
 	err := f.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", deleteURL, nil)
-		if err != nil {
-			return false, err
-		}
-		resp, err := f.client.Do(req)
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &delResp)
 		if err != nil {
 			return fserrors.ShouldRetry(err), err
-		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
-
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return false, err
-		}
-
-		if err := json.Unmarshal(body, &delResp); err != nil {
-			return false, fmt.Errorf("error decoding delete response: %w", err)
 		}
 		if delResp.Status != 200 {
 			return false, fmt.Errorf("delete error: %s", delResp.Msg)
@@ -167,38 +178,27 @@ func (f *Fs) deleteFolder(ctx context.Context, fullPath string) error {
 // getDirectLink of file from FileLu to download.
 func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64, error) {
 	filePath = f.fromStandardPath(filePath)
-	apiURL := fmt.Sprintf("%s/file/direct_link?file_path=%s&key=%s",
-		f.endpoint,
-		url.QueryEscape(filePath),
-		url.QueryEscape(f.opt.Key),
-	)
+
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/file/direct_link",
+		Parameters: url.Values{
+			"file_path": {filePath},
+			"key":       {f.opt.Key},
+		},
+	}
 
 	result := api.FileDirectLinkResponse{}
-	err := f.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-		if err != nil {
-			return false, fmt.Errorf("failed to create request: %w", err)
-		}
 
-		resp, err := f.client.Do(req)
+	err := f.pacer.Call(func() (bool, error) {
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 		if err != nil {
 			return shouldRetry(err), fmt.Errorf("failed to fetch direct link: %w", err)
 		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
-
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return false, fmt.Errorf("error decoding response: %w", err)
-		}
-
 		if result.Status != 200 {
 			return false, fmt.Errorf("API error: %s", result.Msg)
 		}
-
-		return shouldRetryHTTP(resp.StatusCode), nil
+		return false, nil
 	})
 	if err != nil {
 		return "", 0, err
@@ -210,39 +210,31 @@ func (f *Fs) getDirectLink(ctx context.Context, filePath string) (string, int64,
 // deleteFile deletes a file based on filePath
 func (f *Fs) deleteFile(ctx context.Context, filePath string) error {
 	filePath = f.fromStandardPath(filePath)
-	apiURL := fmt.Sprintf("%s/file/remove?file_path=%s&key=%s",
-		f.endpoint,
-		url.QueryEscape(filePath),
-		url.QueryEscape(f.opt.Key),
-	)
+
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/file/remove",
+		Parameters: url.Values{
+			"file_path": {filePath},
+			"key":       {f.opt.Key},
+		},
+	}
 
 	result := api.DeleteFileResponse{}
+
 	err := f.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 		if err != nil {
-			return false, fmt.Errorf("failed to create request: %w", err)
-		}
-
-		resp, err := f.client.Do(req)
-		if err != nil {
-			return shouldRetry(err), fmt.Errorf("failed to fetch direct link: %w", err)
-		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
-
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return false, fmt.Errorf("error decoding response: %w", err)
+			return shouldRetry(err), fmt.Errorf("failed to delete file: %w", err)
 		}
 
 		if result.Status != 200 {
 			return false, fmt.Errorf("API error: %s", result.Msg)
 		}
 
-		return shouldRetryHTTP(resp.StatusCode), nil
+		return false, nil
 	})
+
 	return err
 }
 
@@ -275,45 +267,27 @@ func (f *Fs) getAccountInfo(ctx context.Context) (*api.AccountInfoResponse, erro
 
 // getFileInfo retrieves file information based on file code
 func (f *Fs) getFileInfo(ctx context.Context, fileCode string) (*api.FileInfoResponse, error) {
-	u, _ := url.Parse(f.endpoint + "/file/info2")
-	q := u.Query()
-	q.Set("file_code", fileCode) // raw path — Go handles escaping properly here
-	q.Set("key", f.opt.Key)
-	u.RawQuery = q.Encode()
 
-	apiURL := f.endpoint + "/file/info2?" + u.RawQuery
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/file/info2",
+		Parameters: url.Values{
+			"file_code": {fileCode},
+			"key":       {f.opt.Key},
+		},
+	}
 
-	var body []byte
+	result := api.FileInfoResponse{}
+
 	err := f.pacer.Call(func() (bool, error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
-		if err != nil {
-			return false, fmt.Errorf("failed to create request: %w", err)
-		}
-
-		resp, err := f.client.Do(req)
+		_, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 		if err != nil {
 			return shouldRetry(err), fmt.Errorf("failed to fetch file info: %w", err)
 		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				fs.Logf(nil, "Failed to close response body: %v", err)
-			}
-		}()
-
-		body, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return false, fmt.Errorf("error reading response body: %w", err)
-		}
-
-		return shouldRetryHTTP(resp.StatusCode), nil
+		return false, nil
 	})
 	if err != nil {
 		return nil, err
-	}
-	result := api.FileInfoResponse{}
-
-	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&result); err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
 
 	if result.Status != 200 || len(result.Result) == 0 {

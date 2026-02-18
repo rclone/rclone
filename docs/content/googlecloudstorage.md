@@ -785,9 +785,14 @@ Properties:
 
 #### --gcs-endpoint
 
-Endpoint for the service.
+Custom endpoint for the storage API. Leave blank to use the provider default.
 
-Leave blank normally.
+When using a custom endpoint that includes a subpath (e.g. example.org/custom/endpoint),
+the subpath will be ignored during upload operations due to a limitation in the
+underlying Google API Go client library.
+Download and listing operations will work correctly with the full endpoint path.
+If you require subpath support for uploads, avoid using subpaths in your custom
+endpoint configuration.
 
 Properties:
 
@@ -795,6 +800,13 @@ Properties:
 - Env Var:     RCLONE_GCS_ENDPOINT
 - Type:        string
 - Required:    false
+- Examples:
+  - "storage.example.org"
+    - Specify a custom endpoint
+  - "storage.example.org:4443"
+    - Specifying a custom endpoint with port
+  - "storage.example.org:4443/gcs/api"
+    - Specifying a subpath, see the note, uploads won't use the custom path!
 
 #### --gcs-encoding
 
