@@ -28,7 +28,6 @@ docs = [
     "docker.md",
     "bisync.md",
     "release_signing.md",
-
     # Keep these alphabetical by full name
     "fichier.md",
     "alias.md",
@@ -55,6 +54,7 @@ docs = [
     "googlecloudstorage.md",
     "drive.md",
     "googlephotos.md",
+    "gphotosmobile.md",
     "hasher.md",
     "hdfs.md",
     "hidrive.md",
@@ -97,7 +97,6 @@ docs = [
     "webdav.md",
     "yandex.md",
     "zoho.md",
-
     "local.md",
     "changelog.md",
     "bugs.md",
@@ -127,7 +126,7 @@ commands_order = [
     "rclone_version.md",
     "rclone_cleanup.md",
     "rclone_dedupe.md",
-]    
+]
 
 # Docs which aren't made into outfile
 ignore_docs = [
@@ -137,6 +136,7 @@ ignore_docs = [
     "amazonclouddrive.md",
 ]
 
+
 def read_doc(doc):
     """Read file as a string"""
     path = os.path.join(docpath, doc)
@@ -145,30 +145,33 @@ def read_doc(doc):
     parts = contents.split("---\n", 2)
     if len(parts) != 3:
         raise ValueError(f"{doc}: Couldn't find --- markers: found {len(parts)} parts")
-    contents = parts[2].strip()+"\n\n"
+    contents = parts[2].strip() + "\n\n"
     # Remove icons
     contents = re.sub(r'<i class="fa.*?</i>\s*', "", contents)
     # Interpret img shortcodes
     # {{< img ... >}}
-    contents = re.sub(r'\{\{<\s*img\s+(.*?)>\}\}', r"<img \1>", contents)
+    contents = re.sub(r"\{\{<\s*img\s+(.*?)>\}\}", r"<img \1>", contents)
     # Make any img tags absolute
     contents = re.sub(r'(<img.*?src=")/', r"\1https://rclone.org/", contents)
     # Make [...](/links/) absolute
-    contents = re.sub(r'\]\((\/.*?\/(#.*)?)\)', r"](https://rclone.org\1)", contents)
+    contents = re.sub(r"\]\((\/.*?\/(#.*)?)\)", r"](https://rclone.org\1)", contents)
     # Add additional links on the front page
-    contents = re.sub(r'<!-- MAINPAGELINK -->', "- [Donate.](https://rclone.org/donate/)", contents)
+    contents = re.sub(
+        r"<!-- MAINPAGELINK -->", "- [Donate.](https://rclone.org/donate/)", contents
+    )
     # Interpret provider shortcode
     # {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}
     contents = re.sub(r'\{\{<\s*provider.*?name="(.*?)".*?>\}\}', r"- \1", contents)
     # Remove remaining shortcodes
-    contents = re.sub(r'\{\{<.*?>\}\}', r"", contents)
-    contents = re.sub(r'\{\{%.*?%\}\}', r"", contents)
+    contents = re.sub(r"\{\{<.*?>\}\}", r"", contents)
+    contents = re.sub(r"\{\{%.*?%\}\}", r"", contents)
     return contents
+
 
 def check_docs(docpath):
     """Check all the docs are in docpath"""
     files = set(f for f in os.listdir(docpath) if f.endswith(".md"))
-    files.update(f for f in docs if os.path.exists(os.path.join(docpath,f)))
+    files.update(f for f in docs if os.path.exists(os.path.join(docpath, f)))
     files -= set(ignore_docs)
     docs_set = set(docs)
     if files == docs_set:
@@ -177,11 +180,13 @@ def check_docs(docpath):
     print("Files in docs variable but not on disk: %s" % ", ".join(docs_set - files))
     raise ValueError("Missing files")
 
+
 def read_command(command):
-    doc = read_doc("commands/"+command)
+    doc = read_doc("commands/" + command)
     doc = re.sub(r"### Options inherited from parent commands.*$", "", doc, 0, re.S)
-    doc = doc.strip()+"\n"
+    doc = doc.strip() + "\n"
     return doc
+
 
 def read_commands(docpath):
     """Reads the commands an makes them into a single page"""
@@ -195,14 +200,19 @@ def read_commands(docpath):
             docs.append(read_command(command))
     return "\n".join(docs)
 
+
 def main():
     check_docs(docpath)
-    command_docs = read_commands(docpath).replace("\\", "\\\\") # escape \ so we can use command_docs in re.sub
+    command_docs = read_commands(docpath).replace(
+        "\\", "\\\\"
+    )  # escape \ so we can use command_docs in re.sub
     build_date = datetime.utcfromtimestamp(
-            int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
+        int(os.environ.get("SOURCE_DATE_EPOCH", time.time()))
+    )
     help_output = subprocess.check_output(["rclone", "help"]).decode("utf-8")
     with open(outfile, "w") as out:
-        out.write("""\
+        out.write(
+            """\
 %% rclone(1) User Manual
 %% Nick Craig-Wood
 %% %s
@@ -216,14 +226,23 @@ rclone - manage files on cloud storage
 ```
 %s
 ```
-""" % (build_date.strftime("%b %d, %Y"), help_output))
+"""
+            % (build_date.strftime("%b %d, %Y"), help_output)
+        )
         for doc in docs:
             contents = read_doc(doc)
             # Substitute the commands into doc.md
             if doc == "docs.md":
-                contents = re.sub(r"The main rclone commands.*?for the full list.", command_docs, contents, 0, re.S)
+                contents = re.sub(
+                    r"The main rclone commands.*?for the full list.",
+                    command_docs,
+                    contents,
+                    0,
+                    re.S,
+                )
             out.write(contents)
     print("Written '%s'" % outfile)
+
 
 if __name__ == "__main__":
     main()

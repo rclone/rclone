@@ -1,0 +1,22 @@
+backend: gphotosmobile
+name: Google Photos Mobile
+tier: Tier 5
+maintainers: None
+features_score: 0
+integration_tests: None
+data_integrity: Other
+performance: Low
+adoption: Experimental
+docs: Full
+security: Medium
+virtual: false
+remote: 'TestGPhotosMobile:'
+features:
+- About
+- DuplicateFiles
+- ReadMetadata
+- Shutdown
+- WriteMetadata
+hashes:
+- sha1
+precision: 3153600000000000000
