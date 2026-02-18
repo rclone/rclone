@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
-	"strings"
 	"sync"
 
 	"github.com/rclone/rclone/fs"
@@ -374,26 +373,11 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	return resp, nil
 }
 
-var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
-
-func escapeQuotes(s string) string {
-	return quoteEscaper.Replace(s)
-}
-
-// multipartFileContentDisposition returns the value of a Content-Disposition header
-// with the provided field name and file name.
-func multipartFileContentDisposition(fieldname, filename string) string {
-	return fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
-		escapeQuotes(fieldname), escapeQuotes(filename))
-}
-
 // CreateFormFile is a convenience wrapper around [Writer.CreatePart]. It creates
 // a new form-data header with the provided field name and file name.
 func CreateFormFile(w *multipart.Writer, fieldname, filename, contentType string) (io.Writer, error) {
 	h := make(textproto.MIMEHeader)
-	// FIXME when go1.24 is no longer supported, change to
-	// multipart.FileContentDisposition and remove definition above
-	h.Set("Content-Disposition", multipartFileContentDisposition(fieldname, filename))
+	h.Set("Content-Disposition", multipart.FileContentDisposition(fieldname, filename))
 	if contentType != "" {
 		h.Set("Content-Type", contentType)
 	}
