@@ -5,6 +5,7 @@ package kdrive
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -36,18 +37,46 @@ type uploadSession struct {
 const (
 	maxChunkSize     = 1 * 1024 * 1024 * 1024 // 1 Go (max API)
 	defaultChunkSize = 20 * 1024 * 1024       // 20 Mo
-	maxChunks        = 10000                  // Limite API
+	maxChunks        = 10000                  // Limit API
+	mebi             = 1024 * 1024
 )
 
-func calculateChunkSize(fileSize int64) int64 {
-	if fileSize <= defaultChunkSize*maxChunks {
-		return defaultChunkSize
+func calculateChunkSize(fileSize int64, preferredChunkSize int64) int64 {
+	// Use preferred chunk size
+	chunkSize := preferredChunkSize
+	if chunkSize <= 0 {
+		chunkSize = defaultChunkSize
 	}
-	// Pour les très gros fichiers, augmenter la taille des chunks
-	chunkSize := fileSize / maxChunks
+
+	// Round to greater MiB
+	if chunkSize%mebi != 0 {
+		chunkSize += mebi - (chunkSize % mebi)
+	}
+
+	// Limit chunk size to 1 Go
 	if chunkSize > maxChunkSize {
-		return maxChunkSize
+		chunkSize = maxChunkSize
 	}
+
+	// For large files, use a bigger chunk size
+	requiredChunks := calculateTotalChunks(fileSize, chunkSize)
+	if requiredChunks > maxChunks {
+		chunkSize = fileSize / maxChunks
+		if fileSize%maxChunks != 0 {
+			chunkSize++
+		}
+
+		// Round to greater MiB
+		if chunkSize%mebi != 0 {
+			chunkSize += mebi - (chunkSize % mebi)
+		}
+
+		// Limit chunk size to 1 Go
+		if chunkSize > maxChunkSize {
+			chunkSize = maxChunkSize
+		}
+	}
+
 	return chunkSize
 }
 
@@ -58,7 +87,8 @@ func calculateTotalChunks(fileSize int64, chunkSize int64) int64 {
 }
 
 // OpenChunkWriter returns chunk writer info and the upload session
-func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, _ ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+// @see https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/start
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 	dir, leaf := path.Split(remote)
 	dir = strings.TrimSuffix(dir, "/")
 
@@ -69,7 +99,18 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	}
 
 	fileSize := src.Size()
-	chunkSize := calculateChunkSize(fileSize)
+	if fileSize < 0 {
+		return info, nil, errors.New("kdrive can't upload files with unknown size")
+	}
+
+	var preferredChunkSize int64
+	for _, opt := range options {
+		if chunkOpt, ok := opt.(*fs.ChunkOption); ok {
+			preferredChunkSize = chunkOpt.ChunkSize
+		}
+	}
+
+	chunkSize := calculateChunkSize(fileSize, preferredChunkSize)
 	totalChunks := calculateTotalChunks(fileSize, chunkSize)
 
 	sessionReq := struct {
@@ -93,6 +134,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	var sessionResp api.SessionStartResponse
 	_, err = f.srv.CallJSON(ctx, &opts, &sessionReq, &sessionResp)
 	if err != nil {
+		fs.Debugf(nil, "REQUEST : %s %w", opts.Path, &sessionReq)
 		return info, nil, fmt.Errorf("failed to start upload session: %w", err)
 	}
 
@@ -116,6 +158,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 }
 
 // WriteChunk uploads a single chunk
+// @see https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/%7Bsession_token%7D/chunk
 func (u *uploadSession) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (bytesWritten int64, err error) {
 	if chunkNumber < 0 {
 		return -1, fmt.Errorf("invalid chunk number provided: %v", chunkNumber)
@@ -180,6 +223,7 @@ func (u *uploadSession) WriteChunk(ctx context.Context, chunkNumber int, reader 
 }
 
 // Close finalizes the upload session and returns the created file info
+// @see https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/%7Bsession_token%7D/finish
 func (u *uploadSession) Close(ctx context.Context) error {
 	// Calculate total hash (hash of concatenation of all chunks)
 	totalHashValue := fmt.Sprintf("xxh3:%x", u.totalHash.Sum(nil))
@@ -202,11 +246,12 @@ func (u *uploadSession) Close(ctx context.Context) error {
 	return nil
 }
 
-// Abort cancels the upload session
+// Abort the upload session
+// @see  https://developer.infomaniak.com/docs/api/delete/2/drive/%7Bdrive_id%7D/upload/session/%7Bsession_token%7D
 func (u *uploadSession) Abort(ctx context.Context) error {
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   fmt.Sprintf("/3/drive/%s/upload/session/%s/cancel", u.f.opt.DriveID, u.token),
+		Method: "DELETE",
+		Path:   fmt.Sprintf("/2/drive/%s/upload/session/%s", u.f.opt.DriveID, u.token),
 	}
 	var resp api.SessionCancelResponse
 	_, err := u.f.srv.CallJSON(ctx, &opts, nil, &resp)

@@ -119,6 +119,23 @@ func TestPutLargeFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, size, obj2.Size())
 	assert.Equal(t, remote, obj2.Remote())
+
+	// Test with ChunkSize option
+	remoteChunksize := fmt.Sprintf("large-file-chunksize-%d.bin", time.Now().UnixNano())
+	srcChunksize := object.NewStaticObjectInfo(remoteChunksize, time.Now(), size, true, nil, fRemote)
+
+	size5MBs := 10 * 1024 * 1024
+	objChunksize, err := fRemote.Put(ctx, bytes.NewReader(data), srcChunksize, &fs.ChunkOption{
+		ChunkSize: int64(size5MBs),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, objChunksize)
+
+	// Verify that the object exists
+	objChunksize2, err := fRemote.NewObject(ctx, remoteChunksize)
+	require.NoError(t, err)
+	assert.Equal(t, size, objChunksize2.Size())
+	assert.Equal(t, remoteChunksize, objChunksize2.Remote())
 }
 
 func prepareListing(t *testing.T) fs.Fs {
