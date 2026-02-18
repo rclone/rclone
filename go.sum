@@ -425,6 +425,10 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/internxt/rclone-adapter v0.0.0-20260220172730-613f4cc8b8fd h1:dSIuz2mpJAPQfhHYtG57D0qwSkgC/vQ69gHfeyQ4kxA=
 github.com/internxt/rclone-adapter v0.0.0-20260220172730-613f4cc8b8fd/go.mod h1:vdPya4AIcDjvng4ViaAzqjegJf0VHYpYHQguFx5xBp0=
+github.com/internxt/rclone-adapter v0.0.0-20260226152911-72b83123f8e9 h1:lxVac1uYH2qmAFlCeBZjlueL72PlrOEOoc5K/tbCRr8=
+github.com/internxt/rclone-adapter v0.0.0-20260226152911-72b83123f8e9/go.mod h1:vdPya4AIcDjvng4ViaAzqjegJf0VHYpYHQguFx5xBp0=
+github.com/internxt/rclone-adapter v0.0.0-20260303161852-4b337f11972d h1:dMd7BPNXvz73BBwYSvqInndDkW+q8OAUu8+zSClYtEs=
+github.com/internxt/rclone-adapter v0.0.0-20260303161852-4b337f11972d/go.mod h1:vdPya4AIcDjvng4ViaAzqjegJf0VHYpYHQguFx5xBp0=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=
 github.com/jcmturner/aescts/v2 v2.0.0/go.mod h1:AiaICIRyfYg35RUkr8yESTqvSy7csK90qZ5xfvvsoNs=
 github.com/jcmturner/dnsutils/v2 v2.0.0 h1:lltnkeZGL0wILNvrNiVCR6Ro5PGU/SeBvVO/8c/iPbo=
