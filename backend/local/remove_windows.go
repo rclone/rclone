@@ -14,7 +14,7 @@ import (
 func remove(name string) (err error) {
 	const maxTries = 10
 	var sleepTime = 1 * time.Millisecond
-	for i := 0; i < maxTries; i++ {
+	for i := range maxTries {
 		err = os.Remove(name)
 		if err == nil {
 			break

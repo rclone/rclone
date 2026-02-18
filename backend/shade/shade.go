@@ -163,7 +163,7 @@ func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("invalid token received from server")
 	}
-	var claims map[string]interface{}
+	var claims map[string]any
 	if err := json.Unmarshal(payload, &claims); err != nil {
 		return "", err
 	}
@@ -182,7 +182,7 @@ func (f *Fs) refreshJWTToken(ctx context.Context) (string, error) {
 	return f.token, nil
 }
 
-func (f *Fs) callAPI(ctx context.Context, method, path string, response interface{}) (*http.Response, error) {
+func (f *Fs) callAPI(ctx context.Context, method, path string, response any) (*http.Response, error) {
 	token, err := f.refreshJWTToken(ctx)
 	if err != nil {
 		return nil, err

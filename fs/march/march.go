@@ -205,9 +205,7 @@ func (m *March) Run(ctx context.Context) error {
 	checkers := ci.Checkers
 	in := make(chan listDirJob, checkers)
 	for range checkers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for {
 				select {
 				case <-m.Ctx.Done():
@@ -244,7 +242,7 @@ func (m *March) Run(ctx context.Context) error {
 					traversing.Done()
 				}
 			}
-		}()
+		})
 	}
 
 	// Start the process
@@ -393,9 +391,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	// List the src and dst directories
 	if !job.noSrc {
 		srcChan := srcChan // duplicate this as we may override it later
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			srcListErr = m.srcListDir(job.srcRemote, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
 					srcChan <- entry
@@ -403,16 +399,14 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 				return nil
 			})
 			close(srcChan)
-		}()
+		})
 	} else {
 		close(srcChan)
 	}
 	startedDst := false
 	if !m.NoTraverse && !job.noDst {
 		startedDst = true
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			dstListErr = m.dstListDir(job.dstRemote, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
 					dstChan <- entry
@@ -420,7 +414,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 				return nil
 			})
 			close(dstChan)
-		}()
+		})
 	}
 	// If NoTraverse is set, then try to find a matching object
 	// for each item in the srcList to head dst object
@@ -455,9 +449,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		// Get the tasks from the queue and find a matching object.
 		var workerWg sync.WaitGroup
 		for range workers {
-			workerWg.Add(1)
-			go func() {
-				defer workerWg.Done()
+			workerWg.Go(func() {
 				for t := range matchTasks {
 					// Can't match directories with NewObject
 					if _, ok := t.src.(fs.Object); !ok {
@@ -476,7 +468,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 					}
 					t.dstMatch <- dst
 				}
-			}()
+			})
 		}
 
 		// Close dstResults when all the workers have finished
@@ -486,9 +478,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		}()
 
 		// Read the matches in order and send them to dstChan if found.
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for dstMatch := range dstMatches {
 				dst := <-dstMatch
 				// Note that dst may be nil here
@@ -497,7 +487,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 			}
 			close(srcChan)
 			close(dstChan)
-		}()
+		})
 	}
 	if !startedDst {
 		close(dstChan)

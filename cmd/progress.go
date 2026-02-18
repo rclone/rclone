@@ -41,9 +41,7 @@ func startProgress() func() {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		progressInterval := defaultProgressInterval
 		if ShowStats() && *statsInterval > 0 {
 			progressInterval = *statsInterval
@@ -65,7 +63,7 @@ func startProgress() func() {
 				return
 			}
 		}
-	}()
+	})
 	return func() {
 		close(stopStats)
 		wg.Wait()

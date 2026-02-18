@@ -66,11 +66,9 @@ func testCacheCRUD(t *testing.T, h *Handler, c Cache, fileName string) {
 func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
 	for i := range 100 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			testCacheCRUD(t, h, c, fmt.Sprintf("file-%d", i))
-		}()
+		})
 	}
 	wg.Wait()
 }
@@ -79,9 +77,7 @@ func testCacheThrashDifferent(t *testing.T, h *Handler, c Cache) {
 func testCacheThrashSame(t *testing.T, h *Handler, c Cache) {
 	var wg sync.WaitGroup
 	for range 100 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			// Write a handle
 			splitPath := []string{"file"}
@@ -108,7 +104,7 @@ func testCacheThrashSame(t *testing.T, h *Handler, c Cache) {
 				require.Error(t, err)
 				assert.Equal(t, errStaleHandle, err)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }

@@ -290,9 +290,7 @@ func TestPoolMaxBufferMemory(t *testing.T) {
 	)
 	const trials = 50
 	for i := range trials {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			if i < trials/2 {
 				n := i%4 + 1
 				buf := bp.GetN(n)
@@ -307,7 +305,7 @@ func TestPoolMaxBufferMemory(t *testing.T) {
 				countBuf(-1)
 				bp.Put(buf)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()

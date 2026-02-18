@@ -391,9 +391,7 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 		})
 	}
 	for range ci.Checkers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for {
 				select {
 				case job, ok := <-in:
@@ -442,7 +440,7 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 					return
 				}
 			}
-		}()
+		})
 	}
 	// Start the process
 	traversing.Add(1)

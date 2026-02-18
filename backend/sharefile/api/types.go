@@ -27,8 +27,8 @@ type Item struct {
 	FileCount  int32     `json:"FileCount,omitempty"`
 	Name       string    `json:"Name,omitempty"`
 	FileName   string    `json:"FileName,omitempty"`
-	CreatedAt  time.Time `json:"CreationDate,omitempty"`
-	ModifiedAt time.Time `json:"ClientModifiedDate,omitempty"`
+	CreatedAt  time.Time `json:"CreationDate"`
+	ModifiedAt time.Time `json:"ClientModifiedDate"`
 	IsHidden   bool      `json:"IsHidden,omitempty"`
 	Size       int64     `json:"FileSizeBytes,omitempty"`
 	Type       string    `json:"odata.type,omitempty"`
