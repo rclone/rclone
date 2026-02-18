@@ -547,6 +547,7 @@ rclone [flags]
       --local-time-type mtime|atime|btime|ctime             Set what kind of time is returned (default mtime)
       --local-unicode-normalization                         Apply unicode NFC normalization to paths and filenames
       --local-zero-size-links                               Assume the Stat size of links is zero (and read them instead) (deprecated)
+      --local-preserve-hlinks                               Preserve hardlinks
       --log-file string                                     Log everything to this file
       --log-file-compress                                   If set, compress rotated log files using gzip
       --log-file-max-age Duration                           Maximum duration to retain old log files (eg "7d") (default 0s)
