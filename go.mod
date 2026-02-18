@@ -1,6 +1,6 @@
 module github.com/rclone/rclone
 
-go 1.24.4
+go 1.25.0
 
 godebug x509negativeserial=1
 
