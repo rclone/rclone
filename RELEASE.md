@@ -109,6 +109,59 @@ go run github.com/icholy/gomajor@latest list -major
 
 Expect API breakage when updating major versions.
 
+## Updating Go
+
+When a new Go stable is released update to it. We support the current
+stable Go and the previous release which is in line with the rest of
+the Go ecosystem.
+
+These files will need editing:
+
+- `.github/workflows/build.yml` - change current and previous Go versions
+- `docs/content/install.md` - change minimum Go version required
+- `fs/versioncheck.go` - update minimum Go version required
+- `go.mod` - update minimum Go version required
+
+Check it builds
+
+- `make GOTAGS=cmount`
+- `make compiletest`
+
+Assuming `go1.XX` is current and `go1.YY` is previous version:
+
+Use `git grep go1.YY` and `git grep go1.YY` to look for opportunities
+to remove build tags we no longer need.
+
+Commit with message like this:
+
+```text
+build: update to go1.YY and make go1.YY the minimum required version
+```
+
+Send to CI and if it passes, merge.
+
+### gofix
+
+Updating the minimum required version of Go is a good opportunity to
+run the `go fix` command to modernize Go usage.
+
+This needs to be run for all architectures.
+
+```console
+GOOS=linux go fix -tags cmount ./...
+GOOS=freebsd go fix -tags cmount ./...
+GOOS=windows go fix -tags cmount ./...
+GOOS=darwin go fix -tags cmount ./...
+```
+
+Examine the diff carefully.
+
+Commit with message
+
+```text
+build: modernize Go code with go fix for go1.YY
+```
+
 ## Tidy beta
 
 At some point after the release run
