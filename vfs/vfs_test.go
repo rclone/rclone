@@ -361,6 +361,54 @@ func TestVFSStatfs(t *testing.T) {
 	assert.Equal(t, oldTime, vfs.usageTime)
 }
 
+func TestVFSStatfsWithDiskSpaceTotalSize(t *testing.T) {
+	r, vfs := newTestVFS(t)
+
+	// pre-conditions
+	assert.Nil(t, vfs.usage)
+
+	aboutSupported := r.Fremote.Features().About != nil
+
+	diskSpaceTotalSize := fs.SizeSuffix(int64(unknownFreeBytes) - 1)
+	vfs.Opt.DiskSpaceTotalSize = diskSpaceTotalSize
+
+	// read
+	total, used, free := vfs.Statfs()
+	if !aboutSupported {
+		assert.Equal(t, int64(diskSpaceTotalSize), total)
+		assert.Equal(t, int64(0), used)
+		assert.Equal(t, int64(diskSpaceTotalSize), free)
+		return // can't test anything else if About not supported
+	}
+	require.NotNil(t, vfs.usage)
+	assert.Equal(t, int64(diskSpaceTotalSize), total)
+	if vfs.usage.Used != nil {
+		assert.Equal(t, *vfs.usage.Used, used)
+	} else {
+		assert.Equal(t, int64(0), used)
+	}
+	assert.Equal(t, total-used, free)
+}
+
+func TestVFSStatfsWhenUsedExceedsDiskSpaceTotalSize(t *testing.T) {
+	r, vfs := newTestVFS(t)
+
+	// pre-conditions
+	aboutSupported := r.Fremote.Features().About != nil
+	if !aboutSupported {
+		t.Skip("skip as used space is unknown")
+	}
+
+	diskSpaceTotalSize := fs.SizeSuffix(1)
+	vfs.Opt.DiskSpaceTotalSize = diskSpaceTotalSize
+
+	// read
+	total, used, free := vfs.Statfs()
+	assert.Equal(t, int64(diskSpaceTotalSize), total)
+	assert.Equal(t, int64(diskSpaceTotalSize), used)
+	assert.Equal(t, int64(0), free)
+}
+
 func TestVFSMkdir(t *testing.T) {
 	r, vfs := newTestVFS(t)
 
