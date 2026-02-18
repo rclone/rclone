@@ -375,21 +375,17 @@ func TestCallMaxConnectionsRecursiveDeadlock2(t *testing.T) {
 
 	// Normal
 	for range 100 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			err := p.Call(func() (bool, error) {
 				// check we have taken the connection token
 				assert.Equal(t, 0, len(p.connTokens))
 				return false, nil
 			})
 			assert.NoError(t, err)
-		}()
+		})
 
 		// Now attempt a recursive call
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			err := p.Call(func() (bool, error) {
 				// check we have taken the connection token
 				assert.Equal(t, 0, len(p.connTokens))
@@ -397,7 +393,7 @@ func TestCallMaxConnectionsRecursiveDeadlock2(t *testing.T) {
 				return false, p.Call(dp.fn)
 			})
 			assert.Equal(t, errFoo, err)
-		}()
+		})
 	}
 
 	// Tidy up

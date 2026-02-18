@@ -563,11 +563,9 @@ func TestRWConcurrency(t *testing.T) {
 	writeTo := func(rw *RW, size int64) {
 		in, out := io.Pipe()
 		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			check(in, size, rw)
-		}()
+		})
 		var n int64
 		for n < size {
 			nn, err := rw.WriteTo(out)

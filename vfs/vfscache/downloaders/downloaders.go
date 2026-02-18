@@ -115,9 +115,7 @@ func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *
 		src:    src,
 		remote: remote,
 	}
-	dls.wg.Add(1)
-	go func() {
-		defer dls.wg.Done()
+	dls.wg.Go(func() {
 		ticker := time.NewTicker(backgroundKickerInterval)
 		select {
 		case <-ticker.C:
@@ -129,7 +127,7 @@ func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *
 			break
 		}
 		ticker.Stop()
-	}()
+	})
 
 	return dls
 }
@@ -189,9 +187,7 @@ func (dls *Downloaders) _newDownloader(r ranges.Range) (dl *downloader, err erro
 
 	dls.dls = append(dls.dls, dl)
 
-	dl.wg.Add(1)
-	go func() {
-		defer dl.wg.Done()
+	dl.wg.Go(func() {
 		n, err := dl.download()
 		_ = dl.close(err)
 		dl.dls.countErrors(n, err)
@@ -202,7 +198,7 @@ func (dls *Downloaders) _newDownloader(r ranges.Range) (dl *downloader, err erro
 		if err != nil {
 			fs.Errorf(dl.dls.src, "vfs cache: failed to kick waiters: %v", err)
 		}
-	}()
+	})
 
 	return dl, nil
 }
