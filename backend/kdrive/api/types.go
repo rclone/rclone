@@ -84,51 +84,6 @@ func (e *ResultStatus) Update(err error) error {
 // Check ResultStatus satisfies the error interface
 var _ error = (*ResultStatus)(nil)
 
-// Profile describes a profile, as returned by the "/profile" root API
-type Profile struct {
-	ResultStatus
-	Data struct {
-		ID                                int    `json:"id"`
-		UserID                            int    `json:"user_id"`
-		Login                             string `json:"login"`
-		Firstname                         string `json:"firstname"`
-		Lastname                          string `json:"lastname"`
-		DisplayName                       string `json:"display_name"`
-		DateLastChangePassword            int    `json:"date_last_change_password"`
-		Otp                               bool   `json:"otp"`
-		Sms                               bool   `json:"sms"`
-		SmsPhone                          any    `json:"sms_phone"`
-		Yubikey                           bool   `json:"yubikey"`
-		InfomaniakApplication             bool   `json:"infomaniak_application"`
-		DoubleAuth                        bool   `json:"double_auth"`
-		DoubleAuthMethod                  string `json:"double_auth_method"`
-		RemainingRescueCode               int    `json:"remaining_rescue_code"`
-		SecurityAssistant                 int    `json:"security_assistant"`
-		SecurityCheck                     bool   `json:"security_check"`
-		OpenRenewalWarrantyInvoiceGroupID []any  `json:"open_renewal_warranty_invoice_group_id"`
-		AuthDevices                       []any  `json:"auth_devices"`
-		ValidatedAt                       any    `json:"validated_at"`
-		LastLoginAt                       int    `json:"last_login_at"`
-		AdministrationLastLoginAt         int    `json:"administration_last_login_at"`
-		InvalidEmail                      bool   `json:"invalid_email"`
-		Avatar                            string `json:"avatar"`
-		Locale                            string `json:"locale"`
-		LanguageID                        int    `json:"language_id"`
-		Timezone                          string `json:"timezone"`
-		Country                           struct {
-			ID      int    `json:"id"`
-			Short   string `json:"short"`
-			Name    string `json:"name"`
-			Enabled bool   `json:"enabled"`
-		} `json:"country"`
-		UnsuccessfulConnexionLimit        bool `json:"unsuccessful_connexion_limit"`
-		UnsuccessfulConnexionRateLimit    int  `json:"unsuccessful_connexion_rate_limit"`
-		UnsuccessfulConnexionNotification bool `json:"unsuccessful_connexion_notification"`
-		SuccessfulConnexionNotification   bool `json:"successful_connexion_notification"`
-		CurrentAccountID                  int  `json:"current_account_id"`
-	} `json:"data"`
-}
-
 // ListDrives describes a list of available drives for a user
 type ListDrives struct {
 	ResultStatus
