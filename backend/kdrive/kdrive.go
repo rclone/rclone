@@ -52,9 +52,7 @@ func init() {
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
 			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
-			Default: (encoder.Display |
-				encoder.EncodeLeftSpace | encoder.EncodeRightSpace |
-				encoder.EncodeInvalidUtf8),
+			Default: encoder.Display | encoder.EncodeLeftSpace | encoder.EncodeRightSpace | encoder.EncodeInvalidUtf8,
 		}, {
 			Name: "root_folder_id",
 			Help: "Fill in for rclone to use a non root folder as its starting point.",
@@ -171,7 +169,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 	// defer fs.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
 	leaf, directoryID, err := f.dirCache.FindPath(ctx, path, false)
 	if err != nil {
-		if err == fs.ErrorDirNotFound {
+		if errors.Is(err, fs.ErrorDirNotFound) {
 			return nil, fs.ErrorObjectNotFound
 		}
 		return nil, err
@@ -258,9 +256,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			// No root so return old f
 			return f, nil
 		}
-		_, err := tempF.newObjectWithInfo(ctx, remote, nil)
+		_, err = tempF.newObjectWithInfo(ctx, remote, nil)
 		if err != nil {
-			if err == fs.ErrorObjectNotFound {
+			if errors.Is(err, fs.ErrorObjectNotFound) {
 				// File doesn't exist so return old f
 				return f, nil
 			}
@@ -491,27 +489,27 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // callback returns an error then the listing will stop
 // immediately.
 func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	list := list.NewHelper(callback)
+	l := list.NewHelper(callback)
 	err = f.listHelper(ctx, dir, false, func(o fs.DirEntry) error {
-		return list.Add(o)
+		return l.Add(o)
 	})
 	if err != nil {
 		return err
 	}
-	return list.Flush()
+	return l.Flush()
 }
 
 // ListR lists the objects and directories of the Fs starting
 // from dir recursively into out.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	list := list.NewHelper(callback)
+	l := list.NewHelper(callback)
 	err = f.listHelper(ctx, dir, true, func(o fs.DirEntry) error {
-		return list.Add(o)
+		return l.Add(o)
 	})
 	if err != nil {
 		return err
 	}
-	return list.Flush()
+	return l.Flush()
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -529,8 +527,10 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 	}
 	// Temporary Object under construction
 	o = &Object{
-		fs:     f,
-		remote: remote,
+		fs:      f,
+		remote:  remote,
+		size:    size,
+		modTime: modTime,
 	}
 	return o, leaf, directoryID, nil
 }
@@ -913,9 +913,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 
 	// Check if link exists
-	url, err := f.getPublicLink(ctx, fileID)
-	if url != "" {
-		return url, nil
+	link, err := f.getPublicLink(ctx, fileID)
+	if link != "" {
+		return link, nil
 	}
 
 	// Create or get existing public link
@@ -950,7 +950,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 }
 
 // Shutdown shutdown the fs
-func (f *Fs) Shutdown(ctx context.Context) error {
+func (f *Fs) Shutdown(_ context.Context) error {
 	return nil
 }
 
@@ -1084,7 +1084,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+func (o *Object) SetModTime(_ context.Context, _ time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
@@ -1151,7 +1151,7 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 	}
 	// Calculate xxh3 hash
 	hasher := xxh3.New()
-	hasher.Write(content)
+	_, _ = hasher.Write(content)
 	totalHash := fmt.Sprintf("xxh3:%x", hasher.Sum(nil))
 
 	size := src.Size()

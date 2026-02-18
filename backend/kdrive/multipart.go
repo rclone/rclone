@@ -58,7 +58,7 @@ func calculateTotalChunks(fileSize int64, chunkSize int64) int64 {
 }
 
 // OpenChunkWriter returns chunk writer info and the upload session
-func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, _ ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 	dir, leaf := path.Split(remote)
 	dir = strings.TrimSuffix(dir, "/")
 
@@ -137,7 +137,7 @@ func (u *uploadSession) WriteChunk(ctx context.Context, chunkNumber int, reader 
 
 	// Calculate chunk hash
 	chunkHasher := xxh3.New()
-	chunkHasher.Write(chunkData)
+	_, _ = chunkHasher.Write(chunkData)
 	chunkHash := fmt.Sprintf("xxh3:%x", chunkHasher.Sum(nil))
 
 	// Accumulate in total hash
