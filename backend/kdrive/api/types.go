@@ -84,37 +84,6 @@ func (e *ResultStatus) Update(err error) error {
 // Check ResultStatus satisfies the error interface
 var _ error = (*ResultStatus)(nil)
 
-// ListDrives describes a list of available drives for a user
-type ListDrives struct {
-	ResultStatus
-	Data []struct {
-		ID               int    `json:"id"`
-		DisplayName      string `json:"display_name"`
-		FirstName        string `json:"first_name"`
-		LastName         string `json:"last_name"`
-		Email            string `json:"email"`
-		IsSso            bool   `json:"is_sso"`
-		Avatar           string `json:"avatar"`
-		DeletedAt        any    `json:"deleted_at"`
-		DriveID          int    `json:"drive_id"`
-		DriveName        string `json:"drive_name"`
-		AccountID        int    `json:"account_id"`
-		CreatedAt        int    `json:"created_at"`
-		UpdatedAt        int    `json:"updated_at"`
-		LastConnectionAt int    `json:"last_connection_at"`
-		ProductID        int    `json:"product_id"`
-		Status           string `json:"status"`
-		Role             string `json:"role"`
-		Type             string `json:"type"`
-		Preference       struct {
-			Color       string `json:"color"`
-			Hide        bool   `json:"hide"`
-			Default     bool   `json:"default"`
-			DefaultPage string `json:"default_page"`
-		} `json:"preference"`
-	} `json:"data"`
-}
-
 // Item describes a folder or a file as returned by Get Folder Items and others
 type Item struct {
 	ID             int    `json:"id"`
