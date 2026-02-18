@@ -385,6 +385,21 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	defer func() {
 		tr.Done(ctx, err)
 	}()
+
+	// Pre-validate the destination path if the backend supports it.
+	// This runs even under --dry-run so users can catch forbidden characters early.
+	remoteToCheck := transform.Path(ctx, remote, false)
+	if dst != nil {
+		remoteToCheck = transform.Path(ctx, dst.Remote(), false)
+	}
+	if v, ok := f.(fs.RemotePathValidator); ok {
+		if vErr := v.ValidateRemotePath(ctx, remoteToCheck); vErr != nil {
+			// Ensure the offending path is visible in logs (even in --dry-run).
+			fs.Errorf(remoteToCheck, "[File] %v", vErr)
+			return nil, fserrors.NoRetryError(fserrors.NoLowLevelRetryError(vErr))
+		}
+	}
+
 	if SkipDestructive(ctx, src, "copy") {
 		in := tr.Account(ctx, nil)
 		in.DryRun(src.Size())

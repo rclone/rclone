@@ -234,6 +234,7 @@ type Option struct {
 	Hide       OptionVisibility // set this to hide the config from the configurator or the command line
 	Required   bool             // this option is required, meaning value cannot be empty unless there is a default
 	IsPassword bool             // set if the option is a password
+	NoPasswordGenerate bool     // set to disable generated password choice in interactive configurator
 	NoPrefix   bool             // set if the option for this should not use the backend prefix
 	Advanced   bool             // set if this is an advanced config option
 	Exclusive  bool             // set if the answer can only be one of the examples (empty string allowed unless Required or Default is set)
