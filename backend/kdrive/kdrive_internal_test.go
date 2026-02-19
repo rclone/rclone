@@ -7,11 +7,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
@@ -41,8 +43,21 @@ func setupTestFs(t *testing.T) *Fs {
 	// Create a unique test directory name
 	testDir := fmt.Sprintf("rclone-test-%d", time.Now().UnixNano())
 
+	// Use -remote flag if provided, otherwise default to TestKdrive
+	remoteName := *fstest.RemoteName
+	if remoteName == "" {
+		remoteName = "TestKdrive:"
+	}
+
+	// Check if root_folder_id is "1" in config, if so prepend Private/ to path
+	remoteSection := strings.TrimSuffix(remoteName, ":")
+	rootFolderID := config.GetValue(remoteSection, "root_folder_id")
+	if rootFolderID == "1" {
+		remoteName = remoteName + "Private/"
+	}
+
 	// Step 1: Create fs pointing to root of drive
-	fRoot, err := fs.NewFs(ctx, "TestKdrive:")
+	fRoot, err := fs.NewFs(ctx, remoteName)
 	require.NoError(t, err, "Failed to create root fs")
 
 	// Step 2: Create the test directory in the root fs
@@ -50,7 +65,7 @@ func setupTestFs(t *testing.T) *Fs {
 	require.NoError(t, err, "Failed to create test directory")
 
 	// Step 3: Create fs pointing specifically to the test subdirectory
-	fTest, err := fs.NewFs(ctx, fmt.Sprintf("TestKdrive:%s", testDir))
+	fTest, err := fs.NewFs(ctx, fmt.Sprintf("%s%s", remoteName, testDir))
 	require.NoError(t, err, "Failed to create test fs")
 
 	// Step 4: Cleanup - delete the test directory from the root fs
