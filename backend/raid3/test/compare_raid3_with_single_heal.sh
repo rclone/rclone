@@ -4,28 +4,28 @@
 # ----------------------------------
 # Healing validation harness for the rclone raid3 backend.
 #
-# This script simulates missing particles on individual raid3 remotes (even/odd)
-# by deleting their portion of a dataset, triggers reads to invoke auto-healing,
-# and verifies that the missing particle is restored. Works with both local and
-# MinIO-backed raid3 configurations, auto-starting MinIO containers as needed.
+# Simulates missing particles on individual raid3 backends (even/odd/parity) by
+# deleting their portion of a dataset, triggers reads to invoke auto-healing, and
+# verifies that the missing particle is restored. Works with local, MinIO, mixed,
+# and SFTP configurations.
 #
 # Usage:
 #   compare_raid3_with_single_heal.sh [options] <command> [args]
 #
 # Commands:
-#   start                 Start MinIO containers (requires --storage-type=minio).
-#   stop                  Stop MinIO containers (requires --storage-type=minio).
-#   teardown              Purge datasets and local/MinIO directories.
+#   start                 Start MinIO or SFTP containers (requires --storage-type=minio, mixed, or sftp).
+#   stop                  Stop those containers.
+#   teardown              Purge all data from the selected storage-type (raid3 + single).
 #   list                  Show available healing scenarios.
-#   test [scenario]       Run all or a named scenario (even|odd).
+#   test [scenario]       Run all or a named scenario (even|odd|parity|even-list|odd-list|parity-list).
 #
 # Options:
-#   --storage-type <local|minio>   Backend pair to exercise (required for start/stop/test/teardown).
+#   --storage-type <local|minio|mixed|sftp>   Select backend (required for start/stop/test/teardown).
 #   -v, --verbose                  Show stdout/stderr from rclone operations.
 #   -h, --help                     Display this help text.
 #
 # Environment:
-#   RCLONE_CONFIG   Path to rclone configuration file (defaults to ~/.config/rclone/rclone.conf).
+#   RCLONE_CONFIG   Path to rclone configuration file (see compare_raid3_env.sh).
 #
 # Safety guard: must be executed from backend/raid3/test directory.
 # -----------------------------------------------------------------------------
@@ -52,14 +52,14 @@ usage() {
 Usage: ${SCRIPT_NAME} [options] <command> [arguments]
 
 Commands:
-  start                      Start MinIO containers (requires --storage-type=minio).
-  stop                       Stop MinIO containers (requires --storage-type=minio).
-  teardown                   Purge datasets for the selected storage type.
+  start                      Start MinIO or SFTP containers (requires --storage-type=minio, mixed, or sftp).
+  stop                       Stop those containers.
+  teardown                   Purge all test data for the selected storage type.
   list                       Show available healing scenarios.
-  test [even|odd]            Run all scenarios or a single one.
+  test [scenario]            Run all scenarios or a single one (even|odd|parity|even-list|odd-list|parity-list).
 
 Options:
-  --storage-type <local|minio|mixed>   Backend pair (required for start/stop/test/teardown).
+  --storage-type <local|minio|mixed|sftp>   Select backend (required for start/stop/test/teardown).
   -v, --verbose                  Show stdout/stderr from rclone operations.
   -h, --help                     Display this help.
 
@@ -122,13 +122,17 @@ parse_args() {
 
 print_scenarios() {
   cat <<EOF
-Available healing scenarios:
+Available healing scenarios (run with --storage-type=local, minio, mixed, or sftp):
+
   even        Remove even particles and verify auto-heal after file read.
   odd         Remove odd particles and verify auto-heal after file read.
   parity      Remove parity particles and verify auto-heal after file read.
   even-list   Remove even particles and confirm directory listing does NOT heal.
   odd-list    Remove odd particles and confirm directory listing does NOT heal.
   parity-list Remove parity particles and confirm directory listing does NOT heal.
+
+Run all:  ${SCRIPT_NAME} --storage-type=<type> test
+Run one:  ${SCRIPT_NAME} --storage-type=<type> test even
 EOF
 }
 
@@ -163,8 +167,10 @@ print_heal_summary() {
 trigger_heal_via_cat() {
   local dataset_id="$1"
   local rel_path="$2"
+  local path_prefix
+  path_prefix=$(path_for_id "${dataset_id}")
   local result lvl_status lvl_stdout lvl_stderr
-  result=$(capture_command "heal_cat" cat "${RAID3_REMOTE}:${dataset_id}/${rel_path}")
+  result=$(capture_command "heal_cat" cat "${RAID3_REMOTE}:${path_prefix}/${rel_path}")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${result}"
   print_if_verbose "heal cat" "${lvl_stdout}" "${lvl_stderr}"
 
@@ -265,8 +271,10 @@ run_listing_scenario() {
     return 1
   fi
 
+  local path_prefix
+  path_prefix=$(path_for_id "${dataset_id}")
   local result lvl_status lvl_stdout lvl_stderr
-  result=$(capture_command "heal_list" ls "${RAID3_REMOTE}:${dataset_id}")
+  result=$(capture_command "heal_list" ls "${RAID3_REMOTE}:${path_prefix}")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${result}"
   print_if_verbose "heal ls" "${lvl_stdout}" "${lvl_stderr}"
 
@@ -292,8 +300,8 @@ run_listing_scenario() {
     return 1
   fi
 
-  # For local storage we assert that listing does NOT heal; for MinIO we only
-  # assert that listing succeeds (current backend behavior may heal).
+  # For local storage we assert that listing does NOT heal; for MinIO/SFTP we only
+  # assert that listing succeeds (backend behavior may heal).
   if [[ "${STORAGE_TYPE}" == "local" ]]; then
     if object_exists_in_backend "${backend}" "${dataset_id}" "${TARGET_OBJECT}"; then
       record_heal_result "FAIL" "${backend}-list" "Listing unexpectedly healed '${backend}' particle (local backend)."
@@ -301,7 +309,7 @@ run_listing_scenario() {
     fi
     record_heal_result "PASS" "${backend}-list" "Listing did not heal '${backend}' particle (expected for local)."
   else
-    record_heal_result "PASS" "${backend}-list" "Listing succeeded; healing behavior on '${backend}' is backend-dependent (MinIO may heal)."
+    record_heal_result "PASS" "${backend}-list" "Listing succeeded; healing behavior on '${backend}' is backend-dependent (minio/sftp may heal)."
   fi
   return 0
 }
@@ -371,6 +379,15 @@ main() {
           remove_leftover_files "${dir}"
           verify_directory_empty "${dir}"
         done
+      elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
+        for dir in "${LOCAL_EVEN_DIR}" "${LOCAL_PARITY_DIR}" "${LOCAL_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+        for dir in "${MINIO_ODD_DIR}" "${MINIO_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
       elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
         for dir in "${SFTP_RAID3_DIRS[@]}" "${SFTP_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"
@@ -390,6 +407,13 @@ main() {
       set_remotes_for_storage_type
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
       [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+        log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (minio/mixed)"
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+        log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (sftp)"
+      fi
       reset_heal_results
       if [[ -z "${COMMAND_ARG}" ]]; then
         if ! run_all_heal_scenarios; then

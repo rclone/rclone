@@ -16,10 +16,16 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fspath"
 )
 
 // checkAllBackendsAvailable performs a quick health check to see if all three
 // backends are reachable. This is used to enforce strict write policy.
+//
+// When the Fs has a non-empty root (e.g. "rclone mkdir remote:path" opens with root "path"),
+// the health check runs against backends opened at root "" so List and Mkdir target the
+// storage root. Otherwise backends with a non-existent root (e.g. SFTP) would fail
+// List("") or Mkdir(".raid3-health-check-...") with "file does not exist".
 //
 // Returns: enhanced error with rebuild guidance if any backend is unavailable
 func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
@@ -32,6 +38,27 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 		err  error
 	}
 	results := make(chan healthResult, 3)
+
+	// When Fs has a non-empty root, run health check against backends at root ""
+	// so we don't depend on the (possibly non-existent) current path.
+	var evenFs, oddFs, parityFs fs.Fs
+	if f.root != "" {
+		var errEven, errOdd, errParity error
+		evenFs, errEven = openBackendWithRetry(checkCtx, fspath.JoinRootPath(f.opt.Even, ""))
+		oddFs, errOdd = openBackendWithRetry(checkCtx, fspath.JoinRootPath(f.opt.Odd, ""))
+		parityFs, errParity = openBackendWithRetry(checkCtx, fspath.JoinRootPath(f.opt.Parity, ""))
+		if errEven != nil {
+			return f.formatDegradedModeError("even", false, oddFs != nil, parityFs != nil, errEven)
+		}
+		if errOdd != nil {
+			return f.formatDegradedModeError("odd", true, false, parityFs != nil, errOdd)
+		}
+		if errParity != nil {
+			return f.formatDegradedModeError("parity", true, true, false, errParity)
+		}
+	} else {
+		evenFs, oddFs, parityFs = f.even, f.odd, f.parity
+	}
 
 	// Check each backend by attempting to access it
 	// We check write capability since that's what we need for Put/Update/Move
@@ -50,7 +77,9 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 		if listErr == nil || errors.Is(listErr, fs.ErrorDirNotFound) || errors.Is(listErr, fs.ErrorIsFile) {
 			// Backend seems available, verify we can write
 			// Try mkdir on a test path (won't actually create if Fs is at file level)
-			testDir := ".raid3-health-check-" + name
+			// Use a name without leading dot so SFTP servers (e.g. atmoz/sftp) that
+			// treat dot-paths specially don't reject the Mkdir.
+			testDir := "raid3-health-check-" + name
 			mkdirErr := backend.Mkdir(checkCtx, testDir)
 
 			// Clean up test directory
@@ -58,23 +87,26 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 				_ = backend.Rmdir(checkCtx, testDir)
 			}
 
-			// Acceptable mkdir errors (backend is writable):
+			// Acceptable mkdir errors (backend is writable or test path not supported):
 			//   - nil: Successfully created (backend is writable)
 			//   - ErrorDirExists: Dir already exists (backend is writable)
 			//   - os.IsExist: underlying filesystem reports existing dir/file
-			if mkdirErr == nil || errors.Is(mkdirErr, fs.ErrorDirExists) || os.IsExist(mkdirErr) {
+			//   - os.ErrNotExist / "file does not exist": e.g. SFTP server rejects relative path
+			//   - ErrorPermissionDenied / os.ErrPermission / "permission denied": e.g. atmoz/sftp
+			//     disallows mkdir at chroot root; backend is still writable under data/base
+			if mkdirErr == nil || errors.Is(mkdirErr, fs.ErrorDirExists) || os.IsExist(mkdirErr) ||
+				os.IsNotExist(mkdirErr) || os.IsPermission(mkdirErr) ||
+				errors.Is(mkdirErr, fs.ErrorPermissionDenied) ||
+				strings.Contains(mkdirErr.Error(), "does not exist") ||
+				strings.Contains(strings.ToLower(mkdirErr.Error()), "permission denied") {
 				return healthResult{name, nil} // Backend is available
 			}
 
-			// Mkdir failed with real error (permission, read-only filesystem, etc.)
+			// Mkdir failed with real error (read-only filesystem, etc.)
 			return healthResult{name, mkdirErr}
 		}
 
 		// List failed with real error
-		// Context deadline exceeded: backend may be slow (e.g. MinIO under load), not necessarily down.
-		if errors.Is(listErr, context.DeadlineExceeded) || strings.Contains(listErr.Error(), "deadline exceeded") {
-			return healthResult{name, nil}
-		}
 		// MinIO "listPathRaw: 0 drives provided": list can fail on this path; backend may still accept writes.
 		// Treat as available so copy can proceed (only degrade when direct write fails).
 		if isMinIOListPathRawError(listErr) {
@@ -91,13 +123,13 @@ func (f *Fs) checkAllBackendsAvailable(ctx context.Context) error {
 	}
 
 	go func() {
-		results <- checkBackend(f.even, "even")
+		results <- checkBackend(evenFs, "even")
 	}()
 	go func() {
-		results <- checkBackend(f.odd, "odd")
+		results <- checkBackend(oddFs, "odd")
 	}()
 	go func() {
-		results <- checkBackend(f.parity, "parity")
+		results <- checkBackend(parityFs, "parity")
 	}()
 
 	// Collect results

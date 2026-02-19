@@ -8,6 +8,7 @@
 # - local: All three backends are local filesystem
 # - minio: All three backends are MinIO object storage
 # - mixed: Mix of local filesystem and MinIO (local even/parity, MinIO odd)
+# - sftp: All three backends are SFTP
 #
 # It verifies that features are correctly intersected (AND logic) or use
 # best-effort (OR logic) as documented in the raid3 backend.
@@ -16,14 +17,14 @@
 #   compare_raid3_with_single_features.sh [options] <command> [args]
 #
 # Commands:
-#   start                 Start the MinIO containers required for minioraid3/miniosingle.
-#   stop                  Stop those MinIO containers.
+#   start                 Start MinIO or SFTP containers (for minio/mixed or sftp).
+#   stop                  Stop those containers.
 #   teardown              Purge all data from the selected storage-type (raid3 + single).
 #   list                  Show available test cases.
-#   test <name>           Run a named test (e.g. "local-features", "minio-features", "mixed-features").
+#   test                  Run the feature test for the selected --storage-type.
 #
 # Options:
-#   --storage-type <local|minio|mixed>   Select which backend configuration to test.
+#   --storage-type <local|minio|mixed|sftp>   Select which backend configuration to test.
 #                                        Required for start/stop/test/teardown.
 #   -v, --verbose                        Show stdout/stderr from both rclone invocations.
 #   -h, --help                           Display this help text.
@@ -44,7 +45,6 @@ SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 VERBOSE=0
 STORAGE_TYPE=""
 COMMAND=""
-COMMAND_ARG=""
 
 # ---------------------------- helper functions ------------------------------
 
@@ -53,14 +53,14 @@ usage() {
 Usage: ${SCRIPT_NAME} [options] <command> [arguments]
 
 Commands:
-  start                      Start MinIO containers (requires --storage-type=minio or mixed).
-  stop                       Stop MinIO containers (requires --storage-type=minio or mixed).
+  start                      Start MinIO or SFTP containers (requires --storage-type=minio, mixed, or sftp).
+  stop                       Stop those containers.
   teardown                   Purge all test data for the selected storage type.
   list                       Show available tests.
-  test <name>                Run the named test (e.g. "mixed-features").
+  test                      Run the feature test for the selected storage type.
 
 Options:
-  --storage-type <local|minio|mixed>   Select backend pair (required for start/stop/test/teardown).
+  --storage-type <local|minio|mixed|sftp>   Select backend pair (required for start/stop/test/teardown).
   -v, --verbose                  Show stdout/stderr from both rclone invocations.
   -h, --help                     Display this help.
 
@@ -102,12 +102,8 @@ parse_args() {
         if [[ "$1" =~ ^- ]]; then
           die "Unknown option: $1"
         fi
-        # Otherwise, if command is "test" and we don't have a test name yet, use this as the test name
-        if [[ "${COMMAND}" == "test" && -z "${COMMAND_ARG}" ]]; then
-          COMMAND_ARG="$1"
-        else
-          die "Unknown argument: $1"
-        fi
+        # No positional arguments accepted after command (storage type is via --storage-type)
+        die "Unknown argument: $1"
         ;;
     esac
     shift
@@ -214,6 +210,9 @@ test_features_for_storage_type() {
       ;;
     mixed)
       test_mixed_features "${features_json}"
+      ;;
+    sftp)
+      test_sftp_features "${features_json}"
       ;;
   esac
 
@@ -383,49 +382,68 @@ test_mixed_features() {
   fi
 }
 
-# List available tests
+# Test features specific to SFTP-only backends
+test_sftp_features() {
+  local features_json="$1"
+  log "Testing SFTP-specific features..."
+
+  # SFTP is path-based, not bucket-based
+  local bucket_based
+  bucket_based=$(extract_feature "${features_json}" "BucketBased")
+  if [[ "${bucket_based}" != "false" ]]; then
+    die "BucketBased should be false for SFTP backends, got: '${bucket_based}'"
+  fi
+  log "✓ BucketBased correctly set to false for SFTP backends"
+
+  # SetTier/GetTier should be false for SFTP
+  local set_tier
+  set_tier=$(extract_feature "${features_json}" "SetTier")
+  if [[ "${set_tier}" != "false" ]]; then
+    die "SetTier should be false for SFTP backends, got: ${set_tier}"
+  fi
+  log "✓ SetTier correctly set to false for SFTP backends"
+
+  local get_tier
+  get_tier=$(extract_feature "${features_json}" "GetTier")
+  if [[ "${get_tier}" != "false" ]]; then
+    die "GetTier should be false for SFTP backends, got: ${get_tier}"
+  fi
+  log "✓ GetTier correctly set to false for SFTP backends"
+
+  # IsLocal should be false for raid3 (wrapping backends don't propagate IsLocal)
+  local is_local
+  is_local=$(extract_feature "${features_json}" "IsLocal")
+  if [[ "${is_local}" != "false" ]]; then
+    log "⚠ IsLocal is ${is_local} for raid3 with SFTP backends (expected false)"
+  else
+    log "✓ IsLocal correctly set to false for raid3 (wrapping backend)"
+  fi
+}
+
+# List available tests (storage types)
 list_tests() {
   cat <<EOF
-Available tests:
+Run the feature test for a storage type:
 
-  local-features    Test feature handling with local-only backends
-                    Requires --storage-type=local
-
-  minio-features    Test feature handling with MinIO-only backends
-                    Requires --storage-type=minio
-
-  mixed-features    Test feature handling with mixed remotes (local + MinIO)
-                    Requires --storage-type=mixed
-
-  sftp-features     Test feature handling with SFTP-only backends
-                    Requires --storage-type=sftp
-
-Run all tests by omitting the test name:
-  ${SCRIPT_NAME} --storage-type=local test
-  ${SCRIPT_NAME} --storage-type=minio test
-  ${SCRIPT_NAME} --storage-type=mixed test
-  ${SCRIPT_NAME} --storage-type=sftp test
+  ${SCRIPT_NAME} --storage-type=local test   Test feature handling with local backends
+  ${SCRIPT_NAME} --storage-type=minio test   Test feature handling with MinIO backends
+  ${SCRIPT_NAME} --storage-type=mixed test   Test feature handling with mixed (local + MinIO)
+  ${SCRIPT_NAME} --storage-type=sftp test    Test feature handling with SFTP backends
 
 EOF
 }
 
-# Run all available tests for the current storage type
-run_all_tests() {
-  local test_name="${STORAGE_TYPE}-features"
-  local failed=0
-  
-  log "Running all feature handling tests for --storage-type=${STORAGE_TYPE}..."
+# Run the feature test for the current storage type
+run_feature_test() {
+  log "Running feature test for --storage-type=${STORAGE_TYPE}..."
   echo ""
-  
   if ! test_features_for_storage_type "${STORAGE_TYPE}"; then
-    log "✗ Test '${test_name}' failed"
-    failed=1
-  else
-    log "✓ Test '${test_name}' passed"
+    log "✗ Feature test failed for ${STORAGE_TYPE}"
+    return 1
   fi
+  log "✓ Feature test passed for ${STORAGE_TYPE}"
   echo ""
-  
-  return ${failed}
+  return 0
 }
 
 # Main execution
@@ -444,42 +462,8 @@ main() {
       list_tests
       ;;
     test)
-      if [[ -z "${COMMAND_ARG}" ]]; then
-        # Run all tests when no test name is provided
-        if ! run_all_tests; then
-          die "One or more tests failed."
-        fi
-      else
-        # Run a single named test
-        case "${COMMAND_ARG}" in
-          local-features)
-            if [[ "${STORAGE_TYPE}" != "local" ]]; then
-              die "Test '${COMMAND_ARG}' requires --storage-type=local"
-            fi
-            test_features_for_storage_type "local"
-            ;;
-          minio-features)
-            if [[ "${STORAGE_TYPE}" != "minio" ]]; then
-              die "Test '${COMMAND_ARG}' requires --storage-type=minio"
-            fi
-            test_features_for_storage_type "minio"
-            ;;
-          mixed-features)
-            if [[ "${STORAGE_TYPE}" != "mixed" ]]; then
-              die "Test '${COMMAND_ARG}' requires --storage-type=mixed"
-            fi
-            test_features_for_storage_type "mixed"
-            ;;
-          sftp-features)
-            if [[ "${STORAGE_TYPE}" != "sftp" ]]; then
-              die "Test '${COMMAND_ARG}' requires --storage-type=sftp"
-            fi
-            test_features_for_storage_type "sftp"
-            ;;
-          *)
-            die "Unknown test: '${COMMAND_ARG}'. Use 'list' to see available tests."
-            ;;
-        esac
+      if ! run_feature_test; then
+        die "Feature test failed."
       fi
       ;;
     start)

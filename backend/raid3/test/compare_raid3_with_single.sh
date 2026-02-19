@@ -204,8 +204,8 @@ run_lsd_test() {
   log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained)."
 
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_lsd" lsd "${RAID3_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "single_lsd" lsd "${SINGLE_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command "lvl_lsd" lsd "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
+  single_result=$(capture_command "single_lsd" lsd "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
 
   local lvl_status lvl_stdout lvl_stderr
   local single_status single_stdout single_stderr
@@ -241,8 +241,8 @@ run_ls_test() {
   log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained for inspection)."
 
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_ls" ls "${RAID3_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "single_ls" ls "${SINGLE_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command "lvl_ls" ls "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
+  single_result=$(capture_command "single_ls" ls "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
 
   local lvl_status lvl_stdout lvl_stderr
   local single_status single_stdout single_stderr
@@ -277,13 +277,10 @@ run_cat_test() {
   fi
   log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained for inspection)."
 
-  local target_existing="${dataset_id}/dirA/file_nested.txt"
-  local target_missing="${dataset_id}/missing.txt"
-
   # Existing object
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_cat_existing" cat "${RAID3_REMOTE}:${target_existing}")
-  single_result=$(capture_command "single_cat_existing" cat "${SINGLE_REMOTE}:${target_existing}")
+  lvl_result=$(capture_command "lvl_cat_existing" cat "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")/dirA/file_nested.txt")
+  single_result=$(capture_command "single_cat_existing" cat "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")/dirA/file_nested.txt")
 
   local lvl_status lvl_stdout lvl_stderr
   local single_status single_stdout single_stderr
@@ -312,8 +309,8 @@ run_cat_test() {
   # Missing object
   # Note: rclone cat may return exit code 0 with no output when file can't be opened
   # We need to check both exit codes and output/errors to handle different backend behaviors
-  lvl_result=$(capture_command "lvl_cat_missing" cat "${RAID3_REMOTE}:${target_missing}")
-  single_result=$(capture_command "single_cat_missing" cat "${SINGLE_REMOTE}:${target_missing}")
+  lvl_result=$(capture_command "lvl_cat_missing" cat "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")/missing.txt")
+  single_result=$(capture_command "single_cat_missing" cat "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")/missing.txt")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
@@ -393,8 +390,8 @@ run_copy_download_test() {
   tmp_single=$(mktemp -d) || { rm -rf "${tmp_lvl}"; return 1; }
 
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_copy_download" copy "${RAID3_REMOTE}:${dataset_id}" "${tmp_lvl}")
-  single_result=$(capture_command "single_copy_download" copy "${SINGLE_REMOTE}:${dataset_id}" "${tmp_single}")
+  lvl_result=$(capture_command "lvl_copy_download" copy "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_lvl}")
+  single_result=$(capture_command "single_copy_download" copy "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_single}")
 
   local lvl_status lvl_stdout lvl_stderr
   local single_status single_stdout single_stderr
@@ -447,23 +444,27 @@ run_copy_upload_test() {
 
   local dataset_id
   dataset_id=$(date +upload-%Y%m%d%H%M%S-$((RANDOM % 10000)))
+  if ! sftp_precreate_host_path "${dataset_id}"; then
+    log_warn "test:${test_case}" "Failed to pre-create SFTP host path for ${dataset_id}"
+    return 1
+  fi
 
   local upload_timeout_sec=120
   local lvl_result single_result
   if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
     # Raid3 upload to MinIO can hang on CreateMultipartUpload; use timeout and one retry (like sync-upload).
-    lvl_result=$(capture_command_with_timeout "${upload_timeout_sec}" "lvl_copy_upload" copy "${tempdir}" "${RAID3_REMOTE}:${dataset_id}")
+    lvl_result=$(capture_command_with_timeout "${upload_timeout_sec}" "lvl_copy_upload" copy "${tempdir}" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
     IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
     if [[ "${lvl_status}" -eq 124 ]]; then
       log_info "test:${test_case}" "Copy to raid3 timed out; retrying once after 5s..."
       sleep 5
-      lvl_result=$(capture_command_with_timeout "${upload_timeout_sec}" "lvl_copy_upload_retry" copy "${tempdir}" "${RAID3_REMOTE}:${dataset_id}")
+      lvl_result=$(capture_command_with_timeout "${upload_timeout_sec}" "lvl_copy_upload_retry" copy "${tempdir}" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
       IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
     fi
-    single_result=$(capture_command_with_timeout "${upload_timeout_sec}" "single_copy_upload" copy "${tempdir}" "${SINGLE_REMOTE}:${dataset_id}")
+    single_result=$(capture_command_with_timeout "${upload_timeout_sec}" "single_copy_upload" copy "${tempdir}" "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
   else
-    lvl_result=$(capture_command "lvl_copy_upload" copy "${tempdir}" "${RAID3_REMOTE}:${dataset_id}")
-    single_result=$(capture_command "single_copy_upload" copy "${tempdir}" "${SINGLE_REMOTE}:${dataset_id}")
+    lvl_result=$(capture_command "lvl_copy_upload" copy "${tempdir}" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
+    single_result=$(capture_command "single_copy_upload" copy "${tempdir}" "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
   fi
 
   local lvl_status lvl_stdout lvl_stderr
@@ -496,8 +497,8 @@ run_copy_upload_test() {
   tmp_lvl=$(mktemp -d) || { rm -rf "${tempdir}"; return 1; }
   tmp_single=$(mktemp -d) || { rm -rf "${tempdir}" "${tmp_lvl}"; return 1; }
 
-  lvl_result=$(capture_command "lvl_verify_upload" copy "${RAID3_REMOTE}:${dataset_id}" "${tmp_lvl}")
-  single_result=$(capture_command "single_verify_upload" copy "${SINGLE_REMOTE}:${dataset_id}" "${tmp_single}")
+  lvl_result=$(capture_command "lvl_verify_upload" copy "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_lvl}")
+  single_result=$(capture_command "single_verify_upload" copy "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_single}")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
@@ -542,8 +543,8 @@ run_move_test() {
   tmp_single=$(mktemp -d) || { rm -rf "${tmp_lvl}"; return 1; }
 
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_move" move "${RAID3_REMOTE}:${dataset_id}" "${tmp_lvl}")
-  single_result=$(capture_command "single_move" move "${SINGLE_REMOTE}:${dataset_id}" "${tmp_single}")
+  lvl_result=$(capture_command "lvl_move" move "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_lvl}")
+  single_result=$(capture_command "single_move" move "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_single}")
 
   local lvl_status lvl_stdout lvl_stderr
   local single_status single_stdout single_stderr
@@ -570,8 +571,8 @@ run_move_test() {
   fi
 
   # Confirm source buckets are empty (already moved)
-  lvl_result=$(capture_command "lvl_post_move_ls" ls "${RAID3_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "single_post_move_ls" ls "${SINGLE_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command "lvl_post_move_ls" ls "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
+  single_result=$(capture_command "single_post_move_ls" ls "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
@@ -604,13 +605,10 @@ run_delete_test() {
   fi
   log_info "test:${test_case}" "Dataset ${dataset_id} created on both remotes (retained for inspection)."
 
-  local target_existing="${dataset_id}/dirA/file_nested.txt"
-  local target_missing="${dataset_id}/dirA/does_not_exist.txt"
-
   # Delete existing object
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_delete_existing" delete "${RAID3_REMOTE}:${target_existing}")
-  single_result=$(capture_command "single_delete_existing" delete "${SINGLE_REMOTE}:${target_existing}")
+  lvl_result=$(capture_command "lvl_delete_existing" delete "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")/dirA/file_nested.txt")
+  single_result=$(capture_command "single_delete_existing" delete "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")/dirA/file_nested.txt")
 
   local lvl_status lvl_stdout lvl_stderr
   local single_status single_stdout single_stderr
@@ -628,8 +626,8 @@ run_delete_test() {
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
   # Confirm deletion by listing the directory
-  lvl_result=$(capture_command "lvl_post_delete_ls" ls "${RAID3_REMOTE}:${dataset_id}/dirA")
-  single_result=$(capture_command "single_post_delete_ls" ls "${SINGLE_REMOTE}:${dataset_id}/dirA")
+  lvl_result=$(capture_command "lvl_post_delete_ls" ls "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")/dirA")
+  single_result=$(capture_command "single_post_delete_ls" ls "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")/dirA")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
   print_if_verbose "${RAID3_REMOTE} ls post-delete" "${lvl_stdout}" "${lvl_stderr}"
@@ -644,8 +642,8 @@ run_delete_test() {
   # Delete missing object (should be idempotent)
   # Note: rclone delete may return different exit codes for missing files depending on backend
   # We need to check both exit codes and error messages to handle different backend behaviors
-  lvl_result=$(capture_command "lvl_delete_missing" delete "${RAID3_REMOTE}:${target_missing}")
-  single_result=$(capture_command "single_delete_missing" delete "${SINGLE_REMOTE}:${target_missing}")
+  lvl_result=$(capture_command "lvl_delete_missing" delete "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")/dirA/does_not_exist.txt")
+  single_result=$(capture_command "single_delete_missing" delete "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")/dirA/does_not_exist.txt")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
@@ -707,8 +705,8 @@ run_check_test() {
   local single_status single_stdout single_stderr
 
   # Matching scenario
-  lvl_result=$(capture_command "check_l2s_match" check "${RAID3_REMOTE}:${dataset_id}" "${SINGLE_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "check_s2l_match" check "${SINGLE_REMOTE}:${dataset_id}" "${RAID3_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command "check_l2s_match" check "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")" "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
+  single_result=$(capture_command "check_s2l_match" check "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
@@ -730,10 +728,10 @@ run_check_test() {
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
   # Induce mismatch: remove a file from raid3
-  rclone_cmd delete "${RAID3_REMOTE}:${dataset_id}/dirA/file_nested.txt" >/dev/null 2>&1 || true
+  rclone_cmd delete "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")/dirA/file_nested.txt" >/dev/null 2>&1 || true
 
-  lvl_result=$(capture_command "check_l2s_mismatch" check "${RAID3_REMOTE}:${dataset_id}" "${SINGLE_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "check_s2l_mismatch" check "${SINGLE_REMOTE}:${dataset_id}" "${RAID3_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command "check_l2s_mismatch" check "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")" "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
+  single_result=$(capture_command "check_s2l_mismatch" check "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
@@ -776,21 +774,25 @@ run_sync_upload_test() {
 
   local dataset_id
   dataset_id=$(date +sync-upload-%Y%m%d%H%M%S-$((RANDOM % 10000)))
+  if ! sftp_precreate_host_path "${dataset_id}"; then
+    log_warn "test:${test_case}" "Failed to pre-create SFTP host path for ${dataset_id}"
+    return 1
+  fi
 
   # Use timeout for initial sync too (raid3 sync can hang in List/Update path).
   local sync_timeout_sec=120
   local lvl_result single_result
-  lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_initial" sync "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_initial" sync "${initial_dir}" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
   local lvl_status lvl_stdout lvl_stderr
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   # One retry for MinIO when initial sync times out (intermittent CreateMultipartUpload hang)
   if [[ "${lvl_status}" -eq 124 ]] && [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
     log_info "test:${test_case}" "Initial sync to raid3 timed out; retrying once after 5s..."
     sleep 5
-    lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_initial_retry" sync "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
+    lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_initial_retry" sync "${initial_dir}" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
     IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   fi
-  single_result=$(capture_command_with_timeout "${sync_timeout_sec}" "single_sync_initial" sync "${initial_dir}" "${SINGLE_REMOTE}:${dataset_id}")
+  single_result=$(capture_command_with_timeout "${sync_timeout_sec}" "single_sync_initial" sync "${initial_dir}" "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
 
   local single_status single_stdout single_stderr
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
@@ -834,16 +836,16 @@ run_sync_upload_test() {
   if (( VERBOSE )); then
     sync_extra=(-vv)
   fi
-  lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_delta" sync "${sync_extra[@]+"${sync_extra[@]}"}" "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_delta" sync "${sync_extra[@]+"${sync_extra[@]}"}" "${initial_dir}" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   # One retry for MinIO when delta sync times out (intermittent CreateMultipartUpload hang)
   if [[ "${lvl_status}" -eq 124 ]] && [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
     log_info "test:${test_case}" "Delta sync to raid3 timed out; retrying once after 5s..."
     sleep 5
-    lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_delta_retry" sync "${sync_extra[@]+"${sync_extra[@]}"}" "${initial_dir}" "${RAID3_REMOTE}:${dataset_id}")
+    lvl_result=$(capture_command_with_timeout "${sync_timeout_sec}" "lvl_sync_delta_retry" sync "${sync_extra[@]+"${sync_extra[@]}"}" "${initial_dir}" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
     IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   fi
-  single_result=$(capture_command_with_timeout "${sync_timeout_sec}" "single_sync_delta" sync "${sync_extra[@]+"${sync_extra[@]}"}" "${initial_dir}" "${SINGLE_REMOTE}:${dataset_id}")
+  single_result=$(capture_command_with_timeout "${sync_timeout_sec}" "single_sync_delta" sync "${sync_extra[@]+"${sync_extra[@]}"}" "${initial_dir}" "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
   print_if_verbose "${RAID3_REMOTE} sync (delta)" "${lvl_stdout}" "${lvl_stderr}"
@@ -879,8 +881,8 @@ run_sync_upload_test() {
   tmp_lvl=$(mktemp -d) || { rm -rf "${initial_dir}"; return 1; }
   tmp_single=$(mktemp -d) || { rm -rf "${initial_dir}" "${tmp_lvl}"; return 1; }
 
-  lvl_result=$(capture_command "lvl_sync_verify" copy "${RAID3_REMOTE}:${dataset_id}" "${tmp_lvl}")
-  single_result=$(capture_command "single_sync_verify" copy "${SINGLE_REMOTE}:${dataset_id}" "${tmp_single}")
+  lvl_result=$(capture_command "lvl_sync_verify" copy "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_lvl}")
+  single_result=$(capture_command "single_sync_verify" copy "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_single}")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
@@ -903,8 +905,8 @@ run_sync_upload_test() {
 
   # Remotes should reflect: file1 deleted, file2 updated, file3 present (verified via diff above)
 
-  lvl_result=$(capture_command "lvl_sync_ls" ls "${RAID3_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "single_sync_ls" ls "${SINGLE_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command "lvl_sync_ls" ls "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
+  single_result=$(capture_command "single_sync_ls" ls "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
   print_if_verbose "${RAID3_REMOTE} ls (post-sync)" "${lvl_stdout}" "${lvl_stderr}"
@@ -941,8 +943,8 @@ run_sync_download_test() {
   tmp_single=$(mktemp -d) || { rm -rf "${tmp_lvl}"; return 1; }
 
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_sync_download" sync "${RAID3_REMOTE}:${dataset_id}" "${tmp_lvl}")
-  single_result=$(capture_command "single_sync_download" sync "${SINGLE_REMOTE}:${dataset_id}" "${tmp_single}")
+  lvl_result=$(capture_command "lvl_sync_download" sync "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_lvl}")
+  single_result=$(capture_command "single_sync_download" sync "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")" "${tmp_single}")
 
   local lvl_status lvl_stdout lvl_stderr
   local single_status single_stdout single_stderr
@@ -989,8 +991,8 @@ run_purge_test() {
   local single_status single_stdout single_stderr
 
   # Initial purge
-  lvl_result=$(capture_command "lvl_purge" purge "${RAID3_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "single_purge" purge "${SINGLE_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command "lvl_purge" purge "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
+  single_result=$(capture_command "single_purge" purge "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
@@ -1006,8 +1008,8 @@ run_purge_test() {
   rm -f "${lvl_stdout}" "${lvl_stderr}" "${single_stdout}" "${single_stderr}"
 
   # Confirm dataset no longer exists
-  lvl_result=$(capture_command "lvl_purge_verify" lsd "${RAID3_REMOTE}:${dataset_id}")
-  single_result=$(capture_command "single_purge_verify" lsd "${SINGLE_REMOTE}:${dataset_id}")
+  lvl_result=$(capture_command "lvl_purge_verify" lsd "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")")
+  single_result=$(capture_command "single_purge_verify" lsd "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")")
   IFS='|' read -r lvl_status lvl_stdout lvl_stderr <<<"${lvl_result}"
   IFS='|' read -r single_status single_stdout single_stderr <<<"${single_result}"
 
@@ -1049,8 +1051,8 @@ run_performance_test() {
   
   # Test upload performance
   local raid3_result single_result
-  raid3_result=$(capture_command_timed "raid3_upload" copy "${test_file}" "${RAID3_REMOTE}:${dataset_id}/perf_test.bin")
-  single_result=$(capture_command_timed "single_upload" copy "${test_file}" "${SINGLE_REMOTE}:${dataset_id}/perf_test.bin")
+  raid3_result=$(capture_command_timed "raid3_upload" copy "${test_file}" "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")/perf_test.bin")
+  single_result=$(capture_command_timed "single_upload" copy "${test_file}" "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")/perf_test.bin")
 
   local raid3_status raid3_stdout raid3_stderr raid3_time
   local single_status single_stdout single_stderr single_time
@@ -1105,8 +1107,8 @@ run_performance_test() {
   tmp_raid3=$(mktemp -d) || { rm -rf "${tempdir}"; return 1; }
   tmp_single=$(mktemp -d) || { rm -rf "${tempdir}" "${tmp_raid3}"; return 1; }
 
-  raid3_result=$(capture_command_timed "raid3_download" copy "${RAID3_REMOTE}:${dataset_id}/perf_test.bin" "${tmp_raid3}/perf_test.bin")
-  single_result=$(capture_command_timed "single_download" copy "${SINGLE_REMOTE}:${dataset_id}/perf_test.bin" "${tmp_single}/perf_test.bin")
+  raid3_result=$(capture_command_timed "raid3_download" copy "${RAID3_REMOTE}:$(path_for_id "${dataset_id}")/perf_test.bin" "${tmp_raid3}/perf_test.bin")
+  single_result=$(capture_command_timed "single_download" copy "${SINGLE_REMOTE}:$(path_for_id "${dataset_id}")/perf_test.bin" "${tmp_single}/perf_test.bin")
 
   local raid3_dl_status raid3_dl_stdout raid3_dl_stderr raid3_dl_time
   local single_dl_status single_dl_stdout single_dl_stderr single_dl_time
@@ -1172,9 +1174,15 @@ run_mkdir_test() {
 
   log_info "test:${test_case}" "Running with identifier '${test_id}'"
 
+  # SFTP: pre-create path on host so rclone mkdir sees an existing root
+  if ! sftp_precreate_host_path "${test_id}"; then
+    log_warn "test:${test_case}" "Failed to pre-create SFTP host path for ${test_id}"
+    return 1
+  fi
+
   local lvl_result single_result
-  lvl_result=$(capture_command "lvl_mkdir" mkdir "${RAID3_REMOTE}:${test_id}")
-  single_result=$(capture_command "single_mkdir" mkdir "${SINGLE_REMOTE}:${test_id}")
+  lvl_result=$(capture_command "lvl_mkdir" mkdir "${RAID3_REMOTE}:$(path_for_id "${test_id}")")
+  single_result=$(capture_command "single_mkdir" mkdir "${SINGLE_REMOTE}:$(path_for_id "${test_id}")")
 
   local lvl_status lvl_stdout lvl_stderr
   local single_status single_stdout single_stderr
@@ -1199,8 +1207,8 @@ run_mkdir_test() {
 
   # Follow-up verification using lsd on both remotes.
   local lvl_check single_check
-  lvl_check=$(capture_command "lvl_check" lsd "${RAID3_REMOTE}:${test_id}")
-  single_check=$(capture_command "single_check" lsd "${SINGLE_REMOTE}:${test_id}")
+  lvl_check=$(capture_command "lvl_check" lsd "${RAID3_REMOTE}:$(path_for_id "${test_id}")")
+  single_check=$(capture_command "single_check" lsd "${SINGLE_REMOTE}:$(path_for_id "${test_id}")")
 
   local lvl_check_status lvl_check_stdout lvl_check_stderr
   local single_check_status single_check_stdout single_check_stderr

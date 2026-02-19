@@ -114,6 +114,10 @@ mkdir -p "${MINIO_EVEN_DIR}" "${MINIO_ODD_DIR}" "${MINIO_PARITY_DIR}" "${MINIO_S
 log_info "setup" "Creating SFTP data directories"
 mkdir -p "${SFTP_EVEN_DIR}" "${SFTP_ODD_DIR}" "${SFTP_PARITY_DIR}" "${SFTP_SINGLE_DIR}" || \
   die "Failed to create SFTP data directories"
+# Containers mount at /home/<user>/data; create "base" so rclone paths data/base/... exist.
+for sftp_dir in "${SFTP_EVEN_DIR}" "${SFTP_ODD_DIR}" "${SFTP_PARITY_DIR}" "${SFTP_SINGLE_DIR}"; do
+  mkdir -p "${sftp_dir}/base" || die "Failed to create SFTP base path under ${sftp_dir}"
+done
 
 # Create the rclone config file
 CONFIG_FILE="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"

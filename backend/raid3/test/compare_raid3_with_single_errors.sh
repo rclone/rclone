@@ -4,31 +4,29 @@
 # ------------------------------------
 # Error handling validation harness for the rclone raid3 backend.
 #
-# This script tests that write operations (Move, Update) properly fail when
-# backends are unavailable, following RAID 3 strict write policy. Tests verify
-# that rollback mechanism prevents partial operations (all-or-nothing guarantee).
-# Rollback-disabled tests use rclone connection strings (remote,rollback=false:path)
-# to test behavior without rollback, without requiring a second remote configuration.
-# Works with MinIO-backed raid3 configurations, stopping containers to simulate
-# backend unavailability.
+# Tests that write operations (Move, Update) properly fail when backends are
+# unavailable, following RAID 3 strict write policy. Verifies rollback prevents
+# partial operations (all-or-nothing). Rollback-disabled tests use connection
+# strings (remote,rollback=false:path). Works with local, MinIO, mixed, and SFTP;
+# stops containers to simulate backend unavailability where applicable.
 #
 # Usage:
 #   compare_raid3_with_single_errors.sh [options] <command> [args]
 #
 # Commands:
-#   start                 Start MinIO containers (requires --storage-type=minio).
-#   stop                  Stop MinIO containers (requires --storage-type=minio).
-#   teardown              Purge datasets and local/MinIO directories.
+#   start                 Start MinIO or SFTP containers (requires --storage-type=minio, mixed, or sftp).
+#   stop                  Stop those containers.
+#   teardown              Purge all data from the selected storage-type (raid3 + single).
 #   list                  Show available error scenarios.
 #   test [scenario]       Run all or a named scenario.
 #
 # Options:
-#   --storage-type <local|minio>   Backend pair to exercise (required for start/stop/test/teardown).
+#   --storage-type <local|minio|mixed|sftp>   Select backend (required for start/stop/test/teardown).
 #   -v, --verbose                  Show stdout/stderr from rclone operations.
 #   -h, --help                     Display this help text.
 #
 # Environment:
-#   RCLONE_CONFIG   Path to rclone configuration file (defaults to ~/.config/rclone/rclone.conf).
+#   RCLONE_CONFIG   Path to rclone configuration file (see compare_raid3_env.sh).
 #
 # Safety guard: must be executed from backend/raid3/test directory.
 # -----------------------------------------------------------------------------
@@ -55,14 +53,14 @@ usage() {
 Usage: ${SCRIPT_NAME} [options] <command> [arguments]
 
 Commands:
-  start                      Start MinIO containers (requires --storage-type=minio).
-  stop                       Stop MinIO containers (requires --storage-type=minio).
-  teardown                   Purge datasets for the selected storage type.
+  start                      Start MinIO or SFTP containers (requires --storage-type=minio, mixed, or sftp).
+  stop                       Stop those containers.
+  teardown                   Purge all test data for the selected storage type.
   list                       Show available error scenarios.
   test [scenario]            Run all scenarios or a single one.
 
 Options:
-  --storage-type <local|minio|mixed|sftp>   Backend pair (required for start/stop/test/teardown).
+  --storage-type <local|minio|mixed|sftp>   Select backend (required for start/stop/test/teardown).
   -v, --verbose                  Show stdout/stderr from rclone operations.
   -h, --help                     Display this help.
 
@@ -125,7 +123,8 @@ parse_args() {
 
 print_scenarios() {
   cat <<EOF
-Available error scenarios:
+Available error scenarios (run with --storage-type=local, minio, mixed, or sftp):
+
   move-fail-even              Stop even backend and verify Move fails (with rollback).
   move-fail-odd               Stop odd backend and verify Move fails (with rollback).
   move-fail-parity            Stop parity backend and verify Move fails (with rollback).
@@ -138,6 +137,9 @@ Available error scenarios:
   rollback-disabled-update-fail-even   Stop even backend and verify Update fails (rollback disabled, partial updates allowed).
   rollback-disabled-update-fail-odd    Stop odd backend and verify Update fails (rollback disabled, partial updates allowed).
   rollback-disabled-update-fail-parity Stop parity backend and verify Update fails (rollback disabled, partial updates allowed).
+
+Run all:  ${SCRIPT_NAME} --storage-type=<type> test
+Run one:  ${SCRIPT_NAME} --storage-type=<type> test move-fail-even
 EOF
 }
 
@@ -256,13 +258,15 @@ run_move_fail_scenario() {
   fi
   log_info "scenario:move-fail-${backend}" "Dataset ${dataset_id} created."
 
-  local test_file="${dataset_id}/${TARGET_OBJECT}"
-  local new_file="${dataset_id}/moved_${TARGET_OBJECT}"
+  local path_prefix
+  path_prefix=$(path_for_id "${dataset_id}")
+  local test_file="${path_prefix}/${TARGET_OBJECT}"
+  local new_file="${path_prefix}/moved_${TARGET_OBJECT}"
 
   # Verify destination file does NOT exist before move attempt (cleanup any leftovers).
   # Use lsf on directory so we don't rely on "ls path-to-file" (which can fail when path is a file).
   local pre_check_result pre_check_status pre_check_stdout pre_check_stderr
-  pre_check_result=$(capture_command "pre_check_dest" lsf "${RAID3_REMOTE}:${dataset_id}/" 2>/dev/null || echo "1|||")
+  pre_check_result=$(capture_command "pre_check_dest" lsf "${RAID3_REMOTE}:${path_prefix}/" 2>/dev/null || echo "1|||")
   IFS='|' read -r pre_check_status pre_check_stdout pre_check_stderr <<<"${pre_check_result}"
   local dest_existed=0
   if [[ "${pre_check_status}" -eq 0 ]] && [[ -n "${pre_check_stdout}" ]] && grep -qxF "moved_${TARGET_OBJECT}" "${pre_check_stdout}" 2>/dev/null; then
@@ -278,7 +282,7 @@ run_move_fail_scenario() {
     # Verify cleanup worked - wait a moment and check again
     sleep 1
     local post_cleanup_result post_cleanup_status post_stdout post_stderr
-    post_cleanup_result=$(capture_command "post_cleanup_check" lsf "${RAID3_REMOTE}:${dataset_id}/" 2>/dev/null || echo "1|||")
+    post_cleanup_result=$(capture_command "post_cleanup_check" lsf "${RAID3_REMOTE}:${path_prefix}/" 2>/dev/null || echo "1|||")
     IFS='|' read -r post_cleanup_status post_stdout post_stderr <<<"${post_cleanup_result}"
     local dest_still_exists=0
     if [[ "${post_cleanup_status}" -eq 0 ]] && [[ -n "${post_stdout}" ]] && grep -qxF "moved_${TARGET_OBJECT}" "${post_stdout}" 2>/dev/null; then
@@ -292,7 +296,7 @@ run_move_fail_scenario() {
       # Wait a bit more and check one more time
       sleep 1
       local final_check_result final_check_status final_stdout final_stderr
-      final_check_result=$(capture_command "final_cleanup_check" lsf "${RAID3_REMOTE}:${dataset_id}/" 2>/dev/null || echo "1|||")
+      final_check_result=$(capture_command "final_cleanup_check" lsf "${RAID3_REMOTE}:${path_prefix}/" 2>/dev/null || echo "1|||")
       IFS='|' read -r final_check_status final_stdout final_stderr <<<"${final_check_result}"
       local final_dest_exists=0
       if [[ "${final_check_status}" -eq 0 ]] && [[ -n "${final_stdout}" ]] && grep -qxF "moved_${TARGET_OBJECT}" "${final_stdout}" 2>/dev/null; then
@@ -300,7 +304,7 @@ run_move_fail_scenario() {
       fi
       rm -f "${final_stdout}" "${final_stderr}"
       if [[ "${final_dest_exists}" -eq 1 ]]; then
-        record_error_result "FAIL" "move-fail-${backend}" "Leftover destination could not be removed. Run: ./compare_raid3_with_single_errors.sh teardown --storage-type=minio && ./compare_raid3_with_single_errors.sh test --storage-type=minio"
+        record_error_result "FAIL" "move-fail-${backend}" "Leftover destination could not be removed. Run: ./compare_raid3_with_single_errors.sh teardown --storage-type=${STORAGE_TYPE} && ./compare_raid3_with_single_errors.sh test --storage-type=${STORAGE_TYPE}"
         return 1
       fi
     fi
@@ -309,7 +313,7 @@ run_move_fail_scenario() {
   # Verify source file exists before move attempt.
   # Use lsf on directory (not ls on file path) so existence check works with raid3/SFTP.
   local check_result check_status check_stdout check_stderr
-  check_result=$(capture_command "check_before" lsf "${RAID3_REMOTE}:${dataset_id}/")
+  check_result=$(capture_command "check_before" lsf "${RAID3_REMOTE}:${path_prefix}/")
   IFS='|' read -r check_status check_stdout check_stderr <<<"${check_result}"
   if [[ "${check_status}" -ne 0 ]]; then
     record_error_result "FAIL" "move-fail-${backend}" "Could not list directory before move (exit ${check_status})."
@@ -508,9 +512,9 @@ run_move_fail_scenario() {
       parity) list_remote=$(backend_remote_name "even") ;;
       *)      list_remote="${RAID3_REMOTE}" ;;
     esac
-    check_result=$(capture_command "check_after" lsf "${list_remote}:${dataset_id}/")
+    check_result=$(capture_command "check_after" lsf "${list_remote}:${path_prefix}/")
   else
-    check_result=$(capture_command "check_after" lsf "${RAID3_REMOTE}:${dataset_id}/")
+    check_result=$(capture_command "check_after" lsf "${RAID3_REMOTE}:${path_prefix}/")
   fi
   IFS='|' read -r check_status check_stdout check_stderr <<<"${check_result}"
 
@@ -650,7 +654,9 @@ run_update_fail_scenario() {
   fi
   log_info "scenario:update-fail-${backend}" "Dataset ${dataset_id} created."
 
-  local test_file="${dataset_id}/${TARGET_OBJECT}"
+  local path_prefix
+  path_prefix=$(path_for_id "${dataset_id}")
+  local test_file="${path_prefix}/${TARGET_OBJECT}"
 
   # Get original file content for verification
   local original_content
@@ -890,8 +896,10 @@ run_move_fail_scenario_no_rollback() {
   fi
   log_info "scenario:rollback-disabled-move-fail-${backend}" "Dataset ${dataset_id} created (will use connection string with rollback=false)."
 
-  local test_file="${dataset_id}/${TARGET_OBJECT}"
-  local new_file="${dataset_id}/moved_${TARGET_OBJECT}"
+  local path_prefix
+  path_prefix=$(path_for_id "${dataset_id}")
+  local test_file="${path_prefix}/${TARGET_OBJECT}"
+  local new_file="${path_prefix}/moved_${TARGET_OBJECT}"
 
   # Verify file exists before move attempt (using connection string with rollback=false)
   local test_file_path new_file_path
@@ -1156,7 +1164,9 @@ run_update_fail_scenario_no_rollback() {
   fi
   log_info "scenario:rollback-disabled-update-fail-${backend}" "Dataset ${dataset_id} created (will use connection string with rollback=false)."
 
-  local test_file="${dataset_id}/${TARGET_OBJECT}"
+  local path_prefix
+  path_prefix=$(path_for_id "${dataset_id}")
+  local test_file="${path_prefix}/${TARGET_OBJECT}"
 
   # Get original file content for verification (using connection string with rollback=false)
   local test_file_path
@@ -1392,6 +1402,15 @@ main() {
       purge_remote_root "${SINGLE_REMOTE}"
       if [[ "${STORAGE_TYPE}" == "local" ]]; then
         for dir in "${LOCAL_RAID3_DIRS[@]}" "${LOCAL_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+      elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
+        for dir in "${LOCAL_EVEN_DIR}" "${LOCAL_PARITY_DIR}" "${LOCAL_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+        for dir in "${MINIO_ODD_DIR}" "${MINIO_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"
           verify_directory_empty "${dir}"
         done

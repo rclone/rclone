@@ -1199,11 +1199,13 @@ start_sftp_containers() {
     log "Launching SFTP container '${name}' (port ${sftp_port})."
     local data_dir_abs
     data_dir_abs=$(cd "${data_dir}" && pwd) || data_dir_abs="${data_dir}"
-    # atmoz/sftp: user:pass (no :::upload) so home is /home/user; mount data dir as home
+    # atmoz/sftp: mount host dir under /home/<user>/data so the container keeps correct
+    # ownership of /home/<user> (chroot). Otherwise "directory not found" for subdirs.
+    # In rclone use paths like sftpsingle:data, sftpsingle:data/base, etc.
     docker run -d \
       --name "${name}" \
       -p "${sftp_port}:22" \
-      -v "${data_dir_abs}:/home/${user}" \
+      -v "${data_dir_abs}:/home/${user}/data" \
       "${SFTP_IMAGE:-atmoz/sftp}" \
       "${user}:${pass}" >/dev/null
   done
@@ -1310,6 +1312,8 @@ purge_raid3_remote_root() {
     if (( VERBOSE )); then
       log "  (no top-level entries on raid3 backends)"
     fi
+    # MinIO can return 503 SlowDown after list/purge; cooldown before next operations
+    [[ "${STORAGE_TYPE}" == "minio" ]] && sleep 10
     return 0
   fi
   while IFS= read -r entry; do
@@ -1329,36 +1333,46 @@ purge_raid3_remote_root() {
       rclone_cmd purge "${purge_prefix}" >/dev/null 2>&1 || true
     done
   done <<<"${lsf_output}"
+  # MinIO can return 503 SlowDown after purge; cooldown before next operations (e.g. purge single, then mkdir)
+  [[ "${STORAGE_TYPE}" == "minio" ]] && sleep 10
 }
 
 # Purge only the contents of the remote root, never the root itself
 # (so that local dirs like even_local, odd_local, etc. are not removed)
 purge_remote_root() {
   local remote="$1"
-  log "Purging remote '${remote}:'"
+  local list_root="${remote}:"
+  [[ -n "${REMOTE_ROOT_PATH:-}" ]] && list_root="${remote}:${REMOTE_ROOT_PATH}"
+  log "Purging remote '${list_root}'"
 
   local entry
   local lsf_output lsf_ret
-  lsf_output=$(rclone_cmd lsf "${remote}:" 2>/dev/null)
+  lsf_output=$(rclone_cmd lsf "${list_root}" 2>/dev/null)
   lsf_ret=$?
   lsf_output=$(echo "${lsf_output}" | grep -v '^$' || true)
   if [[ "${lsf_ret}" -eq 124 ]]; then
-    log "WARNING: rclone lsf ${remote} timed out (exit 124); purge may be incomplete"
+    log "WARNING: rclone lsf ${list_root} timed out (exit 124); purge may be incomplete"
   fi
   if [[ -z "${lsf_output}" ]]; then
     if (( VERBOSE )); then
-      log "  (no top-level entries on ${remote})"
+      log "  (no top-level entries on ${list_root})"
     fi
+    # MinIO can return 503 SlowDownWrite immediately after heavy deletes; cooldown before next CreateBucket
+    [[ "${STORAGE_TYPE}" == "minio" ]] && sleep 10
     return 0
   fi
   while IFS= read -r entry; do
     entry="${entry%/}"
     [[ -z "${entry}" ]] && continue
+    local purge_path
+    [[ -n "${REMOTE_ROOT_PATH:-}" ]] && purge_path="${remote}:${REMOTE_ROOT_PATH}/${entry}" || purge_path="${remote}:${entry}"
     if (( VERBOSE )); then
-      log "  - purging ${remote}:${entry}"
+      log "  - purging ${purge_path}"
     fi
-    rclone_cmd purge "${remote}:${entry}" >/dev/null 2>&1 || true
+    rclone_cmd purge "${purge_path}" >/dev/null 2>&1 || true
   done <<<"${lsf_output}"
+  # MinIO can return 503 SlowDownWrite immediately after heavy deletes; cooldown before next CreateBucket
+  [[ "${STORAGE_TYPE}" == "minio" ]] && sleep 10
 }
 
 verify_directory_empty() {
@@ -1442,9 +1456,10 @@ cleanup_raid3_dataset_raw() {
       rclone_cmd purge "${MINIO_ODD_REMOTE}:${dataset_id}" >/dev/null 2>&1 || true
       ;;
     sftp)
-      local remote
+      local remote path_prefix
+      path_prefix=$(path_for_id "${dataset_id}")
       for remote in "${SFTP_RAID3_REMOTES[@]}"; do
-        rclone_cmd purge "${remote}:${dataset_id}" >/dev/null 2>&1 || true
+        rclone_cmd purge "${remote}:${path_prefix}" >/dev/null 2>&1 || true
       done
       ;;
     *)
@@ -1549,8 +1564,11 @@ backend_raid3_root_path() {
         echo "${dir}"
       fi
       ;;
-    minio|mixed|sftp)
+    minio|mixed)
       echo ""
+      ;;
+    sftp)
+      echo "${REMOTE_ROOT_PATH:-}"
       ;;
     *)
       echo ""
@@ -1590,9 +1608,10 @@ remove_dataset_from_backend() {
       esac
       ;;
     sftp)
-      local remote
+      local remote path_prefix
       remote=$(backend_remote_name "${backend}")
-      rclone_cmd purge "${remote}:${dataset_id}" >/dev/null 2>&1 || true
+      path_prefix=$(path_for_id "${dataset_id}")
+      rclone_cmd purge "${remote}:${path_prefix}" >/dev/null 2>&1 || true
       ;;
     *)
       ;;
@@ -1633,9 +1652,10 @@ object_exists_in_backend() {
       esac
       ;;
     sftp)
-      local remote
+      local remote path_prefix
       remote=$(backend_remote_name "${backend}")
-      rclone_cmd lsl "${remote}:${dataset_id}/${relative_path}" >/dev/null 2>&1
+      path_prefix=$(path_for_id "${dataset_id}")
+      rclone_cmd lsl "${remote}:${path_prefix}/${relative_path}" >/dev/null 2>&1
       ;;
     *)
       return 1
@@ -1681,25 +1701,34 @@ create_test_dataset() {
   printf 'Sample data for %s (root file)\n' "${label}" >"${tmpfile1}"
   printf 'Sample data for %s (nested file)\n' "${label}" >"${tmpfile2}"
 
+  # SFTP: pre-create path on host so rclone mkdir/list see an existing root
+  if ! sftp_precreate_host_path "${test_id}"; then
+    log "Failed to pre-create SFTP host path for ${test_id}"
+    rm -f "${tmpfile1}" "${tmpfile2}"
+    return 1
+  fi
+
+  local path_prefix
+  path_prefix=$(path_for_id "${test_id}")
   local remote
   for remote in "${RAID3_REMOTE}" "${SINGLE_REMOTE}"; do
-    if ! rclone_cmd mkdir "${remote}:${test_id}" >/dev/null; then
-      log "Failed to mkdir ${remote}:${test_id}"
+    if ! rclone_cmd mkdir "${remote}:${path_prefix}" >/dev/null; then
+      log "Failed to mkdir ${remote}:${path_prefix}"
       rm -f "${tmpfile1}" "${tmpfile2}"
       return 1
     fi
-    if ! rclone_cmd copyto "${tmpfile1}" "${remote}:${test_id}/file_root.txt" >/dev/null; then
-      log "Failed to copy root sample file to ${remote}:${test_id}"
+    if ! rclone_cmd copyto "${tmpfile1}" "${remote}:${path_prefix}/file_root.txt" >/dev/null; then
+      log "Failed to copy root sample file to ${remote}:${path_prefix}"
       rm -f "${tmpfile1}" "${tmpfile2}"
       return 1
     fi
-    if ! rclone_cmd copyto "${tmpfile2}" "${remote}:${test_id}/dirA/file_nested.txt" >/dev/null; then
-      log "Failed to copy nested sample file to ${remote}:${test_id}"
+    if ! rclone_cmd copyto "${tmpfile2}" "${remote}:${path_prefix}/dirA/file_nested.txt" >/dev/null; then
+      log "Failed to copy nested sample file to ${remote}:${path_prefix}"
       rm -f "${tmpfile1}" "${tmpfile2}"
       return 1
     fi
-    if ! rclone_cmd copyto "${tmpfile1}" "${remote}:${test_id}/dirB/file_placeholder.txt" >/dev/null; then
-      log "Failed to copy placeholder file to ${remote}:${test_id}/dirB"
+    if ! rclone_cmd copyto "${tmpfile1}" "${remote}:${path_prefix}/dirB/file_placeholder.txt" >/dev/null; then
+      log "Failed to copy placeholder file to ${remote}:${path_prefix}/dirB"
       rm -f "${tmpfile1}" "${tmpfile2}"
       return 1
     fi
@@ -1710,6 +1739,7 @@ create_test_dataset() {
 }
 
 set_remotes_for_storage_type() {
+  REMOTE_ROOT_PATH=""
   case "${STORAGE_TYPE}" in
     local)
       # Allow generic override via RAID3_REMOTE environment variable
@@ -1729,9 +1759,38 @@ set_remotes_for_storage_type() {
     sftp)
       RAID3_REMOTE="${RAID3_REMOTE:-sftpraid3}"
       SINGLE_REMOTE="${SINGLE_REMOTE:-sftpsingle}"
+      # Containers mount at /home/<user>/data; we use data/base/<id> so the path exists (pre-create on host).
+      REMOTE_ROOT_PATH="${SFTP_REMOTE_ROOT:-data/base}"
       ;;
     *)
       die "Unsupported storage type '${STORAGE_TYPE}'"
       ;;
   esac
+}
+
+# Echo the remote path for a given id (e.g. test_id or dataset_id).
+# For SFTP, prefixes with REMOTE_ROOT_PATH (e.g. data/base) so we operate under the mount.
+path_for_id() {
+  local id="$1"
+  if [[ -n "${REMOTE_ROOT_PATH:-}" ]]; then
+    echo "${REMOTE_ROOT_PATH}/${id}"
+  else
+    echo "${id}"
+  fi
+}
+
+# For SFTP, pre-create the path on the host under all four SFTP data dirs so rclone's
+# backend sees an existing root and RealPath() can succeed. No-op for other storage types.
+# Safe: only creates under SCRIPT_DIR (SFTP_*_DIR are under _data).
+sftp_precreate_host_path() {
+  local id="$1"
+  [[ "${STORAGE_TYPE:-}" != "sftp" ]] && return 0
+  local sftp_dir safe_dir
+  for sftp_dir in "${SFTP_EVEN_DIR}" "${SFTP_ODD_DIR}" "${SFTP_PARITY_DIR}" "${SFTP_SINGLE_DIR}"; do
+    safe_dir="${sftp_dir}"
+    [[ "${sftp_dir}" != /* ]] && safe_dir="${SCRIPT_DIR}/${sftp_dir}"
+    [[ "${safe_dir}" != "${SCRIPT_DIR}"* ]] && continue
+    mkdir -p "${safe_dir}/base/${id}" || return 1
+  done
+  return 0
 }

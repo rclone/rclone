@@ -4,27 +4,27 @@
 # -------------------------------------
 # Rebuild-focused harness for rclone raid3 backends.
 #
-# This script simulates disk swaps for individual raid3 remotes (even/odd/parity),
-# runs `rclone backend rebuild`, and validates that the dataset is restored
-# (or fails as expected) for both local and MinIO-backed configurations.
+# Simulates disk swaps for individual raid3 backends (even/odd/parity), runs
+# `rclone backend rebuild`, and validates that the dataset is restored (or fails
+# as expected) for local, MinIO, mixed, and SFTP configurations.
 #
 # Usage:
 #   compare_raid3_with_single_rebuild.sh [options] <command> [args]
 #
 # Commands:
-#   start                 Start MinIO containers (requires --storage-type=minio).
-#   stop                  Stop MinIO containers (requires --storage-type=minio).
-#   teardown              Purge all data from the selected storage-type.
+#   start                 Start MinIO or SFTP containers (requires --storage-type=minio, mixed, or sftp).
+#   stop                  Stop those containers.
+#   teardown              Purge all data from the selected storage-type (raid3 + single).
 #   list                  Show available rebuild scenarios.
-#   test [name]           Run a named scenario (even|odd|parity). If omitted, runs all.
+#   test [name]           Run scenario even|odd|parity (optional). If omitted, runs all.
 #
 # Options:
-#   --storage-type <local|minio|mixed>   Select backend pair (required for start/stop/test/teardown).
+#   --storage-type <local|minio|mixed|sftp>   Select backend (required for start/stop/test/teardown).
 #   -v, --verbose                  Show stdout/stderr from rclone commands.
 #   -h, --help                     Display this help text.
 #
 # Environment:
-#   RCLONE_CONFIG   Path to rclone configuration file (default: $HOME/.config/rclone/rclone.conf).
+#   RCLONE_CONFIG   Path to rclone configuration file (see compare_raid3_env.sh).
 #
 # Safety guard: the script must be executed from backend/raid3/test directory.
 # -----------------------------------------------------------------------------
@@ -49,14 +49,14 @@ usage() {
 Usage: ${SCRIPT_NAME} [options] <command> [arguments]
 
 Commands:
-  start                      Start MinIO containers (requires --storage-type=minio).
-  stop                       Stop MinIO containers (requires --storage-type=minio).
+  start                      Start MinIO or SFTP containers (requires --storage-type=minio, mixed, or sftp).
+  stop                       Stop those containers.
   teardown                   Purge all test data for the selected storage type.
   list                       Show available rebuild scenarios.
-  test [name]                Run the named scenario (even|odd|parity). Without a name, runs all.
+  test [name]                Run scenario even|odd|parity. Without a name, runs all.
 
 Options:
-  --storage-type <local|minio>   Select backend pair (required for start/stop/test/teardown).
+  --storage-type <local|minio|mixed|sftp>   Select backend (required for start/stop/test/teardown).
   -v, --verbose                  Show stdout/stderr from rclone commands.
   -h, --help                     Display this help.
 
@@ -150,10 +150,14 @@ print_scenario_summary() {
 
 list_scenarios() {
   cat <<EOF
-Available rebuild scenarios:
+Available rebuild scenarios (run with --storage-type=local, minio, mixed, or sftp):
+
   even    Simulate even backend swap and verify rebuild (success + failure cases).
   odd     Simulate odd backend swap and verify rebuild (success + failure cases).
   parity  Simulate parity backend swap and verify rebuild (success + failure cases).
+
+Run all:  ${SCRIPT_NAME} --storage-type=<type> test
+Run one:  ${SCRIPT_NAME} --storage-type=<type> test even
 EOF
 }
 
@@ -258,9 +262,11 @@ ensure_reference_copy() {
   local dataset_id="$1"
   local ref_dir
   ref_dir=$(mktemp -d) || die "Failed to create temp dir"
-  if ! rclone_cmd copy "${RAID3_REMOTE}:${dataset_id}" "${ref_dir}" >/dev/null; then
+  local path_prefix
+  path_prefix=$(path_for_id "${dataset_id}")
+  if ! rclone_cmd copy "${RAID3_REMOTE}:${path_prefix}" "${ref_dir}" >/dev/null; then
     rm -rf "${ref_dir}"
-    die "Failed to copy ${RAID3_REMOTE}:${dataset_id} to ${ref_dir} for reference"
+    die "Failed to copy ${RAID3_REMOTE}:${path_prefix} to ${ref_dir} for reference"
   fi
   printf '%s\n' "${ref_dir}"
 }
@@ -277,7 +283,9 @@ run_rebuild_success_scenario() {
 
   local dataset_id
   dataset_id=$(create_test_dataset "rebuild-${backend}-success") || die "Failed to create dataset for ${backend} success scenario"
-  log "Success scenario dataset: ${RAID3_REMOTE}:${dataset_id}"
+  local path_prefix
+  path_prefix=$(path_for_id "${dataset_id}")
+  log "Success scenario dataset: ${RAID3_REMOTE}:${path_prefix}"
 
   local ref_dir
   ref_dir=$(ensure_reference_copy "${dataset_id}")
@@ -298,7 +306,7 @@ run_rebuild_success_scenario() {
   fi
 
   local verify_result verify_status verify_stdout verify_stderr
-  verify_result=$(capture_command "lvl_check_${backend}" check "${RAID3_REMOTE}:${dataset_id}" ":local:${ref_dir}")
+  verify_result=$(capture_command "lvl_check_${backend}" check "${RAID3_REMOTE}:${path_prefix}" ":local:${ref_dir}")
   IFS='|' read -r verify_status verify_stdout verify_stderr <<<"${verify_result}"
   print_if_verbose "check ${backend}" "${verify_stdout}" "${verify_stderr}"
 
@@ -312,7 +320,7 @@ run_rebuild_success_scenario() {
 
   local rebuilt_dir
   rebuilt_dir=$(mktemp -d) || { rm -rf "${ref_dir}"; return 1; }
-  if ! rclone_cmd copy "${RAID3_REMOTE}:${dataset_id}" "${rebuilt_dir}" >/dev/null; then
+  if ! rclone_cmd copy "${RAID3_REMOTE}:${path_prefix}" "${rebuilt_dir}" >/dev/null; then
     log "Failed to download rebuilt dataset for comparison."
     rm -rf "${ref_dir}" "${rebuilt_dir}"
     return 1
@@ -336,7 +344,9 @@ run_rebuild_failure_scenario() {
 
   local dataset_id
   dataset_id=$(create_test_dataset "rebuild-${backend}-failure") || die "Failed to create dataset for ${backend} failure scenario"
-  log "Failure scenario dataset: ${RAID3_REMOTE}:${dataset_id}"
+  local path_prefix
+  path_prefix=$(path_for_id "${dataset_id}")
+  log "Failure scenario dataset: ${RAID3_REMOTE}:${path_prefix}"
 
   local secondary
   secondary=$(secondary_failure_backend "${backend}")
@@ -368,13 +378,13 @@ run_rebuild_failure_scenario() {
   # With only one backend available, files cannot be read.
   # Test that reading actually fails by trying to read a known file.
   # The test dataset always includes file_root.txt at the root level.
-  local test_file="${dataset_id}/file_root.txt"
+  local test_file_path="${path_prefix}/file_root.txt"
   
   # Try to actually read the file content
   # Note: rclone cat may return exit code 0 with no output when file can't be opened
   # We need to check for errors in stderr or verify no content was actually read
   local read_result read_status read_stdout read_stderr
-  read_result=$(capture_command "lvl_failure_read_${backend}" cat "${RAID3_REMOTE}:${test_file}")
+  read_result=$(capture_command "lvl_failure_read_${backend}" cat "${RAID3_REMOTE}:${test_file_path}")
   IFS='|' read -r read_status read_stdout read_stderr <<<"${read_result}"
   print_if_verbose "read failure ${backend}" "${read_stdout}" "${read_stderr}"
 
@@ -391,7 +401,7 @@ run_rebuild_failure_scenario() {
   if [[ "${output_size}" -gt 0 ]]; then
     # File content was actually read - this is a failure, should not be possible
     log "Expected file read to fail due to missing particles (only one backend available), but it succeeded and returned ${output_size} bytes."
-    log "File: ${test_file}"
+    log "File: ${test_file_path}"
     log "Outputs retained:"
     log "  ${read_stdout}"
     log "  ${read_stderr}"
@@ -412,14 +422,14 @@ run_rebuild_failure_scenario() {
     # Accept this as expected behavior - the key test is that rebuild failed
     log "File read returned exit code 0 with no content and no error messages."
     log "Since rebuild reported 0 files rebuilt, this indicates files cannot be read (expected behavior)."
-    log "File: ${test_file}"
+    log "File: ${test_file_path}"
     print_if_verbose "read details" "${read_stdout}" "${read_stderr}"
     rm -f "${read_stdout}" "${read_stderr}"
   fi
 
   # Also verify that rclone check fails or reports errors
   local check_result check_status check_stdout check_stderr
-  check_result=$(capture_command "lvl_failure_check_${backend}" check "${RAID3_REMOTE}:${dataset_id}" "${SINGLE_REMOTE}:${dataset_id}")
+  check_result=$(capture_command "lvl_failure_check_${backend}" check "${RAID3_REMOTE}:${path_prefix}" "${SINGLE_REMOTE}:${path_prefix}")
   IFS='|' read -r check_status check_stdout check_stderr <<<"${check_result}"
   print_if_verbose "check failure ${backend}" "${check_stdout}" "${check_stderr}"
 
@@ -510,6 +520,15 @@ main() {
           remove_leftover_files "${dir}"
           verify_directory_empty "${dir}"
         done
+      elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
+        for dir in "${LOCAL_EVEN_DIR}" "${LOCAL_PARITY_DIR}" "${LOCAL_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
+        for dir in "${MINIO_ODD_DIR}" "${MINIO_SINGLE_DIR}"; do
+          remove_leftover_files "${dir}"
+          verify_directory_empty "${dir}"
+        done
       elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
         for dir in "${SFTP_RAID3_DIRS[@]}" "${SFTP_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"
@@ -529,6 +548,13 @@ main() {
       set_remotes_for_storage_type
       [[ "${STORAGE_TYPE}" != "minio" && "${STORAGE_TYPE}" != "mixed" ]] || ensure_minio_containers_ready
       [[ "${STORAGE_TYPE}" != "sftp" ]] || ensure_sftp_containers_ready
+      if [[ "${STORAGE_TYPE}" == "minio" || "${STORAGE_TYPE}" == "mixed" ]]; then
+        export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+        log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (minio/mixed)"
+      elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+        export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+        log_info "main" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s (sftp)"
+      fi
       reset_scenario_results
       if [[ -z "${COMMAND_ARG}" ]]; then
         if ! run_all_scenarios; then

@@ -82,6 +82,14 @@ SFTP_ODD_PORT="${SFTP_ODD_PORT:-2222}"
 SFTP_PARITY_PORT="${SFTP_PARITY_PORT:-2223}"
 SFTP_SINGLE_PORT="${SFTP_SINGLE_PORT:-2224}"
 
+# SFTP remote root path. Containers mount host dirs at /home/<user>/data; we use a "base"
+# subdir on the host so rclone paths are data/base/<id>. setup.sh creates "base" under each.
+# Override via SFTP_REMOTE_ROOT in compare_raid3_env.local.sh if needed.
+SFTP_REMOTE_ROOT="${SFTP_REMOTE_ROOT:-data/base}"
+
+# Legacy: SFTP_BASE_PATH (e.g. /pub) was used before we switched to data/base mount.
+SFTP_BASE_PATH="${SFTP_BASE_PATH:-/pub}"
+
 # SFTP Docker image (atmoz/sftp).
 # On ARM64 (e.g. Apple Silicon) you may see "platform (linux/amd64) does not match (linux/arm64)";
 # that is expected—Docker runs the image via emulation and it works for these tests.

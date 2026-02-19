@@ -154,8 +154,8 @@ Usage: ${SCRIPT_NAME} [options] <command> [arguments]
 Performance test for rclone raid3 backend.
 
 Commands:
-  start                 Start MinIO containers for performance tests (requires --storage-type=minio).
-  stop                  Stop MinIO containers (requires --storage-type=minio).
+  start                 Start MinIO or SFTP containers (requires --storage-type=minio or sftp).
+  stop                  Stop those containers.
   teardown              Purge all test data (requires --storage-type).
   list                  Show available test configurations.
   test [scenario]       Run performance tests (requires --storage-type). Optional scenario:
@@ -182,6 +182,10 @@ Storage types:
                           - localsingle using cp command
                           - localsingle using rclone
                           - localraid3 using rclone
+
+  sftp                  Tests with SFTP backends (requires Docker):
+                          - sftpsingle using rclone
+                          - sftpraid3 using rclone
 
 With file sizes: 4K, 40K, 400K, 4M, 40M, 4G
 Each test runs ${ITERATIONS} iterations (first discarded, remaining averaged).
@@ -567,10 +571,21 @@ run_test_suite() {
     return 1
   fi
   
-  # Remote path for test (same path used for upload and download)
-  local remote_path="perf-test/${test_key_base}/test.bin"
+  # Remote path for test (same path used for upload and download).
+  # For SFTP use path_for_id so path is under data/base (REMOTE_ROOT_PATH).
+  local path_base
+  path_base=$(path_for_id "perf-test/${test_key_base}")
+  local remote_path="${path_base}/test.bin"
   local download_file="${temp_dir}/downloaded.bin"
-  
+
+  if [[ "${tool}" == "rclone" ]] && [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    if ! sftp_precreate_host_path "perf-test/${test_key_base}"; then
+      log_warn "test" "Failed to pre-create SFTP host path for perf-test/${test_key_base}"
+      rm -rf "${temp_dir}"
+      return 1
+    fi
+  fi
+
   # Setup mc alias if needed
   local mc_alias=""
   local mc_path=""
@@ -590,8 +605,8 @@ run_test_suite() {
   
   # Cleanup remote before test
   if [[ "${tool}" == "rclone" ]]; then
-    rclone_cmd purge "${remote_or_alias}:perf-test/${test_key_base}/" >/dev/null 2>&1 || true
-    rclone_cmd mkdir "${remote_or_alias}:perf-test/${test_key_base}/" >/dev/null 2>&1 || true
+    rclone_cmd purge "${remote_or_alias}:${path_base}/" >/dev/null 2>&1 || true
+    rclone_cmd mkdir "${remote_or_alias}:${path_base}/" >/dev/null 2>&1 || true
   elif [[ "${tool}" == "mc" ]]; then
     local mc_bucket="perftest"
     mc mb "${remote_or_alias}/${mc_bucket}" >/dev/null 2>&1 || true
@@ -811,7 +826,7 @@ run_test_suite() {
     log_warn "test" "No valid durations for ${test_key_base} (all iterations failed)"
     rm -rf "${temp_dir}"
     if [[ "${tool}" == "rclone" ]]; then
-      rclone_cmd purge "${remote_or_alias}:perf-test/${test_key_base}/" >/dev/null 2>&1 || true
+      rclone_cmd purge "${remote_or_alias}:${path_base}/" >/dev/null 2>&1 || true
     elif [[ "${tool}" == "mc" ]]; then
       mc rm --recursive --force "${remote_or_alias}/${mc_path%/*}/" >/dev/null 2>&1 || true
     elif [[ "${tool}" == "cp" ]]; then
@@ -819,10 +834,10 @@ run_test_suite() {
     fi
     return 1
   fi
-  
+
   rm -rf "${temp_dir}"
   if [[ "${tool}" == "rclone" ]]; then
-    rclone_cmd purge "${remote_or_alias}:perf-test/${test_key_base}/" >/dev/null 2>&1 || true
+    rclone_cmd purge "${remote_or_alias}:${path_base}/" >/dev/null 2>&1 || true
   elif [[ "${tool}" == "mc" ]]; then
     mc rm --recursive --force "${remote_or_alias}/${mc_path%/*}/" >/dev/null 2>&1 || true
   elif [[ "${tool}" == "cp" ]]; then
@@ -915,6 +930,10 @@ Available test configurations:
     localsingle-rclone   Local single backend using rclone
     localraid3-rclone    Local RAID3 backend using rclone
 
+  --storage-type=sftp (requires Docker):
+    sftpsingle-rclone    SFTP single backend using rclone
+    sftpraid3-rclone     SFTP RAID3 backend using rclone
+
 File sizes tested:
   4K                  4 kilobytes (4096 bytes)
   40K                 40 kilobytes (40960 bytes)
@@ -988,6 +1007,8 @@ print_results_table() {
     elif [[ "${STORAGE_TYPE}" == "local" ]]; then
       # Order: cp single, rclone single, rclone raid3
       config_order=("localsingle-cp|cp single" "localsingle-rclone|rclone single" "localraid3-rclone|rclone raid3")
+    elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+      config_order=("sftpsingle-rclone|rclone single" "sftpraid3-rclone|rclone raid3")
     fi
     
     # First pass: collect all speed values (bytes/sec) for this file-size block to choose one unit per column
@@ -1130,9 +1151,21 @@ run_performance_tests() {
     log_info "test" "Starting performance tests (storage-type=${STORAGE_TYPE}, scenario=${TEST_SCENARIO})"
     log_info "test" "Iterations per test: ${ITERATIONS} (first discarded)"
   fi
-  
+
+  # Set REMOTE_ROOT_PATH for SFTP (and remotes for consistency); no-op for local/minio
+  set_remotes_for_storage_type
+
+  if [[ "${STORAGE_TYPE}" == "minio" ]] || [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    export RCLONE_TEST_TIMEOUT="${RCLONE_TEST_TIMEOUT:-120}"
+    if (( VERBOSE )); then
+      log_info "test" "Rclone command timeout: ${RCLONE_TEST_TIMEOUT}s"
+    fi
+  fi
+
   # Storage-type specific setup
   if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+    ensure_rclone_binary
+    ensure_rclone_config
     # Ensure MinIO containers are ready
     if (( VERBOSE )); then
       log_info "test" "Ensuring MinIO containers are ready"
@@ -1140,7 +1173,7 @@ run_performance_tests() {
     if ! ensure_minio_containers_ready; then
       die "MinIO containers are not ready. Please run '${SCRIPT_NAME} start --storage-type=minio' first."
     fi
-    
+
     # Check mc availability
     if [[ "${SKIP_MC}" -eq 0 ]]; then
       if ! check_mc_available; then
@@ -1167,6 +1200,8 @@ run_performance_tests() {
     fi
     ensure_rclone_binary
   elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    ensure_rclone_binary
+    ensure_rclone_config
     if (( VERBOSE )); then
       log_info "test" "Ensuring SFTP containers are ready"
     fi
@@ -1287,13 +1322,14 @@ main() {
       ;;
       
     teardown)
+      set_remotes_for_storage_type
       if [[ "${STORAGE_TYPE}" == "minio" ]]; then
         ensure_minio_containers_ready
-        
+
         # Purge remotes
         purge_remote_root "miniosingle"
         purge_remote_root "minioraid3"
-        
+
         # Clean up data directories
         for dir in "${MINIO_RAID3_DIRS[@]}" "${MINIO_SINGLE_DIR}"; do
           remove_leftover_files "${dir}"

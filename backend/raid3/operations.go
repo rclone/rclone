@@ -405,7 +405,8 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	return &Object{fs: f, remote: src.Remote()}, nil
 }
 
-// putSpooling writes particles to local temp files, then uploads with known size. Pre-flight runs after spooling.
+// putSpooling writes particles to local temp files, then uploads with known size.
+// Pre-flight runs in parallel with spooling; upload starts only when both have succeeded.
 func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	srcSize := src.Size()
 
@@ -449,12 +450,33 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 		return nil, fmt.Errorf("create parity particle file: %w", err)
 	}
 
-	res, errBuild := buildParticlesToWriters(ctx, f, in, src, options, srcSize, evenFile, oddFile, parityFile, nil)
-	if errBuild != nil {
+	// Run spool and pre-flight in parallel so pre-flight latency overlaps with spool time.
+	var res *particlesBuildResult
+	var buildErr error
+	var preflightErr error
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		res, buildErr = buildParticlesToWriters(ctx, f, in, src, options, srcSize, evenFile, oddFile, parityFile, nil)
+	}()
+	go func() {
+		defer wg.Done()
+		preflightErr = f.checkAllBackendsAvailable(ctx)
+	}()
+	wg.Wait()
+
+	if buildErr != nil {
 		_ = evenFile.Close()
 		_ = oddFile.Close()
 		_ = parityFile.Close()
-		return nil, errBuild
+		return nil, buildErr
+	}
+	if preflightErr != nil {
+		_ = evenFile.Close()
+		_ = oddFile.Close()
+		_ = parityFile.Close()
+		return nil, formatOperationError("write blocked in degraded mode (RAID 3 policy)", "", preflightErr)
 	}
 
 	if err := evenFile.Close(); err != nil {
@@ -484,11 +506,6 @@ func (f *Fs) putSpooling(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 	oddSize := oddStat.Size()
 	paritySize := parityStat.Size()
 	isOddLength := res.TotalEven > res.TotalOdd
-
-	// Pre-flight after spool: backends only needed for upload phase
-	if err := f.checkAllBackendsAvailable(ctx); err != nil {
-		return nil, formatOperationError("write blocked in degraded mode (RAID 3 policy)", "", err)
-	}
 	ctx = f.disableRetriesForWrites(ctx)
 	uploadCtx, uploadCancel := context.WithTimeout(ctx, putOperationTimeout)
 	defer uploadCancel()
