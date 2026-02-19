@@ -108,6 +108,11 @@ type Item struct {
 	Color          string `json:"color"`
 }
 
+type ItemResult struct {
+	ResultStatus
+	Data Item `json:"data"`
+}
+
 // SearchResult is returned when a list of items is requested
 type SearchResult struct {
 	ResultStatus
