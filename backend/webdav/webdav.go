@@ -610,7 +610,7 @@ func (f *Fs) findHeader(headers fs.CommaSepList, find string) bool {
 
 // fetch the bearer token and set it if successful
 func (f *Fs) fetchAndSetBearerToken() error {
-	_, err, _ := f.authSingleflight.Do("bearerToken", func() (interface{}, error) {
+	_, err, _ := f.authSingleflight.Do("bearerToken", func() (any, error) {
 		if len(f.opt.BearerTokenCommand) == 0 {
 			return nil, nil
 		}

@@ -92,10 +92,10 @@ func TestCountWriterConcurrent(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(goroutines)
-	for g := 0; g < goroutines; g++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
-			for i := 0; i < loops; i++ {
+			for range loops {
 				n, err := cw.Write(data)
 				assert.NoError(t, err)
 				assert.Equal(t, chunkSize, n)

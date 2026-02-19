@@ -156,7 +156,7 @@ func Trace(o any, format string, a ...any) func(string, ...any) {
 		for i := range a {
 			// read the values of the pointed to items
 			typ := reflect.TypeOf(a[i])
-			if typ.Kind() == reflect.Ptr {
+			if typ.Kind() == reflect.Pointer {
 				value := reflect.ValueOf(a[i])
 				if value.IsNil() {
 					a[i] = nil
