@@ -38,13 +38,6 @@ XX / Infomaniak kDrive
 [snip]
 Storage> kdrive
 
-Option account_id.
-Fill the account ID that is to be considered for this kdrive.
-When showing a folder on kdrive, you can find the account_id here:
-https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/...
-Enter a value. Press Enter to leave empty.
-account_id> 12345678
-
 Option drive_id.
 Fill the drive ID for this kdrive.
 When showing a folder on kdrive, you can find the drive_id here:

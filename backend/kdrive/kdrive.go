@@ -57,7 +57,7 @@ func init() {
 			Name: "root_folder_id",
 			Help: "Fill in for rclone to use a non root folder as its starting point.",
 			// for default root, see https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
-			Default:   "5",
+			Default:   "1",
 			Advanced:  true,
 			Sensitive: true,
 		}, {
@@ -1222,9 +1222,6 @@ func (o *Object) updateMultipart(ctx context.Context, in io.Reader, src fs.Objec
 	if session.fileInfo == nil {
 		return fmt.Errorf("upload failed: no file info returned")
 	}
-
-	// Use hash from chunk uploads (stored in session)
-	o.setHash(strings.TrimPrefix(session.hash, "xxh3:"))
 
 	return o.setMetaData(session.fileInfo)
 }
