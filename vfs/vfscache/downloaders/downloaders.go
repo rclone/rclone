@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs/asyncreader"
 	"github.com/rclone/rclone/fs/chunkedreader"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/ranges"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -650,4 +651,48 @@ func (dl *downloader) getRange() (start, offset int64) {
 	dl.mu.Lock()
 	defer dl.mu.Unlock()
 	return dl.start, dl.offset
+}
+
+// Stats returns download statistics for this Downloaders instance
+func (dls *Downloaders) Stats() rc.Params {
+	dls.mu.Lock()
+	defer dls.mu.Unlock()
+
+	out := rc.Params{
+		"downloading": len(dls.dls) > 0,
+		"downloaders": len(dls.dls),
+	}
+
+	// Aggregate stats from active downloaders
+	var totalBytes int64
+	var speed, speedAvg float64
+	var hasStats bool
+
+	for _, dl := range dls.dls {
+		dl.mu.Lock()
+		// Calculate bytes downloaded by this downloader
+		dlBytes := dl.offset - dl.start
+		totalBytes += dlBytes
+		
+		// Get speed from accounting if available
+		if dl.in != nil {
+			stats := dl.in.Stats()
+			if s, ok := stats["speed"].(float64); ok {
+				speed += s
+			}
+			if s, ok := stats["speedAvg"].(float64); ok {
+				speedAvg += s
+			}
+			hasStats = true
+		}
+		dl.mu.Unlock()
+	}
+
+	out["bytesDownloaded"] = totalBytes
+	if hasStats {
+		out["speed"] = speed
+		out["speedAvg"] = speedAvg
+	}
+
+	return out
 }
