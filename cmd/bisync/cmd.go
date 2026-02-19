@@ -162,7 +162,7 @@ var commandDefinition = &cobra.Command{
 	Long:  longHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.58",
-		"groups":            "Filter,Copy,Important",
+		"groups":            "Filter,Copy,Important,Sync",
 	},
 	RunE: func(command *cobra.Command, args []string) error {
 		// NOTE: avoid putting too much handling here, as it won't apply to the rc.
