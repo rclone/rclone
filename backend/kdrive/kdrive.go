@@ -30,7 +30,6 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/xxh3"
-	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -163,11 +162,58 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
-// readMetaDataForPath reads the metadata from the path
-func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Item, err error) {
-	fs.Debugf(ctx, "readMetaDataForPath: path=%s", path)
-	// defer fs.Trace(f, "path=%q", path)("info=%+v, err=%v", &info, &err)
-	leaf, directoryID, err := f.dirCache.FindPath(ctx, path, false)
+// findItemInDir retrieves a file or directory by its name in a specific directory using the API
+// This avoids listing the entire directory. It takes the directoryID directly.
+func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
+	fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
+
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       fmt.Sprintf("/3/drive/%s/files/%s/path", f.opt.DriveID, directoryID),
+		Parameters: url.Values{},
+	}
+	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(leaf))
+	opts.Parameters.Set("with", "path,hash")
+
+	var result api.ItemResult
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		err = result.ResultStatus.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		// Check if it's a "not found" error
+		if apiErr, ok := err.(*api.ResultStatus); ok {
+			if apiErr.ErrorDetail.Result == "object_not_found" {
+				return nil, fs.ErrorObjectNotFound
+			}
+		}
+		return nil, fmt.Errorf("couldn't find item in dir: %w", err)
+	}
+
+	item := result.Data
+	// Check if item is valid (has an ID)
+	if item.ID == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	// Normalize the name
+	item.Name = f.opt.Enc.ToStandardName(item.Name)
+
+	return &item, nil
+}
+
+// findItemByPath retrieves a file or directory by its path using the API
+// This avoids listing the entire directory
+func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, error) {
+	fs.Infof(ctx, "findItemByPath: remote=%s", remote)
+
+	// Get the directoryID of the parent directory
+	directory, leaf := path.Split(remote)
+	directory = strings.TrimSuffix(directory, "/")
+
+	directoryID, err := f.dirCache.FindDir(ctx, directory, false)
 	if err != nil {
 		if errors.Is(err, fs.ErrorDirNotFound) {
 			return nil, fs.ErrorObjectNotFound
@@ -175,22 +221,19 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		return nil, err
 	}
 
-	found, err := f.listAll(ctx, directoryID, false, true, false, func(item *api.Item) bool {
-		if item.Name == leaf {
-			info = item
-			return true
-		} else if norm.NFC.String(item.Name) == norm.NFC.String(leaf) {
-			info = item
-			return true
-		}
-		return false
-	})
+	return f.findItemInDir(ctx, directoryID, leaf)
+}
+
+// readMetaDataForPath reads the metadata from the path
+func (f *Fs) readMetaDataForPath(ctx context.Context, remote string) (*api.Item, error) {
+	fs.Debugf(ctx, "readMetaDataForPath: remote=%s", remote)
+
+	// Try the new API endpoint first
+	info, err := f.findItemByPath(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
-	if !found {
-		return nil, fs.ErrorObjectNotFound
-	}
+
 	return info, nil
 }
 
@@ -304,15 +347,21 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	// Find the leaf in pathID
-	found, err = f.listAll(ctx, pathID, true, false, false, func(item *api.Item) bool {
-		if item.Name == leaf {
-			pathIDOut = strconv.Itoa(item.ID)
-			return true
+	// Use API endpoint to find item directly by name
+	item, err := f.findItemInDir(ctx, pathID, leaf)
+	if err != nil {
+		if errors.Is(err, fs.ErrorObjectNotFound) {
+			return "", false, nil
 		}
-		return false
-	})
-	return pathIDOut, found, err
+		return "", false, err
+	}
+
+	if item.Type == "dir" {
+		return strconv.Itoa(item.ID), true, nil
+	}
+
+	// Not a directory
+	return "", false, nil
 }
 
 // CreateDir makes a directory with pathID as parent and name leaf
@@ -351,12 +400,14 @@ type listAllFn func(*api.Item) bool
 //
 // If the user fn ever returns true then it early exits with found = true
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, recursive bool, fn listAllFn) (found bool, err error) {
+	// fs.Infof(nil, "Stacktrace : %s", string(debug.Stack()))
 	listSomeFiles := func(currentDirID string, fromCursor string) (api.SearchResult, error) {
 		opts := rest.Opts{
 			Method:     "GET",
 			Path:       fmt.Sprintf("/3/drive/%s/files/%s/files", f.opt.DriveID, currentDirID),
 			Parameters: url.Values{},
 		}
+		opts.Parameters.Set("limit", "1000")
 		opts.Parameters.Set("with", "path,hash")
 		if len(fromCursor) > 0 {
 			opts.Parameters.Set("cursor", fromCursor)
@@ -431,8 +482,23 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 		return err
 	}
 	var iErr error
+
 	_, err = f.listAll(ctx, directoryID, false, false, recursive, func(info *api.Item) bool {
 		remote := path.Join(dir, info.FullPath)
+
+		// When not recursive, only return direct children
+		if !recursive {
+			itemDir := path.Dir(remote)
+			// Normalize: "." becomes "" for root
+			if itemDir == "." {
+				itemDir = ""
+			}
+			if itemDir != dir {
+				// Skip - not a direct child
+				return false
+			}
+		}
+
 		if info.Type == "dir" {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, strconv.Itoa(info.ID))
@@ -796,26 +862,10 @@ func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
 
-// getFileIDFromPath returns the file/directory ID from a remote path
-func (f *Fs) getFileIDFromPath(ctx context.Context, remote string) (string, error) {
-	// Try to find as directory first
-	directoryID, err := f.dirCache.FindDir(ctx, remote, false)
-	if err == nil {
-		return directoryID, nil
-	}
-
-	// If not a directory, try to find as file
-	info, err := f.readMetaDataForPath(ctx, remote)
-	if err != nil {
-		return "", err
-	}
-	return strconv.Itoa(info.ID), nil
-}
-
-func (f *Fs) getPublicLink(ctx context.Context, fileID string) (string, error) {
+func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   fmt.Sprintf("/2/drive/%s/files/%s/link", f.opt.DriveID, fileID),
+		Path:   fmt.Sprintf("/2/drive/%s/files/%d/link", f.opt.DriveID, fileID),
 	}
 	var result api.PubLinkResult
 	err := f.pacer.Call(func() (bool, error) {
@@ -845,10 +895,10 @@ func (f *Fs) getPublicLink(ctx context.Context, fileID string) (string, error) {
 	return result.Data.URL, nil
 }
 
-func (f *Fs) deletePublicLink(ctx context.Context, fileID string) error {
+func (f *Fs) deletePublicLink(ctx context.Context, fileID int) error {
 	opts := rest.Opts{
 		Method: "DELETE",
-		Path:   fmt.Sprintf("/2/drive/%s/files/%s/link", f.opt.DriveID, fileID),
+		Path:   fmt.Sprintf("/2/drive/%s/files/%d/link", f.opt.DriveID, fileID),
 	}
 	var result api.ResultStatus
 	err := f.pacer.Call(func() (bool, error) {
@@ -864,7 +914,7 @@ func (f *Fs) deletePublicLink(ctx context.Context, fileID string) error {
 	return nil
 }
 
-func (f *Fs) createPublicLink(ctx context.Context, fileID string, expire fs.Duration) (string, error) {
+func (f *Fs) createPublicLink(ctx context.Context, fileID int, expire fs.Duration) (string, error) {
 	createReq := struct {
 		Right      string `json:"right"` // true for read access
 		ValidUntil int    `json:"valid_until,omitempty"`
@@ -879,7 +929,7 @@ func (f *Fs) createPublicLink(ctx context.Context, fileID string, expire fs.Dura
 
 	opts := rest.Opts{
 		Method: "POST",
-		Path:   fmt.Sprintf("/2/drive/%s/files/%s/link", f.opt.DriveID, fileID),
+		Path:   fmt.Sprintf("/2/drive/%s/files/%d/link", f.opt.DriveID, fileID),
 	}
 
 	var result api.PubLinkResult
@@ -899,27 +949,28 @@ func (f *Fs) createPublicLink(ctx context.Context, fileID string, expire fs.Dura
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 // If unlink is true, it removes the existing public link.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
-	fileID, err := f.getFileIDFromPath(ctx, remote)
+	fs.Infof("PublicLink PATH REMOTE", remote)
+	item, err := f.findItemByPath(ctx, remote)
 	if err != nil {
 		return "", err
 	}
 
 	if unlink {
 		// Remove existing public link
-		err = f.deletePublicLink(ctx, fileID)
+		err = f.deletePublicLink(ctx, item.ID)
 		if err != nil {
 			return "", err
 		}
 	}
 
 	// Check if link exists
-	link, err := f.getPublicLink(ctx, fileID)
+	link, err := f.getPublicLink(ctx, item.ID)
 	if link != "" {
 		return link, nil
 	}
 
 	// Create or get existing public link
-	return f.createPublicLink(ctx, fileID, expire)
+	return f.createPublicLink(ctx, item.ID, expire)
 }
 
 // About gets quota information
