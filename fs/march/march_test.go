@@ -508,9 +508,7 @@ func TestMatchListings(t *testing.T) {
 				}
 				ls, err := list.NewSorter(ctx, nil, list.SortToChan(out), key)
 				require.NoError(t, err)
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				wg.Go(func() {
 					for i := 0; i < len(test.input); i += 2 {
 						entry := test.input[i+offset]
 						if entry != nil {
@@ -520,7 +518,7 @@ func TestMatchListings(t *testing.T) {
 					require.NoError(t, ls.Send())
 					ls.CleanUp()
 					close(out)
-				}()
+				})
 				return out
 			}
 

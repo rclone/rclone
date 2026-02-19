@@ -44,7 +44,7 @@ func Walk(err error, f WalkFunc) {
 			// *os.SyscallError and many others in the stdlib.
 			errType := reflect.TypeOf(err)
 			errValue := reflect.ValueOf(err)
-			if errValue.IsValid() && errType.Kind() == reflect.Ptr {
+			if errValue.IsValid() && errType.Kind() == reflect.Pointer {
 				errType = errType.Elem()
 				errValue = errValue.Elem()
 			}

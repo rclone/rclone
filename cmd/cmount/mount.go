@@ -108,7 +108,7 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 func waitFor(fn func() bool) (ok bool) {
 	const totalWait = 10 * time.Second
 	const individualWait = 10 * time.Millisecond
-	for i := 0; i < int(totalWait/individualWait); i++ {
+	for range int(totalWait / individualWait) {
 		ok = fn()
 		if ok {
 			return ok

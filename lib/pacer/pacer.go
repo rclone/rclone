@@ -159,18 +159,30 @@ func (p *Pacer) beginCall(limitConnections bool) {
 	// XXX ms later we put another in.  We could do this with a
 	// Ticker more accurately, but then we'd have to work out how
 	// not to run it when it wasn't needed
-	<-p.pacer
+
+	p.mu.Lock()
+	sleepTime := p.state.SleepTime
+	p.mu.Unlock()
+
+	if sleepTime > 0 {
+		<-p.pacer
+
+		// Re-read the sleep time as it may be stale
+		// after waiting for the pacer token
+		p.mu.Lock()
+		sleepTime = p.state.SleepTime
+		p.mu.Unlock()
+
+		// Restart the timer
+		go func(t time.Duration) {
+			time.Sleep(t)
+			p.pacer <- struct{}{}
+		}(sleepTime)
+	}
+
 	if limitConnections {
 		<-p.connTokens
 	}
-
-	p.mu.Lock()
-	// Restart the timer
-	go func(t time.Duration) {
-		time.Sleep(t)
-		p.pacer <- struct{}{}
-	}(p.state.SleepTime)
-	p.mu.Unlock()
 }
 
 // endCall implements the pacing algorithm
