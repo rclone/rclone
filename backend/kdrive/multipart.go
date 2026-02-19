@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hash"
 	"io"
 	"math"
 	"net/url"
@@ -22,16 +21,14 @@ import (
 
 // uploadSession implements fs.ChunkWriter for kdrive multipart uploads
 type uploadSession struct {
-	f           *Fs
-	parentID    string
-	fileName    string
-	token       string
-	uploadURL   string
-	fileInfo    *api.Item
-	chunkCount  int
-	hash        string    // Hash from the last chunk upload
-	totalHash   hash.Hash // Accumulates all chunks for total hash
-	chunkHashes []string  // Stores individual chunk hashes
+	f          *Fs
+	parentID   string
+	fileName   string
+	token      string
+	uploadURL  string
+	fileInfo   *api.Item
+	chunkCount int
+	hash       string // Hash from the last chunk upload
 }
 
 const (
@@ -139,13 +136,11 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	}
 
 	chunkWriter := &uploadSession{
-		f:           f,
-		parentID:    parentID,
-		fileName:    leaf,
-		token:       sessionResp.Data.Token,
-		uploadURL:   sessionResp.Data.UploadURL,
-		totalHash:   xxh3.New(),
-		chunkHashes: make([]string, 0, totalChunks),
+		f:         f,
+		parentID:  parentID,
+		fileName:  leaf,
+		token:     sessionResp.Data.Token,
+		uploadURL: sessionResp.Data.UploadURL,
 	}
 
 	info = fs.ChunkWriterInfo{
@@ -182,10 +177,6 @@ func (u *uploadSession) WriteChunk(ctx context.Context, chunkNumber int, reader 
 	chunkHasher := xxh3.New()
 	_, _ = chunkHasher.Write(chunkData)
 	chunkHash := fmt.Sprintf("xxh3:%x", chunkHasher.Sum(nil))
-
-	// Accumulate in total hash
-	u.totalHash.Write(chunkData)
-	u.chunkHashes = append(u.chunkHashes, chunkHash)
 
 	uploadPath := fmt.Sprintf("/3/drive/%s/upload/session/%s/chunk", u.f.opt.DriveID, u.token)
 	chunkOpts := rest.Opts{
@@ -225,15 +216,9 @@ func (u *uploadSession) WriteChunk(ctx context.Context, chunkNumber int, reader 
 // Close finalizes the upload session and returns the created file info
 // @see https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/%7Bsession_token%7D/finish
 func (u *uploadSession) Close(ctx context.Context) error {
-	// Calculate total hash (hash of concatenation of all chunks)
-	totalHashValue := fmt.Sprintf("xxh3:%x", u.totalHash.Sum(nil))
-
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   fmt.Sprintf("/3/drive/%s/upload/session/%s/finish", u.f.opt.DriveID, u.token),
-		Parameters: url.Values{
-			"total_chunk_hash": {totalHashValue},
-		},
 	}
 	var resp api.SessionFinishResponse
 	_, err := u.f.srv.CallJSON(ctx, &opts, nil, &resp)
@@ -242,7 +227,7 @@ func (u *uploadSession) Close(ctx context.Context) error {
 	}
 
 	u.fileInfo = &resp.Data.File
-	fs.Debugf(u, "multipart upload completed: file id %d, total hash: %s", resp.Data.File.ID, totalHashValue)
+	fs.Debugf(u, "multipart upload completed: file id %d", resp.Data.File.ID)
 	return nil
 }
 
