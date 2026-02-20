@@ -101,7 +101,7 @@ func (f *Fs) putEmptyFile(ctx context.Context, src fs.ObjectInfo, options ...fs.
 	mtime := effectiveModTime(putCtx, f, src, options)
 	compression, _ := ConfigToFooterCompression(f.opt.Compression)
 
-	ft := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardEven)
+	ft := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardEven)
 	fb, _ := ft.MarshalBinary()
 	evenR := bytes.NewReader(fb)
 	evenInfo := createParticleInfo(f, src, "even", FooterSize, false)
@@ -111,7 +111,7 @@ func (f *Fs) putEmptyFile(ctx context.Context, src fs.ObjectInfo, options ...fs.
 	}
 	uploadedParticles = append(uploadedParticles, evenObj)
 
-	ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardOdd)
+	ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardOdd)
 	fb2, _ := ft2.MarshalBinary()
 	oddR := bytes.NewReader(fb2)
 	oddInfo := createParticleInfo(f, src, "odd", FooterSize, false)
@@ -121,7 +121,7 @@ func (f *Fs) putEmptyFile(ctx context.Context, src fs.ObjectInfo, options ...fs.
 	}
 	uploadedParticles = append(uploadedParticles, oddObj)
 
-	ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardParity)
+	ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardParity)
 	fb3, _ := ft3.MarshalBinary()
 	parityR := bytes.NewReader(fb3)
 	parityInfo := createParticleInfo(f, src, "parity", FooterSize, false)
@@ -169,6 +169,7 @@ type particlesBuildResult struct {
 	ContentLength int64
 	TotalEven     int64
 	TotalOdd      int64
+	NumBlocks     uint32 // number of compressed blocks (0 for uncompressed)
 	MD5Sum        [16]byte
 	SHA256Sum     [32]byte
 	Mtime         time.Time
@@ -178,21 +179,20 @@ type particlesBuildResult struct {
 // buildParticlesToWriters reads from in, splits into even/odd/parity, writes footer to the three writers.
 // Used by both putStreaming (writers are pipe ends) and putSpooling (writers are temp files).
 // isOddLengthCh may be nil when size is known (spool path); for streaming with unknown size it is used by the splitter.
+// When compression is snappy or zstd, uses block-based compression (128 KiB blocks) with inventory for range reads.
 func buildParticlesToWriters(ctx context.Context, f *Fs, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, srcSize int64, evenW, oddW, parityW io.Writer, isOddLengthCh chan bool) (*particlesBuildResult, error) {
 	compression, _ := ConfigToFooterCompression(f.opt.Compression)
 
-	hasher := newHashingReader(in)
-	var splitInput io.Reader = io.Reader(hasher)
-	if f.opt.Compression != "none" && f.opt.Compression != "" {
-		cr, err := newCompressingReader(hasher, f.opt.Compression)
-		if err != nil {
-			return nil, fmt.Errorf("compression: %w", err)
-		}
-		splitInput = cr
+	if f.opt.Compression == "snappy" || f.opt.Compression == "zstd" {
+		return buildParticlesToWritersBlock(ctx, f, in, src, options, srcSize, evenW, oddW, parityW, isOddLengthCh, compression)
 	}
 
+	// Uncompressed path: stream through splitter
+	hasher := newHashingReader(in)
+	splitInput := io.Reader(hasher)
+
 	producerPipeR, producerPipeW := io.Pipe()
-	producerInput := splitInput // capture for goroutine; must not read from pipe
+	producerInput := splitInput
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -224,7 +224,7 @@ func buildParticlesToWriters(ctx context.Context, f *Fs, in io.Reader, src fs.Ob
 	sha256Sum := hasher.SHA256Sum()
 	mtime := effectiveModTime(ctx, f, src, options)
 	for shard := 0; shard < 3; shard++ {
-		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, shard)
+		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, 0, shard)
 		fb, errMarshal := ft.MarshalBinary()
 		if errMarshal != nil {
 			return nil, errMarshal
@@ -247,6 +247,131 @@ func buildParticlesToWriters(ctx context.Context, f *Fs, in io.Reader, src fs.Ob
 		ContentLength: contentLength,
 		TotalEven:     totalEven,
 		TotalOdd:      totalOdd,
+		NumBlocks:     0,
+		MD5Sum:        md5Sum,
+		SHA256Sum:     sha256Sum,
+		Mtime:         mtime,
+		Compression:   compression,
+	}, nil
+}
+
+// buildParticlesToWritersBlock implements block-based compression: read in BlockSize chunks,
+// compress each block, split compressed bytes across even/odd/parity, then write inventory + footer.
+func buildParticlesToWritersBlock(ctx context.Context, f *Fs, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, srcSize int64, evenW, oddW, parityW io.Writer, isOddLengthCh chan bool, compression [4]byte) (*particlesBuildResult, error) {
+	hasher := newHashingReader(in)
+	blockBuf := make([]byte, BlockSize)
+	var totalEven, totalOdd int64
+	var totalCompressed int
+	var inventorySizes []uint32
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+		n, err := io.ReadFull(hasher, blockBuf)
+		if err == io.EOF {
+			break
+		}
+		if err != nil && err != io.ErrUnexpectedEOF {
+			return nil, fmt.Errorf("read block: %w", err)
+		}
+		block := blockBuf[:n]
+
+		compressed, err := compressBlock(block, compression)
+		if err != nil {
+			return nil, fmt.Errorf("compress block: %w", err)
+		}
+		inventorySizes = append(inventorySizes, uint32(len(compressed)))
+
+		evenData, oddData := SplitBytesWithOffset(compressed, totalCompressed)
+		totalCompressed += len(compressed)
+		parityData := CalculateParity(evenData, oddData)
+
+		totalEven += int64(len(evenData))
+		totalOdd += int64(len(oddData))
+
+		if isOddLengthCh != nil && totalEven > totalOdd {
+			select {
+			case isOddLengthCh <- true:
+			default:
+				select {
+				case <-isOddLengthCh:
+					isOddLengthCh <- true
+				default:
+				}
+			}
+		}
+
+		if err := writeInChunks(evenW, evenData, streamWriteChunkSize); err != nil {
+			return nil, fmt.Errorf("write even: %w", err)
+		}
+		if err := writeInChunks(oddW, oddData, streamWriteChunkSize); err != nil {
+			return nil, fmt.Errorf("write odd: %w", err)
+		}
+		if err := writeInChunks(parityW, parityData, streamWriteChunkSize); err != nil {
+			return nil, fmt.Errorf("write parity: %w", err)
+		}
+	}
+
+	if isOddLengthCh != nil && totalEven > totalOdd {
+		select {
+		case isOddLengthCh <- true:
+		default:
+			select {
+			case <-isOddLengthCh:
+				isOddLengthCh <- true
+			default:
+			}
+		}
+	}
+
+	contentLength := hasher.ContentLength()
+	if srcSize >= 0 && contentLength != srcSize {
+		return nil, formatOperationError("upload failed", fmt.Sprintf("stream truncated: read %d bytes, expected %d", contentLength, srcSize), nil)
+	}
+
+	if !ValidateParticleSizes(totalEven, totalOdd) {
+		return nil, formatOperationError("upload failed", fmt.Sprintf("internal: block splitter produced invalid particle sizes even=%d, odd=%d", totalEven, totalOdd), nil)
+	}
+
+	numBlocks := uint32(len(inventorySizes))
+	inv := buildInventory(inventorySizes)
+	for _, w := range []io.Writer{evenW, oddW, parityW} {
+		if _, err := w.Write(inv); err != nil {
+			return nil, err
+		}
+	}
+
+	md5Sum := hasher.MD5Sum()
+	sha256Sum := hasher.SHA256Sum()
+	mtime := effectiveModTime(ctx, f, src, options)
+	for shard := 0; shard < 3; shard++ {
+		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, numBlocks, shard)
+		fb, errMarshal := ft.MarshalBinary()
+		if errMarshal != nil {
+			return nil, errMarshal
+		}
+		var w io.Writer
+		switch shard {
+		case ShardEven:
+			w = evenW
+		case ShardOdd:
+			w = oddW
+		case ShardParity:
+			w = parityW
+		}
+		if _, err := w.Write(fb); err != nil {
+			return nil, err
+		}
+	}
+
+	return &particlesBuildResult{
+		ContentLength: contentLength,
+		TotalEven:     totalEven,
+		TotalOdd:      totalOdd,
+		NumBlocks:     numBlocks,
 		MD5Sum:        md5Sum,
 		SHA256Sum:     sha256Sum,
 		Mtime:         mtime,
@@ -396,8 +521,9 @@ func (f *Fs) putStreaming(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		return nil, err
 	}
 
-	totalEvenWritten := res.TotalEven + FooterSize
-	totalOddWritten := res.TotalOdd + FooterSize
+	invLen := inventoryLength(int(res.NumBlocks))
+	totalEvenWritten := res.TotalEven + int64(invLen) + FooterSize
+	totalOddWritten := res.TotalOdd + int64(invLen) + FooterSize
 	if err := verifyParticleSizes(ctx, f, evenObj, oddObj, totalEvenWritten, totalOddWritten); err != nil {
 		return nil, err
 	}

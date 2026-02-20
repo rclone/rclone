@@ -170,7 +170,7 @@ func (f *Fs) uploadParticle(ctx context.Context, job *uploadJob) error {
 		return fmt.Errorf("could not read footer from any other particle for heal of %s", job.remote)
 	}
 
-	ft := FooterFromReconstructed(sourceFt.ContentLength, sourceFt.MD5[:], sourceFt.SHA256[:], time.Unix(sourceFt.Mtime, 0), sourceFt.Compression, currentShard)
+	ft := FooterFromReconstructed(sourceFt.ContentLength, sourceFt.MD5[:], sourceFt.SHA256[:], time.Unix(sourceFt.Mtime, 0), sourceFt.Compression, sourceFt.NumBlocks, currentShard)
 	fb, errMarshal := ft.MarshalBinary()
 	if errMarshal != nil {
 		return errMarshal

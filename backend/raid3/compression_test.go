@@ -109,3 +109,84 @@ func TestNewCompressingReaderZstd(t *testing.T) {
 	// zstd compressed output should be different from input and typically smaller for repetitive data
 	assert.NotEqual(t, []byte("test data for zstd"), data)
 }
+
+func TestBlockCompressDecompressRoundTrip(t *testing.T) {
+	block := make([]byte, BlockSize)
+	for i := range block {
+		block[i] = byte(i % 256)
+	}
+	for _, comp := range []struct {
+		name [4]byte
+	}{
+		{CompressionSnappy},
+		{CompressionZstd},
+	} {
+		t.Run(string(comp.name[:3]), func(t *testing.T) {
+			compressed, err := compressBlock(block, comp.name)
+			require.NoError(t, err)
+			require.NotEmpty(t, compressed)
+			decompressed, err := decompressBlock(compressed, comp.name)
+			require.NoError(t, err)
+			assert.Equal(t, block, decompressed)
+		})
+	}
+}
+
+func TestBlockCompressDecompressPartialLastBlock(t *testing.T) {
+	// Last block smaller than BlockSize
+	smallBlock := make([]byte, 1000)
+	for i := range smallBlock {
+		smallBlock[i] = byte(i % 256)
+	}
+	compressed, err := compressBlock(smallBlock, CompressionSnappy)
+	require.NoError(t, err)
+	require.NotEmpty(t, compressed)
+	decompressed, err := decompressBlock(compressed, CompressionSnappy)
+	require.NoError(t, err)
+	assert.Equal(t, smallBlock, decompressed)
+}
+
+func TestBlockHelpers(t *testing.T) {
+	assert.Equal(t, 8, inventoryLength(2))
+	assert.Equal(t, 0, blockIndex(0))
+	assert.Equal(t, 0, blockIndex(BlockSize-1))
+	assert.Equal(t, 1, blockIndex(BlockSize))
+	assert.Equal(t, BlockSize, lastBlockUncompressedSize(BlockSize*3))
+	assert.Equal(t, 100, lastBlockUncompressedSize(BlockSize*2+100))
+	assert.Equal(t, BlockSize, lastBlockUncompressedSize(BlockSize))
+	assert.Equal(t, 0, lastBlockUncompressedSize(0))
+}
+
+func TestBuildParseInventory(t *testing.T) {
+	sizes := []uint32{100, 200, 150}
+	b := buildInventory(sizes)
+	require.Len(t, b, 12)
+	parsed := parseInventory(b)
+	assert.Equal(t, sizes, parsed)
+}
+
+func TestBlockDecompressReadCloser(t *testing.T) {
+	// Simulate block-compressed payload: 2 blocks, merge even+odd into single stream
+	block1 := make([]byte, BlockSize)
+	for i := range block1 {
+		block1[i] = byte(i % 256)
+	}
+	block2 := []byte("trailing data")
+	comp1, err := compressBlock(block1, CompressionSnappy)
+	require.NoError(t, err)
+	comp2, err := compressBlock(block2, CompressionSnappy)
+	require.NoError(t, err)
+	inventory := buildInventory([]uint32{uint32(len(comp1)), uint32(len(comp2))})
+
+	// Merge comp1 and comp2 (simulating StreamMerger output: interleaved even+odd)
+	merged := append(comp1, comp2...)
+	src := io.NopCloser(bytes.NewReader(merged))
+
+	dec := newBlockDecompressReadCloser(src, parseInventory(inventory), CompressionSnappy)
+	got, err := io.ReadAll(dec)
+	require.NoError(t, err)
+	_ = dec.Close()
+
+	want := append(block1, block2...)
+	assert.Equal(t, want, got)
+}

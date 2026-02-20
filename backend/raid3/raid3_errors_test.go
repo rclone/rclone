@@ -30,6 +30,31 @@ import (
 //   - Reads: Work with 2 of 3 backends (best effort) ✅
 //   - Writes: Require all 3 backends (strict) ❌
 //   - Deletes: Work with any backends (best effort, idempotent) ✅
+//
+// Simulating unavailable backend: Use non-existent paths for Fs creation, or
+// replaceDirWithFileForTest for tests that need to create files first (matches
+// compare_raid3_with_single_errors.sh strategy). Do NOT use chmod 0555 - the
+// health check treats "permission denied" as acceptable (SFTP chroot workaround).
+
+// replaceDirWithFileForTest makes a backend unavailable by replacing its
+// directory with a file. This causes "not a directory" errors which the
+// health check correctly treats as unavailable (unlike chmod 0555 which
+// yields "permission denied" and is treated as available for SFTP).
+// Returns a cleanup function to restore the directory.
+func replaceDirWithFileForTest(t *testing.T, dir string) func() {
+	t.Helper()
+	backupDir := dir + ".disabled"
+	err := os.Rename(dir, backupDir)
+	require.NoError(t, err, "rename dir for unavailability simulation")
+	f, err := os.Create(dir)
+	require.NoError(t, err, "create blocking file at dir path")
+	err = f.Close()
+	require.NoError(t, err)
+	return func() {
+		_ = os.Remove(dir)
+		_ = os.Rename(backupDir, dir)
+	}
+}
 
 // TestPutFailsWithUnavailableBackend tests that Put fails when one backend
 // is unavailable.
@@ -201,10 +226,10 @@ func TestDeleteFailsWithUnavailableBackend(t *testing.T) {
 	obj, err := f.NewObject(ctx, remote)
 	require.NoError(t, err)
 
-	// Make odd backend unavailable for write (dir 0555 = listable but not writable, so no permission denied on list)
-	err = os.Chmod(oddDir, 0555)
-	require.NoError(t, err)
-	defer func() { _ = os.Chmod(oddDir, 0755) }() // Restore for cleanup
+	// Make odd backend unavailable (replace dir with file - causes "not a directory"
+	// which health check correctly treats as unavailable; chmod 0555 would be
+	// treated as available due to SFTP chroot workaround)
+	defer replaceDirWithFileForTest(t, oddDir)()
 
 	// Delete should fail (strict RAID 3 policy)
 	err = obj.Remove(ctx)
@@ -213,7 +238,6 @@ func TestDeleteFailsWithUnavailableBackend(t *testing.T) {
 	assert.Contains(t, err.Error(), "RAID 3 policy", "Error should mention RAID 3 policy")
 
 	// Verify no particles were deleted (operation failed before deletion)
-	// Note: We don't check odd particle here; directory is not writable (0555)
 	evenPath := filepath.Join(evenDir, remote)
 	parityPath := filepath.Join(parityDir, remote)
 
@@ -641,12 +665,10 @@ func TestUpdateFailsWithUnavailableBackend(t *testing.T) {
 	obj, err := f.NewObject(ctx, remote)
 	require.NoError(t, err)
 
-	// Make odd backend not writable (0555) to simulate failure during update
-	err = os.Chmod(oddDir, 0555)
-	require.NoError(t, err)
-	defer func() {
-		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
-	}()
+	// Make odd backend unavailable (replace dir with file - health check correctly
+	// treats "not a directory" as unavailable; chmod 0555 would be treated as
+	// available due to SFTP chroot workaround)
+	defer replaceDirWithFileForTest(t, oddDir)()
 
 	// Attempt update - should fail
 	newData := []byte("Updated content that should not be saved")
@@ -1385,12 +1407,9 @@ func TestCopyFailsWithUnavailableBackend(t *testing.T) {
 	oldObj, err := f.NewObject(ctx, oldRemote)
 	require.NoError(t, err)
 
-	// Make odd backend not writable (0555) to simulate unavailability
-	err = os.Chmod(oddDir, 0555)
-	require.NoError(t, err)
-	defer func() {
-		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
-	}()
+	// Make odd backend unavailable (replace dir with file - health check correctly
+	// treats "not a directory" as unavailable)
+	defer replaceDirWithFileForTest(t, oddDir)()
 
 	// Attempt copy - should fail
 	newRemote := "copied.txt"
@@ -1601,12 +1620,9 @@ func TestUpdateRollbackOnFailure(t *testing.T) {
 	obj, err := f.NewObject(ctx, remote)
 	require.NoError(t, err)
 
-	// Make odd backend not writable (0555) to simulate failure during update
-	err = os.Chmod(oddDir, 0555)
-	require.NoError(t, err)
-	defer func() {
-		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
-	}()
+	// Make odd backend unavailable (replace dir with file - health check correctly
+	// treats "not a directory" as unavailable)
+	defer replaceDirWithFileForTest(t, oddDir)()
 
 	// Attempt update - should fail
 	newData := []byte("New content that should not be saved")

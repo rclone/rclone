@@ -18,7 +18,7 @@ func TestFooterMarshalParseRoundTrip(t *testing.T) {
 	}
 	mtime := time.Unix(1600000000, 0)
 
-	ft := FooterFromReconstructed(contentLength, md5[:], sha256[:], mtime, CompressionNone, ShardEven)
+	ft := FooterFromReconstructed(contentLength, md5[:], sha256[:], mtime, CompressionNone, 0, ShardEven)
 	b, err := ft.MarshalBinary()
 	require.NoError(t, err)
 	assert.Len(t, b, FooterSize)
@@ -46,7 +46,7 @@ func TestParseFooterInvalidMagic(t *testing.T) {
 func TestParseFooterWrongLength(t *testing.T) {
 	_, err := ParseFooter([]byte("short"))
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "90")
+	assert.Contains(t, err.Error(), "94")
 
 	_, err = ParseFooter(make([]byte, 100))
 	assert.Error(t, err)
@@ -65,7 +65,7 @@ func TestParseFooterInvalidVersion(t *testing.T) {
 
 func TestFooterShards(t *testing.T) {
 	for shard := 0; shard < 3; shard++ {
-		ft := FooterFromReconstructed(100, nil, nil, time.Now(), CompressionNone, shard)
+		ft := FooterFromReconstructed(100, nil, nil, time.Now(), CompressionNone, 0, shard)
 		b, err := ft.MarshalBinary()
 		require.NoError(t, err)
 		parsed, err := ParseFooter(b)
@@ -75,10 +75,24 @@ func TestFooterShards(t *testing.T) {
 }
 
 func TestFooterReservedZeros(t *testing.T) {
-	ft := FooterFromReconstructed(0, nil, nil, time.Time{}, CompressionNone, ShardParity)
+	ft := FooterFromReconstructed(0, nil, nil, time.Time{}, CompressionNone, 0, ShardParity)
 	b, err := ft.MarshalBinary()
 	require.NoError(t, err)
-	assert.Equal(t, []byte{0, 0, 0, 0}, b[86:90])
+	assert.Equal(t, []byte{0, 0, 0, 0}, b[90:94])
+}
+
+func TestFooterNumBlocks(t *testing.T) {
+	ft := FooterFromReconstructed(256*1024, nil, nil, time.Now(), CompressionZstd, 2, ShardEven)
+	b, err := ft.MarshalBinary()
+	require.NoError(t, err)
+	parsed, err := ParseFooter(b)
+	require.NoError(t, err)
+	assert.Equal(t, uint32(2), parsed.NumBlocks)
+
+	ftEmpty := FooterFromReconstructed(0, nil, nil, time.Time{}, CompressionNone, 0, ShardEven)
+	bEmpty, _ := ftEmpty.MarshalBinary()
+	parsedEmpty, _ := ParseFooter(bEmpty)
+	assert.Equal(t, uint32(0), parsedEmpty.NumBlocks)
 }
 
 func TestFooterAllThreeShardsMarshal(t *testing.T) {
@@ -88,7 +102,7 @@ func TestFooterAllThreeShardsMarshal(t *testing.T) {
 	sha256 := [32]byte{0xbb}
 
 	for _, shard := range []int{ShardEven, ShardOdd, ShardParity} {
-		ft := FooterFromReconstructed(contentLength, md5[:], sha256[:], mtime, CompressionNone, shard)
+		ft := FooterFromReconstructed(contentLength, md5[:], sha256[:], mtime, CompressionNone, 0, shard)
 		b, err := ft.MarshalBinary()
 		require.NoError(t, err)
 		require.Len(t, b, FooterSize)
@@ -98,21 +112,21 @@ func TestFooterAllThreeShardsMarshal(t *testing.T) {
 		assert.Equal(t, uint8(shard), parsed.CurrentShard)
 	}
 	// Only CurrentShard should differ between the three
-	fe := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, ShardEven)
-	fo := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, ShardOdd)
-	fp := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, ShardParity)
+	fe := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, 0, ShardEven)
+	fo := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, 0, ShardOdd)
+	fp := FooterFromReconstructed(1, nil, nil, mtime, CompressionNone, 0, ShardParity)
 	be, _ := fe.MarshalBinary()
 	bo, _ := fo.MarshalBinary()
 	bp, _ := fp.MarshalBinary()
 	assert.False(t, bytes.Equal(be, bo))
 	assert.False(t, bytes.Equal(bo, bp))
 	assert.False(t, bytes.Equal(be, bp))
-	// Only byte 85 (CurrentShard) should differ
+	// Only byte 89 (CurrentShard) should differ
 	for i := 0; i < FooterSize; i++ {
-		if i == 85 {
-			assert.Equal(t, byte(0), be[85])
-			assert.Equal(t, byte(1), bo[85])
-			assert.Equal(t, byte(2), bp[85])
+		if i == 89 {
+			assert.Equal(t, byte(0), be[89])
+			assert.Equal(t, byte(1), bo[89])
+			assert.Equal(t, byte(2), bp[89])
 		} else {
 			assert.Equal(t, be[i], bo[i], "index %d", i)
 			assert.Equal(t, be[i], bp[i], "index %d", i)

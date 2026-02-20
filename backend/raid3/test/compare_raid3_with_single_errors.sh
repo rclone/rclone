@@ -125,6 +125,9 @@ print_scenarios() {
   cat <<EOF
 Available error scenarios (run with --storage-type=local, minio, mixed, or sftp):
 
+  upload-fail-even            Stop even backend and verify Put/Upload fails (health check before write).
+  upload-fail-odd             Stop odd backend and verify Put/Upload fails (health check before write).
+  upload-fail-parity          Stop parity backend and verify Put/Upload fails (health check before write).
   move-fail-even              Stop even backend and verify Move fails (with rollback).
   move-fail-odd               Stop odd backend and verify Move fails (with rollback).
   move-fail-parity            Stop parity backend and verify Move fails (with rollback).
@@ -577,6 +580,139 @@ run_move_fail_scenario() {
   rm -f "${check_stdout}" "${check_stderr}" "${move_stdout}" "${move_stderr}"
 
   record_error_result "PASS" "move-fail-${backend}" "Move correctly failed with unavailable '${backend}' backend."
+  return 0
+}
+
+run_upload_fail_scenario() {
+  local backend="$1"
+  log_info "suite" "Running upload-fail scenario '${backend}' (${STORAGE_TYPE})"
+
+  # Skip for local (same as move-fail/update-fail - requires MinIO or SFTP to stop)
+  if [[ "${STORAGE_TYPE}" == "local" ]]; then
+    record_error_result "PASS" "upload-fail-${backend}" "Skipped for local backend (requires MinIO or SFTP to stop containers)."
+    return 0
+  fi
+
+  log_info "scenario:upload-fail-${backend}" "Verifying all backends are ready before starting scenario."
+  if [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    for check_backend in even odd parity; do
+      if ! wait_for_sftp_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:upload-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  else
+    for check_backend in even odd parity; do
+      if ! wait_for_minio_backend_ready "${check_backend}" 2>/dev/null; then
+        log_warn "scenario:upload-fail-${backend}" "Backend '${check_backend}' may not be ready, but continuing."
+      fi
+    done
+  fi
+
+  purge_raid3_remote_root
+  purge_remote_root "${SINGLE_REMOTE}"
+
+  # Stop the backend before upload - health check should fail before any write
+  log_info "scenario:upload-fail-${backend}" "Stopping '${backend}' backend to simulate unavailability."
+  stop_backend "${backend}"
+
+  local is_minio_backend=0
+  local is_sftp_backend=0
+  if [[ "${STORAGE_TYPE}" == "minio" ]]; then
+    is_minio_backend=1
+  elif [[ "${STORAGE_TYPE}" == "sftp" ]]; then
+    is_sftp_backend=1
+  elif [[ "${STORAGE_TYPE}" == "mixed" ]]; then
+    case "${backend}" in
+      odd) is_minio_backend=1 ;;
+      even|parity) is_minio_backend=0 ;;
+    esac
+  fi
+
+  sleep 2
+
+  local upload_content
+  upload_content=$(mktemp) || {
+    record_error_result "FAIL" "upload-fail-${backend}" "Failed to create temp file for upload content."
+    return 1
+  }
+  echo "Upload should fail - backend ${backend} unavailable" > "${upload_content}"
+
+  local upload_path
+  upload_path=$(path_for_id "upload-fail-${backend}")/${TARGET_OBJECT}
+
+  local upload_result upload_status upload_stdout upload_stderr
+  upload_result=$(capture_command "upload_attempt" copyto "${upload_content}" "${RAID3_REMOTE}:${upload_path}")
+  IFS='|' read -r upload_status upload_stdout upload_stderr <<<"${upload_result}"
+  rm -f "${upload_content}"
+  print_if_verbose "upload attempt" "${upload_stdout}" "${upload_stderr}"
+
+  # Restore backend
+  log_info "scenario:upload-fail-${backend}" "Restoring '${backend}' backend."
+  start_backend "${backend}"
+
+  if [[ "${is_sftp_backend}" -eq 1 ]]; then
+    local port
+    case "${backend}" in
+      even) port="${SFTP_EVEN_PORT}" ;;
+      odd) port="${SFTP_ODD_PORT}" ;;
+      parity) port="${SFTP_PARITY_PORT}" ;;
+    esac
+    if ! wait_for_sftp_port "${port}"; then
+      log_warn "scenario:upload-fail-${backend}" "Backend port ${port} did not open in time."
+    fi
+    if ! wait_for_sftp_backend_ready "${backend}"; then
+      log_warn "scenario:upload-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+    else
+      log_info "scenario:upload-fail-${backend}" "Backend '${backend}' confirmed ready."
+    fi
+  elif [[ "${is_minio_backend}" -eq 1 ]]; then
+    local port
+    case "${backend}" in
+      even) port="${MINIO_EVEN_PORT}" ;;
+      odd) port="${MINIO_ODD_PORT}" ;;
+      parity) port="${MINIO_PARITY_PORT}" ;;
+    esac
+    if ! wait_for_minio_port "${port}"; then
+      log_warn "scenario:upload-fail-${backend}" "Backend port ${port} did not open in time."
+    fi
+    if ! wait_for_minio_backend_ready "${backend}"; then
+      log_warn "scenario:upload-fail-${backend}" "Backend '${backend}' may not be fully ready, but continuing."
+    else
+      log_info "scenario:upload-fail-${backend}" "Backend '${backend}' confirmed ready."
+    fi
+  else
+    local dir
+    dir=$(remote_data_dir "${backend}")
+    if [[ -d "${dir}" ]]; then
+      log_info "scenario:upload-fail-${backend}" "Local backend '${backend}' directory ${dir} confirmed restored."
+    else
+      log_warn "scenario:upload-fail-${backend}" "Local backend '${backend}' directory ${dir} may not be fully restored."
+    fi
+  fi
+
+  if [[ "${upload_status}" -eq 0 ]]; then
+    record_error_result "FAIL" "upload-fail-${backend}" "Upload succeeded when it should have failed (backend '${backend}' was unavailable)."
+    rm -f "${upload_stdout}" "${upload_stderr}"
+    return 1
+  fi
+
+  # Read actual error content from temp files (upload_stdout/upload_stderr are file paths)
+  local error_message
+  error_message=$(cat "${upload_stderr}" 2>/dev/null || echo "")
+  if [[ -z "${error_message}" ]]; then
+    error_message=$(cat "${upload_stdout}" 2>/dev/null || echo "")
+  fi
+
+  if [[ -n "${error_message}" ]]; then
+    if ! echo "${error_message}" | grep -qiE "(degraded|unavailable|failed|error|cannot|blocked)"; then
+      log_note "upload" "Upload failed (good), but error message may not clearly indicate backend unavailability."
+      log_note "upload" "Error message: ${error_message}"
+    fi
+  fi
+
+  rm -f "${upload_stdout}" "${upload_stderr}"
+
+  record_error_result "PASS" "upload-fail-${backend}" "Upload correctly failed with unavailable '${backend}' backend."
   return 0
 }
 
@@ -1329,6 +1465,9 @@ run_update_fail_scenario_no_rollback() {
 run_error_scenario() {
   local scenario="$1"
   case "${scenario}" in
+    upload-fail-even) run_upload_fail_scenario "even" ;;
+    upload-fail-odd) run_upload_fail_scenario "odd" ;;
+    upload-fail-parity) run_upload_fail_scenario "parity" ;;
     move-fail-even) run_move_fail_scenario "even" ;;
     move-fail-odd) run_move_fail_scenario "odd" ;;
     move-fail-parity) run_move_fail_scenario "parity" ;;
@@ -1349,7 +1488,7 @@ run_error_scenario() {
 }
 
 run_all_error_scenarios() {
-  local scenarios=("move-fail-even" "move-fail-odd" "move-fail-parity" "update-fail-even" "update-fail-odd" "update-fail-parity")
+  local scenarios=("upload-fail-even" "upload-fail-odd" "upload-fail-parity" "move-fail-even" "move-fail-odd" "move-fail-parity" "update-fail-even" "update-fail-odd" "update-fail-parity")
   local name
   for name in "${scenarios[@]}"; do
     if ! run_error_scenario "${name}"; then

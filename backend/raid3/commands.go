@@ -455,7 +455,7 @@ func (f *Fs) rebuildCommand(ctx context.Context, arg []string, opt map[string]st
 			default:
 				currentShard = 0
 			}
-			ft := FooterFromReconstructed(contentLength, sourceFt.MD5[:], sourceFt.SHA256[:], modTime, sourceFt.Compression, currentShard)
+			ft := FooterFromReconstructed(contentLength, sourceFt.MD5[:], sourceFt.SHA256[:], modTime, sourceFt.Compression, sourceFt.NumBlocks, currentShard)
 			fb, errMarshal := ft.MarshalBinary()
 			if errMarshal != nil {
 				fs.Errorf(f, "Failed to marshal footer for %s: %v", remote, errMarshal)

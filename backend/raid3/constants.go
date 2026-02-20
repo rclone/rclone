@@ -60,6 +60,13 @@ const (
 	initOpenRetryDelay = 1 * time.Second
 )
 
+// Block size for block-based compression (enables range reads via inventory)
+const (
+	// BlockSize is the uncompressed block size (128 KiB) for block-based compression.
+	// Used for both snappy and zstd.
+	BlockSize = 131072
+)
+
 // Chunk size constants
 const (
 	// defaultChunkSize is the default chunk size for streaming operations (8 MiB)

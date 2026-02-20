@@ -5,14 +5,15 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 )
 
-// EC footer constants (90-byte footer at tail of each particle)
+// EC footer constants (94-byte footer at tail of each particle)
 const (
 	FooterMagic   = "RCLONE/EC" // 9 bytes
 	FooterVersion = 1
-	FooterSize    = 90
+	FooterSize    = 94
 )
 
 // Algorithm names (4 bytes ASCII, null-padded)
@@ -45,14 +46,15 @@ func init() {
 	hex.Decode(emptyFileSHA256[:], []byte("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
 }
 
-// Footer holds the 90-byte EC footer stored at the end of each particle.
-// Layout: Magic 9, Version 2, ContentLength 8, MD5 16, SHA256 32, Mtime 8, Compression 4, Algorithm 4, DataShards 1, ParityShards 1, CurrentShard 1, Reserved 4.
+// Footer holds the 94-byte EC footer stored at the end of each particle.
+// Layout: Magic 9, Version 2, ContentLength 8, MD5 16, SHA256 32, Mtime 8, Compression 4, NumBlocks 4, Algorithm 4, DataShards 1, ParityShards 1, CurrentShard 1, Reserved 4.
 type Footer struct {
 	ContentLength int64
 	MD5           [16]byte
 	SHA256        [32]byte
 	Mtime         int64
 	Compression   [4]byte
+	NumBlocks     uint32 // number of compressed blocks (0 for uncompressed or empty)
 	Algorithm     [4]byte
 	DataShards    uint8
 	ParityShards  uint8
@@ -70,18 +72,19 @@ func (f *Footer) MarshalBinary() ([]byte, error) {
 	copy(b[35:67], f.SHA256[:])
 	binary.LittleEndian.PutUint64(b[67:75], uint64(f.Mtime))
 	copy(b[75:79], f.Compression[:])
-	copy(b[79:83], f.Algorithm[:])
-	b[83] = f.DataShards
-	b[84] = f.ParityShards
-	b[85] = f.CurrentShard
-	copy(b[86:90], f.Reserved[:])
+	binary.LittleEndian.PutUint32(b[79:83], f.NumBlocks)
+	copy(b[83:87], f.Algorithm[:])
+	b[87] = f.DataShards
+	b[88] = f.ParityShards
+	b[89] = f.CurrentShard
+	copy(b[90:94], f.Reserved[:])
 	return b, nil
 }
 
-// ParseFooter parses a 90-byte buffer into a Footer. Returns error if len(buf) != 90 or magic/version mismatch.
+// ParseFooter parses a FooterSize-byte buffer into a Footer. Returns error if len(buf) != FooterSize or magic/version mismatch.
 func ParseFooter(buf []byte) (*Footer, error) {
 	if len(buf) != FooterSize {
-		return nil, errors.New("footer: buffer length must be 90")
+		return nil, fmt.Errorf("footer: buffer length must be %d", FooterSize)
 	}
 	if string(buf[0:9]) != FooterMagic {
 		return nil, errors.New("footer: invalid magic")
@@ -96,17 +99,19 @@ func ParseFooter(buf []byte) (*Footer, error) {
 	copy(f.SHA256[:], buf[35:67])
 	f.Mtime = int64(binary.LittleEndian.Uint64(buf[67:75]))
 	copy(f.Compression[:], buf[75:79])
-	copy(f.Algorithm[:], buf[79:83])
-	f.DataShards = buf[83]
-	f.ParityShards = buf[84]
-	f.CurrentShard = buf[85]
-	copy(f.Reserved[:], buf[86:90])
+	f.NumBlocks = binary.LittleEndian.Uint32(buf[79:83])
+	copy(f.Algorithm[:], buf[83:87])
+	f.DataShards = buf[87]
+	f.ParityShards = buf[88]
+	f.CurrentShard = buf[89]
+	copy(f.Reserved[:], buf[90:94])
 	return f, nil
 }
 
 // FooterFromReconstructed builds a footer for RAID3 (data shards 2, parity 1, algorithm R3).
 // For zero-length content with nil hashes, the standard empty-file MD5 and SHA256 are used.
-func FooterFromReconstructed(contentLength int64, md5, sha256 []byte, mtime time.Time, compression [4]byte, currentShard int) *Footer {
+// numBlocks is the number of compressed blocks (0 for uncompressed or empty).
+func FooterFromReconstructed(contentLength int64, md5, sha256 []byte, mtime time.Time, compression [4]byte, numBlocks uint32, currentShard int) *Footer {
 	var md5Arr [16]byte
 	var sha256Arr [32]byte
 	if len(md5) >= 16 {
@@ -125,6 +130,7 @@ func FooterFromReconstructed(contentLength int64, md5, sha256 []byte, mtime time
 		SHA256:         sha256Arr,
 		Mtime:          mtime.Unix(),
 		Compression:    compression,
+		NumBlocks:      numBlocks,
 		Algorithm:      AlgorithmR3,
 		DataShards:     2,
 		ParityShards:   1,

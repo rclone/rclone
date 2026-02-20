@@ -2,6 +2,7 @@
 package raid3
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -27,6 +28,82 @@ func ConfigToFooterCompression(compression string) ([4]byte, error) {
 
 // errUnsupportedCompression is returned when the footer indicates an unsupported compression (e.g. LZ4).
 var errUnsupportedCompression = errors.New("raid3: unsupported compression in object footer")
+
+// inventoryLength returns the byte length of the compression inventory for numBlocks blocks (numBlocks * 4).
+func inventoryLength(numBlocks int) int { return numBlocks * 4 }
+
+// blockIndex returns the block index for the given byte offset (0-based).
+func blockIndex(byteOffset int64) int { return int(byteOffset / BlockSize) }
+
+// lastBlockUncompressedSize returns the uncompressed size of the last block.
+// For contentLength % BlockSize == 0 the last block is full (BlockSize); otherwise it's the remainder.
+func lastBlockUncompressedSize(contentLength int64) int {
+	if contentLength == 0 {
+		return 0
+	}
+	r := int(contentLength % BlockSize)
+	if r == 0 {
+		return BlockSize
+	}
+	return r
+}
+
+// compressBlock compresses a single block using the given compression. Returns the compressed bytes.
+func compressBlock(block []byte, compression [4]byte) ([]byte, error) {
+	if compression == CompressionNone {
+		return append([]byte(nil), block...), nil
+	}
+	if compression == CompressionSnappy {
+		return snappy.Encode(nil, block), nil
+	}
+	if compression == CompressionZstd {
+		enc, err := zstd.NewWriter(nil, zstd.WithEncoderLevel(zstdDefaultLevel))
+		if err != nil {
+			return nil, err
+		}
+		defer enc.Close()
+		return enc.EncodeAll(block, nil), nil
+	}
+	return nil, errUnsupportedCompression
+}
+
+// decompressBlock decompresses a single block using the given compression. Returns the decompressed bytes.
+func decompressBlock(compressed []byte, compression [4]byte) ([]byte, error) {
+	if compression == CompressionNone {
+		return append([]byte(nil), compressed...), nil
+	}
+	if compression == CompressionSnappy {
+		return snappy.Decode(nil, compressed)
+	}
+	if compression == CompressionZstd {
+		dec, err := zstd.NewReader(nil)
+		if err != nil {
+			return nil, err
+		}
+		defer dec.Close()
+		return dec.DecodeAll(compressed, nil)
+	}
+	return nil, errUnsupportedCompression
+}
+
+// buildInventory builds the inventory bytes from compressed block sizes (N × 4-byte little-endian uint32).
+func buildInventory(sizes []uint32) []byte {
+	b := make([]byte, len(sizes)*4)
+	for i, s := range sizes {
+		binary.LittleEndian.PutUint32(b[i*4:], s)
+	}
+	return b
+}
+
+// parseInventory parses inventory bytes into a slice of compressed block sizes.
+func parseInventory(buf []byte) []uint32 {
+	n := len(buf) / 4
+	out := make([]uint32, n)
+	for i := 0; i < n; i++ {
+		out[i] = binary.LittleEndian.Uint32(buf[i*4:])
+	}
+	return out
+}
 
 // zstdDefaultLevel is the default zstd encoder level (good balance of speed and ratio).
 var zstdDefaultLevel = zstd.SpeedDefault
@@ -104,6 +181,62 @@ func (z *zstdDecompressReadCloser) Read(p []byte) (n int, err error) {
 func (z *zstdDecompressReadCloser) Close() error {
 	z.dec.Close()
 	return z.src.Close()
+}
+
+// blockDecompressReadCloser reads compressed blocks from src, decompresses each using inventory, and yields decompressed bytes.
+type blockDecompressReadCloser struct {
+	src         io.ReadCloser
+	inventory   []uint32
+	compression [4]byte
+	blockIdx    int
+	decBuf      []byte
+	decPos      int
+	srcBuf      []byte
+}
+
+func newBlockDecompressReadCloser(src io.ReadCloser, inventory []uint32, compression [4]byte) *blockDecompressReadCloser {
+	return &blockDecompressReadCloser{
+		src:         src,
+		inventory:   inventory,
+		compression: compression,
+		srcBuf:      make([]byte, 0, BlockSize*2), // max compressed block can be larger than BlockSize
+	}
+}
+
+func (b *blockDecompressReadCloser) Read(p []byte) (n int, err error) {
+	for len(p) > 0 {
+		if b.decPos < len(b.decBuf) {
+			copied := copy(p, b.decBuf[b.decPos:])
+			b.decPos += copied
+			n += copied
+			return n, nil
+		}
+		if b.blockIdx >= len(b.inventory) {
+			return n, io.EOF
+		}
+		compressedLen := int(b.inventory[b.blockIdx])
+		b.blockIdx++
+		if compressedLen == 0 {
+			continue
+		}
+		if cap(b.srcBuf) < compressedLen {
+			b.srcBuf = make([]byte, compressedLen)
+		}
+		b.srcBuf = b.srcBuf[:compressedLen]
+		if _, err := io.ReadFull(b.src, b.srcBuf); err != nil {
+			return n, err
+		}
+		b.decBuf, err = decompressBlock(b.srcBuf, b.compression)
+		if err != nil {
+			return n, err
+		}
+		b.decPos = 0
+	}
+	return n, nil
+}
+
+func (b *blockDecompressReadCloser) Close() error {
+	return b.src.Close()
 }
 
 // newDecompressingReadCloser returns a ReadCloser that decompresses data from rc using the footer's compression.

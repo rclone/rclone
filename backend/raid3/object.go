@@ -423,30 +423,8 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		if evenSize < FooterSize || oddSize < FooterSize {
 			return nil, formatOperationError("open failed", fmt.Sprintf("particle too small for footer: even=%d, odd=%d for remote %q", evenSize, oddSize, o.remote), nil)
 		}
-		evenPayload := evenSize - FooterSize
-		oddPayload := oddSize - FooterSize
-		if !ValidateParticleSizes(evenPayload, oddPayload) {
-			return nil, formatOperationError("open failed",
-				fmt.Sprintf("invalid particle sizes: even=%d, odd=%d for remote %q (expected even=odd or even=odd+1; object may be corrupted from a failed or partial upload; try re-uploading or remove the object and re-upload)", evenPayload, oddPayload, o.remote), nil)
-		}
 
-		expectedSize := evenPayload + oddPayload
-		reportedSize := o.Size()
-		if reportedSize != expectedSize && reportedSize >= 0 {
-			fs.Debugf(o, "Size mismatch: Size()=%d, expected from particles=%d (even=%d, odd=%d)",
-				reportedSize, expectedSize, evenPayload, oddPayload)
-		}
-
-		if expectedSize > 0 && (evenPayload < 0 || oddPayload < 0) {
-			return nil, fmt.Errorf("particles report invalid sizes: even=%d, odd=%d (expected > 0)", evenPayload, oddPayload)
-		}
-
-		// Empty file: return a reader that yields 0 bytes (no need to open particles; otherwise we'd read the footer as content)
-		if expectedSize == 0 {
-			return io.NopCloser(bytes.NewReader(nil)), nil
-		}
-
-		// Read footer from one particle to get compression type before opening payload streams
+		// Read footer from one particle to get compression and numBlocks before computing payload
 		var footer *Footer
 		footerReader, ferr := evenObj.Open(ctx, &fs.RangeOption{Start: evenSize - FooterSize, End: evenSize - 1})
 		if ferr == nil {
@@ -456,8 +434,39 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			footer, _ = ParseFooter(footerBuf)
 		}
 		compression := CompressionNone
+		numBlocks := uint32(0)
 		if footer != nil {
 			compression = footer.Compression
+			numBlocks = footer.NumBlocks
+		}
+
+		invLen := inventoryLength(int(numBlocks))
+		evenPayload := evenSize - int64(invLen) - FooterSize
+		oddPayload := oddSize - int64(invLen) - FooterSize
+
+		if !ValidateParticleSizes(evenPayload, oddPayload) {
+			return nil, formatOperationError("open failed",
+				fmt.Sprintf("invalid particle sizes: even=%d, odd=%d for remote %q (expected even=odd or even=odd+1; object may be corrupted from a failed or partial upload; try re-uploading or remove the object and re-upload)", evenPayload, oddPayload, o.remote), nil)
+		}
+
+		expectedCompressed := evenPayload + oddPayload
+		contentLength := int64(0)
+		if footer != nil {
+			contentLength = footer.ContentLength
+		}
+		reportedSize := o.Size()
+		if reportedSize >= 0 && contentLength > 0 && reportedSize != contentLength {
+			fs.Debugf(o, "Size mismatch: Size()=%d, footer ContentLength=%d (even=%d, odd=%d)",
+				reportedSize, contentLength, evenPayload, oddPayload)
+		}
+
+		if expectedCompressed > 0 && (evenPayload < 0 || oddPayload < 0) {
+			return nil, fmt.Errorf("particles report invalid sizes: even=%d, odd=%d (expected > 0)", evenPayload, oddPayload)
+		}
+
+		// Empty file: return a reader that yields 0 bytes
+		if contentLength == 0 {
+			return io.NopCloser(bytes.NewReader(nil)), nil
 		}
 
 		// Extract range/seek options before opening particle readers
@@ -496,22 +505,36 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 
 		merger := NewStreamMerger(evenReader, oddReader, chunkSize)
 
-		// Decompress if object was stored with compression
-		out, err := newDecompressingReadCloser(merger, compression)
-		if err != nil {
-			_ = merger.Close()
-			return nil, err
+		var out io.ReadCloser
+		if numBlocks > 0 {
+			// Block-compressed: read inventory and use block decompressor
+			invStart := evenSize - int64(invLen) - FooterSize
+			invReader, ierr := evenObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
+			if ierr != nil {
+				_ = merger.Close()
+				return nil, formatParticleError(o.fs.even, "even", "open inventory failed", fmt.Sprintf("remote %q", o.remote), ierr)
+			}
+			invBuf := make([]byte, invLen)
+			if _, ierr = io.ReadFull(invReader, invBuf); ierr != nil {
+				_ = invReader.Close()
+				_ = merger.Close()
+				return nil, fmt.Errorf("read inventory: %w", ierr)
+			}
+			_ = invReader.Close()
+			inventory := parseInventory(invBuf)
+			out = newBlockDecompressReadCloser(merger, inventory, compression)
+		} else {
+			// Uncompressed or stream-compressed (legacy): use stream decompressor
+			out, err = newDecompressingReadCloser(merger, compression)
+			if err != nil {
+				_ = merger.Close()
+				return nil, err
+			}
 		}
 
-		// Handle range/seek options by wrapping the merger
-		// For now, we'll apply range filtering on the merged stream (simple approach)
-		// TODO: Optimize to apply range to particle readers directly (future enhancement)
-
+		// Handle range/seek options
 		if rangeStart > 0 || rangeEnd >= 0 {
-			// Apply range filtering on merged stream
-			// This reads the entire stream but filters the output
-			// Future optimization: apply range to particle readers directly
-			return newRangeFilterReader(out, rangeStart, rangeEnd, o.Size()), nil
+			return newRangeFilterReader(out, rangeStart, rangeEnd, contentLength), nil
 		}
 
 		return out, nil
@@ -553,8 +576,12 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		}
 	}
 	degradedCompression := CompressionNone
+	degradedNumBlocks := uint32(0)
+	contentLength := int64(-1)
 	if degradedFooter != nil {
 		degradedCompression = degradedFooter.Compression
+		degradedNumBlocks = degradedFooter.NumBlocks
+		contentLength = degradedFooter.ContentLength
 	}
 
 	// Open known data + parity and reconstruct
@@ -564,8 +591,9 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		if evenSize < FooterSize || paritySize < FooterSize {
 			return nil, formatOperationError("open failed", fmt.Sprintf("particle too small for footer: even=%d, parity=%d for remote %q", evenSize, paritySize, o.remote), nil)
 		}
-		evenPayload := evenSize - FooterSize
-		parityPayload := paritySize - FooterSize
+		invLen := inventoryLength(int(degradedNumBlocks))
+		evenPayload := evenSize - int64(invLen) - FooterSize
+		parityPayload := paritySize - int64(invLen) - FooterSize
 		if evenPayload < 0 || parityPayload < 0 {
 			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: even=%d, parity=%d for remote %q", evenPayload, parityPayload, o.remote), nil)
 		}
@@ -607,14 +635,36 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		reconstructor := NewStreamReconstructor(evenReader, parityReader, "even+parity", isOddLength, chunkSize)
 		fs.Infof(o, "Reconstructed %s from even+parity (degraded mode, streaming)", o.remote)
 
-		out, err := newDecompressingReadCloser(reconstructor, degradedCompression)
-		if err != nil {
-			_ = reconstructor.Close()
-			return nil, err
+		var out io.ReadCloser
+		if degradedNumBlocks > 0 {
+			invStart := evenSize - int64(invLen) - FooterSize
+			invReader, ierr := evenObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
+			if ierr != nil {
+				_ = reconstructor.Close()
+				return nil, formatParticleError(o.fs.even, "even", "open inventory failed", fmt.Sprintf("remote %q", o.remote), ierr)
+			}
+			invBuf := make([]byte, invLen)
+			if _, ierr = io.ReadFull(invReader, invBuf); ierr != nil {
+				_ = invReader.Close()
+				_ = reconstructor.Close()
+				return nil, fmt.Errorf("read inventory: %w", ierr)
+			}
+			_ = invReader.Close()
+			out = newBlockDecompressReadCloser(reconstructor, parseInventory(invBuf), degradedCompression)
+		} else {
+			out, err = newDecompressingReadCloser(reconstructor, degradedCompression)
+			if err != nil {
+				_ = reconstructor.Close()
+				return nil, err
+			}
 		}
 
+		sizeForRange := contentLength
+		if sizeForRange < 0 {
+			sizeForRange = o.Size()
+		}
 		if rangeStart > 0 || rangeEnd >= 0 {
-			return newRangeFilterReader(out, rangeStart, rangeEnd, o.Size()), nil
+			return newRangeFilterReader(out, rangeStart, rangeEnd, sizeForRange), nil
 		}
 
 		return out, nil
@@ -625,8 +675,9 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		if oddSize < FooterSize || paritySize < FooterSize {
 			return nil, formatOperationError("open failed", fmt.Sprintf("particle too small for footer: odd=%d, parity=%d for remote %q", oddSize, paritySize, o.remote), nil)
 		}
-		oddPayload := oddSize - FooterSize
-		parityPayload := paritySize - FooterSize
+		invLen := inventoryLength(int(degradedNumBlocks))
+		oddPayload := oddSize - int64(invLen) - FooterSize
+		parityPayload := paritySize - int64(invLen) - FooterSize
 		if oddPayload < 0 || parityPayload < 0 {
 			return nil, formatOperationError("open failed", fmt.Sprintf("invalid particle sizes for reconstruction: odd=%d, parity=%d for remote %q", oddPayload, parityPayload, o.remote), nil)
 		}
@@ -668,14 +719,36 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		reconstructor := NewStreamReconstructor(oddReader, parityReader, "odd+parity", isOddLength, chunkSize)
 		fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode, streaming)", o.remote)
 
-		out, err := newDecompressingReadCloser(reconstructor, degradedCompression)
-		if err != nil {
-			_ = reconstructor.Close()
-			return nil, err
+		var out io.ReadCloser
+		if degradedNumBlocks > 0 {
+			invStart := oddSize - int64(invLen) - FooterSize
+			invReader, ierr := oddObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
+			if ierr != nil {
+				_ = reconstructor.Close()
+				return nil, formatParticleError(o.fs.odd, "odd", "open inventory failed", fmt.Sprintf("remote %q", o.remote), ierr)
+			}
+			invBuf := make([]byte, invLen)
+			if _, ierr = io.ReadFull(invReader, invBuf); ierr != nil {
+				_ = invReader.Close()
+				_ = reconstructor.Close()
+				return nil, fmt.Errorf("read inventory: %w", ierr)
+			}
+			_ = invReader.Close()
+			out = newBlockDecompressReadCloser(reconstructor, parseInventory(invBuf), degradedCompression)
+		} else {
+			out, err = newDecompressingReadCloser(reconstructor, degradedCompression)
+			if err != nil {
+				_ = reconstructor.Close()
+				return nil, err
+			}
 		}
 
+		sizeForRange := contentLength
+		if sizeForRange < 0 {
+			sizeForRange = o.Size()
+		}
 		if rangeStart > 0 || rangeEnd >= 0 {
-			return newRangeFilterReader(out, rangeStart, rangeEnd, o.Size()), nil
+			return newRangeFilterReader(out, rangeStart, rangeEnd, sizeForRange), nil
 		}
 
 		return out, nil
@@ -857,13 +930,13 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	compression, _ := ConfigToFooterCompression(o.fs.opt.Compression) // validated in NewFs
 	if srcSize == 0 {
 		mtime := effectiveModTime(ctx, o.fs, src, options)
-		ft := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardEven)
+		ft := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardEven)
 		fb, _ := ft.MarshalBinary()
 		evenR := bytes.NewReader(fb)
-		ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardOdd)
+		ft2 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardOdd)
 		fb2, _ := ft2.MarshalBinary()
 		oddR := bytes.NewReader(fb2)
-		ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, ShardParity)
+		ft3 := FooterFromReconstructed(0, nil, nil, mtime, compression, 0, ShardParity)
 		fb3, _ := ft3.MarshalBinary()
 		parityR := bytes.NewReader(fb3)
 		evenInfo := createParticleInfo(o.fs, src, "even", FooterSize, false)
@@ -1027,7 +1100,7 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	sha256Sum := hasher.SHA256Sum()
 	mtime := effectiveModTime(gCtx, o.fs, src, options)
 	for shard := 0; shard < 3; shard++ {
-		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, shard)
+		ft := FooterFromReconstructed(contentLength, md5Sum[:], sha256Sum[:], mtime, compression, 0, shard)
 		fb, errMarshal := ft.MarshalBinary()
 		if errMarshal != nil {
 			_ = evenPipeW.Close()
