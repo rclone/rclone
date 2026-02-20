@@ -1134,9 +1134,41 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
-// SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(_ context.Context, _ time.Time) error {
-	return fs.ErrorCantSetModTime
+// SetModTime sets the modification time of the object
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	if modTime.Unix() == 0 {
+		return fs.ErrorCantSetModTime
+	}
+
+	var result api.ResultStatus
+
+	modTimeReq := struct {
+		LastModifiedAt int64 `json:"last_modified_at"`
+	}{
+		LastModifiedAt: modTime.Unix(),
+	}
+
+	opts := rest.Opts{
+		Method:  "POST",
+		RootURL: fmt.Sprintf("%s/3/drive/%s/files/%s/last-modified", o.fs.opt.Endpoint, o.fs.opt.DriveID, o.id),
+	}
+
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, modTimeReq, &result)
+		err = result.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return fmt.Errorf("SetModTime: %w", err)
+	}
+
+	if result.Status != "success" {
+		return fs.ErrorCantSetModTime
+	}
+
+	// Update Object modTime
+	o.modTime = modTime
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable
