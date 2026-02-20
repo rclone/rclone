@@ -160,6 +160,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/?refer=rclone" config="/s3/#idrive-e2" >}}
 {{< provider name="Intercolo Object Storage" home="https://intercolo.de/object-storage" config="/s3/#intercolo" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
+{{< provider name="kDrive" home="https://www.infomaniak.com/en/ksuite/kdrive" config="/kdrive/" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
 {{< provider name="Leviia Object Storage" home="https://www.leviia.com/object-storage" config="/s3/#leviia" >}}
 {{< provider name="Liara Object Storage" home="https://liara.ir/landing/object-storage" config="/s3/#liara-object-storage" >}}
