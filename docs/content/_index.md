@@ -220,6 +220,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Wasabi" home="https://wasabi.com/" config="/s3/#wasabi" >}}
 {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
+{{< provider name="Zadara Object Storage" home="https://www.zadara.com" config="/s3/#zadara" >}}
 {{< provider name="Zoho WorkDrive" home="https://www.zoho.com/workdrive/" config="/zoho/" >}}
 {{< provider name="Zata" home="https://zata.ai/" config="/s3/#Zata" end="true" >}}
 {{< provider name="The local filesystem" home="/local/" config="/local/" end="true">}}
