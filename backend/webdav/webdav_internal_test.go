@@ -80,3 +80,35 @@ func TestHeaders(t *testing.T) {
 	_, err := f.Features().About(context.Background())
 	require.NoError(t, err)
 }
+
+// TestReservedCharactersInPathAreEscaped verifies that reserved characters
+// like semicolons and equals signs in file paths are percent-encoded in
+// HTTP requests to the WebDAV server (RFC 3986 compliance).
+func TestReservedCharactersInPathAreEscaped(t *testing.T) {
+	var capturedPath string
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedPath = r.RequestURI
+		// Return a 404 so the NewObject call fails cleanly
+		w.WriteHeader(http.StatusNotFound)
+	})
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	configfile.Install()
+	m := configmap.Simple{
+		"type": "webdav",
+		"url":  ts.URL,
+	}
+
+	f, err := webdav.NewFs(context.Background(), remoteName, "", m)
+	require.NoError(t, err)
+
+	// Try to access a file with a semicolon in the name.
+	// We expect the request to fail (404), but the path should be escaped.
+	_, _ = f.NewObject(context.Background(), "my;test")
+
+	// The semicolon must be percent-encoded as %3B
+	assert.Contains(t, capturedPath, "my%3Btest", "semicolons in path should be percent-encoded")
+	assert.NotContains(t, capturedPath, "my;test", "raw semicolons should not appear in path")
+}
