@@ -172,6 +172,11 @@ Setting suffix to "none" will result in an empty suffix. This may be useful
 when the path length is critical.`,
 			Default:  ".bin",
 			Advanced: true,
+		}, {
+			Name:     "scrypt_n",
+			Help:     "N parameter for scrypt key derivation.\n\nThe memory usage is N * 128 * r bytes where r=8. Default is 16384 (16MB).\nMust be a power of 2. Higher values use more memory but provide better security.",
+			Default:  16384,
+			Advanced: true,
 		}},
 	})
 }
@@ -200,7 +205,11 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 	if err != nil {
 		return nil, err
 	}
-	cipher, err := newCipher(mode, password, salt, opt.DirectoryNameEncryption, enc)
+	scryptN := opt.ScryptN
+	if scryptN == 0 {
+		scryptN = 16384
+	}
+	cipher, err := newCipher(mode, password, salt, opt.DirectoryNameEncryption, enc, scryptN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make cipher: %w", err)
 	}
@@ -314,6 +323,7 @@ type Options struct {
 	FilenameEncoding        string `config:"filename_encoding"`
 	Suffix                  string `config:"suffix"`
 	StrictNames             bool   `config:"strict_names"`
+	ScryptN                 int    `config:"scrypt_n"`
 }
 
 // Fs represents a wrapped fs.Fs
