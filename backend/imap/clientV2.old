@@ -1,0 +1,466 @@
+// Package imap implements a provider for imap servers.
+package imap
+
+import (
+	"crypto/tls"
+	"fmt"
+	"io"
+	"strings"
+	"time"
+	"net"
+	"bytes"
+
+	"github.com/rclone/rclone/fs"
+
+	"github.com/emersion/go-imap/v2"
+	"github.com/emersion/go-imap/v2/imapclient"
+)
+
+type mailclient2 struct {
+	conn      *imapclient.Client
+	f         *Fs
+	delimiter string
+	mailboxes []string
+}
+
+type mailreader2 struct {
+	reader io.Reader
+	size   int64
+}
+
+func newMailClientV2(f *Fs) (*mailclient2, error) {
+	cli := &mailclient2{
+		conn:      nil,
+		f:         f,
+		mailboxes: []string{},
+	}
+	// try and login
+	err := cli.login()
+	if err != nil {
+		return nil, err
+	}
+	return cli, nil
+}
+
+func newMailReaderV2(reader io.Reader, size int64) *mailreader2 {
+	return &mailreader2{
+		reader: reader,
+		size:   size,
+	}
+}
+
+func (r *mailreader2) Read(b []byte) (n int, err error) {
+	return r.reader.Read(b)
+}
+
+func (r *mailreader2) Len() int {
+	return int(r.size)
+}
+
+func (m *mailclient2) dirToMailbox(dir string) string {
+	return strings.ReplaceAll(strings.Trim(dir, "/"), "/", m.delimiter)
+}
+
+func (m *mailclient2) mailboxToDir(mailbox string) string {
+	return strings.ReplaceAll(mailbox, m.delimiter, "/")
+}
+
+func (m *mailclient2) login() error {
+	var err error
+	// dialer
+	dialer := &net.Dialer{ Timeout: 30 * time.Second, }
+	// create address
+	address := fmt.Sprintf("%s:%d", m.f.host, m.f.port)
+	// set options
+	options := &imapclient.Options{
+		TLSConfig: &tls.Config{
+			ServerName: m.f.host,
+			InsecureSkipVerify: m.f.skipVerify,
+		},
+	}
+	// create client
+	if m.f.security == securityStartTLS {
+		conn, err := dialer.Dial("tcp", address)
+		if err != nil {
+			return fmt.Errorf("failed to dial IMAP server: %w", err)
+		}
+		m.conn,err = imapclient.NewStartTLS(conn, options)
+		if err != nil {
+			defer conn.Close()
+			return fmt.Errorf("failed to create StartTLS client: %w", err)
+		}
+	} else if m.f.security == securityTLS {
+		options.TLSConfig.NextProtos = []string{"imap"}
+		//
+		conn, err := tls.DialWithDialer(dialer, "tcp", address, options.TLSConfig)
+		if err != nil {
+			defer conn.Close()
+			return fmt.Errorf("failed to dial IMAP server: %w", err)
+		}
+		m.conn = imapclient.New(conn, options)
+	} else if m.f.security == securityNone {
+		m.conn, err = imapclient.DialInsecure(address,options)
+		if err != nil {
+			return fmt.Errorf("failed to dial IMAP server: %w", err)
+		}
+	}
+	// connected ok, now login
+	err = m.conn.Login(m.f.user, m.f.pass).Wait()
+	if err != nil {
+		defer m.Logout()
+		return fmt.Errorf("failed to login: %w", err)
+	}
+	// get list of mailboxes
+	err = m.RefreshMailboxes()
+	if err != nil {
+		defer m.Logout()
+		return err
+	}
+	//
+	return nil
+}
+
+func (m *mailclient2) Logout() {
+	if m.conn != nil {
+		m.conn.Logout().Wait();
+		m.conn.Close()
+	}
+	//
+	m.conn = nil
+}
+
+func (m *mailclient2) RefreshMailboxes() error {
+	if m.conn == nil {
+		return fmt.Errorf("failed to get mailboxes : not connected")
+	}
+	// get mailboxes
+	mailboxes, err := m.conn.List("", "*", nil).Collect()
+	if err != nil {
+		return fmt.Errorf("failed to get mailboxes: %w", err)
+	}
+	// save mailboxes
+	for _, mbox := range mailboxes {
+		m.delimiter = string(mbox.Delim)
+		m.mailboxes = append(m.mailboxes, mbox.Mailbox)
+	}
+	return nil
+}
+
+func (m *mailclient2) ListMailboxes(dir string) ([]string, error) {
+	if m.conn == nil {
+		return nil, fmt.Errorf("failed to list mailboxes : not connected")
+	}
+	list := []string{}
+	for _, curr := range m.mailboxes {
+		list = append(list, m.mailboxToDir(curr))
+	}
+	return getMatches(dir, list), nil
+}
+
+func (m *mailclient2) HasMailbox(dir string) bool {
+	if m.conn == nil {
+		return false
+	}
+	for _, curr := range m.mailboxes {
+		if m.dirToMailbox(dir) == curr {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *mailclient2) RenameMailbox(from string, to string) error {
+	if m.conn == nil {
+		return fmt.Errorf("failed to rename mailbox %s: not connected", from)
+	}
+	fs.Debugf(nil, "Rename mailbox %s to %s", from, to)
+	err := m.conn.Rename(m.dirToMailbox(from), m.dirToMailbox(to)).Wait()
+	if err != nil {
+		return fmt.Errorf("failed to rename mailbox %s: %w", from, err)
+	}
+	return m.RefreshMailboxes()
+}
+
+func (m *mailclient2) CreateMailbox(name string) error {
+	if m.conn == nil {
+		return fmt.Errorf("failed to create mailbox %s: not connected", name)
+	}
+	fs.Debugf(nil, "Create mailbox %s", name)
+	err := m.conn.Create(m.dirToMailbox(name),nil).Wait()
+	if err != nil {
+		return fmt.Errorf("failed to create mailbox %s: %w", name, err)
+	}
+	return m.RefreshMailboxes()
+}
+
+func (m *mailclient2) DeleteMailbox(name string) error {
+	if m.conn == nil {
+		return fmt.Errorf("failed to delete mailbox %s: not connected", name)
+	} else if name == "" {
+		return fmt.Errorf("cant remove root")
+	}
+	// select mailbox, readonly
+	selectedMbox, err := m.conn.Select(m.dirToMailbox(name), &imap.SelectOptions{ ReadOnly:false }).Wait()
+	if err != nil {
+		return fs.ErrorDirNotFound
+	}
+	if selectedMbox.NumMessages != 0 {
+		return fmt.Errorf("mailbox not empty, has %d messages", selectedMbox.NumMessages)
+	}
+	//
+	fs.Debugf(nil, "Delete mailbox %s", name)
+	err = m.conn.Delete(m.dirToMailbox(name)).Wait()
+	if err != nil {
+		return fmt.Errorf("failed to delete mailbox %s: %w", name, err)
+	}
+	return m.RefreshMailboxes()
+}
+
+func (m *mailclient2) ExpungeMailbox(mailbox string) error {
+	if m.conn == nil {
+		return fmt.Errorf("failed to expunge mailbox %s: not connected", mailbox)
+	}
+	// select mailbox, writable
+	_, err := m.conn.Select(m.dirToMailbox(mailbox), &imap.SelectOptions{ ReadOnly:false }).Wait()
+	if err != nil {
+		return fs.ErrorDirNotFound
+	}
+	// expunge
+	fs.Debugf(nil, "Expunge mailbox: %s", mailbox)
+	_, err = m.conn.Expunge().Collect()
+	if err != nil {
+		return fmt.Errorf("failed to expunge mailbox: %w", err)
+	}
+	//
+	return nil
+}
+
+func (m *mailclient2) Save(mailbox string, date time.Time, size int64, reader io.Reader, flags []string) (err error) {
+	if m.conn == nil {
+		return fmt.Errorf("failed to save message to mailbox %s: not connected", mailbox)
+	}
+	fs.Debugf(nil, "Append message to mailbox %s", mailbox)
+	// convert flags
+	flagList:=[]imap.Flag{}
+	for _,curr := range flags {
+		flagList=append(flagList,imap.Flag(curr))
+	}
+	// 
+	opts:=&imap.AppendOptions{
+		Flags: flagList,
+		Time:date,
+	}
+	appendCommand := m.conn.Append(m.dirToMailbox(mailbox), size, opts)
+	_,err = io.Copy(appendCommand,reader)
+	if err != nil {
+		return fmt.Errorf("failed to save message to mailbox %s: %w", mailbox, err)
+	}
+	return nil
+}
+
+func (m *mailclient2) SetFlags(mailbox string,ids  []uint32,flags ...string) error {
+	if m.conn == nil {
+		return fmt.Errorf("failed to sert message flags: not connected")
+	}
+	// select mailbox, writable
+	_, err := m.conn.Select(m.dirToMailbox(mailbox), &imap.SelectOptions{ ReadOnly:false }).Wait()
+	if err != nil {
+		return fs.ErrorDirNotFound
+	}
+	// convert flags
+	flagList:=[]imap.Flag{}
+	for _,curr := range flags {
+		flagList=append(flagList,imap.Flag(curr))
+	}
+	//
+	storeFlags := imap.StoreFlags{
+		Op:     imap.StoreFlagsAdd,
+		Flags:  flagList,
+		Silent: true,
+	}
+	fs.Debugf(nil, "Set flags for messages with ID [%s]: %s", strings.Fields(strings.Trim(fmt.Sprint(ids), "[]")), strings.Fields(strings.Trim(fmt.Sprint(flags), "[]")))
+	err = m.conn.Store(imap.SeqSetNum(ids...), &storeFlags, nil).Close();
+	if err != nil {
+		return fmt.Errorf("failed to set flags: %w", err)
+	}
+	return nil
+}
+
+func (m *mailclient2) Search(mailbox string,since,before time.Time,larger,smaller uint32) (seqNums []uint32, err error) {
+	if m.conn == nil {
+		return nil, fmt.Errorf("failed to search messages : not connected")
+	}
+	// select mailbox, readonly
+	selectedMbox, err := m.conn.Select(m.dirToMailbox(mailbox), &imap.SelectOptions{ ReadOnly:true }).Wait()
+	if err != nil {
+		return nil, fs.ErrorDirNotFound
+	}
+	if selectedMbox.NumMessages == 0 {
+		return []uint32{}, nil
+	}
+	//
+        // init criteria for search
+	criteria:=&imap.SearchCriteria{}
+        // include messages within date range
+        criteria.Since = since
+        criteria.Before = before
+        // include messages with size between size-50 and size+50
+        criteria.Larger = int64(larger)
+        criteria.Smaller = int64(smaller)
+	//
+	data, err := m.conn.Search(criteria, nil).Wait()
+	if err != nil {
+		return nil, fmt.Errorf("failed to search messages : %w", err)
+	}
+	return data.AllSeqNums(), err
+}
+
+func (m *mailclient2) fetch(id uint32,action func(uint32,time.Time,uint32,[]string,io.Reader)) error {
+	seqset:=imap.SeqSetNum(id)
+	// fetch basic information
+	fetchOptions := &imap.FetchOptions{
+		Flags: true,
+		InternalDate: true,
+		RFC822Size: true,
+	}
+	data,err := m.conn.Fetch(seqset, fetchOptions).Collect()
+	if err != nil {
+		return fmt.Errorf("failed to fetch message [%d], %w",id,err)
+	}
+	//
+	date:=data[0].InternalDate
+	size:=uint32(data[0].RFC822Size)
+	flags:=[]string{}
+	for _,curr := range data[0].Flags {
+		flags=append(flags,string(curr))
+	}
+	// fetch reader
+	fetchOptions = &imap.FetchOptions{
+		BodySection: []*imap.FetchItemBodySection{{
+			Peek: true,
+		}},
+	}
+	fetchCmd := m.conn.Fetch(seqset, fetchOptions)
+	defer fetchCmd.Close()
+	msg := fetchCmd.Next()
+	if msg == nil {
+		return fmt.Errorf("failed to fetch message [%d], message not found",id)
+	}
+	item := msg.Next()
+	if item == nil {
+		return fmt.Errorf("failed to fetch message [%d], item is missing",id)
+	}
+	switch item := item.(type) {
+		case imapclient.FetchItemDataBodySection:
+			action(id,date,size,flags,item.Literal)
+		default:
+			return fmt.Errorf("failed to fetch message [%d], body not found",id)
+	}
+	return nil
+
+}
+
+func (m *mailclient2) forEachInternal(seqset imap.NumSet,action func(uint32,time.Time,uint32,[]string,io.Reader)) error {
+	var currFlags []string
+	var currTime time.Time
+	var currSize uint32
+	var currReader io.ReadCloser
+	var currErr error
+	// leave if no action
+	if action == nil {
+		return nil
+	}
+	// set fetch options
+	fetchOptions := &imap.FetchOptions{
+		Flags: true,
+		InternalDate: true,
+		RFC822Size: true,
+		BodySection: []*imap.FetchItemBodySection{{
+			Peek: true,
+		}},
+	}
+	// fetch messages
+	fetchCmd := m.conn.Fetch(seqset, fetchOptions)
+	for {
+		index:=0
+		// get next message
+		msg := fetchCmd.Next()
+		if msg == nil { break }
+		// process message items
+		currFlags = []string{}
+		currTime = time.Now()
+		currSize = 0
+		currReader = nil
+		currErr = nil
+		for {
+			item := msg.Next()
+			if item == nil { 
+				currErr = fmt.Errorf("failed to get item")
+				break
+			}
+			//
+			switch item := item.(type) {
+			case imapclient.FetchItemDataFlags:
+				for _,curr := range item.Flags {
+					currFlags=append(currFlags,string(curr))
+				}
+			case imapclient.FetchItemDataInternalDate:
+				currTime = item.Time
+			case imapclient.FetchItemDataRFC822Size:
+				currSize = uint32(item.Size)
+			case imapclient.FetchItemDataBodySection:
+				buf,currErr:=io.ReadAll(item.Literal)
+				if currErr == nil {
+					currReader=io.NopCloser(bytes.NewReader(buf))
+				}
+			}
+			index+=1
+		}
+		// call action
+		if currErr!=nil{
+			action(msg.SeqNum,currTime,currSize,currFlags,currReader)
+		}else{
+			fs.Debugf(nil,"failed to process message [%d]: %s",msg.SeqNum,currErr.Error())
+		}
+	}
+	//
+        return fetchCmd.Close()
+}
+
+
+func (m *mailclient2) ForEach(mailbox string, action func(uint32,time.Time,uint32,[]string,io.Reader)) error {
+        if m.conn == nil {
+                return fmt.Errorf("failed to fetch messages : not connected")
+        }
+        // select mailbox, readonly
+	selectedMbox, err := m.conn.Select(m.dirToMailbox(mailbox), &imap.SelectOptions{ ReadOnly:true }).Wait()
+        if err != nil {
+                return fs.ErrorDirNotFound
+        }
+        if selectedMbox.NumMessages == 0 {
+                return nil
+        }
+	// set messages to fetch
+	seqset:=imap.SeqSetNum()
+	seqset.AddRange(1,selectedMbox.NumMessages)
+	// do fetch
+	return m.forEachInternal(seqset,action)
+}
+
+func (m *mailclient2) ForEachId(mailbox string, ids []uint32, action func(uint32,time.Time,uint32,[]string,io.Reader)) error {
+        if m.conn == nil {
+                return fmt.Errorf("failed to fetch messages : not connected")
+        }
+        // select mailbox, readonly
+	selectedMbox, err := m.conn.Select(m.dirToMailbox(mailbox), &imap.SelectOptions{ ReadOnly:true }).Wait()
+        if err != nil {
+                return fs.ErrorDirNotFound
+        }
+        if selectedMbox.NumMessages == 0 {
+                return nil
+        }
+	// set messages to fetch
+	seqset:=imap.SeqSetNum(ids...)
+	// do fetch
+	return m.forEachInternal(seqset,action)
+}
