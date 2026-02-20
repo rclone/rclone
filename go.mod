@@ -284,3 +284,8 @@ require (
 	golang.org/x/mobile v0.0.0-20260217195705-b56b3793a9c4
 	golang.org/x/term v0.40.0
 )
+
+replace (
+	github.com/henrybear327/Proton-API-Bridge v1.0.0 => github.com/coderFrankenstain/Proton-API-Bridge v1.1.1
+	github.com/henrybear327/go-proton-api v1.0.0 => github.com/coderFrankenstain/go-proton-api v1.1.0
+)
