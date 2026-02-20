@@ -339,14 +339,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// rootSlash returns root with a slash on if it is not empty, otherwise empty string
-func (f *Fs) rootSlash() string {
-	if f.root == "" {
-		return f.root
-	}
-	return f.root + "/"
-}
-
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	parentID, err := strconv.ParseInt(pathID, 10, 64)
