@@ -80,6 +80,7 @@ directories to and from different cloud storage providers.
 - MEGA [:page_facing_up:](https://rclone.org/mega/)
 - MEGA S4 Object Storage [:page_facing_up:](https://rclone.org/s3/#mega)
 - Memory [:page_facing_up:](https://rclone.org/memory/)
+- Movistar Cloud [:page_facing_up:](https://rclone.org/movistarcloud/)
 - Microsoft Azure Blob Storage [:page_facing_up:](https://rclone.org/azureblob/)
 - Microsoft Azure Files Storage [:page_facing_up:](https://rclone.org/azurefiles/)
 - Microsoft OneDrive [:page_facing_up:](https://rclone.org/onedrive/)
