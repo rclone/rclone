@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -74,6 +75,13 @@ func MustObscure(x string) string {
 
 // Reveal an obscured value
 func Reveal(x string) (string, error) {
+	split_x := strings.SplitAfterN(x, ":", 2)
+	if len(split_x) > 1 {
+		// Check if password is in plaintext format
+		if split_x[0] == "plaintext:" {
+			return split_x[1], nil
+		}
+	}
 	ciphertext, err := base64.RawURLEncoding.DecodeString(x)
 	if err != nil {
 		return "", fmt.Errorf("base64 decode failed when revealing password - is it obscured?: %w", err)

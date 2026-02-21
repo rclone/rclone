@@ -195,6 +195,13 @@ are 100% certain you are already passing obscured passwords then use
 |--no-obscure|.  You can also set obscured passwords using the
 |rclone config password| command.
 
+If you want to set password in plaintext format, use |plaintext:password|
+format with |--no-obscure| option:
+
+|||sh
+rclone config update myremote --no-obscure pass "plaintext:password"
+|||
+
 The flag |--non-interactive| is for use by applications that wish to
 configure rclone themselves, rather than using rclone's text based
 configuration questions. If this flag is set, and rclone needs to ask
