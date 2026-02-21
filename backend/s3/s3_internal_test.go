@@ -499,6 +499,9 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 }
 
 func (f *Fs) InternalTestObjectLock(t *testing.T) {
+	if !f.opt.ObjectLockSupported.Value {
+		t.Skip("Object Lock not supported by this provider (quirk object_lock_supported = false)")
+	}
 	ctx := context.Background()
 
 	// Create a temporary bucket with Object Lock enabled to test on.
@@ -720,6 +723,55 @@ func (f *Fs) InternalTestObjectLock(t *testing.T) {
 		require.NoError(t, err)
 		assert.WithinDuration(t, retainUntilDate, gotRetainDate, time.Second)
 		assert.Equal(t, "ON", gotMetadata["object-lock-legal-hold-status"])
+	})
+
+	t.Run("Multipart", func(t *testing.T) {
+		// Force multipart upload by setting a very low cutoff
+		oldCutoff := f.opt.UploadCutoff
+		f.opt.UploadCutoff = fs.SizeSuffix(1)
+		f.opt.ObjectLockMode = "GOVERNANCE"
+		f.opt.ObjectLockRetainUntilDate = retainUntilDate.Format(time.RFC3339)
+		defer func() {
+			f.opt.UploadCutoff = oldCutoff
+			f.opt.ObjectLockMode = ""
+			f.opt.ObjectLockRetainUntilDate = ""
+		}()
+
+		contents := random.String(100)
+		item := fstest.NewItem("test-object-lock-multipart", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+		obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		defer func() {
+			removeLocked(t, obj)
+		}()
+
+		o := obj.(*Object)
+		gotMetadata, err := o.Metadata(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, "GOVERNANCE", gotMetadata["object-lock-mode"])
+	})
+
+	t.Run("Presigned", func(t *testing.T) {
+		// Use presigned request upload path
+		f.opt.UsePresignedRequest = true
+		f.opt.ObjectLockMode = "GOVERNANCE"
+		f.opt.ObjectLockRetainUntilDate = retainUntilDate.Format(time.RFC3339)
+		defer func() {
+			f.opt.UsePresignedRequest = false
+			f.opt.ObjectLockMode = ""
+			f.opt.ObjectLockRetainUntilDate = ""
+		}()
+
+		contents := random.String(100)
+		item := fstest.NewItem("test-object-lock-presigned", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+		obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		defer func() {
+			removeLocked(t, obj)
+		}()
+
+		o := obj.(*Object)
+		gotMetadata, err := o.Metadata(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, "GOVERNANCE", gotMetadata["object-lock-mode"])
 	})
 }
 
