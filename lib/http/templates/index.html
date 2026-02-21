@@ -187,6 +187,64 @@ footer {
 		max-width: 100px;
 	}
 }
+@media (prefers-color-scheme: dark) {
+	body {
+		background-color: #18181B;
+		color: #F4F4F5;
+		color-scheme: dark;
+	}
+	a {
+		color: #99C7FB;
+	}
+	a:hover,
+	h1 a:hover {
+		color: #CCE3FD;
+	}
+	header {
+		background-color: #27272A;
+	}
+	h1 {
+		color: #A1A1AA;
+	}
+	h1 a {
+		color: #FAFAFA;
+	}
+	.meta {
+		border-bottom: 1px solid #52525B;
+	}
+	#filter {
+		background-color: #27272A;
+		border: 1px solid #71717A;
+		color: #F4F4F5;
+	}
+	#filter::placeholder {
+		color: #A1A1AA;
+	}
+	tr {
+		border-bottom: 1px dashed #3F3F46;
+	}
+	tbody tr:hover {
+		background-color: #3F3F46;
+	}
+	th a {
+		color: #FAFAFA;
+	}
+	a svg {
+		color: #D4D4D8;
+	}
+	a:hover svg {
+		color: #CCE3FD;
+	}
+	a svg use,
+	a svg path:not([fill]),
+	a svg path[fill="#000"],
+	a svg path[fill="#000000"],
+	a svg [stroke="#000"],
+	a svg [stroke="#000000"] {
+		fill: currentColor;
+		stroke: currentColor;
+	}
+}
 td .zip {
 	opacity: 0;
 	margin-left: 6px;
