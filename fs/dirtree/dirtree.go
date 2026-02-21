@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"golang.org/x/text/unicode/norm"
 )
 
 // DirTree is a map of directories to entries
@@ -31,9 +32,18 @@ func parentDir(entryPath string) string {
 
 // Add an entry to the tree
 // it doesn't create parents
+// Duplicate entries (same Remote, or same path under NFC normalization) are
+// skipped so backends that merge multiple sources do not produce duplicates.
 func (dt DirTree) Add(entry fs.DirEntry) {
 	dirPath := parentDir(entry.Remote())
-	dt[dirPath] = append(dt[dirPath], entry)
+	entries := dt[dirPath]
+	entryNorm := norm.NFC.String(entry.Remote())
+	for _, e := range entries {
+		if e.Remote() == entry.Remote() || norm.NFC.String(e.Remote()) == entryNorm {
+			return
+		}
+	}
+	dt[dirPath] = append(entries, entry)
 }
 
 // AddDir adds a directory entry to the tree
