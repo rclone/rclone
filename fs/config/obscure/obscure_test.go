@@ -42,6 +42,9 @@ func TestReveal(t *testing.T) {
 		{"YWFhYWFhYWFhYWFhYWFhYQ", ""},
 		{"YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "potato"},
 		{"YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "potato"},
+		{"plaintext:", ""},
+		{"plaintext:potato", "potato"},
+		{"plaintext::potato:", ":potato:"},
 	} {
 		got, err := Reveal(test.in)
 		assert.NoError(t, err)
