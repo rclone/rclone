@@ -483,13 +483,118 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 				filteredOptions = append(filteredOptions, option)
 			}
 		}
-		evenOpenOpts := filteredOptions
-		oddOpenOpts := filteredOptions
-		if evenPayload > 0 {
-			evenOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
-			evenOpenOpts = append(evenOpenOpts, &fs.RangeOption{Start: 0, End: evenPayload - 1})
-			oddOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
-			oddOpenOpts = append(oddOpenOpts, &fs.RangeOption{Start: 0, End: oddPayload - 1})
+
+		var evenOpenOpts, oddOpenOpts []fs.OpenOption
+		var inventory []uint32
+		var firstBlock, lastBlock int
+		var offset, limit int64
+		useBlockRange := false
+
+		if numBlocks > 0 {
+			// Read inventory early so we can compute block-level particle ranges
+			invStart := evenSize - int64(invLen) - FooterSize
+			invReader, ierr := evenObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
+			if ierr != nil {
+				return nil, formatParticleError(o.fs.even, "even", "open inventory failed", fmt.Sprintf("remote %q", o.remote), ierr)
+			}
+			invBuf := make([]byte, invLen)
+			if _, ierr = io.ReadFull(invReader, invBuf); ierr != nil {
+				_ = invReader.Close()
+				return nil, fmt.Errorf("read inventory: %w", ierr)
+			}
+			_ = invReader.Close()
+			inventory = parseInventory(invBuf)
+
+			// Block-level range read: fetch only required blocks
+			if rangeStart > 0 || rangeEnd >= 0 {
+				opt := &fs.RangeOption{Start: rangeStart, End: rangeEnd}
+				offset, limit = opt.Decode(contentLength)
+				if limit == 0 {
+					return io.NopCloser(bytes.NewReader(nil)), nil
+				}
+				if limit < 0 {
+					limit = contentLength - offset
+				}
+				firstBlock = blockIndex(offset)
+				lastBlock = blockIndex(offset + limit - 1)
+				if lastBlock >= int(numBlocks) {
+					lastBlock = int(numBlocks) - 1
+				}
+				if firstBlock <= lastBlock {
+					fullStart, fullLen := fullStreamRangeForBlocks(inventory, firstBlock, lastBlock)
+					fullStart, fullLen = alignFullStreamToPairs(fullStart, fullLen)
+					if fullLen > 0 {
+						es, ee, os, oe := particleRangesForFullStream(fullStart, fullLen)
+						if ee >= es && oe >= os {
+							if ee > evenPayload-1 {
+								ee = evenPayload - 1
+							}
+							if oe > oddPayload-1 {
+								oe = oddPayload - 1
+							}
+							if oe >= os && ee >= es {
+								evenOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+								evenOpenOpts = append(evenOpenOpts, &fs.RangeOption{Start: es, End: ee})
+								oddOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+								oddOpenOpts = append(oddOpenOpts, &fs.RangeOption{Start: os, End: oe})
+								useBlockRange = true
+							}
+						}
+				}
+			}
+		}
+		} else if numBlocks == 0 && compression == CompressionNone && (rangeStart > 0 || rangeEnd >= 0) {
+			// Uncompressed: same block structure as compressed (128 KiB blocks), no decompression
+			ucInv := uncompressedInventory(contentLength)
+			numBlocksUC := len(ucInv)
+			if numBlocksUC > 0 {
+				opt := &fs.RangeOption{Start: rangeStart, End: rangeEnd}
+				offset, limit = opt.Decode(contentLength)
+				if limit == 0 {
+					return io.NopCloser(bytes.NewReader(nil)), nil
+				}
+				if limit < 0 {
+					limit = contentLength - offset
+				}
+				firstBlock = blockIndex(offset)
+				lastBlock = blockIndex(offset + limit - 1)
+				if lastBlock >= numBlocksUC {
+					lastBlock = numBlocksUC - 1
+				}
+				if firstBlock <= lastBlock {
+					fullStart, fullLen := fullStreamRangeForBlocks(ucInv, firstBlock, lastBlock)
+					fullStart, fullLen = alignFullStreamToPairs(fullStart, fullLen)
+					if fullLen > 0 {
+						es, ee, os, oe := particleRangesForFullStream(fullStart, fullLen)
+						if ee >= es && oe >= os {
+							if ee > evenPayload-1 {
+								ee = evenPayload - 1
+							}
+							if oe > oddPayload-1 {
+								oe = oddPayload - 1
+							}
+							if oe >= os && ee >= es {
+								evenOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+								evenOpenOpts = append(evenOpenOpts, &fs.RangeOption{Start: es, End: ee})
+								oddOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+								oddOpenOpts = append(oddOpenOpts, &fs.RangeOption{Start: os, End: oe})
+								useBlockRange = true
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if !useBlockRange {
+			evenOpenOpts = filteredOptions
+			oddOpenOpts = filteredOptions
+			if evenPayload > 0 {
+				evenOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+				evenOpenOpts = append(evenOpenOpts, &fs.RangeOption{Start: 0, End: evenPayload - 1})
+				oddOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+				oddOpenOpts = append(oddOpenOpts, &fs.RangeOption{Start: 0, End: oddPayload - 1})
+			}
 		}
 
 		evenReader, err := evenObj.Open(ctx, evenOpenOpts...)
@@ -507,22 +612,11 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 
 		var out io.ReadCloser
 		if numBlocks > 0 {
-			// Block-compressed: read inventory and use block decompressor
-			invStart := evenSize - int64(invLen) - FooterSize
-			invReader, ierr := evenObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
-			if ierr != nil {
-				_ = merger.Close()
-				return nil, formatParticleError(o.fs.even, "even", "open inventory failed", fmt.Sprintf("remote %q", o.remote), ierr)
+			inv := inventory
+			if useBlockRange {
+				inv = inventory[firstBlock : lastBlock+1]
 			}
-			invBuf := make([]byte, invLen)
-			if _, ierr = io.ReadFull(invReader, invBuf); ierr != nil {
-				_ = invReader.Close()
-				_ = merger.Close()
-				return nil, fmt.Errorf("read inventory: %w", ierr)
-			}
-			_ = invReader.Close()
-			inventory := parseInventory(invBuf)
-			out = newBlockDecompressReadCloser(merger, inventory, compression)
+			out = newBlockDecompressReadCloser(merger, inv, compression)
 		} else {
 			// Uncompressed or stream-compressed (legacy): use stream decompressor
 			out, err = newDecompressingReadCloser(merger, compression)
@@ -611,22 +705,116 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 				filteredOptions = append(filteredOptions, option)
 			}
 		}
-		if evenPayload > 0 {
-			filteredOptions = append(append([]fs.OpenOption{}, filteredOptions...), &fs.RangeOption{Start: 0, End: evenPayload - 1})
+
+		evenOpenOpts := filteredOptions
+		parityOpenOpts := filteredOptions
+		var degradedInv []uint32
+		degradedUseBlockRange := false
+		degradedFirstBlock, degradedLastBlock := 0, 0
+
+		if degradedNumBlocks > 0 && (rangeStart > 0 || rangeEnd >= 0) && contentLength > 0 {
+			// Block-level range for degraded even+parity (both use even particle range)
+			invStart := evenSize - int64(invLen) - FooterSize
+			invReader, ierr := evenObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
+			if ierr == nil {
+				invBuf := make([]byte, invLen)
+				if _, ierr = io.ReadFull(invReader, invBuf); ierr == nil {
+					_ = invReader.Close()
+					degradedInv = parseInventory(invBuf)
+					opt := &fs.RangeOption{Start: rangeStart, End: rangeEnd}
+					offset, limit := opt.Decode(contentLength)
+					if limit < 0 {
+						limit = contentLength - offset
+					}
+					if limit > 0 {
+						firstBlock := blockIndex(offset)
+						lastBlock := blockIndex(offset + limit - 1)
+						if lastBlock >= int(degradedNumBlocks) {
+							lastBlock = int(degradedNumBlocks) - 1
+						}
+						if firstBlock <= lastBlock {
+							fullStart, fullLen := fullStreamRangeForBlocks(degradedInv, firstBlock, lastBlock)
+							fullStart, fullLen = alignFullStreamToPairs(fullStart, fullLen)
+							if fullLen > 0 {
+								es, ee, _, _ := particleRangesForFullStream(fullStart, fullLen)
+								if ee >= es {
+									if ee > evenPayload-1 {
+										ee = evenPayload - 1
+									}
+									if ee > parityPayload-1 {
+										ee = parityPayload - 1
+									}
+									evenOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+									evenOpenOpts = append(evenOpenOpts, &fs.RangeOption{Start: es, End: ee})
+									parityOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+									parityOpenOpts = append(parityOpenOpts, &fs.RangeOption{Start: es, End: ee})
+									degradedUseBlockRange = true
+									degradedFirstBlock, degradedLastBlock = firstBlock, lastBlock
+								}
+							}
+						}
+					}
+				} else {
+					_ = invReader.Close()
+				}
+			} else if invReader != nil {
+				_ = invReader.Close()
+			}
+		}
+		if degradedNumBlocks == 0 && degradedCompression == CompressionNone && (rangeStart > 0 || rangeEnd >= 0) && contentLength > 0 {
+			// Uncompressed degraded (even+parity): block-based range, same as compressed
+			ucInv := uncompressedInventory(contentLength)
+			numBlocksUC := len(ucInv)
+			if numBlocksUC > 0 {
+				opt := &fs.RangeOption{Start: rangeStart, End: rangeEnd}
+				offset, limit := opt.Decode(contentLength)
+				if limit < 0 {
+					limit = contentLength - offset
+				}
+				if limit > 0 {
+					firstBlock := blockIndex(offset)
+					lastBlock := blockIndex(offset + limit - 1)
+					if lastBlock >= numBlocksUC {
+						lastBlock = numBlocksUC - 1
+					}
+					if firstBlock <= lastBlock {
+						fullStart, fullLen := fullStreamRangeForBlocks(ucInv, firstBlock, lastBlock)
+						fullStart, fullLen = alignFullStreamToPairs(fullStart, fullLen)
+						if fullLen > 0 {
+							es, ee, _, _ := particleRangesForFullStream(fullStart, fullLen)
+							if ee >= es {
+								if ee > evenPayload-1 {
+									ee = evenPayload - 1
+								}
+								if ee > parityPayload-1 {
+									ee = parityPayload - 1
+								}
+								evenOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+								evenOpenOpts = append(evenOpenOpts, &fs.RangeOption{Start: es, End: ee})
+								parityOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+								parityOpenOpts = append(parityOpenOpts, &fs.RangeOption{Start: es, End: ee})
+							}
+						}
+					}
+				}
+			}
+		}
+		if evenPayload > 0 && len(evenOpenOpts) == len(filteredOptions) {
+			evenOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+			evenOpenOpts = append(evenOpenOpts, &fs.RangeOption{Start: 0, End: evenPayload - 1})
+		}
+		if parityPayload > 0 && len(parityOpenOpts) == len(filteredOptions) {
+			parityOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+			parityOpenOpts = append(parityOpenOpts, &fs.RangeOption{Start: 0, End: parityPayload - 1})
 		}
 
 		// Reconstruct from even + parity
-		evenReader, err := evenObj.Open(ctx, filteredOptions...)
+		evenReader, err := evenObj.Open(ctx, evenOpenOpts...)
 		if err != nil {
 			return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 		}
 
-		parityOpts := filteredOptions
-		if parityPayload > 0 {
-			parityOpts = append([]fs.OpenOption{}, filteredOptions...)
-			parityOpts = append(parityOpts, &fs.RangeOption{Start: 0, End: parityPayload - 1})
-		}
-		parityReader, err := parityObj.Open(ctx, parityOpts...)
+		parityReader, err := parityObj.Open(ctx, parityOpenOpts...)
 		if err != nil {
 			_ = evenReader.Close()
 			return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
@@ -637,20 +825,27 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 
 		var out io.ReadCloser
 		if degradedNumBlocks > 0 {
-			invStart := evenSize - int64(invLen) - FooterSize
-			invReader, ierr := evenObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
-			if ierr != nil {
-				_ = reconstructor.Close()
-				return nil, formatParticleError(o.fs.even, "even", "open inventory failed", fmt.Sprintf("remote %q", o.remote), ierr)
-			}
-			invBuf := make([]byte, invLen)
-			if _, ierr = io.ReadFull(invReader, invBuf); ierr != nil {
+			inv := degradedInv
+			if len(inv) == 0 {
+				invStart := evenSize - int64(invLen) - FooterSize
+				invReader, ierr := evenObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
+				if ierr != nil {
+					_ = reconstructor.Close()
+					return nil, formatParticleError(o.fs.even, "even", "open inventory failed", fmt.Sprintf("remote %q", o.remote), ierr)
+				}
+				invBuf := make([]byte, invLen)
+				if _, ierr = io.ReadFull(invReader, invBuf); ierr != nil {
+					_ = invReader.Close()
+					_ = reconstructor.Close()
+					return nil, fmt.Errorf("read inventory: %w", ierr)
+				}
 				_ = invReader.Close()
-				_ = reconstructor.Close()
-				return nil, fmt.Errorf("read inventory: %w", ierr)
+				inv = parseInventory(invBuf)
 			}
-			_ = invReader.Close()
-			out = newBlockDecompressReadCloser(reconstructor, parseInventory(invBuf), degradedCompression)
+			if degradedUseBlockRange {
+				inv = inv[degradedFirstBlock : degradedLastBlock+1]
+			}
+			out = newBlockDecompressReadCloser(reconstructor, inv, degradedCompression)
 		} else {
 			out, err = newDecompressingReadCloser(reconstructor, degradedCompression)
 			if err != nil {
@@ -695,22 +890,112 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 				filteredOptions = append(filteredOptions, option)
 			}
 		}
-		if oddPayload > 0 {
-			filteredOptions = append(append([]fs.OpenOption{}, filteredOptions...), &fs.RangeOption{Start: 0, End: oddPayload - 1})
+
+		oddOpenOpts := filteredOptions
+		parityOpenOpts := filteredOptions
+		var oddDegradedInv []uint32
+		oddDegradedUseBlockRange := false
+		oddDegradedFirstBlock, oddDegradedLastBlock := 0, 0
+
+		if degradedNumBlocks > 0 && (rangeStart > 0 || rangeEnd >= 0) && contentLength > 0 {
+			invStart := oddSize - int64(invLen) - FooterSize
+			invReader, ierr := oddObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
+			if ierr == nil {
+				invBuf := make([]byte, invLen)
+				if _, ierr = io.ReadFull(invReader, invBuf); ierr == nil {
+					_ = invReader.Close()
+					oddDegradedInv = parseInventory(invBuf)
+					opt := &fs.RangeOption{Start: rangeStart, End: rangeEnd}
+					offset, limit := opt.Decode(contentLength)
+					if limit < 0 {
+						limit = contentLength - offset
+					}
+					if limit > 0 {
+						firstBlock := blockIndex(offset)
+						lastBlock := blockIndex(offset + limit - 1)
+						if lastBlock >= int(degradedNumBlocks) {
+							lastBlock = int(degradedNumBlocks) - 1
+						}
+						if firstBlock <= lastBlock {
+							fullStart, fullLen := fullStreamRangeForBlocks(oddDegradedInv, firstBlock, lastBlock)
+							fullStart, fullLen = alignFullStreamToPairs(fullStart, fullLen)
+							if fullLen > 0 {
+								_, _, os, oe := particleRangesForFullStream(fullStart, fullLen)
+								if oe >= os {
+									if oe > oddPayload-1 {
+										oe = oddPayload - 1
+									}
+									if oe > parityPayload-1 {
+										oe = parityPayload - 1
+									}
+									oddOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+									oddOpenOpts = append(oddOpenOpts, &fs.RangeOption{Start: os, End: oe})
+									parityOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+									parityOpenOpts = append(parityOpenOpts, &fs.RangeOption{Start: os, End: oe})
+									oddDegradedUseBlockRange = true
+									oddDegradedFirstBlock, oddDegradedLastBlock = firstBlock, lastBlock
+								}
+							}
+						}
+					}
+				} else {
+					_ = invReader.Close()
+				}
+			}
+		} else if degradedNumBlocks == 0 && degradedCompression == CompressionNone && (rangeStart > 0 || rangeEnd >= 0) && contentLength > 0 {
+			// Uncompressed degraded (odd+parity): block-based range, same as compressed
+			ucInv := uncompressedInventory(contentLength)
+			numBlocksUC := len(ucInv)
+			if numBlocksUC > 0 {
+				opt := &fs.RangeOption{Start: rangeStart, End: rangeEnd}
+				offset, limit := opt.Decode(contentLength)
+				if limit < 0 {
+					limit = contentLength - offset
+				}
+				if limit > 0 {
+					firstBlock := blockIndex(offset)
+					lastBlock := blockIndex(offset + limit - 1)
+					if lastBlock >= numBlocksUC {
+						lastBlock = numBlocksUC - 1
+					}
+					if firstBlock <= lastBlock {
+						fullStart, fullLen := fullStreamRangeForBlocks(ucInv, firstBlock, lastBlock)
+						fullStart, fullLen = alignFullStreamToPairs(fullStart, fullLen)
+						if fullLen > 0 {
+							_, _, os, oe := particleRangesForFullStream(fullStart, fullLen)
+							if oe >= os {
+								if oe > oddPayload-1 {
+									oe = oddPayload - 1
+								}
+								if oe > parityPayload-1 {
+									oe = parityPayload - 1
+								}
+								oddOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+								oddOpenOpts = append(oddOpenOpts, &fs.RangeOption{Start: os, End: oe})
+								parityOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+								parityOpenOpts = append(parityOpenOpts, &fs.RangeOption{Start: os, End: oe})
+							}
+						}
+					}
+				}
+			}
+		}
+		if oddPayload > 0 && len(oddOpenOpts) == len(filteredOptions) {
+			oddOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+			oddOpenOpts = append(oddOpenOpts, &fs.RangeOption{Start: 0, End: oddPayload - 1})
+		}
+		if parityPayload > 0 && len(parityOpenOpts) == len(filteredOptions) {
+			parityOpenOpts = append([]fs.OpenOption{}, filteredOptions...)
+			parityOpenOpts = append(parityOpenOpts, &fs.RangeOption{Start: 0, End: parityPayload - 1})
 		}
 
 		// Reconstruct from odd + parity
-		oddReader, err := oddObj.Open(ctx, filteredOptions...)
+		oddReader, err := oddObj.Open(ctx, oddOpenOpts...)
 		if err != nil {
 			return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 		}
 
-		parityOpts := filteredOptions
-		if parityPayload > 0 {
-			parityOpts = append([]fs.OpenOption{}, filteredOptions...)
-			parityOpts = append(parityOpts, &fs.RangeOption{Start: 0, End: parityPayload - 1})
-		}
-		parityReader, err := parityObj.Open(ctx, parityOpts...)
+		parityReader, err := parityObj.Open(ctx, parityOpenOpts...)
 		if err != nil {
 			_ = oddReader.Close()
 			return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
@@ -721,20 +1006,27 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 
 		var out io.ReadCloser
 		if degradedNumBlocks > 0 {
-			invStart := oddSize - int64(invLen) - FooterSize
-			invReader, ierr := oddObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
-			if ierr != nil {
-				_ = reconstructor.Close()
-				return nil, formatParticleError(o.fs.odd, "odd", "open inventory failed", fmt.Sprintf("remote %q", o.remote), ierr)
-			}
-			invBuf := make([]byte, invLen)
-			if _, ierr = io.ReadFull(invReader, invBuf); ierr != nil {
+			inv := oddDegradedInv
+			if len(inv) == 0 {
+				invStart := oddSize - int64(invLen) - FooterSize
+				invReader, ierr := oddObj.Open(ctx, &fs.RangeOption{Start: invStart, End: invStart + int64(invLen) - 1})
+				if ierr != nil {
+					_ = reconstructor.Close()
+					return nil, formatParticleError(o.fs.odd, "odd", "open inventory failed", fmt.Sprintf("remote %q", o.remote), ierr)
+				}
+				invBuf := make([]byte, invLen)
+				if _, ierr = io.ReadFull(invReader, invBuf); ierr != nil {
+					_ = invReader.Close()
+					_ = reconstructor.Close()
+					return nil, fmt.Errorf("read inventory: %w", ierr)
+				}
 				_ = invReader.Close()
-				_ = reconstructor.Close()
-				return nil, fmt.Errorf("read inventory: %w", ierr)
+				inv = parseInventory(invBuf)
 			}
-			_ = invReader.Close()
-			out = newBlockDecompressReadCloser(reconstructor, parseInventory(invBuf), degradedCompression)
+			if oddDegradedUseBlockRange {
+				inv = inv[oddDegradedFirstBlock : oddDegradedLastBlock+1]
+			}
+			out = newBlockDecompressReadCloser(reconstructor, inv, degradedCompression)
 		} else {
 			out, err = newDecompressingReadCloser(reconstructor, degradedCompression)
 			if err != nil {
@@ -904,23 +1196,17 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 	}
 	parityName := o.remote
 
-	// Track uploaded particles for rollback
+	// Track uploaded particles for rollback. On failure, remove successfully updated
+	// particles (like rollbackPut) so the object is degraded but consistent — the
+	// remaining particles still have the old content; rebuild/heal can restore.
 	var uploadedParticles []fs.Object
 	var err2 error
 	defer func() {
-		if err2 != nil && o.fs.opt.Rollback {
-			particlesMap := make(map[string]fs.Object)
-			if len(uploadedParticles) > 0 {
-				particlesMap["even"] = uploadedParticles[0]
-			}
-			if len(uploadedParticles) > 1 {
-				particlesMap["odd"] = uploadedParticles[1]
-			}
-			if len(uploadedParticles) > 2 {
-				particlesMap["parity"] = uploadedParticles[2]
-			}
-			if rollbackErr := o.fs.rollbackUpdate(ctx, particlesMap); rollbackErr != nil {
+		if err2 != nil && o.fs.opt.Rollback && len(uploadedParticles) > 0 {
+			if rollbackErr := o.fs.rollbackPut(ctx, uploadedParticles); rollbackErr != nil {
 				fs.Errorf(o.fs, "Rollback failed during Update (streaming): %v", rollbackErr)
+			} else {
+				fs.Infof(o.fs, "Update rollback: removed %d partial particle(s) for %q (rebuild/heal can restore)", len(uploadedParticles), o.remote)
 			}
 		}
 	}()

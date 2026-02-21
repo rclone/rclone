@@ -12,11 +12,11 @@ The `raid3` backend implements RAID 3 storage with byte-level data striping and 
 
 ## 🎯 RAID 3 Features
 
-The backend implements byte-level striping (even/odd bytes), XOR parity calculation and storage with length indicators (.parity-el/.parity-ol), parallel upload/delete of all three particles, automatic parity reconstruction during degraded mode reads, and automatic heal with background particle restoration. Degraded mode (hardware RAID 3 compliant): reads work with ANY 2 of 3 backends available (missing particles automatically reconstructed and restored in background), while writes and deletes require ALL 3 backends available (strict RAID 3 behavior). Storage efficiency: enables single-backend failure rebuild using ~150% storage (50% overhead for parity).
+The backend implements byte-level striping (even/odd bytes), XOR parity calculation and storage with length indicators (.parity-el/.parity-ol), parallel upload/delete of all three particles, automatic parity reconstruction during degraded mode reads, and automatic heal with background particle restoration. **Efficient partial reads**: range requests (e.g. HTTP range, video streaming) fetch only the required blocks from particles instead of full particles, reducing I/O for partial file access. Degraded mode (hardware RAID 3 compliant): reads work with ANY 2 of 3 backends available (missing particles automatically reconstructed and restored in background), while writes and deletes require ALL 3 backends available (strict RAID 3 behavior). Storage efficiency: enables single-backend failure rebuild using ~150% storage (50% overhead for parity).
 
 ## 🧹 Auto-Cleanup and Auto-Heal
 
-By default, raid3 provides two automatic features: `auto_cleanup` auto-deletes orphaned items (1/3 particles) when all remotes available, and `auto_heal` reconstructs missing items (2/3 particles). Configuration: default (`auto_cleanup=true`, `auto_heal=true`) auto-deletes orphans and reconstructs degraded (recommended); conservative mode (`auto_cleanup=true`, `auto_heal=false`) auto-deletes orphans but doesn't auto-reconstruct; debugging mode (`auto_cleanup=false`, `auto_heal=false`) shows everything with no automatic changes. `rollback=true` (default) provides all-or-nothing guarantee; Put/Move rollback fully working, Update rollback has issues (see Known Limitations).
+By default, raid3 provides two automatic features: `auto_cleanup` auto-deletes orphaned items (1/3 particles) when all remotes available, and `auto_heal` reconstructs missing items (2/3 particles). Configuration: default (`auto_cleanup=true`, `auto_heal=true`) auto-deletes orphans and reconstructs degraded (recommended); conservative mode (`auto_cleanup=true`, `auto_heal=false`) auto-deletes orphans but doesn't auto-reconstruct; debugging mode (`auto_cleanup=false`, `auto_heal=false`) shows everything with no automatic changes. `rollback=true` (default) provides all-or-nothing guarantee; Put, Move, and Update rollback work (Update removes partial particles on failure; rebuild/heal can restore).
 
 ```bash
 rclone config create myremote raid3 \
@@ -56,9 +56,9 @@ The raid3 backend provides three management commands:
 
 ## ⚠️ Current Limitations
 
-### Update Rollback Not Working Properly
+### Update Rollback Semantics
 
-Update operation rollback has issues when `rollback=true` (default); Put and Move rollback work correctly. Failed Update operations may not properly restore particles from temporary locations, leading to degraded files, mainly affecting backends without server-side Move support (e.g., S3/MinIO). Workarounds: use `rollback=false` for Update operations, ensure all backends support server-side Move, or manually fix degraded files. See [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md) Q1 for details.
+When Update fails partway through and `rollback=true`, raid3 removes successfully updated particles (like Put rollback). The object is left degraded but consistent; the remaining particles retain the old content. Run `rclone backend heal` or `rclone backend rebuild` to restore.
 
 ### File Size Limitation
 
@@ -128,7 +128,7 @@ Due to rclone's virtual backend architecture and cache behavior, `copyto` for si
 
 ## Error Handling (Hardware RAID 3 Compliant)
 
-The raid3 backend follows hardware RAID 3 behavior: reads work with ANY 2 of 3 backends (automatic reconstruction), writes (Put, Update, Move) require ALL 3 backends with strict enforcement via pre-flight health check (5-second timeout, +0.2s overhead), and deletes use best effort (idempotent, succeeds if any backend reachable). When `rollback=true` (default), failed write operations are automatically rolled back (all-or-nothing guarantee). Put and Move rollback are fully working; Update rollback has issues (see Known Limitations). For detailed error handling policy, rationale, and implementation details, see [`docs/STRICT_WRITE_POLICY.md`](docs/STRICT_WRITE_POLICY.md).
+The raid3 backend follows hardware RAID 3 behavior: reads work with ANY 2 of 3 backends (automatic reconstruction), writes (Put, Update, Move) require ALL 3 backends with strict enforcement via pre-flight health check (5-second timeout, +0.2s overhead), and deletes use best effort (idempotent, succeeds if any backend reachable). When `rollback=true` (default), failed write operations are automatically rolled back (all-or-nothing guarantee). Put, Move, and Update rollback work; Update removes partial particles on failure. For detailed error handling policy, rationale, and implementation details, see [`docs/STRICT_WRITE_POLICY.md`](docs/STRICT_WRITE_POLICY.md).
 
 ## Getting Started with Test Environment
 

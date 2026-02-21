@@ -152,7 +152,8 @@ func (f *Fs) rollbackPut(ctx context.Context, uploadedParticles []fs.Object) err
 	return nil
 }
 
-// rollbackUpdate restores original particles from temporary locations (best-effort cleanup)
+// rollbackUpdate restores original particles from temporary locations (best-effort cleanup).
+// Not used by updateStreaming, which updates in place and uses rollbackPut on failure.
 func (f *Fs) rollbackUpdate(ctx context.Context, tempParticles map[string]fs.Object) error {
 	g, _ := errgroup.WithContext(ctx)
 

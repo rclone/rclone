@@ -65,10 +65,10 @@ After dropping the buffered path, the backend is streaming-only. The **heal-on-r
 ---
 
 ### Q1: Update Rollback Not Working Properly
-**Status**: 🚨 **ACTIVE** - Still needs implementation  
+**Status**: ✅ **RESOLVED** (2026-02-21)  
 **Priority**: Medium
 
-Update operation rollback not working properly when `rollback=true`. Put and Move rollback work correctly. Fix `updateWithRollback()` and `rollbackUpdate()` to correctly handle Copy+Delete fallback for backends without Move support. Add comprehensive `update-fail` tests.
+**Resolution**: Update now uses `rollbackPut` on failure: removes successfully updated particles instead of the temp-based `rollbackUpdate` (which did not apply to in-place Update). The object is left degraded but consistent (remaining particles have old content); rebuild/heal can restore. See `object.go` updateStreaming defer.
 
 ---
 
@@ -97,36 +97,18 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 ---
 
 ### Q21: Optimize Range Reads for Streaming
-**Status**: 🟡 **ACTIVE** - Streaming optimization  
+**Status**: ✅ **RESOLVED** - Implemented  
 **Priority**: Medium
 
 **Question**: Should range reads apply byte ranges directly to particle readers instead of reading entire particles and filtering?
 
-**Context**: Currently, when reading a byte range (e.g., bytes 1000-2000 of a file), the implementation reads entire even and odd particles and then filters the output. This wastes bandwidth and I/O for partial reads, which is common in HTTP range requests, video streaming, and partial file access.
+**Resolution**: Implemented. Block-level range reads fetch only the required compressed blocks (or uncompressed blocks) from particles instead of streaming full particles. When a range is requested, the implementation:
+- Computes block indices from the requested byte range
+- Derives particle byte ranges via `fullStreamRangeForBlocks` + `particleRangesForFullStream`
+- Opens particles with `RangeOption{Start: particleStart, End: particleEnd}`
+- Uses `rangeFilterReader` only for sub-block trimming
 
-**Current Implementation** (`object.go` healthy path ~476-497, degraded paths ~590-591, ~648-649):
-- Reads entire particles: `evenObj.Open(ctx, evenOpenOpts...)` / `oddObj.Open(ctx, oddOpenOpts...)` (full particle when no range, or payload range; range then applied on merged stream)
-- Filters output: `newRangeFilterReader(merger, rangeStart, rangeEnd, ...)` (see TODO in code: "Optimize to apply range to particle readers directly")
-- For a 1KB range read from a 1GB file, still reads ~500MB of particle data
-
-**Proposed Optimization**:
-- Calculate which byte ranges are needed from each particle based on the requested range
-- Apply range options directly to particle readers: `evenObj.Open(ctx, &fs.RangeOption{Start: particleStart, End: particleEnd}, ...)`
-- Only read the needed bytes from each particle
-
-**Benefit**:
-- Significantly reduces I/O for partial reads (e.g., 1KB range from 1GB file: ~500MB → ~1KB)
-- Improves latency for range requests
-- Better bandwidth utilization
-- Common use case: HTTP range requests, video streaming, database partial reads
-
-**Implementation Complexity**: Medium (3-5 days)
-- Requires byte-to-particle coordinate mapping
-- Need to handle odd-length files correctly
-- Must support both RangeOption and SeekOption
-
-**References**: 
-- Current implementation: `backend/raid3/object.go` (openStreaming range handling and newRangeFilterReader)
+Works for both compressed (block-based) and uncompressed data (same 128 KiB block structure via `uncompressedInventory`), in normal and degraded mode. See `docs/RANGE_READ_IMPLEMENTATION_CHECKLIST.md`.
 
 ---
 
@@ -174,6 +156,20 @@ Several hardcoded values (upload workers: 2, queue buffer: 100, shutdown timeout
 - Current implementation: `backend/raid3/raid3.go:775-833` (About method)
 - Union backend reference: `backend/union/upstream/upstream.go:391-500` (caching mechanism)
 - Related optimization: Q14 (Health Check Caching) uses similar TTL pattern
+
+---
+
+### Q29: About Aggregation Semantics — Is Summing Proper?
+**Status**: 🟡 **ACTIVE** - Design discussion  
+**Priority**: Medium
+
+**Question**: Is the current About aggregation behavior correct?
+
+**Current behavior**: About aggregates quota/usage (Total, Used, Trashed, Other, Free, Objects) by **summing** these values from the even, odd, and parity backends.
+
+**Context**: raid3 stores 3× the data (one full copy on even, one on odd, one parity block). Summing Total/Used/Free across all three backends yields the combined physical storage across the remotes. Whether this is the right semantic for users (e.g. `rclone about raid3:`) needs discussion — alternatives might include reporting logical usage, per-backend breakdown, or different aggregation rules.
+
+**References**: `backend/raid3/raid3.go` (About method, ~lines 800-857), `_analysis/RAID3_COMMAND_COVERAGE_REVIEW.md` (Q&A 6.2).
 
 ---
 

@@ -39,7 +39,7 @@ Read operations work with ANY 2 of 3 backends available, provide automatic recon
 
 ### Write Operations ❌
 
-Put, Update, and Move operations require ALL 3 backends available, perform a pre-flight health check before each write (5-second timeout, +0.2s overhead), fail immediately if any backend is unavailable with clear error `"write blocked in degraded mode (RAID 3 policy)"`, and provide automatic rollback when `rollback=true` (default). Rollback status: Put rollback is fully working, Move rollback is fully working, but Update rollback is not working properly (see Known Limitations).
+Put, Update, and Move operations require ALL 3 backends available, perform a pre-flight health check before each write (5-second timeout, +0.2s overhead), fail immediately if any backend is unavailable with clear error `"write blocked in degraded mode (RAID 3 policy)"`, and provide automatic rollback when `rollback=true` (default). Rollback status: Put, Move, and Update rollback work; Update removes partial particles on failure (object left degraded; rebuild/heal can restore).
 
 ### Delete Operations ❌
 
@@ -55,7 +55,7 @@ Before every write operation, the backend performs a pre-flight health check tha
 
 ### Rollback Mechanism
 
-When `rollback=true` (default), write operations provide an all-or-nothing guarantee: Put tracks successfully uploaded particles and removes all on failure, Move tracks successfully moved particles and moves back on failure, and Update uses move-to-temp pattern (currently has issues - see Known Limitations).
+When `rollback=true` (default), write operations provide an all-or-nothing guarantee: Put tracks successfully uploaded particles and removes all on failure, Move tracks successfully moved particles and moves back on failure, and Update uses remove-partial-particles pattern (removes successfully updated particles on failure; object left degraded but consistent).
 
 ---
 
@@ -67,7 +67,7 @@ Before the fix, Put operations in degraded mode created degraded files on retry,
 
 ## ✅ Implementation Status
 
-Already compliant: read operations (NewObject, Open work with 2/3), delete operations (strict policy, require all 3 backends), health check implemented, and Put/Move rollback implemented. Known issues: Update rollback not working properly (see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q1).
+Already compliant: read operations (NewObject, Open work with 2/3), delete operations (strict policy, require all 3 backends), health check implemented, and Put/Move rollback implemented. Known issues: Update rollback implemented (removes partial particles; see Q1 resolution).
 
 ---
 

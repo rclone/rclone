@@ -678,7 +678,7 @@ func TestUpdateFailsWithUnavailableBackend(t *testing.T) {
 	// Update should fail
 	require.Error(t, err, "Update should fail when backend unavailable")
 
-	// Verify original file content is preserved (rollback should have restored it)
+	// Verify original file content is preserved (rollback removes partial particles)
 	obj2, err := f.NewObject(ctx, remote)
 	require.NoError(t, err, "Original file should still exist after failed update")
 	rc, err := obj2.Open(ctx)
@@ -686,7 +686,7 @@ func TestUpdateFailsWithUnavailableBackend(t *testing.T) {
 	gotData, err := io.ReadAll(rc)
 	_ = rc.Close()
 	require.NoError(t, err)
-	assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback should have restored it)")
+	assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback removes partial particles)")
 }
 
 // TestHealthCheckEnforcesStrictWrites tests that the pre-flight health check
@@ -1640,17 +1640,17 @@ func TestUpdateRollbackOnFailure(t *testing.T) {
 	gotData, err := io.ReadAll(rc)
 	_ = rc.Close()
 	require.NoError(t, err)
-	assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback should have restored from temp)")
+	assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback removes partial particles; remaining have old content)")
 
 	// Verify no temp particles remain (should be cleaned up after rollback)
 	evenTempPath := filepath.Join(evenDir, remote+".tmp.even")
 	parityTempPath := filepath.Join(parityDir, remote+".tmp.parity")
 
+	// No temp particles used (Update uses in-place; rollback removes partial particles)
 	_, err = os.Stat(evenTempPath)
-	assert.True(t, os.IsNotExist(err), "Temp even particle should not exist (should be cleaned up after rollback)")
-	// Odd temp can't be checked due to read-only, but if rollback worked, file content should be original
+	assert.True(t, os.IsNotExist(err), "Temp even particle should not exist (Update uses in-place, not temp)")
 	_, err = os.Stat(parityTempPath)
-	assert.True(t, os.IsNotExist(err), "Temp parity particle should not exist (should be cleaned up after rollback)")
+	assert.True(t, os.IsNotExist(err), "Temp parity particle should not exist (Update uses in-place, not temp)")
 
-	t.Logf("✅ Update rollback correctly restored original particles from temp locations")
+	t.Logf("✅ Update rollback correctly preserved original content (removed partial particles)")
 }

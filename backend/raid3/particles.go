@@ -524,6 +524,7 @@ func (f *Fs) scanParticles(ctx context.Context, dir string) ([]particleInfo, err
 	// Calculate counts
 	result := make([]particleInfo, 0, len(objectMap))
 	for _, info := range objectMap {
+		info.count = 0
 		if info.evenExists {
 			info.count++
 		}
@@ -539,8 +540,11 @@ func (f *Fs) scanParticles(ctx context.Context, dir string) ([]particleInfo, err
 	return result, nil
 }
 
-// StreamReconstructor reconstructs missing particle from available data + parity stream
-// It processes data in chunks to maintain constant memory usage
+// StreamReconstructor reconstructs missing particle from available data + parity stream.
+// It processes data in chunks to maintain constant memory usage.
+//
+// Read must not be called concurrently from multiple goroutines;
+// the caller is responsible for sequential access.
 type StreamReconstructor struct {
 	dataReader   io.ReadCloser // even or odd
 	parityReader io.ReadCloser

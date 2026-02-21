@@ -35,6 +35,79 @@ func inventoryLength(numBlocks int) int { return numBlocks * 4 }
 // blockIndex returns the block index for the given byte offset (0-based).
 func blockIndex(byteOffset int64) int { return int(byteOffset / BlockSize) }
 
+// fullStreamRangeForBlocks returns the byte range in the full compressed stream
+// for blocks [firstBlock, lastBlock]. The full stream is the concatenation of
+// compressed blocks. Returns (fullStart, fullLen) for range [fullStart, fullStart+fullLen).
+// Caller must ensure 0 <= firstBlock <= lastBlock < len(inventory).
+func fullStreamRangeForBlocks(inventory []uint32, firstBlock, lastBlock int) (fullStart, fullLen int64) {
+	for i := 0; i < firstBlock; i++ {
+		fullStart += int64(inventory[i])
+	}
+	for i := firstBlock; i <= lastBlock; i++ {
+		fullLen += int64(inventory[i])
+	}
+	return fullStart, fullLen
+}
+
+// alignFullStreamToPairs rounds fullStart down and fullLen up so the range covers complete
+// even/odd pairs. The StreamMerger reads in pairs and requires len(even) >= len(odd).
+func alignFullStreamToPairs(fullStart, fullLen int64) (alignedStart, alignedLen int64) {
+	if fullLen <= 0 {
+		return fullStart, fullLen
+	}
+	alignedStart = (fullStart / 2) * 2
+	endByte := fullStart + fullLen - 1
+	alignedEnd := (endByte/2)*2 + 2
+	alignedLen = alignedEnd - alignedStart
+	return alignedStart, alignedLen
+}
+
+// particleRangesForFullStream maps full stream byte range [fullStart, fullStart+fullLen)
+// to particle byte indices. Full stream byte P maps to even[P/2] (P even) or odd[(P-1)/2] (P odd).
+// Returns inclusive End for use with RangeOption.
+// If fullLen is 0, returns zeros; caller must avoid Open with empty range.
+func particleRangesForFullStream(fullStart, fullLen int64) (evenStart, evenEnd, oddStart, oddEnd int64) {
+	if fullLen <= 0 {
+		return 0, 0, 0, 0
+	}
+	// Even: full bytes 0,2,4,... at particle index i = fullByte/2
+	// Start: ceil(fullStart/2) = (fullStart+1)/2, End: floor((fullStart+fullLen-1)/2)
+	evenStart = (fullStart + 1) / 2
+	lastByte := fullStart + fullLen - 1
+	evenEnd = lastByte / 2
+	if evenEnd < evenStart {
+		evenEnd = evenStart - 1
+	}
+	// Odd: full bytes 1,3,5,... at particle index j = (fullByte-1)/2
+	// Start: fullStart/2, End: (lastOdd-1)/2 where lastOdd is largest odd position in range
+	oddStart = fullStart / 2
+	if (fullStart+fullLen-1)%2 == 1 {
+		oddEnd = (fullStart + fullLen - 2) / 2
+	} else {
+		oddEnd = (fullStart + fullLen - 3) / 2
+	}
+	if oddEnd < oddStart {
+		oddEnd = oddStart - 1
+	}
+	return evenStart, evenEnd, oddStart, oddEnd
+}
+
+// uncompressedInventory builds a virtual block inventory for uncompressed content.
+// Content is treated as blocks of BlockSize (128 KiB); the last block may be smaller.
+// Returns inventory suitable for fullStreamRangeForBlocks.
+func uncompressedInventory(contentLength int64) []uint32 {
+	if contentLength <= 0 {
+		return nil
+	}
+	n := int((contentLength + BlockSize - 1) / BlockSize)
+	inv := make([]uint32, n)
+	for i := 0; i < n-1; i++ {
+		inv[i] = uint32(BlockSize)
+	}
+	inv[n-1] = uint32(lastBlockUncompressedSize(contentLength))
+	return inv
+}
+
 // lastBlockUncompressedSize returns the uncompressed size of the last block.
 // For contentLength % BlockSize == 0 the last block is full (BlockSize); otherwise it's the remainder.
 func lastBlockUncompressedSize(contentLength int64) int {

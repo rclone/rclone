@@ -194,7 +194,7 @@ RAID 3 provides fault tolerance by enabling rebuild from single backend failure 
 
 ## Current Limitations
 
-Files are processed in configurable chunks (default 2MB) using a pipelined approach, providing bounded memory usage (~5MB) and enabling efficient handling of very large files. Update rollback may have limitations when `rollback=true` (Put and Move rollback work correctly; see [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) Q1 for details). Move within backend is supported (DirMove implemented).
+Files are processed in configurable chunks (default 2MB) using a pipelined approach, providing bounded memory usage (~5MB) and enabling efficient handling of very large files. Update rollback works by removing partial particles on failure; object left degraded but consistent (rebuild/heal can restore). Move within backend is supported (DirMove implemented).
 
 ## Error Handling - RAID 3 Compliance
 

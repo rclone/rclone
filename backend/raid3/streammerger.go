@@ -9,8 +9,11 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
-// StreamMerger merges even and odd particle streams into original data stream
-// It processes data in chunks to maintain constant memory usage
+// StreamMerger merges even and odd particle streams into original data stream.
+// It processes data in chunks to maintain constant memory usage.
+//
+// Read must not be called concurrently from multiple goroutines;
+// the caller is responsible for sequential access.
 type StreamMerger struct {
 	evenReader   io.ReadCloser
 	oddReader    io.ReadCloser

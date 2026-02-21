@@ -47,7 +47,7 @@ func init() {
 }
 
 // Footer holds the 94-byte EC footer stored at the end of each particle.
-// Layout: Magic 9, Version 2, ContentLength 8, MD5 16, SHA256 32, Mtime 8, Compression 4, NumBlocks 4, Algorithm 4, DataShards 1, ParityShards 1, CurrentShard 1, Reserved 4.
+// Layout: Magic 9, Version 1, ContentLength 8, MD5 16, SHA256 32, Mtime 8, Compression 4, NumBlocks 4, Algorithm 4, DataShards 1, ParityShards 1, CurrentShard 1, Reserved 4.
 type Footer struct {
 	ContentLength int64
 	MD5           [16]byte
