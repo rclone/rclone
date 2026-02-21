@@ -1877,7 +1877,7 @@ see User rate limit exceeded errors, wait at least 24 hours and retry.
 You can disable server-side copies with `--disable copy` to download
 and upload the files if you prefer.
 
-### Limitations of Google Docs
+### Limitations of Google Docs, Sheets, etc.
 
 Google docs will appear as size -1 in `rclone ls`, `rclone ncdu` etc,
 and as size 0 in anything which uses the VFS layer, e.g. `rclone mount`
@@ -1897,6 +1897,8 @@ will get a 0 sized file.  If you try again the doc may gain its
 correct size and be downloadable. Whether it will work on not depends
 on the application accessing the mount and the OS you are running -
 experiment to find out if it does work for you!
+
+Affected are not only google docs but also google sheets (and probably other types in an internal google format) - the unknown filesize is only a symptom of a deeper problem. Although mount reports those files with the corresponding office-file-extension, they are of in the google internal format (after all, this is a mount, not sync!). If you double click such a file, your installed office (Writer, rsp. Word ...) tries to open it and fails - because it is not in office but in google format. Only when you copy/paste the file it will be converted to the corresponding office-format and you can work locally with it.
 
 ### Duplicated files
 
