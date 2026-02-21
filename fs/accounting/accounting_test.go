@@ -183,14 +183,14 @@ func TestAccountString(t *testing.T) {
 
 	// FIXME not an exhaustive test!
 
-	assert.Equal(t, "test:  0% /3, 0/s, -", strings.TrimSpace(acc.String()))
+	assert.Equal(t, "test:  0% / 3 B, 0 B/s, -", strings.TrimSpace(acc.String()))
 
 	var buf = make([]byte, 2)
 	n, err := acc.Read(buf)
 	assert.NoError(t, err)
 	assert.Equal(t, 2, n)
 
-	assert.Equal(t, "test: 66% /3, 0/s, -", strings.TrimSpace(acc.String()))
+	assert.Equal(t, "test: 66% / 3 B, 0 B/s, -", strings.TrimSpace(acc.String()))
 
 	assert.NoError(t, acc.Close())
 }

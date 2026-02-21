@@ -678,6 +678,7 @@ backends:
  - backend: "internxt"
    remote: "TestInternxt:"
    fastlist: false
+   listretries: 5
    ignore:
      - TestRWFileHandleWriteNoWrite
  - backend:  "drime"
