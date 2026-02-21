@@ -1159,9 +1159,10 @@ is to rename it to the same name on both sides. (As of `rclone v1.64`,
 a `--resync` is no longer required after doing so, as bisync will automatically
 detect that Path1 and Path2 are in agreement.)
 
-Note that the `--track-renames` flag is currently not compatible with the
-`--max-delete` flag. For more information see the according
-[issue](https://github.com/rclone/rclone/issues/8685).
+Note that although the flag --track-renames ensures that renamed/moved files won't
+be deleted and uploaded again, they are still counted as deleted files in respect
+to the --max-delete flag (as this check happens before the rename detection
+mechanic). See: [issue](https://github.com/rclone/rclone/issues/8685).
 
 ### `--fast-list` used by default
 
