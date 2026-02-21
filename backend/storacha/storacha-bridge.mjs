@@ -4,48 +4,15 @@
 
 import * as Client from '@storacha/client';
 import * as readline from 'readline';
-import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import * as dagPB from '@ipld/dag-pb';
 import { UnixFS } from 'ipfs-unixfs';
 import { CID } from 'multiformats/cid';
-import * as Block from 'multiformats/block';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { CarWriter } from '@ipld/car';
 
 let client = null;
 let currentSpace = null;
-
-// Local metadata store (maps filename → {cid, size, modTime})
-// Stored in ~/.config/rclone/storacha-meta/<spaceDID>.json
-let metadataPath = null;
-let metadata = {};
-
-function loadMetadata(spaceDID) {
-  const configDir = path.join(os.homedir(), '.config', 'rclone', 'storacha-meta');
-  fs.mkdirSync(configDir, { recursive: true });
-  metadataPath = path.join(configDir, `${spaceDID.replace(/:/g, '_')}.json`);
-  
-  try {
-    if (fs.existsSync(metadataPath)) {
-      metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
-    }
-  } catch (e) {
-    console.error(`[storacha] Failed to load metadata: ${e.message}`);
-    metadata = {};
-  }
-}
-
-function saveMetadata() {
-  if (metadataPath) {
-    try {
-      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
-    } catch (e) {
-      console.error(`[storacha] Failed to save metadata: ${e.message}`);
-    }
-  }
-}
 
 // Read JSON requests from stdin, write JSON responses to stdout
 const rl = readline.createInterface({
@@ -287,6 +254,251 @@ const handlers = {
     // Storacha manages the uploads automatically
     return { cid: cid };
   },
+
+  // ========================================
+  // Content Mutation Operations
+  // ========================================
+
+  async fetchBlock({ cid }) {
+    if (!client) throw new Error('Client not initialized');
+    
+    try {
+      const res = await fetch(
+        `https://ipfs.io/ipfs/${cid}?format=raw`,
+        {
+          headers: {
+            'Accept': 'application/vnd.ipld.raw'
+          }
+        }
+      );
+      
+      if (!res.ok) throw new Error(`Failed fetching block: ${res.status}`);
+      
+      const arrayBuffer = await res.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      
+      // Decode the DAG-PB node
+      const node = dagPB.decode(bytes);
+      
+      const links = node.Links.map(l => ({
+        name: l.Name,
+        hash: l.Hash.toString(),
+        size: l.Tsize || 0
+      }));
+      
+      // Check if this is a directory by examining UnixFS data
+      let isDir = false;
+      try {
+        const unixfs = UnixFS.unmarshal(node.Data);
+        isDir = unixfs.type === 'directory';
+      } catch (e) {
+        // Not a UnixFS node, assume directory if has links
+        isDir = links.length > 0;
+      }
+      
+      return {
+        cid: cid.toString(),
+        data: node.Data,
+        links: links,
+        isDir: isDir,
+        rawBytes: Buffer.from(bytes).toString('base64')
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch block ${cid}: ${error.message}`);
+    }
+  },
+
+  async createFileBlock({ content }) {
+    try {
+      const contentBytes = Buffer.isBuffer(content) 
+        ? content 
+        : Buffer.from(content, 'base64');
+      
+      const unixfs = new UnixFS({
+        type: 'file',
+        data: contentBytes
+      });
+      
+      const node = dagPB.prepare({
+        Data: unixfs.marshal(),
+        Links: []
+      });
+      
+      const bytes = dagPB.encode(node);
+      const hash = await sha256.digest(bytes);
+      const cid = CID.create(1, dagPB.code, hash);
+      
+      return {
+        cid: cid.toString(),
+        data: node.Data,
+        links: [],
+        isDir: false,
+        rawBytes: Buffer.from(bytes).toString('base64')
+      };
+    } catch (error) {
+      throw new Error(`Failed to create file block: ${error.message}`);
+    }
+  },
+
+  async rebuildDirNode({ oldData, links }) {
+    try {
+      const linksArray = links.map(l => ({
+        Name: l.name,
+        Hash: CID.parse(l.hash),
+        Tsize: l.size || 0
+      }));
+      
+      const node = dagPB.prepare({
+        Data: oldData instanceof Uint8Array ? oldData : Buffer.from(oldData, 'base64'),
+        Links: linksArray
+      });
+      
+      const bytes = dagPB.encode(node);
+      const hash = await sha256.digest(bytes);
+      const cid = CID.create(1, dagPB.code, hash);
+      
+      return {
+        cid: cid.toString(),
+        data: node.Data,
+        links: links,
+        isDir: true,
+        rawBytes: Buffer.from(bytes).toString('base64')
+      };
+    } catch (error) {
+      throw new Error(`Failed to rebuild directory node: ${error.message}`);
+    }
+  },
+
+  async createCAR({ rootCID, blocks }) {
+    try {
+      const rootCidParsed = CID.parse(rootCID);
+      const { writer, out } = CarWriter.create([rootCidParsed]);
+      
+      const chunks = [];
+      const readerPromise = (async () => {
+        for await (const chunk of out) {
+          chunks.push(chunk);
+        }
+      })();
+      
+      // Add all blocks to the CAR
+      for (const block of blocks) {
+        const blockBytes = Buffer.from(block.rawBytes, 'base64');
+        const blockCID = CID.parse(block.cid);
+        await writer.put({ cid: blockCID, bytes: blockBytes });
+      }
+      
+      await writer.close();
+      await readerPromise;
+      
+      const carBytes = Buffer.concat(chunks);
+      
+      return {
+        carBytes: carBytes.toString('base64'),
+        size: carBytes.length
+      };
+    } catch (error) {
+      throw new Error(`Failed to create CAR: ${error.message}`);
+    }
+  },
+
+  async uploadCAR({ carData, rootCID }) {
+    if (!client) throw new Error('Client not initialized');
+    if (!currentSpace) throw new Error('No space selected');
+    
+    try {
+      const carBytes = Buffer.from(carData, 'base64');
+      const carBlob = new Blob([carBytes], { type: 'application/car' });
+      
+      let newShardCID = null;
+      
+      await client.uploadCAR(carBlob, {
+        rootCID: CID.parse(rootCID),
+        onShardStored: (meta) => {
+          newShardCID = meta.cid.toString();
+        }
+      });
+      
+      if (!newShardCID) {
+        throw new Error('Failed to get shard CID from upload');
+      }
+      
+      return { shardCID: newShardCID };
+    } catch (error) {
+      throw new Error(`Failed to upload CAR: ${error.message}`);
+    }
+  },
+
+  async getUploads({ rootCID }) {
+    if (!client) throw new Error('Client not initialized');
+    if (!currentSpace) throw new Error('No space selected');
+    
+    try {
+      const targetRootCID = CID.parse(rootCID);
+      const uploads = [];
+      
+      let cursor;
+      do {
+        const res = await client.capability.upload.list({ cursor });
+        if (!res || !res.results) break;
+        
+        for (const upload of res.results) {
+          if (upload.root.toString() === targetRootCID.toString()) {
+            uploads.push({
+              cid: upload.root.toString(),
+              root: upload.root.toString(),
+              shards: (upload.shards || []).map(s => s.cid.toString()),
+              size: upload.shards?.reduce((sum, s) => sum + (s.size || 0), 0) || 0,
+              time: upload.insertedAt || new Date().toISOString()
+            });
+          }
+        }
+        
+        cursor = res.cursor;
+      } while (cursor);
+      
+      return uploads;
+    } catch (error) {
+      console.error(`Failed to get uploads: ${error.message}`);
+      return [];
+    }
+  },
+
+  async registerShards({ rootCID, shards }) {
+    if (!client) throw new Error('Client not initialized');
+    if (!currentSpace) throw new Error('No space selected');
+    
+    try {
+      const rootCidParsed = CID.parse(rootCID);
+      const shardCIDs = shards.map(s => CID.parse(s));
+      
+      await client.capability.upload.add(rootCidParsed, shardCIDs);
+      
+      return { success: true };
+    } catch (error) {
+      throw new Error(`Failed to register shards: ${error.message}`);
+    }
+  },
+
+  async getRootCID() {
+    if (!client) throw new Error('Client not initialized');
+    if (!currentSpace) throw new Error('No space selected');
+    
+    try {
+      // Get the most recent upload's root CID
+      const res = await client.capability.upload.list({ cursor: undefined });
+      
+      if (res && res.results && res.results.length > 0) {
+        const latestUpload = res.results[0];
+        return { rootCID: latestUpload.root.toString() };
+      }
+      
+      throw new Error('No uploads found');
+    } catch (error) {
+      throw new Error(`Failed to get root CID: ${error.message}`);
+    }
+  },
+
   async whoami() {
     if (!client) throw new Error('Client not initialized');
     
@@ -299,7 +511,10 @@ const handlers = {
       currentSpace: currentSpace?.did()
     };
   }
+
 };
+
+  
 
 // Process incoming requests
 rl.on('line', async (line) => {
