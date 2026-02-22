@@ -19,7 +19,7 @@ type TransferSnapshot struct {
 	Checked     bool      `json:"checked"`
 	What        string    `json:"what"`
 	StartedAt   time.Time `json:"started_at"`
-	CompletedAt time.Time `json:"completed_at,omitempty"`
+	CompletedAt time.Time `json:"completed_at"`
 	Error       error     `json:"-"`
 	Group       string    `json:"group"`
 	SrcFs       string    `json:"srcFs,omitempty"`
