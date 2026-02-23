@@ -86,6 +86,11 @@ func calculateTotalChunks(fileSize int64, chunkSize int64) int64 {
 // OpenChunkWriter returns chunk writer info and the upload session
 // @see https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/start
 func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+	fileSize := src.Size()
+	if fileSize < 0 {
+		return info, nil, errors.New("kdrive can't upload files with unknown size")
+	}
+
 	dir, leaf := path.Split(remote)
 	dir = strings.TrimSuffix(dir, "/")
 
@@ -93,11 +98,6 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 	parentID, err := f.dirCache.FindDir(ctx, dir, true)
 	if err != nil {
 		return info, nil, fmt.Errorf("failed to find parent directory: %w", err)
-	}
-
-	fileSize := src.Size()
-	if fileSize < 0 {
-		return info, nil, errors.New("kdrive can't upload files with unknown size")
 	}
 
 	var preferredChunkSize int64
