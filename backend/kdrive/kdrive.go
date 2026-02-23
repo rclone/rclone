@@ -206,10 +206,50 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	return &item, nil
 }
 
+// getItem retrieves a file or directory by its ID
+func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   fmt.Sprintf("/2/drive/%s/files/%s", f.opt.DriveID, id),
+	}
+
+	var result api.ItemResult
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		err = result.ResultStatus.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		if apiErr, ok := err.(*api.ResultStatus); ok {
+			if apiErr.ErrorDetail.Result == "object_not_found" {
+				return nil, fs.ErrorObjectNotFound
+			}
+		}
+		return nil, fmt.Errorf("couldn't get item: %w", err)
+	}
+
+	item := result.Data
+	if item.ID == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	item.Name = f.opt.Enc.ToStandardName(item.Name)
+	return &item, nil
+}
+
 // findItemByPath retrieves a file or directory by its path using the API
 // This avoids listing the entire directory
 func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, error) {
 	// fs.Infof(ctx, "findItemByPath: remote=%s", remote)
+
+	if remote == "" || remote == "." {
+		rootID, err := f.dirCache.FindDir(ctx, "", false)
+		if err != nil {
+			return nil, err
+		}
+		return f.getItem(ctx, rootID)
+	}
 
 	// Get the directoryID of the parent directory
 	directory, leaf := path.Split(remote)
@@ -458,16 +498,16 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 			item.Name = f.opt.Enc.ToStandardName(item.Name)
 			item.FullPath = path.Join(currentSubDir, item.Name)
 
+			if fn(item) {
+				found = true
+				break
+			}
+
 			item.HasChildren = false
 			if recursive && item.Type == "dir" {
 				subDirHasChildren := recursiveContents(strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), "" /*reset cursor*/)
 				// 	fs.Infof(nil, "DIR %s SUBDIR %s subDirHasChildren %w", strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), subDirHasChildren)
 				item.HasChildren = subDirHasChildren
-			}
-
-			if fn(item) {
-				found = true
-				break
 			}
 		}
 
@@ -516,12 +556,6 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 		if info.Type == "dir" {
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, strconv.Itoa(info.ID))
-
-			// In recursive mode, don't return directories - they'll be created
-			// implicitly by checkParent from the file paths
-			if recursive {
-				return false
-			}
 
 			d := fs.NewDir(remote, info.ModTime()).SetID(strconv.Itoa(info.ID))
 			d.SetParentID(strconv.Itoa(info.ParentID))
@@ -597,7 +631,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	l := list.NewHelper(callback)
 	err = f.listHelper(ctx, dir, true, func(o fs.DirEntry) error {
-		fs.Debugf(nil, "ADD OBJECT %w", o.Remote())
+		// fs.Debugf(nil, "ADD OBJECT %s", o.Remote())
 		return l.Add(o)
 	})
 	if err != nil {
@@ -1112,7 +1146,7 @@ func (o *Object) Size() int64 {
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.Item) (err error) {
 	if info.Type == "dir" {
-		return fmt.Errorf("%q is a folder: %w", o.remote, fs.ErrorNotAFile)
+		return fs.ErrorIsDir
 	}
 	o.hasMetaData = true
 	o.size = info.Size
