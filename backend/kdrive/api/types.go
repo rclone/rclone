@@ -229,5 +229,5 @@ type SessionFinishResponse struct {
 
 type SessionCancelResponse struct {
 	Result string `json:"result"`
-	Data   Item   `json:"data"`
+	Data   bool   `json:"data"`
 }
