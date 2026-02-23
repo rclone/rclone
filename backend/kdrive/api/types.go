@@ -106,6 +106,7 @@ type Item struct {
 	MimeType       string `json:"mime_type"`
 	ParentID       int    `json:"parent_id"`
 	Color          string `json:"color"`
+	HasChildren    bool   `json:"has_children,omitempty"`
 }
 
 type ItemResult struct {
