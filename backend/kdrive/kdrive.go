@@ -167,7 +167,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 // findItemInDir retrieves a file or directory by its name in a specific directory using the API
 // This avoids listing the entire directory. It takes the directoryID directly.
 func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
-	fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
+	// fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
 
 	opts := rest.Opts{
 		Method:     "GET",
@@ -209,7 +209,7 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 // findItemByPath retrieves a file or directory by its path using the API
 // This avoids listing the entire directory
 func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, error) {
-	fs.Infof(ctx, "findItemByPath: remote=%s", remote)
+	// fs.Infof(ctx, "findItemByPath: remote=%s", remote)
 
 	// Get the directoryID of the parent directory
 	directory, leaf := path.Split(remote)
@@ -228,7 +228,7 @@ func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, erro
 
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(ctx context.Context, remote string) (*api.Item, error) {
-	fs.Debugf(ctx, "readMetaDataForPath: remote=%s", remote)
+	// fs.Debugf(ctx, "readMetaDataForPath: remote=%s", remote)
 
 	// Try the new API endpoint first
 	info, err := f.findItemByPath(ctx, remote)
@@ -404,15 +404,9 @@ type listAllFn func(*api.Item) bool
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, recursive bool, fn listAllFn) (found bool, err error) {
 	// fs.Infof(nil, "Stacktrace : %s", string(debug.Stack()))
 	listSomeFiles := func(currentDirID string, fromCursor string) (api.SearchResult, error) {
-
-		apiPath := fmt.Sprintf("/3/drive/%s/files/%s/listing/full", f.opt.DriveID, currentDirID)
-		if currentDirID == "1" {
-			apiPath = fmt.Sprintf("/3/drive/%s/files/%s/files", f.opt.DriveID, currentDirID)
-		}
-
 		opts := rest.Opts{
 			Method:     "GET",
-			Path:       apiPath,
+			Path:       fmt.Sprintf("/3/drive/%s/files/%s/files", f.opt.DriveID, currentDirID),
 			Parameters: url.Values{},
 		}
 		opts.Parameters.Set("limit", "1000")
@@ -435,19 +429,22 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	}
 
 	var listErr error
-	var recursiveContents func(currentDirID string, currentSubDir string, fromCursor string)
-	recursiveContents = func(currentDirID string, currentSubDir string, fromCursor string) {
+	var recursiveContents func(currentDirID string, currentSubDir string, fromCursor string) bool
+
+	recursiveContents = func(currentDirID string, currentSubDir string, fromCursor string) bool {
 		if listErr != nil {
-			return
+			return false
 		}
 		result, err := listSomeFiles(currentDirID, fromCursor)
 		if err != nil {
 			listErr = err
-			return
+			return false
 		}
 
+		hasChildren := false
 		// First, analyze what has been returned, and go in-depth if required
 		for i := range result.Data {
+			hasChildren = true
 			item := &result.Data[i]
 			if item.Type == "dir" {
 				if filesOnly {
@@ -460,12 +457,17 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 			}
 			item.Name = f.opt.Enc.ToStandardName(item.Name)
 			item.FullPath = path.Join(currentSubDir, item.Name)
+
+			item.HasChildren = false
+			if recursive && item.Type == "dir" {
+				subDirHasChildren := recursiveContents(strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), "" /*reset cursor*/)
+				// 	fs.Infof(nil, "DIR %s SUBDIR %s subDirHasChildren %w", strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), subDirHasChildren)
+				item.HasChildren = subDirHasChildren
+			}
+
 			if fn(item) {
 				found = true
 				break
-			}
-			if recursive && item.Type == "dir" {
-				recursiveContents(strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), "" /*reset cursor*/)
 			}
 		}
 
@@ -473,8 +475,12 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		if result.HasMore {
 			recursiveContents(currentDirID, currentSubDir, result.Cursor)
 		}
+
+		return hasChildren
 	}
+
 	recursiveContents(dirID, "", "")
+
 	if listErr != nil {
 		return found, listErr
 	}
@@ -514,6 +520,8 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 			d := fs.NewDir(remote, info.ModTime()).SetID(strconv.Itoa(info.ID))
 			d.SetParentID(strconv.Itoa(info.ParentID))
 			d.SetSize(info.Size)
+
+			// fs.Infof(nil, "CALL CALLBACK WITH %s ", info.Name)
 			iErr = callback(d)
 		} else {
 			o, err := f.newObjectWithInfo(ctx, remote, info)
@@ -521,6 +529,8 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 				iErr = err
 				return true
 			}
+
+			fs.Infof(nil, "CALL CALLBACK WITH %s ", info.Name)
 			iErr = callback(o)
 		}
 
@@ -583,6 +593,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	l := list.NewHelper(callback)
 	err = f.listHelper(ctx, dir, true, func(o fs.DirEntry) error {
+		fs.Debugf(nil, "ADD OBJECT %w", o.Remote())
 		return l.Add(o)
 	})
 	if err != nil {
@@ -599,7 +610,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 // Used to create new objects
 func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time, size int64) (o *Object, leaf string, directoryID string, err error) {
 	// Create the directory for the object if it doesn't exist
-	fs.Debugf(ctx, "createObject: remote = %s", remote)
+	// fs.Debugf(ctx, "createObject: remote = %s", remote)
 	leaf, directoryID, err = f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return
@@ -962,7 +973,7 @@ func (f *Fs) createPublicLink(ctx context.Context, fileID int, expire fs.Duratio
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 // If unlink is true, it removes the existing public link.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
-	fs.Infof("PublicLink PATH REMOTE", remote)
+	// fs.Infof("PublicLink PATH REMOTE", remote)
 	item, err := f.findItemByPath(ctx, remote)
 	if err != nil {
 		return "", err
