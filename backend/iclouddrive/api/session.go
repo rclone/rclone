@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"maps"
 	"net/http"
@@ -9,10 +10,14 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/rest"
 )
+
+const iCloudUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3.1 Safari/605.1.15"
 
 // Session represents an iCloud session
 type Session struct {
@@ -22,10 +27,22 @@ type Session struct {
 	AccountCountry string         `json:"account_country"`
 	TrustToken     string         `json:"trust_token"`
 	ClientID       string         `json:"client_id"`
+	AuthAttributes string         `json:"auth_attributes"`
+	FrameID        string         `json:"frame_id"`
 	Cookies        []*http.Cookie `json:"cookies"`
 	AccountInfo    AccountInfo    `json:"account_info"`
 
-	srv *rest.Client `json:"-"`
+	srv         *rest.Client `json:"-"`
+	needs2FA    bool         `json:"-"` // set when SRP signin returns 409
+}
+
+// srpInitResponse is the server response from /auth/signin/init
+type srpInitResponse struct {
+	Iteration int    `json:"iteration"`
+	Salt      string `json:"salt"`
+	Protocol  string `json:"protocol"`
+	B         string `json:"b"`
+	C         string `json:"c"`
 }
 
 // String returns the session as a string
@@ -57,46 +74,311 @@ func (s *Session) Request(ctx context.Context, opts rest.Opts, request any, resp
 	if val := resp.Header.Get("scnt"); val != "" {
 		s.Scnt = val
 	}
+	if val := resp.Header.Get("X-Apple-Auth-Attributes"); val != "" {
+		s.AuthAttributes = val
+	}
 
 	return resp, nil
 }
 
 // Requires2FA returns true if the session requires 2FA
 func (s *Session) Requires2FA() bool {
-	return s.AccountInfo.DsInfo.HsaVersion == 2 && s.AccountInfo.HsaChallengeRequired
+	if s.needs2FA {
+		return true
+	}
+	return s.AccountInfo.DsInfo != nil && s.AccountInfo.DsInfo.HsaVersion == 2 && s.AccountInfo.HsaChallengeRequired
 }
 
-// SignIn signs in the session
+// SignIn performs SRP-based authentication against Apple's idmsa endpoint.
 func (s *Session) SignIn(ctx context.Context, appleID, password string) error {
-	trustTokens := []string{}
-	if s.TrustToken != "" {
-		trustTokens = []string{s.TrustToken}
+	// Step 1: Initialize the auth session
+	if err := s.authStart(ctx); err != nil {
+		return fmt.Errorf("authStart: %w", err)
 	}
+
+	// Step 2: Federate (submit account name)
+	if err := s.authFederate(ctx, appleID); err != nil {
+		return fmt.Errorf("authFederate: %w", err)
+	}
+
+	// Step 3: SRP init — send client public value A, get salt + B
+	client := newSRPClient()
+	aBase64 := base64.StdEncoding.EncodeToString(client.getABytes())
+
+	initResp, err := s.authSRPInit(ctx, aBase64, appleID)
+	if err != nil {
+		return fmt.Errorf("authSRPInit: %w", err)
+	}
+
+	// Decode server values
+	serverB, err := base64.StdEncoding.DecodeString(initResp.B)
+	if err != nil {
+		return fmt.Errorf("decode B: %w", err)
+	}
+	salt, err := base64.StdEncoding.DecodeString(initResp.Salt)
+	if err != nil {
+		return fmt.Errorf("decode salt: %w", err)
+	}
+
+	// Step 4: Derive password key and process the SRP challenge
+	derivedKey, err := derivePassword(password, salt, initResp.Iteration, initResp.Protocol)
+	if err != nil {
+		return fmt.Errorf("derivePassword: %w", err)
+	}
+	client.processChallenge([]byte(appleID), derivedKey, salt, serverB)
+
+	// Step 5: Complete — send M1, M2 proofs
+	m1Base64 := base64.StdEncoding.EncodeToString(client.M1)
+	m2Base64 := base64.StdEncoding.EncodeToString(client.M2)
+
+	if err := s.authSRPComplete(ctx, appleID, m1Base64, m2Base64, initResp.C); err != nil {
+		return fmt.Errorf("authSRPComplete: %w", err)
+	}
+
+	return nil
+}
+
+// authStart initializes the SRP auth session by hitting the authorize/signin endpoint.
+func (s *Session) authStart(ctx context.Context) error {
+	if s.FrameID == "" {
+		s.FrameID = strings.ToLower(uuid.New().String())
+	}
+	frameTag := "auth-" + s.FrameID
+
+	params := url.Values{}
+	params.Set("frame_id", frameTag)
+	params.Set("language", "en_US")
+	params.Set("skVersion", "7")
+	params.Set("iframeId", frameTag)
+	params.Set("client_id", s.ClientID)
+	params.Set("redirect_uri", "https://www.icloud.com")
+	params.Set("response_type", "code")
+	params.Set("response_mode", "web_message")
+	params.Set("state", frameTag)
+	params.Set("authVersion", "latest")
+
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/authorize/signin",
+		Parameters: params,
+		ExtraHeaders: map[string]string{
+			"Accept":     "*/*",
+			"User-Agent": iCloudUserAgent,
+		},
+		RootURL:    authEndpoint,
+		NoResponse: true,
+	}
+
+	resp, err := s.srv.Call(ctx, &opts)
+	if err != nil {
+		return err
+	}
+	_ = resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("authStart: unexpected status %s", resp.Status)
+	}
+
+	if val := resp.Header.Get("X-Apple-Auth-Attributes"); val != "" {
+		s.AuthAttributes = val
+	}
+	if val := resp.Header.Get("scnt"); val != "" {
+		s.Scnt = val
+	}
+	if val := resp.Header.Get("X-Apple-ID-Session-Id"); val != "" {
+		s.SessionID = val
+	}
+
+	return nil
+}
+
+// authFederate submits the account name to Apple's federate endpoint.
+func (s *Session) authFederate(ctx context.Context, accountName string) error {
 	values := map[string]any{
-		"accountName": appleID,
-		"password":    password,
+		"accountName": accountName,
 		"rememberMe":  true,
-		"trustTokens": trustTokens,
 	}
 	body, err := IntoReader(values)
 	if err != nil {
 		return err
 	}
+
 	opts := rest.Opts{
 		Method:       "POST",
-		Path:         "/signin",
-		Parameters:   url.Values{},
-		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
+		Path:         "/federate",
+		Parameters:   url.Values{"isRememberMeEnabled": {"true"}},
+		ExtraHeaders: s.getSRPAuthHeaders(),
 		RootURL:      authEndpoint,
-		IgnoreStatus: true, // need to handle 409 for hsa2
+		Body:         body,
+		NoResponse:   true,
+	}
+
+	resp, err := s.srv.Call(ctx, &opts)
+	if err != nil {
+		return err
+	}
+	_ = resp.Body.Close()
+
+	if val := resp.Header.Get("X-Apple-Auth-Attributes"); val != "" {
+		s.AuthAttributes = val
+	}
+	if val := resp.Header.Get("scnt"); val != "" {
+		s.Scnt = val
+	}
+	if val := resp.Header.Get("X-Apple-ID-Session-Id"); val != "" {
+		s.SessionID = val
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("authFederate: unexpected status %s", resp.Status)
+	}
+	return nil
+}
+
+// authSRPInit sends the client's public value A to the server and retrieves
+// the salt, server public value B, iteration count, protocol, and challenge.
+func (s *Session) authSRPInit(ctx context.Context, aBase64, accountName string) (*srpInitResponse, error) {
+	values := map[string]any{
+		"a":           aBase64,
+		"accountName": accountName,
+		"protocols":   []string{"s2k", "s2k_fo"},
+	}
+	body, err := IntoReader(values)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         "/signin/init",
+		ExtraHeaders: s.getSRPAuthHeaders(),
+		RootURL:      authEndpoint,
+		Body:         body,
+	}
+
+	var initResp srpInitResponse
+	resp, err := s.srv.CallJSON(ctx, &opts, nil, &initResp)
+	if err != nil {
+		return nil, err
+	}
+
+	if val := resp.Header.Get("scnt"); val != "" {
+		s.Scnt = val
+	}
+	if val := resp.Header.Get("X-Apple-ID-Session-Id"); val != "" {
+		s.SessionID = val
+	}
+
+	return &initResp, nil
+}
+
+// authSRPComplete sends the SRP proofs M1 and M2 to complete authentication.
+// Returns nil on success (200 or 409/2FA needed).
+func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2Base64, c string) error {
+	trustTokens := []string{}
+	if s.TrustToken != "" {
+		trustTokens = []string{s.TrustToken}
+	}
+
+	values := map[string]any{
+		"accountName":  accountName,
+		"m1":           m1Base64,
+		"m2":           m2Base64,
+		"c":            c,
+		"rememberMe":   true,
+		"trustTokens":  trustTokens,
+	}
+	body, err := IntoReader(values)
+	if err != nil {
+		return err
+	}
+
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         "/signin/complete",
+		Parameters:   url.Values{"isRememberMeEnabled": {"true"}},
+		ExtraHeaders: s.getSRPAuthHeaders(),
+		RootURL:      authEndpoint,
+		IgnoreStatus: true,
 		NoResponse:   true,
 		Body:         body,
 	}
-	opts.Parameters.Set("isRememberMeEnabled", "true")
-	_, err = s.Request(ctx, opts, nil, nil)
 
-	return err
+	resp, err := s.srv.Call(ctx, &opts)
+	if err != nil {
+		return err
+	}
+	_ = resp.Body.Close()
 
+	// Extract updated headers
+	if val := resp.Header.Get("X-Apple-Auth-Attributes"); val != "" {
+		s.AuthAttributes = val
+	}
+	if val := resp.Header.Get("X-Apple-Session-Token"); val != "" {
+		s.SessionToken = val
+	}
+	if val := resp.Header.Get("scnt"); val != "" {
+		s.Scnt = val
+	}
+	if val := resp.Header.Get("X-Apple-ID-Session-Id"); val != "" {
+		s.SessionID = val
+	}
+	if val := resp.Header.Get("X-Apple-ID-Account-Country"); val != "" {
+		s.AccountCountry = val
+	}
+	if val := resp.Header.Get("X-Apple-TwoSV-Trust-Token"); val != "" {
+		s.TrustToken = val
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		fs.Debugf("icloud", "SRP sign in successful")
+		return nil
+	case http.StatusConflict:
+		// 409 = 2FA required, this is expected
+		fs.Debugf("icloud", "SRP sign in requires 2FA")
+		s.needs2FA = true
+		return nil
+	case http.StatusForbidden:
+		return fmt.Errorf("sign in failed: incorrect username or password")
+	default:
+		return fmt.Errorf("sign in failed: %s", resp.Status)
+	}
+}
+
+// getSRPAuthHeaders returns headers needed for SRP auth requests to idmsa.apple.com.
+func (s *Session) getSRPAuthHeaders() map[string]string {
+	frameTag := "auth-" + s.FrameID
+	headers := map[string]string{
+		"Accept":                           "application/json",
+		"Content-Type":                     "application/json",
+		"User-Agent":                       iCloudUserAgent,
+		"Origin":                           "https://idmsa.apple.com",
+		"Referer":                          "https://idmsa.apple.com/",
+		"X-Apple-Widget-Key":               s.ClientID,
+		"X-Apple-OAuth-Client-Id":          s.ClientID,
+		"X-Apple-OAuth-Client-Type":        "firstPartyAuth",
+		"X-Apple-OAuth-Redirect-URI":       "https://www.icloud.com",
+		"X-Apple-OAuth-Require-Grant-Code": "true",
+		"X-Apple-OAuth-Response-Mode":      "web_message",
+		"X-Apple-OAuth-Response-Type":      "code",
+		"X-Apple-OAuth-State":              frameTag,
+		"X-Apple-Frame-Id":                 frameTag,
+		"X-Requested-With":                 "XMLHttpRequest",
+		"X-Apple-Mandate-Security-Upgrade": "0",
+		"X-Apple-I-Require-UE":             "true",
+		"X-Apple-I-FD-Client-Info":         `{"U":"` + iCloudUserAgent + `","L":"en-US","Z":"GMT-05:00","V":"1.1","F":""}`,
+	}
+	if s.AuthAttributes != "" {
+		headers["X-Apple-Auth-Attributes"] = s.AuthAttributes
+	}
+	if s.Scnt != "" {
+		headers["scnt"] = s.Scnt
+	}
+	if s.SessionID != "" {
+		headers["X-Apple-ID-Session-Id"] = s.SessionID
+	}
+	return headers
 }
 
 // AuthWithToken authenticates the session
@@ -135,14 +417,10 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 		return err
 	}
 
-	headers := s.GetAuthHeaders(map[string]string{})
-	headers["scnt"] = s.Scnt
-	headers["X-Apple-ID-Session-Id"] = s.SessionID
-
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "/verify/trusteddevice/securitycode",
-		ExtraHeaders: headers,
+		ExtraHeaders: s.GetAuthHeaders(map[string]string{}),
 		RootURL:      authEndpoint,
 		Body:         body,
 		NoResponse:   true,
@@ -162,14 +440,10 @@ func (s *Session) Validate2FACode(ctx context.Context, code string) error {
 
 // TrustSession trusts the session
 func (s *Session) TrustSession(ctx context.Context) error {
-	headers := s.GetAuthHeaders(map[string]string{})
-	headers["scnt"] = s.Scnt
-	headers["X-Apple-ID-Session-Id"] = s.SessionID
-
 	opts := rest.Opts{
 		Method:        "GET",
 		Path:          "/2sv/trust",
-		ExtraHeaders:  headers,
+		ExtraHeaders:  s.GetAuthHeaders(map[string]string{}),
 		RootURL:       authEndpoint,
 		NoResponse:    true,
 		ContentLength: common.Int64(0),
@@ -201,25 +475,9 @@ func (s *Session) ValidateSession(ctx context.Context) error {
 }
 
 // GetAuthHeaders returns the authentication headers for the session.
-//
-// It takes an `overwrite` map[string]string parameter which allows
-// overwriting the default headers. It returns a map[string]string.
+// Used for 2FA validation and trust requests to idmsa.apple.com.
 func (s *Session) GetAuthHeaders(overwrite map[string]string) map[string]string {
-	headers := map[string]string{
-		"Accept":                           "application/json",
-		"Content-Type":                     "application/json",
-		"X-Apple-OAuth-Client-Id":          s.ClientID,
-		"X-Apple-OAuth-Client-Type":        "firstPartyAuth",
-		"X-Apple-OAuth-Redirect-URI":       "https://www.icloud.com",
-		"X-Apple-OAuth-Require-Grant-Code": "true",
-		"X-Apple-OAuth-Response-Mode":      "web_message",
-		"X-Apple-OAuth-Response-Type":      "code",
-		"X-Apple-OAuth-State":              s.ClientID,
-		"X-Apple-Widget-Key":               s.ClientID,
-		"Origin":                           homeEndpoint,
-		"Referer":                          fmt.Sprintf("%s/", homeEndpoint),
-		"User-Agent":                       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:103.0) Gecko/20100101 Firefox/103.0",
-	}
+	headers := s.getSRPAuthHeaders()
 	maps.Copy(headers, overwrite)
 	return headers
 }
@@ -248,7 +506,7 @@ func GetCommonHeaders(overwrite map[string]string) map[string]string {
 		"Content-Type": "application/json",
 		"Origin":       baseEndpoint,
 		"Referer":      fmt.Sprintf("%s/", baseEndpoint),
-		"User-Agent":   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:103.0) Gecko/20100101 Firefox/103.0",
+		"User-Agent":   iCloudUserAgent,
 	}
 	maps.Copy(headers, overwrite)
 	return headers
@@ -281,9 +539,16 @@ func GetCookiesForDomain(url *url.URL, cookies []*http.Cookie) ([]*http.Cookie, 
 
 // NewSession creates a new Session instance with default values.
 func NewSession() *Session {
-	session := &Session{}
-	session.srv = rest.NewClient(fshttp.NewClient(context.Background())).SetRoot(baseEndpoint)
-	//session.ClientID = "auth-" + uuid.New().String()
+	session := &Session{
+		FrameID: strings.ToLower(uuid.New().String()),
+	}
+	httpClient := fshttp.NewClient(context.Background())
+	if tr, ok := httpClient.Transport.(*fshttp.Transport); ok {
+		tr.SetRequestFilter(func(req *http.Request) {
+			req.Header.Set("User-Agent", iCloudUserAgent)
+		})
+	}
+	session.srv = rest.NewClient(httpClient).SetRoot(baseEndpoint)
 	return session
 }
 
