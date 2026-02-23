@@ -1314,6 +1314,7 @@ func (s *drimeChunkWriter) Close(ctx context.Context) error {
 		ClientExtension: s.extension,
 		ParentID:        s.parentID,
 		RelativePath:    s.relativePath,
+		WorkspaceID:     s.f.opt.WorkspaceID,
 	}
 
 	entriesOpts := rest.Opts{

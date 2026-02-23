@@ -224,6 +224,7 @@ type MultiPartEntriesRequest struct {
 	ClientExtension string      `json:"clientExtension"`
 	ParentID        json.Number `json:"parent_id"`
 	RelativePath    string      `json:"relativePath"`
+	WorkspaceID     string      `json:"workspaceId,omitempty"`
 }
 
 // MultiPartEntriesResponse is the result of POST /s3/entries
