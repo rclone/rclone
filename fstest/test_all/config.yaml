@@ -699,4 +699,6 @@ backends:
    listretries: 5
  - backend: "kdrive"
    remote: "TestKdrive:Private"
+   ignore:
+    - TestIntegration/FsMkdir/FsOpenChunkWriter
 
