@@ -171,7 +171,7 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 
 	opts := rest.Opts{
 		Method:     "GET",
-		Path:       fmt.Sprintf("/3/drive/%s/files/%s/path", f.opt.DriveID, directoryID),
+		Path:       fmt.Sprintf("/3/drive/%s/files/%s/name", f.opt.DriveID, directoryID),
 		Parameters: url.Values{},
 	}
 	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(leaf))
@@ -404,9 +404,15 @@ type listAllFn func(*api.Item) bool
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, recursive bool, fn listAllFn) (found bool, err error) {
 	// fs.Infof(nil, "Stacktrace : %s", string(debug.Stack()))
 	listSomeFiles := func(currentDirID string, fromCursor string) (api.SearchResult, error) {
+
+		apiPath := fmt.Sprintf("/3/drive/%s/files/%s/listing/full", f.opt.DriveID, currentDirID)
+		if currentDirID == "1" {
+			apiPath = fmt.Sprintf("/3/drive/%s/files/%s/files", f.opt.DriveID, currentDirID)
+		}
+
 		opts := rest.Opts{
 			Method:     "GET",
-			Path:       fmt.Sprintf("/3/drive/%s/files/%s/files", f.opt.DriveID, currentDirID),
+			Path:       apiPath,
 			Parameters: url.Values{},
 		}
 		opts.Parameters.Set("limit", "1000")
