@@ -118,12 +118,19 @@ func (c *Client) Authenticate(ctx context.Context) error {
 
 	fs.Debugf("icloud", "Authenticating as %s\n", c.appleID)
 	err := c.Session.SignIn(ctx, c.appleID, c.password)
+	if err != nil {
+		return err
+	}
 
-	if err == nil {
-		err = c.Session.AuthWithToken(ctx)
-		if err == nil && c.sessionSaveCallback != nil {
-			c.sessionSaveCallback(c.Session)
-		}
+	// If 2FA is required, don't try AuthWithToken yet — the caller
+	// must complete 2FA first, then call AuthWithToken.
+	if c.Session.Requires2FA() {
+		return nil
+	}
+
+	err = c.Session.AuthWithToken(ctx)
+	if err == nil && c.sessionSaveCallback != nil {
+		c.sessionSaveCallback(c.Session)
 	}
 	return err
 }

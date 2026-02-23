@@ -12,12 +12,26 @@ The initial setup for an iCloud Drive backend involves getting a trust token/ses
 This can be done by simply using the regular iCloud password, and accepting the code
 prompt on another iCloud connected device.
 
-**IMPORTANT**: At the moment an app specific password won't be accepted. Only
-use your regular password and 2FA.
+**IMPORTANT**: App-specific passwords are not accepted. Only use your
+regular Apple ID password and 2FA.
 
 `rclone config` walks you through the token creation. The trust token is valid
 for 30 days. After which you will have to reauthenticate with `rclone reconnect`
 or `rclone config`.
+
+## Authentication
+
+rclone authenticates with Apple using [SRP (Secure Remote Password)](https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol),
+the same protocol used by the iCloud web interface. Your password is never
+sent to Apple's servers -- instead, a cryptographic proof is exchanged that
+verifies you know the password without revealing it.
+
+The authentication flow is:
+
+1. rclone initiates a session with Apple's identity service
+2. An SRP key exchange takes place (your password is used locally to derive a key)
+3. Apple sends a 2FA prompt to your trusted devices
+4. After you enter the 2FA code, rclone receives a trust token for future sessions
 
 Here is an example of how to make a remote called `iclouddrive`.  First run:
 
