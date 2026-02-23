@@ -517,11 +517,16 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, strconv.Itoa(info.ID))
 
+			// In recursive mode, don't return directories - they'll be created
+			// implicitly by checkParent from the file paths
+			if recursive {
+				return false
+			}
+
 			d := fs.NewDir(remote, info.ModTime()).SetID(strconv.Itoa(info.ID))
 			d.SetParentID(strconv.Itoa(info.ParentID))
 			d.SetSize(info.Size)
 
-			// fs.Infof(nil, "CALL CALLBACK WITH %s ", info.Name)
 			iErr = callback(d)
 		} else {
 			o, err := f.newObjectWithInfo(ctx, remote, info)
@@ -530,7 +535,6 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 				return true
 			}
 
-			fs.Infof(nil, "CALL CALLBACK WITH %s ", info.Name)
 			iErr = callback(o)
 		}
 
