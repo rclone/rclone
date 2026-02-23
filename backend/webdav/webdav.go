@@ -423,7 +423,7 @@ func (f *Fs) filePath(file string) string {
 	if f.opt.Enc != encoder.EncodeZero {
 		subPath = f.opt.Enc.FromStandardPath(subPath)
 	}
-	return rest.URLPathEscape(subPath)
+	return rest.URLPathEscapeAll(subPath)
 }
 
 // dirPath returns a directory path (f.root, dir)
@@ -610,7 +610,7 @@ func (f *Fs) findHeader(headers fs.CommaSepList, find string) bool {
 
 // fetch the bearer token and set it if successful
 func (f *Fs) fetchAndSetBearerToken() error {
-	_, err, _ := f.authSingleflight.Do("bearerToken", func() (interface{}, error) {
+	_, err, _ := f.authSingleflight.Do("bearerToken", func() (any, error) {
 		if len(f.opt.BearerTokenCommand) == 0 {
 			return nil, nil
 		}

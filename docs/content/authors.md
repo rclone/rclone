@@ -1075,3 +1075,4 @@ put them back in again. -->
 - StarHack <StarHack@users.noreply.github.com>
 - Leon Brocard <acme@astray.com>
 - Cohinem <143964778+Cohinem@users.noreply.github.com>
+- Jack Kelly <jack@OpenClimateFix.org>

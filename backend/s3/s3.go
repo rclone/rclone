@@ -828,6 +828,107 @@ use |-vv| to see the debug level logs.
 		}, {
 			Name: "ibm_resource_instance_id",
 			Help: "IBM service instance id",
+		}, {
+			Name: "object_lock_mode",
+			Help: `Object Lock mode to apply when uploading or copying objects.
+
+Set this to apply Object Lock retention mode to objects.
+If not set, no Object Lock mode is applied (even with --metadata).
+
+Note: To enable Object Lock retention, you must set BOTH object_lock_mode
+AND object_lock_retain_until_date. Setting only one has no effect.
+
+- GOVERNANCE: Set Object Lock mode to GOVERNANCE
+- COMPLIANCE: Set Object Lock mode to COMPLIANCE
+- copy: Copy the mode from the source object (requires --metadata)
+
+See: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html`,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "GOVERNANCE",
+				Help:  "Set Object Lock mode to GOVERNANCE",
+			}, {
+				Value: "COMPLIANCE",
+				Help:  "Set Object Lock mode to COMPLIANCE",
+			}, {
+				Value: "copy",
+				Help:  "Copy from source object (requires --metadata)",
+			}},
+		}, {
+			Name: "object_lock_retain_until_date",
+			Help: `Object Lock retention until date to apply when uploading or copying objects.
+
+Set this to apply Object Lock retention date to objects.
+If not set, no retention date is applied (even with --metadata).
+
+Note: To enable Object Lock retention, you must set BOTH object_lock_mode
+AND object_lock_retain_until_date. Setting only one has no effect.
+
+Accepts:
+- RFC 3339 format: 2030-01-02T15:04:05Z
+- Duration from now: 365d, 1y, 6M (days, years, months)
+- copy: Copy the date from the source object (requires --metadata)
+
+See: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html`,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "copy",
+				Help:  "Copy from source object (requires --metadata)",
+			}, {
+				Value: "2030-01-01T00:00:00Z",
+				Help:  "Set specific date (RFC 3339 format)",
+			}, {
+				Value: "365d",
+				Help:  "Set retention for 365 days from now",
+			}, {
+				Value: "1y",
+				Help:  "Set retention for 1 year from now",
+			}},
+		}, {
+			Name: "object_lock_legal_hold_status",
+			Help: `Object Lock legal hold status to apply when uploading or copying objects.
+
+Set this to apply Object Lock legal hold to objects.
+If not set, no legal hold is applied (even with --metadata).
+
+Note: Legal hold is independent of retention and can be set separately.
+
+- ON: Enable legal hold
+- OFF: Disable legal hold
+- copy: Copy the legal hold status from the source object (requires --metadata)
+
+See: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html`,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "ON",
+				Help:  "Enable legal hold",
+			}, {
+				Value: "OFF",
+				Help:  "Disable legal hold",
+			}, {
+				Value: "copy",
+				Help:  "Copy from source object (requires --metadata)",
+			}},
+		}, {
+			Name:     "bypass_governance_retention",
+			Help:     `Allow deleting or modifying objects locked with GOVERNANCE mode.`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:    "bucket_object_lock_enabled",
+			Help:    `Enable Object Lock when creating new buckets.`,
+			Default: false,
+		}, {
+			Name: "object_lock_set_after_upload",
+			Help: `Set Object Lock via separate API calls after upload.
+
+Use this for S3-compatible providers that don't support setting Object Lock
+headers during PUT operations. When enabled, Object Lock is set via separate
+PutObjectRetention and PutObjectLegalHold API calls after the upload completes.
+
+This adds extra API calls per object, so only enable if your provider requires it.`,
+			Default:  false,
+			Advanced: true,
 		},
 		}}))
 }
@@ -922,6 +1023,21 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 		Example:  "2006-01-02T15:04:05.999999999Z07:00",
 		ReadOnly: true,
 	},
+	"object-lock-mode": {
+		Help:    "Object Lock mode: GOVERNANCE or COMPLIANCE",
+		Type:    "string",
+		Example: "GOVERNANCE",
+	},
+	"object-lock-retain-until-date": {
+		Help:    "Object Lock retention until date",
+		Type:    "RFC 3339",
+		Example: "2030-01-02T15:04:05Z",
+	},
+	"object-lock-legal-hold-status": {
+		Help:    "Object Lock legal hold status: ON or OFF",
+		Type:    "string",
+		Example: "OFF",
+	},
 }
 
 // Options defines the configuration for this backend
@@ -993,6 +1109,12 @@ type Options struct {
 	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
+	ObjectLockMode              string               `config:"object_lock_mode"`
+	ObjectLockRetainUntilDate   string               `config:"object_lock_retain_until_date"`
+	ObjectLockLegalHoldStatus   string               `config:"object_lock_legal_hold_status"`
+	BypassGovernanceRetention   bool                 `config:"bypass_governance_retention"`
+	BucketObjectLockEnabled     bool                 `config:"bucket_object_lock_enabled"`
+	ObjectLockSetAfterUpload    bool                 `config:"object_lock_set_after_upload"`
 }
 
 // Fs represents a remote s3 server
@@ -1037,6 +1159,11 @@ type Object struct {
 	contentDisposition *string // Content-Disposition: header
 	contentEncoding    *string // Content-Encoding: header
 	contentLanguage    *string // Content-Language: header
+
+	// Object Lock metadata
+	objectLockMode            *string    // Object Lock mode: GOVERNANCE or COMPLIANCE
+	objectLockRetainUntilDate *time.Time // Object Lock retention until date
+	objectLockLegalHoldStatus *string    // Object Lock legal hold: ON or OFF
 }
 
 // safely dereference the pointer, returning a zero T if nil
@@ -1055,6 +1182,21 @@ func getHTTPStatusCode(err error) int {
 		return httpErr.HTTPStatusCode()
 	}
 	return -1
+}
+
+// parseRetainUntilDate parses a retain until date from a string.
+// It accepts RFC 3339 format or duration strings like "365d", "1y", "6m".
+func parseRetainUntilDate(s string) (time.Time, error) {
+	// First try RFC 3339 format
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t, nil
+	}
+	// Try as a duration from now
+	d, err := fs.ParseDuration(s)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("can't parse %q as RFC 3339 date or duration: %w", s, err)
+	}
+	return time.Now().Add(d), nil
 }
 
 // ------------------------------------------------------------
@@ -2654,8 +2796,9 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 	}
 	return f.cache.Create(bucket, func() error {
 		req := s3.CreateBucketInput{
-			Bucket: &bucket,
-			ACL:    types.BucketCannedACL(f.opt.BucketACL),
+			Bucket:                     &bucket,
+			ACL:                        types.BucketCannedACL(f.opt.BucketACL),
+			ObjectLockEnabledForBucket: &f.opt.BucketObjectLockEnabled,
 		}
 		if f.opt.LocationConstraint != "" {
 			req.CreateBucketConfiguration = &types.CreateBucketConfiguration{
@@ -2772,6 +2915,24 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 	}
 	if req.StorageClass == types.StorageClass("") && f.opt.StorageClass != "" {
 		req.StorageClass = types.StorageClass(f.opt.StorageClass)
+	}
+
+	// Apply Object Lock options via headers (unless ObjectLockSetAfterUpload is set)
+	// "copy" means: keep the value from source (passed via req from prepareUpload/setFrom functions)
+	if !f.opt.ObjectLockSetAfterUpload {
+		if f.opt.ObjectLockMode != "" && !strings.EqualFold(f.opt.ObjectLockMode, "copy") {
+			req.ObjectLockMode = types.ObjectLockMode(strings.ToUpper(f.opt.ObjectLockMode))
+		}
+		if f.opt.ObjectLockRetainUntilDate != "" && !strings.EqualFold(f.opt.ObjectLockRetainUntilDate, "copy") {
+			retainDate, err := parseRetainUntilDate(f.opt.ObjectLockRetainUntilDate)
+			if err != nil {
+				return fmt.Errorf("invalid object_lock_retain_until_date: %w", err)
+			}
+			req.ObjectLockRetainUntilDate = &retainDate
+		}
+		if f.opt.ObjectLockLegalHoldStatus != "" && !strings.EqualFold(f.opt.ObjectLockLegalHoldStatus, "copy") {
+			req.ObjectLockLegalHoldStatus = types.ObjectLockLegalHoldStatus(strings.ToUpper(f.opt.ObjectLockLegalHoldStatus))
+		}
 	}
 
 	if src.bytes >= int64(f.opt.CopyCutoff) {
@@ -2956,7 +3117,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	setFrom_s3CopyObjectInput_s3PutObjectInput(&req, ui.req)
-	if ci.Metadata {
+	// Use REPLACE directive if metadata is being modified, otherwise S3 ignores our values
+	// This is needed when:
+	// 1. --metadata flag is set
+	// 2. Any Object Lock option is set (to override or explicitly copy)
+	needsReplace := ci.Metadata ||
+		f.opt.ObjectLockMode != "" ||
+		f.opt.ObjectLockRetainUntilDate != "" ||
+		f.opt.ObjectLockLegalHoldStatus != ""
+	if needsReplace {
 		req.MetadataDirective = types.MetadataDirectiveReplace
 	}
 
@@ -2964,7 +3133,21 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	return f.NewObject(ctx, remote)
+	dstObj, err := f.NewObject(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set Object Lock via separate API calls if requested
+	if f.opt.ObjectLockSetAfterUpload {
+		if dstObject, ok := dstObj.(*Object); ok {
+			if err := dstObject.setObjectLockAfterUpload(ctx, srcObj); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return dstObj, nil
 }
 
 // Hashes returns the supported hash sets.
@@ -3843,6 +4026,19 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 	o.contentEncoding = stringClonePointer(removeAWSChunked(resp.ContentEncoding))
 	o.contentLanguage = stringClonePointer(resp.ContentLanguage)
 
+	// Set Object Lock metadata
+	if resp.ObjectLockMode != "" {
+		mode := string(resp.ObjectLockMode)
+		o.objectLockMode = &mode
+	}
+	if resp.ObjectLockRetainUntilDate != nil {
+		o.objectLockRetainUntilDate = resp.ObjectLockRetainUntilDate
+	}
+	if resp.ObjectLockLegalHoldStatus != "" {
+		status := string(resp.ObjectLockLegalHoldStatus)
+		o.objectLockLegalHoldStatus = &status
+	}
+
 	// If decompressing then size and md5sum are unknown
 	if o.fs.opt.Decompress && deref(o.contentEncoding) == "gzip" {
 		o.bytes = -1
@@ -4561,6 +4757,26 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 		case "btime":
 			// write as metadata since we can't set it
 			ui.req.Metadata[k] = v
+		case "object-lock-mode":
+			// Only apply if option is set to "copy" and not using after-upload API
+			if strings.EqualFold(o.fs.opt.ObjectLockMode, "copy") && !o.fs.opt.ObjectLockSetAfterUpload {
+				ui.req.ObjectLockMode = types.ObjectLockMode(v)
+			}
+		case "object-lock-retain-until-date":
+			// Only apply if option is set to "copy" and not using after-upload API
+			if strings.EqualFold(o.fs.opt.ObjectLockRetainUntilDate, "copy") && !o.fs.opt.ObjectLockSetAfterUpload {
+				retainDate, err := time.Parse(time.RFC3339, v)
+				if err != nil {
+					fs.Debugf(o, "failed to parse object-lock-retain-until-date %q: %v", v, err)
+				} else {
+					ui.req.ObjectLockRetainUntilDate = &retainDate
+				}
+			}
+		case "object-lock-legal-hold-status":
+			// Only apply if option is set to "copy" and not using after-upload API
+			if strings.EqualFold(o.fs.opt.ObjectLockLegalHoldStatus, "copy") && !o.fs.opt.ObjectLockSetAfterUpload {
+				ui.req.ObjectLockLegalHoldStatus = types.ObjectLockLegalHoldStatus(v)
+			}
 		default:
 			ui.req.Metadata[k] = v
 		}
@@ -4626,6 +4842,25 @@ func (o *Object) prepareUpload(ctx context.Context, src fs.ObjectInfo, options [
 	if o.fs.opt.StorageClass != "" {
 		ui.req.StorageClass = types.StorageClass(o.fs.opt.StorageClass)
 	}
+
+	// Apply Object Lock options via headers (unless ObjectLockSetAfterUpload is set)
+	// "copy" means: keep the value from metadata (already applied above in the switch)
+	if !o.fs.opt.ObjectLockSetAfterUpload {
+		if o.fs.opt.ObjectLockMode != "" && !strings.EqualFold(o.fs.opt.ObjectLockMode, "copy") {
+			ui.req.ObjectLockMode = types.ObjectLockMode(strings.ToUpper(o.fs.opt.ObjectLockMode))
+		}
+		if o.fs.opt.ObjectLockRetainUntilDate != "" && !strings.EqualFold(o.fs.opt.ObjectLockRetainUntilDate, "copy") {
+			retainDate, err := parseRetainUntilDate(o.fs.opt.ObjectLockRetainUntilDate)
+			if err != nil {
+				return ui, fmt.Errorf("invalid object_lock_retain_until_date %q: %w", o.fs.opt.ObjectLockRetainUntilDate, err)
+			}
+			ui.req.ObjectLockRetainUntilDate = &retainDate
+		}
+		if o.fs.opt.ObjectLockLegalHoldStatus != "" && !strings.EqualFold(o.fs.opt.ObjectLockLegalHoldStatus, "copy") {
+			ui.req.ObjectLockLegalHoldStatus = types.ObjectLockLegalHoldStatus(strings.ToUpper(o.fs.opt.ObjectLockLegalHoldStatus))
+		}
+	}
+
 	// Apply upload options
 	for _, option := range options {
 		key, value := option.Header()
@@ -4749,6 +4984,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		fs.Debugf(o, "Multipart upload Etag: %s OK", wantETag)
 	}
+
+	// Set Object Lock via separate API calls if requested
+	if o.fs.opt.ObjectLockSetAfterUpload {
+		if err := o.setObjectLockAfterUpload(ctx, src); err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
@@ -4766,11 +5009,128 @@ func (o *Object) Remove(ctx context.Context) error {
 	if o.fs.opt.RequesterPays {
 		req.RequestPayer = types.RequestPayerRequester
 	}
+	if o.fs.opt.BypassGovernanceRetention {
+		req.BypassGovernanceRetention = &o.fs.opt.BypassGovernanceRetention
+	}
 	err := o.fs.pacer.Call(func() (bool, error) {
 		_, err := o.fs.c.DeleteObject(ctx, &req)
 		return o.fs.shouldRetry(ctx, err)
 	})
 	return err
+}
+
+// setObjectRetention sets Object Lock retention on an object via PutObjectRetention API
+//
+// Note: We use smithyhttp.AddContentChecksumMiddleware to ensure Content-MD5 is
+// calculated for the request body. The AWS SDK v2 switched from MD5 to CRC32 as
+// the default checksum algorithm, but some S3-compatible providers (e.g. MinIO)
+// still require Content-MD5 for PutObjectRetention requests.
+// See: https://github.com/aws/aws-sdk-go-v2/discussions/2960
+func (o *Object) setObjectRetention(ctx context.Context, mode types.ObjectLockRetentionMode, retainUntilDate time.Time) error {
+	bucket, bucketPath := o.split()
+	req := s3.PutObjectRetentionInput{
+		Bucket:    &bucket,
+		Key:       &bucketPath,
+		VersionId: o.versionID,
+		Retention: &types.ObjectLockRetention{
+			Mode:            mode,
+			RetainUntilDate: &retainUntilDate,
+		},
+	}
+	if o.fs.opt.RequesterPays {
+		req.RequestPayer = types.RequestPayerRequester
+	}
+	if o.fs.opt.BypassGovernanceRetention {
+		req.BypassGovernanceRetention = &o.fs.opt.BypassGovernanceRetention
+	}
+	return o.fs.pacer.Call(func() (bool, error) {
+		_, err := o.fs.c.PutObjectRetention(ctx, &req,
+			s3.WithAPIOptions(smithyhttp.AddContentChecksumMiddleware))
+		return o.fs.shouldRetry(ctx, err)
+	})
+}
+
+// setObjectLegalHold sets Object Lock legal hold on an object via PutObjectLegalHold API
+//
+// Note: We use smithyhttp.AddContentChecksumMiddleware to ensure Content-MD5 is
+// calculated for the request body. The AWS SDK v2 switched from MD5 to CRC32 as
+// the default checksum algorithm, but some S3-compatible providers (e.g. MinIO)
+// still require Content-MD5 for PutObjectLegalHold requests.
+// See: https://github.com/aws/aws-sdk-go-v2/discussions/2960
+func (o *Object) setObjectLegalHold(ctx context.Context, status types.ObjectLockLegalHoldStatus) error {
+	bucket, bucketPath := o.split()
+	req := s3.PutObjectLegalHoldInput{
+		Bucket:    &bucket,
+		Key:       &bucketPath,
+		VersionId: o.versionID,
+		LegalHold: &types.ObjectLockLegalHold{
+			Status: status,
+		},
+	}
+	if o.fs.opt.RequesterPays {
+		req.RequestPayer = types.RequestPayerRequester
+	}
+	return o.fs.pacer.Call(func() (bool, error) {
+		_, err := o.fs.c.PutObjectLegalHold(ctx, &req,
+			s3.WithAPIOptions(smithyhttp.AddContentChecksumMiddleware))
+		return o.fs.shouldRetry(ctx, err)
+	})
+}
+
+// setObjectLockAfterUpload sets Object Lock via separate API calls after upload
+// This is for S3 providers that don't support Object Lock headers during PUT
+func (o *Object) setObjectLockAfterUpload(ctx context.Context, src fs.ObjectInfo) error {
+	// Determine the mode
+	var mode types.ObjectLockRetentionMode
+	modeOpt := o.fs.opt.ObjectLockMode
+	if strings.EqualFold(modeOpt, "copy") {
+		if srcObj, ok := src.(*Object); ok && srcObj.objectLockMode != nil {
+			mode = types.ObjectLockRetentionMode(*srcObj.objectLockMode)
+		}
+	} else if modeOpt != "" {
+		mode = types.ObjectLockRetentionMode(strings.ToUpper(modeOpt))
+	}
+
+	// Determine the retain until date
+	var retainUntilDate time.Time
+	dateOpt := o.fs.opt.ObjectLockRetainUntilDate
+	if strings.EqualFold(dateOpt, "copy") {
+		if srcObj, ok := src.(*Object); ok && srcObj.objectLockRetainUntilDate != nil {
+			retainUntilDate = *srcObj.objectLockRetainUntilDate
+		}
+	} else if dateOpt != "" {
+		var err error
+		retainUntilDate, err = parseRetainUntilDate(dateOpt)
+		if err != nil {
+			return fmt.Errorf("invalid object_lock_retain_until_date %q: %w", dateOpt, err)
+		}
+	}
+
+	// Set retention if both mode and date are set
+	if mode != "" && !retainUntilDate.IsZero() {
+		if err := o.setObjectRetention(ctx, mode, retainUntilDate); err != nil {
+			return fmt.Errorf("failed to set object retention: %w", err)
+		}
+	}
+
+	// Determine and set legal hold
+	var legalHold types.ObjectLockLegalHoldStatus
+	legalHoldOpt := o.fs.opt.ObjectLockLegalHoldStatus
+	if strings.EqualFold(legalHoldOpt, "copy") {
+		if srcObj, ok := src.(*Object); ok && srcObj.objectLockLegalHoldStatus != nil {
+			legalHold = types.ObjectLockLegalHoldStatus(*srcObj.objectLockLegalHoldStatus)
+		}
+	} else if legalHoldOpt != "" {
+		legalHold = types.ObjectLockLegalHoldStatus(strings.ToUpper(legalHoldOpt))
+	}
+
+	if legalHold != "" {
+		if err := o.setObjectLegalHold(ctx, legalHold); err != nil {
+			return fmt.Errorf("failed to set legal hold: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // MimeType of an Object if known, "" otherwise
@@ -4816,7 +5176,7 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	if err != nil {
 		return nil, err
 	}
-	metadata = make(fs.Metadata, len(o.meta)+7)
+	metadata = make(fs.Metadata, len(o.meta)+10)
 	for k, v := range o.meta {
 		switch k {
 		case metaMtime:
@@ -4851,6 +5211,15 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	setMetadata("content-disposition", o.contentDisposition)
 	setMetadata("content-encoding", o.contentEncoding)
 	setMetadata("content-language", o.contentLanguage)
+
+	// Set Object Lock metadata
+	setMetadata("object-lock-mode", o.objectLockMode)
+	if o.objectLockRetainUntilDate != nil {
+		formatted := o.objectLockRetainUntilDate.Format(time.RFC3339)
+		setMetadata("object-lock-retain-until-date", &formatted)
+	}
+	setMetadata("object-lock-legal-hold-status", o.objectLockLegalHoldStatus)
+
 	metadata["tier"] = o.GetTier()
 
 	return metadata, nil
