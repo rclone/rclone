@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	httplib "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -31,16 +32,17 @@ const (
 
 // Server is a s3.FileSystem interface
 type Server struct {
-	server       *httplib.Server
-	opt          Options
-	f            fs.Fs
-	_vfs         *vfs.VFS // don't use directly, use getVFS
-	faker        *gofakes3.GoFakeS3
-	handler      http.Handler
-	proxy        *proxy.Proxy
-	ctx          context.Context // for global config
-	s3Secret     string
-	etagHashType hash.Type
+	server         *httplib.Server
+	opt            Options
+	f              fs.Fs
+	_vfs           *vfs.VFS // don't use directly, use getVFS
+	faker          *gofakes3.GoFakeS3
+	handler        http.Handler
+	proxy          *proxy.Proxy
+	ctx            context.Context // for global config
+	s3Secret       string
+	etagHashType   hash.Type
+	metricsCleanup func()
 }
 
 // Make a new S3 Server to serve the remote
@@ -112,6 +114,10 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 	router := w.server.Router()
 	w.Bind(router)
 
+	if metrics.Enabled() {
+		w.metricsCleanup = metrics.TrackFS(ctx, f)
+	}
+
 	return w, nil
 }
 
@@ -148,6 +154,7 @@ func (w *Server) Bind(router chi.Router) {
 
 // Serve serves the s3 server until the server is shutdown
 func (w *Server) Serve() error {
+	defer w.closeMetrics()
 	w.server.Serve()
 	fs.Logf(w.f, "Starting s3 server on %s", w.server.URLs())
 	w.server.Wait()
@@ -161,7 +168,18 @@ func (w *Server) Addr() net.Addr {
 
 // Shutdown the server
 func (w *Server) Shutdown() error {
-	return w.server.Shutdown()
+	if err := w.server.Shutdown(); err != nil {
+		return err
+	}
+	w.closeMetrics()
+	return nil
+}
+
+func (w *Server) closeMetrics() {
+	if w.metricsCleanup != nil {
+		w.metricsCleanup()
+		w.metricsCleanup = nil
+	}
 }
 
 func authPairMiddleware(next http.Handler, ws *Server) http.Handler {

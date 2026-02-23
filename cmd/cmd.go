@@ -36,6 +36,7 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/buildinfo"
 	"github.com/rclone/rclone/lib/exitcode"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/lib/terminal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -402,6 +403,10 @@ func initConfig() {
 	// Start accounting
 	accounting.Start(ctx)
 
+	if err := metrics.Init(ctx); err != nil {
+		fs.Fatalf(nil, "Failed to initialise metrics: %v", err)
+	}
+
 	// Configure console
 	if ci.NoConsole {
 		// Hide the console window
@@ -427,9 +432,11 @@ func initConfig() {
 		fs.Fatalf(nil, "Failed to start remote control: %v", err)
 	}
 
+	metrics.SetRCEmbed(rc.Opt.EnableMetrics)
+
 	// Start the metrics server if configured and not running the "rc" command
-	if len(os.Args) >= 2 && os.Args[1] != "rc" {
-		_, err = rcserver.MetricsStart(ctx, &rc.Opt)
+	if metrics.Enabled() && !metrics.RCEmbed() && (len(os.Args) >= 2 && os.Args[1] != "rc") {
+		_, err = metrics.StartStandalone(ctx)
 		if err != nil {
 			fs.Fatalf(nil, "Failed to start metrics server: %v", err)
 		}

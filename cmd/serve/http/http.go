@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/serve"
+	"github.com/rclone/rclone/lib/metrics"
 	"github.com/rclone/rclone/lib/systemd"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -139,12 +140,13 @@ control the stats printing.
 
 // HTTP contains everything to run the server
 type HTTP struct {
-	f      fs.Fs
-	_vfs   *vfs.VFS // don't use directly, use getVFS
-	server *libhttp.Server
-	opt    Options
-	proxy  *proxy.Proxy
-	ctx    context.Context // for global config
+	f              fs.Fs
+	_vfs           *vfs.VFS // don't use directly, use getVFS
+	server         *libhttp.Server
+	opt            Options
+	proxy          *proxy.Proxy
+	ctx            context.Context // for global config
+	metricsCleanup func()
 }
 
 // Gets the VFS in use for this request
@@ -201,14 +203,20 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		middleware.SetHeader("Accept-Ranges", "bytes"),
 		middleware.SetHeader("Server", "rclone/"+fs.Version),
 	)
+
 	router.Get("/*", s.handler)
 	router.Head("/*", s.handler)
+
+	if metrics.Enabled() {
+		s.metricsCleanup = metrics.TrackFS(ctx, f)
+	}
 
 	return s, nil
 }
 
 // Serve HTTP until the server is shutdown
 func (s *HTTP) Serve() error {
+	defer s.closeMetrics()
 	s.server.Serve()
 	fs.Logf(s.f, "HTTP Server started on %s", s.server.URLs())
 	s.server.Wait()
@@ -222,7 +230,18 @@ func (s *HTTP) Addr() net.Addr {
 
 // Shutdown the server
 func (s *HTTP) Shutdown() error {
-	return s.server.Shutdown()
+	if err := s.server.Shutdown(); err != nil {
+		return err
+	}
+	s.closeMetrics()
+	return nil
+}
+
+func (s *HTTP) closeMetrics() {
+	if s.metricsCleanup != nil {
+		s.metricsCleanup()
+		s.metricsCleanup = nil
+	}
 }
 
 // handler reads incoming requests and dispatches them
