@@ -66,9 +66,11 @@ func init() {
 	https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...`,
 			Default: "",
 		}, {
-			Name:    "access_token",
-			Help:    `Access token generated in Infomaniak profile manager.`,
-			Default: "",
+			Name:       "access_token",
+			Help:       `Access token generated in Infomaniak profile manager.`,
+			Required:   true,
+			IsPassword: true,
+			Sensitive:  true,
 		}, {
 			Name:     "endpoint",
 			Help:     "By default, pointing to the production API.",
@@ -277,7 +279,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
 		CanHaveEmptyDirectories: true,
-		PartialUploads:          true,
+		PartialUploads:          false,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 
@@ -504,7 +506,8 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 			f.dirCache.Put(remote, strconv.Itoa(info.ID))
 
 			d := fs.NewDir(remote, info.ModTime()).SetID(strconv.Itoa(info.ID))
-			// FIXME more info from dir?
+			d.SetParentID(strconv.Itoa(info.ParentID))
+			d.SetSize(info.Size)
 			iErr = callback(d)
 		} else {
 			o, err := f.newObjectWithInfo(ctx, remote, info)
@@ -514,17 +517,21 @@ func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callbac
 			}
 			iErr = callback(o)
 		}
+
 		if iErr != nil {
 			return true
 		}
 		return false
 	})
+
 	if err != nil {
 		return err
 	}
+
 	if iErr != nil {
 		return iErr
 	}
+
 	return nil
 }
 
@@ -1110,12 +1117,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	}
 	info, err := o.fs.readMetaDataForPath(ctx, o.remote)
 	if err != nil {
-		//if apiErr, ok := err.(*api.Error); ok {
-		// FIXME
-		// if apiErr.Code == "not_found" || apiErr.Code == "trashed" {
-		// 	return fs.ErrorObjectNotFound
-		// }
-		//}
 		return err
 	}
 	return o.setMetaData(info)
@@ -1158,11 +1159,8 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		err = result.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
-	if err != nil {
-		return fmt.Errorf("SetModTime: %w", err)
-	}
 
-	if result.Status != "success" {
+	if err != nil {
 		return fs.ErrorCantSetModTime
 	}
 
@@ -1264,23 +1262,8 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 		return shouldRetry(ctx, resp, err)
 	})
 
-	// TODO: check if the following erroneous behavior also happens on kDrive
-	//       (this workaround comes from the pcloud backend implementation)
 	if err != nil {
-		// sometimes we get a half complete file on
-		// error, so delete it if it exists, trying a few times
-		for range 5 {
-			delObj, delErr := o.fs.NewObject(ctx, o.remote)
-			if delErr == nil && delObj != nil {
-				_ = delObj.Remove(ctx)
-				break
-			}
-			time.Sleep(time.Second)
-		}
 		return err
-	}
-	if result.ResultStatus.IsError() {
-		return fmt.Errorf("failed to upload %v - not sure why", o)
 	}
 
 	o.size = size
