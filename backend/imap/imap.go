@@ -192,6 +192,84 @@ func regexToMap(r *regexp.Regexp, str string) map[string]string {
 }
 
 // ------------------------------------------------------------
+// Maildir name functions
+// Example: 1771568830.H71c34c671bcb1da4.imap.rclone.org,S=3444,W=3444-2,SATD
+//
+//	1771568830 - date in unix format
+//	H71c34c671bcb1da4 - XXH3 hash for the message (H+hash value)
+//	imap.rclone.org - host, not really needed.
+//	S=3444 - Message size
+//	W=3444 - Message size reported by mailserver
+//	SATD - Maildir flags
+//
+// ------------------------------------------------------------
+func createMaildirName(date time.Time, checksum string, size int64, rf822Size int64, flags []string) string {
+	name := fmt.Sprintf("%d.H%s.%s,S=%d,W=%d-2,", date.UTC().Unix(), checksum, imapHost, size, rf822Size)
+	if slices.Contains(flags, imap.SeenFlag) {
+		name += "S"
+	}
+	if slices.Contains(flags, imap.AnsweredFlag) {
+		name += "A"
+	}
+	if slices.Contains(flags, imap.DeletedFlag) {
+		name += "T"
+	}
+	if slices.Contains(flags, imap.DraftFlag) {
+		name += "D"
+	}
+	if slices.Contains(flags, imap.FlaggedFlag) {
+		name += "F"
+	}
+	return name
+}
+
+func parseMaildirName(name string) (date time.Time, checksum string, size int64, rf822Size int64, flags []string, err error) {
+	matches := messageNameRegEx.FindStringSubmatch(path.Base(name))
+	if matches == nil {
+		err = errorInvalidFileName
+		return
+	}
+	// get date
+	i, err := strconv.ParseInt(matches[1], 10, 64)
+	if err != nil {
+		err = errorInvalidFileName
+		return
+	}
+	date = time.Unix(i, 0).UTC()
+	// get hash
+	checksum = matches[2]
+	// get size
+	size, err = strconv.ParseInt(matches[4], 10, 32)
+	if err != nil {
+		err = errorInvalidFileName
+		return
+	}
+	// get rf822Size
+	rf822Size, err = strconv.ParseInt(matches[5], 10, 32)
+	if err != nil {
+		err = errorInvalidFileName
+		return
+	}
+	// get flags
+	if strings.Contains(matches[6], "S") {
+		flags = append(flags, imap.SeenFlag)
+	}
+	if strings.Contains(matches[6], "A") {
+		flags = append(flags, imap.AnsweredFlag)
+	}
+	if strings.Contains(matches[6], "T") {
+		flags = append(flags, imap.DeletedFlag)
+	}
+	if strings.Contains(matches[6], "D") {
+		flags = append(flags, imap.DraftFlag)
+	}
+	if strings.Contains(matches[6], "F") {
+		flags = append(flags, imap.FlaggedFlag)
+	}
+	return
+}
+
+// ------------------------------------------------------------
 // Descriptor
 // ------------------------------------------------------------
 
@@ -206,23 +284,9 @@ type descriptor struct {
 }
 
 func newDescriptor(parent string, name string, date time.Time, checksum string, size int64, rf822Size int64, flags []string) *descriptor {
+	// create Maildir name for message
 	if name == "" {
-		name = fmt.Sprintf("%d.H%s.%s,S=%d,W=%d-2,", date.UTC().Unix(), checksum, imapHost, size, rf822Size)
-		if slices.Contains(flags, imap.SeenFlag) {
-			name += "S"
-		}
-		if slices.Contains(flags, imap.AnsweredFlag) {
-			name += "A"
-		}
-		if slices.Contains(flags, imap.DeletedFlag) {
-			name += "T"
-		}
-		if slices.Contains(flags, imap.DraftFlag) {
-			name += "D"
-		}
-		if slices.Contains(flags, imap.FlaggedFlag) {
-			name += "F"
-		}
+		name = createMaildirName(date, checksum, size, rf822Size, flags)
 	}
 	return &descriptor{
 		parent:    parent,
@@ -303,46 +367,10 @@ func objectToDescriptor(ctx context.Context, parent string, o fs.Object) (info *
 }
 
 func nameToDescriptor(parent, name string) (*descriptor, error) {
-	matches := messageNameRegEx.FindStringSubmatch(path.Base(name))
-	if matches == nil {
-		return nil, errorInvalidFileName
-	}
-	// get date
-	i, err := strconv.ParseInt(matches[1], 10, 64)
+	date, checksum, size, rf822Size, flags, err := parseMaildirName(name)
 	if err != nil {
 		return nil, errorInvalidFileName
 	}
-	date := time.Unix(i, 0).UTC()
-	// get hash
-	checksum := matches[2]
-	// get size
-	size, err := strconv.ParseInt(matches[4], 10, 32)
-	if err != nil {
-		return nil, errorInvalidFileName
-	}
-	// get rf822Size
-	rf822Size, err := strconv.ParseInt(matches[5], 10, 32)
-	if err != nil {
-		return nil, errorInvalidFileName
-	}
-	// get flags
-	flags := []string{}
-	if strings.Contains(matches[6], "S") {
-		flags = append(flags, imap.SeenFlag)
-	}
-	if strings.Contains(matches[6], "A") {
-		flags = append(flags, imap.AnsweredFlag)
-	}
-	if strings.Contains(matches[6], "T") {
-		flags = append(flags, imap.DeletedFlag)
-	}
-	if strings.Contains(matches[6], "D") {
-		flags = append(flags, imap.DraftFlag)
-	}
-	if strings.Contains(matches[6], "F") {
-		flags = append(flags, imap.FlaggedFlag)
-	}
-	//
 	return newDescriptor(parent, name, date, checksum, size, rf822Size, flags), nil
 }
 
@@ -355,29 +383,7 @@ func (i *descriptor) Name() string {
 }
 
 func (i *descriptor) MaildirName(flags bool) string {
-	name := fmt.Sprintf("%d.R%s.%s,S=%d-2,", i.date.UTC().Unix(), i.xxh3sum, imapHost, i.size)
-	if !flags {
-		return name
-	}
-	// include flags
-	if slices.Contains(i.flags, imap.SeenFlag) {
-		name += "S"
-	}
-	if slices.Contains(i.flags, imap.AnsweredFlag) {
-		name += "A"
-	}
-	if slices.Contains(i.flags, imap.DeletedFlag) {
-		name += "T"
-	}
-	if slices.Contains(i.flags, imap.DraftFlag) {
-		name += "D"
-	}
-	if slices.Contains(i.flags, imap.FlaggedFlag) {
-		name += "F"
-	}
-	//
-	return name
-
+	return createMaildirName(i.date, i.xxh3sum, i.size, i.rf822Size, i.flags)
 }
 
 func (i *descriptor) Matches(name string) bool {
