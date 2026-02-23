@@ -58,7 +58,6 @@ y/n>
 Configuration complete.
 Options:
 - type: kdrive
-- account_id: 12345678
 - drive_id: 0654321
 - access_token: ThisIsAVeryLong-Token
 
