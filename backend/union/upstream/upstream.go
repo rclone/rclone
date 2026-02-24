@@ -438,19 +438,37 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 }
 
 // GetNumObjects get the number of objects of the fs
-func (f *Fs) GetNumObjects() (int64, error) {
+func (f *Fs) GetNumObjects() int64 {
+	var err error
 	if f.cacheExpiry.Load() <= time.Now().Unix() {
-		err := f.updateUsage()
-		if err != nil {
-			return 0, ErrUsageFieldNotSupported
+		err = f.updateUsage()
+	}
+
+	if f.usage.Objects == nil {
+		uName := f.Name()
+		fs.LogPrintf(
+			fs.LogLevelWarning,
+			nil,
+			"Number of objects not supported for upstream %s, falling back to listing (this will be slower)...",
+			uName,
+		)
+		count, _, _, err := operations.Count(context.Background(), f)
+		if err == nil {
+			fs.Debugf(nil, "Counted %d objects for upstream %s by listing", count, uName)
+			f.cacheMutex.Lock()
+			f.usage.Objects = &count
+			f.cacheMutex.Unlock()
 		}
 	}
+
+	if err != nil {
+		fs.Errorf(nil, "Error getting number of objects, treating as 0: %v", err)
+		return 0
+	}
+
 	f.cacheMutex.RLock()
 	defer f.cacheMutex.RUnlock()
-	if f.usage.Objects == nil {
-		return 0, ErrUsageFieldNotSupported
-	}
-	return *f.usage.Objects, nil
+	return *f.usage.Objects
 }
 
 func (f *Fs) updateUsage() (err error) {
