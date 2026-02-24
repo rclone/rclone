@@ -359,6 +359,32 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	if r.Size == 0 {
 		return nil
 	}
+
+	// Shrink existing downloaders to prevent doubling up of ReadAhead in case of multiple file threads / accesses
+	if dls.opt.ReadAhead > 0 {
+		for _, dl = range dls.dls {
+			if dl._closed {
+				continue
+			}
+
+			if dl.maxOffset-dl.start <= window {
+				continue
+			}
+
+			// Adjust this range to shrink without ReadAhead value
+			dl.mu.Lock()
+			dl.maxOffset -= int64(dls.opt.ReadAhead)
+			if dl.maxOffset < dl.start {
+				dl.maxOffset = dl.start
+			}
+			dl.mu.Unlock()
+
+			select {
+			case dl.kick <- struct{}{}:
+			default:
+			}
+		}
+	}
 	// Downloader not found so start a new one
 	_, err = dls._newDownloader(r)
 	if err != nil {
