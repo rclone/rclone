@@ -1198,6 +1198,36 @@ func parseRetainUntilDate(s string) (time.Time, error) {
 	return time.Now().Add(d), nil
 }
 
+type About struct {
+	Quota     *Quota   `json:"quota,omitempty"`
+	ExpiresAt string   `json:"expires_at,omitempty"`
+}
+
+// Quota informs drive quota
+type Quota struct {               // "drive#quota"
+	Limit          int64  `json:"limit,omitempty"`          // limit in bytes
+	Usage          int64  `json:"usage,omitempty"`          // bytes in use
+	IsUnlimited    bool   `json:"is_unlimited,omitempty"`
+}
+
+type Tree struct {
+	Nodes []struct {
+		UUID      string `json:"Uuid"`
+		Path      string `json:"Path"`
+		Type      string `json:"Type"`
+		Size      string `json:"Size"`
+		MTime     string `json:"MTime"`
+		Etag      string `json:"Etag"`
+		MetaStore struct {
+			ChildrenCount   string `json:"ChildrenCount"`
+			ChildrenFiles   string `json:"ChildrenFiles"`
+			ChildrenFolders string `json:"ChildrenFolders"`
+			HashingVersion  string `json:"hashing_version"`
+			Name            string `json:"name"`
+		} `json:"MetaStore"`
+	} `json:"Nodes"`
+}
+
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
@@ -1840,7 +1870,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Provider == "Rabata" {
 		f.features.Copy = nil
 	}
-	if opt.DirectoryMarkers {
+	if opt.DirectoryMarkers || matchQuotaless.MatchString(opt.Endpoint) {
 		f.features.CanHaveEmptyDirectories = true
 	}
 	// f.listMultipartUploads()
@@ -2771,7 +2801,41 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if e != nil {
 		return e
 	}
-	return f.createDirectoryMarker(ctx, bucket, dir)
+	if !f.isQuotaless(ctx) {
+		return f.createDirectoryMarker(ctx, bucket, dir)
+	}
+	endpoint := f.opt.Endpoint
+    u, err := url.ParseRequestURI(endpoint)
+    if err != nil || u.Host == "" {
+        fmt.Printf("Could not parse the endpoint url: %s, error: %v\n", endpoint, err)
+        return err
+    }
+	apiUrl := "https://" + u.Hostname()
+	accesstoken := f.opt.AccessKeyID
+    auth := map[string]string {
+		"Authorization": "Bearer " + accesstoken,
+    }
+	config := fmt.Sprintf(`{
+    "Nodes": [{
+        "Path": "%s"
+	}],
+    "Recursive": true
+	}`, f.rootDirectory)
+	rawJSON := []byte(config)
+	body := bytes.NewBuffer(rawJSON)
+	opts := rest.Opts{
+		Method: "POST",
+		RootURL: apiUrl,
+		Body: body,
+		ExtraHeaders: auth,
+		ContentType: "application/json",
+		Path:   "/a/tree/create",
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		_, err = f.srvRest.CallJSON(ctx, &opts, nil, nil)
+		return f.shouldRetry(ctx, err)
+	})
+	return err
 }
 
 // mkdirParent creates the parent bucket/directory if it doesn't exist
@@ -2780,6 +2844,10 @@ func (f *Fs) mkdirParent(ctx context.Context, remote string) error {
 	dir := path.Dir(remote)
 	if dir == "/" || dir == "." {
 		dir = ""
+	}
+	// It's unnecessary to proceed in this context
+	if f.isQuotaless(ctx) {
+		return nil
 	}
 	return f.Mkdir(ctx, dir)
 }
@@ -2828,11 +2896,117 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 	})
 }
 
+func (f *Fs) Rmall(ctx context.Context, dir string) error {
+	_, directory := f.split(dir)
+	endpoint := f.opt.Endpoint
+	u, err := url.ParseRequestURI(endpoint)
+	if err != nil || u.Host == "" {
+		fmt.Printf("Could not parse the endpoint url: %s, error: %v\n", endpoint, err)
+		return err
+	}
+	apiUrl := "https://" + u.Hostname()
+	accesstoken := f.opt.AccessKeyID
+	auth := map[string]string {
+		"Authorization": "Bearer " + accesstoken,
+	}
+	config := fmt.Sprintf(`{
+	"Nodes": [{
+		"Path": "%s"
+	}],
+	"Recursive": true,
+	"RemovePermanently": true
+	}`, directory)
+	rawJSON := []byte(config)
+	body := bytes.NewBuffer(rawJSON)
+	opts := rest.Opts{
+		Method: "POST",
+		RootURL: apiUrl,
+		Body: body,
+		ExtraHeaders: auth,
+		ContentType: "application/json",
+		Path:   "/a/tree/delete",
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		_, err = f.srvRest.CallJSON(ctx, &opts, nil, nil)
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return fmt.Errorf("removing files and folders failed: %w", err)
+	}
+	return nil
+}
+
 // Rmdir deletes the bucket if the fs is at the root
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	bucket, directory := f.split(dir)
+	if f.isQuotaless(ctx) {
+		endpoint := f.opt.Endpoint
+		u, err := url.ParseRequestURI(endpoint)
+		if err != nil || u.Host == "" {
+			fmt.Printf("Could not parse the endpoint url: %s, error: %v\n", endpoint, err)
+			return err
+		}
+		apiUrl := "https://" + u.Hostname()
+		accesstoken := f.opt.AccessKeyID
+		auth := map[string]string {
+			"Authorization": "Bearer " + accesstoken,
+		}
+		config := fmt.Sprintf(`{
+		"NodePaths": ["%s"]
+		}`, directory)
+		rawJSON := []byte(config)
+		body := bytes.NewBuffer(rawJSON)
+		opts := rest.Opts{
+			Method: "POST",
+			RootURL: apiUrl,
+			Body: body,
+			ExtraHeaders: auth,
+			ContentType: "application/json",
+			Path:   "/a/tree/stats",
+		}
+		var info *Tree
+		err = f.pacer.Call(func() (bool, error) {
+			_, err = f.srvRest.CallJSON(ctx, &opts, nil, &info)
+			return f.shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return fmt.Errorf("removing empty directory failed: %w", err)
+		}
+		if ( len(info.Nodes) == 0 ) {
+			return errors.New("Could not get the directory stats") 
+		}
+		children := info.Nodes[0].MetaStore.ChildrenCount
+		if children != "0" {
+			return nil
+		}
+		config = fmt.Sprintf(`{
+		"Nodes": [{
+			"Path": "%s"
+		}],
+		"Recursive": false,
+		"RemovePermanently": true
+		}`, directory)
+		rawJSON = []byte(config)
+		body = bytes.NewBuffer(rawJSON)
+		opts = rest.Opts{
+			Method: "POST",
+			RootURL: apiUrl,
+			Body: body,
+			ExtraHeaders: auth,
+			ContentType: "application/json",
+			Path:   "/a/tree/delete",
+		}
+		err = f.pacer.Call(func() (bool, error) {
+			_, err = f.srvRest.CallJSON(ctx, &opts, nil, nil)
+			return f.shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return fmt.Errorf("removing empty directory failed: %w", err)
+		}
+		return nil
+	}
 	// Remove directory marker file
 	if f.opt.DirectoryMarkers && bucket != "" && dir != "" {
 		o := &Object{
@@ -3716,6 +3890,11 @@ func (f *Fs) setGetVersioning(ctx context.Context, arg ...string) (status types.
 			return "", err
 		}
 	}
+	f.versioning.Valid = true
+	f.versioning.Value = false
+	if f.isQuotaless(ctx) {
+		return "Unversioned", nil
+	}
 	req := s3.GetBucketVersioningInput{
 		Bucket: &f.rootBucket,
 	}
@@ -3724,8 +3903,6 @@ func (f *Fs) setGetVersioning(ctx context.Context, arg ...string) (status types.
 		resp, err = f.c.GetBucketVersioning(ctx, &req)
 		return f.shouldRetry(ctx, err)
 	})
-	f.versioning.Valid = true
-	f.versioning.Value = false
 	if err != nil {
 		fs.Errorf(f, "Failed to read versioning status, assuming unversioned: %v", err)
 		return "", err
@@ -3828,7 +4005,13 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 	checkErr(<-delErr)
 
 	if !oldOnly {
-		checkErr(f.Rmdir(ctx, dir))
+		if f.isQuotaless(ctx) {
+			// ensure all remaining empty folder are deleted
+			checkErr(f.Rmall(ctx, dir))
+		} else {
+			// it can't delete empty directories
+			checkErr(f.Rmdir(ctx, dir))
+		}
 	}
 	return errReturn
 }
@@ -5218,6 +5401,56 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 	metadata["tier"] = o.GetTier()
 
 	return metadata, nil
+}
+
+func (f *Fs) getStorageInfo(ctx context.Context) (info *About, err error) {
+	endpoint := f.opt.Endpoint
+	u, err := url.ParseRequestURI(endpoint)
+	if err != nil || u.Host == "" {
+		fmt.Printf("Could not parse the endpoint url: %s, error: %v\n", endpoint, err)
+		return &About{}, err
+	}
+	apiUrl := "https://" + u.Hostname()
+	accesstoken := f.opt.AccessKeyID
+	auth := map[string]string {
+		"Authorization": "Bearer " + accesstoken,
+	}
+	opts := rest.Opts{
+		Method: "GET",
+		RootURL: apiUrl,
+		ExtraHeaders: auth,
+		Path:   "/a/user/storage",
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		_, err = f.srvRest.CallJSON(ctx, &opts, nil, &info)
+		return f.shouldRetry(ctx, err)
+	})
+	return
+}
+
+func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
+	if ( !f.isQuotaless(ctx) ) {
+		//return &fs.Usage{ Used: fs.NewUsageValue(0) }, nil
+		return nil, errors.New("This backend doesn't support about")
+	}
+	info, err := f.getStorageInfo(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get drive quota: %w", err)
+	}
+	q := info.Quota
+	usage = &fs.Usage{
+		Used: fs.NewUsageValue(q.Usage), // bytes in use
+	}
+	if q.Limit > 0 {
+		usage.Total = fs.NewUsageValue(q.Limit)          // pre-allocated bytes i.e. reserved storage
+		usage.Free = fs.NewUsageValue(q.Limit - q.Usage) // bytes which can be uploaded before exceeding the pre-allocated storage
+	}
+	return usage, nil
+}
+
+var matchQuotaless = regexp.MustCompile(`io\.(quotaless|bitcasa|minhateca)\.cloud`)
+func (f *Fs) isQuotaless (ctx context.Context) bool {
+	return matchQuotaless.MatchString(f.opt.Endpoint) 
 }
 
 // Check the interfaces are satisfied
