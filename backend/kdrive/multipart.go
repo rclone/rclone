@@ -15,8 +15,13 @@ import (
 
 	"github.com/rclone/rclone/backend/kdrive/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/xxh3"
+	"golang.org/x/sync/errgroup"
 )
 
 // uploadSession implements fs.ChunkWriter for kdrive multipart uploads
@@ -83,9 +88,9 @@ func calculateTotalChunks(fileSize int64, chunkSize int64) int64 {
 	return int64(totalChunks)
 }
 
-// OpenChunkWriter returns chunk writer info and the upload session
+// newChunkWriter returns chunk writer info and the upload session
 // @see https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload/session/start
-func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+func (f *Fs) newChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 	fileSize := src.Size()
 	if fileSize < 0 {
 		return info, nil, errors.New("kdrive can't upload files with unknown size")
@@ -252,4 +257,107 @@ func (u *uploadSession) Abort(ctx context.Context) error {
 // String implements fmt.Stringer
 func (u *uploadSession) String() string {
 	return fmt.Sprintf("kdrive upload session %s", u.token)
+}
+
+func NewRW() *pool.RW {
+	return pool.NewRW(pool.Global())
+}
+
+// UploadMultipart does a generic multipart upload from src using f as newChunkWriter.
+//
+// in is read seqentially and chunks from it are uploaded in parallel.
+//
+// It returns the chunkWriter used in case the caller needs to extract any private info from it.
+func (f *Fs) UploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.Reader, opt []fs.OpenOption) (chunkWriterOut fs.ChunkWriter, err error) {
+	info, chunkWriter, err := f.newChunkWriter(ctx, src.Remote(), src, opt...)
+	if err != nil {
+		return nil, fmt.Errorf("multipart upload failed to initialise: %w", err)
+	}
+
+	// make concurrency machinery
+	concurrency := max(info.Concurrency, 1)
+	tokens := pacer.NewTokenDispenser(concurrency)
+
+	uploadCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	defer atexit.OnError(&err, func() {
+		cancel()
+		if info.LeavePartsOnError {
+			return
+		}
+		fs.Debugf(src, "Cancelling multipart upload")
+		errCancel := chunkWriter.Abort(ctx)
+		if errCancel != nil {
+			fs.Debugf(src, "Failed to cancel multipart upload: %v", errCancel)
+		}
+	})()
+
+	var (
+		g, gCtx   = errgroup.WithContext(uploadCtx)
+		finished  = false
+		off       int64
+		size      = src.Size()
+		chunkSize = info.ChunkSize
+	)
+
+	// Do the accounting manually
+	in, acc := accounting.UnWrapAccounting(in)
+
+	for partNum := int64(0); !finished; partNum++ {
+		// Get a block of memory from the pool and token which limits concurrency.
+		tokens.Get()
+		rw := NewRW().Reserve(chunkSize)
+		if acc != nil {
+			rw.SetAccounting(acc.AccountRead)
+		}
+
+		free := func() {
+			// return the memory and token
+			_ = rw.Close() // Can't return an error
+			tokens.Put()
+		}
+
+		// Fail fast, in case an errgroup managed function returns an error
+		// gCtx is cancelled. There is no point in uploading all the other parts.
+		if gCtx.Err() != nil {
+			free()
+			break
+		}
+
+		// Read the chunk
+		var n int64
+		n, err = io.CopyN(rw, in, chunkSize)
+		if err == io.EOF {
+			if n == 0 && partNum != 0 { // end if no data and if not first chunk
+				free()
+				break
+			}
+			finished = true
+		} else if err != nil {
+			free()
+			return nil, fmt.Errorf("multipart upload: failed to read source: %w", err)
+		}
+
+		partNum := partNum
+		partOff := off
+		off += n
+		g.Go(func() (err error) {
+			defer free()
+			fs.Debugf(src, "multipart upload: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(n), fs.SizeSuffix(partOff), fs.SizeSuffix(size))
+			_, err = chunkWriter.WriteChunk(gCtx, int(partNum), rw)
+			return err
+		})
+	}
+
+	err = g.Wait()
+	if err != nil {
+		return nil, err
+	}
+
+	err = chunkWriter.Close(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("multipart upload: failed to finalise: %w", err)
+	}
+
+	return chunkWriter, nil
 }
