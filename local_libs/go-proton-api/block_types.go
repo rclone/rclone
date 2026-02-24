@@ -28,6 +28,13 @@ type BlockUploadInfo struct {
 	Size         int64
 	EncSignature string
 	Hash         string
+	Verifier     *BlockVerifier `json:",omitempty"`
+}
+
+// BlockVerifier holds the verification token required by the Proton API
+// for block uploads. The token is computed as XOR(VerificationCode, encryptedBlockPrefix).
+type BlockVerifier struct {
+	Token string
 }
 
 type BlockUploadLink struct {

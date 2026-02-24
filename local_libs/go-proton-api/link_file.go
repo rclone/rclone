@@ -76,6 +76,20 @@ func (c *Client) DeleteRevision(ctx context.Context, shareID, linkID, revisionID
 	})
 }
 
+// GetVerificationData fetches the block verification data for a revision.
+// The returned VerificationCode is used to compute per-block verifier tokens.
+func (c *Client) GetVerificationData(ctx context.Context, shareID, linkID, revisionID string) (VerificationDataRes, error) {
+	var res VerificationDataRes
+
+	if err := c.do(ctx, func(r *resty.Request) (*resty.Response, error) {
+		return r.SetResult(&res).Get("/drive/shares/" + shareID + "/links/" + linkID + "/revisions/" + revisionID + "/verification")
+	}); err != nil {
+		return VerificationDataRes{}, err
+	}
+
+	return res, nil
+}
+
 func (c *Client) CreateRevision(ctx context.Context, shareID, linkID string) (CreateRevisionRes, error) {
 	var res struct {
 		Revision CreateRevisionRes

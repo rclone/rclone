@@ -198,3 +198,10 @@ type BlockToken struct {
 	Index int
 	Token string
 }
+
+// VerificationDataRes is the response from the revision verification endpoint.
+// VerificationCode is base64-encoded and used to compute per-block verifier tokens.
+type VerificationDataRes struct {
+	VerificationCode string
+	ContentKeyPacket string
+}
