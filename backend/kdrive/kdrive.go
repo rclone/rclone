@@ -242,47 +242,6 @@ func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
 	return &item, nil
 }
 
-// findItemByPath retrieves a file or directory by its path using the API
-// This avoids listing the entire directory
-func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, error) {
-	// fs.Infof(ctx, "findItemByPath: remote=%s", remote)
-
-	if remote == "" || remote == "." {
-		rootID, err := f.dirCache.FindDir(ctx, "", false)
-		if err != nil {
-			return nil, err
-		}
-		return f.getItem(ctx, rootID)
-	}
-
-	// Get the directoryID of the parent directory
-	directory, leaf := path.Split(remote)
-	directory = strings.TrimSuffix(directory, "/")
-
-	directoryID, err := f.dirCache.FindDir(ctx, directory, false)
-	if err != nil {
-		if errors.Is(err, fs.ErrorDirNotFound) {
-			return nil, fs.ErrorObjectNotFound
-		}
-		return nil, err
-	}
-
-	return f.findItemInDir(ctx, directoryID, leaf)
-}
-
-// readMetaDataForPath reads the metadata from the path
-func (f *Fs) readMetaDataForPath(ctx context.Context, remote string) (*api.Item, error) {
-	// fs.Debugf(ctx, "readMetaDataForPath: remote=%s", remote)
-
-	// Try the new API endpoint first
-	info, err := f.findItemByPath(ctx, remote)
-	if err != nil {
-		return nil, err
-	}
-
-	return info, nil
-}
-
 // errorHandler parses a non 2xx error response into an error
 func errorHandler(resp *http.Response) error {
 	// Decode error response
@@ -368,6 +327,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
+// determineRootID retriece the real RootId of the configured RootFolderID
 func (f *Fs) determineRootID() (string, error) {
 	ctx := context.Background()
 
@@ -385,6 +345,47 @@ func (f *Fs) determineRootID() (string, error) {
 	}
 
 	return rootID, err
+}
+
+// findItemByPath retrieves a file or directory by its path using the API
+// This avoids listing the entire directory
+func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, error) {
+	// fs.Infof(ctx, "findItemByPath: remote=%s", remote)
+
+	if remote == "" || remote == "." {
+		rootID, err := f.dirCache.FindDir(ctx, "", false)
+		if err != nil {
+			return nil, err
+		}
+		return f.getItem(ctx, rootID)
+	}
+
+	// Get the directoryID of the parent directory
+	directory, leaf := path.Split(remote)
+	directory = strings.TrimSuffix(directory, "/")
+
+	directoryID, err := f.dirCache.FindDir(ctx, directory, false)
+	if err != nil {
+		if errors.Is(err, fs.ErrorDirNotFound) {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, err
+	}
+
+	return f.findItemInDir(ctx, directoryID, leaf)
+}
+
+// readMetaDataForPath reads the metadata from the path
+func (f *Fs) readMetaDataForPath(ctx context.Context, remote string) (*api.Item, error) {
+	// fs.Debugf(ctx, "readMetaDataForPath: remote=%s", remote)
+
+	// Try the new API endpoint first
+	info, err := f.findItemByPath(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
 }
 
 // Return an Object from a path
@@ -700,11 +701,11 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	size := src.Size()
 	modTime := src.ModTime(ctx)
 
-	o, _, _, err := f.createObject(ctx, remote, modTime, size)
+	o, leaf, directoryID, err := f.createObject(ctx, remote, modTime, size)
 	if err != nil {
 		return nil, err
 	}
-	return o, o.Update(ctx, in, src, options...)
+	return o, o.update(ctx, in, src, directoryID, leaf, options...)
 }
 
 // Mkdir creates the container if it doesn't exist
@@ -942,6 +943,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	srcFs.dirCache.FlushDir(srcRemote)
+	srcFs.dirCache.FlushDir(dstRemote)
 	return nil
 }
 
@@ -1294,6 +1296,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
+	return o.update(ctx, in, src, directoryID, leaf, options...)
+}
+
+func (o *Object) update(ctx context.Context, in io.Reader, src fs.ObjectInfo, directoryID, leaf string, options ...fs.OpenOption) (err error) {
+	size := src.Size() // NB can upload without size
+
+	if size < 0 {
+		return errors.New("can't upload unknown sizes objects")
+	}
+
 	// if file size is less than the threshold, upload direct
 	if size <= uploadThreshold {
 		return o.updateDirect(ctx, in, directoryID, leaf, src, options...)
@@ -1307,21 +1319,36 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 	var resp *http.Response
 	var result api.UploadFileResponse
 
-	// Read the content to calculate hash (files are small, under 20MB)
-	content, err := io.ReadAll(in)
-	if err != nil {
-		return fmt.Errorf("failed to read file content: %w", err)
-	}
-	// Calculate xxh3 hash
-	hasher := xxh3.New()
-	_, _ = hasher.Write(content)
-	totalHash := fmt.Sprintf("xxh3:%x", hasher.Sum(nil))
-
+	// Attempt to get the hash from the source object without reading the content
+	totalHash, err := src.Hash(ctx, hash.XXH3)
+	var body io.Reader
 	size := src.Size()
+
+	if err == nil && totalHash != "" {
+		// Hash is already known (e.g., local file)
+		// Stream directly without loading into memory
+		body = in
+		totalHash = "xxh3:" + totalHash
+	} else {
+		// Hash unknown, need to read content to calculate it
+		content, err := io.ReadAll(in)
+		if err != nil {
+			return fmt.Errorf("failed to read file content: %w", err)
+		}
+
+		// Calculate xxh3 hash
+		hasher := xxh3.New()
+		_, _ = hasher.Write(content)
+		sum := hasher.Sum(nil)
+		totalHash = fmt.Sprintf("xxh3:%x", sum)
+
+		body = bytes.NewReader(content)
+	}
+
 	opts := rest.Opts{
 		Method:           "POST",
 		Path:             fmt.Sprintf("/3/drive/%s/upload", o.fs.opt.DriveID),
-		Body:             bytes.NewReader(content),
+		Body:             body,
 		ContentType:      fs.MimeType(ctx, src),
 		ContentLength:    &size,
 		Parameters:       url.Values{},
@@ -1338,7 +1365,7 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 	opts.Parameters.Set("with", "hash")
 	opts.Parameters.Set("total_chunk_hash", totalHash)
 
-	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.ResultStatus.Update(err)
 		return shouldRetry(ctx, resp, err)
