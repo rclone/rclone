@@ -240,7 +240,7 @@ func (protonDrive *ProtonDrive) createFileUploadDraft(ctx context.Context, paren
 	return linkID, revisionID, newSessionKey, newNodeKR, nil
 }
 
-func (protonDrive *ProtonDrive) uploadAndCollectBlockData(ctx context.Context, newSessionKey *crypto.SessionKey, newNodeKR *crypto.KeyRing, file io.Reader, linkID, revisionID string) ([]byte, int64, []int64, string, error) {
+func (protonDrive *ProtonDrive) uploadAndCollectBlockData(ctx context.Context, newSessionKey *crypto.SessionKey, newNodeKR *crypto.KeyRing, file io.Reader, linkID, revisionID string, verificationCode []byte) ([]byte, int64, []int64, string, error) {
 	type PendingUploadBlocks struct {
 		blockUploadInfo proton.BlockUploadInfo
 		encData         []byte
@@ -365,14 +365,33 @@ func (protonDrive *ProtonDrive) uploadAndCollectBlockData(ctx context.Context, n
 		}
 		manifestSignatureData = append(manifestSignatureData, hash...)
 
+		blockInfo := proton.BlockUploadInfo{
+			Index:        i, // iOS drive: BE starts with 1
+			Size:         int64(len(encData)),
+			EncSignature: encSignatureStr,
+			Hash:         base64Hash,
+		}
+
+		// Compute block verifier token if verification code is available.
+		// Token = XOR(verificationCode, encryptedBlockPrefix), with zero-padding
+		// if the encrypted data is shorter than the verification code.
+		if len(verificationCode) > 0 {
+			vToken := make([]byte, len(verificationCode))
+			for k := 0; k < len(verificationCode); k++ {
+				blockByte := byte(0)
+				if k < len(encData) {
+					blockByte = encData[k]
+				}
+				vToken[k] = verificationCode[k] ^ blockByte
+			}
+			blockInfo.Verifier = &proton.BlockVerifier{
+				Token: base64.StdEncoding.EncodeToString(vToken),
+			}
+		}
+
 		pendingUploadBlocks = append(pendingUploadBlocks, PendingUploadBlocks{
-			blockUploadInfo: proton.BlockUploadInfo{
-				Index:        i, // iOS drive: BE starts with 1
-				Size:         int64(len(encData)),
-				EncSignature: encSignatureStr,
-				Hash:         base64Hash,
-			},
-			encData: encData,
+			blockUploadInfo: blockInfo,
+			encData:         encData,
 		})
 	}
 	err := uploadPendingBlocks()
@@ -441,8 +460,19 @@ func (protonDrive *ProtonDrive) uploadFile(ctx context.Context, parentLink *prot
 		return "", nil, nil
 	}
 
+	/* step 1.5: fetch block verification data for verifier tokens */
+	var verificationCode []byte
+	vDataRes, err := protonDrive.c.GetVerificationData(ctx, protonDrive.MainShare.ShareID, linkID, revisionID)
+	if err == nil && vDataRes.VerificationCode != "" {
+		verificationCode, err = base64.StdEncoding.DecodeString(vDataRes.VerificationCode)
+		if err != nil {
+			return "", nil, err
+		}
+	}
+	// If the endpoint fails (e.g., older API), proceed without verifier tokens
+
 	/* step 2: upload blocks and collect block data */
-	manifestSignature, fileSize, blockSizes, digests, err := protonDrive.uploadAndCollectBlockData(ctx, newSessionKey, newNodeKR, file, linkID, revisionID)
+	manifestSignature, fileSize, blockSizes, digests, err := protonDrive.uploadAndCollectBlockData(ctx, newSessionKey, newNodeKR, file, linkID, revisionID, verificationCode)
 	if err != nil {
 		return "", nil, err
 	}
