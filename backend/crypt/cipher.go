@@ -1145,6 +1145,18 @@ func (c *Cipher) DecryptedSize(size int64) (int64, error) {
 	return decryptedSize, nil
 }
 
+// encryptBlock encrypts a single block of data using the given nonce
+func (c *Cipher) encryptBlock(data []byte, nonce *nonce) []byte {
+	return secretbox.Seal(nil, data, nonce.pointer(), &c.dataKey)
+}
+
+// newNonce creates a new random nonce
+func (c *Cipher) newNonce() (nonce, error) {
+	var n nonce
+	err := n.fromReader(c.cryptoRand)
+	return n, err
+}
+
 // check interfaces
 var (
 	_ io.ReadCloser  = (*decrypter)(nil)

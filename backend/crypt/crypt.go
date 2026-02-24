@@ -2,12 +2,15 @@
 package crypt
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -296,6 +299,11 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 
 	// Enable ListP always
 	f.features.ListP = f.ListP
+
+	// Enable OpenChunkWriter if underlying backend supports it or OpenWriterAt
+	if wrappedFs.Features().OpenChunkWriter != nil || wrappedFs.Features().OpenWriterAt != nil {
+		f.features.OpenChunkWriter = f.OpenChunkWriter
+	}
 
 	return f, err
 }
@@ -1137,6 +1145,428 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 	return do(ctx)
 }
 
+// OpenChunkWriter opens a ChunkWriter for chunked writing
+func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+	// Check if data encryption is disabled
+	if f.opt.NoDataEncryption {
+		// For unencrypted data, just delegate to underlying backend
+		do := f.Fs.Features().OpenChunkWriter
+		if do == nil {
+			// For unencrypted data, we can safely use the adapter
+			openWriterAt := f.Fs.Features().OpenWriterAt
+			if openWriterAt == nil {
+				return info, nil, fs.ErrorNotImplemented
+			}
+			do = f.openChunkWriterFromOpenWriterAt(openWriterAt)
+		}
+		return do(ctx, f.cipher.EncryptFileName(remote), f.newObjectInfo(src, nonce{}), options...)
+	}
+
+	// Check if underlying backend supports chunked writing
+	do := f.Fs.Features().OpenChunkWriter
+	if do == nil {
+		// Check if underlying backend supports OpenWriterAt
+		openWriterAt := f.Fs.Features().OpenWriterAt
+		if openWriterAt == nil {
+			return info, nil, fs.ErrorNotImplemented
+		}
+		// Use adapter to convert OpenWriterAt to OpenChunkWriter
+		do = f.openChunkWriterFromOpenWriterAt(openWriterAt)
+	}
+
+	// Generate a random nonce for this file
+	fileNonce, err := f.cipher.newNonce()
+	if err != nil {
+		return info, nil, fmt.Errorf("failed to generate nonce: %w", err)
+	}
+
+	// Create encrypted ObjectInfo
+	encryptedSrc := f.newObjectInfo(src, fileNonce)
+
+	// Get chunk writer info from underlying backend
+	underlyingInfo, underlyingWriter, err := do(ctx, f.cipher.EncryptFileName(remote), encryptedSrc, options...)
+	if err != nil {
+		return info, nil, err
+	}
+
+	// Calculate optimal chunk size aligned to encryption block boundaries
+	chunkSize := f.calculateOptimalChunkSize(underlyingInfo.ChunkSize, src.Size())
+
+	// Create our chunk writer
+	cryptWriter := &cryptChunkWriter{
+		cipher:           f.cipher,
+		fileNonce:        fileNonce,
+		chunkSize:        chunkSize,
+		underlyingWriter: underlyingWriter,
+		chunkHashes:      make([][]byte, 0),
+		completedChunks:  make(map[int]bool),
+	}
+
+	// Return adjusted chunk writer info
+	info = fs.ChunkWriterInfo{
+		ChunkSize:         chunkSize,
+		Concurrency:       underlyingInfo.Concurrency,
+		LeavePartsOnError: underlyingInfo.LeavePartsOnError,
+	}
+
+	return info, cryptWriter, nil
+}
+
+// calculateOptimalChunkSize calculates chunk size aligned to encryption block boundaries
+func (f *Fs) calculateOptimalChunkSize(baseChunkSize int64, fileSize int64) int64 {
+	if baseChunkSize <= 0 {
+		baseChunkSize = 5 * 1024 * 1024 // 5MB default
+	}
+
+	// Align to encryption block boundaries to avoid partial blocks
+	blocksPerChunk := (baseChunkSize + blockDataSize - 1) / blockDataSize
+	alignedChunkSize := blocksPerChunk * blockDataSize
+
+	// Ensure reasonable parallelism for smaller files
+	if fileSize > 0 && fileSize < alignedChunkSize*2 {
+		// For small files, use smaller chunks to enable parallelism
+		minChunks := int64(2)
+		if fileSize > alignedChunkSize {
+			minChunks = fileSize / alignedChunkSize
+		}
+		if minChunks > 1 {
+			alignedChunkSize = (fileSize + minChunks - 1) / minChunks
+			// Re-align to block boundaries
+			blocksPerChunk = (alignedChunkSize + blockDataSize - 1) / blockDataSize
+			alignedChunkSize = blocksPerChunk * blockDataSize
+		}
+	}
+
+	return alignedChunkSize
+}
+
+// openChunkWriterFromOpenWriterAt adapts an OpenWriterAtFn into an OpenChunkWriterFn for crypt backend
+func (f *Fs) openChunkWriterFromOpenWriterAt(openWriterAt fs.OpenWriterAtFn) fs.OpenChunkWriterFn {
+	return func(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
+		ci := fs.GetConfig(ctx)
+
+		// Extract chunk size from options, default to config value
+		baseChunkSize := int64(ci.MultiThreadChunkSize)
+		for _, option := range options {
+			if chunkOption, ok := option.(*fs.ChunkOption); ok {
+				baseChunkSize = chunkOption.ChunkSize
+				break
+			}
+		}
+
+		chunkSize := f.calculateOptimalChunkSize(baseChunkSize, src.Size())
+
+		writerAt, err := openWriterAt(ctx, remote, src.Size())
+		if err != nil {
+			return info, nil, err
+		}
+
+		chunkWriter := &writerAtChunkWriter{
+			remote:        remote,
+			size:          src.Size(),
+			chunkSize:     chunkSize,
+			chunks:        calculateNumChunks(src.Size(), chunkSize),
+			writerAt:      writerAt,
+			f:             f.Fs,
+			chunkOffsets:  make(map[int]int64),
+			pendingChunks: make(map[int][]byte),
+			nextOffset:    0,
+			nextChunk:     0,
+		}
+
+		info = fs.ChunkWriterInfo{
+			ChunkSize:         chunkSize,
+			Concurrency:       ci.MultiThreadStreams,
+			LeavePartsOnError: false,
+		}
+
+		return info, chunkWriter, nil
+	}
+}
+
+// writerAtChunkWriter converts a WriterAtCloser into a ChunkWriter for crypt backend
+type writerAtChunkWriter struct {
+	remote    string
+	size      int64
+	chunkSize int64
+	chunks    int
+	writerAt  fs.WriterAtCloser
+	f         fs.Fs
+	closed    bool
+
+	// Track chunk ordering for variable-sized chunks (encryption)
+	chunkOffsets  map[int]int64  // chunk number -> file offset
+	pendingChunks map[int][]byte // buffered chunks waiting to be written
+	mu            sync.Mutex
+	nextOffset    int64
+	nextChunk     int // next chunk number we expect to write
+}
+
+// WriteChunk writes chunkNumber from reader
+func (w *writerAtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
+	fs.Debugf(w.remote, "writing chunk %v", chunkNumber)
+
+	// Read the chunk data into memory
+	chunkData, err := io.ReadAll(reader)
+	if err != nil {
+		return 0, err
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	// If this is the next chunk we're waiting for, write it immediately
+	if chunkNumber == w.nextChunk {
+		bytesWritten, err := w.writeChunkData(chunkNumber, chunkData)
+		if err != nil {
+			return 0, err
+		}
+
+		// Try to write any pending chunks that are now ready
+		w.writePendingChunks()
+
+		return bytesWritten, nil
+	}
+
+	// This chunk is out of order, buffer it for later
+	fs.Debugf(w.remote, "buffering chunk %d (waiting for chunk %d)", chunkNumber, w.nextChunk)
+	w.pendingChunks[chunkNumber] = chunkData
+
+	return int64(len(chunkData)), nil
+}
+
+// writeChunkData writes a chunk at the current offset (must be called with lock held)
+func (w *writerAtChunkWriter) writeChunkData(chunkNumber int, data []byte) (int64, error) {
+	// Store the offset for this chunk
+	w.chunkOffsets[chunkNumber] = w.nextOffset
+
+	// Write the chunk at the calculated offset
+	writer := io.NewOffsetWriter(w.writerAt, w.nextOffset)
+	n, err := writer.Write(data)
+	if err != nil {
+		return int64(n), err
+	}
+
+	// Update tracking
+	w.nextOffset += int64(n)
+	w.nextChunk++
+
+	fs.Debugf(w.remote, "chunk %d written at offset %d, size %d, next offset %d", chunkNumber, w.chunkOffsets[chunkNumber], n, w.nextOffset)
+
+	return int64(n), nil
+}
+
+// writePendingChunks writes any buffered chunks that are now ready (must be called with lock held)
+func (w *writerAtChunkWriter) writePendingChunks() {
+	for {
+		chunkData, exists := w.pendingChunks[w.nextChunk]
+		if !exists {
+			break // No more consecutive chunks available
+		}
+
+		// Write this pending chunk
+		_, err := w.writeChunkData(w.nextChunk, chunkData)
+		if err != nil {
+			fs.Errorf(w.remote, "failed to write pending chunk %d: %v", w.nextChunk, err)
+			break
+		}
+
+		// Remove from pending list
+		delete(w.pendingChunks, w.nextChunk-1) // nextChunk was already incremented in writeChunkData
+	}
+}
+
+// Close the chunk writing
+func (w *writerAtChunkWriter) Close(ctx context.Context) error {
+	if w.closed {
+		return nil
+	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	// Check for any remaining pending chunks - this indicates missing chunks
+	if len(w.pendingChunks) > 0 {
+		missing := make([]int, 0)
+		for i := w.nextChunk; i < w.chunks; i++ {
+			if _, exists := w.pendingChunks[i]; !exists {
+				missing = append(missing, i)
+			}
+		}
+		if len(missing) > 0 {
+			fs.Errorf(w.remote, "missing chunks on close: %v, have pending: %v", missing, getKeys(w.pendingChunks))
+		}
+
+		// Try to write remaining pending chunks in order
+		w.writePendingChunks()
+	}
+
+	w.closed = true
+	return w.writerAt.Close()
+}
+
+// getKeys returns the keys of a map as a slice
+func getKeys(m map[int][]byte) []int {
+	keys := make([]int, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// Abort the chunk writing
+func (w *writerAtChunkWriter) Abort(ctx context.Context) error {
+	err := w.Close(ctx)
+	if err != nil {
+		fs.Errorf(w.remote, "chunk writer: failed to close file before aborting: %v", err)
+	}
+	obj, err := w.f.NewObject(ctx, w.remote)
+	if err != nil {
+		return fmt.Errorf("chunk writer: failed to find temp file when aborting chunk writer: %w", err)
+	}
+	return obj.Remove(ctx)
+}
+
+// calculateNumChunks calculates the number of chunks needed for a given size
+func calculateNumChunks(size, chunkSize int64) int {
+	if size == 0 {
+		return 1
+	}
+	return int((size + chunkSize - 1) / chunkSize)
+}
+
+// cryptChunkWriter implements chunked writing with encryption
+type cryptChunkWriter struct {
+	cipher           *Cipher
+	fileNonce        nonce
+	chunkSize        int64
+	underlyingWriter fs.ChunkWriter
+
+	// Thread-safe hash collection
+	hashMu      sync.Mutex
+	chunkHashes [][]byte
+
+	// Header coordination
+	headerWritten sync.Once
+	headerError   error
+	headerData    []byte
+
+	// Chunk tracking
+	completedChunks map[int]bool
+	completedMu     sync.Mutex
+}
+
+// WriteChunk encrypts and writes a chunk
+func (c *cryptChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
+	// Ensure header is written first
+	c.headerWritten.Do(func() {
+		c.headerError = c.writeFileHeader(ctx)
+	})
+	if c.headerError != nil {
+		return 0, c.headerError
+	}
+
+	// Calculate starting nonce for this chunk
+	blocksPerChunk := c.chunkSize / blockDataSize
+	chunkNonce := c.fileNonce
+	chunkNonce.add(uint64(chunkNumber) * uint64(blocksPerChunk))
+
+	// Encrypt data in blocks
+	var encryptedChunk bytes.Buffer
+	blockNonce := chunkNonce
+	bytesRead := int64(0)
+	chunkHasher := sha256.New()
+
+	// If this is chunk 0, prepend the header
+	if chunkNumber == 0 && c.headerData != nil {
+		encryptedChunk.Write(c.headerData)
+		chunkHasher.Write(c.headerData)
+	}
+
+	for {
+		// Read block data
+		blockData := make([]byte, blockDataSize)
+		n, err := reader.Read(blockData)
+		if n == 0 {
+			break
+		}
+
+		// Encrypt block
+		blockData = blockData[:n]
+		encryptedBlock := c.cipher.encryptBlock(blockData, &blockNonce)
+
+		// Write to chunk buffer and hash
+		encryptedChunk.Write(encryptedBlock)
+		chunkHasher.Write(encryptedBlock)
+
+		// Increment nonce for next block
+		blockNonce.increment()
+		bytesRead += int64(n)
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return bytesRead, err
+		}
+	}
+
+	// Store chunk hash
+	c.storeChunkHash(chunkNumber, chunkHasher.Sum(nil))
+
+	// Write encrypted chunk to underlying writer
+	chunkReader := bytes.NewReader(encryptedChunk.Bytes())
+	written, err := c.underlyingWriter.WriteChunk(ctx, chunkNumber, chunkReader)
+	if err != nil {
+		return written, err
+	}
+
+	// Mark chunk as completed
+	c.completedMu.Lock()
+	c.completedChunks[chunkNumber] = true
+	c.completedMu.Unlock()
+
+	return bytesRead, nil
+}
+
+// Close finalizes the chunked writer
+func (c *cryptChunkWriter) Close(ctx context.Context) error {
+	return c.underlyingWriter.Close(ctx)
+}
+
+// Abort aborts the chunked writer
+func (c *cryptChunkWriter) Abort(ctx context.Context) error {
+	return c.underlyingWriter.Abort(ctx)
+}
+
+// writeFileHeader writes the file header with magic and nonce
+func (c *cryptChunkWriter) writeFileHeader(ctx context.Context) error {
+	header := make([]byte, fileHeaderSize)
+
+	// Write magic bytes
+	copy(header[:fileMagicSize], fileMagicBytes)
+
+	// Write file nonce
+	copy(header[fileMagicSize:], c.fileNonce[:])
+
+	// Store header for merging with first chunk
+	c.headerData = header
+	return nil
+}
+
+// storeChunkHash stores hash for a chunk in thread-safe manner
+func (c *cryptChunkWriter) storeChunkHash(chunkNumber int, hash []byte) {
+	c.hashMu.Lock()
+	defer c.hashMu.Unlock()
+
+	// Ensure slice is large enough
+	for len(c.chunkHashes) <= chunkNumber {
+		c.chunkHashes = append(c.chunkHashes, nil)
+	}
+
+	c.chunkHashes[chunkNumber] = hash
+}
+
 // ObjectInfo describes a wrapped fs.ObjectInfo for being the source
 //
 // This encrypts the remote name and adjusts the size
@@ -1327,6 +1757,7 @@ var (
 	_ fs.UserInfoer      = (*Fs)(nil)
 	_ fs.Disconnecter    = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
+	_ fs.OpenChunkWriter = (*Fs)(nil)
 	_ fs.FullObjectInfo  = (*ObjectInfo)(nil)
 	_ fs.FullObject      = (*Object)(nil)
 )
