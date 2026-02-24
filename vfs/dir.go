@@ -1085,12 +1085,26 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 		return nil, err
 	}
 	// fs.Debugf(path, "Dir.Mkdir")
-	err = d.f.Mkdir(context.TODO(), path)
-	if err != nil {
-		fs.Errorf(d, "Dir.Mkdir failed to create directory: %v", err)
-		return nil, err
+	var fsDir *fs.Dir
+	if do := d.Fs().Features().MkdirMetadata; do != nil && !d.vfs.Opt.SkipMetadata {
+		fsDirectory, err := do(context.TODO(), path, fs.Metadata{
+			"uid":  fmt.Sprintf("%d", d.vfs.Opt.UID),
+			"gid":  fmt.Sprintf("%d", d.vfs.Opt.GID),
+			"mode": fmt.Sprintf("%#o", d.vfs.Opt.DirPerms),
+		})
+		if err != nil {
+			fs.Errorf(d, "Dir.Mkdir failed to create directory with metadata: %v", err)
+			return nil, err
+		}
+		fsDir = fs.NewDirCopy(context.TODO(), fsDirectory)
+	} else {
+		err = d.Fs().Mkdir(context.TODO(), path)
+		if err != nil {
+			fs.Errorf(d, "Dir.Mkdir failed to create directory: %v", err)
+			return nil, err
+		}
+		fsDir = fs.NewDir(path, time.Now())
 	}
-	fsDir := fs.NewDir(path, time.Now())
 	dir := newDir(d.vfs, d.f, d, fsDir)
 	d.addObject(dir)
 	if err = d.SetModTime(time.Now()); err != nil {

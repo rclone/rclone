@@ -151,6 +151,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Specify the total space of disk",
 	Groups:  "VFS",
 }, {
+	Name:    "vfs_skip_metadata",
+	Default: true,
+	Help:    "Skip setting the metadata on the underlying files & directories",
+	Groups:  "VFS",
+}, {
 	Name:    "umask",
 	Default: FileMode(getUmask()),
 	Help:    "Override the permission bits set by the filesystem (not supported on Windows)",
@@ -210,6 +215,7 @@ type Options struct {
 	FastFingerprint    bool          `config:"vfs_fast_fingerprint"` // if set use fast fingerprints
 	DiskSpaceTotalSize fs.SizeSuffix `config:"vfs_disk_space_total_size"`
 	MetadataExtension  string        `config:"vfs_metadata_extension"` // if set respond to files with this extension with metadata
+	SkipMetadata       bool          `config:"vfs_skip_metadata"`      // VFS will skip setting the metadata on the underlying files & directories
 }
 
 // Opt is the default options modified by the environment variables and command line flags
