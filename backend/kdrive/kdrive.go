@@ -56,9 +56,14 @@ func init() {
 			Name: "root_folder_id",
 			Help: "Fill in for rclone to use a non root folder as its starting point.",
 			// for default root, see https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
-			Default:   "1",
+			Default:   "private",
 			Advanced:  true,
 			Sensitive: true,
+			Examples: []fs.OptionExample{
+				{Value: "private", Help: "My Folder"},
+				{Value: "common", Help: "Organisation Folder"},
+				{Value: "10", Help: "Explicit folder id"},
+			},
 		}, {
 			Name: "drive_id",
 			Help: `Fill the drive ID for this kdrive.
@@ -324,7 +329,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Get rootFolderID
-	rootID := f.opt.RootFolderID
+	rootID, err := f.determineRootID()
+	if err != nil {
+		return nil, err
+	}
+
 	f.dirCache = dircache.New(root, rootID, f)
 
 	// Find the current root
@@ -358,6 +367,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+func (f *Fs) determineRootID() (string, error) {
+	ctx := context.Background()
+
+	var rootID string
+	var err error
+	switch f.opt.RootFolderID {
+	case "private":
+		rootID, _, err = f.FindLeaf(ctx, "1", "Private")
+	case "common":
+		rootID, _, err = f.FindLeaf(ctx, "1", "Common documents")
+	case "shared":
+		rootID, _, err = f.FindLeaf(ctx, "1", "Shared")
+	default:
+		rootID = f.opt.RootFolderID
+	}
+
+	return rootID, err
 }
 
 // Return an Object from a path

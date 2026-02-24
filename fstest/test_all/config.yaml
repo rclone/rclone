@@ -689,7 +689,7 @@ backends:
    fastlist: false
    extratime: 2.0
  - backend: "kdrive"
-   remote: "TestKdrive:Private"
+   remote: "TestKdrive:"
    ignore:
     - TestIntegration/FsMkdir/FsOpenChunkWriter
 
