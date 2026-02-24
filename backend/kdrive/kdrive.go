@@ -26,7 +26,6 @@ import (
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/xxh3"
@@ -1358,10 +1357,7 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 func (o *Object) updateMultipart(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	f := o.fs
 
-	chunkWriter, err := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
-		Open:        f,
-		OpenOptions: options,
-	})
+	chunkWriter, err := f.UploadMultipart(ctx, src, in, options)
 	if err != nil {
 		return err
 	}
