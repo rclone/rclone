@@ -18,6 +18,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/pkg/sftp"
@@ -547,6 +548,23 @@ as the source and the destination will be the same file.
 
 This feature may be useful backups made with --copy-dest.`,
 			Advanced: true,
+		}, {
+			Name:    "preserve_links",
+			Default: false,
+			Help: `Preserve hard links when syncing.
+
+When this is enabled, if a file being synced is detected to be a hard link
+to another file that has already been synced, rclone will create a hard link
+on the remote SFTP server instead of uploading the file again.
+
+This preserves the hard link relationship and saves space on the remote.
+
+Not all SFTP servers support creating hard links. If the server doesn't
+support it, the file will be uploaded normally.
+
+Note: Hard link detection is based on inode numbers and is only supported
+on Unix-like systems.`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -598,6 +616,13 @@ type Options struct {
 	SocksProxy              string          `config:"socks_proxy"`
 	HTTPProxy               string          `config:"http_proxy"`
 	CopyIsHardlink          bool            `config:"copy_is_hardlink"`
+	PreserveLinks           bool            `config:"preserve_links"`
+}
+
+// hardLinkInfo tracks information about files for hard link detection
+type hardLinkInfo struct {
+	inode      uint64
+	remotePath string
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -623,6 +648,7 @@ type Fs struct {
 	sessions     atomic.Int32 // count in use sessions
 	tokens       *pacer.TokenDispenser
 	proxyURL     *url.URL // address of HTTP proxy read from environment
+	hardLinks    sync.Map // map[uint64]*hardLinkInfo for tracking hard links during sync
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -895,6 +921,11 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 		f.pool[i] = nil
 	}
 	f.pool = nil
+	// Clear hard link tracking when draining pool
+	f.hardLinks.Range(func(key, value interface{}) bool {
+		f.hardLinks.Delete(key)
+		return true
+	})
 	return nil
 }
 
@@ -2334,8 +2365,106 @@ func (sr *sizeReader) Size() int64 {
 	return sr.size
 }
 
+// getInode returns the inode number of the file if available
+func (o *Object) getInode(ctx context.Context) (uint64, error) {
+	info, err := o.fs.stat(ctx, o.remote)
+	if err != nil {
+		return 0, err
+	}
+	stat, ok := info.Sys().(*sftp.FileStat)
+	if !ok {
+		return 0, fmt.Errorf("unexpected type %T in stat", info.Sys())
+	}
+	// sftp.FileStat doesn't expose inode directly, so we need to use syscall
+	if stat.Sys != nil {
+		if stat_t, ok := stat.Sys.(*syscall.Stat_t); ok {
+			return stat_t.Ino, nil
+		}
+	}
+	return 0, fmt.Errorf("inode not available")
+}
+
+// checkHardLink checks if this object is a hard link to an already uploaded file
+func (f *Fs) checkHardLink(ctx context.Context, o *Object) (*hardLinkInfo, bool) {
+	if !f.opt.PreserveLinks {
+		return nil, false
+	}
+
+	// Get inode number
+	inode, err := o.getInode(ctx)
+	if err != nil {
+		fs.Debugf(o, "Failed to get inode for hard link detection: %v", err)
+		return nil, false
+	}
+
+	// Check if we've seen this inode before
+	if val, ok := f.hardLinks.Load(inode); ok {
+		if info, ok := val.(*hardLinkInfo); ok {
+			return info, true
+		}
+	}
+
+	// Get link count from stat
+	info, err := o.fs.stat(ctx, o.remote)
+	if err != nil {
+		return nil, false
+	}
+	stat, ok := info.Sys().(*sftp.FileStat)
+	if !ok {
+		return nil, false
+	}
+	// Check if this file has multiple hard links
+	if stat.Sys != nil {
+		if stat_t, ok := stat.Sys.(*syscall.Stat_t); ok && stat_t.Nlink > 1 {
+			// This is a hard linked file, store it for future reference
+			linkInfo := &hardLinkInfo{
+				inode:      inode,
+				remotePath: o.remote,
+			}
+			f.hardLinks.Store(inode, linkInfo)
+			return linkInfo, false // First time seeing this inode
+		}
+	}
+
+	return nil, false
+}
+
 // Update a remote sftp file using the data <in> and ModTime from <src>
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	// Check if this is a hard link to an already uploaded file
+	if linkInfo, isHardLink := o.fs.checkHardLink(ctx, o); isHardLink {
+		fs.Debugf(o, "Detected hard link to %s, creating link instead of uploading", linkInfo.remotePath)
+		
+		// Create parent directory if needed
+		err := o.fs.mkParentDir(ctx, o.remote)
+		if err != nil {
+			return fmt.Errorf("Update mkParentDir failed: %w", err)
+		}
+		
+		// Create hard link
+		c, err := o.fs.getSftpConnection(ctx)
+		if err != nil {
+			return fmt.Errorf("Update: %w", err)
+		}
+		
+		srcPath := path.Join(o.fs.absRoot, linkInfo.remotePath)
+		dstPath := o.path()
+		err = c.sftpClient.Link(srcPath, dstPath)
+		o.fs.putSftpConnection(&c, err)
+		
+		if err != nil {
+			// If hard link fails, fall back to regular upload
+			fs.Debugf(o, "Hard link creation failed, falling back to regular upload: %v", err)
+		} else {
+			// Hard link created successfully, update metadata
+			err = o.stat(ctx)
+			if err != nil {
+				return fmt.Errorf("Update stat after hard link failed: %w", err)
+			}
+			return nil
+		}
+	}
+
 	o.fs.addSession() // Show session in use
 	defer o.fs.removeSession()
 	// Clear the hash cache since we are about to update the object
