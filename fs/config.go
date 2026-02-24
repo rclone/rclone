@@ -566,6 +566,11 @@ var ConfigOptionsInfo = Options{{
 	Default: "",
 	Help:    "HTTP proxy URL.",
 	Groups:  "Networking",
+}, {
+	Name:    "disable_fadvise",
+	Default: false,
+	Help:    "Disable use of posix_fadvise on local filesystems. Normally, rclone uses it to provide the operating system with hints about expected file access patterns, which can improve performance and reduce memory usage on some systems. Disabling this may be useful if fadvise causes issues.",
+	Groups:  "Copy",
 }}
 
 // ConfigInfo is filesystem config options
@@ -680,6 +685,7 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
+	DisableFadvise             bool              `config:"disable_fadvise"`
 }
 
 func init() {

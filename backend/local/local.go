@@ -329,6 +329,22 @@ only useful for reading.
 				Advanced: true,
 				Default:  encoder.OS,
 			},
+			{
+				Name:     "disable_fadvise",
+				Default:  false,
+				Advanced: true,
+				Help: `
+Disable use of posix_fadvise.
+
+Normally, rclone uses posix_fadvise to provide the operating system with hints about how files will be accessed (for example, sequentially or randomly). 
+These hints can help the OS optimize disk caching and I/O scheduling, improving performance and reducing memory usage on some systems.
+
+Disabling fadvise may be useful if you are experiencing issues or unexpected behavior related to file access on your filesystem, 
+or if you are debugging performance problems. On some filesystems or platforms, posix_fadvise may not be implemented correctly, or may cause compatibility issues.
+
+If you are unsure, it is recommended to leave fadvise enabled (the default), so that rclone can use it where available.
+				`,
+			},
 		},
 	}
 	fs.Register(fsi)
@@ -353,6 +369,7 @@ type Options struct {
 	Hashes            fs.CommaSepList      `config:"hashes"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 	NoClone           bool                 `config:"no_clone"`
+	DisableFadvise    bool                 `config:"disable_fadvise"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -412,8 +429,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if ci.Links {
 		opt.TranslateSymlinks = true
 	}
+
 	if opt.TranslateSymlinks && opt.FollowSymlinks {
 		return nil, errLinksAndCopyLinks
+	}
+
+	// Disable fadvise if --disable-fadvise is set
+	if ci.DisableFadvise {
+		fs.Debug(nil, "fadvise is disabled")
+		opt.DisableFadvise = true
 	}
 
 	f := &Fs{
@@ -1168,7 +1192,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 			var fd *os.File
 			fd, err = file.Open(o.path)
 			if fd != nil {
-				in = newFadviseReadCloser(o, fd, 0, 0)
+				in = o.maybeWrapWithFadvise(fd, 0, 0)
 			}
 		} else {
 			in, err = o.openTranslatedLink(0, -1)
@@ -1374,7 +1398,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return
 	}
-	wrappedFd := readers.NewLimitedReadCloser(newFadviseReadCloser(o, fd, offset, limit), limit)
+
+	wrappedFd := readers.NewLimitedReadCloser(o.maybeWrapWithFadvise(fd, offset, limit), limit)
 	if offset != 0 {
 		// seek the object
 		_, err = fd.Seek(offset, io.SeekStart)
@@ -1408,6 +1433,13 @@ type nopWriterCloser struct {
 func (nwc nopWriterCloser) Close() error {
 	// noop
 	return nil
+}
+
+func (o *Object) maybeWrapWithFadvise(fd *os.File, offset, limit int64) io.ReadCloser {
+	if o.fs.opt.DisableFadvise {
+		return fd
+	}
+	return newFadviseReadCloser(o, fd, offset, limit)
 }
 
 // Update the object from in with modTime and size
