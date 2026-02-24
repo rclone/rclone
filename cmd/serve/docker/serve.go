@@ -29,40 +29,38 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return hs.Shutdown(ctx)
 }
 
-func (s *Server) serve(listener net.Listener, addr, tempFile string) error {
-	if tempFile != "" {
-		atexit.Register(func() {
-			// remove spec file or self-created unix socket
-			fs.Debugf(nil, "Removing stale file %s", tempFile)
-			_ = os.Remove(tempFile)
-		})
-	}
+// Serve requests using the listener
+func (s *Server) Serve(listener net.Listener) error {
 	hs := (*http.Server)(s)
 	return hs.Serve(listener)
 }
 
-// ServeUnix makes the handler to listen for requests in a unix socket.
+// ListenUnix returns a unix socket listener.
 // It also creates the socket file in the right directory for docker to read.
-func (s *Server) ServeUnix(path string, gid int) error {
+func (s *Server) ListenUnix(path string, gid int) (net.Listener, error) {
 	listener, socketPath, err := newUnixListener(path, gid)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if socketPath != "" {
-		path = socketPath
-		fs.Infof(nil, "Serving unix socket: %s", path)
+		fs.Infof(nil, "Listening on unix socket: %s", socketPath)
+		atexit.Register(func() {
+			// remove self-created unix socket
+			fs.Debugf(nil, "Removing stale unix socket file %s", socketPath)
+			_ = os.Remove(socketPath)
+		})
 	} else {
-		fs.Infof(nil, "Serving systemd socket")
+		fs.Infof(nil, "Listening on systemd socket")
 	}
-	return s.serve(listener, path, socketPath)
+	return listener, nil
 }
 
-// ServeTCP makes the handler listen for request on a given TCP address.
+// ListenTCP returns a TCP listener for the given TCP address.
 // It also writes the spec file in the right directory for docker to read.
-func (s *Server) ServeTCP(addr, specDir string, tlsConfig *tls.Config, noSpec bool) error {
+func (s *Server) ListenTCP(addr, specDir string, tlsConfig *tls.Config, noSpec bool) (net.Listener, error) {
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if tlsConfig != nil {
 		tlsConfig.NextProtos = []string{"http/1.1"}
@@ -73,11 +71,16 @@ func (s *Server) ServeTCP(addr, specDir string, tlsConfig *tls.Config, noSpec bo
 	if !noSpec {
 		specFile, err = writeSpecFile(addr, "tcp", specDir)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		atexit.Register(func() {
+			// remove spec file
+			fs.Debugf(nil, "Removing stale spec file %s", specFile)
+			_ = os.Remove(specFile)
+		})
 	}
-	fs.Infof(nil, "Serving TCP socket: %s", addr)
-	return s.serve(listener, addr, specFile)
+	fs.Infof(nil, "Listening on TCP socket: %s", addr)
+	return listener, nil
 }
 
 func writeSpecFile(addr, proto, specDir string) (string, error) {
