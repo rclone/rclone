@@ -285,16 +285,32 @@ func getConfigMap(m configmap.Mapper) (uid, accessToken, refreshToken, saltedKey
 	if accessToken, ok = m.Get(clientAccessTokenKey); !ok {
 		return
 	}
+	if len(accessToken) == 0 {
+		ok = false
+		return
+	}
 
 	if uid, ok = m.Get(clientUIDKey); !ok {
+		return
+	}
+	if len(uid) == 0 {
+		ok = false
 		return
 	}
 
 	if refreshToken, ok = m.Get(clientRefreshTokenKey); !ok {
 		return
 	}
+	if len(refreshToken) == 0 {
+		ok = false
+		return
+	}
 
 	if saltedKeyPass, ok = m.Get(clientSaltedKeyPassKey); !ok {
+		return
+	}
+	if len(saltedKeyPass) == 0 {
+		ok = false
 		return
 	}
 	_saltedKeyPass = saltedKeyPass
