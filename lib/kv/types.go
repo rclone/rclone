@@ -10,6 +10,7 @@ var (
 	ErrEmpty       = errors.New("database empty")
 	ErrInactive    = errors.New("database stopped")
 	ErrUnsupported = errors.New("unsupported on this OS")
+	ErrReadOnly    = errors.New("database in read-only mode")
 )
 
 // Op represents a database operation

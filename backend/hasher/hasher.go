@@ -51,6 +51,10 @@ func init() {
 			Advanced: true,
 			Default:  fs.SizeSuffix(0),
 			Help:     "Auto-update checksum for files smaller than this size (disabled by default).",
+		}, {
+			Name:    "read_only",
+			Default: false,
+			Help:    "Set the db in read only mode",
 		}},
 	})
 }
@@ -61,6 +65,7 @@ type Options struct {
 	Hashes   fs.CommaSepList `config:"hashes"`
 	AutoSize fs.SizeSuffix   `config:"auto_size"`
 	MaxAge   fs.Duration     `config:"max_age"`
+	ReadOnly bool            `config:"read_only"`
 }
 
 // Fs represents a wrapped fs.Fs

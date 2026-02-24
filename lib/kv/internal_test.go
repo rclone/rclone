@@ -66,3 +66,27 @@ func TestKvExit(t *testing.T) {
 	Exit()
 	assert.Equal(t, 0, len(dbMap))
 }
+
+func TestDbReadOnly(t *testing.T) {
+	require.Equal(t, 0, len(dbMap), "no databases can be started initially")
+	ctx := context.Background()
+
+	db, err := Start(ctx, "test", nil)
+	require.NoError(t, err)
+	require.NotNil(t, db)
+
+	assert.False(t, db.readOnly)
+
+	// set db in read only
+	db.ReadOnly(true)
+
+	assert.True(t, db.readOnly)
+
+	// write op is not allowed in read only mode, should throw error
+	err = db.Do(true, nil)
+	assert.ErrorIs(t, err, ErrReadOnly)
+
+	db.ReadOnly(false)
+	err = db.Do(true, &opStop{})
+	assert.NoError(t, err)
+}
