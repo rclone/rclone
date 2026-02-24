@@ -451,7 +451,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 							return
 						}
 					} else {
-						deleteFileErr := operations.DeleteFile(s.ctx, src)
+						deleteFileErr := operations.DeleteFileWithBackupDir(s.ctx, src, s.backupDir)
 						s.processError(deleteFileErr)
 						s.logger(s.ctx, operations.TransferError, pair.Src, pair.Dst, deleteFileErr)
 					}
