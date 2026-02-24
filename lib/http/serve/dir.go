@@ -2,13 +2,15 @@ package serve
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"fmt"
 	"html/template"
+	"math"
 	"net/http"
 	"net/url"
 	"path"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -146,82 +148,86 @@ func (d *Directory) ProcessQueryParams(sortParm string, orderParm string) *Direc
 	d.Sort = sortParm
 	d.Order = orderParm
 
-	var toSort sort.Interface
-
+	var sortFn func(a, b DirEntry) int
 	switch d.Sort {
 	case sortByName:
-		toSort = byName(*d)
+		sortFn = sortDirEntryByName
 	case sortByNameDirFirst:
-		toSort = byNameDirFirst(*d)
+		sortFn = sortDirEntryByNameDirFirst
 	case sortBySize:
-		toSort = bySize(*d)
+		sortFn = sortDirEntryBySize
 	case sortByTime:
-		toSort = byTime(*d)
+		sortFn = sortDirEntryByTime
 	default:
-		toSort = byNameDirFirst(*d)
+		sortFn = sortDirEntryByNameDirFirst
 	}
-	if d.Order == "desc" && toSort != nil {
-		toSort = sort.Reverse(toSort)
-	}
-	if toSort != nil {
-		sort.Sort(toSort)
+	slices.SortFunc(d.Entries, sortFn)
+
+	if d.Order == "desc" {
+		slices.Reverse(d.Entries)
 	}
 
 	return d
-
 }
 
-type byName Directory
-type byNameDirFirst Directory
-type bySize Directory
-type byTime Directory
+func sortDirEntryByName(a, b DirEntry) int {
+	aLeaf := strings.ToLower(a.Leaf)
+	bLeaf := strings.ToLower(b.Leaf)
 
-func (d byName) Len() int      { return len(d.Entries) }
-func (d byName) Swap(i, j int) { d.Entries[i], d.Entries[j] = d.Entries[j], d.Entries[i] }
+	// trim trailing '/' because it's not part of a filename. This also ensures
+	// correct dir order - 'test/' should be placed before 'test 1/'
+	if a.IsDir {
+		aLeaf = strings.TrimSuffix(aLeaf, "/")
+	}
+	if b.IsDir {
+		bLeaf = strings.TrimSuffix(bLeaf, "/")
+	}
 
-func (d byName) Less(i, j int) bool {
-	return strings.ToLower(d.Entries[i].Leaf) < strings.ToLower(d.Entries[j].Leaf)
+	return cmp.Compare(aLeaf, bLeaf)
 }
 
-func (d byNameDirFirst) Len() int      { return len(d.Entries) }
-func (d byNameDirFirst) Swap(i, j int) { d.Entries[i], d.Entries[j] = d.Entries[j], d.Entries[i] }
-
-func (d byNameDirFirst) Less(i, j int) bool {
+func sortDirEntryByNameDirFirst(a, b DirEntry) int {
 	// sort by name if both are dir or file
-	if d.Entries[i].IsDir == d.Entries[j].IsDir {
-		return strings.ToLower(d.Entries[i].Leaf) < strings.ToLower(d.Entries[j].Leaf)
+	if a.IsDir == b.IsDir {
+		return sortDirEntryByName(a, b)
 	}
 	// sort dir ahead of file
-	return d.Entries[i].IsDir
+	if a.IsDir {
+		return -1
+	}
+	return +1
 }
 
-func (d bySize) Len() int      { return len(d.Entries) }
-func (d bySize) Swap(i, j int) { d.Entries[i], d.Entries[j] = d.Entries[j], d.Entries[i] }
+func sortDirEntryBySize(a, b DirEntry) int {
+	const directoryOffset = math.MinInt32
 
-func (d bySize) Less(i, j int) bool {
-	const directoryOffset = -1 << 31 // = -math.MinInt32
-
-	iSize, jSize := d.Entries[i].Size, d.Entries[j].Size
+	iSize, jSize := a.Size, b.Size
 
 	// directory sizes depend on the file system; to
 	// provide a consistent experience, put them up front
 	// and sort them by name
-	if d.Entries[i].IsDir {
+	if a.IsDir {
 		iSize = directoryOffset
 	}
-	if d.Entries[j].IsDir {
+	if b.IsDir {
 		jSize = directoryOffset
 	}
-	if d.Entries[i].IsDir && d.Entries[j].IsDir {
-		return strings.ToLower(d.Entries[i].Leaf) < strings.ToLower(d.Entries[j].Leaf)
+	if a.IsDir && b.IsDir {
+		return sortDirEntryByName(a, b)
 	}
 
-	return iSize < jSize
+	if v := cmp.Compare(iSize, jSize); v != 0 {
+		return v
+	}
+	return sortDirEntryByName(a, b)
 }
 
-func (d byTime) Len() int           { return len(d.Entries) }
-func (d byTime) Swap(i, j int)      { d.Entries[i], d.Entries[j] = d.Entries[j], d.Entries[i] }
-func (d byTime) Less(i, j int) bool { return d.Entries[i].ModTime.Before(d.Entries[j].ModTime) }
+func sortDirEntryByTime(a, b DirEntry) int {
+	if v := a.ModTime.Compare(b.ModTime); v != 0 {
+		return v
+	}
+	return sortDirEntryByNameDirFirst(a, b)
+}
 
 const (
 	sortByName         = "name"
