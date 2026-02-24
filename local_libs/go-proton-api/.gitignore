@@ -1,0 +1,5 @@
+# Editor files
+.*.sw?
+*~
+.idea
+.vscode

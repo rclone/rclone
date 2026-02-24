@@ -284,3 +284,7 @@ require (
 	golang.org/x/mobile v0.0.0-20260217195705-b56b3793a9c4
 	golang.org/x/term v0.40.0
 )
+
+replace github.com/rclone/go-proton-api => ./local_libs/go-proton-api
+
+replace github.com/rclone/Proton-API-Bridge => ./local_libs/Proton-API-Bridge

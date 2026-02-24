@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+option go_package = "github.com/rclone/go-proton-api/server/proto";
+
+package proto; 
+
+//**********************************************************************************************************************
+//  Service Declaration
+//**********************************************************************************************************************
+service Server {
+    rpc GetInfo (GetInfoRequest) returns (GetInfoResponse);
+
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+
+    rpc RevokeUser(RevokeUserRequest) returns (RevokeUserResponse);
+
+    rpc CreateAddress(CreateAddressRequest) returns (CreateAddressResponse);
+
+    rpc RemoveAddress(RemoveAddressRequest) returns (RemoveAddressResponse);
+
+    rpc CreateLabel(CreateLabelRequest) returns (CreateLabelResponse);
+}
+
+//**********************************************************************************************************************
+
+message GetInfoRequest {
+}
+
+message GetInfoResponse {
+    string hostURL = 1;
+    string proxyURL = 2;
+}
+
+message CreateUserRequest {
+    string username = 1;
+    bytes password = 3;
+}
+
+message CreateUserResponse {
+    string userID = 1;
+    string addrID = 2;
+}
+
+message RevokeUserRequest {
+    string userID = 1;
+}
+
+message RevokeUserResponse {
+}
+
+message CreateAddressRequest {
+    string userID = 1;
+    string email = 2;
+    bytes password = 3;
+}
+
+message CreateAddressResponse {
+    string addrID = 1;
+}
+
+message RemoveAddressRequest {
+    string userID = 1;
+    string addrID = 2;
+}
+
+message RemoveAddressResponse {
+}
+
+enum LabelType {
+    FOLDER = 0;
+    LABEL = 1;
+}
+
+message CreateLabelRequest {
+    string userID = 1;
+    string name = 2;
+    string parentID = 3;
+    LabelType type = 4;
+}
+
+message CreateLabelResponse {
+    string labelID = 1;
+}

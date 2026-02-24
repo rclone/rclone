@@ -1,0 +1,28 @@
+name: Lint and Test
+
+on: push
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get sources
+        uses: actions/checkout@v3
+
+      - name: Set up Go 1.18
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.18'
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.50.0
+          args: --timeout=180s
+          skip-cache: true
+
+      # - name: Run tests
+      #   run: go test -v ./...
+
+      # - name: Run tests with race check
+      #   run: go test -v -race ./...

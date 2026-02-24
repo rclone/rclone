@@ -588,10 +588,6 @@ github.com/quic-go/quic-go v0.53.0 h1:QHX46sISpG2S03dPeZBgVIZp8dGagIaiu2FiVYvpCZ
 github.com/quic-go/quic-go v0.53.0/go.mod h1:e68ZEaCdyviluZmy44P6Iey98v/Wfz6HCjQEm+l8zTY=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 h1:UVArwN/wkKjMVhh2EQGC0tEc1+FqiLlvYXY5mQ2f8Wg=
 github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93/go.mod h1:Nfe4efndBz4TibWycNE+lqyJZiMX4ycx+QKV8Ta0f/o=
-github.com/rclone/Proton-API-Bridge v1.0.1-0.20260127174007-77f974840d11 h1:4MI2alxM/Ye2gIRBlYf28JGWTipZ4Zz7yAziPKrttjs=
-github.com/rclone/Proton-API-Bridge v1.0.1-0.20260127174007-77f974840d11/go.mod h1:3HLX7dwZgvB7nt+Yl/xdzVPcargQ1yBmJEUg3n+jMKM=
-github.com/rclone/go-proton-api v1.0.1-0.20260127173028-eb465cac3b18 h1:Lc+d3ISfQaMJKWZOE7z4ZSY4RVmdzbn1B0IM8xN18qM=
-github.com/rclone/go-proton-api v1.0.1-0.20260127173028-eb465cac3b18/go.mod h1:LB2kCEaZMzNn3ocdz+qYfxXmuLxxN0ka62KJd2x53Bc=
 github.com/rclone/gofakes3 v0.0.4 h1:LswpC49VY/UJ1zucoL5ktnOEX6lq3qK7e1aFIAfqCbk=
 github.com/rclone/gofakes3 v0.0.4/go.mod h1:j/UoS+2/Mr7xAlfKhyVC58YyFQmh9uoQA5YZQXQUqmg=
 github.com/relvacode/iso8601 v1.7.0 h1:BXy+V60stMP6cpswc+a93Mq3e65PfXCgDFfhvNNGrdo=
