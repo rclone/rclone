@@ -22,9 +22,9 @@ var (
 			"04E57AE6AF874E7303CE53299CCC041C7BC308D82A5698F3A8D0C38271AE35F8" +
 			"E9DBFBB694B5C803D89F7AE435DE236D525F54759B65E372FCD68EF20FA7111F" +
 			"9E4AFF73")
-	srpG          = big.NewInt(2)
-	srpNLenBytes  = 2048 / 8
-	srpHashFunc   = sha256.New
+	srpG         = big.NewInt(2)
+	srpNLenBytes = 2048 / 8
+	srpHashFunc  = sha256.New
 )
 
 func mustParseBigHex(s string) *big.Int {

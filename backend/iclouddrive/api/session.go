@@ -32,8 +32,8 @@ type Session struct {
 	Cookies        []*http.Cookie `json:"cookies"`
 	AccountInfo    AccountInfo    `json:"account_info"`
 
-	srv         *rest.Client `json:"-"`
-	needs2FA    bool         `json:"-"` // set when SRP signin returns 409
+	srv      *rest.Client `json:"-"`
+	needs2FA bool         `json:"-"` // set when SRP signin returns 409
 }
 
 // srpInitResponse is the server response from /auth/signin/init
@@ -281,12 +281,12 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 	}
 
 	values := map[string]any{
-		"accountName":  accountName,
-		"m1":           m1Base64,
-		"m2":           m2Base64,
-		"c":            c,
-		"rememberMe":   true,
-		"trustTokens":  trustTokens,
+		"accountName": accountName,
+		"m1":          m1Base64,
+		"m2":          m2Base64,
+		"c":           c,
+		"rememberMe":  true,
+		"trustTokens": trustTokens,
 	}
 	body, err := IntoReader(values)
 	if err != nil {
