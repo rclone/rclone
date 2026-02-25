@@ -324,7 +324,7 @@ full new copy of the file.
 When mounting with `--read-only`, attempts to write to files will fail *silently*
 as opposed to with a clear warning as in macFUSE.
 
-## Mounting on Linux
+### Mounting on Linux
 
 On newer versions of Ubuntu, you may encounter the following error when running
 `rclone mount`:
