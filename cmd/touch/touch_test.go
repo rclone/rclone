@@ -150,3 +150,32 @@ func TestRecursiveTouchDirWithFiles(t *testing.T) {
 	require.NoError(t, err)
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, file3}, []string{"a", "a/b", "a/b/c"}, fs.ModTimeNotSupported)
 }
+
+func TestTouchWithMetadata(t *testing.T) {
+	r := fstest.NewRun(t)
+	ctx := context.Background()
+	features := r.Fremote.Features()
+	if !features.UserMetadata {
+		t.Skip("Skipping metadata test; backend does not support user metadata")
+	}
+
+	ci := fs.GetConfig(ctx)
+	origMetadata := ci.Metadata
+	origMetadataSet := ci.MetadataSet
+	t.Cleanup(func() {
+		ci.Metadata = origMetadata
+		ci.MetadataSet = origMetadataSet
+	})
+
+	ci.Metadata = true
+	ci.MetadataSet = fs.Metadata{
+		"testkey": "testvalue",
+	}
+
+	err := Touch(ctx, r.Fremote, "metaFile")
+	require.NoError(t, err)
+
+	o, err := r.Fremote.NewObject(ctx, "metaFile")
+	require.NoError(t, err)
+	fstest.CheckEntryMetadata(ctx, t, r.Fremote, o, ci.MetadataSet)
+}

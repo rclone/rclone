@@ -9,7 +9,6 @@ import (
 	"io"
 	"net"
 	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -508,8 +507,8 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (string, error)
 func (f *Fs) preUploadCheck(ctx context.Context, leaf, directoryID string) (*folders.File, error) {
 	// Parse name and extension from the leaf
 	baseName := f.opt.Encoding.FromStandardName(leaf)
-	name := strings.TrimSuffix(baseName, filepath.Ext(baseName))
-	ext := strings.TrimPrefix(filepath.Ext(baseName), ".")
+	name := strings.TrimSuffix(baseName, path.Ext(baseName))
+	ext := strings.TrimPrefix(path.Ext(baseName), ".")
 
 	checkResult, err := files.CheckFilesExistence(ctx, f.cfg, directoryID, []files.FileExistenceCheck{
 		{
@@ -580,7 +579,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		return nil, err
 	}
 	for _, e := range foldersList {
-		remote := filepath.Join(dir, f.opt.Encoding.ToStandardName(e.PlainName))
+		remote := path.Join(dir, f.opt.Encoding.ToStandardName(e.PlainName))
 		out = append(out, fs.NewDir(remote, e.ModificationTime))
 	}
 	var filesList []folders.File
@@ -597,7 +596,7 @@ func (f *Fs) List(ctx context.Context, dir string) (fs.DirEntries, error) {
 		if len(e.Type) > 0 {
 			remote += "." + e.Type
 		}
-		remote = filepath.Join(dir, f.opt.Encoding.ToStandardName(remote))
+		remote = path.Join(dir, f.opt.Encoding.ToStandardName(remote))
 		out = append(out, newObjectWithFile(f, remote, &e))
 	}
 	return out, nil
@@ -676,7 +675,7 @@ func (f *Fs) Remove(ctx context.Context, remote string) error {
 
 // NewObject creates a new object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	parentDir := filepath.Dir(remote)
+	parentDir := path.Dir(remote)
 
 	if parentDir == "." {
 		parentDir = ""
@@ -696,7 +695,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	targetName := filepath.Base(remote)
+	targetName := path.Base(remote)
 	for _, e := range files {
 		name := e.PlainName
 		if len(e.Type) > 0 {
@@ -837,9 +836,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	remote := o.remote
 
-	origBaseName := filepath.Base(remote)
-	origName := strings.TrimSuffix(origBaseName, filepath.Ext(origBaseName))
-	origType := strings.TrimPrefix(filepath.Ext(origBaseName), ".")
+	origBaseName := path.Base(remote)
+	origName := strings.TrimSuffix(origBaseName, path.Ext(origBaseName))
+	origType := strings.TrimPrefix(path.Ext(origBaseName), ".")
 
 	// Create directory if it doesn't exist
 	_, dirID, err := o.f.dirCache.FindPath(ctx, remote, true)
@@ -857,9 +856,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Step 1: If file exists, rename to backup (preserves old file during upload)
 	if oldUUID != "" {
 		// Generate unique backup name
-		baseName := filepath.Base(remote)
-		name := strings.TrimSuffix(baseName, filepath.Ext(baseName))
-		ext := strings.TrimPrefix(filepath.Ext(baseName), ".")
+		baseName := path.Base(remote)
+		name := strings.TrimSuffix(baseName, path.Ext(baseName))
+		ext := strings.TrimPrefix(path.Ext(baseName), ".")
 
 		backupSuffix := fmt.Sprintf(".rclone-backup-%s", random.String(8))
 		backupName = o.f.opt.Encoding.FromStandardName(name + backupSuffix)
@@ -891,7 +890,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		meta, err = buckets.UploadFileStreamAuto(ctx,
 			o.f.cfg,
 			dirID,
-			o.f.opt.Encoding.FromStandardName(filepath.Base(remote)),
+			o.f.opt.Encoding.FromStandardName(path.Base(remote)),
 			in,
 			src.Size(),
 			src.ModTime(ctx),
@@ -981,7 +980,7 @@ func (o *Object) recoverFromTimeoutConflict(ctx context.Context, uploadErr error
 		return nil, uploadErr
 	}
 
-	baseName := filepath.Base(remote)
+	baseName := path.Base(remote)
 	encodedName := o.f.opt.Encoding.FromStandardName(baseName)
 
 	var meta *buckets.CreateMetaResponse
@@ -991,8 +990,8 @@ func (o *Object) recoverFromTimeoutConflict(ctx context.Context, uploadErr error
 			return o.f.shouldRetry(ctx, err)
 		}
 		if existingFile != nil {
-			name := strings.TrimSuffix(baseName, filepath.Ext(baseName))
-			ext := strings.TrimPrefix(filepath.Ext(baseName), ".")
+			name := strings.TrimSuffix(baseName, path.Ext(baseName))
+			ext := strings.TrimPrefix(path.Ext(baseName), ".")
 
 			meta = &buckets.CreateMetaResponse{
 				UUID:      existingFile.UUID,
