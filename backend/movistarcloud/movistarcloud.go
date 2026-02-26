@@ -940,7 +940,8 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 
 	// Use server-returned metadata if available
 	if info != nil {
-		o.setMetaData(info)
+		_ = o.setMetaData(info)
+
 		// Preserve the modTime we intended — the server may report
 		// a different value until the modificationdate propagates.
 		o.modTime = modTime
