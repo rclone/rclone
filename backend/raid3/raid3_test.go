@@ -15,8 +15,6 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/raid3"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/cache"
-	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -62,12 +60,12 @@ func TestIntegration(t *testing.T) {
 	})
 }
 
-// TestStandard runs the full rclone integration test suite with local
-// temporary directories (default timeout_mode=standard).
+// TestStandard runs the full rclone integration test suite with local-only
+// raid3 storage provided by fstest/testserver (TestRaid3Local).
 //
-// This is the primary test for CI/CD pipelines, as it doesn't require any
-// external backends or configuration. It creates three temp directories and
-// runs comprehensive tests covering all rclone operations.
+// This is the primary test for CI/CD pipelines. The environment is provisioned
+// by init.d/TestRaid3Local (even/odd/parity dirs and config); no manual setup.sh
+// or RCLONE_CONFIG is required.
 //
 // This test verifies:
 //   - All fs.Fs interface methods work correctly
@@ -82,26 +80,8 @@ func TestStandard(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-
-	// Create three temporary directories for even, odd, and parity
-	evenDir := t.TempDir()
-	oddDir := t.TempDir()
-	parityDir := t.TempDir()
-
-	name := "TestRAID3"
-	t.Cleanup(func() {
-		config.LoadedData().DeleteSection(name)
-		cache.ClearConfig(name)
-		cache.Clear() // clear entire Fs cache so no stale refs from any test remain (fixes -count=N)
-	})
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: name + ":",
-		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "type", Value: "raid3"},
-			{Name: name, Key: "even", Value: evenDir},
-			{Name: name, Key: "odd", Value: oddDir},
-			{Name: name, Key: "parity", Value: parityDir},
-		},
+		RemoteName:                   "TestRaid3Local:",
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
 		QuickTestOK:                  true,
@@ -109,14 +89,11 @@ func TestStandard(t *testing.T) {
 }
 
 // TestStandardBalanced runs the full integration suite with timeout_mode=balanced.
-//
-// This tests the "balanced" timeout configuration which uses moderate retries
-// (3 attempts) and timeouts (30s) for S3/MinIO backends. This is a middle ground
-// between standard (long timeouts) and aggressive (fast failover).
+// Uses TestRaid3Local plus ExtraConfig to override timeout_mode (testserver
+// sets aggressive by default).
 //
 // This test verifies:
 //   - All operations work correctly with balanced timeout settings
-//   - Appropriate for reliable S3 backends
 //   - No regressions from timeout configuration changes
 //
 // Failure indicates: Timeout mode configuration affects core functionality.
@@ -124,25 +101,10 @@ func TestStandardBalanced(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-
-	evenDir := t.TempDir()
-	oddDir := t.TempDir()
-	parityDir := t.TempDir()
-
-	name := "TestRAID3Balanced"
-	t.Cleanup(func() {
-		config.LoadedData().DeleteSection(name)
-		cache.ClearConfig(name)
-		cache.Clear() // clear entire Fs cache so no stale refs from any test remain (fixes -count=N)
-	})
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: name + ":",
+		RemoteName: "TestRaid3Local:",
 		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "type", Value: "raid3"},
-			{Name: name, Key: "even", Value: evenDir},
-			{Name: name, Key: "odd", Value: oddDir},
-			{Name: name, Key: "parity", Value: parityDir},
-			{Name: name, Key: "timeout_mode", Value: "balanced"},
+			{Name: "TestRaid3Local", Key: "timeout_mode", Value: "balanced"},
 		},
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
@@ -151,42 +113,19 @@ func TestStandardBalanced(t *testing.T) {
 }
 
 // TestStandardAggressive runs the full integration suite with timeout_mode=aggressive.
-//
-// This tests the "aggressive" timeout configuration which uses minimal retries
-// (1 attempt) and short timeouts (10s) for fast failover in S3/MinIO degraded mode.
-// This is the recommended setting for production S3 deployments.
+// TestRaid3Local already sets aggressive; this test confirms that configuration.
 //
 // This test verifies:
 //   - All operations work correctly with aggressive timeout settings
-//   - Fast failover in degraded mode scenarios
 //   - No regressions from aggressive timeout configuration
 //
-// Failure indicates: Aggressive timeout mode breaks operations or causes
-// premature failures with local backends.
+// Failure indicates: Aggressive timeout mode breaks operations with local backends.
 func TestStandardAggressive(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-
-	evenDir := t.TempDir()
-	oddDir := t.TempDir()
-	parityDir := t.TempDir()
-
-	name := "TestRAID3Aggressive"
-	t.Cleanup(func() {
-		config.LoadedData().DeleteSection(name)
-		cache.ClearConfig(name)
-		cache.Clear() // clear entire Fs cache so no stale refs from any test remain (fixes -count=N)
-	})
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: name + ":",
-		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "type", Value: "raid3"},
-			{Name: name, Key: "even", Value: evenDir},
-			{Name: name, Key: "odd", Value: oddDir},
-			{Name: name, Key: "parity", Value: parityDir},
-			{Name: name, Key: "timeout_mode", Value: "aggressive"},
-		},
+		RemoteName:                   "TestRaid3Local:",
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
 		QuickTestOK:                  true,
@@ -194,30 +133,32 @@ func TestStandardAggressive(t *testing.T) {
 }
 
 // TestStandardSpooling runs the full integration suite with use_spooling=true.
-// Puts spool particles to temp files then upload with known size; verifies no regressions.
+// Uses TestRaid3Local with ExtraConfig to enable spooling.
 func TestStandardSpooling(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-
-	evenDir := t.TempDir()
-	oddDir := t.TempDir()
-	parityDir := t.TempDir()
-
-	name := "TestRAID3Spooling"
-	t.Cleanup(func() {
-		config.LoadedData().DeleteSection(name)
-		cache.ClearConfig(name)
-		cache.Clear()
-	})
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: name + ":",
+		RemoteName: "TestRaid3Local:",
 		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "type", Value: "raid3"},
-			{Name: name, Key: "even", Value: evenDir},
-			{Name: name, Key: "odd", Value: oddDir},
-			{Name: name, Key: "parity", Value: parityDir},
-			{Name: name, Key: "use_spooling", Value: "true"},
+			{Name: "TestRaid3Local", Key: "use_spooling", Value: "true"},
+		},
+		UnimplementableFsMethods:     unimplementableFsMethods,
+		UnimplementableObjectMethods: unimplementableObjectMethods,
+		QuickTestOK:                  true,
+	})
+}
+
+// TestStandardStreaming runs the full integration suite with use_spooling=false.
+// Uses TestRaid3Local with ExtraConfig to disable spooling (streaming path).
+func TestStandardStreaming(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: "TestRaid3Local:",
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: "TestRaid3Local", Key: "use_spooling", Value: "false"},
 		},
 		UnimplementableFsMethods:     unimplementableFsMethods,
 		UnimplementableObjectMethods: unimplementableObjectMethods,
