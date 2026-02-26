@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -52,17 +53,11 @@ func init() {
 			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
 			Default: encoder.Display | encoder.EncodeLeftSpace | encoder.EncodeRightSpace | encoder.EncodeInvalidUtf8,
 		}, {
-			Name: "root_folder_id",
-			Help: "Fill in for rclone to use a non root folder as its starting point.",
-			// for default root, see https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
+			Name:      "root_folder_id",
+			Help:      "Fill in for rclone to use a non root folder as its starting point. (directory id)",
 			Default:   "private",
 			Advanced:  true,
 			Sensitive: true,
-			Examples: []fs.OptionExample{
-				{Value: "private", Help: "My Folder"},
-				{Value: "common", Help: "Organisation Folder"},
-				{Value: "10", Help: "Explicit folder id"},
-			},
 		}, {
 			Name: "drive_id",
 			Help: `Fill the drive ID for this kdrive.
@@ -267,6 +262,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+
+	accessToken, err := obscure.Reveal(opt.AccessToken)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't decrypt access token: %w", err)
+	}
+
 	root = parsePath(root)
 	fs.Debugf(ctx, "NewFs: for root=%s", root)
 
@@ -277,7 +278,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		srv:   rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
-	f.srv.SetHeader("Authorization", "Bearer "+opt.AccessToken)
+	f.srv.SetHeader("Authorization", "Bearer "+accessToken)
 	f.cleanupSrv = rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint)
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
