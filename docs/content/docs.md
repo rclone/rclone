@@ -2961,6 +2961,10 @@ knowing the local file is newer than the time it was last uploaded to the
 remote is sufficient. In those cases, this flag can speed up the process and
 reduce the number of API calls necessary.
 
+This flag is only supported on certain backends and will be silently
+ignored on unsupported backends. Supported backends include
+`azureblob`, `oracleobjectstorage`, `s3`, `swift`.
+
 Using this flag on a sync operation without also using `--update` would cause
 all files modified at any time other than the last upload time to be uploaded
 again, which is probably not what you want.
