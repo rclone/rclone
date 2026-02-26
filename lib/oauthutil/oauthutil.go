@@ -133,11 +133,11 @@ func (conf *Config) MakeClientCredentialsConfig() *clientcredentials.Config {
 // SharedOptions are shared between backends the utilize an OAuth flow
 var SharedOptions = []fs.Option{{
 	Name:      config.ConfigClientID,
-	Help:      "OAuth Client Id.\n\nLeave blank normally.",
+	Help:      "OAuth Client Id.\n\nLeave blank to use rclone's.",
 	Sensitive: true,
 }, {
 	Name:      config.ConfigClientSecret,
-	Help:      "OAuth Client Secret.\n\nLeave blank normally.",
+	Help:      "OAuth Client Secret.\n\nLeave blank to use rclone's.",
 	Sensitive: true,
 }, {
 	Name:      config.ConfigToken,
