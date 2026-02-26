@@ -1083,3 +1083,4 @@ put them back in again. -->
 - Chris <238498929+chris081519-crypto@users.noreply.github.com>
 - Jan-Philipp Reßler <xodarap@xodarap.de>
 - Dark Dragon <darkdragon-001@web.de>
+- Leon Brocard <lbrocard@fastly.com>
