@@ -234,6 +234,53 @@ type UploadResponse struct {
 	Type    string `json:"type"`
 }
 
+// SaveMetadataRequest is the body for updating file metadata
+type SaveMetadataRequest struct {
+	Data SaveMetadataRequestData `json:"data"`
+}
+
+// SaveMetadataRequestData contains the metadata fields to update.
+// Only non-zero/non-empty fields are sent.
+type SaveMetadataRequestData struct {
+	ID               int64  `json:"id"`
+	ModificationDate string `json:"modificationdate,omitempty"`
+	Name             string `json:"name,omitempty"`
+	FolderID         *int64 `json:"folderid,omitempty"`
+}
+
+// SaveMetadataResponse is the response from save-metadata
+type SaveMetadataResponse struct {
+	Response
+	Success string `json:"success"`
+	ID      string `json:"id"`
+}
+
+// ValidationStatusRequest is the body for get-validation-status
+type ValidationStatusRequest struct {
+	Data ValidationStatusRequestData `json:"data"`
+}
+
+// ValidationStatusRequestData contains the file IDs to check
+type ValidationStatusRequestData struct {
+	IDs []ValidationStatusID `json:"ids"`
+}
+
+// ValidationStatusID is a single file ID wrapper
+type ValidationStatusID struct {
+	ID int64 `json:"id"`
+}
+
+// ValidationStatusResponse is the response for get-validation-status
+type ValidationStatusResponse struct {
+	IDs []ValidationStatus `json:"ids"`
+}
+
+// ValidationStatus is the status of a single file
+type ValidationStatus struct {
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
+}
+
 // UserInfo is the response for user profile
 type UserInfo struct {
 	User UserDetails `json:"user"`

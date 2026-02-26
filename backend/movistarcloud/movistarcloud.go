@@ -61,7 +61,15 @@ func init() {
 			Advanced: true,
 			Default: (encoder.Display |
 				encoder.EncodeBackSlash |
-				encoder.EncodeInvalidUtf8),
+				encoder.EncodeInvalidUtf8 |
+				encoder.EncodeLeftSpace |
+				encoder.EncodeRightSpace |
+				encoder.EncodeLeftPeriod |
+				encoder.EncodeRightPeriod |
+				encoder.EncodeLeftTilde |
+				encoder.EncodeLeftCrLfHtVt |
+				encoder.EncodeRightCrLfHtVt |
+				encoder.EncodeHashPercent),
 		}},
 	})
 }
@@ -353,7 +361,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	}
 
 	for _, folder := range result.Folders {
-		if strings.EqualFold(f.opt.Enc.ToStandardName(folder.Name), leaf) {
+		if f.opt.Enc.ToStandardName(folder.Name) == leaf {
 			return strconv.FormatInt(folder.ID, 10), true, nil
 		}
 	}
@@ -384,7 +392,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	return strconv.FormatInt(result.ID, 10), nil
 }
 
-// listFiles lists the files in a directory
+// listFiles lists the files in a directory, handling pagination
 func (f *Fs) listFiles(ctx context.Context, dirID string) ([]api.Media, error) {
 	folderID, err := strconv.ParseInt(dirID, 10, 64)
 	if err != nil {
@@ -398,16 +406,24 @@ func (f *Fs) listFiles(ctx context.Context, dirID string) ([]api.Media, error) {
 	}
 
 	var allMedia []api.Media
-	// The API uses pagination with "more" field
 	limit := f.opt.ListLimit
-	apiPath := fmt.Sprintf("/sapi/media?action=get&folderid=%d&limit=%d", folderID, limit)
+	offset := 0
 
-	var result api.ListFilesResponse
-	err = f.apiPostGet(ctx, apiPath, &request, &result)
-	if err != nil {
-		return nil, err
+	for {
+		apiPath := fmt.Sprintf("/sapi/media?action=get&folderid=%d&limit=%d&offset=%d", folderID, limit, offset)
+
+		var result api.ListFilesResponse
+		err = f.apiPostGet(ctx, apiPath, &request, &result)
+		if err != nil {
+			return nil, err
+		}
+		allMedia = append(allMedia, result.Media...)
+
+		if !result.More {
+			break
+		}
+		offset += len(result.Media)
 	}
-	allMedia = append(allMedia, result.Media...)
 
 	return allMedia, nil
 }
@@ -567,6 +583,15 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	size := src.Size()
 	modTime := src.ModTime(ctx)
 
+	// Check for existing file and delete it first to avoid auto-rename
+	existingObj, err := f.NewObject(ctx, remote)
+	if err == nil {
+		err = existingObj.(*Object).Remove(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to remove existing file before put: %w", err)
+		}
+	}
+
 	o, leaf, directoryID, err := f.createObject(ctx, remote, modTime, size)
 	if err != nil {
 		return nil, err
@@ -699,10 +724,27 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 //
-// Movistar Cloud doesn't have a dedicated API for updating modification time,
-// so this is a no-op that returns an unsupported error.
+// Uses the save-metadata API endpoint to update the modification date.
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	fileID, err := strconv.ParseInt(o.id, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid file ID %q: %w", o.id, err)
+	}
+
+	request := api.SaveMetadataRequest{
+		Data: api.SaveMetadataRequestData{
+			ID:               fileID,
+			ModificationDate: api.BasicISO(modTime),
+		},
+	}
+
+	var result postResponse
+	err = o.fs.apiPost(ctx, "/sapi/upload/file?action=save-metadata", &request, &result)
+	if err != nil {
+		return fmt.Errorf("failed to set modification time: %w", err)
+	}
+	o.modTime = modTime
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -757,6 +799,67 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return resp.Body, nil
 }
 
+// waitForUpload polls the validation-status endpoint until the uploaded
+// file finishes processing (status changes from "V" = validating).
+// Then fetches and returns the full Media record.
+func (f *Fs) waitForUpload(ctx context.Context, id string) (*api.Media, error) {
+	fileID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid file ID %q: %w", id, err)
+	}
+
+	// Poll validation status until no longer "V" (validating)
+	// Use exponential backoff: 500ms, 1s, 2s, 4s, 8s, 8s, 8s...
+	statusReq := api.ValidationStatusRequest{
+		Data: api.ValidationStatusRequestData{
+			IDs: []api.ValidationStatusID{{ID: fileID}},
+		},
+	}
+	delay := 500 * time.Millisecond
+	const maxDelay = 8 * time.Second
+	const maxAttempts = 15
+	for range maxAttempts {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(delay):
+		}
+		var statusResp api.ValidationStatusResponse
+		err = f.apiPostGet(ctx, "/sapi/media?action=get-validation-status", &statusReq, &statusResp)
+		if err != nil {
+			fs.Debugf(nil, "waiting for upload %s validation status: %v", id, err)
+			// Increase delay and continue
+		} else if len(statusResp.IDs) > 0 && statusResp.IDs[0].Status != "V" {
+			break
+		} else {
+			fs.Debugf(nil, "waiting for upload %s to finish validation...", id)
+		}
+		if delay < maxDelay {
+			delay *= 2
+			if delay > maxDelay {
+				delay = maxDelay
+			}
+		}
+	}
+
+	// Now fetch the full metadata
+	infoReq := api.GetFileInfoRequest{
+		Data: api.GetFileInfoRequestData{
+			IDs:    []int64{fileID},
+			Fields: []string{"name", "size", "modificationdate", "url"},
+		},
+	}
+	var infoResp api.GetFileInfoResponse
+	err = f.apiPostGet(ctx, "/sapi/media?action=get&origin=omh,dropbox", &infoReq, &infoResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file info after upload: %w", err)
+	}
+	if len(infoResp.Media) == 0 {
+		return nil, fmt.Errorf("file %s not found after upload", id)
+	}
+	return &infoResp.Media[0], nil
+}
+
 // upload uploads the object
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time, options ...fs.OpenOption) error {
 	folderID, err := strconv.ParseInt(directoryID, 10, 64)
@@ -764,10 +867,20 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		return fmt.Errorf("invalid directory ID %q: %w", directoryID, err)
 	}
 
+	// Read all data first since we need it for the multipart upload
+	// and to determine the actual size for unknown-size uploads
+	data, err := io.ReadAll(in)
+	if err != nil {
+		return fmt.Errorf("failed to read upload data: %w", err)
+	}
+	actualSize := int64(len(data))
+
+	encodedName := o.fs.opt.Enc.FromStandardName(leaf)
+
 	metadata := api.UploadMetadata{
 		Data: api.UploadMetadataData{
-			Name:             o.fs.opt.Enc.FromStandardName(leaf),
-			Size:             size,
+			Name:             encodedName,
+			Size:             actualSize,
 			ModificationDate: api.BasicISO(modTime),
 			ContentType:      "application/octet-stream",
 			FolderID:         folderID,
@@ -778,39 +891,34 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		return fmt.Errorf("failed to marshal upload metadata: %w", err)
 	}
 
-	// Read all data first since we need it for the multipart upload
-	data, err := io.ReadAll(in)
-	if err != nil {
-		return fmt.Errorf("failed to read upload data: %w", err)
-	}
-
-	// Build the multipart body manually
 	boundary := "----RcloneFormBoundary" + strconv.FormatInt(time.Now().UnixNano(), 36)
-	var body bytes.Buffer
-
-	// Metadata part
-	body.WriteString("--" + boundary + "\r\n")
-	body.WriteString("Content-Disposition: form-data; name=\"data\"\r\n\r\n")
-	body.Write(metadataJSON)
-	body.WriteString("\r\n")
-
-	// File part
-	body.WriteString("--" + boundary + "\r\n")
-	body.WriteString(fmt.Sprintf("Content-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\n", o.fs.opt.Enc.FromStandardName(leaf)))
-	body.WriteString("Content-Type: application/octet-stream\r\n\r\n")
-	body.Write(data)
-	body.WriteString("\r\n")
-	body.WriteString("--" + boundary + "--\r\n")
-
-	opts := rest.Opts{
-		Method:      "POST",
-		Path:        "/sapi/upload?action=save&acceptasynchronous=true",
-		Body:        &body,
-		ContentType: "multipart/form-data; boundary=" + boundary,
-	}
 
 	var result api.UploadResponse
 	err = o.fs.pacer.Call(func() (bool, error) {
+		// Build multipart body inside the retry loop so it's fresh each attempt
+		var body bytes.Buffer
+
+		// Metadata part
+		body.WriteString("--" + boundary + "\r\n")
+		body.WriteString("Content-Disposition: form-data; name=\"data\"\r\n\r\n")
+		body.Write(metadataJSON)
+		body.WriteString("\r\n")
+
+		// File part
+		body.WriteString("--" + boundary + "\r\n")
+		body.WriteString(fmt.Sprintf("Content-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\n", encodedName))
+		body.WriteString("Content-Type: application/octet-stream\r\n\r\n")
+		body.Write(data)
+		body.WriteString("\r\n")
+		body.WriteString("--" + boundary + "--\r\n")
+
+		opts := rest.Opts{
+			Method:      "POST",
+			Path:        "/sapi/upload?action=save&acceptasynchronous=true",
+			Body:        &body,
+			ContentType: "multipart/form-data; boundary=" + boundary,
+		}
+
 		resp, err := o.fs.upSrv.CallJSON(ctx, &opts, nil, &result)
 		return shouldRetry(ctx, resp, err)
 	})
@@ -818,11 +926,25 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		return err
 	}
 
+	// Wait for the file to be indexed/available for listing
+	info, err := o.fs.waitForUpload(ctx, result.ID)
+	if err != nil {
+		fs.Logf(o, "upload succeeded (id=%s) but file not yet indexed: %v", result.ID, err)
+	}
+
 	// Update the object metadata
 	o.id = result.ID
-	o.size = int64(len(data))
+	o.size = actualSize
 	o.modTime = modTime
 	o.hasMetaData = true
+
+	// Use server-returned metadata if available
+	if info != nil {
+		o.setMetaData(info)
+		// Preserve the modTime we intended — the server may report
+		// a different value until the modificationdate propagates.
+		o.modTime = modTime
+	}
 
 	return nil
 }
@@ -852,11 +974,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return o.upload(ctx, in, leaf, directoryID, size, modTime, options...)
 }
 
-// Remove an object
-func (o *Object) Remove(ctx context.Context) error {
-	fileID, err := strconv.ParseInt(o.id, 10, 64)
+// deleteFileByID deletes a file by its ID using hard delete to ensure
+// the filename slot is freed immediately (no auto-rename on re-upload).
+func (f *Fs) deleteFileByID(ctx context.Context, id string) error {
+	fileID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		return fmt.Errorf("invalid file ID %q: %w", o.id, err)
+		return fmt.Errorf("invalid file ID %q: %w", id, err)
 	}
 
 	request := api.DeleteFilesRequest{
@@ -865,15 +988,13 @@ func (o *Object) Remove(ctx context.Context) error {
 		},
 	}
 
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/sapi/media/file?action=delete&softdelete=true",
-	}
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(ctx, &opts, &request, nil)
-		return shouldRetry(ctx, resp, err)
-	})
-	return err
+	var result postResponse
+	return f.apiPost(ctx, "/sapi/media/file?action=delete&softdelete=false", &request, &result)
+}
+
+// Remove an object
+func (o *Object) Remove(ctx context.Context) error {
+	return o.fs.deleteFileByID(ctx, o.id)
 }
 
 // ID returns the ID of the Object if known, or "" if not
@@ -881,9 +1002,147 @@ func (o *Object) ID() string {
 	return o.id
 }
 
+// getFileInfoByID fetches media metadata for a file by its numeric ID.
+func (f *Fs) getFileInfoByID(ctx context.Context, fileID int64, fields []string) (*api.Media, error) {
+	request := api.GetFileInfoRequest{
+		Data: api.GetFileInfoRequestData{
+			IDs:    []int64{fileID},
+			Fields: fields,
+		},
+	}
+	var result api.GetFileInfoResponse
+	err := f.apiPostGet(ctx, "/sapi/media?action=get&origin=omh,dropbox", &request, &result)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Media) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	return &result.Media[0], nil
+}
+
+// moveByReupload moves a file by downloading its contents, deleting it,
+// and re-uploading to the destination with the new name. This is needed
+// because the Movistar Cloud API silently refuses to change a file's
+// extension via save-metadata rename.
+func (f *Fs) moveByReupload(ctx context.Context, srcObj *Object, remote, dstLeaf, dstDirectoryID string) (*Object, error) {
+	// Download the file contents
+	reader, err := srcObj.Open(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("move reupload: failed to download source: %w", err)
+	}
+	data, err := io.ReadAll(reader)
+	_ = reader.Close()
+	if err != nil {
+		return nil, fmt.Errorf("move reupload: failed to read source: %w", err)
+	}
+
+	modTime := srcObj.modTime
+
+	// Delete the original file
+	err = srcObj.Remove(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("move reupload: failed to delete source: %w", err)
+	}
+
+	// Upload with the new name
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+	}
+	err = dstObj.upload(ctx, bytes.NewReader(data), dstLeaf, dstDirectoryID, int64(len(data)), modTime)
+	if err != nil {
+		return nil, fmt.Errorf("move reupload: failed to upload: %w", err)
+	}
+
+	return dstObj, nil
+}
+
+// Move src to this remote using server-side move operations.
+//
+// This is stored with the remote path given.
+//
+// It returns the destination Object and a possible error.
+//
+// Will only be called if DstRemote is the same as the source Fs.
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	srcLeaf := path.Base(srcObj.remote)
+	dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return nil, err
+	}
+
+	fileID, err := strconv.ParseInt(srcObj.id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid file ID %q: %w", srcObj.id, err)
+	}
+
+	folderID, err := strconv.ParseInt(dstDirectoryID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid directory ID %q: %w", dstDirectoryID, err)
+	}
+
+	encodedDstLeaf := f.opt.Enc.FromStandardName(dstLeaf)
+	encodedSrcLeaf := f.opt.Enc.FromStandardName(srcLeaf)
+	nameChanged := encodedDstLeaf != encodedSrcLeaf
+
+	// Always send the destination folder ID. We cannot reliably compare
+	// source vs destination directory IDs because Move may be called
+	// across different Fs instances with different dirCaches (e.g.
+	// moving from a dst/ Fs to a backup/ Fs).
+	reqData := api.SaveMetadataRequestData{
+		ID:       fileID,
+		FolderID: &folderID,
+	}
+	if nameChanged {
+		reqData.Name = encodedDstLeaf
+	}
+
+	request := api.SaveMetadataRequest{Data: reqData}
+	var result postResponse
+	err = f.apiPost(ctx, "/sapi/upload/file?action=save-metadata", &request, &result)
+	if err != nil {
+		return nil, fmt.Errorf("move failed: %w", err)
+	}
+
+	// If we attempted a rename, verify it actually took effect.
+	// The Movistar Cloud API silently refuses to change a file's
+	// extension — it keeps the original extension based on content type.
+	// In that case we must fall back to download + delete + re-upload.
+	if nameChanged {
+		info, err := f.getFileInfoByID(ctx, fileID, []string{"name"})
+		if err != nil {
+			return nil, fmt.Errorf("move: failed to verify rename: %w", err)
+		}
+		if info.Name != encodedDstLeaf {
+			fs.Debugf(src, "Move: API refused rename to %q (got %q), falling back to re-upload", encodedDstLeaf, info.Name)
+			return f.moveByReupload(ctx, srcObj, remote, dstLeaf, dstDirectoryID)
+		}
+	}
+
+	// Create the destination object with updated metadata
+	dstObj := &Object{
+		fs:          f,
+		remote:      remote,
+		id:          srcObj.id,
+		size:        srcObj.size,
+		modTime:     srcObj.modTime,
+		hasMetaData: true,
+	}
+
+	return dstObj, nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ListPer         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
