@@ -1,6 +1,7 @@
 package http
 
 import (
+	"compress/gzip"
 	"context"
 	"flag"
 	"io"
@@ -345,6 +346,66 @@ func TestFavicon(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, customFavicon, body)
 	})
+}
+
+func TestCompressedDirectoryListing(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, setAllModTimes("testdata/files", expectedTime))
+	f, err := fs.NewFs(ctx, "testdata/files")
+	require.NoError(t, err)
+
+	s, testURL := start(ctx, t, f)
+	defer func() { assert.NoError(t, s.server.Shutdown()) }()
+
+	req, err := http.NewRequest("GET", testURL, nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "gzip", resp.Header.Get("Content-Encoding"))
+
+	gr, err := gzip.NewReader(resp.Body)
+	require.NoError(t, err)
+	defer func() { _ = gr.Close() }()
+
+	body, err := io.ReadAll(gr)
+	require.NoError(t, err)
+	assert.Contains(t, string(body), "Directory listing of /")
+}
+
+func TestCompressedTextFile(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, setAllModTimes("testdata/files", expectedTime))
+	f, err := fs.NewFs(ctx, "testdata/files")
+	require.NoError(t, err)
+
+	s, testURL := start(ctx, t, f)
+	defer func() { assert.NoError(t, s.server.Shutdown()) }()
+
+	req, err := http.NewRequest("GET", testURL+"two.txt", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth(testUser, testPass)
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "gzip", resp.Header.Get("Content-Encoding"))
+
+	gr, err := gzip.NewReader(resp.Body)
+	require.NoError(t, err)
+	defer func() { _ = gr.Close() }()
+
+	body, err := io.ReadAll(gr)
+	require.NoError(t, err)
+	assert.Equal(t, "0123456789\n", string(body))
 }
 
 func TestRc(t *testing.T) {
