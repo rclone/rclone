@@ -1246,6 +1246,7 @@ func (item *Item) GetModTime() (modTime time.Time, err error) {
 func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 	n = 0
 	var expBackOff int
+	var firstError error
 	for retries := range fs.GetConfig(context.TODO()).LowLevelRetries {
 		item.preAccess()
 		n, err = item.readAt(b, off)
@@ -1253,7 +1254,11 @@ func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 		if err == nil || err == io.EOF {
 			break
 		}
-		fs.Errorf(item.name, "vfs cache: failed to _ensure cache %v", err)
+		// Only log on first retry to avoid spam
+		if firstError == nil {
+			firstError = err
+			fs.Errorf(item.name, "vfs cache: failed to _ensure cache %v", err)
+		}
 		if !fserrors.IsErrNoSpace(err) && err.Error() != "no space left on device" {
 			fs.Debugf(item.name, "vfs cache: failed to _ensure cache %v is not out of space", err)
 			break
