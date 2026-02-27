@@ -147,9 +147,9 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		noBuffering = true
 		usingOpenWriterAt = true
 	} else if src.Fs().Features().IsLocal {
-		// If the source fs is local we don't need to buffer
-		fs.Debugf(src, "multi-thread copy: disabling buffering because source is local disk")
-		noBuffering = true
+		// If the source fs is local, buffering can greatly increase performance of multithread uploads from local
+		fs.Debugf(src, "multi-thread copy: enabling buffering because source is local disk")
+		noBuffering = false
 	} else if f.Features().ChunkWriterDoesntSeek {
 		// If the destination Fs promises not to seek its chunks
 		// (except for retries) then we don't need buffering.
