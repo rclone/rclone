@@ -459,11 +459,11 @@ func Run(t *testing.T, opt *Opt) {
 		t.Logf("Didn't find %q in config file - skipping tests", remoteName)
 		return
 	}
-	require.NoError(t, err, fmt.Sprintf("unexpected error: %v", err))
+	require.NoError(t, err, fmt.Sprintf(" 1 unexpected error: %v", err))
 
 	// Get fsInfo which contains type, etc. of the fs
 	fsInfo, _, _, _, err := fs.ConfigFs(subRemoteName)
-	require.NoError(t, err, fmt.Sprintf("unexpected error: %v", err))
+	require.NoError(t, err, fmt.Sprintf(" 2 unexpected error: %v", err))
 
 	// Skip the rest if it failed
 	skipIfNotOk(t)
