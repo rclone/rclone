@@ -217,6 +217,9 @@ backends:
    fastlist: true
    ignoretests:
      - cmd/bisync
+ - backend:  "netexplorer"
+   remote:   "TestNetExplorer:"
+   fastlist: false
  - backend:  "onedrive"
    remote:   "TestOneDrive:"
    fastlist: false
