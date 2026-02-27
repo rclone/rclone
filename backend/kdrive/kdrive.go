@@ -57,22 +57,12 @@ func init() {
 			Help: `The folder to use as root.
 
 You may use either one of the convenience shortcuts [private|common|shared]
-or an explicit folder ID.`,
-			Default: "private",
-			Examples: []fs.OptionExample{
-				{
-					Value: "private",
-					Help:  "Your user private directory.",
-				},
-				{
-					Value: "common",
-					Help:  "The kDrive common directory, shared among users.",
-				},
-				{
-					Value: "shared",
-					Help:  "The folder with the files shared with you.",
-				},
-			},
+or an explicit folder ID.
+
+- private: your user private directory
+- common: the kDrive common directory, shared among users
+- shared: the folder with the files shared with you`,
+			Default:   "private",
 			Advanced:  true,
 			Sensitive: true,
 		}, {
