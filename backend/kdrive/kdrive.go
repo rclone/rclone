@@ -240,8 +240,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	f.dirCache = dircache.New(root, rootID, f)
+	ctx = context.WithValue(ctx, "kdriveInitCache", make(map[string]*api.Item))
 
+	f.dirCache = dircache.New(root, rootID, f)
 	// Find the current root
 	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
@@ -334,7 +335,13 @@ func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
 
 // findItemInDir retrieves a file or directory by its name in a specific directory using the API.
 func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
-	// fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
+	fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
+
+	cacheKey := directoryID + "|" + leaf
+	cache, cacheExist := ctx.Value("kdriveInitCache").(map[string]*api.Item)
+	if cacheExist && cache[cacheKey] != nil {
+		return cache[cacheKey], nil
+	}
 
 	// https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/name
 	opts := rest.Opts{
@@ -367,6 +374,10 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	}
 	// Normalize the name
 	item.Name = f.opt.Enc.ToStandardName(item.Name)
+
+	if cacheExist {
+		cache[cacheKey] = &item
+	}
 
 	return &item, nil
 }
