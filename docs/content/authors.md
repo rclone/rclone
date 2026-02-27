@@ -1086,3 +1086,4 @@ put them back in again. -->
 - Leon Brocard <lbrocard@fastly.com>
 - a1pcm <a1pcm@users.noreply.github.com>
 - FTCHD <144691102+FTCHD@users.noreply.github.com>
+- Bjoern Franke <bjo+git@schafweide.org>
