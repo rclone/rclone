@@ -554,3 +554,77 @@ func rcQueueSetExpiry(ctx context.Context, in rc.Params) (out rc.Params, err err
 	err = vfs.cache.QueueSetExpiry(writeback.Handle(id), refTime, time.Duration(float64(time.Second)*expiry))
 	return nil, err
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/transfers",
+		Title: "Get active VFS transfers and cache status.",
+		Help: `
+This returns information about active file transfers and cache state for the VFS.
+
+Returns a list of files that are currently open or downloading, along with
+their cache status and transfer statistics.
+
+    rclone rc vfs/transfers
+
+Returns:
+
+` + "\x60\x60\x60" + `
+{
+    "transfers": [
+        {
+            "name": "/path/to/file.mkv",
+            "size": 1073741824,
+            "cacheStatus": "partial",
+            "cacheBytes": 536870912,
+            "cachePercentage": 50,
+            "opens": 1,
+            "downloading": true,
+            "downloadBytes": 600000000,
+            "downloadSpeed": 52428800,
+            "downloadSpeedAvg": 48000000,
+            "lastAccess": "2024-01-18T10:30:00Z"
+        }
+    ],
+    "summary": {
+        "activeReads": 1,
+        "activeDownloads": 1,
+        "totalOpenFiles": 1,
+        "totalCacheBytes": 107374182400,
+        "totalCacheFiles": 42,
+        "outOfSpace": false
+    }
+}
+` + "\x60\x60\x60" + `
+
+The cacheStatus field can be:
+- "none" - file is not cached
+- "partial" - file is partially cached
+- "full" - file is fully cached
+- "unknown" - file size is unknown
+
+` + getVFSHelp,
+		Fn: rcTransfers,
+	})
+}
+
+func rcTransfers(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	if vfs.cache == nil {
+		return rc.Params{
+			"transfers": []rc.Params{},
+			"summary": rc.Params{
+				"activeReads":     0,
+				"activeDownloads": 0,
+				"totalOpenFiles":  0,
+				"totalCacheBytes": 0,
+				"totalCacheFiles": 0,
+				"outOfSpace":      false,
+			},
+		}, nil
+	}
+	return vfs.cache.Transfers(), nil
+}
