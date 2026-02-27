@@ -122,6 +122,11 @@ type Object struct {
 	xxh3        string    // XXH3 if known
 }
 
+type cacheEntry struct {
+	item *api.Item
+	err  error
+}
+
 // ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
@@ -240,7 +245,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	ctx = context.WithValue(ctx, "kdriveInitCache", make(map[string]*api.Item))
+	ctx = context.WithValue(ctx, "kdriveInitCache", make(map[string]cacheEntry))
 
 	f.dirCache = dircache.New(root, rootID, f)
 	// Find the current root
@@ -336,11 +341,15 @@ func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
 // findItemInDir retrieves a file or directory by its name in a specific directory using the API.
 func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
 	fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
+	//fs.Infof(nil, "Stacktrace : %s", string(debug.Stack()))
 
 	cacheKey := directoryID + "|" + leaf
-	cache, cacheExist := ctx.Value("kdriveInitCache").(map[string]*api.Item)
-	if cacheExist && cache[cacheKey] != nil {
-		return cache[cacheKey], nil
+	cache, cacheExist := ctx.Value("kdriveInitCache").(map[string]cacheEntry)
+	if cacheExist {
+		if entry, entryExists := cache[cacheKey]; entryExists {
+			fs.Infof(nil, "USE CACHE")
+			return entry.item, entry.err
+		}
 	}
 
 	// https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/name
@@ -362,6 +371,9 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	})
 	if err != nil {
 		if isNotFoundError(err) {
+			if cacheExist {
+				cache[cacheKey] = cacheEntry{nil, fs.ErrorObjectNotFound}
+			}
 			return nil, fs.ErrorObjectNotFound
 		}
 		return nil, fmt.Errorf("couldn't find item in dir: %w", err)
@@ -376,7 +388,7 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	item.Name = f.opt.Enc.ToStandardName(item.Name)
 
 	if cacheExist {
-		cache[cacheKey] = &item
+		cache[cacheKey] = cacheEntry{&item, nil}
 	}
 
 	return &item, nil
@@ -1056,6 +1068,8 @@ func (f *Fs) createPublicLink(ctx context.Context, fileID int, expire fs.Duratio
 	if expire > 0 {
 		createReq.ValidUntil = int(time.Now().Add(time.Duration(expire)).Unix())
 	}
+
+	// fs.Infof(createReq.ValidUntil);
 
 	// https://developer.infomaniak.com/docs/api/post/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/link
 	opts := rest.Opts{
