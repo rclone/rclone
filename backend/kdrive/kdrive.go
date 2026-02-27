@@ -53,14 +53,32 @@ func init() {
 			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
 			Default: encoder.Display | encoder.EncodeLeftSpace | encoder.EncodeRightSpace | encoder.EncodeInvalidUtf8,
 		}, {
-			Name:      "root_folder_id",
-			Help:      "Fill in for rclone to use a non root folder as its starting point. (directory id)",
-			Default:   "private",
+			Name: "root_folder_id",
+			Help: `The folder to use as root.
+
+You may use either one of the convenience shortcuts [private|common|shared]
+or an explicit folder ID.`,
+			Default: "private",
+			Examples: []fs.OptionExample{
+				{
+					Value: "private",
+					Help:  "Your user private directory.",
+				},
+				{
+					Value: "common",
+					Help:  "The kDrive common directory, shared among users.",
+				},
+				{
+					Value: "shared",
+					Help:  "The folder with the files shared with you.",
+				},
+			},
 			Advanced:  true,
 			Sensitive: true,
 		}, {
 			Name: "drive_id",
-			Help: `Fill the drive ID for this kdrive.
+			Help: `ID of the kDrive to use.
+
 	When showing a folder on kdrive, you can find the drive_id here:
 	https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...`,
 			Default: "",
@@ -71,9 +89,10 @@ func init() {
 			IsPassword: true,
 			Sensitive:  true,
 		}, {
-			Name:     "endpoint",
-			Help:     "By default, pointing to the production API.",
-			Default:  defaultEndpoint,
+			Name: "endpoint",
+			Help: `The API endpoint to use.
+
+Leave blank normally. There is no reason to change the endpoint except for internal use or beta-testing.`,
 			Advanced: true,
 		},
 		},
@@ -163,11 +182,12 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
-// findItemInDir retrieves a file or directory by its name in a specific directory using the API
+// findItemInDir retrieves a file or directory by its name in a specific directory using the API.
 // This avoids listing the entire directory. It takes the directoryID directly.
 func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
 	// fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
 
+	// https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/name
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/name", f.opt.DriveID, directoryID),
@@ -185,11 +205,8 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		// Check if it's a "not found" error
-		if apiErr, ok := err.(*api.ResultStatus); ok {
-			if apiErr.ErrorDetail.Result == "object_not_found" {
-				return nil, fs.ErrorObjectNotFound
-			}
+		if isNotFoundError(err) {
+			return nil, fs.ErrorObjectNotFound
 		}
 		return nil, fmt.Errorf("couldn't find item in dir: %w", err)
 	}
@@ -205,8 +222,9 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	return &item, nil
 }
 
-// getItem retrieves a file or directory by its ID
+// getItem retrieves a file or directory by its ID.
 func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
+	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   fmt.Sprintf("/2/drive/%s/files/%s", f.opt.DriveID, id),
@@ -221,10 +239,8 @@ func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		if apiErr, ok := err.(*api.ResultStatus); ok {
-			if apiErr.ErrorDetail.Result == "object_not_found" {
-				return nil, fs.ErrorObjectNotFound
-			}
+		if isNotFoundError(err) {
+			return nil, fs.ErrorObjectNotFound
 		}
 		return nil, fmt.Errorf("couldn't get item: %w", err)
 	}
@@ -254,6 +270,13 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+// isNotFoundError checks if the given error is a standard kDrive API "Not Found" error.
+func isNotFoundError(err error) bool {
+	var apiErr *api.ResultStatus
+
+	return errors.As(err, &apiErr) && apiErr.ErrorDetail.Result == "object_not_found"
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -261,6 +284,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+
+	// Use the default API endpoint unless explicitly defined;
+	// not defined as option default to keep it hidden from end user,
+	// since there is little to no reason to change it.
+	if opt.Endpoint == "" {
+		opt.Endpoint = defaultEndpoint
 	}
 
 	accessToken, err := obscure.Reveal(opt.AccessToken)
@@ -287,8 +317,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 
-	// Get rootFolderID
-	rootID, err := f.determineRootID()
+	rootID, err := f.computeRootID()
 	if err != nil {
 		return nil, err
 	}
@@ -328,12 +357,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// determineRootID retriece the real RootId of the configured RootFolderID
-func (f *Fs) determineRootID() (string, error) {
+// computeRootID finds the real RootId of the configured RootFolderID.
+func (f *Fs) computeRootID() (rootID string, err error) {
 	ctx := context.Background()
 
-	var rootID string
-	var err error
 	switch f.opt.RootFolderID {
 	case "private":
 		rootID, _, err = f.FindLeaf(ctx, "1", "Private")
@@ -345,11 +372,11 @@ func (f *Fs) determineRootID() (string, error) {
 		rootID = f.opt.RootFolderID
 	}
 
-	return rootID, err
+	return
 }
 
-// findItemByPath retrieves a file or directory by its path using the API
-// This avoids listing the entire directory
+// findItemByPath retrieves a file or directory by its path using the API.
+// This avoids listing the entire directory.
 func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, error) {
 	// fs.Infof(ctx, "findItemByPath: remote=%s", remote)
 
@@ -440,6 +467,8 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var result api.CreateDirResult
+
+	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/directory
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/directory", f.opt.DriveID, pathID),
@@ -452,10 +481,8 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		//fmt.Printf("...Error %v\n", err)
 		return "", err
 	}
-	// fmt.Printf("...Id %d\n", result.Data.ID)
 	return strconv.Itoa(result.Data.ID), nil
 }
 
@@ -467,12 +494,13 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 // Should return true to finish processing
 type listAllFn func(*api.Item) bool
 
-// Lists the directory required calling the user function on each item found
+// Lists the directory required calling the user function on each item found.
 //
-// If the user fn ever returns true then it early exits with found = true
+// If the user fn ever returns true then it early exits with found = true.
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, recursive bool, fn listAllFn) (found bool, err error) {
 	// fs.Infof(nil, "Stacktrace : %s", string(debug.Stack()))
 	listSomeFiles := func(currentDirID string, fromCursor string) (api.SearchResult, error) {
+		// https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/files
 		opts := rest.Opts{
 			Method:     "GET",
 			Path:       fmt.Sprintf("/3/drive/%s/files/%s/files", f.opt.DriveID, currentDirID),
@@ -735,6 +763,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return fmt.Errorf("rmdir failed: directory %s not empty", dir)
 	}
 
+	// https://developer.infomaniak.com/docs/api/delete/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
 	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       fmt.Sprintf("/2/drive/%s/files/%s", f.opt.DriveID, rootID),
@@ -793,7 +822,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Copy the object
+	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/copy/%7Bdestination_directory_id%7D
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/copy/%s", f.opt.DriveID, srcObj.id, directoryID),
@@ -829,6 +858,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) error {
+	// https://developer.infomaniak.com/docs/api/delete/2/drive/%7Bdrive_id%7D/trash
 	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       fmt.Sprintf("/2/drive/%s/trash", f.opt.DriveID),
@@ -866,7 +896,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Do the move
+	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/move/%7Bdestination_directory_id%7D
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/move/%s", f.opt.DriveID, srcObj.id, directoryID),
@@ -925,7 +955,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return err
 	}
 
-	// Do the move
+	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/move/%7Bdestination_directory_id%7D
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/move/%s", f.opt.DriveID, srcID, dstDirectoryID),
@@ -955,6 +985,7 @@ func (f *Fs) DirCacheFlush() {
 }
 
 func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, error) {
+	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/link
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   fmt.Sprintf("/2/drive/%s/files/%d/link", f.opt.DriveID, fileID),
@@ -988,6 +1019,7 @@ func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, error) {
 }
 
 func (f *Fs) deletePublicLink(ctx context.Context, fileID int) error {
+	// https://developer.infomaniak.com/docs/api/delete/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/link
 	opts := rest.Opts{
 		Method: "DELETE",
 		Path:   fmt.Sprintf("/2/drive/%s/files/%d/link", f.opt.DriveID, fileID),
@@ -1019,6 +1051,7 @@ func (f *Fs) createPublicLink(ctx context.Context, fileID int, expire fs.Duratio
 		createReq.ValidUntil = int(time.Now().Add(time.Duration(expire)).Unix())
 	}
 
+	// https://developer.infomaniak.com/docs/api/post/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/link
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   fmt.Sprintf("/2/drive/%s/files/%d/link", f.opt.DriveID, fileID),
@@ -1067,6 +1100,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
+	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       fmt.Sprintf("/2/drive/%s", f.opt.DriveID),
@@ -1128,10 +1162,10 @@ func (o *Object) retrieveHash(ctx context.Context) (err error) {
 	var resp *http.Response
 	var result api.ChecksumFileResult
 
+	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/hash
 	opts := rest.Opts{
-		Method:     "GET",
-		Path:       fmt.Sprintf("/2/drive/%s/files/%s/hash", o.fs.opt.DriveID, o.id),
-		Parameters: url.Values{},
+		Method: "GET",
+		Path:   fmt.Sprintf("/2/drive/%s/files/%s/hash", o.fs.opt.DriveID, o.id),
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
@@ -1234,9 +1268,10 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		LastModifiedAt: modTime.Unix(),
 	}
 
+	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/last-modified
 	opts := rest.Opts{
-		Method:  "POST",
-		RootURL: fmt.Sprintf("%s/3/drive/%s/files/%s/last-modified", o.fs.opt.Endpoint, o.fs.opt.DriveID, o.id),
+		Method: "POST",
+		Path:   fmt.Sprintf("/3/drive/%s/files/%s/last-modified", o.fs.opt.DriveID, o.id),
 	}
 
 	err := o.fs.pacer.Call(func() (bool, error) {
@@ -1263,9 +1298,11 @@ func (o *Object) Storable() bool {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	fs.FixRangeOption(options, o.Size())
 	var resp *http.Response
+
+	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/download
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: fmt.Sprintf("%s/2/drive/%s/files/%s/download", o.fs.opt.Endpoint, o.fs.opt.DriveID, o.id),
+		Path:    fmt.Sprintf("/2/drive/%s/files/%s/download", o.fs.opt.DriveID, o.id),
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1346,6 +1383,7 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 		body = bytes.NewReader(content)
 	}
 
+	// https://developer.infomaniak.com/docs/api/post/3/drive/%7Bdrive_id%7D/upload
 	opts := rest.Opts{
 		Method:           "POST",
 		Path:             fmt.Sprintf("/3/drive/%s/upload", o.fs.opt.DriveID),
@@ -1401,10 +1439,10 @@ func (o *Object) updateMultipart(ctx context.Context, in io.Reader, src fs.Objec
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
+	// https://developer.infomaniak.com/docs/api/delete/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
 	opts := rest.Opts{
-		Method:     "DELETE",
-		Path:       fmt.Sprintf("/2/drive/%s/files/%s", o.fs.opt.DriveID, o.id),
-		Parameters: url.Values{},
+		Method: "DELETE",
+		Path:   fmt.Sprintf("/2/drive/%s/files/%s", o.fs.opt.DriveID, o.id),
 	}
 	var result api.CancellableResponse
 	return o.fs.pacer.Call(func() (bool, error) {
