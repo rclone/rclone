@@ -1456,8 +1456,13 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		checksums := ""
 		if o.fs.hasOCSHA1 && o.sha1 != "" {
 			checksums = "SHA1:" + o.sha1
-		} else if o.fs.hasOCMD5 && o.md5 != "" {
-			checksums = "MD5:" + o.md5
+		}
+		if o.fs.hasOCMD5 && o.md5 != "" {
+			if checksums != "" {
+				checksums += " MD5:" + o.md5
+			} else {
+				checksums = "MD5:" + o.md5
+			}
 		}
 
 		opts := rest.Opts{
