@@ -1089,3 +1089,4 @@ put them back in again. -->
 - Bjoern Franke <bjo+git@schafweide.org>
 - hxnd <callmehxnd@outlook.de>
 - Adam Kasztenny <adamkasztenny@gmail.com>
+- Romāns Potašovs <justgook@gmail.com>
