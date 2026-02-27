@@ -69,8 +69,8 @@ or an explicit folder ID.
 			Name: "drive_id",
 			Help: `ID of the kDrive to use.
 
-	When showing a folder on kdrive, you can find the drive_id here:
-	https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...`,
+When showing a folder on kdrive, you can find the drive_id here:
+https://ksuite.infomaniak.com/{account_id}/kdrive/app/drive/{drive_id}/files/...`,
 			Default: "",
 		}, {
 			Name:       "access_token",
