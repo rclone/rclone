@@ -58,6 +58,7 @@ import (
 const (
 	rcloneClientID              = "202264815644.apps.googleusercontent.com"
 	rcloneEncryptedClientSecret = "eX8GpZTVx3vxMWVkuuBdDWmAUE6rGhTwVrvG9GhllYccSdj2-mvHVg"
+	rcloneAPIKey                = "AIzaSyDgI0Hb9o8UKUhZJjAZ0kKkCgqzkjh7w_k"
 	driveFolderType             = "application/vnd.google-apps.folder"
 	shortcutMimeType            = "application/vnd.google-apps.shortcut"
 	shortcutMimeTypeDangling    = "application/vnd.google-apps.shortcut.dangling" // synthetic mime type for internal use
@@ -3079,10 +3080,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
+	isFolder := false
 	id, err := f.dirCache.FindDir(ctx, remote, false)
 	if err == nil {
 		fs.Debugf(f, "attempting to share directory '%s'", remote)
 		id = shortcutID(id)
+		isFolder = true
 	} else {
 		fs.Debugf(f, "attempting to share single file '%s'", remote)
 		o, err := f.NewObject(ctx, remote)
@@ -3111,7 +3114,16 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("https://drive.google.com/open?id=%s", id), nil
+
+	// Convert share link to direct download link if target is not a folder
+	if isFolder {
+		fs.Debugf(nil, "Can't convert share link for folder to direct link - returning the link as is")
+		return fmt.Sprintf("https://drive.google.com/open?id=%s", id), nil
+	}
+
+	// Do not use the "https://drive.google.com/uc?id={id}&export=download" method. See issues #5381.
+	// The current "https://www.googleapis.com/..." method will rename the downloaded file to {id}.{suffix}
+	return fmt.Sprintf("https://www.googleapis.com/drive/v3/files/%s?alt=media&key=%s", id, rcloneAPIKey), nil
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
