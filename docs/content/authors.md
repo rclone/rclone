@@ -1088,3 +1088,4 @@ put them back in again. -->
 - FTCHD <144691102+FTCHD@users.noreply.github.com>
 - Bjoern Franke <bjo+git@schafweide.org>
 - hxnd <callmehxnd@outlook.de>
+- Adam Kasztenny <adamkasztenny@gmail.com>
