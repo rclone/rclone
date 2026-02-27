@@ -62,7 +62,6 @@ or an explicit folder ID.
 - private: your user private directory
 - common: the kDrive common directory, shared among users
 - shared: the folder with the files shared with you`,
-			Default:   "private",
 			Advanced:  true,
 			Sensitive: true,
 		}, {
@@ -170,77 +169,6 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	}
 
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
-}
-
-// findItemInDir retrieves a file or directory by its name in a specific directory using the API.
-// This avoids listing the entire directory. It takes the directoryID directly.
-func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
-	// fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
-
-	// https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/name
-	opts := rest.Opts{
-		Method:     "GET",
-		Path:       fmt.Sprintf("/3/drive/%s/files/%s/name", f.opt.DriveID, directoryID),
-		Parameters: url.Values{},
-	}
-	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(leaf))
-	opts.Parameters.Set("with", "path,hash")
-
-	var result api.ItemResult
-	var resp *http.Response
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		err = result.ResultStatus.Update(err)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		if isNotFoundError(err) {
-			return nil, fs.ErrorObjectNotFound
-		}
-		return nil, fmt.Errorf("couldn't find item in dir: %w", err)
-	}
-
-	item := result.Data
-	// Check if item is valid (has an ID)
-	if item.ID == 0 {
-		return nil, fs.ErrorObjectNotFound
-	}
-	// Normalize the name
-	item.Name = f.opt.Enc.ToStandardName(item.Name)
-
-	return &item, nil
-}
-
-// getItem retrieves a file or directory by its ID.
-func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
-	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   fmt.Sprintf("/2/drive/%s/files/%s", f.opt.DriveID, id),
-	}
-
-	var result api.ItemResult
-	var resp *http.Response
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		err = result.ResultStatus.Update(err)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		if isNotFoundError(err) {
-			return nil, fs.ErrorObjectNotFound
-		}
-		return nil, fmt.Errorf("couldn't get item: %w", err)
-	}
-
-	item := result.Data
-	if item.ID == 0 {
-		return nil, fs.ErrorObjectNotFound
-	}
-	item.Name = f.opt.Enc.ToStandardName(item.Name)
-	return &item, nil
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -351,22 +279,99 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 func (f *Fs) computeRootID() (rootID string, err error) {
 	ctx := context.Background()
 
-	switch f.opt.RootFolderID {
-	case "private":
-		rootID, _, err = f.FindLeaf(ctx, "1", "Private")
-	case "common":
-		rootID, _, err = f.FindLeaf(ctx, "1", "Common documents")
-	case "shared":
-		rootID, _, err = f.FindLeaf(ctx, "1", "Shared")
-	default:
+	if _, err := strconv.Atoi(f.opt.RootFolderID); err == nil {
 		rootID = f.opt.RootFolderID
+	} else {
+		switch f.opt.RootFolderID {
+		case "private":
+			rootID, _, err = f.FindLeaf(ctx, "1", "Private")
+		case "common":
+			rootID, _, err = f.FindLeaf(ctx, "1", "Common documents")
+		case "shared":
+			rootID, _, err = f.FindLeaf(ctx, "1", "Shared")
+		case "":
+			rootID, _, err = f.FindLeaf(ctx, "1", "Private")
+		default:
+			rootID, _, err = f.FindLeaf(ctx, "1", f.opt.RootFolderID)
+		}
 	}
+
+	fs.Debugf(nil, "ROOTFOLDERID %w ROOTID %s", f.opt.RootFolderID, rootID)
 
 	return
 }
 
-// findItemByPath retrieves a file or directory by its path using the API.
-// This avoids listing the entire directory.
+// getItem retrieves a file or directory by its ID.
+func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
+	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   fmt.Sprintf("/3/drive/%s/files/%s", f.opt.DriveID, id),
+	}
+
+	var result api.ItemResult
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		err = result.ResultStatus.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		if isNotFoundError(err) {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, fmt.Errorf("couldn't get item: %w", err)
+	}
+
+	item := result.Data
+	if item.ID == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	item.Name = f.opt.Enc.ToStandardName(item.Name)
+	return &item, nil
+}
+
+// findItemInDir retrieves a file or directory by its name in a specific directory using the API.
+func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
+	// fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
+
+	// https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/name
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       fmt.Sprintf("/3/drive/%s/files/%s/name", f.opt.DriveID, directoryID),
+		Parameters: url.Values{},
+	}
+	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(leaf))
+	opts.Parameters.Set("with", "path,hash")
+
+	var result api.ItemResult
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		err = result.ResultStatus.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		if isNotFoundError(err) {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, fmt.Errorf("couldn't find item in dir: %w", err)
+	}
+
+	item := result.Data
+	// Check if item is valid (has an ID)
+	if item.ID == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	// Normalize the name
+	item.Name = f.opt.Enc.ToStandardName(item.Name)
+
+	return &item, nil
+}
+
+// findItemByPath retrieves a file or directory by its path
 func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, error) {
 	// fs.Infof(ctx, "findItemByPath: remote=%s", remote)
 
