@@ -147,7 +147,7 @@ MANUAL.txt:	MANUAL.md
 commanddocs: rclone
 	go generate ./lib/transform
 	-@rmdir -p '$$HOME/.config/rclone'
-	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs --config=/notfound docs/content/
+	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" ./rclone gendocs --config=/notfound docs/content/
 	@[ ! -e '$$HOME' ] || (echo 'Error: created unwanted directory named $$HOME' && exit 1)
 	go run bin/make_bisync_docs.go ./docs/content/
 
