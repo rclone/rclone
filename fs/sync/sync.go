@@ -401,6 +401,21 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 					pair.Dst = newDst
 				}
 			}
+			{
+				fsrc := src.Fs()
+				fdst := s.fdst
+
+				fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+				fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
+
+				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+					needTransfer, err = fdstEx.RegisterLinkRoot(s.ctx, src, fsrcEx, pair.Dst, src.Remote(), needTransfer)
+					if err != nil {
+						fs.Errorf(pair.Dst, "Failed to register link root: %s", err)
+						return
+					}
+				}
+			}
 			if needTransfer {
 				// If files are treated as immutable, fail if destination exists and does not match
 				if s.ci.Immutable && pair.Dst != nil {
@@ -1242,6 +1257,22 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			if err != nil {
 				s.processError(err)
 				s.logger(s.ctx, operations.TransferError, x, nil, err)
+			}
+			{
+				fsrc := src.Fs()
+				fdst := s.fdst
+
+				fsrcEx, haveFsrcEx := fsrc.(fs.Hardlinker)
+				fdstEx, haveFdstEx := fdst.(fs.Hardlinker)
+
+				if haveFsrcEx && haveFdstEx && fdstEx.ShouldPreserveLinks() {
+					needTransfer, err := fdstEx.RegisterLinkRoot(s.ctx, x, fsrcEx, nil, src.Remote(), !NoNeedTransfer)
+					NoNeedTransfer = !needTransfer
+					if err != nil {
+						fs.Errorf(src, "failed to register link root: %s", err)
+						return
+					}
+				}
 			}
 			if !NoNeedTransfer {
 				// No need to check since doesn't exist
