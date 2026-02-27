@@ -183,7 +183,89 @@ files from the webdav server then you can try this option.
 `,
 				Advanced: true,
 				Default:  false,
-			}},
+			},
+			{
+				Name: "can_stream",
+				Help: `Whether the server supports streaming uploads.
+
+If this is set to unset (the default) then rclone will choose
+according to the vendor setting what to apply, but you can override
+rclone's choice here.
+`,
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "can_tus",
+				Help: `Whether the server supports the TUS upload protocol.
+
+If this is set to unset (the default) then rclone will choose
+according to the vendor setting what to apply, but you can override
+rclone's choice here.
+`,
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "can_chunk",
+				Help: `Whether the server supports Nextcloud chunked uploads.
+
+If this is set to unset (the default) then rclone will choose
+according to the vendor setting what to apply, but you can override
+rclone's choice here.
+`,
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "use_oc_mtime",
+				Help: `Whether the server supports the X-OC-Mtime header.
+
+If this is set to unset (the default) then rclone will choose
+according to the vendor setting what to apply, but you can override
+rclone's choice here.
+`,
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "propset_mtime",
+				Help: `Whether the server supports setting modtime via PROPPATCH.
+
+If this is set to unset (the default) then rclone will choose
+according to the vendor setting what to apply, but you can override
+rclone's choice here.
+`,
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "has_ocmd5",
+				Help: `Whether the server supports ownCloud style MD5 checksums.
+
+If this is set to unset (the default) then rclone will choose
+according to the vendor setting what to apply, but you can override
+rclone's choice here.
+`,
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "has_ocsha1",
+				Help: `Whether the server supports ownCloud style SHA1 checksums.
+
+If this is set to unset (the default) then rclone will choose
+according to the vendor setting what to apply, but you can override
+rclone's choice here.
+`,
+				Default:  fs.Tristate{},
+				Advanced: true,
+			}, {
+				Name: "has_mesha1",
+				Help: `Whether the server supports Fastmail style SHA1 checksums.
+
+If this is set to unset (the default) then rclone will choose
+according to the vendor setting what to apply, but you can override
+rclone's choice here.
+`,
+				Default:  fs.Tristate{},
+				Advanced: true,
+			},
+		},
 	})
 }
 
@@ -203,6 +285,14 @@ type Options struct {
 	ExcludeMounts      bool                 `config:"owncloud_exclude_mounts"`
 	UnixSocket         string               `config:"unix_socket"`
 	AuthRedirect       bool                 `config:"auth_redirect"`
+	CanStream          fs.Tristate          `config:"can_stream"`
+	CanTus             fs.Tristate          `config:"can_tus"`
+	CanChunk           fs.Tristate          `config:"can_chunk"`
+	UseOCMtime         fs.Tristate          `config:"use_oc_mtime"`
+	PropsetMtime       fs.Tristate          `config:"propset_mtime"`
+	HasOCMD5           fs.Tristate          `config:"has_ocmd5"`
+	HasOCSHA1          fs.Tristate          `config:"has_ocsha1"`
+	HasMESHA1          fs.Tristate          `config:"has_mesha1"`
 }
 
 // Fs represents a remote webdav
@@ -529,7 +619,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.addHeaders(opt.Headers)
 	}
 	f.srv.SetErrorHandler(errorHandler)
-	err = f.setQuirks(ctx, opt.Vendor)
+	err = f.setQuirks(ctx, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -628,8 +718,8 @@ func (f *Fs) fetchAndSetBearerToken() error {
 var nextCloudURLRegex = regexp.MustCompile(`^(.*)/dav/files/([^/]+)`)
 
 // setQuirks adjusts the Fs for the vendor passed in
-func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
-	switch vendor {
+func (f *Fs) setQuirks(ctx context.Context, opt *Options) error {
+	switch opt.Vendor {
 	case "fastmail":
 		f.canStream = true
 		f.precision = time.Second
@@ -712,7 +802,33 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.useOCMtime = true
 	case "other":
 	default:
-		fs.Debugf(f, "Unknown vendor %q", vendor)
+		fs.Debugf(f, "Unknown vendor %q", opt.Vendor)
+	}
+
+	// Override quirks with explicit options if set
+	if opt.CanStream.Valid {
+		f.canStream = opt.CanStream.Value
+	}
+	if opt.CanTus.Valid {
+		f.canTus = opt.CanTus.Value
+	}
+	if opt.CanChunk.Valid {
+		f.canChunk = opt.CanChunk.Value
+	}
+	if opt.UseOCMtime.Valid {
+		f.useOCMtime = opt.UseOCMtime.Value
+	}
+	if opt.PropsetMtime.Valid {
+		f.propsetMtime = opt.PropsetMtime.Value
+	}
+	if opt.HasOCMD5.Valid {
+		f.hasOCMD5 = opt.HasOCMD5.Value
+	}
+	if opt.HasOCSHA1.Valid {
+		f.hasOCSHA1 = opt.HasOCSHA1.Value
+	}
+	if opt.HasMESHA1.Valid {
+		f.hasMESHA1 = opt.HasMESHA1.Value
 	}
 
 	// Remove PutStream from optional features
