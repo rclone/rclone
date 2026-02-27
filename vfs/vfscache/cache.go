@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -248,12 +247,7 @@ func getBackends(ctx context.Context, parentPath string, relativeDirPath string)
 //
 // name should be a remote path not an osPath
 func clean(name string) string {
-	name = strings.Trim(name, "/")
-	name = path.Clean(name)
-	if name == "." || name == "/" {
-		name = ""
-	}
-	return name
+	return vfscommon.NormalizePath(name)
 }
 
 // fromOSPath turns a OS path into a standard/remote path
@@ -363,6 +357,19 @@ func (c *Cache) get(name string) (item *Item, found bool) {
 // name should be a remote path not an osPath
 func (c *Cache) Item(name string) (item *Item) {
 	item, _ = c.get(name)
+	return item
+}
+
+// FindItem looks up a cache item without creating a new one.
+//
+// It returns the item if it exists in the cache, or nil if not found.
+// Unlike Item(), this does not create a new cache entry.
+// name should be a remote path not an osPath
+func (c *Cache) FindItem(name string) (item *Item) {
+	name = clean(name)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	item = c.item[name]
 	return item
 }
 
@@ -873,6 +880,139 @@ func (c *Cache) TotalInUse() (n int) {
 		}
 	}
 	return n
+}
+
+// AggregateStats holds aggregate cache statistics
+type AggregateStats struct {
+	TotalFiles             int64          `json:"totalFiles"`
+	Counts                 map[string]int `json:"counts"`
+	TotalCachedBytes       int64          `json:"totalCachedBytes"`
+	AverageCachePercentage int64          `json:"averageCachePercentage"`
+}
+
+// GetAggregateStats returns aggregate cache statistics for all items in the cache
+//
+// Note: The diskSize return value from VFSStatusCacheDetailedWithDiskSize
+// represents logical size of cached data on disk, which is used to
+// calculate TotalCachedBytes. This may differ from actual filesystem
+// block allocation for sparse files. The name could be clarified in a
+// future refactor, but semantics are: total bytes logically cached.
+func (c *Cache) GetAggregateStats() AggregateStats {
+	c.mu.Lock()
+	items := make([]*Item, 0, len(c.item))
+	for _, it := range c.item {
+		items = append(items, it)
+	}
+	errItemsMap := make(map[string]struct{}, len(c.errItems))
+	for name := range c.errItems {
+		errItemsMap[name] = struct{}{}
+	}
+	c.mu.Unlock()
+
+	counts := make(map[string]int)
+	for _, status := range CacheStatuses {
+		counts[status] = 0
+	}
+
+	stats := AggregateStats{
+		TotalFiles: int64(len(items)),
+		Counts:     counts,
+	}
+
+	if len(items) == 0 {
+		return stats
+	}
+
+	var totalPercentage, nonErrorItems int64
+
+	for _, item := range items {
+		status, percentage, _, _, diskSize, _ := item.VFSStatusCacheDetailedWithDiskSize()
+		stats.TotalCachedBytes += diskSize
+
+		if _, isError := errItemsMap[item.name]; isError {
+			stats.Counts[CacheStatusError]++
+		} else {
+			stats.Counts[status]++
+			totalPercentage += int64(percentage)
+			nonErrorItems++
+		}
+	}
+
+	if nonErrorItems > 0 {
+		stats.AverageCachePercentage = (totalPercentage + nonErrorItems/2) / nonErrorItems
+	}
+	return stats
+}
+
+// ItemStatus holds status information for a cache item
+type ItemStatus struct {
+	Name       string
+	Status     string
+	Percentage int
+	TotalSize  int64
+	CachedSize int64
+	IsDirty    bool
+}
+
+// GetStatusForDir returns cache status for all files in a specified directory
+// If recursive is true, it includes all subdirectories
+func (c *Cache) GetStatusForDir(dirPath string, recursive bool) map[string][]ItemStatus {
+	filesByStatus := make(map[string][]ItemStatus)
+	for _, status := range CacheStatuses {
+		filesByStatus[status] = []ItemStatus{}
+	}
+
+	// Normalize to match cache key format
+	cleanDir := vfscommon.NormalizePath(dirPath)
+	prefix := cleanDir
+	if prefix != "" && !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+
+	// Snapshot items under lock to avoid data races, then compute status
+	// after releasing lock to prevent deadlock with item.mu lock ordering
+	type itemEntry struct {
+		it  *Item
+		rel string
+	}
+	var itemsToProcess []itemEntry
+
+	c.mu.Lock()
+	for name, it := range c.item {
+		if prefix == "" || strings.HasPrefix(name, prefix) {
+			rel := name
+			if prefix != "" {
+				rel = strings.TrimPrefix(name, prefix)
+				if !recursive && strings.Contains(rel, "/") {
+					continue
+				}
+			}
+			itemsToProcess = append(itemsToProcess, itemEntry{it: it, rel: rel})
+		}
+	}
+	c.mu.Unlock()
+
+	// Compute status for each item without holding cache lock to avoid deadlock
+	for _, ie := range itemsToProcess {
+		status, percentage, totalSize, cachedSize, isDirty := ie.it.VFSStatusCacheDetailed()
+		filesByStatus[status] = append(filesByStatus[status], ItemStatus{
+			Name:       ie.rel,
+			Status:     status,
+			Percentage: percentage,
+			TotalSize:  totalSize,
+			CachedSize: cachedSize,
+			IsDirty:    isDirty,
+		})
+	}
+
+	// Sort files within each status group for deterministic output
+	for status := range filesByStatus {
+		sort.Slice(filesByStatus[status], func(i, j int) bool {
+			return filesByStatus[status][i].Name < filesByStatus[status][j].Name
+		})
+	}
+
+	return filesByStatus
 }
 
 // Dump the cache into a string for debugging purposes
