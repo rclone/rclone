@@ -232,7 +232,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.srv.SetHeader("Authorization", "Bearer "+accessToken)
+
 	f.cleanupSrv = rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint)
+	f.cleanupSrv.SetHeader("Authorization", "Bearer "+accessToken)
+
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
 		CanHaveEmptyDirectories: true,
