@@ -4,6 +4,7 @@ package s3
 //go:generate go run gen_setfrom.go -o setfrom.go
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/tls"
@@ -929,6 +930,18 @@ PutObjectRetention and PutObjectLegalHold API calls after the upload completes.
 This adds extra API calls per object, so only enable if your provider requires it.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name: "object_lock_supported",
+			Help: `Whether the provider supports S3 Object Lock.
+
+This should be true, false or left unset to use the default for the provider.
+
+Set to false for providers that don't fully support the S3 Object Lock API
+(e.g. GCS which uses non-standard headers for bypass governance retention
+and doesn't implement Legal Hold via the S3 API).
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
 		},
 		}}))
 }
@@ -1114,6 +1127,7 @@ type Options struct {
 	BypassGovernanceRetention   bool                 `config:"bypass_governance_retention"`
 	BucketObjectLockEnabled     bool                 `config:"bucket_object_lock_enabled"`
 	ObjectLockSetAfterUpload    bool                 `config:"object_lock_set_after_upload"`
+	ObjectLockSupported         fs.Tristate          `config:"object_lock_supported"`
 }
 
 // Fs represents a remote s3 server
@@ -1720,6 +1734,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.UseUnsignedPayload, true, provider.Quirks.UseUnsignedPayload)
 	set(&opt.UseXID, true, provider.Quirks.UseXID)
 	set(&opt.SignAcceptEncoding, true, provider.Quirks.SignAcceptEncoding)
+	set(&opt.ObjectLockSupported, true, provider.Quirks.ObjectLockSupported)
 }
 
 // setRoot changes the root of the Fs
@@ -4597,7 +4612,22 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 
 // Upload a single part using PutObject
 func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
-	req.Body = io.NopCloser(in)
+	// AWS S3 requires Content-MD5 for PutObject with Object Lock parameters.
+	// Since the body is a non-seekable io.Reader, we buffer it to compute
+	// the MD5 and then use the buffered bytes as a seekable body.
+	// See: https://github.com/aws/aws-sdk-go-v2/discussions/2960
+	if req.ObjectLockMode != "" || req.ObjectLockRetainUntilDate != nil || req.ObjectLockLegalHoldStatus != "" {
+		buf, err := io.ReadAll(in)
+		if err != nil {
+			return etag, lastModified, nil, fmt.Errorf("failed to read body for Content-MD5: %w", err)
+		}
+		md5sum := md5.Sum(buf)
+		md5base64 := base64.StdEncoding.EncodeToString(md5sum[:])
+		req.ContentMD5 = &md5base64
+		req.Body = bytes.NewReader(buf)
+	} else {
+		req.Body = io.NopCloser(in)
+	}
 	var options = []func(*s3.Options){}
 	if o.fs.opt.UseUnsignedPayload.Value {
 		options = append(options, s3.WithAPIOptions(
@@ -4627,6 +4657,19 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 
 // Upload a single part using a presigned request
 func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
+	// AWS S3 requires Content-MD5 for PutObject with Object Lock parameters.
+	// Must be set before signing so it's included in the presigned URL.
+	// See: https://github.com/aws/aws-sdk-go-v2/discussions/2960
+	if req.ObjectLockMode != "" || req.ObjectLockRetainUntilDate != nil || req.ObjectLockLegalHoldStatus != "" {
+		buf, err := io.ReadAll(in)
+		if err != nil {
+			return etag, lastModified, nil, fmt.Errorf("failed to read body for Content-MD5: %w", err)
+		}
+		md5sum := md5.Sum(buf)
+		md5base64 := base64.StdEncoding.EncodeToString(md5sum[:])
+		req.ContentMD5 = &md5base64
+		in = bytes.NewReader(buf)
+	}
 	// Create the presigned request
 	putReq, err := s3.NewPresignClient(o.fs.c).PresignPutObject(ctx, req, s3.WithPresignExpires(15*time.Minute))
 	if err != nil {
