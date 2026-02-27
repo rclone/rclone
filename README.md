@@ -145,6 +145,7 @@ These backends adapt or modify other storage providers
 - Compress: compress files [:page_facing_up:](https://rclone.org/compress/)
 - Crypt: encrypt files [:page_facing_up:](https://rclone.org/crypt/)
 - Hasher: hash files [:page_facing_up:](https://rclone.org/hasher/)
+- Raid3: Disaster-tolerant storage across 3 remotes with auto-recovery [:page_facing_up:](https://rclone.org/raid3/)
 - Union: join multiple remotes to work together [:page_facing_up:](https://rclone.org/union/)
 
 ## Features

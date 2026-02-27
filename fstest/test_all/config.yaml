@@ -20,6 +20,9 @@ backends:
  - backend:  "local"
    remote:   ""
    fastlist: false
+ - backend:  "raid3"
+   remote:   "TestRaid3Local:"
+   fastlist: true
  - backend:  "b2"
    remote:   "TestB2:"
    fastlist: true
