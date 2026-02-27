@@ -347,7 +347,6 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	cache, cacheExist := ctx.Value("kdriveInitCache").(map[string]cacheEntry)
 	if cacheExist {
 		if entry, entryExists := cache[cacheKey]; entryExists {
-			fs.Infof(nil, "USE CACHE")
 			return entry.item, entry.err
 		}
 	}
@@ -1029,6 +1028,7 @@ func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, error) {
 		// ValidUntil is a Unix timestamp (UTC)
 		if time.Now().Unix() > int64(result.Data.ValidUntil) {
 			// link is expired
+			f.deletePublicLink(ctx, fileID)
 			return "", nil
 		}
 	}
@@ -1065,7 +1065,7 @@ func (f *Fs) createPublicLink(ctx context.Context, fileID int, expire fs.Duratio
 	}
 
 	// Set expiry if provided
-	if expire > 0 {
+	if expire != fs.DurationOff {
 		createReq.ValidUntil = int(time.Now().Add(time.Duration(expire)).Unix())
 	}
 
@@ -1103,9 +1103,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if unlink {
 		// Remove existing public link
 		err = f.deletePublicLink(ctx, item.ID)
-		if err != nil {
-			return "", err
-		}
+		return "", err
 	}
 
 	// Check if link exists
