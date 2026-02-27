@@ -1091,3 +1091,4 @@ put them back in again. -->
 - Adam Kasztenny <adamkasztenny@gmail.com>
 - Romāns Potašovs <justgook@gmail.com>
 - Brian Bockelman <bbockelman@morgridge.org>
+- Bjoern Franke <bjo@schafweide.org>
