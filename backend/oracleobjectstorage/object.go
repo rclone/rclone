@@ -362,7 +362,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	o.bytes = *bytes
+	if bytes == nil {
+		// Must set these as "defaults" since the HTTP payload is compressed and the handler will decompress by default,
+		// otherwise we end up with a file size and hash mismatch
+		o.bytes = -1
+		o.md5 = ""
+	} else { 
+		o.bytes = *bytes
+	}
 	return resp.HTTPResponse().Body, nil
 }
 
