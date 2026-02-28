@@ -212,6 +212,12 @@ backends:
  - backend:  "memory"
    remote:   ":memory:"
    fastlist: true
+ - backend:  "movistarcloud"
+   remote:   "TestMovistarCloud:"
+   fastlist: false
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
  - backend:  "netstorage"
    remote:   "TestnStorage:"
    fastlist: true

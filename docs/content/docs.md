@@ -68,6 +68,7 @@ See the following for detailed instructions for
 - [Mail.ru Cloud](/mailru/)
 - [Mega](/mega/)
 - [Memory](/memory/)
+- [Movistar Cloud](/movistarcloud/)
 - [Microsoft Azure Blob Storage](/azureblob/)
 - [Microsoft Azure Files Storage](/azurefiles/)
 - [Microsoft OneDrive](/onedrive/)
