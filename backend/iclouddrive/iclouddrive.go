@@ -43,6 +43,7 @@ const (
 	configClientID   = "client_id"
 	configCookies    = "cookies"
 	configTrustToken = "trust_token"
+	configRegion     = "region"
 
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
@@ -57,6 +58,20 @@ func init() {
 		Config:      Config,
 		NewFs:       NewFs,
 		Options: []fs.Option{{
+			Name:     configRegion,
+			Help:     "Region for iCloud endpoints.",
+			Required: false,
+			Advanced: false,
+			Default:  "global",
+			Examples: []fs.OptionExample{{
+				Value: "global",
+				Help:  "Global (default)",
+			}, {
+				Value: "chinamainland",
+				Help:  "China Mainland",
+			}},
+			Exclusive: true,
+		}, {
 			Name:      configAppleID,
 			Help:      "Apple ID.",
 			Required:  true,
@@ -107,6 +122,7 @@ type Options struct {
 	TrustToken string               `config:"trust_token"`
 	Cookies    string               `config:"cookies"`
 	ClientID   string               `config:"client_id"`
+	Region     string               `config:"region"`
 	Enc        encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -156,7 +172,13 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	trustToken, _ := m.Get(configTrustToken)
 	cookieRaw, _ := m.Get(configCookies)
 	clientID, _ := m.Get(configClientID)
+	regionStr, _ := m.Get(configRegion)
 	cookies := ReadCookies(cookieRaw)
+
+	// Switch endpoints if region is China Mainland during config-time flows.
+	if strings.EqualFold(regionStr, "chinamainland") {
+		api.UseChinaMainlandEndpoints()
+	}
 
 	switch config.State {
 	case "":
@@ -811,6 +833,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	if opt.TrustToken == "" {
 		return nil, fmt.Errorf("missing icloud trust token: try refreshing it with \"rclone config reconnect %s:\"", name)
+	}
+
+	// Switch endpoints based on region selection
+	if strings.EqualFold(opt.Region, "chinamainland") {
+		api.UseChinaMainlandEndpoints()
 	}
 
 	cookies := ReadCookies(opt.Cookies)
