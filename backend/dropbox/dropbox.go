@@ -350,6 +350,7 @@ type Fs struct {
 	ns             string         // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
 	exportExts     []exportExtension
+	sharedLinkMeta sharing.IsSharedLinkMetadata
 }
 
 type exportType int
@@ -561,6 +562,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 	})
 
+	sharedModes := 0
+	if f.opt.SharedFiles {
+		sharedModes++
+	}
+	if f.opt.SharedFolders {
+		sharedModes++
+	}
+	if f.opt.SharedLink != "" {
+		sharedModes++
+	}
+	if sharedModes > 1 {
+		return nil, errors.New("dropbox: shared_files, shared_folders and shared_link are mutually exclusive")
+	}
+
 	// do not fill features yet
 	if f.opt.SharedFiles {
 		f.setRoot(root)
@@ -588,6 +603,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("dropbox: get shared link metadata: %w", err)
 		}
+		f.sharedLinkMeta = meta
 		if _, ok := meta.(*sharing.FileLinkMetadata); ok {
 			// The link points directly to a file, not a folder.
 			if f.root != "" {
@@ -595,6 +611,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				// no sense. Treat the root itself as the only file.
 				f.root = ""
 				return f, fs.ErrorIsFile
+			}
+			return f, nil
+		}
+		if f.root != "" {
+			_, err := f.findSharedLinkObject(ctx, "")
+			if err == nil {
+				f.root = ""
+				return f, fs.ErrorIsFile
+			}
+			if err != fs.ErrorObjectNotFound {
+				return nil, err
 			}
 		}
 		return f, nil
@@ -870,6 +897,20 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return f.findSharedFile(ctx, remote)
 	}
 	if f.opt.SharedLink != "" {
+		if _, ok := f.sharedLinkMeta.(*sharing.FileLinkMetadata); ok {
+			file, _ := f.sharedLinkMeta.(*sharing.FileLinkMetadata)
+			leaf := f.opt.Enc.ToStandardName(file.Name)
+			if remote != "" && remote != leaf {
+				return nil, fs.ErrorObjectNotFound
+			}
+			return &Object{
+				fs:      f,
+				remote:  leaf,
+				url:     "",
+				bytes:   int64(file.Size),
+				modTime: file.ServerModified,
+			}, nil
+		}
 		return f.findSharedLinkObject(ctx, remote)
 	}
 	return f.newObjectWithInfo(ctx, remote, nil)
@@ -878,12 +919,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // findSharedLinkObject finds a specific file inside a shared link folder by
 // fetching its metadata via GetSharedLinkMetadata.
 func (f *Fs) findSharedLinkObject(ctx context.Context, remote string) (fs.Object, error) {
-	// Build path relative to the shared link root.
-	linkPath := ""
-	if f.root != "" {
-		linkPath = "/" + f.root
-	}
-	linkPath = linkPath + "/" + remote
+	linkPath := f.buildSharedLinkPath(remote)
 
 	arg := sharing.GetSharedLinkMetadataArg{
 		Url:  f.opt.SharedLink,
@@ -896,7 +932,10 @@ func (f *Fs) findSharedLinkObject(ctx context.Context, remote string) (fs.Object
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, fs.ErrorObjectNotFound
+		if isSharedLinkNotFound(err) {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, err
 	}
 	fileMeta, ok := meta.(*sharing.FileLinkMetadata)
 	if !ok {
@@ -1060,20 +1099,48 @@ func (f *Fs) findSharedFile(ctx context.Context, name string) (o *Object, err er
 	return nil, fs.ErrorObjectNotFound
 }
 
+func isSharedLinkNotFound(err error) bool {
+	switch e := err.(type) {
+	case sharing.GetSharedLinkMetadataAPIError:
+		if e.EndpointError != nil && e.EndpointError.Tag == sharing.SharedLinkErrorSharedLinkNotFound {
+			return true
+		}
+	}
+	return strings.Contains(err.Error(), "not_found")
+}
+
+// buildSharedLinkPath builds a path relative to the shared-link root in API
+// form (leading slash, encoded path segments).
+func (f *Fs) buildSharedLinkPath(remote string) string {
+	full := path.Join(f.root, remote)
+	if full == "." || full == "" {
+		return ""
+	}
+	return "/" + f.opt.Enc.FromStandardPath(full)
+}
+
 // listSharedLink lists the contents of a Dropbox shared link folder (or
 // returns the single file for a file link). It uses files.ListFolder with the
 // SharedLink field, which avoids having to mount the link into the user's
 // namespace. Only non-recursive listing is supported by the API.
 func (f *Fs) listSharedLink(ctx context.Context, dir string, callback func(fs.DirEntry) error) (err error) {
+	if fileMeta, ok := f.sharedLinkMeta.(*sharing.FileLinkMetadata); ok {
+		if dir != "" {
+			return fs.ErrorDirNotFound
+		}
+		leaf := f.opt.Enc.ToStandardName(fileMeta.Name)
+		o := &Object{
+			fs:      f,
+			remote:  leaf,
+			url:     "",
+			bytes:   int64(fileMeta.Size),
+			modTime: fileMeta.ServerModified,
+		}
+		return callback(o)
+	}
+
 	// Build the path relative to the shared link root.
-	// The path must be absolute (start with /) relative to the link root.
-	root := ""
-	if f.root != "" {
-		root = "/" + f.root
-	}
-	if dir != "" {
-		root = root + "/" + dir
-	}
+	root := f.buildSharedLinkPath(dir)
 
 	started := false
 	var res *files.ListFolderResult
@@ -1124,7 +1191,7 @@ func (f *Fs) listSharedLink(ctx context.Context, dir string, callback func(fs.Di
 				remote := path.Join(dir, leaf)
 				// linkPath is the path relative to the shared link root used
 				// by GetSharedLinkFile when downloading (the Path field).
-				linkPath := root + "/" + info.Name
+				linkPath := root + "/" + f.opt.Enc.FromStandardName(leaf)
 				o := &Object{
 					fs:      f,
 					remote:  remote,
