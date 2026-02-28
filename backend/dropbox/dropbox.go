@@ -1110,19 +1110,21 @@ func (f *Fs) listSharedLink(ctx context.Context, dir string, callback func(fs.Di
 		for _, entry := range res.Entries {
 			switch info := entry.(type) {
 			case *files.FolderMetadata:
-				leaf := f.opt.Enc.ToStandardName(path.Base(info.PathDisplay))
+				// When listing via shared link the API does not populate
+				// PathDisplay/PathLower - only Name is reliable.
+				leaf := f.opt.Enc.ToStandardName(info.Name)
 				remote := path.Join(dir, leaf)
 				d := fs.NewDir(remote, time.Time{}).SetID(info.Id)
 				if err = callback(d); err != nil {
 					return err
 				}
 			case *files.FileMetadata:
-				leaf := f.opt.Enc.ToStandardName(path.Base(info.PathDisplay))
+				// Same: PathDisplay is empty for shared-link listings; use Name.
+				leaf := f.opt.Enc.ToStandardName(info.Name)
 				remote := path.Join(dir, leaf)
-				// Store the path relative to the shared link root in the url
-				// field (reused from shared-files mode). This is passed as
-				// Path to GetSharedLinkFile when downloading.
-				linkPath := root + "/" + path.Base(info.PathDisplay)
+				// linkPath is the path relative to the shared link root used
+				// by GetSharedLinkFile when downloading (the Path field).
+				linkPath := root + "/" + info.Name
 				o := &Object{
 					fs:      f,
 					remote:  remote,
@@ -2070,11 +2072,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return
 	}
 	if o.fs.opt.SharedLink != "" {
-		if len(options) != 0 {
-			return nil, errors.New("OpenOptions not supported for shared link files")
-		}
-		// o.url holds the path relative to the shared link root, set during
-		// listing by listSharedLink / findSharedLinkObject.
+		// GetSharedLinkFile does not support range/seek - ignore any options
+		// and always download from the beginning. This matches the behaviour
+		// of the shared-files mode above.
 		arg := sharing.GetSharedLinkMetadataArg{
 			Url:  o.fs.opt.SharedLink,
 			Path: o.url,
