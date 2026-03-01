@@ -106,10 +106,6 @@ require (
 	storj.io/uplink v1.13.1
 )
 
-replace github.com/rclone/Proton-API-Bridge => /home/thomas/Workspace/proton-api-bridge-patch
-
-replace github.com/rclone/go-proton-api => /home/thomas/Workspace/go-proton-api-patch
-
 require (
 	cloud.google.com/go/auth v0.18.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
