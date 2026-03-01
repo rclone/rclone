@@ -763,6 +763,14 @@ See: https://developers.google.com/workspace/drive/api/guides/limited-expansive-
 				Value: "true",
 				Help:  "Get GCP IAM credentials from the environment (env vars or IAM).",
 			}},
+		}, {
+			Name: "cycle_detection",
+			Help: `Enable cycle detection in directory traversal.
+
+This prevents infinite loops when shortcuts create cycles in the directory structure.
+Useful for shared drives with complex shortcut hierarchies. May add minor overhead.`,
+			Advanced: true,
+			Default:  false,
 		}}...),
 	})
 
@@ -826,6 +834,7 @@ type Options struct {
 	EnforceExpansiveAccess    bool                 `config:"metadata_enforce_expansive_access"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 	EnvAuth                   bool                 `config:"env_auth"`
+	CycleDetection            bool                 `config:"cycle_detection"`
 }
 
 // Fs represents a remote drive server
@@ -2220,6 +2229,11 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return err
 	}
 	directoryID = actualID(directoryID)
+	var visited sync.Map
+	if f.opt.CycleDetection {
+		visited = sync.Map{}
+		visited.Store(directoryID, true)
+	}
 
 	mu := sync.Mutex{} // protects in and overflow
 	wg := sync.WaitGroup{}
@@ -2251,8 +2265,18 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	// Send the entry to the caller, queueing any directories as new jobs
 	cb := func(entry fs.DirEntry) error {
 		if d, isDir := entry.(fs.Directory); isDir {
-			job := listREntry{actualID(d.ID()), d.Remote()}
-			sendJob(job)
+			id := actualID(d.ID())
+			if !f.opt.CycleDetection || func() bool {
+				if _, alreadyVisited := visited.Load(id); !alreadyVisited {
+					visited.Store(id, true)
+					return true
+				}
+				fs.Debugf(f, "Skipping directory %q due to cycle detection", d.Remote())
+				return false
+			}() {
+				job := listREntry{id, d.Remote()}
+				sendJob(job)
+			}
 		}
 		mu.Lock()
 		defer mu.Unlock()
