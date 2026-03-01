@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
@@ -336,10 +337,32 @@ func deAuthHandler() {
 	clearConfigMap(_mapper)
 }
 
+func setDriveSDKVersionIfSupported(config any, driveSDKVersion string) {
+	if driveSDKVersion == "" {
+		return
+	}
+
+	v := reflect.ValueOf(config)
+	if v.Kind() != reflect.Pointer || v.IsNil() {
+		return
+	}
+	v = v.Elem()
+	if v.Kind() != reflect.Struct {
+		return
+	}
+
+	field := v.FieldByName("DriveSDKVersion")
+	if !field.IsValid() || !field.CanSet() || field.Kind() != reflect.String {
+		return
+	}
+
+	field.SetString(driveSDKVersion)
+}
+
 func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper) (*protonDriveAPI.ProtonDrive, error) {
 	config := protonDriveAPI.NewDefaultConfig()
 	config.AppVersion = opt.AppVersion
-	config.DriveSDKVersion = opt.DriveSDKVersion
+	setDriveSDKVersionIfSupported(config, opt.DriveSDKVersion)
 	config.UserAgent = f.ci.UserAgent // opt.UserAgent
 
 	config.ReplaceExistingDraft = opt.ReplaceExistingDraft
