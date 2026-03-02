@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"log"
+	"path/filepath"
 
 	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
+	fslog "github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
 )
 
@@ -135,8 +137,23 @@ func rcBisync(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	output := bilib.CaptureOutput(func() {
 		err = Bisync(octx, fs1, fs2, opt)
 	})
+
+	workDir, _ := filepath.Abs(DefaultWorkdir)
+	if opt.Workdir != "" {
+		workDir, _ = filepath.Abs(opt.Workdir)
+	}
+	basePath := bilib.BasePath(ctx, workDir, fs1, fs2)
+
 	_, _ = log.Writer().Write(output)
-	return rc.Params{"output": string(output)}, err
+	return rc.Params{
+		"output":   string(output),
+		"session":  bilib.SessionName(fs1, fs2),
+		"workDir":  workDir,
+		"basePath": basePath,
+		"listing1": basePath + ".path1.lst",
+		"listing2": basePath + ".path2.lst",
+		"logFile":  fslog.Opt.File,
+	}, err
 }
 
 func setEnum(in rc.Params, name string, defaultVal string, set func(s string) error) error {
