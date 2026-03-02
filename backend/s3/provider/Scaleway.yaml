@@ -18,11 +18,11 @@ storage_class:
   GLACIER: |-
     Archived storage.
     Prices are lower, but it needs to be restored first to be accessed.
-    Available in FR-PAR and NL-AMS regions.
+    Available in the FR-PAR region only.
   ONEZONE_IA: |-
     One Zone - Infrequent Access.
     A good choice for storing secondary backup copies or easily re-creatable data.
-    Available in the FR-PAR region only.
+    Available in all regions.
 bucket_acl: true
 quirks:
   max_upload_parts: 1000
