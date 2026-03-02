@@ -127,14 +127,14 @@ func init() {
 	// and the Command line syntax section of docs/content/bisync.md (it doesn't update automatically)
 	flags.BoolVarP(cmdFlags, &Opt.Resync, "resync", "1", Opt.Resync, "Performs the resync run. Equivalent to --resync-mode path1. Consider using --verbose or --dry-run first.", "")
 	flags.FVarP(cmdFlags, &Opt.ResyncMode, "resync-mode", "", "During resync, prefer the version that is: path1, path2, newer, older, larger, smaller (default: path1 if --resync, otherwise none for no resync.)", "")
-	flags.BoolVarP(cmdFlags, &Opt.CheckAccess, "check-access", "", Opt.CheckAccess, makeHelp("Ensure expected {CHECKFILE} files are found on both Path1 and Path2 filesystems, else abort."), "")
-	flags.StringVarP(cmdFlags, &Opt.CheckFilename, "check-filename", "", Opt.CheckFilename, makeHelp("Filename for --check-access (default: {CHECKFILE})"), "")
+	flags.BoolVarP(cmdFlags, &Opt.CheckAccess, "check-access", "", Opt.CheckAccess, MakeHelp("Ensure expected {CHECKFILE} files are found on both Path1 and Path2 filesystems, else abort."), "")
+	flags.StringVarP(cmdFlags, &Opt.CheckFilename, "check-filename", "", Opt.CheckFilename, MakeHelp("Filename for --check-access (default: {CHECKFILE})"), "")
 	flags.BoolVarP(cmdFlags, &Opt.Force, "force", "", Opt.Force, "Bypass --max-delete safety check and run the sync. Consider using with --verbose", "")
 	flags.FVarP(cmdFlags, &Opt.CheckSync, "check-sync", "", "Controls comparison of final listings: true|false|only (default: true)", "")
 	flags.BoolVarP(cmdFlags, &Opt.CreateEmptySrcDirs, "create-empty-src-dirs", "", Opt.CreateEmptySrcDirs, "Sync creation and deletion of empty directories. (Not compatible with --remove-empty-dirs)", "")
 	flags.BoolVarP(cmdFlags, &Opt.RemoveEmptyDirs, "remove-empty-dirs", "", Opt.RemoveEmptyDirs, "Remove ALL empty directories at the final cleanup step.", "")
 	flags.StringVarP(cmdFlags, &Opt.FiltersFile, "filters-file", "", Opt.FiltersFile, "Read filtering patterns from a file", "")
-	flags.StringVarP(cmdFlags, &Opt.Workdir, "workdir", "", Opt.Workdir, makeHelp("Use custom working dir - useful for testing. (default: {WORKDIR})"), "")
+	flags.StringVarP(cmdFlags, &Opt.Workdir, "workdir", "", Opt.Workdir, MakeHelp("Use custom working dir - useful for testing. (default: {WORKDIR})"), "")
 	flags.StringVarP(cmdFlags, &Opt.BackupDir1, "backup-dir1", "", Opt.BackupDir1, "--backup-dir for Path1. Must be a non-overlapping path on the same remote.", "")
 	flags.StringVarP(cmdFlags, &Opt.BackupDir2, "backup-dir2", "", Opt.BackupDir2, "--backup-dir for Path2. Must be a non-overlapping path on the same remote.", "")
 	flags.StringVarP(cmdFlags, &Opt.DebugName, "debugname", "", Opt.DebugName, "Debug by tracking one file at various points throughout a bisync run (when -v or -vv)", "")
@@ -153,6 +153,7 @@ func init() {
 	flags.StringVarP(cmdFlags, &Opt.ConflictSuffixFlag, "conflict-suffix", "", Opt.ConflictSuffixFlag, "Suffix to use when renaming a --conflict-loser. Can be either one string or two comma-separated strings to assign different suffixes to Path1/Path2. (default: 'conflict')", "")
 	_ = cmdFlags.MarkHidden("debugname")
 	_ = cmdFlags.MarkHidden("localtime")
+	addRC()
 }
 
 // bisync command definition
