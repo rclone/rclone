@@ -314,9 +314,11 @@ func (f *Fs) computeRootID() (rootID string, err error) {
 func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
 	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
 	opts := rest.Opts{
-		Method: "GET",
-		Path:   fmt.Sprintf("/3/drive/%s/files/%s", f.opt.DriveID, id),
+		Method:     "GET",
+		Path:       fmt.Sprintf("/3/drive/%s/files/%s", f.opt.DriveID, id),
+		Parameters: url.Values{},
 	}
+	opts.Parameters.Set("with", "path")
 
 	var result api.ItemResult
 	var resp *http.Response
@@ -518,6 +520,12 @@ type listAllFn func(*api.Item) bool
 //
 // If the user fn ever returns true then it early exits with found = true.
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, recursive bool, fn listAllFn) (found bool, err error) {
+	rootItem, err := f.getItem(ctx, dirID)
+	if err != nil {
+		return false, err
+	}
+	rootPath := rootItem.FullPath + "/"
+
 	// fs.Infof(nil, "Stacktrace : %s", string(debug.Stack()))
 	listSomeFiles := func(currentDirID string, fromCursor string) (api.SearchResult, error) {
 		// https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/files
@@ -527,7 +535,11 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 			Parameters: url.Values{},
 		}
 		opts.Parameters.Set("limit", "1000")
-		opts.Parameters.Set("with", "path,hash")
+		opts.Parameters.Set("with", "path")
+		if recursive {
+			opts.Parameters.Set("depth", "unlimited")
+		}
+
 		if len(fromCursor) > 0 {
 			opts.Parameters.Set("cursor", fromCursor)
 		}
@@ -546,22 +558,20 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	}
 
 	var listErr error
-	var recursiveContents func(currentDirID string, currentSubDir string, fromCursor string) bool
+	var recursiveContents func(currentDirID string, currentSubDir string, fromCursor string)
 
-	recursiveContents = func(currentDirID string, currentSubDir string, fromCursor string) bool {
+	recursiveContents = func(currentDirID string, currentSubDir string, fromCursor string) {
 		if listErr != nil {
-			return false
+			return
 		}
 		result, err := listSomeFiles(currentDirID, fromCursor)
 		if err != nil {
 			listErr = err
-			return false
+			return
 		}
 
-		hasChildren := false
 		// First, analyze what has been returned, and go in-depth if required
 		for i := range result.Data {
-			hasChildren = true
 			item := &result.Data[i]
 			if item.Type == "dir" {
 				if filesOnly {
@@ -572,19 +582,17 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 					continue
 				}
 			}
+
 			item.Name = f.opt.Enc.ToStandardName(item.Name)
-			item.FullPath = path.Join(currentSubDir, item.Name)
+			item.FullPath = f.opt.Enc.ToStandardPath(strings.TrimPrefix(item.FullPath, rootPath))
 
 			if fn(item) {
 				found = true
 				break
 			}
 
-			item.HasChildren = false
-			if recursive && item.Type == "dir" {
-				subDirHasChildren := recursiveContents(strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), "" /*reset cursor*/)
-				// 	fs.Infof(nil, "DIR %s SUBDIR %s subDirHasChildren %w", strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), subDirHasChildren)
-				item.HasChildren = subDirHasChildren
+			if recursive && currentDirID == "1" && item.Type == "dir" {
+				recursiveContents(strconv.Itoa(item.ID), path.Join(currentSubDir, item.Name), "" /*reset cursor*/)
 			}
 		}
 
@@ -592,8 +600,6 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		if result.HasMore {
 			recursiveContents(currentDirID, currentSubDir, result.Cursor)
 		}
-
-		return hasChildren
 	}
 
 	recursiveContents(dirID, "", "")
