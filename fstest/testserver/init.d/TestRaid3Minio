@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+#
+# TestRaid3Minio - MinIO-based raid3 test environment for fstest/testserver.
+#
+# Provisions three MinIO containers (even/odd/parity) and outputs a config file
+# path for the raid3 remote "TestRaid3Minio". Used by go test -remote TestRaid3Minio:
+# and by test_all.
+#
+# Does not use run.bash (avoids flock, which is not available on macOS by default).
+# Implements start/stop/status/reset directly; requires Docker.
+#
+set -euo pipefail
+
+RUN_BASE="${STATE_DIR:-${XDG_RUNTIME_DIR:-/tmp}/rclone-test-server}"
+NAME="$(basename "$0")"
+RUN_ROOT="${RUN_BASE}/${NAME}"
+
+# MinIO container names and ports (aligned with compare_raid3_env.sh)
+EVEN_NAME="${NAME}Even"
+ODD_NAME="${NAME}Odd"
+PARITY_NAME="${NAME}Parity"
+EVEN_PORT=9001
+ODD_PORT=9002
+PARITY_PORT=9003
+EVEN_USER=even
+EVEN_PASS=evenpass88
+ODD_USER=odd
+ODD_PASS=oddpass88
+PARITY_USER=parity
+PARITY_PASS=paritypass88
+
+MINIO_IMAGE="${MINIO_IMAGE:-minio/minio:RELEASE.2025-09-07T16-13-09Z}"
+
+status() {
+	local running
+	running=$(docker ps --format '{{.Names}}' 2>/dev/null || true)
+	for n in "${EVEN_NAME}" "${ODD_NAME}" "${PARITY_NAME}"; do
+		echo "${running}" | grep -qFx "${n}" || return 1
+	done
+	return 0
+}
+
+stop() {
+	for n in "${EVEN_NAME}" "${ODD_NAME}" "${PARITY_NAME}"; do
+		if docker ps --format '{{.Names}}' 2>/dev/null | grep -qFx "${n}"; then
+			docker stop "${n}" >/dev/null 2>&1 || true
+		fi
+	done
+}
+
+start() {
+	mkdir -p "${RUN_ROOT}"
+	for entry in "${EVEN_NAME}|${EVEN_USER}|${EVEN_PASS}|${EVEN_PORT}" \
+		    "${ODD_NAME}|${ODD_USER}|${ODD_PASS}|${ODD_PORT}" \
+		    "${PARITY_NAME}|${PARITY_USER}|${PARITY_PASS}|${PARITY_PORT}"; do
+		IFS='|' read -r cname cuser cpass cport <<<"${entry}"
+		if docker ps --format '{{.Names}}' 2>/dev/null | grep -qFx "${cname}"; then
+			: "Container ${cname} already running"
+		elif docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qFx "${cname}"; then
+			docker start "${cname}" >/dev/null
+		else
+			local data_dir="${RUN_ROOT}/data_${cname}"
+			mkdir -p "${data_dir}"
+			docker run -d --name "${cname}" \
+				-p "127.0.0.1:${cport}:9000" \
+				-e "MINIO_ROOT_USER=${cuser}" \
+				-e "MINIO_ROOT_PASSWORD=${cpass}" \
+				-v "${data_dir}:/data" \
+				"${MINIO_IMAGE}" server /data >/dev/null
+		fi
+	done
+
+	# Wait for MinIO to be ready
+	for port in "${EVEN_PORT}" "${ODD_PORT}" "${PARITY_PORT}"; do
+		for i in $(seq 1 30); do
+			nc -z 127.0.0.1 "${port}" 2>/dev/null && break
+			sleep 1
+		done
+	done
+
+	CONFIG_FILE="${RUN_ROOT}/rclone.conf"
+	cat >"${CONFIG_FILE}" <<EOF
+[minioeven]
+type = s3
+provider = Minio
+env_auth = false
+access_key_id = ${EVEN_USER}
+secret_access_key = ${EVEN_PASS}
+endpoint = http://127.0.0.1:${EVEN_PORT}
+acl = private
+no_check_bucket = false
+max_retries = 1
+upload_cutoff = 5G
+
+[minioodd]
+type = s3
+provider = Minio
+env_auth = false
+access_key_id = ${ODD_USER}
+secret_access_key = ${ODD_PASS}
+endpoint = http://127.0.0.1:${ODD_PORT}
+acl = private
+no_check_bucket = false
+max_retries = 1
+upload_cutoff = 5G
+
+[minioparity]
+type = s3
+provider = Minio
+env_auth = false
+access_key_id = ${PARITY_USER}
+secret_access_key = ${PARITY_PASS}
+endpoint = http://127.0.0.1:${PARITY_PORT}
+acl = private
+no_check_bucket = false
+max_retries = 1
+upload_cutoff = 5G
+
+[TestRaid3Minio]
+type = raid3
+even = minioeven:
+odd = minioodd:
+parity = minioparity:
+timeout_mode = aggressive
+auto_cleanup = true
+auto_heal = false
+EOF
+
+	echo _config_file="${CONFIG_FILE}"
+	echo _connect=127.0.0.1:${EVEN_PORT}
+}
+
+case "${1:-}" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status
+		;;
+	reset)
+		stop
+		rm -rf "${RUN_BASE}"
+		;;
+	*)
+		echo "usage: $0 {start|stop|reset|status}" >&2
+		exit 2
+		;;
+esac

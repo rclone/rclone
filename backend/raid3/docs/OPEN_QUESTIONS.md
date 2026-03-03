@@ -173,6 +173,35 @@ Works for both compressed (block-based) and uncompressed data (same 128 KiB bloc
 
 ---
 
+## MinIO/S3-specific raid3 test_all ignores
+
+The following fstest subtests are currently **ignored** for the MinIO-based raid3 backend (`TestRaid3Minio`) in `fstest/test_all/config.yaml`. Each item describes the missing or weak behaviour to address so the ignore can be removed.
+
+- **FsCopy/Metadata**  
+  Ensure raid3 copies and preserves user metadata (e.g. `--metadata-set potato=royal`) across all shards on S3/MinIO, and that merged `Object.Metadata()` returns the expected keys/values.
+
+- **ObjectMimeType**  
+  Implement `fs.MimeTyper` on raid3 `Object` (or adjust feature flags) so that MimeType support over S3/MinIO is either fully supported and tested or explicitly disabled.
+
+- **ObjectMetadata**  
+  Define and implement a deterministic strategy for merging per-shard metadata (including user metadata) into a single raid3 `Object.Metadata()` view on S3/MinIO.
+
+- **ObjectMetadata (mtime precision)**  
+  Investigate mtime precision and storage for raid3 over S3/MinIO and align fstest expectations (or implementation) so that mtime checks can be re-enabled for `TestRaid3Minio`.
+
+- **ObjectUpdate**  
+  Improve update semantics (write + immediate read) for raid3 over S3/MinIO, accounting for eventual consistency and multi-shard writes, so ObjectUpdate passes reliably.
+
+- **FromRoot (List, ListEntries, Put)**  
+  Make FromRoot list and put/remove operations over raid3+S3/MinIO robust to list-after-write timing and ordering differences when merging results from three backends.
+
+- **ObjectRemove**  
+  Optimize and harden multi-shard deletes over S3/MinIO (latency, retries, consistency) so that ObjectRemove and subsequent listing behave as expected in fstest.
+
+**Note:** These items are currently masked via `ignore:` entries in `fstest/test_all/config.yaml` for the `TestRaid3Minio` backend. The long-term goal is to reduce this ignore list as the above behaviours are implemented or improved.
+
+---
+
 ## 🟢 Low Priority
 
 ### Q6: Backend Help Command Behavior

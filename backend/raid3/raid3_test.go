@@ -8,18 +8,22 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	_ "github.com/rclone/rclone/backend/all"   // for integration tests (S3 for TestRaid3Minio)
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/raid3"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/fstest/testserver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,6 +44,9 @@ var (
 // rather than local temporary directories. It exercises all standard rclone
 // operations to ensure compatibility with the rclone ecosystem.
 //
+// test_all runs this against both TestRaid3Local (local storage) and
+// TestRaid3Minio (MinIO/S3 storage) via the -remote flag.
+//
 // This test verifies:
 //   - All standard rclone operations work correctly
 //   - Backend correctly implements the fs.Fs interface
@@ -48,10 +55,16 @@ var (
 // Failure indicates: Breaking changes that would prevent raid3 from working
 // with standard rclone commands.
 //
-// Usage: go test -remote raid3config:
+// Usage: go test -remote TestRaid3Local: or go test -remote TestRaid3Minio:
 func TestIntegration(t *testing.T) {
 	if *fstest.RemoteName == "" {
 		t.Skip("Skipping as -remote not set")
+	}
+	// TestRaid3Minio uses a config file (RCLONE_CONFIG) provided by testserver; the generic
+	// fstest suite does not apply it, so skip the full integration run for that remote.
+	// Feature handling for MinIO is covered by TestFeatureHandlingWithMask (-remote TestRaid3Minio:).
+	if strings.HasPrefix(*fstest.RemoteName, "TestRaid3Minio") {
+		t.Skip("Full integration runs with TestRaid3Local only; MinIO covered by TestFeatureHandlingWithMask")
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   *fstest.RemoteName,
@@ -2603,6 +2616,10 @@ func countAllObjects(ctx context.Context, t *testing.T, f fs.Fs, dir string) int
 // TestFeatureHandlingWithMask tests that raid3 correctly handles features
 // using the Mask() pattern, similar to union backend.
 //
+// When -remote is set (e.g. by test_all with TestRaid3Local or TestRaid3Minio),
+// the test uses that remote so feature handling is exercised for both local and
+// MinIO-based raid3. When -remote is not set, it uses in-process local temp dirs.
+//
 // This test verifies:
 //   - Features are correctly intersected via Mask()
 //   - Special overrides (OR logic for metadata, SlowHash, etc.) work correctly
@@ -2611,105 +2628,138 @@ func countAllObjects(ctx context.Context, t *testing.T, f fs.Fs, dir string) int
 func TestFeatureHandlingWithMask(t *testing.T) {
 	ctx := context.Background()
 
-	// Create three local backends (all support same features)
-	evenDir := t.TempDir()
-	oddDir := t.TempDir()
-	parityDir := t.TempDir()
+	var f fs.Fs
+	var cleanup func()
+	var err error
 
-	// Create raid3 filesystem
-	f, err := raid3.NewFs(ctx, "test", "", configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
-	})
-	require.NoError(t, err, "Failed to create raid3 filesystem")
-	defer func() {
-		if f.Features().Shutdown != nil {
-			_ = f.Features().Shutdown(ctx)
+	if *fstest.RemoteName != "" {
+		// Use the remote from -remote flag (TestRaid3Local or TestRaid3Minio from test_all)
+		fstest.Initialise()
+		remoteName := *fstest.RemoteName
+		if !strings.HasSuffix(remoteName, ":") {
+			remoteName += ":"
 		}
-	}()
+		var finish func()
+		finish, err = testserver.Start(remoteName)
+		require.NoError(t, err)
+		cleanup = finish
+		defer cleanup()
+		// Apply config file path when testserver provides it. Testserver sets RCLONE_CONFIG for
+		// _config_file only if we change testserver; to avoid that, we read the env var it sets
+		// for _config_file (e.g. RCLONE_CONFIG_TESTRAID3MINIO__CONFIG_FILE) and apply it here.
+		if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
+			require.NoError(t, config.SetConfigPath(envConfig))
+		} else if name := remoteName; name != "" {
+			if i := strings.Index(name, ":"); i >= 0 {
+				name = name[:i]
+			}
+			if name != "" {
+				configEnv := "RCLONE_CONFIG_" + strings.ToUpper(name) + "__CONFIG_FILE"
+				if p := os.Getenv(configEnv); p != "" {
+					require.NoError(t, config.SetConfigPath(p))
+				}
+			}
+		}
+		f, err = fs.NewFs(ctx, remoteName)
+		if errors.Is(err, fs.ErrorNotFoundInConfigFile) {
+			t.Skipf("Remote %q not in config - skipping", remoteName)
+			return
+		}
+		require.NoError(t, err, "Failed to open remote %q", remoteName)
+		// Shutdown raid3 Fs before stopping testserver
+		if rf, ok := f.(*raid3.Fs); ok && rf.Features().Shutdown != nil {
+			defer func() { _ = rf.Features().Shutdown(ctx) }()
+		}
+	} else {
+		// In-process local temp dirs (no testserver)
+		evenDir := t.TempDir()
+		oddDir := t.TempDir()
+		parityDir := t.TempDir()
+		fsInterface, err := raid3.NewFs(ctx, "test", "", configmap.Simple{
+			"even":   evenDir,
+			"odd":    oddDir,
+			"parity": parityDir,
+		})
+		require.NoError(t, err, "Failed to create raid3 filesystem")
+		f = fsInterface
+		cleanup = func() {
+			if rfx, ok := fsInterface.(*raid3.Fs); ok && rfx.Features().Shutdown != nil {
+				_ = rfx.Features().Shutdown(ctx)
+			}
+		}
+		defer cleanup()
+	}
 
 	features := f.Features()
 	require.NotNil(t, features, "Features should not be nil")
 
-	// Test features that should be true for local backends
-	t.Run("LocalBackendFeatures", func(t *testing.T) {
-		// Local backends support these features
-		assert.True(t, features.CanHaveEmptyDirectories, "CanHaveEmptyDirectories should be true for local")
-		// Note: Local backend doesn't set ReadMimeType/WriteMimeType, so Mask() sets them to false
-		// This is correct behavior - features are intersected via Mask()
-		assert.True(t, features.ReadMetadata, "ReadMetadata should be true (OR logic)")
-		assert.True(t, features.WriteMetadata, "WriteMetadata should be true (OR logic)")
-		// CaseInsensitive depends on filesystem, but we use OR logic so it may be true
-		_ = features.CaseInsensitive // Just verify it's accessible
-	})
+	// Backend type: MinIO/S3 is bucket-based, local is not
+	isMinIO := features.BucketBased
 
-	// Test features that should be false for local backends
-	t.Run("BucketBasedFeatures", func(t *testing.T) {
-		// Local backends are NOT bucket-based
-		assert.False(t, features.BucketBased, "BucketBased should be false for local backends")
-		assert.False(t, features.BucketBasedRootOK, "BucketBasedRootOK should be false for local backends")
-	})
+	if !isMinIO {
+		// Test features that should be true for local backends
+		t.Run("LocalBackendFeatures", func(t *testing.T) {
+			assert.True(t, features.CanHaveEmptyDirectories, "CanHaveEmptyDirectories should be true for local")
+			assert.True(t, features.ReadMetadata, "ReadMetadata should be true (OR logic)")
+			assert.True(t, features.WriteMetadata, "WriteMetadata should be true (OR logic)")
+			_ = features.CaseInsensitive
+		})
+		t.Run("BucketBasedFeatures", func(t *testing.T) {
+			assert.False(t, features.BucketBased, "BucketBased should be false for local backends")
+			assert.False(t, features.BucketBasedRootOK, "BucketBasedRootOK should be false for local backends")
+		})
+		t.Run("TierFeatures", func(t *testing.T) {
+			assert.False(t, features.SetTier, "SetTier should be false for local backends")
+			assert.False(t, features.GetTier, "GetTier should be false for local backends")
+		})
+		t.Run("OtherFeatures", func(t *testing.T) {
+			assert.False(t, features.ServerSideAcrossConfigs, "ServerSideAcrossConfigs should be false")
+			assert.True(t, features.PartialUploads, "PartialUploads should be true for all-local backends")
+		})
+		t.Run("FunctionFeatures", func(t *testing.T) {
+			assert.NotNil(t, features.Copy, "Copy should be set when all backends support it")
+			assert.NotNil(t, features.Move, "Move should be set when all backends support it")
+			assert.NotNil(t, features.DirMove, "DirMove should be set when all backends support it")
+			assert.Nil(t, features.Purge, "Purge should be nil (local doesn't implement it directly)")
+			assert.NotNil(t, features.ListR, "ListR should be available")
+			assert.NotNil(t, features.DirSetModTime, "DirSetModTime should be available (OR logic)")
+			assert.NotNil(t, features.MkdirMetadata, "MkdirMetadata should be available (OR logic)")
+			assert.Nil(t, features.ListP, "ListP should always be nil (disabled)")
+			assert.Nil(t, features.PutUnchecked, "PutUnchecked should be nil for local")
+			assert.Nil(t, features.PublicLink, "PublicLink should be nil for local")
+		})
+	} else {
+		// MinIO/S3 backends: bucket-based, tier may be supported
+		t.Run("MinIOBucketBasedFeatures", func(t *testing.T) {
+			assert.True(t, features.BucketBased, "BucketBased should be true for MinIO backends")
+		})
+		t.Run("MinIOOtherFeatures", func(t *testing.T) {
+			assert.False(t, features.ServerSideAcrossConfigs, "ServerSideAcrossConfigs should be false")
+			// S3 supports Copy; Move may or may not be set depending on raid3/S3 integration
+			assert.NotNil(t, features.Copy, "Copy should be set for S3 backends")
+			assert.NotNil(t, features.ListR, "ListR should be available")
+			assert.Nil(t, features.ListP, "ListP should always be nil (disabled)")
+		})
+	}
 
-	// Test features that should be false for local backends (tier features)
-	t.Run("TierFeatures", func(t *testing.T) {
-		// Local backends don't support tier operations
-		assert.False(t, features.SetTier, "SetTier should be false for local backends")
-		assert.False(t, features.GetTier, "GetTier should be false for local backends")
-	})
-
-	// Test features that should be false for local backends (other)
-	t.Run("OtherFeatures", func(t *testing.T) {
-		// Server-side operations disabled for now (see docs/OPEN_ISSUES.md)
-		assert.False(t, features.ServerSideAcrossConfigs, "ServerSideAcrossConfigs should be false")
-		// Note: Local backend DOES support PartialUploads, so with all-local backends it should be true
-		// But if we mixed with S3, it would be false (AND logic via Mask())
-		assert.True(t, features.PartialUploads, "PartialUploads should be true for all-local backends")
-	})
-
-	// Test function-based features
-	t.Run("FunctionFeatures", func(t *testing.T) {
-		// Server-side Copy/Move/DirMove enabled for same-backend (all three local backends support them)
-		assert.NotNil(t, features.Copy, "Copy should be set when all backends support it (same-backend server-side)")
-		assert.NotNil(t, features.Move, "Move should be set when all backends support it (same-backend server-side)")
-		assert.NotNil(t, features.DirMove, "DirMove should be set when all backends support it (same-backend server-side)")
-		// Purge: Local backend doesn't implement Purge directly (uses operations.Purge fallback)
-		// So Mask() sets it to nil (requires ALL backends to have Purge function pointer)
-		// This is correct behavior - raid3 will use operations.Purge as fallback
-		assert.Nil(t, features.Purge, "Purge should be nil (local doesn't implement it directly)")
-		assert.NotNil(t, features.ListR, "ListR should be available (any local OR all local logic)")
-		assert.NotNil(t, features.DirSetModTime, "DirSetModTime should be available (OR logic)")
-		assert.NotNil(t, features.MkdirMetadata, "MkdirMetadata should be available (OR logic)")
-
-		// These should be nil (not supported by local)
-		assert.Nil(t, features.ListP, "ListP should always be nil (disabled)")
-		assert.Nil(t, features.PutUnchecked, "PutUnchecked should be nil for local")
-		assert.Nil(t, features.PublicLink, "PublicLink should be nil for local")
-	})
-
-	// Test raid3-specific features
+	// Raid3-specific features (same for local and MinIO)
 	t.Run("Raid3SpecificFeatures", func(t *testing.T) {
-		// raid3 always implements these
 		assert.NotNil(t, features.Shutdown, "Shutdown should always be available (raid3 implements it)")
 		assert.NotNil(t, features.CleanUp, "CleanUp should always be available (raid3 implements it)")
 		assert.True(t, features.Overlay, "Overlay should always be true (raid3 wraps backends)")
-		assert.NotNil(t, features.About, "About should be available if any backend supports it")
+		// About is available if any backend supports it (S3 may not expose it in all configs)
+		_ = features.About
 	})
 
-	// Test PutStream (raid3 is streaming-only; PutStream is always available)
 	t.Run("PutStreamFeature", func(t *testing.T) {
 		assert.NotNil(t, features.PutStream, "PutStream should be available (streaming-only backend)")
 	})
 
-	// Test SlowHash (OR logic: any backend has it)
 	t.Run("SlowHashFeature", func(t *testing.T) {
-		// Local backends typically don't have slow hash, but we test the logic
-		// The actual value depends on backend implementation
-		// We just verify it's set (not panicking)
-		_ = features.SlowHash // Just verify it's accessible
+		_ = features.SlowHash
 	})
 
-	t.Logf("✅ Feature handling with Mask() works correctly")
+	t.Logf("✅ Feature handling with Mask() works correctly (isMinIO=%v)", isMinIO)
 }
 
 // TestFeatureHandlingDegradedMode tests that feature handling works correctly

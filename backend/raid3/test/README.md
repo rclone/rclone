@@ -86,7 +86,6 @@ rclone --config rclone_raid3_integration_tests.config ls sftpsingle:
 | **`compare_raid3_with_single_rebuild.sh`** | Rebuild command validation | `start`, `stop`, `teardown`, `list`, `test <name>` |
 | **`compare_raid3_with_single_heal.sh`** | Auto-heal functionality tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
 | **`compare_raid3_with_single_errors.sh`** | Error handling and rollback tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
-| **`compare_raid3_with_single_features.sh`** | Feature handling with mixed remotes | `start`, `stop`, `teardown`, `list`, `test <name>` |
 | **`compare_raid3_with_single_all.sh`** | Run all test suites across all backends | `[-v]`, `[-h]` |
 | **`performance_test.sh`** | Performance benchmarks (upload/download) for different file sizes and storage types | `start`, `stop`, `teardown`, `list`, `test [all\|all-but-4G\|4K\|…]` |
 | **`compression_bench.sh`** | Measures compression ratio for local raid3 (requires `--storage-type=local`; config compression ≠ none) | `--storage-type=local` |
@@ -227,39 +226,9 @@ Validates error handling, rollback behavior, and degraded mode write blocking.
 ./compare_raid3_with_single_errors.sh --storage-type minio test move-fail-odd -v
 ```
 
-### Feature Handling Tests (`compare_raid3_with_single_features.sh`)
+### Feature handling (Go test)
 
-Validates feature handling across different remote type configurations.
-
-**What it tests**:
-- **local**: Feature handling when all three backends are local filesystem
-- **minio**: Feature handling when all three backends are MinIO object storage
-- **mixed**: Feature intersection when mixing local and MinIO backends (AND logic for most features)
-- Best-effort features (OR logic for metadata, raid3-specific)
-- Always-available features (Shutdown, CleanUp - raid3 implements independently)
-- Verifies features are correctly intersected/disabled when mixing incompatible backends
-
-**Usage**:
-```bash
-# Run all feature handling tests for a storage type
-./compare_raid3_with_single_features.sh --storage-type local test
-./compare_raid3_with_single_features.sh --storage-type minio test
-./compare_raid3_with_single_features.sh --storage-type mixed test
-
-# Run a specific test
-./compare_raid3_with_single_features.sh --storage-type local test local-features
-./compare_raid3_with_single_features.sh --storage-type minio test minio-features
-./compare_raid3_with_single_features.sh --storage-type mixed test mixed-features
-
-# With verbose output
-./compare_raid3_with_single_features.sh --storage-type mixed test -v
-./compare_raid3_with_single_features.sh --storage-type mixed test mixed-features -v
-```
-
-**What it tests**:
-- **local**: Verifies features when all three backends are local filesystem
-- **minio**: Verifies features when all three backends are MinIO object storage
-- **mixed**: Verifies feature intersection when mixing local and MinIO backends
+Feature handling for raid3 (Mask() pattern, local vs MinIO) is covered by the **Go test** `TestFeatureHandlingWithMask` in `backend/raid3/raid3_test.go`. It runs with in-process local temp dirs when `-remote` is not set, and with `TestRaid3Local` or `TestRaid3Minio` when invoked via `go test -remote ...` or by `test_all` (see `fstest/test_all/config.yaml`). No separate bash script is used.
 
 ### Master Test Script (`compare_raid3_with_single_all.sh`)
 
@@ -270,7 +239,8 @@ Runs all test suites across all RAID3 backends with minimal output (pass/fail on
 - Runs `compare_raid3_with_single_heal.sh` with local, minio, and mixed storage types
 - Runs `compare_raid3_with_single_errors.sh` with minio only
 - Runs `compare_raid3_with_single_rebuild.sh` with local, minio, and mixed storage types
-- Runs `compare_raid3_with_single_features.sh` with mixed storage type only
+- Runs `compare_raid3_with_single_stacking.sh` and `performance_test.sh`
+- Feature handling is covered by Go test `TestFeatureHandlingWithMask` (test_all)
 - Provides summary of all test results
 
 **Usage**:
@@ -331,7 +301,6 @@ test/
 ├── compare_raid3_with_single_rebuild.sh   # Rebuild tests
 ├── compare_raid3_with_single_heal.sh     # Heal tests
 ├── compare_raid3_with_single_errors.sh    # Error handling tests
-├── compare_raid3_with_single_features.sh  # Feature handling tests
 ├── compare_raid3_with_single_all.sh       # Master script (runs all tests)
 ├── rclone_raid3_integration_tests.config  # Config file (created by setup.sh)
 └── _data/                                 # Test data directory (created by setup.sh, gitignored)
@@ -364,13 +333,11 @@ cd backend/raid3/test
 # 5. Run heal tests
 ./compare_raid3_with_single_heal.sh --storage-type minio test odd -v
 
-# 6. Run feature handling tests
-./compare_raid3_with_single_features.sh --storage-type mixed test mixed-features
-
-# 7. Run all tests at once (recommended for CI/validation)
+# 6. Run all tests at once (recommended for CI/validation)
 ./compare_raid3_with_single_all.sh
 
-# 7. Clean up (optional)
+# 7. Run feature handling (Go): go test ./backend/raid3 -run TestFeatureHandlingWithMask -remote TestRaid3Local:
+# 8. Clean up (optional)
 ./compare_raid3_with_single.sh --storage-type local teardown
 ```
 

@@ -69,7 +69,6 @@ See [`test/README.md`](../test/README.md) for complete documentation. Scripts in
 - `compare_raid3_with_single_rebuild.sh` - Rebuild validation (success scenarios run `rclone check` after rebuild to verify logical sizes and content match)
 - `compare_raid3_with_single_heal.sh` - Heal validation
 - `compare_raid3_with_single_errors.sh` - Error handling
-- `compare_raid3_with_single_features.sh` - Feature handling with mixed remotes
 - `compare_raid3_with_single_all.sh` - Master script to run all tests across all backends
 - `performance_test.sh` - Performance benchmarks (upload/download) for different file sizes and storage types
 - `compression_bench.sh` - Compression ratio for local raid3 (requires `--storage-type=local`; config compression ≠ none)
@@ -82,7 +81,8 @@ See [`test/README.md`](../test/README.md) for complete documentation. Scripts in
 
 **Integration Tests:**
 - `TestStandard` - Full suite with local temp dirs (70+ sub-tests, CI-ready)
-- `TestIntegration` - Full suite with configured remote (requires `-remote` flag)
+- `TestIntegration` - Full suite with configured remote (requires `-remote` flag; see “Go tests: local vs MinIO” below)
+- `TestFeatureHandlingWithMask` - Feature handling (Mask, local vs bucket-based); runs with temp dirs, TestRaid3Local, or TestRaid3Minio
 
 **Unit Tests:**
 - Byte operations: `TestSplitBytes`, `TestMergeBytes`, `TestSplitMergeRoundtrip`
@@ -98,6 +98,31 @@ See [`test/README.md`](../test/README.md) for complete documentation. Scripts in
 - `TestHeal`, `TestHealEvenParticle` - Automatic particle restoration
 - `TestHealNoQueue` - Fast shutdown optimization
 - `TestHealLargeFile` - 100 KB stress test
+
+### Go tests: local vs MinIO
+
+The raid3 Go tests can run against two fstest/testserver remotes (or with no remote, using temp dirs):
+
+| Remote | How to run | What runs |
+|--------|------------|-----------|
+| **None** | `go test ./backend/raid3/... -v` | Unit tests and `TestFeatureHandlingWithMask` with in-process temp dirs; `TestIntegration` is skipped. |
+| **TestRaid3Local** | `go test ./backend/raid3/... -remote TestRaid3Local: -v` | Full integration suite (`TestIntegration`) plus `TestFeatureHandlingWithMask`. No Docker; testserver uses local dirs. |
+| **TestRaid3Minio** | `go test ./backend/raid3/... -remote TestRaid3Minio: -v` | `TestIntegration` is **skipped** (MinIO uses a config file that the generic fstest suite does not apply). `TestFeatureHandlingWithMask` and other raid3-specific tests run and cover MinIO. Requires Docker. |
+
+So: use **TestRaid3Local** for the full integration run; use **TestRaid3Minio** for MinIO/S3 behaviour (feature handling, etc.). Feature handling is covered by `TestFeatureHandlingWithMask` for both remotes; the full `fs.Fs` suite runs only for TestRaid3Local.
+
+**Quick reference:**
+```bash
+# Local (full integration + feature test; no Docker)
+go test ./backend/raid3/... -remote TestRaid3Local: -v
+
+# MinIO (feature test and other raid3 tests; Docker required)
+go test ./backend/raid3/... -remote TestRaid3Minio: -v
+
+# Feature test only (faster)
+go test ./backend/raid3/... -run TestFeatureHandlingWithMask -remote TestRaid3Local: -v
+go test ./backend/raid3/... -run TestFeatureHandlingWithMask -remote TestRaid3Minio: -v
+```
 
 ### Test Coverage
 

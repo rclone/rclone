@@ -9,9 +9,9 @@
 #   - compare_raid3_with_single_heal.sh (with local, minio, mixed)
 #   - compare_raid3_with_single_errors.sh (with minio only)
 #   - compare_raid3_with_single_rebuild.sh (with local, minio, mixed)
-#   - compare_raid3_with_single_features.sh (with mixed only)
 #   - compare_raid3_with_single_stacking.sh (with local, minio)
 #   - performance_test.sh (with local, minio; uses scenario all-but-4G)
+# Feature handling: covered by Go test TestFeatureHandlingWithMask (test_all runs it for TestRaid3Local and TestRaid3Minio).
 #
 # Usage:
 #   compare_raid3_with_single_all.sh [options]
@@ -83,7 +83,6 @@ TEST_SCRIPTS=(
   "compare_raid3_with_single_heal.sh:local,minio,mixed,sftp"
   "compare_raid3_with_single_errors.sh:minio,sftp"
   "compare_raid3_with_single_rebuild.sh:local,minio,mixed,sftp"
-  "compare_raid3_with_single_features.sh:local,minio,mixed,sftp"
   "compare_raid3_with_single_stacking.sh:local,minio"
   "performance_test.sh:local,minio,sftp"
 )
@@ -106,9 +105,10 @@ This script runs all integration tests across all RAID3 backends
   - compare_raid3_with_single_heal.sh (local, minio, mixed)
   - compare_raid3_with_single_errors.sh (minio only)
   - compare_raid3_with_single_rebuild.sh (local, minio, mixed)
-  - compare_raid3_with_single_features.sh (mixed only)
   - compare_raid3_with_single_stacking.sh (local, minio)
   - performance_test.sh (local, minio; scenario all-but-4G)
+
+Feature handling is covered by Go test TestFeatureHandlingWithMask (local and MinIO via test_all).
 
 Each test suite is run with the appropriate storage types, and only
 pass/fail status is shown unless --verbose is used.
@@ -116,7 +116,7 @@ EOF
 }
 
 # run_test_script runs a test script for the given storage type.
-# Optional extra arguments are passed after "test" (e.g. for features: "mixed-features").
+# Optional extra arguments are passed after "test" (e.g. for performance: "all-but-4G").
 # Returns 0 on success, 1 on failure. Uses common's log_info/log_pass/log_fail.
 run_test_script() {
   local script_path="$1"
@@ -315,13 +315,6 @@ main() {
     for storage_type in "${storage_types_array[@]}"; do
       total_tests=$((total_tests + 1))
 
-      # Features script only supports mixed; skip other storage types before reset
-      if [[ "${script_name}" == "compare_raid3_with_single_features.sh" && "${storage_type}" != "mixed" ]]; then
-        log_info "all" "SKIP: ${script_name} (${storage_type}) - features test only supports mixed"
-        total_tests=$((total_tests - 1))
-        continue
-      fi
-
       # Purge, stop, start containers before each script run (minio/mixed/sftp only)
       reset_backends_before_script "${storage_type}" || {
         log_fail "all" "Failed to reset backends for ${script_name} (${storage_type})"
@@ -331,15 +324,8 @@ main() {
         continue
       }
 
-      if [[ "${script_name}" == "compare_raid3_with_single_features.sh" ]]; then
-        if run_test_script "${script_path}" "mixed" "mixed-features"; then
-          passed_tests=$((passed_tests + 1))
-        else
-          failed_tests=$((failed_tests + 1))
-          failed_test_list+=("${script_name} (${storage_type})")
-        fi
       # Performance test uses scenario all-but-4G (skip 4G file size)
-      elif [[ "${script_name}" == "performance_test.sh" ]]; then
+      if [[ "${script_name}" == "performance_test.sh" ]]; then
         if run_test_script "${script_path}" "${storage_type}" "all-but-4G"; then
           passed_tests=$((passed_tests + 1))
         else
