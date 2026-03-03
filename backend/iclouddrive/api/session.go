@@ -346,15 +346,22 @@ func (s *Session) authSRPComplete(ctx context.Context, accountName, m1Base64, m2
 	}
 }
 
-// getSRPAuthHeaders returns headers needed for SRP auth requests to idmsa.apple.com.
+// getAuthOrigin returns the origin URL for auth requests.
+// Supports both global (idmsa.apple.com) and China (idmsa.apple.com.cn) endpoints.
+func getAuthOrigin() string {
+   return strings.TrimSuffix(authEndpoint, "/appleauth/auth")
+}
+
+// getSRPAuthHeaders returns headers needed for SRP auth requests.
 func (s *Session) getSRPAuthHeaders() map[string]string {
 	frameTag := "auth-" + s.FrameID
+	authOrigin := getAuthOrigin()
 	headers := map[string]string{
 		"Accept":                           "application/json",
 		"Content-Type":                     "application/json",
 		"User-Agent":                       iCloudUserAgent,
-		"Origin":                           "https://idmsa.apple.com",
-		"Referer":                          "https://idmsa.apple.com/",
+		"Origin":                           authOrigin,
+		"Referer":                          authOrigin + "/",
 		"X-Apple-Widget-Key":               s.ClientID,
 		"X-Apple-OAuth-Client-Id":          s.ClientID,
 		"X-Apple-OAuth-Client-Type":        "firstPartyAuth",
