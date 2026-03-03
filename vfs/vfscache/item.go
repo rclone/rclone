@@ -8,16 +8,64 @@ import (
 	"io"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/ranges"
 	"github.com/rclone/rclone/vfs/vfscache/downloaders"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
 )
+
+// readSpeedCalculator tracks read speed using exponential moving average
+type readSpeedCalculator struct {
+	mu        sync.Mutex
+	lastTime  time.Time
+	speedAvg  float64 // EMA of speed in bytes/sec
+	alpha     float64 // EMA smoothing factor
+}
+
+// newReadSpeedCalculator creates a new speed calculator
+func newReadSpeedCalculator() *readSpeedCalculator {
+	return &readSpeedCalculator{alpha: 0.3}
+}
+
+// AddSample records a read and updates the speed average
+func (sc *readSpeedCalculator) AddSample(bytesRead int64) float64 {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+
+	now := time.Now()
+	if !sc.lastTime.IsZero() {
+		elapsed := now.Sub(sc.lastTime).Seconds()
+		if elapsed > 0 && elapsed < 10 { // Ignore stale samples (>10s gap)
+			speed := float64(bytesRead) / elapsed
+			if sc.speedAvg == 0 {
+				sc.speedAvg = speed
+			} else {
+				sc.speedAvg = sc.speedAvg*(1-sc.alpha) + speed*sc.alpha
+			}
+		}
+	}
+	sc.lastTime = now
+	return sc.speedAvg
+}
+
+// Speed returns the current speed estimate, or 0 if no recent reads
+func (sc *readSpeedCalculator) Speed() float64 {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+
+	// Decay speed if no recent reads (> 2 seconds)
+	if time.Since(sc.lastTime) > 2*time.Second {
+		return 0
+	}
+	return sc.speedAvg
+}
 
 // NB as Cache and Item are tightly linked it is necessary to have a
 // total lock ordering between them. So Cache.mu must always be
@@ -68,6 +116,11 @@ type Item struct {
 	pendingAccesses int                      // number of threads - cache reset not allowed if not zero
 	modified        bool                     // set if the file has been modified since the last Open
 	beingReset      bool                     // cache cleaner is resetting the cache file, access not allowed
+
+	// Read tracking for RC stats
+	readBytes      int64                // total bytes read from this item (atomic)
+	lastReadOffset int64                // last read position - end of last read (atomic)
+	readSpeedCalc  *readSpeedCalculator // rolling read speed calculator
 }
 
 // Info is persisted to backing store
@@ -534,6 +587,11 @@ func (item *Item) open(o fs.Object) (err error) {
 	if item.opens != 1 {
 		return nil
 	}
+
+	// Initialize read tracking on first open
+	atomic.StoreInt64(&item.readBytes, 0)
+	atomic.StoreInt64(&item.lastReadOffset, 0)
+	item.readSpeedCalc = newReadSpeedCalculator()
 
 	err = item._createFile(osPath)
 	if err != nil {
@@ -1300,6 +1358,16 @@ func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 	item.info.ATime = time.Now()
 	// Do the reading with Item.mu unlocked and cache protected by preAccess
 	n, err = item.fd.ReadAt(b, off)
+
+	// Track read metrics for RC stats
+	if n > 0 {
+		atomic.AddInt64(&item.readBytes, int64(n))
+		atomic.StoreInt64(&item.lastReadOffset, off+int64(n))
+		if item.readSpeedCalc != nil {
+			item.readSpeedCalc.AddSample(int64(n))
+		}
+	}
+
 	return n, err
 }
 
@@ -1450,4 +1518,75 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 	}
 	item.c.writeback.Rename(id, newName)
 	return err
+}
+
+// TransferStats returns transfer/cache statistics for this Item
+func (item *Item) TransferStats() rc.Params {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	out := rc.Params{
+		"name":       item.name,
+		"size":       item.info.Size,
+		"opens":      item.opens,
+		"lastAccess": item.info.ATime,
+		"dirty":      item.info.Dirty,
+	}
+
+	// Cache bytes from ranges
+	cacheBytes := item.info.Rs.Size()
+	out["cacheBytes"] = cacheBytes
+
+	// Calculate cache percentage and status
+	if item.info.Size > 0 {
+		out["cachePercentage"] = int(float64(cacheBytes) * 100 / float64(item.info.Size))
+		if cacheBytes == 0 {
+			out["cacheStatus"] = "none"
+		} else if cacheBytes >= item.info.Size {
+			out["cacheStatus"] = "full"
+		} else {
+			out["cacheStatus"] = "partial"
+		}
+	} else {
+		out["cachePercentage"] = 0
+		out["cacheStatus"] = "unknown"
+	}
+
+	// Download stats if actively downloading
+	if item.downloaders != nil {
+		dlStats := item.downloaders.Stats()
+		out["downloading"] = dlStats["downloading"]
+		if dlStats["downloading"].(bool) {
+			out["downloadBytes"] = dlStats["bytesDownloaded"]
+			if speed, ok := dlStats["speed"]; ok {
+				out["downloadSpeed"] = speed
+			}
+			if speedAvg, ok := dlStats["speedAvg"]; ok {
+				out["downloadSpeedAvg"] = speedAvg
+			}
+		}
+	} else {
+		out["downloading"] = false
+	}
+
+	// Read stats for playback tracking
+	readOffset := atomic.LoadInt64(&item.lastReadOffset)
+	readBytes := atomic.LoadInt64(&item.readBytes)
+
+	out["readBytes"] = readBytes
+	out["readOffset"] = readOffset
+
+	if item.info.Size > 0 {
+		out["readOffsetPercentage"] = int(float64(readOffset) * 100 / float64(item.info.Size))
+	} else {
+		out["readOffsetPercentage"] = 0
+	}
+
+	if item.readSpeedCalc != nil {
+		out["readSpeed"] = int64(item.readSpeedCalc.Speed())
+	} else {
+		out["readSpeed"] = int64(0)
+	}
+
+	return out
 }

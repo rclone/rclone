@@ -710,3 +710,12 @@ func UnWrapAccounting(in io.Reader) (unwrapped io.Reader, acc *Account) {
 	}
 	return a.in, a.acc
 }
+
+// Stats returns transfer statistics for this Account as rc.Params
+// This is a public version of rcStats for use by other packages
+func (acc *Account) Stats() rc.Params {
+	out := make(rc.Params)
+	acc.rcStats(out)
+	return out
+}
+

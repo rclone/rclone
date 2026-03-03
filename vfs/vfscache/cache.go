@@ -899,3 +899,50 @@ func (c *Cache) AddVirtual(remote string, size int64, isDir bool) error {
 	}
 	return c.avFn(remote, size, isDir)
 }
+
+// Transfers returns information about active transfers and cache state
+func (c *Cache) Transfers() rc.Params {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	var transfers []rc.Params
+	var activeReads, activeDownloads, totalOpenFiles int
+
+	for _, item := range c.item {
+		stats := item.TransferStats()
+		
+		opens := 0
+		if o, ok := stats["opens"].(int); ok {
+			opens = o
+		}
+		
+		downloading := false
+		if d, ok := stats["downloading"].(bool); ok {
+			downloading = d
+		}
+
+		// Include items that are open or downloading
+		if opens > 0 || downloading {
+			transfers = append(transfers, stats)
+			if opens > 0 {
+				activeReads++
+				totalOpenFiles += opens
+			}
+			if downloading {
+				activeDownloads++
+			}
+		}
+	}
+
+	return rc.Params{
+		"transfers": transfers,
+		"summary": rc.Params{
+			"activeReads":     activeReads,
+			"activeDownloads": activeDownloads,
+			"totalOpenFiles":  totalOpenFiles,
+			"totalCacheBytes": c.used,
+			"totalCacheFiles": len(c.item),
+			"outOfSpace":      c.outOfSpace,
+		},
+	}
+}
