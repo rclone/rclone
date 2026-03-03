@@ -191,9 +191,33 @@ func driveScopes(scopesString string) (scopes []string) {
 	if scopesString == "" {
 		scopesString = defaultScope
 	}
+	
+	validScopes := map[string]string{
+		"1": "drive",
+		"2": "drive.readonly",
+		"3": "drive.file",
+		"4": "drive.appfolder",
+		"5": "drive.metadata.readonly",
+		// Also allow direct scope names
+		"drive":                   "drive",
+		"drive.readonly":          "drive.readonly",
+		"drive.file":              "drive.file",
+		"drive.appfolder":         "drive.appfolder",
+		"drive.metadata.readonly": "drive.metadata.readonly",
+	}
+	
 	for scope := range strings.SplitSeq(scopesString, ",") {
 		scope = strings.TrimSpace(scope)
-		scopes = append(scopes, scopePrefix+scope)
+		
+		// Map number or validate scope name
+		if actualScope, found := validScopes[scope]; found {
+			scopes = append(scopes, scopePrefix+actualScope)
+		} else {
+			// For unknown values, still accept them (for future-proofing)
+			// Log as info since this could be a user mistake
+			fs.Logf(nil, "Using unrecognized scope %q - valid options: 1-5 or drive, drive.readonly, drive.file, drive.appfolder, drive.metadata.readonly", scope)
+			scopes = append(scopes, scopePrefix+scope)
+		}
 	}
 	return scopes
 }
