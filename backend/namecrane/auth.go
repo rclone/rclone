@@ -2,11 +2,12 @@ package namecrane
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/namecrane/hoist"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"time"
 )
 
 const (

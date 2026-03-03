@@ -133,9 +133,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root = "/"
 	}
 
-	authManager := hoist.NewAuthManager(opt.ApiURL, hoist.WithAuthStore(&ConfigMapperStore{
-		m: m,
-	}))
+	authManager := hoist.NewAuthManager(opt.ApiURL, hoist.WithClientID("rclone"),
+		hoist.WithAuthStore(&ConfigMapperStore{
+			m: m,
+		}))
 
 	if _, err := authManager.GetToken(ctx); errors.Is(err, hoist.ErrNoToken) {
 		if opt.Username != "" && opt.Password != "" {
