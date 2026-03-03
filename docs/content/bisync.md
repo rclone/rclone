@@ -1897,6 +1897,12 @@ about *Unison* and synchronization in general.
 
 ## Changelog
 
+### `v1.74`
+
+- Added several missing `rc` parameters.
+- Optional `rc` parameters are now truly optional.
+- `rc` output now provides more structured information.
+
 ### `v1.71`
 
 - `bisync` is now officially released from beta.
