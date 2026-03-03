@@ -694,6 +694,10 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 
 	if int64(vfs.Opt.DiskSpaceTotalSize) >= 0 {
 		total = int64(vfs.Opt.DiskSpaceTotalSize)
+		if used > total {
+			used = total
+		}
+		free = -1
 	}
 
 	total, used, free = fillInMissingSizes(total, used, free, unknownFreeBytes)
