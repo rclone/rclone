@@ -63,7 +63,7 @@ description: "Rclone Changelog"
 - B2
   - Support authentication with new bucket restricted application keys (DianaNites)
 - Drive
-  - Add `--drive-metadata-force-expansive-access` flag (Nick Craig-Wood)
+  - Add `--drive-metadata-enforce-expansive-access` flag (Nick Craig-Wood)
   - Fix crash when trying to creating shortcut to a Google doc (Nick Craig-Wood)
 - FTP
   - Add http proxy authentication support (Nicolas Dessart)
