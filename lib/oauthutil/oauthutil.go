@@ -41,11 +41,8 @@ const (
 	// bindPort is the port that we bind the local webserver to
 	bindPort = "53682"
 
-	// bindAddress is binding for local webserver when active
-	bindAddress = "127.0.0.1:" + bindPort
-
 	// RedirectURL is redirect to local webserver when active
-	RedirectURL = "http://" + bindAddress + "/"
+	RedirectURL = "http://127.0.0.1:" + bindPort + "/"
 
 	// RedirectPublicURL is redirect to local webserver when active with public name
 	RedirectPublicURL = "http://localhost.rclone.org:" + bindPort + "/"
@@ -156,6 +153,11 @@ var SharedOptions = []fs.Option{{
 	Name:     config.ConfigClientCredentials,
 	Default:  false,
 	Help:     "Use client credentials OAuth flow.\n\nThis will use the OAUTH2 client Credentials Flow as described in RFC 6749.\n\nNote that this option is NOT supported by all backends.",
+	Advanced: true,
+}, {
+	Name:     config.ConfigAuthServerBindAddress,
+	Default:  "127.0.0.1",
+	Help:     "Local bind address for OAuth callback server.\n\nLeave blank to use the default of 127.0.0.1",
 	Advanced: true,
 }}
 
@@ -775,6 +777,15 @@ func noWebserverNeeded(oauthConfig *Config) bool {
 	return oauthConfig.RedirectURL == TitleBarRedirectURL
 }
 
+// get the bind address for the OAuth callback server
+func getBindAddress(m configmap.Mapper) string {
+	bindAddr, ok := m.Get("auth_bind_addr")
+	if !ok || bindAddr == "" {
+		bindAddr = "127.0.0.1"
+	}
+	return bindAddr + ":" + bindPort
+}
+
 // get the URL we need to send the user to
 func getAuthURL(name string, m configmap.Mapper, oauthConfig *Config, opt *Options) (authURL string, state string, err error) {
 	oauthConfig, _ = OverrideCredentials(name, m, oauthConfig)
@@ -849,6 +860,7 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 	}
 
 	// Prepare webserver
+	bindAddress := getBindAddress(m)
 	server := newAuthServer(opt, bindAddress, state, authURL)
 	err = server.Init()
 	if err != nil {
