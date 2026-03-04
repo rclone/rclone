@@ -122,7 +122,7 @@ jobs:
             type=raw,value=beta,enable={{is_default_branch}}
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
