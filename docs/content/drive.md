@@ -186,9 +186,14 @@ correct root to use itself.
 However you can set this to restrict rclone to a specific folder
 hierarchy or to access data within the "Computers" tab on the drive
 web interface (where files from Google's Backup and Sync desktop
-program go).
+program go). However, this is not the easiest method. 
+Instead, you can create a shortcut to a folder in "Computers" and 
+place it in "My Drive." To do so, right-click the folder, select 
+"Organize", and then choose "Add shortcut" in the Google Drive web interface. 
+Once you add the shortcut to "My Drive," rclone will display the folder, allowing you to interact with it.
+See also [Shortcuts](#shortcuts). 
 
-In order to do this you will have to find the `Folder ID` of the
+If, however, you choose to change your root folder, you will have to find the `Folder ID` of the
 directory you wish rclone to display.  This will be the last segment
 of the URL when you open the relevant folder in the drive web
 interface.
@@ -199,7 +204,11 @@ in the browser, then you use `1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh` as
 the `root_folder_id` in the config.
 
 **NB** folders under the "Computers" tab seem to be read only (drive
-gives a 500 error) when using rclone.
+gives a 500 error) when using rclone, but they are also read-only in the Google Drive web interface, 
+likely because this folder is managed by the Google Drive Desktop tool.
+Top-level folders in "Computers" are read-only, but you can interact 
+with folders contained within them using rclone.
+These are the folders for which you can create a shortcut as well, as described above.
 
 There doesn't appear to be an API to discover the folder IDs of the
 "Computers" tab - please contact us if you know otherwise!
