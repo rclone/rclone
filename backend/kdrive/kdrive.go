@@ -1010,7 +1010,7 @@ func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
 
-func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, error) {
+func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, bool, error) {
 	// https://developer.infomaniak.com/docs/api/get/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/link
 	opts := rest.Opts{
 		Method: "GET",
@@ -1022,14 +1022,15 @@ func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, error) {
 		err = result.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
-
+	fs.Infof(nil, "VALID UNTIL %d", result.Data.ValidUntil)
+	expired := false
 	if err != nil {
-		return "", fmt.Errorf("failed to get public link: %w", err)
+		return "", expired, fmt.Errorf("failed to get public link: %w", err)
 	}
 
 	// check if the shared link is blocked
 	if result.Data.AccessBlocked == true {
-		return "", nil
+		return "", expired, nil
 	}
 
 	// check if the shared link is expired
@@ -1037,12 +1038,11 @@ func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, error) {
 		// ValidUntil is a Unix timestamp (UTC)
 		if time.Now().Unix() > int64(result.Data.ValidUntil) {
 			// link is expired
-			f.deletePublicLink(ctx, fileID)
-			return "", nil
+			expired = true
 		}
 	}
 
-	return result.Data.URL, nil
+	return result.Data.URL, expired, nil
 }
 
 func (f *Fs) deletePublicLink(ctx context.Context, fileID int) error {
@@ -1078,8 +1078,6 @@ func (f *Fs) createPublicLink(ctx context.Context, fileID int, expire fs.Duratio
 		createReq.ValidUntil = int(time.Now().Add(time.Duration(expire)).Unix())
 	}
 
-	// fs.Infof(createReq.ValidUntil);
-
 	// https://developer.infomaniak.com/docs/api/post/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/link
 	opts := rest.Opts{
 		Method: "POST",
@@ -1100,6 +1098,36 @@ func (f *Fs) createPublicLink(ctx context.Context, fileID int, expire fs.Duratio
 	return result.Data.URL, nil
 }
 
+func (f *Fs) updatePublicLink(ctx context.Context, fileID int, expire fs.Duration) error {
+	createReq := struct {
+		ValidUntil int `json:"valid_until,omitempty"`
+	}{}
+
+	// Set expiry if provided
+	if expire != fs.DurationOff {
+		createReq.ValidUntil = int(time.Now().Add(time.Duration(expire)).Unix())
+	}
+
+	// https://developer.infomaniak.com/docs/api/put/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/link
+	opts := rest.Opts{
+		Method: "PUT",
+		Path:   fmt.Sprintf("/2/drive/%s/files/%d/link", f.opt.DriveID, fileID),
+	}
+
+	var result api.PubLinkUpdateResult
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, createReq, &result)
+		err = result.ResultStatus.Update(err)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to update public link: %w", err)
+	}
+
+	return nil
+}
+
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 // If unlink is true, it removes the existing public link.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
@@ -1116,10 +1144,28 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 
 	// Check if link exists
-	link, err := f.getPublicLink(ctx, item.ID)
+	link, expired, err := f.getPublicLink(ctx, item.ID)
 	if link != "" {
-		return link, nil
+		// link exist
+		if expire != fs.DurationOff {
+			// update valid until and return the same link
+			fs.Infof(nil, "UPDATE LINK")
+			err = f.updatePublicLink(ctx, item.ID, expire)
+			if err != nil {
+				return "", err
+			}
+			return link, nil
+		} else if expired == true {
+			fs.Infof(nil, "DELETE LINK")
+			// delete and recreate after
+			f.deletePublicLink(ctx, item.ID)
+		} else {
+			fs.Infof(nil, "RETURN LINK")
+			// return link
+			return link, nil
+		}
 	}
+	fs.Infof(nil, "CREATE LINK")
 
 	// Create or get existing public link
 	return f.createPublicLink(ctx, item.ID, expire)
