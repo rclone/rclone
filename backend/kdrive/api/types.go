@@ -169,7 +169,6 @@ type ChecksumFileResult struct {
 	} `json:"data"`
 }
 
-// PubLinkResult is currently unused, as PublicLink is disabled
 type PubLinkResult struct {
 	ResultStatus
 	Data struct {
@@ -190,6 +189,11 @@ type PubLinkResult struct {
 		} `json:"capabilities"`
 		AccessBlocked bool `json:"access_blocked"`
 	} `json:"data"`
+}
+
+type PubLinkUpdateResult struct {
+	ResultStatus
+	Data bool `json:"data"`
 }
 
 // QuotaInfo is return from kdrive after a call get drive info
