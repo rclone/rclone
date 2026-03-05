@@ -361,17 +361,33 @@ func (drv *Driver) restoreState(ctx context.Context) error {
 		return nil
 	}
 
-	for _, vol := range state {
-		// Use a timeout so that a slow or unreachable remote does
-		// not block the plugin from starting up.
-		volCtx, cancel := context.WithTimeout(ctx, volTimeout)
-		err := vol.restoreState(volCtx, drv)
-		cancel()
-		if err != nil {
-			fs.Logf(nil, "Failed to restore volume %q: %v", vol.Name, err)
+	// Restore volumes concurrently so one slow remote doesn't
+	// block restoring the others.
+	type result struct {
+		vol *Volume
+		err error
+	}
+	results := make([]result, len(state))
+	var wg sync.WaitGroup
+	for i, vol := range state {
+		wg.Add(1)
+		go func(i int, vol *Volume) {
+			defer wg.Done()
+			// Use a timeout so that a slow or unreachable remote does
+			// not block the plugin from starting up.
+			volCtx, cancel := context.WithTimeout(ctx, volTimeout)
+			defer cancel()
+			results[i] = result{vol: vol, err: vol.restoreState(volCtx, drv)}
+		}(i, vol)
+	}
+	wg.Wait()
+
+	for _, r := range results {
+		if r.err != nil {
+			fs.Logf(nil, "Failed to restore volume %q: %v", r.vol.Name, r.err)
 			continue
 		}
-		drv.volumes[vol.Name] = vol
+		drv.volumes[r.vol.Name] = r.vol
 	}
 	return nil
 }
