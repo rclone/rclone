@@ -61,17 +61,18 @@ func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOp
 	}
 	drv.mntOpt.Daemon = false
 
+	// start mount monitoring - must be before restoreState since
+	// restoring mounts sends on monChan
+	drv.hupChan = make(chan os.Signal, 1)
+	drv.monChan = make(chan bool, 1)
+	go drv.monitor()
+
 	// restore from saved state
 	if !forgetState {
 		if err = drv.restoreState(ctx); err != nil {
 			return nil, fmt.Errorf("failed to restore state: %w", err)
 		}
 	}
-
-	// start mount monitoring
-	drv.hupChan = make(chan os.Signal, 1)
-	drv.monChan = make(chan bool, 1)
-	go drv.monitor()
 
 	// unmount all volumes on exit
 	atexit.Register(func() {
@@ -332,7 +333,11 @@ func (drv *Driver) saveState() error {
 	return fmt.Errorf("failed to save state: %w", err)
 }
 
-// restoreState recreates volumes from saved driver state
+// restoreState recreates volumes from saved driver state.
+//
+// It restores volume metadata and filesystems but defers the actual
+// FUSE mounts. Call restoreMounts afterwards (typically after the
+// server socket is listening) to perform the mounts.
 func (drv *Driver) restoreState(ctx context.Context) error {
 	fs.Debugf(nil, "Restore state from %s", drv.statePath)
 
@@ -358,4 +363,44 @@ func (drv *Driver) restoreState(ctx context.Context) error {
 		drv.volumes[vol.Name] = vol
 	}
 	return nil
+}
+
+// RestoreMounts mounts all volumes that were previously mounted.
+//
+// This should be called after the server socket is listening so that
+// Docker can communicate with the plugin even if individual mounts
+// are slow or fail. Mounts are performed concurrently.
+func (drv *Driver) RestoreMounts() {
+	// Collect pending mounts under the lock
+	type pendingMount struct {
+		vol    *Volume
+		mounts []string
+	}
+	drv.mu.Lock()
+	var pending []pendingMount
+	for _, vol := range drv.volumes {
+		mounts := vol.getPendingMounts()
+		if len(mounts) > 0 {
+			pending = append(pending, pendingMount{vol: vol, mounts: mounts})
+		}
+	}
+	drv.mu.Unlock()
+
+	// Mount concurrently without holding the driver lock
+	var wg sync.WaitGroup
+	for _, p := range pending {
+		wg.Add(1)
+		go func(vol *Volume, mounts []string) {
+			defer wg.Done()
+			for _, id := range mounts {
+				drv.mu.Lock()
+				err := vol.mount(id)
+				drv.mu.Unlock()
+				if err != nil {
+					fs.Logf(nil, "Failed to restore mount %q for volume %q: %v", id, vol.Name, err)
+				}
+			}
+		}(p.vol, p.mounts)
+	}
+	wg.Wait()
 }
