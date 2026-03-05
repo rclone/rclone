@@ -44,6 +44,7 @@ type March struct {
 	Callback               Marcher         // object to call with results
 	NoCheckDest            bool            // transfer all objects regardless without checking dst
 	NoUnicodeNormalization bool            // don't normalize unicode characters in filenames
+	NoProcessDstOnly       bool            // if set, when source listing finishes, cancel the dst listing
 	// internal state
 	srcListDir   listDirFn // function to call to list a directory in the src
 	dstListDir   listDirFn // function to call to list a directory in the dst
@@ -297,7 +298,7 @@ func (m *March) aborting() bool {
 // Into match go matchPair's of src and dst which have the same name
 //
 // This checks for duplicates and checks the list is sorted.
-func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, srcOnly, dstOnly func(fs.DirEntry), match func(dst, src fs.DirEntry)) error {
+func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, dstCancel func(), srcOnly, dstOnly func(fs.DirEntry), match func(dst, src fs.DirEntry)) error {
 	var (
 		srcPrev, dstPrev         fs.DirEntry
 		srcPrevName, dstPrevName string
@@ -325,6 +326,12 @@ func (m *March) matchListings(srcChan, dstChan <-chan fs.DirEntry, srcOnly, dstO
 		if src == nil {
 			src, srcHasMore = <-srcChan
 			srcName = m.srcKey(src)
+		}
+		// If the source listing is finished and we don't need
+		// dst-only entries, cancel the dst listing early.
+		if !srcHasMore && m.NoProcessDstOnly {
+			dstCancel()
+			break
 		}
 		if dst == nil {
 			dst, dstHasMore = <-dstChan
@@ -392,9 +399,12 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		srcChan                = make(chan fs.DirEntry, 100)
 		dstChan                = make(chan fs.DirEntry, 100)
 		srcListErr, dstListErr error
+		dstListCancelled       bool
 		wg                     sync.WaitGroup
 		ci                     = fs.GetConfig(m.Ctx)
+		dstCtx, dstCancel      = context.WithCancel(m.Ctx)
 	)
+	defer dstCancel()
 
 	// List the src and dst directories
 	if !job.noSrc {
@@ -415,12 +425,19 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	if !m.NoTraverse && !job.noDst {
 		startedDst = true
 		wg.Go(func() {
-			dstListErr = m.dstListDir(m.Ctx, job.dstRemote, func(entries fs.DirEntries) error {
+			dstListErr = m.dstListDir(dstCtx, job.dstRemote, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
-					dstChan <- entry
+					select {
+					case <-dstCtx.Done():
+						return dstCtx.Err()
+					case dstChan <- entry:
+					}
 				}
 				return nil
 			})
+			if dstCtx.Err() != nil {
+				dstListCancelled = true
+			}
 			close(dstChan)
 		})
 	}
@@ -502,7 +519,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	}
 
 	// Work out what to do and do it
-	err := m.matchListings(srcChan, dstChan, func(src fs.DirEntry) {
+	err := m.matchListings(srcChan, dstChan, dstCancel, func(src fs.DirEntry) {
 		recurse := m.Callback.SrcOnly(src)
 		if recurse && job.srcDepth > 0 {
 			jobs = append(jobs, listDirJob{
@@ -548,7 +565,9 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		srcListErr = fs.CountError(m.Ctx, srcListErr)
 		return nil, srcListErr
 	}
-	if dstListErr == fs.ErrorDirNotFound {
+	if dstListCancelled {
+		// Ignore dst listing errors if we cancelled it
+	} else if dstListErr == fs.ErrorDirNotFound {
 		// Copy the stuff anyway
 	} else if dstListErr != nil {
 		if job.dstRemote != "" {
