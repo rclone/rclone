@@ -27,20 +27,21 @@ var (
 // Volume keeps volume runtime state
 // Public members get persisted in saved state
 type Volume struct {
-	Name       string    `json:"name"`
-	MountPoint string    `json:"mountpoint"`
-	CreatedAt  time.Time `json:"created"`
-	Fs         string    `json:"fs"`             // remote[,connectString]:path
-	Type       string    `json:"type,omitempty"` // same as ":backend:"
-	Path       string    `json:"path,omitempty"` // for "remote:path" or ":backend:path"
-	Options    VolOpts   `json:"options"`        // all options together
-	Mounts     []string  `json:"mounts"`         // mountReqs as a string list
-	mountReqs  map[string]any
-	fsString   string // result of merging Fs, Type and Options
-	persist    bool
-	mountType  string
-	drv        *Driver
-	mnt        *mountlib.MountPoint
+	Name          string    `json:"name"`
+	MountPoint    string    `json:"mountpoint"`
+	CreatedAt     time.Time `json:"created"`
+	Fs            string    `json:"fs"`             // remote[,connectString]:path
+	Type          string    `json:"type,omitempty"` // same as ":backend:"
+	Path          string    `json:"path,omitempty"` // for "remote:path" or ":backend:path"
+	Options       VolOpts   `json:"options"`        // all options together
+	Mounts        []string  `json:"mounts"`         // mountReqs as a string list
+	mountReqs     map[string]any
+	pendingMounts []string // mount IDs to restore after server starts
+	fsString      string   // result of merging Fs, Type and Options
+	persist       bool
+	mountType     string
+	drv           *Driver
+	mnt           *mountlib.MountPoint
 }
 
 // VolOpts keeps volume options
@@ -97,12 +98,18 @@ func (vol *Volume) prepareState() {
 	sort.Strings(vol.Mounts)
 }
 
-// restoreState updates volume from saved state
+// restoreState updates volume from saved state.
+//
+// It restores the volume configuration and filesystem but does not
+// perform FUSE mounts. The pending mount IDs are saved and can be
+// retrieved with getPendingMounts for deferred mounting.
 func (vol *Volume) restoreState(ctx context.Context, drv *Driver) error {
 	vol.drv = drv
 	vol.mnt = &mountlib.MountPoint{
 		MountPoint: vol.MountPoint,
 	}
+	// Save pending mounts before applyOptions clears them
+	vol.pendingMounts = vol.Mounts
 	volOpt := vol.Options
 	volOpt["fs"] = vol.Fs
 	volOpt["type"] = vol.Type
@@ -115,12 +122,15 @@ func (vol *Volume) restoreState(ctx context.Context, drv *Driver) error {
 	if err := vol.setup(ctx); err != nil {
 		return err
 	}
-	for _, id := range vol.Mounts {
-		if err := vol.mount(id); err != nil {
-			return err
-		}
-	}
 	return nil
+}
+
+// getPendingMounts returns and clears the list of mount IDs that
+// were saved from state and need to be re-mounted.
+func (vol *Volume) getPendingMounts() []string {
+	mounts := vol.pendingMounts
+	vol.pendingMounts = nil
+	return mounts
 }
 
 // validate volume
