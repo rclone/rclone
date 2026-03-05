@@ -86,6 +86,7 @@ func init() {
 			Advanced: true,
 			Default: (encoder.Display |
 				encoder.EncodeBackSlash |
+				encoder.EncodeSlash |
 				encoder.EncodeInvalidUtf8),
 		}},
 	})

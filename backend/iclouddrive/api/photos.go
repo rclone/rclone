@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/url"
+	"sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/rest"
@@ -14,6 +15,7 @@ import (
 type PhotosService struct {
 	client    *Client
 	endpoint  string
+	mu        sync.Mutex
 	libraries map[string]*Library
 }
 
@@ -21,6 +23,7 @@ type PhotosService struct {
 type Library struct {
 	service *PhotosService
 	zoneID  string
+	mu      sync.Mutex
 	albums  map[string]*Album
 }
 
@@ -34,6 +37,8 @@ type Album struct {
 	RecordName string
 	Zone       string
 	service    *PhotosService
+	mu         sync.Mutex
+	photoCache map[string]*Photo // keyed by filename
 }
 
 // Photo represents a photo or video with its metadata
@@ -56,8 +61,8 @@ type Filter struct {
 	FieldValue interface{} `json:"fieldValue"`
 }
 
-// Smart album definitions matching the Python implementation
-var smartAlbums = map[string]*Album{
+// SmartAlbums defines the built-in smart album types available in iCloud Photos.
+var SmartAlbums = map[string]*Album{
 	"All Photos": {
 		Name:       "All Photos",
 		ObjectType: "CPLAssetByAssetDateWithoutHiddenOrDeleted",
@@ -176,7 +181,7 @@ var smartAlbums = map[string]*Album{
 }
 
 // NewPhotosService creates a new PhotosService instance
-func NewPhotosService(client *Client) (*PhotosService, error) {
+func NewPhotosService(ctx context.Context, client *Client) (*PhotosService, error) {
 	service, exists := client.Session.AccountInfo.Webservices["ckdatabasews"]
 	if !exists || service.Status != "active" {
 		return nil, fmt.Errorf("ckdatabasews service not available")
@@ -190,7 +195,7 @@ func NewPhotosService(client *Client) (*PhotosService, error) {
 	}
 
 	// Verify primary zone is ready
-	if err := ps.checkIndexingState(context.Background(), "PrimarySync"); err != nil {
+	if err := ps.checkIndexingState(ctx, "PrimarySync"); err != nil {
 		return nil, err
 	}
 
@@ -199,6 +204,9 @@ func NewPhotosService(client *Client) (*PhotosService, error) {
 
 // GetLibraries returns all available photo libraries
 func (ps *PhotosService) GetLibraries(ctx context.Context) (map[string]*Library, error) {
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+
 	if len(ps.libraries) > 0 {
 		return ps.libraries, nil
 	}
@@ -233,16 +241,26 @@ func (ps *PhotosService) GetLibraries(ctx context.Context) (map[string]*Library,
 
 // GetAlbums returns all albums for this library
 func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
+	lib.mu.Lock()
+	defer lib.mu.Unlock()
+
 	if len(lib.albums) > 0 {
 		return lib.albums, nil
 	}
 
 	// Add smart albums
-	for name, template := range smartAlbums {
-		album := *template // Copy the template
-		album.Zone = lib.zoneID
-		album.service = lib.service
-		lib.albums[name] = &album
+	for name, template := range SmartAlbums {
+		album := &Album{
+			Name:       template.Name,
+			ObjectType: template.ObjectType,
+			ListType:   template.ListType,
+			Direction:  template.Direction,
+			Filters:    template.Filters,
+			RecordName: template.RecordName,
+			Zone:       lib.zoneID,
+			service:    lib.service,
+		}
+		lib.albums[name] = album
 	}
 
 	// Add user albums
@@ -265,36 +283,37 @@ func (lib *Library) GetAlbums(ctx context.Context) (map[string]*Album, error) {
 		} `json:"records"`
 	}
 
-	if err := lib.service.request(ctx, "records/query", query, &response); err == nil {
-		for _, record := range response.Records {
-			if record.Fields.AlbumNameEnc == nil ||
-				record.RecordName == "----Root-Folder----" ||
-				(record.Fields.IsDeleted != nil && record.Fields.IsDeleted.Value) {
-				continue
-			}
+	if err := lib.service.request(ctx, "records/query", query, &response); err != nil {
+		return nil, fmt.Errorf("failed to query user albums: %w", err)
+	}
+	for _, record := range response.Records {
+		if record.Fields.AlbumNameEnc == nil ||
+			record.RecordName == "----Root-Folder----" ||
+			(record.Fields.IsDeleted != nil && record.Fields.IsDeleted.Value) {
+			continue
+		}
 
-			nameBytes, err := base64.StdEncoding.DecodeString(record.Fields.AlbumNameEnc.Value)
-			if err != nil {
-				continue
-			}
+		nameBytes, err := base64.StdEncoding.DecodeString(record.Fields.AlbumNameEnc.Value)
+		if err != nil {
+			continue
+		}
 
-			albumName := string(nameBytes)
-			lib.albums[albumName] = &Album{
-				Name:       albumName,
-				ObjectType: fmt.Sprintf("CPLContainerRelationNotDeletedByAssetDate:%s", record.RecordName),
-				ListType:   "CPLContainerRelationLiveByAssetDate",
-				Direction:  "ASCENDING",
-				RecordName: record.RecordName,
-				Zone:       lib.zoneID,
-				service:    lib.service,
-				Filters: []Filter{
-					{
-						FieldName:  "parentId",
-						Comparator: "EQUALS",
-						FieldValue: map[string]string{"type": "STRING", "value": record.RecordName},
-					},
+		albumName := string(nameBytes)
+		lib.albums[albumName] = &Album{
+			Name:       albumName,
+			ObjectType: fmt.Sprintf("CPLContainerRelationNotDeletedByAssetDate:%s", record.RecordName),
+			ListType:   "CPLContainerRelationLiveByAssetDate",
+			Direction:  "ASCENDING",
+			RecordName: record.RecordName,
+			Zone:       lib.zoneID,
+			service:    lib.service,
+			Filters: []Filter{
+				{
+					FieldName:  "parentId",
+					Comparator: "EQUALS",
+					FieldValue: map[string]string{"type": "STRING", "value": record.RecordName},
 				},
-			}
+			},
 		}
 	}
 
@@ -389,8 +408,6 @@ func (album *Album) GetPhotos(ctx context.Context, limit int) ([]*Photo, error) 
 			"zoneID": map[string]interface{}{"zoneName": album.Zone},
 		}
 
-
-
 		// Execute query
 		var response struct {
 			Records []map[string]interface{} `json:"records"`
@@ -399,8 +416,6 @@ func (album *Album) GetPhotos(ctx context.Context, limit int) ([]*Photo, error) 
 		if err := album.service.request(ctx, "records/query", query, &response); err != nil {
 			return nil, fmt.Errorf("failed to fetch photos: %w", err)
 		}
-
-
 
 		// Separate records
 		assetMap := make(map[string]map[string]interface{})
@@ -496,30 +511,78 @@ func (album *Album) GetPhotos(ctx context.Context, limit int) ([]*Photo, error) 
 		offset += len(masters)
 	}
 
+	// Populate filename cache for NewObject lookups
+	album.mu.Lock()
+	album.photoCache = make(map[string]*Photo, len(photos))
+	for _, photo := range photos {
+		if photo.Filename != "" {
+			album.photoCache[photo.Filename] = photo
+		}
+	}
+	album.mu.Unlock()
+
 	return photos, nil
 }
 
-// GetPhotoCount returns the number of photos in this album
-func (album *Album) GetPhotoCount(ctx context.Context) (int64, error) {
-	query := map[string]interface{}{
-		"batch": []map[string]interface{}{
-			{
-				"resultsLimit": 1,
-				"query": map[string]interface{}{
-					"filterBy": map[string]interface{}{
-						"fieldName": "indexCountID",
-						"fieldValue": map[string]interface{}{
-							"type":  "STRING_LIST",
-							"value": []string{album.ObjectType},
-						},
-						"comparator": "IN",
+// GetPhotoByName looks up a photo by filename, using cache if available.
+// Falls back to fetching all photos if cache is empty.
+func (album *Album) GetPhotoByName(ctx context.Context, filename string) (*Photo, error) {
+	album.mu.Lock()
+	if album.photoCache != nil {
+		photo, exists := album.photoCache[filename]
+		album.mu.Unlock()
+		if exists {
+			return photo, nil
+		}
+		return nil, fmt.Errorf("photo %q not found in album %q", filename, album.Name)
+	}
+	album.mu.Unlock()
+
+	// Cache miss — fetch all photos to populate cache
+	photos, err := album.GetPhotos(ctx, 0)
+	if err != nil {
+		return nil, err
+	}
+	for _, photo := range photos {
+		if photo.Filename == filename {
+			return photo, nil
+		}
+	}
+	return nil, fmt.Errorf("photo %q not found in album %q", filename, album.Name)
+}
+
+// GetAlbumCounts returns photo counts for all albums in a single batch request.
+// Returns a map of album name → count.
+func (lib *Library) GetAlbumCounts(ctx context.Context) (map[string]int64, error) {
+	lib.mu.Lock()
+	albums := lib.albums
+	lib.mu.Unlock()
+
+	if len(albums) == 0 {
+		return nil, nil
+	}
+
+	// Build batch query with one entry per album
+	var batch []map[string]interface{}
+	var albumOrder []string
+	for name, album := range albums {
+		albumOrder = append(albumOrder, name)
+		batch = append(batch, map[string]interface{}{
+			"resultsLimit": 1,
+			"query": map[string]interface{}{
+				"filterBy": map[string]interface{}{
+					"fieldName": "indexCountID",
+					"fieldValue": map[string]interface{}{
+						"type":  "STRING_LIST",
+						"value": []string{album.ObjectType},
 					},
-					"recordType": "HyperionIndexCountLookup",
+					"comparator": "IN",
 				},
-				"zoneWide": true,
-				"zoneID":   map[string]interface{}{"zoneName": album.Zone},
+				"recordType": "HyperionIndexCountLookup",
 			},
-		},
+			"zoneWide": true,
+			"zoneID":   map[string]interface{}{"zoneName": album.Zone},
+		})
 	}
 
 	var response struct {
@@ -534,18 +597,21 @@ func (album *Album) GetPhotoCount(ctx context.Context) (int64, error) {
 		} `json:"batch"`
 	}
 
-	if err := album.service.request(ctx, "internal/records/query/batch", query, &response); err != nil {
-		return 0, fmt.Errorf("failed to get photo count: %w", err)
+	if err := lib.service.request(ctx, "internal/records/query/batch", map[string]interface{}{"batch": batch}, &response); err != nil {
+		return nil, err
 	}
 
-	if len(response.Batch) > 0 && len(response.Batch[0].Records) > 0 {
-		return response.Batch[0].Records[0].Fields.ItemCount.Value, nil
+	counts := make(map[string]int64, len(albums))
+	for i, name := range albumOrder {
+		if i < len(response.Batch) && len(response.Batch[i].Records) > 0 {
+			counts[name] = response.Batch[i].Records[0].Fields.ItemCount.Value
+		}
 	}
-
-	return 0, nil
+	return counts, nil
 }
 
-// GetPhoto finds a photo by its path (libraryName/albumName/filename)
+// GetPhoto finds a photo by its path (libraryName/albumName/filename).
+// Uses album photo cache when available (populated by GetPhotos during List).
 func (ps *PhotosService) GetPhoto(ctx context.Context, libraryName, albumName, filename string) (*Photo, error) {
 	libraries, err := ps.GetLibraries(ctx)
 	if err != nil {
@@ -567,18 +633,7 @@ func (ps *PhotosService) GetPhoto(ctx context.Context, libraryName, albumName, f
 		return nil, fmt.Errorf("album %q not found in library %q", albumName, libraryName)
 	}
 
-	photos, err := album.GetPhotos(ctx, 0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get photos from album: %w", err)
-	}
-
-	for _, photo := range photos {
-		if photo.Filename == filename {
-			return photo, nil
-		}
-	}
-
-	return nil, fmt.Errorf("photo %q not found in album %q", filename, albumName)
+	return album.GetPhotoByName(ctx, filename)
 }
 
 // checkIndexingState verifies that the iCloud Photo Library is ready
