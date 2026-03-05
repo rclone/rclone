@@ -21,6 +21,12 @@ import (
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
+const (
+	// volTimeout is the maximum time to wait for a single volume to
+	// be restored (filesystem setup) during plugin startup.
+	volTimeout = 30 * time.Second
+)
+
 // Driver implements docker driver api
 type Driver struct {
 	root      string
@@ -356,7 +362,12 @@ func (drv *Driver) restoreState(ctx context.Context) error {
 	}
 
 	for _, vol := range state {
-		if err := vol.restoreState(ctx, drv); err != nil {
+		// Use a timeout so that a slow or unreachable remote does
+		// not block the plugin from starting up.
+		volCtx, cancel := context.WithTimeout(ctx, volTimeout)
+		err := vol.restoreState(volCtx, drv)
+		cancel()
+		if err != nil {
 			fs.Logf(nil, "Failed to restore volume %q: %v", vol.Name, err)
 			continue
 		}
