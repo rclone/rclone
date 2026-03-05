@@ -20,7 +20,6 @@ import (
 // Errors
 var (
 	ErrVolumeNotFound   = errors.New("volume not found")
-	ErrVolumeExists     = errors.New("volume already exists")
 	ErrMountpointExists = errors.New("non-empty mountpoint already exists")
 )
 
