@@ -415,6 +415,76 @@ func testMountAPI(t *testing.T, sockAddr string) {
 	assert.Empty(t, listRes.Volumes)
 }
 
+func TestDockerPluginDeferredMounts(t *testing.T) {
+	ctx := context.Background()
+	oldCacheDir := config.GetCacheDir()
+	testDir, testFs := initialise(ctx, t)
+	err := config.SetCacheDir(testDir)
+	require.NoError(t, err)
+	defer func() {
+		_ = config.SetCacheDir(oldCacheDir)
+		if !t.Failed() {
+			fstest.Purge(testFs)
+			_ = os.RemoveAll(testDir)
+		}
+	}()
+
+	// Create dummy volume driver with volumes and mounts
+	drv, err := docker.NewDriver(ctx, testDir, nil, nil, true, true)
+	require.NoError(t, err)
+	require.NotNil(t, drv)
+	defer drv.Exit()
+
+	volReq := &docker.CreateRequest{
+		Name:    "vol1",
+		Options: docker.VolOpts{"remote": testDir},
+	}
+	assert.NoError(t, drv.Create(volReq))
+	volReq.Name = "vol2"
+	assert.NoError(t, drv.Create(volReq))
+
+	// Mount vol2 with two IDs
+	mountReq := &docker.MountRequest{Name: "vol2", ID: "id1"}
+	_, err = drv.Mount(mountReq)
+	assert.NoError(t, err)
+	mountReq.ID = "id2"
+	_, err = drv.Mount(mountReq)
+	assert.NoError(t, err)
+
+	// Simulate plugin restart - state is restored but mounts are deferred
+	// (Don't call drv.Exit() since that clears mounts from state, simulating a crash)
+	drv2, err := docker.NewDriver(ctx, testDir, nil, nil, true, false)
+	require.NoError(t, err)
+	require.NotNil(t, drv2)
+	defer drv2.Exit()
+
+	// Volumes should be listed (metadata restored)
+	listRes, err := drv2.List()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(listRes.Volumes))
+
+	// vol2 should have no active mounts yet (deferred)
+	path2 := filepath.Join(testDir, "vol2")
+	assertVolumeInfo(t, listRes.Volumes[1], "vol2", path2)
+
+	// Now restore mounts
+	drv2.RestoreMounts()
+
+	// After RestoreMounts, vol2 should have its mounts back
+	listRes, err = drv2.List()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(listRes.Volumes))
+	status := listRes.Volumes[1].Status
+	require.NotNil(t, status)
+	mounts, ok := status["Mounts"]
+	require.True(t, ok)
+	mountList, ok := mounts.([]string)
+	require.True(t, ok)
+	assert.Equal(t, 2, len(mountList))
+	assert.Contains(t, mountList, "id1")
+	assert.Contains(t, mountList, "id2")
+}
+
 func TestDockerPluginMountTCP(t *testing.T) {
 	testMountAPI(t, "localhost:53789")
 }
