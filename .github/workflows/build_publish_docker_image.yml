@@ -159,7 +159,7 @@ jobs:
 
       - name: Build and Publish Image Digest
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           file: Dockerfile
           context: .
