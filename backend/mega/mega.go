@@ -284,7 +284,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			}
 			err = srv.LoginWithKeys(opt.SessionID, decodedMasterKey)
 			if err != nil {
-				fs.Debugf(f, "login with previous auth keys failed: %v", err)
+				return nil, fmt.Errorf("couldn't login with session ID and master key: %w", err)
 			}
 		}
 	}
@@ -341,6 +341,8 @@ func (f *Fs) findDir(rootNode *mega.Node, dir string) (node *mega.Node, err erro
 	node, err = f.findNode(rootNode, dir)
 	if err == mega.ENOENT {
 		return nil, fs.ErrorDirNotFound
+	} else if err == nil && node == nil {
+		return nil, fs.ErrorDirNotFound
 	} else if err == nil && node.GetType() == mega.FILE {
 		return nil, fs.ErrorIsFile
 	}
@@ -351,6 +353,8 @@ func (f *Fs) findDir(rootNode *mega.Node, dir string) (node *mega.Node, err erro
 func (f *Fs) findObject(rootNode *mega.Node, file string) (node *mega.Node, err error) {
 	node, err = f.findNode(rootNode, file)
 	if err == mega.ENOENT {
+		return nil, fs.ErrorObjectNotFound
+	} else if err == nil && node == nil {
 		return nil, fs.ErrorObjectNotFound
 	} else if err == nil && node.GetType() != mega.FILE {
 		return nil, fs.ErrorIsDir // all other node types are directories
@@ -446,6 +450,9 @@ func (f *Fs) findRoot(ctx context.Context, create bool) (*mega.Node, error) {
 
 	// Check for preexisting root
 	absRoot := f.srv.FS.GetRoot()
+	if absRoot == nil {
+		return nil, errors.New("couldn't find root directory: filesystem not initialized (is the account authenticated?)")
+	}
 	node, err := f.findDir(absRoot, f.root)
 	//log.Printf("findRoot findDir %p %v", node, err)
 	if err == nil {
