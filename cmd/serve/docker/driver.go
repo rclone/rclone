@@ -182,8 +182,12 @@ func reportErr(err error) {
 	}
 }
 
-// Create volume
-// To use subpath we are limited to defining a new volume definition via alias
+// Create volume.
+//
+// If the volume already exists, the request is treated as a no-op
+// (idempotent) so that Docker can safely re-send Create requests
+// after a plugin restart without getting "volume already exists".
+// To use subpath we are limited to defining a new volume definition via alias.
 func (drv *Driver) Create(req *CreateRequest) error {
 	ctx := context.Background()
 	drv.mu.Lock()
@@ -193,7 +197,8 @@ func (drv *Driver) Create(req *CreateRequest) error {
 	fs.Debugf(nil, "Create volume %q", name)
 
 	if vol, _ := drv.getVolume(name); vol != nil {
-		return ErrVolumeExists
+		fs.Debugf(nil, "Volume %q already exists, treating Create as no-op", name)
+		return nil
 	}
 
 	vol, err := newVolume(ctx, name, req.Options, drv)

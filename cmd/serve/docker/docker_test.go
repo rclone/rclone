@@ -94,7 +94,8 @@ func TestDockerPluginLogic(t *testing.T) {
 	assert.NoError(t, drv.Create(volReq))
 	path1 := filepath.Join(testDir, "vol1")
 
-	assert.ErrorIs(t, drv.Create(volReq), docker.ErrVolumeExists)
+	// Create is idempotent - creating the same volume again should succeed
+	assert.NoError(t, drv.Create(volReq))
 
 	getReq := &docker.GetRequest{Name: "vol1"}
 	getRes, err := drv.Get(getReq)
@@ -373,8 +374,9 @@ func testMountAPI(t *testing.T, sockAddr string) {
 	}
 	cli.request("Create", createReq, &res, false)
 	assert.Equal(t, "{}", res)
-	cli.request("Create", createReq, &res, true)
-	assert.Contains(t, res, "volume already exists")
+	// Create is idempotent - creating the same volume again should succeed
+	cli.request("Create", createReq, &res, false)
+	assert.Equal(t, "{}", res)
 
 	mountReq := docker.MountRequest{Name: "vol1", ID: "id1"}
 	var mountRes docker.MountResponse
