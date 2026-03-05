@@ -948,6 +948,7 @@ func (s *syncCopyMove) run() error {
 		DstIncludeAll:          s.fi.Opt.DeleteExcluded,
 		NoCheckDest:            s.noCheckDest,
 		NoUnicodeNormalization: s.noUnicodeNormalization,
+		NoProcessDstOnly:       s.deleteMode == fs.DeleteModeOff && !s.usingLogger,
 	}
 	s.processError(m.Run(s.ctx))
 
