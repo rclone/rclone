@@ -24,8 +24,11 @@ import (
 // comparison in matchListings.
 type matchTransformFn func(name string) string
 
-// list a directory into callback returning err
-type listDirFn func(dir string, callback fs.ListRCallback) (err error)
+// list a directory into callback returning err.
+//
+// The ctx argument should be m.Ctx or a child of it so that listings
+// are cancelled when the march context is cancelled.
+type listDirFn func(ctx context.Context, dir string, callback fs.ListRCallback) (err error)
 
 // March holds the data used to traverse two Fs simultaneously,
 // calling Callback for each match
@@ -117,16 +120,21 @@ func (m *March) dstKey(entry fs.DirEntry) string {
 	return m.srcOrDstKey(entry, false)
 }
 
-// makeListDir makes constructs a listing function for the given fs
+// makeListDir constructs a listing function for the given fs
 // and includeAll flags for marching through the file system.
+//
+// The returned function uses the ctx it is called with for the
+// listing operations. Callers must pass m.Ctx or a child of it to
+// ensure listings are cancelled when the march context is cancelled.
+//
 // Note: this will optionally flag filter-aware backends!
 func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn list.KeyFn) listDirFn {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
 	if !(ci.UseListR && f.Features().ListR != nil) && // !--fast-list active and
 		!(ci.NoTraverse && fi.HaveFilesFrom()) { // !(--files-from and --no-traverse)
-		return func(dir string, callback fs.ListRCallback) (err error) {
-			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
+		return func(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+			dirCtx := filter.SetUseFilter(ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 			return list.DirSortedFn(dirCtx, f, includeAll, dir, callback, keyFn)
 		}
 	}
@@ -139,10 +147,10 @@ func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool, keyFn
 		dirs    dirtree.DirTree
 		dirsErr error
 	)
-	return func(dir string, callback fs.ListRCallback) (err error) {
+	return func(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 		mu.Lock()
 		if !started {
-			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
+			dirCtx := filter.SetUseFilter(ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 			dirs, dirsErr = walk.NewDirTree(dirCtx, f, m.Dir, includeAll, ci.MaxDepth)
 			started = true
 		}
@@ -392,7 +400,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	if !job.noSrc {
 		srcChan := srcChan // duplicate this as we may override it later
 		wg.Go(func() {
-			srcListErr = m.srcListDir(job.srcRemote, func(entries fs.DirEntries) error {
+			srcListErr = m.srcListDir(m.Ctx, job.srcRemote, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
 					srcChan <- entry
 				}
@@ -407,7 +415,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	if !m.NoTraverse && !job.noDst {
 		startedDst = true
 		wg.Go(func() {
-			dstListErr = m.dstListDir(job.dstRemote, func(entries fs.DirEntries) error {
+			dstListErr = m.dstListDir(m.Ctx, job.dstRemote, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
 					dstChan <- entry
 				}
