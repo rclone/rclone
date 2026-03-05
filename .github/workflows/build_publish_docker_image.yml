@@ -100,7 +100,7 @@ jobs:
 
       - name: Extract Metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,manifest-descriptor # Important for digest annotation (used by Github packages)
         with:
@@ -210,7 +210,7 @@ jobs:
 
       - name: Extract Metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: index
         with:
