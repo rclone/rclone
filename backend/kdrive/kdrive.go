@@ -99,14 +99,15 @@ type Options struct {
 
 // Fs represents a remote kdrive
 type Fs struct {
-	name       string             // name of this remote
-	root       string             // the path we are working on
-	opt        Options            // parsed options
-	features   *fs.Features       // optional features
-	srv        *rest.Client       // the connection to the server
-	cleanupSrv *rest.Client       // the connection used for the cleanup method
-	dirCache   *dircache.DirCache // Map of directory path to directory id
-	pacer      *fs.Pacer          // pacer for API calls
+	name          string             // name of this remote
+	root          string             // the path we are working on
+	opt           Options            // parsed options
+	features      *fs.Features       // optional features
+	srv           *rest.Client       // the connection to the server
+	cleanupSrv    *rest.Client       // the connection used for the cleanup method
+	dirCache      *dircache.DirCache // Map of directory path to directory id
+	pacer         *fs.Pacer          // pacer for API calls
+	cacheNotFound map[string]cacheEntry
 }
 
 // Object describes a kdrive object
@@ -147,6 +148,11 @@ func (f *Fs) String() string {
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
 	return f.features
+}
+
+// clearNotFoundCache removes all entries from the not-found cache
+func (f *Fs) clearNotFoundCache() {
+	f.cacheNotFound = make(map[string]cacheEntry)
 }
 
 // parsePath parses a kdrive 'url'
@@ -225,11 +231,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	fs.Debugf(ctx, "NewFs: for root=%s", root)
 
 	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		srv:   rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint),
-		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		name:          name,
+		root:          root,
+		opt:           *opt,
+		srv:           rest.NewClient(fshttp.NewClient(ctx)).SetRoot(opt.Endpoint),
+		pacer:         fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		cacheNotFound: make(map[string]cacheEntry),
 	}
 	f.srv.SetHeader("Authorization", "Bearer "+accessToken)
 
@@ -345,13 +352,15 @@ func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
 
 // findItemInDir retrieves a file or directory by its name in a specific directory using the API.
 func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
-	fs.Infof(ctx, "findItemInDir: directoryID=%s leaf=%s", directoryID, leaf)
-	//fs.Infof(nil, "Stacktrace : %s", string(debug.Stack()))
-
 	cacheKey := directoryID + "|" + leaf
-	cache, cacheExist := ctx.Value("kdriveInitCache").(map[string]cacheEntry)
-	if cacheExist {
-		if entry, entryExists := cache[cacheKey]; entryExists {
+
+	if entry, entryExists := f.cacheNotFound[cacheKey]; entryExists {
+		return entry.item, entry.err
+	}
+
+	cacheInit, cacheInitExist := ctx.Value("kdriveInitCache").(map[string]cacheEntry)
+	if cacheInitExist {
+		if entry, entryExists := cacheInit[cacheKey]; entryExists {
 			return entry.item, entry.err
 		}
 	}
@@ -375,9 +384,7 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	})
 	if err != nil {
 		if isNotFoundError(err) {
-			if cacheExist {
-				cache[cacheKey] = cacheEntry{nil, fs.ErrorObjectNotFound}
-			}
+			f.cacheNotFound[cacheKey] = cacheEntry{nil, fs.ErrorObjectNotFound}
 			return nil, fs.ErrorObjectNotFound
 		}
 		return nil, fmt.Errorf("couldn't find item in dir: %w", err)
@@ -391,8 +398,8 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	// Normalize the name
 	item.Name = f.opt.Enc.ToStandardName(item.Name)
 
-	if cacheExist {
-		cache[cacheKey] = cacheEntry{&item, nil}
+	if cacheInitExist {
+		cacheInit[cacheKey] = cacheEntry{&item, nil}
 	}
 
 	return &item, nil
@@ -400,8 +407,6 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 
 // findItemByPath retrieves a file or directory by its path
 func (f *Fs) findItemByPath(ctx context.Context, remote string) (*api.Item, error) {
-	// fs.Infof(ctx, "findItemByPath: remote=%s", remote)
-
 	if remote == "" || remote == "." {
 		rootID, err := f.dirCache.FindDir(ctx, "", false)
 		if err != nil {
@@ -505,6 +510,8 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	if err != nil {
 		return "", err
 	}
+
+	f.clearNotFoundCache()
 	return strconv.Itoa(result.Data.ID), nil
 }
 
@@ -526,7 +533,6 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	}
 	rootPath := rootItem.FullPath + "/"
 
-	// fs.Infof(nil, "Stacktrace : %s", string(debug.Stack()))
 	listSomeFiles := func(currentDirID string, fromCursor string) (api.SearchResult, error) {
 		// https://developer.infomaniak.com/docs/api/get/3/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D/files
 		opts := rest.Opts{
@@ -870,6 +876,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
+
+	f.clearNotFoundCache()
 	return dstObj, nil
 }
 
@@ -945,6 +953,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 				if err != nil {
 					return false, err
 				}
+
+				f.clearNotFoundCache()
 				return true, nil
 			}
 		}
@@ -958,6 +968,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
+
+	f.clearNotFoundCache()
 	return dstObj, nil
 }
 
@@ -1001,6 +1013,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	srcFs.dirCache.FlushDir(srcRemote)
 	srcFs.dirCache.FlushDir(dstRemote)
+	f.clearNotFoundCache()
 	return nil
 }
 
@@ -1022,7 +1035,7 @@ func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, bool, error
 		err = result.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
-	fs.Infof(nil, "VALID UNTIL %d", result.Data.ValidUntil)
+
 	expired := false
 	if err != nil {
 		return "", expired, fmt.Errorf("failed to get public link: %w", err)
@@ -1131,7 +1144,6 @@ func (f *Fs) updatePublicLink(ctx context.Context, fileID int, expire fs.Duratio
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 // If unlink is true, it removes the existing public link.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
-	// fs.Infof("PublicLink PATH REMOTE", remote)
 	item, err := f.findItemByPath(ctx, remote)
 	if err != nil {
 		return "", err
@@ -1149,23 +1161,19 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		// link exist
 		if expire != fs.DurationOff {
 			// update valid until and return the same link
-			fs.Infof(nil, "UPDATE LINK")
 			err = f.updatePublicLink(ctx, item.ID, expire)
 			if err != nil {
 				return "", err
 			}
 			return link, nil
 		} else if expired == true {
-			fs.Infof(nil, "DELETE LINK")
 			// delete and recreate after
 			f.deletePublicLink(ctx, item.ID)
 		} else {
-			fs.Infof(nil, "RETURN LINK")
 			// return link
 			return link, nil
 		}
 	}
-	fs.Infof(nil, "CREATE LINK")
 
 	// Create or get existing public link
 	return f.createPublicLink(ctx, item.ID, expire)
@@ -1489,6 +1497,8 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 
 	o.size = size
 	o.setHash(strings.TrimPrefix(result.Data.Hash, "xxh3:"))
+
+	o.fs.clearNotFoundCache()
 	return o.readMetaData(ctx)
 }
 
@@ -1507,6 +1517,7 @@ func (o *Object) updateMultipart(ctx context.Context, in io.Reader, src fs.Objec
 		return fmt.Errorf("upload failed: no file info returned")
 	}
 
+	o.fs.clearNotFoundCache()
 	return o.setMetaData(session.fileInfo)
 }
 
