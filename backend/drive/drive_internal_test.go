@@ -643,6 +643,44 @@ func (f *Fs) InternalTestAgeQuery(t *testing.T) {
 	assert.Contains(t, subFs.lastQuery, timeQuery)
 }
 
+// TestIntegration/FsMkdir/FsPutFiles/Internal/SingleQuoteFolder
+func (f *Fs) InternalTestSingleQuoteFolder(t *testing.T) {
+	ctx := context.Background()
+
+	// Test various folder names containing single quotes
+	for _, name := range []string{
+		"'",
+		"''",
+		"'a'",
+		"it's a test",
+	} {
+		t.Run(name, func(t *testing.T) {
+			dir := "singleQuoteTest/" + name
+			err := f.Mkdir(ctx, dir)
+			require.NoError(t, err)
+			defer func() {
+				err := f.Rmdir(ctx, dir)
+				assert.NoError(t, err)
+			}()
+
+			entries, err := f.List(ctx, "singleQuoteTest")
+			require.NoError(t, err)
+
+			found := false
+			for _, entry := range entries {
+				if entry.Remote() == dir {
+					found = true
+					break
+				}
+			}
+			assert.True(t, found, "directory %q not found in listing", name)
+		})
+	}
+
+	err := f.Rmdir(ctx, "singleQuoteTest")
+	assert.NoError(t, err)
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	// These tests all depend on each other so run them as nested tests
 	t.Run("DocumentImport", func(t *testing.T) {
@@ -662,6 +700,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("CopyOrMoveID", f.InternalTestCopyOrMoveID)
 	t.Run("Query", f.InternalTestQuery)
 	t.Run("AgeQuery", f.InternalTestAgeQuery)
+	t.Run("SingleQuoteFolder", f.InternalTestSingleQuoteFolder)
 	t.Run("ShouldRetry", f.InternalTestShouldRetry)
 }
 

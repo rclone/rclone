@@ -1076,3 +1076,21 @@ put them back in again. -->
 - Leon Brocard <acme@astray.com>
 - Cohinem <143964778+Cohinem@users.noreply.github.com>
 - Jack Kelly <jack@OpenClimateFix.org>
+- Prakhar Chhalotre <chhalotreprakhar00@gmail.com>
+- Varun Chawla <34209028+veeceey@users.noreply.github.com>
+- Jan-Philipp Reßler <75355263+TabError@users.noreply.github.com>
+- Shlomi Avihou <shlomi@zadarastorage.com>
+- Chris <238498929+chris081519-crypto@users.noreply.github.com>
+- Jan-Philipp Reßler <xodarap@xodarap.de>
+- Dark Dragon <darkdragon-001@web.de>
+- Leon Brocard <lbrocard@fastly.com>
+- a1pcm <a1pcm@users.noreply.github.com>
+- FTCHD <144691102+FTCHD@users.noreply.github.com>
+- Bjoern Franke <bjo+git@schafweide.org>
+- hxnd <callmehxnd@outlook.de>
+- Adam Kasztenny <adamkasztenny@gmail.com>
+- Romāns Potašovs <justgook@gmail.com>
+- Brian Bockelman <bbockelman@morgridge.org>
+- Bjoern Franke <bjo@schafweide.org>
+- razorloves <razorloves@gmail.com>
+- Duncan F <131309315+duncanaf@users.noreply.github.com>

@@ -45,7 +45,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/hanwen/go-fuse/v2 v2.9.0
-	github.com/internxt/rclone-adapter v0.0.0-20260213125353-6f59c89fcb7c
+	github.com/internxt/rclone-adapter v0.0.0-20260220172730-613f4cc8b8fd
 	github.com/jcmturner/gokrb5/v8 v8.4.4
 	github.com/jlaffaye/ftp v0.2.1-0.20240918233326-1b970516f5d3
 	github.com/josephspurrier/goversioninfo v1.5.0
@@ -60,6 +60,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.98
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/sys/mountinfo v0.7.2
+	github.com/muesli/reflow v0.3.0
 	github.com/ncw/swift/v2 v2.0.5
 	github.com/oracle/oci-go-sdk/v65 v65.108.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -93,7 +94,7 @@ require (
 	go.etcd.io/bbolt v1.4.3
 	goftp.io/server/v2 v2.0.2
 	golang.org/x/crypto v0.48.0
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.51.0
 	golang.org/x/oauth2 v0.35.0
 	golang.org/x/sync v0.19.0
 	golang.org/x/sys v0.41.0
