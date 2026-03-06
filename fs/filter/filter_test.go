@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest/mockdir"
+	"github.com/rclone/rclone/fstest/mockfs"
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -361,7 +363,6 @@ func TestNewFilterMakeListR(t *testing.T) {
 		}
 		newObjects[remote] = struct{}{}
 		return mockobject.New(remote), nil
-
 	}
 
 	// Callback for ListRFn
@@ -951,4 +952,61 @@ func TestGetConfig(t *testing.T) {
 	require.NoError(t, err)
 	ctx3 := ReplaceConfig(ctx, f)
 	assert.Equal(t, globalConfig, GetConfig(ctx3))
+}
+
+func TestListContainsExcludeFile(t *testing.T) {
+	entries := fs.DirEntries{
+		mockobject.New("main.py"),
+		mockdir.New(".venv"),
+		mockobject.New(".venv/file1"),
+		mockobject.New(".venv/file2"),
+		mockobject.New(".git"),
+	}
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+
+	f.Opt.ExcludeFile = []string{".venv"}
+	assert.False(t, f.ListContainsExcludeFile(entries))
+
+	f.Opt.ExcludeFile = []string{".venv/"}
+	assert.True(t, f.ListContainsExcludeFile(entries))
+
+	f.Opt.ExcludeFile = []string{".git"}
+	assert.True(t, f.ListContainsExcludeFile(entries))
+
+	f.Opt.ExcludeFile = []string{".git/"}
+	assert.False(t, f.ListContainsExcludeFile(entries))
+}
+
+func TestDirContainsExcludeFile(t *testing.T) {
+	fs, err := mockfs.NewFs(context.Background(), "test", "root", nil)
+	require.NoError(t, err)
+	mfs := fs.(*mockfs.Fs)
+	mfs.AddObject(mockobject.New("main.py"))
+	mfs.AddObject(mockobject.New(".venv/file1"))
+	mfs.AddObject(mockobject.New(".venv/file2"))
+	mfs.AddObject(mockobject.New(".git"))
+
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+
+	f.Opt.ExcludeFile = []string{".venv"}
+	contains, err := f.DirContainsExcludeFile(context.Background(), fs, "")
+	assert.NoError(t, err)
+	assert.False(t, contains)
+
+	f.Opt.ExcludeFile = []string{".venv/"}
+	contains, err = f.DirContainsExcludeFile(context.Background(), fs, "")
+	assert.NoError(t, err)
+	assert.True(t, contains)
+
+	f.Opt.ExcludeFile = []string{".git"}
+	contains, err = f.DirContainsExcludeFile(context.Background(), fs, "")
+	assert.NoError(t, err)
+	assert.True(t, contains)
+
+	f.Opt.ExcludeFile = []string{".git/"}
+	contains, err = f.DirContainsExcludeFile(context.Background(), fs, "")
+	assert.NoError(t, err)
+	assert.False(t, contains)
 }
