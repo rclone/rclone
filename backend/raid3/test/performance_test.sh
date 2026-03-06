@@ -41,9 +41,9 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# shellcheck source=compare_raid3_with_single_common.sh
+# shellcheck source=compare_common.sh
 # shellcheck disable=SC1091
-. "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
+. "${SCRIPT_DIR}/compare_common.sh"
 
 VERBOSE=0
 SKIP_MC=0

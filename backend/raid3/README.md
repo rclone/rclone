@@ -1,6 +1,6 @@
 # RAID3 Backend - RAID 3 Storage
 
-This document is the main user guide for the rclone `raid3` backend, providing usage instructions, configuration examples, backend commands (`status`, `rebuild`, `heal`), error handling details, and known limitations. For technical RAID 3 details, testing documentation, and design decisions, see [`docs/RAID3.md`](docs/RAID3.md), [`docs/TESTING.md`](docs/TESTING.md), and [`_analysis/DESIGN_DECISIONS.md`](_analysis/DESIGN_DECISIONS.md). For the improvement plan and task tracking, see [`_analysis/IMPROVEMENT_PLAN.md`](_analysis/IMPROVEMENT_PLAN.md).
+This document is the main user guide for the rclone `raid3` backend, providing usage instructions, configuration examples, backend commands (`status`, `rebuild`, `heal`), error handling details, and known limitations. For technical RAID 3 details and testing documentation, see [`docs/RAID3.md`](docs/RAID3.md) and [`docs/TESTING.md`](docs/TESTING.md). For open design questions and resolved decisions, see [`docs/OPEN_QUESTIONS.md`](docs/OPEN_QUESTIONS.md).
 
 ---
 
@@ -132,15 +132,15 @@ The raid3 backend follows hardware RAID 3 behavior: reads work with ANY 2 of 3 b
 
 ## Getting Started with Test Environment
 
-The easiest way to explore the raid3 backend is using the integration test setup, which creates a complete working environment with pre-configured remotes (both local filesystem and MinIO/S3 examples). Run `cd backend/raid3/test && ./setup.sh` to create the test data directories and generate the config file. The config file will be created at `backend/raid3/test/rclone_raid3_integration_tests.config`.
+The easiest way to explore the raid3 backend is using the integration test setup, which creates a complete working environment with pre-configured remotes (both local filesystem and MinIO/S3 examples). Run `cd backend/raid3/test && ./setup.sh` to create the test data directories and generate the config file. The config file will be created at `backend/raid3/test/tests.config`.
 
-The setup provides `localraid3` and `minioraid3` remotes for testing. Basic operations work as expected: upload splits files, download reconstructs them, and degraded mode can be tested by removing particles. Backend commands (`status`, `heal`, `rebuild`) can be tested using these remotes. For MinIO, start containers with `./compare_raid3_with_single.sh --storage-type minio start`. Integration tests are available via the scripts in `test/` directory. See [`test/README.md`](test/README.md) for complete documentation.
+The setup provides `localraid3` and `minioraid3` remotes for testing. Basic operations work as expected: upload splits files, download reconstructs them, and degraded mode can be tested by removing particles. Backend commands (`status`, `heal`, `rebuild`) can be tested using these remotes. For MinIO, start containers with `./manage.sh start --storage-type=minio`. Integration tests are available via the scripts in `test/` directory. See [`test/README.md`](test/README.md) for complete documentation.
 
 ---
 
 ## Testing
 
-For comprehensive testing documentation, see [`docs/TESTING.md`](docs/TESTING.md). The `test/` directory contains Bash-based integration test scripts (`setup.sh`, `compare_raid3_with_single.sh`, `compare_raid3_with_single_rebuild.sh`, `compare_raid3_with_single_heal.sh`, `compare_raid3_with_single_errors.sh`, `compare_raid3_with_single_all.sh`) that supplement Go-based unit and integration tests with black-box testing scenarios. These scripts work on Linux, macOS, WSL, Git Bash, and Cygwin (not natively on Windows). See [`test/README.md`](test/README.md) for complete documentation. The `compare_raid3_with_single_all.sh` script runs all test suites across all RAID3 backends with minimal output (pass/fail only).
+For comprehensive testing documentation, see [`docs/TESTING.md`](docs/TESTING.md). Go tests cover rebuild, heal (degraded read + restore, listing), and error scenarios (upload/move/update fail, rollback-disabled) for **local** (and MinIO for rebuild/heal via `-remote TestRaid3Minio:`). The `test/` directory contains Bash-based integration scripts that **supplement** these: they skip rebuild/heal/error scenarios for local and MinIO (covered by Go) and run them for **SFTP** (and minio/mixed for errors). Scripts include `compare.sh`, `compare_rebuild.sh`, `compare_heal.sh`, `compare_errors.sh`, and `compare_all.sh`. See [`test/README.md`](test/README.md) for full documentation. Scripts work on Linux, macOS, WSL, Git Bash, and Cygwin (not native Windows).
 
 ## Implementation Notes
 

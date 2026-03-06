@@ -93,7 +93,7 @@ func (f *Fs) backgroundUploader(ctx context.Context, workerID int) {
 			err := f.uploadParticle(ctx, job)
 			if err != nil {
 				fs.Errorf(f, "Heal upload failed for %s (%s): %v", job.remote, job.particleType, err)
-				// TODO: Could implement retry logic here
+				// TODO: Could implement retry logic here. Failure is logged; object remains degraded until next heal/rebuild.
 			} else {
 				fs.Infof(f, "Heal upload completed for %s (%s)", job.remote, job.particleType)
 			}

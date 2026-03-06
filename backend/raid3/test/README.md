@@ -33,7 +33,7 @@ cd backend/raid3/test
 
 The setup script will:
 - Create the `_data` subdirectory and all required subdirectories within it
-- Generate the rclone configuration file: `rclone_raid3_integration_tests.config` in the test directory
+- Generate the rclone configuration file: `tests.config` in the test directory
 
 ### 2. Run Tests
 
@@ -44,7 +44,7 @@ All test scripts must be run from the test directory:
 cd backend/raid3/test
 
 # Run a test
-./compare_raid3_with_single.sh --storage-type local test mkdir
+./compare.sh --storage-type local test mkdir
 ```
 
 ### Quick test: sftpsingle remote
@@ -58,23 +58,23 @@ cd backend/raid3/test
 ./setup.sh
 
 # Start the four SFTP containers (ports 2221–2224)
-./compare_raid3_with_single.sh start --storage-type=sftp
+./manage.sh start --storage-type=sftp
 
 # Check that sftpsingle works: list root (should be empty or show existing dirs)
-rclone --config rclone_raid3_integration_tests.config lsd sftpsingle:
+rclone --config tests.config lsd sftpsingle:
 
 # Create a test file and copy it to sftpsingle
 echo "hello sftp" > /tmp/hello.txt
-rclone --config rclone_raid3_integration_tests.config copy /tmp/hello.txt sftpsingle:test/
+rclone --config tests.config copy /tmp/hello.txt sftpsingle:test/
 
 # List again to see test/
-rclone --config rclone_raid3_integration_tests.config ls sftpsingle:
+rclone --config tests.config ls sftpsingle:
 
 # Run one comparison test (raid3 vs single) with SFTP
-./compare_raid3_with_single.sh --storage-type=sftp test mkdir
+./compare.sh --storage-type=sftp test mkdir
 
 # Stop SFTP containers when done
-./compare_raid3_with_single.sh stop --storage-type=sftp
+./manage.sh stop --storage-type=sftp
 ```
 
 ## 📁 Test Scripts
@@ -82,23 +82,19 @@ rclone --config rclone_raid3_integration_tests.config ls sftpsingle:
 | Script | Purpose | Commands |
 |--------|---------|----------|
 | **`setup.sh`** | Initial environment setup | `setup.sh` |
-| **`compare_raid3_with_single.sh`** | Black-box comparison tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
-| **`compare_raid3_with_single_rebuild.sh`** | Rebuild command validation | `start`, `stop`, `teardown`, `list`, `test <name>` |
-| **`compare_raid3_with_single_heal.sh`** | Auto-heal functionality tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
-| **`compare_raid3_with_single_errors.sh`** | Error handling and rollback tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
-| **`compare_raid3_with_single_all.sh`** | Run all test suites across all backends | `[-v]`, `[-h]` |
+| **`manage.sh`** | Environment maintenance | `start`, `stop`, `teardown`, `recreate` (requires `--storage-type`) |
+| **`compare.sh`** | Black-box comparison tests | `list`, `test <name>` |
+| **`compare_rebuild.sh`** | Rebuild command validation | `start`, `stop`, `teardown`, `list`, `test <name>` |
+| **`compare_heal.sh`** | Auto-heal functionality tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
+| **`compare_errors.sh`** | Error handling and rollback tests | `start`, `stop`, `teardown`, `list`, `test <name>` |
+| **`compare_all.sh`** | Run all test suites across all backends | `[-v]`, `[-h]` |
 | **`performance_test.sh`** | Performance benchmarks (upload/download) for different file sizes and storage types | `start`, `stop`, `teardown`, `list`, `test [all\|all-but-4G\|4K\|…]` |
 | **`compression_bench.sh`** | Measures compression ratio for local raid3 (requires `--storage-type=local`; config compression ≠ none) | `--storage-type=local` |
 
 ### Common Commands
 
-All test scripts support these commands:
-
-- **`list`** - Show available test cases
-- **`test <name>`** - Run a named test (e.g., `test mkdir`)
-- **`start`** - Start MinIO or SFTP containers (requires `--storage-type=minio` or `--storage-type=sftp`)
-- **`stop`** - Stop MinIO or SFTP containers (requires `--storage-type=minio` or `--storage-type=sftp`)
-- **`teardown`** - Purge all test data for the selected storage type
+- **`manage.sh`** (maintenance): **`start`**, **`stop`**, **`teardown`**, **`recreate`** — use for container and data management (e.g. `./manage.sh start --storage-type=sftp`).
+- **Comparison/test scripts** (**`compare.sh`**, **`compare_rebuild.sh`**, etc.): **`list`** — show available test cases; **`test <name>`** — run a named test (e.g. `test mkdir`).
 
 ### Options
 
@@ -112,7 +108,7 @@ All test scripts support these commands:
 
 The integration tests use a **strict, test-specific configuration file**:
 
-**Location**: `backend/raid3/test/rclone_raid3_integration_tests.config`
+**Location**: `backend/raid3/test/tests.config`
 
 The config file is created in the test directory by `setup.sh`.
 
@@ -156,7 +152,7 @@ This file is automatically sourced by all test scripts if present. **Do not comm
 
 ## 🎯 Test Script Details
 
-### Comparison Tests (`compare_raid3_with_single.sh`)
+### Comparison Tests (`compare.sh`)
 
 Black-box comparison between raid3 and single backend remotes.
 
@@ -168,91 +164,88 @@ Black-box comparison between raid3 and single backend remotes.
 **Usage**:
 ```bash
 # List available tests
-./compare_raid3_with_single.sh list
+./compare.sh list
 
 # Run a specific test
-./compare_raid3_with_single.sh --storage-type local test mkdir
-./compare_raid3_with_single.sh --storage-type minio test copy -v
+./compare.sh --storage-type local test mkdir
+./compare.sh --storage-type minio test copy -v
 ```
 
-### Rebuild Tests (`compare_raid3_with_single_rebuild.sh`)
+### Rebuild Tests (`compare_rebuild.sh`)
 
-Validates the `rclone backend rebuild` command after simulated backend replacement.
+Validates the `rclone backend rebuild` command after simulated backend replacement. **Go tests** cover local and MinIO (`TestRebuild*` success/failure, `TestRebuildMinioBackendSuccess` with `-remote TestRaid3Minio:`). The bash script **skips** rebuild scenarios for `--storage-type=local`, `minio`, and `mixed`; it **runs** rebuild scenarios only for **SFTP** (`--storage-type=sftp`).
 
-**What it tests**:
+**What it tests** (when run for SFTP):
 - Rebuild scenarios for each backend (even, odd, parity)
 - Failure cases (missing source backends; rebuild reports 0 files rebuilt)
-- Success cases (complete rebuild; post-rebuild `rclone check` passes with correct logical sizes and content)
+- Success cases (complete rebuild; post-rebuild `rclone check` passes)
 - Byte-for-byte comparison of rebuilt dataset against reference copy
 
 **Usage**:
 ```bash
-# Run rebuild tests
-./compare_raid3_with_single_rebuild.sh --storage-type local test even
-./compare_raid3_with_single_rebuild.sh --storage-type minio test odd -v
+# Local/minio/mixed: skipped (covered by Go); use: go test ./backend/raid3 -run TestRebuild
+./compare_rebuild.sh --storage-type sftp test even
 ```
 
-### Heal Tests (`compare_raid3_with_single_heal.sh`)
+### Heal Tests (`compare_heal.sh`)
 
-Validates degraded-read behavior and the explicit `backend heal` command.
+Validates degraded-read behavior and the explicit `backend heal` command. **Go tests** cover local and MinIO: read-heal (even/odd/parity) and listing-does-not-heal in `raid3_heal_command_test.go`, plus `TestHealMinioDegradedReadThenRestore` and `TestHealMinioListingSucceedsInDegradedMode` with `-remote TestRaid3Minio:`. The bash script **skips** heal scenarios for `--storage-type=local`, `minio`, and `mixed`; it **runs** heal scenarios only for **SFTP** (`--storage-type=sftp`).
 
-**What it tests**:
+**What it tests** (when run for SFTP):
 - Degraded mode reads (2/3 particles available)
-- Automatic particle reconstruction
-- Explicit `rclone backend heal` command
-- Directory reconstruction behavior
+- Explicit `rclone backend heal` and particle restoration
+- Listing in degraded mode (even-list, odd-list, parity-list)
 
 **Usage**:
 ```bash
-# Run heal tests
-./compare_raid3_with_single_heal.sh --storage-type local test even
-./compare_raid3_with_single_heal.sh --storage-type minio test parity-list -v
+# Local/minio/mixed: skipped (covered by Go); use: go test ./backend/raid3 -run TestHeal
+./compare_heal.sh --storage-type sftp test even
+./compare_heal.sh --storage-type sftp test parity-list -v
 ```
 
-### Error Handling Tests (`compare_raid3_with_single_errors.sh`)
+### Error Handling Tests (`compare_errors.sh`)
 
-Validates error handling, rollback behavior, and degraded mode write blocking.
+Validates error handling, rollback behavior, and degraded mode write blocking. **Go tests** cover local in `raid3_errors_test.go` (upload-fail, move-fail, update-fail, rollback-disabled-move/update for even/odd/parity). The bash script **skips** error scenarios for `--storage-type=local`; it **runs** for **minio**, **mixed**, and **sftp** (containers can be stopped to simulate backend unavailability).
 
-**What it tests**:
-- Write operations blocked in degraded mode
-- Rollback behavior for Put, Move, Update operations
+**What it tests** (when run for minio/mixed/sftp):
+- Write operations blocked in degraded mode (upload-fail, move-fail, update-fail)
+- Rollback behavior and rollback-disabled scenarios
 - Error messages and recovery
 - Health check functionality
 
 **Usage**:
 ```bash
-# Run error handling tests (minio only - requires containers to stop)
-./compare_raid3_with_single_errors.sh --storage-type minio test put-fail-even
-./compare_raid3_with_single_errors.sh --storage-type minio test move-fail-odd -v
+# Local: skipped (covered by Go); use: go test ./backend/raid3 -run 'TestPutFails|TestMoveFails|TestUpdateFails|TestRollback'
+./compare_errors.sh --storage-type minio test move-fail-even
+./compare_errors.sh --storage-type sftp test move-fail-odd -v
 ```
 
 ### Feature handling (Go test)
 
 Feature handling for raid3 (Mask() pattern, local vs MinIO) is covered by the **Go test** `TestFeatureHandlingWithMask` in `backend/raid3/raid3_test.go`. It runs with in-process local temp dirs when `-remote` is not set, and with `TestRaid3Local` or `TestRaid3Minio` when invoked via `go test -remote ...` or by `test_all` (see `fstest/test_all/config.yaml`). No separate bash script is used.
 
-### Master Test Script (`compare_raid3_with_single_all.sh`)
+### Master Test Script (`compare_all.sh`)
 
 Runs all test suites across all RAID3 backends with minimal output (pass/fail only).
 
 **What it does**:
-- Runs `compare_raid3_with_single.sh` with local, minio, and mixed storage types
-- Runs `compare_raid3_with_single_heal.sh` with local, minio, and mixed storage types
-- Runs `compare_raid3_with_single_errors.sh` with minio only
-- Runs `compare_raid3_with_single_rebuild.sh` with local, minio, and mixed storage types
-- Runs `compare_raid3_with_single_stacking.sh` and `performance_test.sh`
+- Runs `compare.sh` with local, minio, mixed, sftp
+- Runs `compare_heal.sh` and `compare_rebuild.sh` with local, sftp (local/minio/mixed skip and report “covered by Go” for rebuild and heal)
+- Runs `compare_errors.sh` with minio, sftp (local skips and reports “covered by Go”)
+- Runs `compare_stacking.sh` and `performance_test.sh`
 - Feature handling is covered by Go test `TestFeatureHandlingWithMask` (test_all)
 - Provides summary of all test results
 
 **Usage**:
 ```bash
 # Run all tests with minimal output (default)
-./compare_raid3_with_single_all.sh
+./compare_all.sh
 
 # Run all tests with verbose output
-./compare_raid3_with_single_all.sh --verbose
+./compare_all.sh --verbose
 
 # Show help
-./compare_raid3_with_single_all.sh --help
+./compare_all.sh --help
 ```
 
 **Output**: Shows only pass/fail status for each test combination, with a final summary. Use `--verbose` to see detailed output from individual test scripts.
@@ -277,10 +270,10 @@ The test scripts provide clear error messages if the environment is not set up:
 
 | Error | Solution |
 |-------|----------|
-| Missing config file | Run `./setup.sh` to create `rclone_raid3_integration_tests.config` |
+| Missing config file | Run `./setup.sh` to create `tests.config` |
 | Wrong directory | Change to `backend/raid3/test` directory |
 
-**Note**: All test scripts verify that `rclone_raid3_integration_tests.config` exists before executing any tests. If the config file is missing, the script will exit immediately with a clear error message indicating that you need to run `setup.sh` first.
+**Note**: All test scripts verify that `tests.config` exists before executing any tests. If the config file is missing, the script will exit immediately with a clear error message indicating that you need to run `setup.sh` first.
 
 ## 📚 Additional Documentation
 
@@ -296,13 +289,14 @@ test/
 ├── setup.sh                               # Initial setup script
 ├── compare_raid3_env.sh                  # Default environment variables
 ├── compare_raid3_env.local.sh            # Local overrides (not tracked)
-├── compare_raid3_with_single_common.sh    # Shared helper functions
-├── compare_raid3_with_single.sh          # Comparison tests
-├── compare_raid3_with_single_rebuild.sh   # Rebuild tests
-├── compare_raid3_with_single_heal.sh     # Heal tests
-├── compare_raid3_with_single_errors.sh    # Error handling tests
-├── compare_raid3_with_single_all.sh       # Master script (runs all tests)
-├── rclone_raid3_integration_tests.config  # Config file (created by setup.sh)
+├── compare_common.sh    # Shared helper functions
+├── manage.sh            # Maintenance: start/stop/teardown/recreate
+├── compare.sh           # Comparison tests
+├── compare_rebuild.sh   # Rebuild tests
+├── compare_heal.sh     # Heal tests
+├── compare_errors.sh    # Error handling tests
+├── compare_all.sh       # Master script (runs all tests)
+├── tests.config  # Config file (created by setup.sh)
 └── _data/                                 # Test data directory (created by setup.sh, gitignored)
     ├── even_local/
     ├── odd_local/
@@ -322,23 +316,23 @@ cd backend/raid3/test
 ./setup.sh
 
 # 2. List available tests
-./compare_raid3_with_single.sh list
+./compare.sh list
 
 # 3. Run a comparison test
-./compare_raid3_with_single.sh --storage-type local test mkdir
+./compare.sh --storage-type local test mkdir
 
 # 4. Run rebuild tests
-./compare_raid3_with_single_rebuild.sh --storage-type local test even
+./compare_rebuild.sh --storage-type local test even
 
 # 5. Run heal tests
-./compare_raid3_with_single_heal.sh --storage-type minio test odd -v
+./compare_heal.sh --storage-type minio test odd -v
 
 # 6. Run all tests at once (recommended for CI/validation)
-./compare_raid3_with_single_all.sh
+./compare_all.sh
 
 # 7. Run feature handling (Go): go test ./backend/raid3 -run TestFeatureHandlingWithMask -remote TestRaid3Local:
 # 8. Clean up (optional)
-./compare_raid3_with_single.sh --storage-type local teardown
+./manage.sh teardown --storage-type=local
 ```
 
 ## 🔧 Debugging sync-upload timeout (MinIO + multipart)
@@ -364,22 +358,22 @@ So the timeout is almost certainly **MinIO blocking on multipart** (CreateMultip
 ### Workarounds
 
 1. **Run sync-upload against local only** (avoids MinIO):  
-   `./compare_raid3_with_single.sh test sync-upload --storage-type=local`
-2. **Try a different MinIO version**: set `MINIO_IMAGE=quay.io/minio/minio:latest` (or another tag), recreate containers (`stop` then `start --storage-type=minio`), then rerun the test.
+   `./compare.sh test sync-upload --storage-type=local`
+2. **Try a different MinIO version**: set `MINIO_IMAGE=quay.io/minio/minio:latest` (or another tag), recreate containers (`./manage.sh stop --storage-type=minio` then `./manage.sh start --storage-type=minio`), then rerun the test.
 3. **Increase timeout** for a slow environment:  
-   `RCLONE_TEST_TIMEOUT=300 ./compare_raid3_with_single.sh test sync-upload --storage-type=minio`
+   `RCLONE_TEST_TIMEOUT=300 ./compare.sh test sync-upload --storage-type=minio`
 
 ### Getting more detail
 
 1. **Run with `-v`** so the last 30 lines of rclone stderr are printed on timeout:  
-   `./compare_raid3_with_single.sh test sync-upload --storage-type=minio -v`
+   `./compare.sh test sync-upload --storage-type=minio -v`
 
 2. **Reproduce manually** to capture full output:
    ```bash
    cd backend/raid3/test
-   export RCLONE_CONFIG="${PWD}/rclone_raid3_integration_tests.config"
+   export RCLONE_CONFIG="${PWD}/tests.config"
    ./setup.sh  # ensure MinIO is running
-   ./compare_raid3_with_single.sh start --storage-type=minio  # if needed
+   ./manage.sh start --storage-type=minio  # if needed
    mkdir -p /tmp/sync-debug && echo "f1" > /tmp/sync-debug/f1.txt && echo "f2" > /tmp/sync-debug/sub/f2.txt
    rclone sync /tmp/sync-debug minioraid3:sync-debug-test -vv 2>&1 | tee sync_initial.log
    rm /tmp/sync-debug/f1.txt && echo "f2 updated" > /tmp/sync-debug/sub/f2.txt && echo "f3" > /tmp/sync-debug/f3.txt
@@ -398,7 +392,7 @@ So the timeout is almost certainly **MinIO blocking on multipart** (CreateMultip
 When a test fails with `--storage-type=minio` (e.g. timeout 124, or status mismatch), the script may write MinIO container logs to a temp file and log its path, e.g.:
 
 ```text
-[compare_raid3_with_single.sh] WARN minio-logs MinIO container logs (last 150 lines each) saved to: /tmp/minio_logs_cp-upload.XXXXXX
+[compare.sh] WARN minio-logs MinIO container logs (last 150 lines each) saved to: /tmp/minio_logs_cp-upload.XXXXXX
 ```
 
 **Inspect that file:** `cat /tmp/minio_logs_cp-upload.*` (or the path shown).
@@ -430,24 +424,24 @@ If MinIO containers start then stop right away (Docker Desktop shows them stoppi
 2. **"Unknown xl meta version 3" (or similar):** The data on disk was written by a **newer** MinIO than the image you're running. You must wipe the MinIO data dirs so the current image can start with empty storage:
    ```bash
    cd backend/raid3/test
-   ./compare_raid3_with_single.sh stop --storage-type=minio
+   ./manage.sh stop --storage-type=minio
    docker rm -f minioeven minioodd minioparity miniosingle 2>/dev/null || true
    rm -rf _data/even_minio _data/odd_minio _data/parity_minio _data/single_minio
-   ./compare_raid3_with_single.sh start --storage-type=minio
+   ./manage.sh start --storage-type=minio
    ```
 
 3. **Other errors:** Remove containers and optionally wipe data, then start again:
    ```bash
    cd backend/raid3/test
-   ./compare_raid3_with_single.sh stop --storage-type=minio
+   ./manage.sh stop --storage-type=minio
    docker rm -f minioeven minioodd minioparity miniosingle 2>/dev/null || true
    rm -rf _data/even_minio _data/odd_minio _data/parity_minio _data/single_minio
-   ./compare_raid3_with_single.sh start --storage-type=minio
+   ./manage.sh start --storage-type=minio
    ```
 
 4. **Try a different image:** If the pinned image fails on your host (e.g. architecture), try the latest image:
    ```bash
-   MINIO_IMAGE=minio/minio:latest ./compare_raid3_with_single.sh start --storage-type=minio
+   MINIO_IMAGE=minio/minio:latest ./manage.sh start --storage-type=minio
    ```
 
 5. **Ports in use:** Ensure nothing else is using ports 9001–9004 (e.g. `lsof -i :9001` on the host).
@@ -455,7 +449,7 @@ If MinIO containers start then stop right away (Docker Desktop shows them stoppi
 ## 💡 Tips
 
 - **Verbose output**: Use `-v` flag to see detailed rclone command output
-- **MinIO containers**: The scripts automatically start/stop MinIO containers when using `--storage-type=minio`
-- **Test isolation**: Each test cleans up after itself, but you can use `teardown` to purge all data
+- **MinIO containers**: Use `./manage.sh start --storage-type=minio` and `./manage.sh stop --storage-type=minio` to control containers
+- **Test isolation**: Each test cleans up after itself; use `./manage.sh teardown --storage-type=...` to purge all data
 - **Custom configuration**: Create `compare_raid3_env.local.sh` to override defaults without modifying tracked files
 - **Quick help**: Run any script with `-h` or `--help` for command-specific help

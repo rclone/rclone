@@ -126,6 +126,13 @@ auto_cleanup = true
 auto_heal = false
 EOF
 
+	# Pre-create bucket "rclone-rebuild-test" on each MinIO for TestRebuildMinioBackendSuccess (S3 requires bucket to exist).
+	if command -v rclone >/dev/null 2>&1; then
+		for r in minioeven minioodd minioparity; do
+			RCLONE_CONFIG="${CONFIG_FILE}" rclone mkdir "${r}:rclone-rebuild-test" 2>/dev/null || true
+		done
+	fi
+
 	echo _config_file="${CONFIG_FILE}"
 	echo _connect=127.0.0.1:${EVEN_PORT}
 }

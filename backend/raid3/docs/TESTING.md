@@ -1,6 +1,6 @@
 # Testing the RAID3 Backend
 
-This document provides testing documentation for the raid3 backend. For user documentation, see [`../README.md`](../README.md). For technical RAID 3 details, see [`RAID3.md`](RAID3.md). For integration test setup, see [`../test/README.md`](../test/README.md). For naming conventions, see [`../_analysis/NAMING_CONVENTIONS.md`](../_analysis/NAMING_CONVENTIONS.md).
+This document provides testing documentation for the raid3 backend. For user documentation, see [`../README.md`](../README.md). For technical RAID 3 details, see [`RAID3.md`](RAID3.md). For integration test setup and test layout, see [`../test/README.md`](../test/README.md).
 
 ---
 
@@ -10,7 +10,7 @@ The raid3 backend provides three types of tests:
 
 1. **Go tests provided by the raid3 backend** - Unit and integration tests in the `backend/raid3` package. Run with `go test ./backend/raid3 -v`. Includes core RAID 3 operations (split, merge, parity), degraded mode, and heal functionality.
 
-2. **Shell-script based tests provided by the raid3 backend** - Bash integration test harnesses in `backend/raid3/test/`. Black-box testing for comparison, rebuild, heal, and error handling scenarios. See [`test/README.md`](../test/README.md).
+2. **Shell-script based tests provided by the raid3 backend** - Bash integration test harnesses in `backend/raid3/test/`. Black-box testing for comparison, rebuild, heal, and error handling. For **local** (and **MinIO** where noted), rebuild, heal, and error scenarios are covered by Go tests; the bash scripts skip those and run only for **SFTP** (or minio/mixed for errors). See [`test/README.md`](../test/README.md).
 
 3. **Go tests provided by the rclone project** - Comprehensive test suites (`fs/operations` and `fs/sync`) that validate the full `fs.Fs` interface. Run with `go test ./fs/operations -remote localraid3: -v` and `go test ./fs/sync -remote localraid3: -v`.
 
@@ -18,7 +18,7 @@ The raid3 backend provides three types of tests:
 
 ## ✅ Current Test Status
 
-**Last Updated**: 2026-02-12
+**Last Updated**: 2026-03
 
 - **Backend Tests**: ✅ PASS - `go test ./backend/raid3 -v`
 - **fs/sync Tests**: ✅ 96 PASS, 0 FAIL, 12 SKIP - `go test ./fs/sync -remote localraid3: -v`
@@ -51,25 +51,25 @@ go test ./backend/raid3 -race -v
 cd backend/raid3/test && ./setup.sh
 
 # Run from rclone root
-export RCLONE_CONFIG=backend/raid3/test/rclone_raid3_integration_tests.config
+export RCLONE_CONFIG=backend/raid3/test/tests.config
 go test ./fs/operations -remote localraid3: -v
 go test ./fs/sync -remote localraid3: -v
 ```
 
 **Alternative** (inline config):
 ```bash
-RCLONE_CONFIG=backend/raid3/test/rclone_raid3_integration_tests.config \
+RCLONE_CONFIG=backend/raid3/test/tests.config \
   go test ./fs/operations -remote localraid3: -v
 ```
 
 ### Bash Integration Tests (Type 2)
 
 See [`test/README.md`](../test/README.md) for complete documentation. Scripts include:
-- `compare_raid3_with_single.sh` - Comparison harness
-- `compare_raid3_with_single_rebuild.sh` - Rebuild validation (success scenarios run `rclone check` after rebuild to verify logical sizes and content match)
-- `compare_raid3_with_single_heal.sh` - Heal validation
-- `compare_raid3_with_single_errors.sh` - Error handling
-- `compare_raid3_with_single_all.sh` - Master script to run all tests across all backends
+- `compare.sh` - Comparison harness (runs for local, minio, mixed, sftp)
+- `compare_rebuild.sh` - Rebuild validation; **skips local/minio/mixed** (covered by Go); runs for **SFTP** only
+- `compare_heal.sh` - Heal validation; **skips local/minio/mixed** (covered by Go); runs for **SFTP** only
+- `compare_errors.sh` - Error handling; **skips local** (covered by Go); runs for minio, mixed, sftp
+- `compare_all.sh` - Master script to run all tests across all backends
 - `performance_test.sh` - Performance benchmarks (upload/download) for different file sizes and storage types
 - `compression_bench.sh` - Compression ratio for local raid3 (requires `--storage-type=local`; config compression ≠ none)
 
@@ -94,10 +94,20 @@ See [`test/README.md`](../test/README.md) for complete documentation. Scripts in
 - `TestIntegrationStyle_DegradedOpenAndSize` - Simulates backend failure
 - `TestLargeDataQuick` - 1 MB file test
 
-**Heal Tests:**
-- `TestHeal`, `TestHealEvenParticle` - Automatic particle restoration
-- `TestHealNoQueue` - Fast shutdown optimization
-- `TestHealLargeFile` - 100 KB stress test
+**Rebuild Tests** (`raid3_rebuild_test.go`):
+- `TestRebuildEvenBackendSuccess`, `TestRebuildOddBackendSuccess`, `TestRebuildParityBackendSuccess` - Simulate disk swap (wipe one backend), run `backend rebuild`, verify restore and `operations.Check` (local)
+- `TestRebuildEvenBackendFailure`, `TestRebuildOddBackendFailure`, `TestRebuildParityBackendFailure` - Two backends lost; rebuild reports 0 rebuilt, read fails (local)
+- `TestRebuildMinioBackendSuccess` - MinIO/S3; requires `-remote TestRaid3Minio:` and Docker; purges sub-remote, runs rebuild, verifies. Bash rebuild script skips local/minio/mixed; runs for SFTP only.
+
+**Heal Tests** (`raid3_heal_test.go`, `raid3_heal_command_test.go`):
+- `TestHeal`, `TestHealEvenParticle`, `TestHealNoQueue`, `TestHealLargeFile` - Auto-heal on read (some skipped for streaming path)
+- `TestHeal*DegradedReadThenRestore` (even, odd, parity) - Remove one particle, read (degraded), run `backend heal`, verify particle restored (local)
+- `TestHeal*ListingDoesNotHeal` (even, odd, parity) - Remove particle, list only; assert listing does not heal (local)
+- `TestHealMinioDegradedReadThenRestore`, `TestHealMinioListingSucceedsInDegradedMode` - Same flows for MinIO with `-remote TestRaid3Minio:`. Bash heal script skips local/minio/mixed; runs for SFTP only.
+
+**Error Tests** (`raid3_errors_test.go`):
+- `TestPutFailsWithUnavailableBackend`, `TestMoveFailsWithUnavailableBackend`, `TestUpdateFailsWithUnavailableBackend` - Table-driven for even/odd/parity (local; use `replaceDirWithFileForTest` to simulate unavailable backend)
+- `TestMoveFailsWithRollbackDisabled`, `TestUpdateFailsWithRollbackDisabled` - rollback=false, one backend unavailable; operation must fail (local). Bash errors script skips local; runs for minio, mixed, sftp.
 
 ### Go tests: local vs MinIO
 
@@ -122,6 +132,12 @@ go test ./backend/raid3/... -remote TestRaid3Minio: -v
 # Feature test only (faster)
 go test ./backend/raid3/... -run TestFeatureHandlingWithMask -remote TestRaid3Local: -v
 go test ./backend/raid3/... -run TestFeatureHandlingWithMask -remote TestRaid3Minio: -v
+
+# Rebuild tests (local temp dirs; even/odd/parity success + even failure)
+go test ./backend/raid3/... -run TestRebuild -v
+
+# Rebuild MinIO (requires Docker)
+go test ./backend/raid3/... -run TestRebuildMinioBackendSuccess -remote TestRaid3Minio: -v
 ```
 
 ### Test Coverage
@@ -132,7 +148,8 @@ go test ./backend/raid3/... -run TestFeatureHandlingWithMask -remote TestRaid3Mi
 | Byte Operations | 3 | Core striping logic |
 | Parity & Reconstruction | 6 | XOR calculation, degraded mode |
 | Heal | 4 | Background uploads |
-| **Total** | **16** | **Comprehensive** |
+| Rebuild | 5 | even/odd/parity success, even failure (local); MinIO success (TestRaid3Minio) |
+| **Total** | **20** | **Comprehensive** |
 
 ---
 
@@ -146,8 +163,8 @@ cd backend/raid3/test
 
 # Upload and verify
 echo "Hello, World!" > test.txt
-rclone --config rclone_raid3_integration_tests.config copy test.txt localraid3:
-rclone --config rclone_raid3_integration_tests.config copy localraid3:test.txt downloaded.txt
+rclone --config tests.config copy test.txt localraid3:
+rclone --config tests.config copy localraid3:test.txt downloaded.txt
 diff test.txt downloaded.txt
 ```
 
@@ -178,6 +195,8 @@ docker stop minioodd
 rclone -vv cat minioraid3:testdir/hello.txt --timeout 30s --contimeout 5s
 docker start minioodd
 ```
+
+**S3 / MinIO path and root:** The rclone test facility does **not** create data at the literal root of bucket-based remotes. For remotes like `TestS3:` or `TestRaid3Minio:`, `fstest.Run()` calls `fstest.RandomRemoteName()`, which appends a random subdirectory (e.g. `rclone-test-xxxxxxxxxxxx`). So the effective root is always one path segment (e.g. `TestS3:rclone-test-xxx`), and all object paths have at least two segments (bucket + key). The S3 backend’s `bucket.Split(path)` uses the first segment as the bucket name and the rest as the object Key; with that convention, the key is never empty, so the S3/MinIO integration tests never hit “Key must not be empty”. The raid3 MinIO rebuild test (`TestRebuildMinioBackendSuccess`) and the bash rebuild script follow the same idea: they use a path prefix (e.g. `rclone-rebuild-test` or `create_test_dataset`’s dataset id) so that all object paths have a first segment, and S3 never receives an empty key. The S3 backend does not skip this test; it is only when a test creates data at the true root (e.g. `minioeven:` with path `even-length.bin`) that the first segment becomes the “bucket” and the key is empty.
 
 ---
 

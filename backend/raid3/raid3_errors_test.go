@@ -33,7 +33,7 @@ import (
 //
 // Simulating unavailable backend: Use non-existent paths for Fs creation, or
 // replaceDirWithFileForTest for tests that need to create files first (matches
-// compare_raid3_with_single_errors.sh strategy). Do NOT use chmod 0555 - the
+// compare_errors.sh strategy). Do NOT use chmod 0555 - the
 // health check treats "permission denied" as acceptable (SFTP chroot workaround).
 
 // replaceDirWithFileForTest makes a backend unavailable by replacing its
@@ -344,82 +344,63 @@ func TestMoveFailsWithUnavailableBackend(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	evenDir := t.TempDir()
-	oddDir := t.TempDir()
-	parityDir := t.TempDir()
+	for _, backend := range []string{"even", "odd", "parity"} {
+		backend := backend
+		t.Run(backend+"_unavailable", func(t *testing.T) {
+			evenDir := t.TempDir()
+			oddDir := t.TempDir()
+			parityDir := t.TempDir()
 
-	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+			m := configmap.Simple{
+				"even":   evenDir,
+				"odd":    oddDir,
+				"parity": parityDir,
+			}
+			f, err := raid3.NewFs(ctx, "TestMoveFail", "", m)
+			require.NoError(t, err)
+			if f.Features().Move == nil {
+				t.Skip("backend does not support server-side Move")
+			}
+
+			oldRemote := "original.txt"
+			data := []byte("Move should fail")
+			info := object.NewStaticObjectInfo(oldRemote, time.Now(), int64(len(data)), true, nil, nil)
+			_, err = f.Put(ctx, bytes.NewReader(data), info)
+			require.NoError(t, err)
+
+			oldObj, err := f.NewObject(ctx, oldRemote)
+			require.NoError(t, err)
+
+			var restore func()
+			switch backend {
+			case "even":
+				restore = replaceDirWithFileForTest(t, evenDir)
+			case "odd":
+				restore = replaceDirWithFileForTest(t, oddDir)
+			case "parity":
+				restore = replaceDirWithFileForTest(t, parityDir)
+			default:
+				t.Fatalf("unknown backend %q", backend)
+			}
+			defer restore()
+
+			newRemote := "renamed.txt"
+			_, err = f.Features().Move(ctx, oldObj, newRemote)
+			require.Error(t, err, "Move should fail when %s backend unavailable", backend)
+
+			oldObj2, err := f.NewObject(ctx, oldRemote)
+			require.NoError(t, err, "Original file should still exist after failed move")
+			rc, err := oldObj2.Open(ctx)
+			require.NoError(t, err)
+			gotData, err := io.ReadAll(rc)
+			_ = rc.Close()
+			require.NoError(t, err)
+			assert.Equal(t, data, gotData, "Original file content should be unchanged")
+
+			_, err = f.NewObject(ctx, newRemote)
+			require.Error(t, err, "New file should not exist (rollback should have removed it)")
+		})
 	}
-	f, err := raid3.NewFs(ctx, "TestMoveFail", "", m)
-	require.NoError(t, err)
-	if f.Features().Move == nil {
-		t.Skip("backend does not support server-side Move (e.g. underlying has Move=nil)")
-	}
-
-	// Create a file
-	oldRemote := "original.txt"
-	data := []byte("Move should fail")
-	info := object.NewStaticObjectInfo(oldRemote, time.Now(), int64(len(data)), true, nil, nil)
-	_, err = f.Put(ctx, bytes.NewReader(data), info)
-	require.NoError(t, err)
-
-	// Verify file exists
-	_, err = f.NewObject(ctx, oldRemote)
-	require.NoError(t, err)
-
-	// Test Move with backend unavailable by making a backend not writable (0555 = listable, no write)
-	// This simulates backend unavailability for the Move operation
-	oldObj, err := f.NewObject(ctx, oldRemote)
-	require.NoError(t, err)
-
-	// Make odd backend not writable (0555) to simulate unavailability
-	err = os.Chmod(oddDir, 0555)
-	require.NoError(t, err)
-	defer func() {
-		_ = os.Chmod(oddDir, 0755) // Restore for cleanup
-	}()
-
-	// Attempt move - should fail
-	newRemote := "renamed.txt"
-	doMove := f.Features().Move
-	_, err = doMove(ctx, oldObj, newRemote)
-
-	// Move should fail
-	require.Error(t, err, "Move should fail when backend unavailable")
-
-	// Verify original file still exists (move should not have partially succeeded)
-	oldObj2, err := f.NewObject(ctx, oldRemote)
-	require.NoError(t, err, "Original file should still exist after failed move")
-	rc, err := oldObj2.Open(ctx)
-	require.NoError(t, err)
-	gotData, err := io.ReadAll(rc)
-	_ = rc.Close()
-	require.NoError(t, err)
-	assert.Equal(t, data, gotData, "Original file content should be unchanged")
-
-	// Verify no file exists at destination (rollback should have removed any partially moved particles)
-	newObj2, err := f.NewObject(ctx, newRemote)
-	require.Error(t, err, "New file should not exist (rollback should have removed it)")
-	require.Nil(t, newObj2)
-
-	// Verify original particles still exist at source location
-	// Note: We can't check odd backend directly because it's read-only,
-	// but we can verify through the level3 interface
-	evenPath := filepath.Join(evenDir, oldRemote)
-	_, err = os.Stat(evenPath)
-	assert.NoError(t, err, "Even particle should still exist at source")
-
-	// For odd, we verify through level3 interface since directory is read-only
-	// If the file is readable through level3, the particle exists
-	_, err = oldObj2.Open(ctx)
-	assert.NoError(t, err, "Original file should still be readable (particles exist)")
-
-	parityPath := filepath.Join(parityDir, oldRemote)
-	_, err = os.Stat(parityPath)
-	assert.NoError(t, err, "Parity particle should still exist at source")
 }
 
 // TestMoveWithMissingSourceParticle tests Move behavior when source particle
@@ -638,55 +619,58 @@ func TestUpdateFailsWithUnavailableBackend(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	evenDir := t.TempDir()
-	oddDir := t.TempDir()
-	parityDir := t.TempDir()
+	for _, backend := range []string{"even", "odd", "parity"} {
+		backend := backend
+		t.Run(backend+"_unavailable", func(t *testing.T) {
+			evenDir := t.TempDir()
+			oddDir := t.TempDir()
+			parityDir := t.TempDir()
 
-	m := configmap.Simple{
-		"even":   evenDir,
-		"odd":    oddDir,
-		"parity": parityDir,
+			m := configmap.Simple{
+				"even":   evenDir,
+				"odd":    oddDir,
+				"parity": parityDir,
+			}
+			f, err := raid3.NewFs(ctx, "TestUpdateFail", "", m)
+			require.NoError(t, err)
+
+			remote := "update_test.txt"
+			originalData := []byte("Original content")
+			info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(originalData)), true, nil, nil)
+			_, err = f.Put(ctx, bytes.NewReader(originalData), info)
+			require.NoError(t, err)
+
+			obj, err := f.NewObject(ctx, remote)
+			require.NoError(t, err)
+
+			var restore func()
+			switch backend {
+			case "even":
+				restore = replaceDirWithFileForTest(t, evenDir)
+			case "odd":
+				restore = replaceDirWithFileForTest(t, oddDir)
+			case "parity":
+				restore = replaceDirWithFileForTest(t, parityDir)
+			default:
+				t.Fatalf("unknown backend %q", backend)
+			}
+			defer restore()
+
+			newData := []byte("Updated content that should not be saved")
+			newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
+			err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
+			require.Error(t, err, "Update should fail when %s backend unavailable", backend)
+
+			obj2, err := f.NewObject(ctx, remote)
+			require.NoError(t, err, "Original file should still exist after failed update")
+			rc, err := obj2.Open(ctx)
+			require.NoError(t, err)
+			gotData, err := io.ReadAll(rc)
+			_ = rc.Close()
+			require.NoError(t, err)
+			assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback removes partial particles)")
+		})
 	}
-	f, err := raid3.NewFs(ctx, "TestUpdateFail", "", m)
-	require.NoError(t, err)
-
-	// Create original file
-	remote := "update_test.txt"
-	originalData := []byte("Original content")
-	info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(originalData)), true, nil, nil)
-	_, err = f.Put(ctx, bytes.NewReader(originalData), info)
-	require.NoError(t, err)
-
-	// Verify original file exists
-	_, err = f.NewObject(ctx, remote)
-	require.NoError(t, err)
-
-	// Get the object to update
-	obj, err := f.NewObject(ctx, remote)
-	require.NoError(t, err)
-
-	// Make odd backend unavailable (replace dir with file - health check correctly
-	// treats "not a directory" as unavailable; chmod 0555 would be treated as
-	// available due to SFTP chroot workaround)
-	defer replaceDirWithFileForTest(t, oddDir)()
-
-	// Attempt update - should fail
-	newData := []byte("Updated content that should not be saved")
-	newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
-	err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
-
-	// Update should fail
-	require.Error(t, err, "Update should fail when backend unavailable")
-
-	// Verify original file content is preserved (rollback removes partial particles)
-	obj2, err := f.NewObject(ctx, remote)
-	require.NoError(t, err, "Original file should still exist after failed update")
-	rc, err := obj2.Open(ctx)
-	require.NoError(t, err)
-	gotData, err := io.ReadAll(rc)
-	_ = rc.Close()
-	require.NoError(t, err)
-	assert.Equal(t, originalData, gotData, "Original file content should be preserved (rollback removes partial particles)")
 }
 
 // TestHealthCheckEnforcesStrictWrites tests that the pre-flight health check
@@ -1579,6 +1563,135 @@ func TestRollbackDisabled(t *testing.T) {
 		errEven == nil, errOdd == nil)
 
 	t.Logf("✅ Rollback disabled test completed (partial state may remain)")
+}
+
+// TestMoveFailsWithRollbackDisabled aligns with bash rollback-disabled-move-fail-*:
+// with rollback=false, make one backend unavailable, Move must fail; original file remains at source.
+func TestMoveFailsWithRollbackDisabled(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	for _, backend := range []string{"even", "odd", "parity"} {
+		backend := backend
+		t.Run(backend+"_unavailable", func(t *testing.T) {
+			evenDir := t.TempDir()
+			oddDir := t.TempDir()
+			parityDir := t.TempDir()
+
+			m := configmap.Simple{
+				"even":     evenDir,
+				"odd":      oddDir,
+				"parity":   parityDir,
+				"rollback": "false",
+			}
+			f, err := raid3.NewFs(ctx, "TestMoveRollbackDisabled", "", m)
+			require.NoError(t, err)
+			if f.Features().Move == nil {
+				t.Skip("backend does not support server-side Move")
+			}
+
+			oldRemote := "original.txt"
+			data := []byte("Move with rollback disabled")
+			info := object.NewStaticObjectInfo(oldRemote, time.Now(), int64(len(data)), true, nil, nil)
+			_, err = f.Put(ctx, bytes.NewReader(data), info)
+			require.NoError(t, err)
+
+			oldObj, err := f.NewObject(ctx, oldRemote)
+			require.NoError(t, err)
+
+			var restore func()
+			switch backend {
+			case "even":
+				restore = replaceDirWithFileForTest(t, evenDir)
+			case "odd":
+				restore = replaceDirWithFileForTest(t, oddDir)
+			case "parity":
+				restore = replaceDirWithFileForTest(t, parityDir)
+			default:
+				t.Fatalf("unknown backend %q", backend)
+			}
+			defer restore()
+
+			newRemote := "moved.txt"
+			_, err = f.Features().Move(ctx, oldObj, newRemote)
+			require.Error(t, err, "Move should fail when %s backend unavailable (rollback disabled)", backend)
+
+			oldObj2, err := f.NewObject(ctx, oldRemote)
+			require.NoError(t, err, "Original file should still exist after failed move")
+			rc, err := oldObj2.Open(ctx)
+			require.NoError(t, err)
+			gotData, err := io.ReadAll(rc)
+			_ = rc.Close()
+			require.NoError(t, err)
+			// With rollback disabled, partial move may leave source degraded; only assert we get some data back.
+			require.NotEmpty(t, gotData, "Original file should still be readable (content may differ if partially moved)")
+		})
+	}
+}
+
+// TestUpdateFailsWithRollbackDisabled aligns with bash rollback-disabled-update-fail-*:
+// with rollback=false, make one backend unavailable, Update must fail; original content preserved.
+func TestUpdateFailsWithRollbackDisabled(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+
+	ctx := context.Background()
+	for _, backend := range []string{"even", "odd", "parity"} {
+		backend := backend
+		t.Run(backend+"_unavailable", func(t *testing.T) {
+			evenDir := t.TempDir()
+			oddDir := t.TempDir()
+			parityDir := t.TempDir()
+
+			m := configmap.Simple{
+				"even":     evenDir,
+				"odd":      oddDir,
+				"parity":   parityDir,
+				"rollback": "false",
+			}
+			f, err := raid3.NewFs(ctx, "TestUpdateRollbackDisabled", "", m)
+			require.NoError(t, err)
+
+			remote := "update_rollback_disabled.txt"
+			originalData := []byte("Original content")
+			info := object.NewStaticObjectInfo(remote, time.Now(), int64(len(originalData)), true, nil, nil)
+			_, err = f.Put(ctx, bytes.NewReader(originalData), info)
+			require.NoError(t, err)
+
+			obj, err := f.NewObject(ctx, remote)
+			require.NoError(t, err)
+
+			var restore func()
+			switch backend {
+			case "even":
+				restore = replaceDirWithFileForTest(t, evenDir)
+			case "odd":
+				restore = replaceDirWithFileForTest(t, oddDir)
+			case "parity":
+				restore = replaceDirWithFileForTest(t, parityDir)
+			default:
+				t.Fatalf("unknown backend %q", backend)
+			}
+			defer restore()
+
+			newData := []byte("Updated content that should not be saved")
+			newInfo := object.NewStaticObjectInfo(remote, time.Now(), int64(len(newData)), true, nil, nil)
+			err = obj.Update(ctx, bytes.NewReader(newData), newInfo)
+			require.Error(t, err, "Update should fail when %s backend unavailable (rollback disabled)", backend)
+
+			obj2, err := f.NewObject(ctx, remote)
+			require.NoError(t, err, "Original file should still exist after failed update")
+			rc, err := obj2.Open(ctx)
+			require.NoError(t, err)
+			gotData, err := io.ReadAll(rc)
+			_ = rc.Close()
+			require.NoError(t, err)
+			assert.Equal(t, originalData, gotData, "Original file content should be preserved")
+		})
+	}
 }
 
 // TestUpdateRollbackOnFailure tests that Update operations roll back successfully

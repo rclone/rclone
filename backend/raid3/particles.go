@@ -559,23 +559,31 @@ type StreamReconstructor struct {
 	dataEOF      bool
 	parityEOF    bool
 	mu           sync.Mutex
+
+	// Optional: collect reconstructed missing particle for heal-on-read (payload only, no footer)
+	reconstructedCollector io.Writer
+	outputOffset           int // bytes returned so far (for SplitBytesWithOffset)
 }
 
-// NewStreamReconstructor creates a new StreamReconstructor for degraded mode
-func NewStreamReconstructor(dataReader, parityReader io.ReadCloser, mode string, isOddLength bool, chunkSize int) *StreamReconstructor {
+// NewStreamReconstructor creates a new StreamReconstructor for degraded mode.
+// If collector is non-nil, the reconstructed missing particle (even or odd) is written to it
+// as each chunk is produced. Used for heal-on-read to queue the particle for background upload.
+func NewStreamReconstructor(dataReader, parityReader io.ReadCloser, mode string, isOddLength bool, chunkSize int, collector io.Writer) *StreamReconstructor {
 	return &StreamReconstructor{
-		dataReader:   dataReader,
-		parityReader: parityReader,
-		mode:         mode,
-		isOddLength:  isOddLength,
-		chunkSize:    chunkSize,
-		dataBuffer:   make([]byte, chunkSize),
-		parityBuffer: make([]byte, chunkSize),
-		outputBuffer: make([]byte, 0, chunkSize*2), // Output buffer (empty initially, capacity 2x chunk size)
-		dataPos:      0,
-		parityPos:    0,
-		dataEOF:      false,
-		parityEOF:    false,
+		dataReader:             dataReader,
+		parityReader:           parityReader,
+		mode:                   mode,
+		isOddLength:            isOddLength,
+		chunkSize:              chunkSize,
+		dataBuffer:             make([]byte, chunkSize),
+		parityBuffer:           make([]byte, chunkSize),
+		outputBuffer:           make([]byte, 0, chunkSize*2), // Output buffer (empty initially, capacity 2x chunk size)
+		dataPos:                0,
+		parityPos:              0,
+		dataEOF:                false,
+		parityEOF:              false,
+		reconstructedCollector: collector,
+		outputOffset:           0,
 	}
 }
 
@@ -751,6 +759,21 @@ func (r *StreamReconstructor) Read(p []byte) (n int, err error) {
 
 	if reconErr != nil {
 		return 0, formatOperationError("stream reconstruction failed", "", reconErr)
+	}
+
+	// If heal-on-read collector is set, write the missing particle bytes for this chunk
+	if r.reconstructedCollector != nil && len(reconstructed) > 0 {
+		evenBytes, oddBytes := SplitBytesWithOffset(reconstructed, r.outputOffset)
+		r.outputOffset += len(reconstructed)
+		var toWrite []byte
+		if r.mode == "even+parity" {
+			toWrite = oddBytes // missing odd
+		} else {
+			toWrite = evenBytes // missing even
+		}
+		if len(toWrite) > 0 {
+			_, _ = r.reconstructedCollector.Write(toWrite)
+		}
 	}
 
 	// Store reconstructed data in output buffer

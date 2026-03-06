@@ -74,7 +74,6 @@ Already compliant: read operations (NewObject, Open work with 2/3), delete opera
 ## Related Documentation
 
 - [`STRICT_WRITE_POLICY.md`](STRICT_WRITE_POLICY.md) - User-facing error handling guide
-- [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) - DD-001: Hardware RAID 3 Compliance decision record
-- [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) - Q1: Update Rollback Not Working Properly
+- [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md) - Pending and resolved design questions (e.g. Q1: Update Rollback)
 
 ---

@@ -38,8 +38,8 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# shellcheck source=compare_raid3_with_single_common.sh
-. "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
+# shellcheck source=compare_common.sh
+. "${SCRIPT_DIR}/compare_common.sh"
 
 export VERBOSE=0
 COMMAND=""
@@ -184,7 +184,7 @@ run_copy_download_test() {
   fi
   log "Dataset created: ${RAID3_REMOTE}:${dataset_id} and ${SINGLE_REMOTE}:${dataset_id} (retained for inspection)"
 
-  # Verify dataset is visible on raid3 (same as compare_raid3_with_single; avoids spurious "directory not found")
+  # Verify dataset is visible on raid3 (same as compare.sh; avoids spurious "directory not found")
   if ! rclone_cmd lsl "${RAID3_REMOTE}:${dataset_id}/file_root.txt" >/dev/null 2>&1; then
     log "Verification failed: ${RAID3_REMOTE}:${dataset_id}/file_root.txt not found after create_test_dataset"
     return 1

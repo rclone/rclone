@@ -214,6 +214,5 @@ Strict writes match the industry standard: all hardware RAID 3 controllers block
 
 - **`README.md`**: Complete user guide, configuration, commands, and usage examples
 - **`TESTING.md`**: Testing strategy and test coverage details
-- **`_analysis/DESIGN_DECISIONS.md`**: Design choices and rationale
-- **`OPEN_QUESTIONS.md`**: Known issues and future enhancements
+- **`OPEN_QUESTIONS.md`**: Open design questions, resolved decisions, and future enhancements
 

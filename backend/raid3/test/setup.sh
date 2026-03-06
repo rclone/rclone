@@ -65,7 +65,7 @@ Options:
 
 This script will:
   1. Create the _data subdirectory and all required subdirectories within it
-  2. Create the rclone configuration file: \${SCRIPT_DIR}/rclone_raid3_integration_tests.config
+  2. Create the rclone configuration file: \${SCRIPT_DIR}/tests.config
 
 The script is idempotent and safe to run multiple times.
 Tests should be run from the test directory: backend/raid3/test
@@ -95,8 +95,8 @@ DATA_DIR="${SCRIPT_DIR}/_data"
 export SCRIPT_DIR
 export SCRIPT_NAME
 export DATA_DIR
-# shellcheck source=compare_raid3_with_single_common.sh
-. "${SCRIPT_DIR}/compare_raid3_with_single_common.sh"
+# shellcheck source=compare_common.sh
+. "${SCRIPT_DIR}/compare_common.sh"
 
 # Create _data directory
 log_info "setup" "Creating data directory: ${DATA_DIR}"
@@ -120,7 +120,7 @@ for sftp_dir in "${SFTP_EVEN_DIR}" "${SFTP_ODD_DIR}" "${SFTP_PARITY_DIR}" "${SFT
 done
 
 # Create the rclone config file
-CONFIG_FILE="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"
+CONFIG_FILE="${SCRIPT_DIR}/tests.config"
 log_info "setup" "Creating rclone configuration file: ${CONFIG_FILE}"
 
 # Check if config file exists and if it contains the mixed remote
@@ -179,7 +179,7 @@ log_info "setup" "Data directory: ${DATA_DIR}"
 log_info "setup" "Config file: ${CONFIG_FILE}"
 log_info "setup" ""
 log_info "setup" "You can now run the integration tests from: ${SCRIPT_DIR}"
-log_info "setup" "Example: cd ${SCRIPT_DIR} && ./compare_raid3_with_single.sh test mkdir --storage-type=local"
+log_info "setup" "Example: cd ${SCRIPT_DIR} && ./compare.sh test mkdir --storage-type=local"
 log_info "setup" ""
 log_info "setup" "This config file can also be used for Go-based tests (fs/operations, fs/sync):"
 log_info "setup" "  RCLONE_CONFIG=${CONFIG_FILE} go test ./fs/operations -remote localraid3: -v"

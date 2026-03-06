@@ -1,6 +1,6 @@
 # Open Questions - raid3 Backend
 
-This document tracks open design questions and pending decisions for the raid3 backend, serving as a question registry (centralized list of issues requiring decisions), priority tracking (high/medium/low priority classification), status monitoring (active, resolved, or deferred questions), and decision workflow (process for moving questions to decisions). Process: Add questions as they arise, document decisions in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md) when resolved. **Last reviewed**: 2026-02-12. For user documentation, see [`README.md`](../README.md).
+This document tracks open design questions and pending decisions for the raid3 backend, serving as a question registry (centralized list of issues requiring decisions), priority tracking (high/medium/low priority classification), status monitoring (active, resolved, or deferred questions), and decision workflow (process for moving questions to decisions). Process: Add questions as they arise; when resolved, record the decision in this file (e.g. in the question's Status) or in code comments. **Last reviewed**: 2026-02-12. For user documentation, see [`README.md`](../README.md).
 
 **Review 2026-02-12**: All 17 open items were checked against the codebase. **Q15** (background worker context) is **resolved**: workers use `uploadCtx` derived from `NewFs` and respect `ctx.Done()`. **Q18** is partially done (Size() limitation documented in code). **Q21** and **Q22** line references were updated to current code. **Q25** line reference simplified. No other questions were removed; design/limitation items (Q6, Q8, Q9, Q10, Q11, etc.) remain relevant.
 
@@ -22,7 +22,7 @@ Health checks run before every write operation, causing network I/O overhead. Ad
 **Status**: ✅ **RESOLVED** (2026-02-12)  
 **Priority**: High (affects graceful shutdown)
 
-Background upload workers now use a context derived from the parent passed to `NewFs`: `f.uploadCtx, f.uploadCancel = context.WithCancel(ctx)` in `raid3.go`, and `backgroundUploader(ctx, …)` in `heal.go` exits on `<-ctx.Done()`. Workers therefore respect cancellation for graceful shutdown. Move to DESIGN_DECISIONS when that doc exists.
+Background upload workers now use a context derived from the parent passed to `NewFs`: `f.uploadCtx, f.uploadCancel = context.WithCancel(ctx)` in `raid3.go`, and `backgroundUploader(ctx, …)` in `heal.go` exits on `<-ctx.Done()`. Workers therefore respect cancellation for graceful shutdown.
 
 ---
 
@@ -169,7 +169,7 @@ Works for both compressed (block-based) and uncompressed data (same 128 KiB bloc
 
 **Context**: raid3 stores 3× the data (one full copy on even, one on odd, one parity block). Summing Total/Used/Free across all three backends yields the combined physical storage across the remotes. Whether this is the right semantic for users (e.g. `rclone about raid3:`) needs discussion — alternatives might include reporting logical usage, per-backend breakdown, or different aggregation rules.
 
-**References**: `backend/raid3/raid3.go` (About method, ~lines 800-857), `_analysis/RAID3_COMMAND_COVERAGE_REVIEW.md` (Q&A 6.2).
+**References**: `backend/raid3/raid3.go` (About method, ~lines 800-857).
 
 ---
 
@@ -314,11 +314,11 @@ Current error handling uses generic `fmt.Errorf()`. Consider adding specific err
 
 ## 📋 Process for Resolving Questions
 
-**Note**: Resolved questions are recorded in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md).
+**Note**: Resolved questions are recorded in this file (e.g. by setting Status to RESOLVED and adding a short note) or in code comments where appropriate.
 
 ### When a Question is Answered
 
-Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIGN_DECISIONS.md), update this file (remove question or move to resolved in DESIGN_DECISIONS), implement the decision in code, update user documentation if user-facing, and add tests if needed.
+Document the decision in this file (update the question's Status and add a resolution note), implement the decision in code, update user documentation if user-facing, and add tests if needed.
 
 ### Template for New Questions:
 
@@ -366,7 +366,7 @@ Document the decision in [`../_analysis/DESIGN_DECISIONS.md`](../_analysis/DESIG
 
 ## 📊 Statistics
 
-Total active questions: 16. Resolved in this file or moved to DESIGN_DECISIONS: Q2, Q4, Q5, Q7, Q15 (resolved 2026-02-12: background workers use context from NewFs), Q20, Q24. Active by priority: High (1) - Q14: Health Check Caching. Medium (8) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching, Q27: Heal-on-Read for Streaming (implement TestHeal*), Q28: TestReadSucceedsWithUnavailableBackend (odd+parity). Low (8) - Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q18: Size() Limitation (code comment done; README optional), Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch, Q26: Performance Test Skip Largest File.
+Total active questions: 16. Resolved in this file: Q2, Q4, Q5, Q7, Q15 (resolved 2026-02-12: background workers use context from NewFs), Q20, Q24. Active by priority: High (1) - Q14: Health Check Caching. Medium (8) - Q1: Update Rollback, Q10: Backend Commands, Q11: DirMove Limitation, Q16: Configurable Values, Q21: Range Read Optimization, Q25: Usage/Quota Caching, Q27: Heal-on-Read for Streaming (implement TestHeal*), Q28: TestReadSucceedsWithUnavailableBackend (odd+parity). Low (8) - Q6: Help Command, Q8: Cross-Backend Copy, Q9: Compression, Q18: Size() Limitation (code comment done; README optional), Q19: Error Types, Q22: Parallel Reader Opening, Q23: StreamReconstructor Size Mismatch, Q26: Performance Test Skip Largest File.
 
 
 **Use this file to track decisions before they're made!** 🤔

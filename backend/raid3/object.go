@@ -820,7 +820,13 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 		}
 
-		reconstructor := NewStreamReconstructor(evenReader, parityReader, "even+parity", isOddLength, chunkSize)
+		var healBuffer *bytes.Buffer
+		var collector io.Writer
+		if o.fs.opt.AutoHeal && !(rangeStart > 0 || rangeEnd >= 0) {
+			healBuffer = &bytes.Buffer{}
+			collector = healBuffer
+		}
+		reconstructor := NewStreamReconstructor(evenReader, parityReader, "even+parity", isOddLength, chunkSize, collector)
 		fs.Infof(o, "Reconstructed %s from even+parity (degraded mode, streaming)", o.remote)
 
 		var out io.ReadCloser
@@ -862,6 +868,9 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			return newRangeFilterReader(out, rangeStart, rangeEnd, sizeForRange), nil
 		}
 
+		if healBuffer != nil {
+			out = &healOnReadWrapper{underlying: out, buffer: healBuffer, fs: o.fs, remote: o.remote, particle: "odd", oddLength: isOddLength}
+		}
 		return out, nil
 	}
 	if errOdd == nil {
@@ -1001,7 +1010,13 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
 		}
 
-		reconstructor := NewStreamReconstructor(oddReader, parityReader, "odd+parity", isOddLength, chunkSize)
+		var healBuffer *bytes.Buffer
+		var collector io.Writer
+		if o.fs.opt.AutoHeal && !(rangeStart > 0 || rangeEnd >= 0) {
+			healBuffer = &bytes.Buffer{}
+			collector = healBuffer
+		}
+		reconstructor := NewStreamReconstructor(oddReader, parityReader, "odd+parity", isOddLength, chunkSize, collector)
 		fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode, streaming)", o.remote)
 
 		var out io.ReadCloser
@@ -1043,6 +1058,9 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			return newRangeFilterReader(out, rangeStart, rangeEnd, sizeForRange), nil
 		}
 
+		if healBuffer != nil {
+			out = &healOnReadWrapper{underlying: out, buffer: healBuffer, fs: o.fs, remote: o.remote, particle: "even", oddLength: isOddLength}
+		}
 		return out, nil
 	}
 	return nil, fmt.Errorf("cannot reconstruct: no data particle available")
@@ -1142,6 +1160,33 @@ func (r *rangeFilterReader) Read(p []byte) (n int, err error) {
 
 func (r *rangeFilterReader) Close() error {
 	return r.reader.Close()
+}
+
+// healOnReadWrapper wraps a ReadCloser to queue the reconstructed missing particle on Close
+// when the stream was fully read (EOF seen). Used for heal-on-read in degraded mode.
+type healOnReadWrapper struct {
+	underlying io.ReadCloser
+	buffer     *bytes.Buffer
+	fs         *Fs
+	remote     string
+	particle   string // "odd" or "even"
+	oddLength  bool
+	eofSeen    bool
+}
+
+func (w *healOnReadWrapper) Read(p []byte) (int, error) {
+	n, err := w.underlying.Read(p)
+	if err == io.EOF {
+		w.eofSeen = true
+	}
+	return n, err
+}
+
+func (w *healOnReadWrapper) Close() error {
+	if w.eofSeen && w.buffer.Len() > 0 {
+		w.fs.queueParticleUpload(w.remote, w.particle, w.buffer.Bytes(), w.oddLength)
+	}
+	return w.underlying.Close()
 }
 
 // Update updates the object
@@ -1290,44 +1335,55 @@ func (o *Object) updateStreaming(ctx context.Context, in io.Reader, src fs.Objec
 		}
 		splitInput = cr
 	}
-	// Same producer goroutine + bufio as Put (operations.go) so the full stream is read
+	// Same producer goroutine + bufio as Put (operations.go) so the full stream is read.
+	// Pass splitInput into the closure to avoid data race: main goroutine reassigns splitInput
+	// below; the producer must not capture the variable by reference.
 	producerPipeR, producerPipeW := io.Pipe()
-	go func() {
-		_, copyErr := io.Copy(producerPipeW, splitInput)
+	go func(r io.Reader) {
+		_, copyErr := io.Copy(producerPipeW, r)
 		_ = producerPipeW.CloseWithError(copyErr)
-	}()
+	}(splitInput)
 	splitInput = bufio.NewReaderSize(producerPipeR, streamProducerBufferSize)
 
 	splitter := NewStreamSplitter(evenPipeW, oddPipeW, parityPipeW, streamReadChunkSize, isOddLengthCh)
 
+	// Create even/odd particle infos in this goroutine to avoid data race: createParticleInfo
+	// reads src.Remote(), and src may not be safe for concurrent use from multiple goroutines.
+	// Pass evenInfo/oddInfo into the closures so goroutines don't capture the variables by
+	// reference (which the race detector flags as concurrent read/write).
+	evenInfo := createParticleInfo(o.fs, src, "even", -1, isOddLength)
+	oddInfo := createParticleInfo(o.fs, src, "odd", -1, isOddLength)
+
 	// Start Update goroutines first so they are reading from pipes when the splitter writes
 	// Goroutine 1: Update even particle (reads from evenPipeR)
-	g.Go(func() error {
-		defer func() { _ = evenPipeR.Close() }()
-		evenInfo := createParticleInfo(o.fs, src, "even", -1, isOddLength)
-		err := evenObj.Update(gCtx, evenPipeR, evenInfo, options...)
-		if err != nil {
-			return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err)
+	g.Go(func(evenInfo fs.ObjectInfo) func() error {
+		return func() error {
+			defer func() { _ = evenPipeR.Close() }()
+			err := evenObj.Update(gCtx, evenPipeR, evenInfo, options...)
+			if err != nil {
+				return fmt.Errorf("%s: failed to update even particle: %w", o.fs.even.Name(), err)
+			}
+			uploadedMu.Lock()
+			uploadedParticles = append(uploadedParticles, evenObj)
+			uploadedMu.Unlock()
+			return nil
 		}
-		uploadedMu.Lock()
-		uploadedParticles = append(uploadedParticles, evenObj)
-		uploadedMu.Unlock()
-		return nil
-	})
+	}(evenInfo))
 
 	// Goroutine 2: Update odd particle (reads from oddPipeR)
-	g.Go(func() error {
-		defer func() { _ = oddPipeR.Close() }()
-		oddInfo := createParticleInfo(o.fs, src, "odd", -1, isOddLength)
-		err := oddObj.Update(gCtx, oddPipeR, oddInfo, options...)
-		if err != nil {
-			return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err)
+	g.Go(func(oddInfo fs.ObjectInfo) func() error {
+		return func() error {
+			defer func() { _ = oddPipeR.Close() }()
+			err := oddObj.Update(gCtx, oddPipeR, oddInfo, options...)
+			if err != nil {
+				return fmt.Errorf("%s: failed to update odd particle: %w", o.fs.odd.Name(), err)
+			}
+			uploadedMu.Lock()
+			uploadedParticles = append(uploadedParticles, oddObj)
+			uploadedMu.Unlock()
+			return nil
 		}
-		uploadedMu.Lock()
-		uploadedParticles = append(uploadedParticles, oddObj)
-		uploadedMu.Unlock()
-		return nil
-	})
+	}(oddInfo))
 
 	// Goroutine 3: Update or create parity particle (reads from parityPipeR)
 	g.Go(func() error {

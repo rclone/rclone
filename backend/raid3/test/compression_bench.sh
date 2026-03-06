@@ -22,7 +22,7 @@ set -euo pipefail
 SCRIPT_NAME=$(basename "$0")
 SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_DIR="${DATA_DIR:-${SCRIPT_DIR}/_data}"
-RCLONE_CONFIG_BASE="${SCRIPT_DIR}/rclone_raid3_integration_tests.config"
+RCLONE_CONFIG_BASE="${SCRIPT_DIR}/tests.config"
 RCLONE_CMD="${RCLONE_BIN:-rclone}"
 BENCH_PATH="compression_bench"
 
