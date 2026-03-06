@@ -122,9 +122,9 @@ func TestDownloaders(t *testing.T) {
 		r := ranges.Range{Pos: 40 * 1024 * 1024, Size: 250}
 		err := dls.EnsureDownloader(r)
 		require.NoError(t, err)
-		// FIXME racy test
-		assert.False(t, item.HasRange(r))
-		time.Sleep(time.Second)
-		assert.True(t, item.HasRange(r))
+		// The download happens asynchronously, so poll until it completes
+		assert.Eventually(t, func() bool {
+			return item.HasRange(r)
+		}, 10*time.Second, 100*time.Millisecond, "timed out waiting for download to complete")
 	})
 }
