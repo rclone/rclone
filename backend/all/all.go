@@ -37,6 +37,7 @@ import (
 	_ "github.com/rclone/rclone/backend/internetarchive"
 	_ "github.com/rclone/rclone/backend/internxt"
 	_ "github.com/rclone/rclone/backend/jottacloud"
+	_ "github.com/rclone/rclone/backend/kdrive"
 	_ "github.com/rclone/rclone/backend/koofr"
 	_ "github.com/rclone/rclone/backend/linkbox"
 	_ "github.com/rclone/rclone/backend/local"
