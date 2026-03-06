@@ -496,7 +496,7 @@ func (f *Filter) DirContainsExcludeFile(ctx context.Context, fremote fs.Fs, remo
 		for _, excludeFile := range f.Opt.ExcludeFile {
 			exists, err := fs.FileExists(ctx, fremote, path.Join(remote, excludeFile))
 			if exists {
-				return true, nil
+				return !strings.HasSuffix(excludeFile, "/"), nil
 			}
 			if errors.Is(err, fs.ErrorIsDir) {
 				return strings.HasSuffix(excludeFile, "/"), nil
