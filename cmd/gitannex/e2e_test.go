@@ -16,6 +16,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/buildinfo"
 )
 
@@ -187,6 +188,10 @@ func skipE2eTestIfNecessary(t *testing.T) {
 	// TODO(#7984): Port e2e tests to `fstest` framework.
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping because fstest remote was specified.")
+	}
+
+	if runtime.GOOS == "darwin" && testy.CI() {
+		t.Skip("Skipping on macOS CI - tests frequently time out")
 	}
 
 	// TODO: Support e2e tests on Windows. Need to evaluate the semantics of the
