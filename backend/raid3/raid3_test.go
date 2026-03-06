@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/rclone/rclone/backend/all"   // for integration tests (S3 for TestRaid3Minio)
+	_ "github.com/rclone/rclone/backend/all" // for integration tests (S3 for TestRaid3Minio)
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/backend/raid3"
 	"github.com/rclone/rclone/fs"

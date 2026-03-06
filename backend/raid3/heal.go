@@ -149,11 +149,20 @@ func (f *Fs) uploadParticle(ctx context.Context, job *uploadJob) error {
 	}{}
 	switch job.particleType {
 	case "even":
-		tryOrder = []struct{ fs fs.Fs; name string }{{f.odd, "odd"}, {f.parity, "parity"}}
+		tryOrder = []struct {
+			fs   fs.Fs
+			name string
+		}{{f.odd, "odd"}, {f.parity, "parity"}}
 	case "odd":
-		tryOrder = []struct{ fs fs.Fs; name string }{{f.even, "even"}, {f.parity, "parity"}}
+		tryOrder = []struct {
+			fs   fs.Fs
+			name string
+		}{{f.even, "even"}, {f.parity, "parity"}}
 	case "parity":
-		tryOrder = []struct{ fs fs.Fs; name string }{{f.even, "even"}, {f.odd, "odd"}}
+		tryOrder = []struct {
+			fs   fs.Fs
+			name string
+		}{{f.even, "even"}, {f.odd, "odd"}}
 	}
 	for _, b := range tryOrder {
 		obj, err := b.fs.NewObject(ctx, job.remote)

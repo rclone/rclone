@@ -1,4 +1,4 @@
-// Package raid3: compression helpers for write/read path (config mapping, compress, decompress).
+// Package raid3 provides compression helpers for the write/read path (config mapping, compress, decompress).
 package raid3
 
 import (
@@ -134,7 +134,7 @@ func compressBlock(block []byte, compression [4]byte) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer enc.Close()
+		defer func() { _ = enc.Close() }()
 		return enc.EncodeAll(block, nil), nil
 	}
 	return nil, errUnsupportedCompression
@@ -192,7 +192,7 @@ func newCompressingReader(src io.Reader, algo string) (io.Reader, error) {
 	switch algo {
 	case "snappy":
 		go func() {
-			sw := snappy.NewWriter(pw)
+			sw := snappy.NewBufferedWriter(pw)
 			_, err := io.Copy(sw, src)
 			if err != nil {
 				_ = pw.CloseWithError(err)

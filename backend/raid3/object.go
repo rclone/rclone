@@ -540,9 +540,9 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 								useBlockRange = true
 							}
 						}
+					}
 				}
 			}
-		}
 		} else if numBlocks == 0 && compression == CompressionNone && (rangeStart > 0 || rangeEnd >= 0) {
 			// Uncompressed: same block structure as compressed (128 KiB blocks), no decompression
 			ucInv := uncompressedInventory(contentLength)
@@ -597,20 +597,33 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			}
 		}
 
-		evenReader, err := evenObj.Open(ctx, evenOpenOpts...)
-		if err != nil {
-			return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+		var evenReader, oddReader io.ReadCloser
+		if evenPayload == 0 {
+			// Avoid opening with RangeOption{0,-1} which would read the whole particle (footer); use zero-length reader.
+			evenReader = io.NopCloser(bytes.NewReader(nil))
+		} else {
+			var err error
+			evenReader, err = evenObj.Open(ctx, evenOpenOpts...)
+			if err != nil {
+				return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+			}
 		}
-
-		oddReader, err := oddObj.Open(ctx, oddOpenOpts...)
-		if err != nil {
-			_ = evenReader.Close()
-			return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+		if oddPayload == 0 {
+			// Avoid opening with RangeOption{0,-1} which would read the whole particle (footer); use zero-length reader.
+			oddReader = io.NopCloser(bytes.NewReader(nil))
+		} else {
+			var err error
+			oddReader, err = oddObj.Open(ctx, oddOpenOpts...)
+			if err != nil {
+				_ = evenReader.Close()
+				return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+			}
 		}
 
 		merger := NewStreamMerger(evenReader, oddReader, chunkSize)
 
 		var out io.ReadCloser
+		var err error
 		if numBlocks > 0 {
 			inv := inventory
 			if useBlockRange {
@@ -808,16 +821,26 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			parityOpenOpts = append(parityOpenOpts, &fs.RangeOption{Start: 0, End: parityPayload - 1})
 		}
 
-		// Reconstruct from even + parity
-		evenReader, err := evenObj.Open(ctx, evenOpenOpts...)
-		if err != nil {
-			return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+		// Reconstruct from even + parity (avoid RangeOption{0,-1} for zero-payload particle)
+		var evenReader, parityReader io.ReadCloser
+		if evenPayload == 0 {
+			evenReader = io.NopCloser(bytes.NewReader(nil))
+		} else {
+			var err error
+			evenReader, err = evenObj.Open(ctx, evenOpenOpts...)
+			if err != nil {
+				return nil, formatParticleError(o.fs.even, "even", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+			}
 		}
-
-		parityReader, err := parityObj.Open(ctx, parityOpenOpts...)
-		if err != nil {
-			_ = evenReader.Close()
-			return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+		if parityPayload == 0 {
+			parityReader = io.NopCloser(bytes.NewReader(nil))
+		} else {
+			var err error
+			parityReader, err = parityObj.Open(ctx, parityOpenOpts...)
+			if err != nil {
+				_ = evenReader.Close()
+				return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+			}
 		}
 
 		var healBuffer *bytes.Buffer
@@ -830,6 +853,7 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		fs.Infof(o, "Reconstructed %s from even+parity (degraded mode, streaming)", o.remote)
 
 		var out io.ReadCloser
+		var err error
 		if degradedNumBlocks > 0 {
 			inv := degradedInv
 			if len(inv) == 0 {
@@ -998,16 +1022,26 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 			parityOpenOpts = append(parityOpenOpts, &fs.RangeOption{Start: 0, End: parityPayload - 1})
 		}
 
-		// Reconstruct from odd + parity
-		oddReader, err := oddObj.Open(ctx, oddOpenOpts...)
-		if err != nil {
-			return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+		// Reconstruct from odd + parity (avoid RangeOption{0,-1} for zero-payload particle)
+		var oddReader, parityReader io.ReadCloser
+		if oddPayload == 0 {
+			oddReader = io.NopCloser(bytes.NewReader(nil))
+		} else {
+			var err error
+			oddReader, err = oddObj.Open(ctx, oddOpenOpts...)
+			if err != nil {
+				return nil, formatParticleError(o.fs.odd, "odd", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+			}
 		}
-
-		parityReader, err := parityObj.Open(ctx, parityOpenOpts...)
-		if err != nil {
-			_ = oddReader.Close()
-			return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+		if parityPayload == 0 {
+			parityReader = io.NopCloser(bytes.NewReader(nil))
+		} else {
+			var err error
+			parityReader, err = parityObj.Open(ctx, parityOpenOpts...)
+			if err != nil {
+				_ = oddReader.Close()
+				return nil, formatParticleError(o.fs.parity, "parity", "open failed", fmt.Sprintf("remote %q", o.remote), err)
+			}
 		}
 
 		var healBuffer *bytes.Buffer
@@ -1020,6 +1054,7 @@ func (o *Object) openStreaming(ctx context.Context, options ...fs.OpenOption) (i
 		fs.Infof(o, "Reconstructed %s from odd+parity (degraded mode, streaming)", o.remote)
 
 		var out io.ReadCloser
+		var err error
 		if degradedNumBlocks > 0 {
 			inv := oddDegradedInv
 			if len(inv) == 0 {

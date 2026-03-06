@@ -527,9 +527,9 @@ func TestReadSucceedsWithUnavailableBackend(t *testing.T) {
 	parityDir := t.TempDir()
 
 	m := configmap.Simple{
-		"even":          evenDir,
-		"odd":           oddDir,
-		"parity":        parityDir,
+		"even":   evenDir,
+		"odd":    oddDir,
+		"parity": parityDir,
 	}
 	f, err := raid3.NewFs(ctx, "TestReadDegraded", "", m)
 	require.NoError(t, err)

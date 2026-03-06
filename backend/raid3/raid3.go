@@ -422,7 +422,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	// open, set sequentialOpenDelay to 0 in constants.go and restore the previous goroutine+channel code.
 	var (
 		evenPath, oddPath, parityPath string
-		successCount                 int
+		successCount                  int
 	)
 
 	if initCtx.Err() != nil {

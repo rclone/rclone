@@ -160,9 +160,9 @@ func (h *hashingReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
-func (h *hashingReader) ContentLength() int64   { return h.n }
-func (h *hashingReader) MD5Sum() [16]byte      { return [16]byte(h.md5.Sum(nil)) }
-func (h *hashingReader) SHA256Sum() [32]byte   { return [32]byte(h.sha256.Sum(nil)) }
+func (h *hashingReader) ContentLength() int64 { return h.n }
+func (h *hashingReader) MD5Sum() [16]byte     { return [16]byte(h.md5.Sum(nil)) }
+func (h *hashingReader) SHA256Sum() [32]byte  { return [32]byte(h.sha256.Sum(nil)) }
 
 // particlesBuildResult holds the outcome of buildParticlesToWriters for use by putStreaming and putSpooling.
 type particlesBuildResult struct {

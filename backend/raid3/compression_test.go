@@ -189,7 +189,7 @@ func TestBuildParseInventory(t *testing.T) {
 func TestFullStreamRangeForBlocks(t *testing.T) {
 	inv := []uint32{10, 20, 30, 40} // blocks 0..3
 	tests := []struct {
-		first, last     int
+		first, last        int
 		wantStart, wantLen int64
 	}{
 		{0, 0, 0, 10},
@@ -208,7 +208,7 @@ func TestFullStreamRangeForBlocks(t *testing.T) {
 
 func TestAlignFullStreamToPairs(t *testing.T) {
 	tests := []struct {
-		start, len int64
+		start, len         int64
 		wantStart, wantLen int64
 	}{
 		{0, 4, 0, 4},
@@ -226,10 +226,10 @@ func TestAlignFullStreamToPairs(t *testing.T) {
 
 func TestParticleRangesForFullStream(t *testing.T) {
 	tests := []struct {
-		name                    string
-		fullStart, fullLen      int64
-		evenStart, evenEnd      int64
-		oddStart, oddEnd        int64
+		name               string
+		fullStart, fullLen int64
+		evenStart, evenEnd int64
+		oddStart, oddEnd   int64
 	}{
 		{"[0,4) first 4 bytes", 0, 4, 0, 1, 0, 1},
 		{"[0,1) first byte (even)", 0, 1, 0, 0, 0, -1},

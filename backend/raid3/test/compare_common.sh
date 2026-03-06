@@ -819,13 +819,13 @@ wait_for_minio_backend_ready() {
     
     # Success (status 0) means backend is ready
     if [[ ${status} -eq 0 ]]; then
-      [[ -n "${save_timeout}" ]] && export RCLONE_TEST_TIMEOUT="${save_timeout}" || unset RCLONE_TEST_TIMEOUT
+      if [[ -n "${save_timeout}" ]]; then export RCLONE_TEST_TIMEOUT="${save_timeout}"; else unset RCLONE_TEST_TIMEOUT; fi
       return 0
     fi
     
     # ErrorDirNotFound is also acceptable (backend is ready, just empty)
     if echo "${output}" | grep -qiE "(directory not found|bucket.*not found|no such bucket)"; then
-      [[ -n "${save_timeout}" ]] && export RCLONE_TEST_TIMEOUT="${save_timeout}" || unset RCLONE_TEST_TIMEOUT
+      if [[ -n "${save_timeout}" ]]; then export RCLONE_TEST_TIMEOUT="${save_timeout}"; else unset RCLONE_TEST_TIMEOUT; fi
       return 0
     fi
     
@@ -845,10 +845,10 @@ wait_for_minio_backend_ready() {
     
     # Other errors might indicate backend is ready but has issues - accept as ready
     # (better to proceed than wait forever)
-    [[ -n "${save_timeout}" ]] && export RCLONE_TEST_TIMEOUT="${save_timeout}" || unset RCLONE_TEST_TIMEOUT
+    if [[ -n "${save_timeout}" ]]; then export RCLONE_TEST_TIMEOUT="${save_timeout}"; else unset RCLONE_TEST_TIMEOUT; fi
     return 0
   done
-  [[ -n "${save_timeout}" ]] && export RCLONE_TEST_TIMEOUT="${save_timeout}" || unset RCLONE_TEST_TIMEOUT
+  if [[ -n "${save_timeout}" ]]; then export RCLONE_TEST_TIMEOUT="${save_timeout}"; else unset RCLONE_TEST_TIMEOUT; fi
   return 1
 }
 

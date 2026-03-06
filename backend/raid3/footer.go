@@ -42,8 +42,8 @@ var emptyFileMD5 [16]byte
 var emptyFileSHA256 [32]byte
 
 func init() {
-	hex.Decode(emptyFileMD5[:], []byte("d41d8cd98f00b204e9800998ecf8427e"))
-	hex.Decode(emptyFileSHA256[:], []byte("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
+	_, _ = hex.Decode(emptyFileMD5[:], []byte("d41d8cd98f00b204e9800998ecf8427e"))
+	_, _ = hex.Decode(emptyFileSHA256[:], []byte("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"))
 }
 
 // Footer holds the 94-byte EC footer stored at the end of each particle.
@@ -127,14 +127,14 @@ func FooterFromReconstructed(contentLength int64, md5, sha256 []byte, mtime time
 	return &Footer{
 		ContentLength: contentLength,
 		MD5:           md5Arr,
-		SHA256:         sha256Arr,
-		Mtime:          mtime.Unix(),
-		Compression:    compression,
-		NumBlocks:      numBlocks,
-		Algorithm:      AlgorithmR3,
-		DataShards:     2,
-		ParityShards:   1,
-		CurrentShard:   uint8(currentShard),
-		Reserved:       [4]byte{0, 0, 0, 0},
+		SHA256:        sha256Arr,
+		Mtime:         mtime.Unix(),
+		Compression:   compression,
+		NumBlocks:     numBlocks,
+		Algorithm:     AlgorithmR3,
+		DataShards:    2,
+		ParityShards:  1,
+		CurrentShard:  uint8(currentShard),
+		Reserved:      [4]byte{0, 0, 0, 0},
 	}
 }

@@ -154,6 +154,8 @@ func (f *Fs) rollbackPut(ctx context.Context, uploadedParticles []fs.Object) err
 
 // rollbackUpdate restores original particles from temporary locations (best-effort cleanup).
 // Not used by updateStreaming, which updates in place and uses rollbackPut on failure.
+//
+//nolint:unused // Reserved for potential future temp-based Update rollback.
 func (f *Fs) rollbackUpdate(ctx context.Context, tempParticles map[string]fs.Object) error {
 	g, _ := errgroup.WithContext(ctx)
 
@@ -256,6 +258,8 @@ func (f *Fs) rollbackMoves(ctx context.Context, moves []moveState) error {
 // server-side Move if available, or Copy+Delete as fallback (like operations.Move).
 // This allows the move-to-temp rollback pattern to work with backends like S3/MinIO
 // that support Copy but not Move.
+//
+//nolint:unused // Reserved for use with rollbackUpdate.
 func moveOrCopyParticleToTemp(ctx context.Context, backend fs.Fs, obj fs.Object, tempRemote string) (fs.Object, error) {
 	// Input validation
 	if err := validateContext(ctx, "moveOrCopyParticleToTemp"); err != nil {
