@@ -107,6 +107,26 @@ Flags for anything which can copy a file
   -u, --update                                      Skip files that are newer on the destination
 ```
 
+### Sync Options
+
+Flags used for sync commands
+
+```text
+      --backup-dir string               Make backups into hierarchy based in DIR
+      --delete-after                    When synchronizing, delete files on destination after transferring (default)
+      --delete-before                   When synchronizing, delete files on destination before transferring
+      --delete-during                   When synchronizing, delete files during transfer
+      --fix-case                        Force rename of case insensitive dest to match source
+      --ignore-errors                   Delete even if there are I/O errors
+      --list-cutoff int                 To save memory, sort directory listings on disk above this threshold (default 1000000)
+      --max-delete int                  When synchronizing, limit the number of deletes (default -1)
+      --max-delete-size SizeSuffix      When synchronizing, limit the total size of deletes (default off)
+      --suffix string                   Suffix to add to changed files
+      --suffix-keep-extension           Preserve the extension when using --suffix
+      --track-renames                   When synchronizing, track file renames and do a server-side move if possible
+      --track-renames-strategy string   Strategies to use when synchronizing using track-renames hash|modtime|leaf (default "hash")
+```
+
 ### Important Options
 
 Important flags useful for most commands

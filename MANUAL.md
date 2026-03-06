@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Feb 17, 2026
+% Mar 06, 2026
 
 # NAME
 
@@ -3768,6 +3768,26 @@ Flags for anything which can copy a file
   -u, --update                                      Skip files that are newer on the destination
 ```
 
+### Sync Options
+
+Flags used for sync commands
+
+```text
+      --backup-dir string               Make backups into hierarchy based in DIR
+      --delete-after                    When synchronizing, delete files on destination after transferring (default)
+      --delete-before                   When synchronizing, delete files on destination before transferring
+      --delete-during                   When synchronizing, delete files during transfer
+      --fix-case                        Force rename of case insensitive dest to match source
+      --ignore-errors                   Delete even if there are I/O errors
+      --list-cutoff int                 To save memory, sort directory listings on disk above this threshold (default 1000000)
+      --max-delete int                  When synchronizing, limit the number of deletes (default -1)
+      --max-delete-size SizeSuffix      When synchronizing, limit the total size of deletes (default off)
+      --suffix string                   Suffix to add to changed files
+      --suffix-keep-extension           Preserve the extension when using --suffix
+      --track-renames                   When synchronizing, track file renames and do a server-side move if possible
+      --track-renames-strategy string   Strategies to use when synchronizing using track-renames hash|modtime|leaf (default "hash")
+```
+
 ### Important Options
 
 Important flags useful for most commands
@@ -5388,12 +5408,12 @@ rclone convmv "stories/The Quick Brown Fox!.txt" --name-transform "all,command=e
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{YYYYMMDD}"
-// Output: stories/The Quick Brown Fox!-20260217
+// Output: stories/The Quick Brown Fox!-20260306
 ```
 
 ```console
 rclone convmv "stories/The Quick Brown Fox!" --name-transform "date=-{macfriendlytime}"
-// Output: stories/The Quick Brown Fox!-2026-02-17 0451PM
+// Output: stories/The Quick Brown Fox!-2026-03-06 0556PM
 ```
 
 ```console
@@ -7224,7 +7244,7 @@ full new copy of the file.
 When mounting with `--read-only`, attempts to write to files will fail *silently*
 as opposed to with a clear warning as in macFUSE.
 
-# Mounting on Linux
+## Mounting on Linux
 
 On newer versions of Ubuntu, you may encounter the following error when running
 `rclone mount`:
@@ -8666,7 +8686,7 @@ full new copy of the file.
 When mounting with `--read-only`, attempts to write to files will fail *silently*
 as opposed to with a clear warning as in macFUSE.
 
-# Mounting on Linux
+## Mounting on Linux
 
 On newer versions of Ubuntu, you may encounter the following error when running
 `rclone mount`:
@@ -19596,6 +19616,10 @@ knowing the local file is newer than the time it was last uploaded to the
 remote is sufficient. In those cases, this flag can speed up the process and
 reduce the number of API calls necessary.
 
+This flag is only supported on certain backends and will be silently
+ignored on unsupported backends. Supported backends include
+`azureblob`, `oracleobjectstorage`, `s3`, `swift`.
+
 Using this flag on a sync operation without also using `--update` would cause
 all files modified at any time other than the last upload time to be uploaded
 again, which is probably not what you want.
@@ -24785,7 +24809,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.73.1")
+      --user-agent string                  Set the user-agent to a specified string (default "rclone/v1.73.2")
 ```
 
 
@@ -27539,14 +27563,7 @@ The following backends have known issues that need more investigation:
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 - `TestDropbox` (`dropbox`)
   - [`TestBisyncRemoteRemote/normalization`](https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
-- `TestInternxt` (`internxt`)
-  - [`TestBisyncLocalRemote/all_changed`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [`TestBisyncLocalRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [`TestBisyncLocalRemote/max_delete_path1`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [`TestBisyncRemoteRemote/basic`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [`TestBisyncRemoteRemote/concurrent`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [5 more](https://pub.rclone.org/integration-tests/current/)
-- Updated: 2026-02-17-010016
+- Updated: 2026-03-06-010015
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
@@ -29662,6 +29679,20 @@ work with the SDK properly:
 | --------- |:-----------:|
 | .         | ．          |
 | ..        | ．．         |
+
+#### Important note about double slashes (`//`)
+
+Object keys containing consecutive forward slashes (`//`) are **not supported** by rclone. 
+
+When rclone encounters an object key with `//` (e.g., `a//b`), it will normalize the path to use a single slash (e.g., `a/b`). This normalization can cause "object not found" errors when trying to access the original object, as rclone will look for the normalized path instead of the actual object key.
+
+**Example:**
+- Original S3 object key: `folder//file.txt`
+- rclone interprets it as: `folder/file.txt`
+- Result: "object not found" error when trying to access `folder//file.txt`
+
+**Workaround:**
+Avoid using consecutive forward slashes (`//`) in S3 object keys when using rclone. If you have existing objects with `//` in their keys, you will need to rename them to use single slashes or access them through other means.
 
 ### Multipart uploads
 
@@ -68094,6 +68125,31 @@ Options:
 
 # Changelog
 
+## v1.73.2 - 2026-03-06
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2)
+
+- Bug Fixes
+  - build
+    - Update to go 1.25.8 to fix CVE-2026-27137 CVE-2026-27138 CVE-2026-25679 CVE-2026-27142 (Nick Craig-Wood)
+    - Update github.com/cloudflare/circl to v1.6.3 to fix CVE-2026-1229 (Nick Craig-Wood)
+    - Update to golang.org/x/net v0.51.0 to fix CVE-2026-27141 (Nick Craig-Wood)
+  - docs fixes:
+    - bisync: Add group Sync to the bisync command (Jan-Philipp Reßler)
+    - Note that --use-server-modtime only works on some backends (Nick Craig-Wood)
+    - Document unsupported S3 object keys with double slashes (Adam Kasztenny)
+    - Fix headers hierarchy for mount.md (Dark Dragon)
+    - Fix new drive flag typo in changelog (razorloves)
+- Archive
+  - Extract: fix extraction with "./" prefix from tar entry paths (Varun Chawla)
+- Drime
+  - Fix chunk-uploaded files ignoring workspace ID (a1pcm)
+- Internxt
+  - Fix Entry doesn't belong in directory errors on windows (jzunigax2)
+- WebDAV
+  - Escape reserved characters in URL path segments (Varun Chawla)
+  - Add missing headers for CORS (Romāns Potašovs)
+
 ## v1.73.1 - 2026-02-17
 
 [See commits](https://github.com/rclone/rclone/compare/v1.73.0...v1.73.1)
@@ -68151,7 +68207,7 @@ Options:
 - B2
   - Support authentication with new bucket restricted application keys (DianaNites)
 - Drive
-  - Add `--drive-metadata-force-expansive-access` flag (Nick Craig-Wood)
+  - Add `--drive-metadata-enforce-expansive-access` flag (Nick Craig-Wood)
   - Fix crash when trying to creating shortcut to a Google doc (Nick Craig-Wood)
 - FTP
   - Add http proxy authentication support (Nicolas Dessart)

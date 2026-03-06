@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "rclone" "1" "Feb 17, 2026" "User Manual" ""
+.TH "rclone" "1" "Mar 06, 2026" "User Manual" ""
 .hy
 .SH NAME
 .PP
@@ -4489,6 +4489,27 @@ Flags for anything which can copy a file
   -u, --update                                      Skip files that are newer on the destination
 \f[R]
 .fi
+.SS Sync Options
+.PP
+Flags used for sync commands
+.IP
+.nf
+\f[C]
+      --backup-dir string               Make backups into hierarchy based in DIR
+      --delete-after                    When synchronizing, delete files on destination after transferring (default)
+      --delete-before                   When synchronizing, delete files on destination before transferring
+      --delete-during                   When synchronizing, delete files during transfer
+      --fix-case                        Force rename of case insensitive dest to match source
+      --ignore-errors                   Delete even if there are I/O errors
+      --list-cutoff int                 To save memory, sort directory listings on disk above this threshold (default 1000000)
+      --max-delete int                  When synchronizing, limit the number of deletes (default -1)
+      --max-delete-size SizeSuffix      When synchronizing, limit the total size of deletes (default off)
+      --suffix string                   Suffix to add to changed files
+      --suffix-keep-extension           Preserve the extension when using --suffix
+      --track-renames                   When synchronizing, track file renames and do a server-side move if possible
+      --track-renames-strategy string   Strategies to use when synchronizing using track-renames hash|modtime|leaf (default \[dq]hash\[dq])
+\f[R]
+.fi
 .SS Important Options
 .PP
 Important flags useful for most commands
@@ -6292,14 +6313,14 @@ rclone convmv \[dq]stories/The Quick Brown Fox!.txt\[dq] --name-transform \[dq]a
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{YYYYMMDD}\[dq]
-// Output: stories/The Quick Brown Fox!-20260217
+// Output: stories/The Quick Brown Fox!-20260306
 \f[R]
 .fi
 .IP
 .nf
 \f[C]
 rclone convmv \[dq]stories/The Quick Brown Fox!\[dq] --name-transform \[dq]date=-{macfriendlytime}\[dq]
-// Output: stories/The Quick Brown Fox!-2026-02-17 0451PM
+// Output: stories/The Quick Brown Fox!-2026-03-06 0556PM
 \f[R]
 .fi
 .IP
@@ -8390,7 +8411,7 @@ This may make rclone upload a full new copy of the file.
 When mounting with \f[V]--read-only\f[R], attempts to write to files
 will fail \f[I]silently\f[R] as opposed to with a clear warning as in
 macFUSE.
-.SH Mounting on Linux
+.SS Mounting on Linux
 .PP
 On newer versions of Ubuntu, you may encounter the following error when
 running \f[V]rclone mount\f[R]:
@@ -10044,7 +10065,7 @@ This may make rclone upload a full new copy of the file.
 When mounting with \f[V]--read-only\f[R], attempts to write to files
 will fail \f[I]silently\f[R] as opposed to with a clear warning as in
 macFUSE.
-.SH Mounting on Linux
+.SS Mounting on Linux
 .PP
 On newer versions of Ubuntu, you may encounter the following error when
 running \f[V]rclone mount\f[R]:
@@ -22775,6 +22796,11 @@ the remote is sufficient.
 In those cases, this flag can speed up the process and reduce the number
 of API calls necessary.
 .PP
+This flag is only supported on certain backends and will be silently
+ignored on unsupported backends.
+Supported backends include \f[V]azureblob\f[R],
+\f[V]oracleobjectstorage\f[R], \f[V]s3\f[R], \f[V]swift\f[R].
+.PP
 Using this flag on a sync operation without also using
 \f[V]--update\f[R] would cause all files modified at any time other than
 the last upload time to be uploaded again, which is probably not what
@@ -29892,7 +29918,7 @@ Flags for general networking and HTTP stuff.
       --tpslimit float                     Limit HTTP transactions per second to this
       --tpslimit-burst int                 Max burst of transactions for --tpslimit (default 1)
       --use-cookies                        Enable session cookiejar
-      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.73.1\[dq])
+      --user-agent string                  Set the user-agent to a specified string (default \[dq]rclone/v1.73.2\[dq])
 \f[R]
 .fi
 .SS Performance
@@ -33161,23 +33187,7 @@ The following backends have known issues that need more investigation:
 \f[V]TestBisyncRemoteRemote/normalization\f[R] (https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
 .RE
 .IP \[bu] 2
-\f[V]TestInternxt\f[R] (\f[V]internxt\f[R])
-.RS 2
-.IP \[bu] 2
-\f[V]TestBisyncLocalRemote/all_changed\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-.IP \[bu] 2
-\f[V]TestBisyncLocalRemote/ext_paths\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-.IP \[bu] 2
-\f[V]TestBisyncLocalRemote/max_delete_path1\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-.IP \[bu] 2
-\f[V]TestBisyncRemoteRemote/basic\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-.IP \[bu] 2
-\f[V]TestBisyncRemoteRemote/concurrent\f[R] (https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-.IP \[bu] 2
-5 more (https://pub.rclone.org/integration-tests/current/)
-.RE
-.IP \[bu] 2
-Updated: 2026-02-17-010016
+Updated: 2026-03-06-010015
 .PP
 The following backends either have not been tested recently or have
 known issues that are deemed unfixable for the time being:
@@ -35880,6 +35890,28 @@ T}@T{
 ．．
 T}
 .TE
+.SS Important note about double slashes (\f[V]//\f[R])
+.PP
+Object keys containing consecutive forward slashes (\f[V]//\f[R]) are
+\f[B]not supported\f[R] by rclone.
+.PP
+When rclone encounters an object key with \f[V]//\f[R] (e.g.,
+\f[V]a//b\f[R]), it will normalize the path to use a single slash (e.g.,
+\f[V]a/b\f[R]).
+This normalization can cause \[dq]object not found\[dq] errors when
+trying to access the original object, as rclone will look for the
+normalized path instead of the actual object key.
+.PP
+\f[B]Example:\f[R] - Original S3 object key: \f[V]folder//file.txt\f[R]
+- rclone interprets it as: \f[V]folder/file.txt\f[R] - Result:
+\[dq]object not found\[dq] error when trying to access
+\f[V]folder//file.txt\f[R]
+.PP
+\f[B]Workaround:\f[R] Avoid using consecutive forward slashes
+(\f[V]//\f[R]) in S3 object keys when using rclone.
+If you have existing objects with \f[V]//\f[R] in their keys, you will
+need to rename them to use single slashes or access them through other
+means.
 .SS Multipart uploads
 .PP
 rclone supports multipart uploads with S3 which means that it can upload
@@ -86862,6 +86894,68 @@ Options:
 .IP \[bu] 2
 \[dq]error\[dq]: Return an error based on option value.
 .SH Changelog
+.SS v1.73.2 - 2026-03-06
+.PP
+See commits (https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2)
+.IP \[bu] 2
+Bug Fixes
+.RS 2
+.IP \[bu] 2
+build
+.RS 2
+.IP \[bu] 2
+Update to go 1.25.8 to fix CVE-2026-27137 CVE-2026-27138 CVE-2026-25679
+CVE-2026-27142 (Nick Craig-Wood)
+.IP \[bu] 2
+Update github.com/cloudflare/circl to v1.6.3 to fix CVE-2026-1229 (Nick
+Craig-Wood)
+.IP \[bu] 2
+Update to golang.org/x/net v0.51.0 to fix CVE-2026-27141 (Nick
+Craig-Wood)
+.RE
+.IP \[bu] 2
+docs fixes:
+.RS 2
+.IP \[bu] 2
+bisync: Add group Sync to the bisync command (Jan-Philipp Reßler)
+.IP \[bu] 2
+Note that --use-server-modtime only works on some backends (Nick
+Craig-Wood)
+.IP \[bu] 2
+Document unsupported S3 object keys with double slashes (Adam Kasztenny)
+.IP \[bu] 2
+Fix headers hierarchy for mount.md (Dark Dragon)
+.IP \[bu] 2
+Fix new drive flag typo in changelog (razorloves)
+.RE
+.RE
+.IP \[bu] 2
+Archive
+.RS 2
+.IP \[bu] 2
+Extract: fix extraction with \[dq]./\[dq] prefix from tar entry paths
+(Varun Chawla)
+.RE
+.IP \[bu] 2
+Drime
+.RS 2
+.IP \[bu] 2
+Fix chunk-uploaded files ignoring workspace ID (a1pcm)
+.RE
+.IP \[bu] 2
+Internxt
+.RS 2
+.IP \[bu] 2
+Fix Entry doesn\[aq]t belong in directory errors on windows (jzunigax2)
+.RE
+.IP \[bu] 2
+WebDAV
+.RS 2
+.IP \[bu] 2
+Escape reserved characters in URL path segments (Varun Chawla)
+.IP \[bu] 2
+Add missing headers for CORS (Romāns Potašovs)
+.RE
 .SS v1.73.1 - 2026-02-17
 .PP
 See commits (https://github.com/rclone/rclone/compare/v1.73.0...v1.73.1)
@@ -87007,7 +87101,7 @@ Support authentication with new bucket restricted application keys
 Drive
 .RS 2
 .IP \[bu] 2
-Add \f[V]--drive-metadata-force-expansive-access\f[R] flag (Nick
+Add \f[V]--drive-metadata-enforce-expansive-access\f[R] flag (Nick
 Craig-Wood)
 .IP \[bu] 2
 Fix crash when trying to creating shortcut to a Google doc (Nick

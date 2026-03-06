@@ -1049,14 +1049,7 @@ The following backends have known issues that need more investigation:
 <!--- start list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 - `TestDropbox` (`dropbox`)
   - [`TestBisyncRemoteRemote/normalization`](https://pub.rclone.org/integration-tests/current/dropbox-cmd.bisync-TestDropbox-1.txt)
-- `TestInternxt` (`internxt`)
-  - [`TestBisyncLocalRemote/all_changed`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [`TestBisyncLocalRemote/ext_paths`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [`TestBisyncLocalRemote/max_delete_path1`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [`TestBisyncRemoteRemote/basic`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [`TestBisyncRemoteRemote/concurrent`](https://pub.rclone.org/integration-tests/current/internxt-cmd.bisync-TestInternxt-1.txt)
-  - [5 more](https://pub.rclone.org/integration-tests/current/)
-- Updated: 2026-02-17-010016
+- Updated: 2026-03-06-010015
 <!--- end list_failures - DO NOT EDIT THIS SECTION - use make commanddocs --->
 
 The following backends either have not been tested recently or have known issues
