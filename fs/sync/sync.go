@@ -1108,6 +1108,25 @@ func (s *syncCopyMove) copyDirMetadata(ctx context.Context, f fs.Fs, dst fs.Dire
 	if dst != nil && src.Remote() == dst.Remote() && operations.OverlappingFilterCheck(ctx, s.fdst, s.fsrc) {
 		return nil // src and dst can be the same in convmv
 	}
+
+	// Pre-validate the destination directory path even under --dry-run.
+	// In some modes (e.g. --no-update-dir-modtime/--dry-run with delayed dir modtime),
+	// directories can be queued without ever calling Mkdir/SetDirModTime, so validate here.
+	dirToCheck := dir
+	if dst != nil {
+		dirToCheck = dst.Remote()
+	}
+	if v, ok := f.(fs.RemotePathValidator); ok {
+		if vErr := v.ValidateRemotePath(ctx, dirToCheck); vErr != nil {
+			fs.Errorf(dirToCheck, "[Folder] %v", vErr)
+			err = fserrors.NoRetryError(fserrors.NoLowLevelRetryError(vErr))
+		}
+	}
+
+	if err != nil {
+		s.processError(err)
+		return nil
+	}
 	equal := operations.DirsEqual(ctx, src, dst, operations.DirsEqualOpt{ModifyWindow: s.modifyWindow, SetDirModtime: s.setDirModTime, SetDirMetadata: s.setDirMetadata})
 	if !s.setDirModTimeAfter && equal {
 		return nil
