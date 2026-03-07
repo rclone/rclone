@@ -32,5 +32,20 @@ endpoint:
   s3.us-east-va.io.cloud.ovh.us: OVHcloud Vint Hill, Virginia, USA
   s3.us-west-or.io.cloud.ovh.us: OVHcloud Hillsboro, Oregon, USA
   s3.rbx-archive.io.cloud.ovh.net: OVHcloud Roubaix, France (Cold Archive)
+storage_class:
+  "": Default.
+  STANDARD: |-
+    The Standard storage class offers a scalable object storage service, compatible with the vast majority of use cases, adapted to any type of volume.
+  EXPRESS_ONEZONE: |-
+    The High Performance storage class is a high-performance object storage space for applications that have high bandwidth requirements and require extremely fast and intensive read and write access to data.
+  GLACIER: |-
+    The Active Archive storage class is designed for long-term data retention, while ensuring immediate access when needed. 
+    This storage class is optimized for data that is rarely accessed but must always remain instantly available.
+  ONEZONE_IA: |-
+    The Infrequent Access storage class is designed for infrequently accessed data, also known as "cool" data storage, requiring fast data retrieval. 
+    It offers similar performance (ms TTFB, low latency) and availability than Standard Object Storage but with a lower cost per GiB-hour and a per GiB retrieval fee.
+  DEEP_ARCHIVE: |-
+    Cold Archive is designed for long-term data storage and data archiving with a very low cost per GiB-hour and per GiB restore fee. 
+    Indeed, data in the Cold Archive class is not available in real-time and needs to be restored before being available.
 acl: {}
 bucket_acl: true
