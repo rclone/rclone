@@ -3,11 +3,17 @@ description: IONOS Cloud
 region:
   de: Frankfurt, Germany
   eu-central-2: Berlin, Germany
+  eu-central-3: Berlin, Germany
+  eu-central-4: Frankfurt, Germany
   eu-south-2: Logrono, Spain
+  us-central-1: Lenexa, USA
 endpoint:
-  s3-eu-central-1.ionoscloud.com: Frankfurt, Germany
-  s3-eu-central-2.ionoscloud.com: Berlin, Germany
-  s3-eu-south-2.ionoscloud.com: Logrono, Spain
+  s3.eu-central-1.ionoscloud.com: Frankfurt, Germany
+  s3.eu-central-2.ionoscloud.com: Berlin, Germany
+  s3.eu-central-3.ionoscloud.com: Berlin, Germany
+  s3.eu-central-4.ionoscloud.com: Frankfurt, Germany
+  s3.eu-south-2.ionoscloud.com: Logrono, Spain
+  s3.us-central-1.ionoscloud.com: Lenexa, USA
 acl: {}
 bucket_acl: true
 quirks:
