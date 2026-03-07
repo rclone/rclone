@@ -69,6 +69,11 @@ func CheckHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object) (equal b
 
 var errNoHash = errors.New("no hash available")
 
+type key int
+
+// SourceObjectKey is key used to store the source object we are using for a copy/move
+const SourceObjectKey key = iota
+
 // checkHashes does the work of CheckHashes but takes a hash.Type and
 // returns the effective hash type used.
 func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.Type) (equal bool, htOut hash.Type, srcHash, dstHash string, err error) {
@@ -2028,6 +2033,14 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		logger(ctx, TransferError, srcObj, nil, err)
 		return err
 	}
+
+	// Add srcObj to context so backends can look in destination
+	// not only by name but for any other value in srcObj
+	// for example: date/size/checksum
+	// Needed for IMAP backend since it has no filenames
+	// just checksums/date/size
+
+	ctx = context.WithValue(ctx, SourceObjectKey, srcObj)
 
 	// Find dst object if it exists
 	var dstObj fs.Object
