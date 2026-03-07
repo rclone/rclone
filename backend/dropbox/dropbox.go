@@ -239,6 +239,19 @@ folders.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "shared_link",
+			Help: `Instructs rclone to work on a given shared link URL.
+
+In this mode rclone's features are limited to read operations only
+(listing and downloading). All write operations will be disabled.
+
+Set this to the Dropbox shared link URL (e.g.
+https://www.dropbox.com/sh/xxx?dl=0). Both file and folder shared
+links are supported. The remote path is relative to the root of the
+shared link.`,
+			Default:  "",
+			Advanced: true,
+		}, {
 			Name:     "pacer_min_sleep",
 			Default:  defaultMinSleep,
 			Help:     "Minimum time to sleep between API calls.",
@@ -306,6 +319,7 @@ type Options struct {
 	Impersonate    string               `config:"impersonate"`
 	SharedFiles    bool                 `config:"shared_files"`
 	SharedFolders  bool                 `config:"shared_folders"`
+	SharedLink     string               `config:"shared_link"`
 	BatchMode      string               `config:"batch_mode"`
 	BatchSize      int                  `config:"batch_size"`
 	BatchTimeout   fs.Duration          `config:"batch_timeout"`
@@ -336,6 +350,7 @@ type Fs struct {
 	ns             string         // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
 	exportExts     []exportExtension
+	sharedLinkMeta sharing.IsSharedLinkMetadata
 }
 
 type exportType int
@@ -547,6 +562,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 	})
 
+	sharedModes := 0
+	if f.opt.SharedFiles {
+		sharedModes++
+	}
+	if f.opt.SharedFolders {
+		sharedModes++
+	}
+	if f.opt.SharedLink != "" {
+		sharedModes++
+	}
+	if sharedModes > 1 {
+		return nil, errors.New("dropbox: shared_files, shared_folders and shared_link are mutually exclusive")
+	}
+
 	// do not fill features yet
 	if f.opt.SharedFiles {
 		f.setRoot(root)
@@ -557,6 +586,43 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.root = ""
 		if err == nil {
 			return f, fs.ErrorIsFile
+		}
+		return f, nil
+	}
+
+	if f.opt.SharedLink != "" {
+		f.setRoot(root)
+		// Validate the link by fetching its metadata, and detect if it is a
+		// file link so we can surface fs.ErrorIsFile to the caller.
+		arg := sharing.GetSharedLinkMetadataArg{Url: f.opt.SharedLink}
+		var meta sharing.IsSharedLinkMetadata
+		err = f.pacer.Call(func() (bool, error) {
+			meta, err = f.sharing.GetSharedLinkMetadata(&arg)
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return nil, fmt.Errorf("dropbox: get shared link metadata: %w", err)
+		}
+		f.sharedLinkMeta = meta
+		if _, ok := meta.(*sharing.FileLinkMetadata); ok {
+			// The link points directly to a file, not a folder.
+			if f.root != "" {
+				// Caller specified a sub-path inside a file link, which makes
+				// no sense. Treat the root itself as the only file.
+				f.root = ""
+				return f, fs.ErrorIsFile
+			}
+			return f, nil
+		}
+		if f.root != "" {
+			_, err := f.findSharedLinkObject(ctx, "")
+			if err == nil {
+				f.root = ""
+				return f, fs.ErrorIsFile
+			}
+			if err != fs.ErrorObjectNotFound {
+				return nil, err
+			}
 		}
 		return f, nil
 	}
@@ -830,7 +896,59 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if f.opt.SharedFiles {
 		return f.findSharedFile(ctx, remote)
 	}
+	if f.opt.SharedLink != "" {
+		if _, ok := f.sharedLinkMeta.(*sharing.FileLinkMetadata); ok {
+			file, _ := f.sharedLinkMeta.(*sharing.FileLinkMetadata)
+			leaf := f.opt.Enc.ToStandardName(file.Name)
+			if remote != "" && remote != leaf {
+				return nil, fs.ErrorObjectNotFound
+			}
+			return &Object{
+				fs:      f,
+				remote:  leaf,
+				url:     "",
+				bytes:   int64(file.Size),
+				modTime: file.ServerModified,
+			}, nil
+		}
+		return f.findSharedLinkObject(ctx, remote)
+	}
 	return f.newObjectWithInfo(ctx, remote, nil)
+}
+
+// findSharedLinkObject finds a specific file inside a shared link folder by
+// fetching its metadata via GetSharedLinkMetadata.
+func (f *Fs) findSharedLinkObject(ctx context.Context, remote string) (fs.Object, error) {
+	linkPath := f.buildSharedLinkPath(remote)
+
+	arg := sharing.GetSharedLinkMetadataArg{
+		Url:  f.opt.SharedLink,
+		Path: linkPath,
+	}
+	var meta sharing.IsSharedLinkMetadata
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		meta, err = f.sharing.GetSharedLinkMetadata(&arg)
+		return shouldRetry(ctx, err)
+	})
+	if err != nil {
+		if isSharedLinkNotFound(err) {
+			return nil, fs.ErrorObjectNotFound
+		}
+		return nil, err
+	}
+	fileMeta, ok := meta.(*sharing.FileLinkMetadata)
+	if !ok {
+		// It is a folder, not a file.
+		return nil, fs.ErrorObjectNotFound
+	}
+	return &Object{
+		fs:      f,
+		remote:  remote,
+		url:     linkPath,
+		bytes:   int64(fileMeta.Size),
+		modTime: fileMeta.ServerModified,
+	}, nil
 }
 
 // listSharedFolders lists all available shared folders mounted and not mounted
@@ -942,7 +1060,6 @@ func (f *Fs) listReceivedFiles(ctx context.Context, callback func(fs.DirEntry) e
 			}
 		}
 		for _, entry := range res.Entries {
-			fmt.Printf("%+v\n", entry)
 			entryPath := entry.Name
 			o := &Object{
 				fs:      f,
@@ -982,6 +1099,121 @@ func (f *Fs) findSharedFile(ctx context.Context, name string) (o *Object, err er
 	return nil, fs.ErrorObjectNotFound
 }
 
+func isSharedLinkNotFound(err error) bool {
+	switch e := err.(type) {
+	case sharing.GetSharedLinkMetadataAPIError:
+		if e.EndpointError != nil && e.EndpointError.Tag == sharing.SharedLinkErrorSharedLinkNotFound {
+			return true
+		}
+	}
+	return strings.Contains(err.Error(), "not_found")
+}
+
+// buildSharedLinkPath builds a path relative to the shared-link root in API
+// form (leading slash, encoded path segments).
+func (f *Fs) buildSharedLinkPath(remote string) string {
+	full := path.Join(f.root, remote)
+	if full == "." || full == "" {
+		return ""
+	}
+	return "/" + f.opt.Enc.FromStandardPath(full)
+}
+
+// listSharedLink lists the contents of a Dropbox shared link folder (or
+// returns the single file for a file link). It uses files.ListFolder with the
+// SharedLink field, which avoids having to mount the link into the user's
+// namespace. Only non-recursive listing is supported by the API.
+func (f *Fs) listSharedLink(ctx context.Context, dir string, callback func(fs.DirEntry) error) (err error) {
+	if fileMeta, ok := f.sharedLinkMeta.(*sharing.FileLinkMetadata); ok {
+		if dir != "" {
+			return fs.ErrorDirNotFound
+		}
+		leaf := f.opt.Enc.ToStandardName(fileMeta.Name)
+		o := &Object{
+			fs:      f,
+			remote:  leaf,
+			url:     "",
+			bytes:   int64(fileMeta.Size),
+			modTime: fileMeta.ServerModified,
+		}
+		return callback(o)
+	}
+
+	// Build the path relative to the shared link root.
+	root := f.buildSharedLinkPath(dir)
+
+	started := false
+	var res *files.ListFolderResult
+	for {
+		if !started {
+			arg := files.NewListFolderArg(root)
+			arg.SharedLink = &files.SharedLink{Url: f.opt.SharedLink}
+			arg.Recursive = false
+			arg.Limit = 1000
+			err = f.pacer.Call(func() (bool, error) {
+				res, err = f.srv.ListFolder(arg)
+				return shouldRetry(ctx, err)
+			})
+			if err != nil {
+				switch e := err.(type) {
+				case files.ListFolderAPIError:
+					if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
+						err = fs.ErrorDirNotFound
+					}
+				}
+				return err
+			}
+			started = true
+		} else {
+			contArg := files.ListFolderContinueArg{Cursor: res.Cursor}
+			err = f.pacer.Call(func() (bool, error) {
+				res, err = f.srv.ListFolderContinue(&contArg)
+				return shouldRetry(ctx, err)
+			})
+			if err != nil {
+				return fmt.Errorf("list continue: %w", err)
+			}
+		}
+		for _, entry := range res.Entries {
+			switch info := entry.(type) {
+			case *files.FolderMetadata:
+				// When listing via shared link the API does not populate
+				// PathDisplay/PathLower - only Name is reliable.
+				leaf := f.opt.Enc.ToStandardName(info.Name)
+				remote := path.Join(dir, leaf)
+				d := fs.NewDir(remote, time.Time{}).SetID(info.Id)
+				if err = callback(d); err != nil {
+					return err
+				}
+			case *files.FileMetadata:
+				// Same: PathDisplay is empty for shared-link listings; use Name.
+				leaf := f.opt.Enc.ToStandardName(info.Name)
+				remote := path.Join(dir, leaf)
+				// linkPath is the path relative to the shared link root used
+				// by GetSharedLinkFile when downloading (the Path field).
+				linkPath := root + "/" + f.opt.Enc.FromStandardName(leaf)
+				o := &Object{
+					fs:      f,
+					remote:  remote,
+					url:     linkPath,
+					bytes:   int64(info.Size),
+					modTime: info.ServerModified,
+					hash:    info.ContentHash,
+				}
+				if err = callback(o); err != nil {
+					return err
+				}
+			default:
+				fs.Errorf(f, "Unknown type %T", entry)
+			}
+		}
+		if !res.HasMore {
+			break
+		}
+	}
+	return nil
+}
+
 // List the objects and directories in dir into entries.  The
 // entries can be returned in any order but should be for a
 // complete directory.
@@ -1019,6 +1251,13 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 	}
 	if f.opt.SharedFolders {
 		err := f.listSharedFolders(ctx, list.Add)
+		if err != nil {
+			return err
+		}
+		return list.Flush()
+	}
+	if f.opt.SharedLink != "" {
+		err := f.listSharedLink(ctx, dir, list.Add)
 		if err != nil {
 			return err
 		}
@@ -1119,7 +1358,7 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	if f.opt.SharedFiles || f.opt.SharedFolders {
+	if f.opt.SharedFiles || f.opt.SharedFolders || f.opt.SharedLink != "" {
 		return nil, errNotSupportedInSharedMode
 	}
 	// Temporary Object under construction
@@ -1137,7 +1376,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	if f.opt.SharedFiles || f.opt.SharedFolders {
+	if f.opt.SharedFiles || f.opt.SharedFolders || f.opt.SharedLink != "" {
 		return errNotSupportedInSharedMode
 	}
 	root := path.Join(f.slashRoot, dir)
@@ -1219,7 +1458,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	if f.opt.SharedFiles || f.opt.SharedFolders {
+	if f.opt.SharedFiles || f.opt.SharedFolders || f.opt.SharedLink != "" {
 		return errNotSupportedInSharedMode
 	}
 	return f.purgeCheck(ctx, dir, true)
@@ -1899,6 +2138,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 		return
 	}
+	if o.fs.opt.SharedLink != "" {
+		// GetSharedLinkFile does not support range/seek - ignore any options
+		// and always download from the beginning. This matches the behaviour
+		// of the shared-files mode above.
+		arg := sharing.GetSharedLinkMetadataArg{
+			Url:  o.fs.opt.SharedLink,
+			Path: o.url,
+		}
+		err = o.fs.pacer.Call(func() (bool, error) {
+			_, in, err = o.fs.sharing.GetSharedLinkFile(&arg)
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return nil, err
+		}
+		return
+	}
 
 	if o.exportType.exportable() {
 		return o.export(ctx)
@@ -2075,7 +2331,7 @@ func checkPathLength(name string) (err error) {
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders {
+	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders || o.fs.opt.SharedLink != "" {
 		return errNotSupportedInSharedMode
 	}
 	remote := o.remotePath()
@@ -2120,7 +2376,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) (err error) {
-	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders {
+	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders || o.fs.opt.SharedLink != "" {
 		return errNotSupportedInSharedMode
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
