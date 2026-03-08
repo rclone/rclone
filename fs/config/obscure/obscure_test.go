@@ -3,20 +3,28 @@ package obscure
 import (
 	"bytes"
 	"testing"
+	"context"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/rclone/rclone/fs"
 )
 
 func TestObscure(t *testing.T) {
+	ci := fs.GetConfig(context.Background())
 	for _, test := range []struct {
 		in   string
 		want string
 		iv   string
+		plaintext bool
 	}{
-		{"", "YWFhYWFhYWFhYWFhYWFhYQ", "aaaaaaaaaaaaaaaa"},
-		{"potato", "YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "aaaaaaaaaaaaaaaa"},
-		{"potato", "YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "bbbbbbbbbbbbbbbb"},
+		{"", "YWFhYWFhYWFhYWFhYWFhYQ", "aaaaaaaaaaaaaaaa", false},
+		{"potato", "YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "aaaaaaaaaaaaaaaa", false},
+		{"potato", "YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "bbbbbbbbbbbbbbbb", false},
+		{"", "", "", true},
+		{"potato", "potato", "", true},
 	} {
+		ci.PlaintextPasswords = test.plaintext
 		cryptRand = bytes.NewBufferString(test.iv)
 		got, err := Obscure(test.in)
 		assert.NoError(t, err)
@@ -35,14 +43,19 @@ func TestObscure(t *testing.T) {
 }
 
 func TestReveal(t *testing.T) {
+	ci := fs.GetConfig(context.Background())
 	for _, test := range []struct {
 		in   string
 		want string
+		plaintext bool
 	}{
-		{"YWFhYWFhYWFhYWFhYWFhYQ", ""},
-		{"YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "potato"},
-		{"YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "potato"},
+		{"YWFhYWFhYWFhYWFhYWFhYQ", "", false},
+		{"YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "potato", false},
+		{"YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "potato", false},
+		{"", "", true},
+		{"potato", "potato", true},
 	} {
+		ci.PlaintextPasswords = test.plaintext
 		got, err := Reveal(test.in)
 		assert.NoError(t, err)
 		assert.Equal(t, test.want, got)
@@ -55,6 +68,7 @@ func TestReveal(t *testing.T) {
 
 // Test some error cases
 func TestRevealErrors(t *testing.T) {
+	fs.GetConfig(context.Background()).PlaintextPasswords = false
 	for _, test := range []struct {
 		in      string
 		wantErr string
