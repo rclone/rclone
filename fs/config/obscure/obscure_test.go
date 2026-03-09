@@ -2,8 +2,8 @@ package obscure
 
 import (
 	"bytes"
-	"testing"
 	"context"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 
@@ -13,9 +13,9 @@ import (
 func TestObscure(t *testing.T) {
 	ci := fs.GetConfig(context.Background())
 	for _, test := range []struct {
-		in   string
-		want string
-		iv   string
+		in        string
+		want      string
+		iv        string
 		plaintext bool
 	}{
 		{"", "YWFhYWFhYWFhYWFhYWFhYQ", "aaaaaaaaaaaaaaaa", false},
@@ -45,8 +45,8 @@ func TestObscure(t *testing.T) {
 func TestReveal(t *testing.T) {
 	ci := fs.GetConfig(context.Background())
 	for _, test := range []struct {
-		in   string
-		want string
+		in        string
+		want      string
 		plaintext bool
 	}{
 		{"YWFhYWFhYWFhYWFhYWFhYQ", "", false},

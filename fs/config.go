@@ -685,7 +685,7 @@ type ConfigInfo struct {
 	MaxConnections             int               `config:"max_connections"`
 	NameTransform              []string          `config:"name_transform"`
 	HTTPProxy                  string            `config:"http_proxy"`
-	PlaintextPasswords         bool              `config:plaintext_passwords`
+	PlaintextPasswords         bool              `config:"plaintext_passwords"`
 }
 
 func init() {

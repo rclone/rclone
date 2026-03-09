@@ -2,6 +2,7 @@
 package obscure
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -10,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"context"
 
 	"github.com/rclone/rclone/fs"
 )
