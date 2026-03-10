@@ -36,7 +36,7 @@
             "beta" "This feature is currently in beta must be used with care."
           }}
 
-          {{ if .Params.versionIntroduced }}<span class="badge badge-pill badge-secondary float-right" style="margin-top: 30px; font-size: 100%" title="This feature needs Rclone {{ .Params.versionIntroduced }} or later.">{{ .Params.versionIntroduced }}</span>{{ end }}
+          {{ if .Params.versionIntroduced }}<span class="badge badge-pill badge-secondary float-right" style="margin-top: 30px; font-size: 100%" title="This feature needs Rclone {{ .Params.versionIntroduced }} or later.">added in {{ .Params.versionIntroduced }}</span>{{ end }}
 
           {{ with .Params.status | lower }}
             {{ $statusCode := . }}
