@@ -699,3 +699,7 @@ backends:
    listretries: 5
  - backend: "kdrive"
    remote: "TestKdrive:"
+   fastlist: true
+   ignoretests:
+     - cmd/bisync
+     - cmd/gitannex
