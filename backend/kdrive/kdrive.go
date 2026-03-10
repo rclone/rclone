@@ -30,6 +30,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/zeebo/xxh3"
+	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -228,6 +229,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	root = parsePath(root)
+	root = norm.NFC.String(root)
 	fs.Debugf(ctx, "NewFs: for root=%s", root)
 
 	f := &Fs{
@@ -346,17 +348,19 @@ func (f *Fs) getItem(ctx context.Context, id string) (*api.Item, error) {
 	if item.ID == 0 {
 		return nil, fs.ErrorObjectNotFound
 	}
-	item.Name = f.opt.Enc.ToStandardName(item.Name)
+	item.Name = f.opt.Enc.ToStandardName(norm.NFC.String(item.Name))
 	return &item, nil
 }
 
 // findItemInDir retrieves a file or directory by its name in a specific directory using the API.
 func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string) (*api.Item, error) {
+	fs.Infof(nil, "directoryID %s leaf %s", directoryID, leaf)
+
 	cacheKey := directoryID + "|" + leaf
 
-	if entry, entryExists := f.cacheNotFound[cacheKey]; entryExists {
-		return entry.item, entry.err
-	}
+	// if entry, entryExists := f.cacheNotFound[cacheKey]; entryExists {
+	// 	return entry.item, entry.err
+	// }
 
 	cacheInit, cacheInitExist := ctx.Value("kdriveInitCache").(map[string]cacheEntry)
 	if cacheInitExist {
@@ -371,7 +375,7 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/name", f.opt.DriveID, directoryID),
 		Parameters: url.Values{},
 	}
-	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(leaf))
+	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(norm.NFC.String(leaf)))
 	opts.Parameters.Set("with", "path,hash")
 
 	var result api.ItemResult
@@ -384,7 +388,7 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 	})
 	if err != nil {
 		if isNotFoundError(err) {
-			f.cacheNotFound[cacheKey] = cacheEntry{nil, fs.ErrorObjectNotFound}
+			// f.cacheNotFound[cacheKey] = cacheEntry{nil, fs.ErrorObjectNotFound}
 			return nil, fs.ErrorObjectNotFound
 		}
 		return nil, fmt.Errorf("couldn't find item in dir: %w", err)
@@ -396,7 +400,7 @@ func (f *Fs) findItemInDir(ctx context.Context, directoryID string, leaf string)
 		return nil, fs.ErrorObjectNotFound
 	}
 	// Normalize the name
-	item.Name = f.opt.Enc.ToStandardName(item.Name)
+	item.Name = f.opt.Enc.ToStandardName(norm.NFC.String(item.Name))
 
 	if cacheInitExist {
 		cacheInit[cacheKey] = cacheEntry{&item, nil}
@@ -501,7 +505,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/directory", f.opt.DriveID, pathID),
 		Parameters: url.Values{},
 	}
-	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(leaf))
+	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(norm.NFC.String(leaf)))
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.ResultStatus.Update(err)
@@ -589,8 +593,8 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 				}
 			}
 
-			item.Name = f.opt.Enc.ToStandardName(item.Name)
-			item.FullPath = f.opt.Enc.ToStandardPath(strings.TrimPrefix(item.FullPath, rootPath))
+			item.Name = f.opt.Enc.ToStandardName(norm.NFC.String(item.Name))
+			item.FullPath = f.opt.Enc.ToStandardPath(norm.NFC.String(strings.TrimPrefix(item.FullPath, rootPath)))
 
 			if fn(item) {
 				found = true
@@ -808,6 +812,9 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		err = result.ResultStatus.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
+
+	f.clearNotFoundCache()
+
 	if err != nil {
 		return fmt.Errorf("rmdir failed: %w", err)
 	}
@@ -860,7 +867,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/copy/%s", f.opt.DriveID, srcObj.id, directoryID),
 		Parameters: url.Values{},
 	}
-	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(leaf))
+	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(norm.NFC.String(leaf)))
 	//opts.Parameters.Set("mtime", fmt.Sprintf("%d", uint64(srcObj.modTime.Unix())))
 	var resp *http.Response
 	var result api.FileCopyResponse
@@ -936,7 +943,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/move/%s", f.opt.DriveID, srcObj.id, directoryID),
 		Parameters: url.Values{},
 	}
-	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(leaf))
+	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(norm.NFC.String(leaf)))
 	var resp *http.Response
 	var result api.CancellableResponse
 	err = f.pacer.Call(func() (bool, error) {
@@ -999,7 +1006,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		Path:       fmt.Sprintf("/3/drive/%s/files/%s/move/%s", f.opt.DriveID, srcID, dstDirectoryID),
 		Parameters: url.Values{},
 	}
-	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(dstLeaf))
+	opts.Parameters.Set("name", f.opt.Enc.FromStandardName(norm.NFC.String(dstLeaf)))
 	var resp *http.Response
 	var result api.CancellableResponse
 	err = f.pacer.Call(func() (bool, error) {
@@ -1021,6 +1028,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 // optional interface
 func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
+	f.clearNotFoundCache()
 }
 
 func (f *Fs) getPublicLink(ctx context.Context, fileID int) (string, bool, error) {
@@ -1476,7 +1484,7 @@ func (o *Object) updateDirect(ctx context.Context, in io.Reader, directoryID, le
 		Options:          options,
 	}
 
-	leaf = o.fs.opt.Enc.FromStandardName(leaf)
+	leaf = o.fs.opt.Enc.FromStandardName(norm.NFC.String(leaf))
 	opts.Parameters.Set("file_name", leaf)
 	opts.Parameters.Set("directory_id", directoryID)
 	opts.Parameters.Set("total_size", fmt.Sprintf("%d", size))
