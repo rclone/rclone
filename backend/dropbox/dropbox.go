@@ -222,17 +222,14 @@ All other operations will be disabled.`,
 		}, {
 			Name: "shared_folders",
 			Help: `Instructs rclone to work on shared folders.
-			
-When this flag is used with no path only the List operation is supported and 
-all available shared folders will be listed. If you specify a path the first part 
-will be interpreted as the name of shared folder. Rclone will then try to mount this 
-shared to the root namespace. On success shared folder rclone proceeds normally. 
-The shared folder is now pretty much a normal folder and all normal operations 
-are supported. 
 
-Note that we don't unmount the shared folder afterwards so the 
---dropbox-shared-folders can be omitted after the first use of a particular 
-shared folder.
+When this flag is used with no path only the List operation is supported and
+all available shared folders will be listed. If you specify a path the first part
+will be interpreted as the name of shared folder and rclone will list and access
+files within it using the shared folder's namespace. This works for all shared
+folder types including team folders.
+
+Note that write operations (upload, delete, etc.) are not supported in this mode.
 
 See also --dropbox-root-namespace for an alternative way to work with shared
 folders.`,
@@ -336,6 +333,7 @@ type Fs struct {
 	ns             string         // The namespace we are using or "" for none
 	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
 	exportExts     []exportExtension
+	cfg            dropbox.Config // SDK config for creating per-namespace clients
 }
 
 type exportType int
@@ -358,9 +356,21 @@ type Object struct {
 	bytes   int64     // size of the object
 	modTime time.Time // time it was last modified
 	hash    string    // content_hash of the object
+	nsID    string    // shared folder namespace ID, if applicable
 
 	exportType      exportType
 	exportAPIFormat exportAPIFormat
+}
+
+// fileSrv returns the files client to use for this object.
+// If the object belongs to a shared folder, it returns a
+// namespace-scoped client; otherwise it returns the default client.
+func (o *Object) fileSrv() files.Client {
+	if o.nsID != "" {
+		nsCfg := o.fs.cfg.WithNamespaceID(o.nsID)
+		return files.New(nsCfg)
+	}
+	return o.fs.srv
 }
 
 // Name of the remote (as passed into NewFs)
@@ -537,6 +547,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		cfg.AsMemberID = memberIDs[0].MemberInfo.Profile.MemberProfile.TeamMemberId
 	}
 
+	f.cfg = cfg
 	f.srv = files.New(cfg)
 	f.svc = files.New(ucfg)
 	f.sharing = sharing.New(cfg)
@@ -830,7 +841,51 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if f.opt.SharedFiles {
 		return f.findSharedFile(ctx, remote)
 	}
+	if f.opt.SharedFolders {
+		return f.newSharedFolderObject(ctx, remote)
+	}
 	return f.newObjectWithInfo(ctx, remote, nil)
+}
+
+// newSharedFolderObject finds an Object inside a shared folder by
+// using the shared folder's namespace ID to resolve the path.
+func (f *Fs) newSharedFolderObject(ctx context.Context, remote string) (fs.Object, error) {
+	firstDir, subPath, ok := strings.Cut(remote, "/")
+	if !ok {
+		return nil, fs.ErrorObjectNotFound
+	}
+	id, err := f.findSharedFolder(ctx, firstDir)
+	if err != nil {
+		return nil, err
+	}
+	nsCfg := f.cfg.WithNamespaceID(id)
+	nsSrv := files.New(nsCfg)
+
+	filePath := f.opt.Enc.FromStandardPath("/" + subPath)
+	var entry files.IsMetadata
+	err = f.pacer.Call(func() (bool, error) {
+		entry, err = nsSrv.GetMetadata(&files.GetMetadataArg{Path: filePath})
+		return shouldRetry(ctx, err)
+	})
+	if err != nil {
+		switch e := err.(type) {
+		case files.GetMetadataAPIError:
+			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
+				return nil, fs.ErrorObjectNotFound
+			}
+		}
+		return nil, err
+	}
+	fileInfo, ok := entry.(*files.FileMetadata)
+	if !ok {
+		return nil, fs.ErrorObjectNotFound
+	}
+	o, err := f.newObjectWithInfo(ctx, remote, fileInfo)
+	if err != nil {
+		return nil, err
+	}
+	o.(*Object).nsID = id
+	return o, nil
 }
 
 // listSharedFolders lists all available shared folders mounted and not mounted
@@ -877,6 +932,93 @@ func (f *Fs) listSharedFolders(ctx context.Context, callback func(fs.DirEntry) e
 	}
 
 	return nil
+}
+
+// listDir lists the contents of a directory using the given files client.
+// root is the Dropbox API path to list, dir is the rclone directory prefix for results.
+// nsID is the shared folder namespace ID to set on created objects (empty for normal listings).
+func (f *Fs) listDir(ctx context.Context, srv files.Client, root string, dir string, nsID string, list *list.Helper) (err error) {
+	started := false
+	var res *files.ListFolderResult
+	for {
+		if !started {
+			arg := files.NewListFolderArg(f.opt.Enc.FromStandardPath(root))
+			arg.Recursive = false
+			arg.Limit = 1000
+			if root == "/" || root == "" {
+				arg.Path = "" // Specify root folder as empty string
+			}
+			err = f.pacer.Call(func() (bool, error) {
+				res, err = srv.ListFolder(arg)
+				return shouldRetry(ctx, err)
+			})
+			if err != nil {
+				switch e := err.(type) {
+				case files.ListFolderAPIError:
+					if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
+						err = fs.ErrorDirNotFound
+					}
+				}
+				return err
+			}
+			started = true
+		} else {
+			arg := files.ListFolderContinueArg{
+				Cursor: res.Cursor,
+			}
+			err = f.pacer.Call(func() (bool, error) {
+				res, err = srv.ListFolderContinue(&arg)
+				return shouldRetry(ctx, err)
+			})
+			if err != nil {
+				return fmt.Errorf("list continue: %w", err)
+			}
+		}
+		for _, entry := range res.Entries {
+			var fileInfo *files.FileMetadata
+			var folderInfo *files.FolderMetadata
+			var metadata *files.Metadata
+			switch info := entry.(type) {
+			case *files.FolderMetadata:
+				folderInfo = info
+				metadata = &info.Metadata
+			case *files.FileMetadata:
+				fileInfo = info
+				metadata = &info.Metadata
+			default:
+				fs.Errorf(f, "Unknown type %T", entry)
+				continue
+			}
+
+			// Only the last element is reliably cased in PathDisplay
+			entryPath := metadata.PathDisplay
+			leaf := f.opt.Enc.ToStandardName(path.Base(entryPath))
+			remote := path.Join(dir, leaf)
+			if folderInfo != nil {
+				d := fs.NewDir(remote, time.Time{}).SetID(folderInfo.Id)
+				err = list.Add(d)
+				if err != nil {
+					return err
+				}
+			} else if fileInfo != nil {
+				o, err := f.newObjectWithInfo(ctx, remote, fileInfo)
+				if err != nil {
+					return err
+				}
+				o.(*Object).nsID = nsID
+				if o.(*Object).exportType.listable() {
+					err = list.Add(o)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+		if !res.HasMore {
+			break
+		}
+	}
+	return list.Flush()
 }
 
 // findSharedFolder find the id for a given shared folder name
@@ -1018,99 +1160,34 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return list.Flush()
 	}
 	if f.opt.SharedFolders {
-		err := f.listSharedFolders(ctx, list.Add)
+		if dir == "" {
+			err := f.listSharedFolders(ctx, list.Add)
+			if err != nil {
+				return err
+			}
+			return list.Flush()
+		}
+		// For subdirectories, use the shared folder's namespace
+		// to list its contents via the files API.
+		firstDir, subDir, _ := strings.Cut(dir, "/")
+		id, err := f.findSharedFolder(ctx, firstDir)
 		if err != nil {
 			return err
 		}
-		return list.Flush()
+		nsCfg := f.cfg.WithNamespaceID(id)
+		nsSrv := files.New(nsCfg)
+		root := ""
+		if subDir != "" {
+			root = "/" + subDir
+		}
+		return f.listDir(ctx, nsSrv, root, dir, id, list)
 	}
 
 	root := f.slashRoot
 	if dir != "" {
 		root += "/" + dir
 	}
-
-	started := false
-	var res *files.ListFolderResult
-	for {
-		if !started {
-			arg := files.NewListFolderArg(f.opt.Enc.FromStandardPath(root))
-			arg.Recursive = false
-			arg.Limit = 1000
-
-			if root == "/" {
-				arg.Path = "" // Specify root folder as empty string
-			}
-			err = f.pacer.Call(func() (bool, error) {
-				res, err = f.srv.ListFolder(arg)
-				return shouldRetry(ctx, err)
-			})
-			if err != nil {
-				switch e := err.(type) {
-				case files.ListFolderAPIError:
-					if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
-						err = fs.ErrorDirNotFound
-					}
-				}
-				return err
-			}
-			started = true
-		} else {
-			arg := files.ListFolderContinueArg{
-				Cursor: res.Cursor,
-			}
-			err = f.pacer.Call(func() (bool, error) {
-				res, err = f.srv.ListFolderContinue(&arg)
-				return shouldRetry(ctx, err)
-			})
-			if err != nil {
-				return fmt.Errorf("list continue: %w", err)
-			}
-		}
-		for _, entry := range res.Entries {
-			var fileInfo *files.FileMetadata
-			var folderInfo *files.FolderMetadata
-			var metadata *files.Metadata
-			switch info := entry.(type) {
-			case *files.FolderMetadata:
-				folderInfo = info
-				metadata = &info.Metadata
-			case *files.FileMetadata:
-				fileInfo = info
-				metadata = &info.Metadata
-			default:
-				fs.Errorf(f, "Unknown type %T", entry)
-				continue
-			}
-
-			// Only the last element is reliably cased in PathDisplay
-			entryPath := metadata.PathDisplay
-			leaf := f.opt.Enc.ToStandardName(path.Base(entryPath))
-			remote := path.Join(dir, leaf)
-			if folderInfo != nil {
-				d := fs.NewDir(remote, time.Time{}).SetID(folderInfo.Id)
-				err = list.Add(d)
-				if err != nil {
-					return err
-				}
-			} else if fileInfo != nil {
-				o, err := f.newObjectWithInfo(ctx, remote, fileInfo)
-				if err != nil {
-					return err
-				}
-				if o.(*Object).exportType.listable() {
-					err = list.Add(o)
-					if err != nil {
-						return err
-					}
-				}
-			}
-		}
-		if !res.HasMore {
-			break
-		}
-	}
-	return list.Flush()
+	return f.listDir(ctx, f.srv, root, dir, "", list)
 }
 
 // Put the object
@@ -1868,8 +1945,9 @@ func (o *Object) export(ctx context.Context) (in io.ReadCloser, err error) {
 
 	arg := files.ExportArg{Path: o.id, ExportFormat: string(o.exportAPIFormat)}
 	var exportResult *files.ExportResult
+	srv := o.fileSrv()
 	err = o.fs.pacer.Call(func() (bool, error) {
-		exportResult, in, err = o.fs.srv.Export(&arg)
+		exportResult, in, err = srv.Export(&arg)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -1910,8 +1988,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Path:         o.id,
 		ExtraHeaders: headers,
 	}
+	srv := o.fileSrv()
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, in, err = o.fs.srv.Download(&arg)
+		_, in, err = srv.Download(&arg)
 		return shouldRetry(ctx, err)
 	})
 
