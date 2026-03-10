@@ -7,19 +7,6 @@ import (
 	"time"
 )
 
-// Time represents a timestamp from the Movistar Cloud API.
-type Time time.Time
-
-// UnmarshalJSON parses a Movistar Cloud timestamp (Unix millis)
-func (t *Time) UnmarshalJSON(data []byte) error {
-	var millis int64
-	if _, err := fmt.Sscanf(string(data), "%d", &millis); err == nil {
-		*t = Time(time.Unix(millis/1000, (millis%1000)*int64(time.Millisecond)))
-		return nil
-	}
-	return fmt.Errorf("can't parse Movistar Cloud time %q", string(data))
-}
-
 // BasicISO returns time formatted for Movistar Cloud upload API
 // Format: 20060102T150405Z (no dashes, no colons, no fractional seconds)
 func BasicISO(t time.Time) string {

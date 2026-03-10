@@ -131,7 +131,7 @@ func (f *Fs) Hashes() hash.Set {
 
 // Precision return the precision of this Fs
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	return time.Millisecond
 }
 
 // parsePath parses a path string
@@ -666,11 +666,6 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	err := o.readMetaData(context.TODO())
-	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
-		return 0
-	}
 	return o.size
 }
 
