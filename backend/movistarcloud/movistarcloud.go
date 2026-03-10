@@ -35,7 +35,6 @@ const (
 	decayConstant = 2 // bigger for slower decay, exponential
 	rootURL       = "https://micloud.movistar.es"
 	uploadURL     = "https://upload.micloud.movistar.es"
-	userAgent     = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:147.0) Gecko/20100101 Firefox/147.0"
 	defaultLimit  = 200
 )
 
@@ -159,20 +158,6 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
-// getResponse is a helper to decode the Movistar Cloud GET response wrapper
-// The API returns { "responsetime": N, "data": { ... } }
-type getResponse struct {
-	ResponseTime int64           `json:"responsetime"`
-	Data         json.RawMessage `json:"data"`
-}
-
-// postResponse is a helper to decode the Movistar Cloud POST response wrapper
-// The API returns { "responsetime": N, "success": "...", ... }
-type postResponse struct {
-	ResponseTime int64  `json:"responsetime"`
-	Success      string `json:"success"`
-}
-
 // errorHandler parses a non 2xx error response into an error
 func errorHandler(resp *http.Response) error {
 	body, err := rest.ReadBody(resp)
@@ -205,7 +190,7 @@ func (f *Fs) apiGet(ctx context.Context, apiPath string, result interface{}) err
 		Method: "GET",
 		Path:   apiPath,
 	}
-	var respWrapper getResponse
+	var respWrapper api.GetResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &respWrapper)
 		return shouldRetry(ctx, resp, err)
@@ -240,7 +225,7 @@ func (f *Fs) apiPostGet(ctx context.Context, apiPath string, request, result int
 		Method: "POST",
 		Path:   apiPath,
 	}
-	var respWrapper getResponse
+	var respWrapper api.GetResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, request, &respWrapper)
 		return shouldRetry(ctx, resp, err)
@@ -300,11 +285,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.upSrv.SetErrorHandler(errorHandler)
 
 	// Set common headers
-	f.srv.SetHeader("User-Agent", userAgent)
 	f.srv.SetHeader("Accept", "application/json")
 	f.srv.SetHeader("Cookie", "JSESSIONID="+opt.JSessionID)
 
-	f.upSrv.SetHeader("User-Agent", userAgent)
 	f.upSrv.SetHeader("Accept", "application/json")
 	f.upSrv.SetHeader("Cookie", "JSESSIONID="+opt.JSessionID)
 
@@ -641,7 +624,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			IDs: []int64{folderID},
 		},
 	}
-	var result postResponse
+	var result api.PostResponse
 	err = f.apiPost(ctx, "/sapi/media/folder?action=softdelete", &request, &result)
 	if err != nil {
 		return fmt.Errorf("rmdir failed: %w", err)
@@ -738,7 +721,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		},
 	}
 
-	var result postResponse
+	var result api.PostResponse
 	err = o.fs.apiPost(ctx, "/sapi/upload/file?action=save-metadata", &request, &result)
 	if err != nil {
 		return fmt.Errorf("failed to set modification time: %w", err)
@@ -818,6 +801,7 @@ func (f *Fs) waitForUpload(ctx context.Context, id string) (*api.Media, error) {
 	delay := 500 * time.Millisecond
 	const maxDelay = 8 * time.Second
 	const maxAttempts = 15
+	validated := false
 	for range maxAttempts {
 		select {
 		case <-ctx.Done():
@@ -830,6 +814,7 @@ func (f *Fs) waitForUpload(ctx context.Context, id string) (*api.Media, error) {
 			fs.Debugf(nil, "waiting for upload %s validation status: %v", id, err)
 			// Increase delay and continue
 		} else if len(statusResp.IDs) > 0 && statusResp.IDs[0].Status != "V" {
+			validated = true
 			break
 		} else {
 			fs.Debugf(nil, "waiting for upload %s to finish validation...", id)
@@ -840,6 +825,9 @@ func (f *Fs) waitForUpload(ctx context.Context, id string) (*api.Media, error) {
 				delay = maxDelay
 			}
 		}
+	}
+	if !validated {
+		return nil, fmt.Errorf("upload %s still validating after %d attempts", id, maxAttempts)
 	}
 
 	// Now fetch the full metadata
@@ -989,7 +977,7 @@ func (f *Fs) deleteFileByID(ctx context.Context, id string) error {
 		},
 	}
 
-	var result postResponse
+	var result api.PostResponse
 	return f.apiPost(ctx, "/sapi/media/file?action=delete&softdelete=false", &request, &result)
 }
 
@@ -1106,7 +1094,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	request := api.SaveMetadataRequest{Data: reqData}
-	var result postResponse
+	var result api.PostResponse
 	err = f.apiPost(ctx, "/sapi/upload/file?action=save-metadata", &request, &result)
 	if err != nil {
 		return nil, fmt.Errorf("move failed: %w", err)
