@@ -63,6 +63,7 @@ import (
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/rclone/rclone/lib/resume"
 	"github.com/rclone/rclone/lib/transferaccounter"
 	"github.com/rclone/rclone/lib/version"
 )
@@ -1831,6 +1832,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		SetTier:           provider.StorageClass.Len() > 0,
 		GetTier:           provider.StorageClass.Len() > 0,
 		SlowModTime:       true,
+		CanResumeListing:  true,
 	}).Fill(ctx, f)
 	if opt.Provider == "AWS" {
 		f.features.DoubleSlash = true
@@ -2041,6 +2043,10 @@ func (f *Fs) newV1List(req *s3.ListObjectsV2Input) bucketLister {
 	// Convert v2 req into v1 req
 	//structs.SetFrom(&l.req, req)
 	setFrom_s3ListObjectsInput_s3ListObjectsV2Input(&l.req, req)
+	// Map v2 StartAfter to v1 Marker (same semantics: list after this key)
+	if req.StartAfter != nil {
+		l.req.Marker = req.StartAfter
+	}
 	return l
 }
 
@@ -2306,6 +2312,7 @@ type listOpt struct {
 	versionAt     fs.Time // if set only show versions <= this time
 	noSkipMarkers bool    // if set return dir marker objects
 	restoreStatus bool    // if set return restore status in listing too
+	startAfter    string  // if set, start listing strictly after this key
 }
 
 // list lists the objects into the function supplied with the opt
@@ -2350,6 +2357,9 @@ func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
 	}
 	if f.opt.RequesterPays {
 		req.RequestPayer = types.RequestPayerRequester
+	}
+	if opt.startAfter != "" {
+		req.StartAfter = &opt.startAfter
 	}
 	var listBucket bucketLister
 	switch {
@@ -2517,35 +2527,6 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *types.Ob
 	return o, nil
 }
 
-// listDir lists files and directories to out
-func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool, callback func(fs.DirEntry) error) (err error) {
-	// List the objects and directories
-	err = f.list(ctx, listOpt{
-		bucket:       bucket,
-		directory:    directory,
-		prefix:       prefix,
-		addBucket:    addBucket,
-		withVersions: f.opt.Versions,
-		versionAt:    f.opt.VersionAt,
-		hidden:       f.opt.VersionDeleted,
-	}, func(remote string, object *types.Object, versionID *string, isDirectory bool) error {
-		entry, err := f.itemToDirEntry(ctx, remote, object, versionID, isDirectory)
-		if err != nil {
-			return err
-		}
-		if entry != nil {
-			return callback(entry)
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-	// bucket must be present if listing succeeded
-	f.cache.MarkOK(bucket)
-	return nil
-}
-
 // listBuckets lists the buckets to out
 func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
 	req := s3.ListBucketsInput{}
@@ -2592,9 +2573,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // These need not be returned in any particular order.  If
 // callback returns an error then the listing will stop
 // immediately.
-func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
-	list := list.NewHelper(callback)
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (returnErr error) {
 	bucket, directory := f.split(dir)
+	startAfter, callback, done, err := resume.Setup(ctx, bucket != "", f, dir, callback)
+	if err != nil {
+		return err
+	}
+	defer done(&returnErr)
+
+	list := list.NewHelper(callback)
 	if bucket == "" {
 		if directory != "" {
 			return fs.ErrorListBucketRequired
@@ -2610,10 +2597,29 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 			}
 		}
 	} else {
-		err := f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", list.Add)
+		err := f.list(ctx, listOpt{
+			bucket:       bucket,
+			directory:    directory,
+			prefix:       f.rootDirectory,
+			addBucket:    f.rootBucket == "",
+			withVersions: f.opt.Versions,
+			versionAt:    f.opt.VersionAt,
+			hidden:       f.opt.VersionDeleted,
+			startAfter:   startAfter,
+		}, func(remote string, object *types.Object, versionID *string, isDirectory bool) error {
+			entry, err := f.itemToDirEntry(ctx, remote, object, versionID, isDirectory)
+			if err != nil {
+				return err
+			}
+			if entry != nil {
+				return list.Add(entry)
+			}
+			return nil
+		})
 		if err != nil {
 			return err
 		}
+		f.cache.MarkOK(bucket)
 	}
 	return list.Flush()
 }
@@ -2634,8 +2640,14 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 //
 // Don't implement this unless you have a more efficient way
 // of listing recursively than doing a directory traversal.
-func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (returnErr error) {
 	bucket, directory := f.split(dir)
+	startAfter, callback, done, err := resume.Setup(ctx, bucket != "", f, dir, callback)
+	if err != nil {
+		return err
+	}
+	defer done(&returnErr)
+
 	list := list.NewHelper(callback)
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
 		return f.list(ctx, listOpt{
@@ -2647,6 +2659,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			withVersions: f.opt.Versions,
 			versionAt:    f.opt.VersionAt,
 			hidden:       f.opt.VersionDeleted,
+			startAfter:   startAfter,
 		}, func(remote string, object *types.Object, versionID *string, isDirectory bool) error {
 			entry, err := f.itemToDirEntry(ctx, remote, object, versionID, isDirectory)
 			if err != nil {
@@ -2674,7 +2687,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			f.cache.MarkOK(bucket)
 		}
 	} else {
-		err = listR(bucket, directory, f.rootDirectory, f.rootBucket == "")
+		err := listR(bucket, directory, f.rootDirectory, f.rootBucket == "")
 		if err != nil {
 			return err
 		}
