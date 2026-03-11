@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/spf13/pflag"
 )
 
@@ -29,6 +30,7 @@ var (
 	deleteDuring    bool
 	deleteAfter     bool
 	bindAddr        string
+	authHost        string
 	disableFeatures string
 	dscp            string
 	uploadHeaders   []string
@@ -53,6 +55,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &deleteDuring, "delete-during", "", false, "When synchronizing, delete files during transfer", "Sync")
 	flags.BoolVarP(flagSet, &deleteAfter, "delete-after", "", false, "When synchronizing, delete files on destination after transferring (default)", "Sync")
 	flags.StringVarP(flagSet, &bindAddr, "bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name", "Networking")
+	flags.StringVarP(flagSet, &authHost, "auth-host", "", "", "Host interface for local OAuth webserver (default 127.0.0.1)", "Config")
 	flags.StringVarP(flagSet, &disableFeatures, "disable", "", "", "Disable a comma separated list of features (use --disable help to see a list)", "Config")
 	flags.StringArrayVarP(flagSet, &uploadHeaders, "header-upload", "", nil, "Set HTTP header for upload transactions", "Networking")
 	flags.StringArrayVarP(flagSet, &downloadHeaders, "header-download", "", nil, "Set HTTP header for download transactions", "Networking")
@@ -141,6 +144,11 @@ func SetFlags(ci *fs.ConfigInfo) {
 			fs.Fatalf(nil, "--bind: Expecting 1 IP address for %q but got %d", bindAddr, len(addrs))
 		}
 		ci.BindAddr = addrs[0]
+	}
+
+	// Process --auth-host into oauthutil.BindHost
+	if authHost != "" {
+		oauthutil.BindHost = authHost
 	}
 
 	// Process --disable
