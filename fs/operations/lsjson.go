@@ -319,6 +319,37 @@ func StatJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt) 
 	//
 	// Remove trailing / as rclone listings won't have them
 	remote = strings.TrimRight(remote, "/")
+
+	// For bucket-based backends with ListP, try listing the
+	// directory itself first using ListP. This is much cheaper than
+	// listing the parent when the parent has many entries.
+	//
+	// Bucket-based backends don't have directory IDs or other
+	// metadata that would be lost by returning a synthetic entry.
+	//
+	// If the listing returns empty we fall through to listing the
+	// parent to distinguish between an empty directory and a
+	// non-existent one.
+	features := fsrc.Features()
+	if features.BucketBased && features.ListP != nil {
+		errDirFound := errors.New("directory found")
+		err = features.ListP(ctx, remote, func(entries fs.DirEntries) error {
+			if len(entries) > 0 {
+				return errDirFound
+			}
+			return nil
+		})
+		if err == errDirFound {
+			return lj.entry(ctx, fs.NewDir(remote, time.Now()))
+		} else if err == fs.ErrorDirNotFound {
+			return nil, nil
+		}
+		// Fall through to parent listing
+		// - on other errors (err != nil)
+		// - empty listing (err == nil)
+	}
+
+	// List the parent to find the directory entry with proper metadata.
 	parent := path.Dir(remote)
 	if parent == "." || parent == "/" {
 		parent = ""
