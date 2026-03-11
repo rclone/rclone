@@ -190,8 +190,26 @@ See: https://developer.box.com/guides/authentication/jwt/as-user/
 func usesJWTAuth(m configmap.Mapper) bool {
 	jsonFile, okFile := m.Get("box_config_file")
 	jsonFileCredentials, okCredentials := m.Get("config_credentials")
-	boxSubType, boxSubTypeOk := m.Get("box_sub_type")
-	return (okFile || okCredentials) && boxSubTypeOk && (jsonFile != "" || jsonFileCredentials != "") && boxSubType != ""
+	return (okFile || okCredentials) && (jsonFile != "" || jsonFileCredentials != "")
+}
+
+func getOAuthConfig(m configmap.Mapper, opt *Options) *oauthutil.Config {
+	cfg := *oauthConfig
+	clientCreds, _ := m.Get(config.ConfigClientCredentials)
+	useClientCreds, _ := strconv.ParseBool(clientCreds)
+	boxSubType, _ := m.Get("box_sub_type")
+	if boxSubType == "" {
+		boxSubType = "user"
+	}
+	fs.Infof(nil, "getOAuthConfig: client_credentials=%q (parsed=%v), box_sub_type=%q, impersonate=%q", clientCreds, useClientCreds, boxSubType, opt.Impersonate)
+	if useClientCreds && opt.Impersonate != "" {
+		cfg.EndpointParams = url.Values{
+			"box_subject_type": {boxSubType},
+			"box_subject_id":   {opt.Impersonate},
+		}
+		fs.Infof(nil, "getOAuthConfig: set EndpointParams box_subject_type=%s, box_subject_id=%s", boxSubType, opt.Impersonate)
+	}
+	return &cfg
 }
 
 func refreshJWTToken(ctx context.Context, name string, m configmap.Mapper) error {
@@ -470,7 +488,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	var ts *oauthutil.TokenSource
 	// If not using an accessToken, create an oauth client and tokensource
 	if opt.AccessToken == "" {
-		client, ts, err = oauthutil.NewClient(ctx, name, m, oauthConfig)
+		oauthCfg := getOAuthConfig(m, opt)
+		client, ts, err = oauthutil.NewClient(ctx, name, m, oauthCfg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to configure Box: %w", err)
 		}
@@ -498,8 +517,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.srv.SetHeader("Authorization", "Bearer "+f.opt.AccessToken)
 	}
 
-	// If using impersonate set an as-user header
-	if f.opt.Impersonate != "" {
+	// If using impersonate with JWT auth, set an as-user header.
+	// With client credentials, the token is already scoped to the user via box_subject_id.
+	if f.opt.Impersonate != "" && usesJWTAuth(m) {
 		f.srv.SetHeader("as-user", f.opt.Impersonate)
 	}
 
