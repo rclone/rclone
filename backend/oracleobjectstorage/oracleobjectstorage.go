@@ -23,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/resume"
 )
 
 // Register with Fs
@@ -128,6 +129,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		SetTier:           true,
 		GetTier:           true,
 		SlowModTime:       true,
+		CanResumeListing:  true,
 	}).Fill(ctx, f)
 	if f.rootBucket != "" && f.rootDirectory != "" && !strings.HasSuffix(root, "/") {
 		// Check to see if the (bucket,directory) is actually an existing file
@@ -270,10 +272,16 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // These need not be returned in any particular order.  If
 // callback returns an error then the listing will stop
 // immediately.
-func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
-	list := list.NewHelper(callback)
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (returnErr error) {
 	bucketName, directory := f.split(dir)
 	fs.Debugf(f, "listing: bucket : %v, directory: %v", bucketName, dir)
+	startAfter, callback, done, err := resume.Setup(ctx, bucketName != "", f, dir, callback)
+	if err != nil {
+		return err
+	}
+	defer done(&returnErr)
+
+	list := list.NewHelper(callback)
 	if bucketName == "" {
 		if directory != "" {
 			return fs.ErrorListBucketRequired
@@ -289,10 +297,21 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 			}
 		}
 	} else {
-		err := f.listDir(ctx, bucketName, directory, f.rootDirectory, f.rootBucket == "", list.Add)
+		fn := func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error {
+			entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
+			if err != nil {
+				return err
+			}
+			if entry != nil {
+				return list.Add(entry)
+			}
+			return nil
+		}
+		err := f.list(ctx, bucketName, directory, f.rootDirectory, f.rootBucket == "", false, 0, startAfter, fn)
 		if err != nil {
 			return err
 		}
+		f.cache.MarkOK(bucketName)
 	}
 	return list.Flush()
 }
@@ -310,7 +329,7 @@ type listFn func(remote string, object *objectstorage.ObjectSummary, isDirectory
 // If hidden is set then it will list the hidden (deleted) files too.
 // if findFile is set it will look for files called (bucket, directory)
 func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, limit int,
-	fn listFn) (err error) {
+	startAfter string, fn listFn) (err error) {
 	if prefix != "" {
 		prefix += "/"
 	}
@@ -335,6 +354,9 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	}
 	if delimiter != "" {
 		request.Delimiter = common.String(delimiter)
+	}
+	if startAfter != "" {
+		request.Start = common.String(startAfter)
 	}
 
 	for {
@@ -440,27 +462,6 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *objectst
 		return nil, err
 	}
 	return o, nil
-}
-
-// listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool, callback func(fs.DirEntry) error) (err error) {
-	fn := func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error {
-		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
-		if err != nil {
-			return err
-		}
-		if entry != nil {
-			return callback(entry)
-		}
-		return nil
-	}
-	err = f.list(ctx, bucket, directory, prefix, addBucket, false, 0, fn)
-	if err != nil {
-		return err
-	}
-	// bucket must be present if listing succeeded
-	f.cache.MarkOK(bucket)
-	return nil
 }
 
 // listBuckets returns all the buckets to out
@@ -718,11 +719,17 @@ immediately.
 Don't implement this unless you have a more efficient way
 of listing recursively that doing a directory traversal.
 */
-func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (returnErr error) {
 	bucketName, directory := f.split(dir)
+	startAfter, callback, done, err := resume.Setup(ctx, bucketName != "", f, dir, callback)
+	if err != nil {
+		return err
+	}
+	defer done(&returnErr)
+
 	list := list.NewHelper(callback)
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
-		return f.list(ctx, bucket, directory, prefix, addBucket, true, 0, func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error {
+		return f.list(ctx, bucket, directory, prefix, addBucket, true, 0, startAfter, func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error {
 			entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
 			if err != nil {
 				return err
@@ -749,7 +756,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			f.cache.MarkOK(bucketName)
 		}
 	} else {
-		err = listR(bucketName, directory, f.rootDirectory, f.rootBucket == "")
+		err := listR(bucketName, directory, f.rootDirectory, f.rootBucket == "")
 		if err != nil {
 			return err
 		}
