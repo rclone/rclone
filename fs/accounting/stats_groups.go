@@ -89,6 +89,7 @@ Returns the following values:
 {
 	"bytes": total transferred bytes since the start of the group,
 	"checks": number of files checked,
+	"deletedDirs": number of directories deleted,
 	"deletes" : number of files deleted,
 	"elapsedTime": time in floating point seconds since rclone was started,
 	"errors": number of errors,

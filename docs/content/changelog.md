@@ -6,6 +6,31 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.73.2 - 2026-03-06
+
+[See commits](https://github.com/rclone/rclone/compare/v1.73.1...v1.73.2)
+
+- Bug Fixes
+  - build
+    - Update to go 1.25.8 to fix CVE-2026-27137 CVE-2026-27138 CVE-2026-25679 CVE-2026-27142 (Nick Craig-Wood)
+    - Update github.com/cloudflare/circl to v1.6.3 to fix CVE-2026-1229 (Nick Craig-Wood)
+    - Update to golang.org/x/net v0.51.0 to fix CVE-2026-27141 (Nick Craig-Wood)
+  - docs fixes:
+    - bisync: Add group Sync to the bisync command (Jan-Philipp Reßler)
+    - Note that --use-server-modtime only works on some backends (Nick Craig-Wood)
+    - Document unsupported S3 object keys with double slashes (Adam Kasztenny)
+    - Fix headers hierarchy for mount.md (Dark Dragon)
+    - Fix new drive flag typo in changelog (razorloves)
+- Archive
+  - Extract: fix extraction with "./" prefix from tar entry paths (Varun Chawla)
+- Drime
+  - Fix chunk-uploaded files ignoring workspace ID (a1pcm)
+- Internxt
+  - Fix Entry doesn't belong in directory errors on windows (jzunigax2)
+- WebDAV
+  - Escape reserved characters in URL path segments (Varun Chawla)
+  - Add missing headers for CORS (Romāns Potašovs)
+
 ## v1.73.1 - 2026-02-17
 
 [See commits](https://github.com/rclone/rclone/compare/v1.73.0...v1.73.1)
@@ -63,7 +88,7 @@ description: "Rclone Changelog"
 - B2
   - Support authentication with new bucket restricted application keys (DianaNites)
 - Drive
-  - Add `--drive-metadata-force-expansive-access` flag (Nick Craig-Wood)
+  - Add `--drive-metadata-enforce-expansive-access` flag (Nick Craig-Wood)
   - Fix crash when trying to creating shortcut to a Google doc (Nick Craig-Wood)
 - FTP
   - Add http proxy authentication support (Nicolas Dessart)

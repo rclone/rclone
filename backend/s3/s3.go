@@ -63,6 +63,7 @@ import (
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/rclone/rclone/lib/transferaccounter"
 	"github.com/rclone/rclone/lib/version"
 )
 
@@ -3011,6 +3012,8 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 	numParts := (srcSize-1)/partSize + 1
 
 	fs.Debugf(src, "Starting  multipart copy with %d parts", numParts)
+	account := transferaccounter.Get(ctx)
+	account.Start()
 
 	var (
 		parts   = make([]types.CompletedPart, numParts)
@@ -3045,6 +3048,11 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 				PartNumber: &partNum,
 				ETag:       uout.CopyPartResult.ETag,
 			}
+			copied := partSize
+			if int64(partNum) == numParts {
+				copied = srcSize - (numParts-1)*partSize
+			}
+			account.Add(copied)
 			return nil
 		})
 	}
