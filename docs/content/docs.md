@@ -2546,6 +2546,50 @@ This sets the interval between each retry specified by `--retries`
 
 The default is `0`. Use `0` to disable.
 
+### --resume-listings string
+
+Set this to a local directory path to enable resumable listings.
+When a long-running listing operation (e.g. `ls`, `sync`, `copy`) is
+interrupted, rclone saves checkpoint files in this directory so that
+the next run can resume from where it left off rather than starting
+from scratch.
+
+This is useful when working with very large buckets containing
+millions or billions of files, where listing alone can take hours or
+days.
+
+How it works:
+
+- During listing, rclone saves a checkpoint after each page of results
+  from the backend.
+- If the operation is interrupted (e.g. Ctrl-C, crash, reboot), the
+  checkpoint records how far the listing got.
+- On the next run with the same `--resume-listings` directory, rclone
+  detects the checkpoint and resumes listing from that point.
+- When a listing completes successfully, its checkpoint is
+  automatically deleted.
+
+Only backends that support key-name-based pagination can resume
+listings. Currently supported backends include S3, B2, and Oracle
+Object Storage. Other backends will work normally but won't benefit
+from resume checkpoints.
+
+Resume works with both normal listings and `--fast-list` (ListR).
+
+`--resume-listings` cannot be used with `sync` or other commands that
+delete files from the destination. A resumed listing skips
+already-listed source files, which would cause them to appear missing
+and be deleted from the destination. Use `--resume-listings` with
+`copy` or `ls` instead.
+
+After a resumed run completes, it is recommended to do one full run
+without `--resume-listings` to catch any files that were added in the
+already-processed key range between runs.
+
+```console
+rclone copy --resume-listings /tmp/rclone-resume s3:big-bucket /local/dest
+```
+
 ### --server-side-across-configs
 
 Allow server-side operations (e.g. copy or move) to work across

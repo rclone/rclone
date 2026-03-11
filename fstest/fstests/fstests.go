@@ -38,6 +38,7 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/resume"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1133,6 +1134,154 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("FsListFile1and2", func(t *testing.T) {
 				skipIfNotOk(t)
 				fstest.CheckListing(t, f, []fstest.Item{file1, file2})
+			})
+
+			// TestFsCanResumeListing tests the resumable listing feature
+			t.Run("FsCanResumeListing", func(t *testing.T) {
+				skipIfNotOk(t)
+				if !f.Features().CanResumeListing {
+					t.Skip("FS does not support resumable listings")
+				}
+				require.NotNil(t, f.Features().ListP, "CanResumeListing backends must have ListP")
+
+				// Helper to collect all entries from ListP
+				listAll := func(ctx context.Context, dir string) fs.DirEntries {
+					t.Helper()
+					var entries fs.DirEntries
+					err := f.Features().ListP(ctx, dir, func(e fs.DirEntries) error {
+						entries = append(entries, e...)
+						return nil
+					})
+					require.NoError(t, err)
+					return entries
+				}
+
+				// List without resume - get baseline
+				baseEntries := listAll(ctx, "")
+				require.NotEmpty(t, baseEntries, "test requires existing files")
+
+				t.Run("CheckpointSavedAndCleaned", func(t *testing.T) {
+					// List with --resume-listings enabled
+					resumeDir := t.TempDir()
+					resumeCtx, resumeCi := fs.AddConfig(ctx)
+					resumeCi.ResumeListings = resumeDir
+
+					entries := listAll(resumeCtx, "")
+					assert.Equal(t, len(baseEntries), len(entries), "resumed listing should return same entries when no checkpoint exists")
+
+					// After successful completion, checkpoint should be cleaned up
+					dirEntries, err := os.ReadDir(resumeDir)
+					require.NoError(t, err)
+					// Filter out any non-json files
+					var jsonFiles []os.DirEntry
+					for _, e := range dirEntries {
+						if strings.HasSuffix(e.Name(), ".json") {
+							jsonFiles = append(jsonFiles, e)
+						}
+					}
+					assert.Empty(t, jsonFiles, "checkpoint should be deleted after successful listing")
+				})
+
+				t.Run("ResumeFromCheckpoint", func(t *testing.T) {
+					// Sort baseline entries to find a good startAfter key
+					var names []string
+					for _, e := range baseEntries {
+						names = append(names, e.Remote())
+					}
+					sort.Strings(names)
+					if len(names) < 2 {
+						t.Skip("need at least 2 entries to test resume")
+					}
+
+					// Pick the first name as startAfter - resumed listing should skip it
+					startAfter := names[0]
+
+					// Create a checkpoint that resumes after the first entry
+					resumeDir := t.TempDir()
+					store, err := resume.NewStore(resumeDir)
+					require.NoError(t, err)
+					remoteName := fs.ConfigString(f)
+					require.NoError(t, store.Save(&resume.Checkpoint{
+						RemoteName: remoteName,
+						Dir:        "",
+						LastKey:    startAfter,
+					}))
+
+					// List with resume - should skip entries <= startAfter
+					resumeCtx, resumeCi := fs.AddConfig(ctx)
+					resumeCi.ResumeListings = resumeDir
+
+					resumedEntries := listAll(resumeCtx, "")
+
+					var resumedNames []string
+					for _, e := range resumedEntries {
+						resumedNames = append(resumedNames, e.Remote())
+					}
+
+					// The resumed listing should have fewer entries
+					assert.Less(t, len(resumedEntries), len(baseEntries),
+						"resumed listing should have fewer entries than full listing")
+
+					// The startAfter entry should not appear in the resumed listing
+					assert.NotContains(t, resumedNames, startAfter,
+						"entry at checkpoint should not appear in resumed listing")
+
+					// All resumed entries should exist in the full listing
+					for _, name := range resumedNames {
+						assert.Contains(t, names, name,
+							"resumed entry %q should exist in full listing", name)
+					}
+				})
+
+				// Test ListR resume if available
+				if f.Features().ListR != nil {
+					t.Run("ListRResumeFromCheckpoint", func(t *testing.T) {
+						// Get baseline from ListR
+						var baseNames []string
+						err := f.Features().ListR(ctx, "", func(entries fs.DirEntries) error {
+							for _, e := range entries {
+								baseNames = append(baseNames, e.Remote())
+							}
+							return nil
+						})
+						require.NoError(t, err)
+						sort.Strings(baseNames)
+						if len(baseNames) < 2 {
+							t.Skip("need at least 2 entries to test ListR resume")
+						}
+
+						startAfter := baseNames[0]
+
+						// Create checkpoint
+						resumeDir := t.TempDir()
+						store, err := resume.NewStore(resumeDir)
+						require.NoError(t, err)
+						remoteName := fs.ConfigString(f)
+						require.NoError(t, store.Save(&resume.Checkpoint{
+							RemoteName: remoteName,
+							Dir:        "",
+							LastKey:    startAfter,
+						}))
+
+						// List with resume
+						resumeCtx, resumeCi := fs.AddConfig(ctx)
+						resumeCi.ResumeListings = resumeDir
+
+						var resumedNames []string
+						err = f.Features().ListR(resumeCtx, "", func(entries fs.DirEntries) error {
+							for _, e := range entries {
+								resumedNames = append(resumedNames, e.Remote())
+							}
+							return nil
+						})
+						require.NoError(t, err)
+
+						assert.Less(t, len(resumedNames), len(baseNames),
+							"resumed ListR should have fewer entries than full listing")
+						assert.NotContains(t, resumedNames, startAfter,
+							"entry at checkpoint should not appear in resumed ListR")
+					})
+				}
 			})
 
 			// TestFsNewObjectDir tests NewObject on a directory which should produce fs.ErrorIsDir if possible or fs.ErrorObjectNotFound if not

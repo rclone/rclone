@@ -1341,6 +1341,9 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	if deleteMode != fs.DeleteModeOff && DoMove {
 		return fserrors.FatalError(errors.New("can't delete and move at the same time"))
 	}
+	if ci.ResumeListings != "" && deleteMode != fs.DeleteModeOff {
+		return fserrors.FatalError(errors.New("can't use --resume-listings with sync or other delete modes - a resumed listing skips already-listed files which would cause them to be deleted from the destination"))
+	}
 	// Run an extra pass to delete only
 	if deleteMode == fs.DeleteModeBefore {
 		if ci.TrackRenames {

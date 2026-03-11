@@ -278,6 +278,11 @@ var ConfigOptionsInfo = Options{{
 	Help:    "Use recursive list if available; uses more memory but fewer transactions",
 	Groups:  "Listing",
 }, {
+	Name:    "resume_listings",
+	Default: "",
+	Help:    "Local directory path for saving listing checkpoints so interrupted listings can be resumed",
+	Groups:  "Listing",
+}, {
 	Name:    "list_cutoff",
 	Default: 1_000_000,
 	Help:    "To save memory, sort directory listings on disk above this threshold",
@@ -617,6 +622,7 @@ type ConfigInfo struct {
 	Suffix                     string            `config:"suffix"`
 	SuffixKeepExtension        bool              `config:"suffix_keep_extension"`
 	UseListR                   bool              `config:"fast_list"`
+	ResumeListings             string            `config:"resume_listings"`
 	ListCutoff                 int               `config:"list_cutoff"`
 	BufferSize                 SizeSuffix        `config:"buffer_size"`
 	BwLimit                    BwTimetable       `config:"bwlimit"`

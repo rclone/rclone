@@ -174,6 +174,10 @@ type Features struct {
 	// immediately.
 	ListP func(ctx context.Context, dir string, callback ListRCallback) error
 
+	// CanResumeListing indicates the backend handles --resume-listings
+	// internally in its ListP/ListR implementations.
+	CanResumeListing bool
+
 	// About gets quota information from the Fs
 	About func(ctx context.Context) (*Usage, error)
 
@@ -456,6 +460,7 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	if mask.ListP == nil {
 		ft.ListP = nil
 	}
+	ft.CanResumeListing = ft.CanResumeListing && mask.CanResumeListing
 	if mask.About == nil {
 		ft.About = nil
 	}
