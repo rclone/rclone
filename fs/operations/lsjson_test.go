@@ -2,11 +2,14 @@ package operations_test
 
 import (
 	"context"
+	"io"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
@@ -402,5 +405,60 @@ func TestStatJSON(t *testing.T) {
 		_, err = operations.StatJSON(ctx, f, "", &operations.ListJSONOpt{})
 		// This should return an error except for bucket based remotes
 		assert.True(t, err != nil || f.Features().BucketBased, "Need an error for non bucket based backends")
+	})
+}
+
+// TestStatJSONMemory tests StatJSON against the memory backend.
+//
+// The memory backend is bucket based and implements ListP, so this
+// exercises the fast path in StatJSON which lists the target directory
+// itself rather than its (potentially huge) parent. It also checks that
+// the entries listed on that path are accounted in the Listed stats.
+func TestStatJSONMemory(t *testing.T) {
+	ctx := context.Background()
+	f, err := fs.NewFs(ctx, ":memory:")
+	require.NoError(t, err)
+
+	// Check the memory backend triggers the fast path
+	require.True(t, f.Features().BucketBased, "memory backend should be bucket based")
+	require.NotNil(t, f.Features().ListP, "memory backend should implement ListP")
+
+	// Put a file into a subdirectory
+	_, err = operations.Rcat(ctx, f, "sub/file1", io.NopCloser(strings.NewReader("hello")), t1, nil)
+	require.NoError(t, err)
+
+	t.Run("Dir", func(t *testing.T) {
+		accounting.GlobalStats().ResetCounters()
+		got, err := operations.StatJSON(ctx, f, "sub", &operations.ListJSONOpt{})
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, "sub", got.Path)
+		assert.Equal(t, "sub", got.Name)
+		assert.True(t, got.IsDir)
+		// The fast path lists the directory itself - check the entries
+		// it listed were accounted.
+		assert.Positive(t, accounting.GlobalStats().Listed(0), "expected the fast path listing to be accounted")
+	})
+
+	t.Run("DirWithTrailingSlash", func(t *testing.T) {
+		got, err := operations.StatJSON(ctx, f, "sub/", &operations.ListJSONOpt{})
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, "sub", got.Path)
+		assert.True(t, got.IsDir)
+	})
+
+	t.Run("File", func(t *testing.T) {
+		got, err := operations.StatJSON(ctx, f, "sub/file1", &operations.ListJSONOpt{})
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, "sub/file1", got.Path)
+		assert.False(t, got.IsDir)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		got, err := operations.StatJSON(ctx, f, "notfound", &operations.ListJSONOpt{})
+		require.NoError(t, err)
+		assert.Nil(t, got)
 	})
 }
