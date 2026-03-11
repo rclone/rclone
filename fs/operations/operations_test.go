@@ -894,6 +894,29 @@ func TestCopyURL(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1), fstest.NewItem(headerFilename, contents, t1)}, nil, fs.ModTimeNotSupported)
 }
 
+func TestCopyURLDownloadHeaders(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	contents := "file contents\n"
+	var gotHeader string
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeader = r.Header.Get("X-Custom-Header")
+		_, err := w.Write([]byte(contents))
+		assert.NoError(t, err)
+	})
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	ci.DownloadHeaders = []*fs.HTTPOption{{Key: "X-Custom-Header", Value: "test-value"}}
+
+	o, err := operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false, false)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), o.Size())
+	assert.Equal(t, "test-value", gotHeader, "DownloadHeaders should be sent in the HTTP request")
+}
+
 func TestCopyURLToWriter(t *testing.T) {
 	ctx := context.Background()
 	contents := "file contents\n"
@@ -1663,6 +1686,24 @@ func TestRcatSizeMetadata(t *testing.T) {
 		assert.Equal(t, "value", gotMeta["key"])
 		assert.Equal(t, "potato", gotMeta["sausage"])
 	}
+}
+
+func TestRcatSizeUploadHeaders(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+
+	ci.UploadHeaders = []*fs.HTTPOption{{Key: "X-Upload-Header", Value: "upload-value"}}
+
+	const body = "------------------------------------------------------------"
+	file1 := r.WriteFile("potato1", body, t1)
+
+	// Test with known length - exercises the size >= 0 branch (Put path)
+	bodyReader := io.NopCloser(strings.NewReader(body))
+	obj, err := operations.RcatSize(ctx, r.Fremote, file1.Path, bodyReader, int64(len(body)), file1.ModTime, nil)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(body)), obj.Size())
+	assert.Equal(t, file1.Path, obj.Remote())
 }
 
 func TestTouchDir(t *testing.T) {
