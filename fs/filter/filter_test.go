@@ -979,34 +979,40 @@ func TestListContainsExcludeFile(t *testing.T) {
 }
 
 func TestDirContainsExcludeFile(t *testing.T) {
-	fs, err := mockfs.NewFs(context.Background(), "test", "root", nil)
+	testFs, err := mockfs.NewFs(context.Background(), "test", "root", nil)
 	require.NoError(t, err)
-	mfs := fs.(*mockfs.Fs)
-	mfs.AddObject(mockobject.New("main.py"))
-	mfs.AddObject(mockobject.New(".venv/file1"))
-	mfs.AddObject(mockobject.New(".venv/file2"))
-	mfs.AddObject(mockobject.New(".git"))
+	mfs := testFs.(*mockfs.Fs)
+	entries := fs.DirEntries{
+		mockobject.New("main.py"),
+		mockdir.New(".venv"),
+		mockobject.New(".venv/file1"),
+		mockobject.New(".venv/file2"),
+		mockobject.New(".git"),
+	}
+	for _, entry := range entries {
+		mfs.AddDirEntry(entry)
+	}
 
 	f, err := NewFilter(nil)
 	require.NoError(t, err)
 
 	f.Opt.ExcludeFile = []string{".venv"}
-	contains, err := f.DirContainsExcludeFile(context.Background(), fs, "")
+	contains, err := f.DirContainsExcludeFile(context.Background(), testFs, "")
 	assert.NoError(t, err)
 	assert.False(t, contains)
 
 	f.Opt.ExcludeFile = []string{".venv/"}
-	contains, err = f.DirContainsExcludeFile(context.Background(), fs, "")
+	contains, err = f.DirContainsExcludeFile(context.Background(), testFs, "")
 	assert.NoError(t, err)
 	assert.True(t, contains)
 
 	f.Opt.ExcludeFile = []string{".git"}
-	contains, err = f.DirContainsExcludeFile(context.Background(), fs, "")
+	contains, err = f.DirContainsExcludeFile(context.Background(), testFs, "")
 	assert.NoError(t, err)
 	assert.True(t, contains)
 
 	f.Opt.ExcludeFile = []string{".git/"}
-	contains, err = f.DirContainsExcludeFile(context.Background(), fs, "")
+	contains, err = f.DirContainsExcludeFile(context.Background(), testFs, "")
 	assert.NoError(t, err)
 	assert.False(t, contains)
 }
