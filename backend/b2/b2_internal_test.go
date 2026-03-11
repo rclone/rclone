@@ -528,7 +528,7 @@ func (f *Fs) InternalTestCleanupUnfinished(t *testing.T) {
 func listAllFiles(ctx context.Context, t *testing.T, f *Fs, dirName string) []string {
 	bucket, directory := f.split(dirName)
 	foundFiles := []string{}
-	require.NoError(t, f.list(ctx, bucket, directory, "", false, true, 0, true, false, func(remote string, object *api.File, isDirectory bool) error {
+	require.NoError(t, f.list(ctx, bucket, directory, "", false, true, 0, true, false, "", func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
 			foundFiles = append(foundFiles, object.Name)
 		}

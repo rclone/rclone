@@ -41,6 +41,7 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/rclone/rclone/lib/resume"
 )
 
 const (
@@ -596,6 +597,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		BucketBased:           true,
 		BucketBasedRootOK:     true,
 		ChunkWriterDoesntSeek: true,
+		CanResumeListing:      true,
 	}).Fill(ctx, f)
 	// Set the test flag if required
 	if opt.TestMode != "" {
@@ -804,7 +806,7 @@ var errEndList = errors.New("end list")
 // If hidden is set then it will list the hidden (deleted) files too.
 //
 // if findFile is set it will look for files called (bucket, directory)
-func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, limit int, hidden bool, findFile bool, fn listFn) error {
+func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, limit int, hidden bool, findFile bool, startAfter string, fn listFn) error {
 	if !findFile {
 		if prefix != "" {
 			prefix += "/"
@@ -831,7 +833,9 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		Prefix:       f.opt.Enc.FromStandardPath(directory),
 		Delimiter:    delimiter,
 	}
-	if directory != "" {
+	if startAfter != "" {
+		request.StartFileName = f.opt.Enc.FromStandardPath(startAfter)
+	} else if directory != "" {
 		request.StartFileName = f.opt.Enc.FromStandardPath(directory)
 	}
 	opts := rest.Opts{
@@ -930,27 +934,6 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *api.File
 	return o, nil
 }
 
-// listDir lists a single directory
-func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool, callback func(fs.DirEntry) error) (err error) {
-	last := ""
-	err = f.list(ctx, bucket, directory, prefix, f.rootBucket == "", false, 0, f.opt.Versions, false, func(remote string, object *api.File, isDirectory bool) error {
-		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory, &last)
-		if err != nil {
-			return err
-		}
-		if entry != nil {
-			return callback(entry)
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-	// bucket must be present if listing succeeded
-	f.cache.MarkOK(bucket)
-	return nil
-}
-
 // listBuckets returns all the buckets to out
 func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
 	err = f.listBucketsToFn(ctx, "", func(bucket *api.Bucket) error {
@@ -990,9 +973,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // These need not be returned in any particular order.  If
 // callback returns an error then the listing will stop
 // immediately.
-func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) error {
-	list := list.NewHelper(callback)
+func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (returnErr error) {
 	bucket, directory := f.split(dir)
+	startAfter, callback, done, err := resume.Setup(ctx, bucket != "", f, dir, callback)
+	if err != nil {
+		return err
+	}
+	defer done(&returnErr)
+
+	list := list.NewHelper(callback)
 	if bucket == "" {
 		if directory != "" {
 			return fs.ErrorListBucketRequired
@@ -1008,10 +997,21 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 			}
 		}
 	} else {
-		err := f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", list.Add)
+		last := ""
+		err := f.list(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", false, 0, f.opt.Versions, false, startAfter, func(remote string, object *api.File, isDirectory bool) error {
+			entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory, &last)
+			if err != nil {
+				return err
+			}
+			if entry != nil {
+				return list.Add(entry)
+			}
+			return nil
+		})
 		if err != nil {
 			return err
 		}
+		f.cache.MarkOK(bucket)
 	}
 	return list.Flush()
 }
@@ -1032,12 +1032,18 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 //
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (returnErr error) {
 	bucket, directory := f.split(dir)
+	startAfter, callback, done, err := resume.Setup(ctx, bucket != "", f, dir, callback)
+	if err != nil {
+		return err
+	}
+	defer done(&returnErr)
+
 	list := list.NewHelper(callback)
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
 		last := ""
-		return f.list(ctx, bucket, directory, prefix, addBucket, true, 0, f.opt.Versions, false, func(remote string, object *api.File, isDirectory bool) error {
+		return f.list(ctx, bucket, directory, prefix, addBucket, true, 0, f.opt.Versions, false, startAfter, func(remote string, object *api.File, isDirectory bool) error {
 			entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory, &last)
 			if err != nil {
 				return err
@@ -1064,7 +1070,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			f.cache.MarkOK(bucket)
 		}
 	} else {
-		err = listR(bucket, directory, f.rootDirectory, f.rootBucket == "")
+		err := listR(bucket, directory, f.rootDirectory, f.rootBucket == "")
 		if err != nil {
 			return err
 		}
@@ -1458,7 +1464,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden b
 	}
 
 	last := ""
-	checkErr(f.list(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", true, 0, true, false, func(remote string, object *api.File, isDirectory bool) error {
+	checkErr(f.list(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", true, 0, true, false, "", func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
 			oi, err := f.newObjectWithInfo(ctx, object.Name, object)
 			if err != nil {
@@ -1663,7 +1669,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	_, err = f.NewObject(ctx, remote)
 	if err == fs.ErrorObjectNotFound || err == fs.ErrorNotAFile {
-		err2 := f.list(ctx, bucket, bucketPath, f.rootDirectory, f.rootBucket == "", false, 1, f.opt.Versions, false, func(remote string, object *api.File, isDirectory bool) error {
+		err2 := f.list(ctx, bucket, bucketPath, f.rootDirectory, f.rootBucket == "", false, 1, f.opt.Versions, false, "", func(remote string, object *api.File, isDirectory bool) error {
 			err = nil
 			return nil
 		})
@@ -1805,7 +1811,7 @@ func (o *Object) getMetaDataListing(ctx context.Context) (info *api.File, err er
 		maxSearched = maxVersions
 	}
 
-	err = o.fs.list(ctx, bucket, bucketPath, "", false, true, maxSearched, o.fs.opt.Versions, true, func(remote string, object *api.File, isDirectory bool) error {
+	err = o.fs.list(ctx, bucket, bucketPath, "", false, true, maxSearched, o.fs.opt.Versions, true, "", func(remote string, object *api.File, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
