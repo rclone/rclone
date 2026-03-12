@@ -68,6 +68,8 @@ type Item struct {
 	pendingAccesses int                      // number of threads - cache reset not allowed if not zero
 	modified        bool                     // set if the file has been modified since the last Open
 	beingReset      bool                     // cache cleaner is resetting the cache file, access not allowed
+	graceTimer      *time.Timer              // timer for delayed close after grace period
+	graceStoreFn    StoreFn                  // saved StoreFn for use when grace timer fires
 }
 
 // Info is persisted to backing store
@@ -535,6 +537,20 @@ func (item *Item) open(o fs.Object) (err error) {
 		return nil
 	}
 
+	// Check if recovering from grace period (fd and downloaders still alive)
+	if item.graceTimer != nil {
+		item.graceTimer.Stop()
+		item.graceTimer = nil
+		item.graceStoreFn = nil
+		// fd and downloaders still alive - reuse them
+		// Still check object for changes
+		err = item._checkObject(o)
+		if err != nil {
+			return fmt.Errorf("vfs cache item: check object failed: %w", err)
+		}
+		return nil
+	}
+
 	err = item._createFile(osPath)
 	if err != nil {
 		item._remove("item.open failed on _createFile, remove cache data/metadata files")
@@ -647,10 +663,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 	// defer log.Trace(item.o, "Item.Close")("err=%v", &err)
 	item.preAccess()
 	defer item.postAccess()
-	var (
-		downloaders   *downloaders.Downloaders
-		syncWriteBack = item.c.opt.WriteBack <= 0
-	)
+	syncWriteBack := item.c.opt.WriteBack <= 0
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
@@ -662,6 +675,46 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 	} else if item.opens > 0 {
 		return nil
 	}
+
+	// opens == 0: check for grace period (only for non-dirty files,
+	// dirty files need immediate close so writeback can proceed)
+	gracePeriod := time.Duration(item.c.opt.HandleCaching)
+	if gracePeriod > 0 && !item.info.Dirty {
+		item.graceStoreFn = storeFn
+		item.graceTimer = time.AfterFunc(gracePeriod, item.closeAfterGrace)
+		return nil
+	}
+
+	return item._actualClose(storeFn, syncWriteBack)
+}
+
+// closeAfterGrace is called by the grace timer to perform the actual close
+func (item *Item) closeAfterGrace() {
+	item.preAccess()
+	defer item.postAccess()
+	syncWriteBack := item.c.opt.WriteBack <= 0
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	// Someone re-opened or another timer took over
+	if item.opens > 0 || item.graceTimer == nil {
+		return
+	}
+	item.graceTimer = nil
+	storeFn := item.graceStoreFn
+	item.graceStoreFn = nil
+
+	err := item._actualClose(storeFn, syncWriteBack)
+	if err != nil {
+		fs.Errorf(item.name, "vfs cache: close after grace period failed: %v", err)
+	}
+}
+
+// _actualClose performs the actual close operations on the item.
+//
+// Call with item.mu held. May temporarily unlock item.mu.
+func (item *Item) _actualClose(storeFn StoreFn, syncWriteBack bool) (err error) {
+	var dls *downloaders.Downloaders
 
 	// Update the size on close
 	_, _ = item._getSize()
@@ -690,7 +743,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 	}
 
 	// Close the downloaders
-	if downloaders = item.downloaders; downloaders != nil {
+	if dls = item.downloaders; dls != nil {
 		item.downloaders = nil
 		// FIXME need to unlock to kill downloader - should we
 		// re-arrange locking so this isn't necessary?  maybe
@@ -700,7 +753,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 		// downloader.Write calls ensure which needs the lock
 		// close downloader with mutex unlocked
 		item.mu.Unlock()
-		checkErr(downloaders.Close(nil))
+		checkErr(dls.Close(nil))
 		item.mu.Lock()
 	}
 
@@ -918,6 +971,23 @@ func (item *Item) RemoveNotInUse(maxAge time.Duration, emptyOnly bool) (removed 
 		return
 	}
 
+	// Cancel any grace period timer and close the resources it was keeping alive
+	if item.graceTimer != nil {
+		item.graceTimer.Stop()
+		item.graceTimer = nil
+		item.graceStoreFn = nil
+		if dls := item.downloaders; dls != nil {
+			item.downloaders = nil
+			item.mu.Unlock()
+			_ = dls.Close(nil)
+			item.mu.Lock()
+		}
+		if item.fd != nil {
+			_ = item.fd.Close()
+			item.fd = nil
+		}
+	}
+
 	removeIt := false
 	if maxAge == 0 {
 		removeIt = true // quota-driven removal
@@ -948,6 +1018,25 @@ func (item *Item) RemoveNotInUse(maxAge time.Duration, emptyOnly bool) (removed 
 func (item *Item) Reset() (rr ResetResult, spaceFreed int64, err error) {
 	item.mu.Lock()
 	defer item.mu.Unlock()
+
+	// Cancel any grace period timer and close the resources it was keeping alive
+	if item.graceTimer != nil {
+		item.graceTimer.Stop()
+		item.graceTimer = nil
+		item.graceStoreFn = nil
+		// Close the downloaders that the grace period was keeping alive
+		if dls := item.downloaders; dls != nil {
+			item.downloaders = nil
+			item.mu.Unlock()
+			_ = dls.Close(nil)
+			item.mu.Lock()
+		}
+		// Close the file handle that the grace period was keeping alive
+		if item.fd != nil {
+			_ = item.fd.Close()
+			item.fd = nil
+		}
+	}
 
 	// The item is not being used now.  Just remove it instead of resetting it.
 	if item.opens == 0 && !item.info.Dirty {
