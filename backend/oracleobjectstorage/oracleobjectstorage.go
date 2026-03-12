@@ -5,10 +5,14 @@ package oracleobjectstorage
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -300,6 +304,91 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) e
 // listFn is called from list to handle an object.
 type listFn func(remote string, object *objectstorage.ObjectSummary, isDirectory bool) error
 
+const listingCheckpointVersion = 1
+
+type listingCheckpoint struct {
+	Version   int       `json:"version"`
+	Bucket    string    `json:"bucket"`
+	Prefix    string    `json:"prefix"`
+	Delimiter string    `json:"delimiter"`
+	Marker    string    `json:"marker"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func loadListingCheckpoint(filePath, bucket, prefix, delimiter string) (marker string, found bool, err error) {
+	if filePath == "" {
+		return "", false, nil
+	}
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return "", false, nil
+		}
+		return "", false, err
+	}
+
+	state := listingCheckpoint{}
+	if err := json.Unmarshal(data, &state); err != nil {
+		return "", false, err
+	}
+
+	if state.Version != listingCheckpointVersion {
+		fs.Debugf(nil, "Ignoring listing checkpoint at %q due to version mismatch", filePath)
+		return "", false, nil
+	}
+
+	if state.Bucket != bucket || state.Prefix != prefix || state.Delimiter != delimiter {
+		fs.Debugf(nil, "Ignoring listing checkpoint at %q due to scope mismatch", filePath)
+		return "", false, nil
+	}
+
+	return state.Marker, true, nil
+}
+
+func saveListingCheckpoint(filePath string, state listingCheckpoint) error {
+	if filePath == "" {
+		return nil
+	}
+
+	state.UpdatedAt = time.Now().UTC()
+	payload, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(filePath)
+	if dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+	}
+
+	tmpFile, err := os.CreateTemp(dir, ".rclone-oos-list-checkpoint-*.tmp")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmpFile.Name()
+
+	_, writeErr := tmpFile.Write(payload)
+	closeErr := tmpFile.Close()
+	if writeErr != nil {
+		_ = os.Remove(tmpPath)
+		return writeErr
+	}
+	if closeErr != nil {
+		_ = os.Remove(tmpPath)
+		return closeErr
+	}
+
+	if err := os.Rename(tmpPath, filePath); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+
+	return nil
+}
+
 // list the objects into the function supplied from
 // the bucket and root supplied
 // (bucket, directory) is the starting directory
@@ -335,6 +424,32 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	}
 	if delimiter != "" {
 		request.Delimiter = common.String(delimiter)
+	}
+
+	if f.opt.ListStart != "" {
+		request.Start = common.String(f.opt.ListStart)
+	}
+
+	checkpointState := listingCheckpoint{
+		Version:   listingCheckpointVersion,
+		Bucket:    bucket,
+		Prefix:    directory,
+		Delimiter: delimiter,
+	}
+	if f.opt.ListCheckpointFile != "" {
+		marker, found, err := loadListingCheckpoint(f.opt.ListCheckpointFile, checkpointState.Bucket,
+			checkpointState.Prefix, checkpointState.Delimiter)
+		if err != nil {
+			return fmt.Errorf("failed to load list checkpoint: %w", err)
+		}
+		if found {
+			if marker == "" {
+				request.Start = nil
+			} else {
+				request.Start = common.String(marker)
+			}
+			fs.Infof(f, "Resuming listing from checkpoint marker %q", marker)
+		}
 	}
 
 	for {
@@ -416,6 +531,18 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				return err
 			}
 		}
+		nextMarker := ""
+		if resp.NextStartWith != nil {
+			nextMarker = *resp.NextStartWith
+		}
+
+		if f.opt.ListCheckpointFile != "" {
+			checkpointState.Marker = nextMarker
+			if err := saveListingCheckpoint(f.opt.ListCheckpointFile, checkpointState); err != nil {
+				return fmt.Errorf("failed to save list checkpoint: %w", err)
+			}
+		}
+
 		// end if no NextFileName
 		if resp.NextStartWith == nil {
 			break

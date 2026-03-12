@@ -53,6 +53,8 @@ type Options struct {
 	Namespace            string               `config:"namespace"`
 	Region               string               `config:"region"`
 	Endpoint             string               `config:"endpoint"`
+	ListStart            string               `config:"list_start"`
+	ListCheckpointFile   string               `config:"list_checkpoint_file"`
 	Enc                  encoder.MultiEncoder `config:"encoding"`
 	ConfigFile           string               `config:"config_file"`
 	ConfigProfile        string               `config:"config_profile"`
@@ -118,6 +120,28 @@ func newOptions() []fs.Option {
 		Name:     "endpoint",
 		Help:     "Endpoint for Object storage API.\n\nLeave blank to use the default endpoint for the region.",
 		Required: false,
+	}, {
+		Name: "list_start",
+		Help: `Start listing from this object name marker.
+
+This sets the initial ListObjects Start value, useful to resume long listings.
+
+Typically this should be an object name previously returned by OCI pagination
+as NextStartWith.
+`,
+		Advanced: true,
+	}, {
+		Name: "list_checkpoint_file",
+		Help: `Path to a local checkpoint file used during listing.
+
+When set, rclone will:
+- read the checkpoint marker before listing and resume from it when applicable
+- update the marker after each listed page
+
+The checkpoint is stored in JSON and includes listing scope (bucket/prefix).
+If the scope does not match, the checkpoint is ignored.
+`,
+		Advanced: true,
 	}, {
 		Name:     "config_file",
 		Help:     "Path to OCI config file",
