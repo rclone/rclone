@@ -242,6 +242,7 @@ These backends adapt or modify other storage providers:
 {{< provider name="Compress: Compress files" home="/compress/" config="/compress/" >}}
 {{< provider name="Crypt: Encrypt files" home="/crypt/" config="/crypt/" >}}
 {{< provider name="Hasher: Hash files" home="/hasher/" config="/hasher/" >}}
+{{< provider name="Raid3: Disaster-tolerant storage across 3 remotes with auto-recovery" home="/raid3/" config="/raid3/" >}}
 {{< provider name="Union: Join multiple remotes to work together" home="/union/" config="/union/" >}}
 
 <!-- markdownlint-restore -->

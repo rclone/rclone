@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+#
+# TestRaid3Local - local-only raid3 test environment for fstest/testserver.
+#
+# Provisions three local directories (even/odd/parity) and outputs rclone config
+# for the raid3 remote "TestRaid3Local". No Docker; used by go test ./backend/raid3
+# and optionally by test_all.
+#
+# Does not use run.bash (avoids flock, which is not available on macOS by default).
+# Implements start/stop/status/reset directly; refcounting is not used.
+#
+set -euo pipefail
+
+RUN_BASE="${STATE_DIR:-${XDG_RUNTIME_DIR:-/tmp}/rclone-test-server}"
+NAME="$(basename "$0")"
+RUN_ROOT="${RUN_BASE}/${NAME}"
+
+start() {
+	mkdir -p "${RUN_ROOT}/even" "${RUN_ROOT}/odd" "${RUN_ROOT}/parity"
+	echo type=raid3
+	echo even=${RUN_ROOT}/even
+	echo odd=${RUN_ROOT}/odd
+	echo parity=${RUN_ROOT}/parity
+	echo timeout_mode=aggressive
+	echo auto_cleanup=true
+	echo auto_heal=false
+}
+
+status() {
+	[[ -d "${RUN_ROOT}/even" && -d "${RUN_ROOT}/odd" && -d "${RUN_ROOT}/parity" ]]
+}
+
+stop() {
+	:
+}
+
+case "${1:-}" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status
+		;;
+	reset)
+		stop
+		rm -rf "${RUN_BASE}"
+		;;
+	*)
+		echo "usage: $0 {start|stop|reset|status}" >&2
+		exit 2
+		;;
+esac
