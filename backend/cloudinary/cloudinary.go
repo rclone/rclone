@@ -229,7 +229,7 @@ func (f *Fs) FromStandardName(s string) string {
 		parsedURL, err := url.Parse(s)
 		ext := ""
 		if err != nil {
-			fs.Logf(nil, "Error parsing URL: %v", err)
+			fs.LogfCtx(context.Background(), nil, "Error parsing URL: %v", err)
 		} else {
 			ext = path.Ext(parsedURL.Path)
 			if slices.Contains(f.opt.MediaExtensions, strings.ToLower(strings.TrimPrefix(ext, "."))) {
@@ -251,7 +251,7 @@ func (f *Fs) ToStandardName(s string, assetURL string) string {
 	if f.opt.AdjustMediaFilesExtensions {
 		parsedURL, err := url.Parse(assetURL)
 		if err != nil {
-			fs.Logf(nil, "Error parsing URL: %v", err)
+			fs.LogfCtx(context.Background(), nil, "Error parsing URL: %v", err)
 		} else {
 			ext = path.Ext(parsedURL.Path)
 			if !slices.Contains(f.opt.MediaExtensions, strings.ToLower(strings.TrimPrefix(ext, "."))) {
@@ -597,7 +597,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 			}
 		}
 
-		fs.Debugf(nil, "Retrying API error %v", err)
+		fs.DebugfCtx(ctx, nil, "Retrying API error %v", err)
 		return true, err
 	}
 
@@ -679,7 +679,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			key, value = option.Header()
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}

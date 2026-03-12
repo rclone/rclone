@@ -74,7 +74,7 @@ func init() {
 			optc := new(Options)
 			err := configstruct.Set(m, optc)
 			if err != nil {
-				fs.Errorf(nil, "Failed to read config: %v", err)
+				fs.ErrorfCtx(ctx, nil, "Failed to read config: %v", err)
 			}
 			updateTokenURL(oauthConfig, optc.Hostname)
 			checkAuth := func(oauthConfig *oauthutil.Config, auth *oauthutil.AuthResult) error {
@@ -89,7 +89,7 @@ func init() {
 				m.Set("hostname", hostname)
 				// Update the token URL
 				updateTokenURL(oauthConfig, hostname)
-				fs.Debugf(nil, "pcloud: got hostname %q", hostname)
+				fs.DebugfCtx(ctx, nil, "pcloud: got hostname %q", hostname)
 				return nil
 			}
 			return oauthutil.ConfigOut("", &oauthutil.Options{
@@ -250,7 +250,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 
 	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
 		doRetry = true
-		fs.Debugf(nil, "Should retry: %v", err)
+		fs.DebugfCtx(ctx, nil, "Should retry: %v", err)
 	}
 	return doRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -288,7 +288,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.Debugf(nil, "Couldn't decode error response: %v", err)
+		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.ErrorString == "" {
 		errResponse.ErrorString = resp.Status
@@ -480,7 +480,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
+	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var result api.ItemResult
 	opts := rest.Opts{
@@ -509,7 +509,7 @@ func dirIDtoNumber(dirID string) string {
 	if len(dirID) > 0 && dirID[0] == 'd' {
 		return dirID[1:]
 	}
-	fs.Debugf(nil, "Invalid directory id %q", dirID)
+	fs.DebugfCtx(context.Background(), nil, "Invalid directory id %q", dirID)
 	return dirID
 }
 
@@ -519,7 +519,7 @@ func fileIDtoNumber(fileID string) string {
 	if len(fileID) > 0 && fileID[0] == 'f' {
 		return fileID[1:]
 	}
-	fs.Debugf(nil, "Invalid file id %q", fileID)
+	fs.DebugfCtx(context.Background(), nil, "Invalid file id %q", fileID)
 	return fileID
 }
 
@@ -776,7 +776,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err := srcObj.readMetaData(ctx)
@@ -861,7 +861,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -909,7 +909,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1093,7 +1093,7 @@ func (f *Fs) changeNotifyLoop(ctx context.Context, notify func(string, fs.EntryT
 
 			// Deduplicate notifications for this batch
 			if !notifiedPaths[fullPath] {
-				fs.Debugf(f, "ChangeNotify: detected change in %q (type: %v)", fullPath, entryType)
+				fs.DebugfCtx(ctx, f, "ChangeNotify: detected change in %q (type: %v)", fullPath, entryType)
 				notify(fullPath, entryType)
 				notifiedPaths[fullPath] = true
 			}
@@ -1141,7 +1141,7 @@ func (f *Fs) changeNotifyLoop(ctx context.Context, notify func(string, fs.EntryT
 			}
 			// Ignore timeout errors as they are normal for long-polling
 			if !errors.Is(err, context.DeadlineExceeded) {
-				fs.Infof(f, "ChangeNotify: polling error: %v. Waiting %v.", err, interval)
+				fs.InfofCtx(ctx, f, "ChangeNotify: polling error: %v. Waiting %v.", err, interval)
 				time.Sleep(interval)
 			}
 			continue
@@ -1245,7 +1245,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -1297,7 +1297,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime

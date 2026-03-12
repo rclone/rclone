@@ -171,7 +171,7 @@ func startRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		"addr": runningServer.Addr,
 	}
 
-	fs.Debugf(f, "Started serve %s on %s", serveType, runningServer.Addr)
+	fs.DebugfCtx(ctx, f, "Started serve %s on %s", serveType, runningServer.Addr)
 	return out, nil
 }
 

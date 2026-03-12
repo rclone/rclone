@@ -4,6 +4,7 @@ package dirtree
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path"
 	"sort"
@@ -158,7 +159,7 @@ func (dt DirTree) Prune(dirNames map[string]bool) error {
 			// true, therefore this should not
 			// happen. But this makes function
 			// more predictable.
-			fs.Infof(dName, "Directory in the map for prune, but the value is false")
+			fs.InfofCtx(context.Background(), dName, "Directory in the map for prune, but the value is false")
 			continue
 		}
 		if dName == "" {
@@ -197,7 +198,7 @@ func (dt DirTree) Prune(dirNames map[string]bool) error {
 		// during range iteration, they may be skipped.
 		for dName, remove := range dirNames {
 			if !remove {
-				fs.Infof(dName, "Directory in the map for prune, but the value is false")
+				fs.InfofCtx(context.Background(), dName, "Directory in the map for prune, but the value is false")
 				continue
 			}
 			// First, add all subdirectories to dirNames.

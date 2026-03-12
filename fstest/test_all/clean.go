@@ -27,11 +27,11 @@ func cleanFs(ctx context.Context, remote string, cleanup bool, Opt runs.RunOpt) 
 	}
 	var lastErr error
 	if cleanup {
-		fs.Logf(nil, "%q - running cleanup", remote)
+		fs.LogfCtx(ctx, nil, "%q - running cleanup", remote)
 		err = operations.CleanUp(ctx, f)
 		if err != nil {
 			lastErr = err
-			fs.Errorf(f, "Cleanup failed: %v", err)
+			fs.ErrorfCtx(ctx, f, "Cleanup failed: %v", err)
 		}
 	}
 	entries, err := list.DirSorted(ctx, f, true, "")
@@ -43,22 +43,22 @@ func cleanFs(ctx context.Context, remote string, cleanup bool, Opt runs.RunOpt) 
 		fullPath := fspath.JoinRootPath(remote, dirPath)
 		if MatchTestRemote.MatchString(dirPath) {
 			if Opt.DryRun {
-				fs.Logf(nil, "Not Purging %s - -dry-run", fullPath)
+				fs.LogfCtx(ctx, nil, "Not Purging %s - -dry-run", fullPath)
 				return nil
 			}
-			fs.Logf(nil, "Purging %s", fullPath)
+			fs.LogfCtx(ctx, nil, "Purging %s", fullPath)
 			dir, err := fs.NewFs(context.Background(), fullPath)
 			if err != nil {
 				err = fmt.Errorf("NewFs failed: %w", err)
 				lastErr = err
-				fs.Errorf(fullPath, "%v", err)
+				fs.ErrorfCtx(ctx, fullPath, "%v", err)
 				return nil
 			}
 			err = operations.Purge(ctx, dir, "")
 			if err != nil {
 				err = fmt.Errorf("purge failed: %w", err)
 				lastErr = err
-				fs.Errorf(dir, "%v", err)
+				fs.ErrorfCtx(ctx, dir, "%v", err)
 				return nil
 			}
 		}
@@ -75,11 +75,11 @@ func cleanRemotes(conf *runs.Config, Opt runs.RunOpt) error {
 	var lastError error
 	for _, backend := range conf.Backends {
 		remote := backend.Remote
-		fs.Logf(nil, "%q - Cleaning", remote)
+		fs.LogfCtx(context.Background(), nil, "%q - Cleaning", remote)
 		err := cleanFs(context.Background(), remote, backend.CleanUp, Opt)
 		if err != nil {
 			lastError = err
-			fs.Logf(nil, "Failed to purge %q: %v", remote, err)
+			fs.LogfCtx(context.Background(), nil, "Failed to purge %q: %v", remote, err)
 		}
 	}
 	return lastError

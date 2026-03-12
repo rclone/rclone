@@ -68,7 +68,7 @@ func (cr *parallel) newStream(ctx context.Context, offset, size int64) (s *strea
 // read the file into the buffer
 func (s *stream) readFrom(ctx context.Context) {
 	// Open the object at the correct range
-	fs.Debugf(s.cr.o, "%s: open", s.name)
+	fs.DebugfCtx(ctx, s.cr.o, "%s: open", s.name)
 	rc, err := operations.Open(ctx, s.cr.o,
 		&fs.HashesOption{Hashes: hash.Set(hash.None)},
 		&fs.RangeOption{Start: s.offset, End: s.offset + s.size - 1})
@@ -78,9 +78,9 @@ func (s *stream) readFrom(ctx context.Context) {
 	}
 	s.rc = rc
 
-	fs.Debugf(s.cr.o, "%s: readfrom started", s.name)
+	fs.DebugfCtx(ctx, s.cr.o, "%s: readfrom started", s.name)
 	_, err = s.rw.ReadFrom(s.rc)
-	fs.Debugf(s.cr.o, "%s: readfrom finished (%d bytes): %v", s.name, s.rw.Size(), err)
+	fs.DebugfCtx(ctx, s.cr.o, "%s: readfrom finished (%d bytes): %v", s.name, s.rw.Size(), err)
 	s.err <- err
 }
 
@@ -101,7 +101,7 @@ func (s *stream) read(p []byte) (n int, err error) {
 	for {
 		var nn int
 		nn, err = s.rw.Read(p[n:])
-		fs.Debugf(s.cr.o, "%s: rw.Read nn=%d, err=%v", s.name, nn, err)
+		fs.DebugfCtx(context.Background(), s.cr.o, "%s: rw.Read nn=%d, err=%v", s.name, nn, err)
 		s.readBytes += int64(nn)
 		n += nn
 		if err != nil && err != io.EOF {
@@ -155,7 +155,7 @@ func newParallel(ctx context.Context, o fs.Object, chunkSize int64, streams int)
 		newChunkSize += multipart.BufferSize
 	}
 
-	fs.Debugf(o, "newParallel chunkSize=%d, streams=%d", chunkSize, streams)
+	fs.DebugfCtx(ctx, o, "newParallel chunkSize=%d, streams=%d", chunkSize, streams)
 
 	return &parallel{
 		ctx:       ctx,
@@ -291,7 +291,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 	cr.mu.Lock()
 	defer cr.mu.Unlock()
 
-	fs.Debugf(cr.o, "parallel chunked reader: seek from %d to %d whence %d", cr.offset, offset, whence)
+	fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: seek from %d to %d whence %d", cr.offset, offset, whence)
 
 	if cr.closed {
 		return 0, ErrorFileClosed
@@ -313,7 +313,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 
 	// If seek pointer didn't move, return now
 	if newOffset == cr.offset {
-		fs.Debugf(cr.o, "parallel chunked reader: seek pointer didn't move")
+		fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: seek pointer didn't move")
 		return cr.offset, nil
 	}
 
@@ -331,7 +331,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 
 	// If no streams remain we can just restart
 	if len(cr.streams) == 0 {
-		fs.Debugf(cr.o, "parallel chunked reader: no streams remain")
+		fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: no streams remain")
 		cr.endStream = cr.offset
 		return cr.offset, nil
 	}
@@ -342,7 +342,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 	// If new offset is before current stream then ditch all the streams
 	if newOffset < stream.offset {
 		_ = cr._popStreams()
-		fs.Debugf(cr.o, "parallel chunked reader: new offset is before current stream - ditch all")
+		fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: new offset is before current stream - ditch all")
 		cr.endStream = cr.offset
 		return cr.offset, nil
 	}
@@ -350,7 +350,7 @@ func (cr *parallel) Seek(offset int64, whence int) (int64, error) {
 	// Seek the current stream
 	streamOffset := newOffset - stream.offset
 	stream.readBytes = streamOffset // correct read value
-	fs.Debugf(cr.o, "parallel chunked reader: seek the current stream to %d", streamOffset)
+	fs.DebugfCtx(context.Background(), cr.o, "parallel chunked reader: seek the current stream to %d", streamOffset)
 	// Wait for the read to the correct part of the data
 	for stream.rw.Size() < streamOffset {
 		stream.rw.WaitWrite(cr.ctx)

@@ -198,21 +198,21 @@ func NewFilter(opt *Options) (f *Filter, err error) {
 	// Filter flags
 	if f.Opt.MinAge.IsSet() {
 		f.ModTimeTo = time.Now().Add(-time.Duration(f.Opt.MinAge))
-		fs.Debugf(nil, "--min-age %v to %v", f.Opt.MinAge, f.ModTimeTo)
+		fs.DebugfCtx(context.Background(), nil, "--min-age %v to %v", f.Opt.MinAge, f.ModTimeTo)
 	}
 	if f.Opt.MaxAge.IsSet() {
 		f.ModTimeFrom = time.Now().Add(-time.Duration(f.Opt.MaxAge))
 		if !f.ModTimeTo.IsZero() && f.ModTimeTo.Before(f.ModTimeFrom) {
 			return nil, fmt.Errorf("filter: --min-age %q can't be larger than --max-age %q", opt.MinAge, opt.MaxAge)
 		}
-		fs.Debugf(nil, "--max-age %v to %v", f.Opt.MaxAge, f.ModTimeFrom)
+		fs.DebugfCtx(context.Background(), nil, "--max-age %v to %v", f.Opt.MaxAge, f.ModTimeFrom)
 	}
 	if f.Opt.HashFilter != "" {
 		f.hashFilterK, f.hashFilterN, err = parseHashFilter(f.Opt.HashFilter)
 		if err != nil {
 			return nil, err
 		}
-		fs.Debugf(nil, "Using --hash-filter %d/%d", f.hashFilterK, f.hashFilterN)
+		fs.DebugfCtx(context.Background(), nil, "Using --hash-filter %d/%d", f.hashFilterK, f.hashFilterN)
 	}
 
 	err = parseRules(&f.Opt.RulesOpt, f.Add, f.Clear)
@@ -509,24 +509,24 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time, metadata 
 	if f.files != nil {
 		_, include := f.files[remote]
 		if !include {
-			fs.Debugf(remote, "Excluded (FilesFrom Filter)")
+			fs.DebugfCtx(context.Background(), remote, "Excluded (FilesFrom Filter)")
 		}
 		return include
 	}
 	if !f.ModTimeFrom.IsZero() && modTime.Before(f.ModTimeFrom) {
-		fs.Debugf(remote, "Excluded (ModTime Filter)")
+		fs.DebugfCtx(context.Background(), remote, "Excluded (ModTime Filter)")
 		return false
 	}
 	if !f.ModTimeTo.IsZero() && modTime.After(f.ModTimeTo) {
-		fs.Debugf(remote, "Excluded (ModTime Filter)")
+		fs.DebugfCtx(context.Background(), remote, "Excluded (ModTime Filter)")
 		return false
 	}
 	if f.Opt.MinSize >= 0 && size < int64(f.Opt.MinSize) {
-		fs.Debugf(remote, "Excluded (Size Filter)")
+		fs.DebugfCtx(context.Background(), remote, "Excluded (Size Filter)")
 		return false
 	}
 	if f.Opt.MaxSize >= 0 && size > int64(f.Opt.MaxSize) {
-		fs.Debugf(remote, "Excluded (Size Filter)")
+		fs.DebugfCtx(context.Background(), remote, "Excluded (Size Filter)")
 		return false
 	}
 	if f.metaRules.len() > 0 {
@@ -540,13 +540,13 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time, metadata 
 			metadatas = append(metadatas, "\x00=\x00")
 		}
 		if !f.metaRules.includeMany(metadatas) {
-			fs.Debugf(remote, "Excluded (Metadata Filter)")
+			fs.DebugfCtx(context.Background(), remote, "Excluded (Metadata Filter)")
 			return false
 		}
 	}
 	include := f.IncludeRemote(remote)
 	if !include {
-		fs.Debugf(remote, "Excluded (Path Filter)")
+		fs.DebugfCtx(context.Background(), remote, "Excluded (Path Filter)")
 	}
 	return include
 }
@@ -567,7 +567,7 @@ func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 		var err error
 		metadata, err = fs.GetMetadata(ctx, o)
 		if err != nil {
-			fs.Errorf(o, "Failed to read metadata: %v", err)
+			fs.ErrorfCtx(ctx, o, "Failed to read metadata: %v", err)
 			metadata = nil
 		}
 

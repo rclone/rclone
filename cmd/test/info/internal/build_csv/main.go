@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"flag"
@@ -33,7 +34,7 @@ func main() {
 			fs.Fatalf(nil, "Unable to decode %q: %s", fn, err)
 		}
 		if remote.ControlCharacters == nil {
-			fs.Logf(nil, "Skipping remote %s: no ControlCharacters", remote.Remote)
+			fs.LogfCtx(context.Background(), nil, "Skipping remote %s: no ControlCharacters", remote.Remote)
 		} else {
 			remotes = append(remotes, remote)
 		}

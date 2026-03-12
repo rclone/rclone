@@ -149,7 +149,7 @@ func (h *ReOpen) open() error {
 	}
 	if h.err != nil {
 		if h.tries > 1 {
-			fs.Debugf(h.src, "Reopen failed after offset %d bytes read: %v", h.offset, h.err)
+			fs.DebugfCtx(context.Background(), h.src, "Reopen failed after offset %d bytes read: %v", h.offset, h.err)
 		}
 		return h.err
 	}
@@ -194,7 +194,7 @@ func (h *ReOpen) Read(p []byte) (n int, err error) {
 	// re-open if seek needed
 	if h.newOffset >= 0 {
 		if h.offset != h.newOffset {
-			fs.Debugf(h.src, "Seek from %d to %d", h.offset, h.newOffset)
+			fs.DebugfCtx(context.Background(), h.src, "Seek from %d to %d", h.offset, h.newOffset)
 			h.offset = h.newOffset
 			err = h.reopen()
 			if err != nil {
@@ -214,7 +214,7 @@ func (h *ReOpen) Read(p []byte) (n int, err error) {
 		if err != nil && err != io.EOF {
 			h.err = err
 			if !fserrors.IsNoLowLevelRetryError(err) {
-				fs.Debugf(h.src, "Reopening on read failure after offset %d bytes: retry %d/%d: %v", h.offset, h.tries, h.maxTries, err)
+				fs.DebugfCtx(context.Background(), h.src, "Reopening on read failure after offset %d bytes: retry %d/%d: %v", h.offset, h.tries, h.maxTries, err)
 				if h.reopen() == nil {
 					err = nil
 				}

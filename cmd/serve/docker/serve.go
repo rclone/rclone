@@ -33,7 +33,7 @@ func (s *Server) serve(listener net.Listener, addr, tempFile string) error {
 	if tempFile != "" {
 		atexit.Register(func() {
 			// remove spec file or self-created unix socket
-			fs.Debugf(nil, "Removing stale file %s", tempFile)
+			fs.DebugfCtx(context.Background(), nil, "Removing stale file %s", tempFile)
 			_ = os.Remove(tempFile)
 		})
 	}
@@ -50,9 +50,9 @@ func (s *Server) ServeUnix(path string, gid int) error {
 	}
 	if socketPath != "" {
 		path = socketPath
-		fs.Infof(nil, "Serving unix socket: %s", path)
+		fs.InfofCtx(context.Background(), nil, "Serving unix socket: %s", path)
 	} else {
-		fs.Infof(nil, "Serving systemd socket")
+		fs.InfofCtx(context.Background(), nil, "Serving systemd socket")
 	}
 	return s.serve(listener, path, socketPath)
 }
@@ -76,7 +76,7 @@ func (s *Server) ServeTCP(addr, specDir string, tlsConfig *tls.Config, noSpec bo
 			return err
 		}
 	}
-	fs.Infof(nil, "Serving TCP socket: %s", addr)
+	fs.InfofCtx(context.Background(), nil, "Serving TCP socket: %s", addr)
 	return s.serve(listener, addr, specFile)
 }
 
@@ -95,6 +95,6 @@ func writeSpecFile(addr, proto, specDir string) (string, error) {
 	if err := os.WriteFile(specFile, []byte(url), 0644); err != nil {
 		return "", err
 	}
-	fs.Debugf(nil, "Plugin spec has been written to %s", specFile)
+	fs.DebugfCtx(context.Background(), nil, "Plugin spec has been written to %s", specFile)
 	return specFile, nil
 }

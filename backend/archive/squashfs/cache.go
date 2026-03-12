@@ -45,13 +45,13 @@ func (c *cache) open(off int64) (fh vfs.Handle, err error) {
 		// Look for exact match first
 		for i, cfh := range c.fhs {
 			if cfh.offset == off {
-				// fs.Debugf(nil, "CACHE MATCH")
+				// fs.DebugfCtx(ctx, nil, "CACHE MATCH")
 				c.fhs = append(c.fhs[:i], c.fhs[i+1:]...)
 				return cfh.fh, nil
 
 			}
 		}
-		// fs.Debugf(nil, "CACHE MISS")
+		// fs.DebugfCtx(ctx, nil, "CACHE MISS")
 		// Just take the first one if not found
 		cfh := c.fhs[0]
 		c.fhs = c.fhs[1:]
@@ -109,7 +109,7 @@ func (c *cache) ReadAt(p []byte, off int64) (n int, err error) {
 	defer func() {
 		c.close(fh, off+int64(len(p)))
 	}()
-	// fs.Debugf(nil, "ReadAt(p[%d], off=%d, fh=%p)", len(p), off, fh)
+	// fs.DebugfCtx(ctx, nil, "ReadAt(p[%d], off=%d, fh=%p)", len(p), off, fh)
 	return fh.ReadAt(p, off)
 }
 

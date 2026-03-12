@@ -52,7 +52,7 @@ func (cr *sequential) Read(p []byte) (n int, err error) {
 		// the current chunk boundary. valid only when chunkSize > 0
 		chunkEnd := cr.chunkOffset + cr.chunkSize
 
-		fs.Debugf(cr.o, "ChunkedReader.Read at %d length %d chunkOffset %d chunkSize %d", cr.offset, reqSize, cr.chunkOffset, cr.chunkSize)
+		fs.DebugfCtx(context.Background(), cr.o, "ChunkedReader.Read at %d length %d chunkOffset %d chunkSize %d", cr.offset, reqSize, cr.chunkOffset, cr.chunkSize)
 
 		switch {
 		case cr.chunkSize > 0 && cr.offset == chunkEnd: // last chunk read completely
@@ -126,7 +126,7 @@ func (cr *sequential) RangeSeek(ctx context.Context, offset int64, whence int, l
 	cr.mu.Lock()
 	defer cr.mu.Unlock()
 
-	fs.Debugf(cr.o, "ChunkedReader.RangeSeek from %d to %d length %d", cr.offset, offset, length)
+	fs.DebugfCtx(ctx, cr.o, "ChunkedReader.RangeSeek from %d to %d length %d", cr.offset, offset, length)
 
 	if cr.closed {
 		return 0, ErrorFileClosed
@@ -178,7 +178,7 @@ func (cr *sequential) Open() (ChunkedReader, error) {
 // A length <= 0 will request till the end of the file
 func (cr *sequential) openRange() error {
 	offset, length := cr.chunkOffset, cr.chunkSize
-	fs.Debugf(cr.o, "ChunkedReader.openRange at %d length %d", offset, length)
+	fs.DebugfCtx(context.Background(), cr.o, "ChunkedReader.openRange at %d length %d", offset, length)
 
 	if cr.closed {
 		return ErrorFileClosed
@@ -191,9 +191,9 @@ func (cr *sequential) openRange() error {
 			return nil
 		}
 		if err != nil {
-			fs.Debugf(cr.o, "ChunkedReader.openRange seek failed (%s). Trying Open", err)
+			fs.DebugfCtx(context.Background(), cr.o, "ChunkedReader.openRange seek failed (%s). Trying Open", err)
 		} else {
-			fs.Debugf(cr.o, "ChunkedReader.openRange seeked to wrong offset. Wanted %d, got %d. Trying Open", offset, n)
+			fs.DebugfCtx(context.Background(), cr.o, "ChunkedReader.openRange seeked to wrong offset. Wanted %d, got %d. Trying Open", offset, n)
 		}
 	}
 

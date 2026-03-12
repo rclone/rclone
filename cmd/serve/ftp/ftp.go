@@ -237,7 +237,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 
 // Serve runs the FTP server until it is shutdown
 func (d *driver) Serve() error {
-	fs.Logf(d.f, "Serving FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
+	fs.LogfCtx(context.Background(), d.f, "Serving FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
 	err := d.srv.ListenAndServe()
 	if err == ftp.ErrServerClosed {
 		err = nil
@@ -249,7 +249,7 @@ func (d *driver) Serve() error {
 //
 //lint:ignore U1000 unused when not building linux
 func (d *driver) Shutdown() error {
-	fs.Logf(d.f, "Stopping FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
+	fs.LogfCtx(context.Background(), d.f, "Stopping FTP on %s", d.srv.Hostname+":"+strconv.Itoa(d.srv.Port))
 	return d.srv.Shutdown()
 }
 
@@ -263,22 +263,22 @@ func (d *driver) Addr() net.Addr {
 	// Split host and port
 	host, port, err := net.SplitHostPort(d.opt.ListenAddr)
 	if err != nil {
-		fs.Errorf(nil, "ftp: addr: invalid address format: %v", err)
+		fs.ErrorfCtx(context.Background(), nil, "ftp: addr: invalid address format: %v", err)
 		return addr
 	}
 
 	// Parse port
 	addr.Port, err = strconv.Atoi(port)
 	if err != nil {
-		fs.Errorf(nil, "ftp: addr: invalid port number: %v", err)
+		fs.ErrorfCtx(context.Background(), nil, "ftp: addr: invalid port number: %v", err)
 	}
 
 	// Resolve the host to an IP address.
 	ipAddrs, err := net.LookupIP(host)
 	if err != nil {
-		fs.Errorf(nil, "ftp: addr: failed to resolve host: %v", err)
+		fs.ErrorfCtx(context.Background(), nil, "ftp: addr: failed to resolve host: %v", err)
 	} else if len(ipAddrs) == 0 {
-		fs.Errorf(nil, "ftp: addr: no IP addresses found for host: %s", host)
+		fs.ErrorfCtx(context.Background(), nil, "ftp: addr: no IP addresses found for host: %s", host)
 	} else {
 		// Choose the first IP address.
 		addr.IP = ipAddrs[0]
@@ -292,26 +292,26 @@ type Logger struct{}
 
 // Print log simple text message
 func (l *Logger) Print(sessionID string, message any) {
-	fs.Infof(sessionID, "%s", message)
+	fs.InfofCtx(context.Background(), sessionID, "%s", message)
 }
 
 // Printf log formatted text message
 func (l *Logger) Printf(sessionID string, format string, v ...any) {
-	fs.Infof(sessionID, format, v...)
+	fs.InfofCtx(context.Background(), sessionID, format, v...)
 }
 
 // PrintCommand log formatted command execution
 func (l *Logger) PrintCommand(sessionID string, command string, params string) {
 	if command == "PASS" {
-		fs.Infof(sessionID, "> PASS ****")
+		fs.InfofCtx(context.Background(), sessionID, "> PASS ****")
 	} else {
-		fs.Infof(sessionID, "> %s %s", command, params)
+		fs.InfofCtx(context.Background(), sessionID, "> %s %s", command, params)
 	}
 }
 
 // PrintResponse log responses
 func (l *Logger) PrintResponse(sessionID string, code int, message string) {
-	fs.Infof(sessionID, "< %d %s", code, message)
+	fs.InfofCtx(context.Background(), sessionID, "< %d %s", code, message)
 }
 
 // CheckPasswd handle auth based on configuration
@@ -319,7 +319,7 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 	if d.proxy != nil {
 		_, _, err = d.proxy.Call(user, pass, false)
 		if err != nil {
-			fs.Infof(nil, "proxy login failed: %v", err)
+			fs.InfofCtx(context.Background(), nil, "proxy login failed: %v", err)
 			return false, nil
 		}
 		// Cache obscured password for later lookup.
@@ -336,7 +336,7 @@ func (d *driver) CheckPasswd(sctx *ftp.Context, user, pass string) (ok bool, err
 	} else {
 		ok = d.opt.User == user && (d.opt.Pass == "" || d.opt.Pass == pass)
 		if !ok {
-			fs.Infof(nil, "login failed: bad credentials")
+			fs.InfofCtx(context.Background(), nil, "login failed: bad credentials")
 			return false, nil
 		}
 	}
@@ -512,7 +512,7 @@ func (d *driver) GetFile(sctx *ftp.Context, path string, offset int64) (size int
 	}
 	node, err := VFS.Stat(path)
 	if err == vfs.ENOENT {
-		fs.Infof(path, "File not found")
+		fs.InfofCtx(context.Background(), path, "File not found")
 		return 0, nil, errors.New("file not found")
 	} else if err != nil {
 		return 0, nil, err

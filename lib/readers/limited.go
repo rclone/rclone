@@ -1,6 +1,7 @@
 package readers
 
 import (
+	"context"
 	"io"
 
 	"github.com/rclone/rclone/fs"
@@ -16,7 +17,7 @@ type LimitedReadCloser struct {
 func (lrc *LimitedReadCloser) Close() error {
 	err := lrc.Closer.Close()
 	if err != nil && lrc.N == 0 {
-		fs.Debugf(nil, "ignoring close error because we already got all the data")
+		fs.DebugfCtx(context.Background(), nil, "ignoring close error because we already got all the data")
 		err = nil
 	}
 	return err

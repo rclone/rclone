@@ -1,6 +1,7 @@
 package seafile
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -35,7 +36,7 @@ func (r *Renew) renewOnExpiry() {
 		case <-r.ts.C:
 			err := r.run()
 			if err != nil {
-				fs.Errorf(nil, "error while refreshing decryption token: %s", err)
+				fs.ErrorfCtx(context.Background(), nil, "error while refreshing decryption token: %s", err)
 			}
 
 		case <-r.done:

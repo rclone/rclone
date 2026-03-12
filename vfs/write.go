@@ -64,7 +64,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 		return nil
 	}
 	if !fh.safeToTruncate() {
-		fs.Errorf(fh.remote, "WriteFileHandle: Can't open for write without O_TRUNC on existing file without --vfs-cache-mode >= writes")
+		fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle: Can't open for write without O_TRUNC on existing file without --vfs-cache-mode >= writes")
 		return EPERM
 	}
 	var pipeReader *io.PipeReader
@@ -73,7 +73,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 		// NB Rcat deals with Stats.Transferring, etc.
 		o, err := operations.Rcat(context.TODO(), fh.file.Fs(), fh.remote, pipeReader, time.Now(), nil)
 		if err != nil {
-			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
+			fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
 		// Close the pipeReader so the pipeWriter fails with ErrClosedPipe
 		_ = pipeReader.Close()
@@ -129,14 +129,14 @@ func (fh *WriteFileHandle) WriteAt(p []byte, off int64) (n int, err error) {
 func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 	// defer log.Trace(fh.remote, "len=%d off=%d", len(p), off)("n=%d, fh.off=%d, err=%v", &n, &fh.offset, &err)
 	if fh.closed {
-		fs.Errorf(fh.remote, "WriteFileHandle.Write: error: %v", EBADF)
+		fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle.Write: error: %v", EBADF)
 		return 0, ECLOSED
 	}
 	if fh.offset != off {
 		waitSequential("write", fh.remote, &fh.cond, time.Duration(fh.file.VFS().Opt.WriteWait), &fh.offset, off)
 	}
 	if fh.offset != off {
-		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without --vfs-cache-mode >= writes")
+		fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle.Write: can't seek in file without --vfs-cache-mode >= writes")
 		return 0, ESPIPE
 	}
 	if err = fh.openPending(); err != nil {
@@ -147,10 +147,10 @@ func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 	fh.offset += int64(n)
 	fh.file.setSize(fh.offset)
 	if err != nil {
-		fs.Errorf(fh.remote, "WriteFileHandle.Write error: %v", err)
+		fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle.Write error: %v", err)
 		return 0, err
 	}
-	// fs.Debugf(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
+	// fs.DebugfCtx(context.Background(), fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
 	fh.cond.Broadcast() // wake everyone up waiting for an in-sequence read
 	return n, nil
 }
@@ -239,22 +239,22 @@ func (fh *WriteFileHandle) Flush() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	if fh.closed {
-		fs.Debugf(fh.remote, "WriteFileHandle.Flush nothing to do")
+		fs.DebugfCtx(context.Background(), fh.remote, "WriteFileHandle.Flush nothing to do")
 		return nil
 	}
-	// fs.Debugf(fh.remote, "WriteFileHandle.Flush")
+	// fs.DebugfCtx(context.Background(), fh.remote, "WriteFileHandle.Flush")
 	// If Write hasn't been called then ignore the Flush - Release
 	// will pick it up
 	if !fh.writeCalled {
-		fs.Debugf(fh.remote, "WriteFileHandle.Flush unwritten handle, writing 0 bytes to avoid race conditions")
+		fs.DebugfCtx(context.Background(), fh.remote, "WriteFileHandle.Flush unwritten handle, writing 0 bytes to avoid race conditions")
 		_, err := fh.writeAt([]byte{}, fh.offset)
 		return err
 	}
 	err := fh.close()
 	if err != nil {
-		fs.Errorf(fh.remote, "WriteFileHandle.Flush error: %v", err)
+		fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle.Flush error: %v", err)
 		//} else {
-		// fs.Debugf(fh.remote, "WriteFileHandle.Flush OK")
+		// fs.DebugfCtx(context.Background(), fh.remote, "WriteFileHandle.Flush OK")
 	}
 	return err
 }
@@ -267,15 +267,15 @@ func (fh *WriteFileHandle) Release() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	if fh.closed {
-		fs.Debugf(fh.remote, "WriteFileHandle.Release nothing to do")
+		fs.DebugfCtx(context.Background(), fh.remote, "WriteFileHandle.Release nothing to do")
 		return nil
 	}
-	fs.Debugf(fh.remote, "WriteFileHandle.Release closing")
+	fs.DebugfCtx(context.Background(), fh.remote, "WriteFileHandle.Release closing")
 	err := fh.close()
 	if err != nil {
-		fs.Errorf(fh.remote, "WriteFileHandle.Release error: %v", err)
+		fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle.Release error: %v", err)
 		//} else {
-		// fs.Debugf(fh.remote, "WriteFileHandle.Release OK")
+		// fs.DebugfCtx(context.Background(), fh.remote, "WriteFileHandle.Release OK")
 	}
 	return err
 }
@@ -293,7 +293,7 @@ func (fh *WriteFileHandle) Truncate(size int64) (err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	if size != fh.offset {
-		fs.Errorf(fh.remote, "WriteFileHandle: Truncate: Can't change size without --vfs-cache-mode >= writes")
+		fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle: Truncate: Can't change size without --vfs-cache-mode >= writes")
 		return EPERM
 	}
 	// File is correct size
@@ -305,7 +305,7 @@ func (fh *WriteFileHandle) Truncate(size int64) (err error) {
 
 // Read reads up to len(p) bytes into p.
 func (fh *WriteFileHandle) Read(p []byte) (n int, err error) {
-	fs.Errorf(fh.remote, "WriteFileHandle: Read: Can't read and write to file without --vfs-cache-mode >= minimal")
+	fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle: Read: Can't read and write to file without --vfs-cache-mode >= minimal")
 	return 0, EPERM
 }
 
@@ -313,7 +313,7 @@ func (fh *WriteFileHandle) Read(p []byte) (n int, err error) {
 // underlying input source. It returns the number of bytes read (0 <=
 // n <= len(p)) and any error encountered.
 func (fh *WriteFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
-	fs.Errorf(fh.remote, "WriteFileHandle: ReadAt: Can't read and write to file without --vfs-cache-mode >= minimal")
+	fs.ErrorfCtx(context.Background(), fh.remote, "WriteFileHandle: ReadAt: Can't read and write to file without --vfs-cache-mode >= minimal")
 	return 0, EPERM
 }
 

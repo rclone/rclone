@@ -97,7 +97,7 @@ func Start(ctx context.Context, facility string, f fs.Fs) (*DB, error) {
 	fi, err := os.Stat(db.path)
 	if strings.HasSuffix(os.Args[0], ".test") || (err == nil && fi.Size() == 0) {
 		_ = os.Remove(db.path)
-		fs.Infof(db.name, "drop cache remaining after unit test")
+		fs.InfofCtx(ctx, db.name, "drop cache remaining after unit test")
 	}
 
 	if err = db.open(ctx, false); err != nil && err != ErrEmpty {
@@ -161,14 +161,14 @@ func (db *DB) open(ctx context.Context, forWrite bool) (err error) {
 		if err == nil || retry >= maxRetries {
 			break
 		}
-		fs.Debugf(db.name, "Retry #%d opening for %s: %v", retry, openMode, err)
+		fs.DebugfCtx(ctx, db.name, "Retry #%d opening for %s: %v", retry, openMode, err)
 		retry++
 	}
 	if err != nil {
 		return err
 	}
 
-	fs.Debugf(db.name, "Opened for %s in %v", openMode, time.Since(startTime))
+	fs.DebugfCtx(ctx, db.name, "Opened for %s in %v", openMode, time.Since(startTime))
 	_ = db.lockTimer.Reset(db.lockTime)
 	_ = db.idleTimer.Reset(db.idleTime)
 	db.bolt = bolt
@@ -181,7 +181,7 @@ func (db *DB) close() (err error) {
 		_ = db.idleTimer.Stop()
 		err = db.bolt.Close()
 		db.bolt = nil
-		fs.Debugf(db.name, "released")
+		fs.DebugfCtx(context.Background(), db.name, "released")
 	}
 	return
 }

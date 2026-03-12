@@ -408,7 +408,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 			err = o.setMetaData(&file)
 			if err != nil {
-				fs.Debugf(file, "failed to set object metadata: %s", err)
+				fs.DebugfCtx(ctx, file, "failed to set object metadata: %s", err)
 			}
 
 			entries = append(entries, o)
@@ -496,12 +496,12 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.File) (err error) {
 	if info.IsDir() {
-		fs.Debugf(o, "%q is %q", o.remote, info.Type)
+		fs.DebugfCtx(context.Background(), o, "%q is %q", o.remote, info.Type)
 		return fs.ErrorIsDir
 	}
 
 	if !info.IsFile() {
-		fs.Debugf(o, "%q is %q", o.remote, info.Type)
+		fs.DebugfCtx(context.Background(), o, "%q is %q", o.remote, info.Type)
 		return fmt.Errorf("%q is %q: %w", o.remote, info.Type, fs.ErrorNotAFile)
 	}
 
@@ -533,7 +533,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	}
 
 	if !found {
-		fs.Debugf(nil, "object not found: remote %s: directory %s: leaf %s", o.remote, directoryID, leaf)
+		fs.DebugfCtx(ctx, nil, "object not found: remote %s: directory %s: leaf %s", o.remote, directoryID, leaf)
 		return fs.ErrorObjectNotFound
 	}
 
@@ -708,7 +708,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -722,7 +722,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	err := srcObj.readMetaData(ctx)
 	if err != nil {
-		fs.Debugf(srcObj, "read metadata for %s: %s", srcObj.rootPath(), err)
+		fs.DebugfCtx(ctx, srcObj, "read metadata for %s: %s", srcObj.rootPath(), err)
 		return nil, err
 	}
 
@@ -733,7 +733,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	dstObj, dstLeaf, directoryID, err := f.createObject(ctx, remote)
 	if err != nil {
-		fs.Debugf(srcObj, "create empty object for %s: %s", dstObj.rootPath(), err)
+		fs.DebugfCtx(ctx, srcObj, "create empty object for %s: %s", dstObj.rootPath(), err)
 		return nil, err
 	}
 
@@ -787,7 +787,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -850,7 +850,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -963,7 +963,7 @@ func (o *Object) rootPath() string {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
 		return 0
 	}
 
@@ -974,7 +974,7 @@ func (o *Object) Size() int64 {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 
@@ -1101,7 +1101,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 		deleteErr := o.fs.deleteObject(ctx, o.id)
 		if deleteErr != nil {
-			fs.Logf(o.remote, "remove: %s", deleteErr)
+			fs.LogfCtx(ctx, o.remote, "remove: %s", deleteErr)
 		}
 	}()
 

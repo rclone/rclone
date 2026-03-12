@@ -198,7 +198,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.Debugf(nil, "Couldn't decode error response: %v", err)
+		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.StatusCode == 0 {
 		errResponse.StatusCode = resp.StatusCode
@@ -228,7 +228,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error, re
 
 	var apiErr *api.Error
 	if resp != nil && resp.StatusCode == 401 && errors.As(err, &apiErr) && apiErr.ErrorCode == 70001 {
-		fs.Debugf(nil, "Should retry: %v", err)
+		fs.DebugfCtx(ctx, nil, "Should retry: %v", err)
 
 		if reauth {
 			_, err = f.authenticate(ctx)
@@ -579,7 +579,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -602,7 +602,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1113,7 +1113,7 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 	o.remoteFsMtime = info.LastUserModified
 	o.encodedMetadata, err = decodeDescriptionMetadata(info.Description)
 	if err != nil {
-		fs.Debugf(o, "Couldn't decode metadata: %v", err)
+		fs.DebugfCtx(context.Background(), o, "Couldn't decode metadata: %v", err)
 	}
 	o.slug = info.Slug
 	return nil

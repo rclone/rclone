@@ -51,13 +51,13 @@ func Finalize() {
 
 // writeError returns a formatted error string and the status passed in
 func writeError(path string, in rc.Params, err error, status int) (string, int) {
-	fs.Errorf(nil, "rc: %q: error: %v", path, err)
+	fs.ErrorfCtx(context.Background(), nil, "rc: %q: error: %v", path, err)
 	params, status := rc.Error(path, in, err, status)
 	var w strings.Builder
 	err = rc.WriteJSON(&w, params)
 	if err != nil {
 		// ultimate fallback error
-		fs.Errorf(nil, "writeError: failed to write JSON output from %#v: %v", in, err)
+		fs.ErrorfCtx(context.Background(), nil, "writeError: failed to write JSON output from %#v: %v", in, err)
 		status = http.StatusInternalServerError
 		w.Reset()
 		fmt.Fprintf(&w, `{
@@ -112,7 +112,7 @@ func RPC(method string, input string) (output string, status int) {
 		//in["_response"] = w
 	}
 
-	fs.Debugf(nil, "rc: %q: with parameters %+v", method, in)
+	fs.DebugfCtx(context.Background(), nil, "rc: %q: with parameters %+v", method, in)
 
 	_, out, err := jobs.NewJob(context.Background(), call.Fn, in)
 	if err != nil {
@@ -122,12 +122,12 @@ func RPC(method string, input string) (output string, status int) {
 		out = make(rc.Params)
 	}
 
-	fs.Debugf(nil, "rc: %q: reply %+v: %v", method, out, err)
+	fs.DebugfCtx(context.Background(), nil, "rc: %q: reply %+v: %v", method, out, err)
 
 	var w strings.Builder
 	err = rc.WriteJSON(&w, out)
 	if err != nil {
-		fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
+		fs.ErrorfCtx(context.Background(), nil, "rc: failed to write JSON output: %v", err)
 		return writeError(method, in, err, http.StatusInternalServerError)
 	}
 

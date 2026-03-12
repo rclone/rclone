@@ -368,7 +368,7 @@ func (r *Run) CheckRemoteListing(t *testing.T, items []Item, expectedDirs []stri
 // CheckDirectoryModTimes checks that the directory names in r.Flocal has the correct modtime compared to r.Fremote
 func (r *Run) CheckDirectoryModTimes(t *testing.T, names ...string) {
 	if r.Fremote.Features().DirSetModTime == nil && r.Fremote.Features().MkdirMetadata == nil {
-		fs.Debugf(r.Fremote, "Skipping modtime test as remote does not support DirSetModTime or MkdirMetadata")
+		fs.DebugfCtx(context.Background(), r.Fremote, "Skipping modtime test as remote does not support DirSetModTime or MkdirMetadata")
 		return
 	}
 	ctx := context.Background()

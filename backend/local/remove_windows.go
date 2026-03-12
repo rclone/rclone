@@ -26,7 +26,7 @@ func remove(name string) (err error) {
 		if pathErr.Err != windows.ERROR_SHARING_VIOLATION {
 			break
 		}
-		fs.Logf(name, "Remove detected sharing violation - retry %d/%d sleeping %v", i+1, maxTries, sleepTime)
+		fs.LogfCtx(ctx, name, "Remove detected sharing violation - retry %d/%d sleeping %v", i+1, maxTries, sleepTime)
 		time.Sleep(sleepTime)
 		sleepTime <<= 1
 	}

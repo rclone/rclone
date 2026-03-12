@@ -37,7 +37,7 @@ func parseFichierError(err error) int {
 	}
 	code, err := strconv.Atoi(matches[1])
 	if err != nil {
-		fs.Debugf(nil, "failed parsing fichier error: %v", err)
+		fs.DebugfCtx(context.Background(), nil, "failed parsing fichier error: %v", err)
 		return 0
 	}
 	return code
@@ -62,7 +62,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		case 186:
 			return false, err // IP blocked?
 		case 374, 412: // Flood detected seems to be #412 now
-			fs.Debugf(nil, "Sleeping for 30 seconds due to: %v", err)
+			fs.DebugfCtx(ctx, nil, "Sleeping for 30 seconds due to: %v", err)
 			time.Sleep(30 * time.Second)
 		default:
 		}
@@ -180,7 +180,7 @@ func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntr
 }
 
 func (f *Fs) listFiles(ctx context.Context, directoryID int) (filesList *FilesList, err error) {
-	// fs.Debugf(f, "Requesting files for dir `%s`", directoryID)
+	// fs.DebugfCtx(context.Background(), f, "Requesting files for dir `%s`", directoryID)
 	request := ListFilesRequest{
 		FolderID: directoryID,
 	}
@@ -207,7 +207,7 @@ func (f *Fs) listFiles(ctx context.Context, directoryID int) (filesList *FilesLi
 }
 
 func (f *Fs) listFolders(ctx context.Context, directoryID int) (foldersList *FoldersList, err error) {
-	// fs.Debugf(f, "Requesting folders for id `%s`", directoryID)
+	// fs.DebugfCtx(context.Background(), f, "Requesting folders for id `%s`", directoryID)
 
 	request := ListFolderRequest{
 		FolderID: directoryID,
@@ -232,7 +232,7 @@ func (f *Fs) listFolders(ctx context.Context, directoryID int) (foldersList *Fol
 		folder.Name = f.opt.Enc.ToStandardName(folder.Name)
 	}
 
-	// fs.Debugf(f, "Got FoldersList for id `%s`", directoryID)
+	// fs.DebugfCtx(context.Background(), f, "Got FoldersList for id `%s`", directoryID)
 
 	return foldersList, err
 }
@@ -275,7 +275,7 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 
 		entries[len(files.Items)+i] = fs.NewDir(fullPath, createDate).SetID(folderID)
 
-		// fs.Debugf(f, "Put Path `%s` for id `%d` into dircache", fullPath, folder.ID)
+		// fs.DebugfCtx(context.Background(), f, "Put Path `%s` for id `%d` into dircache", fullPath, folder.ID)
 		f.dirCache.Put(fullPath, folderID)
 	}
 
@@ -300,7 +300,7 @@ func getRemote(dir, fileName string) string {
 
 func (f *Fs) makeFolder(ctx context.Context, leaf string, folderID int) (response *MakeFolderResponse, err error) {
 	name := f.opt.Enc.FromStandardName(leaf)
-	// fs.Debugf(f, "Creating folder `%s` in id `%s`", name, directoryID)
+	// fs.DebugfCtx(context.Background(), f, "Creating folder `%s` in id `%s`", name, directoryID)
 
 	request := MakeFolderRequest{
 		FolderID: folderID,
@@ -321,13 +321,13 @@ func (f *Fs) makeFolder(ctx context.Context, leaf string, folderID int) (respons
 		return nil, fmt.Errorf("couldn't create folder: %w", err)
 	}
 
-	// fs.Debugf(f, "Created Folder `%s` in id `%s`", name, directoryID)
+	// fs.DebugfCtx(context.Background(), f, "Created Folder `%s` in id `%s`", name, directoryID)
 
 	return response, err
 }
 
 func (f *Fs) removeFolder(ctx context.Context, name string, folderID int) (response *GenericOKResponse, err error) {
-	// fs.Debugf(f, "Removing folder with id `%s`", directoryID)
+	// fs.DebugfCtx(context.Background(), f, "Removing folder with id `%s`", directoryID)
 
 	request := &RemoveFolderRequest{
 		FolderID: folderID,
@@ -351,7 +351,7 @@ func (f *Fs) removeFolder(ctx context.Context, name string, folderID int) (respo
 		return nil, fmt.Errorf("can't remove folder: %s", response.Message)
 	}
 
-	// fs.Debugf(f, "Removed Folder with id `%s`", directoryID)
+	// fs.DebugfCtx(context.Background(), f, "Removed Folder with id `%s`", directoryID)
 
 	return response, nil
 }
@@ -378,7 +378,7 @@ func (f *Fs) deleteFile(ctx context.Context, url string) (response *GenericOKRes
 		return nil, fmt.Errorf("couldn't remove file: %w", err)
 	}
 
-	// fs.Debugf(f, "Removed file with url `%s`", url)
+	// fs.DebugfCtx(context.Background(), f, "Removed file with url `%s`", url)
 
 	return response, nil
 }
@@ -488,7 +488,7 @@ func (f *Fs) renameFile(ctx context.Context, url string, newName string) (respon
 }
 
 func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse, err error) {
-	// fs.Debugf(f, "Requesting Upload node")
+	// fs.DebugfCtx(context.Background(), f, "Requesting Upload node")
 
 	opts := rest.Opts{
 		Method:      "GET",
@@ -505,13 +505,13 @@ func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse
 		return nil, fmt.Errorf("didn't get an upload node: %w", err)
 	}
 
-	// fs.Debugf(f, "Got Upload node")
+	// fs.DebugfCtx(context.Background(), f, "Got Upload node")
 
 	return response, err
 }
 
 func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName, folderID, uploadID, node string, options ...fs.OpenOption) (response *http.Response, err error) {
-	// fs.Debugf(f, "Uploading File `%s`", fileName)
+	// fs.DebugfCtx(context.Background(), f, "Uploading File `%s`", fileName)
 
 	fileName = f.opt.Enc.FromStandardName(fileName)
 
@@ -549,13 +549,13 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName,
 		return nil, fmt.Errorf("couldn't upload file: %w", err)
 	}
 
-	// fs.Debugf(f, "Uploaded File `%s`", fileName)
+	// fs.DebugfCtx(context.Background(), f, "Uploaded File `%s`", fileName)
 
 	return response, err
 }
 
 func (f *Fs) endUpload(ctx context.Context, uploadID string, nodeurl string) (response *EndFileUploadResponse, err error) {
-	// fs.Debugf(f, "Ending File Upload `%s`", uploadID)
+	// fs.DebugfCtx(context.Background(), f, "Ending File Upload `%s`", uploadID)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
 		return nil, errors.New("invalid UploadID")

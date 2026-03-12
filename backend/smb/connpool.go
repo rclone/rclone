@@ -166,7 +166,7 @@ func (f *Fs) getConnection(ctx context.Context, share string) (c *conn, err erro
 		if err == nil {
 			break
 		}
-		fs.Debugf(f, "Discarding unusable SMB connection: %v", err)
+		fs.DebugfCtx(ctx, f, "Discarding unusable SMB connection: %v", err)
 		c = nil
 	}
 	f.poolMu.Unlock()
@@ -203,11 +203,11 @@ func (f *Fs) putConnection(pc **conn, err error) {
 		if !(errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrExist) || errors.Is(err, os.ErrPermission)) {
 			echoErr := c.smbSession.Echo()
 			if echoErr != nil {
-				fs.Debugf(f, "Connection failed, closing: %v", echoErr)
+				fs.DebugfCtx(context.Background(), f, "Connection failed, closing: %v", echoErr)
 				_ = c.close()
 				return
 			}
-			fs.Debugf(f, "Connection OK after error: %v", err)
+			fs.DebugfCtx(context.Background(), f, "Connection OK after error: %v", err)
 		}
 	}
 
@@ -224,7 +224,7 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 	f.poolMu.Lock()
 	defer f.poolMu.Unlock()
 	if sessions := f.getSessions(); sessions != 0 {
-		fs.Debugf(f, "Not closing %d unused connections as %d sessions active", len(f.pool), sessions)
+		fs.DebugfCtx(ctx, f, "Not closing %d unused connections as %d sessions active", len(f.pool), sessions)
 		if f.opt.IdleTimeout > 0 {
 			f.drain.Reset(time.Duration(f.opt.IdleTimeout)) // nudge on the pool emptying timer
 		}
@@ -234,7 +234,7 @@ func (f *Fs) drainPool(ctx context.Context) (err error) {
 		f.drain.Stop()
 	}
 	if len(f.pool) != 0 {
-		fs.Debugf(f, "Closing %d unused connections", len(f.pool))
+		fs.DebugfCtx(ctx, f, "Closing %d unused connections", len(f.pool))
 	}
 
 	g, _ := errgroup.WithContext(ctx)

@@ -243,7 +243,7 @@ func newWebDAV(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		}
 	}
 	if w.etagHashType != hash.None {
-		fs.Debugf(f, "Using hash %v for ETag", w.etagHashType)
+		fs.DebugfCtx(ctx, f, "Using hash %v for ETag", w.etagHashType)
 	}
 	if proxyOpt.AuthProxy != "" {
 		w.proxy = proxy.New(ctx, proxyOpt, vfsOpt)
@@ -344,14 +344,14 @@ func (w *WebDAV) postprocess(r *http.Request, remote string) {
 	case "COPY", "MOVE", "PUT":
 		VFS, err := w.getVFS(r.Context())
 		if err != nil {
-			fs.Errorf(nil, "Failed to get VFS: %v", err)
+			fs.ErrorfCtx(context.Background(), nil, "Failed to get VFS: %v", err)
 			return
 		}
 
 		// Get the node
 		node, err := VFS.Stat(remote)
 		if err != nil {
-			fs.Errorf(nil, "Failed to stat node: %v", err)
+			fs.ErrorfCtx(context.Background(), nil, "Failed to stat node: %v", err)
 			return
 		}
 
@@ -361,10 +361,10 @@ func (w *WebDAV) postprocess(r *http.Request, remote string) {
 			if err == nil {
 				err = node.SetModTime(time.Unix(modtimeUnix, 0))
 				if err != nil {
-					fs.Errorf(nil, "Failed to set modtime: %v", err)
+					fs.ErrorfCtx(context.Background(), nil, "Failed to set modtime: %v", err)
 				}
 			} else {
-				fs.Errorf(nil, "Failed to parse modtime: %v", err)
+				fs.ErrorfCtx(context.Background(), nil, "Failed to parse modtime: %v", err)
 			}
 		}
 	}
@@ -396,7 +396,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	VFS, err := w.getVFS(r.Context())
 	if err != nil {
 		http.Error(rw, "Root directory not found", http.StatusNotFound)
-		fs.Errorf(nil, "Failed to serve directory: %v", err)
+		fs.ErrorfCtx(context.Background(), nil, "Failed to serve directory: %v", err)
 		return
 	}
 	// List the directory
@@ -415,7 +415,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	dir := node.(*vfs.Dir)
 
 	if r.URL.Query().Get("download") == "zip" && !w.opt.DisableZip {
-		fs.Infof(dirRemote, "%s: Zipping directory", r.RemoteAddr)
+		fs.InfofCtx(context.Background(), dirRemote, "%s: Zipping directory", r.RemoteAddr)
 		zipName := path.Base(dirRemote)
 		if dirRemote == "" {
 			zipName = "root"
@@ -461,7 +461,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 // Use s.Close() and s.Wait() to shutdown server
 func (w *WebDAV) Serve() error {
 	w.server.Serve()
-	fs.Logf(w.f, "WebDav Server started on %s", w.server.URLs())
+	fs.LogfCtx(context.Background(), w.f, "WebDav Server started on %s", w.server.URLs())
 	w.server.Wait()
 	return nil
 }
@@ -478,7 +478,7 @@ func (w *WebDAV) Shutdown() error {
 
 // logRequest is called by the webdav module on every request
 func (w *WebDAV) logRequest(r *http.Request, err error) {
-	fs.Infof(r.URL.Path, "%s from %s", r.Method, r.RemoteAddr)
+	fs.InfofCtx(context.Background(), r.URL.Path, "%s from %s", r.Method, r.RemoteAddr)
 }
 
 // Mkdir creates a directory
@@ -603,7 +603,7 @@ func (h Handle) DeadProps() (map[xml.Name]webdav.Property, error) {
 				property.InnerXML = append(property.InnerXML, "</checksum>"...)
 				properties[xmlName] = property
 			} else {
-				fs.Errorf(nil, "failed to calculate hash: %v", err)
+				fs.ErrorfCtx(context.Background(), nil, "failed to calculate hash: %v", err)
 			}
 		}
 	}
@@ -655,7 +655,7 @@ func (fi FileInfo) ETag(ctx context.Context) (etag string, err error) {
 	}
 	node, ok := (fi.FileInfo).(vfs.Node)
 	if !ok {
-		fs.Errorf(fi, "Expecting vfs.Node, got %T", fi.FileInfo)
+		fs.ErrorfCtx(ctx, fi, "Expecting vfs.Node, got %T", fi.FileInfo)
 		return "", webdav.ErrNotImplemented
 	}
 	entry := node.DirEntry()
@@ -675,7 +675,7 @@ func (fi FileInfo) ContentType(ctx context.Context) (contentType string, err err
 	// defer log.Trace(fi, "")("etag=%q, err=%v", &contentType, &err)
 	node, ok := (fi.FileInfo).(vfs.Node)
 	if !ok {
-		fs.Errorf(fi, "Expecting vfs.Node, got %T", fi.FileInfo)
+		fs.ErrorfCtx(ctx, fi, "Expecting vfs.Node, got %T", fi.FileInfo)
 		return "application/octet-stream", nil
 	}
 	entry := node.DirEntry() // can be nil
@@ -687,6 +687,6 @@ func (fi FileInfo) ContentType(ctx context.Context) (contentType string, err err
 	case nil:
 		return mime.TypeByExtension(path.Ext(node.Name())), nil
 	}
-	fs.Errorf(fi, "Expecting fs.Object or fs.Directory, got %T", entry)
+	fs.ErrorfCtx(ctx, fi, "Expecting fs.Object or fs.Directory, got %T", entry)
 	return "application/octet-stream", nil
 }

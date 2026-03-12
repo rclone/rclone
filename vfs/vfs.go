@@ -221,7 +221,7 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	configName := fs.ConfigString(f)
 	for _, activeVFS := range active[configName] {
 		if vfs.Opt == activeVFS.Opt {
-			fs.Debugf(f, "Reusing VFS from active cache")
+			fs.DebugfCtx(context.Background(), f, "Reusing VFS from active cache")
 			activeVFS.inUse.Add(1)
 			return activeVFS
 		}
@@ -239,17 +239,17 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		do(context.TODO(), vfs.root.changeNotify, vfs.pollChan)
 		vfs.pollChan <- time.Duration(vfs.Opt.PollInterval)
 	} else if vfs.Opt.PollInterval > 0 {
-		fs.Infof(f, "poll-interval is not supported by this remote")
+		fs.InfofCtx(context.Background(), f, "poll-interval is not supported by this remote")
 	}
 
 	// Warn if can't stream
 	if !vfs.Opt.ReadOnly && vfs.Opt.CacheMode < vfscommon.CacheModeWrites && features.PutStream == nil {
-		fs.Logf(f, "--vfs-cache-mode writes or full is recommended for this remote as it can't stream")
+		fs.LogfCtx(context.Background(), f, "--vfs-cache-mode writes or full is recommended for this remote as it can't stream")
 	}
 
 	// Warn if we handle symlinks
 	if vfs.Opt.Links {
-		fs.Logf(f, "Symlinks support enabled")
+		fs.LogfCtx(context.Background(), f, "Symlinks support enabled")
 	}
 
 	// Pin the Fs into the cache so that when we use cache.NewFs
@@ -273,10 +273,10 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 
 // refresh the directory cache for all directories
 func (vfs *VFS) refresh() {
-	fs.Debugf(vfs.f, "Refreshing VFS directory cache")
+	fs.DebugfCtx(context.Background(), vfs.f, "Refreshing VFS directory cache")
 	err := vfs.root.readDirTree()
 	if err != nil {
-		fs.Errorf(vfs.f, "Error refreshing VFS directory cache: %v", err)
+		fs.ErrorfCtx(context.Background(), vfs.f, "Error refreshing VFS directory cache: %v", err)
 	}
 }
 
@@ -293,7 +293,7 @@ func (vfs *VFS) signalHandler(ctx context.Context) {
 		case <-sigHup:
 			root, err := vfs.Root()
 			if err != nil {
-				fs.Errorf(vfs.Fs(), "Error reading root: %v", err)
+				fs.ErrorfCtx(ctx, vfs.Fs(), "Error reading root: %v", err)
 			} else {
 				root.ForgetAll()
 			}
@@ -354,7 +354,7 @@ func (vfs *VFS) SetCacheMode(cacheMode vfscommon.CacheMode) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cache, err := vfscache.New(ctx, vfs.f, &vfs.Opt, vfs.AddVirtual) // FIXME pass on context or get from Opt?
 		if err != nil {
-			fs.Errorf(nil, "Failed to create vfs cache - disabling: %v", err)
+			fs.ErrorfCtx(context.Background(), nil, "Failed to create vfs cache - disabling: %v", err)
 			vfs.Opt.CacheMode = vfscommon.CacheModeOff
 			cancel()
 			return
@@ -436,12 +436,12 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 		if writers == 0 && cacheInUse == 0 {
 			return
 		}
-		fs.Debugf(nil, "Still %d writers active and %d cache items in use, waiting %v", writers, cacheInUse, tickTime)
+		fs.DebugfCtx(context.Background(), nil, "Still %d writers active and %d cache items in use, waiting %v", writers, cacheInUse, tickTime)
 		tick.Reset(tickTime)
 		select {
 		case <-tick.C:
 		case <-deadline.C:
-			fs.Errorf(nil, "Exiting even though %d writers active and %d cache items in use after %v\n%s", writers, cacheInUse, timeout, vfs.cache.Dump())
+			fs.ErrorfCtx(context.Background(), nil, "Exiting even though %d writers active and %d cache items in use after %v\n%s", writers, cacheInUse, timeout, vfs.cache.Dump())
 			return
 		}
 		tickTime *= 2
@@ -453,7 +453,7 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 
 // Root returns the root node
 func (vfs *VFS) Root() (*Dir, error) {
-	// fs.Debugf(vfs.f, "Root()")
+	// fs.DebugfCtx(context.Background(), vfs.f, "Root()")
 	return vfs.root, nil
 }
 
@@ -675,7 +675,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 		}
 		vfs.usageTime = time.Now()
 		if err != nil {
-			fs.Errorf(vfs.f, "Statfs failed: %v", err)
+			fs.ErrorfCtx(context.Background(), vfs.f, "Statfs failed: %v", err)
 			return
 		}
 	}
@@ -853,7 +853,7 @@ func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
 // If there is an error, it will be of type *PathError.
 func (vfs *VFS) Readlink(name string) (s string, err error) {
 	if !vfs.Opt.Links {
-		fs.Errorf(nil, "symlinks not supported without the --links flag: %v", name)
+		fs.ErrorfCtx(context.Background(), nil, "symlinks not supported without the --links flag: %v", name)
 		return "", ENOSYS
 	}
 	node, err := vfs.Stat(name)
@@ -882,7 +882,7 @@ func (vfs *VFS) Readlink(name string) (s string, err error) {
 // It returns the node created
 func (vfs *VFS) CreateSymlink(oldname, newname string) (Node, error) {
 	if !vfs.Opt.Links {
-		fs.Errorf(newname, "symlinks not supported without the --links flag")
+		fs.ErrorfCtx(context.Background(), newname, "symlinks not supported without the --links flag")
 		return nil, ENOSYS
 	}
 

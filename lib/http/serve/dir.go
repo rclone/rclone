@@ -135,7 +135,7 @@ func (d *Directory) AddEntry(remote string, isDir bool) {
 // Error logs the error and if a ResponseWriter is given it writes an http.StatusInternalServerError
 func Error(ctx context.Context, what any, w http.ResponseWriter, text string, err error) {
 	err = fs.CountError(ctx, err)
-	fs.Errorf(what, "%s: %v", text, err)
+	fs.ErrorfCtx(ctx, what, "%s: %v", text, err)
 	if w != nil {
 		http.Error(w, text+".", http.StatusInternalServerError)
 	}
@@ -237,7 +237,7 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	tr := accounting.Stats(r.Context()).NewTransferRemoteSize(d.DirRemote, -1, nil, nil)
 	defer tr.Done(r.Context(), nil)
 
-	fs.Infof(d.DirRemote, "%s: Serving directory", r.RemoteAddr)
+	fs.InfofCtx(ctx, d.DirRemote, "%s: Serving directory", r.RemoteAddr)
 
 	buf := &bytes.Buffer{}
 	err := d.HTMLTemplate.Execute(buf, d)

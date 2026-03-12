@@ -61,11 +61,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options, vfsOpt *vfscommon.Opt
 		}
 	}
 	if w.etagHashType != hash.None {
-		fs.Debugf(f, "Using hash %v for ETag", w.etagHashType)
+		fs.DebugfCtx(ctx, f, "Using hash %v for ETag", w.etagHashType)
 	}
 
 	if len(opt.AuthKey) == 0 {
-		fs.Logf("serve s3", "No auth provided so allowing anonymous access")
+		fs.LogfCtx(ctx, "serve s3", "No auth provided so allowing anonymous access")
 	} else {
 		w.s3Secret = getAuthSecret(opt.AuthKey)
 	}
@@ -149,7 +149,7 @@ func (w *Server) Bind(router chi.Router) {
 // Serve serves the s3 server until the server is shutdown
 func (w *Server) Serve() error {
 	w.server.Serve()
-	fs.Logf(w.f, "Starting s3 server on %s", w.server.URLs())
+	fs.LogfCtx(context.Background(), w.f, "Starting s3 server on %s", w.server.URLs())
 	w.server.Wait()
 	return nil
 }
@@ -181,7 +181,7 @@ func proxyAuthMiddleware(next http.Handler, ws *Server) http.Handler {
 		accessKey, _ := parseAccessKeyID(r)
 		value, err := ws.auth(accessKey)
 		if err != nil {
-			fs.Infof(r.URL.Path, "%s: Auth failed: %v", r.RemoteAddr, err)
+			fs.InfofCtx(context.Background(), r.URL.Path, "%s: Auth failed: %v", r.RemoteAddr, err)
 		}
 		if value != nil {
 			r = r.WithContext(context.WithValue(r.Context(), ctxKeyID, value))

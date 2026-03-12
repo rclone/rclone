@@ -146,10 +146,10 @@ func findFile(dir string, name string) string {
 func findHomeDir() (string, error) {
 	path, err := homedir.Dir()
 	if err != nil {
-		fs.Debugf(nil, "Home directory lookup failed and cannot be used as configuration location: %v", err)
+		fs.DebugfCtx(context.Background(), nil, "Home directory lookup failed and cannot be used as configuration location: %v", err)
 	} else if path == "" {
 		// On Unix homedir return success but empty string for user with empty home configured in passwd file
-		fs.Debugf(nil, "Home directory not defined and cannot be used as configuration location")
+		fs.DebugfCtx(context.Background(), nil, "Home directory not defined and cannot be used as configuration location")
 	}
 	return path, err
 }
@@ -171,7 +171,7 @@ func findAppDataConfig() (configDir string, configFile string) {
 		configDir = filepath.Join(appDataDir, "rclone")
 		configFile = findFile(configDir, configFileName)
 	} else {
-		fs.Debugf(nil, "Environment variable APPDATA is not defined and cannot be used as configuration location")
+		fs.DebugfCtx(context.Background(), nil, "Environment variable APPDATA is not defined and cannot be used as configuration location")
 	}
 	return
 }
@@ -290,17 +290,17 @@ func makeConfigPath() string {
 		// just assume file .rclone.conf (legacy hidden filename) can be written in
 		// its root (~/.rclone.conf).
 		if homeDir != "" {
-			fs.Debugf(nil, "Configuration directory could not be created and will not be used: %v", mkdirErr)
+			fs.DebugfCtx(context.Background(), nil, "Configuration directory could not be created and will not be used: %v", mkdirErr)
 			return filepath.Join(homeDir, hiddenConfigFileName)
 		}
 		if !configSupplied {
-			fs.Errorf(nil, "Couldn't find home directory nor create configuration directory: %v", mkdirErr)
+			fs.ErrorfCtx(context.Background(), nil, "Couldn't find home directory nor create configuration directory: %v", mkdirErr)
 		}
 	} else if !configSupplied {
 		if homeDirErr != nil {
-			fs.Errorf(nil, "Couldn't find configuration directory nor home directory: %v", homeDirErr)
+			fs.ErrorfCtx(context.Background(), nil, "Couldn't find configuration directory nor home directory: %v", homeDirErr)
 		} else {
-			fs.Errorf(nil, "Couldn't find configuration directory nor home directory")
+			fs.ErrorfCtx(context.Background(), nil, "Couldn't find configuration directory nor home directory")
 		}
 	}
 	// No known location that can be used: Did possibly find a configDir
@@ -309,8 +309,8 @@ func makeConfigPath() string {
 	// Report it as an error, and return as last resort the path relative to current
 	// working directory, of .rclone.conf (legacy hidden filename).
 	if !configSupplied {
-		fs.Errorf(nil, "Defaulting to storing config in current directory.")
-		fs.Errorf(nil, "Use --config flag to workaround.")
+		fs.ErrorfCtx(context.Background(), nil, "Defaulting to storing config in current directory.")
+		fs.ErrorfCtx(context.Background(), nil, "Use --config flag to workaround.")
 	}
 	return hiddenConfigFileName
 }
@@ -364,13 +364,13 @@ func LoadedData() Storage {
 		_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(configPath))
 		// Load configuration from file (or initialize sensible default if no file or error)
 		if err := data.Load(); err == nil {
-			fs.Debugf(nil, "Using config file from %q", configPath)
+			fs.DebugfCtx(context.Background(), nil, "Using config file from %q", configPath)
 			dataLoaded = true
 		} else if err == ErrorConfigFileNotFound {
 			if configPath == "" {
-				fs.Debugf(nil, "Config is memory-only - using defaults")
+				fs.DebugfCtx(context.Background(), nil, "Config is memory-only - using defaults")
 			} else {
-				fs.Logf(nil, "Config file %q not found - using defaults", configPath)
+				fs.LogfCtx(context.Background(), nil, "Config file %q not found - using defaults", configPath)
 			}
 			dataLoaded = true
 		} else {
@@ -393,7 +393,7 @@ func SaveConfig() {
 		waitingTimeMs := mathrand.Intn(1000)
 		time.Sleep(time.Duration(waitingTimeMs) * time.Millisecond)
 	}
-	fs.Errorf(nil, "Failed to save config after %d tries: %v", ci.LowLevelRetries, err)
+	fs.ErrorfCtx(context.Background(), nil, "Failed to save config after %d tries: %v", ci.LowLevelRetries, err)
 }
 
 // FileSections returns the sections in the config file
@@ -733,7 +733,7 @@ func Dump() error {
 func makeCacheDir() (dir string) {
 	dir, err := os.UserCacheDir()
 	if err != nil || dir == "" {
-		fs.Debugf(nil, "Failed to find user cache dir, using temporary directory: %v", err)
+		fs.DebugfCtx(context.Background(), nil, "Failed to find user cache dir, using temporary directory: %v", err)
 		// if no dir found then use TempDir - we will have a cachedir!
 		dir = os.TempDir()
 	}

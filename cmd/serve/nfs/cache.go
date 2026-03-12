@@ -4,6 +4,7 @@ package nfs
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
@@ -59,7 +60,7 @@ type Cache interface {
 
 // Set the cache of the handler to the type required by the user
 func (h *Handler) getCache() (c Cache, err error) {
-	fs.Debugf("nfs", "Starting %v handle cache", h.opt.HandleCache)
+	fs.DebugfCtx(context.Background(), "nfs", "Starting %v handle cache", h.opt.HandleCache)
 	switch h.opt.HandleCache {
 	case cacheMemory:
 		return nfshelper.NewCachingHandler(h, h.opt.HandleLimit), nil
@@ -117,7 +118,7 @@ func newDiskHandler(h *Handler) (dh *diskHandler, err error) {
 		suffix:   dh.diskCacheSuffix,
 		metadata: h.vfs.Opt.MetadataExtension,
 	}
-	fs.Infof("nfs", "Storing handle cache in %q", dh.cacheDir)
+	fs.InfofCtx(context.Background(), "nfs", "Storing handle cache in %q", dh.cacheDir)
 	return dh, nil
 }
 
@@ -163,12 +164,12 @@ func (dh *diskHandler) ToHandle(f billy.Filesystem, splitPath []string) (fh []by
 	cacheDir := filepath.Dir(cachePath)
 	err := os.MkdirAll(cacheDir, 0700)
 	if err != nil {
-		fs.Errorf("nfs", "Couldn't create cache file handle directory: %v", err)
+		fs.ErrorfCtx(context.Background(), "nfs", "Couldn't create cache file handle directory: %v", err)
 		return fh
 	}
 	fh, err = dh.write(fh, cachePath, fullPath)
 	if err != nil {
-		fs.Errorf("nfs", "Couldn't create cache file handle: %v", err)
+		fs.ErrorfCtx(context.Background(), "nfs", "Couldn't create cache file handle: %v", err)
 		return fh
 	}
 	// metadata file handle is suffixed with metadataSuffix
@@ -199,7 +200,7 @@ func (dh *diskHandler) isMetadataHandle(fh []byte) (isMetadata bool, newFh []byt
 	} else if bytes.Equal(suffix, metadataSuffix) {
 		return true, fh[:len(fh)-len(suffix)], nil
 	}
-	fs.Errorf("nfs", "Bad file handle suffix %X", suffix)
+	fs.ErrorfCtx(context.Background(), "nfs", "Bad file handle suffix %X", suffix)
 	return false, nil, errStaleHandle
 }
 
@@ -214,7 +215,7 @@ func (dh *diskHandler) FromHandle(fh []byte) (f billy.Filesystem, splitPath []st
 	cachePath := dh.handleToPath(fh)
 	fullPathBytes, err := dh.read(fh, cachePath)
 	if err != nil {
-		fs.Errorf("nfs", "Stale handle %q: %v", cachePath, err)
+		fs.ErrorfCtx(context.Background(), "nfs", "Stale handle %q: %v", cachePath, err)
 		return nil, nil, errStaleHandle
 	}
 	if isMetadata {
@@ -244,7 +245,7 @@ func (dh *diskHandler) InvalidateHandle(f billy.Filesystem, fh []byte) error {
 	cachePath := dh.handleToPath(fh)
 	err = dh.remove(fh, cachePath)
 	if err != nil {
-		fs.Errorf("nfs", "Failed to remove handle %q: %v", cachePath, err)
+		fs.ErrorfCtx(context.Background(), "nfs", "Failed to remove handle %q: %v", cachePath, err)
 	}
 	return nil
 }

@@ -40,7 +40,7 @@ func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	a.Mtime = modTime
 	a.Ctime = modTime
 	// FIXME include Valid so get some caching?
-	// FIXME fs.Debugf(d.path, "Dir.Attr %+v", a)
+	// FIXME fs.DebugfCtx(ctx, d.path, "Dir.Attr %+v", a)
 	return nil
 }
 
@@ -119,7 +119,7 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 	for _, node := range items {
 		name := node.Name()
 		if len(name) > mountlib.MaxLeafSize {
-			fs.Errorf(d, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
+			fs.ErrorfCtx(ctx, d, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
 			continue
 		}
 		var dirent = fuse.Dirent{
@@ -192,10 +192,10 @@ func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) (err error) {
 
 // Invalidate a leaf in a directory
 func (d *Dir) invalidateEntry(dirNode fusefs.Node, leaf string) {
-	fs.Debugf(dirNode, "Invalidating %q", leaf)
+	fs.DebugfCtx(ctx, dirNode, "Invalidating %q", leaf)
 	err := d.fsys.server.InvalidateEntry(dirNode, leaf)
 	if err != nil {
-		fs.Debugf(dirNode, "Failed to invalidate %q: %v", leaf, err)
+		fs.DebugfCtx(ctx, dirNode, "Failed to invalidate %q: %v", leaf, err)
 	}
 }
 
@@ -274,7 +274,7 @@ var _ fusefs.NodeMknoder = (*Dir)(nil)
 func (d *Dir) Mknod(ctx context.Context, req *fuse.MknodRequest) (node fusefs.Node, err error) {
 	defer log.Trace(d, "name=%v, mode=%d, rdev=%d", req.Name, req.Mode, req.Rdev)("node=%v, err=%v", &node, &err)
 	if req.Rdev != 0 {
-		fs.Errorf(d, "Can't create device node %q", req.Name)
+		fs.ErrorfCtx(ctx, d, "Can't create device node %q", req.Name)
 		return nil, fuse.Errno(syscall.EIO)
 	}
 	var cReq = fuse.CreateRequest{

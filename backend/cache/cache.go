@@ -349,7 +349,7 @@ var warnDeprecated sync.Once
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 	warnDeprecated.Do(func() {
-		fs.Logf(nil, "WARNING: Cache backend is deprecated and may be removed in future. Please use VFS instead.")
+		fs.LogfCtx(ctx, nil, "WARNING: Cache backend is deprecated and may be removed in future. Please use VFS instead.")
 	})
 
 	// Parse config into Options struct
@@ -378,14 +378,14 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		return nil, fmt.Errorf("failed to make remote %q to wrap: %w", remotePath, wrapErr)
 	}
 	var fsErr error
-	fs.Debugf(name, "wrapped %v:%v at root %v", wrappedFs.Name(), wrappedFs.Root(), rpath)
+	fs.DebugfCtx(ctx, name, "wrapped %v:%v at root %v", wrappedFs.Name(), wrappedFs.Root(), rpath)
 	if wrapErr == fs.ErrorIsFile {
 		fsErr = fs.ErrorIsFile
 		rpath = cleanPath(path.Dir(rpath))
 	}
 	// configure cache backend
 	if opt.DbPurge {
-		fs.Debugf(name, "Purging the DB")
+		fs.DebugfCtx(ctx, name, "Purging the DB")
 	}
 	f := &Fs{
 		Fs:               wrappedFs,
@@ -448,8 +448,8 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 
 	dbPath = filepath.Join(dbPath, name+".db")
 	chunkPath = filepath.Join(chunkPath, name)
-	fs.Infof(name, "Cache DB path: %v", dbPath)
-	fs.Infof(name, "Cache chunk path: %v", chunkPath)
+	fs.InfofCtx(ctx, name, "Cache DB path: %v", dbPath)
+	fs.InfofCtx(ctx, name, "Cache chunk path: %v", chunkPath)
 	f.cache, err = GetPersistent(dbPath, chunkPath, &Features{
 		PurgeDb:    opt.DbPurge,
 		DbWaitTime: time.Duration(opt.DbWaitTime),
@@ -470,20 +470,20 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		for {
 			s := <-c
 			if s == syscall.SIGHUP {
-				fs.Infof(f, "Clearing cache from signal")
+				fs.InfofCtx(ctx, f, "Clearing cache from signal")
 				f.DirCacheFlush()
 			}
 		}
 	}()
 
-	fs.Infof(name, "Chunk Memory: %v", !f.opt.ChunkNoMemory)
-	fs.Infof(name, "Chunk Size: %v", f.opt.ChunkSize)
-	fs.Infof(name, "Chunk Total Size: %v", f.opt.ChunkTotalSize)
-	fs.Infof(name, "Chunk Clean Interval: %v", f.opt.ChunkCleanInterval)
-	fs.Infof(name, "Workers: %v", f.opt.TotalWorkers)
-	fs.Infof(name, "File Age: %v", f.opt.InfoAge)
+	fs.InfofCtx(ctx, name, "Chunk Memory: %v", !f.opt.ChunkNoMemory)
+	fs.InfofCtx(ctx, name, "Chunk Size: %v", f.opt.ChunkSize)
+	fs.InfofCtx(ctx, name, "Chunk Total Size: %v", f.opt.ChunkTotalSize)
+	fs.InfofCtx(ctx, name, "Chunk Clean Interval: %v", f.opt.ChunkCleanInterval)
+	fs.InfofCtx(ctx, name, "Workers: %v", f.opt.TotalWorkers)
+	fs.InfofCtx(ctx, name, "File Age: %v", f.opt.InfoAge)
 	if f.opt.StoreWrites {
-		fs.Infof(name, "Cache Writes: enabled")
+		fs.InfofCtx(ctx, name, "Cache Writes: enabled")
 	}
 
 	if f.opt.TempWritePath != "" {
@@ -496,8 +496,8 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		if err != nil {
 			return nil, fmt.Errorf("failed to create temp fs: %w", err)
 		}
-		fs.Infof(name, "Upload Temp Rest Time: %v", f.opt.TempWaitTime)
-		fs.Infof(name, "Upload Temp FS: %v", f.opt.TempWritePath)
+		fs.InfofCtx(ctx, name, "Upload Temp Rest Time: %v", f.opt.TempWaitTime)
+		fs.InfofCtx(ctx, name, "Upload Temp FS: %v", f.opt.TempWritePath)
 		f.backgroundRunner, _ = initBackgroundUploader(f)
 		go f.backgroundRunner.run()
 	}
@@ -507,10 +507,10 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 			time.Sleep(time.Duration(f.opt.ChunkCleanInterval))
 			select {
 			case <-f.cleanupChan:
-				fs.Infof(f, "stopping cleanup")
+				fs.InfofCtx(ctx, f, "stopping cleanup")
 				return
 			default:
-				fs.Debugf(f, "starting cleanup")
+				fs.DebugfCtx(ctx, f, "starting cleanup")
 				f.CleanUpCache(false)
 			}
 		}
@@ -819,12 +819,12 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 	if crypt, yes := f.isWrappedByCrypt(); yes {
 		decryptedPath, err := crypt.DecryptFileName(forgetPath)
 		if err == nil {
-			fs.Infof(decryptedPath, "received cache expiry notification")
+			fs.InfofCtx(context.Background(), decryptedPath, "received cache expiry notification")
 		} else {
-			fs.Infof(forgetPath, "received cache expiry notification")
+			fs.InfofCtx(context.Background(), forgetPath, "received cache expiry notification")
 		}
 	} else {
-		fs.Infof(forgetPath, "received cache expiry notification")
+		fs.InfofCtx(context.Background(), forgetPath, "received cache expiry notification")
 	}
 	// notify upstreams too (vfs)
 	f.notifyChangeUpstream(forgetPath, entryType)
@@ -834,11 +834,11 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 		co := NewObject(f, forgetPath)
 		err := f.cache.GetObject(co)
 		if err != nil {
-			fs.Debugf(f, "got change notification for non cached entry %v", co)
+			fs.DebugfCtx(context.Background(), f, "got change notification for non cached entry %v", co)
 		}
 		err = f.cache.ExpireObject(co, true)
 		if err != nil {
-			fs.Debugf(forgetPath, "notify: error expiring '%v': %v", co, err)
+			fs.DebugfCtx(context.Background(), forgetPath, "notify: error expiring '%v': %v", co, err)
 		}
 		cd = NewDirectory(f, cleanPath(path.Dir(co.Remote())))
 	} else {
@@ -847,9 +847,9 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 	// we expire the dir
 	err := f.cache.ExpireDir(cd)
 	if err != nil {
-		fs.Debugf(forgetPath, "notify: error expiring '%v': %v", cd, err)
+		fs.DebugfCtx(context.Background(), forgetPath, "notify: error expiring '%v': %v", cd, err)
 	} else {
-		fs.Debugf(forgetPath, "notify: expired '%v'", cd)
+		fs.DebugfCtx(context.Background(), forgetPath, "notify: expired '%v'", cd)
 	}
 
 	f.notifiedMu.Lock()
@@ -884,7 +884,7 @@ func (f *Fs) notifyChangeUpstream(remote string, entryType fs.EntryType) {
 func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollInterval <-chan time.Duration) {
 	f.parentsForgetMu.Lock()
 	defer f.parentsForgetMu.Unlock()
-	fs.Debugf(f, "subscribing to ChangeNotify")
+	fs.DebugfCtx(ctx, f, "subscribing to ChangeNotify")
 	f.parentsForgetFn = append(f.parentsForgetFn, notifyFunc)
 	go func() {
 		for range pollInterval {
@@ -931,16 +931,16 @@ func (f *Fs) TempUploadWaitTime() time.Duration {
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	var err error
 
-	fs.Debugf(f, "new object '%s'", remote)
+	fs.DebugfCtx(ctx, f, "new object '%s'", remote)
 	co := NewObject(f, remote)
 	// search for entry in cache and validate it
 	err = f.cache.GetObject(co)
 	if err != nil {
-		fs.Debugf(remote, "find: error: %v", err)
+		fs.DebugfCtx(ctx, remote, "find: error: %v", err)
 	} else if time.Now().After(co.CacheTs.Add(time.Duration(f.opt.InfoAge))) {
-		fs.Debugf(co, "find: cold object: %+v", co)
+		fs.DebugfCtx(ctx, co, "find: cold object: %+v", co)
 	} else {
-		fs.Debugf(co, "find: warm object: %v, expiring on: %v", co, co.CacheTs.Add(time.Duration(f.opt.InfoAge)))
+		fs.DebugfCtx(ctx, co, "find: warm object: %v, expiring on: %v", co, co.CacheTs.Add(time.Duration(f.opt.InfoAge)))
 		return co, nil
 	}
 
@@ -950,10 +950,10 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		obj, err = f.tempFs.NewObject(ctx, remote)
 		// not found in temp fs
 		if err != nil {
-			fs.Debugf(remote, "find: not found in local cache fs")
+			fs.DebugfCtx(ctx, remote, "find: not found in local cache fs")
 			obj, err = f.Fs.NewObject(ctx, remote)
 		} else {
-			fs.Debugf(obj, "find: found in local cache fs")
+			fs.DebugfCtx(ctx, obj, "find: found in local cache fs")
 		}
 	} else {
 		obj, err = f.Fs.NewObject(ctx, remote)
@@ -961,33 +961,33 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	// not found in either fs
 	if err != nil {
-		fs.Debugf(obj, "find failed: not found in either local or remote fs")
+		fs.DebugfCtx(ctx, obj, "find failed: not found in either local or remote fs")
 		return nil, err
 	}
 
 	// cache the new entry
 	co = ObjectFromOriginal(ctx, f, obj).persist()
-	fs.Debugf(co, "find: cached object")
+	fs.DebugfCtx(ctx, co, "find: cached object")
 	return co, nil
 }
 
 // List the objects and directories in dir into entries
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	fs.Debugf(f, "list '%s'", dir)
+	fs.DebugfCtx(ctx, f, "list '%s'", dir)
 	cd := ShallowDirectory(f, dir)
 
 	// search for cached dir entries and validate them
 	entries, err = f.cache.GetDirEntries(cd)
 	if err != nil {
-		fs.Debugf(dir, "list: error: %v", err)
+		fs.DebugfCtx(ctx, dir, "list: error: %v", err)
 	} else if time.Now().After(cd.CacheTs.Add(time.Duration(f.opt.InfoAge))) {
-		fs.Debugf(dir, "list: cold listing: %v", cd.CacheTs)
+		fs.DebugfCtx(ctx, dir, "list: cold listing: %v", cd.CacheTs)
 	} else if len(entries) == 0 {
 		// TODO: read empty dirs from source?
-		fs.Debugf(dir, "list: empty listing")
+		fs.DebugfCtx(ctx, dir, "list: empty listing")
 	} else {
-		fs.Debugf(dir, "list: warm %v from cache for: %v, expiring on: %v", len(entries), cd.abs(), cd.CacheTs.Add(time.Duration(f.opt.InfoAge)))
-		fs.Debugf(dir, "list: cached entries: %v", entries)
+		fs.DebugfCtx(ctx, dir, "list: warm %v from cache for: %v, expiring on: %v", len(entries), cd.abs(), cd.CacheTs.Add(time.Duration(f.opt.InfoAge)))
+		fs.DebugfCtx(ctx, dir, "list: cached entries: %v", entries)
 		return entries, nil
 	}
 
@@ -996,19 +996,19 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if f.opt.TempWritePath != "" {
 		queuedEntries, err := f.cache.searchPendingUploadFromDir(cd.abs())
 		if err != nil {
-			fs.Errorf(dir, "list: error getting pending uploads: %v", err)
+			fs.ErrorfCtx(ctx, dir, "list: error getting pending uploads: %v", err)
 		} else {
-			fs.Debugf(dir, "list: read %v from temp fs", len(queuedEntries))
-			fs.Debugf(dir, "list: temp fs entries: %v", queuedEntries)
+			fs.DebugfCtx(ctx, dir, "list: read %v from temp fs", len(queuedEntries))
+			fs.DebugfCtx(ctx, dir, "list: temp fs entries: %v", queuedEntries)
 
 			for _, queuedRemote := range queuedEntries {
 				queuedEntry, err := f.tempFs.NewObject(ctx, f.cleanRootFromPath(queuedRemote))
 				if err != nil {
-					fs.Debugf(dir, "list: temp file not found in local fs: %v", err)
+					fs.DebugfCtx(ctx, dir, "list: temp file not found in local fs: %v", err)
 					continue
 				}
 				co := ObjectFromOriginal(ctx, f, queuedEntry).persist()
-				fs.Debugf(co, "list: cached temp object")
+				fs.DebugfCtx(ctx, co, "list: cached temp object")
 				cachedEntries = append(cachedEntries, co)
 			}
 		}
@@ -1019,8 +1019,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(dir, "list: read %v from source", len(sourceEntries))
-	fs.Debugf(dir, "list: source entries: %v", sourceEntries)
+	fs.DebugfCtx(ctx, dir, "list: read %v from source", len(sourceEntries))
+	fs.DebugfCtx(ctx, dir, "list: source entries: %v", sourceEntries)
 
 	sort.Sort(sourceEntries)
 	for _, entry := range entries {
@@ -1036,7 +1036,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		case fs.Directory:
 			_ = f.cache.RemoveDir(fp)
 		}
-		fs.Debugf(dir, "list: remove entry: %v", entryRemote)
+		fs.DebugfCtx(ctx, dir, "list: remove entry: %v", entryRemote)
 	}
 	entries = nil //nolint:ineffassign
 
@@ -1055,7 +1055,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			}
 			co := ObjectFromOriginal(ctx, f, o).persist()
 			cachedEntries = append(cachedEntries, co)
-			fs.Debugf(dir, "list: cached object: %v", co)
+			fs.DebugfCtx(ctx, dir, "list: cached object: %v", co)
 		case fs.Directory:
 			cdd := DirectoryFromOriginal(ctx, f, o)
 			// check if the dir isn't expired and add it in cache if it isn't
@@ -1064,14 +1064,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			}
 			cachedEntries = append(cachedEntries, cdd)
 		default:
-			fs.Debugf(entry, "list: Unknown object type %T", entry)
+			fs.DebugfCtx(ctx, entry, "list: Unknown object type %T", entry)
 		}
 	}
 	err = f.cache.AddBatchDir(batchDirectories)
 	if err != nil {
-		fs.Errorf(dir, "list: error caching directories from listing %v", dir)
+		fs.ErrorfCtx(ctx, dir, "list: error caching directories from listing %v", dir)
 	} else {
-		fs.Debugf(dir, "list: cached directories: %v", len(batchDirectories))
+		fs.DebugfCtx(ctx, dir, "list: cached directories: %v", len(batchDirectories))
 	}
 
 	// cache dir meta
@@ -1079,9 +1079,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	cd.CacheTs = &t
 	err = f.cache.AddDir(cd)
 	if err != nil {
-		fs.Errorf(cd, "list: save error: '%v'", err)
+		fs.ErrorfCtx(ctx, cd, "list: save error: '%v'", err)
 	} else {
-		fs.Debugf(dir, "list: cached dir: '%v', cache ts: %v", cd.abs(), cd.CacheTs)
+		fs.DebugfCtx(ctx, dir, "list: cached dir: '%v', cache ts: %v", cd.abs(), cd.CacheTs)
 	}
 
 	return cachedEntries, nil
@@ -1114,7 +1114,7 @@ func (f *Fs) recurse(ctx context.Context, dir string, list *list.Helper) error {
 // ListR lists the objects and directories of the Fs starting
 // from dir recursively into out.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	fs.Debugf(f, "list recursively from '%s'", dir)
+	fs.DebugfCtx(ctx, f, "list recursively from '%s'", dir)
 
 	// we check if the source FS supports ListR
 	// if it does, we'll use that to get all the entries, cache them and return
@@ -1150,27 +1150,27 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 // Mkdir makes the directory (container, bucket)
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, "mkdir '%s'", dir)
+	fs.DebugfCtx(ctx, f, "mkdir '%s'", dir)
 	err := f.Fs.Mkdir(ctx, dir)
 	if err != nil {
 		return err
 	}
-	fs.Debugf(dir, "mkdir: created dir in source fs")
+	fs.DebugfCtx(ctx, dir, "mkdir: created dir in source fs")
 
 	cd := NewDirectory(f, cleanPath(dir))
 	err = f.cache.AddDir(cd)
 	if err != nil {
-		fs.Errorf(dir, "mkdir: add error: %v", err)
+		fs.ErrorfCtx(ctx, dir, "mkdir: add error: %v", err)
 	} else {
-		fs.Debugf(cd, "mkdir: added to cache")
+		fs.DebugfCtx(ctx, cd, "mkdir: added to cache")
 	}
 	// expire parent of new dir
 	parentCd := NewDirectory(f, cleanPath(path.Dir(dir)))
 	err = f.cache.ExpireDir(parentCd)
 	if err != nil {
-		fs.Errorf(parentCd, "mkdir: cache expire error: %v", err)
+		fs.ErrorfCtx(ctx, parentCd, "mkdir: cache expire error: %v", err)
 	} else {
-		fs.Infof(parentCd, "mkdir: cache expired")
+		fs.InfofCtx(ctx, parentCd, "mkdir: cache expired")
 	}
 	// advertise to ChangeNotify if wrapped doesn't do that
 	f.notifyChangeUpstreamIfNeeded(parentCd.Remote(), fs.EntryDirectory)
@@ -1180,7 +1180,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // Rmdir removes the directory (container, bucket) if empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, "rmdir '%s'", dir)
+	fs.DebugfCtx(ctx, f, "rmdir '%s'", dir)
 
 	if f.opt.TempWritePath != "" {
 		// pause background uploads
@@ -1195,7 +1195,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			if err != nil {
 				return err
 			}
-			fs.Debugf(dir, "rmdir: removed dir in source fs")
+			fs.DebugfCtx(ctx, dir, "rmdir: removed dir in source fs")
 		}
 
 		var queuedEntries []*Object
@@ -1209,12 +1209,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			return nil
 		})
 		if err != nil {
-			fs.Errorf(dir, "rmdir: error getting pending uploads: %v", err)
+			fs.ErrorfCtx(ctx, dir, "rmdir: error getting pending uploads: %v", err)
 		} else {
-			fs.Debugf(dir, "rmdir: read %v from temp fs", len(queuedEntries))
-			fs.Debugf(dir, "rmdir: temp fs entries: %v", queuedEntries)
+			fs.DebugfCtx(ctx, dir, "rmdir: read %v from temp fs", len(queuedEntries))
+			fs.DebugfCtx(ctx, dir, "rmdir: temp fs entries: %v", queuedEntries)
 			if len(queuedEntries) > 0 {
-				fs.Errorf(dir, "rmdir: temporary dir not empty: %v", queuedEntries)
+				fs.ErrorfCtx(ctx, dir, "rmdir: temporary dir not empty: %v", queuedEntries)
 				return fs.ErrorDirectoryNotEmpty
 			}
 		}
@@ -1223,24 +1223,24 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		if err != nil {
 			return err
 		}
-		fs.Debugf(dir, "rmdir: removed dir in source fs")
+		fs.DebugfCtx(ctx, dir, "rmdir: removed dir in source fs")
 	}
 
 	// remove dir data
 	d := NewDirectory(f, dir)
 	err := f.cache.RemoveDir(d.abs())
 	if err != nil {
-		fs.Errorf(dir, "rmdir: remove error: %v", err)
+		fs.ErrorfCtx(ctx, dir, "rmdir: remove error: %v", err)
 	} else {
-		fs.Debugf(d, "rmdir: removed from cache")
+		fs.DebugfCtx(ctx, d, "rmdir: removed from cache")
 	}
 	// expire parent
 	parentCd := NewDirectory(f, cleanPath(path.Dir(dir)))
 	err = f.cache.ExpireDir(parentCd)
 	if err != nil {
-		fs.Errorf(dir, "rmdir: cache expire error: %v", err)
+		fs.ErrorfCtx(ctx, dir, "rmdir: cache expire error: %v", err)
 	} else {
-		fs.Infof(parentCd, "rmdir: cache expired")
+		fs.InfofCtx(ctx, parentCd, "rmdir: cache expired")
 	}
 	// advertise to ChangeNotify if wrapped doesn't do that
 	f.notifyChangeUpstreamIfNeeded(parentCd.Remote(), fs.EntryDirectory)
@@ -1251,7 +1251,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // DirMove moves src, srcRemote to this remote at dstRemote
 // using server-side move operations.
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
-	fs.Debugf(f, "move dir '%s'/'%s' -> '%s'/'%s'", src.Root(), srcRemote, f.Root(), dstRemote)
+	fs.DebugfCtx(ctx, f, "move dir '%s'/'%s' -> '%s'/'%s'", src.Root(), srcRemote, f.Root(), dstRemote)
 
 	do := f.Fs.Features().DirMove
 	if do == nil {
@@ -1259,11 +1259,11 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Errorf(srcFs, "can't move directory - not same remote type")
+		fs.ErrorfCtx(ctx, srcFs, "can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	if srcFs.Fs.Name() != f.Fs.Name() {
-		fs.Errorf(srcFs, "can't move directory - not wrapping same remotes")
+		fs.ErrorfCtx(ctx, srcFs, "can't move directory - not wrapping same remotes")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1286,7 +1286,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			if err != nil {
 				return err
 			}
-			fs.Debugf(srcRemote, "movedir: dir moved in the source fs")
+			fs.DebugfCtx(ctx, srcRemote, "movedir: dir moved in the source fs")
 		}
 		// we need to check if the directory exists in the temp fs
 		// and skip the move if it doesn't
@@ -1301,7 +1301,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 					co := ObjectFromOriginal(ctx, f, oo)
 					queuedEntries = append(queuedEntries, co)
 					if co.tempFileStartedUpload() {
-						fs.Errorf(co, "can't move - upload has already started. need to finish that")
+						fs.ErrorfCtx(ctx, co, "can't move - upload has already started. need to finish that")
 						return fs.ErrorCantDirMove
 					}
 				}
@@ -1311,12 +1311,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		if err != nil {
 			return err
 		}
-		fs.Debugf(srcRemote, "dirmove: read %v from temp fs", len(queuedEntries))
-		fs.Debugf(srcRemote, "dirmove: temp fs entries: %v", queuedEntries)
+		fs.DebugfCtx(ctx, srcRemote, "dirmove: read %v from temp fs", len(queuedEntries))
+		fs.DebugfCtx(ctx, srcRemote, "dirmove: temp fs entries: %v", queuedEntries)
 
 		do := f.tempFs.Features().DirMove
 		if do == nil {
-			fs.Errorf(srcRemote, "dirmove: can't move dir in temp fs")
+			fs.ErrorfCtx(ctx, srcRemote, "dirmove: can't move dir in temp fs")
 			return fs.ErrorCantDirMove
 		}
 		err = do(ctx, f.tempFs, srcRemote, dstRemote)
@@ -1332,7 +1332,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		if err != nil {
 			return err
 		}
-		fs.Debugf(srcRemote, "movedir: dir moved in the source fs")
+		fs.DebugfCtx(ctx, srcRemote, "movedir: dir moved in the source fs")
 	}
 cleanup:
 
@@ -1340,17 +1340,17 @@ cleanup:
 	srcDir := NewDirectory(srcFs, srcRemote)
 	err := f.cache.RemoveDir(srcDir.abs())
 	if err != nil {
-		fs.Errorf(srcDir, "dirmove: remove error: %v", err)
+		fs.ErrorfCtx(ctx, srcDir, "dirmove: remove error: %v", err)
 	} else {
-		fs.Debugf(srcDir, "dirmove: removed cached dir")
+		fs.DebugfCtx(ctx, srcDir, "dirmove: removed cached dir")
 	}
 	// expire src parent
 	srcParent := NewDirectory(f, cleanPath(path.Dir(srcRemote)))
 	err = f.cache.ExpireDir(srcParent)
 	if err != nil {
-		fs.Errorf(srcParent, "dirmove: cache expire error: %v", err)
+		fs.ErrorfCtx(ctx, srcParent, "dirmove: cache expire error: %v", err)
 	} else {
-		fs.Debugf(srcParent, "dirmove: cache expired")
+		fs.DebugfCtx(ctx, srcParent, "dirmove: cache expired")
 	}
 	// advertise to ChangeNotify if wrapped doesn't do that
 	f.notifyChangeUpstreamIfNeeded(srcParent.Remote(), fs.EntryDirectory)
@@ -1359,9 +1359,9 @@ cleanup:
 	dstParent := NewDirectory(f, cleanPath(path.Dir(dstRemote)))
 	err = f.cache.ExpireDir(dstParent)
 	if err != nil {
-		fs.Errorf(dstParent, "dirmove: cache expire error: %v", err)
+		fs.ErrorfCtx(ctx, dstParent, "dirmove: cache expire error: %v", err)
 	} else {
-		fs.Debugf(dstParent, "dirmove: cache expired")
+		fs.DebugfCtx(ctx, dstParent, "dirmove: cache expired")
 	}
 	// advertise to ChangeNotify if wrapped doesn't do that
 	f.notifyChangeUpstreamIfNeeded(dstParent.Remote(), fs.EntryDirectory)
@@ -1402,7 +1402,7 @@ func (f *Fs) cacheReader(u io.Reader, src fs.ObjectInfo, originalRead func(inn i
 			// 3. ErrClosedPipe - source remote reader was closed (usually means it reached the end) and we need to stop too
 			// if we have a different error: we're going to error out the original reading too and stop this
 			if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF && err != io.ErrClosedPipe {
-				fs.Errorf(src, "error saving new data in cache. offset: %v, err: %v", offset, err)
+				fs.ErrorfCtx(context.Background(), src, "error saving new data in cache. offset: %v, err: %v", offset, err)
 				_ = pr.CloseWithError(err)
 				break
 			}
@@ -1411,7 +1411,7 @@ func (f *Fs) cacheReader(u io.Reader, src fs.ObjectInfo, originalRead func(inn i
 				chunk = chunk[:readSize]
 				err2 := f.cache.AddChunk(cleanPath(path.Join(f.root, src.Remote())), chunk, offset)
 				if err2 != nil {
-					fs.Errorf(src, "error saving new data in cache '%v'", err2)
+					fs.ErrorfCtx(context.Background(), src, "error saving new data in cache '%v'", err2)
 					_ = pr.CloseWithError(err2)
 					break
 				}
@@ -1450,34 +1450,34 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 
 		obj, err = f.tempFs.Put(ctx, in, src, options...)
 		if err != nil {
-			fs.Errorf(obj, "put: failed to upload in temp fs: %v", err)
+			fs.ErrorfCtx(ctx, obj, "put: failed to upload in temp fs: %v", err)
 			return nil, err
 		}
-		fs.Infof(obj, "put: uploaded in temp fs")
+		fs.InfofCtx(ctx, obj, "put: uploaded in temp fs")
 		err = f.cache.addPendingUpload(path.Join(f.Root(), src.Remote()), false)
 		if err != nil {
-			fs.Errorf(obj, "put: failed to queue for upload: %v", err)
+			fs.ErrorfCtx(ctx, obj, "put: failed to queue for upload: %v", err)
 			return nil, err
 		}
-		fs.Infof(obj, "put: queued for upload")
+		fs.InfofCtx(ctx, obj, "put: queued for upload")
 		// if cache writes is enabled write it first through cache
 	} else if f.opt.StoreWrites {
 		f.cacheReader(in, src, func(inn io.Reader) {
 			obj, err = put(ctx, inn, src, options...)
 		})
 		if err == nil {
-			fs.Debugf(obj, "put: uploaded to remote fs and saved in cache")
+			fs.DebugfCtx(ctx, obj, "put: uploaded to remote fs and saved in cache")
 		}
 		// last option: save it directly in remote fs
 	} else {
 		obj, err = put(ctx, in, src, options...)
 		if err == nil {
-			fs.Debugf(obj, "put: uploaded to remote fs")
+			fs.DebugfCtx(ctx, obj, "put: uploaded to remote fs")
 		}
 	}
 	// validate and stop if errors are found
 	if err != nil {
-		fs.Errorf(src, "put: error uploading: %v", err)
+		fs.ErrorfCtx(ctx, src, "put: error uploading: %v", err)
 		return nil, err
 	}
 
@@ -1488,15 +1488,15 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 	_ = f.cache.RemoveObject(cachedObj.abs())
 
 	cachedObj.persist()
-	fs.Debugf(cachedObj, "put: added to cache")
+	fs.DebugfCtx(ctx, cachedObj, "put: added to cache")
 
 	// expire parent
 	parentCd := NewDirectory(f, cleanPath(path.Dir(cachedObj.Remote())))
 	err = f.cache.ExpireDir(parentCd)
 	if err != nil {
-		fs.Errorf(cachedObj, "put: cache expire error: %v", err)
+		fs.ErrorfCtx(ctx, cachedObj, "put: cache expire error: %v", err)
 	} else {
-		fs.Infof(parentCd, "put: cache expired")
+		fs.InfofCtx(ctx, parentCd, "put: cache expired")
 	}
 	// advertise to ChangeNotify
 	f.notifyChangeUpstreamIfNeeded(parentCd.Remote(), fs.EntryDirectory)
@@ -1506,7 +1506,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 
 // Put in to the remote path with the modTime given of the given size
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	fs.Debugf(f, "put data at '%s'", src.Remote())
+	fs.DebugfCtx(ctx, f, "put data at '%s'", src.Remote())
 	return f.put(ctx, in, src, options, f.Fs.Put)
 }
 
@@ -1516,7 +1516,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	if do == nil {
 		return nil, errors.New("can't PutUnchecked")
 	}
-	fs.Debugf(f, "put data unchecked in '%s'", src.Remote())
+	fs.DebugfCtx(ctx, f, "put data unchecked in '%s'", src.Remote())
 	return f.put(ctx, in, src, options, do)
 }
 
@@ -1526,17 +1526,17 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if do == nil {
 		return nil, errors.New("can't PutStream")
 	}
-	fs.Debugf(f, "put data streaming in '%s'", src.Remote())
+	fs.DebugfCtx(ctx, f, "put data streaming in '%s'", src.Remote())
 	return f.put(ctx, in, src, options, do)
 }
 
 // Copy src to this remote using server-side copy operations.
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	fs.Debugf(f, "copy obj '%s' -> '%s'", src, remote)
+	fs.DebugfCtx(ctx, f, "copy obj '%s' -> '%s'", src, remote)
 
 	do := f.Fs.Features().Copy
 	if do == nil {
-		fs.Errorf(src, "source remote (%v) doesn't support Copy", src.Fs())
+		fs.ErrorfCtx(ctx, src, "source remote (%v) doesn't support Copy", src.Fs())
 		return nil, fs.ErrorCantCopy
 	}
 	if f.opt.TempWritePath != "" && src.Fs() == f.tempFs {
@@ -1545,51 +1545,51 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// the source must be a cached object or we abort
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Errorf(srcObj, "can't copy - not same remote type")
+		fs.ErrorfCtx(ctx, srcObj, "can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	// both the source cache fs and this cache fs need to wrap the same remote
 	if srcObj.CacheFs.Fs.Name() != f.Fs.Name() {
-		fs.Errorf(srcObj, "can't copy - not wrapping same remotes")
+		fs.ErrorfCtx(ctx, srcObj, "can't copy - not wrapping same remotes")
 		return nil, fs.ErrorCantCopy
 	}
 	// refresh from source or abort
 	if err := srcObj.refreshFromSource(ctx, false); err != nil {
-		fs.Errorf(f, "can't copy %v - %v", src, err)
+		fs.ErrorfCtx(ctx, f, "can't copy %v - %v", src, err)
 		return nil, fs.ErrorCantCopy
 	}
 
 	if srcObj.isTempFile() {
 		// we check if the feature is still active
 		if f.opt.TempWritePath == "" {
-			fs.Errorf(srcObj, "can't copy - this is a local cached file but this feature is turned off this run")
+			fs.ErrorfCtx(ctx, srcObj, "can't copy - this is a local cached file but this feature is turned off this run")
 			return nil, fs.ErrorCantCopy
 		}
 
 		do = srcObj.ParentFs.Features().Copy
 		if do == nil {
-			fs.Errorf(src, "parent remote (%v) doesn't support Copy", srcObj.ParentFs)
+			fs.ErrorfCtx(ctx, src, "parent remote (%v) doesn't support Copy", srcObj.ParentFs)
 			return nil, fs.ErrorCantCopy
 		}
 	}
 
 	obj, err := do(ctx, srcObj.Object, remote)
 	if err != nil {
-		fs.Errorf(srcObj, "error moving in cache: %v", err)
+		fs.ErrorfCtx(ctx, srcObj, "error moving in cache: %v", err)
 		return nil, err
 	}
-	fs.Debugf(obj, "copy: file copied")
+	fs.DebugfCtx(ctx, obj, "copy: file copied")
 
 	// persist new
 	co := ObjectFromOriginal(ctx, f, obj).persist()
-	fs.Debugf(co, "copy: added to cache")
+	fs.DebugfCtx(ctx, co, "copy: added to cache")
 	// expire the destination path
 	parentCd := NewDirectory(f, cleanPath(path.Dir(co.Remote())))
 	err = f.cache.ExpireDir(parentCd)
 	if err != nil {
-		fs.Errorf(parentCd, "copy: cache expire error: %v", err)
+		fs.ErrorfCtx(ctx, parentCd, "copy: cache expire error: %v", err)
 	} else {
-		fs.Infof(parentCd, "copy: cache expired")
+		fs.InfofCtx(ctx, parentCd, "copy: cache expired")
 	}
 	// advertise to ChangeNotify if wrapped doesn't do that
 	f.notifyChangeUpstreamIfNeeded(parentCd.Remote(), fs.EntryDirectory)
@@ -1597,9 +1597,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcParent := NewDirectory(f, cleanPath(path.Dir(src.Remote())))
 	err = f.cache.ExpireDir(srcParent)
 	if err != nil {
-		fs.Errorf(srcParent, "copy: cache expire error: %v", err)
+		fs.ErrorfCtx(ctx, srcParent, "copy: cache expire error: %v", err)
 	} else {
-		fs.Infof(srcParent, "copy: cache expired")
+		fs.InfofCtx(ctx, srcParent, "copy: cache expired")
 	}
 	// advertise to ChangeNotify if wrapped doesn't do that
 	f.notifyChangeUpstreamIfNeeded(srcParent.Remote(), fs.EntryDirectory)
@@ -1609,28 +1609,28 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Move src to this remote using server-side move operations.
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	fs.Debugf(f, "moving obj '%s' -> %s", src, remote)
+	fs.DebugfCtx(ctx, f, "moving obj '%s' -> %s", src, remote)
 
 	// if source fs doesn't support move abort
 	do := f.Fs.Features().Move
 	if do == nil {
-		fs.Errorf(src, "source remote (%v) doesn't support Move", src.Fs())
+		fs.ErrorfCtx(ctx, src, "source remote (%v) doesn't support Move", src.Fs())
 		return nil, fs.ErrorCantMove
 	}
 	// the source must be a cached object or we abort
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Errorf(srcObj, "can't move - not same remote type")
+		fs.ErrorfCtx(ctx, srcObj, "can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	// both the source cache fs and this cache fs need to wrap the same remote
 	if srcObj.CacheFs.Fs.Name() != f.Fs.Name() {
-		fs.Errorf(srcObj, "can't move - not wrapping same remote types")
+		fs.ErrorfCtx(ctx, srcObj, "can't move - not wrapping same remote types")
 		return nil, fs.ErrorCantMove
 	}
 	// refresh from source or abort
 	if err := srcObj.refreshFromSource(ctx, false); err != nil {
-		fs.Errorf(f, "can't move %v - %v", src, err)
+		fs.ErrorfCtx(ctx, f, "can't move %v - %v", src, err)
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1638,7 +1638,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if srcObj.isTempFile() {
 		// we check if the feature is still active
 		if f.opt.TempWritePath == "" {
-			fs.Errorf(srcObj, "can't move - this is a local cached file but this feature is turned off this run")
+			fs.ErrorfCtx(ctx, srcObj, "can't move - this is a local cached file but this feature is turned off this run")
 			return nil, fs.ErrorCantMove
 		}
 		// pause background uploads
@@ -1647,7 +1647,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 		// started uploads can't be moved until they complete
 		if srcObj.tempFileStartedUpload() {
-			fs.Errorf(srcObj, "can't move - upload has already started. need to finish that")
+			fs.ErrorfCtx(ctx, srcObj, "can't move - upload has already started. need to finish that")
 			return nil, fs.ErrorCantMove
 		}
 		do = f.tempFs.Features().Move
@@ -1659,46 +1659,46 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			return nil
 		})
 		if err != nil {
-			fs.Errorf(srcObj, "failed to rename queued file for upload: %v", err)
+			fs.ErrorfCtx(ctx, srcObj, "failed to rename queued file for upload: %v", err)
 			return nil, fs.ErrorCantMove
 		}
-		fs.Debugf(srcObj, "move: queued file moved to %v", remote)
+		fs.DebugfCtx(ctx, srcObj, "move: queued file moved to %v", remote)
 	}
 
 	obj, err := do(ctx, srcObj.Object, remote)
 	if err != nil {
-		fs.Errorf(srcObj, "error moving: %v", err)
+		fs.ErrorfCtx(ctx, srcObj, "error moving: %v", err)
 		return nil, err
 	}
-	fs.Debugf(obj, "move: file moved")
+	fs.DebugfCtx(ctx, obj, "move: file moved")
 
 	// remove old
 	err = f.cache.RemoveObject(srcObj.abs())
 	if err != nil {
-		fs.Errorf(srcObj, "move: remove error: %v", err)
+		fs.ErrorfCtx(ctx, srcObj, "move: remove error: %v", err)
 	} else {
-		fs.Debugf(srcObj, "move: removed from cache")
+		fs.DebugfCtx(ctx, srcObj, "move: removed from cache")
 	}
 	// expire old parent
 	parentCd := NewDirectory(f, cleanPath(path.Dir(srcObj.Remote())))
 	err = f.cache.ExpireDir(parentCd)
 	if err != nil {
-		fs.Errorf(parentCd, "move: parent cache expire error: %v", err)
+		fs.ErrorfCtx(ctx, parentCd, "move: parent cache expire error: %v", err)
 	} else {
-		fs.Infof(parentCd, "move: cache expired")
+		fs.InfofCtx(ctx, parentCd, "move: cache expired")
 	}
 	// advertise to ChangeNotify if wrapped doesn't do that
 	f.notifyChangeUpstreamIfNeeded(parentCd.Remote(), fs.EntryDirectory)
 	// persist new
 	cachedObj := ObjectFromOriginal(ctx, f, obj).persist()
-	fs.Debugf(cachedObj, "move: added to cache")
+	fs.DebugfCtx(ctx, cachedObj, "move: added to cache")
 	// expire new parent
 	parentCd = NewDirectory(f, cleanPath(path.Dir(cachedObj.Remote())))
 	err = f.cache.ExpireDir(parentCd)
 	if err != nil {
-		fs.Errorf(parentCd, "move: expire error: %v", err)
+		fs.ErrorfCtx(ctx, parentCd, "move: expire error: %v", err)
 	} else {
-		fs.Infof(parentCd, "move: cache expired")
+		fs.InfofCtx(ctx, parentCd, "move: cache expired")
 	}
 	// advertise to ChangeNotify if wrapped doesn't do that
 	f.notifyChangeUpstreamIfNeeded(parentCd.Remote(), fs.EntryDirectory)
@@ -1715,7 +1715,7 @@ func (f *Fs) Hashes() hash.Set {
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	if dir == "" {
 		// FIXME this isn't quite right as it should purge the dir prefix
-		fs.Infof(f, "purging cache")
+		fs.InfofCtx(ctx, f, "purging cache")
 		f.cache.Purge()
 	}
 
@@ -1771,7 +1771,7 @@ func (f *Fs) openRateLimited(fn func() (io.ReadCloser, error)) (io.ReadCloser, e
 
 	elapsed := time.Since(start)
 	if elapsed > time.Second*2 {
-		fs.Debugf(f, "rate limited: %s", elapsed)
+		fs.DebugfCtx(context.Background(), f, "rate limited: %s", elapsed)
 	}
 	return fn()
 }
@@ -1795,7 +1795,7 @@ func (f *Fs) StopBackgroundRunners() {
 		f.backgroundRunner.close()
 	}
 	f.cache.Close()
-	fs.Debugf(f, "Services stopped")
+	fs.DebugfCtx(context.Background(), f, "Services stopped")
 }
 
 // UnWrap returns the Fs that this Fs is wrapping

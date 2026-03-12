@@ -184,7 +184,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 
 	foundArchive := subArchive(remote)
 	if foundArchive != nil {
-		fs.Debugf(nil, "Found archiver for %q remote %q", foundArchive.archiver.Extension, foundArchive.remote)
+		fs.DebugfCtx(ctx, nil, "Found archiver for %q remote %q", foundArchive.archiver.Extension, foundArchive.remote)
 		// Archive path
 		foundArchive.root = strings.Trim(remote[len(foundArchive.remote):], "/")
 		// Path to the archive
@@ -233,7 +233,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 
 	if foundArchive != nil {
-		fs.Debugf(f, "Root is an archive")
+		fs.DebugfCtx(ctx, f, "Root is an archive")
 		if err != fs.ErrorIsFile {
 			return nil, fmt.Errorf("expecting to find a file at %q", remote)
 		}
@@ -357,7 +357,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	return do(ctx, srcFs.f, srcRemote, dstRemote)
@@ -378,7 +378,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		// fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
+		// fs.DebugfCtx(ctx, f, "ChangeNotify: path %q entryType %d", path, entryType)
 		notifyFunc(path, entryType)
 	}
 	do(ctx, wrappedNotifyFunc, ch)

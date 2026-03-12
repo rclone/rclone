@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -107,7 +108,7 @@ func (fh *RWFileHandle) openPending() (err error) {
 	size := fh._size() // update size in file and read size
 	if fh.flags&os.O_APPEND != 0 {
 		fh.offset = size
-		fs.Debugf(fh.logPrefix(), "open at offset %d", fh.offset)
+		fs.DebugfCtx(context.Background(), fh.logPrefix(), "open at offset %d", fh.offset)
 	} else {
 		fh.offset = 0
 	}
@@ -191,7 +192,7 @@ func (fh *RWFileHandle) Close() error {
 // single opened file, Flush can be called multiple times.
 func (fh *RWFileHandle) Flush() error {
 	fh.mu.Lock()
-	fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush")
+	fs.DebugfCtx(context.Background(), fh.logPrefix(), "RWFileHandle.Flush")
 	fh.updateSize()
 	fh.mu.Unlock()
 	return nil
@@ -204,14 +205,14 @@ func (fh *RWFileHandle) Flush() error {
 func (fh *RWFileHandle) Release() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	fs.Debugf(fh.logPrefix(), "RWFileHandle.Release")
+	fs.DebugfCtx(context.Background(), fh.logPrefix(), "RWFileHandle.Release")
 	if fh.closed {
 		// Don't return an error if called twice
 		return nil
 	}
 	err := fh.close()
 	if err != nil {
-		fs.Errorf(fh.logPrefix(), "RWFileHandle.Release error: %v", err)
+		fs.ErrorfCtx(context.Background(), fh.logPrefix(), "RWFileHandle.Release error: %v", err)
 	}
 	return err
 }
@@ -227,7 +228,7 @@ func (fh *RWFileHandle) _size() int64 {
 		if o != nil {
 			size = o.Size()
 		} else {
-			fs.Errorf(fh.logPrefix(), "Couldn't read size of file")
+			fs.ErrorfCtx(context.Background(), fh.logPrefix(), "Couldn't read size of file")
 			size = 0
 		}
 	}

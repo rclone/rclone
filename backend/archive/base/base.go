@@ -35,7 +35,7 @@ var errNotImplemented = errors.New("internal error: method not implemented in ar
 func New(ctx context.Context, wrappedFs fs.Fs, remote, prefix, root string) (*Fs, error) {
 	// FIXME vfs cache?
 	// FIXME could factor out ReadFileHandle and just use that rather than the full VFS
-	fs.Debugf(nil, "New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
+	fs.DebugfCtx(ctx, nil, "New: remote=%q, prefix=%q, root=%q", remote, prefix, root)
 	VFS := vfs.New(wrappedFs, nil)
 	node, err := VFS.Stat(remote)
 	if err != nil {

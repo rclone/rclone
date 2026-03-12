@@ -48,14 +48,14 @@ func startWindowsEventLog(handler *OutputHandler) error {
 	atexit.Register(func() {
 		err := elog.Close()
 		if err != nil {
-			fs.Errorf(nil, "Failed to close Windows event log: %v", err)
+			fs.ErrorfCtx(ctx, nil, "Failed to close Windows event log: %v", err)
 		}
 	})
 
 	// Add additional JSON logging to the eventLog handler.
 	handler.AddOutput(true, eventLog)
 
-	fs.Infof(nil, "Logging to Windows event log at level %v", Opt.WindowsEventLogLevel)
+	fs.InfofCtx(ctx, nil, "Logging to Windows event log at level %v", Opt.WindowsEventLogLevel)
 	return nil
 }
 

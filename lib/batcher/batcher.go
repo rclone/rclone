@@ -41,7 +41,7 @@ type CommitBatchFn[Item, Result any] func(ctx context.Context, items []Item, res
 // Batcher holds info about the current items waiting to be acted on.
 type Batcher[Item, Result any] struct {
 	opt      Options                     // options for configuring the batcher
-	f        any                         // logging identity for fs.Debugf(f, ...)
+	f        any                         // logging identity for fs.DebugfCtx(context.Background(), f, ...)
 	commit   CommitBatchFn[Item, Result] // User defined function to commit the batch
 	async    bool                        // whether we are using async batching
 	in       chan request[Item, Result]  // incoming items to batch
@@ -68,7 +68,7 @@ type response[Result any] struct {
 
 // New creates a Batcher for Item and Result calling commit to do the actual committing.
 func New[Item, Result any](ctx context.Context, f any, commit CommitBatchFn[Item, Result], opt Options) (*Batcher[Item, Result], error) {
-	// fs.Debugf(f, "Creating batcher with mode %q, size %d, timeout %v", mode, size, timeout)
+	// fs.DebugfCtx(context.Background(), f, "Creating batcher with mode %q, size %d, timeout %v", mode, size, timeout)
 	if opt.Size > opt.MaxBatchSize || opt.Size < 0 {
 		return nil, fmt.Errorf("batcher: batch size must be < %d and >= 0 - it is currently %d", opt.MaxBatchSize, opt.Size)
 	}
@@ -133,7 +133,7 @@ func (b *Batcher[Item, Result]) commitBatch(ctx context.Context, requests []requ
 		}
 	}()
 	desc := fmt.Sprintf("%s batch length %d starting with: %s", b.opt.Mode, len(requests), requests[0].name)
-	fs.Debugf(b.f, "Committing %s", desc)
+	fs.DebugfCtx(ctx, b.f, "Committing %s", desc)
 
 	var (
 		items   = make([]Item, len(requests))
@@ -180,7 +180,7 @@ func (b *Batcher[Item, Result]) commitBatch(ctx context.Context, requests []requ
 		return fmt.Errorf("batch had %d errors: last error: %w", errorCount, lastError)
 	}
 
-	fs.Debugf(b.f, "Committed %s", desc)
+	fs.DebugfCtx(ctx, b.f, "Committed %s", desc)
 	return nil
 }
 
@@ -192,7 +192,7 @@ func (b *Batcher[Item, Result]) commitLoop(ctx context.Context) {
 		commit    = func() {
 			err := b.commitBatch(ctx, requests)
 			if err != nil {
-				fs.Errorf(b.f, "%s batch commit: failed to commit batch length %d: %v", b.opt.Mode, len(requests), err)
+				fs.ErrorfCtx(ctx, b.f, "%s batch commit: failed to commit batch length %d: %v", b.opt.Mode, len(requests), err)
 			}
 			requests = nil
 		}
@@ -217,7 +217,7 @@ outer:
 			}
 		case <-idleTimer.C:
 			if len(requests) > 0 {
-				fs.Debugf(b.f, "Batch idle for %v so committing", b.opt.Timeout)
+				fs.DebugfCtx(ctx, b.f, "Batch idle for %v so committing", b.opt.Timeout)
 				commit()
 			}
 		}
@@ -238,7 +238,7 @@ func (b *Batcher[Item, Result]) Shutdown() {
 	}
 	b.shutOnce.Do(func() {
 		atexit.Unregister(b.atexit)
-		fs.Infof(b.f, "Committing uploads - please wait...")
+		fs.InfofCtx(context.Background(), b.f, "Committing uploads - please wait...")
 		// show that batcher is shutting down
 		close(b.closed)
 		// quit the commitLoop by sending a quitRequest message
@@ -266,7 +266,7 @@ func (b *Batcher[Item, Result]) Commit(ctx context.Context, name string, item It
 		return entry, fserrors.FatalError(errors.New("batcher is shutting down"))
 	default:
 	}
-	fs.Debugf(b.f, "Adding %q to batch", name)
+	fs.DebugfCtx(ctx, b.f, "Adding %q to batch", name)
 	resp := make(chan response[Result], 1)
 	b.in <- request[Item, Result]{
 		item:   item,

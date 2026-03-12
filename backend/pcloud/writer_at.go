@@ -38,7 +38,7 @@ func (c *writerAt) Close() error {
 	sizeOk := false
 	sizeLastSeen := int64(0)
 	for retry := range 5 {
-		fs.Debugf(c.remote, "checking file size: try %d/5", retry)
+		fs.DebugfCtx(context.Background(), c.remote, "checking file size: try %d/5", retry)
 		obj, err := c.fs.NewObject(c.ctx, c.remote)
 		if err != nil {
 			return fmt.Errorf("get uploaded obj: %w", err)

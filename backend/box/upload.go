@@ -135,7 +135,7 @@ outer:
 				if delayString != "" {
 					delay, err = strconv.Atoi(delayString)
 					if err != nil {
-						fs.Debugf(o, "Couldn't decode Retry-After header %q: %v", delayString, err)
+						fs.DebugfCtx(ctx, o, "Couldn't decode Retry-After header %q: %v", delayString, err)
 						delay = defaultDelay
 					}
 				}
@@ -143,7 +143,7 @@ outer:
 				return nil, fmt.Errorf("unknown HTTP status return %q (%d)", resp.Status, resp.StatusCode)
 			}
 		}
-		fs.Debugf(o, "commit multipart upload failed %d/%d - trying again in %d seconds (%s)", tries+1, maxTries, delay, why)
+		fs.DebugfCtx(ctx, o, "commit multipart upload failed %d/%d - trying again in %d seconds (%s)", tries+1, maxTries, delay, why)
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
 	if tries >= maxTries {
@@ -180,14 +180,14 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 		return fmt.Errorf("multipart upload create session failed: %w", err)
 	}
 	chunkSize := session.PartSize
-	fs.Debugf(o, "Multipart upload session started for %d parts of size %v", session.TotalParts, fs.SizeSuffix(chunkSize))
+	fs.DebugfCtx(ctx, o, "Multipart upload session started for %d parts of size %v", session.TotalParts, fs.SizeSuffix(chunkSize))
 
 	// Cancel the session if something went wrong
 	defer atexit.OnError(&err, func() {
-		fs.Debugf(o, "Cancelling multipart upload: %v", err)
+		fs.DebugfCtx(ctx, o, "Cancelling multipart upload: %v", err)
 		cancelErr := o.abortUpload(ctx, session.ID)
 		if cancelErr != nil {
-			fs.Logf(o, "Failed to cancel multipart upload: %v", cancelErr)
+			fs.LogfCtx(ctx, o, "Failed to cancel multipart upload: %v", cancelErr)
 		}
 	})()
 
@@ -232,7 +232,7 @@ outer:
 		go func(part int, position int64) {
 			defer wg.Done()
 			defer o.fs.uploadToken.Put()
-			fs.Debugf(o, "Uploading part %d/%d offset %v/%v part size %v", part+1, session.TotalParts, fs.SizeSuffix(position), fs.SizeSuffix(size), fs.SizeSuffix(chunkSize))
+			fs.DebugfCtx(ctx, o, "Uploading part %d/%d offset %v/%v part size %v", part+1, session.TotalParts, fs.SizeSuffix(position), fs.SizeSuffix(size), fs.SizeSuffix(chunkSize))
 			partResponse, err := o.uploadPart(ctx, session.ID, position, size, buf, wrap, options...)
 			if err != nil {
 				err = fmt.Errorf("multipart upload failed to upload part: %w", err)

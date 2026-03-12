@@ -385,12 +385,12 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 
 	if resp != nil && resp.StatusCode == 401 && strings.Contains(resp.Header.Get("Www-Authenticate"), "expired_token") {
 		authRetry = true
-		fs.Debugf(nil, "Should retry: %v", err)
+		fs.DebugfCtx(ctx, nil, "Should retry: %v", err)
 	}
 
 	// Box API errors which should be retries
 	if apiErr, ok := err.(*api.Error); ok && apiErr.Code == "operation_blocked_temporary" {
-		fs.Debugf(nil, "Retrying API error %v", err)
+		fs.DebugfCtx(ctx, nil, "Retrying API error %v", err)
 		return true, err
 	}
 
@@ -440,7 +440,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.Debugf(nil, "Couldn't decode error response: %v", err)
+		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.Code == "" {
 		errResponse.Code = resp.Status
@@ -616,7 +616,7 @@ func fieldsValue() url.Values {
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
+	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var info *api.Item
 	opts := rest.Opts{
@@ -688,7 +688,7 @@ OUTER:
 					continue
 				}
 			} else {
-				fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
+				fs.DebugfCtx(ctx, f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 				continue
 			}
 			if activeOnly && item.ItemStatus != api.ItemStatusActive {
@@ -988,7 +988,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err := srcObj.readMetaData(ctx)
@@ -1015,12 +1015,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	if item != nil { // dest already exists, need to copy to temp name and then move
 		tempSuffix := "-rclone-copy-" + random.String(8)
-		fs.Debugf(remote, "dst already exists, copying to temp name %v", remote+tempSuffix)
+		fs.DebugfCtx(ctx, remote, "dst already exists, copying to temp name %v", remote+tempSuffix)
 		tempObj, err := f.Copy(ctx, src, remote+tempSuffix)
 		if err != nil {
 			return nil, err
 		}
-		fs.Debugf(remote+tempSuffix, "moving to real name %v", remote)
+		fs.DebugfCtx(ctx, remote+tempSuffix, "moving to real name %v", remote)
 		err = f.deleteObject(ctx, item.ID)
 		if err != nil {
 			return nil, err
@@ -1126,7 +1126,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1160,7 +1160,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1183,7 +1183,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	id, err := f.dirCache.FindDir(ctx, remote, false)
 	var opts rest.Opts
 	if err == nil {
-		fs.Debugf(f, "attempting to share directory '%s'", remote)
+		fs.DebugfCtx(ctx, f, "attempting to share directory '%s'", remote)
 
 		opts = rest.Opts{
 			Method:     "PUT",
@@ -1191,7 +1191,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			Parameters: fieldsValue(),
 		}
 	} else {
-		fs.Debugf(f, "attempting to share single file '%s'", remote)
+		fs.DebugfCtx(ctx, f, "attempting to share single file '%s'", remote)
 		o, err := f.NewObject(ctx, remote)
 		if err != nil {
 			return "", err
@@ -1253,12 +1253,12 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 				}()
 				err := f.deletePermanently(ctx, item.Type, item.ID)
 				if err != nil {
-					fs.Errorf(f, "failed to delete trash item %q (%q): %v", item.Name, item.ID, err)
+					fs.ErrorfCtx(ctx, f, "failed to delete trash item %q (%q): %v", item.Name, item.ID, err)
 					deleteErrors.Add(1)
 				}
 			}()
 		} else {
-			fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
+			fs.DebugfCtx(ctx, f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 		}
 		return false
 	})
@@ -1286,7 +1286,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		// get the `stream_position` early so all changes from now on get processed
 		streamPosition, err := f.changeNotifyStreamPosition(ctx)
 		if err != nil {
-			fs.Infof(f, "Failed to get StreamPosition: %s", err)
+			fs.InfofCtx(ctx, f, "Failed to get StreamPosition: %s", err)
 		}
 
 		// box can send duplicate Event IDs. Use this map to track and filter
@@ -1316,7 +1316,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				if streamPosition == "" {
 					streamPosition, err = f.changeNotifyStreamPosition(ctx)
 					if err != nil {
-						fs.Infof(f, "Failed to get StreamPosition: %s", err)
+						fs.InfofCtx(ctx, f, "Failed to get StreamPosition: %s", err)
 						continue
 					}
 				}
@@ -1330,7 +1330,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 
 				streamPosition, err = f.changeNotifyRunner(ctx, notifyFunc, streamPosition, processedEventIDs)
 				if err != nil {
-					fs.Infof(f, "Change notify listener failure: %s", err)
+					fs.InfofCtx(ctx, f, "Change notify listener failure: %s", err)
 				}
 			}
 		}
@@ -1399,7 +1399,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 		var result api.Events
 		var resp *http.Response
-		fs.Debugf(f, "Checking for changes on remote (next_stream_position: %q)", nextStreamPosition)
+		fs.DebugfCtx(ctx, f, "Checking for changes on remote (next_stream_position: %q)", nextStreamPosition)
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 			return shouldRetry(ctx, resp, err)
@@ -1428,28 +1428,28 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 				entry.Source.Type, entry.EventType, entry.Source.ID, entry.EventID)
 
 			if entry.EventID == "" {
-				fs.Debugf(f, "%s ignored due to missing EventID", eventDetails)
+				fs.DebugfCtx(ctx, f, "%s ignored due to missing EventID", eventDetails)
 				continue
 			}
 			if _, ok := processedEventIDs[entry.EventID]; ok {
-				fs.Debugf(f, "%s ignored due to duplicate EventID", eventDetails)
+				fs.DebugfCtx(ctx, f, "%s ignored due to duplicate EventID", eventDetails)
 				continue
 			}
 			processedEventIDs[entry.EventID] = time.Now()
 			newEventIDs++
 
 			if entry.Source.ID == "" { // missing File or Folder ID
-				fs.Debugf(f, "%s ignored due to missing SourceID", eventDetails)
+				fs.DebugfCtx(ctx, f, "%s ignored due to missing SourceID", eventDetails)
 				continue
 			}
 			if entry.Source.Type != api.ItemTypeFile && entry.Source.Type != api.ItemTypeFolder { // event is not for a file or folder
-				fs.Debugf(f, "%s ignored due to unsupported SourceType", eventDetails)
+				fs.DebugfCtx(ctx, f, "%s ignored due to unsupported SourceType", eventDetails)
 				continue
 			}
 
 			// Only interested in event types that result in a file tree change
 			if _, found := api.FileTreeChangeEventTypes[entry.EventType]; !found {
-				fs.Debugf(f, "%s ignored due to unsupported EventType", eventDetails)
+				fs.DebugfCtx(ctx, f, "%s ignored due to unsupported EventType", eventDetails)
 				continue
 			}
 
@@ -1460,7 +1460,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 					// Item in the cache has the same or newer SequenceID than
 					// this event. Ignore this event, it must be old.
 					f.itemMetaCacheMu.Unlock()
-					fs.Debugf(f, "%s ignored due to old SequenceID (%q)", eventDetails, itemMeta.SequenceID)
+					fs.DebugfCtx(ctx, f, "%s ignored due to old SequenceID (%q)", eventDetails, itemMeta.SequenceID)
 					continue
 				}
 
@@ -1482,10 +1482,10 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			if cachedItemMetaFound {
 				path := f.getFullPath(itemMeta.ParentID, itemMeta.Name)
 				if path != "" {
-					fs.Debugf(f, "%s added old path (%q) for notify", eventDetails, path)
+					fs.DebugfCtx(ctx, f, "%s added old path (%q) for notify", eventDetails, path)
 					pathsToClear = append(pathsToClear, pathToClear{path: path, entryType: entryType})
 				} else {
-					fs.Debugf(f, "%s old parent not cached", eventDetails)
+					fs.DebugfCtx(ctx, f, "%s old parent not cached", eventDetails)
 				}
 
 				// If this is a directory, also delete it from the dir cache.
@@ -1509,10 +1509,10 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			if entry.Source.ItemStatus == api.ItemStatusActive {
 				path := f.getFullPath(entry.Source.Parent.ID, entry.Source.Name)
 				if path != "" {
-					fs.Debugf(f, "%s added new path (%q) for notify", eventDetails, path)
+					fs.DebugfCtx(ctx, f, "%s added new path (%q) for notify", eventDetails, path)
 					pathsToClear = append(pathsToClear, pathToClear{path: path, entryType: entryType})
 				} else {
-					fs.Debugf(f, "%s new parent not found", eventDetails)
+					fs.DebugfCtx(ctx, f, "%s new parent not found", eventDetails)
 				}
 			}
 		}
@@ -1532,7 +1532,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			notifiedPaths[p.path] = true
 			notifyFunc(p.path, p.entryType)
 		}
-		fs.Debugf(f, "Received %v events, resulting in %v paths and %v notifications", len(result.Entries), len(pathsToClear), len(notifiedPaths))
+		fs.DebugfCtx(ctx, f, "Received %v events, resulting in %v paths and %v notifications", len(result.Entries), len(pathsToClear), len(notifiedPaths))
 	}
 }
 
@@ -1579,7 +1579,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -1628,7 +1628,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime

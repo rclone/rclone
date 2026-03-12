@@ -43,13 +43,13 @@ func getConfigurationProvider(opt *Options) (common.ConfigurationProvider, error
 	case userPrincipal:
 		expandConfigFilePath := expandPath(opt.ConfigFile)
 		if expandConfigFilePath != "" && !fileExists(expandConfigFilePath) {
-			fs.Errorf(userPrincipal, "oci config file doesn't exist at %v", expandConfigFilePath)
+			fs.ErrorfCtx(context.Background(), userPrincipal, "oci config file doesn't exist at %v", expandConfigFilePath)
 		}
 		return common.CustomProfileConfigProvider(expandConfigFilePath, opt.ConfigProfile), nil
 	case resourcePrincipal:
 		return auth.ResourcePrincipalConfigurationProvider()
 	case noAuth:
-		fs.Infof("client", "using no auth provider")
+		fs.InfofCtx(context.Background(), "client", "using no auth provider")
 		return getNoAuthConfiguration()
 	case workloadIdentity:
 		return auth.OkeWorkloadIdentityConfigurationProvider()
@@ -65,7 +65,7 @@ func newObjectStorageClient(ctx context.Context, opt *Options) (*objectstorage.O
 	}
 	client, err := objectstorage.NewObjectStorageClientWithConfigurationProvider(p)
 	if err != nil {
-		fs.Errorf(opt.Provider, "failed to create object storage client, %v", err)
+		fs.ErrorfCtx(ctx, opt.Provider, "failed to create object storage client, %v", err)
 		return nil, err
 	}
 	if opt.Region != "" {

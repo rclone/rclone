@@ -355,11 +355,11 @@ func (f *Fs) add(entries *fs.DirEntries, obj fs.Object) error {
 		if f.opt.StrictNames {
 			return fmt.Errorf("%s: undecryptable file name detected: %v", remote, err)
 		}
-		fs.Logf(remote, "Skipping undecryptable file name: %v", err)
+		fs.LogfCtx(context.Background(), remote, "Skipping undecryptable file name: %v", err)
 		return nil
 	}
 	if f.opt.ShowMapping {
-		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
+		fs.LogfCtx(context.Background(), decryptedRemote, "Encrypts to %q", remote)
 	}
 	*entries = append(*entries, f.newObject(obj))
 	return nil
@@ -373,11 +373,11 @@ func (f *Fs) addDir(ctx context.Context, entries *fs.DirEntries, dir fs.Director
 		if f.opt.StrictNames {
 			return fmt.Errorf("%s: undecryptable dir name detected: %v", remote, err)
 		}
-		fs.Logf(remote, "Skipping undecryptable dir name: %v", err)
+		fs.LogfCtx(ctx, remote, "Skipping undecryptable dir name: %v", err)
 		return nil
 	}
 	if f.opt.ShowMapping {
-		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
+		fs.LogfCtx(ctx, decryptedRemote, "Encrypts to %q", remote)
 	}
 	*entries = append(*entries, f.newDir(ctx, dir))
 	return nil
@@ -551,11 +551,11 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 				// remove object
 				err = o.Remove(ctx)
 				if err != nil {
-					fs.Errorf(o, "Failed to remove corrupted object: %v", err)
+					fs.ErrorfCtx(ctx, o, "Failed to remove corrupted object: %v", err)
 				}
 				return nil, fmt.Errorf("corrupted on transfer: %v encrypted hashes differ src(%s) %q vs dst(%s) %q", ht, f.Fs, srcHash, o.Fs(), dstHash)
 			}
-			fs.Debugf(src, "%v = %s OK", ht, srcHash)
+			fs.DebugfCtx(ctx, src, "%v = %s OK", ht, srcHash)
 		}
 	}
 
@@ -705,7 +705,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	return do(ctx, srcFs.Fs, f.cipher.EncryptDirName(srcRemote), f.cipher.EncryptDirName(dstRemote))
@@ -829,7 +829,7 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 		return "", fmt.Errorf("failed to open object to read nonce: %w", err)
 	}
 	nonce := d.nonce
-	// fs.Debugf(o, "Read nonce % 2x", nonce)
+	// fs.DebugfCtx(context.Background(), o, "Read nonce % 2x", nonce)
 
 	// Check nonce isn't all zeros
 	isZero := true
@@ -839,7 +839,7 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 		}
 	}
 	if isZero {
-		fs.Errorf(o, "empty nonce read")
+		fs.ErrorfCtx(ctx, o, "empty nonce read")
 	}
 
 	// Close d (and hence in) once we have read the nonce
@@ -897,7 +897,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		// fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
+		// fs.DebugfCtx(context.Background(), f, "ChangeNotify: path %q entryType %d", path, entryType)
 		var (
 			err       error
 			decrypted string
@@ -908,11 +908,11 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		case fs.EntryObject:
 			decrypted, err = f.cipher.DecryptFileName(path)
 		default:
-			fs.Errorf(path, "crypt ChangeNotify: ignoring unknown EntryType %d", entryType)
+			fs.ErrorfCtx(ctx, path, "crypt ChangeNotify: ignoring unknown EntryType %d", entryType)
 			return
 		}
 		if err != nil {
-			fs.Logf(f, "ChangeNotify was unable to decrypt %q: %s", path, err)
+			fs.LogfCtx(ctx, f, "ChangeNotify was unable to decrypt %q: %s", path, err)
 			return
 		}
 		notifyFunc(decrypted, entryType)
@@ -1016,7 +1016,7 @@ func (o *Object) Remote() string {
 	remote := o.Object.Remote()
 	decryptedName, err := o.f.cipher.DecryptFileName(remote)
 	if err != nil {
-		fs.Debugf(remote, "Undecryptable file name: %v", err)
+		fs.DebugfCtx(context.Background(), remote, "Undecryptable file name: %v", err)
 		return remote
 	}
 	return decryptedName
@@ -1029,7 +1029,7 @@ func (o *Object) Size() int64 {
 		var err error
 		size, err = o.f.cipher.DecryptedSize(size)
 		if err != nil {
-			fs.Debugf(o, "Bad size for decrypt: %v", err)
+			fs.DebugfCtx(context.Background(), o, "Bad size for decrypt: %v", err)
 		}
 	}
 	return size
@@ -1101,7 +1101,7 @@ func (f *Fs) newDir(ctx context.Context, dir fs.Directory) fs.Directory {
 	remote := dir.Remote()
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
-		fs.Debugf(remote, "Undecryptable dir name: %v", err)
+		fs.DebugfCtx(ctx, remote, "Undecryptable dir name: %v", err)
 	} else {
 		remote = decryptedRemote
 	}
@@ -1194,7 +1194,7 @@ func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
 	// if this is wrapping a local object then we work out the hash
 	if srcObj.Fs().Features().IsLocal {
 		// Read the data and encrypt it to calculate the hash
-		fs.Debugf(o, "Computing %v hash of encrypted source", hash)
+		fs.DebugfCtx(ctx, o, "Computing %v hash of encrypted source", hash)
 		return o.f.computeHashWithNonce(ctx, o.nonce, srcObj, hash)
 	}
 	return "", nil

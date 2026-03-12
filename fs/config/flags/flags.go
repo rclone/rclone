@@ -3,6 +3,7 @@
 package flags
 
 import (
+	"context"
 	"os"
 	"regexp"
 	"strings"
@@ -159,14 +160,14 @@ func installFlag(flags *pflag.FlagSet, name string, groupsString string) {
 			opt.Value = ([]string)(list)
 			flag.DefValue = list.String()
 			for _, v := range list {
-				fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, v, envKey, envValue)
+				fs.DebugfCtx(context.Background(), nil, "Setting --%s %q from environment variable %s=%q", name, v, envKey, envValue)
 			}
 		} else {
 			err := flags.Set(name, envValue)
 			if err != nil {
 				fs.Fatalf(nil, "Invalid value when setting --%s from environment variable %s=%q: %v", name, envKey, envValue, err)
 			}
-			fs.Debugf(nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
+			fs.DebugfCtx(context.Background(), nil, "Setting --%s %q from environment variable %s=%q", name, flag.Value, envKey, envValue)
 			flag.DefValue = envValue
 		}
 	}
@@ -390,7 +391,7 @@ func AddFlagsFromOptions(flags *pflag.FlagSet, prefix string, options fs.Options
 				flag.Hidden = true
 			}
 		} else {
-			fs.Errorf(nil, "Not adding duplicate flag --%s", name)
+			fs.ErrorfCtx(context.Background(), nil, "Not adding duplicate flag --%s", name)
 		}
 		// flag.Hidden = true
 	}

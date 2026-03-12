@@ -56,7 +56,7 @@ func getFileHash(node any, hashType hash.Type) string {
 	case vfs.Node:
 		fsObj, ok := b.DirEntry().(fs.Object)
 		if !ok {
-			fs.Debugf("serve s3", "File uploading - reading hash from VFS cache")
+			fs.DebugfCtx(context.Background(), "serve s3", "File uploading - reading hash from VFS cache")
 			in, err := b.Open(os.O_RDONLY)
 			if err != nil {
 				return ""

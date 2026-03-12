@@ -53,7 +53,7 @@ func parseRemote(remote string) string {
 	remoteURL, err := url.Parse(remote)
 	if err != nil {
 		// Return a default value in the very unlikely event we're not going to parse remote
-		fs.Infof(nil, "Cannot parse remote %s", remote)
+		fs.InfofCtx(context.Background(), nil, "Cannot parse remote %s", remote)
 		return "default"
 	}
 	host := remoteURL.Hostname()

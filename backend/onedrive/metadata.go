@@ -259,7 +259,7 @@ func (m *Metadata) Set(ctx context.Context, metadata fs.Metadata) (numSet int, e
 			m.btime = t
 			numSet++
 		case "description":
-			fs.Debugf(m.remote, "metadata description is no longer supported -- skipping: %s", v)
+			fs.DebugfCtx(ctx, m.remote, "metadata description is no longer supported -- skipping: %s", v)
 			continue
 		case "permissions":
 			if !m.fs.opt.MetadataPermissions.IsSet(rwWrite) {
@@ -273,11 +273,11 @@ func (m *Metadata) Set(ctx context.Context, metadata fs.Metadata) (numSet int, e
 			m.queuedPermissions = perms
 			numSet++
 		default:
-			fs.Debugf(m.remote, "skipping unsupported metadata item: %s: %s", k, v)
+			fs.DebugfCtx(ctx, m.remote, "skipping unsupported metadata item: %s: %s", k, v)
 		}
 	}
 	if numSet == 0 {
-		fs.Infof(m.remote, "no writeable metadata found: %v", metadata)
+		fs.InfofCtx(ctx, m.remote, "no writeable metadata found: %v", metadata)
 	}
 	return numSet, nil
 }
@@ -317,7 +317,7 @@ func (m *Metadata) Write(ctx context.Context, updatePermissions bool) (*api.Item
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		fs.Debugf(m.remote, "errored metadata: %v", m)
+		fs.DebugfCtx(ctx, m.remote, "errored metadata: %v", m)
 		return nil, fmt.Errorf("%v: error updating metadata: %v", m.remote, err)
 	}
 
@@ -325,7 +325,7 @@ func (m *Metadata) Write(ctx context.Context, updatePermissions bool) (*api.Item
 		m.normalizedID = info.GetID()
 		err = m.WritePermissions(ctx)
 		if err != nil {
-			fs.Errorf(m.remote, "error writing permissions: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "error writing permissions: %v", err)
 			return info, err
 		}
 	}
@@ -364,7 +364,7 @@ func (m *Metadata) WritePermissions(ctx context.Context) (err error) {
 		// If failok is set, allow the permissions setting to fail and only log an ERROR
 		defer func() {
 			if err != nil {
-				fs.Errorf(m.fs, "Ignoring error as failok is set: %v", err)
+				fs.ErrorfCtx(ctx, m.fs, "Ignoring error as failok is set: %v", err)
 				err = nil
 			}
 		}()
@@ -372,14 +372,14 @@ func (m *Metadata) WritePermissions(ctx context.Context) (err error) {
 
 	// compare current to queued and sort into add/update/remove queues
 	add, update, remove := m.sortPermissions()
-	fs.Debugf(m.remote, "metadata permissions: to add: %d to update: %d to remove: %d", len(add), len(update), len(remove))
+	fs.DebugfCtx(ctx, m.remote, "metadata permissions: to add: %d to update: %d to remove: %d", len(add), len(update), len(remove))
 	_, err = m.processPermissions(ctx, add, update, remove)
 	if err != nil {
 		return fmt.Errorf("failed to process permissions: %w", err)
 	}
 
 	err = m.RefreshPermissions(ctx)
-	fs.Debugf(m.remote, "updated permissions (now has %d permissions)", len(m.permissions))
+	fs.DebugfCtx(ctx, m.remote, "updated permissions (now has %d permissions)", len(m.permissions))
 	if err != nil {
 		return fmt.Errorf("failed to get permissions: %w", err)
 	}
@@ -446,28 +446,28 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 			if !slices.ContainsFunc(old, func(o *api.PermissionsType) bool {
 				return o.ID == n.ID && slices.Compare(o.Roles, n.Roles) != 0 && len(o.Roles) > 0 && len(n.Roles) > 0 && !slices.Contains(o.Roles, api.OwnerRole)
 			}) {
-				fs.Debugf(m.remote, "skipping update for invalid roles: %v (perm ID: %v)", n.Roles, n.ID)
+				fs.DebugfCtx(context.Background(), m.remote, "skipping update for invalid roles: %v (perm ID: %v)", n.Roles, n.ID)
 				continue
 			}
 			if m.fs.driveType != driveTypePersonal && n.Link != nil && n.Link.WebURL != "" {
 				// special case to work around API limitation -- can't update a sharing link perm so need to remove + add instead
 				// https://learn.microsoft.com/en-us/answers/questions/986279/why-is-update-permission-graph-api-for-files-not-w
 				// https://github.com/microsoftgraph/msgraph-sdk-dotnet/issues/1135
-				fs.Debugf(m.remote, "sortPermissions: can't update due to API limitation, will remove + add instead: %v", n.Roles)
+				fs.DebugfCtx(context.Background(), m.remote, "sortPermissions: can't update due to API limitation, will remove + add instead: %v", n.Roles)
 				remove = append(remove, n)
 				add = append(add, n)
 				continue
 			}
-			fs.Debugf(m.remote, "sortPermissions: will update role to %v", n.Roles)
+			fs.DebugfCtx(context.Background(), m.remote, "sortPermissions: will update role to %v", n.Roles)
 			update = append(update, n)
 		} else {
-			fs.Debugf(m.remote, "sortPermissions: will add permission: %v %v", n, n.Roles)
+			fs.DebugfCtx(context.Background(), m.remote, "sortPermissions: will add permission: %v %v", n, n.Roles)
 			add = append(add, n)
 		}
 	}
 	for _, o := range old {
 		if slices.Contains(o.Roles, api.OwnerRole) {
-			fs.Debugf(m.remote, "skipping remove permission -- can't remove 'owner' role")
+			fs.DebugfCtx(context.Background(), m.remote, "skipping remove permission -- can't remove 'owner' role")
 			continue
 		}
 		newHasOld := slices.ContainsFunc(new, func(n *api.PermissionsType) bool {
@@ -477,7 +477,7 @@ func (m *Metadata) sortPermissions() (add, update, remove []*api.PermissionsType
 			return n.ID == o.ID
 		})
 		if !newHasOld && o.ID != "" && !slices.Contains(add, o) && !slices.Contains(update, o) {
-			fs.Debugf(m.remote, "sortPermissions: will remove permission: %v %v  (perm ID: %v)", o, o.Roles, o.ID)
+			fs.DebugfCtx(context.Background(), m.remote, "sortPermissions: will remove permission: %v %v  (perm ID: %v)", o, o.Roles, o.ID)
 			remove = append(remove, o)
 		}
 	}
@@ -493,7 +493,7 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 	for _, p := range remove { // remove (need to do these first because of remove + add workaround)
 		_, err := m.removePermission(ctx, p)
 		if err != nil {
-			fs.Errorf(m.remote, "Failed to remove permission: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "Failed to remove permission: %v", err)
 			errs.Add(err)
 		}
 	}
@@ -501,7 +501,7 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 	for _, p := range add { // add
 		newPs, _, err := m.addPermission(ctx, p)
 		if err != nil {
-			fs.Errorf(m.remote, "Failed to add permission: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "Failed to add permission: %v", err)
 			errs.Add(err)
 			continue
 		}
@@ -511,7 +511,7 @@ func (m *Metadata) processPermissions(ctx context.Context, add, update, remove [
 	for _, p := range update { // update
 		newP, _, err := m.updatePermission(ctx, p)
 		if err != nil {
-			fs.Errorf(m.remote, "Failed to update permission: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "Failed to update permission: %v", err)
 			errs.Add(err)
 			continue
 		}
@@ -614,14 +614,14 @@ func (m *Metadata) addPermission(ctx context.Context, p *api.PermissionsType) (n
 	}
 
 	if len(req.Recipients) == 0 {
-		fs.Debugf(m.remote, "skipping add permission -- at least one valid recipient is required")
+		fs.DebugfCtx(ctx, m.remote, "skipping add permission -- at least one valid recipient is required")
 		return nil, nil, nil
 	}
 	if len(req.Roles) == 0 {
 		return nil, nil, errors.New("at least one role is required to add a permission (choices: read, write, owner, member)")
 	}
 	if slices.Contains(req.Roles, api.OwnerRole) {
-		fs.Debugf(m.remote, "skipping add permission -- can't invite a user with 'owner' role")
+		fs.DebugfCtx(ctx, m.remote, "skipping add permission -- can't invite a user with 'owner' role")
 		return nil, nil, nil
 	}
 
@@ -812,7 +812,7 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 			return nil, err
 		}
 		// for some reason, OneDrive Business and Personal needs this extra step to set modtime. Seems like a bug...
-		fs.Debugf(dir, "setting time %v", meta.mtime)
+		fs.DebugfCtx(ctx, dir, "setting time %v", meta.mtime)
 		info, err = meta.Write(ctx, false)
 	} else if err == nil {
 		// Directory exists and needs updating
@@ -845,7 +845,7 @@ func (f *Fs) MkdirMetadata(ctx context.Context, dir string, metadata fs.Metadata
 
 // createDir makes a directory with pathID as parent and name leaf with optional metadata
 func (f *Fs) createDir(ctx context.Context, pathID, dirWithLeaf, leaf string, metadata fs.Metadata) (info *api.Item, meta *Metadata, err error) {
-	// fs.Debugf(f, "CreateDir(%q, %q)\n", dirID, leaf)
+	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", dirID, leaf)
 	var resp *http.Response
 	opts := f.newOptsCall(pathID, "POST", "/children")
 
@@ -886,7 +886,7 @@ func (f *Fs) createDir(ctx context.Context, pathID, dirWithLeaf, leaf string, me
 
 		err = m.WritePermissions(ctx)
 		if err != nil {
-			fs.Errorf(m.remote, "error writing permissions: %v", err)
+			fs.ErrorfCtx(ctx, m.remote, "error writing permissions: %v", err)
 			return info, m, err
 		}
 	}
@@ -923,7 +923,7 @@ func (f *Fs) newDir(dirID, remote string) (d *Directory) {
 func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
 	err = o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return nil, err
 	}
 	return o.meta.Get(ctx)

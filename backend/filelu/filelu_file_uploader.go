@@ -215,7 +215,7 @@ func (f *Fs) uploadFileWithDestination(ctx context.Context, uploadURL, sessID, f
 	go func() {
 		defer func() {
 			if err := pw.Close(); err != nil {
-				fs.Logf(nil, "Failed to close: %v", err)
+				fs.LogfCtx(ctx, nil, "Failed to close: %v", err)
 			}
 		}()
 		_ = writer.WriteField("sess_id", sessID)

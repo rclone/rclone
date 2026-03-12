@@ -107,9 +107,9 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 				usingEnvPassword = true
 				err := SetConfigPassword(envPassword)
 				if err != nil {
-					fs.Errorf(nil, "Using RCLONE_CONFIG_PASS returned: %v", err)
+					fs.ErrorfCtx(context.Background(), nil, "Using RCLONE_CONFIG_PASS returned: %v", err)
 				} else {
-					fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
+					fs.DebugfCtx(context.Background(), nil, "Using RCLONE_CONFIG_PASS password.")
 				}
 			} else {
 				usingEnvPassword = false
@@ -130,7 +130,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 	var out []byte
 	for {
 		if envKeyFile := os.Getenv("_RCLONE_CONFIG_KEY_FILE"); len(envKeyFile) > 0 {
-			fs.Debugf(nil, "attempting to obtain configKey from temp file %s", envKeyFile)
+			fs.DebugfCtx(context.Background(), nil, "attempting to obtain configKey from temp file %s", envKeyFile)
 			obscuredKey, err := os.ReadFile(envKeyFile)
 			if err != nil {
 				errRemove := os.Remove(envKeyFile)
@@ -144,7 +144,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 				return nil, fmt.Errorf("unable to delete temp file with configKey: %w", errRemove)
 			}
 			configKey = []byte(obscure.MustReveal(string(obscuredKey)))
-			fs.Debugf(nil, "using _RCLONE_CONFIG_KEY_FILE for configKey")
+			fs.DebugfCtx(context.Background(), nil, "using _RCLONE_CONFIG_KEY_FILE for configKey")
 		} else if len(configKey) == 0 {
 			if usingPasswordCommand {
 				return nil, errors.New("using --password-command derived password, unable to decrypt configuration")
@@ -172,7 +172,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 		}
 
 		// Retry
-		fs.Errorf(nil, "Couldn't decrypt configuration, most likely wrong password.")
+		fs.ErrorfCtx(context.Background(), nil, "Couldn't decrypt configuration, most likely wrong password.")
 		configKey = nil
 	}
 	return bytes.NewReader(out), nil
@@ -199,9 +199,9 @@ func GetPasswordCommand(ctx context.Context) (pass string, err error) {
 	err = cmd.Run()
 	if err != nil {
 		// One does not always get the stderr returned in the wrapped error.
-		fs.Errorf(nil, "Using --password-command returned: %v", err)
+		fs.ErrorfCtx(ctx, nil, "Using --password-command returned: %v", err)
 		if ers := strings.TrimSpace(stderr.String()); ers != "" {
-			fs.Errorf(nil, "--password-command stderr: %s", ers)
+			fs.ErrorfCtx(ctx, nil, "--password-command stderr: %s", ers)
 		}
 		return pass, fmt.Errorf("password command failed: %w", err)
 	}
@@ -302,7 +302,7 @@ func SetConfigPassword(password string) error {
 			}
 			return fmt.Errorf("error closing temp file with configKey: %w", err)
 		}
-		fs.Debugf(nil, "saving configKey to temp file")
+		fs.DebugfCtx(context.Background(), nil, "saving configKey to temp file")
 		err = os.Setenv("_RCLONE_CONFIG_KEY_FILE", tempFile.Name())
 		if err != nil {
 			errRemove := os.Remove(tempFile.Name())

@@ -4,6 +4,7 @@
 package cachestats
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -29,7 +30,7 @@ var commandDefinition = &cobra.Command{
 	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
-		fs.Logf(nil, `"rclone cachestats" is deprecated, use "rclone backend stats %s" instead`, args[0])
+		fs.LogfCtx(context.Background(), nil, `"rclone cachestats" is deprecated, use "rclone backend stats %s" instead`, args[0])
 
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {

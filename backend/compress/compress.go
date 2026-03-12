@@ -381,7 +381,7 @@ func (f *Fs) dataName(remote string, size int64, compressed bool) (name string) 
 func (f *Fs) addData(entries *fs.DirEntries, o fs.Object) {
 	origFileName, _, size, err := processFileName(o.Remote(), f.modeHandler)
 	if err != nil {
-		fs.Errorf(o, "Error on parsing file name: %v", err)
+		fs.ErrorfCtx(context.Background(), o, "Error on parsing file name: %v", err)
 		return
 	}
 	if size == -2 { // File is uncompressed
@@ -544,7 +544,7 @@ func (f *Fs) verifyObjectHash(ctx context.Context, o fs.Object, hasher *hash.Mul
 		// remove object
 		err = o.Remove(ctx)
 		if err != nil {
-			fs.Errorf(o, "Failed to remove corrupted object: %v", err)
+			fs.ErrorfCtx(ctx, o, "Failed to remove corrupted object: %v", err)
 		}
 		return fmt.Errorf("corrupted on transfer: %v compressed hashes differ src(%s) %q vs dst(%s) %q", ht, f.Fs, srcHash, o.Fs(), dstHash)
 	}
@@ -581,7 +581,7 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 		return f.Fs.Features().PutStream(ctx, in, src, options...)
 	}
 
-	fs.Debugf(f, "Target remote doesn't support streaming uploads, creating temporary local file")
+	fs.DebugfCtx(ctx, f, "Target remote doesn't support streaming uploads, creating temporary local file")
 	tempFile, err := os.CreateTemp("", "rclone-press-")
 	defer func() {
 		// these errors should be relatively uncritical and the upload should've succeeded so it's okay-ish
@@ -633,7 +633,7 @@ func (f *Fs) putUncompress(ctx context.Context, in io.Reader, src fs.ObjectInfo,
 		if o != nil {
 			removeErr := o.Remove(ctx)
 			if removeErr != nil {
-				fs.Errorf(o, "Failed to remove partially transferred object: %v", err)
+				fs.ErrorfCtx(ctx, o, "Failed to remove partially transferred object: %v", err)
 			}
 		}
 		return nil, nil, err
@@ -670,7 +670,7 @@ func (f *Fs) putMetadata(ctx context.Context, meta *ObjectMetadata, src fs.Objec
 		if mo != nil {
 			removeErr := mo.Remove(ctx)
 			if removeErr != nil {
-				fs.Errorf(mo, "Failed to remove partially transferred object: %v", err)
+				fs.ErrorfCtx(ctx, mo, "Failed to remove partially transferred object: %v", err)
 			}
 		}
 		return nil, err
@@ -938,7 +938,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	return do(ctx, srcFs.Fs, srcRemote, dstRemote)
@@ -1020,7 +1020,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		fs.Logf(f, "path %q entryType %d", path, entryType)
+		fs.LogfCtx(ctx, f, "path %q entryType %d", path, entryType)
 		var (
 			wrappedPath    string
 			isMetadataFile bool
@@ -1036,7 +1036,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				return
 			}
 		default:
-			fs.Errorf(path, "press ChangeNotify: ignoring unknown EntryType %d", entryType)
+			fs.ErrorfCtx(ctx, path, "press ChangeNotify: ignoring unknown EntryType %d", entryType)
 			return
 		}
 		notifyFunc(wrappedPath, entryType)
@@ -1242,7 +1242,7 @@ func (o *Object) String() string {
 func (o *Object) Remote() string {
 	origFileName, _, _, err := processFileName(o.Object.Remote(), o.f.modeHandler)
 	if err != nil {
-		fs.Errorf(o.f, "Could not get remote path for: %s", o.Object.Remote())
+		fs.ErrorfCtx(context.Background(), o.f, "Could not get remote path for: %s", o.Object.Remote())
 		return o.Object.Remote()
 	}
 	return origFileName

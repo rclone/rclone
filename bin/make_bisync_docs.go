@@ -35,11 +35,11 @@ const (
 func main() {
 	err := replaceBetween(*path, startListIgnores, endListIgnores, getIgnores)
 	if err != nil {
-		fs.Errorf(*path, "error replacing ignores: %v", err)
+		fs.ErrorfCtx(ctx, *path, "error replacing ignores: %v", err)
 	}
 	err = replaceBetween(*path, startListFailures, endListFailures, getFailures)
 	if err != nil {
-		fs.Errorf(*path, "error replacing failures: %v", err)
+		fs.ErrorfCtx(ctx, *path, "error replacing failures: %v", err)
 	}
 }
 

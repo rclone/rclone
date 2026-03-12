@@ -75,7 +75,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	realpath := o.realpath()
-	fs.Debugf(o.fs, "open [%s]", realpath)
+	fs.DebugfCtx(ctx, o.fs, "open [%s]", realpath)
 	f, err := o.fs.client.Open(realpath)
 	if err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	realpath := o.fs.realpath(o.remote)
 	dirname := path.Dir(realpath)
-	fs.Debugf(o.fs, "update [%s]", realpath)
+	fs.DebugfCtx(ctx, o.fs, "update [%s]", realpath)
 
 	err := o.fs.client.MkdirAll(dirname, 0755)
 	if err != nil {
@@ -132,7 +132,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	cleanup := func() {
 		rerr := o.fs.client.Remove(realpath)
 		if rerr != nil {
-			fs.Errorf(o.fs, "failed to remove [%v]: %v", realpath, rerr)
+			fs.ErrorfCtx(ctx, o.fs, "failed to remove [%v]: %v", realpath, rerr)
 		}
 	}
 
@@ -181,7 +181,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	realpath := o.fs.realpath(o.remote)
-	fs.Debugf(o.fs, "remove [%s]", realpath)
+	fs.DebugfCtx(ctx, o.fs, "remove [%s]", realpath)
 	return o.fs.client.Remove(realpath)
 }
 

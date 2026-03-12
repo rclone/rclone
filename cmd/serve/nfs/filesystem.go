@@ -3,6 +3,7 @@
 package nfs
 
 import (
+	"context"
 	"os"
 	"path"
 	"strings"
@@ -28,7 +29,7 @@ import (
 func setSys(fi os.FileInfo) {
 	node, ok := fi.(vfs.Node)
 	if !ok {
-		fs.Errorf(fi, "internal error: %T is not a vfs.Node", fi)
+		fs.ErrorfCtx(context.Background(), fi, "internal error: %T is not a vfs.Node", fi)
 		return
 	}
 	vfs := node.VFS()
@@ -163,7 +164,7 @@ func (f *FS) Chmod(name string, mode os.FileMode) (err error) {
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
-			fs.Logf(f, "Error while closing file: %e", err)
+			fs.LogfCtx(context.Background(), f, "Error while closing file: %e", err)
 		}
 	}()
 	err = file.Chmod(mode)
@@ -189,7 +190,7 @@ func (f *FS) Chown(name string, uid, gid int) (err error) {
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
-			fs.Logf(f, "Error while closing file: %e", err)
+			fs.LogfCtx(context.Background(), f, "Error while closing file: %e", err)
 		}
 	}()
 	return file.Chown(uid, gid)

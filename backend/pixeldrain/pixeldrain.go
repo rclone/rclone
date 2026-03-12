@@ -151,7 +151,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 		f.loggedIn = true
 
-		fs.Infof(f,
+		fs.InfofCtx(ctx, f,
 			"Logged in as '%s', subscription '%s', storage limit %d",
 			user.Username, user.Subscription.Name, user.Subscription.StorageSpace,
 		)
@@ -367,7 +367,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notify func(string, fs.EntryType)
 	if f.pathPrefix != "/me/" {
 		_, err := f.update(ctx, "", fs.Metadata{"logging_enabled": "true"})
 		if err != nil {
-			fs.Errorf(f, "Failed to set up change logging for path '%s': %s", f.pathPrefix, err)
+			fs.ErrorfCtx(ctx, f, "Failed to set up change logging for path '%s': %s", f.pathPrefix, err)
 		}
 	}
 
@@ -385,18 +385,18 @@ func (f *Fs) changeNotify(ctx context.Context, notify func(string, fs.EntryType)
 				return
 			}
 
-			fs.Debugf(f, "Polling changes at an interval of %s", dur)
+			fs.DebugfCtx(ctx, f, "Polling changes at an interval of %s", dur)
 			ticker.Reset(dur)
 
 		case t := <-ticker.C:
 			clog, err := f.changeLog(ctx, lastPoll, t)
 			if err != nil {
-				fs.Errorf(f, "Failed to get change log for path '%s': %s", f.pathPrefix, err)
+				fs.ErrorfCtx(ctx, f, "Failed to get change log for path '%s': %s", f.pathPrefix, err)
 				continue
 			}
 
 			for i := range clog {
-				fs.Debugf(f, "Path '%s' (%s) changed (%s) in directory '%s'",
+				fs.DebugfCtx(ctx, f, "Path '%s' (%s) changed (%s) in directory '%s'",
 					clog[i].Path, clog[i].Type, clog[i].Action, f.pathPrefix)
 
 				if clog[i].Type == "dir" {

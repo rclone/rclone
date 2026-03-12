@@ -167,7 +167,7 @@ func (b *bisyncRun) WriteResults(ctx context.Context, sigil operations.Sigil, sr
 
 		err := json.NewEncoder(opt.JSON).Encode(result)
 		if err != nil {
-			fs.Errorf(result, "Error encoding JSON: %v", err)
+			fs.ErrorfCtx(ctx, result, "Error encoding JSON: %v", err)
 		}
 	}
 }
@@ -200,13 +200,13 @@ func (b *bisyncRun) preCopy(ctx context.Context) context.Context {
 	overridingEqual := false
 	if (b.opt.Compare.Modtime && b.opt.Compare.Checksum) || b.opt.Compare.DownloadHash {
 		overridingEqual = true
-		fs.Debugf(nil, "overriding equal")
+		fs.DebugfCtx(ctx, nil, "overriding equal")
 		// otherwise impossible in Sync, so override Equal
 		ctx = b.EqualFn(ctx)
 	}
 	if b.opt.ResyncMode == PreferOlder || b.opt.ResyncMode == PreferLarger || b.opt.ResyncMode == PreferSmaller {
 		overridingEqual = true
-		fs.Debugf(nil, "overriding equal")
+		fs.DebugfCtx(ctx, nil, "overriding equal")
 		ctx = b.EqualFn(ctx)
 	}
 	ctxCopyLogger := operations.WithSyncLogger(ctx, b.queueOpt.logger)
@@ -253,11 +253,11 @@ func (b *bisyncRun) fastCopy(ctx context.Context, fsrc, fdst fs.Fs, files bilib.
 	prettyprint(b.queueOpt.logger, "b.queueOpt.logger", fs.LogLevelDebug)
 
 	getResults := ReadResults(b.queueOpt.logger.JSON)
-	fs.Debugf(nil, "Got %v results for %v", len(getResults), queueName)
+	fs.DebugfCtx(ctx, nil, "Got %v results for %v", len(getResults), queueName)
 
 	lineFormat := "%s %8d %s %s %s %q\n"
 	for _, result := range getResults {
-		fs.Debugf(nil, lineFormat, result.Flags, result.Size, result.Hash, "", result.Modtime, result.Name)
+		fs.DebugfCtx(ctx, nil, lineFormat, result.Flags, result.Size, result.Hash, "", result.Modtime, result.Name)
 	}
 
 	return getResults, err
@@ -267,12 +267,12 @@ func (b *bisyncRun) retryFastCopy(ctx context.Context, fsrc, fdst fs.Fs, files b
 	ci := fs.GetConfig(ctx)
 	if err != nil && b.opt.Resilient && !b.InGracefulShutdown && ci.Retries > 1 {
 		for tries := 1; tries <= ci.Retries; tries++ {
-			fs.Logf(queueName, Color(terminal.YellowFg, "Received error: %v - retrying as --resilient is set. Retry %d/%d"), err, tries, ci.Retries)
+			fs.LogfCtx(ctx, queueName, Color(terminal.YellowFg, "Received error: %v - retrying as --resilient is set. Retry %d/%d"), err, tries, ci.Retries)
 			accounting.GlobalStats().ResetErrors()
 			if retryAfter := accounting.GlobalStats().RetryAfter(); !retryAfter.IsZero() {
 				d := time.Until(retryAfter)
 				if d > 0 {
-					fs.Logf(nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
+					fs.LogfCtx(ctx, nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
 					time.Sleep(d)
 				}
 			}
@@ -295,7 +295,7 @@ func (b *bisyncRun) resyncDir(ctx context.Context, fsrc, fdst fs.Fs) ([]Results,
 	prettyprint(b.queueOpt.logger, "b.queueOpt.logger", fs.LogLevelDebug)
 
 	getResults := ReadResults(b.queueOpt.logger.JSON)
-	fs.Debugf(nil, "Got %v results for %v", len(getResults), "resync")
+	fs.DebugfCtx(ctx, nil, "Got %v results for %v", len(getResults), "resync")
 
 	return getResults, err
 }
@@ -305,7 +305,7 @@ func (b *bisyncRun) syncEmptyDirs(ctx context.Context, dst fs.Fs, candidates bil
 	if b.InGracefulShutdown {
 		return
 	}
-	fs.Debugf(nil, "syncing empty dirs")
+	fs.DebugfCtx(ctx, nil, "syncing empty dirs")
 	if b.opt.CreateEmptySrcDirs && (!b.opt.Resync || operation == "make") {
 
 		candidatesList := candidates.ToList()
@@ -359,7 +359,7 @@ func (b *bisyncRun) syncEmptyDirs(ctx context.Context, dst fs.Fs, candidates bil
 				}
 
 				if direrr != nil {
-					fs.Debugf(nil, "Error syncing directory: %v", direrr)
+					fs.DebugfCtx(ctx, nil, "Error syncing directory: %v", direrr)
 				} else {
 					*results = append(*results, rSrc, rDst)
 				}
@@ -378,12 +378,12 @@ func (b *bisyncRun) saveQueue(files bilib.Names, jobName string) error {
 
 func naptime(totalWait fs.Duration) {
 	expireTime := time.Now().Add(time.Duration(totalWait))
-	fs.Logf(nil, "will retry in %v at %v", totalWait, expireTime.Format("2006-01-02 15:04:05 MST"))
+	fs.LogfCtx(context.Background(), nil, "will retry in %v at %v", totalWait, expireTime.Format("2006-01-02 15:04:05 MST"))
 	for i := 0; time.Until(expireTime) > 0; i++ {
 		if i > 0 && i%10 == 0 {
-			fs.Infof(nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
+			fs.InfofCtx(context.Background(), nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
 		} else {
-			fs.Debugf(nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
+			fs.DebugfCtx(context.Background(), nil, Color(terminal.Dim, "retrying in %v..."), time.Until(expireTime).Round(1*time.Second))
 		}
 		time.Sleep(1 * time.Second)
 	}

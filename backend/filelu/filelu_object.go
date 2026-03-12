@@ -82,7 +82,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			count = o.size
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -103,7 +103,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		if resp.StatusCode != http.StatusOK {
 			defer func() {
 				if err := resp.Body.Close(); err != nil {
-					fs.Logf(nil, "Failed to close response body: %v", err)
+					fs.LogfCtx(ctx, nil, "Failed to close response body: %v", err)
 				}
 			}()
 			return false, fmt.Errorf("failed to download file: HTTP %d", resp.StatusCode)
@@ -168,7 +168,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	fs.Infof(o.fs, "Successfully deleted file: %s", fullPath)
+	fs.InfofCtx(ctx, o.fs, "Successfully deleted file: %s", fullPath)
 	return nil
 }
 

@@ -15,7 +15,7 @@ import (
 func readTime(t timeType, fi os.FileInfo) time.Time {
 	stat, ok := fi.Sys().(*syscall.Win32FileAttributeData)
 	if !ok {
-		fs.Debugf(nil, "didn't return Win32FileAttributeData as expected")
+		fs.DebugfCtx(ctx, nil, "didn't return Win32FileAttributeData as expected")
 		return fi.ModTime()
 	}
 	switch t {
@@ -35,7 +35,7 @@ func (o *Object) readMetadataFromFile(m *fs.Metadata) (err error) {
 	}
 	stat, ok := info.Sys().(*syscall.Win32FileAttributeData)
 	if !ok {
-		fs.Debugf(o, "didn't return Win32FileAttributeData as expected")
+		fs.DebugfCtx(ctx, o, "didn't return Win32FileAttributeData as expected")
 		return nil
 	}
 	// FIXME do something with stat.FileAttributes ?

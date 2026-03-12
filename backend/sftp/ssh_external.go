@@ -54,7 +54,7 @@ func (s *sshClientExternal) NewSession() (sshSession, error) {
 		// Store the first session so Wait() and Close() can use it
 		s.session = session
 	} else {
-		fs.Debugf(s.f, "ssh external: creating additional session")
+		fs.DebugfCtx(context.Background(), s.f, "ssh external: creating additional session")
 	}
 	return session, nil
 }
@@ -66,7 +66,7 @@ func (s *sshClientExternal) CanReuse() bool {
 	}
 	exited := s.session.exited()
 	canReuse := !exited && s.session.runningSFTP
-	// fs.Debugf(s.f, "ssh external: CanReuse %v, exited=%v runningSFTP=%v", canReuse, exited, s.session.runningSFTP)
+	// fs.DebugfCtx(context.Background(), s.f, "ssh external: CanReuse %v, exited=%v runningSFTP=%v", canReuse, exited, s.session.runningSFTP)
 	return canReuse
 }
 
@@ -131,7 +131,7 @@ func (s *sshSessionExternal) Start(cmd string) error {
 		s.runningSFTP = false
 	}
 
-	fs.Debugf(s.f, "ssh external: running: %v", fs.SpaceSepList(s.cmd.Args))
+	fs.DebugfCtx(context.Background(), s.f, "ssh external: running: %v", fs.SpaceSepList(s.cmd.Args))
 
 	// start the process
 	err := s.cmd.Start()
@@ -186,9 +186,9 @@ func (s *sshSessionExternal) Wait() error {
 	s.waitOnce.Do(func() {
 		s.waitErr = s.cmd.Wait()
 		if s.waitErr == nil {
-			fs.Debugf(s.f, "ssh external: command exited OK")
+			fs.DebugfCtx(context.Background(), s.f, "ssh external: command exited OK")
 		} else {
-			fs.Debugf(s.f, "ssh external: command exited with error: %v", s.waitErr)
+			fs.DebugfCtx(context.Background(), s.f, "ssh external: command exited with error: %v", s.waitErr)
 		}
 	})
 	return s.waitErr
@@ -208,7 +208,7 @@ func (s *sshSessionExternal) Run(cmd string) error {
 
 // Close the external ssh
 func (s *sshSessionExternal) Close() error {
-	fs.Debugf(s.f, "ssh external: close")
+	fs.DebugfCtx(context.Background(), s.f, "ssh external: close")
 	// Cancel the context which kills the process
 	s.cancel()
 	// Wait for it to finish

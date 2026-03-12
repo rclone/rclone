@@ -47,7 +47,7 @@ func (r *Run) startMountSubProcess() {
 	}
 	r.os = realOs{}
 	r.mountPath = findMountPath()
-	fs.Logf(nil, "startMountSubProcess %q (%q) %q", r.fremote, r.fremoteName, r.mountPath)
+	fs.LogfCtx(context.Background(), nil, "startMountSubProcess %q (%q) %q", r.fremote, r.fremoteName, r.mountPath)
 
 	opt := runMountOpt{
 		MountPoint: r.mountPath,
@@ -86,13 +86,13 @@ func (r *Run) startMountSubProcess() {
 		if rx == "STARTED" {
 			break
 		}
-		fs.Logf(nil, "..Mount said: %s", rx)
+		fs.LogfCtx(context.Background(), nil, "..Mount said: %s", rx)
 	}
 	if r.scanner.Err() != nil {
-		fs.Logf(nil, "scanner err %v", r.scanner.Err())
+		fs.LogfCtx(context.Background(), nil, "scanner err %v", r.scanner.Err())
 	}
 
-	fs.Logf(nil, "startMountSubProcess: end")
+	fs.LogfCtx(context.Background(), nil, "startMountSubProcess: end")
 }
 
 // Find a free path to run the mount on
@@ -148,7 +148,7 @@ func startMount(mountFn mountlib.MountFn, useVFS bool, opts string) {
 		fs.Fatalf(nil, "Failed to mkdir %q: %v", opt.Remote, err)
 	}
 
-	fs.Logf(nil, "startMount: Mounting %q on %q with %q", opt.Remote, opt.MountPoint, opt.VFSOpt.CacheMode)
+	fs.LogfCtx(context.Background(), nil, "startMount: Mounting %q on %q with %q", opt.Remote, opt.MountPoint, opt.VFSOpt.CacheMode)
 	mnt := mountlib.NewMountPoint(mountFn, opt.MountPoint, f, &opt.MountOpt, &opt.VFSOpt)
 
 	_, err = mnt.Mount()
@@ -156,7 +156,7 @@ func startMount(mountFn mountlib.MountFn, useVFS bool, opts string) {
 		fs.Fatalf(nil, "mount FAILED %q: %v", opt.Remote, err)
 	}
 	defer umount(mnt)
-	fs.Logf(nil, "startMount: mount OK")
+	fs.LogfCtx(context.Background(), nil, "startMount: mount OK")
 	fmt.Println("STARTED") // signal to parent all is good
 
 	// Read commands from stdin
@@ -253,17 +253,17 @@ func umount(mnt *mountlib.MountPoint) {
 			log.Printf("fusermount failed: %v", err)
 		}
 	*/
-	fs.Logf(nil, "Unmounting %q", mnt.MountPoint)
+	fs.LogfCtx(context.Background(), nil, "Unmounting %q", mnt.MountPoint)
 	err := mnt.Unmount()
 	if err != nil {
-		fs.Logf(nil, "signal to umount failed - retrying: %v", err)
+		fs.LogfCtx(context.Background(), nil, "signal to umount failed - retrying: %v", err)
 		time.Sleep(3 * time.Second)
 		err = mnt.Unmount()
 	}
 	if err != nil {
 		fs.Fatalf(nil, "signal to umount failed: %v", err)
 	}
-	fs.Logf(nil, "Waiting for umount")
+	fs.LogfCtx(context.Background(), nil, "Waiting for umount")
 	err = <-mnt.ErrChan
 	if err != nil {
 		fs.Fatalf(nil, "umount failed: %v", err)
@@ -272,6 +272,6 @@ func umount(mnt *mountlib.MountPoint) {
 	// Cleanup the VFS cache - umount has called Shutdown
 	err = mnt.VFS.CleanUp()
 	if err != nil {
-		fs.Logf(nil, "Failed to cleanup the VFS cache: %v", err)
+		fs.LogfCtx(context.Background(), nil, "Failed to cleanup the VFS cache: %v", err)
 	}
 }

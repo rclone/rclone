@@ -46,7 +46,7 @@ func (f *FS) Root() (node *Node, err error) {
 
 // SetDebug if called, provide debug output through the log package.
 func (f *FS) SetDebug(debug bool) {
-	fs.Debugf(f.f, "SetDebug %v", debug)
+	fs.DebugfCtx(ctx, f.f, "SetDebug %v", debug)
 }
 
 // get the Mode from a vfs Node
@@ -136,6 +136,6 @@ func translateError(err error) syscall.Errno {
 	case vfs.ELOOP:
 		return syscall.ELOOP
 	}
-	fs.Errorf(nil, "IO error: %v", err)
+	fs.ErrorfCtx(ctx, nil, "IO error: %v", err)
 	return syscall.EIO
 }

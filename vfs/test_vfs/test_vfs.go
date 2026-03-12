@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -93,13 +94,13 @@ func (t *Test) randomTest() {
 // logf logs things - not shown unless -v
 func (t *Test) logf(format string, a ...any) {
 	if *verbose {
-		fs.Logf(nil, t.prefix+format, a)
+		fs.LogfCtx(context.Background(), nil, t.prefix+format, a)
 	}
 }
 
 // errorf logs errors
 func (t *Test) errorf(format string, a ...any) {
-	fs.Logf(nil, t.prefix+"ERROR: "+format, a)
+	fs.LogfCtx(context.Background(), nil, t.prefix+"ERROR: "+format, a)
 }
 
 // list test

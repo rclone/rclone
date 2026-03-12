@@ -517,7 +517,7 @@ func NewJobFromParams(ctx context.Context, in rc.Params) (out rc.Params) {
 
 	// Return an rc error blob
 	rcError := func(err error, status int) rc.Params {
-		fs.Errorf(nil, "rc: %q: error: %v", path, err)
+		fs.ErrorfCtx(ctx, nil, "rc: %q: error: %v", path, err)
 		out, _ = rc.Error(path, in, err, status)
 		return out
 	}
@@ -547,7 +547,7 @@ func NewJobFromParams(ctx context.Context, in rc.Params) (out rc.Params) {
 		}
 	}
 
-	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
+	fs.DebugfCtx(ctx, nil, "rc: %q: with parameters %+v", path, in)
 	_, out, err = NewJob(ctx, call.Fn, in)
 	if err != nil {
 		return rcError(err, http.StatusInternalServerError)
@@ -556,7 +556,7 @@ func NewJobFromParams(ctx context.Context, in rc.Params) (out rc.Params) {
 		out = make(rc.Params)
 	}
 
-	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
+	fs.DebugfCtx(ctx, nil, "rc: %q: reply %+v: %v", path, out, err)
 	return out
 }
 
@@ -580,7 +580,7 @@ func NewJobFromBytes(ctx context.Context, inBuf []byte) (outBuf []byte) {
 	var w bytes.Buffer
 	err = rc.WriteJSON(&w, out)
 	if err != nil {
-		fs.Errorf(nil, "rc: NewJobFromBytes: failed to write JSON output: %v", err)
+		fs.ErrorfCtx(ctx, nil, "rc: NewJobFromBytes: failed to write JSON output: %v", err)
 		return []byte(`{"error":"failed to write JSON output"}`)
 	}
 	return w.Bytes()

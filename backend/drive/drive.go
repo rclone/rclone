@@ -774,7 +774,7 @@ See: https://developers.google.com/workspace/drive/api/guides/limited-expansive-
 	} {
 		for mimeType, extension := range m {
 			if err := mime.AddExtensionType(extension, mimeType); err != nil {
-				fs.Errorf("Failed to register MIME type %q: %v", mimeType, err)
+				fs.ErrorfCtx(context.Background(), "Failed to register MIME type %q: %v", mimeType, err)
 			}
 		}
 	}
@@ -935,18 +935,18 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 			reason := gerr.Errors[0].Reason
 			if reason == "rateLimitExceeded" || reason == "userRateLimitExceeded" {
 				if f.opt.StopOnUploadLimit && gerr.Errors[0].Message == "User rate limit exceeded." {
-					fs.Errorf(f, "Received upload limit error: %v", err)
+					fs.ErrorfCtx(ctx, f, "Received upload limit error: %v", err)
 					return false, fserrors.FatalError(err)
 				}
 				return true, err
 			} else if f.opt.StopOnDownloadLimit && reason == "downloadQuotaExceeded" {
-				fs.Errorf(f, "Received download limit error: %v", err)
+				fs.ErrorfCtx(ctx, f, "Received download limit error: %v", err)
 				return false, fserrors.FatalError(err)
 			} else if f.opt.StopOnUploadLimit && (reason == "quotaExceeded" || reason == "storageQuotaExceeded") {
-				fs.Errorf(f, "Received upload limit error: %v", err)
+				fs.ErrorfCtx(ctx, f, "Received upload limit error: %v", err)
 				return false, fserrors.FatalError(err)
 			} else if f.opt.StopOnUploadLimit && reason == "teamDriveFileLimitExceeded" {
-				fs.Errorf(f, "Received Shared Drive file limit error: %v", err)
+				fs.ErrorfCtx(ctx, f, "Received Shared Drive file limit error: %v", err)
 				return false, fserrors.FatalError(err)
 			}
 		}
@@ -1090,7 +1090,7 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	queryString := strings.Join(query, " and ")
 	if queryString != "" {
 		list.Q(queryString)
-		// fs.Debugf(f, "list query: %q", queryString)
+		// fs.DebugfCtx(context.Background(), f, "list query: %q", queryString)
 	}
 	f.lastQuery = queryString // for unit tests
 
@@ -1125,7 +1125,7 @@ OUTER:
 			return false, fmt.Errorf("couldn't list directory: %w", err)
 		}
 		if files.IncompleteSearch {
-			fs.Errorf(f, "search result INCOMPLETE")
+			fs.ErrorfCtx(ctx, f, "search result INCOMPLETE")
 		}
 		for _, item := range files.Files {
 			item.Name = f.opt.Enc.ToStandardName(item.Name)
@@ -1449,7 +1449,7 @@ func NewFs(ctx context.Context, name, path string, m configmap.Mapper) (fs.Fs, e
 			}
 		}
 		f.rootFolderID = rootID
-		fs.Debugf(f, "'root_folder_id = %s' - save this in the config to speed up startup", rootID)
+		fs.DebugfCtx(ctx, f, "'root_folder_id = %s' - save this in the config to speed up startup", rootID)
 	}
 
 	f.dirCache = dircache.New(f.root, f.rootFolderID, f)
@@ -1668,7 +1668,7 @@ func (f *Fs) newObjectWithExportInfo(
 	case info.MimeType == shortcutMimeType:
 		// We can only get here if f.opt.SkipShortcuts is set
 		// and not from a listing. This is unlikely.
-		fs.Debugf(remote, "Ignoring shortcut as skip shortcuts is set")
+		fs.DebugfCtx(ctx, remote, "Ignoring shortcut as skip shortcuts is set")
 		return nil, fs.ErrorObjectNotFound
 	case info.MimeType == shortcutMimeTypeDangling:
 		// Pretend a dangling shortcut is a regular object
@@ -1678,18 +1678,18 @@ func (f *Fs) newObjectWithExportInfo(
 		// If item has MD5 sum it is a file stored on drive
 		return f.newRegularObject(ctx, remote, info)
 	case f.opt.SkipGdocs:
-		fs.Debugf(remote, "Skipping google document type %q", info.MimeType)
+		fs.DebugfCtx(ctx, remote, "Skipping google document type %q", info.MimeType)
 		return nil, fs.ErrorObjectNotFound
 	case f.opt.ShowAllGdocs:
 		return f.newDocumentObject(ctx, remote, info, "", info.MimeType)
 	default:
 		// If item MimeType is in the ExportFormats then it is a google doc
 		if !isDocument {
-			fs.Debugf(remote, "Ignoring unknown document type %q", info.MimeType)
+			fs.DebugfCtx(ctx, remote, "Ignoring unknown document type %q", info.MimeType)
 			return nil, fs.ErrorObjectNotFound
 		}
 		if extension == "" {
-			fs.Debugf(remote, "No export formats found for %q", info.MimeType)
+			fs.DebugfCtx(ctx, remote, "No export formats found for %q", info.MimeType)
 			return nil, fs.ErrorObjectNotFound
 		}
 		if isLinkMimeType(exportMimeType) {
@@ -1857,7 +1857,7 @@ func (f *Fs) fetchFormats(ctx context.Context) {
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
-			fs.Errorf(f, "Failed to get Drive exportFormats and importFormats: %v", err)
+			fs.ErrorfCtx(ctx, f, "Failed to get Drive exportFormats and importFormats: %v", err)
 			_exportFormats = map[string][]string{}
 			_importFormats = map[string][]string{}
 			return
@@ -1958,7 +1958,7 @@ func (f *Fs) findImportFormat(ctx context.Context, mimeType string) string {
 			importMimeTypes := ifs[mimeType]
 			if l := len(importMimeTypes); l > 0 {
 				if l > 1 {
-					fs.Infof(f, "found %d import formats for %q: %q", l, mimeType, importMimeTypes)
+					fs.InfofCtx(ctx, f, "found %d import formats for %q: %q", l, mimeType, importMimeTypes)
 				}
 				return importMimeTypes[0]
 			}
@@ -2148,7 +2148,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		// https://issuetracker.google.com/issues/149522397
 		if f.opt.FastListBugFix && len(dirs) > 1 && !foundItems {
 			if atomic.SwapInt32(&f.grouping, 1) != 1 {
-				fs.Debugf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
+				fs.DebugfCtx(ctx, f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
 			}
 			f.listRmu.Lock()
 			for i := range dirs {
@@ -2160,7 +2160,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 				f.listRempties[dirs[i]] = struct{}{}
 			}
 			f.listRmu.Unlock()
-			fs.Debugf(f, "Recycled %d entries", len(dirs))
+			fs.DebugfCtx(ctx, f, "Recycled %d entries", len(dirs))
 		}
 		// If using a grouping of 1 and dir was empty then check to see if it
 		// is part of the group that caused grouping to be disabled.
@@ -2174,7 +2174,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 				// empty so must have made a mistake
 				if len(f.listRempties) == 0 {
 					if atomic.SwapInt32(&f.grouping, listRGrouping) != listRGrouping {
-						fs.Debugf(f, "Re-enabling ListR as previous detection was in error")
+						fs.DebugfCtx(ctx, f, "Re-enabling ListR as previous detection was in error")
 					}
 				}
 			}
@@ -2389,7 +2389,7 @@ func (f *Fs) resolveShortcut(ctx context.Context, item *drive.File) (newItem *dr
 		return item, nil
 	}
 	if item.ShortcutDetails == nil {
-		fs.Errorf(nil, "Expecting shortcutDetails in %v", item)
+		fs.ErrorfCtx(ctx, nil, "Expecting shortcutDetails in %v", item)
 		return item, nil
 	}
 	newItem, err = f.getFile(ctx, item.ShortcutDetails.TargetId, f.getFileFields(ctx))
@@ -2397,7 +2397,7 @@ func (f *Fs) resolveShortcut(ctx context.Context, item *drive.File) (newItem *dr
 		var gerr *googleapi.Error
 		if errors.As(err, &gerr) && gerr.Code == 404 {
 			// 404 means dangling shortcut, so just return the shortcut with the mime type mangled
-			fs.Logf(nil, "Dangling shortcut %q detected", item.Name)
+			fs.LogfCtx(ctx, nil, "Dangling shortcut %q detected", item.Name)
 			item.MimeType = shortcutMimeTypeDangling
 			return item, nil
 		}
@@ -2567,7 +2567,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	newDirs := dirs[:0]
 	for _, dir := range dirs {
 		if isShortcutID(dir.ID()) {
-			fs.Infof(dir, "skipping shortcut directory")
+			fs.InfofCtx(ctx, dir, "skipping shortcut directory")
 			continue
 		}
 		newDirs = append(newDirs, dir)
@@ -2589,7 +2589,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 		}
 		// move them into place
 		for _, info := range infos {
-			fs.Infof(srcDir, "merging %q", info.Name)
+			fs.InfofCtx(ctx, srcDir, "merging %q", info.Name)
 			// Move the file into the destination
 			err = f.pacer.Call(func() (bool, error) {
 				_, err = f.svc.Files.Update(info.Id, nil).
@@ -2605,7 +2605,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 			}
 		}
 		// rmdir (into trash) the now empty source directory
-		fs.Infof(srcDir, "removing empty directory")
+		fs.InfofCtx(ctx, srcDir, "removing empty directory")
 		err = f.delete(ctx, srcDir.ID(), true)
 		if err != nil {
 			return fmt.Errorf("MergeDirs move failed to rmdir %q: %w", srcDir, err)
@@ -2713,10 +2713,10 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	if check {
 		found, err := f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, true, func(item *drive.File) bool {
 			if !item.Trashed {
-				fs.Debugf(dir, "Rmdir: contains file: %q", item.Name)
+				fs.DebugfCtx(ctx, dir, "Rmdir: contains file: %q", item.Name)
 				return true
 			}
-			fs.Debugf(dir, "Rmdir: contains trashed file: %q", item.Name)
+			fs.DebugfCtx(ctx, dir, "Rmdir: contains trashed file: %q", item.Name)
 			trashedFiles = true
 			return false
 		})
@@ -2779,7 +2779,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	case *linkObject:
 		srcObj, ext = &src.baseObject, src.ext()
 	default:
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -2791,7 +2791,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// are about to create a doc.
 	if ext != "" {
 		if !strings.HasSuffix(remote, ext) {
-			fs.Debugf(src, "Can't copy - not same document type")
+			fs.DebugfCtx(ctx, src, "Can't copy - not same document type")
 			return nil, fs.ErrorCantCopy
 		}
 		remote = remote[:len(remote)-len(ext)]
@@ -2806,7 +2806,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// preserve the description on copy for docs
 		info, err := f.getFile(ctx, actualID(srcObj.id), "description")
 		if err != nil {
-			fs.Errorf(srcObj, "Failed to read description for Google Doc: %v", err)
+			fs.ErrorfCtx(ctx, srcObj, "Failed to read description for Google Doc: %v", err)
 		} else {
 			createInfo.Description = info.Description
 		}
@@ -2858,7 +2858,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// change effective, without it is ignored. This is
 		// probably some eventual consistency nastiness.
 		sleepTime := 2 * time.Second
-		fs.Debugf(f, "Sleeping for %v before setting the modtime to work around drive bug - see #4517", sleepTime)
+		fs.DebugfCtx(ctx, f, "Sleeping for %v before setting the modtime to work around drive bug - see #4517", sleepTime)
 		time.Sleep(sleepTime)
 		err = newObject.SetModTime(ctx, src.ModTime(ctx))
 		if err != nil {
@@ -2868,7 +2868,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if existingObject != nil {
 		err = existingObject.Remove(ctx)
 		if err != nil {
-			fs.Errorf(existingObject, "Failed to remove existing object after copy: %v", err)
+			fs.ErrorfCtx(ctx, existingObject, "Failed to remove existing object after copy: %v", err)
 		}
 	}
 	// Finalise metadata
@@ -2906,7 +2906,7 @@ func (f *Fs) cleanupTeamDrive(ctx context.Context, dir string, directoryID strin
 			err := f.delete(ctx, item.Id, false)
 			if err != nil {
 				r.Errors++
-				fs.Errorf(remote, "%v", err)
+				fs.ErrorfCtx(ctx, remote, "%v", err)
 			}
 			return false
 		}
@@ -2923,7 +2923,7 @@ func (f *Fs) cleanupTeamDrive(ctx context.Context, dir string, directoryID strin
 	if err != nil {
 		err = fmt.Errorf("failed to list directory: %w", err)
 		r.Errors++
-		fs.Errorf(dir, "%v", err)
+		fs.ErrorfCtx(ctx, dir, "%v", err)
 	}
 	if r.Errors != 0 {
 		return r, r
@@ -2949,7 +2949,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	fs.Logf(f, "Note that emptying the trash happens in the background and can take some time.")
+	fs.LogfCtx(ctx, f, "Note that emptying the trash happens in the background and can take some time.")
 	return nil
 }
 
@@ -2966,7 +2966,7 @@ func (f *Fs) teamDriveOK(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to get Shared Drive info: %w", err)
 	}
-	fs.Debugf(f, "read info from Shared Drive %q", td.Name)
+	fs.DebugfCtx(ctx, f, "read info from Shared Drive %q", td.Name)
 	return err
 }
 
@@ -3022,13 +3022,13 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	case *linkObject:
 		srcObj, ext = &src.baseObject, src.ext()
 	default:
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
 	if ext != "" {
 		if !strings.HasSuffix(remote, ext) {
-			fs.Debugf(src, "Can't move - not same document type")
+			fs.DebugfCtx(ctx, src, "Can't move - not same document type")
 			return nil, fs.ErrorCantMove
 		}
 		remote = remote[:len(remote)-len(ext)]
@@ -3081,10 +3081,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	id, err := f.dirCache.FindDir(ctx, remote, false)
 	if err == nil {
-		fs.Debugf(f, "attempting to share directory '%s'", remote)
+		fs.DebugfCtx(ctx, f, "attempting to share directory '%s'", remote)
 		id = shortcutID(id)
 	} else {
-		fs.Debugf(f, "attempting to share single file '%s'", remote)
+		fs.DebugfCtx(ctx, f, "attempting to share single file '%s'", remote)
 		o, err := f.NewObject(ctx, remote)
 		if err != nil {
 			return "", err
@@ -3125,7 +3125,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -3169,7 +3169,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		// get the StartPageToken early so all changes from now on get processed
 		startPageToken, err := f.changeNotifyStartPageToken(ctx)
 		if err != nil {
-			fs.Infof(f, "Failed to get StartPageToken: %s", err)
+			fs.InfofCtx(ctx, f, "Failed to get StartPageToken: %s", err)
 		}
 		var ticker *time.Ticker
 		var tickerC <-chan time.Time
@@ -3194,14 +3194,14 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				if startPageToken == "" {
 					startPageToken, err = f.changeNotifyStartPageToken(ctx)
 					if err != nil {
-						fs.Infof(f, "Failed to get StartPageToken: %s", err)
+						fs.InfofCtx(ctx, f, "Failed to get StartPageToken: %s", err)
 						continue
 					}
 				}
-				fs.Debugf(f, "Checking for changes on remote")
+				fs.DebugfCtx(ctx, f, "Checking for changes on remote")
 				startPageToken, err = f.changeNotifyRunner(ctx, notifyFunc, startPageToken)
 				if err != nil {
-					fs.Infof(f, "Change notify listener failure: %s", err)
+					fs.InfofCtx(ctx, f, "Change notify listener failure: %s", err)
 				}
 			}
 		}
@@ -3339,7 +3339,7 @@ func (f *Fs) changeChunkSize(chunkSizeString string) (err error) {
 }
 
 func (f *Fs) changeServiceAccountFile(ctx context.Context, file string) (err error) {
-	fs.Debugf(nil, "Changing Service Account File from %s to %s", f.opt.ServiceAccountFile, file)
+	fs.DebugfCtx(ctx, nil, "Changing Service Account File from %s to %s", f.opt.ServiceAccountFile, file)
 	if file == f.opt.ServiceAccountFile {
 		return nil
 	}
@@ -3491,11 +3491,11 @@ func (r unTrashResult) Error() string {
 // Restore the trashed files from dir, directoryID recursing if needed
 func (f *Fs) unTrash(ctx context.Context, dir string, directoryID string, recurse bool) (r unTrashResult, err error) {
 	directoryID = actualID(directoryID)
-	fs.Debugf(dir, "finding trash to restore in directory %q", directoryID)
+	fs.DebugfCtx(ctx, dir, "finding trash to restore in directory %q", directoryID)
 	_, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, true, func(item *drive.File) bool {
 		remote := path.Join(dir, item.Name)
 		if item.ExplicitlyTrashed {
-			fs.Infof(remote, "restoring %q", item.Id)
+			fs.InfofCtx(ctx, remote, "restoring %q", item.Id)
 			if operations.SkipDestructive(ctx, remote, "restore") {
 				return false
 			}
@@ -3513,7 +3513,7 @@ func (f *Fs) unTrash(ctx context.Context, dir string, directoryID string, recurs
 			if err != nil {
 				err = fmt.Errorf("failed to restore: %w", err)
 				r.Errors++
-				fs.Errorf(remote, "%v", err)
+				fs.ErrorfCtx(ctx, remote, "%v", err)
 			} else {
 				r.Untrashed++
 			}
@@ -3530,7 +3530,7 @@ func (f *Fs) unTrash(ctx context.Context, dir string, directoryID string, recurs
 	if err != nil {
 		err = fmt.Errorf("failed to list directory: %w", err)
 		r.Errors++
-		fs.Errorf(dir, "%v", err)
+		fs.ErrorfCtx(ctx, dir, "%v", err)
 	}
 	if r.Errors != 0 {
 		return r, r
@@ -3620,7 +3620,7 @@ func (f *Fs) queryFn(ctx context.Context, query string, fn func(*drive.File)) (e
 			return fmt.Errorf("failed to execute query: %w", err)
 		}
 		if files.IncompleteSearch {
-			fs.Errorf(f, "search result INCOMPLETE")
+			fs.ErrorfCtx(ctx, f, "search result INCOMPLETE")
 		}
 		for _, item := range files.Files {
 			fn(item)
@@ -3653,15 +3653,15 @@ func (f *Fs) rescue(ctx context.Context, dirID string, delete bool) (err error) 
 		}
 		// Have found an orphaned entry
 		if delete {
-			fs.Infof(item.Name, "Deleting orphan %q into trash", item.Id)
+			fs.InfofCtx(ctx, item.Name, "Deleting orphan %q into trash", item.Id)
 			err = f.delete(ctx, item.Id, true)
 			if err != nil {
-				fs.Errorf(item.Name, "Failed to delete orphan %q: %v", item.Id, err)
+				fs.ErrorfCtx(ctx, item.Name, "Failed to delete orphan %q: %v", item.Id, err)
 			}
 		} else if dirID == "" {
 			operations.SyncPrintf("%q, %q\n", item.Name, item.Id)
 		} else {
-			fs.Infof(item.Name, "Rescuing orphan %q", item.Id)
+			fs.InfofCtx(ctx, item.Name, "Rescuing orphan %q", item.Id)
 			err = f.pacer.Call(func() (bool, error) {
 				_, err = f.svc.Files.Update(item.Id, nil).
 					AddParents(dirID).
@@ -3671,7 +3671,7 @@ func (f *Fs) rescue(ctx context.Context, dirID string, delete bool) (err error) 
 				return f.shouldRetry(ctx, err)
 			})
 			if err != nil {
-				fs.Errorf(item.Name, "Failed to rescue orphan %q: %v", item.Id, err)
+				fs.ErrorfCtx(ctx, item.Name, "Failed to rescue orphan %q: %v", item.Id, err)
 			}
 		}
 	})
@@ -4089,7 +4089,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			if err != nil {
 				return nil, fmt.Errorf("failed to find or create rescue directory %q: %w", dir, err)
 			}
-			fs.Infof(f, "Rescuing orphans into %q", dir)
+			fs.InfofCtx(ctx, f, "Rescuing orphans into %q", dir)
 		} else {
 			return nil, errors.New("syntax error: need 0 or 1 args or -o delete")
 		}
@@ -4196,7 +4196,7 @@ func (f *Fs) getRemoteInfoWithExport(ctx context.Context, remote string) (
 func (o *baseObject) ModTime(ctx context.Context) time.Time {
 	modTime, err := time.Parse(timeFormatIn, o.modifiedDate)
 	if err != nil {
-		fs.Debugf(o, "Failed to read mtime from object: %v", err)
+		fs.DebugfCtx(ctx, o, "Failed to read mtime from object: %v", err)
 		return time.Now()
 	}
 	return modTime
@@ -4298,7 +4298,7 @@ func (file *openDocumentFile) Read(p []byte) (n int, err error) {
 func (file *openDocumentFile) Close() (err error) {
 	// If end of file, update bytes read
 	if file.eof && !file.errored {
-		fs.Debugf(file.o, "Updating size of doc after download to %v", file.bytes)
+		fs.DebugfCtx(context.Background(), file.o, "Updating size of doc after download to %v", file.bytes)
 		file.o.bytes = file.bytes
 	}
 	return file.in.Close()
@@ -4359,7 +4359,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			return o.fs.shouldRetry(ctx, err)
 		})
 		if err == nil {
-			fs.Debugf(o, "Using v2 download: %v", v2File.DownloadUrl)
+			fs.DebugfCtx(ctx, o, "Using v2 download: %v", v2File.DownloadUrl)
 			o.url = v2File.DownloadUrl
 			o.v2Download = false
 		}
@@ -4411,7 +4411,7 @@ func (o *linkObject) Open(ctx context.Context, options ...fs.OpenOption) (in io.
 			offset, limit = x.Decode(int64(len(data)))
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -4470,7 +4470,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if newO, ok := newObj.(*Object); ok {
 			*o = *newO
 		} else {
-			fs.Debugf(newObj, "Failed to update object %T from new object %T", o, newObj)
+			fs.DebugfCtx(ctx, newObj, "Failed to update object %T from new object %T", o, newObj)
 		}
 		return nil
 	}
@@ -4586,7 +4586,7 @@ func (o *baseObject) Metadata(ctx context.Context) (metadata fs.Metadata, err er
 	if o.metadata != nil {
 		return *o.metadata, nil
 	}
-	fs.Debugf(o, "Fetching metadata")
+	fs.DebugfCtx(ctx, o, "Fetching metadata")
 	id := actualID(o.id)
 	info, err := o.fs.getFile(ctx, id, o.fs.getFileFields(ctx))
 	if err != nil {

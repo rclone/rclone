@@ -2,6 +2,7 @@
 package webgui
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -95,7 +96,7 @@ func initPluginsOrError() error {
 		loadedPlugins = newPlugins(availablePluginsJSONPath)
 		err := loadedPlugins.readFromFile()
 		if err != nil {
-			fs.Errorf(nil, "error reading available plugins: %v", err)
+			fs.ErrorfCtx(context.Background(), nil, "error reading available plugins: %v", err)
 		}
 		initSuccess = true
 	}
@@ -117,7 +118,7 @@ func (p *Plugins) readFromFile() (err error) {
 		}
 		err = json.Unmarshal(data, &p)
 		if err != nil {
-			fs.Logf(nil, "%s", err)
+			fs.LogfCtx(context.Background(), nil, "%s", err)
 		}
 		return nil
 	} else if os.IsNotExist(err) {
@@ -157,11 +158,11 @@ func (p *Plugins) writeToFile() (err error) {
 
 	file, err := json.MarshalIndent(p, "", " ")
 	if err != nil {
-		fs.Logf(nil, "%s", err)
+		fs.LogfCtx(context.Background(), nil, "%s", err)
 	}
 	err = os.WriteFile(availablePluginsJSON, file, 0755)
 	if err != nil {
-		fs.Logf(nil, "%s", err)
+		fs.LogfCtx(context.Background(), nil, "%s", err)
 	}
 	return nil
 }

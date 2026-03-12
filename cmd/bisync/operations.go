@@ -197,7 +197,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 
 	if b.critical {
 		if b.retryable && b.opt.Resilient {
-			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
+			fs.ErrorfCtx(ctx, nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
 			fs.Error(nil, Color(terminal.YellowFg, "Bisync aborted. Error is retryable without --resync due to --resilient mode."))
 		} else {
 			if bilib.FileExists(b.listing1) {
@@ -206,7 +206,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 			if bilib.FileExists(b.listing2) {
 				_ = os.Rename(b.listing2, b.listing2+"-err")
 			}
-			fs.Errorf(nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
+			fs.ErrorfCtx(ctx, nil, Color(terminal.RedFg, "Bisync critical error: %v"), err)
 			fs.Error(nil, Color(terminal.RedFg, "Bisync aborted. Must run --resync to recover."))
 		}
 		return ErrBisyncAborted
@@ -227,7 +227,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	path2 := bilib.FsPath(b.fs2)
 
 	if opt.CheckSync == CheckSyncOnly {
-		fs.Infof(nil, "Validating listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
+		fs.InfofCtx(context.Background(), nil, "Validating listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
 		if err = b.checkSync(b.listing1, b.listing2); err != nil {
 			b.critical = true
 			b.retryable = true
@@ -235,7 +235,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		return err
 	}
 
-	fs.Infof(nil, "Synching Path1 %s with Path2 %s", quotePath(path1), quotePath(path2))
+	fs.InfofCtx(context.Background(), nil, "Synching Path1 %s with Path2 %s", quotePath(path1), quotePath(path2))
 
 	if opt.DryRun {
 		// In --dry-run mode, preserve original listings and save updates to the .lst-dry files
@@ -284,7 +284,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 			fs.Log(nil, Color(terminal.YellowFg, "Listings not found. Reverting to prior backup as --recover is set. \n")+errTip)
 			if opt.CheckSync != CheckSyncFalse {
 				// Run CheckSync to ensure old listing is valid (garbage in, garbage out!)
-				fs.Infof(nil, "Validating backup listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
+				fs.InfofCtx(context.Background(), nil, "Validating backup listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
 				if err = b.checkSync(b.listing1+"-old", b.listing2+"-old"); err != nil {
 					b.critical = true
 					b.retryable = true
@@ -307,7 +307,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 		}
 	}
 
-	fs.Infof(nil, "Building Path1 and Path2 listings")
+	fs.InfofCtx(context.Background(), nil, "Building Path1 and Path2 listings")
 	b.march.ls1, b.march.ls2, err = b.makeMarchListing(fctx)
 	if err != nil || accounting.Stats(fctx).Errored() {
 		fs.Error(nil, Color(terminal.RedFg, "There were errors while building listings. Aborting as it is too dangerous to continue."))
@@ -317,7 +317,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	}
 
 	// Check for Path1 deltas relative to the prior sync
-	fs.Infof(nil, "Path1 checking for diffs")
+	fs.InfofCtx(context.Background(), nil, "Path1 checking for diffs")
 	ds1, err := b.findDeltas(fctx, b.fs1, b.listing1, b.march.ls1, "Path1")
 	if err != nil {
 		return err
@@ -325,7 +325,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	ds1.printStats()
 
 	// Check for Path2 deltas relative to the prior sync
-	fs.Infof(nil, "Path2 checking for diffs")
+	fs.InfofCtx(context.Background(), nil, "Path2 checking for diffs")
 	ds2, err := b.findDeltas(fctx, b.fs2, b.listing2, b.march.ls2, "Path2")
 	if err != nil {
 		return err
@@ -334,7 +334,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	// Check access health on the Path1 and Path2 filesystems
 	if opt.CheckAccess {
-		fs.Infof(nil, "Checking access health")
+		fs.InfofCtx(context.Background(), nil, "Checking access health")
 		err = b.checkAccess(ds1.checkFiles, ds2.checkFiles)
 		if err != nil {
 			b.critical = true
@@ -357,10 +357,10 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	if !opt.Force {
 		msg := "Safety abort: all files were changed on %s %s. Run with --force if desired."
 		if !ds1.foundSame {
-			fs.Errorf(nil, msg, ds1.msg, quotePath(path1))
+			fs.ErrorfCtx(context.Background(), nil, msg, ds1.msg, quotePath(path1))
 		}
 		if !ds2.foundSame {
-			fs.Errorf(nil, msg, ds2.msg, quotePath(path2))
+			fs.ErrorfCtx(context.Background(), nil, msg, ds2.msg, quotePath(path2))
 		}
 		if !ds1.foundSame || !ds2.foundSame {
 			b.abort = true
@@ -376,13 +376,13 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	queues := queues{}
 
 	if noChanges {
-		fs.Infof(nil, "No changes found")
+		fs.InfofCtx(context.Background(), nil, "No changes found")
 	} else {
-		fs.Infof(nil, "Applying changes")
+		fs.InfofCtx(context.Background(), nil, "Applying changes")
 		results2to1, results1to2, queues, err = b.applyDeltas(octx, ds1, ds2)
 		if err != nil {
 			if b.InGracefulShutdown && (err == context.Canceled || err == accounting.ErrorMaxTransferLimitReachedGraceful || strings.Contains(err.Error(), "context canceled")) {
-				fs.Infof(nil, "Ignoring sync error due to Graceful Shutdown: %v", err)
+				fs.InfofCtx(context.Background(), nil, "Ignoring sync error due to Graceful Shutdown: %v", err)
 			} else {
 				b.critical = true
 				// b.retryable = true // not sure about this one
@@ -392,7 +392,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	}
 
 	// Clean up and check listings integrity
-	fs.Infof(nil, "Updating listings")
+	fs.InfofCtx(context.Background(), nil, "Updating listings")
 	var err1, err2 error
 	if b.DebugName != "" {
 		l1, _ := b.loadListing(b.listing1)
@@ -431,7 +431,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 	}
 
 	if opt.CheckSync == CheckSyncTrue && !opt.DryRun {
-		fs.Infof(nil, "Validating listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
+		fs.InfofCtx(context.Background(), nil, "Validating listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
 		if err := b.checkSync(b.listing1, b.listing2); err != nil {
 			b.critical = true
 			return err
@@ -440,7 +440,7 @@ func (b *bisyncRun) runLocked(octx context.Context) (err error) {
 
 	// Optional rmdirs for empty directories
 	if opt.RemoveEmptyDirs {
-		fs.Infof(nil, "Removing empty directories")
+		fs.InfofCtx(context.Background(), nil, "Removing empty directories")
 		fctx = b.setBackupDir(fctx, 1)
 		err1 := operations.Rmdirs(fctx, b.fs1, "", true)
 		fctx = b.setBackupDir(fctx, 2)
@@ -502,9 +502,9 @@ func (b *bisyncRun) checkAccess(checkFiles1, checkFiles2 bilib.Names) error {
 	numChecks2 := len(checkFiles2)
 	if numChecks1 == 0 || numChecks1 != numChecks2 {
 		if numChecks1 == 0 && numChecks2 == 0 {
-			fs.Logf("--check-access", Color(terminal.RedFg, "Failed to find any files named %s\n More info: %s"), Color(terminal.CyanFg, opt.CheckFilename), Color(terminal.BlueFg, "https://rclone.org/bisync/#check-access"))
+			fs.LogfCtx(context.Background(), "--check-access", Color(terminal.RedFg, "Failed to find any files named %s\n More info: %s"), Color(terminal.CyanFg, opt.CheckFilename), Color(terminal.BlueFg, "https://rclone.org/bisync/#check-access"))
 		}
-		fs.Errorf(nil, "%s Path1 count %d, Path2 count %d - %s", prefix, numChecks1, numChecks2, opt.CheckFilename)
+		fs.ErrorfCtx(context.Background(), nil, "%s Path1 count %d, Path2 count %d - %s", prefix, numChecks1, numChecks2, opt.CheckFilename)
 		ok = false
 	}
 
@@ -525,7 +525,7 @@ func (b *bisyncRun) checkAccess(checkFiles1, checkFiles2 bilib.Names) error {
 	if !ok {
 		return errors.New("check file check failed")
 	}
-	fs.Infof(nil, "Found %d matching %q files on both paths", numChecks1, opt.CheckFilename)
+	fs.InfofCtx(context.Background(), nil, "Found %d matching %q files on both paths", numChecks1, opt.CheckFilename)
 	return nil
 }
 
@@ -543,9 +543,9 @@ func (b *bisyncRun) handleErr(o any, msg string, err error, critical, retryable 
 		if critical {
 			b.critical = true
 			b.abort = true
-			fs.Errorf(o, "%s: %v", msg, err)
+			fs.ErrorfCtx(context.Background(), o, "%s: %v", msg, err)
 		} else {
-			fs.Infof(o, "%s: %v", msg, err)
+			fs.InfofCtx(context.Background(), o, "%s: %v", msg, err)
 		}
 	}
 }
@@ -560,7 +560,7 @@ func (b *bisyncRun) setBackupDir(ctx context.Context, destPath int) context.Cont
 	if destPath == 2 && b.opt.BackupDir2 != "" {
 		ci.BackupDir = b.opt.BackupDir2
 	}
-	fs.Debugf(ci.BackupDir, "updated backup-dir for Path%d", destPath)
+	fs.DebugfCtx(ctx, ci.BackupDir, "updated backup-dir for Path%d", destPath)
 	return ctx
 }
 
@@ -640,7 +640,7 @@ func waitFor(msg string, totalWait time.Duration, fn func() bool) (ok bool) {
 		if ok {
 			return ok
 		}
-		fs.Infof(nil, Color(terminal.YellowFg, "%s: %vs"), msg, int(totalWait/individualWait)-i)
+		fs.InfofCtx(context.Background(), nil, Color(terminal.YellowFg, "%s: %vs"), msg, int(totalWait/individualWait)-i)
 		time.Sleep(individualWait)
 	}
 	return false

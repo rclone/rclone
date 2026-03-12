@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -163,13 +164,13 @@ func decodeRequest(w http.ResponseWriter, r *http.Request, req any) bool {
 func encodeResponse(w http.ResponseWriter, res any, err error, path string) {
 	w.Header().Set("Content-Type", contentType)
 	if err != nil {
-		fs.Debugf(path, "Request returned error: %v", err)
+		fs.DebugfCtx(context.Background(), path, "Request returned error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		res = &ErrorResponse{Err: err.Error()}
 	} else if res == nil {
 		res = struct{}{}
 	}
 	if err = json.NewEncoder(w).Encode(res); err != nil {
-		fs.Debugf(path, "Response encoding failed: %v", err)
+		fs.DebugfCtx(context.Background(), path, "Response encoding failed: %v", err)
 	}
 }

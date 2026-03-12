@@ -146,7 +146,7 @@ func runURLS(args []string) (err error) {
 			}
 			_, err := copyURL(gCtx, dstFs, filename, url, filename == "", headerFilename, noClobber)
 			if err != nil {
-				fs.Errorf(filename, "failed to copy URL %q: %v", url, err)
+				fs.ErrorfCtx(context.Background(), filename, "failed to copy URL %q: %v", url, err)
 				ec.Add(err)
 			}
 			return nil

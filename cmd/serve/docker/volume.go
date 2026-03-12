@@ -170,7 +170,7 @@ func (vol *Volume) checkMountpoint() error {
 
 // setup volume filesystem
 func (vol *Volume) setup(ctx context.Context) error {
-	fs.Debugf(nil, "Setup volume %q as %q at path %s", vol.Name, vol.fsString, vol.MountPoint)
+	fs.DebugfCtx(ctx, nil, "Setup volume %q as %q at path %s", vol.Name, vol.fsString, vol.MountPoint)
 
 	if err := vol.checkMountpoint(); err != nil {
 		return err
@@ -212,7 +212,7 @@ func (vol *Volume) setup(ctx context.Context) error {
 // remove volume filesystem and mounts
 func (vol *Volume) remove(ctx context.Context) error {
 	count := len(vol.mountReqs)
-	fs.Debugf(nil, "Remove volume %q (count %d)", vol.Name, count)
+	fs.DebugfCtx(ctx, nil, "Remove volume %q (count %d)", vol.Name, count)
 
 	if count > 0 {
 		return errors.New("volume is in use")
@@ -252,7 +252,7 @@ func (vol *Volume) clearCache() error {
 func (vol *Volume) mount(id string) error {
 	drv := vol.drv
 	count := len(vol.mountReqs)
-	fs.Debugf(nil, "Mount volume %q for id %q at path %s (count %d)",
+	fs.DebugfCtx(context.Background(), nil, "Mount volume %q for id %q at path %s (count %d)",
 		vol.Name, id, vol.MountPoint, count)
 
 	if _, found := vol.mountReqs[id]; found {
@@ -282,7 +282,7 @@ func (vol *Volume) mount(id string) error {
 // unmount volume
 func (vol *Volume) unmount(id string) error {
 	count := len(vol.mountReqs)
-	fs.Debugf(nil, "Unmount volume %q from id %q at path %s (count %d)",
+	fs.DebugfCtx(context.Background(), nil, "Unmount volume %q from id %q at path %s (count %d)",
 		vol.Name, id, vol.MountPoint, count)
 
 	if count == 0 {

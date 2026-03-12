@@ -136,7 +136,7 @@ func (o *Object) readEntry(ctx context.Context) (f *putio.File, err error) {
 		File putio.File `json:"file"`
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		// fs.Debugf(o, "requesting child. directoryID: %s, name: %s", directoryID, leaf)
+		// fs.DebugfCtx(ctx, o, "requesting child. directoryID: %s, name: %s", directoryID, leaf)
 		req, err := o.fs.client.NewRequest(ctx, "GET", "/v2/files/"+directoryID+"/child?name="+url.QueryEscape(o.fs.opt.Enc.FromStandardName(leaf)), nil)
 		if err != nil {
 			return false, err
@@ -181,7 +181,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	if o.modtime.IsZero() {
 		err := o.readEntryAndSetMetadata(ctx)
 		if err != nil {
-			fs.Debugf(o, "Failed to read metadata: %v", err)
+			fs.DebugfCtx(ctx, o, "Failed to read metadata: %v", err)
 			return time.Now()
 		}
 	}
@@ -197,7 +197,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) 
 	if err != nil {
 		return err
 	}
-	// fs.Debugf(o, "setting modtime: %s", modTime.String())
+	// fs.DebugfCtx(ctx, o, "setting modtime: %s", modTime.String())
 	_, err = o.fs.client.Do(req, nil)
 	if err != nil {
 		return err
@@ -239,7 +239,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		for header, value := range headers {
 			req.Header.Set(header, value)
 		}
-		// fs.Debugf(o, "opening file: id=%d", o.file.ID)
+		// fs.DebugfCtx(ctx, o, "opening file: id=%d", o.file.ID)
 		resp, err = o.fs.httpClient.Do(req)
 		if err != nil {
 			return shouldRetry(ctx, err)
@@ -268,7 +268,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// defer log.Trace(o, "src=%+v", src)("err=%v", &err)
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
-		fs.Logf(o, "File name disallowed - not uploading")
+		fs.LogfCtx(ctx, o, "File name disallowed - not uploading")
 		return nil
 	}
 	err = o.Remove(ctx)
@@ -287,7 +287,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 func (o *Object) Remove(ctx context.Context) (err error) {
 	// defer log.Trace(o, "")("err=%v", &err)
 	return o.fs.pacer.Call(func() (bool, error) {
-		// fs.Debugf(o, "removing file: id=%d", o.file.ID)
+		// fs.DebugfCtx(ctx, o, "removing file: id=%d", o.file.ID)
 		err = o.fs.client.Files.Delete(ctx, o.file.ID)
 		return shouldRetry(ctx, err)
 	})

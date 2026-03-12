@@ -269,7 +269,7 @@ func ChoosePassword(defaultValue string, required bool) string {
 	case 'n':
 		return defaultValue
 	default:
-		fs.Errorf(nil, "Bad choice %c", i)
+		fs.ErrorfCtx(context.Background(), nil, "Bad choice %c", i)
 	}
 	return obscure.MustObscure(password)
 }
@@ -398,7 +398,7 @@ func OkRemote(name string) bool {
 		LoadedData().DeleteSection(name)
 		return true
 	default:
-		fs.Errorf(nil, "Bad choice %c", i)
+		fs.ErrorfCtx(context.Background(), nil, "Bad choice %c", i)
 	}
 	return false
 }
@@ -429,7 +429,7 @@ func backendConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.
 		in.State = out.State
 		in.Result = out.Result
 		if out.Option != nil {
-			fs.Debugf(name, "config: reading config parameter %q", out.Option.Name)
+			fs.DebugfCtx(ctx, name, "config: reading config parameter %q", out.Option.Name)
 			if out.Option.Default == nil {
 				out.Option.Default = ""
 			}

@@ -121,9 +121,9 @@ func (ds *deltaSet) printStats() {
 		}
 	}
 	if nAll != nNew+nMod+nDeleted {
-		fs.Errorf(nil, "something doesn't add up! %4d != %4d + %4d + %4d", nAll, nNew, nMod, nDeleted)
+		fs.ErrorfCtx(context.Background(), nil, "something doesn't add up! %4d != %4d + %4d + %4d", nAll, nNew, nMod, nDeleted)
 	}
-	fs.Infof(nil, "%s: %4d changes: "+Color(terminal.GreenFg, "%4d new")+", "+Color(terminal.YellowFg, "%4d modified")+", "+Color(terminal.RedFg, "%4d deleted"),
+	fs.InfofCtx(context.Background(), nil, "%s: %4d changes: "+Color(terminal.GreenFg, "%4d new")+", "+Color(terminal.YellowFg, "%4d modified")+", "+Color(terminal.RedFg, "%4d deleted"),
 		ds.msg, nAll, nNew, nMod, nDeleted)
 	if nMod > 0 {
 		details := []string{}
@@ -139,10 +139,10 @@ func (ds *deltaSet) printStats() {
 			details = append(details, fmt.Sprintf(Color(terminal.CyanFg, "%4d hash differs"), nHash))
 		}
 		if (nNewer+nOlder != nTime) || (nLarger+nSmaller != nSize) || (nMod > nTime+nSize+nHash) {
-			fs.Errorf(nil, "something doesn't add up!")
+			fs.ErrorfCtx(context.Background(), nil, "something doesn't add up!")
 		}
 
-		fs.Infof(nil, "(%s: %s)", Color(terminal.YellowFg, "Modified"), strings.Join(details, ", "))
+		fs.InfofCtx(context.Background(), nil, "(%s: %s)", Color(terminal.YellowFg, "Modified"), strings.Join(details, ", "))
 	}
 }
 
@@ -153,7 +153,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 
 	old, err = b.loadListing(oldListing)
 	if err != nil {
-		fs.Errorf(nil, "Failed loading prior %s listing: %s", msg, oldListing)
+		fs.ErrorfCtx(context.Background(), nil, "Failed loading prior %s listing: %s", msg, oldListing)
 		b.abort = true
 		return
 	}
@@ -193,7 +193,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 			whatchanged := []string{}
 			if b.opt.Compare.Size {
 				if sizeDiffers(old.getSize(file), now.getSize(file)) {
-					fs.Debugf(file, "(old: %v current: %v)", old.getSize(file), now.getSize(file))
+					fs.DebugfCtx(context.Background(), file, "(old: %v current: %v)", old.getSize(file), now.getSize(file))
 					if now.getSize(file) > old.getSize(file) {
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "size (larger)"))
 						d |= deltaLarger
@@ -207,11 +207,11 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 			if b.opt.Compare.Modtime {
 				if timeDiffers(fctx, old.getTime(file), now.getTime(file), f, f) {
 					if old.beforeOther(now, file) {
-						fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
+						fs.DebugfCtx(context.Background(), file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (newer)"))
 						d |= deltaNewer
 					} else { // Current version is older than prior sync.
-						fs.Debugf(file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
+						fs.DebugfCtx(context.Background(), file, "(old: %v current: %v)", old.getTime(file), now.getTime(file))
 						whatchanged = append(whatchanged, Color(terminal.MagentaFg, "time (older)"))
 						d |= deltaOlder
 					}
@@ -220,7 +220,7 @@ func (b *bisyncRun) findDeltas(fctx context.Context, f fs.Fs, oldListing string,
 			}
 			if b.opt.Compare.Checksum {
 				if b.hashDiffers(old.getHash(file), now.getHash(file), old.hash, now.hash, old.getSize(file), now.getSize(file)) {
-					fs.Debugf(file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
+					fs.DebugfCtx(context.Background(), file, "(old: %v current: %v)", old.getHash(file), now.getHash(file))
 					whatchanged = append(whatchanged, Color(terminal.MagentaFg, "hash"))
 					d |= deltaHash
 					h = now.getHash(file)
@@ -310,7 +310,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 	if dirs1Err != nil {
 		b.critical = true
 		b.retryable = true
-		fs.Debugf(nil, "Error generating dirsonly list for path1: %v", dirs1Err)
+		fs.DebugfCtx(ctx, nil, "Error generating dirsonly list for path1: %v", dirs1Err)
 		return
 	}
 
@@ -318,7 +318,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 	if dirs2Err != nil {
 		b.critical = true
 		b.retryable = true
-		fs.Debugf(nil, "Error generating dirsonly list for path2: %v", dirs2Err)
+		fs.DebugfCtx(ctx, nil, "Error generating dirsonly list for path2: %v", dirs2Err)
 		return
 	}
 
@@ -347,13 +347,13 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 				// if size or hash differ, skip this, as we already know they're not equal
 				if (b.opt.Compare.Size && sizeDiffers(ds1.size[file], ds2.size[file2])) ||
 					(b.opt.Compare.Checksum && b.hashDiffers(ds1.hash[file], ds2.hash[file2], b.opt.Compare.HashType1, b.opt.Compare.HashType2, ds1.size[file], ds2.size[file2])) {
-					fs.Debugf(file, "skipping equality check as size/hash definitely differ")
+					fs.DebugfCtx(ctx, file, "skipping equality check as size/hash definitely differ")
 				} else {
 					checkit := func(filename string) {
 						if err := filterCheck.AddFile(filename); err != nil {
-							fs.Debugf(nil, "Non-critical error adding file to list of potential conflicts to check: %s", err)
+							fs.DebugfCtx(ctx, nil, "Non-critical error adding file to list of potential conflicts to check: %s", err)
 						} else {
-							fs.Debugf(nil, "Added file to list of potential conflicts to check: %s", filename)
+							fs.DebugfCtx(ctx, nil, "Added file to list of potential conflicts to check: %s", filename)
 						}
 					}
 					checkit(file)
@@ -392,7 +392,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 
 				// if files are identical, leave them alone instead of renaming
 				if (dirs1.has(file) || dirs1.has(alias)) && (dirs2.has(file) || dirs2.has(alias)) {
-					fs.Infof(nil, "This is a directory, not a file. Skipping equality check and will not rename: %s", file)
+					fs.InfofCtx(ctx, nil, "This is a directory, not a file. Skipping equality check and will not rename: %s", file)
 					b.march.ls1.getPut(file, skippedDirs1)
 					b.march.ls2.getPut(file, skippedDirs2)
 					b.debugFn(file, func() {
@@ -407,10 +407,10 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 						if ciCheck.FixCase && file != alias {
 							// the content is equal but filename still needs to be FixCase'd, so copy1to2
 							// the Path1 version is deemed "correct" in this scenario
-							fs.Infof(alias, "Files are equal but will copy anyway to fix case to %s", file)
+							fs.InfofCtx(ctx, alias, "Files are equal but will copy anyway to fix case to %s", file)
 							copy1to2.Add(file)
 						} else if b.opt.Compare.Modtime && timeDiffers(ctx, b.march.ls1.getTime(b.march.ls1.getTryAlias(file, alias)), b.march.ls2.getTime(b.march.ls2.getTryAlias(file, alias)), b.fs1, b.fs2) {
-							fs.Infof(file, "Files are equal but will copy anyway to update modtime (will not rename)")
+							fs.InfofCtx(ctx, file, "Files are equal but will copy anyway to update modtime (will not rename)")
 							if b.march.ls1.getTime(b.march.ls1.getTryAlias(file, alias)).Before(b.march.ls2.getTime(b.march.ls2.getTryAlias(file, alias))) {
 								// Path2 is newer
 								b.indent("Path2", p1, "Queue copy to Path1")
@@ -421,12 +421,12 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 								copy1to2.Add(b.march.ls1.getTryAlias(file, alias))
 							}
 						} else {
-							fs.Infof(nil, "Files are equal! Skipping: %s", file)
+							fs.InfofCtx(ctx, nil, "Files are equal! Skipping: %s", file)
 							renameSkipped.Add(file)
 							renameSkipped.Add(alias)
 						}
 					} else {
-						fs.Debugf(nil, "Files are NOT equal: %s", file)
+						fs.DebugfCtx(ctx, nil, "Files are NOT equal: %s", file)
 						err = b.resolve(ctxMove, path1, path2, file, alias, &renameSkipped, &copy1to2, &copy2to1, ds1, ds2)
 						if err != nil {
 							return
@@ -439,12 +439,12 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (result
 			// Path1 deleted
 			d2, in2 := ds2.deltas[file]
 			// try looking under alternate name
-			fs.Debugf(file, "alias: %s, in2: %v", alias, in2)
+			fs.DebugfCtx(ctx, file, "alias: %s, in2: %v", alias, in2)
 			if !in2 && file != alias {
-				fs.Debugf(file, "looking for alias: %s", alias)
+				fs.DebugfCtx(ctx, file, "looking for alias: %s", alias)
 				d2, in2 = ds2.deltas[alias]
 				if in2 {
-					fs.Debugf(file, "detected alias: %s", alias)
+					fs.DebugfCtx(ctx, file, "detected alias: %s", alias)
 				}
 			}
 			if !in2 {
@@ -554,7 +554,7 @@ func (ds *deltaSet) excessDeletes() bool {
 		return false
 	}
 
-	fs.Errorf("Safety abort",
+	fs.ErrorfCtx(context.Background(), "Safety abort",
 		"too many deletes (>%d%%, %d of %d) on %s %s. Run with --force if desired.",
 		maxDelete, ds.deleted, ds.oldCount, ds.msg, quotePath(bilib.FsPath(ds.fs)))
 	return true
@@ -572,7 +572,7 @@ func (b *bisyncRun) updateAliases(ctx context.Context, ds1, ds2 *deltaSet) {
 		return
 	}
 
-	fs.Debugf(nil, "Updating AliasMap")
+	fs.DebugfCtx(ctx, nil, "Updating AliasMap")
 
 	transform := func(s string) string {
 		if !ci.NoUnicodeNormalization {
@@ -613,7 +613,7 @@ func (b *bisyncRun) updateAliases(ctx context.Context, ds1, ds2 *deltaSet) {
 		for transformedname, name := range delMap {
 			matchedName, found := fullMap[transformedname]
 			if found && name != matchedName {
-				fs.Debugf(name, "adding alias %s", matchedName)
+				fs.DebugfCtx(ctx, name, "adding alias %s", matchedName)
 				b.aliases.Add(name, matchedName)
 			}
 		}

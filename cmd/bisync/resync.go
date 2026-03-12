@@ -24,14 +24,14 @@ func (b *bisyncRun) setResyncDefaults() {
 
 	// checks and warnings
 	if (b.opt.ResyncMode == PreferNewer || b.opt.ResyncMode == PreferOlder) && (b.fs1.Precision() == fs.ModTimeNotSupported || b.fs2.Precision() == fs.ModTimeNotSupported) {
-		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: ignoring --resync-mode %s as at least one remote does not support modtimes."), b.opt.ResyncMode.String())
+		fs.LogfCtx(context.Background(), nil, Color(terminal.YellowFg, "WARNING: ignoring --resync-mode %s as at least one remote does not support modtimes."), b.opt.ResyncMode.String())
 		b.opt.ResyncMode = PreferPath1
 	} else if (b.opt.ResyncMode == PreferNewer || b.opt.ResyncMode == PreferOlder) && !b.opt.Compare.Modtime {
-		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: ignoring --resync-mode %s as --compare does not include modtime."), b.opt.ResyncMode.String())
+		fs.LogfCtx(context.Background(), nil, Color(terminal.YellowFg, "WARNING: ignoring --resync-mode %s as --compare does not include modtime."), b.opt.ResyncMode.String())
 		b.opt.ResyncMode = PreferPath1
 	}
 	if (b.opt.ResyncMode == PreferLarger || b.opt.ResyncMode == PreferSmaller) && !b.opt.Compare.Size {
-		fs.Logf(nil, Color(terminal.YellowFg, "WARNING: ignoring --resync-mode %s as --compare does not include size."), b.opt.ResyncMode.String())
+		fs.LogfCtx(context.Background(), nil, Color(terminal.YellowFg, "WARNING: ignoring --resync-mode %s as --compare does not include size."), b.opt.ResyncMode.String())
 		b.opt.ResyncMode = PreferPath1
 	}
 }
@@ -41,7 +41,7 @@ func (b *bisyncRun) setResyncDefaults() {
 // copy any unique files to the opposite path,
 // and resolve any differing files according to the --resync-mode.
 func (b *bisyncRun) resync(fctx context.Context) (err error) {
-	fs.Infof(nil, "Copying Path2 files to Path1")
+	fs.InfofCtx(context.Background(), nil, "Copying Path2 files to Path1")
 
 	// Save blank filelists (will be filled from sync results)
 	ls1 := newFileList()
@@ -60,7 +60,7 @@ func (b *bisyncRun) resync(fctx context.Context) (err error) {
 	// Check access health on the Path1 and Path2 filesystems
 	// enforce even though this is --resync
 	if b.opt.CheckAccess {
-		fs.Infof(nil, "Checking access health")
+		fs.InfofCtx(context.Background(), nil, "Checking access health")
 
 		filesNow1, filesNow2, err := b.findCheckFiles(fctx)
 		if err != nil {
@@ -106,7 +106,7 @@ func (b *bisyncRun) resync(fctx context.Context) (err error) {
 	// fctx has our extra filters added!
 	ctxSync, filterSync := filter.AddConfig(ctxRun)
 	if filterSync.Opt.MinSize == -1 {
-		fs.Debugf(nil, "filterSync.Opt.MinSize: %v", filterSync.Opt.MinSize)
+		fs.DebugfCtx(context.Background(), nil, "filterSync.Opt.MinSize: %v", filterSync.Opt.MinSize)
 	}
 	b.resyncIs1to2 = false
 	ctxSync = b.setResyncConfig(ctxSync)
@@ -127,7 +127,7 @@ func (b *bisyncRun) resync(fctx context.Context) (err error) {
 		return err
 	}
 
-	fs.Infof(nil, "Resync updating listings")
+	fs.InfofCtx(context.Background(), nil, "Resync updating listings")
 	b.saveOldListings() // may not exist, as this is --resync
 	b.replaceCurrentListings()
 
@@ -161,7 +161,7 @@ func (b *bisyncRun) resync(fctx context.Context) (err error) {
 	if b.opt.CheckSync == CheckSyncTrue && !b.opt.DryRun {
 		path1 := bilib.FsPath(b.fs1)
 		path2 := bilib.FsPath(b.fs2)
-		fs.Infof(nil, "Validating listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
+		fs.InfofCtx(context.Background(), nil, "Validating listings for Path1 %s vs Path2 %s", quotePath(path1), quotePath(path2))
 		if err := b.checkSync(b.listing1, b.listing2); err != nil {
 			b.critical = true
 			return err

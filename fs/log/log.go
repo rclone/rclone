@@ -47,6 +47,11 @@ var OptionsInfo = fs.Options{{
 	Help:    "Comma separated list of log format options",
 	Groups:  "Logging",
 }, {
+	Name:    "log_prefix",
+	Default: "",
+	Help:    "Prefix string prepended to every log line (useful for per-instance identification)",
+	Groups:  "Logging",
+}, {
 	Name:    "syslog",
 	Default: false,
 	Help:    "Use Syslog for logging",
@@ -82,14 +87,22 @@ type Options struct {
 	MaxAge               fs.Duration   `config:"log_file_max_age"`     // Max age of log file
 	Compress             bool          `config:"log_file_compress"`    // Set to compress log file
 	Format               logFormat     `config:"log_format"`           // Comma separated list of log format options
+	Prefix               string        `config:"log_prefix"`           // Optional prefix prepended to every log line
 	UseSyslog            bool          `config:"syslog"`               // Use Syslog for logging
 	SyslogFacility       string        `config:"syslog_facility"`      // Facility for syslog, e.g. KERN,USER,...
 	LogSystemdSupport    bool          `config:"log_systemd"`          // set if using systemd logging
 	WindowsEventLogLevel fs.LogLevel   `config:"windows_event_log_level"`
 }
 
+// logOptionsReload is called when log options are changed via RPC
+func logOptionsReload(ctx context.Context) error {
+	Handler.setFormat(Opt.Format)
+	Handler.setPrefix(Opt.Prefix)
+	return nil
+}
+
 func init() {
-	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "log", Opt: &Opt, Options: OptionsInfo})
+	fs.RegisterGlobalOptions(fs.OptionsInfo{Name: "log", Opt: &Opt, Options: OptionsInfo, Reload: logOptionsReload})
 }
 
 // Opt is the options for the logger

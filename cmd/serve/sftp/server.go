@@ -70,17 +70,17 @@ func (s *server) getVFS(what string, sshConn *ssh.ServerConn) (VFS *vfs.VFS) {
 		return s.vfs
 	}
 	if sshConn.Permissions == nil || sshConn.Permissions.Extensions == nil {
-		fs.Infof(what, "SSH Permissions Extensions not found")
+		fs.InfofCtx(context.Background(), what, "SSH Permissions Extensions not found")
 		return nil
 	}
 	key := sshConn.Permissions.Extensions["_vfsKey"]
 	if key == "" {
-		fs.Infof(what, "VFS key not found")
+		fs.InfofCtx(context.Background(), what, "VFS key not found")
 		return nil
 	}
 	VFS = s.proxy.Get(key)
 	if VFS == nil {
-		fs.Infof(what, "failed to read VFS from cache")
+		fs.InfofCtx(context.Background(), what, "failed to read VFS from cache")
 		return nil
 	}
 	return VFS
@@ -94,11 +94,11 @@ func (s *server) acceptConnection(nConn net.Conn) {
 	// Before use, a handshake must be performed on the incoming net.Conn.
 	sshConn, chans, reqs, err := ssh.NewServerConn(nConn, s.config)
 	if err != nil {
-		fs.Errorf(what, "SSH login failed: %v", err)
+		fs.ErrorfCtx(context.Background(), what, "SSH login failed: %v", err)
 		return
 	}
 
-	fs.Infof(what, "SSH login from %s using %s", sshConn.User(), sshConn.ClientVersion())
+	fs.InfofCtx(context.Background(), what, "SSH login from %s using %s", sshConn.User(), sshConn.ClientVersion())
 
 	// Discard all global out-of-band Requests
 	go ssh.DiscardRequests(reqs)
@@ -108,7 +108,7 @@ func (s *server) acceptConnection(nConn net.Conn) {
 		vfs:  s.getVFS(what, sshConn),
 	}
 	if c.vfs == nil {
-		fs.Infof(what, "Closing unauthenticated connection (couldn't find VFS)")
+		fs.InfofCtx(context.Background(), what, "Closing unauthenticated connection (couldn't find VFS)")
 		_ = nConn.Close()
 		return
 	}
@@ -126,7 +126,7 @@ func (s *server) acceptConnections() {
 			if strings.Contains(err.Error(), "use of closed network connection") {
 				return
 			}
-			fs.Errorf(nil, "Failed to accept incoming connection: %v", err)
+			fs.ErrorfCtx(context.Background(), nil, "Failed to accept incoming connection: %v", err)
 			continue
 		}
 		go s.acceptConnection(nConn)
@@ -157,7 +157,7 @@ func (s *server) configure() (err error) {
 				return fmt.Errorf("failed to parse authorized keys")
 			}
 		}
-		fs.Logf(nil, "Loaded %d authorized keys from %q", len(authorizedKeysMap), authKeysFile)
+		fs.LogfCtx(context.Background(), nil, "Loaded %d authorized keys from %q", len(authorizedKeysMap), authKeysFile)
 	}
 
 	if !s.opt.NoAuth && len(authorizedKeysMap) == 0 && s.opt.User == "" && s.opt.Pass == "" && s.proxy == nil {
@@ -169,7 +169,7 @@ func (s *server) configure() (err error) {
 	s.config = &ssh.ServerConfig{
 		ServerVersion: "SSH-2.0-" + fs.GetConfig(s.ctx).UserAgent,
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
-			fs.Debugf(describeConn(c), "Password login attempt for %s", c.User())
+			fs.DebugfCtx(context.Background(), describeConn(c), "Password login attempt for %s", c.User())
 			if s.proxy != nil {
 				// query the proxy for the config
 				_, vfsKey, err := s.proxy.Call(c.User(), string(pass), false)
@@ -192,7 +192,7 @@ func (s *server) configure() (err error) {
 			return nil, fmt.Errorf("password rejected for %q", c.User())
 		},
 		PublicKeyCallback: func(c ssh.ConnMetadata, pubKey ssh.PublicKey) (*ssh.Permissions, error) {
-			fs.Debugf(describeConn(c), "Public key login attempt for %s", c.User())
+			fs.DebugfCtx(context.Background(), describeConn(c), "Public key login attempt for %s", c.User())
 			if s.proxy != nil {
 				//query the proxy for the config
 				_, vfsKey, err := s.proxy.Call(
@@ -225,7 +225,7 @@ func (s *server) configure() (err error) {
 			if err != nil {
 				status = err.Error()
 			}
-			fs.Debugf(describeConn(conn), "ssh auth %q from %q: %s", method, conn.ClientVersion(), status)
+			fs.DebugfCtx(context.Background(), describeConn(conn), "ssh auth %q from %q: %s", method, conn.ClientVersion(), status)
 		},
 		NoClientAuth: s.opt.NoAuth,
 	}
@@ -243,7 +243,7 @@ func (s *server) configure() (err error) {
 	for _, keyPath := range keyPaths {
 		private, err := loadPrivateKey(keyPath)
 		if err != nil && len(s.opt.HostKeys) == 0 {
-			fs.Debugf(nil, "Failed to load %q: %v", keyPath, err)
+			fs.DebugfCtx(context.Background(), nil, "Failed to load %q: %v", keyPath, err)
 			// If loading a cached key failed, make the keys and retry
 			err = file.MkdirAll(cachePath, 0700)
 			if err != nil {
@@ -251,13 +251,13 @@ func (s *server) configure() (err error) {
 			}
 			if strings.HasSuffix(keyPath, string(os.PathSeparator)+"id_rsa") {
 				const bits = 2048
-				fs.Logf(nil, "Generating %d bit key pair at %q", bits, keyPath)
+				fs.LogfCtx(context.Background(), nil, "Generating %d bit key pair at %q", bits, keyPath)
 				err = makeRSASSHKeyPair(bits, keyPath+".pub", keyPath)
 			} else if strings.HasSuffix(keyPath, string(os.PathSeparator)+"id_ecdsa") {
-				fs.Logf(nil, "Generating ECDSA p256 key pair at %q", keyPath)
+				fs.LogfCtx(context.Background(), nil, "Generating ECDSA p256 key pair at %q", keyPath)
 				err = makeECDSASSHKeyPair(keyPath+".pub", keyPath)
 			} else if strings.HasSuffix(keyPath, string(os.PathSeparator)+"id_ed25519") {
-				fs.Logf(nil, "Generating Ed25519 key pair at %q", keyPath)
+				fs.LogfCtx(context.Background(), nil, "Generating Ed25519 key pair at %q", keyPath)
 				err = makeEd25519SSHKeyPair(keyPath+".pub", keyPath)
 			} else {
 				return fmt.Errorf("don't know how to generate key pair %q", keyPath)
@@ -271,7 +271,7 @@ func (s *server) configure() (err error) {
 		if err != nil {
 			return err
 		}
-		fs.Debugf(nil, "Loaded private key from %q", keyPath)
+		fs.DebugfCtx(context.Background(), nil, "Loaded private key from %q", keyPath)
 
 		s.config.AddHostKey(private)
 	}
@@ -304,7 +304,7 @@ func (s *server) configure() (err error) {
 
 // Serve SFTP until the server is Shutdown
 func (s *server) Serve() (err error) {
-	fs.Logf(nil, "SFTP server listening on %v\n", s.listener.Addr())
+	fs.LogfCtx(context.Background(), nil, "SFTP server listening on %v\n", s.listener.Addr())
 	s.acceptConnections()
 	close(s.stopped)
 	return nil

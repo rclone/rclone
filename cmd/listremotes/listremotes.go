@@ -2,6 +2,7 @@
 package ls
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -148,7 +149,7 @@ according to regular rclone filtering pattern syntax.`,
 				if err != nil {
 					return fmt.Errorf("invalid %s filter argument: %w", k, err)
 				}
-				fs.Debugf(nil, "Filter for %s: %s", k, filterRe.String())
+				fs.DebugfCtx(context.Background(), nil, "Filter for %s: %s", k, filterRe.String())
 				filters[k] = filterRe
 			}
 		}

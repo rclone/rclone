@@ -217,7 +217,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(nil, "Seafile server version %s", serverInfo.Version)
+	fs.DebugfCtx(ctx, nil, "Seafile server version %s", serverInfo.Version)
 
 	// We don't support lower than seafile v6.0 (version 6.0 is already more than 3 years old)
 	serverVersion := semver.New(serverInfo.Version)
@@ -452,7 +452,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 			var err error
 			retryAfter, err = strconv.Atoi(retryAfterString)
 			if err != nil {
-				fs.Errorf(f, "Malformed %s header %q: %v", retryAfterHeader, retryAfterString, err)
+				fs.ErrorfCtx(ctx, f, "Malformed %s header %q: %v", retryAfterHeader, retryAfterString, err)
 			}
 		}
 		return true, pacer.RetryAfterError(err, time.Duration(retryAfter)*time.Second)
@@ -1119,7 +1119,7 @@ func (f *Fs) authorizeLibrary(ctx context.Context, libraryID string) error {
 		return err
 	}
 	if encrypted {
-		fs.Debugf(nil, "Decrypting library %s", libraryID)
+		fs.DebugfCtx(ctx, nil, "Decrypting library %s", libraryID)
 		f.authMu.Lock()
 		defer f.authMu.Unlock()
 		err := f.decryptLibrary(ctx, libraryID, f.opt.LibraryKey)
@@ -1147,7 +1147,7 @@ func (f *Fs) mkLibrary(ctx context.Context, libraryName, password string) error 
 		return nil
 	}
 
-	fs.Debugf(nil, "%s: Create library '%s'", f.Name(), libraryName)
+	fs.DebugfCtx(ctx, nil, "%s: Create library '%s'", f.Name(), libraryName)
 	f.librariesMutex.Lock()
 	defer f.librariesMutex.Unlock()
 

@@ -48,7 +48,7 @@ func GetHashsumOutput(filename string) (out *os.File, close func(), err error) {
 	close = func() {
 		err := out.Close()
 		if err != nil {
-			fs.Errorf(nil, "Failed to close output file %v: %v", filename, err)
+			fs.ErrorfCtx(context.Background(), nil, "Failed to close output file %v: %v", filename, err)
 		}
 	}
 

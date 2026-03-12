@@ -435,7 +435,7 @@ func (f *Fs) shouldRetryNoReauth(ctx context.Context, resp *http.Response, err e
 			var err error
 			retryAfter, err = strconv.Atoi(retryAfterString)
 			if err != nil {
-				fs.Errorf(f, "Malformed %s header %q: %v", retryAfterHeader, retryAfterString, err)
+				fs.ErrorfCtx(ctx, f, "Malformed %s header %q: %v", retryAfterHeader, retryAfterString, err)
 			}
 		}
 		return true, pacer.RetryAfterError(err, time.Duration(retryAfter)*time.Second)
@@ -447,7 +447,7 @@ func (f *Fs) shouldRetryNoReauth(ctx context.Context, resp *http.Response, err e
 // deserve to be retried.  It returns the err as a convenience
 func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if resp != nil && resp.StatusCode == 401 {
-		fs.Debugf(f, "Unauthorized: %v", err)
+		fs.DebugfCtx(ctx, f, "Unauthorized: %v", err)
 		// Reauth
 		authErr := f.authorizeAccount(ctx)
 		if authErr != nil {
@@ -462,7 +462,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 func errorHandler(resp *http.Response) error {
 	body, err := rest.ReadBody(resp)
 	if err != nil {
-		fs.Errorf(nil, "Couldn't read error out of body: %v", err)
+		fs.ErrorfCtx(context.Background(), nil, "Couldn't read error out of body: %v", err)
 		body = nil
 	}
 	// Decode error response if there was one - they can be blank
@@ -470,7 +470,7 @@ func errorHandler(resp *http.Response) error {
 	if len(body) > 0 {
 		err = json.Unmarshal(body, errResponse)
 		if err != nil {
-			fs.Errorf(nil, "Couldn't decode error response: %v", err)
+			fs.ErrorfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
 		}
 	}
 	if errResponse.Code == "" {
@@ -539,7 +539,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.UploadCutoff < opt.ChunkSize {
 		opt.UploadCutoff = opt.ChunkSize
-		fs.Infof(nil, "b2: raising upload cutoff to chunk size: %v", opt.UploadCutoff)
+		fs.InfofCtx(ctx, nil, "b2: raising upload cutoff to chunk size: %v", opt.UploadCutoff)
 	}
 	err = checkUploadCutoff(opt, opt.UploadCutoff)
 	if err != nil {
@@ -601,7 +601,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.TestMode != "" {
 		testMode := strings.TrimSpace(opt.TestMode)
 		f.srv.SetHeader(testModeHeader, testMode)
-		fs.Debugf(f, "Setting test header \"%s: %s\"", testModeHeader, testMode)
+		fs.DebugfCtx(ctx, f, "Setting test header \"%s: %s\"", testModeHeader, testMode)
 	}
 	err = f.authorizeAccount(ctx)
 	if err != nil {
@@ -616,7 +616,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		for _, b := range buckets {
 			allowedBucket := f.opt.Enc.ToStandardName(b.Name)
 			if allowedBucket == "" {
-				fs.Debugf(f, "bucket %q that application key is restricted to no longer exists", b.ID)
+				fs.DebugfCtx(ctx, f, "bucket %q that application key is restricted to no longer exists", b.ID)
 				continue
 			}
 
@@ -861,7 +861,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				return nil
 			}
 			if !strings.HasPrefix(file.Name, prefix) {
-				fs.Debugf(f, "Odd name received %q", file.Name)
+				fs.DebugfCtx(ctx, f, "Odd name received %q", file.Name)
 				continue
 			}
 			remote := file.Name[len(prefix):]
@@ -1290,7 +1290,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 						return nil
 					}
 					if getBucketErr != fs.ErrorDirNotFound {
-						fs.Debugf(f, "Error checking bucket exists: %v", getBucketErr)
+						fs.DebugfCtx(ctx, f, "Error checking bucket exists: %v", getBucketErr)
 					}
 				}
 			}
@@ -1432,7 +1432,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden b
 			for object := range toBeDeleted {
 				oi, err := f.newObjectWithInfo(ctx, object.Name, object)
 				if err != nil {
-					fs.Errorf(object.Name, "Can't create object %v", err)
+					fs.ErrorfCtx(ctx, object.Name, "Can't create object %v", err)
 					continue
 				}
 				tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "deleting")
@@ -1444,17 +1444,17 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden b
 	}
 	if oldOnly {
 		if deleteHidden && deleteUnfinished {
-			fs.Infof(f, "cleaning bucket %q of all hidden files, and pending multipart uploads older than %v", bucket, maxAge)
+			fs.InfofCtx(ctx, f, "cleaning bucket %q of all hidden files, and pending multipart uploads older than %v", bucket, maxAge)
 		} else if deleteHidden {
-			fs.Infof(f, "cleaning bucket %q of all hidden files", bucket)
+			fs.InfofCtx(ctx, f, "cleaning bucket %q of all hidden files", bucket)
 		} else if deleteUnfinished {
-			fs.Infof(f, "cleaning bucket %q of pending multipart uploads older than %v", bucket, maxAge)
+			fs.InfofCtx(ctx, f, "cleaning bucket %q of pending multipart uploads older than %v", bucket, maxAge)
 		} else {
-			fs.Errorf(f, "cleaning bucket %q of nothing. This should never happen!", bucket)
+			fs.ErrorfCtx(ctx, f, "cleaning bucket %q of nothing. This should never happen!", bucket)
 			return nil
 		}
 	} else {
-		fs.Infof(f, "cleaning bucket %q of all files", bucket)
+		fs.InfofCtx(ctx, f, "cleaning bucket %q of all files", bucket)
 	}
 
 	last := ""
@@ -1462,26 +1462,26 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool, deleteHidden b
 		if !isDirectory {
 			oi, err := f.newObjectWithInfo(ctx, object.Name, object)
 			if err != nil {
-				fs.Errorf(object, "Can't create object %+v", err)
+				fs.ErrorfCtx(ctx, object, "Can't create object %+v", err)
 			}
 			tr := accounting.Stats(ctx).NewCheckingTransfer(oi, "checking")
 			if oldOnly && last != remote {
 				// Check current version of the file
 				if deleteHidden && object.Action == "hide" {
-					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
+					fs.DebugfCtx(ctx, remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
 					if !operations.SkipDestructive(ctx, object.Name, "remove hide marker") {
 						toBeDeleted <- object
 					}
 				} else if deleteUnfinished && object.Action == "start" && isUnfinishedUploadStale(object.UploadTimestamp) {
-					fs.Debugf(remote, "Deleting current version (id %q) as it is a start marker (upload started at %s)", object.ID, time.Time(object.UploadTimestamp).Local())
+					fs.DebugfCtx(ctx, remote, "Deleting current version (id %q) as it is a start marker (upload started at %s)", object.ID, time.Time(object.UploadTimestamp).Local())
 					if !operations.SkipDestructive(ctx, object.Name, "remove pending upload") {
 						toBeDeleted <- object
 					}
 				} else {
-					fs.Debugf(remote, "Not deleting current version (id %q) %q dated %v (%v ago)", object.ID, object.Action, time.Time(object.UploadTimestamp).Local(), time.Since(time.Time(object.UploadTimestamp)))
+					fs.DebugfCtx(ctx, remote, "Not deleting current version (id %q) %q dated %v (%v ago)", object.ID, object.Action, time.Time(object.UploadTimestamp).Local(), time.Since(time.Time(object.UploadTimestamp)))
 				}
 			} else {
-				fs.Debugf(remote, "Deleting (id %q)", object.ID)
+				fs.DebugfCtx(ctx, remote, "Deleting (id %q)", object.ID)
 				if !operations.SkipDestructive(ctx, object.Name, "delete") {
 					toBeDeleted <- object
 				}
@@ -1598,7 +1598,7 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	// Temporary Object under construction
@@ -1901,7 +1901,7 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 	}
 	modTime, err := parseTimeStringHelper(timeString)
 	if err != nil {
-		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
+		fs.DebugfCtx(context.Background(), o, "Failed to parse mod time string %q: %v", timeString, err)
 		return nil
 	}
 	o.modTime = modTime
@@ -2043,7 +2043,7 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 	var uploadTimestamp api.Timestamp
 	err = uploadTimestamp.UnmarshalJSON([]byte(resp.Header.Get(timestampHeader)))
 	if err != nil {
-		fs.Debugf(o, "Bad "+timestampHeader+" header: %v", err)
+		fs.DebugfCtx(ctx, o, "Bad "+timestampHeader+" header: %v", err)
 	}
 	var Info = make(map[string]string)
 	for k, vs := range resp.Header {
@@ -2166,7 +2166,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 
 		if err == nil {
-			fs.Debugf(o, "File is big enough for chunked streaming")
+			fs.DebugfCtx(ctx, o, "File is big enough for chunked streaming")
 			up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil, options...)
 			if err != nil {
 				o.fs.putRW(rw)
@@ -2179,7 +2179,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			}
 			return o.decodeMetaDataFileInfo(up.info)
 		} else if err == io.EOF {
-			fs.Debugf(o, "File has %d bytes, which makes only one chunk. Using direct upload.", n)
+			fs.DebugfCtx(ctx, o, "File has %d bytes, which makes only one chunk. Using direct upload.", n)
 			defer o.fs.putRW(rw)
 			size = n
 			in = rw
@@ -2301,7 +2301,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		retry, err := o.fs.shouldRetry(ctx, resp, err)
 		// On retryable error clear UploadURL
 		if retry {
-			fs.Debugf(o, "Clearing upload URL because of error: %v", err)
+			fs.DebugfCtx(ctx, o, "Clearing upload URL because of error: %v", err)
 			upload = nil
 		}
 		return retry, err
@@ -2331,7 +2331,7 @@ func (o *Object) getModTime(ctx context.Context, src fs.ObjectInfo, options []fs
 			// mtime in meta overrides source ModTime
 			metaModTime, err := time.Parse(time.RFC3339Nano, v)
 			if err != nil {
-				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+				fs.DebugfCtx(ctx, o, "failed to parse metadata %s: %q: %v", k, v, err)
 			} else {
 				modTime = metaModTime
 			}

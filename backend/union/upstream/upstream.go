@@ -379,7 +379,7 @@ func (o *Object) Writeback(ctx context.Context) (*Object, error) {
 	}
 	// newObj could be nil here
 	if newObj == nil {
-		fs.Errorf(o, "nil Object returned from operations.Copy")
+		fs.ErrorfCtx(ctx, o, "nil Object returned from operations.Copy")
 		return nil, nil
 	}
 	return &Object{

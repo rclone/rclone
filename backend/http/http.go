@@ -198,18 +198,18 @@ func getFsEndpoint(ctx context.Context, client *http.Client, url string, opt *Op
 	// if it is directory or file, and if directory appends the missing
 	// '/', or if file returns the directory url to parent instead.
 	createFileResult := func() (string, bool) {
-		fs.Debugf(nil, "If path is a directory you must add a trailing '/'")
+		fs.DebugfCtx(ctx, nil, "If path is a directory you must add a trailing '/'")
 		parent, _ := path.Split(url)
 		return parent, true
 	}
 	createDirResult := func() (string, bool) {
-		fs.Debugf(nil, "To avoid the initial HEAD request add a trailing '/' to the path")
+		fs.DebugfCtx(ctx, nil, "To avoid the initial HEAD request add a trailing '/' to the path")
 		return url + "/", false
 	}
 
 	// If HEAD requests are not allowed we just have to assume it is a file.
 	if opt.NoHead {
-		fs.Debugf(nil, "Assuming path is a file as --http-no-head is set")
+		fs.DebugfCtx(ctx, nil, "Assuming path is a file as --http-no-head is set")
 		return createFileResult()
 	}
 
@@ -221,17 +221,17 @@ func getFsEndpoint(ctx context.Context, client *http.Client, url string, opt *Op
 	}
 	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
 	if err != nil {
-		fs.Debugf(nil, "Assuming path is a file as HEAD request could not be created: %v", err)
+		fs.DebugfCtx(ctx, nil, "Assuming path is a file as HEAD request could not be created: %v", err)
 		return createFileResult()
 	}
 	addHeaders(req, opt)
 	res, err := noRedir.Do(req)
 	if err != nil {
-		fs.Debugf(nil, "Assuming path is a file as HEAD request could not be sent: %v", err)
+		fs.DebugfCtx(ctx, nil, "Assuming path is a file as HEAD request could not be sent: %v", err)
 		return createFileResult()
 	}
 	if res.StatusCode == http.StatusNotFound {
-		fs.Debugf(nil, "Assuming path is a directory as HEAD response is it does not exist as a file (%s)", res.Status)
+		fs.DebugfCtx(ctx, nil, "Assuming path is a directory as HEAD response is it does not exist as a file (%s)", res.Status)
 		return createDirResult()
 	}
 	if res.StatusCode == http.StatusMovedPermanently ||
@@ -242,22 +242,22 @@ func getFsEndpoint(ctx context.Context, client *http.Client, url string, opt *Op
 		redir := res.Header.Get("Location")
 		if redir != "" {
 			if redir[len(redir)-1] == '/' {
-				fs.Debugf(nil, "Assuming path is a directory as HEAD response is redirect (%s) to a path that ends with '/': %s", res.Status, redir)
+				fs.DebugfCtx(ctx, nil, "Assuming path is a directory as HEAD response is redirect (%s) to a path that ends with '/': %s", res.Status, redir)
 				return createDirResult()
 			}
-			fs.Debugf(nil, "Assuming path is a file as HEAD response is redirect (%s) to a path that does not end with '/': %s", res.Status, redir)
+			fs.DebugfCtx(ctx, nil, "Assuming path is a file as HEAD response is redirect (%s) to a path that does not end with '/': %s", res.Status, redir)
 			return createFileResult()
 		}
-		fs.Debugf(nil, "Assuming path is a file as HEAD response is redirect (%s) but no location header", res.Status)
+		fs.DebugfCtx(ctx, nil, "Assuming path is a file as HEAD response is redirect (%s) but no location header", res.Status)
 		return createFileResult()
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		// Example is 403 (http.StatusForbidden) for servers not allowing HEAD requests.
-		fs.Debugf(nil, "Assuming path is a file as HEAD response is an error (%s)", res.Status)
+		fs.DebugfCtx(ctx, nil, "Assuming path is a file as HEAD response is an error (%s)", res.Status)
 		return createFileResult()
 	}
 
-	fs.Debugf(nil, "Assuming path is a file as HEAD response is success (%s)", res.Status)
+	fs.DebugfCtx(ctx, nil, "Assuming path is a file as HEAD response is success (%s)", res.Status)
 	return createFileResult()
 }
 
@@ -284,7 +284,7 @@ func (f *Fs) httpConnection(ctx context.Context, opt *Options) (isFile bool, err
 	client := fshttp.NewClient(ctx)
 
 	endpoint, isFile := getFsEndpoint(ctx, client, u.String(), opt)
-	fs.Debugf(nil, "Root: %s", endpoint)
+	fs.DebugfCtx(ctx, nil, "Root: %s", endpoint)
 	u, err = url.Parse(endpoint)
 	if err != nil {
 		return false, err
@@ -596,7 +596,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					// ...found a directory not a file
 					add(fs.NewDir(remote, time.Time{}))
 				default:
-					fs.Debugf(remote, "skipping because of error: %v", err)
+					fs.DebugfCtx(ctx, remote, "skipping because of error: %v", err)
 				}
 			}
 		})
@@ -859,7 +859,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		for k := range opt {
 			keys = append(keys, k)
 		}
-		fs.Logf(f, "Updated config values: %s", strings.Join(keys, ", "))
+		fs.LogfCtx(ctx, f, "Updated config values: %s", strings.Join(keys, ", "))
 		return nil, nil
 	default:
 		return nil, fs.ErrorCommandNotFound

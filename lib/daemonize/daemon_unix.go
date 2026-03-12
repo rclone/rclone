@@ -115,7 +115,7 @@ func argsToEnv(origArgs, origEnv []string) (args, env []string) {
 func Check(daemon *os.Process) error {
 	var status unix.WaitStatus
 	wpid, err := unix.Wait4(daemon.Pid, &status, unix.WNOHANG, nil)
-	// fs.Debugf(nil, "wait4 returned wpid=%d, err=%v, status=%d", wpid, err, status)
+	// fs.DebugfCtx(ctx, nil, "wait4 returned wpid=%d, err=%v, status=%d", wpid, err, status)
 	if err != nil {
 		return err
 	}

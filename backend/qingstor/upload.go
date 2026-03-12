@@ -6,6 +6,7 @@ package qingstor
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -164,7 +165,7 @@ func (u *uploader) singlePartUpload(buf io.Reader, size int64) error {
 
 	_, err := bucketInit.PutObject(u.cfg.key, &req)
 	if err == nil {
-		fs.Debugf(u, "Upload single object finished")
+		fs.DebugfCtx(context.Background(), u, "Upload single object finished")
 	}
 	return err
 }
@@ -180,13 +181,13 @@ func (u *uploader) upload() error {
 	// Do one read to determine if we have more than one part
 	reader, _, err := u.nextReader()
 	if err == io.EOF { // single part
-		fs.Debugf(u, "Uploading as single part object to QingStor")
+		fs.DebugfCtx(context.Background(), u, "Uploading as single part object to QingStor")
 		return u.singlePartUpload(reader, u.readerPos)
 	} else if err != nil {
 		return fmt.Errorf("read upload data failed: %w", err)
 	}
 
-	fs.Debugf(u, "Uploading as multi-part object to QingStor")
+	fs.DebugfCtx(context.Background(), u, "Uploading as multi-part object to QingStor")
 	mu := multiUploader{uploader: u}
 	return mu.multiPartUpload(reader)
 }
@@ -262,7 +263,7 @@ func (mu *multiUploader) initiate() error {
 	req := qs.InitiateMultipartUploadInput{
 		ContentType: &mu.cfg.mimeType,
 	}
-	fs.Debugf(mu, "Initiating a multi-part upload")
+	fs.DebugfCtx(context.Background(), mu, "Initiating a multi-part upload")
 	rsp, err := bucketInit.InitiateMultipartUpload(mu.cfg.key, &req)
 	if err == nil {
 		mu.uploadID = rsp.UploadID
@@ -280,12 +281,12 @@ func (mu *multiUploader) send(c chunk) error {
 		ContentLength: &c.size,
 		Body:          c.buffer,
 	}
-	fs.Debugf(mu, "Uploading a part to QingStor with partNumber %d and partSize %d", c.partNumber, c.size)
+	fs.DebugfCtx(context.Background(), mu, "Uploading a part to QingStor with partNumber %d and partSize %d", c.partNumber, c.size)
 	_, err := bucketInit.UploadMultipart(mu.cfg.key, &req)
 	if err != nil {
 		return err
 	}
-	fs.Debugf(mu, "Done uploading part partNumber %d and partSize %d", c.partNumber, c.size)
+	fs.DebugfCtx(context.Background(), mu, "Done uploading part partNumber %d and partSize %d", c.partNumber, c.size)
 
 	mu.mtx.Lock()
 	defer mu.mtx.Unlock()
@@ -317,10 +318,10 @@ func (mu *multiUploader) complete() error {
 		ObjectParts: mu.objectParts,
 		ETag:        &md5String,
 	}
-	fs.Debugf(mu, "Completing multi-part object")
+	fs.DebugfCtx(context.Background(), mu, "Completing multi-part object")
 	_, err = bucketInit.CompleteMultipartUpload(mu.cfg.key, &req)
 	if err == nil {
-		fs.Debugf(mu, "Complete multi-part finished")
+		fs.DebugfCtx(context.Background(), mu, "Complete multi-part finished")
 	}
 	return err
 }
@@ -334,7 +335,7 @@ func (mu *multiUploader) abort() error {
 		req := qs.AbortMultipartUploadInput{
 			UploadID: uploadID,
 		}
-		fs.Debugf(mu, "Aborting multi-part object %q", *uploadID)
+		fs.DebugfCtx(context.Background(), mu, "Aborting multi-part object %q", *uploadID)
 		_, err = bucketInit.AbortMultipartUpload(mu.cfg.key, &req)
 	}
 
@@ -350,10 +351,10 @@ func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) (err error) {
 
 	// Cancel the session if something went wrong
 	defer atexit.OnError(&err, func() {
-		fs.Debugf(mu, "Cancelling multipart upload: %v", err)
+		fs.DebugfCtx(context.Background(), mu, "Cancelling multipart upload: %v", err)
 		cancelErr := mu.abort()
 		if cancelErr != nil {
-			fs.Logf(mu, "Failed to cancel multipart upload: %v", cancelErr)
+			fs.LogfCtx(context.Background(), mu, "Failed to cancel multipart upload: %v", cancelErr)
 		}
 	})()
 

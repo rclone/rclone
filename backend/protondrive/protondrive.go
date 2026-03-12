@@ -319,12 +319,12 @@ func clearConfigMap(m configmap.Mapper) {
 }
 
 func authHandler(auth proton.Auth) {
-	// fs.Debugf("authHandler called")
+	// fs.DebugfCtx(context.Background(), "authHandler called")
 	setConfigMap(_mapper, auth.UID, auth.AccessToken, auth.RefreshToken, _saltedKeyPass)
 }
 
 func deAuthHandler() {
-	// fs.Debugf("deAuthHandler called")
+	// fs.DebugfCtx(context.Background(), "deAuthHandler called")
 	clearConfigMap(_mapper)
 }
 
@@ -341,7 +341,7 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 	_saltedKeyPass = saltedKeyPass
 
 	if hasUseReusableLoginCredentials {
-		fs.Debugf(f, "Has cached credentials")
+		fs.DebugfCtx(ctx, f, "Has cached credentials")
 		config.UseReusableLogin = true
 
 		config.ReusableCredential.UID = uid
@@ -351,21 +351,21 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 
 		protonDrive /* credential will be nil since access credentials are passed in */, _, err := protonDriveAPI.NewProtonDrive(ctx, config, authHandler, deAuthHandler)
 		if err != nil {
-			fs.Debugf(f, "Cached credential doesn't work, clearing and using the fallback login method")
+			fs.DebugfCtx(ctx, f, "Cached credential doesn't work, clearing and using the fallback login method")
 			// clear the access token on failure
 			clearConfigMap(m)
 
-			fs.Debugf(f, "couldn't initialize a new proton drive instance using cached credentials: %v", err)
+			fs.DebugfCtx(ctx, f, "couldn't initialize a new proton drive instance using cached credentials: %v", err)
 			// we fallback to username+password login -> don't throw an error here
 			// return nil, fmt.Errorf("couldn't initialize a new proton drive instance: %w", err)
 		} else {
-			fs.Debugf(f, "Used cached credential to initialize the ProtonDrive API")
+			fs.DebugfCtx(ctx, f, "Used cached credential to initialize the ProtonDrive API")
 			return protonDrive, nil
 		}
 	}
 
 	// if not, let's try to log the user in using username and password (and 2FA if required)
-	fs.Debugf(f, "Using username and password to log in")
+	fs.DebugfCtx(ctx, f, "Using username and password to log in")
 	config.UseReusableLogin = false
 	config.FirstLoginCredential.Username = opt.Username
 	config.FirstLoginCredential.Password = opt.Password
@@ -384,7 +384,7 @@ func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper
 		return nil, fmt.Errorf("couldn't initialize a new proton drive instance: %w", err)
 	}
 
-	fs.Debugf(f, "Used username and password to initialize the ProtonDrive API")
+	fs.DebugfCtx(ctx, f, "Used username and password to initialize the ProtonDrive API")
 	setConfigMap(m, auth.UID, auth.AccessToken, auth.RefreshToken, auth.SaltedKeyPass)
 
 	return protonDrive, nil
@@ -864,7 +864,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 
 	if fileSystemAttrs == nil || fileSystemAttrs.Digests == "" {
-		fs.Debugf(o, "file sha1 digest missing")
+		fs.DebugfCtx(ctx, o, "file sha1 digest missing")
 		return "", nil
 	}
 	return fileSystemAttrs.Digests, nil
@@ -879,7 +879,7 @@ func (o *Object) Size() int64 {
 			return *o.originalSize
 		}
 
-		fs.Debugf(o, "Original file size missing")
+		fs.DebugfCtx(context.Background(), o, "Original file size missing")
 	}
 	return o.size
 }
@@ -914,7 +914,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 			offset, limit = x.Decode(o.Size())
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -937,7 +937,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 		o.digests = &fileSystemAttrs.Digests
 		o.blockSizes = fileSystemAttrs.BlockSizes
 	} else {
-		fs.Debugf(o, "fileSystemAttrs is nil: using fallback size, and now digests and blocksizes available")
+		fs.DebugfCtx(ctx, o, "fileSystemAttrs is nil: using fallback size, and now digests and blocksizes available")
 		o.originalSize = &sizeOnServer
 		o.size = sizeOnServer
 		o.digests = nil
@@ -1060,7 +1060,7 @@ func (f *Fs) Disconnect(ctx context.Context) error {
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1104,7 +1104,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 

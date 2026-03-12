@@ -25,7 +25,7 @@ var commandDefinition = &cobra.Command{
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDir(args)
 		if !fdst.Features().CanHaveEmptyDirectories && strings.Contains(fdst.Root(), "/") {
-			fs.Logf(fdst, "Warning: running mkdir on a remote which can't have empty directories does nothing")
+			fs.LogfCtx(context.Background(), fdst, "Warning: running mkdir on a remote which can't have empty directories does nothing")
 		}
 		cmd.Run(true, false, command, func() error {
 			return operations.Mkdir(context.Background(), fdst, "")

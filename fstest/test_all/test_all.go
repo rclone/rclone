@@ -11,6 +11,7 @@ Make TesTrun have a []string of flags to try - that then makes it generic
 */
 
 import (
+	"context"
 	"encoding/csv"
 	"flag"
 	"fmt"
@@ -70,7 +71,7 @@ func main() {
 		if err != nil {
 			fs.Fatalf(Opt.TestRemotes, "error CSV-parsing -remotes string: %v", err)
 		}
-		fs.Debugf(Opt.TestRemotes, "using remotes: %v", remotes)
+		fs.DebugfCtx(context.Background(), Opt.TestRemotes, "using remotes: %v", remotes)
 		conf.FilterBackendsByRemotes(remotes)
 	}
 	if Opt.TestBackends != "" {
@@ -93,7 +94,7 @@ func main() {
 	for _, remote := range conf.Backends {
 		names = append(names, remote.Remote)
 	}
-	fs.Logf(nil, "Testing remotes: %s", strings.Join(names, ", "))
+	fs.LogfCtx(context.Background(), nil, "Testing remotes: %s", strings.Join(names, ", "))
 
 	// Runs we will do for this test in random order
 	testRuns := conf.MakeRuns()

@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -93,7 +94,7 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 	}
 	if explicitPath != "" {
 		if fsPath != "" {
-			fs.Logf(nil, "Explicit path will override connection string")
+			fs.LogfCtx(context.Background(), nil, "Explicit path will override connection string")
 		}
 		fsPath = explicitPath
 	}
@@ -150,7 +151,7 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 			fsOptName := strings.TrimPrefix(underscoreKey, fsType+"_")
 			hasFsPrefix := underscoreKey != fsOptName
 			if !hasFsPrefix || fsInfo.Options.Get(fsOptName) == nil {
-				fs.Logf(nil, "Option %q is not supported by backend %q", key, fsType)
+				fs.LogfCtx(context.Background(), nil, "Option %q is not supported by backend %q", key, fsType)
 				return fmt.Errorf("unsupported backend option %q", key)
 			}
 			fsOpt[fsOptName], err = opt.GetString(key)

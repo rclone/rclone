@@ -223,7 +223,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// The base URL (endPoint is protocol + :// + domain/internal folder
 	opt.Endpoint = opt.Protocol + "://" + opt.Endpoint
-	fs.Debugf(nil, "NetStorage NewFS endpoint %q", opt.Endpoint)
+	fs.DebugfCtx(ctx, nil, "NetStorage NewFS endpoint %q", opt.Endpoint)
 	if !strings.HasSuffix(opt.Endpoint, "/") {
 		opt.Endpoint += "/"
 	}
@@ -335,7 +335,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, err
 	}
 	if files == nil {
-		fs.Errorf(nil, "Stat for %q has empty files", URL)
+		fs.ErrorfCtx(ctx, nil, "Stat for %q has empty files", URL)
 		return nil, fs.ErrorObjectNotFound
 	}
 
@@ -383,7 +383,7 @@ func (f *Fs) initFs(ctx context.Context, dir string) error {
 		if lastindex != -1 {
 			f.endpointURL = f.endpointURL[0 : lastindex+1]
 		} else {
-			fs.Errorf(nil, "Remote URL %q unexpectedly does not include the slash", f.endpointURL)
+			fs.ErrorfCtx(ctx, nil, "Remote URL %q unexpectedly does not include the slash", f.endpointURL)
 		}
 		return fs.ErrorIsFile
 	default:
@@ -419,7 +419,7 @@ func (f *Fs) getFileName(file *File) string {
 		if err == nil {
 			return string(decoded)
 		}
-		fs.Errorf(nil, "Failed to base64 decode object %s: %v", file.NameBase64, err)
+		fs.ErrorfCtx(context.Background(), nil, "Failed to base64 decode object %s: %v", file.NameBase64, err)
 	}
 	return ""
 }
@@ -471,11 +471,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			// Add .rclonelink suffix to allow local backend code to convert to a symlink.
 			// In case both .rclonelink file AND symlink file exists, the first will be used.
 			if entry, _ = f.newObjectWithInfo(name+".rclonelink", &item); entry != nil {
-				fs.Infof(nil, "Converting a symlink to the rclonelink %s target %s", entry.Remote(), item.Target)
+				fs.InfofCtx(ctx, nil, "Converting a symlink to the rclonelink %s target %s", entry.Remote(), item.Target)
 				entries = append(entries, entry)
 			}
 		default:
-			fs.Logf(nil, "Ignoring unsupported object type %s for %q path", item.Type, name)
+			fs.LogfCtx(ctx, nil, "Ignoring unsupported object type %s for %q path", item.Type, name)
 		}
 	}
 	return entries, nil
@@ -517,7 +517,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	URL := f.url(dir)
 	u, err := url.Parse(URL)
 	if err != nil {
-		fs.Errorf(nil, "Unable to parse URL %q: %v", URL, err)
+		fs.ErrorfCtx(ctx, nil, "Unable to parse URL %q: %v", URL, err)
 		return fs.ErrorDirNotFound
 	}
 
@@ -556,13 +556,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 				// Add .rclonelink suffix to allow local backend code to convert to a symlink.
 				// In case both .rclonelink file AND symlink file exists, the first will be used.
 				if entry, _ := f.newObjectWithInfo(dir+path+".rclonelink", &item); entry != nil {
-					fs.Infof(nil, "Converting a symlink to the rclonelink %s for target %s", entry.Remote(), item.Target)
+					fs.InfofCtx(ctx, nil, "Converting a symlink to the rclonelink %s for target %s", entry.Remote(), item.Target)
 					if err := list.Add(entry); err != nil {
 						return err
 					}
 				}
 			default:
-				fs.Logf(nil, "Ignoring unsupported object type %s for %s path", item.Type, name)
+				fs.LogfCtx(ctx, nil, "Ignoring unsupported object type %s for %s path", item.Type, name)
 			}
 		}
 		if resumeStart != "" {
@@ -570,12 +570,12 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			// URL where the previous request finished
 			u, err := url.Parse(f.endpointURL)
 			if err != nil {
-				fs.Errorf(nil, "Unable to parse URL %q: %v", f.endpointURL, err)
+				fs.ErrorfCtx(ctx, nil, "Unable to parse URL %q: %v", f.endpointURL, err)
 				return fs.ErrorDirNotFound
 			}
 			resumeURL, err := rest.URLJoin(u, rest.URLPathEscape(resumeStart))
 			if err != nil {
-				fs.Errorf(nil, "Unable to join URL %q for resumeStart %s: %v", f.endpointURL, resumeStart, err)
+				fs.ErrorfCtx(ctx, nil, "Unable to join URL %q for resumeStart %s: %v", f.endpointURL, resumeStart, err)
 				return fs.ErrorDirNotFound
 			}
 			URL = resumeURL.String()
@@ -616,7 +616,7 @@ func (f *Fs) implicitCheck(ctx context.Context, remote string, isfile bool) erro
 	URL := f.url(remote)
 	u, err := url.Parse(URL)
 	if err != nil {
-		fs.Errorf(nil, "Unable to parse URL %q while implicit checking directory: %v", URL, err)
+		fs.ErrorfCtx(ctx, nil, "Unable to parse URL %q while implicit checking directory: %v", URL, err)
 		return err
 	}
 	startPos := 0
@@ -625,7 +625,7 @@ func (f *Fs) implicitCheck(ctx context.Context, remote string, isfile bool) erro
 	}
 	pos := strings.Index(u.Path[startPos:], "/")
 	if pos == -1 {
-		fs.Errorf(nil, "URL %q unexpectedly does not include the slash in the CPCODE path", URL)
+		fs.ErrorfCtx(ctx, nil, "URL %q unexpectedly does not include the slash in the CPCODE path", URL)
 		return nil
 	}
 	root := rest.URLPathEscape(u.Path[startPos+pos+1:])
@@ -659,10 +659,10 @@ func (f *Fs) implicitCheck(ctx context.Context, remote string, isfile bool) erro
 		root = root[frontindex+1:]
 		base += frontdir
 		if !f.testAndSetDirscreated(base) {
-			fs.Infof(nil, "Implicitly create directory %s", base)
+			fs.InfofCtx(ctx, nil, "Implicitly create directory %s", base)
 			err := f.netStorageMkdirRequest(ctx, base)
 			if err != nil {
-				fs.Errorf("Mkdir request in implicit check failed for base %s: %v", base, err)
+				fs.ErrorfCtx(ctx, "Mkdir request in implicit check failed for base %s: %v", base, err)
 				return err
 			}
 		}
@@ -677,10 +677,10 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	URL := f.url(dir)
 	const actionHeader = "version=1&action=quick-delete&quick-delete=imreallyreallysure"
 	if _, err := f.callBackend(ctx, URL, "POST", actionHeader, true, nil, nil); err != nil {
-		fs.Logf(nil, "Purge using quick-delete failed, fallback on recursive delete: %v", err)
+		fs.LogfCtx(ctx, nil, "Purge using quick-delete failed, fallback on recursive delete: %v", err)
 		return fs.ErrorCantPurge
 	}
-	fs.Logf(nil, "Purge using quick-delete has been queued, you may not see immediate changes")
+	fs.LogfCtx(ctx, nil, "Purge using quick-delete has been queued, you may not see immediate changes")
 	return nil
 }
 
@@ -740,7 +740,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	when := strconv.FormatInt(modTime.Unix(), 10)
 	actionHeader := "version=1&action=mtime&mtime=" + when
 	if _, err := o.fs.callBackend(ctx, URL, "POST", actionHeader, true, nil, nil); err != nil {
-		fs.Debugf(nil, "NetStorage action mtime failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action mtime failed for %q: %v", URL, err)
 		return err
 	}
 	o.fs.deleteStatCache(URL)
@@ -835,7 +835,7 @@ func (f *Fs) getAuth(req *http.Request) error {
 	//lint:ignore SA1008 false positive when running staticcheck, the header name is according to docs even if not canonical
 	//nolint:staticcheck // Don't include staticcheck when running golangci-lint to avoid SA1008
 	actionHeader := req.Header["X-Akamai-ACS-Action"][0]
-	fs.Debugf(nil, "NetStorage API %s call %s for path %q", req.Method, actionHeader, path)
+	fs.DebugfCtx(context.Background(), nil, "NetStorage API %s call %s for path %q", req.Method, actionHeader, path)
 	req.Header.Set("X-Akamai-ACS-Auth-Data", dataHeader)
 	req.Header.Set("X-Akamai-ACS-Auth-Sign", generateSignHeader(f, dataHeader, path, actionHeader))
 	return nil
@@ -902,7 +902,7 @@ func (f *Fs) callBackend(ctx context.Context, URL, method, actionHeader string, 
 // netStorageStatRequest performs a NetStorage stat request
 func (f *Fs) netStorageStatRequest(ctx context.Context, URL string, directory bool) ([]File, error) {
 	if strings.HasSuffix(URL, ".rclonelink") {
-		fs.Infof(nil, "Converting rclonelink to a symlink on the stat request %q", URL)
+		fs.InfofCtx(ctx, nil, "Converting rclonelink to a symlink on the stat request %q", URL)
 		URL = strings.TrimSuffix(URL, ".rclonelink")
 	}
 	URL = strings.TrimSuffix(URL, "/")
@@ -911,7 +911,7 @@ func (f *Fs) netStorageStatRequest(ctx context.Context, URL string, directory bo
 		const actionHeader = "version=1&action=stat&implicit=yes&format=xml&encoding=utf-8&slash=both"
 		statResp := &Stat{}
 		if _, err := f.callBackend(ctx, URL, "GET", actionHeader, false, statResp, nil); err != nil {
-			fs.Debugf(nil, "NetStorage action stat failed for %q: %v", URL, err)
+			fs.DebugfCtx(ctx, nil, "NetStorage action stat failed for %q: %v", URL, err)
 			return nil, err
 		}
 		files = statResp.Files
@@ -923,7 +923,7 @@ func (f *Fs) netStorageStatRequest(ctx context.Context, URL string, directory bo
 		if files[i].Type == "symlink" {
 			// Add .rclonelink suffix to allow local backend code to convert to a symlink.
 			files[i].Name += ".rclonelink"
-			fs.Infof(nil, "Converting a symlink to the rclonelink on the stat request %s", files[i].Name)
+			fs.InfofCtx(ctx, nil, "Converting a symlink to the rclonelink on the stat request %s", files[i].Name)
 		}
 		entrywanted := (directory && files[i].Type == "dir") ||
 			(!directory && files[i].Type != "dir")
@@ -942,7 +942,7 @@ func (f *Fs) netStorageDirRequest(ctx context.Context, URL string) ([]File, erro
 		if err == fs.ErrorObjectNotFound {
 			return nil, fs.ErrorDirNotFound
 		}
-		fs.Debugf(nil, "NetStorage action dir failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action dir failed for %q: %v", URL, err)
 		return nil, err
 	}
 	return statResp.Files, nil
@@ -965,13 +965,13 @@ func (f *Fs) netStorageListRequest(ctx context.Context, URL, endPath string) ([]
 		if err == fs.ErrorObjectNotFound {
 			// List action is known to return 404 for a valid [CP Code] path with no objects inside.
 			// Call stat to find out whether it is an empty directory or path does not exist.
-			fs.Debugf(nil, "NetStorage action list returned 404, call stat for %q", URL)
+			fs.DebugfCtx(ctx, nil, "NetStorage action list returned 404, call stat for %q", URL)
 			files, err := f.netStorageStatRequest(ctx, URL, true)
 			if err == nil && len(files) > 0 && files[0].Type == "dir" {
 				return []File{}, "", nil
 			}
 		}
-		fs.Debugf(nil, "NetStorage action list failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action list failed for %q: %v", URL, err)
 		return nil, "", err
 	}
 	return listResp.Files, listResp.Resume.Start, nil
@@ -990,7 +990,7 @@ func (o *Object) netStorageUploadRequest(ctx context.Context, in io.Reader, src 
 		}
 		targ := string(bits)
 		symlinkloc := strings.TrimSuffix(URL, ".rclonelink")
-		fs.Infof(nil, "Converting rclonelink to a symlink on upload %s target %s", symlinkloc, targ)
+		fs.InfofCtx(ctx, nil, "Converting rclonelink to a symlink on upload %s target %s", symlinkloc, targ)
 		_, err = o.fs.netStorageSymlinkRequest(ctx, symlinkloc, targ, &o.modTime)
 		return err
 	}
@@ -1042,7 +1042,7 @@ func (o *Object) netStorageUploadRequest(ctx context.Context, in io.Reader, src 
 			// 404 HTTP code translates into Object not found
 			return fs.ErrorObjectNotFound
 		}
-		fs.Debugf(nil, "NetStorage action upload failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action upload failed for %q: %v", URL, err)
 		// Remove failed upload
 		_ = o.Remove(ctx)
 		return fmt.Errorf("failed to call NetStorage API upload: %w", err)
@@ -1068,7 +1068,7 @@ func (o *Object) netStorageDownloadRequest(ctx context.Context, options []fs.Ope
 	// If requested file ends with .rclonelink and target has value
 	// then serve the content of target (the symlink target)
 	if strings.HasSuffix(URL, ".rclonelink") && o.target != "" {
-		fs.Infof(nil, "Converting a symlink to the rclonelink file on download %q", URL)
+		fs.InfofCtx(ctx, nil, "Converting a symlink to the rclonelink file on download %q", URL)
 		reader := strings.NewReader(o.target)
 		readcloser := io.NopCloser(reader)
 		return readcloser, nil
@@ -1078,7 +1078,7 @@ func (o *Object) netStorageDownloadRequest(ctx context.Context, options []fs.Ope
 	fs.FixRangeOption(options, o.size)
 	body, err := o.fs.callBackend(ctx, URL, "GET", actionHeader, false, nil, options)
 	if err != nil {
-		fs.Debugf(nil, "NetStorage action download failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action download failed for %q: %v", URL, err)
 		return nil, err
 	}
 	return body, nil
@@ -1093,7 +1093,7 @@ func (f *Fs) netStorageDuRequest(ctx context.Context) (any, error) {
 		if err == fs.ErrorObjectNotFound {
 			return nil, errors.New("NetStorage du command: target is not a directory or does not exist")
 		}
-		fs.Debugf(nil, "NetStorage action du failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action du failed for %q: %v", URL, err)
 		return nil, err
 	}
 	//passing the output format expected from return of Command to be displayed by rclone code
@@ -1113,7 +1113,7 @@ func (f *Fs) netStorageSymlinkRequest(ctx context.Context, URL string, dst strin
 		actionHeader += "&mtime=" + when
 	}
 	if _, err := f.callBackend(ctx, URL, "POST", actionHeader, true, nil, nil); err != nil {
-		fs.Debugf(nil, "NetStorage action symlink failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action symlink failed for %q: %v", URL, err)
 		return nil, fmt.Errorf("symlink creation failed: %w", err)
 	}
 	f.deleteStatCache(URL)
@@ -1127,7 +1127,7 @@ func (f *Fs) netStorageSymlinkRequest(ctx context.Context, URL string, dst strin
 func (f *Fs) netStorageMkdirRequest(ctx context.Context, URL string) error {
 	const actionHeader = "version=1&action=mkdir"
 	if _, err := f.callBackend(ctx, URL, "POST", actionHeader, true, nil, nil); err != nil {
-		fs.Debugf(nil, "NetStorage action mkdir failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action mkdir failed for %q: %v", URL, err)
 		return err
 	}
 	f.deleteStatCache(URL)
@@ -1140,13 +1140,13 @@ func (o *Object) netStorageDeleteRequest(ctx context.Context) error {
 	// We shouldn't be creating .rclonelink files on remote
 	// but delete corresponding symlink if it exists
 	if strings.HasSuffix(URL, ".rclonelink") {
-		fs.Infof(nil, "Converting rclonelink to a symlink on delete %q", URL)
+		fs.InfofCtx(ctx, nil, "Converting rclonelink to a symlink on delete %q", URL)
 		URL = strings.TrimSuffix(URL, ".rclonelink")
 	}
 
 	const actionHeader = "version=1&action=delete"
 	if _, err := o.fs.callBackend(ctx, URL, "POST", actionHeader, true, nil, nil); err != nil {
-		fs.Debugf(nil, "NetStorage action delete failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action delete failed for %q: %v", URL, err)
 		return err
 	}
 	o.fs.deleteStatCache(URL)
@@ -1161,7 +1161,7 @@ func (f *Fs) netStorageRmdirRequest(ctx context.Context, dir string) error {
 		if err == fs.ErrorObjectNotFound {
 			return fs.ErrorDirNotFound
 		}
-		fs.Debugf(nil, "NetStorage action rmdir failed for %q: %v", URL, err)
+		fs.DebugfCtx(ctx, nil, "NetStorage action rmdir failed for %q: %v", URL, err)
 		return err
 	}
 	f.deleteStatCache(URL)
@@ -1211,7 +1211,7 @@ func (f *Fs) getStatCache(URL string) (files []File) {
 	files = f.statcache[URL]
 	f.statcacheMutex.RUnlock()
 	if files != nil {
-		fs.Debugf(nil, "NetStorage stat cache hit for %q", URL)
+		fs.DebugfCtx(context.Background(), nil, "NetStorage stat cache hit for %q", URL)
 	}
 	return
 }

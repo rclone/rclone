@@ -64,7 +64,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		args = strings.TrimLeft(after, " ")
 	}
 	args = shellUnEscape(args)
-	fs.Debugf(c.what, "exec command: binary = %q, args = %q", binary, args)
+	fs.DebugfCtx(ctx, c.what, "exec command: binary = %q, args = %q", binary, args)
 	switch binary {
 	case "df":
 		about := c.vfs.Fs().Features().About
@@ -209,7 +209,7 @@ func (c *conn) handleHashsumCommand(ctx context.Context, out io.Writer, ht hash.
 		}
 		o, ok := node.DirEntry().(fs.ObjectInfo)
 		if !ok {
-			fs.Debugf(args, "File uploading - reading hash from VFS cache")
+			fs.DebugfCtx(ctx, args, "File uploading - reading hash from VFS cache")
 			in, err := node.Open(os.O_RDONLY)
 			if err != nil {
 				return fmt.Errorf("hash vfs open failed: %w", err)
@@ -242,27 +242,27 @@ func (c *conn) handleHashsumCommand(ctx context.Context, out io.Writer, ht hash.
 
 // handle a new incoming channel request
 func (c *conn) handleChannel(newChannel ssh.NewChannel) {
-	fs.Debugf(c.what, "Incoming channel: %s\n", newChannel.ChannelType())
+	fs.DebugfCtx(context.Background(), c.what, "Incoming channel: %s\n", newChannel.ChannelType())
 	if newChannel.ChannelType() != "session" {
 		err := newChannel.Reject(ssh.UnknownChannelType, "unknown channel type")
-		fs.Debugf(c.what, "Unknown channel type: %s\n", newChannel.ChannelType())
+		fs.DebugfCtx(context.Background(), c.what, "Unknown channel type: %s\n", newChannel.ChannelType())
 		if err != nil {
-			fs.Errorf(c.what, "Failed to reject unknown channel: %v", err)
+			fs.ErrorfCtx(context.Background(), c.what, "Failed to reject unknown channel: %v", err)
 		}
 		return
 	}
 	channel, requests, err := newChannel.Accept()
 	if err != nil {
-		fs.Errorf(c.what, "could not accept channel: %v", err)
+		fs.ErrorfCtx(context.Background(), c.what, "could not accept channel: %v", err)
 		return
 	}
 	defer func() {
 		err := channel.Close()
 		if err != nil && err != io.EOF {
-			fs.Debugf(c.what, "Failed to close channel: %v", err)
+			fs.DebugfCtx(context.Background(), c.what, "Failed to close channel: %v", err)
 		}
 	}()
-	fs.Debugf(c.what, "Channel accepted\n")
+	fs.DebugfCtx(context.Background(), c.what, "Channel accepted\n")
 
 	isSFTP := make(chan bool, 1)
 	var command execCommand
@@ -270,13 +270,13 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 	// Handle out-of-band requests
 	go func(in <-chan *ssh.Request) {
 		for req := range in {
-			fs.Debugf(c.what, "Request: %v\n", req.Type)
+			fs.DebugfCtx(context.Background(), c.what, "Request: %v\n", req.Type)
 			ok := false
 			var subSystemIsSFTP bool
 			var reply []byte
 			switch req.Type {
 			case "subsystem":
-				fs.Debugf(c.what, "Subsystem: %s\n", req.Payload[4:])
+				fs.DebugfCtx(context.Background(), c.what, "Subsystem: %s\n", req.Payload[4:])
 				if string(req.Payload[4:]) == "sftp" {
 					ok = true
 					subSystemIsSFTP = true
@@ -284,16 +284,16 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 			case "exec":
 				err := ssh.Unmarshal(req.Payload, &command)
 				if err != nil {
-					fs.Errorf(c.what, "ignoring bad exec command: %v", err)
+					fs.ErrorfCtx(context.Background(), c.what, "ignoring bad exec command: %v", err)
 				} else {
 					ok = true
 					subSystemIsSFTP = false
 				}
 			}
-			fs.Debugf(c.what, " - accepted: %v\n", ok)
+			fs.DebugfCtx(context.Background(), c.what, " - accepted: %v\n", ok)
 			err := req.Reply(ok, reply)
 			if err != nil {
-				fs.Errorf(c.what, "Failed to Reply to request: %v", err)
+				fs.ErrorfCtx(context.Background(), c.what, "Failed to Reply to request: %v", err)
 				return
 			}
 			if ok {
@@ -306,7 +306,7 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 	// Wait for either subsystem "sftp" or "exec" request
 	if <-isSFTP {
 		if err := serveChannel(channel, c.handlers, c.what); err != nil {
-			fs.Errorf(c.what, "Failed to serve SFTP: %v", err)
+			fs.ErrorfCtx(context.Background(), c.what, "Failed to serve SFTP: %v", err)
 		}
 	} else {
 		var rc = uint32(0)
@@ -315,13 +315,13 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 			rc = 1
 			_, errPrint := fmt.Fprintf(channel.Stderr(), "%v\n", err)
 			if errPrint != nil {
-				fs.Errorf(c.what, "Failed to write to stderr: %v", errPrint)
+				fs.ErrorfCtx(context.Background(), c.what, "Failed to write to stderr: %v", errPrint)
 			}
-			fs.Debugf(c.what, "command %q failed with error: %v", command.Command, err)
+			fs.DebugfCtx(context.Background(), c.what, "command %q failed with error: %v", command.Command, err)
 		}
 		_, err = channel.SendRequest("exit-status", false, ssh.Marshal(exitStatus{RC: rc}))
 		if err != nil {
-			fs.Errorf(c.what, "Failed to send exit status: %v", err)
+			fs.ErrorfCtx(context.Background(), c.what, "Failed to send exit status: %v", err)
 		}
 	}
 }
@@ -334,19 +334,19 @@ func (c *conn) handleChannels(chans <-chan ssh.NewChannel) {
 }
 
 func serveChannel(rwc io.ReadWriteCloser, h sftp.Handlers, what string) error {
-	fs.Debugf(what, "Starting SFTP server")
+	fs.DebugfCtx(context.Background(), what, "Starting SFTP server")
 	server := sftp.NewRequestServer(rwc, h)
 	defer func() {
 		err := server.Close()
 		if err != nil && err != io.EOF {
-			fs.Debugf(what, "Failed to close server: %v", err)
+			fs.DebugfCtx(context.Background(), what, "Failed to close server: %v", err)
 		}
 	}()
 	err := server.Serve()
 	if err != nil && err != io.EOF {
 		return fmt.Errorf("completed with error: %w", err)
 	}
-	fs.Debugf(what, "exited session")
+	fs.DebugfCtx(context.Background(), what, "exited session")
 	return nil
 }
 

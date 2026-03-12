@@ -5,6 +5,7 @@
 package atexit
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"sync"
@@ -48,9 +49,9 @@ func Register(fn func()) FnHandle {
 			}
 			signal.Stop(exitChan)
 			signalled.Store(1)
-			fs.Infof(nil, "Signal received: %s", sig)
+			fs.InfofCtx(context.Background(), nil, "Signal received: %s", sig)
 			Run()
-			fs.Infof(nil, "Exiting...")
+			fs.InfofCtx(context.Background(), nil, "Exiting...")
 			os.Exit(exitCode(sig))
 		}()
 	})

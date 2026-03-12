@@ -3,6 +3,7 @@ package webgui
 
 import (
 	"archive/zip"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -66,15 +67,15 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 	dat, err := os.ReadFile(tagPath)
 	tagsMatch := false
 	if err != nil {
-		fs.Errorf(nil, "Error reading tag file at %s ", tagPath)
+		fs.ErrorfCtx(context.Background(), nil, "Error reading tag file at %s ", tagPath)
 		checkUpdate = true
 	} else if string(dat) == tag {
 		tagsMatch = true
 	}
-	fs.Debugf(nil, "Current tag: %s, Release tag: %s", string(dat), tag)
+	fs.DebugfCtx(context.Background(), nil, "Current tag: %s, Release tag: %s", string(dat), tag)
 
 	if !tagsMatch {
-		fs.Infof(nil, "A release (%s) for gui is present at %s. Use --rc-web-gui-update to update. Your current version is (%s)", tag, WebUIURL, string(dat))
+		fs.InfofCtx(context.Background(), nil, "A release (%s) for gui is present at %s. Use --rc-web-gui-update to update. Your current version is (%s)", tag, WebUIURL, string(dat))
 	}
 
 	// if the old file exists does not exist or forced update is enforced.
@@ -82,11 +83,11 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 	if !extractPathExist || checkUpdate || forceUpdate {
 
 		if tagsMatch {
-			fs.Logf(nil, "No update to Web GUI available.")
+			fs.LogfCtx(context.Background(), nil, "No update to Web GUI available.")
 			if !forceUpdate {
 				return nil
 			}
-			fs.Logf(nil, "Force update the Web GUI binary.")
+			fs.LogfCtx(context.Background(), nil, "Force update the Web GUI binary.")
 		}
 
 		zipName := tag + ".zip"
@@ -103,8 +104,8 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 			return errors.New("Web GUI path is a file instead of folder. Please check it " + extractPath)
 		}
 
-		fs.Logf(nil, "A new release for gui (%s) is present at %s", tag, WebUIURL)
-		fs.Logf(nil, "Downloading webgui binary. Please wait. [Size: %s, Path :  %s]\n", strconv.Itoa(size), zipPath)
+		fs.LogfCtx(context.Background(), nil, "A new release for gui (%s) is present at %s", tag, WebUIURL)
+		fs.LogfCtx(context.Background(), nil, "Downloading webgui binary. Please wait. [Size: %s, Path :  %s]\n", strconv.Itoa(size), zipPath)
 
 		// download the zip from latest url
 		err = DownloadFile(zipPath, WebUIURL)
@@ -114,9 +115,9 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 
 		err = os.RemoveAll(extractPath)
 		if err != nil {
-			fs.Logf(nil, "No previous downloads to remove")
+			fs.LogfCtx(context.Background(), nil, "No previous downloads to remove")
 		}
-		fs.Logf(nil, "Unzipping webgui binary")
+		fs.LogfCtx(context.Background(), nil, "Unzipping webgui binary")
 
 		err = Unzip(zipPath, extractPath)
 		if err != nil {
@@ -125,15 +126,15 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 
 		err = os.RemoveAll(zipPath)
 		if err != nil {
-			fs.Logf(nil, "Downloaded ZIP cannot be deleted")
+			fs.LogfCtx(context.Background(), nil, "Downloaded ZIP cannot be deleted")
 		}
 
 		err = os.WriteFile(tagPath, []byte(tag), 0644)
 		if err != nil {
-			fs.Infof(nil, "Cannot write tag file. You may be required to redownload the binary next time.")
+			fs.InfofCtx(context.Background(), nil, "Cannot write tag file. You may be required to redownload the binary next time.")
 		}
 	} else {
-		fs.Logf(nil, "Web GUI exists. Update skipped.")
+		fs.LogfCtx(context.Background(), nil, "Web GUI exists. Update skipped.")
 	}
 
 	return nil

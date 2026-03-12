@@ -91,9 +91,9 @@ func (f *Fs) dbDump(ctx context.Context, full bool, root string) error {
 	}
 	if f.db == nil {
 		if f.opt.MaxAge == 0 {
-			fs.Errorf(f, "db not found. (disabled with max_age = 0)")
+			fs.ErrorfCtx(ctx, f, "db not found. (disabled with max_age = 0)")
 		} else {
-			fs.Errorf(f, "db not found.")
+			fs.ErrorfCtx(ctx, f, "db not found.")
 		}
 		return kv.ErrInactive
 	}
@@ -105,7 +105,7 @@ func (f *Fs) dbDump(ctx context.Context, full bool, root string) error {
 	}
 	err := f.db.Do(false, op)
 	if err == kv.ErrEmpty {
-		fs.Infof(op.path, "empty")
+		fs.InfofCtx(ctx, op.path, "empty")
 		err = nil
 	}
 	return err
@@ -123,7 +123,7 @@ func (f *Fs) dbImport(ctx context.Context, hashName, sumRemote string, sticky bo
 		return errors.New("unsupported hash type")
 	}
 	if !f.keepHashes.Contains(hashType) {
-		fs.Infof(nil, "Need not import hashes of this type")
+		fs.InfofCtx(ctx, nil, "Need not import hashes of this type")
 		return nil
 	}
 
@@ -156,16 +156,16 @@ func (f *Fs) dbImport(ctx context.Context, hashName, sumRemote string, sticky bo
 			key := path.Join(rootPath, remote)
 			hashSums := operations.HashSums{hashName: hashVal}
 			if err := f.putRawHashes(ctx, key, anyFingerprint, hashSums); err != nil {
-				fs.Errorf(nil, "%s: failed to import: %v", remote, err)
+				fs.ErrorfCtx(ctx, nil, "%s: failed to import: %v", remote, err)
 			}
 		}
-		fs.Infof(nil, "Summary: %d checksum(s) imported", len(hashes))
+		fs.InfofCtx(ctx, nil, "Summary: %d checksum(s) imported", len(hashes))
 		return nil
 	}
 
 	const longImportThreshold = 100
 	if len(hashes) > longImportThreshold {
-		fs.Infof(nil, "Importing %d checksums. Please wait...", len(hashes))
+		fs.InfofCtx(ctx, nil, "Importing %d checksums. Please wait...", len(hashes))
 	}
 
 	doneCount := 0
@@ -176,22 +176,22 @@ func (f *Fs) dbImport(ctx context.Context, hashName, sumRemote string, sticky bo
 		o, ok := obj.(*Object)
 		if ok && hash != "" {
 			if err := o.putHashes(ctx, hashMap{hashType: hash}); err != nil {
-				fs.Errorf(nil, "%s: failed to import: %v", remote, err)
+				fs.ErrorfCtx(ctx, nil, "%s: failed to import: %v", remote, err)
 			}
 			accounting.Stats(ctx).NewCheckingTransfer(obj, "importing").Done(ctx, err)
 			doneCount++
 		}
 	})
 	if err != nil {
-		fs.Errorf(nil, "Import failed: %v", err)
+		fs.ErrorfCtx(ctx, nil, "Import failed: %v", err)
 	}
 	skipCount := 0
 	for remote, emptyOrDone := range hashes {
 		if emptyOrDone != "" {
-			fs.Infof(nil, "Skip vanished object: %s", remote)
+			fs.InfofCtx(ctx, nil, "Skip vanished object: %s", remote)
 			skipCount++
 		}
 	}
-	fs.Infof(nil, "Summary: %d imported, %d skipped", doneCount, skipCount)
+	fs.InfofCtx(ctx, nil, "Summary: %d imported, %d skipped", doneCount, skipCount)
 	return err
 }

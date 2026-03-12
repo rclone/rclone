@@ -286,7 +286,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 	}
 	// If we have a bearer token command and it has expired then refresh it
 	if len(f.opt.BearerTokenCommand) != 0 && resp != nil && resp.StatusCode == 401 {
-		fs.Debugf(f, "Bearer token expired: %v", err)
+		fs.DebugfCtx(ctx, f, "Bearer token expired: %v", err)
 		authErr := f.fetchAndSetBearerToken()
 		if authErr != nil {
 			err = authErr
@@ -322,7 +322,7 @@ func itemIsDir(item *api.Response) bool {
 		if t.Space == "DAV:" && t.Local == "collection" {
 			return true
 		}
-		fs.Debugf(nil, "Unknown resource type %q/%q on %q", t.Space, t.Local, item.Props.Name)
+		fs.DebugfCtx(context.Background(), nil, "Unknown resource type %q/%q on %q", t.Space, t.Local, item.Props.Name)
 	}
 	// the iscollection prop is a Microsoft extension, but if present it is a reliable indicator
 	// if the above check failed - see #2716. This can be an integer or a boolean - see #2964
@@ -333,7 +333,7 @@ func itemIsDir(item *api.Response) bool {
 		case "1", "true":
 			return true
 		default:
-			fs.Debugf(nil, "Unknown value %q for IsCollection", x)
+			fs.DebugfCtx(context.Background(), nil, "Unknown value %q for IsCollection", x)
 		}
 	}
 	return false
@@ -448,7 +448,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if len(opt.Headers)%2 != 0 {
 		return nil, errors.New("odd number of headers supplied")
 	}
-	fs.Debugf(nil, "found headers: %v", opt.Headers)
+	fs.DebugfCtx(ctx, nil, "found headers: %v", opt.Headers)
 
 	rootIsDir := strings.HasSuffix(root, "/")
 	root = strings.Trim(root, "/")
@@ -659,7 +659,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.canChunk = true
 
 		if f.opt.ChunkSize == 0 {
-			fs.Logf(nil, "Chunked uploads are disabled because nextcloud_chunk_size is set to 0")
+			fs.LogfCtx(ctx, nil, "Chunked uploads are disabled because nextcloud_chunk_size is set to 0")
 		} else {
 			chunksUploadURL, err := f.getChunksUploadURL()
 			if err != nil {
@@ -667,7 +667,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 			}
 
 			f.chunksUploadURL = chunksUploadURL
-			fs.Debugf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
+			fs.DebugfCtx(ctx, nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
 		}
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
@@ -682,11 +682,11 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		odrvcookie.NewRenew(12*time.Hour, func() {
 			spCookies, err := spCk.Cookies(ctx)
 			if err != nil {
-				fs.Errorf(nil, "could not renew cookies: %s", err.Error())
+				fs.ErrorfCtx(ctx, nil, "could not renew cookies: %s", err.Error())
 				return
 			}
 			f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)
-			fs.Debugf(spCookies, "successfully renewed sharepoint cookies")
+			fs.DebugfCtx(ctx, spCookies, "successfully renewed sharepoint cookies")
 		})
 
 		f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)
@@ -712,7 +712,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.useOCMtime = true
 	case "other":
 	default:
-		fs.Debugf(f, "Unknown vendor %q", vendor)
+		fs.DebugfCtx(ctx, f, "Unknown vendor %q", vendor)
 	}
 
 	// Remove PutStream from optional features
@@ -818,7 +818,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 		// Find name
 		u, err := rest.URLJoin(baseURL, item.Href)
 		if err != nil {
-			fs.Errorf(nil, "URL Join failed for %q and %q: %v", baseURL, item.Href, err)
+			fs.ErrorfCtx(ctx, nil, "URL Join failed for %q and %q: %v", baseURL, item.Href, err)
 			continue
 		}
 		// Make sure directories end with a /
@@ -826,7 +826,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			u.Path = addSlash(u.Path)
 		}
 		if !strings.HasPrefix(u.Path, baseURL.Path) {
-			fs.Debugf(nil, "Item with unknown path received: %q, %q", u.Path, baseURL.Path)
+			fs.DebugfCtx(ctx, nil, "Item with unknown path received: %q, %q", u.Path, baseURL.Path)
 			continue
 		}
 		subPath := u.Path[len(baseURL.Path):]
@@ -844,7 +844,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 
 		// Check OK
 		if !item.Props.StatusOK() {
-			fs.Debugf(remote, "Ignoring item with bad status %q", item.Props.Status)
+			fs.DebugfCtx(ctx, remote, "Ignoring item with bad status %q", item.Props.Status)
 			continue
 		}
 
@@ -1142,7 +1142,7 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, method string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		if method == "COPY" {
 			return nil, fs.ErrorCantCopy
 		}
@@ -1184,7 +1184,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 		return nil, fmt.Errorf("copy NewObject failed: %w", err)
 	}
 	if f.useOCMtime && resp.Header.Get("X-OC-Mtime") != "accepted" && f.propsetMtime && !dstObj.ModTime(ctx).Equal(src.ModTime(ctx)) {
-		fs.Debugf(dstObj, "Setting modtime after copy to %v", src.ModTime(ctx))
+		fs.DebugfCtx(ctx, dstObj, "Setting modtime after copy to %v", src.ModTime(ctx))
 		err = dstObj.SetModTime(ctx, src.ModTime(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("failed to set modtime: %w", err)
@@ -1239,7 +1239,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	srcPath := srcFs.filePath(srcRemote)
@@ -1374,7 +1374,7 @@ func (o *Object) Size() int64 {
 	ctx := context.TODO()
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Infof(o, "Failed to read metadata: %v", err)
+		fs.InfofCtx(context.Background(), o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -1418,7 +1418,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Infof(o, "Failed to read metadata: %v", err)
+		fs.InfofCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -1545,7 +1545,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	if o.fs.canTus { // supports the tus upload protocol, ie. InfiniteScale
-		fs.Debugf(src, "Update will use the tus protocol to upload")
+		fs.DebugfCtx(ctx, src, "Update will use the tus protocol to upload")
 		contentType := fs.MimeType(ctx, src)
 		err = o.updateViaTus(ctx, in, contentType, src, options...)
 		if err != nil {
@@ -1554,7 +1554,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	} else if o.shouldUseChunkedUpload(src) {
 		if o.fs.opt.Vendor == "nextcloud" {
-			fs.Debugf(src, "Update will use the chunked upload strategy")
+			fs.DebugfCtx(ctx, src, "Update will use the chunked upload strategy")
 			err = o.updateChunked(ctx, in, src, options...)
 		} else {
 			fs.Debug(src, "Chunking - unknown vendor")
@@ -1563,7 +1563,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return err
 		}
 	} else {
-		fs.Debugf(src, "Update will use the normal upload strategy (no chunks)")
+		fs.DebugfCtx(ctx, src, "Update will use the normal upload strategy (no chunks)")
 		contentType := fs.MimeType(ctx, src)
 		filePath := o.filePath()
 		extraHeaders := o.extraHeaders(ctx, src)

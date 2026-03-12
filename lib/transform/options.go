@@ -118,7 +118,7 @@ func (t *transform) parseKeyVal(s string) (err error) {
 			return err
 		}
 		if t.requiresValue() {
-			fs.Debugf(nil, "received %v", s)
+			fs.DebugfCtx(context.Background(), nil, "received %v", s)
 			return errors.New("value is required for " + t.key.String())
 		}
 		return nil

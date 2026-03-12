@@ -3,6 +3,7 @@
 package makefiles
 
 import (
+	"context"
 	"io"
 	"math"
 	"math/rand"
@@ -91,7 +92,7 @@ var makefilesCmd = &cobra.Command{
 		}
 		averageSize := (minFileSize + maxFileSize) / 2
 		start := time.Now()
-		fs.Logf(nil, "Creating %d files of average size %v in %d directories in %q.", numberOfFiles, averageSize, directoriesToCreate, outputDirectory)
+		fs.LogfCtx(context.Background(), nil, "Creating %d files of average size %v in %d directories in %q.", numberOfFiles, averageSize, directoriesToCreate, outputDirectory)
 		root := &dir{name: outputDirectory, depth: 1}
 		for totalDirectories < directoriesToCreate {
 			root.createDirectories()
@@ -108,7 +109,7 @@ var makefilesCmd = &cobra.Command{
 			totalBytes += size
 		}
 		dt := time.Since(start)
-		fs.Logf(nil, "Written %vB in %v at %vB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
+		fs.LogfCtx(context.Background(), nil, "Written %vB in %v at %vB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
 	},
 }
 
@@ -132,7 +133,7 @@ var makefileCmd = &cobra.Command{
 
 func makefiles(size fs.SizeSuffix, files []string) {
 	start := time.Now()
-	fs.Logf(nil, "Creating %d files of size %v.", len(files), size)
+	fs.LogfCtx(context.Background(), nil, "Creating %d files of size %v.", len(files), size)
 	totalBytes := int64(0)
 	for _, filePath := range files {
 		dir := filepath.Dir(filePath)
@@ -141,7 +142,7 @@ func makefiles(size fs.SizeSuffix, files []string) {
 		totalBytes += int64(size)
 	}
 	dt := time.Since(start)
-	fs.Logf(nil, "Written %vB in %v at %vB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
+	fs.LogfCtx(context.Background(), nil, "Written %vB in %v at %vB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
 }
 
 func bool2int(b bool) int {
@@ -155,7 +156,7 @@ func bool2int(b bool) int {
 func commonInit() {
 	if seed == 0 {
 		seed = time.Now().UnixNano()
-		fs.Logf(nil, "Using random seed = %d", seed)
+		fs.LogfCtx(context.Background(), nil, "Using random seed = %d", seed)
 	}
 	randSource = rand.New(rand.NewSource(seed))
 	if bool2int(zero)+bool2int(sparse)+bool2int(ascii)+bool2int(pattern)+bool2int(chargen) > 1 {
@@ -306,5 +307,5 @@ func writeFile(dir, name string, size int64) {
 	if err != nil {
 		fs.Fatalf(nil, "Failed to close file %q: %v", path, err)
 	}
-	fs.Infof(path, "Written file size %v", fs.SizeSuffix(size))
+	fs.InfofCtx(context.Background(), path, "Written file size %v", fs.SizeSuffix(size))
 }

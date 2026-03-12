@@ -295,7 +295,7 @@ func (o *MemoryObject) Open(ctx context.Context, options ...fs.OpenOption) (io.R
 			offset = x.Offset
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}

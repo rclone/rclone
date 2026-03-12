@@ -121,7 +121,7 @@ func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *
 		case <-ticker.C:
 			err := dls.kickWaiters()
 			if err != nil {
-				fs.Errorf(dls.src, "vfs cache: failed to kick waiters: %v", err)
+				fs.ErrorfCtx(context.Background(), dls.src, "vfs cache: failed to kick waiters: %v", err)
 			}
 		case <-ctx.Done():
 			break
@@ -143,7 +143,7 @@ func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *
 func (dls *Downloaders) _countErrors(n int64, err error) {
 	if err == nil && n != 0 {
 		if dls.errorCount != 0 {
-			fs.Infof(dls.src, "vfs cache: downloader: resetting error count to 0")
+			fs.InfofCtx(context.Background(), dls.src, "vfs cache: downloader: resetting error count to 0")
 			dls.errorCount = 0
 			dls.lastErr = nil
 		}
@@ -154,7 +154,7 @@ func (dls *Downloaders) _countErrors(n int64, err error) {
 		dls.errorCount++
 		//}
 		dls.lastErr = err
-		fs.Infof(dls.src, "vfs cache: downloader: error count now %d: %v", dls.errorCount, err)
+		fs.InfofCtx(context.Background(), dls.src, "vfs cache: downloader: error count now %d: %v", dls.errorCount, err)
 	}
 }
 
@@ -192,11 +192,11 @@ func (dls *Downloaders) _newDownloader(r ranges.Range) (dl *downloader, err erro
 		_ = dl.close(err)
 		dl.dls.countErrors(n, err)
 		if err != nil {
-			fs.Errorf(dl.dls.src, "vfs cache: failed to download: %v", err)
+			fs.ErrorfCtx(context.Background(), dl.dls.src, "vfs cache: failed to download: %v", err)
 		}
 		err = dl.dls.kickWaiters()
 		if err != nil {
-			fs.Errorf(dl.dls.src, "vfs cache: failed to kick waiters: %v", err)
+			fs.ErrorfCtx(context.Background(), dl.dls.src, "vfs cache: failed to kick waiters: %v", err)
 		}
 	})
 
@@ -345,7 +345,7 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 		// downloader. The downloader will never reach before
 		// start and offset+windows is too far away - we'd
 		// rather start another downloader.
-		// fs.Debugf(nil, "r=%v start=%d, offset=%d, found=%v", r, start, offset, r.Pos >= start && r.Pos < offset+window)
+		// fs.DebugfCtx(context.Background(), nil, "r=%v start=%d, offset=%d, found=%v", r, start, offset, r.Pos >= start && r.Pos < offset+window)
 		if r.Pos >= start && r.Pos < offset+window {
 			// Found downloader which will soon have our data
 			dl.setRange(r)
@@ -421,17 +421,17 @@ func (dls *Downloaders) kickWaiters() (err error) {
 		err = dls._ensureDownloader(waiter.r)
 		if err != nil {
 			// Failures here will be retried by background kicker
-			fs.Errorf(dls.src, "vfs cache: restart download failed: %v", err)
+			fs.ErrorfCtx(context.Background(), dls.src, "vfs cache: restart download failed: %v", err)
 		}
 	}
 	if fserrors.IsErrNoSpace(dls.lastErr) {
-		fs.Errorf(dls.src, "vfs cache: cache is out of space %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
+		fs.ErrorfCtx(context.Background(), dls.src, "vfs cache: cache is out of space %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
 		dls._closeWaiters(dls.lastErr)
 		return dls.lastErr
 	}
 
 	if dls.errorCount > maxErrorCount {
-		fs.Errorf(dls.src, "vfs cache: too many errors %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
+		fs.ErrorfCtx(context.Background(), dls.src, "vfs cache: too many errors %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
 		dls._closeWaiters(dls.lastErr)
 		return dls.lastErr
 	}
@@ -455,7 +455,7 @@ func (dl *downloader) Write(p []byte) (n int, err error) {
 			return
 		}
 		if waitErr := dl.dls.kickWaiters(); waitErr != nil {
-			fs.Errorf(dl.dls.src, "vfs cache: download write: failed to kick waiters: %v", waitErr)
+			fs.ErrorfCtx(context.Background(), dl.dls.src, "vfs cache: download write: failed to kick waiters: %v", waitErr)
 			if err == nil {
 				err = waitErr
 			}
@@ -485,7 +485,7 @@ loop:
 			// stop any future reading
 			dl.mu.Lock()
 			if !dl.stop {
-				fs.Debugf(dl.dls.src, "vfs cache: stopping download thread as it timed out")
+				fs.DebugfCtx(context.Background(), dl.dls.src, "vfs cache: stopping download thread as it timed out")
 				dl._stop()
 			}
 			break loop
@@ -502,7 +502,7 @@ loop:
 
 	// Kill this downloader if skipped too many bytes
 	if !dl.stop && dl.skipped > maxSkipBytes {
-		fs.Debugf(dl.dls.src, "vfs cache: stopping download thread as it has skipped %d bytes", dl.skipped)
+		fs.DebugfCtx(context.Background(), dl.dls.src, "vfs cache: stopping download thread as it has skipped %d bytes", dl.skipped)
 		dl._stop()
 	}
 
@@ -638,7 +638,7 @@ func (dl *downloader) setRange(r ranges.Range) {
 		dl.maxOffset = maxOffset
 	}
 	dl.mu.Unlock()
-	// fs.Debugf(dl.dls.src, "kicking downloader with maxOffset %d", maxOffset)
+	// fs.DebugfCtx(context.Background(), dl.dls.src, "kicking downloader with maxOffset %d", maxOffset)
 	select {
 	case dl.kick <- struct{}{}:
 	default:

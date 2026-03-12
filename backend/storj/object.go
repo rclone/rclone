@@ -105,7 +105,7 @@ func (o *Object) Fs() fs.Info {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (_ string, err error) {
-	fs.Debugf(o, "%s", ty)
+	fs.DebugfCtx(ctx, o, "%s", ty)
 
 	return "", hash.ErrUnsupported
 }
@@ -117,14 +117,14 @@ func (o *Object) Storable() bool {
 
 // SetModTime sets the metadata on the object to set the modification date
 func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
-	fs.Debugf(o, "touch -d %q sj://%s", t, o.absolute)
+	fs.DebugfCtx(ctx, o, "touch -d %q sj://%s", t, o.absolute)
 
 	return fs.ErrorCantSetModTime
 }
 
 // Open opens the file for read. Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (_ io.ReadCloser, err error) {
-	fs.Debugf(o, "cat sj://%s # %+v", o.absolute, options)
+	fs.DebugfCtx(ctx, o, "cat sj://%s # %+v", o.absolute, options)
 
 	bucketName, bucketPath := bucket.Split(o.absolute)
 
@@ -154,14 +154,14 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (_ io.ReadC
 			offset = opt.Offset
 		default:
 			if option.Mandatory() {
-				fs.Errorf(o, "Unsupported mandatory option: %v", option)
+				fs.ErrorfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 
 				return nil, errors.New("unsupported mandatory option")
 			}
 		}
 	}
 
-	fs.Debugf(o, "range %d + %d", offset, length)
+	fs.DebugfCtx(ctx, o, "range %d + %d", offset, length)
 
 	return o.fs.project.DownloadObject(ctx, bucketName, bucketPath, &uplink.DownloadOptions{
 		Offset: offset,
@@ -175,7 +175,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (_ io.ReadC
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	fs.Debugf(o, "cp input ./%s %+v", o.Remote(), options)
+	fs.DebugfCtx(ctx, o, "cp input ./%s %+v", o.Remote(), options)
 
 	oNew, err := o.fs.put(ctx, in, src, o.Remote(), options...)
 
@@ -188,7 +188,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove this object.
 func (o *Object) Remove(ctx context.Context) (err error) {
-	fs.Debugf(o, "rm sj://%s", o.absolute)
+	fs.DebugfCtx(ctx, o, "rm sj://%s", o.absolute)
 
 	bucketName, bucketPath := bucket.Split(o.absolute)
 

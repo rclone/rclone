@@ -548,7 +548,7 @@ func (f *Fs) getUploadBlock() []byte {
 	if buf == nil {
 		buf = make([]byte, f.opt.ChunkSize)
 	}
-	// fs.Debugf(f, "Getting upload block %p", buf)
+	// fs.DebugfCtx(context.Background(), f, "Getting upload block %p", buf)
 	return buf
 }
 
@@ -558,7 +558,7 @@ func (f *Fs) putUploadBlock(buf []byte) {
 	if len(buf) != int(f.opt.ChunkSize) {
 		panic("bad blocksize returned to pool")
 	}
-	// fs.Debugf(f, "Returning upload block %p", buf)
+	// fs.DebugfCtx(context.Background(), f, "Returning upload block %p", buf)
 	f.bufferTokens <- buf
 }
 
@@ -681,7 +681,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 				continue
 			}
 		} else {
-			fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
+			fs.DebugfCtx(ctx, f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 			continue
 		}
 		item.Name = f.opt.Enc.ToStandardName(item.Name)
@@ -985,7 +985,7 @@ func (f *Fs) move(ctx context.Context, isFile bool, id, oldLeaf, newLeaf, oldDir
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1025,7 +1025,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1055,7 +1055,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -1220,7 +1220,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -1269,7 +1269,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime

@@ -140,7 +140,7 @@ func Touch(ctx context.Context, f fs.Fs, remote string) error {
 	if err != nil {
 		return err
 	}
-	fs.Debugf(nil, "Touch time %v", t)
+	fs.DebugfCtx(ctx, nil, "Touch time %v", t)
 	var file fs.Object
 	if remote == "" {
 		err = fs.ErrorIsDir
@@ -151,22 +151,22 @@ func Touch(ctx context.Context, f fs.Fs, remote string) error {
 		if errors.Is(err, fs.ErrorObjectNotFound) {
 			// Touching non-existent path, possibly creating it as new file
 			if remote == "" {
-				fs.Logf(f, "Not touching empty directory")
+				fs.LogfCtx(ctx, f, "Not touching empty directory")
 				return nil
 			}
 			if notCreateNewFile {
-				fs.Logf(f, "Not touching nonexistent file due to --no-create")
+				fs.LogfCtx(ctx, f, "Not touching nonexistent file due to --no-create")
 				return nil
 			}
 			if recursive {
 				// For consistency, --recursive never creates new files.
-				fs.Logf(f, "Not touching nonexistent file due to --recursive")
+				fs.LogfCtx(ctx, f, "Not touching nonexistent file due to --recursive")
 				return nil
 			}
 			if operations.SkipDestructive(ctx, f, "touch (create)") {
 				return nil
 			}
-			fs.Debugf(f, "Touching (creating) %q", remote)
+			fs.DebugfCtx(ctx, f, "Touching (creating) %q", remote)
 			options := fs.MetadataAsOpenOptions(ctx)
 			if err = createEmptyObject(ctx, remote, t, f, options); err != nil {
 				return fmt.Errorf("failed to touch (create): %w", err)
@@ -175,17 +175,17 @@ func Touch(ctx context.Context, f fs.Fs, remote string) error {
 		if errors.Is(err, fs.ErrorIsDir) {
 			// Touching existing directory
 			if recursive {
-				fs.Debugf(f, "Touching recursively files in directory %q", remote)
+				fs.DebugfCtx(ctx, f, "Touching recursively files in directory %q", remote)
 				return operations.TouchDir(ctx, f, remote, t, true)
 			}
-			fs.Debugf(f, "Touching non-recursively files in directory %q", remote)
+			fs.DebugfCtx(ctx, f, "Touching non-recursively files in directory %q", remote)
 			return operations.TouchDir(ctx, f, remote, t, false)
 		}
 		return err
 	}
 	// Touch single existing file
 	if !operations.SkipDestructive(ctx, remote, "touch") {
-		fs.Debugf(f, "Touching %q", remote)
+		fs.DebugfCtx(ctx, f, "Touching %q", remote)
 		err = file.SetModTime(ctx, t)
 		if err != nil {
 			return fmt.Errorf("failed to touch: %w", err)

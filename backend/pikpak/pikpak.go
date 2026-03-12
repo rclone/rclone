@@ -108,7 +108,7 @@ func pikpakAuthorize(ctx context.Context, opt *Options, name string, m configmap
 	if len(opt.DeviceID) != 32 {
 		opt.DeviceID = genDeviceID()
 		m.Set("device_id", opt.DeviceID)
-		fs.Infof(nil, "Using new device id %q", opt.DeviceID)
+		fs.InfofCtx(ctx, nil, "Using new device id %q", opt.DeviceID)
 	}
 	opts := rest.Opts{
 		Method:  "POST",
@@ -496,7 +496,7 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		fs.Debugf(nil, "Couldn't decode error response: %v", err)
+		fs.DebugfCtx(context.Background(), nil, "Couldn't decode error response: %v", err)
 	}
 	if errResponse.Reason == "" {
 		errResponse.Reason = resp.Status
@@ -613,7 +613,7 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 	if len(f.opt.DeviceID) != 32 {
 		f.opt.DeviceID = genDeviceID()
 		m.Set("device_id", f.opt.DeviceID)
-		fs.Infof(nil, "Using new device id %q", f.opt.DeviceID)
+		fs.InfofCtx(ctx, nil, "Using new device id %q", f.opt.DeviceID)
 	}
 
 	if err := f.newClientWithPacer(ctx); err != nil {
@@ -784,7 +784,7 @@ func (f *Fs) listAll(ctx context.Context, dirID, kind, trashed string, fn listAl
 	if filterStr, err := json.Marshal(filters); err == nil {
 		params.Set("filters", string(filterStr))
 	}
-	// fs.Debugf(f, "list params: %v", params)
+	// fs.DebugfCtx(context.Background(), f, "list params: %v", params)
 
 	opts := rest.Opts{
 		Method:     "GET",
@@ -861,7 +861,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, item *api.File) 
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// fs.Debugf(f, "List(%q)\n", dir)
+	// fs.DebugfCtx(context.Background(), f, "List(%q)\n", dir)
 	dirID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -894,7 +894,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
+	// fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
 	req := api.RequestNewFile{
 		Name:     f.opt.Enc.FromStandardName(leaf),
 		Kind:     api.KindOfFolder,
@@ -935,9 +935,9 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	id, err := f.dirCache.FindDir(ctx, remote, false)
 	if err == nil {
-		fs.Debugf(f, "attempting to share directory '%s'", remote)
+		fs.DebugfCtx(ctx, f, "attempting to share directory '%s'", remote)
 	} else {
-		fs.Debugf(f, "attempting to share single file '%s'", remote)
+		fs.DebugfCtx(ctx, f, "attempting to share single file '%s'", remote)
 		o, err := f.NewObject(ctx, remote)
 		if err != nil {
 			return "", err
@@ -1013,10 +1013,10 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	if check {
 		found, err := f.listAll(ctx, rootID, "", "", func(item *api.File) bool {
 			if !item.Trashed {
-				fs.Debugf(dir, "Rmdir: contains file: %q", item.Name)
+				fs.DebugfCtx(ctx, dir, "Rmdir: contains file: %q", item.Name)
 				return true
 			}
-			fs.Debugf(dir, "Rmdir: contains trashed file: %q", item.Name)
+			fs.DebugfCtx(ctx, dir, "Rmdir: contains trashed file: %q", item.Name)
 			trashedFiles = true
 			return false
 		})
@@ -1132,7 +1132,7 @@ func (f *Fs) renameObject(ctx context.Context, ID, newName string) (info *api.Fi
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1197,7 +1197,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	err = srcObj.readMetaData(ctx)
@@ -1220,7 +1220,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 			if err != nil {
 				// FIXME: Restored file might have a numbered name if a conflict occurs
 				if mvErr := f.moveObjects(ctx, []string{srcObj.id}, srcObj.parent); mvErr != nil {
-					fs.Logf(f, "move: couldn't restore original object %q to %q after move failure: %v", dstObj.id, src.Remote(), mvErr)
+					fs.LogfCtx(ctx, f, "move: couldn't restore original object %q to %q after move failure: %v", dstObj.id, src.Remote(), mvErr)
 				}
 			}
 		}()
@@ -1259,7 +1259,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 		defer func() {
 			if err != nil {
 				if restoreErr := f.untrashObjects(ctx, []string{conflict.ID}); restoreErr != nil {
-					fs.Logf(f, "move: couldn't restore conflicting file: %v", restoreErr)
+					fs.LogfCtx(ctx, f, "move: couldn't restore conflicting file: %v", restoreErr)
 				}
 			}
 		}()
@@ -1305,7 +1305,7 @@ func (f *Fs) copyObjects(ctx context.Context, IDs []string, dirID string) (err e
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err = srcObj.readMetaData(ctx)
@@ -1320,7 +1320,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	}
 	if srcObj.parent == dstParentID {
 		// api restriction
-		fs.Debugf(src, "Can't copy - same parent")
+		fs.DebugfCtx(ctx, src, "Can't copy - same parent")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -1336,7 +1336,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 			defer func() {
 				if err != nil {
 					if restoreErr := f.untrashObjects(ctx, []string{conflict.ID}); restoreErr != nil {
-						fs.Logf(f, "copy: couldn't restore conflicting file: %v", restoreErr)
+						fs.LogfCtx(ctx, f, "copy: couldn't restore conflicting file: %v", restoreErr)
 					}
 				}
 			}()
@@ -1353,7 +1353,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 			}
 			defer func() {
 				if _, renameErr := f.renameObject(ctx, conflict.ID, conflict.Name); renameErr != nil {
-					fs.Logf(f, "copy: couldn't rename conflicting file back to original: %v", renameErr)
+					fs.LogfCtx(ctx, f, "copy: couldn't rename conflicting file back to original: %v", renameErr)
 				}
 			}()
 		} else if err != fs.ErrorObjectNotFound {
@@ -1511,15 +1511,15 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, leaf, dirID, gcid string,
 	}
 
 	defer atexit.OnError(&err, func() {
-		fs.Debugf(leaf, "canceling upload: %v", err)
+		fs.DebugfCtx(ctx, leaf, "canceling upload: %v", err)
 		if cancelErr := f.deleteObjects(ctx, []string{new.File.ID}, false); cancelErr != nil {
-			fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
+			fs.LogfCtx(ctx, leaf, "failed to cancel upload: %v", cancelErr)
 		}
 		if new.Task != nil {
 			if cancelErr := f.deleteTask(ctx, new.Task.ID, false); cancelErr != nil {
-				fs.Logf(leaf, "failed to cancel upload: %v", cancelErr)
+				fs.LogfCtx(ctx, leaf, "failed to cancel upload: %v", cancelErr)
 			}
-			fs.Debugf(leaf, "waiting %v for the cancellation to be effective", taskWaitTime)
+			fs.DebugfCtx(ctx, leaf, "waiting %v for the cancellation to be effective", taskWaitTime)
 			time.Sleep(taskWaitTime)
 		}
 	})()
@@ -1646,19 +1646,19 @@ func (f *Fs) decompressDir(ctx context.Context, filename, id, password string, s
 				if err != nil {
 					err = fmt.Errorf("unexpected error while requesting decompress of %q: %w", item.Name, err)
 					r.Errors++
-					fs.Errorf(f, "%v", err)
+					fs.ErrorfCtx(ctx, f, "%v", err)
 				} else if res.Status != "OK" {
 					r.Errors++
-					fs.Errorf(f, "%q: %d files: %s", item.Name, res.FilesNum, res.Status)
+					fs.ErrorfCtx(ctx, f, "%q: %d files: %s", item.Name, res.FilesNum, res.Status)
 				} else {
 					r.Decompressed++
-					fs.Infof(f, "%q: %d files: %s", item.Name, res.FilesNum, res.Status)
+					fs.InfofCtx(ctx, f, "%q: %d files: %s", item.Name, res.FilesNum, res.Status)
 					if srcDelete {
 						derr := f.deleteObjects(ctx, []string{item.ID}, f.opt.UseTrash)
 						if derr != nil {
 							derr = fmt.Errorf("failed to delete %q: %w", item.Name, derr)
 							r.Errors++
-							fs.Errorf(f, "%v", derr)
+							fs.ErrorfCtx(ctx, f, "%v", derr)
 						} else {
 							r.SourceDeleted++
 						}
@@ -1671,7 +1671,7 @@ func (f *Fs) decompressDir(ctx context.Context, filename, id, password string, s
 	if err != nil {
 		err = fmt.Errorf("couldn't list files to decompress: %w", err)
 		r.Errors++
-		fs.Errorf(f, "%v", err)
+		fs.ErrorfCtx(ctx, f, "%v", err)
 	}
 	if r.Errors != 0 {
 		return r, r
@@ -1802,7 +1802,7 @@ func (o *Object) setMetaData(info *api.File) (err error) {
 			if fid := parseFileID(o.link.URL); fid != "" {
 				for _, media := range info.Medias {
 					if media.Link != nil && parseFileID(media.Link.URL) == fid {
-						fs.Debugf(o, "Using a media link")
+						fs.DebugfCtx(context.Background(), o, "Using a media link")
 						o.link = media.Link
 						break
 					}
@@ -1874,7 +1874,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 func (o *Object) Size() int64 {
 	err := o.readMetaData(context.TODO())
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size
@@ -1899,7 +1899,7 @@ func (o *Object) ParentID() string {
 func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(ctx)
 	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(ctx, o, "Failed to read metadata: %v", err)
 		return time.Now()
 	}
 	return o.modTime
@@ -1993,7 +1993,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 	// Calculate gcid; grabbed from package jottacloud
 	gcid, err := o.fs.getGcid(ctx, src)
 	if err != nil || gcid == "" {
-		fs.Debugf(o, "calculating gcid: %v", err)
+		fs.DebugfCtx(ctx, o, "calculating gcid: %v", err)
 		if srcObj := unWrapObjectInfo(src); srcObj != nil && srcObj.Fs().Features().IsLocal {
 			// No buffering; directly calculate gcid from source
 			rc, err := srcObj.Open(ctx)
@@ -2014,7 +2014,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, src fs.ObjectInfo, wi
 			}
 		}
 	}
-	fs.Debugf(o, "gcid = %s", gcid)
+	fs.DebugfCtx(ctx, o, "gcid = %s", gcid)
 
 	if !withTemp {
 		info, err := o.fs.upload(ctx, in, leaf, dirID, gcid, size, options...)

@@ -48,7 +48,7 @@ func (b *bisyncRun) WhichCheck(ctx context.Context, opt *operations.CheckOpt) *o
 			b.check.fsrc = opt.Fsrc
 			b.check.fdst = opt.Fdst
 			b.check.fcrypt = FdstCrypt
-			fs.Infof(b.check.fdst, "Crypt detected! Using cryptcheck instead of check. (Use --size-only or --ignore-checksum to disable)")
+			fs.InfofCtx(ctx, b.check.fdst, "Crypt detected! Using cryptcheck instead of check. (Use --size-only or --ignore-checksum to disable)")
 			opt.Check = b.CryptCheckFn
 			return opt
 		}
@@ -60,14 +60,14 @@ func (b *bisyncRun) WhichCheck(ctx context.Context, opt *operations.CheckOpt) *o
 			b.check.fsrc = opt.Fdst
 			b.check.fdst = opt.Fsrc
 			b.check.fcrypt = FsrcCrypt
-			fs.Infof(b.check.fdst, "Crypt detected! Using cryptcheck instead of check. (Use --size-only or --ignore-checksum to disable)")
+			fs.InfofCtx(ctx, b.check.fdst, "Crypt detected! Using cryptcheck instead of check. (Use --size-only or --ignore-checksum to disable)")
 			opt.Check = b.ReverseCryptCheckFn
 			return opt
 		}
 	}
 
 	// if we've gotten this far, neither check or cryptcheck will work, so use --download
-	fs.Infof(b.check.fdst, "Can't compare hashes, so using check --download for safety. (Use --size-only or --ignore-checksum to disable)")
+	fs.InfofCtx(ctx, b.check.fdst, "Can't compare hashes, so using check --download for safety. (Use --size-only or --ignore-checksum to disable)")
 	opt.Check = DownloadCheckFn
 	return opt
 }
@@ -83,7 +83,7 @@ func CheckFn(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool,
 	}
 	if !same {
 		err = fmt.Errorf("%v differ", ht)
-		fs.Errorf(src, "%v", err)
+		fs.ErrorfCtx(ctx, src, "%v", err)
 		return true, false, nil
 	}
 	return false, false, nil
@@ -109,10 +109,10 @@ func (b *bisyncRun) CryptCheckFn(ctx context.Context, dst, src fs.Object) (diffe
 	}
 	if cryptHash != underlyingHash {
 		err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", b.check.fdst.Name(), b.check.fdst.Root(), cryptHash, b.check.fsrc.Name(), b.check.fsrc.Root(), underlyingHash)
-		fs.Debugf(src, "%s", err.Error())
+		fs.DebugfCtx(ctx, src, "%s", err.Error())
 		// using same error msg as CheckFn so integration tests match
 		err = fmt.Errorf("%v differ", b.check.hashType)
-		fs.Errorf(src, "%s", err.Error())
+		fs.ErrorfCtx(ctx, src, "%s", err.Error())
 		return true, false, nil
 	}
 	return false, false, nil
@@ -137,13 +137,13 @@ func DownloadCheckFn(ctx context.Context, dst, src fs.Object) (equal bool, noHas
 func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter.Filter, fs1, fs2 fs.Fs) (bilib.Names, error) {
 	matches := bilib.Names{}
 	if filterCheck.HaveFilesFrom() {
-		fs.Debugf(nil, "There are potential conflicts to check.")
+		fs.DebugfCtx(context.Background(), nil, "There are potential conflicts to check.")
 
 		opt, close, checkopterr := check.GetCheckOpt(fs1, fs2)
 		if checkopterr != nil {
 			b.critical = true
 			b.retryable = true
-			fs.Debugf(nil, "GetCheckOpt error: %v", checkopterr)
+			fs.DebugfCtx(context.Background(), nil, "GetCheckOpt error: %v", checkopterr)
 			return matches, checkopterr
 		}
 		defer close()
@@ -152,9 +152,9 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 
 		opt = b.WhichCheck(ctxCheck, opt)
 
-		fs.Infof(nil, "Checking potential conflicts...")
+		fs.InfofCtx(context.Background(), nil, "Checking potential conflicts...")
 		check := operations.CheckFn(ctxCheck, opt)
-		fs.Infof(nil, "Finished checking the potential conflicts. %s", check)
+		fs.InfofCtx(context.Background(), nil, "Finished checking the potential conflicts. %s", check)
 
 		// reset error count, because we don't want to count check errors as bisync errors
 		accounting.Stats(ctxCheck).ResetErrors()
@@ -164,9 +164,9 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 			matches = bilib.ToNames(strings.Split(fmt.Sprint(opt.Match), "\n"))
 		}
 		if matches.NotEmpty() {
-			fs.Debugf(nil, "The following potential conflicts were determined to be identical. %v", matches)
+			fs.DebugfCtx(context.Background(), nil, "The following potential conflicts were determined to be identical. %v", matches)
 		} else {
-			fs.Debugf(nil, "None of the conflicts were determined to be identical.")
+			fs.DebugfCtx(context.Background(), nil, "None of the conflicts were determined to be identical.")
 		}
 
 	}
@@ -178,18 +178,18 @@ func (b *bisyncRun) checkconflicts(ctxCheck context.Context, filterCheck *filter
 func (b *bisyncRun) WhichEqual(ctx context.Context, src, dst fs.Object, Fsrc, Fdst fs.Fs) bool {
 	opt, close, checkopterr := check.GetCheckOpt(Fsrc, Fdst)
 	if checkopterr != nil {
-		fs.Debugf(nil, "GetCheckOpt error: %v", checkopterr)
+		fs.DebugfCtx(ctx, nil, "GetCheckOpt error: %v", checkopterr)
 	}
 	defer close()
 
 	opt = b.WhichCheck(ctx, opt)
 	differ, noHash, err := opt.Check(ctx, dst, src)
 	if err != nil {
-		fs.Errorf(src, "failed to check: %v", err)
+		fs.ErrorfCtx(ctx, src, "failed to check: %v", err)
 		return false
 	}
 	if noHash {
-		fs.Errorf(src, "failed to check as hash is missing")
+		fs.ErrorfCtx(ctx, src, "failed to check as hash is missing")
 		return false
 	}
 	return !differ
@@ -202,12 +202,12 @@ func (b *bisyncRun) EqualFn(ctx context.Context) context.Context {
 	ci.CheckSum = false // force checksum off so modtime is evaluated if needed
 	// modtime and size settings should already be set correctly for Equal
 	var equalFn operations.EqualFn = func(ctx context.Context, src fs.ObjectInfo, dst fs.Object) bool {
-		fs.Debugf(src, "evaluating...")
+		fs.DebugfCtx(ctx, src, "evaluating...")
 		equal := false
 		logger, _ := operations.GetLogger(ctx)
 		// temporarily unset logger, we don't want Equal to duplicate it
 		noop := func(ctx context.Context, sigil operations.Sigil, src, dst fs.DirEntry, err error) {
-			fs.Debugf(src, "equal skipped")
+			fs.DebugfCtx(ctx, src, "equal skipped")
 		}
 		ctxNoLogger := operations.WithLogger(ctx, noop)
 
@@ -233,11 +233,11 @@ func (b *bisyncRun) EqualFn(ctx context.Context) context.Context {
 		}
 		if equal {
 			logger(ctx, operations.Match, src, dst, nil)
-			fs.Debugf(src, "EqualFn: files are equal")
+			fs.DebugfCtx(ctx, src, "EqualFn: files are equal")
 			return true
 		}
 		logger(ctx, operations.Differ, src, dst, nil)
-		fs.Debugf(src, "EqualFn: files are NOT equal")
+		fs.DebugfCtx(ctx, src, "EqualFn: files are NOT equal")
 		return false
 	}
 	return operations.WithEqualFn(ctx, equalFn)

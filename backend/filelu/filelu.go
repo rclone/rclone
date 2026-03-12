@@ -289,7 +289,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, destinationPath string) (f
 		}
 		defer func() {
 			if err := reader.Close(); err != nil {
-				fs.Logf(nil, "Failed to close file body: %v", err)
+				fs.LogfCtx(ctx, nil, "Failed to close file body: %v", err)
 			}
 		}()
 
@@ -299,7 +299,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, destinationPath string) (f
 		}
 		defer func() {
 			if err := dest.Close(); err != nil {
-				fs.Logf(nil, "Failed to close file body: %v", err)
+				fs.LogfCtx(ctx, nil, "Failed to close file body: %v", err)
 			}
 		}()
 
@@ -320,7 +320,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, destinationPath string) (f
 	}
 	defer func() {
 		if err := reader.Close(); err != nil {
-			fs.Logf(nil, "Failed to close file body: %v", err)
+			fs.LogfCtx(ctx, nil, "Failed to close file body: %v", err)
 		}
 	}()
 

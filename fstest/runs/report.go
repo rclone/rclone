@@ -2,6 +2,7 @@ package runs
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -140,15 +141,15 @@ func (r *Report) Title() string {
 
 // LogSummary writes the summary to the log file
 func (r *Report) LogSummary() {
-	fs.Logf(nil, "Logs in %q", r.LogDir)
+	fs.LogfCtx(context.Background(), nil, "Logs in %q", r.LogDir)
 
 	// Summarise results
-	fs.Logf(nil, "SUMMARY")
+	fs.LogfCtx(context.Background(), nil, "SUMMARY")
 	fs.Log(nil, r.Title())
 	if !r.AllPassed() {
 		for _, t := range r.Failed {
-			fs.Logf(nil, "  * %s", toShell(t.nextCmdLine()))
-			fs.Logf(nil, "    * Failed tests: %v", t.FailedTests)
+			fs.LogfCtx(context.Background(), nil, "  * %s", toShell(t.nextCmdLine()))
+			fs.LogfCtx(context.Background(), nil, "    * Failed tests: %v", t.FailedTests)
 		}
 	}
 }
@@ -290,7 +291,7 @@ func (r *Report) EmailHTML(Opt RunOpt) {
 	if Opt.EmailReport == "" || r.IndexHTML == "" {
 		return
 	}
-	fs.Logf(nil, "Sending email summary to %q", Opt.EmailReport)
+	fs.LogfCtx(context.Background(), nil, "Sending email summary to %q", Opt.EmailReport)
 	cmdLine := []string{"mail", "-a", "Content-Type: text/html", Opt.EmailReport, "-s", "rclone integration tests: " + r.Title()}
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
 	in, err := os.Open(r.IndexHTML)
@@ -310,7 +311,7 @@ func (r *Report) EmailHTML(Opt RunOpt) {
 // uploadTo uploads a copy of the report online to the dir given
 func (r *Report) uploadTo(Opt RunOpt, uploadDir string) {
 	dst := path.Join(Opt.UploadPath, uploadDir)
-	fs.Logf(nil, "Uploading results to %q", dst)
+	fs.LogfCtx(context.Background(), nil, "Uploading results to %q", dst)
 	cmdLine := []string{"rclone", "sync", "--stats-log-level", "NOTICE", r.LogDir, dst}
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
 	cmd.Stdout = os.Stdout

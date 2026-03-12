@@ -3,6 +3,7 @@ package configfile
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -38,10 +39,10 @@ func (s *Storage) _check() {
 		if err == nil {
 			// check to see if config file has changed and if it has, reload it
 			if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
-				fs.Debugf(nil, "Config file has changed externally - reloading")
+				fs.DebugfCtx(context.Background(), nil, "Config file has changed externally - reloading")
 				err := s._load()
 				if err != nil {
-					fs.Errorf(nil, "Failed to read config file - using previous config: %v", err)
+					fs.ErrorfCtx(context.Background(), nil, "Failed to read config file - using previous config: %v", err)
 				}
 			}
 		}
@@ -136,7 +137,7 @@ func (s *Storage) Save() error {
 	defer func() {
 		_ = f.Close()
 		if err := os.Remove(f.Name()); err != nil && !os.IsNotExist(err) {
-			fs.Errorf(nil, "Failed to remove temp file for new config: %v", err)
+			fs.ErrorfCtx(context.Background(), nil, "Failed to remove temp file for new config: %v", err)
 		}
 	}()
 
@@ -158,9 +159,9 @@ func (s *Storage) Save() error {
 	var fileMode os.FileMode = 0600
 	info, err = os.Stat(configPath)
 	if err != nil {
-		fs.Debugf(nil, "Using default permissions for config file: %v", fileMode)
+		fs.DebugfCtx(context.Background(), nil, "Using default permissions for config file: %v", fileMode)
 	} else if info.Mode() != fileMode {
-		fs.Debugf(nil, "Keeping previous permissions for config file: %v", info.Mode())
+		fs.DebugfCtx(context.Background(), nil, "Keeping previous permissions for config file: %v", info.Mode())
 		fileMode = info.Mode()
 	}
 
@@ -168,7 +169,7 @@ func (s *Storage) Save() error {
 
 	err = os.Chmod(f.Name(), fileMode)
 	if err != nil {
-		fs.Errorf(nil, "Failed to set permissions on config file: %v", err)
+		fs.ErrorfCtx(context.Background(), nil, "Failed to set permissions on config file: %v", err)
 	}
 
 	fbackup, err := os.CreateTemp(configDir, configName+".old")
@@ -183,7 +184,7 @@ func (s *Storage) Save() error {
 	defer func() {
 		if !keepBackup {
 			if err := os.Remove(fbackup.Name()); err != nil && !os.IsNotExist(err) {
-				fs.Errorf(nil, "Failed to remove temp file for old config backup: %v", err)
+				fs.ErrorfCtx(context.Background(), nil, "Failed to remove temp file for old config backup: %v", err)
 			}
 		}
 	}()
@@ -278,7 +279,7 @@ func (s *Storage) SetValue(section string, key string, value string) {
 
 	s._check()
 	if strings.HasPrefix(section, ":") {
-		fs.Logf(nil, "Can't save config %q for on the fly backend %q", key, section)
+		fs.LogfCtx(context.Background(), nil, "Can't save config %q for on the fly backend %q", key, section)
 		return
 	}
 	s.gc.SetValue(section, key, value)

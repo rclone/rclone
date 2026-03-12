@@ -390,17 +390,17 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 
 	// Bail out early if we are missing OAuth Scopes.
 	if resp != nil && resp.StatusCode == 401 && strings.Contains(resp.Status, "INVALID_OAUTHSCOPE") {
-		fs.Errorf(nil, "zoho: missing OAuth Scope. Run rclone config reconnect to fix this issue.")
+		fs.ErrorfCtx(ctx, nil, "zoho: missing OAuth Scope. Run rclone config reconnect to fix this issue.")
 		return false, err
 	}
 
 	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
 		authRetry = true
-		fs.Debugf(nil, "Should retry: %v", err)
+		fs.DebugfCtx(ctx, nil, "Should retry: %v", err)
 	}
 	if resp != nil && resp.StatusCode == 429 {
 		err = pacer.RetryAfterError(err, 60*time.Second)
-		fs.Debugf(nil, "Too many requests. Trying again in %d seconds.", 60)
+		fs.DebugfCtx(ctx, nil, "Too many requests. Trying again in %d seconds.", 60)
 		return true, err
 	}
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
@@ -685,7 +685,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	//fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
+	//fs.DebugfCtx(context.Background(), f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	var info *api.ItemInfo
 	opts := rest.Opts{
@@ -1027,7 +1027,7 @@ func (f *Fs) rename(ctx context.Context, id, name string) (item *api.Item, err e
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	err := srcObj.readMetaData(ctx)
@@ -1130,7 +1130,7 @@ func (f *Fs) move(ctx context.Context, srcID, parentID string) (item *api.Item, 
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	err := srcObj.readMetaData(ctx)
@@ -1195,7 +1195,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 
@@ -1278,7 +1278,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
 	if err := o.readMetaData(context.TODO()); err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
+		fs.LogfCtx(context.Background(), o, "Failed to read metadata: %v", err)
 		return 0
 	}
 	return o.size

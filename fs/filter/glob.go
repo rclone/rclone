@@ -4,6 +4,7 @@ package filter
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -222,7 +223,7 @@ var (
 func globToDirGlobs(glob string) (out []string) {
 	if tooHardRe.MatchString(glob) {
 		// Can't figure this one out so return any directory might match
-		fs.Infof(nil, "Can't figure out directory filters from %q: looking in all directories", glob)
+		fs.InfofCtx(context.Background(), nil, "Can't figure out directory filters from %q: looking in all directories", glob)
 		out = append(out, "/**")
 		return out
 	}

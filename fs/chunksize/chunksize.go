@@ -2,6 +2,8 @@
 package chunksize
 
 import (
+	"context"
+
 	"github.com/rclone/rclone/fs"
 )
 
@@ -20,7 +22,7 @@ import (
 func Calculator(o any, size int64, maxParts int, defaultChunkSize fs.SizeSuffix) fs.SizeSuffix {
 	// If streaming then use default chunk size
 	if size < 0 {
-		fs.Debugf(o, "Streaming upload with chunk_size %s allows uploads of up to %s and will fail only when that limit is reached.", defaultChunkSize, fs.SizeSuffix(maxParts)*defaultChunkSize)
+		fs.DebugfCtx(context.Background(), o, "Streaming upload with chunk_size %s allows uploads of up to %s and will fail only when that limit is reached.", defaultChunkSize, fs.SizeSuffix(maxParts)*defaultChunkSize)
 
 		return defaultChunkSize
 	}
@@ -39,6 +41,6 @@ func Calculator(o any, size int64, maxParts int, defaultChunkSize fs.SizeSuffix)
 		minChunk += fs.Mebi
 	}
 
-	fs.Debugf(o, "size: %v, parts: %v, default: %v, new: %v; default chunk size insufficient, returned new chunk size", fileSize, maxParts, defaultChunkSize, minChunk)
+	fs.DebugfCtx(context.Background(), o, "size: %v, parts: %v, default: %v, new: %v; default chunk size insufficient, returned new chunk size", fileSize, maxParts, defaultChunkSize, minChunk)
 	return minChunk
 }

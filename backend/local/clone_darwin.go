@@ -28,7 +28,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't clone - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't clone - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
 	if f.opt.TranslateSymlinks && srcObj.translatedLink { // in --links mode, use cloning only for regular files
@@ -79,11 +79,11 @@ func Clone(src, dst string) error {
 	state := apfs.CopyFileStateAlloc()
 	defer func() {
 		if err := apfs.CopyFileStateFree(state); err != nil {
-			fs.Errorf(dst, "free state error: %v", err)
+			fs.ErrorfCtx(context.Background(), dst, "free state error: %v", err)
 		}
 	}()
 	cloned, err := apfs.CopyFile(src, dst, state, apfs.COPYFILE_CLONE)
-	fs.Debugf(dst, "isCloned: %v, error: %v", cloned, err)
+	fs.DebugfCtx(context.Background(), dst, "isCloned: %v, error: %v", cloned, err)
 	return err
 }
 

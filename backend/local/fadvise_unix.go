@@ -87,7 +87,7 @@ func (f *fadvise) sequential(limit int64) bool {
 		l = limit
 	}
 	if err := unix.Fadvise(f.fd, f.curPos, l, unix.FADV_SEQUENTIAL); err != nil {
-		fs.Debugf(f.o, "fadvise sequential failed on file descriptor %d: %s", f.fd, err)
+		fs.DebugfCtx(ctx, f.o, "fadvise sequential failed on file descriptor %d: %s", f.fd, err)
 		return false
 	}
 
@@ -113,7 +113,7 @@ func (f *fadvise) freePages() {
 func (f *fadvise) worker() {
 	for p := range f.freePagesCh {
 		if err := unix.Fadvise(f.fd, p.offset, p.length, unix.FADV_DONTNEED); err != nil {
-			fs.Debugf(f.o, "fadvise dontneed failed on file descriptor %d: %s", f.fd, err)
+			fs.DebugfCtx(ctx, f.o, "fadvise dontneed failed on file descriptor %d: %s", f.fd, err)
 		}
 	}
 

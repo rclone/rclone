@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -26,10 +27,10 @@ func (l logger) Print(level gofakes3.LogLevel, v ...any) {
 	default:
 		fallthrough
 	case gofakes3.LogErr:
-		fs.Errorf("serve s3", s)
+		fs.ErrorfCtx(context.Background(), "serve s3", s)
 	case gofakes3.LogWarn:
-		fs.Infof("serve s3", s)
+		fs.InfofCtx(context.Background(), "serve s3", s)
 	case gofakes3.LogInfo:
-		fs.Debugf("serve s3", s)
+		fs.DebugfCtx(context.Background(), "serve s3", s)
 	}
 }

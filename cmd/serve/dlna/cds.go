@@ -178,11 +178,11 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 		}
 		obj, err := cds.cdsObjectToUpnpavObject(child, de, mediaResources[de], host)
 		if err != nil {
-			fs.Errorf(cds, "error with %s: %s", child.FilePath(), err)
+			fs.ErrorfCtx(context.Background(), cds, "error with %s: %s", child.FilePath(), err)
 			continue
 		}
 		if obj == nil {
-			fs.Debugf(cds, "unrecognized file type: %s", de)
+			fs.DebugfCtx(context.Background(), cds, "unrecognized file type: %s", de)
 			continue
 		}
 		ret = append(ret, obj)
@@ -226,13 +226,13 @@ func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 
 		// Just advise if no match found
 		if !found {
-			fs.Infof(nodes, "could not find associated media for subtitle: %s", baseName)
-			fs.Infof(mediaByName, "mediaByName is this, baseName is %s", baseName)
+			fs.InfofCtx(context.Background(), nodes, "could not find associated media for subtitle: %s", baseName)
+			fs.InfofCtx(context.Background(), mediaByName, "mediaByName is this, baseName is %s", baseName)
 			continue
 		}
 
 		// Associate with all potential media nodes
-		fs.Debugf(mediaNodes, "associating subtitle: %s", baseName)
+		fs.DebugfCtx(context.Background(), mediaNodes, "associating subtitle: %s", baseName)
 		for _, mediaNode := range mediaNodes {
 			mediaResources[mediaNode] = append(mediaResources[mediaNode], nodes...)
 		}

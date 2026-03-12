@@ -32,7 +32,7 @@ mounting them, listing them in lots of different ways.
 See the home page (https://rclone.org/) for installation, usage,
 documentation, changelog and configuration walkthroughs.`,
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
+		fs.DebugfCtx(context.Background(), "rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
 		atexit.Run()
 	},
 	ValidArgsFunction: validArgs,
@@ -75,7 +75,7 @@ var helpFlags = &cobra.Command{
 				if err != nil {
 					fs.Fatalf(nil, "Invalid flag filter: %v", err)
 				}
-				fs.Debugf(nil, "Flag filter: %s", re.String())
+				fs.DebugfCtx(context.Background(), nil, "Flag filter: %s", re.String())
 				filterFlagsRe = re
 			}
 			if filterFlagsGroup != "" {
@@ -162,7 +162,7 @@ func setupRootCommand(rootCmd *cobra.Command) {
 			} else if _, ok := allRegistered[flag]; ok {
 				// flag is in a group already
 			} else {
-				fs.Errorf(nil, "Flag --%s is unknown", flag.Name)
+				fs.ErrorfCtx(context.Background(), nil, "Flag --%s is unknown", flag.Name)
 			}
 		})
 		groups := flags.All.Filter(filterFlagsGroup, filterFlagsRe, filterFlagsNamesOnly).Include(cmd.Annotations["groups"])

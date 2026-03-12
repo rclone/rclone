@@ -126,12 +126,12 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	mnt := NewMountPoint(mountFn, mountPoint, fdst, &mountOpt, &vfsOpt)
 	_, err = mnt.Mount()
 	if err != nil {
-		fs.Logf(nil, "mount FAILED: %v", err)
+		fs.LogfCtx(ctx, nil, "mount FAILED: %v", err)
 		return nil, err
 	}
 	go func() {
 		if err = mnt.Wait(); err != nil {
-			fs.Logf(nil, "unmount FAILED: %v", err)
+			fs.LogfCtx(ctx, nil, "unmount FAILED: %v", err)
 			return
 		}
 		mountMu.Lock()
@@ -141,7 +141,7 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	// Add mount to list if mount point was successfully created
 	liveMounts[mountPoint] = mnt
 
-	fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), mountPoint, mountType)
+	fs.DebugfCtx(ctx, nil, "Mount for %s created at %s using %s", fdst.String(), mountPoint, mountType)
 	return nil, nil
 }
 
@@ -298,7 +298,7 @@ func unmountAll(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	defer mountMu.Unlock()
 	for mountPoint, mountInfo := range liveMounts {
 		if err = mountInfo.Unmount(); err != nil {
-			fs.Debugf(nil, "Couldn't unmount : %s", mountPoint)
+			fs.DebugfCtx(context.Background(), nil, "Couldn't unmount : %s", mountPoint)
 			return nil, err
 		}
 		delete(liveMounts, mountPoint)

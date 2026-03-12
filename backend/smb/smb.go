@@ -239,7 +239,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if !stat.IsDir() {
 		f.root, err = path.Dir(root), fs.ErrorIsFile
 	}
-	fs.Debugf(f, "Using root directory %q", f.root)
+	fs.DebugfCtx(ctx, f, "Using root directory %q", f.root)
 	return f, err
 }
 
@@ -380,12 +380,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 	dstShare, dstPath := f.split(remote)
 	srcObj, ok := src.(*Object)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 	srcShare, srcPath := srcObj.split()
 	if dstShare != srcShare {
-		fs.Debugf(src, "Can't move - must be on the same share")
+		fs.DebugfCtx(ctx, src, "Can't move - must be on the same share")
 		return nil, fs.ErrorCantMove
 	}
 
@@ -418,12 +418,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	dstShare, dstPath := f.split(dstRemote)
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(src, "Can't move - not same remote type")
+		fs.DebugfCtx(ctx, src, "Can't move - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	srcShare, srcPath := srcFs.split(srcRemote)
 	if dstShare != srcShare {
-		fs.Debugf(src, "Can't move - must be on the same share")
+		fs.DebugfCtx(ctx, src, "Can't move - must be on the same share")
 		return fs.ErrorCantDirMove
 	}
 
@@ -735,7 +735,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			offset, limit = x.Decode(o.Size())
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.LogfCtx(ctx, o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
@@ -810,15 +810,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// Windows doesn't allow removal of files without closing file
 		removeErr := fl.Close()
 		if removeErr != nil {
-			fs.Debugf(src, "failed to close the file for delete: %v", removeErr)
+			fs.DebugfCtx(ctx, src, "failed to close the file for delete: %v", removeErr)
 			// try to remove the file anyway; the file may be already closed
 		}
 
 		removeErr = cn.smbShare.Remove(filename)
 		if removeErr != nil {
-			fs.Debugf(src, "failed to remove: %v", removeErr)
+			fs.DebugfCtx(ctx, src, "failed to remove: %v", removeErr)
 		} else {
-			fs.Debugf(src, "removed after failed upload: %v", err)
+			fs.DebugfCtx(ctx, src, "removed after failed upload: %v", err)
 		}
 	}
 

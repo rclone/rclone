@@ -606,7 +606,7 @@ func (f *Fs) parseChunkName(filePath string) (parentPath string, chunkNo int, ct
 			chunkNo = -1
 		}
 		if chunkNo -= f.opt.StartFrom; chunkNo < 0 {
-			fs.Infof(f, "invalid data chunk number in file %q", name)
+			fs.InfofCtx(context.Background(), f, "invalid data chunk number in file %q", name)
 			return "", -1, "", ""
 		}
 	}
@@ -618,7 +618,7 @@ func (f *Fs) parseChunkName(filePath string) (parentPath string, chunkNo int, ct
 		// old-style temporary suffix
 		number, err := strconv.ParseInt(match[5], 10, 64)
 		if err != nil || number < 0 {
-			fs.Infof(f, "invalid old-style transaction number in file %q", name)
+			fs.InfofCtx(context.Background(), f, "invalid old-style transaction number in file %q", name)
 			return "", -1, "", ""
 		}
 		// convert old-style transaction number to base-36 transaction ID
@@ -639,7 +639,7 @@ func (f *Fs) forbidChunk(o any, filePath string) error {
 			return fmt.Errorf("chunk overlap with %q", parentPath)
 		}
 		if boolVal, isBool := o.(bool); !isBool || boolVal {
-			fs.Errorf(o, "chunk overlap with %q", parentPath)
+			fs.ErrorfCtx(context.Background(), o, "chunk overlap with %q", parentPath)
 		}
 	}
 	return nil
@@ -798,7 +798,7 @@ func (f *Fs) processEntries(ctx context.Context, origEntries fs.DirEntries, dirP
 			mainObject := byRemote[mainRemote]
 			isSpecial := xactID != txnByRemote[mainRemote] || ctrlType != ""
 			if mainObject == nil && f.useMeta && !isSpecial {
-				fs.Debugf(f, "skip orphan data chunk %q", remote)
+				fs.DebugfCtx(ctx, f, "skip orphan data chunk %q", remote)
 				break
 			}
 			if mainObject == nil && !f.useMeta {
@@ -812,7 +812,7 @@ func (f *Fs) processEntries(ctx context.Context, origEntries fs.DirEntries, dirP
 			}
 			if isSpecial {
 				if revealHidden {
-					fs.Infof(f, "ignore non-data chunk %q", remote)
+					fs.InfofCtx(ctx, f, "ignore non-data chunk %q", remote)
 				}
 				// need to read metadata to ensure actual object type
 				// no need to read if metaobject is too big or absent,
@@ -837,7 +837,7 @@ func (f *Fs) processEntries(ctx context.Context, origEntries fs.DirEntries, dirP
 			if f.opt.FailHard {
 				return nil, fmt.Errorf("unknown object type %T", entry)
 			}
-			fs.Debugf(f, "unknown object type %T", entry)
+			fs.DebugfCtx(ctx, f, "unknown object type %T", entry)
 		}
 	}
 
@@ -851,14 +851,14 @@ func (f *Fs) processEntries(ctx context.Context, origEntries fs.DirEntries, dirP
 				badEntry[remote] = true // fall thru
 			}
 			if badEntry[remote] {
-				fs.Debugf(f, "invalid directory entry %q", remote)
+				fs.DebugfCtx(ctx, f, "invalid directory entry %q", remote)
 				continue
 			}
 			if err := object.validate(); err != nil {
 				if f.opt.FailHard {
 					return nil, err
 				}
-				fs.Debugf(f, "invalid chunks in object %q", remote)
+				fs.DebugfCtx(ctx, f, "invalid chunks in object %q", remote)
 				continue
 			}
 		}
@@ -982,7 +982,7 @@ func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.
 			}
 			continue
 		}
-		// fs.Debugf(f, "%q belongs to %q as chunk %d", entryRemote, mainRemote, chunkNo)
+		// fs.DebugfCtx(context.Background(), f, "%q belongs to %q as chunk %d", entryRemote, mainRemote, chunkNo)
 		if err := o.addChunk(entry, chunkNo); err != nil {
 			return nil, err
 		}
@@ -1224,7 +1224,7 @@ func (f *Fs) put(
 
 		// Expected a single chunk but more to come, so name it as usual.
 		if !c.done && chunkRemote != tempRemote {
-			fs.Infof(chunk, "Expected single chunk, got more")
+			fs.InfofCtx(ctx, chunk, "Expected single chunk, got more")
 			chunkMoved, errMove := f.baseMove(ctx, chunk, tempRemote, delFailed)
 			if errMove != nil {
 				silentlyRemove(ctx, chunk)
@@ -1376,7 +1376,7 @@ func (c *chunkingReader) wrapStream(ctx context.Context, in io.Reader, src fs.Ob
 	case c.fs.useMD5:
 		srcObj := fs.UnWrapObjectInfo(src)
 		if srcObj != nil && srcObj.Fs().Features().SlowHash {
-			fs.Debugf(src, "skip slow MD5 on source file, hashing in-transit")
+			fs.DebugfCtx(ctx, src, "skip slow MD5 on source file, hashing in-transit")
 			c.hasher = md5.New()
 			break
 		}
@@ -1390,7 +1390,7 @@ func (c *chunkingReader) wrapStream(ctx context.Context, in io.Reader, src fs.Ob
 	case c.fs.useSHA1:
 		srcObj := fs.UnWrapObjectInfo(src)
 		if srcObj != nil && srcObj.Fs().Features().SlowHash {
-			fs.Debugf(src, "skip slow SHA1 on source file, hashing in-transit")
+			fs.DebugfCtx(ctx, src, "skip slow SHA1 on source file, hashing in-transit")
 			c.hasher = sha1.New()
 			break
 		}
@@ -1491,7 +1491,7 @@ func (c *chunkingReader) rollback(ctx context.Context, metaObject fs.Object) {
 	}
 	for _, chunk := range c.chunks {
 		if err := chunk.Remove(ctx); err != nil {
-			fs.Errorf(chunk, "Failed to remove temporary chunk: %v", err)
+			fs.ErrorfCtx(ctx, chunk, "Failed to remove temporary chunk: %v", err)
 		}
 	}
 }
@@ -1502,7 +1502,7 @@ func (f *Fs) removeOldChunks(ctx context.Context, remote string) {
 		oldObject := oldFsObject.(*Object)
 		for _, chunk := range oldObject.chunks {
 			if err := chunk.Remove(ctx); err != nil {
-				fs.Errorf(chunk, "Failed to remove old chunk: %v", err)
+				fs.ErrorfCtx(ctx, chunk, "Failed to remove old chunk: %v", err)
 			}
 		}
 	}
@@ -1653,7 +1653,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	}
 	if err := o.readMetadata(ctx); err == ErrMetaUnknown {
 		// Proceed but warn user that unexpected things can happen.
-		fs.Errorf(o, "Removing a file with unsupported metadata: %v", err)
+		fs.ErrorfCtx(ctx, o, "Removing a file with unsupported metadata: %v", err)
 	}
 
 	// Remove non-chunked file or meta object of a composite file.
@@ -1685,7 +1685,7 @@ func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMo
 		return nil, fmt.Errorf("can't %s this file: %w", opName, err)
 	}
 	if !o.isComposite() {
-		fs.Debugf(o, "%s non-chunked object...", opName)
+		fs.DebugfCtx(ctx, o, "%s non-chunked object...", opName)
 		oResult, err := do(ctx, o.mainChunk(), remote) // chain operation to a single wrapped chunk
 		if err != nil {
 			return nil, err
@@ -1693,7 +1693,7 @@ func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMo
 		return f.newObject("", oResult, nil), nil
 	}
 
-	fs.Debugf(o, "%s %d data chunks...", opName, len(o.chunks))
+	fs.DebugfCtx(ctx, o, "%s %d data chunks...", opName, len(o.chunks))
 	mainRemote := o.remote
 	var newChunks []fs.Object
 	var err error
@@ -1779,7 +1779,7 @@ func (f *Fs) okForServerSide(ctx context.Context, src fs.Object, opName string) 
 		diff = "meta formats"
 	}
 	if diff != "" {
-		fs.Debugf(src, "Can't %s - different %s", opName, diff)
+		fs.DebugfCtx(ctx, src, "Can't %s - different %s", opName, diff)
 		ok = false
 		return
 	}
@@ -1813,7 +1813,7 @@ func (f *Fs) okForServerSide(ctx context.Context, src fs.Object, opName string) 
 		ok = false
 	}
 	if !ok {
-		fs.Debugf(src, "Can't %s - required hash not found", opName)
+		fs.DebugfCtx(ctx, src, "Can't %s - required hash not found", opName)
 	}
 	return
 }
@@ -1900,7 +1900,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	srcFs, ok := src.(*Fs)
 	if !ok {
-		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		fs.DebugfCtx(ctx, srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
 	return do(ctx, srcFs.base, srcRemote, dstRemote)
@@ -1962,7 +1962,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		// fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
+		// fs.DebugfCtx(context.Background(), f, "ChangeNotify: path %q entryType %d", path, entryType)
 		if entryType == fs.EntryObject {
 			mainPath, _, _, xactID := f.parseChunkName(path)
 			metaXactID := ""

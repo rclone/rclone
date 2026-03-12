@@ -63,7 +63,7 @@ func verifyHashsum(ctx context.Context, siteURL, version, archive string, hash [
 	if err != nil {
 		return err
 	}
-	fs.Debugf(nil, "downloaded hashsum list: %s", sumsURL)
+	fs.DebugfCtx(ctx, nil, "downloaded hashsum list: %s", sumsURL)
 	return verifyHashsumDownloaded(ctx, sumsBuf, archive, hash)
 }
 

@@ -57,7 +57,7 @@ func resolveInvenioEndpoint(ctx context.Context, srv *rest.Client, pacer *fs.Pac
 		if err == nil {
 			return Invenio, endpoint, nil
 		}
-		fs.Logf(nil, "using linkset URL failed: %s", err.Error())
+		fs.LogfCtx(ctx, nil, "using linkset URL failed: %s", err.Error())
 	}
 
 	// If there is no linkset header, try to grab the record ID from the URL
@@ -73,7 +73,7 @@ func resolveInvenioEndpoint(ctx context.Context, srv *rest.Client, pacer *fs.Pac
 		if err == nil {
 			return Invenio, endpoint, nil
 		}
-		fs.Logf(nil, "guessing the URL failed: %s", err.Error())
+		fs.LogfCtx(ctx, nil, "guessing the URL failed: %s", err.Error())
 	}
 
 	return "", nil, fmt.Errorf("could not resolve the Invenio API endpoint for '%s'", resolvedURL.String())
@@ -134,7 +134,7 @@ func (ip *invenioProvider) ListEntries(ctx context.Context) (entries []*Object, 
 	for _, file := range result.Entries {
 		modTime, modTimeErr := time.Parse(time.RFC3339, file.Updated)
 		if modTimeErr != nil {
-			fs.Logf(ip.f, "error: could not parse last update time %v", modTimeErr)
+			fs.LogfCtx(ctx, ip.f, "error: could not parse last update time %v", modTimeErr)
 			modTime = timeUnset
 		}
 		entry := &Object{

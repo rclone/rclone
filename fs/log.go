@@ -136,23 +136,49 @@ func LogLevelToSlog(level LogLevel) slog.Level {
 	return slogLevel
 }
 
-func logSlog(level LogLevel, text string, attrs []any) {
-	slog.Log(context.Background(), LogLevelToSlog(level), text, attrs...)
+// logTagContextKeyType is an unexported type for per-RPC log tag context keys.
+type logTagContextKeyType struct{}
+
+// logTagContextKey is the key used to store a per-RPC log tag in a context.
+var logTagContextKey = logTagContextKeyType{}
+
+// WithLogTag returns a new context carrying the given log tag string.
+// The tag will be prepended to every log line emitted via the context-aware
+// logging functions (DebugfCtx, ErrorfCtx, etc.) and visible in OutputHandler.
+func WithLogTag(ctx context.Context, tag string) context.Context {
+	return context.WithValue(ctx, logTagContextKey, tag)
 }
 
-func logSlogWithObject(level LogLevel, o any, text string, attrs []any) {
+// LogTagFromContext retrieves the per-RPC log tag stored in ctx by WithLogTag.
+// Returns an empty string when no tag is set.
+func LogTagFromContext(ctx context.Context) string {
+	tag, _ := ctx.Value(logTagContextKey).(string)
+	return tag
+}
+
+func logSlog(ctx context.Context, level LogLevel, text string, attrs []any) {
+	slog.Log(ctx, LogLevelToSlog(level), text, attrs...)
+}
+
+func logSlogWithObject(ctx context.Context, level LogLevel, o any, text string, attrs []any) {
 	if o != nil {
 		attrs = slices.Concat(attrs, []any{
 			"object", fmt.Sprintf("%+v", o),
 			"objectType", fmt.Sprintf("%T", o),
 		})
 	}
-	logSlog(level, text, attrs)
+	logSlog(ctx, level, text, attrs)
 }
 
 // LogPrint produces a log string from the arguments passed in
 func LogPrint(level LogLevel, o any, text string) {
-	logSlogWithObject(level, o, text, nil)
+	logSlogWithObject(context.Background(), level, o, text, nil)
+}
+
+// LogPrintCtx produces a log string from the arguments passed in,
+// forwarding ctx so that any per-RPC log tag stored via WithLogTag is emitted.
+func LogPrintCtx(ctx context.Context, level LogLevel, o any, text string) {
+	logSlogWithObject(ctx, level, o, text, nil)
 }
 
 // LogPrintf produces a log string from the arguments passed in
@@ -164,7 +190,20 @@ func LogPrintf(level LogLevel, o any, text string, args ...any) {
 			fields = append(fields, item.key, item.value)
 		}
 	}
-	logSlogWithObject(level, o, text, fields)
+	logSlogWithObject(context.Background(), level, o, text, fields)
+}
+
+// LogPrintfCtx produces a log string from the arguments passed in,
+// forwarding ctx so that any per-RPC log tag stored via WithLogTag is emitted.
+func LogPrintfCtx(ctx context.Context, level LogLevel, o any, text string, args ...any) {
+	text = fmt.Sprintf(text, args...)
+	var fields []any
+	for _, arg := range args {
+		if item, ok := arg.(LogValueItem); ok {
+			fields = append(fields, item.key, item.value)
+		}
+	}
+	logSlogWithObject(ctx, level, o, text, fields)
 }
 
 // LogLevelPrint writes logs at the given level
@@ -174,10 +213,24 @@ func LogLevelPrint(level LogLevel, o any, text string) {
 	}
 }
 
+// LogLevelPrintCtx writes logs at the given level, forwarding ctx.
+func LogLevelPrintCtx(ctx context.Context, level LogLevel, o any, text string) {
+	if GetConfig(ctx).LogLevel >= level {
+		LogPrintCtx(ctx, level, o, text)
+	}
+}
+
 // LogLevelPrintf writes logs at the given level
 func LogLevelPrintf(level LogLevel, o any, text string, args ...any) {
 	if GetConfig(context.TODO()).LogLevel >= level {
 		LogPrintf(level, o, text, args...)
+	}
+}
+
+// LogLevelPrintfCtx writes logs at the given level, forwarding ctx.
+func LogLevelPrintfCtx(ctx context.Context, level LogLevel, o any, text string, args ...any) {
+	if GetConfig(ctx).LogLevel >= level {
+		LogPrintfCtx(ctx, level, o, text, args...)
 	}
 }
 
@@ -260,6 +313,12 @@ func Errorf(o any, text string, args ...any) {
 	LogLevelPrintf(LogLevelError, o, text, args...)
 }
 
+// ErrorfCtx writes error log output, forwarding ctx so that any per-RPC
+// log tag stored via WithLogTag appears on the log line.
+func ErrorfCtx(ctx context.Context, o any, text string, args ...any) {
+	LogLevelPrintfCtx(ctx, LogLevelError, o, text, args...)
+}
+
 // Print writes log output for this Object or Fs, same as Logf.
 func Print(o any, text string) {
 	LogLevelPrint(LogLevelNotice, o, text)
@@ -288,6 +347,12 @@ func Logf(o any, text string, args ...any) {
 	LogLevelPrintf(LogLevelNotice, o, text, args...)
 }
 
+// LogfCtx writes notice-level log output, forwarding ctx so that any per-RPC
+// log tag stored via WithLogTag appears on the log line.
+func LogfCtx(ctx context.Context, o any, text string, args ...any) {
+	LogLevelPrintfCtx(ctx, LogLevelNotice, o, text, args...)
+}
+
 // Infoc writes info on transfers for this Object or Fs.  Use this
 // level for logging transfers, deletions and things which should
 // appear with the -v flag.
@@ -303,6 +368,12 @@ func Infof(o any, text string, args ...any) {
 	LogLevelPrintf(LogLevelInfo, o, text, args...)
 }
 
+// InfofCtx writes info-level log output, forwarding ctx so that any per-RPC
+// log tag stored via WithLogTag appears on the log line.
+func InfofCtx(ctx context.Context, o any, text string, args ...any) {
+	LogLevelPrintfCtx(ctx, LogLevelInfo, o, text, args...)
+}
+
 // Debug writes debugging output for this Object or Fs.  Use this for
 // debug only.  The user must have to specify -vv to see this.
 func Debug(o any, text string) {
@@ -313,6 +384,12 @@ func Debug(o any, text string) {
 // debug only.  The user must have to specify -vv to see this.
 func Debugf(o any, text string, args ...any) {
 	LogLevelPrintf(LogLevelDebug, o, text, args...)
+}
+
+// DebugfCtx writes debug-level log output, forwarding ctx so that any per-RPC
+// log tag stored via WithLogTag appears on the log line.
+func DebugfCtx(ctx context.Context, o any, text string, args ...any) {
+	LogLevelPrintfCtx(ctx, LogLevelDebug, o, text, args...)
 }
 
 // LogDirName returns an object for the logger, logging a root

@@ -4,6 +4,7 @@ package cache
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -105,7 +106,7 @@ func newPlexConnectorWithToken(f *Fs, plexURL, token string, insecure bool) (*pl
 func (p *plexConnector) closeWebsocket() {
 	p.runningMu.Lock()
 	defer p.runningMu.Unlock()
-	fs.Infof("plex", "stopped Plex watcher")
+	fs.InfofCtx(context.Background(), "plex", "stopped Plex watcher")
 	p.running = false
 }
 
@@ -130,7 +131,7 @@ func (p *plexConnector) listenWebsocket() {
 
 	conn, err := p.websocketDial()
 	if err != nil {
-		fs.Errorf("plex", "%v", err)
+		fs.ErrorfCtx(context.Background(), "plex", "%v", err)
 		return
 	}
 
@@ -144,7 +145,7 @@ func (p *plexConnector) listenWebsocket() {
 			notif := &PlexNotification{}
 			err := websocket.JSON.Receive(conn, notif)
 			if err != nil {
-				fs.Debugf("plex", "%v", err)
+				fs.DebugfCtx(context.Background(), "plex", "%v", err)
 				p.closeWebsocket()
 				break
 			}
@@ -227,7 +228,7 @@ func (p *plexConnector) authenticate() error {
 		if p.saveToken != nil {
 			p.saveToken(p.token)
 		}
-		fs.Infof(p.f.Name(), "Connected to Plex server: %v", p.url.String())
+		fs.InfofCtx(context.Background(), p.f.Name(), "Connected to Plex server: %v", p.url.String())
 	}
 	p.listenWebsocket()
 
@@ -256,7 +257,7 @@ func (p *plexConnector) isPlaying(co *Object) bool {
 	if cr, yes := p.f.isWrappedByCrypt(); yes {
 		remote, err = cr.DecryptFileName(co.Remote())
 		if err != nil {
-			fs.Debugf("plex", "can not decrypt wrapped file: %v", err)
+			fs.DebugfCtx(context.Background(), "plex", "can not decrypt wrapped file: %v", err)
 			return false
 		}
 	}

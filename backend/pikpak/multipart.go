@@ -59,10 +59,10 @@ func (w *pikpakChunkWriter) Upload(ctx context.Context) (err error) {
 	defer cancel()
 	defer atexit.OnError(&err, func() {
 		cancel()
-		fs.Debugf(w.o, "multipart upload: Cancelling...")
+		fs.DebugfCtx(ctx, w.o, "multipart upload: Cancelling...")
 		errCancel := w.Abort(ctx)
 		if errCancel != nil {
-			fs.Debugf(w.o, "multipart upload: failed to cancel: %v", errCancel)
+			fs.DebugfCtx(ctx, w.o, "multipart upload: failed to cancel: %v", errCancel)
 		}
 	})()
 
@@ -117,7 +117,7 @@ func (w *pikpakChunkWriter) Upload(ctx context.Context) (err error) {
 		off += n
 		g.Go(func() (err error) {
 			defer free()
-			fs.Debugf(w.o, "multipart upload: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(n), fs.SizeSuffix(partOff), fs.SizeSuffix(size))
+			fs.DebugfCtx(ctx, w.o, "multipart upload: starting chunk %d size %v offset %v/%v", partNum, fs.SizeSuffix(n), fs.SizeSuffix(partOff), fs.SizeSuffix(size))
 			_, err = w.WriteChunk(gCtx, int32(partNum), rw)
 			return err
 		})
@@ -167,7 +167,7 @@ func (f *Fs) newChunkWriter(ctx context.Context, remote string, size int64, p *a
 	// 48 GiB which seems like a not too unreasonable limit.
 	if size == -1 {
 		warnStreamUpload.Do(func() {
-			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
+			fs.LogfCtx(ctx, f, "Streaming uploads using chunk size %v will have maximum file size of %v",
 				f.opt.ChunkSize, fs.SizeSuffix(int64(chunkSize)*int64(maxUploadParts)))
 		})
 	} else {
@@ -217,7 +217,7 @@ func (f *Fs) newChunkWriter(ctx context.Context, remote string, size int64, p *a
 	if err != nil {
 		return nil, fmt.Errorf("create multipart upload failed: %w", err)
 	}
-	fs.Debugf(w.o, "multipart upload: %q initiated", *w.mOut.UploadId)
+	fs.DebugfCtx(ctx, w.o, "multipart upload: %q initiated", *w.mOut.UploadId)
 	return
 }
 
@@ -285,7 +285,7 @@ func (w *pikpakChunkWriter) WriteChunk(ctx context.Context, chunkNumber int32, r
 		ETag:       res.ETag,
 	})
 
-	fs.Debugf(w.o, "multipart upload: wrote chunk %d with %v bytes", partNumber, currentChunkSize)
+	fs.DebugfCtx(ctx, w.o, "multipart upload: wrote chunk %d with %v bytes", partNumber, currentChunkSize)
 	return currentChunkSize, err
 }
 
@@ -303,7 +303,7 @@ func (w *pikpakChunkWriter) Abort(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to abort multipart upload %q: %w", *w.mOut.UploadId, err)
 	}
-	fs.Debugf(w.o, "multipart upload: %q aborted", *w.mOut.UploadId)
+	fs.DebugfCtx(ctx, w.o, "multipart upload: %q aborted", *w.mOut.UploadId)
 	return
 }
 
@@ -328,6 +328,6 @@ func (w *pikpakChunkWriter) Close(ctx context.Context) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to complete multipart upload: %w", err)
 	}
-	fs.Debugf(w.o, "multipart upload: %q finished", *w.mOut.UploadId)
+	fs.DebugfCtx(ctx, w.o, "multipart upload: %q finished", *w.mOut.UploadId)
 	return
 }

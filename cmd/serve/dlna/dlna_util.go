@@ -42,7 +42,7 @@ func makeDeviceUUID(unique string) string {
 func listInterfaces() []net.Interface {
 	ifs, err := net.Interfaces()
 	if err != nil {
-		fs.Logf(nil, "list network interfaces: %v", err)
+		fs.LogfCtx(context.Background(), nil, "list network interfaces: %v", err)
 		return []net.Interface{}
 	}
 
@@ -132,7 +132,7 @@ func logging(next http.Handler) http.Handler {
 					http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
 				} else {
 					// Too late to send the error to client, but at least log it.
-					fs.Errorf(r.URL.Path, "Recovered panic: %v", err)
+					fs.ErrorfCtx(context.Background(), r.URL.Path, "Recovered panic: %v", err)
 				}
 			}
 		}()
@@ -150,7 +150,7 @@ func traceLogging(next http.Handler) http.Handler {
 			serveError(ctx, nil, w, "error dumping request", err)
 			return
 		}
-		fs.Debugf(nil, "%s", dump)
+		fs.DebugfCtx(context.Background(), nil, "%s", dump)
 
 		recorder := httptest.NewRecorder()
 		next.ServeHTTP(recorder, r)
@@ -158,9 +158,9 @@ func traceLogging(next http.Handler) http.Handler {
 		dump, err = httputil.DumpResponse(recorder.Result(), true)
 		if err != nil {
 			// log the error but ignore it
-			fs.Errorf(nil, "error dumping response: %v", err)
+			fs.ErrorfCtx(context.Background(), nil, "error dumping response: %v", err)
 		} else {
-			fs.Debugf(nil, "%s", dump)
+			fs.DebugfCtx(context.Background(), nil, "%s", dump)
 		}
 
 		// copy from recorder to the real response writer
@@ -169,7 +169,7 @@ func traceLogging(next http.Handler) http.Handler {
 		_, err = recorder.Body.WriteTo(w)
 		if err != nil {
 			// Network error
-			fs.Debugf(nil, "Error writing response: %v", err)
+			fs.DebugfCtx(context.Background(), nil, "Error writing response: %v", err)
 		}
 	})
 }
@@ -185,7 +185,7 @@ func withHeader(name string, value string, next http.Handler) http.Handler {
 // serveError returns an http.StatusInternalServerError and logs the error
 func serveError(ctx context.Context, what any, w http.ResponseWriter, text string, err error) {
 	err = fs.CountError(ctx, err)
-	fs.Errorf(what, "%s: %v", text, err)
+	fs.ErrorfCtx(ctx, what, "%s: %v", text, err)
 	http.Error(w, text+".", http.StatusInternalServerError)
 }
 

@@ -23,7 +23,7 @@ var (
 func readTime(t timeType, fi os.FileInfo) time.Time {
 	stat, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
-		fs.Debugf(nil, "didn't return Stat_t as expected")
+		fs.DebugfCtx(ctx, nil, "didn't return Stat_t as expected")
 		return fi.ModTime()
 	}
 	switch t {

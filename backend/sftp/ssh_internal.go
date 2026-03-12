@@ -43,7 +43,7 @@ func (f *Fs) newSSHClientInternal(ctx context.Context, network, addr string, ssh
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(f, "New connection %s->%s to %q", c.LocalAddr(), c.RemoteAddr(), c.ServerVersion())
+	fs.DebugfCtx(ctx, f, "New connection %s->%s to %q", c.LocalAddr(), c.RemoteAddr(), c.ServerVersion())
 	srv := ssh.NewClient(c, chans, reqs)
 	return sshClientInternal{srv}, nil
 }
@@ -57,7 +57,7 @@ func (s sshClientInternal) Wait() error {
 func (s sshClientInternal) SendKeepAlive() {
 	_, _, err := s.srv.SendRequest("keepalive@openssh.com", true, nil)
 	if err != nil {
-		fs.Debugf(nil, "Failed to send keep alive: %v", err)
+		fs.DebugfCtx(context.Background(), nil, "Failed to send keep alive: %v", err)
 	}
 }
 

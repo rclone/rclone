@@ -126,7 +126,7 @@ func GetCheckOpt(fsrc, fdst fs.Fs) (opt *operations.CheckOpt, close func(), err 
 		for _, closer := range closers {
 			err := closer.Close()
 			if err != nil {
-				fs.Errorf(nil, "Failed to close report output: %v", err)
+				fs.ErrorfCtx(context.Background(), nil, "Failed to close report output: %v", err)
 			}
 		}
 	}
@@ -193,9 +193,9 @@ the |source:path| must point to a text file in the SUM format.
 			}
 			hashType := fsrc.Hashes().Overlap(fdst.Hashes()).GetOne()
 			if hashType == hash.None {
-				fs.Errorf(nil, "No common hash found - not using a hash for checks")
+				fs.ErrorfCtx(context.Background(), nil, "No common hash found - not using a hash for checks")
 			} else {
-				fs.Infof(nil, "Using %v for hash comparisons", hashType)
+				fs.InfofCtx(context.Background(), nil, "Using %v for hash comparisons", hashType)
 			}
 			return operations.Check(context.Background(), opt)
 		})
