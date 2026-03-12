@@ -830,6 +830,10 @@ use |-vv| to see the debug level logs.
 			Name: "ibm_resource_instance_id",
 			Help: "IBM service instance id",
 		}, {
+			Name:     "ibm_iam_endpoint",
+			Help:     "IBM IAM Endpoint to use for authentication.\n\nLeave blank to use the default public endpoint.",
+			Advanced: true,
+		}, {
 			Name: "object_lock_mode",
 			Help: `Object Lock mode to apply when uploading or copying objects.
 
@@ -1540,13 +1544,9 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 
 	if opt.V2Auth || opt.Region == "other-v2-signature" {
 		fs.Debugf(nil, "Using v2 auth")
-		IBMIAMEndpoint := ""
 		if opt.Provider == "IBMCOS" && opt.IBMAPIKey != "" && opt.IBMInstanceID != "" {
-			if opt.IBMIAMEndpoint != "" {
-				IBMIAMEndpoint = opt.IBMIAMEndpoint
-			}
 			options = append(options, func(s3Opt *s3.Options) {
-				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID, IAMEndpoint: IBMIAMEndpoint}
+				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID, IAMEndpoint: opt.IBMIAMEndpoint}
 			})
 		} else {
 			options = append(options, func(s3Opt *s3.Options) {
