@@ -112,8 +112,8 @@ func TestMultithreadCalculateNumChunks(t *testing.T) {
 	}
 }
 
-// Skip if not multithread, returning the chunkSize otherwise
-func skipIfNotMultithread(ctx context.Context, t *testing.T, r *fstest.Run) int {
+// Skip if not multithread, returning the chunkSize and minFileSize otherwise
+func skipIfNotMultithread(ctx context.Context, t *testing.T, r *fstest.Run) (chunkSize int, minFileSize int64) {
 	features := r.Fremote.Features()
 	if features.OpenChunkWriter == nil && features.OpenWriterAt == nil {
 		t.Skip("multithread writing not supported")
@@ -128,7 +128,7 @@ func skipIfNotMultithread(ctx context.Context, t *testing.T, r *fstest.Run) int 
 	}
 
 	ci := fs.GetConfig(ctx)
-	chunkSize := int(ci.MultiThreadChunkSize)
+	chunkSize = int(ci.MultiThreadChunkSize)
 	if features.OpenChunkWriter != nil {
 		//OpenChunkWriter func(ctx context.Context, remote string, src ObjectInfo, options ...OpenOption) (info ChunkWriterInfo, writer ChunkWriter, err error)
 		const fileName = "chunksize-probe"
@@ -136,16 +136,17 @@ func skipIfNotMultithread(ctx context.Context, t *testing.T, r *fstest.Run) int 
 		info, writer, err := features.OpenChunkWriter(ctx, fileName, src)
 		require.NoError(t, err)
 		chunkSize = int(info.ChunkSize)
+		minFileSize = info.MinFileSize
 		err = writer.Abort(ctx)
 		require.NoError(t, err)
 	}
-	return chunkSize
+	return chunkSize, minFileSize
 }
 
 func TestMultithreadCopy(t *testing.T) {
 	r := fstest.NewRun(t)
 	ctx := context.Background()
-	chunkSize := skipIfNotMultithread(ctx, t, r)
+	chunkSize, minFileSize := skipIfNotMultithread(ctx, t, r)
 	// Check every other transfer for metadata
 	checkMetadata := false
 	ctx, ci := fs.AddConfig(ctx)
@@ -163,6 +164,9 @@ func TestMultithreadCopy(t *testing.T) {
 			ci.Metadata = checkMetadata
 			fileName := fmt.Sprintf("test-multithread-copy-%v-%d-%d", upload, test.size, test.streams)
 			t.Run(fmt.Sprintf("upload=%v,size=%v,streams=%v", upload, test.size, test.streams), func(t *testing.T) {
+				if minFileSize > 0 && int64(test.size) < minFileSize {
+					t.Skipf("file size %d is below backend minimum %d for multipart uploads", test.size, minFileSize)
+				}
 				if *fstest.SizeLimit > 0 && int64(test.size) > *fstest.SizeLimit {
 					t.Skipf("exceeded file size limit %d > %d", test.size, *fstest.SizeLimit)
 				}
@@ -290,9 +294,12 @@ func (rc wgReadCloser) Close() (err error) {
 func TestMultithreadCopyAbort(t *testing.T) {
 	r := fstest.NewRun(t)
 	ctx := context.Background()
-	chunkSize := skipIfNotMultithread(ctx, t, r)
+	chunkSize, minFileSize := skipIfNotMultithread(ctx, t, r)
 	size := 2*chunkSize + 1
 
+	if minFileSize > 0 && int64(size) < minFileSize {
+		t.Skipf("file size %d is below backend minimum %d for multipart uploads", size, minFileSize)
+	}
 	if *fstest.SizeLimit > 0 && int64(size) > *fstest.SizeLimit {
 		t.Skipf("exceeded file size limit %d > %d", size, *fstest.SizeLimit)
 	}

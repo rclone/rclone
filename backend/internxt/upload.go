@@ -1,6 +1,7 @@
 package internxt
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -35,7 +36,6 @@ func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
 }
 
 // internxtChunkWriter implements fs.ChunkWriter for Internxt multipart uploads.
-// All encryption is handled by the SDK's ChunkUploadSession.
 type internxtChunkWriter struct {
 	f              *Fs
 	remote         string
@@ -46,15 +46,27 @@ type internxtChunkWriter struct {
 	size           int64
 	dirID          string
 	meta           *buckets.CreateMetaResponse
+	chunkSize      int64
+	hashMu         sync.Mutex
+	nextHashChunk  int
+	pendingChunks  map[int][]byte
 }
 
 // OpenChunkWriter returns the chunk size and a ChunkWriter for multipart uploads.
-//
-// When called from Update (via multipart.UploadMultipart), the session is
-// pre-created and stored in f.pendingSession so that the encrypting reader
-// can be applied to the input before UploadMultipart reads from it.
 func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectInfo, options ...fs.OpenOption) (info fs.ChunkWriterInfo, writer fs.ChunkWriter, err error) {
 	size := src.Size()
+
+	info = fs.ChunkWriterInfo{
+		ChunkSize:         int64(f.opt.ChunkSize),
+		Concurrency:       f.opt.UploadConcurrency,
+		LeavePartsOnError: false,
+		MinFileSize:       minMultipartSize,
+	}
+
+	// Reject files below the multipart minimum
+	if size >= 0 && size < minMultipartSize {
+		return info, nil, fmt.Errorf("file size %d is below minimum %d for multipart upload", size, minMultipartSize)
+	}
 
 	chunkSize := f.opt.ChunkSize
 	if size < 0 {
@@ -64,6 +76,7 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		})
 	} else {
 		chunkSize = chunksize.Calculator(src, size, maxUploadParts, chunkSize)
+		info.ChunkSize = int64(chunkSize)
 	}
 
 	// Ensure parent directory exists
@@ -72,85 +85,114 @@ func (f *Fs) OpenChunkWriter(ctx context.Context, remote string, src fs.ObjectIn
 		return info, nil, fmt.Errorf("failed to find parent directory: %w", err)
 	}
 
-	// Use pre-created session from Update() if available, otherwise create one
-	session := f.pendingSession
-	if session == nil {
-		err = f.pacer.Call(func() (bool, error) {
-			var err error
-			session, err = buckets.NewChunkUploadSession(ctx, f.cfg, size, int64(chunkSize))
-			return f.shouldRetry(ctx, err)
-		})
-		if err != nil {
-			return info, nil, fmt.Errorf("failed to create upload session: %w", err)
-		}
+	var session *buckets.ChunkUploadSession
+	err = f.pacer.Call(func() (bool, error) {
+		var err error
+		session, err = buckets.NewChunkUploadSession(ctx, f.cfg, size, int64(chunkSize))
+		return f.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return info, nil, fmt.Errorf("failed to create upload session: %w", err)
 	}
 
 	w := &internxtChunkWriter{
-		f:       f,
-		remote:  remote,
-		src:     src,
-		session: session,
-		size:    size,
-		dirID:   dirID,
-	}
-
-	info = fs.ChunkWriterInfo{
-		ChunkSize:         int64(chunkSize),
-		Concurrency:       f.opt.UploadConcurrency,
-		LeavePartsOnError: false,
+		f:             f,
+		remote:        remote,
+		src:           src,
+		session:       session,
+		size:          size,
+		dirID:         dirID,
+		chunkSize:     int64(chunkSize),
+		pendingChunks: make(map[int][]byte),
 	}
 
 	return info, w, nil
 }
 
-// WriteChunk uploads chunk number with reader bytes.
-// The data has already been encrypted by the EncryptingReader applied
-// to the input stream before UploadMultipart started reading.
+// WriteChunk encrypts plaintext per-chunk using AES-256-CTR at the correct
+// byte offset, feeds encrypted data into the ordered hash accumulator, and
+// uploads to the presigned URL.
 func (w *internxtChunkWriter) WriteChunk(ctx context.Context, chunkNumber int, reader io.ReadSeeker) (int64, error) {
-	// Determine chunk size from the reader
-	currentPos, err := reader.Seek(0, io.SeekCurrent)
+	plaintext, err := io.ReadAll(reader)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get current position: %w", err)
+		return 0, err
 	}
-	end, err := reader.Seek(0, io.SeekEnd)
-	if err != nil {
-		return 0, fmt.Errorf("failed to seek to end: %w", err)
-	}
-	size := end - currentPos
-	if _, err := reader.Seek(currentPos, io.SeekStart); err != nil {
-		return 0, fmt.Errorf("failed to seek back: %w", err)
-	}
-
-	if size == 0 {
+	if len(plaintext) == 0 {
 		return 0, nil
 	}
+	size := int64(len(plaintext))
 
+	byteOffset := int64(chunkNumber) * w.chunkSize
+	cipherStream, err := w.session.NewCipherAtOffset(byteOffset)
+	if err != nil {
+		return 0, err
+	}
+	cipherStream.XORKeyStream(plaintext, plaintext)
+	encrypted := plaintext
+
+	w.submitForHashing(chunkNumber, encrypted)
+
+	encReader := bytes.NewReader(encrypted)
 	var etag string
 	err = w.f.pacer.Call(func() (bool, error) {
-		// Seek back to start for retries
-		if _, err := reader.Seek(currentPos, io.SeekStart); err != nil {
+		if _, err := encReader.Seek(0, io.SeekStart); err != nil {
 			return false, err
 		}
 		var uploadErr error
-		etag, uploadErr = w.session.UploadChunk(ctx, chunkNumber, reader, size)
+		etag, uploadErr = w.session.UploadChunk(ctx, chunkNumber, encReader, size)
 		return w.f.shouldRetry(ctx, uploadErr)
 	})
 	if err != nil {
 		return 0, err
 	}
 
+	w.recordCompletedPart(chunkNumber, etag)
+	return size, nil
+}
+
+// recordCompletedPart appends a completed part to the list (thread-safe).
+func (w *internxtChunkWriter) recordCompletedPart(chunkNumber int, etag string) {
 	w.partsMu.Lock()
 	w.completedParts = append(w.completedParts, buckets.CompletedPart{
 		PartNumber: chunkNumber + 1,
 		ETag:       etag,
 	})
 	w.partsMu.Unlock()
+}
 
-	return size, nil
+// submitForHashing feeds encrypted chunk data into the session's hash in order.
+func (w *internxtChunkWriter) submitForHashing(chunkNumber int, encrypted []byte) {
+	w.hashMu.Lock()
+	defer w.hashMu.Unlock()
+
+	if chunkNumber == w.nextHashChunk {
+		w.session.HashEncryptedData(encrypted)
+		w.nextHashChunk++
+		for {
+			next, ok := w.pendingChunks[w.nextHashChunk]
+			if !ok {
+				break
+			}
+			w.session.HashEncryptedData(next)
+			delete(w.pendingChunks, w.nextHashChunk)
+			w.nextHashChunk++
+		}
+	} else {
+		buf := make([]byte, len(encrypted))
+		copy(buf, encrypted)
+		w.pendingChunks[chunkNumber] = buf
+	}
 }
 
 // Close completes the multipart upload and registers the file in Internxt Drive.
 func (w *internxtChunkWriter) Close(ctx context.Context) error {
+	w.hashMu.Lock()
+	pending := len(w.pendingChunks)
+	w.hashMu.Unlock()
+	if pending != 0 {
+		return fmt.Errorf("internal error: %d chunks still pending hash", pending)
+	}
+
 	// Sort parts by part number
 	w.partsMu.Lock()
 	sort.Slice(w.completedParts, func(i, j int) bool {

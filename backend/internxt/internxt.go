@@ -216,20 +216,19 @@ type Options struct {
 
 // Fs represents an Internxt remote
 type Fs struct {
-	name           string
-	root           string
-	opt            Options
-	m              configmap.Mapper
-	dirCache       *dircache.DirCache
-	cfg            *config.Config
-	features       *fs.Features
-	pacer          *fs.Pacer
-	tokenRenewer   *oauthutil.Renew
-	bridgeUser     string
-	userID         string
-	authMu         sync.Mutex
-	authFailed     bool
-	pendingSession *buckets.ChunkUploadSession
+	name         string
+	root         string
+	opt          Options
+	m            configmap.Mapper
+	dirCache     *dircache.DirCache
+	cfg          *config.Config
+	features     *fs.Features
+	pacer        *fs.Pacer
+	tokenRenewer *oauthutil.Renew
+	bridgeUser   string
+	userID       string
+	authMu       sync.Mutex
+	authFailed   bool
 }
 
 // Object holds the data for a remote file object
@@ -271,6 +270,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	opt := new(Options)
 	if err := configstruct.Set(m, opt); err != nil {
 		return nil, err
+	}
+
+	if err := checkUploadChunkSize(opt.ChunkSize); err != nil {
+		return nil, fmt.Errorf("internxt: chunk size: %w", err)
 	}
 
 	if opt.Mnemonic == "" {
@@ -352,7 +355,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
-	f.features.OpenChunkWriter = nil
 
 	if ts != nil {
 		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
@@ -917,29 +919,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 					ci.MaxBufferMemory, fs.SizeSuffix(needed), ci.Transfers, ci.BufferSize, chunkSize, o.f.opt.UploadConcurrency)
 			}
 		}
-		var session *buckets.ChunkUploadSession
-		err = o.f.pacer.Call(func() (bool, error) {
-			var err error
-			session, err = buckets.NewChunkUploadSession(ctx, o.f.cfg, size, int64(chunkSize))
-			return o.f.shouldRetry(ctx, err)
-		})
-		if err != nil {
-			o.restoreBackupFile(ctx, backupUUID, origName, origType)
-			return fmt.Errorf("failed to create upload session: %w", err)
-		}
-
-		// Wrap reader with SDK's encrypting reader
-		encReader := session.EncryptingReader(in)
-
-		// Store session for OpenChunkWriter to pick up
-		o.f.pendingSession = session
-
-		chunkWriter, uploadErr := multipart.UploadMultipart(ctx, src, encReader, multipart.UploadMultipartOptions{
+		chunkWriter, uploadErr := multipart.UploadMultipart(ctx, src, in, multipart.UploadMultipartOptions{
 			Open:        o.f,
 			OpenOptions: options,
 		})
-
-		o.f.pendingSession = nil
 
 		if uploadErr != nil {
 			if isEmptyFileLimitError(uploadErr) {
