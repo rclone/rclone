@@ -117,6 +117,7 @@ acl:
     This acl is available on IBM Cloud (Infra) and On-Premise IBM COS.
 ibm_api_key: true
 ibm_resource_instance_id: true
+ibm_iam_endpoint: true
 bucket_acl: true
 quirks:
   list_version: 1

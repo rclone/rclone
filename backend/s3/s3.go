@@ -830,6 +830,10 @@ use |-vv| to see the debug level logs.
 			Name: "ibm_resource_instance_id",
 			Help: "IBM service instance id",
 		}, {
+			Name:     "ibm_iam_endpoint",
+			Help:     "IBM IAM Endpoint to use for authentication.\n\nLeave blank to use the default public endpoint.",
+			Advanced: true,
+		}, {
 			Name: "object_lock_mode",
 			Help: `Object Lock mode to apply when uploading or copying objects.
 
@@ -1107,6 +1111,7 @@ type Options struct {
 	DirectoryBucket             bool                 `config:"directory_bucket"`
 	IBMAPIKey                   string               `config:"ibm_api_key"`
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
+	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
 	ObjectLockMode              string               `config:"object_lock_mode"`
@@ -1541,7 +1546,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		fs.Debugf(nil, "Using v2 auth")
 		if opt.Provider == "IBMCOS" && opt.IBMAPIKey != "" && opt.IBMInstanceID != "" {
 			options = append(options, func(s3Opt *s3.Options) {
-				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID}
+				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID, IAMEndpoint: opt.IBMIAMEndpoint}
 			})
 		} else {
 			options = append(options, func(s3Opt *s3.Options) {
