@@ -113,6 +113,9 @@ func newTestCache(t *testing.T) (r *fstest.Run, c *Cache) {
 	// Disable synchronous write
 	opt.WriteBack = 0
 
+	// Disable handle caching so existing tests get immediate close behavior
+	opt.HandleCaching = 0
+
 	return newTestCacheOpt(t, opt)
 }
 
