@@ -1688,6 +1688,17 @@ func TestRcatSizeMetadata(t *testing.T) {
 	}
 }
 
+// putOptionSpy wraps an fs.Fs, capturing the options passed to Put.
+type putOptionSpy struct {
+	fs.Fs
+	gotOptions []fs.OpenOption
+}
+
+func (f *putOptionSpy) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	f.gotOptions = options
+	return f.Fs.Put(ctx, in, src, options...)
+}
+
 func TestRcatSizeUploadHeaders(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
@@ -1695,15 +1706,25 @@ func TestRcatSizeUploadHeaders(t *testing.T) {
 
 	ci.UploadHeaders = []*fs.HTTPOption{{Key: "X-Upload-Header", Value: "upload-value"}}
 
-	const body = "------------------------------------------------------------"
-	file1 := r.WriteFile("potato1", body, t1)
+	spy := &putOptionSpy{Fs: r.Fremote}
 
-	// Test with known length - exercises the size >= 0 branch (Put path)
+	const body = "------------------------------------------------------------"
 	bodyReader := io.NopCloser(strings.NewReader(body))
-	obj, err := operations.RcatSize(ctx, r.Fremote, file1.Path, bodyReader, int64(len(body)), file1.ModTime, nil)
+	obj, err := operations.RcatSize(ctx, spy, "potato1", bodyReader, int64(len(body)), t1, nil)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(body)), obj.Size())
-	assert.Equal(t, file1.Path, obj.Remote())
+
+	// Verify the upload header was actually passed through to Put
+	require.NotEmpty(t, spy.gotOptions, "expected options to be passed to Put")
+	var found bool
+	for _, opt := range spy.gotOptions {
+		if httpOpt, ok := opt.(*fs.HTTPOption); ok {
+			if httpOpt.Key == "X-Upload-Header" && httpOpt.Value == "upload-value" {
+				found = true
+			}
+		}
+	}
+	assert.True(t, found, "X-Upload-Header not found in options passed to Put")
 }
 
 func TestTouchDir(t *testing.T) {
