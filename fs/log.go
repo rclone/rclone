@@ -9,9 +9,22 @@ import (
 	"slices"
 )
 
-// logger represents the slog logging facility and should be overriden by
+// logger represents the slog logging facility and should be overridden by
 // the fs/log handling code.
 var logger *slog.Logger = slog.Default()
+
+// InitialiseDefaultLogger controls whether rclone sets the process-wide
+// default slog logger (via slog.SetDefault) during initialisation.
+//
+// When rclone is used as a library, the host application can set this
+// to false before any rclone logging is initialised to prevent rclone
+// from overriding the process-wide default logger. Rclone's own
+// internal logging will still work correctly through its private
+// logger instance.
+//
+// This should be set before importing packages that trigger init()
+// (e.g. backend/all) or before calling fs/log.InitLogging().
+var InitialiseDefaultLogger = true
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
 type LogLevel = Enum[logLevelChoices]
