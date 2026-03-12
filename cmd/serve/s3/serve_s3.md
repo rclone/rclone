@@ -128,8 +128,11 @@ can take some time.
 
 Versioning is not currently supported.
 
-Metadata will only be saved in memory other than the rclone `mtime`
-metadata which will be set as the modification time of the file.
+By default, metadata (custom `X-Amz-Meta-*` headers, Content-Type,
+etc.) is only kept in memory and will be lost on restart. The rclone
+`mtime` metadata is the exception — it is always persisted as the
+file modification time. Use `--meta-db /path/to/meta.db` to persist
+all metadata to a bbolt database on disk so that it survives restarts.
 
 ### Supported operations
 

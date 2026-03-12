@@ -4,12 +4,12 @@ package s3
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"maps"
 	"os"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ncw/swift/v2"
@@ -26,15 +26,25 @@ var (
 // backend for gofakes3
 type s3Backend struct {
 	s    *Server
-	meta *sync.Map
+	meta metadataStore
 }
 
 // newBackend creates a new SimpleBucketBackend.
-func newBackend(s *Server) gofakes3.Backend {
+func newBackend(s *Server, metaDBPath string) (*s3Backend, error) {
+	var meta metadataStore
+	if metaDBPath != "" {
+		var err error
+		meta, err = newBoltMetaStore(metaDBPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open metadata database: %w", err)
+		}
+	} else {
+		meta = newMemoryMetaStore()
+	}
 	return &s3Backend{
 		s:    s,
-		meta: new(sync.Map),
-	}
+		meta: meta,
+	}, nil
 }
 
 // ListBuckets always returns the default bucket.
@@ -141,8 +151,7 @@ func (b *s3Backend) HeadObject(ctx context.Context, bucketName, objectName strin
 		"Content-Type":  fs.MimeType(context.Background(), fobj),
 	}
 
-	if val, ok := b.meta.Load(fp); ok {
-		metaMap := val.(map[string]string)
+	if metaMap, ok := b.meta.Load(fp); ok {
 		maps.Copy(meta, metaMap)
 	}
 
@@ -216,8 +225,7 @@ func (b *s3Backend) GetObject(ctx context.Context, bucketName, objectName string
 		"Content-Type":  fs.MimeType(context.Background(), fobj),
 	}
 
-	if val, ok := b.meta.Load(fp); ok {
-		metaMap := val.(map[string]string)
+	if metaMap, ok := b.meta.Load(fp); ok {
 		maps.Copy(meta, metaMap)
 	}
 
@@ -401,6 +409,8 @@ func (b *s3Backend) deleteObject(ctx context.Context, bucketName, objectName str
 		return err
 	}
 
+	b.meta.Delete(fp)
+
 	// FIXME: unsafe operation
 	rmdirRecursive(fp, _vfs)
 	return nil
@@ -441,6 +451,8 @@ func (b *s3Backend) DeleteBucket(ctx context.Context, name string) error {
 	if err := _vfs.Remove(name); err != nil {
 		return gofakes3.ErrBucketNotEmpty
 	}
+
+	b.meta.DeleteAll(name)
 
 	return nil
 }
@@ -516,4 +528,9 @@ func (b *s3Backend) CopyObject(ctx context.Context, srcBucket, srcKey, dstBucket
 		ETag:         `"` + hex.EncodeToString(c.Hash) + `"`,
 		LastModified: gofakes3.NewContentTime(cStat.ModTime()),
 	}, nil
+}
+
+// Close closes the backend's metadata store.
+func (b *s3Backend) Close() error {
+	return b.meta.Close()
 }
