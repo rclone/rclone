@@ -333,6 +333,21 @@ This option disables concurrent writes should that be necessary.
 `,
 			Advanced: true,
 		}, {
+			Name:    "disable_concurrent_opens",
+			Default: false,
+			Help: `If set, don't open multiple files concurrently on one connection.
+
+Normally rclone may open multiple files for reading on a single SFTP
+connection. This is efficient for most servers, but some servers limit
+the number of files that can be open simultaneously on a single connection,
+returning "permission denied" errors when this limit is exceeded.
+
+Setting this option ensures that each open file exclusively holds its
+connection until the file is closed. The connection is only returned
+to the pool after the transfer completes.
+`,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -585,6 +600,7 @@ type Options struct {
 	UseFstat                bool            `config:"use_fstat"`
 	DisableConcurrentReads  bool            `config:"disable_concurrent_reads"`
 	DisableConcurrentWrites bool            `config:"disable_concurrent_writes"`
+	DisableConcurrentOpens  bool            `config:"disable_concurrent_opens"`
 	IdleTimeout             fs.Duration     `config:"idle_timeout"`
 	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
 	Concurrency             int             `config:"concurrency"`
@@ -2241,15 +2257,17 @@ type objectReader struct {
 	sftpFile   *sftp.File
 	pipeReader *io.PipeReader
 	done       chan struct{}
+	conn       **conn // held connection when DisableConcurrentOpens is set
 }
 
-func (f *Fs) newObjectReader(sftpFile *sftp.File) *objectReader {
+func (f *Fs) newObjectReader(sftpFile *sftp.File, pc **conn) *objectReader {
 	pipeReader, pipeWriter := io.Pipe()
 	file := &objectReader{
 		f:          f,
 		sftpFile:   sftpFile,
 		pipeReader: pipeReader,
 		done:       make(chan struct{}),
+		conn:       pc,
 	}
 	// Show connection in use
 	f.addSession()
@@ -2284,6 +2302,10 @@ func (file *objectReader) Close() (err error) {
 	<-file.done
 	// Show connection no longer in use
 	file.f.removeSession()
+	// Return the held connection to the pool if DisableConcurrentOpen is set
+	if file.conn != nil {
+		file.f.putSftpConnection(file.conn, err)
+	}
 	return err
 }
 
@@ -2307,17 +2329,27 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return nil, fmt.Errorf("Open: %w", err)
 	}
 	sftpFile, err := c.sftpClient.Open(o.path())
-	o.fs.putSftpConnection(&c, err)
 	if err != nil {
+		o.fs.putSftpConnection(&c, err)
 		return nil, fmt.Errorf("Open failed: %w", err)
+	}
+	// If DisableConcurrentOpens is set, hold the connection until Close
+	var pc **conn
+	if o.fs.opt.DisableConcurrentOpens {
+		pc = &c
+	} else {
+		o.fs.putSftpConnection(&c, nil)
 	}
 	if offset > 0 {
 		off, err := sftpFile.Seek(offset, io.SeekStart)
 		if err != nil || off != offset {
+			if pc != nil {
+				o.fs.putSftpConnection(pc, err)
+			}
 			return nil, fmt.Errorf("Open Seek failed: %w", err)
 		}
 	}
-	in = readers.NewLimitedReadCloser(o.fs.newObjectReader(sftpFile), limit)
+	in = readers.NewLimitedReadCloser(o.fs.newObjectReader(sftpFile, pc), limit)
 	return in, nil
 }
 
