@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	pathpkg "path"
 	"strconv"
 	"strings"
 	"time"
@@ -11,7 +12,9 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs/vfscache"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 const getVFSHelp = ` 
@@ -31,9 +34,10 @@ func getVFS(in rc.Params) (vfs *VFS, err error) {
 	if rc.IsErrParamNotFound(err) {
 		var count int
 		vfs, count = activeCacheEntries()
-		if count == 1 {
+		switch count {
+		case 1:
 			return vfs, nil
-		} else if count == 0 {
+		case 0:
 			return nil, errors.New(`no VFS active and "fs" parameter not supplied`)
 		}
 		return nil, errors.New(`more than one VFS active - need "fs" parameter`)
@@ -251,7 +255,7 @@ func getInterval(in rc.Params) (time.Duration, bool, error) {
 		return 0, true, err
 	}
 	if interval < 0 {
-		return 0, true, errors.New("interval must be >= 0")
+		return 0, true, rc.NewErrParamInvalid(errors.New("interval must be >= 0"))
 	}
 	delete(in, k)
 	return interval, true, nil
@@ -273,7 +277,7 @@ func getTimeout(in rc.Params) (time.Duration, error) {
 
 func getStatus(vfs *VFS, in rc.Params) (out rc.Params, err error) {
 	for k, v := range in {
-		return nil, fmt.Errorf("invalid parameter: %s=%s", k, v)
+		return nil, rc.NewErrParamInvalid(fmt.Errorf("invalid parameter: %s=%s", k, v))
 	}
 	return rc.Params{
 		"enabled":   vfs.Opt.PollInterval != 0,
@@ -330,7 +334,7 @@ func rcPollInterval(ctx context.Context, in rc.Params) (out rc.Params, err error
 		return nil, err
 	}
 	for k, v := range in {
-		return nil, fmt.Errorf("invalid parameter: %s=%s", k, v)
+		return nil, rc.NewErrParamInvalid(fmt.Errorf("invalid parameter: %s=%s", k, v))
 	}
 	if vfs.pollChan == nil {
 		return nil, errors.New("poll-interval is not supported by this remote")
@@ -376,7 +380,7 @@ parameter.`,
 func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	activeMu.Lock()
 	defer activeMu.Unlock()
-	var names = []string{}
+	names := make([]string, 0)
 	for name, vfses := range active {
 		if len(vfses) == 1 {
 			names = append(names, name)
@@ -553,4 +557,340 @@ func rcQueueSetExpiry(ctx context.Context, in rc.Params) (out rc.Params, err err
 	}
 	err = vfs.cache.QueueSetExpiry(writeback.Handle(id), refTime, time.Duration(float64(time.Second)*expiry))
 	return nil, err
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/status",
+		Fn:    rcStatus,
+		Title: "Get aggregate cache status statistics.",
+		Help: `
+This returns aggregate cache status statistics for the VFS, including
+counts for each cache status type.
+
+This takes the following parameters:
+
+- fs - select the VFS in use (optional)
+
+This returns a JSON object with the following fields:
+
+- totalFiles - total number of files currently tracked by the cache (only includes files that have been accessed)
+- totalCachedBytes - total bytes cached across all tracked files
+- averageCachePercentage - average cache percentage across all tracked files (0-100)
+- counts - object containing counts for each cache status:
+  - FULL - number of files completely cached locally
+  - PARTIAL - number of files partially cached
+  - NONE - number of tracked files not cached (remote only)
+  - DIRTY - number of files modified locally but not uploaded
+  - UPLOADING - number of files currently being uploaded
+  - ERROR - number of files in error state (items that have experienced errors like reset failures). This status takes precedence over others in the counts.
+- fs - file system path
+
+Note: These statistics only reflect files that are currently tracked by the VFS cache.
+Files that have never been accessed through the VFS are not included in these counts.
+` + getVFSHelp,
+	})
+
+	rc.Add(rc.Call{
+		Path:  "vfs/file-status",
+		Fn:    rcFileStatus,
+		Title: "Get detailed cache status of one or more files.",
+		Help: `
+This returns detailed cache status of files including name, status, percentage,
+size, cached bytes, dirty flag, and uploading status.
+
+This takes the following parameters:
+
+- fs - select the VFS in use (optional)
+- file - the path to the file to get the status of (can be repeated as file1, file2, etc.)
+
+This returns a JSON object with the following fields:
+
+- files - array of file objects with fields:
+  - name - leaf name of the file
+  - status - one of "FULL", "PARTIAL", "NONE", "DIRTY", "UPLOADING", "ERROR"
+  - percentage - cache percentage (0-100), representing the percentage of the file cached locally
+  - uploading - whether the file is currently being uploaded
+  - size - total file size in bytes
+  - cachedBytes - bytes cached locally
+  - dirty - whether the file has uncommitted modifications
+  - error - generic error message if there was an error getting file information (optional).
+    For security, only a generic message is returned; detailed error information is logged internally.
+- fs - file system path
+
+Note: The percentage field indicates how much of the file is cached locally (0-100).
+For "FULL" and "DIRTY" status, it is always 100 since the local file is complete.
+For "UPLOADING" status, it is also 100 which represents the percentage of the file
+that is cached locally (not the upload progress). It is only meaningful for "PARTIAL"
+status files where it shows the actual percentage cached.
+If the file cannot be found or accessed, the status will be "ERROR" and an
+"error" field will be included with a generic message for security (detailed
+errors are logged internally).
+` + getVFSHelp,
+	})
+
+	rc.Add(rc.Call{
+		Path:  "vfs/dir-status",
+		Fn:    rcDirStatus,
+		Title: "Get cache status of files in a directory.",
+		Help: `
+This returns cache status for files in a specified directory that are currently
+tracked by the VFS cache, optionally including subdirectories. This is ideal for
+file manager integrations that need to display cache status overlays for directory
+listings.
+
+This takes the following parameters:
+
+- fs - select the VFS in use (optional)
+- dir - the path to the directory to get the status of (optional, defaults to root)
+- recursive - if true, include all subdirectories (optional, defaults to false)
+
+This returns a JSON object with the following fields:
+
+- dir - the directory path that was scanned
+- files - object containing arrays of files grouped by their cache status.
+  All status categories are always present (may be empty arrays):
+  - FULL - array of completely cached files
+  - PARTIAL - array of partially cached files
+  - NONE - array of tracked files not cached (remote only)
+  - DIRTY - array of files modified locally but not uploaded
+  - UPLOADING - array of files currently being uploaded
+  - ERROR - array of files with errors (e.g., reset failures)
+- Each file entry includes:
+  - name - the file name (use / as path separator)
+  - percentage - cache percentage (0-100). For UPLOADING files, this represents
+    the percentage of the file cached locally, not upload progress
+  - uploading - whether the file is currently being uploaded
+- recursive - whether subdirectories were included in the scan
+- fs - the file system path
+
+Note: This endpoint only returns files that are currently tracked by the VFS cache
+(files that have been accessed). It does not list all files in the remote directory.
+
+Example:
+  rclone rc vfs/dir-status dir=/documents
+  rclone rc vfs/dir-status dir=/documents recursive=true
+` + getVFSHelp,
+	})
+}
+
+func rcDirStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+
+	// dir parameter is optional - defaults to root
+	dirPath, err := in.GetString("dir")
+	if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, err
+	}
+
+	// Check for recursive parameter
+	recursive, err := in.GetBool("recursive")
+	if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, rc.NewErrParamInvalid(fmt.Errorf("invalid recursive parameter: %v", err))
+	}
+
+	// Validate directory if specified - ensure it's not a file
+	// We prefer checking the cache first to avoid expensive remote lookups.
+	// If cache is available, use it to validate without remote calls.
+	// We don't check if directory exists in VFS because cache may contain
+	// items under that path even if directory node itself hasn't been read
+
+	// Normalize path
+	cleanPath := vfscommon.NormalizePath(dirPath)
+
+	if dirPath != "" {
+		// Check if path is a file (not a directory)
+		if node, err := vfs.Stat(cleanPath); err == nil && !node.IsDir() {
+			return nil, rc.NewErrParamInvalid(fmt.Errorf("path %q is not a directory", dirPath))
+		}
+	}
+
+	// Get files status using the cache
+	var filesByStatus map[string][]rc.Params
+	if vfs.cache == nil {
+		// If cache is not enabled, return empty results with all categories
+		filesByStatus = make(map[string][]rc.Params)
+		for _, status := range vfscache.CacheStatuses {
+			filesByStatus[status] = []rc.Params{}
+		}
+	} else {
+		// Convert ItemStatus to rc.Params
+		itemsByStatus := vfs.cache.GetStatusForDir(cleanPath, recursive)
+		filesByStatus = make(map[string][]rc.Params)
+
+		for status, items := range itemsByStatus {
+			paramsList := make([]rc.Params, 0, len(items))
+			for _, item := range items {
+				isUploading := item.Status == vfscache.CacheStatusUploading
+				paramsList = append(paramsList, rc.Params{
+					"name":        item.Name,
+					"percentage":  item.Percentage,
+					"uploading":   isUploading,
+					"size":        item.TotalSize,
+					"cachedBytes": item.CachedSize,
+					"dirty":       item.IsDirty,
+				})
+			}
+			filesByStatus[status] = paramsList
+		}
+	}
+
+	// Prepare the response - always include all categories for a stable API
+	responseFiles := rc.Params{}
+	for _, status := range vfscache.CacheStatuses {
+		responseFiles[status] = filesByStatus[status]
+	}
+
+	return rc.Params{
+		"dir":       cleanPath,
+		"files":     responseFiles,
+		"recursive": recursive,
+		"fs":        fs.ConfigString(vfs.Fs()),
+	}, nil
+}
+
+func rcFileStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+
+	// Support both single file and multiple files
+	var paths []string
+
+	// Check for "file" parameter (single file)
+	if path, err := in.GetString("file"); err == nil {
+		if path == "" {
+			return nil, rc.NewErrParamInvalid(errors.New("empty file parameter"))
+		}
+		paths = append(paths, path)
+	} else if !rc.IsErrParamNotFound(err) {
+		return nil, err
+	}
+
+	// Check for multiple file parameters (file1, file2, etc.)
+	for i := 1; ; i++ {
+		if len(paths) >= 100 {
+			return nil, rc.NewErrParamInvalid(errors.New("too many file parameters provided (max 100)"))
+		}
+		key := "file" + strconv.Itoa(i)
+		path, pathErr := in.GetString(key)
+		if pathErr != nil {
+			if rc.IsErrParamNotFound(pathErr) {
+				break // No more file parameters
+			}
+			return nil, pathErr
+		}
+		if path == "" {
+			return nil, rc.NewErrParamInvalid(fmt.Errorf("empty %s parameter", key))
+		}
+		paths = append(paths, path)
+	}
+
+	// If no files found, return error
+	if len(paths) == 0 {
+		return nil, rc.NewErrParamInvalid(errors.New("no file parameter(s) provided"))
+	}
+
+	// Collect status for each file
+	results := make([]rc.Params, 0, len(paths))
+	for _, path := range paths {
+		var result rc.Params
+
+		// Normalize path to match cache key format
+		cleanPath := vfscommon.NormalizePath(path)
+		baseName := pathpkg.Base(cleanPath)
+
+		// Check if cache is enabled and file exists in cache
+		if vfs.cache != nil {
+			if item := vfs.cache.FindItem(cleanPath); item != nil {
+				status, percentage, totalSize, cachedSize, isDirty := item.VFSStatusCacheDetailed()
+				isUploading := status == vfscache.CacheStatusUploading
+				result = rc.Params{
+					"name":        baseName,
+					"status":      status,
+					"percentage":  percentage,
+					"uploading":   isUploading,
+					"size":        totalSize,
+					"cachedBytes": cachedSize,
+					"dirty":       isDirty,
+				}
+				results = append(results, result)
+				continue
+			}
+		}
+
+		// File not in cache or cache disabled, return NONE or ERROR status
+		size := int64(0)
+		hasError := false
+		// Attempt to get file size from VFS using normalized path
+		if node, err := vfs.Stat(cleanPath); err == nil {
+			size = node.Size()
+		} else {
+			// Log detailed error internally for debugging
+			fs.Debugf(vfs.Fs(), "vfs/file-status: error getting file info for %q: %v", cleanPath, err)
+			hasError = true
+		}
+		fileStatus := vfscache.CacheStatusNone
+		if hasError {
+			fileStatus = vfscache.CacheStatusError
+		}
+		result = rc.Params{
+			"name":        baseName,
+			"status":      fileStatus,
+			"percentage":  0,
+			"uploading":   false,
+			"size":        size,
+			"cachedBytes": 0,
+			"dirty":       false,
+		}
+		if hasError {
+			result["error"] = "file not found or not accessible"
+		}
+		results = append(results, result)
+	}
+
+	// Always return results in 'files' array format for consistency
+	return rc.Params{
+		"files": results,
+		"fs":    fs.ConfigString(vfs.Fs()),
+	}, nil
+}
+
+func rcStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+
+	if vfs.cache == nil {
+		counts := rc.Params{}
+		for _, status := range vfscache.CacheStatuses {
+			counts[status] = 0
+		}
+		return rc.Params{
+			"totalFiles":             int64(0),
+			"totalCachedBytes":       int64(0),
+			"averageCachePercentage": int64(0),
+			"counts":                 counts,
+			"fs":                     fs.ConfigString(vfs.Fs()),
+		}, nil
+	}
+
+	stats := vfs.cache.GetAggregateStats()
+	counts := rc.Params{}
+	for k, v := range stats.Counts {
+		counts[k] = v
+	}
+
+	return rc.Params{
+		"totalFiles":             stats.TotalFiles,
+		"totalCachedBytes":       stats.TotalCachedBytes,
+		"averageCachePercentage": stats.AverageCachePercentage,
+		"counts":                 counts,
+		"fs":                     fs.ConfigString(vfs.Fs()),
+	}, nil
 }
