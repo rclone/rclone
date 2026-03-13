@@ -211,18 +211,19 @@ func createRootDirs(parentOSPath string, relativeDirOSPath string) (dataOSPath s
 //
 // Returns an os path for the data cache file.
 func (c *Cache) createItemDir(name string) (string, error) {
-	parent := vfscommon.FindParent(name)
-	parentPath := c.toOSPath(parent)
-	err := createDir(parentPath)
-	if err != nil {
+	relativePath := toOSPath(name)
+	relativeDir := vfscommon.OSFindParent(relativePath)
+	// Ensure cache directories exists.
+	// Could skip this if relativeDir=="", since the cache root paths should
+	// always exist (ensured in New function), which would avoid unnecessary path
+	// operations and os.Stat, but by always doing it we get an extra failsafe...
+	if err := createDir(filepath.Join(c.root, relativeDir)); err != nil {
 		return "", fmt.Errorf("failed to create data cache item directory: %w", err)
 	}
-	parentPathMeta := c.toOSPathMeta(parent)
-	err = createDir(parentPathMeta)
-	if err != nil {
+	if err := createDir(filepath.Join(c.metaRoot, relativeDir)); err != nil {
 		return "", fmt.Errorf("failed to create metadata cache item directory: %w", err)
 	}
-	return c.toOSPath(name), nil
+	return filepath.Join(c.root, relativePath), nil
 }
 
 // getBackend gets a backend for a cache root dir
