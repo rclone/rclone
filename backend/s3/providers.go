@@ -52,6 +52,7 @@ type Provider struct {
 	// other
 	IBMApiKey             bool `yaml:"ibm_api_key,omitempty"`
 	IBMResourceInstanceID bool `yaml:"ibm_resource_instance_id,omitempty"`
+	IBMIAMEndpoint        bool `yaml:"ibm_iam_endpoint,omitempty"`
 
 	// advanced
 	BucketACL             bool `yaml:"bucket_acl,omitempty"`
@@ -224,6 +225,8 @@ func constructProviders(options fs.Options, providerMap map[string]*Provider) st
 				addBool(opt, p, p.IBMApiKey)
 			case "ibm_resource_instance_id":
 				addBool(opt, p, p.IBMResourceInstanceID)
+			case "ibm_iam_endpoint":
+				addBool(opt, p, p.IBMIAMEndpoint)
 			case "leave_parts_on_error":
 				addBool(opt, p, p.LeavePartsOnError)
 			case "sts_endpoint":
