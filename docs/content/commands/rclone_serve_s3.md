@@ -762,6 +762,66 @@ is an error reading the metadata the error will be returned as
 rclone serve s3 remote:path [flags]
 ```
 
+## Auth Proxy
+
+If you supply the parameter `--auth-proxy /path/to/program` then
+rclone will use that program to generate backends on the fly and send the S3
+ACCESS_KEY_ID as bearer token to these backends. 
+This way backends that need bearer tokens to authenticate can be served as S3
+despite the different authentication method.
+This uses a simple JSON based protocol with input on STDIN and output on STDOUT.
+
+There is an example program
+[bin/test_s3_proxy.py](https://github.com/rclone/rclone/blob/master/bin/test_s3_proxy.py)
+in the rclone source code.
+
+### Detailed example using ownCloud Infinite Scale as WebDAV backend
+
+This example should also work with other WebDAV providers that use bearer authentication.
+But you might have to adjust the way you get a valid token.
+Because ownCloud Infinite Scale uses OpenID Connect (OIDC) for authentication,
+we will use the [OIDC-agent](https://github.com/indigo-dc/oidc-agent) to get and refresh tokens.
+
+1. [Use OIDC-agent to get a token for ownCloud Infinite Scale](https://owncloud.dev/clients/rclone/webdav-sync-oidc/)  
+   make sure that you can get a token using `oidc-token <account-name>`
+2. Set these configuration env. variables  
+   (make sure to replace `<ocis-host>` with the actual host)
+   ```bash
+   export RCLONE_WEBDAV_VENDOR=owncloud
+   export RCLONE_WEBDAV_URL=https://<ocis-host>/webdav
+   ```
+3. Start rclone to serve the WebDAV backend as S3
+   ```bash
+   ./rclone serve s3 --auth-proxy=./bin/test_s3_proxy.py --auth-key ,12345678
+   ```
+   Note: add `--no-check-certificate` if you use a self-signed certificates  
+   Note: the SECRET_ACCESS_KEY (part of the auth-key after the comma) is used to authenticate the client to rclone
+4. Create an S3 client using
+   - `127.0.0.1:8080` as endpoint
+   - the output of `oidc-token <account-name>` as access key
+   - `12345678` as secret key  
+   e.g. with the minio python library:  
+     (make sure to replace `<account-name>` with the actual value)
+   ```python
+   from minio import Minio
+   import subprocess
+   
+   result = subprocess.run(['oidc-token', '<account-name>'], capture_output=True, text=True)
+   access_key = result.stdout.strip()
+   client = Minio(
+      "127.0.0.1:8080",
+      secure=False,
+      access_key=access_key,
+      secret_key="12345678",
+   )
+   
+   # Get and list all buckets (folders in the root)
+   buckets = client.list_buckets()
+   for bucket in buckets:
+       print(bucket.name, bucket.creation_date)
+   ```
+5. Run the client, and you should see all the folders in the root of the WebDAV backend
+
 ## Options
 
 ```
