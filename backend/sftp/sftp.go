@@ -2394,6 +2394,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Stat the file after the upload to read its stats back if o.fs.opt.SetModTime == false
 	if !o.fs.opt.SetModTime {
+		ci := fs.GetConfig(ctx)
+		if ci.NoCheckDest {
+			fs.Debugf(o, "--no-check-dest is set, so returning best guess")
+			o.modTime = uint32(src.ModTime(ctx).Unix())
+			o.size = src.Size()
+			o.mode = os.FileMode(0666) // regular file
+			return nil
+		}
+
 		err = o.stat(ctx)
 		if err == fs.ErrorObjectNotFound {
 			// In the specific case of o.fs.opt.SetModTime == false
