@@ -29,6 +29,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -229,7 +230,10 @@ will be interpreted as the name of shared folder and rclone will list and access
 files within it using the shared folder's namespace. This works for all shared
 folder types including team folders.
 
-Note that write operations (upload, delete, etc.) are not supported in this mode.
+Write operations (upload, delete, mkdir, copy, move) are supported within
+shared folders. Server-side copy and move operations only work within the
+same shared folder - cross-shared-folder operations will fall back to
+upload/download.
 
 See also --dropbox-root-namespace for an alternative way to work with shared
 folders.`,
@@ -317,23 +321,25 @@ type Options struct {
 
 // Fs represents a remote dropbox server
 type Fs struct {
-	name           string         // name of this remote
-	root           string         // the path we are working on
-	opt            Options        // parsed options
-	ci             *fs.ConfigInfo // global config
-	features       *fs.Features   // optional features
-	srv            files.Client   // the connection to the dropbox server
-	svc            files.Client   // the connection to the dropbox server (unauthorized)
-	sharing        sharing.Client // as above, but for generating sharing links
-	users          users.Client   // as above, but for accessing user information
-	team           team.Client    // for the Teams API
-	slashRoot      string         // root with "/" prefix, lowercase
-	slashRootSlash string         // root with "/" prefix and postfix, lowercase
-	pacer          *fs.Pacer      // To pace the API calls
-	ns             string         // The namespace we are using or "" for none
-	batcher        *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
-	exportExts     []exportExtension
-	cfg            dropbox.Config // SDK config for creating per-namespace clients
+	name            string         // name of this remote
+	root            string         // the path we are working on
+	opt             Options        // parsed options
+	ci              *fs.ConfigInfo // global config
+	features        *fs.Features   // optional features
+	srv             files.Client   // the connection to the dropbox server
+	svc             files.Client   // the connection to the dropbox server (unauthorized)
+	sharing         sharing.Client // as above, but for generating sharing links
+	users           users.Client   // as above, but for accessing user information
+	team            team.Client    // for the Teams API
+	slashRoot       string         // root with "/" prefix, lowercase
+	slashRootSlash  string         // root with "/" prefix and postfix, lowercase
+	pacer           *fs.Pacer      // To pace the API calls
+	ns              string         // The namespace we are using or "" for none
+	batcher         *batcher.Batcher[*files.UploadSessionFinishArg, *files.FileMetadata]
+	exportExts      []exportExtension
+	cfg             dropbox.Config    // SDK config for creating per-namespace clients
+	sharedFolderMu  sync.Mutex        // protects sharedFolderIDs
+	sharedFolderIDs map[string]string // cache of shared folder name → namespace ID
 }
 
 type exportType int
@@ -371,6 +377,33 @@ func (o *Object) fileSrv() files.Client {
 		return files.New(nsCfg)
 	}
 	return o.fs.srv
+}
+
+// sharedFolderSrvAndPath resolves an rclone path in shared_folders mode
+// to a namespace-scoped files client and the API path within that namespace.
+// The rclone path format is "SharedFolderName/sub/path/file.txt".
+func (f *Fs) sharedFolderSrvAndPath(ctx context.Context, rclonePath string) (srv files.Client, apiPath string, nsID string, err error) {
+	firstDir, subPath, _ := strings.Cut(rclonePath, "/")
+	nsID, err = f.findSharedFolder(ctx, firstDir)
+	if err != nil {
+		return nil, "", "", err
+	}
+	srv = files.New(f.cfg.WithNamespaceID(nsID))
+	if subPath != "" {
+		apiPath = f.opt.Enc.FromStandardPath("/" + subPath)
+	}
+	return srv, apiPath, nsID, nil
+}
+
+// nsPath returns the encoded API path for use with namespace-scoped clients.
+// In shared_folders mode the object's remote is "SharedFolder/sub/file.txt"
+// but the API path within the namespace is just "/sub/file.txt".
+func (o *Object) nsPath() string {
+	if o.nsID != "" {
+		_, subPath, _ := strings.Cut(o.remote, "/")
+		return o.fs.opt.Enc.FromStandardPath("/" + subPath)
+	}
+	return o.fs.opt.Enc.FromStandardPath(o.remotePath())
 }
 
 // Name of the remote (as passed into NewFs)
@@ -575,7 +608,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if f.opt.SharedFolders {
 		f.setRoot(root)
 		if f.root == "" {
-			return f, nil // our root it empty so we probably want to list shared folders
+			f.features.Fill(ctx, f)
+			return f, nil // our root is empty so we probably want to list shared folders
 		}
 
 		dir := path.Dir(f.root)
@@ -1024,21 +1058,38 @@ func (f *Fs) listDir(ctx context.Context, srv files.Client, root string, dir str
 // findSharedFolder find the id for a given shared folder name
 // somewhat annoyingly there is no endpoint to query a shared folder by it's name
 // so our only option is to iterate over all shared folders
+//
+// Results are cached for the lifetime of the Fs.
 func (f *Fs) findSharedFolder(ctx context.Context, name string) (id string, err error) {
-	errFoundFile := errors.New("found file")
-	err = f.listSharedFolders(ctx, func(entry fs.DirEntry) error {
-		if entry.(*fs.Dir).Remote() == name {
-			id = entry.(*fs.Dir).ID()
-			return errFoundFile
+	f.sharedFolderMu.Lock()
+	if f.sharedFolderIDs != nil {
+		if cachedID, ok := f.sharedFolderIDs[name]; ok {
+			f.sharedFolderMu.Unlock()
+			return cachedID, nil
 		}
+	}
+	f.sharedFolderMu.Unlock()
+
+	// Not cached - list all shared folders and populate the cache
+	found := make(map[string]string)
+	err = f.listSharedFolders(ctx, func(entry fs.DirEntry) error {
+		d := entry.(*fs.Dir)
+		found[d.Remote()] = d.ID()
 		return nil
 	})
-	if errors.Is(err, errFoundFile) {
-		return id, nil
-	} else if err != nil {
+	if err != nil {
 		return "", err
 	}
-	return "", fs.ErrorDirNotFound
+
+	f.sharedFolderMu.Lock()
+	f.sharedFolderIDs = found
+	f.sharedFolderMu.Unlock()
+
+	id, ok := found[name]
+	if !ok {
+		return "", fs.ErrorDirNotFound
+	}
+	return id, nil
 }
 
 // mountSharedFolder mount a shared folder to the root namespace
@@ -1196,13 +1247,24 @@ func (f *Fs) ListP(ctx context.Context, dir string, callback fs.ListRCallback) (
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	if f.opt.SharedFiles || f.opt.SharedFolders {
+	if f.opt.SharedFiles {
 		return nil, errNotSupportedInSharedMode
 	}
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
 		remote: src.Remote(),
+	}
+	if f.opt.SharedFolders {
+		firstDir, _, ok := strings.Cut(src.Remote(), "/")
+		if !ok {
+			return nil, errors.New("can't upload to shared folder root")
+		}
+		nsID, err := f.findSharedFolder(ctx, firstDir)
+		if err != nil {
+			return nil, err
+		}
+		o.nsID = nsID
 	}
 	return o, o.Update(ctx, in, src, options...)
 }
@@ -1214,8 +1276,11 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	if f.opt.SharedFiles || f.opt.SharedFolders {
+	if f.opt.SharedFiles {
 		return errNotSupportedInSharedMode
+	}
+	if f.opt.SharedFolders {
+		return f.mkdirSharedFolder(ctx, dir)
 	}
 	root := path.Join(f.slashRoot, dir)
 
@@ -1242,6 +1307,48 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.srv.CreateFolderV2(&arg2)
+		return shouldRetry(ctx, err)
+	})
+	return err
+}
+
+// mkdirSharedFolder creates a directory within a shared folder.
+// Creating shared folders themselves is not supported.
+func (f *Fs) mkdirSharedFolder(ctx context.Context, dir string) error {
+	if dir == "" {
+		return nil // root of shared folders listing - nothing to create
+	}
+	if !strings.Contains(dir, "/") {
+		// This is just a shared folder name - it already exists
+		// (you can't create shared folders via the files API)
+		_, err := f.findSharedFolder(ctx, dir)
+		return err
+	}
+	srv, apiPath, _, err := f.sharedFolderSrvAndPath(ctx, dir)
+	if err != nil {
+		return err
+	}
+	if apiPath == "" {
+		return nil // root of shared folder already exists
+	}
+	// Check if directory exists by trying to get metadata
+	var entry files.IsMetadata
+	err = f.pacer.Call(func() (bool, error) {
+		entry, err = srv.GetMetadata(&files.GetMetadataArg{Path: apiPath})
+		return shouldRetry(ctx, err)
+	})
+	if err == nil {
+		if _, ok := entry.(*files.FolderMetadata); ok {
+			return nil // directory exists already
+		}
+	}
+	// Create it
+	arg := files.CreateFolderArg{Path: apiPath}
+	if cErr := checkPathLength(arg.Path); cErr != nil {
+		return cErr
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		_, err = srv.CreateFolderV2(&arg)
 		return shouldRetry(ctx, err)
 	})
 	return err
@@ -1296,10 +1403,71 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	if f.opt.SharedFiles || f.opt.SharedFolders {
+	if f.opt.SharedFiles {
 		return errNotSupportedInSharedMode
 	}
+	if f.opt.SharedFolders {
+		return f.rmdirSharedFolder(ctx, dir)
+	}
 	return f.purgeCheck(ctx, dir, true)
+}
+
+// rmdirSharedFolder removes a directory within a shared folder.
+// Removing the shared folder itself (top-level dir) is not allowed.
+func (f *Fs) rmdirSharedFolder(ctx context.Context, dir string) error {
+	if dir == "" || !strings.Contains(dir, "/") {
+		return errors.New("can't remove shared folder itself - only subdirectories within it")
+	}
+	return f.purgeCheckSharedFolder(ctx, dir, true)
+}
+
+// purgeCheckSharedFolder removes a directory within a shared folder.
+// If check is true, it verifies the directory is empty first.
+func (f *Fs) purgeCheckSharedFolder(ctx context.Context, dir string, check bool) error {
+	if dir == "" || !strings.Contains(dir, "/") {
+		return errors.New("can't remove shared folder itself - only subdirectories within it")
+	}
+	srv, apiPath, _, err := f.sharedFolderSrvAndPath(ctx, dir)
+	if err != nil {
+		return err
+	}
+	if apiPath == "" {
+		return errors.New("can't remove shared folder root")
+	}
+	if check {
+		// Check directory exists
+		var entry files.IsMetadata
+		err = f.pacer.Call(func() (bool, error) {
+			entry, err = srv.GetMetadata(&files.GetMetadataArg{Path: apiPath})
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return fmt.Errorf("Rmdir: %w", err)
+		}
+		if _, ok := entry.(*files.FolderMetadata); !ok {
+			return fmt.Errorf("Rmdir: %w", fs.ErrorIsFile)
+		}
+		// Check directory is empty
+		arg := files.NewListFolderArg(apiPath)
+		arg.Recursive = false
+		var res *files.ListFolderResult
+		err = f.pacer.Call(func() (bool, error) {
+			res, err = srv.ListFolder(arg)
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return fmt.Errorf("Rmdir: %w", err)
+		}
+		if len(res.Entries) != 0 {
+			return errors.New("directory not empty")
+		}
+	}
+	// Remove it
+	err = f.pacer.Call(func() (bool, error) {
+		_, err = srv.DeleteV2(&files.DeleteArg{Path: apiPath})
+		return shouldRetry(ctx, err)
+	})
+	return err
 }
 
 // Precision returns the precision
@@ -1321,6 +1489,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
+	}
+
+	if f.opt.SharedFolders {
+		return f.copySharedFolder(ctx, srcObj, remote)
 	}
 
 	// Find and remove existing object
@@ -1365,12 +1537,76 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	return dstObj, nil
 }
 
+// copySharedFolder copies an object within shared folders.
+// Both source and destination must be in the same shared folder namespace.
+func (f *Fs) copySharedFolder(ctx context.Context, srcObj *Object, remote string) (fs.Object, error) {
+	srcFirstDir, _, _ := strings.Cut(srcObj.remote, "/")
+	dstFirstDir, _, ok := strings.Cut(remote, "/")
+	if !ok {
+		return nil, fs.ErrorCantCopy
+	}
+	srcNsID, err := f.findSharedFolder(ctx, srcFirstDir)
+	if err != nil {
+		return nil, fs.ErrorCantCopy
+	}
+	dstNsID, err := f.findSharedFolder(ctx, dstFirstDir)
+	if err != nil {
+		return nil, fs.ErrorCantCopy
+	}
+	if srcNsID != dstNsID {
+		return nil, fs.ErrorCantCopy
+	}
+	srv := files.New(f.cfg.WithNamespaceID(srcNsID))
+
+	// Find and remove existing object
+	cleanup, err := operations.RemoveExisting(ctx, f, remote, "server side copy")
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup(&err)
+
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+		nsID:   srcNsID,
+	}
+
+	_, srcSubPath, _ := strings.Cut(srcObj.remote, "/")
+	_, dstSubPath, _ := strings.Cut(remote, "/")
+	arg := files.RelocationArg{
+		RelocationPath: files.RelocationPath{
+			FromPath: f.opt.Enc.FromStandardPath("/" + srcSubPath),
+			ToPath:   f.opt.Enc.FromStandardPath("/" + dstSubPath),
+		},
+	}
+	var result *files.RelocationResult
+	err = f.pacer.Call(func() (bool, error) {
+		result, err = srv.CopyV2(&arg)
+		return shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("copy failed: %w", err)
+	}
+	fileInfo, ok := result.Metadata.(*files.FileMetadata)
+	if !ok {
+		return nil, fs.ErrorNotAFile
+	}
+	err = dstObj.setMetadataFromEntry(fileInfo)
+	if err != nil {
+		return nil, fmt.Errorf("copy failed: %w", err)
+	}
+	return dstObj, nil
+}
+
 // Purge deletes all the files and the container
 //
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
+	if f.opt.SharedFolders {
+		return f.purgeCheckSharedFolder(ctx, dir, false)
+	}
 	return f.purgeCheck(ctx, dir, false)
 }
 
@@ -1388,6 +1624,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if !ok {
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
+	}
+
+	if f.opt.SharedFolders {
+		return f.moveSharedFolder(ctx, srcObj, remote)
 	}
 
 	// Temporary Object under construction
@@ -1424,6 +1664,67 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Set the metadata
+	fileInfo, ok := result.Metadata.(*files.FileMetadata)
+	if !ok {
+		return nil, fs.ErrorNotAFile
+	}
+	err = dstObj.setMetadataFromEntry(fileInfo)
+	if err != nil {
+		return nil, fmt.Errorf("move failed: %w", err)
+	}
+	return dstObj, nil
+}
+
+// moveSharedFolder moves an object within shared folders.
+// Both source and destination must be in the same shared folder namespace.
+func (f *Fs) moveSharedFolder(ctx context.Context, srcObj *Object, remote string) (fs.Object, error) {
+	srcFirstDir, _, _ := strings.Cut(srcObj.remote, "/")
+	dstFirstDir, _, ok := strings.Cut(remote, "/")
+	if !ok {
+		return nil, fs.ErrorCantMove
+	}
+	srcNsID, err := f.findSharedFolder(ctx, srcFirstDir)
+	if err != nil {
+		return nil, fs.ErrorCantMove
+	}
+	dstNsID, err := f.findSharedFolder(ctx, dstFirstDir)
+	if err != nil {
+		return nil, fs.ErrorCantMove
+	}
+	if srcNsID != dstNsID {
+		return nil, fs.ErrorCantMove
+	}
+	srv := files.New(f.cfg.WithNamespaceID(srcNsID))
+
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+		nsID:   srcNsID,
+	}
+
+	_, srcSubPath, _ := strings.Cut(srcObj.remote, "/")
+	_, dstSubPath, _ := strings.Cut(remote, "/")
+	arg := files.RelocationArg{
+		RelocationPath: files.RelocationPath{
+			FromPath: f.opt.Enc.FromStandardPath("/" + srcSubPath),
+			ToPath:   f.opt.Enc.FromStandardPath("/" + dstSubPath),
+		},
+	}
+	var result *files.RelocationResult
+	err = f.pacer.Call(func() (bool, error) {
+		result, err = srv.MoveV2(&arg)
+		switch e := err.(type) {
+		case files.MoveV2APIError:
+			if e.EndpointError != nil && e.EndpointError.FromLookup != nil && e.EndpointError.FromLookup.Tag == files.LookupErrorNotFound {
+				fs.Debugf(srcObj, "Retrying move on %v error", err)
+				return true, err
+			}
+		}
+		return shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("move failed: %w", err)
+	}
 	fileInfo, ok := result.Metadata.(*files.FileMetadata)
 	if !ok {
 		return nil, fs.ErrorNotAFile
@@ -1522,6 +1823,11 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
+
+	if f.opt.SharedFolders {
+		return f.dirMoveSharedFolder(ctx, srcFs, srcRemote, dstRemote)
+	}
+
 	srcPath := path.Join(srcFs.slashRoot, srcRemote)
 	dstPath := path.Join(f.slashRoot, dstRemote)
 
@@ -1551,6 +1857,57 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fmt.Errorf("MoveDir failed: %w", err)
 	}
 
+	return nil
+}
+
+// dirMoveSharedFolder moves a directory within shared folders.
+// Both source and destination must be in the same shared folder namespace.
+func (f *Fs) dirMoveSharedFolder(ctx context.Context, srcFs *Fs, srcRemote, dstRemote string) error {
+	srcFirstDir, srcSubPath, _ := strings.Cut(srcRemote, "/")
+	dstFirstDir, dstSubPath, _ := strings.Cut(dstRemote, "/")
+	if srcSubPath == "" || dstSubPath == "" {
+		return errors.New("can't move shared folder itself - only subdirectories within it")
+	}
+	srcNsID, err := srcFs.findSharedFolder(ctx, srcFirstDir)
+	if err != nil {
+		return fs.ErrorCantDirMove
+	}
+	dstNsID, err := f.findSharedFolder(ctx, dstFirstDir)
+	if err != nil {
+		return fs.ErrorCantDirMove
+	}
+	if srcNsID != dstNsID {
+		return fs.ErrorCantDirMove
+	}
+	srv := files.New(f.cfg.WithNamespaceID(srcNsID))
+
+	// Check if destination exists
+	dstAPIPath := f.opt.Enc.FromStandardPath("/" + dstSubPath)
+	var entry files.IsMetadata
+	err = f.pacer.Call(func() (bool, error) {
+		entry, err = srv.GetMetadata(&files.GetMetadataArg{Path: dstAPIPath})
+		return shouldRetry(ctx, err)
+	})
+	if err == nil {
+		if _, ok := entry.(*files.FolderMetadata); ok {
+			return fs.ErrorDirExists
+		}
+	}
+
+	// Do the move
+	arg := files.RelocationArg{
+		RelocationPath: files.RelocationPath{
+			FromPath: f.opt.Enc.FromStandardPath("/" + srcSubPath),
+			ToPath:   dstAPIPath,
+		},
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		_, err = srv.MoveV2(&arg)
+		return shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return fmt.Errorf("MoveDir failed: %w", err)
+	}
 	return nil
 }
 
@@ -1818,7 +2175,7 @@ func (o *Object) ID() string {
 
 // Hash returns the dropbox special hash
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders {
+	if o.fs.opt.SharedFiles {
 		return "", errNotSupportedInSharedMode
 	}
 	if t != DbHashType {
@@ -1879,6 +2236,29 @@ func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
 
 // Reads the entry for a file from dropbox
 func (o *Object) readEntry(ctx context.Context) (*files.FileMetadata, error) {
+	if o.nsID != "" {
+		srv := o.fileSrv()
+		var entry files.IsMetadata
+		var err error
+		err = o.fs.pacer.Call(func() (bool, error) {
+			entry, err = srv.GetMetadata(&files.GetMetadataArg{Path: o.nsPath()})
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			switch e := err.(type) {
+			case files.GetMetadataAPIError:
+				if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
+					return nil, fs.ErrorObjectNotFound
+				}
+			}
+			return nil, err
+		}
+		fileInfo, ok := entry.(*files.FileMetadata)
+		if !ok {
+			return nil, fs.ErrorNotAFile
+		}
+		return fileInfo, nil
+	}
 	return o.fs.getFileMetadata(ctx, o.remotePath())
 }
 
@@ -2010,11 +2390,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // Will introduce two additional network requests to start and finish the session.
 // If the size is unknown (i.e. -1) the method incurs one additional
 // request to the Dropbox API that does not carry a payload to close the append session.
-func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *files.CommitInfo, size int64) (entry *files.FileMetadata, err error) {
+func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, srv files.Client, commitInfo *files.CommitInfo, size int64, useBatching bool) (entry *files.FileMetadata, err error) {
 	// start upload
 	var res *files.UploadSessionStartResult
 	err = o.fs.pacer.Call(func() (bool, error) {
-		res, err = o.fs.srv.UploadSessionStart(&files.UploadSessionStartArg{}, nil)
+		res, err = srv.UploadSessionStart(&files.UploadSessionStartArg{}, nil)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2051,7 +2431,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 			if _, err = chunk.Seek(skip, io.SeekStart); err != nil {
 				return false, err
 			}
-			err = o.fs.srv.UploadSessionAppendV2(&appendArg, chunk)
+			err = srv.UploadSessionAppendV2(&appendArg, chunk)
 			// after session is started, we retry everything
 			if err != nil {
 				// Check for incorrect offset error and retry with new offset
@@ -2105,12 +2485,12 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 	}
 	// If we are batching then we should have written all the data now
 	// store the commit info now for a batch commit
-	if o.fs.batcher.Batching() {
+	if useBatching {
 		return o.fs.batcher.Commit(ctx, o.remote, args)
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		entry, err = o.fs.srv.UploadSessionFinish(args, nil)
+		entry, err = srv.UploadSessionFinish(args, nil)
 		if retry, err := shouldRetryExclude(ctx, err); !retry {
 			return retry, err
 		}
@@ -2154,14 +2534,15 @@ func checkPathLength(name string) (err error) {
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders {
+	if o.fs.opt.SharedFiles {
 		return errNotSupportedInSharedMode
 	}
+	uploadPath := o.nsPath()
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
 		return fserrors.NoRetryError(fmt.Errorf("file name %q is disallowed - not uploading", path.Base(remote)))
 	}
-	commitInfo := files.NewCommitInfo(o.fs.opt.Enc.FromStandardPath(o.remotePath()))
+	commitInfo := files.NewCommitInfo(uploadPath)
 	commitInfo.Mode.Tag = "overwrite"
 	// The Dropbox API only accepts timestamps in UTC with second precision.
 	clientModified := src.ModTime(ctx).UTC().Round(time.Second)
@@ -2171,14 +2552,17 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return cErr
 	}
 
+	srv := o.fileSrv()
 	size := src.Size()
+	// Disable batching for shared folder objects since the batch commit uses f.srv
+	useBatching := o.fs.batcher.Batching() && o.nsID == ""
 	var err error
 	var entry *files.FileMetadata
-	if size > int64(o.fs.opt.ChunkSize) || size < 0 || o.fs.batcher.Batching() {
-		entry, err = o.uploadChunked(ctx, in, commitInfo, size)
+	if size > int64(o.fs.opt.ChunkSize) || size < 0 || useBatching {
+		entry, err = o.uploadChunked(ctx, in, srv, commitInfo, size, useBatching)
 	} else {
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			entry, err = o.fs.srv.Upload(&files.UploadArg{CommitInfo: *commitInfo}, in)
+			entry, err = srv.Upload(&files.UploadArg{CommitInfo: *commitInfo}, in)
 			return shouldRetry(ctx, err)
 		})
 	}
@@ -2199,12 +2583,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) (err error) {
-	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders {
+	if o.fs.opt.SharedFiles {
 		return errNotSupportedInSharedMode
 	}
+	srv := o.fileSrv()
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{
-			Path: o.fs.opt.Enc.FromStandardPath(o.remotePath()),
+		_, err = srv.DeleteV2(&files.DeleteArg{
+			Path: o.nsPath(),
 		})
 		return shouldRetry(ctx, err)
 	})
