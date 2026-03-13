@@ -352,6 +352,8 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
+	} else {
+		opts.Body = bytes.NewBuffer(standardProps)
 	}
 	var result api.Multistatus
 	var resp *http.Response
@@ -759,9 +761,19 @@ var owncloudProps = []byte(`<?xml version="1.0"?>
   <d:getlastmodified />
   <d:getcontentlength />
   <d:resourcetype />
-  <d:getcontenttype />
   <oc:checksums />
   <oc:permissions />
+ </d:prop>
+</d:propfind>
+`)
+
+var standardProps = []byte(`<?xml version="1.0"?>
+<d:propfind xmlns:d="DAV:">
+ <d:prop>
+  <d:displayname/>
+  <d:getlastmodified/>
+  <d:getcontentlength/>
+  <d:resourcetype/>
  </d:prop>
 </d:propfind>
 `)
@@ -787,6 +799,8 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 	}
 	if f.hasOCMD5 || f.hasOCSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
+	} else {
+		opts.Body = bytes.NewBuffer(standardProps)
 	}
 	var result api.Multistatus
 	var resp *http.Response
