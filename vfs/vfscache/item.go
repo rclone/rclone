@@ -321,8 +321,12 @@ func (item *Item) _truncateToCurrentSize() (err error) {
 // extended and the extended data will be filled with zeros. The
 // object will be marked as dirty in this case also.
 func (item *Item) Truncate(size int64) (err error) {
-	item.preAccess()
-	defer item.postAccess()
+	return item.retryCacheWriteWithBackoff("truncate", func() (err1 error) {
+		return item.truncate(size)
+	})
+}
+
+func (item *Item) truncate(size int64) (err error) {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
@@ -1245,28 +1249,10 @@ func (item *Item) GetModTime() (modTime time.Time, err error) {
 // ReadAt bytes from the file at off
 func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 	n = 0
-	var expBackOff int
-	for retries := range fs.GetConfig(context.TODO()).LowLevelRetries {
-		item.preAccess()
-		n, err = item.readAt(b, off)
-		item.postAccess()
-		if err == nil || err == io.EOF {
-			break
-		}
-		fs.Errorf(item.name, "vfs cache: failed to _ensure cache %v", err)
-		if !fserrors.IsErrNoSpace(err) && err.Error() != "no space left on device" {
-			fs.Debugf(item.name, "vfs cache: failed to _ensure cache %v is not out of space", err)
-			break
-		}
-		item.c.KickCleaner()
-		expBackOff = 2 << uint(retries)
-		time.Sleep(time.Duration(expBackOff) * time.Millisecond) // Exponential back-off the retries
-	}
-
-	if fserrors.IsErrNoSpace(err) {
-		fs.Errorf(item.name, "vfs cache: failed to _ensure cache after retries %v", err)
-	}
-
+	err = item.retryCacheWriteWithBackoff("read", func() (err1 error) {
+		n, err1 = item.readAt(b, off)
+		return err1
+	})
 	return n, err
 }
 
@@ -1303,10 +1289,42 @@ func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 	return n, err
 }
 
+func (item *Item) retryCacheWriteWithBackoff(op string, attempt func() error) (err error) {
+	var expBackOff int
+	for retries := range fs.GetConfig(context.TODO()).LowLevelRetries {
+		item.preAccess()
+		err = attempt()
+		item.postAccess()
+		if err == nil || err == io.EOF {
+			break
+		}
+		if !fserrors.IsErrNoSpace(err) {
+			fs.Errorf(item.name, "vfs cache: Non-out-of-space error encountered during %s: %v", op, err)
+			break
+		}
+		fs.Debugf(item.name, "vfs cache: failed to claim cache (%s) retrying (%d): %v", op, retries+1, err)
+		item.c.KickCleaner()
+		expBackOff = 2 << uint(retries)
+		time.Sleep(time.Duration(expBackOff) * time.Millisecond) // Exponential back-off the retries
+	}
+
+	if fserrors.IsErrNoSpace(err) {
+		fs.Errorf(item.name, "vfs cache: failed to claim cache for %s after retries: %v", op, err)
+	}
+
+	return err
+}
+
 // WriteAt bytes to the file at off
 func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
-	item.preAccess()
-	defer item.postAccess()
+	err = item.retryCacheWriteWithBackoff("writeAt", func() (err1 error) {
+		n, err1 = item.writeAt(b, off)
+		return err1
+	})
+	return n, err
+}
+
+func (item *Item) writeAt(b []byte, off int64) (n int, err error) {
 	item.mu.Lock()
 	if item.fd == nil {
 		item.mu.Unlock()
@@ -1347,6 +1365,14 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 // It returns n the total bytes processed and skipped the number of
 // bytes which were processed but not actually written to the file.
 func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, err error) {
+	err = item.retryCacheWriteWithBackoff("writeAtNoOverwrite", func() (err1 error) {
+		n, skipped, err1 = item.writeAtNoOverwrite(b, off)
+		return err1
+	})
+	return n, skipped, err
+}
+
+func (item *Item) writeAtNoOverwrite(b []byte, off int64) (n int, skipped int, err error) {
 	item.mu.Lock()
 
 	var (
