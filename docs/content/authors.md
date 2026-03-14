@@ -1092,3 +1092,6 @@ put them back in again. -->
 - Romāns Potašovs <justgook@gmail.com>
 - Brian Bockelman <bbockelman@morgridge.org>
 - Bjoern Franke <bjo@schafweide.org>
+- razorloves <razorloves@gmail.com>
+- Duncan F <131309315+duncanaf@users.noreply.github.com>
+- Billy Hughes <w.g.h.hughes@gmail.com>

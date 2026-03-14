@@ -47,6 +47,7 @@ import (
 	"github.com/rclone/rclone/lib/multipart"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
+	"github.com/rclone/rclone/lib/transferaccounter"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -184,6 +185,16 @@ https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-optimi
 In tests, copy speed increases almost linearly with copy
 concurrency.`,
 			Default:  512,
+			Advanced: true,
+		}, {
+			Name: "copy_total_concurrency",
+			Help: `Global concurrency limit for multipart copy chunks.
+
+This limits the total number of multipart copy chunks running at once
+across all files.
+
+Set to 0 to disable this limiter.`,
+			Default:  0,
 			Advanced: true,
 		}, {
 			Name: "use_copy_blob",
@@ -346,21 +357,22 @@ rclone does if you know the container exists already.
 // Options defines the configuration for this backend
 type Options struct {
 	auth.Options
-	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
-	CopyCutoff        fs.SizeSuffix        `config:"copy_cutoff"`
-	CopyConcurrency   int                  `config:"copy_concurrency"`
-	UseCopyBlob       bool                 `config:"use_copy_blob"`
-	UploadConcurrency int                  `config:"upload_concurrency"`
-	ListChunkSize     uint                 `config:"list_chunk"`
-	AccessTier        string               `config:"access_tier"`
-	ArchiveTierDelete bool                 `config:"archive_tier_delete"`
-	DisableCheckSum   bool                 `config:"disable_checksum"`
-	Enc               encoder.MultiEncoder `config:"encoding"`
-	PublicAccess      string               `config:"public_access"`
-	DirectoryMarkers  bool                 `config:"directory_markers"`
-	NoCheckContainer  bool                 `config:"no_check_container"`
-	NoHeadObject      bool                 `config:"no_head_object"`
-	DeleteSnapshots   string               `config:"delete_snapshots"`
+	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
+	CopyCutoff           fs.SizeSuffix        `config:"copy_cutoff"`
+	CopyConcurrency      int                  `config:"copy_concurrency"`
+	CopyTotalConcurrency int                  `config:"copy_total_concurrency"`
+	UseCopyBlob          bool                 `config:"use_copy_blob"`
+	UploadConcurrency    int                  `config:"upload_concurrency"`
+	ListChunkSize        uint                 `config:"list_chunk"`
+	AccessTier           string               `config:"access_tier"`
+	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
+	DisableCheckSum      bool                 `config:"disable_checksum"`
+	Enc                  encoder.MultiEncoder `config:"encoding"`
+	PublicAccess         string               `config:"public_access"`
+	DirectoryMarkers     bool                 `config:"directory_markers"`
+	NoCheckContainer     bool                 `config:"no_check_container"`
+	NoHeadObject         bool                 `config:"no_head_object"`
+	DeleteSnapshots      string               `config:"delete_snapshots"`
 }
 
 // Fs represents a remote azure server
@@ -382,6 +394,7 @@ type Fs struct {
 	cache              *bucket.Cache                // cache for container creation status
 	pacer              *fs.Pacer                    // To pace and retry the API calls
 	uploadToken        *pacer.TokenDispenser        // control concurrency
+	copyToken          *pacer.TokenDispenser        // global multipart copy concurrency limiter
 	publicAccess       container.PublicAccessType   // Container Public Access Level
 
 	// user delegation cache
@@ -587,6 +600,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ci:          ci,
 		pacer:       fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
+		copyToken:   pacer.NewTokenDispenser(opt.CopyTotalConcurrency),
 		cache:       bucket.NewCache(),
 		cntSVCcache: make(map[string]*container.Client, 1),
 	}
@@ -1742,18 +1756,26 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 		blockIDs = make([]string, numParts) // list of blocks for finalize
 		g, gCtx  = errgroup.WithContext(ctx)
 		checker  = newCheckForInvalidBlockOrBlob("copy", o)
+		account  = transferaccounter.Get(ctx)
 	)
 	g.SetLimit(f.opt.CopyConcurrency)
 
 	fs.Debugf(o, "Starting  multipart copy with %d parts of size %v", numParts, fs.SizeSuffix(partSize))
+	account.Start()
 	for partNum := uint64(0); partNum < uint64(numParts); partNum++ {
 		// Fail fast, in case an errgroup managed function returns an error
 		// gCtx is cancelled. There is no point in uploading all the other parts.
 		if gCtx.Err() != nil {
 			break
 		}
+		if f.opt.CopyTotalConcurrency > 0 {
+			f.copyToken.Get()
+		}
 		partNum := partNum // for closure
 		g.Go(func() error {
+			if f.opt.CopyTotalConcurrency > 0 {
+				defer f.copyToken.Put()
+			}
 			blockID := bic.newBlockID(partNum)
 			options := blockblob.StageBlockFromURLOptions{
 				Range: blob.HTTPRange{
@@ -1787,6 +1809,7 @@ func (f *Fs) copyMultipart(ctx context.Context, remote, dstContainer, dstPath st
 				return fmt.Errorf("multipart copy: failed to copy chunk %d with %v bytes: %w", partNum+1, -1, err)
 			}
 			blockIDs[partNum] = blockID
+			account.Add(options.Range.Count)
 			return nil
 		})
 	}

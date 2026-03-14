@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/rclone/rclone/lib/transferaccounter"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -499,10 +500,12 @@ func (up *largeUpload) Copy(ctx context.Context) (err error) {
 	defer atexit.OnError(&err, func() { _ = up.Abort(ctx) })()
 	fs.Debugf(up.o, "Starting %s of large file in %d chunks (id %q)", up.what, up.parts, up.id)
 	var (
+		account   = transferaccounter.Get(ctx)
 		g, gCtx   = errgroup.WithContext(ctx)
 		remaining = up.size
 	)
 	g.SetLimit(up.f.opt.UploadConcurrency)
+	account.Start()
 	for part := range up.parts {
 		// Fail fast, in case an errgroup managed function returns an error
 		// gCtx is cancelled. There is no point in copying all the other parts.
@@ -514,7 +517,11 @@ func (up *largeUpload) Copy(ctx context.Context) (err error) {
 
 		part := part // for the closure
 		g.Go(func() (err error) {
-			return up.copyChunk(gCtx, part, reqSize)
+			err = up.copyChunk(gCtx, part, reqSize)
+			if err == nil {
+				account.Add(reqSize)
+			}
+			return err
 		})
 		remaining -= reqSize
 	}

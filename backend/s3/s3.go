@@ -63,6 +63,7 @@ import (
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/rclone/rclone/lib/transferaccounter"
 	"github.com/rclone/rclone/lib/version"
 )
 
@@ -829,6 +830,10 @@ use |-vv| to see the debug level logs.
 			Name: "ibm_resource_instance_id",
 			Help: "IBM service instance id",
 		}, {
+			Name:     "ibm_iam_endpoint",
+			Help:     "IBM IAM Endpoint to use for authentication.\n\nLeave blank to use the default public endpoint.",
+			Advanced: true,
+		}, {
 			Name: "object_lock_mode",
 			Help: `Object Lock mode to apply when uploading or copying objects.
 
@@ -1106,6 +1111,7 @@ type Options struct {
 	DirectoryBucket             bool                 `config:"directory_bucket"`
 	IBMAPIKey                   string               `config:"ibm_api_key"`
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
+	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
 	ObjectLockMode              string               `config:"object_lock_mode"`
@@ -1540,7 +1546,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		fs.Debugf(nil, "Using v2 auth")
 		if opt.Provider == "IBMCOS" && opt.IBMAPIKey != "" && opt.IBMInstanceID != "" {
 			options = append(options, func(s3Opt *s3.Options) {
-				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID}
+				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID, IAMEndpoint: opt.IBMIAMEndpoint}
 			})
 		} else {
 			options = append(options, func(s3Opt *s3.Options) {
@@ -3006,6 +3012,8 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 	numParts := (srcSize-1)/partSize + 1
 
 	fs.Debugf(src, "Starting  multipart copy with %d parts", numParts)
+	account := transferaccounter.Get(ctx)
+	account.Start()
 
 	var (
 		parts   = make([]types.CompletedPart, numParts)
@@ -3040,6 +3048,11 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 				PartNumber: &partNum,
 				ETag:       uout.CopyPartResult.ETag,
 			}
+			copied := partSize
+			if int64(partNum) == numParts {
+				copied = srcSize - (numParts-1)*partSize
+			}
+			account.Add(copied)
 			return nil
 		})
 	}
