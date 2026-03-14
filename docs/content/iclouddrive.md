@@ -12,12 +12,26 @@ The initial setup for an iCloud Drive backend involves getting a trust token/ses
 This can be done by simply using the regular iCloud password, and accepting the code
 prompt on another iCloud connected device.
 
-**IMPORTANT**: At the moment an app specific password won't be accepted. Only
-use your regular password and 2FA.
+**IMPORTANT**: App-specific passwords are not accepted. Only use your
+regular Apple ID password and 2FA.
 
 `rclone config` walks you through the token creation. The trust token is valid
 for 30 days. After which you will have to reauthenticate with `rclone reconnect`
 or `rclone config`.
+
+## Authentication
+
+rclone authenticates with Apple using [SRP (Secure Remote Password)](https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol),
+the same protocol used by the iCloud web interface. Your password is never
+sent to Apple's servers -- instead, a cryptographic proof is exchanged that
+verifies you know the password without revealing it.
+
+The authentication flow is:
+
+1. rclone initiates a session with Apple's identity service
+2. An SRP key exchange takes place (your password is used locally to derive a key)
+3. Apple sends a 2FA prompt to your trusted devices
+4. After you enter the 2FA code, rclone receives a trust token for future sessions
 
 Here is an example of how to make a remote called `iclouddrive`.  First run:
 
@@ -79,9 +93,46 @@ d) Delete this remote
 y/e/d> y
 ```
 
+## iCloud Photos
+
+The iCloud Drive backend also supports accessing iCloud Photos by setting the
+`service` option to `photos`:
+
+```console
+rclone lsd iclouddrive: --iclouddrive-service photos
+```
+
+This presents a read-only, 3-level hierarchy:
+
+- **Level 1**: Photo libraries (e.g. `PrimarySync`, `SharedSync-XXXX`)
+- **Level 2**: Albums within a library (11 smart albums + user-created albums)
+- **Level 3**: Photos/videos within an album
+
+Examples:
+
+```console
+# List libraries
+rclone lsd iclouddrive: --iclouddrive-service photos
+
+# List albums in your primary library
+rclone lsd iclouddrive:PrimarySync/ --iclouddrive-service photos
+
+# List photos in an album
+rclone ls iclouddrive:PrimarySync/All\ Photos/ --iclouddrive-service photos
+
+# Download a photo
+rclone copy iclouddrive:PrimarySync/Favorites/IMG_0001.HEIC /tmp/ --iclouddrive-service photos
+```
+
+You can also set `service = photos` in `rclone config` to avoid passing
+`--iclouddrive-service photos` every time.
+
+**Limitations**: iCloud Photos is read-only. Upload, delete, rename, and
+move operations are not supported.
+
 ## Advanced Data Protection
 
-ADP is currently unsupported and need to be disabled
+ADP is currently unsupported and needs to be disabled
 
 On iPhone, Settings `>` Apple Account `>` iCloud `>` 'Access iCloud Data on the Web'
 must be ON, and 'Advanced Data Protection' OFF.

@@ -1,4 +1,4 @@
-// Package api provides functionality for interacting with the iCloud API.
+// Package api provides functionality for interacting with the iCloud API
 package api
 
 import (
@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fshttp"
@@ -32,7 +33,9 @@ type Client struct {
 	Session             *Session
 	sessionSaveCallback sessionSave
 
-	drive *DriveService
+	drive  *DriveService
+	mu     sync.Mutex // protects photos
+	photos *PhotosService
 }
 
 // New creates a new Client instance with the provided Apple ID, password, trust token, cookies, and session save callback.
@@ -69,6 +72,20 @@ func (c *Client) DriveService() (*DriveService, error) {
 		}
 	}
 	return c.drive, nil
+}
+
+// PhotosService returns the PhotosService instance associated with the Client.
+func (c *Client) PhotosService(ctx context.Context) (*PhotosService, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.photos == nil {
+		var err error
+		c.photos, err = NewPhotosService(ctx, c)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.photos, nil
 }
 
 // Request makes a request and retries it if the session is invalid.
@@ -118,12 +135,18 @@ func (c *Client) Authenticate(ctx context.Context) error {
 
 	fs.Debugf("icloud", "Authenticating as %s\n", c.appleID)
 	err := c.Session.SignIn(ctx, c.appleID, c.password)
+	if err != nil {
+		return err
+	}
 
-	if err == nil {
-		err = c.Session.AuthWithToken(ctx)
-		if err == nil && c.sessionSaveCallback != nil {
-			c.sessionSaveCallback(c.Session)
-		}
+	// If 2FA is required, skip AuthWithToken — caller must complete 2FA first
+	if c.Session.Requires2FA() {
+		return nil
+	}
+
+	err = c.Session.AuthWithToken(ctx)
+	if err == nil && c.sessionSaveCallback != nil {
+		c.sessionSaveCallback(c.Session)
 	}
 	return err
 }
