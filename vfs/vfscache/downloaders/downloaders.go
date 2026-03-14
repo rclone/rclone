@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +32,8 @@ const (
 	// If a downloader is within this range or --buffer-size
 	// whichever is the larger, we will reuse the downloader
 	minWindow = 1024 * 1024
+	// error prefix used when wrapping cache write errors
+	errCacheWritePrefix = "vfs reader: failed to write to cache file"
 )
 
 // Item is the interface that an item to download must obey
@@ -623,7 +626,15 @@ func (dl *downloader) download() (n int64, err error) {
 	// defer log.Trace(dl.dls.src, "")("err=%v", &err)
 	n, err = dl.in.WriteTo(dl)
 	if err != nil && !errors.Is(err, asyncreader.ErrorStreamAbandoned) {
-		return n, fmt.Errorf("vfs reader: failed to write to cache file: %w", err)
+		// Avoid re-wrapping errors that already contain our prefix.
+		// This can happen when kickWaiters() propagates a lastErr
+		// (from a previous download attempt) back through Write(),
+		// causing each retry to add another layer of the same prefix,
+		// leading to exponentially growing error messages in the logs.
+		if strings.Contains(err.Error(), errCacheWritePrefix) {
+			return n, err
+		}
+		return n, fmt.Errorf("%s: %w", errCacheWritePrefix, err)
 	}
 
 	return n, nil
