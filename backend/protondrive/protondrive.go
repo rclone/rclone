@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
@@ -151,11 +152,18 @@ size, will fail to operate properly`,
 			Name: "app_version",
 			Help: `The app version string 
 
-The app version string indicates the client that is currently performing 
-the API request. This information is required and will be sent with every 
-API request.`,
+			The app version string indicates the client that is currently performing 
+			the API request. This information is required and will be sent with every 
+			API request.`,
 			Advanced: true,
-			Default:  "macos-drive@1.0.0-alpha.1+rclone",
+			Default:  "web-drive@5.2.0+af66c8fa",
+		}, {
+			Name: "drive_sdk_version",
+			Help: `Drive SDK version header used for v2 API endpoints.
+
+The value is sent as x-pm-drive-sdk-version.`,
+			Advanced: true,
+			Default:  "js@0.10.0",
 		}, {
 			Name: "replace_existing_draft",
 			Help: `Create a new revision when filename conflict is detected
@@ -210,6 +218,7 @@ type Options struct {
 	Enc                  encoder.MultiEncoder `config:"encoding"`
 	ReportOriginalSize   bool                 `config:"original_file_size"`
 	AppVersion           string               `config:"app_version"`
+	DriveSDKVersion      string               `config:"drive_sdk_version"`
 	ReplaceExistingDraft bool                 `config:"replace_existing_draft"`
 	EnableCaching        bool                 `config:"enable_caching"`
 }
@@ -328,9 +337,32 @@ func deAuthHandler() {
 	clearConfigMap(_mapper)
 }
 
+func setDriveSDKVersionIfSupported(config any, driveSDKVersion string) {
+	if driveSDKVersion == "" {
+		return
+	}
+
+	v := reflect.ValueOf(config)
+	if v.Kind() != reflect.Pointer || v.IsNil() {
+		return
+	}
+	v = v.Elem()
+	if v.Kind() != reflect.Struct {
+		return
+	}
+
+	field := v.FieldByName("DriveSDKVersion")
+	if !field.IsValid() || !field.CanSet() || field.Kind() != reflect.String {
+		return
+	}
+
+	field.SetString(driveSDKVersion)
+}
+
 func newProtonDrive(ctx context.Context, f *Fs, opt *Options, m configmap.Mapper) (*protonDriveAPI.ProtonDrive, error) {
 	config := protonDriveAPI.NewDefaultConfig()
 	config.AppVersion = opt.AppVersion
+	setDriveSDKVersionIfSupported(config, opt.DriveSDKVersion)
 	config.UserAgent = f.ci.UserAgent // opt.UserAgent
 
 	config.ReplaceExistingDraft = opt.ReplaceExistingDraft

@@ -434,8 +434,7 @@ func (sg *statsGroups) delete(group string) {
 	if stats == nil {
 		return
 	}
-	stats.ResetErrors()
-	stats.ResetCounters()
+	stats.resetForDelete()
 	delete(sg.m, group)
 
 	// Remove group reference from the ordering slice.
