@@ -714,6 +714,13 @@ func (s *StatsInfo) Listed(listed int64) int64 {
 func (s *StatsInfo) ResetCounters() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.resetCountersLocked(true)
+}
+
+// resetCountersLocked clears counters and optionally restarts averaging.
+//
+// Call with s.mu held.
+func (s *StatsInfo) resetCountersLocked(restartAverageLoop bool) {
 	s.bytes = 0
 	s.errors = 0
 	s.lastError = nil
@@ -732,7 +739,16 @@ func (s *StatsInfo) ResetCounters() {
 
 	s._stopAverageLoop()
 	s.average = averageValues{}
-	s._startAverageLoop()
+	if restartAverageLoop {
+		s._startAverageLoop()
+	}
+}
+
+// resetForDelete clears counters and stops background work permanently.
+func (s *StatsInfo) resetForDelete() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.resetCountersLocked(false)
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
