@@ -69,6 +69,7 @@ directories to and from different cloud storage providers.
 - IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
 - Intercolo Object Storage [:page_facing_up:](https://rclone.org/s3/#intercolo)
 - IONOS Cloud [:page_facing_up:](https://rclone.org/s3/#ionos)
+- kDrive [:page_facing_up:](https://rclone.org/kdrive/)
 - Koofr [:page_facing_up:](https://rclone.org/koofr/)
 - Leviia Object Storage [:page_facing_up:](https://rclone.org/s3/#leviia)
 - Liara Object Storage [:page_facing_up:](https://rclone.org/s3/#liara-object-storage)
