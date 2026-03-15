@@ -161,6 +161,36 @@ Properties:
 - Type:        bool
 - Default:     true
 
+#### --internxt-chunk-size
+
+Chunk size for multipart uploads.
+
+Large files will be uploaded in chunks of this size.
+
+Memory usage is approximately chunk_size * upload_concurrency.
+
+Properties:
+
+- Config:      chunk_size
+- Env Var:     RCLONE_INTERNXT_CHUNK_SIZE
+- Type:        SizeSuffix
+- Default:     30Mi
+
+#### --internxt-upload-concurrency
+
+Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded concurrently.
+
+Note that each chunk is buffered in memory.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_INTERNXT_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     4
+
 #### --internxt-encoding
 
 The encoding for the backend.
