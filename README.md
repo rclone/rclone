@@ -84,6 +84,7 @@ directories to and from different cloud storage providers.
 - Microsoft Azure Files Storage [:page_facing_up:](https://rclone.org/azurefiles/)
 - Microsoft OneDrive [:page_facing_up:](https://rclone.org/onedrive/)
 - Minio [:page_facing_up:](https://rclone.org/s3/#minio)
+- Movistar Cloud [:page_facing_up:](https://rclone.org/movistarcloud/)
 - Nextcloud [:page_facing_up:](https://rclone.org/webdav/#nextcloud)
 - Blomp Cloud Storage [:page_facing_up:](https://rclone.org/swift/)
 - OpenDrive [:page_facing_up:](https://rclone.org/opendrive/)
