@@ -225,7 +225,7 @@ type Fs struct {
 	hasOCMD5           bool          // set if can use owncloud style checksums for MD5
 	hasOCSHA1          bool          // set if can use owncloud style checksums for SHA1
 	hasMESHA1          bool          // set if can use fastmail style checksums for SHA1
-	useStandardProps   bool          // set if should use standard props for PROPFIND (for "other" vendor)
+	useStandardProps   bool          // set if should use standard props for PROPFIND
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
 	chunksUploadURL    string        // upload URL for nextcloud chunked
 	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
