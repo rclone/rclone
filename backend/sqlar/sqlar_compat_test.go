@@ -30,7 +30,7 @@ import (
 )
 
 // lookupSqlite3 returns the path to the sqlite3 binary or skips the test.
-// Compatibility tests require sqlite 3.23.0 or later for sqlar support.
+// Compatibility tests require sqlite 3.23.0 or later with archive mode (-A).
 func lookupSqlite3(t *testing.T) string {
 	t.Helper()
 	p, err := exec.LookPath("sqlite3")
@@ -49,6 +49,16 @@ func lookupSqlite3(t *testing.T) string {
 	if !sqliteVersionAtLeast(fields[0], 3, 23, 0) {
 		t.Skipf("sqlite3 version %s is too old; need 3.23.0 or later for compatibility tests", fields[0])
 	}
+
+	help, err := exec.Command(p, "-help").CombinedOutput()
+	if err != nil {
+		t.Skipf("failed to query sqlite3 help: %v; skipping compatibility tests", err)
+	}
+	helpText := string(help)
+	if !strings.Contains(helpText, "-A ARGS...") || !strings.Contains(helpText, `run ".archive ARGS" and exit`) {
+		t.Skipf("sqlite3 at %q does not support archive mode (-A); skipping compatibility tests", p)
+	}
+
 	return p
 }
 
