@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -29,13 +30,48 @@ import (
 )
 
 // lookupSqlite3 returns the path to the sqlite3 binary or skips the test.
+// Compatibility tests require sqlite 3.23.0 or later for sqlar support.
 func lookupSqlite3(t *testing.T) string {
 	t.Helper()
 	p, err := exec.LookPath("sqlite3")
 	if err != nil {
 		t.Skip("sqlite3 not found in PATH; skipping compatibility tests")
 	}
+
+	out, err := exec.Command(p, "-version").Output()
+	if err != nil {
+		t.Skipf("failed to query sqlite3 version: %v; skipping compatibility tests", err)
+	}
+	fields := strings.Fields(string(out))
+	if len(fields) == 0 {
+		t.Skip("could not parse sqlite3 version; skipping compatibility tests")
+	}
+	if !sqliteVersionAtLeast(fields[0], 3, 23, 0) {
+		t.Skipf("sqlite3 version %s is too old; need 3.23.0 or later for compatibility tests", fields[0])
+	}
 	return p
+}
+
+func sqliteVersionAtLeast(version string, wantMajor, wantMinor, wantPatch int) bool {
+	parts := strings.SplitN(version, ".", 4)
+	if len(parts) < 3 {
+		return false
+	}
+	got := make([]int, 3)
+	for i := range 3 {
+		n, err := strconv.Atoi(parts[i])
+		if err != nil {
+			return false
+		}
+		got[i] = n
+	}
+	want := []int{wantMajor, wantMinor, wantPatch}
+	for i := range 3 {
+		if got[i] != want[i] {
+			return got[i] > want[i]
+		}
+	}
+	return true
 }
 
 // compatObjInfo is a minimal fs.ObjectInfo for use in compatibility tests.
