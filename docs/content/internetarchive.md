@@ -4,7 +4,7 @@ description: "Rclone docs for Internet Archive"
 versionIntroduced: "v1.59"
 ---
 
-# {{< icon "fa fa-archive" >}} Internet Archive
+# Internet Archive
 
 The Internet Archive backend utilizes Items on [archive.org](https://archive.org/)
 

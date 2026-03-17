@@ -14,7 +14,7 @@
     </tr>
   </thead>
   <tbody>
-    {{ range $name, $data := site.Data.backends }}
+    {{ range $name, $data := hugo.Data.backends }}
     <tr>
       <td style="font-weight: bold;">
           <a href="/{{ $name | urlize }}">{{ $data.name }}</a>

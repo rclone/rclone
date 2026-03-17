@@ -4,7 +4,7 @@ description: "Rclone docs for DOI"
 versionIntroduced: "v1.70"
 ---
 
-# {{< icon "fa fa-building-columns" >}} DOI
+# DOI
 
 The DOI remote is a read only remote for reading files from digital object
 identifiers (DOI).

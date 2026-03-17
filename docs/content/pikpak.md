@@ -4,7 +4,7 @@ description: "Rclone docs for PikPak"
 versionIntroduced: "v1.62"
 ---
 
-# {{< icon "fa fa-cloud" >}} PikPak
+# PikPak
 
 PikPak is [a private cloud drive](https://mypikpak.com/).
 
