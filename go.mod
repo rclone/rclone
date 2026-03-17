@@ -60,6 +60,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.98
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/sys/mountinfo v0.7.2
+	github.com/ncruces/go-sqlite3 v0.30.5
 	github.com/ncw/swift/v2 v2.0.5
 	github.com/oracle/oci-go-sdk/v65 v65.108.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -215,6 +216,7 @@ require (
 	github.com/minio/minlz v1.0.1 // indirect
 	github.com/minio/xxml v0.0.3 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/nwaples/rardecode/v2 v2.2.2 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/panjf2000/ants/v2 v2.11.5 // indirect
@@ -241,6 +243,7 @@ require (
 	github.com/sorairolake/lzip-go v0.3.8 // indirect
 	github.com/spacemonkeygo/monkit/v3 v3.0.25-0.20251022131615-eb24eb109368 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
+	github.com/tetratelabs/wazero v1.11.0 // indirect
 	github.com/tinylib/msgp v1.6.3 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
