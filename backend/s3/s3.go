@@ -561,6 +561,17 @@ This is usually set to a CloudFront CDN URL as AWS S3 offers
 cheaper egress for data downloaded through the CloudFront network.`,
 			Advanced: true,
 		}, {
+			Name:    "use_presigned_download",
+			Default: false,
+			Help: `If set, use a presigned request when downloading with download_url.
+
+When download_url is set and this flag is enabled, rclone will generate
+a presigned S3 URL and transfer the authentication query parameters to
+the download_url. This is useful for accessing private S3 objects through
+a CloudFront distribution that forwards query strings to the S3 origin,
+allowing authenticated downloads through the CDN.`,
+			Advanced: true,
+		}, {
 			Name:     "directory_markers",
 			Default:  false,
 			Advanced: true,
@@ -1106,6 +1117,7 @@ type Options struct {
 	Enc                         encoder.MultiEncoder `config:"encoding"`
 	DisableHTTP2                bool                 `config:"disable_http2"`
 	DownloadURL                 string               `config:"download_url"`
+	UsePresignedDownload        bool                 `config:"use_presigned_download"`
 	DirectoryMarkers            bool                 `config:"directory_markers"`
 	UseMultipartEtag            fs.Tristate          `config:"use_multipart_etag"`
 	UsePresignedRequest         bool                 `config:"use_presigned_request"`
@@ -4162,11 +4174,33 @@ func removeAWSChunked(pv *string) *string {
 }
 
 func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	url := o.fs.opt.DownloadURL + bucketPath
+	downloadURL := o.fs.opt.DownloadURL + bucketPath
+	if o.fs.opt.UsePresignedDownload {
+		bucket, _ := o.split()
+		presignReq, presignErr := s3.NewPresignClient(o.fs.c).PresignGetObject(ctx, &s3.GetObjectInput{
+			Bucket:    &bucket,
+			Key:       &bucketPath,
+			VersionId: o.versionID,
+		}, s3.WithPresignExpires(time.Duration(maxExpireDuration)))
+		if presignErr != nil {
+			return nil, fmt.Errorf("failed to presign download URL: %w", presignErr)
+		}
+		presignedURL, presignErr := url.Parse(presignReq.URL)
+		if presignErr != nil {
+			return nil, fmt.Errorf("failed to parse presigned URL: %w", presignErr)
+		}
+		parsedDownloadURL, presignErr := url.Parse(downloadURL)
+		if presignErr != nil {
+			return nil, fmt.Errorf("failed to parse download URL: %w", presignErr)
+		}
+		parsedDownloadURL.RawQuery = presignedURL.RawQuery
+		downloadURL = parsedDownloadURL.String()
+		fs.Debugf(o, "Using presigned download URL via %s", o.fs.opt.DownloadURL)
+	}
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: url,
+		RootURL: downloadURL,
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
