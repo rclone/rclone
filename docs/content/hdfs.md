@@ -4,7 +4,7 @@ description: "Remote for Hadoop Distributed Filesystem"
 versionIntroduced: "v1.54"
 ---
 
-# {{< icon "fa fa-globe" >}} HDFS
+# HDFS
 
 [HDFS](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html)
 is a distributed file-system, part of the [Apache Hadoop](https://hadoop.apache.org/)

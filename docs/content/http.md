@@ -4,7 +4,7 @@ description: "Read only remote for HTTP servers"
 versionIntroduced: "v1.37"
 ---
 
-# {{< icon "fa fa-globe" >}} HTTP
+# HTTP
 
 The HTTP remote is a read only remote for reading files of a
 webserver.  The webserver should provide file listings which rclone

@@ -4,7 +4,7 @@ description: "Rclone docs for Jottacloud"
 versionIntroduced: "v1.43"
 ---
 
-# {{< icon "fa fa-cloud" >}} Jottacloud
+# Jottacloud
 
 Jottacloud is a cloud storage service provider from a Norwegian company, using
 its own datacenters in Norway.

@@ -25,7 +25,7 @@
 {{ else if .name }}
   {{/*  Backend Lookup Usage */}}
   {{ $backendName := .name | lower }}
-  {{ $data := index site.Data.backends $backendName }}
+  {{ $data := index hugo.Data.backends $backendName }}
   {{ if $data }}
     {{ $currentTier = $data.tier }}
   {{ end }}

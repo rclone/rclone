@@ -34,7 +34,7 @@
       }
     },
     "highlight": {
-      "style": "monokailight"
+      "noClasses": false
     }
   }
 }

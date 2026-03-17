@@ -5,7 +5,7 @@ type: page
 versionIntroduced: "v1.60"
 ---
 
-# {{< icon "fa fa-cloud" >}} Oracle Object Storage
+# Oracle Object Storage
 
 Object Storage provided by the Oracle Cloud Infrastructure (OCI).
 Read more at <oracle.com>:

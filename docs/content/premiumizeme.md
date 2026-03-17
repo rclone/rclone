@@ -4,7 +4,7 @@ description: "Rclone docs for premiumize.me"
 versionIntroduced: "v1.49"
 ---
 
-# {{< icon "fa fa-user" >}} premiumize.me
+# premiumize.me
 
 Paths are specified as `remote:path`
 

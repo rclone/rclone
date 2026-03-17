@@ -4,7 +4,7 @@ description: "Remote Unification"
 versionIntroduced: "v1.44"
 ---
 
-# {{< icon "fa fa-link" >}} Union
+# Union
 
 The `union` backend joins several remotes together to make a single unified view
 of them.

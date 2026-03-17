@@ -4,7 +4,7 @@ description: "Shade Backend Docs"
 versionIntroduced: "v1.73"
 ---
 
-# {{< icon "fa fa-moon" >}} Shade
+# Shade
 
 This is a backend for the [Shade](https://shade.inc/) platform
 

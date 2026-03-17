@@ -5,7 +5,7 @@ versionIntroduced: "v1.57"
 date: "2019-10-02"
 ---
 
-# {{< icon "fa fa-globe" >}} Sia
+# Sia
 
 Sia ([sia.tech](https://sia.tech/)) is a decentralized cloud storage platform
 based on the [blockchain](https://wikipedia.org/wiki/Blockchain) technology.

@@ -4,7 +4,7 @@ description: "Remote Aliases"
 versionIntroduced: "v1.40"
 ---
 
-# {{< icon "fa fa-link" >}} Alias
+# Alias
 
 The `alias` remote provides a new name for another remote.
 

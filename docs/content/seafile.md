@@ -4,7 +4,7 @@ description: "Seafile"
 versionIntroduced: "v1.52"
 ---
 
-# {{< icon "fa fa-server" >}} Seafile
+# Seafile
 
 This is a backend for the [Seafile](https://www.seafile.com/) storage service:
 

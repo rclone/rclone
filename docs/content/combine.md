@@ -4,7 +4,7 @@ description: "Combine several remotes into one"
 versionIntroduced: "v1.59"
 ---
 
-# {{< icon "fa fa-folder-plus" >}} Combine
+# Combine
 
 The `combine` backend joins remotes together into a single directory
 tree.

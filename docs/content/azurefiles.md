@@ -4,7 +4,7 @@ description: "Rclone docs for Microsoft Azure Files Storage"
 versionIntroduced: "v1.65"
 ---
 
-# {{< icon "fab fa-windows" >}} Microsoft Azure Files Storage
+# Microsoft Azure Files Storage
 
 Paths are specified as `remote:` You may put subdirectories in too,
 e.g. `remote:path/to/dir`.

@@ -4,7 +4,7 @@ description: "Rclone docs for Uloz.to"
 versionIntroduced: "v1.66"
 ---
 
-# {{< icon "fas fa-angle-double-down" >}} Uloz.to
+# Uloz.to
 
 Paths are specified as `remote:path`
 

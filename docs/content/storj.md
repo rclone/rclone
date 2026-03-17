@@ -6,7 +6,7 @@ aliases:
 versionIntroduced: "v1.52"
 ---
 
-# {{< icon "fas fa-dove" >}} Storj
+# Storj
 
 [Storj](https://storj.io) is redefining the cloud to support the
 future of data—sustainably and economically. Storj leverages the vast

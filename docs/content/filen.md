@@ -4,7 +4,7 @@ description: "Rclone docs for Filen"
 versionIntroduced: "1.73"
 ---
 
-# {{< icon "fa fa-solid fa-f" >}} Filen
+# Filen
 ## Configuration
 The initial setup for Filen requires that you get an API key for your account,
 currently this is only possible using the [Filen CLI](https://github.com/FilenCloudDienste/filen-cli).

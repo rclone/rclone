@@ -4,7 +4,7 @@ description: "Rclone docs for Google drive"
 versionIntroduced: "v0.91"
 ---
 
-# {{< icon "fab fa-google" >}} Google Drive
+# Google Drive
 
 Paths are specified as `drive:path`
 
