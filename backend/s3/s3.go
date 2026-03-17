@@ -4,6 +4,7 @@ package s3
 //go:generate go run gen_setfrom.go -o setfrom.go
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/tls"
@@ -63,6 +64,7 @@ import (
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/rclone/rclone/lib/transferaccounter"
 	"github.com/rclone/rclone/lib/version"
 )
 
@@ -829,6 +831,10 @@ use |-vv| to see the debug level logs.
 			Name: "ibm_resource_instance_id",
 			Help: "IBM service instance id",
 		}, {
+			Name:     "ibm_iam_endpoint",
+			Help:     "IBM IAM Endpoint to use for authentication.\n\nLeave blank to use the default public endpoint.",
+			Advanced: true,
+		}, {
 			Name: "object_lock_mode",
 			Help: `Object Lock mode to apply when uploading or copying objects.
 
@@ -928,6 +934,18 @@ PutObjectRetention and PutObjectLegalHold API calls after the upload completes.
 
 This adds extra API calls per object, so only enable if your provider requires it.`,
 			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "object_lock_supported",
+			Help: `Whether the provider supports S3 Object Lock.
+
+This should be true, false or left unset to use the default for the provider.
+
+Set to false for providers that don't fully support the S3 Object Lock API
+(e.g. GCS which uses non-standard headers for bypass governance retention
+and doesn't implement Legal Hold via the S3 API).
+`,
+			Default:  fs.Tristate{},
 			Advanced: true,
 		},
 		}}))
@@ -1106,6 +1124,7 @@ type Options struct {
 	DirectoryBucket             bool                 `config:"directory_bucket"`
 	IBMAPIKey                   string               `config:"ibm_api_key"`
 	IBMInstanceID               string               `config:"ibm_resource_instance_id"`
+	IBMIAMEndpoint              string               `config:"ibm_iam_endpoint"`
 	UseXID                      fs.Tristate          `config:"use_x_id"`
 	SignAcceptEncoding          fs.Tristate          `config:"sign_accept_encoding"`
 	ObjectLockMode              string               `config:"object_lock_mode"`
@@ -1114,6 +1133,7 @@ type Options struct {
 	BypassGovernanceRetention   bool                 `config:"bypass_governance_retention"`
 	BucketObjectLockEnabled     bool                 `config:"bucket_object_lock_enabled"`
 	ObjectLockSetAfterUpload    bool                 `config:"object_lock_set_after_upload"`
+	ObjectLockSupported         fs.Tristate          `config:"object_lock_supported"`
 }
 
 // Fs represents a remote s3 server
@@ -1540,7 +1560,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (s3Cli
 		fs.Debugf(nil, "Using v2 auth")
 		if opt.Provider == "IBMCOS" && opt.IBMAPIKey != "" && opt.IBMInstanceID != "" {
 			options = append(options, func(s3Opt *s3.Options) {
-				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID}
+				s3Opt.HTTPSignerV4 = &IbmIamSigner{APIKey: opt.IBMAPIKey, InstanceID: opt.IBMInstanceID, IAMEndpoint: opt.IBMIAMEndpoint}
 			})
 		} else {
 			options = append(options, func(s3Opt *s3.Options) {
@@ -1720,6 +1740,7 @@ func setQuirks(opt *Options, provider *Provider) {
 	set(&opt.UseUnsignedPayload, true, provider.Quirks.UseUnsignedPayload)
 	set(&opt.UseXID, true, provider.Quirks.UseXID)
 	set(&opt.SignAcceptEncoding, true, provider.Quirks.SignAcceptEncoding)
+	set(&opt.ObjectLockSupported, true, provider.Quirks.ObjectLockSupported)
 }
 
 // setRoot changes the root of the Fs
@@ -3006,6 +3027,8 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 	numParts := (srcSize-1)/partSize + 1
 
 	fs.Debugf(src, "Starting  multipart copy with %d parts", numParts)
+	account := transferaccounter.Get(ctx)
+	account.Start()
 
 	var (
 		parts   = make([]types.CompletedPart, numParts)
@@ -3040,6 +3063,11 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 				PartNumber: &partNum,
 				ETag:       uout.CopyPartResult.ETag,
 			}
+			copied := partSize
+			if int64(partNum) == numParts {
+				copied = srcSize - (numParts-1)*partSize
+			}
+			account.Add(copied)
 			return nil
 		})
 	}
@@ -4595,9 +4623,32 @@ func (o *Object) uploadMultipart(ctx context.Context, src fs.ObjectInfo, in io.R
 	return wantETag, gotETag, versionID, s3cw.ui, nil
 }
 
+// bufferForObjectLockMD5 buffers the body and computes Content-MD5 when
+// Object Lock parameters are set on the request. AWS S3 requires Content-MD5
+// for PutObject with Object Lock params and cannot compute it automatically
+// from a non-seekable io.Reader.
+// See: https://github.com/aws/aws-sdk-go-v2/discussions/2960
+func bufferForObjectLockMD5(req *s3.PutObjectInput, in io.Reader) (io.Reader, error) {
+	if req.ObjectLockMode == "" && req.ObjectLockRetainUntilDate == nil && req.ObjectLockLegalHoldStatus == "" {
+		return in, nil
+	}
+	buf, err := io.ReadAll(in)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read body for Content-MD5: %w", err)
+	}
+	md5sum := md5.Sum(buf)
+	md5base64 := base64.StdEncoding.EncodeToString(md5sum[:])
+	req.ContentMD5 = &md5base64
+	return bytes.NewReader(buf), nil
+}
+
 // Upload a single part using PutObject
 func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
-	req.Body = io.NopCloser(in)
+	in, err = bufferForObjectLockMD5(req, in)
+	if err != nil {
+		return etag, lastModified, nil, err
+	}
+	req.Body = in
 	var options = []func(*s3.Options){}
 	if o.fs.opt.UseUnsignedPayload.Value {
 		options = append(options, s3.WithAPIOptions(
@@ -4627,6 +4678,11 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 
 // Upload a single part using a presigned request
 func (o *Object) uploadSinglepartPresignedRequest(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, versionID *string, err error) {
+	// Content-MD5 must be set before signing so it's included in the presigned URL.
+	in, err = bufferForObjectLockMD5(req, in)
+	if err != nil {
+		return etag, lastModified, nil, err
+	}
 	// Create the presigned request
 	putReq, err := s3.NewPresignClient(o.fs.c).PresignPutObject(ctx, req, s3.WithPresignExpires(15*time.Minute))
 	if err != nil {

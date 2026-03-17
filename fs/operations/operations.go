@@ -1821,8 +1821,12 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 			return nil, err
 		}
 
+		var options []fs.OpenOption
+		for _, option := range fs.GetConfig(ctx).UploadHeaders {
+			options = append(options, option)
+		}
 		info := object.NewStaticObjectInfo(dstFileName, modTime, size, true, nil, fdst).WithMetadata(meta)
-		obj, err = fdst.Put(ctx, in, info)
+		obj, err = fdst.Put(ctx, in, info, options...)
 		if err != nil {
 			fs.Errorf(dstFileName, "Post request put error: %v", err)
 
@@ -1847,7 +1851,14 @@ type copyURLFunc func(ctx context.Context, dstFileName string, in io.ReadCloser,
 // copyURLFn copies the data from the url to the function supplied
 func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename, dstFileNameFromHeader bool, fn copyURLFunc) (err error) {
 	client := fshttp.NewClient(ctx)
-	resp, err := client.Get(url)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return err
+	}
+	for _, option := range fs.GetConfig(ctx).DownloadHeaders {
+		req.Header.Set(option.Key, option.Value)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
